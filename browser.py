@@ -1,6 +1,6 @@
 import os
 
-import database
+import _database
 
 import constants as C
 

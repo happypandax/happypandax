@@ -1,19 +1,22 @@
 from euler import today
-from database import db # REMEMBER TO IMPLEMENT SERIALIZING METHOD IN DB
+from database import db, metadata # REMEMBER TO IMPLEMENT SERIALIZING METHOD IN DB
 ##TODO: IMPLEMENT add_manga and add_chapter in db
 
+##TODO: IMPLEMENT INDEXING
 class Manga:
-	""" Creates a manga with the following metadata:
-	Title -> str
-	Chapters -> [[<chapter_number>, [<pages>]]]
+	""" Creates a manga with the following parameters:
+	title -> str
+	chapters -> [[<chapter_number>, [<pages>]]]
 				e.g [[1, [pg1, pg2]], [2, [pg1, pg2]]]
-	Genres -> list
-	Publishing date -> (not sure yet... prolly string: dd/mm/yy)
-	Date Added -> date, will be defaulted on init
-	Last Read -> timestamp (e.g. time.time()), will be defaulted to date on init
+	genres -> list
+	pub_date -> (not sure yet... prolly string: dd/mm/yy)
+	date_added -> date, will be defaulted on init
+	last_read -> timestamp (e.g. time.time()), will be defaulted to date on init
 	"""
 	def __init__(self, title, chapters, genres=[], pub_date="",
 			  date_added=today(), last_read=today()):
+		# index will most likely be returned from database class
+		self._index = "" # STILL NEED TO IMPLEMENT
 		self._title = title
 		self._chapters = chapters
 		self._genres = genres
@@ -24,7 +27,7 @@ class Manga:
 
 		self._do_metadata() # make initial metadata
 		
-		db.add_manga(self.title, self._metadata) # add manga with no chapters into db
+		db.MangaDB.add_manga(self.title, self._metadata) # add manga with no chapters into db
 
 		#NOTE: this way we can implement drag & drop, so when zip/cbz/folder of manga
 		# is dropped it handles the chapters itself
@@ -77,9 +80,11 @@ class Manga:
 		def _do_chapter(chapter_number, pages):
 			"sends metadata to db"
 			_chap_metadata = [] #meta data for the individual chapter
-			metadata = {"title":self.title, "chapter":chapter_number, "pages":pages, "metadata":self._chap_metadata}
+			#OBS: still need to implement indexing
+			md = {"link":self._index, "chapter":chapter_number,
+			   "pages":pages, "metadata":self._chap_metadata}
 
-			db.add_chapter(metadata)
+			metadata.ChapterDB.add_chapter(md)
 
 		for chap in chap_object:
 			for numb, pages in chap:
@@ -93,10 +98,16 @@ class Manga:
 
 class MangaContainer(Manga):
 	"""Meant to be used by DB when retriveing manga
-	Title -> str
-	Chapters -> [[<chapter_number>, [<pages>]]]
+	id -> int
+	title -> str
+	chapters -> [[<chapter_number>, [<pages>]]]
 				e.g [[1, [pg1, pg2]], [2, [pg1, pg2]]]
-	Metadata -> dict
+	metadata -> dict
 	"""
-	def __init__(self, title, chapters, metadata):
+	def __init__(self, id, title, chapters, metadata):
 		pass
+
+
+if __name__ == '__main__':
+	#unit testing here
+	pass
