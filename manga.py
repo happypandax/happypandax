@@ -1,4 +1,4 @@
-from euler import today
+from constants import today
 from database import db, metadata # REMEMBER TO IMPLEMENT SERIALIZING METHOD IN DB
 ##TODO: IMPLEMENT add_manga and add_chapter in db
 
