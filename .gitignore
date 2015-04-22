@@ -7,6 +7,7 @@
 *Qt*
 version/build
 version/dist
+*.sln
 
 # User-specific files
 *.suo
