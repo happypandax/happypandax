@@ -1,6 +1,6 @@
 import db_constants
 
-class AbstractDB:
+class DatabaseItem:
 	"A base class for MangaDB and ChapterDB"
 	pass
 
@@ -10,7 +10,7 @@ class Self:
 	"""
 	pass
 
-class MangaDB(AbstractDB):
+class MangaDB(DatabaseItem):
 	"""
 	Provides the following s methods:
 		add_manga -> adds manga into db
@@ -40,7 +40,7 @@ class MangaDB(AbstractDB):
 		"Deletes manga with the given id recursively."
 		pass
 
-class ChapterDB(AbstractDB):
+class ChapterDB(DatabaseItem):
 	"""
 	Provides the following database methods:
 		add_chapter -> adds chapter into db
