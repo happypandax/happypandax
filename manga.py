@@ -5,7 +5,7 @@ from database import db, metadata # REMEMBER TO IMPLEMENT SERIALIZING METHOD IN 
 ##TODO: IMPLEMENT INDEXING
 class MangaContainer:
 	""" Creates a manga with the following parameters:
-	title <- str
+	title <- [list of titles]
 	artist <- str
 	info <- str
 	chapters <- {<chapter_number>:{1:page1, 2:page2, 3:page3}}
@@ -15,13 +15,13 @@ class MangaContainer:
 	date_added <- date, will be defaulted on init
 	last_read <- timestamp (e.g. time.time()), will be defaulted to date on init
 	"""
-	def __init__(self, title, artist, info, chapters, type="Unknown", genres=[], tags=[],
+	def __init__(self, title, artist, info, chapters, type_="Unknown", genres=[], tags=[],
 			  pub_date="", date_added=today(), last_read=today()):
 		self._title = title
 		self._info = info
 		self._artist = artist
 		self._chapters = chapters
-		self._type = type
+		self._type = type_
 		self._genres = genres
 		self._tags = tags
 		self._pub_date = pub_date
@@ -44,6 +44,12 @@ class MangaContainer:
 	def set_genres(self, new_genres):
 		"""Changes genres
 		Note: think about existing genres and how to deal with them
+		"""
+		pass
+
+	def set_tags(self, new_tags):
+		"""Changes tags
+		Note: think about existing tags and how to deal with them
 		"""
 		pass
 
