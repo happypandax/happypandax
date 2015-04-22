@@ -14,10 +14,11 @@ class MangaContainer:
 	date_added -> date, will be defaulted on init
 	last_read -> timestamp (e.g. time.time()), will be defaulted to date on init
 	"""
-	def __init__(self, title, info, chapters, genres=[], pub_date="",
+	def __init__(self, title, artist, info, chapters, genres=[], pub_date="",
 			  date_added=today(), last_read=today()):
 		self._title = title
 		self._info = info
+		self._artist = artist
 		self._chapters = chapters
 		self._genres = genres
 		self._pub_date = pub_date
@@ -77,23 +78,26 @@ class MangaContainer:
 		chapters will be overwritten
 		"""
 		
-		def _do_chapter(chapter_number, pages):
-			"sends metadata to db"
-			_chap_metadata = [] #meta data for the individual chapter
-			#OBS: still need to implement indexing
-			md = {"link":self._index, "chapter":chapter_number,
-			   "pages":pages, "metadata":self._chap_metadata}
+		#DROPPED
+		#def _do_chapter(chapter_number, pages):
+		#	"sends metadata to db"
+		#	_chap_metadata = [] #meta data for the individual chapter
+		#	#OBS: still need to implement indexing
+		#	md = {"link":self._index, "chapter":chapter_number,
+		#	   "pages":pages, "metadata":self._chap_metadata}
 
-			metadata.ChapterDB.add_chapter(md)
+		#	metadata.ChapterDB.add_chapter(md)
 
 		for chap in chap_object:
 			for numb, pages in chap:
-				_do_chapter(numb, pages)
+				raise NotImplementedError("Adding chapters is not implemented yet")
+				#_do_chapter(numb, pages)
 
 	def _do_metadata(self):
 		"will create initial metadata for the manga"
 
-		self._metadata = {"info": self._info, "genres":self._genres, "publishing date":self._pub_date,
+		self._metadata = {"artist":self._artist, "info": self._info, "genres":self._genres,
+					"publishing date":self._pub_date,
 					"date added":self._date_added, "last read":self._last_read}
 
 class Manga(MangaContainer):

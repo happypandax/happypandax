@@ -29,7 +29,7 @@ class MangaDB(DatabaseItem):
 		#NOTE: add index when adding
 		"Adds manga into database"
 		#NOTE: received metadata looks like this:
-		#{"genres":self._genres, "publishing date":self._pub_date,
+		#{"artist":self._artist, "genres":self._genres, "publishing date":self._pub_date,
 		#"date added":self._date_added, "last read":self._last_read}
 		pass
 
@@ -56,10 +56,9 @@ class ChapterDB(DatabaseItem):
 	@staticmethod
 	def add_chapters(metadata):
 		#NOTE: add index when adding
+		#OBS: STILL NEED TO FIGURE OUT A WAY FOR
+		# MANGA AND CHAPTERS TO BE LINKED
 		"Adds chapters linked to manga into database"
-		#NOTE: received metadata looks like this:
-		#{"link":self.title, "chapter":chapter_number,
-		#"pages":pages, "metadata":self._chap_metadata}
 		pass
 
 	@staticmethod
