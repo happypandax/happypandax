@@ -3,9 +3,10 @@ from database import db, metadata # REMEMBER TO IMPLEMENT SERIALIZING METHOD IN 
 ##TODO: IMPLEMENT add_manga and add_chapter in db
 
 ##TODO: IMPLEMENT INDEXING
-class Manga:
+class MangaContainer:
 	""" Creates a manga with the following parameters:
 	title -> str
+	info -> str
 	chapters -> [[<chapter_number>, [<pages>]]]
 				e.g [[1, [pg1, pg2]], [2, [pg1, pg2]]]
 	genres -> list
@@ -13,17 +14,16 @@ class Manga:
 	date_added -> date, will be defaulted on init
 	last_read -> timestamp (e.g. time.time()), will be defaulted to date on init
 	"""
-	def __init__(self, title, chapters, genres=[], pub_date="",
+	def __init__(self, title, info, chapters, genres=[], pub_date="",
 			  date_added=today(), last_read=today()):
-		# index will most likely be returned from database class
-		self._index = "" # STILL NEED TO IMPLEMENT
 		self._title = title
+		self._info = info
 		self._chapters = chapters
 		self._genres = genres
 		self._pub_date = pub_date
 		self._date_added = date_added
 		self._last_read = last_read
-		self._metadata = []
+		self._metadata = {}
 
 		self._do_metadata() # make initial metadata
 		
@@ -93,21 +93,24 @@ class Manga:
 	def _do_metadata(self):
 		"will create initial metadata for the manga"
 
-		self._metadata = {"genres":self._genres, "publishing date":self._pub_date,
+		self._metadata = {"info": self._info, "genres":self._genres, "publishing date":self._pub_date,
 					"date added":self._date_added, "last read":self._last_read}
 
-class MangaContainer(Manga):
+class Manga(MangaContainer):
 	"""Meant to be used by DB when retriveing manga
 	id -> int
 	title -> str
-	chapters -> [[<chapter_number>, [<pages>]]]
+	chapters -> {<chapter_number>:{1:page1, 2:page2, 3:page3}}
 				e.g [[1, [pg1, pg2]], [2, [pg1, pg2]]]
 	metadata -> dict
 	"""
 	def __init__(self, id, title, chapters, metadata):
-		pass
+		self.id = id
+		self.title = title
+		self.data = {"id":id, "chapters":chapters}
+		self.metadata = metadata
 
 
 if __name__ == '__main__':
 	#unit testing here
-	pass
+	raise RuntimeError("Unit testing still not implemented")

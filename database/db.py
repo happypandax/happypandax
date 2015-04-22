@@ -1,4 +1,5 @@
 import db_constants
+import index
 
 class Self_:
 	"""
@@ -8,21 +9,7 @@ class Self_:
 
 class DatabaseItem:
 	"A base class for MangaDB and ChapterDB"
-	def __init__(self, type):
-		import index
-		if isinstance(type, MangaDB):
-			self.init_manga()
-		elif isinstance(type, ChapterDB):
-			self.init_chapter()
-		else:
-			raise TypeError
-
-	def init_manga(self):
-		"Initializes a manga item"
-		self.id = index.manga_index()
-
-	def init_chapter(self):
-		self.id = index.chapter_index()
+	pass
 
 class MangaDB(DatabaseItem):
 	"""
@@ -37,16 +24,9 @@ class MangaDB(DatabaseItem):
 	def __init__(self):
 		return super().__init__(self.__class__)
 
-	def init_chapter(self):
-		"Overridden"
-		raise AttributeError("'MangaDB' object has no attribute 'init_chapter'")
-	
-	def init_manga(self):
-		"Overridden"
-		raise AttributeError("'MangaDB' object has no attribute 'init_manga'")
-
 	@staticmethod
 	def add_manga(title, metadata):
+		#NOTE: add index when adding
 		"Adds manga into database"
 		#NOTE: received metadata looks like this:
 		#{"genres":self._genres, "publishing date":self._pub_date,
@@ -73,16 +53,9 @@ class ChapterDB(DatabaseItem):
 		del_chapter -> (don't think this will be used, but w/e) NotImplementedError
 	"""
 
-	def init_chapter(self):
-		"Overridden"
-		raise AttributeError("'ChapterDB' object has no attribute 'init_chapter'")
-	
-	def init_manga(self):
-		"Overridden"
-		raise AttributeError("'ChapterDB' object has no attribute 'init_manga'")
-
 	@staticmethod
 	def add_chapters(metadata):
+		#NOTE: add index when adding
 		"Adds chapters linked to manga into database"
 		#NOTE: received metadata looks like this:
 		#{"link":self.title, "chapter":chapter_number,
