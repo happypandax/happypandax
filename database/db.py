@@ -25,12 +25,13 @@ class MangaDB(DatabaseItem):
 		return super().__init__(self.__class__)
 
 	@staticmethod
-	def add_manga(title, metadata):
+	def add_manga(title, artist, info, metadata):
 		#NOTE: add index when adding
 		"Adds manga into database"
 		#NOTE: received metadata looks like this:
-		#{"artist":self._artist, "genres":self._genres, "publishing date":self._pub_date,
-		#"date added":self._date_added, "last read":self._last_read}
+		#self._metadata = {"type":self._type, "genres":self._genres, "tags":self._tags,
+		#			"publishing date":self._pub_date,
+		#			"date added":self._date_added, "last read":self._last_read}
 		pass
 
 	@staticmethod
