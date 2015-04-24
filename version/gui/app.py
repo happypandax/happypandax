@@ -18,7 +18,6 @@ class Display(QListView):
 	"""TODO: Inherit from QListView, and add grid view functionalities
 	hint: add resize funtionality extra: (zoom-in/zoom-out) mousekeys
 	hint: add ability to move but snap to grid (QListView.Snap & setGridSize())
-	TODO: REMEMBER TO ADD GRID BUTTONS TO BUTTONGROUP (check gui_constants)
 	"""
 	pass
 
