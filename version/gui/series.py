@@ -1,12 +1,14 @@
 from PyQt5.QtCore import (Qt, QAbstractListModel, QModelIndex, QVariant,
-						  QSize, QRect, QRectF)
+						  QSize, QRect, QRectF, QEvent, pyqtSignal)
 from PyQt5.QtGui import (QPixmap, QIcon, QBrush, QRadialGradient,
-						 QColor, QPainter, QFont, QPen, QTextDocument)
+						 QColor, QPainter, QFont, QPen, QTextDocument,
+						 QMouseEvent)
 from PyQt5.QtWidgets import (QListView, QAbstractItemDelegate,
 							 QFrame, QLabel, QStyledItemDelegate,
-							 QStyle, QApplication, QItemDelegate)
+							 QStyle, QApplication, QItemDelegate,
+							 QListWidget, QMenu, QAction)
 from ..database.seriesdb import Manga
-
+from . import gui_constants
 #class GridBox(QAbstractButton):
 #	"""A Manga/Chapter box
 #	pixmap <- the image in full resolution (a pixmap object)
@@ -111,27 +113,30 @@ class SeriesModel(QAbstractListModel):
 		"""
 		super().__init__(parent)
 		self._data = []
-		self.pic = QPixmap("C:/Users/Autriche/SkyDrive/Billeder/horopic.jpg")
+		self.pic = QPixmap(gui_constants.PIXMAP_PATH)
 		self.modified_pic = self.pic
-		paint = QPainter(self.modified_pic)
-		paint.setRenderHint(QPainter.TextAntialiasing)
-		font = paint.font()
-		paint.setFont(font)
-		init_font_size = font.pointSize()
-		def font_size(x):
-			font.setPointSize(init_font_size*x)
-			paint.setFont(font)
+
+
+		# Wanted to draw on image, saving this
+		#paint = QPainter(self.modified_pic)
+		#paint.setRenderHint(QPainter.TextAntialiasing)
+		#font = paint.font()
+		#paint.setFont(font)
+		#init_font_size = font.pointSize()
+		#def font_size(x):
+		#	font.setPointSize(init_font_size*x)
+		#	paint.setFont(font)
 		
-		for x in range(30):
+		for x in range(100):
 			title = "Title {}".format(x)
 			artist = "Arist {}".format(x)
-			paint.setPen(Qt.blue)
-			pos1 = self.modified_pic.height()-200
-			pos2 = pos1 + 120
-			font_size(14)
-			paint.drawText(20, pos1, title)
-			font_size(12)
-			paint.drawText(20, pos2, artist)
+			#paint.setPen(Qt.blue)
+			#pos1 = self.modified_pic.height()-200
+			#pos2 = pos1 + 120
+			#font_size(14)
+			#paint.drawText(20, pos1, title)
+			#font_size(12)
+			#paint.drawText(20, pos2, artist)
 			#self._data.append(QIcon(self.modified_pic))
 			self._data.append([(title, artist),
 					  QIcon(self.modified_pic)])
@@ -189,29 +194,45 @@ class ChapterModel(SeriesModel):
 
 class CustomDelegate(QStyledItemDelegate):
 	"A custom delegate for the model/view framework"
+
+	BUTTON_CLICKED = pyqtSignal()
+
 	def __init__(self):
 		super().__init__()
 		self.W = 150
 		self.H = 200
+		self._state = None
 
 	def paint(self, painter, option, index):
+		self.initStyleOption(option, index)
 		image = index.data(Qt.DecorationRole)
 		text = index.data(Qt.DisplayRole)
 		title = text[0]
 		artist = text[1]
 
+		if option.state & QStyle.State_MouseOver:
+			painter.fillRect(option.rect, QColor(225,225,225)) #option.palette.highlight()
+
+		if option.state & QStyle.State_Selected:
+			painter.fillRect(option.rect, QColor(164,164,164)) #option.palette.highlight()
+
+		if option.state & QStyle.State_Selected:
+			painter.setPen(QPen(option.palette.highlightedText().color()))
+
 		painter.setRenderHint(QPainter.Antialiasing)
-		painter.drawRect(option.rect)
+		# Enable this to see the defining box
+		#painter.drawRect(option.rect)
+
 		#painter.setPen(QPen(Qt.NoPen))
 
-		r = option.rect.adjusted(1, 1, -1, -1)
+		r = option.rect.adjusted(1, 0, -1, -1)
 		rec = r.getRect()
 		x = rec[0]
 		y = rec[1] - 24
 		w = rec[2]
 		h = rec[3]
 		painter.setRenderHint(QPainter.TextAntialiasing)
-		title="LongLongngLongTextLongLongText"
+		#title="LongLongngLongTextLongLongText"
 		text_area = QTextDocument()
 		text_area.setDefaultFont(option.font)
 		text_area.setHtml("""
@@ -225,11 +246,12 @@ class CustomDelegate(QStyledItemDelegate):
 		}}
 		#title {{
 		position:absolute;
-		color:red;
+		color:#323232;
+		font-weight:bold;
 		}}
 		#artist {{
 		position:absolute;
-		color:gray;
+		color:#585858;
 		top:20px;
 		right:0;
 		}}
@@ -240,10 +262,10 @@ class CustomDelegate(QStyledItemDelegate):
 		<center>
 		<div id="title">{}
 		</div>
-		</center>
 		<div id="artist">{}
 		</div>
 		</div>
+		</center>
 		</body>
 		""".format(title, artist, "Chapters"))
 		text_area.setTextWidth(w)
@@ -266,6 +288,23 @@ class CustomDelegate(QStyledItemDelegate):
 	def sizeHint(self, QStyleOptionViewItem, QModelIndex):
 		return QSize(self.W, self.H)
 
+	#def editorEvent(self, event, model, option, index):
+	#	if event.type() == QEvent.MouseButtonPress:
+	#		self._state = (index.row(), index.column())
+	#		self.BUTTON_CLICKED.emit(self._state)
+	#		return True
+	#	elif event.type() == QEvent.MouseButtonRelease:
+	#		if self._state == (index.row(), index.column()):
+	#			self.BUTTON_CLICKED.emit(self._state)
+	#			return True
+	#		elif self._state:
+	#			old_index = index.model().index(self._state)
+	#			self._state = None
+	#			index.model().dataChanged.emit(old_index, old_index)
+	#		self._state = None
+	#		return True
+	#	#else:
+	#	#	return super().editorEvent(event, model, option, index)
 
 class Display(QListView):
 	"""TODO: Inherit QListView, and add grid view functionalities
@@ -274,11 +313,48 @@ class Display(QListView):
 	def __init__(self, parent=None):
 		super().__init__(parent)
 		self.setViewMode(self.IconMode)
-		self.setGridSize(QSize(200, 200))
+		self.setGridSize(QSize(200, 220))
 		self.setSpacing(10)
 		self.setResizeMode(self.Adjust)
 		# all items have the same size (perfomance)
 		self.setUniformItemSizes(True)
+		# improve scrolling
+		self.setVerticalScrollMode(self.ScrollPerPixel)
+		# prevent all items being loaded at the same time
+		self.setLayoutMode(self.Batched)
+		self.setBatchSize(20)
+		self.setWordWrap(True)
+		
+	def foo(self):
+		pass
+
+	def contextMenuEvent(self, event):
+		handled = False
+		custom = False
+		index = self.indexAt(event.pos())
+		menu = QMenu()
+		all = QAction("Remove", menu, triggered = self.foo)
+		if index.row() in [j for j in range(10)]:
+			action_1 = QAction("Awesome!", menu, triggered = self.foo)
+			action_2 = QAction("It just werks!", menu, triggered = self.foo)
+			menu.addActions([action_1, action_2])
+			handled = True
+			custom = True
+		else:
+			add_series = QAction("&Add new Series...", menu,
+						triggered = self.foo)
+			menu.addAction(add_series)
+			handled = True
+
+		if handled and custom:
+			menu.addAction(all)
+			menu.exec_(event.globalPos())
+			event.accept()
+		elif handled:
+			menu.exec_(event.globalPos())
+			event.accept()
+		else:
+			event.ignore()
 
 if __name__ == '__main__':
 	raise NotImplementedError("Unit testing not yet implemented")
