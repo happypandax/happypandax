@@ -1,6 +1,7 @@
 # Dependecies
 - Qt5
 - PyQt5
+
 # How to run
 1. Navigate to version -> gui -> gui_constants.py
 2. Assign PIXMAP_PATH a string with path to an image, e.g: C:/your/image.png (choose an image with close to identical w & h for best results)
