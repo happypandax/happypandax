@@ -111,7 +111,7 @@ class SeriesModel(QAbstractListModel):
 		"""
 		super().__init__(parent)
 		self._data = []
-		self.pic = QPixmap() #IMAGE PATH HERE
+		self.pic = QPixmap("C:/Users/Autriche/SkyDrive/Billeder/horopic.jpg")
 		self.modified_pic = self.pic
 		paint = QPainter(self.modified_pic)
 		paint.setRenderHint(QPainter.TextAntialiasing)
@@ -191,6 +191,8 @@ class CustomDelegate(QStyledItemDelegate):
 	"A custom delegate for the model/view framework"
 	def __init__(self):
 		super().__init__()
+		self.W = 150
+		self.H = 200
 
 	def paint(self, painter, option, index):
 		image = index.data(Qt.DecorationRole)
@@ -200,36 +202,69 @@ class CustomDelegate(QStyledItemDelegate):
 
 		painter.setRenderHint(QPainter.Antialiasing)
 		painter.drawRect(option.rect)
-		palette = QApplication.palette()
 		#painter.setPen(QPen(Qt.NoPen))
 
-		r = option.rect
+		r = option.rect.adjusted(1, 1, -1, -1)
 		rec = r.getRect()
 		x = rec[0]
-		y = rec[1]
+		y = rec[1] - 24
 		w = rec[2]
 		h = rec[3]
 		painter.setRenderHint(QPainter.TextAntialiasing)
-		
+		title="LongLongngLongTextLongLongText"
 		text_area = QTextDocument()
 		text_area.setDefaultFont(option.font)
-		painter.save()
-		text_area.setHtml("<font color=black> {} </font>".format(title))
+		text_area.setHtml("""
+		<head>
+		<style>
+		#area
+		{{
+			display:flex;
+			width:140px;
+			height:10px
+		}}
+		#title {{
+		position:absolute;
+		color:red;
+		}}
+		#artist {{
+		position:absolute;
+		color:gray;
+		top:20px;
+		right:0;
+		}}
+		</style>
+		</head>
+		<body>
+		<div id="area">
+		<center>
+		<div id="title">{}
+		</div>
+		</center>
+		<div id="artist">{}
+		</div>
+		</div>
+		</body>
+		""".format(title, artist, "Chapters"))
+		text_area.setTextWidth(w)
 
-		#image.paint(painter, QRect(x, y, w, h))#QRect(x, y, w, h))
+		chapter_area = QTextDocument()
+		chapter_area.setDefaultFont(option.font)
+		chapter_area.setHtml("""
+		<font color="black">{}</font>
+		""".format("chapter"))
+		chapter_area.setTextWidth(w)
 
-		color = palette.highlight().color()
+		image.paint(painter, QRect(x, y, w, h))
+
 		# draw text
-		#painter.fillRect(option.rect, color)
-		painter.translate(option.rect.x(), option.rect.y())
-		text_area.drawContents(painter, QRectF(-10, -50, 100, 100))
-		#painter.drawText(w//3,h + 10, title)
-		#painter.drawText(w//3,h + 25, artist)
+		painter.save()
+		painter.translate(option.rect.x(), option.rect.y()+150)
+		text_area.drawContents(painter)
 		painter.restore()
-		#QStyledItemDelegate.paint(self, painter, option, index)
 
 	def sizeHint(self, QStyleOptionViewItem, QModelIndex):
-		return QSize(150, 200)
+		return QSize(self.W, self.H)
 
 
 class Display(QListView):
