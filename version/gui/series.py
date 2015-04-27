@@ -197,7 +197,7 @@ class ChapterModel(SeriesModel):
 class CustomDelegate(QStyledItemDelegate):
 	"A custom delegate for the model/view framework"
 
-	BUTTON_CLICKED = pyqtSignal()
+	BUTTON_CLICKED = pyqtSignal(int)
 
 	def __init__(self):
 		super().__init__()
@@ -294,8 +294,8 @@ class CustomDelegate(QStyledItemDelegate):
 	def editorEvent(self, event, model, option, index):
 		if event.type() == QEvent.MouseButtonPress:
 			self._state = (index.row(), index.column())
-			from . import app
-			self.BUTTON_CLICKED.emit(app.AppWindow().init_chapter_view())#self._state)
+			from ..constants import WINDOW
+			self.BUTTON_CLICKED.emit(WINDOW.setCurrentIndex(1))#self._state)
 			print("Clicked")
 			return True
 		else:

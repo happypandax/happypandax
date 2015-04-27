@@ -1,1 +1,3 @@
-#constants here
+from .gui import app
+
+WINDOW = app.AppWindow()
