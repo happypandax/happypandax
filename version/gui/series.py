@@ -2,11 +2,11 @@ from PyQt5.QtCore import (Qt, QAbstractListModel, QModelIndex, QVariant,
 						  QSize, QRect, QRectF, QEvent, pyqtSignal)
 from PyQt5.QtGui import (QPixmap, QIcon, QBrush, QRadialGradient,
 						 QColor, QPainter, QFont, QPen, QTextDocument,
-						 QMouseEvent)
+						 QMouseEvent, QHelpEvent)
 from PyQt5.QtWidgets import (QListView, QAbstractItemDelegate,
 							 QFrame, QLabel, QStyledItemDelegate,
 							 QStyle, QApplication, QItemDelegate,
-							 QListWidget, QMenu, QAction)
+							 QListWidget, QMenu, QAction, QToolTip)
 from ..database.seriesdb import Manga
 from . import gui_constants
 #class GridBox(QAbstractButton):
@@ -159,6 +159,8 @@ class SeriesModel(QAbstractListModel):
 			bg_color = QColor(70, 67, 70)
 			bg_brush = QBrush(bg_color)
 			return bg_brush
+		if role == Qt.ToolTipRole:
+			return "Example popup!!"
 		return None
 
 	def rowCount(self, parent = QModelIndex()):
@@ -207,6 +209,7 @@ class CustomDelegate(QStyledItemDelegate):
 		self.initStyleOption(option, index)
 		image = index.data(Qt.DecorationRole)
 		text = index.data(Qt.DisplayRole)
+		popup = index.data(Qt.ToolTipRole)
 		title = text[0]
 		artist = text[1]
 
@@ -288,23 +291,27 @@ class CustomDelegate(QStyledItemDelegate):
 	def sizeHint(self, QStyleOptionViewItem, QModelIndex):
 		return QSize(self.W, self.H)
 
-	#def editorEvent(self, event, model, option, index):
-	#	if event.type() == QEvent.MouseButtonPress:
-	#		self._state = (index.row(), index.column())
-	#		self.BUTTON_CLICKED.emit(self._state)
-	#		return True
-	#	elif event.type() == QEvent.MouseButtonRelease:
-	#		if self._state == (index.row(), index.column()):
-	#			self.BUTTON_CLICKED.emit(self._state)
-	#			return True
-	#		elif self._state:
-	#			old_index = index.model().index(self._state)
-	#			self._state = None
-	#			index.model().dataChanged.emit(old_index, old_index)
-	#		self._state = None
-	#		return True
-	#	#else:
-	#	#	return super().editorEvent(event, model, option, index)
+	def editorEvent(self, event, model, option, index):
+		if event.type() == QEvent.MouseButtonPress:
+			self._state = (index.row(), index.column())
+			from . import app
+			self.BUTTON_CLICKED.emit(app.AppWindow().)#self._state)
+			print("Clicked")
+			return True
+		else:
+			return super().editorEvent(event, model, option, index)
+		#elif event.type() == QEvent.MouseButtonRelease:
+		#	if self._state == (index.row(), index.column()):
+		#		self.BUTTON_CLICKED.emit(self._state)
+		#		return True
+		#	elif self._state:
+		#		old_index = index.model().index(self._state)
+		#		self._state = None
+		#		index.model().dataChanged.emit(old_index, old_index)
+		#	self._state = None
+		#	return True
+		#else:
+		#	return super().editorEvent(event, model, option, index)
 
 class Display(QListView):
 	"""TODO: Inherit QListView, and add grid view functionalities
@@ -313,7 +320,7 @@ class Display(QListView):
 	def __init__(self, parent=None):
 		super().__init__(parent)
 		self.setViewMode(self.IconMode)
-		self.setGridSize(QSize(200, 220))
+		self.setGridSize(QSize(180, 220))
 		self.setSpacing(10)
 		self.setResizeMode(self.Adjust)
 		# all items have the same size (perfomance)
@@ -324,7 +331,8 @@ class Display(QListView):
 		self.setLayoutMode(self.Batched)
 		self.setBatchSize(20)
 		self.setWordWrap(True)
-		
+		self.setMouseTracking(True)
+
 	def foo(self):
 		pass
 
@@ -355,6 +363,20 @@ class Display(QListView):
 			event.accept()
 		else:
 			event.ignore()
+
+	#unusable code
+	#def event(self, event):
+	#	if event.type() == QEvent.ToolTip:
+	#		help_event = QHelpEvent(event)
+	#		index = self.indexAt(help_event.globalPos())
+	#		if index is not -1:
+	#			QToolTip.showText(help_event.globalPos(), "Tooltip!")
+	#		else:
+	#			QToolTip().hideText()
+	#			event.ignore()
+	#		return True
+	#	else:
+	#		return super().event(event)
 
 if __name__ == '__main__':
 	raise NotImplementedError("Unit testing not yet implemented")
