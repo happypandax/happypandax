@@ -295,7 +295,7 @@ class CustomDelegate(QStyledItemDelegate):
 		if event.type() == QEvent.MouseButtonPress:
 			self._state = (index.row(), index.column())
 			from . import app
-			self.BUTTON_CLICKED.emit(app.AppWindow().)#self._state)
+			self.BUTTON_CLICKED.emit(app.AppWindow().init_chapter_view())#self._state)
 			print("Clicked")
 			return True
 		else:
