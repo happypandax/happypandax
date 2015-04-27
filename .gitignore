@@ -5,6 +5,7 @@
 *cache
 *.pyproj
 *Qt*
+*__pycache_*
 version/build
 version/dist
 *.sln
