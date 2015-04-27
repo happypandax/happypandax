@@ -9,8 +9,8 @@
 
 # What to expect
 Well, not much yet... The grid view took alot of time to get right.
-Atm. you can select one item and rightclick for contextmenu.
+At the moment you can only select an item, and rightclick to show contextmenu.
 Next step for me is implementing clicking for an item, then i'll
 implement a model/view for chapters.
-The code is currently a mess. Sinxe this if my first time using PyQt,
-i'll be saving alot of old code, and possibly make spaghetti code.
+The code is currently a mess. Since this is my first time using PyQt,
+i'll be saving alot of old code, and run the risk of making spaghetti code.
