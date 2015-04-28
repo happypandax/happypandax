@@ -1,9 +1,10 @@
 import sys
-from PyQt5.QtCore import (Qt)
-from PyQt5.QtGui import (QPixmap)
+from PyQt5.QtCore import (Qt, QSize, pyqtSignal)
+from PyQt5.QtGui import (QPixmap, QIcon)
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QListView,
 							 QHBoxLayout, QFrame, QWidget, QVBoxLayout,
-							 QLabel, QStackedLayout)
+							 QLabel, QStackedLayout, QToolBar, QMenuBar,
+							 QSizePolicy, QMenu, QAction, QLineEdit)
 from . import series
 
 class AppWindow(QMainWindow):
@@ -13,11 +14,13 @@ class AppWindow(QMainWindow):
 		self.center = QWidget()
 		self.display = QStackedLayout()
 		self.center.setLayout(self.display)
+		# init toolbar
+		self.init_toolbar()
 		# init the manga view variables
 		self.manga_display()
 		# init the chapter view variables
 		self.chapter_display()
-		
+
 		self.display.addWidget(self.manga_view)
 		self.display.addWidget(self.chapter_view)
 
@@ -52,6 +55,44 @@ class AppWindow(QMainWindow):
 		self.chapter_view = QFrame()
 		self.chapter_view.setFrameStyle(QFrame.NoFrame)
 		self.chapter_view.setLayout(chapter_layout)
+
+	def init_toolbar(self):
+		self.toolbar = QToolBar()
+		self.toolbar.setFixedHeight(50)
+		self.toolbar.setWindowTitle("Show") # text for the contextmenu
+		#self.toolbar.setStyleSheet("QToolBar {border:0px}") # make it user defined?
+		self.toolbar.setMovable(False)
+		self.toolbar.setFloatable(False)
+		self.toolbar.setIconSize(QSize(35,35))
+		self.toolbar.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+
+		spacer_start = QWidget() # aligns the first actions properly
+		spacer_start.setFixedSize(QSize(10, 1))
+		self.toolbar.addWidget(spacer_start)
+
+		from . import gui_constants
+		manga_view_icon = QIcon(gui_constants.PIXMAP_PATH)
+		manga_view_action = QAction(manga_view_icon, "Manga View", self)
+		manga_view_action.setText("Manga View")
+		manga_view_action.triggered.connect(lambda: self.setCurrentIndex(0)) #need lambda to pass extra args
+		self.toolbar.addAction(manga_view_action)
+
+		chapter_view_icon = QIcon(gui_constants.PIXMAP_PATH)
+		chapter_view_action = QAction(chapter_view_icon, "Chapter View", self)
+		chapter_view_action.setText("Chapter View")
+		chapter_view_action.triggered.connect(lambda: self.setCurrentIndex(1)) #need lambda to pass extra args
+		self.toolbar.addAction(chapter_view_action)
+
+		spacer_middle = QWidget() # aligns buttons to the right
+		spacer_middle.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+		self.toolbar.addWidget(spacer_middle)
+		
+		self.toolbar.addAction("Ab&out")
+		self.addToolBar(self.toolbar)
+		
+		spacer_end = QWidget() # aligns About action properly
+		spacer_end.setFixedSize(QSize(20, 1))
+		self.toolbar.addWidget(spacer_end)
 
 	def setCurrentIndex(self, number):
 		"""Changes the current display view.

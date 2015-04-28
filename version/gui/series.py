@@ -315,8 +315,8 @@ class CustomDelegate(QStyledItemDelegate):
 		#	return super().editorEvent(event, model, option, index)
 
 class Display(QListView):
-	"""TODO: Inherit QListView, and add grid view functionalities
-	hint: add resize funtionality extra: (zoom-in/zoom-out) mousekeys
+	"""
+	TODO: (zoom-in/zoom-out) mousekeys
 	"""
 	def __init__(self, parent=None):
 		super().__init__(parent)
