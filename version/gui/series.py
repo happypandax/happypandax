@@ -127,6 +127,7 @@ class SeriesModel(QAbstractListModel):
 		#	font.setPointSize(init_font_size*x)
 		#	paint.setFont(font)
 		
+		#Test data
 		for x in range(100):
 			title = "Title {}".format(x)
 			artist = "Arist {}".format(x)

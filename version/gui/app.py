@@ -13,7 +13,9 @@ class AppWindow(QMainWindow):
 		self.center = QWidget()
 		self.display = QStackedLayout()
 		self.center.setLayout(self.display)
+		# init the manga view variables
 		self.manga_display()
+		# init the chapter view variables
 		self.chapter_display()
 		
 		self.display.addWidget(self.manga_view)
