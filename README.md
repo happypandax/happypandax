@@ -8,7 +8,7 @@
 3. Navigate to root folder and run main.py
 
 # Notes
-Aside from making a usable program, I seriously need to fix the imports of modules in the code.
+Aside from making an usable program, I seriously need to fix the imports of modules in the code.
 
 # What to expect
 Well, not much yet... The gridview took alot of time to get right.
@@ -31,5 +31,5 @@ Like stated earlier, my code is currently a mess (will try to fix when done test
 - implement checking for & downloading new chapters automatically
 - implement adding new manga/chapter by drag & dropping (zip, cbz, etc)/folder to program (PyQt)
 
-Things to note:
-The text in parantheses after each task is how and what i intended to implement it with. Since this is still in the "testing" state I might move some files or code; alot. I only expect to move my own code, but if nessecary then I'll talk to you first before moving anything. I don't expect this to continue when it's out of "testing" state. 
+*Things to note*:
+The text in parantheses after each task is how and what i intended to implement it with. Since this is still in the "testing" state I might move some files or code; alot. I only expect to move my own code, but if nessecary then I'll talk to you first before moving anything. I don't expect this behaviour to continue when it's out of "testing" state. 
