@@ -112,9 +112,9 @@ class SeriesModel(QAbstractListModel):
 		"""Model for Model/View/Delegate framework
 		"""
 		super().__init__(parent)
-		self._data = []
-		self.pic = QPixmap(gui_constants.PIXMAP_PATH)
-		self.modified_pic = self.pic
+		self._data = [] # a list for the data
+		self.pic = QPixmap(gui_constants.PIXMAP_PATH) # the image for gridbox
+		self.modified_pic = self.pic # was meant for when i wanted to draw on the pic
 
 
 		# Wanted to draw on image, saving this
@@ -144,10 +144,10 @@ class SeriesModel(QAbstractListModel):
 
 	def data(self, index, role):
 		if not index.isValid() or \
-			not (0 <= index.row() < len(self._data)):
+			not (0 <= index.row() < len(self._data)): # to make sure we get valid indexes
 			return QVariant()
 
-		current_row = index.row()
+		current_row = index.row() 
 		current_data = self._data[current_row]
 		metadata = current_data[0]
 		pixmap = current_data[1]

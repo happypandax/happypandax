@@ -98,11 +98,16 @@ class AppWindow(QMainWindow):
 		spacer_middle.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 		self.toolbar.addWidget(spacer_middle)
 		
+		self.search_bar = QLineEdit()
+		self.search_bar.setPlaceholderText("Search title, artist, genres")
+		self.search_bar.setMaximumWidth(200)
+		self.toolbar.addWidget(self.search_bar)
+		self.toolbar.addAction("Search")
 		self.toolbar.addAction("Ab&out")
 		self.addToolBar(self.toolbar)
 		
 		spacer_end = QWidget() # aligns About action properly
-		spacer_end.setFixedSize(QSize(20, 1))
+		spacer_end.setFixedSize(QSize(10, 1))
 		self.toolbar.addWidget(spacer_end)
 
 	def setCurrentIndex(self, number, data=None):
