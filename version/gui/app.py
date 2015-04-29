@@ -36,7 +36,7 @@ class AppWindow(QMainWindow):
 		manga_frame.setMinimumWidth(200)
 		manga_model = series.SeriesModel()
 		manga_delegate = series.CustomDelegate()
-		manga_list_view = series.Display()
+		manga_list_view = series.MangaView()
 		manga_list_view.setModel(manga_model)
 		manga_list_view.setItemDelegate(manga_delegate)
 		manga_layout = QHBoxLayout()
@@ -50,8 +50,18 @@ class AppWindow(QMainWindow):
 	def chapter_display(self):
 		"Initiates chapter view"
 		chapter_layout = QVBoxLayout()
-		label = QLabel("Example Text")
-		for x in range(20): chapter_layout.addWidget(label)
+		chapter_upper = QFrame()
+		chapter_upper.setMinimumHeight(200)
+		chapter_upper.setFrameStyle(1)
+		chapter_upper.setLineWidth(2)
+		chapter_h = QHBoxLayout()
+		self.label = QLabel("Example Text")
+		for x in range(10):
+			chapter_h.addWidget(self.label)
+		chapter_upper.setLayout(chapter_h)
+		chapter_layout.addWidget(chapter_upper)
+		chapter_list_view = series.ChapterView()
+		chapter_layout.addWidget(chapter_list_view)
 		self.chapter_view = QFrame()
 		self.chapter_view.setFrameStyle(QFrame.NoFrame)
 		self.chapter_view.setLayout(chapter_layout)
@@ -94,12 +104,15 @@ class AppWindow(QMainWindow):
 		spacer_end.setFixedSize(QSize(20, 1))
 		self.toolbar.addWidget(spacer_end)
 
-	def setCurrentIndex(self, number):
+	def setCurrentIndex(self, number, data=None):
 		"""Changes the current display view.
 		Note: 0-based indexing
 		"""
-		self.display.setCurrentIndex(number)
-
+		if data is not None:
+			self.label.setText(data[0])
+			self.display.setCurrentIndex(number)
+		else:
+			self.display.setCurrentIndex(number) # shows the previous clicked manga
 
 if __name__ == '__main__':
 	raise NotImplementedError("Unit testing not implemented yet!")

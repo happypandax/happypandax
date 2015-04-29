@@ -209,10 +209,10 @@ class CustomDelegate(QStyledItemDelegate):
 	def paint(self, painter, option, index):
 		self.initStyleOption(option, index)
 		image = index.data(Qt.DecorationRole)
-		text = index.data(Qt.DisplayRole)
+		self.text = index.data(Qt.DisplayRole)
 		popup = index.data(Qt.ToolTipRole)
-		title = text[0]
-		artist = text[1]
+		title = self.text[0]
+		artist = self.text[1]
 
 		if option.state & QStyle.State_MouseOver:
 			painter.fillRect(option.rect, QColor(225,225,225)) #option.palette.highlight()
@@ -296,7 +296,7 @@ class CustomDelegate(QStyledItemDelegate):
 		if event.type() == QEvent.MouseButtonPress:
 			self._state = (index.row(), index.column())
 			from ..constants import WINDOW
-			self.BUTTON_CLICKED.emit(WINDOW.setCurrentIndex(1))#self._state)
+			self.BUTTON_CLICKED.emit(WINDOW.setCurrentIndex(1, self.text))#self._state)
 			print("Clicked")
 			return True
 		else:
@@ -314,7 +314,7 @@ class CustomDelegate(QStyledItemDelegate):
 		#else:
 		#	return super().editorEvent(event, model, option, index)
 
-class Display(QListView):
+class MangaView(QListView):
 	"""
 	TODO: (zoom-in/zoom-out) mousekeys
 	"""
@@ -378,6 +378,12 @@ class Display(QListView):
 	#		return True
 	#	else:
 	#		return super().event(event)
+
+class ChapterView(MangaView):
+	"A view for chapters"
+	def __init__(self, parent=None):
+		super().__init__()
+
 
 if __name__ == '__main__':
 	raise NotImplementedError("Unit testing not yet implemented")
