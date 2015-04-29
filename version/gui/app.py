@@ -4,7 +4,8 @@ from PyQt5.QtGui import (QPixmap, QIcon)
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QListView,
 							 QHBoxLayout, QFrame, QWidget, QVBoxLayout,
 							 QLabel, QStackedLayout, QToolBar, QMenuBar,
-							 QSizePolicy, QMenu, QAction, QLineEdit)
+							 QSizePolicy, QMenu, QAction, QLineEdit,
+							 QSplitter)
 from . import series
 
 class AppWindow(QMainWindow):
@@ -31,40 +32,40 @@ class AppWindow(QMainWindow):
 
 	def manga_display(self):
 		"initiates the manga view"
+		self.manga_view = QSplitter()
+		self.manga_view.setHandleWidth(3)
 		manga_frame = QFrame()
 		manga_frame.setFrameShape(QFrame.StyledPanel)
-		manga_frame.setMinimumWidth(200)
+		manga_frame.setMaximumWidth(215)
 		manga_model = series.SeriesModel()
 		manga_delegate = series.CustomDelegate()
 		manga_list_view = series.MangaView()
 		manga_list_view.setModel(manga_model)
 		manga_list_view.setItemDelegate(manga_delegate)
-		manga_layout = QHBoxLayout()
-		manga_layout.addWidget(manga_frame)
-		manga_layout.addWidget(manga_list_view)
-		self.manga_view = QFrame()
-		self.manga_view.setFrameShape(QFrame.NoFrame)
-		self.manga_view.setLayout(manga_layout)
+		self.manga_view.addWidget(manga_frame)
+		self.manga_view.addWidget(manga_list_view)
+		self.manga_view.setCollapsible(0, True)
+		self.manga_view.setCollapsible(1, False)
 
 
 	def chapter_display(self):
 		"Initiates chapter view"
-		chapter_layout = QVBoxLayout()
+		self.chapter_view = QSplitter()
+		self.chapter_view.setOrientation(Qt.Vertical)
+		self.chapter_view.setHandleWidth(3)
 		chapter_upper = QFrame()
-		chapter_upper.setMinimumHeight(200)
+		chapter_upper.setMaximumHeight(200)
 		chapter_upper.setFrameStyle(1)
-		chapter_upper.setLineWidth(2)
+		chapter_upper.setLineWidth(1)
+		self.chapter_view.addWidget(chapter_upper)
 		chapter_h = QHBoxLayout()
 		self.label = QLabel("Example Text")
-		for x in range(10):
-			chapter_h.addWidget(self.label)
+		chapter_h.addWidget(self.label)
 		chapter_upper.setLayout(chapter_h)
-		chapter_layout.addWidget(chapter_upper)
 		chapter_list_view = series.ChapterView()
-		chapter_layout.addWidget(chapter_list_view)
-		self.chapter_view = QFrame()
-		self.chapter_view.setFrameStyle(QFrame.NoFrame)
-		self.chapter_view.setLayout(chapter_layout)
+		self.chapter_view.addWidget(chapter_list_view)
+		self.chapter_view.setCollapsible(0, True)
+		self.chapter_view.setCollapsible(1, False)
 
 	def init_toolbar(self):
 		self.toolbar = QToolBar()
