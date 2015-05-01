@@ -6,7 +6,8 @@ from PyQt5.QtGui import (QPixmap, QIcon, QBrush, QRadialGradient,
 from PyQt5.QtWidgets import (QListView, QAbstractItemDelegate,
 							 QFrame, QLabel, QStyledItemDelegate,
 							 QStyle, QApplication, QItemDelegate,
-							 QListWidget, QMenu, QAction, QToolTip)
+							 QListWidget, QMenu, QAction, QToolTip,
+							 QHBoxLayout, QVBoxLayout, QWidget)
 from ..database.seriesdb import Manga
 from . import gui_constants
 #class GridBox(QAbstractButton):
@@ -214,15 +215,6 @@ class CustomDelegate(QStyledItemDelegate):
 		title = self.text[0]
 		artist = self.text[1]
 
-		if option.state & QStyle.State_MouseOver:
-			painter.fillRect(option.rect, QColor(225,225,225)) #option.palette.highlight()
-
-		if option.state & QStyle.State_Selected:
-			painter.fillRect(option.rect, QColor(164,164,164)) #option.palette.highlight()
-
-		if option.state & QStyle.State_Selected:
-			painter.setPen(QPen(option.palette.highlightedText().color()))
-
 		painter.setRenderHint(QPainter.Antialiasing)
 		# Enable this to see the defining box
 		#painter.drawRect(option.rect)
@@ -232,11 +224,12 @@ class CustomDelegate(QStyledItemDelegate):
 		r = option.rect.adjusted(1, 0, -1, -1)
 		rec = r.getRect()
 		x = rec[0]
-		y = rec[1] - 24
+		y = rec[1] + 3
 		w = rec[2]
-		h = rec[3]
+		h = rec[3] - 5
 		painter.setRenderHint(QPainter.TextAntialiasing)
 		#title="LongLongngLongTextLongLongText"
+		#colors: title: #323232 artist: #585858
 		text_area = QTextDocument()
 		text_area.setDefaultFont(option.font)
 		text_area.setHtml("""
@@ -250,12 +243,12 @@ class CustomDelegate(QStyledItemDelegate):
 		}}
 		#title {{
 		position:absolute;
-		color:#323232;
+		color: white;
 		font-weight:bold;
 		}}
 		#artist {{
 		position:absolute;
-		color:#585858;
+		color:white;
 		top:20px;
 		right:0;
 		}}
@@ -283,11 +276,29 @@ class CustomDelegate(QStyledItemDelegate):
 
 		image.paint(painter, QRect(x, y, w, h))
 
-		# draw text
+		#draw the label for text
 		painter.save()
+		painter.translate(option.rect.x(), option.rect.y()+140)
+		box_color = QBrush(QColor(0,0,0,123))
+		painter.setBrush(box_color)
+		rect = QRect(0, 0, w+2, 60) #x, y, width, height
+		#painter.drawRect(rect)
+		painter.fillRect(rect, box_color)
+		painter.restore()
+		painter.save()
+		# draw text
 		painter.translate(option.rect.x(), option.rect.y()+150)
 		text_area.drawContents(painter)
 		painter.restore()
+		
+		if option.state & QStyle.State_MouseOver:
+			painter.fillRect(option.rect, QColor(225,225,225,70)) #option.palette.highlight()
+
+		if option.state & QStyle.State_Selected:
+			painter.fillRect(option.rect, QColor(164,164,164,120)) #option.palette.highlight()
+
+		if option.state & QStyle.State_Selected:
+			painter.setPen(QPen(option.palette.highlightedText().color()))
 
 	def sizeHint(self, QStyleOptionViewItem, QModelIndex):
 		return QSize(self.W, self.H)
@@ -321,7 +332,9 @@ class MangaView(QListView):
 	def __init__(self, parent=None):
 		super().__init__(parent)
 		self.setViewMode(self.IconMode)
-		self.setGridSize(QSize(180, 220))
+		self.H = 250
+		self.W = self.H//1.47
+		self.setGridSize(QSize(self.W, self.H))
 		self.setSpacing(10)
 		self.setResizeMode(self.Adjust)
 		# all items have the same size (perfomance)
@@ -330,7 +343,7 @@ class MangaView(QListView):
 		self.setVerticalScrollMode(self.ScrollPerPixel)
 		# prevent all items being loaded at the same time
 		self.setLayoutMode(self.Batched)
-		self.setBatchSize(20)
+		#self.setBatchSize(100) Only loads 100 images at a time
 		self.setWordWrap(True)
 		self.setMouseTracking(True)
 
@@ -365,6 +378,10 @@ class MangaView(QListView):
 		else:
 			event.ignore()
 
+	def resizeEvent(self, resizeevent):
+		super().resizeEvent(resizeevent)
+		print(resizeevent.size())
+
 	#unusable code
 	#def event(self, event):
 	#	if event.type() == QEvent.ToolTip:
@@ -383,6 +400,51 @@ class ChapterView(MangaView):
 	"A view for chapters"
 	def __init__(self, parent=None):
 		super().__init__()
+
+
+class ChapterUpper(QFrame):
+	"A view for chapter data"
+	def __init__(self, parent=None):
+		super().__init__(parent)
+		height = 250
+		self.H = height
+		self.setMaximumHeight(height)
+		self.setFrameStyle(1)
+		self.setLineWidth(1)
+		#self.data = []
+		self.initUI()
+
+	def display_manga(self, index):
+		"""Receives a QModelIndex and updates the
+		viewport with manga data"""
+		self.drawImage()
+
+	def initUI(self):
+		"Constructs UI for the chapter upper view"
+		main_layout = QHBoxLayout()
+		self.setLayout(main_layout)
+
+		self.image_size = QSize(self.H//1.6, self.H)
+		self.image_icon_size = QSize(self.H//1.6-2, self.H-2)
+
+		self.image_box = QLabel()
+		self.image_box.resize(self.image_size)
+
+		main_layout.addWidget(self.image_box, 0, Qt.AlignHCenter)
+
+	def drawImage(self):
+		self.image = QPixmap(gui_constants.PIXMAP_PATH)
+		self.new_image = self.image.scaled(self.image_icon_size, Qt.KeepAspectRatio,
+					Qt.SmoothTransformation)
+		self.image_box.setPixmap(self.new_image)
+
+
+	def resizeEvent(self, resizeevent):
+		super().resizeEvent(resizeevent)
+		self.MAIN_SIZE = resizeevent.size()
+		self.H = self.MAIN_SIZE.height()
+		print("Old Size: ", resizeevent.oldSize())
+		print("New Size: ", resizeevent.size())
 
 
 if __name__ == '__main__':
