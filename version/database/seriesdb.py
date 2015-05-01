@@ -103,7 +103,7 @@ class ChapterDB:
 ##TODO: IMPLEMENT add_manga and add_chapter in db
 
 ##TODO: IMPLEMENT INDEXING
-class MangaContainer(db.DatabaseItem):
+class Series(db.DatabaseItem):
 	""" Creates a manga.
 	Params:
 			title <- [list of titles]
@@ -117,28 +117,34 @@ class MangaContainer(db.DatabaseItem):
 	date_added <- date, will be defaulted on init
 	last_read <- timestamp (e.g. time.time()), will be defaulted to date on init
 	"""
-	def __init__(self, title, artist, chapters, info = "No Info", type_="Unknown", genres=[], tags=[],
-			  pub_date="", date_added=utils.today(), last_read=utils.today()):
+	def __init__(self):
 		super().__init__()
-		self._title = title
-		self._artist = artist
-		self._chapters = chapters
-		self._info = info
-		self._type = type_
-		self._genres = genres
-		self._tags = tags
-		self._pub_date = pub_date
-		self._date_added = date_added
-		self._last_read = last_read
-		self._metadata = ""
 
-		self._do_metadata() # make  initial metadata
+		self.data = {}
+		#      "title":"Unknown", "artist":"Anonymous", "Summary":"No Info", "type":"Unknown", "genres":[], "tags":[],
+		#	  "pub_date":"", "date_added":utils.today(), "last_read":utils.today()}
+		self.chapters = {}
 		
-		MangaDB.add_manga(self) # add manga with no chapters into db
+		self.title = ""
+		self.title_image = ""
+		#self._artist = artist
+		#self._info = info
+		#self._type = type_
+		#self._genres = genres
+		#self._tags = tags
+		#self._pub_date = pub_date
+		#self._date_added = date_added
+		#self._last_read = last_read
+
+
+		
+		#MangaDB.add_manga(self) # add manga with no chapters into db
 
 		#NOTE: this way we can implement drag & drop, so when zip/cbz/folder of manga
 		# is dropped it handles the chapters itself
-		self._do_chapters(self._chapters) # handle received chapters and add them to db
+		#self._do_chapters(self._chapters) # handle received chapters and add them to db
+	
+
 
 	def _do_chapters(self, chap_object):
 		"""Only meant to be used internally and once, but
@@ -161,97 +167,6 @@ class MangaContainer(db.DatabaseItem):
 				pass
 				#raise NotImplementedError("Adding chapters not yet implemented")
 				#_do_chapter(numb, pages)
-
-	def _do_metadata(self):
-		"will create initial metadata for the manga"
-
-		self._metadata = {"info":self._info, "type":self._type,
-					"genres":self._genres, "tags":self._tags,
-					"publishing date":self._pub_date,
-					"date added":self._date_added, "last read":self._last_read}
-
-
-class Manga(db.DatabaseItem):
-	"""Meant to be used by DB and GridBox. Provides manga data.
-	id <- int
-	pixmap <- full resolution pixmap
-	title <- str
-	artist <- str
-	chapters <- {<chapter_number>:{1:page1, 2:page2, 3:page3}}
-	metadata <- dict
-	Provides the following methods:
-		set_genres -> changes genres
-		---to be continued---
-	"""
-	def __init__(self, id, pixmap, title, artist, info, chapters, metadata):
-		super().__init__()
-		self.id = id
-		self.pixmap = pixmap
-		self.title = title
-		self.artist = artist
-		self.chapters = {"id":id, "chapters":chapters}
-		self.metadata = metadata
-
-	def set_title(self, new_title):
-		"Changes manga title"
-		pass
-
-	def set_artist(self, new_artist):
-		"Changes manga artist"
-		pass
-	
-	def set_genres(self, new_genres):
-		"""Changes genres
-		Note: think about existing genres and how to deal with them
-		"""
-		pass
-
-	def set_tags(self, new_tags):
-		"""Changes tags
-		Note: think about existing tags and how to deal with them
-		"""
-		pass
-
-	@property
-	def chapter_count(self):
-		"Returns amount of chapters this manga currently holds"
-		pass
-
-	@property
-	def get_title(self):
-		"Returns title in str"
-		return self.title
-
-	@property
-	def get_artist(self):
-		"Returns artist in str"
-		return self.artist
-
-	def get_chapter(self, chapter_number):
-		"Returns a specific chapter path"
-		pass
-
-	@property
-	def get_chapters(self):
-		"""Returns a dict with all chapters
-		-> chapter_number:path
-		"""
-		pass
-
-	@property
-	def last_read(self):
-		"Returns last read timestamp"
-		pass
-
-	@property
-	def date_added(self):
-		"Returns date added str e.g. dd Mmm YYYY"
-		d = "{} {} {}".format(self._date_added[0], self._date_added[1], self._date_added[2])
-		return d
-
-	def add_chapters(self):
-		"Adds the received dict of chapters"
-		pass
 
 
 
