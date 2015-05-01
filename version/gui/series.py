@@ -378,9 +378,10 @@ class MangaView(QListView):
 		else:
 			event.ignore()
 
+	#need this for debugging purposes
 	def resizeEvent(self, resizeevent):
 		super().resizeEvent(resizeevent)
-		print(resizeevent.size())
+		#print(resizeevent.size())
 
 	#unusable code
 	#def event(self, event):
@@ -440,11 +441,16 @@ class ChapterUpper(QFrame):
 
 
 	def resizeEvent(self, resizeevent):
+		"""This method basically need to make sure
+		the image in chapter view gets resized when moving
+		splitter"""
 		super().resizeEvent(resizeevent)
 		self.MAIN_SIZE = resizeevent.size()
 		self.H = self.MAIN_SIZE.height()
-		print("Old Size: ", resizeevent.oldSize())
-		print("New Size: ", resizeevent.size())
+
+		#for debugging purposes
+		#print("Old Size: ", resizeevent.oldSize())
+		#print("New Size: ", resizeevent.size())
 
 
 if __name__ == '__main__':
