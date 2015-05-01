@@ -203,7 +203,7 @@ class CustomDelegate(QStyledItemDelegate):
 
 	def __init__(self):
 		super().__init__()
-		self.W = 150
+		self.W = 145
 		self.H = 200
 		self._state = None
 
