@@ -163,6 +163,12 @@ class SeriesModel(QAbstractListModel):
 			return bg_brush
 		if role == Qt.ToolTipRole:
 			return "Example popup!!"
+		if role == Qt.UserRole+1:
+			#this needs to be replaced by real metadata
+			test_data = {"date_added":"01 May 2015", "chapters":"30",
+				"year":"2015"}
+			return test_data
+
 		return None
 
 	def rowCount(self, parent = QModelIndex()):
@@ -209,8 +215,9 @@ class CustomDelegate(QStyledItemDelegate):
 
 	def paint(self, painter, option, index):
 		self.initStyleOption(option, index)
-		image = index.data(Qt.DecorationRole)
+		self.image = index.data(Qt.DecorationRole)
 		self.text = index.data(Qt.DisplayRole)
+		self.metadata = index.data(Qt.UserRole+1)
 		popup = index.data(Qt.ToolTipRole)
 		title = self.text[0]
 		artist = self.text[1]
@@ -274,7 +281,7 @@ class CustomDelegate(QStyledItemDelegate):
 		""".format("chapter"))
 		chapter_area.setTextWidth(w)
 
-		image.paint(painter, QRect(x, y, w, h))
+		self.image.paint(painter, QRect(x, y, w, h))
 
 		#draw the label for text
 		painter.save()
@@ -304,10 +311,11 @@ class CustomDelegate(QStyledItemDelegate):
 		return QSize(self.W, self.H)
 
 	def editorEvent(self, event, model, option, index):
+		"Mouse events for each item in the view are defined here"
 		if event.type() == QEvent.MouseButtonPress:
 			self._state = (index.row(), index.column())
 			from ..constants import WINDOW
-			self.BUTTON_CLICKED.emit(WINDOW.setCurrentIndex(1, self.text))#self._state)
+			self.BUTTON_CLICKED.emit(WINDOW.setCurrentIndex(1, self.metadata))#self._state)
 			print("Clicked")
 			return True
 		else:
@@ -417,7 +425,8 @@ class ChapterUpper(QFrame):
 
 	def display_manga(self, index):
 		"""Receives a QModelIndex and updates the
-		viewport with manga data"""
+		viewport with specific manga data"""
+		print(type(index))
 		self.drawImage()
 
 	def initUI(self):
