@@ -37,10 +37,10 @@ class AppWindow(QMainWindow):
 		manga_frame = QFrame()
 		manga_frame.setFrameShape(QFrame.StyledPanel)
 		manga_frame.setMaximumWidth(215)
-		manga_model = series.SeriesModel()
+		self.manga_model = series.SeriesModel()
 		manga_delegate = series.CustomDelegate()
 		manga_list_view = series.MangaView()
-		manga_list_view.setModel(manga_model)
+		manga_list_view.setModel(self.manga_model)
 		manga_list_view.setItemDelegate(manga_delegate)
 		self.manga_view.addWidget(manga_frame)
 		self.manga_view.addWidget(manga_list_view)
@@ -88,6 +88,10 @@ class AppWindow(QMainWindow):
 		chapter_view_action.setText("Chapter View")
 		chapter_view_action.triggered.connect(lambda: self.setCurrentIndex(1)) #need lambda to pass extra args
 		self.toolbar.addAction(chapter_view_action)
+
+		populate_action = QAction(chapter_view_icon, "Populate", self)
+		populate_action.triggered.connect(lambda: self.manga_model.populate())
+		self.toolbar.addAction(populate_action)
 
 		spacer_middle = QWidget() # aligns buttons to the right
 		spacer_middle.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
