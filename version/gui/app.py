@@ -27,7 +27,7 @@ class AppWindow(QMainWindow):
 
 		self.setCentralWidget(self.center)
 		self.setWindowTitle("Sadpanda")
-		self.resize(980, 650)
+		self.resize(1098, 650)
 		self.show()
 
 	def manga_display(self):
@@ -53,15 +53,10 @@ class AppWindow(QMainWindow):
 		self.chapter_view = QSplitter()
 		self.chapter_view.setOrientation(Qt.Vertical)
 		self.chapter_view.setHandleWidth(3)
-		chapter_upper = QFrame()
-		chapter_upper.setMaximumHeight(200)
-		chapter_upper.setFrameStyle(1)
-		chapter_upper.setLineWidth(1)
-		self.chapter_view.addWidget(chapter_upper)
-		chapter_h = QHBoxLayout()
-		self.label = QLabel("Example Text")
-		chapter_h.addWidget(self.label)
-		chapter_upper.setLayout(chapter_h)
+
+		self.chapter_upper = series.ChapterUpper()
+		self.chapter_view.addWidget(self.chapter_upper)
+
 		chapter_list_view = series.ChapterView()
 		self.chapter_view.addWidget(chapter_list_view)
 		self.chapter_view.setCollapsible(0, True)
@@ -110,15 +105,19 @@ class AppWindow(QMainWindow):
 		spacer_end.setFixedSize(QSize(10, 1))
 		self.toolbar.addWidget(spacer_end)
 
-	def setCurrentIndex(self, number, data=None):
+	def setCurrentIndex(self, number, index=None):
 		"""Changes the current display view.
+		Params:
+			number <- int (0 for manga view, 1 for chapter view
+		Optional:
+			index <- QModelIndex for chapter view
 		Note: 0-based indexing
 		"""
-		if data is not None:
-			self.label.setText(data[0])
+		if index is not None:
+			self.chapter_upper.display_manga(index)
 			self.display.setCurrentIndex(number)
 		else:
-			self.display.setCurrentIndex(number) # shows the previous clicked manga
+			self.display.setCurrentIndex(number)
 
 if __name__ == '__main__':
 	raise NotImplementedError("Unit testing not implemented yet!")
