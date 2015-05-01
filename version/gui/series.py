@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import (QListView, QAbstractItemDelegate,
 							 QStyle, QApplication, QItemDelegate,
 							 QListWidget, QMenu, QAction, QToolTip,
 							 QHBoxLayout, QVBoxLayout, QWidget)
-from ..database.seriesdb import Manga
+from ..database import fetch
 from . import gui_constants
 #class GridBox(QAbstractButton):
 #	"""A Manga/Chapter box
@@ -129,9 +129,9 @@ class SeriesModel(QAbstractListModel):
 		#	paint.setFont(font)
 		
 		#Test data
-		for x in range(100):
-			title = "Title {}".format(x)
-			artist = "Arist {}".format(x)
+		#for x in range(100):
+		#	title = "Title {}".format(x)
+		#	artist = "Arist {}".format(x)
 			#paint.setPen(Qt.blue)
 			#pos1 = self.modified_pic.height()-200
 			#pos2 = pos1 + 120
@@ -140,8 +140,14 @@ class SeriesModel(QAbstractListModel):
 			#font_size(12)
 			#paint.drawText(20, pos2, artist)
 			#self._data.append(QIcon(self.modified_pic))
-			self._data.append([(title, artist),
-					  QIcon(self.modified_pic)])
+		#	self._data.append([(title, artist),
+		#			  QIcon(self.modified_pic)])
+
+		#local data
+		local_series = fetch.local() #move to seperate function later
+		for series in local_series:
+			self._data.append([(series.title, series.artist),
+					  QIcon(series.title_image)])
 
 	def data(self, index, role):
 		if not index.isValid() or \
