@@ -1,6 +1,6 @@
 from PyQt5.QtCore import (Qt, QAbstractListModel, QModelIndex, QVariant,
 						  QSize, QRect, QRectF, QEvent, pyqtSignal,
-						  QThread, QMetaObject, Q_ARG)
+						  QThread, QMetaObject, Q_ARG, QTimer)
 from PyQt5.QtGui import (QPixmap, QIcon, QBrush, QColor,
 						 QPainter, QFont, QPen, QTextDocument,
 						 QMouseEvent, QHelpEvent)
@@ -216,15 +216,20 @@ class SeriesModel(QAbstractListModel):
 			FINISHED = pyqtSignal()
 			def __init__(self, parent):
 				super().__init__(parent, Qt.FramelessWindowHint)
+				self.widget = QWidget(self)
+				self.widget.setStyleSheet("background-color:rgba(0, 0, 0, 0.65)")
 				self.progress = QProgressBar()
+				self.progress.setStyleSheet("color:white")
 				self.text = QLabel()
+				self.text.setStyleSheet("color:white;background-color:transparent;")
 				layout_ = QHBoxLayout()
 				inner_layout_ = QVBoxLayout()
 				inner_layout_.addWidget(self.text, 0, Qt.AlignHCenter)
 				inner_layout_.addWidget(self.progress)
-				layout_.addLayout(inner_layout_)
+				self.widget.setLayout(inner_layout_)
+				layout_.addWidget(self.widget)
 				self.setLayout(layout_)
-				self.resize(300,50)
+				self.resize(300,100)
 				self.move(
 					parent.window().frameGeometry().topLeft() +
 					parent.window().rect().center() - self.rect().center())
@@ -243,12 +248,26 @@ class SeriesModel(QAbstractListModel):
 		#for series in local_series:
 		#	row += 1
 		#	self.insertRows(row, value)
+
+		def append_data(series):
+			self._data.append(series)
+			loading.progress.setValue(loading.progress.value()+1)
+			loading.setText("Adding to Catalog...")
+
+			#if container.count > 10:
+			#for ser in container.get_items():
+			#	self._data.append(ser)
+				#container.clear()
+			self.layoutChanged.emit()
+			if loading.progress.maximum() == loading.progress.value():
+				loading.hide()
+
 		class Container:
 			def __init__(self):
 				self._new_data = []
 
-			def insert(self, value):
-				self._new_data.append(value)
+			def set_data(self, value):
+				self._new_data = value
 
 			def clear(self):
 				self._new_data.clear()
@@ -260,28 +279,26 @@ class SeriesModel(QAbstractListModel):
 			def get_items(self):
 				return self._new_data
 
+			def append(self):
+				try:
+					series = self._new_data.pop()
+					value = [(series.title, series.artist), QPixmap(series.title_image)]
+					append_data(value)
+				except IndexError:
+					pass
+
+
 		container = Container()
 
-		def append_data(series_list):
-			print(len(series_list))
-			for series in series_list:
-				value = [(series.title, series.artist), QPixmap(series.title_image)]
-				self._data.append(value)
-				loading.progress.setValue(loading.progress.value()+1)
-				loading.setText("Adding to Catalog")
-
-			#if container.count > 10:
-			#for ser in container.get_items():
-			#	self._data.append(ser)
-				#container.clear()
-			self.layoutChanged.emit()
-			if loading.progress.maximum() == loading.progress.value():
-				loading.hide()
+		timer = QTimer(self)
+		timer.timeout.connect(container.append)
 
 		def finished(status):
 			if status:
 				print("Successfully data search")
 				data_thread.quit
+				timer.start(1000)
+				print("Started Timer")
 			else:
 				print("Could not successfully data search")
 				data_thread.quit
@@ -296,11 +313,14 @@ class SeriesModel(QAbstractListModel):
 			loading.progress.setValue(prog)
 			loading.setText("Searching on local disk...")
 
+		def add_data(value):
+			container.set_data(value)
+
 
 		fetch_instance.moveToThread(data_thread)
 		fetch_instance.DATA_COUNT.connect(loading.progress.setMaximum)
 		fetch_instance.PROGRESS.connect(a_progress)
-		fetch_instance.DATA_READY.connect(append_data)
+		fetch_instance.DATA_READY.connect(add_data)
 		data_thread.started.connect(fetch_instance.local)
 		fetch_instance.FINISHED.connect(finished)
 		fetch_instance.FINISHED.connect(fetch_deleteLater)
@@ -424,14 +444,18 @@ class CustomDelegate(QStyledItemDelegate):
 	def sizeHint(self, QStyleOptionViewItem, QModelIndex):
 		return QSize(self.W, self.H)
 
+
 	def editorEvent(self, event, model, option, index):
 		"Mouse events for each item in the view are defined here"
 		if event.type() == QEvent.MouseButtonPress:
-			self._state = (index.row(), index.column())
-			from ..constants import WINDOW
-			self.BUTTON_CLICKED.emit(WINDOW.setCurrentIndex(1, index))#self._state)
-			print("Clicked")
-			return True
+			mouseEvent = QMouseEvent(event)
+			if mouseEvent.buttons() == Qt.LeftButton:
+				self._state = (index.row(), index.column())
+				from ..constants import WINDOW
+				self.BUTTON_CLICKED.emit(WINDOW.setCurrentIndex(1, index))#self._state)
+				print("Clicked")
+				return True
+			else: return super().editorEvent(event, model, option, index)
 		else:
 			return super().editorEvent(event, model, option, index)
 		#elif event.type() == QEvent.MouseButtonRelease:

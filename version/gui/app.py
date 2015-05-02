@@ -1,6 +1,6 @@
 import sys
-from PyQt5.QtCore import (Qt, QSize, pyqtSignal, QThread)
-from PyQt5.QtGui import (QPixmap, QIcon)
+from PyQt5.QtCore import (Qt, QSize, pyqtSignal, QThread, QEvent)
+from PyQt5.QtGui import (QPixmap, QIcon, QMouseEvent)
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QListView,
 							 QHBoxLayout, QFrame, QWidget, QVBoxLayout,
 							 QLabel, QStackedLayout, QToolBar, QMenuBar,
@@ -39,11 +39,11 @@ class AppWindow(QMainWindow):
 		manga_frame.setMaximumWidth(215)
 		self.manga_model = series.SeriesModel()
 		manga_delegate = series.CustomDelegate()
-		manga_list_view = series.MangaView()
-		manga_list_view.setModel(self.manga_model)
-		manga_list_view.setItemDelegate(manga_delegate)
+		self.manga_list_view = series.MangaView()
+		self.manga_list_view.setModel(self.manga_model)
+		self.manga_list_view.setItemDelegate(manga_delegate)
 		self.manga_view.addWidget(manga_frame)
-		self.manga_view.addWidget(manga_list_view)
+		self.manga_view.addWidget(self.manga_list_view)
 		self.manga_view.setCollapsible(0, True)
 		self.manga_view.setCollapsible(1, False)
 
