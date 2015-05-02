@@ -3,12 +3,29 @@
 - PyQt5
 
 # How to run
-1. Navigate to version -> gui -> gui_constants.py
-2. Assign PIXMAP_PATH a string with path to an image, e.g: C:/your/image.png (there is an example image in gui folder)
+1. Navigate to version -> databse -> db_constants.py
+2. Assign SERIES_PATH a string with path to your manga folder, e.g: C:/your/manga_folder.
+    - Currently supports the following folder structures:
+        + .../My_manga_folder
+            |--/Series1
+            | |--/Chp_1
+            | | |--/image_1
+            | | |--/image_2
+            | |--/Chp_n
+            | | |--/image_n
+
+        + .../My_manga_folder
+            |--/Series1
+            | |--/image_1
+            | |--/image_2
+            |--/Series_n
+            | |--/image_n
+            | |--/image_n
+
 3. Navigate to root folder and run main.py
 
 # Notes
-Aside from making an usable program, I seriously need to fix the imports of modules in the code.
+Aside from making an usable program, I seriously need to fix the import system in the code.
 
 # What to expect
 Well, not much yet... The gridview took alot of time to get right.
