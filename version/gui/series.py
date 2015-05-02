@@ -1,13 +1,15 @@
 from PyQt5.QtCore import (Qt, QAbstractListModel, QModelIndex, QVariant,
-						  QSize, QRect, QRectF, QEvent, pyqtSignal)
-from PyQt5.QtGui import (QPixmap, QIcon, QBrush, QRadialGradient,
-						 QColor, QPainter, QFont, QPen, QTextDocument,
+						  QSize, QRect, QRectF, QEvent, pyqtSignal,
+						  QThread, QMetaObject, Q_ARG)
+from PyQt5.QtGui import (QPixmap, QIcon, QBrush, QColor,
+						 QPainter, QFont, QPen, QTextDocument,
 						 QMouseEvent, QHelpEvent)
 from PyQt5.QtWidgets import (QListView, QAbstractItemDelegate,
 							 QFrame, QLabel, QStyledItemDelegate,
 							 QStyle, QApplication, QItemDelegate,
 							 QListWidget, QMenu, QAction, QToolTip,
-							 QHBoxLayout, QVBoxLayout, QWidget)
+							 QHBoxLayout, QVBoxLayout, QWidget,
+							 QDialog, QProgressBar)
 from ..database import fetch
 from . import gui_constants
 #class GridBox(QAbstractButton):
@@ -205,13 +207,108 @@ class SeriesModel(QAbstractListModel):
 		pass
 
 	def populate(self):
-		"Populates from local series'"
-		local_series = fetch.local()
-		row = self.rowCount()
-		for series in local_series:
-			row += 1
-			value = [(series.title, series.artist), QPixmap(series.title_image)]
-			self.insertRows(row, value)
+		"Populates the view with data from local series'"
+		data_thread = QThread()
+		loading_thread = QThread()
+		fetch_instance = fetch.Fetch()
+
+		class Loading(QWidget):
+			FINISHED = pyqtSignal()
+			def __init__(self, parent):
+				super().__init__(parent, Qt.FramelessWindowHint)
+				self.progress = QProgressBar()
+				self.text = QLabel()
+				layout_ = QHBoxLayout()
+				inner_layout_ = QVBoxLayout()
+				inner_layout_.addWidget(self.text, 0, Qt.AlignHCenter)
+				inner_layout_.addWidget(self.progress)
+				layout_.addLayout(inner_layout_)
+				self.setLayout(layout_)
+				self.resize(300,50)
+				self.move(
+					parent.window().frameGeometry().topLeft() +
+					parent.window().rect().center() - self.rect().center())
+
+			def mousePressEvent(self, QMouseEvent):
+				pass
+
+			def setText(self, string):
+				if string != self.text.text():
+					self.text.setText(string)
+
+		from ..constants import WINDOW
+		loading = Loading(WINDOW)
+		loading.show()
+		#row = self.rowCount()
+		#for series in local_series:
+		#	row += 1
+		#	self.insertRows(row, value)
+		class Container:
+			def __init__(self):
+				self._new_data = []
+
+			def insert(self, value):
+				self._new_data.append(value)
+
+			def clear(self):
+				self._new_data.clear()
+
+			@property
+			def count(self):
+				return len(self._new_data)
+
+			def get_items(self):
+				return self._new_data
+
+		container = Container()
+
+		def append_data(series_list):
+			print(len(series_list))
+			for series in series_list:
+				value = [(series.title, series.artist), QPixmap(series.title_image)]
+				self._data.append(value)
+				loading.progress.setValue(loading.progress.value()+1)
+				loading.setText("Adding to Catalog")
+
+			#if container.count > 10:
+			#for ser in container.get_items():
+			#	self._data.append(ser)
+				#container.clear()
+			self.layoutChanged.emit()
+			if loading.progress.maximum() == loading.progress.value():
+				loading.hide()
+
+		def finished(status):
+			if status:
+				print("Successfully data search")
+				data_thread.quit
+			else:
+				print("Could not successfully data search")
+				data_thread.quit
+
+		def fetch_deleteLater():
+			fetch_instance.deleteLater
+
+		def thread_deleteLater():
+			data_thread.deleteLater
+
+		def a_progress(prog):
+			loading.progress.setValue(prog)
+			loading.setText("Searching on local disk...")
+
+
+		fetch_instance.moveToThread(data_thread)
+		fetch_instance.DATA_COUNT.connect(loading.progress.setMaximum)
+		fetch_instance.PROGRESS.connect(a_progress)
+		fetch_instance.DATA_READY.connect(append_data)
+		data_thread.started.connect(fetch_instance.local)
+		fetch_instance.FINISHED.connect(finished)
+		fetch_instance.FINISHED.connect(fetch_deleteLater)
+		fetch_instance.FINISHED.connect(thread_deleteLater)
+		print("Starting thread")
+		data_thread.start()
+		print("Invoking method")
+
 
 	def save(self):
 		"Appends to DB for save"
@@ -368,7 +465,7 @@ class MangaView(QListView):
 		self.setVerticalScrollMode(self.ScrollPerPixel)
 		# prevent all items being loaded at the same time
 		self.setLayoutMode(self.Batched)
-		#self.setBatchSize(100) Only loads 100 images at a time
+		self.setBatchSize(20) #Only loads 20 images at a time
 		self.setWordWrap(True)
 		self.setMouseTracking(True)
 

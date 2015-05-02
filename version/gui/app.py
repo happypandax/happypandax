@@ -1,5 +1,5 @@
 import sys
-from PyQt5.QtCore import (Qt, QSize, pyqtSignal)
+from PyQt5.QtCore import (Qt, QSize, pyqtSignal, QThread)
 from PyQt5.QtGui import (QPixmap, QIcon)
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QListView,
 							 QHBoxLayout, QFrame, QWidget, QVBoxLayout,
@@ -46,7 +46,6 @@ class AppWindow(QMainWindow):
 		self.manga_view.addWidget(manga_list_view)
 		self.manga_view.setCollapsible(0, True)
 		self.manga_view.setCollapsible(1, False)
-
 
 	def chapter_display(self):
 		"Initiates chapter view"
