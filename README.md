@@ -7,20 +7,20 @@
 2. Assign SERIES_PATH a string with path to your manga folder, e.g: C:/your/manga_folder.
     - Currently supports the following folder structures:
         + .../My_manga_folder
-            |--/Series1
-            | |--/Chp_1
-            | | |--/image_1
-            | | |--/image_2
-            | |--/Chp_n
-            | | |--/image_n
+            - --/Series1
+                - --/Chp_1
+                    - --/image_1
+                    - --/image_2
+                - --/Chp_n
+                    - --/image_n
 
         + .../My_manga_folder
-            |--/Series1
-            | |--/image_1
-            | |--/image_2
-            |--/Series_n
-            | |--/image_n
-            | |--/image_n
+            - --/Series1
+                - --/image_1
+                - --/image_2
+            - --/Series_n
+                - --/image_n
+                - --/image_n
 
 3. Navigate to root folder and run main.py
 
