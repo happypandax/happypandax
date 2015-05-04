@@ -3,7 +3,7 @@ from PyQt5.QtCore import (Qt, QAbstractListModel, QModelIndex, QVariant,
 						  QThread, QMetaObject, Q_ARG, QTimer)
 from PyQt5.QtGui import (QPixmap, QIcon, QBrush, QColor,
 						 QPainter, QFont, QPen, QTextDocument,
-						 QMouseEvent, QHelpEvent)
+						 QMouseEvent, QHelpEvent, QImage)
 from PyQt5.QtWidgets import (QListView, QAbstractItemDelegate,
 							 QFrame, QLabel, QStyledItemDelegate,
 							 QStyle, QApplication, QItemDelegate,
@@ -12,105 +12,6 @@ from PyQt5.QtWidgets import (QListView, QAbstractItemDelegate,
 							 QDialog, QProgressBar)
 from ..database import fetch
 from . import gui_constants
-#class GridBox(QAbstractButton):
-#	"""A Manga/Chapter box
-#	pixmap <- the image in full resolution (a pixmap object)
-#	title <- str
-#	metadata <- dict ( e.g. ["d])
-#	"""
-#	def __init__(self, pixmap, title, metadata,
-#			  parent=None):
-#		super().__init__(parent)
-#		self.pixmap = pixmap
-#		self.title = title
-#		self.metadata = metadata
-
-#	def paintEvent(self, event):
-#		painter = QPainter(self)
-#		painter.drawPixmap() #event.rect(), self.pixmap)
-
-#	def sizeHint(self):
-#		return self.pixmap.size()
-
-# Seems to be obselete
-class GridBox(QFrame):
-	"""Defines gridboxes; Data to be used by SeriesModel.
-	Receives an object of <Manga> class defined in database/manga.py
-	CANDIDATE FOR OBSELENCE"""
-	def __init__(self, object):
-		super().__init__()
-		# useless with QIcon
-		#self.pixmap = object.pixmap
-		#self.pixmap_huge = None
-		#self.pixmap_big = None
-		#self.pixmap_medium = None
-		#self.pixmap_small = None
-		#self.pixmap_micro = None
-		#self.current_pixmap = None
-		#self._do_pixmap() # create the different image sizes
-
-		self.title = object.get_title
-		self.artist = object.get_artist
-		self.chapters = object.chapter_count
-		self.date_added = object.date_added
-		self.last_read = object.last_read
-
-		self.setFrameStyle(self.StyledPanel)
-
-	#def _do_pixmap(self):
-	#	"""Creates the different image sizes.
-	#	Note: Probably need to move this to database,
-	#	and have it be predefined for perfomance gains.
-	#	"""
-	#	pass
-
-	def initUI(self):
-		self.pixmap_label = QLabel()
-		self.pixmap_label.setPixmap(self.current_pixmap)
-		self.pixmap_label.setScaledContents(True)
-		self.title_label = QLabel()
-		self.title_label.setText(self.title)
-		self.title_label.setWordWrap(True)
-
-	def sizeHint():
-		"Provides a default size"
-		pass
-
-	def setSizePolicy(self, Policy, Policy1):
-		pass
-
-	def resize(self, string):
-		"""Set pixmap size. Receives one of the following as string params:
-		"huge", "big", "medium", "small", "micro"
-		"""
-		assert type(string) == str, "GridBox only accept strings!"
-		accepted = ["huge", "big", "medium", "small", "micro"]
-		if not string in accepted:
-			raise AssertionError("GridBox only accepts: huge, big, medium, small or micro")
-		if string == accepted[0]:
-			self.current_pixmap = self.pixmap_huge
-		elif string == accepted[1]:
-			self.current_pixmap = self.pixmap_big
-		elif string == accepted[2]:
-			self.current_pixmap = self.pixmap_medium
-		elif string == accepted[3]:
-			self.current_pixmap = self.pixmap_small
-		elif string == accepted[4]:
-			self.current_pixmap = self.pixmap_micro
-
-
-	def mousePressEvent(self, QMouseEvent):
-		"""Control what to do when mouse is pressed in the widget
-		TODO: make it go open chapter view for this manga
-		"""
-		return super().mousePressEvent()
-
-	def mouseDoubleClickEvent(self, QMouseEvent):
-		"""Control what to do when mouse is double clicked in the widget
-		TODO: maybe some editing?
-		"""
-		return super().mouseDoubleClickEvent()
-
 
 class SeriesModel(QAbstractListModel):
 	def __init__(self, parent=None):
@@ -118,34 +19,16 @@ class SeriesModel(QAbstractListModel):
 		"""
 		super().__init__(parent)
 		self._data = [] # a list for the data
+		self._data_count = 0 # number of items added to model
 		self.pic = QPixmap(gui_constants.PIXMAP_PATH) # the image for gridbox
 		self.modified_pic = self.pic # was meant for when i wanted to draw on the pic
-		
-		#Test data
-		#for x in range(100):
-		#	title = "Title {}".format(x)
-		#	artist = "Arist {}".format(x)
-			#paint.setPen(Qt.blue)
-			#pos1 = self.modified_pic.height()-200
-			#pos2 = pos1 + 120
-			#font_size(14)
-			#paint.drawText(20, pos1, title)
-			#font_size(12)
-			#paint.drawText(20, pos2, artist)
-			#self._data.append(QIcon(self.modified_pic))
-		#	self._data.append([(title, artist),
-		#			  QIcon(self.modified_pic)])
-
-		# temporarily moving this to populate method
-		#local data
-		#local_series = fetch.local() #move to seperate function later
-		#for series in local_series:
-		#	self._data.append([(series.title, series.artist),
-		#			  QPixmap(series.title_image)])
+		self._data_container = []
 
 	def data(self, index, role):
-		if not index.isValid() or \
-			not (0 <= index.row() < len(self._data)): # to make sure we get valid indexes
+		if not index.isValid():
+			return QVariant()
+		if index.row() >= len(self._data) or \
+			index.row() < 0:
 			return QVariant()
 
 		current_row = index.row() 
@@ -156,23 +39,23 @@ class SeriesModel(QAbstractListModel):
 		if role == Qt.DisplayRole:
 			return metadata
 		if role == Qt.DecorationRole:
-			return pixmap
+			return False #QIcon(pixmap)
 		if role == Qt.BackgroundRole:
 			bg_color = QColor(70, 67, 70)
 			bg_brush = QBrush(bg_color)
 			return bg_brush
-		if role == Qt.ToolTipRole:
-			return "Example popup!!"
-		if role == Qt.UserRole+1:
-			#this needs to be replaced by real metadata
-			test_data = {"date_added":"01 May 2015", "chapters":"30",
-				"year":"2015"}
-			return index
+		#if role == Qt.ToolTipRole:
+		#	return "Example popup!!"
+		#if role == Qt.UserRole+1:
+		#	#this needs to be replaced by real metadata
+		#	test_data = {"date_added":"01 May 2015", "chapters":"30",
+		#		"year":"2015"}
+		#	return index
 
 		return None
 
 	def rowCount(self, index = QModelIndex()):
-		return len(self._data)
+		return self._data_count
 
 	def flags(self, index):
 		if not index.isValid():
@@ -194,17 +77,32 @@ class SeriesModel(QAbstractListModel):
 	def insertRows(self, position, value, rows=1, index = QModelIndex()):
 		self.beginInsertRows(QModelIndex(), position, position + rows - 1)
 		for row in range(rows):
-			self._data.insert(position + row, value)
+			self._data.append(value[row])
 		self.endInsertRows()
 		return True
 
 	#def removeRows(self, int, int2, parent = QModelIndex()):
 	#	pass
 
-	def sortBy(self, str):
-		"""takes on of the following string as param
-		str <- 'title', 'metadata', 'artist', 'last read', 'newest'"""
-		pass
+	#def sortBy(self, str):
+	#	"""takes on of the following string as param
+	#	str <- 'title', 'metadata', 'artist', 'last read', 'newest'"""
+	#	pass
+
+	def canFetchMore(self, index):
+		if self._data_count < len(self._data):
+			return True
+		else: 
+			return False
+
+	def fetchMore(self, index):
+		diff = len(self._data) - self._data_count
+		item_to_fetch = min(15, diff)
+
+		self.beginInsertRows(index, self._data_count,
+					   self._data_count+item_to_fetch-1)
+		self._data_count += item_to_fetch
+		self.endInsertRows()
 
 	def populate(self):
 		"Populates the view with data from local series'"
@@ -240,26 +138,30 @@ class SeriesModel(QAbstractListModel):
 			def setText(self, string):
 				if string != self.text.text():
 					self.text.setText(string)
-
+		self.beginResetModel()
 		from ..constants import WINDOW
 		loading = Loading(WINDOW)
 		loading.show()
-		#row = self.rowCount()
-		#for series in local_series:
-		#	row += 1
-		#	self.insertRows(row, value)
+		self._data_count = 0
+		self._data = []
 
 		def append_data(series):
-			self._data.append(series)
-			loading.progress.setValue(loading.progress.value()+1)
-			loading.setText("Adding to Catalog...")
+			for t in series:
+				self._data.append(t)
+			#self.endResetModel()
+			#self.layoutChanged.emit()
+			#self.insertRows(self.rowCount()+1, series, len(series))
+			#loading.setText("Adding to Catalog...")
+			#loading.progress.setValue(loading.progress.value()+1)
+			#self._data_container.append(series)
+			#loading.progress.setValue(loading.progress.maximum())
 
-			#if container.count > 10:
-			#for ser in container.get_items():
-			#	self._data.append(ser)
-				#container.clear()
-			self.layoutChanged.emit()
+			##if container.count > 10:
+			##for ser in container.get_items():
+			##	self._data.append(ser)
+			#	#container.clear()
 			if loading.progress.maximum() == loading.progress.value():
+				pass
 				loading.hide()
 
 		class Container:
@@ -288,17 +190,17 @@ class SeriesModel(QAbstractListModel):
 					pass
 
 
-		container = Container()
+		#container = Container()
 
-		timer = QTimer(self)
-		timer.timeout.connect(container.append)
+		#timer = QTimer(self)
+		#timer.timeout.connect(container.append)
 
 		def finished(status):
 			if status:
 				print("Successfully data search")
 				data_thread.quit
-				timer.start(1000)
-				print("Started Timer")
+				#timer.start(1000)
+				#print("Started Timer")
 			else:
 				print("Could not successfully data search")
 				data_thread.quit
@@ -320,7 +222,7 @@ class SeriesModel(QAbstractListModel):
 		fetch_instance.moveToThread(data_thread)
 		fetch_instance.DATA_COUNT.connect(loading.progress.setMaximum)
 		fetch_instance.PROGRESS.connect(a_progress)
-		fetch_instance.DATA_READY.connect(add_data)
+		fetch_instance.DATA_READY.connect(append_data)
 		data_thread.started.connect(fetch_instance.local)
 		fetch_instance.FINISHED.connect(finished)
 		fetch_instance.FINISHED.connect(fetch_deleteLater)
@@ -350,13 +252,21 @@ class CustomDelegate(QStyledItemDelegate):
 
 	def paint(self, painter, option, index):
 		self.initStyleOption(option, index)
-		self.image = QIcon(index.data(Qt.DecorationRole))
+		if option.state & QStyle.State_MouseOver:
+			painter.fillRect(option.rect, QColor(225,225,225,70)) #option.palette.highlight()
+
+		if option.state & QStyle.State_Selected:
+			painter.fillRect(option.rect, QColor(164,164,164,120)) #option.palette.highlight()
+
+		if option.state & QStyle.State_Selected:
+			painter.setPen(QPen(option.palette.highlightedText().color()))
+
 		self.text = index.data(Qt.DisplayRole)
 		popup = index.data(Qt.ToolTipRole)
 		title = self.text[0]
 		artist = self.text[1]
 
-		painter.setRenderHint(QPainter.Antialiasing)
+		#painter.setRenderHint(QPainter.Antialiasing)
 		# Enable this to see the defining box
 		#painter.drawRect(option.rect)
 
@@ -368,7 +278,7 @@ class CustomDelegate(QStyledItemDelegate):
 		y = rec[1] + 3
 		w = rec[2]
 		h = rec[3] - 5
-		painter.setRenderHint(QPainter.TextAntialiasing)
+		#painter.setRenderHint(QPainter.TextAntialiasing)
 		#title="LongLongngLongTextLongLongText"
 		#colors: title: #323232 artist: #585858
 		text_area = QTextDocument()
@@ -415,8 +325,12 @@ class CustomDelegate(QStyledItemDelegate):
 		""".format("chapter"))
 		chapter_area.setTextWidth(w)
 
-		self.image.paint(painter, QRect(x, y, w, h))
+		painter.setRenderHint(QPainter.SmoothPixmapTransform)
 
+		#painter.drawImage(QRect(x, y, w, h), self.image)
+		if index.data(Qt.DecorationRole):
+			self.image = index.data(Qt.DecorationRole)
+			self.image.paint(painter, QRect(x, y, w, h))
 		#draw the label for text
 		painter.save()
 		painter.translate(option.rect.x(), option.rect.y()+140)
@@ -431,15 +345,6 @@ class CustomDelegate(QStyledItemDelegate):
 		painter.translate(option.rect.x(), option.rect.y()+150)
 		text_area.drawContents(painter)
 		painter.restore()
-		
-		if option.state & QStyle.State_MouseOver:
-			painter.fillRect(option.rect, QColor(225,225,225,70)) #option.palette.highlight()
-
-		if option.state & QStyle.State_Selected:
-			painter.fillRect(option.rect, QColor(164,164,164,120)) #option.palette.highlight()
-
-		if option.state & QStyle.State_Selected:
-			painter.setPen(QPen(option.palette.highlightedText().color()))
 
 	def sizeHint(self, QStyleOptionViewItem, QModelIndex):
 		return QSize(self.W, self.H)
@@ -489,8 +394,8 @@ class MangaView(QListView):
 		self.setVerticalScrollMode(self.ScrollPerPixel)
 		# prevent all items being loaded at the same time
 		self.setLayoutMode(self.Batched)
-		self.setBatchSize(20) #Only loads 20 images at a time
-		self.setWordWrap(True)
+		self.setBatchSize(15) #Only loads 20 images at a time
+		#self.setWordWrap(True)
 		self.setMouseTracking(True)
 
 	def foo(self):
@@ -585,7 +490,7 @@ class ChapterUpper(QFrame):
 		main_layout.addWidget(self.image_box, 0, Qt.AlignHCenter)
 
 	def drawImage(self, img):
-		self.image = img
+		self.image = QPixmap(img)
 		self.new_image = self.image.scaled(self.image_icon_size, Qt.KeepAspectRatio,
 					Qt.SmoothTransformation)
 		self.image_box.setPixmap(self.new_image)
