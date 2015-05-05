@@ -75,14 +75,13 @@ class AppWindow(QMainWindow):
 		spacer_start.setFixedSize(QSize(10, 1))
 		self.toolbar.addWidget(spacer_start)
 
-		from . import gui_constants
-		manga_view_icon = QIcon(gui_constants.PIXMAP_PATH)
+		manga_view_icon = QIcon()
 		manga_view_action = QAction(manga_view_icon, "Manga View", self)
 		manga_view_action.setText("Manga View")
 		manga_view_action.triggered.connect(lambda: self.setCurrentIndex(0)) #need lambda to pass extra args
 		self.toolbar.addAction(manga_view_action)
 
-		chapter_view_icon = QIcon(gui_constants.PIXMAP_PATH)
+		chapter_view_icon = QIcon()
 		chapter_view_action = QAction(chapter_view_icon, "Chapter View", self)
 		chapter_view_action.setText("Chapter View")
 		chapter_view_action.triggered.connect(lambda: self.setCurrentIndex(1)) #need lambda to pass extra args

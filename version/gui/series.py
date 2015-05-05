@@ -1,9 +1,11 @@
 from PyQt5.QtCore import (Qt, QAbstractListModel, QModelIndex, QVariant,
 						  QSize, QRect, QRectF, QEvent, pyqtSignal,
-						  QThread, QMetaObject, Q_ARG, QTimer)
+						  QThread, QMetaObject, Q_ARG, QTimer,
+						  QDataStream, QFile)
 from PyQt5.QtGui import (QPixmap, QIcon, QBrush, QColor,
 						 QPainter, QFont, QPen, QTextDocument,
-						 QMouseEvent, QHelpEvent, QImage)
+						 QMouseEvent, QHelpEvent, QImage,
+						 QTransform, QPixmapCache)
 from PyQt5.QtWidgets import (QListView, QAbstractItemDelegate,
 							 QFrame, QLabel, QStyledItemDelegate,
 							 QStyle, QApplication, QItemDelegate,
@@ -20,8 +22,6 @@ class SeriesModel(QAbstractListModel):
 		super().__init__(parent)
 		self._data = [] # a list for the data
 		self._data_count = 0 # number of items added to model
-		self.pic = QPixmap(gui_constants.PIXMAP_PATH) # the image for gridbox
-		self.modified_pic = self.pic # was meant for when i wanted to draw on the pic
 		self._data_container = []
 
 	def data(self, index, role):
@@ -39,7 +39,7 @@ class SeriesModel(QAbstractListModel):
 		if role == Qt.DisplayRole:
 			return metadata
 		if role == Qt.DecorationRole:
-			return False #QIcon(pixmap)
+			return pixmap
 		if role == Qt.BackgroundRole:
 			bg_color = QColor(70, 67, 70)
 			bg_brush = QBrush(bg_color)
@@ -89,6 +89,7 @@ class SeriesModel(QAbstractListModel):
 	#	str <- 'title', 'metadata', 'artist', 'last read', 'newest'"""
 	#	pass
 
+
 	def canFetchMore(self, index):
 		if self._data_count < len(self._data):
 			return True
@@ -97,7 +98,7 @@ class SeriesModel(QAbstractListModel):
 
 	def fetchMore(self, index):
 		diff = len(self._data) - self._data_count
-		item_to_fetch = min(15, diff)
+		item_to_fetch = min(100, diff)
 
 		self.beginInsertRows(index, self._data_count,
 					   self._data_count+item_to_fetch-1)
@@ -146,11 +147,11 @@ class SeriesModel(QAbstractListModel):
 		self._data = []
 
 		def append_data(series):
-			for t in series:
-				self._data.append(t)
+			#for t in series:
+			#	self._data.append(t)
 			#self.endResetModel()
 			#self.layoutChanged.emit()
-			#self.insertRows(self.rowCount()+1, series, len(series))
+			self.insertRows(self.rowCount()+1, series, len(series))
 			#loading.setText("Adding to Catalog...")
 			#loading.progress.setValue(loading.progress.value()+1)
 			#self._data_container.append(series)
@@ -246,38 +247,41 @@ class CustomDelegate(QStyledItemDelegate):
 
 	def __init__(self):
 		super().__init__()
-		self.W = 145
-		self.H = 200
+		self.W = gui_constants.THUMB_W_SIZE
+		self.H = gui_constants.THUMB_H_SIZE
 		self._state = None
+		QPixmapCache.setCacheLimit(gui_constants.THUMBNAIL_CACHE_SIZE)
+		self._painted_indexes = {}
+
+	def key(self, index):
+		"Assigns an unique key to indexes"
+		if index in self._painted_indexes:
+			return self._painted_indexes[index]
+		else:
+			id = str(len(self._painted_indexes))
+			self._painted_indexes[index] = id
+			return self._painted_indexes[index]
 
 	def paint(self, painter, option, index):
 		self.initStyleOption(option, index)
-		if option.state & QStyle.State_MouseOver:
-			painter.fillRect(option.rect, QColor(225,225,225,70)) #option.palette.highlight()
-
-		if option.state & QStyle.State_Selected:
-			painter.fillRect(option.rect, QColor(164,164,164,120)) #option.palette.highlight()
-
-		if option.state & QStyle.State_Selected:
-			painter.setPen(QPen(option.palette.highlightedText().color()))
 
 		self.text = index.data(Qt.DisplayRole)
 		popup = index.data(Qt.ToolTipRole)
 		title = self.text[0]
 		artist = self.text[1]
 
-		#painter.setRenderHint(QPainter.Antialiasing)
 		# Enable this to see the defining box
 		#painter.drawRect(option.rect)
 
 		#painter.setPen(QPen(Qt.NoPen))
-
 		r = option.rect.adjusted(1, 0, -1, -1)
 		rec = r.getRect()
 		x = rec[0]
 		y = rec[1] + 3
 		w = rec[2]
+		print(w)
 		h = rec[3] - 5
+		print(h)
 		#painter.setRenderHint(QPainter.TextAntialiasing)
 		#title="LongLongngLongTextLongLongText"
 		#colors: title: #323232 artist: #585858
@@ -325,19 +329,36 @@ class CustomDelegate(QStyledItemDelegate):
 		""".format("chapter"))
 		chapter_area.setTextWidth(w)
 
-		painter.setRenderHint(QPainter.SmoothPixmapTransform)
+		#painter.setRenderHint(QPainter.SmoothPixmapTransform)
 
-		#painter.drawImage(QRect(x, y, w, h), self.image)
-		if index.data(Qt.DecorationRole):
-			self.image = index.data(Qt.DecorationRole)
-			self.image.paint(painter, QRect(x, y, w, h))
+		# if we can't find a cached image
+		if not isinstance(QPixmapCache.find(self.key(index)), QPixmap):
+			print("creating new image")
+			self.image = QPixmap(index.data(Qt.DecorationRole))
+			id = self.key(index)
+			QPixmapCache.insert(id, self.image)
+			if self.image.height() < self.image.width(): #to keep aspect ratio
+				painter.drawPixmap(QRect(x, y, w, self.image.height()),
+						self.image)
+			else:
+				painter.drawPixmap(QRect(x, y, w, h),
+						self.image)
+		else:
+			print("fetching image from cache")
+			self.image = QPixmapCache.find(self.key(index))
+			if self.image.height() < self.image.width(): #to keep aspect ratio
+				painter.drawPixmap(QRect(x, y, w, self.image.height()),
+						self.image)
+			else:
+				painter.drawPixmap(QRect(x, y, w, h),
+						self.image)
+
 		#draw the label for text
 		painter.save()
 		painter.translate(option.rect.x(), option.rect.y()+140)
 		box_color = QBrush(QColor(0,0,0,123))
 		painter.setBrush(box_color)
 		rect = QRect(0, 0, w+2, 60) #x, y, width, height
-		#painter.drawRect(rect)
 		painter.fillRect(rect, box_color)
 		painter.restore()
 		painter.save()
@@ -345,6 +366,15 @@ class CustomDelegate(QStyledItemDelegate):
 		painter.translate(option.rect.x(), option.rect.y()+150)
 		text_area.drawContents(painter)
 		painter.restore()
+
+		if option.state & QStyle.State_MouseOver:
+			painter.fillRect(option.rect, QColor(225,225,225,90)) #70
+
+		if option.state & QStyle.State_Selected:
+			painter.fillRect(option.rect, QColor(164,164,164,120)) #option.palette.highlight()
+
+		if option.state & QStyle.State_Selected:
+			painter.setPen(QPen(option.palette.highlightedText().color()))
 
 	def sizeHint(self, QStyleOptionViewItem, QModelIndex):
 		return QSize(self.W, self.H)
@@ -383,8 +413,8 @@ class MangaView(QListView):
 	def __init__(self, parent=None):
 		super().__init__(parent)
 		self.setViewMode(self.IconMode)
-		self.H = 250
-		self.W = self.H//1.47
+		self.H = gui_constants.GRIDBOX_H_SIZE
+		self.W = gui_constants.GRIDBOX_W_SIZE
 		self.setGridSize(QSize(self.W, self.H))
 		self.setSpacing(10)
 		self.setResizeMode(self.Adjust)

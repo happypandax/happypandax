@@ -1,12 +1,14 @@
 import os
 import time
+import uuid #for unique filename
+import gc
 
 from .db_constants import SERIES_PATH, IMG_FILES
-
 from .seriesdb import Series
+from ..gui import gui_constants
 
-from PyQt5.QtCore import QObject, Qt, pyqtSignal, pyqtSlot  # need this for interaction to mainloop
-from PyQt5.QtGui import QPixmap
+from PyQt5.QtCore import QObject, Qt, pyqtSignal, pyqtSlot, QDataStream, QFile, QIODevice
+from PyQt5.QtGui import QImage
 
 """This file contains functions to fectch series data"""
 
@@ -15,6 +17,7 @@ class Fetch(QObject):
 	Should be executed in a new thread.
 	Contains following methods:
 	local -> runs a local search in the given SERIES_PATH
+	gen_thumbnail -> generates thumbnail for an image, returns new img path
 	"""
 
 	FINISHED = pyqtSignal(bool)
@@ -25,6 +28,8 @@ class Fetch(QObject):
 	def __init__(self, parent=None):
 		super().__init__(parent)
 		#self.found_series = []
+		self.cache = "sad_cache" #cache dir name
+		#self.pixmap = QPixmap()
 	
 	def local(self):
 		"""Do a local search in the given SERIES_PATH.
@@ -84,14 +89,16 @@ class Fetch(QObject):
 						fp = os.path.join(root, img)
 						times.add( os.path.getmtime(fp) )
 				last_updated = time.asctime(time.gmtime(max(times)))
-		
+				
+				#choose first image
 				f_img = sorted(images_paths)[0]
+				new_f_img = self.gen_thumbnail(f_img)
 				#f_img = os.path.join(f_cha_path,img)
 
 
 				#new_series.data["title"] = ser
 				metadata["title"] = ser_path
-				metadata["profile"] = f_img
+				metadata["profile"] = new_f_img
 				metadata["artist"] = "Anonymous" #TODO think up something later
 				metadata["chapters_size"] = len(chapters)
 				#new_series.data["last_update"] = last_updated
@@ -122,4 +129,25 @@ class Fetch(QObject):
 
 		# everything went well
 		self.FINISHED.emit(True)
+
+	def gen_thumbnail(self, img_path, w=gui_constants.THUMB_W_SIZE-2,
+				   h=gui_constants.THUMB_H_SIZE): # 2 and 6 to align it properly.. need to redo this
+		# generate a cache dir if required
+		suff = img_path[-4:] # the image ext with dot
+		if not os.path.isdir(self.cache):
+			os.mkdir(self.cache)
+
+		# generate unique file name
+		file_name = str(uuid.uuid4()) + suff
+		new_img_path = self.cache + '/' + file_name # '\' is not supported by QFile
+		
+		# Do the scaling
+		image = QImage()
+		image.load(img_path)
+		image = image.scaled(w, h, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+		image.save(new_img_path, quality=100)
+		#del pixmap
+		#gc.collect()
+		abs_path = os.path.abspath(new_img_path)
+		return abs_path
 
