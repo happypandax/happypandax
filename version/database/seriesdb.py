@@ -126,8 +126,9 @@ class Series(db.DatabaseItem):
 		self.chapters = {}
 		
 		self.title = ""
-		self.title_image = ""
-		#self._artist = artist
+		self.profile = ""
+		self.path = ""
+		self.artist = ""
 		#self._info = info
 		#self._type = type_
 		#self._genres = genres
@@ -135,38 +136,6 @@ class Series(db.DatabaseItem):
 		#self._pub_date = pub_date
 		#self._date_added = date_added
 		#self._last_read = last_read
-
-
-		
-		#MangaDB.add_manga(self) # add manga with no chapters into db
-
-		#NOTE: this way we can implement drag & drop, so when zip/cbz/folder of manga
-		# is dropped it handles the chapters itself
-		#self._do_chapters(self._chapters) # handle received chapters and add them to db
-	
-
-
-	def _do_chapters(self, chap_object):
-		"""Only meant to be used internally and once, but
-		can be used outside too. Just remember, that
-		chapters will be overwritten
-		"""
-		
-		#DROPPED
-		#def _do_chapter(chapter_number, pages):
-		#	"sends metadata to db"
-		#	_chap_metadata = [] #meta data for the individual chapter
-		#	#OBS: still need to implement indexing
-		#	md = {"link":self._index, "chapter":chapter_number,
-		#	   "pages":pages, "metadata":self._chap_metadata}
-
-		#	metadataChapterDB.add_chapter(md)
-
-		for chap in chap_object:
-			for pages in chap_object[chap]:
-				pass
-				#raise NotImplementedError("Adding chapters not yet implemented")
-				#_do_chapter(numb, pages)
 
 
 

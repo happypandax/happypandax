@@ -147,61 +147,17 @@ class SeriesModel(QAbstractListModel):
 		self._data = []
 
 		def append_data(series):
-			#for t in series:
-			#	self._data.append(t)
-			#self.endResetModel()
-			#self.layoutChanged.emit()
-			self.insertRows(self.rowCount()+1, series, len(series))
-			#loading.setText("Adding to Catalog...")
-			#loading.progress.setValue(loading.progress.value()+1)
-			#self._data_container.append(series)
-			#loading.progress.setValue(loading.progress.maximum())
-
-			##if container.count > 10:
-			##for ser in container.get_items():
-			##	self._data.append(ser)
-			#	#container.clear()
+			for t in series:
+				self._data.append(t)
+			self.layoutChanged.emit()
 			if loading.progress.maximum() == loading.progress.value():
 				pass
 				loading.hide()
-
-		class Container:
-			def __init__(self):
-				self._new_data = []
-
-			def set_data(self, value):
-				self._new_data = value
-
-			def clear(self):
-				self._new_data.clear()
-
-			@property
-			def count(self):
-				return len(self._new_data)
-
-			def get_items(self):
-				return self._new_data
-
-			def append(self):
-				try:
-					series = self._new_data.pop()
-					value = [(series.title, series.artist), QPixmap(series.title_image)]
-					append_data(value)
-				except IndexError:
-					pass
-
-
-		#container = Container()
-
-		#timer = QTimer(self)
-		#timer.timeout.connect(container.append)
 
 		def finished(status):
 			if status:
 				print("Successfully data search")
 				data_thread.quit
-				#timer.start(1000)
-				#print("Started Timer")
 			else:
 				print("Could not successfully data search")
 				data_thread.quit
@@ -228,9 +184,7 @@ class SeriesModel(QAbstractListModel):
 		fetch_instance.FINISHED.connect(finished)
 		fetch_instance.FINISHED.connect(fetch_deleteLater)
 		fetch_instance.FINISHED.connect(thread_deleteLater)
-		print("Starting thread")
 		data_thread.start()
-		print("Invoking method")
 
 
 	def save(self):
@@ -279,12 +233,7 @@ class CustomDelegate(QStyledItemDelegate):
 		x = rec[0]
 		y = rec[1] + 3
 		w = rec[2]
-		print(w)
 		h = rec[3] - 5
-		print(h)
-		#painter.setRenderHint(QPainter.TextAntialiasing)
-		#title="LongLongngLongTextLongLongText"
-		#colors: title: #323232 artist: #585858
 		text_area = QTextDocument()
 		text_area.setDefaultFont(option.font)
 		text_area.setHtml("""
@@ -322,18 +271,17 @@ class CustomDelegate(QStyledItemDelegate):
 		""".format(title, artist, "Chapters"))
 		text_area.setTextWidth(w)
 
-		chapter_area = QTextDocument()
-		chapter_area.setDefaultFont(option.font)
-		chapter_area.setHtml("""
-		<font color="black">{}</font>
-		""".format("chapter"))
-		chapter_area.setTextWidth(w)
+		#chapter_area = QTextDocument()
+		#chapter_area.setDefaultFont(option.font)
+		#chapter_area.setHtml("""
+		#<font color="black">{}</font>
+		#""".format("chapter"))
+		#chapter_area.setTextWidth(w)
 
-		#painter.setRenderHint(QPainter.SmoothPixmapTransform)
+		painter.setRenderHint(QPainter.SmoothPixmapTransform)
 
 		# if we can't find a cached image
 		if not isinstance(QPixmapCache.find(self.key(index)), QPixmap):
-			print("creating new image")
 			self.image = QPixmap(index.data(Qt.DecorationRole))
 			id = self.key(index)
 			QPixmapCache.insert(id, self.image)
@@ -344,7 +292,6 @@ class CustomDelegate(QStyledItemDelegate):
 				painter.drawPixmap(QRect(x, y, w, h),
 						self.image)
 		else:
-			print("fetching image from cache")
 			self.image = QPixmapCache.find(self.key(index))
 			if self.image.height() < self.image.width(): #to keep aspect ratio
 				painter.drawPixmap(QRect(x, y, w, self.image.height()),
@@ -393,18 +340,6 @@ class CustomDelegate(QStyledItemDelegate):
 			else: return super().editorEvent(event, model, option, index)
 		else:
 			return super().editorEvent(event, model, option, index)
-		#elif event.type() == QEvent.MouseButtonRelease:
-		#	if self._state == (index.row(), index.column()):
-		#		self.BUTTON_CLICKED.emit(self._state)
-		#		return True
-		#	elif self._state:
-		#		old_index = index.model().index(self._state)
-		#		self._state = None
-		#		index.model().dataChanged.emit(old_index, old_index)
-		#	self._state = None
-		#	return True
-		#else:
-		#	return super().editorEvent(event, model, option, index)
 
 class MangaView(QListView):
 	"""
@@ -422,9 +357,10 @@ class MangaView(QListView):
 		self.setUniformItemSizes(True)
 		# improve scrolling
 		self.setVerticalScrollMode(self.ScrollPerPixel)
+		self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 		# prevent all items being loaded at the same time
-		self.setLayoutMode(self.Batched)
-		self.setBatchSize(15) #Only loads 20 images at a time
+		#self.setLayoutMode(self.Batched)
+		#self.setBatchSize(15) #Only loads 20 images at a time
 		#self.setWordWrap(True)
 		self.setMouseTracking(True)
 
