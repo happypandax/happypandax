@@ -1,13 +1,12 @@
 import os
 import time
 import uuid #for unique filename
-import gc
 
 from .db_constants import SERIES_PATH, IMG_FILES
 from .seriesdb import Series
 from ..gui import gui_constants
 
-from PyQt5.QtCore import QObject, Qt, pyqtSignal, pyqtSlot, QDataStream, QFile, QIODevice
+from PyQt5.QtCore import QObject, Qt, pyqtSignal, pyqtSlot # need this for interaction with main thread
 from PyQt5.QtGui import QImage
 
 """This file contains functions to fectch series data"""
@@ -51,13 +50,11 @@ class Fetch(QObject):
 				con = os.listdir(path) #all of content in the series folder
 		
 				chapters = [os.path.join(path,sub) for sub in con if os.path.isdir(os.path.join(path, sub))] #subfolders
-
 				# if series has chapters divided into sub folders
 				if len(chapters) != 0:
 					for ch in chapters: #title of each chapter folder is a key to full path to the folder
-						key = ch
 						value = os.path.join(SERIES_PATH, ser_path, ch) #replace with a proper chapter class later
-						new_series.chapters[key] = value
+						new_series.chapters[ch] = value
 		
 					#pick first image of first chapter as the default title image
 					first_cha = sorted(new_series.chapters.keys())[0] #smallest chapter alphabetically
@@ -65,7 +62,8 @@ class Fetch(QObject):
 					for r,d,f in os.walk(f_cha_path):
 						for file in f:
 							if file[-3:] in IMG_FILES:
-								images_paths.append(file)
+								file_path = os.path.join(f_cha_path, file)
+								images_paths.append(file_path)
 				else: #else assume that all images are in series folder
 					#f_cha_path = value # needed for finding first image below
 					value = new_series.path
