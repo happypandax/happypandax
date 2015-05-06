@@ -3,8 +3,8 @@
 - PyQt5
 
 # How to run
-1. Navigate to version -> databse -> db_constants.py
-2. Assign SERIES_PATH a string with path to your manga folder, e.g: C:/your/manga_folder.
+1. Navigate to version -> database -> db_constants.py
+2. Assign SERIES_PATH a string with path to your manga folder, e.g: C:/your/manga_folder
     - Currently supports the following folder structures:
         + .../My_manga_folder
             - --/Series1
@@ -28,7 +28,6 @@
 Aside from making an usable program, I seriously need to fix the import system in the code.
 
 # What to expect
-Well, not much yet... The gridview took alot of time to get right.
 I'm currently only trying to make a mockup program while learning/discovering PyQt5. More and more features will be added as time progresses. I expect to release an usable program in about a month depending on how busy school will be. (Current Date: 28 april)
 The code is currently a mess.
 Since this is my first time using PyQt I'll be saving alot of old code, and run the risk of making spaghetti code.
