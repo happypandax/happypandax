@@ -227,6 +227,29 @@ class CustomDelegate(QStyledItemDelegate):
 		# Enable this to see the defining box
 		#painter.drawRect(option.rect)
 
+		# define font size
+		if 30 > len(title) > 20:
+			title_size = "font-size:12px;"
+		elif 40 > len(title) >= 30:
+			title_size = "font-size:11px;"
+		elif 50 > len(title) >= 40:
+			title_size = "font-size:10px;"
+		elif len(title) >= 50:
+			title_size = "font-size:8px;"
+		else:
+			title_size = ""
+
+		if 30 > len(artist) > 20:
+			artist_size = "font-size:12px;"
+		elif 40 > len(artist) >= 30:
+			artist_size = "font-size:10px;"
+		elif len(artist) >= 40:
+			artist_size = "font-size:8px;"
+		else:
+			artist_size = ""
+
+
+
 		#painter.setPen(QPen(Qt.NoPen))
 		r = option.rect.adjusted(1, 0, -1, -1)
 		rec = r.getRect()
@@ -249,12 +272,14 @@ class CustomDelegate(QStyledItemDelegate):
 		position:absolute;
 		color: white;
 		font-weight:bold;
+		{}
 		}}
 		#artist {{
 		position:absolute;
 		color:white;
 		top:20px;
 		right:0;
+		{}
 		}}
 		</style>
 		</head>
@@ -268,7 +293,7 @@ class CustomDelegate(QStyledItemDelegate):
 		</div>
 		</center>
 		</body>
-		""".format(title, artist, "Chapters"))
+		""".format(title_size, artist_size, title, artist, "Chapters"))
 		text_area.setTextWidth(w)
 
 		#chapter_area = QTextDocument()
@@ -310,7 +335,7 @@ class CustomDelegate(QStyledItemDelegate):
 		painter.restore()
 		painter.save()
 		# draw text
-		painter.translate(option.rect.x(), option.rect.y()+150)
+		painter.translate(option.rect.x(), option.rect.y()+142)
 		text_area.drawContents(painter)
 		painter.restore()
 

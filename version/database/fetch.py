@@ -90,14 +90,11 @@ class Fetch(QObject):
 				new_series.profile = new_f_img
 				new_series.artist = "Anonymous" #TODO think up something later
 				new_series.data["chapters_size"] = len(chapters)
-				#new_series.data["last_update"] = last_updated
-			#	for ch in chapters: #title of each chapter folder is a key to full path to the folder
-			#		key = ch
-			#		value = os.path.join(SERIES_PATH, ser, ch) #replace with a proper chapter class later
-			#		new_series.chapters[key] = value
-				progress += 1
+				new_series.data["last_update"] = last_updated
+
+				progress += 1 # update the progress bar
 				self.PROGRESS.emit(progress)
-				#found_series.append(metadata)
+
 				found_series.append([(new_series.title, new_series.artist),
 							  new_series.profile])
 			
