@@ -103,7 +103,7 @@ class ChapterDB:
 ##TODO: IMPLEMENT add_manga and add_chapter in db
 
 ##TODO: IMPLEMENT INDEXING
-class Series(db.DatabaseItem):
+class Series:
 	""" Creates a manga.
 	Params:
 			title <- [list of titles]

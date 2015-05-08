@@ -240,15 +240,13 @@ class CustomDelegate(QStyledItemDelegate):
 			title_size = ""
 
 		if 30 > len(artist) > 20:
-			artist_size = "font-size:12px;"
+			artist_size = "font-size:11px;"
 		elif 40 > len(artist) >= 30:
-			artist_size = "font-size:10px;"
+			artist_size = "font-size:9px;"
 		elif len(artist) >= 40:
 			artist_size = "font-size:8px;"
 		else:
 			artist_size = ""
-
-
 
 		#painter.setPen(QPen(Qt.NoPen))
 		r = option.rect.adjusted(1, 0, -1, -1)
