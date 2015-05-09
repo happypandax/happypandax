@@ -7,3 +7,7 @@ def today():
 	month = _date.strftime("%b")
 	year = _date.strftime("%Y")
 	return [day, month, year]
+
+def exception_handler(msg):
+	"Spawns a dialog with the specified msg"
+	pass

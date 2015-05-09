@@ -1,5 +1,5 @@
-from .. import utils
-from . import db, metadata # REMEMBER TO IMPLEMENT SERIALIZING METHOD IN DB
+from ..utils import today
+from . import db # REMEMBER TO IMPLEMENT SERIALIZING METHOD IN DB
 
 class MangaDB:
 	"""
@@ -102,40 +102,39 @@ class ChapterDB:
 
 ##TODO: IMPLEMENT add_manga and add_chapter in db
 
-##TODO: IMPLEMENT INDEXING
 class Series:
 	""" Creates a manga.
-	Params:
-			title <- [list of titles]
-			artist <- str
-			chapters <- {<chapter_number>:{1:page1, 2:page2, 3:page3}}
-	The following params wil be packed into a metadata dict:
+	Available data:
+	title <- [list of titles] or str
+	profile <- path to thumbnail
+	path <- path to series
+	artist <- str
+	chapters <- {number:<x>, path:<x>}
+	chapter_size <- int of number of chapters
 	info <- str
-	type <- str
-	genres <- list
-	pub_date <- (not sure yet... prolly string: dd/mm/yy)
+	type <- str (Manga? Doujin? Other?)
+	status <- "completed" or "ongoing"
+	tags <- list of str
+	pub_date <- string: dd/mm/yy
 	date_added <- date, will be defaulted on init
-	last_read <- timestamp (e.g. time.time()), will be defaulted to date on init
+	last_read <- timestamp (e.g. time.time())
+	last_update <- last updated file
 	"""
 	def __init__(self):
-		super().__init__()
-
-		self.data = {}
-		#      "title":"Unknown", "artist":"Anonymous", "Summary":"No Info", "type":"Unknown", "genres":[], "tags":[],
-		#	  "pub_date":"", "date_added":utils.today(), "last_read":utils.today()}
-		self.chapters = {}
 		
-		self.title = ""
-		self.profile = ""
-		self.path = ""
-		self.artist = ""
-		#self._info = info
-		#self._type = type_
-		#self._genres = genres
-		#self._tags = tags
-		#self._pub_date = pub_date
-		#self._date_added = date_added
-		#self._last_read = last_read
+		self.title = None
+		self.profile = None
+		self.path = None
+		self.artist = None
+		self.chapters = {}
+		self.info = None
+		self.type = None
+		self.status = None
+		self.tags = None
+		self.pub_date = None
+		self.date_added = today()
+		self.last_read = None
+		self.last_update = None
 
 
 

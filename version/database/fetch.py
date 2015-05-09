@@ -89,8 +89,8 @@ class Fetch(QObject):
 				new_series.title = ser_path
 				new_series.profile = new_f_img
 				new_series.artist = "Anonymous" #TODO think up something later
-				new_series.data["chapters_size"] = len(chapters)
-				new_series.data["last_update"] = last_updated
+				new_series.chapters_size = len(chapters)
+				new_series.last_update = last_updated
 
 				progress += 1 # update the progress bar
 				self.PROGRESS.emit(progress)
