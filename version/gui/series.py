@@ -12,7 +12,7 @@ from PyQt5.QtWidgets import (QListView, QAbstractItemDelegate,
 							 QListWidget, QMenu, QAction, QToolTip,
 							 QHBoxLayout, QVBoxLayout, QWidget,
 							 QDialog, QProgressBar)
-from ..database import fetch
+from ..database import fetch, seriesdb
 from . import gui_constants
 
 class SeriesModel(QAbstractListModel):
@@ -107,6 +107,8 @@ class SeriesModel(QAbstractListModel):
 
 	def populate(self):
 		"Populates the view with data from local series'"
+		#TODO: Move this method out of class
+		#TODO: Revise this so the model fetches data from the DB
 		data_thread = QThread()
 		loading_thread = QThread()
 		fetch_instance = fetch.Fetch()
@@ -172,13 +174,15 @@ class SeriesModel(QAbstractListModel):
 			loading.progress.setValue(prog)
 			loading.setText("Searching on local disk...")
 
-		def add_data(value):
-			container.set_data(value)
+		def populate_db(series):
+			assert isinstance(series, seriesdb.Series), "SeriesDB only receives objects of class Series"
+			seriesdb.SeriesDB.add_series(series)
 
 
 		fetch_instance.moveToThread(data_thread)
 		fetch_instance.DATA_COUNT.connect(loading.progress.setMaximum)
 		fetch_instance.PROGRESS.connect(a_progress)
+		fetch_instance.ADD_DB.connect(populate_db)
 		fetch_instance.DATA_READY.connect(append_data)
 		data_thread.started.connect(fetch_instance.local)
 		fetch_instance.FINISHED.connect(finished)

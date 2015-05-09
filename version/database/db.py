@@ -30,15 +30,28 @@ class Database:
 
 			# Series
 			c.execute("""
-			CREATE TABLE IF NOT EXISTS series(series_id INTEGER PRIMARY KEY, title TEXT, artist TEXT,
-								profile TEXT, series_path TEXT, info TEXT, type TEXT,
-								pub_date TEXT, date_added TEXT, last_read TEXT)
+			CREATE TABLE IF NOT EXISTS series(
+						series_id INTEGER PRIMARY KEY,
+						title TEXT,
+						artist TEXT,
+						profile BLOB,
+						series_path BLOB,
+						info TEXT,
+						type TEXT,
+						pub_date TEXT,
+						date_added TEXT,
+						last_read TEXT,
+						last_update TEXT)
 			""")
 
 			#chapters
 			c.execute("""
-			CREATE TABLE chapters(chapter_id INTERGER UNIQUE, series_id INTEGER, chapter_number INTEGER,
-									chapter_path TEXT, FOREIGN KEY(series_id) REFERENCES series(series_id))
+			CREATE TABLE IF NOT EXISTS chapters(
+						chapter_id INTEGER PRIMARY KEY,
+						series_id INTEGER,
+						chapter_number INTEGER,
+						chapter_path BLOB,
+						FOREIGN KEY(series_id) REFERENCES series(series_id))
 			""")
 
 			# tags & namespaces
@@ -47,7 +60,9 @@ class Database:
 			#CREATE TABLE namespaces(namespace_id INTERGER PRIMARY KEY, namespace TEXT)
 			#""")
 			c.execute("""
-			CREATE TABLE IF NOT EXISTS tags(tag_id INTERGER PRIMARY KEY, tag TEXT NOT NULL)
+			CREATE TABLE IF NOT EXISTS tags(
+						tag_id INTEGER PRIMARY KEY,
+						tag TEXT NOT NULL)
 			""")
 
 			## tags_mapping
@@ -58,10 +73,11 @@ class Database:
 						
 			# series tags
 			c.execute("""
-			CREATE TABLE IF NOT EXISTS series_tags(series_id INTEGER, tag_id INTEGER,
-										FOREIGN KEY(series_id) REFERENCES series(series_id),
-										FOREIGN KEY(tag_id) REFERENCES tags(tag_id))
-			""")
+			CREATE TABLE IF NOT EXISTS series_tags(
+						series_id INTEGER,
+						tag_id INTEGER,
+						FOREIGN KEY(series_id) REFERENCES series(series_id),
+						FOREIGN KEY(tag_id) REFERENCES tags(tag_id))""")
 
 			self.conn.commit()
 		self._check_db_version()
@@ -78,7 +94,7 @@ class Database:
 
 	def _check_db_version(self):
 		"Checks if DB version is allowed. Raises dialog if not"
-		vs = ["SELECT version FROM version"]
+		vs = [["SELECT version FROM version"]]
 		db_vs = self.exec(vs).fetchone()
 		if db_vs[0] not in db_constants.DB_VERSION:
 			msg = "The database is not compatible with the current version of the program"
@@ -86,16 +102,25 @@ class Database:
 			raise Exception(msg)
 
 	def exec(self, list_of_cmds):
-		'''Receives a list containing string of SQL commands to execute.
-		NB: haven't tested yet, but you should pass a list with 1 string if
-		you expect a return.
+		'''Receives a 2D list containing strings of SQL commands to execute.
+		NB: Pass only one statment if you expect a return.
 		'''
 		assert isinstance(list_of_cmds, list), "DB only receives lists containting sql cmds!"
 		c = self.conn.cursor()
-		for string in list_of_cmds:
-			c.execute(string)
+		for cmd in list_of_cmds:
+			try:
+				c.execute(cmd[0], cmd[1])
+			except IndexError:
+				c.execute(cmd[0])
 		self.conn.commit()
 		return c
+
+	def reset(self):
+		"WARNING: Resets the DB! You'll lose all data."
+		os.remove(db_constants.DB_PATH)
+		self.__init__()
+
+DB = Database()
 
 if __name__ == '__main__':
 	raise RuntimeError("Unit tests not yet implemented")
