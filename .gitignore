@@ -190,3 +190,5 @@ UpgradeLog*.htm
 
 # Microsoft Fakes
 FakesAssemblies/
+/db
+/thumbnails
