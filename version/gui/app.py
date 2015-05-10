@@ -88,7 +88,7 @@ class AppWindow(QMainWindow):
 		self.toolbar.addAction(chapter_view_action)
 
 		self.populate_action = QAction(chapter_view_icon, "Populate", self)
-		self.populate_action.triggered.connect(lambda: self.manga_model.populate())
+		self.populate_action.triggered.connect(lambda:series.populate())
 		self.toolbar.addAction(self.populate_action)
 
 		spacer_middle = QWidget() # aligns buttons to the right

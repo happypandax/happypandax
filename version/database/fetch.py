@@ -22,7 +22,7 @@ class Fetch(QObject):
 
 	FINISHED = pyqtSignal(bool)
 	DATA_COUNT = pyqtSignal(int)
-	DATA_READY = pyqtSignal(list)
+	DATA_READY = pyqtSignal()
 	PROGRESS = pyqtSignal(int)
 	ADD_DB = pyqtSignal(Series)
 
@@ -102,7 +102,7 @@ class Fetch(QObject):
 				self.ADD_DB.emit(new_series)
 			
 			#TODO: Revise this so that the model fetches data from DB
-			self.DATA_READY.emit(found_series)
+			self.DATA_READY.emit()
 		
 				#found_series.append(new_series)
 

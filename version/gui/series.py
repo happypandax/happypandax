@@ -13,14 +13,66 @@ from PyQt5.QtWidgets import (QListView, QAbstractItemDelegate,
 							 QHBoxLayout, QVBoxLayout, QWidget,
 							 QDialog, QProgressBar)
 from ..database import fetch, seriesdb
-from . import gui_constants
+from . import gui_constants, misc
+
+data_thread = QThread()
+loading_thread = QThread()
+
+def populate():
+	"Populates the database with series from local drive'"
+	#TODO: Revise this so the model fetches data from the DB
+	fetch_instance = fetch.Fetch()
+	#self.beginResetModel()
+	loading = misc.Loading()
+	loading.show()
+
+	def tell_model():
+		SeriesModel.populate()
+		if loading.progress.maximum() == loading.progress.value():
+			loading.hide()
+
+	def finished(status):
+		if status:
+			# TODO: make it spawn a dialog instead (from utils.py or misc.py)
+			print("Successfully data search")
+			data_thread.quit
+		else:
+			print("Could not successfully data search")
+			data_thread.quit
+
+	def fetch_deleteLater():
+		fetch_instance.deleteLater
+
+	def thread_deleteLater(): #NOTE: Isn't this bad?
+		data_thread.deleteLater
+
+	def a_progress(prog):
+		loading.progress.setValue(prog)
+		loading.setText("Searching on local disk...\n(Will take a while if first time)")
+
+	def populate_db(series):
+		assert isinstance(series, seriesdb.Series), "SeriesDB only receives objects of class Series"
+		seriesdb.SeriesDB.add_series(series)
+
+
+	fetch_instance.moveToThread(data_thread)
+	fetch_instance.DATA_COUNT.connect(loading.progress.setMaximum)
+	fetch_instance.PROGRESS.connect(a_progress)
+	fetch_instance.ADD_DB.connect(populate_db)
+	fetch_instance.DATA_READY.connect(tell_model) # useless, consider revising
+	data_thread.started.connect(fetch_instance.local)
+	fetch_instance.FINISHED.connect(finished)
+	fetch_instance.FINISHED.connect(fetch_deleteLater)
+	fetch_instance.FINISHED.connect(thread_deleteLater)
+	data_thread.start()
+
 
 class SeriesModel(QAbstractListModel):
+	"""Model for Model/View/Delegate framework
+	"""
+	_data = [] #a list for the data
 	def __init__(self, parent=None):
-		"""Model for Model/View/Delegate framework
-		"""
 		super().__init__(parent)
-		self._data = [] # a list for the data
 		self._data_count = 0 # number of items added to model
 		self._data_container = []
 
@@ -66,6 +118,7 @@ class SeriesModel(QAbstractListModel):
 	def setData(self, index, value, role = Qt.EditRole):
 		"""Takes the new data and appends it to old
 		Note: Might want to make make it replace instead"""
+		#NOTE: Things will be more complicated than this
 		if index.isValid() and 0 <= index.row() < len(self._data):
 			current_row = index.row()
 			current_data = self._data[current_row]
@@ -105,91 +158,14 @@ class SeriesModel(QAbstractListModel):
 		self._data_count += item_to_fetch
 		self.endInsertRows()
 
-	def populate(self):
-		"Populates the view with data from local series'"
-		#TODO: Move this method out of class
-		#TODO: Revise this so the model fetches data from the DB
-		data_thread = QThread()
-		loading_thread = QThread()
-		fetch_instance = fetch.Fetch()
-
-		class Loading(QWidget):
-			FINISHED = pyqtSignal()
-			def __init__(self, parent):
-				super().__init__(parent, Qt.FramelessWindowHint)
-				self.widget = QWidget(self)
-				self.widget.setStyleSheet("background-color:rgba(0, 0, 0, 0.65)")
-				self.progress = QProgressBar()
-				self.progress.setStyleSheet("color:white")
-				self.text = QLabel()
-				self.text.setStyleSheet("color:white;background-color:transparent;")
-				layout_ = QHBoxLayout()
-				inner_layout_ = QVBoxLayout()
-				inner_layout_.addWidget(self.text, 0, Qt.AlignHCenter)
-				inner_layout_.addWidget(self.progress)
-				self.widget.setLayout(inner_layout_)
-				layout_.addWidget(self.widget)
-				self.setLayout(layout_)
-				self.resize(300,100)
-				self.move(
-					parent.window().frameGeometry().topLeft() +
-					parent.window().rect().center() - self.rect().center())
-
-			def mousePressEvent(self, QMouseEvent):
-				pass
-
-			def setText(self, string):
-				if string != self.text.text():
-					self.text.setText(string)
-		self.beginResetModel()
-		from ..constants import WINDOW
-		loading = Loading(WINDOW)
-		loading.show()
-		self._data_count = 0
-		self._data = []
-
-		def append_data(series):
-			for t in series:
-				self._data.append(t)
-			self.layoutChanged.emit()
-			if loading.progress.maximum() == loading.progress.value():
-				pass
-				loading.hide()
-
-		def finished(status):
-			if status:
-				print("Successfully data search")
-				data_thread.quit
-			else:
-				print("Could not successfully data search")
-				data_thread.quit
-
-		def fetch_deleteLater():
-			fetch_instance.deleteLater
-
-		def thread_deleteLater():
-			data_thread.deleteLater
-
-		def a_progress(prog):
-			loading.progress.setValue(prog)
-			loading.setText("Searching on local disk...")
-
-		def populate_db(series):
-			assert isinstance(series, seriesdb.Series), "SeriesDB only receives objects of class Series"
-			seriesdb.SeriesDB.add_series(series)
-
-
-		fetch_instance.moveToThread(data_thread)
-		fetch_instance.DATA_COUNT.connect(loading.progress.setMaximum)
-		fetch_instance.PROGRESS.connect(a_progress)
-		fetch_instance.ADD_DB.connect(populate_db)
-		fetch_instance.DATA_READY.connect(append_data)
-		data_thread.started.connect(fetch_instance.local)
-		fetch_instance.FINISHED.connect(finished)
-		fetch_instance.FINISHED.connect(fetch_deleteLater)
-		fetch_instance.FINISHED.connect(thread_deleteLater)
-		data_thread.start()
-
+	@classmethod
+	def populate(cls):
+		"Populates the view with items from DB"
+		#TODO: add chapters to series here
+		pass
+		#db = series.SeriesDB
+		#cls._data = db.get_all_series()
+		#cls.layoutChanged()
 
 	def save(self):
 		"Appends to DB for save"
