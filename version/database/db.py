@@ -11,9 +11,11 @@ class Database:
 		# TODO: add a more tourough search in the DB
 		if os.path.isfile(db_constants.DB_PATH):
 			self.conn = sqlite3.connect(db_constants.DB_PATH)
+			self.conn.row_factory = sqlite3.Row
 		else:
 			self._create_db_path()
 			self.conn = sqlite3.connect(db_constants.DB_PATH)
+			self.conn.row_factory = sqlite3.Row
 			c = self.conn.cursor()
 			# version
 			c.execute("""
@@ -106,6 +108,7 @@ class Database:
 		NB: Pass only one statment if you expect a return.
 		'''
 		assert isinstance(list_of_cmds, list), "DB only receives lists containting sql cmds!"
+		# TODO: implement error handling. Idea: make it return an exception (possible?)
 		c = self.conn.cursor()
 		for cmd in list_of_cmds:
 			try:

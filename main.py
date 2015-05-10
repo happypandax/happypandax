@@ -1,5 +1,4 @@
-#NOTE: import like this:
-# version.parent.childs
+#NOTE: import like this: version.parent.childs
 from PyQt5.QtWidgets import QApplication
 from sys import argv, exit
 
