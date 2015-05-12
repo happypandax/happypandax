@@ -1,8 +1,6 @@
+import datetime, os
 from ..utils import today
-import datetime
-from .db import DB
-
-import os
+from .db import CommandQueue, StaleQueue, ResultQueue
 
 class SeriesDB:
 	"""
@@ -25,7 +23,9 @@ class SeriesDB:
 		"""Careful, might crash with very large libraries i think...
 		Returns a list of all series (<Series> class) currently in DB"""
 		executing = [["SELECT * FROM series"]]
-		all_series = DB.exec(executing).fetchall()
+		CommandQueue.put(executing)
+		cursor = ResultQueue.get()
+		all_series = cursor.fetchall()
 		series_list = []
 		for series_row in all_series:
 			series = Series()
@@ -50,7 +50,9 @@ class SeriesDB:
 		"Returns series with given id"
 		assert isinstance(id, int), "Provided ID is invalid"
 		executing = [["SELECT * FROM series WHERE series_id=?", (id,)]]
-		row = DB.exec(executing).fetchone()
+		CommandQueue.put(executing)
+		cursor = ResultQueue.get()
+		row = cursor.fetchone()
 		series = Series()
 		series.id = row['series_id']
 		series.title = row['title']
@@ -71,7 +73,9 @@ class SeriesDB:
 		"Returns series with given artist"
 		assert isinstance(artist, str), "Provided artist is invalid"
 		executing = [["SELECT * FROM series WHERE artist=?", (artist,)]]
-		row = DB.exec(executing).fetchone()
+		CommandQueue.put(executing)
+		cursor = ResultQueue.get()
+		row = cursor.fetchone()
 		series = Series()
 		series.id = row['series_id']
 		series.title = row['title']
@@ -91,7 +95,9 @@ class SeriesDB:
 		"Returns series with given title"
 		assert isinstance(id, int), "Provided title is invalid"
 		executing = [["SELECT * FROM series WHERE title=?", (title,)]]
-		row = DB.exec(executing).fetchone()
+		CommandQueue.put(executing)
+		cursor = ResultQueue.get()
+		row = cursor.fetchone()
 		series = Series()
 		series.id = row['series_id']
 		series.title = row['title']
@@ -116,7 +122,7 @@ class SeriesDB:
 	def add_series(object):
 		"Receives an object of class Series, and appends it to DB"
 		"Adds series of <Series> class into database"
-		assert isinstance(object, Series), "add_manga method only accept Series items"
+		assert isinstance(object, Series), "add_series method only accept Series items"
 
 		executing = [["""INSERT INTO series(title, artist, profile, series_path, 
 						info,type, pub_date, date_added, last_read, last_update)
@@ -135,7 +141,9 @@ class SeriesDB:
 					'last_update':object.last_update
 					}
 					]]
-		series_id = DB.exec(executing).lastrowid
+		CommandQueue.put(executing)
+		cursor = ResultQueue.get()
+		series_id = cursor.lastrowid
 		object.id = series_id
 		ChapterDB.add_chapters(object)
 		# TODO: Add a way to insert tags
@@ -173,7 +181,11 @@ class ChapterDB:
 			'chapter_number':chap_number,
 			'chapter_path':chap_path}
 			]]
-			DB.exec(executing)
+			StaleQueue.put(executing)
+
+	def add_chapters_raw(series_id):
+		"Adds chapter(s) to a series with the received series_id"
+		pass
 
 	@staticmethod
 	def get_chapters_for_series(series_id):
@@ -183,7 +195,9 @@ class ChapterDB:
 		executing = [["""SELECT chapter_number, chapter_path
 							FROM chapters WHERE series_id=?""",
 							(series_id,)]]
-		rows = DB.exec(executing)
+		CommandQueue.put(executing)
+		cursor = ResultQueue.get()
+		rows = cursor.fetchall()
 		chapters = {}
 		for row in rows:
 			chapters[row['chapter_number']] = bytes.decode(row['chapter_path'])
@@ -199,7 +213,9 @@ class ChapterDB:
 		executing = [["""SELECT chapter_number, chapter_path
 							FROM chapters WHERE chapter_id=?""",
 							(id,)]]
-		rows = DB.exec(executing)
+		CommandQueue.put(executing)
+		cursor = ResultQueue.get()
+		rows = cursor.fetchall()
 		chapters = {}
 		for row in rows:
 			chapters[row['chapter_number']] = bytes.decode(row['chapter_path'])

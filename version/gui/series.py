@@ -26,8 +26,11 @@ def populate():
 	loading = misc.Loading()
 	loading.show()
 
-	def tell_model():
-		SeriesModel.populate()
+	from ..database import seriesdb
+	def tell_model(list_of_series):
+		for series in list_of_series:
+			seriesdb.SeriesDB.add_series(series)
+		#SeriesModel.populate()
 		if loading.progress.maximum() == loading.progress.value():
 			loading.hide()
 

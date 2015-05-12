@@ -1,16 +1,14 @@
-import os
-import time
-import uuid #for unique filename
+import os, time, uuid # for unique filename
 
-from .db_constants import SERIES_PATH, IMG_FILES
 from . import seriesdb
+from .db_constants import SERIES_PATH, IMG_FILES
 from .seriesdb import Series
 from ..gui import gui_constants
 
 from PyQt5.QtCore import QObject, Qt, pyqtSignal, pyqtSlot # need this for interaction with main thread
 from PyQt5.QtGui import QImage
 
-"""This file contains functions to fectch series data"""
+"""This file contains functions to fetch series data"""
 
 class Fetch(QObject):
 	"""A class containing methods to fetch series data.
@@ -22,7 +20,7 @@ class Fetch(QObject):
 
 	FINISHED = pyqtSignal(bool)
 	DATA_COUNT = pyqtSignal(int)
-	DATA_READY = pyqtSignal()
+	DATA_READY = pyqtSignal(list)
 	PROGRESS = pyqtSignal(int)
 	ADD_DB = pyqtSignal(Series)
 
@@ -95,16 +93,14 @@ class Fetch(QObject):
 
 				progress += 1 # update the progress bar
 				self.PROGRESS.emit(progress)
-
-				found_series.append([(new_series.title, new_series.artist),
-							  new_series.profile])
+				#found_series.append([(new_series.title, new_series.artist),
+				#			  new_series.profile])
 				
-				self.ADD_DB.emit(new_series)
-			
+				found_series.append(new_series)
+
 			#TODO: Revise this so that the model fetches data from DB
-			self.DATA_READY.emit()
+			self.DATA_READY.emit(found_series)
 		
-				#found_series.append(new_series)
 
 		else: # if series folder is empty
 			self.FINISHED.emit(False)
