@@ -20,49 +20,59 @@ loading_thread = QThread()
 
 def populate():
 	"Populates the database with series from local drive'"
-	fetch_instance = fetch.Fetch()
 	loading = misc.Loading()
-	loading.show()
+	if not loading.ON:
+		misc.Loading.ON = True
+		fetch_instance = fetch.Fetch()
+		loading.show()
 
-	def finished(status):
-		if status:
-			# TODO: make it spawn a dialog instead (from utils.py or misc.py)
-			if loading.progress.maximum() == loading.progress.value():
-				loading.hide()
-			data_thread.quit
-		else:
-			loading.setText("<font color=red>An error occured. Try restarting..</font>")
-			loading.progress.setStyleSheet("background-color:red")
-			data_thread.quit
+		def finished(status):
+			if status:
+				# TODO: make it spawn a dialog instead (from utils.py or misc.py)
+				if loading.progress.maximum() == loading.progress.value():
+					misc.Loading.ON = False
+					loading.hide()
+				data_thread.quit
+			else:
+				loading.setText("<font color=red>An error occured. Try restarting..</font>")
+				loading.progress.setStyleSheet("background-color:red")
+				data_thread.quit
 
-	def fetch_deleteLater():
-		fetch_instance.deleteLater
+		def fetch_deleteLater():
+			fetch_instance.deleteLater
 
-	def thread_deleteLater(): #NOTE: Isn't this bad?
-		data_thread.deleteLater
+		def thread_deleteLater(): #NOTE: Isn't this bad?
+			data_thread.deleteLater
 
-	def a_progress(prog):
-		loading.progress.setValue(prog)
-		loading.setText("<center>Searching on local disk...\n(Will take a while on first time)</center>")
+		def a_progress(prog):
+			loading.progress.setValue(prog)
+			loading.setText("<center>Searching on local disk...\n(Will take a while on first time)</center>")
 
-	fetch_instance.moveToThread(data_thread)
-	fetch_instance.DATA_COUNT.connect(loading.progress.setMaximum)
-	fetch_instance.PROGRESS.connect(a_progress)
-	data_thread.started.connect(fetch_instance.local)
-	fetch_instance.FINISHED.connect(finished)
-	fetch_instance.FINISHED.connect(fetch_deleteLater)
-	fetch_instance.FINISHED.connect(thread_deleteLater)
-	data_thread.start()
+		fetch_instance.moveToThread(data_thread)
+		fetch_instance.DATA_COUNT.connect(loading.progress.setMaximum)
+		fetch_instance.PROGRESS.connect(a_progress)
+		data_thread.started.connect(fetch_instance.local)
+		fetch_instance.FINISHED.connect(finished)
+		fetch_instance.FINISHED.connect(fetch_deleteLater)
+		fetch_instance.FINISHED.connect(thread_deleteLater)
+		data_thread.start()
 
 
 class SeriesModel(QAbstractListModel):
 	"""Model for Model/View/Delegate framework
 	"""
 	_data = [] #a list for the data
+
 	def __init__(self, parent=None):
 		super().__init__(parent)
 		self._data_count = 0 # number of items added to model
-		self._data_container = []
+		self.update_data()
+		#self._data_container = []
+
+	@classmethod
+	def update_data(self):
+		"Populates the model with data from database"
+		self._data = seriesdb.SeriesDB.get_all_series()
 
 	def data(self, index, role):
 		if not index.isValid():
@@ -72,13 +82,15 @@ class SeriesModel(QAbstractListModel):
 			return QVariant()
 
 		current_row = index.row() 
-		current_data = self._data[current_row]
-		metadata = current_data[0]
-		pixmap = current_data[1]
+		current_series = self._data[current_row]
 
 		if role == Qt.DisplayRole:
-			return metadata
+			title = current_series.title
+			artist = current_series.artist
+			text = {'title':title, 'artist':artist}
+			return text
 		if role == Qt.DecorationRole:
+			pixmap = current_series.profile
 			return pixmap
 		if role == Qt.BackgroundRole:
 			bg_color = QColor(70, 67, 70)
@@ -106,14 +118,15 @@ class SeriesModel(QAbstractListModel):
 	def setData(self, index, value, role = Qt.EditRole):
 		"""Takes the new data and appends it to old
 		Note: Might want to make make it replace instead"""
-		#NOTE: Things will be more complicated than this
-		if index.isValid() and 0 <= index.row() < len(self._data):
-			current_row = index.row()
-			current_data = self._data[current_row]
-			self._data.append(value)
-			self.dataChanged.emit(index, index, ()) # emit a tuple of roles that have changed in 3rd arg
-			return True
-		return False
+		super().setData(self)
+		#NOTE: Things are more complicated than this
+		#if index.isValid() and 0 <= index.row() < len(self._data):
+		#	current_row = index.row()
+		#	current_data = self._data[current_row]
+		#	self._data.append(value)
+		#	self.dataChanged.emit(index, index, ()) # emit a tuple of roles that have changed in 3rd arg
+		#	return True
+		#return False
 
 	def insertRows(self, position, value, rows=1, index = QModelIndex()):
 		self.beginInsertRows(QModelIndex(), position, position + rows - 1)
@@ -139,21 +152,12 @@ class SeriesModel(QAbstractListModel):
 
 	def fetchMore(self, index):
 		diff = len(self._data) - self._data_count
-		item_to_fetch = min(100, diff)
+		item_to_fetch = min(50, diff)
 
 		self.beginInsertRows(index, self._data_count,
 					   self._data_count+item_to_fetch-1)
 		self._data_count += item_to_fetch
 		self.endInsertRows()
-
-	@classmethod
-	def populate(cls):
-		"Populates the view with items from DB"
-		#TODO: add chapters to series here
-		pass
-		#db = series.SeriesDB
-		#cls._data = db.get_all_series()
-		#cls.layoutChanged()
 
 	def save(self):
 		"Appends to DB for save"
@@ -189,8 +193,8 @@ class CustomDelegate(QStyledItemDelegate):
 
 		self.text = index.data(Qt.DisplayRole)
 		popup = index.data(Qt.ToolTipRole)
-		title = self.text[0]
-		artist = self.text[1]
+		title = self.text['title']
+		artist = self.text['artist']
 
 		# Enable this to see the defining box
 		#painter.drawRect(option.rect)
@@ -352,7 +356,6 @@ class MangaView(QListView):
 		# prevent all items being loaded at the same time
 		#self.setLayoutMode(self.Batched)
 		#self.setBatchSize(15) #Only loads 20 images at a time
-		#self.setWordWrap(True)
 		self.setMouseTracking(True)
 
 	def foo(self):
@@ -429,8 +432,8 @@ class ChapterUpper(QFrame):
 		self.image = index.data(Qt.DecorationRole)
 		self.text = index.data(Qt.DisplayRole)
 		self.metadata = index.data(Qt.UserRole+1)
-		self.title = self.text[0]
-		self.artist = self.text[1]
+		self.title = self.text['title']
+		self.artist = self.text['artist']
 		self.drawImage(self.image)
 
 	def initUI(self):

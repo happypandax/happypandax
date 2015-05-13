@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QVBoxLayout, QHBoxLayout)
 
 class Loading(QWidget):
+	ON = False #to prevent multiple instances
 	def __init__(self):
 		from ..constants import WINDOW as parent
 		super().__init__(parent, Qt.FramelessWindowHint)
