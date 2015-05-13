@@ -1,8 +1,7 @@
 import os, time, uuid # for unique filename
 
-from . import seriesdb
 from .db_constants import SERIES_PATH, IMG_FILES
-from .seriesdb import Series
+from .seriesdb import Series, SeriesDB
 from ..gui import gui_constants
 
 from PyQt5.QtCore import QObject, Qt, pyqtSignal, pyqtSlot # need this for interaction with main thread
@@ -20,9 +19,7 @@ class Fetch(QObject):
 
 	FINISHED = pyqtSignal(bool)
 	DATA_COUNT = pyqtSignal(int)
-	DATA_READY = pyqtSignal(list)
 	PROGRESS = pyqtSignal(int)
-	ADD_DB = pyqtSignal(Series)
 
 	def __init__(self, parent=None):
 		super().__init__(parent)
@@ -30,11 +27,7 @@ class Fetch(QObject):
 	
 	def local(self):
 		"""Do a local search in the given SERIES_PATH.
-		TODO: Return bool for indicating success; Add found series
-				dynamically.
 		"""
-
-		found_series = []
 		series_l = sorted(os.listdir(SERIES_PATH)) #list of folders in the "Series" folder 
 		if len(series_l) != 0: # if series folder is not empty
 			self.DATA_COUNT.emit(len(series_l)) #tell model how many items are going to be added
@@ -93,24 +86,12 @@ class Fetch(QObject):
 
 				progress += 1 # update the progress bar
 				self.PROGRESS.emit(progress)
-				#found_series.append([(new_series.title, new_series.artist),
-				#			  new_series.profile])
 				
-				found_series.append(new_series)
-
-			#TODO: Revise this so that the model fetches data from DB
-			self.DATA_READY.emit(found_series)
-		
+				SeriesDB.add_series(new_series)
 
 		else: # if series folder is empty
 			self.FINISHED.emit(False)
 			# might want to include an error message
-
-			#STRING = """NAME-:-{0} \nNUMBER_CHAPTERS-:-{1} \nLAST_EDITED-:-{2} \n""".format(name,len(chapters),last_edit)
-			#f_path = os.path.join(path, C.MetaF)
-			#f = open(f_path, 'w')    
-			#f.write( STRING )
-			#f.close()
 
 		# everything went well
 		self.FINISHED.emit(True)
@@ -133,7 +114,6 @@ class Fetch(QObject):
 		image.load(img_path)
 		image = image.scaled(w, h, Qt.KeepAspectRatio, Qt.SmoothTransformation)
 		image.save(new_img_path, quality=100)
-		#del pixmap
-		#gc.collect()
+
 		abs_path = os.path.abspath(new_img_path)
 		return abs_path

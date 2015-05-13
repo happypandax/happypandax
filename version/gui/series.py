@@ -20,27 +20,19 @@ loading_thread = QThread()
 
 def populate():
 	"Populates the database with series from local drive'"
-	#TODO: Revise this so the model fetches data from the DB
 	fetch_instance = fetch.Fetch()
-	#self.beginResetModel()
 	loading = misc.Loading()
 	loading.show()
-
-	from ..database import seriesdb
-	def tell_model(list_of_series):
-		for series in list_of_series:
-			seriesdb.SeriesDB.add_series(series)
-		#SeriesModel.populate()
-		if loading.progress.maximum() == loading.progress.value():
-			loading.hide()
 
 	def finished(status):
 		if status:
 			# TODO: make it spawn a dialog instead (from utils.py or misc.py)
-			print("Successfully data search")
+			if loading.progress.maximum() == loading.progress.value():
+				loading.hide()
 			data_thread.quit
 		else:
-			print("Could not successfully data search")
+			loading.setText("<font color=red>An error occured. Try restarting..</font>")
+			loading.progress.setStyleSheet("background-color:red")
 			data_thread.quit
 
 	def fetch_deleteLater():
@@ -51,18 +43,11 @@ def populate():
 
 	def a_progress(prog):
 		loading.progress.setValue(prog)
-		loading.setText("Searching on local disk...\n(Will take a while if first time)")
-
-	def populate_db(series):
-		assert isinstance(series, seriesdb.Series), "SeriesDB only receives objects of class Series"
-		seriesdb.SeriesDB.add_series(series)
-
+		loading.setText("<center>Searching on local disk...\n(Will take a while on first time)</center>")
 
 	fetch_instance.moveToThread(data_thread)
 	fetch_instance.DATA_COUNT.connect(loading.progress.setMaximum)
 	fetch_instance.PROGRESS.connect(a_progress)
-	fetch_instance.ADD_DB.connect(populate_db)
-	fetch_instance.DATA_READY.connect(tell_model) # useless, consider revising
 	data_thread.started.connect(fetch_instance.local)
 	fetch_instance.FINISHED.connect(finished)
 	fetch_instance.FINISHED.connect(fetch_deleteLater)

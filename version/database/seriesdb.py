@@ -1,6 +1,6 @@
 import datetime, os
 from ..utils import today
-from .db import CommandQueue, StaleQueue, ResultQueue
+from .db import CommandQueue, ResultQueue
 
 class SeriesDB:
 	"""
@@ -181,7 +181,10 @@ class ChapterDB:
 			'chapter_number':chap_number,
 			'chapter_path':chap_path}
 			]]
-			StaleQueue.put(executing)
+			CommandQueue.put(executing)
+			# neccessary to keep order... feels awkward, will prolly redo this.
+			d = ResultQueue.get()
+			del d
 
 	def add_chapters_raw(series_id):
 		"Adds chapter(s) to a series with the received series_id"
