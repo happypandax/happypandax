@@ -12,6 +12,7 @@ class Loading(QWidget):
 		self.progress = QProgressBar()
 		self.progress.setStyleSheet("color:white")
 		self.text = QLabel()
+		self.text.setAlignment(Qt.AlignCenter)
 		self.text.setStyleSheet("color:white;background-color:transparent;")
 		layout_ = QHBoxLayout()
 		inner_layout_ = QVBoxLayout()

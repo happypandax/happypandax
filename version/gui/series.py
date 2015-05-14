@@ -1,17 +1,17 @@
 from PyQt5.QtCore import (Qt, QAbstractListModel, QModelIndex, QVariant,
-						  QSize, QRect, QRectF, QEvent, pyqtSignal,
-						  QThread, QMetaObject, Q_ARG, QTimer,
-						  QDataStream, QFile)
-from PyQt5.QtGui import (QPixmap, QIcon, QBrush, QColor,
-						 QPainter, QFont, QPen, QTextDocument,
-						 QMouseEvent, QHelpEvent, QImage,
-						 QTransform, QPixmapCache)
-from PyQt5.QtWidgets import (QListView, QAbstractItemDelegate,
-							 QFrame, QLabel, QStyledItemDelegate,
-							 QStyle, QApplication, QItemDelegate,
-							 QListWidget, QMenu, QAction, QToolTip,
-							 QHBoxLayout, QVBoxLayout, QWidget,
-							 QDialog, QProgressBar)
+						  QSize, QRect, QEvent, pyqtSignal, QThread,
+						  QTimer)
+from PyQt5.QtGui import (QPixmap, QBrush, QColor, QPainter,
+						 QFont, QPen, QTextDocument,
+						 QMouseEvent, QHelpEvent,
+						 QPixmapCache)
+from PyQt5.QtWidgets import (QListView, QFrame, QLabel,
+							 QStyledItemDelegate, QStyle,
+							 QMenu, QAction, QToolTip,
+							 QHBoxLayout, QVBoxLayout,
+							 QWidget, QPushButton,
+							 QSizePolicy, QTableWidget,
+							 QTableWidgetItem)
 from ..database import fetch, seriesdb
 from . import gui_constants, misc
 
@@ -28,6 +28,7 @@ def populate():
 
 		def finished(status):
 			if status:
+				SeriesModel.update_data()
 				# TODO: make it spawn a dialog instead (from utils.py or misc.py)
 				if loading.progress.maximum() == loading.progress.value():
 					misc.Loading.ON = False
@@ -46,7 +47,7 @@ def populate():
 
 		def a_progress(prog):
 			loading.progress.setValue(prog)
-			loading.setText("<center>Searching on local disk...\n(Will take a while on first time)</center>")
+			loading.setText("Searching on local disk...\n(Will take a while on first time)")
 
 		fetch_instance.moveToThread(data_thread)
 		fetch_instance.DATA_COUNT.connect(loading.progress.setMaximum)
@@ -98,11 +99,8 @@ class SeriesModel(QAbstractListModel):
 			return bg_brush
 		#if role == Qt.ToolTipRole:
 		#	return "Example popup!!"
-		#if role == Qt.UserRole+1:
-		#	#this needs to be replaced by real metadata
-		#	test_data = {"date_added":"01 May 2015", "chapters":"30",
-		#		"year":"2015"}
-		#	return index
+		if role == Qt.UserRole+1:
+			return current_series
 
 		return None
 
@@ -336,6 +334,7 @@ class CustomDelegate(QStyledItemDelegate):
 		else:
 			return super().editorEvent(event, model, option, index)
 
+
 class MangaView(QListView):
 	"""
 	TODO: (zoom-in/zoom-out) mousekeys
@@ -396,17 +395,22 @@ class MangaView(QListView):
 
 	#unusable code
 	#def event(self, event):
-	#	if event.type() == QEvent.ToolTip:
-	#		help_event = QHelpEvent(event)
-	#		index = self.indexAt(help_event.globalPos())
-	#		if index is not -1:
-	#			QToolTip.showText(help_event.globalPos(), "Tooltip!")
-	#		else:
-	#			QToolTip().hideText()
-	#			event.ignore()
-	#		return True
+	#	#if event.type() == QEvent.ToolTip:
+	#	#	help_event = QHelpEvent(event)
+	#	#	index = self.indexAt(help_event.globalPos())
+	#	#	if index is not -1:
+	#	#		QToolTip.showText(help_event.globalPos(), "Tooltip!")
+	#	#	else:
+	#	#		QToolTip().hideText()
+	#	#		event.ignore()
+	#	#	return True
+	#	if event.type() == QEvent.Enter:
+	#		print("hovered")
 	#	else:
 	#		return super().event(event)
+
+	def entered(*args, **kwargs):
+		return super().entered(**kwargs)
 
 class ChapterView(MangaView):
 	"A view for chapters"
@@ -414,59 +418,120 @@ class ChapterView(MangaView):
 		super().__init__()
 
 
-class ChapterUpper(QFrame):
+class ChapterInfo(QFrame):
 	"A view for chapter data"
 	def __init__(self, parent=None):
 		super().__init__(parent)
-		height = 250
-		self.H = height
-		self.setMaximumHeight(height)
+		self.H = gui_constants.CHAP_IMAGE_H
+		self.W = self.H//1.6
 		self.setFrameStyle(1)
 		self.setLineWidth(1)
+		self.setMaximumWidth(self.W*1.2)
 		#self.data = []
 		self.initUI()
 
 	def display_manga(self, index):
 		"""Receives a QModelIndex and updates the
 		viewport with specific manga data"""
-		self.image = index.data(Qt.DecorationRole)
-		self.text = index.data(Qt.DisplayRole)
-		self.metadata = index.data(Qt.UserRole+1)
-		self.title = self.text['title']
-		self.artist = self.text['artist']
-		self.drawImage(self.image)
+		series = index.data(Qt.UserRole+1)
+		self.drawContents(series)
 
 	def initUI(self):
-		"Constructs UI for the chapter upper view"
-		main_layout = QHBoxLayout()
-		self.setLayout(main_layout)
+		"Constructs UI for the chapter info view"
+		background_layout = QVBoxLayout()
+		self.setLayout(background_layout)
+		
 
-		self.image_size = QSize(self.H//1.6, self.H)
-		self.image_icon_size = QSize(self.H//1.6-2, self.H-2)
-
+		# The image
+		self.image_icon_size = QSize(self.W, self.H)
 		self.image_box = QLabel()
-		self.image_box.resize(self.image_size)
+		background_layout.addWidget(self.image_box, 0, Qt.AlignHCenter)
 
-		main_layout.addWidget(self.image_box, 0, Qt.AlignHCenter)
+		# the metadata
+		self.metadata = QTableWidget()
+		self.metadata.setRowCount(10)
+		self.metadata.setColumnCount(2)
+		#self.metadata.setColumnWidth(2,70)
+		#self.metadata.resizeColumnsToContents()
+		self.metadata.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+		self.metadata.setShowGrid(False)
+		self.metadata.horizontalHeader().setVisible(False)
+		self.metadata.verticalHeader().setVisible(False)
+		self.metadata.setFrameShape(QFrame.NoFrame)
+		self.metadata.setFocusPolicy(Qt.NoFocus)
+		self.metadata.setWordWrap(True)
+		background_layout.addWidget(self.metadata, 2)
 
-	def drawImage(self, img):
-		self.image = QPixmap(img)
-		self.new_image = self.image.scaled(self.image_icon_size, Qt.KeepAspectRatio,
+		def t_props(obj):
+			obj.setWordWrap(True)
+
+		self.title = QLabel()
+		t_props(self.title)
+		self.title.setAlignment(Qt.AlignHCenter)
+		self.metadata.setCellWidget(0,0,self.title)
+		self.metadata.setSpan(0,0,1,2)
+
+		self.artist = QLabel()
+		self.artist.setAlignment(Qt.AlignLeft)
+		self.metadata.setCellWidget(1,0, self.artist)
+
+		self.chapter_count = QLabel()
+		self.chapter_count.setAlignment(Qt.AlignRight)
+		self.metadata.setCellWidget(1, 1, self.chapter_count)
+
+		self.info = QLabel()
+		self.info.setAlignment(Qt.AlignLeft)
+		t_props(self.info)
+		self.metadata.setCellWidget(2,0, self.info)
+		self.metadata.setSpan(2,0,1,2)
+
+		#self.last_read = QLabel("None")
+		#self.last_update = QLabel("None")
+
+		self.date_added = QLabel()
+		self.date_added.setAlignment(Qt.AlignLeft)
+		self.metadata.setCellWidget(3,0, self.date_added)
+
+		self.pub_date = QLabel()
+		self.pub_date.setAlignment(Qt.AlignRight)
+		self.metadata.setCellWidget(3,1, self.pub_date)
+
+		self.tags = QLabel()
+		t_props(self.tags)
+		self.tags.setAlignment(Qt.AlignLeft)
+		self.metadata.setCellWidget(4,0, self.tags)
+		self.metadata.setSpan(4, 0, 1, 2)
+
+		self.path = QLabel()
+		t_props(self.path)
+		self.path.setAlignment(Qt.AlignLeft)
+		self.metadata.setCellWidget(5,0, self.path)
+		self.metadata.setSpan(5,0,1,2)
+
+
+	def drawContents(self, series):
+		assert isinstance(series, seriesdb.Series), "Please provide a series of Series class from SeriesDB"
+		
+		new_image = QPixmap(series.profile).scaled(self.image_icon_size, Qt.KeepAspectRatio,
 					Qt.SmoothTransformation)
-		self.image_box.setPixmap(self.new_image)
+		self.image_box.setPixmap(new_image)
+		self.title.setText("<font size='4' color='#585858'><b>"+series.title+"</b></font>")
+		self.artist.setText("<font size='3' color='#585858'>"+series.artist+"</font>")
+		self.chapter_count.setText("<font size='2' color='#B7153E'><i>Chapters:</i></font>"+"TODO")
+		self.info.setText("<font size='2' color='#B7153E'><i>Description:</i></font><br>"+series.info)
+		self.date_added.setText("<font size='2' color='#B7153E'><i>Date Added:</i></font><br>"+series.date_added)
+		self.pub_date.setText("<font size='2' color='#B7153E'><i>Date Published:</i></font><br>"+series.pub_date)
+		self.tags.setText("<font size='2' color='#B7153E'><i>Tags:</i></font><br>"+"TODO")
+		self.path.setText("<font size='2' color='#B7153E'><i>Path:</i></font><br><font size='2'><i>"+series.path+"</i></font><br>")
+		#self.path.setText("Path:\n"+series.path)
+		self.metadata.resizeRowsToContents()
 
-
-	def resizeEvent(self, resizeevent):
-		"""This method basically need to make sure
-		the image in chapter view gets resized when moving
-		splitter"""
-		super().resizeEvent(resizeevent)
-		self.MAIN_SIZE = resizeevent.size()
-		self.H = self.MAIN_SIZE.height()
-
-		#for debugging purposes
-		#print("Old Size: ", resizeevent.oldSize())
-		#print("New Size: ", resizeevent.size())
+	#def resizeEvent(self, resizeevent):
+	#	"""This method basically need to make sure
+	#	the image in chapter view gets resized when moving
+	#	splitter"""
+	#	super().resizeEvent(resizeevent)
+	#	self.MAIN_SIZE = resizeevent.size()
 
 
 if __name__ == '__main__':

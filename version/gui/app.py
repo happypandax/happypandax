@@ -23,7 +23,7 @@ class AppWindow(QMainWindow):
 		self.chapter_display()
 
 		self.display.addWidget(self.manga_view)
-		self.display.addWidget(self.chapter_view)
+		self.display.addWidget(self.chapter_main)
 
 		self.setCentralWidget(self.center)
 		self.setWindowTitle("Sadpanda")
@@ -49,17 +49,19 @@ class AppWindow(QMainWindow):
 
 	def chapter_display(self):
 		"Initiates chapter view"
-		self.chapter_view = QSplitter()
-		self.chapter_view.setOrientation(Qt.Vertical)
-		self.chapter_view.setHandleWidth(3)
+		self.chapter_main = QWidget()
+		self.chapter_layout = QHBoxLayout()
+		self.chapter_main.setLayout(self.chapter_layout)
 
-		self.chapter_upper = series.ChapterUpper()
-		self.chapter_view.addWidget(self.chapter_upper)
+		#self.chapter_info.setContentsMargins(-8,-7,-7,-7)
+		#self.chapter_info.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+		self.chapter_info_view = series.ChapterInfo()
+		self.chapter_layout.addWidget(self.chapter_info_view)
 
 		chapter_list_view = series.ChapterView()
-		self.chapter_view.addWidget(chapter_list_view)
-		self.chapter_view.setCollapsible(0, True)
-		self.chapter_view.setCollapsible(1, False)
+		self.chapter_layout.addWidget(chapter_list_view)
+		#self.chapter.setCollapsible(0, True)
+		#self.chapter.setCollapsible(1, False)
 
 	def init_toolbar(self):
 		self.toolbar = QToolBar()
@@ -116,7 +118,7 @@ class AppWindow(QMainWindow):
 		Note: 0-based indexing
 		"""
 		if index is not None:
-			self.chapter_upper.display_manga(index)
+			self.chapter_info_view.display_manga(index)
 			self.display.setCurrentIndex(number)
 		else:
 			self.display.setCurrentIndex(number)

@@ -124,21 +124,27 @@ class SeriesDB:
 		"Adds series of <Series> class into database"
 		assert isinstance(object, Series), "add_series method only accept Series items"
 
+		def check(obj):
+			if obj == None:
+				return "None"
+			else:
+				return obj
+
 		executing = [["""INSERT INTO series(title, artist, profile, series_path, 
 						info,type, pub_date, date_added, last_read, last_update)
 					VALUES(:title, :artist, :profile, :series_path, :info, :type,
 						:pub_date, :date_added, :last_read, :last_update)""",
 					{
-					'title':object.title,
-					'artist':object.artist,
+					'title':check(object.title),
+					'artist':check(object.artist),
 					'profile':str.encode(object.profile),
 					'series_path':str.encode(object.path),
-					'info':object.info,
-					'type':object.type,
-					'pub_date':object.pub_date,
-					'date_added':object.date_added,
-					'last_read':object.last_read,
-					'last_update':object.last_update
+					'info':check(object.info),
+					'type':check(object.type),
+					'pub_date':check(object.pub_date),
+					'date_added':check(object.date_added),
+					'last_read':check(object.last_read),
+					'last_update':check(object.last_update)
 					}
 					]]
 		CommandQueue.put(executing)
