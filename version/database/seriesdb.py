@@ -53,6 +53,7 @@ def series_map(row, series):
 	series.language = row['language']
 	series.status = row['status']
 	series.type = row['type']
+	series.fav = row['fav']
 	series.pub_date = row['pub_date']
 	series.last_update = row['last_update']
 	series.last_read = row['last_read']
@@ -66,8 +67,8 @@ def default_exec(object):
 		else:
 			return obj
 	executing = [["""INSERT INTO series(title, artist, profile, series_path, 
-					info, type, status, pub_date, date_added, last_read, last_update)
-				VALUES(:title, :artist, :profile, :series_path, :info, :type,
+					info, type, fav, status, pub_date, date_added, last_read, last_update)
+				VALUES(:title, :artist, :profile, :series_path, :info, :type, :fav,
 					:status, :pub_date, :date_added, :last_read, :last_update)""",
 				{
 				'title':check(object.title),
@@ -75,6 +76,7 @@ def default_exec(object):
 				'profile':str.encode(object.profile),
 				'series_path':str.encode(object.path),
 				'info':check(object.info),
+				'fav':check(object.fav),
 				'type':check(object.type),
 				'language':check(object.language),
 				'status':check(object.status),
@@ -102,6 +104,29 @@ class SeriesDB:
 	"""
 	def __init__(self):
 		raise Exception("SeriesDB should not be instantiated")
+
+	@staticmethod
+	def modify_series(series_id, title=False, artist=False, info=False, type=False, fav=False,
+				   language=False, status=False, pub_date=False):
+		"Modifies series with given series id"
+		pass
+
+	@staticmethod
+	def fav_series_set(series_id, fav):
+		"Set fav on series with given series id, and returns the series"
+		executing = [["UPDATE series SET fav=? WHERE series_id=?", (fav, series_id)]]
+		CommandQueue.put(executing)
+		c = ResultQueue.get()
+		del c
+		ex = [["SELECT * FROM series WHERE series_id=?", (series_id,)]]
+		CommandQueue.put(ex)
+		cursor = ResultQueue.get()
+		row = cursor.fetchone()
+		series = Series()
+		series.id = row['series_id']
+		series = series_map(row, series)
+		return series
+		
 
 	@staticmethod
 	def get_all_series():
@@ -167,6 +192,23 @@ class SeriesDB:
 		pass
 
 	@staticmethod
+	def get_series_by_fav(list_of_tags):
+		"Returns a list of series with fav set to true (1)"
+		assert isinstance(list_of_tags, list), "Provided tag(s) is/are invalid"
+		x = 1
+		executing = [["SELECT * FROM series WHERE fav=?", (x,)]]
+		CommandQueue.put(executing)
+		cursor = ResultQueue.get()
+		
+		series_list = []
+		for row in cursor.fetchall():
+			series = Series()
+			series.id = row["series_id"]
+			series = series_map(row, series)
+			series_list.append(series)
+		return series_list
+
+	@staticmethod
 	def add_series(object):
 		"Receives an object of class Series, and appends it to DB"
 		"Adds series of <Series> class into database"
@@ -216,6 +258,7 @@ class SeriesDB:
 	def del_series(manga_id):
 		"Deletes series with the given id recursively."
 		pass
+
 
 class ChapterDB:
 	"""
@@ -327,6 +370,7 @@ class Series:
 		self.artist = None
 		self.chapters = {}
 		self.info = None
+		self.fav = 0
 		self.type = None
 		self.language = None
 		self.status = None

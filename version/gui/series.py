@@ -1,6 +1,6 @@
 from PyQt5.QtCore import (Qt, QAbstractListModel, QModelIndex, QVariant,
 						  QSize, QRect, QEvent, pyqtSignal, QThread,
-						  QTimer)
+						  QTimer, QPointF)
 from PyQt5.QtGui import (QPixmap, QBrush, QColor, QPainter,
 						 QFont, QPen, QTextDocument,
 						 QMouseEvent, QHelpEvent,
@@ -129,14 +129,31 @@ class SeriesModel(QAbstractListModel):
 		#	return True
 		#return False
 
-	def insertRows(self, list_of_series, position=len(_data)-1,
+	def addRows(self, list_of_series, position=len(_data)-1,
 				rows=1, index = QModelIndex()):
+		"Adds new series data to model and DB"
 		self.beginInsertRows(QModelIndex(), position, position + rows - 1)
 		for series in list_of_series:
 			n_series = seriesdb.SeriesDB.add_series_return(series)
 			self._data.append(n_series)
 		self.endInsertRows()
 		return True
+
+	def insertRows(self, list_of_series, position=len(_data)-1,
+				rows=1, index = QModelIndex()):
+		"Inserts new series data to the data list WITHOUT adding to DB"
+		self.beginInsertRows(QModelIndex(), position, position + rows - 1)
+		for pos, series in enumerate(list_of_series, 1):
+			self._data.insert(position+pos, n_series)
+		self.endInsertRows()
+		return True
+
+	def replaceRows(self, index, list_of_series, position=len(_data)-1, rows=1):
+		"Inserts new series data to the data list WITHOUT adding to DB"
+		for pos, series in enumerate(list_of_series):
+			del self._data[position+pos]
+			self._data.insert(position+pos, series)
+		self.dataChanged.emit(index, index, [Qt.UserRole+1])
 
 	#def removeRows(self, int, int2, parent = QModelIndex()):
 	#	pass
@@ -194,6 +211,9 @@ class CustomDelegate(QStyledItemDelegate):
 	def paint(self, painter, option, index):
 		self.initStyleOption(option, index)
 
+		assert isinstance(painter, QPainter)
+
+		series = index.data(Qt.UserRole+1)
 		self.text = index.data(Qt.DisplayRole)
 		popup = index.data(Qt.ToolTipRole)
 		title = self.text['title']
@@ -297,6 +317,10 @@ class CustomDelegate(QStyledItemDelegate):
 			else:
 				painter.drawPixmap(QRect(x, y, w, h),
 						self.image)
+		
+		# draw star if it's favourited
+		if series.fav == 1:
+			painter.drawPixmap(QPointF(x,y), QPixmap(gui_constants.STAR_PATH))
 
 		#draw the label for text
 		painter.save()
@@ -372,18 +396,42 @@ class MangaView(QListView):
 	def foo(self):
 		pass
 
+	def favourite(self, index):
+		assert isinstance(index, QModelIndex)
+		series = index.data(Qt.UserRole+1)
+		if series.fav == 1:
+			n_series = seriesdb.SeriesDB.fav_series_set(series.id, 0)
+			self.series_model.replaceRows(index, [n_series], index.row(), 1)
+		else:
+			n_series = seriesdb.SeriesDB.fav_series_set(series.id, 1)
+			self.series_model.replaceRows(index, [n_series], index.row(), 1)
+
 	def contextMenuEvent(self, event):
 		handled = False
 		custom = False
 		index = self.indexAt(event.pos())
 		menu = QMenu()
 		all = QAction("Remove", menu, triggered = self.foo)
+		def fav():
+			self.favourite(index)
+
 		if index.isValid():
-			action_1 = QAction("Awesome!", menu, triggered = self.foo)
-			action_2 = QAction("It just werks!", menu, triggered = self.foo)
-			menu.addActions([action_1, action_2])
-			handled = True
-			custom = True
+			if index.data(Qt.UserRole+1).fav==1: # here you can limit which items to show these actions for
+				action_1 = QAction("Favourite", menu, triggered = fav)
+				action_1.setCheckable(True)
+				action_1.setChecked(True)
+				action_2 = QAction("It just werks!", menu, triggered = self.foo)
+				menu.addActions([action_1, action_2])
+				handled = True
+				custom = True
+			if index.data(Qt.UserRole+1).fav==0: # here you can limit which items to show these actions for
+				action_1 = QAction("Favourite", menu, triggered = fav)
+				action_1.setCheckable(True)
+				action_1.setChecked(False)
+				action_2 = QAction("It just werks!", menu, triggered = self.foo)
+				menu.addActions([action_1, action_2])
+				handled = True
+				custom = True
 		else:
 			add_series = QAction("&Add new Series...", menu,
 						triggered = self.SERIES_DIALOG.emit)
@@ -407,7 +455,7 @@ class MangaView(QListView):
 
 	def spawn_dialog(self):
 		dialog = misc.SeriesDialog()
-		dialog.SERIES.connect(self.series_model.insertRows)
+		dialog.SERIES.connect(self.series_model.addRows)
 		dialog.trigger() # TODO: implement mass series' adding
 
 	#unusable code

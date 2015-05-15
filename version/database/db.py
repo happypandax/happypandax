@@ -47,6 +47,7 @@ def init_db():
 					profile BLOB,
 					series_path BLOB,
 					info TEXT,
+					fav INTEGER,
 					type TEXT,
 					language TEXT,
 					status TEXT,

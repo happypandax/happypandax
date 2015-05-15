@@ -1,4 +1,8 @@
+import os
 """Contains constants to be used by several modules"""
+
+current_dir, f = os.path.split(os.path.realpath(__file__))
+static_dir = os.path.join(current_dir, "static")
 
 #default stylesheet path
 default_stylesheet_path = ""
@@ -12,6 +16,10 @@ THUMB_W_SIZE = 145
 
 # chapterview
 CHAP_IMAGE_H = 325
+
+# star paths
+STAR_PATH = os.path.join(static_dir, "star.png")
+STAR_SMALL_PATH = os.path.join(static_dir, "star_small.png")
 
 # controls
 THUMBNAIL_CACHE_SIZE = 10240*100 #10240 is 10mb, so sum is 1gb
