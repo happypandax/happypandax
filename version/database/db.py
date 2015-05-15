@@ -48,6 +48,8 @@ def init_db():
 					series_path BLOB,
 					info TEXT,
 					type TEXT,
+					language TEXT,
+					status TEXT,
 					pub_date TEXT,
 					date_added TEXT,
 					last_read TEXT,

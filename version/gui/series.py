@@ -11,15 +11,15 @@ from PyQt5.QtWidgets import (QListView, QFrame, QLabel,
 							 QHBoxLayout, QVBoxLayout,
 							 QWidget, QPushButton,
 							 QSizePolicy, QTableWidget,
-							 QTableWidgetItem)
+							 QTableWidgetItem, QDialog,
+							 QGridLayout)
 from ..database import fetch, seriesdb
 from . import gui_constants, misc
 
-data_thread = QThread()
-loading_thread = QThread()
-
 def populate():
 	"Populates the database with series from local drive'"
+	data_thread = QThread()
+	loading_thread = QThread()
 	loading = misc.Loading()
 	if not loading.ON:
 		misc.Loading.ON = True
@@ -40,7 +40,10 @@ def populate():
 				data_thread.quit
 
 		def fetch_deleteLater():
-			fetch_instance.deleteLater
+			try:
+				fetch_instance.deleteLater
+			except NameError:
+				pass
 
 		def thread_deleteLater(): #NOTE: Isn't this bad?
 			data_thread.deleteLater
@@ -126,10 +129,12 @@ class SeriesModel(QAbstractListModel):
 		#	return True
 		#return False
 
-	def insertRows(self, position, value, rows=1, index = QModelIndex()):
+	def insertRows(self, list_of_series, position=len(_data)-1,
+				rows=1, index = QModelIndex()):
 		self.beginInsertRows(QModelIndex(), position, position + rows - 1)
-		for row in range(rows):
-			self._data.append(value[row])
+		for series in list_of_series:
+			n_series = seriesdb.SeriesDB.add_series_return(series)
+			self._data.append(n_series)
 		self.endInsertRows()
 		return True
 
@@ -335,10 +340,14 @@ class CustomDelegate(QStyledItemDelegate):
 			return super().editorEvent(event, model, option, index)
 
 
+
 class MangaView(QListView):
 	"""
 	TODO: (zoom-in/zoom-out) mousekeys
 	"""
+
+	SERIES_DIALOG = pyqtSignal()
+
 	def __init__(self, parent=None):
 		super().__init__(parent)
 		self.setViewMode(self.IconMode)
@@ -356,6 +365,9 @@ class MangaView(QListView):
 		#self.setLayoutMode(self.Batched)
 		#self.setBatchSize(15) #Only loads 20 images at a time
 		self.setMouseTracking(True)
+		self.series_model = SeriesModel()
+		self.setModel(self.series_model)
+		self.SERIES_DIALOG.connect(self.spawn_dialog)
 
 	def foo(self):
 		pass
@@ -366,7 +378,7 @@ class MangaView(QListView):
 		index = self.indexAt(event.pos())
 		menu = QMenu()
 		all = QAction("Remove", menu, triggered = self.foo)
-		if index.row() in [j for j in range(10)]:
+		if index.isValid():
 			action_1 = QAction("Awesome!", menu, triggered = self.foo)
 			action_2 = QAction("It just werks!", menu, triggered = self.foo)
 			menu.addActions([action_1, action_2])
@@ -374,7 +386,7 @@ class MangaView(QListView):
 			custom = True
 		else:
 			add_series = QAction("&Add new Series...", menu,
-						triggered = self.foo)
+						triggered = self.SERIES_DIALOG.emit)
 			menu.addAction(add_series)
 			handled = True
 
@@ -392,6 +404,11 @@ class MangaView(QListView):
 	def resizeEvent(self, resizeevent):
 		super().resizeEvent(resizeevent)
 		#print(resizeevent.size())
+
+	def spawn_dialog(self):
+		dialog = misc.SeriesDialog()
+		dialog.SERIES.connect(self.series_model.insertRows)
+		dialog.trigger() # TODO: implement mass series' adding
 
 	#unusable code
 	#def event(self, event):
@@ -412,10 +429,25 @@ class MangaView(QListView):
 	def entered(*args, **kwargs):
 		return super().entered(**kwargs)
 
-class ChapterView(MangaView):
+class ChapterView(QListView):
 	"A view for chapters"
 	def __init__(self, parent=None):
 		super().__init__()
+		self.setViewMode(self.IconMode)
+		self.H = gui_constants.GRIDBOX_H_SIZE
+		self.W = gui_constants.GRIDBOX_W_SIZE
+		self.setGridSize(QSize(self.W, self.H))
+		self.setSpacing(10)
+		self.setResizeMode(self.Adjust)
+		# all items have the same size (perfomance)
+		self.setUniformItemSizes(True)
+		# improve scrolling
+		self.setVerticalScrollMode(self.ScrollPerPixel)
+		self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+		# prevent all items being loaded at the same time
+		#self.setLayoutMode(self.Batched)
+		#self.setBatchSize(15) #Only loads 20 images at a time
+		self.setMouseTracking(True)
 
 
 class ChapterInfo(QFrame):
@@ -517,7 +549,7 @@ class ChapterInfo(QFrame):
 		self.image_box.setPixmap(new_image)
 		self.title.setText("<font size='4' color='#585858'><b>"+series.title+"</b></font>")
 		self.artist.setText("<font size='3' color='#585858'>"+series.artist+"</font>")
-		self.chapter_count.setText("<font size='2' color='#B7153E'><i>Chapters:</i></font>"+"TODO")
+		self.chapter_count.setText("<font size='2' color='#B7153E'><i>Chapters:</i></font>"+"{}".format(len(series.chapters)))
 		self.info.setText("<font size='2' color='#B7153E'><i>Description:</i></font><br>"+series.info)
 		self.date_added.setText("<font size='2' color='#B7153E'><i>Date Added:</i></font><br>"+series.date_added)
 		self.pub_date.setText("<font size='2' color='#B7153E'><i>Date Published:</i></font><br>"+series.pub_date)

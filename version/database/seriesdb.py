@@ -1,6 +1,90 @@
-import datetime, os
+import datetime, os, threading, queue, uuid # for unique filename
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QImage
+
 from ..utils import today
 from .db import CommandQueue, ResultQueue
+from ..gui import gui_constants
+from .db_constants import THUMBNAIL_PATH, IMG_FILES
+
+def gen_thumbnail(chapter_path, width=gui_constants.THUMB_W_SIZE-2,
+				height=gui_constants.THUMB_H_SIZE): # 2 to align it properly.. need to redo this
+	"""Generates a thumbnail with unique filename in the cache dir.
+	Returns absolute path to the created thumbnail
+	"""
+	assert isinstance(chapter_path, str), "Path to chapter should be a string"
+
+	img_path_queue = queue.Queue()
+	# generate a cache dir if required
+	if not os.path.isdir(THUMBNAIL_PATH):
+		os.mkdir(THUMBNAIL_PATH)
+
+	def generate(cache, chap_path, w, h, img_queue):
+		img_path = os.path.join(chap_path, [x for x in sorted(os.listdir(chap_path)) if x[-3:] in IMG_FILES][0]) #first image in chapter
+		suff = img_path[-4:] # the image ext with dot
+		
+		# generate unique file name
+		file_name = str(uuid.uuid4()) + suff
+		new_img_path = os.path.join(cache, (file_name))
+		
+		# Do the scaling
+		image = QImage()
+		image.load(img_path)
+		image = image.scaled(w, h, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+		image.save(new_img_path, quality=100)
+
+		abs_path = os.path.abspath(new_img_path)
+		img_queue.put(abs_path)
+		return True
+
+	thread = threading.Thread(target=generate, args=(THUMBNAIL_PATH,
+												  chapter_path, width, height,
+												  img_path_queue,))
+	thread.start()
+	thread.join()
+	return img_path_queue.get()
+
+def series_map(row, series):
+	series.title = row['title']
+	series.artist = row['artist']
+	series.profile = bytes.decode(row['profile'])
+	series.path = bytes.decode(row['series_path'])
+	series.info = row['info']
+	series.language = row['language']
+	series.status = row['status']
+	series.type = row['type']
+	series.pub_date = row['pub_date']
+	series.last_update = row['last_update']
+	series.last_read = row['last_read']
+	series.date_added = row['date_added']
+	return series
+
+def default_exec(object):
+	def check(obj):
+		if obj == None:
+			return "None"
+		else:
+			return obj
+	executing = [["""INSERT INTO series(title, artist, profile, series_path, 
+					info, type, status, pub_date, date_added, last_read, last_update)
+				VALUES(:title, :artist, :profile, :series_path, :info, :type,
+					:status, :pub_date, :date_added, :last_read, :last_update)""",
+				{
+				'title':check(object.title),
+				'artist':check(object.artist),
+				'profile':str.encode(object.profile),
+				'series_path':str.encode(object.path),
+				'info':check(object.info),
+				'type':check(object.type),
+				'language':check(object.language),
+				'status':check(object.status),
+				'pub_date':check(object.pub_date),
+				'date_added':check(object.date_added),
+				'last_read':check(object.last_read),
+				'last_update':check(object.last_update)
+				}
+				]]
+	return executing
 
 class SeriesDB:
 	"""
@@ -11,6 +95,7 @@ class SeriesDB:
 		get_series_by_title -> Returns series with given title
 		get_series_by_tags -> Returns series with given list of tags
 		add_series -> adds series into db
+		add_series_return -> adds series into db AND returns the added series
 		set_series_title -> changes series title
 		series_count -> returns amount of series (can be used for indexing)
 		del_series -> deletes the series with the given id recursively
@@ -30,17 +115,7 @@ class SeriesDB:
 		for series_row in all_series:
 			series = Series()
 			series.id = series_row['series_id']
-			series.title = series_row['title']
-			series.artist = series_row['artist']
-			series.profile = bytes.decode(series_row['profile'])
-			series.path = bytes.decode(series_row['series_path'])
-			series.info = series_row['info']
-			series.type = series_row['type']
-			series.pub_date = series_row['pub_date']
-			series.date_added = series_row['date_added']
-			series.last_read = series_row['last_read']
-			series.last_update = series_row['last_update']
-
+			series = series_map(series_row, series)
 			series_list.append(series)
 
 		return series_list
@@ -55,16 +130,7 @@ class SeriesDB:
 		row = cursor.fetchone()
 		series = Series()
 		series.id = row['series_id']
-		series.title = row['title']
-		series.artist = row['artist']
-		series.profile = bytes.decode(row['profile'])
-		series.path = bytes.decode(row['series_path'])
-		series.info = row['info']
-		series.type = row['type']
-		series.pub_date = row['pub_date']
-		series.date_added = row['date_added']
-		series.last_read = row['last_read']
-		series.last_update = row['last_update']
+		series = series_map(row, series)
 		return series
 
 
@@ -75,19 +141,10 @@ class SeriesDB:
 		executing = [["SELECT * FROM series WHERE artist=?", (artist,)]]
 		CommandQueue.put(executing)
 		cursor = ResultQueue.get()
-		row = cursor.fetchone()
+		row = cursor.fetchone() # TODO: an artist can have multiple series' :^)
 		series = Series()
 		series.id = row['series_id']
-		series.title = row['title']
-		series.artist = row['artist']
-		series.profile = bytes.decode(row['profile'])
-		series.path = bytes.decode(row['series_path'])
-		series.info = row['info']
-		series.type = row['type']
-		series.pub_date = row['pub_date']
-		series.date_added = row['date_added']
-		series.last_read = row['last_read']
-		series.last_update = row['last_update']
+		series = series_map(row, series)
 		return series
 
 	@staticmethod
@@ -100,16 +157,7 @@ class SeriesDB:
 		row = cursor.fetchone()
 		series = Series()
 		series.id = row['series_id']
-		series.title = row['title']
-		series.artist = row['artist']
-		series.profile = bytes.decode(row['profile'])
-		series.path = bytes.decode(row['series_path'])
-		series.info = row['info']
-		series.type = row['type']
-		series.pub_date = row['pub_date']
-		series.date_added = row['date_added']
-		series.last_read = row['last_read']
-		series.last_update = row['last_update']
+		series = series_map(row, series)
 		return series
 
 	@staticmethod
@@ -124,34 +172,38 @@ class SeriesDB:
 		"Adds series of <Series> class into database"
 		assert isinstance(object, Series), "add_series method only accept Series items"
 
-		def check(obj):
-			if obj == None:
-				return "None"
-			else:
-				return obj
+		object.profile = gen_thumbnail(object.chapters[0])
 
-		executing = [["""INSERT INTO series(title, artist, profile, series_path, 
-						info,type, pub_date, date_added, last_read, last_update)
-					VALUES(:title, :artist, :profile, :series_path, :info, :type,
-						:pub_date, :date_added, :last_read, :last_update)""",
-					{
-					'title':check(object.title),
-					'artist':check(object.artist),
-					'profile':str.encode(object.profile),
-					'series_path':str.encode(object.path),
-					'info':check(object.info),
-					'type':check(object.type),
-					'pub_date':check(object.pub_date),
-					'date_added':check(object.date_added),
-					'last_read':check(object.last_read),
-					'last_update':check(object.last_update)
-					}
-					]]
+		executing = default_exec(object)
 		CommandQueue.put(executing)
 		cursor = ResultQueue.get()
 		series_id = cursor.lastrowid
 		object.id = series_id
 		ChapterDB.add_chapters(object)
+
+	@staticmethod
+	def add_series_return(object):
+		"Receives an object of class Series, and appends it to DB"
+		"Adds series of <Series> class into database AND returns the added series"
+		assert isinstance(object, Series), "add_series method only accept Series items"
+
+		object.profile = gen_thumbnail(object.chapters[0])
+
+		executing = default_exec(object)
+		CommandQueue.put(executing)
+		cursor = ResultQueue.get()
+		series_id = cursor.lastrowid
+		object.id = series_id
+		ChapterDB.add_chapters(object)
+
+		executing2 = [["SELECT * FROM series WHERE series_id=?", (series_id,)]]
+		CommandQueue.put(executing2)
+		cursor = ResultQueue.get()
+		row = cursor.fetchone()
+		series = Series()
+		series.id = row['series_id']
+		series = series_map(row, series)
+		return series
 		# TODO: Add a way to insert tags
 
 	@staticmethod
@@ -169,6 +221,9 @@ class ChapterDB:
 	"""
 	Provides the following database methods:
 		add_chapter -> adds chapter into db
+		add_chapter_raw -> links chapter to the given seires id, and adds into db
+		get_chapters_for_series-> returns a dict with chapters linked to the given series_id
+		get_chapter-> returns a dict with chapter matching the given chapter_id
 		chapter_size -> returns amount of manga (can be used for indexing)
 		del_chapter -> (don't think this will be used, but w/e) NotImplementedError
 	"""
@@ -201,6 +256,7 @@ class ChapterDB:
 		"""Returns a dict of chapters matching the received series_id
 		{<chap_number>:<chap_path>}
 		"""
+		assert isinstance(series_id, int), "Please provide a valid series ID"
 		executing = [["""SELECT chapter_number, chapter_path
 							FROM chapters WHERE series_id=?""",
 							(series_id,)]]
@@ -215,10 +271,11 @@ class ChapterDB:
 
 
 	@staticmethod
-	def get_chapters(id):
-		"""Returns a dict of chapters matching the recieved chapter_id
+	def get_chapter(id):
+		"""Returns a dict of chapter matching the recieved chapter_id
 		{<chap_number>:<chap_path>}
 		"""
+		assert isinstance(id, int), "Please provide a valid chapter ID"
 		executing = [["""SELECT chapter_number, chapter_path
 							FROM chapters WHERE chapter_id=?""",
 							(id,)]]
@@ -254,7 +311,7 @@ class Series:
 	chapter_size <- int of number of chapters
 	info <- str
 	type <- str (Manga? Doujin? Other?)
-	status <- "completed" or "ongoing"
+	status <- "unknown", "completed" or "ongoing"
 	tags <- list of str
 	pub_date <- string: dd/mm/yy
 	date_added <- date, will be defaulted to today if not specified
@@ -271,6 +328,7 @@ class Series:
 		self.chapters = {}
 		self.info = None
 		self.type = None
+		self.language = None
 		self.status = None
 		self.tags = None
 		self.pub_date = None
