@@ -18,9 +18,12 @@ THUMB_W_SIZE = 145
 CHAP_IMAGE_H = 325
 
 # image paths
+STAR_BTN_PATH = os.path.join(static_dir, "btn_star.png")
 STAR_PATH = os.path.join(static_dir, "star.png")
 STAR_SMALL_PATH = os.path.join(static_dir, "star_small.png")
 PLUS_PATH = os.path.join(static_dir, "plus.png")
+HOME_BTN_PATH = os.path.join(static_dir, "home.png")
+SETTINGS_PATH = os.path.join(static_dir, "settings.png")
 
 # controls
 THUMBNAIL_CACHE_SIZE = 10240*100 #10240 is 10mb, so sum is 1gb

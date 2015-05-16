@@ -1,6 +1,5 @@
 import os
 
-SERIES_PATH = "" #your folder for series here
 IMG_FILES = ['jpg','bmp','png','gif']
 
 THUMBNAIL_PATH = os.path.join("db", "thumbnails")

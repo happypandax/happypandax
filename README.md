@@ -3,8 +3,7 @@
 - PyQt5
 
 # How to run
-1. Navigate to version -> database -> db_constants.py
-2. Assign SERIES_PATH a string with path to your manga folder, e.g: C:/your/manga_folder
+1. Run main.py, click on "Add series" dropdown, and click Populate from folder.
     - Currently supports the following folder structures:
         + .../My_manga_folder
             - --/Series1

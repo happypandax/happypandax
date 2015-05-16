@@ -76,13 +76,13 @@ class AppWindow(QMainWindow):
 		spacer_start.setFixedSize(QSize(10, 1))
 		self.toolbar.addWidget(spacer_start)
 
-		favourite_view_icon = QIcon(gui_constants.STAR_PATH)
+		favourite_view_icon = QIcon(gui_constants.STAR_BTN_PATH)
 		favourite_view_action = QAction(favourite_view_icon, "Favourite", self)
 		#favourite_view_action.setText("Manga View")
 		favourite_view_action.triggered.connect(lambda: self.setCurrentIndex(1)) #need lambda to pass extra args
 		self.toolbar.addAction(favourite_view_action)
 
-		catalog_view_icon = QIcon()
+		catalog_view_icon = QIcon(gui_constants.HOME_BTN_PATH)
 		catalog_view_action = QAction(catalog_view_icon, "Catalog", self)
 		#catalog_view_action.setText("Catalog")
 		catalog_view_action.triggered.connect(lambda: self.setCurrentIndex(0)) #need lambda to pass extra args
@@ -90,10 +90,10 @@ class AppWindow(QMainWindow):
 		self.toolbar.addSeparator()
 
 		series_icon = QIcon(gui_constants.PLUS_PATH)
-		series_action = QAction(series_icon, "Add series", self)
+		series_action = QAction(series_icon, "Add series...", self)
 		series_menu = QMenu()
 		series_menu.addSeparator()
-		populate_action = QAction("Populate", self)
+		populate_action = QAction("Populate from folder...", self)
 		populate_action.triggered.connect(lambda:series.populate())
 		series_menu.addAction(populate_action)
 		series_action.setMenu(series_menu)
@@ -107,8 +107,10 @@ class AppWindow(QMainWindow):
 		self.search_bar.setPlaceholderText("Search title, artist, genres")
 		self.search_bar.setMaximumWidth(200)
 		self.toolbar.addWidget(self.search_bar)
-		self.toolbar.addAction("Search")
-		self.toolbar.addAction("Set&tings")
+		self.toolbar.addSeparator()
+		settings_icon = QIcon(gui_constants.SETTINGS_PATH)
+		settings_action = QAction(settings_icon, "Set&tings", self)
+		self.toolbar.addAction(settings_action)
 		self.addToolBar(self.toolbar)
 		
 		spacer_end = QWidget() # aligns About action properly

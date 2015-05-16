@@ -1,6 +1,5 @@
 import os, time
 
-from .db_constants import SERIES_PATH
 from .seriesdb import Series, SeriesDB
 
 from PyQt5.QtCore import QObject, pyqtSignal # need this for interaction with main thread
@@ -11,7 +10,7 @@ class Fetch(QObject):
 	"""A class containing methods to fetch series data.
 	Should be executed in a new thread.
 	Contains following methods:
-	local -> runs a local search in the given SERIES_PATH
+	local -> runs a local search in the given series_path
 	"""
 
 	FINISHED = pyqtSignal(bool)
@@ -20,18 +19,19 @@ class Fetch(QObject):
 
 	def __init__(self, parent=None):
 		super().__init__(parent)
+		self.series_path = ""
 	
 	def local(self):
-		"""Do a local search in the given SERIES_PATH.
+		"""Do a local search in the given series_path.
 		"""
-		series_l = sorted(os.listdir(SERIES_PATH)) #list of folders in the "Series" folder 
+		series_l = sorted(os.listdir(self.series_path)) #list of folders in the "Series" folder 
 		if len(series_l) != 0: # if series folder is not empty
 			self.DATA_COUNT.emit(len(series_l)) #tell model how many items are going to be added
 			progress = 0
 			for ser_path in series_l: # ser_path = series folder title
 				new_series = Series()
 
-				path = os.path.join(SERIES_PATH, ser_path)
+				path = os.path.join(self.series_path, ser_path)
 
 				images_paths = []
 
@@ -41,7 +41,7 @@ class Fetch(QObject):
 				# if series has chapters divided into sub folders
 				if len(chapters) != 0:
 					for numb, ch in enumerate(chapters):
-						chap_path = os.path.join(SERIES_PATH, ser_path, ch)
+						chap_path = os.path.join(self.series_path, ser_path, ch)
 						new_series.chapters[numb] = chap_path
 
 				else: #else assume that all images are in series folder
