@@ -1,4 +1,5 @@
-plus.png |
-btn_star.png |____________________________________________
+plus.png     |
+btn_star.png |
+settings.png |________________________________________
 https://www.iconfinder.com/iconsets/woothemesiconset  |
 ------------------------------------------------------

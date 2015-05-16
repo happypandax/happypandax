@@ -471,6 +471,10 @@ class MangaView(QListView):
 		dialog.SERIES.connect(self.series_model.addRows)
 		dialog.trigger() # TODO: implement mass series' adding
 
+	def updateGeometries(self):
+		super().updateGeometries()
+		self.verticalScrollBar().setSingleStep(7)
+
 	#unusable code
 	#def event(self, event):
 	#	#if event.type() == QEvent.ToolTip:

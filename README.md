@@ -33,15 +33,12 @@ Since this is my first time using PyQt I'll be saving alot of old code, and run 
 
 # Contributing
 Like stated earlier, my code is currently a mess (will try to fix when done testing), but incase you still want to contribute then these are the tasks in my TODO list in no particular order:
-- Implement a database using sqlite3 or pickle module
 - implement list view for chapters/mangas (PyQt)
 - implement opening chapter in external image viewer feature
 - implement hotkeys (PyQt)
 - implement searching for genres (PyQt)
 - implement searching for manga title/artist (PyQt)
 - implement sorting & filtering (sort by:(rank, title, artists, recent read, last updated) filter by: (status, genres, string/text, date) (PyQt)
-- implement a "Favourite" view (PyQt)
-- implement adding new manga/chapter manually (PyQt, Database)
 - implement adding new manga/chapter from website (sadpanda and popular manga providers)
 - implement checking for & downloading new chapters automatically
 - implement adding new manga/chapter by drag & dropping (zip, cbz, etc)/folder to program (PyQt)
