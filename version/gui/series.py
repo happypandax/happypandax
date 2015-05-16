@@ -80,6 +80,8 @@ class SeriesModel(QAbstractListModel):
 	"""
 	_data = [] #a list for the data
 
+	ROWCOUNT_CHANGE = pyqtSignal()
+
 	def __init__(self, parent=None):
 		super().__init__(parent)
 		self._data_count = 0 # number of items added to model
@@ -185,12 +187,14 @@ class SeriesModel(QAbstractListModel):
 
 	def fetchMore(self, index):
 		diff = len(self._data) - self._data_count
-		item_to_fetch = min(50, diff)
+		item_to_fetch = min(10, diff)
 
 		self.beginInsertRows(index, self._data_count,
 					   self._data_count+item_to_fetch-1)
 		self._data_count += item_to_fetch
 		self.endInsertRows()
+		self.ROWCOUNT_CHANGE.emit()
+
 
 	def save(self):
 		"Appends to DB for save"
@@ -473,7 +477,7 @@ class MangaView(QListView):
 
 	def updateGeometries(self):
 		super().updateGeometries()
-		self.verticalScrollBar().setSingleStep(7)
+		self.verticalScrollBar().setSingleStep(5)
 
 	#unusable code
 	#def event(self, event):

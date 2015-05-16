@@ -5,7 +5,7 @@ current_dir, f = os.path.split(os.path.realpath(__file__))
 static_dir = os.path.join(current_dir, "static")
 
 #default stylesheet path
-default_stylesheet_path = ""
+default_stylesheet_path = static_dir + '/' + "style.css"
 user_stylesheet_path = ""
 
 # sizes

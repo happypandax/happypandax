@@ -86,6 +86,7 @@ class SeriesDialog(QDialog):
 		self.title_edit.setFocus()
 		self.author_edit = QLineEdit()
 		self.descr_edit = QTextEdit()
+		self.descr_edit.setFixedHeight(70)
 		self.descr_edit.setPlaceholderText("HTML 4 tags supported")
 		self.lang_box = QComboBox()
 		self.lang_box.addItems(["English", "Japanese", "Other"])

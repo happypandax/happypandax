@@ -22,18 +22,43 @@ class AppWindow(QMainWindow):
 		self.chapter_display()
 		# init toolbar
 		self.init_toolbar()
+		# init status bar
+		self.init_stat_bar()
 
 		self.display.addWidget(self.manga_main)
 		self.display.addWidget(self.chapter_main)
 
 		self.setCentralWidget(self.center)
 		self.setWindowTitle("Sadpanda")
-		self.resize(1065, 650)
+		self.resize(1029, 650)
 		self.show()
+	
+	def init_stat_bar(self):
+		self.status_bar = self.statusBar()
+		self.status_bar.setMaximumHeight(20)
+		self.status_bar.setSizeGripEnabled(False)
+		self.stat_info = QLabel()
+		self.stat_info.setIndent(5)
+		self.sort_main = QAction("Asc", self)
+		sort_menu = QMenu()
+		self.sort_main.setMenu(sort_menu)
+		s_by_title = QAction("Title", sort_menu)
+		s_by_artist = QAction("Artist", sort_menu)
+		sort_menu.addAction(s_by_title)
+		sort_menu.addAction(s_by_artist)
+		self.status_bar.addWidget(self.stat_info)
+		#self.status_bar.addAction(self.sort_main)
+		self.manga_list_view.series_model.ROWCOUNT_CHANGE.connect(self.stat_row_info)
+
+	def stat_row_info(self):
+		r = self.manga_list_view.series_model.rowCount()
+		t = len(self.manga_list_view.series_model._data)
+		self.stat_info.setText("<b>Showing {} items of {}</b>".format(r, t))
 
 	def manga_display(self):
 		"initiates the manga view"
 		self.manga_main = QWidget()
+		self.manga_main.setContentsMargins(-10, -12, -10, -10)
 		self.manga_view = QHBoxLayout()
 		self.manga_main.setLayout(self.manga_view)
 
@@ -64,12 +89,12 @@ class AppWindow(QMainWindow):
 
 	def init_toolbar(self):
 		self.toolbar = QToolBar()
-		self.toolbar.setFixedHeight(40)
+		self.toolbar.setFixedHeight(30)
 		self.toolbar.setWindowTitle("Show") # text for the contextmenu
 		#self.toolbar.setStyleSheet("QToolBar {border:0px}") # make it user defined?
 		self.toolbar.setMovable(False)
 		self.toolbar.setFloatable(False)
-		self.toolbar.setIconSize(QSize(35,35))
+		#self.toolbar.setIconSize(QSize(20,20))
 		self.toolbar.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
 
 		spacer_start = QWidget() # aligns the first actions properly
@@ -83,7 +108,7 @@ class AppWindow(QMainWindow):
 		self.toolbar.addAction(favourite_view_action)
 
 		catalog_view_icon = QIcon(gui_constants.HOME_BTN_PATH)
-		catalog_view_action = QAction(catalog_view_icon, "Catalog", self)
+		catalog_view_action = QAction(catalog_view_icon, "Library", self)
 		#catalog_view_action.setText("Catalog")
 		catalog_view_action.triggered.connect(lambda: self.setCurrentIndex(0)) #need lambda to pass extra args
 		self.toolbar.addAction(catalog_view_action)
