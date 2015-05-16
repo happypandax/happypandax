@@ -103,6 +103,7 @@ class SeriesModel(QAbstractListModel):
 		current_row = index.row() 
 		current_series = self._data[current_row]
 
+		# TODO: remove this.. not needed anymore, since i use custom role now
 		if role == Qt.DisplayRole:
 			title = current_series.title
 			artist = current_series.artist
@@ -163,8 +164,8 @@ class SeriesModel(QAbstractListModel):
 		self.endInsertRows()
 		return True
 
-	def replaceRows(self, index, list_of_series, position=len(_data)-1, rows=1):
-		"Inserts new series data to the data list WITHOUT adding to DB"
+	def replaceRows(self, list_of_series, position=len(_data)-1, rows=1, index=QModelIndex()):
+		"replaces series data to the data list WITHOUT adding to DB"
 		for pos, series in enumerate(list_of_series):
 			del self._data[position+pos]
 			self._data.insert(position+pos, series)
@@ -187,7 +188,7 @@ class SeriesModel(QAbstractListModel):
 
 	def fetchMore(self, index):
 		diff = len(self._data) - self._data_count
-		item_to_fetch = min(10, diff)
+		item_to_fetch = min(gui_constants.PREFETCH_ITEM_AMOUNT, diff)
 
 		self.beginInsertRows(index, self._data_count,
 					   self._data_count+item_to_fetch-1)
@@ -206,7 +207,7 @@ class ChapterModel(SeriesModel):
 class CustomDelegate(QStyledItemDelegate):
 	"A custom delegate for the model/view framework"
 
-	BUTTON_CLICKED = pyqtSignal(int)
+	BUTTON_CLICKED = pyqtSignal(int, QModelIndex)
 
 	def __init__(self):
 		super().__init__()
@@ -231,10 +232,9 @@ class CustomDelegate(QStyledItemDelegate):
 		assert isinstance(painter, QPainter)
 
 		series = index.data(Qt.UserRole+1)
-		self.text = index.data(Qt.DisplayRole)
 		popup = index.data(Qt.ToolTipRole)
-		title = self.text['title']
-		artist = self.text['artist']
+		title = series.title
+		artist = series.artist
 
 		# Enable this to see the defining box
 		#painter.drawRect(option.rect)
@@ -368,12 +368,12 @@ class CustomDelegate(QStyledItemDelegate):
 
 	def editorEvent(self, event, model, option, index):
 		"Mouse events for each item in the view are defined here"
+		assert isinstance(index, QModelIndex)
 		if event.type() == QEvent.MouseButtonPress:
 			mouseEvent = QMouseEvent(event)
 			if mouseEvent.buttons() == Qt.LeftButton:
 				self._state = (index.row(), index.column())
-				from ..constants import WINDOW
-				self.BUTTON_CLICKED.emit(WINDOW.setCurrentIndex(1, index))#self._state)
+				self.BUTTON_CLICKED.emit(1, index)#self._state)
 				print("Clicked")
 				return True
 			else: return super().editorEvent(event, model, option, index)
@@ -418,17 +418,20 @@ class MangaView(QListView):
 		series = index.data(Qt.UserRole+1)
 		if series.fav == 1:
 			n_series = seriesdb.SeriesDB.fav_series_set(series.id, 0)
-			self.series_model.replaceRows(index, [n_series], index.row(), 1)
+			self.series_model.replaceRows([n_series], index.row(), 1, index)
 		else:
 			n_series = seriesdb.SeriesDB.fav_series_set(series.id, 1)
-			self.series_model.replaceRows(index, [n_series], index.row(), 1)
+			self.series_model.replaceRows([n_series], index.row(), 1, index)
 
 	def contextMenuEvent(self, event):
 		handled = False
 		custom = False
 		index = self.indexAt(event.pos())
+
 		menu = QMenu()
-		all = QAction("Remove", menu, triggered = self.foo)
+		all_1 = QAction("Open in external viewer", menu, triggered = self.foo)
+		all_2 = QAction("Edit...", menu, triggered = lambda: self.spawn_dialog(index))
+		all_3 = QAction("Remove", menu, triggered = self.foo)
 		def fav():
 			self.favourite(index)
 
@@ -437,26 +440,38 @@ class MangaView(QListView):
 				action_1 = QAction("Favourite", menu, triggered = fav)
 				action_1.setCheckable(True)
 				action_1.setChecked(True)
-				action_2 = QAction("It just werks!", menu, triggered = self.foo)
-				menu.addActions([action_1, action_2])
+				menu.addAction(action_1)
 				handled = True
 				custom = True
 			if index.data(Qt.UserRole+1).fav==0: # here you can limit which items to show these actions for
 				action_1 = QAction("Favourite", menu, triggered = fav)
 				action_1.setCheckable(True)
 				action_1.setChecked(False)
-				action_2 = QAction("It just werks!", menu, triggered = self.foo)
-				menu.addActions([action_1, action_2])
+				menu.addAction(action_1)
 				handled = True
 				custom = True
 		else:
 			add_series = QAction("&Add new Series...", menu,
 						triggered = self.SERIES_DIALOG.emit)
 			menu.addAction(add_series)
+			sort_main = QAction("&Sort by", menu)
+			menu.addAction(sort_main)
+			sort_menu = QMenu()
+			sort_main.setMenu(sort_menu)
+			asc_desc = QAction("Asc/Desc", menu, triggered = self.foo)
+			s_title = QAction("Title", menu, triggered = self.foo)
+			s_artist = QAction("Author", menu, triggered = self.foo)
+			sort_menu.addAction(asc_desc)
+			sort_menu.addSeparator()
+			sort_menu.addAction(s_title)
+			sort_menu.addAction(s_artist)
 			handled = True
 
 		if handled and custom:
-			menu.addAction(all)
+			menu.addSeparator()
+			menu.addAction(all_1)
+			menu.addAction(all_2)
+			menu.addAction(all_3)
 			menu.exec_(event.globalPos())
 			event.accept()
 		elif handled:
@@ -470,10 +485,25 @@ class MangaView(QListView):
 		super().resizeEvent(resizeevent)
 		#print(resizeevent.size())
 
-	def spawn_dialog(self):
-		dialog = misc.SeriesDialog()
-		dialog.SERIES.connect(self.series_model.addRows)
-		dialog.trigger() # TODO: implement mass series' adding
+	def replace_edit_series(self, list_of_series, pos):
+		"Replaces the view and DB with given list of series, at given position"
+		assert isinstance(list_of_series, list), "Please pass a series to replace with"
+		assert isinstance(pos, int)
+		for series in list_of_series:
+			seriesdb.SeriesDB.modify_series(series.id, series.title, series.artist,
+									  series.info, series.type, series.language,
+									  series.status, series.pub_date)
+		self.series_model.replaceRows([series], pos, len(list_of_series))
+
+	def spawn_dialog(self, index=False):
+		if not index:
+			dialog = misc.SeriesDialog()
+			dialog.SERIES.connect(self.series_model.addRows)
+			dialog.trigger() # TODO: implement mass series' adding
+		else:
+			dialog = misc.SeriesDialog()
+			dialog.SERIES_EDIT.connect(self.replace_edit_series)
+			dialog.trigger([index])
 
 	def updateGeometries(self):
 		super().updateGeometries()

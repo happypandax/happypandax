@@ -63,6 +63,7 @@ class AppWindow(QMainWindow):
 		self.manga_main.setLayout(self.manga_view)
 
 		manga_delegate = series.CustomDelegate()
+		manga_delegate.BUTTON_CLICKED.connect(self.setCurrentIndex)
 		self.manga_list_view = series.MangaView()
 		self.manga_list_view.setItemDelegate(manga_delegate)
 		self.manga_view.addWidget(self.manga_list_view)

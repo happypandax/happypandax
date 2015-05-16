@@ -91,6 +91,8 @@ def default_exec(object):
 class SeriesDB:
 	"""
 	Provides the following s methods:
+		modify_series -> Modifies series with given series id
+		fav_series_set -> Set fav on series with given series id, and returns the series
 		get_all_series -> returns a list of all series (<Series> class) currently in DB
 		get_series_by_id -> Returns series with given id
 		get_series_by_artist -> Returns series with given artist
@@ -106,7 +108,7 @@ class SeriesDB:
 		raise Exception("SeriesDB should not be instantiated")
 
 	@staticmethod
-	def modify_series(series_id, title=False, artist=False, info=False, type=False, fav=False,
+	def modify_series(series_id, title=None, artist=None, info=None, type=False, fav=False,
 				   language=False, status=False, pub_date=False):
 		"Modifies series with given series id"
 		pass

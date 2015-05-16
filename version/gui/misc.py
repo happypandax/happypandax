@@ -42,6 +42,7 @@ class SeriesDialog(QDialog):
 
 	series_queue = queue.Queue()
 	SERIES = pyqtSignal(list)
+	SERIES_EDIT = pyqtSignal(list, int)
 	#series_list = [] # might want to extend this to allow mass series adding
 
 	def _init__(self, parent=None):
@@ -87,7 +88,7 @@ class SeriesDialog(QDialog):
 		self.author_edit = QLineEdit()
 		self.descr_edit = QTextEdit()
 		self.descr_edit.setFixedHeight(70)
-		self.descr_edit.setPlaceholderText("HTML 4 tags supported")
+		self.descr_edit.setPlaceholderText("HTML 4 tags are supported")
 		self.lang_box = QComboBox()
 		self.lang_box.addItems(["English", "Japanese", "Other"])
 		self.lang_box.setCurrentIndex(0)
@@ -221,8 +222,16 @@ class SeriesDialog(QDialog):
 		else:
 			super().reject()
 
-	def trigger(self):
-		self.initUI()
+	def trigger(self, list_of_index=None):
+		if not list_of_index:
+			self.initUI()
+		else:
+			assert isinstance(list_of_index, list)
+			self.position = list_of_index[0].row()
+			for index in list_of_index:
+				series = index.data(Qt.UserRole+1)
+				self.setSeries(series)
+
 		from ..constants import WINDOW as parent
 		self.resize(500,200)
 		frect = self.frameGeometry()
@@ -232,10 +241,117 @@ class SeriesDialog(QDialog):
 		self.setWindowFlags(Qt.FramelessWindowHint)
 		self.exec()
 
-	def setSeries(self, index):
-		"To be used for when editing a series"
-		pass
 
-	def new_series(self):
-		"To be used for when adding a new series"
-		pass
+	def setSeries(self, series):
+		"To be used for when editing a series"
+		self.series = series
+		main_layout = QVBoxLayout()
+
+		f_web = QGroupBox("Fetch metadata from Web")
+		f_web.setCheckable(False)
+		main_layout.addWidget(f_web)
+		web_layout = QHBoxLayout()
+		f_web.setLayout(web_layout)
+
+		f_series = QGroupBox("Series Info")
+		f_series.setCheckable(False)
+		main_layout.addWidget(f_series)
+		series_layout = QFormLayout()
+		f_series.setLayout(series_layout)
+
+		def basic_web(name):
+			return QLabel(name), QLineEdit(), QPushButton("Fetch")
+
+		exh_lbl, exh_edit, exh_btn = basic_web("ExHentai:")
+		web_layout.addWidget(exh_lbl, 0, Qt.AlignLeft)
+		web_layout.addWidget(exh_edit, 0)
+		web_layout.addWidget(exh_btn, 0, Qt.AlignRight)
+
+		self.title_edit = QLineEdit()
+		self.title_edit.setText(series.title)
+		self.author_edit = QLineEdit()
+		self.author_edit.setText(series.artist)
+		self.descr_edit = QTextEdit()
+		self.descr_edit.setPlaceholderText("HTML 4 tags are supported")
+		self.descr_edit.setPlainText(series.info)
+		self.descr_edit.setFixedHeight(70)
+		self.lang_box = QComboBox()
+		self.lang_box.addItems(["English", "Japanese", "Other"])
+		if series.language is "English":
+			self.lang_box.setCurrentIndex(0)
+		elif series.language is "Japanese":
+			self.lang_box.setCurrentIndex(1)
+		else:
+			self.lang_box.setCurrentIndex(2)
+
+		self.tags_edit = QLineEdit() #TODO Finish this..
+		self.tags_edit.setPlaceholderText("namespace1:tag1, tag2, namespace3:tag3, etc..")
+		self.type_box = QComboBox()
+		self.type_box.addItems(["Manga", "Doujinshi", "Other"])
+		if series.type is "Manga":
+			self.type_box.setCurrentIndex(0)
+		elif series.type is "Doujinshi":
+			self.type_box.setCurrentIndex(1)
+		else:
+			self.type_box.setCurrentIndex(2)
+		#self.type_box.currentIndexChanged[int].connect(self.doujin_show)
+		#self.doujin_parent = QLineEdit()
+		#self.doujin_parent.setVisible(False)
+		self.status_box = QComboBox()
+		self.status_box.addItems(["Unknown", "Ongoing", "Completed"])
+		if series.status is "Ongoing":
+			self.status_box.setCurrentIndex(1)
+		elif series.status is "Completed":
+			self.status_box.setCurrentIndex(2)
+		else:
+			self.status_box.setCurrentIndex(0)
+
+		self.pub_edit = QDateEdit() # TODO: Finish this..
+		self.pub_edit.setCalendarPopup(True)
+		self.pub_edit.setDate(QDate.currentDate())
+		self.path_lbl = QLabel("unspecified...")
+		self.path_lbl.setText(series.path)
+
+		series_layout.addRow("Title:", self.title_edit)
+		series_layout.addRow("Author:", self.author_edit)
+		series_layout.addRow("Description:", self.descr_edit)
+		series_layout.addRow("Language:", self.lang_box)
+		series_layout.addRow("Tags:", self.tags_edit)
+		series_layout.addRow("Type:", self.type_box)
+		series_layout.addRow("Publication Date:", self.pub_edit)
+		series_layout.addRow("Path:", self.path_lbl)
+
+		final_buttons = QHBoxLayout()
+		final_buttons.setAlignment(Qt.AlignRight)
+		main_layout.addLayout(final_buttons)
+		done = QPushButton("Done")
+		done.setDefault(True)
+		done.clicked.connect(self.accept_edit)
+		cancel = QPushButton("Cancel")
+		cancel.clicked.connect(self.reject_edit)
+		final_buttons.addWidget(cancel)
+		final_buttons.addWidget(done)
+
+		self.setLayout(main_layout)
+
+	def accept_edit(self):
+
+		if self.check():
+			new_series = self.series
+			new_series.title = self.title_edit.text()
+			new_series.artist = self.author_edit.text()
+			new_series.path = self.path_lbl.text()
+			new_series.info = self.descr_edit.toPlainText()
+			new_series.type = self.type_box.currentText()
+			new_series.language = self.lang_box.currentText()
+			new_series.status = self.status_box.currentText()
+			#qpub_d = self.pub_edit.date().toString("ddMMyyyy")
+			#dpub_d = datetime.strptime(qpub_d, "%d%m%Y").date()
+			#new_series.pub_date = dpub_d
+
+			#for ser in self.series:
+			self.SERIES_EDIT.emit([new_series], self.position)
+			super().accept()
+
+	def reject_edit(self):
+		super().reject()
