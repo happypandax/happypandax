@@ -28,9 +28,7 @@ class Loading(QWidget):
 		layout_.addWidget(self.widget)
 		self.setLayout(layout_)
 		self.resize(300,100)
-		self.move(
-			parent.window().frameGeometry().topLeft() +
-			parent.window().rect().center() - self.rect().center())
+		self.move(parent.window().rect().center()-QPoint(120,50))
 
 	def mousePressEvent(self, QMouseEvent):
 		pass
