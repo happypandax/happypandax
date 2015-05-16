@@ -9,6 +9,7 @@
 version/build
 version/dist
 *.sln
+*Thumbs.db
 
 # User-specific files
 *.suo
