@@ -29,7 +29,7 @@ class AppWindow(QMainWindow):
 		self.display.addWidget(self.chapter_main)
 
 		self.setCentralWidget(self.center)
-		self.setWindowTitle("Sadpanda")
+		self.setWindowTitle("Happypanda")
 		self.resize(1029, 650)
 		self.show()
 	
