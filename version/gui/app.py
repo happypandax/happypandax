@@ -16,12 +16,12 @@ class AppWindow(QMainWindow):
 		self.center = QWidget()
 		self.display = QStackedLayout()
 		self.center.setLayout(self.display)
-		# init toolbar
-		self.init_toolbar()
 		# init the manga view variables
 		self.manga_display()
 		# init the chapter view variables
 		self.chapter_display()
+		# init toolbar
+		self.init_toolbar()
 
 		self.display.addWidget(self.manga_main)
 		self.display.addWidget(self.chapter_main)
@@ -91,6 +91,7 @@ class AppWindow(QMainWindow):
 
 		series_icon = QIcon(gui_constants.PLUS_PATH)
 		series_action = QAction(series_icon, "Add series...", self)
+		series_action.triggered.connect(self.manga_list_view.SERIES_DIALOG.emit)
 		series_menu = QMenu()
 		series_menu.addSeparator()
 		populate_action = QAction("Populate from folder...", self)

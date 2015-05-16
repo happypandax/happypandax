@@ -93,8 +93,11 @@ class SeriesDialog(QDialog):
 		self.tags_edit = QLineEdit()
 		self.tags_edit.setPlaceholderText("namespace1:tag1, tag2, namespace3:tag3, etc..")
 		self.type_box = QComboBox()
-		self.type_box.addItems(["Manga", "Doujin", "Other"])
+		self.type_box.addItems(["Manga", "Doujinshi", "Other"])
 		self.type_box.setCurrentIndex(0)
+		#self.type_box.currentIndexChanged[int].connect(self.doujin_show)
+		#self.doujin_parent = QLineEdit()
+		#self.doujin_parent.setVisible(False)
 		self.status_box = QComboBox()
 		self.status_box.addItems(["Unknown", "Ongoing", "Completed"])
 		self.status_box.setCurrentIndex(0)
@@ -108,7 +111,7 @@ class SeriesDialog(QDialog):
 		series_layout.addRow("Description:", self.descr_edit)
 		series_layout.addRow("Language:", self.lang_box)
 		series_layout.addRow("Tags:", self.tags_edit)
-		series_layout.addRow("Type", self.type_box)
+		series_layout.addRow("Type:", self.type_box)
 		series_layout.addRow("Publication Date:", self.pub_edit)
 		series_layout.addRow("Path:", self.path_lbl)
 
@@ -125,6 +128,13 @@ class SeriesDialog(QDialog):
 
 
 		self.setLayout(main_layout)
+
+	# TODO: complete this... maybe another time.. 
+	#def doujin_show(self, index):
+	#	if index is 1:
+	#		self.doujin_parent.setVisible(True)
+	#	else:
+	#		self.doujin_parent.setVisible(False)
 
 	def choose_dir(self):
 		dir_name = QFileDialog.getExistingDirectory(self, 'Choose a folder')
