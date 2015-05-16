@@ -17,9 +17,10 @@ THUMB_W_SIZE = 145
 # chapterview
 CHAP_IMAGE_H = 325
 
-# star paths
+# image paths
 STAR_PATH = os.path.join(static_dir, "star.png")
 STAR_SMALL_PATH = os.path.join(static_dir, "star_small.png")
+PLUS_PATH = os.path.join(static_dir, "plus.png")
 
 # controls
 THUMBNAIL_CACHE_SIZE = 10240*100 #10240 is 10mb, so sum is 1gb

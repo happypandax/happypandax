@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QListView,
 							 QSizePolicy, QMenu, QAction, QLineEdit,
 							 QSplitter)
 from . import series
+from . import gui_constants
 
 class AppWindow(QMainWindow):
 	"The application's main window"
@@ -22,28 +23,28 @@ class AppWindow(QMainWindow):
 		# init the chapter view variables
 		self.chapter_display()
 
-		self.display.addWidget(self.manga_view)
+		self.display.addWidget(self.manga_main)
 		self.display.addWidget(self.chapter_main)
 
 		self.setCentralWidget(self.center)
 		self.setWindowTitle("Sadpanda")
-		self.resize(1098, 650)
+		self.resize(1065, 650)
 		self.show()
 
 	def manga_display(self):
 		"initiates the manga view"
-		self.manga_view = QSplitter()
-		self.manga_view.setHandleWidth(3)
-		manga_frame = QFrame()
-		manga_frame.setFrameShape(QFrame.StyledPanel)
-		manga_frame.setMaximumWidth(215)
+		self.manga_main = QWidget()
+		self.manga_view = QHBoxLayout()
+		self.manga_main.setLayout(self.manga_view)
+
 		manga_delegate = series.CustomDelegate()
 		self.manga_list_view = series.MangaView()
 		self.manga_list_view.setItemDelegate(manga_delegate)
-		self.manga_view.addWidget(manga_frame)
 		self.manga_view.addWidget(self.manga_list_view)
-		self.manga_view.setCollapsible(0, True)
-		self.manga_view.setCollapsible(1, False)
+
+	def favourite_display(self):
+		"initiates favourite display"
+		pass
 
 	def chapter_display(self):
 		"Initiates chapter view"
@@ -63,7 +64,7 @@ class AppWindow(QMainWindow):
 
 	def init_toolbar(self):
 		self.toolbar = QToolBar()
-		self.toolbar.setFixedHeight(50)
+		self.toolbar.setFixedHeight(40)
 		self.toolbar.setWindowTitle("Show") # text for the contextmenu
 		#self.toolbar.setStyleSheet("QToolBar {border:0px}") # make it user defined?
 		self.toolbar.setMovable(False)
@@ -75,21 +76,28 @@ class AppWindow(QMainWindow):
 		spacer_start.setFixedSize(QSize(10, 1))
 		self.toolbar.addWidget(spacer_start)
 
-		manga_view_icon = QIcon()
-		manga_view_action = QAction(manga_view_icon, "Manga View", self)
-		manga_view_action.setText("Manga View")
-		manga_view_action.triggered.connect(lambda: self.setCurrentIndex(0)) #need lambda to pass extra args
-		self.toolbar.addAction(manga_view_action)
+		favourite_view_icon = QIcon(gui_constants.STAR_PATH)
+		favourite_view_action = QAction(favourite_view_icon, "Favourite", self)
+		#favourite_view_action.setText("Manga View")
+		favourite_view_action.triggered.connect(lambda: self.setCurrentIndex(1)) #need lambda to pass extra args
+		self.toolbar.addAction(favourite_view_action)
 
-		chapter_view_icon = QIcon()
-		chapter_view_action = QAction(chapter_view_icon, "Chapter View", self)
-		chapter_view_action.setText("Chapter View")
-		chapter_view_action.triggered.connect(lambda: self.setCurrentIndex(1)) #need lambda to pass extra args
-		self.toolbar.addAction(chapter_view_action)
+		catalog_view_icon = QIcon()
+		catalog_view_action = QAction(catalog_view_icon, "Catalog", self)
+		#catalog_view_action.setText("Catalog")
+		catalog_view_action.triggered.connect(lambda: self.setCurrentIndex(0)) #need lambda to pass extra args
+		self.toolbar.addAction(catalog_view_action)
+		self.toolbar.addSeparator()
 
-		self.populate_action = QAction(chapter_view_icon, "Populate", self)
-		self.populate_action.triggered.connect(lambda:series.populate())
-		self.toolbar.addAction(self.populate_action)
+		series_icon = QIcon(gui_constants.PLUS_PATH)
+		series_action = QAction(series_icon, "Add series", self)
+		series_menu = QMenu()
+		series_menu.addSeparator()
+		populate_action = QAction("Populate", self)
+		populate_action.triggered.connect(lambda:series.populate())
+		series_menu.addAction(populate_action)
+		series_action.setMenu(series_menu)
+		self.toolbar.addAction(series_action)
 
 		spacer_middle = QWidget() # aligns buttons to the right
 		spacer_middle.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -100,7 +108,7 @@ class AppWindow(QMainWindow):
 		self.search_bar.setMaximumWidth(200)
 		self.toolbar.addWidget(self.search_bar)
 		self.toolbar.addAction("Search")
-		self.toolbar.addAction("Ab&out")
+		self.toolbar.addAction("Set&tings")
 		self.addToolBar(self.toolbar)
 		
 		spacer_end = QWidget() # aligns About action properly
