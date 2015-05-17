@@ -65,7 +65,7 @@ class AppWindow(QMainWindow):
 	def stat_row_info(self):
 		r = self.manga_list_view.series_model.rowCount()
 		t = len(self.manga_list_view.series_model._data)
-		self.stat_info.setText("<b>Showing {} items of {}</b>".format(r, t))
+		self.stat_info.setText("<b>Showing {} of {} </b>".format(r, t))
 
 	def manga_display(self):
 		"initiates the manga view"
@@ -194,7 +194,7 @@ class AppWindow(QMainWindow):
 
 					def finished(status):
 						if status:
-							self.manga_list_view.series_model.update_data()
+							self.manga_list_view.series_model.populate_data()
 							# TODO: make it spawn a dialog instead (from utils.py or misc.py)
 							if loading.progress.maximum() == loading.progress.value():
 								misc.Loading.ON = False

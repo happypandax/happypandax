@@ -370,6 +370,7 @@ class ChapterDB:
 class Series:
 	"""Base class for a series.
 	Available data:
+	id -> Not to be editied. Do not touch.
 	title <- [list of titles] or str
 	profile <- path to thumbnail
 	path <- path to series
@@ -377,7 +378,9 @@ class Series:
 	chapters <- {<number>:<path>}
 	chapter_size <- int of number of chapters
 	info <- str
+	fav <- int (1 for true 0 for false)
 	type <- str (Manga? Doujin? Other?)
+	language <- str
 	status <- "unknown", "completed" or "ongoing"
 	tags <- list of str
 	pub_date <- string: dd/mm/yy
@@ -404,6 +407,25 @@ class Series:
 		self.last_read = None
 		self.last_update = None
 
+	def __str__(self):
+		string = """
+		ID: {}
+		Title: {}
+		Profile Path: {}
+		Path: {}
+		Author: {}
+		Description: {}
+		Favourite: {}
+		Type: {}
+		Language: {}
+		Status: {}
+		Tags: {}
+		Publication Date: {}
+		Date Added: {}
+		""".format(self.id, self.title, self.profile, self.path, self.artist,
+			 self.info, self.fav, self.type, self.language, self.status, self.tags,
+			 self.pub_date, self.date_added)
+		return string
 
 
 if __name__ == '__main__':

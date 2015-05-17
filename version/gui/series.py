@@ -24,19 +24,19 @@ class SeriesModel(QAbstractListModel):
 	def __init__(self, parent=None):
 		super().__init__(parent)
 		self._data_count = 0 # number of items added to model
-		self.update_data()
+		self.populate_data()
 		#self._data_container = []
 		self.layoutChanged.connect(lambda: self.status_b_msg("Refreshed")) # quite a hack
 		self.dataChanged.connect(lambda: self.status_b_msg("Edited"))
 		self.CUSTOM_STATUS_MSG.connect(self.status_b_msg)
 
-	def update_data(self):
+	def populate_data(self):
 		"Populates the model with data from database"
 		self._data = seriesdb.SeriesDB.get_all_series()
 		self.layoutChanged.emit()
+		self.ROWCOUNT_CHANGE.emit()
 
 	def status_b_msg(self, msg):
-		print(msg)
 		self.STATUSBAR_MSG.emit(msg)
 
 	def data(self, index, role):
@@ -77,19 +77,6 @@ class SeriesModel(QAbstractListModel):
 			return Qt.ItemIsEnabled
 		return Qt.ItemFlags(QAbstractListModel.flags(self, index) |
 					  Qt.ItemIsEditable)
-
-	def setData(self, index, value, role = Qt.EditRole):
-		"""Takes the new data and appends it to old
-		Note: Might want to make make it replace instead"""
-		super().setData(self)
-		#NOTE: Things are more complicated than this
-		#if index.isValid() and 0 <= index.row() < len(self._data):
-		#	current_row = index.row()
-		#	current_data = self._data[current_row]
-		#	self._data.append(value)
-		#	self.dataChanged.emit(index, index, ()) # emit a tuple of roles that have changed in 3rd arg
-		#	return True
-		#return False
 
 	def addRows(self, list_of_series, position=len(_data)-1,
 				rows=1, index = QModelIndex()):
@@ -156,7 +143,6 @@ class CustomDelegate(QStyledItemDelegate):
 		super().__init__()
 		self.W = gui_constants.THUMB_W_SIZE
 		self.H = gui_constants.THUMB_H_SIZE
-		self._state = None
 		QPixmapCache.setCacheLimit(gui_constants.THUMBNAIL_CACHE_SIZE)
 		self._painted_indexes = {}
 
@@ -299,11 +285,11 @@ class CustomDelegate(QStyledItemDelegate):
 		if option.state & QStyle.State_MouseOver:
 			painter.fillRect(option.rect, QColor(225,225,225,90)) #70
 
-		if option.state & QStyle.State_Selected:
-			painter.fillRect(option.rect, QColor(164,164,164,120)) #option.palette.highlight()
+		#if option.state & QStyle.State_Selected:
+		#	painter.fillRect(option.rect, QColor(164,164,164,120))
 
-		if option.state & QStyle.State_Selected:
-			painter.setPen(QPen(option.palette.highlightedText().color()))
+		#if option.state & QStyle.State_Selected:
+		#	painter.setPen(QPen(option.palette.highlightedText().color()))
 
 	def sizeHint(self, QStyleOptionViewItem, QModelIndex):
 		return QSize(self.W, self.H)
@@ -315,9 +301,7 @@ class CustomDelegate(QStyledItemDelegate):
 		if event.type() == QEvent.MouseButtonPress:
 			mouseEvent = QMouseEvent(event)
 			if mouseEvent.buttons() == Qt.LeftButton:
-				self._state = (index.row(), index.column())
-				self.BUTTON_CLICKED.emit(1, index)#self._state)
-				print("Clicked")
+				self.BUTTON_CLICKED.emit(1, index)
 				return True
 			else: return super().editorEvent(event, model, option, index)
 		else:
@@ -379,7 +363,6 @@ class MangaView(QListView):
 		all_3 = QAction("Remove", menu, triggered = self.foo)
 		def fav():
 			self.favourite(index)
-
 		if index.isValid():
 			if index.data(Qt.UserRole+1).fav==1: # here you can limit which items to show these actions for
 				action_1 = QAction("Favourite", menu, triggered = fav)
@@ -438,9 +421,10 @@ class MangaView(QListView):
 		assert isinstance(list_of_series, list), "Please pass a series to replace with"
 		assert isinstance(pos, int)
 		for series in list_of_series:
-			seriesdb.SeriesDB.modify_series(series.id, series.title, series.artist,
-									  series.info, series.type, series.language,
-									  series.status, series.pub_date)
+			seriesdb.SeriesDB.modify_series(series.id, title=series.title,
+								   artist=series.artist, info=series.info,
+								   type=series.type, language=series.language,
+									  status=series.status, pub_date=series.pub_date)
 		self.series_model.replaceRows([series], pos, len(list_of_series))
 
 	def spawn_dialog(self, index=False):
