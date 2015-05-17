@@ -8,14 +8,14 @@ from PyQt5.QtGui import (QPixmap, QBrush, QColor, QPainter,
 from PyQt5.QtWidgets import (QListView, QFrame, QLabel,
 							 QStyledItemDelegate, QStyle,
 							 QMenu, QAction, QToolTip, QVBoxLayout,
-							 QSizePolicy, QTableWidget)
+							 QSizePolicy, QTableWidget, QScrollArea,
+							 QHBoxLayout, QFormLayout)
 from ..database import seriesdb
 from . import gui_constants, misc
 
 class SeriesModel(QAbstractListModel):
 	"""Model for Model/View/Delegate framework
 	"""
-	_data = [] #a list for the data
 
 	ROWCOUNT_CHANGE = pyqtSignal()
 	STATUSBAR_MSG = pyqtSignal(str)
@@ -24,6 +24,7 @@ class SeriesModel(QAbstractListModel):
 	def __init__(self, parent=None):
 		super().__init__(parent)
 		self._data_count = 0 # number of items added to model
+		self._data = [] #a list for the data
 		self.populate_data()
 		#self._data_container = []
 		self.layoutChanged.connect(lambda: self.status_b_msg("Refreshed")) # quite a hack
@@ -78,9 +79,11 @@ class SeriesModel(QAbstractListModel):
 		return Qt.ItemFlags(QAbstractListModel.flags(self, index) |
 					  Qt.ItemIsEditable)
 
-	def addRows(self, list_of_series, position=len(_data)-1,
+	def addRows(self, list_of_series, position=None,
 				rows=1, index = QModelIndex()):
 		"Adds new series data to model and DB"
+		if not position:
+			position = len(self._data)
 		self.beginInsertRows(QModelIndex(), position, position + rows - 1)
 		for series in list_of_series:
 			n_series = seriesdb.SeriesDB.add_series_return(series)
@@ -89,7 +92,7 @@ class SeriesModel(QAbstractListModel):
 		self.CUSTOM_STATUS_MSG.emit("Added row(s)")
 		return True
 
-	def insertRows(self, list_of_series, position=len(_data)-1,
+	def insertRows(self, list_of_series, position,
 				rows=1, index = QModelIndex()):
 		"Inserts new series data to the data list WITHOUT adding to DB"
 		self.beginInsertRows(QModelIndex(), position, position + rows - 1)
@@ -99,7 +102,7 @@ class SeriesModel(QAbstractListModel):
 		self.CUSTOM_STATUS_MSG.emit("Added row(s)")
 		return True
 
-	def replaceRows(self, list_of_series, position=len(_data)-1, rows=1, index=QModelIndex()):
+	def replaceRows(self, list_of_series, position, rows=1, index=QModelIndex()):
 		"replaces series data to the data list WITHOUT adding to DB"
 		for pos, series in enumerate(list_of_series):
 			del self._data[position+pos]
@@ -487,9 +490,10 @@ class ChapterInfo(QFrame):
 		super().__init__(parent)
 		self.H = gui_constants.CHAP_IMAGE_H
 		self.W = self.H//1.6
-		self.setFrameStyle(1)
-		self.setLineWidth(1)
+		self.setFrameStyle(QFrame.NoFrame)
 		self.setMaximumWidth(self.W*1.2)
+		self.image = QPixmap()
+		self.scaled_image = None
 		#self.data = []
 		self.initUI()
 
@@ -508,87 +512,98 @@ class ChapterInfo(QFrame):
 		# The image
 		self.image_icon_size = QSize(self.W, self.H)
 		self.image_box = QLabel()
+		self.image_box.setObjectName("image_box") # to allow styling this object
+		self.image_box.setFrameStyle(QFrame.StyledPanel)
 		background_layout.addWidget(self.image_box, 0, Qt.AlignHCenter)
 
 		# the metadata
-		self.metadata = QTableWidget()
-		self.metadata.setRowCount(10)
-		self.metadata.setColumnCount(2)
-		#self.metadata.setColumnWidth(2,70)
-		#self.metadata.resizeColumnsToContents()
-		self.metadata.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-		self.metadata.setShowGrid(False)
-		self.metadata.horizontalHeader().setVisible(False)
-		self.metadata.verticalHeader().setVisible(False)
-		self.metadata.setFrameShape(QFrame.NoFrame)
-		self.metadata.setFocusPolicy(Qt.NoFocus)
-		self.metadata.setWordWrap(True)
-		background_layout.addWidget(self.metadata, 2)
+		self.metadata_area = QScrollArea()
+		self.metadata_main = QFrame()
+		self.metadata_main.setMaximumWidth(self.W*1.1)
+		self.metadata = QVBoxLayout()
+		self.metadata_main.setLayout(self.metadata)
+
+		background_layout.addWidget(self.metadata_area)
 
 		def t_props(obj):
 			obj.setWordWrap(True)
 
 		self.title = QLabel()
+		self.title.setObjectName("title")
 		t_props(self.title)
 		self.title.setAlignment(Qt.AlignHCenter)
-		self.metadata.setCellWidget(0,0,self.title)
-		self.metadata.setSpan(0,0,1,2)
+		self.title.setMinimumWidth(self.W)
+		self.metadata.addWidget(self.title)
 
+		artist_chap = QHBoxLayout()
+		self.metadata.addLayout(artist_chap)
 		self.artist = QLabel()
+		self.artist.setObjectName("author")
 		self.artist.setAlignment(Qt.AlignLeft)
-		self.metadata.setCellWidget(1,0, self.artist)
+		artist_chap.addWidget(self.artist, 0, Qt.AlignLeft)
 
 		self.chapter_count = QLabel()
+		self.chapter_count.setObjectName("chapter_count")
 		self.chapter_count.setAlignment(Qt.AlignRight)
-		self.metadata.setCellWidget(1, 1, self.chapter_count)
+		artist_chap.addWidget(self.chapter_count, 0, Qt.AlignRight)
 
 		self.info = QLabel()
+		self.info.setObjectName("info")
 		self.info.setAlignment(Qt.AlignLeft)
 		t_props(self.info)
-		self.metadata.setCellWidget(2,0, self.info)
-		self.metadata.setSpan(2,0,1,2)
+		self.metadata.addWidget(self.info, 1, Qt.AlignLeft)
 
 		#self.last_read = QLabel("None")
 		#self.last_update = QLabel("None")
 
+		dates = QHBoxLayout()
+		self.metadata.addLayout(dates)
 		self.date_added = QLabel()
-		self.date_added.setAlignment(Qt.AlignLeft)
-		self.metadata.setCellWidget(3,0, self.date_added)
+		self.date_added.setObjectName("date_added")
+		self.date_added.setAlignment(Qt.AlignHCenter)
+		dates.addWidget(self.date_added, 0, Qt.AlignLeft)
 
 		self.pub_date = QLabel()
-		self.pub_date.setAlignment(Qt.AlignRight)
-		self.metadata.setCellWidget(3,1, self.pub_date)
+		self.pub_date.setObjectName("pub_date")
+		self.pub_date.setAlignment(Qt.AlignHCenter)
+		dates.addWidget(self.pub_date, 0, Qt.AlignRight)
 
 		self.tags = QLabel()
+		self.tags.setObjectName("tags")
 		t_props(self.tags)
 		self.tags.setAlignment(Qt.AlignLeft)
-		self.metadata.setCellWidget(4,0, self.tags)
-		self.metadata.setSpan(4, 0, 1, 2)
+		self.metadata.addWidget(self.tags, 0, Qt.AlignLeft)
 
 		self.path = QLabel()
+		self.path.setObjectName("path")
 		t_props(self.path)
 		self.path.setAlignment(Qt.AlignLeft)
-		self.metadata.setCellWidget(5,0, self.path)
-		self.metadata.setSpan(5,0,1,2)
+		self.metadata.addWidget(self.path, 0 , Qt.AlignLeft)
 
 
 	def drawContents(self, series):
 		assert isinstance(series, seriesdb.Series), "Please provide a series of Series class from SeriesDB"
 		
-		new_image = QPixmap(series.profile).scaled(self.image_icon_size, Qt.KeepAspectRatio,
+		self.image.load(series.profile)
+		self.scaled_image = self.image.scaled(self.image_icon_size, Qt.KeepAspectRatio,
 					Qt.SmoothTransformation)
-		self.image_box.setPixmap(new_image)
-		self.title.setText("<font size='4' color='#585858'><b>"+series.title+"</b></font>")
-		self.artist.setText("<font size='3' color='#585858'>"+series.artist+"</font>")
-		self.chapter_count.setText("<font size='2' color='#B7153E'><i>Chapters:</i></font>"+"{}".format(len(series.chapters)))
-		self.info.setText("<font size='2' color='#B7153E'><i>Description:</i></font><br>"+series.info)
-		self.date_added.setText("<font size='2' color='#B7153E'><i>Date Added:</i></font><br>"+series.date_added)
-		self.pub_date.setText("<font size='2' color='#B7153E'><i>Date Published:</i></font><br>"+series.pub_date)
-		self.tags.setText("<font size='2' color='#B7153E'><i>Tags:</i></font><br>"+"TODO")
-		self.path.setText("<font size='2' color='#B7153E'><i>Path:</i></font><br><font size='2'><i>"+series.path+"</i></font><br>")
-		#self.path.setText("Path:\n"+series.path)
-		self.metadata.resizeRowsToContents()
+		self.image_box.setPixmap(self.scaled_image)
 
+		self.title.setText(series.title)
+		self.artist.setText(series.artist)
+		self.chapter_count.setText("Chapters:"+"{}  ".format(len(series.chapters)))
+		self.info.setText("Description:\n"+series.info)
+		self.date_added.setText("Date Added:\n"+series.date_added)
+		try:
+			self.pub_date.setText("Date Published:\n{2}-{1}-{0}".format(series.pub_date.day,
+														   series.pub_date.month, series.pub_date.month))
+		except:
+			self.pub_date.setText("Date Published:\n"+series.pub_date)
+		self.tags.setText("Tags:\n"+"TODO")
+		self.path.setText("Path:\n"+series.path)
+		self.metadata_area.setWidget(self.metadata_main)
+		self.metadata_main.adjustSize()
+		self.metadata.update()
 	#def resizeEvent(self, resizeevent):
 	#	"""This method basically need to make sure
 	#	the image in chapter view gets resized when moving

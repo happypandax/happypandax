@@ -11,3 +11,6 @@ def today():
 def exception_handler(msg):
 	"Spawns a dialog with the specified msg"
 	pass
+
+def open(filepath):
+	pass 

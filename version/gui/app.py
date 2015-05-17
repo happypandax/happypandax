@@ -87,6 +87,7 @@ class AppWindow(QMainWindow):
 	def chapter_display(self):
 		"Initiates chapter view"
 		self.chapter_main = QWidget()
+		self.chapter_main.setObjectName("chapter_main") # to allow styling this object
 		self.chapter_layout = QHBoxLayout()
 		self.chapter_main.setLayout(self.chapter_layout)
 

@@ -6,6 +6,22 @@ AppWindow {
 	background-color: #F2F2F2;
 }
 
+QWidget#chapter_main {
+	background-color: #464646;
+}
+
+QLabel#image_box {
+    border:1px solid #ffd800;
+}
+
+QLabel#title {
+    font-weight:bold;
+    font-size:12px;
+}
+
+QLabel#author {
+    font-weight:lighter;
+}
 
 AppWindow > QToolBar, QStatusBar {
 	background-color: #464646;
@@ -30,7 +46,7 @@ QScrollBar {
 
 QScrollBar::handle {
     background-color: #464646;
-    border: 1px solid #464646;
+    border: 0px solid #464646;
     min-width: 50px;
 }
 
@@ -78,6 +94,10 @@ QPushButton:hover {
 
 QPushButton:pressed, QPushButton:checked {
 	background-color: #E1E1E1;
+}
+
+ChapterInfo {
+    background-color:#464646;
 }
 
 /*Window > QPlainTextEdit, QTextEdit, QGraphicsView {

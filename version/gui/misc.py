@@ -107,6 +107,7 @@ class SeriesDialog(QDialog):
 		self.pub_edit.setCalendarPopup(True)
 		self.pub_edit.setDate(QDate.currentDate())
 		self.path_lbl = QLabel("unspecified...")
+		self.path_lbl.setWordWrap(True)
 
 		series_layout.addRow("Title:", self.title_edit)
 		series_layout.addRow("Author:", self.author_edit)
@@ -272,8 +273,8 @@ class SeriesDialog(QDialog):
 		self.author_edit = QLineEdit()
 		self.author_edit.setText(series.artist)
 		self.descr_edit = QTextEdit()
-		self.descr_edit.setPlaceholderText("HTML 4 tags are supported")
-		self.descr_edit.setPlainText(series.info)
+		self.descr_edit.setText(series.info)
+		self.descr_edit.setAcceptRichText(True)
 		self.descr_edit.setFixedHeight(70)
 		self.lang_box = QComboBox()
 		self.lang_box.addItems(["English", "Japanese", "Other"])
@@ -312,6 +313,7 @@ class SeriesDialog(QDialog):
 		qdate_pub_date = QDate.fromString(series_pub_date, "yyyy-MM-dd")
 		self.pub_edit.setDate(qdate_pub_date)
 		self.path_lbl = QLabel("unspecified...")
+		self.path_lbl.setWordWrap(True)
 		self.path_lbl.setText(series.path)
 
 		series_layout.addRow("Title:", self.title_edit)
