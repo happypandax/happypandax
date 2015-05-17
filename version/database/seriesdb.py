@@ -399,7 +399,7 @@ class Series:
 		self.language = None
 		self.status = None
 		self.tags = None
-		self.pub_date = None
+		self.pub_date = datetime.date.today()
 		self.date_added = datetime.date.today()
 		self.last_read = None
 		self.last_update = None

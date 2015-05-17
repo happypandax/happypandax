@@ -5,9 +5,10 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QListView,
 							 QHBoxLayout, QFrame, QWidget, QVBoxLayout,
 							 QLabel, QStackedLayout, QToolBar, QMenuBar,
 							 QSizePolicy, QMenu, QAction, QLineEdit,
-							 QSplitter)
+							 QSplitter, QMessageBox, QFileDialog)
 from . import series
-from . import gui_constants
+from . import gui_constants, misc
+from ..database import fetch
 
 class AppWindow(QMainWindow):
 	"The application's main window"
@@ -132,7 +133,7 @@ class AppWindow(QMainWindow):
 		series_menu = QMenu()
 		series_menu.addSeparator()
 		populate_action = QAction("Populate from folder...", self)
-		populate_action.triggered.connect(lambda:series.populate())
+		populate_action.triggered.connect(self.populate)
 		series_menu.addAction(populate_action)
 		series_action.setMenu(series_menu)
 		self.toolbar.addAction(series_action)
@@ -168,6 +169,64 @@ class AppWindow(QMainWindow):
 			self.display.setCurrentIndex(number)
 		else:
 			self.display.setCurrentIndex(number)
+
+	# TODO: Improve this so that it adds to the series dialog,
+	# so user can edit data before inserting (make it a choice)
+	def populate(self):
+		"Populates the database with series from local drive'"
+		msgbox = QMessageBox()
+		msgbox.setText("<font color='red'><b>Use with care.</b></font> Choose a folder containing all your series'.")
+		msgbox.setInformativeText("Oniichan, are you sure you want to do this?")
+		msgbox.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+		msgbox.setDefaultButton(QMessageBox.No)
+		if msgbox.exec() == QMessageBox.Yes:
+			path = QFileDialog.getExistingDirectory(None, "Choose a folder containing your series'")
+			if len(path) is not 0:
+				data_thread = QThread()
+				loading_thread = QThread()
+				loading = misc.Loading()
+
+				if not loading.ON:
+					misc.Loading.ON = True
+					fetch_instance = fetch.Fetch()
+					fetch_instance.series_path = path
+					loading.show()
+
+					def finished(status):
+						if status:
+							self.manga_list_view.series_model.update_data()
+							# TODO: make it spawn a dialog instead (from utils.py or misc.py)
+							if loading.progress.maximum() == loading.progress.value():
+								misc.Loading.ON = False
+								loading.hide()
+							data_thread.quit
+						else:
+							loading.setText("<font color=red>An error occured. Try restarting..</font>")
+							loading.progress.setStyleSheet("background-color:red")
+							data_thread.quit
+
+					def fetch_deleteLater():
+						try:
+							fetch_instance.deleteLater
+						except NameError:
+							pass
+
+					def thread_deleteLater(): #NOTE: Isn't this bad?
+						data_thread.deleteLater
+
+					def a_progress(prog):
+						loading.progress.setValue(prog)
+						loading.setText("Searching on local disk...\n(Will take a while on first time)")
+
+					fetch_instance.moveToThread(data_thread)
+					fetch_instance.DATA_COUNT.connect(loading.progress.setMaximum)
+					fetch_instance.PROGRESS.connect(a_progress)
+					data_thread.started.connect(fetch_instance.local)
+					fetch_instance.FINISHED.connect(finished)
+					fetch_instance.FINISHED.connect(fetch_deleteLater)
+					fetch_instance.FINISHED.connect(thread_deleteLater)
+					data_thread.start()
+
 
 if __name__ == '__main__':
 	raise NotImplementedError("Unit testing not implemented yet!")

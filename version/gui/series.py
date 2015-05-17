@@ -1,79 +1,16 @@
 from PyQt5.QtCore import (Qt, QAbstractListModel, QModelIndex, QVariant,
 						  QSize, QRect, QEvent, pyqtSignal, QThread,
 						  QTimer, QPointF)
-from PyQt5.QtGui import (QPixmap, QBrush, QColor, QPainter,
-						 QFont, QPen, QTextDocument,
+from PyQt5.QtGui import (QPixmap, QBrush, QColor, QPainter, 
+						 QPen, QTextDocument,
 						 QMouseEvent, QHelpEvent,
 						 QPixmapCache)
 from PyQt5.QtWidgets import (QListView, QFrame, QLabel,
 							 QStyledItemDelegate, QStyle,
-							 QMenu, QAction, QToolTip,
-							 QHBoxLayout, QVBoxLayout,
-							 QWidget, QPushButton,
-							 QSizePolicy, QTableWidget,
-							 QTableWidgetItem, QDialog,
-							 QGridLayout, QMessageBox,
-							 QFileDialog)
-from ..database import fetch, seriesdb
+							 QMenu, QAction, QToolTip, QVBoxLayout,
+							 QSizePolicy, QTableWidget)
+from ..database import seriesdb
 from . import gui_constants, misc
-
-# TODO: Improve this so that it adds to the series dialog,
-# so user can edit data before inserting
-def populate():
-	"Populates the database with series from local drive'"
-	msgbox = QMessageBox()
-	msgbox.setText("<font color='red'><b>Use with care.</b></font> Choose a folder containing all your series'.")
-	msgbox.setInformativeText("Oniichan, are you sure you want to do this?")
-	msgbox.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-	msgbox.setDefaultButton(QMessageBox.No)
-	if msgbox.exec() == QMessageBox.Yes:
-		path = QFileDialog.getExistingDirectory(None, "Choose a folder containing your series'")
-		if len(path) is not 0:
-			data_thread = QThread()
-			loading_thread = QThread()
-			loading = misc.Loading()
-
-			if not loading.ON:
-				misc.Loading.ON = True
-				fetch_instance = fetch.Fetch()
-				fetch_instance.series_path = path
-				loading.show()
-
-				def finished(status):
-					if status:
-						SeriesModel.update_data()
-						# TODO: make it spawn a dialog instead (from utils.py or misc.py)
-						if loading.progress.maximum() == loading.progress.value():
-							misc.Loading.ON = False
-							loading.hide()
-						data_thread.quit
-					else:
-						loading.setText("<font color=red>An error occured. Try restarting..</font>")
-						loading.progress.setStyleSheet("background-color:red")
-						data_thread.quit
-
-				def fetch_deleteLater():
-					try:
-						fetch_instance.deleteLater
-					except NameError:
-						pass
-
-				def thread_deleteLater(): #NOTE: Isn't this bad?
-					data_thread.deleteLater
-
-				def a_progress(prog):
-					loading.progress.setValue(prog)
-					loading.setText("Searching on local disk...\n(Will take a while on first time)")
-
-				fetch_instance.moveToThread(data_thread)
-				fetch_instance.DATA_COUNT.connect(loading.progress.setMaximum)
-				fetch_instance.PROGRESS.connect(a_progress)
-				data_thread.started.connect(fetch_instance.local)
-				fetch_instance.FINISHED.connect(finished)
-				fetch_instance.FINISHED.connect(fetch_deleteLater)
-				fetch_instance.FINISHED.connect(thread_deleteLater)
-				data_thread.start()
-
 
 class SeriesModel(QAbstractListModel):
 	"""Model for Model/View/Delegate framework
@@ -93,10 +30,10 @@ class SeriesModel(QAbstractListModel):
 		self.dataChanged.connect(lambda: self.status_b_msg("Edited"))
 		self.CUSTOM_STATUS_MSG.connect(self.status_b_msg)
 
-	@classmethod
 	def update_data(self):
 		"Populates the model with data from database"
 		self._data = seriesdb.SeriesDB.get_all_series()
+		self.layoutChanged.emit()
 
 	def status_b_msg(self, msg):
 		print(msg)

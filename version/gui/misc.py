@@ -308,7 +308,9 @@ class SeriesDialog(QDialog):
 
 		self.pub_edit = QDateEdit() # TODO: Finish this..
 		self.pub_edit.setCalendarPopup(True)
-		self.pub_edit.setDate(QDate.currentDate())
+		series_pub_date = "{}".format(series.pub_date)
+		qdate_pub_date = QDate.fromString(series_pub_date, "yyyy-MM-dd")
+		self.pub_edit.setDate(qdate_pub_date)
 		self.path_lbl = QLabel("unspecified...")
 		self.path_lbl.setText(series.path)
 
@@ -345,9 +347,9 @@ class SeriesDialog(QDialog):
 			new_series.type = self.type_box.currentText()
 			new_series.language = self.lang_box.currentText()
 			new_series.status = self.status_box.currentText()
-			#qpub_d = self.pub_edit.date().toString("ddMMyyyy")
-			#dpub_d = datetime.strptime(qpub_d, "%d%m%Y").date()
-			#new_series.pub_date = dpub_d
+			qpub_d = self.pub_edit.date().toString("ddMMyyyy")
+			dpub_d = datetime.strptime(qpub_d, "%d%m%Y").date()
+			new_series.pub_date = dpub_d
 
 			#for ser in self.series:
 			self.SERIES_EDIT.emit([new_series], self.position)
