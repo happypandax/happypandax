@@ -10,7 +10,7 @@ if __name__ == '__main__':
 	
 	if len(u_style) is not 0:
 		try:
-			pass
+			style_file = QFile(u_style)
 		except:
 			style_file = QFile(d_style)
 	else:
