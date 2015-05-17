@@ -1,6 +1,7 @@
 import os
+from ..utils import IMG_FILES as IMF
 
-IMG_FILES = ['jpg','bmp','png','gif']
+IMG_FILES = IMF
 
 THUMBNAIL_PATH = os.path.join("db", "thumbnails")
 DB_PATH = os.path.join("db","sadpanda.db")

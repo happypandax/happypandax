@@ -12,6 +12,7 @@ from PyQt5.QtWidgets import (QListView, QFrame, QLabel,
 							 QHBoxLayout, QFormLayout)
 from ..database import seriesdb
 from . import gui_constants, misc
+from .. import utils
 
 class SeriesModel(QAbstractListModel):
 	"""Model for Model/View/Delegate framework
@@ -355,13 +356,18 @@ class MangaView(QListView):
 			self.series_model.replaceRows([n_series], index.row(), 1, index)
 			self.series_model.CUSTOM_STATUS_MSG.emit("Favourited")
 
+	def open_chapter(self, index):
+		series = index.data(Qt.UserRole+1)
+		utils.open(series.chapters[0])
+
 	def contextMenuEvent(self, event):
 		handled = False
 		custom = False
 		index = self.indexAt(event.pos())
 
 		menu = QMenu()
-		all_1 = QAction("Open in external viewer", menu, triggered = self.foo)
+		all_1 = QAction("Open in external viewer", menu,
+				  triggered = lambda: self.open_chapter(index))
 		all_2 = QAction("Edit...", menu, triggered = lambda: self.spawn_dialog(index))
 		all_3 = QAction("Remove", menu, triggered = self.foo)
 		def fav():

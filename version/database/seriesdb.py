@@ -58,6 +58,9 @@ def series_map(row, series):
 	series.last_update = row['last_update']
 	series.last_read = row['last_read']
 	series.date_added = row['date_added']
+
+	series.chapters = ChapterDB.get_chapters_for_series(series.id)
+
 	return series
 
 def default_exec(object):
