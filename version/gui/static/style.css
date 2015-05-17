@@ -1,0 +1,110 @@
+﻿DoNotDelete {
+	background-color: #F2F2F2; 
+}
+
+AppWindow {
+	background-color: #F2F2F2;
+}
+
+QWidget#chapter_main {
+	background-color: #464646;
+}
+
+QLabel#image_box {
+    border:1px solid #ffd800;
+}
+
+QLabel#title {
+    font-weight:bold;
+    font-size:12px;
+}
+
+QLabel#author {
+    font-weight:lighter;
+}
+
+AppWindow > QToolBar, QStatusBar {
+	background-color: #464646;
+    border: 0px solid #F2F2F2;
+}
+
+AppWindow > QStatusBar > QWidget {
+    color:white;
+}
+
+AppWindow > QStatusBar > QLabel {
+    color:white;
+    font-style:italic;
+    border: 0px;
+}
+
+QScrollBar {
+    background: none;
+    width: 10px;
+    border: 0px solid #9A9A9A;
+}
+
+QScrollBar::handle {
+    background-color: #464646;
+    border: 0px solid #464646;
+    min-width: 50px;
+}
+
+QScrollBar::add-line, QScrollBar::sub-line {
+    border: 0px;
+    width: 20px;
+}
+
+QMenu {
+    background-color: #464646;
+    color: white;
+}
+
+QMenu::item:selected {
+    background-color: #808080;
+}
+
+MangaView {
+	background-color: #F2F2F2;
+    border: 0px solid #F2F2F2;
+}
+
+QLabel {
+		color: #3A404B;
+}
+
+QPushButton, QToolButton {
+	background-color: #464646;
+    /*height: 20px;
+	border: 0.5px solid #303030;*/
+	font-size: 13px;
+	color: white;
+}
+
+QPushButton:hover {
+	background-color: #585858; 
+}
+
+/*SeriesDialog {
+    background-color:#464646;
+    border: 1px solid #464646;
+    border-radius: 20px;
+    color: white;
+}*/
+
+QPushButton:pressed, QPushButton:checked {
+	background-color: #E1E1E1;
+}
+
+ChapterInfo {
+    background-color:#464646;
+}
+
+/*Window > QPlainTextEdit, QTextEdit, QGraphicsView {
+	background-color: #303030;
+	color: white;
+	border: none;
+
+QGraphicsTextItem {
+	color:white;
+} */
