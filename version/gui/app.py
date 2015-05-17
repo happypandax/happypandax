@@ -1,5 +1,5 @@
 import sys
-from PyQt5.QtCore import (Qt, QSize, pyqtSignal, QThread, QEvent)
+from PyQt5.QtCore import (Qt, QSize, pyqtSignal, QThread, QEvent, QTimer)
 from PyQt5.QtGui import (QPixmap, QIcon, QMouseEvent)
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QListView,
 							 QHBoxLayout, QFrame, QWidget, QVBoxLayout,
@@ -46,9 +46,20 @@ class AppWindow(QMainWindow):
 		s_by_artist = QAction("Artist", sort_menu)
 		sort_menu.addAction(s_by_title)
 		sort_menu.addAction(s_by_artist)
-		self.status_bar.addWidget(self.stat_info)
+		self.status_bar.addPermanentWidget(self.stat_info)
 		#self.status_bar.addAction(self.sort_main)
+		self.temp_msg = QLabel()
+		self.temp_timer = QTimer()
 		self.manga_list_view.series_model.ROWCOUNT_CHANGE.connect(self.stat_row_info)
+		self.manga_list_view.series_model.STATUSBAR_MSG.connect(self.stat_temp_msg)
+
+	def stat_temp_msg(self, msg):
+		self.temp_timer.stop()
+		self.temp_msg.setText(msg)
+		self.status_bar.addWidget(self.temp_msg)
+		self.temp_timer.timeout.connect(self.temp_msg.clear)
+		self.temp_timer.setSingleShot(True)
+		self.temp_timer.start(5000)
 
 	def stat_row_info(self):
 		r = self.manga_list_view.series_model.rowCount()

@@ -126,7 +126,7 @@ class DBThread:
 
 		while True:
 			list_of_cmds = cmd_queue.get()
-			# TODO: implement error handling. Idea: make it return an exception (possible?)
+			# TODO: implement error handling. Idea: make it put status code in resultqueue or spawn a dialog?
 			c = self.conn.cursor()
 			for cmd in list_of_cmds:
 				try:
@@ -147,68 +147,6 @@ class DBThread:
 			msg = "The database is not compatible with the current version of the program"
 			exception_handler(msg)
 			raise Exception(msg)
-			#self.vs_checked = True # we have now checked the version for this instance
-
-#class DBThreadStale:
-#	'''A class containing methods to interact with a database in a thread-safe manner.
-#	Should only be used when you dont expect a return. This class works with queues.
-#	'''
-#	def __init__(self, db_conn):
-#		assert isinstance(db_conn, sqlite3.Connection), "A sqlite3 connection must be passed"
-#		self.conn = db_conn
-#		self.vs_checked = False #to prevent multiple version cheking this instance
-		
-#		stale_query_thread = threading.Thread(target=self.stale_query, args=(StaleQueue,))
-#		stale_query_thread.start()
-
-#	def stale_query(self, stale_queue):
-#		"""This method should only be used for inserting methods,
-#		as it won't put anything in the result queue"""
-#		assert isinstance(stale_queue, queue.Queue), "You must pass a queue from the queue system module"
-#		self._check_db_version()
-#		print("Checked DB Version From Thread 2")
-
-#		from time import sleep
-
-#		def execute_func(cursor, cmd):
-#			try:
-#				cursor.execute(cmd[0], cmd[1])
-#			except IndexError:
-#				cursor.execute(cmd[0])
-
-#		while True:
-#			list_of_cmds = stale_queue.get()
-#			c = self.conn.cursor()
-#			for cmd in list_of_cmds:
-#				try:
-#					execute_func(c, cmd)
-#				except sqlite3.OperationalError:
-#					db_locked = True
-#					while db_locked is True:
-#						sleep(0.01)
-#						try:
-#							execute_func(c, cmd)
-#							db_locked = False
-#						except sqlite3.OperationalError:
-#							pass
-#			print("Executed from Thread 2")
-#			self.conn.commit()
-#			stale_queue.task_done()
-
-
-#	def _check_db_version(self):
-#		"Checks if DB version is allowed. Raises dialog if not"
-#		if not self.vs_checked:
-#			vs = "SELECT version FROM version"
-#			c = self.conn.cursor()
-#			c.execute(vs)
-#			db_vs = c.fetchone()
-#			if db_vs[0] not in db_constants.DB_VERSION:
-#				msg = "The database is not compatible with the current version of the program"
-#				exception_handler(msg)
-#				raise Exception(msg)
-#			self.vs_checked = True # we have now checked the version for this instance
-
 
 if __name__ == '__main__':
 	raise RuntimeError("Unit tests not yet implemented")

@@ -16,6 +16,12 @@ AppWindow > QStatusBar > QWidget {
     color:white;
 }
 
+AppWindow > QStatusBar > QLabel {
+    color:white;
+    font-style:italic;
+    border: 0px;
+}
+
 QScrollBar {
     background: none;
     width: 10px;

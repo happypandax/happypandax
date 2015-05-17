@@ -108,14 +108,36 @@ class SeriesDB:
 		raise Exception("SeriesDB should not be instantiated")
 
 	@staticmethod
-	def modify_series(series_id, title=None, artist=None, info=None, type=False, fav=False,
-				   language=False, status=False, pub_date=False):
+	def modify_series(series_id, title=None, artist=None, info=None, type=None, fav=None,
+				   language=None, status=None, pub_date=None):
 		"Modifies series with given series id"
-		pass
+		executing = []
+		if title:
+			executing.append(["UPDATE series SET title=? WHERE series_id=?", (title, series_id)])
+		if artist:
+			executing.append(["UPDATE series SET artist=? WHERE series_id=?", (artist, series_id)])
+		if info:
+			executing.append(["UPDATE series SET info=? WHERE series_id=?", (info, series_id)])
+		if type:
+			executing.append(["UPDATE series SET type=? WHERE series_id=?", (type, series_id)])
+		if fav:
+			executing.append(["UPDATE series SET fav=? WHERE series_id=?", (fav, series_id)])
+		if language:
+			executing.append(["UPDATE series SET language=? WHERE series_id=?", (language, series_id)])
+		if status:
+			executing.append(["UPDATE series SET status=? WHERE series_id=?", (status, series_id)])
+		if pub_date:
+			executing.append(["UPDATE series SET pub_date=? WHERE series_id=?", (pub_date, series_id)])
+
+		CommandQueue.put(executing)
+		c = ResultQueue.get()
+		del c
+
 
 	@staticmethod
 	def fav_series_set(series_id, fav):
 		"Set fav on series with given series id, and returns the series"
+		# NOTE: USELESS BECAUSE OF THE METHOD ABOVE; CONSIDER REVISING & DELETING
 		executing = [["UPDATE series SET fav=? WHERE series_id=?", (fav, series_id)]]
 		CommandQueue.put(executing)
 		c = ResultQueue.get()

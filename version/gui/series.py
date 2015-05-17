@@ -81,17 +81,26 @@ class SeriesModel(QAbstractListModel):
 	_data = [] #a list for the data
 
 	ROWCOUNT_CHANGE = pyqtSignal()
+	STATUSBAR_MSG = pyqtSignal(str)
+	CUSTOM_STATUS_MSG = pyqtSignal(str)
 
 	def __init__(self, parent=None):
 		super().__init__(parent)
 		self._data_count = 0 # number of items added to model
 		self.update_data()
 		#self._data_container = []
+		self.layoutChanged.connect(lambda: self.status_b_msg("Refreshed")) # quite a hack
+		self.dataChanged.connect(lambda: self.status_b_msg("Edited"))
+		self.CUSTOM_STATUS_MSG.connect(self.status_b_msg)
 
 	@classmethod
 	def update_data(self):
 		"Populates the model with data from database"
 		self._data = seriesdb.SeriesDB.get_all_series()
+
+	def status_b_msg(self, msg):
+		print(msg)
+		self.STATUSBAR_MSG.emit(msg)
 
 	def data(self, index, role):
 		if not index.isValid():
@@ -153,6 +162,7 @@ class SeriesModel(QAbstractListModel):
 			n_series = seriesdb.SeriesDB.add_series_return(series)
 			self._data.append(n_series)
 		self.endInsertRows()
+		self.CUSTOM_STATUS_MSG.emit("Added row(s)")
 		return True
 
 	def insertRows(self, list_of_series, position=len(_data)-1,
@@ -162,6 +172,7 @@ class SeriesModel(QAbstractListModel):
 		for pos, series in enumerate(list_of_series, 1):
 			self._data.insert(position+pos, n_series)
 		self.endInsertRows()
+		self.CUSTOM_STATUS_MSG.emit("Added row(s)")
 		return True
 
 	def replaceRows(self, list_of_series, position=len(_data)-1, rows=1, index=QModelIndex()):
@@ -195,11 +206,6 @@ class SeriesModel(QAbstractListModel):
 		self._data_count += item_to_fetch
 		self.endInsertRows()
 		self.ROWCOUNT_CHANGE.emit()
-
-
-	def save(self):
-		"Appends to DB for save"
-		pass
 
 class ChapterModel(SeriesModel):
 	pass
@@ -419,9 +425,11 @@ class MangaView(QListView):
 		if series.fav == 1:
 			n_series = seriesdb.SeriesDB.fav_series_set(series.id, 0)
 			self.series_model.replaceRows([n_series], index.row(), 1, index)
+			self.series_model.CUSTOM_STATUS_MSG.emit("Unfavourited")
 		else:
 			n_series = seriesdb.SeriesDB.fav_series_set(series.id, 1)
 			self.series_model.replaceRows([n_series], index.row(), 1, index)
+			self.series_model.CUSTOM_STATUS_MSG.emit("Favourited")
 
 	def contextMenuEvent(self, event):
 		handled = False
@@ -465,6 +473,9 @@ class MangaView(QListView):
 			sort_menu.addSeparator()
 			sort_menu.addAction(s_title)
 			sort_menu.addAction(s_artist)
+			refresh = QAction("&Refresh", menu,
+					 triggered = self.series_model.layoutChanged.emit)
+			menu.addAction(refresh)
 			handled = True
 
 		if handled and custom:
@@ -507,7 +518,7 @@ class MangaView(QListView):
 
 	def updateGeometries(self):
 		super().updateGeometries()
-		self.verticalScrollBar().setSingleStep(5)
+		self.verticalScrollBar().setSingleStep(gui_constants.SCROLL_SPEED)
 
 	#unusable code
 	#def event(self, event):
