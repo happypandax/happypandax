@@ -8,7 +8,7 @@ I'm here if you have any questions!
 # Screenshots
 ![alt-text][logo]
 
-[logo]: "Screenshot 1"
+[logo]: https://raw.githubusercontent.com/Pewpews/Sadpanda/master/misc/screenshot1.png "Screenshot 1"
 
 # Dependencies
 I wanted to keep the list short (I know the pain of wasting hours trying to install the correct dependencies)
