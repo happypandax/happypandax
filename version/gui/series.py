@@ -356,9 +356,9 @@ class MangaView(QListView):
 			self.series_model.replaceRows([n_series], index.row(), 1, index)
 			self.series_model.CUSTOM_STATUS_MSG.emit("Favourited")
 
-	def open_chapter(self, index):
+	def open_chapter(self, index, chap_numb):
 		series = index.data(Qt.UserRole+1)
-		utils.open(series.chapters[0])
+		utils.open(series.chapters[chap_numb])
 
 	def contextMenuEvent(self, event):
 		handled = False
@@ -366,18 +366,33 @@ class MangaView(QListView):
 		index = self.indexAt(event.pos())
 
 		menu = QMenu()
-		all_1 = QAction("Open in external viewer", menu,
-				  triggered = lambda: self.open_chapter(index))
+		all_1 = QAction("Open First Chapter", menu,
+				  triggered = lambda: self.open_chapter(index, 0))
 		all_2 = QAction("Edit...", menu, triggered = lambda: self.spawn_dialog(index))
 		all_3 = QAction("Remove", menu, triggered = self.foo)
 		def fav():
 			self.favourite(index)
+
+		# add the chapter menus
+		def chapters():
+			menu.addSeparator()
+			chapters_menu = QAction("Chapters", menu)
+			menu.addAction(chapters_menu)
+			open_chapters = QMenu()
+			chapters_menu.setMenu(open_chapters)
+			for number, chap_number in enumerate(range(len(
+				index.data(Qt.UserRole+1).chapters)), 1):
+				chap_action = QAction("Open chapter {}".format(
+					number), open_chapters, triggered = lambda: self.open_chapter(index, chap_number))
+				open_chapters.addAction(chap_action)
+
 		if index.isValid():
 			if index.data(Qt.UserRole+1).fav==1: # here you can limit which items to show these actions for
 				action_1 = QAction("Favourite", menu, triggered = fav)
 				action_1.setCheckable(True)
 				action_1.setChecked(True)
 				menu.addAction(action_1)
+				chapters()
 				handled = True
 				custom = True
 			if index.data(Qt.UserRole+1).fav==0: # here you can limit which items to show these actions for
@@ -385,6 +400,7 @@ class MangaView(QListView):
 				action_1.setCheckable(True)
 				action_1.setChecked(False)
 				menu.addAction(action_1)
+				chapters()
 				handled = True
 				custom = True
 		else:
