@@ -61,6 +61,8 @@ def series_map(row, series):
 
 	series.chapters = ChapterDB.get_chapters_for_series(series.id)
 
+	series.tags = TagDB.get_series_tags(series.id)
+
 	return series
 
 def default_exec(object):
@@ -248,6 +250,7 @@ class SeriesDB:
 		cursor = ResultQueue.get()
 		series_id = cursor.lastrowid
 		object.id = series_id
+		TagDB.add_tags(object)
 		ChapterDB.add_chapters(object)
 
 	@staticmethod
@@ -263,6 +266,7 @@ class SeriesDB:
 		cursor = ResultQueue.get()
 		series_id = cursor.lastrowid
 		object.id = series_id
+		TagDB.add_tags(object)
 		ChapterDB.add_chapters(object)
 
 		executing2 = [["SELECT * FROM series WHERE series_id=?", (series_id,)]]
@@ -297,6 +301,9 @@ class ChapterDB:
 		chapter_size -> returns amount of manga (can be used for indexing)
 		del_chapter -> (don't think this will be used, but w/e) NotImplementedError
 	"""
+
+	def __init__(self):
+		raise Exception("ChapterDB should not be instantiated")
 
 	@staticmethod
 	def add_chapters(series_object):
@@ -369,6 +376,152 @@ class ChapterDB:
 	def del_chapter():
 		"Raises NotImplementedError"
 		raise NotImplementedError
+
+class TagDB:
+	"""
+	Tags are returned in a dict where {"namespace":["tag1","tag2"]}
+	The namespace "default" will be used for tags without namespaces.
+
+	Provides the following methods:
+	get_series_tags -> Returns all tags and namespaces found for the given series_id;
+	get_tag_series -> Returns all series' with the given tag
+	get_ns_tags -> Returns all tags linked to the given namespace
+	get_ns_tags_series -> Returns all series' linked to the namespace tags
+	add_tags <- Adds the given dict_of_tags to the given series_id
+	modify_tags <- Modifies the given tags
+	"""
+
+	def __init__(self):
+		raise Exception("TagsDB should not be instantiated")
+
+	@staticmethod
+	def get_series_tags(series_id):
+		"Returns all tags and namespaces found for the given series_id"
+		assert isinstance(series_id, int), "Please provide a valid series ID"
+		executing = [["SELECT tags_mappings_id FROM series_tags_map WHERE series_id=?",
+				(series_id,)]]
+		CommandQueue.put(executing)
+		cursor = ResultQueue.get()
+		tags = {}
+		# WARNING: rowcount doesn't work! Fix this ASAP!
+		if cursor.rowcount != 0: # tags exists
+			for tag_map_row in cursor.fetchall(): # iterate all tag_mappings_ids
+				# get tag and namespace 
+				executing = [["""SELECT namespace_id, tag_id FROM tags_mappings
+								WHERE tags_mappings_id=?""", (tag_map_row['tags_mappings_id'],)]]
+				CommandQueue.put(executing)
+				c = ResultQueue.get()
+				for row in c.fetchall(): # iterate all rows
+					# get namespace
+					executing = [["SELECT namespace FROM namespaces WHERE namespace_id=?",
+					(row['namespace_id'],)]]
+					CommandQueue.put(executing)
+					c = ResultQueue.get()
+					namespace = c.fetchone()['namespace']
+
+					# get tag
+					executing = [["SELECT tag FROM tags WHERE tag_id=?", (row['tag_id'],)]]
+					CommandQueue.put(executing)
+					c = ResultQueue.get()
+					tag = c.fetchone()['tag']
+
+					# add them to dict
+					if not namespace in tags:
+						tags[namespace] = [tag]
+					else:
+						# namespace already exists in dict
+						tags[namespace].append(tag)
+		return tags
+
+	@staticmethod
+	def add_tags(object):
+		"Adds the given dict_of_tags to the given series_id"
+		assert isinstance(object, Series), "Please provide a valid series of class Series"
+		
+		series_id = object.id
+		dict_of_tags = object.tags
+
+		def look_exists(tag_or_ns, what):
+			"""check if tag or namespace already exists in base
+			returns id, else returns None"""
+			executing = [["SELECT {}_id FROM {}s WHERE {} LIKE ?".format(what, what, what),
+				('%'+tag_or_ns+'%',)]]
+			CommandQueue.put(executing)
+			c = ResultQueue.get()
+			try: # exists
+				c.fetchone()['{}_id'.format(what)]
+			except TypeError: # doesnt exist
+				return None
+
+		tags_mappings_id_list = []
+		# first let's add the tags and namespaces to db
+		for namespace in dict_of_tags: 
+			tags_list = dict_of_tags[namespace]
+			# don't add if it already exists
+			try:
+				namespace_id = look_exists(namespace, "namespace")
+				assert namespace_id
+			except AssertionError:
+				executing = [["""INSERT INTO namespaces(namespace)
+								VALUES(?)""", (namespace,)]]
+				CommandQueue.put(executing)
+				c = ResultQueue.get()
+				namespace_id = c.lastrowid
+			
+			tags_id_list = []
+			for tag in tags_list:
+				try:
+					tag_id = look_exists(tag, "tag")
+					assert tag_id
+				except AssertionError:
+					executing = [["""INSERT INTO tags(tag)
+								VALUES(?)""", (tag,)]]
+					CommandQueue.put(executing)
+					c = ResultQueue.get()
+					tag_id = c.lastrowid
+				
+				tags_id_list.append(tag_id)
+
+			# time to map the tags to the namespace now
+			for tag_id in tags_id_list:
+				executing = [["""
+				INSERT INTO tags_mappings(namespace_id, tag_id)
+				VALUES(?, ?)""", (namespace_id, tag_id,)]]
+				CommandQueue.put(executing)
+				c = ResultQueue.get()
+				# add the tags_mappings_id to our list
+				tags_mappings_id_list.append(c.lastrowid)
+
+		# Lastly we map the series_id to the tags_mappings
+		for tags_map in tags_mappings_id_list:
+				executing = [["""
+				INSERT INTO series_tags_map(series_id, tags_mappings_id)
+				VALUES(?, ?)""", (series_id, tags_map,)]]
+				CommandQueue.put(executing)
+				c = ResultQueue.get()
+				del c
+
+	@staticmethod
+	def modify_tags(dict_of_tags):
+		"Modifies the given tags"
+		pass
+
+	@staticmethod
+	def get_tag_series(tag):
+		"Returns all series' with the given tag"
+		pass
+
+	@staticmethod
+	def get_ns_tags(namespace):
+		"Returns all tags linked to the given namespace"
+		pass
+
+	@staticmethod
+	def get_ns_tags_series(ns_tags):
+		"""Returns all series' linked to the namespace tags.
+		Receives a dict like this: {"namespace":["tag1","tag2"]}"""
+		pass
+
 
 class Series:
 	"""Base class for a series.

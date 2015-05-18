@@ -170,6 +170,17 @@ class SeriesDialog(QDialog):
 			thread.join()
 			return self.series_queue.get()
 
+		def do_tags(string):
+			tags = {'default':[]}
+			splitted = string.split(',')
+			stripped = []
+			for x in splitted:
+				stripped.append(x.lstrip())
+			for z in stripped:
+				tags['default'].append(z)
+			return tags
+			
+
 		if self.check():
 			new_series = seriesdb.Series()
 			new_series.title = self.title_edit.text()
@@ -179,6 +190,7 @@ class SeriesDialog(QDialog):
 			new_series.type = self.type_box.currentText()
 			new_series.language = self.lang_box.currentText()
 			new_series.status = self.status_box.currentText()
+			new_series.tags = do_tags(self.tags_edit.text())
 			qpub_d = self.pub_edit.date().toString("ddMMyyyy")
 			dpub_d = datetime.strptime(qpub_d, "%d%m%Y").date()
 			new_series.pub_date = dpub_d

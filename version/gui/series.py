@@ -387,6 +387,7 @@ class MangaView(QListView):
 				open_chapters.addAction(chap_action)
 
 		if index.isValid():
+			print(index.data(Qt.UserRole+1))
 			if index.data(Qt.UserRole+1).fav==1: # here you can limit which items to show these actions for
 				action_1 = QAction("Favourite", menu, triggered = fav)
 				action_1.setCheckable(True)

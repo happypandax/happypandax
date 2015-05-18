@@ -40,7 +40,7 @@ def init_db():
 
 		# Series
 		c.execute("""
-		CREATE TABLE IF NOT EXISTS series USING fts4(
+		CREATE TABLE IF NOT EXISTS series(
 					series_id INTEGER PRIMARY KEY,
 					title TEXT,
 					artist TEXT,
@@ -68,29 +68,36 @@ def init_db():
 		""")
 
 		# tags & namespaces
-		# nvm namespaces for now
-		#c.execute("""
-		#CREATE TABLE namespaces(namespace_id INTERGER PRIMARY KEY, namespace TEXT)
-		#""")
 		c.execute("""
-		CREATE TABLE IF NOT EXISTS tags USING fts4(
+		CREATE TABLE IF NOT EXISTS namespaces(
+					namespace_id INTEGER PRIMARY KEY,
+					namespace TEXT)
+		""")
+
+		c.execute("""
+		CREATE TABLE IF NOT EXISTS tags(
 					tag_id INTEGER PRIMARY KEY,
 					tag TEXT NOT NULL)
 		""")
 
-		## tags_mapping
-		#c.execute("""
-		#CREATE TABLE tags_mappings(tags_mappings_id INTEGER PRIMARY KEY, namespace_id INTERGER,
-		#							tag_id INTEGER, hash_id INTEGER)
-		#""")
+		# tags_mapping
+		c.execute("""
+		CREATE TABLE IF NOT EXISTS tags_mappings(
+					tags_mappings_id INTEGER PRIMARY KEY,
+					namespace_id INTERGER,
+					tag_id INTEGER,
+					FOREIGN KEY(namespace_id) REFERENCES namespaces(namespace_id),
+					FOREIGN KEY(tag_id) REFERENCES tags(tag_id))
+		""")
 						
 		# series tags
 		c.execute("""
-		CREATE TABLE IF NOT EXISTS series_tags(
+		CREATE TABLE IF NOT EXISTS series_tags_map(
 					series_id INTEGER,
-					tag_id INTEGER,
+					tags_mappings_id INTEGER,
 					FOREIGN KEY(series_id) REFERENCES series(series_id),
-					FOREIGN KEY(tag_id) REFERENCES tags(tag_id))""")
+					FOREIGN KEY(tags_mappings_id) REFERENCES tags_mappings(tags_mappings_id))
+		""")
 
 		conn.commit()
 	return conn
