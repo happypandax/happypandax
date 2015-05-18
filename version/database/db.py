@@ -40,7 +40,7 @@ def init_db():
 
 		# Series
 		c.execute("""
-		CREATE TABLE IF NOT EXISTS series(
+		CREATE TABLE IF NOT EXISTS series USING fts4(
 					series_id INTEGER PRIMARY KEY,
 					title TEXT,
 					artist TEXT,
@@ -73,7 +73,7 @@ def init_db():
 		#CREATE TABLE namespaces(namespace_id INTERGER PRIMARY KEY, namespace TEXT)
 		#""")
 		c.execute("""
-		CREATE TABLE IF NOT EXISTS tags(
+		CREATE TABLE IF NOT EXISTS tags USING fts4(
 					tag_id INTEGER PRIMARY KEY,
 					tag TEXT NOT NULL)
 		""")
