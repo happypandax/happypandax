@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QDesktopWidget, QMessageBox, QFileDialog)
 import os, threading, queue, time
 from datetime import datetime
+from ..utils import tag_to_string, tag_to_dict
 
 class Loading(QWidget):
 	ON = False #to prevent multiple instances
@@ -74,7 +75,7 @@ class SeriesDialog(QDialog):
 		def basic_web(name):
 			return QLabel(name), QLineEdit(), QPushButton("Fetch")
 
-		exh_lbl, exh_edit, exh_btn = basic_web("ExHentai:")
+		exh_lbl, exh_edit, exh_btn = basic_web("ExHen:")
 		web_layout.addWidget(exh_lbl, 0, Qt.AlignLeft)
 		web_layout.addWidget(exh_edit, 0)
 		web_layout.addWidget(exh_btn, 0, Qt.AlignRight)
@@ -170,17 +171,6 @@ class SeriesDialog(QDialog):
 			thread.join()
 			return self.series_queue.get()
 
-		def do_tags(string):
-			tags = {'default':[]}
-			splitted = string.split(',')
-			stripped = []
-			for x in splitted:
-				stripped.append(x.lstrip())
-			for z in stripped:
-				tags['default'].append(z)
-			return tags
-			
-
 		if self.check():
 			new_series = seriesdb.Series()
 			new_series.title = self.title_edit.text()
@@ -190,14 +180,17 @@ class SeriesDialog(QDialog):
 			new_series.type = self.type_box.currentText()
 			new_series.language = self.lang_box.currentText()
 			new_series.status = self.status_box.currentText()
-			new_series.tags = do_tags(self.tags_edit.text())
+			new_series.tags = tag_to_dict(self.tags_edit.text())
 			qpub_d = self.pub_edit.date().toString("ddMMyyyy")
 			dpub_d = datetime.strptime(qpub_d, "%d%m%Y").date()
 			new_series.pub_date = dpub_d
 
-			updated_series = do_chapters(new_series)
-			#for ser in self.series:
-			self.SERIES.emit([updated_series])
+			if self.path_lbl.text() == "unspecified...":
+				self.SERIES.emit([new_series])
+			else:
+				updated_series = do_chapters(new_series)
+				#for ser in self.series:
+				self.SERIES.emit([updated_series])
 			super().accept()
 
 	def set_chapters(self, series_object):
@@ -275,7 +268,7 @@ class SeriesDialog(QDialog):
 		def basic_web(name):
 			return QLabel(name), QLineEdit(), QPushButton("Fetch")
 
-		exh_lbl, exh_edit, exh_btn = basic_web("ExHentai:")
+		exh_lbl, exh_edit, exh_btn = basic_web("ExHen:")
 		web_layout.addWidget(exh_lbl, 0, Qt.AlignLeft)
 		web_layout.addWidget(exh_edit, 0)
 		web_layout.addWidget(exh_btn, 0, Qt.AlignRight)
@@ -298,7 +291,9 @@ class SeriesDialog(QDialog):
 			self.lang_box.setCurrentIndex(2)
 
 		self.tags_edit = QLineEdit() #TODO Finish this..
-		self.tags_edit.setPlaceholderText("namespace1:tag1, tag2, namespace3:tag3, etc..")
+		self.tags_edit.setPlaceholderText("namespace1:tag1, tag2, namespace3:[tag3, tag4] etc..")
+		self.tags_edit.setText(tag_to_string(series.tags))
+
 		self.type_box = QComboBox()
 		self.type_box.addItems(["Manga", "Doujinshi", "Other"])
 		if series.type is "Manga":
@@ -361,6 +356,7 @@ class SeriesDialog(QDialog):
 			new_series.type = self.type_box.currentText()
 			new_series.language = self.lang_box.currentText()
 			new_series.status = self.status_box.currentText()
+			new_series.tags = tag_to_dict(self.tags_edit.text())
 			qpub_d = self.pub_edit.date().toString("ddMMyyyy")
 			dpub_d = datetime.strptime(qpub_d, "%d%m%Y").date()
 			new_series.pub_date = dpub_d
