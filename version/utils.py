@@ -64,7 +64,7 @@ def tag_to_dict(string):
 
 
 		if x == ',': # if we meet a comma
-			# we trim our buffer if we are at top 
+			# we trim our buffer if we are at top level
 			if level is 0:
 				# add to list
 				stripped_set.add(buffer.strip())
@@ -85,33 +85,43 @@ def tag_to_dict(string):
 		tags = br_tags.replace('[', '').replace(']','')
 		tags = tags.split(',')
 		for t in tags:
-			unique_tags.add(t.strip())
+			if len(t) != 0:
+				unique_tags.add(t.strip().lower())
 		return list(unique_tags)
 
 	unique_tags = set()
 	for ns_tag in stripped_set:
 		splitted_tag = ns_tag.split(':')
 		# if there is a namespace
-		if len(splitted_tag) < 1:
-			namespace = splitted_tag[0]
+		if len(splitted_tag) > 1 and len(splitted_tag[0]) != 0:
+			if splitted_tag[0] != 'default':
+				namespace = splitted_tag[0].capitalize()
+			else:
+				namespace = splitted_tag[0]
 			tags = splitted_tag[1]
 			# if tags are enclosed in brackets
 			if '[' in tags and ']' in tags:
 				tags = tags_in_list(tags)
+				tags = [x for x in tags if len(x) != 0]
 				# if namespace is already in our list
 				if namespace in namespace_tags:
 					for t in tags:
-						namespace_tags[namespace].append(t)
+						# if tag not already in ns list
+						if not t in namespace_tags[namespace]:
+							namespace_tags[namespace].append(t)
 				else:
+					# to avoid empty strings
 					namespace_tags[namespace] = tags
 			else: # only one tag
-				if namespace in namespace_tags:
-					namespace_tags[namespace].append(tags)
-				else:
-					namespace_tags[namespace] = [tags]
+				if len(tags) != 0:
+					if namespace in namespace_tags:
+						namespace_tags[namespace].append(tags)
+					else:
+						namespace_tags[namespace] = [tags]
 		else: # no namespace specified
 			tag = splitted_tag[0]
-			unique_tags.add(tag)
+			if len(tag) != 0:
+				unique_tags.add(tag.lower())
 
 	if len(unique_tags) != 0:
 		for t in unique_tags:

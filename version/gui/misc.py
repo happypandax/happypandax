@@ -290,7 +290,7 @@ class SeriesDialog(QDialog):
 		else:
 			self.lang_box.setCurrentIndex(2)
 
-		self.tags_edit = QLineEdit() #TODO Finish this..
+		self.tags_edit = QLineEdit()
 		self.tags_edit.setPlaceholderText("namespace1:tag1, tag2, namespace3:[tag3, tag4] etc..")
 		self.tags_edit.setText(tag_to_string(series.tags))
 
