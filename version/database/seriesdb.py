@@ -114,7 +114,7 @@ class SeriesDB:
 
 	@staticmethod
 	def modify_series(series_id, title=None, artist=None, info=None, type=None, fav=None,
-				   language=None, status=None, pub_date=None):
+				   tags=None, language=None, status=None, pub_date=None):
 		"Modifies series with given series id"
 		executing = []
 		if title:
@@ -133,6 +133,8 @@ class SeriesDB:
 			executing.append(["UPDATE series SET status=? WHERE series_id=?", (status, series_id)])
 		if pub_date:
 			executing.append(["UPDATE series SET pub_date=? WHERE series_id=?", (pub_date, series_id)])
+		if tags:
+			TagDB.modify_tags(series_id, tags)
 
 		CommandQueue.put(executing)
 		c = ResultQueue.get()
@@ -502,9 +504,36 @@ class TagDB:
 				del c
 
 	@staticmethod
-	def modify_tags(dict_of_tags):
+	def modify_tags(series_id, dict_of_tags):
 		"Modifies the given tags"
-		pass
+
+		# We first get all the current tags_mappings_ids related to series
+		tag_m_ids = []
+		executing = [["SELECT tags_mappings_id FROM series_tags_map WHERE series_id=?",
+				(series_id,)]]
+		CommandQueue.put(executing)
+		c = ResultQueue.get()
+		for tmd in c.fetchall():
+			tag_m_ids.append(tmd['tags_mappings_id'])
+
+		# Then we delete all mappings related to the given series_id
+		executing = [["DELETE FROM series_tags_map WHERE series_id=?", (series_id,)]]
+
+		for tmd_id in tag_m_ids:
+			executing.append(["DELETE FROM tags_mappings WHERE tags_mappings_id=?",
+					 (tmd_id,)])
+
+		CommandQueue.put(executing)
+		c = ResultQueue.get()
+		del c
+
+		# Now we add the new tags to DB
+		weak_series = Series()
+		weak_series.id = series_id
+		weak_series.tags = dict_of_tags
+
+		TagDB.add_tags(weak_series)
+
 
 	@staticmethod
 	def get_tag_series(tag):

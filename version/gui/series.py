@@ -450,7 +450,8 @@ class MangaView(QListView):
 			seriesdb.SeriesDB.modify_series(series.id, title=series.title,
 								   artist=series.artist, info=series.info,
 								   type=series.type, language=series.language,
-									  status=series.status, pub_date=series.pub_date)
+									  status=series.status, pub_date=series.pub_date,
+									  tags=series.tags)
 		self.series_model.replaceRows([series], pos, len(list_of_series))
 
 	def spawn_dialog(self, index=False):
