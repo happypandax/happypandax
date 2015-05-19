@@ -252,7 +252,8 @@ class SeriesDB:
 		cursor = ResultQueue.get()
 		series_id = cursor.lastrowid
 		object.id = series_id
-		TagDB.add_tags(object)
+		if object.tags:
+			TagDB.add_tags(object)
 		ChapterDB.add_chapters(object)
 
 	@staticmethod
@@ -268,7 +269,8 @@ class SeriesDB:
 		cursor = ResultQueue.get()
 		series_id = cursor.lastrowid
 		object.id = series_id
-		TagDB.add_tags(object)
+		if object.tags:
+			TagDB.add_tags(object)
 		ChapterDB.add_chapters(object)
 
 		executing2 = [["SELECT * FROM series WHERE series_id=?", (series_id,)]]
