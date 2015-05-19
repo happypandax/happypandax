@@ -451,7 +451,7 @@ class TagDB:
 			CommandQueue.put(executing)
 			c = ResultQueue.get()
 			try: # exists
-				c.fetchone()['{}_id'.format(what)]
+				return c.fetchone()['{}_id'.format(what)]
 			except TypeError: # doesnt exist
 				return None
 
