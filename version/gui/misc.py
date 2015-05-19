@@ -93,7 +93,8 @@ class SeriesDialog(QDialog):
 		self.lang_box = QComboBox()
 		self.lang_box.addItems(["English", "Japanese", "Other"])
 		self.lang_box.setCurrentIndex(0)
-		self.tags_edit = QLineEdit()
+		self.tags_edit = QTextEdit()
+		self.tags_edit.setFixedHeight(45)
 		self.tags_edit.setPlaceholderText("namespace1:tag1, tag2, namespace3:tag3, etc..")
 		self.type_box = QComboBox()
 		self.type_box.addItems(["Manga", "Doujinshi", "Other"])
@@ -157,8 +158,8 @@ class SeriesDialog(QDialog):
 		if len(self.descr_edit.toPlainText()) is 0:
 			self.descr_edit.setText("<i>No description..</i>")
 
-		#if self.path_lbl.text() == "unspecified...":
-		#	return False
+		if self.path_lbl.text() == "unspecified...":
+			return False
 
 		return True
 
@@ -180,7 +181,7 @@ class SeriesDialog(QDialog):
 			new_series.type = self.type_box.currentText()
 			new_series.language = self.lang_box.currentText()
 			new_series.status = self.status_box.currentText()
-			new_series.tags = tag_to_dict(self.tags_edit.text())
+			new_series.tags = tag_to_dict(self.tags_edit.toPlainText())
 			qpub_d = self.pub_edit.date().toString("ddMMyyyy")
 			dpub_d = datetime.strptime(qpub_d, "%d%m%Y").date()
 			new_series.pub_date = dpub_d
@@ -290,7 +291,8 @@ class SeriesDialog(QDialog):
 		else:
 			self.lang_box.setCurrentIndex(2)
 
-		self.tags_edit = QLineEdit()
+		self.tags_edit = QTextEdit()
+		self.tags_edit.setFixedHeight(45)
 		self.tags_edit.setPlaceholderText("namespace1:tag1, tag2, namespace3:[tag3, tag4] etc..")
 		self.tags_edit.setText(tag_to_string(series.tags))
 
@@ -356,7 +358,7 @@ class SeriesDialog(QDialog):
 			new_series.type = self.type_box.currentText()
 			new_series.language = self.lang_box.currentText()
 			new_series.status = self.status_box.currentText()
-			new_series.tags = tag_to_dict(self.tags_edit.text())
+			new_series.tags = tag_to_dict(self.tags_edit.toPlainText())
 			qpub_d = self.pub_edit.date().toString("ddMMyyyy")
 			dpub_d = datetime.strptime(qpub_d, "%d%m%Y").date()
 			new_series.pub_date = dpub_d

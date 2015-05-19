@@ -387,7 +387,6 @@ class MangaView(QListView):
 				open_chapters.addAction(chap_action)
 
 		if index.isValid():
-			print(index.data(Qt.UserRole+1))
 			if index.data(Qt.UserRole+1).fav==1: # here you can limit which items to show these actions for
 				action_1 = QAction("Favourite", menu, triggered = fav)
 				action_1.setCheckable(True)
@@ -623,7 +622,9 @@ class ChapterInfo(QFrame):
 														   series.pub_date.month, series.pub_date.month))
 		except:
 			self.pub_date.setText("Date Published:\n"+series.pub_date)
-		self.tags.setText("Tags:\n"+"TODO")
+
+		# Put tags in a FormLayout
+		self.tags.setText("Tags:\n"+ "TODO")
 		self.path.setText("Path:\n"+series.path)
 		self.metadata_area.setWidget(self.metadata_main)
 		self.metadata_main.adjustSize()
