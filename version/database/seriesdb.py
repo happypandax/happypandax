@@ -7,6 +7,8 @@ from .db import CommandQueue, ResultQueue
 from ..gui import gui_constants
 from .db_constants import THUMBNAIL_PATH, IMG_FILES
 
+PROFILE_TO_MODEL = queue.Queue()
+
 def gen_thumbnail(chapter_path, width=gui_constants.THUMB_W_SIZE-2,
 				height=gui_constants.THUMB_H_SIZE): # 2 to align it properly.. need to redo this
 	"""Generates a thumbnail with unique filename in the cache dir.
@@ -258,11 +260,11 @@ class SeriesDB:
 
 	@staticmethod
 	def add_series_return(object):
-		"Receives an object of class Series, and appends it to DB"
-		"Adds series of <Series> class into database AND returns the added series"
-		assert isinstance(object, Series), "add_series method only accept Series items"
+		"""Adds series of <Series> class into database AND returns the profile generated"""
+		assert isinstance(object, Series), "[add_series_return] method only accept Series items"
 
 		object.profile = gen_thumbnail(object.chapters[0])
+		PROFILE_TO_MODEL.put(object.profile)
 
 		executing = default_exec(object)
 		CommandQueue.put(executing)
@@ -272,16 +274,6 @@ class SeriesDB:
 		if object.tags:
 			TagDB.add_tags(object)
 		ChapterDB.add_chapters(object)
-
-		executing2 = [["SELECT * FROM series WHERE series_id=?", (series_id,)]]
-		CommandQueue.put(executing2)
-		cursor = ResultQueue.get()
-		row = cursor.fetchone()
-		series = Series()
-		series.id = row['series_id']
-		series = series_map(row, series)
-		return series
-		# TODO: Add a way to insert tags
 
 	@staticmethod
 	def series_count():

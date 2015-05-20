@@ -8,6 +8,7 @@ from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 import os, threading, queue, time
 from datetime import datetime
 from ..utils import tag_to_string, tag_to_dict
+from ..database import seriesdb
 
 class Loading(QWidget):
 	ON = False #to prevent multiple instances
@@ -170,7 +171,7 @@ class SeriesDialog(QDialog):
 			thread = threading.Thread(target=self.set_chapters, args=(series,))
 			thread.start()
 			thread.join()
-			return self.series_queue.get()
+			#return self.series_queue.get()
 
 		if self.check():
 			new_series = seriesdb.Series()
@@ -191,7 +192,7 @@ class SeriesDialog(QDialog):
 			else:
 				updated_series = do_chapters(new_series)
 				#for ser in self.series:
-				self.SERIES.emit([updated_series])
+				#self.SERIES.emit([updated_series])
 			super().accept()
 
 	def set_chapters(self, series_object):
@@ -214,8 +215,11 @@ class SeriesDialog(QDialog):
 				fp = os.path.join(root, img)
 				times.add( os.path.getmtime(fp) )
 		series_object.last_update = time.asctime(time.gmtime(max(times)))
-		self.series_queue.put(series_object)
-		return True
+		#self.series_queue.put(series_object)
+		print(series_object.id)
+		self.SERIES.emit([series_object])
+		#seriesdb.SeriesDB.add_series(series_object)
+		
 
 	def reject(self):
 		if self.check():
@@ -247,6 +251,7 @@ class SeriesDialog(QDialog):
 		self.setAttribute(Qt.WA_DeleteOnClose)
 		self.setWindowFlags(Qt.FramelessWindowHint)
 		self.exec()
+
 
 
 	def setSeries(self, series):

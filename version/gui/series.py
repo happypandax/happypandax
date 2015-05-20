@@ -13,6 +13,7 @@ from PyQt5.QtWidgets import (QListView, QFrame, QLabel,
 from ..database import seriesdb
 from . import gui_constants, misc
 from .. import utils
+import threading
 
 class SeriesModel(QAbstractListModel):
 	"""Model for Model/View/Delegate framework
@@ -82,13 +83,15 @@ class SeriesModel(QAbstractListModel):
 
 	def addRows(self, list_of_series, position=None,
 				rows=1, index = QModelIndex()):
-		"Adds new series data to model and DB"
+		"Adds new series data to model and to DB"
+		from ..database.seriesdb import PROFILE_TO_MODEL
 		if not position:
 			position = len(self._data)
 		self.beginInsertRows(QModelIndex(), position, position + rows - 1)
 		for series in list_of_series:
-			n_series = seriesdb.SeriesDB.add_series_return(series)
-			self._data.append(n_series)
+			threading.Thread(target=seriesdb.SeriesDB.add_series_return, args=(series,)).start()
+			series.profile = PROFILE_TO_MODEL.get()
+			self._data.append(series)
 		self.endInsertRows()
 		self.CUSTOM_STATUS_MSG.emit("Added row(s)")
 		return True
@@ -387,6 +390,7 @@ class MangaView(QListView):
 				open_chapters.addAction(chap_action)
 
 		if index.isValid():
+			print(index.data(Qt.UserRole+1))
 			if index.data(Qt.UserRole+1).fav==1: # here you can limit which items to show these actions for
 				action_1 = QAction("Favourite", menu, triggered = fav)
 				action_1.setCheckable(True)
@@ -446,11 +450,18 @@ class MangaView(QListView):
 		assert isinstance(list_of_series, list), "Please pass a series to replace with"
 		assert isinstance(pos, int)
 		for series in list_of_series:
-			seriesdb.SeriesDB.modify_series(series.id, title=series.title,
-								   artist=series.artist, info=series.info,
-								   type=series.type, language=series.language,
-									  status=series.status, pub_date=series.pub_date,
-									  tags=series.tags)
+
+			kwdict = {'title':series.title,
+			 'artist':series.artist,
+			 'info':series.info,
+			 'type':series.type,
+			 'language':series.language,
+			 'status':series.status,
+			 'pub_date':series.pub_date,
+			 'tags':series.tags}
+
+			threading.Thread(target=seriesdb.SeriesDB.modify_series,
+							 args=(series.id,), kwargs=kwdict).start()
 		self.series_model.replaceRows([series], pos, len(list_of_series))
 
 	def spawn_dialog(self, index=False):
