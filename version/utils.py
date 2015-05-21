@@ -31,23 +31,24 @@ def tag_to_string(series_tag):
 	assert isinstance(series_tag, dict), "Please provide a dict like this: {'namespace':['tag1']}"
 	string = ""
 	for n, namespace in enumerate(series_tag, 1):
-		string += namespace + ":"
+		if len(series_tag[namespace]) != 0:
+			string += namespace + ":"
 
-		# find tags
-		if len(series_tag[namespace]) > 1:
-			string += '['
-		for x, tag in enumerate(series_tag[namespace], 1):
-			# if we are at the end of the list
-			if x == len(series_tag[namespace]):
-				string += tag
-			else:
-				string += tag + ', '
-		if len(series_tag[namespace]) > 1:
-			string += ']'
+			# find tags
+			if len(series_tag[namespace]) > 1:
+				string += '['
+			for x, tag in enumerate(series_tag[namespace], 1):
+				# if we are at the end of the list
+				if x == len(series_tag[namespace]):
+					string += tag
+				else:
+					string += tag + ', '
+			if len(series_tag[namespace]) > 1:
+				string += ']'
 
-		# if we aren't at the end of the list
-		if not n == len(series_tag):
-			string += ', '
+			# if we aren't at the end of the list
+			if not n == len(series_tag):
+				string += ', '
 	return string
 
 def tag_to_dict(string):

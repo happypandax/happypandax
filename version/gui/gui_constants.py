@@ -9,6 +9,8 @@ default_stylesheet_path = static_dir + '/' + "style.css"
 user_stylesheet_path = ""
 
 # sizes
+MAIN_W = 1029 # main window
+MAIN_H = 650 # main window
 GRIDBOX_H_SIZE = 250
 GRIDBOX_W_SIZE = GRIDBOX_H_SIZE//1.47
 THUMB_H_SIZE = 200
@@ -27,10 +29,10 @@ SETTINGS_PATH = os.path.join(static_dir, "settings.png")
 
 # controls
 THUMBNAIL_CACHE_SIZE = 10240*100 #10240 is 10mb, so sum is 1gb
-PREFETCH_ITEM_AMOUNT = 50 # amount of items to prefetch
+PREFETCH_ITEM_AMOUNT = 100 # amount of items to prefetch
 SCROLL_SPEED = 7 # controls how many steps it takes when scrolling
 
 # POPUP
-POPUP_WIDTH = 500
+POPUP_WIDTH = 400
 POPUP_HEIGHT = 300
 

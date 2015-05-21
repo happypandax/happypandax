@@ -10,6 +10,14 @@ QWidget#chapter_main {
 	background-color: #464646;
 }
 
+Popup {
+    background-color: #585858;
+}
+
+Popup > QLabel {
+    color: white;
+}
+
 QLabel#image_box {
     border:1px solid #ffd800;
 }
@@ -25,17 +33,20 @@ QLabel#author {
 
 AppWindow > QToolBar, QStatusBar {
 	background-color: #464646;
-    border: 0px solid #F2F2F2;
+    border: none;
 }
 
 AppWindow > QStatusBar > QWidget {
     color:white;
+    border: none;
 }
 
 AppWindow > QStatusBar > QLabel {
     color:white;
-    font-style:italic;
-    border: 0px;
+    border: none;
+}
+AppWindow > QStatusBar::item {
+    border: none;
 }
 
 QScrollBar {

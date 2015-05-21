@@ -9,11 +9,99 @@ from PyQt5.QtWidgets import (QListView, QFrame, QLabel,
 							 QStyledItemDelegate, QStyle,
 							 QMenu, QAction, QToolTip, QVBoxLayout,
 							 QSizePolicy, QTableWidget, QScrollArea,
-							 QHBoxLayout, QFormLayout)
+							 QHBoxLayout, QFormLayout, QDesktopWidget,
+							 QWidget)
 from ..database import seriesdb
 from . import gui_constants, misc
 from .. import utils
 import threading
+
+class Popup(QWidget):
+	def __init__(self):
+		super().__init__(None, Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+		self.setAttribute(Qt.WA_ShowWithoutActivating)
+		self.initUI()
+		self.setWindowModality(Qt.WindowModal)
+		#self.resize(gui_constants.POPUP_WIDTH,gui_constants.POPUP_HEIGHT)
+		self.setFixedWidth(gui_constants.POPUP_WIDTH)
+		self.setMaximumHeight(gui_constants.POPUP_HEIGHT)
+	
+	def initUI(self):
+		main_layout = QVBoxLayout()
+		self.setLayout(main_layout)
+		form_l = QFormLayout()
+		main_layout.addLayout(form_l)
+		self.title = QLabel()
+		self.title.setWordWrap(True)
+		self.title_lbl = QLabel("Title:")
+		self.artist = QLabel()
+		self.artist.setWordWrap(True)
+		self.artist_lbl = QLabel("Author:")
+		self.chapters = QLabel()
+		self.chapters_lbl = QLabel("Chapters:")
+		self.info = QLabel()
+		self.info_lbl = QLabel("Description:")
+		self.info.setWordWrap(True)
+
+		type_status_l = QHBoxLayout()
+		self.type = QLabel()
+		type_status_l.addWidget(self.type, 0, Qt.AlignLeft)
+		self.status = QLabel()
+		type_status_l.addWidget(self.status, 0, Qt.AlignRight)
+
+		self.tags = QLabel()
+		self.tags.setTextFormat(Qt.RichText)
+		self.tags.setWordWrap(True)
+		self.tags_lbl = QLabel("Tags:")
+
+		self.pub_date = QLabel()
+		self.date_added = QLabel()
+
+		form_l.addRow(self.title_lbl, self.title)
+		form_l.addRow(self.artist_lbl, self.artist)
+		form_l.addRow(self.chapters_lbl, self.chapters)
+		form_l.addRow(self.info_lbl, self.info)
+		form_l.addRow(self.tags_lbl, self.tags)
+
+	def set_series(self, series):
+		def tags_parser(tags):
+			string = ""
+			try:
+				if len(tags['default']) > 0:
+					has_default = True
+				else:
+					has_default = False
+			except KeyError:
+				has_default = False
+
+			for namespace in tags:
+				if namespace == 'default':
+					for n, tag in enumerate(tags[namespace], 1):
+						if n == 1:
+							string = tag + string
+						else:
+							string = tag + ', ' + string
+				else:
+					if not has_default:
+						string += '<b>'+namespace + ':</b> '
+						has_default = True
+					else:
+						string += '<br><b>' + namespace + ':</b> '
+					for n, tag in enumerate(tags[namespace], 1):
+						if n != len(tags[namespace]):
+							string += tag + ', '
+						else:
+							string += tag
+
+			return string
+
+		self.title.setText(series.title)
+		self.artist.setText(series.artist)
+		self.chapters.setText("{}".format(len(series.chapters)))
+		self.info.setText(series.info)
+		self.type.setText(series.type)
+		self.status.setText(series.status)
+		self.tags.setText(tags_parser(series.tags))
 
 class SeriesModel(QAbstractListModel):
 	"""Model for Model/View/Delegate framework
@@ -75,11 +163,11 @@ class SeriesModel(QAbstractListModel):
 	def rowCount(self, index = QModelIndex()):
 		return self._data_count
 
-	def flags(self, index):
-		if not index.isValid():
-			return Qt.ItemIsEnabled
-		return Qt.ItemFlags(QAbstractListModel.flags(self, index) |
-					  Qt.ItemIsEditable)
+	#def flags(self, index):
+	#	if not index.isValid():
+	#		return Qt.ItemIsEnabled
+	#	return Qt.ItemFlags(QAbstractListModel.flags(self, index) |
+	#				  Qt.ItemIsEditable)
 
 	def addRows(self, list_of_series, position=None,
 				rows=1, index = QModelIndex()):
@@ -138,66 +226,14 @@ class SeriesModel(QAbstractListModel):
 		self.endInsertRows()
 		self.ROWCOUNT_CHANGE.emit()
 
-class ChapterModel(SeriesModel):
-	pass
-
-from PyQt5.QtWidgets import QWidget
-class Popup(QWidget):
-	def __init__(self):
-		super().__init__(None, Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
-		self.setAttribute(Qt.WA_ShowWithoutActivating)
-		self.initUI()
-		self.setWindowModality(Qt.WindowModal)
-		self.resize(gui_constants.POPUP_WIDTH,gui_constants.POPUP_HEIGHT)
-	
-	def initUI(self):
-		main_layout = QVBoxLayout()
-		self.setLayout(main_layout)
-		form_l = QFormLayout()
-		main_layout.addLayout(form_l)
-		self.title = QLabel("Title:")
-		self.title_lbl = QLabel("Title:")
-		self.artist = QLabel("Author:")
-		self.artist_lbl = QLabel("Author:")
-		self.chapters = QLabel("Chapters:")
-		self.chapters_lbl = QLabel("Chapters:")
-		self.info = QLabel("Description:")
-		self.info_lbl = QLabel("Description:")
-
-		type_status_l = QHBoxLayout()
-		self.type = QLabel()
-		type_status_l.addWidget(self.type, 0, Qt.AlignLeft)
-		self.status = QLabel()
-		type_status_l.addWidget(self.status, 0, Qt.AlignRight)
-
-		self.tags = QLabel("Tags:")
-		self.tags_lbl = QLabel("Tags:")
-
-		self.pub_date = QLabel()
-		self.date_added = QLabel()
-
-		form_l.addRow(self.title_lbl, self.title)
-		form_l.addRow(self.artist_lbl, self.artist)
-		form_l.addRow(self.chapters_lbl, self.chapters)
-		form_l.addRow(self.info_lbl, self.info)
-		form_l.addRow(self.tags_lbl, self.tags)
-
-	def set_series(self, series):
-		self.title.setText(series.title)
-		self.artist.setText(series.artist)
-		self.chapters.setText("{}".format(len(series.chapters)))
-		self.info.setText(series.info)
-		self.type.setText(series.type)
-		self.status.setText(series.status)
-
 
 class CustomDelegate(QStyledItemDelegate):
 	"A custom delegate for the model/view framework"
 
-	BUTTON_CLICKED = pyqtSignal(int, QModelIndex)
+	BUTTON_CLICKED = pyqtSignal(QModelIndex)
 	POPUP = pyqtSignal()
-	POPUP_DROP = pyqtSignal()
 	CONTEXT_ON = False
+	OPEN_CHAPTER = pyqtSignal(QModelIndex)
 
 	def __init__(self):
 		super().__init__()
@@ -205,8 +241,9 @@ class CustomDelegate(QStyledItemDelegate):
 		self.H = gui_constants.THUMB_H_SIZE
 		QPixmapCache.setCacheLimit(gui_constants.THUMBNAIL_CACHE_SIZE)
 		self._painted_indexes = {}
+		self.popup_window = Popup()
 		self.popup_timer = QTimer()
-		self.popup_timer.timeout.connect(self.POPUP.emit)
+		#self.popup_timer.timeout.connect(self.POPUP.emit)
 
 	def key(self, index):
 		"Assigns an unique key to indexes"
@@ -226,10 +263,9 @@ class CustomDelegate(QStyledItemDelegate):
 		popup = index.data(Qt.ToolTipRole)
 		title = series.title
 		artist = series.artist
-
+		QRect.y
 		# Enable this to see the defining box
 		#painter.drawRect(option.rect)
-
 		# define font size
 		if 30 > len(title) > 20:
 			title_size = "font-size:12px;"
@@ -346,12 +382,8 @@ class CustomDelegate(QStyledItemDelegate):
 
 		if option.state & QStyle.State_MouseOver:
 			painter.fillRect(option.rect, QColor(225,225,225,90)) #70
-			if not self.CONTEXT_ON:
-				self.popup_timer.start(1000)
 		else:
-			if self.popup_timer.isActive():
-				self.popup_timer.stop()
-				self.POPUP_DROP.emit()
+			self.popup_window.hide()
 		#if option.state & QStyle.State_Selected:
 		#	painter.fillRect(option.rect, QColor(164,164,164,120))
 
@@ -368,9 +400,12 @@ class CustomDelegate(QStyledItemDelegate):
 		if event.type() == QEvent.MouseButtonPress:
 			mouseEvent = QMouseEvent(event)
 			if mouseEvent.buttons() == Qt.LeftButton:
-				self.BUTTON_CLICKED.emit(1, index)
+				self.BUTTON_CLICKED.emit(index)
 				return True
 			else: return super().editorEvent(event, model, option, index)
+		elif event.type() == QEvent.MouseButtonDblClick:
+			self.OPEN_CHAPTER.emit(index)
+			return True
 		else:
 			return super().editorEvent(event, model, option, index)
 
@@ -381,6 +416,7 @@ class MangaView(QListView):
 	TODO: (zoom-in/zoom-out) mousekeys
 	"""
 
+	STATUS_BAR_MSG = pyqtSignal(str)
 	SERIES_DIALOG = pyqtSignal()
 
 	def __init__(self, parent=None):
@@ -401,6 +437,7 @@ class MangaView(QListView):
 		#self.setBatchSize(15) #Only loads 20 images at a time
 		self.setMouseTracking(True)
 		self.manga_delegate = CustomDelegate()
+		self.manga_delegate.OPEN_CHAPTER.connect(self.open_chapter)
 		self.setItemDelegate(self.manga_delegate)
 		self.series_model = SeriesModel()
 		self.setModel(self.series_model)
@@ -421,7 +458,8 @@ class MangaView(QListView):
 			self.series_model.replaceRows([n_series], index.row(), 1, index)
 			self.series_model.CUSTOM_STATUS_MSG.emit("Favourited")
 
-	def open_chapter(self, index, chap_numb):
+	def open_chapter(self, index, chap_numb=0):
+		self.STATUS_BAR_MSG.emit("Opening chapter {}".format(chap_numb+1))
 		series = index.data(Qt.UserRole+1)
 		utils.open(series.chapters[chap_numb])
 
@@ -453,7 +491,6 @@ class MangaView(QListView):
 
 		if index.isValid():
 			self.manga_delegate.CONTEXT_ON = True
-			print(index.data(Qt.UserRole+1))
 			if index.data(Qt.UserRole+1).fav==1: # here you can limit which items to show these actions for
 				action_1 = QAction("Favourite", menu, triggered = fav)
 				action_1.setCheckable(True)
@@ -562,149 +599,150 @@ class MangaView(QListView):
 	def entered(*args, **kwargs):
 		return super().entered(**kwargs)
 
-class ChapterView(QListView):
-	"A view for chapters"
-	def __init__(self, parent=None):
-		super().__init__()
-		self.setViewMode(self.IconMode)
-		self.H = gui_constants.GRIDBOX_H_SIZE
-		self.W = gui_constants.GRIDBOX_W_SIZE
-		self.setGridSize(QSize(self.W, self.H))
-		self.setSpacing(10)
-		self.setResizeMode(self.Adjust)
-		# all items have the same size (perfomance)
-		self.setUniformItemSizes(True)
-		# improve scrolling
-		self.setVerticalScrollMode(self.ScrollPerPixel)
-		self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-		# prevent all items being loaded at the same time
-		#self.setLayoutMode(self.Batched)
-		#self.setBatchSize(15) #Only loads 20 images at a time
-		self.setMouseTracking(True)
+# DEPRECATED
+#class ChapterView(QListView):
+#	"A view for chapters"
+#	def __init__(self, parent=None):
+#		super().__init__()
+#		self.setViewMode(self.IconMode)
+#		self.H = gui_constants.GRIDBOX_H_SIZE
+#		self.W = gui_constants.GRIDBOX_W_SIZE
+#		self.setGridSize(QSize(self.W, self.H))
+#		self.setSpacing(10)
+#		self.setResizeMode(self.Adjust)
+#		# all items have the same size (perfomance)
+#		self.setUniformItemSizes(True)
+#		# improve scrolling
+#		self.setVerticalScrollMode(self.ScrollPerPixel)
+#		self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+#		# prevent all items being loaded at the same time
+#		#self.setLayoutMode(self.Batched)
+#		#self.setBatchSize(15) #Only loads 20 images at a time
+#		self.setMouseTracking(True)
 
 
-class ChapterInfo(QFrame):
-	"A view for chapter data"
-	def __init__(self, parent=None):
-		super().__init__(parent)
-		self.H = gui_constants.CHAP_IMAGE_H
-		self.W = self.H//1.6
-		self.setFrameStyle(QFrame.NoFrame)
-		self.setMaximumWidth(self.W*1.2)
-		self.image = QPixmap()
-		self.scaled_image = None
-		#self.data = []
-		self.initUI()
+#class ChapterInfo(QFrame):
+#	"A view for chapter data"
+#	def __init__(self, parent=None):
+#		super().__init__(parent)
+#		self.H = gui_constants.CHAP_IMAGE_H
+#		self.W = self.H//1.6
+#		self.setFrameStyle(QFrame.NoFrame)
+#		self.setMaximumWidth(self.W*1.2)
+#		self.image = QPixmap()
+#		self.scaled_image = None
+#		#self.data = []
+#		self.initUI()
 
-	def display_manga(self, index):
-		"""Receives a QModelIndex and updates the
-		viewport with specific manga data"""
-		series = index.data(Qt.UserRole+1)
-		self.drawContents(series)
+#	def display_manga(self, index):
+#		"""Receives a QModelIndex and updates the
+#		viewport with specific manga data"""
+#		series = index.data(Qt.UserRole+1)
+#		self.drawContents(series)
 
-	def initUI(self):
-		"Constructs UI for the chapter info view"
-		background_layout = QVBoxLayout()
-		self.setLayout(background_layout)
+#	def initUI(self):
+#		"Constructs UI for the chapter info view"
+#		background_layout = QVBoxLayout()
+#		self.setLayout(background_layout)
 		
 
-		# The image
-		self.image_icon_size = QSize(self.W, self.H)
-		self.image_box = QLabel()
-		self.image_box.setObjectName("image_box") # to allow styling this object
-		self.image_box.setFrameStyle(QFrame.StyledPanel)
-		background_layout.addWidget(self.image_box, 0, Qt.AlignHCenter)
+#		# The image
+#		self.image_icon_size = QSize(self.W, self.H)
+#		self.image_box = QLabel()
+#		self.image_box.setObjectName("image_box") # to allow styling this object
+#		self.image_box.setFrameStyle(QFrame.StyledPanel)
+#		background_layout.addWidget(self.image_box, 0, Qt.AlignHCenter)
 
-		# the metadata
-		self.metadata_area = QScrollArea()
-		self.metadata_main = QFrame()
-		self.metadata_main.setMaximumWidth(self.W*1.1)
-		self.metadata = QVBoxLayout()
-		self.metadata_main.setLayout(self.metadata)
+#		# the metadata
+#		self.metadata_area = QScrollArea()
+#		self.metadata_main = QFrame()
+#		self.metadata_main.setMaximumWidth(self.W*1.1)
+#		self.metadata = QVBoxLayout()
+#		self.metadata_main.setLayout(self.metadata)
 
-		background_layout.addWidget(self.metadata_area)
+#		background_layout.addWidget(self.metadata_area)
 
-		def t_props(obj):
-			obj.setWordWrap(True)
+#		def t_props(obj):
+#			obj.setWordWrap(True)
 
-		self.title = QLabel()
-		self.title.setObjectName("title")
-		t_props(self.title)
-		self.title.setAlignment(Qt.AlignHCenter)
-		self.title.setMinimumWidth(self.W)
-		self.metadata.addWidget(self.title)
+#		self.title = QLabel()
+#		self.title.setObjectName("title")
+#		t_props(self.title)
+#		self.title.setAlignment(Qt.AlignHCenter)
+#		self.title.setMinimumWidth(self.W)
+#		self.metadata.addWidget(self.title)
 
-		artist_chap = QHBoxLayout()
-		self.metadata.addLayout(artist_chap)
-		self.artist = QLabel()
-		self.artist.setObjectName("author")
-		self.artist.setAlignment(Qt.AlignLeft)
-		artist_chap.addWidget(self.artist, 0, Qt.AlignLeft)
+#		artist_chap = QHBoxLayout()
+#		self.metadata.addLayout(artist_chap)
+#		self.artist = QLabel()
+#		self.artist.setObjectName("author")
+#		self.artist.setAlignment(Qt.AlignLeft)
+#		artist_chap.addWidget(self.artist, 0, Qt.AlignLeft)
 
-		self.chapter_count = QLabel()
-		self.chapter_count.setObjectName("chapter_count")
-		self.chapter_count.setAlignment(Qt.AlignRight)
-		artist_chap.addWidget(self.chapter_count, 0, Qt.AlignRight)
+#		self.chapter_count = QLabel()
+#		self.chapter_count.setObjectName("chapter_count")
+#		self.chapter_count.setAlignment(Qt.AlignRight)
+#		artist_chap.addWidget(self.chapter_count, 0, Qt.AlignRight)
 
-		self.info = QLabel()
-		self.info.setObjectName("info")
-		self.info.setAlignment(Qt.AlignLeft)
-		t_props(self.info)
-		self.metadata.addWidget(self.info, 1, Qt.AlignLeft)
+#		self.info = QLabel()
+#		self.info.setObjectName("info")
+#		self.info.setAlignment(Qt.AlignLeft)
+#		t_props(self.info)
+#		self.metadata.addWidget(self.info, 1, Qt.AlignLeft)
 
-		#self.last_read = QLabel("None")
-		#self.last_update = QLabel("None")
+#		#self.last_read = QLabel("None")
+#		#self.last_update = QLabel("None")
 
-		dates = QHBoxLayout()
-		self.metadata.addLayout(dates)
-		self.date_added = QLabel()
-		self.date_added.setObjectName("date_added")
-		self.date_added.setAlignment(Qt.AlignHCenter)
-		dates.addWidget(self.date_added, 0, Qt.AlignLeft)
+#		dates = QHBoxLayout()
+#		self.metadata.addLayout(dates)
+#		self.date_added = QLabel()
+#		self.date_added.setObjectName("date_added")
+#		self.date_added.setAlignment(Qt.AlignHCenter)
+#		dates.addWidget(self.date_added, 0, Qt.AlignLeft)
 
-		self.pub_date = QLabel()
-		self.pub_date.setObjectName("pub_date")
-		self.pub_date.setAlignment(Qt.AlignHCenter)
-		dates.addWidget(self.pub_date, 0, Qt.AlignRight)
+#		self.pub_date = QLabel()
+#		self.pub_date.setObjectName("pub_date")
+#		self.pub_date.setAlignment(Qt.AlignHCenter)
+#		dates.addWidget(self.pub_date, 0, Qt.AlignRight)
 
-		self.tags = QLabel()
-		self.tags.setObjectName("tags")
-		t_props(self.tags)
-		self.tags.setAlignment(Qt.AlignLeft)
-		self.metadata.addWidget(self.tags, 0, Qt.AlignLeft)
+#		self.tags = QLabel()
+#		self.tags.setObjectName("tags")
+#		t_props(self.tags)
+#		self.tags.setAlignment(Qt.AlignLeft)
+#		self.metadata.addWidget(self.tags, 0, Qt.AlignLeft)
 
-		self.path = QLabel()
-		self.path.setObjectName("path")
-		t_props(self.path)
-		self.path.setAlignment(Qt.AlignLeft)
-		self.metadata.addWidget(self.path, 0 , Qt.AlignLeft)
+#		self.path = QLabel()
+#		self.path.setObjectName("path")
+#		t_props(self.path)
+#		self.path.setAlignment(Qt.AlignLeft)
+#		self.metadata.addWidget(self.path, 0 , Qt.AlignLeft)
 
 
-	def drawContents(self, series):
-		assert isinstance(series, seriesdb.Series), "Please provide a series of Series class from SeriesDB"
+#	def drawContents(self, series):
+#		assert isinstance(series, seriesdb.Series), "Please provide a series of Series class from SeriesDB"
 		
-		self.image.load(series.profile)
-		self.scaled_image = self.image.scaled(self.image_icon_size, Qt.KeepAspectRatio,
-					Qt.SmoothTransformation)
-		self.image_box.setPixmap(self.scaled_image)
+#		self.image.load(series.profile)
+#		self.scaled_image = self.image.scaled(self.image_icon_size, Qt.KeepAspectRatio,
+#					Qt.SmoothTransformation)
+#		self.image_box.setPixmap(self.scaled_image)
 
-		self.title.setText(series.title)
-		self.artist.setText(series.artist)
-		self.chapter_count.setText("Chapters:"+"{}  ".format(len(series.chapters)))
-		self.info.setText("Description:\n"+series.info)
-		self.date_added.setText("Date Added:\n"+series.date_added)
-		try:
-			self.pub_date.setText("Date Published:\n{2}-{1}-{0}".format(series.pub_date.day,
-														   series.pub_date.month, series.pub_date.month))
-		except:
-			self.pub_date.setText("Date Published:\n"+series.pub_date)
+#		self.title.setText(series.title)
+#		self.artist.setText(series.artist)
+#		self.chapter_count.setText("Chapters:"+"{}  ".format(len(series.chapters)))
+#		self.info.setText("Description:\n"+series.info)
+#		self.date_added.setText("Date Added:\n"+series.date_added)
+#		try:
+#			self.pub_date.setText("Date Published:\n{2}-{1}-{0}".format(series.pub_date.day,
+#														   series.pub_date.month, series.pub_date.month))
+#		except:
+#			self.pub_date.setText("Date Published:\n"+series.pub_date)
 
-		# Put tags in a FormLayout
-		self.tags.setText("Tags:\n"+ "TODO")
-		self.path.setText("Path:\n"+series.path)
-		self.metadata_area.setWidget(self.metadata_main)
-		self.metadata_main.adjustSize()
-		self.metadata.update()
+#		# Put tags in a FormLayout
+#		self.tags.setText("Tags:\n"+ "TODO")
+#		self.path.setText("Path:\n"+series.path)
+#		self.metadata_area.setWidget(self.metadata_main)
+#		self.metadata_main.adjustSize()
+#		self.metadata.update()
 	#def resizeEvent(self, resizeevent):
 	#	"""This method basically need to make sure
 	#	the image in chapter view gets resized when moving
