@@ -4,7 +4,7 @@ from PyQt5.QtCore import (Qt, QAbstractListModel, QModelIndex, QVariant,
 from PyQt5.QtGui import (QPixmap, QBrush, QColor, QPainter, 
 						 QPen, QTextDocument,
 						 QMouseEvent, QHelpEvent,
-						 QPixmapCache)
+						 QPixmapCache, QCursor)
 from PyQt5.QtWidgets import (QListView, QFrame, QLabel,
 							 QStyledItemDelegate, QStyle,
 							 QMenu, QAction, QToolTip, QVBoxLayout,
@@ -141,10 +141,63 @@ class SeriesModel(QAbstractListModel):
 class ChapterModel(SeriesModel):
 	pass
 
+from PyQt5.QtWidgets import QWidget
+class Popup(QWidget):
+	def __init__(self):
+		super().__init__(None, Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+		self.setAttribute(Qt.WA_ShowWithoutActivating)
+		self.initUI()
+		self.setWindowModality(Qt.WindowModal)
+		self.resize(gui_constants.POPUP_WIDTH,gui_constants.POPUP_HEIGHT)
+	
+	def initUI(self):
+		main_layout = QVBoxLayout()
+		self.setLayout(main_layout)
+		form_l = QFormLayout()
+		main_layout.addLayout(form_l)
+		self.title = QLabel("Title:")
+		self.title_lbl = QLabel("Title:")
+		self.artist = QLabel("Author:")
+		self.artist_lbl = QLabel("Author:")
+		self.chapters = QLabel("Chapters:")
+		self.chapters_lbl = QLabel("Chapters:")
+		self.info = QLabel("Description:")
+		self.info_lbl = QLabel("Description:")
+
+		type_status_l = QHBoxLayout()
+		self.type = QLabel()
+		type_status_l.addWidget(self.type, 0, Qt.AlignLeft)
+		self.status = QLabel()
+		type_status_l.addWidget(self.status, 0, Qt.AlignRight)
+
+		self.tags = QLabel("Tags:")
+		self.tags_lbl = QLabel("Tags:")
+
+		self.pub_date = QLabel()
+		self.date_added = QLabel()
+
+		form_l.addRow(self.title_lbl, self.title)
+		form_l.addRow(self.artist_lbl, self.artist)
+		form_l.addRow(self.chapters_lbl, self.chapters)
+		form_l.addRow(self.info_lbl, self.info)
+		form_l.addRow(self.tags_lbl, self.tags)
+
+	def set_series(self, series):
+		self.title.setText(series.title)
+		self.artist.setText(series.artist)
+		self.chapters.setText("{}".format(len(series.chapters)))
+		self.info.setText(series.info)
+		self.type.setText(series.type)
+		self.status.setText(series.status)
+
+
 class CustomDelegate(QStyledItemDelegate):
 	"A custom delegate for the model/view framework"
 
 	BUTTON_CLICKED = pyqtSignal(int, QModelIndex)
+	POPUP = pyqtSignal()
+	POPUP_DROP = pyqtSignal()
+	CONTEXT_ON = False
 
 	def __init__(self):
 		super().__init__()
@@ -152,6 +205,8 @@ class CustomDelegate(QStyledItemDelegate):
 		self.H = gui_constants.THUMB_H_SIZE
 		QPixmapCache.setCacheLimit(gui_constants.THUMBNAIL_CACHE_SIZE)
 		self._painted_indexes = {}
+		self.popup_timer = QTimer()
+		self.popup_timer.timeout.connect(self.POPUP.emit)
 
 	def key(self, index):
 		"Assigns an unique key to indexes"
@@ -291,7 +346,12 @@ class CustomDelegate(QStyledItemDelegate):
 
 		if option.state & QStyle.State_MouseOver:
 			painter.fillRect(option.rect, QColor(225,225,225,90)) #70
-
+			if not self.CONTEXT_ON:
+				self.popup_timer.start(1000)
+		else:
+			if self.popup_timer.isActive():
+				self.popup_timer.stop()
+				self.POPUP_DROP.emit()
 		#if option.state & QStyle.State_Selected:
 		#	painter.fillRect(option.rect, QColor(164,164,164,120))
 
@@ -340,6 +400,8 @@ class MangaView(QListView):
 		#self.setLayoutMode(self.Batched)
 		#self.setBatchSize(15) #Only loads 20 images at a time
 		self.setMouseTracking(True)
+		self.manga_delegate = CustomDelegate()
+		self.setItemDelegate(self.manga_delegate)
 		self.series_model = SeriesModel()
 		self.setModel(self.series_model)
 		self.SERIES_DIALOG.connect(self.spawn_dialog)
@@ -390,6 +452,7 @@ class MangaView(QListView):
 				open_chapters.addAction(chap_action)
 
 		if index.isValid():
+			self.manga_delegate.CONTEXT_ON = True
 			print(index.data(Qt.UserRole+1))
 			if index.data(Qt.UserRole+1).fav==1: # here you can limit which items to show these actions for
 				action_1 = QAction("Favourite", menu, triggered = fav)
@@ -433,9 +496,11 @@ class MangaView(QListView):
 			menu.addAction(all_2)
 			menu.addAction(all_3)
 			menu.exec_(event.globalPos())
+			self.manga_delegate.CONTEXT_ON = False
 			event.accept()
 		elif handled:
 			menu.exec_(event.globalPos())
+			self.manga_delegate.CONTEXT_ON = False
 			event.accept()
 		else:
 			event.ignore()

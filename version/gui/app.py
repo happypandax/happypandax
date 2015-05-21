@@ -1,11 +1,12 @@
 import sys
 from PyQt5.QtCore import (Qt, QSize, pyqtSignal, QThread, QEvent, QTimer)
-from PyQt5.QtGui import (QPixmap, QIcon, QMouseEvent)
+from PyQt5.QtGui import (QPixmap, QIcon, QMouseEvent, QCursor)
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QListView,
 							 QHBoxLayout, QFrame, QWidget, QVBoxLayout,
 							 QLabel, QStackedLayout, QToolBar, QMenuBar,
 							 QSizePolicy, QMenu, QAction, QLineEdit,
-							 QSplitter, QMessageBox, QFileDialog)
+							 QSplitter, QMessageBox, QFileDialog,
+							 QDesktopWidget)
 from . import series
 from . import gui_constants, misc
 from ..database import fetch
@@ -73,12 +74,40 @@ class AppWindow(QMainWindow):
 		self.manga_main.setContentsMargins(-10, -12, -10, -10)
 		self.manga_view = QHBoxLayout()
 		self.manga_main.setLayout(self.manga_view)
+		self.popup_window = series.Popup()
 
-		manga_delegate = series.CustomDelegate()
-		manga_delegate.BUTTON_CLICKED.connect(self.setCurrentIndex)
 		self.manga_list_view = series.MangaView()
-		self.manga_list_view.setItemDelegate(manga_delegate)
+		self.manga_list_view.manga_delegate.BUTTON_CLICKED.connect(self.setCurrentIndex)
+		self.manga_list_view.manga_delegate.POPUP.connect(self.popup)
+		self.manga_list_view.manga_delegate.POPUP_DROP.connect(self.popup_drop)
 		self.manga_view.addWidget(self.manga_list_view)
+
+	def popup(self):
+		if not self.popup_window.isVisible():
+			m_x = QCursor.pos().x()
+			m_y = QCursor.pos().y()
+			d_w = QDesktopWidget().width()
+			d_h = QDesktopWidget().height()
+			p_w = gui_constants.POPUP_WIDTH
+			p_h = gui_constants.POPUP_HEIGHT
+
+			# adjust so it doesn't go offscreen
+			if d_w - m_x < p_w and d_h - m_y < p_h:
+				self.popup_window.move(m_x-p_w+5, m_y-p_h)
+			elif d_w - m_x > p_w and d_h - m_y < p_h:
+				self.popup_window.move(m_x+5, m_y-p_h)
+			elif d_w - m_x < p_w:
+				self.popup_window.move(m_x-p_w+5, m_y+5)
+			else:
+				self.popup_window.move(m_x+5, m_y+5)
+
+			index = self.manga_list_view.indexAt(QCursor.pos())
+			self.popup_window.set_series(index.data(Qt.UserRole+1))
+			self.popup_window.show()
+
+	def popup_drop(self):
+		if self.popup_window.isVisible:
+			self.popup_window.hide()
 
 	def favourite_display(self):
 		"initiates favourite display"

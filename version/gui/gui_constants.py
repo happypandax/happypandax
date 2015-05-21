@@ -30,3 +30,7 @@ THUMBNAIL_CACHE_SIZE = 10240*100 #10240 is 10mb, so sum is 1gb
 PREFETCH_ITEM_AMOUNT = 50 # amount of items to prefetch
 SCROLL_SPEED = 7 # controls how many steps it takes when scrolling
 
+# POPUP
+POPUP_WIDTH = 500
+POPUP_HEIGHT = 300
+
