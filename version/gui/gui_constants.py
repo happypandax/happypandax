@@ -33,6 +33,6 @@ PREFETCH_ITEM_AMOUNT = 100 # amount of items to prefetch
 SCROLL_SPEED = 7 # controls how many steps it takes when scrolling
 
 # POPUP
-POPUP_WIDTH = 400
-POPUP_HEIGHT = 300
+POPUP_WIDTH = 450
+POPUP_HEIGHT = 220
 

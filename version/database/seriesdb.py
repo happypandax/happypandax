@@ -179,6 +179,23 @@ class SeriesDB:
 		return series_list
 
 	@staticmethod
+	def get_all_f_series():
+		"""Careful, might crash with very large libraries i think...
+		Returns a list of all favourited series (<Series> class) currently in DB"""
+		executing = [["SELECT * FROM series WHERE fav=1"]]
+		CommandQueue.put(executing)
+		cursor = ResultQueue.get()
+		all_series = cursor.fetchall()
+		series_list = []
+		for series_row in all_series:
+			series = Series()
+			series.id = series_row['series_id']
+			series = series_map(series_row, series)
+			series_list.append(series)
+
+		return series_list
+
+	@staticmethod
 	def get_series_by_id(id):
 		"Returns series with given id"
 		assert isinstance(id, int), "Provided ID is invalid"

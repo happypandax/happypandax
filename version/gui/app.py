@@ -54,6 +54,8 @@ class AppWindow(QMainWindow):
 		self.temp_timer = QTimer()
 		self.manga_list_view.series_model.ROWCOUNT_CHANGE.connect(self.stat_row_info)
 		self.manga_list_view.series_model.STATUSBAR_MSG.connect(self.stat_temp_msg)
+		self.manga_list_view.favourite_model.ROWCOUNT_CHANGE.connect(self.stat_row_info)
+		self.manga_list_view.favourite_model.STATUSBAR_MSG.connect(self.stat_temp_msg)
 		self.manga_list_view.STATUS_BAR_MSG.connect(self.stat_temp_msg)
 
 	def stat_temp_msg(self, msg):
@@ -65,8 +67,8 @@ class AppWindow(QMainWindow):
 		self.temp_timer.start(5000)
 
 	def stat_row_info(self):
-		r = self.manga_list_view.series_model.rowCount()
-		t = len(self.manga_list_view.series_model._data)
+		r = self.manga_list_view.model().rowCount()
+		t = len(self.manga_list_view.model()._data)
 		self.stat_info.setText("Loaded {} of {} ".format(r, t))
 
 	def manga_display(self):
@@ -77,7 +79,7 @@ class AppWindow(QMainWindow):
 		self.manga_main.setLayout(self.manga_view)
 
 		self.manga_list_view = series.MangaView()
-		self.manga_list_view.manga_delegate.BUTTON_CLICKED.connect(self.popup)
+		self.manga_list_view.clicked.connect(self.popup)
 		self.manga_list_view.manga_delegate.POPUP.connect(self.popup)
 		self.popup_window = self.manga_list_view.manga_delegate.popup_window
 		self.manga_view.addWidget(self.manga_list_view)
@@ -107,26 +109,14 @@ class AppWindow(QMainWindow):
 			self.popup_window.show()
 
 	def favourite_display(self):
-		"initiates favourite display"
-		pass
+		"Switches to favourite display"
+		self.manga_list_view.setModel(self.manga_list_view.favourite_model)
+		self.manga_list_view.favourite_model.populate_data()
 
-	#DEPRECATED
-	#def chapter_display(self):
-	#	"Initiates chapter view"
-	#	self.chapter_main = QWidget()
-	#	self.chapter_main.setObjectName("chapter_main") # to allow styling this object
-	#	self.chapter_layout = QHBoxLayout()
-	#	self.chapter_main.setLayout(self.chapter_layout)
-
-	#	#self.chapter_info.setContentsMargins(-8,-7,-7,-7)
-	#	#self.chapter_info.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
-	#	self.chapter_info_view = series.ChapterInfo()
-	#	self.chapter_layout.addWidget(self.chapter_info_view)
-
-	#	chapter_list_view = series.ChapterView()
-	#	self.chapter_layout.addWidget(chapter_list_view)
-	#	#self.chapter.setCollapsible(0, True)
-	#	#self.chapter.setCollapsible(1, False)
+	def catalog_display(self):
+		"Switches to catalog display"
+		self.manga_list_view.setModel(self.manga_list_view.series_model)
+		self.manga_list_view.series_model.populate_data()
 
 	def init_toolbar(self):
 		self.toolbar = QToolBar()
@@ -144,14 +134,13 @@ class AppWindow(QMainWindow):
 
 		favourite_view_icon = QIcon(gui_constants.STAR_BTN_PATH)
 		favourite_view_action = QAction(favourite_view_icon, "Favourite", self)
-		#favourite_view_action.setText("Manga View")
-		#favourite_view_action.triggered.connect(lambda: self.setCurrentIndex(1)) #need lambda to pass extra args
+		favourite_view_action.triggered.connect(self.favourite_display) #need lambda to pass extra args
 		self.toolbar.addAction(favourite_view_action)
 
 		catalog_view_icon = QIcon(gui_constants.HOME_BTN_PATH)
 		catalog_view_action = QAction(catalog_view_icon, "Library", self)
 		#catalog_view_action.setText("Catalog")
-		catalog_view_action.triggered.connect(lambda: self.setCurrentIndex(0)) #need lambda to pass extra args
+		catalog_view_action.triggered.connect(self.catalog_display) #need lambda to pass extra args
 		self.toolbar.addAction(catalog_view_action)
 		self.toolbar.addSeparator()
 
@@ -184,20 +173,20 @@ class AppWindow(QMainWindow):
 		spacer_end.setFixedSize(QSize(10, 1))
 		self.toolbar.addWidget(spacer_end)
 
-	def setCurrentIndex(self, number, index=None):
-		"""Changes the current display view.
-		Params:
-			number <- int (0 for manga view, 1 for chapter view
-		Optional:
-			index <- QModelIndex for chapter view
-		Note: 0-based indexing
-		"""
-		if index is not None:
-			pass
-			#self.chapter_info_view.display_manga(index)
-			#self.display.setCurrentIndex(number)
-		else:
-			self.display.setCurrentIndex(number)
+	#def setCurrentIndex(self, number, index=None):
+	#	"""Changes the current display view.
+	#	Params:
+	#		number <- int (0 for manga view, 1 for chapter view
+	#	Optional:
+	#		index <- QModelIndex for chapter view
+	#	Note: 0-based indexing
+	#	"""
+	#	if index is not None:
+	#		pass
+	#		#self.chapter_info_view.display_manga(index)
+	#		#self.display.setCurrentIndex(number)
+	#	else:
+	#		self.display.setCurrentIndex(number)
 
 	# TODO: Improve this so that it adds to the series dialog,
 	# so user can edit data before inserting (make it a choice)
@@ -231,7 +220,7 @@ class AppWindow(QMainWindow):
 							data_thread.quit
 						else:
 							loading.setText("<font color=red>An error occured. Try restarting..</font>")
-							loading.progress.setStyleSheet("background-color:red")
+							loading.progress.setStyleSheet("background-color:red;")
 							data_thread.quit
 
 					def fetch_deleteLater():
