@@ -236,7 +236,7 @@ class FavouriteModel(SeriesModel):
 
 	def populate_data(self):
 		"Populates the model with data from database"
-		self._data = seriesdb.SeriesDB.get_all_f_series()
+		self._data = seriesdb.SeriesDB.get_series_by_fav()
 		self.layoutChanged.emit()
 		self.ROWCOUNT_CHANGE.emit()
 
