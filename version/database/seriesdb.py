@@ -119,23 +119,33 @@ class SeriesDB:
 				   tags=None, language=None, status=None, pub_date=None):
 		"Modifies series with given series id"
 		executing = []
+		assert isinstance(series_id, int)
+		executing = []
 		if title:
+			assert isinstance(title, str)
 			executing.append(["UPDATE series SET title=? WHERE series_id=?", (title, series_id)])
 		if artist:
+			assert isinstance(artist, str)
 			executing.append(["UPDATE series SET artist=? WHERE series_id=?", (artist, series_id)])
 		if info:
+			assert isinstance(info, str)
 			executing.append(["UPDATE series SET info=? WHERE series_id=?", (info, series_id)])
 		if type:
+			assert isinstance(type, str)
 			executing.append(["UPDATE series SET type=? WHERE series_id=?", (type, series_id)])
 		if fav:
+			assert isinstance(fav, int)
 			executing.append(["UPDATE series SET fav=? WHERE series_id=?", (fav, series_id)])
 		if language:
+			assert isinstance(language, str)
 			executing.append(["UPDATE series SET language=? WHERE series_id=?", (language, series_id)])
 		if status:
+			assert isinstance(status, str)
 			executing.append(["UPDATE series SET status=? WHERE series_id=?", (status, series_id)])
 		if pub_date:
 			executing.append(["UPDATE series SET pub_date=? WHERE series_id=?", (pub_date, series_id)])
 		if tags:
+			assert isinstance(tags, dict)
 			TagDB.modify_tags(series_id, tags)
 
 		CommandQueue.put(executing)
@@ -281,9 +291,15 @@ class SeriesDB:
 		pass
 
 	@staticmethod
-	def del_series(manga_id):
+	def del_series(series_id):
 		"Deletes series with the given id recursively."
-		pass
+		assert isinstance(series_id, int), "Please provide a valid series id to delete"
+		executing = [["DELETE FROM series WHERE series_id=?", (series_id,)]]
+		CommandQueue.put(executing)
+		c = ResultQueue.get()
+		del c
+		ChapterDB.del_all_chapters(series_id)
+		TagDB.del_series_mapping(series_id)
 
 
 class ChapterDB:
@@ -368,9 +384,15 @@ class ChapterDB:
 		pass
 
 	@staticmethod
-	def del_chapter():
-		"Raises NotImplementedError"
-		raise NotImplementedError
+	def del_all_chapters(series_id):
+		"Deletes all chapters with the given series_id"
+		assert isinstance(series_id, int), "Please provide a valid series ID"
+		executing = [["DELETE FROM chapters WHERE series_id=?", (series_id,)]]
+		CommandQueue.put(executing)
+		c = ResultQueue.get()
+		del c
+
+
 
 class TagDB:
 	"""
@@ -378,6 +400,8 @@ class TagDB:
 	The namespace "default" will be used for tags without namespaces.
 
 	Provides the following methods:
+	del_tags <- Deletes the tags with corresponding tag_ids from DB
+	del_series_tags_mapping <- Deletes the tags and series mappings with corresponding series_ids from DB
 	get_series_tags -> Returns all tags and namespaces found for the given series_id;
 	get_tag_series -> Returns all series' with the given tag
 	get_ns_tags -> Returns all tags linked to the given namespace
@@ -388,6 +412,35 @@ class TagDB:
 
 	def __init__(self):
 		raise Exception("TagsDB should not be instantiated")
+
+	@staticmethod
+	def del_tags(list_of_tags_id):
+		"Deletes the tags with corresponding tag_ids from DB"
+		pass
+
+	@staticmethod
+	def del_series_mapping(series_id):
+		"Deletes the tags and series mappings with corresponding series_ids from DB"
+		assert isinstance(series_id, int), "Please provide a valid series_id"
+		# We first get all the current tags_mappings_ids related to series
+		tag_m_ids = []
+		executing = [["SELECT tags_mappings_id FROM series_tags_map WHERE series_id=?",
+				(series_id,)]]
+		CommandQueue.put(executing)
+		c = ResultQueue.get()
+		for tmd in c.fetchall():
+			tag_m_ids.append(tmd['tags_mappings_id'])
+
+		# Then we delete all mappings related to the given series_id
+		executing = [["DELETE FROM series_tags_map WHERE series_id=?", (series_id,)]]
+
+		for tmd_id in tag_m_ids:
+			executing.append(["DELETE FROM tags_mappings WHERE tags_mappings_id=?",
+					 (tmd_id,)])
+
+		CommandQueue.put(executing)
+		c = ResultQueue.get()
+		del c
 
 	@staticmethod
 	def get_series_tags(series_id):
@@ -500,25 +553,8 @@ class TagDB:
 	def modify_tags(series_id, dict_of_tags):
 		"Modifies the given tags"
 
-		# We first get all the current tags_mappings_ids related to series
-		tag_m_ids = []
-		executing = [["SELECT tags_mappings_id FROM series_tags_map WHERE series_id=?",
-				(series_id,)]]
-		CommandQueue.put(executing)
-		c = ResultQueue.get()
-		for tmd in c.fetchall():
-			tag_m_ids.append(tmd['tags_mappings_id'])
-
-		# Then we delete all mappings related to the given series_id
-		executing = [["DELETE FROM series_tags_map WHERE series_id=?", (series_id,)]]
-
-		for tmd_id in tag_m_ids:
-			executing.append(["DELETE FROM tags_mappings WHERE tags_mappings_id=?",
-					 (tmd_id,)])
-
-		CommandQueue.put(executing)
-		c = ResultQueue.get()
-		del c
+		# We first delete all mappings
+		TagDB.del_series_mapping(series_id)
 
 		# Now we add the new tags to DB
 		weak_series = Series()

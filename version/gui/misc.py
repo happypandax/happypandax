@@ -216,7 +216,6 @@ class SeriesDialog(QDialog):
 				times.add( os.path.getmtime(fp) )
 		series_object.last_update = time.asctime(time.gmtime(max(times)))
 		#self.series_queue.put(series_object)
-		print(series_object.id)
 		self.SERIES.emit([series_object])
 		#seriesdb.SeriesDB.add_series(series_object)
 		

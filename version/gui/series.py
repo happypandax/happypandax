@@ -117,7 +117,6 @@ class SeriesModel(QAbstractListModel):
 		self._data = [] #a list for the data
 		self.populate_data()
 		#self._data_container = []
-		self.layoutChanged.connect(lambda: self.status_b_msg("Refreshed")) # quite a hack
 		self.dataChanged.connect(lambda: self.status_b_msg("Edited"))
 		self.CUSTOM_STATUS_MSG.connect(self.status_b_msg)
 
@@ -202,6 +201,7 @@ class SeriesModel(QAbstractListModel):
 		self.dataChanged.emit(index, index, [Qt.UserRole+1])
 
 	def removeRows(self, position, rows=1, index=QModelIndex()):
+		"Deletes series data from the model data list. OBS: doesn't touch DB!"
 		self.beginRemoveRows(QModelIndex(), position, position + rows - 1)
 		self._data = self._data[:position] + self._data[position + rows:]
 		self._data_count -= rows
@@ -460,6 +460,8 @@ class MangaView(QListView):
 
 	def remove_series(self, index):
 		self.rowsAboutToBeRemoved(index.parent(), index.row(), index.row())
+		series = index.data(Qt.UserRole+1)
+		seriesdb.SeriesDB.del_series(series.id)
 		self.model().removeRows(index.row(), 1)
 
 	def favourite(self, index):
@@ -469,6 +471,8 @@ class MangaView(QListView):
 			self.dataChanged(index, index)
 			self.model().removeRows(index.row(), 1)
 			self.model().CUSTOM_STATUS_MSG.emit("Unfavourited")
+			n_series = seriesdb.SeriesDB.fav_series_set(series.id, 0)
+			del n_series
 		else:
 			if series.fav == 1:
 				n_series = seriesdb.SeriesDB.fav_series_set(series.id, 0)
@@ -483,6 +487,10 @@ class MangaView(QListView):
 		self.STATUS_BAR_MSG.emit("Opening chapter {}".format(chap_numb+1))
 		series = index.data(Qt.UserRole+1)
 		utils.open(series.chapters[chap_numb])
+
+	def refresh(self):
+		self.model().layoutChanged.emit()
+		self.STATUS_BAR_MSG.emit("Refreshed")
 
 	def contextMenuEvent(self, event):
 		handled = False
@@ -545,7 +553,7 @@ class MangaView(QListView):
 			sort_menu.addAction(s_title)
 			sort_menu.addAction(s_artist)
 			refresh = QAction("&Refresh", menu,
-					 triggered = self.model().layoutChanged.emit)
+					 triggered = self.refresh)
 			menu.addAction(refresh)
 			handled = True
 
