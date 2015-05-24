@@ -12,8 +12,9 @@ I'm here if you have any questions!
 
 # Dependencies
 I wanted to keep the list short (I know the pain of wasting hours trying to install the correct dependencies)
-- Qt5 (Install this first)
+- Qt5 (Install this first) > 5.4
 - PyQt5
+- requests (pip) > 2.6.0
 
 # How to run/use
 *(I actually haven't tested this on other systems yet)*

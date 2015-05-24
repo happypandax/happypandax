@@ -530,6 +530,7 @@ class TagDB:
 				
 				tags_id_list.append(tag_id)
 
+			# TODO: Only add unique mappings!!!
 			# time to map the tags to the namespace now
 			for tag_id in tags_id_list:
 				executing = [["""

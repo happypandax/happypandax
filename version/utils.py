@@ -129,7 +129,3 @@ def tag_to_dict(string):
 			namespace_tags['default'].append(t)
 
 	return namespace_tags
-
-class DBSeriesInterface:
-	"An interface for seriedb"
-	pass

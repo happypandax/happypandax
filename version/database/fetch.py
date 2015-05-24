@@ -1,6 +1,8 @@
 import os, time
+import re as regex
 
 from .seriesdb import Series, SeriesDB
+from .. import pewnet, settings
 
 from PyQt5.QtCore import QObject, pyqtSignal # need this for interaction with main thread
 
@@ -13,13 +15,20 @@ class Fetch(QObject):
 	local -> runs a local search in the given series_path
 	"""
 
+	# local signals
 	FINISHED = pyqtSignal(bool)
 	DATA_COUNT = pyqtSignal(int)
 	PROGRESS = pyqtSignal(int)
 
+	# WEB signals
+	WEB_METADATA = pyqtSignal(list)
+	WEB_PROGRESS = pyqtSignal()
+	WEB_STATUS = pyqtSignal(bool)
+
 	def __init__(self, parent=None):
 		super().__init__(parent)
 		self.series_path = ""
+		self.web_url = ""
 	
 	def local(self):
 		"""Do a local search in the given series_path.
@@ -75,3 +84,44 @@ class Fetch(QObject):
 
 		# everything went well
 		self.FINISHED.emit(True)
+
+	def web(self):
+		"""Fetches gallery metadata from the web.
+		Website is determined from the url"""
+
+		assert len(self.web_url) > 5 # very random..
+
+		def r_metadata(metadata):
+			if metadata:
+				self.WEB_METADATA.emit(metadata)
+				self.WEB_STATUS.emit(True)
+			else: self.WEB_STATUS.emit(False)
+
+		def http_checker(url):
+			try:
+				r = regex.match('^(?=http)', url).group()
+				del r
+				return url
+			except AttributeError:
+				n_url = 'http://' + url
+				return n_url
+
+		def website_checker(url):
+			if 'g.e-hentai.org' in url:
+				return 'ehen'
+			elif 'exhentai.org' in url:
+				return 'exhen'
+			else: return None
+
+		new_url = http_checker(self.web_url)
+
+		if website_checker(new_url) == 'exhen':
+			self.WEB_PROGRESS.emit()
+			cookie = settings.exhen_cookies()
+			exhen = pewnet.ExHen(cookie[0], cookie[1])
+			r_metadata(exhen.get_metadata([new_url]))
+		elif website_checker(new_url) == 'ehen':
+			self.WEB_PROGRESS.emit()
+			ehen = pewnet.EHen()
+			r_metadata(ehen.get_metadata([new_url]))
+		else: self.WEB_STATUS.emit(False)

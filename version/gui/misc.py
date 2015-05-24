@@ -1,4 +1,4 @@
-from PyQt5.QtCore import Qt, QDate, QPoint, pyqtSignal
+from PyQt5.QtCore import Qt, QDate, QPoint, pyqtSignal, QThread, QTimer
 from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QVBoxLayout, QHBoxLayout,
 							 QDialog, QGridLayout, QLineEdit,
@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 import os, threading, queue, time
 from datetime import datetime
 from ..utils import tag_to_string, tag_to_dict
-from ..database import seriesdb
+from ..database import seriesdb, fetch
 
 class Loading(QWidget):
 	ON = False #to prevent multiple instances
@@ -39,6 +39,7 @@ class Loading(QWidget):
 		if string != self.text.text():
 			self.text.setText(string)
 
+# TODO: FIX THIS HORRENDOUS DUPLICATED CODE
 class SeriesDialog(QDialog):
 	"A window for adding/modifying series"
 
@@ -55,17 +56,18 @@ class SeriesDialog(QDialog):
 	def initUI(self):
 		main_layout = QVBoxLayout()
 
-		f_web = QGroupBox("From the Web")
-		f_web.setCheckable(False)
-		main_layout.addWidget(f_web)
-		web_layout = QHBoxLayout()
-		f_web.setLayout(web_layout)
 
-		f_local = QGroupBox("From local folder")
+		f_local = QGroupBox("Folder")
 		f_local.setCheckable(False)
 		main_layout.addWidget(f_local)
 		local_layout = QHBoxLayout()
 		f_local.setLayout(local_layout)
+
+		f_web = QGroupBox("Metadata from the Web")
+		f_web.setCheckable(False)
+		main_layout.addWidget(f_web)
+		web_layout = QHBoxLayout()
+		f_web.setLayout(web_layout)
 
 		f_series = QGroupBox("Series Info")
 		f_series.setCheckable(False)
@@ -74,19 +76,26 @@ class SeriesDialog(QDialog):
 		f_series.setLayout(series_layout)
 
 		def basic_web(name):
-			return QLabel(name), QLineEdit(), QPushButton("Fetch")
+			return QLabel(name), QLineEdit(), QPushButton("Fetch"), QProgressBar()
 
-		exh_lbl, exh_edit, exh_btn = basic_web("ExHen:")
-		web_layout.addWidget(exh_lbl, 0, Qt.AlignLeft)
-		web_layout.addWidget(exh_edit, 0)
-		web_layout.addWidget(exh_btn, 0, Qt.AlignRight)
+		url_lbl, url_edit, url_btn, url_prog = basic_web("URL:")
+		url_btn.clicked.connect(lambda: self.web_metadata(url_edit.text(), url_btn,
+											url_prog))
+		url_prog.setTextVisible(False)
+		url_prog.setMinimum(0)
+		url_prog.setMaximum(0)
+		web_layout.addWidget(url_lbl, 0, Qt.AlignLeft)
+		web_layout.addWidget(url_edit, 0)
+		web_layout.addWidget(url_btn, 0, Qt.AlignRight)
+		web_layout.addWidget(url_prog, 0, Qt.AlignRight)
+		url_edit.setPlaceholderText("paste g.e-hentai/exhentai gallery link")
+		url_prog.hide()
 
 		choose_folder = QPushButton("Choose Folder")
 		choose_folder.clicked.connect(self.choose_dir)
 		local_layout.addWidget(choose_folder, Qt.AlignLeft)
 
 		self.title_edit = QLineEdit()
-		self.title_edit.setFocus()
 		self.author_edit = QLineEdit()
 		self.descr_edit = QTextEdit()
 		self.descr_edit.setFixedHeight(70)
@@ -98,7 +107,8 @@ class SeriesDialog(QDialog):
 		self.tags_edit.setFixedHeight(45)
 		self.tags_edit.setPlaceholderText("namespace1:tag1, tag2, namespace3:tag3, etc..")
 		self.type_box = QComboBox()
-		self.type_box.addItems(["Manga", "Doujinshi", "Other"])
+		self.type_box.addItems(["Manga", "Doujinshi", "Artist CG Sets", "Game CG Sets",
+						  "Western", "Image Sets", "Non-H", "Cosplay", "Other"])
 		self.type_box.setCurrentIndex(0)
 		#self.type_box.currentIndexChanged[int].connect(self.doujin_show)
 		#self.doujin_parent = QLineEdit()
@@ -134,6 +144,7 @@ class SeriesDialog(QDialog):
 
 
 		self.setLayout(main_layout)
+		self.title_edit.setFocus()
 
 	# TODO: complete this... maybe another time.. 
 	#def doujin_show(self, index):
@@ -251,7 +262,59 @@ class SeriesDialog(QDialog):
 		self.setWindowFlags(Qt.FramelessWindowHint)
 		self.exec()
 
+	def web_metadata(self, url, btn_widget, pgr_widget):
+		try:
+			assert len(url) > 5
+		except AssertionError:
+			return None
+		f = fetch.Fetch()
+		f.web_url = url
+		thread = QThread()
 
+		def status(stat):
+			def do_hide():
+				try:
+					pgr_widget.hide()
+					btn_widget.show()
+				except RuntimeError:
+					pass
+
+			if stat:
+				do_hide()
+			else:
+				pgr_widget.setStyleSheet("color:red;background-color:red;")
+				QTimer.singleShot(3000, do_hide)
+
+		f.moveToThread(thread)
+		f.WEB_METADATA.connect(self.set_web_metadata)
+		f.WEB_PROGRESS.connect(btn_widget.hide)
+		f.WEB_PROGRESS.connect(pgr_widget.show)
+		thread.started.connect(f.web)
+		f.WEB_STATUS.connect(status)
+		f.WEB_STATUS.connect(lambda: f.deleteLater)
+		f.WEB_STATUS.connect(lambda: thread.deleteLater)
+		thread.start()
+
+	def set_web_metadata(self, metadata):
+		assert isinstance(metadata, list)
+		for gallery in metadata:
+			self.title_edit.setText(gallery['title'])
+			tags = ""
+			for n, tag in enumerate(gallery['tags'], 1):
+				if n == len(gallery['tags']):
+					tags += tag
+				else:
+					tags += tag + ', '
+			self.tags_edit.setText(tags)
+			pub_dt = datetime.fromtimestamp(int(gallery['posted']))
+			pub_string = "{}".format(pub_dt)
+			pub_date = QDate.fromString(pub_string.split()[0], "yyyy-MM-dd")
+			self.pub_edit.setDate(pub_date)
+			t_index = self.type_box.findText(gallery['category'])
+			try:
+				self.type_box.setCurrentIndex(t_index)
+			except:
+				self.type_box.setCurrentIndex(0)
 
 	def setSeries(self, series):
 		"To be used for when editing a series"
@@ -270,13 +333,22 @@ class SeriesDialog(QDialog):
 		series_layout = QFormLayout()
 		f_series.setLayout(series_layout)
 
-		def basic_web(name):
-			return QLabel(name), QLineEdit(), QPushButton("Fetch")
 
-		exh_lbl, exh_edit, exh_btn = basic_web("ExHen:")
-		web_layout.addWidget(exh_lbl, 0, Qt.AlignLeft)
-		web_layout.addWidget(exh_edit, 0)
-		web_layout.addWidget(exh_btn, 0, Qt.AlignRight)
+		def basic_web(name):
+			return QLabel(name), QLineEdit(), QPushButton("Fetch"), QProgressBar()
+
+		url_lbl, url_edit, url_btn, url_prog = basic_web("URL:")
+		url_btn.clicked.connect(lambda: self.web_metadata(url_edit.text(), url_btn,
+													url_prog))
+		url_prog.setTextVisible(False)
+		url_prog.setMinimum(0)
+		url_prog.setMaximum(0)
+		web_layout.addWidget(url_lbl, 0, Qt.AlignLeft)
+		web_layout.addWidget(url_edit, 0)
+		web_layout.addWidget(url_btn, 0, Qt.AlignRight)
+		web_layout.addWidget(url_prog, 0, Qt.AlignRight)
+		url_edit.setPlaceholderText("paste g.e-hentai/exhentai gallery link")
+		url_prog.hide()
 
 		self.title_edit = QLineEdit()
 		self.title_edit.setText(series.title)
@@ -301,13 +373,14 @@ class SeriesDialog(QDialog):
 		self.tags_edit.setText(tag_to_string(series.tags))
 
 		self.type_box = QComboBox()
-		self.type_box.addItems(["Manga", "Doujinshi", "Other"])
-		if series.type is "Manga":
+		self.type_box.addItems(["Manga", "Doujinshi", "Artist CG Sets", "Game CG Sets",
+						  "Western", "Image Sets", "Non-H", "Cosplay", "Other"])
+
+		t_index = self.type_box.findText(series.type)
+		try:
+			self.type_box.setCurrentIndex(t_index)
+		except:
 			self.type_box.setCurrentIndex(0)
-		elif series.type is "Doujinshi":
-			self.type_box.setCurrentIndex(1)
-		else:
-			self.type_box.setCurrentIndex(2)
 		#self.type_box.currentIndexChanged[int].connect(self.doujin_show)
 		#self.doujin_parent = QLineEdit()
 		#self.doujin_parent.setVisible(False)
@@ -320,7 +393,7 @@ class SeriesDialog(QDialog):
 		else:
 			self.status_box.setCurrentIndex(0)
 
-		self.pub_edit = QDateEdit() # TODO: Finish this..
+		self.pub_edit = QDateEdit()
 		self.pub_edit.setCalendarPopup(True)
 		series_pub_date = "{}".format(series.pub_date)
 		qdate_pub_date = QDate.fromString(series_pub_date, "yyyy-MM-dd")

@@ -467,6 +467,7 @@ class MangaView(QListView):
 	def favourite(self, index):
 		assert isinstance(index, QModelIndex)
 		series = index.data(Qt.UserRole+1)
+		# TODO: don't need to fetch from DB here... 
 		if self.model() == self.favourite_model:
 			self.dataChanged(index, index)
 			self.model().removeRows(index.row(), 1)
