@@ -49,6 +49,7 @@ def init_db():
 					info TEXT,
 					fav INTEGER,
 					type TEXT,
+					link BLOB,
 					language TEXT,
 					status TEXT,
 					pub_date TEXT,

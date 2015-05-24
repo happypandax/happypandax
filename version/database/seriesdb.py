@@ -60,6 +60,7 @@ def series_map(row, series):
 	series.last_update = row['last_update']
 	series.last_read = row['last_read']
 	series.date_added = row['date_added']
+	series.link = bytes.decode(row['link'])
 
 	series.chapters = ChapterDB.get_chapters_for_series(series.id)
 
@@ -74,9 +75,9 @@ def default_exec(object):
 		else:
 			return obj
 	executing = [["""INSERT INTO series(title, artist, profile, series_path, 
-					info, type, fav, status, pub_date, date_added, last_read, last_update)
+					info, type, fav, status, pub_date, date_added, last_read, link, last_update)
 				VALUES(:title, :artist, :profile, :series_path, :info, :type, :fav,
-					:status, :pub_date, :date_added, :last_read, :last_update)""",
+					:status, :pub_date, :date_added, :last_read, :link, :last_update)""",
 				{
 				'title':check(object.title),
 				'artist':check(object.artist),
@@ -90,7 +91,8 @@ def default_exec(object):
 				'pub_date':check(object.pub_date),
 				'date_added':check(object.date_added),
 				'last_read':check(object.last_read),
-				'last_update':check(object.last_update)
+				'last_update':check(object.last_update),
+				'link':str.encode(object.link)
 				}
 				]]
 	return executing
@@ -116,7 +118,7 @@ class SeriesDB:
 
 	@staticmethod
 	def modify_series(series_id, title=None, artist=None, info=None, type=None, fav=None,
-				   tags=None, language=None, status=None, pub_date=None):
+				   tags=None, language=None, status=None, pub_date=None, link=None):
 		"Modifies series with given series id"
 		executing = []
 		assert isinstance(series_id, int)
@@ -144,6 +146,8 @@ class SeriesDB:
 			executing.append(["UPDATE series SET status=? WHERE series_id=?", (status, series_id)])
 		if pub_date:
 			executing.append(["UPDATE series SET pub_date=? WHERE series_id=?", (pub_date, series_id)])
+		if link:
+			executing.append(["UPDATE series SET link=? WHERE series_id=?", (link, series_id)])
 		if tags:
 			assert isinstance(tags, dict)
 			TagDB.modify_tags(series_id, tags)
@@ -614,6 +618,7 @@ class Series:
 		self.info = None
 		self.fav = 0
 		self.type = None
+		self.link = ""
 		self.language = None
 		self.status = None
 		self.tags = None

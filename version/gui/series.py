@@ -43,6 +43,9 @@ class Popup(QWidget):
 		self.info_lbl = QLabel("Description:")
 		self.info.setWordWrap(True)
 
+		self.lang = QLabel()
+		lang_lbl = QLabel("Language:")
+
 		type_status_l = QHBoxLayout()
 		self.type = QLabel()
 		type_status_l.addWidget(self.type, 0, Qt.AlignLeft)
@@ -57,11 +60,17 @@ class Popup(QWidget):
 		self.pub_date = QLabel()
 		self.date_added = QLabel()
 
+		link_lbl = QLabel("Link:")
+		self.link = QLabel()
+		self.link.setWordWrap(True)
+
 		form_l.addRow(self.title_lbl, self.title)
 		form_l.addRow(self.artist_lbl, self.artist)
 		form_l.addRow(self.chapters_lbl, self.chapters)
 		form_l.addRow(self.info_lbl, self.info)
+		form_l.addRow(lang_lbl, self.lang)
 		form_l.addRow(self.tags_lbl, self.tags)
+		form_l.addRow(link_lbl, self.link)
 
 	def set_series(self, series):
 		def tags_parser(tags):
@@ -99,9 +108,11 @@ class Popup(QWidget):
 		self.artist.setText(series.artist)
 		self.chapters.setText("{}".format(len(series.chapters)))
 		self.info.setText(series.info)
+		self.lang.setText(series.language)
 		self.type.setText(series.type)
 		self.status.setText(series.status)
 		self.tags.setText(tags_parser(series.tags))
+		self.link.setText(series.link)
 
 class SeriesModel(QAbstractListModel):
 	"""Model for Model/View/Delegate framework
@@ -520,8 +531,16 @@ class MangaView(QListView):
 					number), open_chapters, triggered = lambda: self.open_chapter(index, chap_number))
 				open_chapters.addAction(chap_action)
 
+		def open_link():
+			link = index.data(Qt.UserRole+1).link
+			utils.open_web_link(link)
+
 		if index.isValid():
 			self.manga_delegate.CONTEXT_ON = True
+
+			if index.data(Qt.UserRole+1).link != "":
+				ext_action = QAction("Open link", menu, triggered = open_link)
+
 			if index.data(Qt.UserRole+1).fav==1: # here you can limit which items to show these actions for
 				action_1 = QAction("Favourite", menu, triggered = fav)
 				action_1.setCheckable(True)
@@ -538,6 +557,7 @@ class MangaView(QListView):
 				chapters()
 				handled = True
 				custom = True
+
 		else:
 			add_series = QAction("&Add new Series...", menu,
 						triggered = self.SERIES_DIALOG.emit)
@@ -562,6 +582,10 @@ class MangaView(QListView):
 			menu.addSeparator()
 			menu.addAction(all_1)
 			menu.addAction(all_2)
+			try:
+				menu.addAction(ext_action)
+			except:
+				pass
 			menu.addSeparator()
 			menu.addAction(all_3)
 			menu.exec_(event.globalPos())
@@ -592,7 +616,8 @@ class MangaView(QListView):
 			 'language':series.language,
 			 'status':series.status,
 			 'pub_date':series.pub_date,
-			 'tags':series.tags}
+			 'tags':series.tags,
+			 'link':series.link}
 
 			threading.Thread(target=seriesdb.SeriesDB.modify_series,
 							 args=(series.id,), kwargs=kwdict).start()

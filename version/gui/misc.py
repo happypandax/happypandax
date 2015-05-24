@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QDesktopWidget, QMessageBox, QFileDialog)
 import os, threading, queue, time
 from datetime import datetime
-from ..utils import tag_to_string, tag_to_dict
+from ..utils import tag_to_string, tag_to_dict, title_parser
 from ..database import seriesdb, fetch
 
 class Loading(QWidget):
@@ -98,13 +98,13 @@ class SeriesDialog(QDialog):
 		self.title_edit = QLineEdit()
 		self.author_edit = QLineEdit()
 		self.descr_edit = QTextEdit()
-		self.descr_edit.setFixedHeight(70)
+		self.descr_edit.setFixedHeight(45)
 		self.descr_edit.setPlaceholderText("HTML 4 tags are supported")
 		self.lang_box = QComboBox()
 		self.lang_box.addItems(["English", "Japanese", "Other"])
 		self.lang_box.setCurrentIndex(0)
 		self.tags_edit = QTextEdit()
-		self.tags_edit.setFixedHeight(45)
+		self.tags_edit.setFixedHeight(70)
 		self.tags_edit.setPlaceholderText("namespace1:tag1, tag2, namespace3:tag3, etc..")
 		self.type_box = QComboBox()
 		self.type_box.addItems(["Manga", "Doujinshi", "Artist CG Sets", "Game CG Sets",
@@ -122,6 +122,23 @@ class SeriesDialog(QDialog):
 		self.path_lbl = QLabel("unspecified...")
 		self.path_lbl.setWordWrap(True)
 
+		self.link_layout = QHBoxLayout()
+		self.link_lbl = QLabel("")
+		self.link_lbl.setWordWrap(True)
+		self.link_edit = QLineEdit()
+		self.link_layout.addWidget(self.link_edit)
+		self.link_layout.addWidget(self.link_lbl)
+		self.link_edit.hide()
+		self.link_btn = QPushButton("Modify")
+		self.link_btn.setFixedWidth(50)
+		self.link_btn2 = QPushButton("Set")
+		self.link_btn2.setFixedWidth(40)
+		self.link_btn.clicked.connect(self.link_modify)
+		self.link_btn2.clicked.connect(self.link_set)
+		self.link_layout.addWidget(self.link_btn)
+		self.link_layout.addWidget(self.link_btn2)
+		self.link_btn2.hide()
+
 		series_layout.addRow("Title:", self.title_edit)
 		series_layout.addRow("Author:", self.author_edit)
 		series_layout.addRow("Description:", self.descr_edit)
@@ -130,6 +147,7 @@ class SeriesDialog(QDialog):
 		series_layout.addRow("Type:", self.type_box)
 		series_layout.addRow("Publication Date:", self.pub_edit)
 		series_layout.addRow("Path:", self.path_lbl)
+		series_layout.addRow("Link:", self.link_layout)
 
 		final_buttons = QHBoxLayout()
 		final_buttons.setAlignment(Qt.AlignRight)
@@ -156,7 +174,13 @@ class SeriesDialog(QDialog):
 	def choose_dir(self):
 		dir_name = QFileDialog.getExistingDirectory(self, 'Choose a folder')
 		head, tail = os.path.split(dir_name)
-		self.title_edit.setText(tail)
+		parsed = title_parser(tail)
+		self.title_edit.setText(parsed['title'])
+		self.author_edit.setText(parsed['artist'])
+		l_i = self.lang_box.findText(parsed['language'])
+		if l_i != -1:
+			self.lang_box.setCurrentIndex(l_i)
+
 		self.path_lbl.setText(dir_name)
 
 	def check(self):
@@ -197,6 +221,7 @@ class SeriesDialog(QDialog):
 			qpub_d = self.pub_edit.date().toString("ddMMyyyy")
 			dpub_d = datetime.strptime(qpub_d, "%d%m%Y").date()
 			new_series.pub_date = dpub_d
+			new_series.link = self.link_lbl.text()
 
 			if self.path_lbl.text() == "unspecified...":
 				self.SERIES.emit([new_series])
@@ -257,9 +282,10 @@ class SeriesDialog(QDialog):
 		self.resize(500,200)
 		frect = self.frameGeometry()
 		frect.moveCenter(QDesktopWidget().availableGeometry().center())
-		self.move(frect.topLeft()-QPoint(0,120))
+		self.move(frect.topLeft()-QPoint(0,150))
 		self.setAttribute(Qt.WA_DeleteOnClose)
-		self.setWindowFlags(Qt.FramelessWindowHint)
+		self.setWindowTitle("Add a new series")
+		#self.setWindowFlags(Qt.FramelessWindowHint)
 		self.exec()
 
 	def web_metadata(self, url, btn_widget, pgr_widget):
@@ -267,6 +293,7 @@ class SeriesDialog(QDialog):
 			assert len(url) > 5
 		except AssertionError:
 			return None
+		self.link_lbl.setText(url)
 		f = fetch.Fetch()
 		f.web_url = url
 		thread = QThread()
@@ -282,7 +309,12 @@ class SeriesDialog(QDialog):
 			if stat:
 				do_hide()
 			else:
-				pgr_widget.setStyleSheet("color:red;background-color:red;")
+				danger = """QProgressBar::chunk {
+					background: QLinearGradient( x1: 0, y1: 0, x2: 1, y2: 0,stop: 0 #FF0350,stop: 0.4999 #FF0020,stop: 0.5 #FF0019,stop: 1 #FF0000 );
+					border-bottom-right-radius: 5px;
+					border-bottom-left-radius: 5px;
+					border: .px solid black;}"""
+				pgr_widget.setStyleSheet(danger)
 				QTimer.singleShot(3000, do_hide)
 
 		f.moveToThread(thread)
@@ -298,13 +330,25 @@ class SeriesDialog(QDialog):
 	def set_web_metadata(self, metadata):
 		assert isinstance(metadata, list)
 		for gallery in metadata:
-			self.title_edit.setText(gallery['title'])
+			parsed = title_parser(gallery['title'])
+			self.title_edit.setText(parsed['title'])
+			self.author_edit.setText(parsed['artist'])
 			tags = ""
+			lang = ['English', 'Japanese']
+			l_i = self.lang_box.findText(parsed['language'])
+			if l_i != -1:
+				self.lang_box.setCurrentIndex(l_i)
 			for n, tag in enumerate(gallery['tags'], 1):
-				if n == len(gallery['tags']):
-					tags += tag
+				l_tag = tag.capitalize()
+				if l_tag in lang:
+					l_index = self.lang_box.findText(l_tag)
+					if l_index != -1:
+						self.lang_box.setCurrentIndex(l_index)
 				else:
-					tags += tag + ', '
+					if n == len(gallery['tags']):
+						tags += tag
+					else:
+						tags += tag + ', '
 			self.tags_edit.setText(tags)
 			pub_dt = datetime.fromtimestamp(int(gallery['posted']))
 			pub_string = "{}".format(pub_dt)
@@ -315,6 +359,23 @@ class SeriesDialog(QDialog):
 				self.type_box.setCurrentIndex(t_index)
 			except:
 				self.type_box.setCurrentIndex(0)
+
+
+	def link_set(self):
+		t = self.link_edit.text()
+		self.link_edit.hide()
+		self.link_lbl.show()
+		self.link_lbl.setText(t)
+		self.link_btn2.hide()
+		self.link_btn.show() 
+
+	def link_modify(self):
+		t = self.link_lbl.text()
+		self.link_lbl.hide()
+		self.link_edit.show()
+		self.link_edit.setText(t)
+		self.link_btn.hide()
+		self.link_btn2.show()
 
 	def setSeries(self, series):
 		"To be used for when editing a series"
@@ -338,6 +399,7 @@ class SeriesDialog(QDialog):
 			return QLabel(name), QLineEdit(), QPushButton("Fetch"), QProgressBar()
 
 		url_lbl, url_edit, url_btn, url_prog = basic_web("URL:")
+		url_edit.setText(series.link)
 		url_btn.clicked.connect(lambda: self.web_metadata(url_edit.text(), url_btn,
 													url_prog))
 		url_prog.setTextVisible(False)
@@ -357,7 +419,7 @@ class SeriesDialog(QDialog):
 		self.descr_edit = QTextEdit()
 		self.descr_edit.setText(series.info)
 		self.descr_edit.setAcceptRichText(True)
-		self.descr_edit.setFixedHeight(70)
+		self.descr_edit.setFixedHeight(45)
 		self.lang_box = QComboBox()
 		self.lang_box.addItems(["English", "Japanese", "Other"])
 		if series.language is "English":
@@ -368,7 +430,7 @@ class SeriesDialog(QDialog):
 			self.lang_box.setCurrentIndex(2)
 
 		self.tags_edit = QTextEdit()
-		self.tags_edit.setFixedHeight(45)
+		self.tags_edit.setFixedHeight(70)
 		self.tags_edit.setPlaceholderText("namespace1:tag1, tag2, namespace3:[tag3, tag4] etc..")
 		self.tags_edit.setText(tag_to_string(series.tags))
 
@@ -400,7 +462,23 @@ class SeriesDialog(QDialog):
 		self.pub_edit.setDate(qdate_pub_date)
 		self.path_lbl = QLabel("unspecified...")
 		self.path_lbl.setWordWrap(True)
-		self.path_lbl.setText(series.path)
+
+		self.link_layout = QHBoxLayout()
+		self.link_lbl = QLabel("")
+		self.link_lbl.setWordWrap(True)
+		self.link_edit = QLineEdit()
+		self.link_layout.addWidget(self.link_edit)
+		self.link_layout.addWidget(self.link_lbl)
+		self.link_edit.hide()
+		self.link_btn = QPushButton("Modify")
+		self.link_btn.setFixedWidth(50)
+		self.link_btn2 = QPushButton("Set")
+		self.link_btn2.setFixedWidth(40)
+		self.link_btn.clicked.connect(self.link_modify)
+		self.link_btn2.clicked.connect(self.link_set)
+		self.link_layout.addWidget(self.link_btn)
+		self.link_layout.addWidget(self.link_btn2)
+		self.link_btn2.hide()
 
 		series_layout.addRow("Title:", self.title_edit)
 		series_layout.addRow("Author:", self.author_edit)
@@ -410,6 +488,10 @@ class SeriesDialog(QDialog):
 		series_layout.addRow("Type:", self.type_box)
 		series_layout.addRow("Publication Date:", self.pub_edit)
 		series_layout.addRow("Path:", self.path_lbl)
+		series_layout.addRow("Link:", self.link_layout)
+
+		self.link_lbl.setText(series.link)
+		self.path_lbl.setText(series.path)
 
 		final_buttons = QHBoxLayout()
 		final_buttons.setAlignment(Qt.AlignRight)
@@ -439,6 +521,7 @@ class SeriesDialog(QDialog):
 			qpub_d = self.pub_edit.date().toString("ddMMyyyy")
 			dpub_d = datetime.strptime(qpub_d, "%d%m%Y").date()
 			new_series.pub_date = dpub_d
+			new_series.link = self.link_lbl.text()
 
 			#for ser in self.series:
 			self.SERIES_EDIT.emit([new_series], self.position)

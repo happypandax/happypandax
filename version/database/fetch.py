@@ -2,7 +2,7 @@ import os, time
 import re as regex
 
 from .seriesdb import Series, SeriesDB
-from .. import pewnet, settings
+from .. import pewnet, settings, utils
 
 from PyQt5.QtCore import QObject, pyqtSignal # need this for interaction with main thread
 
@@ -65,9 +65,11 @@ class Fetch(QObject):
 							times.add( os.path.getmtime(fp) )
 					last_updated = time.asctime(time.gmtime(max(times)))
 
-					new_series.title = ser_path
+					parsed = utils.title_parser(ser_path)
+					new_series.title = parsed['title']
 					new_series.path = path
-					new_series.artist = "Anon" #TODO: think up something later
+					new_series.artist = parsed['artist']
+					new_series.language = parsed['language']
 					new_series.info = "<i>No description..</i>"
 					new_series.chapters_size = len(chapters)
 					new_series.last_update = last_updated
@@ -118,7 +120,11 @@ class Fetch(QObject):
 		if website_checker(new_url) == 'exhen':
 			self.WEB_PROGRESS.emit()
 			cookie = settings.exhen_cookies()
-			exhen = pewnet.ExHen(cookie[0], cookie[1])
+			try:
+				exhen = pewnet.ExHen(cookie[0], cookie[1])
+			except IndexError:
+				self.WEB_STATUS.emit(False)
+				return None
 			r_metadata(exhen.get_metadata([new_url]))
 		elif website_checker(new_url) == 'ehen':
 			self.WEB_PROGRESS.emit()

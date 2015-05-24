@@ -32,10 +32,11 @@ def tag_to_string(series_tag):
 	string = ""
 	for n, namespace in enumerate(series_tag, 1):
 		if len(series_tag[namespace]) != 0:
-			string += namespace + ":"
+			if namespace != 'default':
+				string += namespace + ":"
 
 			# find tags
-			if len(series_tag[namespace]) > 1:
+			if namespace != 'default' and len(series_tag[namespace]) > 1:
 				string += '['
 			for x, tag in enumerate(series_tag[namespace], 1):
 				# if we are at the end of the list
@@ -43,7 +44,7 @@ def tag_to_string(series_tag):
 					string += tag
 				else:
 					string += tag + ', '
-			if len(series_tag[namespace]) > 1:
+			if namespace != 'default' and len(series_tag[namespace]) > 1:
 				string += ']'
 
 			# if we aren't at the end of the list
@@ -129,3 +130,42 @@ def tag_to_dict(string):
 			namespace_tags['default'].append(t)
 
 	return namespace_tags
+
+import re as regex
+def title_parser(title):
+	"Receives a title to parse. Returns dict with 'title', 'artist' and language"
+	parsed_title = {'title':"", 'artist':"", 'language':"other"}
+	try:
+		a = regex.findall('((?<=\[) *[^\]]+( +\S+)* *(?=\]))', title)
+		assert len(a) != 0
+		artist = a[0][0].strip()
+		parsed_title['artist'] = artist
+
+		try:
+			assert a[1]
+			lang = ['English', 'Japanese']
+			for x in a:
+				l = x[0].strip()
+				l = l.lower()
+				l = l.capitalize()
+				if l in lang:
+					parsed_title['langauge'] = l
+		except IndexError:
+			pass
+
+		t = title
+		for x in a:
+			t = t.replace(x[0], '')
+
+		t = t.replace('[]', '')
+		final_title = t.strip()
+		parsed_title['title'] = final_title
+
+		return parsed_title
+	except AssertionError:
+		parsed_title['title'] = title
+		return parsed_title
+
+import webbrowser
+def open_web_link(url):
+	webbrowser.open_new_tab(url)
