@@ -60,7 +60,10 @@ def series_map(row, series):
 	series.last_update = row['last_update']
 	series.last_read = row['last_read']
 	series.date_added = row['date_added']
-	series.link = bytes.decode(row['link'])
+	try:
+		series.link = bytes.decode(row['link'])
+	except TypeError:
+		series.link = row['link']
 
 	series.chapters = ChapterDB.get_chapters_for_series(series.id)
 
