@@ -89,9 +89,6 @@ class EHen(CommenHen):
 		metadata = self.parse_metadata(r.json())
 		return metadata
 
-id = '1750889'
-hash = '9da71af4209dd818946dfea85dde9cca'
-
 #go = ExHen(id, hash)
 #u1 = 'http://g.e-hentai.org/g/618395/0439fa3666/ '
 #u2 = 'http://g.e-hentai.org/g/817727/08056b3040/'
