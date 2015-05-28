@@ -3,7 +3,7 @@ A cross platform manga/doujinshi manager with tagging support(soon).
 
 I'm here if you have any questions!
 
-[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Pewpews/Sadpanda?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Pewpews/happypanda?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 # Screenshots
 ![alt-text][logo]
