@@ -45,7 +45,7 @@ I'm making this program while learning/discovering PyQt5 and python. More featur
 Since this is my first time using PyQt, I'll be saving old code and run the risk of making spaghetti code. (Sorry about that)
 
 # Contributing
-[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Pewpews/Sadpanda?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Pewpews/happypanda?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 Like stated earlier, my code is currently a mess (I think), but in case you still want to contribute, then these are *some* tasks in my TODO list in no particular order:
 - implement list view for chapters/mangas (PyQt)
