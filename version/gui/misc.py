@@ -1,4 +1,4 @@
-from PyQt5.QtCore import Qt, QDate, QPoint, pyqtSignal, QThread, QTimer
+from PyQt5.QtCore import Qt, QDate, QPoint, pyqtSignal, QThread, QTimer, QObject
 from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QVBoxLayout, QHBoxLayout,
 							 QDialog, QGridLayout, QLineEdit,
@@ -8,7 +8,56 @@ from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 import os, threading, queue, time
 from datetime import datetime
 from ..utils import tag_to_string, tag_to_dict, title_parser
-from ..database import seriesdb, fetch
+from ..database import seriesdb, fetch, db
+
+
+#class ErrorEvent(QObject):
+#	ERROR_MSG = pyqtSignal(str)
+#	DONE = pyqtSignal()
+#	def __init__(self):
+#		super().__init__()
+
+#	def error_event(self):
+#		err_q = db.ErrorQueue
+#		while True:
+#			msg = err_q.get()
+#			ERROR_MSG.emit(msg)
+#		DONE.emit()
+
+#class ExceptionHandler(QObject):
+#	def __init__(self):
+#		super().__init__()
+#		thread = QThread()
+
+#		def thread_deleteLater():
+#			thread.deleteLater
+
+#		err_instance = ErrorEvent()
+#		err_instance.moveToThread(thread)
+#		err_instance.ERROR_MSG.connect(self.exception_handler)
+#		thread.started.connect(err_instance.error_event)
+#		err_instance.DONE.connect(thread.deleteLater)
+#		thread.start()
+
+#	def exception_handler(self, msg):
+#		"Spawns a dialog with the specified msg"
+#		db_msg = msg = "The database is not compatible with the current version of the program"
+#		msgbox = QMessageBox()
+#		if msg == db_msg:
+#			msgbox.setText(msg)
+#			msgbox.setStandardButtons(QMessageBox.Ok | QMessageBox.Abort)
+#			msgbox.setDefaultButton(QMessageBox.Ok)
+#			if msgbox.exec() == QMessageBox.Ok:
+#				return True
+#		else:
+#			msgbox.setText(msg)
+#			msgbox.setStandardButtons(QMessageBox.Close)
+#			msgbox.setDefaultButton(QMessageBox.Close)
+#			if msgbox.exec():
+#				exit()
+
+#errors = ExceptionHandler()
+
 
 class Loading(QWidget):
 	ON = False #to prevent multiple instances
@@ -66,8 +115,24 @@ class SeriesDialog(QDialog):
 		f_web = QGroupBox("Metadata from the Web")
 		f_web.setCheckable(False)
 		main_layout.addWidget(f_web)
+		web_main_layout = QVBoxLayout()
 		web_layout = QHBoxLayout()
-		f_web.setLayout(web_layout)
+		web_main_layout.addLayout(web_layout)
+		ipb_info_l = QHBoxLayout()
+		ipb_lbl = QLabel("ipb member id:")
+		self.ipb = QLineEdit()
+		ipb_pass_lbl = QLabel("ipb pass hash:")
+		self.ipb_pass = QLineEdit()
+		ipb_btn = QPushButton("Apply")
+		ipb_btn.setFixedWidth(70)
+		ipb_btn.clicked.connect(self.set_ipb)
+		ipb_info_l.addWidget(ipb_lbl)
+		ipb_info_l.addWidget(self.ipb)
+		ipb_info_l.addWidget(ipb_pass_lbl)
+		ipb_info_l.addWidget(self.ipb_pass)
+		ipb_info_l.addWidget(ipb_btn)
+		web_main_layout.addLayout(ipb_info_l)
+		f_web.setLayout(web_main_layout)
 
 		f_series = QGroupBox("Series Info")
 		f_series.setCheckable(False)
@@ -170,6 +235,13 @@ class SeriesDialog(QDialog):
 	#		self.doujin_parent.setVisible(True)
 	#	else:
 	#		self.doujin_parent.setVisible(False)
+
+	def set_ipb(self):
+		ipb = self.ipb.text()
+		ipb_pass = self.ipb_pass.text()
+		from ..settings import s
+		s.ini['ipb_id'] = ipb
+		s.ini['ipb_pass'] = ipb_pass
 
 	def choose_dir(self):
 		dir_name = QFileDialog.getExistingDirectory(self, 'Choose a folder')
@@ -385,8 +457,28 @@ class SeriesDialog(QDialog):
 		f_web = QGroupBox("Fetch metadata from Web")
 		f_web.setCheckable(False)
 		main_layout.addWidget(f_web)
+		web_main_layout = QVBoxLayout()
 		web_layout = QHBoxLayout()
-		f_web.setLayout(web_layout)
+		web_main_layout.addLayout(web_layout)
+		ipb_info_l = QHBoxLayout()
+		ipb_lbl = QLabel("ipb member id:")
+		self.ipb = QLineEdit()
+		ipb_pass_lbl = QLabel("ipb pass hash:")
+		self.ipb_pass = QLineEdit()
+		ipb_btn = QPushButton("Apply")
+		ipb_btn.setFixedWidth(50)
+		ipb_btn.clicked.connect(self.set_ipb)
+		ipb_info_l.addWidget(ipb_lbl)
+		ipb_info_l.addWidget(self.ipb)
+		ipb_info_l.addWidget(ipb_pass_lbl)
+		ipb_info_l.addWidget(self.ipb_pass)
+		ipb_info_l.addWidget(ipb_btn)
+		web_main_layout.addLayout(ipb_info_l)
+		f_web.setLayout(web_main_layout)
+
+		from ..settings import s
+		self.ipb.setText(s.ini['ipb_id'])
+		self.ipb_pass.setText(s.ini['ipb_pass'])
 
 		f_series = QGroupBox("Series Info")
 		f_series.setCheckable(False)

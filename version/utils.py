@@ -10,9 +10,9 @@ def today():
 	year = _date.strftime("%Y")
 	return [day, month, year]
 
-def exception_handler(msg):
-	"Spawns a dialog with the specified msg"
-	pass
+
+from PyQt5.QtWidgets import QMessageBox
+from sys import exit
 
 def open(chapterpath):
 

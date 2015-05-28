@@ -1,3 +1,11 @@
+class Settings:
+	def __init__(self):
+		self. ini = {
+				'ipb_id':'',
+				'ipb_pass':'',
+			}
+
+s = Settings()
 def exhen_cookies():
-	cookies = ['1750889','9da71af4209dd818946dfea85dde9cca']#ID_HERE, #PASS_HASH_HERE]
+	cookies = [s.ini['ipb_id'], s.ini['ipb_pass']]
 	return cookies

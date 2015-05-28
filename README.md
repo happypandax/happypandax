@@ -19,6 +19,8 @@ I wanted to keep the list short (I know the pain of wasting hours trying to inst
 # How to run/use
 *(I actually haven't tested this on other systems yet)*
 
+Note: rename 'main.py' to 'main.pyw' if you want to hide the console.
+
 1. Run main.py, add a series by clicking on the "Add series". Choose your series folder and edit the metadata, at last click done.
 2. Or you can populate the program with all series' from folder:
     - Currently supports the following folder structures *(Folders containing both structures are supported)*:

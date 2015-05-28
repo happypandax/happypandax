@@ -84,6 +84,9 @@ class AppWindow(QMainWindow):
 		self.popup_window = self.manga_list_view.manga_delegate.popup_window
 		self.manga_view.addWidget(self.manga_list_view)
 
+	def search(self, srch_string):
+		self.manga_list_view.sort_model.setFilterRegExp(srch_string)
+
 	def popup(self, index):
 		if not self.popup_window.isVisible():
 			m_x = QCursor.pos().x()
@@ -110,12 +113,12 @@ class AppWindow(QMainWindow):
 
 	def favourite_display(self):
 		"Switches to favourite display"
-		self.manga_list_view.setModel(self.manga_list_view.favourite_model)
+		self.manga_list_view.sort_model.change_model(self.manga_list_view.favourite_model)
 		self.manga_list_view.favourite_model.populate_data()
 
 	def catalog_display(self):
 		"Switches to catalog display"
-		self.manga_list_view.setModel(self.manga_list_view.series_model)
+		self.manga_list_view.sort_model.change_model(self.manga_list_view.series_model)
 		self.manga_list_view.series_model.populate_data()
 
 	def init_toolbar(self):
@@ -160,7 +163,8 @@ class AppWindow(QMainWindow):
 		self.toolbar.addWidget(spacer_middle)
 		
 		self.search_bar = QLineEdit()
-		self.search_bar.setPlaceholderText("Search title, artist, genres")
+		self.search_bar.textChanged[str].connect(self.search)
+		self.search_bar.setPlaceholderText("Search title, artist (Tag: search tag)")
 		self.search_bar.setMaximumWidth(200)
 		self.toolbar.addWidget(self.search_bar)
 		self.toolbar.addSeparator()
@@ -201,7 +205,7 @@ class AppWindow(QMainWindow):
 			path = QFileDialog.getExistingDirectory(None, "Choose a folder containing your series'")
 			if len(path) is not 0:
 				data_thread = QThread()
-				loading_thread = QThread()
+				#loading_thread = QThread()
 				loading = misc.Loading()
 
 				if not loading.ON:

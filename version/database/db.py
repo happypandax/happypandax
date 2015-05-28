@@ -1,7 +1,6 @@
 import os, sqlite3, threading, queue
 
 from . import db_constants
-from ..utils import exception_handler
 
 def init_db():
 	"""Initialises the DB. Returns a sqlite3 connection,
@@ -104,8 +103,8 @@ def init_db():
 	return conn
 
 CommandQueue = queue.Queue() #Receives a 2D list of cmds, and puts them in the queue
-StaleQueue = queue.Queue() #Receives a 2D list of cmds, and puts them in the queue
 ResultQueue = queue.Queue() #Receives a cursor object and puts it in the result queue
+ErrorQueue = queue.Queue()
 
 # TODO: Maybe look at the priority method? 
 
@@ -153,7 +152,7 @@ class DBThread:
 		db_vs = c.fetchone()
 		if db_vs[0] not in db_constants.DB_VERSION:
 			msg = "The database is not compatible with the current version of the program"
-			exception_handler(msg)
+			#ErrorQueue.put(msg)
 			raise Exception(msg)
 
 if __name__ == '__main__':
