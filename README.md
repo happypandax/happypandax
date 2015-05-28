@@ -3,7 +3,7 @@ A cross platform manga/doujinshi manager with tagging support.
 
 I'm here if you have any questions!
 
-[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Pewpews/Sadpanda?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Pewpews/happypanda?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 # Screenshots
 ![alt-text][logo]
@@ -17,9 +17,11 @@ I wanted to keep the list short (I know the pain of wasting hours trying to inst
 - requests (pip) >= 2.6.0
 
 # How to run/use
-*(I actually haven't tested this on other systems yet)*
+*(I haven't actually tested this on other systems yet)*
 
-Note: rename 'main.py' to 'main.pyw' if you want to hide the console.
+Note: rename 'main.py' to 'main.pyw' if you want to hide the console. *(Not guarenteed to work)*
+
+Refer to GUIDE.md for a step by step guide.
 
 1. Run main.py, add a series by clicking on the "Add series". Choose your series folder and edit the metadata, at last click done.
 2. Or you can populate the program with all series' from folder:
@@ -48,7 +50,7 @@ I'm making this program while learning/discovering PyQt5 and python. More featur
 Since this is my first time using PyQt, I'll be saving old code and run the risk of making spaghetti code. (Sorry about that)
 
 # Contributing
-[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Pewpews/Sadpanda?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Pewpews/happypanda?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 Like stated earlier, my code is currently a mess (I think), but in case you still want to contribute, then these are *some* tasks in my TODO list in no particular order:
 - implement list view for chapters/mangas (PyQt)
