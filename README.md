@@ -8,7 +8,7 @@ I'm here if you have any questions!
 # Screenshots
 ![alt-text][logo]
 
-[logo]: "Screenshot 1"
+[logo]: misc/screenshot1.png "Screenshot 1"
 
 # How to install & run
 *(I have only tested this on windows)*
