@@ -1,7 +1,20 @@
+"""
+This file is part of Happypanda.
+Happypanda is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+any later version.
+Happypanda is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+You should have received a copy of the GNU General Public License
+along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
 import os, sqlite3, threading, queue
 
 from . import db_constants
-from ..utils import exception_handler
 
 def init_db():
 	"""Initialises the DB. Returns a sqlite3 connection,
@@ -49,6 +62,7 @@ def init_db():
 					info TEXT,
 					fav INTEGER,
 					type TEXT,
+					link BLOB,
 					language TEXT,
 					status TEXT,
 					pub_date TEXT,
@@ -68,36 +82,43 @@ def init_db():
 		""")
 
 		# tags & namespaces
-		# nvm namespaces for now
-		#c.execute("""
-		#CREATE TABLE namespaces(namespace_id INTERGER PRIMARY KEY, namespace TEXT)
-		#""")
+		c.execute("""
+		CREATE TABLE IF NOT EXISTS namespaces(
+					namespace_id INTEGER PRIMARY KEY,
+					namespace TEXT)
+		""")
+
 		c.execute("""
 		CREATE TABLE IF NOT EXISTS tags(
 					tag_id INTEGER PRIMARY KEY,
 					tag TEXT NOT NULL)
 		""")
 
-		## tags_mapping
-		#c.execute("""
-		#CREATE TABLE tags_mappings(tags_mappings_id INTEGER PRIMARY KEY, namespace_id INTERGER,
-		#							tag_id INTEGER, hash_id INTEGER)
-		#""")
+		# tags_mapping
+		c.execute("""
+		CREATE TABLE IF NOT EXISTS tags_mappings(
+					tags_mappings_id INTEGER PRIMARY KEY,
+					namespace_id INTERGER,
+					tag_id INTEGER,
+					FOREIGN KEY(namespace_id) REFERENCES namespaces(namespace_id),
+					FOREIGN KEY(tag_id) REFERENCES tags(tag_id))
+		""")
 						
 		# series tags
 		c.execute("""
-		CREATE TABLE IF NOT EXISTS series_tags(
+		CREATE TABLE IF NOT EXISTS series_tags_map(
 					series_id INTEGER,
-					tag_id INTEGER,
+					tags_mappings_id INTEGER,
 					FOREIGN KEY(series_id) REFERENCES series(series_id),
-					FOREIGN KEY(tag_id) REFERENCES tags(tag_id))""")
+					FOREIGN KEY(tags_mappings_id) REFERENCES tags_mappings(tags_mappings_id))
+		""")
 
 		conn.commit()
 	return conn
 
 CommandQueue = queue.Queue() #Receives a 2D list of cmds, and puts them in the queue
-StaleQueue = queue.Queue() #Receives a 2D list of cmds, and puts them in the queue
 ResultQueue = queue.Queue() #Receives a cursor object and puts it in the result queue
+ErrorQueue = queue.Queue()
 
 # TODO: Maybe look at the priority method? 
 
@@ -113,7 +134,7 @@ class DBThread:
 		self.conn = db_conn
 		#self.vs_checked = False #to prevent multiple version cheking this instance
 		
-		query_thread = threading.Thread(target=self.query, args=(CommandQueue, ResultQueue,))
+		query_thread = threading.Thread(target=self.query, args=(CommandQueue, ResultQueue,), daemon=True)
 		query_thread.start()
 
 	def query(self, cmd_queue, result_queue):
@@ -145,7 +166,7 @@ class DBThread:
 		db_vs = c.fetchone()
 		if db_vs[0] not in db_constants.DB_VERSION:
 			msg = "The database is not compatible with the current version of the program"
-			exception_handler(msg)
+			#ErrorQueue.put(msg)
 			raise Exception(msg)
 
 if __name__ == '__main__':

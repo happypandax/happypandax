@@ -1,3 +1,17 @@
+"""
+This file is part of Happypanda.
+Happypanda is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+any later version.
+Happypanda is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+You should have received a copy of the GNU General Public License
+along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
 import datetime, os, threading, queue, uuid # for unique filename
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QImage
@@ -6,6 +20,8 @@ from ..utils import today
 from .db import CommandQueue, ResultQueue
 from ..gui import gui_constants
 from .db_constants import THUMBNAIL_PATH, IMG_FILES
+
+PROFILE_TO_MODEL = queue.Queue()
 
 def gen_thumbnail(chapter_path, width=gui_constants.THUMB_W_SIZE-2,
 				height=gui_constants.THUMB_H_SIZE): # 2 to align it properly.. need to redo this
@@ -58,8 +74,14 @@ def series_map(row, series):
 	series.last_update = row['last_update']
 	series.last_read = row['last_read']
 	series.date_added = row['date_added']
+	try:
+		series.link = bytes.decode(row['link'])
+	except TypeError:
+		series.link = row['link']
 
 	series.chapters = ChapterDB.get_chapters_for_series(series.id)
+
+	series.tags = TagDB.get_series_tags(series.id)
 
 	return series
 
@@ -70,9 +92,9 @@ def default_exec(object):
 		else:
 			return obj
 	executing = [["""INSERT INTO series(title, artist, profile, series_path, 
-					info, type, fav, status, pub_date, date_added, last_read, last_update)
+					info, type, fav, status, pub_date, date_added, last_read, link, last_update)
 				VALUES(:title, :artist, :profile, :series_path, :info, :type, :fav,
-					:status, :pub_date, :date_added, :last_read, :last_update)""",
+					:status, :pub_date, :date_added, :last_read, :link, :last_update)""",
 				{
 				'title':check(object.title),
 				'artist':check(object.artist),
@@ -86,7 +108,8 @@ def default_exec(object):
 				'pub_date':check(object.pub_date),
 				'date_added':check(object.date_added),
 				'last_read':check(object.last_read),
-				'last_update':check(object.last_update)
+				'last_update':check(object.last_update),
+				'link':str.encode(object.link)
 				}
 				]]
 	return executing
@@ -112,25 +135,39 @@ class SeriesDB:
 
 	@staticmethod
 	def modify_series(series_id, title=None, artist=None, info=None, type=None, fav=None,
-				   language=None, status=None, pub_date=None):
+				   tags=None, language=None, status=None, pub_date=None, link=None):
 		"Modifies series with given series id"
 		executing = []
+		assert isinstance(series_id, int)
+		executing = []
 		if title:
+			assert isinstance(title, str)
 			executing.append(["UPDATE series SET title=? WHERE series_id=?", (title, series_id)])
 		if artist:
+			assert isinstance(artist, str)
 			executing.append(["UPDATE series SET artist=? WHERE series_id=?", (artist, series_id)])
 		if info:
+			assert isinstance(info, str)
 			executing.append(["UPDATE series SET info=? WHERE series_id=?", (info, series_id)])
 		if type:
+			assert isinstance(type, str)
 			executing.append(["UPDATE series SET type=? WHERE series_id=?", (type, series_id)])
 		if fav:
+			assert isinstance(fav, int)
 			executing.append(["UPDATE series SET fav=? WHERE series_id=?", (fav, series_id)])
 		if language:
+			assert isinstance(language, str)
 			executing.append(["UPDATE series SET language=? WHERE series_id=?", (language, series_id)])
 		if status:
+			assert isinstance(status, str)
 			executing.append(["UPDATE series SET status=? WHERE series_id=?", (status, series_id)])
 		if pub_date:
 			executing.append(["UPDATE series SET pub_date=? WHERE series_id=?", (pub_date, series_id)])
+		if link:
+			executing.append(["UPDATE series SET link=? WHERE series_id=?", (link, series_id)])
+		if tags:
+			assert isinstance(tags, dict)
+			TagDB.modify_tags(series_id, tags)
 
 		CommandQueue.put(executing)
 		c = ResultQueue.get()
@@ -219,9 +256,8 @@ class SeriesDB:
 		pass
 
 	@staticmethod
-	def get_series_by_fav(list_of_tags):
-		"Returns a list of series with fav set to true (1)"
-		assert isinstance(list_of_tags, list), "Provided tag(s) is/are invalid"
+	def get_series_by_fav():
+		"Returns a list of all series with fav set to true (1)"
 		x = 1
 		executing = [["SELECT * FROM series WHERE fav=?", (x,)]]
 		CommandQueue.put(executing)
@@ -248,32 +284,26 @@ class SeriesDB:
 		cursor = ResultQueue.get()
 		series_id = cursor.lastrowid
 		object.id = series_id
+		if object.tags:
+			TagDB.add_tags(object)
 		ChapterDB.add_chapters(object)
 
 	@staticmethod
 	def add_series_return(object):
-		"Receives an object of class Series, and appends it to DB"
-		"Adds series of <Series> class into database AND returns the added series"
-		assert isinstance(object, Series), "add_series method only accept Series items"
+		"""Adds series of <Series> class into database AND returns the profile generated"""
+		assert isinstance(object, Series), "[add_series_return] method only accept Series items"
 
 		object.profile = gen_thumbnail(object.chapters[0])
+		PROFILE_TO_MODEL.put(object.profile)
 
 		executing = default_exec(object)
 		CommandQueue.put(executing)
 		cursor = ResultQueue.get()
 		series_id = cursor.lastrowid
 		object.id = series_id
+		if object.tags:
+			TagDB.add_tags(object)
 		ChapterDB.add_chapters(object)
-
-		executing2 = [["SELECT * FROM series WHERE series_id=?", (series_id,)]]
-		CommandQueue.put(executing2)
-		cursor = ResultQueue.get()
-		row = cursor.fetchone()
-		series = Series()
-		series.id = row['series_id']
-		series = series_map(row, series)
-		return series
-		# TODO: Add a way to insert tags
 
 	@staticmethod
 	def series_count():
@@ -282,9 +312,15 @@ class SeriesDB:
 		pass
 
 	@staticmethod
-	def del_series(manga_id):
+	def del_series(series_id):
 		"Deletes series with the given id recursively."
-		pass
+		assert isinstance(series_id, int), "Please provide a valid series id to delete"
+		executing = [["DELETE FROM series WHERE series_id=?", (series_id,)]]
+		CommandQueue.put(executing)
+		c = ResultQueue.get()
+		del c
+		ChapterDB.del_all_chapters(series_id)
+		TagDB.del_series_mapping(series_id)
 
 
 class ChapterDB:
@@ -297,6 +333,9 @@ class ChapterDB:
 		chapter_size -> returns amount of manga (can be used for indexing)
 		del_chapter -> (don't think this will be used, but w/e) NotImplementedError
 	"""
+
+	def __init__(self):
+		raise Exception("ChapterDB should not be instantiated")
 
 	@staticmethod
 	def add_chapters(series_object):
@@ -366,9 +405,203 @@ class ChapterDB:
 		pass
 
 	@staticmethod
-	def del_chapter():
-		"Raises NotImplementedError"
-		raise NotImplementedError
+	def del_all_chapters(series_id):
+		"Deletes all chapters with the given series_id"
+		assert isinstance(series_id, int), "Please provide a valid series ID"
+		executing = [["DELETE FROM chapters WHERE series_id=?", (series_id,)]]
+		CommandQueue.put(executing)
+		c = ResultQueue.get()
+		del c
+
+
+
+class TagDB:
+	"""
+	Tags are returned in a dict where {"namespace":["tag1","tag2"]}
+	The namespace "default" will be used for tags without namespaces.
+
+	Provides the following methods:
+	del_tags <- Deletes the tags with corresponding tag_ids from DB
+	del_series_tags_mapping <- Deletes the tags and series mappings with corresponding series_ids from DB
+	get_series_tags -> Returns all tags and namespaces found for the given series_id;
+	get_tag_series -> Returns all series' with the given tag
+	get_ns_tags -> Returns all tags linked to the given namespace
+	get_ns_tags_series -> Returns all series' linked to the namespace tags
+	add_tags <- Adds the given dict_of_tags to the given series_id
+	modify_tags <- Modifies the given tags
+	"""
+
+	def __init__(self):
+		raise Exception("TagsDB should not be instantiated")
+
+	@staticmethod
+	def del_tags(list_of_tags_id):
+		"Deletes the tags with corresponding tag_ids from DB"
+		pass
+
+	@staticmethod
+	def del_series_mapping(series_id):
+		"Deletes the tags and series mappings with corresponding series_ids from DB"
+		assert isinstance(series_id, int), "Please provide a valid series_id"
+		# We first get all the current tags_mappings_ids related to series
+		tag_m_ids = []
+		executing = [["SELECT tags_mappings_id FROM series_tags_map WHERE series_id=?",
+				(series_id,)]]
+		CommandQueue.put(executing)
+		c = ResultQueue.get()
+		for tmd in c.fetchall():
+			tag_m_ids.append(tmd['tags_mappings_id'])
+
+		# Then we delete all mappings related to the given series_id
+		executing = [["DELETE FROM series_tags_map WHERE series_id=?", (series_id,)]]
+
+		for tmd_id in tag_m_ids:
+			executing.append(["DELETE FROM tags_mappings WHERE tags_mappings_id=?",
+					 (tmd_id,)])
+
+		CommandQueue.put(executing)
+		c = ResultQueue.get()
+		del c
+
+	@staticmethod
+	def get_series_tags(series_id):
+		"Returns all tags and namespaces found for the given series_id"
+		assert isinstance(series_id, int), "Please provide a valid series ID"
+		executing = [["SELECT tags_mappings_id FROM series_tags_map WHERE series_id=?",
+				(series_id,)]]
+		CommandQueue.put(executing)
+		cursor = ResultQueue.get()
+		tags = {}
+		# WARNING: rowcount doesn't work! Fix this ASAP!
+		if cursor.rowcount != 0: # tags exists
+			for tag_map_row in cursor.fetchall(): # iterate all tag_mappings_ids
+				# get tag and namespace 
+				executing = [["""SELECT namespace_id, tag_id FROM tags_mappings
+								WHERE tags_mappings_id=?""", (tag_map_row['tags_mappings_id'],)]]
+				CommandQueue.put(executing)
+				c = ResultQueue.get()
+				for row in c.fetchall(): # iterate all rows
+					# get namespace
+					executing = [["SELECT namespace FROM namespaces WHERE namespace_id=?",
+					(row['namespace_id'],)]]
+					CommandQueue.put(executing)
+					c = ResultQueue.get()
+					namespace = c.fetchone()['namespace']
+
+					# get tag
+					executing = [["SELECT tag FROM tags WHERE tag_id=?", (row['tag_id'],)]]
+					CommandQueue.put(executing)
+					c = ResultQueue.get()
+					tag = c.fetchone()['tag']
+
+					# add them to dict
+					if not namespace in tags:
+						tags[namespace] = [tag]
+					else:
+						# namespace already exists in dict
+						tags[namespace].append(tag)
+		return tags
+
+	@staticmethod
+	def add_tags(object):
+		"Adds the given dict_of_tags to the given series_id"
+		assert isinstance(object, Series), "Please provide a valid series of class Series"
+		
+		series_id = object.id
+		dict_of_tags = object.tags
+
+		def look_exists(tag_or_ns, what):
+			"""check if tag or namespace already exists in base
+			returns id, else returns None"""
+			executing = [["SELECT {}_id FROM {}s WHERE {} LIKE ?".format(what, what, what),
+				('%'+tag_or_ns+'%',)]]
+			CommandQueue.put(executing)
+			c = ResultQueue.get()
+			try: # exists
+				return c.fetchone()['{}_id'.format(what)]
+			except TypeError: # doesnt exist
+				return None
+
+		tags_mappings_id_list = []
+		# first let's add the tags and namespaces to db
+		for namespace in dict_of_tags: 
+			tags_list = dict_of_tags[namespace]
+			# don't add if it already exists
+			try:
+				namespace_id = look_exists(namespace, "namespace")
+				assert namespace_id
+			except AssertionError:
+				executing = [["""INSERT INTO namespaces(namespace)
+								VALUES(?)""", (namespace,)]]
+				CommandQueue.put(executing)
+				c = ResultQueue.get()
+				namespace_id = c.lastrowid
+			
+			tags_id_list = []
+			for tag in tags_list:
+				try:
+					tag_id = look_exists(tag, "tag")
+					assert tag_id
+				except AssertionError:
+					executing = [["""INSERT INTO tags(tag)
+								VALUES(?)""", (tag,)]]
+					CommandQueue.put(executing)
+					c = ResultQueue.get()
+					tag_id = c.lastrowid
+				
+				tags_id_list.append(tag_id)
+
+			# TODO: Only add unique mappings!!!
+			# time to map the tags to the namespace now
+			for tag_id in tags_id_list:
+				executing = [["""
+				INSERT INTO tags_mappings(namespace_id, tag_id)
+				VALUES(?, ?)""", (namespace_id, tag_id,)]]
+				CommandQueue.put(executing)
+				c = ResultQueue.get()
+				# add the tags_mappings_id to our list
+				tags_mappings_id_list.append(c.lastrowid)
+
+		# Lastly we map the series_id to the tags_mappings
+		for tags_map in tags_mappings_id_list:
+				executing = [["""
+				INSERT INTO series_tags_map(series_id, tags_mappings_id)
+				VALUES(?, ?)""", (series_id, tags_map,)]]
+				CommandQueue.put(executing)
+				c = ResultQueue.get()
+				del c
+
+	@staticmethod
+	def modify_tags(series_id, dict_of_tags):
+		"Modifies the given tags"
+
+		# We first delete all mappings
+		TagDB.del_series_mapping(series_id)
+
+		# Now we add the new tags to DB
+		weak_series = Series()
+		weak_series.id = series_id
+		weak_series.tags = dict_of_tags
+
+		TagDB.add_tags(weak_series)
+
+
+	@staticmethod
+	def get_tag_series(tag):
+		"Returns all series' with the given tag"
+		pass
+
+	@staticmethod
+	def get_ns_tags(namespace):
+		"Returns all tags linked to the given namespace"
+		pass
+
+	@staticmethod
+	def get_ns_tags_series(ns_tags):
+		"""Returns all series' linked to the namespace tags.
+		Receives a dict like this: {"namespace":["tag1","tag2"]}"""
+		pass
+
 
 class Series:
 	"""Base class for a series.
@@ -402,6 +635,7 @@ class Series:
 		self.info = None
 		self.fav = 0
 		self.type = None
+		self.link = ""
 		self.language = None
 		self.status = None
 		self.tags = None

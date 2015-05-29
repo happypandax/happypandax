@@ -1,11 +1,27 @@
+"""
+This file is part of Happypanda.
+Happypanda is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+any later version.
+Happypanda is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+You should have received a copy of the GNU General Public License
+along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
 import sys
-from PyQt5.QtCore import (Qt, QSize, pyqtSignal, QThread, QEvent, QTimer)
-from PyQt5.QtGui import (QPixmap, QIcon, QMouseEvent)
+from PyQt5.QtCore import (Qt, QSize, pyqtSignal, QThread, QEvent, QTimer,
+						  QObject)
+from PyQt5.QtGui import (QPixmap, QIcon, QMouseEvent, QCursor)
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QListView,
 							 QHBoxLayout, QFrame, QWidget, QVBoxLayout,
 							 QLabel, QStackedLayout, QToolBar, QMenuBar,
 							 QSizePolicy, QMenu, QAction, QLineEdit,
-							 QSplitter, QMessageBox, QFileDialog)
+							 QSplitter, QMessageBox, QFileDialog,
+							 QDesktopWidget)
 from . import series
 from . import gui_constants, misc
 from ..database import fetch
@@ -20,20 +36,65 @@ class AppWindow(QMainWindow):
 		# init the manga view variables
 		self.manga_display()
 		# init the chapter view variables
-		self.chapter_display()
+		#self.chapter_display()
 		# init toolbar
 		self.init_toolbar()
 		# init status bar
 		self.init_stat_bar()
 
 		self.display.addWidget(self.manga_main)
-		self.display.addWidget(self.chapter_main)
+		#self.display.addWidget(self.chapter_main)
 
 		self.setCentralWidget(self.center)
 		self.setWindowTitle("Happypanda")
-		self.resize(1029, 650)
+		self.resize(gui_constants.MAIN_W, gui_constants.MAIN_H)
 		self.show()
+
+		class upd_chk(QObject):
+			UPDATE_CHECK = pyqtSignal(str)
+			def __init__(self, **kwargs):
+				super().__init__(**kwargs)
+			def fetch_vs(self):
+				import requests
+				import time
+				try:
+					time.sleep(3)
+					r = requests.get("https://raw.githubusercontent.com/Pewpews/happypanda/master/VERSION")
+					a = r.text
+					vs = a.strip()
+					self.UPDATE_CHECK.emit(vs)
+				except:
+					pass
+
+		update_instance = upd_chk()
+		thread = QThread()
+		update_instance.moveToThread(thread)
+		update_instance.UPDATE_CHECK.connect(self.check_update)
+		thread.started.connect(update_instance.fetch_vs)
+		update_instance.UPDATE_CHECK.connect(lambda: update_instance.deleteLater)
+		update_instance.UPDATE_CHECK.connect(lambda: thread.deleteLater)
+		thread.start()
+		#QTimer.singleShot(3000, self.check_update)
 	
+	def check_update(self, vs):
+		try:
+			if vs != gui_constants.vs:
+				msgbox = QMessageBox()
+				msgbox.setText("Update {} is available!".format(vs))
+				msgbox.setDetailedText(
+"""How to update:
+1. Get the newest release from:
+https://github.com/Pewpews/happypanda/releases
+
+2. Overwrite your files with the new files.
+
+Your database will not be touched without you being notified.""")
+				msgbox.setStandardButtons(QMessageBox.Ok)
+				msgbox.setDefaultButton(QMessageBox.Ok)
+				msgbox.exec()
+		except:
+			pass
+
 	def init_stat_bar(self):
 		self.status_bar = self.statusBar()
 		self.status_bar.setMaximumHeight(20)
@@ -53,6 +114,9 @@ class AppWindow(QMainWindow):
 		self.temp_timer = QTimer()
 		self.manga_list_view.series_model.ROWCOUNT_CHANGE.connect(self.stat_row_info)
 		self.manga_list_view.series_model.STATUSBAR_MSG.connect(self.stat_temp_msg)
+		self.manga_list_view.favourite_model.ROWCOUNT_CHANGE.connect(self.stat_row_info)
+		self.manga_list_view.favourite_model.STATUSBAR_MSG.connect(self.stat_temp_msg)
+		self.manga_list_view.STATUS_BAR_MSG.connect(self.stat_temp_msg)
 
 	def stat_temp_msg(self, msg):
 		self.temp_timer.stop()
@@ -63,9 +127,9 @@ class AppWindow(QMainWindow):
 		self.temp_timer.start(5000)
 
 	def stat_row_info(self):
-		r = self.manga_list_view.series_model.rowCount()
-		t = len(self.manga_list_view.series_model._data)
-		self.stat_info.setText("<b>Showing {} of {} </b>".format(r, t))
+		r = self.manga_list_view.model().rowCount()
+		t = len(self.manga_list_view.model()._data)
+		self.stat_info.setText("Loaded {} of {} ".format(r, t))
 
 	def manga_display(self):
 		"initiates the manga view"
@@ -74,32 +138,51 @@ class AppWindow(QMainWindow):
 		self.manga_view = QHBoxLayout()
 		self.manga_main.setLayout(self.manga_view)
 
-		manga_delegate = series.CustomDelegate()
-		manga_delegate.BUTTON_CLICKED.connect(self.setCurrentIndex)
 		self.manga_list_view = series.MangaView()
-		self.manga_list_view.setItemDelegate(manga_delegate)
+		self.manga_list_view.clicked.connect(self.popup)
+		self.manga_list_view.manga_delegate.POPUP.connect(self.popup)
+		self.popup_window = self.manga_list_view.manga_delegate.popup_window
 		self.manga_view.addWidget(self.manga_list_view)
 
+	def search(self, srch_string):
+		self.manga_list_view.sort_model.setFilterRegExp(srch_string)
+
+	def popup(self, index):
+		if not self.popup_window.isVisible():
+			m_x = QCursor.pos().x()
+			m_y = QCursor.pos().y()
+			d_w = QDesktopWidget().width()
+			d_h = QDesktopWidget().height()
+			p_w = gui_constants.POPUP_WIDTH
+			p_h = gui_constants.POPUP_HEIGHT
+			
+			index_rect = self.manga_list_view.visualRect(index)
+			index_point = self.manga_list_view.mapToGlobal(index_rect.topRight())
+			# adjust so it doesn't go offscreen
+			if d_w - m_x < p_w and d_h - m_y < p_h: # bottom
+				self.popup_window.move(m_x-p_w+5, m_y-p_h)
+			elif d_w - m_x > p_w and d_h - m_y < p_h:
+				self.popup_window.move(m_x+5, m_y-p_h)
+			elif d_w - m_x < p_w:
+				self.popup_window.move(m_x-p_w+5, m_y+5)
+			else:
+				self.popup_window.move(index_point)
+
+			self.popup_window.set_series(index.data(Qt.UserRole+1))
+			self.popup_window.show()
+
 	def favourite_display(self):
-		"initiates favourite display"
-		pass
+		"Switches to favourite display"
+		self.manga_list_view.sort_model.change_model(self.manga_list_view.favourite_model)
+		self.manga_list_view.favourite_model.populate_data()
 
-	def chapter_display(self):
-		"Initiates chapter view"
-		self.chapter_main = QWidget()
-		self.chapter_main.setObjectName("chapter_main") # to allow styling this object
-		self.chapter_layout = QHBoxLayout()
-		self.chapter_main.setLayout(self.chapter_layout)
+	def catalog_display(self):
+		"Switches to catalog display"
+		self.manga_list_view.sort_model.change_model(self.manga_list_view.series_model)
+		self.manga_list_view.series_model.populate_data()
 
-		#self.chapter_info.setContentsMargins(-8,-7,-7,-7)
-		#self.chapter_info.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
-		self.chapter_info_view = series.ChapterInfo()
-		self.chapter_layout.addWidget(self.chapter_info_view)
-
-		chapter_list_view = series.ChapterView()
-		self.chapter_layout.addWidget(chapter_list_view)
-		#self.chapter.setCollapsible(0, True)
-		#self.chapter.setCollapsible(1, False)
+	def settings(self):
+		about = misc.About()
 
 	def init_toolbar(self):
 		self.toolbar = QToolBar()
@@ -117,14 +200,13 @@ class AppWindow(QMainWindow):
 
 		favourite_view_icon = QIcon(gui_constants.STAR_BTN_PATH)
 		favourite_view_action = QAction(favourite_view_icon, "Favourite", self)
-		#favourite_view_action.setText("Manga View")
-		favourite_view_action.triggered.connect(lambda: self.setCurrentIndex(1)) #need lambda to pass extra args
+		favourite_view_action.triggered.connect(self.favourite_display) #need lambda to pass extra args
 		self.toolbar.addAction(favourite_view_action)
 
 		catalog_view_icon = QIcon(gui_constants.HOME_BTN_PATH)
 		catalog_view_action = QAction(catalog_view_icon, "Library", self)
 		#catalog_view_action.setText("Catalog")
-		catalog_view_action.triggered.connect(lambda: self.setCurrentIndex(0)) #need lambda to pass extra args
+		catalog_view_action.triggered.connect(self.catalog_display) #need lambda to pass extra args
 		self.toolbar.addAction(catalog_view_action)
 		self.toolbar.addSeparator()
 
@@ -144,12 +226,14 @@ class AppWindow(QMainWindow):
 		self.toolbar.addWidget(spacer_middle)
 		
 		self.search_bar = QLineEdit()
-		self.search_bar.setPlaceholderText("Search title, artist, genres")
+		self.search_bar.textChanged[str].connect(self.search)
+		self.search_bar.setPlaceholderText("Search title, artist (Tag: search tag)")
 		self.search_bar.setMaximumWidth(200)
 		self.toolbar.addWidget(self.search_bar)
 		self.toolbar.addSeparator()
 		settings_icon = QIcon(gui_constants.SETTINGS_PATH)
 		settings_action = QAction(settings_icon, "Set&tings", self)
+		settings_action.triggered.connect(self.settings)
 		self.toolbar.addAction(settings_action)
 		self.addToolBar(self.toolbar)
 		
@@ -157,19 +241,20 @@ class AppWindow(QMainWindow):
 		spacer_end.setFixedSize(QSize(10, 1))
 		self.toolbar.addWidget(spacer_end)
 
-	def setCurrentIndex(self, number, index=None):
-		"""Changes the current display view.
-		Params:
-			number <- int (0 for manga view, 1 for chapter view
-		Optional:
-			index <- QModelIndex for chapter view
-		Note: 0-based indexing
-		"""
-		if index is not None:
-			self.chapter_info_view.display_manga(index)
-			self.display.setCurrentIndex(number)
-		else:
-			self.display.setCurrentIndex(number)
+	#def setCurrentIndex(self, number, index=None):
+	#	"""Changes the current display view.
+	#	Params:
+	#		number <- int (0 for manga view, 1 for chapter view
+	#	Optional:
+	#		index <- QModelIndex for chapter view
+	#	Note: 0-based indexing
+	#	"""
+	#	if index is not None:
+	#		pass
+	#		#self.chapter_info_view.display_manga(index)
+	#		#self.display.setCurrentIndex(number)
+	#	else:
+	#		self.display.setCurrentIndex(number)
 
 	# TODO: Improve this so that it adds to the series dialog,
 	# so user can edit data before inserting (make it a choice)
@@ -184,7 +269,7 @@ class AppWindow(QMainWindow):
 			path = QFileDialog.getExistingDirectory(None, "Choose a folder containing your series'")
 			if len(path) is not 0:
 				data_thread = QThread()
-				loading_thread = QThread()
+				#loading_thread = QThread()
 				loading = misc.Loading()
 
 				if not loading.ON:
@@ -203,7 +288,7 @@ class AppWindow(QMainWindow):
 							data_thread.quit
 						else:
 							loading.setText("<font color=red>An error occured. Try restarting..</font>")
-							loading.progress.setStyleSheet("background-color:red")
+							loading.progress.setStyleSheet("background-color:red;")
 							data_thread.quit
 
 					def fetch_deleteLater():
@@ -214,6 +299,7 @@ class AppWindow(QMainWindow):
 
 					def thread_deleteLater(): #NOTE: Isn't this bad?
 						data_thread.deleteLater
+						data_thread.quit()
 
 					def a_progress(prog):
 						loading.progress.setValue(prog)
@@ -228,6 +314,11 @@ class AppWindow(QMainWindow):
 					fetch_instance.FINISHED.connect(thread_deleteLater)
 					data_thread.start()
 
+	def closeEvent(self, event):
+		super().closeEvent(event)
+		app = QApplication.instance()
+		app.quit()
+		sys.exit()
 
 if __name__ == '__main__':
 	raise NotImplementedError("Unit testing not implemented yet!")

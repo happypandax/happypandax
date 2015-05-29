@@ -10,6 +10,11 @@ version/build
 version/dist
 *.sln
 *Thumbs.db
+settings.json
+build
+dist
+Happypanda
+setup.py
 
 # User-specific files
 *.suo
