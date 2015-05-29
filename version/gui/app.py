@@ -1,5 +1,20 @@
+"""
+This file is part of Happypanda.
+Happypanda is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+any later version.
+Happypanda is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+You should have received a copy of the GNU General Public License
+along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
 import sys
-from PyQt5.QtCore import (Qt, QSize, pyqtSignal, QThread, QEvent, QTimer)
+from PyQt5.QtCore import (Qt, QSize, pyqtSignal, QThread, QEvent, QTimer,
+						  QObject)
 from PyQt5.QtGui import (QPixmap, QIcon, QMouseEvent, QCursor)
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QListView,
 							 QHBoxLayout, QFrame, QWidget, QVBoxLayout,
@@ -34,7 +49,52 @@ class AppWindow(QMainWindow):
 		self.setWindowTitle("Happypanda")
 		self.resize(gui_constants.MAIN_W, gui_constants.MAIN_H)
 		self.show()
+
+		class upd_chk(QObject):
+			UPDATE_CHECK = pyqtSignal(str)
+			def __init__(self, **kwargs):
+				super().__init__(**kwargs)
+			def fetch_vs(self):
+				import requests
+				import time
+				try:
+					time.sleep(3)
+					r = requests.get("https://raw.githubusercontent.com/Pewpews/happypanda/master/VERSION")
+					a = r.text
+					vs = a.strip()
+					self.UPDATE_CHECK.emit(vs)
+				except:
+					pass
+
+		update_instance = upd_chk()
+		thread = QThread()
+		update_instance.moveToThread(thread)
+		update_instance.UPDATE_CHECK.connect(self.check_update)
+		thread.started.connect(update_instance.fetch_vs)
+		update_instance.UPDATE_CHECK.connect(lambda: update_instance.deleteLater)
+		update_instance.UPDATE_CHECK.connect(lambda: thread.deleteLater)
+		thread.start()
+		#QTimer.singleShot(3000, self.check_update)
 	
+	def check_update(self, vs):
+		try:
+			if vs != gui_constants.vs:
+				msgbox = QMessageBox()
+				msgbox.setText("Update {} is available!".format(vs))
+				msgbox.setDetailedText(
+"""How to update:
+1. Get the newest release from:
+https://github.com/Pewpews/happypanda/releases
+
+2. Overwrite your files with the new files.
+
+Your database will not be touched without you being notified.""")
+				msgbox.setStandardButtons(QMessageBox.Ok)
+				msgbox.setDefaultButton(QMessageBox.Ok)
+				msgbox.exec()
+		except:
+			pass
+
 	def init_stat_bar(self):
 		self.status_bar = self.statusBar()
 		self.status_bar.setMaximumHeight(20)
@@ -121,6 +181,9 @@ class AppWindow(QMainWindow):
 		self.manga_list_view.sort_model.change_model(self.manga_list_view.series_model)
 		self.manga_list_view.series_model.populate_data()
 
+	def settings(self):
+		about = misc.About()
+
 	def init_toolbar(self):
 		self.toolbar = QToolBar()
 		self.toolbar.setFixedHeight(30)
@@ -170,6 +233,7 @@ class AppWindow(QMainWindow):
 		self.toolbar.addSeparator()
 		settings_icon = QIcon(gui_constants.SETTINGS_PATH)
 		settings_action = QAction(settings_icon, "Set&tings", self)
+		settings_action.triggered.connect(self.settings)
 		self.toolbar.addAction(settings_action)
 		self.addToolBar(self.toolbar)
 		
@@ -235,6 +299,7 @@ class AppWindow(QMainWindow):
 
 					def thread_deleteLater(): #NOTE: Isn't this bad?
 						data_thread.deleteLater
+						data_thread.quit()
 
 					def a_progress(prog):
 						loading.progress.setValue(prog)
@@ -249,6 +314,11 @@ class AppWindow(QMainWindow):
 					fetch_instance.FINISHED.connect(thread_deleteLater)
 					data_thread.start()
 
+	def closeEvent(self, event):
+		super().closeEvent(event)
+		app = QApplication.instance()
+		app.quit()
+		sys.exit()
 
 if __name__ == '__main__':
 	raise NotImplementedError("Unit testing not implemented yet!")

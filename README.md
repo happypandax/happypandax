@@ -21,8 +21,8 @@ I wanted to keep the list short (I know the pain of wasting hours trying to inst
 
 Note: rename 'main.py' to 'main.pyw' if you want to hide the console. *(Not guarenteed to work)*
 
-Refer to GUIDE.md for a step by step guide.
-
+1. Install the required dependencies above.
+    - Install Qt5 from the
 1. Run main.py, add a series by clicking on the "Add series". Choose your series folder and edit the metadata, at last click done.
 2. Or you can populate the program with all series' from folder:
     - Currently supports the following folder structures *(Folders containing both structures are supported)*:

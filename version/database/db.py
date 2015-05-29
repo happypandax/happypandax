@@ -1,3 +1,17 @@
+"""
+This file is part of Happypanda.
+Happypanda is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+any later version.
+Happypanda is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+You should have received a copy of the GNU General Public License
+along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
 import os, sqlite3, threading, queue
 
 from . import db_constants
@@ -120,7 +134,7 @@ class DBThread:
 		self.conn = db_conn
 		#self.vs_checked = False #to prevent multiple version cheking this instance
 		
-		query_thread = threading.Thread(target=self.query, args=(CommandQueue, ResultQueue,))
+		query_thread = threading.Thread(target=self.query, args=(CommandQueue, ResultQueue,), daemon=True)
 		query_thread.start()
 
 	def query(self, cmd_queue, result_queue):

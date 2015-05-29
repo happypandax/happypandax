@@ -1,3 +1,17 @@
+"""
+This file is part of Happypanda.
+Happypanda is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+any later version.
+Happypanda is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+You should have received a copy of the GNU General Public License
+along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
 from PyQt5.QtCore import (Qt, QAbstractListModel, QModelIndex, QVariant,
 						  QSize, QRect, QEvent, pyqtSignal, QThread,
 						  QTimer, QPointF, QSortFilterProxyModel)
@@ -222,7 +236,8 @@ class SeriesModel(QAbstractListModel):
 			series.profile = PROFILE_TO_MODEL.get()
 			self._data.insert(0, series)
 		self.endInsertRows()
-		self.CUSTOM_STATUS_MSG.emit("Added row(s)")
+		self.CUSTOM_STATUS_MSG.emit("Added item(s)")
+		self.ROWCOUNT_CHANGE.emit()
 		return True
 
 	def insertRows(self, list_of_series, position,
@@ -230,9 +245,10 @@ class SeriesModel(QAbstractListModel):
 		"Inserts new series data to the data list WITHOUT adding to DB"
 		self.beginInsertRows(QModelIndex(), position, position + rows - 1)
 		for pos, series in enumerate(list_of_series, 1):
-			self._data.insert(position+pos, n_series)
+			self._data.append(series)
 		self.endInsertRows()
-		self.CUSTOM_STATUS_MSG.emit("Added row(s)")
+		self.CUSTOM_STATUS_MSG.emit("Added item(s)")
+		self.ROWCOUNT_CHANGE.emit()
 		return True
 
 	def replaceRows(self, list_of_series, position, rows=1, index=QModelIndex()):
@@ -248,6 +264,7 @@ class SeriesModel(QAbstractListModel):
 		self._data = self._data[:position] + self._data[position + rows:]
 		self._data_count -= rows
 		self.endRemoveRows()
+		self.ROWCOUNT_CHANGE.emit()
 		return True
 
 	#def sortBy(self, str):
@@ -539,6 +556,7 @@ class MangaView(QListView):
 			self.favourite_model.CUSTOM_STATUS_MSG.emit("Unfavourited")
 			n_series = seriesdb.SeriesDB.fav_series_set(series.id, 0)
 			del n_series
+			self.favourite_model.ROWCOUNT_CHANGE.emit()
 		else:
 			if series.fav == 1:
 				n_series = seriesdb.SeriesDB.fav_series_set(series.id, 0)
@@ -555,7 +573,7 @@ class MangaView(QListView):
 		utils.open(series.chapters[chap_numb])
 
 	def refresh(self):
-		self.model().layoutChanged.emit()
+		self.model().populate_data()
 		self.STATUS_BAR_MSG.emit("Refreshed")
 
 	def contextMenuEvent(self, event):

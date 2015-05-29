@@ -1,3 +1,17 @@
+"""
+This file is part of Happypanda.
+Happypanda is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+any later version.
+Happypanda is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+You should have received a copy of the GNU General Public License
+along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
 from PyQt5.QtCore import Qt, QDate, QPoint, pyqtSignal, QThread, QTimer, QObject
 from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QVBoxLayout, QHBoxLayout,
@@ -58,12 +72,47 @@ from ..database import seriesdb, fetch, db
 
 #errors = ExceptionHandler()
 
+class About(QDialog):
+	ON = False #to prevent multiple instances
+	def __init__(self):
+		super().__init__()
+		gpl = """
+Happypanda is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+any later version.
+Happypanda is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+You should have received a copy of the GNU General Public License
+along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
+"""
+		self.text = QLabel(gpl)
+		self.text.setAlignment(Qt.AlignCenter)
+		info_lbl = QLabel()
+		info_lbl.setText('<a href="https://github.com/Pewpews/happypanda">Visit GitHub Repo</a>')
+		info_lbl.setTextFormat(Qt.RichText)
+		info_lbl.setTextInteractionFlags(Qt.TextBrowserInteraction)
+		info_lbl.setOpenExternalLinks(True)
+
+		layout_ = QVBoxLayout()
+		layout_.addWidget(QLabel("<b>Author:</b>\nPewpews\n"))
+		layout_.addWidget(self.text, 0, Qt.AlignHCenter)
+		layout_.addWidget(info_lbl)
+		self.setLayout(layout_)
+		self.resize(300,100)
+		frect = self.frameGeometry()
+		frect.moveCenter(QDesktopWidget().availableGeometry().center())
+		self.move(frect.topLeft()-QPoint(0,150))
+		self.setAttribute(Qt.WA_DeleteOnClose)
+		self.setWindowTitle("About")
+		self.exec()
 
 class Loading(QWidget):
 	ON = False #to prevent multiple instances
 	def __init__(self):
-		from ..constants import WINDOW as parent
-		super().__init__(parent, Qt.FramelessWindowHint)
+		super().__init__()
 		self.widget = QWidget(self)
 		self.widget.setStyleSheet("background-color:rgba(0, 0, 0, 0.65)")
 		self.progress = QProgressBar()
@@ -79,7 +128,11 @@ class Loading(QWidget):
 		layout_.addWidget(self.widget)
 		self.setLayout(layout_)
 		self.resize(300,100)
-		self.move(parent.window().rect().center()-QPoint(120,50))
+		frect = self.frameGeometry()
+		frect.moveCenter(QDesktopWidget().availableGeometry().center())
+		self.move(frect.topLeft())
+		#self.setAttribute(Qt.WA_DeleteOnClose)
+		self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
 
 	def mousePressEvent(self, QMouseEvent):
 		pass
@@ -240,8 +293,7 @@ class SeriesDialog(QDialog):
 		ipb = self.ipb.text()
 		ipb_pass = self.ipb_pass.text()
 		from ..settings import s
-		s.ini['ipb_id'] = ipb
-		s.ini['ipb_pass'] = ipb_pass
+		s.set_ipb(ipb, ipb_pass)
 
 	def choose_dir(self):
 		dir_name = QFileDialog.getExistingDirectory(self, 'Choose a folder')
@@ -275,7 +327,7 @@ class SeriesDialog(QDialog):
 		from ..database import seriesdb
 
 		def do_chapters(series):
-			thread = threading.Thread(target=self.set_chapters, args=(series,))
+			thread = threading.Thread(target=self.set_chapters, args=(series,), daemon=True)
 			thread.start()
 			thread.join()
 			#return self.series_queue.get()
@@ -350,7 +402,6 @@ class SeriesDialog(QDialog):
 				series = index.data(Qt.UserRole+1)
 				self.setSeries(series)
 
-		from ..constants import WINDOW as parent
 		self.resize(500,200)
 		frect = self.frameGeometry()
 		frect.moveCenter(QDesktopWidget().availableGeometry().center())
@@ -388,6 +439,10 @@ class SeriesDialog(QDialog):
 					border: .px solid black;}"""
 				pgr_widget.setStyleSheet(danger)
 				QTimer.singleShot(3000, do_hide)
+
+		def t_del_later():
+			thread.deleteLater
+			thread.quit()
 
 		f.moveToThread(thread)
 		f.WEB_METADATA.connect(self.set_web_metadata)
@@ -477,8 +532,9 @@ class SeriesDialog(QDialog):
 		f_web.setLayout(web_main_layout)
 
 		from ..settings import s
-		self.ipb.setText(s.ini['ipb_id'])
-		self.ipb_pass.setText(s.ini['ipb_pass'])
+		ipb_dict = s.get_ipb()
+		self.ipb.setText(ipb_dict['ipb_id'])
+		self.ipb_pass.setText(ipb_dict['ipb_pass'])
 
 		f_series = QGroupBox("Series Info")
 		f_series.setCheckable(False)
