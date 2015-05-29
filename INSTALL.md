@@ -30,8 +30,8 @@ i'm petty sure it's the same way as on windows but incase not, please tell me.
     
 2. Now go to the frontpage of the happypanda repo and click Download Zip
 3. Extract to desired location
-4. Open a cmd in that location. (in Windows you can write 'cmd' in the fodler explorer url bar and then press enter)
-5. Write: python main.py
+4. Open a cmd in that location. (in Windows you can write 'cmd' in the folder explorer url-bar and then press enter)
+5. Write in cmd: python main.py
 6. The program should now be running.
 
-Note: Try renaming the 'main.py' file to 'main.pyw' to try running without console (not guaranteed to work)
+Note: Try renaming the 'main.py' file to 'main.pyw' and then just doubleclicking on it to try running without console (not guaranteed to work)
