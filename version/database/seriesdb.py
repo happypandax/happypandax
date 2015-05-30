@@ -551,16 +551,35 @@ class TagDB:
 				
 				tags_id_list.append(tag_id)
 
-			# TODO: Only add unique mappings!!!
-			# time to map the tags to the namespace now
-			for tag_id in tags_id_list:
-				executing = [["""
-				INSERT INTO tags_mappings(namespace_id, tag_id)
-				VALUES(?, ?)""", (namespace_id, tag_id,)]]
+
+			def look_exist_tag_map(tag_id):
+				"Checks DB if the tag_id already exists with the namespace_id, returns id else None"
+				executing = [["""SELECT tags_mappings_id FROM tags_mappings
+								WHERE namespace_id=? AND tag_id=?""", (namespace_id, tag_id,)]]
 				CommandQueue.put(executing)
 				c = ResultQueue.get()
-				# add the tags_mappings_id to our list
-				tags_mappings_id_list.append(c.lastrowid)
+				try: # exists
+					return c.fetchone()['tags_mappings_id']
+				except TypeError: # doesnt exist
+					return None
+
+			# time to map the tags to the namespace now
+			for tag_id in tags_id_list:
+				# First check if tags mappings exists
+				try:
+					t_map_id = look_exist_tag_map(tag_id)
+					if t_map_id:
+						tags_mappings_id_list.append(t_map_id)
+					else:
+						raise TypeError
+				except TypeError:
+					executing = [["""
+					INSERT INTO tags_mappings(namespace_id, tag_id)
+					VALUES(?, ?)""", (namespace_id, tag_id,)]]
+					CommandQueue.put(executing)
+					c = ResultQueue.get()
+					# add the tags_mappings_id to our list
+					tags_mappings_id_list.append(c.lastrowid)
 
 		# Lastly we map the series_id to the tags_mappings
 		for tags_map in tags_mappings_id_list:

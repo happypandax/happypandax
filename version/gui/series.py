@@ -186,7 +186,6 @@ class SeriesModel(QAbstractListModel):
 		current_row = index.row() 
 		current_series = self._data[current_row]
 
-		# TODO: remove this.. not needed anymore, since i use custom role now
 		if role == Qt.DisplayRole:
 			title = current_series.title
 			return title
@@ -528,10 +527,13 @@ class MangaView(QListView):
 		self.sort_model = SortFilterModel()
 		self.sort_model.setDynamicSortFilter(True)
 		self.sort_model.setFilterCaseSensitivity(Qt.CaseInsensitive)
+		self.sort_model.setSortLocaleAware(True)
+		self.sort_model.setSortCaseSensitivity(Qt.CaseInsensitive)
 		self.manga_delegate = CustomDelegate()
 		self.setItemDelegate(self.manga_delegate)
 		self.series_model = SeriesModel()
 		self.sort_model.change_model(self.series_model)
+		self.sort_model.sort(0)
 		self.favourite_model = FavouriteModel()
 		self.setModel(self.sort_model)
 		self.SERIES_DIALOG.connect(self.spawn_dialog)
@@ -607,6 +609,21 @@ class MangaView(QListView):
 			link = index.data(Qt.UserRole+1).link
 			utils.open_web_link(link)
 
+		def sort_title():
+			self.sort_model.setSortRole(Qt.DisplayRole)
+			self.sort_model.sort(0, Qt.AscendingOrder)
+
+		def sort_artist():
+			self.sort_model.setSortRole(Qt.UserRole+2)
+			self.sort_model.sort(0, Qt.AscendingOrder)
+
+		def asc_desc():
+			if self.sort_model.sortOrder() == Qt.AscendingOrder:
+				self.sort_model.sort(0, Qt.DescendingOrder)
+			else:
+				self.sort_model.sort(0, Qt.AscendingOrder)
+
+
 		if index.isValid():
 			self.manga_delegate.CONTEXT_ON = True
 
@@ -638,9 +655,12 @@ class MangaView(QListView):
 			menu.addAction(sort_main)
 			sort_menu = QMenu()
 			sort_main.setMenu(sort_menu)
-			asc_desc = QAction("Asc/Desc", menu, triggered = self.foo)
-			s_title = QAction("Title", menu, triggered = self.foo)
-			s_artist = QAction("Author", menu, triggered = self.foo)
+			asc_desc = QAction("Asc/Desc", menu,
+					  triggered = asc_desc)
+			s_title = QAction("Title", menu,
+					 triggered = sort_title)
+			s_artist = QAction("Author", menu,
+					  triggered = sort_artist)
 			sort_menu.addAction(asc_desc)
 			sort_menu.addSeparator()
 			sort_menu.addAction(s_title)
