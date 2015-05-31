@@ -114,8 +114,6 @@ Your database will not be touched without you being notified.""")
 		self.temp_timer = QTimer()
 		self.manga_list_view.series_model.ROWCOUNT_CHANGE.connect(self.stat_row_info)
 		self.manga_list_view.series_model.STATUSBAR_MSG.connect(self.stat_temp_msg)
-		self.manga_list_view.favourite_model.ROWCOUNT_CHANGE.connect(self.stat_row_info)
-		self.manga_list_view.favourite_model.STATUSBAR_MSG.connect(self.stat_temp_msg)
 		self.manga_list_view.STATUS_BAR_MSG.connect(self.stat_temp_msg)
 
 	def stat_temp_msg(self, msg):
@@ -146,6 +144,7 @@ Your database will not be touched without you being notified.""")
 
 	def search(self, srch_string):
 		self.manga_list_view.sort_model.setFilterRegExp(srch_string)
+		self.manga_list_view.sort_model.setFilterRole(Qt.DisplayRole)
 
 	def popup(self, index):
 		if not self.popup_window.isVisible():
@@ -173,13 +172,15 @@ Your database will not be touched without you being notified.""")
 
 	def favourite_display(self):
 		"Switches to favourite display"
-		self.manga_list_view.sort_model.change_model(self.manga_list_view.favourite_model)
-		self.manga_list_view.favourite_model.populate_data()
+		self.manga_list_view.sort_model.fav_view()
+		#self.manga_list_view.sort_model.change_model(self.manga_list_view.favourite_model)
+		#self.manga_list_view.favourite_model.populate_data()
 
 	def catalog_display(self):
 		"Switches to catalog display"
-		self.manga_list_view.sort_model.change_model(self.manga_list_view.series_model)
-		self.manga_list_view.series_model.populate_data()
+		self.manga_list_view.sort_model.catalog_view()
+		#self.manga_list_view.sort_model.change_model(self.manga_list_view.series_model)
+		#self.manga_list_view.series_model.populate_data()
 
 	def settings(self):
 		about = misc.About()

@@ -16,6 +16,18 @@ import os, sqlite3, threading, queue
 
 from . import db_constants
 
+def check_db_version(conn):
+	"Checks if DB version is allowed. Raises dialog if not"
+	vs = "SELECT version FROM version"
+	c = conn.cursor()
+	c.execute(vs)
+	db_vs = c.fetchone()
+	if db_vs[0] not in db_constants.DB_VERSION:
+		msg = "The database is not compatible with the current version of the program"
+		#ErrorQueue.put(msg)
+		return False
+	return True
+
 def init_db():
 	"""Initialises the DB. Returns a sqlite3 connection,
 	which will be passed to the db thread.
@@ -33,6 +45,8 @@ def init_db():
 	if os.path.isfile(db_constants.DB_PATH):
 		conn = sqlite3.connect(db_constants.DB_PATH, check_same_thread=False)
 		conn.row_factory = sqlite3.Row
+		if not check_db_version(conn):
+			return None
 	else:
 		create_db_path()
 		conn = sqlite3.connect(db_constants.DB_PATH, check_same_thread=False)
@@ -143,10 +157,10 @@ class DBThread:
 		get the cursor out of the queue"""
 		assert isinstance(cmd_queue, queue.Queue), "You must pass a queue from the queue system module"
 		assert isinstance(result_queue, queue.Queue), "You must pass a queue from the queue system module"
-		self._check_db_version()
 
 		while True:
 			list_of_cmds = cmd_queue.get()
+			check_db_version(self.conn)
 			# TODO: implement error handling. Idea: make it put status code in resultqueue or spawn a dialog?
 			c = self.conn.cursor()
 			for cmd in list_of_cmds:
@@ -157,17 +171,6 @@ class DBThread:
 			self.conn.commit()
 			result_queue.put(c)
 			cmd_queue.task_done()
-
-	def _check_db_version(self):
-		"Checks if DB version is allowed. Raises dialog if not"
-		vs = "SELECT version FROM version"
-		c = self.conn.cursor()
-		c.execute(vs)
-		db_vs = c.fetchone()
-		if db_vs[0] not in db_constants.DB_VERSION:
-			msg = "The database is not compatible with the current version of the program"
-			#ErrorQueue.put(msg)
-			raise Exception(msg)
 
 if __name__ == '__main__':
 	raise RuntimeError("Unit tests not yet implemented")

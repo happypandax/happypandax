@@ -132,6 +132,20 @@ class SortFilterModel(QSortFilterProxyModel):
 	def __init__(self, parent=None):
 		super().__init__(parent)
 		self._data = []
+
+		# filtering
+		self.fav = False
+		self.tags = {}
+		self.title = ""
+		self.artist = ""
+
+	def fav_view(self):
+		self.fav = True
+		self.invalidateFilter()
+
+	def catalog_view(self):
+		self.fav = False
+		self.invalidateFilter()
 	
 	def change_model(self, model):
 		self.setSourceModel(model)
@@ -149,6 +163,23 @@ class SortFilterModel(QSortFilterProxyModel):
 
 	def replaceRows(self, list_of_series, position, rows=1, index=QModelIndex()):
 		self.sourceModel().replaceRows(list_of_series, position, rows, index)
+
+	def filterAcceptsRow(self, source_row, index_parent):
+
+		allow = False
+
+		if self.sourceModel():
+			index = self.sourceModel().index(source_row, 0, index_parent)
+			if index.isValid():
+				if self.fav:
+					fav = index.data(Qt.UserRole+3)
+					if fav == 1:
+						allow = True
+				else:
+					allow = True
+
+		return allow
+
 
 class SeriesModel(QAbstractListModel):
 	"""Model for Model/View/Delegate framework
@@ -287,28 +318,6 @@ class SeriesModel(QAbstractListModel):
 		self._data_count += item_to_fetch
 		self.endInsertRows()
 		self.ROWCOUNT_CHANGE.emit()
-
-class FavouriteModel(SeriesModel):
-	def __init__(self):
-		super().__init__()
-
-	def populate_data(self):
-		"Populates the model with data from database"
-		self._data = seriesdb.SeriesDB.get_series_by_fav()
-		self.layoutChanged.emit()
-		self.ROWCOUNT_CHANGE.emit()
-
-	def insertRows(self, list_of_series, position, rows = 1, index = QModelIndex()):
-		pass
-
-	def addRows(self, list_of_series, position = None, rows = 1, index = QModelIndex()):
-		pass
-
-	def replaceRows(self, list_of_series, position, rows=1, index=QModelIndex()):
-		"Deletes the series from the view"
-		for x in range(rows):
-			self.removeRows(position+x, 1, index.parent())
-
 
 class CustomDelegate(QStyledItemDelegate):
 	"A custom delegate for the model/view framework"
@@ -478,27 +487,6 @@ class CustomDelegate(QStyledItemDelegate):
 	def sizeHint(self, QStyleOptionViewItem, QModelIndex):
 		return QSize(self.W, self.H)
 
-#class FavouriteFilterModel(QSortFilterProxyModel):
-#	def __init__(self, parent=None):
-#		super().__init__(parent)
-#		self._data = []
-	
-#	def change_model(self, model):
-#		self.setSourceModel(model)
-#		self._data = self.sourceModel()._data
-
-#	def filterAcceptsRow(self, source_row, index_parent):
-#		result = False
-
-#		if self.sourceModel():
-#			index = self.sourceModel().index(source_row, 0, index_parent)
-#			if index.isValid():
-#				fav = index.data(Qt.UserRole+3)
-#				if fav == 1:
-#					result = True
-
-#		return result
-
 class MangaView(QListView):
 	"""
 	TODO: (zoom-in/zoom-out) mousekeys
@@ -534,13 +522,9 @@ class MangaView(QListView):
 		self.series_model = SeriesModel()
 		self.sort_model.change_model(self.series_model)
 		self.sort_model.sort(0)
-		self.favourite_model = FavouriteModel()
 		self.setModel(self.sort_model)
 		self.SERIES_DIALOG.connect(self.spawn_dialog)
 		self.doubleClicked.connect(self.open_chapter)
-
-	def foo(self):
-		pass
 
 	def remove_series(self, index):
 		self.rowsAboutToBeRemoved(index.parent(), index.row(), index.row())
@@ -552,22 +536,14 @@ class MangaView(QListView):
 		assert isinstance(index, QModelIndex)
 		series = index.data(Qt.UserRole+1)
 		# TODO: don't need to fetch from DB here... 
-		if self.model().sourceModel() == self.favourite_model:
-			self.dataChanged(index, index)
-			self.model().removeRows(index.row(), 1)
-			self.favourite_model.CUSTOM_STATUS_MSG.emit("Unfavourited")
+		if series.fav == 1:
 			n_series = seriesdb.SeriesDB.fav_series_set(series.id, 0)
-			del n_series
-			self.favourite_model.ROWCOUNT_CHANGE.emit()
+			self.model().replaceRows([n_series], index.row(), 1, index)
+			self.series_model.CUSTOM_STATUS_MSG.emit("Unfavourited")
 		else:
-			if series.fav == 1:
-				n_series = seriesdb.SeriesDB.fav_series_set(series.id, 0)
-				self.model().replaceRows([n_series], index.row(), 1, index)
-				self.series_model.CUSTOM_STATUS_MSG.emit("Unfavourited")
-			else:
-				n_series = seriesdb.SeriesDB.fav_series_set(series.id, 1)
-				self.model().replaceRows([n_series], index.row(), 1, index)
-				self.series_model.CUSTOM_STATUS_MSG.emit("Favourited")
+			n_series = seriesdb.SeriesDB.fav_series_set(series.id, 1)
+			self.model().replaceRows([n_series], index.row(), 1, index)
+			self.series_model.CUSTOM_STATUS_MSG.emit("Favourited")
 
 	def open_chapter(self, index, chap_numb=0):
 		self.STATUS_BAR_MSG.emit("Opening chapter {}".format(chap_numb+1))
@@ -582,6 +558,7 @@ class MangaView(QListView):
 		handled = False
 		custom = False
 		index = self.indexAt(event.pos())
+		index = self.sort_model.mapToSource(index)
 
 		menu = QMenu()
 		all_1 = QAction("Open First Chapter", menu,
