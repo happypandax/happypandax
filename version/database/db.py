@@ -82,7 +82,8 @@ def init_db():
 					pub_date TEXT,
 					date_added TEXT,
 					last_read TEXT,
-					last_update TEXT)
+					last_update TEXT,
+					times_read INTEGER)
 		""")
 
 		#chapters

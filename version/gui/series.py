@@ -226,14 +226,24 @@ class SortFilterModel(QSortFilterProxyModel):
 			if where['artist']:
 				if re_search(self.artist, series.artist):
 					allow = True
-			#if where['tags']:
-			#	namespaces = series.tags.keys()
-			#	print(namespaces)
-			#	s_namespaces = self.tags.keys()
-			#	print(s_namespaces)
-			#	for x in s_namespaces:
-			#		if x in namespaces:
-			#			print("hurray!")
+			if where['tags']:
+				print(self.tags)
+				ser_tags = utils.tag_to_string(series.tags)
+				for ns in self.tags:
+					if ns == 'default':
+						for tag in self.tags[ns]:
+							if re_search(tag, ser_tags):
+								print(ser_tags)
+								allow = True
+					else:
+						t = {ns:[]}
+						for tag in self.tags[ns]:
+							t[ns].append(tag)
+						tags_string = utils.tag_to_string(t)
+						print(tags_string)
+						if re_search(tags_string, ser_tags):
+							allow = True
+
 			return allow
 
 		if self.sourceModel():
