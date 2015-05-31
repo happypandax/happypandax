@@ -25,10 +25,12 @@ from PyQt5.QtWidgets import (QListView, QFrame, QLabel,
 							 QSizePolicy, QTableWidget, QScrollArea,
 							 QHBoxLayout, QFormLayout, QDesktopWidget,
 							 QWidget)
+import threading
+import re as regex
+
 from ..database import seriesdb
 from . import gui_constants, misc
 from .. import utils
-import threading
 
 class Popup(QWidget):
 	def __init__(self):
@@ -164,19 +166,91 @@ class SortFilterModel(QSortFilterProxyModel):
 	def replaceRows(self, list_of_series, position, rows=1, index=QModelIndex()):
 		self.sourceModel().replaceRows(list_of_series, position, rows, index)
 
+	def search(self, term, title=True, artist=True, tags=True):
+		"""
+		Receives a search term.
+		If title/artist/tags True: searches in it
+		"""
+
+		def f_tags():
+			self.tags = utils.tag_to_dict(term)
+
+		def f_title():
+			self.title = term
+
+		def f_artist():
+			self.artist = term
+
+		if title and artist and tags:
+			f_tags()
+			f_title()
+			f_artist()
+
+		self.invalidateFilter()
+
 	def filterAcceptsRow(self, source_row, index_parent):
 
 		allow = False
+		series = None
+
+		def do_search():
+			l = {'title':False, 'artist':False, 'tags':False}
+			if self.title:
+				l['title'] = True
+			if self.artist:
+				l['artist'] = True
+			if self.tags:
+				try:
+					a = self.tags['default']
+					if a:
+						l['tags'] = True
+				except IndexError:
+					l['tags'] = True
+			
+			for x in l:
+				if l[x]:
+					return l
+			return None
+
+		def return_searched(where):
+			allow = False
+
+			def re_search(a, b):
+				"searches for a in b"
+				m = regex.search("({})".format(a), b, regex.IGNORECASE)
+				return m
+
+			if where['title']:
+				if re_search(self.title, series.title):
+					allow = True
+			if where['artist']:
+				if re_search(self.artist, series.artist):
+					allow = True
+			#if where['tags']:
+			#	namespaces = series.tags.keys()
+			#	print(namespaces)
+			#	s_namespaces = self.tags.keys()
+			#	print(s_namespaces)
+			#	for x in s_namespaces:
+			#		if x in namespaces:
+			#			print("hurray!")
+			return allow
 
 		if self.sourceModel():
 			index = self.sourceModel().index(source_row, 0, index_parent)
 			if index.isValid():
+				series = index.data(Qt.UserRole+1)
 				if self.fav:
-					fav = index.data(Qt.UserRole+3)
-					if fav == 1:
-						allow = True
+					if series.fav == 1:
+						s = do_search()
+						if s:
+							allow = return_searched(s)
+						else: allow = True
 				else:
-					allow = True
+					s = do_search()
+					if s:
+						allow = return_searched(s)
+					else: allow = True
 
 		return allow
 

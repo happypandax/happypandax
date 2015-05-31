@@ -67,6 +67,7 @@ def tag_to_string(series_tag):
 	return string
 
 def tag_to_dict(string):
+	"Receives a string of tags and converts it to a dict of tags"
 	namespace_tags = {'default':[]}
 	level = 0 # so we know if we are in a list
 	buffer = ""

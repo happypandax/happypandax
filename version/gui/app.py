@@ -143,8 +143,8 @@ Your database will not be touched without you being notified.""")
 		self.manga_view.addWidget(self.manga_list_view)
 
 	def search(self, srch_string):
-		self.manga_list_view.sort_model.setFilterRegExp(srch_string)
-		self.manga_list_view.sort_model.setFilterRole(Qt.DisplayRole)
+		case_ins = srch_string.lower()
+		self.manga_list_view.sort_model.search(case_ins)
 
 	def popup(self, index):
 		if not self.popup_window.isVisible():
@@ -173,14 +173,10 @@ Your database will not be touched without you being notified.""")
 	def favourite_display(self):
 		"Switches to favourite display"
 		self.manga_list_view.sort_model.fav_view()
-		#self.manga_list_view.sort_model.change_model(self.manga_list_view.favourite_model)
-		#self.manga_list_view.favourite_model.populate_data()
 
 	def catalog_display(self):
 		"Switches to catalog display"
 		self.manga_list_view.sort_model.catalog_view()
-		#self.manga_list_view.sort_model.change_model(self.manga_list_view.series_model)
-		#self.manga_list_view.series_model.populate_data()
 
 	def settings(self):
 		about = misc.About()
