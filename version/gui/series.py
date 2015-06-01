@@ -594,7 +594,7 @@ class MangaView(QListView):
 		self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 		# prevent all items being loaded at the same time
 		#self.setLayoutMode(self.Batched)
-		#self.setBatchSize(15) #Only loads 15 images at a time
+		self.setBatchSize(gui_constants.PREFETCH_ITEM_AMOUNT)
 		self.setMouseTracking(True)
 		self.sort_model = SortFilterModel()
 		self.sort_model.setDynamicSortFilter(True)
