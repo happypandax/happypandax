@@ -13,6 +13,7 @@ along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import sys
+import logging
 from PyQt5.QtCore import (Qt, QSize, pyqtSignal, QThread, QEvent, QTimer,
 						  QObject)
 from PyQt5.QtGui import (QPixmap, QIcon, QMouseEvent, QCursor)
@@ -25,6 +26,13 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QListView,
 from . import series
 from . import gui_constants, misc
 from ..database import fetch
+
+log = logging.getLogger(__name__)
+log_i = log.info
+log_d = log.debug
+log_w = log.warning
+log_e = log.error
+log_c = log.critical
 
 class AppWindow(QMainWindow):
 	"The application's main window"
@@ -74,6 +82,7 @@ class AppWindow(QMainWindow):
 		update_instance.UPDATE_CHECK.connect(lambda: update_instance.deleteLater)
 		update_instance.UPDATE_CHECK.connect(lambda: thread.deleteLater)
 		thread.start()
+		log_i('Window Create: OK')
 		#QTimer.singleShot(3000, self.check_update)
 	
 	def check_update(self, vs):
@@ -277,6 +286,7 @@ Your database will not be touched without you being notified.""")
 
 					def finished(status):
 						if status:
+							log_i('Populating DB from series folder: OK')
 							self.manga_list_view.series_model.populate_data()
 							# TODO: make it spawn a dialog instead (from utils.py or misc.py)
 							if loading.progress.maximum() == loading.progress.value():
@@ -284,6 +294,7 @@ Your database will not be touched without you being notified.""")
 								loading.hide()
 							data_thread.quit
 						else:
+							log_e('Populating DB from series folder: FAIL')
 							loading.setText("<font color=red>An error occured. Try restarting..</font>")
 							loading.progress.setStyleSheet("background-color:red;")
 							data_thread.quit
@@ -310,10 +321,12 @@ Your database will not be touched without you being notified.""")
 					fetch_instance.FINISHED.connect(fetch_deleteLater)
 					fetch_instance.FINISHED.connect(thread_deleteLater)
 					data_thread.start()
+					log_i('Populating DB from series folder')
 
 	def closeEvent(self, event):
 		super().closeEvent(event)
 		app = QApplication.instance()
+		log_d('Normal Exit App: OK')
 		app.quit()
 		sys.exit()
 

@@ -14,7 +14,8 @@ along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 
 from PyQt5.QtCore import (Qt, QAbstractListModel, QModelIndex, QVariant,
 						  QSize, QRect, QEvent, pyqtSignal, QThread,
-						  QTimer, QPointF, QSortFilterProxyModel)
+						  QTimer, QPointF, QSortFilterProxyModel,
+						  QAbstractTableModel)
 from PyQt5.QtGui import (QPixmap, QBrush, QColor, QPainter, 
 						 QPen, QTextDocument,
 						 QMouseEvent, QHelpEvent,
@@ -24,13 +25,21 @@ from PyQt5.QtWidgets import (QListView, QFrame, QLabel,
 							 QMenu, QAction, QToolTip, QVBoxLayout,
 							 QSizePolicy, QTableWidget, QScrollArea,
 							 QHBoxLayout, QFormLayout, QDesktopWidget,
-							 QWidget)
+							 QWidget, QHeaderView, QTableView)
 import threading
 import re as regex
+import logging
 
 from ..database import seriesdb
 from . import gui_constants, misc
 from .. import utils
+
+log = logging.getLogger(__name__)
+log_i = log.info
+log_d = log.debug
+log_w = log.warning
+log_e = log.error
+log_c = log.critical
 
 class Popup(QWidget):
 	def __init__(self):
@@ -264,6 +273,98 @@ class SortFilterModel(QSortFilterProxyModel):
 
 		return allow
 
+class SeriesTableModel(QAbstractTableModel):
+	"""
+	Model for Model/View/Delegate framework
+	"""
+
+	ROWCOUNT_CHANGE = pyqtSignal()
+	STATUSBAR_MSG = pyqtSignal(str)
+	CUSTOM_STATUS_MSG = pyqtSignal(str)
+
+	def __init__(self, parent=None):
+		super().__init__(parent)
+		self._data_count = 0 # number of items added to model
+		self._data = [] #a list for the data
+		self.populate_data()
+		#self._data_container = []
+		self.dataChanged.connect(lambda: self.status_b_msg("Edited"))
+		self.CUSTOM_STATUS_MSG.connect(self.status_b_msg)
+
+	def populate_data(self):
+		"Populates the model with data from database"
+		self._data = seriesdb.SeriesDB.get_all_series()
+		self.layoutChanged.emit()
+		self.ROWCOUNT_CHANGE.emit()
+
+	def status_b_msg(self, msg):
+		self.STATUSBAR_MSG.emit(msg)
+
+	def data(self, index, role):
+		if not index.isValid():
+			return QVariant()
+		if index.row() >= len(self._data) or \
+			index.row() < 0:
+			return QVariant()
+
+		current_row = index.row() 
+		current_series = self._data[current_row]
+
+		if role == Qt.DisplayRole:
+			title = current_series.title
+			return title
+
+		# for artist searching
+		if role == Qt.UserRole+2:
+			artist = current_series.artist
+			return artist
+
+		if role == Qt.DecorationRole:
+			pixmap = current_series.profile
+			return pixmap
+		if role == Qt.BackgroundRole:
+			bg_color = QColor(70, 67, 70)
+			bg_brush = QBrush(bg_color)
+			return bg_brush
+		#if role == Qt.ToolTipRole:
+		#	return "Example popup!!"
+		if role == Qt.UserRole+1:
+			return current_series
+
+		# favourite satus
+		if role == Qt.UserRole+3:
+			return current_series.fav
+
+
+		return None
+
+	def rowCount(self, index = QModelIndex()):
+		return self._data_count
+
+	def columnCount(self, parent = QModelIndex()):
+		return 2
+
+	#def flags(self, index):
+	#	if not index.isValid():
+	#		return Qt.ItemIsEnabled
+	#	return Qt.ItemFlags(QAbstractListModel.flags(self, index) |
+	#				  Qt.ItemIsEditable)
+
+	def canFetchMore(self, index):
+		if self._data_count < len(self._data):
+			return True
+		else: 
+			return False
+
+	def fetchMore(self, index):
+		diff = len(self._data) - self._data_count
+		item_to_fetch = min(gui_constants.PREFETCH_ITEM_AMOUNT, diff)
+
+		self.beginInsertRows(index, self._data_count,
+					   self._data_count+item_to_fetch-1)
+		self._data_count += item_to_fetch
+		self.endInsertRows()
+		self.ROWCOUNT_CHANGE.emit()
 
 class SeriesModel(QAbstractListModel):
 	"""Model for Model/View/Delegate framework
@@ -331,6 +432,9 @@ class SeriesModel(QAbstractListModel):
 
 	def rowCount(self, index = QModelIndex()):
 		return self._data_count
+
+	def columnCount(self, parent = QModelIndex()):
+		return 2
 
 	#def flags(self, index):
 	#	if not index.isValid():

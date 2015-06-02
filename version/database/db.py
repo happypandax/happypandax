@@ -13,8 +13,15 @@ along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os, sqlite3, threading, queue
+import logging
 
 from . import db_constants
+log = logging.getLogger(__name__)
+log_i = log.info
+log_d = log.debug
+log_w = log.warning
+log_e = log.error
+log_c = log.critical
 
 def check_db_version(conn):
 	"Checks if DB version is allowed. Raises dialog if not"
@@ -23,6 +30,9 @@ def check_db_version(conn):
 	c.execute(vs)
 	db_vs = c.fetchone()
 	if db_vs[0] not in db_constants.DB_VERSION:
+		log_c('The database is not compatible with the current version of the program')
+		log_d('Local database version: {}\nProgram database version:{}'.format(db_vs[0],
+																		 db_constants.CURRENT_DB_VERSION))
 		msg = "The database is not compatible with the current version of the program"
 		#ErrorQueue.put(msg)
 		return False
@@ -151,6 +161,7 @@ class DBThread:
 		
 		query_thread = threading.Thread(target=self.query, args=(CommandQueue, ResultQueue,), daemon=True)
 		query_thread.start()
+		log_i('Started Database Thread: OK')
 
 	def query(self, cmd_queue, result_queue):
 		"""Important: This method puts a cursor in the ResultQueue.

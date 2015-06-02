@@ -19,11 +19,17 @@ from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QFormLayout, QPushButton, QTextEdit,
 							 QComboBox, QDateEdit, QGroupBox,
 							 QDesktopWidget, QMessageBox, QFileDialog)
-import os, threading, queue, time
+import os, threading, queue, time, logging
 from datetime import datetime
 from ..utils import tag_to_string, tag_to_dict, title_parser
 from ..database import seriesdb, fetch, db
 
+log = logging.getLogger(__name__)
+log_i = log.info
+log_d = log.debug
+log_w = log.warning
+log_e = log.error
+log_c = log.critical
 
 #class ErrorEvent(QObject):
 #	ERROR_MSG = pyqtSignal(str)
@@ -415,6 +421,7 @@ class SeriesDialog(QDialog):
 		try:
 			assert len(url) > 5
 		except AssertionError:
+			log_w('Invalid URL')
 			return None
 		self.link_lbl.setText(url)
 		f = fetch.Fetch()

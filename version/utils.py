@@ -12,7 +12,14 @@ You should have received a copy of the GNU General Public License
 along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import time, datetime, os, subprocess, sys
+import time, datetime, os, subprocess, sys, logging
+
+log = logging.getLogger(__name__)
+log_i = log.info
+log_d = log.debug
+log_w = log.warning
+log_e = log.error
+log_c = log.critical
 
 IMG_FILES =  ['jpg','bmp','png','gif']
 
@@ -33,12 +40,15 @@ def open(chapterpath):
 	filepath = os.path.join(chapterpath, [x for x in sorted(os.listdir(chapterpath))\
 		if x[-3:] in IMG_FILES][0]) # Find first page
 
-	if sys.platform.startswith('darwin'):
-		subprocess.call(('open', filepath))
-	elif os.name == 'nt':
-		os.startfile(filepath)
-	elif os.name == 'posix':
-		subprocess.call(('xdg-open', filepath))
+	try:
+		if sys.platform.startswith('darwin'):
+			subprocess.call(('open', filepath))
+		elif os.name == 'nt':
+			os.startfile(filepath)
+		elif os.name == 'posix':
+			subprocess.call(('xdg-open', filepath))
+	except:
+		log_e('Could not open chapter')
 
 def tag_to_string(series_tag):
 	"Takes series tags and converts it to string, returns string"
@@ -183,4 +193,7 @@ def title_parser(title):
 
 import webbrowser
 def open_web_link(url):
-	webbrowser.open_new_tab(url)
+	try:
+		webbrowser.open_new_tab(url)
+	except:
+		log_e('Could not open URL in browser')

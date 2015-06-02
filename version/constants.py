@@ -16,19 +16,34 @@ from .database import db
 from .gui import app, gui_constants
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QFile
-import sys
+import sys, logging
 
 #IMPORTANT STUFF
 def init():
-	application = QApplication(sys.argv)
-	conn = db.init_db()
-	if conn:
-		# create log
-		try:
-			with open('happypanda.log', 'x') as f:
-				pass
-		except FileExistsError: pass
+	# create log
+	try:
+		with open('happypanda.log', 'x') as f:
+			pass
+	except FileExistsError: pass
 
+	logging.basicConfig(level=logging.DEBUG,
+					format='%(asctime)-8s %(levelname)-6s %(name)-6s %(message)s',
+					datefmt='%d-%m %H:%M',
+					filename='happypanda.log',
+					filemode='a')
+
+	log = logging.getLogger(__name__)
+	log_i = log.info
+	log_d = log.debug
+	log_w = log.warning
+	log_e = log.error
+	log_c = log.critical
+
+	application = QApplication(sys.argv)
+	log_i('App Start: OK')
+	conn = db.init_db()
+	log_i('Init DB Conn: OK')
+	if conn:
 		DB = db.DBThread(conn)
 		WINDOW = app.AppWindow()
 
@@ -39,10 +54,13 @@ def init():
 		if len(u_style) is not 0:
 			try:
 				style_file = QFile(u_style)
+				log_i('Set userstyle: OK')
 			except:
 				style_file = QFile(d_style)
+				log_i('Set defaultstyle: OK')
 		else:
 			style_file = QFile(d_style)
+			log_i('Set defaultstyle: OK')
 
 		style_file.open(QFile.ReadOnly)
 		style = str(style_file.readAll(), 'utf-8')
@@ -57,4 +75,5 @@ def init():
 		msg_box.setDefaultButton(QMessageBox.Ok)
 		if msg_box.exec():
 			application.exit()
+			log_i('Normal Exit App: OK')
 			sys.exit()
