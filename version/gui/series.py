@@ -734,9 +734,11 @@ class MangaView(QListView):
 			self.series_model.CUSTOM_STATUS_MSG.emit("Favourited")
 
 	def open_chapter(self, index, chap_numb=0):
-		self.STATUS_BAR_MSG.emit("Opening chapter {}".format(chap_numb+1))
 		series = index.data(Qt.UserRole+1)
-		utils.open(series.chapters[chap_numb])
+		self.STATUS_BAR_MSG.emit("Opening chapter {} of {}".format(chap_numb+1,
+															 series.title))
+		threading.Thread(target=utils.open,
+				   args=(series.chapters[chap_numb],)).start()
 
 	def refresh(self):
 		self.model().populate_data()

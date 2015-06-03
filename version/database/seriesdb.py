@@ -12,16 +12,24 @@ You should have received a copy of the GNU General Public License
 along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import datetime, os, threading, queue, uuid # for unique filename
+import datetime, os, threading, logging, queue, uuid # for unique filename
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QImage
 
-from ..utils import today
+from ..utils import today, ArchiveFile
 from .db import CommandQueue, ResultQueue
 from ..gui import gui_constants
 from .db_constants import THUMBNAIL_PATH, IMG_FILES
 
 PROFILE_TO_MODEL = queue.Queue()
+
+log = logging.getLogger(__name__)
+log_i = log.info
+log_d = log.debug
+log_w = log.warning
+log_e = log.error
+log_c = log.critical
+
 
 def gen_thumbnail(chapter_path, width=gui_constants.THUMB_W_SIZE-2,
 				height=gui_constants.THUMB_H_SIZE): # 2 to align it properly.. need to redo this
@@ -36,7 +44,17 @@ def gen_thumbnail(chapter_path, width=gui_constants.THUMB_W_SIZE-2,
 		os.mkdir(THUMBNAIL_PATH)
 
 	def generate(cache, chap_path, w, h, img_queue):
-		img_path = os.path.join(chap_path, [x for x in sorted(os.listdir(chap_path)) if x[-3:] in IMG_FILES][0]) #first image in chapter
+		if chap_path[-4:] == '.zip':
+			log_d('Generating Thumb from zip')
+			zip = ArchiveFile(chap_path)
+			p = os.path.join('happytemp', str(uuid.uuid4()))
+			os.mkdir(p)
+			f_img_name = sorted(zip.namelist())[0]
+			img_path = zip.extract(f_img_name, p)
+			zip.close()
+		else:
+			log_d('Generating Thumb from folder')
+			img_path = os.path.join(chap_path, [x for x in sorted(os.listdir(chap_path)) if x[-3:] in IMG_FILES][0]) #first image in chapter
 		suff = img_path[-4:] # the image ext with dot
 		
 		# generate unique file name

@@ -16,7 +16,7 @@ from .database import db
 from .gui import app, gui_constants
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QFile
-import sys, logging
+import sys, logging, os
 
 #IMPORTANT STUFF
 def init():
@@ -26,6 +26,7 @@ def init():
 			pass
 	except FileExistsError: pass
 
+	# TODO: Implement --debug argument to specify level=DEBUG
 	logging.basicConfig(level=logging.DEBUG,
 					format='%(asctime)-8s %(levelname)-6s %(name)-6s %(message)s',
 					datefmt='%d-%m %H:%M',
@@ -40,7 +41,7 @@ def init():
 	log_c = log.critical
 
 	application = QApplication(sys.argv)
-	log_i('App Start: OK')
+	log_i('App Event Start: OK')
 	conn = db.init_db()
 	log_i('Init DB Conn: OK')
 	if conn:
@@ -54,17 +55,30 @@ def init():
 		if len(u_style) is not 0:
 			try:
 				style_file = QFile(u_style)
-				log_i('Set userstyle: OK')
+				log_i('Select userstyle: OK')
 			except:
 				style_file = QFile(d_style)
-				log_i('Set defaultstyle: OK')
+				log_i('Select defaultstyle: OK')
 		else:
 			style_file = QFile(d_style)
-			log_i('Set defaultstyle: OK')
+			log_i('Select defaultstyle: OK')
 
 		style_file.open(QFile.ReadOnly)
 		style = str(style_file.readAll(), 'utf-8')
 		application.setStyleSheet(style)
+		try:
+			os.mkdir('happytemp')
+		except FileExistsError:
+			try:
+				for root, dirs, files in os.walk('happytemp', topdown=False):
+					for name in files:
+						os.remove(os.path.join(root, name))
+					for name in dirs:
+						os.rmdir(os.path.join(root, name))
+			except:
+				log_d('Empty happytemp: FAIL')
+		log_d('Create happytemp: OK')
+
 		sys.exit(application.exec_())
 	else:
 		from PyQt5.QtWidgets import QMessageBox

@@ -57,16 +57,18 @@ class Fetch(QObject):
 		"""
 		series_l = sorted(os.listdir(self.series_path)) #list of folders in the "Series" folder 
 		if len(series_l) != 0: # if series folder is not empty
-			try:
-				self.DATA_COUNT.emit(len(series_l)) #tell model how many items are going to be added
-				progress = 0
-				for ser_path in series_l: # ser_path = series folder title
-					new_series = Series()
+			log_d('Series folder is not empty')
+			#try:
+			self.DATA_COUNT.emit(len(series_l)) #tell model how many items are going to be added
+			log_d('Found {} items'.format(len(series_l)))
+			progress = 0
+			for ser_path in series_l: # ser_path = series folder title
+				new_series = Series()
 
-					path = os.path.join(self.series_path, ser_path)
+				path = os.path.join(self.series_path, ser_path)
 
-					images_paths = []
-
+				images_paths = []
+				try:
 					con = os.listdir(path) #all of content in the series folder
 		
 					chapters = sorted([os.path.join(path,sub) for sub in con if os.path.isdir(os.path.join(path, sub))]) #subfolders
@@ -86,29 +88,40 @@ class Fetch(QObject):
 							fp = os.path.join(root, img)
 							times.add( os.path.getmtime(fp) )
 					last_updated = time.asctime(time.gmtime(max(times)))
-
-					parsed = utils.title_parser(ser_path)
-					new_series.title = parsed['title']
-					new_series.path = path
-					new_series.artist = parsed['artist']
-					new_series.language = parsed['language']
-					new_series.info = "<i>No description..</i>"
-					new_series.chapters_size = len(chapters)
 					new_series.last_update = last_updated
+					parsed = utils.title_parser(ser_path)
+				except NotADirectoryError:
+					if ser_path[-4:] == '.zip':
+						#TODO: add support for folders in archive
+						new_series.chapters[0] = path
+						parsed = utils.title_parser(ser_path[:-4])
+					else:
+						log_w('Skipped {} in local search'.format(path))
+						progress += 1 # update the progress bar
+						self.PROGRESS.emit(progress)
+						continue
 
-					progress += 1 # update the progress bar
-					self.PROGRESS.emit(progress)
-				
-					SeriesDB.add_series(new_series)
-			except:
-				log_e('Local Search: Fail')
-				self.FINISHED.emit(False)
+				new_series.title = parsed['title']
+				new_series.path = path
+				new_series.artist = parsed['artist']
+				new_series.language = parsed['language']
+				new_series.info = "<i>No description..</i>"
+				new_series.chapters_size = len(new_series.chapters)
+
+				progress += 1 # update the progress bar
+				self.PROGRESS.emit(progress)
+				SeriesDB.add_series(new_series)
+			#except:
+				#log_e('Local Search: Fail')
+				#self.FINISHED.emit(False)
 		else: # if series folder is empty
 			log_e('Local search error: Invalid directory')
+			log_d('Series folder is empty')
 			self.FINISHED.emit(False)
 			# might want to include an error message
 
 		# everything went well
+		log_d('Local search: OK')
 		self.FINISHED.emit(True)
 
 	def web(self):

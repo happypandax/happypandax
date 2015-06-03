@@ -165,7 +165,7 @@ class SeriesDialog(QDialog):
 		main_layout = QVBoxLayout()
 
 
-		f_local = QGroupBox("Folder")
+		f_local = QGroupBox("Folder/ZIP")
 		f_local.setCheckable(False)
 		main_layout.addWidget(f_local)
 		local_layout = QHBoxLayout()
@@ -215,9 +215,13 @@ class SeriesDialog(QDialog):
 		url_edit.setPlaceholderText("paste g.e-hentai/exhentai gallery link")
 		url_prog.hide()
 
-		choose_folder = QPushButton("Choose Folder")
-		choose_folder.clicked.connect(self.choose_dir)
-		local_layout.addWidget(choose_folder, Qt.AlignLeft)
+		choose_folder = QPushButton("From Folder")
+		choose_folder.clicked.connect(lambda: self.choose_dir('f'))
+		local_layout.addWidget(choose_folder)
+
+		choose_archive = QPushButton("From ZIP")
+		choose_archive.clicked.connect(lambda: self.choose_dir('a'))
+		local_layout.addWidget(choose_archive)
 
 		self.title_edit = QLineEdit()
 		self.author_edit = QLineEdit()
@@ -301,17 +305,21 @@ class SeriesDialog(QDialog):
 		from ..settings import s
 		s.set_ipb(ipb, ipb_pass)
 
-	def choose_dir(self):
-		dir_name = QFileDialog.getExistingDirectory(self, 'Choose a folder')
-		head, tail = os.path.split(dir_name)
+	def choose_dir(self, mode):
+		if mode == 'a':
+			name = QFileDialog.getOpenFileName(self, 'Choose archive',
+											  filter='*.zip')
+			name = name[0]
+		else:
+			name = QFileDialog.getExistingDirectory(self, 'Choose folder')
+		head, tail = os.path.split(name)
 		parsed = title_parser(tail)
 		self.title_edit.setText(parsed['title'])
 		self.author_edit.setText(parsed['artist'])
+		self.path_lbl.setText(name)
 		l_i = self.lang_box.findText(parsed['language'])
 		if l_i != -1:
 			self.lang_box.setCurrentIndex(l_i)
-
-		self.path_lbl.setText(dir_name)
 
 	def check(self):
 		if len(self.title_edit.text()) is 0:
@@ -363,24 +371,30 @@ class SeriesDialog(QDialog):
 
 	def set_chapters(self, series_object):
 		path = series_object.path
-		con = os.listdir(path) # list all folders in series dir
-		chapters = sorted([os.path.join(path,sub) for sub in con if os.path.isdir(os.path.join(path, sub))]) #subfolders
-		# if series has chapters divided into sub folders
-		if len(chapters) != 0:
-			for numb, ch in enumerate(chapters):
-				chap_path = os.path.join(path, ch)
-				series_object.chapters[numb] = chap_path
+		try:
+			con = os.listdir(path) # list all folders in series dir
+			chapters = sorted([os.path.join(path,sub) for sub in con if os.path.isdir(os.path.join(path, sub))]) #subfolders
+			# if series has chapters divided into sub folders
+			if len(chapters) != 0:
+				for numb, ch in enumerate(chapters):
+					chap_path = os.path.join(path, ch)
+					series_object.chapters[numb] = chap_path
 
-		else: #else assume that all images are in series folder
-			series_object.chapters[0] = path
+			else: #else assume that all images are in series folder
+				series_object.chapters[0] = path
 				
-		#find last edited file
-		times = set()
-		for root, dirs, files in os.walk(path, topdown=False):
-			for img in files:
-				fp = os.path.join(root, img)
-				times.add( os.path.getmtime(fp) )
-		series_object.last_update = time.asctime(time.gmtime(max(times)))
+			#find last edited file
+			times = set()
+			for root, dirs, files in os.walk(path, topdown=False):
+				for img in files:
+					fp = os.path.join(root, img)
+					times.add(os.path.getmtime(fp))
+			series_object.last_update = time.asctime(time.gmtime(max(times)))
+		except NotADirectoryError:
+			if path[-4:] == '.zip':
+				#TODO: add support for folders in archive
+				series_object.chapters[0] = path
+
 		#self.series_queue.put(series_object)
 		self.SERIES.emit([series_object])
 		#seriesdb.SeriesDB.add_series(series_object)
@@ -399,6 +413,7 @@ class SeriesDialog(QDialog):
 			super().reject()
 
 	def trigger(self, list_of_index=None):
+		log_d('Triggered Series Add')
 		if not list_of_index:
 			self.initUI()
 		else:

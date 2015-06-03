@@ -12,8 +12,7 @@ You should have received a copy of the GNU General Public License
 along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import sys
-import logging
+import sys, logging, os
 from PyQt5.QtCore import (Qt, QSize, pyqtSignal, QThread, QEvent, QTimer,
 						  QObject)
 from PyQt5.QtGui import (QPixmap, QIcon, QMouseEvent, QCursor)
@@ -324,9 +323,18 @@ Your database will not be touched without you being notified.""")
 					log_i('Populating DB from series folder')
 
 	def closeEvent(self, event):
+		try:
+			for root, dirs, files in os.walk('happytemp', topdown=False):
+				for name in files:
+					os.remove(os.path.join(root, name))
+				for name in dirs:
+					os.rmdir(os.path.join(root, name))
+				log_i('Empty happytemp on exit: OK')
+		except:
+			log_d('Empty happytemp on exit: FAIL')
+		log_d('Normal Exit App: OK')
 		super().closeEvent(event)
 		app = QApplication.instance()
-		log_d('Normal Exit App: OK')
 		app.quit()
 		sys.exit()
 
