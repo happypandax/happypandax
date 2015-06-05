@@ -19,13 +19,13 @@ from PyQt5.QtCore import (Qt, QAbstractListModel, QModelIndex, QVariant,
 from PyQt5.QtGui import (QPixmap, QBrush, QColor, QPainter, 
 						 QPen, QTextDocument,
 						 QMouseEvent, QHelpEvent,
-						 QPixmapCache, QCursor)
+						 QPixmapCache, QCursor, QPalette)
 from PyQt5.QtWidgets import (QListView, QFrame, QLabel,
 							 QStyledItemDelegate, QStyle,
 							 QMenu, QAction, QToolTip, QVBoxLayout,
 							 QSizePolicy, QTableWidget, QScrollArea,
 							 QHBoxLayout, QFormLayout, QDesktopWidget,
-							 QWidget, QHeaderView, QTableView)
+							 QWidget, QHeaderView, QTableView, QApplication)
 import threading
 import re as regex
 import logging
@@ -272,115 +272,28 @@ class SortFilterModel(QSortFilterProxyModel):
 
 		return allow
 
-class SeriesTableModel(QAbstractTableModel):
-	"""
-	Model for Model/View/Delegate framework
-	"""
-
-	ROWCOUNT_CHANGE = pyqtSignal()
-	STATUSBAR_MSG = pyqtSignal(str)
-	CUSTOM_STATUS_MSG = pyqtSignal(str)
-
-	def __init__(self, parent=None):
-		super().__init__(parent)
-		self._data_count = 0 # number of items added to model
-		self._data = [] #a list for the data
-		self.populate_data()
-		#self._data_container = []
-		self.dataChanged.connect(lambda: self.status_b_msg("Edited"))
-		self.CUSTOM_STATUS_MSG.connect(self.status_b_msg)
-
-	def populate_data(self):
-		"Populates the model with data from database"
-		self._data = seriesdb.SeriesDB.get_all_series()
-		self.layoutChanged.emit()
-		self.ROWCOUNT_CHANGE.emit()
-
-	def status_b_msg(self, msg):
-		self.STATUSBAR_MSG.emit(msg)
-
-	def data(self, index, role):
-		if not index.isValid():
-			return QVariant()
-		if index.row() >= len(self._data) or \
-			index.row() < 0:
-			return QVariant()
-
-		current_row = index.row() 
-		current_series = self._data[current_row]
-
-		if role == Qt.DisplayRole:
-			title = current_series.title
-			return title
-
-		# for artist searching
-		if role == Qt.UserRole+2:
-			artist = current_series.artist
-			return artist
-
-		if role == Qt.DecorationRole:
-			pixmap = current_series.profile
-			return pixmap
-		if role == Qt.BackgroundRole:
-			bg_color = QColor(70, 67, 70)
-			bg_brush = QBrush(bg_color)
-			return bg_brush
-		#if role == Qt.ToolTipRole:
-		#	return "Example popup!!"
-		if role == Qt.UserRole+1:
-			return current_series
-
-		# favourite satus
-		if role == Qt.UserRole+3:
-			return current_series.fav
-
-
-		return None
-
-	def rowCount(self, index = QModelIndex()):
-		return self._data_count
-
-	def columnCount(self, parent = QModelIndex()):
-		return 2
-
-	#def flags(self, index):
-	#	if not index.isValid():
-	#		return Qt.ItemIsEnabled
-	#	return Qt.ItemFlags(QAbstractListModel.flags(self, index) |
-	#				  Qt.ItemIsEditable)
-
-	def canFetchMore(self, index):
-		if self._data_count < len(self._data):
-			return True
-		else: 
-			return False
-
-	def fetchMore(self, index):
-		diff = len(self._data) - self._data_count
-		item_to_fetch = min(gui_constants.PREFETCH_ITEM_AMOUNT, diff)
-
-		self.beginInsertRows(index, self._data_count,
-					   self._data_count+item_to_fetch-1)
-		self._data_count += item_to_fetch
-		self.endInsertRows()
-		self.ROWCOUNT_CHANGE.emit()
-
-class SeriesModel(QAbstractListModel):
+class SeriesModel(QAbstractTableModel):
 	"""Model for Model/View/Delegate framework
 	"""
 
 	ROWCOUNT_CHANGE = pyqtSignal()
 	STATUSBAR_MSG = pyqtSignal(str)
 	CUSTOM_STATUS_MSG = pyqtSignal(str)
+	_data = []
 
 	def __init__(self, parent=None):
 		super().__init__(parent)
 		self._data_count = 0 # number of items added to model
-		self._data = [] #a list for the data
+		#self._data = [] #a list for the data
 		self.populate_data()
 		#self._data_container = []
 		self.dataChanged.connect(lambda: self.status_b_msg("Edited"))
 		self.CUSTOM_STATUS_MSG.connect(self.status_b_msg)
+		self._TITLE = gui_constants.TITLE
+		self._ARTIST = gui_constants.ARTIST
+		self._TAGS = gui_constants.TAGS
+		self._TYPE = gui_constants.TYPE
+		self._FAV = gui_constants.FAV
 
 	def populate_data(self):
 		"Populates the model with data from database"
@@ -391,7 +304,7 @@ class SeriesModel(QAbstractListModel):
 	def status_b_msg(self, msg):
 		self.STATUSBAR_MSG.emit(msg)
 
-	def data(self, index, role):
+	def data(self, index, role=Qt.DisplayRole):
 		if not index.isValid():
 			return QVariant()
 		if index.row() >= len(self._data) or \
@@ -400,10 +313,26 @@ class SeriesModel(QAbstractListModel):
 
 		current_row = index.row() 
 		current_series = self._data[current_row]
+		current_column = index.column()
 
 		if role == Qt.DisplayRole:
-			title = current_series.title
-			return title
+			if current_column == self._TITLE:
+				title = current_series.title
+				return title
+			elif current_column == self._ARTIST:
+				artist = current_series.artist
+				return artist
+			elif current_column == self._TAGS:
+				tags = utils.tag_to_string(current_series.tags)
+				return tags
+			elif current_column == self._TYPE:
+				type = current_series.type
+				return type
+			elif current_column == self._FAV:
+				if current_series.fav == 1:
+					return u'\u2605'
+				else:
+					return ''
 
 		# for artist searching
 		if role == Qt.UserRole+2:
@@ -413,10 +342,10 @@ class SeriesModel(QAbstractListModel):
 		if role == Qt.DecorationRole:
 			pixmap = current_series.profile
 			return pixmap
-		if role == Qt.BackgroundRole:
-			bg_color = QColor(70, 67, 70)
-			bg_brush = QBrush(bg_color)
-			return bg_brush
+		#if role == Qt.BackgroundRole:
+		#	bg_color = QColor(70, 67, 70)
+		#	bg_brush = QBrush(bg_color)
+		#	return bg_brush
 		#if role == Qt.ToolTipRole:
 		#	return "Example popup!!"
 		if role == Qt.UserRole+1:
@@ -433,8 +362,25 @@ class SeriesModel(QAbstractListModel):
 		return self._data_count
 
 	def columnCount(self, parent = QModelIndex()):
-		return 2
+		return len(gui_constants.COLUMNS)
 
+	def headerData(self, section, orientation, role = Qt.DisplayRole):
+		if role == Qt.TextAlignmentRole:
+			return Qt.AlignLeft
+		if role != Qt.DisplayRole:
+			return None
+		if orientation == Qt.Horizontal:
+			if section == self._TITLE:
+				return 'Title'
+			elif section == self._ARTIST:
+				return 'Author'
+			elif section == self._TAGS:
+				return 'Tags'
+			elif section == self._TYPE:
+				return 'Type'
+			elif section == self._FAV:
+				return u'\u2605'
+		return section + 1
 	#def flags(self, index):
 	#	if not index.isValid():
 	#		return Qt.ItemIsEnabled
@@ -540,7 +486,6 @@ class CustomDelegate(QStyledItemDelegate):
 			popup = index.data(Qt.ToolTipRole)
 			title = series.title
 			artist = series.artist
-			QRect.y
 			# Enable this to see the defining box
 			#painter.drawRect(option.rect)
 			# define font size
@@ -565,7 +510,7 @@ class CustomDelegate(QStyledItemDelegate):
 				artist_size = ""
 
 			#painter.setPen(QPen(Qt.NoPen))
-			r = option.rect.adjusted(1, 0, -1, -1)
+			r = option.rect.adjusted(1, -2, -1, 0)
 			rec = r.getRect()
 			x = rec[0]
 			y = rec[1] + 3
@@ -630,7 +575,7 @@ class CustomDelegate(QStyledItemDelegate):
 				painter.drawPixmap(QRect(x, y, w, self.image.height()),
 						self.image)
 			else:
-				painter.drawPixmap(QRect(x, y, w, h),
+				painter.drawPixmap(QRect(x, y, w, self.image.height()),
 						self.image)
 			#else:
 			#	self.image = QPixmapCache.find(self.key(index))
@@ -674,6 +619,8 @@ class CustomDelegate(QStyledItemDelegate):
 	def sizeHint(self, QStyleOptionViewItem, QModelIndex):
 		return QSize(self.W, self.H)
 
+# TODO: Redo this part to avoid duplicated code
+
 class MangaView(QListView):
 	"""
 	TODO: (zoom-in/zoom-out) mousekeys
@@ -688,7 +635,6 @@ class MangaView(QListView):
 		self.H = gui_constants.GRIDBOX_H_SIZE
 		self.W = gui_constants.GRIDBOX_W_SIZE
 		self.setGridSize(QSize(self.W, self.H))
-		self.setSpacing(10)
 		self.setResizeMode(self.Adjust)
 		# all items have the same size (perfomance)
 		self.setUniformItemSizes(True)
@@ -914,6 +860,194 @@ class MangaView(QListView):
 	def entered(*args, **kwargs):
 		return super().entered(**kwargs)
 
+class MangaTableView(QTableView):
+	STATUS_BAR_MSG = pyqtSignal(str)
+	SERIES_DIALOG = pyqtSignal()
+
+	def __init__(self, parent=None):
+		super().__init__(parent)
+		# options
+		self.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+		self.setSelectionBehavior(self.SelectRows)
+		self.setSelectionMode(self.SingleSelection)
+		self.setFocusPolicy(Qt.NoFocus)
+		self.setShowGrid(True)
+		self.setSortingEnabled(True)
+		v_header = self.verticalHeader()
+		v_header.sectionResizeMode(QHeaderView.Fixed)
+		v_header.setDefaultSectionSize(24)
+		v_header.hide()
+		self.setIconSize(QSize(0,0))
+		self.doubleClicked.connect(self.open_chapter)
+
+	def remove_series(self, index):
+		self.rowsAboutToBeRemoved(index.parent(), index.row(), index.row())
+		series = index.data(Qt.UserRole+1)
+		seriesdb.SeriesDB.del_series(series.id)
+		self.model().removeRows(index.row(), 1)
+
+	def favourite(self, index):
+		assert isinstance(index, QModelIndex)
+		series = index.data(Qt.UserRole+1)
+		# TODO: don't need to fetch from DB here... 
+		if series.fav == 1:
+			n_series = seriesdb.SeriesDB.fav_series_set(series.id, 0)
+			self.model().replaceRows([n_series], index.row(), 1, index)
+			self.series_model.CUSTOM_STATUS_MSG.emit("Unfavourited")
+		else:
+			n_series = seriesdb.SeriesDB.fav_series_set(series.id, 1)
+			self.model().replaceRows([n_series], index.row(), 1, index)
+			self.series_model.CUSTOM_STATUS_MSG.emit("Favourited")
+
+	def open_chapter(self, index, chap_numb=0):
+		series = index.data(Qt.UserRole+1)
+		self.STATUS_BAR_MSG.emit("Opening chapter {} of {}".format(chap_numb+1,
+															 series.title))
+		threading.Thread(target=utils.open,
+				   args=(series.chapters[chap_numb],)).start()
+
+	def refresh(self):
+		self.model().populate_data()
+		self.STATUS_BAR_MSG.emit("Refreshed")
+
+	def contextMenuEvent(self, event):
+		handled = False
+		custom = False
+		index = self.indexAt(event.pos())
+		index = self.sort_model.mapToSource(index)
+
+		menu = QMenu()
+		all_1 = QAction("Open First Chapter", menu,
+				  triggered = lambda: self.open_chapter(index, 0))
+		all_2 = QAction("Edit...", menu, triggered = lambda: self.spawn_dialog(index))
+		all_3 = QAction("Remove", menu, triggered = lambda: self.remove_series(index))
+		
+		def fav():
+			self.favourite(index)
+
+		# add the chapter menus
+		def chapters():
+			menu.addSeparator()
+			chapters_menu = QAction("Chapters", menu)
+			menu.addAction(chapters_menu)
+			open_chapters = QMenu()
+			chapters_menu.setMenu(open_chapters)
+			for number, chap_number in enumerate(range(len(
+				index.data(Qt.UserRole+1).chapters)), 1):
+				chap_action = QAction("Open chapter {}".format(
+					number), open_chapters, triggered = lambda: self.open_chapter(index, chap_number))
+				open_chapters.addAction(chap_action)
+
+		def open_link():
+			link = index.data(Qt.UserRole+1).link
+			utils.open_web_link(link)
+
+		def sort_title():
+			self.sort_model.setSortRole(Qt.DisplayRole)
+			self.sort_model.sort(0, Qt.AscendingOrder)
+
+		def sort_artist():
+			self.sort_model.setSortRole(Qt.UserRole+2)
+			self.sort_model.sort(0, Qt.AscendingOrder)
+
+		def asc_desc():
+			if self.sort_model.sortOrder() == Qt.AscendingOrder:
+				self.sort_model.sort(0, Qt.DescendingOrder)
+			else:
+				self.sort_model.sort(0, Qt.AscendingOrder)
+
+
+		if index.isValid():
+			if index.data(Qt.UserRole+1).link != "":
+				ext_action = QAction("Open link", menu, triggered = open_link)
+
+			if index.data(Qt.UserRole+1).fav==1: # here you can limit which items to show these actions for
+				action_1 = QAction("Favourite", menu, triggered = fav)
+				action_1.setCheckable(True)
+				action_1.setChecked(True)
+				menu.addAction(action_1)
+				chapters()
+				handled = True
+				custom = True
+			if index.data(Qt.UserRole+1).fav==0: # here you can limit which items to show these actions for
+				action_1 = QAction("Favourite", menu, triggered = fav)
+				action_1.setCheckable(True)
+				action_1.setChecked(False)
+				menu.addAction(action_1)
+				chapters()
+				handled = True
+				custom = True
+
+		else:
+			add_series = QAction("&Add new Series...", menu,
+						triggered = self.SERIES_DIALOG.emit)
+			menu.addAction(add_series)
+			sort_main = QAction("&Sort by", menu)
+			menu.addAction(sort_main)
+			sort_menu = QMenu()
+			sort_main.setMenu(sort_menu)
+			asc_desc = QAction("Asc/Desc", menu,
+					  triggered = asc_desc)
+			s_title = QAction("Title", menu,
+					 triggered = sort_title)
+			s_artist = QAction("Author", menu,
+					  triggered = sort_artist)
+			sort_menu.addAction(asc_desc)
+			sort_menu.addSeparator()
+			sort_menu.addAction(s_title)
+			sort_menu.addAction(s_artist)
+			refresh = QAction("&Refresh", menu,
+					 triggered = self.refresh)
+			menu.addAction(refresh)
+			handled = True
+
+		if handled and custom:
+			menu.addSeparator()
+			menu.addAction(all_1)
+			menu.addAction(all_2)
+			try:
+				menu.addAction(ext_action)
+			except:
+				pass
+			menu.addSeparator()
+			menu.addAction(all_3)
+			menu.exec_(event.globalPos())
+			event.accept()
+		elif handled:
+			menu.exec_(event.globalPos())
+			event.accept()
+		else:
+			event.ignore()
+
+	def replace_edit_series(self, list_of_series, pos):
+		"Replaces the view and DB with given list of series, at given position"
+		assert isinstance(list_of_series, list), "Please pass a series to replace with"
+		assert isinstance(pos, int)
+		for series in list_of_series:
+
+			kwdict = {'title':series.title,
+			 'artist':series.artist,
+			 'info':series.info,
+			 'type':series.type,
+			 'language':series.language,
+			 'status':series.status,
+			 'pub_date':series.pub_date,
+			 'tags':series.tags,
+			 'link':series.link}
+
+			threading.Thread(target=seriesdb.SeriesDB.modify_series,
+							 args=(series.id,), kwargs=kwdict).start()
+		self.model().replaceRows([series], pos, len(list_of_series))
+
+	def spawn_dialog(self, index=False):
+		if not index:
+			dialog = misc.SeriesDialog()
+			dialog.SERIES.connect(self.series_model.addRows)
+			dialog.trigger() # TODO: implement mass series' adding
+		else:
+			dialog = misc.SeriesDialog()
+			dialog.SERIES_EDIT.connect(self.replace_edit_series)
+			dialog.trigger([index])
 
 if __name__ == '__main__':
 	raise NotImplementedError("Unit testing not yet implemented")

@@ -426,7 +426,7 @@ class SeriesDialog(QDialog):
 		self.resize(500,200)
 		frect = self.frameGeometry()
 		frect.moveCenter(QDesktopWidget().availableGeometry().center())
-		self.move(frect.topLeft()-QPoint(0,150))
+		self.move(frect.topLeft()-QPoint(0,180))
 		self.setAttribute(Qt.WA_DeleteOnClose)
 		self.setWindowTitle("Add a new series")
 		#self.setWindowFlags(Qt.FramelessWindowHint)
