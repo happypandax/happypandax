@@ -47,7 +47,7 @@ def gen_thumbnail(chapter_path, width=gui_constants.THUMB_W_SIZE-2,
 		if chap_path[-4:] == '.zip':
 			log_d('Generating Thumb from zip')
 			zip = ArchiveFile(chap_path)
-			p = os.path.join('happytemp', str(uuid.uuid4()))
+			p = os.path.join('temp', str(uuid.uuid4()))
 			os.mkdir(p)
 			f_img_name = sorted(zip.namelist())[0]
 			img_path = zip.extract(f_img_name, p)

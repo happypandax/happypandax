@@ -128,7 +128,6 @@ class Popup(QWidget):
 							string += tag
 
 			return string
-
 		self.title.setText(series.title)
 		self.artist.setText(series.artist)
 		self.chapters.setText("{}".format(len(series.chapters)))

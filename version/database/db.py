@@ -161,7 +161,7 @@ class DBThread:
 		
 		query_thread = threading.Thread(target=self.query, args=(CommandQueue, ResultQueue,), daemon=True)
 		query_thread.start()
-		log_i('Started Database Thread: OK')
+		log_d('Start Database Thread: OK')
 
 	def query(self, cmd_queue, result_queue):
 		"""Important: This method puts a cursor in the ResultQueue.

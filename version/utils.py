@@ -85,7 +85,7 @@ def open(chapterpath):
 	except NotADirectoryError: # archive
 		zip = ArchiveFile(chapterpath)
 		import uuid
-		t_p = os.path.join('happytemp', str(uuid.uuid4()))
+		t_p = os.path.join('temp', str(uuid.uuid4()))
 		zip.extract_all(t_p)
 		filepath = os.path.join(t_p, [x for x in sorted(os.listdir(t_p))\
 			if x[-3:] in IMG_FILES][0]) # Find first page
@@ -98,7 +98,7 @@ def open(chapterpath):
 		elif os.name == 'posix':
 			subprocess.call(('xdg-open', filepath))
 	except:
-		log_e('Could not open chapter')
+		log_e('Could not open chapter {}'.format(os.path.split(chapterpath)[1]))
 
 	return None
 

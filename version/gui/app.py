@@ -42,12 +42,15 @@ class AppWindow(QMainWindow):
 		self.center.setLayout(self.display)
 		# init the manga view variables
 		self.manga_display()
+		log_d('Create manga display: OK')
 		# init the chapter view variables
 		#self.chapter_display()
 		# init toolbar
 		self.init_toolbar()
+		log_d('Create toolbar: OK')
 		# init status bar
 		self.init_stat_bar()
+		log_d('Create statusbar: OK')
 
 		self.display.addWidget(self.manga_main)
 		#self.display.addWidget(self.chapter_main)
@@ -56,6 +59,7 @@ class AppWindow(QMainWindow):
 		self.setWindowTitle("Happypanda")
 		self.resize(gui_constants.MAIN_W, gui_constants.MAIN_H)
 		self.show()
+		log_d('Show window: OK')
 
 		class upd_chk(QObject):
 			UPDATE_CHECK = pyqtSignal(str)
@@ -65,12 +69,14 @@ class AppWindow(QMainWindow):
 				import requests
 				import time
 				try:
+					log_d('Checking Update')
 					time.sleep(3)
 					r = requests.get("https://raw.githubusercontent.com/Pewpews/happypanda/master/VERSION")
 					a = r.text
 					vs = a.strip()
 					self.UPDATE_CHECK.emit(vs)
 				except:
+					log_d('Checking Update: FAIL')
 					pass
 
 		update_instance = upd_chk()
@@ -81,7 +87,7 @@ class AppWindow(QMainWindow):
 		update_instance.UPDATE_CHECK.connect(lambda: update_instance.deleteLater)
 		update_instance.UPDATE_CHECK.connect(lambda: thread.deleteLater)
 		thread.start()
-		log_i('Window Create: OK')
+		log_d('Window Create: OK')
 		#QTimer.singleShot(3000, self.check_update)
 	
 	def check_update(self, vs):
@@ -324,14 +330,14 @@ Your database will not be touched without you being notified.""")
 
 	def closeEvent(self, event):
 		try:
-			for root, dirs, files in os.walk('happytemp', topdown=False):
+			for root, dirs, files in os.walk('temp', topdown=False):
 				for name in files:
 					os.remove(os.path.join(root, name))
 				for name in dirs:
 					os.rmdir(os.path.join(root, name))
-				log_i('Empty happytemp on exit: OK')
+			log_d('Empty temp on exit: OK')
 		except:
-			log_d('Empty happytemp on exit: FAIL')
+			log_d('Empty temp on exit: FAIL')
 		log_d('Normal Exit App: OK')
 		super().closeEvent(event)
 		app = QApplication.instance()

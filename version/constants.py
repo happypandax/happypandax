@@ -16,22 +16,45 @@ from .database import db
 from .gui import app, gui_constants
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QFile
-import sys, logging, os
+import sys, logging, os, argparse
 
 #IMPORTANT STUFF
 def init():
-	# create log
-	try:
-		with open('happypanda.log', 'x') as f:
-			pass
-	except FileExistsError: pass
 
-	# TODO: Implement --debug argument to specify level=DEBUG
-	logging.basicConfig(level=logging.DEBUG,
-					format='%(asctime)-8s %(levelname)-6s %(name)-6s %(message)s',
-					datefmt='%d-%m %H:%M',
-					filename='happypanda.log',
-					filemode='a')
+	parser = argparse.ArgumentParser(prog='Happypanda',
+								  description='A manga/doujinshi manager with tagging support')
+	parser.add_argument('-d', '--debug', action='store_true',
+					 help='happypanda_debug_log.log will be created in main directory')
+	parser.add_argument('-v', '--version', action='version',
+					 version='Happypanda v{}'.format(gui_constants.vs))
+
+	args = parser.parse_args()
+	if args.debug:
+		print("happypanda_debug.log created at {}".format(os.getcwd()))
+		# create log
+		try:
+			with open('happypanda_debug.log', 'x') as f:
+				pass
+		except FileExistsError:
+			pass
+
+		logging.basicConfig(level=logging.DEBUG,
+						format='%(asctime)-8s %(levelname)-6s %(name)-6s %(message)s',
+						datefmt='%d-%m %H:%M',
+						filename='happypanda_debug.log',
+						filemode='w')
+	else:
+		try:
+			with open('happypanda.log', 'x') as f:
+				pass
+		except FileExistsError: pass
+
+		logging.basicConfig(level=logging.INFO,
+						format='%(asctime)-8s %(levelname)-6s %(name)-6s %(message)s',
+						datefmt='%d-%m %H:%M',
+						filename='happypanda.log',
+						filemode='a')
+
 
 	log = logging.getLogger(__name__)
 	log_i = log.info
@@ -41,9 +64,9 @@ def init():
 	log_c = log.critical
 
 	application = QApplication(sys.argv)
-	log_i('App Event Start: OK')
+	log_d('App Event Start: OK')
 	conn = db.init_db()
-	log_i('Init DB Conn: OK')
+	log_d('Init DB Conn: OK')
 	if conn:
 		DB = db.DBThread(conn)
 		WINDOW = app.AppWindow()
@@ -67,20 +90,21 @@ def init():
 		style = str(style_file.readAll(), 'utf-8')
 		application.setStyleSheet(style)
 		try:
-			os.mkdir('happytemp')
+			os.mkdir('temp')
 		except FileExistsError:
 			try:
-				for root, dirs, files in os.walk('happytemp', topdown=False):
+				for root, dirs, files in os.walk('temp', topdown=False):
 					for name in files:
 						os.remove(os.path.join(root, name))
 					for name in dirs:
 						os.rmdir(os.path.join(root, name))
 			except:
-				log_d('Empty happytemp: FAIL')
-		log_d('Create happytemp: OK')
+				log_d('Empty temp: FAIL')
+		log_d('Create temp: OK')
 
 		sys.exit(application.exec_())
 	else:
+		log_d('Database connection failed')
 		from PyQt5.QtWidgets import QMessageBox
 		msg_box = QMessageBox()
 		msg_box.setInformativeText("The database is not compatible with the current version of the program")
@@ -89,5 +113,5 @@ def init():
 		msg_box.setDefaultButton(QMessageBox.Ok)
 		if msg_box.exec():
 			application.exit()
-			log_i('Normal Exit App: OK')
+			log_d('Normal Exit App: OK')
 			sys.exit()
