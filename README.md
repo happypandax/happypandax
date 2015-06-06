@@ -6,13 +6,9 @@ I'm here if you have any questions!
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Pewpews/happypanda?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 # Screenshots
-![alt-text][scr1]
-![alt-text][scr2]
-![alt-text][scr3]
-
-[scr1]: misc/screenshot1.png "Screenshot 1"
-[scr2]: misc/screenshot2.png "Screenshot 2"
-[scr3]: misc/screenshot3.png "Screenshot 3"
+<img src="misc/screenshot1.png" width="300">
+<img src="misc/screenshot2.png" width="300">
+<img src="misc/screenshot3.png" width="300">
 
 # How to install & run
 *(I have only tested this on windows)*
