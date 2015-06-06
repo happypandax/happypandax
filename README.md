@@ -13,7 +13,7 @@ I'm here if you have any questions!
 # How to install & run
 *(I have only tested this on windows)*
 
-For Mac & Linux see INSTALL.md
+For Mac & Linux see [INSTALL.md](INSTALL.md)
 
 1. Download the installer from releases (located above the filetree)
 2. Extract to desired location (avoid locations where you need admin rights)
