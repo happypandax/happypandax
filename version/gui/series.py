@@ -197,7 +197,6 @@ class SortFilterModel(QSortFilterProxyModel):
 		self.invalidateFilter()
 
 	def filterAcceptsRow(self, source_row, index_parent):
-
 		allow = False
 		series = None
 
@@ -235,20 +234,20 @@ class SortFilterModel(QSortFilterProxyModel):
 				if re_search(self.artist, series.artist):
 					allow = True
 			if where['tags']:
-				print(self.tags)
+				#print(self.tags)
 				ser_tags = utils.tag_to_string(series.tags)
 				for ns in self.tags:
 					if ns == 'default':
 						for tag in self.tags[ns]:
 							if re_search(tag, ser_tags):
-								print(ser_tags)
+								#print(ser_tags)
 								allow = True
 					else:
 						t = {ns:[]}
 						for tag in self.tags[ns]:
 							t[ns].append(tag)
 						tags_string = utils.tag_to_string(t)
-						print(tags_string)
+						#print(tags_string)
 						if re_search(tags_string, ser_tags):
 							allow = True
 
@@ -284,7 +283,6 @@ class SeriesModel(QAbstractTableModel):
 	def __init__(self, parent=None):
 		super().__init__(parent)
 		self._data_count = 0 # number of items added to model
-		#self._data = [] #a list for the data
 		self.populate_data()
 		#self._data_container = []
 		self.dataChanged.connect(lambda: self.status_b_msg("Edited"))

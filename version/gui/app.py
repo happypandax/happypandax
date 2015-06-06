@@ -21,7 +21,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QListView,
 							 QLabel, QStackedLayout, QToolBar, QMenuBar,
 							 QSizePolicy, QMenu, QAction, QLineEdit,
 							 QSplitter, QMessageBox, QFileDialog,
-							 QDesktopWidget, QPushButton)
+							 QDesktopWidget, QPushButton, QCompleter)
 from . import series
 from . import gui_constants, misc
 from ..database import fetch
@@ -183,6 +183,9 @@ Your database will not be touched without you being notified.""")
 
 	def search(self, srch_string):
 		case_ins = srch_string.lower()
+		remove = '^$*+?{}[]\\|()'
+		for x in remove:
+			case_ins = case_ins.replace(x, '.')
 		self.manga_list_view.sort_model.search(case_ins)
 
 	def popup(self, index):
@@ -273,7 +276,16 @@ Your database will not be touched without you being notified.""")
 		self.grid_toggle.setIcon(self.grid_toggle_l_icon)
 		self.grid_toggle.triggered.connect(self.toggle_view)
 		self.toolbar.addAction(self.grid_toggle)
+
+		completer = QCompleter(self)
+		completer.setModel(self.manga_list_view.series_model)
+		completer.setCaseSensitivity(Qt.CaseInsensitive)
+		completer.setCompletionMode(QCompleter.PopupCompletion)
+		completer.setCompletionRole(Qt.DisplayRole)
+		completer.setCompletionColumn(gui_constants.TITLE)
+		completer.setFilterMode(Qt.MatchContains)
 		self.search_bar = QLineEdit()
+		self.search_bar.setCompleter(completer)
 		self.search_bar.textChanged[str].connect(self.search)
 		self.search_bar.setPlaceholderText("Search title, artist (Tag: search tag)")
 		self.search_bar.setMaximumWidth(200)

@@ -447,6 +447,8 @@ class TagDB:
 	get_ns_tags_series -> Returns all series' linked to the namespace tags
 	add_tags <- Adds the given dict_of_tags to the given series_id
 	modify_tags <- Modifies the given tags
+	get_all_tags -> Returns all tags in database
+	get_all_ns -> Returns all namespaces in database
 	"""
 
 	def __init__(self):
@@ -639,6 +641,27 @@ class TagDB:
 		Receives a dict like this: {"namespace":["tag1","tag2"]}"""
 		pass
 
+	@staticmethod
+	def get_all_tags():
+		"""
+		Returns all tags in database in a list
+		"""
+		executing = [['SELECT tag FROM tags']]
+		CommandQueue.put(executing)
+		cursor = ResultQueue.get()
+		tags = [t['tag'] for t in cursor.fetchall()]
+		return tags
+
+	@staticmethod
+	def get_all_ns():
+		"""
+		Returns all namespaces in database in a list
+		"""
+		executing = [['SELECT namespace FROM namespaces']]
+		CommandQueue.put(executing)
+		cursor = ResultQueue.get()
+		ns = [n['namespace'] for n in cursor.fetchall()]
+		return ns
 
 class Series:
 	"""Base class for a series.

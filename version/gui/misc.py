@@ -12,13 +12,16 @@ You should have received a copy of the GNU General Public License
 along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from PyQt5.QtCore import Qt, QDate, QPoint, pyqtSignal, QThread, QTimer, QObject
+from PyQt5.QtCore import (Qt, QDate, QPoint, pyqtSignal, QThread,
+						  QTimer, QObject)
+from PyQt5.QtGui import QTextCursor
 from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QVBoxLayout, QHBoxLayout,
 							 QDialog, QGridLayout, QLineEdit,
 							 QFormLayout, QPushButton, QTextEdit,
 							 QComboBox, QDateEdit, QGroupBox,
-							 QDesktopWidget, QMessageBox, QFileDialog)
+							 QDesktopWidget, QMessageBox, QFileDialog,
+							 QCompleter)
 import os, threading, queue, time, logging
 from datetime import datetime
 from ..utils import tag_to_string, tag_to_dict, title_parser
@@ -147,6 +150,133 @@ class Loading(QWidget):
 		if string != self.text.text():
 			self.text.setText(string)
 
+class CompleterTextEdit(QTextEdit):
+	"""
+	A textedit with autocomplete
+	"""
+	def __init__(self, **kwargs):
+		super().__init__(**kwargs)
+		self.completer = None
+		log_d('Instantiat CompleterTextEdit: OK')
+
+	def setCompleter(self, completer):
+		if self.completer:
+			self.disconnect(self.completer, 0, self, 0)
+		if not completer:
+			return None
+
+		completer.setWidget(self)
+		completer.setCompletionMode(QCompleter.PopupCompletion)
+		completer.setCaseSensitivity(Qt.CaseInsensitive)
+		self.completer = completer
+		self.completer.insertText.connect(self.insertCompletion)
+
+	def insertCompletion(self, completion):
+		tc = self.textCursor()
+		extra = (len(completion) -
+		   len(self.completer.completionPrefix()))
+		tc.movePosition(QTextCursor.Left)
+		tc.movePosition(QTextCursor.EndOfWord)
+		tc.insertText(completion[-extra:])
+		self.setTextCursor(tc)
+
+	def textUnderCursor(self):
+		tc = self.textCursor()
+		tc.select(QTextCursor.WordUnderCursor)
+		return tc.selectedText()
+
+	def focusInEvent(self, event):
+		if self.completer:
+			self.completer.setWidget(self)
+		super().focusInEvent(event)
+
+	def keyPressEvent(self, event):
+		if self.completer and self.completer.popup() and \
+			self.completer.popup().isVisible():
+			if event.key() in (
+				Qt.Key_Enter,
+				Qt.Key_Return,
+				Qt.Key_Tab,
+				Qt.Key_Escape,
+				Qt.Key_Backtab):
+				event.ignore()
+				return None
+
+		# to show popup shortcut
+		isShortcut = event.modifiers() == Qt.ControlModifier and \
+			    event.key() == Qt.Key_Space
+
+		# to complete suggestion inline
+		inline = event.key() == Qt.Key_Tab
+
+		if inline:
+			self.completer.setCompletionMode(QCompleter.InlineCompletion)
+			completionPrefix = self.textUnderCursor()
+			if completionPrefix != self.completer.completionPrefix():
+				self.completer.setCompletionPrefix(completionPrefix)
+			self.completer.complete()
+
+			# set the current suggestion in text box
+			self.completer.insertText.emit(self.completer.currentCompletion())
+			#reset completion mode
+			self.completer.setCompletionMode(QCompleter.PopupCompletion)
+			return None
+		if not self.completer or not isShortcut:
+			super().keyPressEvent(event)
+		
+		ctrlOrShift = event.modifiers() in (Qt.ControlModifier,
+									  Qt.ShiftModifier)
+		if ctrlOrShift and event.text() == '':
+			return None
+
+		#end of word
+		eow = "~!@#$%^&*+{}|:\"<>?,./;'[]\\-="
+		
+		hasModifier = event.modifiers() != Qt.NoModifier and not ctrlOrShift
+		completionPrefix = self.textUnderCursor()
+
+		if not isShortcut:
+			if self.completer.popup():
+				self.completer.popup().hide()
+			return None
+
+		self.completer.setCompletionPrefix(completionPrefix)
+		popup = self.completer.popup()
+		popup.setCurrentIndex(self.completer.completionModel().index(0,0))
+		cr = self.cursorRect()
+		cr.setWidth(self.completer.popup().sizeHintForColumn(0) +
+			  self.completer.popup().verticalScrollBar().sizeHint().width())
+		self.completer.complete(cr)
+
+class CompleterWithData(QCompleter):
+	"""
+	Instantiate a QCompleter with predefined data
+	"""
+	insertText = pyqtSignal(str)
+
+	def __init__(self, data, parent=None):
+		assert isinstance(data, list)
+		super().__init__(data, parent)
+		self.activated[str].connect(self.changeCompletion)
+		log_d('Instantiate CompleterWithData: OK')
+
+	def changeCompletion(self, completion):
+		if completion.find('(') != -1:
+			completion = completion[:completion.find('(')]
+		print(completion)
+		self.insertText.emit(completion)
+
+
+
+def return_tag_completer_TextEdit():
+	ns = seriesdb.TagDB.get_all_ns()
+	for t in seriesdb.TagDB.get_all_tags():
+		ns.append(t)
+	TextEditCompleter = CompleterTextEdit()
+	TextEditCompleter.setCompleter(CompleterWithData(ns))
+	return TextEditCompleter
+
+
 # TODO: FIX THIS HORRENDOUS DUPLICATED CODE
 class SeriesDialog(QDialog):
 	"A window for adding/modifying series"
@@ -231,9 +361,10 @@ class SeriesDialog(QDialog):
 		self.lang_box = QComboBox()
 		self.lang_box.addItems(["English", "Japanese", "Other"])
 		self.lang_box.setCurrentIndex(0)
-		self.tags_edit = QTextEdit()
+		self.tags_edit = return_tag_completer_TextEdit()
 		self.tags_edit.setFixedHeight(70)
-		self.tags_edit.setPlaceholderText("namespace1:tag1, tag2, namespace3:tag3, etc..")
+		self.tags_edit.setPlaceholderText("Autocomplete enabled. (Tab or Ctrl + Space)"+
+									"\nnamespace1:tag1, tag2, namespace3:tag3, etc..")
 		self.type_box = QComboBox()
 		self.type_box.addItems(["Manga", "Doujinshi", "Artist CG Sets", "Game CG Sets",
 						  "Western", "Image Sets", "Non-H", "Cosplay", "Other"])
@@ -413,7 +544,7 @@ class SeriesDialog(QDialog):
 			super().reject()
 
 	def trigger(self, list_of_index=None):
-		log_d('Triggered Series Add')
+		log_d('Triggered Series Edit/Add Dialog')
 		if not list_of_index:
 			self.initUI()
 		else:
@@ -599,9 +730,10 @@ class SeriesDialog(QDialog):
 		else:
 			self.lang_box.setCurrentIndex(2)
 
-		self.tags_edit = QTextEdit()
+		self.tags_edit = return_tag_completer_TextEdit()
 		self.tags_edit.setFixedHeight(70)
-		self.tags_edit.setPlaceholderText("namespace1:tag1, tag2, namespace3:[tag3, tag4] etc..")
+		self.tags_edit.setPlaceholderText("Autocomplete enabled. (Tab or Ctrl + Space)"+
+									"\nnamespace1:tag1, tag2, namespace3:tag3, etc..")
 		self.tags_edit.setText(tag_to_string(series.tags))
 
 		self.type_box = QComboBox()

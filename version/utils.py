@@ -102,30 +102,52 @@ def open(chapterpath):
 
 	return None
 
-def tag_to_string(series_tag):
-	"Takes series tags and converts it to string, returns string"
+def tag_to_string(series_tag, simple=False):
+	"""
+	Takes series tags and converts it to string, returns string
+	if simple is set to True, returns a CSV string, else a dict looking string
+	"""
 	assert isinstance(series_tag, dict), "Please provide a dict like this: {'namespace':['tag1']}"
 	string = ""
-	for n, namespace in enumerate(series_tag, 1):
-		if len(series_tag[namespace]) != 0:
-			if namespace != 'default':
-				string += namespace + ":"
+	if not simple:
+		for n, namespace in enumerate(series_tag, 1):
+			if len(series_tag[namespace]) != 0:
+				if namespace != 'default':
+					string += namespace + ":"
 
-			# find tags
-			if namespace != 'default' and len(series_tag[namespace]) > 1:
-				string += '['
-			for x, tag in enumerate(series_tag[namespace], 1):
-				# if we are at the end of the list
-				if x == len(series_tag[namespace]):
-					string += tag
-				else:
-					string += tag + ', '
-			if namespace != 'default' and len(series_tag[namespace]) > 1:
-				string += ']'
+				# find tags
+				if namespace != 'default' and len(series_tag[namespace]) > 1:
+					string += '['
+				for x, tag in enumerate(series_tag[namespace], 1):
+					# if we are at the end of the list
+					if x == len(series_tag[namespace]):
+						string += tag
+					else:
+						string += tag + ', '
+				if namespace != 'default' and len(series_tag[namespace]) > 1:
+					string += ']'
 
-			# if we aren't at the end of the list
-			if not n == len(series_tag):
-				string += ', '
+				# if we aren't at the end of the list
+				if not n == len(series_tag):
+					string += ', '
+	else:
+		for n, namespace in enumerate(series_tag, 1):
+			if len(series_tag[namespace]) != 0:
+				if namespace != 'default':
+					string += namespace + ","
+
+				# find tags
+				for x, tag in enumerate(series_tag[namespace], 1):
+					# if we are at the end of the list
+					if x == len(series_tag[namespace]):
+						string += tag
+					else:
+						string += tag + ', '
+
+				# if we aren't at the end of the list
+				if not n == len(series_tag):
+					string += ', '
+
 	return string
 
 def tag_to_dict(string):
