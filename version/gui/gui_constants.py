@@ -16,7 +16,7 @@ import os
 """Contains constants to be used by several modules"""
 
 # Version number
-vs  = '0.13'
+vs  = '0.14'
 
 current_dir, f = os.path.split(os.path.realpath(__file__))
 static_dir = os.path.join(current_dir, "static")
@@ -59,4 +59,3 @@ SCROLL_SPEED = 9 # controls how many steps it takes when scrolling
 # POPUP
 POPUP_WIDTH = 450
 POPUP_HEIGHT = 220
-

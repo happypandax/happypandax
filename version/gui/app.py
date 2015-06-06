@@ -131,10 +131,7 @@ Your database will not be touched without you being notified.""")
 		self.manga_list_view.series_model.ROWCOUNT_CHANGE.connect(self.stat_row_info)
 		self.manga_list_view.series_model.STATUSBAR_MSG.connect(self.stat_temp_msg)
 		self.manga_list_view.STATUS_BAR_MSG.connect(self.stat_temp_msg)
-
-		self.manga_table_view.series_model.ROWCOUNT_CHANGE.connect(self.stat_row_info)
-		self.manga_table_view.series_model.STATUSBAR_MSG.connect(self.stat_temp_msg)
-		self.manga_table_view.STATUS_BAR_MSG.connect(self.stat_temp_msg)
+		self.stat_row_info()
 
 	def stat_temp_msg(self, msg):
 		self.temp_timer.stop()

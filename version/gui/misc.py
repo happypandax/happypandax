@@ -363,7 +363,7 @@ class SeriesDialog(QDialog):
 		self.lang_box.setCurrentIndex(0)
 		self.tags_edit = return_tag_completer_TextEdit()
 		self.tags_edit.setFixedHeight(70)
-		self.tags_edit.setPlaceholderText("Autocomplete enabled. (Tab or Ctrl + Space)"+
+		self.tags_edit.setPlaceholderText("Autocomplete enabled. Press Tab (Ctrl + Space to show popup)"+
 									"\nnamespace1:tag1, tag2, namespace3:tag3, etc..")
 		self.type_box = QComboBox()
 		self.type_box.addItems(["Manga", "Doujinshi", "Artist CG Sets", "Game CG Sets",
@@ -732,7 +732,7 @@ class SeriesDialog(QDialog):
 
 		self.tags_edit = return_tag_completer_TextEdit()
 		self.tags_edit.setFixedHeight(70)
-		self.tags_edit.setPlaceholderText("Autocomplete enabled. (Tab or Ctrl + Space)"+
+		self.tags_edit.setPlaceholderText("Autocomplete enabled. Press Tab (Ctrl + Space to show popup)"+
 									"\nnamespace1:tag1, tag2, namespace3:tag3, etc..")
 		self.tags_edit.setText(tag_to_string(series.tags))
 
