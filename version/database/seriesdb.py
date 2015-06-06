@@ -12,16 +12,24 @@ You should have received a copy of the GNU General Public License
 along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import datetime, os, threading, queue, uuid # for unique filename
+import datetime, os, threading, logging, queue, uuid # for unique filename
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QImage
 
-from ..utils import today
+from ..utils import today, ArchiveFile
 from .db import CommandQueue, ResultQueue
 from ..gui import gui_constants
 from .db_constants import THUMBNAIL_PATH, IMG_FILES
 
 PROFILE_TO_MODEL = queue.Queue()
+
+log = logging.getLogger(__name__)
+log_i = log.info
+log_d = log.debug
+log_w = log.warning
+log_e = log.error
+log_c = log.critical
+
 
 def gen_thumbnail(chapter_path, width=gui_constants.THUMB_W_SIZE-2,
 				height=gui_constants.THUMB_H_SIZE): # 2 to align it properly.. need to redo this
@@ -36,7 +44,17 @@ def gen_thumbnail(chapter_path, width=gui_constants.THUMB_W_SIZE-2,
 		os.mkdir(THUMBNAIL_PATH)
 
 	def generate(cache, chap_path, w, h, img_queue):
-		img_path = os.path.join(chap_path, [x for x in sorted(os.listdir(chap_path)) if x[-3:] in IMG_FILES][0]) #first image in chapter
+		if chap_path[-4:] == '.zip':
+			log_d('Generating Thumb from zip')
+			zip = ArchiveFile(chap_path)
+			p = os.path.join('temp', str(uuid.uuid4()))
+			os.mkdir(p)
+			f_img_name = sorted(zip.namelist())[0]
+			img_path = zip.extract(f_img_name, p)
+			zip.close()
+		else:
+			log_d('Generating Thumb from folder')
+			img_path = os.path.join(chap_path, [x for x in sorted(os.listdir(chap_path)) if x[-3:] in IMG_FILES][0]) #first image in chapter
 		suff = img_path[-4:] # the image ext with dot
 		
 		# generate unique file name
@@ -429,6 +447,8 @@ class TagDB:
 	get_ns_tags_series -> Returns all series' linked to the namespace tags
 	add_tags <- Adds the given dict_of_tags to the given series_id
 	modify_tags <- Modifies the given tags
+	get_all_tags -> Returns all tags in database
+	get_all_ns -> Returns all namespaces in database
 	"""
 
 	def __init__(self):
@@ -551,16 +571,35 @@ class TagDB:
 				
 				tags_id_list.append(tag_id)
 
-			# TODO: Only add unique mappings!!!
-			# time to map the tags to the namespace now
-			for tag_id in tags_id_list:
-				executing = [["""
-				INSERT INTO tags_mappings(namespace_id, tag_id)
-				VALUES(?, ?)""", (namespace_id, tag_id,)]]
+
+			def look_exist_tag_map(tag_id):
+				"Checks DB if the tag_id already exists with the namespace_id, returns id else None"
+				executing = [["""SELECT tags_mappings_id FROM tags_mappings
+								WHERE namespace_id=? AND tag_id=?""", (namespace_id, tag_id,)]]
 				CommandQueue.put(executing)
 				c = ResultQueue.get()
-				# add the tags_mappings_id to our list
-				tags_mappings_id_list.append(c.lastrowid)
+				try: # exists
+					return c.fetchone()['tags_mappings_id']
+				except TypeError: # doesnt exist
+					return None
+
+			# time to map the tags to the namespace now
+			for tag_id in tags_id_list:
+				# First check if tags mappings exists
+				try:
+					t_map_id = look_exist_tag_map(tag_id)
+					if t_map_id:
+						tags_mappings_id_list.append(t_map_id)
+					else:
+						raise TypeError
+				except TypeError:
+					executing = [["""
+					INSERT INTO tags_mappings(namespace_id, tag_id)
+					VALUES(?, ?)""", (namespace_id, tag_id,)]]
+					CommandQueue.put(executing)
+					c = ResultQueue.get()
+					# add the tags_mappings_id to our list
+					tags_mappings_id_list.append(c.lastrowid)
 
 		# Lastly we map the series_id to the tags_mappings
 		for tags_map in tags_mappings_id_list:
@@ -602,6 +641,27 @@ class TagDB:
 		Receives a dict like this: {"namespace":["tag1","tag2"]}"""
 		pass
 
+	@staticmethod
+	def get_all_tags():
+		"""
+		Returns all tags in database in a list
+		"""
+		executing = [['SELECT tag FROM tags']]
+		CommandQueue.put(executing)
+		cursor = ResultQueue.get()
+		tags = [t['tag'] for t in cursor.fetchall()]
+		return tags
+
+	@staticmethod
+	def get_all_ns():
+		"""
+		Returns all namespaces in database in a list
+		"""
+		executing = [['SELECT namespace FROM namespaces']]
+		CommandQueue.put(executing)
+		cursor = ResultQueue.get()
+		ns = [n['namespace'] for n in cursor.fetchall()]
+		return ns
 
 class Series:
 	"""Base class for a series.

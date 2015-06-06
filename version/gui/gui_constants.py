@@ -16,7 +16,7 @@ import os
 """Contains constants to be used by several modules"""
 
 # Version number
-vs  = '0.13'
+vs  = '0.14'
 
 current_dir, f = os.path.split(os.path.realpath(__file__))
 static_dir = os.path.join(current_dir, "static")
@@ -33,8 +33,13 @@ GRIDBOX_W_SIZE = GRIDBOX_H_SIZE//1.47
 THUMB_H_SIZE = 200
 THUMB_W_SIZE = 145
 
-# chapterview
-CHAP_IMAGE_H = 325
+# Columns
+COLUMNS = [0, 1, 2, 3, 4]
+TITLE = 0
+ARTIST = 1
+TAGS = 2
+TYPE = 3
+FAV = 4
 
 # image paths
 STAR_BTN_PATH = os.path.join(static_dir, "btn_star.png")
@@ -43,13 +48,14 @@ STAR_SMALL_PATH = os.path.join(static_dir, "star_small.png")
 PLUS_PATH = os.path.join(static_dir, "plus.png")
 HOME_BTN_PATH = os.path.join(static_dir, "home.png")
 SETTINGS_PATH = os.path.join(static_dir, "settings.png")
+GRID_PATH = os.path.join(static_dir, "grid.png")
+LIST_PATH = os.path.join(static_dir, "list.png")
 
 # controls
 THUMBNAIL_CACHE_SIZE = 10240*100 #10240 is 10mb, so sum is 1gb
 PREFETCH_ITEM_AMOUNT = 100 # amount of items to prefetch
-SCROLL_SPEED = 7 # controls how many steps it takes when scrolling
+SCROLL_SPEED = 9 # controls how many steps it takes when scrolling
 
 # POPUP
 POPUP_WIDTH = 450
 POPUP_HEIGHT = 220
-

@@ -12,18 +12,27 @@ You should have received a copy of the GNU General Public License
 along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from PyQt5.QtCore import Qt, QDate, QPoint, pyqtSignal, QThread, QTimer, QObject
+from PyQt5.QtCore import (Qt, QDate, QPoint, pyqtSignal, QThread,
+						  QTimer, QObject)
+from PyQt5.QtGui import QTextCursor
 from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QVBoxLayout, QHBoxLayout,
 							 QDialog, QGridLayout, QLineEdit,
 							 QFormLayout, QPushButton, QTextEdit,
 							 QComboBox, QDateEdit, QGroupBox,
-							 QDesktopWidget, QMessageBox, QFileDialog)
-import os, threading, queue, time
+							 QDesktopWidget, QMessageBox, QFileDialog,
+							 QCompleter)
+import os, threading, queue, time, logging
 from datetime import datetime
 from ..utils import tag_to_string, tag_to_dict, title_parser
 from ..database import seriesdb, fetch, db
 
+log = logging.getLogger(__name__)
+log_i = log.info
+log_d = log.debug
+log_w = log.warning
+log_e = log.error
+log_c = log.critical
 
 #class ErrorEvent(QObject):
 #	ERROR_MSG = pyqtSignal(str)
@@ -141,6 +150,133 @@ class Loading(QWidget):
 		if string != self.text.text():
 			self.text.setText(string)
 
+class CompleterTextEdit(QTextEdit):
+	"""
+	A textedit with autocomplete
+	"""
+	def __init__(self, **kwargs):
+		super().__init__(**kwargs)
+		self.completer = None
+		log_d('Instantiat CompleterTextEdit: OK')
+
+	def setCompleter(self, completer):
+		if self.completer:
+			self.disconnect(self.completer, 0, self, 0)
+		if not completer:
+			return None
+
+		completer.setWidget(self)
+		completer.setCompletionMode(QCompleter.PopupCompletion)
+		completer.setCaseSensitivity(Qt.CaseInsensitive)
+		self.completer = completer
+		self.completer.insertText.connect(self.insertCompletion)
+
+	def insertCompletion(self, completion):
+		tc = self.textCursor()
+		extra = (len(completion) -
+		   len(self.completer.completionPrefix()))
+		tc.movePosition(QTextCursor.Left)
+		tc.movePosition(QTextCursor.EndOfWord)
+		tc.insertText(completion[-extra:])
+		self.setTextCursor(tc)
+
+	def textUnderCursor(self):
+		tc = self.textCursor()
+		tc.select(QTextCursor.WordUnderCursor)
+		return tc.selectedText()
+
+	def focusInEvent(self, event):
+		if self.completer:
+			self.completer.setWidget(self)
+		super().focusInEvent(event)
+
+	def keyPressEvent(self, event):
+		if self.completer and self.completer.popup() and \
+			self.completer.popup().isVisible():
+			if event.key() in (
+				Qt.Key_Enter,
+				Qt.Key_Return,
+				Qt.Key_Tab,
+				Qt.Key_Escape,
+				Qt.Key_Backtab):
+				event.ignore()
+				return None
+
+		# to show popup shortcut
+		isShortcut = event.modifiers() == Qt.ControlModifier and \
+			    event.key() == Qt.Key_Space
+
+		# to complete suggestion inline
+		inline = event.key() == Qt.Key_Tab
+
+		if inline:
+			self.completer.setCompletionMode(QCompleter.InlineCompletion)
+			completionPrefix = self.textUnderCursor()
+			if completionPrefix != self.completer.completionPrefix():
+				self.completer.setCompletionPrefix(completionPrefix)
+			self.completer.complete()
+
+			# set the current suggestion in text box
+			self.completer.insertText.emit(self.completer.currentCompletion())
+			#reset completion mode
+			self.completer.setCompletionMode(QCompleter.PopupCompletion)
+			return None
+		if not self.completer or not isShortcut:
+			super().keyPressEvent(event)
+		
+		ctrlOrShift = event.modifiers() in (Qt.ControlModifier,
+									  Qt.ShiftModifier)
+		if ctrlOrShift and event.text() == '':
+			return None
+
+		#end of word
+		eow = "~!@#$%^&*+{}|:\"<>?,./;'[]\\-="
+		
+		hasModifier = event.modifiers() != Qt.NoModifier and not ctrlOrShift
+		completionPrefix = self.textUnderCursor()
+
+		if not isShortcut:
+			if self.completer.popup():
+				self.completer.popup().hide()
+			return None
+
+		self.completer.setCompletionPrefix(completionPrefix)
+		popup = self.completer.popup()
+		popup.setCurrentIndex(self.completer.completionModel().index(0,0))
+		cr = self.cursorRect()
+		cr.setWidth(self.completer.popup().sizeHintForColumn(0) +
+			  self.completer.popup().verticalScrollBar().sizeHint().width())
+		self.completer.complete(cr)
+
+class CompleterWithData(QCompleter):
+	"""
+	Instantiate a QCompleter with predefined data
+	"""
+	insertText = pyqtSignal(str)
+
+	def __init__(self, data, parent=None):
+		assert isinstance(data, list)
+		super().__init__(data, parent)
+		self.activated[str].connect(self.changeCompletion)
+		log_d('Instantiate CompleterWithData: OK')
+
+	def changeCompletion(self, completion):
+		if completion.find('(') != -1:
+			completion = completion[:completion.find('(')]
+		print(completion)
+		self.insertText.emit(completion)
+
+
+
+def return_tag_completer_TextEdit():
+	ns = seriesdb.TagDB.get_all_ns()
+	for t in seriesdb.TagDB.get_all_tags():
+		ns.append(t)
+	TextEditCompleter = CompleterTextEdit()
+	TextEditCompleter.setCompleter(CompleterWithData(ns))
+	return TextEditCompleter
+
+
 # TODO: FIX THIS HORRENDOUS DUPLICATED CODE
 class SeriesDialog(QDialog):
 	"A window for adding/modifying series"
@@ -159,7 +295,7 @@ class SeriesDialog(QDialog):
 		main_layout = QVBoxLayout()
 
 
-		f_local = QGroupBox("Folder")
+		f_local = QGroupBox("Folder/ZIP")
 		f_local.setCheckable(False)
 		main_layout.addWidget(f_local)
 		local_layout = QHBoxLayout()
@@ -209,9 +345,13 @@ class SeriesDialog(QDialog):
 		url_edit.setPlaceholderText("paste g.e-hentai/exhentai gallery link")
 		url_prog.hide()
 
-		choose_folder = QPushButton("Choose Folder")
-		choose_folder.clicked.connect(self.choose_dir)
-		local_layout.addWidget(choose_folder, Qt.AlignLeft)
+		choose_folder = QPushButton("From Folder")
+		choose_folder.clicked.connect(lambda: self.choose_dir('f'))
+		local_layout.addWidget(choose_folder)
+
+		choose_archive = QPushButton("From ZIP")
+		choose_archive.clicked.connect(lambda: self.choose_dir('a'))
+		local_layout.addWidget(choose_archive)
 
 		self.title_edit = QLineEdit()
 		self.author_edit = QLineEdit()
@@ -221,9 +361,10 @@ class SeriesDialog(QDialog):
 		self.lang_box = QComboBox()
 		self.lang_box.addItems(["English", "Japanese", "Other"])
 		self.lang_box.setCurrentIndex(0)
-		self.tags_edit = QTextEdit()
+		self.tags_edit = return_tag_completer_TextEdit()
 		self.tags_edit.setFixedHeight(70)
-		self.tags_edit.setPlaceholderText("namespace1:tag1, tag2, namespace3:tag3, etc..")
+		self.tags_edit.setPlaceholderText("Autocomplete enabled. Press Tab (Ctrl + Space to show popup)"+
+									"\nnamespace1:tag1, tag2, namespace3:tag3, etc..")
 		self.type_box = QComboBox()
 		self.type_box.addItems(["Manga", "Doujinshi", "Artist CG Sets", "Game CG Sets",
 						  "Western", "Image Sets", "Non-H", "Cosplay", "Other"])
@@ -295,17 +436,21 @@ class SeriesDialog(QDialog):
 		from ..settings import s
 		s.set_ipb(ipb, ipb_pass)
 
-	def choose_dir(self):
-		dir_name = QFileDialog.getExistingDirectory(self, 'Choose a folder')
-		head, tail = os.path.split(dir_name)
+	def choose_dir(self, mode):
+		if mode == 'a':
+			name = QFileDialog.getOpenFileName(self, 'Choose archive',
+											  filter='*.zip')
+			name = name[0]
+		else:
+			name = QFileDialog.getExistingDirectory(self, 'Choose folder')
+		head, tail = os.path.split(name)
 		parsed = title_parser(tail)
 		self.title_edit.setText(parsed['title'])
 		self.author_edit.setText(parsed['artist'])
+		self.path_lbl.setText(name)
 		l_i = self.lang_box.findText(parsed['language'])
 		if l_i != -1:
 			self.lang_box.setCurrentIndex(l_i)
-
-		self.path_lbl.setText(dir_name)
 
 	def check(self):
 		if len(self.title_edit.text()) is 0:
@@ -357,24 +502,30 @@ class SeriesDialog(QDialog):
 
 	def set_chapters(self, series_object):
 		path = series_object.path
-		con = os.listdir(path) # list all folders in series dir
-		chapters = sorted([os.path.join(path,sub) for sub in con if os.path.isdir(os.path.join(path, sub))]) #subfolders
-		# if series has chapters divided into sub folders
-		if len(chapters) != 0:
-			for numb, ch in enumerate(chapters):
-				chap_path = os.path.join(path, ch)
-				series_object.chapters[numb] = chap_path
+		try:
+			con = os.listdir(path) # list all folders in series dir
+			chapters = sorted([os.path.join(path,sub) for sub in con if os.path.isdir(os.path.join(path, sub))]) #subfolders
+			# if series has chapters divided into sub folders
+			if len(chapters) != 0:
+				for numb, ch in enumerate(chapters):
+					chap_path = os.path.join(path, ch)
+					series_object.chapters[numb] = chap_path
 
-		else: #else assume that all images are in series folder
-			series_object.chapters[0] = path
+			else: #else assume that all images are in series folder
+				series_object.chapters[0] = path
 				
-		#find last edited file
-		times = set()
-		for root, dirs, files in os.walk(path, topdown=False):
-			for img in files:
-				fp = os.path.join(root, img)
-				times.add( os.path.getmtime(fp) )
-		series_object.last_update = time.asctime(time.gmtime(max(times)))
+			#find last edited file
+			times = set()
+			for root, dirs, files in os.walk(path, topdown=False):
+				for img in files:
+					fp = os.path.join(root, img)
+					times.add(os.path.getmtime(fp))
+			series_object.last_update = time.asctime(time.gmtime(max(times)))
+		except NotADirectoryError:
+			if path[-4:] == '.zip':
+				#TODO: add support for folders in archive
+				series_object.chapters[0] = path
+
 		#self.series_queue.put(series_object)
 		self.SERIES.emit([series_object])
 		#seriesdb.SeriesDB.add_series(series_object)
@@ -393,6 +544,7 @@ class SeriesDialog(QDialog):
 			super().reject()
 
 	def trigger(self, list_of_index=None):
+		log_d('Triggered Series Edit/Add Dialog')
 		if not list_of_index:
 			self.initUI()
 		else:
@@ -405,7 +557,7 @@ class SeriesDialog(QDialog):
 		self.resize(500,200)
 		frect = self.frameGeometry()
 		frect.moveCenter(QDesktopWidget().availableGeometry().center())
-		self.move(frect.topLeft()-QPoint(0,150))
+		self.move(frect.topLeft()-QPoint(0,180))
 		self.setAttribute(Qt.WA_DeleteOnClose)
 		self.setWindowTitle("Add a new series")
 		#self.setWindowFlags(Qt.FramelessWindowHint)
@@ -415,6 +567,7 @@ class SeriesDialog(QDialog):
 		try:
 			assert len(url) > 5
 		except AssertionError:
+			log_w('Invalid URL')
 			return None
 		self.link_lbl.setText(url)
 		f = fetch.Fetch()
@@ -577,9 +730,10 @@ class SeriesDialog(QDialog):
 		else:
 			self.lang_box.setCurrentIndex(2)
 
-		self.tags_edit = QTextEdit()
+		self.tags_edit = return_tag_completer_TextEdit()
 		self.tags_edit.setFixedHeight(70)
-		self.tags_edit.setPlaceholderText("namespace1:tag1, tag2, namespace3:[tag3, tag4] etc..")
+		self.tags_edit.setPlaceholderText("Autocomplete enabled. Press Tab (Ctrl + Space to show popup)"+
+									"\nnamespace1:tag1, tag2, namespace3:tag3, etc..")
 		self.tags_edit.setText(tag_to_string(series.tags))
 
 		self.type_box = QComboBox()

@@ -12,7 +12,7 @@ You should have received a copy of the GNU General Public License
 along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import sys
+import sys, logging, os
 from PyQt5.QtCore import (Qt, QSize, pyqtSignal, QThread, QEvent, QTimer,
 						  QObject)
 from PyQt5.QtGui import (QPixmap, QIcon, QMouseEvent, QCursor)
@@ -21,10 +21,17 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QListView,
 							 QLabel, QStackedLayout, QToolBar, QMenuBar,
 							 QSizePolicy, QMenu, QAction, QLineEdit,
 							 QSplitter, QMessageBox, QFileDialog,
-							 QDesktopWidget)
+							 QDesktopWidget, QPushButton, QCompleter)
 from . import series
 from . import gui_constants, misc
 from ..database import fetch
+
+log = logging.getLogger(__name__)
+log_i = log.info
+log_d = log.debug
+log_w = log.warning
+log_e = log.error
+log_c = log.critical
 
 class AppWindow(QMainWindow):
 	"The application's main window"
@@ -35,20 +42,25 @@ class AppWindow(QMainWindow):
 		self.center.setLayout(self.display)
 		# init the manga view variables
 		self.manga_display()
+		log_d('Create manga display: OK')
 		# init the chapter view variables
 		#self.chapter_display()
 		# init toolbar
 		self.init_toolbar()
+		log_d('Create toolbar: OK')
 		# init status bar
 		self.init_stat_bar()
+		log_d('Create statusbar: OK')
 
-		self.display.addWidget(self.manga_main)
+		self.m_l_view_index = self.display.addWidget(self.manga_list_main)
+		self.m_t_view_index = self.display.addWidget(self.manga_table_view)
 		#self.display.addWidget(self.chapter_main)
 
 		self.setCentralWidget(self.center)
 		self.setWindowTitle("Happypanda")
 		self.resize(gui_constants.MAIN_W, gui_constants.MAIN_H)
 		self.show()
+		log_d('Show window: OK')
 
 		class upd_chk(QObject):
 			UPDATE_CHECK = pyqtSignal(str)
@@ -58,12 +70,14 @@ class AppWindow(QMainWindow):
 				import requests
 				import time
 				try:
+					log_d('Checking Update')
 					time.sleep(3)
 					r = requests.get("https://raw.githubusercontent.com/Pewpews/happypanda/master/VERSION")
 					a = r.text
 					vs = a.strip()
 					self.UPDATE_CHECK.emit(vs)
 				except:
+					log_d('Checking Update: FAIL')
 					pass
 
 		update_instance = upd_chk()
@@ -74,8 +88,9 @@ class AppWindow(QMainWindow):
 		update_instance.UPDATE_CHECK.connect(lambda: update_instance.deleteLater)
 		update_instance.UPDATE_CHECK.connect(lambda: thread.deleteLater)
 		thread.start()
+		log_d('Window Create: OK')
 		#QTimer.singleShot(3000, self.check_update)
-	
+
 	def check_update(self, vs):
 		try:
 			if vs != gui_constants.vs:
@@ -112,11 +127,11 @@ Your database will not be touched without you being notified.""")
 		#self.status_bar.addAction(self.sort_main)
 		self.temp_msg = QLabel()
 		self.temp_timer = QTimer()
+
 		self.manga_list_view.series_model.ROWCOUNT_CHANGE.connect(self.stat_row_info)
 		self.manga_list_view.series_model.STATUSBAR_MSG.connect(self.stat_temp_msg)
-		self.manga_list_view.favourite_model.ROWCOUNT_CHANGE.connect(self.stat_row_info)
-		self.manga_list_view.favourite_model.STATUSBAR_MSG.connect(self.stat_temp_msg)
 		self.manga_list_view.STATUS_BAR_MSG.connect(self.stat_temp_msg)
+		self.stat_row_info()
 
 	def stat_temp_msg(self, msg):
 		self.temp_timer.stop()
@@ -133,19 +148,42 @@ Your database will not be touched without you being notified.""")
 
 	def manga_display(self):
 		"initiates the manga view"
-		self.manga_main = QWidget()
-		self.manga_main.setContentsMargins(-10, -12, -10, -10)
-		self.manga_view = QHBoxLayout()
-		self.manga_main.setLayout(self.manga_view)
+		#list view
+		self.manga_list_main = QWidget()
+		self.manga_list_main.setContentsMargins(-10, -12, -10, -10)
+		self.manga_list_layout = QHBoxLayout()
+		self.manga_list_main.setLayout(self.manga_list_layout)
 
 		self.manga_list_view = series.MangaView()
 		self.manga_list_view.clicked.connect(self.popup)
 		self.manga_list_view.manga_delegate.POPUP.connect(self.popup)
 		self.popup_window = self.manga_list_view.manga_delegate.popup_window
-		self.manga_view.addWidget(self.manga_list_view)
+		self.manga_list_layout.addWidget(self.manga_list_view)
+
+		#table view
+		self.manga_table_main = QWidget()
+		self.manga_table_layout = QVBoxLayout()
+		self.manga_table_main.setLayout(self.manga_table_layout)
+
+		self.manga_table_view = series.MangaTableView()
+		self.manga_table_view.series_model = self.manga_list_view.series_model
+		self.manga_table_view.sort_model = self.manga_list_view.sort_model
+		self.manga_table_view.setModel(self.manga_table_view.sort_model)
+		self.manga_table_view.sort_model.change_model(self.manga_table_view.series_model)
+		self.manga_table_view.setColumnWidth(gui_constants.FAV, 20)
+		self.manga_table_view.setColumnWidth(gui_constants.ARTIST, 200)
+		self.manga_table_view.setColumnWidth(gui_constants.TITLE, 400)
+		self.manga_table_view.setColumnWidth(gui_constants.TAGS, 300)
+		self.manga_table_view.setColumnWidth(gui_constants.TYPE, 100)
+		self.manga_table_layout.addWidget(self.manga_table_view)
+
 
 	def search(self, srch_string):
-		self.manga_list_view.sort_model.setFilterRegExp(srch_string)
+		case_ins = srch_string.lower()
+		remove = '^$*+?{}[]\\|()'
+		for x in remove:
+			case_ins = case_ins.replace(x, '.')
+		self.manga_list_view.sort_model.search(case_ins)
 
 	def popup(self, index):
 		if not self.popup_window.isVisible():
@@ -173,13 +211,17 @@ Your database will not be touched without you being notified.""")
 
 	def favourite_display(self):
 		"Switches to favourite display"
-		self.manga_list_view.sort_model.change_model(self.manga_list_view.favourite_model)
-		self.manga_list_view.favourite_model.populate_data()
+		if self.display.currentIndex() == self.m_l_view_index:
+			self.manga_list_view.sort_model.fav_view()
+		else:
+			self.manga_table_view.sort_model.fav_view()
 
 	def catalog_display(self):
 		"Switches to catalog display"
-		self.manga_list_view.sort_model.change_model(self.manga_list_view.series_model)
-		self.manga_list_view.series_model.populate_data()
+		if self.display.currentIndex() == self.m_l_view_index:
+			self.manga_list_view.sort_model.catalog_view()
+		else:
+			self.manga_table_view.sort_model.catalog_view()
 
 	def settings(self):
 		about = misc.About()
@@ -225,7 +267,22 @@ Your database will not be touched without you being notified.""")
 		spacer_middle.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 		self.toolbar.addWidget(spacer_middle)
 		
+		self.grid_toggle_g_icon = QIcon(gui_constants.GRID_PATH)
+		self.grid_toggle_l_icon = QIcon(gui_constants.LIST_PATH)
+		self.grid_toggle = QAction(self.toolbar)
+		self.grid_toggle.setIcon(self.grid_toggle_l_icon)
+		self.grid_toggle.triggered.connect(self.toggle_view)
+		self.toolbar.addAction(self.grid_toggle)
+
+		completer = QCompleter(self)
+		completer.setModel(self.manga_list_view.series_model)
+		completer.setCaseSensitivity(Qt.CaseInsensitive)
+		completer.setCompletionMode(QCompleter.PopupCompletion)
+		completer.setCompletionRole(Qt.DisplayRole)
+		completer.setCompletionColumn(gui_constants.TITLE)
+		completer.setFilterMode(Qt.MatchContains)
 		self.search_bar = QLineEdit()
+		self.search_bar.setCompleter(completer)
 		self.search_bar.textChanged[str].connect(self.search)
 		self.search_bar.setPlaceholderText("Search title, artist (Tag: search tag)")
 		self.search_bar.setMaximumWidth(200)
@@ -241,20 +298,16 @@ Your database will not be touched without you being notified.""")
 		spacer_end.setFixedSize(QSize(10, 1))
 		self.toolbar.addWidget(spacer_end)
 
-	#def setCurrentIndex(self, number, index=None):
-	#	"""Changes the current display view.
-	#	Params:
-	#		number <- int (0 for manga view, 1 for chapter view
-	#	Optional:
-	#		index <- QModelIndex for chapter view
-	#	Note: 0-based indexing
-	#	"""
-	#	if index is not None:
-	#		pass
-	#		#self.chapter_info_view.display_manga(index)
-	#		#self.display.setCurrentIndex(number)
-	#	else:
-	#		self.display.setCurrentIndex(number)
+	def toggle_view(self):
+		"""
+		Toggles the current display view
+		"""
+		if self.display.currentIndex() == self.m_l_view_index:
+			self.display.setCurrentIndex(self.m_t_view_index)
+			self.grid_toggle.setIcon(self.grid_toggle_g_icon)
+		else:
+			self.display.setCurrentIndex(self.m_l_view_index)
+			self.grid_toggle.setIcon(self.grid_toggle_l_icon)
 
 	# TODO: Improve this so that it adds to the series dialog,
 	# so user can edit data before inserting (make it a choice)
@@ -280,6 +333,7 @@ Your database will not be touched without you being notified.""")
 
 					def finished(status):
 						if status:
+							log_i('Populating DB from series folder: OK')
 							self.manga_list_view.series_model.populate_data()
 							# TODO: make it spawn a dialog instead (from utils.py or misc.py)
 							if loading.progress.maximum() == loading.progress.value():
@@ -287,6 +341,7 @@ Your database will not be touched without you being notified.""")
 								loading.hide()
 							data_thread.quit
 						else:
+							log_e('Populating DB from series folder: FAIL')
 							loading.setText("<font color=red>An error occured. Try restarting..</font>")
 							loading.progress.setStyleSheet("background-color:red;")
 							data_thread.quit
@@ -313,8 +368,19 @@ Your database will not be touched without you being notified.""")
 					fetch_instance.FINISHED.connect(fetch_deleteLater)
 					fetch_instance.FINISHED.connect(thread_deleteLater)
 					data_thread.start()
+					log_i('Populating DB from series folder')
 
 	def closeEvent(self, event):
+		try:
+			for root, dirs, files in os.walk('temp', topdown=False):
+				for name in files:
+					os.remove(os.path.join(root, name))
+				for name in dirs:
+					os.rmdir(os.path.join(root, name))
+			log_d('Empty temp on exit: OK')
+		except:
+			log_d('Empty temp on exit: FAIL')
+		log_d('Normal Exit App: OK')
 		super().closeEvent(event)
 		app = QApplication.instance()
 		app.quit()
