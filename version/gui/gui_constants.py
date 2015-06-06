@@ -42,6 +42,7 @@ TYPE = 3
 FAV = 4
 
 # image paths
+APP_ICO_PATH = os.path.join(static_dir, "happypanda.ico")
 STAR_BTN_PATH = os.path.join(static_dir, "btn_star.png")
 STAR_PATH = os.path.join(static_dir, "star.png")
 STAR_SMALL_PATH = os.path.join(static_dir, "star_small.png")

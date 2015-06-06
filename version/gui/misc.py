@@ -14,7 +14,7 @@ along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 
 from PyQt5.QtCore import (Qt, QDate, QPoint, pyqtSignal, QThread,
 						  QTimer, QObject)
-from PyQt5.QtGui import QTextCursor
+from PyQt5.QtGui import QTextCursor, QIcon
 from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QVBoxLayout, QHBoxLayout,
 							 QDialog, QGridLayout, QLineEdit,
@@ -26,6 +26,7 @@ import os, threading, queue, time, logging
 from datetime import datetime
 from ..utils import tag_to_string, tag_to_dict, title_parser
 from ..database import seriesdb, fetch, db
+from . import gui_constants
 
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -116,6 +117,7 @@ along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 		self.move(frect.topLeft()-QPoint(0,150))
 		self.setAttribute(Qt.WA_DeleteOnClose)
 		self.setWindowTitle("About")
+		self.setWindowIcon(QIcon(gui_constants.APP_ICO_PATH))
 		self.exec()
 
 class Loading(QWidget):
@@ -560,6 +562,7 @@ class SeriesDialog(QDialog):
 		self.move(frect.topLeft()-QPoint(0,180))
 		self.setAttribute(Qt.WA_DeleteOnClose)
 		self.setWindowTitle("Add a new series")
+		self.setWindowIcon(QIcon(gui_constants.APP_ICO_PATH))
 		#self.setWindowFlags(Qt.FramelessWindowHint)
 		self.exec()
 

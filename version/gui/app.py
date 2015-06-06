@@ -58,6 +58,7 @@ class AppWindow(QMainWindow):
 
 		self.setCentralWidget(self.center)
 		self.setWindowTitle("Happypanda")
+		self.setWindowIcon(QIcon(gui_constants.APP_ICO_PATH))
 		self.resize(gui_constants.MAIN_W, gui_constants.MAIN_H)
 		self.show()
 		log_d('Show window: OK')
@@ -72,7 +73,7 @@ class AppWindow(QMainWindow):
 				try:
 					log_d('Checking Update')
 					time.sleep(3)
-					r = requests.get("https://raw.githubusercontent.com/Pewpews/happypanda/master/VERSION")
+					r = requests.get("https://raw.githubusercontent.com/Pewpews/happypanda/master/VS.txt")
 					a = r.text
 					vs = a.strip()
 					self.UPDATE_CHECK.emit(vs)
@@ -106,6 +107,7 @@ https://github.com/Pewpews/happypanda/releases
 Your database will not be touched without you being notified.""")
 				msgbox.setStandardButtons(QMessageBox.Ok)
 				msgbox.setDefaultButton(QMessageBox.Ok)
+				msgbox.setWindowIcon(QIcon(gui_constants.APP_ICO_PATH))
 				msgbox.exec()
 		except:
 			pass
