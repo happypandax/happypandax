@@ -12,14 +12,14 @@ You should have received a copy of the GNU General Public License
 along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from .database import db
+from .database import db, db_constants
 from .gui import app, gui_constants
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QFile
 import sys, logging, os, argparse
 
 #IMPORTANT STUFF
-def init():
+def start():
 
 	parser = argparse.ArgumentParser(prog='Happypanda',
 								  description='A manga/doujinshi manager with tagging support')
@@ -64,10 +64,31 @@ def init():
 	log_c = log.critical
 
 	application = QApplication(sys.argv)
+	log_d('Happypanda Version {}'.format(gui_constants.vs))
 	log_d('App Event Start: OK')
-	conn = db.init_db()
-	log_d('Init DB Conn: OK')
-	if conn:
+	try:
+		conn = db.init_db()
+		log_d('Init DB Conn: OK')
+	except:
+		log_d('Database connection failed')
+		from PyQt5.QtGui import QIcon
+		from PyQt5.QtWidgets import QMessageBox
+		log_i('Invalid database')
+		msg_box = QMessageBox()
+		msg_box.setWindowIcon(QIcon(gui_constants.APP_ICO_PATH))
+		msg_box.setText('Invalid database')
+		msg_box.setInformativeText("Do you want to create a new database?")
+		msg_box.setIcon(QMessageBox.Critical)
+		msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+		msg_box.setDefaultButton(QMessageBox.Yes)
+		if msg_box.exec() == QMessageBox.Yes:
+			pass
+		else:
+			application.exit()
+			log_d('Normal Exit App: OK')
+			sys.exit()
+
+	def start_main_window(conn):
 		DB = db.DBThread(conn)
 		WINDOW = app.AppWindow()
 
@@ -103,15 +124,36 @@ def init():
 		log_d('Create temp: OK')
 
 		sys.exit(application.exec_())
-	else:
+
+	def db_upgrade():
 		log_d('Database connection failed')
+		from PyQt5.QtGui import QIcon
 		from PyQt5.QtWidgets import QMessageBox
+
 		msg_box = QMessageBox()
-		msg_box.setInformativeText("The database is not compatible with the current version of the program")
+		msg_box.setWindowIcon(QIcon(gui_constants.APP_ICO_PATH))
+		msg_box.setText('Incompatible database!')
+		msg_box.setInformativeText("Do you want to upgrade to newest version?" +
+							 "Don't worry about your data. It'll remain mostly the same.")
 		msg_box.setIcon(QMessageBox.Critical)
-		msg_box.setStandardButtons(QMessageBox.Ok)
-		msg_box.setDefaultButton(QMessageBox.Ok)
-		if msg_box.exec():
+		msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+		msg_box.setDefaultButton(QMessageBox.Yes)
+		if msg_box.exec() == QMessageBox.Yes:
+			import threading
+			db_p = db_constants.DB_PATH
+			threading.Thread(target=db.add_db_revisions,
+					args=(db_p,)).start()
+			done = None
+			while not done:
+				done = db.ResultQueue.get()
+			conn = db.init_db()
+			start_main_window(conn)
+		else:
 			application.exit()
 			log_d('Normal Exit App: OK')
 			sys.exit()
+
+	if conn:
+		start_main_window(conn)
+	else:
+		db_upgrade()
