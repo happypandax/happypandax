@@ -15,7 +15,7 @@ I'm here if you have any questions!
 
 For Mac & Linux see [INSTALL.md](INSTALL.md)
 
-1. Download the installer from [https://github.com/Pewpews/happypanda/releases](releases)
+1. Download the installer from (https://github.com/Pewpews/happypanda/releases)
 2. Extract to desired location (avoid locations where you need admin rights)
 3. Run the program by clicking on Happypanda
 
