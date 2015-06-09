@@ -22,7 +22,8 @@ from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QComboBox, QDateEdit, QGroupBox,
 							 QDesktopWidget, QMessageBox, QFileDialog,
 							 QCompleter, QListWidgetItem,
-							 QListWidget, QApplication)
+							 QListWidget, QApplication, QSizePolicy,
+							 QCheckBox)
 import os, threading, queue, time, logging
 from datetime import datetime
 from ..utils import tag_to_string, tag_to_dict, title_parser
@@ -118,13 +119,23 @@ class SeriesListView(QWidget):
 		super().__init__(parent)
 		self.setWindowFlags(Qt.Dialog)
 
+		spacer = QWidget()
+		spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+
 		layout = QVBoxLayout()
 		self.setLayout(layout)
 		self.view_list = QListWidget()
 		self.view_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
 		self.view_list.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-		layout.addWidget(QLabel('Please uncheck series\' you do' +
-						  ' not want to add. (Existing series\' are hidden)'))
+		check_layout = QHBoxLayout()
+		layout.addLayout(check_layout)
+		check_layout.addWidget(QLabel('Please uncheck series\' you do' +
+						  ' not want to add. (Existing series\' are hidden)'),
+						 3)
+		self.check_all = QCheckBox('Check/Uncheck All', self)
+		self.check_all.setChecked(True)
+		self.check_all.stateChanged.connect(self.all_check_state)
+		check_layout.addWidget(self.check_all)
 		layout.addWidget(self.view_list)
 		
 		add_btn = QPushButton('Add checked')
@@ -132,7 +143,8 @@ class SeriesListView(QWidget):
 		cancel_btn = QPushButton('Cancel')
 		cancel_btn.clicked.connect(self.close_window)
 		btn_layout = QHBoxLayout()
-		btn_layout.addSpacing(0)
+
+		btn_layout.addWidget(spacer)
 		btn_layout.addWidget(add_btn)
 		btn_layout.addWidget(cancel_btn)
 		layout.addLayout(btn_layout)
@@ -141,6 +153,20 @@ class SeriesListView(QWidget):
 		frect = self.frameGeometry()
 		frect.moveCenter(QDesktopWidget().availableGeometry().center())
 		self.move(frect.topLeft())
+
+	def all_check_state(self, new_state):
+		row = 0
+		done = False
+		while not done:
+			item = self.view_list.item(row)
+			if item:
+				row += 1
+				if new_state == Qt.Unchecked:
+					item.setCheckState(Qt.Unchecked)
+				else:
+					item.setCheckState(Qt.Checked)
+			else:
+				done = True
 
 	def return_series(self):
 		series_list = []
