@@ -278,6 +278,41 @@ def return_tag_completer_TextEdit():
 	TextEditCompleter.setCompleter(CompleterWithData(ns))
 	return TextEditCompleter
 
+from PyQt5.QtCore import QSortFilterProxyModel
+class DatabaseFilterProxyModel(QSortFilterProxyModel):
+	"""
+	A proxy model to hide items already in database
+	Pass a tuple with entries to 'filters' param if you need a custom filter.
+	"""
+	def __init__(self, filters="", parent=None):
+		super().__init__(parent)
+		self.filters = tuple(filters)
+		self.role = Qt.DisplayRole
+		db_data = SeriesDB.get_all_series()
+		filter_list = []
+		for series in db_data:
+			p = os.path.split(series.path)
+			filter_list.append(p[1])
+		self.filter_list = sorted(filter_list)
+		print('Instatiated')
+
+	def set_name_role(self, role):
+		self.role = role
+		self.invalidateFilter()
+
+	def filterAcceptsRow(self, source_row, index_parent):
+		print('Using')
+		allow = False
+		index = self.sourceModel().index(source_row, 0, index_parent)
+
+		if self.sourceModel() and index.isValid():
+			allow = True
+			name = index.data(self.role)
+			if name.endswith(self.filters):
+				if binary_search(name):
+					print('Hiding {}'.format(name))
+					allow = True
+		return allow
 
 # TODO: FIX THIS HORRENDOUS DUPLICATED CODE
 class SeriesDialog(QDialog):
@@ -302,6 +337,18 @@ class SeriesDialog(QDialog):
 		main_layout.addWidget(f_local)
 		local_layout = QHBoxLayout()
 		f_local.setLayout(local_layout)
+
+		choose_folder = QPushButton("From Folder")
+		choose_folder.clicked.connect(lambda: self.choose_dir('f'))
+		local_layout.addWidget(choose_folder)
+
+		choose_archive = QPushButton("From ZIP")
+		choose_archive.clicked.connect(lambda: self.choose_dir('a'))
+		local_layout.addWidget(choose_archive)
+
+		self.file_exists_lbl = QLabel()
+		local_layout.addWidget(self.file_exists_lbl)
+		self.file_exists_lbl.hide()
 
 		f_web = QGroupBox("Metadata from the Web")
 		f_web.setCheckable(False)
@@ -347,13 +394,6 @@ class SeriesDialog(QDialog):
 		url_edit.setPlaceholderText("paste g.e-hentai/exhentai gallery link")
 		url_prog.hide()
 
-		choose_folder = QPushButton("From Folder")
-		choose_folder.clicked.connect(lambda: self.choose_dir('f'))
-		local_layout.addWidget(choose_folder)
-
-		choose_archive = QPushButton("From ZIP")
-		choose_archive.clicked.connect(lambda: self.choose_dir('a'))
-		local_layout.addWidget(choose_archive)
 
 		self.title_edit = QLineEdit()
 		self.author_edit = QLineEdit()
@@ -453,6 +493,11 @@ class SeriesDialog(QDialog):
 		l_i = self.lang_box.findText(parsed['language'])
 		if l_i != -1:
 			self.lang_box.setCurrentIndex(l_i)
+
+		if seriesdb.SeriesDB.check_exists(tail):
+			self.file_exists_lbl.setText('<font color="red">Series already exists</font>')
+			self.file_exists_lbl.show()
+		else: self.file_exists_lbl.hide()
 
 	def check(self):
 		if len(self.title_edit.text()) is 0:

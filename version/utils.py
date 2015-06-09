@@ -236,7 +236,7 @@ def title_parser(title):
 
 	if title[-4:] in ('.zip','.rar'):
 		title = title[:-4]
-	elif artist[-3:] is '.7z':
+	elif title[-3:] is '.7z':
 		title = title[:-3]
 
 	parsed_title = {'title':"", 'artist':"", 'language':"other"}

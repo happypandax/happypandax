@@ -147,6 +147,7 @@ class SeriesDB:
 		set_series_title -> changes series title
 		series_count -> returns amount of series (can be used for indexing)
 		del_series -> deletes the series with the given id recursively
+		check_exists -> Checks if provided string exists
 	"""
 	def __init__(self):
 		raise Exception("SeriesDB should not be instantiated")
@@ -339,6 +340,37 @@ class SeriesDB:
 		del c
 		ChapterDB.del_all_chapters(series_id)
 		TagDB.del_series_mapping(series_id)
+
+	@staticmethod
+	def check_exists(name, data=None):
+		"""
+		Checks if provided string exists in provided sorted
+		list based on path name
+		"""
+		if not data:
+			db_data = SeriesDB.get_all_series()
+			filter_list = []
+			for series in db_data:
+				p = os.path.split(series.path)
+				filter_list.append(p[1])
+			filter_list = sorted(filter_list)
+
+		def binary_search(key):
+			low = 0
+			high = len(filter_list) - 1
+			while high >= low:
+				mid = low + (high - low) // 2
+				if filter_list[mid] < key:
+					low = mid + 1
+				elif filter_list[mid] > key:
+					high = mid - 1
+				else:
+					return mid
+			return None
+
+		if binary_search(name):
+			return True
+		else: return False
 
 
 class ChapterDB:
@@ -723,6 +755,7 @@ class Series:
 			 self.info, self.fav, self.type, self.language, self.status, self.tags,
 			 self.pub_date, self.date_added)
 		return string
+
 
 
 if __name__ == '__main__':
