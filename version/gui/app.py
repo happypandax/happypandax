@@ -12,7 +12,7 @@ You should have received a copy of the GNU General Public License
 along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import sys, logging, os
+import sys, logging, os, threading
 from PyQt5.QtCore import (Qt, QSize, pyqtSignal, QThread, QEvent, QTimer,
 						  QObject)
 from PyQt5.QtGui import (QPixmap, QIcon, QMouseEvent, QCursor)
@@ -21,10 +21,11 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QListView,
 							 QLabel, QStackedLayout, QToolBar, QMenuBar,
 							 QSizePolicy, QMenu, QAction, QLineEdit,
 							 QSplitter, QMessageBox, QFileDialog,
-							 QDesktopWidget, QPushButton, QCompleter)
+							 QDesktopWidget, QPushButton, QCompleter,
+							 QListWidget, QListWidgetItem)
 from . import series
 from . import gui_constants, misc
-from ..database import fetch
+from ..database import fetch, seriesdb
 
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -133,6 +134,7 @@ Your database will not be touched without you being notified.""")
 		self.manga_list_view.series_model.ROWCOUNT_CHANGE.connect(self.stat_row_info)
 		self.manga_list_view.series_model.STATUSBAR_MSG.connect(self.stat_temp_msg)
 		self.manga_list_view.STATUS_BAR_MSG.connect(self.stat_temp_msg)
+		self.manga_table_view.STATUS_BAR_MSG.connect(self.stat_temp_msg)
 		self.stat_row_info()
 
 	def stat_temp_msg(self, msg):
@@ -315,62 +317,108 @@ Your database will not be touched without you being notified.""")
 	# so user can edit data before inserting (make it a choice)
 	def populate(self):
 		"Populates the database with series from local drive'"
-		msgbox = QMessageBox()
-		msgbox.setText("<font color='red'><b>Use with care.</b></font> Choose a folder containing all your series'.")
-		msgbox.setInformativeText("Oniichan, are you sure you want to do this?")
-		msgbox.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-		msgbox.setDefaultButton(QMessageBox.No)
-		if msgbox.exec() == QMessageBox.Yes:
-			path = QFileDialog.getExistingDirectory(None, "Choose a folder containing your series'")
-			if len(path) is not 0:
-				data_thread = QThread()
-				#loading_thread = QThread()
-				loading = misc.Loading()
+		path = QFileDialog.getExistingDirectory(None, "Choose a folder containing your series'")
+		if len(path) is not 0:
+			data_thread = QThread()
+			#loading_thread = QThread()
+			loading = misc.Loading(self)
+			if not loading.ON:
+				misc.Loading.ON = True
+				fetch_instance = fetch.Fetch()
+				fetch_instance.series_path = path
+				loading.show()
 
-				if not loading.ON:
-					misc.Loading.ON = True
-					fetch_instance = fetch.Fetch()
-					fetch_instance.series_path = path
-					loading.show()
+				def finished(status):
+					def hide_loading():
+						loading.hide()
+					if status:
+						if len(status) != 0:
+							def add_series(series_list):
+								class A(QObject):
+									done = pyqtSignal()
+									prog = pyqtSignal(int)
+									def __init__(self, obj, parent=None):
+										super().__init__(parent)
+										self.obj = obj
 
-					def finished(status):
-						if status:
+									def add_to_db(self):
+										p = 0
+										for x in self.obj:
+											seriesdb.SeriesDB.add_series(x)
+											p += 1
+											self.prog.emit(p)
+										self.done.emit()
+
+								loading.progress.setMaximum(len(series_list))
+								a_instance = A(series_list)
+								thread = QThread()
+								def loading_show():
+									loading.setText('Populating database.\nPlease wait...')
+									loading.show()
+
+								def loading_hide():
+									loading.hide()
+									self.manga_list_view.series_model.populate_data()
+
+								a_instance.moveToThread(thread)
+								a_instance.prog.connect(loading.progress.setValue)
+								thread.started.connect(loading_show)
+								thread.started.connect(a_instance.add_to_db)
+								a_instance.done.connect(loading_hide)
+								a_instance.done.connect(lambda: a_instance.deleteLater)
+								a_instance.done.connect(lambda: thread.deleteLater)
+								thread.start()
+
+							data_thread.quit
+							hide_loading()
 							log_i('Populating DB from series folder: OK')
-							self.manga_list_view.series_model.populate_data()
+							series_list = misc.SeriesListView(self)
+							series_list.SERIES.connect(add_series)
+							for ser in status:
+								item = misc.SeriesListItem(ser)
+								item.setText(os.path.split(ser.path)[1])
+								item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
+								item.setCheckState(Qt.Checked)
+								series_list.view_list.addItem(item)
+							#self.manga_list_view.series_model.populate_data()
+							series_list.show()
 							# TODO: make it spawn a dialog instead (from utils.py or misc.py)
-							if loading.progress.maximum() == loading.progress.value():
-								misc.Loading.ON = False
-								loading.hide()
-							data_thread.quit
+							misc.Loading.ON = False
 						else:
-							log_e('Populating DB from series folder: FAIL')
-							loading.setText("<font color=red>An error occured. Try restarting..</font>")
-							loading.progress.setStyleSheet("background-color:red;")
+							log_d('No new series was found')
+							loading.setText("No new series found")
 							data_thread.quit
+							misc.Loading.ON = False
 
-					def fetch_deleteLater():
-						try:
-							fetch_instance.deleteLater
-						except NameError:
-							pass
+					else:
+						log_e('Populating DB from series folder: FAIL')
+						loading.setText("<font color=red>An error occured. Try restarting..</font>")
+						loading.progress.setStyleSheet("background-color:red;")
+						data_thread.quit
 
-					def thread_deleteLater(): #NOTE: Isn't this bad?
-						data_thread.deleteLater
-						data_thread.quit()
+				def fetch_deleteLater():
+					try:
+						fetch_instance.deleteLater
+					except NameError:
+						pass
 
-					def a_progress(prog):
-						loading.progress.setValue(prog)
-						loading.setText("Searching on local disk...\n(Will take a while on first time)")
+				def thread_deleteLater(): #NOTE: Isn't this bad?
+					data_thread.deleteLater
+					data_thread.quit()
 
-					fetch_instance.moveToThread(data_thread)
-					fetch_instance.DATA_COUNT.connect(loading.progress.setMaximum)
-					fetch_instance.PROGRESS.connect(a_progress)
-					data_thread.started.connect(fetch_instance.local)
-					fetch_instance.FINISHED.connect(finished)
-					fetch_instance.FINISHED.connect(fetch_deleteLater)
-					fetch_instance.FINISHED.connect(thread_deleteLater)
-					data_thread.start()
-					log_i('Populating DB from series folder')
+				def a_progress(prog):
+					loading.progress.setValue(prog)
+					loading.setText("Searching for series...")
+
+				fetch_instance.moveToThread(data_thread)
+				fetch_instance.DATA_COUNT.connect(loading.progress.setMaximum)
+				fetch_instance.PROGRESS.connect(a_progress)
+				data_thread.started.connect(fetch_instance.local)
+				fetch_instance.FINISHED.connect(finished)
+				fetch_instance.FINISHED.connect(fetch_deleteLater)
+				fetch_instance.FINISHED.connect(thread_deleteLater)
+				data_thread.start()
+				log_i('Populating DB from series folder')
 
 	def closeEvent(self, event):
 		try:

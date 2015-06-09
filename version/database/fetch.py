@@ -38,7 +38,7 @@ class Fetch(QObject):
 	"""
 
 	# local signals
-	FINISHED = pyqtSignal(bool)
+	FINISHED = pyqtSignal(object)
 	DATA_COUNT = pyqtSignal(int)
 	PROGRESS = pyqtSignal(int)
 
@@ -51,6 +51,7 @@ class Fetch(QObject):
 		super().__init__(parent)
 		self.series_path = ""
 		self.web_url = ""
+		self.data = []
 	
 	def local(self):
 		"""Do a local search in the given series_path.
@@ -58,15 +59,15 @@ class Fetch(QObject):
 		series_l = sorted(os.listdir(self.series_path)) #list of folders in the "Series" folder 
 		if len(series_l) != 0: # if series folder is not empty
 			log_d('Series folder is not empty')
-			try:
-				self.DATA_COUNT.emit(len(series_l)) #tell model how many items are going to be added
-				log_d('Found {} items'.format(len(series_l)))
-				progress = 0
-				for ser_path in series_l: # ser_path = series folder title
-					new_series = Series()
-
+			#try:
+			self.DATA_COUNT.emit(len(series_l)) #tell model how many items are going to be added
+			log_d('Found {} items'.format(len(series_l)))
+			progress = 0
+			for ser_path in series_l: # ser_path = series folder title
+				if not SeriesDB.check_exists(ser_path):
+					log_d('Creating series: {}'.format(ser_path.encode('utf-8', 'ignore')))
 					path = os.path.join(self.series_path, ser_path)
-
+					new_series = Series()
 					images_paths = []
 					try:
 						con = os.listdir(path) #all of content in the series folder
@@ -108,21 +109,24 @@ class Fetch(QObject):
 					new_series.info = "<i>No description..</i>"
 					new_series.chapters_size = len(new_series.chapters)
 
-					progress += 1 # update the progress bar
-					self.PROGRESS.emit(progress)
-					SeriesDB.add_series(new_series)
-			except:
-				log_e('Local Search: Fail')
-				self.FINISHED.emit(False)
+					self.data.append(new_series)
+				else:
+					log_d('Series already exists: {}'.format(ser_path.encode('utf-8', 'ignore')))
+
+				progress += 1 # update the progress bar
+				self.PROGRESS.emit(progress)
+			#except:
+				#log_e('Local Search: Fail')
+				#self.FINISHED.emit(False)
 		else: # if series folder is empty
 			log_e('Local search error: Invalid directory')
 			log_d('Series folder is empty')
 			self.FINISHED.emit(False)
 			# might want to include an error message
-
 		# everything went well
 		log_i('Local search: OK')
-		self.FINISHED.emit(True)
+		log_d('Created {} items'.format(len(self.data)))
+		self.FINISHED.emit(self.data)
 
 	def web(self):
 		"""Fetches gallery metadata from the web.

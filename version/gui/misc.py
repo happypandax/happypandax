@@ -21,7 +21,8 @@ from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QFormLayout, QPushButton, QTextEdit,
 							 QComboBox, QDateEdit, QGroupBox,
 							 QDesktopWidget, QMessageBox, QFileDialog,
-							 QCompleter)
+							 QCompleter, QListWidgetItem,
+							 QListWidget, QApplication)
 import os, threading, queue, time, logging
 from datetime import datetime
 from ..utils import tag_to_string, tag_to_dict, title_parser
@@ -82,6 +83,91 @@ log_c = log.critical
 
 #errors = ExceptionHandler()
 
+#def center_parent(parent, child):
+#	"centers child window in parent"
+#	centerparent = QPoint(
+#			parent.x() + (parent.frameGeometry().width() -
+#					 child.frameGeometry().width())//2,
+#					parent.y() + (parent.frameGeometry().width() -
+#					   child.frameGeometry().width())//2)
+#	desktop = QApplication.desktop()
+#	sg_rect = desktop.screenGeometry(desktop.screenNumber(parent))
+#	child_frame = child.frameGeometry()
+
+#	if centerparent.x() < sg_rect.left():
+#		centerparent.setX(sg_rect.left())
+#	elif (centerparent.x() + child_frame.width()) > sg_rect.right():
+#		centerparent.setX(sg_rect.right() - child_frame.width())
+
+#	if centerparent.y() < sg_rect.top():
+#		centerparent.setY(sg_rect.top())
+#	elif (centerparent.y() + child_frame.height()) > sg_rect.bottom():
+#		centerparent.setY(sg_rect.bottom() - child_frame.height())
+
+#	child.move(centerparent)
+
+
+class SeriesListItem(QListWidgetItem):
+	def __init__(self, series=None, parent=None):
+		super().__init__(parent)
+		self.series = series
+
+class SeriesListView(QWidget):
+	SERIES = pyqtSignal(list)
+	def __init__(self, parent=None):
+		super().__init__(parent)
+		self.setWindowFlags(Qt.Dialog)
+
+		layout = QVBoxLayout()
+		self.setLayout(layout)
+		self.view_list = QListWidget()
+		self.view_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+		self.view_list.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+		layout.addWidget(QLabel('Please uncheck series\' you do' +
+						  ' not want to add. (Existing series\' are hidden)'))
+		layout.addWidget(self.view_list)
+		
+		add_btn = QPushButton('Add checked')
+		add_btn.clicked.connect(self.return_series)
+		cancel_btn = QPushButton('Cancel')
+		cancel_btn.clicked.connect(self.close_window)
+		btn_layout = QHBoxLayout()
+		btn_layout.addSpacing(0)
+		btn_layout.addWidget(add_btn)
+		btn_layout.addWidget(cancel_btn)
+		layout.addLayout(btn_layout)
+
+		self.resize(500,550)
+		frect = self.frameGeometry()
+		frect.moveCenter(QDesktopWidget().availableGeometry().center())
+		self.move(frect.topLeft())
+
+	def return_series(self):
+		series_list = []
+		row = 0
+		done = False
+		while not done:
+			item = self.view_list.item(row)
+			if not item:
+				done = True
+			else:
+				if item.checkState() == Qt.Checked:
+					series_list.append(item.series)
+				row += 1
+
+		self.SERIES.emit(series_list)
+		self.close()
+
+	def close_window(self):
+		msgbox = QMessageBox()
+		msgbox.setText('Are you sure you want to cancel?')
+		msgbox.setStandardButtons(msgbox.Yes | msgbox.No)
+		msgbox.setDefaultButton(msgbox.No)
+		msgbox.setIcon(msgbox.Question)
+		if msgbox.exec() == QMessageBox.Yes:
+			self.close()
+		
+
 class About(QDialog):
 	ON = False #to prevent multiple instances
 	def __init__(self):
@@ -122,8 +208,8 @@ along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 
 class Loading(QWidget):
 	ON = False #to prevent multiple instances
-	def __init__(self):
-		super().__init__()
+	def __init__(self, parent=None):
+		super().__init__(parent)
 		self.widget = QWidget(self)
 		self.widget.setStyleSheet("background-color:rgba(0, 0, 0, 0.65)")
 		self.progress = QProgressBar()
@@ -139,11 +225,13 @@ class Loading(QWidget):
 		layout_.addWidget(self.widget)
 		self.setLayout(layout_)
 		self.resize(300,100)
-		frect = self.frameGeometry()
-		frect.moveCenter(QDesktopWidget().availableGeometry().center())
-		self.move(frect.topLeft())
+		#frect = self.frameGeometry()
+		#frect.moveCenter(QDesktopWidget().availableGeometry().center())
+		self.move(parent.window().frameGeometry().topLeft() +
+			parent.window().rect().center() -
+			self.rect().center() - QPoint(self.rect().width()//2,0))
 		#self.setAttribute(Qt.WA_DeleteOnClose)
-		self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+		#self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
 
 	def mousePressEvent(self, QMouseEvent):
 		pass

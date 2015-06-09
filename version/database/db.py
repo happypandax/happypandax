@@ -348,9 +348,9 @@ class DBThread:
 		assert isinstance(cmd_queue, queue.Queue), "You must pass a queue from the queue system module"
 		assert isinstance(result_queue, queue.Queue), "You must pass a queue from the queue system module"
 
+		check_db_version(self.conn)
 		while True:
 			list_of_cmds = cmd_queue.get()
-			check_db_version(self.conn)
 			# TODO: implement error handling. Idea: make it put status code in resultqueue or spawn a dialog?
 			c = self.conn.cursor()
 			for cmd in list_of_cmds:
