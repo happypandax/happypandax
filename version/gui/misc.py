@@ -23,7 +23,8 @@ from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QDesktopWidget, QMessageBox, QFileDialog,
 							 QCompleter, QListWidgetItem,
 							 QListWidget, QApplication, QSizePolicy,
-							 QCheckBox)
+							 QCheckBox, QFrame, QListView,
+							 QAbstractItemView, QTreeView)
 import os, threading, queue, time, logging
 from datetime import datetime
 from ..utils import tag_to_string, tag_to_dict, title_parser
@@ -115,35 +116,58 @@ class SeriesListItem(QListWidgetItem):
 
 class SeriesListView(QWidget):
 	SERIES = pyqtSignal(list)
-	def __init__(self, parent=None):
+	def __init__(self, parent=None, modal=False):
 		super().__init__(parent)
 		self.setWindowFlags(Qt.Dialog)
 
-		spacer = QWidget()
-		spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-
 		layout = QVBoxLayout()
 		self.setLayout(layout)
-		self.view_list = QListWidget()
-		self.view_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-		self.view_list.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+
+		if modal:
+			frame = QFrame()
+			frame.setFrameShape(frame.StyledPanel)
+			modal_layout = QHBoxLayout()
+			frame.setLayout(modal_layout)
+			layout.addWidget(frame)
+			info = QLabel('Select 1 or more series\' to add' +
+				 ' to your list.')
+			f_folder = QPushButton('Add folders')
+			f_folder.clicked.connect(self.from_folder)
+			f_files = QPushButton('Add files')
+			f_files.clicked.connect(self.from_files)
+			modal_layout.addWidget(info, 3, Qt.AlignLeft)
+			modal_layout.addWidget(f_folder, 0, Qt.AlignRight)
+			modal_layout.addWidget(f_files, 0, Qt.AlignRight)
+
 		check_layout = QHBoxLayout()
 		layout.addLayout(check_layout)
-		check_layout.addWidget(QLabel('Please uncheck series\' you do' +
-						  ' not want to add. (Existing series\' are hidden)'),
-						 3)
+		if modal:
+			check_layout.addWidget(QLabel('Please uncheck series\' you do' +
+							  ' not want to add. (Exisiting series\' won\'t be added'),
+							 3)
+		else:
+			check_layout.addWidget(QLabel('Please uncheck series\' you do' +
+							  ' not want to add. (Existing series\' are hidden)'),
+							 3)
 		self.check_all = QCheckBox('Check/Uncheck All', self)
 		self.check_all.setChecked(True)
 		self.check_all.stateChanged.connect(self.all_check_state)
+
 		check_layout.addWidget(self.check_all)
+		self.view_list = QListWidget()
+		self.view_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+		self.view_list.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
 		layout.addWidget(self.view_list)
 		
 		add_btn = QPushButton('Add checked')
 		add_btn.clicked.connect(self.return_series)
+
 		cancel_btn = QPushButton('Cancel')
 		cancel_btn.clicked.connect(self.close_window)
 		btn_layout = QHBoxLayout()
 
+		spacer = QWidget()
+		spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
 		btn_layout.addWidget(spacer)
 		btn_layout.addWidget(add_btn)
 		btn_layout.addWidget(cancel_btn)
@@ -153,6 +177,7 @@ class SeriesListView(QWidget):
 		frect = self.frameGeometry()
 		frect.moveCenter(QDesktopWidget().availableGeometry().center())
 		self.move(frect.topLeft())
+		self.setWindowTitle('Series List')
 
 	def all_check_state(self, new_state):
 		row = 0
@@ -167,6 +192,18 @@ class SeriesListView(QWidget):
 					item.setCheckState(Qt.Checked)
 			else:
 				done = True
+
+	def add_series(self, item, name):
+		"""
+		Constructs an widgetitem to hold the provided item,
+		and adds it to the view_list
+		"""
+		assert isinstance(name, str)
+		series_item = SeriesListItem(item)
+		series_item.setText(name)
+		series_item.setFlags(series_item.flags() | Qt.ItemIsUserCheckable)
+		series_item.setCheckState(Qt.Checked)
+		self.view_list.addItem(series_item)
 
 	def return_series(self):
 		series_list = []
@@ -183,6 +220,31 @@ class SeriesListView(QWidget):
 
 		self.SERIES.emit(series_list)
 		self.close()
+
+	def from_folder(self):
+		file_dialog = QFileDialog()
+		file_dialog.setFileMode(QFileDialog.DirectoryOnly)
+		file_dialog.setOption(QFileDialog.DontUseNativeDialog, True)
+		file_view = file_dialog.findChild(QListView, 'listView')
+		if file_view:
+			file_view.setSelectionMode(QAbstractItemView.MultiSelection)
+		f_tree_view = file_dialog.findChild(QTreeView)
+		if f_tree_view:
+			f_tree_view.setSelectionMode(QAbstractItemView.MultiSelection)
+
+		if file_dialog.exec():
+			for path in file_dialog.selectedFiles():
+				self.add_series(path, os.path.split(path)[1])
+
+
+	def from_files(self):
+		series_list = QFileDialog.getOpenFileNames(self,
+											 'Select 1 or more series to add',
+											 filter='Archives (*.zip)')
+		for path in series_list[0]:
+			#Warning: will break when you add more filters
+			if len(path) != 0:
+				self.add_series(path, os.path.split(path)[1])
 
 	def close_window(self):
 		msgbox = QMessageBox()

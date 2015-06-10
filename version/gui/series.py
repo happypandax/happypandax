@@ -19,7 +19,7 @@ from PyQt5.QtCore import (Qt, QAbstractListModel, QModelIndex, QVariant,
 from PyQt5.QtGui import (QPixmap, QBrush, QColor, QPainter, 
 						 QPen, QTextDocument,
 						 QMouseEvent, QHelpEvent,
-						 QPixmapCache, QCursor, QPalette)
+						 QPixmapCache, QCursor, QPalette, QKeyEvent)
 from PyQt5.QtWidgets import (QListView, QFrame, QLabel,
 							 QStyledItemDelegate, QStyle,
 							 QMenu, QAction, QToolTip, QVBoxLayout,
@@ -340,10 +340,12 @@ class SeriesModel(QAbstractTableModel):
 		if role == Qt.DecorationRole:
 			pixmap = current_series.profile
 			return pixmap
-		#if role == Qt.BackgroundRole:
-		#	bg_color = QColor(70, 67, 70)
-		#	bg_brush = QBrush(bg_color)
-		#	return bg_brush
+		
+		if role == Qt.BackgroundRole:
+			bg_color = QColor(242, 242, 242)
+			bg_brush = QBrush(bg_color)
+			return bg_brush
+
 		#if role == Qt.ToolTipRole:
 		#	return "Example popup!!"
 		if role == Qt.UserRole+1:
@@ -868,13 +870,16 @@ class MangaTableView(QTableView):
 		self.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
 		self.setSelectionBehavior(self.SelectRows)
 		self.setSelectionMode(self.SingleSelection)
-		self.setFocusPolicy(Qt.NoFocus)
 		self.setShowGrid(True)
 		self.setSortingEnabled(True)
 		v_header = self.verticalHeader()
 		v_header.sectionResizeMode(QHeaderView.Fixed)
 		v_header.setDefaultSectionSize(24)
 		v_header.hide()
+		palette = self.palette()
+		palette.setColor(palette.Highlight, QColor(88, 88, 88, 70))
+		palette.setColor(palette.HighlightedText, QColor('black'))
+		self.setPalette(palette)
 		self.setIconSize(QSize(0,0))
 		self.doubleClicked.connect(self.open_chapter)
 

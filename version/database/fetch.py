@@ -56,17 +56,26 @@ class Fetch(QObject):
 	def local(self):
 		"""Do a local search in the given series_path.
 		"""
-		series_l = sorted(os.listdir(self.series_path)) #list of folders in the "Series" folder 
-		if len(series_l) != 0: # if series folder is not empty
+		try:
+			series_l = sorted(os.listdir(self.series_path)) #list of folders in the "Series" folder
+			mixed = False
+		except TypeError:
+			series_l = self.series_path
+			mixed = True
+		if len(series_l) != 0: # if series path list is not empty
 			log_d('Series folder is not empty')
 			try:
 				self.DATA_COUNT.emit(len(series_l)) #tell model how many items are going to be added
 				log_d('Found {} items'.format(len(series_l)))
 				progress = 0
 				for ser_path in series_l: # ser_path = series folder title
+					if mixed:
+						path = ser_path
+						ser_path = os.path.split(path)[1]
+					else:
+						path = os.path.join(self.series_path, ser_path)
 					if not SeriesDB.check_exists(ser_path):
 						log_d('Creating series: {}'.format(ser_path.encode('utf-8', 'ignore')))
-						path = os.path.join(self.series_path, ser_path)
 						new_series = Series()
 						images_paths = []
 						try:
@@ -76,7 +85,7 @@ class Fetch(QObject):
 							# if series has chapters divided into sub folders
 							if len(chapters) != 0:
 								for numb, ch in enumerate(chapters):
-									chap_path = os.path.join(self.series_path, ser_path, ch)
+									chap_path = os.path.join(path, ch)
 									new_series.chapters[numb] = chap_path
 
 							else: #else assume that all images are in series folder

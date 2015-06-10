@@ -246,22 +246,30 @@ Your database will not be touched without you being notified.""")
 
 		favourite_view_icon = QIcon(gui_constants.STAR_BTN_PATH)
 		favourite_view_action = QAction(favourite_view_icon, "Favourite", self)
+		favourite_view_action.setToolTip('Show only favourite series\'')
 		favourite_view_action.triggered.connect(self.favourite_display) #need lambda to pass extra args
 		self.toolbar.addAction(favourite_view_action)
 
 		catalog_view_icon = QIcon(gui_constants.HOME_BTN_PATH)
 		catalog_view_action = QAction(catalog_view_icon, "Library", self)
+		catalog_view_action.setToolTip('Show all your series\'')
 		#catalog_view_action.setText("Catalog")
 		catalog_view_action.triggered.connect(self.catalog_display) #need lambda to pass extra args
 		self.toolbar.addAction(catalog_view_action)
 		self.toolbar.addSeparator()
 
 		series_icon = QIcon(gui_constants.PLUS_PATH)
-		series_action = QAction(series_icon, "Add series...", self)
+		series_action = QAction(series_icon, "Add series advanced", self)
 		series_action.triggered.connect(self.manga_list_view.SERIES_DIALOG.emit)
+		series_action.setToolTip('Add a single series thoroughly')
 		series_menu = QMenu()
 		series_menu.addSeparator()
+		add_more_action = QAction("Add series simple...", self)
+		add_more_action.setStatusTip('Add series\' from different folders')
+		add_more_action.triggered.connect(lambda: self.populate(True))
+		series_menu.addAction(add_more_action)
 		populate_action = QAction("Populate from folder...", self)
+		populate_action.setStatusTip('Populates the DB with series\' from a single folder')
 		populate_action.triggered.connect(self.populate)
 		series_menu.addAction(populate_action)
 		series_action.setMenu(series_menu)
@@ -315,9 +323,18 @@ Your database will not be touched without you being notified.""")
 
 	# TODO: Improve this so that it adds to the series dialog,
 	# so user can edit data before inserting (make it a choice)
-	def populate(self):
+	def populate(self, mixed=None):
 		"Populates the database with series from local drive'"
-		path = QFileDialog.getExistingDirectory(None, "Choose a folder containing your series'")
+		if mixed:
+			series_view = misc.SeriesListView(self, True)
+			series_view.SERIES.connect(self.series_populate)
+			series_view.show()
+		else:
+			path = QFileDialog.getExistingDirectory(None, "Choose a folder containing your series'")
+			self.series_populate(path, True)
+
+	def series_populate(self, path, validate=False):
+		"Scans the given path for series to add into the DB"
 		if len(path) is not 0:
 			data_thread = QThread()
 			#loading_thread = QThread()
@@ -372,16 +389,15 @@ Your database will not be touched without you being notified.""")
 							data_thread.quit
 							hide_loading()
 							log_i('Populating DB from series folder: OK')
-							series_list = misc.SeriesListView(self)
-							series_list.SERIES.connect(add_series)
-							for ser in status:
-								item = misc.SeriesListItem(ser)
-								item.setText(os.path.split(ser.path)[1])
-								item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
-								item.setCheckState(Qt.Checked)
-								series_list.view_list.addItem(item)
-							#self.manga_list_view.series_model.populate_data()
-							series_list.show()
+							if validate:
+								series_list = misc.SeriesListView(self)
+								series_list.SERIES.connect(add_series)
+								for ser in status:
+									series_list.add_series(ser, os.path.split(ser.path)[1])
+								#self.manga_list_view.series_model.populate_data()
+								series_list.show()
+							else:
+								add_series(status)
 							# TODO: make it spawn a dialog instead (from utils.py or misc.py)
 							misc.Loading.ON = False
 						else:
