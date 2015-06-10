@@ -55,7 +55,7 @@ LIST_PATH = os.path.join(static_dir, "list.png")
 # controls
 THUMBNAIL_CACHE_SIZE = 10240*100 #10240 is 10mb, so sum is 1gb
 PREFETCH_ITEM_AMOUNT = 100 # amount of items to prefetch
-SCROLL_SPEED = 9 # controls how many steps it takes when scrolling
+SCROLL_SPEED = 20 # controls how many steps it takes when scrolling
 
 # POPUP
 POPUP_WIDTH = 450
