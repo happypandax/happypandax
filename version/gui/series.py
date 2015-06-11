@@ -662,8 +662,9 @@ class MangaView(QListView):
 	def remove_series(self, index):
 		self.rowsAboutToBeRemoved(index.parent(), index.row(), index.row())
 		series = index.data(Qt.UserRole+1)
-		seriesdb.SeriesDB.del_series(series.id)
-		self.model().removeRows(index.row(), 1)
+		self.series_model.removeRows(index.row(), 1)
+		threading.Thread(target=seriesdb.SeriesDB.del_series,
+				   args=(series.id,), daemon=True).start()
 
 	def favourite(self, index):
 		assert isinstance(index, QModelIndex)
@@ -886,8 +887,9 @@ class MangaTableView(QTableView):
 	def remove_series(self, index):
 		self.rowsAboutToBeRemoved(index.parent(), index.row(), index.row())
 		series = index.data(Qt.UserRole+1)
-		seriesdb.SeriesDB.del_series(series.id)
-		self.model().removeRows(index.row(), 1)
+		self.series_model.removeRows(index.row(), 1)
+		threading.Thread(target=seriesdb.SeriesDB.del_series,
+				   args=(series.id,), daemon=True).start()
 
 	def favourite(self, index):
 		assert isinstance(index, QModelIndex)

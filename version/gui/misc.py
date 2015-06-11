@@ -129,8 +129,8 @@ class SeriesListView(QWidget):
 			modal_layout = QHBoxLayout()
 			frame.setLayout(modal_layout)
 			layout.addWidget(frame)
-			info = QLabel('Select 1 or more series\' to add' +
-				 ' to your list.')
+			info = QLabel('This mode let\'s you add series\' from ' +
+				 'different folders.')
 			f_folder = QPushButton('Add folders')
 			f_folder.clicked.connect(self.from_folder)
 			f_files = QPushButton('Add files')
