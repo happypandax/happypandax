@@ -158,7 +158,7 @@ Your database will not be touched without you being notified.""")
 		self.manga_list_layout = QHBoxLayout()
 		self.manga_list_main.setLayout(self.manga_list_layout)
 
-		self.manga_list_view = series.MangaView()
+		self.manga_list_view = series.MangaView(self)
 		self.manga_list_view.clicked.connect(self.popup)
 		self.manga_list_view.manga_delegate.POPUP.connect(self.popup)
 		self.popup_window = self.manga_list_view.manga_delegate.popup_window
@@ -169,7 +169,7 @@ Your database will not be touched without you being notified.""")
 		self.manga_table_layout = QVBoxLayout()
 		self.manga_table_main.setLayout(self.manga_table_layout)
 
-		self.manga_table_view = series.MangaTableView()
+		self.manga_table_view = series.MangaTableView(self)
 		self.manga_table_view.series_model = self.manga_list_view.series_model
 		self.manga_table_view.sort_model = self.manga_list_view.sort_model
 		self.manga_table_view.setModel(self.manga_table_view.sort_model)
@@ -178,7 +178,10 @@ Your database will not be touched without you being notified.""")
 		self.manga_table_view.setColumnWidth(gui_constants.ARTIST, 200)
 		self.manga_table_view.setColumnWidth(gui_constants.TITLE, 400)
 		self.manga_table_view.setColumnWidth(gui_constants.TAGS, 300)
-		self.manga_table_view.setColumnWidth(gui_constants.TYPE, 100)
+		self.manga_table_view.setColumnWidth(gui_constants.TYPE, 60)
+		self.manga_table_view.setColumnWidth(gui_constants.CHAPTERS, 60)
+		self.manga_table_view.setColumnWidth(gui_constants.LANGUAGE, 100)
+		self.manga_table_view.setColumnWidth(gui_constants.LINK, 400)
 		self.manga_table_layout.addWidget(self.manga_table_view)
 
 
@@ -374,7 +377,7 @@ Your database will not be touched without you being notified.""")
 									loading.show()
 
 								def loading_hide():
-									loading.hide()
+									loading.close()
 									self.manga_list_view.series_model.populate_data()
 
 								a_instance.moveToThread(thread)

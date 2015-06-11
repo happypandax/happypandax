@@ -44,30 +44,33 @@ def gen_thumbnail(chapter_path, width=gui_constants.THUMB_W_SIZE-2,
 		os.mkdir(THUMBNAIL_PATH)
 
 	def generate(cache, chap_path, w, h, img_queue):
-		if chap_path[-4:] == '.zip':
-			log_d('Generating Thumb from zip')
-			zip = ArchiveFile(chap_path)
-			p = os.path.join('temp', str(uuid.uuid4()))
-			os.mkdir(p)
-			f_img_name = sorted(zip.namelist())[0]
-			img_path = zip.extract(f_img_name, p)
-			zip.close()
-		else:
-			log_d('Generating Thumb from folder')
-			img_path = os.path.join(chap_path, [x for x in sorted(os.listdir(chap_path)) if x[-3:] in IMG_FILES][0]) #first image in chapter
-		suff = img_path[-4:] # the image ext with dot
+		try:
+			if chap_path[-4:] == '.zip':
+				log_d('Generating Thumb from zip')
+				zip = ArchiveFile(chap_path)
+				p = os.path.join('temp', str(uuid.uuid4()))
+				os.mkdir(p)
+				f_img_name = sorted(zip.namelist())[0]
+				img_path = zip.extract(f_img_name, p)
+				zip.close()
+			else:
+				log_d('Generating Thumb from folder')
+				img_path = os.path.join(chap_path, [x for x in sorted(os.listdir(chap_path)) if x[-3:] in IMG_FILES][0]) #first image in chapter
+			suff = img_path[-4:] # the image ext with dot
 		
-		# generate unique file name
-		file_name = str(uuid.uuid4()) + suff
-		new_img_path = os.path.join(cache, (file_name))
+			# generate unique file name
+			file_name = str(uuid.uuid4()) + suff
+			new_img_path = os.path.join(cache, (file_name))
 		
-		# Do the scaling
-		image = QImage()
-		image.load(img_path)
-		image = image.scaled(w, h, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-		image.save(new_img_path, quality=100)
+			# Do the scaling
+			image = QImage()
+			image.load(img_path)
+			image = image.scaled(w, h, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+			image.save(new_img_path, quality=100)
 
-		abs_path = os.path.abspath(new_img_path)
+			abs_path = os.path.abspath(new_img_path)
+		except IndexError:
+			abs_path = gui_constants.NO_IMAGE_PATH
 		img_queue.put(abs_path)
 		return True
 
@@ -334,6 +337,8 @@ class SeriesDB:
 	def del_series(series_id):
 		"Deletes series with the given id recursively."
 		assert isinstance(series_id, int), "Please provide a valid series id to delete"
+		series = SeriesDB.get_series_by_id(series_id)
+		os.remove(series.profile)
 		executing = [["DELETE FROM series WHERE series_id=?", (series_id,)]]
 		CommandQueue.put(executing)
 		c = ResultQueue.get()

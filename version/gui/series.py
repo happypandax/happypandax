@@ -292,6 +292,9 @@ class SeriesModel(QAbstractTableModel):
 		self._TAGS = gui_constants.TAGS
 		self._TYPE = gui_constants.TYPE
 		self._FAV = gui_constants.FAV
+		self._CHAPTERS = gui_constants.CHAPTERS
+		self._LANGUAGE = gui_constants.LANGUAGE
+		self._LINK = gui_constants.LINK
 
 	def populate_data(self):
 		"Populates the model with data from database"
@@ -313,7 +316,7 @@ class SeriesModel(QAbstractTableModel):
 		current_series = self._data[current_row]
 		current_column = index.column()
 
-		if role == Qt.DisplayRole:
+		def column_checker():
 			if current_column == self._TITLE:
 				title = current_series.title
 				return title
@@ -331,7 +334,15 @@ class SeriesModel(QAbstractTableModel):
 					return u'\u2605'
 				else:
 					return ''
+			elif current_column == self._CHAPTERS:
+				return len(current_series.chapters)
+			elif current_column == self._LANGUAGE:
+				return current_series.language
+			elif current_column == self._LINK:
+				return current_series.link
 
+		if role == Qt.DisplayRole:
+			return column_checker()
 		# for artist searching
 		if role == Qt.UserRole+2:
 			artist = current_series.artist
@@ -345,6 +356,9 @@ class SeriesModel(QAbstractTableModel):
 			bg_color = QColor(242, 242, 242)
 			bg_brush = QBrush(bg_color)
 			return bg_brush
+
+		if role == Qt.ToolTipRole:
+			return column_checker()
 
 		#if role == Qt.ToolTipRole:
 		#	return "Example popup!!"
@@ -380,6 +394,12 @@ class SeriesModel(QAbstractTableModel):
 				return 'Type'
 			elif section == self._FAV:
 				return u'\u2605'
+			elif section == self._CHAPTERS:
+				return 'Chapters'
+			elif section == self._LANGUAGE:
+				return 'Language'
+			elif section == self._LINK:
+				return 'Link'
 		return section + 1
 	#def flags(self, index):
 	#	if not index.isValid():
@@ -390,6 +410,11 @@ class SeriesModel(QAbstractTableModel):
 	def addRows(self, list_of_series, position=None,
 				rows=1, index = QModelIndex()):
 		"Adds new series data to model and to DB"
+		loading = misc.Loading(self.parent())
+		loading.setText('Adding...')
+		loading.progress.setMinimum(0)
+		loading.progress.setMaximum(0)
+		loading.show()
 		from ..database.seriesdb import PROFILE_TO_MODEL
 		if not position:
 			position = len(self._data)
@@ -401,6 +426,7 @@ class SeriesModel(QAbstractTableModel):
 		self.endInsertRows()
 		self.CUSTOM_STATUS_MSG.emit("Added item(s)")
 		self.ROWCOUNT_CHANGE.emit()
+		loading.close()
 		return True
 
 	def insertRows(self, list_of_series, position,
@@ -621,6 +647,9 @@ class CustomDelegate(QStyledItemDelegate):
 
 # TODO: Redo this part to avoid duplicated code
 
+
+
+
 class MangaView(QListView):
 	"""
 	TODO: (zoom-in/zoom-out) mousekeys
@@ -652,7 +681,7 @@ class MangaView(QListView):
 		self.sort_model.setSortCaseSensitivity(Qt.CaseInsensitive)
 		self.manga_delegate = CustomDelegate()
 		self.setItemDelegate(self.manga_delegate)
-		self.series_model = SeriesModel()
+		self.series_model = SeriesModel(parent)
 		self.sort_model.change_model(self.series_model)
 		self.sort_model.sort(0)
 		self.setModel(self.sort_model)
@@ -883,6 +912,20 @@ class MangaTableView(QTableView):
 		self.setPalette(palette)
 		self.setIconSize(QSize(0,0))
 		self.doubleClicked.connect(self.open_chapter)
+
+	def viewportEvent(self, event):
+		if event.type() == QEvent.ToolTip:
+			h_event = QHelpEvent(event)
+			index = self.indexAt(h_event.pos())
+			if index.isValid():
+				size_hint = self.itemDelegate(index).sizeHint(self.viewOptions(),
+												  index)
+				rect = QRect(0, 0, size_hint.width(), size_hint.height())
+				rect_visual = self.visualRect(index)
+				if rect.width() <= rect_visual.width():
+					QToolTip.hideText()
+					return True
+		return super().viewportEvent(event)
 
 	def remove_series(self, index):
 		self.rowsAboutToBeRemoved(index.parent(), index.row(), index.row())

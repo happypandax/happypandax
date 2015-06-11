@@ -34,12 +34,16 @@ THUMB_H_SIZE = 200
 THUMB_W_SIZE = 145
 
 # Columns
-COLUMNS = [0, 1, 2, 3, 4]
+COLUMNS = [0, 1, 2, 3, 4, 5, 6, 7]
 TITLE = 0
 ARTIST = 1
 TAGS = 2
 TYPE = 3
 FAV = 4
+CHAPTERS = 5
+LANGUAGE = 6
+LINK = 7
+
 
 # image paths
 APP_ICO_PATH = os.path.join(static_dir, "happypanda.ico")
@@ -51,6 +55,7 @@ HOME_BTN_PATH = os.path.join(static_dir, "home.png")
 SETTINGS_PATH = os.path.join(static_dir, "settings.png")
 GRID_PATH = os.path.join(static_dir, "grid.png")
 LIST_PATH = os.path.join(static_dir, "list.png")
+NO_IMAGE_PATH = os.path.join(static_dir, "no-image.jpg")
 
 # controls
 THUMBNAIL_CACHE_SIZE = 10240*100 #10240 is 10mb, so sum is 1gb
