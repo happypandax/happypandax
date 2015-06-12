@@ -15,7 +15,7 @@ along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 from PyQt5.QtCore import (Qt, QAbstractListModel, QModelIndex, QVariant,
 						  QSize, QRect, QEvent, pyqtSignal, QThread,
 						  QTimer, QPointF, QSortFilterProxyModel,
-						  QAbstractTableModel)
+						  QAbstractTableModel, QItemSelectionModel)
 from PyQt5.QtGui import (QPixmap, QBrush, QColor, QPainter, 
 						 QPen, QTextDocument,
 						 QMouseEvent, QHelpEvent,
@@ -25,7 +25,8 @@ from PyQt5.QtWidgets import (QListView, QFrame, QLabel,
 							 QMenu, QAction, QToolTip, QVBoxLayout,
 							 QSizePolicy, QTableWidget, QScrollArea,
 							 QHBoxLayout, QFormLayout, QDesktopWidget,
-							 QWidget, QHeaderView, QTableView, QApplication)
+							 QWidget, QHeaderView, QTableView, QApplication,
+							 QRubberBand)
 import threading
 import re as regex
 import logging
@@ -634,8 +635,8 @@ class CustomDelegate(QStyledItemDelegate):
 				painter.fillRect(option.rect, QColor(225,225,225,90)) #70
 			else:
 				self.popup_window.hide()
-			#if option.state & QStyle.State_Selected:
-			#	painter.fillRect(option.rect, QColor(164,164,164,120))
+			if option.state & QStyle.State_Selected:
+				painter.fillRect(option.rect, QColor(164,164,164,120))
 
 			#if option.state & QStyle.State_Selected:
 			#	painter.setPen(QPen(option.palette.highlightedText().color()))
@@ -664,14 +665,17 @@ class MangaView(QListView):
 		self.H = gui_constants.GRIDBOX_H_SIZE
 		self.W = gui_constants.GRIDBOX_W_SIZE
 		self.setGridSize(QSize(self.W, self.H))
+		self.setSpacing(10)
 		self.setResizeMode(self.Adjust)
 		# all items have the same size (perfomance)
 		self.setUniformItemSizes(True)
+		self.setSelectionBehavior(self.SelectItems)
+		self.setSelectionMode(self.ExtendedSelection)
 		# improve scrolling
 		self.setVerticalScrollMode(self.ScrollPerPixel)
 		self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 		# prevent all items being loaded at the same time
-		#self.setLayoutMode(self.Batched)
+		self.setLayoutMode(self.Batched)
 		self.setBatchSize(gui_constants.PREFETCH_ITEM_AMOUNT)
 		self.setMouseTracking(True)
 		self.sort_model = SortFilterModel()
@@ -688,12 +692,13 @@ class MangaView(QListView):
 		self.SERIES_DIALOG.connect(self.spawn_dialog)
 		self.doubleClicked.connect(self.open_chapter)
 
-	def remove_series(self, index):
-		self.rowsAboutToBeRemoved(index.parent(), index.row(), index.row())
-		series = index.data(Qt.UserRole+1)
-		self.series_model.removeRows(index.row(), 1)
-		threading.Thread(target=seriesdb.SeriesDB.del_series,
-				   args=(series.id,), daemon=True).start()
+	def remove_series(self, index_list):
+		for index in index_list:
+			self.rowsAboutToBeRemoved(index.parent(), index.row(), index.row())
+			series = index.data(Qt.UserRole+1)
+			self.series_model.removeRows(index.row(), 1)
+			threading.Thread(target=seriesdb.SeriesDB.del_series,
+					   args=(series.id,), daemon=True).start()
 
 	def favourite(self, index):
 		assert isinstance(index, QModelIndex)
@@ -709,11 +714,18 @@ class MangaView(QListView):
 			self.series_model.CUSTOM_STATUS_MSG.emit("Favourited")
 
 	def open_chapter(self, index, chap_numb=0):
-		series = index.data(Qt.UserRole+1)
-		self.STATUS_BAR_MSG.emit("Opening chapter {} of {}".format(chap_numb+1,
-															 series.title))
-		threading.Thread(target=utils.open,
-				   args=(series.chapters[chap_numb],)).start()
+		if isinstance(index, list):
+			for x in index:
+				series = x.data(Qt.UserRole+1)
+				self.STATUS_BAR_MSG.emit("Opening chapters of selected series'")
+				threading.Thread(target=utils.open,
+						   args=(series.chapters[chap_numb],)).start()
+		else:
+			series = index.data(Qt.UserRole+1)
+			self.STATUS_BAR_MSG.emit("Opening chapter {} of {}".format(chap_numb+1,
+																 series.title))
+			threading.Thread(target=utils.open,
+					   args=(series.chapters[chap_numb],)).start()
 
 	def refresh(self):
 		self.model().populate_data()
@@ -725,11 +737,21 @@ class MangaView(QListView):
 		index = self.indexAt(event.pos())
 		index = self.sort_model.mapToSource(index)
 
+		selected = False
+		select_indexes = self.selectedIndexes()
+		if len(select_indexes) > 1:
+			selected = True
+
 		menu = QMenu()
-		all_1 = QAction("Open First Chapter", menu,
-				  triggered = lambda: self.open_chapter(index, 0))
+		if selected:
+			all_0 = QAction("Open first chapters", menu,
+					  triggered = lambda: self.open_chapter(select_indexes, 0))
+			all_4 = QAction("Remove selected", menu,
+				   triggered = lambda: self.remove_series(select_indexes))
+		all_1 = QAction("Open first chapter", menu,
+					triggered = lambda: self.open_chapter(index, 0))
 		all_2 = QAction("Edit...", menu, triggered = lambda: self.spawn_dialog(index))
-		all_3 = QAction("Remove", menu, triggered = lambda: self.remove_series(index))
+		all_3 = QAction("Remove", menu, triggered = lambda: self.remove_series([index]))
 		
 		def fav():
 			self.favourite(index)
@@ -803,10 +825,12 @@ class MangaView(QListView):
 					 triggered = sort_title)
 			s_artist = QAction("Author", menu,
 					  triggered = sort_artist)
+			s_date = QAction("Date Added", menu)
 			sort_menu.addAction(asc_desc)
 			sort_menu.addSeparator()
 			sort_menu.addAction(s_title)
 			sort_menu.addAction(s_artist)
+			sort_menu.addAction(s_date)
 			refresh = QAction("&Refresh", menu,
 					 triggered = self.refresh)
 			menu.addAction(refresh)
@@ -814,6 +838,10 @@ class MangaView(QListView):
 
 		if handled and custom:
 			menu.addSeparator()
+			try:
+				menu.addAction(all_0)
+			except:
+				pass
 			menu.addAction(all_1)
 			menu.addAction(all_2)
 			try:
@@ -822,6 +850,10 @@ class MangaView(QListView):
 				pass
 			menu.addSeparator()
 			menu.addAction(all_3)
+			try:
+				menu.addAction(all_4)
+			except:
+				pass
 			menu.exec_(event.globalPos())
 			self.manga_delegate.CONTEXT_ON = False
 			event.accept()
@@ -899,7 +931,7 @@ class MangaTableView(QTableView):
 		# options
 		self.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
 		self.setSelectionBehavior(self.SelectRows)
-		self.setSelectionMode(self.SingleSelection)
+		self.setSelectionMode(self.ExtendedSelection)
 		self.setShowGrid(True)
 		self.setSortingEnabled(True)
 		v_header = self.verticalHeader()
