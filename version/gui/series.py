@@ -728,17 +728,39 @@ class MangaView(QListView):
 			for x in index:
 				series = x.data(Qt.UserRole+1)
 				self.STATUS_BAR_MSG.emit("Opening chapters of selected series'")
-				threading.Thread(target=utils.open,
-						   args=(series.chapters[chap_numb],)).start()
+				try:
+					threading.Thread(target=utils.open,
+							   args=(series.chapters[chap_numb],)).start()
+				except IndexError:
+					pass
 		else:
 			series = index.data(Qt.UserRole+1)
 			self.STATUS_BAR_MSG.emit("Opening chapter {} of {}".format(chap_numb+1,
 																 series.title))
-			threading.Thread(target=utils.open,
-					   args=(series.chapters[chap_numb],)).start()
+			try:
+				threading.Thread(target=utils.open,
+						   args=(series.chapters[chap_numb],)).start()
+			except IndexError:
+				pass
+
+	def del_chapter(self, index, chap_numb):
+		series = index.data(Qt.UserRole+1)
+		if len(series.chapters) < 2:
+			self.remove_series([index])
+		else:
+			msgbox = QMessageBox(self)
+			msgbox.setText('Are you sure you want to delete:')
+			msgbox.setIcon(msgbox.Question)
+			msgbox.setInformativeText('Chapter {} of {}'.format(chap_numb+1,
+														  series.title))
+			msgbox.setStandardButtons(msgbox.Yes | msgbox.No)
+			if msgbox.exec() == msgbox.Yes:
+				series.chapters.pop(chap_numb, None)
+				self.series_model.replaceRows([series], index.row())
+				seriesdb.ChapterDB.del_chapter(series.id, chap_numb)
 
 	def refresh(self):
-		self.model().populate_data()
+		self.series_model.populate_data() # TODO: CAUSE OF CRASH! FIX ASAP
 		self.STATUS_BAR_MSG.emit("Refreshed")
 
 	def contextMenuEvent(self, event):
@@ -809,6 +831,21 @@ class MangaView(QListView):
 				ser = index.data(Qt.UserRole+1)
 				utils.open_path(os.path.split(ser.path)[0])
 
+		def add_chapters():
+			def add_chdb(chaps):
+				print(chaps)
+				series = index.data(Qt.UserRole+1)
+				log_d('Adding new chapter for {}'.format(series.title))
+				seriesdb.ChapterDB.add_chapters_raw(series.id, chaps)
+				series = seriesdb.SeriesDB.get_series_by_id(series.id)
+				print(series.chapters)
+				self.series_model.replaceRows([series], index.row())
+
+			ch_widget = misc.ChapterAddWidget(index.data(Qt.UserRole+1),
+								   self.parentWidget())
+			ch_widget.CHAPTERS.connect(add_chdb)
+			ch_widget.show()
+
 		if index.isValid():
 			self.manga_delegate.CONTEXT_ON = True
 
@@ -851,23 +888,40 @@ class MangaView(QListView):
 			handled = True
 
 		if handled and custom:
-			if selected:
-				folder_select_act = QAction('Open folders', menu, triggered = lambda: op_folder(True))
-				menu.addAction(folder_select_act)
-			menu.addSeparator()
-			folder_act = QAction('Open folder', menu, triggered = op_folder)
-			menu.addAction(folder_act)
+			# chapters
 			try:
 				menu.addAction(all_0)
 			except:
 				pass
 			menu.addAction(all_1)
+			if not selected:
+				add_chap_act = QAction('Add chapters', menu,
+						   triggered=add_chapters)
+				menu.addAction(add_chap_act)
+				remo_chap_act = QAction('Remove chapter', menu)
+				menu.addAction(remo_chap_act)
+				remove_chap_menu = QMenu()
+				remo_chap_act.setMenu(remove_chap_menu)
+				for number, chap_number in enumerate(range(len(
+					index.data(Qt.UserRole+1).chapters)), 1):
+					chap_action = QAction("Remove chapter {}".format(
+						number), remove_chap_menu, triggered = lambda: self.del_chapter(index, chap_number))
+					remove_chap_menu.addAction(chap_action)
+			menu.addSeparator()
+			# folders
+			if selected:
+				folder_select_act = QAction('Open folders', menu, triggered = lambda: op_folder(True))
+				menu.addAction(folder_select_act)
+			folder_act = QAction('Open folder', menu, triggered = op_folder)
+			menu.addAction(folder_act)
 			menu.addAction(all_2)
+			# link
 			try:
 				menu.addAction(ext_action)
 			except:
 				pass
 			menu.addSeparator()
+			# remove
 			menu.addAction(all_3)
 			try:
 				menu.addAction(all_4)
@@ -906,7 +960,7 @@ class MangaView(QListView):
 
 			threading.Thread(target=seriesdb.SeriesDB.modify_series,
 							 args=(series.id,), kwargs=kwdict).start()
-		self.model().replaceRows([series], pos, len(list_of_series))
+		self.series_model.replaceRows([series], pos, len(list_of_series))
 
 	def spawn_dialog(self, index=False):
 		if not index:
@@ -978,12 +1032,22 @@ class MangaTableView(QTableView):
 					return True
 		return super().viewportEvent(event)
 
-	def remove_series(self, index):
-		self.rowsAboutToBeRemoved(index.parent(), index.row(), index.row())
-		series = index.data(Qt.UserRole+1)
-		self.series_model.removeRows(index.row(), 1)
-		threading.Thread(target=seriesdb.SeriesDB.del_series,
-				   args=(series.id,), daemon=True).start()
+	def remove_series(self, index_list):
+		msgbox = QMessageBox()
+		msgbox.setIcon(msgbox.Question)
+		msgbox.setStandardButtons(msgbox.Yes | msgbox.No)
+		if len(index_list) > 1:
+			msgbox.setText('Are you sure you want to remove selected?')
+		else:
+			msgbox.setText('Are you sure you want to remove?')
+
+		if msgbox.exec() == msgbox.Yes:
+			for index in index_list:
+				self.rowsAboutToBeRemoved(index.parent(), index.row(), index.row())
+				series = index.data(Qt.UserRole+1)
+				self.series_model.removeRows(index.row(), 1)
+				threading.Thread(target=seriesdb.SeriesDB.del_series,
+						   args=(series.id,), daemon=True).start()
 
 	def favourite(self, index):
 		assert isinstance(index, QModelIndex)
@@ -999,14 +1063,43 @@ class MangaTableView(QTableView):
 			self.series_model.CUSTOM_STATUS_MSG.emit("Favourited")
 
 	def open_chapter(self, index, chap_numb=0):
+		if isinstance(index, list):
+			for x in index:
+				series = x.data(Qt.UserRole+1)
+				self.STATUS_BAR_MSG.emit("Opening chapters of selected series'")
+				try:
+					threading.Thread(target=utils.open,
+							   args=(series.chapters[chap_numb],)).start()
+				except IndexError:
+					pass
+		else:
+			series = index.data(Qt.UserRole+1)
+			self.STATUS_BAR_MSG.emit("Opening chapter {} of {}".format(chap_numb+1,
+																 series.title))
+			try:
+				threading.Thread(target=utils.open,
+						   args=(series.chapters[chap_numb],)).start()
+			except IndexError:
+				pass
+
+	def del_chapter(self, index, chap_numb):
 		series = index.data(Qt.UserRole+1)
-		self.STATUS_BAR_MSG.emit("Opening chapter {} of {}".format(chap_numb+1,
-															 series.title))
-		threading.Thread(target=utils.open,
-				   args=(series.chapters[chap_numb],)).start()
+		if len(series.chapters) < 2:
+			self.remove_series([index])
+		else:
+			msgbox = QMessageBox(self)
+			msgbox.setText('Are you sure you want to delete:')
+			msgbox.setIcon(msgbox.Question)
+			msgbox.setInformativeText('Chapter {} of {}'.format(chap_numb+1,
+														  series.title))
+			msgbox.setStandardButtons(msgbox.Yes | msgbox.No)
+			if msgbox.exec() == msgbox.Yes:
+				series.chapters.pop(chap_numb, None)
+				self.series_model.replaceRows([series], index.row())
+				seriesdb.ChapterDB.del_chapter(series.id, chap_numb)
 
 	def refresh(self):
-		self.model().populate_data()
+		self.series_model.populate_data() # TODO: CAUSE OF CRASH! FIX ASAP
 		self.STATUS_BAR_MSG.emit("Refreshed")
 
 	def contextMenuEvent(self, event):
@@ -1015,14 +1108,25 @@ class MangaTableView(QTableView):
 		index = self.indexAt(event.pos())
 		index = self.sort_model.mapToSource(index)
 
+		selected = False
+		select_indexes = self.selectedIndexes()
+		if len(select_indexes) > len(gui_constants.COLUMNS):
+			selected = True
+
 		menu = QMenu()
-		all_1 = QAction("Open First Chapter", menu,
-				  triggered = lambda: self.open_chapter(index, 0))
+		if selected:
+			all_0 = QAction("Open first chapters", menu,
+					  triggered = lambda: self.open_chapter(select_indexes, 0))
+			all_4 = QAction("Remove selected", menu,
+				   triggered = lambda: self.remove_series(select_indexes))
+		all_1 = QAction("Open first chapter", menu,
+					triggered = lambda: self.open_chapter(index, 0))
 		all_2 = QAction("Edit...", menu, triggered = lambda: self.spawn_dialog(index))
-		all_3 = QAction("Remove", menu, triggered = lambda: self.remove_series(index))
-		
+		all_3 = QAction("Remove", menu, triggered = lambda: self.remove_series([index]))
+
 		def fav():
 			self.favourite(index)
+
 
 		# add the chapter menus
 		def chapters():
@@ -1055,28 +1159,45 @@ class MangaTableView(QTableView):
 			else:
 				self.sort_model.sort(0, Qt.AscendingOrder)
 
+		def op_folder(selected=False):
+			if selected:
+				self.STATUS_BAR_MSG.emit('Opening folders')
+				for x in select_indexes:
+					ser = x.data(Qt.UserRole+1)
+					utils.open_path(os.path.split(ser.path)[0])
+			else:
+				self.STATUS_BAR_MSG.emit('Opening folder')
+				ser = index.data(Qt.UserRole+1)
+				utils.open_path(os.path.split(ser.path)[0])
+
+		def add_chapters():
+			def add_chdb(chaps):
+				series = index.data(Qt.UserRole+1)
+				log_d('Adding new chapter for {}'.format(series.title))
+				seriesdb.ChapterDB.add_chapters_raw(series.id, chaps)
+				series = seriesdb.SeriesDB.get_series_by_id(series.id)
+				self.series_model.replaceRows([series], index.row())
+
+			ch_widget = misc.ChapterAddWidget(index.data(Qt.UserRole+1),
+								   self.parentWidget())
+			ch_widget.CHAPTERS.connect(add_chdb)
+			ch_widget.show()
 
 		if index.isValid():
+
 			if index.data(Qt.UserRole+1).link != "":
 				ext_action = QAction("Open link", menu, triggered = open_link)
 
+			action_1 = QAction("Favourite", menu, triggered = fav)
+			action_1.setCheckable(True)
 			if index.data(Qt.UserRole+1).fav==1: # here you can limit which items to show these actions for
-				action_1 = QAction("Favourite", menu, triggered = fav)
-				action_1.setCheckable(True)
 				action_1.setChecked(True)
-				menu.addAction(action_1)
-				chapters()
-				handled = True
-				custom = True
-			if index.data(Qt.UserRole+1).fav==0: # here you can limit which items to show these actions for
-				action_1 = QAction("Favourite", menu, triggered = fav)
-				action_1.setCheckable(True)
+			else:
 				action_1.setChecked(False)
-				menu.addAction(action_1)
-				chapters()
-				handled = True
-				custom = True
-
+			menu.addAction(action_1)
+			chapters()
+			handled = True
+			custom = True
 		else:
 			add_series = QAction("&Add new Series...", menu,
 						triggered = self.SERIES_DIALOG.emit)
@@ -1091,25 +1212,57 @@ class MangaTableView(QTableView):
 					 triggered = sort_title)
 			s_artist = QAction("Author", menu,
 					  triggered = sort_artist)
+			s_date = QAction("Date Added", menu)
 			sort_menu.addAction(asc_desc)
 			sort_menu.addSeparator()
 			sort_menu.addAction(s_title)
 			sort_menu.addAction(s_artist)
+			sort_menu.addAction(s_date)
 			refresh = QAction("&Refresh", menu,
 					 triggered = self.refresh)
 			menu.addAction(refresh)
 			handled = True
 
 		if handled and custom:
-			menu.addSeparator()
+			# chapters
+			try:
+				menu.addAction(all_0)
+			except:
+				pass
 			menu.addAction(all_1)
+			if not selected:
+				add_chap_act = QAction('Add chapters', menu,
+						   triggered=add_chapters)
+				menu.addAction(add_chap_act)
+				remo_chap_act = QAction('Remove chapter', menu)
+				menu.addAction(remo_chap_act)
+				remove_chap_menu = QMenu()
+				remo_chap_act.setMenu(remove_chap_menu)
+				for number, chap_number in enumerate(range(len(
+					index.data(Qt.UserRole+1).chapters)), 1):
+					chap_action = QAction("Remove chapter {}".format(
+						number), remove_chap_menu, triggered = lambda: self.del_chapter(index, chap_number))
+					remove_chap_menu.addAction(chap_action)
+			menu.addSeparator()
+			# folders
+			if selected:
+				folder_select_act = QAction('Open folders', menu, triggered = lambda: op_folder(True))
+				menu.addAction(folder_select_act)
+			folder_act = QAction('Open folder', menu, triggered = op_folder)
+			menu.addAction(folder_act)
 			menu.addAction(all_2)
+			# link
 			try:
 				menu.addAction(ext_action)
 			except:
 				pass
 			menu.addSeparator()
+			# remove
 			menu.addAction(all_3)
+			try:
+				menu.addAction(all_4)
+			except:
+				pass
 			menu.exec_(event.globalPos())
 			event.accept()
 		elif handled:
@@ -1136,7 +1289,7 @@ class MangaTableView(QTableView):
 
 			threading.Thread(target=seriesdb.SeriesDB.modify_series,
 							 args=(series.id,), kwargs=kwdict).start()
-		self.model().replaceRows([series], pos, len(list_of_series))
+		self.series_model.replaceRows([series], pos, len(list_of_series))
 
 	def spawn_dialog(self, index=False):
 		if not index:
