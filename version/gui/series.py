@@ -815,22 +815,16 @@ class MangaView(QListView):
 			if index.data(Qt.UserRole+1).link != "":
 				ext_action = QAction("Open link", menu, triggered = open_link)
 
+			action_1 = QAction("Favourite", menu, triggered = fav)
+			action_1.setCheckable(True)
 			if index.data(Qt.UserRole+1).fav==1: # here you can limit which items to show these actions for
-				action_1 = QAction("Favourite", menu, triggered = fav)
-				action_1.setCheckable(True)
 				action_1.setChecked(True)
-				menu.addAction(action_1)
-				chapters()
-				handled = True
-				custom = True
-			if index.data(Qt.UserRole+1).fav==0: # here you can limit which items to show these actions for
-				action_1 = QAction("Favourite", menu, triggered = fav)
-				action_1.setCheckable(True)
+			else:
 				action_1.setChecked(False)
-				menu.addAction(action_1)
-				chapters()
-				handled = True
-				custom = True
+			menu.addAction(action_1)
+			chapters()
+			handled = True
+			custom = True
 		else:
 			add_series = QAction("&Add new Series...", menu,
 						triggered = self.SERIES_DIALOG.emit)
