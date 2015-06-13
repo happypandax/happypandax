@@ -26,10 +26,9 @@ from PyQt5.QtWidgets import (QListView, QFrame, QLabel,
 							 QSizePolicy, QTableWidget, QScrollArea,
 							 QHBoxLayout, QFormLayout, QDesktopWidget,
 							 QWidget, QHeaderView, QTableView, QApplication,
-							 QRubberBand)
-import threading
+							 QMessageBox)
+import threading, logging, os
 import re as regex
-import logging
 
 from ..database import seriesdb
 from . import gui_constants, misc
@@ -516,12 +515,14 @@ class CustomDelegate(QStyledItemDelegate):
 			# Enable this to see the defining box
 			#painter.drawRect(option.rect)
 			# define font size
-			if 30 > len(title) > 20:
+			if 20 > len(title) > 15:
 				title_size = "font-size:12px;"
-			elif 40 > len(title) >= 30:
+			elif 30 > len(title) > 20:
 				title_size = "font-size:11px;"
-			elif 50 > len(title) >= 40:
+			elif 40 > len(title) >= 30:
 				title_size = "font-size:10px;"
+			elif 50 > len(title) >= 40:
+				title_size = "font-size:9px;"
 			elif len(title) >= 50:
 				title_size = "font-size:8px;"
 			else:
@@ -693,12 +694,21 @@ class MangaView(QListView):
 		self.doubleClicked.connect(self.open_chapter)
 
 	def remove_series(self, index_list):
-		for index in index_list:
-			self.rowsAboutToBeRemoved(index.parent(), index.row(), index.row())
-			series = index.data(Qt.UserRole+1)
-			self.series_model.removeRows(index.row(), 1)
-			threading.Thread(target=seriesdb.SeriesDB.del_series,
-					   args=(series.id,), daemon=True).start()
+		msgbox = QMessageBox()
+		msgbox.setIcon(msgbox.Question)
+		msgbox.setStandardButtons(msgbox.Yes | msgbox.No)
+		if len(index_list) > 1:
+			msgbox.setText('Are you sure you want to remove selected?')
+		else:
+			msgbox.setText('Are you sure you want to remove?')
+
+		if msgbox.exec() == msgbox.Yes:
+			for index in index_list:
+				self.rowsAboutToBeRemoved(index.parent(), index.row(), index.row())
+				series = index.data(Qt.UserRole+1)
+				self.series_model.removeRows(index.row(), 1)
+				threading.Thread(target=seriesdb.SeriesDB.del_series,
+						   args=(series.id,), daemon=True).start()
 
 	def favourite(self, index):
 		assert isinstance(index, QModelIndex)
@@ -752,9 +762,10 @@ class MangaView(QListView):
 					triggered = lambda: self.open_chapter(index, 0))
 		all_2 = QAction("Edit...", menu, triggered = lambda: self.spawn_dialog(index))
 		all_3 = QAction("Remove", menu, triggered = lambda: self.remove_series([index]))
-		
+
 		def fav():
 			self.favourite(index)
+
 
 		# add the chapter menus
 		def chapters():
@@ -787,6 +798,16 @@ class MangaView(QListView):
 			else:
 				self.sort_model.sort(0, Qt.AscendingOrder)
 
+		def op_folder(selected=False):
+			if selected:
+				self.STATUS_BAR_MSG.emit('Opening folders')
+				for x in select_indexes:
+					ser = x.data(Qt.UserRole+1)
+					utils.open_path(os.path.split(ser.path)[0])
+			else:
+				self.STATUS_BAR_MSG.emit('Opening folder')
+				ser = index.data(Qt.UserRole+1)
+				utils.open_path(os.path.split(ser.path)[0])
 
 		if index.isValid():
 			self.manga_delegate.CONTEXT_ON = True
@@ -810,7 +831,6 @@ class MangaView(QListView):
 				chapters()
 				handled = True
 				custom = True
-
 		else:
 			add_series = QAction("&Add new Series...", menu,
 						triggered = self.SERIES_DIALOG.emit)
@@ -837,7 +857,12 @@ class MangaView(QListView):
 			handled = True
 
 		if handled and custom:
+			if selected:
+				folder_select_act = QAction('Open folders', menu, triggered = lambda: op_folder(True))
+				menu.addAction(folder_select_act)
 			menu.addSeparator()
+			folder_act = QAction('Open folder', menu, triggered = op_folder)
+			menu.addAction(folder_act)
 			try:
 				menu.addAction(all_0)
 			except:

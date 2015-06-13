@@ -277,3 +277,17 @@ def open_web_link(url):
 		webbrowser.open_new_tab(url)
 	except:
 		log_e('Could not open URL in browser')
+
+def open_path(path):
+	try:
+		if sys.platform.startswith('darwin'):
+			subprocess.Popen(['open', path])
+		elif os.name == 'nt':
+			os.startfile(path)
+		elif os.name == 'posix':
+			subprocess.Popen(('xdg-open', path))
+		else:
+			log_e('Could not open path: no OS found')
+	except:
+		log_e('Could not open path')
+
