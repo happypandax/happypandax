@@ -14,7 +14,7 @@ along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 
 from PyQt5.QtCore import (Qt, QDate, QPoint, pyqtSignal, QThread,
 						  QTimer, QObject)
-from PyQt5.QtGui import QTextCursor, QIcon
+from PyQt5.QtGui import QTextCursor, QIcon, QMouseEvent
 from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QVBoxLayout, QHBoxLayout,
 							 QDialog, QGridLayout, QLineEdit,
@@ -24,7 +24,7 @@ from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QCompleter, QListWidgetItem,
 							 QListWidget, QApplication, QSizePolicy,
 							 QCheckBox, QFrame, QListView,
-							 QAbstractItemView, QTreeView)
+							 QAbstractItemView, QTreeView, QSpinBox)
 import os, threading, queue, time, logging
 from datetime import datetime
 from ..utils import tag_to_string, tag_to_dict, title_parser
@@ -108,11 +108,131 @@ log_c = log.critical
 
 #	child.move(centerparent)
 
+class PathLineEdit(QLineEdit):
+	def __init(self, parent=None, dir=True):
+		super().__init__(parent)
+		self.folder = dir
+
+	def openExplorer(self):
+		if self.folder:
+			path = QFileDialog.getExistingDirectory(self,
+										   'Choose folder')
+		else:
+			path = QFileDialog.getOpenFileName(self,
+									  'Choose file')
+			path = path[0]
+		if len(path) != 0:
+			self.setText(path)
+
+	def mousePressEvent(self, event):
+		assert isinstance(event, QMouseEvent)
+		if len(self.text()) == 0:
+			if event.button() == Qt.LeftButton:
+				self.openExplorer()
+			else:
+				return super().mousePressEvent(event)
+		if event.button() == Qt.RightButton:
+			self.openExplorer()
+			
+		super().mousePressEvent(event)
+
+class ChapterAddWidget(QWidget):
+	CHAPTERS = pyqtSignal(dict)
+	def __init__(self, series, parent=None):
+		super().__init__(parent)
+		self.setWindowFlags(Qt.Window)
+
+		self.current_chapters = len(series.chapters)
+		self.added_chaps = 0
+
+		layout = QFormLayout()
+		self.setLayout(layout)
+		lbl = QLabel('[{} {}]'.format(series.artist, series.title))
+		layout.addRow('Series:', lbl)
+		layout.addRow('Current chapters:', QLabel('{}'.format(self.current_chapters)))
+
+		new_btn = QPushButton('New')
+		new_btn.clicked.connect(self.add_new_chapter)
+		new_btn.adjustSize()
+		add_btn = QPushButton('Finish')
+		add_btn.clicked.connect(self.finish)
+		add_btn.adjustSize()
+		new_l = QHBoxLayout()
+		new_l.addWidget(add_btn, alignment=Qt.AlignLeft)
+		new_l.addWidget(new_btn, alignment=Qt.AlignRight)
+		layout.addRow(new_l)
+
+		frame = QFrame()
+		frame.setFrameShape(frame.StyledPanel)
+		layout.addRow(frame)
+
+		self.chapter_l = QVBoxLayout()
+		frame.setLayout(self.chapter_l)
+
+		new_btn.click()
+
+		self.setMaximumHeight(550)
+		self.setFixedWidth(500)
+		if parent:
+			self.move(parent.window().frameGeometry().topLeft() +
+				parent.window().rect().center() -
+				self.rect().center())
+		else:
+			frect = self.frameGeometry()
+			frect.moveCenter(QDesktopWidget().availableGeometry().center())
+			self.move(frect.topLeft())
+		self.setWindowTitle('Add Chapters')
+
+	def add_new_chapter(self):
+		chap_layout = QHBoxLayout()
+		self.added_chaps += 1
+		curr_chap = self.current_chapters+self.added_chaps
+
+		chp_numb = QSpinBox(self)
+		chp_numb.setMinimum(1)
+		chp_numb.setValue(curr_chap)
+		curr_chap_lbl = QLabel('Chapter {}'.format(curr_chap))
+		def ch_lbl(n): curr_chap_lbl.setText('Chapter {}'.format(n))
+		chp_numb.valueChanged[int].connect(ch_lbl)
+		chp_path = PathLineEdit()
+		chp_path.folder = True
+		chp_path.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+		chp_path.setPlaceholderText('Right/Left-click to open folder explorer.'+
+							  ' Leave empty to not add.')
+		chap_layout.addWidget(chp_path, 3)
+		chap_layout.addWidget(chp_numb, 0)
+		self.chapter_l.addWidget(curr_chap_lbl,
+						   alignment=Qt.AlignLeft)
+		self.chapter_l.addLayout(chap_layout)
+
+	def finish(self):
+		chapters = {}
+		widgets = []
+		x = True
+		while x:
+			x = self.chapter_l.takeAt(0)
+			if x:
+				widgets.append(x)
+		for l in range(1, len(widgets), 1):
+			layout = widgets[l]
+			try:
+				line_edit = layout.itemAt(0).widget()
+				spin_box = layout.itemAt(1).widget()
+			except AttributeError:
+				continue
+			p = line_edit.text()
+			c = spin_box.value() - 1 # because of 0-based index
+			if os.path.exists(p):
+				chapters[c] = p
+		self.CHAPTERS.emit(chapters)
+		self.close()
+
 
 class SeriesListItem(QListWidgetItem):
 	def __init__(self, series=None, parent=None):
 		super().__init__(parent)
 		self.series = series
+
 
 class SeriesListView(QWidget):
 	SERIES = pyqtSignal(list)
@@ -274,16 +394,28 @@ along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 """
 		self.text = QLabel(gpl)
 		self.text.setAlignment(Qt.AlignCenter)
+		l = QHBoxLayout()
+		author_lbl = QLabel("<b>Author:</b>\nPewpews\n")
+		l.addWidget(author_lbl, alignment=Qt.AlignLeft)
 		info_lbl = QLabel()
 		info_lbl.setText('<a href="https://github.com/Pewpews/happypanda">Visit GitHub Repo</a>')
 		info_lbl.setTextFormat(Qt.RichText)
 		info_lbl.setTextInteractionFlags(Qt.TextBrowserInteraction)
 		info_lbl.setOpenExternalLinks(True)
+		l.addWidget(info_lbl, alignment=Qt.AlignRight)
+
+		bug_lbl = QLabel()
+		bug_lbl.setText('Find some bugs or got any suggestions? Then please '+
+				  '<a href="https://github.com/Pewpews/happypanda/issues">'+
+				  'report them here.</a>')
+		bug_lbl.setTextFormat(Qt.RichText)
+		bug_lbl.setTextInteractionFlags(Qt.TextBrowserInteraction)
+		bug_lbl.setOpenExternalLinks(True)
 
 		layout_ = QVBoxLayout()
-		layout_.addWidget(QLabel("<b>Author:</b>\nPewpews\n"))
+		layout_.addLayout(l)
 		layout_.addWidget(self.text, 0, Qt.AlignHCenter)
-		layout_.addWidget(info_lbl)
+		layout_.addWidget(bug_lbl)
 		self.setLayout(layout_)
 		self.resize(300,100)
 		frect = self.frameGeometry()

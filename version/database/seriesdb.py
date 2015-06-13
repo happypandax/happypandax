@@ -383,10 +383,11 @@ class ChapterDB:
 	Provides the following database methods:
 		add_chapter -> adds chapter into db
 		add_chapter_raw -> links chapter to the given seires id, and adds into db
-		get_chapters_for_series-> returns a dict with chapters linked to the given series_id
-		get_chapter-> returns a dict with chapter matching the given chapter_id
+		get_chapters_for_series -> returns a dict with chapters linked to the given series_id
+		get_chapter-> returns a dict with chapter matching the given chapter_number
 		chapter_size -> returns amount of manga (can be used for indexing)
-		del_chapter -> (don't think this will be used, but w/e) NotImplementedError
+		del_all_chapters <- Deletes all chapters with the given series_id
+		del_chapter <- Deletes chapter with the given number from series
 	"""
 
 	def __init__(self):
@@ -411,9 +412,28 @@ class ChapterDB:
 			d = ResultQueue.get()
 			del d
 
-	def add_chapters_raw(series_id):
+	def add_chapters_raw(series_id, chapters_dict):
 		"Adds chapter(s) to a series with the received series_id"
-		pass
+		assert isinstance(chapters_dict, dict), "chapters_dict must be a dictionary: {numb:path}"
+		for chap_number in chapters_dict:
+			chap_path = str.encode(chapters_dict[chap_number])
+			if not ChapterDB.get_chapter(series_id, chap_number):
+				executing = [["""
+				INSERT INTO chapters(series_id, chapter_number, chapter_path)
+				VALUES(:series_id, :chapter_number, :chapter_path)""",
+				{'series_id':series_id,
+				'chapter_number':chap_number,
+				'chapter_path':chap_path}
+				]]
+			else:
+				executing = [["""
+				UPDATE chapters SET chapter_path=?
+				WHERE series_id=? AND chapter_number=?""",
+				(series_id, chap_number,)]]
+			CommandQueue.put(executing)
+			d = ResultQueue.get()
+			del d
+				
 
 	@staticmethod
 	def get_chapters_for_series(series_id):
@@ -435,21 +455,24 @@ class ChapterDB:
 
 
 	@staticmethod
-	def get_chapter(id):
-		"""Returns a dict of chapter matching the recieved chapter_id
+	def get_chapter(series_id, chap_numb):
+		"""Returns a dict of chapter matching the recieved chapter_number
 		{<chap_number>:<chap_path>}
+		return None for no match
 		"""
-		assert isinstance(id, int), "Please provide a valid chapter ID"
+		assert isinstance(chap_numb, int), "Please provide a valid chapter number"
 		executing = [["""SELECT chapter_number, chapter_path
-							FROM chapters WHERE chapter_id=?""",
-							(id,)]]
+							FROM chapters WHERE series_id=? AND chapter_number=?""",
+							(series_id, chap_numb,)]]
 		CommandQueue.put(executing)
 		cursor = ResultQueue.get()
-		rows = cursor.fetchall()
-		chapters = {}
-		for row in rows:
-			chapters[row['chapter_number']] = bytes.decode(row['chapter_path'])
-
+		try:
+			rows = cursor.fetchall()
+			chapters = {}
+			for row in rows:
+				chapters[row['chapter_number']] = bytes.decode(row['chapter_path'])
+		except TypeError:
+			return None
 		return chapters
 
 	@staticmethod
@@ -464,6 +487,17 @@ class ChapterDB:
 		"Deletes all chapters with the given series_id"
 		assert isinstance(series_id, int), "Please provide a valid series ID"
 		executing = [["DELETE FROM chapters WHERE series_id=?", (series_id,)]]
+		CommandQueue.put(executing)
+		c = ResultQueue.get()
+		del c
+
+	@staticmethod
+	def del_chapter(series_id, chap_number):
+		"Deletes chapter with the given number from series"
+		assert isinstance(series_id, int), "Please provide a valid series ID"
+		assert isinstance(chap_number, int), "Please provide a valid chapter number"
+		executing = [["DELETE FROM chapters WHERE series_id=? AND chapter_number=?",
+				(series_id, chap_number,)]]
 		CommandQueue.put(executing)
 		c = ResultQueue.get()
 		del c
