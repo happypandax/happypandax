@@ -336,24 +336,29 @@ class GalleryDB:
 	def del_gallery(list_of_gallery, local=False):
 		"Deletes all galleries in the list recursively."
 		assert isinstance(list_of_gallery, list), "Please provide a valid list of galleries to delete"
-		print('DB: Deleting ',len(list_of_gallery))
 		for gallery in list_of_gallery:
 			if not gallery.validate():
-				log_e('Failed to delete gallery:{}, {}'.format(gallery.id,
-												  gallery.title))
+				log_d('Invalid gallery not removable')
 				continue
+			if local:
+				for chap in gallery.chapters:
+					path = gallery.chapters[chap]
+					s = delete_path(path)
+					if not s:
+						log_e('Failed to delete chapter {}:{}, {}'.format(chap,
+														gallery.id, gallery.title.encode('utf-8', 'ignore')))
+						continue
+
+				s = delete_path(gallery.path)
+				if not s:
+					log_e('Failed to delete gallery:{}, {}'.format(gallery.id,
+													  gallery.title.encode('utf-8', 'ignore')))
+					continue
+
 			if gallery.profile != os.path.abspath(gui_constants.NO_IMAGE_PATH):
 				try:
 					os.remove(gallery.profile)
 				except FileNotFoundError:
-					pass
-			if local:
-				for chap in gallery.chapters:
-					path = gallery.chapters[chap]
-					delete_path(path)
-				try:
-					delete_path(gallery.path)
-				except (FileNotFoundError, NotADirectoryError):
 					pass
 			executing = [["DELETE FROM series WHERE series_id=?", (gallery.id,)]]
 			CommandQueue.put(executing)
@@ -361,6 +366,7 @@ class GalleryDB:
 			del c
 			ChapterDB.del_all_chapters(gallery.id)
 			TagDB.del_gallery_mapping(gallery.id)
+			log_i('Successfully deleted: {}'.format(gallery.title.encode('utf-8', 'ignore')))
 
 	@staticmethod
 	def check_exists(name, data=None):

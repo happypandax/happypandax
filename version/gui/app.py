@@ -73,7 +73,7 @@ class AppWindow(QMainWindow):
 				import time
 				try:
 					log_d('Checking Update')
-					time.sleep(3)
+					time.sleep(1.5)
 					r = requests.get("https://raw.githubusercontent.com/Pewpews/happypanda/master/VS.txt")
 					a = r.text
 					vs = a.strip()
@@ -147,7 +147,7 @@ Your database will not be touched without you being notified.""")
 
 	def stat_row_info(self):
 		r = self.manga_list_view.model().rowCount()
-		t = len(self.manga_list_view.model()._data)
+		t = len(self.manga_list_view.gallery_model._data)
 		self.stat_info.setText("Loaded {} of {} ".format(r, t))
 
 	def manga_display(self):
@@ -379,6 +379,8 @@ Your database will not be touched without you being notified.""")
 								def loading_hide():
 									loading.close()
 									self.manga_list_view.gallery_model.populate_data()
+									self.manga_list_view.refresh()
+									self.manga_list_view.gallery_model.ROWCOUNT_CHANGE.emit()
 
 								a_instance.moveToThread(thread)
 								a_instance.prog.connect(loading.progress.setValue)
@@ -401,7 +403,6 @@ Your database will not be touched without you being notified.""")
 								gallery_list.show()
 							else:
 								add_gallery(status)
-							# TODO: make it spawn a dialog instead (from utils.py or misc.py)
 							misc.Loading.ON = False
 						else:
 							log_d('No new gallery was found')

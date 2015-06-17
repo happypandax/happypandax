@@ -16,7 +16,7 @@ import os
 """Contains constants to be used by several modules"""
 
 # Version number
-vs  = '0.14'
+vs  = '0.15'
 
 current_dir, f = os.path.split(os.path.realpath(__file__))
 static_dir = os.path.join(current_dir, "static")

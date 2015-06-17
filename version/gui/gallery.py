@@ -287,6 +287,8 @@ class GalleryModel(QAbstractTableModel):
 		self.populate_data()
 		#self._data_container = []
 		self.dataChanged.connect(lambda: self.status_b_msg("Edited"))
+		self.dataChanged.connect(lambda: self.ROWCOUNT_CHANGE.emit())
+		self.layoutChanged.connect(lambda: self.ROWCOUNT_CHANGE.emit())
 		self.CUSTOM_STATUS_MSG.connect(self.status_b_msg)
 		self._TITLE = gui_constants.TITLE
 		self._ARTIST = gui_constants.ARTIST
@@ -758,7 +760,7 @@ class MangaView(QListView):
 					self.rowsAboutToBeRemoved(index.parent(), index.row(), index.row())
 					self.gallery_model.removeRows(index.row(), 1)
 					gallery_list.append(gallery)
-			log_i('Removed {} galleries'.format(len(gallery_list)))
+			log_i('Removing {} galleries'.format(len(gallery_list)))
 			threading.Thread(target=gallerydb.GalleryDB.del_gallery,
 						args=(gallery_list, local), daemon=True).start()
 
@@ -813,7 +815,7 @@ class MangaView(QListView):
 				gallerydb.ChapterDB.del_chapter(gallery.id, chap_numb)
 
 	def refresh(self):
-		self.gallery_model.populate_data() # TODO: CAUSE OF CRASH! FIX ASAP
+		self.gallery_model.layoutChanged.emit() # TODO: CAUSE OF CRASH! FIX ASAP
 		self.STATUS_BAR_MSG.emit("Refreshed")
 
 	def contextMenuEvent(self, event):
@@ -831,6 +833,9 @@ class MangaView(QListView):
 			select = self.selectionModel().selection()
 			s_select = self.model().mapSelectionToSource(select)
 			indexes = s_select.indexes()
+			for indx in indexes:
+				if not indx.isValid():
+					del indexes[indx]
 			self.remove_gallery(indexes, local)
 
 		menu = QMenu()
@@ -846,12 +851,12 @@ class MangaView(QListView):
 
 		if selected:
 			remove_menu.addSeparator()
-			remove_selected_act = QAction("Remove selected", remove_menu,
-				   triggered = remove_selection)
-			remove_menu.addAction(remove_selected_act)
-			remove_local_selected_act = QAction('Remove selected and their files', remove_menu,
-				   triggered = lambda: remove_selection(True))
-			remove_menu.addAction(remove_local_selected_act)
+			#remove_selected_act = QAction("Remove selected", remove_menu,
+			#	   triggered = remove_selection)
+			#remove_menu.addAction(remove_selected_act)
+			#remove_local_selected_act = QAction('Remove selected and their files', remove_menu,
+			#	   triggered = lambda: remove_selection(True))
+			#remove_menu.addAction(remove_local_selected_act)
 
 			all_0 = QAction("Open first chapters", menu,
 					  triggered = lambda: self.open_chapter(select_indexes, 0))
@@ -1207,12 +1212,12 @@ class MangaTableView(QTableView):
 
 		if selected:
 			remove_menu.addSeparator()
-			remove_selected_act = QAction("Remove selected", remove_menu,
-				   triggered = remove_selection)
-			remove_menu.addAction(remove_selected_act)
-			remove_local_selected_act = QAction('Remove selected and their files', remove_menu,
-				   triggered = lambda: remove_selection(True))
-			remove_menu.addAction(remove_local_selected_act)
+			#remove_selected_act = QAction("Remove selected", remove_menu,
+			#	   triggered = remove_selection)
+			#remove_menu.addAction(remove_selected_act)
+			#remove_local_selected_act = QAction('Remove selected and their files', remove_menu,
+			#	   triggered = lambda: remove_selection(True))
+			#remove_menu.addAction(remove_local_selected_act)
 
 			all_0 = QAction("Open first chapters", menu,
 					  triggered = lambda: self.open_chapter(select_indexes, 0))

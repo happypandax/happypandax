@@ -308,8 +308,18 @@ def open_path(path):
 def delete_path(path):
 	"Deletes the provided recursively"
 	if os.path.exists(path):
-		if os.path.isfile:
-			os.remove(path)
-		else:
-			shutil.rmtree(path)
+		error = ''
+		try:
+			if os.path.isfile:
+				os.remove(path)
+			else:
+				shutil.rmtree(path)
+		except PermissionError:
+			error = 'PermissionError'
+
+		if error:
+			p = os.path.split(path)[1]
+			log_e('Failed to delete: {}:{}'.format(error, p))
+			return False
+		return True
 

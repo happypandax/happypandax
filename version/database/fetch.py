@@ -52,9 +52,12 @@ class Fetch(QObject):
 		self.series_path = ""
 		self.web_url = ""
 		self.data = []
+		self._curr_gallery = '' # for debugging purposes
+		self._error = 'Unknown error' # for debugging purposes
 	
 	def local(self):
-		"""Do a local search in the given series_path.
+		"""
+		Do a local search in the given series_path.
 		"""
 		try:
 			gallery_l = sorted(os.listdir(self.series_path)) #list of folders in the "Gallery" folder
@@ -69,6 +72,7 @@ class Fetch(QObject):
 				log_d('Found {} items'.format(len(gallery_l)))
 				progress = 0
 				for ser_path in gallery_l: # ser_path = gallery folder title
+					self._curr_gallery = ser_path
 					if mixed:
 						path = ser_path
 						ser_path = os.path.split(path)[1]
@@ -119,13 +123,17 @@ class Fetch(QObject):
 						new_gallery.chapters_size = len(new_gallery.chapters)
 
 						self.data.append(new_gallery)
+						log_d('Gallery successful created: {}'.format(ser_path.encode('utf-8', 'ignore')))
 					else:
 						log_d('Gallery already exists: {}'.format(ser_path.encode('utf-8', 'ignore')))
 
 					progress += 1 # update the progress bar
 					self.PROGRESS.emit(progress)
 			except:
-				log_e('Local Search: Fail')
+				import sys
+				if not self._error:
+					self._error = sys.exc_info()[0] + sys.exc_info()[1]
+				log_e('Local Search Error: {}: {}'.format(self._error, self._curr_gallery))
 				self.FINISHED.emit(False)
 		else: # if gallery folder is empty
 			log_e('Local search error: Invalid directory')
