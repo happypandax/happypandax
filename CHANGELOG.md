@@ -1,3 +1,19 @@
+*Happypanda v0.15*
+- More options are now available in contextmenu when rightclicking a gallery
+- It's now possible to add and remove chapters from a gallery
+- Added a way to select more galleries
+	+ More options are now available in contextmenu for selected galleries
+- Added more columns to tableview
+	+ Language
+	+ Link
+	+ Chapters
+- Tweaked the grid view to reduce the lag when scrolling
+- Added 1 more way to add galleries
+- Already exisiting galleries will now be ignored
+- Database will now try to auto update to newest version
+- Updated Database to version 0.16 (breaking previous versions)
+- Bugfixes
+
 *Happypanda v0.14*
 - New tableview. Switch easily between grid view and table view with the new button beside the searchbar
 - Now able to add and read ZIP archives (You don't need to extract anymore).
