@@ -16,12 +16,12 @@ import os, time
 import re as regex
 import logging
 
-from .seriesdb import Series, SeriesDB
+from .gallerydb import Gallery, GalleryDB
 from .. import pewnet, settings, utils
 
 from PyQt5.QtCore import QObject, pyqtSignal # need this for interaction with main thread
 
-"""This file contains functions to fetch series data"""
+"""This file contains functions to fetch gallery data"""
 
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -31,7 +31,7 @@ log_e = log.error
 log_c = log.critical
 
 class Fetch(QObject):
-	"""A class containing methods to fetch series data.
+	"""A class containing methods to fetch gallery data.
 	Should be executed in a new thread.
 	Contains following methods:
 	local -> runs a local search in the given series_path
@@ -57,39 +57,39 @@ class Fetch(QObject):
 		"""Do a local search in the given series_path.
 		"""
 		try:
-			series_l = sorted(os.listdir(self.series_path)) #list of folders in the "Series" folder
+			gallery_l = sorted(os.listdir(self.series_path)) #list of folders in the "Gallery" folder
 			mixed = False
 		except TypeError:
-			series_l = self.series_path
+			gallery_l = self.series_path
 			mixed = True
-		if len(series_l) != 0: # if series path list is not empty
-			log_d('Series folder is not empty')
+		if len(gallery_l) != 0: # if gallery path list is not empty
+			log_d('Gallery folder is not empty')
 			try:
-				self.DATA_COUNT.emit(len(series_l)) #tell model how many items are going to be added
-				log_d('Found {} items'.format(len(series_l)))
+				self.DATA_COUNT.emit(len(gallery_l)) #tell model how many items are going to be added
+				log_d('Found {} items'.format(len(gallery_l)))
 				progress = 0
-				for ser_path in series_l: # ser_path = series folder title
+				for ser_path in gallery_l: # ser_path = gallery folder title
 					if mixed:
 						path = ser_path
 						ser_path = os.path.split(path)[1]
 					else:
 						path = os.path.join(self.series_path, ser_path)
-					if not SeriesDB.check_exists(ser_path):
-						log_d('Creating series: {}'.format(ser_path.encode('utf-8', 'ignore')))
-						new_series = Series()
+					if not GalleryDB.check_exists(ser_path):
+						log_d('Creating gallery: {}'.format(ser_path.encode('utf-8', 'ignore')))
+						new_gallery = Gallery()
 						images_paths = []
 						try:
-							con = os.listdir(path) #all of content in the series folder
+							con = os.listdir(path) #all of content in the gallery folder
 		
 							chapters = sorted([os.path.join(path,sub) for sub in con if os.path.isdir(os.path.join(path, sub))]) #subfolders
-							# if series has chapters divided into sub folders
+							# if gallery has chapters divided into sub folders
 							if len(chapters) != 0:
 								for numb, ch in enumerate(chapters):
 									chap_path = os.path.join(path, ch)
-									new_series.chapters[numb] = chap_path
+									new_gallery.chapters[numb] = chap_path
 
-							else: #else assume that all images are in series folder
-								new_series.chapters[0] = path
+							else: #else assume that all images are in gallery folder
+								new_gallery.chapters[0] = path
 				
 							#find last edited file
 							times = set()
@@ -98,12 +98,12 @@ class Fetch(QObject):
 									fp = os.path.join(root, img)
 									times.add( os.path.getmtime(fp) )
 							last_updated = time.asctime(time.gmtime(max(times)))
-							new_series.last_update = last_updated
+							new_gallery.last_update = last_updated
 							parsed = utils.title_parser(ser_path)
 						except NotADirectoryError:
 							if ser_path[-4:] == '.zip':
 								#TODO: add support for folders in archive
-								new_series.chapters[0] = path
+								new_gallery.chapters[0] = path
 								parsed = utils.title_parser(ser_path[:-4])
 							else:
 								log_w('Skipped {} in local search'.format(path))
@@ -111,25 +111,25 @@ class Fetch(QObject):
 								self.PROGRESS.emit(progress)
 								continue
 
-						new_series.title = parsed['title']
-						new_series.path = path
-						new_series.artist = parsed['artist']
-						new_series.language = parsed['language']
-						new_series.info = "<i>No description..</i>"
-						new_series.chapters_size = len(new_series.chapters)
+						new_gallery.title = parsed['title']
+						new_gallery.path = path
+						new_gallery.artist = parsed['artist']
+						new_gallery.language = parsed['language']
+						new_gallery.info = "<i>No description..</i>"
+						new_gallery.chapters_size = len(new_gallery.chapters)
 
-						self.data.append(new_series)
+						self.data.append(new_gallery)
 					else:
-						log_d('Series already exists: {}'.format(ser_path.encode('utf-8', 'ignore')))
+						log_d('Gallery already exists: {}'.format(ser_path.encode('utf-8', 'ignore')))
 
 					progress += 1 # update the progress bar
 					self.PROGRESS.emit(progress)
 			except:
 				log_e('Local Search: Fail')
 				self.FINISHED.emit(False)
-		else: # if series folder is empty
+		else: # if gallery folder is empty
 			log_e('Local search error: Invalid directory')
-			log_d('Series folder is empty')
+			log_d('Gallery folder is empty')
 			self.FINISHED.emit(False)
 			# might want to include an error message
 		# everything went well
