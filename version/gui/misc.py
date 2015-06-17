@@ -405,17 +405,20 @@ along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 		l.addWidget(info_lbl, alignment=Qt.AlignRight)
 
 		bug_lbl = QLabel()
-		bug_lbl.setText('Find some bugs or got any suggestions? Then please '+
+		bug_lbl.setText('<i>Find some bugs or got any suggestions? Then please</i> '+
 				  '<a href="https://github.com/Pewpews/happypanda/issues">'+
 				  'report them here.</a>')
 		bug_lbl.setTextFormat(Qt.RichText)
 		bug_lbl.setTextInteractionFlags(Qt.TextBrowserInteraction)
 		bug_lbl.setOpenExternalLinks(True)
 
+		vs_lbl = QLabel('Happypanda Version {}'.format(gui_constants.vs))
+
 		layout_ = QVBoxLayout()
 		layout_.addLayout(l)
 		layout_.addWidget(self.text, 0, Qt.AlignHCenter)
 		layout_.addWidget(bug_lbl)
+		layout_.addWidget(vs_lbl, 0, Qt.AlignHCenter)
 		self.setLayout(layout_)
 		self.resize(300,100)
 		frect = self.frameGeometry()
