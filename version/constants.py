@@ -173,7 +173,7 @@ def start():
 		msg_box.setWindowIcon(QIcon(gui_constants.APP_ICO_PATH))
 		msg_box.setText('Incompatible database!')
 		msg_box.setInformativeText("Do you want to upgrade to newest version?" +
-							 "Don't worry about your data. It'll remain mostly the same.")
+							 "Don't worry about your data. It'll remain the same.")
 		msg_box.setIcon(QMessageBox.Critical)
 		msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
 		msg_box.setDefaultButton(QMessageBox.Yes)
