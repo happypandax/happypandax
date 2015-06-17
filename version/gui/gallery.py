@@ -730,15 +730,25 @@ class MangaView(QListView):
 
 	#	print('Found ', found)
 
-	def remove_gallery(self, index_list):
+	def remove_gallery(self, index_list, local=False):
 		msgbox = QMessageBox()
 		msgbox.setIcon(msgbox.Question)
 		msgbox.setStandardButtons(msgbox.Yes | msgbox.No)
 		if len(index_list) > 1:
-			msgbox.setText('Are you sure you want to remove {} selected?'.format(
-				len(index_list)))
+			if not local:
+				msg = 'Are you sure you want to remove {} selected galleries?'.format(
+				len(index_list))
+			else:
+				msg = 'Are you sure you want to remove {} selected galleries and their files/directories?'.format(
+				len(index_list))
+
+			msgbox.setText(msg)
 		else:
-			msgbox.setText('Are you sure you want to remove?')
+			if not local:
+				msg = 'Are you sure you want to remove this gallery?'
+			else:
+				msg = 'Are you sure you want to remove this gallery and it\'s file/diriectory?'
+			msgbox.setText(msg)
 
 		if msgbox.exec() == msgbox.Yes:
 			gallery_list = []
@@ -750,12 +760,11 @@ class MangaView(QListView):
 					gallery_list.append(gallery)
 			log_i('Removed {} galleries'.format(len(gallery_list)))
 			threading.Thread(target=gallerydb.GalleryDB.del_gallery,
-						args=(gallery_list,), daemon=True).start()
+						args=(gallery_list, local), daemon=True).start()
 
 	def favorite(self, index):
 		assert isinstance(index, QModelIndex)
 		gallery = index.data(Qt.UserRole+1)
-		# TODO: don't need to fetch from DB here... 
 		if gallery.fav == 1:
 			gallery.fav = 0
 			self.model().replaceRows([gallery], index.row(), 1, index)
@@ -818,23 +827,38 @@ class MangaView(QListView):
 		if len(select_indexes) > 1:
 			selected = True
 
-		def remove_selection():
+		def remove_selection(local=False):
 			select = self.selectionModel().selection()
 			s_select = self.model().mapSelectionToSource(select)
 			indexes = s_select.indexes()
-			self.remove_gallery(indexes)
+			self.remove_gallery(indexes, local)
 
 		menu = QMenu()
+		remove_act = QAction('Remove', menu)
+		remove_menu = QMenu()
+		remove_act.setMenu(remove_menu)
+		remove_gallery_act = QAction('Remove gallery', remove_menu,
+							   triggered=lambda: self.remove_gallery([index]))
+		remove_menu.addAction(remove_gallery_act)
+		remove_local_gallery_act = QAction('Remove gallery and files', remove_menu,
+							   triggered=lambda: self.remove_gallery([index], True))
+		remove_menu.addAction(remove_local_gallery_act)
+
 		if selected:
+			remove_menu.addSeparator()
+			remove_selected_act = QAction("Remove selected", remove_menu,
+				   triggered = remove_selection)
+			remove_menu.addAction(remove_selected_act)
+			remove_local_selected_act = QAction('Remove selected and their files', remove_menu,
+				   triggered = lambda: remove_selection(True))
+			remove_menu.addAction(remove_local_selected_act)
+
 			all_0 = QAction("Open first chapters", menu,
 					  triggered = lambda: self.open_chapter(select_indexes, 0))
-			all_4 = QAction("Remove selected", menu,
-				   triggered = remove_selection)
+
 		all_1 = QAction("Open first chapter", menu,
 					triggered = lambda: self.open_chapter(index, 0))
 		all_2 = QAction("Edit...", menu, triggered = lambda: self.spawn_dialog(index))
-		all_3 = QAction("Remove", menu, triggered = lambda: self.remove_gallery([index]))
-
 		def fav():
 			self.favorite(index)
 
@@ -947,7 +971,7 @@ class MangaView(QListView):
 						   triggered=add_chapters)
 				menu.addAction(add_chap_act)
 				remo_chap_act = QAction('Remove chapter', menu)
-				menu.addAction(remo_chap_act)
+				remove_menu.addAction(remo_chap_act)
 				remove_chap_menu = QMenu()
 				remo_chap_act.setMenu(remove_chap_menu)
 				for number, chap_number in enumerate(range(len(
@@ -970,11 +994,7 @@ class MangaView(QListView):
 				pass
 			menu.addSeparator()
 			# remove
-			menu.addAction(all_3)
-			try:
-				menu.addAction(all_4)
-			except:
-				pass
+			menu.addAction(remove_act)
 			menu.exec_(event.globalPos())
 			self.manga_delegate.CONTEXT_ON = False
 			event.accept()
@@ -1175,16 +1195,31 @@ class MangaTableView(QTableView):
 			self.remove_gallery(indexes)
 
 		menu = QMenu()
+		remove_act = QAction('Remove', menu)
+		remove_menu = QMenu()
+		remove_act.setMenu(remove_menu)
+		remove_gallery_act = QAction('Remove gallery', remove_menu,
+							   triggered=lambda: self.remove_gallery([index]))
+		remove_menu.addAction(remove_gallery_act)
+		remove_local_gallery_act = QAction('Remove gallery and files', remove_menu,
+							   triggered=lambda: self.remove_gallery([index], True))
+		remove_menu.addAction(remove_local_gallery_act)
+
 		if selected:
+			remove_menu.addSeparator()
+			remove_selected_act = QAction("Remove selected", remove_menu,
+				   triggered = remove_selection)
+			remove_menu.addAction(remove_selected_act)
+			remove_local_selected_act = QAction('Remove selected and their files', remove_menu,
+				   triggered = lambda: remove_selection(True))
+			remove_menu.addAction(remove_local_selected_act)
+
 			all_0 = QAction("Open first chapters", menu,
 					  triggered = lambda: self.open_chapter(select_indexes, 0))
-			all_4 = QAction("Remove selected", menu,
-				   triggered = remove_selection)
+
 		all_1 = QAction("Open first chapter", menu,
 					triggered = lambda: self.open_chapter(index, 0))
 		all_2 = QAction("Edit...", menu, triggered = lambda: self.spawn_dialog(index))
-		all_3 = QAction("Remove", menu, triggered = lambda: self.remove_gallery([index]))
-
 		def fav():
 			self.favorite(index)
 
@@ -1296,7 +1331,7 @@ class MangaTableView(QTableView):
 						   triggered=add_chapters)
 				menu.addAction(add_chap_act)
 				remo_chap_act = QAction('Remove chapter', menu)
-				menu.addAction(remo_chap_act)
+				remove_menu.addAction(remo_chap_act)
 				remove_chap_menu = QMenu()
 				remo_chap_act.setMenu(remove_chap_menu)
 				for number, chap_number in enumerate(range(len(
@@ -1319,11 +1354,7 @@ class MangaTableView(QTableView):
 				pass
 			menu.addSeparator()
 			# remove
-			menu.addAction(all_3)
-			try:
-				menu.addAction(all_4)
-			except:
-				pass
+			menu.addAction(remove_act)
 			menu.exec_(event.globalPos())
 			event.accept()
 		elif handled:

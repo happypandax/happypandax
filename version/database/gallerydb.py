@@ -16,7 +16,7 @@ import datetime, os, threading, logging, queue, uuid # for unique filename
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QImage
 
-from ..utils import today, ArchiveFile, generate_img_hash
+from ..utils import today, ArchiveFile, generate_img_hash, delete_path
 from .db import CommandQueue, ResultQueue
 from ..gui import gui_constants
 from .db_constants import THUMBNAIL_PATH, IMG_FILES
@@ -333,7 +333,7 @@ class GalleryDB:
 		pass
 
 	@staticmethod
-	def del_gallery(list_of_gallery):
+	def del_gallery(list_of_gallery, local=False):
 		"Deletes all galleries in the list recursively."
 		assert isinstance(list_of_gallery, list), "Please provide a valid list of galleries to delete"
 		print('DB: Deleting ',len(list_of_gallery))
@@ -341,10 +341,19 @@ class GalleryDB:
 			if not gallery.validate():
 				log_e('Failed to delete gallery:{}, {}'.format(gallery.id,
 												  gallery.title))
+				continue
 			if gallery.profile != os.path.abspath(gui_constants.NO_IMAGE_PATH):
 				try:
 					os.remove(gallery.profile)
 				except FileNotFoundError:
+					pass
+			if local:
+				for chap in gallery.chapters:
+					path = gallery.chapters[chap]
+					delete_path(path)
+				try:
+					delete_path(gallery.path)
+				except (FileNotFoundError, NotADirectoryError):
 					pass
 			executing = [["DELETE FROM series WHERE series_id=?", (gallery.id,)]]
 			CommandQueue.put(executing)

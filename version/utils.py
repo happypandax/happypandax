@@ -12,7 +12,8 @@ You should have received a copy of the GNU General Public License
 along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import time, datetime, os, subprocess, sys, logging, zipfile, hashlib
+import time, datetime, os, subprocess, sys, logging, zipfile
+import hashlib, shutil
 
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -303,4 +304,12 @@ def open_path(path):
 			log_e('Could not open path: no OS found')
 	except:
 		log_e('Could not open path')
+
+def delete_path(path):
+	"Deletes the provided recursively"
+	if os.path.exists(path):
+		if os.path.isfile:
+			os.remove(path)
+		else:
+			shutil.rmtree(path)
 
