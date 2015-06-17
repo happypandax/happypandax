@@ -15,7 +15,8 @@ along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 from PyQt5.QtCore import (Qt, QAbstractListModel, QModelIndex, QVariant,
 						  QSize, QRect, QEvent, pyqtSignal, QThread,
 						  QTimer, QPointF, QSortFilterProxyModel,
-						  QAbstractTableModel, QItemSelectionModel)
+						  QAbstractTableModel, QItemSelectionModel,
+						  QPoint)
 from PyQt5.QtGui import (QPixmap, QBrush, QColor, QPainter, 
 						 QPen, QTextDocument,
 						 QMouseEvent, QHelpEvent,
@@ -301,6 +302,7 @@ class SeriesModel(QAbstractTableModel):
 		self._data = seriesdb.SeriesDB.get_all_series()
 		self.layoutChanged.emit()
 		self.ROWCOUNT_CHANGE.emit()
+		self._data_count = len(self._data)
 
 	def status_b_msg(self, msg):
 		self.STATUSBAR_MSG.emit(msg)
@@ -456,27 +458,22 @@ class SeriesModel(QAbstractTableModel):
 		self.ROWCOUNT_CHANGE.emit()
 		return True
 
-	#def sortBy(self, str):
-	#	"""takes on of the following string as param
-	#	str <- 'title', 'metadata', 'artist', 'last read', 'newest'"""
-	#	pass
+	#def canFetchMore(self, index):
+	#	if self._data_count < len(self._data):
+	#		return True
+	#	else: 
+	#		return False
 
+	#def fetchMore(self, index):
+	#	print('Fetching more')
+	#	diff = len(self._data) - self._data_count
+	#	item_to_fetch = min(gui_constants.PREFETCH_ITEM_AMOUNT, diff)
 
-	def canFetchMore(self, index):
-		if self._data_count < len(self._data):
-			return True
-		else: 
-			return False
-
-	def fetchMore(self, index):
-		diff = len(self._data) - self._data_count
-		item_to_fetch = min(gui_constants.PREFETCH_ITEM_AMOUNT, diff)
-
-		self.beginInsertRows(index, self._data_count,
-					   self._data_count+item_to_fetch-1)
-		self._data_count += item_to_fetch
-		self.endInsertRows()
-		self.ROWCOUNT_CHANGE.emit()
+	#	self.beginInsertRows(index, self._data_count,
+	#				   self._data_count+item_to_fetch-1)
+	#	self._data_count += item_to_fetch
+	#	self.endInsertRows()
+	#	self.ROWCOUNT_CHANGE.emit()
 
 class CustomDelegate(QStyledItemDelegate):
 	"A custom delegate for the model/view framework"
@@ -489,27 +486,28 @@ class CustomDelegate(QStyledItemDelegate):
 		self.W = gui_constants.THUMB_W_SIZE
 		self.H = gui_constants.THUMB_H_SIZE
 		QPixmapCache.setCacheLimit(gui_constants.THUMBNAIL_CACHE_SIZE)
-		self._painted_indexes = {}
 		self.popup_window = Popup()
 		self.popup_timer = QTimer()
+		self._painted_indexes = {}
 		#self.popup_timer.timeout.connect(self.POPUP.emit)
 
-	def key(self, index):
+	def key(self, key):
 		"Assigns an unique key to indexes"
-		if index in self._painted_indexes:
-			return self._painted_indexes[index]
+		if key:
+			return self._painted_indexes[key]
 		else:
-			series_id = index.data(Qt.UserRole+1).id
-			self._painted_indexes[index] = series_id
-			return self._painted_indexes[index]
+			k = len(self._painted_indexes)
+			self._painted_indexes[str(k)] = str(k)
+			return str(k)
 
 	def paint(self, painter, option, index):
-		self.initStyleOption(option, index)
+		#self.initStyleOption(option, index)
 
 		assert isinstance(painter, QPainter)
 		if index.data(Qt.UserRole+1):
+			if gui_constants.HIGH_QUALITY_THUMBS:
+				painter.setRenderHint(QPainter.SmoothPixmapTransform)
 			series = index.data(Qt.UserRole+1)
-			popup = index.data(Qt.ToolTipRole)
 			title = series.title
 			artist = series.artist
 			# Enable this to see the defining box
@@ -544,6 +542,8 @@ class CustomDelegate(QStyledItemDelegate):
 			y = rec[1] + 3
 			w = rec[2]
 			h = rec[3] - 5
+
+
 			text_area = QTextDocument()
 			text_area.setDefaultFont(option.font)
 			text_area.setHtml("""
@@ -590,29 +590,27 @@ class CustomDelegate(QStyledItemDelegate):
 			#""".format("chapter"))
 			#chapter_area.setTextWidth(w)
 
-			painter.setRenderHint(QPainter.SmoothPixmapTransform)
-
-
-			# TODO: FIX THIS PART, MAYBE?
 			# if we can't find a cached image
-			#if not isinstance(QPixmapCache.find(self.key(index)), QPixmap):
-			self.image = QPixmap(index.data(Qt.DecorationRole))
-			#id = self.key(index)
-			#QPixmapCache.insert(id, self.image)
-			if self.image.height() < self.image.width(): #to keep aspect ratio
-				painter.drawPixmap(QRect(x, y, w, self.image.height()),
-						self.image)
+			if not series._cache_id:
+				series._cache_id = self.key(series._cache_id)
+			pix_cache = QPixmapCache.find(series._cache_id)
+			if not isinstance(pix_cache, QPixmap):
+				self.image = QPixmap(index.data(Qt.DecorationRole))
+				QPixmapCache.insert(series._cache_id, self.image)
+				if self.image.height() < self.image.width(): #to keep aspect ratio
+					painter.drawPixmap(QPoint(x,y),
+							self.image)
+				else:
+					painter.drawPixmap(QPoint(x,y),
+							self.image)
 			else:
-				painter.drawPixmap(QRect(x, y, w, self.image.height()),
-						self.image)
-			#else:
-			#	self.image = QPixmapCache.find(self.key(index))
-			#	if self.image.height() < self.image.width(): #to keep aspect ratio
-			#		painter.drawPixmap(QRect(x, y, w, self.image.height()),
-			#				self.image)
-			#	else:
-			#		painter.drawPixmap(QRect(x, y, w, h),
-			#				self.image)
+				self.image = pix_cache
+				if self.image.height() < self.image.width(): #to keep aspect ratio
+					painter.drawPixmap(QPoint(x,y),
+							self.image)
+				else:
+					painter.drawPixmap(QPoint(x,y),
+							self.image)
 		
 			# draw star if it's favourited
 			if series.fav == 1:
@@ -630,6 +628,7 @@ class CustomDelegate(QStyledItemDelegate):
 			# draw text
 			painter.translate(option.rect.x(), option.rect.y()+142)
 			text_area.drawContents(painter)
+			#painter.resetTransform()
 			painter.restore()
 
 			if option.state & QStyle.State_MouseOver:
@@ -648,10 +647,6 @@ class CustomDelegate(QStyledItemDelegate):
 		return QSize(self.W, self.H)
 
 # TODO: Redo this part to avoid duplicated code
-
-
-
-
 class MangaView(QListView):
 	"""
 	TODO: (zoom-in/zoom-out) mousekeys
@@ -666,7 +661,6 @@ class MangaView(QListView):
 		self.H = gui_constants.GRIDBOX_H_SIZE
 		self.W = gui_constants.GRIDBOX_W_SIZE
 		self.setGridSize(QSize(self.W, self.H))
-		self.setSpacing(10)
 		self.setResizeMode(self.Adjust)
 		# all items have the same size (perfomance)
 		self.setUniformItemSizes(True)
@@ -675,9 +669,8 @@ class MangaView(QListView):
 		# improve scrolling
 		self.setVerticalScrollMode(self.ScrollPerPixel)
 		self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-		# prevent all items being loaded at the same time
-		self.setLayoutMode(self.Batched)
-		self.setBatchSize(gui_constants.PREFETCH_ITEM_AMOUNT)
+		self.setLayoutMode(self.SinglePass)
+		self.setBatchSize(1)#gui_constants.PREFETCH_ITEM_AMOUNT)
 		self.setMouseTracking(True)
 		self.sort_model = SortFilterModel()
 		self.sort_model.setDynamicSortFilter(True)
@@ -692,35 +685,86 @@ class MangaView(QListView):
 		self.setModel(self.sort_model)
 		self.SERIES_DIALOG.connect(self.spawn_dialog)
 		self.doubleClicked.connect(self.open_chapter)
+	#	self.ti = QTimer()
+	#	self.ti.timeout.connect(self.test_)
+	#	self.ti.start(5000)
+
+	#def test_(self):
+	#	"find all series' in viewport"
+	#	def col_next_prepare(index):
+	#		"Calculates where the next index is"
+	#		rect = self.visualRect(index)
+	#		new_col = QPoint(rect.x() + rect.width() + rect.width(),
+	#					   rect.y())
+	#		return new_col
+
+	#	#find first index locatiion. A wild guess!!
+	#	f_indx = self.indexAt(QPoint(87,130))
+	#	found = 1
+	#	f_rect = self.visualRect(f_indx) # need the first index's rect
+	#	row = 1 # which row are we on
+	#	while row: # while row is is valid
+	#		rect = self.visualRect(f_indx) # rect of current index
+	#		next_col_point = col_next_prepare(f_indx)
+	#		#calculate the next row
+	#		next_row_point = QPoint(f_rect.x()+10,
+	#					   rect.y()+rect.height()+(rect.height()//2))
+	#		found += 1
+	#		# while there are stil more colums
+	#		while self.viewport().rect().contains(next_col_point,
+	#								  proper=True):
+	#			next_indx = self.indexAt(next_col_point) # find the next index
+	#			if not next_indx:
+	#				break
+	#			found += 1
+	#			# time to prepare the next iteration
+	#			next_col_point = col_next_prepare(next_indx)
+	#			print('Moving to next col')
+			
+	#		if self.viewport().rect().contains(next_row_point, proper=True):
+	#			f_indx = self.indexAt(next_row_point)
+	#			if f_indx.isValid():
+	#				row += 1
+	#				print('Moving to next row')
+	#		row = None
+
+	#	print('Found ', found)
 
 	def remove_series(self, index_list):
 		msgbox = QMessageBox()
 		msgbox.setIcon(msgbox.Question)
 		msgbox.setStandardButtons(msgbox.Yes | msgbox.No)
 		if len(index_list) > 1:
-			msgbox.setText('Are you sure you want to remove selected?')
+			msgbox.setText('Are you sure you want to remove {} selected?'.format(
+				len(index_list)))
 		else:
 			msgbox.setText('Are you sure you want to remove?')
 
 		if msgbox.exec() == msgbox.Yes:
+			series_list = []
 			for index in index_list:
-				self.rowsAboutToBeRemoved(index.parent(), index.row(), index.row())
 				series = index.data(Qt.UserRole+1)
-				self.series_model.removeRows(index.row(), 1)
-				threading.Thread(target=seriesdb.SeriesDB.del_series,
-						   args=(series.id,), daemon=True).start()
+				if index.isValid() and series:
+					self.rowsAboutToBeRemoved(index.parent(), index.row(), index.row())
+					self.series_model.removeRows(index.row(), 1)
+					series_list.append(series)
+			print('deleting', len(series_list))
+			threading.Thread(target=seriesdb.SeriesDB.del_series,
+						args=(series_list,), daemon=True).start()
 
 	def favourite(self, index):
 		assert isinstance(index, QModelIndex)
 		series = index.data(Qt.UserRole+1)
 		# TODO: don't need to fetch from DB here... 
 		if series.fav == 1:
-			n_series = seriesdb.SeriesDB.fav_series_set(series.id, 0)
-			self.model().replaceRows([n_series], index.row(), 1, index)
+			series.fav = 0
+			self.model().replaceRows([series], index.row(), 1, index)
+			seriesdb.SeriesDB.fav_series_set(series.id, 0)
 			self.series_model.CUSTOM_STATUS_MSG.emit("Unfavourited")
 		else:
-			n_series = seriesdb.SeriesDB.fav_series_set(series.id, 1)
-			self.model().replaceRows([n_series], index.row(), 1, index)
+			series.fav = 1
+			self.model().replaceRows([series], index.row(), 1, index)
+			seriesdb.SeriesDB.fav_series_set(series.id, 1)
 			self.series_model.CUSTOM_STATUS_MSG.emit("Favourited")
 
 	def open_chapter(self, index, chap_numb=0):
@@ -774,12 +818,18 @@ class MangaView(QListView):
 		if len(select_indexes) > 1:
 			selected = True
 
+		def remove_selection():
+			select = self.selectionModel().selection()
+			s_select = self.model().mapSelectionToSource(select)
+			indexes = s_select.indexes()
+			self.remove_series(indexes)
+
 		menu = QMenu()
 		if selected:
 			all_0 = QAction("Open first chapters", menu,
 					  triggered = lambda: self.open_chapter(select_indexes, 0))
 			all_4 = QAction("Remove selected", menu,
-				   triggered = lambda: self.remove_series(select_indexes))
+				   triggered = remove_selection)
 		all_1 = QAction("Open first chapter", menu,
 					triggered = lambda: self.open_chapter(index, 0))
 		all_2 = QAction("Edit...", menu, triggered = lambda: self.spawn_dialog(index))
@@ -1035,29 +1085,36 @@ class MangaTableView(QTableView):
 		msgbox.setIcon(msgbox.Question)
 		msgbox.setStandardButtons(msgbox.Yes | msgbox.No)
 		if len(index_list) > 1:
-			msgbox.setText('Are you sure you want to remove selected?')
+			msgbox.setText('Are you sure you want to remove {} selected?'.format(
+				len(index_list)))
 		else:
 			msgbox.setText('Are you sure you want to remove?')
 
 		if msgbox.exec() == msgbox.Yes:
+			series_list = []
 			for index in index_list:
-				self.rowsAboutToBeRemoved(index.parent(), index.row(), index.row())
 				series = index.data(Qt.UserRole+1)
-				self.series_model.removeRows(index.row(), 1)
-				threading.Thread(target=seriesdb.SeriesDB.del_series,
-						   args=(series.id,), daemon=True).start()
+				if index.isValid() and series:
+					self.rowsAboutToBeRemoved(index.parent(), index.row(), index.row())
+					self.series_model.removeRows(index.row(), 1)
+					series_list.append(series)
+
+			threading.Thread(target=seriesdb.SeriesDB.del_series,
+						args=(series_list,), daemon=True).start()
 
 	def favourite(self, index):
 		assert isinstance(index, QModelIndex)
 		series = index.data(Qt.UserRole+1)
 		# TODO: don't need to fetch from DB here... 
 		if series.fav == 1:
-			n_series = seriesdb.SeriesDB.fav_series_set(series.id, 0)
-			self.model().replaceRows([n_series], index.row(), 1, index)
+			series.fav = 0
+			self.series_model.replaceRows([series], index.row(), 1, index)
+			seriesdb.SeriesDB.fav_series_set(series.id, 0)
 			self.series_model.CUSTOM_STATUS_MSG.emit("Unfavourited")
 		else:
-			n_series = seriesdb.SeriesDB.fav_series_set(series.id, 1)
-			self.model().replaceRows([n_series], index.row(), 1, index)
+			series.fav = 1
+			self.series_model.replaceRows([series], index.row(), 1, index)
+			seriesdb.SeriesDB.fav_series_set(series.id, 1)
 			self.series_model.CUSTOM_STATUS_MSG.emit("Favourited")
 
 	def open_chapter(self, index, chap_numb=0):

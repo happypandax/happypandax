@@ -271,21 +271,13 @@ def check_db_version(conn):
 	return True
 	
 
-def init_db():
+def init_db(test=False):
 	"""Initialises the DB. Returns a sqlite3 connection,
 	which will be passed to the db thread.
 	"""
 
-	if os.path.isfile(db_constants.DB_PATH):
-		conn = sqlite3.connect(db_constants.DB_PATH, check_same_thread=False)
-		conn.row_factory = sqlite3.Row
-		if not check_db_version(conn):
-			return None
-	else:
-		create_db_path()
-		conn = sqlite3.connect(db_constants.DB_PATH, check_same_thread=False)
-		conn.row_factory = sqlite3.Row
-		c = conn.cursor()
+	def db_layout(cursor):
+		c = cursor
 		# version
 		c.execute("""
 		CREATE TABLE IF NOT EXISTS version(version REAL)
@@ -299,7 +291,7 @@ def init_db():
 		#CREATE TABLE hashes(hash_id INTERGER PRIMARY KEY, hash BLOB)
 		#""")
 
-		# Series
+		# series
 		c.execute(series_sql())
 
 		#chapters
@@ -316,6 +308,31 @@ def init_db():
 		# series tags
 		c.execute(series_tags_mappings_sql())
 
+	if test:
+		db_test_path = os.path.join(os.path.split(db_constants.DB_PATH)[0],'database_test.db')
+		if os.path.isfile(db_test_path):
+			conn = sqlite3.connect(db_test_path, check_same_thread=False)
+			conn.row_factory = sqlite3.Row
+		else:
+			create_db_path('database_test.db')
+			conn = sqlite3.connect(db_test_path, check_same_thread=False)
+			conn.row_factory = sqlite3.Row
+			c = conn.cursor()
+			db_layout(c)
+			conn.commit()
+		return conn
+
+	if os.path.isfile(db_constants.DB_PATH):
+		conn = sqlite3.connect(db_constants.DB_PATH, check_same_thread=False)
+		conn.row_factory = sqlite3.Row
+		if not check_db_version(conn):
+			return None
+	else:
+		create_db_path()
+		conn = sqlite3.connect(db_constants.DB_PATH, check_same_thread=False)
+		conn.row_factory = sqlite3.Row
+		c = conn.cursor()
+		db_layout(c)
 		conn.commit()
 	return conn
 

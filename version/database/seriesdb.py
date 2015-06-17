@@ -16,12 +16,13 @@ import datetime, os, threading, logging, queue, uuid # for unique filename
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QImage
 
-from ..utils import today, ArchiveFile
+from ..utils import today, ArchiveFile, generate_img_hash
 from .db import CommandQueue, ResultQueue
 from ..gui import gui_constants
 from .db_constants import THUMBNAIL_PATH, IMG_FILES
 
 PROFILE_TO_MODEL = queue.Queue()
+TestQueue = queue.Queue()
 
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -61,16 +62,19 @@ def gen_thumbnail(chapter_path, width=gui_constants.THUMB_W_SIZE-2,
 			# generate unique file name
 			file_name = str(uuid.uuid4()) + suff
 			new_img_path = os.path.join(cache, (file_name))
-		
+			if not os.path.isfile(img_path):
+				raise IndexError
 			# Do the scaling
 			image = QImage()
 			image.load(img_path)
+			if image.isNull():
+				raise IndexError
 			image = image.scaled(w, h, Qt.KeepAspectRatio, Qt.SmoothTransformation)
 			image.save(new_img_path, quality=100)
-
-			abs_path = os.path.abspath(new_img_path)
 		except IndexError:
-			abs_path = gui_constants.NO_IMAGE_PATH
+			new_img_path = gui_constants.NO_IMAGE_PATH
+
+		abs_path = os.path.abspath(new_img_path)
 		img_queue.put(abs_path)
 		return True
 
@@ -201,18 +205,7 @@ class SeriesDB:
 		"Set fav on series with given series id, and returns the series"
 		# NOTE: USELESS BECAUSE OF THE METHOD ABOVE; CONSIDER REVISING & DELETING
 		executing = [["UPDATE series SET fav=? WHERE series_id=?", (fav, series_id)]]
-		CommandQueue.put(executing)
-		c = ResultQueue.get()
-		del c
-		ex = [["SELECT * FROM series WHERE series_id=?", (series_id,)]]
-		CommandQueue.put(ex)
-		cursor = ResultQueue.get()
-		row = cursor.fetchone()
-		series = Series()
-		series.id = row['series_id']
-		series = series_map(row, series)
-		return series
-		
+		SeriesDB.modify_series(series_id, fav=fav)		
 
 	@staticmethod
 	def get_all_series():
@@ -239,10 +232,14 @@ class SeriesDB:
 		CommandQueue.put(executing)
 		cursor = ResultQueue.get()
 		row = cursor.fetchone()
+		print(row)
 		series = Series()
-		series.id = row['series_id']
-		series = series_map(row, series)
-		return series
+		try:
+			series.id = row['series_id']
+			series = series_map(row, series)
+			return series
+		except TypeError:
+			return None
 
 
 	@staticmethod
@@ -294,10 +291,10 @@ class SeriesDB:
 		return series_list
 
 	@staticmethod
-	def add_series(object):
-		"Receives an object of class Series, and appends it to DB"
+	def add_series(object, test_mode=False):
+		"Receives an object of class series, and appends it to DB"
 		"Adds series of <Series> class into database"
-		assert isinstance(object, Series), "add_series method only accept Series items"
+		assert isinstance(object, Series), "add_series method only accept series items"
 
 		object.profile = gen_thumbnail(object.chapters[0])
 
@@ -309,11 +306,13 @@ class SeriesDB:
 		if object.tags:
 			TagDB.add_tags(object)
 		ChapterDB.add_chapters(object)
+		if test_mode:
+			TestQueue.put('x')
 
 	@staticmethod
 	def add_series_return(object):
 		"""Adds series of <Series> class into database AND returns the profile generated"""
-		assert isinstance(object, Series), "[add_series_return] method only accept Series items"
+		assert isinstance(object, Series), "[add_series_return] method only accept series items"
 
 		object.profile = gen_thumbnail(object.chapters[0])
 		PROFILE_TO_MODEL.put(object.profile)
@@ -334,17 +333,26 @@ class SeriesDB:
 		pass
 
 	@staticmethod
-	def del_series(series_id):
-		"Deletes series with the given id recursively."
-		assert isinstance(series_id, int), "Please provide a valid series id to delete"
-		series = SeriesDB.get_series_by_id(series_id)
-		os.remove(series.profile)
-		executing = [["DELETE FROM series WHERE series_id=?", (series_id,)]]
-		CommandQueue.put(executing)
-		c = ResultQueue.get()
-		del c
-		ChapterDB.del_all_chapters(series_id)
-		TagDB.del_series_mapping(series_id)
+	def del_series(list_of_series):
+		"Deletes all galleries in the list recursively."
+		assert isinstance(list_of_series, list), "Please provide a valid list of galleries to delete"
+		print('DB: Deleting ',len(list_of_series))
+		for series in list_of_series:
+			print(series.id)
+			if not series:
+				log_e('Failed to delete series:{}, {}'.format(series.id,
+												  series.title))
+			if series.profile != os.path.abspath(gui_constants.NO_IMAGE_PATH):
+				try:
+					os.remove(series.profile)
+				except FileNotFoundError:
+					pass
+			executing = [["DELETE FROM series WHERE series_id=?", (series.id,)]]
+			CommandQueue.put(executing)
+			c = ResultQueue.get()
+			del c
+			ChapterDB.del_all_chapters(series.id)
+			TagDB.del_series_mapping(series.id)
 
 	@staticmethod
 	def check_exists(name, data=None):
@@ -396,7 +404,7 @@ class ChapterDB:
 	@staticmethod
 	def add_chapters(series_object):
 		"Adds chapters linked to series into database"
-		assert isinstance(series_object, Series), "Parent series need to be of class Series"
+		assert isinstance(series_object, Series), "Parent series need to be of class series"
 		series_id = series_object.id
 		for chap_number in series_object.chapters:
 			chap_path = str.encode(series_object.chapters[chap_number])
@@ -564,7 +572,7 @@ class TagDB:
 		cursor = ResultQueue.get()
 		tags = {}
 		# WARNING: rowcount doesn't work! Fix this ASAP!
-		if cursor.rowcount != 0: # tags exists
+		if cursor.fetchone(): # tags exists
 			for tag_map_row in cursor.fetchall(): # iterate all tag_mappings_ids
 				# get tag and namespace 
 				executing = [["""SELECT namespace_id, tag_id FROM tags_mappings
@@ -596,7 +604,7 @@ class TagDB:
 	@staticmethod
 	def add_tags(object):
 		"Adds the given dict_of_tags to the given series_id"
-		assert isinstance(object, Series), "Please provide a valid series of class Series"
+		assert isinstance(object, Series), "Please provide a valid series of class series"
 		
 		series_id = object.id
 		dict_of_tags = object.tags
@@ -774,6 +782,37 @@ class Series:
 		self.date_added = datetime.date.today()
 		self.last_read = None
 		self.last_update = None
+		self.hash = None
+		self.valid = False
+		self._cache_id = None
+
+	def gen_hash(self, nth):
+		"""
+		Generates hash from an image middle of first chapter.
+		"""
+		try:
+			f_chap = os.listdir(self.chapters[0])
+			img_p = sorted(f_chap)[len(f_chap//2)]
+			with open(img_p, 'rb') as img:
+				hash = generate_img_hash(img)
+			self.hash = hash
+			log_d('Hash generation succesful: {}'.format(hash))
+		except IndexError:
+			log_w('{} has no first chapter'.format(self.title))
+
+	def validate(self):
+		"Validates series, returns status"
+		# TODO: Extend this
+		val = []
+		def check(x):
+			if x:
+				if len(x) > 0:
+					val.append(True)
+				val.append(False)
+		status = all(val)
+		if status:
+			self.valid = True
+		return status
 
 	def __str__(self):
 		string = """
@@ -794,7 +833,6 @@ class Series:
 			 self.info, self.fav, self.type, self.language, self.status, self.tags,
 			 self.pub_date, self.date_added)
 		return string
-
 
 
 if __name__ == '__main__':

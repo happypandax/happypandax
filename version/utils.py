@@ -12,7 +12,7 @@ You should have received a copy of the GNU General Public License
 along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import time, datetime, os, subprocess, sys, logging, zipfile
+import time, datetime, os, subprocess, sys, logging, zipfile, hashlib
 
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -22,6 +22,19 @@ log_e = log.error
 log_c = log.critical
 
 IMG_FILES =  ['jpg','bmp','png','gif']
+
+def generate_img_hash(src):
+	"""
+	Generates sha1 hash based on the given bytes.
+	Returns hex-digits
+	"""
+	chunk = 8129
+	sha1 = hashlib.sha1()
+	buffer = src.read(chunk)
+	while len(buffer) > 0:
+		sha1.update(buffer)
+		buffer = src.read(chunk)
+	return sha1.hexdigest()
 
 class ArchiveFile():
 	"""

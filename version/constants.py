@@ -12,7 +12,7 @@ You should have received a copy of the GNU General Public License
 along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from .database import db, db_constants
+from .database import db, db_constants, seriesdb
 from .gui import app, gui_constants
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QFile
@@ -25,6 +25,8 @@ def start():
 								  description='A manga/doujinshi manager with tagging support')
 	parser.add_argument('-d', '--debug', action='store_true',
 					 help='happypanda_debug_log.log will be created in main directory')
+	parser.add_argument('-t', '--test', action='store_true',
+					 help='Run happypanda in test mode. 5000 series will be preadded in DB.')
 	parser.add_argument('-v', '--version', action='version',
 					 version='Happypanda v{}'.format(gui_constants.vs))
 
@@ -67,7 +69,10 @@ def start():
 	log_d('Happypanda Version {}'.format(gui_constants.vs))
 	log_d('App Event Start: OK')
 	try:
-		conn = db.init_db()
+		if args.test:
+			conn = db.init_db(True)
+		else:
+			conn = db.init_db()
 		log_d('Init DB Conn: OK')
 	except:
 		log_d('Database connection failed')
@@ -90,6 +95,40 @@ def start():
 
 	def start_main_window(conn):
 		DB = db.DBThread(conn)
+		#if args.test:
+		#	import threading, time
+		#	ser_list = []
+		#	for x in range(5000):
+		#		s = seriesdb.series()
+		#		s.profile = gui_constants.NO_IMAGE_PATH
+		#		s.title = 'Test {}'.format(x)
+		#		s.artist = 'Author {}'.format(x)
+		#		s.path = gui_constants.static_dir
+		#		s.type = 'Test'
+		#		s.chapters = {0:gui_constants.static_dir}
+		#		s.language = 'English'
+		#		s.info = 'I am number {}'.format(x)
+		#		ser_list.append(s)
+
+		#	done = False
+		#	thread_list = []
+		#	i = 0
+		#	while not done:
+		#		try:
+		#			if threading.active_count() > 5000:
+		#				thread_list = []
+		#				done = True
+		#			else:
+		#				thread_list.append(
+		#					threading.Thread(target=seriesdb.seriesDB.add_series,
+		#					  args=(ser_list[i],)))
+		#				thread_list[i].start()
+		#				i += 1
+		#				print(i)
+		#				print('Threads running: {}'.format(threading.activeCount()))
+		#		except IndexError:
+		#			done = True
+
 		WINDOW = app.AppWindow()
 
 		# styling

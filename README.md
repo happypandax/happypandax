@@ -27,7 +27,7 @@ For Mac & Linux see [INSTALL.md](INSTALL.md)
 - Or you can populate the program with all series' from folder by clicking on the arrow:
     - Currently supports the following folder structures *(Mixed structures are supported)*:
         + .../My_general_series_folder
-            - --/Series1_folder
+            - --/series1_folder
                 - --/Chp_1_folder
                     - --/image_1
                     - --/image_2
@@ -35,10 +35,10 @@ For Mac & Linux see [INSTALL.md](INSTALL.md)
                     - --/image_n
 
         + .../My_general_series_folder
-            - --/Series1_folder
+            - --/series1_folder
                 - --/image_1
                 - --/image_2
-            - --/Series_n_folder
+            - --/series_n_folder
                 - --/image_n
                 - --/image_n
 

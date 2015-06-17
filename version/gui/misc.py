@@ -596,7 +596,7 @@ class DatabaseFilterProxyModel(QSortFilterProxyModel):
 		super().__init__(parent)
 		self.filters = tuple(filters)
 		self.role = Qt.DisplayRole
-		db_data = SeriesDB.get_all_series()
+		db_data = seriesdb.SeriesDB.get_all_series()
 		filter_list = []
 		for series in db_data:
 			p = os.path.split(series.path)
@@ -699,7 +699,7 @@ class SeriesDialog(QDialog):
 		web_layout.addWidget(url_edit, 0)
 		web_layout.addWidget(url_btn, 0, Qt.AlignRight)
 		web_layout.addWidget(url_prog, 0, Qt.AlignRight)
-		url_edit.setPlaceholderText("paste g.e-hentai/exhentai gallery link")
+		url_edit.setPlaceholderText("paste g.e-hentai/exhentai series link")
 		url_prog.hide()
 
 
@@ -803,7 +803,7 @@ class SeriesDialog(QDialog):
 			self.lang_box.setCurrentIndex(l_i)
 
 		if seriesdb.SeriesDB.check_exists(tail):
-			self.file_exists_lbl.setText('<font color="red">Series already exists</font>')
+			self.file_exists_lbl.setText('<font color="red">series already exists</font>')
 			self.file_exists_lbl.show()
 		else: self.file_exists_lbl.hide()
 

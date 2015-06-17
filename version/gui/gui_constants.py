@@ -55,13 +55,15 @@ HOME_BTN_PATH = os.path.join(static_dir, "home.png")
 SETTINGS_PATH = os.path.join(static_dir, "settings.png")
 GRID_PATH = os.path.join(static_dir, "grid.png")
 LIST_PATH = os.path.join(static_dir, "list.png")
-NO_IMAGE_PATH = os.path.join(static_dir, "no-image.jpg")
+NO_IMAGE_PATH = os.path.join(static_dir, "default.jpg")
 
 # controls
-THUMBNAIL_CACHE_SIZE = 10240*100 #10240 is 10mb, so sum is 1gb
-PREFETCH_ITEM_AMOUNT = 100 # amount of items to prefetch
-SCROLL_SPEED = 20 # controls how many steps it takes when scrolling
+THUMBNAIL_CACHE_SIZE = 10240*20 #10240 is 10mb
+PREFETCH_ITEM_AMOUNT = 1# amount of items to prefetch
+SCROLL_SPEED = 7 # controls how many steps it takes when scrolling
 
 # POPUP
 POPUP_WIDTH = 450
 POPUP_HEIGHT = 220
+
+HIGH_QUALITY_THUMBS = False
