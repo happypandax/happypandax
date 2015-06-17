@@ -115,50 +115,50 @@ def open(chapterpath):
 
 	return None
 
-def tag_to_string(series_tag, simple=False):
+def tag_to_string(gallery_tag, simple=False):
 	"""
-	Takes series tags and converts it to string, returns string
+	Takes gallery tags and converts it to string, returns string
 	if simple is set to True, returns a CSV string, else a dict looking string
 	"""
-	assert isinstance(series_tag, dict), "Please provide a dict like this: {'namespace':['tag1']}"
+	assert isinstance(gallery_tag, dict), "Please provide a dict like this: {'namespace':['tag1']}"
 	string = ""
 	if not simple:
-		for n, namespace in enumerate(series_tag, 1):
-			if len(series_tag[namespace]) != 0:
+		for n, namespace in enumerate(gallery_tag, 1):
+			if len(gallery_tag[namespace]) != 0:
 				if namespace != 'default':
 					string += namespace + ":"
 
 				# find tags
-				if namespace != 'default' and len(series_tag[namespace]) > 1:
+				if namespace != 'default' and len(gallery_tag[namespace]) > 1:
 					string += '['
-				for x, tag in enumerate(series_tag[namespace], 1):
+				for x, tag in enumerate(gallery_tag[namespace], 1):
 					# if we are at the end of the list
-					if x == len(series_tag[namespace]):
+					if x == len(gallery_tag[namespace]):
 						string += tag
 					else:
 						string += tag + ', '
-				if namespace != 'default' and len(series_tag[namespace]) > 1:
+				if namespace != 'default' and len(gallery_tag[namespace]) > 1:
 					string += ']'
 
 				# if we aren't at the end of the list
-				if not n == len(series_tag):
+				if not n == len(gallery_tag):
 					string += ', '
 	else:
-		for n, namespace in enumerate(series_tag, 1):
-			if len(series_tag[namespace]) != 0:
+		for n, namespace in enumerate(gallery_tag, 1):
+			if len(gallery_tag[namespace]) != 0:
 				if namespace != 'default':
 					string += namespace + ","
 
 				# find tags
-				for x, tag in enumerate(series_tag[namespace], 1):
+				for x, tag in enumerate(gallery_tag[namespace], 1):
 					# if we are at the end of the list
-					if x == len(series_tag[namespace]):
+					if x == len(gallery_tag[namespace]):
 						string += tag
 					else:
 						string += tag + ', '
 
 				# if we aren't at the end of the list
-				if not n == len(series_tag):
+				if not n == len(gallery_tag):
 					string += ', '
 
 	return string

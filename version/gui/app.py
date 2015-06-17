@@ -23,9 +23,9 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QListView,
 							 QSplitter, QMessageBox, QFileDialog,
 							 QDesktopWidget, QPushButton, QCompleter,
 							 QListWidget, QListWidgetItem)
-from . import series
+from . import gallery
 from . import gui_constants, misc
-from ..database import fetch, seriesdb
+from ..database import fetch, gallerydb
 
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -131,8 +131,8 @@ Your database will not be touched without you being notified.""")
 		self.temp_msg = QLabel()
 		self.temp_timer = QTimer()
 
-		self.manga_list_view.series_model.ROWCOUNT_CHANGE.connect(self.stat_row_info)
-		self.manga_list_view.series_model.STATUSBAR_MSG.connect(self.stat_temp_msg)
+		self.manga_list_view.gallery_model.ROWCOUNT_CHANGE.connect(self.stat_row_info)
+		self.manga_list_view.gallery_model.STATUSBAR_MSG.connect(self.stat_temp_msg)
 		self.manga_list_view.STATUS_BAR_MSG.connect(self.stat_temp_msg)
 		self.manga_table_view.STATUS_BAR_MSG.connect(self.stat_temp_msg)
 		self.stat_row_info()
@@ -158,7 +158,7 @@ Your database will not be touched without you being notified.""")
 		self.manga_list_layout = QHBoxLayout()
 		self.manga_list_main.setLayout(self.manga_list_layout)
 
-		self.manga_list_view = series.MangaView(self)
+		self.manga_list_view = gallery.MangaView(self)
 		self.manga_list_view.clicked.connect(self.popup)
 		self.manga_list_view.manga_delegate.POPUP.connect(self.popup)
 		self.popup_window = self.manga_list_view.manga_delegate.popup_window
@@ -169,11 +169,11 @@ Your database will not be touched without you being notified.""")
 		self.manga_table_layout = QVBoxLayout()
 		self.manga_table_main.setLayout(self.manga_table_layout)
 
-		self.manga_table_view = series.MangaTableView(self)
-		self.manga_table_view.series_model = self.manga_list_view.series_model
+		self.manga_table_view = gallery.MangaTableView(self)
+		self.manga_table_view.gallery_model = self.manga_list_view.gallery_model
 		self.manga_table_view.sort_model = self.manga_list_view.sort_model
 		self.manga_table_view.setModel(self.manga_table_view.sort_model)
-		self.manga_table_view.sort_model.change_model(self.manga_table_view.series_model)
+		self.manga_table_view.sort_model.change_model(self.manga_table_view.gallery_model)
 		self.manga_table_view.setColumnWidth(gui_constants.FAV, 20)
 		self.manga_table_view.setColumnWidth(gui_constants.ARTIST, 200)
 		self.manga_table_view.setColumnWidth(gui_constants.TITLE, 400)
@@ -213,7 +213,7 @@ Your database will not be touched without you being notified.""")
 			else:
 				self.popup_window.move(index_point)
 
-			self.popup_window.set_series(index.data(Qt.UserRole+1))
+			self.popup_window.set_gallery(index.data(Qt.UserRole+1))
 			self.popup_window.show()
 
 	def favourite_display(self):
@@ -248,35 +248,35 @@ Your database will not be touched without you being notified.""")
 		self.toolbar.addWidget(spacer_start)
 
 		favourite_view_icon = QIcon(gui_constants.STAR_BTN_PATH)
-		favourite_view_action = QAction(favourite_view_icon, "Favourite", self)
-		favourite_view_action.setToolTip('Show only favourite series\'')
+		favourite_view_action = QAction(favourite_view_icon, "Favorites", self)
+		favourite_view_action.setToolTip('Show only favourite galleries')
 		favourite_view_action.triggered.connect(self.favourite_display) #need lambda to pass extra args
 		self.toolbar.addAction(favourite_view_action)
 
 		catalog_view_icon = QIcon(gui_constants.HOME_BTN_PATH)
 		catalog_view_action = QAction(catalog_view_icon, "Library", self)
-		catalog_view_action.setToolTip('Show all your series\'')
+		catalog_view_action.setToolTip('Show all your galleries')
 		#catalog_view_action.setText("Catalog")
 		catalog_view_action.triggered.connect(self.catalog_display) #need lambda to pass extra args
 		self.toolbar.addAction(catalog_view_action)
 		self.toolbar.addSeparator()
 
-		series_icon = QIcon(gui_constants.PLUS_PATH)
-		series_action = QAction(series_icon, "Add series advanced", self)
-		series_action.triggered.connect(self.manga_list_view.SERIES_DIALOG.emit)
-		series_action.setToolTip('Add a single series thoroughly')
-		series_menu = QMenu()
-		series_menu.addSeparator()
-		add_more_action = QAction("Add series simple...", self)
-		add_more_action.setStatusTip('Add series\' from different folders')
+		gallery_icon = QIcon(gui_constants.PLUS_PATH)
+		gallery_action = QAction(gallery_icon, "Add gallery", self)
+		gallery_action.triggered.connect(self.manga_list_view.SERIES_DIALOG.emit)
+		gallery_action.setToolTip('Add a single gallery thoroughly')
+		gallery_menu = QMenu()
+		gallery_menu.addSeparator()
+		add_more_action = QAction("Add galleries...", self)
+		add_more_action.setStatusTip('Add galleries from different folders')
 		add_more_action.triggered.connect(lambda: self.populate(True))
-		series_menu.addAction(add_more_action)
+		gallery_menu.addAction(add_more_action)
 		populate_action = QAction("Populate from folder...", self)
-		populate_action.setStatusTip('Populates the DB with series\' from a single folder')
+		populate_action.setStatusTip('Populates the DB with galleries from a single folder')
 		populate_action.triggered.connect(self.populate)
-		series_menu.addAction(populate_action)
-		series_action.setMenu(series_menu)
-		self.toolbar.addAction(series_action)
+		gallery_menu.addAction(populate_action)
+		gallery_action.setMenu(gallery_menu)
+		self.toolbar.addAction(gallery_action)
 
 		spacer_middle = QWidget() # aligns buttons to the right
 		spacer_middle.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -290,7 +290,7 @@ Your database will not be touched without you being notified.""")
 		self.toolbar.addAction(self.grid_toggle)
 
 		completer = QCompleter(self)
-		completer.setModel(self.manga_list_view.series_model)
+		completer.setModel(self.manga_list_view.gallery_model)
 		completer.setCaseSensitivity(Qt.CaseInsensitive)
 		completer.setCompletionMode(QCompleter.PopupCompletion)
 		completer.setCompletionRole(Qt.DisplayRole)
@@ -324,20 +324,20 @@ Your database will not be touched without you being notified.""")
 			self.display.setCurrentIndex(self.m_l_view_index)
 			self.grid_toggle.setIcon(self.grid_toggle_l_icon)
 
-	# TODO: Improve this so that it adds to the series dialog,
+	# TODO: Improve this so that it adds to the gallery dialog,
 	# so user can edit data before inserting (make it a choice)
 	def populate(self, mixed=None):
-		"Populates the database with series from local drive'"
+		"Populates the database with gallery from local drive'"
 		if mixed:
-			series_view = misc.SeriesListView(self, True)
-			series_view.SERIES.connect(self.series_populate)
-			series_view.show()
+			gallery_view = misc.GalleryListView(self, True)
+			gallery_view.SERIES.connect(self.gallery_populate)
+			gallery_view.show()
 		else:
-			path = QFileDialog.getExistingDirectory(None, "Choose a folder containing your series'")
-			self.series_populate(path, True)
+			path = QFileDialog.getExistingDirectory(None, "Choose a folder containing your galleries")
+			self.gallery_populate(path, True)
 
-	def series_populate(self, path, validate=False):
-		"Scans the given path for series to add into the DB"
+	def gallery_populate(self, path, validate=False):
+		"Scans the given path for gallery to add into the DB"
 		if len(path) is not 0:
 			data_thread = QThread()
 			#loading_thread = QThread()
@@ -353,7 +353,7 @@ Your database will not be touched without you being notified.""")
 						loading.hide()
 					if status:
 						if len(status) != 0:
-							def add_series(series_list):
+							def add_gallery(gallery_list):
 								class A(QObject):
 									done = pyqtSignal()
 									prog = pyqtSignal(int)
@@ -364,13 +364,13 @@ Your database will not be touched without you being notified.""")
 									def add_to_db(self):
 										p = 0
 										for x in self.obj:
-											seriesdb.SeriesDB.add_series(x)
+											gallerydb.GalleryDB.add_gallery(x)
 											p += 1
 											self.prog.emit(p)
 										self.done.emit()
 
-								loading.progress.setMaximum(len(series_list))
-								a_instance = A(series_list)
+								loading.progress.setMaximum(len(gallery_list))
+								a_instance = A(gallery_list)
 								thread = QThread()
 								def loading_show():
 									loading.setText('Populating database.\nPlease wait...')
@@ -378,7 +378,7 @@ Your database will not be touched without you being notified.""")
 
 								def loading_hide():
 									loading.close()
-									self.manga_list_view.series_model.populate_data()
+									self.manga_list_view.gallery_model.populate_data()
 
 								a_instance.moveToThread(thread)
 								a_instance.prog.connect(loading.progress.setValue)
@@ -391,26 +391,26 @@ Your database will not be touched without you being notified.""")
 
 							data_thread.quit
 							hide_loading()
-							log_i('Populating DB from series folder: OK')
+							log_i('Populating DB from gallery folder: OK')
 							if validate:
-								series_list = misc.SeriesListView(self)
-								series_list.SERIES.connect(add_series)
+								gallery_list = misc.GalleryListView(self)
+								gallery_list.SERIES.connect(add_gallery)
 								for ser in status:
-									series_list.add_series(ser, os.path.split(ser.path)[1])
-								#self.manga_list_view.series_model.populate_data()
-								series_list.show()
+									gallery_list.add_gallery(ser, os.path.split(ser.path)[1])
+								#self.manga_list_view.gallery_model.populate_data()
+								gallery_list.show()
 							else:
-								add_series(status)
+								add_gallery(status)
 							# TODO: make it spawn a dialog instead (from utils.py or misc.py)
 							misc.Loading.ON = False
 						else:
-							log_d('No new series was found')
-							loading.setText("No new series found")
+							log_d('No new gallery was found')
+							loading.setText("No new gallery found")
 							data_thread.quit
 							misc.Loading.ON = False
 
 					else:
-						log_e('Populating DB from series folder: FAIL')
+						log_e('Populating DB from gallery folder: FAIL')
 						loading.setText("<font color=red>An error occured. Try restarting..</font>")
 						loading.progress.setStyleSheet("background-color:red;")
 						data_thread.quit
@@ -427,7 +427,7 @@ Your database will not be touched without you being notified.""")
 
 				def a_progress(prog):
 					loading.progress.setValue(prog)
-					loading.setText("Searching for series...")
+					loading.setText("Searching for galleries...")
 
 				fetch_instance.moveToThread(data_thread)
 				fetch_instance.DATA_COUNT.connect(loading.progress.setMaximum)
@@ -437,7 +437,7 @@ Your database will not be touched without you being notified.""")
 				fetch_instance.FINISHED.connect(fetch_deleteLater)
 				fetch_instance.FINISHED.connect(thread_deleteLater)
 				data_thread.start()
-				log_i('Populating DB from series folder')
+				log_i('Populating DB from gallery folder')
 
 	def closeEvent(self, event):
 		try:

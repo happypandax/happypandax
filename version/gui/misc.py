@@ -28,7 +28,7 @@ from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 import os, threading, queue, time, logging
 from datetime import datetime
 from ..utils import tag_to_string, tag_to_dict, title_parser
-from ..database import seriesdb, fetch, db
+from ..database import gallerydb, fetch, db
 from . import gui_constants
 
 log = logging.getLogger(__name__)
@@ -138,17 +138,17 @@ class PathLineEdit(QLineEdit):
 
 class ChapterAddWidget(QWidget):
 	CHAPTERS = pyqtSignal(dict)
-	def __init__(self, series, parent=None):
+	def __init__(self, gallery, parent=None):
 		super().__init__(parent)
 		self.setWindowFlags(Qt.Window)
 
-		self.current_chapters = len(series.chapters)
+		self.current_chapters = len(gallery.chapters)
 		self.added_chaps = 0
 
 		layout = QFormLayout()
 		self.setLayout(layout)
-		lbl = QLabel('[{} {}]'.format(series.artist, series.title))
-		layout.addRow('Series:', lbl)
+		lbl = QLabel('[{} {}]'.format(gallery.artist, gallery.title))
+		layout.addRow('Gallery:', lbl)
 		layout.addRow('Current chapters:', QLabel('{}'.format(self.current_chapters)))
 
 		new_btn = QPushButton('New')
@@ -228,13 +228,13 @@ class ChapterAddWidget(QWidget):
 		self.close()
 
 
-class SeriesListItem(QListWidgetItem):
-	def __init__(self, series=None, parent=None):
+class GalleryListItem(QListWidgetItem):
+	def __init__(self, gallery=None, parent=None):
 		super().__init__(parent)
-		self.series = series
+		self.gallery = gallery
 
 
-class SeriesListView(QWidget):
+class GalleryListView(QWidget):
 	SERIES = pyqtSignal(list)
 	def __init__(self, parent=None, modal=False):
 		super().__init__(parent)
@@ -249,7 +249,7 @@ class SeriesListView(QWidget):
 			modal_layout = QHBoxLayout()
 			frame.setLayout(modal_layout)
 			layout.addWidget(frame)
-			info = QLabel('This mode let\'s you add series\' from ' +
+			info = QLabel('This mode let\'s you add galleries from ' +
 				 'different folders.')
 			f_folder = QPushButton('Add folders')
 			f_folder.clicked.connect(self.from_folder)
@@ -262,12 +262,12 @@ class SeriesListView(QWidget):
 		check_layout = QHBoxLayout()
 		layout.addLayout(check_layout)
 		if modal:
-			check_layout.addWidget(QLabel('Please uncheck series\' you do' +
-							  ' not want to add. (Exisiting series\' won\'t be added'),
+			check_layout.addWidget(QLabel('Please uncheck galleries you do' +
+							  ' not want to add. (Exisiting galleries won\'t be added'),
 							 3)
 		else:
-			check_layout.addWidget(QLabel('Please uncheck series\' you do' +
-							  ' not want to add. (Existing series\' are hidden)'),
+			check_layout.addWidget(QLabel('Please uncheck galleries you do' +
+							  ' not want to add. (Existing galleries are hidden)'),
 							 3)
 		self.check_all = QCheckBox('Check/Uncheck All', self)
 		self.check_all.setChecked(True)
@@ -280,7 +280,7 @@ class SeriesListView(QWidget):
 		layout.addWidget(self.view_list)
 		
 		add_btn = QPushButton('Add checked')
-		add_btn.clicked.connect(self.return_series)
+		add_btn.clicked.connect(self.return_gallery)
 
 		cancel_btn = QPushButton('Cancel')
 		cancel_btn.clicked.connect(self.close_window)
@@ -297,7 +297,7 @@ class SeriesListView(QWidget):
 		frect = self.frameGeometry()
 		frect.moveCenter(QDesktopWidget().availableGeometry().center())
 		self.move(frect.topLeft())
-		self.setWindowTitle('Series List')
+		self.setWindowTitle('Gallery List')
 
 	def all_check_state(self, new_state):
 		row = 0
@@ -313,20 +313,20 @@ class SeriesListView(QWidget):
 			else:
 				done = True
 
-	def add_series(self, item, name):
+	def add_gallery(self, item, name):
 		"""
 		Constructs an widgetitem to hold the provided item,
 		and adds it to the view_list
 		"""
 		assert isinstance(name, str)
-		series_item = SeriesListItem(item)
-		series_item.setText(name)
-		series_item.setFlags(series_item.flags() | Qt.ItemIsUserCheckable)
-		series_item.setCheckState(Qt.Checked)
-		self.view_list.addItem(series_item)
+		gallery_item = GalleryListItem(item)
+		gallery_item.setText(name)
+		gallery_item.setFlags(gallery_item.flags() | Qt.ItemIsUserCheckable)
+		gallery_item.setCheckState(Qt.Checked)
+		self.view_list.addItem(gallery_item)
 
-	def return_series(self):
-		series_list = []
+	def return_gallery(self):
+		gallery_list = []
 		row = 0
 		done = False
 		while not done:
@@ -335,10 +335,10 @@ class SeriesListView(QWidget):
 				done = True
 			else:
 				if item.checkState() == Qt.Checked:
-					series_list.append(item.series)
+					gallery_list.append(item.gallery)
 				row += 1
 
-		self.SERIES.emit(series_list)
+		self.SERIES.emit(gallery_list)
 		self.close()
 
 	def from_folder(self):
@@ -354,17 +354,17 @@ class SeriesListView(QWidget):
 
 		if file_dialog.exec():
 			for path in file_dialog.selectedFiles():
-				self.add_series(path, os.path.split(path)[1])
+				self.add_gallery(path, os.path.split(path)[1])
 
 
 	def from_files(self):
-		series_list = QFileDialog.getOpenFileNames(self,
-											 'Select 1 or more series to add',
+		gallery_list = QFileDialog.getOpenFileNames(self,
+											 'Select 1 or more gallery to add',
 											 filter='Archives (*.zip)')
-		for path in series_list[0]:
+		for path in gallery_list[0]:
 			#Warning: will break when you add more filters
 			if len(path) != 0:
-				self.add_series(path, os.path.split(path)[1])
+				self.add_gallery(path, os.path.split(path)[1])
 
 	def close_window(self):
 		msgbox = QMessageBox()
@@ -579,8 +579,8 @@ class CompleterWithData(QCompleter):
 
 
 def return_tag_completer_TextEdit():
-	ns = seriesdb.TagDB.get_all_ns()
-	for t in seriesdb.TagDB.get_all_tags():
+	ns = gallerydb.TagDB.get_all_ns()
+	for t in gallerydb.TagDB.get_all_tags():
 		ns.append(t)
 	TextEditCompleter = CompleterTextEdit()
 	TextEditCompleter.setCompleter(CompleterWithData(ns))
@@ -596,10 +596,10 @@ class DatabaseFilterProxyModel(QSortFilterProxyModel):
 		super().__init__(parent)
 		self.filters = tuple(filters)
 		self.role = Qt.DisplayRole
-		db_data = seriesdb.SeriesDB.get_all_series()
+		db_data = gallerydb.GalleryDB.get_all_gallery()
 		filter_list = []
-		for series in db_data:
-			p = os.path.split(series.path)
+		for gallery in db_data:
+			p = os.path.split(gallery.path)
 			filter_list.append(p[1])
 		self.filter_list = sorted(filter_list)
 		print('Instatiated')
@@ -623,17 +623,17 @@ class DatabaseFilterProxyModel(QSortFilterProxyModel):
 		return allow
 
 # TODO: FIX THIS HORRENDOUS DUPLICATED CODE
-class SeriesDialog(QDialog):
-	"A window for adding/modifying series"
+class GalleryDialog(QDialog):
+	"A window for adding/modifying gallery"
 
-	series_queue = queue.Queue()
+	gallery_queue = queue.Queue()
 	SERIES = pyqtSignal(list)
 	SERIES_EDIT = pyqtSignal(list, int)
-	#series_list = [] # might want to extend this to allow mass series adding
+	#gallery_list = [] # might want to extend this to allow mass gallery adding
 
 	def _init__(self, parent=None):
 		super().__init__()
-	#TODO: Implement a way to mass add series'
+	#TODO: Implement a way to mass add galleries
 	#IDEA: Extend dialog in a ScrollArea with more forms...
 
 	def initUI(self):
@@ -680,11 +680,11 @@ class SeriesDialog(QDialog):
 		web_main_layout.addLayout(ipb_info_l)
 		f_web.setLayout(web_main_layout)
 
-		f_series = QGroupBox("Series Info")
-		f_series.setCheckable(False)
-		main_layout.addWidget(f_series)
-		series_layout = QFormLayout()
-		f_series.setLayout(series_layout)
+		f_gallery = QGroupBox("Gallery Info")
+		f_gallery.setCheckable(False)
+		main_layout.addWidget(f_gallery)
+		gallery_layout = QFormLayout()
+		f_gallery.setLayout(gallery_layout)
 
 		def basic_web(name):
 			return QLabel(name), QLineEdit(), QPushButton("Fetch"), QProgressBar()
@@ -699,7 +699,7 @@ class SeriesDialog(QDialog):
 		web_layout.addWidget(url_edit, 0)
 		web_layout.addWidget(url_btn, 0, Qt.AlignRight)
 		web_layout.addWidget(url_prog, 0, Qt.AlignRight)
-		url_edit.setPlaceholderText("paste g.e-hentai/exhentai series link")
+		url_edit.setPlaceholderText("paste g.e-hentai/exhentai gallery link")
 		url_prog.hide()
 
 
@@ -748,15 +748,15 @@ class SeriesDialog(QDialog):
 		self.link_layout.addWidget(self.link_btn2)
 		self.link_btn2.hide()
 
-		series_layout.addRow("Title:", self.title_edit)
-		series_layout.addRow("Author:", self.author_edit)
-		series_layout.addRow("Description:", self.descr_edit)
-		series_layout.addRow("Language:", self.lang_box)
-		series_layout.addRow("Tags:", self.tags_edit)
-		series_layout.addRow("Type:", self.type_box)
-		series_layout.addRow("Publication Date:", self.pub_edit)
-		series_layout.addRow("Path:", self.path_lbl)
-		series_layout.addRow("Link:", self.link_layout)
+		gallery_layout.addRow("Title:", self.title_edit)
+		gallery_layout.addRow("Author:", self.author_edit)
+		gallery_layout.addRow("Description:", self.descr_edit)
+		gallery_layout.addRow("Language:", self.lang_box)
+		gallery_layout.addRow("Tags:", self.tags_edit)
+		gallery_layout.addRow("Type:", self.type_box)
+		gallery_layout.addRow("Publication Date:", self.pub_edit)
+		gallery_layout.addRow("Path:", self.path_lbl)
+		gallery_layout.addRow("Link:", self.link_layout)
 
 		final_buttons = QHBoxLayout()
 		final_buttons.setAlignment(Qt.AlignRight)
@@ -802,8 +802,8 @@ class SeriesDialog(QDialog):
 		if l_i != -1:
 			self.lang_box.setCurrentIndex(l_i)
 
-		if seriesdb.SeriesDB.check_exists(tail):
-			self.file_exists_lbl.setText('<font color="red">series already exists</font>')
+		if gallerydb.GalleryDB.check_exists(tail):
+			self.file_exists_lbl.setText('<font color="red">gallery already exists</font>')
 			self.file_exists_lbl.show()
 		else: self.file_exists_lbl.hide()
 
@@ -824,50 +824,50 @@ class SeriesDialog(QDialog):
 		return True
 
 	def accept(self):
-		from ..database import seriesdb
+		from ..database import gallerydb
 
-		def do_chapters(series):
-			thread = threading.Thread(target=self.set_chapters, args=(series,), daemon=True)
+		def do_chapters(gallery):
+			thread = threading.Thread(target=self.set_chapters, args=(gallery,), daemon=True)
 			thread.start()
 			thread.join()
-			#return self.series_queue.get()
+			#return self.gallery_queue.get()
 
 		if self.check():
-			new_series = seriesdb.Series()
-			new_series.title = self.title_edit.text()
-			new_series.artist = self.author_edit.text()
-			new_series.path = self.path_lbl.text()
-			new_series.info = self.descr_edit.toPlainText()
-			new_series.type = self.type_box.currentText()
-			new_series.language = self.lang_box.currentText()
-			new_series.status = self.status_box.currentText()
-			new_series.tags = tag_to_dict(self.tags_edit.toPlainText())
+			new_gallery = gallerydb.Gallery()
+			new_gallery.title = self.title_edit.text()
+			new_gallery.artist = self.author_edit.text()
+			new_gallery.path = self.path_lbl.text()
+			new_gallery.info = self.descr_edit.toPlainText()
+			new_gallery.type = self.type_box.currentText()
+			new_gallery.language = self.lang_box.currentText()
+			new_gallery.status = self.status_box.currentText()
+			new_gallery.tags = tag_to_dict(self.tags_edit.toPlainText())
 			qpub_d = self.pub_edit.date().toString("ddMMyyyy")
 			dpub_d = datetime.strptime(qpub_d, "%d%m%Y").date()
-			new_series.pub_date = dpub_d
-			new_series.link = self.link_lbl.text()
+			new_gallery.pub_date = dpub_d
+			new_gallery.link = self.link_lbl.text()
 
 			if self.path_lbl.text() == "unspecified...":
-				self.SERIES.emit([new_series])
+				self.SERIES.emit([new_gallery])
 			else:
-				updated_series = do_chapters(new_series)
-				#for ser in self.series:
-				#self.SERIES.emit([updated_series])
+				updated_gallery = do_chapters(new_gallery)
+				#for ser in self.gallery:
+				#self.SERIES.emit([updated_gallery])
 			super().accept()
 
-	def set_chapters(self, series_object):
-		path = series_object.path
+	def set_chapters(self, gallery_object):
+		path = gallery_object.path
 		try:
-			con = os.listdir(path) # list all folders in series dir
+			con = os.listdir(path) # list all folders in gallery dir
 			chapters = sorted([os.path.join(path,sub) for sub in con if os.path.isdir(os.path.join(path, sub))]) #subfolders
-			# if series has chapters divided into sub folders
+			# if gallery has chapters divided into sub folders
 			if len(chapters) != 0:
 				for numb, ch in enumerate(chapters):
 					chap_path = os.path.join(path, ch)
-					series_object.chapters[numb] = chap_path
+					gallery_object.chapters[numb] = chap_path
 
-			else: #else assume that all images are in series folder
-				series_object.chapters[0] = path
+			else: #else assume that all images are in gallery folder
+				gallery_object.chapters[0] = path
 				
 			#find last edited file
 			times = set()
@@ -875,21 +875,21 @@ class SeriesDialog(QDialog):
 				for img in files:
 					fp = os.path.join(root, img)
 					times.add(os.path.getmtime(fp))
-			series_object.last_update = time.asctime(time.gmtime(max(times)))
+			gallery_object.last_update = time.asctime(time.gmtime(max(times)))
 		except NotADirectoryError:
 			if path[-4:] == '.zip':
 				#TODO: add support for folders in archive
-				series_object.chapters[0] = path
+				gallery_object.chapters[0] = path
 
-		#self.series_queue.put(series_object)
-		self.SERIES.emit([series_object])
-		#seriesdb.SeriesDB.add_series(series_object)
+		#self.gallery_queue.put(gallery_object)
+		self.SERIES.emit([gallery_object])
+		#gallerydb.GalleryDB.add_gallery(gallery_object)
 		
 
 	def reject(self):
 		if self.check():
 			msgbox = QMessageBox()
-			msgbox.setText("<font color='red'><b>Noo oniichan! You were about to add a new series.</b></font>")
+			msgbox.setText("<font color='red'><b>Noo oniichan! You were about to add a new gallery.</b></font>")
 			msgbox.setInformativeText("Do you really want to discard?")
 			msgbox.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
 			msgbox.setDefaultButton(QMessageBox.No)
@@ -899,22 +899,22 @@ class SeriesDialog(QDialog):
 			super().reject()
 
 	def trigger(self, list_of_index=None):
-		log_d('Triggered Series Edit/Add Dialog')
+		log_d('Triggered Gallery Edit/Add Dialog')
 		if not list_of_index:
 			self.initUI()
 		else:
 			assert isinstance(list_of_index, list)
 			self.position = list_of_index[0].row()
 			for index in list_of_index:
-				series = index.data(Qt.UserRole+1)
-				self.setSeries(series)
+				gallery = index.data(Qt.UserRole+1)
+				self.setGallery(gallery)
 
 		self.resize(500,200)
 		frect = self.frameGeometry()
 		frect.moveCenter(QDesktopWidget().availableGeometry().center())
 		self.move(frect.topLeft()-QPoint(0,180))
 		self.setAttribute(Qt.WA_DeleteOnClose)
-		self.setWindowTitle("Add a new series")
+		self.setWindowTitle("Add a new gallery")
 		self.setWindowIcon(QIcon(gui_constants.APP_ICO_PATH))
 		#self.setWindowFlags(Qt.FramelessWindowHint)
 		self.exec()
@@ -1013,9 +1013,9 @@ class SeriesDialog(QDialog):
 		self.link_btn.hide()
 		self.link_btn2.show()
 
-	def setSeries(self, series):
-		"To be used for when editing a series"
-		self.series = series
+	def setGallery(self, gallery):
+		"To be used for when editing a gallery"
+		self.gallery = gallery
 		main_layout = QVBoxLayout()
 
 		f_web = QGroupBox("Fetch metadata from Web")
@@ -1045,18 +1045,18 @@ class SeriesDialog(QDialog):
 		self.ipb.setText(ipb_dict['ipb_id'])
 		self.ipb_pass.setText(ipb_dict['ipb_pass'])
 
-		f_series = QGroupBox("Series Info")
-		f_series.setCheckable(False)
-		main_layout.addWidget(f_series)
-		series_layout = QFormLayout()
-		f_series.setLayout(series_layout)
+		f_gallery = QGroupBox("Gallery Info")
+		f_gallery.setCheckable(False)
+		main_layout.addWidget(f_gallery)
+		gallery_layout = QFormLayout()
+		f_gallery.setLayout(gallery_layout)
 
 
 		def basic_web(name):
 			return QLabel(name), QLineEdit(), QPushButton("Fetch"), QProgressBar()
 
 		url_lbl, url_edit, url_btn, url_prog = basic_web("URL:")
-		url_edit.setText(series.link)
+		url_edit.setText(gallery.link)
 		url_btn.clicked.connect(lambda: self.web_metadata(url_edit.text(), url_btn,
 													url_prog))
 		url_prog.setTextVisible(False)
@@ -1070,18 +1070,18 @@ class SeriesDialog(QDialog):
 		url_prog.hide()
 
 		self.title_edit = QLineEdit()
-		self.title_edit.setText(series.title)
+		self.title_edit.setText(gallery.title)
 		self.author_edit = QLineEdit()
-		self.author_edit.setText(series.artist)
+		self.author_edit.setText(gallery.artist)
 		self.descr_edit = QTextEdit()
-		self.descr_edit.setText(series.info)
+		self.descr_edit.setText(gallery.info)
 		self.descr_edit.setAcceptRichText(True)
 		self.descr_edit.setFixedHeight(45)
 		self.lang_box = QComboBox()
 		self.lang_box.addItems(["English", "Japanese", "Other"])
-		if series.language is "English":
+		if gallery.language is "English":
 			self.lang_box.setCurrentIndex(0)
-		elif series.language is "Japanese":
+		elif gallery.language is "Japanese":
 			self.lang_box.setCurrentIndex(1)
 		else:
 			self.lang_box.setCurrentIndex(2)
@@ -1090,13 +1090,13 @@ class SeriesDialog(QDialog):
 		self.tags_edit.setFixedHeight(70)
 		self.tags_edit.setPlaceholderText("Autocomplete enabled. Press Tab (Ctrl + Space to show popup)"+
 									"\nnamespace1:tag1, tag2, namespace3:tag3, etc..")
-		self.tags_edit.setText(tag_to_string(series.tags))
+		self.tags_edit.setText(tag_to_string(gallery.tags))
 
 		self.type_box = QComboBox()
 		self.type_box.addItems(["Manga", "Doujinshi", "Artist CG Sets", "Game CG Sets",
 						  "Western", "Image Sets", "Non-H", "Cosplay", "Other"])
 
-		t_index = self.type_box.findText(series.type)
+		t_index = self.type_box.findText(gallery.type)
 		try:
 			self.type_box.setCurrentIndex(t_index)
 		except:
@@ -1106,17 +1106,17 @@ class SeriesDialog(QDialog):
 		#self.doujin_parent.setVisible(False)
 		self.status_box = QComboBox()
 		self.status_box.addItems(["Unknown", "Ongoing", "Completed"])
-		if series.status is "Ongoing":
+		if gallery.status is "Ongoing":
 			self.status_box.setCurrentIndex(1)
-		elif series.status is "Completed":
+		elif gallery.status is "Completed":
 			self.status_box.setCurrentIndex(2)
 		else:
 			self.status_box.setCurrentIndex(0)
 
 		self.pub_edit = QDateEdit()
 		self.pub_edit.setCalendarPopup(True)
-		series_pub_date = "{}".format(series.pub_date)
-		qdate_pub_date = QDate.fromString(series_pub_date, "yyyy-MM-dd")
+		gallery_pub_date = "{}".format(gallery.pub_date)
+		qdate_pub_date = QDate.fromString(gallery_pub_date, "yyyy-MM-dd")
 		self.pub_edit.setDate(qdate_pub_date)
 		self.path_lbl = QLabel("unspecified...")
 		self.path_lbl.setWordWrap(True)
@@ -1138,18 +1138,18 @@ class SeriesDialog(QDialog):
 		self.link_layout.addWidget(self.link_btn2)
 		self.link_btn2.hide()
 
-		series_layout.addRow("Title:", self.title_edit)
-		series_layout.addRow("Author:", self.author_edit)
-		series_layout.addRow("Description:", self.descr_edit)
-		series_layout.addRow("Language:", self.lang_box)
-		series_layout.addRow("Tags:", self.tags_edit)
-		series_layout.addRow("Type:", self.type_box)
-		series_layout.addRow("Publication Date:", self.pub_edit)
-		series_layout.addRow("Path:", self.path_lbl)
-		series_layout.addRow("Link:", self.link_layout)
+		gallery_layout.addRow("Title:", self.title_edit)
+		gallery_layout.addRow("Author:", self.author_edit)
+		gallery_layout.addRow("Description:", self.descr_edit)
+		gallery_layout.addRow("Language:", self.lang_box)
+		gallery_layout.addRow("Tags:", self.tags_edit)
+		gallery_layout.addRow("Type:", self.type_box)
+		gallery_layout.addRow("Publication Date:", self.pub_edit)
+		gallery_layout.addRow("Path:", self.path_lbl)
+		gallery_layout.addRow("Link:", self.link_layout)
 
-		self.link_lbl.setText(series.link)
-		self.path_lbl.setText(series.path)
+		self.link_lbl.setText(gallery.link)
+		self.path_lbl.setText(gallery.path)
 
 		final_buttons = QHBoxLayout()
 		final_buttons.setAlignment(Qt.AlignRight)
@@ -1167,22 +1167,22 @@ class SeriesDialog(QDialog):
 	def accept_edit(self):
 
 		if self.check():
-			new_series = self.series
-			new_series.title = self.title_edit.text()
-			new_series.artist = self.author_edit.text()
-			new_series.path = self.path_lbl.text()
-			new_series.info = self.descr_edit.toPlainText()
-			new_series.type = self.type_box.currentText()
-			new_series.language = self.lang_box.currentText()
-			new_series.status = self.status_box.currentText()
-			new_series.tags = tag_to_dict(self.tags_edit.toPlainText())
+			new_gallery = self.gallery
+			new_gallery.title = self.title_edit.text()
+			new_gallery.artist = self.author_edit.text()
+			new_gallery.path = self.path_lbl.text()
+			new_gallery.info = self.descr_edit.toPlainText()
+			new_gallery.type = self.type_box.currentText()
+			new_gallery.language = self.lang_box.currentText()
+			new_gallery.status = self.status_box.currentText()
+			new_gallery.tags = tag_to_dict(self.tags_edit.toPlainText())
 			qpub_d = self.pub_edit.date().toString("ddMMyyyy")
 			dpub_d = datetime.strptime(qpub_d, "%d%m%Y").date()
-			new_series.pub_date = dpub_d
-			new_series.link = self.link_lbl.text()
+			new_gallery.pub_date = dpub_d
+			new_gallery.link = self.link_lbl.text()
 
-			#for ser in self.series:
-			self.SERIES_EDIT.emit([new_series], self.position)
+			#for ser in self.gallery:
+			self.SERIES_EDIT.emit([new_gallery], self.position)
 			super().accept()
 
 	def reject_edit(self):

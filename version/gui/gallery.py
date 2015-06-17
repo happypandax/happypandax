@@ -31,7 +31,7 @@ from PyQt5.QtWidgets import (QListView, QFrame, QLabel,
 import threading, logging, os
 import re as regex
 
-from ..database import seriesdb
+from ..database import gallerydb
 from . import gui_constants, misc
 from .. import utils
 
@@ -98,7 +98,7 @@ class Popup(QWidget):
 		form_l.addRow(self.tags_lbl, self.tags)
 		form_l.addRow(link_lbl, self.link)
 
-	def set_series(self, series):
+	def set_gallery(self, gallery):
 		def tags_parser(tags):
 			string = ""
 			try:
@@ -129,15 +129,15 @@ class Popup(QWidget):
 							string += tag
 
 			return string
-		self.title.setText(series.title)
-		self.artist.setText(series.artist)
-		self.chapters.setText("{}".format(len(series.chapters)))
-		self.info.setText(series.info)
-		self.lang.setText(series.language)
-		self.type.setText(series.type)
-		self.status.setText(series.status)
-		self.tags.setText(tags_parser(series.tags))
-		self.link.setText(series.link)
+		self.title.setText(gallery.title)
+		self.artist.setText(gallery.artist)
+		self.chapters.setText("{}".format(len(gallery.chapters)))
+		self.info.setText(gallery.info)
+		self.lang.setText(gallery.language)
+		self.type.setText(gallery.type)
+		self.status.setText(gallery.status)
+		self.tags.setText(tags_parser(gallery.tags))
+		self.link.setText(gallery.link)
 
 class SortFilterModel(QSortFilterProxyModel):
 	def __init__(self, parent=None):
@@ -168,12 +168,12 @@ class SortFilterModel(QSortFilterProxyModel):
 	def status_b_msg(self, msg):
 		self.sourceModel().status_b_msg(msg)
 
-	def addRows(self, list_of_series, position=None,
+	def addRows(self, list_of_gallery, position=None,
 				rows=1, index = QModelIndex()):
-		self.sourceModel().addRows(list_of_series, position, rows, index)
+		self.sourceModel().addRows(list_of_gallery, position, rows, index)
 
-	def replaceRows(self, list_of_series, position, rows=1, index=QModelIndex()):
-		self.sourceModel().replaceRows(list_of_series, position, rows, index)
+	def replaceRows(self, list_of_gallery, position, rows=1, index=QModelIndex()):
+		self.sourceModel().replaceRows(list_of_gallery, position, rows, index)
 
 	def search(self, term, title=True, artist=True, tags=True):
 		"""
@@ -199,7 +199,7 @@ class SortFilterModel(QSortFilterProxyModel):
 
 	def filterAcceptsRow(self, source_row, index_parent):
 		allow = False
-		series = None
+		gallery = None
 
 		def do_search():
 			l = {'title':False, 'artist':False, 'tags':False}
@@ -229,14 +229,14 @@ class SortFilterModel(QSortFilterProxyModel):
 				return m
 
 			if where['title']:
-				if re_search(self.title, series.title):
+				if re_search(self.title, gallery.title):
 					allow = True
 			if where['artist']:
-				if re_search(self.artist, series.artist):
+				if re_search(self.artist, gallery.artist):
 					allow = True
 			if where['tags']:
 				#print(self.tags)
-				ser_tags = utils.tag_to_string(series.tags)
+				ser_tags = utils.tag_to_string(gallery.tags)
 				for ns in self.tags:
 					if ns == 'default':
 						for tag in self.tags[ns]:
@@ -257,9 +257,9 @@ class SortFilterModel(QSortFilterProxyModel):
 		if self.sourceModel():
 			index = self.sourceModel().index(source_row, 0, index_parent)
 			if index.isValid():
-				series = index.data(Qt.UserRole+1)
+				gallery = index.data(Qt.UserRole+1)
 				if self.fav:
-					if series.fav == 1:
+					if gallery.fav == 1:
 						s = do_search()
 						if s:
 							allow = return_searched(s)
@@ -272,7 +272,7 @@ class SortFilterModel(QSortFilterProxyModel):
 
 		return allow
 
-class SeriesModel(QAbstractTableModel):
+class GalleryModel(QAbstractTableModel):
 	"""Model for Model/View/Delegate framework
 	"""
 
@@ -299,7 +299,7 @@ class SeriesModel(QAbstractTableModel):
 
 	def populate_data(self):
 		"Populates the model with data from database"
-		self._data = seriesdb.SeriesDB.get_all_series()
+		self._data = gallerydb.GalleryDB.get_all_gallery()
 		self.layoutChanged.emit()
 		self.ROWCOUNT_CHANGE.emit()
 		self._data_count = len(self._data)
@@ -315,43 +315,43 @@ class SeriesModel(QAbstractTableModel):
 			return QVariant()
 
 		current_row = index.row() 
-		current_series = self._data[current_row]
+		current_gallery = self._data[current_row]
 		current_column = index.column()
 
 		def column_checker():
 			if current_column == self._TITLE:
-				title = current_series.title
+				title = current_gallery.title
 				return title
 			elif current_column == self._ARTIST:
-				artist = current_series.artist
+				artist = current_gallery.artist
 				return artist
 			elif current_column == self._TAGS:
-				tags = utils.tag_to_string(current_series.tags)
+				tags = utils.tag_to_string(current_gallery.tags)
 				return tags
 			elif current_column == self._TYPE:
-				type = current_series.type
+				type = current_gallery.type
 				return type
 			elif current_column == self._FAV:
-				if current_series.fav == 1:
+				if current_gallery.fav == 1:
 					return u'\u2605'
 				else:
 					return ''
 			elif current_column == self._CHAPTERS:
-				return len(current_series.chapters)
+				return len(current_gallery.chapters)
 			elif current_column == self._LANGUAGE:
-				return current_series.language
+				return current_gallery.language
 			elif current_column == self._LINK:
-				return current_series.link
+				return current_gallery.link
 
 		if role == Qt.DisplayRole:
 			return column_checker()
 		# for artist searching
 		if role == Qt.UserRole+2:
-			artist = current_series.artist
+			artist = current_gallery.artist
 			return artist
 
 		if role == Qt.DecorationRole:
-			pixmap = current_series.profile
+			pixmap = current_gallery.profile
 			return pixmap
 		
 		if role == Qt.BackgroundRole:
@@ -365,11 +365,11 @@ class SeriesModel(QAbstractTableModel):
 		#if role == Qt.ToolTipRole:
 		#	return "Example popup!!"
 		if role == Qt.UserRole+1:
-			return current_series
+			return current_gallery
 
-		# favourite satus
+		# favorite satus
 		if role == Qt.UserRole+3:
-			return current_series.fav
+			return current_gallery.fav
 
 
 		return None
@@ -409,48 +409,48 @@ class SeriesModel(QAbstractTableModel):
 	#	return Qt.ItemFlags(QAbstractListModel.flags(self, index) |
 	#				  Qt.ItemIsEditable)
 
-	def addRows(self, list_of_series, position=None,
+	def addRows(self, list_of_gallery, position=None,
 				rows=1, index = QModelIndex()):
-		"Adds new series data to model and to DB"
+		"Adds new gallery data to model and to DB"
 		loading = misc.Loading(self.parent())
 		loading.setText('Adding...')
 		loading.progress.setMinimum(0)
 		loading.progress.setMaximum(0)
 		loading.show()
-		from ..database.seriesdb import PROFILE_TO_MODEL
+		from ..database.gallerydb import PROFILE_TO_MODEL
 		if not position:
 			position = len(self._data)
 		self.beginInsertRows(QModelIndex(), position, position + rows - 1)
-		for series in list_of_series:
-			threading.Thread(target=seriesdb.SeriesDB.add_series_return, args=(series,)).start()
-			series.profile = PROFILE_TO_MODEL.get()
-			self._data.insert(0, series)
+		for gallery in list_of_gallery:
+			threading.Thread(target=gallerydb.GalleryDB.add_gallery_return, args=(gallery,)).start()
+			gallery.profile = PROFILE_TO_MODEL.get()
+			self._data.insert(0, gallery)
 		self.endInsertRows()
 		self.CUSTOM_STATUS_MSG.emit("Added item(s)")
 		self.ROWCOUNT_CHANGE.emit()
 		loading.close()
 		return True
 
-	def insertRows(self, list_of_series, position,
+	def insertRows(self, list_of_gallery, position,
 				rows=1, index = QModelIndex()):
-		"Inserts new series data to the data list WITHOUT adding to DB"
+		"Inserts new gallery data to the data list WITHOUT adding to DB"
 		self.beginInsertRows(QModelIndex(), position, position + rows - 1)
-		for pos, series in enumerate(list_of_series, 1):
-			self._data.append(series)
+		for pos, gallery in enumerate(list_of_gallery, 1):
+			self._data.append(gallery)
 		self.endInsertRows()
 		self.CUSTOM_STATUS_MSG.emit("Added item(s)")
 		self.ROWCOUNT_CHANGE.emit()
 		return True
 
-	def replaceRows(self, list_of_series, position, rows=1, index=QModelIndex()):
-		"replaces series data to the data list WITHOUT adding to DB"
-		for pos, series in enumerate(list_of_series):
+	def replaceRows(self, list_of_gallery, position, rows=1, index=QModelIndex()):
+		"replaces gallery data to the data list WITHOUT adding to DB"
+		for pos, gallery in enumerate(list_of_gallery):
 			del self._data[position+pos]
-			self._data.insert(position+pos, series)
+			self._data.insert(position+pos, gallery)
 		self.dataChanged.emit(index, index, [Qt.UserRole+1])
 
 	def removeRows(self, position, rows=1, index=QModelIndex()):
-		"Deletes series data from the model data list. OBS: doesn't touch DB!"
+		"Deletes gallery data from the model data list. OBS: doesn't touch DB!"
 		self.beginRemoveRows(QModelIndex(), position, position + rows - 1)
 		self._data = self._data[:position] + self._data[position + rows:]
 		self._data_count -= rows
@@ -507,9 +507,9 @@ class CustomDelegate(QStyledItemDelegate):
 		if index.data(Qt.UserRole+1):
 			if gui_constants.HIGH_QUALITY_THUMBS:
 				painter.setRenderHint(QPainter.SmoothPixmapTransform)
-			series = index.data(Qt.UserRole+1)
-			title = series.title
-			artist = series.artist
+			gallery = index.data(Qt.UserRole+1)
+			title = gallery.title
+			artist = gallery.artist
 			# Enable this to see the defining box
 			#painter.drawRect(option.rect)
 			# define font size
@@ -591,12 +591,12 @@ class CustomDelegate(QStyledItemDelegate):
 			#chapter_area.setTextWidth(w)
 
 			# if we can't find a cached image
-			if not series._cache_id:
-				series._cache_id = self.key(series._cache_id)
-			pix_cache = QPixmapCache.find(series._cache_id)
+			if not gallery._cache_id:
+				gallery._cache_id = self.key(gallery._cache_id)
+			pix_cache = QPixmapCache.find(gallery._cache_id)
 			if not isinstance(pix_cache, QPixmap):
 				self.image = QPixmap(index.data(Qt.DecorationRole))
-				QPixmapCache.insert(series._cache_id, self.image)
+				QPixmapCache.insert(gallery._cache_id, self.image)
 				if self.image.height() < self.image.width(): #to keep aspect ratio
 					painter.drawPixmap(QPoint(x,y),
 							self.image)
@@ -612,8 +612,8 @@ class CustomDelegate(QStyledItemDelegate):
 					painter.drawPixmap(QPoint(x,y),
 							self.image)
 		
-			# draw star if it's favourited
-			if series.fav == 1:
+			# draw star if it's favorited
+			if gallery.fav == 1:
 				painter.drawPixmap(QPointF(x,y), QPixmap(gui_constants.STAR_PATH))
 
 			#draw the label for text
@@ -679,8 +679,8 @@ class MangaView(QListView):
 		self.sort_model.setSortCaseSensitivity(Qt.CaseInsensitive)
 		self.manga_delegate = CustomDelegate()
 		self.setItemDelegate(self.manga_delegate)
-		self.series_model = SeriesModel(parent)
-		self.sort_model.change_model(self.series_model)
+		self.gallery_model = GalleryModel(parent)
+		self.sort_model.change_model(self.gallery_model)
 		self.sort_model.sort(0)
 		self.setModel(self.sort_model)
 		self.SERIES_DIALOG.connect(self.spawn_dialog)
@@ -690,7 +690,7 @@ class MangaView(QListView):
 	#	self.ti.start(5000)
 
 	#def test_(self):
-	#	"find all series' in viewport"
+	#	"find all galleries in viewport"
 	#	def col_next_prepare(index):
 	#		"Calculates where the next index is"
 	#		rect = self.visualRect(index)
@@ -730,7 +730,7 @@ class MangaView(QListView):
 
 	#	print('Found ', found)
 
-	def remove_series(self, index_list):
+	def remove_gallery(self, index_list):
 		msgbox = QMessageBox()
 		msgbox.setIcon(msgbox.Question)
 		msgbox.setStandardButtons(msgbox.Yes | msgbox.No)
@@ -741,70 +741,70 @@ class MangaView(QListView):
 			msgbox.setText('Are you sure you want to remove?')
 
 		if msgbox.exec() == msgbox.Yes:
-			series_list = []
+			gallery_list = []
 			for index in index_list:
-				series = index.data(Qt.UserRole+1)
-				if index.isValid() and series:
+				gallery = index.data(Qt.UserRole+1)
+				if index.isValid() and gallery:
 					self.rowsAboutToBeRemoved(index.parent(), index.row(), index.row())
-					self.series_model.removeRows(index.row(), 1)
-					series_list.append(series)
-			print('deleting', len(series_list))
-			threading.Thread(target=seriesdb.SeriesDB.del_series,
-						args=(series_list,), daemon=True).start()
+					self.gallery_model.removeRows(index.row(), 1)
+					gallery_list.append(gallery)
+			log_i('Removed {} galleries'.format(len(gallery_list)))
+			threading.Thread(target=gallerydb.GalleryDB.del_gallery,
+						args=(gallery_list,), daemon=True).start()
 
-	def favourite(self, index):
+	def favorite(self, index):
 		assert isinstance(index, QModelIndex)
-		series = index.data(Qt.UserRole+1)
+		gallery = index.data(Qt.UserRole+1)
 		# TODO: don't need to fetch from DB here... 
-		if series.fav == 1:
-			series.fav = 0
-			self.model().replaceRows([series], index.row(), 1, index)
-			seriesdb.SeriesDB.fav_series_set(series.id, 0)
-			self.series_model.CUSTOM_STATUS_MSG.emit("Unfavourited")
+		if gallery.fav == 1:
+			gallery.fav = 0
+			self.model().replaceRows([gallery], index.row(), 1, index)
+			gallerydb.GalleryDB.fav_gallery_set(gallery.id, 0)
+			self.gallery_model.CUSTOM_STATUS_MSG.emit("Unfavorited")
 		else:
-			series.fav = 1
-			self.model().replaceRows([series], index.row(), 1, index)
-			seriesdb.SeriesDB.fav_series_set(series.id, 1)
-			self.series_model.CUSTOM_STATUS_MSG.emit("Favourited")
+			gallery.fav = 1
+			self.model().replaceRows([gallery], index.row(), 1, index)
+			gallerydb.GalleryDB.fav_gallery_set(gallery.id, 1)
+			self.gallery_model.CUSTOM_STATUS_MSG.emit("Favorited")
 
 	def open_chapter(self, index, chap_numb=0):
 		if isinstance(index, list):
 			for x in index:
-				series = x.data(Qt.UserRole+1)
-				self.STATUS_BAR_MSG.emit("Opening chapters of selected series'")
+				gallery = x.data(Qt.UserRole+1)
+				self.STATUS_BAR_MSG.emit("Opening chapters of selected galleries")
 				try:
 					threading.Thread(target=utils.open,
-							   args=(series.chapters[chap_numb],)).start()
+							   args=(gallery.chapters[chap_numb],)).start()
 				except IndexError:
 					pass
 		else:
-			series = index.data(Qt.UserRole+1)
+			gallery = index.data(Qt.UserRole+1)
 			self.STATUS_BAR_MSG.emit("Opening chapter {} of {}".format(chap_numb+1,
-																 series.title))
+																 gallery.title))
 			try:
 				threading.Thread(target=utils.open,
-						   args=(series.chapters[chap_numb],)).start()
+						   args=(gallery.chapters[chap_numb],)).start()
 			except IndexError:
 				pass
 
 	def del_chapter(self, index, chap_numb):
-		series = index.data(Qt.UserRole+1)
-		if len(series.chapters) < 2:
-			self.remove_series([index])
+		gallery = index.data(Qt.UserRole+1)
+		if len(gallery.chapters) < 2:
+			self.remove_gallery([index])
 		else:
 			msgbox = QMessageBox(self)
 			msgbox.setText('Are you sure you want to delete:')
 			msgbox.setIcon(msgbox.Question)
 			msgbox.setInformativeText('Chapter {} of {}'.format(chap_numb+1,
-														  series.title))
+														  gallery.title))
 			msgbox.setStandardButtons(msgbox.Yes | msgbox.No)
 			if msgbox.exec() == msgbox.Yes:
-				series.chapters.pop(chap_numb, None)
-				self.series_model.replaceRows([series], index.row())
-				seriesdb.ChapterDB.del_chapter(series.id, chap_numb)
+				gallery.chapters.pop(chap_numb, None)
+				self.gallery_model.replaceRows([gallery], index.row())
+				gallerydb.ChapterDB.del_chapter(gallery.id, chap_numb)
 
 	def refresh(self):
-		self.series_model.populate_data() # TODO: CAUSE OF CRASH! FIX ASAP
+		self.gallery_model.populate_data() # TODO: CAUSE OF CRASH! FIX ASAP
 		self.STATUS_BAR_MSG.emit("Refreshed")
 
 	def contextMenuEvent(self, event):
@@ -822,7 +822,7 @@ class MangaView(QListView):
 			select = self.selectionModel().selection()
 			s_select = self.model().mapSelectionToSource(select)
 			indexes = s_select.indexes()
-			self.remove_series(indexes)
+			self.remove_gallery(indexes)
 
 		menu = QMenu()
 		if selected:
@@ -833,10 +833,10 @@ class MangaView(QListView):
 		all_1 = QAction("Open first chapter", menu,
 					triggered = lambda: self.open_chapter(index, 0))
 		all_2 = QAction("Edit...", menu, triggered = lambda: self.spawn_dialog(index))
-		all_3 = QAction("Remove", menu, triggered = lambda: self.remove_series([index]))
+		all_3 = QAction("Remove", menu, triggered = lambda: self.remove_gallery([index]))
 
 		def fav():
-			self.favourite(index)
+			self.favorite(index)
 
 
 		# add the chapter menus
@@ -883,11 +883,11 @@ class MangaView(QListView):
 
 		def add_chapters():
 			def add_chdb(chaps):
-				series = index.data(Qt.UserRole+1)
-				log_d('Adding new chapter for {}'.format(series.title))
-				seriesdb.ChapterDB.add_chapters_raw(series.id, chaps)
-				series = seriesdb.SeriesDB.get_series_by_id(series.id)
-				self.series_model.replaceRows([series], index.row())
+				gallery = index.data(Qt.UserRole+1)
+				log_d('Adding new chapter for {}'.format(gallery.title))
+				gallerydb.ChapterDB.add_chapters_raw(gallery.id, chaps)
+				gallery = gallerydb.GalleryDB.get_gallery_by_id(gallery.id)
+				self.gallery_model.replaceRows([gallery], index.row())
 
 			ch_widget = misc.ChapterAddWidget(index.data(Qt.UserRole+1),
 								   self.parentWidget())
@@ -900,7 +900,7 @@ class MangaView(QListView):
 			if index.data(Qt.UserRole+1).link != "":
 				ext_action = QAction("Open link", menu, triggered = open_link)
 
-			action_1 = QAction("Favourite", menu, triggered = fav)
+			action_1 = QAction("Favorite", menu, triggered = fav)
 			action_1.setCheckable(True)
 			if index.data(Qt.UserRole+1).fav==1: # here you can limit which items to show these actions for
 				action_1.setChecked(True)
@@ -911,9 +911,9 @@ class MangaView(QListView):
 			handled = True
 			custom = True
 		else:
-			add_series = QAction("&Add new Series...", menu,
+			add_gallery = QAction("&Add new Gallery...", menu,
 						triggered = self.SERIES_DIALOG.emit)
-			menu.addAction(add_series)
+			menu.addAction(add_gallery)
 			sort_main = QAction("&Sort by", menu)
 			menu.addAction(sort_main)
 			sort_menu = QMenu()
@@ -990,34 +990,34 @@ class MangaView(QListView):
 		super().resizeEvent(resizeevent)
 		#print(resizeevent.size())
 
-	def replace_edit_series(self, list_of_series, pos):
-		"Replaces the view and DB with given list of series, at given position"
-		assert isinstance(list_of_series, list), "Please pass a series to replace with"
+	def replace_edit_gallery(self, list_of_gallery, pos):
+		"Replaces the view and DB with given list of gallery, at given position"
+		assert isinstance(list_of_gallery, list), "Please pass a gallery to replace with"
 		assert isinstance(pos, int)
-		for series in list_of_series:
+		for gallery in list_of_gallery:
 
-			kwdict = {'title':series.title,
-			 'artist':series.artist,
-			 'info':series.info,
-			 'type':series.type,
-			 'language':series.language,
-			 'status':series.status,
-			 'pub_date':series.pub_date,
-			 'tags':series.tags,
-			 'link':series.link}
+			kwdict = {'title':gallery.title,
+			 'artist':gallery.artist,
+			 'info':gallery.info,
+			 'type':gallery.type,
+			 'language':gallery.language,
+			 'status':gallery.status,
+			 'pub_date':gallery.pub_date,
+			 'tags':gallery.tags,
+			 'link':gallery.link}
 
-			threading.Thread(target=seriesdb.SeriesDB.modify_series,
-							 args=(series.id,), kwargs=kwdict).start()
-		self.series_model.replaceRows([series], pos, len(list_of_series))
+			threading.Thread(target=gallerydb.GalleryDB.modify_gallery,
+							 args=(gallery.id,), kwargs=kwdict).start()
+		self.gallery_model.replaceRows([gallery], pos, len(list_of_gallery))
 
 	def spawn_dialog(self, index=False):
 		if not index:
-			dialog = misc.SeriesDialog()
-			dialog.SERIES.connect(self.series_model.addRows)
-			dialog.trigger() # TODO: implement mass series' adding
+			dialog = misc.GalleryDialog()
+			dialog.SERIES.connect(self.gallery_model.addRows)
+			dialog.trigger() # TODO: implement mass galleries adding
 		else:
-			dialog = misc.SeriesDialog()
-			dialog.SERIES_EDIT.connect(self.replace_edit_series)
+			dialog = misc.GalleryDialog()
+			dialog.SERIES_EDIT.connect(self.replace_edit_gallery)
 			dialog.trigger([index])
 
 	def updateGeometries(self):
@@ -1080,7 +1080,7 @@ class MangaTableView(QTableView):
 					return True
 		return super().viewportEvent(event)
 
-	def remove_series(self, index_list):
+	def remove_gallery(self, index_list):
 		msgbox = QMessageBox()
 		msgbox.setIcon(msgbox.Question)
 		msgbox.setStandardButtons(msgbox.Yes | msgbox.No)
@@ -1091,70 +1091,70 @@ class MangaTableView(QTableView):
 			msgbox.setText('Are you sure you want to remove?')
 
 		if msgbox.exec() == msgbox.Yes:
-			series_list = []
+			gallery_list = []
 			for index in index_list:
-				series = index.data(Qt.UserRole+1)
-				if index.isValid() and series:
+				gallery = index.data(Qt.UserRole+1)
+				if index.isValid() and gallery:
 					self.rowsAboutToBeRemoved(index.parent(), index.row(), index.row())
-					self.series_model.removeRows(index.row(), 1)
-					series_list.append(series)
+					self.gallery_model.removeRows(index.row(), 1)
+					gallery_list.append(gallery)
+			log_i('Removed {} galleries'.format(len(gallery_list)))
+			threading.Thread(target=gallerydb.GalleryDB.del_gallery,
+						args=(gallery_list,), daemon=True).start()
 
-			threading.Thread(target=seriesdb.SeriesDB.del_series,
-						args=(series_list,), daemon=True).start()
-
-	def favourite(self, index):
+	def favorite(self, index):
 		assert isinstance(index, QModelIndex)
-		series = index.data(Qt.UserRole+1)
+		gallery = index.data(Qt.UserRole+1)
 		# TODO: don't need to fetch from DB here... 
-		if series.fav == 1:
-			series.fav = 0
-			self.series_model.replaceRows([series], index.row(), 1, index)
-			seriesdb.SeriesDB.fav_series_set(series.id, 0)
-			self.series_model.CUSTOM_STATUS_MSG.emit("Unfavourited")
+		if gallery.fav == 1:
+			gallery.fav = 0
+			self.gallery_model.replaceRows([gallery], index.row(), 1, index)
+			gallerydb.GalleryDB.fav_gallery_set(gallery.id, 0)
+			self.gallery_model.CUSTOM_STATUS_MSG.emit("Unfavorited")
 		else:
-			series.fav = 1
-			self.series_model.replaceRows([series], index.row(), 1, index)
-			seriesdb.SeriesDB.fav_series_set(series.id, 1)
-			self.series_model.CUSTOM_STATUS_MSG.emit("Favourited")
+			gallery.fav = 1
+			self.gallery_model.replaceRows([gallery], index.row(), 1, index)
+			gallerydb.GalleryDB.fav_gallery_set(gallery.id, 1)
+			self.gallery_model.CUSTOM_STATUS_MSG.emit("Favorited")
 
 	def open_chapter(self, index, chap_numb=0):
 		if isinstance(index, list):
 			for x in index:
-				series = x.data(Qt.UserRole+1)
-				self.STATUS_BAR_MSG.emit("Opening chapters of selected series'")
+				gallery = x.data(Qt.UserRole+1)
+				self.STATUS_BAR_MSG.emit("Opening chapters of selected galleries")
 				try:
 					threading.Thread(target=utils.open,
-							   args=(series.chapters[chap_numb],)).start()
+							   args=(gallery.chapters[chap_numb],)).start()
 				except IndexError:
 					pass
 		else:
-			series = index.data(Qt.UserRole+1)
+			gallery = index.data(Qt.UserRole+1)
 			self.STATUS_BAR_MSG.emit("Opening chapter {} of {}".format(chap_numb+1,
-																 series.title))
+																 gallery.title))
 			try:
 				threading.Thread(target=utils.open,
-						   args=(series.chapters[chap_numb],)).start()
+						   args=(gallery.chapters[chap_numb],)).start()
 			except IndexError:
 				pass
 
 	def del_chapter(self, index, chap_numb):
-		series = index.data(Qt.UserRole+1)
-		if len(series.chapters) < 2:
-			self.remove_series([index])
+		gallery = index.data(Qt.UserRole+1)
+		if len(gallery.chapters) < 2:
+			self.remove_gallery([index])
 		else:
 			msgbox = QMessageBox(self)
 			msgbox.setText('Are you sure you want to delete:')
 			msgbox.setIcon(msgbox.Question)
 			msgbox.setInformativeText('Chapter {} of {}'.format(chap_numb+1,
-														  series.title))
+														  gallery.title))
 			msgbox.setStandardButtons(msgbox.Yes | msgbox.No)
 			if msgbox.exec() == msgbox.Yes:
-				series.chapters.pop(chap_numb, None)
-				self.series_model.replaceRows([series], index.row())
-				seriesdb.ChapterDB.del_chapter(series.id, chap_numb)
+				gallery.chapters.pop(chap_numb, None)
+				self.gallery_model.replaceRows([gallery], index.row())
+				gallerydb.ChapterDB.del_chapter(gallery.id, chap_numb)
 
 	def refresh(self):
-		self.series_model.populate_data() # TODO: CAUSE OF CRASH! FIX ASAP
+		self.gallery_model.populate_data() # TODO: CAUSE OF CRASH! FIX ASAP
 		self.STATUS_BAR_MSG.emit("Refreshed")
 
 	def contextMenuEvent(self, event):
@@ -1168,19 +1168,25 @@ class MangaTableView(QTableView):
 		if len(select_indexes) > len(gui_constants.COLUMNS):
 			selected = True
 
+		def remove_selection():
+			select = self.selectionModel().selection()
+			s_select = self.model().mapSelectionToSource(select)
+			indexes = s_select.indexes()
+			self.remove_gallery(indexes)
+
 		menu = QMenu()
 		if selected:
 			all_0 = QAction("Open first chapters", menu,
 					  triggered = lambda: self.open_chapter(select_indexes, 0))
 			all_4 = QAction("Remove selected", menu,
-				   triggered = lambda: self.remove_series(select_indexes))
+				   triggered = remove_selection)
 		all_1 = QAction("Open first chapter", menu,
 					triggered = lambda: self.open_chapter(index, 0))
 		all_2 = QAction("Edit...", menu, triggered = lambda: self.spawn_dialog(index))
-		all_3 = QAction("Remove", menu, triggered = lambda: self.remove_series([index]))
+		all_3 = QAction("Remove", menu, triggered = lambda: self.remove_gallery([index]))
 
 		def fav():
-			self.favourite(index)
+			self.favorite(index)
 
 
 		# add the chapter menus
@@ -1227,11 +1233,11 @@ class MangaTableView(QTableView):
 
 		def add_chapters():
 			def add_chdb(chaps):
-				series = index.data(Qt.UserRole+1)
-				log_d('Adding new chapter for {}'.format(series.title))
-				seriesdb.ChapterDB.add_chapters_raw(series.id, chaps)
-				series = seriesdb.SeriesDB.get_series_by_id(series.id)
-				self.series_model.replaceRows([series], index.row())
+				gallery = index.data(Qt.UserRole+1)
+				log_d('Adding new chapter for {}'.format(gallery.title))
+				gallerydb.ChapterDB.add_chapters_raw(gallery.id, chaps)
+				gallery = gallerydb.GalleryDB.get_gallery_by_id(gallery.id)
+				self.gallery_model.replaceRows([gallery], index.row())
 
 			ch_widget = misc.ChapterAddWidget(index.data(Qt.UserRole+1),
 								   self.parentWidget())
@@ -1243,7 +1249,7 @@ class MangaTableView(QTableView):
 			if index.data(Qt.UserRole+1).link != "":
 				ext_action = QAction("Open link", menu, triggered = open_link)
 
-			action_1 = QAction("Favourite", menu, triggered = fav)
+			action_1 = QAction("Favorite", menu, triggered = fav)
 			action_1.setCheckable(True)
 			if index.data(Qt.UserRole+1).fav==1: # here you can limit which items to show these actions for
 				action_1.setChecked(True)
@@ -1254,9 +1260,9 @@ class MangaTableView(QTableView):
 			handled = True
 			custom = True
 		else:
-			add_series = QAction("&Add new Series...", menu,
+			add_gallery = QAction("&Add new Gallery...", menu,
 						triggered = self.SERIES_DIALOG.emit)
-			menu.addAction(add_series)
+			menu.addAction(add_gallery)
 			sort_main = QAction("&Sort by", menu)
 			menu.addAction(sort_main)
 			sort_menu = QMenu()
@@ -1326,34 +1332,34 @@ class MangaTableView(QTableView):
 		else:
 			event.ignore()
 
-	def replace_edit_series(self, list_of_series, pos):
-		"Replaces the view and DB with given list of series, at given position"
-		assert isinstance(list_of_series, list), "Please pass a series to replace with"
+	def replace_edit_gallery(self, list_of_gallery, pos):
+		"Replaces the view and DB with given list of gallery, at given position"
+		assert isinstance(list_of_gallery, list), "Please pass a gallery to replace with"
 		assert isinstance(pos, int)
-		for series in list_of_series:
+		for gallery in list_of_gallery:
 
-			kwdict = {'title':series.title,
-			 'artist':series.artist,
-			 'info':series.info,
-			 'type':series.type,
-			 'language':series.language,
-			 'status':series.status,
-			 'pub_date':series.pub_date,
-			 'tags':series.tags,
-			 'link':series.link}
+			kwdict = {'title':gallery.title,
+			 'artist':gallery.artist,
+			 'info':gallery.info,
+			 'type':gallery.type,
+			 'language':gallery.language,
+			 'status':gallery.status,
+			 'pub_date':gallery.pub_date,
+			 'tags':gallery.tags,
+			 'link':gallery.link}
 
-			threading.Thread(target=seriesdb.SeriesDB.modify_series,
-							 args=(series.id,), kwargs=kwdict).start()
-		self.series_model.replaceRows([series], pos, len(list_of_series))
+			threading.Thread(target=gallerydb.GalleryDB.modify_gallery,
+							 args=(gallery.id,), kwargs=kwdict).start()
+		self.gallery_model.replaceRows([gallery], pos, len(list_of_gallery))
 
 	def spawn_dialog(self, index=False):
 		if not index:
-			dialog = misc.SeriesDialog()
-			dialog.SERIES.connect(self.series_model.addRows)
-			dialog.trigger() # TODO: implement mass series' adding
+			dialog = misc.GalleryDialog()
+			dialog.SERIES.connect(self.gallery_model.addRows)
+			dialog.trigger() # TODO: implement mass galleries adding
 		else:
-			dialog = misc.SeriesDialog()
-			dialog.SERIES_EDIT.connect(self.replace_edit_series)
+			dialog = misc.GalleryDialog()
+			dialog.SERIES_EDIT.connect(self.replace_edit_gallery)
 			dialog.trigger([index])
 
 if __name__ == '__main__':

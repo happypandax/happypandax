@@ -85,30 +85,30 @@ def gen_thumbnail(chapter_path, width=gui_constants.THUMB_W_SIZE-2,
 	thread.join()
 	return img_path_queue.get()
 
-def series_map(row, series):
-	series.title = row['title']
-	series.artist = row['artist']
-	series.profile = bytes.decode(row['profile'])
-	series.path = bytes.decode(row['series_path'])
-	series.info = row['info']
-	series.language = row['language']
-	series.status = row['status']
-	series.type = row['type']
-	series.fav = row['fav']
-	series.pub_date = row['pub_date']
-	series.last_update = row['last_update']
-	series.last_read = row['last_read']
-	series.date_added = row['date_added']
+def gallery_map(row, gallery):
+	gallery.title = row['title']
+	gallery.artist = row['artist']
+	gallery.profile = bytes.decode(row['profile'])
+	gallery.path = bytes.decode(row['series_path'])
+	gallery.info = row['info']
+	gallery.language = row['language']
+	gallery.status = row['status']
+	gallery.type = row['type']
+	gallery.fav = row['fav']
+	gallery.pub_date = row['pub_date']
+	gallery.last_update = row['last_update']
+	gallery.last_read = row['last_read']
+	gallery.date_added = row['date_added']
 	try:
-		series.link = bytes.decode(row['link'])
+		gallery.link = bytes.decode(row['link'])
 	except TypeError:
-		series.link = row['link']
+		gallery.link = row['link']
 
-	series.chapters = ChapterDB.get_chapters_for_series(series.id)
+	gallery.chapters = ChapterDB.get_chapters_for_gallery(gallery.id)
 
-	series.tags = TagDB.get_series_tags(series.id)
+	gallery.tags = TagDB.get_gallery_tags(gallery.id)
 
-	return series
+	return gallery
 
 def default_exec(object):
 	def check(obj):
@@ -139,30 +139,30 @@ def default_exec(object):
 				]]
 	return executing
 
-class SeriesDB:
+class GalleryDB:
 	"""
 	Provides the following s methods:
-		modify_series -> Modifies series with given series id
-		fav_series_set -> Set fav on series with given series id, and returns the series
-		get_all_series -> returns a list of all series (<Series> class) currently in DB
-		get_series_by_id -> Returns series with given id
-		get_series_by_artist -> Returns series with given artist
-		get_series_by_title -> Returns series with given title
-		get_series_by_tags -> Returns series with given list of tags
-		add_series -> adds series into db
-		add_series_return -> adds series into db AND returns the added series
-		set_series_title -> changes series title
-		series_count -> returns amount of series (can be used for indexing)
-		del_series -> deletes the series with the given id recursively
+		modify_gallery -> Modifies gallery with given gallery id
+		fav_gallery_set -> Set fav on gallery with given gallery id, and returns the gallery
+		get_all_gallery -> returns a list of all gallery (<Gallery> class) currently in DB
+		get_gallery_by_id -> Returns gallery with given id
+		get_gallery_by_artist -> Returns gallery with given artist
+		get_gallery_by_title -> Returns gallery with given title
+		get_gallery_by_tags -> Returns gallery with given list of tags
+		add_gallery -> adds gallery into db
+		add_gallery_return -> adds gallery into db AND returns the added gallery
+		set_gallery_title -> changes gallery title
+		gallery_count -> returns amount of gallery (can be used for indexing)
+		del_gallery -> deletes the gallery with the given id recursively
 		check_exists -> Checks if provided string exists
 	"""
 	def __init__(self):
-		raise Exception("SeriesDB should not be instantiated")
+		raise Exception("GalleryDB should not be instantiated")
 
 	@staticmethod
-	def modify_series(series_id, title=None, artist=None, info=None, type=None, fav=None,
+	def modify_gallery(series_id, title=None, artist=None, info=None, type=None, fav=None,
 				   tags=None, language=None, status=None, pub_date=None, link=None):
-		"Modifies series with given series id"
+		"Modifies gallery with given gallery id"
 		executing = []
 		assert isinstance(series_id, int)
 		executing = []
@@ -201,100 +201,100 @@ class SeriesDB:
 
 
 	@staticmethod
-	def fav_series_set(series_id, fav):
-		"Set fav on series with given series id, and returns the series"
+	def fav_gallery_set(series_id, fav):
+		"Set fav on gallery with given gallery id, and returns the gallery"
 		# NOTE: USELESS BECAUSE OF THE METHOD ABOVE; CONSIDER REVISING & DELETING
 		executing = [["UPDATE series SET fav=? WHERE series_id=?", (fav, series_id)]]
-		SeriesDB.modify_series(series_id, fav=fav)		
+		GalleryDB.modify_gallery(series_id, fav=fav)		
 
 	@staticmethod
-	def get_all_series():
+	def get_all_gallery():
 		"""Careful, might crash with very large libraries i think...
-		Returns a list of all series (<Series> class) currently in DB"""
+		Returns a list of all galleries (<Gallery> class) currently in DB"""
 		executing = [["SELECT * FROM series"]]
 		CommandQueue.put(executing)
 		cursor = ResultQueue.get()
-		all_series = cursor.fetchall()
-		series_list = []
-		for series_row in all_series:
-			series = Series()
-			series.id = series_row['series_id']
-			series = series_map(series_row, series)
-			series_list.append(series)
+		all_gallery = cursor.fetchall()
+		gallery_list = []
+		for gallery_row in all_gallery:
+			gallery = Gallery()
+			gallery.id = gallery_row['series_id']
+			gallery = gallery_map(gallery_row, gallery)
+			gallery_list.append(gallery)
 
-		return series_list
+		return gallery_list
 
 	@staticmethod
-	def get_series_by_id(id):
-		"Returns series with given id"
+	def get_gallery_by_id(id):
+		"Returns gallery with given id"
 		assert isinstance(id, int), "Provided ID is invalid"
 		executing = [["SELECT * FROM series WHERE series_id=?", (id,)]]
 		CommandQueue.put(executing)
 		cursor = ResultQueue.get()
 		row = cursor.fetchone()
 		print(row)
-		series = Series()
+		gallery = Gallery()
 		try:
-			series.id = row['series_id']
-			series = series_map(row, series)
-			return series
+			gallery.id = row['series_id']
+			gallery = gallery_map(row, gallery)
+			return gallery
 		except TypeError:
 			return None
 
 
 	@staticmethod
-	def get_series_by_artist(artist):
-		"Returns series with given artist"
+	def get_gallery_by_artist(artist):
+		"Returns gallery with given artist"
 		assert isinstance(artist, str), "Provided artist is invalid"
 		executing = [["SELECT * FROM series WHERE artist=?", (artist,)]]
 		CommandQueue.put(executing)
 		cursor = ResultQueue.get()
-		row = cursor.fetchone() # TODO: an artist can have multiple series' :^)
-		series = Series()
-		series.id = row['series_id']
-		series = series_map(row, series)
-		return series
+		row = cursor.fetchone() # TODO: an artist can have multiple galleries :^)
+		gallery = Gallery()
+		gallery.id = row['series_id']
+		gallery = gallery_map(row, gallery)
+		return gallery
 
 	@staticmethod
-	def get_series_by_title(title):
-		"Returns series with given title"
+	def get_gallery_by_title(title):
+		"Returns gallery with given title"
 		assert isinstance(id, int), "Provided title is invalid"
 		executing = [["SELECT * FROM series WHERE title=?", (title,)]]
 		CommandQueue.put(executing)
 		cursor = ResultQueue.get()
 		row = cursor.fetchone()
-		series = Series()
-		series.id = row['series_id']
-		series = series_map(row, series)
-		return series
+		gallery = Gallery()
+		gallery.id = row['series_id']
+		gallery = gallery_map(row, gallery)
+		return gallery
 
 	@staticmethod
-	def get_series_by_tags(list_of_tags):
-		"Returns series with given list of tags"
+	def get_gallery_by_tags(list_of_tags):
+		"Returns gallery with given list of tags"
 		assert isinstance(list_of_tags, list), "Provided tag(s) is/are invalid"
 		pass
 
 	@staticmethod
-	def get_series_by_fav():
-		"Returns a list of all series with fav set to true (1)"
+	def get_gallery_by_fav():
+		"Returns a list of all gallery with fav set to true (1)"
 		x = 1
 		executing = [["SELECT * FROM series WHERE fav=?", (x,)]]
 		CommandQueue.put(executing)
 		cursor = ResultQueue.get()
 		
-		series_list = []
+		gallery_list = []
 		for row in cursor.fetchall():
-			series = Series()
-			series.id = row["series_id"]
-			series = series_map(row, series)
-			series_list.append(series)
-		return series_list
+			gallery = Gallery()
+			gallery.id = row["series_id"]
+			gallery = gallery_map(row, gallery)
+			gallery_list.append(gallery)
+		return gallery_list
 
 	@staticmethod
-	def add_series(object, test_mode=False):
-		"Receives an object of class series, and appends it to DB"
-		"Adds series of <Series> class into database"
-		assert isinstance(object, Series), "add_series method only accept series items"
+	def add_gallery(object, test_mode=False):
+		"Receives an object of class gallery, and appends it to DB"
+		"Adds gallery of <Gallery> class into database"
+		assert isinstance(object, Gallery), "add_gallery method only accept gallery items"
 
 		object.profile = gen_thumbnail(object.chapters[0])
 
@@ -310,9 +310,9 @@ class SeriesDB:
 			TestQueue.put('x')
 
 	@staticmethod
-	def add_series_return(object):
-		"""Adds series of <Series> class into database AND returns the profile generated"""
-		assert isinstance(object, Series), "[add_series_return] method only accept series items"
+	def add_gallery_return(object):
+		"""Adds gallery of <Gallery> class into database AND returns the profile generated"""
+		assert isinstance(object, Gallery), "[add_gallery_return] method only accept gallery items"
 
 		object.profile = gen_thumbnail(object.chapters[0])
 		PROFILE_TO_MODEL.put(object.profile)
@@ -327,32 +327,31 @@ class SeriesDB:
 		ChapterDB.add_chapters(object)
 
 	@staticmethod
-	def series_count():
-		"""Returns the amount of series' in db.
+	def gallery_count():
+		"""Returns the amount of galleries in db.
 		"""
 		pass
 
 	@staticmethod
-	def del_series(list_of_series):
+	def del_gallery(list_of_gallery):
 		"Deletes all galleries in the list recursively."
-		assert isinstance(list_of_series, list), "Please provide a valid list of galleries to delete"
-		print('DB: Deleting ',len(list_of_series))
-		for series in list_of_series:
-			print(series.id)
-			if not series:
-				log_e('Failed to delete series:{}, {}'.format(series.id,
-												  series.title))
-			if series.profile != os.path.abspath(gui_constants.NO_IMAGE_PATH):
+		assert isinstance(list_of_gallery, list), "Please provide a valid list of galleries to delete"
+		print('DB: Deleting ',len(list_of_gallery))
+		for gallery in list_of_gallery:
+			if not gallery.validate():
+				log_e('Failed to delete gallery:{}, {}'.format(gallery.id,
+												  gallery.title))
+			if gallery.profile != os.path.abspath(gui_constants.NO_IMAGE_PATH):
 				try:
-					os.remove(series.profile)
+					os.remove(gallery.profile)
 				except FileNotFoundError:
 					pass
-			executing = [["DELETE FROM series WHERE series_id=?", (series.id,)]]
+			executing = [["DELETE FROM series WHERE series_id=?", (gallery.id,)]]
 			CommandQueue.put(executing)
 			c = ResultQueue.get()
 			del c
-			ChapterDB.del_all_chapters(series.id)
-			TagDB.del_series_mapping(series.id)
+			ChapterDB.del_all_chapters(gallery.id)
+			TagDB.del_gallery_mapping(gallery.id)
 
 	@staticmethod
 	def check_exists(name, data=None):
@@ -361,10 +360,10 @@ class SeriesDB:
 		list based on path name
 		"""
 		if not data:
-			db_data = SeriesDB.get_all_series()
+			db_data = GalleryDB.get_all_gallery()
 			filter_list = []
-			for series in db_data:
-				p = os.path.split(series.path)
+			for gallery in db_data:
+				p = os.path.split(gallery.path)
 				filter_list.append(p[1])
 			filter_list = sorted(filter_list)
 
@@ -391,23 +390,23 @@ class ChapterDB:
 	Provides the following database methods:
 		add_chapter -> adds chapter into db
 		add_chapter_raw -> links chapter to the given seires id, and adds into db
-		get_chapters_for_series -> returns a dict with chapters linked to the given series_id
+		get_chapters_for_gallery -> returns a dict with chapters linked to the given series_id
 		get_chapter-> returns a dict with chapter matching the given chapter_number
 		chapter_size -> returns amount of manga (can be used for indexing)
 		del_all_chapters <- Deletes all chapters with the given series_id
-		del_chapter <- Deletes chapter with the given number from series
+		del_chapter <- Deletes chapter with the given number from gallery
 	"""
 
 	def __init__(self):
 		raise Exception("ChapterDB should not be instantiated")
 
 	@staticmethod
-	def add_chapters(series_object):
-		"Adds chapters linked to series into database"
-		assert isinstance(series_object, Series), "Parent series need to be of class series"
-		series_id = series_object.id
-		for chap_number in series_object.chapters:
-			chap_path = str.encode(series_object.chapters[chap_number])
+	def add_chapters(gallery_object):
+		"Adds chapters linked to gallery into database"
+		assert isinstance(gallery_object, Gallery), "Parent gallery need to be of class gallery"
+		series_id = gallery_object.id
+		for chap_number in gallery_object.chapters:
+			chap_path = str.encode(gallery_object.chapters[chap_number])
 			executing = [["""
 			INSERT INTO chapters(series_id, chapter_number, chapter_path)
 			VALUES(:series_id, :chapter_number, :chapter_path)""",
@@ -421,7 +420,7 @@ class ChapterDB:
 			del d
 
 	def add_chapters_raw(series_id, chapters_dict):
-		"Adds chapter(s) to a series with the received series_id"
+		"Adds chapter(s) to a gallery with the received series_id"
 		assert isinstance(chapters_dict, dict), "chapters_dict must be a dictionary: {numb:path}"
 		for chap_number in chapters_dict:
 			chap_path = str.encode(chapters_dict[chap_number])
@@ -444,11 +443,11 @@ class ChapterDB:
 				
 
 	@staticmethod
-	def get_chapters_for_series(series_id):
+	def get_chapters_for_gallery(series_id):
 		"""Returns a dict of chapters matching the received series_id
 		{<chap_number>:<chap_path>}
 		"""
-		assert isinstance(series_id, int), "Please provide a valid series ID"
+		assert isinstance(series_id, int), "Please provide a valid gallery ID"
 		executing = [["""SELECT chapter_number, chapter_path
 							FROM chapters WHERE series_id=?""",
 							(series_id,)]]
@@ -493,7 +492,7 @@ class ChapterDB:
 	@staticmethod
 	def del_all_chapters(series_id):
 		"Deletes all chapters with the given series_id"
-		assert isinstance(series_id, int), "Please provide a valid series ID"
+		assert isinstance(series_id, int), "Please provide a valid gallery ID"
 		executing = [["DELETE FROM chapters WHERE series_id=?", (series_id,)]]
 		CommandQueue.put(executing)
 		c = ResultQueue.get()
@@ -501,8 +500,8 @@ class ChapterDB:
 
 	@staticmethod
 	def del_chapter(series_id, chap_number):
-		"Deletes chapter with the given number from series"
-		assert isinstance(series_id, int), "Please provide a valid series ID"
+		"Deletes chapter with the given number from gallery"
+		assert isinstance(series_id, int), "Please provide a valid gallery ID"
 		assert isinstance(chap_number, int), "Please provide a valid chapter number"
 		executing = [["DELETE FROM chapters WHERE series_id=? AND chapter_number=?",
 				(series_id, chap_number,)]]
@@ -519,11 +518,11 @@ class TagDB:
 
 	Provides the following methods:
 	del_tags <- Deletes the tags with corresponding tag_ids from DB
-	del_series_tags_mapping <- Deletes the tags and series mappings with corresponding series_ids from DB
-	get_series_tags -> Returns all tags and namespaces found for the given series_id;
-	get_tag_series -> Returns all series' with the given tag
+	del_gallery_tags_mapping <- Deletes the tags and gallery mappings with corresponding series_ids from DB
+	get_gallery_tags -> Returns all tags and namespaces found for the given series_id;
+	get_tag_gallery -> Returns all galleries with the given tag
 	get_ns_tags -> Returns all tags linked to the given namespace
-	get_ns_tags_series -> Returns all series' linked to the namespace tags
+	get_ns_tags_gallery -> Returns all galleries linked to the namespace tags
 	add_tags <- Adds the given dict_of_tags to the given series_id
 	modify_tags <- Modifies the given tags
 	get_all_tags -> Returns all tags in database
@@ -539,10 +538,10 @@ class TagDB:
 		pass
 
 	@staticmethod
-	def del_series_mapping(series_id):
-		"Deletes the tags and series mappings with corresponding series_ids from DB"
-		assert isinstance(series_id, int), "Please provide a valid series_id"
-		# We first get all the current tags_mappings_ids related to series
+	def del_gallery_mapping(series_id):
+		"Deletes the tags and gallery mappings with corresponding series_ids from DB"
+		assert isinstance(series_id, int), "Please provide a valid gallery id"
+		# We first get all the current tags_mappings_ids related to gallery
 		tag_m_ids = []
 		executing = [["SELECT tags_mappings_id FROM series_tags_map WHERE series_id=?",
 				(series_id,)]]
@@ -563,9 +562,9 @@ class TagDB:
 		del c
 
 	@staticmethod
-	def get_series_tags(series_id):
+	def get_gallery_tags(series_id):
 		"Returns all tags and namespaces found for the given series_id"
-		assert isinstance(series_id, int), "Please provide a valid series ID"
+		assert isinstance(series_id, int), "Please provide a valid gallery ID"
 		executing = [["SELECT tags_mappings_id FROM series_tags_map WHERE series_id=?",
 				(series_id,)]]
 		CommandQueue.put(executing)
@@ -604,7 +603,7 @@ class TagDB:
 	@staticmethod
 	def add_tags(object):
 		"Adds the given dict_of_tags to the given series_id"
-		assert isinstance(object, Series), "Please provide a valid series of class series"
+		assert isinstance(object, Gallery), "Please provide a valid gallery of class gallery"
 		
 		series_id = object.id
 		dict_of_tags = object.tags
@@ -694,19 +693,19 @@ class TagDB:
 		"Modifies the given tags"
 
 		# We first delete all mappings
-		TagDB.del_series_mapping(series_id)
+		TagDB.del_gallery_mapping(series_id)
 
 		# Now we add the new tags to DB
-		weak_series = Series()
-		weak_series.id = series_id
-		weak_series.tags = dict_of_tags
+		weak_gallery = Gallery()
+		weak_gallery.id = series_id
+		weak_gallery.tags = dict_of_tags
 
-		TagDB.add_tags(weak_series)
+		TagDB.add_tags(weak_gallery)
 
 
 	@staticmethod
-	def get_tag_series(tag):
-		"Returns all series' with the given tag"
+	def get_tag_gallery(tag):
+		"Returns all galleries with the given tag"
 		pass
 
 	@staticmethod
@@ -715,8 +714,8 @@ class TagDB:
 		pass
 
 	@staticmethod
-	def get_ns_tags_series(ns_tags):
-		"""Returns all series' linked to the namespace tags.
+	def get_ns_tags_gallery(ns_tags):
+		"""Returns all galleries linked to the namespace tags.
 		Receives a dict like this: {"namespace":["tag1","tag2"]}"""
 		pass
 
@@ -742,13 +741,13 @@ class TagDB:
 		ns = [n['namespace'] for n in cursor.fetchall()]
 		return ns
 
-class Series:
-	"""Base class for a series.
+class Gallery:
+	"""Base class for a gallery.
 	Available data:
 	id -> Not to be editied. Do not touch.
 	title <- [list of titles] or str
 	profile <- path to thumbnail
-	path <- path to series
+	path <- path to gallery
 	artist <- str
 	chapters <- {<number>:<path>}
 	chapter_size <- int of number of chapters
@@ -801,7 +800,7 @@ class Series:
 			log_w('{} has no first chapter'.format(self.title))
 
 	def validate(self):
-		"Validates series, returns status"
+		"Validates gallery, returns status"
 		# TODO: Extend this
 		val = []
 		def check(x):
@@ -822,7 +821,7 @@ class Series:
 		Path: {}
 		Author: {}
 		Description: {}
-		Favourite: {}
+		Favorite: {}
 		Type: {}
 		Language: {}
 		Status: {}

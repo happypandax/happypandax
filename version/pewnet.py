@@ -30,9 +30,9 @@ class CommenHen:
 
 	def parse_url(self, url):
 		"Parses url into a list of gallery id and token"
-		gallery_id = int(regex.search('(\d+)(?=\S{4,})', url).group())
+		series_id = int(regex.search('(\d+)(?=\S{4,})', url).group())
 		gallery_token = regex.search('(?<=\d/)(\S+)(?=/$)', url).group()
-		parsed_url = [gallery_id, series_token]
+		parsed_url = [series_id, gallery_token]
 		return parsed_url
 
 	def parse_metadata(self, metadata_dict):

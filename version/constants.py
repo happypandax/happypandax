@@ -12,7 +12,7 @@ You should have received a copy of the GNU General Public License
 along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from .database import db, db_constants, seriesdb
+from .database import db, db_constants, gallerydb
 from .gui import app, gui_constants
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QFile
@@ -26,7 +26,7 @@ def start():
 	parser.add_argument('-d', '--debug', action='store_true',
 					 help='happypanda_debug_log.log will be created in main directory')
 	parser.add_argument('-t', '--test', action='store_true',
-					 help='Run happypanda in test mode. 5000 series will be preadded in DB.')
+					 help='Run happypanda in test mode. 5000 gallery will be preadded in DB.')
 	parser.add_argument('-v', '--version', action='version',
 					 version='Happypanda v{}'.format(gui_constants.vs))
 
@@ -99,7 +99,7 @@ def start():
 		#	import threading, time
 		#	ser_list = []
 		#	for x in range(5000):
-		#		s = seriesdb.series()
+		#		s = gallerydb.gallery()
 		#		s.profile = gui_constants.NO_IMAGE_PATH
 		#		s.title = 'Test {}'.format(x)
 		#		s.artist = 'Author {}'.format(x)
@@ -120,7 +120,7 @@ def start():
 		#				done = True
 		#			else:
 		#				thread_list.append(
-		#					threading.Thread(target=seriesdb.seriesDB.add_series,
+		#					threading.Thread(target=gallerydb.galleryDB.add_gallery,
 		#					  args=(ser_list[i],)))
 		#				thread_list[i].start()
 		#				i += 1
