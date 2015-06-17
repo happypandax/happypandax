@@ -12,19 +12,21 @@ You should have received a copy of the GNU General Public License
 along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from .database import db
+from .database import db, db_constants, gallerydb
 from .gui import app, gui_constants
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QFile
 import sys, logging, os, argparse
 
 #IMPORTANT STUFF
-def init():
+def start():
 
 	parser = argparse.ArgumentParser(prog='Happypanda',
 								  description='A manga/doujinshi manager with tagging support')
 	parser.add_argument('-d', '--debug', action='store_true',
 					 help='happypanda_debug_log.log will be created in main directory')
+	parser.add_argument('-t', '--test', action='store_true',
+					 help='Run happypanda in test mode. 5000 gallery will be preadded in DB.')
 	parser.add_argument('-v', '--version', action='version',
 					 version='Happypanda v{}'.format(gui_constants.vs))
 
@@ -64,11 +66,69 @@ def init():
 	log_c = log.critical
 
 	application = QApplication(sys.argv)
+	log_d('Happypanda Version {}'.format(gui_constants.vs))
 	log_d('App Event Start: OK')
-	conn = db.init_db()
-	log_d('Init DB Conn: OK')
-	if conn:
+	try:
+		if args.test:
+			conn = db.init_db(True)
+		else:
+			conn = db.init_db()
+		log_d('Init DB Conn: OK')
+	except:
+		log_d('Database connection failed')
+		from PyQt5.QtGui import QIcon
+		from PyQt5.QtWidgets import QMessageBox
+		log_i('Invalid database')
+		msg_box = QMessageBox()
+		msg_box.setWindowIcon(QIcon(gui_constants.APP_ICO_PATH))
+		msg_box.setText('Invalid database')
+		msg_box.setInformativeText("Do you want to create a new database?")
+		msg_box.setIcon(QMessageBox.Critical)
+		msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+		msg_box.setDefaultButton(QMessageBox.Yes)
+		if msg_box.exec() == QMessageBox.Yes:
+			pass
+		else:
+			application.exit()
+			log_d('Normal Exit App: OK')
+			sys.exit()
+
+	def start_main_window(conn):
 		DB = db.DBThread(conn)
+		#if args.test:
+		#	import threading, time
+		#	ser_list = []
+		#	for x in range(5000):
+		#		s = gallerydb.gallery()
+		#		s.profile = gui_constants.NO_IMAGE_PATH
+		#		s.title = 'Test {}'.format(x)
+		#		s.artist = 'Author {}'.format(x)
+		#		s.path = gui_constants.static_dir
+		#		s.type = 'Test'
+		#		s.chapters = {0:gui_constants.static_dir}
+		#		s.language = 'English'
+		#		s.info = 'I am number {}'.format(x)
+		#		ser_list.append(s)
+
+		#	done = False
+		#	thread_list = []
+		#	i = 0
+		#	while not done:
+		#		try:
+		#			if threading.active_count() > 5000:
+		#				thread_list = []
+		#				done = True
+		#			else:
+		#				thread_list.append(
+		#					threading.Thread(target=gallerydb.galleryDB.add_gallery,
+		#					  args=(ser_list[i],)))
+		#				thread_list[i].start()
+		#				i += 1
+		#				print(i)
+		#				print('Threads running: {}'.format(threading.activeCount()))
+		#		except IndexError:
+		#			done = True
+
 		WINDOW = app.AppWindow()
 
 		# styling
@@ -103,15 +163,36 @@ def init():
 		log_d('Create temp: OK')
 
 		sys.exit(application.exec_())
-	else:
+
+	def db_upgrade():
 		log_d('Database connection failed')
+		from PyQt5.QtGui import QIcon
 		from PyQt5.QtWidgets import QMessageBox
+
 		msg_box = QMessageBox()
-		msg_box.setInformativeText("The database is not compatible with the current version of the program")
+		msg_box.setWindowIcon(QIcon(gui_constants.APP_ICO_PATH))
+		msg_box.setText('Incompatible database!')
+		msg_box.setInformativeText("Do you want to upgrade to newest version?" +
+							 "Don't worry about your data. It'll remain the same.")
 		msg_box.setIcon(QMessageBox.Critical)
-		msg_box.setStandardButtons(QMessageBox.Ok)
-		msg_box.setDefaultButton(QMessageBox.Ok)
-		if msg_box.exec():
+		msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+		msg_box.setDefaultButton(QMessageBox.Yes)
+		if msg_box.exec() == QMessageBox.Yes:
+			import threading
+			db_p = db_constants.DB_PATH
+			threading.Thread(target=db.add_db_revisions,
+					args=(db_p,)).start()
+			done = None
+			while not done:
+				done = db.ResultQueue.get()
+			conn = db.init_db()
+			start_main_window(conn)
+		else:
 			application.exit()
 			log_d('Normal Exit App: OK')
 			sys.exit()
+
+	if conn:
+		start_main_window(conn)
+	else:
+		db_upgrade()

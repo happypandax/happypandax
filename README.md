@@ -1,8 +1,11 @@
 # Happypanda
 A cross platform manga/doujinshi manager with tagging support.
 
-Development is done in alpha branch.
 
+Development is done in alpha branch
+
+# Motivation
+little to none.
 I'm here if you have any questions!
 
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Pewpews/happypanda?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
@@ -22,29 +25,29 @@ For Mac & Linux see [INSTALL.md](INSTALL.md)
 3. Run the program by clicking on Happypanda
 
 # Usage
-- Click "Add series". Choose your series folder and edit the metadata, click done when... done.
-- Or you can populate the program with all series' from folder by clicking on the arrow:
+- Click "Add gallery". Choose your gallery folder and edit the metadata, click done when... done.
+- Or you can populate the program with all gallery' from folder by clicking on the arrow:
     - Currently supports the following folder structures *(Mixed structures are supported)*:
-        + .../My_general_series_folder
-            - --/Series1_folder
+        + .../My_general_gallery_folder
+            - --/gallery1_folder
                 - --/Chp_1_folder
                     - --/image_1
                     - --/image_2
                 - --/Chp_n_folder
                     - --/image_n
 
-        + .../My_general_series_folder
-            - --/Series1_folder
+        + .../My_general_gallery_folder
+            - --/gallery1_folder
                 - --/image_1
                 - --/image_2
-            - --/Series_n_folder
+            - --/gallery_n_folder
                 - --/image_n
                 - --/image_n
 
-- Edit/Remove/Open/Favourite series by rightclicking on it
-- Doubleclick on series to open first chapter
-- Click on a series to open a window with it's metadata
-- Rightclick on empty space to add series
+- Edit/Remove/Open/Favourite gallery by rightclicking on it
+- Doubleclick on gallery to open first chapter
+- Click on a gallery to open a window with it's metadata
+- Rightclick on empty space to add gallery
 
 
 - If everything fails or you somehow messed up, then feel free to delete the DB folder and start over. Find me in the gitter chat, if you have any questions.

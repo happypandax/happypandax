@@ -13,6 +13,7 @@ along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import time, datetime, os, subprocess, sys, logging, zipfile
+import hashlib, shutil
 
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -22,6 +23,19 @@ log_e = log.error
 log_c = log.critical
 
 IMG_FILES =  ['jpg','bmp','png','gif']
+
+def generate_img_hash(src):
+	"""
+	Generates sha1 hash based on the given bytes.
+	Returns hex-digits
+	"""
+	chunk = 8129
+	sha1 = hashlib.sha1()
+	buffer = src.read(chunk)
+	while len(buffer) > 0:
+		sha1.update(buffer)
+		buffer = src.read(chunk)
+	return sha1.hexdigest()
 
 class ArchiveFile():
 	"""
@@ -102,50 +116,50 @@ def open(chapterpath):
 
 	return None
 
-def tag_to_string(series_tag, simple=False):
+def tag_to_string(gallery_tag, simple=False):
 	"""
-	Takes series tags and converts it to string, returns string
+	Takes gallery tags and converts it to string, returns string
 	if simple is set to True, returns a CSV string, else a dict looking string
 	"""
-	assert isinstance(series_tag, dict), "Please provide a dict like this: {'namespace':['tag1']}"
+	assert isinstance(gallery_tag, dict), "Please provide a dict like this: {'namespace':['tag1']}"
 	string = ""
 	if not simple:
-		for n, namespace in enumerate(series_tag, 1):
-			if len(series_tag[namespace]) != 0:
+		for n, namespace in enumerate(gallery_tag, 1):
+			if len(gallery_tag[namespace]) != 0:
 				if namespace != 'default':
 					string += namespace + ":"
 
 				# find tags
-				if namespace != 'default' and len(series_tag[namespace]) > 1:
+				if namespace != 'default' and len(gallery_tag[namespace]) > 1:
 					string += '['
-				for x, tag in enumerate(series_tag[namespace], 1):
+				for x, tag in enumerate(gallery_tag[namespace], 1):
 					# if we are at the end of the list
-					if x == len(series_tag[namespace]):
+					if x == len(gallery_tag[namespace]):
 						string += tag
 					else:
 						string += tag + ', '
-				if namespace != 'default' and len(series_tag[namespace]) > 1:
+				if namespace != 'default' and len(gallery_tag[namespace]) > 1:
 					string += ']'
 
 				# if we aren't at the end of the list
-				if not n == len(series_tag):
+				if not n == len(gallery_tag):
 					string += ', '
 	else:
-		for n, namespace in enumerate(series_tag, 1):
-			if len(series_tag[namespace]) != 0:
+		for n, namespace in enumerate(gallery_tag, 1):
+			if len(gallery_tag[namespace]) != 0:
 				if namespace != 'default':
 					string += namespace + ","
 
 				# find tags
-				for x, tag in enumerate(series_tag[namespace], 1):
+				for x, tag in enumerate(gallery_tag[namespace], 1):
 					# if we are at the end of the list
-					if x == len(series_tag[namespace]):
+					if x == len(gallery_tag[namespace]):
 						string += tag
 					else:
 						string += tag + ', '
 
 				# if we aren't at the end of the list
-				if not n == len(series_tag):
+				if not n == len(gallery_tag):
 					string += ', '
 
 	return string
@@ -236,7 +250,7 @@ def title_parser(title):
 
 	if title[-4:] in ('.zip','.rar'):
 		title = title[:-4]
-	elif artist[-3:] is '.7z':
+	elif title[-3:] is '.7z':
 		title = title[:-3]
 
 	parsed_title = {'title':"", 'artist':"", 'language':"other"}
@@ -277,3 +291,35 @@ def open_web_link(url):
 		webbrowser.open_new_tab(url)
 	except:
 		log_e('Could not open URL in browser')
+
+def open_path(path):
+	try:
+		if sys.platform.startswith('darwin'):
+			subprocess.Popen(['open', path])
+		elif os.name == 'nt':
+			os.startfile(path)
+		elif os.name == 'posix':
+			subprocess.Popen(('xdg-open', path))
+		else:
+			log_e('Could not open path: no OS found')
+	except:
+		log_e('Could not open path')
+
+def delete_path(path):
+	"Deletes the provided recursively"
+	if os.path.exists(path):
+		error = ''
+		try:
+			if os.path.isfile:
+				os.remove(path)
+			else:
+				shutil.rmtree(path)
+		except PermissionError:
+			error = 'PermissionError'
+
+		if error:
+			p = os.path.split(path)[1]
+			log_e('Failed to delete: {}:{}'.format(error, p))
+			return False
+		return True
+

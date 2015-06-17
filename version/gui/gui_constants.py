@@ -16,7 +16,7 @@ import os
 """Contains constants to be used by several modules"""
 
 # Version number
-vs  = '0.14'
+vs  = '0.15'
 
 current_dir, f = os.path.split(os.path.realpath(__file__))
 static_dir = os.path.join(current_dir, "static")
@@ -34,12 +34,16 @@ THUMB_H_SIZE = 200
 THUMB_W_SIZE = 145
 
 # Columns
-COLUMNS = [0, 1, 2, 3, 4]
+COLUMNS = [0, 1, 2, 3, 4, 5, 6, 7]
 TITLE = 0
 ARTIST = 1
 TAGS = 2
 TYPE = 3
 FAV = 4
+CHAPTERS = 5
+LANGUAGE = 6
+LINK = 7
+
 
 # image paths
 APP_ICO_PATH = os.path.join(static_dir, "happypanda.ico")
@@ -51,12 +55,15 @@ HOME_BTN_PATH = os.path.join(static_dir, "home.png")
 SETTINGS_PATH = os.path.join(static_dir, "settings.png")
 GRID_PATH = os.path.join(static_dir, "grid.png")
 LIST_PATH = os.path.join(static_dir, "list.png")
+NO_IMAGE_PATH = os.path.join(static_dir, "default.jpg")
 
 # controls
-THUMBNAIL_CACHE_SIZE = 10240*100 #10240 is 10mb, so sum is 1gb
-PREFETCH_ITEM_AMOUNT = 100 # amount of items to prefetch
-SCROLL_SPEED = 9 # controls how many steps it takes when scrolling
+THUMBNAIL_CACHE_SIZE = 10240*20 #10240 is 10mb
+PREFETCH_ITEM_AMOUNT = 1# amount of items to prefetch
+SCROLL_SPEED = 7 # controls how many steps it takes when scrolling
 
 # POPUP
 POPUP_WIDTH = 450
 POPUP_HEIGHT = 220
+
+HIGH_QUALITY_THUMBS = False
