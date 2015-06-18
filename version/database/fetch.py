@@ -176,13 +176,12 @@ class Fetch(QObject):
 
 		if website_checker(new_url) == 'exhen':
 			self.WEB_PROGRESS.emit()
-			cookie = settings.exhen_cookies()
-			try:
-				exhen = pewnet.ExHen(cookie[0], cookie[1])
-			except IndexError:
+			exprops = settings.ExProperties()
+			if not exprops.ipb_id or not exprops.ipb_pass:
 				self.WEB_STATUS.emit(False)
-				log_e('ExHentai: No cookies set')
+				log_e('ExHentai: No cookies properly set')
 				return None
+			exhen = pewnet.ExHen(exprops.ipb_id, exprops.ipb_pass)
 			r_metadata(exhen.get_metadata([new_url]))
 		elif website_checker(new_url) == 'ehen':
 			self.WEB_PROGRESS.emit()

@@ -67,3 +67,19 @@ POPUP_WIDTH = 450
 POPUP_HEIGHT = 220
 
 HIGH_QUALITY_THUMBS = False
+
+EXHEN_COOKIE_TUTORIAL =\
+	"""
+How do you find these two values? <br \>
+<b>Firefox:</b> <br \>
+1. Navigate to exhentai.org <br \>
+2. Press Shift + F2 (A console should appear below) <br \>
+3. Write: cookie list <br \>
+4. A popup should appear with a list over active cookies <br \>
+5. Look for the 'ipb_member_id' and 'ipb_hash_pass' values <br \>
+<br \>
+<b>Other browsers</b> <br \>
+1. Download a cookie manager (google it) <br \>
+2. look for the 'ipb_member_id' and 'ipb_hash_pass' values in exhentai cookies
+"""
+

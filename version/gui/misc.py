@@ -14,7 +14,7 @@ along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 
 from PyQt5.QtCore import (Qt, QDate, QPoint, pyqtSignal, QThread,
 						  QTimer, QObject, QSize)
-from PyQt5.QtGui import QTextCursor, QIcon, QMouseEvent
+from PyQt5.QtGui import QTextCursor, QIcon, QMouseEvent, QFont
 from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QVBoxLayout, QHBoxLayout,
 							 QDialog, QGridLayout, QLineEdit,
@@ -25,7 +25,7 @@ from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QListWidget, QApplication, QSizePolicy,
 							 QCheckBox, QFrame, QListView,
 							 QAbstractItemView, QTreeView, QSpinBox,
-							 QAction)
+							 QAction, QStackedLayout, QTabWidget)
 
 import os, threading, queue, time, logging
 from datetime import datetime
@@ -115,7 +115,6 @@ class SettingsDialog(QWidget):
 	"A settings dialog"
 	def __init__(self, parent=None):
 		super().__init__(parent, flags=Qt.Window)
-		self.sections
 		main_layout = QVBoxLayout()
 		sub_layout = QHBoxLayout()
 		# Left Panel
@@ -124,15 +123,26 @@ class SettingsDialog(QWidget):
 		#left_panel.setIconSize(QSize(40,40))
 		left_panel.setTextElideMode(Qt.ElideRight)
 		left_panel.setMaximumWidth(200)
-		about = QListWidgetItem()
-		about.setText('About')
+		left_panel.itemClicked.connect(self.change)
+		#web.setText('Web')
+		self.web = QListWidgetItem()
+		self.web.setText('Web')
+		self.visual = QListWidgetItem()
+		self.visual.setText('Visual')
+		self.advanced = QListWidgetItem()
+		self.advanced.setText('Advanced')
+		self.about = QListWidgetItem()
+		self.about.setText('About')
 
 		#main.setIcon(QIcon(os.path.join(gui_constants.static_dir, 'plus2.png')))
-		left_panel.addItem(about)
+		left_panel.addItem(self.web)
+		left_panel.addItem(self.visual)
+		left_panel.addItem(self.advanced)
+		left_panel.addItem(self.about)
 
 		# right panel
-		right_panel = QVBoxLayout()
-		self.opt_title = QLabel()
+		self.right_panel = QStackedLayout()
+		self.init_right_panel()
 
 		# bottom
 		bottom_layout = QHBoxLayout()
@@ -155,15 +165,106 @@ class SettingsDialog(QWidget):
 		bottom_layout.addWidget(cancel_btn, 0, Qt.AlignRight)
 
 		sub_layout.addWidget(left_panel)
-		sub_layout.addLayout(right_panel)
+		sub_layout.addLayout(self.right_panel)
 		main_layout.addLayout(sub_layout)
 		main_layout.addLayout(bottom_layout)
+
+		self.restore_options()
+
 		self.setLayout(main_layout)
-		self.setWindowTitle('Settings')
 		self.resize(700, 500)
+		self.setWindowTitle('Settings')
 		self.show()
 
+
+	def change(self, item):
+		def curr_index(index):
+			if index != self.right_panel.currentIndex():
+				self.right_panel.setCurrentIndex(index)
+
+		if item == self.web:
+			curr_index(self.web_index)
+		elif item == self.visual:
+			curr_index(self.visual_index)
+		elif item == self.advanced:
+			curr_index(self.advanced_index)
+		elif item == self.about:
+			curr_index(self.about_index)
+
+	def restore_options(self):
+		#Web
+		self.exprops = settings.ExProperties()
+		self.ipbid_edit.setText(self.exprops.ipb_id)
+		self.ipbpass_edit.setText(self.exprops.ipb_pass)
+
+		# Visual
+		self.high_quality_thumbs = gui_constants.HIGH_QUALITY_THUMBS
+		self.popup_width = gui_constants.POPUP_WIDTH
+		self.popup_height = gui_constants.POPUP_HEIGHT
+		self.scroll_speed = gui_constants.SCROLL_SPEED
+		self.style = gui_constants.user_stylesheet_path
+
+		# Advanced
+		self.cache_size = gui_constants.THUMBNAIL_CACHE_SIZE
+		self.prefetch_item_amnt = gui_constants.PREFETCH_ITEM_AMOUNT
+
 	def accept(self):
+		self.exprops.ipb_id = self.ipbid_edit.text()
+		self.exprops.ipb_pass = self.ipbpass_edit.text()
+		settings.save()
+		self.close()
+
+	def init_right_panel(self):
+
+		#def title_def(title):
+		#	title_lbl = QLabel(title)
+		#	f = QFont()
+		#	f.setPixelSize(16)
+		#	title_lbl.setFont(f)
+		#	return title_lbl
+
+		# Web
+		web = QTabWidget()
+		self.web_index = self.right_panel.addWidget(web)
+		web_general_page = QWidget()
+		web.addTab(web_general_page, 'General')
+		web.setTabEnabled(0, False)
+		exhentai_page = QWidget()
+		web.addTab(exhentai_page, 'ExHentai')
+		web.setCurrentIndex(1)
+		ipb_layout = QFormLayout()
+		exhentai_page.setLayout(ipb_layout)
+		# exhentai
+		self.ipbid_edit = QLineEdit()
+		self.ipbpass_edit = QLineEdit()
+		exh_tutorial = QLabel(gui_constants.EXHEN_COOKIE_TUTORIAL)
+		exh_tutorial.setTextFormat(Qt.RichText)
+		ipb_layout.addRow('IPB Member ID:', self.ipbid_edit)
+		ipb_layout.addRow('IPB Pass Hash:', self.ipbpass_edit)
+		ipb_layout.addRow(exh_tutorial)
+
+		# Visual
+		visual = QTabWidget()
+		self.visual_index = self.right_panel.addWidget(visual)
+		visual_general_page = QWidget()
+		visual.addTab(visual_general_page, 'General')
+		style_page = QWidget()
+		visual.addTab(style_page, 'Style')
+		visual.setTabEnabled(1, False)
+
+		# Advanced
+		advanced = QTabWidget()
+		self.advanced_index = self.right_panel.addWidget(advanced)
+		visual_misc = QWidget()
+		advanced.addTab(visual_misc, 'Misc')
+
+		# About
+		about = QTabWidget()
+		self.about_index = self.right_panel.addWidget(about)
+		about_happypanda_page = QWidget()
+		about.addTab(about_happypanda_page, 'About Happypanda')
+
+	def reject(self):
 		self.close()
 
 class PathLineEdit(QLineEdit):
@@ -731,25 +832,7 @@ class GalleryDialog(QWidget):
 		web_main_layout = QVBoxLayout()
 		web_layout = QHBoxLayout()
 		web_main_layout.addLayout(web_layout)
-		ipb_info_l = QHBoxLayout()
-		ipb_lbl = QLabel("ipb member id:")
-		self.ipb = QLineEdit()
-		ipb_pass_lbl = QLabel("ipb pass hash:")
-		self.ipb_pass = QLineEdit()
-		ipb_btn = QPushButton("Apply")
-		ipb_btn.setFixedWidth(50)
-		ipb_btn.clicked.connect(self.set_ipb)
-		ipb_info_l.addWidget(ipb_lbl)
-		ipb_info_l.addWidget(self.ipb)
-		ipb_info_l.addWidget(ipb_pass_lbl)
-		ipb_info_l.addWidget(self.ipb_pass)
-		ipb_info_l.addWidget(ipb_btn)
-		web_main_layout.addLayout(ipb_info_l)
 		f_web.setLayout(web_main_layout)
-
-		exprops = settings.ExProperties()
-		self.ipb.setText(exprops.ipb_id)
-		self.ipb_pass.setText(exprops.ipb_pass)
 
 		f_gallery = QGroupBox("Gallery Info")
 		f_gallery.setCheckable(False)
@@ -898,13 +981,6 @@ class GalleryDialog(QWidget):
 		self.file_exists_lbl = QLabel()
 		local_layout.addWidget(self.file_exists_lbl)
 		self.file_exists_lbl.hide()
-
-
-	def set_ipb(self):
-		exprops = settings.ExProperties()
-		exprops.ipb_id = self.ipb.text()
-		exprops.ipb_pass = self.ipb_pass.text()
-		settings.save()
 
 	def choose_dir(self, mode):
 		if mode == 'a':
