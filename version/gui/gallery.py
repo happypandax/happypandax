@@ -538,12 +538,14 @@ class CustomDelegate(QStyledItemDelegate):
 				artist_size = ""
 
 			#painter.setPen(QPen(Qt.NoPen))
-			r = option.rect.adjusted(1, -2, -1, 0)
-			rec = r.getRect()
+			#option.rect = option.rect.adjusted(11, 10, 0, 0)
+			option.rect.setWidth(self.W)
+			option.rect.setHeight(self.H)
+			rec = option.rect.getRect()
 			x = rec[0]
-			y = rec[1] + 3
+			y = rec[1]
 			w = rec[2]
-			h = rec[3] - 5
+			h = rec[3]
 
 
 			text_area = QTextDocument()
@@ -623,7 +625,7 @@ class CustomDelegate(QStyledItemDelegate):
 			painter.translate(option.rect.x(), option.rect.y()+140)
 			box_color = QBrush(QColor(0,0,0,123))
 			painter.setBrush(box_color)
-			rect = QRect(0, 0, w+2, 60) #x, y, width, height
+			rect = QRect(0, 0, w, 60) #x, y, width, height
 			painter.fillRect(rect, box_color)
 			painter.restore()
 			painter.save()
@@ -634,7 +636,7 @@ class CustomDelegate(QStyledItemDelegate):
 			painter.restore()
 
 			if option.state & QStyle.State_MouseOver:
-				painter.fillRect(option.rect, QColor(225,225,225,90)) #70
+				painter.fillRect(QRect(x, y, w, h), QColor(225,225,225,90)) #70
 			else:
 				self.popup_window.hide()
 			if option.state & QStyle.State_Selected:
@@ -645,7 +647,7 @@ class CustomDelegate(QStyledItemDelegate):
 		else:
 			super().paint(painter, option, index)
 
-	def sizeHint(self, QStyleOptionViewItem, QModelIndex):
+	def sizeHint(self, StyleOptionViewItem, QModelIndex):
 		return QSize(self.W, self.H)
 
 # TODO: Redo this part to avoid duplicated code
@@ -664,6 +666,8 @@ class MangaView(QListView):
 		self.W = gui_constants.GRIDBOX_W_SIZE
 		self.setGridSize(QSize(self.W, self.H))
 		self.setResizeMode(self.Adjust)
+		self.setIconSize(QSize(gui_constants.THUMB_W_SIZE,
+						 gui_constants.THUMB_H_SIZE))
 		# all items have the same size (perfomance)
 		self.setUniformItemSizes(True)
 		self.setSelectionBehavior(self.SelectItems)
@@ -687,6 +691,7 @@ class MangaView(QListView):
 		self.setModel(self.sort_model)
 		self.SERIES_DIALOG.connect(self.spawn_dialog)
 		self.doubleClicked.connect(self.open_chapter)
+		print(self.getContentsMargins())
 	#	self.ti = QTimer()
 	#	self.ti.timeout.connect(self.test_)
 	#	self.ti.start(5000)

@@ -28,10 +28,10 @@ user_stylesheet_path = ""
 # sizes
 MAIN_W = 1029 # main window
 MAIN_H = 650 # main window
-GRIDBOX_H_SIZE = 250
-GRIDBOX_W_SIZE = GRIDBOX_H_SIZE//1.47
+GRIDBOX_H_SIZE = 230
+GRIDBOX_W_SIZE = GRIDBOX_H_SIZE//1.40 #1.47
 THUMB_H_SIZE = 200
-THUMB_W_SIZE = 145
+THUMB_W_SIZE = 143
 
 # Columns
 COLUMNS = [0, 1, 2, 3, 4, 5, 6, 7]

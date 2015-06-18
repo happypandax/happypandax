@@ -162,7 +162,8 @@ Your database will not be touched without you being notified.""")
 		"initiates the manga view"
 		#list view
 		self.manga_list_main = QWidget()
-		self.manga_list_main.setContentsMargins(-10, -12, -10, -10)
+		#self.manga_list_main.setContentsMargins(-10, -12, -10, -10)
+		self.manga_list_main.setContentsMargins(10, -12, -10, -10) # x, y, inverted_width, inverted_height
 		self.manga_list_layout = QHBoxLayout()
 		self.manga_list_main.setLayout(self.manga_list_layout)
 

@@ -33,7 +33,7 @@ log_e = log.error
 log_c = log.critical
 
 
-def gen_thumbnail(chapter_path, width=gui_constants.THUMB_W_SIZE-2,
+def gen_thumbnail(chapter_path, width=gui_constants.THUMB_W_SIZE,
 				height=gui_constants.THUMB_H_SIZE): # 2 to align it properly.. need to redo this
 	"""Generates a thumbnail with unique filename in the cache dir.
 	Returns absolute path to the created thumbnail

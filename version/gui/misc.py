@@ -683,7 +683,6 @@ class DatabaseFilterProxyModel(QSortFilterProxyModel):
 					allow = True
 		return allow
 
-# TODO: FIX THIS HORRENDOUS DUPLICATED CODE
 class GalleryDialog(QWidget):
 	"A window for adding/modifying gallery"
 
