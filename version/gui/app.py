@@ -412,9 +412,10 @@ Your database will not be touched without you being notified.""")
 
 					else:
 						log_e('Populating DB from gallery folder: FAIL')
-						loading.setText("<font color=red>An error occured. Try restarting..</font>")
+						loading.setText("<font color=red>An error occured. Check happypanda_log..</font>")
 						loading.progress.setStyleSheet("background-color:red;")
 						data_thread.quit
+						QTimer.singleShot(5000, loading.close)
 
 				def fetch_deleteLater():
 					try:

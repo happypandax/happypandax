@@ -16,7 +16,8 @@ import datetime, os, threading, logging, queue, uuid # for unique filename
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QImage
 
-from ..utils import today, ArchiveFile, generate_img_hash, delete_path
+from ..utils import (today, ArchiveFile, generate_img_hash, delete_path,
+					 ARCHIVE_FILES)
 from .db import CommandQueue, ResultQueue
 from ..gui import gui_constants
 from .db_constants import THUMBNAIL_PATH, IMG_FILES
@@ -46,8 +47,8 @@ def gen_thumbnail(chapter_path, width=gui_constants.THUMB_W_SIZE-2,
 
 	def generate(cache, chap_path, w, h, img_queue):
 		try:
-			if chap_path[-4:] == '.zip':
-				log_d('Generating Thumb from zip')
+			if chap_path[-4:] in ARCHIVE_FILES:
+				log_d('Generating Thumb from {}'.format(chap_path[-3:]))
 				zip = ArchiveFile(chap_path)
 				p = os.path.join('temp', str(uuid.uuid4()))
 				os.mkdir(p)

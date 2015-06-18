@@ -27,7 +27,7 @@ from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QAbstractItemView, QTreeView, QSpinBox)
 import os, threading, queue, time, logging
 from datetime import datetime
-from ..utils import tag_to_string, tag_to_dict, title_parser
+from ..utils import tag_to_string, tag_to_dict, title_parser, ARCHIVE_FILES
 from ..database import gallerydb, fetch, db
 from . import gui_constants
 
@@ -360,7 +360,7 @@ class GalleryListView(QWidget):
 	def from_files(self):
 		gallery_list = QFileDialog.getOpenFileNames(self,
 											 'Select 1 or more gallery to add',
-											 filter='Archives (*.zip)')
+											 filter='Archives (*.zip *.cbz)')
 		for path in gallery_list[0]:
 			#Warning: will break when you add more filters
 			if len(path) != 0:
@@ -792,7 +792,7 @@ class GalleryDialog(QDialog):
 	def choose_dir(self, mode):
 		if mode == 'a':
 			name = QFileDialog.getOpenFileName(self, 'Choose archive',
-											  filter='*.zip')
+											  filter='*.zip *.cbz')
 			name = name[0]
 		else:
 			name = QFileDialog.getExistingDirectory(self, 'Choose folder')
@@ -880,7 +880,7 @@ class GalleryDialog(QDialog):
 					times.add(os.path.getmtime(fp))
 			gallery_object.last_update = time.asctime(time.gmtime(max(times)))
 		except NotADirectoryError:
-			if path[-4:] == '.zip':
+			if path[-4:] in ARCHIVE_FILES:
 				#TODO: add support for folders in archive
 				gallery_object.chapters[0] = path
 

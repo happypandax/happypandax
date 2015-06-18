@@ -105,7 +105,7 @@ class Fetch(QObject):
 							new_gallery.last_update = last_updated
 							parsed = utils.title_parser(ser_path)
 						except NotADirectoryError:
-							if ser_path[-4:] == '.zip':
+							if ser_path[-4:] in utils.ARCHIVE_FILES:
 								#TODO: add support for folders in archive
 								new_gallery.chapters[0] = path
 								parsed = utils.title_parser(ser_path[:-4])

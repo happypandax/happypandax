@@ -23,6 +23,7 @@ log_e = log.error
 log_c = log.critical
 
 IMG_FILES =  ['jpg','bmp','png','gif']
+ARCHIVE_FILES = ['.zip', '.cbz']
 
 def generate_img_hash(src):
 	"""
@@ -47,16 +48,16 @@ class ArchiveFile():
 	# Most of the code are from kunesj on GitHub #
 	"""
 	def __init__(self, filepath):
-		extension = filepath[-3:]
+		extension = filepath[-4:]
 
-		if extension == 'zip':
+		if extension in ARCHIVE_FILES:
 			try:
 				self.archive = zipfile.ZipFile(filepath)
 			except:
 				log_e('Create ZIP: FAIL')
 				raise Exception
 		else:
-			log_e('ZIP: Unsupported file format')
+			log_e('Archive: Unsupported file format')
 			raise Exception
 
 	def namelist(self):
@@ -248,7 +249,7 @@ import re as regex
 def title_parser(title):
 	"Receives a title to parse. Returns dict with 'title', 'artist' and language"
 
-	if title[-4:] in ('.zip','.rar'):
+	if title[-4:] in ARCHIVE_FILES:
 		title = title[:-4]
 	elif title[-3:] is '.7z':
 		title = title[:-3]
