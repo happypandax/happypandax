@@ -13,7 +13,7 @@ along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from PyQt5.QtCore import (Qt, QDate, QPoint, pyqtSignal, QThread,
-						  QTimer, QObject)
+						  QTimer, QObject, QSize)
 from PyQt5.QtGui import QTextCursor, QIcon, QMouseEvent
 from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QVBoxLayout, QHBoxLayout,
@@ -24,12 +24,15 @@ from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QCompleter, QListWidgetItem,
 							 QListWidget, QApplication, QSizePolicy,
 							 QCheckBox, QFrame, QListView,
-							 QAbstractItemView, QTreeView, QSpinBox)
+							 QAbstractItemView, QTreeView, QSpinBox,
+							 QAction)
+
 import os, threading, queue, time, logging
 from datetime import datetime
+from . import gui_constants
 from ..utils import tag_to_string, tag_to_dict, title_parser, ARCHIVE_FILES
 from ..database import gallerydb, fetch, db
-from . import gui_constants
+from .. import settings
 
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -107,6 +110,61 @@ log_c = log.critical
 #		centerparent.setY(sg_rect.bottom() - child_frame.height())
 
 #	child.move(centerparent)
+
+class SettingsDialog(QWidget):
+	"A settings dialog"
+	def __init__(self, parent=None):
+		super().__init__(parent, flags=Qt.Window)
+		self.sections
+		main_layout = QVBoxLayout()
+		sub_layout = QHBoxLayout()
+		# Left Panel
+		left_panel = QListWidget()
+		left_panel.setViewMode(left_panel.ListMode)
+		#left_panel.setIconSize(QSize(40,40))
+		left_panel.setTextElideMode(Qt.ElideRight)
+		left_panel.setMaximumWidth(200)
+		about = QListWidgetItem()
+		about.setText('About')
+
+		#main.setIcon(QIcon(os.path.join(gui_constants.static_dir, 'plus2.png')))
+		left_panel.addItem(about)
+
+		# right panel
+		right_panel = QVBoxLayout()
+		self.opt_title = QLabel()
+
+		# bottom
+		bottom_layout = QHBoxLayout()
+		ok_btn = QPushButton('Ok')
+		ok_btn.clicked.connect(self.accept)
+		cancel_btn = QPushButton('Cancel')
+		cancel_btn.clicked.connect(self.close)
+		info_lbl = QLabel()
+		info_lbl.setText('<a href="https://github.com/Pewpews/happypanda">'+
+				   'Visit GitHub Repo</a> | Find any bugs? Check out the troubleshoot guide '+
+				   'in About section.')
+		info_lbl.setTextFormat(Qt.RichText)
+		info_lbl.setTextInteractionFlags(Qt.TextBrowserInteraction)
+		info_lbl.setOpenExternalLinks(True)
+		self.spacer = QWidget()
+		self.spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+		bottom_layout.addWidget(info_lbl, 0, Qt.AlignLeft)
+		bottom_layout.addWidget(self.spacer)
+		bottom_layout.addWidget(ok_btn, 0, Qt.AlignRight)
+		bottom_layout.addWidget(cancel_btn, 0, Qt.AlignRight)
+
+		sub_layout.addWidget(left_panel)
+		sub_layout.addLayout(right_panel)
+		main_layout.addLayout(sub_layout)
+		main_layout.addLayout(bottom_layout)
+		self.setLayout(main_layout)
+		self.setWindowTitle('Settings')
+		self.resize(700, 500)
+		self.show()
+
+	def accept(self):
+		self.close()
 
 class PathLineEdit(QLineEdit):
 	def __init(self, parent=None, dir=True):
@@ -626,7 +684,7 @@ class DatabaseFilterProxyModel(QSortFilterProxyModel):
 		return allow
 
 # TODO: FIX THIS HORRENDOUS DUPLICATED CODE
-class GalleryDialog(QDialog):
+class GalleryDialog(QWidget):
 	"A window for adding/modifying gallery"
 
 	gallery_queue = queue.Queue()
@@ -634,36 +692,43 @@ class GalleryDialog(QDialog):
 	SERIES_EDIT = pyqtSignal(list, int)
 	#gallery_list = [] # might want to extend this to allow mass gallery adding
 
-	def _init__(self, parent=None):
-		super().__init__()
-	#TODO: Implement a way to mass add galleries
-	#IDEA: Extend dialog in a ScrollArea with more forms...
+	def __init__(self, parent=None, list_of_index=None):
+		super().__init__(parent, Qt.Dialog)
+		log_d('Triggered Gallery Edit/Add Dialog')
+		self.main_layout = QVBoxLayout()
 
-	def initUI(self):
-		main_layout = QVBoxLayout()
+		if not list_of_index:
+			self.newUI()
+			self.commonUI()
+			self.done.clicked.connect(self.accept)
+			self.cancel.clicked.connect(self.reject)
+		else:
+			assert isinstance(list_of_index, list)
+			self.position = list_of_index[0].row()
+			for index in list_of_index:
+				gallery = index.data(Qt.UserRole+1)
+				self.commonUI()
+				self.setGallery(gallery)
 
+			self.done.clicked.connect(self.accept_edit)
+			self.cancel.clicked.connect(self.reject_edit)
 
-		f_local = QGroupBox("Folder/ZIP")
-		f_local.setCheckable(False)
-		main_layout.addWidget(f_local)
-		local_layout = QHBoxLayout()
-		f_local.setLayout(local_layout)
+		log_d('GalleryDialog: Create UI: successful')
+		#TODO: Implement a way to mass add galleries
+		#IDEA: Extend dialog in a ScrollArea with more forms...
 
-		choose_folder = QPushButton("From Folder")
-		choose_folder.clicked.connect(lambda: self.choose_dir('f'))
-		local_layout.addWidget(choose_folder)
+		self.setLayout(self.main_layout)
+		self.resize(500,200)
+		frect = self.frameGeometry()
+		frect.moveCenter(QDesktopWidget().availableGeometry().center())
+		self.move(frect.topLeft()-QPoint(0,180))
+		#self.setAttribute(Qt.WA_DeleteOnClose)
+		self.setWindowTitle("Add a new gallery")
 
-		choose_archive = QPushButton("From ZIP")
-		choose_archive.clicked.connect(lambda: self.choose_dir('a'))
-		local_layout.addWidget(choose_archive)
-
-		self.file_exists_lbl = QLabel()
-		local_layout.addWidget(self.file_exists_lbl)
-		self.file_exists_lbl.hide()
-
+	def commonUI(self):
 		f_web = QGroupBox("Metadata from the Web")
 		f_web.setCheckable(False)
-		main_layout.addWidget(f_web)
+		self.main_layout.addWidget(f_web)
 		web_main_layout = QVBoxLayout()
 		web_layout = QHBoxLayout()
 		web_main_layout.addLayout(web_layout)
@@ -673,7 +738,7 @@ class GalleryDialog(QDialog):
 		ipb_pass_lbl = QLabel("ipb pass hash:")
 		self.ipb_pass = QLineEdit()
 		ipb_btn = QPushButton("Apply")
-		ipb_btn.setFixedWidth(70)
+		ipb_btn.setFixedWidth(50)
 		ipb_btn.clicked.connect(self.set_ipb)
 		ipb_info_l.addWidget(ipb_lbl)
 		ipb_info_l.addWidget(self.ipb)
@@ -683,33 +748,37 @@ class GalleryDialog(QDialog):
 		web_main_layout.addLayout(ipb_info_l)
 		f_web.setLayout(web_main_layout)
 
+		exprops = settings.ExProperties()
+		self.ipb.setText(exprops.ipb_id)
+		self.ipb_pass.setText(exprops.ipb_pass)
+
 		f_gallery = QGroupBox("Gallery Info")
 		f_gallery.setCheckable(False)
-		main_layout.addWidget(f_gallery)
+		self.main_layout.addWidget(f_gallery)
 		gallery_layout = QFormLayout()
 		f_gallery.setLayout(gallery_layout)
 
 		def basic_web(name):
 			return QLabel(name), QLineEdit(), QPushButton("Fetch"), QProgressBar()
 
-		url_lbl, url_edit, url_btn, url_prog = basic_web("URL:")
-		url_btn.clicked.connect(lambda: self.web_metadata(url_edit.text(), url_btn,
+		url_lbl, self.url_edit, url_btn, url_prog = basic_web("URL:")
+		url_btn.clicked.connect(lambda: self.web_metadata(self.url_edit.text(), url_btn,
 											url_prog))
 		url_prog.setTextVisible(False)
 		url_prog.setMinimum(0)
 		url_prog.setMaximum(0)
 		web_layout.addWidget(url_lbl, 0, Qt.AlignLeft)
-		web_layout.addWidget(url_edit, 0)
+		web_layout.addWidget(self.url_edit, 0)
 		web_layout.addWidget(url_btn, 0, Qt.AlignRight)
 		web_layout.addWidget(url_prog, 0, Qt.AlignRight)
-		url_edit.setPlaceholderText("paste g.e-hentai/exhentai gallery link")
+		self.url_edit.setPlaceholderText("paste g.e-hentai/exhentai gallery link")
 		url_prog.hide()
-
 
 		self.title_edit = QLineEdit()
 		self.author_edit = QLineEdit()
 		self.descr_edit = QTextEdit()
 		self.descr_edit.setFixedHeight(45)
+		self.descr_edit.setAcceptRichText(True)
 		self.descr_edit.setPlaceholderText("HTML 4 tags are supported")
 		self.lang_box = QComboBox()
 		self.lang_box.addItems(["English", "Japanese", "Other"])
@@ -734,12 +803,12 @@ class GalleryDialog(QDialog):
 		self.path_lbl = QLabel("unspecified...")
 		self.path_lbl.setWordWrap(True)
 
-		self.link_layout = QHBoxLayout()
+		link_layout = QHBoxLayout()
 		self.link_lbl = QLabel("")
 		self.link_lbl.setWordWrap(True)
 		self.link_edit = QLineEdit()
-		self.link_layout.addWidget(self.link_edit)
-		self.link_layout.addWidget(self.link_lbl)
+		link_layout.addWidget(self.link_edit)
+		link_layout.addWidget(self.link_lbl)
 		self.link_edit.hide()
 		self.link_btn = QPushButton("Modify")
 		self.link_btn.setFixedWidth(50)
@@ -747,8 +816,8 @@ class GalleryDialog(QDialog):
 		self.link_btn2.setFixedWidth(40)
 		self.link_btn.clicked.connect(self.link_modify)
 		self.link_btn2.clicked.connect(self.link_set)
-		self.link_layout.addWidget(self.link_btn)
-		self.link_layout.addWidget(self.link_btn2)
+		link_layout.addWidget(self.link_btn)
+		link_layout.addWidget(self.link_btn2)
 		self.link_btn2.hide()
 
 		gallery_layout.addRow("Title:", self.title_edit)
@@ -759,35 +828,84 @@ class GalleryDialog(QDialog):
 		gallery_layout.addRow("Type:", self.type_box)
 		gallery_layout.addRow("Publication Date:", self.pub_edit)
 		gallery_layout.addRow("Path:", self.path_lbl)
-		gallery_layout.addRow("Link:", self.link_layout)
+		gallery_layout.addRow("Link:", link_layout)
 
 		final_buttons = QHBoxLayout()
 		final_buttons.setAlignment(Qt.AlignRight)
-		main_layout.addLayout(final_buttons)
-		done = QPushButton("Done")
-		done.setDefault(True)
-		done.clicked.connect(self.accept)
-		cancel = QPushButton("Cancel")
-		cancel.clicked.connect(self.reject)
-		final_buttons.addWidget(cancel)
-		final_buttons.addWidget(done)
+		self.main_layout.addLayout(final_buttons)
+		self.done = QPushButton("Done")
+		self.done.setDefault(True)
+		self.cancel = QPushButton("Cancel")
+		final_buttons.addWidget(self.cancel)
+		final_buttons.addWidget(self.done)
 
-
-		self.setLayout(main_layout)
 		self.title_edit.setFocus()
 
-	# TODO: complete this... maybe another time.. 
-	#def doujin_show(self, index):
-	#	if index is 1:
-	#		self.doujin_parent.setVisible(True)
-	#	else:
-	#		self.doujin_parent.setVisible(False)
+	def setGallery(self, gallery):
+		"To be used for when editing a gallery"
+		self.gallery = gallery
+
+		self.url_edit.setText(gallery.link)
+
+		self.title_edit.setText(gallery.title)
+		self.author_edit.setText(gallery.artist)
+		self.descr_edit.setText(gallery.info)
+
+		if gallery.language is "English":
+			self.lang_box.setCurrentIndex(0)
+		elif gallery.language is "Japanese":
+			self.lang_box.setCurrentIndex(1)
+		else:
+			self.lang_box.setCurrentIndex(2)
+
+		self.tags_edit.setText(tag_to_string(gallery.tags))
+
+		t_index = self.type_box.findText(gallery.type)
+		try:
+			self.type_box.setCurrentIndex(t_index)
+		except:
+			self.type_box.setCurrentIndex(0)
+
+		if gallery.status is "Ongoing":
+			self.status_box.setCurrentIndex(1)
+		elif gallery.status is "Completed":
+			self.status_box.setCurrentIndex(2)
+		else:
+			self.status_box.setCurrentIndex(0)
+
+		gallery_pub_date = "{}".format(gallery.pub_date)
+		qdate_pub_date = QDate.fromString(gallery_pub_date, "yyyy-MM-dd")
+		self.pub_edit.setDate(qdate_pub_date)
+
+		self.link_lbl.setText(gallery.link)
+		self.path_lbl.setText(gallery.path)
+
+	def newUI(self):
+
+		f_local = QGroupBox("Folder/ZIP")
+		f_local.setCheckable(False)
+		self.main_layout.addWidget(f_local)
+		local_layout = QHBoxLayout()
+		f_local.setLayout(local_layout)
+
+		choose_folder = QPushButton("From Folder")
+		choose_folder.clicked.connect(lambda: self.choose_dir('f'))
+		local_layout.addWidget(choose_folder)
+
+		choose_archive = QPushButton("From ZIP")
+		choose_archive.clicked.connect(lambda: self.choose_dir('a'))
+		local_layout.addWidget(choose_archive)
+
+		self.file_exists_lbl = QLabel()
+		local_layout.addWidget(self.file_exists_lbl)
+		self.file_exists_lbl.hide()
+
 
 	def set_ipb(self):
-		ipb = self.ipb.text()
-		ipb_pass = self.ipb_pass.text()
-		from ..settings import s
-		s.set_ipb(ipb, ipb_pass)
+		exprops = settings.ExProperties()
+		exprops.ipb_id = self.ipb.text()
+		exprops.ipb_pass = self.ipb_pass.text()
+		settings.save()
 
 	def choose_dir(self, mode):
 		if mode == 'a':
@@ -827,7 +945,6 @@ class GalleryDialog(QDialog):
 		return True
 
 	def accept(self):
-		from ..database import gallerydb
 
 		def do_chapters(gallery):
 			thread = threading.Thread(target=self.set_chapters, args=(gallery,), daemon=True)
@@ -856,7 +973,7 @@ class GalleryDialog(QDialog):
 				updated_gallery = do_chapters(new_gallery)
 				#for ser in self.gallery:
 				#self.SERIES.emit([updated_gallery])
-			super().accept()
+			self.close()
 
 	def set_chapters(self, gallery_object):
 		path = gallery_object.path
@@ -897,30 +1014,9 @@ class GalleryDialog(QDialog):
 			msgbox.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
 			msgbox.setDefaultButton(QMessageBox.No)
 			if msgbox.exec() == QMessageBox.Yes:
-				super().reject()
+				self.close()
 		else:
-			super().reject()
-
-	def trigger(self, list_of_index=None):
-		log_d('Triggered Gallery Edit/Add Dialog')
-		if not list_of_index:
-			self.initUI()
-		else:
-			assert isinstance(list_of_index, list)
-			self.position = list_of_index[0].row()
-			for index in list_of_index:
-				gallery = index.data(Qt.UserRole+1)
-				self.setGallery(gallery)
-
-		self.resize(500,200)
-		frect = self.frameGeometry()
-		frect.moveCenter(QDesktopWidget().availableGeometry().center())
-		self.move(frect.topLeft()-QPoint(0,180))
-		self.setAttribute(Qt.WA_DeleteOnClose)
-		self.setWindowTitle("Add a new gallery")
-		self.setWindowIcon(QIcon(gui_constants.APP_ICO_PATH))
-		#self.setWindowFlags(Qt.FramelessWindowHint)
-		self.exec()
+			self.close()
 
 	def web_metadata(self, url, btn_widget, pgr_widget):
 		try:
@@ -1016,157 +1112,6 @@ class GalleryDialog(QDialog):
 		self.link_btn.hide()
 		self.link_btn2.show()
 
-	def setGallery(self, gallery):
-		"To be used for when editing a gallery"
-		self.gallery = gallery
-		main_layout = QVBoxLayout()
-
-		f_web = QGroupBox("Fetch metadata from Web")
-		f_web.setCheckable(False)
-		main_layout.addWidget(f_web)
-		web_main_layout = QVBoxLayout()
-		web_layout = QHBoxLayout()
-		web_main_layout.addLayout(web_layout)
-		ipb_info_l = QHBoxLayout()
-		ipb_lbl = QLabel("ipb member id:")
-		self.ipb = QLineEdit()
-		ipb_pass_lbl = QLabel("ipb pass hash:")
-		self.ipb_pass = QLineEdit()
-		ipb_btn = QPushButton("Apply")
-		ipb_btn.setFixedWidth(50)
-		ipb_btn.clicked.connect(self.set_ipb)
-		ipb_info_l.addWidget(ipb_lbl)
-		ipb_info_l.addWidget(self.ipb)
-		ipb_info_l.addWidget(ipb_pass_lbl)
-		ipb_info_l.addWidget(self.ipb_pass)
-		ipb_info_l.addWidget(ipb_btn)
-		web_main_layout.addLayout(ipb_info_l)
-		f_web.setLayout(web_main_layout)
-
-		from ..settings import s
-		ipb_dict = s.get_ipb()
-		self.ipb.setText(ipb_dict['ipb_id'])
-		self.ipb_pass.setText(ipb_dict['ipb_pass'])
-
-		f_gallery = QGroupBox("Gallery Info")
-		f_gallery.setCheckable(False)
-		main_layout.addWidget(f_gallery)
-		gallery_layout = QFormLayout()
-		f_gallery.setLayout(gallery_layout)
-
-
-		def basic_web(name):
-			return QLabel(name), QLineEdit(), QPushButton("Fetch"), QProgressBar()
-
-		url_lbl, url_edit, url_btn, url_prog = basic_web("URL:")
-		url_edit.setText(gallery.link)
-		url_btn.clicked.connect(lambda: self.web_metadata(url_edit.text(), url_btn,
-													url_prog))
-		url_prog.setTextVisible(False)
-		url_prog.setMinimum(0)
-		url_prog.setMaximum(0)
-		web_layout.addWidget(url_lbl, 0, Qt.AlignLeft)
-		web_layout.addWidget(url_edit, 0)
-		web_layout.addWidget(url_btn, 0, Qt.AlignRight)
-		web_layout.addWidget(url_prog, 0, Qt.AlignRight)
-		url_edit.setPlaceholderText("paste g.e-hentai/exhentai gallery link")
-		url_prog.hide()
-
-		self.title_edit = QLineEdit()
-		self.title_edit.setText(gallery.title)
-		self.author_edit = QLineEdit()
-		self.author_edit.setText(gallery.artist)
-		self.descr_edit = QTextEdit()
-		self.descr_edit.setText(gallery.info)
-		self.descr_edit.setAcceptRichText(True)
-		self.descr_edit.setFixedHeight(45)
-		self.lang_box = QComboBox()
-		self.lang_box.addItems(["English", "Japanese", "Other"])
-		if gallery.language is "English":
-			self.lang_box.setCurrentIndex(0)
-		elif gallery.language is "Japanese":
-			self.lang_box.setCurrentIndex(1)
-		else:
-			self.lang_box.setCurrentIndex(2)
-
-		self.tags_edit = return_tag_completer_TextEdit()
-		self.tags_edit.setFixedHeight(70)
-		self.tags_edit.setPlaceholderText("Autocomplete enabled. Press Tab (Ctrl + Space to show popup)"+
-									"\nnamespace1:tag1, tag2, namespace3:tag3, etc..")
-		self.tags_edit.setText(tag_to_string(gallery.tags))
-
-		self.type_box = QComboBox()
-		self.type_box.addItems(["Manga", "Doujinshi", "Artist CG Sets", "Game CG Sets",
-						  "Western", "Image Sets", "Non-H", "Cosplay", "Other"])
-
-		t_index = self.type_box.findText(gallery.type)
-		try:
-			self.type_box.setCurrentIndex(t_index)
-		except:
-			self.type_box.setCurrentIndex(0)
-		#self.type_box.currentIndexChanged[int].connect(self.doujin_show)
-		#self.doujin_parent = QLineEdit()
-		#self.doujin_parent.setVisible(False)
-		self.status_box = QComboBox()
-		self.status_box.addItems(["Unknown", "Ongoing", "Completed"])
-		if gallery.status is "Ongoing":
-			self.status_box.setCurrentIndex(1)
-		elif gallery.status is "Completed":
-			self.status_box.setCurrentIndex(2)
-		else:
-			self.status_box.setCurrentIndex(0)
-
-		self.pub_edit = QDateEdit()
-		self.pub_edit.setCalendarPopup(True)
-		gallery_pub_date = "{}".format(gallery.pub_date)
-		qdate_pub_date = QDate.fromString(gallery_pub_date, "yyyy-MM-dd")
-		self.pub_edit.setDate(qdate_pub_date)
-		self.path_lbl = QLabel("unspecified...")
-		self.path_lbl.setWordWrap(True)
-
-		self.link_layout = QHBoxLayout()
-		self.link_lbl = QLabel("")
-		self.link_lbl.setWordWrap(True)
-		self.link_edit = QLineEdit()
-		self.link_layout.addWidget(self.link_edit)
-		self.link_layout.addWidget(self.link_lbl)
-		self.link_edit.hide()
-		self.link_btn = QPushButton("Modify")
-		self.link_btn.setFixedWidth(50)
-		self.link_btn2 = QPushButton("Set")
-		self.link_btn2.setFixedWidth(40)
-		self.link_btn.clicked.connect(self.link_modify)
-		self.link_btn2.clicked.connect(self.link_set)
-		self.link_layout.addWidget(self.link_btn)
-		self.link_layout.addWidget(self.link_btn2)
-		self.link_btn2.hide()
-
-		gallery_layout.addRow("Title:", self.title_edit)
-		gallery_layout.addRow("Author:", self.author_edit)
-		gallery_layout.addRow("Description:", self.descr_edit)
-		gallery_layout.addRow("Language:", self.lang_box)
-		gallery_layout.addRow("Tags:", self.tags_edit)
-		gallery_layout.addRow("Type:", self.type_box)
-		gallery_layout.addRow("Publication Date:", self.pub_edit)
-		gallery_layout.addRow("Path:", self.path_lbl)
-		gallery_layout.addRow("Link:", self.link_layout)
-
-		self.link_lbl.setText(gallery.link)
-		self.path_lbl.setText(gallery.path)
-
-		final_buttons = QHBoxLayout()
-		final_buttons.setAlignment(Qt.AlignRight)
-		main_layout.addLayout(final_buttons)
-		done = QPushButton("Done")
-		done.setDefault(True)
-		done.clicked.connect(self.accept_edit)
-		cancel = QPushButton("Cancel")
-		cancel.clicked.connect(self.reject_edit)
-		final_buttons.addWidget(cancel)
-		final_buttons.addWidget(done)
-
-		self.setLayout(main_layout)
-
 	def accept_edit(self):
 
 		if self.check():
@@ -1186,7 +1131,7 @@ class GalleryDialog(QDialog):
 
 			#for ser in self.gallery:
 			self.SERIES_EDIT.emit([new_gallery], self.position)
-			super().accept()
+			self.close()
 
 	def reject_edit(self):
-		super().reject()
+		self.close()

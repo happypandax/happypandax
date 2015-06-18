@@ -1037,13 +1037,13 @@ class MangaView(QListView):
 
 	def spawn_dialog(self, index=False):
 		if not index:
-			dialog = misc.GalleryDialog()
+			dialog = misc.GalleryDialog(self.parentWidget())
 			dialog.SERIES.connect(self.gallery_model.addRows)
-			dialog.trigger() # TODO: implement mass galleries adding
 		else:
-			dialog = misc.GalleryDialog()
+			dialog = misc.GalleryDialog(self.parentWidget(), [index])
 			dialog.SERIES_EDIT.connect(self.replace_edit_gallery)
-			dialog.trigger([index])
+		
+		dialog.show()
 
 	def updateGeometries(self):
 		super().updateGeometries()
@@ -1390,13 +1390,13 @@ class MangaTableView(QTableView):
 
 	def spawn_dialog(self, index=False):
 		if not index:
-			dialog = misc.GalleryDialog()
+			dialog = misc.GalleryDialog(self.parentWidget())
 			dialog.SERIES.connect(self.gallery_model.addRows)
-			dialog.trigger() # TODO: implement mass galleries adding
+			dialog.show() # TODO: implement mass galleries adding
 		else:
-			dialog = misc.GalleryDialog()
+			dialog = misc.GalleryDialog(self.parentWidget())
 			dialog.SERIES_EDIT.connect(self.replace_edit_gallery)
-			dialog.trigger([index])
+			dialog.show()
 
 if __name__ == '__main__':
 	raise NotImplementedError("Unit testing not yet implemented")

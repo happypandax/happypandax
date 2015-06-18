@@ -26,6 +26,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QListView,
 from . import gallery
 from . import gui_constants, misc
 from ..database import fetch, gallerydb
+from .. import settings
 
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -60,7 +61,14 @@ class AppWindow(QMainWindow):
 		self.setCentralWidget(self.center)
 		self.setWindowTitle("Happypanda")
 		self.setWindowIcon(QIcon(gui_constants.APP_ICO_PATH))
-		self.resize(gui_constants.MAIN_W, gui_constants.MAIN_H)
+		props = settings.win_read(self, 'AppWindow')
+		if props.resize:
+			x, y = props.resize
+			self.resize(x, y)
+		else:
+			self.resize(gui_constants.MAIN_W, gui_constants.MAIN_H)
+		posx, posy = props.pos
+		self.move(posx, posy)
 		self.show()
 		log_d('Show window: OK')
 
@@ -231,7 +239,8 @@ Your database will not be touched without you being notified.""")
 			self.manga_table_view.sort_model.catalog_view()
 
 	def settings(self):
-		about = misc.About()
+		#about = misc.About()
+		misc.SettingsDialog(self)
 
 	def init_toolbar(self):
 		self.toolbar = QToolBar()
@@ -300,7 +309,8 @@ Your database will not be touched without you being notified.""")
 		self.search_bar.setCompleter(completer)
 		self.search_bar.textChanged[str].connect(self.search)
 		self.search_bar.setPlaceholderText("Search title, author, (tags partial supported)")
-		self.search_bar.setMaximumWidth(200)
+		self.search_bar.setMinimumWidth(150)
+		self.search_bar.setMaximumWidth(400)
 		self.toolbar.addWidget(self.search_bar)
 		self.toolbar.addSeparator()
 		settings_icon = QIcon(gui_constants.SETTINGS_PATH)
@@ -442,6 +452,7 @@ Your database will not be touched without you being notified.""")
 				log_i('Populating DB from gallery folder')
 
 	def closeEvent(self, event):
+		settings.win_save(self, 'AppWindow')
 		try:
 			for root, dirs, files in os.walk('temp', topdown=False):
 				for name in files:
@@ -451,7 +462,11 @@ Your database will not be touched without you being notified.""")
 			log_d('Empty temp on exit: OK')
 		except:
 			log_d('Empty temp on exit: FAIL')
-		log_d('Normal Exit App: OK')
+		err = sys.exc_info()
+		if all(err):
+			log_c('Last error before exit:\n{}\n{}\n{}'.format(err[0], err[1], err[2]))
+		else:
+			log_d('Normal Exit App: OK')
 		super().closeEvent(event)
 		app = QApplication.instance()
 		app.quit()

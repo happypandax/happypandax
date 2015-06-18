@@ -130,10 +130,7 @@ class Fetch(QObject):
 					progress += 1 # update the progress bar
 					self.PROGRESS.emit(progress)
 			except:
-				import sys
-				if not self._error:
-					self._error = sys.exc_info()[0] + sys.exc_info()[1]
-				log_e('Local Search Error: {}: {}'.format(self._error, self._curr_gallery))
+				log.exception('Local Search Error:')
 				self.FINISHED.emit(False)
 		else: # if gallery folder is empty
 			log_e('Local search error: Invalid directory')
