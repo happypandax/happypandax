@@ -22,7 +22,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QListView,
 							 QSizePolicy, QMenu, QAction, QLineEdit,
 							 QSplitter, QMessageBox, QFileDialog,
 							 QDesktopWidget, QPushButton, QCompleter,
-							 QListWidget, QListWidgetItem)
+							 QListWidget, QListWidgetItem, QToolTip)
 from . import gallery
 from . import gui_constants, misc
 from ..database import fetch, gallerydb
@@ -120,6 +120,10 @@ Your database will not be touched without you being notified.""")
 				msgbox.exec()
 		except:
 			pass
+
+	#def style_tooltip(self):
+	#	palette = QToolTip.palette()
+	#	palette.setColor()
 
 	def init_stat_bar(self):
 		self.status_bar = self.statusBar()

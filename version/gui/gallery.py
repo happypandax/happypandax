@@ -361,11 +361,53 @@ class GalleryModel(QAbstractTableModel):
 			bg_brush = QBrush(bg_color)
 			return bg_brush
 
-		if role == Qt.ToolTipRole:
-			return column_checker()
+		if gui_constants.GRID_TOOLTIP and role == Qt.ToolTipRole:
+			add_bold = []
+			add_tips = []
+			if gui_constants.TOOLTIP_TITLE:
+				add_bold.append('<b>Title:</b>')
+				add_tips.append(current_gallery.title)
+			if gui_constants.TOOLTIP_AUTHOR:
+				add_bold.append('<b>Author:</b>')
+				add_tips.append(current_gallery.artist)
+			if gui_constants.TOOLTIP_CHAPTERS:
+				add_bold.append('<b>Chapters:</b>')
+				add_tips.append(len(current_gallery.chapters))
+			if gui_constants.TOOLTIP_STATUS:
+				add_bold.append('<b>Status:</b>')
+				add_tips.append(current_gallery.status)
+			if gui_constants.TOOLTIP_TYPE:
+				add_bold.append('<b>Type:</b>')
+				add_tips.append(current_gallery.type)
+			if gui_constants.TOOLTIP_LANG:
+				add_bold.append('<b>Language:</b>')
+				add_tips.append(current_gallery.language)
+			if gui_constants.TOOLTIP_DESCR:
+				add_bold.append('<b>Description:</b><br />')
+				add_tips.append(current_gallery.info)
+			if gui_constants.TOOLTIP_TAGS:
+				add_bold.append('<b>Tags:</b>')
+				add_tips.append(utils.tag_to_string(
+					current_gallery.tags))
+			if gui_constants.TOOLTIP_LAST_READ:
+				add_bold.append('<b>Last read:</b>')
+				add_tips.append(current_gallery.last_read)
+			if gui_constants.TOOLTIP_TIMES_READ:
+				add_bold.append('<b>Times read:</b>')
+				add_tips.append(current_gallery.times_read)
+			if gui_constants.TOOLTIP_PUB_DATE:
+				add_bold.append('<b>Publication Date:</b>')
+				add_tips.append(current_gallery.pub_date)
+			if gui_constants.TOOLTIP_DATE_ADDED:
+				add_bold.append('<b>Date added:</b>')
+				add_tips.append(current_gallery.date_added)
 
-		#if role == Qt.ToolTipRole:
-		#	return "Example popup!!"
+			tooltip = ""
+			tips = list(zip(add_bold, add_tips))
+			for tip in tips:
+				tooltip += "{} {}<br />".format(tip[0], tip[1])
+			return tooltip
+
 		if role == Qt.UserRole+1:
 			return current_gallery
 
@@ -791,6 +833,11 @@ class MangaView(QListView):
 				try:
 					threading.Thread(target=utils.open,
 							   args=(gallery.chapters[chap_numb],)).start()
+					if not gallery.times_read:
+						gallery.times_read = 0
+					gallery.times_read += 1
+					gallerydb.GalleryDB.modify_gallery(gallery.id,
+						times_read=gallery.times_read)
 				except IndexError:
 					pass
 		else:
@@ -800,6 +847,11 @@ class MangaView(QListView):
 			try:
 				threading.Thread(target=utils.open,
 						   args=(gallery.chapters[chap_numb],)).start()
+				if not gallery.times_read:
+					gallery.times_read = 0
+				gallery.times_read += 1
+				gallerydb.GalleryDB.modify_gallery(gallery.id,
+					times_read=gallery.times_read)
 			except IndexError:
 				pass
 
@@ -1155,6 +1207,11 @@ class MangaTableView(QTableView):
 				try:
 					threading.Thread(target=utils.open,
 							   args=(gallery.chapters[chap_numb],)).start()
+					if not gallery.times_read:
+						gallery.times_read = 0
+					gallery.times_read += 1
+					gallerydb.GalleryDB.modify_gallery(gallery.id,
+						times_read=gallery.times_read)
 				except IndexError:
 					pass
 		else:
@@ -1164,6 +1221,11 @@ class MangaTableView(QTableView):
 			try:
 				threading.Thread(target=utils.open,
 						   args=(gallery.chapters[chap_numb],)).start()
+				if not gallery.times_read:
+					gallery.times_read = 0
+				gallery.times_read += 1
+				gallerydb.GalleryDB.modify_gallery(gallery.id,
+					times_read=gallery.times_read)
 			except IndexError:
 				pass
 

@@ -13,7 +13,7 @@ along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from PyQt5.QtCore import (Qt, QDate, QPoint, pyqtSignal, QThread,
-						  QTimer, QObject, QSize)
+						  QTimer, QObject, QSize, QRect)
 from PyQt5.QtGui import QTextCursor, QIcon, QMouseEvent, QFont, QPixmapCache
 from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QVBoxLayout, QHBoxLayout,
@@ -25,7 +25,8 @@ from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QListWidget, QApplication, QSizePolicy,
 							 QCheckBox, QFrame, QListView,
 							 QAbstractItemView, QTreeView, QSpinBox,
-							 QAction, QStackedLayout, QTabWidget)
+							 QAction, QStackedLayout, QTabWidget,
+							 QGridLayout, QScrollArea, QLayout)
 
 import os, threading, queue, time, logging
 from datetime import datetime
@@ -111,6 +112,138 @@ log_c = log.critical
 
 #	child.move(centerparent)
 
+class FlowLayout(QLayout):
+    """
+    Standard PyQt examples FlowLayout modified to work with a scollable parent
+    """
+    
+    def __init__(self, parent=None, margin=0, spacing=-1):
+        super().__init__(parent)
+
+        #if parent is not None:
+        #    self.setMargin(margin)
+        self.setSpacing(spacing)
+
+        self.itemList = []
+
+    def __del__(self):
+        item = self.takeAt(0)
+        while item:
+            item = self.takeAt(0)
+
+    def addItem(self, item):
+        self.itemList.append(item)
+
+    def count(self):
+        return len(self.itemList)
+
+    def itemAt(self, index):
+        if index >= 0 and index < len(self.itemList):
+            return self.itemList[index]
+        return None
+
+    def takeAt(self, index):
+        if index >= 0 and index < len(self.itemList):
+            return self.itemList.pop(index)
+        return None
+
+    def expandingDirections(self):
+        return Qt.Orientations(Qt.Orientation(0))
+
+    def hasHeightForWidth(self):
+        return False
+
+    def heightForWidth(self, width):
+        height = self.doLayout(QRect(0, 0, width, 0), True)
+        return height
+
+    def setGeometry(self, rect):
+        super().setGeometry(rect)
+        self.doLayout(rect, False)
+
+    def sizeHint(self):
+        return self.minimumSize()
+
+    def minimumSize(self):
+        size = QSize()
+
+        for item in self.itemList:
+            size = size.expandedTo(item.minimumSize())
+
+        size += QSize(2 * 0, 2 * 0)
+        return size
+    
+    def doLayout(self, rect, testOnly=False):
+        """
+        """
+        x = rect.x()
+        y = rect.y()
+        lineHeight = 0
+
+        for item in self.itemList:
+            wid = item.widget()
+            spaceX = self.spacing() + wid.style().layoutSpacing(QSizePolicy.PushButton, QSizePolicy.PushButton, Qt.Horizontal)
+            spaceY = self.spacing() + wid.style().layoutSpacing(QSizePolicy.PushButton, QSizePolicy.PushButton, Qt.Vertical)
+            nextX = x + item.sizeHint().width() + spaceX
+            if nextX - spaceX > rect.right() and lineHeight > 0:
+                x = rect.x()
+                y = y + lineHeight + spaceY
+                nextX = x + item.sizeHint().width() + spaceX
+                lineHeight = 0
+
+            if not testOnly:
+                item.setGeometry(QRect(QPoint(x, y), item.sizeHint()))
+
+            x = nextX
+            lineHeight = max(lineHeight, item.sizeHint().height())
+
+        return y + lineHeight - rect.y()
+
+#class ResizeScrollArea(QScrollArea):
+#    """
+#    A QScrollArea that propagates the resizing to any FlowLayout children.
+#    Code from: http://vfxdebate.com/2014/02/25/a-better-pyqt-flow-layout/
+#    """
+#    def __init(self, parent=None):  
+#        super().__init__(parent)
+
+#    def resizeEvent(self, event):
+#        wrapper = self.findChild(QWidget)
+#        flow = wrapper.findChild(FlowLayout)
+        
+#        if wrapper and flow:            
+#            width = self.viewport().width()
+#            height = flow.heightForWidth(width)
+#            size = QSize(width, height)
+#            point = self.viewport().rect().topLeft()
+#            flow.setGeometry(QRect(point, size))
+#            self.viewport().update()
+
+#        super().resizeEvent(event)
+
+#class ScrollingFlowWidget(QWidget):
+#    """
+#    A resizable and scrollable widget that uses a flow layout.
+#    Use its addWidget() method to flow children into it.
+#    """
+#    def __init__(self,parent=None):
+#        super().__init__(parent)
+#        grid = QGridLayout(self)
+#        scroll = ResizeScrollArea()
+#        self._wrapper = QWidget(scroll)
+#        self.flowLayout = FlowLayout(self._wrapper)
+#        self._wrapper.setLayout(self.flowLayout)
+#        scroll.setWidget(self._wrapper)
+#        scroll.setWidgetResizable(True)
+#        grid.addWidget(scroll)
+
+
+#    def addWidget(self, widget):
+#        self.flowLayout.addWidget(widget)
+#        widget.setParent(self._wrapper)
+
+# ----------------------------------------------------------
+
 class SettingsDialog(QWidget):
 	"A settings dialog"
 	scroll_speed_changed = pyqtSignal()
@@ -141,6 +274,7 @@ class SettingsDialog(QWidget):
 		left_panel.addItem(self.visual)
 		left_panel.addItem(self.advanced)
 		left_panel.addItem(self.about)
+		left_panel.setMaximumWidth(100)
 
 		# right panel
 		self.right_panel = QStackedLayout()
@@ -201,6 +335,19 @@ class SettingsDialog(QWidget):
 		self.popup_width = gui_constants.POPUP_WIDTH
 		self.popup_height = gui_constants.POPUP_HEIGHT
 		self.style = gui_constants.user_stylesheet_path
+		self.grid_tooltip = gui_constants.GRID_TOOLTIP
+		self.grid_tooltip_title = gui_constants.TOOLTIP_TITLE
+		self.grid_tooltip_author = gui_constants.TOOLTIP_AUTHOR
+		self.grid_tooltip_chapters = gui_constants.TOOLTIP_CHAPTERS
+		self.grid_tooltip_status = gui_constants.TOOLTIP_STATUS
+		self.grid_tooltip_type = gui_constants.TOOLTIP_TYPE
+		self.grid_tooltip_lang = gui_constants.TOOLTIP_LANG
+		self.grid_tooltip_descr = gui_constants.TOOLTIP_DESCR
+		self.grid_tooltip_tags = gui_constants.TOOLTIP_TAGS
+		self.grid_tooltip_last_read = gui_constants.TOOLTIP_LAST_READ
+		self.grid_tooltip_times_read = gui_constants.TOOLTIP_TIMES_READ
+		self.grid_tooltip_pub_date = gui_constants.TOOLTIP_PUB_DATE
+		self.grid_tooltip_date_added = gui_constants.TOOLTIP_DATE_ADDED
 
 		# Advanced
 		self.scroll_speed = gui_constants.SCROLL_SPEED
@@ -208,8 +355,24 @@ class SettingsDialog(QWidget):
 		self.prefetch_item_amnt = gui_constants.PREFETCH_ITEM_AMOUNT
 
 	def restore_options(self):
+		# Web / Exhentai
 		self.ipbid_edit.setText(self.exprops.ipb_id)
 		self.ipbpass_edit.setText(self.exprops.ipb_pass)
+
+		# Visual / Grid View / Tooltip
+		self.grid_tooltip_group.setChecked(self.grid_tooltip)
+		self.visual_grid_tooltip_title.setChecked(self.grid_tooltip_title)
+		self.visual_grid_tooltip_author.setChecked(self.grid_tooltip_author)
+		self.visual_grid_tooltip_chapters.setChecked(self.grid_tooltip_chapters)
+		self.visual_grid_tooltip_status.setChecked(self.grid_tooltip_status)
+		self.visual_grid_tooltip_type.setChecked(self.grid_tooltip_type)
+		self.visual_grid_tooltip_lang.setChecked(self.grid_tooltip_lang)
+		self.visual_grid_tooltip_descr.setChecked(self.grid_tooltip_descr)
+		self.visual_grid_tooltip_tags.setChecked(self.grid_tooltip_tags)
+		self.visual_grid_tooltip_last_read.setChecked(self.grid_tooltip_last_read)
+		self.visual_grid_tooltip_times_read.setChecked(self.grid_tooltip_times_read)
+		self.visual_grid_tooltip_pub_date.setChecked(self.grid_tooltip_pub_date)
+		self.visual_grid_tooltip_date_added.setChecked(self.grid_tooltip_date_added)
 
 
 	def accept(self):
@@ -259,9 +422,56 @@ class SettingsDialog(QWidget):
 		self.visual_index = self.right_panel.addWidget(visual)
 		visual_general_page = QWidget()
 		visual.addTab(visual_general_page, 'General')
+
+		gallery_general_page = QWidget()
+		visual.addTab(gallery_general_page, 'Gallery')
+		gallery_layout = QVBoxLayout()
+		gallery_general_page.setLayout(gallery_layout)
+		# grid view
+		grid_view_group = QGroupBox('Grid View')
+		gallery_layout.addWidget(grid_view_group)
+		grid_view_layout = QHBoxLayout()
+		grid_view_group.setLayout(grid_view_layout)
+		# grid view / tooltip
+		self.grid_tooltip_group = QGroupBox('Tooltip', grid_view_group)
+		self.grid_tooltip_group.setCheckable(True)
+		grid_view_layout.addWidget(self.grid_tooltip_group)
+		grid_tooltip_layout = QFormLayout()
+		self.grid_tooltip_group.setLayout(grid_tooltip_layout)
+		grid_tooltip_layout.addRow(QLabel('Control what is'+
+									' displayed in the tooltip'))
+		grid_tooltips_hlayout = FlowLayout()
+		grid_tooltip_layout.addRow(grid_tooltips_hlayout)
+		self.visual_grid_tooltip_title = QCheckBox('Title')
+		grid_tooltips_hlayout.addWidget(self.visual_grid_tooltip_title)
+		self.visual_grid_tooltip_author = QCheckBox('Author')
+		grid_tooltips_hlayout.addWidget(self.visual_grid_tooltip_author)
+		self.visual_grid_tooltip_chapters = QCheckBox('Chapters')
+		grid_tooltips_hlayout.addWidget(self.visual_grid_tooltip_chapters)
+		self.visual_grid_tooltip_status = QCheckBox('Status')
+		grid_tooltips_hlayout.addWidget(self.visual_grid_tooltip_status)
+		self.visual_grid_tooltip_type = QCheckBox('Type')
+		grid_tooltips_hlayout.addWidget(self.visual_grid_tooltip_type)
+		self.visual_grid_tooltip_lang = QCheckBox('Language')
+		grid_tooltips_hlayout.addWidget(self.visual_grid_tooltip_type)
+		self.visual_grid_tooltip_descr = QCheckBox('Description')
+		grid_tooltips_hlayout.addWidget(self.visual_grid_tooltip_descr)
+		self.visual_grid_tooltip_tags = QCheckBox('Tags')
+		grid_tooltips_hlayout.addWidget(self.visual_grid_tooltip_tags)
+		self.visual_grid_tooltip_last_read = QCheckBox('Last read')
+		grid_tooltips_hlayout.addWidget(self.visual_grid_tooltip_last_read)
+		self.visual_grid_tooltip_times_read = QCheckBox('Times read')
+		grid_tooltips_hlayout.addWidget(self.visual_grid_tooltip_times_read)
+		self.visual_grid_tooltip_pub_date = QCheckBox('Publication Date')
+		grid_tooltips_hlayout.addWidget(self.visual_grid_tooltip_pub_date)
+		self.visual_grid_tooltip_date_added = QCheckBox('Date added')
+		grid_tooltips_hlayout.addWidget(self.visual_grid_tooltip_date_added)
+
 		style_page = QWidget()
 		visual.addTab(style_page, 'Style')
-		visual.setTabEnabled(1, False)
+		visual.setTabEnabled(0, False)
+		visual.setTabEnabled(2, False)
+		visual.setCurrentIndex(1)
 
 		# Advanced
 		advanced = QTabWidget()

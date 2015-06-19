@@ -100,6 +100,7 @@ def gallery_map(row, gallery):
 	gallery.last_update = row['last_update']
 	gallery.last_read = row['last_read']
 	gallery.date_added = row['date_added']
+	gallery.times_read = row['times_read']
 	try:
 		gallery.link = bytes.decode(row['link'])
 	except TypeError:
@@ -118,9 +119,11 @@ def default_exec(object):
 		else:
 			return obj
 	executing = [["""INSERT INTO series(title, artist, profile, series_path, 
-					info, type, fav, status, pub_date, date_added, last_read, link, last_update)
+					info, type, fav, status, pub_date, date_added, last_read, link, last_update,
+					times_read)
 				VALUES(:title, :artist, :profile, :series_path, :info, :type, :fav,
-					:status, :pub_date, :date_added, :last_read, :link, :last_update)""",
+					:status, :pub_date, :date_added, :last_read, :link, :last_update,
+					:times_read)""",
 				{
 				'title':check(object.title),
 				'artist':check(object.artist),
@@ -135,7 +138,8 @@ def default_exec(object):
 				'date_added':check(object.date_added),
 				'last_read':check(object.last_read),
 				'last_update':check(object.last_update),
-				'link':str.encode(object.link)
+				'link':str.encode(object.link),
+				'times_read':check(object.times_read)
 				}
 				]]
 	return executing
@@ -162,7 +166,8 @@ class GalleryDB:
 
 	@staticmethod
 	def modify_gallery(series_id, title=None, artist=None, info=None, type=None, fav=None,
-				   tags=None, language=None, status=None, pub_date=None, link=None):
+				   tags=None, language=None, status=None, pub_date=None, link=None,
+				   times_read=None):
 		"Modifies gallery with given gallery id"
 		executing = []
 		assert isinstance(series_id, int)
@@ -192,6 +197,8 @@ class GalleryDB:
 			executing.append(["UPDATE series SET pub_date=? WHERE series_id=?", (pub_date, series_id)])
 		if link:
 			executing.append(["UPDATE series SET link=? WHERE series_id=?", (link, series_id)])
+		if times_read:
+			executing.append(["UPDATE series SET times_read=? WHERE series_id=?", (times_read, series_id)])
 		if tags:
 			assert isinstance(tags, dict)
 			TagDB.modify_tags(series_id, tags)
@@ -797,6 +804,7 @@ class Gallery:
 		self.date_added = datetime.date.today()
 		self.last_read = None
 		self.last_update = None
+		self.times_read = 0
 		self.hash = None
 		self.valid = False
 		self._cache_id = None

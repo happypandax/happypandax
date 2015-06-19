@@ -83,3 +83,18 @@ How do you find these two values? <br \>
 2. look for the 'ipb_member_id' and 'ipb_hash_pass' values in exhentai cookies
 """
 
+# Grid Tooltip
+GRID_TOOLTIP = True
+TOOLTIP_TITLE = False
+TOOLTIP_AUTHOR = False
+TOOLTIP_CHAPTERS = True
+TOOLTIP_STATUS = True
+TOOLTIP_TYPE = True
+TOOLTIP_LANG = True
+TOOLTIP_DESCR = False
+TOOLTIP_TAGS = True
+TOOLTIP_LAST_READ = True
+TOOLTIP_TIMES_READ = True
+TOOLTIP_PUB_DATE = False
+TOOLTIP_DATE_ADDED = False
+
