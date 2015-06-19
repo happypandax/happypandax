@@ -487,7 +487,8 @@ class CustomDelegate(QStyledItemDelegate):
 		super().__init__()
 		self.W = gui_constants.THUMB_W_SIZE
 		self.H = gui_constants.THUMB_H_SIZE
-		QPixmapCache.setCacheLimit(gui_constants.THUMBNAIL_CACHE_SIZE)
+		QPixmapCache.setCacheLimit(gui_constants.THUMBNAIL_CACHE_SIZE[0]*
+							 gui_constants.THUMBNAIL_CACHE_SIZE[1])
 		self.popup_window = Popup()
 		self.popup_timer = QTimer()
 		self._painted_indexes = {}

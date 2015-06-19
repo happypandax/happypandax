@@ -95,7 +95,7 @@ class AppWindow(QMainWindow):
 		update_instance.moveToThread(thread)
 		update_instance.UPDATE_CHECK.connect(self.check_update)
 		thread.started.connect(update_instance.fetch_vs)
-		update_instance.UPDATE_CHECK.connect(lambda: update_instance.deleteLater)
+		#update_instance.UPDATE_CHECK.connect(lambda: update_instance.deleteLater)
 		update_instance.UPDATE_CHECK.connect(lambda: thread.deleteLater)
 		thread.start()
 		log_d('Window Create: OK')
@@ -241,7 +241,9 @@ Your database will not be touched without you being notified.""")
 
 	def settings(self):
 		#about = misc.About()
-		misc.SettingsDialog(self)
+		sett = misc.SettingsDialog(self)
+		sett.scroll_speed_changed.connect(self.manga_list_view.updateGeometries)
+		sett.show()
 
 	def init_toolbar(self):
 		self.toolbar = QToolBar()

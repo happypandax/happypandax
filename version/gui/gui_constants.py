@@ -58,7 +58,7 @@ LIST_PATH = os.path.join(static_dir, "list.png")
 NO_IMAGE_PATH = os.path.join(static_dir, "default.jpg")
 
 # controls
-THUMBNAIL_CACHE_SIZE = 10240*20 #10240 is 10mb
+THUMBNAIL_CACHE_SIZE = (1024, 200) #1024 is 1mib
 PREFETCH_ITEM_AMOUNT = 1# amount of items to prefetch
 SCROLL_SPEED = 7 # controls how many steps it takes when scrolling
 

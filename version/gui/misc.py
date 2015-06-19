@@ -14,7 +14,7 @@ along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 
 from PyQt5.QtCore import (Qt, QDate, QPoint, pyqtSignal, QThread,
 						  QTimer, QObject, QSize)
-from PyQt5.QtGui import QTextCursor, QIcon, QMouseEvent, QFont
+from PyQt5.QtGui import QTextCursor, QIcon, QMouseEvent, QFont, QPixmapCache
 from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QVBoxLayout, QHBoxLayout,
 							 QDialog, QGridLayout, QLineEdit,
@@ -113,8 +113,10 @@ log_c = log.critical
 
 class SettingsDialog(QWidget):
 	"A settings dialog"
+	scroll_speed_changed = pyqtSignal()
 	def __init__(self, parent=None):
 		super().__init__(parent, flags=Qt.Window)
+		self.restore_values()
 		main_layout = QVBoxLayout()
 		sub_layout = QHBoxLayout()
 		# Left Panel
@@ -174,7 +176,6 @@ class SettingsDialog(QWidget):
 		self.setLayout(main_layout)
 		self.resize(700, 500)
 		self.setWindowTitle('Settings')
-		self.show()
 
 
 	def change(self, item):
@@ -191,27 +192,37 @@ class SettingsDialog(QWidget):
 		elif item == self.about:
 			curr_index(self.about_index)
 
-	def restore_options(self):
+	def restore_values(self):
 		#Web
 		self.exprops = settings.ExProperties()
-		self.ipbid_edit.setText(self.exprops.ipb_id)
-		self.ipbpass_edit.setText(self.exprops.ipb_pass)
 
 		# Visual
 		self.high_quality_thumbs = gui_constants.HIGH_QUALITY_THUMBS
 		self.popup_width = gui_constants.POPUP_WIDTH
 		self.popup_height = gui_constants.POPUP_HEIGHT
-		self.scroll_speed = gui_constants.SCROLL_SPEED
 		self.style = gui_constants.user_stylesheet_path
 
 		# Advanced
+		self.scroll_speed = gui_constants.SCROLL_SPEED
 		self.cache_size = gui_constants.THUMBNAIL_CACHE_SIZE
 		self.prefetch_item_amnt = gui_constants.PREFETCH_ITEM_AMOUNT
+
+	def restore_options(self):
+		self.ipbid_edit.setText(self.exprops.ipb_id)
+		self.ipbpass_edit.setText(self.exprops.ipb_pass)
+
 
 	def accept(self):
 		self.exprops.ipb_id = self.ipbid_edit.text()
 		self.exprops.ipb_pass = self.ipbpass_edit.text()
 		settings.save()
+
+		gui_constants.SCROLL_SPEED = self.scroll_speed
+		self.scroll_speed_changed.emit()
+		gui_constants.THUMBNAIL_CACHE_SIZE = self.cache_size
+		QPixmapCache.setCacheLimit(self.cache_size[0]*
+							 self.cache_size[1])
+
 		self.close()
 
 	def init_right_panel(self):
@@ -257,12 +268,45 @@ class SettingsDialog(QWidget):
 		self.advanced_index = self.right_panel.addWidget(advanced)
 		visual_misc = QWidget()
 		advanced.addTab(visual_misc, 'Misc')
+		visual_main_layout = QVBoxLayout()
+		visual_misc.setLayout(visual_main_layout)
+		misc_controls_layout = QFormLayout()
+		visual_main_layout.addLayout(misc_controls_layout)
+		# scroll speed
+		scroll_speed_spin_box = QSpinBox()
+		scroll_speed_spin_box.setFixedWidth(60)
+		scroll_speed_spin_box.setToolTip('Control the speed when scrolling in'+
+								   ' grid view. DEFAULT: 7')
+		scroll_speed_spin_box.setValue(self.scroll_speed)
+		def scroll_speed(v): self.scroll_speed = v
+		scroll_speed_spin_box.valueChanged[int].connect(scroll_speed)
+		misc_controls_layout.addRow('Scroll speed:', scroll_speed_spin_box)
+		# cache size
+		cache_size_spin_box = QSpinBox()
+		cache_size_spin_box.setFixedWidth(120)
+		cache_size_spin_box.setMaximum(999999999)
+		cache_size_spin_box.setToolTip('This will greatly improve the grid view.' +
+								 ' Increase the value if you experience lag when scrolling'+
+								 ' through galleries. DEFAULT: 200 MiB')
+		def cache_size(c): self.cache_size = (self.cache_size[0], c)
+		cache_size_spin_box.setValue(self.cache_size[1])
+		cache_size_spin_box.valueChanged[int].connect(cache_size)
+		misc_controls_layout.addRow('Cache Size (MiB):', cache_size_spin_box)
 
 		# About
 		about = QTabWidget()
 		self.about_index = self.right_panel.addWidget(about)
 		about_happypanda_page = QWidget()
+		about_troubleshoot_page = QWidget()
 		about.addTab(about_happypanda_page, 'About Happypanda')
+		about_layout = QVBoxLayout()
+		about_happypanda_page.setLayout(about_layout)
+		info_lbl = QLabel('<b>Author:</b> Pewpews<br/>'+
+					'Happypanda was created using:<br/>'+
+					'Python 3.4<br/>'+
+					'The Qt5 Framework')
+		about_layout.addWidget(info_lbl)
+		about.addTab(about_troubleshoot_page, 'Troubleshooting Guide')
 
 	def reject(self):
 		self.close()
