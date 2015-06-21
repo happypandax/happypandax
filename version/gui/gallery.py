@@ -816,12 +816,12 @@ class MangaView(QListView):
 		gallery = index.data(Qt.UserRole+1)
 		if gallery.fav == 1:
 			gallery.fav = 0
-			self.model().replaceRows([gallery], index.row(), 1, index)
+			#self.model().replaceRows([gallery], index.row(), 1, index)
 			gallerydb.GalleryDB.fav_gallery_set(gallery.id, 0)
 			self.gallery_model.CUSTOM_STATUS_MSG.emit("Unfavorited")
 		else:
 			gallery.fav = 1
-			self.model().replaceRows([gallery], index.row(), 1, index)
+			#self.model().replaceRows([gallery], index.row(), 1, index)
 			gallerydb.GalleryDB.fav_gallery_set(gallery.id, 1)
 			self.gallery_model.CUSTOM_STATUS_MSG.emit("Favorited")
 
@@ -1190,12 +1190,12 @@ class MangaTableView(QTableView):
 		# TODO: don't need to fetch from DB here... 
 		if gallery.fav == 1:
 			gallery.fav = 0
-			self.gallery_model.replaceRows([gallery], index.row(), 1, index)
+			#self.gallery_model.replaceRows([gallery], index.row(), 1, index)
 			gallerydb.GalleryDB.fav_gallery_set(gallery.id, 0)
 			self.gallery_model.CUSTOM_STATUS_MSG.emit("Unfavorited")
 		else:
 			gallery.fav = 1
-			self.gallery_model.replaceRows([gallery], index.row(), 1, index)
+			#self.gallery_model.replaceRows([gallery], index.row(), 1, index)
 			gallerydb.GalleryDB.fav_gallery_set(gallery.id, 1)
 			self.gallery_model.CUSTOM_STATUS_MSG.emit("Favorited")
 
@@ -1246,7 +1246,8 @@ class MangaTableView(QTableView):
 				gallerydb.ChapterDB.del_chapter(gallery.id, chap_numb)
 
 	def refresh(self):
-		self.gallery_model.populate_data() # TODO: CAUSE OF CRASH! FIX ASAP
+		self.gallery_model.layoutChanged.emit()
+		#self.gallery_model.populate_data() # TODO: CAUSE OF CRASH! FIX ASAP
 		self.STATUS_BAR_MSG.emit("Refreshed")
 
 	def contextMenuEvent(self, event):

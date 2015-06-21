@@ -52,6 +52,54 @@ config.read('settings.ini')
 def save():
 	config.save()
 
+def get(default, section, key=None, type=str):
+	"""
+	Tries to find the given entries in config,
+	returning default if none is found. Default type
+	is str.
+	"""
+	value = default
+	try:
+		if key:
+			try:
+				value = config[section][key]
+			except KeyError:
+				value = default
+		else:
+			try:
+				value = config[section]
+			except KeyError:
+				value = default
+		try:
+			if value.lower() == 'false':
+				value = False
+			elif value.lower() == 'true':
+				value = True
+			elif value.lower() == 'none':
+				value = None
+			else:
+				value = type(value)
+		except AttributeError:
+			pass
+		except:
+			return default
+		return value
+	except:
+		return default
+
+def set(value, section, key=None):
+	"""
+	Adds a new entry in config.
+	Remember everything is converted to string
+	"""
+	if key:
+		if not section in config:
+			config[section] = {}
+		config[section][key] = str(value)
+	else:
+		config[section] = str(value)
+
+
 class Properties:
 	pass
 

@@ -247,7 +247,7 @@ Your database will not be touched without you being notified.""")
 		#about = misc.About()
 		sett = misc.SettingsDialog(self)
 		sett.scroll_speed_changed.connect(self.manga_list_view.updateGeometries)
-		sett.show()
+		#sett.show()
 
 	def init_toolbar(self):
 		self.toolbar = QToolBar()

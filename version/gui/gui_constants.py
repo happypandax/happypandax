@@ -13,10 +13,13 @@ along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
+from .. import settings
 """Contains constants to be used by several modules"""
 
 # Version number
 vs  = '0.15'
+
+get = settings.get
 
 current_dir, f = os.path.split(os.path.realpath(__file__))
 static_dir = os.path.join(current_dir, "static")
@@ -58,15 +61,15 @@ LIST_PATH = os.path.join(static_dir, "list.png")
 NO_IMAGE_PATH = os.path.join(static_dir, "default.jpg")
 
 # controls
-THUMBNAIL_CACHE_SIZE = (1024, 200) #1024 is 1mib
-PREFETCH_ITEM_AMOUNT = 1# amount of items to prefetch
-SCROLL_SPEED = 7 # controls how many steps it takes when scrolling
+THUMBNAIL_CACHE_SIZE = (1024, get(200, 'Advanced', 'cache size', int)) #1024 is 1mib
+PREFETCH_ITEM_AMOUNT = get(1, 'Advanced', 'prefetch item amount', int)# amount of items to prefetch
+SCROLL_SPEED = get(7, 'Advanced', 'scroll speed', int) # controls how many steps it takes when scrolling
 
 # POPUP
-POPUP_WIDTH = 450
-POPUP_HEIGHT = 220
+POPUP_WIDTH = get(450, 'Visual', 'popup.w', int)
+POPUP_HEIGHT = get(220, 'Visual', 'popup.h', int)
 
-HIGH_QUALITY_THUMBS = False
+HIGH_QUALITY_THUMBS = get(False, 'Visual', 'high quality thumbs', bool)
 
 EXHEN_COOKIE_TUTORIAL =\
 	"""
@@ -84,17 +87,17 @@ How do you find these two values? <br \>
 """
 
 # Grid Tooltip
-GRID_TOOLTIP = True
-TOOLTIP_TITLE = False
-TOOLTIP_AUTHOR = False
-TOOLTIP_CHAPTERS = True
-TOOLTIP_STATUS = True
-TOOLTIP_TYPE = True
-TOOLTIP_LANG = True
-TOOLTIP_DESCR = False
-TOOLTIP_TAGS = True
-TOOLTIP_LAST_READ = True
-TOOLTIP_TIMES_READ = True
-TOOLTIP_PUB_DATE = False
-TOOLTIP_DATE_ADDED = False
+GRID_TOOLTIP = get(True, 'Visual', 'grid tooltip', bool)
+TOOLTIP_TITLE = get(False, 'Visual', 'tooltip title', bool)
+TOOLTIP_AUTHOR = get(False, 'Visual', 'tooltip author', bool)
+TOOLTIP_CHAPTERS = get(True, 'Visual', 'tooltip chapters', bool)
+TOOLTIP_STATUS = get(True, 'Visual', 'tooltip status', bool)
+TOOLTIP_TYPE = get(True, 'Visual', 'tooltip type', bool)
+TOOLTIP_LANG = get(True, 'Visual', 'tooltip lang', bool)
+TOOLTIP_DESCR = get(False, 'Visual', 'tooltip descr', bool)
+TOOLTIP_TAGS = get(True, 'Visual', 'tooltip tags', bool)
+TOOLTIP_LAST_READ = get(True, 'Visual', 'tooltip last read', bool)
+TOOLTIP_TIMES_READ = get(True, 'Visual', 'tooltip times read', bool)
+TOOLTIP_PUB_DATE = get(False, 'Visual', 'tooltip pub date', bool)
+TOOLTIP_DATE_ADDED = get(False, 'Visual', 'tooltip date added', bool)
 

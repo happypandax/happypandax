@@ -249,6 +249,8 @@ class SettingsDialog(QWidget):
 	scroll_speed_changed = pyqtSignal()
 	def __init__(self, parent=None):
 		super().__init__(parent, flags=Qt.Window)
+		self.resize(700, 500)
+		self.show()
 		self.restore_values()
 		main_layout = QVBoxLayout()
 		sub_layout = QHBoxLayout()
@@ -308,7 +310,6 @@ class SettingsDialog(QWidget):
 		self.restore_options()
 
 		self.setLayout(main_layout)
-		self.resize(700, 500)
 		self.setWindowTitle('Settings')
 
 
@@ -335,19 +336,6 @@ class SettingsDialog(QWidget):
 		self.popup_width = gui_constants.POPUP_WIDTH
 		self.popup_height = gui_constants.POPUP_HEIGHT
 		self.style = gui_constants.user_stylesheet_path
-		self.grid_tooltip = gui_constants.GRID_TOOLTIP
-		self.grid_tooltip_title = gui_constants.TOOLTIP_TITLE
-		self.grid_tooltip_author = gui_constants.TOOLTIP_AUTHOR
-		self.grid_tooltip_chapters = gui_constants.TOOLTIP_CHAPTERS
-		self.grid_tooltip_status = gui_constants.TOOLTIP_STATUS
-		self.grid_tooltip_type = gui_constants.TOOLTIP_TYPE
-		self.grid_tooltip_lang = gui_constants.TOOLTIP_LANG
-		self.grid_tooltip_descr = gui_constants.TOOLTIP_DESCR
-		self.grid_tooltip_tags = gui_constants.TOOLTIP_TAGS
-		self.grid_tooltip_last_read = gui_constants.TOOLTIP_LAST_READ
-		self.grid_tooltip_times_read = gui_constants.TOOLTIP_TIMES_READ
-		self.grid_tooltip_pub_date = gui_constants.TOOLTIP_PUB_DATE
-		self.grid_tooltip_date_added = gui_constants.TOOLTIP_DATE_ADDED
 
 		# Advanced
 		self.scroll_speed = gui_constants.SCROLL_SPEED
@@ -360,32 +348,65 @@ class SettingsDialog(QWidget):
 		self.ipbpass_edit.setText(self.exprops.ipb_pass)
 
 		# Visual / Grid View / Tooltip
-		self.grid_tooltip_group.setChecked(self.grid_tooltip)
-		self.visual_grid_tooltip_title.setChecked(self.grid_tooltip_title)
-		self.visual_grid_tooltip_author.setChecked(self.grid_tooltip_author)
-		self.visual_grid_tooltip_chapters.setChecked(self.grid_tooltip_chapters)
-		self.visual_grid_tooltip_status.setChecked(self.grid_tooltip_status)
-		self.visual_grid_tooltip_type.setChecked(self.grid_tooltip_type)
-		self.visual_grid_tooltip_lang.setChecked(self.grid_tooltip_lang)
-		self.visual_grid_tooltip_descr.setChecked(self.grid_tooltip_descr)
-		self.visual_grid_tooltip_tags.setChecked(self.grid_tooltip_tags)
-		self.visual_grid_tooltip_last_read.setChecked(self.grid_tooltip_last_read)
-		self.visual_grid_tooltip_times_read.setChecked(self.grid_tooltip_times_read)
-		self.visual_grid_tooltip_pub_date.setChecked(self.grid_tooltip_pub_date)
-		self.visual_grid_tooltip_date_added.setChecked(self.grid_tooltip_date_added)
+		self.grid_tooltip_group.setChecked(gui_constants.GRID_TOOLTIP)
+		self.visual_grid_tooltip_title.setChecked(gui_constants.TOOLTIP_TITLE)
+		self.visual_grid_tooltip_author.setChecked(gui_constants.TOOLTIP_AUTHOR)
+		self.visual_grid_tooltip_chapters.setChecked(gui_constants.TOOLTIP_CHAPTERS)
+		self.visual_grid_tooltip_status.setChecked(gui_constants.TOOLTIP_STATUS)
+		self.visual_grid_tooltip_type.setChecked(gui_constants.TOOLTIP_TYPE)
+		self.visual_grid_tooltip_lang.setChecked(gui_constants.TOOLTIP_LANG)
+		self.visual_grid_tooltip_descr.setChecked(gui_constants.TOOLTIP_DESCR)
+		self.visual_grid_tooltip_tags.setChecked(gui_constants.TOOLTIP_TAGS)
+		self.visual_grid_tooltip_last_read.setChecked(gui_constants.TOOLTIP_LAST_READ)
+		self.visual_grid_tooltip_times_read.setChecked(gui_constants.TOOLTIP_TIMES_READ)
+		self.visual_grid_tooltip_pub_date.setChecked(gui_constants.TOOLTIP_PUB_DATE)
+		self.visual_grid_tooltip_date_added.setChecked(gui_constants.TOOLTIP_DATE_ADDED)
 
 
 	def accept(self):
+		set = settings.set
+		# Web / ExHentai
 		self.exprops.ipb_id = self.ipbid_edit.text()
 		self.exprops.ipb_pass = self.ipbpass_edit.text()
-		settings.save()
 
+		# Advanced / Misc
 		gui_constants.SCROLL_SPEED = self.scroll_speed
+		set(self.scroll_speed, 'Advanced', 'scroll speed')
 		self.scroll_speed_changed.emit()
 		gui_constants.THUMBNAIL_CACHE_SIZE = self.cache_size
+		set(self.cache_size[1], 'Advanced', 'cache size')
 		QPixmapCache.setCacheLimit(self.cache_size[0]*
 							 self.cache_size[1])
 
+		# Visual / Grid View / Tooltip
+		gui_constants.GRID_TOOLTIP = self.grid_tooltip_group.isChecked()
+		set(gui_constants.GRID_TOOLTIP, 'Visual', 'grid tooltip')
+		gui_constants.TOOLTIP_TITLE = self.visual_grid_tooltip_title.isChecked()
+		set(gui_constants.TOOLTIP_TITLE, 'Visual', 'tooltip title')
+		gui_constants.TOOLTIP_AUTHOR = self.visual_grid_tooltip_author.isChecked()
+		set(gui_constants.TOOLTIP_AUTHOR, 'Visual', 'tooltip author')
+		gui_constants.TOOLTIP_CHAPTERS = self.visual_grid_tooltip_chapters.isChecked()
+		set(gui_constants.TOOLTIP_CHAPTERS, 'Visual', 'tooltip chapters')
+		gui_constants.TOOLTIP_STATUS = self.visual_grid_tooltip_status.isChecked()
+		set(gui_constants.TOOLTIP_STATUS, 'Visual', 'tooltip status')
+		gui_constants.TOOLTIP_TYPE = self.visual_grid_tooltip_type.isChecked()
+		set(gui_constants.TOOLTIP_TYPE, 'Visual', 'tooltip type')
+		gui_constants.TOOLTIP_LANG = self.visual_grid_tooltip_lang.isChecked()
+		set(gui_constants.TOOLTIP_LANG, 'Visual', 'tooltip lang')
+		gui_constants.TOOLTIP_DESCR = self.visual_grid_tooltip_descr.isChecked()
+		set(gui_constants.TOOLTIP_DESCR, 'Visual', 'tooltip descr')
+		gui_constants.TOOLTIP_TAGS = self.visual_grid_tooltip_tags.isChecked()
+		set(gui_constants.TOOLTIP_TAGS, 'Visual', 'tooltip tags')
+		gui_constants.TOOLTIP_LAST_READ = self.visual_grid_tooltip_last_read.isChecked()
+		set(gui_constants.TOOLTIP_LAST_READ, 'Visual', 'tooltip last read')
+		gui_constants.TOOLTIP_TIMES_READ = self.visual_grid_tooltip_times_read.isChecked()
+		set(gui_constants.TOOLTIP_TIMES_READ, 'Visual', 'tooltip times read')
+		gui_constants.TOOLTIP_PUB_DATE = self.visual_grid_tooltip_pub_date.isChecked()
+		set(gui_constants.TOOLTIP_PUB_DATE, 'Visual', 'tooltip pub date')
+		gui_constants.TOOLTIP_DATE_ADDED = self.visual_grid_tooltip_date_added.isChecked()
+		set(gui_constants.TOOLTIP_DATE_ADDED, 'Visual', 'tooltip date added')
+
+		settings.save()
 		self.close()
 
 	def init_right_panel(self):
