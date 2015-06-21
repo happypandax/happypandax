@@ -324,11 +324,11 @@ Your database will not be touched without you being notified.""")
 		settings_action = QAction(settings_icon, "Set&tings", self)
 		settings_action.triggered.connect(self.settings)
 		self.toolbar.addAction(settings_action)
-		self.addToolBar(self.toolbar)
 		
 		spacer_end = QWidget() # aligns About action properly
 		spacer_end.setFixedSize(QSize(10, 1))
 		self.toolbar.addWidget(spacer_end)
+		self.addToolBar(self.toolbar)
 
 	def toggle_view(self):
 		"""

@@ -112,6 +112,20 @@ log_c = log.critical
 
 #	child.move(centerparent)
 
+class Spacer(QWidget):
+	"""
+	To be used as a spacer.
+	Default mode is both. Specify mode with string: v, h or both
+	"""
+	def __init__(self, mode='both', parent=None):
+		super().__init__(parent)
+		if mode == 'h':
+			self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+		elif mode == 'v':
+			self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+		else:
+			self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
 class FlowLayout(QLayout):
     """
     Standard PyQt examples FlowLayout modified to work with a scollable parent
@@ -252,6 +266,9 @@ class SettingsDialog(QWidget):
 		self.resize(700, 500)
 		self.show()
 		self.restore_values()
+		self.initUI()
+
+	def initUI(self):
 		main_layout = QVBoxLayout()
 		sub_layout = QHBoxLayout()
 		# Left Panel
@@ -532,12 +549,31 @@ class SettingsDialog(QWidget):
 		about.addTab(about_happypanda_page, 'About Happypanda')
 		about_layout = QVBoxLayout()
 		about_happypanda_page.setLayout(about_layout)
-		info_lbl = QLabel('<b>Author:</b> Pewpews<br/>'+
+		info_lbl = QLabel('<b>Author:</b> <a href=\'https://github.com/Pewpews\'>'+
+					'Pewpews</a><br/>'+
+					'Chat: <a href=\'https://gitter.im/Pewpews/happypanda\'>'+
+					'Gitter chat</a><br/>'+
+					'Email: happypandabugs@gmail.com<br/>'+
+					'<b>Current version {}</b><br/>'.format(gui_constants.vs)+
 					'Happypanda was created using:<br/>'+
-					'Python 3.4<br/>'+
-					'The Qt5 Framework')
-		about_layout.addWidget(info_lbl)
+					'- Python 3.4<br/>'+
+					'- The Qt5 Framework')
+		info_lbl.setOpenExternalLinks(True)
+		about_layout.addWidget(info_lbl, 0, Qt.AlignTop)
+		gpl_lbl = QLabel(gui_constants.GPL)
+		gpl_lbl.setOpenExternalLinks(True)
+		gpl_lbl.setWordWrap(True)
+		about_layout.addWidget(gpl_lbl, 0, Qt.AlignTop)
+		about_layout.addWidget(Spacer('v'))
+		# About / Troubleshooting
 		about.addTab(about_troubleshoot_page, 'Troubleshooting Guide')
+		troubleshoot_layout = QVBoxLayout()
+		about_troubleshoot_page.setLayout(troubleshoot_layout)
+		guide_lbl = QLabel(gui_constants.TROUBLE_GUIDE)
+		guide_lbl.setTextFormat(Qt.RichText)
+		guide_lbl.setOpenExternalLinks(True)
+		troubleshoot_layout.addWidget(guide_lbl, 0, Qt.AlignTop)
+		troubleshoot_layout.addWidget(Spacer('v'))
 
 	def reject(self):
 		self.close()
@@ -808,60 +844,6 @@ class GalleryListView(QWidget):
 		msgbox.setIcon(msgbox.Question)
 		if msgbox.exec() == QMessageBox.Yes:
 			self.close()
-		
-
-class About(QDialog):
-	ON = False #to prevent multiple instances
-	def __init__(self):
-		super().__init__()
-		gpl = """
-Happypanda is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 2 of the License, or
-any later version.
-Happypanda is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-You should have received a copy of the GNU General Public License
-along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
-"""
-		self.text = QLabel(gpl)
-		self.text.setAlignment(Qt.AlignCenter)
-		l = QHBoxLayout()
-		author_lbl = QLabel("<b>Author:</b>\nPewpews\n")
-		l.addWidget(author_lbl, alignment=Qt.AlignLeft)
-		info_lbl = QLabel()
-		info_lbl.setText('<a href="https://github.com/Pewpews/happypanda">Visit GitHub Repo</a>')
-		info_lbl.setTextFormat(Qt.RichText)
-		info_lbl.setTextInteractionFlags(Qt.TextBrowserInteraction)
-		info_lbl.setOpenExternalLinks(True)
-		l.addWidget(info_lbl, alignment=Qt.AlignRight)
-
-		bug_lbl = QLabel()
-		bug_lbl.setText('<i>Find some bugs or got any suggestions? Then please</i> '+
-				  '<a href="https://github.com/Pewpews/happypanda/issues">'+
-				  'report them here.</a>')
-		bug_lbl.setTextFormat(Qt.RichText)
-		bug_lbl.setTextInteractionFlags(Qt.TextBrowserInteraction)
-		bug_lbl.setOpenExternalLinks(True)
-
-		vs_lbl = QLabel('Happypanda Version {}'.format(gui_constants.vs))
-
-		layout_ = QVBoxLayout()
-		layout_.addLayout(l)
-		layout_.addWidget(self.text, 0, Qt.AlignHCenter)
-		layout_.addWidget(bug_lbl)
-		layout_.addWidget(vs_lbl, 0, Qt.AlignHCenter)
-		self.setLayout(layout_)
-		self.resize(300,100)
-		frect = self.frameGeometry()
-		frect.moveCenter(QDesktopWidget().availableGeometry().center())
-		self.move(frect.topLeft()-QPoint(0,150))
-		self.setAttribute(Qt.WA_DeleteOnClose)
-		self.setWindowTitle("About")
-		self.setWindowIcon(QIcon(gui_constants.APP_ICO_PATH))
-		self.exec()
 
 class Loading(QWidget):
 	ON = False #to prevent multiple instances

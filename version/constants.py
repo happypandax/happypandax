@@ -16,7 +16,7 @@ from .database import db, db_constants, gallerydb
 from .gui import app, gui_constants
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QFile
-import sys, logging, os, argparse
+import sys, logging, os, argparse, platform
 
 #IMPORTANT STUFF
 def start():
@@ -71,8 +71,8 @@ def start():
 	application.setApplicationName('Happypanda')
 	application.setApplicationDisplayName('Happypanda')
 	application.setApplicationVersion('v{}'.format(gui_constants.vs))
-	log_d('Happypanda Version {}'.format(gui_constants.vs))
-	log_d('App Event Start: OK')
+	log_i('Happypanda Version {}'.format(gui_constants.vs))
+	log_i('OS: {} {}\n'.format(platform.system(), platform.release()))
 	try:
 		if args.test:
 			conn = db.init_db(True)

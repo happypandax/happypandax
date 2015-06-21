@@ -71,6 +71,21 @@ POPUP_HEIGHT = get(220, 'Visual', 'popup.h', int)
 
 HIGH_QUALITY_THUMBS = get(False, 'Visual', 'high quality thumbs', bool)
 
+# Grid Tooltip
+GRID_TOOLTIP = get(True, 'Visual', 'grid tooltip', bool)
+TOOLTIP_TITLE = get(False, 'Visual', 'tooltip title', bool)
+TOOLTIP_AUTHOR = get(False, 'Visual', 'tooltip author', bool)
+TOOLTIP_CHAPTERS = get(True, 'Visual', 'tooltip chapters', bool)
+TOOLTIP_STATUS = get(True, 'Visual', 'tooltip status', bool)
+TOOLTIP_TYPE = get(True, 'Visual', 'tooltip type', bool)
+TOOLTIP_LANG = get(True, 'Visual', 'tooltip lang', bool)
+TOOLTIP_DESCR = get(False, 'Visual', 'tooltip descr', bool)
+TOOLTIP_TAGS = get(True, 'Visual', 'tooltip tags', bool)
+TOOLTIP_LAST_READ = get(True, 'Visual', 'tooltip last read', bool)
+TOOLTIP_TIMES_READ = get(True, 'Visual', 'tooltip times read', bool)
+TOOLTIP_PUB_DATE = get(False, 'Visual', 'tooltip pub date', bool)
+TOOLTIP_DATE_ADDED = get(False, 'Visual', 'tooltip date added', bool)
+
 EXHEN_COOKIE_TUTORIAL =\
 	"""
 How do you find these two values? <br \>
@@ -86,18 +101,32 @@ How do you find these two values? <br \>
 2. look for the 'ipb_member_id' and 'ipb_hash_pass' values in exhentai cookies
 """
 
-# Grid Tooltip
-GRID_TOOLTIP = get(True, 'Visual', 'grid tooltip', bool)
-TOOLTIP_TITLE = get(False, 'Visual', 'tooltip title', bool)
-TOOLTIP_AUTHOR = get(False, 'Visual', 'tooltip author', bool)
-TOOLTIP_CHAPTERS = get(True, 'Visual', 'tooltip chapters', bool)
-TOOLTIP_STATUS = get(True, 'Visual', 'tooltip status', bool)
-TOOLTIP_TYPE = get(True, 'Visual', 'tooltip type', bool)
-TOOLTIP_LANG = get(True, 'Visual', 'tooltip lang', bool)
-TOOLTIP_DESCR = get(False, 'Visual', 'tooltip descr', bool)
-TOOLTIP_TAGS = get(True, 'Visual', 'tooltip tags', bool)
-TOOLTIP_LAST_READ = get(True, 'Visual', 'tooltip last read', bool)
-TOOLTIP_TIMES_READ = get(True, 'Visual', 'tooltip times read', bool)
-TOOLTIP_PUB_DATE = get(False, 'Visual', 'tooltip pub date', bool)
-TOOLTIP_DATE_ADDED = get(False, 'Visual', 'tooltip date added', bool)
+GPL =\
+	"""Happypanda is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or any later version. Happypanda is distributed in the hope that it will
+be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details. You should have received a copy of the GNU General Public License along with Happypanda. 
+If not, see http://www.gnu.org/licenses/."""
+
+TROUBLE_GUIDE =\
+	""" Did you find any bugs? Then please walk through this guide, so we can fix it together! <br/>
+	<br/>
+<b>Can you start a new instance of happypanda and reproduce the bug?</b><br/>
+	- If that's not the case then skip the steps below and go to <i>How to report</i>:<br/>
+	1. First close all instances of Happypanda.<br/>
+	2. Open a console and navigate to where Happypanda is installed. <i>Eg.: cd path/to/happypanda</i><br/>
+	3. Now type: <i>Happypanda.exe -d</i> or <i>main.py -d</i> depending on what the main file is called.<br/>
+	4. The program will now open, and create a new file named <i>happypanda_debug.log</i>.<br/>
+	5. Reproduce the error/bug<br/>
+	<br/>
+<b>How to report</b><br/>
+If you did the steps written above, then be sure to include the <i>happypanda_debug.log</i> file which was created.<br/>
+and how you reproduced the error/bug. <br/>
+1. Navigate to where you installed Happypanda with a file explorer, <br/>and find <i>happypanda.log<i>. Send it to me with a description of the bug.<br/>
+2. You have 3 options of contacting me:<br/>
+- Go to the github repo issue page <a href='https://github.com/Pewpews/happypanda/issues'>here</a>, <br/>and create a new issue <i>(if it doesn't already exist, 
+if it does then comment the last iteration of your log contents)</i><br/>
+- Enter the chat <a href='https://gitter.im/Pewpews/happypanda'>here</a>, and tell me about your issue.<br/>
+- If for some reason you don't want anything to do with github, <br/>then feel free to email me: happypandabugs@gmail.com
+"""
 
