@@ -992,7 +992,7 @@ class CompleterWithData(QCompleter):
 	def changeCompletion(self, completion):
 		if completion.find('(') != -1:
 			completion = completion[:completion.find('(')]
-		print(completion)
+		#print(completion)
 		self.insertText.emit(completion)
 
 
@@ -1021,14 +1021,14 @@ class DatabaseFilterProxyModel(QSortFilterProxyModel):
 			p = os.path.split(gallery.path)
 			filter_list.append(p[1])
 		self.filter_list = sorted(filter_list)
-		print('Instatiated')
+		#print('Instatiated')
 
 	def set_name_role(self, role):
 		self.role = role
 		self.invalidateFilter()
 
 	def filterAcceptsRow(self, source_row, index_parent):
-		print('Using')
+		#print('Using')
 		allow = False
 		index = self.sourceModel().index(source_row, 0, index_parent)
 
@@ -1037,7 +1037,7 @@ class DatabaseFilterProxyModel(QSortFilterProxyModel):
 			name = index.data(self.role)
 			if name.endswith(self.filters):
 				if binary_search(name):
-					print('Hiding {}'.format(name))
+					#print('Hiding {}'.format(name))
 					allow = True
 		return allow
 
@@ -1139,7 +1139,7 @@ class GalleryDialog(QWidget):
 		self.pub_edit = QDateEdit()
 		self.pub_edit.setCalendarPopup(True)
 		self.pub_edit.setDate(QDate.currentDate())
-		self.path_lbl = QLabel("unspecified...")
+		self.path_lbl = QLabel("")
 		self.path_lbl.setWordWrap(True)
 
 		link_layout = QHBoxLayout()
@@ -1190,9 +1190,9 @@ class GalleryDialog(QWidget):
 		self.author_edit.setText(gallery.artist)
 		self.descr_edit.setText(gallery.info)
 
-		if gallery.language is "English":
+		if gallery.language.lower() in "english":
 			self.lang_box.setCurrentIndex(0)
-		elif gallery.language is "Japanese":
+		elif gallery.language.lower() in "japanese":
 			self.lang_box.setCurrentIndex(1)
 		else:
 			self.lang_box.setCurrentIndex(2)
@@ -1271,7 +1271,9 @@ class GalleryDialog(QWidget):
 		if len(self.descr_edit.toPlainText()) is 0:
 			self.descr_edit.setText("<i>No description..</i>")
 
-		if self.path_lbl.text() == "unspecified...":
+		if len(self.path_lbl.text()) == 0 or self.path_lbl.text() == 'No path specified':
+			self.path_lbl.setStyleSheet("color:red")
+			self.path_lbl.setText('No path specified')
 			return False
 
 		return True
@@ -1279,25 +1281,37 @@ class GalleryDialog(QWidget):
 	def accept(self):
 
 		def do_chapters(gallery):
+			log_d('Starting chapters')
 			thread = threading.Thread(target=self.set_chapters, args=(gallery,), daemon=True)
 			thread.start()
 			thread.join()
+			log_d('Finished chapters')
 			#return self.gallery_queue.get()
 
 		if self.check():
 			new_gallery = gallerydb.Gallery()
 			new_gallery.title = self.title_edit.text()
+			log_d('Adding gallery title')
 			new_gallery.artist = self.author_edit.text()
+			log_d('Adding gallery artist')
 			new_gallery.path = self.path_lbl.text()
+			log_d('Adding gallery path')
 			new_gallery.info = self.descr_edit.toPlainText()
+			log_d('Adding gallery descr')
 			new_gallery.type = self.type_box.currentText()
+			log_d('Adding gallery type')
 			new_gallery.language = self.lang_box.currentText()
+			log_d('Adding gallery lang')
 			new_gallery.status = self.status_box.currentText()
+			log_d('Adding gallery status')
 			new_gallery.tags = tag_to_dict(self.tags_edit.toPlainText())
+			log_d('Adding gallery: tagging to dict')
 			qpub_d = self.pub_edit.date().toString("ddMMyyyy")
 			dpub_d = datetime.strptime(qpub_d, "%d%m%Y").date()
 			new_gallery.pub_date = dpub_d
+			log_d('Adding gallery pub date')
 			new_gallery.link = self.link_lbl.text()
+			log_d('Adding gallery link')
 
 			if self.path_lbl.text() == "unspecified...":
 				self.SERIES.emit([new_gallery])
@@ -1310,31 +1324,39 @@ class GalleryDialog(QWidget):
 	def set_chapters(self, gallery_object):
 		path = gallery_object.path
 		try:
+			log_d('Listing dir...')
 			con = os.listdir(path) # list all folders in gallery dir
+			log_d('Sorting')
 			chapters = sorted([os.path.join(path,sub) for sub in con if os.path.isdir(os.path.join(path, sub))]) #subfolders
 			# if gallery has chapters divided into sub folders
 			if len(chapters) != 0:
+				log_d('Chapters divided in folders..')
 				for numb, ch in enumerate(chapters):
 					chap_path = os.path.join(path, ch)
 					gallery_object.chapters[numb] = chap_path
 
 			else: #else assume that all images are in gallery folder
 				gallery_object.chapters[0] = path
+			log_d('Added chapters to gallery')
 				
 			#find last edited file
 			times = set()
+			log_d('Finding last update...')
 			for root, dirs, files in os.walk(path, topdown=False):
 				for img in files:
 					fp = os.path.join(root, img)
 					times.add(os.path.getmtime(fp))
 			gallery_object.last_update = time.asctime(time.gmtime(max(times)))
+			log_d('Found last update')
 		except NotADirectoryError:
 			if path[-4:] in ARCHIVE_FILES:
+				log_d('Found an archive')
 				#TODO: add support for folders in archive
 				gallery_object.chapters[0] = path
 
 		#self.gallery_queue.put(gallery_object)
 		self.SERIES.emit([gallery_object])
+		log_d('Sent gallery to model')
 		#gallerydb.GalleryDB.add_gallery(gallery_object)
 		
 

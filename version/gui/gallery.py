@@ -43,11 +43,10 @@ log_e = log.error
 log_c = log.critical
 
 class Popup(QWidget):
-	def __init__(self):
-		super().__init__(None, Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+	def __init__(self, parent=None):
+		super().__init__(parent, Qt.Window | Qt.FramelessWindowHint)
 		self.setAttribute(Qt.WA_ShowWithoutActivating)
 		self.initUI()
-		self.setWindowModality(Qt.WindowModal)
 		#self.resize(gui_constants.POPUP_WIDTH,gui_constants.POPUP_HEIGHT)
 		self.setFixedWidth(gui_constants.POPUP_WIDTH)
 		self.setMaximumHeight(gui_constants.POPUP_HEIGHT)
@@ -419,7 +418,7 @@ class GalleryModel(QAbstractTableModel):
 		return None
 
 	def rowCount(self, index = QModelIndex()):
-		return self._data_count
+		return len(self._data)
 
 	def columnCount(self, parent = QModelIndex()):
 		return len(gui_constants.COLUMNS)
@@ -456,23 +455,22 @@ class GalleryModel(QAbstractTableModel):
 	def addRows(self, list_of_gallery, position=None,
 				rows=1, index = QModelIndex()):
 		"Adds new gallery data to model and to DB"
-		loading = misc.Loading(self.parent())
-		loading.setText('Adding...')
-		loading.progress.setMinimum(0)
-		loading.progress.setMaximum(0)
-		loading.show()
 		from ..database.gallerydb import PROFILE_TO_MODEL
+		log_d('Adding {} rows'.format(rows))
 		if not position:
+			log_d('Add rows: No position specified')
 			position = len(self._data)
 		self.beginInsertRows(QModelIndex(), position, position + rows - 1)
+		log_d('Add rows: Began inserting')
 		for gallery in list_of_gallery:
+			#
 			threading.Thread(target=gallerydb.GalleryDB.add_gallery_return, args=(gallery,)).start()
 			gallery.profile = PROFILE_TO_MODEL.get()
-			self._data.insert(0, gallery)
+			self._data.insert(position, gallery)
+		log_d('Add rows: Finished inserting')
 		self.endInsertRows()
 		self.CUSTOM_STATUS_MSG.emit("Added item(s)")
 		self.ROWCOUNT_CHANGE.emit()
-		loading.close()
 		return True
 
 	def insertRows(self, list_of_gallery, position,
@@ -525,13 +523,13 @@ class CustomDelegate(QStyledItemDelegate):
 	POPUP = pyqtSignal()
 	CONTEXT_ON = False
 
-	def __init__(self):
+	def __init__(self, parent=None):
 		super().__init__()
 		self.W = gui_constants.THUMB_W_SIZE
 		self.H = gui_constants.THUMB_H_SIZE
 		QPixmapCache.setCacheLimit(gui_constants.THUMBNAIL_CACHE_SIZE[0]*
 							 gui_constants.THUMBNAIL_CACHE_SIZE[1])
-		self.popup_window = Popup()
+		self.popup_window = Popup(parent)
 		self.popup_timer = QTimer()
 		self._painted_indexes = {}
 		#self.popup_timer.timeout.connect(self.POPUP.emit)
@@ -726,7 +724,7 @@ class MangaView(QListView):
 		self.sort_model.setFilterCaseSensitivity(Qt.CaseInsensitive)
 		self.sort_model.setSortLocaleAware(True)
 		self.sort_model.setSortCaseSensitivity(Qt.CaseInsensitive)
-		self.manga_delegate = CustomDelegate()
+		self.manga_delegate = CustomDelegate(parent)
 		self.setItemDelegate(self.manga_delegate)
 		self.gallery_model = GalleryModel(parent)
 		self.sort_model.change_model(self.gallery_model)

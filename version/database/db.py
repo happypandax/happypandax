@@ -375,6 +375,10 @@ class DBThread:
 					c.execute(cmd[0], cmd[1])
 				except IndexError:
 					c.execute(cmd[0])
+				except sqlite3.OperationalError:
+					log.exception('Could not access database!')
+				except:
+					log.exception('Could not access database!')
 			self.conn.commit()
 			result_queue.put(c)
 			cmd_queue.task_done()

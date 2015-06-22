@@ -240,7 +240,6 @@ class GalleryDB:
 		CommandQueue.put(executing)
 		cursor = ResultQueue.get()
 		row = cursor.fetchone()
-		print(row)
 		gallery = Gallery()
 		try:
 			gallery.id = row['series_id']
@@ -302,7 +301,7 @@ class GalleryDB:
 	def add_gallery(object, test_mode=False):
 		"Receives an object of class gallery, and appends it to DB"
 		"Adds gallery of <Gallery> class into database"
-		assert isinstance(object, Gallery), "add_gallery method only accept gallery items"
+		assert isinstance(object, Gallery), "add_gallery method only accepts gallery items"
 
 		object.profile = gen_thumbnail(object.chapters[0])
 
@@ -593,34 +592,35 @@ class TagDB:
 		CommandQueue.put(executing)
 		cursor = ResultQueue.get()
 		tags = {}
-		# WARNING: rowcount doesn't work! Fix this ASAP!
-		if cursor.fetchone(): # tags exists
-			for tag_map_row in cursor.fetchall(): # iterate all tag_mappings_ids
-				# get tag and namespace 
-				executing = [["""SELECT namespace_id, tag_id FROM tags_mappings
-								WHERE tags_mappings_id=?""", (tag_map_row['tags_mappings_id'],)]]
+		result = cursor.fetchall()
+		for tag_map_row in result: # iterate all tag_mappings_ids
+			if not tag_map_row:
+				continue
+			# get tag and namespace 
+			executing = [["""SELECT namespace_id, tag_id FROM tags_mappings
+							WHERE tags_mappings_id=?""", (tag_map_row['tags_mappings_id'],)]]
+			CommandQueue.put(executing)
+			c = ResultQueue.get()
+			for row in c.fetchall(): # iterate all rows
+				# get namespace
+				executing = [["SELECT namespace FROM namespaces WHERE namespace_id=?",
+				(row['namespace_id'],)]]
 				CommandQueue.put(executing)
 				c = ResultQueue.get()
-				for row in c.fetchall(): # iterate all rows
-					# get namespace
-					executing = [["SELECT namespace FROM namespaces WHERE namespace_id=?",
-					(row['namespace_id'],)]]
-					CommandQueue.put(executing)
-					c = ResultQueue.get()
-					namespace = c.fetchone()['namespace']
+				namespace = c.fetchone()['namespace']
 
-					# get tag
-					executing = [["SELECT tag FROM tags WHERE tag_id=?", (row['tag_id'],)]]
-					CommandQueue.put(executing)
-					c = ResultQueue.get()
-					tag = c.fetchone()['tag']
+				# get tag
+				executing = [["SELECT tag FROM tags WHERE tag_id=?", (row['tag_id'],)]]
+				CommandQueue.put(executing)
+				c = ResultQueue.get()
+				tag = c.fetchone()['tag']
 
-					# add them to dict
-					if not namespace in tags:
-						tags[namespace] = [tag]
-					else:
-						# namespace already exists in dict
-						tags[namespace].append(tag)
+				# add them to dict
+				if not namespace in tags:
+					tags[namespace] = [tag]
+				else:
+					# namespace already exists in dict
+					tags[namespace].append(tag)
 		return tags
 
 	@staticmethod
