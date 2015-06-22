@@ -71,6 +71,11 @@ POPUP_HEIGHT = get(220, 'Visual', 'popup.h', int)
 
 HIGH_QUALITY_THUMBS = get(False, 'Visual', 'high quality thumbs', bool)
 
+# Search
+SEARCH_AUTOCOMPLETE = get(True, 'Advanced', 'search autocomplete', bool)
+ALLOW_SEARCH_REGEX = get(False, 'Advanced', 'allow search regex', bool)
+SEARCH_ON_ENTER = get(False, 'Advanced', 'search on enter', bool)
+
 # Grid Tooltip
 GRID_TOOLTIP = get(True, 'Visual', 'grid tooltip', bool)
 TOOLTIP_TITLE = get(False, 'Visual', 'tooltip title', bool)

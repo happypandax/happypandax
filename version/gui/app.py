@@ -200,9 +200,11 @@ Your database will not be touched without you being notified.""")
 
 	def search(self, srch_string):
 		case_ins = srch_string.lower()
-		remove = '^$*+?{}[]\\|()'
-		for x in remove:
-			case_ins = case_ins.replace(x, '.')
+		if not gui_constants.ALLOW_SEARCH_REGEX:
+			remove = '^$*+?{}[]\\|()'
+			for x in remove:
+				case_ins = case_ins.replace(x, '.')
+		print(case_ins)
 		self.manga_list_view.sort_model.search(case_ins)
 
 	def popup(self, index):
@@ -305,16 +307,20 @@ Your database will not be touched without you being notified.""")
 		self.grid_toggle.triggered.connect(self.toggle_view)
 		self.toolbar.addAction(self.grid_toggle)
 
-		completer = QCompleter(self)
-		completer.setModel(self.manga_list_view.gallery_model)
-		completer.setCaseSensitivity(Qt.CaseInsensitive)
-		completer.setCompletionMode(QCompleter.PopupCompletion)
-		completer.setCompletionRole(Qt.DisplayRole)
-		completer.setCompletionColumn(gui_constants.TITLE)
-		completer.setFilterMode(Qt.MatchContains)
-		self.search_bar = QLineEdit()
-		self.search_bar.setCompleter(completer)
-		self.search_bar.textChanged[str].connect(self.search)
+		self.search_bar = misc.LineEdit()
+		if gui_constants.SEARCH_AUTOCOMPLETE:
+			completer = QCompleter(self)
+			completer.setModel(self.manga_list_view.gallery_model)
+			completer.setCaseSensitivity(Qt.CaseInsensitive)
+			completer.setCompletionMode(QCompleter.PopupCompletion)
+			completer.setCompletionRole(Qt.DisplayRole)
+			completer.setCompletionColumn(gui_constants.TITLE)
+			completer.setFilterMode(Qt.MatchContains)
+			self.search_bar.setCompleter(completer)
+		if gui_constants.SEARCH_ON_ENTER:
+			self.search_bar.returnPressed.connect(lambda: self.search(self.search_bar.text()))
+		else:
+			self.search_bar.textChanged[str].connect(self.search)
 		self.search_bar.setPlaceholderText("Search title, author, (tags partial supported)")
 		self.search_bar.setMinimumWidth(150)
 		self.search_bar.setMaximumWidth(400)

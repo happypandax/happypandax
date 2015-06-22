@@ -26,7 +26,8 @@ from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QCheckBox, QFrame, QListView,
 							 QAbstractItemView, QTreeView, QSpinBox,
 							 QAction, QStackedLayout, QTabWidget,
-							 QGridLayout, QScrollArea, QLayout)
+							 QGridLayout, QScrollArea, QLayout, QButtonGroup,
+							 QRadioButton)
 
 import os, threading, queue, time, logging
 from datetime import datetime
@@ -258,6 +259,24 @@ class FlowLayout(QLayout):
 
 # ----------------------------------------------------------
 
+class LineEdit(QLineEdit):
+	"""
+	Custom Line Edit which sacrifices contextmenu for selectAll
+	"""
+	def __init__(self, parent=None):
+		super().__init__(parent)
+
+	def mousePressEvent(self, event):
+		print('Oh!')
+		if event.button() == Qt.RightButton:
+			print('Yes')
+			self.selectAll()
+		else:
+			super().mousePressEvent(event)
+
+	def contextMenuEvent(self, QContextMenuEvent):
+		pass
+
 class SettingsDialog(QWidget):
 	"A settings dialog"
 	scroll_speed_changed = pyqtSignal()
@@ -379,21 +398,16 @@ class SettingsDialog(QWidget):
 		self.visual_grid_tooltip_pub_date.setChecked(gui_constants.TOOLTIP_PUB_DATE)
 		self.visual_grid_tooltip_date_added.setChecked(gui_constants.TOOLTIP_DATE_ADDED)
 
+		if gui_constants.SEARCH_ON_ENTER:
+			self.search_on_enter.setChecked(True)
+		else:
+			self.search_every_keystroke.setChecked(True)
 
 	def accept(self):
 		set = settings.set
 		# Web / ExHentai
 		self.exprops.ipb_id = self.ipbid_edit.text()
 		self.exprops.ipb_pass = self.ipbpass_edit.text()
-
-		# Advanced / Misc
-		gui_constants.SCROLL_SPEED = self.scroll_speed
-		set(self.scroll_speed, 'Advanced', 'scroll speed')
-		self.scroll_speed_changed.emit()
-		gui_constants.THUMBNAIL_CACHE_SIZE = self.cache_size
-		set(self.cache_size[1], 'Advanced', 'cache size')
-		QPixmapCache.setCacheLimit(self.cache_size[0]*
-							 self.cache_size[1])
 
 		# Visual / Grid View / Tooltip
 		gui_constants.GRID_TOOLTIP = self.grid_tooltip_group.isChecked()
@@ -422,6 +436,26 @@ class SettingsDialog(QWidget):
 		set(gui_constants.TOOLTIP_PUB_DATE, 'Visual', 'tooltip pub date')
 		gui_constants.TOOLTIP_DATE_ADDED = self.visual_grid_tooltip_date_added.isChecked()
 		set(gui_constants.TOOLTIP_DATE_ADDED, 'Visual', 'tooltip date added')
+		
+		# Advanced / Misc
+		# grid view
+		gui_constants.SCROLL_SPEED = self.scroll_speed
+		set(self.scroll_speed, 'Advanced', 'scroll speed')
+		self.scroll_speed_changed.emit()
+		gui_constants.THUMBNAIL_CACHE_SIZE = self.cache_size
+		set(self.cache_size[1], 'Advanced', 'cache size')
+		QPixmapCache.setCacheLimit(self.cache_size[0]*
+							 self.cache_size[1])
+		# search
+		gui_constants.ALLOW_SEARCH_REGEX = self.search_allow_regex.isChecked()
+		set(gui_constants.ALLOW_SEARCH_REGEX, 'Advanced', 'allow search regex')
+		gui_constants.SEARCH_AUTOCOMPLETE = self.search_autocomplete.isChecked()
+		set(gui_constants.SEARCH_AUTOCOMPLETE, 'Advanced', 'search autocomplete')
+		if self.search_on_enter.isChecked():
+			gui_constants.SEARCH_ON_ENTER = True
+		else:
+			gui_constants.SEARCH_ON_ENTER = False
+		set(gui_constants.SEARCH_ON_ENTER, 'Advanced', 'search on enter')
 
 		settings.save()
 		self.close()
@@ -514,13 +548,18 @@ class SettingsDialog(QWidget):
 		# Advanced
 		advanced = QTabWidget()
 		self.advanced_index = self.right_panel.addWidget(advanced)
-		visual_misc = QWidget()
-		advanced.addTab(visual_misc, 'Misc')
-		visual_main_layout = QVBoxLayout()
-		visual_misc.setLayout(visual_main_layout)
+		advanced_misc = QWidget()
+		advanced.addTab(advanced_misc, 'Misc')
+		advanced_misc_main_layout = QVBoxLayout()
+		advanced_misc.setLayout(advanced_misc_main_layout)
 		misc_controls_layout = QFormLayout()
-		visual_main_layout.addLayout(misc_controls_layout)
+		misc_controls_layout.addWidget(QLabel('Options marked with * requires application restart'))
+		advanced_misc_main_layout.addLayout(misc_controls_layout)
 		# scroll speed
+		misc_gridview = QGroupBox('Grid View')
+		misc_controls_layout.addWidget(misc_gridview)
+		misc_gridview_layout = QFormLayout()
+		misc_gridview.setLayout(misc_gridview_layout)
 		scroll_speed_spin_box = QSpinBox()
 		scroll_speed_spin_box.setFixedWidth(60)
 		scroll_speed_spin_box.setToolTip('Control the speed when scrolling in'+
@@ -528,7 +567,7 @@ class SettingsDialog(QWidget):
 		scroll_speed_spin_box.setValue(self.scroll_speed)
 		def scroll_speed(v): self.scroll_speed = v
 		scroll_speed_spin_box.valueChanged[int].connect(scroll_speed)
-		misc_controls_layout.addRow('Scroll speed:', scroll_speed_spin_box)
+		misc_gridview_layout.addRow('Scroll speed:', scroll_speed_spin_box)
 		# cache size
 		cache_size_spin_box = QSpinBox()
 		cache_size_spin_box.setFixedWidth(120)
@@ -539,7 +578,37 @@ class SettingsDialog(QWidget):
 		def cache_size(c): self.cache_size = (self.cache_size[0], c)
 		cache_size_spin_box.setValue(self.cache_size[1])
 		cache_size_spin_box.valueChanged[int].connect(cache_size)
-		misc_controls_layout.addRow('Cache Size (MiB):', cache_size_spin_box)
+		misc_gridview_layout.addRow('Cache Size (MiB):', cache_size_spin_box)		
+		# regex
+		misc_search = QGroupBox('Search')
+		misc_controls_layout.addWidget(misc_search)
+		misc_search_layout = QFormLayout()
+		misc_search.setLayout(misc_search_layout)
+		search_allow_regex_l = QHBoxLayout()
+		self.search_allow_regex = QCheckBox()
+		self.search_allow_regex.setChecked(gui_constants.ALLOW_SEARCH_REGEX)
+		self.search_allow_regex.adjustSize()
+		self.search_allow_regex.setToolTip('A regex tutorial is located in About->Regex Cheatsheet')
+		search_allow_regex_l.addWidget(self.search_allow_regex)
+		search_allow_regex_l.addWidget(QLabel('A regex tutorial is located in About->Regex Cheatsheet'))
+		search_allow_regex_l.addWidget(Spacer('h'))
+		misc_search_layout.addRow('Regex:', search_allow_regex_l)
+		# autocomplete
+		self.search_autocomplete = QCheckBox('*')
+		self.search_autocomplete.setChecked(gui_constants.SEARCH_AUTOCOMPLETE)
+		self.search_autocomplete.setToolTip('Turn autocomplete on/off')
+		misc_search_layout.addRow('Autocomplete', self.search_autocomplete)
+		# search behaviour
+		self.search_every_keystroke = QRadioButton('Search on every keystroke *', misc_search)
+		misc_search_layout.addRow(self.search_every_keystroke)
+		self.search_on_enter = QRadioButton('Search on enter-key *', misc_search)
+		misc_search_layout.addRow(self.search_on_enter)
+
+		# Advanced / Database
+		advanced_db_page = QWidget()
+		advanced.addTab(advanced_db_page, 'Database')
+		advanced.setTabEnabled(1, False)
+
 
 		# About
 		about = QTabWidget()
@@ -565,6 +634,12 @@ class SettingsDialog(QWidget):
 		gpl_lbl.setWordWrap(True)
 		about_layout.addWidget(gpl_lbl, 0, Qt.AlignTop)
 		about_layout.addWidget(Spacer('v'))
+		# About / Tags
+		about_tags_page = QWidget()
+		about.addTab(about_tags_page, 'Tags')
+		about.setTabEnabled(1, False)
+		# list of tags/namespaces here
+
 		# About / Troubleshooting
 		about.addTab(about_troubleshoot_page, 'Troubleshooting Guide')
 		troubleshoot_layout = QVBoxLayout()
@@ -574,6 +649,39 @@ class SettingsDialog(QWidget):
 		guide_lbl.setOpenExternalLinks(True)
 		troubleshoot_layout.addWidget(guide_lbl, 0, Qt.AlignTop)
 		troubleshoot_layout.addWidget(Spacer('v'))
+		# About / Search tutorial
+		about_search_tut = QWidget()
+		about.addTab(about_search_tut, 'Regex Cheatsheet')
+		about_search_tut_l = QVBoxLayout()
+		about_search_tut.setLayout(about_search_tut_l)
+		# tags
+
+		# regex
+		about_s_regex = QGroupBox('Regex')
+		about_search_tut_l.addWidget(about_s_regex)
+		about_s_regex_l = QFormLayout()
+		about_s_regex.setLayout(about_s_regex_l)
+		about_s_regex_l.addRow('\\\\\\\\', QLabel('Match literally \\'))
+		about_s_regex_l.addRow('.', QLabel('Match any single character'))
+		about_s_regex_l.addRow('^', QLabel('Start of string'))
+		about_s_regex_l.addRow('$', QLabel('End of string'))
+		about_s_regex_l.addRow('\\d', QLabel('Match any decimal digit'))
+		about_s_regex_l.addRow('\\D', QLabel('Match any non-digit character'))
+		about_s_regex_l.addRow('\\s', QLabel('Match any whitespace character'))
+		about_s_regex_l.addRow('\\S', QLabel('Match any non-whitespace character'))
+		about_s_regex_l.addRow('\\w', QLabel('Match any alphanumeric character'))
+		about_s_regex_l.addRow('\\W', QLabel('Match any non-alphanumeric character'))
+		about_s_regex_l.addRow('*', QLabel('Repeat previous character zero or more times'))
+		about_s_regex_l.addRow('+', QLabel('Repeat previous character one or more times'))
+		about_s_regex_l.addRow('?', QLabel('Repeat previous character one or zero times'))
+		about_s_regex_l.addRow('{m, n}', QLabel('Repeat previous character atleast <i>m</i> times but no more than <i>n</i> times'))
+		about_s_regex_l.addRow('(...)', QLabel('Match everything enclosed'))
+		about_s_regex_l.addRow('(a|b)', QLabel('Match either a or b'))
+		about_s_regex_l.addRow('[abc]', QLabel('Match a single character of: a, b or c'))
+		about_s_regex_l.addRow('[^abc]', QLabel('Match a character except: a, b or c'))
+		about_s_regex_l.addRow('[a-z]', QLabel('Match a character in the range'))
+		about_s_regex_l.addRow('[^a-z]', QLabel('Match a character not in the range'))
+
 
 	def reject(self):
 		self.close()
