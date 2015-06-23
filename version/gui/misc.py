@@ -13,8 +13,10 @@ along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from PyQt5.QtCore import (Qt, QDate, QPoint, pyqtSignal, QThread,
-						  QTimer, QObject, QSize, QRect)
-from PyQt5.QtGui import QTextCursor, QIcon, QMouseEvent, QFont, QPixmapCache
+						  QTimer, QObject, QSize, QRect, QFileInfo,
+						  QMargins)
+from PyQt5.QtGui import (QTextCursor, QIcon, QMouseEvent, QFont,
+						 QPixmapCache)
 from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QVBoxLayout, QHBoxLayout,
 							 QDialog, QGridLayout, QLineEdit,
@@ -27,12 +29,14 @@ from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QAbstractItemView, QTreeView, QSpinBox,
 							 QAction, QStackedLayout, QTabWidget,
 							 QGridLayout, QScrollArea, QLayout, QButtonGroup,
-							 QRadioButton)
+							 QRadioButton, QFileIconProvider, QFontDialog,
+							 QColorDialog)
 
 import os, threading, queue, time, logging
 from datetime import datetime
 from . import gui_constants
-from ..utils import tag_to_string, tag_to_dict, title_parser, ARCHIVE_FILES
+from ..utils import (tag_to_string, tag_to_dict, title_parser, ARCHIVE_FILES,
+					 ArchiveFile, IMG_FILES, CreateZipFail)
 from ..database import gallerydb, fetch, db
 from .. import settings
 
@@ -42,6 +46,83 @@ log_d = log.debug
 log_w = log.warning
 log_e = log.error
 log_c = log.critical
+
+class FileIcon:
+
+	@staticmethod
+	def get_file_icon(path):
+		# TODO: Very ineffiecent!! Save known file exts
+		info = QFileInfo(path)
+		return QFileIconProvider().icon(info)
+
+	@staticmethod
+	def get_external_file_icon():
+		if gui_constants._REFRESH_EXTERNAL_VIEWER:
+			if os.path.exists(gui_constants.GALLERY_EXT_ICO_PATH):
+				os.remove(gui_constants.GALLERY_EXT_ICO_PATH)
+			info = QFileInfo(gui_constants.EXTERNAL_VIEWER_PATH)
+			icon =  QFileIconProvider().icon(info)
+			pixmap = icon.pixmap(QSize(32, 32))
+			pixmap.save(gui_constants.GALLERY_EXT_ICO_PATH, quality=100)
+			gui_constants._REFRESH_EXTERNAL_VIEWER = False
+
+		return QIcon(gui_constants.GALLERY_EXT_ICO_PATH)
+
+	@staticmethod
+	def refresh_default_icon():
+
+		if os.path.exists(gui_constants.GALLERY_DEF_ICO_PATH):
+			os.remove(gui_constants.GALLERY_DEF_ICO_PATH)
+
+		def get_file(n):
+			gallery = gallerydb.GalleryDB.get_gallery_by_id(n)
+			if not gallery:
+				return False
+			file = ""
+			if gallery.path.endswith(tuple(ARCHIVE_FILES)):
+				zip = ArchiveFile(gallery.path)
+				for name in zip.namelist():
+					if name.endswith(tuple(IMG_FILES)):
+						folder = os.path.normcase(os.path.join(
+							gui_constants.temp_dir,
+							'{}{}'.format(name, n)))
+						zip.extract(name, folder)
+						file = os.path.normcase(os.path.join(
+							folder, name))
+						break;
+			else:
+				for name in os.listdir(gallery.chapter[0]):
+					if name.endswith(tuple(IMG_FILES)):
+						file = os.path.normcase(os.path.join(
+							gallery.chapter[0], name))
+						break;
+			return file
+
+		# TODO: fix this! (When there are no ids below 300? (because they go deleted))
+		for x in range(1, 300):
+			try:
+				file = get_file(x)
+				break
+			except FileNotFoundError:
+				continue
+			except CreateZipFail:
+				continue
+
+		if not file:
+			return None
+		icon = QFileIconProvider().icon(QFileInfo(file))
+		pixmap = icon.pixmap(QSize(32, 32))
+		pixmap.save(gui_constants.GALLERY_DEF_ICO_PATH, quality=100)
+		return True
+
+	@staticmethod
+	def get_default_file_icon():
+		s = True
+		if not os.path.isfile(gui_constants.GALLERY_DEF_ICO_PATH):
+			s = FileIcon.refresh_default_icon()
+		if s:
+			return QIcon(gui_constants.GALLERY_DEF_ICO_PATH)
+		else: return None
 
 #class ErrorEvent(QObject):
 #	ERROR_MSG = pyqtSignal(str)
@@ -128,15 +209,13 @@ class Spacer(QWidget):
 			self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
 class FlowLayout(QLayout):
-    """
-    Standard PyQt examples FlowLayout modified to work with a scollable parent
-    """
-    
-    def __init__(self, parent=None, margin=0, spacing=-1):
-        super().__init__(parent)
 
-        #if parent is not None:
-        #    self.setMargin(margin)
+    def __init__(self, parent=None, margin=0, spacing=-1):
+        super(FlowLayout, self).__init__(parent)
+
+        if parent is not None:
+            self.setContentsMargins(margin, margin, margin, margin)
+
         self.setSpacing(spacing)
 
         self.itemList = []
@@ -155,25 +234,27 @@ class FlowLayout(QLayout):
     def itemAt(self, index):
         if index >= 0 and index < len(self.itemList):
             return self.itemList[index]
+
         return None
 
     def takeAt(self, index):
         if index >= 0 and index < len(self.itemList):
             return self.itemList.pop(index)
+
         return None
 
     def expandingDirections(self):
         return Qt.Orientations(Qt.Orientation(0))
 
     def hasHeightForWidth(self):
-        return False
+        return True
 
     def heightForWidth(self, width):
         height = self.doLayout(QRect(0, 0, width, 0), True)
         return height
 
     def setGeometry(self, rect):
-        super().setGeometry(rect)
+        super(FlowLayout, self).setGeometry(rect)
         self.doLayout(rect, False)
 
     def sizeHint(self):
@@ -185,12 +266,12 @@ class FlowLayout(QLayout):
         for item in self.itemList:
             size = size.expandedTo(item.minimumSize())
 
-        size += QSize(2 * 0, 2 * 0)
+        margin, _, _, _ = self.getContentsMargins()
+
+        size += QSize(2 * margin, 2 * margin)
         return size
-    
-    def doLayout(self, rect, testOnly=False):
-        """
-        """
+
+    def doLayout(self, rect, testOnly):
         x = rect.x()
         y = rect.y()
         lineHeight = 0
@@ -213,51 +294,6 @@ class FlowLayout(QLayout):
             lineHeight = max(lineHeight, item.sizeHint().height())
 
         return y + lineHeight - rect.y()
-
-#class ResizeScrollArea(QScrollArea):
-#    """
-#    A QScrollArea that propagates the resizing to any FlowLayout children.
-#    Code from: http://vfxdebate.com/2014/02/25/a-better-pyqt-flow-layout/
-#    """
-#    def __init(self, parent=None):  
-#        super().__init__(parent)
-
-#    def resizeEvent(self, event):
-#        wrapper = self.findChild(QWidget)
-#        flow = wrapper.findChild(FlowLayout)
-        
-#        if wrapper and flow:            
-#            width = self.viewport().width()
-#            height = flow.heightForWidth(width)
-#            size = QSize(width, height)
-#            point = self.viewport().rect().topLeft()
-#            flow.setGeometry(QRect(point, size))
-#            self.viewport().update()
-
-#        super().resizeEvent(event)
-
-#class ScrollingFlowWidget(QWidget):
-#    """
-#    A resizable and scrollable widget that uses a flow layout.
-#    Use its addWidget() method to flow children into it.
-#    """
-#    def __init__(self,parent=None):
-#        super().__init__(parent)
-#        grid = QGridLayout(self)
-#        scroll = ResizeScrollArea()
-#        self._wrapper = QWidget(scroll)
-#        self.flowLayout = FlowLayout(self._wrapper)
-#        self._wrapper.setLayout(self.flowLayout)
-#        scroll.setWidget(self._wrapper)
-#        scroll.setWidgetResizable(True)
-#        grid.addWidget(scroll)
-
-
-#    def addWidget(self, widget):
-#        self.flowLayout.addWidget(widget)
-#        widget.setParent(self._wrapper)
-
-# ----------------------------------------------------------
 
 class LineEdit(QLineEdit):
 	"""
@@ -397,11 +433,27 @@ class SettingsDialog(QWidget):
 		self.visual_grid_tooltip_times_read.setChecked(gui_constants.TOOLTIP_TIMES_READ)
 		self.visual_grid_tooltip_pub_date.setChecked(gui_constants.TOOLTIP_PUB_DATE)
 		self.visual_grid_tooltip_date_added.setChecked(gui_constants.TOOLTIP_DATE_ADDED)
+		# Visual / Grid View / Gallery
+		self.external_viewer_ico.setChecked(gui_constants.USE_EXTERNAL_PROG_ICO)
+		self.gallery_type_ico.setChecked(gui_constants.DISPLAY_GALLERY_TYPE)
+		if gui_constants.GALLERY_FONT_ELIDE:
+			self.gallery_text_elide.setChecked(True)
+		else:
+			self.gallery_text_fit.setChecked(True)
+		self.font_lbl.setText(gui_constants.GALLERY_FONT[0])
+		self.font_size_lbl.setValue(gui_constants.GALLERY_FONT[1])
 
 		if gui_constants.SEARCH_ON_ENTER:
 			self.search_on_enter.setChecked(True)
 		else:
 			self.search_every_keystroke.setChecked(True)
+		# Visual / Grid View / Colors
+		self.grid_label_color.setText(gui_constants.GRID_VIEW_LABEL_COLOR)
+		self.grid_title_color.setText(gui_constants.GRID_VIEW_TITLE_COLOR)
+		self.grid_artist_color.setText(gui_constants.GRID_VIEW_ARTIST_COLOR)
+
+		# Advanced / Misc / External Viewer
+		self.external_viewer_path.setText(gui_constants.EXTERNAL_VIEWER_PATH)
 
 	def accept(self):
 		set = settings.set
@@ -436,9 +488,32 @@ class SettingsDialog(QWidget):
 		set(gui_constants.TOOLTIP_PUB_DATE, 'Visual', 'tooltip pub date')
 		gui_constants.TOOLTIP_DATE_ADDED = self.visual_grid_tooltip_date_added.isChecked()
 		set(gui_constants.TOOLTIP_DATE_ADDED, 'Visual', 'tooltip date added')
-		
+		# Visual / Grid View / Gallery
+		gui_constants.USE_EXTERNAL_PROG_ICO = self.external_viewer_ico.isChecked()
+		set(gui_constants.USE_EXTERNAL_PROG_ICO, 'Visual', 'use external prog ico')
+		gui_constants.DISPLAY_GALLERY_TYPE = self.gallery_type_ico.isChecked()
+		set(gui_constants.DISPLAY_GALLERY_TYPE, 'Visual', 'display gallery type')
+		if self.gallery_text_elide.isChecked():
+			gui_constants.GALLERY_FONT_ELIDE = True
+		else:
+			gui_constants.GALLERY_FONT_ELIDE = False
+		set(gui_constants.GALLERY_FONT_ELIDE, 'Visual', 'gallery font elide')
+		gui_constants.GALLERY_FONT = (self.font_lbl.text(), self.font_size_lbl.value())
+		set(gui_constants.GALLERY_FONT[0], 'Visual', 'gallery font family')
+		set(gui_constants.GALLERY_FONT[1], 'Visual', 'gallery font size')
+		# Visual / Grid View / Colors
+		if self.color_checker(self.grid_title_color.text()):
+			gui_constants.GRID_VIEW_TITLE_COLOR = self.grid_title_color.text()
+			set(gui_constants.GRID_VIEW_TITLE_COLOR, 'Visual', 'grid view title color')
+		if self.color_checker(self.grid_artist_color.text()):
+			gui_constants.GRID_VIEW_ARTIST_COLOR = self.grid_artist_color.text()
+			set(gui_constants.GRID_VIEW_ARTIST_COLOR, 'Visual', 'grid view artist color')
+		if self.color_checker(self.grid_label_color.text()):
+			gui_constants.GRID_VIEW_LABEL_COLOR = self.grid_label_color.text()
+			set(gui_constants.GRID_VIEW_LABEL_COLOR, 'Visual', 'grid view label color')
+
 		# Advanced / Misc
-		# grid view
+		# Advanced / Misc / Grid View
 		gui_constants.SCROLL_SPEED = self.scroll_speed
 		set(self.scroll_speed, 'Advanced', 'scroll speed')
 		self.scroll_speed_changed.emit()
@@ -446,7 +521,7 @@ class SettingsDialog(QWidget):
 		set(self.cache_size[1], 'Advanced', 'cache size')
 		QPixmapCache.setCacheLimit(self.cache_size[0]*
 							 self.cache_size[1])
-		# search
+		# Advanced / Misc / Search
 		gui_constants.ALLOW_SEARCH_REGEX = self.search_allow_regex.isChecked()
 		set(gui_constants.ALLOW_SEARCH_REGEX, 'Advanced', 'allow search regex')
 		gui_constants.SEARCH_AUTOCOMPLETE = self.search_autocomplete.isChecked()
@@ -456,6 +531,17 @@ class SettingsDialog(QWidget):
 		else:
 			gui_constants.SEARCH_ON_ENTER = False
 		set(gui_constants.SEARCH_ON_ENTER, 'Advanced', 'search on enter')
+
+		# Advanced / Misc / External Viewer
+		if not self.external_viewer_path.text():
+			gui_constants.USE_EXTERNAL_VIEWER = False
+			set(False, 'Advanced', 'use external viewer')
+		else:
+			gui_constants.USE_EXTERNAL_VIEWER = True
+			set(True, 'Advanced', 'use external viewer')
+			gui_constants._REFRESH_EXTERNAL_VIEWER = True
+		gui_constants.EXTERNAL_VIEWER_PATH = self.external_viewer_path.text()
+		set(gui_constants.EXTERNAL_VIEWER_PATH,'Advanced', 'external viewer path')
 
 		settings.save()
 		self.close()
@@ -495,19 +581,17 @@ class SettingsDialog(QWidget):
 		visual_general_page = QWidget()
 		visual.addTab(visual_general_page, 'General')
 
-		gallery_general_page = QWidget()
-		visual.addTab(gallery_general_page, 'Gallery')
-		gallery_layout = QVBoxLayout()
-		gallery_general_page.setLayout(gallery_layout)
+		grid_view_general_page = QWidget()
+		visual.addTab(grid_view_general_page, 'Grid View')
+		grid_view_layout = QVBoxLayout()
+		grid_view_layout.addWidget(QLabel('Options marked with * requires application restart'),
+						   0, Qt.AlignTop)
+		grid_view_general_page.setLayout(grid_view_layout)
 		# grid view
-		grid_view_group = QGroupBox('Grid View')
-		gallery_layout.addWidget(grid_view_group)
-		grid_view_layout = QHBoxLayout()
-		grid_view_group.setLayout(grid_view_layout)
 		# grid view / tooltip
-		self.grid_tooltip_group = QGroupBox('Tooltip', grid_view_group)
+		self.grid_tooltip_group = QGroupBox('Tooltip', grid_view_general_page)
 		self.grid_tooltip_group.setCheckable(True)
-		grid_view_layout.addWidget(self.grid_tooltip_group)
+		grid_view_layout.addWidget(self.grid_tooltip_group, 0, Qt.AlignTop)
 		grid_tooltip_layout = QFormLayout()
 		self.grid_tooltip_group.setLayout(grid_tooltip_layout)
 		grid_tooltip_layout.addRow(QLabel('Control what is'+
@@ -538,6 +622,54 @@ class SettingsDialog(QWidget):
 		grid_tooltips_hlayout.addWidget(self.visual_grid_tooltip_pub_date)
 		self.visual_grid_tooltip_date_added = QCheckBox('Date added')
 		grid_tooltips_hlayout.addWidget(self.visual_grid_tooltip_date_added)
+		# grid view / gallery
+		grid_gallery_group = QGroupBox('Gallery', grid_view_general_page)
+		grid_view_layout.addWidget(grid_gallery_group, 0, Qt.AlignTop)
+		grid_gallery_main_l = QFormLayout()
+		grid_gallery_main_l.setFormAlignment(Qt.AlignLeft)
+		grid_gallery_group.setLayout(grid_gallery_main_l)
+		grid_gallery_display = FlowLayout()
+		grid_gallery_main_l.addRow('Display on gallery:', grid_gallery_display)
+		self.external_viewer_ico = QCheckBox('External Viewer')
+		grid_gallery_display.addWidget(self.external_viewer_ico)
+		self.gallery_type_ico = QCheckBox('File Type')
+		grid_gallery_display.addWidget(self.gallery_type_ico)
+		gallery_text_mode = QWidget()
+		grid_gallery_main_l.addRow('Text Mode:', gallery_text_mode)
+		gallery_text_mode_l = QHBoxLayout()
+		gallery_text_mode.setLayout(gallery_text_mode_l)
+		self.gallery_text_elide = QRadioButton('Elide text', gallery_text_mode)
+		self.gallery_text_fit = QRadioButton('Fit text', gallery_text_mode)
+		gallery_text_mode_l.addWidget(self.gallery_text_elide, 0, Qt.AlignLeft)
+		gallery_text_mode_l.addWidget(self.gallery_text_fit, 0, Qt.AlignLeft)
+		gallery_font = QHBoxLayout()
+		grid_gallery_main_l.addRow('Font:*', gallery_font)
+		self.font_lbl = QLabel()
+		self.font_size_lbl = QSpinBox()
+		self.font_size_lbl.setMaximum(100)
+		self.font_size_lbl.setMinimum(1)
+		self.font_size_lbl.setToolTip('Font size in pixels')
+		choose_font = QPushButton('Choose font')
+		choose_font.clicked.connect(self.choose_font)
+		gallery_font.addWidget(self.font_lbl, 0, Qt.AlignLeft)
+		gallery_font.addWidget(self.font_size_lbl, 0, Qt.AlignLeft)
+		gallery_font.addWidget(choose_font, 0, Qt.AlignLeft)
+		# grid view / colors
+		grid_colors_group = QGroupBox('Colors', grid_view_general_page)
+		grid_view_layout.addWidget(grid_colors_group, 1, Qt.AlignTop)
+		grid_colors_l = QFormLayout()
+		grid_colors_group.setLayout(grid_colors_l)
+		def color_lineedit():
+			l = QLineEdit()
+			l.setPlaceholderText('Hex colors. Eg.: #323232')
+			l.setMaximumWidth(200)
+			return l
+		self.grid_label_color = color_lineedit()
+		self.grid_title_color = color_lineedit()
+		self.grid_artist_color = color_lineedit()
+		grid_colors_l.addRow('Label color:', self.grid_label_color)
+		grid_colors_l.addRow('Title color:', self.grid_title_color)
+		grid_colors_l.addRow('Artist color:', self.grid_artist_color)
 
 		style_page = QWidget()
 		visual.addTab(style_page, 'Style')
@@ -555,11 +687,12 @@ class SettingsDialog(QWidget):
 		misc_controls_layout = QFormLayout()
 		misc_controls_layout.addWidget(QLabel('Options marked with * requires application restart'))
 		advanced_misc_main_layout.addLayout(misc_controls_layout)
-		# scroll speed
+		# Advanced / Misc / Grid View
 		misc_gridview = QGroupBox('Grid View')
 		misc_controls_layout.addWidget(misc_gridview)
 		misc_gridview_layout = QFormLayout()
 		misc_gridview.setLayout(misc_gridview_layout)
+		# Advanced / Misc / Grid View / scroll speed
 		scroll_speed_spin_box = QSpinBox()
 		scroll_speed_spin_box.setFixedWidth(60)
 		scroll_speed_spin_box.setToolTip('Control the speed when scrolling in'+
@@ -568,7 +701,7 @@ class SettingsDialog(QWidget):
 		def scroll_speed(v): self.scroll_speed = v
 		scroll_speed_spin_box.valueChanged[int].connect(scroll_speed)
 		misc_gridview_layout.addRow('Scroll speed:', scroll_speed_spin_box)
-		# cache size
+		# Advanced / Misc / Grid View / cache size
 		cache_size_spin_box = QSpinBox()
 		cache_size_spin_box.setFixedWidth(120)
 		cache_size_spin_box.setMaximum(999999999)
@@ -579,7 +712,7 @@ class SettingsDialog(QWidget):
 		cache_size_spin_box.setValue(self.cache_size[1])
 		cache_size_spin_box.valueChanged[int].connect(cache_size)
 		misc_gridview_layout.addRow('Cache Size (MiB):', cache_size_spin_box)		
-		# regex
+		# Advanced / Misc / Regex
 		misc_search = QGroupBox('Search')
 		misc_controls_layout.addWidget(misc_search)
 		misc_search_layout = QFormLayout()
@@ -588,21 +721,35 @@ class SettingsDialog(QWidget):
 		self.search_allow_regex = QCheckBox()
 		self.search_allow_regex.setChecked(gui_constants.ALLOW_SEARCH_REGEX)
 		self.search_allow_regex.adjustSize()
-		self.search_allow_regex.setToolTip('A regex tutorial is located in About->Regex Cheatsheet')
+		self.search_allow_regex.setToolTip('A regex cheatsheet is located at About->Regex Cheatsheet')
 		search_allow_regex_l.addWidget(self.search_allow_regex)
-		search_allow_regex_l.addWidget(QLabel('A regex tutorial is located in About->Regex Cheatsheet'))
+		search_allow_regex_l.addWidget(QLabel('A regex cheatsheet is located at About->Regex Cheatsheet'))
 		search_allow_regex_l.addWidget(Spacer('h'))
 		misc_search_layout.addRow('Regex:', search_allow_regex_l)
-		# autocomplete
+		# Advanced / Misc / Regex / autocomplete
 		self.search_autocomplete = QCheckBox('*')
 		self.search_autocomplete.setChecked(gui_constants.SEARCH_AUTOCOMPLETE)
 		self.search_autocomplete.setToolTip('Turn autocomplete on/off')
 		misc_search_layout.addRow('Autocomplete', self.search_autocomplete)
-		# search behaviour
+		# Advanced / Misc / Regex / search behaviour
 		self.search_every_keystroke = QRadioButton('Search on every keystroke *', misc_search)
 		misc_search_layout.addRow(self.search_every_keystroke)
 		self.search_on_enter = QRadioButton('Search on enter-key *', misc_search)
 		misc_search_layout.addRow(self.search_on_enter)
+		# Advanced / Misc / External Viewer
+		misc_external_viewer = QGroupBox('External Viewer')
+		misc_controls_layout.addWidget(misc_external_viewer)
+		misc_external_viewer_l = QFormLayout()
+		misc_external_viewer.setLayout(misc_external_viewer_l)
+		misc_external_viewer_l.addRow(QLabel(gui_constants.SUPPORTED_EXTERNAL_VIEWER_LBL))
+		self.external_viewer_path = PathLineEdit(misc_external_viewer, False)
+		self.external_viewer_path.setPlaceholderText('Right/Left-click to open folder explorer.'+
+							  ' Leave empty to use default viewer')
+		self.external_viewer_path.setToolTip('Right/Left-click to open folder explorer.'+
+							  ' Leave empty to use default viewer')
+		self.external_viewer_path.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+		misc_external_viewer_l.addRow('Path:', self.external_viewer_path)
+
 
 		# Advanced / Database
 		advanced_db_page = QWidget()
@@ -682,12 +829,29 @@ class SettingsDialog(QWidget):
 		about_s_regex_l.addRow('[a-z]', QLabel('Match a character in the range'))
 		about_s_regex_l.addRow('[^a-z]', QLabel('Match a character not in the range'))
 
+	def color_checker(self, txt):
+		allow = False
+		if len(txt) == 7:
+			if txt[0] == '#':
+				allow = True
+		return allow
+
+	def choose_font(self):
+		tup = QFontDialog.getFont(self)
+		font = tup[0]
+		if tup[1]:
+			self.font_lbl.setText(font.family())
+			self.font_size_lbl.setValue(font.pointSize())
 
 	def reject(self):
 		self.close()
 
 class PathLineEdit(QLineEdit):
-	def __init(self, parent=None, dir=True):
+	"""
+	A lineedit which open a filedialog on right/left click
+	Set dir to false if you want files.
+	"""
+	def __init__(self, parent=None, dir=True):
 		super().__init__(parent)
 		self.folder = dir
 
@@ -1298,12 +1462,12 @@ class GalleryDialog(QWidget):
 		self.author_edit.setText(gallery.artist)
 		self.descr_edit.setText(gallery.info)
 
-		if gallery.language.lower() in "english":
-			self.lang_box.setCurrentIndex(0)
-		elif gallery.language.lower() in "japanese":
-			self.lang_box.setCurrentIndex(1)
-		else:
-			self.lang_box.setCurrentIndex(2)
+		self.lang_box.setCurrentIndex(2)
+		if gallery.language:
+			if gallery.language.lower() in "english":
+					self.lang_box.setCurrentIndex(0)
+			elif gallery.language.lower() in "japanese":
+				self.lang_box.setCurrentIndex(1)
 
 		self.tags_edit.setText(tag_to_string(gallery.tags))
 
@@ -1402,7 +1566,7 @@ class GalleryDialog(QWidget):
 			log_d('Adding gallery title')
 			new_gallery.artist = self.author_edit.text()
 			log_d('Adding gallery artist')
-			new_gallery.path = self.path_lbl.text()
+			new_gallery.path = os.path.normcase(self.path_lbl.text())
 			log_d('Adding gallery path')
 			new_gallery.info = self.descr_edit.toPlainText()
 			log_d('Adding gallery descr')
@@ -1440,7 +1604,7 @@ class GalleryDialog(QWidget):
 			if len(chapters) != 0:
 				log_d('Chapters divided in folders..')
 				for numb, ch in enumerate(chapters):
-					chap_path = os.path.join(path, ch)
+					chap_path = os.path.normcase(os.path.join(path, ch))
 					gallery_object.chapters[numb] = chap_path
 
 			else: #else assume that all images are in gallery folder
@@ -1597,3 +1761,4 @@ class GalleryDialog(QWidget):
 
 	def reject_edit(self):
 		self.close()
+

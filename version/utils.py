@@ -38,6 +38,8 @@ def generate_img_hash(src):
 		buffer = src.read(chunk)
 	return sha1.hexdigest()
 
+class CreateZipFail(Exception): pass
+
 class ArchiveFile():
 	"""
 	Work with zip files, raises exception if instance fails.
@@ -55,7 +57,7 @@ class ArchiveFile():
 				self.archive = zipfile.ZipFile(filepath)
 			except:
 				log_e('Create ZIP: FAIL')
-				raise Exception
+				raise CreateZipFail
 		else:
 			log_e('Archive: Unsupported file format')
 			raise Exception

@@ -74,10 +74,10 @@ class Fetch(QObject):
 				for ser_path in gallery_l: # ser_path = gallery folder title
 					self._curr_gallery = ser_path
 					if mixed:
-						path = ser_path
+						path = os.path.normcase(ser_path)
 						ser_path = os.path.split(path)[1]
 					else:
-						path = os.path.join(self.series_path, ser_path)
+						path = os.path.normcase(os.path.join(self.series_path, ser_path))
 					if not GalleryDB.check_exists(ser_path):
 						log_d('Creating gallery: {}'.format(ser_path.encode('utf-8', 'ignore')))
 						new_gallery = Gallery()
@@ -89,7 +89,7 @@ class Fetch(QObject):
 							# if gallery has chapters divided into sub folders
 							if len(chapters) != 0:
 								for numb, ch in enumerate(chapters):
-									chap_path = os.path.join(path, ch)
+									chap_path = os.path.normcase(os.path.join(path, ch))
 									new_gallery.chapters[numb] = chap_path
 
 							else: #else assume that all images are in gallery folder

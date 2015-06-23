@@ -16,11 +16,13 @@ from PyQt5.QtCore import (Qt, QAbstractListModel, QModelIndex, QVariant,
 						  QSize, QRect, QEvent, pyqtSignal, QThread,
 						  QTimer, QPointF, QSortFilterProxyModel,
 						  QAbstractTableModel, QItemSelectionModel,
-						  QPoint)
+						  QPoint, QRectF)
 from PyQt5.QtGui import (QPixmap, QBrush, QColor, QPainter, 
 						 QPen, QTextDocument,
 						 QMouseEvent, QHelpEvent,
-						 QPixmapCache, QCursor, QPalette, QKeyEvent)
+						 QPixmapCache, QCursor, QPalette, QKeyEvent,
+						 QFont, QTextOption, QFontMetrics, QFontMetricsF,
+						 QTextLayout)
 from PyQt5.QtWidgets import (QListView, QFrame, QLabel,
 							 QStyledItemDelegate, QStyle,
 							 QMenu, QAction, QToolTip, QVBoxLayout,
@@ -28,7 +30,7 @@ from PyQt5.QtWidgets import (QListView, QFrame, QLabel,
 							 QHBoxLayout, QFormLayout, QDesktopWidget,
 							 QWidget, QHeaderView, QTableView, QApplication,
 							 QMessageBox)
-import threading, logging, os
+import threading, logging, os, math
 import re as regex
 
 from ..database import gallerydb
@@ -526,12 +528,28 @@ class CustomDelegate(QStyledItemDelegate):
 	def __init__(self, parent=None):
 		super().__init__()
 		self.W = gui_constants.THUMB_W_SIZE
-		self.H = gui_constants.THUMB_H_SIZE
+		self.H = gui_constants.THUMB_H_SIZE + gui_constants.GRIDBOX_LBL_H
 		QPixmapCache.setCacheLimit(gui_constants.THUMBNAIL_CACHE_SIZE[0]*
 							 gui_constants.THUMBNAIL_CACHE_SIZE[1])
 		self.popup_window = Popup(parent)
 		self.popup_timer = QTimer()
 		self._painted_indexes = {}
+
+		misc.FileIcon.refresh_default_icon()
+		self.font_size = gui_constants.GALLERY_FONT[1]
+		self.font_name = gui_constants.GALLERY_FONT[0]
+		if not self.font_name:
+			self.font_name = QWidget().font().family()
+		self.title_font = QFont()
+		self.title_font.setBold(True)
+		self.title_font.setFamily(self.font_name)
+		self.artist_font = QFont()
+		self.artist_font.setFamily(self.font_name)
+		if self.font_size is not 0:
+			self.title_font.setPixelSize(self.font_size)
+			self.artist_font.setPixelSize(self.font_size)
+		self.title_font_m = QFontMetrics(self.title_font)
+		self.artist_font_m = QFontMetrics(self.artist_font)
 		#self.popup_timer.timeout.connect(self.POPUP.emit)
 
 	def key(self, key):
@@ -553,30 +571,33 @@ class CustomDelegate(QStyledItemDelegate):
 			gallery = index.data(Qt.UserRole+1)
 			title = gallery.title
 			artist = gallery.artist
+			title_color = gui_constants.GRID_VIEW_TITLE_COLOR
+			artist_color = gui_constants.GRID_VIEW_ARTIST_COLOR
+			label_color = gui_constants.GRID_VIEW_LABEL_COLOR
 			# Enable this to see the defining box
 			#painter.drawRect(option.rect)
 			# define font size
 			if 20 > len(title) > 15:
-				title_size = "font-size:12px;"
+				title_size = "font-size:{}px;".format(self.font_size)
 			elif 30 > len(title) > 20:
-				title_size = "font-size:11px;"
+				title_size = "font-size:{}px;".format(self.font_size-1)
 			elif 40 > len(title) >= 30:
-				title_size = "font-size:10px;"
+				title_size = "font-size:{}px;".format(self.font_size-2)
 			elif 50 > len(title) >= 40:
-				title_size = "font-size:9px;"
+				title_size = "font-size:{}px;".format(self.font_size-3)
 			elif len(title) >= 50:
-				title_size = "font-size:8px;"
+				title_size = "font-size:{}px;".format(self.font_size-4)
 			else:
-				title_size = ""
+				title_size = "font-size:{}px;".format(self.font_size)
 
 			if 30 > len(artist) > 20:
-				artist_size = "font-size:11px;"
+				artist_size = "font-size:{}px;".format(self.font_size)
 			elif 40 > len(artist) >= 30:
-				artist_size = "font-size:9px;"
+				artist_size = "font-size:{}px;".format(self.font_size-1)
 			elif len(artist) >= 40:
-				artist_size = "font-size:8px;"
+				artist_size = "font-size:{}px;".format(self.font_size-2)
 			else:
-				artist_size = ""
+				artist_size = "font-size:{}px;".format(self.font_size)
 
 			#painter.setPen(QPen(Qt.NoPen))
 			#option.rect = option.rect.adjusted(11, 10, 0, 0)
@@ -587,7 +608,6 @@ class CustomDelegate(QStyledItemDelegate):
 			y = rec[1]
 			w = rec[2]
 			h = rec[3]
-
 
 			text_area = QTextDocument()
 			text_area.setDefaultFont(option.font)
@@ -602,30 +622,30 @@ class CustomDelegate(QStyledItemDelegate):
 			}}
 			#title {{
 			position:absolute;
-			color: white;
+			color: {4};
 			font-weight:bold;
-			{}
+			{0}
 			}}
 			#artist {{
 			position:absolute;
-			color:white;
+			color: {5};
 			top:20px;
 			right:0;
-			{}
+			{1}
 			}}
 			</style>
 			</head>
 			<body>
 			<div id="area">
 			<center>
-			<div id="title">{}
+			<div id="title">{2}
 			</div>
-			<div id="artist">{}
+			<div id="artist">{3}
 			</div>
 			</div>
 			</center>
 			</body>
-			""".format(title_size, artist_size, title, artist, "Chapters"))
+			""".format(title_size, artist_size, title, artist, title_color, artist_color))
 			text_area.setTextWidth(w)
 
 			#chapter_area = QTextDocument()
@@ -656,28 +676,62 @@ class CustomDelegate(QStyledItemDelegate):
 				else:
 					painter.drawPixmap(QPoint(x,y),
 							self.image)
-		
+
 			# draw star if it's favorited
 			if gallery.fav == 1:
 				painter.drawPixmap(QPointF(x,y), QPixmap(gui_constants.STAR_PATH))
 
+			if gui_constants.DISPLAY_GALLERY_TYPE:
+				icon = misc.FileIcon.get_file_icon(gallery.path)
+				if not icon.isNull():
+					icon.paint(painter, QRect(x+2, y+gui_constants.THUMB_H_SIZE-16, 16, 16))
+
+			if gui_constants.USE_EXTERNAL_PROG_ICO:
+				if gui_constants.USE_EXTERNAL_VIEWER:
+					icon = misc.FileIcon.get_external_file_icon()
+				else:
+					icon = misc.FileIcon.get_default_file_icon()
+
+				if icon:
+					icon.paint(painter, QRect(x+w-30, y+gui_constants.THUMB_H_SIZE-28, 28, 28))
+
+
 			#draw the label for text
 			painter.save()
-			painter.translate(option.rect.x(), option.rect.y()+140)
-			box_color = QBrush(QColor(0,0,0,123))
+			painter.translate(x, y+gui_constants.THUMB_H_SIZE)
+			box_color = QBrush(QColor(label_color))#QColor(0,0,0,123))
 			painter.setBrush(box_color)
 			rect = QRect(0, 0, w, 60) #x, y, width, height
 			painter.fillRect(rect, box_color)
 			painter.restore()
 			painter.save()
 			# draw text
-			painter.translate(option.rect.x(), option.rect.y()+142)
-			text_area.drawContents(painter)
-			#painter.resetTransform()
+			alignment = QTextOption(Qt.AlignCenter)
+			alignment.setUseDesignMetrics(True)
+			title_rect = QRectF(0,0,w,15)
+			artist_rect = QRectF(0,15,w,15)
+			painter.translate(x, y+gui_constants.THUMB_H_SIZE)
+			if gui_constants.GALLERY_FONT_ELIDE:
+				painter.setFont(self.title_font)
+				painter.setPen(QColor(title_color))
+				painter.drawText(title_rect,
+						 self.title_font_m.elidedText(title, Qt.ElideRight, w-10),
+						 alignment)
+				
+				painter.setPen(QColor(artist_color))
+				painter.setFont(self.artist_font)
+				alignment.setWrapMode(QTextOption.NoWrap)
+				painter.drawText(artist_rect,
+							self.title_font_m.elidedText(artist, Qt.ElideRight, w-10),
+							alignment)
+			else:
+				text_area.setDefaultFont(QFont(self.font_name))
+				text_area.drawContents(painter)
+			##painter.resetTransform()
 			painter.restore()
-
+			
 			if option.state & QStyle.State_MouseOver:
-				painter.fillRect(QRect(x, y, w, h), QColor(225,225,225,90)) #70
+				painter.fillRect(option.rect, QColor(225,225,225,90)) #70
 			else:
 				self.popup_window.hide()
 			if option.state & QStyle.State_Selected:

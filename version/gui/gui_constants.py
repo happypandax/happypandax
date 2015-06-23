@@ -23,6 +23,7 @@ get = settings.get
 
 current_dir, f = os.path.split(os.path.realpath(__file__))
 static_dir = os.path.join(current_dir, "static")
+temp_dir = os.path.join('temp')
 
 #default stylesheet path
 default_stylesheet_path = static_dir + '/' + "style.css"
@@ -33,6 +34,8 @@ MAIN_W = 1029 # main window
 MAIN_H = 650 # main window
 GRIDBOX_H_SIZE = 230
 GRIDBOX_W_SIZE = GRIDBOX_H_SIZE//1.40 #1.47
+GRIDBOX_LBL_H = 60
+GRIDBOX_H_SIZE += GRIDBOX_LBL_H
 THUMB_H_SIZE = 200
 THUMB_W_SIZE = 143
 
@@ -49,6 +52,9 @@ LINK = 7
 
 
 # image paths
+GALLERY_ICO_PATH = os.path.join(static_dir, "gallery_ico.ico")
+GALLERY_DEF_ICO_PATH = os.path.join(static_dir, "gallery_def_ico.ico")
+GALLERY_EXT_ICO_PATH = os.path.join(static_dir, "gallery_ext_ico.ico")
 APP_ICO_PATH = os.path.join(static_dir, "happypanda.ico")
 STAR_BTN_PATH = os.path.join(static_dir, "btn_star.png")
 STAR_PATH = os.path.join(static_dir, "star.png")
@@ -60,6 +66,11 @@ GRID_PATH = os.path.join(static_dir, "grid.png")
 LIST_PATH = os.path.join(static_dir, "list.png")
 NO_IMAGE_PATH = os.path.join(static_dir, "default.jpg")
 
+# External Viewer
+USE_EXTERNAL_VIEWER = get(False, 'Advanced', 'use external viewer', bool)
+EXTERNAL_VIEWER_PATH = os.path.normcase(get('', 'Advanced', 'external viewer path', str))
+_REFRESH_EXTERNAL_VIEWER = False
+
 # controls
 THUMBNAIL_CACHE_SIZE = (1024, get(200, 'Advanced', 'cache size', int)) #1024 is 1mib
 PREFETCH_ITEM_AMOUNT = get(1, 'Advanced', 'prefetch item amount', int)# amount of items to prefetch
@@ -69,7 +80,18 @@ SCROLL_SPEED = get(7, 'Advanced', 'scroll speed', int) # controls how many steps
 POPUP_WIDTH = get(450, 'Visual', 'popup.w', int)
 POPUP_HEIGHT = get(220, 'Visual', 'popup.h', int)
 
+# Gallery
 HIGH_QUALITY_THUMBS = get(False, 'Visual', 'high quality thumbs', bool)
+USE_EXTERNAL_PROG_ICO = get(True, 'Visual', 'use external prog ico', bool)
+DISPLAY_GALLERY_TYPE = get(True, 'Visual', 'display gallery type', bool)
+GALLERY_FONT = (get('Segoe UI', 'Visual', 'gallery font family', str),
+				get(11, 'Visual', 'gallery font size', int))
+GALLERY_FONT_ELIDE = get(True, 'Visual', 'gallery font elide', bool)
+
+# Colors
+GRID_VIEW_TITLE_COLOR = get('#323232', 'Visual', 'grid view title color', str)
+GRID_VIEW_ARTIST_COLOR = get('#585858', 'Visual', 'grid view artist color', str)
+GRID_VIEW_LABEL_COLOR = get('#F2F2F2', 'Visual', 'grid view label color', str)
 
 # Search
 SEARCH_AUTOCOMPLETE = get(True, 'Advanced', 'search autocomplete', bool)
@@ -125,7 +147,7 @@ TROUBLE_GUIDE =\
 	5. Reproduce the error/bug<br/>
 	<br/>
 <b>How to report</b><br/>
-If you did the steps written above, then be sure to include the <i>happypanda_debug.log</i> file which was created.<br/>
+If you did the steps written above, then be sure to include the <i>happypanda_debug.log</i> file which was created<br/>
 and how you reproduced the error/bug. <br/>
 1. Navigate to where you installed Happypanda with a file explorer, <br/>and find <i>happypanda.log<i>. Send it to me with a description of the bug.<br/>
 2. You have 3 options of contacting me:<br/>
@@ -133,5 +155,13 @@ and how you reproduced the error/bug. <br/>
 if it does then comment the last iteration of your log contents)</i><br/>
 - Enter the chat <a href='https://gitter.im/Pewpews/happypanda'>here</a>, and tell me about your issue.<br/>
 - If for some reason you don't want anything to do with github, <br/>then feel free to email me: happypandabugs@gmail.com
+"""
+
+SUPPORTED_EXTERNAL_VIEWER_LBL =\
+	"""
+Currently only these programs are supported:
+Associated Program, Honeyview
+
+Hit me up on github/gitter-chat to add more supported programs
 """
 
