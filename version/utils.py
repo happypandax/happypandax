@@ -134,7 +134,6 @@ def open(chapterpath):
 			elif os.name == 'posix':
 				subprocess.call(('xdg-open', filepath))
 		else:
-			print('using')
 			ext_path = gui_constants.EXTERNAL_VIEWER_PATH
 			viewer = external_viewer_checker(ext_path)
 			if viewer == 'honeyview':

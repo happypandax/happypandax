@@ -12,7 +12,7 @@ You should have received a copy of the GNU General Public License
 along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import sys, logging, os, threading
+import sys, logging, os, threading, re
 from PyQt5.QtCore import (Qt, QSize, pyqtSignal, QThread, QEvent, QTimer,
 						  QObject)
 from PyQt5.QtGui import (QPixmap, QIcon, QMouseEvent, QCursor)
@@ -201,10 +201,17 @@ Your database will not be touched without you being notified.""")
 	def search(self, srch_string):
 		case_ins = srch_string.lower()
 		if not gui_constants.ALLOW_SEARCH_REGEX:
-			remove = '^$*+?{}[]\\|()'
+			remove = '^$*+?{}\\|()[]'
 			for x in remove:
-				case_ins = case_ins.replace(x, '.')
-		print(case_ins)
+				if x == '[' or x == ']':
+					continue
+				else:
+					case_ins = case_ins.replace(x, '.')
+		else:
+			try:
+				re.compile(case_ins)
+			except re.error:
+				return
 		self.manga_list_view.sort_model.search(case_ins)
 
 	def popup(self, index):
@@ -321,9 +328,9 @@ Your database will not be touched without you being notified.""")
 			self.search_bar.returnPressed.connect(lambda: self.search(self.search_bar.text()))
 		else:
 			self.search_bar.textChanged[str].connect(self.search)
-		self.search_bar.setPlaceholderText("Search title, author, (tags partial supported)")
+		self.search_bar.setPlaceholderText("Search guide located at About -> Search Guide")
 		self.search_bar.setMinimumWidth(150)
-		self.search_bar.setMaximumWidth(400)
+		self.search_bar.setMaximumWidth(500)
 		self.toolbar.addWidget(self.search_bar)
 		self.toolbar.addSeparator()
 		settings_icon = QIcon(gui_constants.SETTINGS_PATH)

@@ -1,4 +1,4 @@
-"""
+﻿"""
 This file is part of Happypanda.
 Happypanda is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@ from PyQt5.QtCore import (Qt, QDate, QPoint, pyqtSignal, QThread,
 						  QTimer, QObject, QSize, QRect, QFileInfo,
 						  QMargins)
 from PyQt5.QtGui import (QTextCursor, QIcon, QMouseEvent, QFont,
-						 QPixmapCache)
+						 QPixmapCache, QPalette)
 from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QVBoxLayout, QHBoxLayout,
 							 QDialog, QGridLayout, QLineEdit,
@@ -30,7 +30,7 @@ from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QAction, QStackedLayout, QTabWidget,
 							 QGridLayout, QScrollArea, QLayout, QButtonGroup,
 							 QRadioButton, QFileIconProvider, QFontDialog,
-							 QColorDialog)
+							 QColorDialog, QScrollArea)
 
 import os, threading, queue, time, logging
 from datetime import datetime
@@ -303,9 +303,7 @@ class LineEdit(QLineEdit):
 		super().__init__(parent)
 
 	def mousePressEvent(self, event):
-		print('Oh!')
 		if event.button() == Qt.RightButton:
-			print('Yes')
 			self.selectAll()
 		else:
 			super().mousePressEvent(event)
@@ -442,6 +440,11 @@ class SettingsDialog(QWidget):
 			self.gallery_text_fit.setChecked(True)
 		self.font_lbl.setText(gui_constants.GALLERY_FONT[0])
 		self.font_size_lbl.setValue(gui_constants.GALLERY_FONT[1])
+
+		def re_enforce(s):
+			if s:
+				self.search_on_enter.setChecked(True)
+		self.search_allow_regex.clicked.connect(re_enforce)
 
 		if gui_constants.SEARCH_ON_ENTER:
 			self.search_on_enter.setChecked(True)
@@ -798,16 +801,9 @@ class SettingsDialog(QWidget):
 		guide_lbl.setOpenExternalLinks(True)
 		troubleshoot_layout.addWidget(guide_lbl, 0, Qt.AlignTop)
 		troubleshoot_layout.addWidget(Spacer('v'))
-		# About / Search tutorial
-		about_search_tut = QWidget()
-		about.addTab(about_search_tut, 'Regex Cheatsheet')
-		about_search_tut_l = QVBoxLayout()
-		about_search_tut.setLayout(about_search_tut_l)
-		# tags
-
-		# regex
+		# About / Regex Cheatsheet
 		about_s_regex = QGroupBox('Regex')
-		about_search_tut_l.addWidget(about_s_regex)
+		about.addTab(about_s_regex, 'Regex Cheatsheet')
 		about_s_regex_l = QFormLayout()
 		about_s_regex.setLayout(about_s_regex_l)
 		about_s_regex_l.addRow('\\\\\\\\', QLabel('Match literally \\'))
@@ -830,6 +826,34 @@ class SettingsDialog(QWidget):
 		about_s_regex_l.addRow('[^abc]', QLabel('Match a character except: a, b or c'))
 		about_s_regex_l.addRow('[a-z]', QLabel('Match a character in the range'))
 		about_s_regex_l.addRow('[^a-z]', QLabel('Match a character not in the range'))
+		# About / Search tutorial
+		about_search_scroll = QScrollArea()
+		about_search_scroll.setBackgroundRole(QPalette.Base)
+		about_search_scroll.setWidgetResizable(True)
+		about_search_tut = QWidget()
+		about.addTab(about_search_scroll, 'Search Guide')
+		about_search_tut_l = QVBoxLayout()
+		about_search_tut.setLayout(about_search_tut_l)
+		# General
+		about_search_general = QGroupBox('General')
+		about_search_tut_l.addWidget(about_search_general)
+		about_search_general_l = QFormLayout()
+		about_search_general.setLayout(about_search_general_l)
+		about_search_general_l.addRow(QLabel(gui_constants.SEARCH_TUTORIAL_GENERAL))
+		# Title & Author
+		about_search_tit_aut = QGroupBox('Title and Author')
+		about_search_tut_l.addWidget(about_search_tit_aut)
+		about_search_tit_l = QFormLayout()
+		about_search_tit_aut.setLayout(about_search_tit_l)
+		about_search_tit_l.addRow(QLabel(gui_constants.SEARCH_TUTORIAL_TIT_AUT))
+		# Namespace & Tags
+		about_search_tags = QGroupBox('Namespace and Tags')
+		about_search_tut_l.addWidget(about_search_tags)
+		about_search_tags_l = QFormLayout()
+		about_search_tags.setLayout(about_search_tags_l)
+		about_search_tags_l.addRow(QLabel(gui_constants.SEARCH_TUTORIAL_TAGS))
+		about_search_scroll.setWidget(about_search_tut)
+
 
 	def color_checker(self, txt):
 		allow = False

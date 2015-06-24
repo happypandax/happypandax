@@ -150,6 +150,8 @@ class SortFilterModel(QSortFilterProxyModel):
 		self.tags = {}
 		self.title = ""
 		self.artist = ""
+		self.allow_all = True
+		self.excludes = []
 
 	def fav_view(self):
 		self.fav = True
@@ -179,26 +181,85 @@ class SortFilterModel(QSortFilterProxyModel):
 	def search(self, term, title=True, artist=True, tags=True):
 		"""
 		Receives a search term.
-		If title/artist/tags True: searches in it
+		If title/artist/tags True: searches in them
 		"""
+		self.excludes = []
+		def trim_for_non_tag(txt):
+			level = 0 # so we know if we are in a list
+			buffer = ""
+			stripped_set = set() # we only need unique values
+			for n, x in enumerate(txt, 1):
 
-		def f_tags():
-			self.tags = utils.tag_to_dict(term)
+				if x == '[':
+					level += 1 # we are now entering a list
+				if x == ']':
+					level -= 1 # we are now exiting a list
 
-		def f_title():
-			self.title = term
 
-		def f_artist():
-			self.artist = term
+				if x == ',': # if we meet a comma
+					# we trim our buffer if we are at top level
+					if level is 0:
+						# add to list
+						stripped_set.add(buffer.strip())
+						buffer = ""
+					else:
+						buffer += x
+				elif n == len(txt): # or at end of string
+					buffer += x
+					# add to list
+					stripped_set.add(buffer.strip())
+					buffer = ""
+				else:
+					buffer += x
+			for s in stripped_set:
+				if not ':' in s:
+					txt = s
+			txt = txt.split(' ')
+			txt = [x.strip() for x in txt]
+			return txt
 
-		if title and artist and tags:
-			f_tags()
-			f_title()
-			f_artist()
+		if len(term) > 0:
+			self.allow_all = False
+			if title:
+				if 'title:' in term:
+					t = regex.search('(?<=title:)"([^"]*)"', term)
+					if t:
+						n = t.group()
+						term = term.replace('title:'+n, '')
+						t = n.replace('"', '')
+						self.title = [t]
+				else:
+					self.title = trim_for_non_tag(term)
+
+			if artist:
+				if 'artist:' in term:
+					a = regex.search('(?<=artist:)"([^"]*)"', term)
+					if a:
+						n = a.group()
+						term = term.replace('artist:'+n, '')
+						a = n.replace('"', '')
+						self.artist = a
+				elif 'author:' in term:
+					a = regex.search('(?<=author:)"([^"]*)"', term)
+					if a:
+						n = a.group()
+						term = term.replace('author:'+n, '')
+						a = n.replace('"', '')
+						self.artist = a
+				else:
+					self.artist = trim_for_non_tag(term)
+
+			if tags:
+				self.tags = utils.tag_to_dict(term)
+		else:
+			self.allow_all = True
 
 		self.invalidateFilter()
 
 	def filterAcceptsRow(self, source_row, index_parent):
+
+		if self.allow_all:
+			return True
 		allow = False
 		gallery = None
 
@@ -209,49 +270,68 @@ class SortFilterModel(QSortFilterProxyModel):
 			if self.artist:
 				l['artist'] = True
 			if self.tags:
-				try:
-					a = self.tags['default']
-					if a:
-						l['tags'] = True
-				except IndexError:
-					l['tags'] = True
+				l['tags'] = True
 			
-			for x in l:
-				if l[x]:
-					return l
-			return None
+			return l
 
 		def return_searched(where):
 			allow = False
 
 			def re_search(a, b):
 				"searches for a in b"
-				m = regex.search("({})".format(a), b, regex.IGNORECASE)
+				try:
+					m = regex.search("({})".format(a), b, regex.IGNORECASE)
+				except regex.error:
+					return None
 				return m
 
-			if where['title']:
-				if re_search(self.title, gallery.title):
-					allow = True
-			if where['artist']:
-				if re_search(self.artist, gallery.artist):
-					allow = True
 			if where['tags']:
-				#print(self.tags)
-				ser_tags = utils.tag_to_string(gallery.tags)
+				tag_allow = []
+				ser_tags = gallery.tags
 				for ns in self.tags:
 					if ns == 'default':
-						for tag in self.tags[ns]:
-							if re_search(tag, ser_tags):
-								#print(ser_tags)
-								allow = True
+						if ns in ser_tags:
+							for tag in self.tags[ns]:
+								if tag in ser_tags[ns]:
+									tag_allow.append(True)
+								else:
+									tag_allow.append(False)
+									#print(self.tags)
+						else: continue
 					else:
-						t = {ns:[]}
-						for tag in self.tags[ns]:
-							t[ns].append(tag)
-						tags_string = utils.tag_to_string(t)
-						#print(tags_string)
-						if re_search(tags_string, ser_tags):
-							allow = True
+						if ns in ser_tags:
+							for tag in self.tags[ns]:
+								if tag in ser_tags[ns]:
+									tag_allow.append(True)
+								else:
+									tag_allow.append(False)
+								#print(self.tags)
+						else:
+							tag_allow.append(False)
+				if len(tag_allow) != 0 and all(tag_allow):
+					allow = True
+			if where['title']:
+				title_allow = []
+				#print(self.title)
+				if all(self.title):
+					for t in self.title:
+						if re_search(t, gallery.title):
+							title_allow.append(True)
+						else:
+							title_allow.append(False)
+					if len(title_allow) > 0 and all(title_allow):
+						allow = True
+			if where['artist']:
+				artist_allow = []
+				#print(self.artist)
+				if all(self.artist):
+					for a in self.artist:
+						if re_search(a, gallery.artist):
+							artist_allow.append(True)
+						else:
+							artist_allow.append(False)
+					if len(artist_allow) > 0 and all(artist_allow):
+						allow = True
 
 			return allow
 

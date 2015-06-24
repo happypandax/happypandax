@@ -67,7 +67,7 @@ LIST_PATH = os.path.join(static_dir, "list.png")
 NO_IMAGE_PATH = os.path.join(static_dir, "default.jpg")
 
 # External Viewer
-EXTERNAL_VIEWER_SUPPORT = {'honeyview':['Honeyview.exe'], 'irfanview':['i_view32.exe']}
+EXTERNAL_VIEWER_SUPPORT = {'honeyview':['Honeyview.exe']}
 USE_EXTERNAL_VIEWER = get(False, 'Advanced', 'use external viewer', bool)
 EXTERNAL_VIEWER_PATH = os.path.normcase(get('', 'Advanced', 'external viewer path', str))
 _REFRESH_EXTERNAL_VIEWER = False
@@ -167,5 +167,48 @@ Mac: Default Viewer
 
 Note: Your viewer *might* still work, even though it's not on the list.
 You preffered viewer not on the list? Hit me up on github/gitter-chat to add official support.
+"""
+
+SEARCH_TUTORIAL_TIT_AUT =\
+	"""There are two ways to search for title/author:
+- 'term' or 'title:"term"'
+- 'author' or 'author:"term"'
+
+Examples:
+Say we want to find 'example title' by 'anon'
+
+First search entry: 'title:"example title"'
+Result: All galleries with the string 'example title' in their title
+Second search entry: example title
+Result: All galleries with either example or title in their title
+
+Same thing applies to author:
+
+First search entry: 'author:"anon"'
+Result: Same as above
+Second search entry: 'anon'
+Result: This will however show all galleries with the string anon in either tag, title or author
+"""
+
+
+SEARCH_TUTORIAL_TAGS =\
+	"""There are three ways to search for namespaces and tags:
+tag_term, namespace:tag_term and namespace:[tag_term1, tag_term2]
+
+Examples:
+Say we want to find a gallery with the namespace & tags: "tag1, ns:tag1, ns2:[tag1, tag2]"
+
+First search entry: 'tag1'
+Result: All galleries with a tag which is not in a namespace + the word 'tag1' in their title or author
+Second search entry: 'ns:tag1'
+Result: All galleries with the tag 'tag1' in namespace 'ns'
+Third search entry: 'ns2:[tag1, tag2]'
+Result: All galleries with 'tag1' AND 'tag2' in namespace 'ns2'
+"""
+
+SEARCH_TUTORIAL_GENERAL=\
+	"""Term excluding and case sensitive searching are not yet supported. (Will be in the near future)
+Some things to note when searching:
+- terms are seperated by a comma
 """
 
