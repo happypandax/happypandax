@@ -1,3 +1,18 @@
+*Happypanda v0.16*
+- A more proper way to search for namespace and tags is now available
+- Added support for external image viewers
+- Added support for CBZ
+- The settings button will now open up a real settings dialog
+	+ Tons of new options are now available in the settings dialog
+- Restyled the grid view
+- Restyled the tooltip to now show other metadata in grid view
+- Added troubleshoot, regex and search guides
+- Fixed bugs:
+	+ Application crashing when adding a gallery
+	+ Application crashing when refreshing
+	+ Namespace & tags not being shown correctly
+	+ & other small bugs
+
 *Happypanda v0.15*
 - More options are now available in contextmenu when rightclicking a gallery
 - It's now possible to add and remove chapters from a gallery
