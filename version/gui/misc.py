@@ -91,10 +91,10 @@ class FileIcon:
 							folder, name)
 						break;
 			else:
-				for name in os.listdir(gallery.chapter[0]):
+				for name in os.listdir(gallery.chapters[0]):
 					if name.endswith(tuple(IMG_FILES)):
 						file = os.path.join(
-							gallery.chapter[0], name)
+							gallery.chapters[0], name)
 						break;
 			return file
 

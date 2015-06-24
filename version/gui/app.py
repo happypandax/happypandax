@@ -412,13 +412,19 @@ Your database will not be touched without you being notified.""")
 									self.manga_list_view.refresh()
 									self.manga_list_view.gallery_model.ROWCOUNT_CHANGE.emit()
 
+								def del_later():
+									try:
+										a_instance.deleteLater()
+										thread.deleteLater()
+									except NameError:
+										pass
+
 								a_instance.moveToThread(thread)
 								a_instance.prog.connect(loading.progress.setValue)
 								thread.started.connect(loading_show)
 								thread.started.connect(a_instance.add_to_db)
 								a_instance.done.connect(loading_hide)
-								a_instance.done.connect(lambda: a_instance.deleteLater)
-								a_instance.done.connect(lambda: thread.deleteLater)
+								a_instance.done.connect(del_later)
 								thread.start()
 
 							data_thread.quit
