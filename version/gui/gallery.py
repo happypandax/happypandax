@@ -1,4 +1,4 @@
-"""
+﻿"""
 This file is part of Happypanda.
 Happypanda is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -16,11 +16,13 @@ from PyQt5.QtCore import (Qt, QAbstractListModel, QModelIndex, QVariant,
 						  QSize, QRect, QEvent, pyqtSignal, QThread,
 						  QTimer, QPointF, QSortFilterProxyModel,
 						  QAbstractTableModel, QItemSelectionModel,
-						  QPoint)
+						  QPoint, QRectF)
 from PyQt5.QtGui import (QPixmap, QBrush, QColor, QPainter, 
 						 QPen, QTextDocument,
 						 QMouseEvent, QHelpEvent,
-						 QPixmapCache, QCursor, QPalette, QKeyEvent)
+						 QPixmapCache, QCursor, QPalette, QKeyEvent,
+						 QFont, QTextOption, QFontMetrics, QFontMetricsF,
+						 QTextLayout)
 from PyQt5.QtWidgets import (QListView, QFrame, QLabel,
 							 QStyledItemDelegate, QStyle,
 							 QMenu, QAction, QToolTip, QVBoxLayout,
@@ -28,7 +30,7 @@ from PyQt5.QtWidgets import (QListView, QFrame, QLabel,
 							 QHBoxLayout, QFormLayout, QDesktopWidget,
 							 QWidget, QHeaderView, QTableView, QApplication,
 							 QMessageBox)
-import threading, logging, os
+import threading, logging, os, math
 import re as regex
 
 from ..database import gallerydb
@@ -43,11 +45,10 @@ log_e = log.error
 log_c = log.critical
 
 class Popup(QWidget):
-	def __init__(self):
-		super().__init__(None, Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+	def __init__(self, parent=None):
+		super().__init__(parent, Qt.Window | Qt.FramelessWindowHint)
 		self.setAttribute(Qt.WA_ShowWithoutActivating)
 		self.initUI()
-		self.setWindowModality(Qt.WindowModal)
 		#self.resize(gui_constants.POPUP_WIDTH,gui_constants.POPUP_HEIGHT)
 		self.setFixedWidth(gui_constants.POPUP_WIDTH)
 		self.setMaximumHeight(gui_constants.POPUP_HEIGHT)
@@ -140,6 +141,7 @@ class Popup(QWidget):
 		self.link.setText(gallery.link)
 
 class SortFilterModel(QSortFilterProxyModel):
+	ROWCOUNT_CHANGE = pyqtSignal()
 	def __init__(self, parent=None):
 		super().__init__(parent)
 		self._data = []
@@ -149,14 +151,18 @@ class SortFilterModel(QSortFilterProxyModel):
 		self.tags = {}
 		self.title = ""
 		self.artist = ""
+		self.allow_all = True
+		self.excludes = []
 
 	def fav_view(self):
 		self.fav = True
 		self.invalidateFilter()
+		self.ROWCOUNT_CHANGE.emit()
 
 	def catalog_view(self):
 		self.fav = False
 		self.invalidateFilter()
+		self.ROWCOUNT_CHANGE.emit()
 	
 	def change_model(self, model):
 		self.setSourceModel(model)
@@ -178,24 +184,81 @@ class SortFilterModel(QSortFilterProxyModel):
 	def search(self, term, title=True, artist=True, tags=True):
 		"""
 		Receives a search term.
-		If title/artist/tags True: searches in it
+		If title/artist/tags True: searches in them
 		"""
+		self.excludes = []
+		def trim_for_non_tag(txt):
+			level = 0 # so we know if we are in a list
+			buffer = ""
+			stripped_set = set() # we only need unique values
+			for n, x in enumerate(txt, 1):
 
-		def f_tags():
-			self.tags = utils.tag_to_dict(term)
+				if x == '[':
+					level += 1 # we are now entering a list
+				if x == ']':
+					level -= 1 # we are now exiting a list
 
-		def f_title():
-			self.title = term
 
-		def f_artist():
-			self.artist = term
+				if x == ',': # if we meet a comma
+					# we trim our buffer if we are at top level
+					if level is 0:
+						# add to list
+						stripped_set.add(buffer.strip())
+						buffer = ""
+					else:
+						buffer += x
+				elif n == len(txt): # or at end of string
+					buffer += x
+					# add to list
+					stripped_set.add(buffer.strip())
+					buffer = ""
+				else:
+					buffer += x
+			for s in stripped_set:
+				if not ':' in s:
+					txt = s
+			txt = txt.split(' ')
+			txt = [x.strip() for x in txt]
+			return txt
 
-		if title and artist and tags:
-			f_tags()
-			f_title()
-			f_artist()
+		if len(term) > 0:
+			self.allow_all = False
+			if title:
+				if 'title:' in term:
+					t = regex.search('(?<=title:)"([^"]*)"', term)
+					if t:
+						n = t.group()
+						term = term.replace('title:'+n, '')
+						t = n.replace('"', '')
+						self.title = [t]
+				else:
+					self.title = trim_for_non_tag(term)
+
+			if artist:
+				if 'artist:' in term:
+					a = regex.search('(?<=artist:)"([^"]*)"', term)
+					if a:
+						n = a.group()
+						term = term.replace('artist:'+n, '')
+						a = n.replace('"', '')
+						self.artist = a
+				elif 'author:' in term:
+					a = regex.search('(?<=author:)"([^"]*)"', term)
+					if a:
+						n = a.group()
+						term = term.replace('author:'+n, '')
+						a = n.replace('"', '')
+						self.artist = a
+				else:
+					self.artist = trim_for_non_tag(term)
+
+			if tags:
+				self.tags = utils.tag_to_dict(term)
+		else:
+			self.allow_all = True
 
 		self.invalidateFilter()
+		self.ROWCOUNT_CHANGE.emit()
 
 	def filterAcceptsRow(self, source_row, index_parent):
 		allow = False
@@ -208,49 +271,68 @@ class SortFilterModel(QSortFilterProxyModel):
 			if self.artist:
 				l['artist'] = True
 			if self.tags:
-				try:
-					a = self.tags['default']
-					if a:
-						l['tags'] = True
-				except IndexError:
-					l['tags'] = True
+				l['tags'] = True
 			
-			for x in l:
-				if l[x]:
-					return l
-			return None
+			return l
 
 		def return_searched(where):
 			allow = False
 
 			def re_search(a, b):
 				"searches for a in b"
-				m = regex.search("({})".format(a), b, regex.IGNORECASE)
+				try:
+					m = regex.search("({})".format(a), b, regex.IGNORECASE)
+				except regex.error:
+					return None
 				return m
 
-			if where['title']:
-				if re_search(self.title, gallery.title):
-					allow = True
-			if where['artist']:
-				if re_search(self.artist, gallery.artist):
-					allow = True
 			if where['tags']:
-				#print(self.tags)
-				ser_tags = utils.tag_to_string(gallery.tags)
+				tag_allow = []
+				ser_tags = gallery.tags
 				for ns in self.tags:
 					if ns == 'default':
-						for tag in self.tags[ns]:
-							if re_search(tag, ser_tags):
-								#print(ser_tags)
-								allow = True
+						if ns in ser_tags:
+							for tag in self.tags[ns]:
+								if tag in ser_tags[ns]:
+									tag_allow.append(True)
+								else:
+									tag_allow.append(False)
+									#print(self.tags)
+						else: continue
 					else:
-						t = {ns:[]}
-						for tag in self.tags[ns]:
-							t[ns].append(tag)
-						tags_string = utils.tag_to_string(t)
-						#print(tags_string)
-						if re_search(tags_string, ser_tags):
-							allow = True
+						if ns in ser_tags:
+							for tag in self.tags[ns]:
+								if tag in ser_tags[ns]:
+									tag_allow.append(True)
+								else:
+									tag_allow.append(False)
+								#print(self.tags)
+						else:
+							tag_allow.append(False)
+				if len(tag_allow) != 0 and all(tag_allow):
+					allow = True
+			if where['title']:
+				title_allow = []
+				#print(self.title)
+				if all(self.title):
+					for t in self.title:
+						if re_search(t, gallery.title):
+							title_allow.append(True)
+						else:
+							title_allow.append(False)
+					if len(title_allow) > 0 and all(title_allow):
+						allow = True
+			if where['artist']:
+				artist_allow = []
+				#print(self.artist)
+				if all(self.artist):
+					for a in self.artist:
+						if re_search(a, gallery.artist):
+							artist_allow.append(True)
+						else:
+							artist_allow.append(False)
+					if len(artist_allow) > 0 and all(artist_allow):
+						allow = True
 
 			return allow
 
@@ -264,12 +346,15 @@ class SortFilterModel(QSortFilterProxyModel):
 						if s:
 							allow = return_searched(s)
 						else: allow = True
+						if self.allow_all:
+							return True
 				else:
 					s = do_search()
 					if s:
 						allow = return_searched(s)
 					else: allow = True
-
+					if self.allow_all:
+						return True
 		return allow
 
 class GalleryModel(QAbstractTableModel):
@@ -361,11 +446,53 @@ class GalleryModel(QAbstractTableModel):
 			bg_brush = QBrush(bg_color)
 			return bg_brush
 
-		if role == Qt.ToolTipRole:
-			return column_checker()
+		if gui_constants.GRID_TOOLTIP and role == Qt.ToolTipRole:
+			add_bold = []
+			add_tips = []
+			if gui_constants.TOOLTIP_TITLE:
+				add_bold.append('<b>Title:</b>')
+				add_tips.append(current_gallery.title)
+			if gui_constants.TOOLTIP_AUTHOR:
+				add_bold.append('<b>Author:</b>')
+				add_tips.append(current_gallery.artist)
+			if gui_constants.TOOLTIP_CHAPTERS:
+				add_bold.append('<b>Chapters:</b>')
+				add_tips.append(len(current_gallery.chapters))
+			if gui_constants.TOOLTIP_STATUS:
+				add_bold.append('<b>Status:</b>')
+				add_tips.append(current_gallery.status)
+			if gui_constants.TOOLTIP_TYPE:
+				add_bold.append('<b>Type:</b>')
+				add_tips.append(current_gallery.type)
+			if gui_constants.TOOLTIP_LANG:
+				add_bold.append('<b>Language:</b>')
+				add_tips.append(current_gallery.language)
+			if gui_constants.TOOLTIP_DESCR:
+				add_bold.append('<b>Description:</b><br />')
+				add_tips.append(current_gallery.info)
+			if gui_constants.TOOLTIP_TAGS:
+				add_bold.append('<b>Tags:</b>')
+				add_tips.append(utils.tag_to_string(
+					current_gallery.tags))
+			if gui_constants.TOOLTIP_LAST_READ:
+				add_bold.append('<b>Last read:</b>')
+				add_tips.append(current_gallery.last_read)
+			if gui_constants.TOOLTIP_TIMES_READ:
+				add_bold.append('<b>Times read:</b>')
+				add_tips.append(current_gallery.times_read)
+			if gui_constants.TOOLTIP_PUB_DATE:
+				add_bold.append('<b>Publication Date:</b>')
+				add_tips.append(current_gallery.pub_date)
+			if gui_constants.TOOLTIP_DATE_ADDED:
+				add_bold.append('<b>Date added:</b>')
+				add_tips.append(current_gallery.date_added)
 
-		#if role == Qt.ToolTipRole:
-		#	return "Example popup!!"
+			tooltip = ""
+			tips = list(zip(add_bold, add_tips))
+			for tip in tips:
+				tooltip += "{} {}<br />".format(tip[0], tip[1])
+			return tooltip
+
 		if role == Qt.UserRole+1:
 			return current_gallery
 
@@ -377,7 +504,7 @@ class GalleryModel(QAbstractTableModel):
 		return None
 
 	def rowCount(self, index = QModelIndex()):
-		return self._data_count
+		return len(self._data)
 
 	def columnCount(self, parent = QModelIndex()):
 		return len(gui_constants.COLUMNS)
@@ -414,23 +541,22 @@ class GalleryModel(QAbstractTableModel):
 	def addRows(self, list_of_gallery, position=None,
 				rows=1, index = QModelIndex()):
 		"Adds new gallery data to model and to DB"
-		loading = misc.Loading(self.parent())
-		loading.setText('Adding...')
-		loading.progress.setMinimum(0)
-		loading.progress.setMaximum(0)
-		loading.show()
 		from ..database.gallerydb import PROFILE_TO_MODEL
+		log_d('Adding {} rows'.format(rows))
 		if not position:
+			log_d('Add rows: No position specified')
 			position = len(self._data)
 		self.beginInsertRows(QModelIndex(), position, position + rows - 1)
+		log_d('Add rows: Began inserting')
 		for gallery in list_of_gallery:
+			#
 			threading.Thread(target=gallerydb.GalleryDB.add_gallery_return, args=(gallery,)).start()
 			gallery.profile = PROFILE_TO_MODEL.get()
-			self._data.insert(0, gallery)
+			self._data.insert(position, gallery)
+		log_d('Add rows: Finished inserting')
 		self.endInsertRows()
 		self.CUSTOM_STATUS_MSG.emit("Added item(s)")
 		self.ROWCOUNT_CHANGE.emit()
-		loading.close()
 		return True
 
 	def insertRows(self, list_of_gallery, position,
@@ -483,14 +609,31 @@ class CustomDelegate(QStyledItemDelegate):
 	POPUP = pyqtSignal()
 	CONTEXT_ON = False
 
-	def __init__(self):
+	def __init__(self, parent=None):
 		super().__init__()
 		self.W = gui_constants.THUMB_W_SIZE
-		self.H = gui_constants.THUMB_H_SIZE
-		QPixmapCache.setCacheLimit(gui_constants.THUMBNAIL_CACHE_SIZE)
-		self.popup_window = Popup()
+		self.H = gui_constants.THUMB_H_SIZE + gui_constants.GRIDBOX_LBL_H
+		QPixmapCache.setCacheLimit(gui_constants.THUMBNAIL_CACHE_SIZE[0]*
+							 gui_constants.THUMBNAIL_CACHE_SIZE[1])
+		self.popup_window = Popup(parent)
 		self.popup_timer = QTimer()
 		self._painted_indexes = {}
+
+		misc.FileIcon.refresh_default_icon()
+		self.font_size = gui_constants.GALLERY_FONT[1]
+		self.font_name = gui_constants.GALLERY_FONT[0]
+		if not self.font_name:
+			self.font_name = QWidget().font().family()
+		self.title_font = QFont()
+		self.title_font.setBold(True)
+		self.title_font.setFamily(self.font_name)
+		self.artist_font = QFont()
+		self.artist_font.setFamily(self.font_name)
+		if self.font_size is not 0:
+			self.title_font.setPixelSize(self.font_size)
+			self.artist_font.setPixelSize(self.font_size)
+		self.title_font_m = QFontMetrics(self.title_font)
+		self.artist_font_m = QFontMetrics(self.artist_font)
 		#self.popup_timer.timeout.connect(self.POPUP.emit)
 
 	def key(self, key):
@@ -512,39 +655,43 @@ class CustomDelegate(QStyledItemDelegate):
 			gallery = index.data(Qt.UserRole+1)
 			title = gallery.title
 			artist = gallery.artist
+			title_color = gui_constants.GRID_VIEW_TITLE_COLOR
+			artist_color = gui_constants.GRID_VIEW_ARTIST_COLOR
+			label_color = gui_constants.GRID_VIEW_LABEL_COLOR
 			# Enable this to see the defining box
 			#painter.drawRect(option.rect)
 			# define font size
 			if 20 > len(title) > 15:
-				title_size = "font-size:12px;"
+				title_size = "font-size:{}px;".format(self.font_size)
 			elif 30 > len(title) > 20:
-				title_size = "font-size:11px;"
+				title_size = "font-size:{}px;".format(self.font_size-1)
 			elif 40 > len(title) >= 30:
-				title_size = "font-size:10px;"
+				title_size = "font-size:{}px;".format(self.font_size-2)
 			elif 50 > len(title) >= 40:
-				title_size = "font-size:9px;"
+				title_size = "font-size:{}px;".format(self.font_size-3)
 			elif len(title) >= 50:
-				title_size = "font-size:8px;"
+				title_size = "font-size:{}px;".format(self.font_size-4)
 			else:
-				title_size = ""
+				title_size = "font-size:{}px;".format(self.font_size)
 
 			if 30 > len(artist) > 20:
-				artist_size = "font-size:11px;"
+				artist_size = "font-size:{}px;".format(self.font_size)
 			elif 40 > len(artist) >= 30:
-				artist_size = "font-size:9px;"
+				artist_size = "font-size:{}px;".format(self.font_size-1)
 			elif len(artist) >= 40:
-				artist_size = "font-size:8px;"
+				artist_size = "font-size:{}px;".format(self.font_size-2)
 			else:
-				artist_size = ""
+				artist_size = "font-size:{}px;".format(self.font_size)
 
 			#painter.setPen(QPen(Qt.NoPen))
-			r = option.rect.adjusted(1, -2, -1, 0)
-			rec = r.getRect()
+			#option.rect = option.rect.adjusted(11, 10, 0, 0)
+			option.rect.setWidth(self.W)
+			option.rect.setHeight(self.H)
+			rec = option.rect.getRect()
 			x = rec[0]
-			y = rec[1] + 3
+			y = rec[1]
 			w = rec[2]
-			h = rec[3] - 5
-
+			h = rec[3]
 
 			text_area = QTextDocument()
 			text_area.setDefaultFont(option.font)
@@ -559,30 +706,30 @@ class CustomDelegate(QStyledItemDelegate):
 			}}
 			#title {{
 			position:absolute;
-			color: white;
+			color: {4};
 			font-weight:bold;
-			{}
+			{0}
 			}}
 			#artist {{
 			position:absolute;
-			color:white;
+			color: {5};
 			top:20px;
 			right:0;
-			{}
+			{1}
 			}}
 			</style>
 			</head>
 			<body>
 			<div id="area">
 			<center>
-			<div id="title">{}
+			<div id="title">{2}
 			</div>
-			<div id="artist">{}
+			<div id="artist">{3}
 			</div>
 			</div>
 			</center>
 			</body>
-			""".format(title_size, artist_size, title, artist, "Chapters"))
+			""".format(title_size, artist_size, title, artist, title_color, artist_color))
 			text_area.setTextWidth(w)
 
 			#chapter_area = QTextDocument()
@@ -613,26 +760,60 @@ class CustomDelegate(QStyledItemDelegate):
 				else:
 					painter.drawPixmap(QPoint(x,y),
 							self.image)
-		
+
 			# draw star if it's favorited
 			if gallery.fav == 1:
 				painter.drawPixmap(QPointF(x,y), QPixmap(gui_constants.STAR_PATH))
 
+			if gui_constants.DISPLAY_GALLERY_TYPE:
+				icon = misc.FileIcon.get_file_icon(gallery.path)
+				if not icon.isNull():
+					icon.paint(painter, QRect(x+2, y+gui_constants.THUMB_H_SIZE-16, 16, 16))
+
+			if gui_constants.USE_EXTERNAL_PROG_ICO:
+				if gui_constants.USE_EXTERNAL_VIEWER:
+					icon = misc.FileIcon.get_external_file_icon()
+				else:
+					icon = misc.FileIcon.get_default_file_icon()
+
+				if icon:
+					icon.paint(painter, QRect(x+w-30, y+gui_constants.THUMB_H_SIZE-28, 28, 28))
+
+
 			#draw the label for text
 			painter.save()
-			painter.translate(option.rect.x(), option.rect.y()+140)
-			box_color = QBrush(QColor(0,0,0,123))
+			painter.translate(x, y+gui_constants.THUMB_H_SIZE)
+			box_color = QBrush(QColor(label_color))#QColor(0,0,0,123))
 			painter.setBrush(box_color)
-			rect = QRect(0, 0, w+2, 60) #x, y, width, height
+			rect = QRect(0, 0, w, 60) #x, y, width, height
 			painter.fillRect(rect, box_color)
 			painter.restore()
 			painter.save()
 			# draw text
-			painter.translate(option.rect.x(), option.rect.y()+142)
-			text_area.drawContents(painter)
-			#painter.resetTransform()
+			alignment = QTextOption(Qt.AlignCenter)
+			alignment.setUseDesignMetrics(True)
+			title_rect = QRectF(0,0,w,15)
+			artist_rect = QRectF(0,15,w,15)
+			painter.translate(x, y+gui_constants.THUMB_H_SIZE)
+			if gui_constants.GALLERY_FONT_ELIDE:
+				painter.setFont(self.title_font)
+				painter.setPen(QColor(title_color))
+				painter.drawText(title_rect,
+						 self.title_font_m.elidedText(title, Qt.ElideRight, w-10),
+						 alignment)
+				
+				painter.setPen(QColor(artist_color))
+				painter.setFont(self.artist_font)
+				alignment.setWrapMode(QTextOption.NoWrap)
+				painter.drawText(artist_rect,
+							self.title_font_m.elidedText(artist, Qt.ElideRight, w-10),
+							alignment)
+			else:
+				text_area.setDefaultFont(QFont(self.font_name))
+				text_area.drawContents(painter)
+			##painter.resetTransform()
 			painter.restore()
-
+			
 			if option.state & QStyle.State_MouseOver:
 				painter.fillRect(option.rect, QColor(225,225,225,90)) #70
 			else:
@@ -645,7 +826,7 @@ class CustomDelegate(QStyledItemDelegate):
 		else:
 			super().paint(painter, option, index)
 
-	def sizeHint(self, QStyleOptionViewItem, QModelIndex):
+	def sizeHint(self, StyleOptionViewItem, QModelIndex):
 		return QSize(self.W, self.H)
 
 # TODO: Redo this part to avoid duplicated code
@@ -664,6 +845,8 @@ class MangaView(QListView):
 		self.W = gui_constants.GRIDBOX_W_SIZE
 		self.setGridSize(QSize(self.W, self.H))
 		self.setResizeMode(self.Adjust)
+		self.setIconSize(QSize(gui_constants.THUMB_W_SIZE,
+						 gui_constants.THUMB_H_SIZE))
 		# all items have the same size (perfomance)
 		self.setUniformItemSizes(True)
 		self.setSelectionBehavior(self.SelectItems)
@@ -679,11 +862,12 @@ class MangaView(QListView):
 		self.sort_model.setFilterCaseSensitivity(Qt.CaseInsensitive)
 		self.sort_model.setSortLocaleAware(True)
 		self.sort_model.setSortCaseSensitivity(Qt.CaseInsensitive)
-		self.manga_delegate = CustomDelegate()
+		self.manga_delegate = CustomDelegate(parent)
 		self.setItemDelegate(self.manga_delegate)
 		self.gallery_model = GalleryModel(parent)
 		self.sort_model.change_model(self.gallery_model)
 		self.sort_model.sort(0)
+		self.sort_model.ROWCOUNT_CHANGE.connect(self.gallery_model.ROWCOUNT_CHANGE.emit)
 		self.setModel(self.sort_model)
 		self.SERIES_DIALOG.connect(self.spawn_dialog)
 		self.doubleClicked.connect(self.open_chapter)
@@ -769,12 +953,12 @@ class MangaView(QListView):
 		gallery = index.data(Qt.UserRole+1)
 		if gallery.fav == 1:
 			gallery.fav = 0
-			self.model().replaceRows([gallery], index.row(), 1, index)
+			#self.model().replaceRows([gallery], index.row(), 1, index)
 			gallerydb.GalleryDB.fav_gallery_set(gallery.id, 0)
 			self.gallery_model.CUSTOM_STATUS_MSG.emit("Unfavorited")
 		else:
 			gallery.fav = 1
-			self.model().replaceRows([gallery], index.row(), 1, index)
+			#self.model().replaceRows([gallery], index.row(), 1, index)
 			gallerydb.GalleryDB.fav_gallery_set(gallery.id, 1)
 			self.gallery_model.CUSTOM_STATUS_MSG.emit("Favorited")
 
@@ -786,6 +970,11 @@ class MangaView(QListView):
 				try:
 					threading.Thread(target=utils.open,
 							   args=(gallery.chapters[chap_numb],)).start()
+					if not gallery.times_read:
+						gallery.times_read = 0
+					gallery.times_read += 1
+					gallerydb.GalleryDB.modify_gallery(gallery.id,
+						times_read=gallery.times_read)
 				except IndexError:
 					pass
 		else:
@@ -795,6 +984,11 @@ class MangaView(QListView):
 			try:
 				threading.Thread(target=utils.open,
 						   args=(gallery.chapters[chap_numb],)).start()
+				if not gallery.times_read:
+					gallery.times_read = 0
+				gallery.times_read += 1
+				gallerydb.GalleryDB.modify_gallery(gallery.id,
+					times_read=gallery.times_read)
 			except IndexError:
 				pass
 
@@ -904,11 +1098,11 @@ class MangaView(QListView):
 				self.STATUS_BAR_MSG.emit('Opening folders')
 				for x in select_indexes:
 					ser = x.data(Qt.UserRole+1)
-					utils.open_path(os.path.split(ser.path)[0])
+					utils.open_path(ser.path)
 			else:
 				self.STATUS_BAR_MSG.emit('Opening folder')
 				ser = index.data(Qt.UserRole+1)
-				utils.open_path(os.path.split(ser.path)[0])
+				utils.open_path(ser.path)
 
 		def add_chapters():
 			def add_chdb(chaps):
@@ -1037,13 +1231,13 @@ class MangaView(QListView):
 
 	def spawn_dialog(self, index=False):
 		if not index:
-			dialog = misc.GalleryDialog()
+			dialog = misc.GalleryDialog(self.parentWidget())
 			dialog.SERIES.connect(self.gallery_model.addRows)
-			dialog.trigger() # TODO: implement mass galleries adding
 		else:
-			dialog = misc.GalleryDialog()
+			dialog = misc.GalleryDialog(self.parentWidget(), [index])
 			dialog.SERIES_EDIT.connect(self.replace_edit_gallery)
-			dialog.trigger([index])
+		
+		dialog.show()
 
 	def updateGeometries(self):
 		super().updateGeometries()
@@ -1133,12 +1327,12 @@ class MangaTableView(QTableView):
 		# TODO: don't need to fetch from DB here... 
 		if gallery.fav == 1:
 			gallery.fav = 0
-			self.gallery_model.replaceRows([gallery], index.row(), 1, index)
+			#self.gallery_model.replaceRows([gallery], index.row(), 1, index)
 			gallerydb.GalleryDB.fav_gallery_set(gallery.id, 0)
 			self.gallery_model.CUSTOM_STATUS_MSG.emit("Unfavorited")
 		else:
 			gallery.fav = 1
-			self.gallery_model.replaceRows([gallery], index.row(), 1, index)
+			#self.gallery_model.replaceRows([gallery], index.row(), 1, index)
 			gallerydb.GalleryDB.fav_gallery_set(gallery.id, 1)
 			self.gallery_model.CUSTOM_STATUS_MSG.emit("Favorited")
 
@@ -1150,6 +1344,11 @@ class MangaTableView(QTableView):
 				try:
 					threading.Thread(target=utils.open,
 							   args=(gallery.chapters[chap_numb],)).start()
+					if not gallery.times_read:
+						gallery.times_read = 0
+					gallery.times_read += 1
+					gallerydb.GalleryDB.modify_gallery(gallery.id,
+						times_read=gallery.times_read)
 				except IndexError:
 					pass
 		else:
@@ -1159,6 +1358,11 @@ class MangaTableView(QTableView):
 			try:
 				threading.Thread(target=utils.open,
 						   args=(gallery.chapters[chap_numb],)).start()
+				if not gallery.times_read:
+					gallery.times_read = 0
+				gallery.times_read += 1
+				gallerydb.GalleryDB.modify_gallery(gallery.id,
+					times_read=gallery.times_read)
 			except IndexError:
 				pass
 
@@ -1179,7 +1383,8 @@ class MangaTableView(QTableView):
 				gallerydb.ChapterDB.del_chapter(gallery.id, chap_numb)
 
 	def refresh(self):
-		self.gallery_model.populate_data() # TODO: CAUSE OF CRASH! FIX ASAP
+		self.gallery_model.layoutChanged.emit()
+		#self.gallery_model.populate_data() # TODO: CAUSE OF CRASH! FIX ASAP
 		self.STATUS_BAR_MSG.emit("Refreshed")
 
 	def contextMenuEvent(self, event):
@@ -1265,11 +1470,11 @@ class MangaTableView(QTableView):
 				self.STATUS_BAR_MSG.emit('Opening folders')
 				for x in select_indexes:
 					ser = x.data(Qt.UserRole+1)
-					utils.open_path(os.path.split(ser.path)[0])
+					utils.open_path(ser.path)
 			else:
 				self.STATUS_BAR_MSG.emit('Opening folder')
 				ser = index.data(Qt.UserRole+1)
-				utils.open_path(os.path.split(ser.path)[0])
+				utils.open_path(ser.path)
 
 		def add_chapters():
 			def add_chdb(chaps):
@@ -1390,13 +1595,13 @@ class MangaTableView(QTableView):
 
 	def spawn_dialog(self, index=False):
 		if not index:
-			dialog = misc.GalleryDialog()
+			dialog = misc.GalleryDialog(self.parentWidget())
 			dialog.SERIES.connect(self.gallery_model.addRows)
-			dialog.trigger() # TODO: implement mass galleries adding
+			dialog.show() # TODO: implement mass galleries adding
 		else:
-			dialog = misc.GalleryDialog()
+			dialog = misc.GalleryDialog(self.parentWidget())
 			dialog.SERIES_EDIT.connect(self.replace_edit_gallery)
-			dialog.trigger([index])
+			dialog.show()
 
 if __name__ == '__main__':
 	raise NotImplementedError("Unit testing not yet implemented")

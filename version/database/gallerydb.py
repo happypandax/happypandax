@@ -16,7 +16,8 @@ import datetime, os, threading, logging, queue, uuid # for unique filename
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QImage
 
-from ..utils import today, ArchiveFile, generate_img_hash, delete_path
+from ..utils import (today, ArchiveFile, generate_img_hash, delete_path,
+					 ARCHIVE_FILES)
 from .db import CommandQueue, ResultQueue
 from ..gui import gui_constants
 from .db_constants import THUMBNAIL_PATH, IMG_FILES
@@ -32,7 +33,7 @@ log_e = log.error
 log_c = log.critical
 
 
-def gen_thumbnail(chapter_path, width=gui_constants.THUMB_W_SIZE-2,
+def gen_thumbnail(chapter_path, width=gui_constants.THUMB_W_SIZE,
 				height=gui_constants.THUMB_H_SIZE): # 2 to align it properly.. need to redo this
 	"""Generates a thumbnail with unique filename in the cache dir.
 	Returns absolute path to the created thumbnail
@@ -46,8 +47,8 @@ def gen_thumbnail(chapter_path, width=gui_constants.THUMB_W_SIZE-2,
 
 	def generate(cache, chap_path, w, h, img_queue):
 		try:
-			if chap_path[-4:] == '.zip':
-				log_d('Generating Thumb from zip')
+			if chap_path[-4:] in ARCHIVE_FILES:
+				log_d('Generating Thumb from {}'.format(chap_path[-3:]))
 				zip = ArchiveFile(chap_path)
 				p = os.path.join('temp', str(uuid.uuid4()))
 				os.mkdir(p)
@@ -99,6 +100,7 @@ def gallery_map(row, gallery):
 	gallery.last_update = row['last_update']
 	gallery.last_read = row['last_read']
 	gallery.date_added = row['date_added']
+	gallery.times_read = row['times_read']
 	try:
 		gallery.link = bytes.decode(row['link'])
 	except TypeError:
@@ -117,9 +119,11 @@ def default_exec(object):
 		else:
 			return obj
 	executing = [["""INSERT INTO series(title, artist, profile, series_path, 
-					info, type, fav, status, pub_date, date_added, last_read, link, last_update)
+					info, type, fav, status, pub_date, date_added, last_read, link, last_update,
+					times_read)
 				VALUES(:title, :artist, :profile, :series_path, :info, :type, :fav,
-					:status, :pub_date, :date_added, :last_read, :link, :last_update)""",
+					:status, :pub_date, :date_added, :last_read, :link, :last_update,
+					:times_read)""",
 				{
 				'title':check(object.title),
 				'artist':check(object.artist),
@@ -134,7 +138,8 @@ def default_exec(object):
 				'date_added':check(object.date_added),
 				'last_read':check(object.last_read),
 				'last_update':check(object.last_update),
-				'link':str.encode(object.link)
+				'link':str.encode(object.link),
+				'times_read':check(object.times_read)
 				}
 				]]
 	return executing
@@ -161,7 +166,8 @@ class GalleryDB:
 
 	@staticmethod
 	def modify_gallery(series_id, title=None, artist=None, info=None, type=None, fav=None,
-				   tags=None, language=None, status=None, pub_date=None, link=None):
+				   tags=None, language=None, status=None, pub_date=None, link=None,
+				   times_read=None):
 		"Modifies gallery with given gallery id"
 		executing = []
 		assert isinstance(series_id, int)
@@ -191,6 +197,8 @@ class GalleryDB:
 			executing.append(["UPDATE series SET pub_date=? WHERE series_id=?", (pub_date, series_id)])
 		if link:
 			executing.append(["UPDATE series SET link=? WHERE series_id=?", (link, series_id)])
+		if times_read:
+			executing.append(["UPDATE series SET times_read=? WHERE series_id=?", (times_read, series_id)])
 		if tags:
 			assert isinstance(tags, dict)
 			TagDB.modify_tags(series_id, tags)
@@ -232,7 +240,6 @@ class GalleryDB:
 		CommandQueue.put(executing)
 		cursor = ResultQueue.get()
 		row = cursor.fetchone()
-		print(row)
 		gallery = Gallery()
 		try:
 			gallery.id = row['series_id']
@@ -294,7 +301,7 @@ class GalleryDB:
 	def add_gallery(object, test_mode=False):
 		"Receives an object of class gallery, and appends it to DB"
 		"Adds gallery of <Gallery> class into database"
-		assert isinstance(object, Gallery), "add_gallery method only accept gallery items"
+		assert isinstance(object, Gallery), "add_gallery method only accepts gallery items"
 
 		object.profile = gen_thumbnail(object.chapters[0])
 
@@ -585,34 +592,35 @@ class TagDB:
 		CommandQueue.put(executing)
 		cursor = ResultQueue.get()
 		tags = {}
-		# WARNING: rowcount doesn't work! Fix this ASAP!
-		if cursor.fetchone(): # tags exists
-			for tag_map_row in cursor.fetchall(): # iterate all tag_mappings_ids
-				# get tag and namespace 
-				executing = [["""SELECT namespace_id, tag_id FROM tags_mappings
-								WHERE tags_mappings_id=?""", (tag_map_row['tags_mappings_id'],)]]
+		result = cursor.fetchall()
+		for tag_map_row in result: # iterate all tag_mappings_ids
+			if not tag_map_row:
+				continue
+			# get tag and namespace 
+			executing = [["""SELECT namespace_id, tag_id FROM tags_mappings
+							WHERE tags_mappings_id=?""", (tag_map_row['tags_mappings_id'],)]]
+			CommandQueue.put(executing)
+			c = ResultQueue.get()
+			for row in c.fetchall(): # iterate all rows
+				# get namespace
+				executing = [["SELECT namespace FROM namespaces WHERE namespace_id=?",
+				(row['namespace_id'],)]]
 				CommandQueue.put(executing)
 				c = ResultQueue.get()
-				for row in c.fetchall(): # iterate all rows
-					# get namespace
-					executing = [["SELECT namespace FROM namespaces WHERE namespace_id=?",
-					(row['namespace_id'],)]]
-					CommandQueue.put(executing)
-					c = ResultQueue.get()
-					namespace = c.fetchone()['namespace']
+				namespace = c.fetchone()['namespace']
 
-					# get tag
-					executing = [["SELECT tag FROM tags WHERE tag_id=?", (row['tag_id'],)]]
-					CommandQueue.put(executing)
-					c = ResultQueue.get()
-					tag = c.fetchone()['tag']
+				# get tag
+				executing = [["SELECT tag FROM tags WHERE tag_id=?", (row['tag_id'],)]]
+				CommandQueue.put(executing)
+				c = ResultQueue.get()
+				tag = c.fetchone()['tag']
 
-					# add them to dict
-					if not namespace in tags:
-						tags[namespace] = [tag]
-					else:
-						# namespace already exists in dict
-						tags[namespace].append(tag)
+				# add them to dict
+				if not namespace in tags:
+					tags[namespace] = [tag]
+				else:
+					# namespace already exists in dict
+					tags[namespace].append(tag)
 		return tags
 
 	@staticmethod
@@ -796,6 +804,7 @@ class Gallery:
 		self.date_added = datetime.date.today()
 		self.last_read = None
 		self.last_update = None
+		self.times_read = 0
 		self.hash = None
 		self.valid = False
 		self._cache_id = None

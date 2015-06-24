@@ -1,4 +1,4 @@
-"""
+﻿"""
 This file is part of Happypanda.
 Happypanda is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -12,7 +12,7 @@ You should have received a copy of the GNU General Public License
 along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import sys, logging, os, threading
+import sys, logging, os, threading, re
 from PyQt5.QtCore import (Qt, QSize, pyqtSignal, QThread, QEvent, QTimer,
 						  QObject)
 from PyQt5.QtGui import (QPixmap, QIcon, QMouseEvent, QCursor)
@@ -22,10 +22,11 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QListView,
 							 QSizePolicy, QMenu, QAction, QLineEdit,
 							 QSplitter, QMessageBox, QFileDialog,
 							 QDesktopWidget, QPushButton, QCompleter,
-							 QListWidget, QListWidgetItem)
+							 QListWidget, QListWidgetItem, QToolTip)
 from . import gallery
 from . import gui_constants, misc
 from ..database import fetch, gallerydb
+from .. import settings
 
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -60,7 +61,14 @@ class AppWindow(QMainWindow):
 		self.setCentralWidget(self.center)
 		self.setWindowTitle("Happypanda")
 		self.setWindowIcon(QIcon(gui_constants.APP_ICO_PATH))
-		self.resize(gui_constants.MAIN_W, gui_constants.MAIN_H)
+		props = settings.win_read(self, 'AppWindow')
+		if props.resize:
+			x, y = props.resize
+			self.resize(x, y)
+		else:
+			self.resize(gui_constants.MAIN_W, gui_constants.MAIN_H)
+		posx, posy = props.pos
+		self.move(posx, posy)
 		self.show()
 		log_d('Show window: OK')
 
@@ -113,6 +121,10 @@ Your database will not be touched without you being notified.""")
 		except:
 			pass
 
+	#def style_tooltip(self):
+	#	palette = QToolTip.palette()
+	#	palette.setColor()
+
 	def init_stat_bar(self):
 		self.status_bar = self.statusBar()
 		self.status_bar.setMaximumHeight(20)
@@ -154,7 +166,8 @@ Your database will not be touched without you being notified.""")
 		"initiates the manga view"
 		#list view
 		self.manga_list_main = QWidget()
-		self.manga_list_main.setContentsMargins(-10, -12, -10, -10)
+		#self.manga_list_main.setContentsMargins(-10, -12, -10, -10)
+		self.manga_list_main.setContentsMargins(10, -9, -10, -10) # x, y, inverted_width, inverted_height
 		self.manga_list_layout = QHBoxLayout()
 		self.manga_list_main.setLayout(self.manga_list_layout)
 
@@ -187,9 +200,18 @@ Your database will not be touched without you being notified.""")
 
 	def search(self, srch_string):
 		case_ins = srch_string.lower()
-		remove = '^$*+?{}[]\\|()'
-		for x in remove:
-			case_ins = case_ins.replace(x, '.')
+		if not gui_constants.ALLOW_SEARCH_REGEX:
+			remove = '^$*+?{}\\|()[]'
+			for x in remove:
+				if x == '[' or x == ']':
+					continue
+				else:
+					case_ins = case_ins.replace(x, '.')
+		else:
+			try:
+				re.compile(case_ins)
+			except re.error:
+				return
 		self.manga_list_view.sort_model.search(case_ins)
 
 	def popup(self, index):
@@ -231,7 +253,10 @@ Your database will not be touched without you being notified.""")
 			self.manga_table_view.sort_model.catalog_view()
 
 	def settings(self):
-		about = misc.About()
+		#about = misc.About()
+		sett = misc.SettingsDialog(self)
+		sett.scroll_speed_changed.connect(self.manga_list_view.updateGeometries)
+		#sett.show()
 
 	def init_toolbar(self):
 		self.toolbar = QToolBar()
@@ -289,29 +314,34 @@ Your database will not be touched without you being notified.""")
 		self.grid_toggle.triggered.connect(self.toggle_view)
 		self.toolbar.addAction(self.grid_toggle)
 
-		completer = QCompleter(self)
-		completer.setModel(self.manga_list_view.gallery_model)
-		completer.setCaseSensitivity(Qt.CaseInsensitive)
-		completer.setCompletionMode(QCompleter.PopupCompletion)
-		completer.setCompletionRole(Qt.DisplayRole)
-		completer.setCompletionColumn(gui_constants.TITLE)
-		completer.setFilterMode(Qt.MatchContains)
-		self.search_bar = QLineEdit()
-		self.search_bar.setCompleter(completer)
-		self.search_bar.textChanged[str].connect(self.search)
-		self.search_bar.setPlaceholderText("Search title, author, (tags partial supported)")
-		self.search_bar.setMaximumWidth(200)
+		self.search_bar = misc.LineEdit()
+		if gui_constants.SEARCH_AUTOCOMPLETE:
+			completer = QCompleter(self)
+			completer.setModel(self.manga_list_view.gallery_model)
+			completer.setCaseSensitivity(Qt.CaseInsensitive)
+			completer.setCompletionMode(QCompleter.PopupCompletion)
+			completer.setCompletionRole(Qt.DisplayRole)
+			completer.setCompletionColumn(gui_constants.TITLE)
+			completer.setFilterMode(Qt.MatchContains)
+			self.search_bar.setCompleter(completer)
+		if gui_constants.SEARCH_ON_ENTER:
+			self.search_bar.returnPressed.connect(lambda: self.search(self.search_bar.text()))
+		else:
+			self.search_bar.textChanged[str].connect(self.search)
+		self.search_bar.setPlaceholderText("Search guide located at About -> Search Guide")
+		self.search_bar.setMinimumWidth(150)
+		self.search_bar.setMaximumWidth(500)
 		self.toolbar.addWidget(self.search_bar)
 		self.toolbar.addSeparator()
 		settings_icon = QIcon(gui_constants.SETTINGS_PATH)
 		settings_action = QAction(settings_icon, "Set&tings", self)
 		settings_action.triggered.connect(self.settings)
 		self.toolbar.addAction(settings_action)
-		self.addToolBar(self.toolbar)
 		
 		spacer_end = QWidget() # aligns About action properly
 		spacer_end.setFixedSize(QSize(10, 1))
 		self.toolbar.addWidget(spacer_end)
+		self.addToolBar(self.toolbar)
 
 	def toggle_view(self):
 		"""
@@ -412,9 +442,10 @@ Your database will not be touched without you being notified.""")
 
 					else:
 						log_e('Populating DB from gallery folder: FAIL')
-						loading.setText("<font color=red>An error occured. Try restarting..</font>")
+						loading.setText("<font color=red>An error occured. Check happypanda_log..</font>")
 						loading.progress.setStyleSheet("background-color:red;")
 						data_thread.quit
+						QTimer.singleShot(5000, loading.close)
 
 				def fetch_deleteLater():
 					try:
@@ -441,6 +472,7 @@ Your database will not be touched without you being notified.""")
 				log_i('Populating DB from gallery folder')
 
 	def closeEvent(self, event):
+		settings.win_save(self, 'AppWindow')
 		try:
 			for root, dirs, files in os.walk('temp', topdown=False):
 				for name in files:
@@ -450,7 +482,11 @@ Your database will not be touched without you being notified.""")
 			log_d('Empty temp on exit: OK')
 		except:
 			log_d('Empty temp on exit: FAIL')
-		log_d('Normal Exit App: OK')
+		err = sys.exc_info()
+		if all(err):
+			log_c('Last error before exit:\n{}\n{}\n{}'.format(err[0], err[1], err[2]))
+		else:
+			log_d('Normal Exit App: OK')
 		super().closeEvent(event)
 		app = QApplication.instance()
 		app.quit()

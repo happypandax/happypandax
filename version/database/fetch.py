@@ -1,4 +1,4 @@
-"""
+﻿"""
 This file is part of Happypanda.
 Happypanda is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -105,7 +105,7 @@ class Fetch(QObject):
 							new_gallery.last_update = last_updated
 							parsed = utils.title_parser(ser_path)
 						except NotADirectoryError:
-							if ser_path[-4:] == '.zip':
+							if ser_path[-4:] in utils.ARCHIVE_FILES:
 								#TODO: add support for folders in archive
 								new_gallery.chapters[0] = path
 								parsed = utils.title_parser(ser_path[:-4])
@@ -130,10 +130,7 @@ class Fetch(QObject):
 					progress += 1 # update the progress bar
 					self.PROGRESS.emit(progress)
 			except:
-				import sys
-				if not self._error:
-					self._error = sys.exc_info()[0] + sys.exc_info()[1]
-				log_e('Local Search Error: {}: {}'.format(self._error, self._curr_gallery))
+				log.exception('Local Search Error:')
 				self.FINISHED.emit(False)
 		else: # if gallery folder is empty
 			log_e('Local search error: Invalid directory')
@@ -179,13 +176,12 @@ class Fetch(QObject):
 
 		if website_checker(new_url) == 'exhen':
 			self.WEB_PROGRESS.emit()
-			cookie = settings.exhen_cookies()
-			try:
-				exhen = pewnet.ExHen(cookie[0], cookie[1])
-			except IndexError:
+			exprops = settings.ExProperties()
+			if not exprops.ipb_id or not exprops.ipb_pass:
 				self.WEB_STATUS.emit(False)
-				log_e('ExHentai: No cookies set')
+				log_e('ExHentai: No cookies properly set')
 				return None
+			exhen = pewnet.ExHen(exprops.ipb_id, exprops.ipb_pass)
 			r_metadata(exhen.get_metadata([new_url]))
 		elif website_checker(new_url) == 'ehen':
 			self.WEB_PROGRESS.emit()

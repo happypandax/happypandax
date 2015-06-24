@@ -5,7 +5,7 @@
 *cache
 *.pyproj
 *Qt*
-*__pycache_*
+*__pycache__*
 version/build
 version/dist
 *.sln
@@ -15,6 +15,7 @@ build
 dist
 Happypanda
 setup.py
+*.ini
 
 # User-specific files
 *.suo
@@ -198,3 +199,7 @@ UpgradeLog*.htm
 FakesAssemblies/
 /db
 /thumbnails
+/version/gui/static/gallery_def_ico.ico
+/version/gui/static/gallery_ext_ico.ico
+*.pyperf
+/temp

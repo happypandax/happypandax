@@ -1,4 +1,4 @@
-"""
+﻿"""
 This file is part of Happypanda.
 Happypanda is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -15,6 +15,8 @@ along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 import time, datetime, os, subprocess, sys, logging, zipfile
 import hashlib, shutil
 
+from .gui import gui_constants
+
 log = logging.getLogger(__name__)
 log_i = log.info
 log_d = log.debug
@@ -23,6 +25,7 @@ log_e = log.error
 log_c = log.critical
 
 IMG_FILES =  ['jpg','bmp','png','gif']
+ARCHIVE_FILES = ['.zip', '.cbz']
 
 def generate_img_hash(src):
 	"""
@@ -37,6 +40,8 @@ def generate_img_hash(src):
 		buffer = src.read(chunk)
 	return sha1.hexdigest()
 
+class CreateZipFail(Exception): pass
+
 class ArchiveFile():
 	"""
 	Work with zip files, raises exception if instance fails.
@@ -47,16 +52,16 @@ class ArchiveFile():
 	# Most of the code are from kunesj on GitHub #
 	"""
 	def __init__(self, filepath):
-		extension = filepath[-3:]
+		extension = filepath[-4:]
 
-		if extension == 'zip':
+		if extension in ARCHIVE_FILES:
 			try:
 				self.archive = zipfile.ZipFile(filepath)
 			except:
 				log_e('Create ZIP: FAIL')
-				raise Exception
+				raise CreateZipFail
 		else:
-			log_e('ZIP: Unsupported file format')
+			log_e('Archive: Unsupported file format')
 			raise Exception
 
 	def namelist(self):
@@ -92,25 +97,51 @@ def today():
 	year = _date.strftime("%Y")
 	return [day, month, year]
 
+def external_viewer_checker(path):
+	check_dict = gui_constants.EXTERNAL_VIEWER_SUPPORT
+	viewer = os.path.split(path)[1]
+	for x in check_dict:
+		allow = False
+		for n in check_dict[x]:
+			if viewer.lower() in n.lower():
+				allow = True
+				break
+		if allow:
+			return x
+
 def open(chapterpath):
-	try: # folder
-		filepath = os.path.join(chapterpath, [x for x in sorted(os.listdir(chapterpath))\
-			if x[-3:] in IMG_FILES][0]) # Find first page
-	except NotADirectoryError: # archive
-		zip = ArchiveFile(chapterpath)
-		import uuid
-		t_p = os.path.join('temp', str(uuid.uuid4()))
-		zip.extract_all(t_p)
-		filepath = os.path.join(t_p, [x for x in sorted(os.listdir(t_p))\
-			if x[-3:] in IMG_FILES][0]) # Find first page
+	try:
+		try: # folder
+			filepath = os.path.join(chapterpath, [x for x in sorted(os.listdir(chapterpath))\
+				if x[-3:] in IMG_FILES][0]) # Find first page
+		except NotADirectoryError: # archive
+			zip = ArchiveFile(chapterpath)
+			import uuid
+			t_p = os.path.join('temp', str(uuid.uuid4()))
+			zip.extract_all(t_p)
+			filepath = os.path.join(t_p, [x for x in sorted(os.listdir(t_p))\
+				if x[-3:] in IMG_FILES][0]) # Find first page
+			filepath = os.path.abspath(filepath)
+	except FileNotFoundError:
+		log.exception('Could not find chapter {}'.format(chapterpath))
 
 	try:
-		if sys.platform.startswith('darwin'):
-			subprocess.call(('open', filepath))
-		elif os.name == 'nt':
-			os.startfile(filepath)
-		elif os.name == 'posix':
-			subprocess.call(('xdg-open', filepath))
+		if not gui_constants.USE_EXTERNAL_VIEWER:
+			if sys.platform.startswith('darwin'):
+				subprocess.call(('open', filepath))
+			elif os.name == 'nt':
+				os.startfile(filepath)
+			elif os.name == 'posix':
+				subprocess.call(('xdg-open', filepath))
+		else:
+			ext_path = gui_constants.EXTERNAL_VIEWER_PATH
+			viewer = external_viewer_checker(ext_path)
+			if viewer == 'honeyview':
+				subprocess.call((ext_path, filepath))
+			else:
+				subprocess.check_call((ext_path, filepath))
+	except subprocess.CalledProcessError:
+		log.exception('Could not open chapter. Invalid external viewer.')
 	except:
 		log_e('Could not open chapter {}'.format(os.path.split(chapterpath)[1]))
 
@@ -248,7 +279,7 @@ import re as regex
 def title_parser(title):
 	"Receives a title to parse. Returns dict with 'title', 'artist' and language"
 
-	if title[-4:] in ('.zip','.rar'):
+	if title[-4:] in ARCHIVE_FILES:
 		title = title[:-4]
 	elif title[-3:] is '.7z':
 		title = title[:-3]

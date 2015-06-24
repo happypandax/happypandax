@@ -16,7 +16,7 @@ from .database import db, db_constants, gallerydb
 from .gui import app, gui_constants
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QFile
-import sys, logging, os, argparse
+import sys, logging, os, argparse, platform
 
 #IMPORTANT STUFF
 def start():
@@ -66,8 +66,13 @@ def start():
 	log_c = log.critical
 
 	application = QApplication(sys.argv)
-	log_d('Happypanda Version {}'.format(gui_constants.vs))
-	log_d('App Event Start: OK')
+	application.setOrganizationName('Pewpews')
+	application.setOrganizationDomain('https://github.com/Pewpews/happypanda')
+	application.setApplicationName('Happypanda')
+	application.setApplicationDisplayName('Happypanda')
+	application.setApplicationVersion('v{}'.format(gui_constants.vs))
+	log_i('Happypanda Version {}'.format(gui_constants.vs))
+	log_i('OS: {} {}\n'.format(platform.system(), platform.release()))
 	try:
 		if args.test:
 			conn = db.init_db(True)
@@ -75,10 +80,10 @@ def start():
 			conn = db.init_db()
 		log_d('Init DB Conn: OK')
 	except:
-		log_d('Database connection failed')
+		log_c('Database connection failed')
 		from PyQt5.QtGui import QIcon
 		from PyQt5.QtWidgets import QMessageBox
-		log_i('Invalid database')
+		log_c('Invalid database')
 		msg_box = QMessageBox()
 		msg_box.setWindowIcon(QIcon(gui_constants.APP_ICO_PATH))
 		msg_box.setText('Invalid database')

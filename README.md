@@ -1,7 +1,6 @@
 # Happypanda
 A cross platform manga/doujinshi manager with tagging support.
 
-
 Development is done in alpha branch
 
 I'm here if you have any questions!
@@ -24,8 +23,8 @@ For Mac & Linux see [INSTALL.md](INSTALL.md)
 
 # Usage
 - Click "Add gallery". Choose your gallery folder and edit the metadata, click done when... done.
-- Or you can populate the program with all gallery' from folder by clicking on the arrow:
-    - Currently supports the following folder structures *(Mixed structures are supported)*:
+- Or you can populate the program with all galleries from folder by clicking on the arrow for dropdown menu and then 'Populate from folder':
+    - Currently supports ZIP/CBZ and the following folder structures *(Mixed structures are supported)*:
         + .../My_general_gallery_folder
             - --/gallery1_folder
                 - --/Chp_1_folder
@@ -45,7 +44,8 @@ For Mac & Linux see [INSTALL.md](INSTALL.md)
 - Edit/Remove/Open/Favourite gallery by rightclicking on it
 - Doubleclick on gallery to open first chapter
 - Click on a gallery to open a window with it's metadata
-- Rightclick on empty space to add gallery
+- Search title, author and namespace & tags
+- And lots more...
 
 
 - If everything fails or you somehow messed up, then feel free to delete the DB folder and start over. Find me in the gitter chat, if you have any questions.

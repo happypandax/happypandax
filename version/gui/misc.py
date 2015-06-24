@@ -1,4 +1,4 @@
-"""
+﻿"""
 This file is part of Happypanda.
 Happypanda is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -13,8 +13,10 @@ along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from PyQt5.QtCore import (Qt, QDate, QPoint, pyqtSignal, QThread,
-						  QTimer, QObject)
-from PyQt5.QtGui import QTextCursor, QIcon, QMouseEvent
+						  QTimer, QObject, QSize, QRect, QFileInfo,
+						  QMargins)
+from PyQt5.QtGui import (QTextCursor, QIcon, QMouseEvent, QFont,
+						 QPixmapCache, QPalette)
 from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QVBoxLayout, QHBoxLayout,
 							 QDialog, QGridLayout, QLineEdit,
@@ -24,12 +26,19 @@ from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QCompleter, QListWidgetItem,
 							 QListWidget, QApplication, QSizePolicy,
 							 QCheckBox, QFrame, QListView,
-							 QAbstractItemView, QTreeView, QSpinBox)
+							 QAbstractItemView, QTreeView, QSpinBox,
+							 QAction, QStackedLayout, QTabWidget,
+							 QGridLayout, QScrollArea, QLayout, QButtonGroup,
+							 QRadioButton, QFileIconProvider, QFontDialog,
+							 QColorDialog, QScrollArea)
+
 import os, threading, queue, time, logging
 from datetime import datetime
-from ..utils import tag_to_string, tag_to_dict, title_parser
-from ..database import gallerydb, fetch, db
 from . import gui_constants
+from ..utils import (tag_to_string, tag_to_dict, title_parser, ARCHIVE_FILES,
+					 ArchiveFile, IMG_FILES, CreateZipFail)
+from ..database import gallerydb, fetch, db
+from .. import settings
 
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -37,6 +46,83 @@ log_d = log.debug
 log_w = log.warning
 log_e = log.error
 log_c = log.critical
+
+class FileIcon:
+
+	@staticmethod
+	def get_file_icon(path):
+		# TODO: Very ineffiecent!! Save known file exts
+		info = QFileInfo(path)
+		return QFileIconProvider().icon(info)
+
+	@staticmethod
+	def get_external_file_icon():
+		if gui_constants._REFRESH_EXTERNAL_VIEWER:
+			if os.path.exists(gui_constants.GALLERY_EXT_ICO_PATH):
+				os.remove(gui_constants.GALLERY_EXT_ICO_PATH)
+			info = QFileInfo(gui_constants.EXTERNAL_VIEWER_PATH)
+			icon =  QFileIconProvider().icon(info)
+			pixmap = icon.pixmap(QSize(32, 32))
+			pixmap.save(gui_constants.GALLERY_EXT_ICO_PATH, quality=100)
+			gui_constants._REFRESH_EXTERNAL_VIEWER = False
+
+		return QIcon(gui_constants.GALLERY_EXT_ICO_PATH)
+
+	@staticmethod
+	def refresh_default_icon():
+
+		if os.path.exists(gui_constants.GALLERY_DEF_ICO_PATH):
+			os.remove(gui_constants.GALLERY_DEF_ICO_PATH)
+
+		def get_file(n):
+			gallery = gallerydb.GalleryDB.get_gallery_by_id(n)
+			if not gallery:
+				return False
+			file = ""
+			if gallery.path.endswith(tuple(ARCHIVE_FILES)):
+				zip = ArchiveFile(gallery.path)
+				for name in zip.namelist():
+					if name.endswith(tuple(IMG_FILES)):
+						folder = os.path.join(
+							gui_constants.temp_dir,
+							'{}{}'.format(name, n))
+						zip.extract(name, folder)
+						file = os.path.join(
+							folder, name)
+						break;
+			else:
+				for name in os.listdir(gallery.chapter[0]):
+					if name.endswith(tuple(IMG_FILES)):
+						file = os.path.join(
+							gallery.chapter[0], name)
+						break;
+			return file
+
+		# TODO: fix this! (When there are no ids below 300? (because they go deleted))
+		for x in range(1, 300):
+			try:
+				file = get_file(x)
+				break
+			except FileNotFoundError:
+				continue
+			except CreateZipFail:
+				continue
+
+		if not file:
+			return None
+		icon = QFileIconProvider().icon(QFileInfo(file))
+		pixmap = icon.pixmap(QSize(32, 32))
+		pixmap.save(gui_constants.GALLERY_DEF_ICO_PATH, quality=100)
+		return True
+
+	@staticmethod
+	def get_default_file_icon():
+		s = True
+		if not os.path.isfile(gui_constants.GALLERY_DEF_ICO_PATH):
+			s = FileIcon.refresh_default_icon()
+		if s:
+			return QIcon(gui_constants.GALLERY_DEF_ICO_PATH)
+		else: return None
 
 #class ErrorEvent(QObject):
 #	ERROR_MSG = pyqtSignal(str)
@@ -108,8 +194,690 @@ log_c = log.critical
 
 #	child.move(centerparent)
 
+class Spacer(QWidget):
+	"""
+	To be used as a spacer.
+	Default mode is both. Specify mode with string: v, h or both
+	"""
+	def __init__(self, mode='both', parent=None):
+		super().__init__(parent)
+		if mode == 'h':
+			self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+		elif mode == 'v':
+			self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+		else:
+			self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+class FlowLayout(QLayout):
+
+    def __init__(self, parent=None, margin=0, spacing=-1):
+        super(FlowLayout, self).__init__(parent)
+
+        if parent is not None:
+            self.setContentsMargins(margin, margin, margin, margin)
+
+        self.setSpacing(spacing)
+
+        self.itemList = []
+
+    def __del__(self):
+        item = self.takeAt(0)
+        while item:
+            item = self.takeAt(0)
+
+    def addItem(self, item):
+        self.itemList.append(item)
+
+    def count(self):
+        return len(self.itemList)
+
+    def itemAt(self, index):
+        if index >= 0 and index < len(self.itemList):
+            return self.itemList[index]
+
+        return None
+
+    def takeAt(self, index):
+        if index >= 0 and index < len(self.itemList):
+            return self.itemList.pop(index)
+
+        return None
+
+    def expandingDirections(self):
+        return Qt.Orientations(Qt.Orientation(0))
+
+    def hasHeightForWidth(self):
+        return True
+
+    def heightForWidth(self, width):
+        height = self.doLayout(QRect(0, 0, width, 0), True)
+        return height
+
+    def setGeometry(self, rect):
+        super(FlowLayout, self).setGeometry(rect)
+        self.doLayout(rect, False)
+
+    def sizeHint(self):
+        return self.minimumSize()
+
+    def minimumSize(self):
+        size = QSize()
+
+        for item in self.itemList:
+            size = size.expandedTo(item.minimumSize())
+
+        margin, _, _, _ = self.getContentsMargins()
+
+        size += QSize(2 * margin, 2 * margin)
+        return size
+
+    def doLayout(self, rect, testOnly):
+        x = rect.x()
+        y = rect.y()
+        lineHeight = 0
+
+        for item in self.itemList:
+            wid = item.widget()
+            spaceX = self.spacing() + wid.style().layoutSpacing(QSizePolicy.PushButton, QSizePolicy.PushButton, Qt.Horizontal)
+            spaceY = self.spacing() + wid.style().layoutSpacing(QSizePolicy.PushButton, QSizePolicy.PushButton, Qt.Vertical)
+            nextX = x + item.sizeHint().width() + spaceX
+            if nextX - spaceX > rect.right() and lineHeight > 0:
+                x = rect.x()
+                y = y + lineHeight + spaceY
+                nextX = x + item.sizeHint().width() + spaceX
+                lineHeight = 0
+
+            if not testOnly:
+                item.setGeometry(QRect(QPoint(x, y), item.sizeHint()))
+
+            x = nextX
+            lineHeight = max(lineHeight, item.sizeHint().height())
+
+        return y + lineHeight - rect.y()
+
+class LineEdit(QLineEdit):
+	"""
+	Custom Line Edit which sacrifices contextmenu for selectAll
+	"""
+	def __init__(self, parent=None):
+		super().__init__(parent)
+
+	def mousePressEvent(self, event):
+		if event.button() == Qt.RightButton:
+			self.selectAll()
+		else:
+			super().mousePressEvent(event)
+
+	def contextMenuEvent(self, QContextMenuEvent):
+		pass
+
+class SettingsDialog(QWidget):
+	"A settings dialog"
+	scroll_speed_changed = pyqtSignal()
+	def __init__(self, parent=None):
+		super().__init__(parent, flags=Qt.Window)
+		self.resize(700, 500)
+		self.show()
+		self.restore_values()
+		self.initUI()
+
+	def initUI(self):
+		main_layout = QVBoxLayout()
+		sub_layout = QHBoxLayout()
+		# Left Panel
+		left_panel = QListWidget()
+		left_panel.setViewMode(left_panel.ListMode)
+		#left_panel.setIconSize(QSize(40,40))
+		left_panel.setTextElideMode(Qt.ElideRight)
+		left_panel.setMaximumWidth(200)
+		left_panel.itemClicked.connect(self.change)
+		#web.setText('Web')
+		self.web = QListWidgetItem()
+		self.web.setText('Web')
+		self.visual = QListWidgetItem()
+		self.visual.setText('Visual')
+		self.advanced = QListWidgetItem()
+		self.advanced.setText('Advanced')
+		self.about = QListWidgetItem()
+		self.about.setText('About')
+
+		#main.setIcon(QIcon(os.path.join(gui_constants.static_dir, 'plus2.png')))
+		left_panel.addItem(self.web)
+		left_panel.addItem(self.visual)
+		left_panel.addItem(self.advanced)
+		left_panel.addItem(self.about)
+		left_panel.setMaximumWidth(100)
+
+		# right panel
+		self.right_panel = QStackedLayout()
+		self.init_right_panel()
+
+		# bottom
+		bottom_layout = QHBoxLayout()
+		ok_btn = QPushButton('Ok')
+		ok_btn.clicked.connect(self.accept)
+		cancel_btn = QPushButton('Cancel')
+		cancel_btn.clicked.connect(self.close)
+		info_lbl = QLabel()
+		info_lbl.setText('<a href="https://github.com/Pewpews/happypanda">'+
+				   'Visit GitHub Repo</a> | Find any bugs? Check out the troubleshoot guide '+
+				   'in About section.')
+		info_lbl.setTextFormat(Qt.RichText)
+		info_lbl.setTextInteractionFlags(Qt.TextBrowserInteraction)
+		info_lbl.setOpenExternalLinks(True)
+		self.spacer = QWidget()
+		self.spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+		bottom_layout.addWidget(info_lbl, 0, Qt.AlignLeft)
+		bottom_layout.addWidget(self.spacer)
+		bottom_layout.addWidget(ok_btn, 0, Qt.AlignRight)
+		bottom_layout.addWidget(cancel_btn, 0, Qt.AlignRight)
+
+		sub_layout.addWidget(left_panel)
+		sub_layout.addLayout(self.right_panel)
+		main_layout.addLayout(sub_layout)
+		main_layout.addLayout(bottom_layout)
+
+		self.restore_options()
+
+		self.setLayout(main_layout)
+		self.setWindowTitle('Settings')
+
+
+	def change(self, item):
+		def curr_index(index):
+			if index != self.right_panel.currentIndex():
+				self.right_panel.setCurrentIndex(index)
+
+		if item == self.web:
+			curr_index(self.web_index)
+		elif item == self.visual:
+			curr_index(self.visual_index)
+		elif item == self.advanced:
+			curr_index(self.advanced_index)
+		elif item == self.about:
+			curr_index(self.about_index)
+
+	def restore_values(self):
+		#Web
+		self.exprops = settings.ExProperties()
+
+		# Visual
+		self.high_quality_thumbs = gui_constants.HIGH_QUALITY_THUMBS
+		self.popup_width = gui_constants.POPUP_WIDTH
+		self.popup_height = gui_constants.POPUP_HEIGHT
+		self.style = gui_constants.user_stylesheet_path
+
+		# Advanced
+		self.scroll_speed = gui_constants.SCROLL_SPEED
+		self.cache_size = gui_constants.THUMBNAIL_CACHE_SIZE
+		self.prefetch_item_amnt = gui_constants.PREFETCH_ITEM_AMOUNT
+
+	def restore_options(self):
+		# Web / Exhentai
+		self.ipbid_edit.setText(self.exprops.ipb_id)
+		self.ipbpass_edit.setText(self.exprops.ipb_pass)
+
+		# Visual / Grid View / Tooltip
+		self.grid_tooltip_group.setChecked(gui_constants.GRID_TOOLTIP)
+		self.visual_grid_tooltip_title.setChecked(gui_constants.TOOLTIP_TITLE)
+		self.visual_grid_tooltip_author.setChecked(gui_constants.TOOLTIP_AUTHOR)
+		self.visual_grid_tooltip_chapters.setChecked(gui_constants.TOOLTIP_CHAPTERS)
+		self.visual_grid_tooltip_status.setChecked(gui_constants.TOOLTIP_STATUS)
+		self.visual_grid_tooltip_type.setChecked(gui_constants.TOOLTIP_TYPE)
+		self.visual_grid_tooltip_lang.setChecked(gui_constants.TOOLTIP_LANG)
+		self.visual_grid_tooltip_descr.setChecked(gui_constants.TOOLTIP_DESCR)
+		self.visual_grid_tooltip_tags.setChecked(gui_constants.TOOLTIP_TAGS)
+		self.visual_grid_tooltip_last_read.setChecked(gui_constants.TOOLTIP_LAST_READ)
+		self.visual_grid_tooltip_times_read.setChecked(gui_constants.TOOLTIP_TIMES_READ)
+		self.visual_grid_tooltip_pub_date.setChecked(gui_constants.TOOLTIP_PUB_DATE)
+		self.visual_grid_tooltip_date_added.setChecked(gui_constants.TOOLTIP_DATE_ADDED)
+		# Visual / Grid View / Gallery
+		self.external_viewer_ico.setChecked(gui_constants.USE_EXTERNAL_PROG_ICO)
+		self.gallery_type_ico.setChecked(gui_constants.DISPLAY_GALLERY_TYPE)
+		if gui_constants.GALLERY_FONT_ELIDE:
+			self.gallery_text_elide.setChecked(True)
+		else:
+			self.gallery_text_fit.setChecked(True)
+		self.font_lbl.setText(gui_constants.GALLERY_FONT[0])
+		self.font_size_lbl.setValue(gui_constants.GALLERY_FONT[1])
+
+		def re_enforce(s):
+			if s:
+				self.search_on_enter.setChecked(True)
+		self.search_allow_regex.clicked.connect(re_enforce)
+
+		if gui_constants.SEARCH_ON_ENTER:
+			self.search_on_enter.setChecked(True)
+		else:
+			self.search_every_keystroke.setChecked(True)
+		# Visual / Grid View / Colors
+		self.grid_label_color.setText(gui_constants.GRID_VIEW_LABEL_COLOR)
+		self.grid_title_color.setText(gui_constants.GRID_VIEW_TITLE_COLOR)
+		self.grid_artist_color.setText(gui_constants.GRID_VIEW_ARTIST_COLOR)
+
+		# Advanced / Misc / External Viewer
+		self.external_viewer_path.setText(gui_constants.EXTERNAL_VIEWER_PATH)
+
+	def accept(self):
+		set = settings.set
+		# Web / ExHentai
+		self.exprops.ipb_id = self.ipbid_edit.text()
+		self.exprops.ipb_pass = self.ipbpass_edit.text()
+
+		# Visual / Grid View / Tooltip
+		gui_constants.GRID_TOOLTIP = self.grid_tooltip_group.isChecked()
+		set(gui_constants.GRID_TOOLTIP, 'Visual', 'grid tooltip')
+		gui_constants.TOOLTIP_TITLE = self.visual_grid_tooltip_title.isChecked()
+		set(gui_constants.TOOLTIP_TITLE, 'Visual', 'tooltip title')
+		gui_constants.TOOLTIP_AUTHOR = self.visual_grid_tooltip_author.isChecked()
+		set(gui_constants.TOOLTIP_AUTHOR, 'Visual', 'tooltip author')
+		gui_constants.TOOLTIP_CHAPTERS = self.visual_grid_tooltip_chapters.isChecked()
+		set(gui_constants.TOOLTIP_CHAPTERS, 'Visual', 'tooltip chapters')
+		gui_constants.TOOLTIP_STATUS = self.visual_grid_tooltip_status.isChecked()
+		set(gui_constants.TOOLTIP_STATUS, 'Visual', 'tooltip status')
+		gui_constants.TOOLTIP_TYPE = self.visual_grid_tooltip_type.isChecked()
+		set(gui_constants.TOOLTIP_TYPE, 'Visual', 'tooltip type')
+		gui_constants.TOOLTIP_LANG = self.visual_grid_tooltip_lang.isChecked()
+		set(gui_constants.TOOLTIP_LANG, 'Visual', 'tooltip lang')
+		gui_constants.TOOLTIP_DESCR = self.visual_grid_tooltip_descr.isChecked()
+		set(gui_constants.TOOLTIP_DESCR, 'Visual', 'tooltip descr')
+		gui_constants.TOOLTIP_TAGS = self.visual_grid_tooltip_tags.isChecked()
+		set(gui_constants.TOOLTIP_TAGS, 'Visual', 'tooltip tags')
+		gui_constants.TOOLTIP_LAST_READ = self.visual_grid_tooltip_last_read.isChecked()
+		set(gui_constants.TOOLTIP_LAST_READ, 'Visual', 'tooltip last read')
+		gui_constants.TOOLTIP_TIMES_READ = self.visual_grid_tooltip_times_read.isChecked()
+		set(gui_constants.TOOLTIP_TIMES_READ, 'Visual', 'tooltip times read')
+		gui_constants.TOOLTIP_PUB_DATE = self.visual_grid_tooltip_pub_date.isChecked()
+		set(gui_constants.TOOLTIP_PUB_DATE, 'Visual', 'tooltip pub date')
+		gui_constants.TOOLTIP_DATE_ADDED = self.visual_grid_tooltip_date_added.isChecked()
+		set(gui_constants.TOOLTIP_DATE_ADDED, 'Visual', 'tooltip date added')
+		# Visual / Grid View / Gallery
+		gui_constants.USE_EXTERNAL_PROG_ICO = self.external_viewer_ico.isChecked()
+		set(gui_constants.USE_EXTERNAL_PROG_ICO, 'Visual', 'use external prog ico')
+		gui_constants.DISPLAY_GALLERY_TYPE = self.gallery_type_ico.isChecked()
+		set(gui_constants.DISPLAY_GALLERY_TYPE, 'Visual', 'display gallery type')
+		if self.gallery_text_elide.isChecked():
+			gui_constants.GALLERY_FONT_ELIDE = True
+		else:
+			gui_constants.GALLERY_FONT_ELIDE = False
+		set(gui_constants.GALLERY_FONT_ELIDE, 'Visual', 'gallery font elide')
+		gui_constants.GALLERY_FONT = (self.font_lbl.text(), self.font_size_lbl.value())
+		set(gui_constants.GALLERY_FONT[0], 'Visual', 'gallery font family')
+		set(gui_constants.GALLERY_FONT[1], 'Visual', 'gallery font size')
+		# Visual / Grid View / Colors
+		if self.color_checker(self.grid_title_color.text()):
+			gui_constants.GRID_VIEW_TITLE_COLOR = self.grid_title_color.text()
+			set(gui_constants.GRID_VIEW_TITLE_COLOR, 'Visual', 'grid view title color')
+		if self.color_checker(self.grid_artist_color.text()):
+			gui_constants.GRID_VIEW_ARTIST_COLOR = self.grid_artist_color.text()
+			set(gui_constants.GRID_VIEW_ARTIST_COLOR, 'Visual', 'grid view artist color')
+		if self.color_checker(self.grid_label_color.text()):
+			gui_constants.GRID_VIEW_LABEL_COLOR = self.grid_label_color.text()
+			set(gui_constants.GRID_VIEW_LABEL_COLOR, 'Visual', 'grid view label color')
+
+		# Advanced / Misc
+		# Advanced / Misc / Grid View
+		gui_constants.SCROLL_SPEED = self.scroll_speed
+		set(self.scroll_speed, 'Advanced', 'scroll speed')
+		self.scroll_speed_changed.emit()
+		gui_constants.THUMBNAIL_CACHE_SIZE = self.cache_size
+		set(self.cache_size[1], 'Advanced', 'cache size')
+		QPixmapCache.setCacheLimit(self.cache_size[0]*
+							 self.cache_size[1])
+		# Advanced / Misc / Search
+		gui_constants.ALLOW_SEARCH_REGEX = self.search_allow_regex.isChecked()
+		set(gui_constants.ALLOW_SEARCH_REGEX, 'Advanced', 'allow search regex')
+		gui_constants.SEARCH_AUTOCOMPLETE = self.search_autocomplete.isChecked()
+		set(gui_constants.SEARCH_AUTOCOMPLETE, 'Advanced', 'search autocomplete')
+		if self.search_on_enter.isChecked():
+			gui_constants.SEARCH_ON_ENTER = True
+		else:
+			gui_constants.SEARCH_ON_ENTER = False
+		set(gui_constants.SEARCH_ON_ENTER, 'Advanced', 'search on enter')
+
+		# Advanced / Misc / External Viewer
+		if not self.external_viewer_path.text():
+			gui_constants.USE_EXTERNAL_VIEWER = False
+			set(False, 'Advanced', 'use external viewer')
+		else:
+			gui_constants.USE_EXTERNAL_VIEWER = True
+			set(True, 'Advanced', 'use external viewer')
+			gui_constants._REFRESH_EXTERNAL_VIEWER = True
+		gui_constants.EXTERNAL_VIEWER_PATH = self.external_viewer_path.text()
+		set(gui_constants.EXTERNAL_VIEWER_PATH,'Advanced', 'external viewer path')
+
+		settings.save()
+		self.close()
+
+	def init_right_panel(self):
+
+		#def title_def(title):
+		#	title_lbl = QLabel(title)
+		#	f = QFont()
+		#	f.setPixelSize(16)
+		#	title_lbl.setFont(f)
+		#	return title_lbl
+
+		# Web
+		web = QTabWidget()
+		self.web_index = self.right_panel.addWidget(web)
+		web_general_page = QWidget()
+		web.addTab(web_general_page, 'General')
+		web.setTabEnabled(0, False)
+		exhentai_page = QWidget()
+		web.addTab(exhentai_page, 'ExHentai')
+		web.setCurrentIndex(1)
+		ipb_layout = QFormLayout()
+		exhentai_page.setLayout(ipb_layout)
+		# exhentai
+		self.ipbid_edit = QLineEdit()
+		self.ipbpass_edit = QLineEdit()
+		exh_tutorial = QLabel(gui_constants.EXHEN_COOKIE_TUTORIAL)
+		exh_tutorial.setTextFormat(Qt.RichText)
+		ipb_layout.addRow('IPB Member ID:', self.ipbid_edit)
+		ipb_layout.addRow('IPB Pass Hash:', self.ipbpass_edit)
+		ipb_layout.addRow(exh_tutorial)
+
+		# Visual
+		visual = QTabWidget()
+		self.visual_index = self.right_panel.addWidget(visual)
+		visual_general_page = QWidget()
+		visual.addTab(visual_general_page, 'General')
+
+		grid_view_general_page = QWidget()
+		visual.addTab(grid_view_general_page, 'Grid View')
+		grid_view_layout = QVBoxLayout()
+		grid_view_layout.addWidget(QLabel('Options marked with * requires application restart'),
+						   0, Qt.AlignTop)
+		grid_view_general_page.setLayout(grid_view_layout)
+		# grid view
+		# grid view / tooltip
+		self.grid_tooltip_group = QGroupBox('Tooltip', grid_view_general_page)
+		self.grid_tooltip_group.setCheckable(True)
+		grid_view_layout.addWidget(self.grid_tooltip_group, 0, Qt.AlignTop)
+		grid_tooltip_layout = QFormLayout()
+		self.grid_tooltip_group.setLayout(grid_tooltip_layout)
+		grid_tooltip_layout.addRow(QLabel('Control what is'+
+									' displayed in the tooltip'))
+		grid_tooltips_hlayout = FlowLayout()
+		grid_tooltip_layout.addRow(grid_tooltips_hlayout)
+		self.visual_grid_tooltip_title = QCheckBox('Title')
+		grid_tooltips_hlayout.addWidget(self.visual_grid_tooltip_title)
+		self.visual_grid_tooltip_author = QCheckBox('Author')
+		grid_tooltips_hlayout.addWidget(self.visual_grid_tooltip_author)
+		self.visual_grid_tooltip_chapters = QCheckBox('Chapters')
+		grid_tooltips_hlayout.addWidget(self.visual_grid_tooltip_chapters)
+		self.visual_grid_tooltip_status = QCheckBox('Status')
+		grid_tooltips_hlayout.addWidget(self.visual_grid_tooltip_status)
+		self.visual_grid_tooltip_type = QCheckBox('Type')
+		grid_tooltips_hlayout.addWidget(self.visual_grid_tooltip_type)
+		self.visual_grid_tooltip_lang = QCheckBox('Language')
+		grid_tooltips_hlayout.addWidget(self.visual_grid_tooltip_lang)
+		self.visual_grid_tooltip_descr = QCheckBox('Description')
+		grid_tooltips_hlayout.addWidget(self.visual_grid_tooltip_descr)
+		self.visual_grid_tooltip_tags = QCheckBox('Tags')
+		grid_tooltips_hlayout.addWidget(self.visual_grid_tooltip_tags)
+		self.visual_grid_tooltip_last_read = QCheckBox('Last read')
+		grid_tooltips_hlayout.addWidget(self.visual_grid_tooltip_last_read)
+		self.visual_grid_tooltip_times_read = QCheckBox('Times read')
+		grid_tooltips_hlayout.addWidget(self.visual_grid_tooltip_times_read)
+		self.visual_grid_tooltip_pub_date = QCheckBox('Publication Date')
+		grid_tooltips_hlayout.addWidget(self.visual_grid_tooltip_pub_date)
+		self.visual_grid_tooltip_date_added = QCheckBox('Date added')
+		grid_tooltips_hlayout.addWidget(self.visual_grid_tooltip_date_added)
+		# grid view / gallery
+		grid_gallery_group = QGroupBox('Gallery', grid_view_general_page)
+		grid_view_layout.addWidget(grid_gallery_group, 0, Qt.AlignTop)
+		grid_gallery_main_l = QFormLayout()
+		grid_gallery_main_l.setFormAlignment(Qt.AlignLeft)
+		grid_gallery_group.setLayout(grid_gallery_main_l)
+		grid_gallery_display = FlowLayout()
+		grid_gallery_main_l.addRow('Display on gallery:', grid_gallery_display)
+		self.external_viewer_ico = QCheckBox('External Viewer')
+		grid_gallery_display.addWidget(self.external_viewer_ico)
+		self.gallery_type_ico = QCheckBox('File Type')
+		grid_gallery_display.addWidget(self.gallery_type_ico)
+		gallery_text_mode = QWidget()
+		grid_gallery_main_l.addRow('Text Mode:', gallery_text_mode)
+		gallery_text_mode_l = QHBoxLayout()
+		gallery_text_mode.setLayout(gallery_text_mode_l)
+		self.gallery_text_elide = QRadioButton('Elide text', gallery_text_mode)
+		self.gallery_text_fit = QRadioButton('Fit text', gallery_text_mode)
+		gallery_text_mode_l.addWidget(self.gallery_text_elide, 0, Qt.AlignLeft)
+		gallery_text_mode_l.addWidget(self.gallery_text_fit, 0, Qt.AlignLeft)
+		gallery_text_mode_l.addWidget(Spacer('h'), 1, Qt.AlignLeft)
+		gallery_font = QHBoxLayout()
+		grid_gallery_main_l.addRow('Font:*', gallery_font)
+		self.font_lbl = QLabel()
+		self.font_size_lbl = QSpinBox()
+		self.font_size_lbl.setMaximum(100)
+		self.font_size_lbl.setMinimum(1)
+		self.font_size_lbl.setToolTip('Font size in pixels')
+		choose_font = QPushButton('Choose font')
+		choose_font.clicked.connect(self.choose_font)
+		gallery_font.addWidget(self.font_lbl, 0, Qt.AlignLeft)
+		gallery_font.addWidget(self.font_size_lbl, 0, Qt.AlignLeft)
+		gallery_font.addWidget(choose_font, 0, Qt.AlignLeft)
+		gallery_font.addWidget(Spacer('h'), 1, Qt.AlignLeft)
+		# grid view / colors
+		grid_colors_group = QGroupBox('Colors', grid_view_general_page)
+		grid_view_layout.addWidget(grid_colors_group, 1, Qt.AlignTop)
+		grid_colors_l = QFormLayout()
+		grid_colors_group.setLayout(grid_colors_l)
+		def color_lineedit():
+			l = QLineEdit()
+			l.setPlaceholderText('Hex colors. Eg.: #323232')
+			l.setMaximumWidth(200)
+			return l
+		self.grid_label_color = color_lineedit()
+		self.grid_title_color = color_lineedit()
+		self.grid_artist_color = color_lineedit()
+		grid_colors_l.addRow('Label color:', self.grid_label_color)
+		grid_colors_l.addRow('Title color:', self.grid_title_color)
+		grid_colors_l.addRow('Artist color:', self.grid_artist_color)
+
+		style_page = QWidget()
+		visual.addTab(style_page, 'Style')
+		visual.setTabEnabled(0, False)
+		visual.setTabEnabled(2, False)
+		visual.setCurrentIndex(1)
+
+		# Advanced
+		advanced = QTabWidget()
+		self.advanced_index = self.right_panel.addWidget(advanced)
+		advanced_misc = QWidget()
+		advanced.addTab(advanced_misc, 'Misc')
+		advanced_misc_main_layout = QVBoxLayout()
+		advanced_misc.setLayout(advanced_misc_main_layout)
+		misc_controls_layout = QFormLayout()
+		misc_controls_layout.addWidget(QLabel('Options marked with * requires application restart'))
+		advanced_misc_main_layout.addLayout(misc_controls_layout)
+		# Advanced / Misc / Grid View
+		misc_gridview = QGroupBox('Grid View')
+		misc_controls_layout.addWidget(misc_gridview)
+		misc_gridview_layout = QFormLayout()
+		misc_gridview.setLayout(misc_gridview_layout)
+		# Advanced / Misc / Grid View / scroll speed
+		scroll_speed_spin_box = QSpinBox()
+		scroll_speed_spin_box.setFixedWidth(60)
+		scroll_speed_spin_box.setToolTip('Control the speed when scrolling in'+
+								   ' grid view. DEFAULT: 7')
+		scroll_speed_spin_box.setValue(self.scroll_speed)
+		def scroll_speed(v): self.scroll_speed = v
+		scroll_speed_spin_box.valueChanged[int].connect(scroll_speed)
+		misc_gridview_layout.addRow('Scroll speed:', scroll_speed_spin_box)
+		# Advanced / Misc / Grid View / cache size
+		cache_size_spin_box = QSpinBox()
+		cache_size_spin_box.setFixedWidth(120)
+		cache_size_spin_box.setMaximum(999999999)
+		cache_size_spin_box.setToolTip('This will greatly improve the grid view.' +
+								 ' Increase the value if you experience lag when scrolling'+
+								 ' through galleries. DEFAULT: 200 MiB')
+		def cache_size(c): self.cache_size = (self.cache_size[0], c)
+		cache_size_spin_box.setValue(self.cache_size[1])
+		cache_size_spin_box.valueChanged[int].connect(cache_size)
+		misc_gridview_layout.addRow('Cache Size (MiB):', cache_size_spin_box)		
+		# Advanced / Misc / Regex
+		misc_search = QGroupBox('Search')
+		misc_controls_layout.addWidget(misc_search)
+		misc_search_layout = QFormLayout()
+		misc_search.setLayout(misc_search_layout)
+		search_allow_regex_l = QHBoxLayout()
+		self.search_allow_regex = QCheckBox()
+		self.search_allow_regex.setChecked(gui_constants.ALLOW_SEARCH_REGEX)
+		self.search_allow_regex.adjustSize()
+		self.search_allow_regex.setToolTip('A regex cheatsheet is located at About->Regex Cheatsheet')
+		search_allow_regex_l.addWidget(self.search_allow_regex)
+		search_allow_regex_l.addWidget(QLabel('A regex cheatsheet is located at About->Regex Cheatsheet'))
+		search_allow_regex_l.addWidget(Spacer('h'))
+		misc_search_layout.addRow('Regex:', search_allow_regex_l)
+		# Advanced / Misc / Regex / autocomplete
+		self.search_autocomplete = QCheckBox('*')
+		self.search_autocomplete.setChecked(gui_constants.SEARCH_AUTOCOMPLETE)
+		self.search_autocomplete.setToolTip('Turn autocomplete on/off')
+		misc_search_layout.addRow('Autocomplete', self.search_autocomplete)
+		# Advanced / Misc / Regex / search behaviour
+		self.search_every_keystroke = QRadioButton('Search on every keystroke *', misc_search)
+		misc_search_layout.addRow(self.search_every_keystroke)
+		self.search_on_enter = QRadioButton('Search on enter-key *', misc_search)
+		misc_search_layout.addRow(self.search_on_enter)
+		# Advanced / Misc / External Viewer
+		misc_external_viewer = QGroupBox('External Viewer')
+		misc_controls_layout.addWidget(misc_external_viewer)
+		misc_external_viewer_l = QFormLayout()
+		misc_external_viewer.setLayout(misc_external_viewer_l)
+		misc_external_viewer_l.addRow(QLabel(gui_constants.SUPPORTED_EXTERNAL_VIEWER_LBL))
+		self.external_viewer_path = PathLineEdit(misc_external_viewer, False)
+		self.external_viewer_path.setPlaceholderText('Right/Left-click to open folder explorer.'+
+							  ' Leave empty to use default viewer')
+		self.external_viewer_path.setToolTip('Right/Left-click to open folder explorer.'+
+							  ' Leave empty to use default viewer')
+		self.external_viewer_path.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+		misc_external_viewer_l.addRow('Path:', self.external_viewer_path)
+
+
+		# Advanced / Database
+		advanced_db_page = QWidget()
+		advanced.addTab(advanced_db_page, 'Database')
+		advanced.setTabEnabled(1, False)
+
+
+		# About
+		about = QTabWidget()
+		self.about_index = self.right_panel.addWidget(about)
+		about_happypanda_page = QWidget()
+		about_troubleshoot_page = QWidget()
+		about.addTab(about_happypanda_page, 'About Happypanda')
+		about_layout = QVBoxLayout()
+		about_happypanda_page.setLayout(about_layout)
+		info_lbl = QLabel('<b>Author:</b> <a href=\'https://github.com/Pewpews\'>'+
+					'Pewpews</a><br/>'+
+					'Chat: <a href=\'https://gitter.im/Pewpews/happypanda\'>'+
+					'Gitter chat</a><br/>'+
+					'Email: happypandabugs@gmail.com<br/>'+
+					'<b>Current version {}</b><br/>'.format(gui_constants.vs)+
+					'Happypanda was created using:<br/>'+
+					'- Python 3.4<br/>'+
+					'- The Qt5 Framework')
+		info_lbl.setOpenExternalLinks(True)
+		about_layout.addWidget(info_lbl, 0, Qt.AlignTop)
+		gpl_lbl = QLabel(gui_constants.GPL)
+		gpl_lbl.setOpenExternalLinks(True)
+		gpl_lbl.setWordWrap(True)
+		about_layout.addWidget(gpl_lbl, 0, Qt.AlignTop)
+		about_layout.addWidget(Spacer('v'))
+		# About / Tags
+		about_tags_page = QWidget()
+		about.addTab(about_tags_page, 'Tags')
+		about.setTabEnabled(1, False)
+		# list of tags/namespaces here
+
+		# About / Troubleshooting
+		about.addTab(about_troubleshoot_page, 'Troubleshooting Guide')
+		troubleshoot_layout = QVBoxLayout()
+		about_troubleshoot_page.setLayout(troubleshoot_layout)
+		guide_lbl = QLabel(gui_constants.TROUBLE_GUIDE)
+		guide_lbl.setTextFormat(Qt.RichText)
+		guide_lbl.setOpenExternalLinks(True)
+		troubleshoot_layout.addWidget(guide_lbl, 0, Qt.AlignTop)
+		troubleshoot_layout.addWidget(Spacer('v'))
+		# About / Regex Cheatsheet
+		about_s_regex = QGroupBox('Regex')
+		about.addTab(about_s_regex, 'Regex Cheatsheet')
+		about_s_regex_l = QFormLayout()
+		about_s_regex.setLayout(about_s_regex_l)
+		about_s_regex_l.addRow('\\\\\\\\', QLabel('Match literally \\'))
+		about_s_regex_l.addRow('.', QLabel('Match any single character'))
+		about_s_regex_l.addRow('^', QLabel('Start of string'))
+		about_s_regex_l.addRow('$', QLabel('End of string'))
+		about_s_regex_l.addRow('\\d', QLabel('Match any decimal digit'))
+		about_s_regex_l.addRow('\\D', QLabel('Match any non-digit character'))
+		about_s_regex_l.addRow('\\s', QLabel('Match any whitespace character'))
+		about_s_regex_l.addRow('\\S', QLabel('Match any non-whitespace character'))
+		about_s_regex_l.addRow('\\w', QLabel('Match any alphanumeric character'))
+		about_s_regex_l.addRow('\\W', QLabel('Match any non-alphanumeric character'))
+		about_s_regex_l.addRow('*', QLabel('Repeat previous character zero or more times'))
+		about_s_regex_l.addRow('+', QLabel('Repeat previous character one or more times'))
+		about_s_regex_l.addRow('?', QLabel('Repeat previous character one or zero times'))
+		about_s_regex_l.addRow('{m, n}', QLabel('Repeat previous character atleast <i>m</i> times but no more than <i>n</i> times'))
+		about_s_regex_l.addRow('(...)', QLabel('Match everything enclosed'))
+		about_s_regex_l.addRow('(a|b)', QLabel('Match either a or b'))
+		about_s_regex_l.addRow('[abc]', QLabel('Match a single character of: a, b or c'))
+		about_s_regex_l.addRow('[^abc]', QLabel('Match a character except: a, b or c'))
+		about_s_regex_l.addRow('[a-z]', QLabel('Match a character in the range'))
+		about_s_regex_l.addRow('[^a-z]', QLabel('Match a character not in the range'))
+		# About / Search tutorial
+		about_search_scroll = QScrollArea()
+		about_search_scroll.setBackgroundRole(QPalette.Base)
+		about_search_scroll.setWidgetResizable(True)
+		about_search_tut = QWidget()
+		about.addTab(about_search_scroll, 'Search Guide')
+		about_search_tut_l = QVBoxLayout()
+		about_search_tut.setLayout(about_search_tut_l)
+		# General
+		about_search_general = QGroupBox('General')
+		about_search_tut_l.addWidget(about_search_general)
+		about_search_general_l = QFormLayout()
+		about_search_general.setLayout(about_search_general_l)
+		about_search_general_l.addRow(QLabel(gui_constants.SEARCH_TUTORIAL_GENERAL))
+		# Title & Author
+		about_search_tit_aut = QGroupBox('Title and Author')
+		about_search_tut_l.addWidget(about_search_tit_aut)
+		about_search_tit_l = QFormLayout()
+		about_search_tit_aut.setLayout(about_search_tit_l)
+		about_search_tit_l.addRow(QLabel(gui_constants.SEARCH_TUTORIAL_TIT_AUT))
+		# Namespace & Tags
+		about_search_tags = QGroupBox('Namespace and Tags')
+		about_search_tut_l.addWidget(about_search_tags)
+		about_search_tags_l = QFormLayout()
+		about_search_tags.setLayout(about_search_tags_l)
+		about_search_tags_l.addRow(QLabel(gui_constants.SEARCH_TUTORIAL_TAGS))
+		about_search_scroll.setWidget(about_search_tut)
+
+
+	def color_checker(self, txt):
+		allow = False
+		if len(txt) == 7:
+			if txt[0] == '#':
+				allow = True
+		return allow
+
+	def choose_font(self):
+		tup = QFontDialog.getFont(self)
+		font = tup[0]
+		if tup[1]:
+			self.font_lbl.setText(font.family())
+			self.font_size_lbl.setValue(font.pointSize())
+
+	def reject(self):
+		self.close()
+
 class PathLineEdit(QLineEdit):
-	def __init(self, parent=None, dir=True):
+	"""
+	A lineedit which open a filedialog on right/left click
+	Set dir to false if you want files.
+	"""
+	def __init__(self, parent=None, dir=True):
 		super().__init__(parent)
 		self.folder = dir
 
@@ -360,7 +1128,7 @@ class GalleryListView(QWidget):
 	def from_files(self):
 		gallery_list = QFileDialog.getOpenFileNames(self,
 											 'Select 1 or more gallery to add',
-											 filter='Archives (*.zip)')
+											 filter='Archives (*.zip *.cbz)')
 		for path in gallery_list[0]:
 			#Warning: will break when you add more filters
 			if len(path) != 0:
@@ -374,60 +1142,6 @@ class GalleryListView(QWidget):
 		msgbox.setIcon(msgbox.Question)
 		if msgbox.exec() == QMessageBox.Yes:
 			self.close()
-		
-
-class About(QDialog):
-	ON = False #to prevent multiple instances
-	def __init__(self):
-		super().__init__()
-		gpl = """
-Happypanda is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 2 of the License, or
-any later version.
-Happypanda is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-You should have received a copy of the GNU General Public License
-along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
-"""
-		self.text = QLabel(gpl)
-		self.text.setAlignment(Qt.AlignCenter)
-		l = QHBoxLayout()
-		author_lbl = QLabel("<b>Author:</b>\nPewpews\n")
-		l.addWidget(author_lbl, alignment=Qt.AlignLeft)
-		info_lbl = QLabel()
-		info_lbl.setText('<a href="https://github.com/Pewpews/happypanda">Visit GitHub Repo</a>')
-		info_lbl.setTextFormat(Qt.RichText)
-		info_lbl.setTextInteractionFlags(Qt.TextBrowserInteraction)
-		info_lbl.setOpenExternalLinks(True)
-		l.addWidget(info_lbl, alignment=Qt.AlignRight)
-
-		bug_lbl = QLabel()
-		bug_lbl.setText('<i>Find some bugs or got any suggestions? Then please</i> '+
-				  '<a href="https://github.com/Pewpews/happypanda/issues">'+
-				  'report them here.</a>')
-		bug_lbl.setTextFormat(Qt.RichText)
-		bug_lbl.setTextInteractionFlags(Qt.TextBrowserInteraction)
-		bug_lbl.setOpenExternalLinks(True)
-
-		vs_lbl = QLabel('Happypanda Version {}'.format(gui_constants.vs))
-
-		layout_ = QVBoxLayout()
-		layout_.addLayout(l)
-		layout_.addWidget(self.text, 0, Qt.AlignHCenter)
-		layout_.addWidget(bug_lbl)
-		layout_.addWidget(vs_lbl, 0, Qt.AlignHCenter)
-		self.setLayout(layout_)
-		self.resize(300,100)
-		frect = self.frameGeometry()
-		frect.moveCenter(QDesktopWidget().availableGeometry().center())
-		self.move(frect.topLeft()-QPoint(0,150))
-		self.setAttribute(Qt.WA_DeleteOnClose)
-		self.setWindowTitle("About")
-		self.setWindowIcon(QIcon(gui_constants.APP_ICO_PATH))
-		self.exec()
 
 class Loading(QWidget):
 	ON = False #to prevent multiple instances
@@ -576,7 +1290,7 @@ class CompleterWithData(QCompleter):
 	def changeCompletion(self, completion):
 		if completion.find('(') != -1:
 			completion = completion[:completion.find('(')]
-		print(completion)
+		#print(completion)
 		self.insertText.emit(completion)
 
 
@@ -605,14 +1319,14 @@ class DatabaseFilterProxyModel(QSortFilterProxyModel):
 			p = os.path.split(gallery.path)
 			filter_list.append(p[1])
 		self.filter_list = sorted(filter_list)
-		print('Instatiated')
+		#print('Instatiated')
 
 	def set_name_role(self, role):
 		self.role = role
 		self.invalidateFilter()
 
 	def filterAcceptsRow(self, source_row, index_parent):
-		print('Using')
+		#print('Using')
 		allow = False
 		index = self.sourceModel().index(source_row, 0, index_parent)
 
@@ -621,12 +1335,11 @@ class DatabaseFilterProxyModel(QSortFilterProxyModel):
 			name = index.data(self.role)
 			if name.endswith(self.filters):
 				if binary_search(name):
-					print('Hiding {}'.format(name))
+					#print('Hiding {}'.format(name))
 					allow = True
 		return allow
 
-# TODO: FIX THIS HORRENDOUS DUPLICATED CODE
-class GalleryDialog(QDialog):
+class GalleryDialog(QWidget):
 	"A window for adding/modifying gallery"
 
 	gallery_queue = queue.Queue()
@@ -634,82 +1347,75 @@ class GalleryDialog(QDialog):
 	SERIES_EDIT = pyqtSignal(list, int)
 	#gallery_list = [] # might want to extend this to allow mass gallery adding
 
-	def _init__(self, parent=None):
-		super().__init__()
-	#TODO: Implement a way to mass add galleries
-	#IDEA: Extend dialog in a ScrollArea with more forms...
+	def __init__(self, parent=None, list_of_index=None):
+		super().__init__(parent, Qt.Dialog)
+		log_d('Triggered Gallery Edit/Add Dialog')
+		self.main_layout = QVBoxLayout()
 
-	def initUI(self):
-		main_layout = QVBoxLayout()
+		if not list_of_index:
+			self.newUI()
+			self.commonUI()
+			self.done.clicked.connect(self.accept)
+			self.cancel.clicked.connect(self.reject)
+		else:
+			assert isinstance(list_of_index, list)
+			self.position = list_of_index[0].row()
+			for index in list_of_index:
+				gallery = index.data(Qt.UserRole+1)
+				self.commonUI()
+				self.setGallery(gallery)
 
+			self.done.clicked.connect(self.accept_edit)
+			self.cancel.clicked.connect(self.reject_edit)
 
-		f_local = QGroupBox("Folder/ZIP")
-		f_local.setCheckable(False)
-		main_layout.addWidget(f_local)
-		local_layout = QHBoxLayout()
-		f_local.setLayout(local_layout)
+		log_d('GalleryDialog: Create UI: successful')
+		#TODO: Implement a way to mass add galleries
+		#IDEA: Extend dialog in a ScrollArea with more forms...
 
-		choose_folder = QPushButton("From Folder")
-		choose_folder.clicked.connect(lambda: self.choose_dir('f'))
-		local_layout.addWidget(choose_folder)
+		self.setLayout(self.main_layout)
+		self.resize(500,200)
+		frect = self.frameGeometry()
+		frect.moveCenter(QDesktopWidget().availableGeometry().center())
+		self.move(frect.topLeft()-QPoint(0,180))
+		#self.setAttribute(Qt.WA_DeleteOnClose)
+		self.setWindowTitle("Add a new gallery")
 
-		choose_archive = QPushButton("From ZIP")
-		choose_archive.clicked.connect(lambda: self.choose_dir('a'))
-		local_layout.addWidget(choose_archive)
-
-		self.file_exists_lbl = QLabel()
-		local_layout.addWidget(self.file_exists_lbl)
-		self.file_exists_lbl.hide()
-
+	def commonUI(self):
 		f_web = QGroupBox("Metadata from the Web")
 		f_web.setCheckable(False)
-		main_layout.addWidget(f_web)
+		self.main_layout.addWidget(f_web)
 		web_main_layout = QVBoxLayout()
 		web_layout = QHBoxLayout()
 		web_main_layout.addLayout(web_layout)
-		ipb_info_l = QHBoxLayout()
-		ipb_lbl = QLabel("ipb member id:")
-		self.ipb = QLineEdit()
-		ipb_pass_lbl = QLabel("ipb pass hash:")
-		self.ipb_pass = QLineEdit()
-		ipb_btn = QPushButton("Apply")
-		ipb_btn.setFixedWidth(70)
-		ipb_btn.clicked.connect(self.set_ipb)
-		ipb_info_l.addWidget(ipb_lbl)
-		ipb_info_l.addWidget(self.ipb)
-		ipb_info_l.addWidget(ipb_pass_lbl)
-		ipb_info_l.addWidget(self.ipb_pass)
-		ipb_info_l.addWidget(ipb_btn)
-		web_main_layout.addLayout(ipb_info_l)
 		f_web.setLayout(web_main_layout)
 
 		f_gallery = QGroupBox("Gallery Info")
 		f_gallery.setCheckable(False)
-		main_layout.addWidget(f_gallery)
+		self.main_layout.addWidget(f_gallery)
 		gallery_layout = QFormLayout()
 		f_gallery.setLayout(gallery_layout)
 
 		def basic_web(name):
 			return QLabel(name), QLineEdit(), QPushButton("Fetch"), QProgressBar()
 
-		url_lbl, url_edit, url_btn, url_prog = basic_web("URL:")
-		url_btn.clicked.connect(lambda: self.web_metadata(url_edit.text(), url_btn,
+		url_lbl, self.url_edit, url_btn, url_prog = basic_web("URL:")
+		url_btn.clicked.connect(lambda: self.web_metadata(self.url_edit.text(), url_btn,
 											url_prog))
 		url_prog.setTextVisible(False)
 		url_prog.setMinimum(0)
 		url_prog.setMaximum(0)
 		web_layout.addWidget(url_lbl, 0, Qt.AlignLeft)
-		web_layout.addWidget(url_edit, 0)
+		web_layout.addWidget(self.url_edit, 0)
 		web_layout.addWidget(url_btn, 0, Qt.AlignRight)
 		web_layout.addWidget(url_prog, 0, Qt.AlignRight)
-		url_edit.setPlaceholderText("paste g.e-hentai/exhentai gallery link")
+		self.url_edit.setPlaceholderText("paste g.e-hentai/exhentai gallery link")
 		url_prog.hide()
-
 
 		self.title_edit = QLineEdit()
 		self.author_edit = QLineEdit()
 		self.descr_edit = QTextEdit()
 		self.descr_edit.setFixedHeight(45)
+		self.descr_edit.setAcceptRichText(True)
 		self.descr_edit.setPlaceholderText("HTML 4 tags are supported")
 		self.lang_box = QComboBox()
 		self.lang_box.addItems(["English", "Japanese", "Other"])
@@ -731,15 +1437,15 @@ class GalleryDialog(QDialog):
 		self.pub_edit = QDateEdit()
 		self.pub_edit.setCalendarPopup(True)
 		self.pub_edit.setDate(QDate.currentDate())
-		self.path_lbl = QLabel("unspecified...")
+		self.path_lbl = QLabel("")
 		self.path_lbl.setWordWrap(True)
 
-		self.link_layout = QHBoxLayout()
+		link_layout = QHBoxLayout()
 		self.link_lbl = QLabel("")
 		self.link_lbl.setWordWrap(True)
 		self.link_edit = QLineEdit()
-		self.link_layout.addWidget(self.link_edit)
-		self.link_layout.addWidget(self.link_lbl)
+		link_layout.addWidget(self.link_edit)
+		link_layout.addWidget(self.link_lbl)
 		self.link_edit.hide()
 		self.link_btn = QPushButton("Modify")
 		self.link_btn.setFixedWidth(50)
@@ -747,8 +1453,8 @@ class GalleryDialog(QDialog):
 		self.link_btn2.setFixedWidth(40)
 		self.link_btn.clicked.connect(self.link_modify)
 		self.link_btn2.clicked.connect(self.link_set)
-		self.link_layout.addWidget(self.link_btn)
-		self.link_layout.addWidget(self.link_btn2)
+		link_layout.addWidget(self.link_btn)
+		link_layout.addWidget(self.link_btn2)
 		self.link_btn2.hide()
 
 		gallery_layout.addRow("Title:", self.title_edit)
@@ -759,40 +1465,82 @@ class GalleryDialog(QDialog):
 		gallery_layout.addRow("Type:", self.type_box)
 		gallery_layout.addRow("Publication Date:", self.pub_edit)
 		gallery_layout.addRow("Path:", self.path_lbl)
-		gallery_layout.addRow("Link:", self.link_layout)
+		gallery_layout.addRow("Link:", link_layout)
 
 		final_buttons = QHBoxLayout()
 		final_buttons.setAlignment(Qt.AlignRight)
-		main_layout.addLayout(final_buttons)
-		done = QPushButton("Done")
-		done.setDefault(True)
-		done.clicked.connect(self.accept)
-		cancel = QPushButton("Cancel")
-		cancel.clicked.connect(self.reject)
-		final_buttons.addWidget(cancel)
-		final_buttons.addWidget(done)
+		self.main_layout.addLayout(final_buttons)
+		self.done = QPushButton("Done")
+		self.done.setDefault(True)
+		self.cancel = QPushButton("Cancel")
+		final_buttons.addWidget(self.cancel)
+		final_buttons.addWidget(self.done)
 
-
-		self.setLayout(main_layout)
 		self.title_edit.setFocus()
 
-	# TODO: complete this... maybe another time.. 
-	#def doujin_show(self, index):
-	#	if index is 1:
-	#		self.doujin_parent.setVisible(True)
-	#	else:
-	#		self.doujin_parent.setVisible(False)
+	def setGallery(self, gallery):
+		"To be used for when editing a gallery"
+		self.gallery = gallery
 
-	def set_ipb(self):
-		ipb = self.ipb.text()
-		ipb_pass = self.ipb_pass.text()
-		from ..settings import s
-		s.set_ipb(ipb, ipb_pass)
+		self.url_edit.setText(gallery.link)
+
+		self.title_edit.setText(gallery.title)
+		self.author_edit.setText(gallery.artist)
+		self.descr_edit.setText(gallery.info)
+
+		self.lang_box.setCurrentIndex(2)
+		if gallery.language:
+			if gallery.language.lower() in "english":
+					self.lang_box.setCurrentIndex(0)
+			elif gallery.language.lower() in "japanese":
+				self.lang_box.setCurrentIndex(1)
+
+		self.tags_edit.setText(tag_to_string(gallery.tags))
+
+		t_index = self.type_box.findText(gallery.type)
+		try:
+			self.type_box.setCurrentIndex(t_index)
+		except:
+			self.type_box.setCurrentIndex(0)
+
+		if gallery.status is "Ongoing":
+			self.status_box.setCurrentIndex(1)
+		elif gallery.status is "Completed":
+			self.status_box.setCurrentIndex(2)
+		else:
+			self.status_box.setCurrentIndex(0)
+
+		gallery_pub_date = "{}".format(gallery.pub_date)
+		qdate_pub_date = QDate.fromString(gallery_pub_date, "yyyy-MM-dd")
+		self.pub_edit.setDate(qdate_pub_date)
+
+		self.link_lbl.setText(gallery.link)
+		self.path_lbl.setText(gallery.path)
+
+	def newUI(self):
+
+		f_local = QGroupBox("Folder/ZIP")
+		f_local.setCheckable(False)
+		self.main_layout.addWidget(f_local)
+		local_layout = QHBoxLayout()
+		f_local.setLayout(local_layout)
+
+		choose_folder = QPushButton("From Folder")
+		choose_folder.clicked.connect(lambda: self.choose_dir('f'))
+		local_layout.addWidget(choose_folder)
+
+		choose_archive = QPushButton("From ZIP/CBZ")
+		choose_archive.clicked.connect(lambda: self.choose_dir('a'))
+		local_layout.addWidget(choose_archive)
+
+		self.file_exists_lbl = QLabel()
+		local_layout.addWidget(self.file_exists_lbl)
+		self.file_exists_lbl.hide()
 
 	def choose_dir(self, mode):
 		if mode == 'a':
 			name = QFileDialog.getOpenFileName(self, 'Choose archive',
-											  filter='*.zip')
+											  filter='*.zip *.cbz')
 			name = name[0]
 		else:
 			name = QFileDialog.getExistingDirectory(self, 'Choose folder')
@@ -821,34 +1569,47 @@ class GalleryDialog(QDialog):
 		if len(self.descr_edit.toPlainText()) is 0:
 			self.descr_edit.setText("<i>No description..</i>")
 
-		if self.path_lbl.text() == "unspecified...":
+		if len(self.path_lbl.text()) == 0 or self.path_lbl.text() == 'No path specified':
+			self.path_lbl.setStyleSheet("color:red")
+			self.path_lbl.setText('No path specified')
 			return False
 
 		return True
 
 	def accept(self):
-		from ..database import gallerydb
 
 		def do_chapters(gallery):
+			log_d('Starting chapters')
 			thread = threading.Thread(target=self.set_chapters, args=(gallery,), daemon=True)
 			thread.start()
 			thread.join()
+			log_d('Finished chapters')
 			#return self.gallery_queue.get()
 
 		if self.check():
 			new_gallery = gallerydb.Gallery()
 			new_gallery.title = self.title_edit.text()
+			log_d('Adding gallery title')
 			new_gallery.artist = self.author_edit.text()
+			log_d('Adding gallery artist')
 			new_gallery.path = self.path_lbl.text()
+			log_d('Adding gallery path')
 			new_gallery.info = self.descr_edit.toPlainText()
+			log_d('Adding gallery descr')
 			new_gallery.type = self.type_box.currentText()
+			log_d('Adding gallery type')
 			new_gallery.language = self.lang_box.currentText()
+			log_d('Adding gallery lang')
 			new_gallery.status = self.status_box.currentText()
+			log_d('Adding gallery status')
 			new_gallery.tags = tag_to_dict(self.tags_edit.toPlainText())
+			log_d('Adding gallery: tagging to dict')
 			qpub_d = self.pub_edit.date().toString("ddMMyyyy")
 			dpub_d = datetime.strptime(qpub_d, "%d%m%Y").date()
 			new_gallery.pub_date = dpub_d
+			log_d('Adding gallery pub date')
 			new_gallery.link = self.link_lbl.text()
+			log_d('Adding gallery link')
 
 			if self.path_lbl.text() == "unspecified...":
 				self.SERIES.emit([new_gallery])
@@ -856,36 +1617,44 @@ class GalleryDialog(QDialog):
 				updated_gallery = do_chapters(new_gallery)
 				#for ser in self.gallery:
 				#self.SERIES.emit([updated_gallery])
-			super().accept()
+			self.close()
 
 	def set_chapters(self, gallery_object):
 		path = gallery_object.path
 		try:
+			log_d('Listing dir...')
 			con = os.listdir(path) # list all folders in gallery dir
+			log_d('Sorting')
 			chapters = sorted([os.path.join(path,sub) for sub in con if os.path.isdir(os.path.join(path, sub))]) #subfolders
 			# if gallery has chapters divided into sub folders
 			if len(chapters) != 0:
+				log_d('Chapters divided in folders..')
 				for numb, ch in enumerate(chapters):
 					chap_path = os.path.join(path, ch)
 					gallery_object.chapters[numb] = chap_path
 
 			else: #else assume that all images are in gallery folder
 				gallery_object.chapters[0] = path
+			log_d('Added chapters to gallery')
 				
 			#find last edited file
 			times = set()
+			log_d('Finding last update...')
 			for root, dirs, files in os.walk(path, topdown=False):
 				for img in files:
 					fp = os.path.join(root, img)
 					times.add(os.path.getmtime(fp))
 			gallery_object.last_update = time.asctime(time.gmtime(max(times)))
+			log_d('Found last update')
 		except NotADirectoryError:
-			if path[-4:] == '.zip':
+			if path[-4:] in ARCHIVE_FILES:
+				log_d('Found an archive')
 				#TODO: add support for folders in archive
 				gallery_object.chapters[0] = path
 
 		#self.gallery_queue.put(gallery_object)
 		self.SERIES.emit([gallery_object])
+		log_d('Sent gallery to model')
 		#gallerydb.GalleryDB.add_gallery(gallery_object)
 		
 
@@ -897,30 +1666,9 @@ class GalleryDialog(QDialog):
 			msgbox.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
 			msgbox.setDefaultButton(QMessageBox.No)
 			if msgbox.exec() == QMessageBox.Yes:
-				super().reject()
+				self.close()
 		else:
-			super().reject()
-
-	def trigger(self, list_of_index=None):
-		log_d('Triggered Gallery Edit/Add Dialog')
-		if not list_of_index:
-			self.initUI()
-		else:
-			assert isinstance(list_of_index, list)
-			self.position = list_of_index[0].row()
-			for index in list_of_index:
-				gallery = index.data(Qt.UserRole+1)
-				self.setGallery(gallery)
-
-		self.resize(500,200)
-		frect = self.frameGeometry()
-		frect.moveCenter(QDesktopWidget().availableGeometry().center())
-		self.move(frect.topLeft()-QPoint(0,180))
-		self.setAttribute(Qt.WA_DeleteOnClose)
-		self.setWindowTitle("Add a new gallery")
-		self.setWindowIcon(QIcon(gui_constants.APP_ICO_PATH))
-		#self.setWindowFlags(Qt.FramelessWindowHint)
-		self.exec()
+			self.close()
 
 	def web_metadata(self, url, btn_widget, pgr_widget):
 		try:
@@ -1016,157 +1764,6 @@ class GalleryDialog(QDialog):
 		self.link_btn.hide()
 		self.link_btn2.show()
 
-	def setGallery(self, gallery):
-		"To be used for when editing a gallery"
-		self.gallery = gallery
-		main_layout = QVBoxLayout()
-
-		f_web = QGroupBox("Fetch metadata from Web")
-		f_web.setCheckable(False)
-		main_layout.addWidget(f_web)
-		web_main_layout = QVBoxLayout()
-		web_layout = QHBoxLayout()
-		web_main_layout.addLayout(web_layout)
-		ipb_info_l = QHBoxLayout()
-		ipb_lbl = QLabel("ipb member id:")
-		self.ipb = QLineEdit()
-		ipb_pass_lbl = QLabel("ipb pass hash:")
-		self.ipb_pass = QLineEdit()
-		ipb_btn = QPushButton("Apply")
-		ipb_btn.setFixedWidth(50)
-		ipb_btn.clicked.connect(self.set_ipb)
-		ipb_info_l.addWidget(ipb_lbl)
-		ipb_info_l.addWidget(self.ipb)
-		ipb_info_l.addWidget(ipb_pass_lbl)
-		ipb_info_l.addWidget(self.ipb_pass)
-		ipb_info_l.addWidget(ipb_btn)
-		web_main_layout.addLayout(ipb_info_l)
-		f_web.setLayout(web_main_layout)
-
-		from ..settings import s
-		ipb_dict = s.get_ipb()
-		self.ipb.setText(ipb_dict['ipb_id'])
-		self.ipb_pass.setText(ipb_dict['ipb_pass'])
-
-		f_gallery = QGroupBox("Gallery Info")
-		f_gallery.setCheckable(False)
-		main_layout.addWidget(f_gallery)
-		gallery_layout = QFormLayout()
-		f_gallery.setLayout(gallery_layout)
-
-
-		def basic_web(name):
-			return QLabel(name), QLineEdit(), QPushButton("Fetch"), QProgressBar()
-
-		url_lbl, url_edit, url_btn, url_prog = basic_web("URL:")
-		url_edit.setText(gallery.link)
-		url_btn.clicked.connect(lambda: self.web_metadata(url_edit.text(), url_btn,
-													url_prog))
-		url_prog.setTextVisible(False)
-		url_prog.setMinimum(0)
-		url_prog.setMaximum(0)
-		web_layout.addWidget(url_lbl, 0, Qt.AlignLeft)
-		web_layout.addWidget(url_edit, 0)
-		web_layout.addWidget(url_btn, 0, Qt.AlignRight)
-		web_layout.addWidget(url_prog, 0, Qt.AlignRight)
-		url_edit.setPlaceholderText("paste g.e-hentai/exhentai gallery link")
-		url_prog.hide()
-
-		self.title_edit = QLineEdit()
-		self.title_edit.setText(gallery.title)
-		self.author_edit = QLineEdit()
-		self.author_edit.setText(gallery.artist)
-		self.descr_edit = QTextEdit()
-		self.descr_edit.setText(gallery.info)
-		self.descr_edit.setAcceptRichText(True)
-		self.descr_edit.setFixedHeight(45)
-		self.lang_box = QComboBox()
-		self.lang_box.addItems(["English", "Japanese", "Other"])
-		if gallery.language is "English":
-			self.lang_box.setCurrentIndex(0)
-		elif gallery.language is "Japanese":
-			self.lang_box.setCurrentIndex(1)
-		else:
-			self.lang_box.setCurrentIndex(2)
-
-		self.tags_edit = return_tag_completer_TextEdit()
-		self.tags_edit.setFixedHeight(70)
-		self.tags_edit.setPlaceholderText("Autocomplete enabled. Press Tab (Ctrl + Space to show popup)"+
-									"\nnamespace1:tag1, tag2, namespace3:tag3, etc..")
-		self.tags_edit.setText(tag_to_string(gallery.tags))
-
-		self.type_box = QComboBox()
-		self.type_box.addItems(["Manga", "Doujinshi", "Artist CG Sets", "Game CG Sets",
-						  "Western", "Image Sets", "Non-H", "Cosplay", "Other"])
-
-		t_index = self.type_box.findText(gallery.type)
-		try:
-			self.type_box.setCurrentIndex(t_index)
-		except:
-			self.type_box.setCurrentIndex(0)
-		#self.type_box.currentIndexChanged[int].connect(self.doujin_show)
-		#self.doujin_parent = QLineEdit()
-		#self.doujin_parent.setVisible(False)
-		self.status_box = QComboBox()
-		self.status_box.addItems(["Unknown", "Ongoing", "Completed"])
-		if gallery.status is "Ongoing":
-			self.status_box.setCurrentIndex(1)
-		elif gallery.status is "Completed":
-			self.status_box.setCurrentIndex(2)
-		else:
-			self.status_box.setCurrentIndex(0)
-
-		self.pub_edit = QDateEdit()
-		self.pub_edit.setCalendarPopup(True)
-		gallery_pub_date = "{}".format(gallery.pub_date)
-		qdate_pub_date = QDate.fromString(gallery_pub_date, "yyyy-MM-dd")
-		self.pub_edit.setDate(qdate_pub_date)
-		self.path_lbl = QLabel("unspecified...")
-		self.path_lbl.setWordWrap(True)
-
-		self.link_layout = QHBoxLayout()
-		self.link_lbl = QLabel("")
-		self.link_lbl.setWordWrap(True)
-		self.link_edit = QLineEdit()
-		self.link_layout.addWidget(self.link_edit)
-		self.link_layout.addWidget(self.link_lbl)
-		self.link_edit.hide()
-		self.link_btn = QPushButton("Modify")
-		self.link_btn.setFixedWidth(50)
-		self.link_btn2 = QPushButton("Set")
-		self.link_btn2.setFixedWidth(40)
-		self.link_btn.clicked.connect(self.link_modify)
-		self.link_btn2.clicked.connect(self.link_set)
-		self.link_layout.addWidget(self.link_btn)
-		self.link_layout.addWidget(self.link_btn2)
-		self.link_btn2.hide()
-
-		gallery_layout.addRow("Title:", self.title_edit)
-		gallery_layout.addRow("Author:", self.author_edit)
-		gallery_layout.addRow("Description:", self.descr_edit)
-		gallery_layout.addRow("Language:", self.lang_box)
-		gallery_layout.addRow("Tags:", self.tags_edit)
-		gallery_layout.addRow("Type:", self.type_box)
-		gallery_layout.addRow("Publication Date:", self.pub_edit)
-		gallery_layout.addRow("Path:", self.path_lbl)
-		gallery_layout.addRow("Link:", self.link_layout)
-
-		self.link_lbl.setText(gallery.link)
-		self.path_lbl.setText(gallery.path)
-
-		final_buttons = QHBoxLayout()
-		final_buttons.setAlignment(Qt.AlignRight)
-		main_layout.addLayout(final_buttons)
-		done = QPushButton("Done")
-		done.setDefault(True)
-		done.clicked.connect(self.accept_edit)
-		cancel = QPushButton("Cancel")
-		cancel.clicked.connect(self.reject_edit)
-		final_buttons.addWidget(cancel)
-		final_buttons.addWidget(done)
-
-		self.setLayout(main_layout)
-
 	def accept_edit(self):
 
 		if self.check():
@@ -1186,7 +1783,8 @@ class GalleryDialog(QDialog):
 
 			#for ser in self.gallery:
 			self.SERIES_EDIT.emit([new_gallery], self.position)
-			super().accept()
+			self.close()
 
 	def reject_edit(self):
-		super().reject()
+		self.close()
+
