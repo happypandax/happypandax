@@ -257,9 +257,6 @@ class SortFilterModel(QSortFilterProxyModel):
 		self.invalidateFilter()
 
 	def filterAcceptsRow(self, source_row, index_parent):
-
-		if self.allow_all:
-			return True
 		allow = False
 		gallery = None
 
@@ -345,12 +342,15 @@ class SortFilterModel(QSortFilterProxyModel):
 						if s:
 							allow = return_searched(s)
 						else: allow = True
+						if self.allow_all:
+							return True
 				else:
 					s = do_search()
 					if s:
 						allow = return_searched(s)
 					else: allow = True
-
+					if self.allow_all:
+						return True
 		return allow
 
 class GalleryModel(QAbstractTableModel):
