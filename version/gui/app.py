@@ -95,7 +95,7 @@ class AppWindow(QMainWindow):
 		update_instance.moveToThread(thread)
 		update_instance.UPDATE_CHECK.connect(self.check_update)
 		thread.started.connect(update_instance.fetch_vs)
-		#update_instance.UPDATE_CHECK.connect(lambda: update_instance.deleteLater)
+		update_instance.UPDATE_CHECK.connect(lambda: update_instance.deleteLater)
 		update_instance.UPDATE_CHECK.connect(lambda: thread.deleteLater)
 		thread.start()
 		log_d('Window Create: OK')
