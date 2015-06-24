@@ -202,3 +202,4 @@ FakesAssemblies/
 /version/gui/static/gallery_def_ico.ico
 /version/gui/static/gallery_ext_ico.ico
 *.pyperf
+/temp

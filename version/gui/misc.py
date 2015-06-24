@@ -83,18 +83,18 @@ class FileIcon:
 				zip = ArchiveFile(gallery.path)
 				for name in zip.namelist():
 					if name.endswith(tuple(IMG_FILES)):
-						folder = os.path.normcase(os.path.join(
+						folder = os.path.join(
 							gui_constants.temp_dir,
-							'{}{}'.format(name, n)))
+							'{}{}'.format(name, n))
 						zip.extract(name, folder)
-						file = os.path.normcase(os.path.join(
-							folder, name))
+						file = os.path.join(
+							folder, name)
 						break;
 			else:
 				for name in os.listdir(gallery.chapter[0]):
 					if name.endswith(tuple(IMG_FILES)):
-						file = os.path.normcase(os.path.join(
-							gallery.chapter[0], name))
+						file = os.path.join(
+							gallery.chapter[0], name)
 						break;
 			return file
 
@@ -612,7 +612,7 @@ class SettingsDialog(QWidget):
 		self.visual_grid_tooltip_type = QCheckBox('Type')
 		grid_tooltips_hlayout.addWidget(self.visual_grid_tooltip_type)
 		self.visual_grid_tooltip_lang = QCheckBox('Language')
-		grid_tooltips_hlayout.addWidget(self.visual_grid_tooltip_type)
+		grid_tooltips_hlayout.addWidget(self.visual_grid_tooltip_lang)
 		self.visual_grid_tooltip_descr = QCheckBox('Description')
 		grid_tooltips_hlayout.addWidget(self.visual_grid_tooltip_descr)
 		self.visual_grid_tooltip_tags = QCheckBox('Tags')
@@ -1529,7 +1529,7 @@ class GalleryDialog(QWidget):
 		choose_folder.clicked.connect(lambda: self.choose_dir('f'))
 		local_layout.addWidget(choose_folder)
 
-		choose_archive = QPushButton("From ZIP")
+		choose_archive = QPushButton("From ZIP/CBZ")
 		choose_archive.clicked.connect(lambda: self.choose_dir('a'))
 		local_layout.addWidget(choose_archive)
 
@@ -1592,7 +1592,7 @@ class GalleryDialog(QWidget):
 			log_d('Adding gallery title')
 			new_gallery.artist = self.author_edit.text()
 			log_d('Adding gallery artist')
-			new_gallery.path = os.path.normcase(self.path_lbl.text())
+			new_gallery.path = self.path_lbl.text()
 			log_d('Adding gallery path')
 			new_gallery.info = self.descr_edit.toPlainText()
 			log_d('Adding gallery descr')
@@ -1630,7 +1630,7 @@ class GalleryDialog(QWidget):
 			if len(chapters) != 0:
 				log_d('Chapters divided in folders..')
 				for numb, ch in enumerate(chapters):
-					chap_path = os.path.normcase(os.path.join(path, ch))
+					chap_path = os.path.join(path, ch)
 					gallery_object.chapters[numb] = chap_path
 
 			else: #else assume that all images are in gallery folder

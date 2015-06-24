@@ -106,13 +106,13 @@ TOOLTIP_AUTHOR = get(False, 'Visual', 'tooltip author', bool)
 TOOLTIP_CHAPTERS = get(True, 'Visual', 'tooltip chapters', bool)
 TOOLTIP_STATUS = get(True, 'Visual', 'tooltip status', bool)
 TOOLTIP_TYPE = get(True, 'Visual', 'tooltip type', bool)
-TOOLTIP_LANG = get(True, 'Visual', 'tooltip lang', bool)
+TOOLTIP_LANG = get(False, 'Visual', 'tooltip lang', bool)
 TOOLTIP_DESCR = get(False, 'Visual', 'tooltip descr', bool)
-TOOLTIP_TAGS = get(True, 'Visual', 'tooltip tags', bool)
+TOOLTIP_TAGS = get(False, 'Visual', 'tooltip tags', bool)
 TOOLTIP_LAST_READ = get(True, 'Visual', 'tooltip last read', bool)
 TOOLTIP_TIMES_READ = get(True, 'Visual', 'tooltip times read', bool)
 TOOLTIP_PUB_DATE = get(False, 'Visual', 'tooltip pub date', bool)
-TOOLTIP_DATE_ADDED = get(False, 'Visual', 'tooltip date added', bool)
+TOOLTIP_DATE_ADDED = get(True, 'Visual', 'tooltip date added', bool)
 
 EXHEN_COOKIE_TUTORIAL =\
 	"""
