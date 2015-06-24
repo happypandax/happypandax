@@ -642,6 +642,7 @@ class SettingsDialog(QWidget):
 		self.gallery_text_fit = QRadioButton('Fit text', gallery_text_mode)
 		gallery_text_mode_l.addWidget(self.gallery_text_elide, 0, Qt.AlignLeft)
 		gallery_text_mode_l.addWidget(self.gallery_text_fit, 0, Qt.AlignLeft)
+		gallery_text_mode_l.addWidget(Spacer('h'), 1, Qt.AlignLeft)
 		gallery_font = QHBoxLayout()
 		grid_gallery_main_l.addRow('Font:*', gallery_font)
 		self.font_lbl = QLabel()
@@ -654,6 +655,7 @@ class SettingsDialog(QWidget):
 		gallery_font.addWidget(self.font_lbl, 0, Qt.AlignLeft)
 		gallery_font.addWidget(self.font_size_lbl, 0, Qt.AlignLeft)
 		gallery_font.addWidget(choose_font, 0, Qt.AlignLeft)
+		gallery_font.addWidget(Spacer('h'), 1, Qt.AlignLeft)
 		# grid view / colors
 		grid_colors_group = QGroupBox('Colors', grid_view_general_page)
 		grid_view_layout.addWidget(grid_colors_group, 1, Qt.AlignTop)

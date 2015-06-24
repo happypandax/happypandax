@@ -1,4 +1,4 @@
-"""
+﻿"""
 This file is part of Happypanda.
 Happypanda is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -1013,11 +1013,11 @@ class MangaView(QListView):
 				self.STATUS_BAR_MSG.emit('Opening folders')
 				for x in select_indexes:
 					ser = x.data(Qt.UserRole+1)
-					utils.open_path(os.path.split(ser.path)[0])
+					utils.open_path(ser.path)
 			else:
 				self.STATUS_BAR_MSG.emit('Opening folder')
 				ser = index.data(Qt.UserRole+1)
-				utils.open_path(os.path.split(ser.path)[0])
+				utils.open_path(ser.path)
 
 		def add_chapters():
 			def add_chdb(chaps):
@@ -1385,11 +1385,11 @@ class MangaTableView(QTableView):
 				self.STATUS_BAR_MSG.emit('Opening folders')
 				for x in select_indexes:
 					ser = x.data(Qt.UserRole+1)
-					utils.open_path(os.path.split(ser.path)[0])
+					utils.open_path(ser.path)
 			else:
 				self.STATUS_BAR_MSG.emit('Opening folder')
 				ser = index.data(Qt.UserRole+1)
-				utils.open_path(os.path.split(ser.path)[0])
+				utils.open_path(ser.path)
 
 		def add_chapters():
 			def add_chdb(chaps):

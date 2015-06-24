@@ -1,4 +1,4 @@
-"""
+﻿"""
 This file is part of Happypanda.
 Happypanda is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -167,7 +167,7 @@ Your database will not be touched without you being notified.""")
 		#list view
 		self.manga_list_main = QWidget()
 		#self.manga_list_main.setContentsMargins(-10, -12, -10, -10)
-		self.manga_list_main.setContentsMargins(10, -12, -10, -10) # x, y, inverted_width, inverted_height
+		self.manga_list_main.setContentsMargins(10, -9, -10, -10) # x, y, inverted_width, inverted_height
 		self.manga_list_layout = QHBoxLayout()
 		self.manga_list_main.setLayout(self.manga_list_layout)
 

@@ -1,4 +1,4 @@
-"""
+﻿"""
 This file is part of Happypanda.
 Happypanda is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -14,6 +14,8 @@ along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 
 import time, datetime, os, subprocess, sys, logging, zipfile
 import hashlib, shutil
+
+from .gui import gui_constants
 
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -95,25 +97,52 @@ def today():
 	year = _date.strftime("%Y")
 	return [day, month, year]
 
+def external_viewer_checker(path):
+	check_dict = gui_constants.EXTERNAL_VIEWER_SUPPORT
+	viewer = os.path.split(path)[1]
+	for x in check_dict:
+		allow = False
+		for n in check_dict[x]:
+			if viewer.lower() in n.lower():
+				allow = True
+				break
+		if allow:
+			return x
+
 def open(chapterpath):
-	try: # folder
-		filepath = os.path.join(chapterpath, [x for x in sorted(os.listdir(chapterpath))\
-			if x[-3:] in IMG_FILES][0]) # Find first page
-	except NotADirectoryError: # archive
-		zip = ArchiveFile(chapterpath)
-		import uuid
-		t_p = os.path.join('temp', str(uuid.uuid4()))
-		zip.extract_all(t_p)
-		filepath = os.path.join(t_p, [x for x in sorted(os.listdir(t_p))\
-			if x[-3:] in IMG_FILES][0]) # Find first page
+	try:
+		try: # folder
+			filepath = os.path.join(chapterpath, [x for x in sorted(os.listdir(chapterpath))\
+				if x[-3:] in IMG_FILES][0]) # Find first page
+		except NotADirectoryError: # archive
+			zip = ArchiveFile(chapterpath)
+			import uuid
+			t_p = os.path.join('temp', str(uuid.uuid4()))
+			zip.extract_all(t_p)
+			filepath = os.path.join(t_p, [x for x in sorted(os.listdir(t_p))\
+				if x[-3:] in IMG_FILES][0]) # Find first page
+			filepath = os.path.abspath(filepath)
+	except FileNotFoundError:
+		log.exception('Could not find chapter {}'.format(chapterpath))
 
 	try:
-		if sys.platform.startswith('darwin'):
-			subprocess.call(('open', filepath))
-		elif os.name == 'nt':
-			os.startfile(filepath)
-		elif os.name == 'posix':
-			subprocess.call(('xdg-open', filepath))
+		if not gui_constants.USE_EXTERNAL_VIEWER:
+			if sys.platform.startswith('darwin'):
+				subprocess.call(('open', filepath))
+			elif os.name == 'nt':
+				os.startfile(filepath)
+			elif os.name == 'posix':
+				subprocess.call(('xdg-open', filepath))
+		else:
+			print('using')
+			ext_path = gui_constants.EXTERNAL_VIEWER_PATH
+			viewer = external_viewer_checker(ext_path)
+			if viewer == 'honeyview':
+				subprocess.call((ext_path, filepath))
+			else:
+				subprocess.check_call((ext_path, filepath))
+	except subprocess.CalledProcessError:
+		log.exception('Could not open chapter. Invalid external viewer.')
 	except:
 		log_e('Could not open chapter {}'.format(os.path.split(chapterpath)[1]))
 

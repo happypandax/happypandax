@@ -1,4 +1,4 @@
-"""
+﻿"""
 This file is part of Happypanda.
 Happypanda is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -67,6 +67,7 @@ LIST_PATH = os.path.join(static_dir, "list.png")
 NO_IMAGE_PATH = os.path.join(static_dir, "default.jpg")
 
 # External Viewer
+EXTERNAL_VIEWER_SUPPORT = {'honeyview':['Honeyview.exe'], 'irfanview':['i_view32.exe']}
 USE_EXTERNAL_VIEWER = get(False, 'Advanced', 'use external viewer', bool)
 EXTERNAL_VIEWER_PATH = os.path.normcase(get('', 'Advanced', 'external viewer path', str))
 _REFRESH_EXTERNAL_VIEWER = False
@@ -158,10 +159,13 @@ if it does then comment the last iteration of your log contents)</i><br/>
 """
 
 SUPPORTED_EXTERNAL_VIEWER_LBL =\
-	"""
-Currently only these programs are supported:
-Associated Program, Honeyview
+	"""Currently only these programs are officially supported (tested and works):
 
-Hit me up on github/gitter-chat to add more supported programs
+Windows: Default Viewer, Honeyview, Irfanview
+Linux: Default Viewer
+Mac: Default Viewer
+
+Note: Your viewer *might* still work, even though it's not on the list.
+You preffered viewer not on the list? Hit me up on github/gitter-chat to add official support.
 """
 
