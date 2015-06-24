@@ -141,6 +141,7 @@ class Popup(QWidget):
 		self.link.setText(gallery.link)
 
 class SortFilterModel(QSortFilterProxyModel):
+	ROWCOUNT_CHANGE = pyqtSignal()
 	def __init__(self, parent=None):
 		super().__init__(parent)
 		self._data = []
@@ -156,10 +157,12 @@ class SortFilterModel(QSortFilterProxyModel):
 	def fav_view(self):
 		self.fav = True
 		self.invalidateFilter()
+		self.ROWCOUNT_CHANGE.emit()
 
 	def catalog_view(self):
 		self.fav = False
 		self.invalidateFilter()
+		self.ROWCOUNT_CHANGE.emit()
 	
 	def change_model(self, model):
 		self.setSourceModel(model)
@@ -255,6 +258,7 @@ class SortFilterModel(QSortFilterProxyModel):
 			self.allow_all = True
 
 		self.invalidateFilter()
+		self.ROWCOUNT_CHANGE.emit()
 
 	def filterAcceptsRow(self, source_row, index_parent):
 		allow = False
@@ -863,6 +867,7 @@ class MangaView(QListView):
 		self.gallery_model = GalleryModel(parent)
 		self.sort_model.change_model(self.gallery_model)
 		self.sort_model.sort(0)
+		self.sort_model.ROWCOUNT_CHANGE.connect(self.gallery_model.ROWCOUNT_CHANGE.emit)
 		self.setModel(self.sort_model)
 		self.SERIES_DIALOG.connect(self.spawn_dialog)
 		self.doubleClicked.connect(self.open_chapter)
