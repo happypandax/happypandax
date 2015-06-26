@@ -39,6 +39,7 @@ class AppWindow(QMainWindow):
 	"The application's main window"
 	def __init__(self):
 		super().__init__()
+		self.first_time()
 		self.center = QWidget()
 		self.display = QStackedLayout()
 		self.center.setLayout(self.display)
@@ -476,6 +477,12 @@ Your database will not be touched without you being notified.""")
 				fetch_instance.FINISHED.connect(thread_deleteLater)
 				data_thread.start()
 				log_i('Populating DB from gallery folder')
+
+	def first_time(self):
+		if gui_constants.FIRST_TIME_LEVEL < 1:
+			log_d('Invoking first time level 0')
+			if gallerydb.GalleryDB.rebuild_galleries():
+				settings.set(1, 'Application', 'first time level')
 
 	def closeEvent(self, event):
 		settings.win_save(self, 'AppWindow')

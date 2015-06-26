@@ -871,6 +871,9 @@ class MangaView(QListView):
 		self.setModel(self.sort_model)
 		self.SERIES_DIALOG.connect(self.spawn_dialog)
 		self.doubleClicked.connect(self.open_chapter)
+		def debug_print(a):
+			print(a.data(Qt.UserRole+1))
+		self.clicked.connect(debug_print)
 	#	self.ti = QTimer()
 	#	self.ti.timeout.connect(self.test_)
 	#	self.ti.start(5000)
@@ -968,7 +971,7 @@ class MangaView(QListView):
 				gallery = x.data(Qt.UserRole+1)
 				self.STATUS_BAR_MSG.emit("Opening chapters of selected galleries")
 				try:
-					threading.Thread(target=utils.open,
+					threading.Thread(target=utils.open_chapter,
 							   args=(gallery.chapters[chap_numb],)).start()
 					if not gallery.times_read:
 						gallery.times_read = 0
@@ -982,7 +985,7 @@ class MangaView(QListView):
 			self.STATUS_BAR_MSG.emit("Opening chapter {} of {}".format(chap_numb+1,
 																 gallery.title))
 			try:
-				threading.Thread(target=utils.open,
+				threading.Thread(target=utils.open_chapter,
 						   args=(gallery.chapters[chap_numb],)).start()
 				if not gallery.times_read:
 					gallery.times_read = 0
@@ -1342,7 +1345,7 @@ class MangaTableView(QTableView):
 				gallery = x.data(Qt.UserRole+1)
 				self.STATUS_BAR_MSG.emit("Opening chapters of selected galleries")
 				try:
-					threading.Thread(target=utils.open,
+					threading.Thread(target=utils.open_chapter,
 							   args=(gallery.chapters[chap_numb],)).start()
 					if not gallery.times_read:
 						gallery.times_read = 0
@@ -1356,7 +1359,7 @@ class MangaTableView(QTableView):
 			self.STATUS_BAR_MSG.emit("Opening chapter {} of {}".format(chap_numb+1,
 																 gallery.title))
 			try:
-				threading.Thread(target=utils.open,
+				threading.Thread(target=utils.open_chapter,
 						   args=(gallery.chapters[chap_numb],)).start()
 				if not gallery.times_read:
 					gallery.times_read = 0

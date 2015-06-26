@@ -109,7 +109,7 @@ def external_viewer_checker(path):
 		if allow:
 			return x
 
-def open(chapterpath):
+def open_chapter(chapterpath):
 	try:
 		try: # folder
 			filepath = os.path.join(chapterpath, [x for x in sorted(os.listdir(chapterpath))\

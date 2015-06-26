@@ -1,4 +1,4 @@
-"""
+﻿"""
 This file is part of Happypanda.
 Happypanda is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -101,6 +101,7 @@ def gallery_map(row, gallery):
 	gallery.last_read = row['last_read']
 	gallery.date_added = row['date_added']
 	gallery.times_read = row['times_read']
+	gallery.hash = row['hash']
 	try:
 		gallery.link = bytes.decode(row['link'])
 	except TypeError:
@@ -113,6 +114,7 @@ def gallery_map(row, gallery):
 	return gallery
 
 def default_exec(object):
+	object.validate()
 	def check(obj):
 		if obj == None:
 			return "None"
@@ -139,7 +141,8 @@ def default_exec(object):
 				'last_read':check(object.last_read),
 				'last_update':check(object.last_update),
 				'link':str.encode(object.link),
-				'times_read':check(object.times_read)
+				'times_read':check(object.times_read),
+				'hash':check(object.hash)
 				}
 				]]
 	return executing
@@ -147,6 +150,7 @@ def default_exec(object):
 class GalleryDB:
 	"""
 	Provides the following s methods:
+		rebuild_galleries -> Rebuilds the galleries in DB
 		modify_gallery -> Modifies gallery with given gallery id
 		fav_gallery_set -> Set fav on gallery with given gallery id, and returns the gallery
 		get_all_gallery -> returns a list of all gallery (<Gallery> class) currently in DB
@@ -165,9 +169,37 @@ class GalleryDB:
 		raise Exception("GalleryDB should not be instantiated")
 
 	@staticmethod
+	def rebuild_galleries():
+		"Rebuilds the galleries in DB"
+		galleries = GalleryDB.get_all_gallery()
+		try:
+			log_i('Rebuilding galleries')
+			for gallery in galleries:
+				if gallery.validate():
+					GalleryDB.modify_gallery(
+						gallery.id,
+						title=gallery.title,
+						artist=gallery.artist,
+						info=gallery.info,
+						type=gallery.type,
+						fav=gallery.fav,
+						tags=gallery.tags,
+						language=gallery.language,
+						status=gallery.status,
+						pub_date=gallery.pub_date,
+						link=gallery.link,
+						times_read=gallery.times_read,
+						hash=gallery.hash)
+		except:
+			log.exception('Failed rebuilding galleries')
+			return False
+		log_i('Finished rebuilding galleries')
+		return True
+
+	@staticmethod
 	def modify_gallery(series_id, title=None, artist=None, info=None, type=None, fav=None,
 				   tags=None, language=None, status=None, pub_date=None, link=None,
-				   times_read=None):
+				   times_read=None, hash=None):
 		"Modifies gallery with given gallery id"
 		executing = []
 		assert isinstance(series_id, int)
@@ -199,6 +231,8 @@ class GalleryDB:
 			executing.append(["UPDATE series SET link=? WHERE series_id=?", (link, series_id)])
 		if times_read:
 			executing.append(["UPDATE series SET times_read=? WHERE series_id=?", (times_read, series_id)])
+		if hash:
+			executing.append(["UPDATE series SET hash=? WHERE series_id=?", (hash, series_id)])
 		if tags:
 			assert isinstance(tags, dict)
 			TagDB.modify_tags(series_id, tags)
@@ -809,32 +843,52 @@ class Gallery:
 		self.valid = False
 		self._cache_id = None
 
-	def gen_hash(self, nth):
+	def gen_hash(self):
 		"""
-		Generates hash from an image middle of first chapter.
+		Generates hash from an image in the middle of first chapter.
 		"""
 		try:
-			f_chap = os.listdir(self.chapters[0])
-			img_p = sorted(f_chap)[len(f_chap//2)]
+			hash = None
+			try:
+				imgs = os.listdir(self.chapters[0])
+				imgs_p = [os.path.join(self.chapters[0],x)\
+					for x in imgs if x.endswith(tuple(IMG_FILES))]
+				img_p = imgs_p[len(imgs_p)//2]
+			except NotADirectoryError:
+				zip = ArchiveFile(self.chapters[0])
+				names = zip.namelist()
+				img_p = os.path.join(gui_constants.temp_dir, str(uuid.uuid4()))
+				img = names[len(names)//2]
+				zip.extract(img, img_p)
+				img_p = os.path.join(img_p, img)
+
 			with open(img_p, 'rb') as img:
 				hash = generate_img_hash(img)
+
+
 			self.hash = hash
+			if not hash:
+				return False
 			log_d('Hash generation succesful: {}'.format(hash))
 		except IndexError:
 			log_w('{} has no first chapter'.format(self.title))
+			return False
+		return True
 
 	def validate(self):
 		"Validates gallery, returns status"
 		# TODO: Extend this
-		val = []
-		def check(x):
-			if x:
-				if len(x) > 0:
-					val.append(True)
-				val.append(False)
-		status = all(val)
-		if status:
-			self.valid = True
+		validity = []
+		status = False
+
+		if not self.hash:
+			if self.gen_hash():
+				validity.append(True)
+			else:
+				validity.append(False)
+
+		if all(validity):
+			status = True
 		return status
 
 	def __str__(self):
@@ -852,9 +906,10 @@ class Gallery:
 		Tags: {}
 		Publication Date: {}
 		Date Added: {}
+		Hash: {}
 		""".format(self.id, self.title, self.profile, self.path, self.artist,
 			 self.info, self.fav, self.type, self.language, self.status, self.tags,
-			 self.pub_date, self.date_added)
+			 self.pub_date, self.date_added, self.hash)
 		return string
 
 
