@@ -68,6 +68,10 @@ GRID_PATH = os.path.join(static_dir, "grid.png")
 LIST_PATH = os.path.join(static_dir, "list.png")
 NO_IMAGE_PATH = os.path.join(static_dir, "default.jpg")
 
+# WEB
+GLOBAL_EHEN_TIME = get(5, 'Web', 'global ehen time offset', int)
+FETCH_METADATA_API = get(False, 'Web', 'fetch metadata api', bool)
+
 # External Viewer
 EXTERNAL_VIEWER_SUPPORT = {'honeyview':['Honeyview.exe']}
 USE_EXTERNAL_VIEWER = get(False, 'Advanced', 'use external viewer', bool)

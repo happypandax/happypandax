@@ -12,8 +12,11 @@ You should have received a copy of the GNU General Public License
 along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import requests, logging
+import requests, logging, random, time
 import re as regex
+from bs4 import BeautifulSoup
+from datetime import datetime
+from .gui import gui_constants
 
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -24,7 +27,45 @@ log_c = log.critical
 
 class CommenHen:
 	"Contains common methods"
+	LOCK = False
 	SESSION = requests.Session()
+	TIME_RAND = gui_constants.GLOBAL_EHEN_TIME
+	QUEUE = []
+
+	def add_to_queue(self, url):
+		self.QUEUE.append(url)
+		if len(self.QUEUE) > 24:
+			self.process_queue()
+
+	def process_queue(self):
+		if len(self.QUEUE) < 1:
+			return None
+
+		if gui_constants.FETCH_METADATA_API:
+			if len(self.QUEUE > 25):
+				self.get_metadata(self.QUEUE[:25])
+			else:
+				self.get_metadata(self.QUEUE)
+
+		self.QUEUE.clear()
+
+	def check_cookie(self, cookie):
+		assert isinstance(cookie, dict)
+		cookies = self.SESSION.cookies.keys()
+		present = []
+		for c in cookie:
+			if c in cookies:
+				present.append(True)
+			else:
+				present.append(False)
+		if not all(present):
+			self.SESSION.cookies.update(cookie)
+
+	def lock(self):
+		r_time = random.randint(5,5+self.TIME_RAND)
+		while self.LOCK:
+			time.sleep(0.1)
+		time.sleep(r_time)
 
 	def parse_url(self, url):
 		"Parses url into a list of gallery id and token"
@@ -47,15 +88,13 @@ class CommenHen:
 
 		return parsed_metadata
 
-	def get_metadata(self, list_of_urls):
+	def get_metadata(self, list_of_urls, cookies=None):
 		"""
 		Fetches the metadata from the provided list of urls
 		through the official API
 		"""
 		assert isinstance(list_of_urls, list)
-		try:
-			assert len(list_of_urls) <= 25
-		except AssertionError:
+		if len(list_of_urls) >= 25:
 			return None
 
 		payload = {"method": "gdata",
@@ -66,10 +105,12 @@ class CommenHen:
 			payload['gidlist'].append(parsed_url)
 
 		if payload['gidlist']:
-			try:
-				r = self.SESSION.post(self.e_url, cookies=self.cookies, json=payload)
-			except NameError:
-				r = self.SESSION.post(self.e_url, json=payload)
+			self.lock()
+			self.LOCK = True
+			if cookies:
+				self.check_cookie(cookies)
+			self.SESSION.post(self.e_url, json=payload)
+			self.LOCK = False
 		else: return None
 		try:
 			log.exception('Could not fetch metadata')
@@ -88,10 +129,12 @@ class CommenHen:
 		- Publication Date
 		- Namespace & Tags
 		"""
+		self.lock()
+		self.LOCK = True
 		if cookies:
-			r = requests.get(url, cookies=cookies, timeout=30)
-		else:
-			r = requests.get(url, timeout=30)
+			self.check_cookie(cookies)
+		r = self.SESSION.get(url, timeout=30)
+		self.LOCK = False
 		html = r.text
 		if len(html)<5000:
 			log_w("Length of HTML response is only {} => Failure".format(len(html)))
@@ -149,8 +192,11 @@ class ExHen(CommenHen):
 				  'ipb_pass_hash':cookie_pass_hash}
 		self.e_url = "http://exhentai.org/api.php"
 
+	def get_metadata(self, list_of_urls):
+		return super().get_metadata(list_of_urls, self.cookies)
+
 	def eh_html_parser(self, url):
-		super().eh_html_parser(url, self.cookies)
+		return super().eh_html_parser(url, self.cookies)
 
 class EHen(CommenHen):
 	"Fetches galleries from ehen"
