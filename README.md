@@ -55,6 +55,7 @@ I wanted to keep the list short (I know the pain of wasting hours trying to inst
 - Qt5 (Install this first) >= 5.4
 - PyQt5
 - requests (pip) >= 2.6.0
+- BeautifulSoup 4
 
 # Contributing
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Pewpews/happypanda?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
