@@ -195,7 +195,7 @@ def tag_to_string(gallery_tag, simple=False):
 
 	return string
 
-def tag_to_dict(string):
+def tag_to_dict(string, ns_capitalize=True):
 	"Receives a string of tags and converts it to a dict of tags"
 	namespace_tags = {'default':[]}
 	level = 0 # so we know if we are in a list
@@ -241,7 +241,10 @@ def tag_to_dict(string):
 		# if there is a namespace
 		if len(splitted_tag) > 1 and len(splitted_tag[0]) != 0:
 			if splitted_tag[0] != 'default':
-				namespace = splitted_tag[0].capitalize()
+				if ns_capitalize:
+					namespace = splitted_tag[0].capitalize()
+				else:
+					namespace = splitted_tag[0]
 			else:
 				namespace = splitted_tag[0]
 			tags = splitted_tag[1]

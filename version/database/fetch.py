@@ -17,6 +17,7 @@ import re as regex
 import logging
 
 from .gallerydb import Gallery, GalleryDB
+from ..gui import gui_constants
 from .. import pewnet, settings, utils
 
 from PyQt5.QtCore import QObject, pyqtSignal # need this for interaction with main thread
@@ -43,7 +44,7 @@ class Fetch(QObject):
 	PROGRESS = pyqtSignal(int)
 
 	# WEB signals
-	WEB_METADATA = pyqtSignal(list)
+	WEB_METADATA = pyqtSignal(object)
 	WEB_PROGRESS = pyqtSignal()
 	WEB_STATUS = pyqtSignal(bool)
 
@@ -54,7 +55,8 @@ class Fetch(QObject):
 		self.data = []
 		self._curr_gallery = '' # for debugging purposes
 		self._error = 'Unknown error' # for debugging purposes
-	
+		self._use_ehen_api = gui_constants.FETCH_METADATA_API
+
 	def local(self):
 		"""
 		Do a local search in the given series_path.
@@ -142,7 +144,7 @@ class Fetch(QObject):
 		log_d('Created {} items'.format(len(self.data)))
 		self.FINISHED.emit(self.data)
 
-	def web(self):
+	def web_metadata(self):
 		"""Fetches gallery metadata from the web.
 		Website is determined from the url"""
 
@@ -172,6 +174,10 @@ class Fetch(QObject):
 				log_e('Invalid URL')
 				return None
 
+		def lock():
+			while gui_constants.GLOBAL_EHEN_LOCK:
+				time.sleep(0.5)
+
 		new_url = http_checker(self.web_url)
 
 		if website_checker(new_url) == 'exhen':
@@ -181,12 +187,23 @@ class Fetch(QObject):
 				self.WEB_STATUS.emit(False)
 				log_e('ExHentai: No cookies properly set')
 				return None
+			lock()
 			exhen = pewnet.ExHen(exprops.ipb_id, exprops.ipb_pass)
-			r_metadata(exhen.get_metadata([new_url]))
+			if self._use_ehen_api:
+				r_metadata(exhen.get_metadata([new_url]))
+			else:
+				r_metadata(exhen.eh_gallery_parser(new_url))
+			exhen.end_lock()
 		elif website_checker(new_url) == 'ehen':
 			self.WEB_PROGRESS.emit()
+			lock()
 			ehen = pewnet.EHen()
-			r_metadata(ehen.get_metadata([new_url]))
+			if self._use_ehen_api:
+				r_metadata(ehen.get_metadata([new_url]))
+			else:
+				r_metadata(ehen.eh_gallery_parser(new_url))
+			ehen.end_lock()
 		else:
 			log_e('Web Search: Fail')
 			self.WEB_STATUS.emit(False)
+

@@ -68,9 +68,15 @@ GRID_PATH = os.path.join(static_dir, "grid.png")
 LIST_PATH = os.path.join(static_dir, "list.png")
 NO_IMAGE_PATH = os.path.join(static_dir, "default.jpg")
 
+# Monitored Paths
+MONITOR_PATHS = get('', 'General' 'monitor paths', str).split(',')
+
 # WEB
+SESSION_COOKIES_PATH = os.path.join(static_dir, 'session')
 GLOBAL_EHEN_TIME = get(5, 'Web', 'global ehen time offset', int)
+GLOBAL_EHEN_LOCK = False
 FETCH_METADATA_API = get(False, 'Web', 'fetch metadata api', bool)
+DEFAULT_EHEN_URL = get('http://g.e-hentai.org/', 'Web', 'default ehen url', str)
 
 # External Viewer
 EXTERNAL_VIEWER_SUPPORT = {'honeyview':['Honeyview.exe']}

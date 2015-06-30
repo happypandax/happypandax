@@ -16,7 +16,8 @@ from PyQt5.QtCore import (Qt, QDate, QPoint, pyqtSignal, QThread,
 						  QTimer, QObject, QSize, QRect, QFileInfo,
 						  QMargins)
 from PyQt5.QtGui import (QTextCursor, QIcon, QMouseEvent, QFont,
-						 QPixmapCache, QPalette)
+						 QPixmapCache, QPalette, QPainter, QBrush,
+						 QColor, QPen)
 from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QVBoxLayout, QHBoxLayout,
 							 QDialog, QGridLayout, QLineEdit,
@@ -32,7 +33,7 @@ from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QRadioButton, QFileIconProvider, QFontDialog,
 							 QColorDialog, QScrollArea)
 
-import os, threading, queue, time, logging
+import os, threading, queue, time, logging, math, random
 from datetime import datetime
 from . import gui_constants
 from ..utils import (tag_to_string, tag_to_dict, title_parser, ARCHIVE_FILES,
@@ -46,6 +47,47 @@ log_d = log.debug
 log_w = log.warning
 log_e = log.error
 log_c = log.critical
+
+class LoadingOverlay(QWidget):
+	
+	def __init__(self, parent=None):
+		super().__init__(parent)
+		palette = QPalette(self.palette())
+		palette.setColor(palette.Background, Qt.transparent)
+		self.setPalette(palette)
+
+	def paintEngine(self, event):
+		painter = QPainter()
+		painter.begin(self)
+		painter.setRenderHint(QPainter.Antialiasing)
+		painter.fillRect(event.rect(),
+				   QBrush(QColor(255,255,255,127)))
+		painter.setPen(QPen(Qt.NoPen))
+		for i in range(6):
+			if (self.counter/5) % 6 == i:
+				painter.setBrush(QBrush(QColor(127+
+								   (self.counter%5)*32,127,127)))
+			else:
+				painter.setBrush(QBrush(QColor(127,127,127)))
+				painter.drawEllipse(self.width()/2+30*
+						math.cos(2*math.pi*i/6.0) - 10,
+						self.height()/2+30*
+						math.sin(2*math.pi*i/6.0) - 10,
+						20,20)
+
+		painter.end()
+
+	def showEvent(self, event):
+		self.timer = self.startTimer(50)
+		self.counter = 0
+		super().showEvent(event)
+
+	def timerEvent(self, event):
+		self.counter += 1
+		self.update()
+		if self.counter == 60:
+			self.killTimer(self.timer)
+			self.hide()
 
 class FileIcon:
 
@@ -1422,8 +1464,8 @@ class GalleryDialog(QWidget):
 		self.lang_box.setCurrentIndex(0)
 		self.tags_edit = return_tag_completer_TextEdit()
 		self.tags_edit.setFixedHeight(70)
-		self.tags_edit.setPlaceholderText("Autocomplete enabled. Press Tab (Ctrl + Space to show popup)"+
-									"\nnamespace1:tag1, tag2, namespace3:tag3, etc..")
+		self.tags_edit.setPlaceholderText("Press Tab to autocomplete (Ctrl + Space to show popup)"+
+									"\ntag1, namespace:tag2, namespace2:[tag3, tag4] etc..")
 		self.type_box = QComboBox()
 		self.type_box.addItems(["Manga", "Doujinshi", "Artist CG Sets", "Game CG Sets",
 						  "Western", "Image Sets", "Non-H", "Cosplay", "Other"])
@@ -1708,45 +1750,65 @@ class GalleryDialog(QWidget):
 		f.WEB_METADATA.connect(self.set_web_metadata)
 		f.WEB_PROGRESS.connect(btn_widget.hide)
 		f.WEB_PROGRESS.connect(pgr_widget.show)
-		thread.started.connect(f.web)
+		thread.started.connect(f.web_metadata)
 		f.WEB_STATUS.connect(status)
 		f.WEB_STATUS.connect(lambda: f.deleteLater)
 		f.WEB_STATUS.connect(lambda: thread.deleteLater)
 		thread.start()
 
-	def set_web_metadata(self, metadata):
-		assert isinstance(metadata, list)
-		for gallery in metadata:
-			parsed = title_parser(gallery['title'])
-			self.title_edit.setText(parsed['title'])
-			self.author_edit.setText(parsed['artist'])
-			tags = ""
-			lang = ['English', 'Japanese']
-			l_i = self.lang_box.findText(parsed['language'])
-			if l_i != -1:
-				self.lang_box.setCurrentIndex(l_i)
-			for n, tag in enumerate(gallery['tags'], 1):
-				l_tag = tag.capitalize()
-				if l_tag in lang:
-					l_index = self.lang_box.findText(l_tag)
-					if l_index != -1:
-						self.lang_box.setCurrentIndex(l_index)
-				else:
-					if n == len(gallery['tags']):
-						tags += tag
-					else:
-						tags += tag + ', '
-			self.tags_edit.setText(tags)
-			pub_dt = datetime.fromtimestamp(int(gallery['posted']))
-			pub_string = "{}".format(pub_dt)
-			pub_date = QDate.fromString(pub_string.split()[0], "yyyy-MM-dd")
-			self.pub_edit.setDate(pub_date)
-			t_index = self.type_box.findText(gallery['category'])
-			try:
-				self.type_box.setCurrentIndex(t_index)
-			except:
-				self.type_box.setCurrentIndex(0)
+		gui_constants.GLOBAL_EHEN_LOCK = True
+		def unlock():
+			gui_constants.GLOBAL_EHEN_LOCK = False
+		r_time = random.randint(5,5+self.TIME_RAND)
+		QTimer.singleShot(r_time*1000, unlock)
+			
 
+	def set_web_metadata(self, metadata):
+		assert isinstance(metadata, list) or isinstance(metadata, dict)
+		if gui_constants.FETCH_METADATA_API:
+			for gallery in metadata:
+				parsed = title_parser(gallery['title'])
+				self.title_edit.setText(parsed['title'])
+				self.author_edit.setText(parsed['artist'])
+				tags = ""
+				lang = ['English', 'Japanese']
+				l_i = self.lang_box.findText(parsed['language'])
+				if l_i != -1:
+					self.lang_box.setCurrentIndex(l_i)
+				for n, tag in enumerate(gallery['tags'], 1):
+					l_tag = tag.capitalize()
+					if l_tag in lang:
+						l_index = self.lang_box.findText(l_tag)
+						if l_index != -1:
+							self.lang_box.setCurrentIndex(l_index)
+					else:
+						if n == len(gallery['tags']):
+							tags += tag
+						else:
+							tags += tag + ', '
+				self.tags_edit.setText(tags)
+				pub_dt = datetime.fromtimestamp(int(gallery['posted']))
+				pub_string = "{}".format(pub_dt)
+				pub_date = QDate.fromString(pub_string.split()[0], "yyyy-MM-dd")
+				self.pub_edit.setDate(pub_date)
+				t_index = self.type_box.findText(gallery['category'])
+				try:
+					self.type_box.setCurrentIndex(t_index)
+				except:
+					self.type_box.setCurrentIndex(0)
+		else:
+			current_tags = tag_to_dict(self.tags_edit.toPlainText(),
+									ns_capitalize=False)
+			for ns in metadata['tags']:
+				if ns in current_tags:
+					ns_tags = current_tags[ns]
+					for tag in metadata['tags'][ns]:
+						if not tag in ns_tags:
+							ns_tags.append(tag)
+				else:
+					current_tags[ns] = metadata['tags'][ns]
+			current_tags_string = tag_to_string(current_tags)
+			self.tags_edit.setText(current_tags_string)
 
 	def link_set(self):
 		t = self.link_edit.text()

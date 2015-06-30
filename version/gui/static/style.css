@@ -131,7 +131,7 @@ QPushButton, QToolButton {
 	color: white;
 }
 
-QPushButton:hover {
+QPushButton:hover, QToolButton:hover {
 	background-color: #585858; 
 }
 

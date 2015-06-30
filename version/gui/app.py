@@ -12,7 +12,7 @@ You should have received a copy of the GNU General Public License
 along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import sys, logging, os, threading, re
+import sys, logging, os, threading, re, pickle, requests
 from PyQt5.QtCore import (Qt, QSize, pyqtSignal, QThread, QEvent, QTimer,
 						  QObject)
 from PyQt5.QtGui import (QPixmap, QIcon, QMouseEvent, QCursor)
@@ -23,10 +23,9 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QListView,
 							 QSplitter, QMessageBox, QFileDialog,
 							 QDesktopWidget, QPushButton, QCompleter,
 							 QListWidget, QListWidgetItem, QToolTip)
-from . import gallery
-from . import gui_constants, misc
+from . import gui_constants, misc, gallery, local_misc
 from ..database import fetch, gallerydb
-from .. import settings
+from .. import settings, pewnet
 
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -39,6 +38,7 @@ class AppWindow(QMainWindow):
 	"The application's main window"
 	def __init__(self):
 		super().__init__()
+		watch = local_misc.PathWatcher()
 		self.first_time()
 		self.center = QWidget()
 		self.display = QStackedLayout()
@@ -311,6 +311,7 @@ Your database will not be touched without you being notified.""")
 		self.grid_toggle_g_icon = QIcon(gui_constants.GRID_PATH)
 		self.grid_toggle_l_icon = QIcon(gui_constants.LIST_PATH)
 		self.grid_toggle = QAction(self.toolbar)
+		self.grid_toggle.setObjectName('gridtoggle')
 		self.grid_toggle.setIcon(self.grid_toggle_l_icon)
 		self.grid_toggle.triggered.connect(self.toggle_view)
 		self.toolbar.addAction(self.grid_toggle)
@@ -486,6 +487,8 @@ Your database will not be touched without you being notified.""")
 
 	def closeEvent(self, event):
 		settings.win_save(self, 'AppWindow')
+		with open(gui_constants.SESSION_COOKIES_PATH, 'wb') as f:
+			pickle.dump(requests.utils.dict_from_cookiejar(pewnet.web_session.cookies), f)
 		try:
 			for root, dirs, files in os.walk('temp', topdown=False):
 				for name in files:
