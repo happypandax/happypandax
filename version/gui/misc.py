@@ -17,7 +17,7 @@ from PyQt5.QtCore import (Qt, QDate, QPoint, pyqtSignal, QThread,
 						  QMargins)
 from PyQt5.QtGui import (QTextCursor, QIcon, QMouseEvent, QFont,
 						 QPixmapCache, QPalette, QPainter, QBrush,
-						 QColor, QPen)
+						 QColor, QPen, QPixmap)
 from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QVBoxLayout, QHBoxLayout,
 							 QDialog, QGridLayout, QLineEdit,
@@ -47,11 +47,6 @@ log_d = log.debug
 log_w = log.warning
 log_e = log.error
 log_c = log.critical
-
-class GalleryPopup(QWidget):
-	
-	def __init__(self, parent=None):
-		super().__init__()
 
 class LoadingOverlay(QWidget):
 	
@@ -634,7 +629,6 @@ class Loading(QWidget):
 	def __init__(self, parent=None):
 		super().__init__(parent)
 		self.widget = QWidget(self)
-		self.widget.setStyleSheet("background-color:rgba(0, 0, 0, 0.65)")
 		self.progress = QProgressBar()
 		self.progress.setStyleSheet("color:white")
 		self.text = QLabel()

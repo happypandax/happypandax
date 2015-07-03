@@ -43,13 +43,21 @@ class AppWindow(QMainWindow):
 		self.initUI()
 
 	def init_watchers(self):
+
+		def created(path):
+			c_popup = file_misc.CreatedPopup(path, self)
+		def modified(path, id):
+			p = file_misc.ModifiedPopup(path, id, self)
+		def deleted(path, id):
+			p = file_misc.DeletedPopup(path, id, self)
+		def moved(path, id):
+			p = file_misc.MovedPopup(path, id, self)
+
 		self.watchers = file_misc.Watchers()
-		def test(*args):
-			print(args)
-		self.watchers.gallery_handler.CREATE_SIGNAL.connect(test)
-		self.watchers.gallery_handler.MODIFIED_SIGNAL.connect(test)
-		self.watchers.gallery_handler.MOVED_SIGNAL.connect(test)
-		self.watchers.gallery_handler.DELETED_SIGNAL.connect(test)
+		self.watchers.gallery_handler.CREATE_SIGNAL.connect(created)
+		self.watchers.gallery_handler.MODIFIED_SIGNAL.connect(modified)
+		self.watchers.gallery_handler.MOVED_SIGNAL.connect(moved)
+		self.watchers.gallery_handler.DELETED_SIGNAL.connect(deleted)
 
 	def initUI(self):
 		self.center = QWidget()

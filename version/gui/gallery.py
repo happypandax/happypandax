@@ -652,6 +652,7 @@ class CustomDelegate(QStyledItemDelegate):
 		if index.data(Qt.UserRole+1):
 			if gui_constants.HIGH_QUALITY_THUMBS:
 				painter.setRenderHint(QPainter.SmoothPixmapTransform)
+			painter.setRenderHint(QPainter.Antialiasing)
 			gallery = index.data(Qt.UserRole+1)
 			title = gallery.title
 			artist = gallery.artist
