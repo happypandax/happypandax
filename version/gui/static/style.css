@@ -36,6 +36,10 @@ AppWindow > QToolBar, QStatusBar {
     border: none;
 }
 
+AppWindow > QToolBar::sunken {
+    border: none;
+}
+
 AppWindow > QStatusBar > QWidget {
     color:white;
     border: none;

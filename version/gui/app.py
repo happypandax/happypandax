@@ -23,7 +23,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QListView,
 							 QSplitter, QMessageBox, QFileDialog,
 							 QDesktopWidget, QPushButton, QCompleter,
 							 QListWidget, QListWidgetItem, QToolTip)
-from . import gui_constants, misc, gallery, local_misc
+from . import gui_constants, misc, gallery, file_misc, settingsdialog
 from ..database import fetch, gallerydb
 from .. import settings, pewnet
 
@@ -38,8 +38,20 @@ class AppWindow(QMainWindow):
 	"The application's main window"
 	def __init__(self):
 		super().__init__()
-		watch = local_misc.PathWatcher()
 		self.first_time()
+		self.init_watchers()
+		self.initUI()
+
+	def init_watchers(self):
+		self.watchers = file_misc.Watchers()
+		def test(*args):
+			print(args)
+		self.watchers.gallery_handler.CREATE_SIGNAL.connect(test)
+		self.watchers.gallery_handler.MODIFIED_SIGNAL.connect(test)
+		self.watchers.gallery_handler.MOVED_SIGNAL.connect(test)
+		self.watchers.gallery_handler.DELETED_SIGNAL.connect(test)
+
+	def initUI(self):
 		self.center = QWidget()
 		self.display = QStackedLayout()
 		self.center.setLayout(self.display)
@@ -255,7 +267,7 @@ Your database will not be touched without you being notified.""")
 
 	def settings(self):
 		#about = misc.About()
-		sett = misc.SettingsDialog(self)
+		sett = settingsdialog.SettingsDialog(self)
 		sett.scroll_speed_changed.connect(self.manga_list_view.updateGeometries)
 		#sett.show()
 
@@ -486,9 +498,17 @@ Your database will not be touched without you being notified.""")
 				settings.set(1, 'Application', 'first time level')
 
 	def closeEvent(self, event):
+		# watchers
+		self.watchers.stop_all()
+
+		# settings
 		settings.win_save(self, 'AppWindow')
+
+		# web session
 		with open(gui_constants.SESSION_COOKIES_PATH, 'wb') as f:
 			pickle.dump(requests.utils.dict_from_cookiejar(pewnet.web_session.cookies), f)
+		
+		# temp dir
 		try:
 			for root, dirs, files in os.walk('temp', topdown=False):
 				for name in files:
@@ -498,6 +518,8 @@ Your database will not be touched without you being notified.""")
 			log_d('Empty temp on exit: OK')
 		except:
 			log_d('Empty temp on exit: FAIL')
+
+		# error
 		err = sys.exc_info()
 		if all(err):
 			log_c('Last error before exit:\n{}\n{}\n{}'.format(err[0], err[1], err[2]))

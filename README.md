@@ -51,11 +51,11 @@ For Mac & Linux see [INSTALL.md](INSTALL.md)
 - If everything fails or you somehow messed up, then feel free to delete the DB folder and start over. Find me in the gitter chat, if you have any questions.
 
 # Dependencies
-I wanted to keep the list short (I know the pain of wasting hours trying to install the correct dependencies)
 - Qt5 (Install this first) >= 5.4
 - PyQt5
 - requests (pip) >= 2.6.0
-- BeautifulSoup 4
+- BeautifulSoup 4 (pip)
+- watchdog (pip)
 
 # Contributing
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Pewpews/happypanda?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)

@@ -34,7 +34,7 @@ import threading, logging, os, math
 import re as regex
 
 from ..database import gallerydb
-from . import gui_constants, misc
+from . import gui_constants, misc, gallerydialog
 from .. import utils
 
 log = logging.getLogger(__name__)
@@ -1234,10 +1234,10 @@ class MangaView(QListView):
 
 	def spawn_dialog(self, index=False):
 		if not index:
-			dialog = misc.GalleryDialog(self.parentWidget())
+			dialog = gallerydialog.GalleryDialog(self.parentWidget())
 			dialog.SERIES.connect(self.gallery_model.addRows)
 		else:
-			dialog = misc.GalleryDialog(self.parentWidget(), [index])
+			dialog = gallerydialog.GalleryDialog(self.parentWidget(), [index])
 			dialog.SERIES_EDIT.connect(self.replace_edit_gallery)
 		
 		dialog.show()
@@ -1598,11 +1598,11 @@ class MangaTableView(QTableView):
 
 	def spawn_dialog(self, index=False):
 		if not index:
-			dialog = misc.GalleryDialog(self.parentWidget())
+			dialog = gallerydialog.GalleryDialog(self.parentWidget())
 			dialog.SERIES.connect(self.gallery_model.addRows)
 			dialog.show() # TODO: implement mass galleries adding
 		else:
-			dialog = misc.GalleryDialog(self.parentWidget())
+			dialog = gallerydialog.GalleryDialog(self.parentWidget())
 			dialog.SERIES_EDIT.connect(self.replace_edit_gallery)
 			dialog.show()
 
