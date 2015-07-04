@@ -62,8 +62,8 @@ BasePopup QLabel{
 }
 
 BasePopup > QFrame {
-    background-color:rgba(0, 0, 0, 0.65);
-    border: 1px solid rgba(0, 0, 0, 0.65);
+    background-color:rgba(0, 0, 0, 0.85);
+    border: 1px solid rgba(0, 0, 0, 0.85);
     border-radius: 5px;
 }
 

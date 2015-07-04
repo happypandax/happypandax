@@ -1,12 +1,15 @@
 ﻿import logging, os
-from PyQt5.QtCore import Qt, QObject, pyqtSignal
+from PyQt5.QtCore import Qt, QObject, pyqtSignal, QTimer
+from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout,
-							 QLabel, QFrame, QPushButton)
-from watchdog.events import FileSystemEventHandler
+							 QLabel, QFrame, QPushButton, QMessageBox,
+							 QFileDialog)
+from watchdog.events import FileSystemEventHandler, DirDeletedEvent
 from watchdog.observers import Observer
-
+from threading import Timer
 from . import gui_constants, misc
 from ..database import gallerydb
+from .. import utils
 
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -23,12 +26,12 @@ class BasePopup(QWidget):
 		self.main_widget = QFrame()
 		self.setLayout(main_layout)
 		main_layout.addWidget(self.main_widget)
-		self.button_layout = QHBoxLayout()
-		self.button_layout.addWidget(misc.Spacer('h'))
+		self.generic_buttons = QHBoxLayout()
+		self.generic_buttons.addWidget(misc.Spacer('h'))
 		self.yes_button = QPushButton('Yes')
 		self.no_button = QPushButton('No')
-		self.button_layout.addWidget(self.yes_button)
-		self.button_layout.addWidget(self.no_button)
+		self.generic_buttons.addWidget(self.yes_button)
+		self.generic_buttons.addWidget(self.no_button)
 		self.setMaximumWidth(500)
 		self.resize(500,350)
 
@@ -46,58 +49,157 @@ class CreatedPopup(BasePopup):
 	def __init__(self, path, parent=None):
 		super().__init__(parent)
 		main_layout = QVBoxLayout()
+		inner_layout = QHBoxLayout()
 		name = os.path.split(path)[1]
+		cover = QLabel()
+		img = QPixmap(utils.get_gallery_img(path))
+		cover.setPixmap(img.scaled(350, 200, Qt.KeepAspectRatio, Qt.SmoothTransformation))
 		info_lbl = QLabel('New gallery detected!\n\n{}\n\nDo you want to add it?'.format(name))
 		info_lbl.setWordWrap(True)
 		info_lbl.setAlignment(Qt.AlignCenter)
-		main_layout.addWidget(info_lbl)
-		main_layout.addLayout(self.button_layout)
+		inner_layout.addWidget(cover)
+		inner_layout.addWidget(info_lbl)
+		main_layout.addLayout(inner_layout)
+		main_layout.addLayout(self.generic_buttons)
 		self.main_widget.setLayout(main_layout)
-		def add():
-			self.ADD_SIGNAL.emit(path)
-		self.yes_button.clicked.connect(add)
+		self.yes_button.clicked.connect(lambda: self.ADD_SIGNAL.emit(path))
 		self.no_button.clicked.connect(self.close)
 		self.adjustSize()
 		self.show()
 
 class MovedPopup(BasePopup):
-	def __init__(self, path, gallery_id, parent=None):
+	UPDATE_SIGNAL = pyqtSignal(object)
+	def __init__(self, new_path, gallery, parent=None):
 		super().__init__(parent)
+		def update_path():
+			gallery.path = new_path
+			self.UPDATE_SIGNAL.emit(gallery)
 		main_layout = QVBoxLayout()
-		main_layout.addWidget(QLabel("Moved:\npath: {}\nID:{}".format(path, gallery_id)))
+		inner_layout = QHBoxLayout()
+		title = QLabel(gallery.title)
+		title.setWordWrap(True)
+		title.setAlignment(Qt.AlignCenter)
+		cover = QLabel()
+		img = QPixmap(gallery.profile)
+		cover.setPixmap(img)
+		text = QLabel("The path to this gallery has been renamed\n"+
+				"\n{}\n".format(gallery.path)+u'\u2192'+"\n{}".format(new_path))
+		text.setWordWrap(True)
+		text.setAlignment(Qt.AlignCenter)
+		button_layout = QHBoxLayout()
+		update_btn = QPushButton('Update')
+		update_btn.clicked.connect(update_path)
+		close_btn = QPushButton('Close')
+		close_btn.clicked.connect(self.close)
+		button_layout.addWidget(update_btn)
+		button_layout.addWidget(close_btn)
+
+		inner_layout.addWidget(cover)
+		inner_layout.addWidget(text)
+		main_layout.addWidget(title)
+		main_layout.addLayout(inner_layout)
+		main_layout.addLayout(button_layout)
 		self.main_widget.setLayout(main_layout)
 
 		self.show()
 
 class DeletedPopup(BasePopup):
-	def __init__(self, path, gallery_id, parent=None):
+	REMOVE_SIGNAL = pyqtSignal(object)
+	UPDATE_SIGNAL = pyqtSignal(object)
+	def __init__(self, path, gallery, parent=None):
 		super().__init__(parent)
-		main_layout = QVBoxLayout()
-		main_layout.addWidget(QLabel("Deleted:\npath: {}\nID:{}".format(path, gallery_id)))
-		self.main_widget.setLayout(main_layout)
-		self.show()
+		
+		def update_path():
+			msgbox = QMessageBox(QMessageBox.Question, parent=self)
+			msgbox.setWindowTitle('What kind of gallery')
+			msgbox.setText('What kind of gallery is it?')
+			dir = msgbox.addButton('Directory', QMessageBox.YesRole)
+			archive = msgbox.addButton('Archive', QMessageBox.NoRole)
+			msgbox.exec()
+			new_path = ''
+			if msgbox.clickedButton() == dir:
+				new_path = QFileDialog.getExistingDirectory(self, 'Choose directory')
+			elif msgbox.clickedButton() == archive:
+				new_path = QFileDialog.getOpenFileName(self, 'Choose archive',
+										   filter=utils.FILE_FILTER)
+				new_path = new_path[0]
+			else: return None
+			if new_path:
+				gallery.path = new_path
 
+			self.UPDATE_SIGNAL.emit(gallery)
+			self.close()
+
+		main_layout = QVBoxLayout()
+		inner_layout = QHBoxLayout()
+		cover = QLabel()
+		img = QPixmap(gallery.profile)
+		cover.setPixmap(img)
+		title_lbl = QLabel(gallery.title)
+		title_lbl.setAlignment(Qt.AlignCenter)
+		info_lbl = QLabel("The path to this gallery has been removed\n"+
+					"What do you want to do?")
+		#info_lbl.setWordWrap(True)
+		path_lbl = QLabel(path)
+		path_lbl.setWordWrap(True)
+		info_lbl.setAlignment(Qt.AlignCenter)
+		inner_layout.addWidget(cover)
+		inner_layout.addWidget(info_lbl)
+		main_layout.addLayout(inner_layout)
+		main_layout.addWidget(path_lbl)
+		close_btn = QPushButton('Close')
+		close_btn.clicked.connect(self.close)
+		update_btn = QPushButton('Update path...')
+		update_btn.clicked.connect(update_path)
+		remove_btn = QPushButton('Remove')
+		remove_btn.clicked.connect(lambda: self.REMOVE_SIGNAL.emit(gallery))
+		buttons_layout = QHBoxLayout()
+		buttons_layout.addWidget(remove_btn)
+		buttons_layout.addWidget(update_btn)
+		buttons_layout.addWidget(close_btn)
+		main_layout.addWidget(title_lbl)
+		main_layout.addLayout(buttons_layout)
+		self.main_widget.setLayout(main_layout)
+		self.adjustSize()
+		self.show()
 
 class GalleryHandler(FileSystemEventHandler, QObject):
 	CREATE_SIGNAL = pyqtSignal(str)
 	MODIFIED_SIGNAL = pyqtSignal(str, int)
-	DELETED_SIGNAL = pyqtSignal(str, int)
-	MOVED_SIGNAL = pyqtSignal(str, int)
+	DELETED_SIGNAL = pyqtSignal(str, object)
+	MOVED_SIGNAL = pyqtSignal(str, object)
 
 	def __init__(self):
 		super().__init__()
 
+	def file_filter(self, event):
+		name = os.path.split(event.src_path)[1]
+		if event.is_directory or name.endswith(tuple(utils.ARCHIVE_FILES)):
+			return True
+		else: return False
+
 	def on_created(self, event):
-		self.CREATE_SIGNAL.emit(event.src_path)
+		if self.file_filter(event):
+			t = Timer(10, self.CREATE_SIGNAL.emit, args=(event.src_path,))
+			t.start()
 
 	def on_deleted(self, event):
-		self.DELETED_SIGNAL.emit(event.src_path, 1)
+		path = event.src_path
+		print(path)
+		gallery = gallerydb.GalleryDB.get_gallery_by_path(path)
+		print(gallery)
+		if gallery:
+			self.DELETED_SIGNAL.emit(path, gallery)
 
 	def on_modified(self, event):
-		self.MODIFIED_SIGNAL.emit('modified', 1)
+		pass
 
 	def on_moved(self, event):
-		self.MOVED_SIGNAL.emit('hi', 2)
+		if self.file_filter(event):
+			old_path = event.src_path
+			gallery = gallerydb.GalleryDB.get_gallery_by_path(old_path)
+			if gallery:
+				self.MOVED_SIGNAL.emit(event.dest_path, gallery)
 
 class Watchers:
 	def __init__(self):

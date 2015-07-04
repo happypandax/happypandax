@@ -9,7 +9,7 @@ import queue, os, threading, random, logging
 
 from . import gui_constants
 from .misc import return_tag_completer_TextEdit
-from ..utils import title_parser, tag_to_dict, tag_to_string
+from ..utils import title_parser, tag_to_dict, tag_to_string, FILE_FILTER
 from ..database import gallerydb, fetch
 
 log = logging.getLogger(__name__)
@@ -220,7 +220,7 @@ class GalleryDialog(QWidget):
 	def choose_dir(self, mode):
 		if mode == 'a':
 			name = QFileDialog.getOpenFileName(self, 'Choose archive',
-											  filter='*.zip *.cbz')
+											  filter=FILE_FILTER)
 			name = name[0]
 		else:
 			name = QFileDialog.getExistingDirectory(self, 'Choose folder')

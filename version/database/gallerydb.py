@@ -17,7 +17,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QImage
 
 from ..utils import (today, ArchiveFile, generate_img_hash, delete_path,
-					 ARCHIVE_FILES)
+					 ARCHIVE_FILES, get_gallery_img)
 from .db import CommandQueue, ResultQueue
 from ..gui import gui_constants
 from .db_constants import THUMBNAIL_PATH, IMG_FILES
@@ -49,12 +49,7 @@ def gen_thumbnail(chapter_path, width=gui_constants.THUMB_W_SIZE,
 		try:
 			if chap_path[-4:] in ARCHIVE_FILES:
 				log_d('Generating Thumb from {}'.format(chap_path[-3:]))
-				zip = ArchiveFile(chap_path)
-				p = os.path.join('temp', str(uuid.uuid4()))
-				os.mkdir(p)
-				f_img_name = sorted(zip.namelist())[0]
-				img_path = zip.extract(f_img_name, p)
-				zip.close()
+				img_path = get_gallery_img(chap_path)
 			else:
 				log_d('Generating Thumb from folder')
 				img_path = os.path.join(chap_path, [x for x in sorted(os.listdir(chap_path)) if x[-3:] in IMG_FILES][0]) #first image in chapter
@@ -158,6 +153,7 @@ class GalleryDB:
 		get_gallery_by_artist -> Returns gallery with given artist
 		get_gallery_by_title -> Returns gallery with given title
 		get_gallery_by_tags -> Returns gallery with given list of tags
+		get_gallery_by_path -> Returns gallery with given path
 		add_gallery -> adds gallery into db
 		add_gallery_return -> adds gallery into db AND returns the added gallery
 		set_gallery_title -> changes gallery title
@@ -314,6 +310,20 @@ class GalleryDB:
 		"Returns gallery with given list of tags"
 		assert isinstance(list_of_tags, list), "Provided tag(s) is/are invalid"
 		pass
+
+	@staticmethod
+	def get_gallery_by_path(path):
+		"Returns gallery with given path"
+		assert isinstance(path, str), "Provided path should be a str"
+		executing = [["SELECT * FROM series where series_path=?", (str.encode(path),)]]
+		CommandQueue.put(executing)
+		cursor = ResultQueue.get()
+		row = cursor.fetchone()
+		if row:
+			gallery = Gallery()
+			gallery.id = row['series_id']
+			gallery = gallery_map(row, gallery)
+			return gallery
 
 	@staticmethod
 	def get_gallery_by_fav():

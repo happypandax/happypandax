@@ -13,7 +13,7 @@ along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import time, datetime, os, subprocess, sys, logging, zipfile
-import hashlib, shutil
+import hashlib, shutil, uuid
 
 from .gui import gui_constants
 
@@ -26,6 +26,7 @@ log_c = log.critical
 
 IMG_FILES =  ['jpg','bmp','png','gif']
 ARCHIVE_FILES = ['.zip', '.cbz']
+FILE_FILTER = '*.zip *.cbz'
 
 def generate_img_hash(src):
 	"""
@@ -56,13 +57,11 @@ class ArchiveFile():
 
 		if extension in ARCHIVE_FILES:
 			try:
-				self.archive = zipfile.ZipFile(filepath)
+				self.archive = zipfile.ZipFile(os.path.normcase(filepath))
 			except:
-				log_e('Create ZIP: FAIL')
-				raise CreateZipFail
+				log.exception('Create ZIP: FAIL')
 		else:
-			log_e('Archive: Unsupported file format')
-			raise Exception
+			log.exception('Archive: Unsupported file format')
 
 	def namelist(self):
 		filelist = self.archive.namelist()
@@ -146,6 +145,27 @@ def open_chapter(chapterpath):
 		log_e('Could not open chapter {}'.format(os.path.split(chapterpath)[1]))
 
 	return None
+
+def get_gallery_img(path):
+	"""
+	Returns a path to a gallery's cover
+	"""
+	# TODO: add chapter support
+	name = os.path.split(path)[1]
+	img_path = None
+	if name.endswith(tuple(ARCHIVE_FILES)):
+		zip = ArchiveFile(path)
+		temp_path = os.path.join('temp', str(uuid.uuid4()))
+		os.mkdir(temp_path)
+		f_img_name = sorted([img for img in zip.namelist() if img.endswith(tuple(IMG_FILES))])[0]
+		img_path = zip.extract(f_img_name, temp_path)
+		zip.close()
+	elif os.path.isdir(path):
+		first_img = sorted([img for img in os.listdir(path) if img.endswith(tuple(IMG_FILES))])[0]
+		img_path = os.path.join(path, first_img)
+
+	if img_path:
+		return os.path.abspath(img_path)
 
 def tag_to_string(gallery_tag, simple=False):
 	"""

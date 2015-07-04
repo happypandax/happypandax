@@ -39,19 +39,35 @@ class AppWindow(QMainWindow):
 	def __init__(self):
 		super().__init__()
 		self.first_time()
-		self.init_watchers()
 		self.initUI()
+		self.init_watchers()
 
 	def init_watchers(self):
 
+		def update_gallery(g):
+			rows = self.manga_list_view.gallery_model.rowCount()
+			index = None
+			for r in range(rows):
+				indx = self.manga_list_view.gallery_model.index(r, 1)
+				m_gallery = indx.data(Qt.UserRole+1)
+				if m_gallery.id == g.id:
+					index = indx
+					break
+			if index:
+				self.manga_list_view.replace_edit_gallery([gallery], index.row())
+			else:
+				log_e('Could not find gallery to update from Watcher')
+
 		def created(path):
 			c_popup = file_misc.CreatedPopup(path, self)
-		def modified(path, id):
-			p = file_misc.ModifiedPopup(path, id, self)
-		def deleted(path, id):
-			p = file_misc.DeletedPopup(path, id, self)
-		def moved(path, id):
-			p = file_misc.MovedPopup(path, id, self)
+		def modified(path, gallery):
+			mod_popup = file_misc.ModifiedPopup(path, gallery, self)
+		def deleted(path, gallery):
+			d_popup = file_misc.DeletedPopup(path, gallery, self)
+			d_popup.UPDATE_SIGNAL.connect(update_gallery)
+		def moved(new_path, gallery):
+			mov_popup = file_misc.MovedPopup(new_path, gallery, self)
+			mov_popup.UPDATE_SIGNAL.connect(update_gallery)
 
 		self.watchers = file_misc.Watchers()
 		self.watchers.gallery_handler.CREATE_SIGNAL.connect(created)
