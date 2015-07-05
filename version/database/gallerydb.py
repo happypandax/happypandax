@@ -195,7 +195,7 @@ class GalleryDB:
 	@staticmethod
 	def modify_gallery(series_id, title=None, artist=None, info=None, type=None, fav=None,
 				   tags=None, language=None, status=None, pub_date=None, link=None,
-				   times_read=None, hash=None):
+				   times_read=None, hash=None, series_path=None, chapters=None):
 		"Modifies gallery with given gallery id"
 		executing = []
 		assert isinstance(series_id, int)
@@ -229,9 +229,14 @@ class GalleryDB:
 			executing.append(["UPDATE series SET times_read=? WHERE series_id=?", (times_read, series_id)])
 		if hash:
 			executing.append(["UPDATE series SET hash=? WHERE series_id=?", (hash, series_id)])
+		if series_path:
+			executing.append(["UPDATE series SET series_path=? WHERE series_id=?", (str.encode(series_path), series_id)])
 		if tags:
 			assert isinstance(tags, dict)
 			TagDB.modify_tags(series_id, tags)
+		if chapters:
+			assert isinstance(chapters, Gallery)
+			ChapterDB.update_chapter(chapters)
 
 		CommandQueue.put(executing)
 		c = ResultQueue.get()
@@ -454,6 +459,7 @@ class GalleryDB:
 class ChapterDB:
 	"""
 	Provides the following database methods:
+		update_chapter -> Updates an existing chapter in DB
 		add_chapter -> adds chapter into db
 		add_chapter_raw -> links chapter to the given seires id, and adds into db
 		get_chapters_for_gallery -> returns a dict with chapters linked to the given series_id
@@ -465,6 +471,27 @@ class ChapterDB:
 
 	def __init__(self):
 		raise Exception("ChapterDB should not be instantiated")
+
+	@staticmethod
+	def update_chapter(gallery, chapters=[]):
+		"""
+		Updates an existing chapter in DB.
+		Pass a gallery. Specify which chapters to update with list of ints,
+		leave empty to update all chapters.
+		"""
+		assert isinstance(gallery, Gallery) and isinstance(chapters, (list, tuple))
+		if not chapters:
+			chapters = [x for x in range(len(gallery.chapters))]
+		executing = []
+	
+		for numb in chapters:
+			new_path = gallery.chapters[numb]
+			executing.append(
+			["UPDATE chapters SET chapter_path=? WHERE series_id=? AND chapter_number=?", (
+				str.encode(new_path), gallery.id, numb)])
+		CommandQueue.put(executing)
+		c = ResultQueue.get()
+		del c
 
 	@staticmethod
 	def add_chapters(gallery_object):
@@ -638,33 +665,36 @@ class TagDB:
 		tags = {}
 		result = cursor.fetchall()
 		for tag_map_row in result: # iterate all tag_mappings_ids
-			if not tag_map_row:
+			try:
+				if not tag_map_row:
+					continue
+				# get tag and namespace 
+				executing = [["""SELECT namespace_id, tag_id FROM tags_mappings
+								WHERE tags_mappings_id=?""", (tag_map_row['tags_mappings_id'],)]]
+				CommandQueue.put(executing)
+				c = ResultQueue.get()
+				for row in c.fetchall(): # iterate all rows
+					# get namespace
+					executing = [["SELECT namespace FROM namespaces WHERE namespace_id=?",
+					(row['namespace_id'],)]]
+					CommandQueue.put(executing)
+					c = ResultQueue.get()
+					namespace = c.fetchone()['namespace']
+
+					# get tag
+					executing = [["SELECT tag FROM tags WHERE tag_id=?", (row['tag_id'],)]]
+					CommandQueue.put(executing)
+					c = ResultQueue.get()
+					tag = c.fetchone()['tag']
+
+					# add them to dict
+					if not namespace in tags:
+						tags[namespace] = [tag]
+					else:
+						# namespace already exists in dict
+						tags[namespace].append(tag)
+			except IndexError:
 				continue
-			# get tag and namespace 
-			executing = [["""SELECT namespace_id, tag_id FROM tags_mappings
-							WHERE tags_mappings_id=?""", (tag_map_row['tags_mappings_id'],)]]
-			CommandQueue.put(executing)
-			c = ResultQueue.get()
-			for row in c.fetchall(): # iterate all rows
-				# get namespace
-				executing = [["SELECT namespace FROM namespaces WHERE namespace_id=?",
-				(row['namespace_id'],)]]
-				CommandQueue.put(executing)
-				c = ResultQueue.get()
-				namespace = c.fetchone()['namespace']
-
-				# get tag
-				executing = [["SELECT tag FROM tags WHERE tag_id=?", (row['tag_id'],)]]
-				CommandQueue.put(executing)
-				c = ResultQueue.get()
-				tag = c.fetchone()['tag']
-
-				# add them to dict
-				if not namespace in tags:
-					tags[namespace] = [tag]
-				else:
-					# namespace already exists in dict
-					tags[namespace].append(tag)
 		return tags
 
 	@staticmethod
@@ -917,9 +947,11 @@ class Gallery:
 		Publication Date: {}
 		Date Added: {}
 		Hash: {}
+
+		Chapters: {}
 		""".format(self.id, self.title, self.profile, self.path, self.artist,
 			 self.info, self.fav, self.type, self.language, self.status, self.tags,
-			 self.pub_date, self.date_added, self.hash)
+			 self.pub_date, self.date_added, self.hash, self.chapters)
 		return string
 
 

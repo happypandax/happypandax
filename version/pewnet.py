@@ -12,7 +12,7 @@ You should have received a copy of the GNU General Public License
 along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import requests, logging, random, time, pickle, os
+import requests, logging, random, time, pickle, os, threading
 import re as regex
 from bs4 import BeautifulSoup
 from datetime import datetime
@@ -26,6 +26,7 @@ log_e = log.error
 log_c = log.critical
 
 web_session = requests.Session()
+web_session.headers["user-agent"] = "Mozilla/5.0 (Windows NT 6.3; rv:36.0) Gecko/20100101 Firefox/36.0"
 if os.path.isfile(gui_constants.SESSION_COOKIES_PATH):
 	with open(gui_constants.SESSION_COOKIES_PATH, 'rb') as f:
 		try:
@@ -40,10 +41,11 @@ else:
 
 class CommenHen:
 	"Contains common methods"
-	LOCK = [False]
+	LOCK = threading.Lock()
 	SESSION = web_session
 	TIME_RAND = gui_constants.GLOBAL_EHEN_TIME
 	QUEUE = []
+	LAST_USED = 0
 
 	@staticmethod
 	def hash_search(g_hash):
@@ -54,10 +56,14 @@ class CommenHen:
 		pass
 
 	def begin_lock(self):
-		self.LOCK[0] = True
+		self.LOCK.acquire()
+		while int(time.time() - LAST_USED) < 5:
+			t = random.randint(1, self.TIME_RAND)
+			time.sleep(t*1000)
 	
 	def end_lock(self):
-		self.LOCK[0] = False
+		self.LAST_USED = time.time()
+		self.LOCK.release()
 
 	def add_to_queue(self, url):
 		"Add url the the queue, when the queue has reached 25 entries will auto process"
@@ -84,9 +90,7 @@ class CommenHen:
 
 	def check_cookie(self, cookie):
 		assert isinstance(cookie, dict)
-		print('your cookies', cookie)
 		cookies = self.SESSION.cookies.keys()
-		print('session cookies', cookies)
 		present = []
 		for c in cookie:
 			if c in cookies:
@@ -94,15 +98,19 @@ class CommenHen:
 			else:
 				present.append(False)
 		if not all(present):
-			print('Updating cookies')
 			self.SESSION.cookies.update(cookie)
 
-	def lock(self, sleep=False):
-		while self.LOCK[0]:
-			time.sleep(0.1)
-		if sleep:
-			r_time = random.randint(5,5+self.TIME_RAND)
-			time.sleep(r_time)
+	def handle_error(self, response):
+		content_type = response.headers['content-type']
+		text = response.text
+		if 'image/gif' in content_type:
+			gui_constants.GLOBAL_EHEN_LOCK = True
+			log_e('Provided exhentai credentials are incorrect!')
+		elif 'text/html' and 'Your IP address has been' in text:
+			gui_constants.GLOBAL_EHEN_LOCK = True
+			log_e('Your IP address has been temp banned from g.e- and ex-hentai')
+		elif 'text/html' in content_type and 'You are opening' in text:
+			time.sleep(random.randint(100,200))
 
 	def parse_url(self, url):
 		"Parses url into a list of gallery id and token"
@@ -158,11 +166,12 @@ class CommenHen:
 			payload['gidlist'].append(parsed_url)
 
 		if payload['gidlist']:
-			self.lock()
 			self.begin_lock()
 			if cookies:
 				self.check_cookie(cookies)
 			r = self.SESSION.post(self.e_url, json=payload)
+			self.handle_error(r.headers)
+			self.end_lock()
 		else: return None
 		try:
 			r.raise_for_status()
@@ -195,9 +204,9 @@ class CommenHen:
 		hash_url = gui_constants.DEFAULT_EHEN_URL + '?f_shash='
 		found_galleries = {}
 		for h in hash_string:
-			self.lock(sleep=True)
 			self.begin_lock()
 			r = requests.get(hash_url+h)
+			self.end_lock()
 			if not no_hits_found_check(r.text):
 				continue
 			soup = BeautifulSoup(r.text)
@@ -214,7 +223,6 @@ class CommenHen:
 					title = gallery.text
 					g_url = gallery.a.attrs['href']
 					found_galleries[h].append({title:g_url})
-			self.end_lock()
 
 		if found_galleries:
 			return found_galleries
@@ -230,11 +238,11 @@ class CommenHen:
 		- publication date
 		- namespace & tags
 		"""
-		self.lock()
 		self.begin_lock()
 		if cookies:
 			self.check_cookie(cookies)
 		r = self.SESSION.get(url, timeout=30)
+		self.end_lock()
 		html = r.text
 		if len(html)<5000:
 			log_w("Length of HTML response is only {} => Failure".format(len(html)))

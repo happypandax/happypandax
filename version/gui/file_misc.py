@@ -72,13 +72,26 @@ class MovedPopup(BasePopup):
 	def __init__(self, new_path, gallery, parent=None):
 		super().__init__(parent)
 		def update_path():
+			for chap_numb in gallery.chapters:
+				chap_path = gallery.chapters[chap_numb]
+				head, tail = os.path.split(chap_path)
+				if gallery.path == chap_path:
+					chap_path = new_path
+				elif gallery.path == head:
+					chap_path = os.path.join(new_path, tail)
+
+				gallery.chapters[chap_numb] = chap_path
+
 			gallery.path = new_path
+
 			self.UPDATE_SIGNAL.emit(gallery)
+			self.close()
 		main_layout = QVBoxLayout()
 		inner_layout = QHBoxLayout()
 		title = QLabel(gallery.title)
 		title.setWordWrap(True)
 		title.setAlignment(Qt.AlignCenter)
+		title.adjustSize()
 		cover = QLabel()
 		img = QPixmap(gallery.profile)
 		cover.setPixmap(img)

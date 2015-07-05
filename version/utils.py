@@ -109,6 +109,7 @@ def external_viewer_checker(path):
 			return x
 
 def open_chapter(chapterpath):
+	chapterpath = os.path.normpath(chapterpath)
 	try:
 		try: # folder
 			filepath = os.path.join(chapterpath, [x for x in sorted(os.listdir(chapterpath))\

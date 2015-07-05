@@ -982,6 +982,7 @@ class MangaView(QListView):
 				except IndexError:
 					pass
 		else:
+			print(chap_numb)
 			gallery = index.data(Qt.UserRole+1)
 			self.STATUS_BAR_MSG.emit("Opening chapter {} of {}".format(chap_numb+1,
 																 gallery.title))
@@ -1073,8 +1074,10 @@ class MangaView(QListView):
 			menu.addAction(chapters_menu)
 			open_chapters = QMenu()
 			chapters_menu.setMenu(open_chapters)
+
 			for number, chap_number in enumerate(range(len(
 				index.data(Qt.UserRole+1).chapters)), 1):
+				print(chap_number)
 				chap_action = QAction("Open chapter {}".format(
 					number), open_chapters, triggered = lambda: self.open_chapter(index, chap_number))
 				open_chapters.addAction(chap_action)
@@ -1227,7 +1230,9 @@ class MangaView(QListView):
 			 'status':gallery.status,
 			 'pub_date':gallery.pub_date,
 			 'tags':gallery.tags,
-			 'link':gallery.link}
+			 'link':gallery.link,
+			 'series_path':gallery.path,
+			 'chapters':gallery}
 
 			threading.Thread(target=gallerydb.GalleryDB.modify_gallery,
 							 args=(gallery.id,), kwargs=kwdict).start()
@@ -1579,7 +1584,7 @@ class MangaTableView(QTableView):
 
 	def replace_edit_gallery(self, list_of_gallery, pos):
 		"Replaces the view and DB with given list of gallery, at given position"
-		assert isinstance(list_of_gallery, list), "Please pass a gallery to replace with"
+		assert isinstance(list_of_gallery, list), "Please pass a list of galleries to replace with"
 		assert isinstance(pos, int)
 		for gallery in list_of_gallery:
 
@@ -1591,7 +1596,9 @@ class MangaTableView(QTableView):
 			 'status':gallery.status,
 			 'pub_date':gallery.pub_date,
 			 'tags':gallery.tags,
-			 'link':gallery.link}
+			 'link':gallery.link,
+			 'series_path':gallery.path,
+			 'chapters':gallery}
 
 			threading.Thread(target=gallerydb.GalleryDB.modify_gallery,
 							 args=(gallery.id,), kwargs=kwdict).start()

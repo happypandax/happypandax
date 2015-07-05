@@ -396,7 +396,7 @@ class ChapterAddWidget(QWidget):
 
 		layout = QFormLayout()
 		self.setLayout(layout)
-		lbl = QLabel('[{} {}]'.format(gallery.artist, gallery.title))
+		lbl = QLabel('{} by {}'.format(gallery.title, gallery.artist))
 		layout.addRow('Gallery:', lbl)
 		layout.addRow('Current chapters:', QLabel('{}'.format(self.current_chapters)))
 
