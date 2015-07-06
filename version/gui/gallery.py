@@ -30,7 +30,7 @@ from PyQt5.QtWidgets import (QListView, QFrame, QLabel,
 							 QHBoxLayout, QFormLayout, QDesktopWidget,
 							 QWidget, QHeaderView, QTableView, QApplication,
 							 QMessageBox)
-import threading, logging, os, math
+import threading, logging, os, math, functools
 import re as regex
 
 from ..database import gallerydb
@@ -1077,10 +1077,10 @@ class MangaView(QListView):
 
 			for number, chap_number in enumerate(range(len(
 				index.data(Qt.UserRole+1).chapters)), 1):
-				print(chap_number)
 				chap_action = QAction("Open chapter {}".format(
-					number), open_chapters, triggered = lambda: self.open_chapter(index, chap_number))
+					number), open_chapters, triggered = functools.partial(self.open_chapter, index, chap_number))
 				open_chapters.addAction(chap_action)
+
 
 		def open_link():
 			link = index.data(Qt.UserRole+1).link
@@ -1453,7 +1453,7 @@ class MangaTableView(QTableView):
 			for number, chap_number in enumerate(range(len(
 				index.data(Qt.UserRole+1).chapters)), 1):
 				chap_action = QAction("Open chapter {}".format(
-					number), open_chapters, triggered = lambda: self.open_chapter(index, chap_number))
+					number), open_chapters, triggered = functools.partial(self.open_chapter, index, chap_number))
 				open_chapters.addAction(chap_action)
 
 		def open_link():
