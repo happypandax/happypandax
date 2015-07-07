@@ -18,6 +18,21 @@ log_w = log.warning
 log_e = log.error
 log_c = log.critical
 
+def update_gallery_path(new_path, gallery):
+	"Updates a gallery's & it's chapters' path"
+	for chap_numb in gallery.chapters:
+		chap_path = gallery.chapters[chap_numb]
+		head, tail = os.path.split(chap_path)
+		if gallery.path == chap_path:
+			chap_path = new_path
+		elif gallery.path == head:
+			chap_path = os.path.join(new_path, tail)
+
+		gallery.chapters[chap_numb] = chap_path
+
+	gallery.path = new_path
+	return gallery
+
 class BasePopup(QWidget):
 	def __init__(self, parent=None):
 		super().__init__(parent, flags= Qt.Window | Qt.FramelessWindowHint)
@@ -35,7 +50,6 @@ class BasePopup(QWidget):
 		self.setMaximumWidth(500)
 		self.resize(500,350)
 
-
 class ModifiedPopup(BasePopup):
 	def __init__(self, path, gallery_id, parent=None):
 		super().__init__(parent)
@@ -48,6 +62,9 @@ class CreatedPopup(BasePopup):
 	ADD_SIGNAL = pyqtSignal(str)
 	def __init__(self, path, parent=None):
 		super().__init__(parent)
+		def commit():
+			self.ADD_SIGNAL.emit(path)
+			self.close()
 		main_layout = QVBoxLayout()
 		inner_layout = QHBoxLayout()
 		name = os.path.split(path)[1]
@@ -62,7 +79,7 @@ class CreatedPopup(BasePopup):
 		main_layout.addLayout(inner_layout)
 		main_layout.addLayout(self.generic_buttons)
 		self.main_widget.setLayout(main_layout)
-		self.yes_button.clicked.connect(lambda: self.ADD_SIGNAL.emit(path))
+		self.yes_button.clicked.connect(commit)
 		self.no_button.clicked.connect(self.close)
 		self.adjustSize()
 		self.show()
@@ -71,20 +88,9 @@ class MovedPopup(BasePopup):
 	UPDATE_SIGNAL = pyqtSignal(object)
 	def __init__(self, new_path, gallery, parent=None):
 		super().__init__(parent)
-		def update_path():
-			for chap_numb in gallery.chapters:
-				chap_path = gallery.chapters[chap_numb]
-				head, tail = os.path.split(chap_path)
-				if gallery.path == chap_path:
-					chap_path = new_path
-				elif gallery.path == head:
-					chap_path = os.path.join(new_path, tail)
-
-				gallery.chapters[chap_numb] = chap_path
-
-			gallery.path = new_path
-
-			self.UPDATE_SIGNAL.emit(gallery)
+		def commit():
+			g = update_gallery_path(new_path, gallery)
+			self.UPDATE_SIGNAL.emit(g)
 			self.close()
 		main_layout = QVBoxLayout()
 		inner_layout = QHBoxLayout()
@@ -101,7 +107,7 @@ class MovedPopup(BasePopup):
 		text.setAlignment(Qt.AlignCenter)
 		button_layout = QHBoxLayout()
 		update_btn = QPushButton('Update')
-		update_btn.clicked.connect(update_path)
+		update_btn.clicked.connect(commit)
 		close_btn = QPushButton('Close')
 		close_btn.clicked.connect(self.close)
 		button_layout.addWidget(update_btn)
@@ -122,10 +128,11 @@ class DeletedPopup(BasePopup):
 	def __init__(self, path, gallery, parent=None):
 		super().__init__(parent)
 		
-		def update_path():
-			msgbox = QMessageBox(QMessageBox.Question, parent=self)
-			msgbox.setWindowTitle('What kind of gallery')
-			msgbox.setText('What kind of gallery is it?')
+		def commit():
+			msgbox = QMessageBox(self)
+			msgbox.setIcon(QMessageBox.Question)
+			msgbox.setWindowTitle('Type of file')
+			msgbox.setInformativeText('What type of file is it?')
 			dir = msgbox.addButton('Directory', QMessageBox.YesRole)
 			archive = msgbox.addButton('Archive', QMessageBox.NoRole)
 			msgbox.exec()
@@ -138,9 +145,12 @@ class DeletedPopup(BasePopup):
 				new_path = new_path[0]
 			else: return None
 			if new_path:
-				gallery.path = new_path
+				g = update_gallery_path(new_path, gallery)
+				self.UPDATE_SIGNAL.emit(g)
+				self.close()
 
-			self.UPDATE_SIGNAL.emit(gallery)
+		def remove_commit():
+			self.REMOVE_SIGNAL.emit(gallery)
 			self.close()
 
 		main_layout = QVBoxLayout()
@@ -163,9 +173,9 @@ class DeletedPopup(BasePopup):
 		close_btn = QPushButton('Close')
 		close_btn.clicked.connect(self.close)
 		update_btn = QPushButton('Update path...')
-		update_btn.clicked.connect(update_path)
+		update_btn.clicked.connect(commit)
 		remove_btn = QPushButton('Remove')
-		remove_btn.clicked.connect(lambda: self.REMOVE_SIGNAL.emit(gallery))
+		remove_btn.clicked.connect(remove_commit)
 		buttons_layout = QHBoxLayout()
 		buttons_layout.addWidget(remove_btn)
 		buttons_layout.addWidget(update_btn)
@@ -193,14 +203,12 @@ class GalleryHandler(FileSystemEventHandler, QObject):
 
 	def on_created(self, event):
 		if self.file_filter(event):
-			t = Timer(10, self.CREATE_SIGNAL.emit, args=(event.src_path,))
+			t = Timer(8, self.CREATE_SIGNAL.emit, args=(event.src_path,))
 			t.start()
 
 	def on_deleted(self, event):
 		path = event.src_path
-		print(path)
 		gallery = gallerydb.GalleryDB.get_gallery_by_path(path)
-		print(gallery)
 		if gallery:
 			self.DELETED_SIGNAL.emit(path, gallery)
 

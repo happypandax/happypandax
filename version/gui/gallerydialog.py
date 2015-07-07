@@ -5,7 +5,7 @@
 from PyQt5.QtCore import pyqtSignal, Qt, QPoint, QDate, QThread, QTimer
 from datetime import datetime
 
-import queue, os, threading, random, logging
+import queue, os, threading, random, logging, time
 
 from . import gui_constants
 from .misc import return_tag_completer_TextEdit
@@ -20,33 +20,42 @@ log_e = log.error
 log_c = log.critical
 
 class GalleryDialog(QWidget):
-	"A window for adding/modifying gallery"
+	"""
+	A window for adding/modifying gallery.
+	Pass a list of QModelIndexes to edit their data
+	or pass a path to preset path
+	"""
 
 	gallery_queue = queue.Queue()
 	SERIES = pyqtSignal(list)
 	SERIES_EDIT = pyqtSignal(list, int)
 	#gallery_list = [] # might want to extend this to allow mass gallery adding
 
-	def __init__(self, parent=None, list_of_index=None):
+	def __init__(self, parent=None, arg=None):
 		super().__init__(parent, Qt.Dialog)
 		log_d('Triggered Gallery Edit/Add Dialog')
 		self.main_layout = QVBoxLayout()
 
-		if not list_of_index:
+		if arg:
+			if isinstance(arg, list):
+				self.position = arg[0].row()
+				for index in arg:
+					gallery = index.data(Qt.UserRole+1)
+					self.commonUI()
+					self.setGallery(gallery)
+				self.done.clicked.connect(self.accept_edit)
+				self.cancel.clicked.connect(self.reject_edit)
+			elif isinstance(arg, str):
+				self.newUI()
+				self.commonUI()
+				self.choose_dir(arg)
+				self.done.clicked.connect(self.accept)
+				self.cancel.clicked.connect(self.reject)
+		else:
 			self.newUI()
 			self.commonUI()
 			self.done.clicked.connect(self.accept)
 			self.cancel.clicked.connect(self.reject)
-		else:
-			assert isinstance(list_of_index, list)
-			self.position = list_of_index[0].row()
-			for index in list_of_index:
-				gallery = index.data(Qt.UserRole+1)
-				self.commonUI()
-				self.setGallery(gallery)
-
-			self.done.clicked.connect(self.accept_edit)
-			self.cancel.clicked.connect(self.reject_edit)
 
 		log_d('GalleryDialog: Create UI: successful')
 		#TODO: Implement a way to mass add galleries
@@ -218,12 +227,23 @@ class GalleryDialog(QWidget):
 		self.file_exists_lbl.hide()
 
 	def choose_dir(self, mode):
+		"""
+		Pass which mode to open the folder explorer in:
+		'f': directory
+		'a': files
+		Or pass a predefined path
+		"""
 		if mode == 'a':
 			name = QFileDialog.getOpenFileName(self, 'Choose archive',
 											  filter=FILE_FILTER)
 			name = name[0]
-		else:
+		elif mode == 'f':
 			name = QFileDialog.getExistingDirectory(self, 'Choose folder')
+		elif mode:
+			if os.path.exists(mode):
+				name = mode
+			else:
+				return None
 		head, tail = os.path.split(name)
 		parsed = title_parser(tail)
 		self.title_edit.setText(parsed['title'])

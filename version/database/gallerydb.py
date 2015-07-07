@@ -263,6 +263,7 @@ class GalleryDB:
 			gallery = Gallery()
 			gallery.id = gallery_row['series_id']
 			gallery = gallery_map(gallery_row, gallery)
+			gallery.validate()
 			gallery_list.append(gallery)
 
 		return gallery_list
@@ -930,6 +931,13 @@ class Gallery:
 		if all(validity):
 			status = True
 		return status
+
+	def invalidities(self):
+		"""
+		Checks all attributes for invalidities.
+		Returns list of string with invalid attribute names
+		"""
+		return []
 
 	def __str__(self):
 		string = """

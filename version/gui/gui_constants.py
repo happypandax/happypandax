@@ -71,6 +71,9 @@ NO_IMAGE_PATH = os.path.join(static_dir, "default.jpg")
 # Monitored Paths
 MONITOR_PATHS = get('C:/Users/Autriche/Videos/HP Laserjet 5684/Doujin', 'General' 'monitor paths', str).split(',')
 
+# GENERAL
+SCROLL_TO_NEW_GALLERIES = get(False, 'General', 'scroll to new galleries', bool)
+
 # WEB
 SESSION_COOKIES_PATH = os.path.join(static_dir, 'session')
 GLOBAL_EHEN_TIME = get(5, 'Web', 'global ehen time offset', int)

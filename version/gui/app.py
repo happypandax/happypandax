@@ -23,7 +23,8 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QListView,
 							 QSplitter, QMessageBox, QFileDialog,
 							 QDesktopWidget, QPushButton, QCompleter,
 							 QListWidget, QListWidgetItem, QToolTip)
-from . import gui_constants, misc, gallery, file_misc, settingsdialog
+from . import (gui_constants, misc, gallery, file_misc, settingsdialog,
+			   gallerydialog)
 from ..database import fetch, gallerydb
 from .. import settings, pewnet
 
@@ -44,15 +45,29 @@ class AppWindow(QMainWindow):
 
 	def init_watchers(self):
 
-		def update_gallery(g):
-			rows = self.manga_list_view.gallery_model.rowCount()
+		def find_index(gallery_id):
 			index = None
+			rows = self.manga_list_view.gallery_model.rowCount()
 			for r in range(rows):
 				indx = self.manga_list_view.gallery_model.index(r, 1)
 				m_gallery = indx.data(Qt.UserRole+1)
-				if m_gallery.id == g.id:
+				if m_gallery.id == gallery_id:
 					index = indx
 					break
+			return index
+
+		def remove_gallery(g):
+			index = find_index(g.id)
+			if index:
+				self.manga_list_view.remove_gallery([index])
+
+		def create_gallery(path):
+			g_dia = gallerydialog.GalleryDialog(self, path)
+			g_dia.SERIES.connect(self.manga_list_view.gallery_model.addRows)
+			g_dia.show()
+
+		def update_gallery(g):
+			index = find_index(g.id)
 			if index:
 				self.manga_list_view.replace_edit_gallery([g], index.row())
 			else:
@@ -60,11 +75,13 @@ class AppWindow(QMainWindow):
 
 		def created(path):
 			c_popup = file_misc.CreatedPopup(path, self)
+			c_popup.ADD_SIGNAL.connect(create_gallery)
 		def modified(path, gallery):
 			mod_popup = file_misc.ModifiedPopup(path, gallery, self)
 		def deleted(path, gallery):
 			d_popup = file_misc.DeletedPopup(path, gallery, self)
 			d_popup.UPDATE_SIGNAL.connect(update_gallery)
+			d_popup.REMOVE_SIGNAL.connect(remove_gallery)
 		def moved(new_path, gallery):
 			mov_popup = file_misc.MovedPopup(new_path, gallery, self)
 			mov_popup.UPDATE_SIGNAL.connect(update_gallery)

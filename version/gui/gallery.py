@@ -34,7 +34,7 @@ import threading, logging, os, math, functools
 import re as regex
 
 from ..database import gallerydb
-from . import gui_constants, misc, gallerydialog
+from . import gui_constants, misc, gallerydialog, file_misc
 from .. import utils
 
 log = logging.getLogger(__name__)
@@ -386,7 +386,11 @@ class GalleryModel(QAbstractTableModel):
 
 	def populate_data(self):
 		"Populates the model with data from database"
-		self._data = gallerydb.GalleryDB.get_all_gallery()
+		for gallery in gallerydb.GalleryDB.get_all_gallery():
+			if not gallery.valid:
+				reasons = gallery.invalidities()
+			else:
+				self._data.append(gallery)
 		self.layoutChanged.emit()
 		self.ROWCOUNT_CHANGE.emit()
 		self._data_count = len(self._data)
@@ -549,9 +553,9 @@ class GalleryModel(QAbstractTableModel):
 		self.beginInsertRows(QModelIndex(), position, position + rows - 1)
 		log_d('Add rows: Began inserting')
 		for gallery in list_of_gallery:
-			#
 			threading.Thread(target=gallerydb.GalleryDB.add_gallery_return, args=(gallery,)).start()
 			gallery.profile = PROFILE_TO_MODEL.get()
+			gallery.validate()
 			self._data.insert(position, gallery)
 		log_d('Add rows: Finished inserting')
 		self.endInsertRows()
@@ -564,6 +568,7 @@ class GalleryModel(QAbstractTableModel):
 		"Inserts new gallery data to the data list WITHOUT adding to DB"
 		self.beginInsertRows(QModelIndex(), position, position + rows - 1)
 		for pos, gallery in enumerate(list_of_gallery, 1):
+			gallery.validate()
 			self._data.append(gallery)
 		self.endInsertRows()
 		self.CUSTOM_STATUS_MSG.emit("Added item(s)")
@@ -982,7 +987,6 @@ class MangaView(QListView):
 				except IndexError:
 					pass
 		else:
-			print(chap_numb)
 			gallery = index.data(Qt.UserRole+1)
 			self.STATUS_BAR_MSG.emit("Opening chapter {} of {}".format(chap_numb+1,
 																 gallery.title))
