@@ -369,7 +369,7 @@ class GalleryModel(QAbstractTableModel):
 	def __init__(self, parent=None):
 		super().__init__(parent)
 		self._data_count = 0 # number of items added to model
-		self.populate_data()
+		#self.populate_data()
 		#self._data_container = []
 		self.dataChanged.connect(lambda: self.status_b_msg("Edited"))
 		self.dataChanged.connect(lambda: self.ROWCOUNT_CHANGE.emit())
@@ -386,14 +386,21 @@ class GalleryModel(QAbstractTableModel):
 
 	def populate_data(self):
 		"Populates the model with data from database"
-		for gallery in gallerydb.GalleryDB.get_all_gallery():
+		self._data = []
+		t = 0
+		galleries = gallerydb.GalleryDB.get_all_gallery()
+		self._data_count = len(galleries)
+		for pos, gallery in enumerate(galleries):
+			t += 80
 			if not gallery.valid:
 				reasons = gallery.invalidities()
 			else:
-				self._data.append(gallery)
-		self.layoutChanged.emit()
-		self.ROWCOUNT_CHANGE.emit()
-		self._data_count = len(self._data)
+				QTimer.singleShot(t, functools.partial(self.insertRows, [gallery], pos,
+										   data_count=False))
+				#self._data.append(gallery)
+		#self.layoutChanged.emit()
+		#self.ROWCOUNT_CHANGE.emit()
+		#self._data_count = len(self._data)
 
 	def status_b_msg(self, msg):
 		self.STATUSBAR_MSG.emit(msg)
@@ -557,6 +564,7 @@ class GalleryModel(QAbstractTableModel):
 			gallery.profile = PROFILE_TO_MODEL.get()
 			gallery.validate()
 			self._data.insert(position, gallery)
+			self._data_count += 1
 		log_d('Add rows: Finished inserting')
 		self.endInsertRows()
 		self.CUSTOM_STATUS_MSG.emit("Added item(s)")
@@ -564,14 +572,17 @@ class GalleryModel(QAbstractTableModel):
 		return True
 
 	def insertRows(self, list_of_gallery, position,
-				rows=1, index = QModelIndex()):
+				rows=1, index = QModelIndex(), data_count=True):
 		"Inserts new gallery data to the data list WITHOUT adding to DB"
 		self.beginInsertRows(QModelIndex(), position, position + rows - 1)
 		for pos, gallery in enumerate(list_of_gallery, 1):
 			gallery.validate()
 			self._data.append(gallery)
+			if data_count:
+				self._data_count += 1
 		self.endInsertRows()
-		self.CUSTOM_STATUS_MSG.emit("Added item(s)")
+		if data_count:
+			self.CUSTOM_STATUS_MSG.emit("Added item(s)")
 		self.ROWCOUNT_CHANGE.emit()
 		return True
 

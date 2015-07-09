@@ -13,14 +13,14 @@ along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import datetime, os, threading, logging, queue, uuid # for unique filename
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QObject, pyqtSignal
 from PyQt5.QtGui import QImage
 
 from ..utils import (today, ArchiveFile, generate_img_hash, delete_path,
 					 ARCHIVE_FILES, get_gallery_img)
 from .db import CommandQueue, ResultQueue
 from ..gui import gui_constants
-from .db_constants import THUMBNAIL_PATH, IMG_FILES
+from .db_constants import THUMBNAIL_PATH, IMG_FILES, CURRENT_DB_VERSION
 
 PROFILE_TO_MODEL = queue.Queue()
 TestQueue = queue.Queue()
@@ -96,7 +96,7 @@ def gallery_map(row, gallery):
 	gallery.last_read = row['last_read']
 	gallery.date_added = row['date_added']
 	gallery.times_read = row['times_read']
-	gallery.hash = row['hash']
+	gallery._db_v = row['db_v']
 	try:
 		gallery.link = bytes.decode(row['link'])
 	except TypeError:
@@ -106,10 +106,11 @@ def gallery_map(row, gallery):
 
 	gallery.tags = TagDB.get_gallery_tags(gallery.id)
 
+	gallery.hashes = HashDB.get_gallery_hashes(gallery.id)
+
 	return gallery
 
 def default_exec(object):
-	object.validate()
 	def check(obj):
 		if obj == None:
 			return "None"
@@ -137,7 +138,7 @@ def default_exec(object):
 				'last_update':check(object.last_update),
 				'link':str.encode(object.link),
 				'times_read':check(object.times_read),
-				'hash':check(object.hash)
+				'db_v':check(CURRENT_DB_VERSION)
 				}
 				]]
 	return executing
@@ -172,6 +173,7 @@ class GalleryDB:
 			log_i('Rebuilding galleries')
 			for gallery in galleries:
 				if gallery.validate():
+					log_i("Rebuilding gallery {}".format(gallery.id))
 					GalleryDB.modify_gallery(
 						gallery.id,
 						title=gallery.title,
@@ -185,7 +187,7 @@ class GalleryDB:
 						pub_date=gallery.pub_date,
 						link=gallery.link,
 						times_read=gallery.times_read,
-						hash=gallery.hash)
+						_db_v=CURRENT_DB_VERSION)
 		except:
 			log.exception('Failed rebuilding galleries')
 			return False
@@ -195,7 +197,8 @@ class GalleryDB:
 	@staticmethod
 	def modify_gallery(series_id, title=None, artist=None, info=None, type=None, fav=None,
 				   tags=None, language=None, status=None, pub_date=None, link=None,
-				   times_read=None, hash=None, series_path=None, chapters=None):
+				   times_read=None, series_path=None, chapters=None, _db_v=None,
+				   hashes=None):
 		"Modifies gallery with given gallery id"
 		executing = []
 		assert isinstance(series_id, int)
@@ -231,12 +234,18 @@ class GalleryDB:
 			executing.append(["UPDATE series SET hash=? WHERE series_id=?", (hash, series_id)])
 		if series_path:
 			executing.append(["UPDATE series SET series_path=? WHERE series_id=?", (str.encode(series_path), series_id)])
+		if _db_v:
+			executing.append(["UPDATE series SET db_v=? WHERE series_id=?", (_db_v, series_id)])
 		if tags:
 			assert isinstance(tags, dict)
 			TagDB.modify_tags(series_id, tags)
 		if chapters:
 			assert isinstance(chapters, Gallery)
 			ChapterDB.update_chapter(chapters)
+
+		if hashes:
+			assert isinstance(hashes, Gallery)
+			HashDB.rebuild_gallery_hashes(hashes)
 
 		CommandQueue.put(executing)
 		c = ResultQueue.get()
@@ -363,8 +372,6 @@ class GalleryDB:
 		if object.tags:
 			TagDB.add_tags(object)
 		ChapterDB.add_chapters(object)
-		if test_mode:
-			TestQueue.put('x')
 
 	@staticmethod
 	def add_gallery_return(object):
@@ -423,6 +430,7 @@ class GalleryDB:
 			del c
 			ChapterDB.del_all_chapters(gallery.id)
 			TagDB.del_gallery_mapping(gallery.id)
+			HashDB.del_gallery_hashes(gallery.id)
 			log_i('Successfully deleted: {}'.format(gallery.title.encode('utf-8', 'ignore')))
 
 	@staticmethod
@@ -465,6 +473,7 @@ class ChapterDB:
 		add_chapter_raw -> links chapter to the given seires id, and adds into db
 		get_chapters_for_gallery -> returns a dict with chapters linked to the given series_id
 		get_chapter-> returns a dict with chapter matching the given chapter_number
+		get_chapter_id -> returns id of the chapter number
 		chapter_size -> returns amount of manga (can be used for indexing)
 		del_all_chapters <- Deletes all chapters with the given series_id
 		del_chapter <- Deletes chapter with the given number from gallery
@@ -575,6 +584,21 @@ class ChapterDB:
 		except TypeError:
 			return None
 		return chapters
+
+	@staticmethod
+	def get_chapter_id(series_id, chapter_number):
+		"Returns id of the chapter number"
+		assert isinstance(series_id, int) and isinstance(chapter_number, int), "Passed args must be of int"
+		executing = [["SELECT chapter_id FROM chapters WHERE series_id=? AND chapter_number=?",
+						(series_id, chapter_number,)]]
+		CommandQueue.put(executing)
+		cursor = ResultQueue.get()
+		try:
+			row = cursor.fetchone()
+			chp_id = row['chapter_id']
+			return chp_id
+		except KeyError:
+			return None
 
 	@staticmethod
 	def chapter_size(series_id):
@@ -839,6 +863,88 @@ class TagDB:
 		ns = [n['namespace'] for n in cursor.fetchall()]
 		return ns
 
+
+class HashDB:
+	"""
+	Contains the following methods:
+
+	get_gallery_hashes -> returns all hashes with the given gallery id in a list
+	gen_gallery_hashes <- generates hashes for gallery's chapters and inserts them to db
+	rebuild_gallery_hashes <- inserts hashes into DB only if it doesnt already exist
+	"""
+
+	@staticmethod
+	def get_gallery_hashes(gallery_id):
+		"Returns all hashes with the given gallery id in a list"
+		executing = [['SELECT hash FROM hashes WHERE series_id=?',
+				(gallery_id,)]]
+		CommandQueue.put(executing)
+		cursor = ResultQueue.get()
+		rows = cursor.fetchall()
+
+		hashes = []
+		try:
+			for row in rows:
+				hashes.append(row['hash'])
+		except TypeError:
+			return []
+		return hashes
+
+	@staticmethod
+	def gen_gallery_hashes(gallery):
+		"Generates hashes for gallery's first chapter and inserts them to DB"
+		chap_id = ChapterDB.get_chapter_id(gallery.id, 0)
+		try:
+			chap_path = gallery.chapters[0]
+			imgs = os.listdir(chap_path)
+			# filter
+		except NotADirectoryError:
+			zip = ArchiveFile(gallery.chapters[0])
+			chap_path = os.path.join(gui_constants.temp_dir, str(uuid.uuid4()))
+			zip.extract_all(chap_path)
+			imgs = os.listdir(chap_path)
+
+		except FileNotFoundError:
+			return False
+
+		# filter
+		imgs = [os.path.join(chap_path,x)\
+			for x in imgs if x.endswith(tuple(IMG_FILES))]
+
+		hashes = []
+		for i in imgs:
+			with open(i, 'rb') as img:
+				hashes.append(generate_img_hash(img))
+		
+		executing = []
+		for hash in hashes:
+			executing.append(["""INSERT INTO hashes(hash, series_id, chapter_id)
+			VALUES(?, ?, ?)""", (hash, gallery.id, chap_id)])
+
+		CommandQueue.put(executing)
+		c = ResultQueue.get()
+		del c
+		return hashes
+
+	@staticmethod
+	def rebuild_gallery_hashes(gallery):
+		"Inserts hashes into DB only if it doesnt already exist"
+		assert isinstance(gallery, Gallery)
+		hashes = HashDB.get_gallery_hashes(gallery.id)
+
+		if not hashes:
+			hashes = HashDB.gen_gallery_hashes(gallery)
+		return hashes
+
+	@staticmethod
+	def del_gallery_hashes(gallery_id):
+		"Deletes all hashes linked to the given gallery id"
+		executing = [["DELETE FROM hashes WHERE series_id=?", gallery_id]]
+		CommandQueue.put(executing)
+		c = ResultQueue.get()
+		del c
+
+
 class Gallery:
 	"""Base class for a gallery.
 	Available data:
@@ -859,6 +965,9 @@ class Gallery:
 	date_added <- date, will be defaulted to today if not specified
 	last_read <- timestamp (e.g. time.time())
 	last_update <- last updated file
+	last_read <- an integer telling us how many times the gallery has been opened
+	hashes <- a list of hashes of the gallery's chapters
+	valid <- a bool indicating the validity of the gallery
 	"""
 	def __init__(self):
 		
@@ -880,41 +989,14 @@ class Gallery:
 		self.last_read = None
 		self.last_update = None
 		self.times_read = 0
-		self.hash = None
 		self.valid = False
 		self._cache_id = None
+		self._db_v = None
+		self.hashes = []
 
-	def gen_hash(self):
-		"""
-		Generates hash from an image in the middle of first chapter.
-		"""
-		try:
-			hash = None
-			try:
-				imgs = os.listdir(self.chapters[0])
-				imgs_p = [os.path.join(self.chapters[0],x)\
-					for x in imgs if x.endswith(tuple(IMG_FILES))]
-				img_p = imgs_p[len(imgs_p)//2]
-			except NotADirectoryError:
-				zip = ArchiveFile(self.chapters[0])
-				names = zip.namelist()
-				img_p = os.path.join(gui_constants.temp_dir, str(uuid.uuid4()))
-				img = names[len(names)//2]
-				zip.extract(img, img_p)
-				img_p = os.path.join(img_p, img)
-
-			with open(img_p, 'rb') as img:
-				hash = generate_img_hash(img)
-
-
-			self.hash = hash
-			if not hash:
-				return False
-			log_d('Hash generation succesful: {}'.format(hash))
-		except IndexError:
-			log_w('{} has no first chapter'.format(self.title))
-			return False
-		return True
+	def gen_hashes(self):
+		"Generate hashes while inserting them into DB"
+		self.hashes = HashDB.gen_gallery_hashes(self)
 
 	def validate(self):
 		"Validates gallery, returns status"
@@ -922,14 +1004,13 @@ class Gallery:
 		validity = []
 		status = False
 
-		if not self.hash:
-			if self.gen_hash():
-				validity.append(True)
-			else:
-				validity.append(False)
+		if not self.hashes:
+			HashDB.gen_gallery_hashes(self)
+			self.hashes = HashDB.get_gallery_hashes(self.id)
 
 		if all(validity):
 			status = True
+			self.valid = True
 		return status
 
 	def invalidities(self):
@@ -954,14 +1035,24 @@ class Gallery:
 		Tags: {}
 		Publication Date: {}
 		Date Added: {}
-		Hash: {}
+		Hashes: {}
 
 		Chapters: {}
 		""".format(self.id, self.title, self.profile, self.path, self.artist,
 			 self.info, self.fav, self.type, self.language, self.status, self.tags,
-			 self.pub_date, self.date_added, self.hash, self.chapters)
+			 self.pub_date, self.date_added, len(self.hashes), self.chapters)
 		return string
 
+class Bridge(QObject):
+	DONE = pyqtSignal(bool)
+	def __init__(self, parent=None):
+		super().__init__(parent)
+
+	def rebuild_galleries(self):
+		if GalleryDB.rebuild_galleries():
+			self.DONE.emit(True)
+		else:
+			self.DONE.emit(False)
 
 if __name__ == '__main__':
 	#unit testing here

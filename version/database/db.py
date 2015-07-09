@@ -23,6 +23,27 @@ log_w = log.warning
 log_e = log.error
 log_c = log.critical
 
+def hashes_sql(cols=False):
+	sql = """
+		CREATE TABLE IF NOT EXISTS hashes(
+					hash_id INTEGER PRIMARY KEY,
+					hash BLOB,
+					series_id INTEGER,
+					chapter_id INTEGER,
+					FOREIGN KEY(series_id) REFERENCES series(series_id),
+					FOREIGN KEY(chapter_id) REFERENCES chapters(chapter_id))
+	"""
+
+	col_list = [
+	'hash_id',
+	'hash',
+	'series_id',
+	'chapter_id'
+	]
+	if cols:
+		return sql, col_list
+	return sql
+
 def series_sql(cols=False):
 	sql = """
 		CREATE TABLE IF NOT EXISTS series(
@@ -42,7 +63,7 @@ def series_sql(cols=False):
 					last_read TEXT,
 					last_update TEXT,
 					times_read INTEGER,
-					hash BLOB)
+					db_v REAL)
 		"""
 	col_list = [
 		'series_id',
@@ -61,7 +82,7 @@ def series_sql(cols=False):
 		'last_read',
 		'last_update',
 		'times_read',
-		'hash'
+		'db_v'
 		]
 	if cols:
 		return sql, col_list
@@ -161,6 +182,7 @@ def global_db_convert(conn):
 	tags, tags_cols = tags_sql(True)
 	tags_mappings, tags_mappings_cols = tags_mappings_sql(True)
 	series_tags_mappings, series_tags_mappings_cols = series_tags_mappings_sql(True)
+	hashes, hashes_cols = hashes_sql(True)
 	
 	t_d = {}
 	t_d['series'] = series_cols
@@ -169,6 +191,7 @@ def global_db_convert(conn):
 	t_d['tags'] = tags_cols
 	t_d['tags_mappings'] = tags_mappings_cols
 	t_d['series_tags_mappings'] = series_tags_mappings_cols
+	t_d['hashes'] = hashes_cols
 
 	log_d('Checking table structures')
 	c.execute(series_sql())
@@ -177,6 +200,7 @@ def global_db_convert(conn):
 	c.execute(tags_sql())
 	c.execute(tags_mappings_sql())
 	c.execute(series_tags_mappings_sql())
+	c.execute(hashes_sql())
 	conn.commit()
 
 	log_d('Checking columns')
@@ -190,14 +214,6 @@ def global_db_convert(conn):
 	conn.commit()
 	log_d('Commited DB changes')
 	return c
-
-from PyQt5.QtCore import pyqtSignal, QObject
-class SignalsFromDB(QObject):
-	"""
-	Contains various signals which are connected to methods
-	from the gui module package
-	"""
-	pass
 
 def add_db_revisions(old_db):
 	"""
@@ -221,11 +237,9 @@ def add_db_revisions(old_db):
 	# version 0.16
 	if 0.16 > version:
 		vs = 0.16
-	#	SFB = SignalsFromDB()
-	#	c.execute('SELECT series_id, hash FROM series')
-	#	rows = c.fetchall()
-	#	for row in rows:
-	#		SFB.HASH_F_0_16.emit(ro
+
+	if 0.17 > version:
+		vs = 0.17
 
 	log_d('Updating DB version')
 	c.execute('UPDATE version SET version=? WHERE 1', (db_constants.CURRENT_DB_VERSION,))
@@ -285,12 +299,6 @@ def init_db(test=False):
 
 		c.execute("""INSERT INTO version(version) VALUES(?)""", (db_constants.CURRENT_DB_VERSION,))
 
-		# hash
-		# nvm the complicated stuff for now
-		#c.execute("""
-		#CREATE TABLE hashes(hash_id INTERGER PRIMARY KEY, hash BLOB)
-		#""")
-
 		# series
 		c.execute(series_sql())
 
@@ -307,6 +315,9 @@ def init_db(test=False):
 						
 		# series tags
 		c.execute(series_tags_mappings_sql())
+		
+		# hashes
+		c.execute(hashes_sql())
 
 	if test:
 		db_test_path = os.path.join(os.path.split(db_constants.DB_PATH)[0],'database_test.db')

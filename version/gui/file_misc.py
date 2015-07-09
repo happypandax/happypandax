@@ -34,8 +34,11 @@ def update_gallery_path(new_path, gallery):
 	return gallery
 
 class BasePopup(QWidget):
-	def __init__(self, parent=None):
-		super().__init__(parent, flags= Qt.Window | Qt.FramelessWindowHint)
+	def __init__(self, parent=None, **kwargs):
+		if kwargs:
+			super().__init__(parent, **kwargs)
+		else:
+			super().__init__(parent, flags= Qt.Window | Qt.FramelessWindowHint)
 		self.setAttribute(Qt.WA_TranslucentBackground)
 		main_layout = QVBoxLayout()
 		self.main_widget = QFrame()

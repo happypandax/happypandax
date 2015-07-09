@@ -22,7 +22,8 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QListView,
 							 QSizePolicy, QMenu, QAction, QLineEdit,
 							 QSplitter, QMessageBox, QFileDialog,
 							 QDesktopWidget, QPushButton, QCompleter,
-							 QListWidget, QListWidgetItem, QToolTip)
+							 QListWidget, QListWidgetItem, QToolTip,
+							 QProgressBar)
 from . import (gui_constants, misc, gallery, file_misc, settingsdialog,
 			   gallerydialog)
 from ..database import fetch, gallerydb
@@ -39,9 +40,8 @@ class AppWindow(QMainWindow):
 	"The application's main window"
 	def __init__(self):
 		super().__init__()
-		self.first_time()
 		self.initUI()
-		self.init_watchers()
+		self.first_time()
 
 	def init_watchers(self):
 
@@ -213,7 +213,7 @@ Your database will not be touched without you being notified.""")
 
 	def stat_row_info(self):
 		r = self.manga_list_view.model().rowCount()
-		t = len(self.manga_list_view.gallery_model._data)
+		t = self.manga_list_view.gallery_model._data_count
 		self.stat_info.setText("Loaded {} of {} ".format(r, t))
 
 	def manga_display(self):
@@ -533,10 +533,45 @@ Your database will not be touched without you being notified.""")
 				log_i('Populating DB from gallery folder')
 
 	def first_time(self):
-		if gui_constants.FIRST_TIME_LEVEL < 1:
-			log_d('Invoking first time level 0')
-			if gallerydb.GalleryDB.rebuild_galleries():
-				settings.set(1, 'Application', 'first time level')
+		def done():
+			self.manga_list_view.gallery_model.populate_data()
+			self.init_watchers()
+		if gui_constants.FIRST_TIME_LEVEL < 2:
+
+			class FirstTime(file_misc.BasePopup):
+				def __init__(self, parent=None):
+					super().__init__(parent)
+					main_layout = QVBoxLayout()
+					info_lbl = QLabel('Hi there! Some big changes are about to occur!\n'+
+					   "Please wait.. This will take a while.")
+					info_lbl.setAlignment(Qt.AlignCenter)
+					main_layout.addWidget(info_lbl)
+					prog = QProgressBar(self)
+					prog.setMinimum(0)
+					prog.setMaximum(0)
+					prog.setTextVisible(False)
+					main_layout.addWidget(prog)
+					main_layout.addWidget(QLabel('Note: This popup will close itself when everything is ready'))
+					self.main_widget.setLayout(main_layout)
+
+			ft_widget = FirstTime(self)
+			log_d('Invoking first time level 2')
+			bridge = gallerydb.Bridge()
+			thread = QThread(self)
+			bridge.moveToThread(thread)
+			thread.started.connect(bridge.rebuild_galleries)
+			bridge.DONE.connect(ft_widget.close)
+			bridge.DONE.connect(lambda: self.setEnabled(True))
+			bridge.DONE.connect(lambda: settings.set(2, 'Application', 'first time level'))
+			bridge.DONE.connect(done)
+			bridge.DONE.connect(bridge.deleteLater)
+			bridge.DONE.connect(thread.deleteLater)
+			thread.start()
+			ft_widget.adjustSize()
+			ft_widget.show()
+			self.setEnabled(False)
+		else:
+			done()
 
 	def closeEvent(self, event):
 		# watchers

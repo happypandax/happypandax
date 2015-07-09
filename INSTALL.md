@@ -23,6 +23,7 @@ Download from here https://www.python.org/downloads/
     + Python 3.4 should've included pip on install. Incase it didn't: 'sudo pacman -S pip3'
     + To install 'requests': pip3 install requests
     + To install 'BeautifulSoup 4': pip3 install bs4
+    + To install 'porc': pip3 install porc
   - PyQt5
     + I'm pretty sure you can install this through pip3, but if not: sudo pacman -S python-pyqt5 ('apt-get install python-pyqt5' on Ubuntu)
     
@@ -35,11 +36,13 @@ Download from here https://www.python.org/downloads/
 1. Install these dependencies:
   - Qt5 (Install this first) >= 5.4
     + Download from https://www.qt.io/download-open-source/#section-2
-  - requests >= 2.6.0 (PyPi)
+  - pip
     + Python 3.4 should've included pip on install. Incase it didn't https://pip.pypa.io/en/latest/installing.html
     Make sure python is in your PATH. (http://stackoverflow.com/questions/6318156/adding-python-path-on-windows-7)
-    + Now open cmd; Write: pip install requests
-    + and: pip install bs4
+    + Now open cmd and write these commands:
+    + pip install requests
+    + pip install bs4
+    + pip install porc
   - PyQt5
     + I'm pretty sure you can install this through pip, but here is the download location
     http://www.riverbankcomputing.com/software/pyqt/download5 (see Binary Packages for windows)

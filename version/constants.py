@@ -1,4 +1,4 @@
-"""
+﻿"""
 This file is part of Happypanda.
 Happypanda is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -178,11 +178,12 @@ def start():
 		msg_box.setWindowIcon(QIcon(gui_constants.APP_ICO_PATH))
 		msg_box.setText('Incompatible database!')
 		msg_box.setInformativeText("Do you want to upgrade to newest version?" +
-							 "Don't worry about your data. It'll remain the same.")
+							 "This might take a while. Don't start a new instance!")
 		msg_box.setIcon(QMessageBox.Critical)
 		msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
 		msg_box.setDefaultButton(QMessageBox.Yes)
 		if msg_box.exec() == QMessageBox.Yes:
+
 			import threading
 			db_p = db_constants.DB_PATH
 			threading.Thread(target=db.add_db_revisions,

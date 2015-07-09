@@ -56,6 +56,7 @@ For Mac & Linux see [INSTALL.md](INSTALL.md)
 - requests (pip) >= 2.6.0
 - BeautifulSoup 4 (pip)
 - watchdog (pip)
+- porc (pip)
 
 # Contributing
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Pewpews/happypanda?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
