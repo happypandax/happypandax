@@ -392,9 +392,9 @@ class GalleryModel(QAbstractTableModel):
 				reasons = gallery.invalidities()
 			else:
 				self._data.append(gallery)
+		self._data_count = len(self._data)
 		self.layoutChanged.emit()
 		self.ROWCOUNT_CHANGE.emit()
-		self._data_count = len(self._data)
 
 	def populate_data(self):
 		"Populates the model with data from database in a timely manner"
@@ -635,8 +635,6 @@ class CustomDelegate(QStyledItemDelegate):
 
 	def __init__(self, parent=None):
 		super().__init__()
-		self.W = gui_constants.THUMB_W_SIZE
-		self.H = gui_constants.THUMB_H_SIZE + gui_constants.GRIDBOX_LBL_H
 		QPixmapCache.setCacheLimit(gui_constants.THUMBNAIL_CACHE_SIZE[0]*
 							 gui_constants.THUMBNAIL_CACHE_SIZE[1])
 		self.popup_window = Popup(parent)
@@ -658,6 +656,11 @@ class CustomDelegate(QStyledItemDelegate):
 			self.artist_font.setPixelSize(self.font_size)
 		self.title_font_m = QFontMetrics(self.title_font)
 		self.artist_font_m = QFontMetrics(self.artist_font)
+		t_h = self.title_font_m.height()
+		a_h = self.artist_font_m.height()
+		self.text_label_h = a_h + t_h * 2
+		self.W = gui_constants.THUMB_W_SIZE
+		self.H = gui_constants.THUMB_H_SIZE + gui_constants.GRIDBOX_LBL_H#self.text_label_h #+ gui_constants.GRIDBOX_LBL_H
 		#self.popup_timer.timeout.connect(self.POPUP.emit)
 
 	def key(self, key):
@@ -711,6 +714,7 @@ class CustomDelegate(QStyledItemDelegate):
 			#painter.setPen(QPen(Qt.NoPen))
 			#option.rect = option.rect.adjusted(11, 10, 0, 0)
 			option.rect.setWidth(self.W)
+
 			option.rect.setHeight(self.H)
 			rec = option.rect.getRect()
 			x = rec[0]
@@ -803,46 +807,67 @@ class CustomDelegate(QStyledItemDelegate):
 
 				if icon:
 					icon.paint(painter, QRect(x+w-30, y+gui_constants.THUMB_H_SIZE-28, 28, 28))
+			def draw_text_label(lbl_h):
+				#draw the label for text
+				painter.save()
+				painter.translate(x, y+gui_constants.THUMB_H_SIZE)
+				box_color = QBrush(QColor(label_color))#QColor(0,0,0,123))
+				painter.setBrush(box_color)
+				rect = QRect(0, 0, w, lbl_h) #x, y, width, height
+				painter.fillRect(rect, box_color)
+				painter.restore()
 
+			if option.state & QStyle.State_MouseOver or\
+			    option.state & QStyle.State_Selected:
+				title_layout = self.text_layout(title, w, self.title_font, self.title_font_m)
+				artist_layout = self.text_layout(artist, w, self.artist_font, self.artist_font_m)
+				t_h = title_layout.boundingRect().height()
+				a_h = artist_layout.boundingRect().height()
 
-			#draw the label for text
-			painter.save()
-			painter.translate(x, y+gui_constants.THUMB_H_SIZE)
-			box_color = QBrush(QColor(label_color))#QColor(0,0,0,123))
-			painter.setBrush(box_color)
-			rect = QRect(0, 0, w, 60) #x, y, width, height
-			painter.fillRect(rect, box_color)
-			painter.restore()
-			painter.save()
-			# draw text
-			alignment = QTextOption(Qt.AlignCenter)
-			alignment.setUseDesignMetrics(True)
-			title_rect = QRectF(0,0,w,15)
-			artist_rect = QRectF(0,15,w,15)
-			painter.translate(x, y+gui_constants.THUMB_H_SIZE)
-			if gui_constants.GALLERY_FONT_ELIDE:
-				painter.setFont(self.title_font)
-				painter.setPen(QColor(title_color))
-				painter.drawText(title_rect,
-						 self.title_font_m.elidedText(title, Qt.ElideRight, w-10),
-						 alignment)
+				if gui_constants.GALLERY_FONT_ELIDE:
+					draw_text_label(min(t_h+a_h+3, gui_constants.GRIDBOX_LBL_H))
+				else:
+					draw_text_label(gui_constants.GRIDBOX_LBL_H)
+
+				clipping = QRectF(x, y+gui_constants.THUMB_H_SIZE, w, gui_constants.GRIDBOX_LBL_H - 10)
+				title_layout.draw(painter, QPointF(x, y+gui_constants.THUMB_H_SIZE),
+					  clip=clipping)
+				artist_layout.draw(painter, QPointF(x, y+gui_constants.THUMB_H_SIZE+t_h),
+					   clip=clipping)
+				#painter.fillRect(option.rect, QColor)
+			else:
+				if gui_constants.GALLERY_FONT_ELIDE:
+					draw_text_label(self.text_label_h)
+				else:
+					draw_text_label(gui_constants.GRIDBOX_LBL_H)
+				# draw text
+				painter.save()
+				alignment = QTextOption(Qt.AlignCenter)
+				alignment.setUseDesignMetrics(True)
+				title_rect = QRectF(0,0,w, self.title_font_m.height())
+				artist_rect = QRectF(0,self.artist_font_m.height(),w,
+						 self.artist_font_m.height())
+				painter.translate(x, y+gui_constants.THUMB_H_SIZE)
+				if gui_constants.GALLERY_FONT_ELIDE:
+					painter.setFont(self.title_font)
+					painter.setPen(QColor(title_color))
+					painter.drawText(title_rect,
+							 self.title_font_m.elidedText(title, Qt.ElideRight, w-10),
+							 alignment)
 				
-				painter.setPen(QColor(artist_color))
-				painter.setFont(self.artist_font)
-				alignment.setWrapMode(QTextOption.NoWrap)
-				painter.drawText(artist_rect,
-							self.title_font_m.elidedText(artist, Qt.ElideRight, w-10),
-							alignment)
-			else:
-				text_area.setDefaultFont(QFont(self.font_name))
-				text_area.drawContents(painter)
-			##painter.resetTransform()
-			painter.restore()
-			
-			if option.state & QStyle.State_MouseOver:
-				painter.fillRect(option.rect, QColor(225,225,225,90)) #70
-			else:
+					painter.setPen(QColor(artist_color))
+					painter.setFont(self.artist_font)
+					alignment.setWrapMode(QTextOption.NoWrap)
+					painter.drawText(artist_rect,
+								self.title_font_m.elidedText(artist, Qt.ElideRight, w-10),
+								alignment)
+				else:
+					text_area.setDefaultFont(QFont(self.font_name))
+					text_area.drawContents(painter)
+				##painter.resetTransform()
+				painter.restore()
 				self.popup_window.hide()
+
 			if option.state & QStyle.State_Selected:
 				painter.fillRect(option.rect, QColor(164,164,164,120))
 
@@ -850,6 +875,28 @@ class CustomDelegate(QStyledItemDelegate):
 			#	painter.setPen(QPen(option.palette.highlightedText().color()))
 		else:
 			super().paint(painter, option, index)
+
+	def text_layout(self, text, width, font, font_metrics):
+		"Lays out wrapped text"
+		text_option = QTextOption(Qt.AlignCenter)
+		text_option.setUseDesignMetrics(True)
+		text_option.setWrapMode(QTextOption.WordWrap)
+		layout = QTextLayout(text, font)
+		layout.setTextOption(text_option)
+		leading = font_metrics.leading()
+		height = 0
+		layout.setCacheEnabled(True)
+		layout.beginLayout()
+		while True:
+			line = layout.createLine()
+			if not line.isValid():
+				break
+			line.setLineWidth(width)
+			height += leading
+			line.setPosition(QPointF(0, height))
+			height += line.height()
+		layout.endLayout()
+		return layout
 
 	def sizeHint(self, StyleOptionViewItem, QModelIndex):
 		return QSize(self.W, self.H)
