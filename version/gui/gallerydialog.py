@@ -9,7 +9,7 @@ import queue, os, threading, random, logging, time
 
 from . import gui_constants
 from .misc import return_tag_completer_TextEdit
-from ..utils import title_parser, tag_to_dict, tag_to_string, FILE_FILTER
+from .. import utils
 from ..database import gallerydb, fetch
 
 log = logging.getLogger(__name__)
@@ -184,7 +184,7 @@ class GalleryDialog(QWidget):
 			elif gallery.language.lower() in "japanese":
 				self.lang_box.setCurrentIndex(1)
 
-		self.tags_edit.setText(tag_to_string(gallery.tags))
+		self.tags_edit.setText(utils.tag_to_string(gallery.tags))
 
 		t_index = self.type_box.findText(gallery.type)
 		try:
@@ -235,7 +235,7 @@ class GalleryDialog(QWidget):
 		"""
 		if mode == 'a':
 			name = QFileDialog.getOpenFileName(self, 'Choose archive',
-											  filter=FILE_FILTER)
+											  filter=utils.FILE_FILTER)
 			name = name[0]
 		elif mode == 'f':
 			name = QFileDialog.getExistingDirectory(self, 'Choose folder')
@@ -245,7 +245,7 @@ class GalleryDialog(QWidget):
 			else:
 				return None
 		head, tail = os.path.split(name)
-		parsed = title_parser(tail)
+		parsed = utils.title_parser(tail)
 		self.title_edit.setText(parsed['title'])
 		self.author_edit.setText(parsed['artist'])
 		self.path_lbl.setText(name)
@@ -302,7 +302,7 @@ class GalleryDialog(QWidget):
 			log_d('Adding gallery lang')
 			new_gallery.status = self.status_box.currentText()
 			log_d('Adding gallery status')
-			new_gallery.tags = tag_to_dict(self.tags_edit.toPlainText())
+			new_gallery.tags = utils.tag_to_dict(self.tags_edit.toPlainText())
 			log_d('Adding gallery: tagging to dict')
 			qpub_d = self.pub_edit.date().toString("ddMMyyyy")
 			dpub_d = datetime.strptime(qpub_d, "%d%m%Y").date()
@@ -347,7 +347,7 @@ class GalleryDialog(QWidget):
 			gallery_object.last_update = time.asctime(time.gmtime(max(times)))
 			log_d('Found last update')
 		except NotADirectoryError:
-			if path[-4:] in ARCHIVE_FILES:
+			if path[-4:] in utils.ARCHIVE_FILES:
 				log_d('Found an archive')
 				#TODO: add support for folders in archive
 				gallery_object.chapters[0] = path
@@ -425,7 +425,7 @@ class GalleryDialog(QWidget):
 		assert isinstance(metadata, list) or isinstance(metadata, dict)
 		if gui_constants.FETCH_METADATA_API:
 			for gallery in metadata:
-				parsed = title_parser(gallery['title'])
+				parsed = utils.title_parser(gallery['title'])
 				self.title_edit.setText(parsed['title'])
 				self.author_edit.setText(parsed['artist'])
 				tags = ""
@@ -455,7 +455,7 @@ class GalleryDialog(QWidget):
 				except:
 					self.type_box.setCurrentIndex(0)
 		else:
-			current_tags = tag_to_dict(self.tags_edit.toPlainText(),
+			current_tags = utils.tag_to_dict(self.tags_edit.toPlainText(),
 									ns_capitalize=False)
 			for ns in metadata['tags']:
 				if ns in current_tags:
@@ -465,7 +465,7 @@ class GalleryDialog(QWidget):
 							ns_tags.append(tag)
 				else:
 					current_tags[ns] = metadata['tags'][ns]
-			current_tags_string = tag_to_string(current_tags)
+			current_tags_string = utils.tag_to_string(current_tags)
 			self.tags_edit.setText(current_tags_string)
 
 	def link_set(self):
@@ -495,7 +495,7 @@ class GalleryDialog(QWidget):
 			new_gallery.type = self.type_box.currentText()
 			new_gallery.language = self.lang_box.currentText()
 			new_gallery.status = self.status_box.currentText()
-			new_gallery.tags = tag_to_dict(self.tags_edit.toPlainText())
+			new_gallery.tags = utils.tag_to_dict(self.tags_edit.toPlainText())
 			qpub_d = self.pub_edit.date().toString("ddMMyyyy")
 			dpub_d = datetime.strptime(qpub_d, "%d%m%Y").date()
 			new_gallery.pub_date = dpub_d

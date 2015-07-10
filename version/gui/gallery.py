@@ -16,7 +16,7 @@ from PyQt5.QtCore import (Qt, QAbstractListModel, QModelIndex, QVariant,
 						  QSize, QRect, QEvent, pyqtSignal, QThread,
 						  QTimer, QPointF, QSortFilterProxyModel,
 						  QAbstractTableModel, QItemSelectionModel,
-						  QPoint, QRectF)
+						  QPoint, QRectF, QDate)
 from PyQt5.QtGui import (QPixmap, QBrush, QColor, QPainter, 
 						 QPen, QTextDocument,
 						 QMouseEvent, QHelpEvent,
@@ -449,6 +449,8 @@ class GalleryModel(QAbstractTableModel):
 			elif current_column == self._LINK:
 				return current_gallery.link
 
+		# TODO: name all these roles and put them in gui_constants...
+
 		if role == Qt.DisplayRole:
 			return column_checker()
 		# for artist searching
@@ -519,6 +521,11 @@ class GalleryModel(QAbstractTableModel):
 		if role == Qt.UserRole+3:
 			return current_gallery.fav
 
+		if role == Qt.UserRole+4:
+			date_added = "{}".format(current_gallery.date_added)
+			qdate_added = QDate.fromString(date_added, "yyyy-MM-dd")
+			return qdate_added
+
 
 		return None
 
@@ -570,7 +577,6 @@ class GalleryModel(QAbstractTableModel):
 		for gallery in list_of_gallery:
 			threading.Thread(target=gallerydb.GalleryDB.add_gallery_return, args=(gallery,)).start()
 			gallery.profile = PROFILE_TO_MODEL.get()
-			gallery.validate()
 			self._data.insert(position, gallery)
 			self._data_count += 1
 		log_d('Add rows: Finished inserting')
@@ -584,7 +590,6 @@ class GalleryModel(QAbstractTableModel):
 		"Inserts new gallery data to the data list WITHOUT adding to DB"
 		self.beginInsertRows(QModelIndex(), position, position + rows - 1)
 		for pos, gallery in enumerate(list_of_gallery, 1):
-			gallery.validate()
 			self._data.append(gallery)
 			if data_count:
 				self._data_count += 1
@@ -1176,6 +1181,10 @@ class MangaView(QListView):
 			self.sort_model.setSortRole(Qt.UserRole+2)
 			self.sort_model.sort(0, Qt.AscendingOrder)
 
+		def sort_date_added():
+			self.sort_model.setSortRole(Qt.UserRole+4)
+			self.sort_model.sort(0, Qt.DescendingOrder)
+
 		def asc_desc():
 			if self.sort_model.sortOrder() == Qt.AscendingOrder:
 				self.sort_model.sort(0, Qt.DescendingOrder)
@@ -1236,7 +1245,8 @@ class MangaView(QListView):
 					 triggered = sort_title)
 			s_artist = QAction("Author", menu,
 					  triggered = sort_artist)
-			s_date = QAction("Date Added", menu)
+			s_date = QAction("Date Added", menu,
+					triggered = sort_date_added)
 			sort_menu.addAction(asc_desc)
 			sort_menu.addSeparator()
 			sort_menu.addAction(s_title)
@@ -1546,6 +1556,10 @@ class MangaTableView(QTableView):
 			self.sort_model.setSortRole(Qt.DisplayRole)
 			self.sort_model.sort(0, Qt.AscendingOrder)
 
+		def sort_date_added():
+			self.sort_model.setSortRole(Qt.UserRole+4)
+			self.sort_model.sort(0, Qt.DescendingOrder)
+
 		def sort_artist():
 			self.sort_model.setSortRole(Qt.UserRole+2)
 			self.sort_model.sort(0, Qt.AscendingOrder)
@@ -1609,7 +1623,8 @@ class MangaTableView(QTableView):
 					 triggered = sort_title)
 			s_artist = QAction("Author", menu,
 					  triggered = sort_artist)
-			s_date = QAction("Date Added", menu)
+			s_date = QAction("Date Added", menu,
+					triggered = sort_date_added)
 			sort_menu.addAction(asc_desc)
 			sort_menu.addSeparator()
 			sort_menu.addAction(s_title)

@@ -588,7 +588,8 @@ class ChapterDB:
 	@staticmethod
 	def get_chapter_id(series_id, chapter_number):
 		"Returns id of the chapter number"
-		assert isinstance(series_id, int) and isinstance(chapter_number, int), "Passed args must be of int"
+		assert isinstance(series_id, int) and isinstance(chapter_number, int),\
+			"Passed args must be of int not {} and {}".format(type(series_id), type(chapter_number))
 		executing = [["SELECT chapter_id FROM chapters WHERE series_id=? AND chapter_number=?",
 						(series_id, chapter_number,)]]
 		CommandQueue.put(executing)
