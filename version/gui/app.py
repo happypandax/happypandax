@@ -23,7 +23,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QListView,
 							 QSplitter, QMessageBox, QFileDialog,
 							 QDesktopWidget, QPushButton, QCompleter,
 							 QListWidget, QListWidgetItem, QToolTip,
-							 QProgressBar)
+							 QProgressBar, QToolButton)
 from . import (gui_constants, misc, gallery, file_misc, settingsdialog,
 			   gallerydialog)
 from ..database import fetch, gallerydb
@@ -314,7 +314,7 @@ Your database will not be touched without you being notified.""")
 
 	def init_toolbar(self):
 		self.toolbar = QToolBar()
-		self.toolbar.setFixedHeight(30)
+		self.toolbar.setFixedHeight(25)
 		self.toolbar.setWindowTitle("Show") # text for the contextmenu
 		#self.toolbar.setStyleSheet("QToolBar {border:0px}") # make it user defined?
 		self.toolbar.setMovable(False)
@@ -356,6 +356,18 @@ Your database will not be touched without you being notified.""")
 		gallery_menu.addAction(populate_action)
 		gallery_action.setMenu(gallery_menu)
 		self.toolbar.addAction(gallery_action)
+		self.toolbar.addSeparator()
+
+		misc_action = QToolButton()
+		misc_action.setText('Misc ')
+		misc_action_menu = QMenu()
+		misc_action.setMenu(misc_action_menu)
+		misc_action.setPopupMode(QToolButton.InstantPopup)
+		misc_action.setToolTip("Contains misc. features")
+		misc_action_random = QAction("Read a random gallery", misc_action_menu)
+		misc_action_random.triggered.connect(self.manga_list_view.open_random_gallery)
+		misc_action_menu.addAction(misc_action_random)
+		self.toolbar.addWidget(misc_action)
 
 		spacer_middle = QWidget() # aligns buttons to the right
 		spacer_middle.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -365,7 +377,7 @@ Your database will not be touched without you being notified.""")
 		self.grid_toggle_l_icon = QIcon(gui_constants.LIST_PATH)
 		self.grid_toggle = QAction(self.toolbar)
 		self.grid_toggle.setObjectName('gridtoggle')
-		self.grid_toggle.setIcon(self.grid_toggle_l_icon)
+		#self.grid_toggle.setIcon(self.grid_toggle_l_icon)
 		self.grid_toggle.triggered.connect(self.toggle_view)
 		self.toolbar.addAction(self.grid_toggle)
 
@@ -383,13 +395,13 @@ Your database will not be touched without you being notified.""")
 			self.search_bar.returnPressed.connect(lambda: self.search(self.search_bar.text()))
 		else:
 			self.search_bar.textChanged[str].connect(self.search)
-		self.search_bar.setPlaceholderText("Search guide located at About -> Search Guide")
+		self.search_bar.setPlaceholderText("Search title, artist, namespace & tags")
 		self.search_bar.setMinimumWidth(150)
 		self.search_bar.setMaximumWidth(500)
 		self.toolbar.addWidget(self.search_bar)
 		self.toolbar.addSeparator()
 		settings_icon = QIcon(gui_constants.SETTINGS_PATH)
-		settings_action = QAction(settings_icon, "Set&tings", self)
+		settings_action = QAction("Set&tings", self)
 		settings_action.triggered.connect(self.settings)
 		self.toolbar.addAction(settings_action)
 		
@@ -534,7 +546,7 @@ Your database will not be touched without you being notified.""")
 
 	def first_time(self):
 		def done():
-			self.manga_list_view.gallery_model.populate_data()
+			self.manga_list_view.gallery_model.init_data()
 			self.init_watchers()
 		if gui_constants.FIRST_TIME_LEVEL < 2:
 
@@ -543,7 +555,7 @@ Your database will not be touched without you being notified.""")
 					super().__init__(parent)
 					main_layout = QVBoxLayout()
 					info_lbl = QLabel('Hi there! Some big changes are about to occur!\n'+
-					   "Please wait.. This will take a while.")
+					   "Please wait.. This might take a while.")
 					info_lbl.setAlignment(Qt.AlignCenter)
 					main_layout.addWidget(info_lbl)
 					prog = QProgressBar(self)

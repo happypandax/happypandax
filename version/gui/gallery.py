@@ -30,7 +30,7 @@ from PyQt5.QtWidgets import (QListView, QFrame, QLabel,
 							 QHBoxLayout, QFormLayout, QDesktopWidget,
 							 QWidget, QHeaderView, QTableView, QApplication,
 							 QMessageBox)
-import threading, logging, os, math, functools
+import threading, logging, os, math, functools, random
 import re as regex
 
 from ..database import gallerydb
@@ -384,8 +384,20 @@ class GalleryModel(QAbstractTableModel):
 		self._LANGUAGE = gui_constants.LANGUAGE
 		self._LINK = gui_constants.LINK
 
-	def populate_data(self):
+	def init_data(self):
 		"Populates the model with data from database"
+		self._data = []
+		for gallery in gallerydb.GalleryDB.get_all_gallery():
+			if not gallery.valid:
+				reasons = gallery.invalidities()
+			else:
+				self._data.append(gallery)
+		self.layoutChanged.emit()
+		self.ROWCOUNT_CHANGE.emit()
+		self._data_count = len(self._data)
+
+	def populate_data(self):
+		"Populates the model with data from database in a timely manner"
 		self._data = []
 		t = 0
 		galleries = gallerydb.GalleryDB.get_all_gallery()
@@ -397,10 +409,6 @@ class GalleryModel(QAbstractTableModel):
 			else:
 				QTimer.singleShot(t, functools.partial(self.insertRows, [gallery], pos,
 										   data_count=False))
-				#self._data.append(gallery)
-		#self.layoutChanged.emit()
-		#self.ROWCOUNT_CHANGE.emit()
-		#self._data_count = len(self._data)
 
 	def status_b_msg(self, msg):
 		self.STATUSBAR_MSG.emit(msg)
@@ -981,6 +989,18 @@ class MangaView(QListView):
 			#self.model().replaceRows([gallery], index.row(), 1, index)
 			gallerydb.GalleryDB.fav_gallery_set(gallery.id, 1)
 			self.gallery_model.CUSTOM_STATUS_MSG.emit("Favorited")
+
+	def open_random_gallery(self):
+		g = random.randint(0, self.gallery_model._data_count-1)
+		indx = self.gallery_model.index(g, 1)
+		chap_numb = 0
+		if gui_constants.RANDOM_GALLERY_CHAPTERS:
+			gallery = indx.data(Qt.UserRole)
+			b = len(gallery.chapters)
+			if b > 1:
+				chap_numb = random.randint(0, b-1)
+
+		self.open_chapter(indx, chap_numb)
 
 	def open_chapter(self, index, chap_numb=0):
 		if isinstance(index, list):

@@ -73,6 +73,7 @@ MONITOR_PATHS = get('C:/Users/Autriche/Videos/HP Laserjet 5684/Doujin', 'General
 
 # GENERAL
 SCROLL_TO_NEW_GALLERIES = get(False, 'General', 'scroll to new galleries', bool)
+RANDOM_GALLERY_CHAPTERS = get(False, 'General', 'random gallery chapters', bool)
 
 # WEB
 SESSION_COOKIES_PATH = os.path.join(static_dir, 'session')
