@@ -55,7 +55,10 @@ class Fetch(QObject):
 		self.data = []
 		self._curr_gallery = '' # for debugging purposes
 		self._error = 'Unknown error' # for debugging purposes
-		self._use_ehen_api = gui_constants.FETCH_METADATA_API
+
+		# web
+		self._use_ehen_api = gui_constants.FETCH_EHEN_API
+		self.galleries = []
 
 	def local(self):
 		"""
@@ -144,6 +147,30 @@ class Fetch(QObject):
 		log_d('Created {} items'.format(len(self.data)))
 		self.FINISHED.emit(self.data)
 
+	def _append_custom_api(self, gallery):
+		"""
+		Appends the metadata to my custom api
+		"""
+		assert isinstance(gallery, Gallery)
+
+	def _get_metadata_api(self, gallery):
+		"""
+		Tries to retrieve metadata from my custom api, returns none if not found
+		"""
+		assert isinstance(gallery, Gallery)
+
+
+	def auto_web_metadata(self):
+		"""
+		Auto fetches metadata for the provided list of galleries.
+		Appends or replaces metadata with the new fetched metadata.
+		"""
+		if self.galleries:
+			new_galleries = []
+			if gui_constants.HASH_GALLERY_PAGES == 'all':
+				for gallery in self.galleries:
+					
+
 	def web_metadata(self):
 		"""Fetches gallery metadata from the web.
 		Website is determined from the url"""
@@ -175,8 +202,12 @@ class Fetch(QObject):
 				return None
 
 		def lock():
+			t = 0
 			while gui_constants.GLOBAL_EHEN_LOCK:
 				time.sleep(0.5)
+				t += 1
+				if t > 1000:
+					break;
 
 		new_url = http_checker(self.web_url)
 

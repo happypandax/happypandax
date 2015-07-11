@@ -1386,19 +1386,20 @@ class MangaTableView(QTableView):
 		self.setIconSize(QSize(0,0))
 		self.doubleClicked.connect(self.open_chapter)
 
-	def viewportEvent(self, event):
-		if event.type() == QEvent.ToolTip:
-			h_event = QHelpEvent(event)
-			index = self.indexAt(h_event.pos())
-			if index.isValid():
-				size_hint = self.itemDelegate(index).sizeHint(self.viewOptions(),
-												  index)
-				rect = QRect(0, 0, size_hint.width(), size_hint.height())
-				rect_visual = self.visualRect(index)
-				if rect.width() <= rect_visual.width():
-					QToolTip.hideText()
-					return True
-		return super().viewportEvent(event)
+	# display tooltip only for elided text
+	#def viewportEvent(self, event):
+	#	if event.type() == QEvent.ToolTip:
+	#		h_event = QHelpEvent(event)
+	#		index = self.indexAt(h_event.pos())
+	#		if index.isValid():
+	#			size_hint = self.itemDelegate(index).sizeHint(self.viewOptions(),
+	#											  index)
+	#			rect = QRect(0, 0, size_hint.width(), size_hint.height())
+	#			rect_visual = self.visualRect(index)
+	#			if rect.width() <= rect_visual.width():
+	#				QToolTip.hideText()
+	#				return True
+	#	return super().viewportEvent(event)
 
 	def remove_gallery(self, index_list):
 		msgbox = QMessageBox()

@@ -1,4 +1,4 @@
-"""
+﻿"""
 This file is part of Happypanda.
 Happypanda is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -52,11 +52,11 @@ config.read('settings.ini')
 def save():
 	config.save()
 
-def get(default, section, key=None, type=str):
+def get(default, section, key=None, type=str, subtype=None):
 	"""
 	Tries to find the given entries in config,
 	returning default if none is found. Default type
-	is str.
+	is str. Subtype will be used for when try_excepting fails
 	"""
 	value = default
 	try:
@@ -78,7 +78,13 @@ def get(default, section, key=None, type=str):
 			elif value.lower() == 'none':
 				value = None
 			else:
-				value = type(value)
+				if subtype:
+					try:
+						value = type(value)
+					except:
+						value = subtype(value)
+				else:
+					value = type(value)
 		except AttributeError:
 			pass
 		except:

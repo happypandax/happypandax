@@ -75,12 +75,17 @@ MONITOR_PATHS = get('C:/Users/Autriche/Videos/HP Laserjet 5684/Doujin', 'General
 SCROLL_TO_NEW_GALLERIES = get(False, 'General', 'scroll to new galleries', bool)
 RANDOM_GALLERY_CHAPTERS = get(False, 'General', 'random gallery chapters', bool)
 
+# HASH
+HASH_GALLERY_PAGES = get('all', 'General', 'hash gallery pages', int, str)
+
 # WEB
 SESSION_COOKIES_PATH = os.path.join(static_dir, 'session')
 GLOBAL_EHEN_TIME = get(5, 'Web', 'global ehen time offset', int)
 GLOBAL_EHEN_LOCK = False
-FETCH_METADATA_API = get(False, 'Web', 'fetch metadata api', bool)
+FETCH_METADATA_API = get(True, 'Web', 'fetch metadata api', bool)
+FETCH_EHEN_API = get(False, 'Web', 'fetch ehen api', bool)
 DEFAULT_EHEN_URL = get('http://g.e-hentai.org/', 'Web', 'default ehen url', str)
+REPLACE_METADATA = get(False, 'Web', 'replace metadata', bool)
 
 # External Viewer
 EXTERNAL_VIEWER_SUPPORT = {'honeyview':['Honeyview.exe']}

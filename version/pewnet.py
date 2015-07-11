@@ -17,6 +17,7 @@ import re as regex
 from bs4 import BeautifulSoup
 from datetime import datetime
 from .gui import gui_constants
+from PyQt5.QtCore import QObject, pyqtSignal
 
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -39,6 +40,11 @@ else:
 	with open(gui_constants.SESSION_COOKIES_PATH, 'x') as f:
 		pass
 
+class ErrorHandler(QObject):
+	error_dispatch = pyqtSignal(int, str)
+	def __init__(self):
+		super().__init__()
+
 class CommenHen:
 	"Contains common methods"
 	LOCK = threading.Lock()
@@ -46,6 +52,7 @@ class CommenHen:
 	TIME_RAND = gui_constants.GLOBAL_EHEN_TIME
 	QUEUE = []
 	LAST_USED = 0
+	error_handler = ErrorHandler()
 
 	@staticmethod
 	def hash_search(g_hash):
@@ -105,9 +112,11 @@ class CommenHen:
 		text = response.text
 		if 'image/gif' in content_type:
 			gui_constants.GLOBAL_EHEN_LOCK = True
+			self.error_handler.error_dispatch.emit('Provided exhentai credentials are incorrect!')
 			log_e('Provided exhentai credentials are incorrect!')
 		elif 'text/html' and 'Your IP address has been' in text:
 			gui_constants.GLOBAL_EHEN_LOCK = True
+			self.error_handler.error_dispatch.emit('You IP adress has been temp banned from g.e-/ex-hentai :(')
 			log_e('Your IP address has been temp banned from g.e- and ex-hentai')
 		elif 'text/html' in content_type and 'You are opening' in text:
 			time.sleep(random.randint(100,200))
@@ -151,6 +160,9 @@ class CommenHen:
 		assert isinstance(list_of_urls, list)
 		if len(list_of_urls) >= 25:
 			return None
+
+		if gui_constants.GLOBAL_EHEN_LOCK:
+			return
 
 		payload = {"method": "gdata",
 			 "gidlist": []
