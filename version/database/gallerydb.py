@@ -900,6 +900,7 @@ class HashDB:
 			imgs = os.listdir(chap_path)
 			# filter
 		except NotADirectoryError:
+			# HACK: Do not need to extract all.. can read bytes form acrhive!!!
 			zip = ArchiveFile(gallery.chapters[0])
 			chap_path = os.path.join(gui_constants.temp_dir, str(uuid.uuid4()))
 			zip.extract_all(chap_path)
@@ -997,7 +998,12 @@ class Gallery:
 
 	def gen_hashes(self):
 		"Generate hashes while inserting them into DB"
-		self.hashes = HashDB.gen_gallery_hashes(self)
+		hash = HashDB.gen_gallery_hashes(self)
+		if hash:
+			self.hashes = hash
+			return True
+		else:
+			return False
 
 	def validate(self):
 		"Validates gallery, returns status"

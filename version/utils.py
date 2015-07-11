@@ -82,8 +82,14 @@ class ArchiveFile():
 		# TODO: Check contents of archive before extracting
 		self.archive.extractall(path)
 
-	def open(self, file_to_open):
-		return self.archive.open(file_to_open).read()
+	def open(self, file_to_open, fp=False):
+		"""
+		Returns bytes. If fp set to true, returns file-like.
+		"""
+		if fp:
+			return self.archive.open(file_to_open)
+		else:
+			return self.archive.open(file_to_open).read()
 
 	def close(self):
 		self.archive.close()

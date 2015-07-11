@@ -14,7 +14,7 @@ along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 
 import os, time
 import re as regex
-import logging
+import logging, uuid, random
 
 from .gallerydb import Gallery, GalleryDB
 from ..gui import gui_constants
@@ -58,6 +58,7 @@ class Fetch(QObject):
 
 		# web
 		self._use_ehen_api = gui_constants.FETCH_EHEN_API
+		self._default_ehen_url = gui_constants.DEFAULT_EHEN_URL
 		self.galleries = []
 
 	def local(self):
@@ -151,14 +152,17 @@ class Fetch(QObject):
 		"""
 		Appends the metadata to my custom api
 		"""
-		assert isinstance(gallery, Gallery)
+		assert isinstance(gallery, (Gallery, list))
 
 	def _get_metadata_api(self, gallery):
 		"""
-		Tries to retrieve metadata from my custom api, returns none if not found
+		Tries to retrieve metadata from my custom api,
+		returns dict with keys 'success' and 'errors' with list of galleries as values
 		"""
-		assert isinstance(gallery, Gallery)
+		assert isinstance(gallery, (Gallery, list))
 
+	def _return_gallery_metadata(galleries):
+		assert isinstance(galleries, (Gallery, list))
 
 	def auto_web_metadata(self):
 		"""
@@ -166,10 +170,87 @@ class Fetch(QObject):
 		Appends or replaces metadata with the new fetched metadata.
 		"""
 		if self.galleries:
-			new_galleries = []
+			hashed_galleries = []
 			if gui_constants.HASH_GALLERY_PAGES == 'all':
 				for gallery in self.galleries:
-					
+					hash = None
+					if gui_constants.HASH_GALLERY_PAGES == 'all':
+						if not gallery.hashes:
+							if not gallery.gen_hashes():
+								continue
+						hash = gallery.hashes[random.randint(0, len(gallery.hashes)-1)]
+					elif gui_constants.HASH_GALLERY_PAGES == '1':
+						try:
+							chap_path = gallery.chapters[0]
+							imgs = os.listdir(chap_path)
+							# filter
+							img = [os.path.join(chap_path, x) for x in imgs\
+							    if x.endswith(tuple(utils.IMG_FILES))][len(imgs)//2]
+							with open(img, 'rb') as f:
+								hash = utils.generate_img_hash(f)
+						except NotADirectoryError:
+							zip = ArchiveFile(gallery.chapters[0])
+							img = [x for x in zip.namelist()\
+								if x.endswith(tuple(utils.IMG_FILES))][len(zip.namelist())//2]
+							hash = utils.generate_img_hash(zip.open(img, fp=True))
+						except FileNotFoundError:
+							continue
+					if not hash:
+						continue
+					gallery['hash'] = hash
+					hashed_galleries.append(gallery)
+
+			api_result = self._get_metadata_api(hashed_galleries)
+			if api_result['success']:
+				self._return_gallery_metadata(api_result(api_result['success']))
+
+			if api_result['error']:
+				error_galleries = api_result['error']
+				if self._use_ehen_api:
+					if 'exhentai' in self._default_ehen_url:
+						try:
+							exprops = settings.ExProperties()
+							if exprops.ipb_id and exprops.ipb_pass:
+								hen = pewnet.ExHen(exprops.ipb_id, exprops.ipb_pass)
+								valid_url = 'exhen'
+							else:
+								raise ValueError
+						except ValueError:
+							hen = pewnet.EHen()
+							valid_url = 'ehen'
+					else:
+						hen = pewnet.EHen()
+						valid_url = 'ehen'
+
+					ready_galleries = []
+					for gallery in error_galleries:
+						if gallery.link:
+							check = self.website_checker(gallery.link)
+							if check == valid_url:
+								continue
+						url = hen.hash_search(gallery.hash)
+						if not url:
+							log_e('Could not find url for {}'.format(gallery.title.encode()))
+							continue
+						gallery.temp_url = url
+						ready_galleries.append(gallery)
+
+					if ready_galleries:
+						pass
+
+
+	def website_checker(self, url):
+		if not url:
+			return None
+
+		if 'g.e-hentai.org' in url:
+			return 'ehen'
+		elif 'exhentai.org' in url:
+			return 'exhen'
+		else:
+			log_e('Invalid URL')
+			return None
+
 
 	def web_metadata(self):
 		"""Fetches gallery metadata from the web.
@@ -192,15 +273,6 @@ class Fetch(QObject):
 				n_url = 'http://' + url
 				return n_url
 
-		def website_checker(url):
-			if 'g.e-hentai.org' in url:
-				return 'ehen'
-			elif 'exhentai.org' in url:
-				return 'exhen'
-			else:
-				log_e('Invalid URL')
-				return None
-
 		def lock():
 			t = 0
 			while gui_constants.GLOBAL_EHEN_LOCK:
@@ -211,7 +283,7 @@ class Fetch(QObject):
 
 		new_url = http_checker(self.web_url)
 
-		if website_checker(new_url) == 'exhen':
+		if self.website_checker(new_url) == 'exhen':
 			self.WEB_PROGRESS.emit()
 			exprops = settings.ExProperties()
 			if not exprops.ipb_id or not exprops.ipb_pass:
@@ -225,7 +297,7 @@ class Fetch(QObject):
 			else:
 				r_metadata(exhen.eh_gallery_parser(new_url))
 			exhen.end_lock()
-		elif website_checker(new_url) == 'ehen':
+		elif self.website_checker(new_url) == 'ehen':
 			self.WEB_PROGRESS.emit()
 			lock()
 			ehen = pewnet.EHen()

@@ -40,11 +40,6 @@ else:
 	with open(gui_constants.SESSION_COOKIES_PATH, 'x') as f:
 		pass
 
-class ErrorHandler(QObject):
-	error_dispatch = pyqtSignal(int, str)
-	def __init__(self):
-		super().__init__()
-
 class CommenHen:
 	"Contains common methods"
 	LOCK = threading.Lock()
@@ -60,7 +55,7 @@ class CommenHen:
 		Searches ex or g.e for a gallery with the hash value
 		Return list with titles of galleries found.
 		"""
-		pass
+		raise NotImplementedError
 
 	def begin_lock(self):
 		self.LOCK.acquire()
@@ -87,11 +82,11 @@ class CommenHen:
 		if len(self.QUEUE) < 1:
 			return None
 
-		if gui_constants.FETCH_METADATA_API:
+		if gui_constants.FETCH_EHEN_API:
 			if len(self.QUEUE > 25):
-				self.get_metadata(self.QUEUE[:25])
+				data = self.get_metadata(self.QUEUE[:25])
 			else:
-				self.get_metadata(self.QUEUE)
+				data = self.get_metadata(self.QUEUE)
 
 		self.QUEUE.clear()
 
@@ -112,11 +107,9 @@ class CommenHen:
 		text = response.text
 		if 'image/gif' in content_type:
 			gui_constants.GLOBAL_EHEN_LOCK = True
-			self.error_handler.error_dispatch.emit('Provided exhentai credentials are incorrect!')
 			log_e('Provided exhentai credentials are incorrect!')
 		elif 'text/html' and 'Your IP address has been' in text:
 			gui_constants.GLOBAL_EHEN_LOCK = True
-			self.error_handler.error_dispatch.emit('You IP adress has been temp banned from g.e-/ex-hentai :(')
 			log_e('Your IP address has been temp banned from g.e- and ex-hentai')
 		elif 'text/html' in content_type and 'You are opening' in text:
 			time.sleep(random.randint(100,200))
