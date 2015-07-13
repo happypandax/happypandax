@@ -798,6 +798,10 @@ class CustomDelegate(QStyledItemDelegate):
 			# draw star if it's favorited
 			if gallery.fav == 1:
 				painter.drawPixmap(QPointF(x,y), QPixmap(gui_constants.STAR_PATH))
+			
+			# WARNING: CAUSE OF MEMORY LEAK!!
+			if gui_constants.REFRESH_GALLERY_ICONS:
+				pass
 
 			if gui_constants.DISPLAY_GALLERY_TYPE:
 				icon = misc.FileIcon.get_file_icon(gallery.path)

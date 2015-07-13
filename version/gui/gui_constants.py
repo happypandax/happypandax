@@ -106,6 +106,7 @@ POPUP_HEIGHT = get(220, 'Visual', 'popup.h', int)
 
 # Gallery
 HIGH_QUALITY_THUMBS = get(False, 'Visual', 'high quality thumbs', bool)
+REFRESH_GALLERY_ICONS = False
 USE_EXTERNAL_PROG_ICO = get(True, 'Visual', 'use external prog ico', bool)
 DISPLAY_GALLERY_TYPE = get(True, 'Visual', 'display gallery type', bool)
 GALLERY_FONT = (get('Segoe UI', 'Visual', 'gallery font family', str),
