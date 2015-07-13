@@ -155,6 +155,16 @@ class AppWindow(QMainWindow):
 		log_d('Window Create: OK')
 		#QTimer.singleShot(3000, self.check_update)
 
+	def get_all_metadata(self):
+		thread = QThread()
+		fetch_instance = fetch.Fetch()
+		fetch_instance.galleries = self.manga_list_view.gallery_model._data
+		fetch_instance.moveToThread(thread)
+		thread.started.connect(fetch_instance.auto_web_metadata)
+		fetch_instance.FINISHED.connect(lambda: fetch_instance.deleteLater)
+		fetch_instance.FINISHED.connect(lambda: thread.deleteLater)
+		thread.start()
+
 	def check_update(self, vs):
 		try:
 			if vs != gui_constants.vs:
@@ -361,6 +371,7 @@ Your database will not be touched without you being notified.""")
 		gallery_menu.addAction(populate_action)
 		gallery_menu.addSeparator()
 		metadata_action = QAction('Get metadata for all galleries', self)
+		metadata_action.triggered.connect(self.get_all_metadata)
 		gallery_menu.addAction(metadata_action)
 		self.toolbar.addWidget(gallery_action)
 		self.toolbar.addSeparator()

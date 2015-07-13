@@ -57,6 +57,8 @@ class Fetch(QObject):
 		self._error = 'Unknown error' # for debugging purposes
 
 		# web
+		self.api_url = gui_constants.API_URL
+		self.api_instance = pewnet.CustomAPI()
 		self._use_ehen_api = gui_constants.FETCH_EHEN_API
 		self._default_ehen_url = gui_constants.DEFAULT_EHEN_URL
 		self.galleries = []
@@ -150,9 +152,11 @@ class Fetch(QObject):
 
 	def _append_custom_api(self, gallery):
 		"""
-		Appends the metadata to my custom api
+		Appends the metadata to my custom api.
+		Receives a gallery, or a list of gallery and metadata dict tuple pairs
 		"""
 		assert isinstance(gallery, (Gallery, list))
+		pass
 
 	def _get_metadata_api(self, gallery):
 		"""
@@ -160,9 +164,18 @@ class Fetch(QObject):
 		returns dict with keys 'success' and 'errors' with list of galleries as values
 		"""
 		assert isinstance(gallery, (Gallery, list))
+		return {'success':None,'error':gallery}
+		result = {'success':[],
+			'error':[]}
+		if isinstance(gallery, Gallery):
+			pass
+		else:
+			pass
 
 	def _return_gallery_metadata(galleries):
+		"Emits galleries"
 		assert isinstance(galleries, (Gallery, list))
+		print('success')
 
 	def auto_web_metadata(self):
 		"""
@@ -170,74 +183,134 @@ class Fetch(QObject):
 		Appends or replaces metadata with the new fetched metadata.
 		"""
 		if self.galleries:
+			print('something')
 			hashed_galleries = []
-			if gui_constants.HASH_GALLERY_PAGES == 'all':
-				for gallery in self.galleries:
-					hash = None
-					if gui_constants.HASH_GALLERY_PAGES == 'all':
-						if not gallery.hashes:
-							if not gallery.gen_hashes():
-								continue
-						hash = gallery.hashes[random.randint(0, len(gallery.hashes)-1)]
-					elif gui_constants.HASH_GALLERY_PAGES == '1':
-						try:
-							chap_path = gallery.chapters[0]
-							imgs = os.listdir(chap_path)
-							# filter
-							img = [os.path.join(chap_path, x) for x in imgs\
-							    if x.endswith(tuple(utils.IMG_FILES))][len(imgs)//2]
-							with open(img, 'rb') as f:
-								hash = utils.generate_img_hash(f)
-						except NotADirectoryError:
-							zip = ArchiveFile(gallery.chapters[0])
-							img = [x for x in zip.namelist()\
-								if x.endswith(tuple(utils.IMG_FILES))][len(zip.namelist())//2]
-							hash = utils.generate_img_hash(zip.open(img, fp=True))
-						except FileNotFoundError:
+			hashes = []
+			for gallery in self.galleries:
+				hash = None
+				if gui_constants.HASH_GALLERY_PAGES == 'all':
+					if not gallery.hashes:
+						if not gallery.gen_hashes():
 							continue
-					if not hash:
+					hash = gallery.hashes[random.randint(0, len(gallery.hashes)-1)]
+				elif gui_constants.HASH_GALLERY_PAGES == '1':
+					try:
+						chap_path = gallery.chapters[0]
+						imgs = os.listdir(chap_path)
+						# filter
+						img = [os.path.join(chap_path, x) for x in imgs\
+							if x.endswith(tuple(utils.IMG_FILES))][len(imgs)//2]
+						with open(img, 'rb') as f:
+							hash = utils.generate_img_hash(f)
+					except NotADirectoryError:
+						zip = ArchiveFile(gallery.chapters[0])
+						img = [x for x in zip.namelist()\
+							if x.endswith(tuple(utils.IMG_FILES))][len(zip.namelist())//2]
+						hash = utils.generate_img_hash(zip.open(img, fp=True))
+					except FileNotFoundError:
 						continue
-					gallery['hash'] = hash
-					hashed_galleries.append(gallery)
+				if not hash:
+					print('not hash continuing')
+					continue
+				gallery.hash = hash
+				print(hash)
+				hashed_galleries.append(gallery)
 
 			api_result = self._get_metadata_api(hashed_galleries)
 			if api_result['success']:
 				self._return_gallery_metadata(api_result(api_result['success']))
 
 			if api_result['error']:
+				print('api errored')
 				error_galleries = api_result['error']
-				if self._use_ehen_api:
-					if 'exhentai' in self._default_ehen_url:
-						try:
-							exprops = settings.ExProperties()
-							if exprops.ipb_id and exprops.ipb_pass:
-								hen = pewnet.ExHen(exprops.ipb_id, exprops.ipb_pass)
-								valid_url = 'exhen'
-							else:
-								raise ValueError
-						except ValueError:
-							hen = pewnet.EHen()
-							valid_url = 'ehen'
-					else:
+				if 'exhentai' in self._default_ehen_url:
+					try:
+						exprops = settings.ExProperties()
+						if exprops.ipb_id and exprops.ipb_pass:
+							hen = pewnet.ExHen(exprops.ipb_id, exprops.ipb_pass)
+							valid_url = 'exhen'
+						else:
+							raise ValueError
+					except ValueError:
 						hen = pewnet.EHen()
 						valid_url = 'ehen'
+				else:
+					hen = pewnet.EHen()
+					valid_url = 'ehen'
 
-					ready_galleries = []
-					for gallery in error_galleries:
-						if gallery.link:
-							check = self.website_checker(gallery.link)
-							if check == valid_url:
-								continue
-						url = hen.hash_search(gallery.hash)
-						if not url:
-							log_e('Could not find url for {}'.format(gallery.title.encode()))
+				gallery_hashes = []
+				for gallery in error_galleries:
+					if gallery.link:
+						check = self.website_checker(gallery.link)
+						if check == valid_url:
 							continue
-						gallery.temp_url = url
-						ready_galleries.append(gallery)
+						else:
+							log_i('Skipping because of predefined non ex/g.e-hentai url: {}'.
+			format(gallery.title.encode()))
+							continue
+					gallery_hashes.append(gallery.hash)
 
-					if ready_galleries:
+				# dict -> hash:[list of title,url tuples] or None
+				print('finding urls')
+				urls = hen.eh_hash_search(gallery_hashes)
+				ready_galleries = []
+				for gallery in checked_galleries:
+					if not gallery.hash in urls:
+						print('did not find url')
+						continue
+					title_url_list = urls[gallery.hash]
+					if gui_constants.ALWAYS_CHOOSE_FIRST_HIT:
+						title = title_url_list[0][0]
+						url = title_url_list[0][1]
+					else:
+						# TODO: make user choose which gallery..
 						pass
+					gallery.temp_url = url
+					ready_galleries.append(gallery)
 
+				final_galleries = []
+				api_galleries = []
+				if ready_galleries:
+					print("Fetching metadata")
+					for gallery in ready_galleries:
+						print('next gallery')
+						if not self._use_ehen_api:
+							metadata = hen.eh_gallery_parser(gallery.url)
+							if not metadata:
+								log_e('No metadata found for gallery: {}'.format(gallery.title.encode()))
+								continue
+							api_galleries.append((gallery,metadata))
+							if gui_constants.REPLACE_METADATA:
+								gallery.type = metadata['type']
+								gallery.language = metadata['language']
+								gallery.pub_date = metadata['published']
+								gallery.tags = metadata['tags']
+							else:
+								if not gallery.type:
+									gallery.type = metadata['type']
+								if not gallery.language:
+									gallery.language = metadata['language']
+								if not gallery.pub_date:
+									gallery.pub_date = metadata['published']
+								if not gallery.tags:
+									gallery.tags = metadata['tags']
+								else:
+									for ns in metadata['tags']:
+										if ns in gallery.tags:
+											for tag in metadata['tags'][ns]:
+												if not tag in gallery.tags[ns]:
+													gallery.tags[ns].append(tag)
+										else:
+											gallery.tags[ns] = metadata['tags'][ns]
+						else:
+							raise NotImplementedError
+				if api_galleries:
+					self._append_custom_api(api_galleries)
+				if final_galleries:
+					print('everything went well with {} galleries'.format(len(final_galleries)))
+					_return_gallery_metadata(final_galleries)
+		print('Autometadata Done!')
+		self.FINISHED.emit(True)
 
 	def website_checker(self, url):
 		if not url:

@@ -40,14 +40,41 @@ else:
 	with open(gui_constants.SESSION_COOKIES_PATH, 'x') as f:
 		pass
 
+class CustomAPI:
+	API_URL = gui_constants.API_URL
+	API_V = 'v0'
+
+	def get_metadata(self, hashes):
+		"""
+		Recieves a string or list of hashes,
+		return dict with hash:
+		"""
+		raise NotImplementedError
+		assert isinstance(hashes, (str, list))
+		r = requests.post(self.API_URL+self.API_V+'/gallery', json={'hash':hashes})
+		try:
+			r.raise_for_status()
+		except:
+			log_e('Could not fetch metadata from custom API: {}'.format(r.json()['error']))
+			return None
+		data = r.json()
+		for gallery in data['galleries']:
+			if 'error' in gallery:
+				log_e('Custom API: an error occured: {}'.format(gallery['error']))
+				continue
+
+	def append_metadata(self, galleries):
+		return NotImplementedError
+			
+
+
 class CommenHen:
 	"Contains common methods"
 	LOCK = threading.Lock()
 	SESSION = web_session
 	TIME_RAND = gui_constants.GLOBAL_EHEN_TIME
 	QUEUE = []
-	LAST_USED = 0
-	error_handler = ErrorHandler()
+	LAST_USED = time.time()
 
 	@staticmethod
 	def hash_search(g_hash):
@@ -58,12 +85,15 @@ class CommenHen:
 		raise NotImplementedError
 
 	def begin_lock(self):
+		print('locked')
 		self.LOCK.acquire()
-		while int(time.time() - LAST_USED) < 5:
-			t = random.randint(1, self.TIME_RAND)
-			time.sleep(t*1000)
+		while int(time.time() - self.LAST_USED) < 5:
+			print('sleeping')
+			t = random.randint(6, self.TIME_RAND)
+			time.sleep(t)
 	
 	def end_lock(self):
+		print('unlocked')
 		self.LAST_USED = time.time()
 		self.LOCK.release()
 
@@ -192,9 +222,9 @@ class CommenHen:
 	def eh_hash_search(self, hash_string):
 		"""
 		Searches ehentai for the provided string or list of hashes,
-		returns a dict with hash:[list of title:url] of hits found or None if no hits are found.
+		returns a dict with hash:[list of title,url tuples] of hits found or None if no hits are found.
 		"""
-		assert isinstance(hash_string, str) or isinstance(hash_search, list)
+		assert isinstance(hash_string, (str, list))
 		if isinstance(hash_string, str):
 			hash_string = [hash_string]
 
@@ -209,10 +239,13 @@ class CommenHen:
 		hash_url = gui_constants.DEFAULT_EHEN_URL + '?f_shash='
 		found_galleries = {}
 		for h in hash_string:
+			print('searching hash on ehentai')
 			self.begin_lock()
 			r = requests.get(hash_url+h)
 			self.end_lock()
+			self.handle_error(r)
 			if not no_hits_found_check(r.text):
+				log_e('No hits found with hash: {}'.format(h))
 				continue
 			soup = BeautifulSoup(r.text)
 			if soup.body:
@@ -227,7 +260,7 @@ class CommenHen:
 				for gallery in visible_galleries:
 					title = gallery.text
 					g_url = gallery.a.attrs['href']
-					found_galleries[h].append({title:g_url})
+					found_galleries[h].append((title,g_url))
 
 		if found_galleries:
 			return found_galleries
@@ -248,6 +281,7 @@ class CommenHen:
 			self.check_cookie(cookies)
 		r = self.SESSION.get(url, timeout=30)
 		self.end_lock()
+		self.handle_error(r)
 		html = r.text
 		if len(html)<5000:
 			log_w("Length of HTML response is only {} => Failure".format(len(html)))
@@ -289,6 +323,7 @@ class CommenHen:
 		namespaces = tag_table.find_all('tr')
 		for ns in namespaces:
 			namespace = ns.next_element.text.replace(':', '')
+			namespace = namespace.capitalize()
 			found_tags[namespace] = []
 			tags = ns.find(tags_in_ns).find_all('div')
 			for tag in tags:

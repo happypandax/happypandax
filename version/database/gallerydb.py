@@ -963,7 +963,7 @@ class Gallery:
 	language <- str
 	status <- "unknown", "completed" or "ongoing"
 	tags <- list of str
-	pub_date <- string: dd/mm/yy
+	pub_date <- date
 	date_added <- date, will be defaulted to today if not specified
 	last_read <- timestamp (e.g. time.time())
 	last_update <- last updated file
@@ -986,7 +986,7 @@ class Gallery:
 		self.language = None
 		self.status = None
 		self.tags = None
-		self.pub_date = datetime.date.today()
+		self.pub_date = None
 		self.date_added = datetime.date.today()
 		self.last_read = None
 		self.last_update = None

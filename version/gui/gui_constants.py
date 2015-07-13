@@ -79,13 +79,15 @@ RANDOM_GALLERY_CHAPTERS = get(False, 'General', 'random gallery chapters', bool)
 HASH_GALLERY_PAGES = get('all', 'General', 'hash gallery pages', int, str)
 
 # WEB
+API_URL = 'http://178.62.73.39/'
 SESSION_COOKIES_PATH = os.path.join(static_dir, 'session')
-GLOBAL_EHEN_TIME = get(5, 'Web', 'global ehen time offset', int)
+GLOBAL_EHEN_TIME = get(10, 'Web', 'global ehen time offset', int)
 GLOBAL_EHEN_LOCK = False
 FETCH_METADATA_API = get(True, 'Web', 'fetch metadata api', bool)
 FETCH_EHEN_API = get(False, 'Web', 'fetch ehen api', bool)
 DEFAULT_EHEN_URL = get('http://g.e-hentai.org/', 'Web', 'default ehen url', str)
 REPLACE_METADATA = get(False, 'Web', 'replace metadata', bool)
+ALWAYS_CHOOSE_FIRST_HIT = get(True, 'Web', 'always choose first hit', bool)
 
 # External Viewer
 EXTERNAL_VIEWER_SUPPORT = {'honeyview':['Honeyview.exe']}
