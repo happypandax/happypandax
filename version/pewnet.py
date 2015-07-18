@@ -28,17 +28,6 @@ log_c = log.critical
 
 web_session = requests.Session()
 web_session.headers["user-agent"] = "Mozilla/5.0 (Windows NT 6.3; rv:36.0) Gecko/20100101 Firefox/36.0"
-if os.path.isfile(gui_constants.SESSION_COOKIES_PATH):
-	with open(gui_constants.SESSION_COOKIES_PATH, 'rb') as f:
-		try:
-			cookies = requests.utils.cookiejar_from_dict(pickle.load(f))
-			if cookies:
-				web_session.cookies = cookies
-		except EOFError:
-			pass
-else:
-	with open(gui_constants.SESSION_COOKIES_PATH, 'x') as f:
-		pass
 
 class CustomAPI:
 	API_URL = gui_constants.API_URL
@@ -87,10 +76,13 @@ class CommenHen:
 	def begin_lock(self):
 		print('locked')
 		self.LOCK.acquire()
+		t1 = time.time()
 		while int(time.time() - self.LAST_USED) < 5:
 			print('sleeping')
 			t = random.randint(6, self.TIME_RAND)
 			time.sleep(t)
+		t2 = time.time() - t1
+		print("slept for", t2)
 	
 	def end_lock(self):
 		print('unlocked')
@@ -222,7 +214,7 @@ class CommenHen:
 	def eh_hash_search(self, hash_string):
 		"""
 		Searches ehentai for the provided string or list of hashes,
-		returns a dict with hash:[list of title,url tuples] of hits found or None if no hits are found.
+		returns a dict with hash:[list of title,url tuples] of hits found or emtpy dict if no hits are found.
 		"""
 		assert isinstance(hash_string, (str, list))
 		if isinstance(hash_string, str):
@@ -243,29 +235,35 @@ class CommenHen:
 			self.begin_lock()
 			r = requests.get(hash_url+h)
 			self.end_lock()
+			continue
 			self.handle_error(r)
 			if not no_hits_found_check(r.text):
 				log_e('No hits found with hash: {}'.format(h))
 				continue
 			soup = BeautifulSoup(r.text)
-			if soup.body:
-				found_galleries[h] = []
-				# list view or grid view
-				type = soup.find(attrs={'class':'itg'}).name
-				if type == 'div':
-					visible_galleries = soup.find_all('div', attrs={'class':'id1'})
-				elif type == 'table':
-					visible_galleries = soup.find_all('div', attrs={'class':'it5'})
+			try:
+				if soup.body:
+					found_galleries[h] = []
+					# list view or grid view
+					type = soup.find(attrs={'class':'itg'}).name
+					if type == 'div':
+						visible_galleries = soup.find_all('div', attrs={'class':'id1'})
+					elif type == 'table':
+						visible_galleries = soup.find_all('div', attrs={'class':'it5'})
 				
-				for gallery in visible_galleries:
-					title = gallery.text
-					g_url = gallery.a.attrs['href']
-					found_galleries[h].append((title,g_url))
+					for gallery in visible_galleries:
+						title = gallery.text
+						g_url = gallery.a.attrs['href']
+						found_galleries[h].append((title,g_url))
+			except AttributeError:
+				print('Unparseable text')
+				continue
 
 		if found_galleries:
 			return found_galleries
 		else:
-			return None
+			print('didnt find any galleries')
+			return {}
 
 	def eh_gallery_parser(self, url, cookies=None):
 		"""
@@ -281,6 +279,7 @@ class CommenHen:
 			self.check_cookie(cookies)
 		r = self.SESSION.get(url, timeout=30)
 		self.end_lock()
+		return
 		self.handle_error(r)
 		html = r.text
 		if len(html)<5000:

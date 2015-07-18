@@ -169,6 +169,11 @@ QToolTip {
     background-color: #464646;
     color: white;
 }
+
+NotificationOverlay > * {
+    color:white;
+}
+
 /*Window > QPlainTextEdit, QTextEdit, QGraphicsView {
 	background-color: #303030;
 	color: white;

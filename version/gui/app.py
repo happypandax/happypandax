@@ -27,7 +27,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QListView,
 from . import (gui_constants, misc, gallery, file_misc, settingsdialog,
 			   gallerydialog)
 from ..database import fetch, gallerydb
-from .. import settings, pewnet
+from .. import settings, pewnet, utils
 
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -41,7 +41,8 @@ class AppWindow(QMainWindow):
 	def __init__(self):
 		super().__init__()
 		self.initUI()
-		self.first_time()
+		self.start_up()
+		QTimer.singleShot(3000, self._check_update)
 
 	def init_watchers(self):
 
@@ -92,6 +93,95 @@ class AppWindow(QMainWindow):
 		self.watchers.gallery_handler.MOVED_SIGNAL.connect(moved)
 		self.watchers.gallery_handler.DELETED_SIGNAL.connect(deleted)
 
+		if gui_constants.LOOK_NEW_GALLERY_STARTUP:
+			db_data = self.manga_list_view.gallery_model._data
+			paths = []
+			for g in range(len(db_data)):
+				paths.append(os.path.normcase(db_data[g].path))
+
+			contents = []
+			case_path = [] # needed for tile and artist parsing... e.g to avoid lowercase
+			for m_path in gui_constants.MONITOR_PATHS:
+				for p in os.listdir(m_path):
+					abs_p = os.path.join(m_path, p)
+					if os.path.isdir(abs_p) or \
+						p.endswith(utils.ARCHIVE_FILES):
+						case_path.append(abs_p)
+						contents.append(os.path.normcase(abs_p))
+
+			paths = sorted(paths)
+			new_galleries = []
+			for c, x in enumerate(contents):
+				y = utils.b_search(paths, x)
+				if not y:
+					# (path, number for case_path)
+					new_galleries.append((x, c))
+
+			if new_galleries:
+				galleries = []
+				final_paths = []
+				for g in new_galleries:
+					gallery = gallerydb.Gallery()
+					gallery.profile = utils.get_gallery_img(g[0])
+					parser_dict = utils.title_parser(os.path.split(case_path[g[1]])[1])
+					gallery.title = parser_dict['title']
+					gallery.artist = parser_dict['artist']
+					galleries.append(gallery)
+					final_paths.append(case_path[g[1]])
+
+				text = "These new galleries were discovered! Do you want to add them?"\
+					if len(galleries) > 1 else "This new gallery was discovered! Do you want to add it?"
+				g_popup = file_misc.GalleryPopup((text, galleries), self)
+				buttons = g_popup.add_buttons('Add', 'Close')
+
+				def populate_n_close():
+					self.gallery_populate(final_paths)
+					g_popup.close()
+				buttons[0].clicked.connect(populate_n_close)
+				buttons[1].clicked.connect(g_popup.close)
+
+	def start_up(self):
+		def done():
+			self.manga_list_view.gallery_model.init_data()
+			self.init_watchers()
+		if gui_constants.FIRST_TIME_LEVEL < 2:
+
+			class FirstTime(file_misc.BasePopup):
+				def __init__(self, parent=None):
+					super().__init__(parent)
+					main_layout = QVBoxLayout()
+					info_lbl = QLabel('Hi there! Some big changes are about to occur!\n'+
+					   "Please wait.. This might take a while.")
+					info_lbl.setAlignment(Qt.AlignCenter)
+					main_layout.addWidget(info_lbl)
+					prog = QProgressBar(self)
+					prog.setMinimum(0)
+					prog.setMaximum(0)
+					prog.setTextVisible(False)
+					main_layout.addWidget(prog)
+					main_layout.addWidget(QLabel('Note: This popup will close itself when everything is ready'))
+					self.main_widget.setLayout(main_layout)
+
+			ft_widget = FirstTime(self)
+			log_i('Invoking first time level 2')
+			bridge = gallerydb.Bridge()
+			thread = QThread(self)
+			bridge.moveToThread(thread)
+			thread.started.connect(bridge.rebuild_galleries)
+			bridge.DONE.connect(ft_widget.close)
+			bridge.DONE.connect(lambda: self.setEnabled(True))
+			bridge.DONE.connect(lambda: settings.set(2, 'Application', 'first time level'))
+			bridge.DONE.connect(done)
+			bridge.DONE.connect(bridge.deleteLater)
+			bridge.DONE.connect(thread.deleteLater)
+			thread.start()
+			ft_widget.adjustSize()
+			ft_widget.show()
+			self.setEnabled(False)
+		else:
+			done()
+
+
 	def initUI(self):
 		self.center = QWidget()
 		self.display = QStackedLayout()
@@ -110,11 +200,14 @@ class AppWindow(QMainWindow):
 		self.init_stat_bar()
 		log_d('Create statusbar: OK')
 
+
 		#self.display.addWidget(self.chapter_main)
 
 		self.setCentralWidget(self.center)
 		self.setWindowTitle("Happypanda")
 		self.setWindowIcon(QIcon(gui_constants.APP_ICO_PATH))
+
+
 		props = settings.win_read(self, 'AppWindow')
 		if props.resize:
 			x, y = props.resize
@@ -126,6 +219,15 @@ class AppWindow(QMainWindow):
 		self.show()
 		log_d('Show window: OK')
 
+		self.notification_bar = misc.NotificationOverlay(self)
+		p = self.toolbar.pos()
+		self.notification_bar.move(p.x(), p.y()+self.toolbar.height())
+		self.notification_bar.resize(self.width())
+		log_d('Create notificationbar: OK')
+
+		log_d('Window Create: OK')
+
+	def _check_update(self):
 		class upd_chk(QObject):
 			UPDATE_CHECK = pyqtSignal(str)
 			def __init__(self, **kwargs):
@@ -144,46 +246,36 @@ class AppWindow(QMainWindow):
 					log_d('Checking Update: FAIL')
 					pass
 
+		def check_update(vs):
+			if vs != gui_constants.vs:
+				if len(vs) < 10:
+					self.notification_bar.add_text("Version {} of Happypanda is".format(vs)+
+									   " available. Click here to update!", False)
+					self.notification_bar.clicked.connect(lambda: utils.open_web_link(
+						'https://github.com/Pewpews/happypanda/releases'))
+					self.notification_bar.set_clickable(True)
+				else:
+					self.notification_bar.add_text("An error occurred while checking for new version")
+
 		update_instance = upd_chk()
 		thread = QThread()
 		update_instance.moveToThread(thread)
-		update_instance.UPDATE_CHECK.connect(self.check_update)
+		update_instance.UPDATE_CHECK.connect(check_update)
 		thread.started.connect(update_instance.fetch_vs)
 		update_instance.UPDATE_CHECK.connect(lambda: update_instance.deleteLater)
 		update_instance.UPDATE_CHECK.connect(lambda: thread.deleteLater)
 		thread.start()
-		log_d('Window Create: OK')
-		#QTimer.singleShot(3000, self.check_update)
 
 	def get_all_metadata(self):
 		thread = QThread()
 		fetch_instance = fetch.Fetch()
-		fetch_instance.galleries = self.manga_list_view.gallery_model._data
+		fetch_instance.galleries = self.manga_list_view.gallery_model._data[:5]
 		fetch_instance.moveToThread(thread)
 		thread.started.connect(fetch_instance.auto_web_metadata)
 		fetch_instance.FINISHED.connect(lambda: fetch_instance.deleteLater)
 		fetch_instance.FINISHED.connect(lambda: thread.deleteLater)
 		thread.start()
 
-	def check_update(self, vs):
-		try:
-			if vs != gui_constants.vs:
-				msgbox = QMessageBox()
-				msgbox.setText("Update {} is available!".format(vs))
-				msgbox.setDetailedText(
-"""How to update:
-1. Get the newest release from:
-https://github.com/Pewpews/happypanda/releases
-
-2. Overwrite your files with the new files.
-
-Your database will not be touched without you being notified.""")
-				msgbox.setStandardButtons(QMessageBox.Ok)
-				msgbox.setDefaultButton(QMessageBox.Ok)
-				msgbox.setWindowIcon(QIcon(gui_constants.APP_ICO_PATH))
-				msgbox.exec()
-		except:
-			pass
 
 	#def style_tooltip(self):
 	#	palette = QToolTip.palette()
@@ -455,10 +547,11 @@ Your database will not be touched without you being notified.""")
 			self.gallery_populate(path, True)
 
 	def gallery_populate(self, path, validate=False):
+		print('triggered')
 		"Scans the given path for gallery to add into the DB"
 		if len(path) is not 0:
+			print('pass')
 			data_thread = QThread()
-			#loading_thread = QThread()
 			loading = misc.Loading(self)
 			if not loading.ON:
 				misc.Loading.ON = True
@@ -472,19 +565,25 @@ Your database will not be touched without you being notified.""")
 					if status:
 						if len(status) != 0:
 							def add_gallery(gallery_list):
+								def append_to_model(x):
+									self.manga_list_view.gallery_model.insertRows(x, None, len(x))
+
 								class A(QObject):
 									done = pyqtSignal()
 									prog = pyqtSignal(int)
 									def __init__(self, obj, parent=None):
 										super().__init__(parent)
 										self.obj = obj
+										self.galleries = []
 
 									def add_to_db(self):
 										p = 0
 										for x in self.obj:
-											gallerydb.GalleryDB.add_gallery(x)
+											g = gallerydb.GalleryDB.add_gallery_return(x)
+											self.galleries.append(x)
 											p += 1
 											self.prog.emit(p)
+										append_to_model(self.galleries)
 										self.done.emit()
 
 								loading.progress.setMaximum(len(gallery_list))
@@ -496,8 +595,6 @@ Your database will not be touched without you being notified.""")
 
 								def loading_hide():
 									loading.close()
-									self.manga_list_view.gallery_model.populate_data()
-									self.manga_list_view.refresh()
 									self.manga_list_view.gallery_model.ROWCOUNT_CHANGE.emit()
 
 								def del_later():
@@ -539,7 +636,7 @@ Your database will not be touched without you being notified.""")
 						loading.setText("<font color=red>An error occured. Check happypanda_log..</font>")
 						loading.progress.setStyleSheet("background-color:red;")
 						data_thread.quit
-						QTimer.singleShot(5000, loading.close)
+						QTimer.singleShot(10000, loading.close)
 
 				def fetch_deleteLater():
 					try:
@@ -565,46 +662,12 @@ Your database will not be touched without you being notified.""")
 				data_thread.start()
 				log_i('Populating DB from gallery folder')
 
-	def first_time(self):
-		def done():
-			self.manga_list_view.gallery_model.init_data()
-			self.init_watchers()
-		if gui_constants.FIRST_TIME_LEVEL < 2:
-
-			class FirstTime(file_misc.BasePopup):
-				def __init__(self, parent=None):
-					super().__init__(parent)
-					main_layout = QVBoxLayout()
-					info_lbl = QLabel('Hi there! Some big changes are about to occur!\n'+
-					   "Please wait.. This might take a while.")
-					info_lbl.setAlignment(Qt.AlignCenter)
-					main_layout.addWidget(info_lbl)
-					prog = QProgressBar(self)
-					prog.setMinimum(0)
-					prog.setMaximum(0)
-					prog.setTextVisible(False)
-					main_layout.addWidget(prog)
-					main_layout.addWidget(QLabel('Note: This popup will close itself when everything is ready'))
-					self.main_widget.setLayout(main_layout)
-
-			ft_widget = FirstTime(self)
-			log_d('Invoking first time level 2')
-			bridge = gallerydb.Bridge()
-			thread = QThread(self)
-			bridge.moveToThread(thread)
-			thread.started.connect(bridge.rebuild_galleries)
-			bridge.DONE.connect(ft_widget.close)
-			bridge.DONE.connect(lambda: self.setEnabled(True))
-			bridge.DONE.connect(lambda: settings.set(2, 'Application', 'first time level'))
-			bridge.DONE.connect(done)
-			bridge.DONE.connect(bridge.deleteLater)
-			bridge.DONE.connect(thread.deleteLater)
-			thread.start()
-			ft_widget.adjustSize()
-			ft_widget.show()
-			self.setEnabled(False)
-		else:
-			done()
+	def resizeEvent(self, event):
+		try:
+			self.notification_bar.resize(event.size().width())
+		except AttributeError:
+			pass
+		return super().resizeEvent(event)
 
 	def closeEvent(self, event):
 		# watchers
@@ -613,10 +676,6 @@ Your database will not be touched without you being notified.""")
 		# settings
 		settings.win_save(self, 'AppWindow')
 
-		# web session
-		with open(gui_constants.SESSION_COOKIES_PATH, 'wb') as f:
-			pickle.dump(requests.utils.dict_from_cookiejar(pewnet.web_session.cookies), f)
-		
 		# temp dir
 		try:
 			for root, dirs, files in os.walk('temp', topdown=False):

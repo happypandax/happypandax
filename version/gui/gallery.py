@@ -585,9 +585,10 @@ class GalleryModel(QAbstractTableModel):
 		self.ROWCOUNT_CHANGE.emit()
 		return True
 
-	def insertRows(self, list_of_gallery, position,
+	def insertRows(self, list_of_gallery, position=None,
 				rows=1, index = QModelIndex(), data_count=True):
 		"Inserts new gallery data to the data list WITHOUT adding to DB"
+		position = len(self._data) if not position else position
 		self.beginInsertRows(QModelIndex(), position, position + rows - 1)
 		for pos, gallery in enumerate(list_of_gallery, 1):
 			self._data.append(gallery)
@@ -800,22 +801,22 @@ class CustomDelegate(QStyledItemDelegate):
 				painter.drawPixmap(QPointF(x,y), QPixmap(gui_constants.STAR_PATH))
 			
 			# WARNING: CAUSE OF MEMORY LEAK!!
-			if gui_constants.REFRESH_GALLERY_ICONS:
-				pass
+			#if gui_constants.REFRESH_GALLERY_ICONS:
+			#	pass
 
-			if gui_constants.DISPLAY_GALLERY_TYPE:
-				icon = misc.FileIcon.get_file_icon(gallery.path)
-				if not icon.isNull():
-					icon.paint(painter, QRect(x+2, y+gui_constants.THUMB_H_SIZE-16, 16, 16))
+			#if gui_constants.DISPLAY_GALLERY_TYPE:
+			#	icon = misc.FileIcon.get_file_icon(gallery.path)
+			#	if not icon.isNull():
+			#		icon.paint(painter, QRect(x+2, y+gui_constants.THUMB_H_SIZE-16, 16, 16))
 
-			if gui_constants.USE_EXTERNAL_PROG_ICO:
-				if gui_constants.USE_EXTERNAL_VIEWER:
-					icon = misc.FileIcon.get_external_file_icon()
-				else:
-					icon = misc.FileIcon.get_default_file_icon()
+			#if gui_constants.USE_EXTERNAL_PROG_ICO:
+			#	if gui_constants.USE_EXTERNAL_VIEWER:
+			#		icon = misc.FileIcon.get_external_file_icon()
+			#	else:
+			#		icon = misc.FileIcon.get_default_file_icon()
 
-				if icon:
-					icon.paint(painter, QRect(x+w-30, y+gui_constants.THUMB_H_SIZE-28, 28, 28))
+			#	if icon:
+			#		icon.paint(painter, QRect(x+w-30, y+gui_constants.THUMB_H_SIZE-28, 28, 28))
 			def draw_text_label(lbl_h):
 				#draw the label for text
 				painter.save()

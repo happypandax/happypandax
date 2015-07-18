@@ -48,6 +48,81 @@ log_w = log.warning
 log_e = log.error
 log_c = log.critical
 
+class NotificationOverlay(QWidget):
+	"""
+	A notifaction bar
+	"""
+	clicked = pyqtSignal()
+	def __init__(self, parent=None):
+		super().__init__(parent)
+		self._main_layout = QHBoxLayout(self)
+		self._default_height = 20
+		self._lbl = QLabel()
+		self._main_layout.addWidget(self._lbl)
+		self._lbl.setAlignment(Qt.AlignCenter)
+		self.setAutoFillBackground(True)
+		self.setBackgroundRole(self.palette().Shadow)
+		self.setContentsMargins(-10,-10,-10,-10)
+		self._click = False
+
+	def mousePressEvent(self, event):
+		if self._click:
+			self.clicked.emit()
+		return super().mousePressEvent(event)
+
+	def set_clickable(self, d=True):
+		self._click = d
+
+	def resize(self, x, y=0):
+		return super().resize(x, self._default_height)
+
+	def add_text(self, text, autohide=True):
+		"""
+		Add new text to the bar, deleting the previous one
+		"""
+		try:
+			self._unset_clickable()
+		except TypeError:
+			pass
+		if not self.isVisible():
+			self.show()
+		self._lbl.setText(text)
+		if autohide:
+			QTimer.singleShot(10000, self.hide)
+
+	def _unset_clickable(self):
+		self.clicked.disconnect()
+
+class GalleryShowcaseWidget(QWidget):
+	"""
+	Pass a gallery or set a gallery via -> set_gallery
+	"""
+	def __init__(self, gallery=None, parent=None):
+		super().__init__(parent)
+		self.main_layout = QVBoxLayout(self)
+		self.profile = QLabel()
+		self.text = QLabel()
+		self.font_M = self.text.fontMetrics()
+		self.main_layout.addWidget(self.profile)
+		self.main_layout.addWidget(self.text)
+		self.h = 0
+		self.w = 0
+		if gallery:
+			self.h = 220
+			self.w = 143
+			self.set_gallery(gallery, (self.w, self.h))
+		self.resize(self.w, self.h)
+
+	def set_gallery(self, gallery, size=(143, 220)):
+		assert isinstance(size, (list, tuple))
+		self.w = size[0]
+		self.h = size[1]
+		self.profile.setPixmap(QPixmap(gallery.profile).scaled(self.w, self.h-20, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+		title = self.font_M.elidedText(gallery.title, Qt.ElideRight, self.w)
+		artist = self.font_M.elidedText(gallery.artist, Qt.ElideRight, self.w)
+		self.text.setText("{}\n{}".format(title, artist))
+		self.resize(self.w, self.h)
+
 class LoadingOverlay(QWidget):
 	
 	def __init__(self, parent=None):

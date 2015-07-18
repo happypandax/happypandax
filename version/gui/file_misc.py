@@ -3,7 +3,7 @@ from PyQt5.QtCore import Qt, QObject, pyqtSignal, QTimer
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout,
 							 QLabel, QFrame, QPushButton, QMessageBox,
-							 QFileDialog)
+							 QFileDialog, QScrollArea)
 from watchdog.events import FileSystemEventHandler, DirDeletedEvent
 from watchdog.observers import Observer
 from threading import Timer
@@ -52,6 +52,59 @@ class BasePopup(QWidget):
 		self.generic_buttons.addWidget(self.no_button)
 		self.setMaximumWidth(500)
 		self.resize(500,350)
+
+class GalleryPopup(BasePopup):
+	"""
+	Pass a tuple with text and a list of galleries
+	"""
+
+	def __init__(self, tup_gallery, parent = None,):
+		super().__init__(parent)
+		self.setMaximumWidth(16777215)
+		assert isinstance(tup_gallery, tuple), "Incorrect type received, expected tuple"
+		assert isinstance(tup_gallery[0], str) and isinstance(tup_gallery[1], list)
+		main_layout = QVBoxLayout()
+		# todo make it scroll
+		scroll_area = QScrollArea()
+		dummy = QWidget()
+		gallery_layout = misc.FlowLayout(dummy)
+		scroll_area.setWidgetResizable(True)
+		scroll_area.setMaximumHeight(400)
+		scroll_area.setMidLineWidth(620)
+		scroll_area.setBackgroundRole(scroll_area.palette().Shadow)
+		scroll_area.setFrameStyle(scroll_area.NoFrame)
+		scroll_area.setWidget(dummy)
+		text = tup_gallery[0]
+		galleries = tup_gallery[1]
+		main_layout.addWidget(scroll_area, 3)
+		for g in galleries:
+			gall_w = misc.GalleryShowcaseWidget(parent=self)
+			gall_w.set_gallery(g, (170//1.40, 170))
+			gallery_layout.addWidget(gall_w)
+
+		text_lbl =  QLabel(text)
+		text_lbl.setAlignment(Qt.AlignCenter)
+		main_layout.addWidget(text_lbl)
+		self.buttons_layout = QHBoxLayout()
+		self.buttons_layout.addWidget(misc.Spacer('h'), 3)
+		main_layout.addLayout(self.buttons_layout)
+		self.main_widget.setLayout(main_layout)
+		self.setMaximumHeight(500)
+		self.setMaximumWidth(620)
+		self.resize(620, 500)
+		self.show()
+
+	def add_buttons(self, *args):
+		"""
+		Pass names of buttons, from right to left.
+		Returns list of buttons in same order.
+		"""
+		b = []
+		for name in args:
+			button = QPushButton(name)
+			self.buttons_layout.addWidget(button)
+			b.append(button)
+		return b
 
 class ModifiedPopup(BasePopup):
 	def __init__(self, path, gallery_id, parent=None):

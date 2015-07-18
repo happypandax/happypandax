@@ -389,6 +389,7 @@ class GalleryDB:
 		if object.tags:
 			TagDB.add_tags(object)
 		ChapterDB.add_chapters(object)
+		return GalleryDB.get_gallery_by_id(object.id)
 
 	@staticmethod
 	def gallery_count():
@@ -887,7 +888,7 @@ class HashDB:
 		try:
 			for row in rows:
 				hashes.append(row['hash'])
-		except TypeError:
+		except IndexError:
 			return []
 		return hashes
 
@@ -985,7 +986,7 @@ class Gallery:
 		self.link = ""
 		self.language = None
 		self.status = None
-		self.tags = None
+		self.tags = {}
 		self.pub_date = None
 		self.date_added = datetime.date.today()
 		self.last_read = None
@@ -1011,9 +1012,9 @@ class Gallery:
 		validity = []
 		status = False
 
-		if not self.hashes:
-			HashDB.gen_gallery_hashes(self)
-			self.hashes = HashDB.get_gallery_hashes(self.id)
+		#if not self.hashes:
+		#	HashDB.gen_gallery_hashes(self)
+		#	self.hashes = HashDB.get_gallery_hashes(self.id)
 
 		if all(validity):
 			status = True

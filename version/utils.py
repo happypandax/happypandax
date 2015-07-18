@@ -24,9 +24,22 @@ log_w = log.warning
 log_e = log.error
 log_c = log.critical
 
-IMG_FILES =  ['jpg','bmp','png','gif']
-ARCHIVE_FILES = ['.zip', '.cbz']
+IMG_FILES =  ('jpg','bmp','png','gif')
+ARCHIVE_FILES = ('.zip', '.cbz')
 FILE_FILTER = '*.zip *.cbz'
+
+def b_search(data, key):
+	lo = 0
+	hi = len(data) - 1
+	while hi >= lo:
+		mid = lo + (hi - lo) // 2
+		if data[mid] < key:
+			lo = mid + 1
+		elif data[mid] > key:
+			hi = mid - 1
+		else:
+			return data[mid]
+	return None
 
 def generate_img_hash(src):
 	"""
@@ -36,6 +49,7 @@ def generate_img_hash(src):
 	chunk = 8129
 	sha1 = hashlib.sha1()
 	buffer = src.read(chunk)
+	log_d("Generating hash")
 	while len(buffer) > 0:
 		sha1.update(buffer)
 		buffer = src.read(chunk)

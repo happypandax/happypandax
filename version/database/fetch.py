@@ -239,19 +239,24 @@ class Fetch(QObject):
 					valid_url = 'ehen'
 
 				gallery_hashes = []
+				checked_pre_url_galleries = []
+				checked_galleries = []
 				for gallery in error_galleries:
 					if gallery.link:
 						check = self.website_checker(gallery.link)
 						if check == valid_url:
+							checked_pre_url_galleries.append(gallery)
 							continue
 						else:
 							log_i('Skipping because of predefined non ex/g.e-hentai url: {}'.
 			format(gallery.title.encode()))
 							continue
+					checked_galleries.append(gallery)
 					gallery_hashes.append(gallery.hash)
 
 				# dict -> hash:[list of title,url tuples] or None
 				print('finding urls')
+				hen.LAST_USED = time.time()
 				urls = hen.eh_hash_search(gallery_hashes)
 				ready_galleries = []
 				for gallery in checked_galleries:
@@ -268,6 +273,8 @@ class Fetch(QObject):
 					gallery.temp_url = url
 					ready_galleries.append(gallery)
 
+				if checked_pre_url_galleries:
+					ready_galleries += checked_pre_url_galleries
 				final_galleries = []
 				api_galleries = []
 				if ready_galleries:
