@@ -74,10 +74,10 @@ class Fetch(QObject):
 			gallery_l = self.series_path
 			mixed = True
 		if len(gallery_l) != 0: # if gallery path list is not empty
-			log_d('Gallery folder is not empty')
+			log_i('Gallery folder is not empty')
 			try:
 				self.DATA_COUNT.emit(len(gallery_l)) #tell model how many items are going to be added
-				log_d('Found {} items'.format(len(gallery_l)))
+				log_i('Found {} items'.format(len(gallery_l)))
 				progress = 0
 				for ser_path in gallery_l: # ser_path = gallery folder title
 					self._curr_gallery = ser_path
@@ -87,7 +87,7 @@ class Fetch(QObject):
 					else:
 						path = os.path.join(self.series_path, ser_path)
 					if not GalleryDB.check_exists(ser_path):
-						log_d('Creating gallery: {}'.format(ser_path.encode('utf-8', 'ignore')))
+						log_i('Creating gallery: {}'.format(ser_path.encode('utf-8', 'ignore')))
 						new_gallery = Gallery()
 						images_paths = []
 						try:
@@ -131,9 +131,9 @@ class Fetch(QObject):
 						new_gallery.chapters_size = len(new_gallery.chapters)
 
 						self.data.append(new_gallery)
-						log_d('Gallery successful created: {}'.format(ser_path.encode('utf-8', 'ignore')))
+						log_i('Gallery successful created: {}'.format(ser_path.encode('utf-8', 'ignore')))
 					else:
-						log_d('Gallery already exists: {}'.format(ser_path.encode('utf-8', 'ignore')))
+						log_i('Gallery already exists: {}'.format(ser_path.encode('utf-8', 'ignore')))
 
 					progress += 1 # update the progress bar
 					self.PROGRESS.emit(progress)
@@ -142,12 +142,12 @@ class Fetch(QObject):
 				self.FINISHED.emit(False)
 		else: # if gallery folder is empty
 			log_e('Local search error: Invalid directory')
-			log_d('Gallery folder is empty')
+			log_e('Gallery folder is empty')
 			self.FINISHED.emit(False)
 			# might want to include an error message
 		# everything went well
 		log_i('Local search: OK')
-		log_d('Created {} items'.format(len(self.data)))
+		log_i('Created {} items'.format(len(self.data)))
 		self.FINISHED.emit(self.data)
 
 	def _append_custom_api(self, gallery):

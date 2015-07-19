@@ -391,6 +391,8 @@ def delete_path(path):
 				shutil.rmtree(path)
 		except PermissionError:
 			error = 'PermissionError'
+		except FileNotFoundError:
+			pass
 
 		if error:
 			p = os.path.split(path)[1]

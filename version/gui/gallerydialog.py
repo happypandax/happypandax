@@ -1,7 +1,7 @@
 ﻿from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QDesktopWidget, QGroupBox,
 							 QHBoxLayout, QFormLayout, QLabel, QLineEdit,
 							 QPushButton, QProgressBar, QTextEdit, QComboBox,
-							 QDateEdit, QFileDialog, QMessageBox)
+							 QDateEdit, QFileDialog, QMessageBox, QScrollArea)
 from PyQt5.QtCore import pyqtSignal, Qt, QPoint, QDate, QThread, QTimer
 from datetime import datetime
 
@@ -34,7 +34,24 @@ class GalleryDialog(QWidget):
 	def __init__(self, parent=None, arg=None):
 		super().__init__(parent, Qt.Dialog)
 		log_d('Triggered Gallery Edit/Add Dialog')
+		m_l = QVBoxLayout()
 		self.main_layout = QVBoxLayout()
+		dummy = QWidget(self)
+		scroll_area = QScrollArea(self)
+		scroll_area.setWidgetResizable(True)
+		scroll_area.setFrameStyle(scroll_area.StyledPanel)
+		dummy.setLayout(self.main_layout)
+		scroll_area.setWidget(dummy)
+		m_l.addWidget(scroll_area, 3)
+
+		final_buttons = QHBoxLayout()
+		final_buttons.setAlignment(Qt.AlignRight)
+		m_l.addLayout(final_buttons)
+		done = QPushButton("Done")
+		done.setDefault(True)
+		cancel = QPushButton("Cancel")
+		final_buttons.addWidget(cancel)
+		final_buttons.addWidget(done)
 
 		if arg:
 			if isinstance(arg, list):
@@ -43,29 +60,29 @@ class GalleryDialog(QWidget):
 					gallery = index.data(Qt.UserRole+1)
 					self.commonUI()
 					self.setGallery(gallery)
-				self.done.clicked.connect(self.accept_edit)
-				self.cancel.clicked.connect(self.reject_edit)
+				done.clicked.connect(self.accept_edit)
+				cancel.clicked.connect(self.reject_edit)
 			elif isinstance(arg, str):
 				self.newUI()
 				self.commonUI()
 				self.choose_dir(arg)
-				self.done.clicked.connect(self.accept)
-				self.cancel.clicked.connect(self.reject)
+				done.clicked.connect(self.accept)
+				cancel.clicked.connect(self.reject)
 		else:
 			self.newUI()
 			self.commonUI()
-			self.done.clicked.connect(self.accept)
-			self.cancel.clicked.connect(self.reject)
+			done.clicked.connect(self.accept)
+			cancel.clicked.connect(self.reject)
 
 		log_d('GalleryDialog: Create UI: successful')
 		#TODO: Implement a way to mass add galleries
 		#IDEA: Extend dialog in a ScrollArea with more forms...
 
-		self.setLayout(self.main_layout)
-		self.resize(500,200)
+		self.setLayout(m_l)
+		self.resize(500,560)
 		frect = self.frameGeometry()
 		frect.moveCenter(QDesktopWidget().availableGeometry().center())
-		self.move(frect.topLeft()-QPoint(0,180))
+		self.move(frect.topLeft())
 		#self.setAttribute(Qt.WA_DeleteOnClose)
 		self.setWindowTitle("Add a new gallery")
 
@@ -152,18 +169,10 @@ class GalleryDialog(QWidget):
 		gallery_layout.addRow("Language:", self.lang_box)
 		gallery_layout.addRow("Tags:", self.tags_edit)
 		gallery_layout.addRow("Type:", self.type_box)
+		gallery_layout.addRow("Status:", self.status_box)
 		gallery_layout.addRow("Publication Date:", self.pub_edit)
 		gallery_layout.addRow("Path:", self.path_lbl)
 		gallery_layout.addRow("Link:", link_layout)
-
-		final_buttons = QHBoxLayout()
-		final_buttons.setAlignment(Qt.AlignRight)
-		self.main_layout.addLayout(final_buttons)
-		self.done = QPushButton("Done")
-		self.done.setDefault(True)
-		self.cancel = QPushButton("Cancel")
-		final_buttons.addWidget(self.cancel)
-		final_buttons.addWidget(self.done)
 
 		self.title_edit.setFocus()
 
@@ -254,7 +263,7 @@ class GalleryDialog(QWidget):
 			self.lang_box.setCurrentIndex(l_i)
 
 		if gallerydb.GalleryDB.check_exists(tail):
-			self.file_exists_lbl.setText('<font color="red">gallery already exists</font>')
+			self.file_exists_lbl.setText('<font color="red">Gallery already exists</font>')
 			self.file_exists_lbl.show()
 		else: self.file_exists_lbl.hide()
 
@@ -264,10 +273,7 @@ class GalleryDialog(QWidget):
 			self.title_edit.setStyleSheet("border-style:outset;border-width:2px;border-color:red;")
 			return False
 		elif len(self.author_edit.text()) is 0:
-			self.author_edit.setText("Anon")
-
-		if len(self.descr_edit.toPlainText()) is 0:
-			self.descr_edit.setText("<i>No description..</i>")
+			self.author_edit.setText("Unknown")
 
 		if len(self.path_lbl.text()) == 0 or self.path_lbl.text() == 'No path specified':
 			self.path_lbl.setStyleSheet("color:red")

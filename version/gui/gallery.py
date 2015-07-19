@@ -383,6 +383,9 @@ class GalleryModel(QAbstractTableModel):
 		self._CHAPTERS = gui_constants.CHAPTERS
 		self._LANGUAGE = gui_constants.LANGUAGE
 		self._LINK = gui_constants.LINK
+		self._DESCR = gui_constants.DESCR
+		self._DATE_ADDED = gui_constants.DATE_ADDED
+		self._PUB_DATE = gui_constants.PUB_DATE
 
 	def init_data(self):
 		"Populates the model with data from database"
@@ -448,6 +451,16 @@ class GalleryModel(QAbstractTableModel):
 				return current_gallery.language
 			elif current_column == self._LINK:
 				return current_gallery.link
+			elif current_column == self._DESCR:
+				return current_gallery.info
+			elif current_column == self._DATE_ADDED:
+				g_dt = "{}".format(current_gallery.date_added)
+				qdate_g_dt = QDate.fromString(g_dt, "yyyy-MM-dd")
+				return qdate_g_dt
+			elif current_column == self._PUB_DATE:
+				g_pdt = "{}".format(current_gallery.pub_date)
+				qdate_g_pdt = QDate.fromString(g_pdt, "yyyy-MM-dd")
+				return qdate_g_pdt
 
 		# TODO: name all these roles and put them in gui_constants...
 
@@ -557,6 +570,12 @@ class GalleryModel(QAbstractTableModel):
 				return 'Language'
 			elif section == self._LINK:
 				return 'Link'
+			elif section == self._DESCR:
+				return 'Description'
+			elif section == self._DATE_ADDED:
+				return 'Date Added'
+			elif section == self._PUB_DATE:
+				return 'Published'
 		return section + 1
 	#def flags(self, index):
 	#	if not index.isValid():
@@ -922,6 +941,7 @@ class MangaView(QListView):
 
 	def __init__(self, parent=None):
 		super().__init__(parent)
+		self.parent_widget = parent
 		self.setViewMode(self.IconMode)
 		self.H = gui_constants.GRIDBOX_H_SIZE
 		self.W = gui_constants.GRIDBOX_W_SIZE
@@ -1023,15 +1043,18 @@ class MangaView(QListView):
 
 		if msgbox.exec() == msgbox.Yes:
 			gallery_list = []
+			log_i('Removing {} galleries'.format(len(gallery_list)))
 			for index in index_list:
 				gallery = index.data(Qt.UserRole+1)
 				if index.isValid() and gallery:
 					self.rowsAboutToBeRemoved(index.parent(), index.row(), index.row())
 					self.gallery_model.removeRows(index.row(), 1)
 					gallery_list.append(gallery)
-			log_i('Removing {} galleries'.format(len(gallery_list)))
+					log_i('Attempt to remove: {} by {}'.format(gallery.title.encode(),
+												gallery.artist.encode()))
 			threading.Thread(target=gallerydb.GalleryDB.del_gallery,
 						args=(gallery_list, local), daemon=True).start()
+			self.STATUS_BAR_MSG.emit('Gallery removed!')
 
 	def favorite(self, index):
 		assert isinstance(index, QModelIndex)
@@ -1058,6 +1081,40 @@ class MangaView(QListView):
 				chap_numb = random.randint(0, b-1)
 
 		self.open_chapter(indx, chap_numb)
+
+	def duplicate_check(self, simple=True):
+		mode = 'simple' if simple else 'advanced'
+		log_i('Checking for duplicates in mode: {}'.format(mode))
+		notifbar = self.parent_widget.notification_bar
+		notifbar.add_text('Checking for duplicates...')
+		if simple:
+			galleries = self.gallery_model._data
+			duplicates = []
+			for g in galleries:
+				notifbar.add_text('Checking gallery {}'.format(g.id))
+				for y in galleries:
+					if g.id != y.id and g.path == y.path:
+						if g.path == y.path:
+							if g not in duplicates:
+								duplicates.append(y)
+								duplicates.append(g)
+							continue
+						try:
+							if os.path.samefile(g.path, y.path):
+								if g not in duplicates:
+									duplicates.append(y)
+									duplicates.append(g)
+						except:
+							continue
+			if duplicates:
+				notifbar.add_text('Found {} duplicates!'.format(len(duplicates)))
+				log_d('Found {} duplicates'.format(len(duplicates)))
+				g_widget = file_misc.GalleryPopup(("These galleries are found to"+
+										  " link to the same file.", duplicates), self.parentWidget())
+				buttons = g_widget.add_buttons("Close")
+				buttons[0].clicked.connect(g_widget.close)
+			else:
+				notifbar.add_text('No duplicates found!')
 
 	def open_chapter(self, index, chap_numb=0):
 		if isinstance(index, list):
@@ -1418,15 +1475,18 @@ class MangaTableView(QTableView):
 
 		if msgbox.exec() == msgbox.Yes:
 			gallery_list = []
+			log_i('Removed {} galleries'.format(len(gallery_list)))
 			for index in index_list:
 				gallery = index.data(Qt.UserRole+1)
 				if index.isValid() and gallery:
 					self.rowsAboutToBeRemoved(index.parent(), index.row(), index.row())
 					self.gallery_model.removeRows(index.row(), 1)
 					gallery_list.append(gallery)
-			log_i('Removed {} galleries'.format(len(gallery_list)))
+					log_i('Attempt to remove: {} by {}'.format(gallery.title.encode(),
+											gallery.artist.encode()))
 			threading.Thread(target=gallerydb.GalleryDB.del_gallery,
 						args=(gallery_list,), daemon=True).start()
+			self.STATUS_BAR_MSG.emit('Gallery removed!')
 
 	def favorite(self, index):
 		assert isinstance(index, QModelIndex)

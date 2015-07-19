@@ -72,6 +72,7 @@ class NotificationOverlay(QWidget):
 
 	def set_clickable(self, d=True):
 		self._click = d
+		self.setCursor(Qt.PointingHandCursor)
 
 	def resize(self, x, y=0):
 		return super().resize(x, self._default_height)
@@ -81,7 +82,7 @@ class NotificationOverlay(QWidget):
 		Add new text to the bar, deleting the previous one
 		"""
 		try:
-			self._unset_clickable()
+			self._reset()
 		except TypeError:
 			pass
 		if not self.isVisible():
@@ -90,7 +91,9 @@ class NotificationOverlay(QWidget):
 		if autohide:
 			QTimer.singleShot(10000, self.hide)
 
-	def _unset_clickable(self):
+	def _reset(self):
+		self.unsetCursor()
+		self._click = False
 		self.clicked.disconnect()
 
 class GalleryShowcaseWidget(QWidget):

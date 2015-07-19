@@ -477,6 +477,9 @@ class AppWindow(QMainWindow):
 		misc_action_random = QAction("Open random gallery", misc_action_menu)
 		misc_action_random.triggered.connect(self.manga_list_view.open_random_gallery)
 		misc_action_menu.addAction(misc_action_random)
+		duplicate_check_simple = QAction("Simple duplicate finder", misc_action_menu)
+		duplicate_check_simple.triggered.connect(lambda: self.manga_list_view.duplicate_check())
+		misc_action_menu.addAction(duplicate_check_simple)
 		self.toolbar.addWidget(misc_action)
 
 		spacer_middle = QWidget() # aligns buttons to the right

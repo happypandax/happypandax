@@ -42,15 +42,18 @@ THUMB_H_SIZE = 200
 THUMB_W_SIZE = 143
 
 # Columns
-COLUMNS = [0, 1, 2, 3, 4, 5, 6, 7]
+COLUMNS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 TITLE = 0
 ARTIST = 1
-TAGS = 2
-TYPE = 3
-FAV = 4
-CHAPTERS = 5
-LANGUAGE = 6
-LINK = 7
+DESCR = 2
+TAGS = 3
+TYPE = 4
+FAV = 5
+CHAPTERS = 6
+LANGUAGE = 7
+LINK = 8
+PUB_DATE = 9
+DATE_ADDED = 10
 
 
 # image paths
