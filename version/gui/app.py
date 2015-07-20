@@ -266,12 +266,22 @@ class AppWindow(QMainWindow):
 		update_instance.UPDATE_CHECK.connect(lambda: thread.deleteLater)
 		thread.start()
 
+	def _web_metadata_picker(self, gallery, title_url_list, queue):
+		text = "Which gallery do you want to extract metadata from?"
+		s_gallery_popup = misc.SingleGalleryChoices(gallery, title_url_list,
+											  text,self)
+		s_gallery_popup.USER_CHOICE.connect(queue.put)
+
 	def get_all_metadata(self):
+		self.notification_bar.begin_show()
 		thread = QThread()
 		fetch_instance = fetch.Fetch()
 		fetch_instance.galleries = self.manga_list_view.gallery_model._data[:5]
 		fetch_instance.moveToThread(thread)
+		fetch_instance.GALLERY_PICKER.connect(self._web_metadata_picker)
+		fetch_instance.AUTO_METADATA_PROGRESS.connect(self.notification_bar.add_text)
 		thread.started.connect(fetch_instance.auto_web_metadata)
+		fetch_instance.FINISHED.connect(lambda: self.notification_bar.end_show)
 		fetch_instance.FINISHED.connect(lambda: fetch_instance.deleteLater)
 		fetch_instance.FINISHED.connect(lambda: thread.deleteLater)
 		thread.start()

@@ -26,9 +26,6 @@ log_w = log.warning
 log_e = log.error
 log_c = log.critical
 
-web_session = requests.Session()
-web_session.headers["user-agent"] = "Mozilla/5.0 (Windows NT 6.3; rv:36.0) Gecko/20100101 Firefox/36.0"
-
 class CustomAPI:
 	API_URL = gui_constants.API_URL
 	API_V = 'v0'
@@ -60,10 +57,11 @@ class CustomAPI:
 class CommenHen:
 	"Contains common methods"
 	LOCK = threading.Lock()
-	SESSION = web_session
 	TIME_RAND = gui_constants.GLOBAL_EHEN_TIME
 	QUEUE = []
+	COOKIES = {}
 	LAST_USED = time.time()
+	HEADERS = {'user-agent':"Mozilla/5.0 (Windows NT 6.3; rv:36.0) Gecko/20100101 Firefox/36.0"}
 
 	@staticmethod
 	def hash_search(g_hash):
@@ -114,7 +112,7 @@ class CommenHen:
 
 	def check_cookie(self, cookie):
 		assert isinstance(cookie, dict)
-		cookies = self.SESSION.cookies.keys()
+		cookies = self.COOKIES.keys()
 		present = []
 		for c in cookie:
 			if c in cookies:
@@ -122,7 +120,7 @@ class CommenHen:
 			else:
 				present.append(False)
 		if not all(present):
-			self.SESSION.cookies.update(cookie)
+			self.COOKIES.update(cookie)
 
 	def handle_error(self, response):
 		content_type = response.headers['content-type']
@@ -196,7 +194,9 @@ class CommenHen:
 			self.begin_lock()
 			if cookies:
 				self.check_cookie(cookies)
-			r = self.SESSION.post(self.e_url, json=payload)
+				r = requests.post(self.e_url, json=payload, headers=self.HEADERS, cookies=self.COOKIES)
+			else:
+				r = requests.post(self.e_url, json=payload, headers=self.HEADERS)
 			self.handle_error(r.headers)
 			self.end_lock()
 		else: return None
@@ -230,17 +230,18 @@ class CommenHen:
 
 		hash_url = gui_constants.DEFAULT_EHEN_URL + '?f_shash='
 		found_galleries = {}
+		log_i('Initiating hash search on ehentai')
 		for h in hash_string:
-			print('searching hash on ehentai')
+			print('Hash search: {}'.format(h))
 			self.begin_lock()
-			r = requests.get(hash_url+h)
+			r = requests.get(hash_url+h, headers=self.HEADERS)
 			self.end_lock()
-			continue
 			self.handle_error(r)
 			if not no_hits_found_check(r.text):
 				log_e('No hits found with hash: {}'.format(h))
 				continue
 			soup = BeautifulSoup(r.text)
+			log_i('Parsing html')
 			try:
 				if soup.body:
 					found_galleries[h] = []
@@ -251,18 +252,20 @@ class CommenHen:
 					elif type == 'table':
 						visible_galleries = soup.find_all('div', attrs={'class':'it5'})
 				
+					log_i('Found {} visible galleries'.format(len(visible_galleries)))
 					for gallery in visible_galleries:
 						title = gallery.text
 						g_url = gallery.a.attrs['href']
 						found_galleries[h].append((title,g_url))
 			except AttributeError:
-				print('Unparseable text')
+				log_e('Unparseable html')
 				continue
 
 		if found_galleries:
+			log_i('Found {} out of {} galleries'.format(len(found_galleries), len(hash_string)))
 			return found_galleries
 		else:
-			print('didnt find any galleries')
+			log_w('Could not find any galleries')
 			return {}
 
 	def eh_gallery_parser(self, url, cookies=None):
@@ -277,9 +280,10 @@ class CommenHen:
 		self.begin_lock()
 		if cookies:
 			self.check_cookie(cookies)
-		r = self.SESSION.get(url, timeout=30)
+			r = requests.get(url, headers=self.HEADERS, timeout=30, cookies=cookies)
+		else:
+			r = requests.get(url, headers=self.HEADERS, timeout=30)
 		self.end_lock()
-		return
 		self.handle_error(r)
 		html = r.text
 		if len(html)<5000:

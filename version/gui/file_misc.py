@@ -8,6 +8,7 @@ from watchdog.events import FileSystemEventHandler, DirDeletedEvent
 from watchdog.observers import Observer
 from threading import Timer
 from . import gui_constants, misc
+from .misc import BasePopup
 from ..database import gallerydb
 from .. import utils
 
@@ -32,26 +33,6 @@ def update_gallery_path(new_path, gallery):
 
 	gallery.path = new_path
 	return gallery
-
-class BasePopup(QWidget):
-	def __init__(self, parent=None, **kwargs):
-		if kwargs:
-			super().__init__(parent, **kwargs)
-		else:
-			super().__init__(parent, flags= Qt.Window | Qt.FramelessWindowHint)
-		self.setAttribute(Qt.WA_TranslucentBackground)
-		main_layout = QVBoxLayout()
-		self.main_widget = QFrame()
-		self.setLayout(main_layout)
-		main_layout.addWidget(self.main_widget)
-		self.generic_buttons = QHBoxLayout()
-		self.generic_buttons.addWidget(misc.Spacer('h'))
-		self.yes_button = QPushButton('Yes')
-		self.no_button = QPushButton('No')
-		self.generic_buttons.addWidget(self.yes_button)
-		self.generic_buttons.addWidget(self.no_button)
-		self.setMaximumWidth(500)
-		self.resize(500,350)
 
 class GalleryPopup(BasePopup):
 	"""
@@ -85,26 +66,12 @@ class GalleryPopup(BasePopup):
 		text_lbl =  QLabel(text)
 		text_lbl.setAlignment(Qt.AlignCenter)
 		main_layout.addWidget(text_lbl)
-		self.buttons_layout = QHBoxLayout()
-		self.buttons_layout.addWidget(misc.Spacer('h'), 3)
 		main_layout.addLayout(self.buttons_layout)
 		self.main_widget.setLayout(main_layout)
 		self.setMaximumHeight(500)
 		self.setMaximumWidth(620)
 		self.resize(620, 500)
 		self.show()
-
-	def add_buttons(self, *args):
-		"""
-		Pass names of buttons, from right to left.
-		Returns list of buttons in same order.
-		"""
-		b = []
-		for name in args:
-			button = QPushButton(name)
-			self.buttons_layout.addWidget(button)
-			b.append(button)
-		return b
 
 class ModifiedPopup(BasePopup):
 	def __init__(self, path, gallery_id, parent=None):

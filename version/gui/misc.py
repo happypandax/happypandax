@@ -48,6 +48,41 @@ log_w = log.warning
 log_e = log.error
 log_c = log.critical
 
+class BasePopup(QWidget):
+	def __init__(self, parent=None, **kwargs):
+		if kwargs:
+			super().__init__(parent, **kwargs)
+		else:
+			super().__init__(parent, flags= Qt.Window | Qt.FramelessWindowHint)
+		self.setAttribute(Qt.WA_TranslucentBackground)
+		main_layout = QVBoxLayout()
+		self.main_widget = QFrame()
+		self.setLayout(main_layout)
+		main_layout.addWidget(self.main_widget)
+		self.generic_buttons = QHBoxLayout()
+		self.generic_buttons.addWidget(Spacer('h'))
+		self.yes_button = QPushButton('Yes')
+		self.no_button = QPushButton('No')
+		self.buttons_layout = QHBoxLayout()
+		self.buttons_layout.addWidget(Spacer('h'), 3)
+		self.generic_buttons.addWidget(self.yes_button)
+		self.generic_buttons.addWidget(self.no_button)
+		self.setMaximumWidth(500)
+		self.resize(500,350)
+
+	def add_buttons(self, *args):
+		"""
+		Pass names of buttons, from right to left.
+		Returns list of buttons in same order.
+		"""
+		b = []
+		for name in args:
+			button = QPushButton(name)
+			self.buttons_layout.addWidget(button)
+			b.append(button)
+		return b
+
+
 class NotificationOverlay(QWidget):
 	"""
 	A notifaction bar
@@ -64,6 +99,7 @@ class NotificationOverlay(QWidget):
 		self.setBackgroundRole(self.palette().Shadow)
 		self.setContentsMargins(-10,-10,-10,-10)
 		self._click = False
+		self._override_hide = False
 
 	def mousePressEvent(self, event):
 		if self._click:
@@ -89,7 +125,20 @@ class NotificationOverlay(QWidget):
 			self.show()
 		self._lbl.setText(text)
 		if autohide:
-			QTimer.singleShot(10000, self.hide)
+			if not self._override_hide:
+				QTimer.singleShot(10000, self.hide)
+
+	def begin_show(self):
+		"""
+		Control how long you will show notification bar.
+		end_show() must be called to hide the bar.
+		"""
+		self._override_hide = True
+		self.show()
+
+	def end_show(self):
+		self._override_hide = False
+		QTimer.singleShot(5000, self.hide)
 
 	def _reset(self):
 		self.unsetCursor()
@@ -125,6 +174,48 @@ class GalleryShowcaseWidget(QWidget):
 		artist = self.font_M.elidedText(gallery.artist, Qt.ElideRight, self.w)
 		self.text.setText("{}\n{}".format(title, artist))
 		self.resize(self.w, self.h)
+
+class SingleGalleryChoices(BasePopup):
+	"""
+	Represent a single gallery with a list of choices below.
+	Pass a gallery and a list of tuple/list where the first index is a string in each
+	if text is passed, the text will be shown alongside gallery, else gallery be centered
+	"""
+	USER_CHOICE = pyqtSignal(tuple)
+	def __init__(self, gallery, tuple_first_idx, text=None, parent = None):
+		super().__init__(parent, flags= Qt.Dialog | Qt.FramelessWindowHint)
+		main_layout = QVBoxLayout()
+		self.main_widget.setLayout(main_layout)
+		g_showcase = GalleryShowcaseWidget()
+		g_showcase.set_gallery(gallery, (170//1.40, 170))
+		if text:
+			t_layout = QHBoxLayout()
+			main_layout.addLayout(t_layout)
+			t_layout.addWidget(g_showcase, 1)
+			info = QLabel(text)
+			info.setWordWrap(True)
+			t_layout.addWidget(info)
+		else:
+			main_layout.addWidget(g_showcase, 0, Qt.AlignCenter)
+		self.list_w = QListWidget(self)
+		main_layout.addWidget(self.list_w, 3)
+		main_layout.addLayout(self.buttons_layout)
+		for t in tuple_first_idx:
+			item = GalleryListItem(t)
+			item.setText(t[0])
+			self.list_w.addItem(item)
+		buttons = self.add_buttons('Choose')
+		buttons[0].clicked.connect(self.finish)
+		self.resize(400, 400)
+		self.show()
+
+	def finish(self):
+		item = self.list_w.selectedItems()
+		if item:
+			item = item[0]
+			print(item.gallery)
+			self.USER_CHOICE.emit(item.gallery)
+			self.close()
 
 class LoadingOverlay(QWidget):
 	
