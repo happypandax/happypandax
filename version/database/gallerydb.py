@@ -1000,7 +1000,7 @@ class Gallery:
 		self._cache_id = None
 		self._db_v = None
 		self.hashes = []
-		self.exed = 1
+		self.exed = 0
 	def gen_hashes(self):
 		"Generate hashes while inserting them into DB"
 		hash = HashDB.gen_gallery_hashes(self)
@@ -1058,6 +1058,7 @@ class Gallery:
 
 class Bridge(QObject):
 	DONE = pyqtSignal(bool)
+	TERMINATE = pyqtSignal()
 	def __init__(self, parent=None):
 		super().__init__(parent)
 
@@ -1066,7 +1067,7 @@ class Bridge(QObject):
 			self.DONE.emit(True)
 		else:
 			self.DONE.emit(False)
-
+		self.TERMINATE.emit()
 if __name__ == '__main__':
 	#unit testing here
 	date = today()

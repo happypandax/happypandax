@@ -63,7 +63,7 @@ def series_sql(cols=False):
 					last_read TEXT,
 					last_update TEXT,
 					times_read INTEGER,
-					exed INTEGER,
+					exed INTEGER NOT NULL DEFAULT 0,
 					db_v REAL)
 		"""
 	col_list = [
@@ -83,7 +83,7 @@ def series_sql(cols=False):
 		'last_read TEXT',
 		'last_update TEXT',
 		'times_read INTEGER',
-		'exed INTEGER',
+		'exed INTEGER NOT NULL DEFAULT 0',
 		'db_v REAL',
 		]
 	if cols:

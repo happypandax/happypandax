@@ -1386,7 +1386,8 @@ class MangaView(QListView):
 			 'tags':gallery.tags,
 			 'link':gallery.link,
 			 'series_path':gallery.path,
-			 'chapters':gallery}
+			 'chapters':gallery,
+			 'exed':gallery.exed}
 
 			threading.Thread(target=gallerydb.GalleryDB.modify_gallery,
 							 args=(gallery.id,), kwargs=kwdict).start()
@@ -1761,7 +1762,8 @@ class MangaTableView(QTableView):
 			 'tags':gallery.tags,
 			 'link':gallery.link,
 			 'series_path':gallery.path,
-			 'chapters':gallery}
+			 'chapters':gallery,
+			 'exed':gallery.exed}
 
 			threading.Thread(target=gallerydb.GalleryDB.modify_gallery,
 							 args=(gallery.id,), kwargs=kwdict).start()

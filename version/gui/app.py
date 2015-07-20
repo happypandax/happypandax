@@ -141,10 +141,14 @@ class AppWindow(QMainWindow):
 				buttons[1].clicked.connect(g_popup.close)
 
 	def start_up(self):
+		def normalize_first_time():
+			settings.set(2, 'Application', 'first time level')
 		def done():
 			self.manga_list_view.gallery_model.init_data()
 			if gui_constants.MONITOR_PATHS and all(gui_constants.MONITOR_PATHS):
 				self.init_watchers()
+			if gui_constants.FIRST_TIME_LEVEL < 2:
+				normalize_first_time()
 		if gui_constants.FIRST_TIME_LEVEL < 2:
 
 			class FirstTime(file_misc.BasePopup):
@@ -170,11 +174,10 @@ class AppWindow(QMainWindow):
 			bridge.moveToThread(thread)
 			thread.started.connect(bridge.rebuild_galleries)
 			bridge.DONE.connect(ft_widget.close)
-			bridge.DONE.connect(lambda: self.setEnabled(True))
-			bridge.DONE.connect(lambda: settings.set(2, 'Application', 'first time level'))
+			bridge.DONE.connect(self.setEnabled)
 			bridge.DONE.connect(done)
-			bridge.DONE.connect(bridge.deleteLater)
-			bridge.DONE.connect(thread.deleteLater)
+			bridge.TERMINATE.connect(bridge.deleteLater)
+			bridge.TERMINATE.connect(thread.deleteLater)
 			thread.start()
 			ft_widget.adjustSize()
 			ft_widget.show()
@@ -420,7 +423,6 @@ class AppWindow(QMainWindow):
 			self.manga_table_view.sort_model.catalog_view()
 
 	def settings(self):
-		#about = misc.About()
 		sett = settingsdialog.SettingsDialog(self)
 		sett.scroll_speed_changed.connect(self.manga_list_view.updateGeometries)
 		#sett.show()

@@ -178,7 +178,7 @@ def start():
 		msg_box.setWindowIcon(QIcon(gui_constants.APP_ICO_PATH))
 		msg_box.setText('Incompatible database!')
 		msg_box.setInformativeText("Do you want to upgrade to newest version?" +
-							 "This might take a while. Don't start a new instance!")
+							 "It shouldn't take more than a second. Don't start a new instance!")
 		msg_box.setIcon(QMessageBox.Critical)
 		msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
 		msg_box.setDefaultButton(QMessageBox.Yes)

@@ -186,27 +186,18 @@ class GalleryDialog(QWidget):
 		self.author_edit.setText(gallery.artist)
 		self.descr_edit.setText(gallery.info)
 
-		self.lang_box.setCurrentIndex(2)
-		if gallery.language:
-			if gallery.language.lower() in "english":
-					self.lang_box.setCurrentIndex(0)
-			elif gallery.language.lower() in "japanese":
-				self.lang_box.setCurrentIndex(1)
-
 		self.tags_edit.setText(utils.tag_to_string(gallery.tags))
 
-		t_index = self.type_box.findText(gallery.type)
-		try:
-			self.type_box.setCurrentIndex(t_index)
-		except:
-			self.type_box.setCurrentIndex(0)
+		def find_combobox_match(combobox, key, default):
+			f_index = combobox.findText(key, Qt.MatchFixedString)
+			try:
+				combobox.setCurrentIndex(f_index)
+			except:
+				combobox.setCurrentIndex(default)
 
-		if gallery.status is "Ongoing":
-			self.status_box.setCurrentIndex(1)
-		elif gallery.status is "Completed":
-			self.status_box.setCurrentIndex(2)
-		else:
-			self.status_box.setCurrentIndex(0)
+		find_combobox_match(self.lang_box, gallery.language, 2)
+		find_combobox_match(self.type_box, gallery.type, 0)
+		find_combobox_match(self.status_box, gallery.status, 0)
 
 		gallery_pub_date = "{}".format(gallery.pub_date)
 		qdate_pub_date = QDate.fromString(gallery_pub_date, "yyyy-MM-dd")
