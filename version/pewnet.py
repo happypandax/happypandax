@@ -223,9 +223,10 @@ class CommenHen:
 		def no_hits_found_check(html):
 			"return true if hits are found"
 			soup = BeautifulSoup(html)
-			f_div = soup.body.find('div')
-			if 'No hits found' in f_div.text[-20:]:
-				return False
+			f_div = soup.body.find_all('div')
+			for d in f_div:
+				if 'No hits found' in d.text:
+					return False
 			return True
 
 		hash_url = gui_constants.DEFAULT_EHEN_URL + '?f_shash='
@@ -258,7 +259,8 @@ class CommenHen:
 						g_url = gallery.a.attrs['href']
 						found_galleries[h].append((title,g_url))
 			except AttributeError:
-				log_e('Unparseable html')
+				log.exception('Unparseable html')
+				log_d("\n{}\n".format(soup.prettify()))
 				continue
 
 		if found_galleries:

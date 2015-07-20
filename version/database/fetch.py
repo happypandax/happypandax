@@ -36,6 +36,7 @@ class Fetch(QObject):
 	Should be executed in a new thread.
 	Contains following methods:
 	local -> runs a local search in the given series_path
+	auto_web_metadata -> does a search online for the given galleries and returns their metdata
 	"""
 
 	# local signals
@@ -44,12 +45,7 @@ class Fetch(QObject):
 	PROGRESS = pyqtSignal(int)
 
 	# WEB signals
-	WEB_METADATA = pyqtSignal(object)
-	WEB_PROGRESS = pyqtSignal()
-	WEB_STATUS = pyqtSignal(bool)
 	GALLERY_EMITTER = pyqtSignal(Gallery)
-
-	# EH PARSER
 	AUTO_METADATA_PROGRESS = pyqtSignal(str)
 	GALLERY_PICKER = pyqtSignal(object, list, queue.Queue)
 	GALLERY_PICKER_QUEUE = queue.Queue()
@@ -57,7 +53,6 @@ class Fetch(QObject):
 	def __init__(self, parent=None):
 		super().__init__(parent)
 		self.series_path = ""
-		self.web_url = ""
 		self.data = []
 		self._curr_gallery = '' # for debugging purposes
 		self._error = 'Unknown error' # for debugging purposes
@@ -183,7 +178,8 @@ class Fetch(QObject):
 		assert isinstance(gallery, Gallery)
 		if gallery:
 			gallery.exed = 1
-			gallery.link = gallery.temp_url
+			if not gallery.link:
+				gallery.link = gallery.temp_url
 			self.GALLERY_EMITTER.emit(gallery)
 			print('Success')
 
@@ -192,10 +188,14 @@ class Fetch(QObject):
 		Auto fetches metadata for the provided list of galleries.
 		Appends or replaces metadata with the new fetched metadata.
 		"""
-		if self.galleries:
+		log_d('Initiating auto metadata fetcher')
+		if self.galleries and not gui_constants.GLOBAL_EHEN_LOCK:
+			log_d('Auto metadata fetcher is now running')
+			gui_constants.GLOBAL_EHEN_LOCK = True
 			hashed_galleries = []
 			hashes = []
 			self.AUTO_METADATA_PROGRESS.emit("Checking gallery hashes...")
+			log_d('Checking gallery hashes')
 			for gallery in self.galleries:
 				self.AUTO_METADATA_PROGRESS.emit("Checking gallery hash: {}".format(gallery.title))
 				hash = None
@@ -221,21 +221,23 @@ class Fetch(QObject):
 					except FileNotFoundError:
 						continue
 				if not hash:
-					print('not hash continuing')
 					continue
 				gallery.hash = hash
 				print(hash)
 				hashed_galleries.append(gallery)
 
 			self.AUTO_METADATA_PROGRESS.emit("Searching for galleries with the custom api..")
+			log_d("Searching for galleries with the custom api")
 			api_result = self._get_metadata_api(hashed_galleries)
 			if api_result['success']:
 				self._return_gallery_metadata(api_result(api_result['success']))
 
 			if api_result['error']:
-				print('api errored')
+				errors = []
 				error_galleries = api_result['error']
 				self.AUTO_METADATA_PROGRESS.emit("Could not find {} galleries with the custom api".format(
+					len(error_galleries)))
+				log_d("Could not find {} galleries with the custom api".format(
 					len(error_galleries)))
 				if 'exhentai' in self._default_ehen_url:
 					try:
@@ -255,6 +257,7 @@ class Fetch(QObject):
 				checked_pre_url_galleries = []
 				checked_galleries = []
 				self.AUTO_METADATA_PROGRESS.emit("Checking gallery urls...")
+				log_d("Checking gallery urls")
 				for gallery in error_galleries:
 					if gallery.link:
 						check = self.website_checker(gallery.link)
@@ -271,9 +274,11 @@ class Fetch(QObject):
 
 				def fetch_metadata(gallery):
 					self.AUTO_METADATA_PROGRESS.emit("Fetching metadata for gallery: {}".format(gallery.title))
+					log_d("Fetching metadata for gallery: {}".format(gallery.title.encode(errors='ignore')))
 					if not self._use_ehen_api:
 						metadata = hen.eh_gallery_parser(gallery.temp_url)
 						if not metadata:
+							errors.append(False)
 							self.AUTO_METADATA_PROGRESS('No metadata found for gallery: {}'.format(gallery.title))
 							log_e('No metadata found for gallery: {}'.format(gallery.title.encode(errors='ignore')))
 							return False
@@ -319,12 +324,14 @@ class Fetch(QObject):
 
 				# dict -> hash:[list of title,url tuples] or None
 				self.AUTO_METADATA_PROGRESS.emit("Finding gallery urls...")
+				log_e("Finding gallery urls")
 				hen.LAST_USED = time.time()
 				ready_galleries = []
 				for gallery in checked_galleries:
 					self.AUTO_METADATA_PROGRESS.emit("Finding url for gallery: {}".format(gallery.title))
 					found_url = hen.eh_hash_search(gallery.hash)
 					if not gallery.hash in found_url:
+						errors.append(False)
 						self.AUTO_METADATA_PROGRESS.emit("Could not find url for gallery: {}".format(gallery.title))
 						log_w('Could not find url for gallery: {}'.format(gallery.title.encode(errors='ignore')))
 						continue
@@ -335,6 +342,7 @@ class Fetch(QObject):
 					else:
 						if len(title_url_list) > 1:
 							self.AUTO_METADATA_PROGRESS.emit("Multiple galleries found for gallery: {}".format(gallery.title))
+							log_e("Multiple galleries found for gallery: {}".format(gallery.title.encode(errors='ignore')))
 							self.GALLERY_PICKER.emit(gallery, title_url_list, self.GALLERY_PICKER_QUEUE)
 							user_choice = self.GALLERY_PICKER_QUEUE.get()
 						else:
@@ -347,12 +355,27 @@ class Fetch(QObject):
 					g = fetch_metadata(gallery)
 					self._return_gallery_metadata(g)
 
-		self.AUTO_METADATA_PROGRESS.emit('Done!')
-		self.FINISHED.emit(True)
+			log_d('Auto metadata fetcher is done')
+			gui_constants.GLOBAL_EHEN_LOCK = False
+			if all(errors):
+				self.AUTO_METADATA_PROGRESS.emit('Successfully fetched metadata!')
+				self.FINISHED.emit(True)
+			else:
+				self.AUTO_METADATA_PROGRESS.emit('Could not fetch metadata for some galleries. Check happypanda.log!')
+				self.FINISHED.emit(False)
+		else:
+			log_e('Auto metadata fetcher is already running')
+			self.AUTO_METADATA_PROGRESS.emit('Auto metadata fetcher is already running!')
+			self.FINISHED.emit(False)
 
 	def website_checker(self, url):
 		if not url:
 			return None
+		try:
+			r = regex.match('^(?=http)', url).group()
+			del r
+		except AttributeError:
+			n_url = 'http://' + url
 
 		if 'g.e-hentai.org' in url:
 			return 'ehen'
@@ -361,63 +384,4 @@ class Fetch(QObject):
 		else:
 			log_e('Invalid URL')
 			return None
-
-
-	def web_metadata(self):
-		"""Fetches gallery metadata from the web.
-		Website is determined from the url"""
-
-		assert len(self.web_url) > 5 # very random..
-
-		def r_metadata(metadata):
-			if metadata:
-				self.WEB_METADATA.emit(metadata)
-				self.WEB_STATUS.emit(True)
-			else: self.WEB_STATUS.emit(False)
-
-		def http_checker(url):
-			try:
-				r = regex.match('^(?=http)', url).group()
-				del r
-				return url
-			except AttributeError:
-				n_url = 'http://' + url
-				return n_url
-
-		def lock():
-			t = 0
-			while gui_constants.GLOBAL_EHEN_LOCK:
-				time.sleep(0.5)
-				t += 1
-				if t > 1000:
-					break;
-
-		new_url = http_checker(self.web_url)
-
-		if self.website_checker(new_url) == 'exhen':
-			self.WEB_PROGRESS.emit()
-			exprops = settings.ExProperties()
-			if not exprops.ipb_id or not exprops.ipb_pass:
-				self.WEB_STATUS.emit(False)
-				log_e('ExHentai: No cookies properly set')
-				return None
-			lock()
-			exhen = pewnet.ExHen(exprops.ipb_id, exprops.ipb_pass)
-			if self._use_ehen_api:
-				r_metadata(exhen.get_metadata([new_url]))
-			else:
-				r_metadata(exhen.eh_gallery_parser(new_url))
-			exhen.end_lock()
-		elif self.website_checker(new_url) == 'ehen':
-			self.WEB_PROGRESS.emit()
-			lock()
-			ehen = pewnet.EHen()
-			if self._use_ehen_api:
-				r_metadata(ehen.get_metadata([new_url]))
-			else:
-				r_metadata(ehen.eh_gallery_parser(new_url))
-			ehen.end_lock()
-		else:
-			log_e('Web Search: Fail')
-			self.WEB_STATUS.emit(False)
 

@@ -898,7 +898,8 @@ class HashDB:
 	@staticmethod
 	def gen_gallery_hashes(gallery):
 		"Generates hashes for gallery's first chapter and inserts them to DB"
-		chap_id = ChapterDB.get_chapter_id(gallery.id, 0)
+		if gallery.id:
+			chap_id = ChapterDB.get_chapter_id(gallery.id, 0)
 		try:
 			chap_path = gallery.chapters[0]
 			imgs = os.listdir(chap_path)
@@ -922,14 +923,15 @@ class HashDB:
 			with open(i, 'rb') as img:
 				hashes.append(generate_img_hash(img))
 		
-		executing = []
-		for hash in hashes:
-			executing.append(["""INSERT INTO hashes(hash, series_id, chapter_id)
-			VALUES(?, ?, ?)""", (hash, gallery.id, chap_id)])
+		if gallery.id:
+			executing = []
+			for hash in hashes:
+				executing.append(["""INSERT INTO hashes(hash, series_id, chapter_id)
+				VALUES(?, ?, ?)""", (hash, gallery.id, chap_id)])
 
-		CommandQueue.put(executing)
-		c = ResultQueue.get()
-		del c
+			CommandQueue.put(executing)
+			c = ResultQueue.get()
+			del c
 		return hashes
 
 	@staticmethod
@@ -1003,12 +1005,15 @@ class Gallery:
 		self.exed = 0
 	def gen_hashes(self):
 		"Generate hashes while inserting them into DB"
-		hash = HashDB.gen_gallery_hashes(self)
-		if hash:
-			self.hashes = hash
-			return True
+		if not self.hashes:
+			hash = HashDB.gen_gallery_hashes(self)
+			if hash:
+				self.hashes = hash
+				return True
+			else:
+				return False
 		else:
-			return False
+			return True
 
 	def validate(self):
 		"Validates gallery, returns status"
