@@ -1093,24 +1093,17 @@ class MangaView(QListView):
 			for g in galleries:
 				notifbar.add_text('Checking gallery {}'.format(g.id))
 				for y in galleries:
-					if g.id != y.id and g.path == y.path:
-						if g.path == y.path:
-							if g not in duplicates:
-								duplicates.append(y)
-								duplicates.append(g)
-							continue
-						try:
-							if os.path.samefile(g.path, y.path):
-								if g not in duplicates:
-									duplicates.append(y)
-									duplicates.append(g)
-						except:
-							continue
+					title = g.title.strip().lower() == y.title.strip().lower()
+					path = os.path.normcase(g.path) == os.path.normcase(y.path)
+					if g.id != y.id and (title or path):
+						if g not in duplicates:
+							duplicates.append(y)
+							duplicates.append(g)
 			if duplicates:
 				notifbar.add_text('Found {} duplicates!'.format(len(duplicates)))
 				log_d('Found {} duplicates'.format(len(duplicates)))
 				g_widget = file_misc.GalleryPopup(("These galleries are found to"+
-										  " link to the same file.", duplicates), self.parentWidget())
+										  " be duplicates.", duplicates), self.parentWidget())
 				buttons = g_widget.add_buttons("Close")
 				buttons[0].clicked.connect(g_widget.close)
 			else:
