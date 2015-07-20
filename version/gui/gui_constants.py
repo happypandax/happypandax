@@ -90,7 +90,7 @@ GLOBAL_EHEN_LOCK = False
 FETCH_METADATA_API = get(True, 'Web', 'fetch metadata api', bool)
 FETCH_EHEN_API = get(False, 'Web', 'fetch ehen api', bool)
 DEFAULT_EHEN_URL = get('http://g.e-hentai.org/', 'Web', 'default ehen url', str)
-REPLACE_METADATA = get(False, 'Web', 'replace metadata', bool)
+REPLACE_METADATA = get(True, 'Web', 'replace metadata', bool)
 ALWAYS_CHOOSE_FIRST_HIT = get(False, 'Web', 'always choose first hit', bool)
 
 # External Viewer

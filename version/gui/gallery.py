@@ -1340,6 +1340,10 @@ class MangaView(QListView):
 						number), remove_chap_menu, triggered = lambda: self.del_chapter(index, chap_number))
 					remove_chap_menu.addAction(chap_action)
 			menu.addSeparator()
+			get_metadata_action = QAction('Get metadata', menu,
+								 triggered=lambda: self.parent_widget.get_metadata(index.data(Qt.UserRole+1)))
+			menu.addAction(get_metadata_action)
+			menu.addSeparator()
 			# folders
 			if selected:
 				folder_select_act = QAction('Open folders', menu, triggered = lambda: op_folder(True))
@@ -1657,6 +1661,10 @@ class MangaTableView(QTableView):
 					chap_action = QAction("Remove chapter {}".format(
 						number), remove_chap_menu, triggered = lambda: self.parent_widget.manga_list_view.del_chapter(index, chap_number))
 					remove_chap_menu.addAction(chap_action)
+			menu.addSeparator()
+			get_metadata_action = QAction('Get metadata', menu,
+								 triggered=lambda: self.parent_widget.get_metadata(index.data(Qt.UserRole+1)))
+			menu.addAction(get_metadata_action)
 			menu.addSeparator()
 			# folders
 			if selected:

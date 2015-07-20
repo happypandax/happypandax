@@ -265,20 +265,27 @@ class AppWindow(QMainWindow):
 											  text,self)
 		s_gallery_popup.USER_CHOICE.connect(queue.put)
 
-	def get_all_metadata(self):
+	def get_metadata(self, gal=None):
 		self.notification_bar.begin_show()
 		thread = QThread()
 		fetch_instance = fetch.Fetch()
-		galleries = [g for g in self.manga_list_view.gallery_model._data if not g.exed]
+		if gal:
+			galleries = [gal]
+		else:
+			galleries = [g for g in self.manga_list_view.gallery_model._data if not g.exed]
 		fetch_instance.galleries = galleries[:5]
 		fetch_instance.moveToThread(thread)
+
+		def done():
+			self.notification_bar.end_show()
+			fetch_instance.deleteLater()
+			thread.deleteLater()
+
 		fetch_instance.GALLERY_PICKER.connect(self._web_metadata_picker)
 		fetch_instance.GALLERY_EMITTER.connect(self.manga_list_view.replace_edit_gallery)
 		fetch_instance.AUTO_METADATA_PROGRESS.connect(self.notification_bar.add_text)
 		thread.started.connect(fetch_instance.auto_web_metadata)
-		fetch_instance.FINISHED.connect(lambda: self.notification_bar.end_show)
-		fetch_instance.FINISHED.connect(lambda: fetch_instance.deleteLater)
-		fetch_instance.FINISHED.connect(lambda: thread.deleteLater)
+		fetch_instance.FINISHED.connect(done)
 		thread.start()
 
 
@@ -467,7 +474,7 @@ class AppWindow(QMainWindow):
 		gallery_menu.addAction(populate_action)
 		gallery_menu.addSeparator()
 		metadata_action = QAction('Get metadata for all galleries', self)
-		metadata_action.triggered.connect(self.get_all_metadata)
+		metadata_action.triggered.connect(self.get_metadata)
 		gallery_menu.addAction(metadata_action)
 		self.toolbar.addWidget(gallery_action)
 		self.toolbar.addSeparator()

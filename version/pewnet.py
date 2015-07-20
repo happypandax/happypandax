@@ -272,6 +272,8 @@ class CommenHen:
 		"""
 		Parses an ehentai page for metadata.
 		Returns gallery dict with following metadata:
+		- title
+		- jap_title
 		- type
 		- language
 		- publication date
@@ -292,8 +294,17 @@ class CommenHen:
 
 		gallery = {}
 		soup = BeautifulSoup(html)
-		with open('html2.html', 'w', encoding='utf-8') as f:
-			f.write(soup.prettify())
+
+		#title
+		div_gd2 = soup.body.find('div', id='gd2')
+		# normal
+		title = div_gd2.find('h1', id='gn').text.strip()
+		# japanese
+		jap_title = div_gd2.find('h1', id='gj').text.strip()
+
+		gallery['title'] = title
+		gallery['jap_title'] = jap_title
+
 		# Type
 		div_gd3 = soup.body.find('div', id='gd3')
 		gallery['type'] = div_gd3.find('img').get('alt')

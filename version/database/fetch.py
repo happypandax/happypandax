@@ -278,12 +278,20 @@ class Fetch(QObject):
 							log_e('No metadata found for gallery: {}'.format(gallery.title.encode(errors='ignore')))
 							return False
 						self.AUTO_METADATA_PROGRESS.emit("Applying metadata..")
+						title_artist_dict = utils.title_parser(metadata['title'])
 						if gui_constants.REPLACE_METADATA:
+							gallery.title = title_artist_dict['title']
+							if title_artist_dict['artist']:
+								gallery.artist = title_artist_dict['artist']
 							gallery.type = metadata['type']
 							gallery.language = metadata['language']
 							gallery.pub_date = metadata['published']
 							gallery.tags = metadata['tags']
 						else:
+							if not gallery.title:
+								gallery.title = title_artist_dict['title']
+							if not gallery.artist:
+								gallery.artist = title_artist_dict['artist']
 							if not gallery.type:
 								gallery.type = metadata['type']
 							if not gallery.language:
