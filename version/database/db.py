@@ -35,10 +35,10 @@ def hashes_sql(cols=False):
 	"""
 
 	col_list = [
-	'hash_id',
-	'hash',
-	'series_id',
-	'chapter_id'
+	'hash_id INTEGER PRIMARY KEY',
+	'hash BLOB',
+	'series_id INTEGER',
+	'chapter_id INTEGER'
 	]
 	if cols:
 		return sql, col_list
@@ -63,26 +63,28 @@ def series_sql(cols=False):
 					last_read TEXT,
 					last_update TEXT,
 					times_read INTEGER,
+					exed INTEGER,
 					db_v REAL)
 		"""
 	col_list = [
-		'series_id',
-		'title',
-		'artist',
-		'profile',
-		'series_path',
-		'info',
-		'fav',
-		'type',
-		'link',
-		'language',
-		'status',
-		'pub_date',
-		'date_added',
-		'last_read',
-		'last_update',
-		'times_read',
-		'db_v'
+		'series_id INTEGER PRIMARY KEY',
+		'title TEXT',
+		'artist TEXT',
+		'profile BLOB',
+		'series_path BLOB',
+		'info TEXT',
+		'fav INTEGER',
+		'type TEXT',
+		'link BLOB',
+		'language TEXT',
+		'status TEXT',
+		'pub_date TEXT',
+		'date_added TEXT',
+		'last_read TEXT',
+		'last_update TEXT',
+		'times_read INTEGER',
+		'exed INTEGER',
+		'db_v REAL',
 		]
 	if cols:
 		return sql, col_list
@@ -98,10 +100,10 @@ def chapters_sql(cols=False):
 					FOREIGN KEY(series_id) REFERENCES series(series_id))
 		"""
 	col_list = [
-		'chapter_id',
-		'series_id',
-		'chapter_number',
-		'chapter_path',
+		'chapter_id INTEGER PRIMARY KEY',
+		'series_id INTEGER',
+		'chapter_number INTEGER',
+		'chapter_path BLOB',
 		]
 	if cols:
 		return sql, col_list
@@ -114,8 +116,8 @@ def namespaces_sql(cols=False):
 					namespace TEXT)
 		"""
 	col_list = [
-		'namespace_id',
-		'namespace'
+		'namespace_id INTEGER PRIMARY KEY',
+		'namespace TEXT'
 		]
 	if cols:
 		return sql, col_list
@@ -128,8 +130,8 @@ def tags_sql(cols=False):
 					tag TEXT NOT NULL)
 		"""
 	col_list = [
-		'tag_id',
-		'tag'
+		'tag_id INTEGER PRIMARY KEY',
+		'tag TEXT NOT NULL'
 		]
 	if cols:
 		return sql, col_list
@@ -139,15 +141,15 @@ def tags_mappings_sql(cols=False):
 	sql ="""
 		CREATE TABLE IF NOT EXISTS tags_mappings(
 					tags_mappings_id INTEGER PRIMARY KEY,
-					namespace_id INTERGER,
+					namespace_id INTEGER,
 					tag_id INTEGER,
 					FOREIGN KEY(namespace_id) REFERENCES namespaces(namespace_id),
 					FOREIGN KEY(tag_id) REFERENCES tags(tag_id))
 		"""
 	col_list = [
-		'tags_mappings_id',
-		'namespace_id',
-		'tag_id'
+		'tags_mappings_id INTEGER PRIMARY KEY',
+		'namespace_id INTEGER',
+		'tag_id INTEGER'
 		]
 	if cols:
 		return sql, col_list
@@ -162,8 +164,8 @@ def series_tags_mappings_sql(cols=False):
 					FOREIGN KEY(tags_mappings_id) REFERENCES tags_mappings(tags_mappings_id))
 		"""
 	col_list = [
-		'series_id',
-		'tags_mappings'
+		'series_id INTEGER',
+		'tags_mappings_id INTEGER'
 		]
 	if cols:
 		return sql, col_list
@@ -234,12 +236,8 @@ def add_db_revisions(old_db):
 	log_i('Start DB version: {}'.format(version))
 	vs = 0
 
-	# version 0.16
-	if 0.16 > version:
-		vs = 0.16
-
-	if 0.17 > version:
-		vs = 0.17
+	if 0.18 > version:
+		vs = 0.18
 
 	log_d('Updating DB version')
 	c.execute('UPDATE version SET version=? WHERE 1', (db_constants.CURRENT_DB_VERSION,))
@@ -383,13 +381,17 @@ class DBThread:
 			c = self.conn.cursor()
 			for cmd in list_of_cmds:
 				try:
+					log_d("{}".format(cmd[0]).encode(errors='ignore'))
 					c.execute(cmd[0], cmd[1])
+					log_d("{}".format(cmd[1]).encode(errors='ignore'))
 				except IndexError:
+					log_d("{}".format(cmd[0]).encode(errors='ignore'))
 					c.execute(cmd[0])
 				except sqlite3.OperationalError:
-					log.exception('Could not access database!')
+					log.exception('An error occured while trying to access DB')
 				except:
-					log.exception('Could not access database!')
+					log.exception('An unknown error occured while trying to access DB')
+
 			self.conn.commit()
 			result_queue.put(c)
 			cmd_queue.task_done()

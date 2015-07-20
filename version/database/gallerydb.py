@@ -97,6 +97,7 @@ def gallery_map(row, gallery):
 	gallery.date_added = row['date_added']
 	gallery.times_read = row['times_read']
 	gallery._db_v = row['db_v']
+	gallery.exed = row['exed']
 	try:
 		gallery.link = bytes.decode(row['link'])
 	except TypeError:
@@ -118,10 +119,10 @@ def default_exec(object):
 			return obj
 	executing = [["""INSERT INTO series(title, artist, profile, series_path, 
 					info, type, fav, status, pub_date, date_added, last_read, link, last_update,
-					times_read)
+					times_read, exed)
 				VALUES(:title, :artist, :profile, :series_path, :info, :type, :fav,
 					:status, :pub_date, :date_added, :last_read, :link, :last_update,
-					:times_read)""",
+					:times_read, :exed)""",
 				{
 				'title':check(object.title),
 				'artist':check(object.artist),
@@ -138,7 +139,8 @@ def default_exec(object):
 				'last_update':check(object.last_update),
 				'link':str.encode(object.link),
 				'times_read':check(object.times_read),
-				'db_v':check(CURRENT_DB_VERSION)
+				'db_v':check(CURRENT_DB_VERSION),
+				'exed':check(object.exed)
 				}
 				]]
 	return executing
@@ -187,7 +189,8 @@ class GalleryDB:
 						pub_date=gallery.pub_date,
 						link=gallery.link,
 						times_read=gallery.times_read,
-						_db_v=CURRENT_DB_VERSION)
+						_db_v=CURRENT_DB_VERSION,
+						exed=gallery.exed)
 		except:
 			log.exception('Failed rebuilding galleries')
 			return False
@@ -198,7 +201,7 @@ class GalleryDB:
 	def modify_gallery(series_id, title=None, artist=None, info=None, type=None, fav=None,
 				   tags=None, language=None, status=None, pub_date=None, link=None,
 				   times_read=None, series_path=None, chapters=None, _db_v=None,
-				   hashes=None):
+				   hashes=None, exed=None):
 		"Modifies gallery with given gallery id"
 		executing = []
 		assert isinstance(series_id, int)
@@ -230,12 +233,12 @@ class GalleryDB:
 			executing.append(["UPDATE series SET link=? WHERE series_id=?", (link, series_id)])
 		if times_read:
 			executing.append(["UPDATE series SET times_read=? WHERE series_id=?", (times_read, series_id)])
-		if hash:
-			executing.append(["UPDATE series SET hash=? WHERE series_id=?", (hash, series_id)])
 		if series_path:
 			executing.append(["UPDATE series SET series_path=? WHERE series_id=?", (str.encode(series_path), series_id)])
 		if _db_v:
 			executing.append(["UPDATE series SET db_v=? WHERE series_id=?", (_db_v, series_id)])
+		if exed:
+			executing.append(["UPDATE series SET exed=? WHERE series_id=?", (exed, series_id)])
 		if tags:
 			assert isinstance(tags, dict)
 			TagDB.modify_tags(series_id, tags)
@@ -970,6 +973,7 @@ class Gallery:
 	last_update <- last updated file
 	last_read <- an integer telling us how many times the gallery has been opened
 	hashes <- a list of hashes of the gallery's chapters
+	exed <- indicator on if gallery metadata has been fetched
 	valid <- a bool indicating the validity of the gallery
 	"""
 	def __init__(self):
@@ -996,7 +1000,7 @@ class Gallery:
 		self._cache_id = None
 		self._db_v = None
 		self.hashes = []
-
+		self.exed = 1
 	def gen_hashes(self):
 		"Generate hashes while inserting them into DB"
 		hash = HashDB.gen_gallery_hashes(self)
@@ -1043,12 +1047,13 @@ class Gallery:
 		Tags: {}
 		Publication Date: {}
 		Date Added: {}
+		Exed: {}
 		Hashes: {}
 
 		Chapters: {}
 		""".format(self.id, self.title, self.profile, self.path, self.artist,
 			 self.info, self.fav, self.type, self.language, self.status, self.tags,
-			 self.pub_date, self.date_added, len(self.hashes), self.chapters)
+			 self.pub_date, self.date_added, self.exed, len(self.hashes), self.chapters)
 		return string
 
 class Bridge(QObject):
