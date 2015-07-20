@@ -46,19 +46,8 @@ class AppWindow(QMainWindow):
 
 	def init_watchers(self):
 
-		def find_index(gallery_id):
-			index = None
-			rows = self.manga_list_view.gallery_model.rowCount()
-			for r in range(rows):
-				indx = self.manga_list_view.gallery_model.index(r, 1)
-				m_gallery = indx.data(Qt.UserRole+1)
-				if m_gallery.id == gallery_id:
-					index = indx
-					break
-			return index
-
 		def remove_gallery(g):
-			index = find_index(g.id)
+			index = self.manga_list_view.find_index(g.id)
 			if index:
 				self.manga_list_view.remove_gallery([index])
 
@@ -68,7 +57,7 @@ class AppWindow(QMainWindow):
 			g_dia.show()
 
 		def update_gallery(g):
-			index = find_index(g.id)
+			index = self.manga_list_view.find_index(g.id)
 			if index:
 				self.manga_list_view.replace_edit_gallery([g], index.row())
 			else:
@@ -280,9 +269,11 @@ class AppWindow(QMainWindow):
 		self.notification_bar.begin_show()
 		thread = QThread()
 		fetch_instance = fetch.Fetch()
-		fetch_instance.galleries = self.manga_list_view.gallery_model._data[:5]
+		galleries = [g for g in self.manga_list_view.gallery_model._data if not g.exed]
+		fetch_instance.galleries = galleries[:5]
 		fetch_instance.moveToThread(thread)
 		fetch_instance.GALLERY_PICKER.connect(self._web_metadata_picker)
+		fetch_instance.GALLERY_EMITTER.connect(self.manga_list_view.replace_edit_gallery)
 		fetch_instance.AUTO_METADATA_PROGRESS.connect(self.notification_bar.add_text)
 		thread.started.connect(fetch_instance.auto_web_metadata)
 		fetch_instance.FINISHED.connect(lambda: self.notification_bar.end_show)
@@ -563,10 +554,8 @@ class AppWindow(QMainWindow):
 			self.gallery_populate(path, True)
 
 	def gallery_populate(self, path, validate=False):
-		print('triggered')
 		"Scans the given path for gallery to add into the DB"
 		if len(path) is not 0:
-			print('pass')
 			data_thread = QThread()
 			loading = misc.Loading(self)
 			if not loading.ON:

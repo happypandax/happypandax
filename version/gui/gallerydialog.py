@@ -122,7 +122,6 @@ class GalleryDialog(QWidget):
 		self.descr_edit = QTextEdit()
 		self.descr_edit.setFixedHeight(45)
 		self.descr_edit.setAcceptRichText(True)
-		self.descr_edit.setPlaceholderText("HTML 4 tags are supported")
 		self.lang_box = QComboBox()
 		self.lang_box.addItems(["English", "Japanese", "Other"])
 		self.lang_box.setCurrentIndex(0)

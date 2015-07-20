@@ -1047,7 +1047,7 @@ class MangaView(QListView):
 			for index in index_list:
 				gallery = index.data(Qt.UserRole+1)
 				if index.isValid() and gallery:
-					self.rowsAboutToBeRemoved(index.parent(), index.row(), index.row())
+					#self.rowsAboutToBeRemoved(index.parent(), index.row(), index.row())
 					self.gallery_model.removeRows(index.row(), 1)
 					gallery_list.append(gallery)
 					log_i('Attempt to remove: {} by {}'.format(gallery.title.encode(),
@@ -1370,12 +1370,31 @@ class MangaView(QListView):
 		super().resizeEvent(resizeevent)
 		#print(resizeevent.size())
 
-	def replace_edit_gallery(self, list_of_gallery, pos):
-		"Replaces the view and DB with given list of gallery, at given position"
-		assert isinstance(list_of_gallery, list), "Please pass a gallery to replace with"
-		assert isinstance(pos, int)
-		for gallery in list_of_gallery:
+	def find_index(self, gallery_id):
+		"Finds and returns the index associated with the gallery id"
+		index = None
+		rows = self.gallery_model.rowCount()
+		for r in range(rows):
+			indx = self.gallery_model.index(r, 1)
+			m_gallery = indx.data(Qt.UserRole+1)
+			if m_gallery.id == gallery_id:
+				index = indx
+				break
+		return index
 
+	def replace_edit_gallery(self, list_of_gallery, pos=None):
+		"Replaces the view and DB with given list of gallery, at given position"
+		assert isinstance(list_of_gallery, (list, gallerydb.Gallery)), "Please pass a gallery to replace with"
+		if isinstance(list_of_gallery, gallerydb.Gallery):
+			list_of_gallery = [list_of_gallery]
+		for gallery in list_of_gallery:
+			if not pos:
+				index = self.find_index(gallery.id)
+				if not index:
+					log_e('Could not find index for gallery to edit: {}'.format(
+						gallery.title.encode(errors='ignore')))
+					continue
+				pos = index.row()
 			kwdict = {'title':gallery.title,
 			 'artist':gallery.artist,
 			 'info':gallery.info,
@@ -1391,14 +1410,15 @@ class MangaView(QListView):
 
 			threading.Thread(target=gallerydb.GalleryDB.modify_gallery,
 							 args=(gallery.id,), kwargs=kwdict).start()
+		assert isinstance(pos, int)
 		self.gallery_model.replaceRows([gallery], pos, len(list_of_gallery))
 
 	def spawn_dialog(self, index=False):
 		if not index:
-			dialog = gallerydialog.GalleryDialog(self.parentWidget())
+			dialog = gallerydialog.GalleryDialog(self.parent_widget)
 			dialog.SERIES.connect(self.gallery_model.addRows)
 		else:
-			dialog = gallerydialog.GalleryDialog(self.parentWidget(), [index])
+			dialog = gallerydialog.GalleryDialog(self.parent_widget, [index])
 			dialog.SERIES_EDIT.connect(self.replace_edit_gallery)
 		
 		dialog.show()
@@ -1433,6 +1453,7 @@ class MangaTableView(QTableView):
 	def __init__(self, parent=None):
 		super().__init__(parent)
 		# options
+		self.parent_widget = parent
 		self.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
 		self.setSelectionBehavior(self.SelectRows)
 		self.setSelectionMode(self.ExtendedSelection)
@@ -1447,7 +1468,7 @@ class MangaTableView(QTableView):
 		palette.setColor(palette.HighlightedText, QColor('black'))
 		self.setPalette(palette)
 		self.setIconSize(QSize(0,0))
-		self.doubleClicked.connect(self.open_chapter)
+		self.doubleClicked.connect(self.parent_widget.manga_list_view.open_chapter)
 
 	# display tooltip only for elided text
 	#def viewportEvent(self, event):
@@ -1463,92 +1484,6 @@ class MangaTableView(QTableView):
 	#				QToolTip.hideText()
 	#				return True
 	#	return super().viewportEvent(event)
-
-	def remove_gallery(self, index_list):
-		msgbox = QMessageBox()
-		msgbox.setIcon(msgbox.Question)
-		msgbox.setStandardButtons(msgbox.Yes | msgbox.No)
-		if len(index_list) > 1:
-			msgbox.setText('Are you sure you want to remove {} selected?'.format(
-				len(index_list)))
-		else:
-			msgbox.setText('Are you sure you want to remove?')
-
-		if msgbox.exec() == msgbox.Yes:
-			gallery_list = []
-			log_i('Removed {} galleries'.format(len(gallery_list)))
-			for index in index_list:
-				gallery = index.data(Qt.UserRole+1)
-				if index.isValid() and gallery:
-					self.rowsAboutToBeRemoved(index.parent(), index.row(), index.row())
-					self.gallery_model.removeRows(index.row(), 1)
-					gallery_list.append(gallery)
-					log_i('Attempt to remove: {} by {}'.format(gallery.title.encode(),
-											gallery.artist.encode()))
-			threading.Thread(target=gallerydb.GalleryDB.del_gallery,
-						args=(gallery_list,), daemon=True).start()
-			self.STATUS_BAR_MSG.emit('Gallery removed!')
-
-	def favorite(self, index):
-		assert isinstance(index, QModelIndex)
-		gallery = index.data(Qt.UserRole+1)
-		# TODO: don't need to fetch from DB here... 
-		if gallery.fav == 1:
-			gallery.fav = 0
-			#self.gallery_model.replaceRows([gallery], index.row(), 1, index)
-			gallerydb.GalleryDB.fav_gallery_set(gallery.id, 0)
-			self.gallery_model.CUSTOM_STATUS_MSG.emit("Unfavorited")
-		else:
-			gallery.fav = 1
-			#self.gallery_model.replaceRows([gallery], index.row(), 1, index)
-			gallerydb.GalleryDB.fav_gallery_set(gallery.id, 1)
-			self.gallery_model.CUSTOM_STATUS_MSG.emit("Favorited")
-
-	def open_chapter(self, index, chap_numb=0):
-		if isinstance(index, list):
-			for x in index:
-				gallery = x.data(Qt.UserRole+1)
-				self.STATUS_BAR_MSG.emit("Opening chapters of selected galleries")
-				try:
-					threading.Thread(target=utils.open_chapter,
-							   args=(gallery.chapters[chap_numb],)).start()
-					if not gallery.times_read:
-						gallery.times_read = 0
-					gallery.times_read += 1
-					gallerydb.GalleryDB.modify_gallery(gallery.id,
-						times_read=gallery.times_read)
-				except IndexError:
-					pass
-		else:
-			gallery = index.data(Qt.UserRole+1)
-			self.STATUS_BAR_MSG.emit("Opening chapter {} of {}".format(chap_numb+1,
-																 gallery.title))
-			try:
-				threading.Thread(target=utils.open_chapter,
-						   args=(gallery.chapters[chap_numb],)).start()
-				if not gallery.times_read:
-					gallery.times_read = 0
-				gallery.times_read += 1
-				gallerydb.GalleryDB.modify_gallery(gallery.id,
-					times_read=gallery.times_read)
-			except IndexError:
-				pass
-
-	def del_chapter(self, index, chap_numb):
-		gallery = index.data(Qt.UserRole+1)
-		if len(gallery.chapters) < 2:
-			self.remove_gallery([index])
-		else:
-			msgbox = QMessageBox(self)
-			msgbox.setText('Are you sure you want to delete:')
-			msgbox.setIcon(msgbox.Question)
-			msgbox.setInformativeText('Chapter {} of {}'.format(chap_numb+1,
-														  gallery.title))
-			msgbox.setStandardButtons(msgbox.Yes | msgbox.No)
-			if msgbox.exec() == msgbox.Yes:
-				gallery.chapters.pop(chap_numb, None)
-				self.gallery_model.replaceRows([gallery], index.row())
-				gallerydb.ChapterDB.del_chapter(gallery.id, chap_numb)
 
 	def refresh(self):
 		self.gallery_model.layoutChanged.emit()
@@ -1577,10 +1512,10 @@ class MangaTableView(QTableView):
 		remove_menu = QMenu()
 		remove_act.setMenu(remove_menu)
 		remove_gallery_act = QAction('Remove gallery', remove_menu,
-							   triggered=lambda: self.remove_gallery([index]))
+							   triggered=lambda: self.parent_widget.manga_list_view.remove_gallery([index]))
 		remove_menu.addAction(remove_gallery_act)
 		remove_local_gallery_act = QAction('Remove gallery and files', remove_menu,
-							   triggered=lambda: self.remove_gallery([index], True))
+							   triggered=lambda: self.parent_widget.manga_list_view.remove_gallery([index], True))
 		remove_menu.addAction(remove_local_gallery_act)
 
 		if selected:
@@ -1593,13 +1528,13 @@ class MangaTableView(QTableView):
 			#remove_menu.addAction(remove_local_selected_act)
 
 			all_0 = QAction("Open first chapters", menu,
-					  triggered = lambda: self.open_chapter(select_indexes, 0))
+					  triggered = lambda: self.parent_widget.manga_list_view.open_chapter(select_indexes, 0))
 
 		all_1 = QAction("Open first chapter", menu,
-					triggered = lambda: self.open_chapter(index, 0))
-		all_2 = QAction("Edit...", menu, triggered = lambda: self.spawn_dialog(index))
+					triggered = lambda: self.parent_widget.manga_list_view.open_chapter(index, 0))
+		all_2 = QAction("Edit...", menu, triggered = lambda: self.parent_widget.manga_list_view.spawn_dialog(index))
 		def fav():
-			self.favorite(index)
+			self.parent_widget.manga_list_view.favorite(index)
 
 
 		# add the chapter menus
@@ -1612,7 +1547,7 @@ class MangaTableView(QTableView):
 			for number, chap_number in enumerate(range(len(
 				index.data(Qt.UserRole+1).chapters)), 1):
 				chap_action = QAction("Open chapter {}".format(
-					number), open_chapters, triggered = functools.partial(self.open_chapter, index, chap_number))
+					number), open_chapters, triggered = functools.partial(self.parent_widget.manga_list_view.open_chapter, index, chap_number))
 				open_chapters.addAction(chap_action)
 
 		def open_link():
@@ -1720,7 +1655,7 @@ class MangaTableView(QTableView):
 				for number, chap_number in enumerate(range(len(
 					index.data(Qt.UserRole+1).chapters)), 1):
 					chap_action = QAction("Remove chapter {}".format(
-						number), remove_chap_menu, triggered = lambda: self.del_chapter(index, chap_number))
+						number), remove_chap_menu, triggered = lambda: self.parent_widget.manga_list_view.del_chapter(index, chap_number))
 					remove_chap_menu.addAction(chap_action)
 			menu.addSeparator()
 			# folders
@@ -1745,39 +1680,6 @@ class MangaTableView(QTableView):
 			event.accept()
 		else:
 			event.ignore()
-
-	def replace_edit_gallery(self, list_of_gallery, pos):
-		"Replaces the view and DB with given list of gallery, at given position"
-		assert isinstance(list_of_gallery, list), "Please pass a list of galleries to replace with"
-		assert isinstance(pos, int)
-		for gallery in list_of_gallery:
-
-			kwdict = {'title':gallery.title,
-			 'artist':gallery.artist,
-			 'info':gallery.info,
-			 'type':gallery.type,
-			 'language':gallery.language,
-			 'status':gallery.status,
-			 'pub_date':gallery.pub_date,
-			 'tags':gallery.tags,
-			 'link':gallery.link,
-			 'series_path':gallery.path,
-			 'chapters':gallery,
-			 'exed':gallery.exed}
-
-			threading.Thread(target=gallerydb.GalleryDB.modify_gallery,
-							 args=(gallery.id,), kwargs=kwdict).start()
-		self.gallery_model.replaceRows([gallery], pos, len(list_of_gallery))
-
-	def spawn_dialog(self, index=False):
-		if not index:
-			dialog = gallerydialog.GalleryDialog(self.parentWidget())
-			dialog.SERIES.connect(self.gallery_model.addRows)
-			dialog.show() # TODO: implement mass galleries adding
-		else:
-			dialog = gallerydialog.GalleryDialog(self.parentWidget())
-			dialog.SERIES_EDIT.connect(self.replace_edit_gallery)
-			dialog.show()
 
 if __name__ == '__main__':
 	raise NotImplementedError("Unit testing not yet implemented")

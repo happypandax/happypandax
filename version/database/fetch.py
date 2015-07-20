@@ -182,6 +182,9 @@ class Fetch(QObject):
 		"Emits galleries"
 		assert isinstance(gallery, Gallery)
 		if gallery:
+			gallery.exed = 1
+			gallery.link = gallery.temp_url
+			self.GALLERY_EMITTER.emit(gallery)
 			print('Success')
 
 	def auto_web_metadata(self):
@@ -256,6 +259,7 @@ class Fetch(QObject):
 					if gallery.link:
 						check = self.website_checker(gallery.link)
 						if check == valid_url:
+							gallery.temp_url = gallery.link
 							checked_pre_url_galleries.append(gallery)
 							continue
 						else:
