@@ -143,7 +143,8 @@ class AppWindow(QMainWindow):
 	def start_up(self):
 		def done():
 			self.manga_list_view.gallery_model.init_data()
-			self.init_watchers()
+			if gui_constants.MONITOR_PATHS and all(gui_constants.MONITOR_PATHS):
+				self.init_watchers()
 		if gui_constants.FIRST_TIME_LEVEL < 2:
 
 			class FirstTime(file_misc.BasePopup):
@@ -684,7 +685,10 @@ class AppWindow(QMainWindow):
 
 	def closeEvent(self, event):
 		# watchers
-		self.watchers.stop_all()
+		try:
+			self.watchers.stop_all()
+		except AttributeError:
+			pass
 
 		# settings
 		settings.win_save(self, 'AppWindow')

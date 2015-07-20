@@ -73,7 +73,7 @@ NO_IMAGE_PATH = os.path.join(static_dir, "default.jpg")
 
 # Monitored Paths
 LOOK_NEW_GALLERY_STARTUP = get(True, 'General', 'look new gallery startup', bool)
-MONITOR_PATHS = get('C:/Users/Autriche/Videos/HP Laserjet 5684/Doujin', 'General', 'monitor paths', str).split(',')
+MONITOR_PATHS = get('', 'General', 'monitor paths', str).split(',')
 
 # GENERAL
 SCROLL_TO_NEW_GALLERIES = get(False, 'General', 'scroll to new galleries', bool)
