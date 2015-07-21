@@ -1,3 +1,29 @@
+*Happypanda v0.17*
+- Improved UI
+- Improved stability
+- Improved the toolbar
+-	+ Added a way to find duplicate galleries
+	+ Added a random gallery opener
+	+ Added a way to fetch metadata for all your galleries
+- Added a way to automagically fetch metadata from g.e-/exhentai
+	+ Fetching metadata is now safer, and should not get you banned
+- Added a new sort option: Date added
+- Added a place for gallery hashes in the database
+- Added folder monitoring support
+	+ You will now be informed when you rename, remove or add a gallery source in one of your monitored folders
+	+ The application will scan for new galleries in all of your monitored folders on startup
+- Added a new section in settings dialog: Application
+	+ Added new options in settings dialog
+	+ Enabled the 'General' tab in the Web section
+- Bugfixes:
+	+ Fixed a bug where you could only open the first chapter of a gallery
+	+ Fixed a bug causing the application to crash when populating new galleries
+	+ Fixed some issues occuring when adding archive files
+	+ Fixed some issues occuring when editing galleries
+	+ other small bugfixes
+- Disabled gallery source type and external program viewer icons because of memory leak (will be reenabled in a later version)
+- Cleaned up some code
+
 *Happypanda v0.16*
 - A more proper way to search for namespace and tags is now available
 - Added support for external image viewers
