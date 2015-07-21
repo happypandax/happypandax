@@ -14,7 +14,7 @@ I'm here if you have any questions!
 <img src="misc/screenshot4.png" width="300">
 
 # How to install & run
-*(I have only tested this on windows)*
+*(Tested on windows and linux)*
 
 For Mac & Linux see [INSTALL.md](INSTALL.md)
 
