@@ -291,7 +291,7 @@ class AppWindow(QMainWindow):
 			if not galleries:
 				self.notification_bar.add_text('Seems like we\'ve gone through all galleries!')
 				return None
-		fetch_instance.galleries = galleries[:5]
+		fetch_instance.galleries = galleries
 
 		self.notification_bar.begin_show()
 		fetch_instance.moveToThread(thread)

@@ -245,6 +245,7 @@ class GalleryDialog(QWidget):
 			else:
 				return None
 		head, tail = os.path.split(name)
+		name = os.path.join(head, tail)
 		parsed = utils.title_parser(tail)
 		self.title_edit.setText(parsed['title'])
 		self.author_edit.setText(parsed['artist'])
