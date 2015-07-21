@@ -40,6 +40,8 @@ class SettingsDialog(QWidget):
 		left_panel.setMaximumWidth(200)
 		left_panel.itemClicked.connect(self.change)
 		#web.setText('Web')
+		self.application = QListWidgetItem()
+		self.application.setText('Application')
 		self.web = QListWidgetItem()
 		self.web.setText('Web')
 		self.visual = QListWidgetItem()
@@ -50,6 +52,7 @@ class SettingsDialog(QWidget):
 		self.about.setText('About')
 
 		#main.setIcon(QIcon(os.path.join(gui_constants.static_dir, 'plus2.png')))
+		left_panel.addItem(self.application)
 		left_panel.addItem(self.web)
 		left_panel.addItem(self.visual)
 		left_panel.addItem(self.advanced)
@@ -68,8 +71,7 @@ class SettingsDialog(QWidget):
 		cancel_btn.clicked.connect(self.close)
 		info_lbl = QLabel()
 		info_lbl.setText('<a href="https://github.com/Pewpews/happypanda">'+
-				   'Visit GitHub Repo</a> | Find any bugs? Check out the troubleshoot guide '+
-				   'in About section.')
+				   'Visit GitHub Repo</a> | Options marked with * requires application restart.')
 		info_lbl.setTextFormat(Qt.RichText)
 		info_lbl.setTextInteractionFlags(Qt.TextBrowserInteraction)
 		info_lbl.setOpenExternalLinks(True)
@@ -95,8 +97,9 @@ class SettingsDialog(QWidget):
 		def curr_index(index):
 			if index != self.right_panel.currentIndex():
 				self.right_panel.setCurrentIndex(index)
-
-		if item == self.web:
+		if item == self.application:
+			curr_index(self.application_index)
+		elif item == self.web:
 			curr_index(self.web_index)
 		elif item == self.visual:
 			curr_index(self.visual_index)
@@ -121,6 +124,25 @@ class SettingsDialog(QWidget):
 		self.prefetch_item_amnt = gui_constants.PREFETCH_ITEM_AMOUNT
 
 	def restore_options(self):
+		# App / Monitor / Misc
+		self.enable_monitor.setChecked(gui_constants.ENABLE_MONITOR)
+		self.look_new_gallery_startup.setChecked(gui_constants.LOOK_NEW_GALLERY_STARTUP)
+		self.auto_add_new_galleries.setChecked(gui_constants.LOOK_NEW_GALLERY_AUTOADD)
+		# App / Monitor / Folders
+		for path in gui_constants.MONITOR_PATHS:
+			self.add_folder_monitor(path)
+
+		# Web / General
+		if 'g.e-hentai' in gui_constants.DEFAULT_EHEN_URL:
+			self.default_ehen_url.setChecked(True)
+		else:
+			self.exhentai_ehen_url.setChecked(True)
+		
+		self.fetch_ehen_api.setChecked(gui_constants.FETCH_EHEN_API)
+		self.replace_metadata.setChecked(gui_constants.REPLACE_METADATA)
+		self.always_first_hit.setChecked(gui_constants.ALWAYS_CHOOSE_FIRST_HIT)
+		self.web_time_offset.setValue(gui_constants.GLOBAL_EHEN_TIME)
+
 		# Web / Exhentai
 		self.ipbid_edit.setText(self.exprops.ipb_id)
 		self.ipbpass_edit.setText(self.exprops.ipb_pass)
@@ -168,6 +190,48 @@ class SettingsDialog(QWidget):
 
 	def accept(self):
 		set = settings.set
+
+		# App / Monitor / misc
+		gui_constants.ENABLE_MONITOR = self.enable_monitor.isChecked()
+		set(gui_constants.ENABLE_MONITOR, 'Application', 'enable monitor')
+		gui_constants.LOOK_NEW_GALLERY_STARTUP = self.look_new_gallery_startup.isChecked()
+		set(gui_constants.LOOK_NEW_GALLERY_STARTUP, 'Application', 'look new gallery startup')
+		gui_constants.LOOK_NEW_GALLERY_AUTOADD = self.auto_add_new_galleries.isChecked()
+		set(gui_constants.LOOK_NEW_GALLERY_AUTOADD, 'Application', 'look new gallery autoadd')
+		# App / Monitor / folders
+		n = self.folders_layout.rowCount()
+		paths = ''
+		for x in range(n):
+			item = self.folders_layout.takeAt(x+1)
+			l_edit = item.widget()
+			p = l_edit.text()
+			if p:
+				if x == n-1:
+					paths += '{}'.format(p)
+				else:
+					paths += '{},'.format(p)
+		set(paths, 'Application', 'monitor paths')
+		gui_constants.MONITOR_PATHS = paths.split(',')
+
+		# Web / General
+		if self.default_ehen_url.isChecked():
+			gui_constants.DEFAULT_EHEN_URL = 'http://g.e-hentai.org/'
+		else:
+			gui_constants.DEFAULT_EHEN_URL = 'http://exhentai.org/'
+		set(gui_constants.DEFAULT_EHEN_URL, 'Web', 'default ehen url')
+
+		gui_constants.FETCH_EHEN_API = self.fetch_ehen_api.isChecked()
+		set(gui_constants.FETCH_EHEN_API, 'Web', 'fetch ehen api')
+
+		gui_constants.REPLACE_METADATA = self.replace_metadata.isChecked()
+		set(gui_constants.REPLACE_METADATA, 'Web', 'replace metadata')
+
+		gui_constants.ALWAYS_CHOOSE_FIRST_HIT = self.always_first_hit.isChecked()
+		set(gui_constants.ALWAYS_CHOOSE_FIRST_HIT, 'Web', 'always choose first hit')
+
+		gui_constants.GLOBAL_EHEN_TIME = self.web_time_offset.value()
+		set(gui_constants.GLOBAL_EHEN_TIME, 'Web', 'global ehen time offset')
+
 		# Web / ExHentai
 		self.exprops.ipb_id = self.ipbid_edit.text()
 		self.exprops.ipb_pass = self.ipbpass_edit.text()
@@ -266,18 +330,121 @@ class SettingsDialog(QWidget):
 		#	title_lbl.setFont(f)
 		#	return title_lbl
 
+		# App
+		application = QTabWidget()
+		self.application_index = self.right_panel.addWidget(application)
+		application_general = QWidget()
+		application.addTab(application_general, 'General')
+		application.setTabEnabled(0, False)
+
+		# App / Monitor
+		app_monitor_page = QScrollArea()
+		app_monitor_page.setBackgroundRole(QPalette.Base)
+		app_monitor_dummy = QWidget()
+		app_monitor_page.setWidgetResizable(True)
+		app_monitor_page.setWidget(app_monitor_dummy)
+		application.addTab(app_monitor_page, 'Monitoring')
+		application.setCurrentIndex(1)
+		app_monitor_m_l = QVBoxLayout(app_monitor_dummy)
+		# App / Monitor / misc
+		app_monitor_misc_group = QGroupBox('General *', self)
+		app_monitor_m_l.addWidget(app_monitor_misc_group)
+		app_monitor_misc_m_l = QFormLayout(app_monitor_misc_group)
+		monitor_info = QLabel('Directory monitoring will monitor the specified directories for any'+
+						'gallery events. For example if you delete a gallery source in one of your'+
+						'monitored directories the application will inform you about it, and ask if'+
+						'you want to delete the gallery from the application as well.')
+		monitor_info.setWordWrap(True)
+		app_monitor_misc_m_l.addRow(monitor_info)
+		self.enable_monitor = QCheckBox('Enable directory monitoring')
+		app_monitor_misc_m_l.addRow(self.enable_monitor)
+		self.look_new_gallery_startup = QGroupBox('Scan for new galleries on startup', self)
+		app_monitor_misc_m_l.addRow(self.look_new_gallery_startup)
+		self.look_new_gallery_startup.setCheckable(True)
+		look_new_gallery_startup_m_l = QVBoxLayout(self.look_new_gallery_startup)
+		self.auto_add_new_galleries = QCheckBox('Automatically add found galleries')
+		self.auto_add_new_galleries.setDisabled(True)
+		look_new_gallery_startup_m_l.addWidget(self.auto_add_new_galleries)
+
+		# App / Monitor / folders
+		app_monitor_group = QGroupBox('Directories *', self)
+		app_monitor_m_l.addWidget(app_monitor_group, 1)
+		app_monitor_folders_m_l = QVBoxLayout(app_monitor_group)
+		app_monitor_folders_add = QPushButton('+')
+		app_monitor_folders_add.clicked.connect(self.add_folder_monitor)
+		app_monitor_folders_add.setMaximumWidth(20)
+		app_monitor_folders_add.setMaximumHeight(20)
+		app_monitor_folders_m_l.addWidget(app_monitor_folders_add, 0, Qt.AlignRight)
+		self.folders_layout = QFormLayout()
+		app_monitor_folders_m_l.addLayout(self.folders_layout)
+
 		# Web
 		web = QTabWidget()
 		self.web_index = self.right_panel.addWidget(web)
-		web_general_page = QWidget()
+		web_general_page = QScrollArea()
+		web_general_page.setBackgroundRole(QPalette.Base)
+		web_general_page.setWidgetResizable(True)
 		web.addTab(web_general_page, 'General')
-		web.setTabEnabled(0, False)
+		web_general_dummy = QWidget()
+		web_general_page.setWidget(web_general_dummy)
+		web_general_m_l = QVBoxLayout(web_general_dummy)
+		metadata_fetcher_group = QGroupBox('Metadata', self)
+		web_general_m_l.addWidget(metadata_fetcher_group)
+		metadata_fetcher_m_l = QFormLayout(metadata_fetcher_group)
+		self.default_ehen_url = QRadioButton('g.e-hentai.org', metadata_fetcher_group)
+		self.exhentai_ehen_url = QRadioButton('exhentai.org', metadata_fetcher_group)
+		ehen_url_l = QHBoxLayout()
+		ehen_url_l.addWidget(self.default_ehen_url)
+		ehen_url_l.addWidget(self.exhentai_ehen_url, 1)
+		metadata_fetcher_m_l.addRow('Default URL:', ehen_url_l)
+		metadata_method_group = QGroupBox('Method', self)
+		metadata_fetcher_m_l.addRow(metadata_method_group)
+		metadata_method_l = QVBoxLayout(metadata_method_group)
+		api_info = QLabel('Fetching through the API is quicker, but namespaces are not included.')
+		api_info.setWordWrap(True)
+		self.fetch_ehen_api = QRadioButton('API', metadata_method_group)
+		self.fetch_ehen_api.setEnabled(False)
+		html_info = QLabel('Fetching through HTML is slower, but namespaces are included.')
+		html_info.setWordWrap(True)
+		self.fetch_ehen_html = QRadioButton('HTML', metadata_method_group)
+		self.fetch_ehen_html.setChecked(True)
+		metadata_method_l.addWidget(api_info)
+		metadata_method_l.addWidget(self.fetch_ehen_api)
+		metadata_method_l.addWidget(html_info)
+		metadata_method_l.addWidget(self.fetch_ehen_html)
+		time_offset_info = QLabel('To avoid getting banned, we need to impose a delay between our requests.'+
+							' I have made it so you cannot set the delay lower than the recommended (I don\'t'+
+							' want you to get banned, anon).\nSpecify the delay between requests in seconds.')
+		time_offset_info.setWordWrap(True)
+		self.web_time_offset = QSpinBox()
+		self.web_time_offset.setMaximumWidth(40)
+		self.web_time_offset.setMinimum(4)
+		self.web_time_offset.setMaximum(99)
+		metadata_fetcher_m_l.addRow(time_offset_info)
+		metadata_fetcher_m_l.addRow('Requests delay in', self.web_time_offset)
+		replace_metadata_info = QLabel('When fetching for metadata the new metadata will be appended'+
+								 ' to the gallery by default. This means that new data will only be set if'+
+								 ' the field was empty. There is however a special case for namespace & tags.'+
+								 'We go through all the new namespace & tags to only add those who'+
+								 ' does not already exists.\n\nEnabling this option makes it so that a gallery\'s old data'+
+								 ' are deleted and replaced with the new data.')
+		replace_metadata_info.setWordWrap(True)
+		self.replace_metadata = QCheckBox('Replace old metadata with new metadata')
+		metadata_fetcher_m_l.addRow(replace_metadata_info)
+		metadata_fetcher_m_l.addRow(self.replace_metadata)
+		first_hit_info = QLabel('By default, you get to choose which gallery to extract metadata from when'+
+						  'when more than 1 galleries are found when searching.\n'+
+						  'Enabling this option makes it choose the first hit, saving you from moving your mouse.')
+		first_hit_info.setWordWrap(True)
+		self.always_first_hit = QCheckBox('Always choose first hit')
+		metadata_fetcher_m_l.addRow(first_hit_info)
+		metadata_fetcher_m_l.addRow(self.always_first_hit)
+
+		# Web / Exhentai
 		exhentai_page = QWidget()
 		web.addTab(exhentai_page, 'ExHentai')
-		web.setCurrentIndex(1)
 		ipb_layout = QFormLayout()
 		exhentai_page.setLayout(ipb_layout)
-		# exhentai
 		self.ipbid_edit = QLineEdit()
 		self.ipbpass_edit = QLineEdit()
 		exh_tutorial = QLabel(gui_constants.EXHEN_COOKIE_TUTORIAL)
@@ -564,6 +731,13 @@ class SettingsDialog(QWidget):
 		about_search_tags_l.addRow(QLabel(gui_constants.SEARCH_TUTORIAL_TAGS))
 		about_search_scroll.setWidget(about_search_tut)
 
+	def add_folder_monitor(self, path=''):
+		if not isinstance(path, str):
+			path = ''
+		l_edit = PathLineEdit()
+		l_edit.setText(path)
+		n = self.folders_layout.rowCount() + 1
+		self.folders_layout.addRow('Dir {}'.format(n), l_edit)
 
 	def color_checker(self, txt):
 		allow = False

@@ -75,9 +75,8 @@ class CommenHen:
 		print('locked')
 		self.LOCK.acquire()
 		t1 = time.time()
-		while int(time.time() - self.LAST_USED) < 5:
-			print('sleeping')
-			t = random.randint(6, self.TIME_RAND)
+		while int(time.time() - self.LAST_USED) < 4:
+			t = random.randint(4, self.TIME_RAND)
 			time.sleep(t)
 		t2 = time.time() - t1
 		print("slept for", t2)

@@ -83,58 +83,72 @@ class AppWindow(QMainWindow):
 		self.watchers.gallery_handler.DELETED_SIGNAL.connect(deleted)
 
 		if gui_constants.LOOK_NEW_GALLERY_STARTUP:
-			db_data = self.manga_list_view.gallery_model._data
-			paths = []
-			for g in range(len(db_data)):
-				paths.append(os.path.normcase(db_data[g].path))
+			try:
+				db_data = self.manga_list_view.gallery_model._data
+				paths = []
+				for g in range(len(db_data)):
+					paths.append(os.path.normcase(db_data[g].path))
 
-			contents = []
-			case_path = [] # needed for tile and artist parsing... e.g to avoid lowercase
-			for m_path in gui_constants.MONITOR_PATHS:
-				for p in os.listdir(m_path):
-					abs_p = os.path.join(m_path, p)
-					if os.path.isdir(abs_p) or \
-						p.endswith(utils.ARCHIVE_FILES):
-						case_path.append(abs_p)
-						contents.append(os.path.normcase(abs_p))
+				contents = []
+				case_path = [] # needed for tile and artist parsing... e.g to avoid lowercase
+				for m_path in gui_constants.MONITOR_PATHS:
+					for p in os.listdir(m_path):
+						abs_p = os.path.join(m_path, p)
+						if os.path.isdir(abs_p) or \
+							p.endswith(utils.ARCHIVE_FILES):
+							case_path.append(abs_p)
+							contents.append(os.path.normcase(abs_p))
 
-			paths = sorted(paths)
-			new_galleries = []
-			for c, x in enumerate(contents):
-				y = utils.b_search(paths, x)
-				if not y:
-					# (path, number for case_path)
-					new_galleries.append((x, c))
+				paths = sorted(paths)
+				new_galleries = []
+				for c, x in enumerate(contents):
+					y = utils.b_search(paths, x)
+					if not y:
+						# (path, number for case_path)
+						new_galleries.append((x, c))
 
-			if new_galleries:
-				galleries = []
-				final_paths = []
-				for g in new_galleries:
-					gallery = gallerydb.Gallery()
-					gallery.profile = utils.get_gallery_img(g[0])
-					parser_dict = utils.title_parser(os.path.split(case_path[g[1]])[1])
-					gallery.title = parser_dict['title']
-					gallery.artist = parser_dict['artist']
-					galleries.append(gallery)
-					final_paths.append(case_path[g[1]])
+				if new_galleries:
+					self.notification_bar.add_text(
+						'{} new galleries have been found in one of your monitored folders.'.format(len(new_galleries)))
+					galleries = []
+					final_paths = []
+					for g in new_galleries:
+						gallery = gallerydb.Gallery()
+						try:
+							gallery.profile = utils.get_gallery_img(g[0])
+						except:
+							gallery.profile = gui_constants.NO_IMAGE_PATH
+						parser_dict = utils.title_parser(os.path.split(case_path[g[1]])[1])
+						gallery.title = parser_dict['title']
+						gallery.artist = parser_dict['artist']
+						galleries.append(gallery)
+						final_paths.append(case_path[g[1]])
 
-				text = "These new galleries were discovered! Do you want to add them?"\
-					if len(galleries) > 1 else "This new gallery was discovered! Do you want to add it?"
-				g_popup = file_misc.GalleryPopup((text, galleries), self)
-				buttons = g_popup.add_buttons('Add', 'Close')
+					#if gui_constants.LOOK_NEW_GALLERY_AUTOADD:
+					#	QTimer.singleShot(10000, self.gallery_populate(final_paths))
+					#	return
 
-				def populate_n_close():
-					self.gallery_populate(final_paths)
-					g_popup.close()
-				buttons[0].clicked.connect(populate_n_close)
-				buttons[1].clicked.connect(g_popup.close)
+					text = "These new galleries were discovered! Do you want to add them?"\
+						if len(galleries) > 1 else "This new gallery was discovered! Do you want to add it?"
+					g_popup = file_misc.GalleryPopup((text, galleries), self)
+					buttons = g_popup.add_buttons('Add', 'Close')
+
+					def populate_n_close():
+						self.gallery_populate(final_paths)
+						g_popup.close()
+					buttons[0].clicked.connect(populate_n_close)
+					buttons[1].clicked.connect(g_popup.close)
+			except:
+				self.notification_bar.add_text('An error occured while attempting to scan for new galleries. Check happypanda.log.')
+				log.exception('An error occured while attempting to scan for new galleries.')
 
 	def start_up(self):
 		def normalize_first_time():
 			settings.set(2, 'Application', 'first time level')
 		def done():
 			self.manga_list_view.gallery_model.init_data()
-			if gui_constants.MONITOR_PATHS and all(gui_constants.MONITOR_PATHS):
+			if gui_constants.ENABLE_MONITOR and\
+				gui_constants.MONITOR_PATHS and all(gui_constants.MONITOR_PATHS):
 				self.init_watchers()
 			if gui_constants.FIRST_TIME_LEVEL < 2:
 				normalize_first_time()
@@ -650,8 +664,8 @@ class AppWindow(QMainWindow):
 							misc.Loading.ON = False
 
 					else:
-						log_e('Populating DB from gallery folder: FAIL')
-						loading.setText("<font color=red>An error occured. Check happypanda_log..</font>")
+						log_e('Populating DB from gallery folder: Nothing was added!')
+						loading.setText("<font color=red>Nothing was added. Check happypanda_log for details..</font>")
 						loading.progress.setStyleSheet("background-color:red;")
 						data_thread.quit
 						QTimer.singleShot(10000, loading.close)

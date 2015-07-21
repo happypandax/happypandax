@@ -1,16 +1,14 @@
-﻿"""
-This file is part of Happypanda.
-Happypanda is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 2 of the License, or
-any later version.
-Happypanda is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-You should have received a copy of the GNU General Public License
-along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
-"""
+﻿#This file is part of Happypanda.
+#Happypanda is free software: you can redistribute it and/or modify
+#it under the terms of the GNU General Public License as published by
+#the Free Software Foundation, either version 2 of the License, or
+#any later version.
+#Happypanda is distributed in the hope that it will be useful,
+#but WITHOUT ANY WARRANTY; without even the implied warranty of
+#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#GNU General Public License for more details.
+#You should have received a copy of the GNU General Public License
+#along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 from .. import settings
@@ -72,8 +70,10 @@ LIST_PATH = os.path.join(static_dir, "list.png")
 NO_IMAGE_PATH = os.path.join(static_dir, "default.jpg")
 
 # Monitored Paths
-LOOK_NEW_GALLERY_STARTUP = get(True, 'General', 'look new gallery startup', bool)
-MONITOR_PATHS = get('', 'General', 'monitor paths', str).split(',')
+LOOK_NEW_GALLERY_STARTUP = get(True, 'Application', 'look new gallery startup', bool)
+LOOK_NEW_GALLERY_AUTOADD = get(False, 'Application', 'look new gallery autoadd', bool)
+ENABLE_MONITOR = get(True, 'Application', 'enable monitor', bool)
+MONITOR_PATHS = [x for x in get('', 'Application', 'monitor paths', str).split(',') if x]
 
 # GENERAL
 SCROLL_TO_NEW_GALLERIES = get(False, 'General', 'scroll to new galleries', bool)
@@ -84,13 +84,12 @@ HASH_GALLERY_PAGES = get('all', 'General', 'hash gallery pages', int, str)
 
 # WEB
 API_URL = 'http://178.62.73.39/'
-SESSION_COOKIES_PATH = os.path.join(static_dir, 'session')
 GLOBAL_EHEN_TIME = get(10, 'Web', 'global ehen time offset', int)
 GLOBAL_EHEN_LOCK = False
 FETCH_METADATA_API = get(True, 'Web', 'fetch metadata api', bool)
 FETCH_EHEN_API = get(False, 'Web', 'fetch ehen api', bool)
 DEFAULT_EHEN_URL = get('http://g.e-hentai.org/', 'Web', 'default ehen url', str)
-REPLACE_METADATA = get(True, 'Web', 'replace metadata', bool)
+REPLACE_METADATA = get(False, 'Web', 'replace metadata', bool)
 ALWAYS_CHOOSE_FIRST_HIT = get(False, 'Web', 'always choose first hit', bool)
 
 # External Viewer

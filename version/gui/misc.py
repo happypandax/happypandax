@@ -530,6 +530,8 @@ class PathLineEdit(QLineEdit):
 	def __init__(self, parent=None, dir=True):
 		super().__init__(parent)
 		self.folder = dir
+		self.setPlaceholderText('Right/Left-click to open folder explorer.')
+		self.setToolTip('Right/Left-click to open folder explorer.')
 
 	def openExplorer(self):
 		if self.folder:
