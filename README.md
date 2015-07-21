@@ -11,6 +11,7 @@ I'm here if you have any questions!
 <img src="misc/screenshot1.png" width="300">
 <img src="misc/screenshot2.png" width="300">
 <img src="misc/screenshot3.png" width="300">
+<img src="misc/screenshot4.png" width="300">
 
 # How to install & run
 *(I have only tested this on windows)*
@@ -21,34 +22,39 @@ For Mac & Linux see [INSTALL.md](INSTALL.md)
 2. Extract to desired location (avoid locations where you need admin rights)
 3. Run the program by clicking on Happypanda
 
-# Usage
-- Click "Add gallery". Choose your gallery folder and edit the metadata, click done when... done.
-- Or you can populate the program with all galleries from folder by clicking on the arrow for dropdown menu and then 'Populate from folder':
-    - Currently supports ZIP/CBZ and the following folder structures *(Mixed structures are supported)*:
-        + .../My_general_gallery_folder
-            - --/gallery1_folder
-                - --/Chp_1_folder
-                    - --/image_1
-                    - --/image_2
-                - --/Chp_n_folder
-                    - --/image_n
-
-        + .../My_general_gallery_folder
-            - --/gallery1_folder
+# Features
+- Keep track of your galleries and organize them more easily
+- Search for galleries through title, artist or namespaces & tags
+- Fetch metadata which includes namespace & tags from the web (Currently only supports g.e-hentai and exhentai) without getting you banned
+- Favourite your favourite galleries and keep them in a seperate view
+- View your galleries with highquality thumbnails or in a simple table list
+- Add your galleries easily without worrying about adding duplicates with one of the 3 available modes:
+	+ Add a single gallery. *Note: this way you can add even if the gallery already exist*
+	+ Add galleries from different locations
+	+ Or just populate from a single folder containing all your galleries
+- Currently supports ZIP/CBZ and the following folder structures:
+    + .../My_general_gallery_folder
+        - --/gallery1_folder
+            - --/Chp_1_folder
                 - --/image_1
                 - --/image_2
-            - --/gallery_n_folder
-                - --/image_n
+            - --/Chp_n_folder
                 - --/image_n
 
-- Edit/Remove/Open/Favourite gallery by rightclicking on it
-- Doubleclick on gallery to open first chapter
-- Click on a gallery to open a window with it's metadata
-- Search title, author and namespace & tags
+    + .../My_general_gallery_folder
+        - --/gallery1_folder
+            - --/image_1
+            - --/image_2
+        - --/gallery_n_folder
+            - --/image_n
+            - --/image_n
+- Add new released chapters to your gallery easily
+- Monitor 1 or more folders for events and be notified:
+	+ Renaming a gallery source  will prompt the program to ask if you want to update the renamed gallery's source
+	+ Deleting a gallery source will prompt the program to ask if you want to remove the gallery from the program as well
+	+ Adding new gallery sources will prompt the program to ask you if you want to add them
+- Customize your program with lots of options in the settings
 - And lots more...
-
-
-- If everything fails or you somehow messed up, then feel free to delete the DB folder and start over. Find me in the gitter chat, if you have any questions.
 
 # Dependencies
 - Qt5 (Install this first) >= 5.4
