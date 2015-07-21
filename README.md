@@ -1,5 +1,5 @@
 # Happypanda
-A cross platform manga/doujinshi manager with tagging support.
+A cross platform manga/doujinshi manager with namespace & tag support.
 
 Development is done in alpha branch
 
