@@ -181,7 +181,7 @@ class Fetch(QObject):
 			if not gallery.link:
 				gallery.link = gallery.temp_url
 			self.GALLERY_EMITTER.emit(gallery)
-			print('Success')
+			log_d('Success')
 
 	def auto_web_metadata(self):
 		"""
@@ -223,7 +223,6 @@ class Fetch(QObject):
 				if not hash:
 					continue
 				gallery.hash = hash
-				print(hash)
 				hashed_galleries.append(gallery)
 
 			self.AUTO_METADATA_PROGRESS.emit("Searching for galleries with the custom api..")

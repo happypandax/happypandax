@@ -72,17 +72,17 @@ class CommenHen:
 		raise NotImplementedError
 
 	def begin_lock(self):
-		print('locked')
+		log_d('locked')
 		self.LOCK.acquire()
 		t1 = time.time()
 		while int(time.time() - self.LAST_USED) < 4:
 			t = random.randint(4, self.TIME_RAND)
 			time.sleep(t)
 		t2 = time.time() - t1
-		print("slept for", t2)
+		log_d("Slept for", t2)
 	
 	def end_lock(self):
-		print('unlocked')
+		log_d('unlocked')
 		self.LAST_USED = time.time()
 		self.LOCK.release()
 
@@ -232,7 +232,7 @@ class CommenHen:
 		found_galleries = {}
 		log_i('Initiating hash search on ehentai')
 		for h in hash_string:
-			print('Hash search: {}'.format(h))
+			log_d('Hash search: {}'.format(h))
 			self.begin_lock()
 			r = requests.get(hash_url+h, headers=self.HEADERS)
 			self.end_lock()

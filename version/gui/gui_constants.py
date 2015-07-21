@@ -27,7 +27,7 @@ temp_dir = os.path.join('temp')
 default_stylesheet_path = static_dir + '/' + "style.css"
 user_stylesheet_path = ""
 
-FIRST_TIME_LEVEL = get(2, 'Application', 'first time level', int)
+FIRST_TIME_LEVEL = get(1, 'Application', 'first time level', int)
 
 # sizes
 MAIN_W = 1029 # main window

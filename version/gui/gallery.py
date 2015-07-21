@@ -975,7 +975,7 @@ class MangaView(QListView):
 		self.doubleClicked.connect(self.open_chapter)
 		def debug_print(a):
 			print(a.data(Qt.UserRole+1))
-		self.clicked.connect(debug_print)
+		#self.clicked.connect(debug_print)
 	#	self.ti = QTimer()
 	#	self.ti.timeout.connect(self.test_)
 	#	self.ti.start(5000)

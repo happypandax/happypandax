@@ -213,7 +213,6 @@ class SingleGalleryChoices(BasePopup):
 		item = self.list_w.selectedItems()
 		if item:
 			item = item[0]
-			print(item.gallery)
 			self.USER_CHOICE.emit(item.gallery)
 			self.close()
 
