@@ -1,5 +1,5 @@
-# Happypanda
-A cross platform manga/doujinshi manager with namespace & tag support.
+# Website
+http://pewpews.github.io/happypanda
 
 Development is done in alpha branch
 
