@@ -329,7 +329,8 @@ class GalleryDialog(QWidget):
 	def web_metadata(self, url, btn_widget, pgr_widget):
 		self.link_lbl.setText(url)
 		f = fetch.Fetch()
-		thread = QThread()
+		thread = QThread(self)
+		thread.setObjectName('Gallerydialog web metadata')
 		btn_widget.hide()
 		pgr_widget.show()
 
@@ -352,11 +353,7 @@ class GalleryDialog(QWidget):
 				pgr_widget.setStyleSheet(danger)
 				QTimer.singleShot(3000, do_hide)
 			f.deleteLater()
-			thread.deleteLater()
 
-		def t_del_later():
-			thread.deleteLater
-			thread.quit()
 		def gallery_picker(gallery, title_url_list, q):
 			self.parent_widget._web_metadata_picker(gallery, title_url_list, q, self)
 
@@ -374,6 +371,7 @@ class GalleryDialog(QWidget):
 		f.GALLERY_PICKER.connect(gallery_picker)
 		f.GALLERY_EMITTER.connect(self.set_web_metadata)
 		thread.started.connect(f.auto_web_metadata)
+		thread.finished.connect(thread.deleteLater)
 		f.FINISHED.connect(status)
 		thread.start()
 			

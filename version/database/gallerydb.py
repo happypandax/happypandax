@@ -1063,7 +1063,6 @@ class Gallery:
 
 class Bridge(QObject):
 	DONE = pyqtSignal(bool)
-	TERMINATE = pyqtSignal()
 	def __init__(self, parent=None):
 		super().__init__(parent)
 
@@ -1072,7 +1071,6 @@ class Bridge(QObject):
 			self.DONE.emit(True)
 		else:
 			self.DONE.emit(False)
-		self.TERMINATE.emit()
 if __name__ == '__main__':
 	#unit testing here
 	date = today()
