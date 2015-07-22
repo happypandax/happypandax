@@ -193,7 +193,7 @@ Linux: Default Viewer
 Mac: Default Viewer
 
 Note: Your viewer *might* still work, even though it's not on the list.
-You preffered viewer not on the list? Hit me up on github/gitter-chat to add official support.
+Is your preffered viewer not on the list? Hit me up on github/gitter-chat to add official support.
 """
 
 SEARCH_TUTORIAL_TIT_AUT =\

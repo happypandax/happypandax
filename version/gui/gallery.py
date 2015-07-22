@@ -1038,7 +1038,7 @@ class MangaView(QListView):
 			if not local:
 				msg = 'Are you sure you want to remove this gallery?'
 			else:
-				msg = 'Are you sure you want to remove this gallery and it\'s file/diriectory?'
+				msg = 'Are you sure you want to remove this gallery and its file/directory?'
 			msgbox.setText(msg)
 
 		if msgbox.exec() == msgbox.Yes:

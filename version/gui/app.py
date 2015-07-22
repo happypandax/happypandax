@@ -266,13 +266,12 @@ class AppWindow(QMainWindow):
 				else:
 					self.notification_bar.add_text("An error occurred while checking for new version")
 
-		update_instance = upd_chk()
+		self.update_instance = upd_chk()
 		thread = QThread(self)
-		thread.setObjectName('Check update')
-		update_instance.moveToThread(thread)
-		update_instance.UPDATE_CHECK.connect(check_update)
-		thread.started.connect(update_instance.fetch_vs)
-		update_instance.UPDATE_CHECK.connect(update_instance.deleteLater)
+		self.update_instance.moveToThread(thread)
+		thread.started.connect(self.update_instance.fetch_vs)
+		self.update_instance.UPDATE_CHECK.connect(check_update)
+		self.update_instance.UPDATE_CHECK.connect(self.update_instance.deleteLater)
 		thread.finished.connect(thread.deleteLater)
 		thread.start()
 
@@ -293,7 +292,7 @@ class AppWindow(QMainWindow):
 		else:
 			galleries = [g for g in self.manga_list_view.gallery_model._data if not g.exed]
 			if not galleries:
-				self.notification_bar.add_text('Seems like we\'ve gone through all galleries!')
+				self.notification_bar.add_text('Seems like we\'ve already gone through all galleries!')
 				return None
 		fetch_instance.galleries = galleries
 

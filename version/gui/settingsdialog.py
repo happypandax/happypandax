@@ -351,9 +351,9 @@ class SettingsDialog(QWidget):
 		app_monitor_m_l.addWidget(app_monitor_misc_group)
 		app_monitor_misc_m_l = QFormLayout(app_monitor_misc_group)
 		monitor_info = QLabel('Directory monitoring will monitor the specified directories for any'+
-						'gallery events. For example if you delete a gallery source in one of your'+
-						'monitored directories the application will inform you about it, and ask if'+
-						'you want to delete the gallery from the application as well.')
+						' gallery events. For example if you delete a gallery source in one of your'+
+						' monitored directories the application will inform you about it, and ask if'+
+						' you want to delete the gallery from the application as well.')
 		monitor_info.setWordWrap(True)
 		app_monitor_misc_m_l.addRow(monitor_info)
 		self.enable_monitor = QCheckBox('Enable directory monitoring')
@@ -425,15 +425,15 @@ class SettingsDialog(QWidget):
 		replace_metadata_info = QLabel('When fetching for metadata the new metadata will be appended'+
 								 ' to the gallery by default. This means that new data will only be set if'+
 								 ' the field was empty. There is however a special case for namespace & tags.'+
-								 'We go through all the new namespace & tags to only add those who'+
-								 ' does not already exists.\n\nEnabling this option makes it so that a gallery\'s old data'+
+								 ' We go through all the new namespace & tags to only add those that'+
+								 ' do not already exists.\n\nEnabling this option makes it so that a gallery\'s old data'+
 								 ' are deleted and replaced with the new data.')
 		replace_metadata_info.setWordWrap(True)
 		self.replace_metadata = QCheckBox('Replace old metadata with new metadata')
 		metadata_fetcher_m_l.addRow(replace_metadata_info)
 		metadata_fetcher_m_l.addRow(self.replace_metadata)
 		first_hit_info = QLabel('By default, you get to choose which gallery to extract metadata from when'+
-						  'when more than 1 galleries are found when searching.\n'+
+						  ' there is more than one gallery found when searching.\n'+
 						  'Enabling this option makes it choose the first hit, saving you from moving your mouse.')
 		first_hit_info.setWordWrap(True)
 		self.always_first_hit = QCheckBox('Always choose first hit')
