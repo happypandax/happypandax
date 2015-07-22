@@ -252,7 +252,7 @@ class AppWindow(QMainWindow):
 					vs = a.strip()
 					self.UPDATE_CHECK.emit(vs)
 				except:
-					log_e('Checking Update: FAIL')
+					log.exception('Checking Update: FAIL')
 					self.UPDATE_CHECK.emit('this is a very long text which is is sure to be over limit')
 
 		def check_update(vs):

@@ -13,7 +13,6 @@ along with Happypanda. If not, see <http://www.gnu.org/licenses/>.
 """
 
 #NOTE: import like this: version.parent.child
-
 from version.constants import start
 
 start()
