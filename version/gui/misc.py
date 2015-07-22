@@ -359,7 +359,7 @@ class FileIcon:
 #		err_instance.moveToThread(thread)
 #		err_instance.ERROR_MSG.connect(self.exception_handler)
 #		thread.started.connect(err_instance.error_event)
-#		err_instance.DONE.connect(thread.deleteLater)
+#		thread.finished.connect(thread.deleteLater)
 #		thread.start()
 
 #	def exception_handler(self, msg):

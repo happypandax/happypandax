@@ -150,7 +150,7 @@ class AppWindow(QMainWindow):
 			if gui_constants.ENABLE_MONITOR and\
 				gui_constants.MONITOR_PATHS and all(gui_constants.MONITOR_PATHS):
 				self.init_watchers()
-			if gui_constants.FIRST_TIME_LEVEL < 2:
+			if gui_constants.FIRST_TIME_LEVEL != 2:
 				normalize_first_time()
 		if gui_constants.FIRST_TIME_LEVEL < 2:
 
@@ -158,8 +158,9 @@ class AppWindow(QMainWindow):
 				def __init__(self, parent=None):
 					super().__init__(parent)
 					main_layout = QVBoxLayout()
-					info_lbl = QLabel('Hi there! Some big changes are about to occur!\n'+
-					   "Please wait.. This might take a while.")
+					info_lbl = QLabel("Hi there! Some big changes are about to occur!\n"+
+					   "Please wait.. This will take at most a few minutes.\n"+
+					   "If not then try restarting the application.")
 					info_lbl.setAlignment(Qt.AlignCenter)
 					main_layout.addWidget(info_lbl)
 					prog = QProgressBar(self)
@@ -174,13 +175,14 @@ class AppWindow(QMainWindow):
 			log_i('Invoking first time level 2')
 			bridge = gallerydb.Bridge()
 			thread = QThread(self)
+			thread.setObjectName('Startup')
 			bridge.moveToThread(thread)
 			thread.started.connect(bridge.rebuild_galleries)
 			bridge.DONE.connect(ft_widget.close)
 			bridge.DONE.connect(self.setEnabled)
 			bridge.DONE.connect(done)
-			bridge.TERMINATE.connect(bridge.deleteLater)
-			bridge.TERMINATE.connect(thread.deleteLater)
+			bridge.DONE.connect(bridge.deleteLater)
+			thread.finished.connect(thread.deleteLater)
 			thread.start()
 			ft_widget.adjustSize()
 			ft_widget.show()
@@ -250,8 +252,8 @@ class AppWindow(QMainWindow):
 					vs = a.strip()
 					self.UPDATE_CHECK.emit(vs)
 				except:
-					log_d('Checking Update: FAIL')
-					pass
+					log_e('Checking Update: FAIL')
+					self.UPDATE_CHECK.emit('this is a very long text which is is sure to be over limit')
 
 		def check_update(vs):
 			if vs != gui_constants.vs:
@@ -265,12 +267,13 @@ class AppWindow(QMainWindow):
 					self.notification_bar.add_text("An error occurred while checking for new version")
 
 		update_instance = upd_chk()
-		thread = QThread()
+		thread = QThread(self)
+		thread.setObjectName('Check update')
 		update_instance.moveToThread(thread)
 		update_instance.UPDATE_CHECK.connect(check_update)
 		thread.started.connect(update_instance.fetch_vs)
-		update_instance.UPDATE_CHECK.connect(lambda: update_instance.deleteLater)
-		update_instance.UPDATE_CHECK.connect(lambda: thread.deleteLater)
+		update_instance.UPDATE_CHECK.connect(update_instance.deleteLater)
+		thread.finished.connect(thread.deleteLater)
 		thread.start()
 
 	def _web_metadata_picker(self, gallery, title_url_list, queue, parent=None):
@@ -282,7 +285,8 @@ class AppWindow(QMainWindow):
 		s_gallery_popup.USER_CHOICE.connect(queue.put)
 
 	def get_metadata(self, gal=None):
-		thread = QThread()
+		thread = QThread(self)
+		thread.setObjectName('App.get_metadata')
 		fetch_instance = fetch.Fetch()
 		if gal:
 			galleries = [gal]
@@ -299,13 +303,13 @@ class AppWindow(QMainWindow):
 		def done(status):
 			self.notification_bar.end_show()
 			fetch_instance.deleteLater()
-			thread.deleteLater()
 
 		fetch_instance.GALLERY_PICKER.connect(self._web_metadata_picker)
 		fetch_instance.GALLERY_EMITTER.connect(self.manga_list_view.replace_edit_gallery)
 		fetch_instance.AUTO_METADATA_PROGRESS.connect(self.notification_bar.add_text)
 		thread.started.connect(fetch_instance.auto_web_metadata)
 		fetch_instance.FINISHED.connect(done)
+		thread.finished.connect(thread.deleteLater)
 		thread.start()
 
 
@@ -583,7 +587,8 @@ class AppWindow(QMainWindow):
 	def gallery_populate(self, path, validate=False):
 		"Scans the given path for gallery to add into the DB"
 		if len(path) is not 0:
-			data_thread = QThread()
+			data_thread = QThread(self)
+			data_thread.setObjectName('General gallery populate')
 			loading = misc.Loading(self)
 			if not loading.ON:
 				misc.Loading.ON = True
@@ -620,7 +625,8 @@ class AppWindow(QMainWindow):
 
 								loading.progress.setMaximum(len(gallery_list))
 								a_instance = A(gallery_list)
-								thread = QThread()
+								thread = QThread(self)
+								thread.setObjectName('Database populate')
 								def loading_show():
 									loading.setText('Populating database.\nPlease wait...')
 									loading.show()
@@ -632,7 +638,6 @@ class AppWindow(QMainWindow):
 								def del_later():
 									try:
 										a_instance.deleteLater()
-										thread.deleteLater()
 									except NameError:
 										pass
 
@@ -642,6 +647,7 @@ class AppWindow(QMainWindow):
 								thread.started.connect(a_instance.add_to_db)
 								a_instance.done.connect(loading_hide)
 								a_instance.done.connect(del_later)
+								thread.finished.connect(thread.deleteLater)
 								thread.start()
 
 							data_thread.quit
@@ -676,10 +682,6 @@ class AppWindow(QMainWindow):
 					except NameError:
 						pass
 
-				def thread_deleteLater(): #NOTE: Isn't this bad?
-					data_thread.deleteLater
-					data_thread.quit()
-
 				def a_progress(prog):
 					loading.progress.setValue(prog)
 					loading.setText("Searching for galleries...")
@@ -690,7 +692,7 @@ class AppWindow(QMainWindow):
 				data_thread.started.connect(fetch_instance.local)
 				fetch_instance.FINISHED.connect(finished)
 				fetch_instance.FINISHED.connect(fetch_deleteLater)
-				fetch_instance.FINISHED.connect(thread_deleteLater)
+				data_thread.finished.connect(data_thread.deleteLater)
 				data_thread.start()
 				log_i('Populating DB from gallery folder')
 

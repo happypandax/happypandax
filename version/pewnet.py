@@ -79,7 +79,7 @@ class CommenHen:
 			t = random.randint(4, self.TIME_RAND)
 			time.sleep(t)
 		t2 = time.time() - t1
-		log_d("Slept for", t2)
+		log_d("Slept for {}".format(t2))
 	
 	def end_lock(self):
 		log_d('unlocked')

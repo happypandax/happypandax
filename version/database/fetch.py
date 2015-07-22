@@ -188,16 +188,16 @@ class Fetch(QObject):
 		Auto fetches metadata for the provided list of galleries.
 		Appends or replaces metadata with the new fetched metadata.
 		"""
-		log_d('Initiating auto metadata fetcher')
+		log_i('Initiating auto metadata fetcher')
 		if self.galleries and not gui_constants.GLOBAL_EHEN_LOCK:
-			log_d('Auto metadata fetcher is now running')
+			log_i('Auto metadata fetcher is now running')
 			gui_constants.GLOBAL_EHEN_LOCK = True
 			hashed_galleries = []
 			hashes = []
 			self.AUTO_METADATA_PROGRESS.emit("Checking gallery hashes...")
-			log_d('Checking gallery hashes')
-			for gallery in self.galleries:
-				self.AUTO_METADATA_PROGRESS.emit("Checking gallery hash: {}".format(gallery.title))
+			log_i('Checking gallery hashes')
+			for x, gallery in enumerate(self.galleries):
+				self.AUTO_METADATA_PROGRESS.emit("({}/{}) Checking gallery hash: {}".format(x, len(self.galleries), gallery.title))
 				hash = None
 				if gui_constants.HASH_GALLERY_PAGES == 'all':
 					if not gallery.hashes:
@@ -226,7 +226,7 @@ class Fetch(QObject):
 				hashed_galleries.append(gallery)
 
 			self.AUTO_METADATA_PROGRESS.emit("Searching for galleries with the custom api..")
-			log_d("Searching for galleries with the custom api")
+			log_i("Searching for galleries with the custom api")
 			api_result = self._get_metadata_api(hashed_galleries)
 			if api_result['success']:
 				self._return_gallery_metadata(api_result(api_result['success']))
@@ -236,7 +236,7 @@ class Fetch(QObject):
 				error_galleries = api_result['error']
 				self.AUTO_METADATA_PROGRESS.emit("Could not find {} galleries with the custom api".format(
 					len(error_galleries)))
-				log_d("Could not find {} galleries with the custom api".format(
+				log_i("Could not find {} galleries with the custom api".format(
 					len(error_galleries)))
 				if 'exhentai' in self._default_ehen_url:
 					try:
@@ -256,7 +256,7 @@ class Fetch(QObject):
 				checked_pre_url_galleries = []
 				checked_galleries = []
 				self.AUTO_METADATA_PROGRESS.emit("Checking gallery urls...")
-				log_d("Checking gallery urls")
+				log_i("Checking gallery urls")
 				for gallery in error_galleries:
 					if gallery.link:
 						check = self.website_checker(gallery.link)
@@ -272,16 +272,16 @@ class Fetch(QObject):
 
 
 				def fetch_metadata(gallery):
-					self.AUTO_METADATA_PROGRESS.emit("Fetching metadata for gallery: {}".format(gallery.title))
-					log_d("Fetching metadata for gallery: {}".format(gallery.title.encode(errors='ignore')))
+					log_i("Fetching metadata for gallery: {}".format(gallery.title.encode(errors='ignore')))
 					if not self._use_ehen_api:
 						metadata = hen.eh_gallery_parser(gallery.temp_url)
 						if not metadata:
 							errors.append(False)
 							self.AUTO_METADATA_PROGRESS('No metadata found for gallery: {}'.format(gallery.title))
-							log_e('No metadata found for gallery: {}'.format(gallery.title.encode(errors='ignore')))
+							log_w('No metadata found for gallery: {}'.format(gallery.title.encode(errors='ignore')))
 							return False
 						self.AUTO_METADATA_PROGRESS.emit("Applying metadata..")
+						log_i('Applying metadata')
 						title_artist_dict = utils.title_parser(metadata['title'])
 						if gui_constants.REPLACE_METADATA:
 							gallery.title = title_artist_dict['title']
@@ -317,7 +317,9 @@ class Fetch(QObject):
 					return gallery
 
 				if checked_pre_url_galleries:
-					for gallery in checked_pre_url_galleries:
+					for x, gallery in enumerate(checked_pre_url_galleries):
+						self.AUTO_METADATA_PROGRESS.emit("({}/{}) Fetching metadata for gallery: {}".format(
+							x, len(checked_pre_url_galleries), gallery.title))
 						g = fetch_metadata(gallery)
 						self._return_gallery_metadata(g)
 
@@ -326,8 +328,8 @@ class Fetch(QObject):
 				log_e("Finding gallery urls")
 				hen.LAST_USED = time.time()
 				ready_galleries = []
-				for gallery in checked_galleries:
-					self.AUTO_METADATA_PROGRESS.emit("Finding url for gallery: {}".format(gallery.title))
+				for x, gallery in enumerate(checked_galleries):
+					self.AUTO_METADATA_PROGRESS.emit("({}/{}) Finding url for gallery: {}".format(x, len(checked_galleries), gallery.title))
 					found_url = hen.eh_hash_search(gallery.hash)
 					if not gallery.hash in found_url:
 						errors.append(False)
@@ -351,6 +353,8 @@ class Fetch(QObject):
 						url = user_choice[1]
 
 					gallery.temp_url = url
+					self.AUTO_METADATA_PROGRESS.emit("({}/{}) Fetching metadata for gallery: {}".format(
+						x, len(checked_galleries), gallery.title))
 					g = fetch_metadata(gallery)
 					self._return_gallery_metadata(g)
 
