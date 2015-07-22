@@ -1,3 +1,9 @@
+*Happypanda v0.18*
+- Greatly improved stability
+- Added numbers to show how many galleries are left when fetching for metadata
+- Possibly fixed a bug causing the *"big changes are about to occur"* popup to never disappear
+- Fixed auto metadata fetcher (did not work before)
+
 *Happypanda v0.17*
 - Improved UI
 - Improved stability
