@@ -26,34 +26,6 @@ log_w = log.warning
 log_e = log.error
 log_c = log.critical
 
-class CustomAPI:
-	API_URL = gui_constants.API_URL
-	API_V = 'v0'
-
-	def get_metadata(self, hashes):
-		"""
-		Recieves a string or list of hashes,
-		return dict with hash:
-		"""
-		raise NotImplementedError
-		assert isinstance(hashes, (str, list))
-		r = requests.post(self.API_URL+self.API_V+'/gallery', json={'hash':hashes})
-		try:
-			r.raise_for_status()
-		except:
-			log_e('Could not fetch metadata from custom API: {}'.format(r.json()['error']))
-			return None
-		data = r.json()
-		for gallery in data['galleries']:
-			if 'error' in gallery:
-				log_e('Custom API: an error occured: {}'.format(gallery['error']))
-				continue
-
-	def append_metadata(self, galleries):
-		return NotImplementedError
-			
-
-
 class CommenHen:
 	"Contains common methods"
 	LOCK = threading.Lock()
@@ -86,11 +58,15 @@ class CommenHen:
 		self.LAST_USED = time.time()
 		self.LOCK.release()
 
-	def add_to_queue(self, url):
+	def add_to_queue(self, url, proc=False):
 		"Add url the the queue, when the queue has reached 25 entries will auto process"
 		self.QUEUE.append(url)
+		if proc:
+			return self.process_queue()
 		if len(self.QUEUE) > 24:
-			self.process_queue()
+			return self.process_queue()
+		else:
+			return 0
 
 	def process_queue(self):
 		"""
@@ -101,13 +77,13 @@ class CommenHen:
 		if len(self.QUEUE) < 1:
 			return None
 
-		if gui_constants.FETCH_EHEN_API:
-			if len(self.QUEUE > 25):
-				data = self.get_metadata(self.QUEUE[:25])
-			else:
-				data = self.get_metadata(self.QUEUE)
+		if len(self.QUEUE > 25):
+			data = self.get_metadata(self.QUEUE[:25])
+		else:
+			data = self.get_metadata(self.QUEUE)
 
 		self.QUEUE.clear()
+		return data
 
 	def check_cookie(self, cookie):
 		assert isinstance(cookie, dict)
@@ -170,14 +146,13 @@ class CommenHen:
 		a dict will be returned with url as key and tags as value
 		"""
 		assert isinstance(list_of_urls, list)
-		if len(list_of_urls) >= 25:
+		if len(list_of_urls) > 25:
+			log_e('More than 25 urls are provided.')
 			return None
 
-		if gui_constants.GLOBAL_EHEN_LOCK:
-			return
-
 		payload = {"method": "gdata",
-			 "gidlist": []
+			 "gidlist": [],
+			 "namespace": 1
 			 }
 		dict_metadata = {}
 		if len(list_of_urls) > 1:

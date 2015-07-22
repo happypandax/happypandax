@@ -83,7 +83,6 @@ RANDOM_GALLERY_CHAPTERS = get(False, 'General', 'random gallery chapters', bool)
 HASH_GALLERY_PAGES = get('all', 'General', 'hash gallery pages', int, str)
 
 # WEB
-API_URL = 'http://178.62.73.39/'
 GLOBAL_EHEN_TIME = get(10, 'Web', 'global ehen time offset', int)
 GLOBAL_EHEN_LOCK = False
 FETCH_METADATA_API = get(True, 'Web', 'fetch metadata api', bool)
