@@ -8,7 +8,7 @@ from datetime import datetime
 import queue, os, threading, random, logging, time
 
 from . import gui_constants
-from .misc import return_tag_completer_TextEdit
+from .misc import return_tag_completer_TextEdit, ClickedLabel
 from .. import utils
 from ..database import gallerydb, fetch
 
@@ -125,10 +125,20 @@ class GalleryDialog(QWidget):
 		self.lang_box = QComboBox()
 		self.lang_box.addItems(["English", "Japanese", "Other"])
 		self.lang_box.setCurrentIndex(0)
-		self.tags_edit = return_tag_completer_TextEdit()
+		tags_l = QVBoxLayout()
+		tag_info = ClickedLabel("How do i write namespace & tags? (hover)", parent=self)
+		tag_info.setToolTip("Ways to write tags:\n\nWithout namespaces:\ntag1, tag2, tag3\n\n"+
+					  "Namespaces with single tags:\nns1:tag1, ns1:tag2\n\nNamespaces with more than"+
+					  " one tag:\nns1:[tag1, tag2, tag3], ns2:[tag1, tag2]\n\n"+
+					  "Those three ways of writing namespace & tags can be combined freely.\n"+
+					  "Tags are seperated by a comma.\nNamespaces will be capitalized while tags"+
+					  " will be lowercased.")
+		tag_info.setToolTipDuration(99999999)
+		tags_l.addWidget(tag_info)
+		self.tags_edit = return_tag_completer_TextEdit(self)
+		tags_l.addWidget(self.tags_edit, 3)
 		self.tags_edit.setFixedHeight(70)
-		self.tags_edit.setPlaceholderText("Press Tab to autocomplete (Ctrl + Space to show popup)"+
-									"\ntag1, namespace:tag2, namespace2:[tag3, tag4] etc..")
+		self.tags_edit.setPlaceholderText("Press Tab to autocomplete (Ctrl + E to show popup)")
 		self.type_box = QComboBox()
 		self.type_box.addItems(["Manga", "Doujinshi", "Artist CG Sets", "Game CG Sets",
 						  "Western", "Image Sets", "Non-H", "Cosplay", "Other"])
@@ -166,7 +176,7 @@ class GalleryDialog(QWidget):
 		gallery_layout.addRow("Author:", self.author_edit)
 		gallery_layout.addRow("Description:", self.descr_edit)
 		gallery_layout.addRow("Language:", self.lang_box)
-		gallery_layout.addRow("Tags:", self.tags_edit)
+		gallery_layout.addRow("Tags:", tags_l)
 		gallery_layout.addRow("Type:", self.type_box)
 		gallery_layout.addRow("Status:", self.status_box)
 		gallery_layout.addRow("Publication Date:", self.pub_edit)

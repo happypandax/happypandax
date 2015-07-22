@@ -48,6 +48,20 @@ log_w = log.warning
 log_e = log.error
 log_c = log.critical
 
+class ClickedLabel(QLabel):
+	"""
+	A QLabel which emits clicked signal on click
+	"""
+	clicked = pyqtSignal()
+	def __init__(self, s="", **kwargs):
+		super().__init__(s, **kwargs)
+		self.setCursor(Qt.PointingHandCursor)
+		self.setTextInteractionFlags(Qt.LinksAccessibleByMouse | Qt.LinksAccessibleByKeyboard)
+
+	def mousePressEvent(self, event):
+		self.clicked.emit()
+		return super().mousePressEvent(event)
+
 class BasePopup(QWidget):
 	def __init__(self, parent=None, **kwargs):
 		if kwargs:
@@ -69,6 +83,10 @@ class BasePopup(QWidget):
 		self.generic_buttons.addWidget(self.no_button)
 		self.setMaximumWidth(500)
 		self.resize(500,350)
+	
+	def showEvent(self, event):
+		self.activateWindow()
+		return super().showEvent(event)
 
 	def add_buttons(self, *args):
 		"""
@@ -833,25 +851,29 @@ class CompleterTextEdit(QTextEdit):
 	"""
 	def __init__(self, **kwargs):
 		super().__init__(**kwargs)
-		self.completer = None
-		log_d('Instantiat CompleterTextEdit: OK')
+		self._completer = None
+		log_d('Instantiate CompleterTextEdit: OK')
 
-	def setCompleter(self, completer):
-		if self.completer:
-			self.disconnect(self.completer, 0, self, 0)
-		if not completer:
-			return None
+	def setCompleter(self, c):
+		if self._completer is not None:
+			self._completer.activated.disconnect()
 
-		completer.setWidget(self)
-		completer.setCompletionMode(QCompleter.PopupCompletion)
-		completer.setCaseSensitivity(Qt.CaseInsensitive)
-		self.completer = completer
-		self.completer.insertText.connect(self.insertCompletion)
+		self._completer = c
+
+		c.setWidget(self)
+		c.setCompletionMode(QCompleter.PopupCompletion)
+		c.setCaseSensitivity(Qt.CaseInsensitive)
+		c.activated.connect(self.insertCompletion)
+
+	def completer(self):
+		return self._completer
 
 	def insertCompletion(self, completion):
+		if self._completer.widget() is not self:
+			return
+
 		tc = self.textCursor()
-		extra = (len(completion) -
-		   len(self.completer.completionPrefix()))
+		extra = len(completion) - len(self._completer.completionPrefix())
 		tc.movePosition(QTextCursor.Left)
 		tc.movePosition(QTextCursor.EndOfWord)
 		tc.insertText(completion[-extra:])
@@ -860,97 +882,80 @@ class CompleterTextEdit(QTextEdit):
 	def textUnderCursor(self):
 		tc = self.textCursor()
 		tc.select(QTextCursor.WordUnderCursor)
+
 		return tc.selectedText()
 
-	def focusInEvent(self, event):
-		if self.completer:
-			self.completer.setWidget(self)
-		super().focusInEvent(event)
+	def focusInEvent(self, e):
+		if self._completer is not None:
+			self._completer.setWidget(self)
 
-	def keyPressEvent(self, event):
-		if self.completer and self.completer.popup() and \
-			self.completer.popup().isVisible():
-			if event.key() in (
-				Qt.Key_Enter,
-				Qt.Key_Return,
-				Qt.Key_Tab,
-				Qt.Key_Escape,
-				Qt.Key_Backtab):
-				event.ignore()
-				return None
+		super().focusInEvent(e)
 
-		# to show popup shortcut
-		isShortcut = event.modifiers() == Qt.ControlModifier and \
-			    event.key() == Qt.Key_Space
+	def keyPressEvent(self, e):
+		if self._completer is not None and self._completer.popup().isVisible():
+			# The following keys are forwarded by the completer to the widget.
+			if e.key() in (Qt.Key_Enter, Qt.Key_Return, Qt.Key_Escape, Qt.Key_Tab, Qt.Key_Backtab):
+				e.ignore()
+				# Let the completer do default behavior.
+				return
 
-		# to complete suggestion inline
-		inline = event.key() == Qt.Key_Tab
+		isShortcut = e.modifiers() == Qt.ControlModifier and e.key() == Qt.Key_E
+		if self._completer is None or not isShortcut:
+			# Do not process the shortcut when we have a completer.
+			super().keyPressEvent(e)
 
-		if inline:
-			self.completer.setCompletionMode(QCompleter.InlineCompletion)
-			completionPrefix = self.textUnderCursor()
-			if completionPrefix != self.completer.completionPrefix():
-				self.completer.setCompletionPrefix(completionPrefix)
-			self.completer.complete()
+		ctrlOrShift = e.modifiers() & (Qt.ControlModifier | Qt.ShiftModifier)
+		if self._completer is None or (ctrlOrShift and len(e.text()) == 0):
+			return
 
-			# set the current suggestion in text box
-			self.completer.insertText.emit(self.completer.currentCompletion())
-			#reset completion mode
-			self.completer.setCompletionMode(QCompleter.PopupCompletion)
-			return None
-		if not self.completer or not isShortcut:
-			super().keyPressEvent(event)
-		
-		ctrlOrShift = event.modifiers() in (Qt.ControlModifier,
-									  Qt.ShiftModifier)
-		if ctrlOrShift and event.text() == '':
-			return None
-
-		#end of word
-		eow = "~!@#$%^&*+{}|:\"<>?,./;'[]\\-="
-		
-		hasModifier = event.modifiers() != Qt.NoModifier and not ctrlOrShift
+		eow = "~!@#$%^&*()_+{}|:\"<>?,./;'[]\\-="
+		hasModifier = (e.modifiers() != Qt.NoModifier) and not ctrlOrShift
 		completionPrefix = self.textUnderCursor()
 
-		if not isShortcut:
-			if self.completer.popup():
-				self.completer.popup().hide()
-			return None
+		if not isShortcut and (hasModifier or len(e.text()) == 0 or len(completionPrefix) < 3 or e.text()[-1] in eow):
+			self._completer.popup().hide()
+			return
 
-		self.completer.setCompletionPrefix(completionPrefix)
-		popup = self.completer.popup()
-		popup.setCurrentIndex(self.completer.completionModel().index(0,0))
+		if completionPrefix != self._completer.completionPrefix():
+			self._completer.setCompletionPrefix(completionPrefix)
+			self._completer.popup().setCurrentIndex(
+					self._completer.completionModel().index(0, 0))
+
 		cr = self.cursorRect()
-		cr.setWidth(self.completer.popup().sizeHintForColumn(0) +
-			  self.completer.popup().verticalScrollBar().sizeHint().width())
-		self.completer.complete(cr)
+		cr.setWidth(self._completer.popup().sizeHintForColumn(0) + self._completer.popup().verticalScrollBar().sizeHint().width())
+		self._completer.complete(cr)
 
-class CompleterWithData(QCompleter):
-	"""
-	Instantiate a QCompleter with predefined data
-	"""
-	insertText = pyqtSignal(str)
+#class CompleterWithData(QCompleter):
+#	"""
+#	Instantiate a QCompleter with predefined data
+#	"""
+#	insertText = pyqtSignal(str)
 
-	def __init__(self, data, parent=None):
-		assert isinstance(data, list)
-		super().__init__(data, parent)
-		self.activated[str].connect(self.changeCompletion)
-		log_d('Instantiate CompleterWithData: OK')
+#	def __init__(self, data, parent=None):
+#		assert isinstance(data, list)
+#		super().__init__(data, parent)
+#		#self.activated[str].connect(self.changeCompletion)
+#		self.setModelSorting(QCompleter.CaseInsensitivelySortedModel)
+#		self.setCaseSensitivity(Qt.CaseInsensitive)
+#		self.setWrapAround(False)
+#		log_d('Instantiate CompleterWithData: OK')
 
-	def changeCompletion(self, completion):
-		if completion.find('(') != -1:
-			completion = completion[:completion.find('(')]
-		#print(completion)
-		self.insertText.emit(completion)
+#	#def changeCompletion(self, completion):
+#	#	if completion.find('(') != -1:
+#	#		completion = completion[:completion.find('(')]
+#	#	#print(completion)
+#	#	self.insertText.emit(completion)
 
 
 
-def return_tag_completer_TextEdit():
+def return_tag_completer_TextEdit(parent=None):
 	ns = gallerydb.TagDB.get_all_ns()
 	for t in gallerydb.TagDB.get_all_tags():
 		ns.append(t)
 	TextEditCompleter = CompleterTextEdit()
-	TextEditCompleter.setCompleter(CompleterWithData(ns))
+	comp = QCompleter(ns, parent)
+	comp.setCaseSensitivity(Qt.CaseInsensitive)
+	TextEditCompleter.setCompleter(comp)
 	return TextEditCompleter
 
 from PyQt5.QtCore import QSortFilterProxyModel

@@ -217,12 +217,20 @@ class GalleryHandler(FileSystemEventHandler, QObject):
 
 	def __init__(self):
 		super().__init__()
+		#self.g_queue = []
 
 	def file_filter(self, event):
 		name = os.path.split(event.src_path)[1]
 		if event.is_directory or name.endswith(tuple(utils.ARCHIVE_FILES)):
 			return True
 		else: return False
+
+	#def process_queue(self, type):
+	#	if self.g_queue:
+	#		if type == 'create':
+	#			self.CREATE_SIGNAL.emit(self.g_queue)
+
+	#	self.g_queue = []
 
 	def on_created(self, event):
 		if self.file_filter(event):
