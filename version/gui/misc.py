@@ -31,7 +31,7 @@ from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QAction, QStackedLayout, QTabWidget,
 							 QGridLayout, QScrollArea, QLayout, QButtonGroup,
 							 QRadioButton, QFileIconProvider, QFontDialog,
-							 QColorDialog, QScrollArea)
+							 QColorDialog, QScrollArea, QSystemTrayIcon)
 
 import os, threading, queue, time, logging, math, random
 from datetime import datetime
@@ -47,6 +47,23 @@ log_d = log.debug
 log_w = log.warning
 log_e = log.error
 log_c = log.critical
+
+class SystemTray(QSystemTrayIcon):
+	"""
+	Pass True to minimized arg in showMessage method to only
+	show message if application is minimized.
+	"""
+	def __init__(self, icon, parent=None):
+		super().__init__(icon, parent=None)
+		self.parent_widget = parent
+
+	def showMessage(self, title, msg, icon=QSystemTrayIcon.Information,
+				 msecs=10000, minimized=False):
+		if minimized:
+			if self.parent_widget.isMinimized:
+				return super().showMessage(title, msg, icon, msecs)
+		else:
+			return super().showMessage(title, msg, icon, msecs)
 
 class ClickedLabel(QLabel):
 	"""

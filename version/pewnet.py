@@ -26,6 +26,7 @@ log_w = log.warning
 log_e = log.error
 log_c = log.critical
 
+
 class CommenHen:
 	"Contains common methods"
 	LOCK = threading.Lock()
@@ -61,6 +62,7 @@ class CommenHen:
 	def add_to_queue(self, url, proc=False):
 		"Add url the the queue, when the queue has reached 25 entries will auto process"
 		self.QUEUE.append(url)
+		log_i("Status on queue: {}/25".format(len(self.QUEUE)))
 		if proc:
 			return self.process_queue()
 		if len(self.QUEUE) > 24:
@@ -74,14 +76,16 @@ class CommenHen:
 		Note: Will only process 25 entries (first come first out) while
 			additional entries will get deleted.
 		"""
+		log_i("Processing queue...")
 		if len(self.QUEUE) < 1:
 			return None
 
-		if len(self.QUEUE > 25):
+		if len(self.QUEUE) > 25:
 			data = self.get_metadata(self.QUEUE[:25])
 		else:
 			data = self.get_metadata(self.QUEUE)
 
+		log_i("Flushing queue...")
 		self.QUEUE.clear()
 		return data
 
@@ -95,19 +99,25 @@ class CommenHen:
 			else:
 				present.append(False)
 		if not all(present):
+			log_i("Updating cookies...")
 			self.COOKIES.update(cookie)
 
 	def handle_error(self, response):
 		content_type = response.headers['content-type']
 		text = response.text
 		if 'image/gif' in content_type:
-			gui_constants.GLOBAL_EHEN_LOCK = True
+			gui_constants.NOTIF_BAR.add_text('Provided exhentai credentials are incorrect!')
 			log_e('Provided exhentai credentials are incorrect!')
+			time.sleep(5)
+			return False
 		elif 'text/html' and 'Your IP address has been' in text:
-			gui_constants.GLOBAL_EHEN_LOCK = True
+			gui_constants.NOTIF_BAR.add_text("Your IP address has been temporarily banned from g.e-/exhentai")
 			log_e('Your IP address has been temp banned from g.e- and ex-hentai')
+			time.sleep(5)
+			return False
 		elif 'text/html' in content_type and 'You are opening' in text:
-			time.sleep(random.randint(100,200))
+			time.sleep(random.randint(10,50))
+		return True
 
 	def parse_url(self, url):
 		"Parses url into a list of gallery id and token"
@@ -116,25 +126,20 @@ class CommenHen:
 		parsed_url = [gallery_id, gallery_token]
 		return parsed_url
 
-	def parse_metadata(self, metadata_json, dict_metadata=None):
+	def parse_metadata(self, metadata_json, dict_metadata):
 
 		def invalid_token_check(g_dict):
 			if 'error' in g_dict:
 				return False
 			else: return True
 
-		if dict_metadata:
-			parsed_metadata = {}
-		else:
-			parsed_metadata = []
-
+		parsed_metadata = {}
 		for gallery in metadata_json['gmetadata']:
 			if invalid_token_check(gallery):
-				if not dict_metadata:
-					parsed_metadata.append(gallery)
-				else:
-					url = dict_metadata[gallery['gid']]
-					parsed_metadata[url] = gallery
+				url = dict_metadata[gallery['gid']]
+				parsed_metadata[url] = gallery
+			else:
+				log_e("Error in received response with URL: {}".format(url))
 
 		return parsed_metadata
 
@@ -147,7 +152,7 @@ class CommenHen:
 		"""
 		assert isinstance(list_of_urls, list)
 		if len(list_of_urls) > 25:
-			log_e('More than 25 urls are provided.')
+			log_e('More than 25 urls are provided. Aborting.')
 			return None
 
 		payload = {"method": "gdata",
@@ -155,37 +160,31 @@ class CommenHen:
 			 "namespace": 1
 			 }
 		dict_metadata = {}
-		if len(list_of_urls) > 1:
-			for url in list_of_urls:
-				parsed_url = self.parse_url(url.strip())
-				dict_metadata[parsed_url[1]] = url # gallery id
-				payload['gidlist'].append(parsed_url)
-		else:
-			parsed_url = self.parse_url(list_of_urls[0].strip())
+		for url in list_of_urls:
+			parsed_url = self.parse_url(url.strip())
+			dict_metadata[parsed_url[0]] = url # gallery id
 			payload['gidlist'].append(parsed_url)
 
 		if payload['gidlist']:
 			self.begin_lock()
 			if cookies:
 				self.check_cookie(cookies)
-				r = requests.post(self.e_url, json=payload, headers=self.HEADERS, cookies=self.COOKIES)
+				r = requests.post(self.e_url, json=payload, timeout=30, headers=self.HEADERS, cookies=self.COOKIES)
 			else:
-				r = requests.post(self.e_url, json=payload, headers=self.HEADERS)
-			self.handle_error(r.headers)
+				r = requests.post(self.e_url, json=payload, timeout=30, headers=self.HEADERS)
+			if not self.handle_error(r):
+				return 'error'
 			self.end_lock()
 		else: return None
 		try:
 			r.raise_for_status()
 		except:
-			log.exception('Could not fetch metadata')
+			log.exception('Could not fetch metadata: connection error')
 			return None
-		if dict_metadata:
-			metdata = self.parse_metadata(r.json(), dict_metadata)
-		else:
-			metadata = self.parse_metadata(r.json())
+		metadata = self.parse_metadata(r.json(), dict_metadata)
 		return metadata
 
-	def eh_hash_search(self, hash_string):
+	def eh_hash_search(self, hash_string, cookies=None):
 		"""
 		Searches ehentai for the provided string or list of hashes,
 		returns a dict with hash:[list of title,url tuples] of hits found or emtpy dict if no hits are found.
@@ -209,9 +208,14 @@ class CommenHen:
 		for h in hash_string:
 			log_d('Hash search: {}'.format(h))
 			self.begin_lock()
-			r = requests.get(hash_url+h, headers=self.HEADERS)
+			if cookies:
+				self.check_cookie(cookies)
+				r = requests.get(hash_url+h, timeout=30, headers=self.HEADERS, cookies=self.COOKIES)
+			else:
+				r = requests.get(hash_url+h, timeout=30, headers=self.HEADERS)
 			self.end_lock()
-			self.handle_error(r)
+			if not self.handle_error(r):
+				return 'error'
 			if not no_hits_found_check(r.text):
 				log_e('No hits found with hash: {}'.format(h))
 				continue
@@ -258,11 +262,12 @@ class CommenHen:
 		self.begin_lock()
 		if cookies:
 			self.check_cookie(cookies)
-			r = requests.get(url, headers=self.HEADERS, timeout=30, cookies=cookies)
+			r = requests.get(url, headers=self.HEADERS, timeout=30, cookies=self.COOKIES)
 		else:
 			r = requests.get(url, headers=self.HEADERS, timeout=30)
 		self.end_lock()
-		self.handle_error(r)
+		if not self.handle_error(r):
+			return {}
 		html = r.text
 		if len(html)<5000:
 			log_w("Length of HTML response is only {} => Failure".format(len(html)))
@@ -334,6 +339,9 @@ class ExHen(CommenHen):
 
 	def eh_gallery_parser(self, url):
 		return super().eh_gallery_parser(url, self.cookies)
+
+	def eh_hash_search(self, hash_string):
+		return super().eh_hash_search(hash_string, self.cookies)
 
 class EHen(CommenHen):
 	"Fetches galleries from ehen"

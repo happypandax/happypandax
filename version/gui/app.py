@@ -23,7 +23,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QListView,
 							 QSplitter, QMessageBox, QFileDialog,
 							 QDesktopWidget, QPushButton, QCompleter,
 							 QListWidget, QListWidgetItem, QToolTip,
-							 QProgressBar, QToolButton)
+							 QProgressBar, QToolButton, QSystemTrayIcon)
 from . import (gui_constants, misc, gallery, file_misc, settingsdialog,
 			   gallerydialog)
 from ..database import fetch, gallerydb
@@ -209,6 +209,16 @@ class AppWindow(QMainWindow):
 		self.init_stat_bar()
 		log_d('Create statusbar: OK')
 
+		self.system_tray = misc.SystemTray(QIcon(gui_constants.APP_ICO_PATH), self)
+		gui_constants.SYSTEM_TRAY = self.system_tray
+		tray_menu = QMenu(self)
+		self.system_tray.setContextMenu(tray_menu)
+		self.system_tray.setToolTip('Happypanda {}'.format(gui_constants.vs))
+		tray_quit = QAction('Quit', tray_menu)
+		tray_menu.addAction(tray_quit)
+		tray_quit.triggered.connect(self.close)
+		self.system_tray.show()
+		log_d('Create system tray: OK')
 
 		#self.display.addWidget(self.chapter_main)
 
@@ -232,6 +242,7 @@ class AppWindow(QMainWindow):
 		p = self.toolbar.pos()
 		self.notification_bar.move(p.x(), p.y()+self.toolbar.height())
 		self.notification_bar.resize(self.width())
+		gui_constants.NOTIF_BAR = self.notification_bar
 		log_d('Create notificationbar: OK')
 
 		log_d('Window Create: OK')
@@ -290,7 +301,7 @@ class AppWindow(QMainWindow):
 		if gal:
 			galleries = [gal]
 		else:
-			galleries = [g for g in self.manga_list_view.gallery_model._data if not g.exed]
+			galleries = [g for g in self.manga_list_view.gallery_model._data if not g.exed][:10]
 			if not galleries:
 				self.notification_bar.add_text('Seems like we\'ve already gone through all galleries!')
 				return None

@@ -53,6 +53,9 @@ LINK = 8
 PUB_DATE = 9
 DATE_ADDED = 10
 
+# Application
+SYSTEM_TRAY = None
+NOTIF_BAR = None
 
 # image paths
 GALLERY_ICO_PATH = os.path.join(static_dir, "gallery_ico.ico")
