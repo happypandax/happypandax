@@ -29,7 +29,7 @@ from PyQt5.QtWidgets import (QListView, QFrame, QLabel,
 							 QSizePolicy, QTableWidget, QScrollArea,
 							 QHBoxLayout, QFormLayout, QDesktopWidget,
 							 QWidget, QHeaderView, QTableView, QApplication,
-							 QMessageBox)
+							 QMessageBox, QActionGroup)
 import threading, logging, os, math, functools, random
 import re as regex
 
@@ -1223,17 +1223,17 @@ class MangaView(QListView):
 			link = index.data(Qt.UserRole+1).link
 			utils.open_web_link(link)
 
-		def sort_title():
-			self.sort_model.setSortRole(Qt.DisplayRole)
-			self.sort_model.sort(0, Qt.AscendingOrder)
-
-		def sort_artist():
-			self.sort_model.setSortRole(Qt.UserRole+2)
-			self.sort_model.sort(0, Qt.AscendingOrder)
-
-		def sort_date_added():
-			self.sort_model.setSortRole(Qt.UserRole+4)
-			self.sort_model.sort(0, Qt.DescendingOrder)
+		def sort(obj, name):
+			obj.setChecked(True)
+			if name == 'title':
+				self.sort_model.setSortRole(Qt.DisplayRole)
+				self.sort_model.sort(0, Qt.AscendingOrder)
+			elif name == 'artist':
+				self.sort_model.setSortRole(Qt.UserRole+2)
+				self.sort_model.sort(0, Qt.AscendingOrder)
+			elif name == 'date_added':
+				self.sort_model.setSortRole(Qt.UserRole+4)
+				self.sort_model.sort(0, Qt.DescendingOrder)
 
 		def asc_desc():
 			if self.sort_model.sortOrder() == Qt.AscendingOrder:
@@ -1287,17 +1287,19 @@ class MangaView(QListView):
 			menu.addAction(add_gallery)
 			sort_main = QAction("&Sort by", menu)
 			menu.addAction(sort_main)
+			sort_actions = QActionGroup(self, exclusive=True)
 			sort_menu = QMenu()
 			sort_main.setMenu(sort_menu)
-			asc_desc = QAction("Asc/Desc", menu,
-					  triggered = asc_desc)
-			s_title = QAction("Title", menu,
-					 triggered = sort_title)
-			s_artist = QAction("Author", menu,
-					  triggered = sort_artist)
-			s_date = QAction("Date Added", menu,
-					triggered = sort_date_added)
-			sort_menu.addAction(asc_desc)
+			asc_desc_act = QAction("Asc/Desc", menu)
+			asc_desc_act.triggered.connect(asc_desc)
+			s_title = sort_actions.addAction(QAction("Title", menu, checkable=True))
+			s_title.triggered.connect(lambda: sort(s_title, 'title'))
+			s_artist = sort_actions.addAction(QAction("Author", menu, checkable=True))
+			s_artist.triggered.connect(lambda: sort(s_artist, 'artist'))
+			s_date = sort_actions.addAction(QAction("Date Added", menu, checkable=True))
+			s_date.triggered.connect(lambda: sort(s_date, 'date_added'))
+
+			sort_menu.addAction(asc_desc_act)
 			sort_menu.addSeparator()
 			sort_menu.addAction(s_title)
 			sort_menu.addAction(s_artist)
@@ -1542,28 +1544,6 @@ class MangaTableView(QTableView):
 					number), open_chapters, triggered = functools.partial(self.parent_widget.manga_list_view.open_chapter, index, chap_number))
 				open_chapters.addAction(chap_action)
 
-		def open_link():
-			link = index.data(Qt.UserRole+1).link
-			utils.open_web_link(link)
-
-		def sort_title():
-			self.sort_model.setSortRole(Qt.DisplayRole)
-			self.sort_model.sort(0, Qt.AscendingOrder)
-
-		def sort_date_added():
-			self.sort_model.setSortRole(Qt.UserRole+4)
-			self.sort_model.sort(0, Qt.DescendingOrder)
-
-		def sort_artist():
-			self.sort_model.setSortRole(Qt.UserRole+2)
-			self.sort_model.sort(0, Qt.AscendingOrder)
-
-		def asc_desc():
-			if self.sort_model.sortOrder() == Qt.AscendingOrder:
-				self.sort_model.sort(0, Qt.DescendingOrder)
-			else:
-				self.sort_model.sort(0, Qt.AscendingOrder)
-
 		def op_folder(selected=False):
 			if selected:
 				self.STATUS_BAR_MSG.emit('Opening folders')
@@ -1607,23 +1587,6 @@ class MangaTableView(QTableView):
 			add_gallery = QAction("&Add new Gallery...", menu,
 						triggered = self.SERIES_DIALOG.emit)
 			menu.addAction(add_gallery)
-			sort_main = QAction("&Sort by", menu)
-			menu.addAction(sort_main)
-			sort_menu = QMenu()
-			sort_main.setMenu(sort_menu)
-			asc_desc = QAction("Asc/Desc", menu,
-					  triggered = asc_desc)
-			s_title = QAction("Title", menu,
-					 triggered = sort_title)
-			s_artist = QAction("Author", menu,
-					  triggered = sort_artist)
-			s_date = QAction("Date Added", menu,
-					triggered = sort_date_added)
-			sort_menu.addAction(asc_desc)
-			sort_menu.addSeparator()
-			sort_menu.addAction(s_title)
-			sort_menu.addAction(s_artist)
-			sort_menu.addAction(s_date)
 			refresh = QAction("&Refresh", menu,
 					 triggered = self.refresh)
 			menu.addAction(refresh)

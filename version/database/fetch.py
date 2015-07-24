@@ -187,6 +187,7 @@ class Fetch(QObject):
 				data = metadata[g.temp_url]
 			except KeyError:
 				self.AUTO_METADATA_PROGRESS.emit("No metadata found for gallery: {}".format(g.title))
+				self.error_galleries.append(g)
 				log_w("No metadata found for gallery: {}".format(g.title.encode(errors='ignore')))
 				continue
 			log_i('({}/{}) Applying metadata for gallery: {}'.format(x, len(self.galleries_in_queue),
@@ -369,7 +370,7 @@ class Fetch(QObject):
 					self.FINISHED.emit(True)
 					return
 				if not gallery.hash in found_url:
-					error_galleries.append(gallery)
+					self.error_galleries.append(gallery)
 					self.AUTO_METADATA_PROGRESS.emit("Could not find url for gallery: {}".format(gallery.title))
 					log_w('Could not find url for gallery: {}'.format(gallery.title.encode(errors='ignore')))
 					continue
@@ -414,13 +415,13 @@ class Fetch(QObject):
 			log_d('Auto metadata fetcher is done')
 			gui_constants.GLOBAL_EHEN_LOCK = False
 			if not self.error_galleries:
-				self.AUTO_METADATA_PROGRESS.emit('Auto metadata fetcher is done!')
-				gui_constants.SYSTEM_TRAY.showMessage('Happypanda', 'Auto metadata fetcher is done!', minimized=True)
+				self.AUTO_METADATA_PROGRESS.emit('Done! Successfully fetched metadata for {} galleries.'.format(len(self.galleries)))
+				gui_constants.SYSTEM_TRAY.showMessage('Done', 'Auto metadata fetcher is done!', minimized=True)
 				self.FINISHED.emit(True)
 			else:
-				self.AUTO_METADATA_PROGRESS.emit('Could not add {} galleries to queue. Check happypanda.log for more details!'.format(len(self.error_galleries)))
-				gui_constants.SYSTEM_TRAY.showMessage('Happypanda',
-										  'Could not add {} galleries to queue. Check happypanda.log for more details!'.format(len(self.error_galleries)),
+				self.AUTO_METADATA_PROGRESS.emit('Done! Could not fetch metadata for  {} galleries. Check happypanda.log for more details!'.format(len(self.error_galleries)))
+				gui_constants.SYSTEM_TRAY.showMessage('Done!',
+										  'Could not fetch metadat for {} galleries. Check happypanda.log for more details!'.format(len(self.error_galleries)),
 										  minimized=True)
 				for e in error_galleries:
 					log_e("An error occured with gallery: {}".format.title.encode(errors='ignore'))

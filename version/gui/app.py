@@ -43,11 +43,6 @@ class AppWindow(QMainWindow):
 		self.initUI()
 		self.start_up()
 		QTimer.singleShot(3000, self._check_update)
-		def p():
-			print(threading.activeCount())
-		self.t_timer = QTimer()
-		self.t_timer.timeout.connect(p)
-		self.t_timer.start(3000)
 
 	def init_watchers(self):
 
@@ -88,11 +83,11 @@ class AppWindow(QMainWindow):
 		self.watchers.gallery_handler.DELETED_SIGNAL.connect(deleted)
 
 		if gui_constants.LOOK_NEW_GALLERY_STARTUP:
-			self.notification_bar.begin_show()
 			self.notification_bar.add_text("Looking for new galleries...")
 			try:
 				class ScanDir(QObject):
 					final_paths_and_galleries = pyqtSignal(list, list)
+					done = pyqtSignal()
 					def __init__(self, model_data, parent=None):
 						super().__init__(parent)
 						self.model_data = model_data
@@ -120,9 +115,9 @@ class AppWindow(QMainWindow):
 								# (path, number for case_path)
 								new_galleries.append((x, c))
 
+						galleries = []
+						final_paths = []
 						if new_galleries:
-							galleries = []
-							final_paths = []
 							for g in new_galleries:
 								gallery = gallerydb.Gallery()
 								try:
@@ -134,14 +129,14 @@ class AppWindow(QMainWindow):
 								gallery.artist = parser_dict['artist']
 								galleries.append(gallery)
 								final_paths.append(case_path[g[1]])
-							self.final_paths_and_galleries.emit(final_paths, galleries)
-
+						self.final_paths_and_galleries.emit(final_paths, galleries)
+						self.done.emit()
 					#if gui_constants.LOOK_NEW_GALLERY_AUTOADD:
 					#	QTimer.singleShot(10000, self.gallery_populate(final_paths))
 					#	return
 
 				def show_new_galleries(final_paths, galleries):
-					if galleries:
+					if final_paths and galleries:
 						if len(galleries) == 1:
 							self.notification_bar.add_text("{} new gallery was discovered in one of your monitored directories".format(len(galleries)))
 						else:
@@ -161,9 +156,8 @@ class AppWindow(QMainWindow):
 				scan_inst = ScanDir(self.manga_list_view.gallery_model._data)
 				scan_inst.moveToThread(thread)
 				scan_inst.final_paths_and_galleries.connect(show_new_galleries)
-				scan_inst.final_paths_and_galleries.connect(lambda a: scan_inst.deleteLater())
 				thread.started.connect(scan_inst.scan_dirs)
-				thread.finished.connect(lambda a: self.notification_bar.end_show())
+				scan_inst.done.connect(scan_inst.deleteLater)
 				thread.finished.connect(thread.deleteLater)
 				thread.start()
 			except:
@@ -329,9 +323,9 @@ class AppWindow(QMainWindow):
 		if gal:
 			galleries = [gal]
 		else:
-			galleries = [g for g in self.manga_list_view.gallery_model._data if not g.exed][:10]
+			galleries = [g for g in self.manga_list_view.gallery_model._data if not g.exed]
 			if not galleries:
-				self.notification_bar.add_text('Seems like we\'ve already gone through all galleries!')
+				self.notification_bar.add_text('Looks like we\'ve already gone through all galleries!')
 				return None
 		fetch_instance.galleries = galleries
 
