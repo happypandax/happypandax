@@ -79,6 +79,7 @@ def start():
 		else:
 			conn = db.init_db()
 		log_d('Init DB Conn: OK')
+		log_i("DB Version: {}".format(db_constants.REAL_DB_VERSION))
 	except:
 		log_c('Database connection failed')
 		from PyQt5.QtGui import QIcon

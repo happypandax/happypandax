@@ -113,11 +113,11 @@ def namespaces_sql(cols=False):
 	sql = """
 		CREATE TABLE IF NOT EXISTS namespaces(
 					namespace_id INTEGER PRIMARY KEY,
-					namespace TEXT)
+					namespace TEXT NOT NULL UNIQUE)
 		"""
 	col_list = [
 		'namespace_id INTEGER PRIMARY KEY',
-		'namespace TEXT'
+		'namespace TEXT NOT NULL UNIQUE'
 		]
 	if cols:
 		return sql, col_list
@@ -127,11 +127,11 @@ def tags_sql(cols=False):
 	sql = """
 		CREATE TABLE IF NOT EXISTS tags(
 					tag_id INTEGER PRIMARY KEY,
-					tag TEXT NOT NULL UNIQE)
+					tag TEXT NOT NULL UNIQUE)
 		"""
 	col_list = [
 		'tag_id INTEGER PRIMARY KEY',
-		'tag TEXT NOT NULL'
+		'tag TEXT NOT NULL UNIQUE'
 		]
 	if cols:
 		return sql, col_list
@@ -273,6 +273,7 @@ def check_db_version(conn):
 	c.execute(vs)
 	log_d('Checking DB Version')
 	db_vs = c.fetchone()
+	db_constants.REAL_DB_VERSION = db_vs[0]
 	if db_vs[0] not in db_constants.DB_VERSION:
 		msg = "Incompatible database"
 		log_c(msg)

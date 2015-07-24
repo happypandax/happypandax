@@ -43,6 +43,11 @@ class AppWindow(QMainWindow):
 		self.initUI()
 		self.start_up()
 		QTimer.singleShot(3000, self._check_update)
+		def p():
+			print(threading.activeCount())
+		self.t_timer = QTimer()
+		self.t_timer.timeout.connect(p)
+		self.t_timer.start(3000)
 
 	def init_watchers(self):
 
@@ -138,9 +143,9 @@ class AppWindow(QMainWindow):
 				def show_new_galleries(final_paths, galleries):
 					if galleries:
 						if len(galleries) == 1:
-							self.notification_bar.add_text("{} new gallery was discovered in one of your monitored directories")
+							self.notification_bar.add_text("{} new gallery was discovered in one of your monitored directories".format(len(galleries)))
 						else:
-							self.notification_bar.add_text("{} new galleries were discovered in one of your monitored directories")
+							self.notification_bar.add_text("{} new galleries were discovered in one of your monitored directories".format(len(galleries)))
 						text = "These new galleries were discovered! Do you want to add them?"\
 							if len(galleries) > 1 else "This new gallery was discovered! Do you want to add it?"
 						g_popup = file_misc.GalleryPopup((text, galleries), self)
@@ -649,7 +654,8 @@ class AppWindow(QMainWindow):
 									def add_to_db(self):
 										p = 0
 										for x in self.obj:
-											g = gallerydb.GalleryDB.add_gallery_return(x)
+											gallerydb.add_method_queue(
+												gallerydb.GalleryDB.add_gallery_return, True, x)
 											self.galleries.append(x)
 											p += 1
 											self.prog.emit(p)

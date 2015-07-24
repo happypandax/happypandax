@@ -20,6 +20,7 @@ from ..utils import (today, ArchiveFile, generate_img_hash, delete_path,
 					 ARCHIVE_FILES, get_gallery_img)
 from .db import CommandQueue, ResultQueue
 from ..gui import gui_constants
+from . import db_constants
 from .db_constants import THUMBNAIL_PATH, IMG_FILES, CURRENT_DB_VERSION
 
 PROFILE_TO_MODEL = queue.Queue()
@@ -32,6 +33,64 @@ log_w = log.warning
 log_e = log.error
 log_c = log.critical
 
+method_queue = queue.Queue()
+method_return = queue.Queue()
+db_constants.METHOD_QUEUE = method_queue
+db_constants.METHOD_RETURN = method_return
+def process_methods():
+	"""
+	Methods are objects.
+	Put a list in the method queue where first index is the
+	method. Named arguments are put in a dict.
+	"""
+	while True:
+		l = method_queue.get()
+		method = l.pop(0)
+		args = []
+		kwargs = {}
+		get_args = 1
+		no_return = False
+		while get_args:
+			try:
+				a = l.pop(0)
+				if a == 'no return':
+					no_return = True
+					continue
+				if isinstance(a, dict):
+					kwargs = a
+				else:
+					args.append(a)
+			except IndexError:
+				get_args = 0
+		args = tuple(args)
+		if args and kwargs:
+			r = method(*args, **kwargs)
+		elif args:
+			r = method(*args)
+		elif kwargs:
+			r = method(**kwargs)
+		else:
+			r = method()
+
+		if not no_return:
+			method_return.put(r)
+
+method_queue_thread = threading.Thread(name='Method Queue Thread', target=process_methods,
+									   daemon=True)
+method_queue_thread.start()
+
+def add_method_queue(method, no_return, *args, **kwargs):
+	arg_list = [method]
+	if no_return:
+		arg_list.append('no return')
+	if args:
+		for x in args:
+			arg_list.append(x)
+	if kwargs:
+		arg_list.append(kwargs)
+	method_queue.put(arg_list)
+	if not no_return:
+		return method_return.get()
 
 def gen_thumbnail(chapter_path, width=gui_constants.THUMB_W_SIZE,
 				height=gui_constants.THUMB_H_SIZE): # 2 to align it properly.. need to redo this
@@ -139,7 +198,7 @@ def default_exec(object):
 				'last_update':check(object.last_update),
 				'link':str.encode(object.link),
 				'times_read':check(object.times_read),
-				'db_v':check(CURRENT_DB_VERSION),
+				'db_v':check(db_constants.REAL_DB_VERSION),
 				'exed':check(object.exed)
 				}
 				]]

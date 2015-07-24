@@ -594,7 +594,7 @@ class GalleryModel(QAbstractTableModel):
 		self.beginInsertRows(QModelIndex(), position, position + rows - 1)
 		log_d('Add rows: Began inserting')
 		for gallery in list_of_gallery:
-			threading.Thread(target=gallerydb.GalleryDB.add_gallery_return, args=(gallery,)).start()
+			gallerydb.add_method_queue(gallerydb.GalleryDB.add_gallery_return, True, gallery)
 			gallery.profile = PROFILE_TO_MODEL.get()
 			self._data.insert(position, gallery)
 			self._data_count += 1
@@ -1052,8 +1052,7 @@ class MangaView(QListView):
 					gallery_list.append(gallery)
 					log_i('Attempt to remove: {} by {}'.format(gallery.title.encode(),
 												gallery.artist.encode()))
-			threading.Thread(target=gallerydb.GalleryDB.del_gallery,
-						args=(gallery_list, local), daemon=True).start()
+			gallerydb.add_method_queue(gallerydb.GalleryDB.del_gallery, True, gallery_list, local)
 			self.STATUS_BAR_MSG.emit('Gallery removed!')
 
 	def favorite(self, index):
@@ -1062,12 +1061,12 @@ class MangaView(QListView):
 		if gallery.fav == 1:
 			gallery.fav = 0
 			#self.model().replaceRows([gallery], index.row(), 1, index)
-			gallerydb.GalleryDB.fav_gallery_set(gallery.id, 0)
+			gallerydb.add_method_queue(gallerydb.GalleryDB.fav_gallery_set, True, gallery.id, 0)
 			self.gallery_model.CUSTOM_STATUS_MSG.emit("Unfavorited")
 		else:
 			gallery.fav = 1
 			#self.model().replaceRows([gallery], index.row(), 1, index)
-			gallerydb.GalleryDB.fav_gallery_set(gallery.id, 1)
+			gallerydb.add_method_queue(gallerydb.GalleryDB.fav_gallery_set, True, gallery.id, 1)
 			self.gallery_model.CUSTOM_STATUS_MSG.emit("Favorited")
 
 	def open_random_gallery(self):
@@ -1115,13 +1114,11 @@ class MangaView(QListView):
 				gallery = x.data(Qt.UserRole+1)
 				self.STATUS_BAR_MSG.emit("Opening chapters of selected galleries")
 				try:
-					threading.Thread(target=utils.open_chapter,
-							   args=(gallery.chapters[chap_numb],)).start()
+					gallerydb.add_method_queue(utils.open_chapter, True, gallery.chapters[chap_numb])
 					if not gallery.times_read:
 						gallery.times_read = 0
 					gallery.times_read += 1
-					gallerydb.GalleryDB.modify_gallery(gallery.id,
-						times_read=gallery.times_read)
+					gallerydb.add_method_queue(gallerydb.GalleryDB.modify_gallery, True, gallery.id, times_read=gallery.times_read)
 				except IndexError:
 					pass
 		else:
@@ -1129,13 +1126,11 @@ class MangaView(QListView):
 			self.STATUS_BAR_MSG.emit("Opening chapter {} of {}".format(chap_numb+1,
 																 gallery.title))
 			try:
-				threading.Thread(target=utils.open_chapter,
-						   args=(gallery.chapters[chap_numb],)).start()
+				gallerydb.add_method_queue(utils.open_chapter, True, gallery.chapters[chap_numb])
 				if not gallery.times_read:
 					gallery.times_read = 0
 				gallery.times_read += 1
-				gallerydb.GalleryDB.modify_gallery(gallery.id,
-					times_read=gallery.times_read)
+				gallerydb.add_method_queue(gallerydb.GalleryDB.modify_gallery, True, gallery.id, times_read=gallery.times_read)
 			except IndexError:
 				pass
 
@@ -1153,7 +1148,7 @@ class MangaView(QListView):
 			if msgbox.exec() == msgbox.Yes:
 				gallery.chapters.pop(chap_numb, None)
 				self.gallery_model.replaceRows([gallery], index.row())
-				gallerydb.ChapterDB.del_chapter(gallery.id, chap_numb)
+				gallerydb.add_method_queue(gallerydb.ChapterDB.del_chapter, True, gallery.id, chap_numb)
 
 	def refresh(self):
 		self.gallery_model.layoutChanged.emit() # TODO: CAUSE OF CRASH! FIX ASAP
@@ -1261,7 +1256,7 @@ class MangaView(QListView):
 			def add_chdb(chaps):
 				gallery = index.data(Qt.UserRole+1)
 				log_d('Adding new chapter for {}'.format(gallery.title))
-				gallerydb.ChapterDB.add_chapters_raw(gallery.id, chaps)
+				gallerydb.add_method_queue(gallerydb.ChapterDB.add_chapters_raw, True, gallery.id, chaps)
 				gallery = gallerydb.GalleryDB.get_gallery_by_id(gallery.id)
 				self.gallery_model.replaceRows([gallery], index.row())
 
@@ -1405,8 +1400,8 @@ class MangaView(QListView):
 			 'chapters':gallery,
 			 'exed':gallery.exed}
 
-			threading.Thread(target=gallerydb.GalleryDB.modify_gallery,
-							 args=(gallery.id,), kwargs=kwdict).start()
+			gallerydb.add_method_queue(gallerydb.GalleryDB.modify_gallery,
+							 True, gallery.id, **kwdict)
 		assert isinstance(pos, int)
 		self.gallery_model.replaceRows([gallery], pos, len(list_of_gallery))
 
@@ -1584,7 +1579,7 @@ class MangaTableView(QTableView):
 			def add_chdb(chaps):
 				gallery = index.data(Qt.UserRole+1)
 				log_d('Adding new chapter for {}'.format(gallery.title))
-				gallerydb.ChapterDB.add_chapters_raw(gallery.id, chaps)
+				gallerydb.add_method_queue(gallerydb.ChapterDB.add_chapters_raw, True, gallery.id, chaps)
 				gallery = gallerydb.GalleryDB.get_gallery_by_id(gallery.id)
 				self.gallery_model.replaceRows([gallery], index.row())
 
