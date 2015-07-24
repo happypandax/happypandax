@@ -136,8 +136,27 @@ class CommenHen:
 		parsed_metadata = {}
 		for gallery in metadata_json['gmetadata']:
 			if invalid_token_check(gallery):
+				new_gallery = {}
+				try:
+					new_gallery['title'] = {'def':gallery['title'], 'jpn':gallery['title_jpn']}
+				except KeyError:
+					new_gallery['title'] = {'def':gallery['title']}
+				new_gallery['type'] = gallery['category']
+				new_gallery['pub_date'] = datetime.fromtimestamp(int(gallery['posted']))
+				tags = {'default':[]}
+				for t in gallery['tags']:
+					if ':' in t:
+						ns_tag = t.split(':')
+						namespace = ns_tag[0].capitalize()
+						tag = ns_tag[1].lower()
+						if not namespace in tags:
+							tags[namespace] = []
+						tags[namespace].append(tag)
+					else:
+						tags['default'].append(t.lower())
+				new_gallery['tags'] = tags
 				url = dict_metadata[gallery['gid']]
-				parsed_metadata[url] = gallery
+				parsed_metadata[url] = new_gallery
 			else:
 				log_e("Error in received response with URL: {}".format(url))
 

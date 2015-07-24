@@ -93,6 +93,7 @@ FETCH_EHEN_API = get(False, 'Web', 'fetch ehen api', bool)
 DEFAULT_EHEN_URL = get('http://g.e-hentai.org/', 'Web', 'default ehen url', str)
 REPLACE_METADATA = get(False, 'Web', 'replace metadata', bool)
 ALWAYS_CHOOSE_FIRST_HIT = get(False, 'Web', 'always choose first hit', bool)
+USE_JPN_TITLE = get(False, 'Web', 'use jpn title', bool)
 
 # External Viewer
 EXTERNAL_VIEWER_SUPPORT = {'honeyview':['Honeyview.exe']}

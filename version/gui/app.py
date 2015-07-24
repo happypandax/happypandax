@@ -83,61 +83,84 @@ class AppWindow(QMainWindow):
 		self.watchers.gallery_handler.DELETED_SIGNAL.connect(deleted)
 
 		if gui_constants.LOOK_NEW_GALLERY_STARTUP:
+			self.notification_bar.begin_show()
+			self.notification_bar.add_text("Looking for new galleries...")
 			try:
-				db_data = self.manga_list_view.gallery_model._data
-				paths = []
-				for g in range(len(db_data)):
-					paths.append(os.path.normcase(db_data[g].path))
+				class ScanDir(QObject):
+					final_paths_and_galleries = pyqtSignal(list, list)
+					def __init__(self, model_data, parent=None):
+						super().__init__(parent)
+						self.model_data = model_data
+					def scan_dirs(self):
+						db_data = self.model_data
+						paths = []
+						for g in range(len(db_data)):
+							paths.append(os.path.normcase(db_data[g].path))
 
-				contents = []
-				case_path = [] # needed for tile and artist parsing... e.g to avoid lowercase
-				for m_path in gui_constants.MONITOR_PATHS:
-					for p in os.listdir(m_path):
-						abs_p = os.path.join(m_path, p)
-						if os.path.isdir(abs_p) or \
-							p.endswith(utils.ARCHIVE_FILES):
-							case_path.append(abs_p)
-							contents.append(os.path.normcase(abs_p))
+						contents = []
+						case_path = [] # needed for tile and artist parsing... e.g to avoid lowercase
+						for m_path in gui_constants.MONITOR_PATHS:
+							for p in os.listdir(m_path):
+								abs_p = os.path.join(m_path, p)
+								if os.path.isdir(abs_p) or \
+									p.endswith(utils.ARCHIVE_FILES):
+									case_path.append(abs_p)
+									contents.append(os.path.normcase(abs_p))
 
-				paths = sorted(paths)
-				new_galleries = []
-				for c, x in enumerate(contents):
-					y = utils.b_search(paths, x)
-					if not y:
-						# (path, number for case_path)
-						new_galleries.append((x, c))
+						paths = sorted(paths)
+						new_galleries = []
+						for c, x in enumerate(contents):
+							y = utils.b_search(paths, x)
+							if not y:
+								# (path, number for case_path)
+								new_galleries.append((x, c))
 
-				if new_galleries:
-					self.notification_bar.add_text(
-						'{} new galleries have been found in one of your monitored folders.'.format(len(new_galleries)))
-					galleries = []
-					final_paths = []
-					for g in new_galleries:
-						gallery = gallerydb.Gallery()
-						try:
-							gallery.profile = utils.get_gallery_img(g[0])
-						except:
-							gallery.profile = gui_constants.NO_IMAGE_PATH
-						parser_dict = utils.title_parser(os.path.split(case_path[g[1]])[1])
-						gallery.title = parser_dict['title']
-						gallery.artist = parser_dict['artist']
-						galleries.append(gallery)
-						final_paths.append(case_path[g[1]])
+						if new_galleries:
+							galleries = []
+							final_paths = []
+							for g in new_galleries:
+								gallery = gallerydb.Gallery()
+								try:
+									gallery.profile = utils.get_gallery_img(g[0])
+								except:
+									gallery.profile = gui_constants.NO_IMAGE_PATH
+								parser_dict = utils.title_parser(os.path.split(case_path[g[1]])[1])
+								gallery.title = parser_dict['title']
+								gallery.artist = parser_dict['artist']
+								galleries.append(gallery)
+								final_paths.append(case_path[g[1]])
+							self.final_paths_and_galleries.emit(final_paths, galleries)
 
 					#if gui_constants.LOOK_NEW_GALLERY_AUTOADD:
 					#	QTimer.singleShot(10000, self.gallery_populate(final_paths))
 					#	return
 
-					text = "These new galleries were discovered! Do you want to add them?"\
-						if len(galleries) > 1 else "This new gallery was discovered! Do you want to add it?"
-					g_popup = file_misc.GalleryPopup((text, galleries), self)
-					buttons = g_popup.add_buttons('Add', 'Close')
+				def show_new_galleries(final_paths, galleries):
+					if galleries:
+						if len(galleries) == 1:
+							self.notification_bar.add_text("{} new gallery was discovered in one of your monitored directories")
+						else:
+							self.notification_bar.add_text("{} new galleries were discovered in one of your monitored directories")
+						text = "These new galleries were discovered! Do you want to add them?"\
+							if len(galleries) > 1 else "This new gallery was discovered! Do you want to add it?"
+						g_popup = file_misc.GalleryPopup((text, galleries), self)
+						buttons = g_popup.add_buttons('Add', 'Close')
 
-					def populate_n_close():
-						self.gallery_populate(final_paths)
-						g_popup.close()
-					buttons[0].clicked.connect(populate_n_close)
-					buttons[1].clicked.connect(g_popup.close)
+						def populate_n_close():
+							self.gallery_populate(final_paths)
+							g_popup.close()
+						buttons[0].clicked.connect(populate_n_close)
+						buttons[1].clicked.connect(g_popup.close)
+
+				thread = QThread(self)
+				scan_inst = ScanDir(self.manga_list_view.gallery_model._data)
+				scan_inst.moveToThread(thread)
+				scan_inst.final_paths_and_galleries.connect(show_new_galleries)
+				scan_inst.final_paths_and_galleries.connect(lambda a: scan_inst.deleteLater())
+				thread.started.connect(scan_inst.scan_dirs)
+				thread.finished.connect(lambda a: self.notification_bar.end_show())
+				thread.finished.connect(thread.deleteLater)
+				thread.start()
 			except:
 				self.notification_bar.add_text('An error occured while attempting to scan for new galleries. Check happypanda.log.')
 				log.exception('An error occured while attempting to scan for new galleries.')

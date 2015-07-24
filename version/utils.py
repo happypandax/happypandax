@@ -328,7 +328,7 @@ def title_parser(title):
 	elif title[-3:] is '.7z':
 		title = title[:-3]
 
-	parsed_title = {'title':"", 'artist':"", 'language':"other"}
+	parsed_title = {'title':"", 'artist':"", 'language':"Other"}
 	try:
 		a = regex.findall('((?<=\[) *[^\]]+( +\S+)* *(?=\]))', title)
 		assert len(a) != 0

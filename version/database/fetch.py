@@ -127,7 +127,7 @@ class Fetch(QObject):
 						new_gallery.path = path
 						new_gallery.artist = parsed['artist']
 						new_gallery.language = parsed['language']
-						new_gallery.info = "<i>No description..</i>"
+						new_gallery.info = "No description.."
 						new_gallery.chapters_size = len(new_gallery.chapters)
 
 						self.data.append(new_gallery)
@@ -155,8 +155,6 @@ class Fetch(QObject):
 		assert isinstance(gallery, Gallery)
 		if gallery:
 			gallery.exed = 1
-			if not gallery.link:
-				gallery.link = gallery.temp_url
 			self.GALLERY_EMITTER.emit(gallery)
 			log_d('Success')
 
@@ -183,13 +181,78 @@ class Fetch(QObject):
 				gallery.title.encode(errors='ignore')))
 			return None
 		self.AUTO_METADATA_PROGRESS.emit("Applying metadata...")
-		for g in self.galleries_in_queue:
+
+		for x, g in enumerate(self.galleries_in_queue, 1):
 			try:
 				data = metadata[g.temp_url]
 			except KeyError:
 				self.AUTO_METADATA_PROGRESS.emit("No metadata found for gallery: {}".format(g.title))
 				log_w("No metadata found for gallery: {}".format(g.title.encode(errors='ignore')))
-			
+				continue
+			log_i('({}/{}) Applying metadata for gallery: {}'.format(x, len(self.galleries_in_queue),
+															g.title.encode(errors='ignore')))
+			if gui_constants.USE_JPN_TITLE:
+				try:
+					title = data['title']['jpn']
+				except KeyError:
+					title = data['title']['def']
+			else:
+				title = data['title']['def']
+
+			if 'Language' in data['tags']:
+				try:
+					lang = [x for x in data['tags']['Language'] if not x == 'translated'][0].capitalize()
+				except IndexError:
+					lang = ""
+			else:
+				lang = ""
+
+			title_artist_dict = utils.title_parser(title)
+			if gui_constants.REPLACE_METADATA:
+				g.title = title_artist_dict['title']
+				if title_artist_dict['artist']:
+					g.artist = title_artist_dict['artist']
+				g.language = title_artist_dict['language'].capitalize()
+				if 'Artist' in data['tags']:
+					g.artist = data['tags']['Artist'][0].capitalize()
+				if lang:
+					g.language = lang
+				g.type = data['type']
+				g.pub_date = data['pub_date']
+				g.tags = data['tags']
+				g.link = g.temp_url
+			else:
+				if not g.title:
+					g.title = title_artist_dict['title']
+				if not g.artist:
+					g.artist = title_artist_dict['artist']
+					if 'Artist' in data['tags']:
+						g.artist = data['tags']['Artist'][0].capitalize()
+				if not g.language:
+					g.language = title_artist_dict['language'].capitalize()
+					if lang:
+						g.language = lang
+				if not g.type or g.type == 'Other':
+					g.type = data['type']
+				if not g.pub_date:
+					g.pub_date = data['pub_date']
+				if not g.tags:
+					g.tags = data['tags']
+				else:
+					for ns in data['tags']:
+						if ns in g.tags:
+							for tag in data['tags'][ns]:
+								if not tag in g.tags[ns]:
+									g.tags[ns].append(tag)
+						else:
+							g.tags[ns] = data['tags'][ns]
+				if not g.link:
+					g.link = g.temp_url
+			self._return_gallery_metadata(g)
+			log_i('Successfully applied metadata to gallery: {}'.format(g.title.encode(errors='ignore')))
+		self.galleries_in_queue.clear()
+		self.AUTO_METADATA_PROGRESS.emit('Finished applying metadata')
+		log_i('Finished applying metadata')
 		
 		#HTML PARSING OBSELETE
 		#metadata = hen.eh_gallery_parser(gallery.temp_url)
@@ -351,8 +414,8 @@ class Fetch(QObject):
 			log_d('Auto metadata fetcher is done')
 			gui_constants.GLOBAL_EHEN_LOCK = False
 			if not self.error_galleries:
-				self.AUTO_METADATA_PROGRESS.emit('Successfully added all galleries to metadata queue!')
-				gui_constants.SYSTEM_TRAY.showMessage('Happypanda', 'Successfully added all galleries to metadata queue', minimized=True)
+				self.AUTO_METADATA_PROGRESS.emit('Auto metadata fetcher is done!')
+				gui_constants.SYSTEM_TRAY.showMessage('Happypanda', 'Auto metadata fetcher is done!', minimized=True)
 				self.FINISHED.emit(True)
 			else:
 				self.AUTO_METADATA_PROGRESS.emit('Could not add {} galleries to queue. Check happypanda.log for more details!'.format(len(self.error_galleries)))

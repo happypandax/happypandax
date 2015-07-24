@@ -604,6 +604,8 @@ class ChapterDB:
 			return chp_id
 		except KeyError:
 			return None
+		except TypeError:
+			return None
 
 	@staticmethod
 	def chapter_size(series_id):
@@ -738,13 +740,15 @@ class TagDB:
 		def look_exists(tag_or_ns, what):
 			"""check if tag or namespace already exists in base
 			returns id, else returns None"""
-			executing = [["SELECT {}_id FROM {}s WHERE {} LIKE ?".format(what, what, what),
-				('%'+tag_or_ns+'%',)]]
+			executing = [["SELECT {}_id FROM {}s WHERE {} = ?".format(what, what, what),
+				(tag_or_ns,)]]
 			CommandQueue.put(executing)
 			c = ResultQueue.get()
 			try: # exists
 				return c.fetchone()['{}_id'.format(what)]
 			except TypeError: # doesnt exist
+				return None
+			except IndexError:
 				return None
 
 		tags_mappings_id_list = []
@@ -754,8 +758,9 @@ class TagDB:
 			# don't add if it already exists
 			try:
 				namespace_id = look_exists(namespace, "namespace")
-				assert namespace_id
-			except AssertionError:
+				if not namespace_id:
+					raise ValueError
+			except ValueError:
 				executing = [["""INSERT INTO namespaces(namespace)
 								VALUES(?)""", (namespace,)]]
 				CommandQueue.put(executing)
@@ -766,8 +771,9 @@ class TagDB:
 			for tag in tags_list:
 				try:
 					tag_id = look_exists(tag, "tag")
-					assert tag_id
-				except AssertionError:
+					if not tag_id:
+						raise ValueError
+				except ValueError:
 					executing = [["""INSERT INTO tags(tag)
 								VALUES(?)""", (tag,)]]
 					CommandQueue.put(executing)
@@ -786,6 +792,8 @@ class TagDB:
 				try: # exists
 					return c.fetchone()['tags_mappings_id']
 				except TypeError: # doesnt exist
+					return None
+				except IndexError:
 					return None
 
 			# time to map the tags to the namespace now
@@ -923,7 +931,7 @@ class HashDB:
 			with open(i, 'rb') as img:
 				hashes.append(generate_img_hash(img))
 		
-		if gallery.id:
+		if gallery.id and chap_id:
 			executing = []
 			for hash in hashes:
 				executing.append(["""INSERT INTO hashes(hash, series_id, chapter_id)

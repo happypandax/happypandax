@@ -127,7 +127,7 @@ def tags_sql(cols=False):
 	sql = """
 		CREATE TABLE IF NOT EXISTS tags(
 					tag_id INTEGER PRIMARY KEY,
-					tag TEXT NOT NULL)
+					tag TEXT NOT NULL UNIQE)
 		"""
 	col_list = [
 		'tag_id INTEGER PRIMARY KEY',
@@ -382,8 +382,8 @@ class DBThread:
 			for cmd in list_of_cmds:
 				try:
 					log_d("{}".format(cmd[0]).encode(errors='ignore'))
-					c.execute(cmd[0], cmd[1])
 					log_d("{}".format(cmd[1]).encode(errors='ignore'))
+					c.execute(cmd[0], cmd[1])
 				except IndexError:
 					log_d("{}".format(cmd[0]).encode(errors='ignore'))
 					c.execute(cmd[0])
