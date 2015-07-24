@@ -973,6 +973,10 @@ class MangaView(QListView):
 		self.setModel(self.sort_model)
 		self.SERIES_DIALOG.connect(self.spawn_dialog)
 		self.doubleClicked.connect(self.open_chapter)
+
+		self.current_sort = gui_constants.CURRENT_SORT
+		self.sort(self.current_sort)
+
 		def debug_print(a):
 			print(a.data(Qt.UserRole+1))
 		#self.clicked.connect(debug_print)
@@ -1154,6 +1158,20 @@ class MangaView(QListView):
 		self.gallery_model.layoutChanged.emit() # TODO: CAUSE OF CRASH! FIX ASAP
 		self.STATUS_BAR_MSG.emit("Refreshed")
 
+	def sort(self, name):
+		if name == 'title':
+			self.sort_model.setSortRole(Qt.DisplayRole)
+			self.sort_model.sort(0, Qt.AscendingOrder)
+			self.current_sort = 'title'
+		elif name == 'artist':
+			self.sort_model.setSortRole(Qt.UserRole+2)
+			self.sort_model.sort(0, Qt.AscendingOrder)
+			self.current_sort = 'artist'
+		elif name == 'date_added':
+			self.sort_model.setSortRole(Qt.UserRole+4)
+			self.sort_model.sort(0, Qt.DescendingOrder)
+			self.current_sort = 'date_added'
+
 	def contextMenuEvent(self, event):
 		handled = False
 		custom = False
@@ -1223,18 +1241,6 @@ class MangaView(QListView):
 			link = index.data(Qt.UserRole+1).link
 			utils.open_web_link(link)
 
-		def sort(obj, name):
-			obj.setChecked(True)
-			if name == 'title':
-				self.sort_model.setSortRole(Qt.DisplayRole)
-				self.sort_model.sort(0, Qt.AscendingOrder)
-			elif name == 'artist':
-				self.sort_model.setSortRole(Qt.UserRole+2)
-				self.sort_model.sort(0, Qt.AscendingOrder)
-			elif name == 'date_added':
-				self.sort_model.setSortRole(Qt.UserRole+4)
-				self.sort_model.sort(0, Qt.DescendingOrder)
-
 		def asc_desc():
 			if self.sort_model.sortOrder() == Qt.AscendingOrder:
 				self.sort_model.sort(0, Qt.DescendingOrder)
@@ -1285,19 +1291,25 @@ class MangaView(QListView):
 			add_gallery = QAction("&Add new Gallery...", menu,
 						triggered = self.SERIES_DIALOG.emit)
 			menu.addAction(add_gallery)
+			def set_current_sort(act, key):
+				if self.current_sort == key:
+					act.setChecked(True)
 			sort_main = QAction("&Sort by", menu)
 			menu.addAction(sort_main)
-			sort_actions = QActionGroup(self, exclusive=True)
 			sort_menu = QMenu()
 			sort_main.setMenu(sort_menu)
-			asc_desc_act = QAction("Asc/Desc", menu)
+			sort_actions = QActionGroup(sort_menu, exclusive=True)
+			asc_desc_act = QAction("Asc/Desc", sort_menu)
 			asc_desc_act.triggered.connect(asc_desc)
-			s_title = sort_actions.addAction(QAction("Title", menu, checkable=True))
-			s_title.triggered.connect(lambda: sort(s_title, 'title'))
-			s_artist = sort_actions.addAction(QAction("Author", menu, checkable=True))
-			s_artist.triggered.connect(lambda: sort(s_artist, 'artist'))
-			s_date = sort_actions.addAction(QAction("Date Added", menu, checkable=True))
-			s_date.triggered.connect(lambda: sort(s_date, 'date_added'))
+			s_title = sort_actions.addAction(QAction("Title", sort_actions, checkable=True))
+			s_title.triggered.connect(functools.partial(self.sort, 'title'))
+			set_current_sort(s_title, 'title')
+			s_artist = sort_actions.addAction(QAction("Author", sort_actions, checkable=True))
+			s_artist.triggered.connect(functools.partial(self.sort, 'artist'))
+			set_current_sort(s_artist, 'artist')
+			s_date = sort_actions.addAction(QAction("Date Added", sort_actions, checkable=True))
+			s_date.triggered.connect(functools.partial(self.sort, 'date_added'))
+			set_current_sort(s_date, 'date_added')
 
 			sort_menu.addAction(asc_desc_act)
 			sort_menu.addSeparator()

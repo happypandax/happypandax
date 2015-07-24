@@ -111,6 +111,7 @@ POPUP_WIDTH = get(450, 'Visual', 'popup.w', int)
 POPUP_HEIGHT = get(220, 'Visual', 'popup.h', int)
 
 # Gallery
+CURRENT_SORT = get('title', 'General', 'current sort')
 HIGH_QUALITY_THUMBS = get(False, 'Visual', 'high quality thumbs', bool)
 REFRESH_GALLERY_ICONS = False
 USE_EXTERNAL_PROG_ICO = get(True, 'Visual', 'use external prog ico', bool)

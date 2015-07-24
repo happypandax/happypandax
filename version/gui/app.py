@@ -744,6 +744,7 @@ class AppWindow(QMainWindow):
 			pass
 
 		# settings
+		settings.set(self.manga_list_view.current_sort, 'General', 'current sort')
 		settings.win_save(self, 'AppWindow')
 
 		# temp dir
