@@ -2,7 +2,7 @@
 							 QHBoxLayout, QFormLayout, QLabel, QLineEdit,
 							 QPushButton, QProgressBar, QTextEdit, QComboBox,
 							 QDateEdit, QFileDialog, QMessageBox, QScrollArea)
-from PyQt5.QtCore import pyqtSignal, Qt, QPoint, QDate, QThread, QTimer
+from PyQt5.QtCore import (pyqtSignal, Qt, QPoint, QDate, QThread, QTimer)
 from datetime import datetime
 
 import queue, os, threading, random, logging, time
@@ -209,8 +209,9 @@ class GalleryDialog(QWidget):
 		self._find_combobox_match(self.type_box, gallery.type, 0)
 		self._find_combobox_match(self.status_box, gallery.status, 0)
 
-		gallery_pub_date = "{}".format(gallery.pub_date)
-		qdate_pub_date = QDate.fromString(gallery_pub_date, "yyyy-MM-dd")
+		gallery_pub_date = "{}".format(gallery.pub_date).split(' ')
+		self.gallery_time = gallery_pub_date[1]
+		qdate_pub_date = QDate.fromString(gallery_pub_date[0], "yyyy-MM-dd")
 		self.pub_edit.setDate(qdate_pub_date)
 
 		self.link_lbl.setText(gallery.link)
@@ -419,6 +420,11 @@ class GalleryDialog(QWidget):
 			log_d('Adding gallery: tagging to dict')
 			qpub_d = self.pub_edit.date().toString("ddMMyyyy")
 			dpub_d = datetime.strptime(qpub_d, "%d%m%Y").date()
+			try:
+				d_t = self.gallery_time
+			except AttributeError:
+				d_t = datetime.now().time().replace(microsecond=0)
+			dpub_d = datetime.combine(dpub_d, d_t)
 			new_gallery.pub_date = dpub_d
 			log_d('Adding gallery pub date')
 			new_gallery.link = self.link_lbl.text()

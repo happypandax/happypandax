@@ -12,7 +12,7 @@ You should have received a copy of the GNU General Public License
 along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import sys, logging, os, threading, re, pickle, requests
+import sys, logging, os, threading, re, requests
 from PyQt5.QtCore import (Qt, QSize, pyqtSignal, QThread, QEvent, QTimer,
 						  QObject)
 from PyQt5.QtGui import (QPixmap, QIcon, QMouseEvent, QCursor)
@@ -87,7 +87,6 @@ class AppWindow(QMainWindow):
 			try:
 				class ScanDir(QObject):
 					final_paths_and_galleries = pyqtSignal(list, list)
-					done = pyqtSignal()
 					def __init__(self, model_data, parent=None):
 						super().__init__(parent)
 						self.model_data = model_data
@@ -130,34 +129,36 @@ class AppWindow(QMainWindow):
 								galleries.append(gallery)
 								final_paths.append(case_path[g[1]])
 						self.final_paths_and_galleries.emit(final_paths, galleries)
-						self.done.emit()
 					#if gui_constants.LOOK_NEW_GALLERY_AUTOADD:
 					#	QTimer.singleShot(10000, self.gallery_populate(final_paths))
 					#	return
 
 				def show_new_galleries(final_paths, galleries):
 					if final_paths and galleries:
-						if len(galleries) == 1:
-							self.notification_bar.add_text("{} new gallery was discovered in one of your monitored directories".format(len(galleries)))
-						else:
-							self.notification_bar.add_text("{} new galleries were discovered in one of your monitored directories".format(len(galleries)))
-						text = "These new galleries were discovered! Do you want to add them?"\
-							if len(galleries) > 1 else "This new gallery was discovered! Do you want to add it?"
-						g_popup = file_misc.GalleryPopup((text, galleries), self)
-						buttons = g_popup.add_buttons('Add', 'Close')
-
-						def populate_n_close():
+						if gui_constants.LOOK_NEW_GALLERY_AUTOADD:
 							self.gallery_populate(final_paths)
-							g_popup.close()
-						buttons[0].clicked.connect(populate_n_close)
-						buttons[1].clicked.connect(g_popup.close)
+						else:
+							if len(galleries) == 1:
+								self.notification_bar.add_text("{} new gallery was discovered in one of your monitored directories".format(len(galleries)))
+							else:
+								self.notification_bar.add_text("{} new galleries were discovered in one of your monitored directories".format(len(galleries)))
+							text = "These new galleries were discovered! Do you want to add them?"\
+								if len(galleries) > 1 else "This new gallery was discovered! Do you want to add it?"
+							g_popup = file_misc.GalleryPopup((text, galleries), self)
+							buttons = g_popup.add_buttons('Add', 'Close')
+
+							def populate_n_close():
+								self.gallery_populate(final_paths)
+								g_popup.close()
+							buttons[0].clicked.connect(populate_n_close)
+							buttons[1].clicked.connect(g_popup.close)
 
 				thread = QThread(self)
-				scan_inst = ScanDir(self.manga_list_view.gallery_model._data)
-				scan_inst.moveToThread(thread)
-				scan_inst.final_paths_and_galleries.connect(show_new_galleries)
-				thread.started.connect(scan_inst.scan_dirs)
-				scan_inst.done.connect(scan_inst.deleteLater)
+				self.scan_inst = ScanDir(self.manga_list_view.gallery_model._data)
+				self.scan_inst.moveToThread(thread)
+				self.scan_inst.final_paths_and_galleries.connect(show_new_galleries)
+				self.scan_inst.final_paths_and_galleries.connect(lambda a: self.scan_inst.deleteLater())
+				thread.started.connect(self.scan_inst.scan_dirs)
 				thread.finished.connect(thread.deleteLater)
 				thread.start()
 			except:
@@ -323,7 +324,10 @@ class AppWindow(QMainWindow):
 		if gal:
 			galleries = [gal]
 		else:
-			galleries = [g for g in self.manga_list_view.gallery_model._data if not g.exed]
+			if gui_constants.CONTINUE_AUTO_METADATA_FETCHER:
+				galleries = [g for g in self.manga_list_view.gallery_model._data if not g.exed]
+			else:
+				galleries = self.manga_list_view.gallery_model._data
 			if not galleries:
 				self.notification_bar.add_text('Looks like we\'ve already gone through all galleries!')
 				return None

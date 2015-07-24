@@ -1061,7 +1061,7 @@ class Gallery:
 		self.status = None
 		self.tags = {}
 		self.pub_date = None
-		self.date_added = datetime.date.today()
+		self.date_added = datetime.datetime.now().replace(microsecond=0)
 		self.last_read = None
 		self.last_update = None
 		self.times_read = 0

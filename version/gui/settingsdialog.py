@@ -138,10 +138,11 @@ class SettingsDialog(QWidget):
 		else:
 			self.exhentai_ehen_url.setChecked(True)
 		
-		self.fetch_ehen_api.setChecked(gui_constants.FETCH_EHEN_API)
 		self.replace_metadata.setChecked(gui_constants.REPLACE_METADATA)
 		self.always_first_hit.setChecked(gui_constants.ALWAYS_CHOOSE_FIRST_HIT)
 		self.web_time_offset.setValue(gui_constants.GLOBAL_EHEN_TIME)
+		self.continue_a_metadata_fetcher.setChecked(gui_constants.CONTINUE_AUTO_METADATA_FETCHER)
+		self.use_jpn_title.setChecked(gui_constants.USE_JPN_TITLE)
 
 		# Web / Exhentai
 		self.ipbid_edit.setText(self.exprops.ipb_id)
@@ -220,9 +221,6 @@ class SettingsDialog(QWidget):
 			gui_constants.DEFAULT_EHEN_URL = 'http://exhentai.org/'
 		set(gui_constants.DEFAULT_EHEN_URL, 'Web', 'default ehen url')
 
-		gui_constants.FETCH_EHEN_API = self.fetch_ehen_api.isChecked()
-		set(gui_constants.FETCH_EHEN_API, 'Web', 'fetch ehen api')
-
 		gui_constants.REPLACE_METADATA = self.replace_metadata.isChecked()
 		set(gui_constants.REPLACE_METADATA, 'Web', 'replace metadata')
 
@@ -231,6 +229,12 @@ class SettingsDialog(QWidget):
 
 		gui_constants.GLOBAL_EHEN_TIME = self.web_time_offset.value()
 		set(gui_constants.GLOBAL_EHEN_TIME, 'Web', 'global ehen time offset')
+
+		gui_constants.CONTINUE_AUTO_METADATA_FETCHER = self.continue_a_metadata_fetcher.isChecked()
+		set(gui_constants.CONTINUE_AUTO_METADATA_FETCHER, 'Web', 'continue auto metadata fetcher')
+
+		gui_constants.USE_JPN_TITLE = self.use_jpn_title.isChecked()
+		set(gui_constants.USE_JPN_TITLE, 'Web', 'use jpn title')
 
 		# Web / ExHentai
 		self.exprops.ipb_id = self.ipbid_edit.text()
@@ -363,7 +367,6 @@ class SettingsDialog(QWidget):
 		self.look_new_gallery_startup.setCheckable(True)
 		look_new_gallery_startup_m_l = QVBoxLayout(self.look_new_gallery_startup)
 		self.auto_add_new_galleries = QCheckBox('Automatically add found galleries')
-		self.auto_add_new_galleries.setDisabled(True)
 		look_new_gallery_startup_m_l.addWidget(self.auto_add_new_galleries)
 
 		# App / Monitor / folders
@@ -397,21 +400,10 @@ class SettingsDialog(QWidget):
 		ehen_url_l.addWidget(self.default_ehen_url)
 		ehen_url_l.addWidget(self.exhentai_ehen_url, 1)
 		metadata_fetcher_m_l.addRow('Default URL:', ehen_url_l)
-		metadata_method_group = QGroupBox('Method', self)
-		metadata_fetcher_m_l.addRow(metadata_method_group)
-		metadata_method_l = QVBoxLayout(metadata_method_group)
-		api_info = QLabel('Fetching through the API is quicker, but namespaces are not included.')
-		api_info.setWordWrap(True)
-		self.fetch_ehen_api = QRadioButton('API', metadata_method_group)
-		self.fetch_ehen_api.setEnabled(False)
-		html_info = QLabel('Fetching through HTML is slower, but namespaces are included.')
-		html_info.setWordWrap(True)
-		self.fetch_ehen_html = QRadioButton('HTML', metadata_method_group)
-		self.fetch_ehen_html.setChecked(True)
-		metadata_method_l.addWidget(api_info)
-		metadata_method_l.addWidget(self.fetch_ehen_api)
-		metadata_method_l.addWidget(html_info)
-		metadata_method_l.addWidget(self.fetch_ehen_html)
+		self.continue_a_metadata_fetcher = QCheckBox('Continue from where auto metadata fetcher left off')
+		metadata_fetcher_m_l.addRow(self.continue_a_metadata_fetcher)
+		self.use_jpn_title = QCheckBox('Use japanese title')
+		metadata_fetcher_m_l.addRow(self.use_jpn_title)
 		time_offset_info = QLabel('To avoid getting banned, we need to impose a delay between our requests.'+
 							' I have made it so you cannot set the delay lower than the recommended (I don\'t'+
 							' want you to get banned, anon).\nSpecify the delay between requests in seconds.')

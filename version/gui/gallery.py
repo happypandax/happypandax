@@ -16,7 +16,7 @@ from PyQt5.QtCore import (Qt, QAbstractListModel, QModelIndex, QVariant,
 						  QSize, QRect, QEvent, pyqtSignal, QThread,
 						  QTimer, QPointF, QSortFilterProxyModel,
 						  QAbstractTableModel, QItemSelectionModel,
-						  QPoint, QRectF, QDate)
+						  QPoint, QRectF, QDate, QDateTime)
 from PyQt5.QtGui import (QPixmap, QBrush, QColor, QPainter, 
 						 QPen, QTextDocument,
 						 QMouseEvent, QHelpEvent,
@@ -455,11 +455,11 @@ class GalleryModel(QAbstractTableModel):
 				return current_gallery.info
 			elif current_column == self._DATE_ADDED:
 				g_dt = "{}".format(current_gallery.date_added)
-				qdate_g_dt = QDate.fromString(g_dt, "yyyy-MM-dd")
+				qdate_g_dt = QDateTime.fromString(g_dt, "yyyy-MM-dd HH:mm:ss")
 				return qdate_g_dt
 			elif current_column == self._PUB_DATE:
 				g_pdt = "{}".format(current_gallery.pub_date)
-				qdate_g_pdt = QDate.fromString(g_pdt, "yyyy-MM-dd")
+				qdate_g_pdt = QDateTime.fromString(g_pdt, "yyyy-MM-dd HH:mm:ss")
 				return qdate_g_pdt
 
 		# TODO: name all these roles and put them in gui_constants...
@@ -516,10 +516,10 @@ class GalleryModel(QAbstractTableModel):
 				add_tips.append(current_gallery.times_read)
 			if gui_constants.TOOLTIP_PUB_DATE:
 				add_bold.append('<b>Publication Date:</b>')
-				add_tips.append(current_gallery.pub_date)
+				add_tips.append('{}'.format(current_gallery.pub_date).split(' ')[0])
 			if gui_constants.TOOLTIP_DATE_ADDED:
 				add_bold.append('<b>Date added:</b>')
-				add_tips.append(current_gallery.date_added)
+				add_tips.append('{}'.format(current_gallery.date_added).split(' ')[0])
 
 			tooltip = ""
 			tips = list(zip(add_bold, add_tips))
@@ -538,7 +538,12 @@ class GalleryModel(QAbstractTableModel):
 			date_added = "{}".format(current_gallery.date_added)
 			qdate_added = QDate.fromString(date_added, "yyyy-MM-dd")
 			return qdate_added
-
+		
+		if role == Qt.UserRole+5:
+			if current_gallery.pub_date:
+				pub_date = "{}".format(current_gallery.pub_date)
+				qpub_date = QDate.fromString(pub_date, "yyyy-MM-dd")
+				return qpub_date
 
 		return None
 
@@ -979,7 +984,7 @@ class MangaView(QListView):
 
 		def debug_print(a):
 			print(a.data(Qt.UserRole+1))
-		#self.clicked.connect(debug_print)
+		self.clicked.connect(debug_print)
 	#	self.ti = QTimer()
 	#	self.ti.timeout.connect(self.test_)
 	#	self.ti.start(5000)
@@ -1171,6 +1176,10 @@ class MangaView(QListView):
 			self.sort_model.setSortRole(Qt.UserRole+4)
 			self.sort_model.sort(0, Qt.DescendingOrder)
 			self.current_sort = 'date_added'
+		elif name == 'pub_date':
+			self.sort_model.setSortRole(Qt.UserRole+5)
+			self.sort_model.sort(0, Qt.DescendingOrder)
+			self.current_sort = 'pub_date'
 
 	def contextMenuEvent(self, event):
 		handled = False
@@ -1310,12 +1319,16 @@ class MangaView(QListView):
 			s_date = sort_actions.addAction(QAction("Date Added", sort_actions, checkable=True))
 			s_date.triggered.connect(functools.partial(self.sort, 'date_added'))
 			set_current_sort(s_date, 'date_added')
+			s_pub_d = sort_actions.addAction(QAction("Date Published", sort_actions, checkable=True))
+			s_pub_d.triggered.connect(functools.partial(self.sort, 'pub_date'))
+			set_current_sort(s_pub_d, 'pub_date')
 
 			sort_menu.addAction(asc_desc_act)
 			sort_menu.addSeparator()
 			sort_menu.addAction(s_title)
 			sort_menu.addAction(s_artist)
 			sort_menu.addAction(s_date)
+			sort_menu.addAction(s_pub_d)
 			refresh = QAction("&Refresh", menu,
 					 triggered = self.refresh)
 			menu.addAction(refresh)
