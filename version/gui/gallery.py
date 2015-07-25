@@ -460,7 +460,10 @@ class GalleryModel(QAbstractTableModel):
 			elif current_column == self._PUB_DATE:
 				g_pdt = "{}".format(current_gallery.pub_date)
 				qdate_g_pdt = QDateTime.fromString(g_pdt, "yyyy-MM-dd HH:mm:ss")
-				return qdate_g_pdt
+				if qdate_g_pdt.isValid():
+					return qdate_g_pdt
+				else:
+					'No date set'
 
 		# TODO: name all these roles and put them in gui_constants...
 
@@ -536,13 +539,13 @@ class GalleryModel(QAbstractTableModel):
 
 		if role == Qt.UserRole+4:
 			date_added = "{}".format(current_gallery.date_added)
-			qdate_added = QDate.fromString(date_added, "yyyy-MM-dd")
+			qdate_added = QDateTime.fromString(date_added, "yyyy-MM-dd HH:mm:ss")
 			return qdate_added
 		
 		if role == Qt.UserRole+5:
 			if current_gallery.pub_date:
 				pub_date = "{}".format(current_gallery.pub_date)
-				qpub_date = QDate.fromString(pub_date, "yyyy-MM-dd")
+				qpub_date = QDateTime.fromString(pub_date, "yyyy-MM-dd HH:mm:ss")
 				return qpub_date
 
 		return None
@@ -1160,8 +1163,9 @@ class MangaView(QListView):
 				gallerydb.add_method_queue(gallerydb.ChapterDB.del_chapter, True, gallery.id, chap_numb)
 
 	def refresh(self):
-		self.gallery_model.layoutChanged.emit() # TODO: CAUSE OF CRASH! FIX ASAP
-		self.STATUS_BAR_MSG.emit("Refreshed")
+		#self.gallery_model.layoutChanged.emit() # TODO: CAUSE OF CRASH! FIX ASAP
+		#self.STATUS_BAR_MSG.emit("Refreshed")
+		pass
 
 	def sort(self, name):
 		if name == 'title':
@@ -1505,9 +1509,10 @@ class MangaTableView(QTableView):
 	#	return super().viewportEvent(event)
 
 	def refresh(self):
-		self.gallery_model.layoutChanged.emit()
-		#self.gallery_model.populate_data() # TODO: CAUSE OF CRASH! FIX ASAP
-		self.STATUS_BAR_MSG.emit("Refreshed")
+		#self.gallery_model.layoutChanged.emit()
+		##self.gallery_model.populate_data() # TODO: CAUSE OF CRASH! FIX ASAP
+		#self.STATUS_BAR_MSG.emit("Refreshed")
+		pass
 
 	def contextMenuEvent(self, event):
 		handled = False

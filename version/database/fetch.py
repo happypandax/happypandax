@@ -92,10 +92,11 @@ class Fetch(QObject):
 						images_paths = []
 						try:
 							con = os.listdir(path) #all of content in the gallery folder
-		
+							log_i('Gallery source is a directory')
 							chapters = sorted([os.path.join(path,sub) for sub in con if os.path.isdir(os.path.join(path, sub))]) #subfolders
 							# if gallery has chapters divided into sub folders
 							if len(chapters) != 0:
+								log_i('Gallery has chapters divided in directories')
 								for numb, ch in enumerate(chapters):
 									chap_path = os.path.join(path, ch)
 									new_gallery.chapters[numb] = chap_path
@@ -114,6 +115,7 @@ class Fetch(QObject):
 							parsed = utils.title_parser(ser_path)
 						except NotADirectoryError:
 							if ser_path[-4:] in utils.ARCHIVE_FILES:
+								log_i('Gallery source is an archive')
 								#TODO: add support for folders in archive
 								new_gallery.chapters[0] = path
 								parsed = utils.title_parser(ser_path[:-4])
