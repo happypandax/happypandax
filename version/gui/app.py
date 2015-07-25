@@ -281,7 +281,8 @@ class AppWindow(QMainWindow):
 				try:
 					log_d('Checking Update')
 					time.sleep(1.5)
-					r = requests.get("https://raw.githubusercontent.com/Pewpews/happypanda/master/VS.txt")
+					r = requests.get("https://raw.githubusercontent.com/Pewpews/happypanda/master/VS.txt",
+					  verify='cacert.pem')
 					a = r.text
 					vs = a.strip()
 					self.UPDATE_CHECK.emit(vs)
@@ -290,6 +291,7 @@ class AppWindow(QMainWindow):
 					self.UPDATE_CHECK.emit('this is a very long text which is is sure to be over limit')
 
 		def check_update(vs):
+			log_i('Received version: {}\nCurrent version: {}'.format(vs, gui_constants.vs))
 			if vs != gui_constants.vs:
 				if len(vs) < 10:
 					self.notification_bar.add_text("Version {} of Happypanda is".format(vs)+
