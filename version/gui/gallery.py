@@ -1560,6 +1560,9 @@ class MangaTableView(QTableView):
 		def fav():
 			self.parent_widget.manga_list_view.favorite(index)
 
+		def open_link():
+			link = index.data(Qt.UserRole+1).link
+			utils.open_web_link(link)
 
 		# add the chapter menus
 		def chapters():

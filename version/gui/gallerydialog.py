@@ -55,6 +55,7 @@ class GalleryDialog(QWidget):
 		final_buttons.addWidget(done)
 		if arg:
 			if isinstance(arg, list):
+				self.setWindowTitle('Edit gallery')
 				self.position = arg[0].row()
 				for index in arg:
 					gallery = index.data(Qt.UserRole+1)
@@ -63,12 +64,14 @@ class GalleryDialog(QWidget):
 				done.clicked.connect(self.accept_edit)
 				cancel.clicked.connect(self.reject_edit)
 			elif isinstance(arg, str):
+				self.setWindowTitle('Add a new gallery')
 				self.newUI()
 				self.commonUI()
 				self.choose_dir(arg)
 				done.clicked.connect(self.accept)
 				cancel.clicked.connect(self.reject)
 		else:
+			self.setWindowTitle('Add a new gallery')
 			self.newUI()
 			self.commonUI()
 			done.clicked.connect(self.accept)
@@ -84,7 +87,6 @@ class GalleryDialog(QWidget):
 		frect.moveCenter(QDesktopWidget().availableGeometry().center())
 		self.move(frect.topLeft())
 		#self.setAttribute(Qt.WA_DeleteOnClose)
-		self.setWindowTitle("Add a new gallery")
 
 	def commonUI(self):
 		f_web = QGroupBox("Metadata from the Web")
@@ -210,7 +212,10 @@ class GalleryDialog(QWidget):
 		self._find_combobox_match(self.status_box, gallery.status, 0)
 
 		gallery_pub_date = "{}".format(gallery.pub_date).split(' ')
-		self.gallery_time = gallery_pub_date[1]
+		try:
+			self.gallery_time = datetime.strptime(gallery_pub_date[1], '%H:%M:%S').time()
+		except IndexError:
+			self.gallery_time = None
 		qdate_pub_date = QDate.fromString(gallery_pub_date[0], "yyyy-MM-dd")
 		self.pub_edit.setDate(qdate_pub_date)
 
@@ -420,9 +425,9 @@ class GalleryDialog(QWidget):
 			log_d('Adding gallery: tagging to dict')
 			qpub_d = self.pub_edit.date().toString("ddMMyyyy")
 			dpub_d = datetime.strptime(qpub_d, "%d%m%Y").date()
-			try:
+			if self.gallery_time:
 				d_t = self.gallery_time
-			except AttributeError:
+			else:
 				d_t = datetime.now().time().replace(microsecond=0)
 			dpub_d = datetime.combine(dpub_d, d_t)
 			new_gallery.pub_date = dpub_d
