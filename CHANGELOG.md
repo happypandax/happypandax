@@ -5,11 +5,11 @@
     + No more need to restart application because it froze
     + Updated to support namespace fetching directly from the official API
 - Improved tag autocompletion in gallery dialog
-- Added a system tray to notify you about events such as auto metadata fetcher being done and more
+- Added a system tray to notify you about events such as auto metadata fetcher being done
 - Sorting:
     + Added a new sort option: Publication Date
     + Added an indicator to the current sort option.
-    + You current sort option will now be saved
+    + Your current sort option will now be saved
     + Increased pecision of date added
 - Settings:
     + Added new options:
