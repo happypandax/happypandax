@@ -1,3 +1,29 @@
+*Happypanda v0.19*
+- Improved stability
+- Updated and fixed auto metadata fetcher:
+    + Now twice as fast
+    + No more need to restart application because it froze
+    + Updated to support namespace fetching directly from the official API
+- Improved tag autocompletion in gallery dialog
+- Added a system tray to notify you about events such as auto metadata fetcher being done and more
+- Sorting:
+    + Added a new sort option: Publication Date
+    + Added an indicator to the current sort option.
+    + You current sort option will now be saved
+    + Increased pecision of date added
+- Settings:
+    + Added new options:
+        * Continue auto metadata fetcher from where it left off
+        * Use japanese title
+    + Enabled option:
+        * Auto add new galleries on startup
+    + Removed options:
+        * HTML Parsing or API
+- Bugfixes:
+    + Fixed critical bug: Fetching metadata from exhentai not working
+    + Fixed critical bug: Duplicates were being created in database
+    + Fixed a bug causing the update checker to always fail.
+
 *Happypanda v0.18*
 - Greatly improved stability
 - Added numbers to show how many galleries are left when fetching for metadata
