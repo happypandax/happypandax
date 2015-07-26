@@ -652,14 +652,17 @@ class AppWindow(QMainWindow):
 										self.galleries = []
 
 									def add_to_db(self):
-										p = 0
-										for x in self.obj:
+										gui_constants.NOTIF_BAR.begin_show()
+										gui_constants.NOTIF_BAR.add_text('Populating database...')
+										for y, x in enumerate(self.obj):
+											gui_constants.NOTIF_BAR.add_text('Populating database {}/{}'.format(y+1, len(self.obj)))
 											gallerydb.add_method_queue(
-												gallerydb.GalleryDB.add_gallery_return, True, x)
+												gallerydb.GalleryDB.add_gallery_return, False, x)
 											self.galleries.append(x)
-											p += 1
-											self.prog.emit(p)
+											y += 1
+											self.prog.emit(y)
 										append_to_model(self.galleries)
+										gui_constants.NOTIF_BAR.end_show()
 										self.done.emit()
 
 								loading.progress.setMaximum(len(gallery_list))

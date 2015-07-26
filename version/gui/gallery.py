@@ -987,7 +987,7 @@ class MangaView(QListView):
 
 		def debug_print(a):
 			print(a.data(Qt.UserRole+1))
-		self.clicked.connect(debug_print)
+		#self.clicked.connect(debug_print)
 	#	self.ti = QTimer()
 	#	self.ti.timeout.connect(self.test_)
 	#	self.ti.start(5000)
@@ -1560,6 +1560,9 @@ class MangaTableView(QTableView):
 		def fav():
 			self.parent_widget.manga_list_view.favorite(index)
 
+		def open_link():
+			link = index.data(Qt.UserRole+1).link
+			utils.open_web_link(link)
 
 		# add the chapter menus
 		def chapters():

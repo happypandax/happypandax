@@ -214,7 +214,7 @@ class CommenHen:
 
 		def no_hits_found_check(html):
 			"return true if hits are found"
-			soup = BeautifulSoup(html)
+			soup = BeautifulSoup(html, "html.parser")
 			f_div = soup.body.find_all('div')
 			for d in f_div:
 				if 'No hits found' in d.text:
@@ -238,7 +238,7 @@ class CommenHen:
 			if not no_hits_found_check(r.text):
 				log_e('No hits found with hash: {}'.format(h))
 				continue
-			soup = BeautifulSoup(r.text)
+			soup = BeautifulSoup(r.text, "html.parser")
 			log_i('Parsing html')
 			try:
 				if soup.body:

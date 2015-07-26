@@ -45,6 +45,7 @@ def process_methods():
 	"""
 	while True:
 		l = method_queue.get()
+		log_i('Processing a method from queue...')
 		method = l.pop(0)
 		args = []
 		kwargs = {}
@@ -80,6 +81,8 @@ method_queue_thread = threading.Thread(name='Method Queue Thread', target=proces
 method_queue_thread.start()
 
 def add_method_queue(method, no_return, *args, **kwargs):
+	log_i('Added method to queue')
+	log_d('Method name: {}'.format(method.__name__))
 	arg_list = [method]
 	if no_return:
 		arg_list.append('no return')
