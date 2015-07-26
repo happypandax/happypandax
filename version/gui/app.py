@@ -655,7 +655,7 @@ class AppWindow(QMainWindow):
 										gui_constants.NOTIF_BAR.begin_show()
 										gui_constants.NOTIF_BAR.add_text('Populating database...')
 										for y, x in enumerate(self.obj):
-											gui_constants.NOTIF_BAR.add_text('Populating database {}/{}'.format(y, len(self.obj)))
+											gui_constants.NOTIF_BAR.add_text('Populating database {}/{}'.format(y+1, len(self.obj)))
 											gallerydb.add_method_queue(
 												gallerydb.GalleryDB.add_gallery_return, False, x)
 											self.galleries.append(x)
