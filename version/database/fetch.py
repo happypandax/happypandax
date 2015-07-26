@@ -16,7 +16,7 @@ import os, time
 import re as regex
 import logging, uuid, random , queue
 
-from .gallerydb import Gallery, GalleryDB
+from .gallerydb import Gallery, GalleryDB, add_method_queue
 from ..gui import gui_constants
 from .. import pewnet, settings, utils
 
@@ -330,7 +330,8 @@ class Fetch(QObject):
 				hash = None
 				if gui_constants.HASH_GALLERY_PAGES == 'all':
 					if not gallery.hashes:
-						if not gallery.gen_hashes():
+						result = add_method_queue(gallery.gen_hashes, False)
+						if not result:
 							continue
 					hash = gallery.hashes[random.randint(0, len(gallery.hashes)-1)]
 				elif gui_constants.HASH_GALLERY_PAGES == '1':
