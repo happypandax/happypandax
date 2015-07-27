@@ -78,13 +78,17 @@ LOOK_NEW_GALLERY_STARTUP = get(True, 'Application', 'look new gallery startup', 
 LOOK_NEW_GALLERY_AUTOADD = get(False, 'Application', 'look new gallery autoadd', bool)
 ENABLE_MONITOR = get(True, 'Application', 'enable monitor', bool)
 MONITOR_PATHS = [x for x in get('', 'Application', 'monitor paths', str).split(',') if x]
+MOVE_IMPORTED_GALLERIES = get(False, 'Application' 'move imported galleries', bool)
+IMPORTED_GALLERY_DEF_PATH = get('', 'Application', 'imported gallery def path', str)
+MOVE_IMPORTED_GALLERYIES_TO_DEF = get(True, 'Application', 'move imported galleries to def', bool)
 
 # GENERAL
-SCROLL_TO_NEW_GALLERIES = get(False, 'General', 'scroll to new galleries', bool)
-RANDOM_GALLERY_CHAPTERS = get(False, 'General', 'random gallery chapters', bool)
+SCROLL_TO_NEW_GALLERIES = get(False, 'Application', 'scroll to new galleries', bool)
+RANDOM_GALLERY_CHAPTERS = get(False, 'Application', 'random gallery chapters', bool)
+SUBFOLDER_AS_CHAPTERS = get(True, 'Application', 'subfolder as chapters', bool)
 
 # HASH
-HASH_GALLERY_PAGES = get('all', 'General', 'hash gallery pages', int, str)
+HASH_GALLERY_PAGES = get('all', 'Application', 'hash gallery pages', int, str)
 
 # WEB
 GLOBAL_EHEN_TIME = get(10, 'Web', 'global ehen time offset', int)
