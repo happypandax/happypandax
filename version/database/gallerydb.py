@@ -426,6 +426,7 @@ class GalleryDB:
 		"Receives an object of class gallery, and appends it to DB"
 		"Adds gallery of <Gallery> class into database"
 		assert isinstance(object, Gallery), "add_gallery method only accepts gallery items"
+		log_i('Recevied gallery: {}'.format(object.path.encode(errors='ignore')))
 
 		object.profile = gen_thumbnail(object.chapters[0])
 
@@ -442,6 +443,7 @@ class GalleryDB:
 	def add_gallery_return(object):
 		"""Adds gallery of <Gallery> class into database AND returns the profile generated"""
 		assert isinstance(object, Gallery), "[add_gallery_return] method only accept gallery items"
+		log_i('Recevied gallery: {}'.format(object.path.encode(errors='ignore')))
 
 		object.profile = gen_thumbnail(object.chapters[0])
 		PROFILE_TO_MODEL.put(object.profile)
@@ -1017,7 +1019,7 @@ class HashDB:
 	@staticmethod
 	def del_gallery_hashes(gallery_id):
 		"Deletes all hashes linked to the given gallery id"
-		executing = [["DELETE FROM hashes WHERE series_id=?", gallery_id]]
+		executing = [["DELETE FROM hashes WHERE series_id=?", (gallery_id,)]]
 		CommandQueue.put(executing)
 		c = ResultQueue.get()
 		del c

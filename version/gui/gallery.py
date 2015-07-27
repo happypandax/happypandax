@@ -985,9 +985,10 @@ class MangaView(QListView):
 		self.current_sort = gui_constants.CURRENT_SORT
 		self.sort(self.current_sort)
 
-		def debug_print(a):
-			print(a.data(Qt.UserRole+1))
-		#self.clicked.connect(debug_print)
+		if gui_constants.DEBUG:
+			def debug_print(a):
+				print(a.data(Qt.UserRole+1))
+			self.clicked.connect(debug_print)
 	#	self.ti = QTimer()
 	#	self.ti.timeout.connect(self.test_)
 	#	self.ti.start(5000)
@@ -1212,18 +1213,31 @@ class MangaView(QListView):
 		remove_gallery_act = QAction('Remove gallery', remove_menu,
 							   triggered=lambda: self.remove_gallery([index]))
 		remove_menu.addAction(remove_gallery_act)
+
+		if not selected:
+			remo_chap_act = QAction('Remove chapter', menu)
+			remove_menu.addAction(remo_chap_act)
+			remove_chap_menu = QMenu()
+			remo_chap_act.setMenu(remove_chap_menu)
+			for number, chap_number in enumerate(range(len(
+				index.data(Qt.UserRole+1).chapters)), 1):
+				chap_action = QAction("Remove chapter {}".format(
+					number), remove_chap_menu, triggered = functools.partial(self.del_chapter, index, chap_number))
+				remove_chap_menu.addAction(chap_action)
+
+		if selected:
+			remove_selected_act = QAction("Remove selected galleries", remove_menu,
+				   triggered = remove_selection)
+			remove_menu.addAction(remove_selected_act)
+		remove_menu.addSeparator()
 		remove_local_gallery_act = QAction('Remove gallery and files', remove_menu,
 							   triggered=lambda: self.remove_gallery([index], True))
 		remove_menu.addAction(remove_local_gallery_act)
 
 		if selected:
-			remove_menu.addSeparator()
-			#remove_selected_act = QAction("Remove selected", remove_menu,
-			#	   triggered = remove_selection)
-			#remove_menu.addAction(remove_selected_act)
-			#remove_local_selected_act = QAction('Remove selected and their files', remove_menu,
-			#	   triggered = lambda: remove_selection(True))
-			#remove_menu.addAction(remove_local_selected_act)
+			remove_local_selected_act = QAction('Remove selected galleries and their files', remove_menu,
+				   triggered = lambda: remove_selection(True))
+			remove_menu.addAction(remove_local_selected_act)
 
 			all_0 = QAction("Open first chapters", menu,
 					  triggered = lambda: self.open_chapter(select_indexes, 0))
@@ -1349,15 +1363,6 @@ class MangaView(QListView):
 				add_chap_act = QAction('Add chapters', menu,
 						   triggered=add_chapters)
 				menu.addAction(add_chap_act)
-				remo_chap_act = QAction('Remove chapter', menu)
-				remove_menu.addAction(remo_chap_act)
-				remove_chap_menu = QMenu()
-				remo_chap_act.setMenu(remove_chap_menu)
-				for number, chap_number in enumerate(range(len(
-					index.data(Qt.UserRole+1).chapters)), 1):
-					chap_action = QAction("Remove chapter {}".format(
-						number), remove_chap_menu, triggered = lambda: self.del_chapter(index, chap_number))
-					remove_chap_menu.addAction(chap_action)
 			menu.addSeparator()
 			get_metadata_action = QAction('Get metadata', menu,
 								 triggered=lambda: self.parent_widget.get_metadata(index.data(Qt.UserRole+1)))
@@ -1538,18 +1543,29 @@ class MangaTableView(QTableView):
 		remove_gallery_act = QAction('Remove gallery', remove_menu,
 							   triggered=lambda: self.parent_widget.manga_list_view.remove_gallery([index]))
 		remove_menu.addAction(remove_gallery_act)
+		if not selected:
+			remo_chap_act = QAction('Remove chapter', menu)
+			remove_menu.addAction(remo_chap_act)
+			remove_chap_menu = QMenu()
+			remo_chap_act.setMenu(remove_chap_menu)
+			for number, chap_number in enumerate(range(len(
+				index.data(Qt.UserRole+1).chapters)), 1):
+				chap_action = QAction("Remove chapter {}".format(
+					number), remove_chap_menu, triggered = functools.partial(self.parent_widget.manga_list_view.del_chapter, index, chap_number))
+				remove_chap_menu.addAction(chap_action)
+
+		if selected:
+			remove_selected_act = QAction("Remove selected galleries", remove_menu,
+				   triggered = remove_selection)
+			remove_menu.addAction(remove_selected_act)
+		remove_menu.addSeparator()
 		remove_local_gallery_act = QAction('Remove gallery and files', remove_menu,
 							   triggered=lambda: self.parent_widget.manga_list_view.remove_gallery([index], True))
 		remove_menu.addAction(remove_local_gallery_act)
-
 		if selected:
-			remove_menu.addSeparator()
-			#remove_selected_act = QAction("Remove selected", remove_menu,
-			#	   triggered = remove_selection)
-			#remove_menu.addAction(remove_selected_act)
-			#remove_local_selected_act = QAction('Remove selected and their files', remove_menu,
-			#	   triggered = lambda: remove_selection(True))
-			#remove_menu.addAction(remove_local_selected_act)
+			remove_local_selected_act = QAction('Remove selected galleries and their files', remove_menu,
+				   triggered = lambda: remove_selection(True))
+			remove_menu.addAction(remove_local_selected_act)
 
 			all_0 = QAction("Open first chapters", menu,
 					  triggered = lambda: self.parent_widget.manga_list_view.open_chapter(select_indexes, 0))
@@ -1557,6 +1573,7 @@ class MangaTableView(QTableView):
 		all_1 = QAction("Open first chapter", menu,
 					triggered = lambda: self.parent_widget.manga_list_view.open_chapter(index, 0))
 		all_2 = QAction("Edit...", menu, triggered = lambda: self.parent_widget.manga_list_view.spawn_dialog(index))
+	
 		def fav():
 			self.parent_widget.manga_list_view.favorite(index)
 
@@ -1636,15 +1653,6 @@ class MangaTableView(QTableView):
 				add_chap_act = QAction('Add chapters', menu,
 						   triggered=add_chapters)
 				menu.addAction(add_chap_act)
-				remo_chap_act = QAction('Remove chapter', menu)
-				remove_menu.addAction(remo_chap_act)
-				remove_chap_menu = QMenu()
-				remo_chap_act.setMenu(remove_chap_menu)
-				for number, chap_number in enumerate(range(len(
-					index.data(Qt.UserRole+1).chapters)), 1):
-					chap_action = QAction("Remove chapter {}".format(
-						number), remove_chap_menu, triggered = lambda: self.parent_widget.manga_list_view.del_chapter(index, chap_number))
-					remove_chap_menu.addAction(chap_action)
 			menu.addSeparator()
 			get_metadata_action = QAction('Get metadata', menu,
 								 triggered=lambda: self.parent_widget.get_metadata(index.data(Qt.UserRole+1)))

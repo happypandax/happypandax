@@ -53,6 +53,14 @@ class GalleryDialog(QWidget):
 		cancel = QPushButton("Cancel")
 		final_buttons.addWidget(cancel)
 		final_buttons.addWidget(done)
+
+		def new_gallery():
+			self.setWindowTitle('Add a new gallery')
+			self.newUI()
+			self.commonUI()
+			done.clicked.connect(self.accept)
+			cancel.clicked.connect(self.reject)
+
 		if arg:
 			if isinstance(arg, list):
 				self.setWindowTitle('Edit gallery')
@@ -64,18 +72,10 @@ class GalleryDialog(QWidget):
 				done.clicked.connect(self.accept_edit)
 				cancel.clicked.connect(self.reject_edit)
 			elif isinstance(arg, str):
-				self.setWindowTitle('Add a new gallery')
-				self.newUI()
-				self.commonUI()
+				new_gallery()
 				self.choose_dir(arg)
-				done.clicked.connect(self.accept)
-				cancel.clicked.connect(self.reject)
 		else:
-			self.setWindowTitle('Add a new gallery')
-			self.newUI()
-			self.commonUI()
-			done.clicked.connect(self.accept)
-			cancel.clicked.connect(self.reject)
+			new_gallery()
 
 		log_d('GalleryDialog: Create UI: successful')
 		#TODO: Implement a way to mass add galleries
@@ -425,9 +425,9 @@ class GalleryDialog(QWidget):
 			log_d('Adding gallery: tagging to dict')
 			qpub_d = self.pub_edit.date().toString("ddMMyyyy")
 			dpub_d = datetime.strptime(qpub_d, "%d%m%Y").date()
-			if self.gallery_time:
+			try:
 				d_t = self.gallery_time
-			else:
+			except AttributeError:
 				d_t = datetime.now().time().replace(microsecond=0)
 			dpub_d = datetime.combine(dpub_d, d_t)
 			new_gallery.pub_date = dpub_d

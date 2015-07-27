@@ -45,6 +45,7 @@ def start():
 						datefmt='%d-%m %H:%M',
 						filename='happypanda_debug.log',
 						filemode='w')
+		gui_constants.DEBUG = True
 	else:
 		try:
 			with open('happypanda.log', 'x') as f:
@@ -81,10 +82,10 @@ def start():
 		log_d('Init DB Conn: OK')
 		log_i("DB Version: {}".format(db_constants.REAL_DB_VERSION))
 	except:
-		log_c('Database connection failed')
+		log_c('Invalid database')
+		log.exception('Database connection failed!')
 		from PyQt5.QtGui import QIcon
 		from PyQt5.QtWidgets import QMessageBox
-		log_c('Invalid database')
 		msg_box = QMessageBox()
 		msg_box.setWindowIcon(QIcon(gui_constants.APP_ICO_PATH))
 		msg_box.setText('Invalid database')

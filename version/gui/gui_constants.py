@@ -16,6 +16,7 @@ from .. import settings
 
 # Version number
 vs  = '0.19'
+DEBUG = False
 
 get = settings.get
 
