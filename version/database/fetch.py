@@ -204,7 +204,7 @@ class Fetch(QObject):
 			return None
 		# We received something from get_metadata
 		if not metadata: # metadata fetching failed
-			self.error_galleries.append(gallery)
+			self.error_galleries.append((gallery, "Metadata fetching failed"))
 			log_i("An error occured while fetching metadata with gallery: {}".format(
 				gallery.title.encode(errors='ignore')))
 			return None
@@ -215,7 +215,7 @@ class Fetch(QObject):
 				data = metadata[g.temp_url]
 			except KeyError:
 				self.AUTO_METADATA_PROGRESS.emit("No metadata found for gallery: {}".format(g.title))
-				self.error_galleries.append(g)
+				self.error_galleries.append((g, "No metadata found"))
 				log_w("No metadata found for gallery: {}".format(g.title.encode(errors='ignore')))
 				continue
 			log_i('({}/{}) Applying metadata for gallery: {}'.format(x, len(self.galleries_in_queue),
@@ -348,7 +348,6 @@ class Fetch(QObject):
 			hen.LAST_USED = time.time()
 			self.AUTO_METADATA_PROGRESS.emit("Checking gallery urls...")
 
-			error_galleries = []
 			fetched_galleries = []
 			checked_pre_url_galleries = []
 			for x, gallery in enumerate(self.galleries, 1):
@@ -378,7 +377,7 @@ class Fetch(QObject):
 						self.AUTO_METADATA_PROGRESS
 						continue
 				if not hash:
-					error_galleries.append(gallery)
+					self.error_galleries.append((gallery, "Could not generate hash"))
 					log_e("Could not generate hash for gallery: {}".format(gallery.title.encode(errors='ignore')))
 					continue
 				gallery.hash = hash
@@ -399,7 +398,7 @@ class Fetch(QObject):
 					self.FINISHED.emit(True)
 					return
 				if not gallery.hash in found_url:
-					self.error_galleries.append(gallery)
+					self.error_galleries.append(gallery, "Could not find url for gallery")
 					self.AUTO_METADATA_PROGRESS.emit("Could not find url for gallery: {}".format(gallery.title))
 					log_w('Could not find url for gallery: {}'.format(gallery.title.encode(errors='ignore')))
 					continue
@@ -452,8 +451,8 @@ class Fetch(QObject):
 				gui_constants.SYSTEM_TRAY.showMessage('Done!',
 										  'Could not fetch metadat for {} galleries. Check happypanda.log for more details!'.format(len(self.error_galleries)),
 										  minimized=True)
-				for e in error_galleries:
-					log_e("An error occured with gallery: {}".format.title.encode(errors='ignore'))
+				for tup in self.error_galleries:
+					log_e("{}: {}".format(tup[1], tup[0].title.encode(errors='ignore')))
 				self.FINISHED.emit(False)
 		else:
 			log_e('Auto metadata fetcher is already running')
