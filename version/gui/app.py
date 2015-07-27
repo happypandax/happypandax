@@ -40,6 +40,7 @@ class AppWindow(QMainWindow):
 	"The application's main window"
 	def __init__(self):
 		super().__init__()
+		self.setAcceptDrops(True)
 		self.initUI()
 		self.start_up()
 		QTimer.singleShot(3000, self._check_update)
@@ -737,6 +738,44 @@ class AppWindow(QMainWindow):
 				data_thread.finished.connect(data_thread.deleteLater)
 				data_thread.start()
 				log_i('Populating DB from gallery folder')
+
+	def dragEnterEvent(self, event):
+		if event.mimeData().hasUrls():
+			event.acceptProposedAction()
+		else:
+			self.notification_bar.add_text('File is not supported')
+
+	def dropEvent(self, event):
+		acceptable = []
+		unaccept = []
+		for u in event.mimeData().urls():
+			path = u.toLocalFile()
+			if os.path.isdir(path):
+				acceptable.append(path)
+				continue
+			head, tail = os.path.split(path)
+			if tail.endswith(utils.ARCHIVE_FILES):
+				acceptable.append(path)
+			else:
+				unaccept(path)
+		log_i('Acceptable dropped items: {}'.format(len(acceptable)))
+		log_i('Unacceptable dropped items: {}'.format(len(unaccept)))
+		log_d('Dropped items: {}\n{}'.format(acceptable, unaccept).encode(errors='ignore'))
+		if acceptable:
+			self.notification_bar.add_text('Adding dropped items...')
+			log_i('Adding dropped items')
+			if len(acceptable) == 1:
+				g_d = gallerydialog.GalleryDialog(self, acceptable[0])
+				g_d.SERIES.connect(self.manga_list_view.gallery_model.addRows)
+				g_d.show()
+			else:
+				self.gallery_populate(acceptable, True)
+		else:
+			text = 'File not supported' if len(unaccept) < 2 else 'Files not supported'
+			self.notification_bar.add_text(text)
+
+		if unaccept:
+			self.notification_bar.add_text('Some unsupported files did not get added')
 
 	def resizeEvent(self, event):
 		try:
