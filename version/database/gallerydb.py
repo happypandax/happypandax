@@ -114,7 +114,7 @@ def gen_thumbnail(chapter_path, width=gui_constants.THUMB_W_SIZE,
 				img_path = get_gallery_img(chap_path)
 			else:
 				log_d('Generating Thumb from folder')
-				img_path = os.path.join(chap_path, [x for x in sorted(os.listdir(chap_path)) if x[-3:] in IMG_FILES][0]) #first image in chapter
+				img_path = os.path.join(chap_path, [x for x in sorted(os.listdir(chap_path)) if x.endswith(IMG_FILES)][0]) #first image in chapter
 			suff = img_path[-4:] # the image ext with dot
 		
 			# generate unique file name

@@ -79,21 +79,16 @@ class Fetch(QObject):
 				self.DATA_COUNT.emit(len(gallery_l)) #tell model how many items are going to be added
 				log_i('Found {} items'.format(len(gallery_l)))
 				progress = 0
-				for ser_path in gallery_l: # ser_path = gallery folder title
-					self._curr_gallery = ser_path
-					if mixed:
-						path = ser_path
-						ser_path = os.path.split(path)[1]
-					else:
-						path = os.path.join(self.series_path, ser_path)
-					if not GalleryDB.check_exists(ser_path):
-						log_i('Creating gallery: {}'.format(ser_path.encode('utf-8', 'ignore')))
+				def create_gallery(path, folder_name, do_chapters=True):
+					if not GalleryDB.check_exists(folder_name):
+						log_i('Creating gallery: {}'.format(folder_name.encode('utf-8', 'ignore')))
 						new_gallery = Gallery()
 						images_paths = []
 						try:
 							con = os.listdir(path) #all of content in the gallery folder
 							log_i('Gallery source is a directory')
-							chapters = sorted([os.path.join(path,sub) for sub in con if os.path.isdir(os.path.join(path, sub))]) #subfolders
+							chapters = sorted([os.path.join(path,sub) for sub in con if os.path.isdir(os.path.join(path, sub))])\
+							    if do_chapters else [] #subfolders
 							# if gallery has chapters divided into sub folders
 							if len(chapters) != 0:
 								log_i('Gallery has chapters divided in directories')
@@ -104,26 +99,23 @@ class Fetch(QObject):
 							else: #else assume that all images are in gallery folder
 								new_gallery.chapters[0] = path
 				
-							#find last edited file
-							times = set()
-							for root, dirs, files in os.walk(path, topdown=False):
-								for img in files:
-									fp = os.path.join(root, img)
-									times.add( os.path.getmtime(fp) )
-							last_updated = time.asctime(time.gmtime(max(times)))
-							new_gallery.last_update = last_updated
-							parsed = utils.title_parser(ser_path)
+							##find last edited file
+							#times = set()
+							#for root, dirs, files in os.walk(path, topdown=False):
+							#	for img in files:
+							#		fp = os.path.join(root, img)
+							#		times.add( os.path.getmtime(fp) )
+							#last_updated = time.asctime(time.gmtime(max(times)))
+							#new_gallery.last_update = last_updated
+							parsed = utils.title_parser(folder_name)
 						except NotADirectoryError:
-							if ser_path[-4:] in utils.ARCHIVE_FILES:
+							if folder_name.endswith(utils.ARCHIVE_FILES):
 								log_i('Gallery source is an archive')
 								#TODO: add support for folders in archive
 								new_gallery.chapters[0] = path
-								parsed = utils.title_parser(ser_path[:-4])
+								parsed = utils.title_parser(folder_name[:-4])
 							else:
 								log_w('Skipped {} in local search'.format(path))
-								progress += 1 # update the progress bar
-								self.PROGRESS.emit(progress)
-								continue
 
 						new_gallery.title = parsed['title']
 						new_gallery.path = path
@@ -133,9 +125,43 @@ class Fetch(QObject):
 						new_gallery.chapters_size = len(new_gallery.chapters)
 
 						self.data.append(new_gallery)
-						log_i('Gallery successful created: {}'.format(ser_path.encode('utf-8', 'ignore')))
+						log_i('Gallery successful created: {}'.format(folder_name.encode('utf-8', 'ignore')))
 					else:
-						log_i('Gallery already exists: {}'.format(ser_path.encode('utf-8', 'ignore')))
+						log_i('Gallery already exists: {}'.format(folder_name.encode('utf-8', 'ignore')))
+
+				for folder_name in gallery_l: # ser_path = gallery folder title
+					self._curr_gallery = folder_name
+					if mixed:
+						path = folder_name
+						folder_name = os.path.split(path)[1]
+					else:
+						path = os.path.join(self.series_path, folder_name)
+
+					if not gui_constants.SUBFOLDER_AS_CHAPTERS:
+						log_i("Treating each subfolder as gallery")
+						if os.path.isdir(path):
+							gallery_sources = []
+							for root, subfolders, files in os.walk(path):
+								if files:
+									for f in files:
+										if f.endswith(utils.ARCHIVE_FILES):
+											gallery_sources.append(os.path.join(root, f))
+									
+									if not subfolders:
+										gallery_probability = len(files)
+										for f in files:
+											if not f.endswith(utils.IMG_FILES):
+												gallery_probability -= 1
+										if gallery_probability >= len(files)//2:
+											gallery_sources.append(root)
+
+							for gs in gallery_sources:
+								create_gallery(gs, os.path.split(gs)[1], False)
+						elif path.endswith(utils.ARCHIVE_FILES):
+							create_gallery(path, folder_name)
+					else:
+						log_i("Treating each subfolder as chapter")
+						create_gallery(path, folder_name)
 
 					progress += 1 # update the progress bar
 					self.PROGRESS.emit(progress)

@@ -83,7 +83,7 @@ class AppWindow(QMainWindow):
 		self.watchers.gallery_handler.MOVED_SIGNAL.connect(moved)
 		self.watchers.gallery_handler.DELETED_SIGNAL.connect(deleted)
 
-		if gui_constants.LOOK_NEW_GALLERY_STARTUP:
+		if gui_constants.LOOK_NEW_GALLERY_STARTUP and gui_constants.SUBFOLDER_AS_CHAPTERS:
 			self.notification_bar.add_text("Looking for new galleries...")
 			try:
 				class ScanDir(QObject):
@@ -113,6 +113,7 @@ class AppWindow(QMainWindow):
 							y = utils.b_search(paths, x)
 							if not y:
 								# (path, number for case_path)
+								print(x.encode(errors='ignore'))
 								new_galleries.append((x, c))
 
 						galleries = []
@@ -802,9 +803,9 @@ class AppWindow(QMainWindow):
 					os.remove(os.path.join(root, name))
 				for name in dirs:
 					os.rmdir(os.path.join(root, name))
-			log_d('Empty temp on exit: OK')
+			log_d('Flush temp on exit: OK')
 		except:
-			log_d('Empty temp on exit: FAIL')
+			log_d('Flush temp on exit: FAIL')
 
 		# error
 		err = sys.exc_info()

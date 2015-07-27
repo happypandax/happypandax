@@ -85,7 +85,7 @@ MOVE_IMPORTED_GALLERYIES_TO_DEF = get(True, 'Application', 'move imported galler
 # GENERAL
 SCROLL_TO_NEW_GALLERIES = get(False, 'Application', 'scroll to new galleries', bool)
 RANDOM_GALLERY_CHAPTERS = get(False, 'Application', 'random gallery chapters', bool)
-SUBFOLDER_AS_CHAPTERS = get(True, 'Application', 'subfolder as chapters', bool)
+SUBFOLDER_AS_CHAPTERS = get(False, 'Application', 'subfolder as chapters', bool)
 
 # HASH
 HASH_GALLERY_PAGES = get('all', 'Application', 'hash gallery pages', int, str)
