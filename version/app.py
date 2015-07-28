@@ -351,6 +351,14 @@ class AppWindow(QMainWindow):
 		def done(status):
 			self.notification_bar.end_show()
 			fetch_instance.deleteLater()
+			if not isinstance(status, bool):
+				galleries = []
+				for tup in status:
+					galleries.append(tup[0])
+				g_popup = file_misc.GalleryPopup(('Fecthing metadata for these galleries failed.'+
+									  ' Check happypanda.log for details.', galleries), self)
+				close_button = g_popup.add_buttons('Close')[0]
+				close_button.clicked.connect(g_popup.close)
 
 		fetch_instance.GALLERY_PICKER.connect(self._web_metadata_picker)
 		fetch_instance.GALLERY_EMITTER.connect(self.manga_list_view.replace_edit_gallery)

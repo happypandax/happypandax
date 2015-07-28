@@ -33,7 +33,8 @@ log_e = log.error
 log_c = log.critical
 
 class Fetch(QObject):
-	"""A class containing methods to fetch gallery data.
+	"""
+	A class containing methods to fetch gallery data.
 	Should be executed in a new thread.
 	Contains following methods:
 	local -> runs a local search in the given series_path
@@ -445,16 +446,16 @@ class Fetch(QObject):
 			gui_constants.GLOBAL_EHEN_LOCK = False
 			if not self.error_galleries:
 				self.AUTO_METADATA_PROGRESS.emit('Done! Successfully fetched metadata for {} galleries.'.format(len(self.galleries)))
-				gui_constants.SYSTEM_TRAY.showMessage('Done', 'Auto metadata fetcher is done!', minimized=True)
+				gui_constants.SYSTEM_TRAY.showMessage('Done', 'Successfully fetched metadata for {} galleries!', minimized=True)
 				self.FINISHED.emit(True)
 			else:
-				self.AUTO_METADATA_PROGRESS.emit('Done! Could not fetch metadata for  {} galleries. Check happypanda.log for more details!'.format(len(self.error_galleries)))
+				self.AUTO_METADATA_PROGRESS.emit('Done! Could not fetch metadata for {} galleries. Check happypanda.log for more details!'.format(len(self.error_galleries)))
 				gui_constants.SYSTEM_TRAY.showMessage('Done!',
-										  'Could not fetch metadat for {} galleries. Check happypanda.log for more details!'.format(len(self.error_galleries)),
+										  'Could not fetch metadata for {} galleries. Check happypanda.log for more details!'.format(len(self.error_galleries)),
 										  minimized=True)
 				for tup in self.error_galleries:
 					log_e("{}: {}".format(tup[1], tup[0].title.encode(errors='ignore')))
-				self.FINISHED.emit(False)
+				self.FINISHED.emit(tup)
 		else:
 			log_e('Auto metadata fetcher is already running')
 			self.AUTO_METADATA_PROGRESS.emit('Auto metadata fetcher is already running!')

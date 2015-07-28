@@ -23,7 +23,7 @@ import gui_constants
 import gallerydb
 
 #IMPORTANT STUFF
-def start():
+def start(test=False):
 
 	parser = argparse.ArgumentParser(prog='Happypanda',
 								  description='A manga/doujinshi manager with tagging support')
@@ -172,6 +172,9 @@ def start():
 			except:
 				log_d('Empty temp: FAIL')
 		log_d('Create temp: OK')
+
+		if test:
+			return application, WINDOW
 
 		sys.exit(application.exec_())
 

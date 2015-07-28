@@ -39,9 +39,10 @@ def update_gallery_path(new_path, gallery):
 class GalleryPopup(misc.BasePopup):
 	"""
 	Pass a tuple with text and a list of galleries
+	gallery profiles won't be scaled if scale is set to false
 	"""
 
-	def __init__(self, tup_gallery, parent = None,):
+	def __init__(self, tup_gallery, parent = None):
 		super().__init__(parent)
 		self.setMaximumWidth(16777215)
 		assert isinstance(tup_gallery, tuple), "Incorrect type received, expected tuple"

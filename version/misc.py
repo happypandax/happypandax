@@ -61,7 +61,7 @@ class SystemTray(QSystemTrayIcon):
 	def showMessage(self, title, msg, icon=QSystemTrayIcon.Information,
 				 msecs=10000, minimized=False):
 		if minimized:
-			if self.parent_widget.isMinimized:
+			if self.parent_widget.isMinimized():
 				return super().showMessage(title, msg, icon, msecs)
 		else:
 			return super().showMessage(title, msg, icon, msecs)
