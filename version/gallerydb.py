@@ -1,27 +1,28 @@
-﻿"""
-This file is part of Happypanda.
-Happypanda is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 2 of the License, or
-any later version.
-Happypanda is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-You should have received a copy of the GNU General Public License
-along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
-"""
+﻿#"""
+#This file is part of Happypanda.
+#Happypanda is free software: you can redistribute it and/or modify
+#it under the terms of the GNU General Public License as published by
+#the Free Software Foundation, either version 2 of the License, or
+#any later version.
+#Happypanda is distributed in the hope that it will be useful,
+#but WITHOUT ANY WARRANTY; without even the implied warranty of
+#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#GNU General Public License for more details.
+#You should have received a copy of the GNU General Public License
+#along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
+#"""
 
 import datetime, os, threading, logging, queue, uuid # for unique filename
+
 from PyQt5.QtCore import Qt, QObject, pyqtSignal
 from PyQt5.QtGui import QImage
 
-from ..utils import (today, ArchiveFile, generate_img_hash, delete_path,
-					 ARCHIVE_FILES, get_gallery_img)
-from .db import CommandQueue, ResultQueue
-from ..gui import gui_constants
-from . import db_constants
-from .db_constants import THUMBNAIL_PATH, IMG_FILES, CURRENT_DB_VERSION
+from utils import (today, ArchiveFile, generate_img_hash, delete_path,
+					 ARCHIVE_FILES, get_gallery_img, IMG_FILES)
+from database.db import CommandQueue, ResultQueue
+from database import db_constants
+
+import gui_constants
 
 PROFILE_TO_MODEL = queue.Queue()
 TestQueue = queue.Queue()
@@ -104,8 +105,8 @@ def gen_thumbnail(chapter_path, width=gui_constants.THUMB_W_SIZE,
 
 	img_path_queue = queue.Queue()
 	# generate a cache dir if required
-	if not os.path.isdir(THUMBNAIL_PATH):
-		os.mkdir(THUMBNAIL_PATH)
+	if not os.path.isdir(db_constants.THUMBNAIL_PATH):
+		os.mkdir(db_constants.THUMBNAIL_PATH)
 
 	def generate(cache, chap_path, w, h, img_queue):
 		try:
@@ -251,7 +252,7 @@ class GalleryDB:
 						pub_date=gallery.pub_date,
 						link=gallery.link,
 						times_read=gallery.times_read,
-						_db_v=CURRENT_DB_VERSION,
+						_db_v=db_constants.CURRENT_DB_VERSION,
 						exed=gallery.exed)
 		except:
 			log.exception('Failed rebuilding galleries')

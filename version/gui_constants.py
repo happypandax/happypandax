@@ -11,7 +11,7 @@
 #along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-from .. import settings
+import settings
 """Contains constants to be used by several modules"""
 
 # Version number
@@ -20,8 +20,8 @@ DEBUG = False
 
 get = settings.get
 
-current_dir, f = os.path.split(os.path.realpath(__file__))
-static_dir = os.path.join(current_dir, "static")
+#current_dir, f = os.path.split(os.path.realpath(__file__))
+static_dir = os.path.join(os.getcwd(), "res")
 temp_dir = os.path.join('temp')
 
 #default stylesheet path

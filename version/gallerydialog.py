@@ -1,16 +1,17 @@
-﻿from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QDesktopWidget, QGroupBox,
+﻿import queue, os, threading, random, logging, time
+from datetime import datetime
+
+from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QDesktopWidget, QGroupBox,
 							 QHBoxLayout, QFormLayout, QLabel, QLineEdit,
 							 QPushButton, QProgressBar, QTextEdit, QComboBox,
 							 QDateEdit, QFileDialog, QMessageBox, QScrollArea)
 from PyQt5.QtCore import (pyqtSignal, Qt, QPoint, QDate, QThread, QTimer)
-from datetime import datetime
 
-import queue, os, threading, random, logging, time
-
-from . import gui_constants
-from .misc import return_tag_completer_TextEdit, ClickedLabel
-from .. import utils
-from ..database import gallerydb, fetch
+from misc import return_tag_completer_TextEdit, ClickedLabel
+import gui_constants
+import utils
+import gallerydb
+import fetch
 
 log = logging.getLogger(__name__)
 log_i = log.info

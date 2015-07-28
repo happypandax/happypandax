@@ -1,16 +1,19 @@
-﻿"""
-This file is part of Happypanda.
-Happypanda is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 2 of the License, or
-any later version.
-Happypanda is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-You should have received a copy of the GNU General Public License
-along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
-"""
+﻿#"""
+#This file is part of Happypanda.
+#Happypanda is free software: you can redistribute it and/or modify
+#it under the terms of the GNU General Public License as published by
+#the Free Software Foundation, either version 2 of the License, or
+#any later version.
+#Happypanda is distributed in the hope that it will be useful,
+#but WITHOUT ANY WARRANTY; without even the implied warranty of
+#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#GNU General Public License for more details.
+#You should have received a copy of the GNU General Public License
+#along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
+#"""
+
+import threading, logging, os, math, functools, random
+import re as regex
 
 from PyQt5.QtCore import (Qt, QAbstractListModel, QModelIndex, QVariant,
 						  QSize, QRect, QEvent, pyqtSignal, QThread,
@@ -30,12 +33,13 @@ from PyQt5.QtWidgets import (QListView, QFrame, QLabel,
 							 QHBoxLayout, QFormLayout, QDesktopWidget,
 							 QWidget, QHeaderView, QTableView, QApplication,
 							 QMessageBox, QActionGroup)
-import threading, logging, os, math, functools, random
-import re as regex
 
-from ..database import gallerydb
-from . import gui_constants, misc, gallerydialog, file_misc
-from .. import utils
+import gallerydb
+import gui_constants
+import misc
+import gallerydialog
+import file_misc
+import utils
 
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -594,7 +598,6 @@ class GalleryModel(QAbstractTableModel):
 	def addRows(self, list_of_gallery, position=None,
 				rows=1, index = QModelIndex()):
 		"Adds new gallery data to model and to DB"
-		from ..database.gallerydb import PROFILE_TO_MODEL
 		log_d('Adding {} rows'.format(rows))
 		if not position:
 			log_d('Add rows: No position specified')
@@ -603,7 +606,7 @@ class GalleryModel(QAbstractTableModel):
 		log_d('Add rows: Began inserting')
 		for gallery in list_of_gallery:
 			gallerydb.add_method_queue(gallerydb.GalleryDB.add_gallery_return, True, gallery)
-			gallery.profile = PROFILE_TO_MODEL.get()
+			gallery.profile = gallerydb.PROFILE_TO_MODEL.get()
 			self._data.insert(position, gallery)
 			self._data_count += 1
 		log_d('Add rows: Finished inserting')

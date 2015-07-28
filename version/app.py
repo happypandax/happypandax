@@ -1,16 +1,16 @@
-﻿"""
-This file is part of Happypanda.
-Happypanda is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 2 of the License, or
-any later version.
-Happypanda is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-You should have received a copy of the GNU General Public License
-along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
-"""
+﻿#"""
+#This file is part of Happypanda.
+#Happypanda is free software: you can redistribute it and/or modify
+#it under the terms of the GNU General Public License as published by
+#the Free Software Foundation, either version 2 of the License, or
+#any later version.
+#Happypanda is distributed in the hope that it will be useful,
+#but WITHOUT ANY WARRANTY; without even the implied warranty of
+#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#GNU General Public License for more details.
+#You should have received a copy of the GNU General Public License
+#along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
+#"""
 
 import sys, logging, os, threading, re, requests
 from PyQt5.QtCore import (Qt, QSize, pyqtSignal, QThread, QEvent, QTimer,
@@ -24,10 +24,18 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QListView,
 							 QDesktopWidget, QPushButton, QCompleter,
 							 QListWidget, QListWidgetItem, QToolTip,
 							 QProgressBar, QToolButton, QSystemTrayIcon)
-from . import (gui_constants, misc, gallery, file_misc, settingsdialog,
-			   gallerydialog)
-from ..database import fetch, gallerydb
-from .. import settings, pewnet, utils
+
+import gui_constants
+import misc
+import gallery
+import file_misc
+import settingsdialog
+import gallerydialog
+import fetch
+import gallerydb
+import settings
+import pewnet
+import utils
 
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -179,7 +187,7 @@ class AppWindow(QMainWindow):
 				normalize_first_time()
 		if gui_constants.FIRST_TIME_LEVEL < 2:
 
-			class FirstTime(file_misc.BasePopup):
+			class FirstTime(misc.BasePopup):
 				def __init__(self, parent=None):
 					super().__init__(parent)
 					main_layout = QVBoxLayout()

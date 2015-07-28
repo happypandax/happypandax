@@ -1,16 +1,16 @@
-﻿from PyQt5.QtWidgets import (QVBoxLayout, QHBoxLayout, QListWidget, QWidget,
+﻿import logging
+
+from PyQt5.QtWidgets import (QVBoxLayout, QHBoxLayout, QListWidget, QWidget,
 							 QListWidgetItem, QStackedLayout, QPushButton,
 							 QLabel, QTabWidget, QLineEdit, QGroupBox, QFormLayout,
 							 QCheckBox, QRadioButton, QSpinBox, QSizePolicy,
 							 QScrollArea, QFontDialog)
 from PyQt5.QtCore import pyqtSignal, Qt
-
-import logging
-
-from .. import settings
-from . import gui_constants
-from .misc import FlowLayout, Spacer, PathLineEdit
 from PyQt5.QtGui import QPalette, QPixmapCache
+
+from misc import FlowLayout, Spacer, PathLineEdit
+import settings
+import gui_constants
 
 log = logging.getLogger(__name__)
 log_i = log.info

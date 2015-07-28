@@ -1,26 +1,27 @@
-﻿"""
-This file is part of Happypanda.
-Happypanda is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 2 of the License, or
-any later version.
-Happypanda is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-You should have received a copy of the GNU General Public License
-along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
-"""
+﻿#"""
+#This file is part of Happypanda.
+#Happypanda is free software: you can redistribute it and/or modify
+#it under the terms of the GNU General Public License as published by
+#the Free Software Foundation, either version 2 of the License, or
+#any later version.
+#Happypanda is distributed in the hope that it will be useful,
+#but WITHOUT ANY WARRANTY; without even the implied warranty of
+#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#GNU General Public License for more details.
+#You should have received a copy of the GNU General Public License
+#along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
+#"""
 
-import os, time
+import os, time, logging, uuid, random, queue
 import re as regex
-import logging, uuid, random , queue
-
-from .gallerydb import Gallery, GalleryDB, add_method_queue
-from ..gui import gui_constants
-from .. import pewnet, settings, utils
 
 from PyQt5.QtCore import QObject, pyqtSignal # need this for interaction with main thread
+
+from gallerydb import Gallery, GalleryDB, add_method_queue
+import gui_constants
+import pewnet
+import settings
+import utils
 
 """This file contains functions to fetch gallery data"""
 

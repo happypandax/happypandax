@@ -1,16 +1,18 @@
-﻿"""
-This file is part of Happypanda.
-Happypanda is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 2 of the License, or
-any later version.
-Happypanda is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-You should have received a copy of the GNU General Public License
-along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
-"""
+﻿#"""
+#This file is part of Happypanda.
+#Happypanda is free software: you can redistribute it and/or modify
+#it under the terms of the GNU General Public License as published by
+#the Free Software Foundation, either version 2 of the License, or
+#any later version.
+#Happypanda is distributed in the hope that it will be useful,
+#but WITHOUT ANY WARRANTY; without even the implied warranty of
+#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#GNU General Public License for more details.
+#You should have received a copy of the GNU General Public License
+#along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
+#"""
+import os, threading, queue, time, logging, math, random
+from datetime import datetime
 
 from PyQt5.QtCore import (Qt, QDate, QPoint, pyqtSignal, QThread,
 						  QTimer, QObject, QSize, QRect, QFileInfo,
@@ -33,13 +35,12 @@ from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QRadioButton, QFileIconProvider, QFontDialog,
 							 QColorDialog, QScrollArea, QSystemTrayIcon)
 
-import os, threading, queue, time, logging, math, random
-from datetime import datetime
-from . import gui_constants
-from ..utils import (tag_to_string, tag_to_dict, title_parser, ARCHIVE_FILES,
+from utils import (tag_to_string, tag_to_dict, title_parser, ARCHIVE_FILES,
 					 ArchiveFile, IMG_FILES, CreateZipFail)
-from ..database import gallerydb, fetch, db
-from .. import settings
+import gui_constants
+import gallerydb
+import fetch
+import settings
 
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -368,53 +369,6 @@ class FileIcon:
 		if s:
 			return QIcon(gui_constants.GALLERY_DEF_ICO_PATH)
 		else: return None
-
-#class ErrorEvent(QObject):
-#	ERROR_MSG = pyqtSignal(str)
-#	DONE = pyqtSignal()
-#	def __init__(self):
-#		super().__init__()
-
-#	def error_event(self):
-#		err_q = db.ErrorQueue
-#		while True:
-#			msg = err_q.get()
-#			ERROR_MSG.emit(msg)
-#		DONE.emit()
-
-#class ExceptionHandler(QObject):
-#	def __init__(self):
-#		super().__init__()
-#		thread = QThread()
-
-#		def thread_deleteLater():
-#			thread.deleteLater
-
-#		err_instance = ErrorEvent()
-#		err_instance.moveToThread(thread)
-#		err_instance.ERROR_MSG.connect(self.exception_handler)
-#		thread.started.connect(err_instance.error_event)
-#		thread.finished.connect(thread.deleteLater)
-#		thread.start()
-
-#	def exception_handler(self, msg):
-#		"Spawns a dialog with the specified msg"
-#		db_msg = msg = "The database is not compatible with the current version of the program"
-#		msgbox = QMessageBox()
-#		if msg == db_msg:
-#			msgbox.setText(msg)
-#			msgbox.setStandardButtons(QMessageBox.Ok | QMessageBox.Abort)
-#			msgbox.setDefaultButton(QMessageBox.Ok)
-#			if msgbox.exec() == QMessageBox.Ok:
-#				return True
-#		else:
-#			msgbox.setText(msg)
-#			msgbox.setStandardButtons(QMessageBox.Close)
-#			msgbox.setDefaultButton(QMessageBox.Close)
-#			if msgbox.exec():
-#				exit()
-
-#errors = ExceptionHandler()
 
 #def center_parent(parent, child):
 #	"centers child window in parent"

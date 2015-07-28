@@ -13,9 +13,6 @@ along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
-from ..utils import IMG_FILES as IMF
-
-IMG_FILES = IMF
 
 THUMBNAIL_PATH = os.path.join("db", "thumbnails")
 DB_PATH = os.path.join("db","sadpanda.db")
