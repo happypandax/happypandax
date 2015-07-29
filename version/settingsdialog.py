@@ -189,6 +189,12 @@ class SettingsDialog(QWidget):
 		# Advanced / Misc / External Viewer
 		self.external_viewer_path.setText(gui_constants.EXTERNAL_VIEWER_PATH)
 
+		# Advanced / Gallery / Gallery Text Fixer
+		self.g_data_regex_fix_edit.setText(gui_constants.GALLERY_DATA_FIX_REGEX)
+		self.g_data_replace_fix_edit.setText(gui_constants.GALLERY_DATA_FIX_REPLACE)
+		self.g_data_fixer_title.setChecked(gui_constants.GALLERY_DATA_FIX_TITLE)
+		self.g_data_fixer_artist.setChecked(gui_constants.GALLERY_DATA_FIX_ARTIST)
+
 	def accept(self):
 		set = settings.set
 
@@ -321,6 +327,17 @@ class SettingsDialog(QWidget):
 			gui_constants._REFRESH_EXTERNAL_VIEWER = True
 		gui_constants.EXTERNAL_VIEWER_PATH = self.external_viewer_path.text()
 		set(gui_constants.EXTERNAL_VIEWER_PATH,'Advanced', 'external viewer path')
+
+		# Advanced / General / Gallery Text Fixer
+		gui_constants.GALLERY_DATA_FIX_REGEX = self.g_data_regex_fix_edit.text()
+		set(gui_constants.GALLERY_DATA_FIX_REGEX, 'Advanced', 'gallery data fix regex')
+		gui_constants.GALLERY_DATA_FIX_TITLE = self.g_data_fixer_title.isChecked()
+		set(gui_constants.GALLERY_DATA_FIX_TITLE, 'Advanced', 'gallery data fix title')
+		gui_constants.GALLERY_DATA_FIX_ARTIST = self.g_data_fixer_artist.isChecked()
+		set(gui_constants.GALLERY_DATA_FIX_ARTIST, 'Advanced', 'gallery data fix artist')
+		gui_constants.GALLERY_DATA_FIX_REPLACE = self.g_data_replace_fix_edit.text()
+		set(gui_constants.GALLERY_DATA_FIX_REPLACE, 'Advanced', 'gallery data fix replace')
+
 
 		settings.save()
 		self.close()
@@ -675,7 +692,7 @@ class SettingsDialog(QWidget):
 		# Advanced / Gallery
 		advanced_gallery, advanced_gallery_m_l = new_tab(parent=advanced)
 		advanced.addTab(advanced_gallery, 'Gallery')
-		g_data_fixer_group, g_data_fixer_l =  groupbox('Gallery Data Fixer', QFormLayout, advanced_gallery)
+		g_data_fixer_group, g_data_fixer_l =  groupbox('Gallery Text Fixer', QFormLayout, advanced_gallery)
 		advanced_gallery_m_l.addRow(g_data_fixer_group)
 		g_data_regex_fix_lbl = QLabel("Replace text from gallery data through regular expression."+
 								" A regex cheatsheet is located at About -> Regex Cheatsheet.")
