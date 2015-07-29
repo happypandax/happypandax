@@ -239,6 +239,7 @@ class GalleryDB:
 			for gallery in galleries:
 				if gallery.validate():
 					log_i("Rebuilding gallery {}".format(gallery.id))
+					HashDB.del_gallery_hashes(gallery.id)
 					GalleryDB.modify_gallery(
 						gallery.id,
 						title=gallery.title,
@@ -947,6 +948,7 @@ class HashDB:
 	Contains the following methods:
 
 	get_gallery_hashes -> returns all hashes with the given gallery id in a list
+	get_gallery_hash -> returns hash of chapter specified. If page is specified, returns hash of chapter page
 	gen_gallery_hashes <- generates hashes for gallery's chapters and inserts them to db
 	rebuild_gallery_hashes <- inserts hashes into DB only if it doesnt already exist
 	"""
@@ -966,6 +968,113 @@ class HashDB:
 				hashes.append(row['hash'])
 		except IndexError:
 			return []
+		return hashes
+
+	@staticmethod
+	def get_gallery_hash(gallery_id, chapter, page=None):
+		"""
+		returns hash of chapter. If page is specified, returns hash of chapter page
+		"""
+		assert isinstance(gallery_id, int)
+		assert isinstance(chapter, int)
+		if page:
+			assert isinstance(page, int)
+		chap_id = ChapterDB.get_chapter_id(gallery_id, chapter)
+		if not chap_id:
+			return None
+		exceuting = []
+		if page:
+			exceuting.append(["SELECT hash FROM hashes WHERE series_id=? AND chapter_id=? AND page=?",
+					 (gallery_id, chap_id, page)])
+		else:
+			exceuting.append(["SELECT hash FROM hashes WHERE series_id=? AND chapter_id=?",
+					 (gallery_id, chap_id)])
+		hashes = []
+		CommandQueue.put(exceuting)
+		c = ResultQueue.get()
+		for h in c.fetchall():
+			try:
+				hashes.append(h['hash'])
+			except KeyError:
+				pass
+		return hashes
+
+	@staticmethod
+	def gen_gallery_hash(gallery, chapter, page=None):
+		"""
+		Generate hash for a specific chapter.
+		Set page to only generate specific page
+		page: 'mid' or number
+		Returns dict with chapter number as key and hash as value
+		"""
+		assert isinstance(gallery, Gallery)
+		assert isinstance(chapter, int)
+		if page:
+			assert isinstance(page, (int, str))
+		if gallery.id:
+			chap_id = ChapterDB.get_chapter_id(gallery.id, chapter)
+		chap_path = gallery.chapters[chapter]
+		try:
+			imgs = sorted([os.path.join(chap_path, x) for x in os.listdir(chap_path)])
+			pages = {}
+			for n, i in enumerate(imgs):
+				pages[n] = i
+
+			if page:
+				pages = {}
+				if page == 'mid':
+					imgs = imgs[len(imgs)//2]
+					pages[len(imgs)//2] = imgs
+				else:
+					imgs = imgs[page]
+					pages = {page:imgs}
+
+		except NotADirectoryError:
+			zip = ArchiveFile(chap_path)
+			temp_dir = os.path.join(gui_constants.temp_dir, str(uuid.uuid4()))
+			pages = {}
+			if page:
+				p = 0
+				if page == 'mid':
+					img = zip.namelist()[len(zip.namelist())//2]
+					p = len(zip.namelist())//2
+				else:
+					img = zip.namelist()[page]
+					p = page
+				pages = {p:zip.extract(img, temp_dir)}
+
+			else:
+				zip.extract_all(temp_dir)
+				imgs = sorted([os.path.join(temp_dir, x) for x in os.listdir(temp_dir)])
+				for n, i in enumerate(imgs):
+					pages[n] = i
+
+		def look_exists(hash):
+			"""check if hash already exists in database
+			returns hash, else returns None"""
+			executing = [["SELECT hash FROM hashes WHERE hash = ?",
+				(hash,)]]
+			CommandQueue.put(executing)
+			c = ResultQueue.get()
+			try: # exists
+				return c.fetchone()['hash']
+			except TypeError: # doesnt exist
+				return None
+			except IndexError:
+				return None
+		hashes = {}
+		for i in pages:
+			with open(pages[i], 'rb') as f:
+				hashes[i] = generate_img_hash(f)
+		if gallery.id:
+			executing = []
+			for h in hashes:
+				if not look_exists(hashes[h]):
+					executing.append(["""INSERT INTO hashes(hash, series_id, chapter_id, page)
+					VALUES(?, ?, ?, ?)""", (hashes[h], gallery.id, chap_id, h)])
+			CommandQueue.put(executing)
+			c = ResultQueue.get()
+			del c
 		return hashes
 
 	@staticmethod
@@ -992,15 +1101,15 @@ class HashDB:
 			for x in imgs if x.endswith(tuple(IMG_FILES))]
 
 		hashes = []
-		for i in imgs:
+		for n, i in enumerate(sorted(imgs)):
 			with open(i, 'rb') as img:
 				hashes.append(generate_img_hash(img))
 		
 		if gallery.id and chap_id:
 			executing = []
 			for hash in hashes:
-				executing.append(["""INSERT INTO hashes(hash, series_id, chapter_id)
-				VALUES(?, ?, ?)""", (hash, gallery.id, chap_id)])
+				executing.append(["""INSERT INTO hashes(hash, series_id, chapter_id, page)
+				VALUES(?, ?, ?, ?)""", (hash, gallery.id, chap_id, n)])
 
 			CommandQueue.put(executing)
 			c = ResultQueue.get()

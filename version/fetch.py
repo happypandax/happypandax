@@ -17,7 +17,7 @@ import re as regex
 
 from PyQt5.QtCore import QObject, pyqtSignal # need this for interaction with main thread
 
-from gallerydb import Gallery, GalleryDB, add_method_queue
+from gallerydb import Gallery, GalleryDB, HashDB, add_method_queue
 import gui_constants
 import pewnet
 import settings
@@ -354,30 +354,13 @@ class Fetch(QObject):
 			checked_pre_url_galleries = []
 			for x, gallery in enumerate(self.galleries, 1):
 				self.AUTO_METADATA_PROGRESS.emit("({}/{}) Generating gallery hash: {}".format(x, len(self.galleries), gallery.title))
+				log_i("Generating gallery hash: {}".format(gallery.title.encode(errors='ignore')))
 				hash = None
-				if gui_constants.HASH_GALLERY_PAGES == 'all':
-					if not gallery.hashes:
-						result = add_method_queue(gallery.gen_hashes, False)
-						if not result:
-							continue
+				if not gallery.hashes:
+					hash_dict = add_method_queue(HashDB.gen_gallery_hash, False, gallery, 0, 'mid')
+					hash = hash_dict[list(hash_dict.keys())[0]]
+				else:
 					hash = gallery.hashes[random.randint(0, len(gallery.hashes)-1)]
-				elif gui_constants.HASH_GALLERY_PAGES == '1':
-					try:
-						chap_path = gallery.chapters[0]
-						imgs = os.listdir(chap_path)
-						# filter
-						img = [os.path.join(chap_path, x) for x in imgs\
-							if x.endswith(tuple(utils.IMG_FILES))][len(imgs)//2]
-						with open(img, 'rb') as f:
-							hash = utils.generate_img_hash(f)
-					except NotADirectoryError:
-						zip = ArchiveFile(gallery.chapters[0])
-						img = [x for x in zip.namelist()\
-							if x.endswith(tuple(utils.IMG_FILES))][len(zip.namelist())//2]
-						hash = utils.generate_img_hash(zip.open(img, fp=True))
-					except FileNotFoundError:
-						self.AUTO_METADATA_PROGRESS
-						continue
 				if not hash:
 					self.error_galleries.append((gallery, "Could not generate hash"))
 					log_e("Could not generate hash for gallery: {}".format(gallery.title.encode(errors='ignore')))
@@ -400,7 +383,7 @@ class Fetch(QObject):
 					self.FINISHED.emit(True)
 					return
 				if not gallery.hash in found_url:
-					self.error_galleries.append(gallery, "Could not find url for gallery")
+					self.error_galleries.append((gallery, "Could not find url for gallery"))
 					self.AUTO_METADATA_PROGRESS.emit("Could not find url for gallery: {}".format(gallery.title))
 					log_w('Could not find url for gallery: {}'.format(gallery.title.encode(errors='ignore')))
 					continue

@@ -177,22 +177,23 @@ class AppWindow(QMainWindow):
 
 	def start_up(self):
 		def normalize_first_time():
-			settings.set(2, 'Application', 'first time level')
+			settings.set(3, 'Application', 'first time level')
+			settings.save()
 		def done():
+			if gui_constants.FIRST_TIME_LEVEL != 3:
+				normalize_first_time()
 			self.manga_list_view.gallery_model.init_data()
 			if gui_constants.ENABLE_MONITOR and\
 				gui_constants.MONITOR_PATHS and all(gui_constants.MONITOR_PATHS):
 				self.init_watchers()
-			if gui_constants.FIRST_TIME_LEVEL != 2:
-				normalize_first_time()
-		if gui_constants.FIRST_TIME_LEVEL < 2:
+		if gui_constants.FIRST_TIME_LEVEL < 3:
 
 			class FirstTime(misc.BasePopup):
 				def __init__(self, parent=None):
 					super().__init__(parent)
 					main_layout = QVBoxLayout()
-					info_lbl = QLabel("Hi there! Some big changes are about to occur!\n"+
-					   "Please wait.. This will take at most a few minutes.\n"+
+					info_lbl = QLabel("Hi there! I need to rebuild your galleries.\n"+
+					   "Please wait.. This will take a few minutes at most.\n"+
 					   "If not then try restarting the application.")
 					info_lbl.setAlignment(Qt.AlignCenter)
 					main_layout.addWidget(info_lbl)

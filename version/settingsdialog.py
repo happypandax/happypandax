@@ -334,12 +334,50 @@ class SettingsDialog(QWidget):
 		#	title_lbl.setFont(f)
 		#	return title_lbl
 
+		def groupbox(name, layout, parent):
+			g = QGroupBox(name, parent)
+			l = layout(g)
+			return g, l
+
+		def option_lbl_checkbox(text, optiontext, parent=None):
+			l = QLabel(text)
+			c = QCheckBox(text, parent)
+			return l, c
+
 		# App
 		application = QTabWidget()
 		self.application_index = self.right_panel.addWidget(application)
 		application_general = QWidget()
+		app_general_m_l = QFormLayout(application_general)
 		application.addTab(application_general, 'General')
-		application.setTabEnabled(0, False)
+
+		# App / General / gallery
+
+		app_gallery_group, app_gallery_l = groupbox('Gallery', QFormLayout, self)
+		app_general_m_l.addRow(app_gallery_group)
+		self.scroll_to_new_galleries = QCheckBox("Scroll to newly added galleries")
+		app_gallery_l.addRow(self.scroll_to_new_galleries)
+		self.subfolder_as_chapters = QCheckBox("Treat subfolders as galleries")
+		app_gallery_l.addRow(self.subfolder_as_chapters)
+		self.rename_g_source_group, rename_g_source_l = groupbox('Rename gallery source',
+													  QFormLayout, app_gallery_group)
+		self.rename_g_source_group.setCheckable(True)
+		app_gallery_l.addRow(self.rename_g_source_group)
+		rename_g_source_l.addRow(QLabel("Check what to include when renaming gallery source. (Same order)"))
+		rename_g_source_flow_l = FlowLayout()
+		rename_g_source_l.addRow(rename_g_source_flow_l)
+		self.rename_artist = QCheckBox("Artist")
+		self.rename_title = QCheckBox("Title")
+		self.rename_lang = QCheckBox("Language")
+		self.rename_title.setChecked(True)
+		self.rename_title.setDisabled(True)
+		rename_g_source_flow_l.addWidget(self.rename_artist)
+		rename_g_source_flow_l.addWidget(self.rename_title)
+		rename_g_source_flow_l.addWidget(self.rename_lang)
+		random_gallery_opener, random_g_opener_l = groupbox('Random Gallery Opener', QFormLayout, app_gallery_group)
+		app_gallery_l.addRow(random_gallery_opener)
+		self.open_random_g_chapters = QCheckBox("Open random gallery chapters")
+		random_g_opener_l.addRow(self.open_random_g_chapters)
 
 		# App / Monitor
 		app_monitor_page = QScrollArea()
@@ -348,7 +386,6 @@ class SettingsDialog(QWidget):
 		app_monitor_page.setWidgetResizable(True)
 		app_monitor_page.setWidget(app_monitor_dummy)
 		application.addTab(app_monitor_page, 'Monitoring')
-		application.setCurrentIndex(1)
 		app_monitor_m_l = QVBoxLayout(app_monitor_dummy)
 		# App / Monitor / misc
 		app_monitor_misc_group = QGroupBox('General *', self)

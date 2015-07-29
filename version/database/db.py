@@ -30,6 +30,7 @@ def hashes_sql(cols=False):
 					hash BLOB,
 					series_id INTEGER,
 					chapter_id INTEGER,
+					page INTEGER,
 					FOREIGN KEY(series_id) REFERENCES series(series_id),
 					FOREIGN KEY(chapter_id) REFERENCES chapters(chapter_id))
 	"""
@@ -38,7 +39,8 @@ def hashes_sql(cols=False):
 	'hash_id INTEGER PRIMARY KEY',
 	'hash BLOB',
 	'series_id INTEGER',
-	'chapter_id INTEGER'
+	'chapter_id INTEGER',
+	'page INTEGER'
 	]
 	if cols:
 		return sql, col_list

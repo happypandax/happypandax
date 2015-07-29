@@ -28,7 +28,7 @@ temp_dir = os.path.join('temp')
 default_stylesheet_path = static_dir + '/' + "style.css"
 user_stylesheet_path = ""
 
-FIRST_TIME_LEVEL = get(1, 'Application', 'first time level', int)
+FIRST_TIME_LEVEL = get(2, 'Application', 'first time level', int)
 
 # sizes
 MAIN_W = 1029 # main window
@@ -84,11 +84,12 @@ MOVE_IMPORTED_GALLERYIES_TO_DEF = get(True, 'Application', 'move imported galler
 
 # GENERAL
 SCROLL_TO_NEW_GALLERIES = get(False, 'Application', 'scroll to new galleries', bool)
-RANDOM_GALLERY_CHAPTERS = get(False, 'Application', 'random gallery chapters', bool)
+OPEN_RANDOM_GALLERY_CHAPTERS = get(False, 'Application', 'open random gallery chapters', bool)
 SUBFOLDER_AS_CHAPTERS = get(False, 'Application', 'subfolder as chapters', bool)
+RENAME_GALLERY_SOURCE = get(False, 'Application', 'rename gallery source', bool)
 
 # HASH
-HASH_GALLERY_PAGES = get('all', 'Application', 'hash gallery pages', int, str)
+HASH_GALLERY_PAGES = get('all', 'Advanced', 'hash gallery pages', int, str)
 
 # WEB
 GLOBAL_EHEN_TIME = get(10, 'Web', 'global ehen time offset', int)
