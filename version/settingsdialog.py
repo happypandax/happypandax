@@ -344,6 +344,17 @@ class SettingsDialog(QWidget):
 			c = QCheckBox(text, parent)
 			return l, c
 
+		def new_tab(scroll=False, parent=None):
+			new_t = QWidget()
+			new_l = QFormLayout(new_t)
+			if scroll:
+				scr = QScrollArea(parent)
+				scr.setWidget(new_t)
+				scr.setWidgetResizable(True)
+				return new_t, new_l, scr
+			return new_t, new_l
+
+
 		# App
 		application = QTabWidget()
 		self.application_index = self.right_panel.addWidget(application)
@@ -661,11 +672,33 @@ class SettingsDialog(QWidget):
 		self.external_viewer_path.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
 		misc_external_viewer_l.addRow('Path:', self.external_viewer_path)
 
+		# Advanced / Gallery
+		advanced_gallery, advanced_gallery_m_l = new_tab(parent=advanced)
+		advanced.addTab(advanced_gallery, 'Gallery')
+		g_data_fixer_group, g_data_fixer_l =  groupbox('Gallery Data Fixer', QFormLayout, advanced_gallery)
+		advanced_gallery_m_l.addRow(g_data_fixer_group)
+		g_data_regex_fix_lbl = QLabel("Replace text from gallery data through regular expression."+
+								" A regex cheatsheet is located at About -> Regex Cheatsheet.")
+		g_data_regex_fix_lbl.setWordWrap(True)
+		g_data_fixer_l.addRow(g_data_regex_fix_lbl)
+		self.g_data_regex_fix_edit = QLineEdit()
+		self.g_data_regex_fix_edit.setPlaceholderText("Valid regex")
+		g_data_fixer_l.addRow('Regex:', self.g_data_regex_fix_edit)
+		self.g_data_replace_fix_edit = QLineEdit()
+		self.g_data_replace_fix_edit.setPlaceholderText("Leave empty to delete matches")
+		g_data_fixer_l.addRow('Replace with:', self.g_data_replace_fix_edit)
+		g_data_fixer_options = FlowLayout()
+		g_data_fixer_l.addRow(g_data_fixer_options)
+		self.g_data_fixer_title = QCheckBox("Title", g_data_fixer_group)
+		self.g_data_fixer_artist = QCheckBox("Artist", g_data_fixer_group)
+		g_data_fixer_options.addWidget(self.g_data_fixer_title)
+		g_data_fixer_options.addWidget(self.g_data_fixer_artist)
+
 
 		# Advanced / Database
 		advanced_db_page = QWidget()
 		advanced.addTab(advanced_db_page, 'Database')
-		advanced.setTabEnabled(1, False)
+		advanced.setTabEnabled(2, False)
 
 
 		# About

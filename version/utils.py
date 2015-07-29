@@ -13,7 +13,7 @@
 #"""
 
 import time, datetime, os, subprocess, sys, logging, zipfile
-import hashlib, shutil, uuid
+import hashlib, shutil, uuid, re
 
 import gui_constants
 
@@ -27,6 +27,27 @@ log_c = log.critical
 IMG_FILES =  ('jpg','bmp','png','gif')
 ARCHIVE_FILES = ('.zip', '.cbz')
 FILE_FILTER = '*.zip *.cbz'
+
+def gallery_text_fixer(gallery):
+	regex_str = gui_constants.GALLERY_DATA_FIX_REGEX
+	if regex_str:
+		try:
+			valid_regex = re.compile(regex_str)
+		except re.error:
+			return None
+		if not valid_regex:
+			return None
+
+		def replace_regex(text):
+			new_text = re.sub(regex_str, gui_constants.GALLERY_DATA_FIX_REPLACE, text)
+			return new_text
+
+		if gui_constants.GALLERY_DATA_FIX_TITLE:
+			gallery.title = replace_regex(gallery.title)
+		if gui_constants.GALLERY_DATA_FIX_ARTIST:
+			gallery.artist = replace_regex(gallery.artist)
+
+		return gallery
 
 def b_search(data, key):
 	lo = 0

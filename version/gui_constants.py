@@ -88,6 +88,12 @@ OPEN_RANDOM_GALLERY_CHAPTERS = get(False, 'Application', 'open random gallery ch
 SUBFOLDER_AS_CHAPTERS = get(False, 'Application', 'subfolder as chapters', bool)
 RENAME_GALLERY_SOURCE = get(False, 'Application', 'rename gallery source', bool)
 
+# ADVANCED
+GALLERY_DATA_FIX_REGEX = get("", 'Advanced', 'gallery data fix regex', str)
+GALLERY_DATA_FIX_TITLE = get(True, 'Advanced', 'gallery data fix title', bool)
+GALLERY_DATA_FIX_ARTIST = get(True, 'Advanced', 'gallery data fix artist', bool)
+GALLERY_DATA_FIX_REPLACE = get("", 'Advanced', 'gallery data fix replace', str)
+
 # HASH
 HASH_GALLERY_PAGES = get('all', 'Advanced', 'hash gallery pages', int, str)
 
