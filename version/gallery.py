@@ -1217,7 +1217,7 @@ class MangaView(QListView):
 							   triggered=lambda: self.remove_gallery([index]))
 		remove_menu.addAction(remove_gallery_act)
 
-		if not selected:
+		if not selected and index.isValid():
 			remo_chap_act = QAction('Remove chapter', menu)
 			remove_menu.addAction(remo_chap_act)
 			remove_chap_menu = QMenu()

@@ -322,7 +322,7 @@ def tag_to_dict(string, ns_capitalize=True):
 import re as regex
 def title_parser(title):
 	"Receives a title to parse. Returns dict with 'title', 'artist' and language"
-
+	" ".join(title.split())
 	if title[-4:] in ARCHIVE_FILES:
 		title = title[:-4]
 	elif title[-3:] is '.7z':
