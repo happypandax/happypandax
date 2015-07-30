@@ -85,7 +85,7 @@ MOVE_IMPORTED_GALLERYIES_TO_DEF = get(True, 'Application', 'move imported galler
 # GENERAL
 SCROLL_TO_NEW_GALLERIES = get(False, 'Application', 'scroll to new galleries', bool)
 OPEN_RANDOM_GALLERY_CHAPTERS = get(False, 'Application', 'open random gallery chapters', bool)
-SUBFOLDER_AS_CHAPTERS = get(False, 'Application', 'subfolder as chapters', bool)
+SUBFOLDER_AS_GALLERY = get(False, 'Application', 'subfolder as gallery', bool)
 RENAME_GALLERY_SOURCE = get(False, 'Application', 'rename gallery source', bool)
 
 # ADVANCED

@@ -124,6 +124,13 @@ class SettingsDialog(QWidget):
 		self.prefetch_item_amnt = gui_constants.PREFETCH_ITEM_AMOUNT
 
 	def restore_options(self):
+
+		# App / General
+		self.scroll_to_new_gallery.setChecked(gui_constants.SCROLL_TO_NEW_GALLERIES)
+		self.open_random_g_chapters.setChecked(gui_constants.OPEN_RANDOM_GALLERY_CHAPTERS)
+		self.subfolder_as_chapters.setChecked(gui_constants.SUBFOLDER_AS_GALLERY)
+		self.rename_g_source_group.setChecked(gui_constants.RENAME_GALLERY_SOURCE)
+
 		# App / Monitor / Misc
 		self.enable_monitor.setChecked(gui_constants.ENABLE_MONITOR)
 		self.look_new_gallery_startup.setChecked(gui_constants.LOOK_NEW_GALLERY_STARTUP)
@@ -197,6 +204,16 @@ class SettingsDialog(QWidget):
 
 	def accept(self):
 		set = settings.set
+
+		# App / General
+		gui_constants.SCROLL_TO_NEW_GALLERIES = self.scroll_to_new_gallery.isChecked()
+		set(gui_constants.SCROLL_TO_NEW_GALLERIES, 'Application', 'scroll to new galleries')
+		gui_constants.OPEN_RANDOM_GALLERY_CHAPTERS = self.open_random_g_chapters.isChecked()
+		set(gui_constants.OPEN_RANDOM_GALLERY_CHAPTERS, 'Application', 'open random gallery chapters')
+		gui_constants.SUBFOLDER_AS_GALLERY = self.subfolder_as_chapters.isChecked()
+		set(gui_constants.SUBFOLDER_AS_GALLERY, 'Application', 'subfolder as gallery')
+		gui_constants.RENAME_GALLERY_SOURCE = self.rename_g_source_group.isChecked()
+		set(gui_constants.RENAME_GALLERY_SOURCE, 'Application', 'rename gallery source')
 
 		# App / Monitor / misc
 		gui_constants.ENABLE_MONITOR = self.enable_monitor.isChecked()
@@ -383,13 +400,15 @@ class SettingsDialog(QWidget):
 
 		app_gallery_group, app_gallery_l = groupbox('Gallery', QFormLayout, self)
 		app_general_m_l.addRow(app_gallery_group)
-		self.scroll_to_new_galleries = QCheckBox("Scroll to newly added galleries")
-		app_gallery_l.addRow(self.scroll_to_new_galleries)
+		self.scroll_to_new_gallery = QCheckBox("Scroll to newly added gallery")
+		self.scroll_to_new_gallery.setDisabled(True)
+		app_gallery_l.addRow(self.scroll_to_new_gallery)
 		self.subfolder_as_chapters = QCheckBox("Treat subfolders as galleries")
 		app_gallery_l.addRow(self.subfolder_as_chapters)
 		self.rename_g_source_group, rename_g_source_l = groupbox('Rename gallery source',
 													  QFormLayout, app_gallery_group)
 		self.rename_g_source_group.setCheckable(True)
+		self.rename_g_source_group.setDisabled(True)
 		app_gallery_l.addRow(self.rename_g_source_group)
 		rename_g_source_l.addRow(QLabel("Check what to include when renaming gallery source. (Same order)"))
 		rename_g_source_flow_l = FlowLayout()

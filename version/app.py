@@ -91,29 +91,40 @@ class AppWindow(QMainWindow):
 		self.watchers.gallery_handler.MOVED_SIGNAL.connect(moved)
 		self.watchers.gallery_handler.DELETED_SIGNAL.connect(deleted)
 
-		if gui_constants.LOOK_NEW_GALLERY_STARTUP and gui_constants.SUBFOLDER_AS_CHAPTERS:
+		if gui_constants.LOOK_NEW_GALLERY_STARTUP:
+			self.notification_bar.begin_show()
 			self.notification_bar.add_text("Looking for new galleries...")
 			try:
 				class ScanDir(QObject):
 					final_paths_and_galleries = pyqtSignal(list, list)
+					finished = pyqtSignal()
 					def __init__(self, model_data, parent=None):
 						super().__init__(parent)
 						self.model_data = model_data
+						self.scanned_data = []
 					def scan_dirs(self):
 						db_data = self.model_data
 						paths = []
 						for g in range(len(db_data)):
 							paths.append(os.path.normcase(db_data[g].path))
 
+						paths = []
+						for p in gui_constants.MONITOR_PATHS:
+							dir_content = os.listdir(p)
+							for d in dir_content:
+								paths.append(os.path.join(p,d))
+
+						fetch_inst = fetch.Fetch(self)
+						fetch_inst.series_path = paths
+						def set_scanned_d(d):
+							self.scanned_data = d
+						fetch_inst.FINISHED.connect(set_scanned_d)
+						fetch_inst.local()
 						contents = []
 						case_path = [] # needed for tile and artist parsing... e.g to avoid lowercase
-						for m_path in gui_constants.MONITOR_PATHS:
-							for p in os.listdir(m_path):
-								abs_p = os.path.join(m_path, p)
-								if os.path.isdir(abs_p) or \
-									p.endswith(utils.ARCHIVE_FILES):
-									case_path.append(abs_p)
-									contents.append(os.path.normcase(abs_p))
+						for g in self.scanned_data:
+							case_path.append(g.path)
+							contents.append(os.path.normcase(g.path))
 
 						paths = sorted(paths)
 						new_galleries = []
@@ -121,7 +132,6 @@ class AppWindow(QMainWindow):
 							y = utils.b_search(paths, x)
 							if not y:
 								# (path, number for case_path)
-								print(x.encode(errors='ignore'))
 								new_galleries.append((x, c))
 
 						galleries = []
@@ -139,6 +149,7 @@ class AppWindow(QMainWindow):
 								galleries.append(gallery)
 								final_paths.append(case_path[g[1]])
 						self.final_paths_and_galleries.emit(final_paths, galleries)
+						self.finished.emit()
 					#if gui_constants.LOOK_NEW_GALLERY_AUTOADD:
 					#	QTimer.singleShot(10000, self.gallery_populate(final_paths))
 					#	return
@@ -168,6 +179,7 @@ class AppWindow(QMainWindow):
 				self.scan_inst.moveToThread(thread)
 				self.scan_inst.final_paths_and_galleries.connect(show_new_galleries)
 				self.scan_inst.final_paths_and_galleries.connect(lambda a: self.scan_inst.deleteLater())
+				self.scan_inst.finished.connect(lambda: self.notification_bar.end_show())
 				thread.started.connect(self.scan_inst.scan_dirs)
 				thread.finished.connect(thread.deleteLater)
 				thread.start()

@@ -57,7 +57,6 @@ class Fetch(QObject):
 		self.series_path = ""
 		self.data = []
 		self._curr_gallery = '' # for debugging purposes
-		self._error = 'Unknown error' # for debugging purposes
 
 		# web
 		self._default_ehen_url = gui_constants.DEFAULT_EHEN_URL
@@ -139,7 +138,7 @@ class Fetch(QObject):
 					else:
 						path = os.path.join(self.series_path, folder_name)
 
-					if not gui_constants.SUBFOLDER_AS_CHAPTERS:
+					if gui_constants.SUBFOLDER_AS_GALLERY:
 						log_i("Treating each subfolder as gallery")
 						if os.path.isdir(path):
 							gallery_sources = []
