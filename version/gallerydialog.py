@@ -271,7 +271,7 @@ class GalleryDialog(QWidget):
 		if l_i != -1:
 			self.lang_box.setCurrentIndex(l_i)
 
-		if gallerydb.GalleryDB.check_exists(tail):
+		if gallerydb.GalleryDB.check_exists(name):
 			self.file_exists_lbl.setText('<font color="red">Gallery already exists</font>')
 			self.file_exists_lbl.show()
 		else: self.file_exists_lbl.hide()

@@ -64,6 +64,13 @@ class Fetch(QObject):
 		self.galleries_in_queue = []
 		self.error_galleries = []
 
+		self.galleries_from_db = GalleryDB.get_all_gallery()
+		# filter
+		filter_list = []
+		for g in self.galleries_from_db:
+			filter_list.append(g.path)
+		self.galleries_from_db = filter_list
+
 	def local(self):
 		"""
 		Do a local search in the given series_path.
@@ -81,7 +88,7 @@ class Fetch(QObject):
 				log_i('Found {} items'.format(len(gallery_l)))
 				progress = 0
 				def create_gallery(path, folder_name, do_chapters=True):
-					if not GalleryDB.check_exists(folder_name):
+					if not GalleryDB.check_exists(path, self.galleries_from_db, False):
 						log_i('Creating gallery: {}'.format(folder_name.encode('utf-8', 'ignore')))
 						new_gallery = Gallery()
 						images_paths = []

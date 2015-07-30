@@ -504,18 +504,21 @@ class GalleryDB:
 			log_i('Successfully deleted: {}'.format(gallery.title.encode('utf-8', 'ignore')))
 
 	@staticmethod
-	def check_exists(name, data=None):
+	def check_exists(name, galleries=None, filter=True):
 		"""
 		Checks if provided string exists in provided sorted
 		list based on path name
 		"""
-		if not data:
-			db_data = GalleryDB.get_all_gallery()
+		if not galleries:
+			galleries = GalleryDB.get_all_gallery()
+
+		if filter:
 			filter_list = []
-			for gallery in db_data:
-				p = os.path.split(gallery.path)
-				filter_list.append(p[1])
+			for gallery in galleries:
+				filter_list.append(gallery.path)
 			filter_list = sorted(filter_list)
+		else:
+			filter_list = galleries
 
 		def binary_search(key):
 			low = 0
