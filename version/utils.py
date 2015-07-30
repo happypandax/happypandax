@@ -28,6 +28,14 @@ IMG_FILES =  ('jpg','bmp','png','gif')
 ARCHIVE_FILES = ('.zip', '.cbz')
 FILE_FILTER = '*.zip *.cbz'
 
+def check_ignore_list(key):
+	k = os.path.normcase(key)
+	for path in gui_constants.IGNORE_PATHS:
+		p = os.path.normcase(path)
+		if p in k:
+			return False
+	return True
+
 def gallery_text_fixer(gallery):
 	regex_str = gui_constants.GALLERY_DATA_FIX_REGEX
 	if regex_str:

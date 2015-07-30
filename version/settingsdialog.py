@@ -1,4 +1,4 @@
-﻿import logging
+﻿import logging, os
 
 from PyQt5.QtWidgets import (QVBoxLayout, QHBoxLayout, QListWidget, QWidget,
 							 QListWidgetItem, QStackedLayout, QPushButton,
@@ -139,6 +139,10 @@ class SettingsDialog(QWidget):
 		for path in gui_constants.MONITOR_PATHS:
 			self.add_folder_monitor(path)
 
+		# App / Monitor / Ignore list
+		for path in gui_constants.IGNORE_PATHS:
+			self.add_ignore_path(path)
+
 		# Web / General
 		if 'g.e-hentai' in gui_constants.DEFAULT_EHEN_URL:
 			self.default_ehen_url.setChecked(True)
@@ -223,19 +227,25 @@ class SettingsDialog(QWidget):
 		gui_constants.LOOK_NEW_GALLERY_AUTOADD = self.auto_add_new_galleries.isChecked()
 		set(gui_constants.LOOK_NEW_GALLERY_AUTOADD, 'Application', 'look new gallery autoadd')
 		# App / Monitor / folders
-		n = self.folders_layout.rowCount()
-		paths = ''
-		for x in range(n):
-			item = self.folders_layout.takeAt(x+1)
-			l_edit = item.widget()
+		paths = []
+		folder_p_widgets = self.take_all_layout_widgets(self.folders_layout)
+		for x, l_edit in enumerate(folder_p_widgets):
 			p = l_edit.text()
 			if p:
-				if x == n-1:
-					paths += '{}'.format(p)
-				else:
-					paths += '{},'.format(p)
+				paths.append(p)
+
 		set(paths, 'Application', 'monitor paths')
-		gui_constants.MONITOR_PATHS = paths.split(',')
+		gui_constants.MONITOR_PATHS = paths
+		# App / Monitor / ignore list
+		paths = []
+		ignore_p_widgets = self.take_all_layout_widgets(self.ignore_path_l)
+		for x, l_edit in enumerate(ignore_p_widgets):
+			p = l_edit.text()
+			if p:
+				paths.append(p)
+		set(paths, 'Application', 'ignore paths')
+		gui_constants.IGNORE_PATHS = paths
+
 
 		# Web / General
 		if self.default_ehen_url.isChecked():
@@ -403,7 +413,8 @@ class SettingsDialog(QWidget):
 		self.scroll_to_new_gallery = QCheckBox("Scroll to newly added gallery")
 		self.scroll_to_new_gallery.setDisabled(True)
 		app_gallery_l.addRow(self.scroll_to_new_gallery)
-		self.subfolder_as_chapters = QCheckBox("Treat subfolders as galleries")
+		self.subfolder_as_chapters = QCheckBox("Treat subfolders as galleries. Note: behaviour of"+
+										 " 'Scan for new galleries on startup' option will be affected.")
 		app_gallery_l.addRow(self.subfolder_as_chapters)
 		self.rename_g_source_group, rename_g_source_l = groupbox('Rename gallery source',
 													  QFormLayout, app_gallery_group)
@@ -464,6 +475,17 @@ class SettingsDialog(QWidget):
 		app_monitor_folders_m_l.addWidget(app_monitor_folders_add, 0, Qt.AlignRight)
 		self.folders_layout = QFormLayout()
 		app_monitor_folders_m_l.addLayout(self.folders_layout)
+		# App / Monitor / ignore path
+		app_monitor_ignore_group, app_monitor_ignore_l = groupbox('Ignore List', QVBoxLayout, app_monitor_dummy)
+		app_monitor_m_l.addWidget(app_monitor_ignore_group, 1)
+		app_monitor_ignore_add = QPushButton('+')
+		app_monitor_ignore_add.clicked.connect(self.add_ignore_path)
+		app_monitor_ignore_add.setMaximumWidth(20)
+		app_monitor_ignore_add.setMaximumHeight(20)
+		app_monitor_ignore_l.addWidget(app_monitor_ignore_add, 0, Qt.AlignRight)
+		self.ignore_path_l = QFormLayout()
+		app_monitor_ignore_l.addLayout(self.ignore_path_l)
+		#app_monitor_ignore_group.setDisabled(True)
 
 		# Web
 		web = QTabWidget()
@@ -835,7 +857,15 @@ class SettingsDialog(QWidget):
 		l_edit = PathLineEdit()
 		l_edit.setText(path)
 		n = self.folders_layout.rowCount() + 1
-		self.folders_layout.addRow('Dir {}'.format(n), l_edit)
+		self.folders_layout.addRow('{}'.format(n), l_edit)
+
+	def add_ignore_path(self, path=''):
+		if not isinstance(path, str):
+			path = ''
+		l_edit = PathLineEdit()
+		l_edit.setText(path)
+		n = self.ignore_path_l.rowCount() + 1
+		self.ignore_path_l.addRow('{}'.format(n), l_edit)
 
 	def color_checker(self, txt):
 		allow = False
@@ -843,6 +873,15 @@ class SettingsDialog(QWidget):
 			if txt[0] == '#':
 				allow = True
 		return allow
+
+	def take_all_layout_widgets(self, l):
+		n = l.rowCount()
+		items = []
+		for x in range(n):
+			item = l.takeAt(x+1)
+			items.append(item.widget())
+		return items
+
 
 	def choose_font(self):
 		tup = QFontDialog.getFont(self)

@@ -137,7 +137,7 @@ def gen_thumbnail(chapter_path, width=gui_constants.THUMB_W_SIZE,
 		img_queue.put(abs_path)
 		return True
 
-	thread = threading.Thread(target=generate, args=(THUMBNAIL_PATH,
+	thread = threading.Thread(target=generate, args=(db_constants.THUMBNAIL_PATH,
 												  chapter_path, width, height,
 												  img_path_queue,))
 	thread.start()

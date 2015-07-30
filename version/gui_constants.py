@@ -81,6 +81,7 @@ MONITOR_PATHS = [x for x in get('', 'Application', 'monitor paths', str).split('
 MOVE_IMPORTED_GALLERIES = get(False, 'Application' 'move imported galleries', bool)
 IMPORTED_GALLERY_DEF_PATH = get('', 'Application', 'imported gallery def path', str)
 MOVE_IMPORTED_GALLERYIES_TO_DEF = get(True, 'Application', 'move imported galleries to def', bool)
+IGNORE_PATHS = [x for x in get('', 'Application', 'ignore paths', str).split(',') if x]
 
 # GENERAL
 SCROLL_TO_NEW_GALLERIES = get(False, 'Application', 'scroll to new galleries', bool)

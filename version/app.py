@@ -823,6 +823,7 @@ class AppWindow(QMainWindow):
 
 		# settings
 		settings.set(self.manga_list_view.current_sort, 'General', 'current sort')
+		settings.set(gui_constants.IGNORE_PATHS, 'Application', 'ignore paths')
 		settings.win_save(self, 'AppWindow')
 
 		# temp dir

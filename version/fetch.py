@@ -88,7 +88,7 @@ class Fetch(QObject):
 				log_i('Found {} items'.format(len(gallery_l)))
 				progress = 0
 				def create_gallery(path, folder_name, do_chapters=True):
-					if not GalleryDB.check_exists(path, self.galleries_from_db, False):
+					if utils.check_ignore_list(path) and not GalleryDB.check_exists(path, self.galleries_from_db, False):
 						log_i('Creating gallery: {}'.format(folder_name.encode('utf-8', 'ignore')))
 						new_gallery = Gallery()
 						images_paths = []
@@ -124,6 +124,7 @@ class Fetch(QObject):
 								parsed = utils.title_parser(folder_name[:-4])
 							else:
 								log_w('Skipped {} in local search'.format(path))
+								return
 
 						new_gallery.title = parsed['title']
 						new_gallery.path = path

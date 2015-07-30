@@ -205,7 +205,12 @@ class GalleryShowcaseWidget(QWidget):
 		assert isinstance(size, (list, tuple))
 		self.w = size[0]
 		self.h = size[1]
-		self.profile.setPixmap(QPixmap(gallery.profile).scaled(self.w, self.h-20, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+
+		pixm = QPixmap(gallery.profile)
+		if pixm.isNull():
+			pixm = QPixmap(gui_constants.NO_IMAGE_PATH)
+		pixm = pixm.scaled(self.w, self.h-20, Qt.KeepAspectRatio, Qt.FastTransformation)
+		self.profile.setPixmap(pixm)
 		title = self.font_M.elidedText(gallery.title, Qt.ElideRight, self.w)
 		artist = self.font_M.elidedText(gallery.artist, Qt.ElideRight, self.w)
 		self.text.setText("{}\n{}".format(title, artist))
