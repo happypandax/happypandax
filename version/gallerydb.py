@@ -110,12 +110,7 @@ def gen_thumbnail(chapter_path, width=gui_constants.THUMB_W_SIZE,
 
 	def generate(cache, chap_path, w, h, img_queue):
 		try:
-			if chap_path[-4:] in ARCHIVE_FILES:
-				log_d('Generating Thumb from {}'.format(chap_path[-3:]))
-				img_path = get_gallery_img(chap_path)
-			else:
-				log_d('Generating Thumb from folder')
-				img_path = os.path.join(chap_path, [x for x in sorted(os.listdir(chap_path)) if x.endswith(IMG_FILES)][0]) #first image in chapter
+			img_path = get_gallery_img(chap_path)
 			suff = img_path[-4:] # the image ext with dot
 		
 			# generate unique file name
@@ -509,6 +504,7 @@ class GalleryDB:
 		Checks if provided string exists in provided sorted
 		list based on path name
 		"""
+		#pdb.set_trace()
 		if not galleries:
 			galleries = GalleryDB.get_all_gallery()
 
@@ -530,12 +526,10 @@ class GalleryDB:
 				elif filter_list[mid] > key:
 					high = mid - 1
 				else:
-					return mid
-			return None
+					return True
+			return False
 
-		if binary_search(name):
-			return True
-		else: return False
+		return binary_search(name)
 
 
 class ChapterDB:

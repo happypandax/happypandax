@@ -69,7 +69,7 @@ class Fetch(QObject):
 		filter_list = []
 		for g in self.galleries_from_db:
 			filter_list.append(g.path)
-		self.galleries_from_db = filter_list
+		self.galleries_from_db = sorted(filter_list)
 
 	def local(self):
 		"""
@@ -137,7 +137,6 @@ class Fetch(QObject):
 						log_i('Gallery successful created: {}'.format(folder_name.encode('utf-8', 'ignore')))
 					else:
 						log_i('Gallery already exists: {}'.format(folder_name.encode('utf-8', 'ignore')))
-
 				for folder_name in gallery_l: # ser_path = gallery folder title
 					self._curr_gallery = folder_name
 					if mixed:

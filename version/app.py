@@ -120,34 +120,28 @@ class AppWindow(QMainWindow):
 							self.scanned_data = d
 						fetch_inst.FINISHED.connect(set_scanned_d)
 						fetch_inst.local()
-						contents = []
-						case_path = [] # needed for tile and artist parsing... e.g to avoid lowercase
-						for g in self.scanned_data:
-							case_path.append(g.path)
-							contents.append(os.path.normcase(g.path))
+						#contents = []
+						#for g in self.scanned_data:
+						#	contents.append(g)
 
-						paths = sorted(paths)
-						new_galleries = []
-						for c, x in enumerate(contents):
-							y = utils.b_search(paths, x)
-							if not y:
-								# (path, number for case_path)
-								new_galleries.append((x, c))
+						#paths = sorted(paths)
+						#new_galleries = []
+						#for x in contents:
+						#	y = utils.b_search(paths, os.path.normcase(x.path))
+						#	if not y:
+						#		new_galleries.append(x)
 
 						galleries = []
 						final_paths = []
-						if new_galleries:
-							for g in new_galleries:
-								gallery = gallerydb.Gallery()
+						if self.scanned_data:
+							for g in self.scanned_data:
 								try:
-									gallery.profile = utils.get_gallery_img(g[0])
+									g.profile = utils.get_gallery_img(g.chapters[0])
 								except:
-									gallery.profile = gui_constants.NO_IMAGE_PATH
-								parser_dict = utils.title_parser(os.path.split(case_path[g[1]])[1])
-								gallery.title = parser_dict['title']
-								gallery.artist = parser_dict['artist']
-								galleries.append(gallery)
-								final_paths.append(case_path[g[1]])
+									g.profile = gui_constants.NO_IMAGE_PATH
+							
+								galleries.append(g)
+								final_paths.append(g.path)
 						self.final_paths_and_galleries.emit(final_paths, galleries)
 						self.finished.emit()
 					#if gui_constants.LOOK_NEW_GALLERY_AUTOADD:
@@ -181,6 +175,7 @@ class AppWindow(QMainWindow):
 				self.scan_inst.final_paths_and_galleries.connect(lambda a: self.scan_inst.deleteLater())
 				self.scan_inst.finished.connect(lambda: self.notification_bar.end_show())
 				thread.started.connect(self.scan_inst.scan_dirs)
+				#self.scan_inst.scan_dirs()
 				thread.finished.connect(thread.deleteLater)
 				thread.start()
 			except:
@@ -835,18 +830,12 @@ class AppWindow(QMainWindow):
 					os.rmdir(os.path.join(root, name))
 			log_d('Flush temp on exit: OK')
 		except:
-			log_d('Flush temp on exit: FAIL')
-
-		# error
-		err = sys.exc_info()
-		if all(err):
-			log_c('Last error before exit:\n{}\n{}\n{}'.format(err[0], err[1], err[2]))
-		else:
-			log_d('Normal Exit App: OK')
+			log.exception('Flush temp on exit: FAIL')
+		log_d('Normal Exit App: OK')
 		super().closeEvent(event)
 		app = QApplication.instance()
-		app.quit()
-		sys.exit()
+		app.exit()
+		#sys.exit()
 
 if __name__ == '__main__':
 	raise NotImplementedError("Unit testing not implemented yet!")

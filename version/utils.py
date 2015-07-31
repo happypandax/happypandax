@@ -204,6 +204,7 @@ def get_gallery_img(path):
 	name = os.path.split(path)[1]
 	img_path = None
 	if name.endswith(tuple(ARCHIVE_FILES)):
+		log_i('Getting image from archive')
 		zip = ArchiveFile(path)
 		temp_path = os.path.join('temp', str(uuid.uuid4()))
 		os.mkdir(temp_path)
@@ -211,6 +212,7 @@ def get_gallery_img(path):
 		img_path = zip.extract(f_img_name, temp_path)
 		zip.close()
 	elif os.path.isdir(path):
+		log_i('Getting image from folder')
 		first_img = sorted([img for img in os.listdir(path) if img.endswith(tuple(IMG_FILES))])[0]
 		img_path = os.path.join(path, first_img)
 
