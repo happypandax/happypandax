@@ -833,8 +833,8 @@ class AppWindow(QMainWindow):
 			log.exception('Flush temp on exit: FAIL')
 		log_d('Normal Exit App: OK')
 		super().closeEvent(event)
-		app = QApplication.instance()
-		app.exit()
+		#app = QApplication.instance()
+		#app.exit()
 		#sys.exit()
 
 if __name__ == '__main__':

@@ -388,14 +388,18 @@ class SettingsDialog(QWidget):
 			c = QCheckBox(text, parent)
 			return l, c
 
-		def new_tab(scroll=False, parent=None):
-			new_t = QWidget()
+		def new_tab(name, parent, scroll=False):
+			new_t = QWidget(parent)
 			new_l = QFormLayout(new_t)
 			if scroll:
 				scr = QScrollArea(parent)
+				scr.setBackgroundRole(QPalette.Base)
 				scr.setWidget(new_t)
 				scr.setWidgetResizable(True)
-				return new_t, new_l, scr
+				parent.addTab(scr, name)
+				return new_t, new_l
+			else:
+				parent.addTab(new_t, name)
 			return new_t, new_l
 
 
@@ -475,17 +479,21 @@ class SettingsDialog(QWidget):
 		app_monitor_folders_m_l.addWidget(app_monitor_folders_add, 0, Qt.AlignRight)
 		self.folders_layout = QFormLayout()
 		app_monitor_folders_m_l.addLayout(self.folders_layout)
-		# App / Monitor / ignore path
-		app_monitor_ignore_group, app_monitor_ignore_l = groupbox('Ignore List', QVBoxLayout, app_monitor_dummy)
-		app_monitor_m_l.addWidget(app_monitor_ignore_group, 1)
-		app_monitor_ignore_add = QPushButton('+')
-		app_monitor_ignore_add.clicked.connect(self.add_ignore_path)
-		app_monitor_ignore_add.setMaximumWidth(20)
-		app_monitor_ignore_add.setMaximumHeight(20)
-		app_monitor_ignore_l.addWidget(app_monitor_ignore_add, 0, Qt.AlignRight)
+
+		app_ignore, app_ignore_m_l = new_tab('Ignore', application, True)
+		# App / Ignore
+		app_ignore_group, app_ignore_list_l = groupbox('List', QVBoxLayout, app_monitor_dummy)
+		app_ignore_m_l.addRow(app_ignore_group)
+		add_buttons_l = QHBoxLayout()
+		app_ignore_add_a = QPushButton('Add archive')
+		app_ignore_add_a.clicked.connect(lambda: self.add_ignore_path(dir=False))
+		app_ignore_add_f = QPushButton('Add directory')
+		app_ignore_add_f.clicked.connect(self.add_ignore_path)
+		add_buttons_l.addWidget(app_ignore_add_a, 0, Qt.AlignRight)
+		add_buttons_l.addWidget(app_ignore_add_f, 1, Qt.AlignRight)
+		app_ignore_list_l.addLayout(add_buttons_l)
 		self.ignore_path_l = QFormLayout()
-		app_monitor_ignore_l.addLayout(self.ignore_path_l)
-		#app_monitor_ignore_group.setDisabled(True)
+		app_ignore_list_l.addLayout(self.ignore_path_l)
 
 		# Web
 		web = QTabWidget()
@@ -731,8 +739,7 @@ class SettingsDialog(QWidget):
 		misc_external_viewer_l.addRow('Path:', self.external_viewer_path)
 
 		# Advanced / Gallery
-		advanced_gallery, advanced_gallery_m_l = new_tab(parent=advanced)
-		advanced.addTab(advanced_gallery, 'Gallery')
+		advanced_gallery, advanced_gallery_m_l = new_tab('Gallery', advanced)
 		g_data_fixer_group, g_data_fixer_l =  groupbox('Gallery Text Fixer', QFormLayout, advanced_gallery)
 		advanced_gallery_m_l.addRow(g_data_fixer_group)
 		g_data_regex_fix_lbl = QLabel("Replace text from gallery data through regular expression."+
@@ -859,10 +866,10 @@ class SettingsDialog(QWidget):
 		n = self.folders_layout.rowCount() + 1
 		self.folders_layout.addRow('{}'.format(n), l_edit)
 
-	def add_ignore_path(self, path=''):
+	def add_ignore_path(self, path='', dir=True):
 		if not isinstance(path, str):
 			path = ''
-		l_edit = PathLineEdit()
+		l_edit = PathLineEdit(dir=dir)
 		l_edit.setText(path)
 		n = self.ignore_path_l.rowCount() + 1
 		self.ignore_path_l.addRow('{}'.format(n), l_edit)
