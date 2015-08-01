@@ -1,4 +1,4 @@
-﻿import queue, os, threading, random, logging, time
+﻿import queue, os, threading, random, logging, time, scandir
 from datetime import datetime
 
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QDesktopWidget, QGroupBox,
@@ -295,9 +295,9 @@ class GalleryDialog(QWidget):
 		path = gallery_object.path
 		try:
 			log_d('Listing dir...')
-			con = os.listdir(path) # list all folders in gallery dir
+			con = scandir.scandir(path) # list all folders in gallery dir
 			log_d('Sorting')
-			chapters = sorted([os.path.join(path,sub) for sub in con if os.path.isdir(os.path.join(path, sub))]) #subfolders
+			chapters = sorted([sub.path for sub in con if sub.is_dir()]) #subfolders
 			# if gallery has chapters divided into sub folders
 			if len(chapters) != 0:
 				log_d('Chapters divided in folders..')
@@ -312,7 +312,7 @@ class GalleryDialog(QWidget):
 			#find last edited file
 			times = set()
 			log_d('Finding last update...')
-			for root, dirs, files in os.walk(path, topdown=False):
+			for root, dirs, files in scandir.walk(path, topdown=False):
 				for img in files:
 					fp = os.path.join(root, img)
 					times.add(os.path.getmtime(fp))

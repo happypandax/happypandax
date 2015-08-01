@@ -12,7 +12,7 @@
 #along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 #"""
 
-import datetime, os, threading, logging, queue, uuid # for unique filename
+import datetime, os, scandir, threading, logging, queue, uuid # for unique filename
 
 from PyQt5.QtCore import Qt, QObject, pyqtSignal
 from PyQt5.QtGui import QImage
@@ -1012,7 +1012,7 @@ class HashDB:
 			chap_id = ChapterDB.get_chapter_id(gallery.id, chapter)
 		chap_path = gallery.chapters[chapter]
 		try:
-			imgs = sorted([os.path.join(chap_path, x) for x in os.listdir(chap_path)])
+			imgs = sorted([x.path for x in scandir.scandir(chap_path)])
 			pages = {}
 			for n, i in enumerate(imgs):
 				pages[n] = i
@@ -1042,7 +1042,7 @@ class HashDB:
 
 			else:
 				zip.extract_all(temp_dir)
-				imgs = sorted([os.path.join(temp_dir, x) for x in os.listdir(temp_dir)])
+				imgs = sorted([x.path for x in scandir.scandir(temp_dir)])
 				for n, i in enumerate(imgs):
 					pages[n] = i
 
@@ -1081,21 +1081,20 @@ class HashDB:
 			chap_id = ChapterDB.get_chapter_id(gallery.id, 0)
 		try:
 			chap_path = gallery.chapters[0]
-			imgs = os.listdir(chap_path)
+			imgs = scandir.scandir(chap_path)
 			# filter
 		except NotADirectoryError:
 			# HACK: Do not need to extract all.. can read bytes form acrhive!!!
 			zip = ArchiveFile(gallery.chapters[0])
 			chap_path = os.path.join(gui_constants.temp_dir, str(uuid.uuid4()))
 			zip.extract_all(chap_path)
-			imgs = os.listdir(chap_path)
+			imgs = scandir.scandir(chap_path)
 
 		except FileNotFoundError:
 			return False
 
 		# filter
-		imgs = [os.path.join(chap_path,x)\
-			for x in imgs if x.endswith(tuple(IMG_FILES))]
+		imgs = [x.path for x in imgs if x.name.endswith(tuple(IMG_FILES))]
 
 		hashes = []
 		for n, i in enumerate(sorted(imgs)):

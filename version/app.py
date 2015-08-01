@@ -12,7 +12,7 @@
 #along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 #"""
 
-import sys, logging, os, threading, re, requests
+import sys, logging, os, threading, re, requests, scandir
 from PyQt5.QtCore import (Qt, QSize, pyqtSignal, QThread, QEvent, QTimer,
 						  QObject)
 from PyQt5.QtGui import (QPixmap, QIcon, QMouseEvent, QCursor)
@@ -110,9 +110,9 @@ class AppWindow(QMainWindow):
 
 						paths = []
 						for p in gui_constants.MONITOR_PATHS:
-							dir_content = os.listdir(p)
+							dir_content = scandir.scandir(p)
 							for d in dir_content:
-								paths.append(os.path.join(p,d))
+								paths.append(d.path)
 
 						fetch_inst = fetch.Fetch(self)
 						fetch_inst.series_path = paths
@@ -823,7 +823,7 @@ class AppWindow(QMainWindow):
 
 		# temp dir
 		try:
-			for root, dirs, files in os.walk('temp', topdown=False):
+			for root, dirs, files in scandir.walk('temp', topdown=False):
 				for name in files:
 					os.remove(os.path.join(root, name))
 				for name in dirs:

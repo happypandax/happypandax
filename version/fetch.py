@@ -12,7 +12,7 @@
 #along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 #"""
 
-import os, time, logging, uuid, random, queue
+import os, time, logging, uuid, random, queue, scandir
 import re as regex
 
 from PyQt5.QtCore import QObject, pyqtSignal # need this for interaction with main thread
@@ -76,7 +76,7 @@ class Fetch(QObject):
 		Do a local search in the given series_path.
 		"""
 		try:
-			gallery_l = sorted(os.listdir(self.series_path)) #list of folders in the "Gallery" folder
+			gallery_l = sorted([p.path for p in scandir.scandir(self.series_path)]) #list of folders in the "Gallery" folder
 			mixed = False
 		except TypeError:
 			gallery_l = self.series_path
@@ -93,9 +93,9 @@ class Fetch(QObject):
 						new_gallery = Gallery()
 						images_paths = []
 						try:
-							con = os.listdir(path) #all of content in the gallery folder
+							con = scandir.scandir(path) #all of content in the gallery folder
 							log_i('Gallery source is a directory')
-							chapters = sorted([os.path.join(path,sub) for sub in con if os.path.isdir(os.path.join(path, sub))])\
+							chapters = sorted([sub.path for sub in con if sub.is_dir()])\
 							    if do_chapters else [] #subfolders
 							# if gallery has chapters divided into sub folders
 							if len(chapters) != 0:
@@ -149,7 +149,7 @@ class Fetch(QObject):
 						log_i("Treating each subfolder as gallery")
 						if os.path.isdir(path):
 							gallery_sources = []
-							for root, subfolders, files in os.walk(path):
+							for root, subfolders, files in scandir.walk(path):
 								if files:
 									for f in files:
 										if f.endswith(utils.ARCHIVE_FILES):

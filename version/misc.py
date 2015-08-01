@@ -342,10 +342,9 @@ class FileIcon:
 							folder, name)
 						break;
 			else:
-				for name in os.listdir(gallery.chapters[0]):
-					if name.endswith(tuple(IMG_FILES)):
-						file = os.path.join(
-							gallery.chapters[0], name)
+				for p in scandir.scandir(gallery.chapters[0]):
+					if p.name.endswith(tuple(IMG_FILES)):
+						file = p.path
 						break;
 			return file
 

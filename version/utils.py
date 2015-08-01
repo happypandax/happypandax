@@ -13,7 +13,7 @@
 #"""
 
 import time, datetime, os, subprocess, sys, logging, zipfile
-import hashlib, shutil, uuid, re
+import hashlib, shutil, uuid, re, scandir
 
 import gui_constants
 
@@ -161,14 +161,14 @@ def open_chapter(chapterpath):
 	chapterpath = os.path.normpath(chapterpath)
 	try:
 		try: # folder
-			filepath = os.path.join(chapterpath, [x for x in sorted(os.listdir(chapterpath))\
+			filepath = os.path.join(chapterpath, [x for x in sorted([y.name for y in scandir.scandir(chapterpath)])\
 				if x[-3:] in IMG_FILES][0]) # Find first page
 		except NotADirectoryError: # archive
 			zip = ArchiveFile(chapterpath)
 			import uuid
 			t_p = os.path.join('temp', str(uuid.uuid4()))
 			zip.extract_all(t_p)
-			filepath = os.path.join(t_p, [x for x in sorted(os.listdir(t_p))\
+			filepath = os.path.join(t_p, [x for x in sorted([y.name for y in scandir.scandir(t_p)])\
 				if x[-3:] in IMG_FILES][0]) # Find first page
 			filepath = os.path.abspath(filepath)
 	except FileNotFoundError:
@@ -213,7 +213,7 @@ def get_gallery_img(path):
 		zip.close()
 	elif os.path.isdir(path):
 		log_i('Getting image from folder')
-		first_img = sorted([img for img in os.listdir(path) if img.endswith(tuple(IMG_FILES))])[0]
+		first_img = sorted([img.name for img in scandir.scandir(path) if img.name.endswith(tuple(IMG_FILES))])[0]
 		img_path = os.path.join(path, first_img)
 
 	if img_path:
