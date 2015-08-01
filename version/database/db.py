@@ -54,6 +54,8 @@ def series_sql(cols=False):
 					artist TEXT,
 					profile BLOB,
 					series_path BLOB,
+					is_archive INTEGER,
+					path_in_archive BLOB,
 					info TEXT,
 					fav INTEGER,
 					type TEXT,
@@ -74,6 +76,8 @@ def series_sql(cols=False):
 		'artist TEXT',
 		'profile BLOB',
 		'series_path BLOB',
+		'is_archive INTEGER',
+		'path_in_archive BLOB',
 		'info TEXT',
 		'fav INTEGER',
 		'type TEXT',
@@ -99,6 +103,7 @@ def chapters_sql(cols=False):
 					series_id INTEGER,
 					chapter_number INTEGER,
 					chapter_path BLOB,
+					in_archive INTEGER,
 					FOREIGN KEY(series_id) REFERENCES series(series_id))
 		"""
 	col_list = [
@@ -106,6 +111,7 @@ def chapters_sql(cols=False):
 		'series_id INTEGER',
 		'chapter_number INTEGER',
 		'chapter_path BLOB',
+		'in_archive INTEGER',
 		]
 	if cols:
 		return sql, col_list

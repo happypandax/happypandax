@@ -136,7 +136,10 @@ class AppWindow(QMainWindow):
 						if self.scanned_data:
 							for g in self.scanned_data:
 								try:
-									g.profile = utils.get_gallery_img(g.chapters[0])
+									if g.is_archive:
+										g.profile = utils.get_gallery_img(g.chapters[0], g.path)
+									else:
+										g.profile = utils.get_gallery_img(g.chapters[0])
 								except:
 									g.profile = gui_constants.NO_IMAGE_PATH
 							
@@ -709,16 +712,16 @@ class AppWindow(QMainWindow):
 									except NameError:
 										pass
 
-								a_instance.moveToThread(thread)
+								#a_instance.moveToThread(thread)
 								a_instance.prog.connect(loading.progress.setValue)
-								thread.started.connect(loading_show)
-								thread.started.connect(a_instance.add_to_db)
+								#thread.started.connect(loading_show)
+								#thread.started.connect(a_instance.add_to_db)
 								a_instance.done.connect(loading_hide)
 								a_instance.done.connect(del_later)
-								thread.finished.connect(thread.deleteLater)
-								thread.start()
-
-							data_thread.quit
+								#thread.finished.connect(thread.deleteLater)
+								#thread.start()
+								a_instance.add_to_db()
+							#data_thread.quit
 							hide_loading()
 							log_i('Populating DB from gallery folder: OK')
 							if validate:
@@ -733,8 +736,8 @@ class AppWindow(QMainWindow):
 							misc.Loading.ON = False
 						else:
 							log_d('No new gallery was found')
-							loading.setText("No new gallery found")
-							data_thread.quit
+							loading.setText("No new gallery found")/
+							#data_thread.quit
 							misc.Loading.ON = False
 
 					else:
@@ -754,14 +757,15 @@ class AppWindow(QMainWindow):
 					loading.progress.setValue(prog)
 					loading.setText("Searching for galleries...")
 
-				fetch_instance.moveToThread(data_thread)
+				#fetch_instance.moveToThread(data_thread)
 				fetch_instance.DATA_COUNT.connect(loading.progress.setMaximum)
 				fetch_instance.PROGRESS.connect(a_progress)
-				data_thread.started.connect(fetch_instance.local)
+				#data_thread.started.connect(fetch_instance.local)
 				fetch_instance.FINISHED.connect(finished)
 				fetch_instance.FINISHED.connect(fetch_deleteLater)
-				data_thread.finished.connect(data_thread.deleteLater)
-				data_thread.start()
+				#data_thread.finished.connect(data_thread.deleteLater)
+				#data_thread.start()
+				fetch_instance.local()
 				log_i('Populating DB from gallery folder')
 
 	def dragEnterEvent(self, event):

@@ -24,7 +24,7 @@ log_w = log.warning
 log_e = log.error
 log_c = log.critical
 
-IMG_FILES =  ('jpg','bmp','png','gif')
+IMG_FILES =  ('.jpg','.bmp','.png','.gif')
 ARCHIVE_FILES = ('.zip', '.cbz')
 FILE_FILTER = '*.zip *.cbz'
 
@@ -85,6 +85,7 @@ def generate_img_hash(src):
 	return sha1.hexdigest()
 
 class CreateZipFail(Exception): pass
+class FileNotFoundInArchive(Exception): pass
 
 class ArchiveFile():
 	"""
@@ -93,12 +94,9 @@ class ArchiveFile():
 	extract <- Extracts one specific file to given path
 	open -> open the given file in archive, returns bytes
 	close -> close archive
-	# Most of the code are from kunesj on GitHub #
 	"""
 	def __init__(self, filepath):
-		extension = filepath[-4:]
-
-		if extension in ARCHIVE_FILES:
+		if filepath.endswith(ARCHIVE_FILES):
 			try:
 				self.archive = zipfile.ZipFile(os.path.normcase(filepath))
 			except:
@@ -109,6 +107,40 @@ class ArchiveFile():
 	def namelist(self):
 		filelist = self.archive.namelist()
 		return filelist
+
+	def is_dir(self, name):
+		"""
+		Checks if the provided name in the archive is a directory or not
+		"""
+		if not name in self.namelist():
+			log_e('File {} not found in archive'.format(name))
+			raise FileNotFoundInArchive
+		if name.endswith('/'):
+			return True
+		else: return False
+
+	def dir_list(self, only_top_level=False):
+		"""
+		Returns a list of all directories found recursively. For directories not in toplevel
+		a path in the archive to the diretory will be returned.
+		"""
+		if only_top_level:
+			return [x for x in self.namelist() if x.endswith('/') and x.count('/') == 1]
+		else:
+			return [x for x in self.namelist() if x.endswith('/')]
+
+	def dir_contents(self, dir_name):
+		"""
+		Returns a list of contents in the directory
+		An empty string will return the contents of the top folder
+		"""
+		if dir_name and not dir_name in self.namelist():
+			log_e('Directory {} not found in archive'.format(dir_name))
+			raise FileNotFoundInArchive
+		if not dir_name:
+			return [x for x in self.namelist() if (x.endswith('/') and x.count('/') == 1) or \
+				x.count('/') == 0]
+		return [x for x in self.namelist() if x.startswith(dir_name)]
 
 	def extract(self, file_to_ext, path):
 		"""
@@ -137,6 +169,31 @@ class ArchiveFile():
 	def close(self):
 		self.archive.close()
 
+def check_archive(archive_path):
+	"""
+	Checks archive path for potential galleries.
+	Returns a list with a path in archive to galleries
+	if there is no directories
+	"""
+	zip = ArchiveFile(archive_path)
+	zip_dirs = zip.dir_list()
+	if zip_dirs: # There are directories in the top folder
+		galleries = []
+		for d in zip_dirs:
+			con = zip.dir_contents(d)
+			if con:
+				gallery_probability = len(con)
+				for n in con:
+					if not n.endswith(IMG_FILES):
+						gallery_probability -= 1
+				if gallery_probability >= (len(con)*0.8):
+					galleries.append(d)
+		zip.close()
+		return galleries
+	else: # all pages are in top folder
+		zip.close()
+		return ['']
+
 def today():
 	"Returns current date in a list: [dd, Mmm, yyyy]"
 	_date = datetime.date.today()
@@ -157,19 +214,22 @@ def external_viewer_checker(path):
 		if allow:
 			return x
 
-def open_chapter(chapterpath):
+def open_chapter(chapterpath, archive=None):
 	chapterpath = os.path.normpath(chapterpath)
+	is_archive = True if archive else False
 	try:
 		try: # folder
 			filepath = os.path.join(chapterpath, [x for x in sorted([y.name for y in scandir.scandir(chapterpath)])\
-				if x[-3:] in IMG_FILES][0]) # Find first page
+				if x.endswith(IMG_FILES)][0]) # Find first page
 		except NotADirectoryError: # archive
 			zip = ArchiveFile(chapterpath)
-			import uuid
 			t_p = os.path.join('temp', str(uuid.uuid4()))
-			zip.extract_all(t_p)
+			if is_archive: # Compatibility reasons.. TODO: REMOVE IN BETA
+				zip.extract(chapterpath, t_ip)
+			else:
+				zip.extract_all(t_p)
 			filepath = os.path.join(t_p, [x for x in sorted([y.name for y in scandir.scandir(t_p)])\
-				if x[-3:] in IMG_FILES][0]) # Find first page
+				if x.endswith(IMG_FILES)][0]) # Find first page
 			filepath = os.path.abspath(filepath)
 	except FileNotFoundError:
 		log.exception('Could not find chapter {}'.format(chapterpath))
@@ -194,30 +254,36 @@ def open_chapter(chapterpath):
 	except:
 		log_e('Could not open chapter {}'.format(os.path.split(chapterpath)[1]))
 
-	return None
-
-def get_gallery_img(path):
+def get_gallery_img(path, archive=None):
 	"""
 	Returns a path to a gallery's cover
+	Looks in archive if archive is set.
 	"""
 	# TODO: add chapter support
 	name = os.path.split(path)[1]
+	is_archive = True if archive or name.endswith(ARCHIVE_FILES) else False
+	real_path = archive if archive else path
 	img_path = None
-	if name.endswith(tuple(ARCHIVE_FILES)):
+	if is_archive:
 		log_i('Getting image from archive')
-		zip = ArchiveFile(path)
-		temp_path = os.path.join('temp', str(uuid.uuid4()))
+		zip = ArchiveFile(real_path)
+		temp_path = os.path.join(gui_constants.temp_dir, str(uuid.uuid4()))
 		os.mkdir(temp_path)
-		f_img_name = sorted([img for img in zip.namelist() if img.endswith(tuple(IMG_FILES))])[0]
+		if not archive:
+			f_img_name = sorted([img for img in zip.namelist() if img.endswith(IMG_FILES)])[0]
+		else:
+			f_img_name = sorted([img for img in zip.dir_contents(path) if img.endswith(IMG_FILES)])[0]
 		img_path = zip.extract(f_img_name, temp_path)
 		zip.close()
-	elif os.path.isdir(path):
+	elif os.path.isdir(real_path):
 		log_i('Getting image from folder')
-		first_img = sorted([img.name for img in scandir.scandir(path) if img.name.endswith(tuple(IMG_FILES))])[0]
-		img_path = os.path.join(path, first_img)
+		first_img = sorted([img.name for img in scandir.scandir(real_path) if img.name.endswith(tuple(IMG_FILES))])[0]
+		img_path = os.path.join(real_path, first_img)
 
 	if img_path:
 		return os.path.abspath(img_path)
+	else:
+		log_e("Could not get image")
 
 def tag_to_string(gallery_tag, simple=False):
 	"""

@@ -1227,7 +1227,6 @@ class MangaView(QListView):
 				chap_action = QAction("Remove chapter {}".format(
 					number), remove_chap_menu, triggered = functools.partial(self.del_chapter, index, chap_number))
 				remove_chap_menu.addAction(chap_action)
-
 		if selected:
 			remove_selected_act = QAction("Remove selected galleries", remove_menu,
 				   triggered = remove_selection)

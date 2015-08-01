@@ -96,54 +96,55 @@ def add_method_queue(method, no_return, *args, **kwargs):
 	if not no_return:
 		return method_return.get()
 
-def gen_thumbnail(chapter_path, width=gui_constants.THUMB_W_SIZE,
+def gen_thumbnail(gallery, width=gui_constants.THUMB_W_SIZE,
 				height=gui_constants.THUMB_H_SIZE): # 2 to align it properly.. need to redo this
 	"""Generates a thumbnail with unique filename in the cache dir.
 	Returns absolute path to the created thumbnail
 	"""
-	assert isinstance(chapter_path, str), "Path to chapter should be a string"
+	assert isinstance(gallery, Gallery), "gallery should be an instance of Gallery class"
 
 	img_path_queue = queue.Queue()
 	# generate a cache dir if required
 	if not os.path.isdir(db_constants.THUMBNAIL_PATH):
 		os.mkdir(db_constants.THUMBNAIL_PATH)
 
-	def generate(cache, chap_path, w, h, img_queue):
-		try:
-			img_path = get_gallery_img(chap_path)
-			suff = img_path[-4:] # the image ext with dot
+	try:
+		if gallery.is_archive:
+			img_path = get_gallery_img(gallery.chapters[0], gallery.path)
+		else:
+			img_path = get_gallery_img(gallery.chapters[0])
+		for ext in IMG_FILES:
+			if img_path.endswith(ext):
+				suff = ext # the image ext with dot
 		
-			# generate unique file name
-			file_name = str(uuid.uuid4()) + suff
-			new_img_path = os.path.join(cache, (file_name))
-			if not os.path.isfile(img_path):
-				raise IndexError
-			# Do the scaling
-			image = QImage()
-			image.load(img_path)
-			if image.isNull():
-				raise IndexError
-			image = image.scaled(w, h, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-			image.save(new_img_path, quality=100)
-		except IndexError:
-			new_img_path = gui_constants.NO_IMAGE_PATH
+		# generate unique file name
+		file_name = str(uuid.uuid4()) + suff
+		new_img_path = os.path.join(db_constants.THUMBNAIL_PATH, (file_name))
+		if not os.path.isfile(img_path):
+			raise IndexError
+		# Do the scaling
+		image = QImage()
+		image.load(img_path)
+		if image.isNull():
+			raise IndexError
+		image = image.scaled(width, height, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+		image.save(new_img_path, quality=100)
+	except IndexError:
+		new_img_path = gui_constants.NO_IMAGE_PATH
 
-		abs_path = os.path.abspath(new_img_path)
-		img_queue.put(abs_path)
-		return True
-
-	thread = threading.Thread(target=generate, args=(db_constants.THUMBNAIL_PATH,
-												  chapter_path, width, height,
-												  img_path_queue,))
-	thread.start()
-	thread.join()
-	return img_path_queue.get()
+	abs_path = os.path.abspath(new_img_path)
+	return abs_path
 
 def gallery_map(row, gallery):
 	gallery.title = row['title']
 	gallery.artist = row['artist']
 	gallery.profile = bytes.decode(row['profile'])
 	gallery.path = bytes.decode(row['series_path'])
+	gallery.is_archive = row['is_archive']
+	try:
+		gallery.path_in_archive = bytes.decode(row['path_in_archive'])
+	except TypeError:
+		pass
 	gallery.info = row['info']
 	gallery.language = row['language']
 	gallery.status = row['status']
@@ -186,6 +187,8 @@ def default_exec(object):
 				'artist':check(object.artist),
 				'profile':str.encode(object.profile),
 				'series_path':str.encode(object.path),
+				'is_archive':check(object.is_archive),
+				'path_in_archive':str.encode(object.path_in_archive),
 				'info':check(object.info),
 				'fav':check(object.fav),
 				'type':check(object.type),
@@ -249,7 +252,9 @@ class GalleryDB:
 						link=gallery.link,
 						times_read=gallery.times_read,
 						_db_v=db_constants.CURRENT_DB_VERSION,
-						exed=gallery.exed)
+						exed=gallery.exed,
+						is_archive=gallery.is_archive,
+						path_in_archive=gallery.path_in_archive)
 		except:
 			log.exception('Failed rebuilding galleries')
 			return False
@@ -260,7 +265,7 @@ class GalleryDB:
 	def modify_gallery(series_id, title=None, artist=None, info=None, type=None, fav=None,
 				   tags=None, language=None, status=None, pub_date=None, link=None,
 				   times_read=None, series_path=None, chapters=None, _db_v=None,
-				   hashes=None, exed=None):
+				   hashes=None, exed=None, is_archive=None, path_in_archive=None):
 		"Modifies gallery with given gallery id"
 		executing = []
 		assert isinstance(series_id, int)
@@ -298,6 +303,11 @@ class GalleryDB:
 			executing.append(["UPDATE series SET db_v=? WHERE series_id=?", (_db_v, series_id)])
 		if exed:
 			executing.append(["UPDATE series SET exed=? WHERE series_id=?", (exed, series_id)])
+		if is_archive:
+			executing.append(["UPDATE series SET is_archive=? WHERE series_id=?", (is_archive, series_id)])
+		if path_in_archive:
+			executing.append(["UPDATE series SET path_in_archive=? WHERE series_id=?", (path_in_archive, series_id)])
+
 		if tags:
 			assert isinstance(tags, dict)
 			TagDB.modify_tags(series_id, tags)
@@ -425,7 +435,7 @@ class GalleryDB:
 		assert isinstance(object, Gallery), "add_gallery method only accepts gallery items"
 		log_i('Recevied gallery: {}'.format(object.path.encode(errors='ignore')))
 
-		object.profile = gen_thumbnail(object.chapters[0])
+		object.profile = gen_thumbnail(object)
 
 		executing = default_exec(object)
 		CommandQueue.put(executing)
@@ -442,7 +452,7 @@ class GalleryDB:
 		assert isinstance(object, Gallery), "[add_gallery_return] method only accept gallery items"
 		log_i('Recevied gallery: {}'.format(object.path.encode(errors='ignore')))
 
-		object.profile = gen_thumbnail(object.chapters[0])
+		object.profile = gen_thumbnail(object)
 		PROFILE_TO_MODEL.put(object.profile)
 
 		executing = default_exec(object)
@@ -531,6 +541,41 @@ class GalleryDB:
 
 		return binary_search(name)
 
+#def default_chap_exec(object):
+#	def check(obj):
+#		if obj == None:
+#			return "None"
+#		else:
+#			return obj
+#	executing = [["""INSERT INTO series(title, artist, profile, series_path, 
+#					info, type, fav, status, pub_date, date_added, last_read, link, last_update,
+#					times_read, exed)
+#				VALUES(:title, :artist, :profile, :series_path, :info, :type, :fav,
+#					:status, :pub_date, :date_added, :last_read, :link, :last_update,
+#					:times_read, :exed)""",
+#				{
+#				'title':check(object.title),
+#				'artist':check(object.artist),
+#				'profile':str.encode(object.profile),
+#				'series_path':str.encode(object.path),
+#				'is_archive':check(object.is_archive),
+#				'path_in_archive':str.encode(object.path_in_archive),
+#				'info':check(object.info),
+#				'fav':check(object.fav),
+#				'type':check(object.type),
+#				'language':check(object.language),
+#				'status':check(object.status),
+#				'pub_date':check(object.pub_date),
+#				'date_added':check(object.date_added),
+#				'last_read':check(object.last_read),
+#				'last_update':check(object.last_update),
+#				'link':str.encode(object.link),
+#				'times_read':check(object.times_read),
+#				'db_v':check(db_constants.REAL_DB_VERSION),
+#				'exed':check(object.exed)
+#				}
+#				]]
+#	return executing
 
 class ChapterDB:
 	"""
@@ -564,8 +609,8 @@ class ChapterDB:
 		for numb in chapters:
 			new_path = gallery.chapters[numb]
 			executing.append(
-			["UPDATE chapters SET chapter_path=? WHERE series_id=? AND chapter_number=?", (
-				str.encode(new_path), gallery.id, numb)])
+			["UPDATE chapters SET chapter_path=? AND in_archive=? WHERE series_id=? AND chapter_number=?", (
+				str.encode(new_path), gallery.is_archive, gallery.id, numb)])
 		CommandQueue.put(executing)
 		c = ResultQueue.get()
 		del c
@@ -573,16 +618,17 @@ class ChapterDB:
 	@staticmethod
 	def add_chapters(gallery_object):
 		"Adds chapters linked to gallery into database"
-		assert isinstance(gallery_object, Gallery), "Parent gallery need to be of class gallery"
+		assert isinstance(gallery_object, Gallery), "Parent gallery need to be of class Gallery"
 		series_id = gallery_object.id
 		for chap_number in gallery_object.chapters:
 			chap_path = str.encode(gallery_object.chapters[chap_number])
 			executing = [["""
-			INSERT INTO chapters(series_id, chapter_number, chapter_path)
-			VALUES(:series_id, :chapter_number, :chapter_path)""",
+			INSERT INTO chapters(series_id, chapter_number, chapter_path, in_archive)
+			VALUES(:series_id, :chapter_number, :chapter_path, :in_archive)""",
 			{'series_id':series_id,
 			'chapter_number':chap_number,
-			'chapter_path':chap_path}
+			'chapter_path':chap_path,
+			'in_archive':gallery_object.is_archive}
 			]]
 			CommandQueue.put(executing)
 			# neccessary to keep order... feels awkward, will prolly redo this.
@@ -1162,6 +1208,8 @@ class Gallery:
 		self.title = None
 		self.profile = None
 		self.path = None
+		self.path_in_archive = ""
+		self.is_archive = 0
 		self.artist = None
 		self.chapters = {}
 		self.info = None
@@ -1177,10 +1225,11 @@ class Gallery:
 		self.last_update = None
 		self.times_read = 0
 		self.valid = False
-		self._cache_id = None
 		self._db_v = None
 		self.hashes = []
 		self.exed = 0
+		self._cache_id = 0
+
 	def gen_hashes(self):
 		"Generate hashes while inserting them into DB"
 		if not self.hashes:
@@ -1238,6 +1287,23 @@ class Gallery:
 			 self.info, self.fav, self.type, self.language, self.status, self.tags,
 			 self.pub_date, self.date_added, self.exed, len(self.hashes), self.chapters)
 		return string
+
+#class Chapter:
+#	"""
+#	Base class for a chapter
+#	Contains following attributes:
+#	parent_id -> parent gallery id
+#	path -> path to chapter
+#	number -> chapter number
+#	pages -> chapter pages
+#	in_archive -> 1 if the chapter path is in an archive else 0
+#	"""
+#	def __init__(self, parent_id=0):
+#		self.parent_id = parent_id
+#		self.path = ""
+#		self.number = 0
+#		self.pages = 0
+#		self.in_archive = 0
 
 class Bridge(QObject):
 	DONE = pyqtSignal(bool)

@@ -87,13 +87,16 @@ class Fetch(QObject):
 				self.DATA_COUNT.emit(len(gallery_l)) #tell model how many items are going to be added
 				log_i('Found {} items'.format(len(gallery_l)))
 				progress = 0
-				def create_gallery(path, folder_name, do_chapters=True):
-					if utils.check_ignore_list(path) and not GalleryDB.check_exists(path, self.galleries_from_db, False):
+				def create_gallery(path, folder_name, do_chapters=True, archive=None):
+					is_archive = True if archive else False
+					temp_p = archive if is_archive else path
+					folder_name = folder_name if folder_name else os.path.split(archive)[1]
+					if utils.check_ignore_list(temp_p) and not GalleryDB.check_exists(temp_p, self.galleries_from_db, False):
 						log_i('Creating gallery: {}'.format(folder_name.encode('utf-8', 'ignore')))
 						new_gallery = Gallery()
 						images_paths = []
 						try:
-							con = scandir.scandir(path) #all of content in the gallery folder
+							con = scandir.scandir(temp_p) #all of content in the gallery folder
 							log_i('Gallery source is a directory')
 							chapters = sorted([sub.path for sub in con if sub.is_dir()])\
 							    if do_chapters else [] #subfolders
@@ -117,26 +120,38 @@ class Fetch(QObject):
 							#new_gallery.last_update = last_updated
 							parsed = utils.title_parser(folder_name)
 						except NotADirectoryError:
-							if folder_name.endswith(utils.ARCHIVE_FILES):
+							if is_archive:
 								log_i('Gallery source is an archive')
-								#TODO: add support for folders in archive
-								new_gallery.chapters[0] = path
-								parsed = utils.title_parser(folder_name[:-4])
+								new_gallery.is_archive = 1
+								new_gallery.path_in_archive = path
+								if folder_name.endswith(utils.ARCHIVE_FILES):
+									n = folder_name
+									for ext in utils.ARCHIVE_FILES:
+										n = n.replace(ext, '')
+									parsed = utils.title_parser(n)
+								else:
+									parsed = utils.title_parser(folder_name)
+								if do_chapters:
+									archive_g = sorted(utils.check_archive(temp_p))
+									for n, g in enumerate(archive_g):
+										new_gallery.chapters[n] = g
+								else:
+									new_gallery.chapters[0] = path
 							else:
 								log_w('Skipped {} in local search'.format(path))
 								return
 
 						new_gallery.title = parsed['title']
-						new_gallery.path = path
+						new_gallery.path = temp_p
 						new_gallery.artist = parsed['artist']
 						new_gallery.language = parsed['language']
 						new_gallery.info = "No description.."
-						new_gallery.chapters_size = len(new_gallery.chapters)
 
 						self.data.append(new_gallery)
 						log_i('Gallery successful created: {}'.format(folder_name.encode('utf-8', 'ignore')))
 					else:
 						log_i('Gallery already exists: {}'.format(folder_name.encode('utf-8', 'ignore')))
+
 				for folder_name in gallery_l: # ser_path = gallery folder title
 					self._curr_gallery = folder_name
 					if mixed:
@@ -153,20 +168,26 @@ class Fetch(QObject):
 								if files:
 									for f in files:
 										if f.endswith(utils.ARCHIVE_FILES):
-											gallery_sources.append(os.path.join(root, f))
+											arch_path = os.path.join(root, f)
+											for g in utils.check_archive(arch_path):
+												gallery_sources.append((g, {'archive':arch_path}))
 									
 									if not subfolders:
 										gallery_probability = len(files)
 										for f in files:
 											if not f.endswith(utils.IMG_FILES):
 												gallery_probability -= 1
-										if gallery_probability >= len(files)//2:
+										if gallery_probability >= (len(files)*0.8):
 											gallery_sources.append(root)
 
 							for gs in gallery_sources:
-								create_gallery(gs, os.path.split(gs)[1], False)
+								if isinstance(gs , tuple):
+									create_gallery(gs[0], os.path.split(gs[0])[1], False, **gs[1])
+								else:
+									create_gallery(gs, os.path.split(gs)[1], False)
 						elif path.endswith(utils.ARCHIVE_FILES):
-							create_gallery(path, folder_name)
+							for g in utils.check_archive(path):
+								create_gallery(g, os.path.split(g)[1], False, archive=path)
 					else:
 						log_i("Treating each subfolder as chapter")
 						create_gallery(path, folder_name)
