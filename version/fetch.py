@@ -68,7 +68,7 @@ class Fetch(QObject):
 		# filter
 		filter_list = []
 		for g in self.galleries_from_db:
-			filter_list.append(g.path)
+			filter_list.append(os.path.normcase(g.path))
 		self.galleries_from_db = sorted(filter_list)
 
 	def local(self):
@@ -298,45 +298,6 @@ class Fetch(QObject):
 		self.galleries_in_queue.clear()
 		self.AUTO_METADATA_PROGRESS.emit('Finished applying metadata')
 		log_i('Finished applying metadata')
-		
-		#HTML PARSING OBSELETE
-		#metadata = hen.eh_gallery_parser(gallery.temp_url)
-		#if not metadata:
-		#	self.AUTO_METADATA_PROGRESS('No metadata found for gallery: {}'.format(gallery.title))
-		#	log_w('No metadata found for gallery: {}'.format(gallery.title.encode(errors='ignore')))
-		#	return False
-		#self.AUTO_METADATA_PROGRESS.emit("Applying metadata..")
-		#log_i('Applying metadata')
-		#title_artist_dict = utils.title_parser(metadata['title'])
-		#if gui_constants.REPLACE_METADATA:
-		#	gallery.title = title_artist_dict['title']
-		#	if title_artist_dict['artist']:
-		#		gallery.artist = title_artist_dict['artist']
-		#	gallery.type = metadata['type']
-		#	gallery.language = metadata['language']
-		#	gallery.pub_date = metadata['published']
-		#	gallery.tags = metadata['tags']
-		#else:
-		#	if not gallery.title:
-		#		gallery.title = title_artist_dict['title']
-		#	if not gallery.artist:
-		#		gallery.artist = title_artist_dict['artist']
-		#	if not gallery.type:
-		#		gallery.type = metadata['type']
-		#	if not gallery.language:
-		#		gallery.language = metadata['language']
-		#	if not gallery.pub_date:
-		#		gallery.pub_date = metadata['published']
-		#	if not gallery.tags:
-		#		gallery.tags = metadata['tags']
-		#	else:
-		#		for ns in metadata['tags']:
-		#			if ns in gallery.tags:
-		#				for tag in metadata['tags'][ns]:
-		#					if not tag in gallery.tags[ns]:
-		#						gallery.tags[ns].append(tag)
-		#			else:
-		#				gallery.tags[ns] = metadata['tags'][ns]
 
 	def auto_web_metadata(self):
 		"""
@@ -372,7 +333,7 @@ class Fetch(QObject):
 				hash = None
 				if not gallery.hashes:
 					hash_dict = add_method_queue(HashDB.gen_gallery_hash, False, gallery, 0, 'mid')
-					hash = hash_dict[list(hash_dict.keys())[0]]
+					hash = hash_dict['mid']
 				else:
 					hash = gallery.hashes[random.randint(0, len(gallery.hashes)-1)]
 				if not hash:

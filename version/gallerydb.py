@@ -512,7 +512,8 @@ class GalleryDB:
 	def check_exists(name, galleries=None, filter=True):
 		"""
 		Checks if provided string exists in provided sorted
-		list based on path name
+		list based on path name.
+		Note: key will be normcased
 		"""
 		#pdb.set_trace()
 		if not galleries:
@@ -521,7 +522,7 @@ class GalleryDB:
 		if filter:
 			filter_list = []
 			for gallery in galleries:
-				filter_list.append(gallery.path)
+				filter_list.append(os.path.normcase(gallery.path))
 			filter_list = sorted(filter_list)
 		else:
 			filter_list = galleries
@@ -539,7 +540,7 @@ class GalleryDB:
 					return True
 			return False
 
-		return binary_search(name)
+		return binary_search(os.path.normcase(name))
 
 #def default_chap_exec(object):
 #	def check(obj):
@@ -603,13 +604,13 @@ class ChapterDB:
 		"""
 		assert isinstance(gallery, Gallery) and isinstance(chapters, (list, tuple))
 		if not chapters:
-			chapters = [x for x in range(len(gallery.chapters))]
+			chapters = range(len(gallery.chapters))
 		executing = []
 	
 		for numb in chapters:
 			new_path = gallery.chapters[numb]
 			executing.append(
-			["UPDATE chapters SET chapter_path=? AND in_archive=? WHERE series_id=? AND chapter_number=?", (
+			["UPDATE chapters SET chapter_path=?, in_archive=? WHERE series_id=? AND chapter_number=?", (
 				str.encode(new_path), gallery.is_archive, gallery.id, numb)])
 		CommandQueue.put(executing)
 		c = ResultQueue.get()
@@ -1048,7 +1049,7 @@ class HashDB:
 		Generate hash for a specific chapter.
 		Set page to only generate specific page
 		page: 'mid' or number
-		Returns dict with chapter number as key and hash as value
+		Returns dict with chapter number or 'mid' as key and hash as value
 		"""
 		assert isinstance(gallery, Gallery)
 		assert isinstance(chapter, int)
@@ -1058,6 +1059,8 @@ class HashDB:
 			chap_id = ChapterDB.get_chapter_id(gallery.id, chapter)
 		chap_path = gallery.chapters[chapter]
 		try:
+			if gallery.is_archive:
+				raise NotADirectoryError
 			imgs = sorted([x.path for x in scandir.scandir(chap_path)])
 			pages = {}
 			for n, i in enumerate(imgs):
@@ -1073,21 +1076,37 @@ class HashDB:
 					pages = {page:imgs}
 
 		except NotADirectoryError:
-			zip = ArchiveFile(chap_path)
 			temp_dir = os.path.join(gui_constants.temp_dir, str(uuid.uuid4()))
+			is_archive = gallery.is_archive
+			if is_archive:
+				zip = ArchiveFile(gallery.path)
+			else:
+				zip = ArchiveFile(chap_path)
 			pages = {}
 			if page:
 				p = 0
 				if page == 'mid':
-					img = zip.namelist()[len(zip.namelist())//2]
-					p = len(zip.namelist())//2
+					if is_archive:
+						con = zip.dir_contents(chap_path)
+						p = len(con)//2
+						img = con[p]
+					else:
+						img = zip.namelist()[len(zip.namelist())//2]
+						p = len(zip.namelist())//2
 				else:
-					img = zip.namelist()[page]
 					p = page
+					if is_archive:
+						con = zip.dir_contents(chap_path)
+						img = con[p]
+					else:
+						img = zip.namelist()[p]
 				pages = {p:zip.extract(img, temp_dir)}
 
 			else:
-				zip.extract_all(temp_dir)
+				if is_archive:
+					temp_dir = zip.extract(chap_path, temp_dir)
+				else:
+					zip.extract_all(temp_dir)
 				imgs = sorted([x.path for x in scandir.scandir(temp_dir)])
 				for n, i in enumerate(imgs):
 					pages[n] = i
@@ -1118,7 +1137,10 @@ class HashDB:
 			CommandQueue.put(executing)
 			c = ResultQueue.get()
 			del c
-		return hashes
+		if page == 'mid':
+			return {'mid':list(hashes.values())[0]}
+		else:
+			return hashes
 
 	@staticmethod
 	def gen_gallery_hashes(gallery):
@@ -1126,14 +1148,21 @@ class HashDB:
 		if gallery.id:
 			chap_id = ChapterDB.get_chapter_id(gallery.id, 0)
 		try:
+			if gallery.is_archive:
+				raise NotADirectoryError
 			chap_path = gallery.chapters[0]
 			imgs = scandir.scandir(chap_path)
 			# filter
 		except NotADirectoryError:
-			# HACK: Do not need to extract all.. can read bytes form acrhive!!!
-			zip = ArchiveFile(gallery.chapters[0])
-			chap_path = os.path.join(gui_constants.temp_dir, str(uuid.uuid4()))
-			zip.extract_all(chap_path)
+			# HACK: Do not need to extract all.. can read bytes from acrhive!!!
+			t_p = os.path.join(gui_constants.temp_dir, str(uuid.uuid4()))
+			if gallery.is_archive:
+				zip = ArchiveFile(gallery.path)
+				chap_path = zip.extract(gallery.chapters[0], t_p)
+			else:
+				chap_path = t_p
+				zip = ArchiveFile(gallery.chapters[0])
+				zip.extract_all(chap_path)
 			imgs = scandir.scandir(chap_path)
 
 		except FileNotFoundError:

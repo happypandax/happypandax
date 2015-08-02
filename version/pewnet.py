@@ -140,9 +140,10 @@ class CommenHen:
 			if invalid_token_check(gallery):
 				new_gallery = {}
 				try:
-					new_gallery['title'] = {'def':gallery['title'], 'jpn':gallery['title_jpn']}
+					new_gallery['title'] = {'def':" ".join(gallery['title'].split()),
+							 'jpn':" ".join(gallery['title_jpn'].split())}
 				except KeyError:
-					new_gallery['title'] = {'def':gallery['title']}
+					new_gallery['title'] = {'def':" ".join(gallery['title'].split())}
 				new_gallery['type'] = gallery['category']
 				new_gallery['pub_date'] = datetime.fromtimestamp(int(gallery['posted']))
 				tags = {'default':[]}
