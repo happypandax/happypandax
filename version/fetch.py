@@ -120,10 +120,10 @@ class Fetch(QObject):
 							#new_gallery.last_update = last_updated
 							parsed = utils.title_parser(folder_name)
 						except NotADirectoryError:
-							if is_archive:
+							if is_archive or temp_p.endswith(utils.ARCHIVE_FILES):
 								log_i('Gallery source is an archive')
 								new_gallery.is_archive = 1
-								new_gallery.path_in_archive = path
+								new_gallery.path_in_archive = '' if not is_archive else path
 								folder_name = folder_name.replace('/','')
 								if folder_name.endswith(utils.ARCHIVE_FILES):
 									n = folder_name
@@ -134,6 +134,9 @@ class Fetch(QObject):
 									parsed = utils.title_parser(folder_name)
 								if do_chapters:
 									archive_g = sorted(utils.check_archive(temp_p))
+									if not archive_g:
+										log_w('No chapters found for {}'.format(temp_p.encode(errors='ignore')))
+										return
 									for n, g in enumerate(archive_g):
 										new_gallery.chapters[n] = g
 								else:
@@ -164,34 +167,17 @@ class Fetch(QObject):
 					if gui_constants.SUBFOLDER_AS_GALLERY:
 						log_i("Treating each subfolder as gallery")
 						if os.path.isdir(path):
-							gallery_sources = []
-							for root, subfolders, files in scandir.walk(path):
-								if files:
-									for f in files:
-										if f.endswith(utils.ARCHIVE_FILES):
-											arch_path = os.path.join(root, f)
-											for g in utils.check_archive(arch_path):
-												gallery_sources.append((g, {'archive':arch_path}))
-									
-									if not subfolders:
-										gallery_probability = len(files)
-										for f in files:
-											if not f.endswith(utils.IMG_FILES):
-												gallery_probability -= 1
-										if gallery_probability >= (len(files)*0.8):
-											gallery_sources.append(root)
-
-							for gs in gallery_sources:
-								if isinstance(gs , tuple):
-									create_gallery(gs[0], os.path.split(gs[0])[1], False, **gs[1])
-								else:
+							gallery_folders, gallery_archives = utils.recursive_gallery_check(path)
+							for gs in gallery_folders:
 									create_gallery(gs, os.path.split(gs)[1], False)
+							for gs in gallery_archives:
+									create_gallery(gs[0], os.path.split(gs[0])[1], False, archive=gs[1])
 						elif path.endswith(utils.ARCHIVE_FILES):
 							for g in utils.check_archive(path):
 								create_gallery(g, os.path.split(g)[1], False, archive=path)
 					else:
 						log_i("Treating each subfolder as chapter")
-						create_gallery(path, folder_name)
+						create_gallery(path, folder_name, do_chapters=True)
 
 					progress += 1 # update the progress bar
 					self.PROGRESS.emit(progress)

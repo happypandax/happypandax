@@ -49,17 +49,17 @@ class GalleryDialog(QWidget):
 		final_buttons = QHBoxLayout()
 		final_buttons.setAlignment(Qt.AlignRight)
 		m_l.addLayout(final_buttons)
-		done = QPushButton("Done")
-		done.setDefault(True)
+		self.done = QPushButton("Done")
+		self.done.setDefault(True)
 		cancel = QPushButton("Cancel")
 		final_buttons.addWidget(cancel)
-		final_buttons.addWidget(done)
+		final_buttons.addWidget(self.done)
 
 		def new_gallery():
 			self.setWindowTitle('Add a new gallery')
 			self.newUI()
 			self.commonUI()
-			done.clicked.connect(self.accept)
+			self.done.clicked.connect(self.accept)
 			cancel.clicked.connect(self.reject)
 
 		if arg:
@@ -70,7 +70,7 @@ class GalleryDialog(QWidget):
 					gallery = index.data(Qt.UserRole+1)
 					self.commonUI()
 					self.setGallery(gallery)
-				done.clicked.connect(self.accept_edit)
+				self.done.clicked.connect(self.accept_edit)
 				cancel.clicked.connect(self.reject_edit)
 			elif isinstance(arg, str):
 				new_gallery()
@@ -250,6 +250,8 @@ class GalleryDialog(QWidget):
 		'a': files
 		Or pass a predefined path
 		"""
+		self.done.show()
+		self.file_exists_lbl.hide()
 		if mode == 'a':
 			name = QFileDialog.getOpenFileName(self, 'Choose archive',
 											  filter=utils.FILE_FILTER)
@@ -261,6 +263,8 @@ class GalleryDialog(QWidget):
 				name = mode
 			else:
 				return None
+		if not name:
+			return
 		head, tail = os.path.split(name)
 		name = os.path.join(head, tail)
 		parsed = utils.title_parser(tail)
@@ -270,11 +274,25 @@ class GalleryDialog(QWidget):
 		l_i = self.lang_box.findText(parsed['language'])
 		if l_i != -1:
 			self.lang_box.setCurrentIndex(l_i)
-
 		if gallerydb.GalleryDB.check_exists(name):
-			self.file_exists_lbl.setText('<font color="red">Gallery already exists</font>')
+			self.file_exists_lbl.setText('<font color="red">Gallery already exists.</font>')
 			self.file_exists_lbl.show()
-		else: self.file_exists_lbl.hide()
+		# check galleries
+		gs = 1
+		if mode == 'a':
+			gs = len(utils.check_archive(name))
+		elif mode == 'f':
+			g_dirs, g_archs = utils.recursive_gallery_check(name)
+			gs = len(g_dirs) + len(g_archs)
+		if gs == 0:
+			self.file_exists_lbl.setText('<font color="red">Invalid gallery source.</font>')
+			self.file_exists_lbl.show()
+			self.done.hide()
+		if gui_constants.SUBFOLDER_AS_GALLERY:
+			if gs > 1:
+				self.file_exists_lbl.setText('<font color="red">Source contains more than one gallery.</font>')
+				self.file_exists_lbl.show()
+				self.done.hide()
 
 	def check(self):
 		if len(self.title_edit.text()) is 0:
@@ -296,6 +314,7 @@ class GalleryDialog(QWidget):
 		try:
 			log_d('Listing dir...')
 			con = scandir.scandir(path) # list all folders in gallery dir
+			log_i('Gallery source is a directory')
 			log_d('Sorting')
 			chapters = sorted([sub.path for sub in con if sub.is_dir()]) #subfolders
 			# if gallery has chapters divided into sub folders
@@ -307,7 +326,6 @@ class GalleryDialog(QWidget):
 
 			else: #else assume that all images are in gallery folder
 				gallery_object.chapters[0] = path
-			log_d('Added chapters to gallery')
 				
 			#find last edited file
 			times = set()
@@ -319,16 +337,16 @@ class GalleryDialog(QWidget):
 			gallery_object.last_update = time.asctime(time.gmtime(max(times)))
 			log_d('Found last update')
 		except NotADirectoryError:
-			if path[-4:] in utils.ARCHIVE_FILES:
-				log_d('Found an archive')
-				#TODO: add support for folders in archive
-				gallery_object.chapters[0] = path
+			if path.endswith(utils.ARCHIVE_FILES):
+				gallery_object.is_archive = 1
+				log_i("Gallery source is an archive")
+				archive_g = sorted(utils.check_archive(path))
+				for n, g in enumerate(archive_g):
+					gallery_object.chapters[n] = g
 
-		#self.gallery_queue.put(gallery_object)
 		if add_to_model:
 			self.SERIES.emit([gallery_object])
 			log_d('Sent gallery to model')
-		#gallerydb.GalleryDB.add_gallery(gallery_object)
 		
 
 	def reject(self):

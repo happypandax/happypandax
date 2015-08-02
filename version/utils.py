@@ -153,13 +153,22 @@ class ArchiveFile():
 			self.extract_all(path)
 			return path
 		else:
-			return self.archive.extract(file_to_ext, path)
+			membs = []
+			for name in self.namelist():
+				if name.startswith(file_to_ext) and name != file_to_ext:
+					membs.append(name)
+			temp_p = self.archive.extract(file_to_ext, path)
+			for m in membs:
+				self.archive.extract(m, path)
+			return temp_p
 
-	def extract_all(self, path):
+	def extract_all(self, path, member=None):
 		"""
 		Extracts all files to given path
 		"""
 		# TODO: Check contents of archive before extracting
+		if member:
+			self.archive.extractall(path, member)
 		self.archive.extractall(path)
 
 	def open(self, file_to_open, fp=False):
@@ -199,6 +208,33 @@ def check_archive(archive_path):
 		zip.close()
 		return ['']
 
+def recursive_gallery_check(path):
+	"""
+	Recursively checks a folder for any potential galleries
+	Returns a list of paths for directories and a list of tuples where first
+	index is path to gallery in archive and second index is path to archive.
+	Like this:
+	["C:path/to/g"] and [("path/to/g/in/a", "C:path/to/a")]
+	"""
+	gallery_dirs = []
+	gallery_arch = []
+	for root, subfolders, files in scandir.walk(path):
+		if files:
+			for f in files:
+				if f.endswith(ARCHIVE_FILES):
+					arch_path = os.path.join(root, f)
+					for g in check_archive(arch_path):
+						gallery_arch.append((g, arch_path))
+									
+			if not subfolders:
+				gallery_probability = len(files)
+				for f in files:
+					if not f.endswith(IMG_FILES):
+						gallery_probability -= 1
+				if gallery_probability >= (len(files)*0.8):
+					gallery_dirs.append(root)
+	return gallery_dirs, gallery_arch
+
 def today():
 	"Returns current date in a list: [dd, Mmm, yyyy]"
 	_date = datetime.date.today()
@@ -233,11 +269,11 @@ def open_chapter(chapterpath, archive=None):
 			t_p = os.path.join('temp', str(uuid.uuid4()))
 			os.mkdir(t_p)
 			if is_archive: # Compatibility reasons.. TODO: REMOVE IN BETA
-				zip.extract(chapterpath, t_p)
+				t_p = zip.extract(chapterpath, t_p)
 			else:
 				zip.extract_all(t_p)
 			filepath = os.path.join(t_p, [x for x in sorted([y.name for y in scandir.scandir(t_p)])\
-				if x.endswith(IMG_FILES)][0]) # Find first page
+ 				if x.endswith(IMG_FILES)][0]) # Find first page
 			filepath = os.path.abspath(filepath)
 	except FileNotFoundError:
 		log.exception('Could not find chapter {}'.format(chapterpath))
