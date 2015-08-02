@@ -1125,24 +1125,19 @@ class MangaView(QListView):
 				notifbar.add_text('No duplicates found!')
 
 	def open_chapter(self, index, chap_numb=0):
-		if isinstance(index, list):
-			for x in index:
-				gallery = x.data(Qt.UserRole+1)
+		if not isinstance(index, list):
+			index = [index]
+		for x in index:
+			gallery = x.data(Qt.UserRole+1)
+			if len(index) > 1:
 				self.STATUS_BAR_MSG.emit("Opening chapters of selected galleries")
-				try:
-					gallerydb.add_method_queue(utils.open_chapter, True, gallery.chapters[chap_numb])
-					if not gallery.times_read:
-						gallery.times_read = 0
-					gallery.times_read += 1
-					gallerydb.add_method_queue(gallerydb.GalleryDB.modify_gallery, True, gallery.id, times_read=gallery.times_read)
-				except IndexError:
-					pass
-		else:
-			gallery = index.data(Qt.UserRole+1)
-			self.STATUS_BAR_MSG.emit("Opening chapter {} of {}".format(chap_numb+1,
-																 gallery.title))
+			else:
+				self.STATUS_BAR_MSG.emit("Opening chapter {} of {}".format(chap_numb+1, gallery.title))
 			try:
-				gallerydb.add_method_queue(utils.open_chapter, True, gallery.chapters[chap_numb])
+				if gallery.is_archive:
+					gallerydb.add_method_queue(utils.open_chapter, True, gallery.chapters[chap_numb], gallery.path)
+				else:
+					gallerydb.add_method_queue(utils.open_chapter, True, gallery.chapters[chap_numb])
 				if not gallery.times_read:
 					gallery.times_read = 0
 				gallery.times_read += 1

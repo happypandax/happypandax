@@ -112,6 +112,8 @@ class ArchiveFile():
 		"""
 		Checks if the provided name in the archive is a directory or not
 		"""
+		if not name:
+			return False
 		if not name in self.namelist():
 			log_e('File {} not found in archive'.format(name))
 			raise FileNotFoundInArchive
@@ -147,8 +149,11 @@ class ArchiveFile():
 		Extracts one file from archive to given path
 		Returns path to the extracted file
 		"""
-
-		return self.archive.extract(file_to_ext, path)
+		if not file_to_ext:
+			self.extract_all(path)
+			return path
+		else:
+			return self.archive.extract(file_to_ext, path)
 
 	def extract_all(self, path):
 		"""
@@ -215,17 +220,20 @@ def external_viewer_checker(path):
 			return x
 
 def open_chapter(chapterpath, archive=None):
-	chapterpath = os.path.normpath(chapterpath)
 	is_archive = True if archive else False
+	if not is_archive:
+		chapterpath = os.path.normpath(chapterpath)
+	temp_p = archive if is_archive else chapterpath
 	try:
 		try: # folder
-			filepath = os.path.join(chapterpath, [x for x in sorted([y.name for y in scandir.scandir(chapterpath)])\
+			filepath = os.path.join(temp_p, [x for x in sorted([y.name for y in scandir.scandir(temp_p)])\
 				if x.endswith(IMG_FILES)][0]) # Find first page
 		except NotADirectoryError: # archive
-			zip = ArchiveFile(chapterpath)
+			zip = ArchiveFile(temp_p)
 			t_p = os.path.join('temp', str(uuid.uuid4()))
+			os.mkdir(t_p)
 			if is_archive: # Compatibility reasons.. TODO: REMOVE IN BETA
-				zip.extract(chapterpath, t_ip)
+				zip.extract(chapterpath, t_p)
 			else:
 				zip.extract_all(t_p)
 			filepath = os.path.join(t_p, [x for x in sorted([y.name for y in scandir.scandir(t_p)])\

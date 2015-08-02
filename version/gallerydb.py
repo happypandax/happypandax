@@ -176,10 +176,10 @@ def default_exec(object):
 			return "None"
 		else:
 			return obj
-	executing = [["""INSERT INTO series(title, artist, profile, series_path, 
+	executing = [["""INSERT INTO series(title, artist, profile, series_path, is_archive,
 					info, type, fav, status, pub_date, date_added, last_read, link, last_update,
 					times_read, exed)
-				VALUES(:title, :artist, :profile, :series_path, :info, :type, :fav,
+				VALUES(:title, :artist, :profile, :series_path, :is_archive, :info, :type, :fav,
 					:status, :pub_date, :date_added, :last_read, :link, :last_update,
 					:times_read, :exed)""",
 				{
@@ -1270,6 +1270,7 @@ class Gallery:
 		Title: {}
 		Profile Path: {}
 		Path: {}
+		Is Archive: {}
 		Author: {}
 		Description: {}
 		Favorite: {}
@@ -1283,7 +1284,7 @@ class Gallery:
 		Hashes: {}
 
 		Chapters: {}
-		""".format(self.id, self.title, self.profile, self.path, self.artist,
+		""".format(self.id, self.title, self.profile, self.path, self.is_archive, self.artist,
 			 self.info, self.fav, self.type, self.language, self.status, self.tags,
 			 self.pub_date, self.date_added, self.exed, len(self.hashes), self.chapters)
 		return string

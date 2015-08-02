@@ -90,7 +90,7 @@ class Fetch(QObject):
 				def create_gallery(path, folder_name, do_chapters=True, archive=None):
 					is_archive = True if archive else False
 					temp_p = archive if is_archive else path
-					folder_name = folder_name if folder_name else os.path.split(archive)[1]
+					folder_name = folder_name or path if folder_name or path else os.path.split(archive)[1]
 					if utils.check_ignore_list(temp_p) and not GalleryDB.check_exists(temp_p, self.galleries_from_db, False):
 						log_i('Creating gallery: {}'.format(folder_name.encode('utf-8', 'ignore')))
 						new_gallery = Gallery()
@@ -124,6 +124,7 @@ class Fetch(QObject):
 								log_i('Gallery source is an archive')
 								new_gallery.is_archive = 1
 								new_gallery.path_in_archive = path
+								folder_name = folder_name.replace('/','')
 								if folder_name.endswith(utils.ARCHIVE_FILES):
 									n = folder_name
 									for ext in utils.ARCHIVE_FILES:
