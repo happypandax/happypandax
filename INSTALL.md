@@ -23,7 +23,7 @@ Download from here https://www.python.org/downloads/
     + Python 3.4 should've included pip on install. Incase it didn't: 'sudo pacman -S pip3'
     + To install 'requests': pip3 install requests
     + To install 'BeautifulSoup 4': pip3 install bs4
-    + To install 'porc': pip3 install porc
+    + To install 'scandir': pip3 install scandir
   - PyQt5
     + I'm pretty sure you can install this through pip3, but if not: sudo pacman -S python-pyqt5 ('apt-get install python-pyqt5' on Ubuntu)
     
@@ -42,7 +42,7 @@ Download from here https://www.python.org/downloads/
     + Now open cmd and write these commands:
     + pip install requests
     + pip install bs4
-    + pip install porc
+    + pip install scandir
   - PyQt5
     + I'm pretty sure you can install this through pip, but here is the download location
     http://www.riverbankcomputing.com/software/pyqt/download5 (see Binary Packages for windows)
@@ -64,12 +64,12 @@ Note: Try renaming the 'main.py' file to 'main.pyw' and then just doubleclick on
 2. Install Python3, PyQt5, and sip
   - Run the following
    + brew install PyQt5
-3. Install requests, BeautifulSoup4, Watchdog, and Porc
+3. Install requests, BeautifulSoup4, Watchdog, and scandir
   - Run the following
    + python3 -m pip install requests
    + python3 -m pip install beautifulsoup4
    + python3 -m pip install watchdog
-   + python3 -m pip install proc
+   + python3 -m pip install scandir
 4. Download HappyPanda
   - Go to github.com/Pewpews/happypanda
   - Press the "Download ZIP" button
