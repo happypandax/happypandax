@@ -32,7 +32,7 @@ Download from here https://www.python.org/downloads/
 3. Now enter the cloned directory (should be named 'happypanda') and write: python3 main.py
 4. The program should now be running
 
-# Windows (Should be more or less the same procedure on Mac)
+# Windows
 1. Install these dependencies:
   - Qt5 (Install this first) >= 5.4
     + Download from https://www.qt.io/download-open-source/#section-2
@@ -54,3 +54,28 @@ Download from here https://www.python.org/downloads/
 6. The program should now be running.
 
 Note: Try renaming the 'main.py' file to 'main.pyw' and then just doubleclick on it to try running without console (not guaranteed to work)
+
+# Mac OS X
+1. Install Homebrew (this makes everything easier)
+  - Open Terminal
+  - Run the following
+   + ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+   + brew update && brew upgrade --all
+2. Install Python3, PyQt5, and sip
+  - Run the following
+   + brew install PyQt5
+3. Install requests, BeautifulSoup4, Watchdog, and Porc
+  - Run the following
+   + python3 -m pip install requests
+   + python3 -m pip install beautifulsoup4
+   + python3 -m pip install watchdog
+   + python3 -m pip install proc
+4. Download HappyPanda
+  - Go to github.com/Pewpews/happypanda
+  - Press the "Download ZIP" button
+  - UnZip happypanda-master.zip
+5. Running HappyPanda
+  - Run the following
+   + cd /where/ever/you/put/the/folder/happypanda-master
+     + (For example cd /Users/username/Downloads/happypanda-master)
+   + python3 main.py
