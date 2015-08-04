@@ -144,11 +144,16 @@ class ArchiveFile():
 				x.count('/') == 0]
 		return [x for x in self.namelist() if x.startswith(dir_name)]
 
-	def extract(self, file_to_ext, path):
+	def extract(self, file_to_ext, path=None):
 		"""
 		Extracts one file from archive to given path
+		Creates a temp_dir if path is not specified
 		Returns path to the extracted file
 		"""
+		if not path:
+			path = os.path.join(gui_constants.temp_dir, str(uuid.uuid4()))
+			os.mkdir(path)
+
 		if not file_to_ext:
 			self.extract_all(path)
 			return path
@@ -162,14 +167,18 @@ class ArchiveFile():
 				self.archive.extract(m, path)
 			return temp_p
 
-	def extract_all(self, path, member=None):
+	def extract_all(self, path=None, member=None):
 		"""
-		Extracts all files to given path
+		Extracts all files to given path, and returns path
+		If path is not specified, a temp dir will be created
 		"""
-		# TODO: Check contents of archive before extracting
+		if not path:
+			path = os.path.join(gui_constants.temp_dir, str(uuid.uuid4()))
+			os.mkdir(path)
 		if member:
 			self.archive.extractall(path, member)
 		self.archive.extractall(path)
+		return path
 
 	def open(self, file_to_open, fp=False):
 		"""

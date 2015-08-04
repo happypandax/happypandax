@@ -133,6 +133,32 @@ class GalleryMenu(QMenu):
 		if self.selected:
 			remove_source_select_g = remove_menu.addAction('Remove selected galleries and their files',
 										   lambda: self.remove_selection(True))
+		self.addSeparator()
+		advanced = self.addAction('Advanced')
+		adv_menu = QMenu(self)
+		advanced.setMenu(adv_menu)
+		change_cover = adv_menu.addAction('Change cover...', self.change_cover)
+
+	def change_cover(self):
+		gallery = self.index.data(Qt.UserRole+1)
+		log_i('Attempting to change cover of {}'.format(gallery.title.encode(errors='ignore')))
+		if gallery.is_archive:
+			zip = utils.ArchiveFile(gallery.path)
+			path = zip.extract_all()
+		else:
+			path = gallery.path
+
+		new_cover = QFileDialog.getOpenFileName(self,
+							'Select a new gallery cover',
+							filter='Image (*.jpg *.bmp *.png)',
+							directory=path)[0]
+		if new_cover and new_cover.endswith(utils.IMG_FILES):
+			os.remove(gallery.profile)
+			gallery.profile = gallerydb.gen_thumbnail(gallery, img=new_cover)
+			gallery._cache = 'refresh'
+			self.parent_widget.manga_list_view.replace_edit_gallery(gallery,
+														   self.index.row())
+			log_i('Changed cover successfully!')
 
 	def remove_selection(self, source=False):
 		select = self.view.selectionModel().selection()

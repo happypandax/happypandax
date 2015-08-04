@@ -731,7 +731,15 @@ class AppWindow(QMainWindow):
 								gallery_list = misc.GalleryListView(self)
 								gallery_list.SERIES.connect(add_gallery)
 								for ser in status:
-									gallery_list.add_gallery(ser, os.path.split(ser.path)[1])
+									if ser.is_archive and gui_constants.SUBFOLDER_AS_GALLERY:
+										p = os.path.split(ser.path)[1]
+										if ser.chapters[0]:
+											text = '{}: {}'.format(p, os.path.split(ser.chapters[0])[0])
+										else:
+											text = p
+										gallery_list.add_gallery(ser, text)
+									else:
+										gallery_list.add_gallery(ser, os.path.split(ser.path)[1])
 								#self.manga_list_view.gallery_model.populate_data()
 								gallery_list.show()
 							else:

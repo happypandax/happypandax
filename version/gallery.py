@@ -635,7 +635,7 @@ class GalleryModel(QAbstractTableModel):
 		for pos, gallery in enumerate(list_of_gallery):
 			del self._data[position+pos]
 			self._data.insert(position+pos, gallery)
-		self.dataChanged.emit(index, index, [Qt.UserRole+1])
+		self.dataChanged.emit(index, index, [Qt.UserRole+1, Qt.DecorationRole])
 
 	def removeRows(self, position, rows=1, index=QModelIndex()):
 		"Deletes gallery data from the model data list. OBS: doesn't touch DB!"
@@ -805,11 +805,15 @@ class CustomDelegate(QStyledItemDelegate):
 			#chapter_area.setTextWidth(w)
 
 			# if we can't find a cached image
-			if not gallery._cache_id:
-				gallery._cache_id = self.key(gallery._cache_id)
-			pix_cache = QPixmapCache.find(gallery._cache_id)
+			pix_cache = None
+			if gallery._cache_id != 'refresh':
+				if not gallery._cache_id:
+					gallery._cache_id = self.key(gallery._cache_id)
+				pix_cache = QPixmapCache.find(gallery._cache_id)
 			if not isinstance(pix_cache, QPixmap):
-				self.image = QPixmap(index.data(Qt.DecorationRole))
+				if gallery.title == 't2':
+					print('not from cache')
+				self.image = QPixmap(gallery.profile)
 				QPixmapCache.insert(gallery._cache_id, self.image)
 				if self.image.height() < self.image.width(): #to keep aspect ratio
 					painter.drawPixmap(QPoint(x,y),
@@ -818,6 +822,8 @@ class CustomDelegate(QStyledItemDelegate):
 					painter.drawPixmap(QPoint(x,y),
 							self.image)
 			else:
+				if gallery.title == 't2':
+					print('from cache')
 				self.image = pix_cache
 				if self.image.height() < self.image.width(): #to keep aspect ratio
 					painter.drawPixmap(QPoint(x,y),
@@ -1277,6 +1283,7 @@ class MangaView(QListView):
 		assert isinstance(list_of_gallery, (list, gallerydb.Gallery)), "Please pass a gallery to replace with"
 		if isinstance(list_of_gallery, gallerydb.Gallery):
 			list_of_gallery = [list_of_gallery]
+		log_d('Replacing {} galleries'.format(len(list_of_gallery)))
 		for gallery in list_of_gallery:
 			if not pos:
 				index = self.find_index(gallery.id)
@@ -1286,6 +1293,7 @@ class MangaView(QListView):
 					continue
 				pos = index.row()
 			kwdict = {'title':gallery.title,
+			 'profile':gallery.profile,
 			 'artist':gallery.artist,
 			 'info':gallery.info,
 			 'type':gallery.type,

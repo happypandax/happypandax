@@ -97,7 +97,7 @@ def add_method_queue(method, no_return, *args, **kwargs):
 		return method_return.get()
 
 def gen_thumbnail(gallery, width=gui_constants.THUMB_W_SIZE,
-				height=gui_constants.THUMB_H_SIZE): # 2 to align it properly.. need to redo this
+				height=gui_constants.THUMB_H_SIZE, img=None):
 	"""Generates a thumbnail with unique filename in the cache dir.
 	Returns absolute path to the created thumbnail
 	"""
@@ -109,10 +109,13 @@ def gen_thumbnail(gallery, width=gui_constants.THUMB_W_SIZE,
 		os.mkdir(db_constants.THUMBNAIL_PATH)
 
 	try:
-		if gallery.is_archive:
-			img_path = get_gallery_img(gallery.chapters[0], gallery.path)
+		if not img:
+			if gallery.is_archive:
+				img_path = get_gallery_img(gallery.chapters[0], gallery.path)
+			else:
+				img_path = get_gallery_img(gallery.chapters[0])
 		else:
-			img_path = get_gallery_img(gallery.chapters[0])
+			img_path = img
 		for ext in IMG_FILES:
 			if img_path.endswith(ext):
 				suff = ext # the image ext with dot
@@ -262,7 +265,7 @@ class GalleryDB:
 		return True
 
 	@staticmethod
-	def modify_gallery(series_id, title=None, artist=None, info=None, type=None, fav=None,
+	def modify_gallery(series_id, title=None, profile=None, artist=None, info=None, type=None, fav=None,
 				   tags=None, language=None, status=None, pub_date=None, link=None,
 				   times_read=None, series_path=None, chapters=None, _db_v=None,
 				   hashes=None, exed=None, is_archive=None, path_in_archive=None):
@@ -273,6 +276,9 @@ class GalleryDB:
 		if title:
 			assert isinstance(title, str)
 			executing.append(["UPDATE series SET title=? WHERE series_id=?", (title, series_id)])
+		if profile:
+			assert isinstance(profile, str)
+			executing.append(["UPDATE series SET profile=? WHERE series_id=?", (str.encode(profile), series_id)])
 		if artist:
 			assert isinstance(artist, str)
 			executing.append(["UPDATE series SET artist=? WHERE series_id=?", (artist, series_id)])
@@ -1257,7 +1263,7 @@ class Gallery:
 		self._db_v = None
 		self.hashes = []
 		self.exed = 0
-		self._cache_id = 0
+		self._cache_id = 0 # used by custom delegate to cache profile
 
 	def gen_hashes(self):
 		"Generate hashes while inserting them into DB"
