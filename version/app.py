@@ -357,7 +357,7 @@ class AppWindow(QMainWindow):
 		fetch_instance.galleries = galleries
 
 		self.notification_bar.begin_show()
-		#fetch_instance.moveToThread(thread)
+		fetch_instance.moveToThread(thread)
 
 		def done(status):
 			self.notification_bar.end_show()
@@ -374,11 +374,11 @@ class AppWindow(QMainWindow):
 		fetch_instance.GALLERY_PICKER.connect(self._web_metadata_picker)
 		fetch_instance.GALLERY_EMITTER.connect(self.manga_list_view.replace_edit_gallery)
 		fetch_instance.AUTO_METADATA_PROGRESS.connect(self.notification_bar.add_text)
-		#thread.started.connect(fetch_instance.auto_web_metadata)
+		thread.started.connect(fetch_instance.auto_web_metadata)
 		fetch_instance.FINISHED.connect(done)
-		#thread.finished.connect(thread.deleteLater)
-		#thread.start()
-		fetch_instance.auto_web_metadata()
+		thread.finished.connect(thread.deleteLater)
+		thread.start()
+
 
 	#def style_tooltip(self):
 	#	palette = QToolTip.palette()
