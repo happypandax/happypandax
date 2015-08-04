@@ -12,7 +12,7 @@
 #along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 #"""
 
-import requests, logging, random, time, pickle, os, threading
+import requests, logging, random, time, pickle, os, threading, html
 import re as regex
 from bs4 import BeautifulSoup
 from datetime import datetime
@@ -139,11 +139,18 @@ class CommenHen:
 		for gallery in metadata_json['gmetadata']:
 			if invalid_token_check(gallery):
 				new_gallery = {}
+				def fix_titles(text):
+					t = html.unescape(text)
+					t = " ".join(t.split())
+					return t
 				try:
-					new_gallery['title'] = {'def':" ".join(gallery['title'].split()),
-							 'jpn':" ".join(gallery['title_jpn'].split())}
+					gallery['title_jpn'] = fix_titles(gallery['title_jpn'])
+					gallery['title'] = fix_titles(gallery['title'])
+					new_gallery['title'] = {'def':gallery['title'], 'jpn':gallery['title_jpn']}
 				except KeyError:
-					new_gallery['title'] = {'def':" ".join(gallery['title'].split())}
+					gallery['title'] = fix_titles(gallery['title'])
+					new_gallery['title'] = {'def':gallery['title']}
+
 				new_gallery['type'] = gallery['category']
 				new_gallery['pub_date'] = datetime.fromtimestamp(int(gallery['posted']))
 				tags = {'default':[]}
