@@ -76,7 +76,7 @@ class Fetch(QObject):
 		Do a local search in the given series_path.
 		"""
 		try:
-			gallery_l = sorted([p.path for p in scandir.scandir(self.series_path)]) #list of folders in the "Gallery" folder
+			gallery_l = sorted([p.name for p in scandir.scandir(self.series_path)]) #list of folders in the "Gallery" folder
 			mixed = False
 		except TypeError:
 			gallery_l = self.series_path
