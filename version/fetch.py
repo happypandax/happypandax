@@ -413,7 +413,7 @@ class Fetch(QObject):
 										  minimized=True)
 				for tup in self.error_galleries:
 					log_e("{}: {}".format(tup[1], tup[0].title.encode(errors='ignore')))
-				self.FINISHED.emit(tup)
+				self.FINISHED.emit(self.error_galleries)
 		else:
 			log_e('Auto metadata fetcher is already running')
 			self.AUTO_METADATA_PROGRESS.emit('Auto metadata fetcher is already running!')

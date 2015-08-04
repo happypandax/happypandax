@@ -345,7 +345,10 @@ class AppWindow(QMainWindow):
 		thread.setObjectName('App.get_metadata')
 		fetch_instance = fetch.Fetch()
 		if gal:
-			galleries = [gal]
+			if not isinstance(gal, list):
+				galleries = [gal]
+			else:
+				galleries = gal
 		else:
 			if gui_constants.CONTINUE_AUTO_METADATA_FETCHER:
 				galleries = [g for g in self.manga_list_view.gallery_model._data if not g.exed]

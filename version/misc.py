@@ -11,7 +11,7 @@
 #You should have received a copy of the GNU General Public License
 #along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 #"""
-import os, threading, queue, time, logging, math, random
+import os, threading, queue, time, logging, math, random, functools
 from datetime import datetime
 
 from PyQt5.QtCore import (Qt, QDate, QPoint, pyqtSignal, QThread,
@@ -33,10 +33,12 @@ from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QAction, QStackedLayout, QTabWidget,
 							 QGridLayout, QScrollArea, QLayout, QButtonGroup,
 							 QRadioButton, QFileIconProvider, QFontDialog,
-							 QColorDialog, QScrollArea, QSystemTrayIcon)
+							 QColorDialog, QScrollArea, QSystemTrayIcon,
+							 QMenu)
 
 from utils import (tag_to_string, tag_to_dict, title_parser, ARCHIVE_FILES,
 					 ArchiveFile, IMG_FILES, CreateZipFail)
+import utils
 import gui_constants
 import gallerydb
 import fetch
@@ -48,6 +50,128 @@ log_d = log.debug
 log_w = log.warning
 log_e = log.error
 log_c = log.critical
+
+class GalleryMenu(QMenu):
+	def __init__(self, view, index, gallery_model, app_window, selected_indexes=None):
+		super().__init__(app_window)
+		self.parent_widget = app_window
+		self.view = view
+		self.gallery_model = gallery_model
+		self.index = index
+		self.selected = selected_indexes
+		favourite_act = self.addAction('Favorite',
+								 lambda: self.parent_widget.manga_list_view.favorite(self.index))
+		favourite_act.setCheckable(True)
+		if self.index.data(Qt.UserRole+1).fav:
+			favourite_act.setChecked(True)
+			favourite_act.setText('Unfavorite')
+		else:
+			favourite_act.setChecked(False)
+		self.addSeparator()
+		chapters_menu = self.addAction('Chapters')
+		open_chapters = QMenu(self)
+		chapters_menu.setMenu(open_chapters)
+		for number, chap_number in enumerate(range(len(
+			index.data(Qt.UserRole+1).chapters)), 1):
+			chap_action = QAction("Open chapter {}".format(number),
+						 open_chapters,
+						 triggered = functools.partial(
+							 self.parent_widget.manga_list_view.open_chapter,
+							 index,
+							 chap_number))
+			open_chapters.addAction(chap_action)
+		if not self.selected:
+			add_chapters = self.addAction('Add chapters', self.add_chapters)
+		if self.selected:
+			open_f_chapters = self.addAction('Open first chapters',
+									lambda: self.parent_widget.manga_list_view.open_chapter(self.selected, 0))
+		self.addSeparator()
+		get_metadata = self.addAction('Get metadata',
+								lambda: self.parent_widget.get_metadata(index.data(Qt.UserRole+1)))
+		if self.selected:
+			gals = []
+			for idx in self.selected:
+				gals.append(idx.data(Qt.UserRole+1))
+			get_select_metadata = self.addAction('Get metadata for selected',
+										lambda: self.parent_widget.get_metadata(gals))
+		self.addSeparator()
+		edit = self.addAction('Edit', lambda: self.parent_widget.manga_list_view.spawn_dialog(self.index))
+		text = 'folder' if not self.index.data(Qt.UserRole+1).is_archive else 'archive'
+		op_folder_act = self.addAction('Open {}'.format(text), self.op_folder)
+		if self.selected:
+			text = 'folders' if not self.index.data(Qt.UserRole+1).is_archive else 'archives'
+			op_folder_select = self.addAction('Open {}'.format(text), lambda: self.op_folder(True))
+		if self.index.data(Qt.UserRole+1).link:
+			op_link = self.addAction('Open URL', self.op_link)
+		if self.selected and all([idx.data(Qt.UserRole+1).link for idx in self.selected]):
+			op_links = self.addAction('Open URLs', lambda: self.op_link(True))
+
+		remove_act = self.addAction('Remove')
+		remove_menu = QMenu(self)
+		remove_act.setMenu(remove_menu)
+		remove_g = remove_menu.addAction('Remove gallery',
+							lambda: self.parent_widget.manga_list_view.remove_gallery([self.index]))
+		if not self.selected:
+			remove_ch = remove_menu.addAction('Remove chapter')
+			remove_ch_menu = QMenu(self)
+			remove_ch.setMenu(remove_ch_menu)
+			for number, chap_number in enumerate(range(len(
+				self.index.data(Qt.UserRole+1).chapters)), 1):
+				chap_action = QAction("Remove chapter {}".format(number),
+						  remove_ch_menu,
+						  triggered = functools.partial(
+							  self.parent_widget.manga_list_view.del_chapter,
+							  index,
+							  chap_number))
+				remove_ch_menu.addAction(chap_action)
+		if self.selected:
+			remove_select_g = remove_menu.addAction('Remove selected galleries', self.remove_selection)
+		remove_menu.addSeparator()
+		remove_source_g = remove_menu.addAction('Remove gallery and files',
+								   lambda: self.parent_widget.manga_list_view.remove_gallery(
+									   [self.index], True))
+		if self.selected:
+			remove_source_select_g = remove_menu.addAction('Remove selected galleries and their files',
+										   lambda: self.remove_selection(True))
+
+	def remove_selection(self, source=False):
+		select = self.view.selectionModel().selection()
+		s_select = self.view.model().mapSelectionToSource(select)
+		indexes = s_select.indexes()
+		self.parent_widget.manga_list_view.remove_gallery(indexes)
+
+	def op_link(self, select=False):
+		if select:
+			for x in self.selected:
+				gal = x.data(Qt.UserRole+1)
+				utils.open_web_link(gal.link)
+		else:
+			utils.open_web_link(self.index.data(Qt.UserRole+1).link)
+			
+
+	def op_folder(self, select=False):
+		if select:
+			for x in self.selected:
+				text = 'Opening archives...' if self.index.data(Qt.UserRole+1).is_archive else 'Opening folders...'
+				self.view.STATUS_BAR_MSG.emit(text)
+				gal = x.data(Qt.UserRole+1)
+				utils.open_path(gal.path)
+		else:
+			text = 'Opening archive...' if self.index.data(Qt.UserRole+1).is_archive else 'Opening folder...'
+			self.view.STATUS_BAR_MSG.emit(text)
+			gal = self.index.data(Qt.UserRole+1)
+			utils.open_path(gal.path)
+
+	def add_chapters(self):
+		def add_chdb(chaps_dict):
+			gallery = self.index.data(Qt.UserRole+1)
+			log_i('Adding new chapter for {}'.format(gallery.title.encode(errors='ignore')))
+			gallerydb.add_method_queue(gallerydb.ChapterDB.add_chapters_raw, True, gallery.id, chaps_dict)
+			gallery = gallerydb.GalleryDB.get_gallery_by_id(gallery.id)
+			self.gallery_model.replaceRows([gallery], self.index.row())
+		ch_widget = ChapterAddWidget(self.index.data(Qt.UserRole+1), self.parent_widget)
+		ch_widget.CHAPTERS.connect(add_chdb)
+		ch_widget.show()
 
 class SystemTray(QSystemTrayIcon):
 	"""
