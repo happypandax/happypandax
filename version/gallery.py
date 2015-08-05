@@ -701,11 +701,11 @@ class CustomDelegate(QStyledItemDelegate):
 
 	def key(self, key):
 		"Assigns an unique key to indexes"
-		if key:
+		if key in self._painted_indexes:
 			return self._painted_indexes[key]
 		else:
-			k = len(self._painted_indexes)
-			self._painted_indexes[str(k)] = str(k)
+			k = hash(key)
+			self._painted_indexes[key] = str(k)
 			return str(k)
 
 	def paint(self, painter, option, index):
@@ -805,14 +805,8 @@ class CustomDelegate(QStyledItemDelegate):
 			#chapter_area.setTextWidth(w)
 
 			# if we can't find a cached image
-			pix_cache = None
-			refresh = False
-			if gallery._cache_id == None:
-				refresh = True
-			if not gallery._cache_id:
-				gallery._cache_id = self.key(gallery._cache_id)
-			pix_cache = QPixmapCache.find(gallery._cache_id)
-			if isinstance(pix_cache, QPixmap) and not refresh:
+			pix_cache = QPixmapCache.find(self.key(gallery.profile))
+			if isinstance(pix_cache, QPixmap):
 				print('from cache')
 				self.image = pix_cache
 				if self.image.height() < self.image.width(): #to keep aspect ratio
@@ -824,7 +818,7 @@ class CustomDelegate(QStyledItemDelegate):
 			else:
 				print('not from cache')
 				self.image = QPixmap(gallery.profile)
-				QPixmapCache.insert(gallery._cache_id, self.image)
+				QPixmapCache.insert(self.key(gallery.profile), self.image)
 				if self.image.height() < self.image.width(): #to keep aspect ratio
 					painter.drawPixmap(QPoint(x,y),
 							self.image)
