@@ -277,6 +277,7 @@ def open_chapter(chapterpath, archive=None):
 			zip = ArchiveFile(temp_p)
 			t_p = os.path.join('temp', str(uuid.uuid4()))
 			os.mkdir(t_p)
+			gui_constants.NOTIF_BAR.add_text('Extracting...')
 			if is_archive: # Compatibility reasons.. TODO: REMOVE IN BETA
 				t_p = zip.extract(chapterpath, t_p)
 			else:

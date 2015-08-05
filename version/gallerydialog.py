@@ -216,7 +216,7 @@ class GalleryDialog(QWidget):
 		try:
 			self.gallery_time = datetime.strptime(gallery_pub_date[1], '%H:%M:%S').time()
 		except IndexError:
-			self.gallery_time = None
+			pass
 		qdate_pub_date = QDate.fromString(gallery_pub_date[0], "yyyy-MM-dd")
 		self.pub_edit.setDate(qdate_pub_date)
 

@@ -807,7 +807,6 @@ class CustomDelegate(QStyledItemDelegate):
 			# if we can't find a cached image
 			pix_cache = QPixmapCache.find(self.key(gallery.profile))
 			if isinstance(pix_cache, QPixmap):
-				print('from cache')
 				self.image = pix_cache
 				if self.image.height() < self.image.width(): #to keep aspect ratio
 					painter.drawPixmap(QPoint(x,y),
@@ -816,7 +815,6 @@ class CustomDelegate(QStyledItemDelegate):
 					painter.drawPixmap(QPoint(x,y),
 							self.image)
 			else:
-				print('not from cache')
 				self.image = QPixmap(gallery.profile)
 				QPixmapCache.insert(self.key(gallery.profile), self.image)
 				if self.image.height() < self.image.width(): #to keep aspect ratio
@@ -1089,7 +1087,7 @@ class MangaView(QListView):
 		g = random.randint(0, self.gallery_model._data_count-1)
 		indx = self.gallery_model.index(g, 1)
 		chap_numb = 0
-		if gui_constants.RANDOM_GALLERY_CHAPTERS:
+		if gui_constants.OPEN_RANDOM_GALLERY_CHAPTERS:
 			gallery = indx.data(Qt.UserRole)
 			b = len(gallery.chapters)
 			if b > 1:
