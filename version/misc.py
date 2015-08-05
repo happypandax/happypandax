@@ -155,7 +155,7 @@ class GalleryMenu(QMenu):
 		if new_cover and new_cover.endswith(utils.IMG_FILES):
 			os.remove(gallery.profile)
 			gallery.profile = gallerydb.gen_thumbnail(gallery, img=new_cover)
-			gallery._cache = 'refresh'
+			gallery._cache = None
 			self.parent_widget.manga_list_view.replace_edit_gallery(gallery,
 														   self.index.row())
 			log_i('Changed cover successfully!')
