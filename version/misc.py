@@ -11,7 +11,7 @@
 #You should have received a copy of the GNU General Public License
 #along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 #"""
-import os, threading, queue, time, logging, math, random, functools
+import os, threading, queue, time, logging, math, random, functools, scandir
 from datetime import datetime
 
 from PyQt5.QtCore import (Qt, QDate, QPoint, pyqtSignal, QThread,

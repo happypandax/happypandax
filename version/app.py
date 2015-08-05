@@ -98,16 +98,10 @@ class AppWindow(QMainWindow):
 				class ScanDir(QObject):
 					final_paths_and_galleries = pyqtSignal(list, list)
 					finished = pyqtSignal()
-					def __init__(self, model_data, parent=None):
+					def __init__(self, parent=None):
 						super().__init__(parent)
-						self.model_data = model_data
 						self.scanned_data = []
 					def scan_dirs(self):
-						db_data = self.model_data
-						paths = []
-						for g in range(len(db_data)):
-							paths.append(os.path.normcase(db_data[g].path))
-
 						paths = []
 						for p in gui_constants.MONITOR_PATHS:
 							dir_content = scandir.scandir(p)
@@ -153,6 +147,7 @@ class AppWindow(QMainWindow):
 
 				def show_new_galleries(final_paths, galleries):
 					if final_paths and galleries:
+						gui_constants.OVERRIDE_MOVE_IMPORTED_IN_FETCH = True
 						if gui_constants.LOOK_NEW_GALLERY_AUTOADD:
 							self.gallery_populate(final_paths)
 						else:
@@ -172,7 +167,7 @@ class AppWindow(QMainWindow):
 							buttons[1].clicked.connect(g_popup.close)
 
 				thread = QThread(self)
-				self.scan_inst = ScanDir(self.manga_list_view.gallery_model._data)
+				self.scan_inst = ScanDir()
 				self.scan_inst.moveToThread(thread)
 				self.scan_inst.final_paths_and_galleries.connect(show_new_galleries)
 				self.scan_inst.final_paths_and_galleries.connect(lambda a: self.scan_inst.deleteLater())
@@ -715,15 +710,15 @@ class AppWindow(QMainWindow):
 									except NameError:
 										pass
 
-								#a_instance.moveToThread(thread)
+								a_instance.moveToThread(thread)
 								a_instance.prog.connect(loading.progress.setValue)
-								#thread.started.connect(loading_show)
-								#thread.started.connect(a_instance.add_to_db)
+								thread.started.connect(loading_show)
+								thread.started.connect(a_instance.add_to_db)
 								a_instance.done.connect(loading_hide)
 								a_instance.done.connect(del_later)
-								#thread.finished.connect(thread.deleteLater)
-								#thread.start()
-								a_instance.add_to_db()
+								thread.finished.connect(thread.deleteLater)
+								thread.start()
+								#a_instance.add_to_db()
 							#data_thread.quit
 							hide_loading()
 							log_i('Populating DB from gallery folder: OK')

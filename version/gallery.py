@@ -677,7 +677,7 @@ class CustomDelegate(QStyledItemDelegate):
 		self.popup_timer = QTimer()
 		self._painted_indexes = {}
 
-		misc.FileIcon.refresh_default_icon()
+		#misc.FileIcon.refresh_default_icon()
 		self.font_size = gui_constants.GALLERY_FONT[1]
 		self.font_name = gui_constants.GALLERY_FONT[0]
 		if not self.font_name:

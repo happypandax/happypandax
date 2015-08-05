@@ -424,14 +424,18 @@ class GalleryDialog(QWidget):
 		self.pub_edit.setDate(pub_date)
 		self._find_combobox_match(self.type_box, metadata.type, 0)
 
-	def make_gallery(self, new_gallery, add_to_model=True):
+	def make_gallery(self, new_gallery, add_to_model=True, new=False):
 		if self.check():
 			new_gallery.title = self.title_edit.text()
 			log_d('Adding gallery title')
 			new_gallery.artist = self.author_edit.text()
 			log_d('Adding gallery artist')
-			new_gallery.path = self.path_lbl.text()
 			log_d('Adding gallery path')
+			if new and gui_constants.MOVE_IMPORTED_GALLERIES:
+				gui_constants.OVERRIDE_MONITOR = True
+				new_gallery.path = utils.move_files(self.path_lbl.text())
+			else:
+				new_gallery.path = self.path_lbl.text()
 			new_gallery.info = self.descr_edit.toPlainText()
 			log_d('Adding gallery descr')
 			new_gallery.type = self.type_box.currentText()
@@ -481,7 +485,7 @@ class GalleryDialog(QWidget):
 		self.link_btn2.show()
 
 	def accept(self):
-		new_gallery = self.make_gallery(gallerydb.Gallery())
+		new_gallery = self.make_gallery(gallerydb.Gallery(), new=True)
 
 		if new_gallery:
 			self.close()
