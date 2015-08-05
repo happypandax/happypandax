@@ -755,9 +755,10 @@ class SettingsDialog(QWidget):
 
 		# Advanced / Gallery
 		advanced_gallery, advanced_gallery_m_l = new_tab('Gallery', advanced)
-		g_data_fixer_group, g_data_fixer_l =  groupbox('Gallery Text Fixer', QFormLayout, advanced_gallery)
+		advanced_gallery.setEnabled(False)
+		g_data_fixer_group, g_data_fixer_l =  groupbox('Gallery Renamer', QFormLayout, advanced_gallery)
 		advanced_gallery_m_l.addRow(g_data_fixer_group)
-		g_data_regex_fix_lbl = QLabel("Replace text from gallery data through regular expression."+
+		g_data_regex_fix_lbl = QLabel("Rename a gallery through regular expression."+
 								" A regex cheatsheet is located at About -> Regex Cheatsheet.")
 		g_data_regex_fix_lbl.setWordWrap(True)
 		g_data_fixer_l.addRow(g_data_regex_fix_lbl)
