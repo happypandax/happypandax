@@ -59,49 +59,67 @@ class GalleryMenu(QMenu):
 		self.gallery_model = gallery_model
 		self.index = index
 		self.selected = selected_indexes
-		favourite_act = self.addAction('Favorite',
-								 lambda: self.parent_widget.manga_list_view.favorite(self.index))
-		favourite_act.setCheckable(True)
-		if self.index.data(Qt.UserRole+1).fav:
-			favourite_act.setChecked(True)
-			favourite_act.setText('Unfavorite')
-		else:
-			favourite_act.setChecked(False)
-		self.addSeparator()
-		chapters_menu = self.addAction('Chapters')
-		open_chapters = QMenu(self)
-		chapters_menu.setMenu(open_chapters)
-		for number, chap_number in enumerate(range(len(
-			index.data(Qt.UserRole+1).chapters)), 1):
-			chap_action = QAction("Open chapter {}".format(number),
-						 open_chapters,
-						 triggered = functools.partial(
-							 self.parent_widget.manga_list_view.open_chapter,
-							 index,
-							 chap_number))
-			open_chapters.addAction(chap_action)
 		if not self.selected:
+			favourite_act = self.addAction('Favorite',
+									 lambda: self.parent_widget.manga_list_view.favorite(self.index))
+			favourite_act.setCheckable(True)
+			if self.index.data(Qt.UserRole+1).fav:
+				favourite_act.setChecked(True)
+				favourite_act.setText('Unfavorite')
+			else:
+				favourite_act.setChecked(False)
+		else:
+			favourite_act = self.addAction('Favorite selected', self.favourite_select)
+			favourite_act.setCheckable(True)
+			f = []
+			for idx in self.selected:
+				if idx.data(Qt.UserRole+1).fav:
+					f.append(True)
+				else:
+					f.append(False)
+			if all(f):
+				favourite_act.setChecked(True)
+				favourite_act.setText('Unfavorite selected')
+			else:
+				favourite_act.setChecked(False)
+
+		self.addSeparator()
+		if not self.selected:
+			chapters_menu = self.addAction('Chapters')
+			open_chapters = QMenu(self)
+			chapters_menu.setMenu(open_chapters)
+			for number, chap_number in enumerate(range(len(
+				index.data(Qt.UserRole+1).chapters)), 1):
+				chap_action = QAction("Open chapter {}".format(number),
+							 open_chapters,
+							 triggered = functools.partial(
+								 self.parent_widget.manga_list_view.open_chapter,
+								 index,
+								 chap_number))
+				open_chapters.addAction(chap_action)
 			add_chapters = self.addAction('Add chapters', self.add_chapters)
 		if self.selected:
 			open_f_chapters = self.addAction('Open first chapters',
 									lambda: self.parent_widget.manga_list_view.open_chapter(self.selected, 0))
 		self.addSeparator()
-		get_metadata = self.addAction('Get metadata',
-								lambda: self.parent_widget.get_metadata(index.data(Qt.UserRole+1)))
-		if self.selected:
+		if not self.selected:
+			get_metadata = self.addAction('Get metadata',
+									lambda: self.parent_widget.get_metadata(index.data(Qt.UserRole+1)))
+		else:
 			gals = []
 			for idx in self.selected:
 				gals.append(idx.data(Qt.UserRole+1))
 			get_select_metadata = self.addAction('Get metadata for selected',
 										lambda: self.parent_widget.get_metadata(gals))
 		self.addSeparator()
-		edit = self.addAction('Edit', lambda: self.parent_widget.manga_list_view.spawn_dialog(self.index))
-		text = 'folder' if not self.index.data(Qt.UserRole+1).is_archive else 'archive'
-		op_folder_act = self.addAction('Open {}'.format(text), self.op_folder)
-		if self.selected:
+		if not self.selected:
+			edit = self.addAction('Edit', lambda: self.parent_widget.manga_list_view.spawn_dialog(self.index))
+			text = 'folder' if not self.index.data(Qt.UserRole+1).is_archive else 'archive'
+			op_folder_act = self.addAction('Open {}'.format(text), self.op_folder)
+		else:
 			text = 'folders' if not self.index.data(Qt.UserRole+1).is_archive else 'archives'
 			op_folder_select = self.addAction('Open {}'.format(text), lambda: self.op_folder(True))
-		if self.index.data(Qt.UserRole+1).link:
+		if self.index.data(Qt.UserRole+1).link and not self.selected:
 			op_link = self.addAction('Open URL', self.op_link)
 		if self.selected and all([idx.data(Qt.UserRole+1).link for idx in self.selected]):
 			op_links = self.addAction('Open URLs', lambda: self.op_link(True))
@@ -109,9 +127,9 @@ class GalleryMenu(QMenu):
 		remove_act = self.addAction('Remove')
 		remove_menu = QMenu(self)
 		remove_act.setMenu(remove_menu)
-		remove_g = remove_menu.addAction('Remove gallery',
-							lambda: self.parent_widget.manga_list_view.remove_gallery([self.index]))
 		if not self.selected:
+			remove_g = remove_menu.addAction('Remove gallery',
+								lambda: self.parent_widget.manga_list_view.remove_gallery([self.index]))
 			remove_ch = remove_menu.addAction('Remove chapter')
 			remove_ch_menu = QMenu(self)
 			remove_ch.setMenu(remove_ch_menu)
@@ -124,20 +142,26 @@ class GalleryMenu(QMenu):
 							  index,
 							  chap_number))
 				remove_ch_menu.addAction(chap_action)
-		if self.selected:
+		else:
 			remove_select_g = remove_menu.addAction('Remove selected galleries', self.remove_selection)
 		remove_menu.addSeparator()
-		remove_source_g = remove_menu.addAction('Remove gallery and files',
-								   lambda: self.parent_widget.manga_list_view.remove_gallery(
-									   [self.index], True))
-		if self.selected:
+		if not self.selected:
+			remove_source_g = remove_menu.addAction('Remove gallery and files',
+									   lambda: self.parent_widget.manga_list_view.remove_gallery(
+										   [self.index], True))
+		else:
 			remove_source_select_g = remove_menu.addAction('Remove selected galleries and their files',
 										   lambda: self.remove_selection(True))
 		self.addSeparator()
-		advanced = self.addAction('Advanced')
-		adv_menu = QMenu(self)
-		advanced.setMenu(adv_menu)
-		change_cover = adv_menu.addAction('Change cover...', self.change_cover)
+		if not self.selected:
+			advanced = self.addAction('Advanced')
+			adv_menu = QMenu(self)
+			advanced.setMenu(adv_menu)
+			change_cover = adv_menu.addAction('Change cover...', self.change_cover)
+
+	def favourite_select(self):
+		for idx in self.selected:
+			self.parent_widget.manga_list_view.favorite(idx)
 
 	def change_cover(self):
 		gallery = self.index.data(Qt.UserRole+1)
