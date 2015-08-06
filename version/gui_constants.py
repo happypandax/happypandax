@@ -15,7 +15,7 @@ import settings
 """Contains constants to be used by several modules"""
 
 # Version number
-vs  = '0.20'
+vs  = '0.2'
 DEBUG = False
 
 get = settings.get
