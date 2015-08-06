@@ -15,7 +15,7 @@
 import sys, logging, os, threading, re, requests, scandir
 from PyQt5.QtCore import (Qt, QSize, pyqtSignal, QThread, QEvent, QTimer,
 						  QObject)
-from PyQt5.QtGui import (QPixmap, QIcon, QMouseEvent, QCursor)
+from PyQt5.QtGui import (QPixmap, QIcon, QMoveEvent, QCursor)
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QListView,
 							 QHBoxLayout, QFrame, QWidget, QVBoxLayout,
 							 QLabel, QStackedLayout, QToolBar, QMenuBar,
@@ -46,6 +46,7 @@ log_c = log.critical
 
 class AppWindow(QMainWindow):
 	"The application's main window"
+	move_listener = pyqtSignal()
 	def __init__(self):
 		super().__init__()
 		self.setAcceptDrops(True)
@@ -258,7 +259,6 @@ class AppWindow(QMainWindow):
 		tray_quit.triggered.connect(self.close)
 		self.system_tray.show()
 		log_d('Create system tray: OK')
-
 		#self.display.addWidget(self.chapter_main)
 
 		self.setCentralWidget(self.center)
@@ -701,7 +701,7 @@ class AppWindow(QMainWindow):
 									loading.show()
 
 								def loading_hide():
-									loading.close()
+									loading.hide()
 									self.manga_list_view.gallery_model.ROWCOUNT_CHANGE.emit()
 
 								def del_later():
@@ -818,6 +818,10 @@ class AppWindow(QMainWindow):
 		except AttributeError:
 			pass
 		return super().resizeEvent(event)
+
+	def moveEvent(self, event):
+		self.move_listener.emit()
+		return super().moveEvent(event)
 
 	def closeEvent(self, event):
 		# watchers

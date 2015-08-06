@@ -34,7 +34,7 @@ from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QGridLayout, QScrollArea, QLayout, QButtonGroup,
 							 QRadioButton, QFileIconProvider, QFontDialog,
 							 QColorDialog, QScrollArea, QSystemTrayIcon,
-							 QMenu)
+							 QMenu, QGraphicsBlurEffect)
 
 from utils import (tag_to_string, tag_to_dict, title_parser, ARCHIVE_FILES,
 					 ArchiveFile, IMG_FILES, CreateZipFail)
@@ -256,11 +256,13 @@ class ClickedLabel(QLabel):
 		return super().mousePressEvent(event)
 
 class BasePopup(QWidget):
+	graphics_blur = QGraphicsBlurEffect()
 	def __init__(self, parent=None, **kwargs):
 		if kwargs:
 			super().__init__(parent, **kwargs)
 		else:
 			super().__init__(parent, flags= Qt.Window | Qt.FramelessWindowHint)
+		self.parent_widget = parent
 		self.setAttribute(Qt.WA_TranslucentBackground)
 		main_layout = QVBoxLayout()
 		self.main_widget = QFrame()
@@ -276,10 +278,42 @@ class BasePopup(QWidget):
 		self.generic_buttons.addWidget(self.no_button)
 		self.setMaximumWidth(500)
 		self.resize(500,350)
-	
+		self.curr_pos = QPoint()
+		if parent:
+			parent.setGraphicsEffect(self.graphics_blur)
+			try:
+				parent.move_listener.connect(self.update_move)
+			except AttributeError:
+				pass
+
+	def mousePressEvent(self, event):
+		self.curr_pos = event.pos()
+		return super().mousePressEvent(event)
+
+	def mouseMoveEvent(self, event):
+		if event.buttons() == Qt.LeftButton:
+			diff = event.pos() - self.curr_pos
+			newpos = self.pos()+diff
+			self.move(newpos)
+		return super().mouseMoveEvent(event)
+
+	def update_move(self):
+		if self.parent_widget:
+			self.move(self.parent_widget.window().frameGeometry().center() -\
+				self.window().rect().center())
+
 	def showEvent(self, event):
 		self.activateWindow()
+		self.graphics_blur.setEnabled(True)
 		return super().showEvent(event)
+
+	def closeEvent(self, event):
+		self.graphics_blur.setEnabled(False)
+		return super().closeEvent(event)
+
+	def hideEvent(self, event):
+		self.graphics_blur.setEnabled(False)
+		return super().hideEvent(event)
 
 	def add_buttons(self, *args):
 		"""
@@ -987,29 +1021,25 @@ class GalleryListView(QWidget):
 		if msgbox.exec() == QMessageBox.Yes:
 			self.close()
 
-class Loading(QWidget):
+class Loading(BasePopup):
 	ON = False #to prevent multiple instances
 	def __init__(self, parent=None):
 		super().__init__(parent)
-		self.widget = QWidget(self)
 		self.progress = QProgressBar()
 		self.progress.setStyleSheet("color:white")
 		self.text = QLabel()
 		self.text.setAlignment(Qt.AlignCenter)
 		self.text.setStyleSheet("color:white;background-color:transparent;")
-		layout_ = QHBoxLayout()
 		inner_layout_ = QVBoxLayout()
 		inner_layout_.addWidget(self.text, 0, Qt.AlignHCenter)
 		inner_layout_.addWidget(self.progress)
-		self.widget.setLayout(inner_layout_)
-		layout_.addWidget(self.widget)
-		self.setLayout(layout_)
+		self.main_widget.setLayout(inner_layout_)
 		self.resize(300,100)
 		#frect = self.frameGeometry()
 		#frect.moveCenter(QDesktopWidget().availableGeometry().center())
-		self.move(parent.window().frameGeometry().topLeft() +
-			parent.window().rect().center() -
-			self.rect().center() - QPoint(self.rect().width()//2,0))
+		#self.move(parent.window().frameGeometry().topLeft() +
+		#	parent.window().rect().center() -
+		#	self.rect().center() - QPoint(self.rect().width(),0))
 		#self.setAttribute(Qt.WA_DeleteOnClose)
 		#self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
 
