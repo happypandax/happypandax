@@ -98,7 +98,7 @@ class Fetch(QObject):
 						try:
 							con = scandir.scandir(temp_p) #all of content in the gallery folder
 							log_i('Gallery source is a directory')
-							chapters = sorted([sub.path for sub in con if sub.is_dir()])\
+							chapters = sorted([sub.path for sub in con if sub.is_dir() or sub.name.endswith(utils.ARCHIVE_FILES)])\
 							    if do_chapters else [] #subfolders
 							# if gallery has chapters divided into sub folders
 							if len(chapters) != 0:

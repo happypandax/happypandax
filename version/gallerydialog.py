@@ -316,7 +316,7 @@ class GalleryDialog(QWidget):
 			con = scandir.scandir(path) # list all folders in gallery dir
 			log_i('Gallery source is a directory')
 			log_d('Sorting')
-			chapters = sorted([sub.path for sub in con if sub.is_dir()]) #subfolders
+			chapters = sorted([sub.path for sub in con if sub.is_dir() or sub.name.endswith(utils.ARCHIVE_FILES)]) #subfolders
 			# if gallery has chapters divided into sub folders
 			if len(chapters) != 0:
 				log_d('Chapters divided in folders..')
