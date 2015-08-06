@@ -288,22 +288,41 @@ def open_chapter(chapterpath, archive=None):
 	if not is_archive:
 		chapterpath = os.path.normpath(chapterpath)
 	temp_p = archive if is_archive else chapterpath
+	def find_f_img_folder():
+		filepath = os.path.join(temp_p, [x for x in sorted([y.name for y in scandir.scandir(temp_p)])\
+			if x.endswith(IMG_FILES)][0]) # Find first page
+		return filepath
+
+	def find_f_img_archive():
+		zip = ArchiveFile(temp_p)
+		t_p = os.path.join('temp', str(uuid.uuid4()))
+		os.mkdir(t_p)
+		gui_constants.NOTIF_BAR.add_text('Extracting...')
+		if is_archive:
+			if os.path.isdir(chapterpath):
+				t_p = chapterpath
+			elif chapterpath.endswith(ARCHIVE_FILES):
+				zip2 = ArchiveFile(chapterpath)
+				f_d = sorted(zip2.dir_list(True))
+				if f_d:
+					f_d = f_d[0]
+					t_p = zip2.extract(f_d, t_p)
+				else:
+					t_p = zip2.extract('', t_p)
+			else:
+				t_p = zip.extract(chapterpath, t_p)
+		else:
+			zip.extract_all(t_p) # Compatibility reasons.. TODO: REMOVE IN BETA
+		filepath = os.path.join(t_p, [x for x in sorted([y.name for y in scandir.scandir(t_p)])\
+ 			if x.endswith(IMG_FILES)][0]) # Find first page
+		filepath = os.path.abspath(filepath)
+		return filepath
+
 	try:
 		try: # folder
-			filepath = os.path.join(temp_p, [x for x in sorted([y.name for y in scandir.scandir(temp_p)])\
-				if x.endswith(IMG_FILES)][0]) # Find first page
+			filepath = find_f_img_folder()
 		except NotADirectoryError: # archive
-			zip = ArchiveFile(temp_p)
-			t_p = os.path.join('temp', str(uuid.uuid4()))
-			os.mkdir(t_p)
-			gui_constants.NOTIF_BAR.add_text('Extracting...')
-			if is_archive: # Compatibility reasons.. TODO: REMOVE IN BETA
-				t_p = zip.extract(chapterpath, t_p)
-			else:
-				zip.extract_all(t_p)
-			filepath = os.path.join(t_p, [x for x in sorted([y.name for y in scandir.scandir(t_p)])\
- 				if x.endswith(IMG_FILES)][0]) # Find first page
-			filepath = os.path.abspath(filepath)
+			filepath = find_f_img_archive()
 	except FileNotFoundError:
 		log.exception('Could not find chapter {}'.format(chapterpath))
 
