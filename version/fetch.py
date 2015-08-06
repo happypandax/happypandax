@@ -156,21 +156,24 @@ class Fetch(QObject):
 					else:
 						log_i('Gallery already exists: {}'.format(folder_name.encode('utf-8', 'ignore')))
 
-				for folder_name in gallery_l: # ser_path = gallery folder title
+				for folder_name in gallery_l: # folder_name = gallery folder title
 					self._curr_gallery = folder_name
 					if mixed:
 						path = folder_name
 						folder_name = os.path.split(path)[1]
 					else:
 						path = os.path.join(self.series_path, folder_name)
-
+					if gui_constants.MOVE_IMPORTED_GALLERIES and not gui_constants.OVERRIDE_MOVE_IMPORTED_IN_FETCH:
+						path = utils.move_files(path)
 					if gui_constants.SUBFOLDER_AS_GALLERY:
 						log_i("Treating each subfolder as gallery")
 						if os.path.isdir(path):
 							gallery_folders, gallery_archives = utils.recursive_gallery_check(path)
 							for gs in gallery_folders:
 									create_gallery(gs, os.path.split(gs)[1], False)
+							p_saving = {}
 							for gs in gallery_archives:
+									
 									create_gallery(gs[0], os.path.split(gs[0])[1], False, archive=gs[1])
 						elif path.endswith(utils.ARCHIVE_FILES):
 							for g in utils.check_archive(path):
@@ -183,12 +186,15 @@ class Fetch(QObject):
 					self.PROGRESS.emit(progress)
 			except:
 				log.exception('Local Search Error:')
+				gui_constants.OVERRIDE_MOVE_IMPORTED_IN_FETCH = True # sanity check
 				self.FINISHED.emit(False)
 		else: # if gallery folder is empty
 			log_e('Local search error: Invalid directory')
 			log_e('Gallery folder is empty')
+			gui_constants.OVERRIDE_MOVE_IMPORTED_IN_FETCH = True # sanity check
 			self.FINISHED.emit(False)
 			# might want to include an error message
+		gui_constants.OVERRIDE_MOVE_IMPORTED_IN_FETCH = False
 		# everything went well
 		log_i('Local search: OK')
 		log_i('Created {} items'.format(len(self.data)))

@@ -28,6 +28,25 @@ IMG_FILES =  ('.jpg','.bmp','.png','.gif')
 ARCHIVE_FILES = ('.zip', '.cbz')
 FILE_FILTER = '*.zip *.cbz'
 
+def move_files(path, dest=''):
+	"""
+	Move files to a new destination. If dest is not set,
+	imported_galleries_def_path will be used instead.
+	"""
+	if not dest:
+		dest = gui_constants.IMPORTED_GALLERY_DEF_PATH
+		if not dest:
+			return path
+	f = os.path.split(path)[1]
+	new_path = os.path.join(dest, f)
+	if new_path == os.path.join(*os.path.split(path)):
+		return path
+	if not os.path.exists(new_path):
+		new_path = shutil.move(path, new_path)
+	else:
+		return path
+	return new_path
+
 def check_ignore_list(key):
 	k = os.path.normcase(key)
 	for path in gui_constants.IGNORE_PATHS:

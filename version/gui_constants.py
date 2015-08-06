@@ -74,16 +74,17 @@ LIST_PATH = os.path.join(static_dir, "list.png")
 NO_IMAGE_PATH = os.path.join(static_dir, "default.jpg")
 
 # Monitored Paths
+OVERRIDE_MONITOR = False # set true to make watchers to ignore next item (will be set to False)
 LOOK_NEW_GALLERY_STARTUP = get(True, 'Application', 'look new gallery startup', bool)
 LOOK_NEW_GALLERY_AUTOADD = get(False, 'Application', 'look new gallery autoadd', bool)
 ENABLE_MONITOR = get(True, 'Application', 'enable monitor', bool)
 MONITOR_PATHS = [x for x in get('', 'Application', 'monitor paths', str).split(',') if x]
-MOVE_IMPORTED_GALLERIES = get(False, 'Application', 'move imported galleries', bool)
-IMPORTED_GALLERY_DEF_PATH = get('', 'Application', 'imported gallery def path', str)
-MOVE_IMPORTED_GALLERYIES_TO_DEF = get(True, 'Application', 'move imported galleries to def', bool)
 IGNORE_PATHS = [x for x in get('', 'Application', 'ignore paths', str).split(',') if x]
 
 # GENERAL
+OVERRIDE_MOVE_IMPORTED_IN_FETCH = False # set to true to make a fetch instance ignore moving files (will be set to false)
+MOVE_IMPORTED_GALLERIES = get(False, 'Application', 'move imported galleries', bool)
+IMPORTED_GALLERY_DEF_PATH = get('', 'Application', 'imported gallery def path', str)
 SCROLL_TO_NEW_GALLERIES = get(False, 'Application', 'scroll to new galleries', bool)
 OPEN_RANDOM_GALLERY_CHAPTERS = get(False, 'Application', 'open random gallery chapters', bool)
 SUBFOLDER_AS_GALLERY = get(False, 'Application', 'subfolder as gallery', bool)

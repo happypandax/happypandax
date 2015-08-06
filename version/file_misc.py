@@ -236,25 +236,34 @@ class GalleryHandler(FileSystemEventHandler, QObject):
 	#	self.g_queue = []
 
 	def on_created(self, event):
-		if self.file_filter(event):
-			t = Timer(8, self.CREATE_SIGNAL.emit, args=(event.src_path,))
-			t.start()
+		if not gui_constants.OVERRIDE_MONITOR:
+			if self.file_filter(event):
+				t = Timer(8, self.CREATE_SIGNAL.emit, args=(event.src_path,))
+				t.start()
+		else:
+			gui_constants.OVERRIDE_MONITOR = False
 
 	def on_deleted(self, event):
-		path = event.src_path
-		gallery = gallerydb.GalleryDB.get_gallery_by_path(path)
-		if gallery:
-			self.DELETED_SIGNAL.emit(path, gallery)
+		if not gui_constants.OVERRIDE_MONITOR:
+			path = event.src_path
+			gallery = gallerydb.GalleryDB.get_gallery_by_path(path)
+			if gallery:
+				self.DELETED_SIGNAL.emit(path, gallery)
+		else:
+			gui_constants.OVERRIDE_MONITOR = False
 
 	def on_modified(self, event):
 		pass
 
 	def on_moved(self, event):
-		if self.file_filter(event):
-			old_path = event.src_path
-			gallery = gallerydb.GalleryDB.get_gallery_by_path(old_path)
-			if gallery:
-				self.MOVED_SIGNAL.emit(event.dest_path, gallery)
+		if not gui_constants.OVERRIDE_MONITOR:
+			if self.file_filter(event):
+				old_path = event.src_path
+				gallery = gallerydb.GalleryDB.get_gallery_by_path(old_path)
+				if gallery:
+					self.MOVED_SIGNAL.emit(event.dest_path, gallery)
+		else:
+			gui_constants.OVERRIDE_MONITOR = False
 
 class Watchers:
 	def __init__(self):
