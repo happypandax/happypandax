@@ -60,14 +60,14 @@ class GalleryMenu(QMenu):
 		self.index = index
 		self.selected = selected_indexes
 		if not self.selected:
-		favourite_act = self.addAction('Favorite',
-								 lambda: self.parent_widget.manga_list_view.favorite(self.index))
-		favourite_act.setCheckable(True)
-		if self.index.data(Qt.UserRole+1).fav:
-			favourite_act.setChecked(True)
-			favourite_act.setText('Unfavorite')
-		else:
-			favourite_act.setChecked(False)
+			favourite_act = self.addAction('Favorite',
+									 lambda: self.parent_widget.manga_list_view.favorite(self.index))
+			favourite_act.setCheckable(True)
+			if self.index.data(Qt.UserRole+1).fav:
+				favourite_act.setChecked(True)
+				favourite_act.setText('Unfavorite')
+			else:
+				favourite_act.setChecked(False)
 		else:
 			favourite_act = self.addAction('Favorite selected', self.favourite_select)
 			favourite_act.setCheckable(True)
@@ -85,18 +85,18 @@ class GalleryMenu(QMenu):
 
 		self.addSeparator()
 		if not self.selected:
-		chapters_menu = self.addAction('Chapters')
-		open_chapters = QMenu(self)
-		chapters_menu.setMenu(open_chapters)
-		for number, chap_number in enumerate(range(len(
-			index.data(Qt.UserRole+1).chapters)), 1):
-			chap_action = QAction("Open chapter {}".format(number),
-						 open_chapters,
-						 triggered = functools.partial(
-							 self.parent_widget.manga_list_view.open_chapter,
-							 index,
-							 chap_number))
-			open_chapters.addAction(chap_action)
+			chapters_menu = self.addAction('Chapters')
+			open_chapters = QMenu(self)
+			chapters_menu.setMenu(open_chapters)
+			for number, chap_number in enumerate(range(len(
+				index.data(Qt.UserRole+1).chapters)), 1):
+				chap_action = QAction("Open chapter {}".format(number),
+							 open_chapters,
+							 triggered = functools.partial(
+								 self.parent_widget.manga_list_view.open_chapter,
+								 index,
+								 chap_number))
+				open_chapters.addAction(chap_action)
 		if not self.selected and not self.index.data(Qt.UserRole+1).is_archive:
 			add_chapters = self.addAction('Add chapters', self.add_chapters)
 		if self.selected:
@@ -104,8 +104,8 @@ class GalleryMenu(QMenu):
 									lambda: self.parent_widget.manga_list_view.open_chapter(self.selected, 0))
 		self.addSeparator()
 		if not self.selected:
-		get_metadata = self.addAction('Get metadata',
-								lambda: self.parent_widget.get_metadata(index.data(Qt.UserRole+1)))
+			get_metadata = self.addAction('Get metadata',
+									lambda: self.parent_widget.get_metadata(index.data(Qt.UserRole+1)))
 		else:
 			gals = []
 			for idx in self.selected:
@@ -114,9 +114,9 @@ class GalleryMenu(QMenu):
 										lambda: self.parent_widget.get_metadata(gals))
 		self.addSeparator()
 		if not self.selected:
-		edit = self.addAction('Edit', lambda: self.parent_widget.manga_list_view.spawn_dialog(self.index))
-		text = 'folder' if not self.index.data(Qt.UserRole+1).is_archive else 'archive'
-		op_folder_act = self.addAction('Open {}'.format(text), self.op_folder)
+			edit = self.addAction('Edit', lambda: self.parent_widget.manga_list_view.spawn_dialog(self.index))
+			text = 'folder' if not self.index.data(Qt.UserRole+1).is_archive else 'archive'
+			op_folder_act = self.addAction('Open {}'.format(text), self.op_folder)
 		else:
 			text = 'folders' if not self.index.data(Qt.UserRole+1).is_archive else 'archives'
 			op_folder_select = self.addAction('Open {}'.format(text), lambda: self.op_folder(True))
@@ -129,8 +129,8 @@ class GalleryMenu(QMenu):
 		remove_menu = QMenu(self)
 		remove_act.setMenu(remove_menu)
 		if not self.selected:
-		remove_g = remove_menu.addAction('Remove gallery',
-							lambda: self.parent_widget.manga_list_view.remove_gallery([self.index]))
+			remove_g = remove_menu.addAction('Remove gallery',
+								lambda: self.parent_widget.manga_list_view.remove_gallery([self.index]))
 			remove_ch = remove_menu.addAction('Remove chapter')
 			remove_ch_menu = QMenu(self)
 			remove_ch.setMenu(remove_ch_menu)
@@ -147,18 +147,18 @@ class GalleryMenu(QMenu):
 			remove_select_g = remove_menu.addAction('Remove selected galleries', self.remove_selection)
 		remove_menu.addSeparator()
 		if not self.selected:
-		remove_source_g = remove_menu.addAction('Remove gallery and files',
-								   lambda: self.parent_widget.manga_list_view.remove_gallery(
-									   [self.index], True))
+			remove_source_g = remove_menu.addAction('Remove gallery and files',
+									   lambda: self.parent_widget.manga_list_view.remove_gallery(
+										   [self.index], True))
 		else:
 			remove_source_select_g = remove_menu.addAction('Remove selected galleries and their files',
 										   lambda: self.remove_selection(True))
 		self.addSeparator()
 		if not self.selected:
-		advanced = self.addAction('Advanced')
-		adv_menu = QMenu(self)
-		advanced.setMenu(adv_menu)
-		change_cover = adv_menu.addAction('Change cover...', self.change_cover)
+			advanced = self.addAction('Advanced')
+			adv_menu = QMenu(self)
+			advanced.setMenu(adv_menu)
+			change_cover = adv_menu.addAction('Change cover...', self.change_cover)
 
 	def favourite_select(self):
 		for idx in self.selected:
@@ -217,7 +217,7 @@ class GalleryMenu(QMenu):
 		def add_chdb(chaps_dict):
 			gallery = self.index.data(Qt.UserRole+1)
 			log_i('Adding new chapter for {}'.format(gallery.title.encode(errors='ignore')))
-			gallerydb.add_method_queue(gallerydb.ChapterDB.add_chapters_raw, False, gallery.id, {'chapters_dict':chaps_dict})
+			gallerydb.add_method_queue(gallerydb.ChapterDB.add_chapters_raw, True, gallery.id, chaps_dict)
 			gallery = gallerydb.GalleryDB.get_gallery_by_id(gallery.id)
 			self.gallery_model.replaceRows([gallery], self.index.row())
 		ch_widget = ChapterAddWidget(self.index.data(Qt.UserRole+1), self.parent_widget)
@@ -694,10 +694,9 @@ class PathLineEdit(QLineEdit):
 	A lineedit which open a filedialog on right/left click
 	Set dir to false if you want files.
 	"""
-	def __init__(self, parent=None, dir=True, filters=utils.FILE_FILTER):
+	def __init__(self, parent=None, dir=True):
 		super().__init__(parent)
 		self.folder = dir
-		self.filters = filters
 		self.setPlaceholderText('Right/Left-click to open folder explorer.')
 		self.setToolTip('Right/Left-click to open folder explorer.')
 
@@ -707,7 +706,7 @@ class PathLineEdit(QLineEdit):
 										   'Choose folder')
 		else:
 			path = QFileDialog.getOpenFileName(self,
-									  'Choose file', filter=self.filters)
+									  'Choose file')
 			path = path[0]
 		if len(path) != 0:
 			self.setText(path)
@@ -739,20 +738,15 @@ class ChapterAddWidget(QWidget):
 		layout.addRow('Gallery:', lbl)
 		layout.addRow('Current chapters:', QLabel('{}'.format(self.current_chapters)))
 
-		new_btn = QPushButton('Add directory')
-		new_btn.clicked.connect(lambda: self.add_new_chapter('f'))
+		new_btn = QPushButton('New')
+		new_btn.clicked.connect(self.add_new_chapter)
 		new_btn.adjustSize()
-		new_btn_a = QPushButton('Add archive')
-		new_btn_a.clicked.connect(lambda: self.add_new_chapter('a'))
-		new_btn_a.adjustSize()
 		add_btn = QPushButton('Finish')
 		add_btn.clicked.connect(self.finish)
 		add_btn.adjustSize()
 		new_l = QHBoxLayout()
-		new_l.addWidget(add_btn, 1, alignment=Qt.AlignLeft)
-		new_l.addWidget(Spacer('h'))
+		new_l.addWidget(add_btn, alignment=Qt.AlignLeft)
 		new_l.addWidget(new_btn, alignment=Qt.AlignRight)
-		new_l.addWidget(new_btn_a, alignment=Qt.AlignRight)
 		layout.addRow(new_l)
 
 		frame = QFrame()
@@ -761,6 +755,8 @@ class ChapterAddWidget(QWidget):
 
 		self.chapter_l = QVBoxLayout()
 		frame.setLayout(self.chapter_l)
+
+		new_btn.click()
 
 		self.setMaximumHeight(550)
 		self.setFixedWidth(500)
@@ -774,32 +770,22 @@ class ChapterAddWidget(QWidget):
 			self.move(frect.topLeft())
 		self.setWindowTitle('Add Chapters')
 
-	def add_new_chapter(self, mode):
+	def add_new_chapter(self):
 		chap_layout = QHBoxLayout()
 		self.added_chaps += 1
 		curr_chap = self.current_chapters+self.added_chaps
 
 		chp_numb = QSpinBox(self)
-		chp_numb.setMinimum(curr_chap-1)
-		chp_numb.setMaximum(curr_chap+1)
+		chp_numb.setMinimum(1)
 		chp_numb.setValue(curr_chap)
 		curr_chap_lbl = QLabel('Chapter {}'.format(curr_chap))
 		def ch_lbl(n): curr_chap_lbl.setText('Chapter {}'.format(n))
 		chp_numb.valueChanged[int].connect(ch_lbl)
-		if mode =='f':
 		chp_path = PathLineEdit()
-			chp_path.setPlaceholderText('Right/Left-click to open folder explorer.'+
-									' Leave empty to not add.')
-		elif mode == 'a':
-			chp_path = PathLineEdit(dir=False)
-		chp_path.setPlaceholderText('Right/Left-click to open folder explorer.'+
-							  ' Leave empty to not add.')
-
+		chp_path.folder = True
 		chp_path.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-		if mode == 'f':
-			chap_layout.addWidget(QLabel('D'))
-		elif mode == 'a':
-			chap_layout.addWidget(QLabel('A'))
+		chp_path.setPlaceholderText('Right/Left-click to open folder explorer.'+
+								' Leave empty to not add.')
 		chap_layout.addWidget(chp_path, 3)
 		chap_layout.addWidget(chp_numb, 0)
 		self.chapter_l.addWidget(curr_chap_lbl,
@@ -817,8 +803,8 @@ class ChapterAddWidget(QWidget):
 		for l in range(1, len(widgets), 1):
 			layout = widgets[l]
 			try:
-				line_edit = layout.itemAt(1).widget()
-				spin_box = layout.itemAt(2).widget()
+				line_edit = layout.itemAt(0).widget()
+				spin_box = layout.itemAt(1).widget()
 			except AttributeError:
 				continue
 			p = line_edit.text()
