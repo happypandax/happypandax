@@ -80,7 +80,7 @@ class GalleryMenu(QMenu):
 							 index,
 							 chap_number))
 			open_chapters.addAction(chap_action)
-		if not self.selected:
+		if not self.selected and not self.index.data(Qt.UserRole+1).is_archive:
 			add_chapters = self.addAction('Add chapters', self.add_chapters)
 		if self.selected:
 			open_f_chapters = self.addAction('Open first chapters',
@@ -192,7 +192,7 @@ class GalleryMenu(QMenu):
 		def add_chdb(chaps_dict):
 			gallery = self.index.data(Qt.UserRole+1)
 			log_i('Adding new chapter for {}'.format(gallery.title.encode(errors='ignore')))
-			gallerydb.add_method_queue(gallerydb.ChapterDB.add_chapters_raw, True, gallery.id, chaps_dict)
+			gallerydb.add_method_queue(gallerydb.ChapterDB.add_chapters_raw, False, gallery.id, {'chapters_dict':chaps_dict})
 			gallery = gallerydb.GalleryDB.get_gallery_by_id(gallery.id)
 			self.gallery_model.replaceRows([gallery], self.index.row())
 		ch_widget = ChapterAddWidget(self.index.data(Qt.UserRole+1), self.parent_widget)
@@ -669,9 +669,10 @@ class PathLineEdit(QLineEdit):
 	A lineedit which open a filedialog on right/left click
 	Set dir to false if you want files.
 	"""
-	def __init__(self, parent=None, dir=True):
+	def __init__(self, parent=None, dir=True, filters=utils.FILE_FILTER):
 		super().__init__(parent)
 		self.folder = dir
+		self.filters = filters
 		self.setPlaceholderText('Right/Left-click to open folder explorer.')
 		self.setToolTip('Right/Left-click to open folder explorer.')
 
@@ -681,7 +682,7 @@ class PathLineEdit(QLineEdit):
 										   'Choose folder')
 		else:
 			path = QFileDialog.getOpenFileName(self,
-									  'Choose file')
+									  'Choose file', filter=self.filters)
 			path = path[0]
 		if len(path) != 0:
 			self.setText(path)
@@ -713,15 +714,20 @@ class ChapterAddWidget(QWidget):
 		layout.addRow('Gallery:', lbl)
 		layout.addRow('Current chapters:', QLabel('{}'.format(self.current_chapters)))
 
-		new_btn = QPushButton('New')
-		new_btn.clicked.connect(self.add_new_chapter)
+		new_btn = QPushButton('Add directory')
+		new_btn.clicked.connect(lambda: self.add_new_chapter('f'))
 		new_btn.adjustSize()
+		new_btn_a = QPushButton('Add archive')
+		new_btn_a.clicked.connect(lambda: self.add_new_chapter('a'))
+		new_btn_a.adjustSize()
 		add_btn = QPushButton('Finish')
 		add_btn.clicked.connect(self.finish)
 		add_btn.adjustSize()
 		new_l = QHBoxLayout()
-		new_l.addWidget(add_btn, alignment=Qt.AlignLeft)
+		new_l.addWidget(add_btn, 1, alignment=Qt.AlignLeft)
+		new_l.addWidget(Spacer('h'))
 		new_l.addWidget(new_btn, alignment=Qt.AlignRight)
+		new_l.addWidget(new_btn_a, alignment=Qt.AlignRight)
 		layout.addRow(new_l)
 
 		frame = QFrame()
@@ -730,8 +736,6 @@ class ChapterAddWidget(QWidget):
 
 		self.chapter_l = QVBoxLayout()
 		frame.setLayout(self.chapter_l)
-
-		new_btn.click()
 
 		self.setMaximumHeight(550)
 		self.setFixedWidth(500)
@@ -745,22 +749,32 @@ class ChapterAddWidget(QWidget):
 			self.move(frect.topLeft())
 		self.setWindowTitle('Add Chapters')
 
-	def add_new_chapter(self):
+	def add_new_chapter(self, mode):
 		chap_layout = QHBoxLayout()
 		self.added_chaps += 1
 		curr_chap = self.current_chapters+self.added_chaps
 
 		chp_numb = QSpinBox(self)
-		chp_numb.setMinimum(1)
+		chp_numb.setMinimum(curr_chap-1)
+		chp_numb.setMaximum(curr_chap+1)
 		chp_numb.setValue(curr_chap)
 		curr_chap_lbl = QLabel('Chapter {}'.format(curr_chap))
 		def ch_lbl(n): curr_chap_lbl.setText('Chapter {}'.format(n))
 		chp_numb.valueChanged[int].connect(ch_lbl)
-		chp_path = PathLineEdit()
-		chp_path.folder = True
+		if mode =='f':
+			chp_path = PathLineEdit()
+			chp_path.setPlaceholderText('Right/Left-click to open folder explorer.'+
+									' Leave empty to not add.')
+		elif mode == 'a':
+			chp_path = PathLineEdit(dir=False)
+			chp_path.setPlaceholderText('Right/Left-click to open folder explorer.'+
+									' Leave empty to not add.')
+
 		chp_path.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-		chp_path.setPlaceholderText('Right/Left-click to open folder explorer.'+
-							  ' Leave empty to not add.')
+		if mode == 'f':
+			chap_layout.addWidget(QLabel('D'))
+		elif mode == 'a':
+			chap_layout.addWidget(QLabel('A'))
 		chap_layout.addWidget(chp_path, 3)
 		chap_layout.addWidget(chp_numb, 0)
 		self.chapter_l.addWidget(curr_chap_lbl,
@@ -778,8 +792,8 @@ class ChapterAddWidget(QWidget):
 		for l in range(1, len(widgets), 1):
 			layout = widgets[l]
 			try:
-				line_edit = layout.itemAt(0).widget()
-				spin_box = layout.itemAt(1).widget()
+				line_edit = layout.itemAt(1).widget()
+				spin_box = layout.itemAt(2).widget()
 			except AttributeError:
 				continue
 			p = line_edit.text()
