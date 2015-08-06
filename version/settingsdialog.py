@@ -743,7 +743,7 @@ class SettingsDialog(QWidget):
 		misc_external_viewer_l = QFormLayout()
 		misc_external_viewer.setLayout(misc_external_viewer_l)
 		misc_external_viewer_l.addRow(QLabel(gui_constants.SUPPORTED_EXTERNAL_VIEWER_LBL))
-		self.external_viewer_path = PathLineEdit(misc_external_viewer, False)
+		self.external_viewer_path = PathLineEdit(misc_external_viewer, False, '')
 		self.external_viewer_path.setPlaceholderText('Right/Left-click to open folder explorer.'+
 							  ' Leave empty to use default viewer')
 		self.external_viewer_path.setToolTip('Right/Left-click to open folder explorer.'+
