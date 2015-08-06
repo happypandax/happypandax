@@ -1,3 +1,43 @@
+*Happypanda v0.20*
+- Added support for recursively importing of galleries (applies to archives)
+	+ Directories in archives will now be noticed when importing
+	+ Directories with archives as chapters will now be properly imported
+- Added drag and drop feature for directories and archives
+- Galleries that was unsuccesful during gallery fetching will now be displayed in a popup
+- Added support for directory or archive ignoring
+- Added support for changing gallery covers
+- Added: move imported galleries to a specified folder feature
+- Increased speed of Populate from folder and Add galleries...
+- Improved title parser to now remove unneecessary whitespaces
+- Improved gallery hashing to avoid unnecessary hashing
+- Added 'Add archive' button in chapter dialog
+- Popups will now center on parent window correctly
+	+ It is now possible to move popups by leftclicking and dragging
+	+ Added background blur effect when popups are shown
+- The rebuild galleries popup will now show real progress
+- Settings:
+	+ Added new option: Treat subfolders as galleries
+	+ Added new option: Move imported galleries
+	+ Added new option: Scroll to new galleries (disabled)
+	+ Added new option: Open random gallery chapters
+	+ Added new option: Rename gallery source (disabled)
+	+ Added new tab in Advanced section: Gallery
+	+ Added new options: Gallery renamer (disabled)
+	+ Added new tab in Application section: Ignore
+	+ Enabled General tab in Application section
+	+ Reenabled Display on gallery options
+- Contextmenu:
+	+ When selecting more galleries only options that apply to selected galleries will be shown
+	+ It is now possible to favourite/Unfavourite selected galleries
+	+ Reenabled removing of selected galleries
+	+ Added: Advanced and Change cover
+- Updated database to version 0.2
+- Bugfixes:
+	+ Fixed critical bug: not being able to add chapters
+	+ Fixed bug: removing a chapter would always remove the first chapter
+	+ Fixed bug: fetched metadata title and artist would not be formatted correctly
+	+ & other minor bugs
+
 *Happypanda v0.19*
 - Improved stability
 - Updated and fixed auto metadata fetcher:
