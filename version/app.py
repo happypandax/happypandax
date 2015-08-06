@@ -93,7 +93,6 @@ class AppWindow(QMainWindow):
 		self.watchers.gallery_handler.DELETED_SIGNAL.connect(deleted)
 
 		if gui_constants.LOOK_NEW_GALLERY_STARTUP:
-			self.notification_bar.begin_show()
 			self.notification_bar.add_text("Looking for new galleries...")
 			try:
 				class ScanDir(QObject):
@@ -172,7 +171,6 @@ class AppWindow(QMainWindow):
 				self.scan_inst.moveToThread(thread)
 				self.scan_inst.final_paths_and_galleries.connect(show_new_galleries)
 				self.scan_inst.final_paths_and_galleries.connect(lambda a: self.scan_inst.deleteLater())
-				self.scan_inst.finished.connect(lambda: self.notification_bar.end_show())
 				thread.started.connect(self.scan_inst.scan_dirs)
 				#self.scan_inst.scan_dirs()
 				thread.finished.connect(thread.deleteLater)
