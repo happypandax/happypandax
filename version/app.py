@@ -1,21 +1,21 @@
-﻿"""
-This file is part of Happypanda.
-Happypanda is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 2 of the License, or
-any later version.
-Happypanda is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-You should have received a copy of the GNU General Public License
-along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
-"""
+﻿#"""
+#This file is part of Happypanda.
+#Happypanda is free software: you can redistribute it and/or modify
+#it under the terms of the GNU General Public License as published by
+#the Free Software Foundation, either version 2 of the License, or
+#any later version.
+#Happypanda is distributed in the hope that it will be useful,
+#but WITHOUT ANY WARRANTY; without even the implied warranty of
+#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#GNU General Public License for more details.
+#You should have received a copy of the GNU General Public License
+#along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
+#"""
 
-import sys, logging, os, threading, re, requests
+import sys, logging, os, threading, re, requests, scandir
 from PyQt5.QtCore import (Qt, QSize, pyqtSignal, QThread, QEvent, QTimer,
 						  QObject)
-from PyQt5.QtGui import (QPixmap, QIcon, QMouseEvent, QCursor)
+from PyQt5.QtGui import (QPixmap, QIcon, QMoveEvent, QCursor)
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QListView,
 							 QHBoxLayout, QFrame, QWidget, QVBoxLayout,
 							 QLabel, QStackedLayout, QToolBar, QMenuBar,
@@ -24,10 +24,18 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QListView,
 							 QDesktopWidget, QPushButton, QCompleter,
 							 QListWidget, QListWidgetItem, QToolTip,
 							 QProgressBar, QToolButton, QSystemTrayIcon)
-from . import (gui_constants, misc, gallery, file_misc, settingsdialog,
-			   gallerydialog)
-from ..database import fetch, gallerydb
-from .. import settings, pewnet, utils
+
+import gui_constants
+import misc
+import gallery
+import file_misc
+import settingsdialog
+import gallerydialog
+import fetch
+import gallerydb
+import settings
+import pewnet
+import utils
 
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -38,8 +46,10 @@ log_c = log.critical
 
 class AppWindow(QMainWindow):
 	"The application's main window"
+	move_listener = pyqtSignal()
 	def __init__(self):
 		super().__init__()
+		self.setAcceptDrops(True)
 		self.initUI()
 		self.start_up()
 		QTimer.singleShot(3000, self._check_update)
@@ -87,54 +97,57 @@ class AppWindow(QMainWindow):
 			try:
 				class ScanDir(QObject):
 					final_paths_and_galleries = pyqtSignal(list, list)
-					def __init__(self, model_data, parent=None):
+					finished = pyqtSignal()
+					def __init__(self, parent=None):
 						super().__init__(parent)
-						self.model_data = model_data
+						self.scanned_data = []
 					def scan_dirs(self):
-						db_data = self.model_data
 						paths = []
-						for g in range(len(db_data)):
-							paths.append(os.path.normcase(db_data[g].path))
+						for p in gui_constants.MONITOR_PATHS:
+							dir_content = scandir.scandir(p)
+							for d in dir_content:
+								paths.append(d.path)
 
-						contents = []
-						case_path = [] # needed for tile and artist parsing... e.g to avoid lowercase
-						for m_path in gui_constants.MONITOR_PATHS:
-							for p in os.listdir(m_path):
-								abs_p = os.path.join(m_path, p)
-								if os.path.isdir(abs_p) or \
-									p.endswith(utils.ARCHIVE_FILES):
-									case_path.append(abs_p)
-									contents.append(os.path.normcase(abs_p))
+						fetch_inst = fetch.Fetch(self)
+						fetch_inst.series_path = paths
+						def set_scanned_d(d):
+							self.scanned_data = d
+						fetch_inst.FINISHED.connect(set_scanned_d)
+						fetch_inst.local()
+						#contents = []
+						#for g in self.scanned_data:
+						#	contents.append(g)
 
-						paths = sorted(paths)
-						new_galleries = []
-						for c, x in enumerate(contents):
-							y = utils.b_search(paths, x)
-							if not y:
-								# (path, number for case_path)
-								new_galleries.append((x, c))
+						#paths = sorted(paths)
+						#new_galleries = []
+						#for x in contents:
+						#	y = utils.b_search(paths, os.path.normcase(x.path))
+						#	if not y:
+						#		new_galleries.append(x)
 
 						galleries = []
 						final_paths = []
-						if new_galleries:
-							for g in new_galleries:
-								gallery = gallerydb.Gallery()
+						if self.scanned_data:
+							for g in self.scanned_data:
 								try:
-									gallery.profile = utils.get_gallery_img(g[0])
+									if g.is_archive:
+										g.profile = utils.get_gallery_img(g.chapters[0], g.path)
+									else:
+										g.profile = utils.get_gallery_img(g.chapters[0])
 								except:
-									gallery.profile = gui_constants.NO_IMAGE_PATH
-								parser_dict = utils.title_parser(os.path.split(case_path[g[1]])[1])
-								gallery.title = parser_dict['title']
-								gallery.artist = parser_dict['artist']
-								galleries.append(gallery)
-								final_paths.append(case_path[g[1]])
+									g.profile = gui_constants.NO_IMAGE_PATH
+							
+								galleries.append(g)
+								final_paths.append(g.path)
 						self.final_paths_and_galleries.emit(final_paths, galleries)
+						self.finished.emit()
 					#if gui_constants.LOOK_NEW_GALLERY_AUTOADD:
 					#	QTimer.singleShot(10000, self.gallery_populate(final_paths))
 					#	return
 
 				def show_new_galleries(final_paths, galleries):
 					if final_paths and galleries:
+						gui_constants.OVERRIDE_MOVE_IMPORTED_IN_FETCH = True
 						if gui_constants.LOOK_NEW_GALLERY_AUTOADD:
 							self.gallery_populate(final_paths)
 						else:
@@ -154,11 +167,12 @@ class AppWindow(QMainWindow):
 							buttons[1].clicked.connect(g_popup.close)
 
 				thread = QThread(self)
-				self.scan_inst = ScanDir(self.manga_list_view.gallery_model._data)
+				self.scan_inst = ScanDir()
 				self.scan_inst.moveToThread(thread)
 				self.scan_inst.final_paths_and_galleries.connect(show_new_galleries)
 				self.scan_inst.final_paths_and_galleries.connect(lambda a: self.scan_inst.deleteLater())
 				thread.started.connect(self.scan_inst.scan_dirs)
+				#self.scan_inst.scan_dirs()
 				thread.finished.connect(thread.deleteLater)
 				thread.start()
 			except:
@@ -167,35 +181,32 @@ class AppWindow(QMainWindow):
 
 	def start_up(self):
 		def normalize_first_time():
-			settings.set(2, 'Application', 'first time level')
-		def done():
+			settings.set(3, 'Application', 'first time level')
+			settings.save()
+		def done(status=True):
+			if gui_constants.FIRST_TIME_LEVEL != 3:
+				normalize_first_time()
 			self.manga_list_view.gallery_model.init_data()
 			if gui_constants.ENABLE_MONITOR and\
 				gui_constants.MONITOR_PATHS and all(gui_constants.MONITOR_PATHS):
 				self.init_watchers()
-			if gui_constants.FIRST_TIME_LEVEL != 2:
-				normalize_first_time()
-		if gui_constants.FIRST_TIME_LEVEL < 2:
+		if gui_constants.FIRST_TIME_LEVEL < 3:
 
-			class FirstTime(file_misc.BasePopup):
+			class FirstTime(misc.BasePopup):
 				def __init__(self, parent=None):
 					super().__init__(parent)
 					main_layout = QVBoxLayout()
-					info_lbl = QLabel("Hi there! Some big changes are about to occur!\n"+
-					   "Please wait.. This will take at most a few minutes.\n"+
-					   "If not then try restarting the application.")
+					info_lbl = QLabel("Hi there! I need to rebuild your galleries.\n"+
+					   "Please wait.. Restart if there is no sign of progress.")
 					info_lbl.setAlignment(Qt.AlignCenter)
 					main_layout.addWidget(info_lbl)
-					prog = QProgressBar(self)
-					prog.setMinimum(0)
-					prog.setMaximum(0)
-					prog.setTextVisible(False)
-					main_layout.addWidget(prog)
+					self.prog = QProgressBar(self)
+					main_layout.addWidget(self.prog)
 					main_layout.addWidget(QLabel('Note: This popup will close itself when everything is ready'))
 					self.main_widget.setLayout(main_layout)
 
 			ft_widget = FirstTime(self)
-			log_i('Invoking first time level 2')
+			log_i('Invoking first time level 3')
 			bridge = gallerydb.Bridge()
 			thread = QThread(self)
 			thread.setObjectName('Startup')
@@ -205,6 +216,8 @@ class AppWindow(QMainWindow):
 			bridge.DONE.connect(self.setEnabled)
 			bridge.DONE.connect(done)
 			bridge.DONE.connect(bridge.deleteLater)
+			bridge.DATA_COUNT.connect(ft_widget.prog.setMaximum)
+			bridge.PROGRESS.connect(ft_widget.prog.setValue)
 			thread.finished.connect(thread.deleteLater)
 			thread.start()
 			ft_widget.adjustSize()
@@ -242,7 +255,6 @@ class AppWindow(QMainWindow):
 		tray_quit.triggered.connect(self.close)
 		self.system_tray.show()
 		log_d('Create system tray: OK')
-
 		#self.display.addWidget(self.chapter_main)
 
 		self.setCentralWidget(self.center)
@@ -324,7 +336,10 @@ class AppWindow(QMainWindow):
 		thread.setObjectName('App.get_metadata')
 		fetch_instance = fetch.Fetch()
 		if gal:
-			galleries = [gal]
+			if not isinstance(gal, list):
+				galleries = [gal]
+			else:
+				galleries = gal
 		else:
 			if gui_constants.CONTINUE_AUTO_METADATA_FETCHER:
 				galleries = [g for g in self.manga_list_view.gallery_model._data if not g.exed]
@@ -341,6 +356,14 @@ class AppWindow(QMainWindow):
 		def done(status):
 			self.notification_bar.end_show()
 			fetch_instance.deleteLater()
+			if not isinstance(status, bool):
+				galleries = []
+				for tup in status:
+					galleries.append(tup[0])
+				g_popup = file_misc.GalleryPopup(('Fecthing metadata for these galleries failed.'+
+									  ' Check happypanda.log for details.', galleries), self)
+				close_button = g_popup.add_buttons('Close')[0]
+				close_button.clicked.connect(g_popup.close)
 
 		fetch_instance.GALLERY_PICKER.connect(self._web_metadata_picker)
 		fetch_instance.GALLERY_EMITTER.connect(self.manga_list_view.replace_edit_gallery)
@@ -674,7 +697,7 @@ class AppWindow(QMainWindow):
 									loading.show()
 
 								def loading_hide():
-									loading.close()
+									loading.hide()
 									self.manga_list_view.gallery_model.ROWCOUNT_CHANGE.emit()
 
 								def del_later():
@@ -691,15 +714,23 @@ class AppWindow(QMainWindow):
 								a_instance.done.connect(del_later)
 								thread.finished.connect(thread.deleteLater)
 								thread.start()
-
-							data_thread.quit
+								#a_instance.add_to_db()
+							#data_thread.quit
 							hide_loading()
 							log_i('Populating DB from gallery folder: OK')
 							if validate:
 								gallery_list = misc.GalleryListView(self)
 								gallery_list.SERIES.connect(add_gallery)
 								for ser in status:
-									gallery_list.add_gallery(ser, os.path.split(ser.path)[1])
+									if ser.is_archive and gui_constants.SUBFOLDER_AS_GALLERY:
+										p = os.path.split(ser.path)[1]
+										if ser.chapters[0]:
+											text = '{}: {}'.format(p, os.path.split(ser.chapters[0])[0])
+										else:
+											text = p
+										gallery_list.add_gallery(ser, text)
+									else:
+										gallery_list.add_gallery(ser, os.path.split(ser.path)[1])
 								#self.manga_list_view.gallery_model.populate_data()
 								gallery_list.show()
 							else:
@@ -708,7 +739,7 @@ class AppWindow(QMainWindow):
 						else:
 							log_d('No new gallery was found')
 							loading.setText("No new gallery found")
-							data_thread.quit
+							#data_thread.quit
 							misc.Loading.ON = False
 
 					else:
@@ -728,15 +759,54 @@ class AppWindow(QMainWindow):
 					loading.progress.setValue(prog)
 					loading.setText("Searching for galleries...")
 
-				fetch_instance.moveToThread(data_thread)
+				#fetch_instance.moveToThread(data_thread)
 				fetch_instance.DATA_COUNT.connect(loading.progress.setMaximum)
 				fetch_instance.PROGRESS.connect(a_progress)
-				data_thread.started.connect(fetch_instance.local)
+				#data_thread.started.connect(fetch_instance.local)
 				fetch_instance.FINISHED.connect(finished)
 				fetch_instance.FINISHED.connect(fetch_deleteLater)
-				data_thread.finished.connect(data_thread.deleteLater)
-				data_thread.start()
+				#data_thread.finished.connect(data_thread.deleteLater)
+				#data_thread.start()
+				fetch_instance.local()
 				log_i('Populating DB from gallery folder')
+
+	def dragEnterEvent(self, event):
+		if event.mimeData().hasUrls():
+			event.acceptProposedAction()
+		else:
+			self.notification_bar.add_text('File is not supported')
+
+	def dropEvent(self, event):
+		acceptable = []
+		unaccept = []
+		for u in event.mimeData().urls():
+			path = u.toLocalFile()
+			if os.path.isdir(path):
+				acceptable.append(path)
+				continue
+			head, tail = os.path.split(path)
+			if tail.endswith(utils.ARCHIVE_FILES):
+				acceptable.append(path)
+			else:
+				unaccept(path)
+		log_i('Acceptable dropped items: {}'.format(len(acceptable)))
+		log_i('Unacceptable dropped items: {}'.format(len(unaccept)))
+		log_d('Dropped items: {}\n{}'.format(acceptable, unaccept).encode(errors='ignore'))
+		if acceptable:
+			self.notification_bar.add_text('Adding dropped items...')
+			log_i('Adding dropped items')
+			if len(acceptable) == 1:
+				g_d = gallerydialog.GalleryDialog(self, acceptable[0])
+				g_d.SERIES.connect(self.manga_list_view.gallery_model.addRows)
+				g_d.show()
+			else:
+				self.gallery_populate(acceptable, True)
+		else:
+			text = 'File not supported' if len(unaccept) < 2 else 'Files not supported'
+			self.notification_bar.add_text(text)
+
+		if unaccept:
+			self.notification_bar.add_text('Some unsupported files did not get added')
 
 	def resizeEvent(self, event):
 		try:
@@ -744,6 +814,10 @@ class AppWindow(QMainWindow):
 		except AttributeError:
 			pass
 		return super().resizeEvent(event)
+
+	def moveEvent(self, event):
+		self.move_listener.emit()
+		return super().moveEvent(event)
 
 	def closeEvent(self, event):
 		# watchers
@@ -754,29 +828,24 @@ class AppWindow(QMainWindow):
 
 		# settings
 		settings.set(self.manga_list_view.current_sort, 'General', 'current sort')
+		settings.set(gui_constants.IGNORE_PATHS, 'Application', 'ignore paths')
 		settings.win_save(self, 'AppWindow')
 
 		# temp dir
 		try:
-			for root, dirs, files in os.walk('temp', topdown=False):
+			for root, dirs, files in scandir.walk('temp', topdown=False):
 				for name in files:
 					os.remove(os.path.join(root, name))
 				for name in dirs:
 					os.rmdir(os.path.join(root, name))
-			log_d('Empty temp on exit: OK')
+			log_d('Flush temp on exit: OK')
 		except:
-			log_d('Empty temp on exit: FAIL')
-
-		# error
-		err = sys.exc_info()
-		if all(err):
-			log_c('Last error before exit:\n{}\n{}\n{}'.format(err[0], err[1], err[2]))
-		else:
-			log_d('Normal Exit App: OK')
+			log.exception('Flush temp on exit: FAIL')
+		log_d('Normal Exit App: OK')
 		super().closeEvent(event)
-		app = QApplication.instance()
-		app.quit()
-		sys.exit()
+		#app = QApplication.instance()
+		#app.exit()
+		#sys.exit()
 
 if __name__ == '__main__':
 	raise NotImplementedError("Unit testing not implemented yet!")

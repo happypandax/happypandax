@@ -1,21 +1,21 @@
-﻿"""
-This file is part of Happypanda.
-Happypanda is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 2 of the License, or
-any later version.
-Happypanda is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-You should have received a copy of the GNU General Public License
-along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
-"""
+﻿#"""
+#This file is part of Happypanda.
+#Happypanda is free software: you can redistribute it and/or modify
+#it under the terms of the GNU General Public License as published by
+#the Free Software Foundation, either version 2 of the License, or
+#any later version.
+#Happypanda is distributed in the hope that it will be useful,
+#but WITHOUT ANY WARRANTY; without even the implied warranty of
+#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#GNU General Public License for more details.
+#You should have received a copy of the GNU General Public License
+#along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
+#"""
 
 import time, datetime, os, subprocess, sys, logging, zipfile
-import hashlib, shutil, uuid
+import hashlib, shutil, uuid, re, scandir
 
-from .gui import gui_constants
+import gui_constants
 
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -24,9 +24,57 @@ log_w = log.warning
 log_e = log.error
 log_c = log.critical
 
-IMG_FILES =  ('jpg','bmp','png','gif')
+IMG_FILES =  ('.jpg','.bmp','.png','.gif')
 ARCHIVE_FILES = ('.zip', '.cbz')
 FILE_FILTER = '*.zip *.cbz'
+
+def move_files(path, dest=''):
+	"""
+	Move files to a new destination. If dest is not set,
+	imported_galleries_def_path will be used instead.
+	"""
+	if not dest:
+		dest = gui_constants.IMPORTED_GALLERY_DEF_PATH
+		if not dest:
+			return path
+	f = os.path.split(path)[1]
+	new_path = os.path.join(dest, f)
+	if new_path == os.path.join(*os.path.split(path)):
+		return path
+	if not os.path.exists(new_path):
+		new_path = shutil.move(path, new_path)
+	else:
+		return path
+	return new_path
+
+def check_ignore_list(key):
+	k = os.path.normcase(key)
+	for path in gui_constants.IGNORE_PATHS:
+		p = os.path.normcase(path)
+		if p in k:
+			return False
+	return True
+
+def gallery_text_fixer(gallery):
+	regex_str = gui_constants.GALLERY_DATA_FIX_REGEX
+	if regex_str:
+		try:
+			valid_regex = re.compile(regex_str)
+		except re.error:
+			return None
+		if not valid_regex:
+			return None
+
+		def replace_regex(text):
+			new_text = re.sub(regex_str, gui_constants.GALLERY_DATA_FIX_REPLACE, text)
+			return new_text
+
+		if gui_constants.GALLERY_DATA_FIX_TITLE:
+			gallery.title = replace_regex(gallery.title)
+		if gui_constants.GALLERY_DATA_FIX_ARTIST:
+			gallery.artist = replace_regex(gallery.artist)
+
+		return gallery
 
 def b_search(data, key):
 	lo = 0
@@ -56,6 +104,7 @@ def generate_img_hash(src):
 	return sha1.hexdigest()
 
 class CreateZipFail(Exception): pass
+class FileNotFoundInArchive(Exception): pass
 
 class ArchiveFile():
 	"""
@@ -64,12 +113,9 @@ class ArchiveFile():
 	extract <- Extracts one specific file to given path
 	open -> open the given file in archive, returns bytes
 	close -> close archive
-	# Most of the code are from kunesj on GitHub #
 	"""
 	def __init__(self, filepath):
-		extension = filepath[-4:]
-
-		if extension in ARCHIVE_FILES:
+		if filepath.endswith(ARCHIVE_FILES):
 			try:
 				self.archive = zipfile.ZipFile(os.path.normcase(filepath))
 			except:
@@ -81,20 +127,77 @@ class ArchiveFile():
 		filelist = self.archive.namelist()
 		return filelist
 
-	def extract(self, file_to_ext, path):
+	def is_dir(self, name):
+		"""
+		Checks if the provided name in the archive is a directory or not
+		"""
+		if not name:
+			return False
+		if not name in self.namelist():
+			log_e('File {} not found in archive'.format(name))
+			raise FileNotFoundInArchive
+		if name.endswith('/'):
+			return True
+		else: return False
+
+	def dir_list(self, only_top_level=False):
+		"""
+		Returns a list of all directories found recursively. For directories not in toplevel
+		a path in the archive to the diretory will be returned.
+		"""
+		if only_top_level:
+			return [x for x in self.namelist() if x.endswith('/') and x.count('/') == 1]
+		else:
+			return [x for x in self.namelist() if x.endswith('/')]
+
+	def dir_contents(self, dir_name):
+		"""
+		Returns a list of contents in the directory
+		An empty string will return the contents of the top folder
+		"""
+		if dir_name and not dir_name in self.namelist():
+			log_e('Directory {} not found in archive'.format(dir_name))
+			raise FileNotFoundInArchive
+		if not dir_name:
+			return [x for x in self.namelist() if (x.endswith('/') and x.count('/') == 1) or \
+				x.count('/') == 0]
+		return [x for x in self.namelist() if x.startswith(dir_name)]
+
+	def extract(self, file_to_ext, path=None):
 		"""
 		Extracts one file from archive to given path
+		Creates a temp_dir if path is not specified
 		Returns path to the extracted file
 		"""
+		if not path:
+			path = os.path.join(gui_constants.temp_dir, str(uuid.uuid4()))
+			os.mkdir(path)
 
-		return self.archive.extract(file_to_ext, path)
+		if not file_to_ext:
+			self.extract_all(path)
+			return path
+		else:
+			membs = []
+			for name in self.namelist():
+				if name.startswith(file_to_ext) and name != file_to_ext:
+					membs.append(name)
+			temp_p = self.archive.extract(file_to_ext, path)
+			for m in membs:
+				self.archive.extract(m, path)
+			return temp_p
 
-	def extract_all(self, path):
+	def extract_all(self, path=None, member=None):
 		"""
-		Extracts all files to given path
+		Extracts all files to given path, and returns path
+		If path is not specified, a temp dir will be created
 		"""
-		# TODO: Check contents of archive before extracting
+		if not path:
+			path = os.path.join(gui_constants.temp_dir, str(uuid.uuid4()))
+			os.mkdir(path)
+		if member:
+			self.archive.extractall(path, member)
 		self.archive.extractall(path)
+		return path
 
 	def open(self, file_to_open, fp=False):
 		"""
@@ -107,6 +210,58 @@ class ArchiveFile():
 
 	def close(self):
 		self.archive.close()
+
+def check_archive(archive_path):
+	"""
+	Checks archive path for potential galleries.
+	Returns a list with a path in archive to galleries
+	if there is no directories
+	"""
+	zip = ArchiveFile(archive_path)
+	zip_dirs = zip.dir_list()
+	if zip_dirs: # There are directories in the top folder
+		galleries = []
+		for d in zip_dirs:
+			con = zip.dir_contents(d)
+			if con:
+				gallery_probability = len(con)
+				for n in con:
+					if not n.endswith(IMG_FILES):
+						gallery_probability -= 1
+				if gallery_probability >= (len(con)*0.8):
+					galleries.append(d)
+		zip.close()
+		return galleries
+	else: # all pages are in top folder
+		zip.close()
+		return ['']
+
+def recursive_gallery_check(path):
+	"""
+	Recursively checks a folder for any potential galleries
+	Returns a list of paths for directories and a list of tuples where first
+	index is path to gallery in archive and second index is path to archive.
+	Like this:
+	["C:path/to/g"] and [("path/to/g/in/a", "C:path/to/a")]
+	"""
+	gallery_dirs = []
+	gallery_arch = []
+	for root, subfolders, files in scandir.walk(path):
+		if files:
+			for f in files:
+				if f.endswith(ARCHIVE_FILES):
+					arch_path = os.path.join(root, f)
+					for g in check_archive(arch_path):
+						gallery_arch.append((g, arch_path))
+									
+			if not subfolders:
+				gallery_probability = len(files)
+				for f in files:
+					if not f.endswith(IMG_FILES):
+						gallery_probability -= 1
+				if gallery_probability >= (len(files)*0.8):
+					gallery_dirs.append(root)
+	return gallery_dirs, gallery_arch
 
 def today():
 	"Returns current date in a list: [dd, Mmm, yyyy]"
@@ -128,20 +283,46 @@ def external_viewer_checker(path):
 		if allow:
 			return x
 
-def open_chapter(chapterpath):
-	chapterpath = os.path.normpath(chapterpath)
+def open_chapter(chapterpath, archive=None):
+	is_archive = True if archive else False
+	if not is_archive:
+		chapterpath = os.path.normpath(chapterpath)
+	temp_p = archive if is_archive else chapterpath
+	def find_f_img_folder():
+		filepath = os.path.join(temp_p, [x for x in sorted([y.name for y in scandir.scandir(temp_p)])\
+			if x.endswith(IMG_FILES)][0]) # Find first page
+		return filepath
+
+	def find_f_img_archive():
+		zip = ArchiveFile(temp_p)
+		t_p = os.path.join('temp', str(uuid.uuid4()))
+		os.mkdir(t_p)
+		gui_constants.NOTIF_BAR.add_text('Extracting...')
+		if is_archive:
+			if os.path.isdir(chapterpath):
+				t_p = chapterpath
+			elif chapterpath.endswith(ARCHIVE_FILES):
+				zip2 = ArchiveFile(chapterpath)
+				f_d = sorted(zip2.dir_list(True))
+				if f_d:
+					f_d = f_d[0]
+					t_p = zip2.extract(f_d, t_p)
+				else:
+					t_p = zip2.extract('', t_p)
+			else:
+				t_p = zip.extract(chapterpath, t_p)
+		else:
+			zip.extract_all(t_p) # Compatibility reasons.. TODO: REMOVE IN BETA
+		filepath = os.path.join(t_p, [x for x in sorted([y.name for y in scandir.scandir(t_p)])\
+ 			if x.endswith(IMG_FILES)][0]) # Find first page
+		filepath = os.path.abspath(filepath)
+		return filepath
+
 	try:
 		try: # folder
-			filepath = os.path.join(chapterpath, [x for x in sorted(os.listdir(chapterpath))\
-				if x[-3:] in IMG_FILES][0]) # Find first page
+			filepath = find_f_img_folder()
 		except NotADirectoryError: # archive
-			zip = ArchiveFile(chapterpath)
-			import uuid
-			t_p = os.path.join('temp', str(uuid.uuid4()))
-			zip.extract_all(t_p)
-			filepath = os.path.join(t_p, [x for x in sorted(os.listdir(t_p))\
-				if x[-3:] in IMG_FILES][0]) # Find first page
-			filepath = os.path.abspath(filepath)
+			filepath = find_f_img_archive()
 	except FileNotFoundError:
 		log.exception('Could not find chapter {}'.format(chapterpath))
 
@@ -165,28 +346,36 @@ def open_chapter(chapterpath):
 	except:
 		log_e('Could not open chapter {}'.format(os.path.split(chapterpath)[1]))
 
-	return None
-
-def get_gallery_img(path):
+def get_gallery_img(path, archive=None):
 	"""
 	Returns a path to a gallery's cover
+	Looks in archive if archive is set.
 	"""
 	# TODO: add chapter support
 	name = os.path.split(path)[1]
+	is_archive = True if archive or name.endswith(ARCHIVE_FILES) else False
+	real_path = archive if archive else path
 	img_path = None
-	if name.endswith(tuple(ARCHIVE_FILES)):
-		zip = ArchiveFile(path)
-		temp_path = os.path.join('temp', str(uuid.uuid4()))
+	if is_archive:
+		log_i('Getting image from archive')
+		zip = ArchiveFile(real_path)
+		temp_path = os.path.join(gui_constants.temp_dir, str(uuid.uuid4()))
 		os.mkdir(temp_path)
-		f_img_name = sorted([img for img in zip.namelist() if img.endswith(tuple(IMG_FILES))])[0]
+		if not archive:
+			f_img_name = sorted([img for img in zip.namelist() if img.endswith(IMG_FILES)])[0]
+		else:
+			f_img_name = sorted([img for img in zip.dir_contents(path) if img.endswith(IMG_FILES)])[0]
 		img_path = zip.extract(f_img_name, temp_path)
 		zip.close()
-	elif os.path.isdir(path):
-		first_img = sorted([img for img in os.listdir(path) if img.endswith(tuple(IMG_FILES))])[0]
-		img_path = os.path.join(path, first_img)
+	elif os.path.isdir(real_path):
+		log_i('Getting image from folder')
+		first_img = sorted([img.name for img in scandir.scandir(real_path) if img.name.endswith(tuple(IMG_FILES))])[0]
+		img_path = os.path.join(real_path, first_img)
 
 	if img_path:
 		return os.path.abspath(img_path)
+	else:
+		log_e("Could not get image")
 
 def tag_to_string(gallery_tag, simple=False):
 	"""
@@ -322,7 +511,7 @@ def tag_to_dict(string, ns_capitalize=True):
 import re as regex
 def title_parser(title):
 	"Receives a title to parse. Returns dict with 'title', 'artist' and language"
-
+	" ".join(title.split())
 	if title[-4:] in ARCHIVE_FILES:
 		title = title[:-4]
 	elif title[-3:] is '.7z':

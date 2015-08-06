@@ -1,27 +1,28 @@
-﻿"""
-This file is part of Happypanda.
-Happypanda is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 2 of the License, or
-any later version.
-Happypanda is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-You should have received a copy of the GNU General Public License
-along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
-"""
+﻿#"""
+#This file is part of Happypanda.
+#Happypanda is free software: you can redistribute it and/or modify
+#it under the terms of the GNU General Public License as published by
+#the Free Software Foundation, either version 2 of the License, or
+#any later version.
+#Happypanda is distributed in the hope that it will be useful,
+#but WITHOUT ANY WARRANTY; without even the implied warranty of
+#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#GNU General Public License for more details.
+#You should have received a copy of the GNU General Public License
+#along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
+#"""
 
-import datetime, os, threading, logging, queue, uuid # for unique filename
+import datetime, os, scandir, threading, logging, queue, uuid # for unique filename
+
 from PyQt5.QtCore import Qt, QObject, pyqtSignal
 from PyQt5.QtGui import QImage
 
-from ..utils import (today, ArchiveFile, generate_img_hash, delete_path,
-					 ARCHIVE_FILES, get_gallery_img)
-from .db import CommandQueue, ResultQueue
-from ..gui import gui_constants
-from . import db_constants
-from .db_constants import THUMBNAIL_PATH, IMG_FILES, CURRENT_DB_VERSION
+from utils import (today, ArchiveFile, generate_img_hash, delete_path,
+					 ARCHIVE_FILES, get_gallery_img, IMG_FILES)
+from database.db import CommandQueue, ResultQueue
+from database import db_constants
+
+import gui_constants
 
 PROFILE_TO_MODEL = queue.Queue()
 TestQueue = queue.Queue()
@@ -95,59 +96,58 @@ def add_method_queue(method, no_return, *args, **kwargs):
 	if not no_return:
 		return method_return.get()
 
-def gen_thumbnail(chapter_path, width=gui_constants.THUMB_W_SIZE,
-				height=gui_constants.THUMB_H_SIZE): # 2 to align it properly.. need to redo this
+def gen_thumbnail(gallery, width=gui_constants.THUMB_W_SIZE,
+				height=gui_constants.THUMB_H_SIZE, img=None):
 	"""Generates a thumbnail with unique filename in the cache dir.
 	Returns absolute path to the created thumbnail
 	"""
-	assert isinstance(chapter_path, str), "Path to chapter should be a string"
+	assert isinstance(gallery, Gallery), "gallery should be an instance of Gallery class"
 
 	img_path_queue = queue.Queue()
 	# generate a cache dir if required
-	if not os.path.isdir(THUMBNAIL_PATH):
-		os.mkdir(THUMBNAIL_PATH)
+	if not os.path.isdir(db_constants.THUMBNAIL_PATH):
+		os.mkdir(db_constants.THUMBNAIL_PATH)
 
-	def generate(cache, chap_path, w, h, img_queue):
-		try:
-			if chap_path[-4:] in ARCHIVE_FILES:
-				log_d('Generating Thumb from {}'.format(chap_path[-3:]))
-				img_path = get_gallery_img(chap_path)
+	try:
+		if not img:
+			if gallery.is_archive:
+				img_path = get_gallery_img(gallery.chapters[0], gallery.path)
 			else:
-				log_d('Generating Thumb from folder')
-				img_path = os.path.join(chap_path, [x for x in sorted(os.listdir(chap_path)) if x[-3:] in IMG_FILES][0]) #first image in chapter
-			suff = img_path[-4:] # the image ext with dot
+				img_path = get_gallery_img(gallery.chapters[0])
+		else:
+			img_path = img
+		for ext in IMG_FILES:
+			if img_path.endswith(ext):
+				suff = ext # the image ext with dot
 		
-			# generate unique file name
-			file_name = str(uuid.uuid4()) + suff
-			new_img_path = os.path.join(cache, (file_name))
-			if not os.path.isfile(img_path):
-				raise IndexError
-			# Do the scaling
-			image = QImage()
-			image.load(img_path)
-			if image.isNull():
-				raise IndexError
-			image = image.scaled(w, h, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-			image.save(new_img_path, quality=100)
-		except IndexError:
-			new_img_path = gui_constants.NO_IMAGE_PATH
+		# generate unique file name
+		file_name = str(uuid.uuid4()) + suff
+		new_img_path = os.path.join(db_constants.THUMBNAIL_PATH, (file_name))
+		if not os.path.isfile(img_path):
+			raise IndexError
+		# Do the scaling
+		image = QImage()
+		image.load(img_path)
+		if image.isNull():
+			raise IndexError
+		image = image.scaled(width, height, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+		image.save(new_img_path, quality=100)
+	except IndexError:
+		new_img_path = gui_constants.NO_IMAGE_PATH
 
-		abs_path = os.path.abspath(new_img_path)
-		img_queue.put(abs_path)
-		return True
-
-	thread = threading.Thread(target=generate, args=(THUMBNAIL_PATH,
-												  chapter_path, width, height,
-												  img_path_queue,))
-	thread.start()
-	thread.join()
-	return img_path_queue.get()
+	abs_path = os.path.abspath(new_img_path)
+	return abs_path
 
 def gallery_map(row, gallery):
 	gallery.title = row['title']
 	gallery.artist = row['artist']
 	gallery.profile = bytes.decode(row['profile'])
 	gallery.path = bytes.decode(row['series_path'])
+	gallery.is_archive = row['is_archive']
+	try:
+		gallery.path_in_archive = bytes.decode(row['path_in_archive'])
+	except TypeError:
+		pass
 	gallery.info = row['info']
 	gallery.language = row['language']
 	gallery.status = row['status']
@@ -179,10 +179,10 @@ def default_exec(object):
 			return "None"
 		else:
 			return obj
-	executing = [["""INSERT INTO series(title, artist, profile, series_path, 
+	executing = [["""INSERT INTO series(title, artist, profile, series_path, is_archive,
 					info, type, fav, status, pub_date, date_added, last_read, link, last_update,
 					times_read, exed)
-				VALUES(:title, :artist, :profile, :series_path, :info, :type, :fav,
+				VALUES(:title, :artist, :profile, :series_path, :is_archive, :info, :type, :fav,
 					:status, :pub_date, :date_added, :last_read, :link, :last_update,
 					:times_read, :exed)""",
 				{
@@ -190,6 +190,8 @@ def default_exec(object):
 				'artist':check(object.artist),
 				'profile':str.encode(object.profile),
 				'series_path':str.encode(object.path),
+				'is_archive':check(object.is_archive),
+				'path_in_archive':str.encode(object.path_in_archive),
 				'info':check(object.info),
 				'fav':check(object.fav),
 				'type':check(object.type),
@@ -230,40 +232,40 @@ class GalleryDB:
 		raise Exception("GalleryDB should not be instantiated")
 
 	@staticmethod
-	def rebuild_galleries():
+	def rebuild_gallery(gallery):
 		"Rebuilds the galleries in DB"
-		galleries = GalleryDB.get_all_gallery()
 		try:
-			log_i('Rebuilding galleries')
-			for gallery in galleries:
-				if gallery.validate():
-					log_i("Rebuilding gallery {}".format(gallery.id))
-					GalleryDB.modify_gallery(
-						gallery.id,
-						title=gallery.title,
-						artist=gallery.artist,
-						info=gallery.info,
-						type=gallery.type,
-						fav=gallery.fav,
-						tags=gallery.tags,
-						language=gallery.language,
-						status=gallery.status,
-						pub_date=gallery.pub_date,
-						link=gallery.link,
-						times_read=gallery.times_read,
-						_db_v=CURRENT_DB_VERSION,
-						exed=gallery.exed)
+			log_i('Rebuilding {}'.format(gallery.title.encode(errors='ignore')))
+			if gallery.validate():
+				log_i("Rebuilding gallery {}".format(gallery.id))
+				HashDB.del_gallery_hashes(gallery.id)
+				GalleryDB.modify_gallery(
+					gallery.id,
+					title=gallery.title,
+					artist=gallery.artist,
+					info=gallery.info,
+					type=gallery.type,
+					fav=gallery.fav,
+					tags=gallery.tags,
+					language=gallery.language,
+					status=gallery.status,
+					pub_date=gallery.pub_date,
+					link=gallery.link,
+					times_read=gallery.times_read,
+					_db_v=db_constants.CURRENT_DB_VERSION,
+					exed=gallery.exed,
+					is_archive=gallery.is_archive,
+					path_in_archive=gallery.path_in_archive)
 		except:
-			log.exception('Failed rebuilding galleries')
+			log.exception('Failed rebuilding')
 			return False
-		log_i('Finished rebuilding galleries')
 		return True
 
 	@staticmethod
-	def modify_gallery(series_id, title=None, artist=None, info=None, type=None, fav=None,
+	def modify_gallery(series_id, title=None, profile=None, artist=None, info=None, type=None, fav=None,
 				   tags=None, language=None, status=None, pub_date=None, link=None,
 				   times_read=None, series_path=None, chapters=None, _db_v=None,
-				   hashes=None, exed=None):
+				   hashes=None, exed=None, is_archive=None, path_in_archive=None):
 		"Modifies gallery with given gallery id"
 		executing = []
 		assert isinstance(series_id, int)
@@ -271,6 +273,9 @@ class GalleryDB:
 		if title:
 			assert isinstance(title, str)
 			executing.append(["UPDATE series SET title=? WHERE series_id=?", (title, series_id)])
+		if profile:
+			assert isinstance(profile, str)
+			executing.append(["UPDATE series SET profile=? WHERE series_id=?", (str.encode(profile), series_id)])
 		if artist:
 			assert isinstance(artist, str)
 			executing.append(["UPDATE series SET artist=? WHERE series_id=?", (artist, series_id)])
@@ -301,6 +306,11 @@ class GalleryDB:
 			executing.append(["UPDATE series SET db_v=? WHERE series_id=?", (_db_v, series_id)])
 		if exed:
 			executing.append(["UPDATE series SET exed=? WHERE series_id=?", (exed, series_id)])
+		if is_archive:
+			executing.append(["UPDATE series SET is_archive=? WHERE series_id=?", (is_archive, series_id)])
+		if path_in_archive:
+			executing.append(["UPDATE series SET path_in_archive=? WHERE series_id=?", (path_in_archive, series_id)])
+
 		if tags:
 			assert isinstance(tags, dict)
 			TagDB.modify_tags(series_id, tags)
@@ -426,8 +436,9 @@ class GalleryDB:
 		"Receives an object of class gallery, and appends it to DB"
 		"Adds gallery of <Gallery> class into database"
 		assert isinstance(object, Gallery), "add_gallery method only accepts gallery items"
+		log_i('Recevied gallery: {}'.format(object.path.encode(errors='ignore')))
 
-		object.profile = gen_thumbnail(object.chapters[0])
+		object.profile = gen_thumbnail(object)
 
 		executing = default_exec(object)
 		CommandQueue.put(executing)
@@ -442,8 +453,9 @@ class GalleryDB:
 	def add_gallery_return(object):
 		"""Adds gallery of <Gallery> class into database AND returns the profile generated"""
 		assert isinstance(object, Gallery), "[add_gallery_return] method only accept gallery items"
+		log_i('Recevied gallery: {}'.format(object.path.encode(errors='ignore')))
 
-		object.profile = gen_thumbnail(object.chapters[0])
+		object.profile = gen_thumbnail(object)
 		PROFILE_TO_MODEL.put(object.profile)
 
 		executing = default_exec(object)
@@ -500,18 +512,23 @@ class GalleryDB:
 			log_i('Successfully deleted: {}'.format(gallery.title.encode('utf-8', 'ignore')))
 
 	@staticmethod
-	def check_exists(name, data=None):
+	def check_exists(name, galleries=None, filter=True):
 		"""
 		Checks if provided string exists in provided sorted
-		list based on path name
+		list based on path name.
+		Note: key will be normcased
 		"""
-		if not data:
-			db_data = GalleryDB.get_all_gallery()
+		#pdb.set_trace()
+		if not galleries:
+			galleries = GalleryDB.get_all_gallery()
+
+		if filter:
 			filter_list = []
-			for gallery in db_data:
-				p = os.path.split(gallery.path)
-				filter_list.append(p[1])
+			for gallery in galleries:
+				filter_list.append(os.path.normcase(gallery.path))
 			filter_list = sorted(filter_list)
+		else:
+			filter_list = galleries
 
 		def binary_search(key):
 			low = 0
@@ -523,13 +540,46 @@ class GalleryDB:
 				elif filter_list[mid] > key:
 					high = mid - 1
 				else:
-					return mid
-			return None
+					return True
+			return False
 
-		if binary_search(name):
-			return True
-		else: return False
+		return binary_search(os.path.normcase(name))
 
+#def default_chap_exec(object):
+#	def check(obj):
+#		if obj == None:
+#			return "None"
+#		else:
+#			return obj
+#	executing = [["""INSERT INTO series(title, artist, profile, series_path, 
+#					info, type, fav, status, pub_date, date_added, last_read, link, last_update,
+#					times_read, exed)
+#				VALUES(:title, :artist, :profile, :series_path, :info, :type, :fav,
+#					:status, :pub_date, :date_added, :last_read, :link, :last_update,
+#					:times_read, :exed)""",
+#				{
+#				'title':check(object.title),
+#				'artist':check(object.artist),
+#				'profile':str.encode(object.profile),
+#				'series_path':str.encode(object.path),
+#				'is_archive':check(object.is_archive),
+#				'path_in_archive':str.encode(object.path_in_archive),
+#				'info':check(object.info),
+#				'fav':check(object.fav),
+#				'type':check(object.type),
+#				'language':check(object.language),
+#				'status':check(object.status),
+#				'pub_date':check(object.pub_date),
+#				'date_added':check(object.date_added),
+#				'last_read':check(object.last_read),
+#				'last_update':check(object.last_update),
+#				'link':str.encode(object.link),
+#				'times_read':check(object.times_read),
+#				'db_v':check(db_constants.REAL_DB_VERSION),
+#				'exed':check(object.exed)
+#				}
+#				]]
+#	return executing
 
 class ChapterDB:
 	"""
@@ -557,14 +607,14 @@ class ChapterDB:
 		"""
 		assert isinstance(gallery, Gallery) and isinstance(chapters, (list, tuple))
 		if not chapters:
-			chapters = [x for x in range(len(gallery.chapters))]
+			chapters = range(len(gallery.chapters))
 		executing = []
 	
 		for numb in chapters:
 			new_path = gallery.chapters[numb]
 			executing.append(
-			["UPDATE chapters SET chapter_path=? WHERE series_id=? AND chapter_number=?", (
-				str.encode(new_path), gallery.id, numb)])
+			["UPDATE chapters SET chapter_path=?, in_archive=? WHERE series_id=? AND chapter_number=?", (
+				str.encode(new_path), gallery.is_archive, gallery.id, numb)])
 		CommandQueue.put(executing)
 		c = ResultQueue.get()
 		del c
@@ -572,16 +622,17 @@ class ChapterDB:
 	@staticmethod
 	def add_chapters(gallery_object):
 		"Adds chapters linked to gallery into database"
-		assert isinstance(gallery_object, Gallery), "Parent gallery need to be of class gallery"
+		assert isinstance(gallery_object, Gallery), "Parent gallery need to be of class Gallery"
 		series_id = gallery_object.id
 		for chap_number in gallery_object.chapters:
 			chap_path = str.encode(gallery_object.chapters[chap_number])
 			executing = [["""
-			INSERT INTO chapters(series_id, chapter_number, chapter_path)
-			VALUES(:series_id, :chapter_number, :chapter_path)""",
+			INSERT INTO chapters(series_id, chapter_number, chapter_path, in_archive)
+			VALUES(:series_id, :chapter_number, :chapter_path, :in_archive)""",
 			{'series_id':series_id,
 			'chapter_number':chap_number,
-			'chapter_path':chap_path}
+			'chapter_path':chap_path,
+			'in_archive':gallery_object.is_archive}
 			]]
 			CommandQueue.put(executing)
 			# neccessary to keep order... feels awkward, will prolly redo this.
@@ -944,6 +995,7 @@ class HashDB:
 	Contains the following methods:
 
 	get_gallery_hashes -> returns all hashes with the given gallery id in a list
+	get_gallery_hash -> returns hash of chapter specified. If page is specified, returns hash of chapter page
 	gen_gallery_hashes <- generates hashes for gallery's chapters and inserts them to db
 	rebuild_gallery_hashes <- inserts hashes into DB only if it doesnt already exist
 	"""
@@ -966,38 +1018,172 @@ class HashDB:
 		return hashes
 
 	@staticmethod
+	def get_gallery_hash(gallery_id, chapter, page=None):
+		"""
+		returns hash of chapter. If page is specified, returns hash of chapter page
+		"""
+		assert isinstance(gallery_id, int)
+		assert isinstance(chapter, int)
+		if page:
+			assert isinstance(page, int)
+		chap_id = ChapterDB.get_chapter_id(gallery_id, chapter)
+		if not chap_id:
+			return None
+		exceuting = []
+		if page:
+			exceuting.append(["SELECT hash FROM hashes WHERE series_id=? AND chapter_id=? AND page=?",
+					 (gallery_id, chap_id, page)])
+		else:
+			exceuting.append(["SELECT hash FROM hashes WHERE series_id=? AND chapter_id=?",
+					 (gallery_id, chap_id)])
+		hashes = []
+		CommandQueue.put(exceuting)
+		c = ResultQueue.get()
+		for h in c.fetchall():
+			try:
+				hashes.append(h['hash'])
+			except KeyError:
+				pass
+		return hashes
+
+	@staticmethod
+	def gen_gallery_hash(gallery, chapter, page=None):
+		"""
+		Generate hash for a specific chapter.
+		Set page to only generate specific page
+		page: 'mid' or number
+		Returns dict with chapter number or 'mid' as key and hash as value
+		"""
+		assert isinstance(gallery, Gallery)
+		assert isinstance(chapter, int)
+		if page:
+			assert isinstance(page, (int, str))
+		if gallery.id:
+			chap_id = ChapterDB.get_chapter_id(gallery.id, chapter)
+		chap_path = gallery.chapters[chapter]
+		try:
+			if gallery.is_archive:
+				raise NotADirectoryError
+			imgs = sorted([x.path for x in scandir.scandir(chap_path)])
+			pages = {}
+			for n, i in enumerate(imgs):
+				pages[n] = i
+
+			if page:
+				pages = {}
+				if page == 'mid':
+					imgs = imgs[len(imgs)//2]
+					pages[len(imgs)//2] = imgs
+				else:
+					imgs = imgs[page]
+					pages = {page:imgs}
+
+		except NotADirectoryError:
+			temp_dir = os.path.join(gui_constants.temp_dir, str(uuid.uuid4()))
+			is_archive = gallery.is_archive
+			if is_archive:
+				zip = ArchiveFile(gallery.path)
+			else:
+				zip = ArchiveFile(chap_path)
+			pages = {}
+			if page:
+				p = 0
+				if page == 'mid':
+					if is_archive:
+						con = zip.dir_contents(chap_path)
+						p = len(con)//2
+						img = con[p]
+					else:
+						img = zip.namelist()[len(zip.namelist())//2]
+						p = len(zip.namelist())//2
+				else:
+					p = page
+					if is_archive:
+						con = zip.dir_contents(chap_path)
+						img = con[p]
+					else:
+						img = zip.namelist()[p]
+				pages = {p:zip.extract(img, temp_dir)}
+
+			else:
+				if is_archive:
+					temp_dir = zip.extract(chap_path, temp_dir)
+				else:
+					zip.extract_all(temp_dir)
+				imgs = sorted([x.path for x in scandir.scandir(temp_dir)])
+				for n, i in enumerate(imgs):
+					pages[n] = i
+
+		def look_exists(hash):
+			"""check if hash already exists in database
+			returns hash, else returns None"""
+			executing = [["SELECT hash FROM hashes WHERE hash = ?",
+				(hash,)]]
+			CommandQueue.put(executing)
+			c = ResultQueue.get()
+			try: # exists
+				return c.fetchone()['hash']
+			except TypeError: # doesnt exist
+				return None
+			except IndexError:
+				return None
+		hashes = {}
+		for i in pages:
+			with open(pages[i], 'rb') as f:
+				hashes[i] = generate_img_hash(f)
+		if gallery.id:
+			executing = []
+			for h in hashes:
+				if not look_exists(hashes[h]):
+					executing.append(["""INSERT INTO hashes(hash, series_id, chapter_id, page)
+					VALUES(?, ?, ?, ?)""", (hashes[h], gallery.id, chap_id, h)])
+			CommandQueue.put(executing)
+			c = ResultQueue.get()
+			del c
+		if page == 'mid':
+			return {'mid':list(hashes.values())[0]}
+		else:
+			return hashes
+
+	@staticmethod
 	def gen_gallery_hashes(gallery):
 		"Generates hashes for gallery's first chapter and inserts them to DB"
 		if gallery.id:
 			chap_id = ChapterDB.get_chapter_id(gallery.id, 0)
 		try:
+			if gallery.is_archive:
+				raise NotADirectoryError
 			chap_path = gallery.chapters[0]
-			imgs = os.listdir(chap_path)
+			imgs = scandir.scandir(chap_path)
 			# filter
 		except NotADirectoryError:
-			# HACK: Do not need to extract all.. can read bytes form acrhive!!!
-			zip = ArchiveFile(gallery.chapters[0])
-			chap_path = os.path.join(gui_constants.temp_dir, str(uuid.uuid4()))
-			zip.extract_all(chap_path)
-			imgs = os.listdir(chap_path)
+			# HACK: Do not need to extract all.. can read bytes from acrhive!!!
+			t_p = os.path.join(gui_constants.temp_dir, str(uuid.uuid4()))
+			if gallery.is_archive:
+				zip = ArchiveFile(gallery.path)
+				chap_path = zip.extract(gallery.chapters[0], t_p)
+			else:
+				chap_path = t_p
+				zip = ArchiveFile(gallery.chapters[0])
+				zip.extract_all(chap_path)
+			imgs = scandir.scandir(chap_path)
 
 		except FileNotFoundError:
 			return False
 
 		# filter
-		imgs = [os.path.join(chap_path,x)\
-			for x in imgs if x.endswith(tuple(IMG_FILES))]
+		imgs = [x.path for x in imgs if x.name.endswith(tuple(IMG_FILES))]
 
 		hashes = []
-		for i in imgs:
+		for n, i in enumerate(sorted(imgs)):
 			with open(i, 'rb') as img:
 				hashes.append(generate_img_hash(img))
 		
 		if gallery.id and chap_id:
 			executing = []
 			for hash in hashes:
-				executing.append(["""INSERT INTO hashes(hash, series_id, chapter_id)
-				VALUES(?, ?, ?)""", (hash, gallery.id, chap_id)])
+				executing.append(["""INSERT INTO hashes(hash, series_id, chapter_id, page)
+				VALUES(?, ?, ?, ?)""", (hash, gallery.id, chap_id, n)])
 
 			CommandQueue.put(executing)
 			c = ResultQueue.get()
@@ -1017,7 +1203,7 @@ class HashDB:
 	@staticmethod
 	def del_gallery_hashes(gallery_id):
 		"Deletes all hashes linked to the given gallery id"
-		executing = [["DELETE FROM hashes WHERE series_id=?", gallery_id]]
+		executing = [["DELETE FROM hashes WHERE series_id=?", (gallery_id,)]]
 		CommandQueue.put(executing)
 		c = ResultQueue.get()
 		del c
@@ -1054,6 +1240,8 @@ class Gallery:
 		self.title = None
 		self.profile = None
 		self.path = None
+		self.path_in_archive = ""
+		self.is_archive = 0
 		self.artist = None
 		self.chapters = {}
 		self.info = None
@@ -1069,10 +1257,11 @@ class Gallery:
 		self.last_update = None
 		self.times_read = 0
 		self.valid = False
-		self._cache_id = None
 		self._db_v = None
 		self.hashes = []
 		self.exed = 0
+		self._cache_id = 0 # used by custom delegate to cache profile
+
 	def gen_hashes(self):
 		"Generate hashes while inserting them into DB"
 		if not self.hashes:
@@ -1113,6 +1302,7 @@ class Gallery:
 		Title: {}
 		Profile Path: {}
 		Path: {}
+		Is Archive: {}
 		Author: {}
 		Description: {}
 		Favorite: {}
@@ -1126,21 +1316,44 @@ class Gallery:
 		Hashes: {}
 
 		Chapters: {}
-		""".format(self.id, self.title, self.profile, self.path, self.artist,
+		""".format(self.id, self.title, self.profile, self.path, self.is_archive, self.artist,
 			 self.info, self.fav, self.type, self.language, self.status, self.tags,
 			 self.pub_date, self.date_added, self.exed, len(self.hashes), self.chapters)
 		return string
 
+#class Chapter:
+#	"""
+#	Base class for a chapter
+#	Contains following attributes:
+#	parent_id -> parent gallery id
+#	path -> path to chapter
+#	number -> chapter number
+#	pages -> chapter pages
+#	in_archive -> 1 if the chapter path is in an archive else 0
+#	"""
+#	def __init__(self, parent_id=0):
+#		self.parent_id = parent_id
+#		self.path = ""
+#		self.number = 0
+#		self.pages = 0
+#		self.in_archive = 0
+
 class Bridge(QObject):
 	DONE = pyqtSignal(bool)
+	PROGRESS = pyqtSignal(int)
+	DATA_COUNT = pyqtSignal(int)
 	def __init__(self, parent=None):
 		super().__init__(parent)
 
 	def rebuild_galleries(self):
-		if GalleryDB.rebuild_galleries():
-			self.DONE.emit(True)
-		else:
-			self.DONE.emit(False)
+		galleries = GalleryDB.get_all_gallery()
+		if galleries:
+			self.DATA_COUNT.emit(len(galleries))
+			log_i('Rebuilding galleries')
+			for n, g in enumerate(galleries, 1):
+				GalleryDB.rebuild_gallery(g)
+				self.PROGRESS.emit(n)
+		self.DONE.emit(True)
 if __name__ == '__main__':
 	#unit testing here
 	date = today()

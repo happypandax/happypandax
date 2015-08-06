@@ -1,26 +1,27 @@
-﻿"""
-This file is part of Happypanda.
-Happypanda is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 2 of the License, or
-any later version.
-Happypanda is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-You should have received a copy of the GNU General Public License
-along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
-"""
+﻿#"""
+#This file is part of Happypanda.
+#Happypanda is free software: you can redistribute it and/or modify
+#it under the terms of the GNU General Public License as published by
+#the Free Software Foundation, either version 2 of the License, or
+#any later version.
+#Happypanda is distributed in the hope that it will be useful,
+#but WITHOUT ANY WARRANTY; without even the implied warranty of
+#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#GNU General Public License for more details.
+#You should have received a copy of the GNU General Public License
+#along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
+#"""
 
-import os, time
+import os, time, logging, uuid, random, queue, scandir
 import re as regex
-import logging, uuid, random , queue
-
-from .gallerydb import Gallery, GalleryDB, add_method_queue
-from ..gui import gui_constants
-from .. import pewnet, settings, utils
 
 from PyQt5.QtCore import QObject, pyqtSignal # need this for interaction with main thread
+
+from gallerydb import Gallery, GalleryDB, HashDB, add_method_queue
+import gui_constants
+import pewnet
+import settings
+import utils
 
 """This file contains functions to fetch gallery data"""
 
@@ -32,7 +33,8 @@ log_e = log.error
 log_c = log.critical
 
 class Fetch(QObject):
-	"""A class containing methods to fetch gallery data.
+	"""
+	A class containing methods to fetch gallery data.
 	Should be executed in a new thread.
 	Contains following methods:
 	local -> runs a local search in the given series_path
@@ -55,7 +57,6 @@ class Fetch(QObject):
 		self.series_path = ""
 		self.data = []
 		self._curr_gallery = '' # for debugging purposes
-		self._error = 'Unknown error' # for debugging purposes
 
 		# web
 		self._default_ehen_url = gui_constants.DEFAULT_EHEN_URL
@@ -63,12 +64,19 @@ class Fetch(QObject):
 		self.galleries_in_queue = []
 		self.error_galleries = []
 
+		self.galleries_from_db = GalleryDB.get_all_gallery()
+		# filter
+		filter_list = []
+		for g in self.galleries_from_db:
+			filter_list.append(os.path.normcase(g.path))
+		self.galleries_from_db = sorted(filter_list)
+
 	def local(self):
 		"""
 		Do a local search in the given series_path.
 		"""
 		try:
-			gallery_l = sorted(os.listdir(self.series_path)) #list of folders in the "Gallery" folder
+			gallery_l = sorted([p.name for p in scandir.scandir(self.series_path)]) #list of folders in the "Gallery" folder
 			mixed = False
 		except TypeError:
 			gallery_l = self.series_path
@@ -79,21 +87,19 @@ class Fetch(QObject):
 				self.DATA_COUNT.emit(len(gallery_l)) #tell model how many items are going to be added
 				log_i('Found {} items'.format(len(gallery_l)))
 				progress = 0
-				for ser_path in gallery_l: # ser_path = gallery folder title
-					self._curr_gallery = ser_path
-					if mixed:
-						path = ser_path
-						ser_path = os.path.split(path)[1]
-					else:
-						path = os.path.join(self.series_path, ser_path)
-					if not GalleryDB.check_exists(ser_path):
-						log_i('Creating gallery: {}'.format(ser_path.encode('utf-8', 'ignore')))
+				def create_gallery(path, folder_name, do_chapters=True, archive=None):
+					is_archive = True if archive else False
+					temp_p = archive if is_archive else path
+					folder_name = folder_name or path if folder_name or path else os.path.split(archive)[1]
+					if utils.check_ignore_list(temp_p) and not GalleryDB.check_exists(temp_p, self.galleries_from_db, False):
+						log_i('Creating gallery: {}'.format(folder_name.encode('utf-8', 'ignore')))
 						new_gallery = Gallery()
 						images_paths = []
 						try:
-							con = os.listdir(path) #all of content in the gallery folder
+							con = scandir.scandir(temp_p) #all of content in the gallery folder
 							log_i('Gallery source is a directory')
-							chapters = sorted([os.path.join(path,sub) for sub in con if os.path.isdir(os.path.join(path, sub))]) #subfolders
+							chapters = sorted([sub.path for sub in con if sub.is_dir() or sub.name.endswith(utils.ARCHIVE_FILES)])\
+							    if do_chapters else [] #subfolders
 							# if gallery has chapters divided into sub folders
 							if len(chapters) != 0:
 								log_i('Gallery has chapters divided in directories')
@@ -104,49 +110,91 @@ class Fetch(QObject):
 							else: #else assume that all images are in gallery folder
 								new_gallery.chapters[0] = path
 				
-							#find last edited file
-							times = set()
-							for root, dirs, files in os.walk(path, topdown=False):
-								for img in files:
-									fp = os.path.join(root, img)
-									times.add( os.path.getmtime(fp) )
-							last_updated = time.asctime(time.gmtime(max(times)))
-							new_gallery.last_update = last_updated
-							parsed = utils.title_parser(ser_path)
+							##find last edited file
+							#times = set()
+							#for root, dirs, files in os.walk(path, topdown=False):
+							#	for img in files:
+							#		fp = os.path.join(root, img)
+							#		times.add( os.path.getmtime(fp) )
+							#last_updated = time.asctime(time.gmtime(max(times)))
+							#new_gallery.last_update = last_updated
+							parsed = utils.title_parser(folder_name)
 						except NotADirectoryError:
-							if ser_path[-4:] in utils.ARCHIVE_FILES:
+							if is_archive or temp_p.endswith(utils.ARCHIVE_FILES):
 								log_i('Gallery source is an archive')
-								#TODO: add support for folders in archive
-								new_gallery.chapters[0] = path
-								parsed = utils.title_parser(ser_path[:-4])
+								new_gallery.is_archive = 1
+								new_gallery.path_in_archive = '' if not is_archive else path
+								folder_name = folder_name.replace('/','')
+								if folder_name.endswith(utils.ARCHIVE_FILES):
+									n = folder_name
+									for ext in utils.ARCHIVE_FILES:
+										n = n.replace(ext, '')
+									parsed = utils.title_parser(n)
+								else:
+									parsed = utils.title_parser(folder_name)
+								if do_chapters:
+									archive_g = sorted(utils.check_archive(temp_p))
+									if not archive_g:
+										log_w('No chapters found for {}'.format(temp_p.encode(errors='ignore')))
+										return
+									for n, g in enumerate(archive_g):
+										new_gallery.chapters[n] = g
+								else:
+									new_gallery.chapters[0] = path
 							else:
 								log_w('Skipped {} in local search'.format(path))
-								progress += 1 # update the progress bar
-								self.PROGRESS.emit(progress)
-								continue
+								return
 
 						new_gallery.title = parsed['title']
-						new_gallery.path = path
+						new_gallery.path = temp_p
 						new_gallery.artist = parsed['artist']
 						new_gallery.language = parsed['language']
 						new_gallery.info = "No description.."
-						new_gallery.chapters_size = len(new_gallery.chapters)
 
 						self.data.append(new_gallery)
-						log_i('Gallery successful created: {}'.format(ser_path.encode('utf-8', 'ignore')))
+						log_i('Gallery successful created: {}'.format(folder_name.encode('utf-8', 'ignore')))
 					else:
-						log_i('Gallery already exists: {}'.format(ser_path.encode('utf-8', 'ignore')))
+						log_i('Gallery already exists: {}'.format(folder_name.encode('utf-8', 'ignore')))
+
+				for folder_name in gallery_l: # folder_name = gallery folder title
+					self._curr_gallery = folder_name
+					if mixed:
+						path = folder_name
+						folder_name = os.path.split(path)[1]
+					else:
+						path = os.path.join(self.series_path, folder_name)
+					if gui_constants.MOVE_IMPORTED_GALLERIES and not gui_constants.OVERRIDE_MOVE_IMPORTED_IN_FETCH:
+						path = utils.move_files(path)
+					if gui_constants.SUBFOLDER_AS_GALLERY:
+						log_i("Treating each subfolder as gallery")
+						if os.path.isdir(path):
+							gallery_folders, gallery_archives = utils.recursive_gallery_check(path)
+							for gs in gallery_folders:
+									create_gallery(gs, os.path.split(gs)[1], False)
+							p_saving = {}
+							for gs in gallery_archives:
+									
+									create_gallery(gs[0], os.path.split(gs[0])[1], False, archive=gs[1])
+						elif path.endswith(utils.ARCHIVE_FILES):
+							for g in utils.check_archive(path):
+								create_gallery(g, os.path.split(g)[1], False, archive=path)
+					else:
+						log_i("Treating each subfolder as chapter")
+						create_gallery(path, folder_name, do_chapters=True)
 
 					progress += 1 # update the progress bar
 					self.PROGRESS.emit(progress)
 			except:
 				log.exception('Local Search Error:')
+				gui_constants.OVERRIDE_MOVE_IMPORTED_IN_FETCH = True # sanity check
 				self.FINISHED.emit(False)
 		else: # if gallery folder is empty
 			log_e('Local search error: Invalid directory')
 			log_e('Gallery folder is empty')
+			gui_constants.OVERRIDE_MOVE_IMPORTED_IN_FETCH = True # sanity check
 			self.FINISHED.emit(False)
 			# might want to include an error message
+		gui_constants.OVERRIDE_MOVE_IMPORTED_IN_FETCH = False
 		# everything went well
 		log_i('Local search: OK')
 		log_i('Created {} items'.format(len(self.data)))
@@ -178,7 +226,7 @@ class Fetch(QObject):
 			return None
 		# We received something from get_metadata
 		if not metadata: # metadata fetching failed
-			self.error_galleries.append(gallery)
+			self.error_galleries.append((gallery, "Metadata fetching failed"))
 			log_i("An error occured while fetching metadata with gallery: {}".format(
 				gallery.title.encode(errors='ignore')))
 			return None
@@ -189,7 +237,7 @@ class Fetch(QObject):
 				data = metadata[g.temp_url]
 			except KeyError:
 				self.AUTO_METADATA_PROGRESS.emit("No metadata found for gallery: {}".format(g.title))
-				self.error_galleries.append(g)
+				self.error_galleries.append((g, "No metadata found"))
 				log_w("No metadata found for gallery: {}".format(g.title.encode(errors='ignore')))
 				continue
 			log_i('({}/{}) Applying metadata for gallery: {}'.format(x, len(self.galleries_in_queue),
@@ -256,45 +304,6 @@ class Fetch(QObject):
 		self.galleries_in_queue.clear()
 		self.AUTO_METADATA_PROGRESS.emit('Finished applying metadata')
 		log_i('Finished applying metadata')
-		
-		#HTML PARSING OBSELETE
-		#metadata = hen.eh_gallery_parser(gallery.temp_url)
-		#if not metadata:
-		#	self.AUTO_METADATA_PROGRESS('No metadata found for gallery: {}'.format(gallery.title))
-		#	log_w('No metadata found for gallery: {}'.format(gallery.title.encode(errors='ignore')))
-		#	return False
-		#self.AUTO_METADATA_PROGRESS.emit("Applying metadata..")
-		#log_i('Applying metadata')
-		#title_artist_dict = utils.title_parser(metadata['title'])
-		#if gui_constants.REPLACE_METADATA:
-		#	gallery.title = title_artist_dict['title']
-		#	if title_artist_dict['artist']:
-		#		gallery.artist = title_artist_dict['artist']
-		#	gallery.type = metadata['type']
-		#	gallery.language = metadata['language']
-		#	gallery.pub_date = metadata['published']
-		#	gallery.tags = metadata['tags']
-		#else:
-		#	if not gallery.title:
-		#		gallery.title = title_artist_dict['title']
-		#	if not gallery.artist:
-		#		gallery.artist = title_artist_dict['artist']
-		#	if not gallery.type:
-		#		gallery.type = metadata['type']
-		#	if not gallery.language:
-		#		gallery.language = metadata['language']
-		#	if not gallery.pub_date:
-		#		gallery.pub_date = metadata['published']
-		#	if not gallery.tags:
-		#		gallery.tags = metadata['tags']
-		#	else:
-		#		for ns in metadata['tags']:
-		#			if ns in gallery.tags:
-		#				for tag in metadata['tags'][ns]:
-		#					if not tag in gallery.tags[ns]:
-		#						gallery.tags[ns].append(tag)
-		#			else:
-		#				gallery.tags[ns] = metadata['tags'][ns]
 
 	def auto_web_metadata(self):
 		"""
@@ -322,37 +331,19 @@ class Fetch(QObject):
 			hen.LAST_USED = time.time()
 			self.AUTO_METADATA_PROGRESS.emit("Checking gallery urls...")
 
-			error_galleries = []
 			fetched_galleries = []
 			checked_pre_url_galleries = []
 			for x, gallery in enumerate(self.galleries, 1):
 				self.AUTO_METADATA_PROGRESS.emit("({}/{}) Generating gallery hash: {}".format(x, len(self.galleries), gallery.title))
+				log_i("Generating gallery hash: {}".format(gallery.title.encode(errors='ignore')))
 				hash = None
-				if gui_constants.HASH_GALLERY_PAGES == 'all':
-					if not gallery.hashes:
-						result = add_method_queue(gallery.gen_hashes, False)
-						if not result:
-							continue
+				if not gallery.hashes:
+					hash_dict = add_method_queue(HashDB.gen_gallery_hash, False, gallery, 0, 'mid')
+					hash = hash_dict['mid']
+				else:
 					hash = gallery.hashes[random.randint(0, len(gallery.hashes)-1)]
-				elif gui_constants.HASH_GALLERY_PAGES == '1':
-					try:
-						chap_path = gallery.chapters[0]
-						imgs = os.listdir(chap_path)
-						# filter
-						img = [os.path.join(chap_path, x) for x in imgs\
-							if x.endswith(tuple(utils.IMG_FILES))][len(imgs)//2]
-						with open(img, 'rb') as f:
-							hash = utils.generate_img_hash(f)
-					except NotADirectoryError:
-						zip = ArchiveFile(gallery.chapters[0])
-						img = [x for x in zip.namelist()\
-							if x.endswith(tuple(utils.IMG_FILES))][len(zip.namelist())//2]
-						hash = utils.generate_img_hash(zip.open(img, fp=True))
-					except FileNotFoundError:
-						self.AUTO_METADATA_PROGRESS
-						continue
 				if not hash:
-					error_galleries.append(gallery)
+					self.error_galleries.append((gallery, "Could not generate hash"))
 					log_e("Could not generate hash for gallery: {}".format(gallery.title.encode(errors='ignore')))
 					continue
 				gallery.hash = hash
@@ -373,7 +364,7 @@ class Fetch(QObject):
 					self.FINISHED.emit(True)
 					return
 				if not gallery.hash in found_url:
-					self.error_galleries.append(gallery)
+					self.error_galleries.append((gallery, "Could not find url for gallery"))
 					self.AUTO_METADATA_PROGRESS.emit("Could not find url for gallery: {}".format(gallery.title))
 					log_w('Could not find url for gallery: {}'.format(gallery.title.encode(errors='ignore')))
 					continue
@@ -419,16 +410,16 @@ class Fetch(QObject):
 			gui_constants.GLOBAL_EHEN_LOCK = False
 			if not self.error_galleries:
 				self.AUTO_METADATA_PROGRESS.emit('Done! Successfully fetched metadata for {} galleries.'.format(len(self.galleries)))
-				gui_constants.SYSTEM_TRAY.showMessage('Done', 'Auto metadata fetcher is done!', minimized=True)
+				gui_constants.SYSTEM_TRAY.showMessage('Done', 'Successfully fetched metadata for {} galleries!', minimized=True)
 				self.FINISHED.emit(True)
 			else:
-				self.AUTO_METADATA_PROGRESS.emit('Done! Could not fetch metadata for  {} galleries. Check happypanda.log for more details!'.format(len(self.error_galleries)))
+				self.AUTO_METADATA_PROGRESS.emit('Done! Could not fetch metadata for {} galleries. Check happypanda.log for more details!'.format(len(self.error_galleries)))
 				gui_constants.SYSTEM_TRAY.showMessage('Done!',
-										  'Could not fetch metadat for {} galleries. Check happypanda.log for more details!'.format(len(self.error_galleries)),
+										  'Could not fetch metadata for {} galleries. Check happypanda.log for more details!'.format(len(self.error_galleries)),
 										  minimized=True)
-				for e in error_galleries:
-					log_e("An error occured with gallery: {}".format.title.encode(errors='ignore'))
-				self.FINISHED.emit(False)
+				for tup in self.error_galleries:
+					log_e("{}: {}".format(tup[1], tup[0].title.encode(errors='ignore')))
+				self.FINISHED.emit(self.error_galleries)
 		else:
 			log_e('Auto metadata fetcher is already running')
 			self.AUTO_METADATA_PROGRESS.emit('Auto metadata fetcher is already running!')

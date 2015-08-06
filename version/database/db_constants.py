@@ -13,13 +13,10 @@ along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
-from ..utils import IMG_FILES as IMF
-
-IMG_FILES = IMF
 
 THUMBNAIL_PATH = os.path.join("db", "thumbnails")
 DB_PATH = os.path.join("db","sadpanda.db")
-DB_VERSION = [0.19, 0.18] # a list of accepted db versions. E.g. v3.5 will be backward compatible with v3.1 etc.
+DB_VERSION = [0.21] # a list of accepted db versions. E.g. v3.5 will be backward compatible with v3.1 etc.
 CURRENT_DB_VERSION = DB_VERSION[0]
 REAL_DB_VERSION = DB_VERSION[len(DB_VERSION)-1]
 METHOD_QUEUE = None

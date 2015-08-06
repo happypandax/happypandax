@@ -98,12 +98,20 @@ def set(value, section, key=None):
 	Adds a new entry in config.
 	Remember everything is converted to string
 	"""
+	val_as_str = value
+	if not section in config:
+		config[section] = {}
+	if isinstance(value, (list, tuple)):
+		val_as_str = ""
+		for n, v in enumerate(value):
+			if n == len(value)-1:
+				val_as_str += "{}".format(v)
+			else:
+				val_as_str += "{},".format(v)
 	if key:
-		if not section in config:
-			config[section] = {}
-		config[section][key] = str(value)
+		config[section][key] = str(val_as_str)
 	else:
-		config[section] = str(value)
+		config[section] = str(val_as_str)
 
 
 class Properties:

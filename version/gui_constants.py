@@ -11,23 +11,24 @@
 #along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-from .. import settings
+import settings
 """Contains constants to be used by several modules"""
 
 # Version number
-vs  = '0.19'
+vs  = '0.20'
+DEBUG = False
 
 get = settings.get
 
-current_dir, f = os.path.split(os.path.realpath(__file__))
-static_dir = os.path.join(current_dir, "static")
+#current_dir, f = os.path.split(os.path.realpath(__file__))
+static_dir = os.path.join(os.getcwd(), "res")
 temp_dir = os.path.join('temp')
 
 #default stylesheet path
 default_stylesheet_path = static_dir + '/' + "style.css"
 user_stylesheet_path = ""
 
-FIRST_TIME_LEVEL = get(1, 'Application', 'first time level', int)
+FIRST_TIME_LEVEL = get(2, 'Application', 'first time level', int)
 
 # sizes
 MAIN_W = 1029 # main window
@@ -73,17 +74,30 @@ LIST_PATH = os.path.join(static_dir, "list.png")
 NO_IMAGE_PATH = os.path.join(static_dir, "default.jpg")
 
 # Monitored Paths
+OVERRIDE_MONITOR = False # set true to make watchers to ignore next item (will be set to False)
 LOOK_NEW_GALLERY_STARTUP = get(True, 'Application', 'look new gallery startup', bool)
 LOOK_NEW_GALLERY_AUTOADD = get(False, 'Application', 'look new gallery autoadd', bool)
 ENABLE_MONITOR = get(True, 'Application', 'enable monitor', bool)
 MONITOR_PATHS = [x for x in get('', 'Application', 'monitor paths', str).split(',') if x]
+IGNORE_PATHS = [x for x in get('', 'Application', 'ignore paths', str).split(',') if x]
 
 # GENERAL
-SCROLL_TO_NEW_GALLERIES = get(False, 'General', 'scroll to new galleries', bool)
-RANDOM_GALLERY_CHAPTERS = get(False, 'General', 'random gallery chapters', bool)
+OVERRIDE_MOVE_IMPORTED_IN_FETCH = False # set to true to make a fetch instance ignore moving files (will be set to false)
+MOVE_IMPORTED_GALLERIES = get(False, 'Application', 'move imported galleries', bool)
+IMPORTED_GALLERY_DEF_PATH = get('', 'Application', 'imported gallery def path', str)
+SCROLL_TO_NEW_GALLERIES = get(False, 'Application', 'scroll to new galleries', bool)
+OPEN_RANDOM_GALLERY_CHAPTERS = get(False, 'Application', 'open random gallery chapters', bool)
+SUBFOLDER_AS_GALLERY = get(False, 'Application', 'subfolder as gallery', bool)
+RENAME_GALLERY_SOURCE = get(False, 'Application', 'rename gallery source', bool)
+
+# ADVANCED
+GALLERY_DATA_FIX_REGEX = get("", 'Advanced', 'gallery data fix regex', str)
+GALLERY_DATA_FIX_TITLE = get(True, 'Advanced', 'gallery data fix title', bool)
+GALLERY_DATA_FIX_ARTIST = get(True, 'Advanced', 'gallery data fix artist', bool)
+GALLERY_DATA_FIX_REPLACE = get("", 'Advanced', 'gallery data fix replace', str)
 
 # HASH
-HASH_GALLERY_PAGES = get('all', 'General', 'hash gallery pages', int, str)
+HASH_GALLERY_PAGES = get('all', 'Advanced', 'hash gallery pages', int, str)
 
 # WEB
 GLOBAL_EHEN_TIME = get(10, 'Web', 'global ehen time offset', int)
@@ -112,7 +126,6 @@ POPUP_HEIGHT = get(220, 'Visual', 'popup.h', int)
 # Gallery
 CURRENT_SORT = get('title', 'General', 'current sort')
 HIGH_QUALITY_THUMBS = get(False, 'Visual', 'high quality thumbs', bool)
-REFRESH_GALLERY_ICONS = False
 USE_EXTERNAL_PROG_ICO = get(True, 'Visual', 'use external prog ico', bool)
 DISPLAY_GALLERY_TYPE = get(True, 'Visual', 'display gallery type', bool)
 GALLERY_FONT = (get('Segoe UI', 'Visual', 'gallery font family', str),

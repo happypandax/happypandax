@@ -1,16 +1,16 @@
-﻿from PyQt5.QtWidgets import (QVBoxLayout, QHBoxLayout, QListWidget, QWidget,
+﻿import logging, os
+
+from PyQt5.QtWidgets import (QVBoxLayout, QHBoxLayout, QListWidget, QWidget,
 							 QListWidgetItem, QStackedLayout, QPushButton,
 							 QLabel, QTabWidget, QLineEdit, QGroupBox, QFormLayout,
 							 QCheckBox, QRadioButton, QSpinBox, QSizePolicy,
 							 QScrollArea, QFontDialog)
 from PyQt5.QtCore import pyqtSignal, Qt
-
-import logging
-
-from .. import settings
-from . import gui_constants
-from .misc import FlowLayout, Spacer, PathLineEdit
 from PyQt5.QtGui import QPalette, QPixmapCache
+
+from misc import FlowLayout, Spacer, PathLineEdit
+import settings
+import gui_constants
 
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -124,6 +124,15 @@ class SettingsDialog(QWidget):
 		self.prefetch_item_amnt = gui_constants.PREFETCH_ITEM_AMOUNT
 
 	def restore_options(self):
+
+		# App / General
+		self.scroll_to_new_gallery.setChecked(gui_constants.SCROLL_TO_NEW_GALLERIES)
+		self.move_imported_gs.setChecked(gui_constants.MOVE_IMPORTED_GALLERIES)
+		self.move_imported_def_path.setText(gui_constants.IMPORTED_GALLERY_DEF_PATH)
+		self.open_random_g_chapters.setChecked(gui_constants.OPEN_RANDOM_GALLERY_CHAPTERS)
+		self.subfolder_as_chapters.setChecked(gui_constants.SUBFOLDER_AS_GALLERY)
+		self.rename_g_source_group.setChecked(gui_constants.RENAME_GALLERY_SOURCE)
+
 		# App / Monitor / Misc
 		self.enable_monitor.setChecked(gui_constants.ENABLE_MONITOR)
 		self.look_new_gallery_startup.setChecked(gui_constants.LOOK_NEW_GALLERY_STARTUP)
@@ -131,6 +140,10 @@ class SettingsDialog(QWidget):
 		# App / Monitor / Folders
 		for path in gui_constants.MONITOR_PATHS:
 			self.add_folder_monitor(path)
+
+		# App / Monitor / Ignore list
+		for path in gui_constants.IGNORE_PATHS:
+			self.add_ignore_path(path)
 
 		# Web / General
 		if 'g.e-hentai' in gui_constants.DEFAULT_EHEN_URL:
@@ -189,8 +202,29 @@ class SettingsDialog(QWidget):
 		# Advanced / Misc / External Viewer
 		self.external_viewer_path.setText(gui_constants.EXTERNAL_VIEWER_PATH)
 
+		# Advanced / Gallery / Gallery Text Fixer
+		self.g_data_regex_fix_edit.setText(gui_constants.GALLERY_DATA_FIX_REGEX)
+		self.g_data_replace_fix_edit.setText(gui_constants.GALLERY_DATA_FIX_REPLACE)
+		self.g_data_fixer_title.setChecked(gui_constants.GALLERY_DATA_FIX_TITLE)
+		self.g_data_fixer_artist.setChecked(gui_constants.GALLERY_DATA_FIX_ARTIST)
+
 	def accept(self):
 		set = settings.set
+
+		# App / General
+		gui_constants.SCROLL_TO_NEW_GALLERIES = self.scroll_to_new_gallery.isChecked()
+		set(gui_constants.SCROLL_TO_NEW_GALLERIES, 'Application', 'scroll to new galleries')
+		gui_constants.MOVE_IMPORTED_GALLERIES = self.move_imported_gs.isChecked()
+		set(gui_constants.MOVE_IMPORTED_GALLERIES, 'Application', 'move imported galleries')
+		if not self.move_imported_def_path.text() or os.path.exists(self.move_imported_def_path.text()):
+			gui_constants.IMPORTED_GALLERY_DEF_PATH = self.move_imported_def_path.text()
+			set(gui_constants.IMPORTED_GALLERY_DEF_PATH, 'Application', 'imported gallery def path')
+		gui_constants.OPEN_RANDOM_GALLERY_CHAPTERS = self.open_random_g_chapters.isChecked()
+		set(gui_constants.OPEN_RANDOM_GALLERY_CHAPTERS, 'Application', 'open random gallery chapters')
+		gui_constants.SUBFOLDER_AS_GALLERY = self.subfolder_as_chapters.isChecked()
+		set(gui_constants.SUBFOLDER_AS_GALLERY, 'Application', 'subfolder as gallery')
+		gui_constants.RENAME_GALLERY_SOURCE = self.rename_g_source_group.isChecked()
+		set(gui_constants.RENAME_GALLERY_SOURCE, 'Application', 'rename gallery source')
 
 		# App / Monitor / misc
 		gui_constants.ENABLE_MONITOR = self.enable_monitor.isChecked()
@@ -200,19 +234,25 @@ class SettingsDialog(QWidget):
 		gui_constants.LOOK_NEW_GALLERY_AUTOADD = self.auto_add_new_galleries.isChecked()
 		set(gui_constants.LOOK_NEW_GALLERY_AUTOADD, 'Application', 'look new gallery autoadd')
 		# App / Monitor / folders
-		n = self.folders_layout.rowCount()
-		paths = ''
-		for x in range(n):
-			item = self.folders_layout.takeAt(x+1)
-			l_edit = item.widget()
+		paths = []
+		folder_p_widgets = self.take_all_layout_widgets(self.folders_layout)
+		for x, l_edit in enumerate(folder_p_widgets):
 			p = l_edit.text()
 			if p:
-				if x == n-1:
-					paths += '{}'.format(p)
-				else:
-					paths += '{},'.format(p)
+				paths.append(p)
+
 		set(paths, 'Application', 'monitor paths')
-		gui_constants.MONITOR_PATHS = paths.split(',')
+		gui_constants.MONITOR_PATHS = paths
+		# App / Monitor / ignore list
+		paths = []
+		ignore_p_widgets = self.take_all_layout_widgets(self.ignore_path_l)
+		for x, l_edit in enumerate(ignore_p_widgets):
+			p = l_edit.text()
+			if p:
+				paths.append(p)
+		set(paths, 'Application', 'ignore paths')
+		gui_constants.IGNORE_PATHS = paths
+
 
 		# Web / General
 		if self.default_ehen_url.isChecked():
@@ -322,6 +362,17 @@ class SettingsDialog(QWidget):
 		gui_constants.EXTERNAL_VIEWER_PATH = self.external_viewer_path.text()
 		set(gui_constants.EXTERNAL_VIEWER_PATH,'Advanced', 'external viewer path')
 
+		# Advanced / General / Gallery Text Fixer
+		gui_constants.GALLERY_DATA_FIX_REGEX = self.g_data_regex_fix_edit.text()
+		set(gui_constants.GALLERY_DATA_FIX_REGEX, 'Advanced', 'gallery data fix regex')
+		gui_constants.GALLERY_DATA_FIX_TITLE = self.g_data_fixer_title.isChecked()
+		set(gui_constants.GALLERY_DATA_FIX_TITLE, 'Advanced', 'gallery data fix title')
+		gui_constants.GALLERY_DATA_FIX_ARTIST = self.g_data_fixer_artist.isChecked()
+		set(gui_constants.GALLERY_DATA_FIX_ARTIST, 'Advanced', 'gallery data fix artist')
+		gui_constants.GALLERY_DATA_FIX_REPLACE = self.g_data_replace_fix_edit.text()
+		set(gui_constants.GALLERY_DATA_FIX_REPLACE, 'Advanced', 'gallery data fix replace')
+
+
 		settings.save()
 		self.close()
 
@@ -334,12 +385,76 @@ class SettingsDialog(QWidget):
 		#	title_lbl.setFont(f)
 		#	return title_lbl
 
+		def groupbox(name, layout, parent):
+			g = QGroupBox(name, parent)
+			l = layout(g)
+			return g, l
+
+		def option_lbl_checkbox(text, optiontext, parent=None):
+			l = QLabel(text)
+			c = QCheckBox(text, parent)
+			return l, c
+
+		def new_tab(name, parent, scroll=False):
+			new_t = QWidget(parent)
+			new_l = QFormLayout(new_t)
+			if scroll:
+				scr = QScrollArea(parent)
+				scr.setBackgroundRole(QPalette.Base)
+				scr.setWidget(new_t)
+				scr.setWidgetResizable(True)
+				parent.addTab(scr, name)
+				return new_t, new_l
+			else:
+				parent.addTab(new_t, name)
+			return new_t, new_l
+
+
 		# App
 		application = QTabWidget()
 		self.application_index = self.right_panel.addWidget(application)
 		application_general = QWidget()
+		app_general_m_l = QFormLayout(application_general)
 		application.addTab(application_general, 'General')
-		application.setTabEnabled(0, False)
+
+		# App / General / gallery
+
+		app_gallery_group, app_gallery_l = groupbox('Gallery', QFormLayout, self)
+		app_general_m_l.addRow(app_gallery_group)
+		self.subfolder_as_chapters = QCheckBox("Treat subfolders as galleries (applies in archives too)")
+		subf_info = QLabel("Behaviour of 'Scan for new galleries on startup' option will be affected.")
+		subf_info.setWordWrap(True)
+		app_gallery_l.addRow('Note:', subf_info)
+		app_gallery_l.addRow(self.subfolder_as_chapters)
+		self.scroll_to_new_gallery = QCheckBox("Scroll to newly added gallery")
+		self.scroll_to_new_gallery.setDisabled(True)
+		app_gallery_l.addRow(self.scroll_to_new_gallery)
+		self.move_imported_gs, move_imported_gs_l = groupbox('Move imported galleries',
+													   QFormLayout, app_gallery_group)
+		self.move_imported_gs.setCheckable(True)
+		self.move_imported_def_path = PathLineEdit()
+		move_imported_gs_l.addRow('Directory:', self.move_imported_def_path)
+		app_gallery_l.addRow(self.move_imported_gs)
+		self.rename_g_source_group, rename_g_source_l = groupbox('Rename gallery source',
+													  QFormLayout, app_gallery_group)
+		self.rename_g_source_group.setCheckable(True)
+		self.rename_g_source_group.setDisabled(True)
+		app_gallery_l.addRow(self.rename_g_source_group)
+		rename_g_source_l.addRow(QLabel("Check what to include when renaming gallery source. (Same order)"))
+		rename_g_source_flow_l = FlowLayout()
+		rename_g_source_l.addRow(rename_g_source_flow_l)
+		self.rename_artist = QCheckBox("Artist")
+		self.rename_title = QCheckBox("Title")
+		self.rename_lang = QCheckBox("Language")
+		self.rename_title.setChecked(True)
+		self.rename_title.setDisabled(True)
+		rename_g_source_flow_l.addWidget(self.rename_artist)
+		rename_g_source_flow_l.addWidget(self.rename_title)
+		rename_g_source_flow_l.addWidget(self.rename_lang)
+		random_gallery_opener, random_g_opener_l = groupbox('Random Gallery Opener', QFormLayout, app_gallery_group)
+		app_gallery_l.addRow(random_gallery_opener)
+		self.open_random_g_chapters = QCheckBox("Open random gallery chapters")
+		random_g_opener_l.addRow(self.open_random_g_chapters)
 
 		# App / Monitor
 		app_monitor_page = QScrollArea()
@@ -348,7 +463,6 @@ class SettingsDialog(QWidget):
 		app_monitor_page.setWidgetResizable(True)
 		app_monitor_page.setWidget(app_monitor_dummy)
 		application.addTab(app_monitor_page, 'Monitoring')
-		application.setCurrentIndex(1)
 		app_monitor_m_l = QVBoxLayout(app_monitor_dummy)
 		# App / Monitor / misc
 		app_monitor_misc_group = QGroupBox('General *', self)
@@ -380,6 +494,21 @@ class SettingsDialog(QWidget):
 		app_monitor_folders_m_l.addWidget(app_monitor_folders_add, 0, Qt.AlignRight)
 		self.folders_layout = QFormLayout()
 		app_monitor_folders_m_l.addLayout(self.folders_layout)
+
+		app_ignore, app_ignore_m_l = new_tab('Ignore', application, True)
+		# App / Ignore
+		app_ignore_group, app_ignore_list_l = groupbox('List', QVBoxLayout, app_monitor_dummy)
+		app_ignore_m_l.addRow(app_ignore_group)
+		add_buttons_l = QHBoxLayout()
+		app_ignore_add_a = QPushButton('Add archive')
+		app_ignore_add_a.clicked.connect(lambda: self.add_ignore_path(dir=False))
+		app_ignore_add_f = QPushButton('Add directory')
+		app_ignore_add_f.clicked.connect(self.add_ignore_path)
+		add_buttons_l.addWidget(app_ignore_add_a, 0, Qt.AlignRight)
+		add_buttons_l.addWidget(app_ignore_add_f, 1, Qt.AlignRight)
+		app_ignore_list_l.addLayout(add_buttons_l)
+		self.ignore_path_l = QFormLayout()
+		app_ignore_list_l.addLayout(self.ignore_path_l)
 
 		# Web
 		web = QTabWidget()
@@ -413,7 +542,7 @@ class SettingsDialog(QWidget):
 		self.web_time_offset.setMinimum(4)
 		self.web_time_offset.setMaximum(99)
 		metadata_fetcher_m_l.addRow(time_offset_info)
-		metadata_fetcher_m_l.addRow('Requests delay in', self.web_time_offset)
+		metadata_fetcher_m_l.addRow('Requests delay in seconds', self.web_time_offset)
 		replace_metadata_info = QLabel('When fetching for metadata the new metadata will be appended'+
 								 ' to the gallery by default. This means that new data will only be set if'+
 								 ' the field was empty. There is however a special case for namespace & tags.'+
@@ -501,10 +630,8 @@ class SettingsDialog(QWidget):
 		grid_gallery_display = FlowLayout()
 		grid_gallery_main_l.addRow('Display on gallery:', grid_gallery_display)
 		self.external_viewer_ico = QCheckBox('External Viewer')
-		self.external_viewer_ico.setDisabled(True)
 		grid_gallery_display.addWidget(self.external_viewer_ico)
 		self.gallery_type_ico = QCheckBox('File Type')
-		self.gallery_type_ico.setDisabled(True)
 		grid_gallery_display.addWidget(self.gallery_type_ico)
 		gallery_text_mode = QWidget()
 		grid_gallery_main_l.addRow('Text Mode:', gallery_text_mode)
@@ -616,7 +743,7 @@ class SettingsDialog(QWidget):
 		misc_external_viewer_l = QFormLayout()
 		misc_external_viewer.setLayout(misc_external_viewer_l)
 		misc_external_viewer_l.addRow(QLabel(gui_constants.SUPPORTED_EXTERNAL_VIEWER_LBL))
-		self.external_viewer_path = PathLineEdit(misc_external_viewer, False)
+		self.external_viewer_path = PathLineEdit(misc_external_viewer, False, '')
 		self.external_viewer_path.setPlaceholderText('Right/Left-click to open folder explorer.'+
 							  ' Leave empty to use default viewer')
 		self.external_viewer_path.setToolTip('Right/Left-click to open folder explorer.'+
@@ -624,11 +751,33 @@ class SettingsDialog(QWidget):
 		self.external_viewer_path.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
 		misc_external_viewer_l.addRow('Path:', self.external_viewer_path)
 
+		# Advanced / Gallery
+		advanced_gallery, advanced_gallery_m_l = new_tab('Gallery', advanced)
+		advanced_gallery.setEnabled(False)
+		g_data_fixer_group, g_data_fixer_l =  groupbox('Gallery Renamer', QFormLayout, advanced_gallery)
+		advanced_gallery_m_l.addRow(g_data_fixer_group)
+		g_data_regex_fix_lbl = QLabel("Rename a gallery through regular expression."+
+								" A regex cheatsheet is located at About -> Regex Cheatsheet.")
+		g_data_regex_fix_lbl.setWordWrap(True)
+		g_data_fixer_l.addRow(g_data_regex_fix_lbl)
+		self.g_data_regex_fix_edit = QLineEdit()
+		self.g_data_regex_fix_edit.setPlaceholderText("Valid regex")
+		g_data_fixer_l.addRow('Regex:', self.g_data_regex_fix_edit)
+		self.g_data_replace_fix_edit = QLineEdit()
+		self.g_data_replace_fix_edit.setPlaceholderText("Leave empty to delete matches")
+		g_data_fixer_l.addRow('Replace with:', self.g_data_replace_fix_edit)
+		g_data_fixer_options = FlowLayout()
+		g_data_fixer_l.addRow(g_data_fixer_options)
+		self.g_data_fixer_title = QCheckBox("Title", g_data_fixer_group)
+		self.g_data_fixer_artist = QCheckBox("Artist", g_data_fixer_group)
+		g_data_fixer_options.addWidget(self.g_data_fixer_title)
+		g_data_fixer_options.addWidget(self.g_data_fixer_artist)
+
 
 		# Advanced / Database
 		advanced_db_page = QWidget()
 		advanced.addTab(advanced_db_page, 'Database')
-		advanced.setTabEnabled(1, False)
+		advanced.setTabEnabled(2, False)
 
 
 		# About
@@ -729,7 +878,15 @@ class SettingsDialog(QWidget):
 		l_edit = PathLineEdit()
 		l_edit.setText(path)
 		n = self.folders_layout.rowCount() + 1
-		self.folders_layout.addRow('Dir {}'.format(n), l_edit)
+		self.folders_layout.addRow('{}'.format(n), l_edit)
+
+	def add_ignore_path(self, path='', dir=True):
+		if not isinstance(path, str):
+			path = ''
+		l_edit = PathLineEdit(dir=dir)
+		l_edit.setText(path)
+		n = self.ignore_path_l.rowCount() + 1
+		self.ignore_path_l.addRow('{}'.format(n), l_edit)
 
 	def color_checker(self, txt):
 		allow = False
@@ -737,6 +894,15 @@ class SettingsDialog(QWidget):
 			if txt[0] == '#':
 				allow = True
 		return allow
+
+	def take_all_layout_widgets(self, l):
+		n = l.rowCount()
+		items = []
+		for x in range(n):
+			item = l.takeAt(x+1)
+			items.append(item.widget())
+		return items
+
 
 	def choose_font(self):
 		tup = QFontDialog.getFont(self)

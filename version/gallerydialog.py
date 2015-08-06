@@ -1,16 +1,17 @@
-﻿from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QDesktopWidget, QGroupBox,
+﻿import queue, os, threading, random, logging, time, scandir
+from datetime import datetime
+
+from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QDesktopWidget, QGroupBox,
 							 QHBoxLayout, QFormLayout, QLabel, QLineEdit,
 							 QPushButton, QProgressBar, QTextEdit, QComboBox,
 							 QDateEdit, QFileDialog, QMessageBox, QScrollArea)
 from PyQt5.QtCore import (pyqtSignal, Qt, QPoint, QDate, QThread, QTimer)
-from datetime import datetime
 
-import queue, os, threading, random, logging, time
-
-from . import gui_constants
-from .misc import return_tag_completer_TextEdit, ClickedLabel
-from .. import utils
-from ..database import gallerydb, fetch
+from misc import return_tag_completer_TextEdit, ClickedLabel
+import gui_constants
+import utils
+import gallerydb
+import fetch
 
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -48,11 +49,19 @@ class GalleryDialog(QWidget):
 		final_buttons = QHBoxLayout()
 		final_buttons.setAlignment(Qt.AlignRight)
 		m_l.addLayout(final_buttons)
-		done = QPushButton("Done")
-		done.setDefault(True)
+		self.done = QPushButton("Done")
+		self.done.setDefault(True)
 		cancel = QPushButton("Cancel")
 		final_buttons.addWidget(cancel)
-		final_buttons.addWidget(done)
+		final_buttons.addWidget(self.done)
+
+		def new_gallery():
+			self.setWindowTitle('Add a new gallery')
+			self.newUI()
+			self.commonUI()
+			self.done.clicked.connect(self.accept)
+			cancel.clicked.connect(self.reject)
+
 		if arg:
 			if isinstance(arg, list):
 				self.setWindowTitle('Edit gallery')
@@ -61,21 +70,13 @@ class GalleryDialog(QWidget):
 					gallery = index.data(Qt.UserRole+1)
 					self.commonUI()
 					self.setGallery(gallery)
-				done.clicked.connect(self.accept_edit)
+				self.done.clicked.connect(self.accept_edit)
 				cancel.clicked.connect(self.reject_edit)
 			elif isinstance(arg, str):
-				self.setWindowTitle('Add a new gallery')
-				self.newUI()
-				self.commonUI()
+				new_gallery()
 				self.choose_dir(arg)
-				done.clicked.connect(self.accept)
-				cancel.clicked.connect(self.reject)
 		else:
-			self.setWindowTitle('Add a new gallery')
-			self.newUI()
-			self.commonUI()
-			done.clicked.connect(self.accept)
-			cancel.clicked.connect(self.reject)
+			new_gallery()
 
 		log_d('GalleryDialog: Create UI: successful')
 		#TODO: Implement a way to mass add galleries
@@ -215,7 +216,7 @@ class GalleryDialog(QWidget):
 		try:
 			self.gallery_time = datetime.strptime(gallery_pub_date[1], '%H:%M:%S').time()
 		except IndexError:
-			self.gallery_time = None
+			pass
 		qdate_pub_date = QDate.fromString(gallery_pub_date[0], "yyyy-MM-dd")
 		self.pub_edit.setDate(qdate_pub_date)
 
@@ -249,6 +250,8 @@ class GalleryDialog(QWidget):
 		'a': files
 		Or pass a predefined path
 		"""
+		self.done.show()
+		self.file_exists_lbl.hide()
 		if mode == 'a':
 			name = QFileDialog.getOpenFileName(self, 'Choose archive',
 											  filter=utils.FILE_FILTER)
@@ -260,6 +263,8 @@ class GalleryDialog(QWidget):
 				name = mode
 			else:
 				return None
+		if not name:
+			return
 		head, tail = os.path.split(name)
 		name = os.path.join(head, tail)
 		parsed = utils.title_parser(tail)
@@ -269,11 +274,25 @@ class GalleryDialog(QWidget):
 		l_i = self.lang_box.findText(parsed['language'])
 		if l_i != -1:
 			self.lang_box.setCurrentIndex(l_i)
-
-		if gallerydb.GalleryDB.check_exists(tail):
-			self.file_exists_lbl.setText('<font color="red">Gallery already exists</font>')
+		if gallerydb.GalleryDB.check_exists(name):
+			self.file_exists_lbl.setText('<font color="red">Gallery already exists.</font>')
 			self.file_exists_lbl.show()
-		else: self.file_exists_lbl.hide()
+		# check galleries
+		gs = 1
+		if mode == 'a':
+			gs = len(utils.check_archive(name))
+		elif mode == 'f':
+			g_dirs, g_archs = utils.recursive_gallery_check(name)
+			gs = len(g_dirs) + len(g_archs)
+		if gs == 0:
+			self.file_exists_lbl.setText('<font color="red">Invalid gallery source.</font>')
+			self.file_exists_lbl.show()
+			self.done.hide()
+		if gui_constants.SUBFOLDER_AS_GALLERY:
+			if gs > 1:
+				self.file_exists_lbl.setText('<font color="red">Source contains more than one gallery.</font>')
+				self.file_exists_lbl.show()
+				self.done.hide()
 
 	def check(self):
 		if len(self.title_edit.text()) is 0:
@@ -294,9 +313,10 @@ class GalleryDialog(QWidget):
 		path = gallery_object.path
 		try:
 			log_d('Listing dir...')
-			con = os.listdir(path) # list all folders in gallery dir
+			con = scandir.scandir(path) # list all folders in gallery dir
+			log_i('Gallery source is a directory')
 			log_d('Sorting')
-			chapters = sorted([os.path.join(path,sub) for sub in con if os.path.isdir(os.path.join(path, sub))]) #subfolders
+			chapters = sorted([sub.path for sub in con if sub.is_dir() or sub.name.endswith(utils.ARCHIVE_FILES)]) #subfolders
 			# if gallery has chapters divided into sub folders
 			if len(chapters) != 0:
 				log_d('Chapters divided in folders..')
@@ -306,28 +326,27 @@ class GalleryDialog(QWidget):
 
 			else: #else assume that all images are in gallery folder
 				gallery_object.chapters[0] = path
-			log_d('Added chapters to gallery')
 				
 			#find last edited file
 			times = set()
 			log_d('Finding last update...')
-			for root, dirs, files in os.walk(path, topdown=False):
+			for root, dirs, files in scandir.walk(path, topdown=False):
 				for img in files:
 					fp = os.path.join(root, img)
 					times.add(os.path.getmtime(fp))
 			gallery_object.last_update = time.asctime(time.gmtime(max(times)))
 			log_d('Found last update')
 		except NotADirectoryError:
-			if path[-4:] in utils.ARCHIVE_FILES:
-				log_d('Found an archive')
-				#TODO: add support for folders in archive
-				gallery_object.chapters[0] = path
+			if path.endswith(utils.ARCHIVE_FILES):
+				gallery_object.is_archive = 1
+				log_i("Gallery source is an archive")
+				archive_g = sorted(utils.check_archive(path))
+				for n, g in enumerate(archive_g):
+					gallery_object.chapters[n] = g
 
-		#self.gallery_queue.put(gallery_object)
 		if add_to_model:
 			self.SERIES.emit([gallery_object])
 			log_d('Sent gallery to model')
-		#gallerydb.GalleryDB.add_gallery(gallery_object)
 		
 
 	def reject(self):
@@ -405,14 +424,18 @@ class GalleryDialog(QWidget):
 		self.pub_edit.setDate(pub_date)
 		self._find_combobox_match(self.type_box, metadata.type, 0)
 
-	def make_gallery(self, new_gallery, add_to_model=True):
+	def make_gallery(self, new_gallery, add_to_model=True, new=False):
 		if self.check():
 			new_gallery.title = self.title_edit.text()
 			log_d('Adding gallery title')
 			new_gallery.artist = self.author_edit.text()
 			log_d('Adding gallery artist')
-			new_gallery.path = self.path_lbl.text()
 			log_d('Adding gallery path')
+			if new and gui_constants.MOVE_IMPORTED_GALLERIES:
+				gui_constants.OVERRIDE_MONITOR = True
+				new_gallery.path = utils.move_files(self.path_lbl.text())
+			else:
+				new_gallery.path = self.path_lbl.text()
 			new_gallery.info = self.descr_edit.toPlainText()
 			log_d('Adding gallery descr')
 			new_gallery.type = self.type_box.currentText()
@@ -425,9 +448,9 @@ class GalleryDialog(QWidget):
 			log_d('Adding gallery: tagging to dict')
 			qpub_d = self.pub_edit.date().toString("ddMMyyyy")
 			dpub_d = datetime.strptime(qpub_d, "%d%m%Y").date()
-			if self.gallery_time:
+			try:
 				d_t = self.gallery_time
-			else:
+			except AttributeError:
 				d_t = datetime.now().time().replace(microsecond=0)
 			dpub_d = datetime.combine(dpub_d, d_t)
 			new_gallery.pub_date = dpub_d
@@ -462,7 +485,7 @@ class GalleryDialog(QWidget):
 		self.link_btn2.show()
 
 	def accept(self):
-		new_gallery = self.make_gallery(gallerydb.Gallery())
+		new_gallery = self.make_gallery(gallerydb.Gallery(), new=True)
 
 		if new_gallery:
 			self.close()

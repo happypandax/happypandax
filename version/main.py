@@ -1,25 +1,29 @@
-﻿"""
-This file is part of Happypanda.
-Happypanda is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 2 of the License, or
-any later version.
-Happypanda is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-You should have received a copy of the GNU General Public License
-along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
-"""
+﻿#"""
+#This file is part of Happypanda.
+#Happypanda is free software: you can redistribute it and/or modify
+#it under the terms of the GNU General Public License as published by
+#the Free Software Foundation, either version 2 of the License, or
+#any later version.
+#Happypanda is distributed in the hope that it will be useful,
+#but WITHOUT ANY WARRANTY; without even the implied warranty of
+#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#GNU General Public License for more details.
+#You should have received a copy of the GNU General Public License
+#along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
+#"""
 
-from .database import db, db_constants, gallerydb
-from .gui import app, gui_constants
+import sys, logging, os, argparse, platform, scandir
+
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QFile
-import sys, logging, os, argparse, platform
+
+from database import db, db_constants
+import app
+import gui_constants
+import gallerydb
 
 #IMPORTANT STUFF
-def start():
+def start(test=False):
 
 	parser = argparse.ArgumentParser(prog='Happypanda',
 								  description='A manga/doujinshi manager with tagging support')
@@ -45,6 +49,7 @@ def start():
 						datefmt='%d-%m %H:%M',
 						filename='happypanda_debug.log',
 						filemode='w')
+		gui_constants.DEBUG = True
 	else:
 		try:
 			with open('happypanda.log', 'x') as f:
@@ -81,10 +86,10 @@ def start():
 		log_d('Init DB Conn: OK')
 		log_i("DB Version: {}".format(db_constants.REAL_DB_VERSION))
 	except:
-		log_c('Database connection failed')
+		log_c('Invalid database')
+		log.exception('Database connection failed!')
 		from PyQt5.QtGui import QIcon
 		from PyQt5.QtWidgets import QMessageBox
-		log_c('Invalid database')
 		msg_box = QMessageBox()
 		msg_box.setWindowIcon(QIcon(gui_constants.APP_ICO_PATH))
 		msg_box.setText('Invalid database')
@@ -159,7 +164,7 @@ def start():
 			os.mkdir('temp')
 		except FileExistsError:
 			try:
-				for root, dirs, files in os.walk('temp', topdown=False):
+				for root, dirs, files in scandir.walk('temp', topdown=False):
 					for name in files:
 						os.remove(os.path.join(root, name))
 					for name in dirs:
@@ -167,6 +172,9 @@ def start():
 			except:
 				log_d('Empty temp: FAIL')
 		log_d('Create temp: OK')
+
+		if test:
+			return application, WINDOW
 
 		sys.exit(application.exec_())
 
@@ -179,7 +187,7 @@ def start():
 		msg_box.setWindowIcon(QIcon(gui_constants.APP_ICO_PATH))
 		msg_box.setText('Incompatible database!')
 		msg_box.setInformativeText("Do you want to upgrade to newest version?" +
-							 "It shouldn't take more than a second. Don't start a new instance!")
+							 " It shouldn't take more than a second. Don't start a new instance!")
 		msg_box.setIcon(QMessageBox.Critical)
 		msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
 		msg_box.setDefaultButton(QMessageBox.Yes)
@@ -203,3 +211,6 @@ def start():
 		start_main_window(conn)
 	else:
 		db_upgrade()
+
+if __name__ == '__main__':
+	start()

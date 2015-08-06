@@ -1,16 +1,19 @@
-﻿"""
-This file is part of Happypanda.
-Happypanda is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 2 of the License, or
-any later version.
-Happypanda is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-You should have received a copy of the GNU General Public License
-along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
-"""
+﻿#"""
+#This file is part of Happypanda.
+#Happypanda is free software: you can redistribute it and/or modify
+#it under the terms of the GNU General Public License as published by
+#the Free Software Foundation, either version 2 of the License, or
+#any later version.
+#Happypanda is distributed in the hope that it will be useful,
+#but WITHOUT ANY WARRANTY; without even the implied warranty of
+#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#GNU General Public License for more details.
+#You should have received a copy of the GNU General Public License
+#along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
+#"""
+
+import threading, logging, os, math, functools, random
+import re as regex
 
 from PyQt5.QtCore import (Qt, QAbstractListModel, QModelIndex, QVariant,
 						  QSize, QRect, QEvent, pyqtSignal, QThread,
@@ -30,12 +33,13 @@ from PyQt5.QtWidgets import (QListView, QFrame, QLabel,
 							 QHBoxLayout, QFormLayout, QDesktopWidget,
 							 QWidget, QHeaderView, QTableView, QApplication,
 							 QMessageBox, QActionGroup)
-import threading, logging, os, math, functools, random
-import re as regex
 
-from ..database import gallerydb
-from . import gui_constants, misc, gallerydialog, file_misc
-from .. import utils
+import gallerydb
+import gui_constants
+import misc
+import gallerydialog
+import file_misc
+import utils
 
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -594,7 +598,6 @@ class GalleryModel(QAbstractTableModel):
 	def addRows(self, list_of_gallery, position=None,
 				rows=1, index = QModelIndex()):
 		"Adds new gallery data to model and to DB"
-		from ..database.gallerydb import PROFILE_TO_MODEL
 		log_d('Adding {} rows'.format(rows))
 		if not position:
 			log_d('Add rows: No position specified')
@@ -603,7 +606,7 @@ class GalleryModel(QAbstractTableModel):
 		log_d('Add rows: Began inserting')
 		for gallery in list_of_gallery:
 			gallerydb.add_method_queue(gallerydb.GalleryDB.add_gallery_return, True, gallery)
-			gallery.profile = PROFILE_TO_MODEL.get()
+			gallery.profile = gallerydb.PROFILE_TO_MODEL.get()
 			self._data.insert(position, gallery)
 			self._data_count += 1
 		log_d('Add rows: Finished inserting')
@@ -632,7 +635,7 @@ class GalleryModel(QAbstractTableModel):
 		for pos, gallery in enumerate(list_of_gallery):
 			del self._data[position+pos]
 			self._data.insert(position+pos, gallery)
-		self.dataChanged.emit(index, index, [Qt.UserRole+1])
+		self.dataChanged.emit(index, index, [Qt.UserRole+1, Qt.DecorationRole])
 
 	def removeRows(self, position, rows=1, index=QModelIndex()):
 		"Deletes gallery data from the model data list. OBS: doesn't touch DB!"
@@ -674,7 +677,13 @@ class CustomDelegate(QStyledItemDelegate):
 		self.popup_timer = QTimer()
 		self._painted_indexes = {}
 
-		misc.FileIcon.refresh_default_icon()
+		#misc.FileIcon.refresh_default_icon()
+		self.file_icons = misc.FileIcon()
+		if gui_constants.USE_EXTERNAL_VIEWER:
+			self.external_icon = self.file_icons.get_external_file_icon()
+		else:
+			self.external_icon = self.file_icons.get_default_file_icon()
+
 		self.font_size = gui_constants.GALLERY_FONT[1]
 		self.font_name = gui_constants.GALLERY_FONT[0]
 		if not self.font_name:
@@ -698,11 +707,11 @@ class CustomDelegate(QStyledItemDelegate):
 
 	def key(self, key):
 		"Assigns an unique key to indexes"
-		if key:
+		if key in self._painted_indexes:
 			return self._painted_indexes[key]
 		else:
-			k = len(self._painted_indexes)
-			self._painted_indexes[str(k)] = str(k)
+			k = hash(key)
+			self._painted_indexes[key] = str(k)
 			return str(k)
 
 	def paint(self, painter, option, index):
@@ -802,12 +811,9 @@ class CustomDelegate(QStyledItemDelegate):
 			#chapter_area.setTextWidth(w)
 
 			# if we can't find a cached image
-			if not gallery._cache_id:
-				gallery._cache_id = self.key(gallery._cache_id)
-			pix_cache = QPixmapCache.find(gallery._cache_id)
-			if not isinstance(pix_cache, QPixmap):
-				self.image = QPixmap(index.data(Qt.DecorationRole))
-				QPixmapCache.insert(gallery._cache_id, self.image)
+			pix_cache = QPixmapCache.find(self.key(gallery.profile))
+			if isinstance(pix_cache, QPixmap):
+				self.image = pix_cache
 				if self.image.height() < self.image.width(): #to keep aspect ratio
 					painter.drawPixmap(QPoint(x,y),
 							self.image)
@@ -815,7 +821,8 @@ class CustomDelegate(QStyledItemDelegate):
 					painter.drawPixmap(QPoint(x,y),
 							self.image)
 			else:
-				self.image = pix_cache
+				self.image = QPixmap(gallery.profile)
+				QPixmapCache.insert(self.key(gallery.profile), self.image)
 				if self.image.height() < self.image.width(): #to keep aspect ratio
 					painter.drawPixmap(QPoint(x,y),
 							self.image)
@@ -827,23 +834,21 @@ class CustomDelegate(QStyledItemDelegate):
 			if gallery.fav == 1:
 				painter.drawPixmap(QPointF(x,y), QPixmap(gui_constants.STAR_PATH))
 			
-			# WARNING: CAUSE OF MEMORY LEAK!!
-			#if gui_constants.REFRESH_GALLERY_ICONS:
-			#	pass
+			if gui_constants._REFRESH_EXTERNAL_VIEWER:
+				if gui_constants.USE_EXTERNAL_VIEWER:
+					self.external_icon = self.file_icons.get_external_file_icon()
+				else:
+					self.external_icon = self.file_icons.get_default_file_icon()
 
-			#if gui_constants.DISPLAY_GALLERY_TYPE:
-			#	icon = misc.FileIcon.get_file_icon(gallery.path)
-			#	if not icon.isNull():
-			#		icon.paint(painter, QRect(x+2, y+gui_constants.THUMB_H_SIZE-16, 16, 16))
+			if gui_constants.DISPLAY_GALLERY_TYPE:
+				self.type_icon = self.file_icons.get_file_icon(gallery.path)
+				if self.type_icon and not self.type_icon.isNull():
+					self.type_icon.paint(painter, QRect(x+2, y+gui_constants.THUMB_H_SIZE-16, 16, 16))
 
-			#if gui_constants.USE_EXTERNAL_PROG_ICO:
-			#	if gui_constants.USE_EXTERNAL_VIEWER:
-			#		icon = misc.FileIcon.get_external_file_icon()
-			#	else:
-			#		icon = misc.FileIcon.get_default_file_icon()
+			if gui_constants.USE_EXTERNAL_PROG_ICO:
+				if self.external_icon and not self.external_icon.isNull():
+					self.external_icon.paint(painter, QRect(x+w-30, y+gui_constants.THUMB_H_SIZE-28, 28, 28))
 
-			#	if icon:
-			#		icon.paint(painter, QRect(x+w-30, y+gui_constants.THUMB_H_SIZE-28, 28, 28))
 			def draw_text_label(lbl_h):
 				#draw the label for text
 				painter.save()
@@ -985,9 +990,10 @@ class MangaView(QListView):
 		self.current_sort = gui_constants.CURRENT_SORT
 		self.sort(self.current_sort)
 
-		def debug_print(a):
-			print(a.data(Qt.UserRole+1))
-		#self.clicked.connect(debug_print)
+		if gui_constants.DEBUG:
+			def debug_print(a):
+				print(a.data(Qt.UserRole+1))
+			self.clicked.connect(debug_print)
 	#	self.ti = QTimer()
 	#	self.ti.timeout.connect(self.test_)
 	#	self.ti.start(5000)
@@ -1085,8 +1091,8 @@ class MangaView(QListView):
 		g = random.randint(0, self.gallery_model._data_count-1)
 		indx = self.gallery_model.index(g, 1)
 		chap_numb = 0
-		if gui_constants.RANDOM_GALLERY_CHAPTERS:
-			gallery = indx.data(Qt.UserRole)
+		if gui_constants.OPEN_RANDOM_GALLERY_CHAPTERS:
+			gallery = indx.data(Qt.UserRole+1)
 			b = len(gallery.chapters)
 			if b > 1:
 				chap_numb = random.randint(0, b-1)
@@ -1121,24 +1127,19 @@ class MangaView(QListView):
 				notifbar.add_text('No duplicates found!')
 
 	def open_chapter(self, index, chap_numb=0):
-		if isinstance(index, list):
-			for x in index:
-				gallery = x.data(Qt.UserRole+1)
+		if not isinstance(index, list):
+			index = [index]
+		for x in index:
+			gallery = x.data(Qt.UserRole+1)
+			if len(index) > 1:
 				self.STATUS_BAR_MSG.emit("Opening chapters of selected galleries")
-				try:
-					gallerydb.add_method_queue(utils.open_chapter, True, gallery.chapters[chap_numb])
-					if not gallery.times_read:
-						gallery.times_read = 0
-					gallery.times_read += 1
-					gallerydb.add_method_queue(gallerydb.GalleryDB.modify_gallery, True, gallery.id, times_read=gallery.times_read)
-				except IndexError:
-					pass
-		else:
-			gallery = index.data(Qt.UserRole+1)
-			self.STATUS_BAR_MSG.emit("Opening chapter {} of {}".format(chap_numb+1,
-																 gallery.title))
+			else:
+				self.STATUS_BAR_MSG.emit("Opening chapter {} of {}".format(chap_numb+1, gallery.title))
 			try:
-				gallerydb.add_method_queue(utils.open_chapter, True, gallery.chapters[chap_numb])
+				if gallery.is_archive:
+					gallerydb.add_method_queue(utils.open_chapter, True, gallery.chapters[chap_numb], gallery.path)
+				else:
+					gallerydb.add_method_queue(utils.open_chapter, True, gallery.chapters[chap_numb])
 				if not gallery.times_read:
 					gallery.times_read = 0
 				gallery.times_read += 1
@@ -1196,111 +1197,23 @@ class MangaView(QListView):
 		if len(select_indexes) > 1:
 			selected = True
 
-		def remove_selection(local=False):
-			select = self.selectionModel().selection()
-			s_select = self.model().mapSelectionToSource(select)
-			indexes = s_select.indexes()
-			for indx in indexes:
-				if not indx.isValid():
-					del indexes[indx]
-			self.remove_gallery(indexes, local)
-
-		menu = QMenu()
-		remove_act = QAction('Remove', menu)
-		remove_menu = QMenu()
-		remove_act.setMenu(remove_menu)
-		remove_gallery_act = QAction('Remove gallery', remove_menu,
-							   triggered=lambda: self.remove_gallery([index]))
-		remove_menu.addAction(remove_gallery_act)
-		remove_local_gallery_act = QAction('Remove gallery and files', remove_menu,
-							   triggered=lambda: self.remove_gallery([index], True))
-		remove_menu.addAction(remove_local_gallery_act)
-
-		if selected:
-			remove_menu.addSeparator()
-			#remove_selected_act = QAction("Remove selected", remove_menu,
-			#	   triggered = remove_selection)
-			#remove_menu.addAction(remove_selected_act)
-			#remove_local_selected_act = QAction('Remove selected and their files', remove_menu,
-			#	   triggered = lambda: remove_selection(True))
-			#remove_menu.addAction(remove_local_selected_act)
-
-			all_0 = QAction("Open first chapters", menu,
-					  triggered = lambda: self.open_chapter(select_indexes, 0))
-
-		all_1 = QAction("Open first chapter", menu,
-					triggered = lambda: self.open_chapter(index, 0))
-		all_2 = QAction("Edit...", menu, triggered = lambda: self.spawn_dialog(index))
-		def fav():
-			self.favorite(index)
-
-
-		# add the chapter menus
-		def chapters():
-			menu.addSeparator()
-			chapters_menu = QAction("Chapters", menu)
-			menu.addAction(chapters_menu)
-			open_chapters = QMenu()
-			chapters_menu.setMenu(open_chapters)
-
-			for number, chap_number in enumerate(range(len(
-				index.data(Qt.UserRole+1).chapters)), 1):
-				chap_action = QAction("Open chapter {}".format(
-					number), open_chapters, triggered = functools.partial(self.open_chapter, index, chap_number))
-				open_chapters.addAction(chap_action)
-
-
-		def open_link():
-			link = index.data(Qt.UserRole+1).link
-			utils.open_web_link(link)
-
 		def asc_desc():
 			if self.sort_model.sortOrder() == Qt.AscendingOrder:
 				self.sort_model.sort(0, Qt.DescendingOrder)
 			else:
 				self.sort_model.sort(0, Qt.AscendingOrder)
 
-		def op_folder(selected=False):
-			if selected:
-				self.STATUS_BAR_MSG.emit('Opening folders')
-				for x in select_indexes:
-					ser = x.data(Qt.UserRole+1)
-					utils.open_path(ser.path)
-			else:
-				self.STATUS_BAR_MSG.emit('Opening folder')
-				ser = index.data(Qt.UserRole+1)
-				utils.open_path(ser.path)
-
-		def add_chapters():
-			def add_chdb(chaps):
-				gallery = index.data(Qt.UserRole+1)
-				log_d('Adding new chapter for {}'.format(gallery.title))
-				gallerydb.add_method_queue(gallerydb.ChapterDB.add_chapters_raw, True, gallery.id, chaps)
-				gallery = gallerydb.GalleryDB.get_gallery_by_id(gallery.id)
-				self.gallery_model.replaceRows([gallery], index.row())
-
-			ch_widget = misc.ChapterAddWidget(index.data(Qt.UserRole+1),
-								   self.parentWidget())
-			ch_widget.CHAPTERS.connect(add_chdb)
-			ch_widget.show()
-
 		if index.isValid():
 			self.manga_delegate.CONTEXT_ON = True
-
-			if index.data(Qt.UserRole+1).link != "":
-				ext_action = QAction("Open link", menu, triggered = open_link)
-
-			action_1 = QAction("Favorite", menu, triggered = fav)
-			action_1.setCheckable(True)
-			if index.data(Qt.UserRole+1).fav==1: # here you can limit which items to show these actions for
-				action_1.setChecked(True)
+			if selected:
+				menu = misc.GalleryMenu(self, index, self.gallery_model,
+							   self.parent_widget, select_indexes)
 			else:
-				action_1.setChecked(False)
-			menu.addAction(action_1)
-			chapters()
+				menu = misc.GalleryMenu(self, index, self.gallery_model,
+							   self.parent_widget)
 			handled = True
-			custom = True
 		else:
+			menu = QMenu(self)
 			add_gallery = QAction("&Add new Gallery...", menu,
 						triggered = self.SERIES_DIALOG.emit)
 			menu.addAction(add_gallery)
@@ -1333,58 +1246,14 @@ class MangaView(QListView):
 			sort_menu.addAction(s_artist)
 			sort_menu.addAction(s_date)
 			sort_menu.addAction(s_pub_d)
-			refresh = QAction("&Refresh", menu,
-					 triggered = self.refresh)
-			menu.addAction(refresh)
+
 			handled = True
 
-		if handled and custom:
-			# chapters
-			try:
-				menu.addAction(all_0)
-			except:
-				pass
-			menu.addAction(all_1)
-			if not selected:
-				add_chap_act = QAction('Add chapters', menu,
-						   triggered=add_chapters)
-				menu.addAction(add_chap_act)
-				remo_chap_act = QAction('Remove chapter', menu)
-				remove_menu.addAction(remo_chap_act)
-				remove_chap_menu = QMenu()
-				remo_chap_act.setMenu(remove_chap_menu)
-				for number, chap_number in enumerate(range(len(
-					index.data(Qt.UserRole+1).chapters)), 1):
-					chap_action = QAction("Remove chapter {}".format(
-						number), remove_chap_menu, triggered = lambda: self.del_chapter(index, chap_number))
-					remove_chap_menu.addAction(chap_action)
-			menu.addSeparator()
-			get_metadata_action = QAction('Get metadata', menu,
-								 triggered=lambda: self.parent_widget.get_metadata(index.data(Qt.UserRole+1)))
-			menu.addAction(get_metadata_action)
-			menu.addSeparator()
-			# folders
-			if selected:
-				folder_select_act = QAction('Open folders', menu, triggered = lambda: op_folder(True))
-				menu.addAction(folder_select_act)
-			folder_act = QAction('Open folder', menu, triggered = op_folder)
-			menu.addAction(folder_act)
-			menu.addAction(all_2)
-			# link
-			try:
-				menu.addAction(ext_action)
-			except:
-				pass
-			menu.addSeparator()
-			# remove
-			menu.addAction(remove_act)
+		if handled:
 			menu.exec_(event.globalPos())
 			self.manga_delegate.CONTEXT_ON = False
 			event.accept()
-		elif handled:
-			menu.exec_(event.globalPos())
-			self.manga_delegate.CONTEXT_ON = False
-			event.accept()
+			del menu
 		else:
 			event.ignore()
 
@@ -1410,6 +1279,7 @@ class MangaView(QListView):
 		assert isinstance(list_of_gallery, (list, gallerydb.Gallery)), "Please pass a gallery to replace with"
 		if isinstance(list_of_gallery, gallerydb.Gallery):
 			list_of_gallery = [list_of_gallery]
+		log_d('Replacing {} galleries'.format(len(list_of_gallery)))
 		for gallery in list_of_gallery:
 			if not pos:
 				index = self.find_index(gallery.id)
@@ -1419,6 +1289,7 @@ class MangaView(QListView):
 					continue
 				pos = index.row()
 			kwdict = {'title':gallery.title,
+			 'profile':gallery.profile,
 			 'artist':gallery.artist,
 			 'info':gallery.info,
 			 'type':gallery.type,
@@ -1516,7 +1387,6 @@ class MangaTableView(QTableView):
 
 	def contextMenuEvent(self, event):
 		handled = False
-		custom = False
 		index = self.indexAt(event.pos())
 		index = self.sort_model.mapToSource(index)
 
@@ -1525,151 +1395,21 @@ class MangaTableView(QTableView):
 		if len(select_indexes) > len(gui_constants.COLUMNS):
 			selected = True
 
-		def remove_selection():
-			select = self.selectionModel().selection()
-			s_select = self.model().mapSelectionToSource(select)
-			indexes = s_select.indexes()
-			self.remove_gallery(indexes)
-
-		menu = QMenu()
-		remove_act = QAction('Remove', menu)
-		remove_menu = QMenu()
-		remove_act.setMenu(remove_menu)
-		remove_gallery_act = QAction('Remove gallery', remove_menu,
-							   triggered=lambda: self.parent_widget.manga_list_view.remove_gallery([index]))
-		remove_menu.addAction(remove_gallery_act)
-		remove_local_gallery_act = QAction('Remove gallery and files', remove_menu,
-							   triggered=lambda: self.parent_widget.manga_list_view.remove_gallery([index], True))
-		remove_menu.addAction(remove_local_gallery_act)
-
-		if selected:
-			remove_menu.addSeparator()
-			#remove_selected_act = QAction("Remove selected", remove_menu,
-			#	   triggered = remove_selection)
-			#remove_menu.addAction(remove_selected_act)
-			#remove_local_selected_act = QAction('Remove selected and their files', remove_menu,
-			#	   triggered = lambda: remove_selection(True))
-			#remove_menu.addAction(remove_local_selected_act)
-
-			all_0 = QAction("Open first chapters", menu,
-					  triggered = lambda: self.parent_widget.manga_list_view.open_chapter(select_indexes, 0))
-
-		all_1 = QAction("Open first chapter", menu,
-					triggered = lambda: self.parent_widget.manga_list_view.open_chapter(index, 0))
-		all_2 = QAction("Edit...", menu, triggered = lambda: self.parent_widget.manga_list_view.spawn_dialog(index))
-		def fav():
-			self.parent_widget.manga_list_view.favorite(index)
-
-		def open_link():
-			link = index.data(Qt.UserRole+1).link
-			utils.open_web_link(link)
-
-		# add the chapter menus
-		def chapters():
-			menu.addSeparator()
-			chapters_menu = QAction("Chapters", menu)
-			menu.addAction(chapters_menu)
-			open_chapters = QMenu()
-			chapters_menu.setMenu(open_chapters)
-			for number, chap_number in enumerate(range(len(
-				index.data(Qt.UserRole+1).chapters)), 1):
-				chap_action = QAction("Open chapter {}".format(
-					number), open_chapters, triggered = functools.partial(self.parent_widget.manga_list_view.open_chapter, index, chap_number))
-				open_chapters.addAction(chap_action)
-
-		def op_folder(selected=False):
-			if selected:
-				self.STATUS_BAR_MSG.emit('Opening folders')
-				for x in select_indexes:
-					ser = x.data(Qt.UserRole+1)
-					utils.open_path(ser.path)
-			else:
-				self.STATUS_BAR_MSG.emit('Opening folder')
-				ser = index.data(Qt.UserRole+1)
-				utils.open_path(ser.path)
-
-		def add_chapters():
-			def add_chdb(chaps):
-				gallery = index.data(Qt.UserRole+1)
-				log_d('Adding new chapter for {}'.format(gallery.title))
-				gallerydb.add_method_queue(gallerydb.ChapterDB.add_chapters_raw, True, gallery.id, chaps)
-				gallery = gallerydb.GalleryDB.get_gallery_by_id(gallery.id)
-				self.gallery_model.replaceRows([gallery], index.row())
-
-			ch_widget = misc.ChapterAddWidget(index.data(Qt.UserRole+1),
-								   self.parentWidget())
-			ch_widget.CHAPTERS.connect(add_chdb)
-			ch_widget.show()
-
 		if index.isValid():
-
-			if index.data(Qt.UserRole+1).link != "":
-				ext_action = QAction("Open link", menu, triggered = open_link)
-
-			action_1 = QAction("Favorite", menu, triggered = fav)
-			action_1.setCheckable(True)
-			if index.data(Qt.UserRole+1).fav==1: # here you can limit which items to show these actions for
-				action_1.setChecked(True)
-			else:
-				action_1.setChecked(False)
-			menu.addAction(action_1)
-			chapters()
-			handled = True
-			custom = True
-		else:
-			add_gallery = QAction("&Add new Gallery...", menu,
-						triggered = self.SERIES_DIALOG.emit)
-			menu.addAction(add_gallery)
-			refresh = QAction("&Refresh", menu,
-					 triggered = self.refresh)
-			menu.addAction(refresh)
-			handled = True
-
-		if handled and custom:
-			# chapters
-			try:
-				menu.addAction(all_0)
-			except:
-				pass
-			menu.addAction(all_1)
-			if not selected:
-				add_chap_act = QAction('Add chapters', menu,
-						   triggered=add_chapters)
-				menu.addAction(add_chap_act)
-				remo_chap_act = QAction('Remove chapter', menu)
-				remove_menu.addAction(remo_chap_act)
-				remove_chap_menu = QMenu()
-				remo_chap_act.setMenu(remove_chap_menu)
-				for number, chap_number in enumerate(range(len(
-					index.data(Qt.UserRole+1).chapters)), 1):
-					chap_action = QAction("Remove chapter {}".format(
-						number), remove_chap_menu, triggered = lambda: self.parent_widget.manga_list_view.del_chapter(index, chap_number))
-					remove_chap_menu.addAction(chap_action)
-			menu.addSeparator()
-			get_metadata_action = QAction('Get metadata', menu,
-								 triggered=lambda: self.parent_widget.get_metadata(index.data(Qt.UserRole+1)))
-			menu.addAction(get_metadata_action)
-			menu.addSeparator()
-			# folders
 			if selected:
-				folder_select_act = QAction('Open folders', menu, triggered = lambda: op_folder(True))
-				menu.addAction(folder_select_act)
-			folder_act = QAction('Open folder', menu, triggered = op_folder)
-			menu.addAction(folder_act)
-			menu.addAction(all_2)
-			# link
-			try:
-				menu.addAction(ext_action)
-			except:
-				pass
-			menu.addSeparator()
-			# remove
-			menu.addAction(remove_act)
+				menu = misc.GalleryMenu(self, 
+							index,
+							self.parent_widget.manga_list_view.gallery_model,
+							self.parent_widget, select_indexes)
+			else:
+				menu = misc.GalleryMenu(self, index, self.gallery_model,
+							   self.parent_widget)
+			handled = True
+
+		if handled:
 			menu.exec_(event.globalPos())
 			event.accept()
-		elif handled:
-			menu.exec_(event.globalPos())
-			event.accept()
+			del menu
 		else:
 			event.ignore()
 

@@ -1,16 +1,18 @@
 ﻿import logging, os
+from watchdog.events import FileSystemEventHandler, DirDeletedEvent
+from watchdog.observers import Observer
+from threading import Timer
+
 from PyQt5.QtCore import Qt, QObject, pyqtSignal, QTimer
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout,
 							 QLabel, QFrame, QPushButton, QMessageBox,
 							 QFileDialog, QScrollArea)
-from watchdog.events import FileSystemEventHandler, DirDeletedEvent
-from watchdog.observers import Observer
-from threading import Timer
-from . import gui_constants, misc
-from .misc import BasePopup
-from ..database import gallerydb
-from .. import utils
+
+import gui_constants
+import misc
+import gallerydb
+import utils
 
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -34,12 +36,13 @@ def update_gallery_path(new_path, gallery):
 	gallery.path = new_path
 	return gallery
 
-class GalleryPopup(BasePopup):
+class GalleryPopup(misc.BasePopup):
 	"""
 	Pass a tuple with text and a list of galleries
+	gallery profiles won't be scaled if scale is set to false
 	"""
 
-	def __init__(self, tup_gallery, parent = None,):
+	def __init__(self, tup_gallery, parent = None):
 		super().__init__(parent)
 		self.setMaximumWidth(16777215)
 		assert isinstance(tup_gallery, tuple), "Incorrect type received, expected tuple"
@@ -73,7 +76,7 @@ class GalleryPopup(BasePopup):
 		self.resize(620, 500)
 		self.show()
 
-class ModifiedPopup(BasePopup):
+class ModifiedPopup(misc.BasePopup):
 	def __init__(self, path, gallery_id, parent=None):
 		super().__init__(parent)
 		main_layout = QVBoxLayout()
@@ -81,7 +84,7 @@ class ModifiedPopup(BasePopup):
 		self.main_widget.setLayout(main_layout)
 		self.show()
 
-class CreatedPopup(BasePopup):
+class CreatedPopup(misc.BasePopup):
 	ADD_SIGNAL = pyqtSignal(str)
 	def __init__(self, path, parent=None):
 		super().__init__(parent)
@@ -107,7 +110,7 @@ class CreatedPopup(BasePopup):
 		self.adjustSize()
 		self.show()
 
-class MovedPopup(BasePopup):
+class MovedPopup(misc.BasePopup):
 	UPDATE_SIGNAL = pyqtSignal(object)
 	def __init__(self, new_path, gallery, parent=None):
 		super().__init__(parent)
@@ -145,7 +148,7 @@ class MovedPopup(BasePopup):
 
 		self.show()
 
-class DeletedPopup(BasePopup):
+class DeletedPopup(misc.BasePopup):
 	REMOVE_SIGNAL = pyqtSignal(object)
 	UPDATE_SIGNAL = pyqtSignal(object)
 	def __init__(self, path, gallery, parent=None):
@@ -233,25 +236,34 @@ class GalleryHandler(FileSystemEventHandler, QObject):
 	#	self.g_queue = []
 
 	def on_created(self, event):
-		if self.file_filter(event):
-			t = Timer(8, self.CREATE_SIGNAL.emit, args=(event.src_path,))
-			t.start()
+		if not gui_constants.OVERRIDE_MONITOR:
+			if self.file_filter(event):
+				t = Timer(8, self.CREATE_SIGNAL.emit, args=(event.src_path,))
+				t.start()
+		else:
+			gui_constants.OVERRIDE_MONITOR = False
 
 	def on_deleted(self, event):
-		path = event.src_path
-		gallery = gallerydb.GalleryDB.get_gallery_by_path(path)
-		if gallery:
-			self.DELETED_SIGNAL.emit(path, gallery)
+		if not gui_constants.OVERRIDE_MONITOR:
+			path = event.src_path
+			gallery = gallerydb.GalleryDB.get_gallery_by_path(path)
+			if gallery:
+				self.DELETED_SIGNAL.emit(path, gallery)
+		else:
+			gui_constants.OVERRIDE_MONITOR = False
 
 	def on_modified(self, event):
 		pass
 
 	def on_moved(self, event):
-		if self.file_filter(event):
-			old_path = event.src_path
-			gallery = gallerydb.GalleryDB.get_gallery_by_path(old_path)
-			if gallery:
-				self.MOVED_SIGNAL.emit(event.dest_path, gallery)
+		if not gui_constants.OVERRIDE_MONITOR:
+			if self.file_filter(event):
+				old_path = event.src_path
+				gallery = gallerydb.GalleryDB.get_gallery_by_path(old_path)
+				if gallery:
+					self.MOVED_SIGNAL.emit(event.dest_path, gallery)
+		else:
+			gui_constants.OVERRIDE_MONITOR = False
 
 class Watchers:
 	def __init__(self):

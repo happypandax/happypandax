@@ -23,7 +23,7 @@ Download from here https://www.python.org/downloads/
     + Python 3.4 should've included pip on install. Incase it didn't: 'sudo pacman -S pip3'
     + To install 'requests': pip3 install requests
     + To install 'BeautifulSoup 4': pip3 install bs4
-    + To install 'porc': pip3 install porc
+    + To install 'scandir': pip3 install scandir
   - PyQt5
     + I'm pretty sure you can install this through pip3, but if not: sudo pacman -S python-pyqt5 ('apt-get install python-pyqt5' on Ubuntu)
     
@@ -32,7 +32,7 @@ Download from here https://www.python.org/downloads/
 3. Now enter the cloned directory (should be named 'happypanda') and write: python3 main.py
 4. The program should now be running
 
-# Windows (Should be more or less the same procedure on Mac)
+# Windows
 1. Install these dependencies:
   - Qt5 (Install this first) >= 5.4
     + Download from https://www.qt.io/download-open-source/#section-2
@@ -42,7 +42,7 @@ Download from here https://www.python.org/downloads/
     + Now open cmd and write these commands:
     + pip install requests
     + pip install bs4
-    + pip install porc
+    + pip install scandir
   - PyQt5
     + I'm pretty sure you can install this through pip, but here is the download location
     http://www.riverbankcomputing.com/software/pyqt/download5 (see Binary Packages for windows)
@@ -54,3 +54,28 @@ Download from here https://www.python.org/downloads/
 6. The program should now be running.
 
 Note: Try renaming the 'main.py' file to 'main.pyw' and then just doubleclick on it to try running without console (not guaranteed to work)
+
+# Mac OS X
+1. Install Homebrew (this makes everything easier)
+  - Open Terminal
+  - Run the following
+   + ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+   + brew update && brew upgrade --all
+2. Install Python3, PyQt5, and sip
+  - Run the following
+   + brew install PyQt5
+3. Install requests, BeautifulSoup4, Watchdog, and scandir
+  - Run the following
+   + python3 -m pip install requests
+   + python3 -m pip install beautifulsoup4
+   + python3 -m pip install watchdog
+   + python3 -m pip install scandir
+4. Download HappyPanda
+  - Go to github.com/Pewpews/happypanda
+  - Press the "Download ZIP" button
+  - UnZip happypanda-master.zip
+5. Running HappyPanda
+  - Run the following
+   + cd /where/ever/you/put/the/folder/happypanda-master
+     + (For example cd /Users/username/Downloads/happypanda-master)
+   + python3 main.py
