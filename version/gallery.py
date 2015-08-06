@@ -678,6 +678,12 @@ class CustomDelegate(QStyledItemDelegate):
 		self._painted_indexes = {}
 
 		#misc.FileIcon.refresh_default_icon()
+		self.file_icons = misc.FileIcon()
+		if gui_constants.USE_EXTERNAL_VIEWER:
+			self.external_icon = self.file_icons.get_external_file_icon()
+		else:
+			self.external_icon = self.file_icons.get_default_file_icon()
+
 		self.font_size = gui_constants.GALLERY_FONT[1]
 		self.font_name = gui_constants.GALLERY_FONT[0]
 		if not self.font_name:
@@ -828,23 +834,21 @@ class CustomDelegate(QStyledItemDelegate):
 			if gallery.fav == 1:
 				painter.drawPixmap(QPointF(x,y), QPixmap(gui_constants.STAR_PATH))
 			
-			# WARNING: CAUSE OF MEMORY LEAK!!
-			#if gui_constants.REFRESH_GALLERY_ICONS:
-			#	pass
+			if gui_constants._REFRESH_EXTERNAL_VIEWER:
+				if gui_constants.USE_EXTERNAL_VIEWER:
+					self.external_icon = self.file_icons.get_external_file_icon()
+				else:
+					self.external_icon = self.file_icons.get_default_file_icon()
 
-			#if gui_constants.DISPLAY_GALLERY_TYPE:
-			#	icon = misc.FileIcon.get_file_icon(gallery.path)
-			#	if not icon.isNull():
-			#		icon.paint(painter, QRect(x+2, y+gui_constants.THUMB_H_SIZE-16, 16, 16))
+			if gui_constants.DISPLAY_GALLERY_TYPE:
+				self.type_icon = self.file_icons.get_file_icon(gallery.path)
+				if self.type_icon and not self.type_icon.isNull():
+					self.type_icon.paint(painter, QRect(x+2, y+gui_constants.THUMB_H_SIZE-16, 16, 16))
 
-			#if gui_constants.USE_EXTERNAL_PROG_ICO:
-			#	if gui_constants.USE_EXTERNAL_VIEWER:
-			#		icon = misc.FileIcon.get_external_file_icon()
-			#	else:
-			#		icon = misc.FileIcon.get_default_file_icon()
+			if gui_constants.USE_EXTERNAL_PROG_ICO:
+				if self.external_icon and not self.external_icon.isNull():
+					self.external_icon.paint(painter, QRect(x+w-30, y+gui_constants.THUMB_H_SIZE-28, 28, 28))
 
-			#	if icon:
-			#		icon.paint(painter, QRect(x+w-30, y+gui_constants.THUMB_H_SIZE-28, 28, 28))
 			def draw_text_label(lbl_h):
 				#draw the label for text
 				painter.save()
@@ -1088,7 +1092,7 @@ class MangaView(QListView):
 		indx = self.gallery_model.index(g, 1)
 		chap_numb = 0
 		if gui_constants.OPEN_RANDOM_GALLERY_CHAPTERS:
-			gallery = indx.data(Qt.UserRole)
+			gallery = indx.data(Qt.UserRole+1)
 			b = len(gallery.chapters)
 			if b > 1:
 				chap_numb = random.randint(0, b-1)

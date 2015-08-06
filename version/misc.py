@@ -474,12 +474,23 @@ class LoadingOverlay(QWidget):
 			self.hide()
 
 class FileIcon:
+	
+	def __init__(self):
+		self.ico_types = {}
 
-	@staticmethod
-	def get_file_icon(path):
-		# TODO: Very ineffiecent!! Save known file exts
-		info = QFileInfo(path)
-		return QFileIconProvider().icon(info)
+	def get_file_icon(self, path):
+		if os.path.isdir(path):
+			if not 'dir' in self.ico_types:
+				self.ico_types['dir'] = QFileIconProvider().icon(QFileInfo(path))
+			return self.ico_types['dir']
+		elif path.endswith(utils.ARCHIVE_FILES):
+			suff = ''
+			for s in utils.ARCHIVE_FILES:
+				if path.endswith(s):
+					suff = s
+			if not suff in self.ico_types:
+				self.ico_types[suff] = QFileIconProvider().icon(QFileInfo(path))
+			return self.ico_types[suff]
 
 	@staticmethod
 	def get_external_file_icon():

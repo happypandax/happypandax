@@ -542,7 +542,7 @@ class SettingsDialog(QWidget):
 		self.web_time_offset.setMinimum(4)
 		self.web_time_offset.setMaximum(99)
 		metadata_fetcher_m_l.addRow(time_offset_info)
-		metadata_fetcher_m_l.addRow('Requests delay in', self.web_time_offset)
+		metadata_fetcher_m_l.addRow('Requests delay in seconds', self.web_time_offset)
 		replace_metadata_info = QLabel('When fetching for metadata the new metadata will be appended'+
 								 ' to the gallery by default. This means that new data will only be set if'+
 								 ' the field was empty. There is however a special case for namespace & tags.'+
@@ -630,10 +630,8 @@ class SettingsDialog(QWidget):
 		grid_gallery_display = FlowLayout()
 		grid_gallery_main_l.addRow('Display on gallery:', grid_gallery_display)
 		self.external_viewer_ico = QCheckBox('External Viewer')
-		self.external_viewer_ico.setDisabled(True)
 		grid_gallery_display.addWidget(self.external_viewer_ico)
 		self.gallery_type_ico = QCheckBox('File Type')
-		self.gallery_type_ico.setDisabled(True)
 		grid_gallery_display.addWidget(self.gallery_type_ico)
 		gallery_text_mode = QWidget()
 		grid_gallery_main_l.addRow('Text Mode:', gallery_text_mode)
