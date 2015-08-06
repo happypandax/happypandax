@@ -232,36 +232,33 @@ class GalleryDB:
 		raise Exception("GalleryDB should not be instantiated")
 
 	@staticmethod
-	def rebuild_galleries():
+	def rebuild_gallery(gallery):
 		"Rebuilds the galleries in DB"
-		galleries = GalleryDB.get_all_gallery()
 		try:
-			log_i('Rebuilding galleries')
-			for gallery in galleries:
-				if gallery.validate():
-					log_i("Rebuilding gallery {}".format(gallery.id))
-					HashDB.del_gallery_hashes(gallery.id)
-					GalleryDB.modify_gallery(
-						gallery.id,
-						title=gallery.title,
-						artist=gallery.artist,
-						info=gallery.info,
-						type=gallery.type,
-						fav=gallery.fav,
-						tags=gallery.tags,
-						language=gallery.language,
-						status=gallery.status,
-						pub_date=gallery.pub_date,
-						link=gallery.link,
-						times_read=gallery.times_read,
-						_db_v=db_constants.CURRENT_DB_VERSION,
-						exed=gallery.exed,
-						is_archive=gallery.is_archive,
-						path_in_archive=gallery.path_in_archive)
+			log_i('Rebuilding {}'.format(gallery.title.encode(errors='ignore')))
+			if gallery.validate():
+				log_i("Rebuilding gallery {}".format(gallery.id))
+				HashDB.del_gallery_hashes(gallery.id)
+				GalleryDB.modify_gallery(
+					gallery.id,
+					title=gallery.title,
+					artist=gallery.artist,
+					info=gallery.info,
+					type=gallery.type,
+					fav=gallery.fav,
+					tags=gallery.tags,
+					language=gallery.language,
+					status=gallery.status,
+					pub_date=gallery.pub_date,
+					link=gallery.link,
+					times_read=gallery.times_read,
+					_db_v=db_constants.CURRENT_DB_VERSION,
+					exed=gallery.exed,
+					is_archive=gallery.is_archive,
+					path_in_archive=gallery.path_in_archive)
 		except:
-			log.exception('Failed rebuilding galleries')
+			log.exception('Failed rebuilding')
 			return False
-		log_i('Finished rebuilding galleries')
 		return True
 
 	@staticmethod
@@ -1343,14 +1340,20 @@ class Gallery:
 
 class Bridge(QObject):
 	DONE = pyqtSignal(bool)
+	PROGRESS = pyqtSignal(int)
+	DATA_COUNT = pyqtSignal(int)
 	def __init__(self, parent=None):
 		super().__init__(parent)
 
 	def rebuild_galleries(self):
-		if GalleryDB.rebuild_galleries():
-			self.DONE.emit(True)
-		else:
-			self.DONE.emit(False)
+		galleries = GalleryDB.get_all_gallery()
+		if galleries:
+			self.DATA_COUNT.emit(len(galleries))
+			log_i('Rebuilding galleries')
+			for n, g in enumerate(galleries, 1):
+				GalleryDB.rebuild_gallery(g)
+				self.PROGRESS.emit(n)
+		self.DONE.emit(True)
 if __name__ == '__main__':
 	#unit testing here
 	date = today()

@@ -185,7 +185,7 @@ class AppWindow(QMainWindow):
 		def normalize_first_time():
 			settings.set(3, 'Application', 'first time level')
 			settings.save()
-		def done():
+		def done(status=True):
 			if gui_constants.FIRST_TIME_LEVEL != 3:
 				normalize_first_time()
 			self.manga_list_view.gallery_model.init_data()
@@ -199,20 +199,16 @@ class AppWindow(QMainWindow):
 					super().__init__(parent)
 					main_layout = QVBoxLayout()
 					info_lbl = QLabel("Hi there! I need to rebuild your galleries.\n"+
-					   "Please wait.. This will take a few minutes at most.\n"+
-					   "If not then try restarting the application.")
+					   "Please wait.. Restart if there is no sign of progress.")
 					info_lbl.setAlignment(Qt.AlignCenter)
 					main_layout.addWidget(info_lbl)
-					prog = QProgressBar(self)
-					prog.setMinimum(0)
-					prog.setMaximum(0)
-					prog.setTextVisible(False)
-					main_layout.addWidget(prog)
+					self.prog = QProgressBar(self)
+					main_layout.addWidget(self.prog)
 					main_layout.addWidget(QLabel('Note: This popup will close itself when everything is ready'))
 					self.main_widget.setLayout(main_layout)
 
 			ft_widget = FirstTime(self)
-			log_i('Invoking first time level 2')
+			log_i('Invoking first time level 3')
 			bridge = gallerydb.Bridge()
 			thread = QThread(self)
 			thread.setObjectName('Startup')
@@ -222,6 +218,8 @@ class AppWindow(QMainWindow):
 			bridge.DONE.connect(self.setEnabled)
 			bridge.DONE.connect(done)
 			bridge.DONE.connect(bridge.deleteLater)
+			bridge.DATA_COUNT.connect(ft_widget.prog.setMaximum)
+			bridge.PROGRESS.connect(ft_widget.prog.setValue)
 			thread.finished.connect(thread.deleteLater)
 			thread.start()
 			ft_widget.adjustSize()
