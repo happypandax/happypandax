@@ -76,9 +76,11 @@ Note: Try renaming the 'main.py' file to 'main.pyw' and then just doubleclick on
   - Press the "Download ZIP" button
   - UnZip happypanda-master.zip
   - Open the happypanda-master folder
-  - Put the Res folder inside the version folder
+  - Put the res folder inside the version folder
 5. Running HappyPanda
   - Run the following
    + cd /where/ever/you/put/the/folder/happypanda-master/version
      + (For example cd /Users/username/Downloads/happypanda-master/version)
    + python3 main.py
+   + Press the button with the lines on it on the right side of the search field
+   + Do NOT press this button again or Happypanda will crash
