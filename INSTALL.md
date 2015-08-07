@@ -65,7 +65,7 @@ Note: Try renaming the 'main.py' file to 'main.pyw' and then just doubleclick on
 2. Install Python3, PyQt5, and sip
   - Run the following
    + brew install PyQt5
-3. Install requests, BeautifulSoup4, Watchdog, and scandir
+3. Install Requests, BeautifulSoup4, Watchdog, and scandir
   - Run the following
    + pip3 install requests
    + pip3 install beautifulsoup4
@@ -75,6 +75,8 @@ Note: Try renaming the 'main.py' file to 'main.pyw' and then just doubleclick on
   - Go to github.com/Pewpews/happypanda
   - Press the "Download ZIP" button
   - UnZip happypanda-master.zip
+  - Open the happypanda-master folder
+  - Put the Res folder inside the version folder
 5. Running HappyPanda
   - Run the following
    + cd /where/ever/you/put/the/folder/happypanda-master/version
