@@ -65,7 +65,7 @@ Note: Try renaming the 'main.py' file to 'main.pyw' and then just doubleclick on
 2. Install Python3, PyQt5, and sip
   - Run the following
    + brew install PyQt5
-3. Install Requests, BeautifulSoup4, Watchdog, and scandir
+3. Install Requests, BeautifulSoup4, Watchdog, and Scandir
   - Run the following
    + pip3 install requests
    + pip3 install beautifulsoup4
