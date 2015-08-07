@@ -82,5 +82,5 @@ Note: Try renaming the 'main.py' file to 'main.pyw' and then just doubleclick on
    + cd /where/ever/you/put/the/folder/happypanda-master/version
      + (For example cd /Users/username/Downloads/happypanda-master/version)
    + python3 main.py
-   + Press the button with the lines on it on the right side of the search field
+   + Press the button with the lines on it, on the right side of the search field
    + Do NOT press this button again or Happypanda will crash
