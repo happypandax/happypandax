@@ -1,4 +1,4 @@
-﻿import logging, os
+﻿import logging, os, sys
 
 from PyQt5.QtWidgets import (QVBoxLayout, QHBoxLayout, QListWidget, QWidget,
 							 QListWidgetItem, QStackedLayout, QPushButton,
@@ -633,6 +633,8 @@ class SettingsDialog(QWidget):
 		grid_gallery_display.addWidget(self.external_viewer_ico)
 		self.gallery_type_ico = QCheckBox('File Type')
 		grid_gallery_display.addWidget(self.gallery_type_ico)
+		if sys.platform.startswith('darwin'):
+			grid_gallery_group.setEnabled(False)
 		gallery_text_mode = QWidget()
 		grid_gallery_main_l.addRow('Text Mode:', gallery_text_mode)
 		gallery_text_mode_l = QHBoxLayout()

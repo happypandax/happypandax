@@ -986,7 +986,7 @@ class MangaView(QListView):
 		self.setModel(self.sort_model)
 		self.SERIES_DIALOG.connect(self.spawn_dialog)
 		self.doubleClicked.connect(self.open_chapter)
-
+		self.setViewportMargins(0,0,0,0)
 		self.current_sort = gui_constants.CURRENT_SORT
 		self.sort(self.current_sort)
 

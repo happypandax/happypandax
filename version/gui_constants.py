@@ -10,7 +10,7 @@
 #You should have received a copy of the GNU General Public License
 #along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
+import os, sys
 import settings
 """Contains constants to be used by several modules"""
 
@@ -126,8 +126,8 @@ POPUP_HEIGHT = get(220, 'Visual', 'popup.h', int)
 # Gallery
 CURRENT_SORT = get('title', 'General', 'current sort')
 HIGH_QUALITY_THUMBS = get(False, 'Visual', 'high quality thumbs', bool)
-USE_EXTERNAL_PROG_ICO = get(True, 'Visual', 'use external prog ico', bool)
-DISPLAY_GALLERY_TYPE = get(True, 'Visual', 'display gallery type', bool)
+USE_EXTERNAL_PROG_ICO = get(True, 'Visual', 'use external prog ico', bool) if not sys.platform.startswith('darwin')  else False
+DISPLAY_GALLERY_TYPE = get(True, 'Visual', 'display gallery type', bool) if not sys.platform.startswith('darwin') else False
 GALLERY_FONT = (get('Segoe UI', 'Visual', 'gallery font family', str),
 				get(11, 'Visual', 'gallery font size', int))
 GALLERY_FONT_ELIDE = get(True, 'Visual', 'gallery font elide', bool)
