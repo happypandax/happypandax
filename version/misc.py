@@ -11,7 +11,7 @@
 #You should have received a copy of the GNU General Public License
 #along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 #"""
-import os, threading, queue, time, logging, math, random
+import os, threading, queue, time, logging, math, random, functools, scandir
 from datetime import datetime
 
 from PyQt5.QtCore import (Qt, QDate, QPoint, pyqtSignal, QThread,
@@ -33,10 +33,12 @@ from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QAction, QStackedLayout, QTabWidget,
 							 QGridLayout, QScrollArea, QLayout, QButtonGroup,
 							 QRadioButton, QFileIconProvider, QFontDialog,
-							 QColorDialog, QScrollArea, QSystemTrayIcon)
+							 QColorDialog, QScrollArea, QSystemTrayIcon,
+							 QMenu, QGraphicsBlurEffect)
 
 from utils import (tag_to_string, tag_to_dict, title_parser, ARCHIVE_FILES,
 					 ArchiveFile, IMG_FILES, CreateZipFail)
+import utils
 import gui_constants
 import gallerydb
 import fetch
@@ -48,6 +50,179 @@ log_d = log.debug
 log_w = log.warning
 log_e = log.error
 log_c = log.critical
+
+class GalleryMenu(QMenu):
+	def __init__(self, view, index, gallery_model, app_window, selected_indexes=None):
+		super().__init__(app_window)
+		self.parent_widget = app_window
+		self.view = view
+		self.gallery_model = gallery_model
+		self.index = index
+		self.selected = selected_indexes
+		if not self.selected:
+			favourite_act = self.addAction('Favorite',
+									 lambda: self.parent_widget.manga_list_view.favorite(self.index))
+			favourite_act.setCheckable(True)
+			if self.index.data(Qt.UserRole+1).fav:
+				favourite_act.setChecked(True)
+				favourite_act.setText('Unfavorite')
+			else:
+				favourite_act.setChecked(False)
+		else:
+			favourite_act = self.addAction('Favorite selected', self.favourite_select)
+			favourite_act.setCheckable(True)
+			f = []
+			for idx in self.selected:
+				if idx.data(Qt.UserRole+1).fav:
+					f.append(True)
+				else:
+					f.append(False)
+			if all(f):
+				favourite_act.setChecked(True)
+				favourite_act.setText('Unfavorite selected')
+			else:
+				favourite_act.setChecked(False)
+
+		self.addSeparator()
+		if not self.selected:
+			chapters_menu = self.addAction('Chapters')
+			open_chapters = QMenu(self)
+			chapters_menu.setMenu(open_chapters)
+			for number, chap_number in enumerate(range(len(
+				index.data(Qt.UserRole+1).chapters)), 1):
+				chap_action = QAction("Open chapter {}".format(number),
+							 open_chapters,
+							 triggered = functools.partial(
+								 self.parent_widget.manga_list_view.open_chapter,
+								 index,
+								 chap_number))
+				open_chapters.addAction(chap_action)
+		if not self.selected:
+			add_chapters = self.addAction('Add chapters', self.add_chapters)
+		if self.selected:
+			open_f_chapters = self.addAction('Open first chapters',
+									lambda: self.parent_widget.manga_list_view.open_chapter(self.selected, 0))
+		self.addSeparator()
+		if not self.selected:
+			get_metadata = self.addAction('Get metadata',
+									lambda: self.parent_widget.get_metadata(index.data(Qt.UserRole+1)))
+		else:
+			gals = []
+			for idx in self.selected:
+				gals.append(idx.data(Qt.UserRole+1))
+			get_select_metadata = self.addAction('Get metadata for selected',
+										lambda: self.parent_widget.get_metadata(gals))
+		self.addSeparator()
+		if not self.selected:
+			edit = self.addAction('Edit', lambda: self.parent_widget.manga_list_view.spawn_dialog(self.index))
+			text = 'folder' if not self.index.data(Qt.UserRole+1).is_archive else 'archive'
+			op_folder_act = self.addAction('Open {}'.format(text), self.op_folder)
+		else:
+			text = 'folders' if not self.index.data(Qt.UserRole+1).is_archive else 'archives'
+			op_folder_select = self.addAction('Open {}'.format(text), lambda: self.op_folder(True))
+		if self.index.data(Qt.UserRole+1).link and not self.selected:
+			op_link = self.addAction('Open URL', self.op_link)
+		if self.selected and all([idx.data(Qt.UserRole+1).link for idx in self.selected]):
+			op_links = self.addAction('Open URLs', lambda: self.op_link(True))
+
+		remove_act = self.addAction('Remove')
+		remove_menu = QMenu(self)
+		remove_act.setMenu(remove_menu)
+		if not self.selected:
+			remove_g = remove_menu.addAction('Remove gallery',
+								lambda: self.parent_widget.manga_list_view.remove_gallery([self.index]))
+			remove_ch = remove_menu.addAction('Remove chapter')
+			remove_ch_menu = QMenu(self)
+			remove_ch.setMenu(remove_ch_menu)
+			for number, chap_number in enumerate(range(len(
+				self.index.data(Qt.UserRole+1).chapters)), 1):
+				chap_action = QAction("Remove chapter {}".format(number),
+						  remove_ch_menu,
+						  triggered = functools.partial(
+							  self.parent_widget.manga_list_view.del_chapter,
+							  index,
+							  chap_number))
+				remove_ch_menu.addAction(chap_action)
+		else:
+			remove_select_g = remove_menu.addAction('Remove selected galleries', self.remove_selection)
+		remove_menu.addSeparator()
+		if not self.selected:
+			remove_source_g = remove_menu.addAction('Remove gallery and files',
+									   lambda: self.parent_widget.manga_list_view.remove_gallery(
+										   [self.index], True))
+		else:
+			remove_source_select_g = remove_menu.addAction('Remove selected galleries and their files',
+										   lambda: self.remove_selection(True))
+		self.addSeparator()
+		if not self.selected:
+			advanced = self.addAction('Advanced')
+			adv_menu = QMenu(self)
+			advanced.setMenu(adv_menu)
+			change_cover = adv_menu.addAction('Change cover...', self.change_cover)
+
+	def favourite_select(self):
+		for idx in self.selected:
+			self.parent_widget.manga_list_view.favorite(idx)
+
+	def change_cover(self):
+		gallery = self.index.data(Qt.UserRole+1)
+		log_i('Attempting to change cover of {}'.format(gallery.title.encode(errors='ignore')))
+		if gallery.is_archive:
+			zip = utils.ArchiveFile(gallery.path)
+			path = zip.extract_all()
+		else:
+			path = gallery.path
+
+		new_cover = QFileDialog.getOpenFileName(self,
+							'Select a new gallery cover',
+							filter='Image (*.jpg *.bmp *.png)',
+							directory=path)[0]
+		if new_cover and new_cover.endswith(utils.IMG_FILES):
+			os.remove(gallery.profile)
+			gallery.profile = gallerydb.gen_thumbnail(gallery, img=new_cover)
+			gallery._cache = None
+			self.parent_widget.manga_list_view.replace_edit_gallery(gallery,
+														   self.index.row())
+			log_i('Changed cover successfully!')
+
+	def remove_selection(self, source=False):
+		select = self.view.selectionModel().selection()
+		s_select = self.view.model().mapSelectionToSource(select)
+		indexes = s_select.indexes()
+		self.parent_widget.manga_list_view.remove_gallery(indexes)
+
+	def op_link(self, select=False):
+		if select:
+			for x in self.selected:
+				gal = x.data(Qt.UserRole+1)
+				utils.open_web_link(gal.link)
+		else:
+			utils.open_web_link(self.index.data(Qt.UserRole+1).link)
+			
+
+	def op_folder(self, select=False):
+		if select:
+			for x in self.selected:
+				text = 'Opening archives...' if self.index.data(Qt.UserRole+1).is_archive else 'Opening folders...'
+				self.view.STATUS_BAR_MSG.emit(text)
+				gal = x.data(Qt.UserRole+1)
+				utils.open_path(gal.path)
+		else:
+			text = 'Opening archive...' if self.index.data(Qt.UserRole+1).is_archive else 'Opening folder...'
+			self.view.STATUS_BAR_MSG.emit(text)
+			gal = self.index.data(Qt.UserRole+1)
+			utils.open_path(gal.path)
+
+	def add_chapters(self):
+		def add_chdb(chaps_dict):
+			gallery = self.index.data(Qt.UserRole+1)
+			log_i('Adding new chapter for {}'.format(gallery.title.encode(errors='ignore')))
+			gallerydb.add_method_queue(gallerydb.ChapterDB.add_chapters_raw, False, gallery.id, {'chapters_dict':chaps_dict})
+			gallery = gallerydb.GalleryDB.get_gallery_by_id(gallery.id)
+			self.gallery_model.replaceRows([gallery], self.index.row())
+		ch_widget = ChapterAddWidget(self.index.data(Qt.UserRole+1), self.parent_widget)
+		ch_widget.CHAPTERS.connect(add_chdb)
+		ch_widget.show()
 
 class SystemTray(QSystemTrayIcon):
 	"""
@@ -81,11 +256,13 @@ class ClickedLabel(QLabel):
 		return super().mousePressEvent(event)
 
 class BasePopup(QWidget):
+	graphics_blur = QGraphicsBlurEffect()
 	def __init__(self, parent=None, **kwargs):
 		if kwargs:
 			super().__init__(parent, **kwargs)
 		else:
 			super().__init__(parent, flags= Qt.Window | Qt.FramelessWindowHint)
+		self.parent_widget = parent
 		self.setAttribute(Qt.WA_TranslucentBackground)
 		main_layout = QVBoxLayout()
 		self.main_widget = QFrame()
@@ -101,10 +278,42 @@ class BasePopup(QWidget):
 		self.generic_buttons.addWidget(self.no_button)
 		self.setMaximumWidth(500)
 		self.resize(500,350)
-	
+		self.curr_pos = QPoint()
+		if parent:
+			parent.setGraphicsEffect(self.graphics_blur)
+			try:
+				parent.move_listener.connect(self.update_move)
+			except AttributeError:
+				pass
+
+	def mousePressEvent(self, event):
+		self.curr_pos = event.pos()
+		return super().mousePressEvent(event)
+
+	def mouseMoveEvent(self, event):
+		if event.buttons() == Qt.LeftButton:
+			diff = event.pos() - self.curr_pos
+			newpos = self.pos()+diff
+			self.move(newpos)
+		return super().mouseMoveEvent(event)
+
+	def update_move(self):
+		if self.parent_widget:
+			self.move(self.parent_widget.window().frameGeometry().center() -\
+				self.window().rect().center())
+
 	def showEvent(self, event):
 		self.activateWindow()
+		self.graphics_blur.setEnabled(True)
 		return super().showEvent(event)
+
+	def closeEvent(self, event):
+		self.graphics_blur.setEnabled(False)
+		return super().closeEvent(event)
+
+	def hideEvent(self, event):
+		self.graphics_blur.setEnabled(False)
+		return super().hideEvent(event)
 
 	def add_buttons(self, *args):
 		"""
@@ -299,12 +508,23 @@ class LoadingOverlay(QWidget):
 			self.hide()
 
 class FileIcon:
+	
+	def __init__(self):
+		self.ico_types = {}
 
-	@staticmethod
-	def get_file_icon(path):
-		# TODO: Very ineffiecent!! Save known file exts
-		info = QFileInfo(path)
-		return QFileIconProvider().icon(info)
+	def get_file_icon(self, path):
+		if os.path.isdir(path):
+			if not 'dir' in self.ico_types:
+				self.ico_types['dir'] = QFileIconProvider().icon(QFileInfo(path))
+			return self.ico_types['dir']
+		elif path.endswith(utils.ARCHIVE_FILES):
+			suff = ''
+			for s in utils.ARCHIVE_FILES:
+				if path.endswith(s):
+					suff = s
+			if not suff in self.ico_types:
+				self.ico_types[suff] = QFileIconProvider().icon(QFileInfo(path))
+			return self.ico_types[suff]
 
 	@staticmethod
 	def get_external_file_icon():
@@ -519,9 +739,10 @@ class PathLineEdit(QLineEdit):
 	A lineedit which open a filedialog on right/left click
 	Set dir to false if you want files.
 	"""
-	def __init__(self, parent=None, dir=True):
+	def __init__(self, parent=None, dir=True, filters=utils.FILE_FILTER):
 		super().__init__(parent)
 		self.folder = dir
+		self.filters = filters
 		self.setPlaceholderText('Right/Left-click to open folder explorer.')
 		self.setToolTip('Right/Left-click to open folder explorer.')
 
@@ -531,7 +752,7 @@ class PathLineEdit(QLineEdit):
 										   'Choose folder')
 		else:
 			path = QFileDialog.getOpenFileName(self,
-									  'Choose file')
+									  'Choose file', filter=self.filters)
 			path = path[0]
 		if len(path) != 0:
 			self.setText(path)
@@ -563,15 +784,20 @@ class ChapterAddWidget(QWidget):
 		layout.addRow('Gallery:', lbl)
 		layout.addRow('Current chapters:', QLabel('{}'.format(self.current_chapters)))
 
-		new_btn = QPushButton('New')
-		new_btn.clicked.connect(self.add_new_chapter)
+		new_btn = QPushButton('Add directory')
+		new_btn.clicked.connect(lambda: self.add_new_chapter('f'))
 		new_btn.adjustSize()
+		new_btn_a = QPushButton('Add archive')
+		new_btn_a.clicked.connect(lambda: self.add_new_chapter('a'))
+		new_btn_a.adjustSize()
 		add_btn = QPushButton('Finish')
 		add_btn.clicked.connect(self.finish)
 		add_btn.adjustSize()
 		new_l = QHBoxLayout()
-		new_l.addWidget(add_btn, alignment=Qt.AlignLeft)
+		new_l.addWidget(add_btn, 1, alignment=Qt.AlignLeft)
+		new_l.addWidget(Spacer('h'))
 		new_l.addWidget(new_btn, alignment=Qt.AlignRight)
+		new_l.addWidget(new_btn_a, alignment=Qt.AlignRight)
 		layout.addRow(new_l)
 
 		frame = QFrame()
@@ -580,8 +806,6 @@ class ChapterAddWidget(QWidget):
 
 		self.chapter_l = QVBoxLayout()
 		frame.setLayout(self.chapter_l)
-
-		new_btn.click()
 
 		self.setMaximumHeight(550)
 		self.setFixedWidth(500)
@@ -595,22 +819,32 @@ class ChapterAddWidget(QWidget):
 			self.move(frect.topLeft())
 		self.setWindowTitle('Add Chapters')
 
-	def add_new_chapter(self):
+	def add_new_chapter(self, mode):
 		chap_layout = QHBoxLayout()
 		self.added_chaps += 1
 		curr_chap = self.current_chapters+self.added_chaps
 
 		chp_numb = QSpinBox(self)
-		chp_numb.setMinimum(1)
+		chp_numb.setMinimum(curr_chap-1)
+		chp_numb.setMaximum(curr_chap+1)
 		chp_numb.setValue(curr_chap)
 		curr_chap_lbl = QLabel('Chapter {}'.format(curr_chap))
 		def ch_lbl(n): curr_chap_lbl.setText('Chapter {}'.format(n))
 		chp_numb.valueChanged[int].connect(ch_lbl)
-		chp_path = PathLineEdit()
-		chp_path.folder = True
+		if mode =='f':
+			chp_path = PathLineEdit()
+			chp_path.setPlaceholderText('Right/Left-click to open folder explorer.'+
+									' Leave empty to not add.')
+		elif mode == 'a':
+			chp_path = PathLineEdit(dir=False)
+			chp_path.setPlaceholderText('Right/Left-click to open folder explorer.'+
+									' Leave empty to not add.')
+
 		chp_path.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-		chp_path.setPlaceholderText('Right/Left-click to open folder explorer.'+
-							  ' Leave empty to not add.')
+		if mode == 'f':
+			chap_layout.addWidget(QLabel('D'))
+		elif mode == 'a':
+			chap_layout.addWidget(QLabel('A'))
 		chap_layout.addWidget(chp_path, 3)
 		chap_layout.addWidget(chp_numb, 0)
 		self.chapter_l.addWidget(curr_chap_lbl,
@@ -628,8 +862,8 @@ class ChapterAddWidget(QWidget):
 		for l in range(1, len(widgets), 1):
 			layout = widgets[l]
 			try:
-				line_edit = layout.itemAt(0).widget()
-				spin_box = layout.itemAt(1).widget()
+				line_edit = layout.itemAt(1).widget()
+				spin_box = layout.itemAt(2).widget()
 			except AttributeError:
 				continue
 			p = line_edit.text()
@@ -787,29 +1021,25 @@ class GalleryListView(QWidget):
 		if msgbox.exec() == QMessageBox.Yes:
 			self.close()
 
-class Loading(QWidget):
+class Loading(BasePopup):
 	ON = False #to prevent multiple instances
 	def __init__(self, parent=None):
 		super().__init__(parent)
-		self.widget = QWidget(self)
 		self.progress = QProgressBar()
 		self.progress.setStyleSheet("color:white")
 		self.text = QLabel()
 		self.text.setAlignment(Qt.AlignCenter)
 		self.text.setStyleSheet("color:white;background-color:transparent;")
-		layout_ = QHBoxLayout()
 		inner_layout_ = QVBoxLayout()
 		inner_layout_.addWidget(self.text, 0, Qt.AlignHCenter)
 		inner_layout_.addWidget(self.progress)
-		self.widget.setLayout(inner_layout_)
-		layout_.addWidget(self.widget)
-		self.setLayout(layout_)
+		self.main_widget.setLayout(inner_layout_)
 		self.resize(300,100)
 		#frect = self.frameGeometry()
 		#frect.moveCenter(QDesktopWidget().availableGeometry().center())
-		self.move(parent.window().frameGeometry().topLeft() +
-			parent.window().rect().center() -
-			self.rect().center() - QPoint(self.rect().width()//2,0))
+		#self.move(parent.window().frameGeometry().topLeft() +
+		#	parent.window().rect().center() -
+		#	self.rect().center() - QPoint(self.rect().width(),0))
 		#self.setAttribute(Qt.WA_DeleteOnClose)
 		#self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
 

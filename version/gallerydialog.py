@@ -216,7 +216,7 @@ class GalleryDialog(QWidget):
 		try:
 			self.gallery_time = datetime.strptime(gallery_pub_date[1], '%H:%M:%S').time()
 		except IndexError:
-			self.gallery_time = None
+			pass
 		qdate_pub_date = QDate.fromString(gallery_pub_date[0], "yyyy-MM-dd")
 		self.pub_edit.setDate(qdate_pub_date)
 
@@ -316,7 +316,7 @@ class GalleryDialog(QWidget):
 			con = scandir.scandir(path) # list all folders in gallery dir
 			log_i('Gallery source is a directory')
 			log_d('Sorting')
-			chapters = sorted([sub.path for sub in con if sub.is_dir()]) #subfolders
+			chapters = sorted([sub.path for sub in con if sub.is_dir() or sub.name.endswith(utils.ARCHIVE_FILES)]) #subfolders
 			# if gallery has chapters divided into sub folders
 			if len(chapters) != 0:
 				log_d('Chapters divided in folders..')
@@ -424,14 +424,18 @@ class GalleryDialog(QWidget):
 		self.pub_edit.setDate(pub_date)
 		self._find_combobox_match(self.type_box, metadata.type, 0)
 
-	def make_gallery(self, new_gallery, add_to_model=True):
+	def make_gallery(self, new_gallery, add_to_model=True, new=False):
 		if self.check():
 			new_gallery.title = self.title_edit.text()
 			log_d('Adding gallery title')
 			new_gallery.artist = self.author_edit.text()
 			log_d('Adding gallery artist')
-			new_gallery.path = self.path_lbl.text()
 			log_d('Adding gallery path')
+			if new and gui_constants.MOVE_IMPORTED_GALLERIES:
+				gui_constants.OVERRIDE_MONITOR = True
+				new_gallery.path = utils.move_files(self.path_lbl.text())
+			else:
+				new_gallery.path = self.path_lbl.text()
 			new_gallery.info = self.descr_edit.toPlainText()
 			log_d('Adding gallery descr')
 			new_gallery.type = self.type_box.currentText()
@@ -481,7 +485,7 @@ class GalleryDialog(QWidget):
 		self.link_btn2.show()
 
 	def accept(self):
-		new_gallery = self.make_gallery(gallerydb.Gallery())
+		new_gallery = self.make_gallery(gallerydb.Gallery(), new=True)
 
 		if new_gallery:
 			self.close()

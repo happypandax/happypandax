@@ -28,6 +28,25 @@ IMG_FILES =  ('.jpg','.bmp','.png','.gif')
 ARCHIVE_FILES = ('.zip', '.cbz')
 FILE_FILTER = '*.zip *.cbz'
 
+def move_files(path, dest=''):
+	"""
+	Move files to a new destination. If dest is not set,
+	imported_galleries_def_path will be used instead.
+	"""
+	if not dest:
+		dest = gui_constants.IMPORTED_GALLERY_DEF_PATH
+		if not dest:
+			return path
+	f = os.path.split(path)[1]
+	new_path = os.path.join(dest, f)
+	if new_path == os.path.join(*os.path.split(path)):
+		return path
+	if not os.path.exists(new_path):
+		new_path = shutil.move(path, new_path)
+	else:
+		return path
+	return new_path
+
 def check_ignore_list(key):
 	k = os.path.normcase(key)
 	for path in gui_constants.IGNORE_PATHS:
@@ -144,11 +163,16 @@ class ArchiveFile():
 				x.count('/') == 0]
 		return [x for x in self.namelist() if x.startswith(dir_name)]
 
-	def extract(self, file_to_ext, path):
+	def extract(self, file_to_ext, path=None):
 		"""
 		Extracts one file from archive to given path
+		Creates a temp_dir if path is not specified
 		Returns path to the extracted file
 		"""
+		if not path:
+			path = os.path.join(gui_constants.temp_dir, str(uuid.uuid4()))
+			os.mkdir(path)
+
 		if not file_to_ext:
 			self.extract_all(path)
 			return path
@@ -162,14 +186,18 @@ class ArchiveFile():
 				self.archive.extract(m, path)
 			return temp_p
 
-	def extract_all(self, path, member=None):
+	def extract_all(self, path=None, member=None):
 		"""
-		Extracts all files to given path
+		Extracts all files to given path, and returns path
+		If path is not specified, a temp dir will be created
 		"""
-		# TODO: Check contents of archive before extracting
+		if not path:
+			path = os.path.join(gui_constants.temp_dir, str(uuid.uuid4()))
+			os.mkdir(path)
 		if member:
 			self.archive.extractall(path, member)
 		self.archive.extractall(path)
+		return path
 
 	def open(self, file_to_open, fp=False):
 		"""
@@ -260,21 +288,41 @@ def open_chapter(chapterpath, archive=None):
 	if not is_archive:
 		chapterpath = os.path.normpath(chapterpath)
 	temp_p = archive if is_archive else chapterpath
+	def find_f_img_folder():
+		filepath = os.path.join(temp_p, [x for x in sorted([y.name for y in scandir.scandir(temp_p)])\
+			if x.endswith(IMG_FILES)][0]) # Find first page
+		return filepath
+
+	def find_f_img_archive():
+		zip = ArchiveFile(temp_p)
+		t_p = os.path.join('temp', str(uuid.uuid4()))
+		os.mkdir(t_p)
+		gui_constants.NOTIF_BAR.add_text('Extracting...')
+		if is_archive:
+			if os.path.isdir(chapterpath):
+				t_p = chapterpath
+			elif chapterpath.endswith(ARCHIVE_FILES):
+				zip2 = ArchiveFile(chapterpath)
+				f_d = sorted(zip2.dir_list(True))
+				if f_d:
+					f_d = f_d[0]
+					t_p = zip2.extract(f_d, t_p)
+				else:
+					t_p = zip2.extract('', t_p)
+			else:
+				t_p = zip.extract(chapterpath, t_p)
+		else:
+			zip.extract_all(t_p) # Compatibility reasons.. TODO: REMOVE IN BETA
+		filepath = os.path.join(t_p, [x for x in sorted([y.name for y in scandir.scandir(t_p)])\
+ 			if x.endswith(IMG_FILES)][0]) # Find first page
+		filepath = os.path.abspath(filepath)
+		return filepath
+
 	try:
 		try: # folder
-			filepath = os.path.join(temp_p, [x for x in sorted([y.name for y in scandir.scandir(temp_p)])\
-				if x.endswith(IMG_FILES)][0]) # Find first page
+			filepath = find_f_img_folder()
 		except NotADirectoryError: # archive
-			zip = ArchiveFile(temp_p)
-			t_p = os.path.join('temp', str(uuid.uuid4()))
-			os.mkdir(t_p)
-			if is_archive: # Compatibility reasons.. TODO: REMOVE IN BETA
-				t_p = zip.extract(chapterpath, t_p)
-			else:
-				zip.extract_all(t_p)
-			filepath = os.path.join(t_p, [x for x in sorted([y.name for y in scandir.scandir(t_p)])\
- 				if x.endswith(IMG_FILES)][0]) # Find first page
-			filepath = os.path.abspath(filepath)
+			filepath = find_f_img_archive()
 	except FileNotFoundError:
 		log.exception('Could not find chapter {}'.format(chapterpath))
 

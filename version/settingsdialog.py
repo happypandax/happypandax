@@ -127,6 +127,8 @@ class SettingsDialog(QWidget):
 
 		# App / General
 		self.scroll_to_new_gallery.setChecked(gui_constants.SCROLL_TO_NEW_GALLERIES)
+		self.move_imported_gs.setChecked(gui_constants.MOVE_IMPORTED_GALLERIES)
+		self.move_imported_def_path.setText(gui_constants.IMPORTED_GALLERY_DEF_PATH)
 		self.open_random_g_chapters.setChecked(gui_constants.OPEN_RANDOM_GALLERY_CHAPTERS)
 		self.subfolder_as_chapters.setChecked(gui_constants.SUBFOLDER_AS_GALLERY)
 		self.rename_g_source_group.setChecked(gui_constants.RENAME_GALLERY_SOURCE)
@@ -212,6 +214,11 @@ class SettingsDialog(QWidget):
 		# App / General
 		gui_constants.SCROLL_TO_NEW_GALLERIES = self.scroll_to_new_gallery.isChecked()
 		set(gui_constants.SCROLL_TO_NEW_GALLERIES, 'Application', 'scroll to new galleries')
+		gui_constants.MOVE_IMPORTED_GALLERIES = self.move_imported_gs.isChecked()
+		set(gui_constants.MOVE_IMPORTED_GALLERIES, 'Application', 'move imported galleries')
+		if not self.move_imported_def_path.text() or os.path.exists(self.move_imported_def_path.text()):
+			gui_constants.IMPORTED_GALLERY_DEF_PATH = self.move_imported_def_path.text()
+			set(gui_constants.IMPORTED_GALLERY_DEF_PATH, 'Application', 'imported gallery def path')
 		gui_constants.OPEN_RANDOM_GALLERY_CHAPTERS = self.open_random_g_chapters.isChecked()
 		set(gui_constants.OPEN_RANDOM_GALLERY_CHAPTERS, 'Application', 'open random gallery chapters')
 		gui_constants.SUBFOLDER_AS_GALLERY = self.subfolder_as_chapters.isChecked()
@@ -414,12 +421,20 @@ class SettingsDialog(QWidget):
 
 		app_gallery_group, app_gallery_l = groupbox('Gallery', QFormLayout, self)
 		app_general_m_l.addRow(app_gallery_group)
+		self.subfolder_as_chapters = QCheckBox("Treat subfolders as galleries (applies in archives too)")
+		subf_info = QLabel("Behaviour of 'Scan for new galleries on startup' option will be affected.")
+		subf_info.setWordWrap(True)
+		app_gallery_l.addRow('Note:', subf_info)
+		app_gallery_l.addRow(self.subfolder_as_chapters)
 		self.scroll_to_new_gallery = QCheckBox("Scroll to newly added gallery")
 		self.scroll_to_new_gallery.setDisabled(True)
 		app_gallery_l.addRow(self.scroll_to_new_gallery)
-		self.subfolder_as_chapters = QCheckBox("Treat subfolders as galleries. Note: behaviour of"+
-										 " 'Scan for new galleries on startup' option will be affected.")
-		app_gallery_l.addRow(self.subfolder_as_chapters)
+		self.move_imported_gs, move_imported_gs_l = groupbox('Move imported galleries',
+													   QFormLayout, app_gallery_group)
+		self.move_imported_gs.setCheckable(True)
+		self.move_imported_def_path = PathLineEdit()
+		move_imported_gs_l.addRow('Directory:', self.move_imported_def_path)
+		app_gallery_l.addRow(self.move_imported_gs)
 		self.rename_g_source_group, rename_g_source_l = groupbox('Rename gallery source',
 													  QFormLayout, app_gallery_group)
 		self.rename_g_source_group.setCheckable(True)
@@ -527,7 +542,7 @@ class SettingsDialog(QWidget):
 		self.web_time_offset.setMinimum(4)
 		self.web_time_offset.setMaximum(99)
 		metadata_fetcher_m_l.addRow(time_offset_info)
-		metadata_fetcher_m_l.addRow('Requests delay in', self.web_time_offset)
+		metadata_fetcher_m_l.addRow('Requests delay in seconds', self.web_time_offset)
 		replace_metadata_info = QLabel('When fetching for metadata the new metadata will be appended'+
 								 ' to the gallery by default. This means that new data will only be set if'+
 								 ' the field was empty. There is however a special case for namespace & tags.'+
@@ -615,10 +630,8 @@ class SettingsDialog(QWidget):
 		grid_gallery_display = FlowLayout()
 		grid_gallery_main_l.addRow('Display on gallery:', grid_gallery_display)
 		self.external_viewer_ico = QCheckBox('External Viewer')
-		self.external_viewer_ico.setDisabled(True)
 		grid_gallery_display.addWidget(self.external_viewer_ico)
 		self.gallery_type_ico = QCheckBox('File Type')
-		self.gallery_type_ico.setDisabled(True)
 		grid_gallery_display.addWidget(self.gallery_type_ico)
 		gallery_text_mode = QWidget()
 		grid_gallery_main_l.addRow('Text Mode:', gallery_text_mode)
@@ -730,7 +743,7 @@ class SettingsDialog(QWidget):
 		misc_external_viewer_l = QFormLayout()
 		misc_external_viewer.setLayout(misc_external_viewer_l)
 		misc_external_viewer_l.addRow(QLabel(gui_constants.SUPPORTED_EXTERNAL_VIEWER_LBL))
-		self.external_viewer_path = PathLineEdit(misc_external_viewer, False)
+		self.external_viewer_path = PathLineEdit(misc_external_viewer, False, '')
 		self.external_viewer_path.setPlaceholderText('Right/Left-click to open folder explorer.'+
 							  ' Leave empty to use default viewer')
 		self.external_viewer_path.setToolTip('Right/Left-click to open folder explorer.'+
@@ -740,9 +753,10 @@ class SettingsDialog(QWidget):
 
 		# Advanced / Gallery
 		advanced_gallery, advanced_gallery_m_l = new_tab('Gallery', advanced)
-		g_data_fixer_group, g_data_fixer_l =  groupbox('Gallery Text Fixer', QFormLayout, advanced_gallery)
+		advanced_gallery.setEnabled(False)
+		g_data_fixer_group, g_data_fixer_l =  groupbox('Gallery Renamer', QFormLayout, advanced_gallery)
 		advanced_gallery_m_l.addRow(g_data_fixer_group)
-		g_data_regex_fix_lbl = QLabel("Replace text from gallery data through regular expression."+
+		g_data_regex_fix_lbl = QLabel("Rename a gallery through regular expression."+
 								" A regex cheatsheet is located at About -> Regex Cheatsheet.")
 		g_data_regex_fix_lbl.setWordWrap(True)
 		g_data_fixer_l.addRow(g_data_regex_fix_lbl)

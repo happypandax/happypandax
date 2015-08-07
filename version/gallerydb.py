@@ -97,7 +97,7 @@ def add_method_queue(method, no_return, *args, **kwargs):
 		return method_return.get()
 
 def gen_thumbnail(gallery, width=gui_constants.THUMB_W_SIZE,
-				height=gui_constants.THUMB_H_SIZE): # 2 to align it properly.. need to redo this
+				height=gui_constants.THUMB_H_SIZE, img=None):
 	"""Generates a thumbnail with unique filename in the cache dir.
 	Returns absolute path to the created thumbnail
 	"""
@@ -109,10 +109,13 @@ def gen_thumbnail(gallery, width=gui_constants.THUMB_W_SIZE,
 		os.mkdir(db_constants.THUMBNAIL_PATH)
 
 	try:
-		if gallery.is_archive:
-			img_path = get_gallery_img(gallery.chapters[0], gallery.path)
+		if not img:
+			if gallery.is_archive:
+				img_path = get_gallery_img(gallery.chapters[0], gallery.path)
+			else:
+				img_path = get_gallery_img(gallery.chapters[0])
 		else:
-			img_path = get_gallery_img(gallery.chapters[0])
+			img_path = img
 		for ext in IMG_FILES:
 			if img_path.endswith(ext):
 				suff = ext # the image ext with dot
@@ -229,40 +232,37 @@ class GalleryDB:
 		raise Exception("GalleryDB should not be instantiated")
 
 	@staticmethod
-	def rebuild_galleries():
+	def rebuild_gallery(gallery):
 		"Rebuilds the galleries in DB"
-		galleries = GalleryDB.get_all_gallery()
 		try:
-			log_i('Rebuilding galleries')
-			for gallery in galleries:
-				if gallery.validate():
-					log_i("Rebuilding gallery {}".format(gallery.id))
-					HashDB.del_gallery_hashes(gallery.id)
-					GalleryDB.modify_gallery(
-						gallery.id,
-						title=gallery.title,
-						artist=gallery.artist,
-						info=gallery.info,
-						type=gallery.type,
-						fav=gallery.fav,
-						tags=gallery.tags,
-						language=gallery.language,
-						status=gallery.status,
-						pub_date=gallery.pub_date,
-						link=gallery.link,
-						times_read=gallery.times_read,
-						_db_v=db_constants.CURRENT_DB_VERSION,
-						exed=gallery.exed,
-						is_archive=gallery.is_archive,
-						path_in_archive=gallery.path_in_archive)
+			log_i('Rebuilding {}'.format(gallery.title.encode(errors='ignore')))
+			if gallery.validate():
+				log_i("Rebuilding gallery {}".format(gallery.id))
+				HashDB.del_gallery_hashes(gallery.id)
+				GalleryDB.modify_gallery(
+					gallery.id,
+					title=gallery.title,
+					artist=gallery.artist,
+					info=gallery.info,
+					type=gallery.type,
+					fav=gallery.fav,
+					tags=gallery.tags,
+					language=gallery.language,
+					status=gallery.status,
+					pub_date=gallery.pub_date,
+					link=gallery.link,
+					times_read=gallery.times_read,
+					_db_v=db_constants.CURRENT_DB_VERSION,
+					exed=gallery.exed,
+					is_archive=gallery.is_archive,
+					path_in_archive=gallery.path_in_archive)
 		except:
-			log.exception('Failed rebuilding galleries')
+			log.exception('Failed rebuilding')
 			return False
-		log_i('Finished rebuilding galleries')
 		return True
 
 	@staticmethod
-	def modify_gallery(series_id, title=None, artist=None, info=None, type=None, fav=None,
+	def modify_gallery(series_id, title=None, profile=None, artist=None, info=None, type=None, fav=None,
 				   tags=None, language=None, status=None, pub_date=None, link=None,
 				   times_read=None, series_path=None, chapters=None, _db_v=None,
 				   hashes=None, exed=None, is_archive=None, path_in_archive=None):
@@ -273,6 +273,9 @@ class GalleryDB:
 		if title:
 			assert isinstance(title, str)
 			executing.append(["UPDATE series SET title=? WHERE series_id=?", (title, series_id)])
+		if profile:
+			assert isinstance(profile, str)
+			executing.append(["UPDATE series SET profile=? WHERE series_id=?", (str.encode(profile), series_id)])
 		if artist:
 			assert isinstance(artist, str)
 			executing.append(["UPDATE series SET artist=? WHERE series_id=?", (artist, series_id)])
@@ -1257,7 +1260,7 @@ class Gallery:
 		self._db_v = None
 		self.hashes = []
 		self.exed = 0
-		self._cache_id = 0
+		self._cache_id = 0 # used by custom delegate to cache profile
 
 	def gen_hashes(self):
 		"Generate hashes while inserting them into DB"
@@ -1337,14 +1340,20 @@ class Gallery:
 
 class Bridge(QObject):
 	DONE = pyqtSignal(bool)
+	PROGRESS = pyqtSignal(int)
+	DATA_COUNT = pyqtSignal(int)
 	def __init__(self, parent=None):
 		super().__init__(parent)
 
 	def rebuild_galleries(self):
-		if GalleryDB.rebuild_galleries():
-			self.DONE.emit(True)
-		else:
-			self.DONE.emit(False)
+		galleries = GalleryDB.get_all_gallery()
+		if galleries:
+			self.DATA_COUNT.emit(len(galleries))
+			log_i('Rebuilding galleries')
+			for n, g in enumerate(galleries, 1):
+				GalleryDB.rebuild_gallery(g)
+				self.PROGRESS.emit(n)
+		self.DONE.emit(True)
 if __name__ == '__main__':
 	#unit testing here
 	date = today()

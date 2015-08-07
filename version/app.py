@@ -15,7 +15,7 @@
 import sys, logging, os, threading, re, requests, scandir
 from PyQt5.QtCore import (Qt, QSize, pyqtSignal, QThread, QEvent, QTimer,
 						  QObject)
-from PyQt5.QtGui import (QPixmap, QIcon, QMouseEvent, QCursor)
+from PyQt5.QtGui import (QPixmap, QIcon, QMoveEvent, QCursor)
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QListView,
 							 QHBoxLayout, QFrame, QWidget, QVBoxLayout,
 							 QLabel, QStackedLayout, QToolBar, QMenuBar,
@@ -46,6 +46,7 @@ log_c = log.critical
 
 class AppWindow(QMainWindow):
 	"The application's main window"
+	move_listener = pyqtSignal()
 	def __init__(self):
 		super().__init__()
 		self.setAcceptDrops(True)
@@ -92,22 +93,15 @@ class AppWindow(QMainWindow):
 		self.watchers.gallery_handler.DELETED_SIGNAL.connect(deleted)
 
 		if gui_constants.LOOK_NEW_GALLERY_STARTUP:
-			self.notification_bar.begin_show()
 			self.notification_bar.add_text("Looking for new galleries...")
 			try:
 				class ScanDir(QObject):
 					final_paths_and_galleries = pyqtSignal(list, list)
 					finished = pyqtSignal()
-					def __init__(self, model_data, parent=None):
+					def __init__(self, parent=None):
 						super().__init__(parent)
-						self.model_data = model_data
 						self.scanned_data = []
 					def scan_dirs(self):
-						db_data = self.model_data
-						paths = []
-						for g in range(len(db_data)):
-							paths.append(os.path.normcase(db_data[g].path))
-
 						paths = []
 						for p in gui_constants.MONITOR_PATHS:
 							dir_content = scandir.scandir(p)
@@ -153,6 +147,7 @@ class AppWindow(QMainWindow):
 
 				def show_new_galleries(final_paths, galleries):
 					if final_paths and galleries:
+						gui_constants.OVERRIDE_MOVE_IMPORTED_IN_FETCH = True
 						if gui_constants.LOOK_NEW_GALLERY_AUTOADD:
 							self.gallery_populate(final_paths)
 						else:
@@ -172,11 +167,10 @@ class AppWindow(QMainWindow):
 							buttons[1].clicked.connect(g_popup.close)
 
 				thread = QThread(self)
-				self.scan_inst = ScanDir(self.manga_list_view.gallery_model._data)
+				self.scan_inst = ScanDir()
 				self.scan_inst.moveToThread(thread)
 				self.scan_inst.final_paths_and_galleries.connect(show_new_galleries)
 				self.scan_inst.final_paths_and_galleries.connect(lambda a: self.scan_inst.deleteLater())
-				self.scan_inst.finished.connect(lambda: self.notification_bar.end_show())
 				thread.started.connect(self.scan_inst.scan_dirs)
 				#self.scan_inst.scan_dirs()
 				thread.finished.connect(thread.deleteLater)
@@ -189,7 +183,7 @@ class AppWindow(QMainWindow):
 		def normalize_first_time():
 			settings.set(3, 'Application', 'first time level')
 			settings.save()
-		def done():
+		def done(status=True):
 			if gui_constants.FIRST_TIME_LEVEL != 3:
 				normalize_first_time()
 			self.manga_list_view.gallery_model.init_data()
@@ -203,20 +197,16 @@ class AppWindow(QMainWindow):
 					super().__init__(parent)
 					main_layout = QVBoxLayout()
 					info_lbl = QLabel("Hi there! I need to rebuild your galleries.\n"+
-					   "Please wait.. This will take a few minutes at most.\n"+
-					   "If not then try restarting the application.")
+					   "Please wait.. Restart if there is no sign of progress.")
 					info_lbl.setAlignment(Qt.AlignCenter)
 					main_layout.addWidget(info_lbl)
-					prog = QProgressBar(self)
-					prog.setMinimum(0)
-					prog.setMaximum(0)
-					prog.setTextVisible(False)
-					main_layout.addWidget(prog)
+					self.prog = QProgressBar(self)
+					main_layout.addWidget(self.prog)
 					main_layout.addWidget(QLabel('Note: This popup will close itself when everything is ready'))
 					self.main_widget.setLayout(main_layout)
 
 			ft_widget = FirstTime(self)
-			log_i('Invoking first time level 2')
+			log_i('Invoking first time level 3')
 			bridge = gallerydb.Bridge()
 			thread = QThread(self)
 			thread.setObjectName('Startup')
@@ -226,6 +216,8 @@ class AppWindow(QMainWindow):
 			bridge.DONE.connect(self.setEnabled)
 			bridge.DONE.connect(done)
 			bridge.DONE.connect(bridge.deleteLater)
+			bridge.DATA_COUNT.connect(ft_widget.prog.setMaximum)
+			bridge.PROGRESS.connect(ft_widget.prog.setValue)
 			thread.finished.connect(thread.deleteLater)
 			thread.start()
 			ft_widget.adjustSize()
@@ -263,7 +255,6 @@ class AppWindow(QMainWindow):
 		tray_quit.triggered.connect(self.close)
 		self.system_tray.show()
 		log_d('Create system tray: OK')
-
 		#self.display.addWidget(self.chapter_main)
 
 		self.setCentralWidget(self.center)
@@ -345,7 +336,10 @@ class AppWindow(QMainWindow):
 		thread.setObjectName('App.get_metadata')
 		fetch_instance = fetch.Fetch()
 		if gal:
-			galleries = [gal]
+			if not isinstance(gal, list):
+				galleries = [gal]
+			else:
+				galleries = gal
 		else:
 			if gui_constants.CONTINUE_AUTO_METADATA_FETCHER:
 				galleries = [g for g in self.manga_list_view.gallery_model._data if not g.exed]
@@ -703,7 +697,7 @@ class AppWindow(QMainWindow):
 									loading.show()
 
 								def loading_hide():
-									loading.close()
+									loading.hide()
 									self.manga_list_view.gallery_model.ROWCOUNT_CHANGE.emit()
 
 								def del_later():
@@ -712,15 +706,15 @@ class AppWindow(QMainWindow):
 									except NameError:
 										pass
 
-								#a_instance.moveToThread(thread)
+								a_instance.moveToThread(thread)
 								a_instance.prog.connect(loading.progress.setValue)
-								#thread.started.connect(loading_show)
-								#thread.started.connect(a_instance.add_to_db)
+								thread.started.connect(loading_show)
+								thread.started.connect(a_instance.add_to_db)
 								a_instance.done.connect(loading_hide)
 								a_instance.done.connect(del_later)
-								#thread.finished.connect(thread.deleteLater)
-								#thread.start()
-								a_instance.add_to_db()
+								thread.finished.connect(thread.deleteLater)
+								thread.start()
+								#a_instance.add_to_db()
 							#data_thread.quit
 							hide_loading()
 							log_i('Populating DB from gallery folder: OK')
@@ -728,7 +722,15 @@ class AppWindow(QMainWindow):
 								gallery_list = misc.GalleryListView(self)
 								gallery_list.SERIES.connect(add_gallery)
 								for ser in status:
-									gallery_list.add_gallery(ser, os.path.split(ser.path)[1])
+									if ser.is_archive and gui_constants.SUBFOLDER_AS_GALLERY:
+										p = os.path.split(ser.path)[1]
+										if ser.chapters[0]:
+											text = '{}: {}'.format(p, os.path.split(ser.chapters[0])[0])
+										else:
+											text = p
+										gallery_list.add_gallery(ser, text)
+									else:
+										gallery_list.add_gallery(ser, os.path.split(ser.path)[1])
 								#self.manga_list_view.gallery_model.populate_data()
 								gallery_list.show()
 							else:
@@ -812,6 +814,10 @@ class AppWindow(QMainWindow):
 		except AttributeError:
 			pass
 		return super().resizeEvent(event)
+
+	def moveEvent(self, event):
+		self.move_listener.emit()
+		return super().moveEvent(event)
 
 	def closeEvent(self, event):
 		# watchers
