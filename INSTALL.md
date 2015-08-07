@@ -56,6 +56,7 @@ Download from here https://www.python.org/downloads/
 Note: Try renaming the 'main.py' file to 'main.pyw' and then just doubleclick on it to try running without console (not guaranteed to work)
 
 # Mac OS X
+(Note: PyQt5 MUST be installed via Homebrew and NOT via Pip)
 1. Install Homebrew (this makes everything easier)
   - Open Terminal
   - Run the following
@@ -66,10 +67,10 @@ Note: Try renaming the 'main.py' file to 'main.pyw' and then just doubleclick on
    + brew install PyQt5
 3. Install requests, BeautifulSoup4, Watchdog, and scandir
   - Run the following
-   + python3 -m pip install requests
-   + python3 -m pip install beautifulsoup4
-   + python3 -m pip install watchdog
-   + python3 -m pip install scandir
+   + pip3 install requests
+   + pip3 install beautifulsoup4
+   + pip3 install watchdog
+   + pip3 install scandir
 4. Download HappyPanda
   - Go to github.com/Pewpews/happypanda
   - Press the "Download ZIP" button
