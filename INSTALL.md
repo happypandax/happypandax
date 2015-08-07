@@ -77,6 +77,6 @@ Note: Try renaming the 'main.py' file to 'main.pyw' and then just doubleclick on
   - UnZip happypanda-master.zip
 5. Running HappyPanda
   - Run the following
-   + cd /where/ever/you/put/the/folder/happypanda-master
-     + (For example cd /Users/username/Downloads/happypanda-master)
+   + cd /where/ever/you/put/the/folder/happypanda-master/version
+     + (For example cd /Users/username/Downloads/happypanda-master/version)
    + python3 main.py
