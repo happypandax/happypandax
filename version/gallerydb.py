@@ -510,6 +510,7 @@ class GalleryDB:
 			TagDB.del_gallery_mapping(gallery.id)
 			HashDB.del_gallery_hashes(gallery.id)
 			log_i('Successfully deleted: {}'.format(gallery.title.encode('utf-8', 'ignore')))
+			gui_constants.NOTIF_BAR.add_text('Successfully deleted: {}'.format(gallery.title))
 
 	@staticmethod
 	def check_exists(name, galleries=None, filter=True):

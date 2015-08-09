@@ -149,12 +149,12 @@ class ArchiveFile():
 	def dir_list(self, only_top_level=False):
 		"""
 		Returns a list of all directories found recursively. For directories not in toplevel
-		a path in the archive to the diretory will be returned. The parent folder won't be included.
+		a path in the archive to the diretory will be returned.
 		"""
 		if only_top_level:
 			return [x for x in self.namelist() if x.endswith('/') and x.count('/') == 2]
 		else:
-			return [x for x in self.namelist() if x.endswith('/') and x.count('/') > 1]
+			return [x for x in self.namelist() if x.endswith('/') and x.count('/') >= 1]
 
 	def dir_contents(self, dir_name):
 		"""
@@ -166,7 +166,7 @@ class ArchiveFile():
 			raise FileNotFoundInArchive
 		if not dir_name:
 			con=  [x for x in self.namelist() if (x.endswith('/') and x.count('/') == 1) or \
-				x.count('/') == 1 and not x.endswith('/')]
+				(x.count('/') <= 1 and not x.endswith('/'))]
 			return con
 		return [x for x in self.namelist() if x.startswith(dir_name)]
 
