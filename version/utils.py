@@ -204,7 +204,10 @@ class ArchiveFile():
 			self.archive.extractall(path, member)
 		self.archive.extractall(path)
 		# find parent folder
-		path = os.path.join(path, [x for x in self.namelist() if x.endswith('/') and x.count('/') == 1][0])
+		try:
+			path = os.path.join(path, [x for x in self.namelist() if x.endswith('/') and x.count('/') == 1][0])
+		except IndexError:
+			pass
 		return path
 
 	def open(self, file_to_open, fp=False):
@@ -316,7 +319,7 @@ def open_chapter(chapterpath, archive=None):
 		t_p = os.path.join('temp', str(uuid.uuid4()))
 		os.mkdir(t_p)
 		gui_constants.NOTIF_BAR.add_text('Extracting...')
-		if is_archive:
+		if is_archive or chapterpath.endswith(ARCHIVE_FILES):
 			if os.path.isdir(chapterpath):
 				t_p = chapterpath
 			elif chapterpath.endswith(ARCHIVE_FILES):

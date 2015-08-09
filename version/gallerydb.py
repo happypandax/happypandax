@@ -1316,9 +1316,9 @@ class Gallery:
 		Hashes: {}
 
 		Chapters: {}
-		""".format(self.id, self.title, self.profile, self.path, self.is_archive, self.artist,
+		""".format(self.id, self.title, self.profile, self.path.encode(errors='ignore'), self.is_archive, self.artist,
 			 self.info, self.fav, self.type, self.language, self.status, self.tags,
-			 self.pub_date, self.date_added, self.exed, len(self.hashes), self.chapters)
+			 self.pub_date, self.date_added, self.exed, len(self.hashes), "".format(self.chapters).encode(errors='ignore'))
 		return string
 
 #class Chapter:
