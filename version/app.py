@@ -750,6 +750,22 @@ class AppWindow(QMainWindow):
 						data_thread.quit
 						QTimer.singleShot(10000, loading.close)
 
+				def skipped_gs(s_list):
+					"Skipped galleries"
+					msg_box = QMessageBox(self)
+					msg_box.setIcon(QMessageBox.Question)
+					msg_box.setText('Do you want to view skipped paths?')
+					msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+					msg_box.setDefaultButton(QMessageBox.No)
+					if msg_box.exec() == QMessageBox.Yes:
+						list_wid = QListWidget(self)
+						for g in s_list:
+							list_wid.addItem(g)
+						list_wid.setWindowTitle('Skipped paths')
+						list_wid.setWindowFlags(Qt.Window)
+						list_wid.resize(500,500)
+						list_wid.show()
+
 				def fetch_deleteLater():
 					try:
 						fetch_instance.deleteLater
@@ -766,6 +782,7 @@ class AppWindow(QMainWindow):
 				#data_thread.started.connect(fetch_instance.local)
 				fetch_instance.FINISHED.connect(finished)
 				fetch_instance.FINISHED.connect(fetch_deleteLater)
+				fetch_instance.SKIPPED.connect(skipped_gs)
 				#data_thread.finished.connect(data_thread.deleteLater)
 				#data_thread.start()
 				fetch_instance.local()
