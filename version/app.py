@@ -135,6 +135,8 @@ class AppWindow(QMainWindow):
 										g.profile = utils.get_gallery_img(g.chapters[0], g.path)
 									else:
 										g.profile = utils.get_gallery_img(g.chapters[0])
+									if not g.profile:
+										raise Exception
 								except:
 									g.profile = gui_constants.NO_IMAGE_PATH
 							

@@ -103,7 +103,7 @@ def generate_img_hash(src):
 		buffer = src.read(chunk)
 	return sha1.hexdigest()
 
-class CreateZipFail(Exception): pass
+class CreateArchiveFail(Exception): pass
 class FileNotFoundInArchive(Exception): pass
 
 class ArchiveFile():
@@ -115,19 +115,20 @@ class ArchiveFile():
 	close -> close archive
 	"""
 	def __init__(self, filepath):
-		if filepath.endswith(ARCHIVE_FILES):
-			try:
+		try:
+			if filepath.endswith(ARCHIVE_FILES):
 				self.archive = zipfile.ZipFile(os.path.normcase(filepath))
 				# test for corruption
 				b_f = self.archive.testzip()
 				if b_f:
 					log_w('Bad file found in archive {}'.format(filepath.encode(errors='ignore')))
-					raise Exception
-			except:
-				log.exception('Create ZIP: FAIL')
-				raise CreateZipFail
-		else:
-			log.exception('Archive: Unsupported file format')
+					raise CreateArchiveFail
+			else:
+				log_e('Archive: Unsupported file format')
+				raise CreateArchiveFail
+		except:
+			log.exception('Create ZIP: FAIL')
+			raise CreateArchiveFail
 
 	def namelist(self):
 		filelist = self.archive.namelist()
@@ -228,7 +229,10 @@ def check_archive(archive_path):
 	Returns a list with a path in archive to galleries
 	if there is no directories
 	"""
-	zip = ArchiveFile(archive_path)
+	try:
+		zip = ArchiveFile(archive_path)
+	except CreateArchiveFail:
+		return []
 	if not zip:
 		return []
 	zip_dirs = zip.dir_list()
@@ -343,7 +347,12 @@ def open_chapter(chapterpath, archive=None):
 		try: # folder
 			filepath = find_f_img_folder()
 		except NotADirectoryError: # archive
-			filepath = find_f_img_archive()
+			try:
+				filepath = find_f_img_archive()
+			except CreateArchiveFail:
+				log.exception('Could not open chapter')
+				gui_constants.NOTIF_BAR.add_text('Could not open chapter. Check happypanda.log for more details.')
+				return
 	except FileNotFoundError:
 		log.exception('Could not find chapter {}'.format(chapterpath))
 
@@ -378,16 +387,19 @@ def get_gallery_img(path, archive=None):
 	real_path = archive if archive else path
 	img_path = None
 	if is_archive:
-		log_i('Getting image from archive')
-		zip = ArchiveFile(real_path)
-		temp_path = os.path.join(gui_constants.temp_dir, str(uuid.uuid4()))
-		os.mkdir(temp_path)
-		if not archive:
-			f_img_name = sorted([img for img in zip.namelist() if img.endswith(IMG_FILES)])[0]
-		else:
-			f_img_name = sorted([img for img in zip.dir_contents(path) if img.endswith(IMG_FILES)])[0]
-		img_path = zip.extract(f_img_name, temp_path)
-		zip.close()
+		try:
+			log_i('Getting image from archive')
+			zip = ArchiveFile(real_path)
+			temp_path = os.path.join(gui_constants.temp_dir, str(uuid.uuid4()))
+			os.mkdir(temp_path)
+			if not archive:
+				f_img_name = sorted([img for img in zip.namelist() if img.endswith(IMG_FILES)])[0]
+			else:
+				f_img_name = sorted([img for img in zip.dir_contents(path) if img.endswith(IMG_FILES)])[0]
+			img_path = zip.extract(f_img_name, temp_path)
+			zip.close()
+		except CreateArchiveFail:
+			img_path = gui_constants.NO_IMAGE_PATH
 	elif os.path.isdir(real_path):
 		log_i('Getting image from folder')
 		first_img = sorted([img.name for img in scandir.scandir(real_path) if img.name.endswith(tuple(IMG_FILES))])[0]

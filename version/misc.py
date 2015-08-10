@@ -37,7 +37,7 @@ from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QMenu, QGraphicsBlurEffect)
 
 from utils import (tag_to_string, tag_to_dict, title_parser, ARCHIVE_FILES,
-					 ArchiveFile, IMG_FILES, CreateZipFail)
+					 ArchiveFile, IMG_FILES, CreateArchiveFail)
 import utils
 import gui_constants
 import gallerydb
@@ -168,7 +168,11 @@ class GalleryMenu(QMenu):
 		gallery = self.index.data(Qt.UserRole+1)
 		log_i('Attempting to change cover of {}'.format(gallery.title.encode(errors='ignore')))
 		if gallery.is_archive:
-			zip = utils.ArchiveFile(gallery.path)
+			try:
+				zip = utils.ArchiveFile(gallery.path)
+			except utils.CreateArchiveFail:
+				gui_constants.NOTIF_BAR.add_text('Attempt to change cover failed. Could not create archive.')
+				return
 			path = zip.extract_all()
 		else:
 			path = gallery.path
@@ -551,7 +555,10 @@ class FileIcon:
 				return False
 			file = ""
 			if gallery.path.endswith(tuple(ARCHIVE_FILES)):
-				zip = ArchiveFile(gallery.path)
+				try:
+					zip = ArchiveFile(gallery.path)
+				except utils.CreateArchiveFail:
+					return False
 				for name in zip.namelist():
 					if name.endswith(tuple(IMG_FILES)):
 						folder = os.path.join(
@@ -575,7 +582,7 @@ class FileIcon:
 				break
 			except FileNotFoundError:
 				continue
-			except CreateZipFail:
+			except CreateArchiveFail:
 				continue
 
 		if not file:
