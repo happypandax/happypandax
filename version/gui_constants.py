@@ -21,7 +21,7 @@ DEBUG = False
 get = settings.get
 
 #current_dir, f = os.path.split(os.path.realpath(__file__))
-static_dir = os.path.join(os.getcwd(), "res")
+static_dir = os.path.join(os.getcwd(), "../res")
 temp_dir = os.path.join('temp')
 
 #default stylesheet path
