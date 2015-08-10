@@ -45,6 +45,7 @@ class Fetch(QObject):
 	FINISHED = pyqtSignal(object)
 	DATA_COUNT = pyqtSignal(int)
 	PROGRESS = pyqtSignal(int)
+	SKIPPED = pyqtSignal(list)
 
 	# WEB signals
 	GALLERY_EMITTER = pyqtSignal(Gallery)
@@ -57,6 +58,7 @@ class Fetch(QObject):
 		self.series_path = ""
 		self.data = []
 		self._curr_gallery = '' # for debugging purposes
+		self.skipped_paths = []
 
 		# web
 		self._default_ehen_url = gui_constants.DEFAULT_EHEN_URL
@@ -155,6 +157,7 @@ class Fetch(QObject):
 						log_i('Gallery successful created: {}'.format(folder_name.encode('utf-8', 'ignore')))
 					else:
 						log_i('Gallery already exists: {}'.format(folder_name.encode('utf-8', 'ignore')))
+						self.skipped_paths.append(temp_p)
 
 				for folder_name in gallery_l: # folder_name = gallery folder title
 					self._curr_gallery = folder_name
@@ -199,6 +202,8 @@ class Fetch(QObject):
 		log_i('Local search: OK')
 		log_i('Created {} items'.format(len(self.data)))
 		self.FINISHED.emit(self.data)
+		if self.skipped_paths:
+			self.SKIPPED.emit(self.skipped_paths)
 
 	def _return_gallery_metadata(self, gallery):
 		"Emits galleries"

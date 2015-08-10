@@ -118,8 +118,14 @@ class ArchiveFile():
 		if filepath.endswith(ARCHIVE_FILES):
 			try:
 				self.archive = zipfile.ZipFile(os.path.normcase(filepath))
+				# test for corruption
+				b_f = self.archive.testzip()
+				if b_f:
+					log_w('Bad file found in archive {}'.format(filepath.encode(errors='ignore')))
+					raise Exception
 			except:
 				log.exception('Create ZIP: FAIL')
+				raise CreateZipFail
 		else:
 			log.exception('Archive: Unsupported file format')
 
@@ -146,9 +152,9 @@ class ArchiveFile():
 		a path in the archive to the diretory will be returned.
 		"""
 		if only_top_level:
-			return [x for x in self.namelist() if x.endswith('/') and x.count('/') == 1]
+			return [x for x in self.namelist() if x.endswith('/') and x.count('/') == 2]
 		else:
-			return [x for x in self.namelist() if x.endswith('/')]
+			return [x for x in self.namelist() if x.endswith('/') and x.count('/') >= 1]
 
 	def dir_contents(self, dir_name):
 		"""
@@ -159,8 +165,9 @@ class ArchiveFile():
 			log_e('Directory {} not found in archive'.format(dir_name))
 			raise FileNotFoundInArchive
 		if not dir_name:
-			return [x for x in self.namelist() if (x.endswith('/') and x.count('/') == 1) or \
-				x.count('/') == 0]
+			con=  [x for x in self.namelist() if (x.endswith('/') and x.count('/') == 1) or \
+				(x.count('/') <= 1 and not x.endswith('/'))]
+			return con
 		return [x for x in self.namelist() if x.startswith(dir_name)]
 
 	def extract(self, file_to_ext, path=None):
@@ -174,8 +181,7 @@ class ArchiveFile():
 			os.mkdir(path)
 
 		if not file_to_ext:
-			self.extract_all(path)
-			return path
+			return self.extract_all(path)
 		else:
 			membs = []
 			for name in self.namelist():
@@ -197,6 +203,11 @@ class ArchiveFile():
 		if member:
 			self.archive.extractall(path, member)
 		self.archive.extractall(path)
+		# find parent folder
+		try:
+			path = os.path.join(path, [x for x in self.namelist() if x.endswith('/') and x.count('/') == 1][0])
+		except IndexError:
+			pass
 		return path
 
 	def open(self, file_to_open, fp=False):
@@ -218,10 +229,12 @@ def check_archive(archive_path):
 	if there is no directories
 	"""
 	zip = ArchiveFile(archive_path)
+	if not zip:
+		return []
 	zip_dirs = zip.dir_list()
 	if zip_dirs: # There are directories in the top folder
 		galleries = []
-		for d in zip_dirs:
+		def gallery_eval(d):
 			con = zip.dir_contents(d)
 			if con:
 				gallery_probability = len(con)
@@ -229,7 +242,15 @@ def check_archive(archive_path):
 					if not n.endswith(IMG_FILES):
 						gallery_probability -= 1
 				if gallery_probability >= (len(con)*0.8):
-					galleries.append(d)
+					return d
+		# check parent
+		r = gallery_eval('')
+		if r:
+			galleries.append('')
+		for d in zip_dirs:
+			r = gallery_eval(d)
+			if r:
+				galleries.append(r)
 		zip.close()
 		return galleries
 	else: # all pages are in top folder
@@ -298,7 +319,7 @@ def open_chapter(chapterpath, archive=None):
 		t_p = os.path.join('temp', str(uuid.uuid4()))
 		os.mkdir(t_p)
 		gui_constants.NOTIF_BAR.add_text('Extracting...')
-		if is_archive:
+		if is_archive or chapterpath.endswith(ARCHIVE_FILES):
 			if os.path.isdir(chapterpath):
 				t_p = chapterpath
 			elif chapterpath.endswith(ARCHIVE_FILES):

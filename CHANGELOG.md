@@ -1,3 +1,12 @@
+*Happypanda v0.21*
+- The application will now ask if you want to view skipped paths after searching for galleries
+- Added 'delete successful' in the notificationbar
+- Bugfixes:
+	+ Fixed critical bug: Could not open chapters
+		+ If your gallery still won't open then please try re-adding the gallery.
+	+ Fixed bug: Covers for archives with no folder in-between were not being found
+	+ & other minor bugs
+
 *Happypanda v0.20*
 - Added support for recursively importing of galleries (applies to archives)
 	+ Directories in archives will now be noticed when importing

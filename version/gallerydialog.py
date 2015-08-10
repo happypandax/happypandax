@@ -279,9 +279,9 @@ class GalleryDialog(QWidget):
 			self.file_exists_lbl.show()
 		# check galleries
 		gs = 1
-		if mode == 'a':
+		if name.endswith(utils.ARCHIVE_FILES):
 			gs = len(utils.check_archive(name))
-		elif mode == 'f':
+		elif os.path.isdir(name):
 			g_dirs, g_archs = utils.recursive_gallery_check(name)
 			gs = len(g_dirs) + len(g_archs)
 		if gs == 0:
