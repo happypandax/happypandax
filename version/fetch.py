@@ -145,7 +145,7 @@ class Fetch(QObject):
 									new_gallery.chapters[0] = path
 							else:
 								log_w('Skipped {} in local search'.format(path))
-								self.skipped_paths(temp_p)
+								self.skipped_paths.append(temp_p)
 								return
 
 						new_gallery.title = parsed['title']
