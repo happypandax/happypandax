@@ -145,6 +145,7 @@ class Fetch(QObject):
 									new_gallery.chapters[0] = path
 							else:
 								log_w('Skipped {} in local search'.format(path))
+								self.skipped_paths.append(temp_p)
 								return
 
 						new_gallery.title = parsed['title']
@@ -342,11 +343,14 @@ class Fetch(QObject):
 				self.AUTO_METADATA_PROGRESS.emit("({}/{}) Generating gallery hash: {}".format(x, len(self.galleries), gallery.title))
 				log_i("Generating gallery hash: {}".format(gallery.title.encode(errors='ignore')))
 				hash = None
-				if not gallery.hashes:
-					hash_dict = add_method_queue(HashDB.gen_gallery_hash, False, gallery, 0, 'mid')
-					hash = hash_dict['mid']
-				else:
-					hash = gallery.hashes[random.randint(0, len(gallery.hashes)-1)]
+				try:
+					if not gallery.hashes:
+						hash_dict = add_method_queue(HashDB.gen_gallery_hash, False, gallery, 0, 'mid')
+						hash = hash_dict['mid']
+					else:
+						hash = gallery.hashes[random.randint(0, len(gallery.hashes)-1)]
+				except utils.CreateArchiveFail:
+					pass
 				if not hash:
 					self.error_galleries.append((gallery, "Could not generate hash"))
 					log_e("Could not generate hash for gallery: {}".format(gallery.title.encode(errors='ignore')))

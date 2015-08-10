@@ -96,7 +96,8 @@ class CreatedPopup(misc.BasePopup):
 		name = os.path.split(path)[1]
 		cover = QLabel()
 		img = QPixmap(utils.get_gallery_img(path))
-		cover.setPixmap(img.scaled(350, 200, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+		if img:
+			cover.setPixmap(img.scaled(350, 200, Qt.KeepAspectRatio, Qt.SmoothTransformation))
 		info_lbl = QLabel('New gallery detected!\n\n{}\n\nDo you want to add it?'.format(name))
 		info_lbl.setWordWrap(True)
 		info_lbl.setAlignment(Qt.AlignCenter)
