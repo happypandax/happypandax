@@ -205,3 +205,6 @@ FakesAssemblies/
 /temp
 /main.build
 /main.dist
+/res
+/version/db
+/test_g.zip
