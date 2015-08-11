@@ -13,7 +13,7 @@
 #"""
 
 import time, datetime, os, subprocess, sys, logging, zipfile
-import hashlib, shutil, uuid, re, scandir
+import hashlib, shutil, uuid, re, scandir, rarfile
 
 import gui_constants
 
