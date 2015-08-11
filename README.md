@@ -45,10 +45,11 @@ For Mac & Linux see [INSTALL.md](INSTALL.md)
 # Dependencies
 - Qt5 (Install this first) >= 5.4
 - PyQt5
-- requests (pip) >= 2.6.0
+- requests (pip)
 - BeautifulSoup 4 (pip)
 - watchdog (pip)
 - scandir (pip)
+- rarfile (pip)
 
 # Contributing
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Pewpews/happypanda?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
