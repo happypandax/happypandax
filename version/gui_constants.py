@@ -23,10 +23,17 @@ get = settings.get
 #current_dir, f = os.path.split(os.path.realpath(__file__))
 if os.name == 'posix':
 	static_dir = os.path.join(os.getcwd(), "../res")
+	bin_dir = os.path.join(os.getcwd(), '../bin')
 	temp_dir = os.path.join('../temp')
 else:
+	bin_dir = os.path.join(os.getcwd(), 'bin')
 	static_dir = os.path.join(os.getcwd(), "res")
 	temp_dir = os.path.join('temp')
+# path to unrar tool binary
+if os.name == 'nt':
+	unrar_tool_path = os.path.join(bin_dir, 'unrar.exe')
+else:
+	unrar_tool_path = 'unrar' # find a solution
 
 #default stylesheet path
 default_stylesheet_path = static_dir + '/' + "style.css"
