@@ -13,7 +13,7 @@
 #"""
 
 import time, datetime, os, subprocess, sys, logging, zipfile
-import hashlib, shutil, uuid, re, scandir
+import hashlib, shutil, uuid, re, scandir, rarfile
 
 import gui_constants
 
@@ -25,8 +25,9 @@ log_e = log.error
 log_c = log.critical
 
 IMG_FILES =  ('.jpg','.bmp','.png','.gif')
-ARCHIVE_FILES = ('.zip', '.cbz')
-FILE_FILTER = '*.zip *.cbz'
+ARCHIVE_FILES = ('.zip', '.cbz', '.rar', '.cbr')
+FILE_FILTER = '*.zip *.cbz *.rar *.cbr'
+rarfile.PATH_SEP = '/'
 
 def move_files(path, dest=''):
 	"""
@@ -115,11 +116,19 @@ class ArchiveFile():
 	close -> close archive
 	"""
 	def __init__(self, filepath):
+		self.ext = ''
 		try:
 			if filepath.endswith(ARCHIVE_FILES):
-				self.archive = zipfile.ZipFile(os.path.normcase(filepath))
+				if filepath.endswith(ARCHIVE_FILES[:2]):
+					self.archive = zipfile.ZipFile(os.path.normcase(filepath))
+					b_f = self.archive.testzip()
+					self.ext = 'zip'
+				elif filepath.endswith(ARCHIVE_FILES[2:]):
+					self.archive = rarfile.RarFile(os.path.normcase(filepath))
+					b_f = self.archive.testrar()
+					self.ext = 'rar'
+
 				# test for corruption
-				b_f = self.archive.testzip()
 				if b_f:
 					log_w('Bad file found in archive {}'.format(filepath.encode(errors='ignore')))
 					raise CreateArchiveFail
@@ -127,7 +136,7 @@ class ArchiveFile():
 				log_e('Archive: Unsupported file format')
 				raise CreateArchiveFail
 		except:
-			log.exception('Create ZIP: FAIL')
+			log.exception('Create archive: FAIL')
 			raise CreateArchiveFail
 
 	def namelist(self):
@@ -152,6 +161,7 @@ class ArchiveFile():
 		Returns a list of all directories found recursively. For directories not in toplevel
 		a path in the archive to the diretory will be returned.
 		"""
+		
 		if only_top_level:
 			return [x for x in self.namelist() if x.endswith('/') and x.count('/') == 2]
 		else:
