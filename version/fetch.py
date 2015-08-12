@@ -122,29 +122,36 @@ class Fetch(QObject):
 							#new_gallery.last_update = last_updated
 							parsed = utils.title_parser(folder_name)
 						except NotADirectoryError:
-							if is_archive or temp_p.endswith(utils.ARCHIVE_FILES):
-								log_i('Gallery source is an archive')
-								new_gallery.is_archive = 1
-								new_gallery.path_in_archive = '' if not is_archive else path
-								folder_name = folder_name.replace('/','')
-								if folder_name.endswith(utils.ARCHIVE_FILES):
-									n = folder_name
-									for ext in utils.ARCHIVE_FILES:
-										n = n.replace(ext, '')
-									parsed = utils.title_parser(n)
+							try:
+								if is_archive or temp_p.endswith(utils.ARCHIVE_FILES):
+									log_i('Gallery source is an archive')
+									contents = utils.check_archive(temp_p)
+									if contents:
+										new_gallery.is_archive = 1
+										new_gallery.path_in_archive = '' if not is_archive else path
+										folder_name = folder_name.replace('/','')
+										if folder_name.endswith(utils.ARCHIVE_FILES):
+											n = folder_name
+											for ext in utils.ARCHIVE_FILES:
+												n = n.replace(ext, '')
+											parsed = utils.title_parser(n)
+										else:
+											parsed = utils.title_parser(folder_name)
+										if do_chapters:
+											archive_g = sorted(contents)
+											if not archive_g:
+												log_w('No chapters found for {}'.format(temp_p.encode(errors='ignore')))
+												raise ValueError
+											for n, g in enumerate(archive_g):
+												new_gallery.chapters[n] = g
+										else:
+											new_gallery.chapters[0] = path
+									else:
+										raise ValueError
 								else:
-									parsed = utils.title_parser(folder_name)
-								if do_chapters:
-									archive_g = sorted(utils.check_archive(temp_p))
-									if not archive_g:
-										log_w('No chapters found for {}'.format(temp_p.encode(errors='ignore')))
-										return
-									for n, g in enumerate(archive_g):
-										new_gallery.chapters[n] = g
-								else:
-									new_gallery.chapters[0] = path
-							else:
-								log_w('Skipped {} in local search'.format(path))
+									raise ValueError
+							except ValueError:
+								log_w('Skipped {} in local search'.format(path.encode(errors='ignore')))
 								self.skipped_paths.append(temp_p)
 								return
 
@@ -183,8 +190,12 @@ class Fetch(QObject):
 							for g in utils.check_archive(path):
 								create_gallery(g, os.path.split(g)[1], False, archive=path)
 					else:
-						log_i("Treating each subfolder as chapter")
-						create_gallery(path, folder_name, do_chapters=True)
+						if (os.path.isdir(path) and os.listdir(path)) or path.endswith(utils.ARCHIVE_FILES):
+							log_i("Treating each subfolder as chapter")
+							create_gallery(path, folder_name, do_chapters=True)
+						else:
+							self.skipped_paths.append(path)
+							log_w('Directory is empty: {}'.format(path.encode(errors='ignore')))
 
 					progress += 1 # update the progress bar
 					self.PROGRESS.emit(progress)
