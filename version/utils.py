@@ -171,6 +171,14 @@ class ArchiveFile():
 			return con
 		return [x for x in self.namelist() if x.startswith(dir_name)]
 
+	def get_top_folder(self):
+		"""
+		Returns name of topfolder
+		"""
+		for n in self.namelist():
+			if n.endswith('/') and n.count('/') == 1:
+				return n
+
 	def extract(self, file_to_ext, path=None):
 		"""
 		Extracts one file from archive to given path
@@ -235,31 +243,36 @@ def check_archive(archive_path):
 		return []
 	if not zip:
 		return []
+	galleries = []
 	zip_dirs = zip.dir_list()
+	def gallery_eval(d):
+		con = zip.dir_contents(d)
+		if con:
+			gallery_probability = len(con)
+			for n in con:
+				if not n.endswith(IMG_FILES):
+					gallery_probability -= 1
+			if gallery_probability >= (len(con)*0.8):
+				return d
 	if zip_dirs: # There are directories in the top folder
-		galleries = []
-		def gallery_eval(d):
-			con = zip.dir_contents(d)
-			if con:
-				gallery_probability = len(con)
-				for n in con:
-					if not n.endswith(IMG_FILES):
-						gallery_probability -= 1
-				if gallery_probability >= (len(con)*0.8):
-					return d
 		# check parent
 		r = gallery_eval('')
 		if r:
 			galleries.append('')
+		top_folder = zip.get_top_folder()
 		for d in zip_dirs:
+			if d == top_folder:
+				continue
 			r = gallery_eval(d)
 			if r:
 				galleries.append(r)
 		zip.close()
-		return galleries
 	else: # all pages are in top folder
+		if isinstance(gallery_eval(''), str):
+			galleries.append('')
 		zip.close()
-		return ['']
+
+	return galleries
 
 def recursive_gallery_check(path):
 	"""
@@ -280,6 +293,8 @@ def recursive_gallery_check(path):
 						gallery_arch.append((g, arch_path))
 									
 			if not subfolders:
+				if not files:
+					continue
 				gallery_probability = len(files)
 				for f in files:
 					if not f.endswith(IMG_FILES):
