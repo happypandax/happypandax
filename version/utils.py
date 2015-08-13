@@ -118,7 +118,6 @@ class ArchiveFile():
 	"""
 	zip, rar = range(2)
 	def __init__(self, filepath):
-		print("Jeg var her")
 		self.type = 0
 		try:
 			if filepath.endswith(ARCHIVE_FILES):
@@ -171,7 +170,7 @@ class ArchiveFile():
 		
 		if only_top_level:
 			if self.type == self.zip:
-				return [x for x in self.namelist() if x.endswith('/') and x.count('/') == 2]
+				return [x for x in self.namelist() if x.endswith('/') and x.count('/') == 1]
 			elif self.type == self.rar:
 				potential_dirs = [x for x in self.namelist() if x.count('/') == 0]
 				return [x.filename for x in [self.archive.getinfo(y) for y in potential_dirs] if x.isdir()]
@@ -191,28 +190,19 @@ class ArchiveFile():
 			raise FileNotFoundInArchive
 		if not dir_name:
 			if self.type == self.zip:
-				con =  [x for x in self.namelist() if (x.endswith('/') and x.count('/') == 1) or \
-					(x.count('/') <= 1 and not x.endswith('/'))]
+				con =  [x for x in self.namelist() if x.count('/') == 0 or \
+					(x.count('/') == 1 and x.endswith('/'))]
 			elif self.type == self.rar:
 				con = [x for x in self.namelist() if x.count('/') == 0]
 			return con
 		if self.type == self.zip:
-			return [x for x in self.namelist() if x.startswith(dir_name)]
+			dir_con_start = [x for x in self.namelist() if x.startswith(dir_name)]
+			return [x for x in dir_con_start if x.count('/') == dir_name.count('/') or \
+				(x.count('/') == 1 + dir_name.count('/') and x.endswith('/'))]
 		elif self.type == self.rar:
 			return [x for x in self.namelist() if x.startswith(dir_name) and \
 			    x.count('/') == 1 + dir_name.count('/')]
 		return []
-
-	def get_top_folder(self):
-		"""
-		Returns name of topfolder
-		"""
-		if self.type == self.zip:
-			for n in self.namelist():
-				if n.endswith('/') and n.count('/') == 1:
-					return n
-		elif self.type == self.rar:
-			return ''
 
 	def extract(self, file_to_ext, path=None):
 		"""
@@ -251,12 +241,6 @@ class ArchiveFile():
 		if member:
 			self.archive.extractall(path, member)
 		self.archive.extractall(path)
-		# find parent folder
-		if self.type == self.zip:
-			try:
-				path = os.path.join(path, [x for x in self.namelist() if x.endswith('/') and x.count('/') == 1][0])
-			except IndexError:
-				pass
 		return path
 
 	def open(self, file_to_open, fp=False):
@@ -299,10 +283,7 @@ def check_archive(archive_path):
 		r = gallery_eval('')
 		if r:
 			galleries.append('')
-		top_folder = zip.get_top_folder()
 		for d in zip_dirs:
-			if d == top_folder:
-				continue
 			r = gallery_eval(d)
 			if r:
 				galleries.append(r)

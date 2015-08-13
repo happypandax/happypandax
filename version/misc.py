@@ -904,9 +904,9 @@ class GalleryListView(QWidget):
 			layout.addWidget(frame)
 			info = QLabel('This mode let\'s you add galleries from ' +
 				 'different folders.')
-			f_folder = QPushButton('Add folders')
+			f_folder = QPushButton('Add directories')
 			f_folder.clicked.connect(self.from_folder)
-			f_files = QPushButton('Add files')
+			f_files = QPushButton('Add archives')
 			f_files.clicked.connect(self.from_files)
 			modal_layout.addWidget(info, 3, Qt.AlignLeft)
 			modal_layout.addWidget(f_folder, 0, Qt.AlignRight)
@@ -1013,7 +1013,7 @@ class GalleryListView(QWidget):
 	def from_files(self):
 		gallery_list = QFileDialog.getOpenFileNames(self,
 											 'Select 1 or more gallery to add',
-											 filter='Archives (*.zip *.cbz)')
+											 filter='Archives ({})'.format(utils.FILE_FILTER))
 		for path in gallery_list[0]:
 			#Warning: will break when you add more filters
 			if len(path) != 0:
