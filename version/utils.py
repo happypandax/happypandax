@@ -28,7 +28,7 @@ IMG_FILES =  ('.jpg','.bmp','.png','.gif')
 ARCHIVE_FILES = ('.zip', '.cbz', '.rar', '.cbr')
 FILE_FILTER = '*.zip *.cbz *.rar *.cbr'
 rarfile.PATH_SEP = '/'
-rarfile.UNRAR_TOOL = gui_constants
+rarfile.UNRAR_TOOL = gui_constants.unrar_tool_path
 
 def move_files(path, dest=''):
 	"""
@@ -118,6 +118,7 @@ class ArchiveFile():
 	"""
 	zip, rar = range(2)
 	def __init__(self, filepath):
+		print("Jeg var her")
 		self.type = 0
 		try:
 			if filepath.endswith(ARCHIVE_FILES):
@@ -173,12 +174,12 @@ class ArchiveFile():
 				return [x for x in self.namelist() if x.endswith('/') and x.count('/') == 2]
 			elif self.type == self.rar:
 				potential_dirs = [x for x in self.namelist() if x.count('/') == 0]
-				return [x for x in [self.archive.getinfo(y) for y in potential_dirs] if x.is_dir()]
+				return [x.filename for x in [self.archive.getinfo(y) for y in potential_dirs] if x.isdir()]
 		else:
 			if self.type == self.zip:
 				return [x for x in self.namelist() if x.endswith('/') and x.count('/') >= 1]
 			elif self.type == self.rar:
-				return [x.filename for x in self.archive.infolist() if x.is_dir()]
+				return [x.filename for x in self.archive.infolist() if x.isdir()]
 
 	def dir_contents(self, dir_name):
 		"""
