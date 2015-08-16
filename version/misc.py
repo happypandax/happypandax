@@ -268,6 +268,7 @@ class BasePopup(QWidget):
 			super().__init__(parent, flags= Qt.Window | Qt.FramelessWindowHint)
 		self.parent_widget = parent
 		self.setAttribute(Qt.WA_TranslucentBackground)
+		self.setAttribute(Qt.WA_DeleteOnClose)
 		main_layout = QVBoxLayout()
 		self.main_widget = QFrame()
 		self.setLayout(main_layout)
@@ -322,7 +323,8 @@ class BasePopup(QWidget):
 	def add_buttons(self, *args):
 		"""
 		Pass names of buttons, from right to left.
-		Returns list of buttons in same order.
+		Returns list of buttons in same order as they came in.
+		Note: Remember to add buttons_layout to main layout!
 		"""
 		b = []
 		for name in args:
@@ -400,6 +402,7 @@ class GalleryShowcaseWidget(QWidget):
 	"""
 	def __init__(self, gallery=None, parent=None):
 		super().__init__(parent)
+		self.setAttribute(Qt.WA_DeleteOnClose)
 		self.main_layout = QVBoxLayout(self)
 		self.profile = QLabel()
 		self.text = QLabel()
@@ -781,7 +784,7 @@ class ChapterAddWidget(QWidget):
 	def __init__(self, gallery, parent=None):
 		super().__init__(parent)
 		self.setWindowFlags(Qt.Window)
-
+		self.setAttribute(Qt.WA_DeleteOnClose)
 		self.current_chapters = len(gallery.chapters)
 		self.added_chaps = 0
 
@@ -892,7 +895,7 @@ class GalleryListView(QWidget):
 	def __init__(self, parent=None, modal=False):
 		super().__init__(parent)
 		self.setWindowFlags(Qt.Dialog)
-
+		self.setAttribute(Qt.WA_DeleteOnClose)
 		layout = QVBoxLayout()
 		self.setLayout(layout)
 

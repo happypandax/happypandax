@@ -24,6 +24,7 @@ class SettingsDialog(QWidget):
 	scroll_speed_changed = pyqtSignal()
 	def __init__(self, parent=None):
 		super().__init__(parent, flags=Qt.Window)
+		self.setAttribute(Qt.WA_DeleteOnClose)
 		self.resize(700, 500)
 		self.show()
 		self.restore_values()
