@@ -933,6 +933,7 @@ class GalleryListView(QWidget):
 		self.view_list = QListWidget()
 		self.view_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
 		self.view_list.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+		self.view_list.setAlternatingRowColors(True)
 		layout.addWidget(self.view_list)
 		
 		add_btn = QPushButton('Add checked')
@@ -954,6 +955,7 @@ class GalleryListView(QWidget):
 		frect.moveCenter(QDesktopWidget().availableGeometry().center())
 		self.move(frect.topLeft())
 		self.setWindowTitle('Gallery List')
+		self.count = 0
 
 	def all_check_state(self, new_state):
 		row = 0
@@ -980,6 +982,10 @@ class GalleryListView(QWidget):
 		gallery_item.setFlags(gallery_item.flags() | Qt.ItemIsUserCheckable)
 		gallery_item.setCheckState(Qt.Checked)
 		self.view_list.addItem(gallery_item)
+		self.count += 1
+
+	def update_count(self):
+		self.setWindowTitle('Gallery List ({})'.format(self.count))
 
 	def return_gallery(self):
 		gallery_list = []

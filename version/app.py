@@ -759,6 +759,7 @@ class AppWindow(QMainWindow):
 								else:
 									gallery_list.add_gallery(ser, os.path.split(ser.path)[1])
 							#self.manga_list_view.gallery_model.populate_data()
+							gallery_list.update_count()
 							gallery_list.show()
 						else:
 							add_gallery(status)
@@ -785,7 +786,7 @@ class AppWindow(QMainWindow):
 					list_wid = QListWidget(self)
 					for g in s_list:
 						list_wid.addItem(g)
-					list_wid.setWindowTitle('Skipped paths')
+					list_wid.setWindowTitle('{} skipped paths'.format(len(s_list)))
 					list_wid.setWindowFlags(Qt.Window)
 					list_wid.resize(500,500)
 					list_wid.show()
