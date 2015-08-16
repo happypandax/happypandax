@@ -133,6 +133,7 @@ class SettingsDialog(QWidget):
 		self.open_random_g_chapters.setChecked(gui_constants.OPEN_RANDOM_GALLERY_CHAPTERS)
 		self.subfolder_as_chapters.setChecked(gui_constants.SUBFOLDER_AS_GALLERY)
 		self.rename_g_source_group.setChecked(gui_constants.RENAME_GALLERY_SOURCE)
+		self.path_to_unrar.setText(gui_constants.unrar_tool_path)
 
 		# App / Monitor / Misc
 		self.enable_monitor.setChecked(gui_constants.ENABLE_MONITOR)
@@ -226,7 +227,8 @@ class SettingsDialog(QWidget):
 		set(gui_constants.SUBFOLDER_AS_GALLERY, 'Application', 'subfolder as gallery')
 		gui_constants.RENAME_GALLERY_SOURCE = self.rename_g_source_group.isChecked()
 		set(gui_constants.RENAME_GALLERY_SOURCE, 'Application', 'rename gallery source')
-
+		gui_constants.unrar_tool_path = self.path_to_unrar.text()
+		set(gui_constants.unrar_tool_path, 'Application', 'unrar tool path')
 		# App / Monitor / misc
 		gui_constants.ENABLE_MONITOR = self.enable_monitor.isChecked()
 		set(gui_constants.ENABLE_MONITOR, 'Application', 'enable monitor')
@@ -414,9 +416,7 @@ class SettingsDialog(QWidget):
 		# App
 		application = QTabWidget()
 		self.application_index = self.right_panel.addWidget(application)
-		application_general = QWidget()
-		app_general_m_l = QFormLayout(application_general)
-		application.addTab(application_general, 'General')
+		application_general, app_general_m_l = new_tab('General', application, True)
 
 		# App / General / gallery
 
@@ -456,6 +456,19 @@ class SettingsDialog(QWidget):
 		app_gallery_l.addRow(random_gallery_opener)
 		self.open_random_g_chapters = QCheckBox("Open random gallery chapters")
 		random_g_opener_l.addRow(self.open_random_g_chapters)
+
+		# App / General / Rar Support
+		app_rar_group, app_rar_layout = groupbox('RAR Support *', QFormLayout, self)
+		app_general_m_l.addRow(app_rar_group)
+		rar_info = QLabel('Specify the path to the unrar tool to enable rar support.\n'+
+					'Windows: "unrar.exe" should be in the "bin" directory if you installed from the'+
+					' self-extracting archive provided on github.\nOSX: You can install this via HomeBrew.'+
+					' Path should be something like: "/usr/local/bin/unrar".\nLinux: Should already be'+
+					' installed. You can just type "unrar". If it\'s not installed, use your package manager: pacman -S unrar')
+		rar_info.setWordWrap(True)
+		app_rar_layout.addRow(rar_info)
+		self.path_to_unrar = PathLineEdit(self, False, filters='')
+		app_rar_layout.addRow('UnRAR tool path:', self.path_to_unrar)
 
 		# App / Monitor
 		app_monitor_page = QScrollArea()
@@ -684,12 +697,15 @@ class SettingsDialog(QWidget):
 		# Advanced
 		advanced = QTabWidget()
 		self.advanced_index = self.right_panel.addWidget(advanced)
+		advanced_misc_scroll = QScrollArea(self)
+		advanced_misc_scroll.setBackgroundRole(QPalette.Base)
+		advanced_misc_scroll.setWidgetResizable(True)
 		advanced_misc = QWidget()
-		advanced.addTab(advanced_misc, 'Misc')
+		advanced_misc_scroll.setWidget(advanced_misc)
+		advanced.addTab(advanced_misc_scroll, 'Misc')
 		advanced_misc_main_layout = QVBoxLayout()
 		advanced_misc.setLayout(advanced_misc_main_layout)
 		misc_controls_layout = QFormLayout()
-		misc_controls_layout.addWidget(QLabel('Options marked with * requires application restart'))
 		advanced_misc_main_layout.addLayout(misc_controls_layout)
 		# Advanced / Misc / Grid View
 		misc_gridview = QGroupBox('Grid View')
@@ -740,6 +756,7 @@ class SettingsDialog(QWidget):
 		misc_search_layout.addRow(self.search_every_keystroke)
 		self.search_on_enter = QRadioButton('Search on enter-key *', misc_search)
 		misc_search_layout.addRow(self.search_on_enter)
+
 		# Advanced / Misc / External Viewer
 		misc_external_viewer = QGroupBox('External Viewer')
 		misc_controls_layout.addWidget(misc_external_viewer)

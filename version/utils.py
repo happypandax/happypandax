@@ -29,6 +29,9 @@ ARCHIVE_FILES = ('.zip', '.cbz', '.rar', '.cbr')
 FILE_FILTER = '*.zip *.cbz *.rar *.cbr'
 rarfile.PATH_SEP = '/'
 rarfile.UNRAR_TOOL = gui_constants.unrar_tool_path
+if not gui_constants.unrar_tool_path:
+	FILE_FILTER = '*.zip *.cbz'
+	ARCHIVE_FILES = ('.zip', '.cbz')
 
 def move_files(path, dest=''):
 	"""

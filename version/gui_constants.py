@@ -30,10 +30,7 @@ else:
 	static_dir = os.path.join(os.getcwd(), "res")
 	temp_dir = os.path.join('temp')
 # path to unrar tool binary
-if os.name == 'nt':
-	unrar_tool_path = os.path.join(bin_dir, 'unrar.exe')
-else:
-	unrar_tool_path = 'unrar' # find a solution
+unrar_tool_path = get('', 'Application', 'unrar tool path')
 
 #default stylesheet path
 default_stylesheet_path = static_dir + '/' + "style.css"
