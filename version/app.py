@@ -818,21 +818,25 @@ class AppWindow(QMainWindow):
 		unaccept = []
 		for u in event.mimeData().urls():
 			path = u.toLocalFile()
-			if os.path.isdir(path):
-				acceptable.append(path)
-				continue
-			head, tail = os.path.split(path)
-			if tail.endswith(utils.ARCHIVE_FILES):
+			if os.path.isdir(path) or path.endswith(utils.ARCHIVE_FILES):
 				acceptable.append(path)
 			else:
-				unaccept(path)
+				unaccept.append(path)
 		log_i('Acceptable dropped items: {}'.format(len(acceptable)))
 		log_i('Unacceptable dropped items: {}'.format(len(unaccept)))
 		log_d('Dropped items: {}\n{}'.format(acceptable, unaccept).encode(errors='ignore'))
 		if acceptable:
 			self.notification_bar.add_text('Adding dropped items...')
 			log_i('Adding dropped items')
-			if len(acceptable) == 1:
+			l = len(acceptable) == 1
+			f_item = acceptable[0]
+			if f_item.endswith(utils.ARCHIVE_FILES):
+				f_item = utils.check_archive(f_item)
+			else:
+				f_item = utils.recursive_gallery_check(f_item)
+			f_item_l = len(f_item) < 2
+			subfolder_as_c = not gui_constants.SUBFOLDER_AS_GALLERY
+			if l and subfolder_as_c or l and f_item_l:
 				g_d = gallerydialog.GalleryDialog(self, acceptable[0])
 				g_d.SERIES.connect(self.manga_list_view.gallery_model.addRows)
 				g_d.show()

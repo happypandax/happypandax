@@ -15,7 +15,7 @@ import settings
 """Contains constants to be used by several modules"""
 
 # Version number
-vs  = '0.21'
+vs  = '0.22'
 DEBUG = False
 
 get = settings.get
@@ -64,7 +64,7 @@ DATE_ADDED = 10
 
 # Application
 SYSTEM_TRAY = None
-NOTIF_BAR = None
+NOTIF_BAR = None # HACK: Cause of thread warnings!!
 
 # image paths
 GALLERY_ICO_PATH = os.path.join(static_dir, "gallery_ico.ico")
