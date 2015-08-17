@@ -268,6 +268,7 @@ class BasePopup(QWidget):
 			super().__init__(parent, flags= Qt.Window | Qt.FramelessWindowHint)
 		self.parent_widget = parent
 		self.setAttribute(Qt.WA_TranslucentBackground)
+		self.setAttribute(Qt.WA_DeleteOnClose)
 		main_layout = QVBoxLayout()
 		self.main_widget = QFrame()
 		self.setLayout(main_layout)
@@ -322,7 +323,8 @@ class BasePopup(QWidget):
 	def add_buttons(self, *args):
 		"""
 		Pass names of buttons, from right to left.
-		Returns list of buttons in same order.
+		Returns list of buttons in same order as they came in.
+		Note: Remember to add buttons_layout to main layout!
 		"""
 		b = []
 		for name in args:
@@ -400,6 +402,7 @@ class GalleryShowcaseWidget(QWidget):
 	"""
 	def __init__(self, gallery=None, parent=None):
 		super().__init__(parent)
+		self.setAttribute(Qt.WA_DeleteOnClose)
 		self.main_layout = QVBoxLayout(self)
 		self.profile = QLabel()
 		self.text = QLabel()
@@ -781,7 +784,7 @@ class ChapterAddWidget(QWidget):
 	def __init__(self, gallery, parent=None):
 		super().__init__(parent)
 		self.setWindowFlags(Qt.Window)
-
+		self.setAttribute(Qt.WA_DeleteOnClose)
 		self.current_chapters = len(gallery.chapters)
 		self.added_chaps = 0
 
@@ -892,7 +895,7 @@ class GalleryListView(QWidget):
 	def __init__(self, parent=None, modal=False):
 		super().__init__(parent)
 		self.setWindowFlags(Qt.Dialog)
-
+		self.setAttribute(Qt.WA_DeleteOnClose)
 		layout = QVBoxLayout()
 		self.setLayout(layout)
 
@@ -904,9 +907,9 @@ class GalleryListView(QWidget):
 			layout.addWidget(frame)
 			info = QLabel('This mode let\'s you add galleries from ' +
 				 'different folders.')
-			f_folder = QPushButton('Add folders')
+			f_folder = QPushButton('Add directories')
 			f_folder.clicked.connect(self.from_folder)
-			f_files = QPushButton('Add files')
+			f_files = QPushButton('Add archives')
 			f_files.clicked.connect(self.from_files)
 			modal_layout.addWidget(info, 3, Qt.AlignLeft)
 			modal_layout.addWidget(f_folder, 0, Qt.AlignRight)
@@ -930,6 +933,7 @@ class GalleryListView(QWidget):
 		self.view_list = QListWidget()
 		self.view_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
 		self.view_list.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+		self.view_list.setAlternatingRowColors(True)
 		layout.addWidget(self.view_list)
 		
 		add_btn = QPushButton('Add checked')
@@ -951,6 +955,7 @@ class GalleryListView(QWidget):
 		frect.moveCenter(QDesktopWidget().availableGeometry().center())
 		self.move(frect.topLeft())
 		self.setWindowTitle('Gallery List')
+		self.count = 0
 
 	def all_check_state(self, new_state):
 		row = 0
@@ -977,6 +982,10 @@ class GalleryListView(QWidget):
 		gallery_item.setFlags(gallery_item.flags() | Qt.ItemIsUserCheckable)
 		gallery_item.setCheckState(Qt.Checked)
 		self.view_list.addItem(gallery_item)
+		self.count += 1
+
+	def update_count(self):
+		self.setWindowTitle('Gallery List ({})'.format(self.count))
 
 	def return_gallery(self):
 		gallery_list = []
@@ -1013,7 +1022,7 @@ class GalleryListView(QWidget):
 	def from_files(self):
 		gallery_list = QFileDialog.getOpenFileNames(self,
 											 'Select 1 or more gallery to add',
-											 filter='Archives (*.zip *.cbz)')
+											 filter='Archives ({})'.format(utils.FILE_FILTER))
 		for path in gallery_list[0]:
 			#Warning: will break when you add more filters
 			if len(path) != 0:

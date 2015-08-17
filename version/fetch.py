@@ -129,6 +129,10 @@ class Fetch(QObject):
 									if contents:
 										new_gallery.is_archive = 1
 										new_gallery.path_in_archive = '' if not is_archive else path
+										if folder_name.endswith('/'):
+											folder_name = folder_name[:-1]
+											fn = os.path.split(folder_name)
+											folder_name = fn[1] or fn[2]
 										folder_name = folder_name.replace('/','')
 										if folder_name.endswith(utils.ARCHIVE_FILES):
 											n = folder_name
@@ -176,7 +180,9 @@ class Fetch(QObject):
 						path = os.path.join(self.series_path, folder_name)
 					if gui_constants.MOVE_IMPORTED_GALLERIES and not gui_constants.OVERRIDE_MOVE_IMPORTED_IN_FETCH:
 						path = utils.move_files(path)
-					if gui_constants.SUBFOLDER_AS_GALLERY:
+					if gui_constants.SUBFOLDER_AS_GALLERY or gui_constants.OVERRIDE_SUBFOLDER_AS_GALLERY:
+						if gui_constants.OVERRIDE_SUBFOLDER_AS_GALLERY:
+							gui_constants.OVERRIDE_SUBFOLDER_AS_GALLERY = False
 						log_i("Treating each subfolder as gallery")
 						if os.path.isdir(path):
 							gallery_folders, gallery_archives = utils.recursive_gallery_check(path)

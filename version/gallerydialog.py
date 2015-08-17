@@ -34,6 +34,7 @@ class GalleryDialog(QWidget):
 
 	def __init__(self, parent=None, arg=None):
 		super().__init__(parent, Qt.Dialog)
+		self.setAttribute(Qt.WA_DeleteOnClose)
 		self.parent_widget = parent
 		log_d('Triggered Gallery Edit/Add Dialog')
 		m_l = QVBoxLayout()

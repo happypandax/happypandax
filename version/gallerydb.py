@@ -1221,7 +1221,8 @@ class HashDB:
 
 
 class Gallery:
-	"""Base class for a gallery.
+	"""
+	Base class for a gallery.
 	Available data:
 	id -> Not to be editied. Do not touch.
 	title <- [list of titles] or str
@@ -1313,6 +1314,7 @@ class Gallery:
 		Title: {}
 		Profile Path: {}
 		Path: {}
+		Path In Archive: {}
 		Is Archive: {}
 		Author: {}
 		Description: {}
@@ -1327,8 +1329,8 @@ class Gallery:
 		Hashes: {}
 
 		Chapters: {}
-		""".format(self.id, self.title, self.profile, self.path.encode(errors='ignore'), self.is_archive, self.artist,
-			 self.info, self.fav, self.type, self.language, self.status, self.tags,
+		""".format(self.id, self.title, self.profile, self.path.encode(errors='ignore'), self.path_in_archive.encode(errors='ignore'),
+			 self.is_archive, self.artist, self.info, self.fav, self.type, self.language, self.status, self.tags,
 			 self.pub_date, self.date_added, self.exed, len(self.hashes), "".format(self.chapters).encode(errors='ignore'))
 		return string
 
