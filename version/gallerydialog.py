@@ -34,6 +34,7 @@ class GalleryDialog(QWidget):
 
 	def __init__(self, parent=None, arg=None):
 		super().__init__(parent, Qt.Dialog)
+		self.setAttribute(Qt.WA_DeleteOnClose)
 		self.parent_widget = parent
 		log_d('Triggered Gallery Edit/Add Dialog')
 		m_l = QVBoxLayout()
@@ -225,17 +226,17 @@ class GalleryDialog(QWidget):
 
 	def newUI(self):
 
-		f_local = QGroupBox("Folder/ZIP")
+		f_local = QGroupBox("Directory/Archive")
 		f_local.setCheckable(False)
 		self.main_layout.addWidget(f_local)
 		local_layout = QHBoxLayout()
 		f_local.setLayout(local_layout)
 
-		choose_folder = QPushButton("From Folder")
+		choose_folder = QPushButton("From Directory")
 		choose_folder.clicked.connect(lambda: self.choose_dir('f'))
 		local_layout.addWidget(choose_folder)
 
-		choose_archive = QPushButton("From ZIP/CBZ")
+		choose_archive = QPushButton("From Archive")
 		choose_archive.clicked.connect(lambda: self.choose_dir('a'))
 		local_layout.addWidget(choose_archive)
 

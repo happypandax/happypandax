@@ -18,7 +18,7 @@ from PyQt5.QtCore import Qt, QObject, pyqtSignal
 from PyQt5.QtGui import QImage
 
 from utils import (today, ArchiveFile, generate_img_hash, delete_path,
-					 ARCHIVE_FILES, get_gallery_img, IMG_FILES)
+					 ARCHIVE_FILES, get_gallery_img, IMG_FILES, CreateArchiveFail)
 from database.db import CommandQueue, ResultQueue
 from database import db_constants
 
@@ -116,6 +116,8 @@ def gen_thumbnail(gallery, width=gui_constants.THUMB_W_SIZE,
 				img_path = get_gallery_img(gallery.chapters[0])
 		else:
 			img_path = img
+		if not img_path:
+			raise IndexError
 		for ext in IMG_FILES:
 			if img_path.endswith(ext):
 				suff = ext # the image ext with dot
@@ -1082,10 +1084,14 @@ class HashDB:
 		except NotADirectoryError:
 			temp_dir = os.path.join(gui_constants.temp_dir, str(uuid.uuid4()))
 			is_archive = gallery.is_archive
-			if is_archive:
-				zip = ArchiveFile(gallery.path)
-			else:
-				zip = ArchiveFile(chap_path)
+			try:
+				if is_archive:
+					zip = ArchiveFile(gallery.path)
+				else:
+					zip = ArchiveFile(chap_path)
+			except CreateArchiveFail:
+				log_e('Could not generate hash: CreateZipFail')
+				return {}
 			pages = {}
 			if page:
 				p = 0
@@ -1160,13 +1166,17 @@ class HashDB:
 		except NotADirectoryError:
 			# HACK: Do not need to extract all.. can read bytes from acrhive!!!
 			t_p = os.path.join(gui_constants.temp_dir, str(uuid.uuid4()))
-			if gallery.is_archive:
-				zip = ArchiveFile(gallery.path)
-				chap_path = zip.extract(gallery.chapters[0], t_p)
-			else:
-				chap_path = t_p
-				zip = ArchiveFile(gallery.chapters[0])
-				zip.extract_all(chap_path)
+			try:
+				if gallery.is_archive:
+					zip = ArchiveFile(gallery.path)
+					chap_path = zip.extract(gallery.chapters[0], t_p)
+				else:
+					chap_path = t_p
+					zip = ArchiveFile(gallery.chapters[0])
+					zip.extract_all(chap_path)
+			except CreateArchiveFail:
+				log_e('Could not generate hashes: CreateZipFail')
+				return []
 			imgs = scandir.scandir(chap_path)
 
 		except FileNotFoundError:
@@ -1211,7 +1221,8 @@ class HashDB:
 
 
 class Gallery:
-	"""Base class for a gallery.
+	"""
+	Base class for a gallery.
 	Available data:
 	id -> Not to be editied. Do not touch.
 	title <- [list of titles] or str
@@ -1303,6 +1314,7 @@ class Gallery:
 		Title: {}
 		Profile Path: {}
 		Path: {}
+		Path In Archive: {}
 		Is Archive: {}
 		Author: {}
 		Description: {}
@@ -1317,8 +1329,8 @@ class Gallery:
 		Hashes: {}
 
 		Chapters: {}
-		""".format(self.id, self.title, self.profile, self.path.encode(errors='ignore'), self.is_archive, self.artist,
-			 self.info, self.fav, self.type, self.language, self.status, self.tags,
+		""".format(self.id, self.title, self.profile, self.path.encode(errors='ignore'), self.path_in_archive.encode(errors='ignore'),
+			 self.is_archive, self.artist, self.info, self.fav, self.type, self.language, self.status, self.tags,
 			 self.pub_date, self.date_added, self.exed, len(self.hashes), "".format(self.chapters).encode(errors='ignore'))
 		return string
 

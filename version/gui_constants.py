@@ -15,20 +15,28 @@ import settings
 """Contains constants to be used by several modules"""
 
 # Version number
-vs  = '0.21'
+vs  = '0.22'
 DEBUG = False
 
 get = settings.get
 
 #current_dir, f = os.path.split(os.path.realpath(__file__))
-static_dir = os.path.join(os.getcwd(), "res")
-temp_dir = os.path.join('temp')
+if os.name == 'posix':
+	static_dir = os.path.join(os.getcwd(), "../res")
+	bin_dir = os.path.join(os.getcwd(), '../bin')
+	temp_dir = os.path.join('../temp')
+else:
+	bin_dir = os.path.join(os.getcwd(), 'bin')
+	static_dir = os.path.join(os.getcwd(), "res")
+	temp_dir = os.path.join('temp')
+# path to unrar tool binary
+unrar_tool_path = get('', 'Application', 'unrar tool path')
 
 #default stylesheet path
 default_stylesheet_path = static_dir + '/' + "style.css"
 user_stylesheet_path = ""
 
-FIRST_TIME_LEVEL = get(2, 'Application', 'first time level', int)
+FIRST_TIME_LEVEL = get(3, 'Application', 'first time level', int)
 
 # sizes
 MAIN_W = 1029 # main window
@@ -56,7 +64,7 @@ DATE_ADDED = 10
 
 # Application
 SYSTEM_TRAY = None
-NOTIF_BAR = None
+NOTIF_BAR = None # HACK: Cause of thread warnings!!
 
 # image paths
 GALLERY_ICO_PATH = os.path.join(static_dir, "gallery_ico.ico")
@@ -87,6 +95,7 @@ MOVE_IMPORTED_GALLERIES = get(False, 'Application', 'move imported galleries', b
 IMPORTED_GALLERY_DEF_PATH = get('', 'Application', 'imported gallery def path', str)
 SCROLL_TO_NEW_GALLERIES = get(False, 'Application', 'scroll to new galleries', bool)
 OPEN_RANDOM_GALLERY_CHAPTERS = get(False, 'Application', 'open random gallery chapters', bool)
+OVERRIDE_SUBFOLDER_AS_GALLERY = False # set to true to make a fetch instance treat subfolder as galleries (will be set to false)
 SUBFOLDER_AS_GALLERY = get(False, 'Application', 'subfolder as gallery', bool)
 RENAME_GALLERY_SOURCE = get(False, 'Application', 'rename gallery source', bool)
 
