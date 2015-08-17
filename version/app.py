@@ -164,20 +164,20 @@ class AppWindow(QMainWindow):
 							buttons = g_popup.add_buttons('Add', 'Close')
 
 							def populate_n_close():
-								self.gallery_populate(final_paths)
 								g_popup.close()
+								self.gallery_populate(final_paths)
 							buttons[0].clicked.connect(populate_n_close)
 							buttons[1].clicked.connect(g_popup.close)
 
-				#thread = QThread(self)
+				thread = QThread(self)
 				self.scan_inst = ScanDir()
-				#self.scan_inst.moveToThread(thread)
+				self.scan_inst.moveToThread(thread)
 				self.scan_inst.final_paths_and_galleries.connect(show_new_galleries)
 				self.scan_inst.final_paths_and_galleries.connect(lambda a: self.scan_inst.deleteLater())
-				#thread.started.connect(self.scan_inst.scan_dirs)
-				self.scan_inst.scan_dirs()
-				#thread.finished.connect(thread.deleteLater)
-				#thread.start()
+				thread.started.connect(self.scan_inst.scan_dirs)
+				#self.scan_inst.scan_dirs()
+				thread.finished.connect(thread.deleteLater)
+				thread.start()
 			except:
 				self.notification_bar.add_text('An error occured while attempting to scan for new galleries. Check happypanda.log.')
 				log.exception('An error occured while attempting to scan for new galleries.')
@@ -677,21 +677,22 @@ class AppWindow(QMainWindow):
 
 	def gallery_populate(self, path, validate=False):
 		"Scans the given path for gallery to add into the DB"
-		print('hi')
 		if len(path) is not 0:
 			data_thread = QThread(self)
 			data_thread.setObjectName('General gallery populate')
 			loading = misc.Loading(self)
-			fetch_instance = fetch.Fetch()
-			fetch_instance.series_path = path
+			self.g_populate_inst = fetch.Fetch()
+			self.g_populate_inst.series_path = path
 			loading.show()
 
 			def finished(status):
+				print('hi')
 				def hide_loading():
 					loading.hide()
 				if status:
 					if len(status) != 0:
 						def add_gallery(gallery_list):
+							print('add g')
 							def append_to_model(x):
 								self.manga_list_view.gallery_model.insertRows(x, None, len(x))
 
@@ -717,7 +718,7 @@ class AppWindow(QMainWindow):
 									gui_constants.NOTIF_BAR.end_show()
 									self.done.emit()
 							loading.progress.setMaximum(len(gallery_list))
-							a_instance = A(gallery_list)
+							self.a_instance = A(gallery_list)
 							thread = QThread(self)
 							thread.setObjectName('Database populate')
 							def loading_show(numb):
@@ -732,11 +733,11 @@ class AppWindow(QMainWindow):
 								loading.close()
 								self.manga_list_view.gallery_model.ROWCOUNT_CHANGE.emit()
 
-							a_instance.moveToThread(thread)
-							a_instance.prog.connect(loading_show)
-							thread.started.connect(a_instance.add_to_db)
-							a_instance.done.connect(loading_hide)
-							a_instance.done.connect(a_instance.deleteLater)
+							self.a_instance.moveToThread(thread)
+							self.a_instance.prog.connect(loading_show)
+							thread.started.connect(self.a_instance.add_to_db)
+							self.a_instance.done.connect(loading_hide)
+							self.a_instance.done.connect(self.a_instance.deleteLater)
 							#a_instance.add_to_db()
 							thread.finished.connect(thread.deleteLater)
 							thread.start()
@@ -772,7 +773,7 @@ class AppWindow(QMainWindow):
 					log_e('Populating DB from gallery folder: Nothing was added!')
 					loading.setText("<font color=red>Nothing was added. Check happypanda_log for details..</font>")
 					loading.progress.setStyleSheet("background-color:red;")
-					#data_thread.quit
+					data_thread.quit
 					QTimer.singleShot(8000, loading.close)
 
 			def skipped_gs(s_list):
@@ -795,17 +796,17 @@ class AppWindow(QMainWindow):
 				loading.progress.setValue(prog)
 				loading.setText("Searching for galleries...")
 
-			#fetch_instance.moveToThread(data_thread)
-			fetch_instance.DATA_COUNT.connect(loading.progress.setMaximum)
-			fetch_instance.PROGRESS.connect(a_progress)
-			#data_thread.started.connect(fetch_instance.local)
-			fetch_instance.FINISHED.connect(finished)
-			#fetch_instance.FINISHED.connect(fetch_instance.deleteLater)
-			fetch_instance.SKIPPED.connect(skipped_gs)
-			#data_thread.finished.connect(data_thread.deleteLater)
-			#data_thread.start()
-			fetch_instance.local()
-			log_i('Populating DB from gallery folder')
+			self.g_populate_inst.moveToThread(data_thread)
+			self.g_populate_inst.DATA_COUNT.connect(loading.progress.setMaximum)
+			self.g_populate_inst.PROGRESS.connect(a_progress)
+			self.g_populate_inst.FINISHED.connect(finished)
+			self.g_populate_inst.FINISHED.connect(self.g_populate_inst.deleteLater)
+			self.g_populate_inst.SKIPPED.connect(skipped_gs)
+			data_thread.finished.connect(data_thread.deleteLater)
+			data_thread.started.connect(self.g_populate_inst.local)
+			data_thread.start()
+			#fetch_instance.local()
+			log_i('Populating DB from directory/archive')
 
 	def dragEnterEvent(self, event):
 		if event.mimeData().hasUrls():
