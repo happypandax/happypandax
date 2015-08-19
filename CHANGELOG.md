@@ -1,3 +1,12 @@
+*Happypanda v0.22*
+- Added support for .rar files.
+	+ To enable rar support, specify the path to unrar in Settings -> Application -> General. Follow the instructions for your OS.
+- Fixed most (if not all) gallery importing issues
+- Added a way to populate form archive.
+	+ Note: Subfolders will always be treated as galleries when populating from an archive.
+- Fixed a bug where users who tries Happypanda for the first time would see the 'rebuilding galleries' dialog.
+- & other misc. changes
+
 *Happypanda v0.21*
 - The application will now ask if you want to view skipped paths after searching for galleries
 - Added 'delete successful' in the notificationbar

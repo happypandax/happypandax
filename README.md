@@ -27,28 +27,14 @@ For Mac & Linux see [INSTALL.md](INSTALL.md)
 - Search for galleries through title, artist or namespaces & tags
 - Fetch metadata which includes namespace & tags from the web (Currently only supports g.e-hentai and exhentai) without getting you banned
 - Favourite your favourite galleries and keep them in a seperate view
-- View your galleries with highquality thumbnails or in a simple table list
-- Add your galleries easily without worrying about adding duplicates with one of the 3 available modes:
-	+ Add a single gallery. *Note: this way you can add even if the gallery already exist*
+- View your galleries with high-quality thumbnails or in a simple table list
+- Add your galleries easily without worrying about adding duplicates:
+	+ Add a single detailed gallery. *Note: this way you can add even if the gallery already exist*
 	+ Add galleries from different locations
-	+ Or just populate from a single folder containing all your galleries
-- Currently supports ZIP/CBZ and the following folder structures:
-    + .../My_general_gallery_folder
-        - --/gallery1_folder
-            - --/Chp_1_folder
-                - --/image_1
-                - --/image_2
-            - --/Chp_n_folder
-                - --/image_n
-
-    + .../My_general_gallery_folder
-        - --/gallery1_folder
-            - --/image_1
-            - --/image_2
-        - --/gallery_n_folder
-            - --/image_n
-            - --/image_n
-- Add new released chapters to your gallery easily
+	+ Or if you want it easy then just populate from a single folder containing all your galleries
+- Can add galleries recursively, treating each subfolder as a gallery (applies to archives too)
+- Currently only supports ZIP/CBZ and directories with loose files
+- Keep track of on-going galleries and add new released chapters to your gallery easily
 - Monitor 1 or more folders for events and be notified:
 	+ Renaming a gallery source  will prompt the program to ask if you want to update the renamed gallery's source
 	+ Deleting a gallery source will prompt the program to ask if you want to remove the gallery from the program as well
@@ -59,10 +45,11 @@ For Mac & Linux see [INSTALL.md](INSTALL.md)
 # Dependencies
 - Qt5 (Install this first) >= 5.4
 - PyQt5
-- requests (pip) >= 2.6.0
+- requests (pip)
 - BeautifulSoup 4 (pip)
 - watchdog (pip)
 - scandir (pip)
+- rarfile (pip)
 
 # Contributing
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Pewpews/happypanda?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)

@@ -29,6 +29,9 @@ ARCHIVE_FILES = ('.zip', '.cbz', '.rar', '.cbr')
 FILE_FILTER = '*.zip *.cbz *.rar *.cbr'
 rarfile.PATH_SEP = '/'
 rarfile.UNRAR_TOOL = gui_constants.unrar_tool_path
+if not gui_constants.unrar_tool_path:
+	FILE_FILTER = '*.zip *.cbz'
+	ARCHIVE_FILES = ('.zip', '.cbz')
 
 def move_files(path, dest=''):
 	"""
@@ -355,10 +358,10 @@ def open_chapter(chapterpath, archive=None):
 		return filepath
 
 	def find_f_img_archive():
+		gui_constants.NOTIF_BAR.add_text('Extracting...')
 		zip = ArchiveFile(temp_p)
 		t_p = os.path.join('temp', str(uuid.uuid4()))
 		os.mkdir(t_p)
-		gui_constants.NOTIF_BAR.add_text('Extracting...')
 		if is_archive or chapterpath.endswith(ARCHIVE_FILES):
 			if os.path.isdir(chapterpath):
 				t_p = chapterpath
@@ -393,6 +396,7 @@ def open_chapter(chapterpath, archive=None):
 		log.exception('Could not find chapter {}'.format(chapterpath))
 
 	try:
+		gui_constants.NOTIF_BAR.add_text('Opening gallery...')
 		if not gui_constants.USE_EXTERNAL_VIEWER:
 			if sys.platform.startswith('darwin'):
 				subprocess.call(('open', filepath))

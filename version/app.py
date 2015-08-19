@@ -164,20 +164,20 @@ class AppWindow(QMainWindow):
 							buttons = g_popup.add_buttons('Add', 'Close')
 
 							def populate_n_close():
-								self.gallery_populate(final_paths)
 								g_popup.close()
+								self.gallery_populate(final_paths)
 							buttons[0].clicked.connect(populate_n_close)
 							buttons[1].clicked.connect(g_popup.close)
 
-				#thread = QThread(self)
+				thread = QThread(self)
 				self.scan_inst = ScanDir()
-				#self.scan_inst.moveToThread(thread)
+				self.scan_inst.moveToThread(thread)
 				self.scan_inst.final_paths_and_galleries.connect(show_new_galleries)
 				self.scan_inst.final_paths_and_galleries.connect(lambda a: self.scan_inst.deleteLater())
-				#thread.started.connect(self.scan_inst.scan_dirs)
-				self.scan_inst.scan_dirs()
-				#thread.finished.connect(thread.deleteLater)
-				#thread.start()
+				thread.started.connect(self.scan_inst.scan_dirs)
+				#self.scan_inst.scan_dirs()
+				thread.finished.connect(thread.deleteLater)
+				thread.start()
 			except:
 				self.notification_bar.add_text('An error occured while attempting to scan for new galleries. Check happypanda.log.')
 				log.exception('An error occured while attempting to scan for new galleries.')
@@ -549,7 +549,7 @@ class AppWindow(QMainWindow):
 		gallery_action.setToolTip('Contains various gallery related features')
 		gallery_action.setMenu(gallery_menu)
 		add_gallery_icon = QIcon(gui_constants.PLUS_PATH)
-		gallery_action_add = QAction(add_gallery_icon, "Add gallery", self)
+		gallery_action_add = QAction(add_gallery_icon, "Add single gallery...", self)
 		gallery_action_add.triggered.connect(self.manga_list_view.SERIES_DIALOG.emit)
 		gallery_action_add.setToolTip('Add a single gallery thoroughly')
 		gallery_menu.addAction(gallery_action_add)
@@ -557,8 +557,8 @@ class AppWindow(QMainWindow):
 		add_more_action.setStatusTip('Add galleries from different folders')
 		add_more_action.triggered.connect(lambda: self.populate(True))
 		gallery_menu.addAction(add_more_action)
-		populate_action = QAction(add_gallery_icon, "Populate from folder...", self)
-		populate_action.setStatusTip('Populates the DB with galleries from a single folder')
+		populate_action = QAction(add_gallery_icon, "Add from directory/archive...", self)
+		populate_action.setStatusTip('Populates the DB with galleries from a single folder or archive')
 		populate_action.triggered.connect(self.populate)
 		gallery_menu.addAction(populate_action)
 		gallery_menu.addSeparator()
@@ -646,8 +646,35 @@ class AppWindow(QMainWindow):
 			gallery_view.SERIES.connect(self.gallery_populate)
 			gallery_view.show()
 		else:
-			path = QFileDialog.getExistingDirectory(None, "Choose a folder containing your galleries")
-			self.gallery_populate(path, True)
+			msg_box = misc.BasePopup(self)
+			l = QVBoxLayout()
+			msg_box.main_widget.setLayout(l)
+			l.addWidget(QLabel('Directory or Archive?'))
+			l.addLayout(msg_box.buttons_layout)
+
+			def from_dir():
+				path = QFileDialog.getExistingDirectory(self, "Choose a directory containing your galleries")
+				if not path:
+					return
+				msg_box.close()
+				gui_constants.OVERRIDE_SUBFOLDER_AS_GALLERY = True
+				self.gallery_populate(path, True)
+			def from_arch():
+				path = QFileDialog.getOpenFileName(self, 'Choose an archive containing your galleries',
+									   filter=utils.FILE_FILTER)
+				path = [path[0]]
+				if not all(path) or not path:
+					return
+				msg_box.close()
+				gui_constants.OVERRIDE_SUBFOLDER_AS_GALLERY = True
+				self.gallery_populate(path, True)
+
+			buttons = msg_box.add_buttons('Directory', 'Archive', 'Close')
+			buttons[2].clicked.connect(msg_box.close)
+			buttons[0].clicked.connect(from_dir)
+			buttons[1].clicked.connect(from_arch)
+			msg_box.adjustSize()
+			msg_box.show()
 
 	def gallery_populate(self, path, validate=False):
 		"Scans the given path for gallery to add into the DB"
@@ -655,141 +682,132 @@ class AppWindow(QMainWindow):
 			data_thread = QThread(self)
 			data_thread.setObjectName('General gallery populate')
 			loading = misc.Loading(self)
-			if not loading.ON:
-				misc.Loading.ON = True
-				fetch_instance = fetch.Fetch()
-				fetch_instance.series_path = path
-				loading.show()
+			self.g_populate_inst = fetch.Fetch()
+			self.g_populate_inst.series_path = path
+			loading.show()
 
-				def finished(status):
-					def hide_loading():
-						loading.hide()
-					if status:
-						if len(status) != 0:
-							def add_gallery(gallery_list):
-								def append_to_model(x):
-									self.manga_list_view.gallery_model.insertRows(x, None, len(x))
+			def finished(status):
+				print('hi')
+				def hide_loading():
+					loading.hide()
+				if status:
+					if len(status) != 0:
+						def add_gallery(gallery_list):
+							print('add g')
+							def append_to_model(x):
+								self.manga_list_view.gallery_model.insertRows(x, None, len(x))
 
-								class A(QObject):
-									done = pyqtSignal()
-									prog = pyqtSignal(int)
-									def __init__(self, obj, parent=None):
-										super().__init__(parent)
-										self.obj = obj
-										self.galleries = []
+							class A(QObject):
+								done = pyqtSignal()
+								prog = pyqtSignal(int)
+								def __init__(self, obj, parent=None):
+									super().__init__(parent)
+									self.obj = obj
+									self.galleries = []
 
-									def add_to_db(self):
-										gui_constants.NOTIF_BAR.begin_show()
-										gui_constants.NOTIF_BAR.add_text('Populating database...')
-										for y, x in enumerate(self.obj):
-											gui_constants.NOTIF_BAR.add_text('Populating database {}/{}'.format(y+1, len(self.obj)))
-											gallerydb.add_method_queue(
-												gallerydb.GalleryDB.add_gallery_return, False, x)
-											self.galleries.append(x)
-											y += 1
-											self.prog.emit(y)
-										append_to_model(self.galleries)
-										gui_constants.NOTIF_BAR.end_show()
-										self.done.emit()
-
-								loading.progress.setMaximum(len(gallery_list))
-								a_instance = A(gallery_list)
-								thread = QThread(self)
-								thread.setObjectName('Database populate')
-								def loading_show():
-									loading.setText('Populating database.\nPlease wait...')
+								def add_to_db(self):
+									gui_constants.NOTIF_BAR.begin_show()
+									gui_constants.NOTIF_BAR.add_text('Populating database...')
+									for y, x in enumerate(self.obj):
+										gui_constants.NOTIF_BAR.add_text('Populating database {}/{}'.format(y+1, len(self.obj)))
+										gallerydb.add_method_queue(
+											gallerydb.GalleryDB.add_gallery_return, False, x)
+										self.galleries.append(x)
+										y += 1
+										self.prog.emit(y)
+									append_to_model(self.galleries)
+									gui_constants.NOTIF_BAR.end_show()
+									self.done.emit()
+							loading.progress.setMaximum(len(gallery_list))
+							self.a_instance = A(gallery_list)
+							thread = QThread(self)
+							thread.setObjectName('Database populate')
+							def loading_show(numb):
+								if loading.isHidden():
 									loading.show()
+								loading.setText('Populating database ({}/{})\nPlease wait...'.format(
+									numb, loading.progress.maximum()))
+								loading.progress.setValue(numb)
+								loading.show()
 
-								def loading_hide():
-									loading.hide()
-									self.manga_list_view.gallery_model.ROWCOUNT_CHANGE.emit()
+							def loading_hide():
+								loading.close()
+								self.manga_list_view.gallery_model.ROWCOUNT_CHANGE.emit()
 
-								def del_later():
-									try:
-										a_instance.deleteLater()
-									except NameError:
-										pass
-
-								a_instance.moveToThread(thread)
-								a_instance.prog.connect(loading.progress.setValue)
-								thread.started.connect(loading_show)
-								thread.started.connect(a_instance.add_to_db)
-								a_instance.done.connect(loading_hide)
-								a_instance.done.connect(del_later)
-								thread.finished.connect(thread.deleteLater)
-								thread.start()
-								#a_instance.add_to_db()
-							#data_thread.quit
-							hide_loading()
-							log_i('Populating DB from gallery folder: OK')
-							if validate:
-								gallery_list = misc.GalleryListView(self)
-								gallery_list.SERIES.connect(add_gallery)
-								for ser in status:
-									if ser.is_archive and gui_constants.SUBFOLDER_AS_GALLERY:
-										p = os.path.split(ser.path)[1]
-										if ser.chapters[0]:
-											text = '{}: {}'.format(p, os.path.split(ser.chapters[0])[0])
-										else:
-											text = p
-										gallery_list.add_gallery(ser, text)
+							self.a_instance.moveToThread(thread)
+							self.a_instance.prog.connect(loading_show)
+							thread.started.connect(self.a_instance.add_to_db)
+							self.a_instance.done.connect(loading_hide)
+							self.a_instance.done.connect(self.a_instance.deleteLater)
+							#a_instance.add_to_db()
+							thread.finished.connect(thread.deleteLater)
+							thread.start()
+						#data_thread.quit
+						hide_loading()
+						log_i('Populating DB from gallery folder: OK')
+						if validate:
+							gallery_list = misc.GalleryListView(self)
+							gallery_list.SERIES.connect(add_gallery)
+							for ser in status:
+								if ser.is_archive and gui_constants.SUBFOLDER_AS_GALLERY:
+									p = os.path.split(ser.path)[1]
+									if ser.chapters[0]:
+										pt_in_arch = os.path.split(ser.path_in_archive)
+										pt_in_arch = pt_in_arch[1] or pt_in_arch[0]
+										text = '{}: {}'.format(p, pt_in_arch)
 									else:
-										gallery_list.add_gallery(ser, os.path.split(ser.path)[1])
-								#self.manga_list_view.gallery_model.populate_data()
-								gallery_list.show()
-							else:
-								add_gallery(status)
-							misc.Loading.ON = False
+										text = p
+									gallery_list.add_gallery(ser, text)
+								else:
+									gallery_list.add_gallery(ser, os.path.split(ser.path)[1])
+							#self.manga_list_view.gallery_model.populate_data()
+							gallery_list.update_count()
+							gallery_list.show()
 						else:
-							log_d('No new gallery was found')
-							loading.setText("No new gallery found")
-							#data_thread.quit
-							misc.Loading.ON = False
-
+							add_gallery(status)
 					else:
-						log_e('Populating DB from gallery folder: Nothing was added!')
-						loading.setText("<font color=red>Nothing was added. Check happypanda_log for details..</font>")
-						loading.progress.setStyleSheet("background-color:red;")
-						data_thread.quit
-						QTimer.singleShot(10000, loading.close)
+						log_d('No new gallery was found')
+						loading.setText("No new gallery found")
+						#data_thread.quit
 
-				def skipped_gs(s_list):
-					"Skipped galleries"
-					msg_box = QMessageBox(self)
-					msg_box.setIcon(QMessageBox.Question)
-					msg_box.setText('Do you want to view skipped paths?')
-					msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-					msg_box.setDefaultButton(QMessageBox.No)
-					if msg_box.exec() == QMessageBox.Yes:
-						list_wid = QListWidget(self)
-						for g in s_list:
-							list_wid.addItem(g)
-						list_wid.setWindowTitle('Skipped paths')
-						list_wid.setWindowFlags(Qt.Window)
-						list_wid.resize(500,500)
-						list_wid.show()
+				else:
+					log_e('Populating DB from gallery folder: Nothing was added!')
+					loading.setText("<font color=red>Nothing was added. Check happypanda_log for details..</font>")
+					loading.progress.setStyleSheet("background-color:red;")
+					data_thread.quit
+					QTimer.singleShot(8000, loading.close)
 
-				def fetch_deleteLater():
-					try:
-						fetch_instance.deleteLater
-					except NameError:
-						pass
+			def skipped_gs(s_list):
+				"Skipped galleries"
+				msg_box = QMessageBox(self)
+				msg_box.setIcon(QMessageBox.Question)
+				msg_box.setText('Do you want to view skipped paths?')
+				msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+				msg_box.setDefaultButton(QMessageBox.No)
+				if msg_box.exec() == QMessageBox.Yes:
+					list_wid = QListWidget(self)
+					for g in s_list:
+						list_wid.addItem(g)
+					list_wid.setWindowTitle('{} skipped paths'.format(len(s_list)))
+					list_wid.setWindowFlags(Qt.Window)
+					list_wid.resize(500,500)
+					list_wid.show()
 
-				def a_progress(prog):
-					loading.progress.setValue(prog)
-					loading.setText("Searching for galleries...")
+			def a_progress(prog):
+				loading.progress.setValue(prog)
+				loading.setText("Searching for galleries...")
 
-				#fetch_instance.moveToThread(data_thread)
-				fetch_instance.DATA_COUNT.connect(loading.progress.setMaximum)
-				fetch_instance.PROGRESS.connect(a_progress)
-				#data_thread.started.connect(fetch_instance.local)
-				fetch_instance.FINISHED.connect(finished)
-				fetch_instance.FINISHED.connect(fetch_deleteLater)
-				fetch_instance.SKIPPED.connect(skipped_gs)
-				#data_thread.finished.connect(data_thread.deleteLater)
-				#data_thread.start()
-				fetch_instance.local()
-				log_i('Populating DB from gallery folder')
+			self.g_populate_inst.moveToThread(data_thread)
+			self.g_populate_inst.DATA_COUNT.connect(loading.progress.setMaximum)
+			self.g_populate_inst.PROGRESS.connect(a_progress)
+			self.g_populate_inst.FINISHED.connect(finished)
+			self.g_populate_inst.FINISHED.connect(self.g_populate_inst.deleteLater)
+			self.g_populate_inst.SKIPPED.connect(skipped_gs)
+			data_thread.finished.connect(data_thread.deleteLater)
+			data_thread.started.connect(self.g_populate_inst.local)
+			data_thread.start()
+			#fetch_instance.local()
+			log_i('Populating DB from directory/archive')
 
 	def dragEnterEvent(self, event):
 		if event.mimeData().hasUrls():
@@ -802,21 +820,25 @@ class AppWindow(QMainWindow):
 		unaccept = []
 		for u in event.mimeData().urls():
 			path = u.toLocalFile()
-			if os.path.isdir(path):
-				acceptable.append(path)
-				continue
-			head, tail = os.path.split(path)
-			if tail.endswith(utils.ARCHIVE_FILES):
+			if os.path.isdir(path) or path.endswith(utils.ARCHIVE_FILES):
 				acceptable.append(path)
 			else:
-				unaccept(path)
+				unaccept.append(path)
 		log_i('Acceptable dropped items: {}'.format(len(acceptable)))
 		log_i('Unacceptable dropped items: {}'.format(len(unaccept)))
 		log_d('Dropped items: {}\n{}'.format(acceptable, unaccept).encode(errors='ignore'))
 		if acceptable:
 			self.notification_bar.add_text('Adding dropped items...')
 			log_i('Adding dropped items')
-			if len(acceptable) == 1:
+			l = len(acceptable) == 1
+			f_item = acceptable[0]
+			if f_item.endswith(utils.ARCHIVE_FILES):
+				f_item = utils.check_archive(f_item)
+			else:
+				f_item = utils.recursive_gallery_check(f_item)
+			f_item_l = len(f_item) < 2
+			subfolder_as_c = not gui_constants.SUBFOLDER_AS_GALLERY
+			if l and subfolder_as_c or l and f_item_l:
 				g_d = gallerydialog.GalleryDialog(self, acceptable[0])
 				g_d.SERIES.connect(self.manga_list_view.gallery_model.addRows)
 				g_d.show()

@@ -88,7 +88,7 @@ QScrollBar::handle {
 }
 
 QScrollBar::handle:vertical {
-    min-height: 0px;
+    min-height: 100px;
 }
 
 QScrollBar::handle:horizontal {
