@@ -157,6 +157,7 @@ class SortFilterModel(QSortFilterProxyModel):
 		self.artist = ""
 		self.allow_all = True
 		self.excludes = []
+		self.filter_funcs = {}
 
 	def fav_view(self):
 		self.fav = True
@@ -167,6 +168,77 @@ class SortFilterModel(QSortFilterProxyModel):
 		self.fav = False
 		self.invalidateFilter()
 		self.ROWCOUNT_CHANGE.emit()
+
+
+	def setFilterString(self, text):
+		"""
+		Text used for pattern matching
+		"""
+		self.invalidateFilter()
+
+	def add_filter_func(self, name, n_func):
+		"""
+		name: name of function, used as a key in dict
+		n_func: a new function which takes two args, the row to be tested
+			and the current filterpattern. Returns False or True.
+		"""
+		self.filter_funcs[name] = n_func
+		self.invalidateFilter()
+
+	def remove_filter_func(self, name):
+		"""
+		name : name of func used in the add_filter_func method
+		"""
+		if name in self.filter_funcs:
+			self.filter_funcs.pop(name)
+			self.invalidateFilter()
+
+	def filterAcceptsRow(self, source_row, parent_index):
+		model = self.sourceModel()
+		funcs = []
+		validity = []
+		index = self.sourceModel().index(source_row, 0, parent_index)
+		if index.isValid():
+			gallery = index.data(Qt.UserRole+1)
+		else:
+			return False
+		if self.fav:
+			if gallery.fav:
+				validity.append(True)
+			else:
+				validity.append(False)
+
+		if self.artist:
+			validity.append(self.test_text(self.artist, gallery.artist))
+		else:
+			validity.append(True)
+
+		if self.title:
+			validity.append(self.test_text(self.title, gallery.title))
+		else:
+			validity.append(True)
+
+		if self.tags:
+			validity.append(self.test_tags(self.tags, self.excludes))
+		print(validity)
+		return all(validity)
+
+	def test_text(self, list_of_text, text_to_test):
+		valid = []
+		text = text_to_test.lower()
+		for t in list_of_text:
+			t = t.lower()
+			if t in text:
+				valid.append(True)
+			else:
+				valid.append(False)
+		if valid and all(valid):
+			return True
+		else:
+			return False
+
+	def test_tags(self, tags, excludes):
+		return True
 	
 	def change_model(self, model):
 		self.setSourceModel(model)
@@ -196,13 +268,10 @@ class SortFilterModel(QSortFilterProxyModel):
 			buffer = ""
 			stripped_set = set() # we only need unique values
 			for n, x in enumerate(txt, 1):
-
 				if x == '[':
 					level += 1 # we are now entering a list
 				if x == ']':
 					level -= 1 # we are now exiting a list
-
-
 				if x == ',': # if we meet a comma
 					# we trim our buffer if we are at top level
 					if level is 0:
@@ -264,7 +333,7 @@ class SortFilterModel(QSortFilterProxyModel):
 		self.invalidateFilter()
 		self.ROWCOUNT_CHANGE.emit()
 
-	def filterAcceptsRow(self, source_row, index_parent):
+	def filterAcceptsRow2(self, source_row, index_parent):
 		allow = False
 		gallery = None
 
