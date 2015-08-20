@@ -1,4 +1,4 @@
-﻿#"""
+#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -377,7 +377,8 @@ class NotificationOverlay(QWidget):
 		self._lbl.setText(text)
 		if autohide:
 			if not self._override_hide:
-				QTimer.singleShot(10000, self.hide)
+				t = threading.Timer(10, self.hide)
+				t.start()
 
 	def begin_show(self):
 		"""
