@@ -989,10 +989,13 @@ class CustomDelegate(QStyledItemDelegate):
 				self.popup_window.hide()
 
 			if option.state & QStyle.State_Selected:
+				painter.save()
+				selected_rect = QRect(x, y, w, lbl_rect.height()+gui_constants.THUMB_H_SIZE)
 				painter.setPen(Qt.NoPen)
 				painter.setBrush(QBrush(QColor(164,164,164,120)))
-				painter.drawRoundedRect(QRectF(option.rect), 5,5)
-				painter.fillRect(option.rect, QColor(164,164,164,120))
+				painter.drawRoundedRect(selected_rect, 5,5)
+				painter.fillRect(selected_rect, QColor(164,164,164,120))
+				painter.restore()
 
 			#if option.state & QStyle.State_Selected:
 			#	painter.setPen(QPen(option.palette.highlightedText().color()))
