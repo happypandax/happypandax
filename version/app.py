@@ -284,6 +284,7 @@ class AppWindow(QMainWindow):
 		log_d('Create notificationbar: OK')
 
 		log_d('Window Create: OK')
+		print('Ok')
 
 	def _check_update(self):
 		class upd_chk(QObject):
