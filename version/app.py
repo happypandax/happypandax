@@ -189,7 +189,7 @@ class AppWindow(QMainWindow):
 		def done(status=True):
 			if gui_constants.FIRST_TIME_LEVEL != 3:
 				normalize_first_time()
-			#self.manga_list_view.gallery_model.init_data()
+			self.manga_list_view.gallery_model.init_data()
 			if gui_constants.ENABLE_MONITOR and\
 				gui_constants.MONITOR_PATHS and all(gui_constants.MONITOR_PATHS):
 				self.init_watchers()
@@ -433,7 +433,7 @@ class AppWindow(QMainWindow):
 		self.manga_table_view.gallery_model = self.manga_list_view.gallery_model
 		self.manga_table_view.sort_model = self.manga_list_view.sort_model
 		self.manga_table_view.setModel(self.manga_table_view.sort_model)
-		#self.manga_table_view.sort_model.(self.manga_table_view.gallery_model)
+		self.manga_table_view.sort_model.change_model(self.manga_table_view.gallery_model)
 		self.manga_table_view.setColumnWidth(gui_constants.FAV, 20)
 		self.manga_table_view.setColumnWidth(gui_constants.ARTIST, 200)
 		self.manga_table_view.setColumnWidth(gui_constants.TITLE, 400)

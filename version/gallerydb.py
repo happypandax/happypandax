@@ -14,10 +14,8 @@
 
 import datetime, os, scandir, threading, logging, queue, uuid # for unique filename
 
-from PyQt5.QtCore import (Qt, QObject, pyqtSignal, QIdentityProxyModel,
-						  QModelIndex)
+from PyQt5.QtCore import Qt, QObject, pyqtSignal
 from PyQt5.QtGui import QImage
-from PyQt5.QtSql import QSqlQueryModel, QSqlQuery, QSqlRecord
 
 from utils import (today, ArchiveFile, generate_img_hash, delete_path,
 					 ARCHIVE_FILES, get_gallery_img, IMG_FILES, CreateArchiveFail)
@@ -233,21 +231,7 @@ class GalleryDB:
 		check_exists -> Checks if provided string exists
 	"""
 	def __init__(self):
-		super().__init__()
-		self._model = QSqlQueryModel(self)
-		self._model.setQuery('SELECT * FROM series')
-		self.setSourceModel(self._model)
-		self._TITLE = gui_constants.TITLE
-		self._ARTIST = gui_constants.ARTIST
-		self._TAGS = gui_constants.TAGS
-		self._TYPE = gui_constants.TYPE
-		self._FAV = gui_constants.FAV
-		self._CHAPTERS = gui_constants.CHAPTERS
-		self._LANGUAGE = gui_constants.LANGUAGE
-		self._LINK = gui_constants.LINK
-		self._DESCR = gui_constants.DESCR
-		self._DATE_ADDED = gui_constants.DATE_ADDED
-		self._PUB_DATE = gui_constants.PUB_DATE
+		raise Exception("GalleryDB should not be instantiated")
 
 	@staticmethod
 	def rebuild_gallery(gallery):
