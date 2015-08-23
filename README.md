@@ -33,7 +33,7 @@ For Mac & Linux see [INSTALL.md](INSTALL.md)
 	+ Add galleries from different locations
 	+ Or if you want it easy then just populate from a single folder containing all your galleries
 - Can add galleries recursively, treating each subfolder as a gallery (applies to archives too)
-- Currently only supports ZIP/CBZ and directories with loose files
+- Supports ZIP/CBZ, RAR/CBR and directories with loose files
 - Keep track of on-going galleries and add new released chapters to your gallery easily
 - Monitor 1 or more folders for events and be notified:
 	+ Renaming a gallery source  will prompt the program to ask if you want to update the renamed gallery's source
