@@ -25,11 +25,15 @@ log_w = log.warning
 log_e = log.error
 log_c = log.critical
 
-def init_db():
+def setup_db(test=False):
 	db = QSqlDatabase.addDatabase('QSQLITE')
-	db.setDatabaseName(db_constants.DB_PATH)
+	if test:
+		db.setDatabaseName(db_constants.DB_PATH)
+	else:
+		db.setDatabaseName(db_constants.TEST_DB_PATH)
 	log_i('Open database: {}'.format(db.open()))
 	db_constants.DATABASE = db
+	return True
 
 def hashes_sql(cols=False):
 	sql = """

@@ -80,10 +80,9 @@ def start(test=False):
 	log_i('OS: {} {}\n'.format(platform.system(), platform.release()))
 	try:
 		if args.test:
-			conn = db.init_db(True)
+			db_status = db.setup_db(True)
 		else:
-			conn = db.init_db()
-		log_d('Init DB Conn: OK')
+			db_status = db.setup_db()
 		log_i("DB Version: {}".format(db_constants.REAL_DB_VERSION))
 	except:
 		log_c('Invalid database')
@@ -104,8 +103,8 @@ def start(test=False):
 			log_d('Normal Exit App: OK')
 			sys.exit()
 
-	def start_main_window(conn):
-		DB = db.DBThread(conn)
+	def start_main_window():
+		#DB = db.DBThread(conn)
 		#if args.test:
 		#	import threading, time
 		#	ser_list = []
@@ -200,15 +199,14 @@ def start(test=False):
 			done = None
 			while not done:
 				done = db.ResultQueue.get()
-			conn = db.init_db()
-			start_main_window(conn)
+			start_main_window()
 		else:
 			application.exit()
 			log_d('Normal Exit App: OK')
 			sys.exit()
 
-	if conn:
-		start_main_window(conn)
+	if db_status:
+		start_main_window()
 	else:
 		db_upgrade()
 

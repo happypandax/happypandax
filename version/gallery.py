@@ -19,7 +19,7 @@ from PyQt5.QtCore import (Qt, QAbstractListModel, QModelIndex, QVariant,
 						  QSize, QRect, QEvent, pyqtSignal, QThread,
 						  QTimer, QPointF, QSortFilterProxyModel,
 						  QAbstractTableModel, QItemSelectionModel,
-						  QPoint, QRectF, QDate, QDateTime)
+						  QPoint, QRectF, QDate, QDateTime, QIdentityProxyModel)
 from PyQt5.QtGui import (QPixmap, QBrush, QColor, QPainter, 
 						 QPen, QTextDocument,
 						 QMouseEvent, QHelpEvent,
@@ -33,6 +33,7 @@ from PyQt5.QtWidgets import (QListView, QFrame, QLabel,
 							 QHBoxLayout, QFormLayout, QDesktopWidget,
 							 QWidget, QHeaderView, QTableView, QApplication,
 							 QMessageBox, QActionGroup)
+from PyQt5.QtSql import QSqlQueryModel, QSqlRecord
 
 import gallerydb
 import gui_constants
@@ -239,13 +240,6 @@ class SortFilterModel(QSortFilterProxyModel):
 
 	def test_tags(self, tags, excludes):
 		return True
-	
-	def change_model(self, model):
-		self.setSourceModel(model)
-		self._data = self.sourceModel()._data
-
-	def populate_data(self):
-		self.sourceModel().populate_data()
 
 	def status_b_msg(self, msg):
 		self.sourceModel().status_b_msg(msg)
@@ -430,20 +424,18 @@ class SortFilterModel(QSortFilterProxyModel):
 						return True
 		return allow
 
-class GalleryModel(QAbstractTableModel):
-	"""Model for Model/View/Delegate framework
+class GalleryModel(QIdentityProxyModel):
+	"""
+	Model for Model/View/Delegate framework
 	"""
 
 	ROWCOUNT_CHANGE = pyqtSignal()
 	STATUSBAR_MSG = pyqtSignal(str)
 	CUSTOM_STATUS_MSG = pyqtSignal(str)
-	_data = []
 
 	def __init__(self, parent=None):
 		super().__init__(parent)
 		self._data_count = 0 # number of items added to model
-		#self.populate_data()
-		#self._data_container = []
 		self.dataChanged.connect(lambda: self.status_b_msg("Edited"))
 		self.dataChanged.connect(lambda: self.ROWCOUNT_CHANGE.emit())
 		self.layoutChanged.connect(lambda: self.ROWCOUNT_CHANGE.emit())
@@ -460,44 +452,52 @@ class GalleryModel(QAbstractTableModel):
 		self._DATE_ADDED = gui_constants.DATE_ADDED
 		self._PUB_DATE = gui_constants.PUB_DATE
 
-	def init_data(self):
-		"Populates the model with data from database"
-		self._data = []
-		for gallery in gallerydb.GalleryDB.get_all_gallery():
-			if not gallery.valid:
-				reasons = gallery.invalidities()
-			else:
-				self._data.append(gallery)
-		self._data_count = len(self._data)
-		self.layoutChanged.emit()
-		self.ROWCOUNT_CHANGE.emit()
-
-	def populate_data(self):
-		"Populates the model with data from database in a timely manner"
-		self._data = []
-		t = 0
-		galleries = gallerydb.GalleryDB.get_all_gallery()
-		self._data_count = len(galleries)
-		for pos, gallery in enumerate(galleries):
-			t += 80
-			if not gallery.valid:
-				reasons = gallery.invalidities()
-			else:
-				QTimer.singleShot(t, functools.partial(self.insertRows, [gallery], pos,
-										   data_count=False))
+		self._model = QSqlQueryModel(self)
+		self._model.setQuery('SELECT * FROM series')
+		self.setSourceModel(self._model)
 
 	def status_b_msg(self, msg):
 		self.STATUSBAR_MSG.emit(msg)
 
-	def data(self, index, role=Qt.DisplayRole):
-		if not index.isValid():
-			return QVariant()
-		if index.row() >= len(self._data) or \
-			index.row() < 0:
-			return QVariant()
+	def _gen_gallery(self, db_record):
+		"""
+		Generates a gallery from a database record from the series table
+		"""
+		assert isinstance(db_record, QSqlRecord)
+		gallery = gallerydb.Gallery()
+		gallery.id = db_record.value('series_id')
+		gallery.title = db_record.value('title')
+		gallery.artist = db_record.value('artist')
+		gallery.profile = bytes.decode(db_record.value('profile').data())
+		gallery.path = bytes.decode(db_record.value('series_path').data())
+		gallery.is_archive = db_record.value('is_archive')
+		gallery.path_in_archive = db_record.value('path_in_archive')
+		gallery.info = db_record.value('info')
+		gallery.language = db_record.value('language')
+		gallery.status = db_record.value('status')
+		gallery.type = db_record.value('type')
+		gallery.fav = db_record.value('fav')
+		gallery.pub_date = db_record.value('pub_date')
+		gallery.last_update = db_record.value('last_update')
+		gallery.last_read = db_record.value('last_read')
+		gallery.date_added = db_record.value('date_added')
+		gallery.times_read = db_record.value('times_read')
+		gallery._db_v = db_record.value('db_v')
+		gallery.exed = db_record.value('exed')
+		gallery.link = db_record.value('link')
+		gallery.chapters = {}
+		gallery.tags = {}
+		gallery.hashes = []
+		return gallery
 
-		current_row = index.row() 
-		current_gallery = self._data[current_row]
+	def data(self, index, role=Qt.DisplayRole):
+		if index.row() < 0:
+			return QVariant()
+		record = self._model.record(index.row())
+		if record.isEmpty():
+			return None
+		current_row = index.row()
+		current_gallery = self._gen_gallery(record)
 		current_column = index.column()
 
 		def column_checker():
@@ -624,7 +624,7 @@ class GalleryModel(QAbstractTableModel):
 		return None
 
 	def rowCount(self, index = QModelIndex()):
-		return len(self._data)
+		return self._model.rowCount()
 
 	def columnCount(self, parent = QModelIndex()):
 		return len(gui_constants.COLUMNS)
@@ -658,6 +658,7 @@ class GalleryModel(QAbstractTableModel):
 			elif section == self._PUB_DATE:
 				return 'Published'
 		return section + 1
+
 	#def flags(self, index):
 	#	if not index.isValid():
 	#		return Qt.ItemIsEnabled
@@ -667,70 +668,59 @@ class GalleryModel(QAbstractTableModel):
 	def addRows(self, list_of_gallery, position=None,
 				rows=1, index = QModelIndex()):
 		"Adds new gallery data to model and to DB"
-		log_d('Adding {} rows'.format(rows))
-		if not position:
-			log_d('Add rows: No position specified')
-			position = len(self._data)
-		self.beginInsertRows(QModelIndex(), position, position + rows - 1)
-		log_d('Add rows: Began inserting')
-		for gallery in list_of_gallery:
-			gallerydb.add_method_queue(gallerydb.GalleryDB.add_gallery_return, True, gallery)
-			gallery.profile = gallerydb.PROFILE_TO_MODEL.get()
-			self._data.insert(position, gallery)
-			self._data_count += 1
-		log_d('Add rows: Finished inserting')
-		self.endInsertRows()
-		self.CUSTOM_STATUS_MSG.emit("Added item(s)")
-		self.ROWCOUNT_CHANGE.emit()
+		#log_d('Adding {} rows'.format(rows))
+		#if not position:
+		#	log_d('Add rows: No position specified')
+		#	position = len(self._data)
+		#self.beginInsertRows(QModelIndex(), position, position + rows - 1)
+		#log_d('Add rows: Began inserting')
+		#for gallery in list_of_gallery:
+		#	gallerydb.add_method_queue(gallerydb.GalleryDB.add_gallery_return, True, gallery)
+		#	gallery.profile = gallerydb.PROFILE_TO_MODEL.get()
+		#	self._data.insert(position, gallery)
+		#	self._data_count += 1
+		#log_d('Add rows: Finished inserting')
+		#self.endInsertRows()
+		#self.CUSTOM_STATUS_MSG.emit("Added item(s)")
+		#self.ROWCOUNT_CHANGE.emit()
 		return True
 
 	def insertRows(self, list_of_gallery, position=None,
 				rows=1, index = QModelIndex(), data_count=True):
 		"Inserts new gallery data to the data list WITHOUT adding to DB"
-		position = len(self._data) if not position else position
-		self.beginInsertRows(QModelIndex(), position, position + rows - 1)
-		for pos, gallery in enumerate(list_of_gallery, 1):
-			self._data.append(gallery)
-			if data_count:
-				self._data_count += 1
-		self.endInsertRows()
-		if data_count:
-			self.CUSTOM_STATUS_MSG.emit("Added item(s)")
-		self.ROWCOUNT_CHANGE.emit()
+		#position = len(self._data) if not position else position
+		#self.beginInsertRows(QModelIndex(), position, position + rows - 1)
+		#for pos, gallery in enumerate(list_of_gallery, 1):
+		#	self._data.append(gallery)
+		#	if data_count:
+		#		self._data_count += 1
+		#self.endInsertRows()
+		#if data_count:
+		#	self.CUSTOM_STATUS_MSG.emit("Added item(s)")
+		#self.ROWCOUNT_CHANGE.emit()
 		return True
 
 	def replaceRows(self, list_of_gallery, position, rows=1, index=QModelIndex()):
 		"replaces gallery data to the data list WITHOUT adding to DB"
-		for pos, gallery in enumerate(list_of_gallery):
-			del self._data[position+pos]
-			self._data.insert(position+pos, gallery)
+		#for pos, gallery in enumerate(list_of_gallery):
+			#del self._data[position+pos]
+			#self._data.insert(position+pos, gallery)
 		self.dataChanged.emit(index, index, [Qt.UserRole+1, Qt.DecorationRole])
 
 	def removeRows(self, position, rows=1, index=QModelIndex()):
 		"Deletes gallery data from the model data list. OBS: doesn't touch DB!"
 		self.beginRemoveRows(QModelIndex(), position, position + rows - 1)
-		self._data = self._data[:position] + self._data[position + rows:]
-		self._data_count -= rows
+		#self._data = self._data[:position] + self._data[position + rows:]
+		#self._data_count -= rows
 		self.endRemoveRows()
 		self.ROWCOUNT_CHANGE.emit()
 		return True
 
-	#def canFetchMore(self, index):
-	#	if self._data_count < len(self._data):
-	#		return True
-	#	else: 
-	#		return False
+	def canFetchMore(self, index):
+		return self._model.canFetchMore(index)
 
-	#def fetchMore(self, index):
-	#	print('Fetching more')
-	#	diff = len(self._data) - self._data_count
-	#	item_to_fetch = min(gui_constants.PREFETCH_ITEM_AMOUNT, diff)
-
-	#	self.beginInsertRows(index, self._data_count,
-	#				   self._data_count+item_to_fetch-1)
-	#	self._data_count += item_to_fetch
-	#	self.endInsertRows()
-	#	self.ROWCOUNT_CHANGE.emit()
+	def fetchMore(self, index):
+		return self._model.fetchMore(index)
 
 class CustomDelegate(QStyledItemDelegate):
 	"A custom delegate for the model/view framework"
@@ -1063,10 +1053,10 @@ class MangaView(QListView):
 		self.sort_model.setSortCaseSensitivity(Qt.CaseInsensitive)
 		self.manga_delegate = CustomDelegate(parent)
 		self.setItemDelegate(self.manga_delegate)
-		self.gallery_model = GalleryModel(parent)
-		self.sort_model.change_model(self.gallery_model)
+		self.gallery_model = GalleryModel(self)
 		self.sort_model.sort(0)
-		self.sort_model.ROWCOUNT_CHANGE.connect(self.gallery_model.ROWCOUNT_CHANGE.emit)
+		self.sort_model.setSourceModel(self.gallery_model)
+		#self.sort_model.ROWCOUNT_CHANGE.connect(self.gallery_model.ROWCOUNT_CHANGE.emit)
 		self.setModel(self.sort_model)
 		self.SERIES_DIALOG.connect(self.spawn_dialog)
 		self.doubleClicked.connect(self.open_chapter)
