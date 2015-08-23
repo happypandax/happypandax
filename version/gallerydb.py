@@ -344,8 +344,15 @@ class GalleryDB:
 		CommandQueue.put(executing)
 		cursor = ResultQueue.get()
 		all_gallery = cursor.fetchall()
+		return GalleryDB.gen_galleries(all_gallery)
+
+	@staticmethod
+	def gen_galleries(gallery_dict):
+		"""
+		Map galleries fetched from DB
+		"""
 		gallery_list = []
-		for gallery_row in all_gallery:
+		for gallery_row in gallery_dict:
 			gallery = Gallery()
 			gallery.id = gallery_row['series_id']
 			gallery = gallery_map(gallery_row, gallery)
@@ -1367,6 +1374,50 @@ class Bridge(QObject):
 				GalleryDB.rebuild_gallery(g)
 				self.PROGRESS.emit(n)
 		self.DONE.emit(True)
+
+class DatabaseEmitter(QObject):
+	"""
+	Fetches and emits database records
+	"""
+	GALLERY_EMITTER = pyqtSignal(list)
+	def __init__(self):
+		super().__init__()
+		self._current_data = []
+		self._fetch_count = 100
+		self._offset = 0
+		CommandQueue.put([["SELECT count(*) AS 'size' FROM series"]])
+		cursor = ResultQueue.get()
+		self.count = cursor.fetchone()['size']
+		self._fetching = False
+
+	def can_fetch_more(self):
+		print('can fetch more')
+		if len(self._current_data) < self.count:
+			return True
+		else:
+			return False
+	
+	def fetch_more(self):
+		print('fetching more')
+		def get_records():
+			self._fetching = True
+			remaining = self.count - len(self._current_data)
+			rec_to_fetch = min(remaining, self._fetch_count)
+			CommandQueue.put([["SELECT * FROM series LIMIT {}, {}".format(
+				self._offset, rec_to_fetch)]])
+			self._offset += rec_to_fetch
+			c = ResultQueue.get()
+			new_data = c.fetchall()
+			self._current_data.extend(new_data)
+			gallery_list = GalleryDB.gen_galleries(new_data)
+			self.GALLERY_EMITTER.emit(gallery_list)
+			self._fetching = False
+
+		if not self._fetching:
+			thread = threading.Thread(target=get_records, name='DatabaseEmitter')
+			thread.start()
+
+
 if __name__ == '__main__':
 	#unit testing here
 	date = today()

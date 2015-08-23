@@ -431,7 +431,8 @@ class SortFilterModel(QSortFilterProxyModel):
 		return allow
 
 class GalleryModel(QAbstractTableModel):
-	"""Model for Model/View/Delegate framework
+	"""
+	Model for Model/View/Delegate framework
 	"""
 
 	ROWCOUNT_CHANGE = pyqtSignal()
@@ -441,9 +442,6 @@ class GalleryModel(QAbstractTableModel):
 
 	def __init__(self, parent=None):
 		super().__init__(parent)
-		self._data_count = 0 # number of items added to model
-		#self.populate_data()
-		#self._data_container = []
 		self.dataChanged.connect(lambda: self.status_b_msg("Edited"))
 		self.dataChanged.connect(lambda: self.ROWCOUNT_CHANGE.emit())
 		self.layoutChanged.connect(lambda: self.ROWCOUNT_CHANGE.emit())
@@ -460,17 +458,10 @@ class GalleryModel(QAbstractTableModel):
 		self._DATE_ADDED = gui_constants.DATE_ADDED
 		self._PUB_DATE = gui_constants.PUB_DATE
 
-	def init_data(self):
-		"Populates the model with data from database"
 		self._data = []
-		for gallery in gallerydb.GalleryDB.get_all_gallery():
-			if not gallery.valid:
-				reasons = gallery.invalidities()
-			else:
-				self._data.append(gallery)
-		self._data_count = len(self._data)
-		self.layoutChanged.emit()
-		self.ROWCOUNT_CHANGE.emit()
+		self._data_count = 0 # number of items added to model
+		self.db_emitter = gallerydb.DatabaseEmitter()
+		self.db_emitter.GALLERY_EMITTER.connect(self.insertRows)
 
 	def populate_data(self):
 		"Populates the model with data from database in a timely manner"
@@ -685,9 +676,10 @@ class GalleryModel(QAbstractTableModel):
 		return True
 
 	def insertRows(self, list_of_gallery, position=None,
-				rows=1, index = QModelIndex(), data_count=True):
+				rows=None, index = QModelIndex(), data_count=True):
 		"Inserts new gallery data to the data list WITHOUT adding to DB"
 		position = len(self._data) if not position else position
+		rows = len(list_of_gallery) if not rows else 0
 		self.beginInsertRows(QModelIndex(), position, position + rows - 1)
 		for pos, gallery in enumerate(list_of_gallery, 1):
 			self._data.append(gallery)
@@ -715,22 +707,11 @@ class GalleryModel(QAbstractTableModel):
 		self.ROWCOUNT_CHANGE.emit()
 		return True
 
-	#def canFetchMore(self, index):
-	#	if self._data_count < len(self._data):
-	#		return True
-	#	else: 
-	#		return False
+	def canFetchMore(self, index):
+		return self.db_emitter.can_fetch_more()
 
-	#def fetchMore(self, index):
-	#	print('Fetching more')
-	#	diff = len(self._data) - self._data_count
-	#	item_to_fetch = min(gui_constants.PREFETCH_ITEM_AMOUNT, diff)
-
-	#	self.beginInsertRows(index, self._data_count,
-	#				   self._data_count+item_to_fetch-1)
-	#	self._data_count += item_to_fetch
-	#	self.endInsertRows()
-	#	self.ROWCOUNT_CHANGE.emit()
+	def fetchMore(self, index):
+		self.db_emitter.fetch_more()
 
 class CustomDelegate(QStyledItemDelegate):
 	"A custom delegate for the model/view framework"
@@ -1027,7 +1008,6 @@ class CustomDelegate(QStyledItemDelegate):
 	def sizeHint(self, StyleOptionViewItem, QModelIndex):
 		return QSize(self.W, self.H)
 
-# TODO: Redo this part to avoid duplicated code
 class MangaView(QListView):
 	"""
 	TODO: (zoom-in/zoom-out) mousekeys

@@ -125,7 +125,7 @@ _REFRESH_EXTERNAL_VIEWER = False
 
 # controls
 THUMBNAIL_CACHE_SIZE = (1024, get(200, 'Advanced', 'cache size', int)) #1024 is 1mib
-PREFETCH_ITEM_AMOUNT = get(1, 'Advanced', 'prefetch item amount', int)# amount of items to prefetch
+PREFETCH_ITEM_AMOUNT = get(50, 'Advanced', 'prefetch item amount', int)# amount of items to prefetch
 SCROLL_SPEED = get(7, 'Advanced', 'scroll speed', int) # controls how many steps it takes when scrolling
 
 # POPUP

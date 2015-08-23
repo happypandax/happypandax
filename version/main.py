@@ -12,7 +12,7 @@
 #along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 #"""
 
-import sys, logging, os, argparse, platform, scandir
+import sys, logging, os, argparse, platform, scandir, traceback
 
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QFile
@@ -69,6 +69,13 @@ def start(test=False):
 	log_w = log.warning
 	log_e = log.error
 	log_c = log.critical
+
+	def uncaught_exceptions(ex_type, ex, tb):
+		log_c(''.join(traceback.format_tb(tb)))
+		log_c('{}: {}'.format(ex_type, ex))
+		traceback.print_exception(ex_type, ex, tb)
+
+	sys.excepthook = uncaught_exceptions
 
 	application = QApplication(sys.argv)
 	application.setOrganizationName('Pewpews')

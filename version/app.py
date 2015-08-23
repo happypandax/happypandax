@@ -189,7 +189,6 @@ class AppWindow(QMainWindow):
 		def done(status=True):
 			if gui_constants.FIRST_TIME_LEVEL != 3:
 				normalize_first_time()
-			self.manga_list_view.gallery_model.init_data()
 			if gui_constants.ENABLE_MONITOR and\
 				gui_constants.MONITOR_PATHS and all(gui_constants.MONITOR_PATHS):
 				self.init_watchers()
@@ -416,7 +415,7 @@ class AppWindow(QMainWindow):
 
 	def stat_row_info(self):
 		r = self.manga_list_view.model().rowCount()
-		t = self.manga_list_view.gallery_model._data_count
+		t = self.manga_list_view.gallery_model.db_emitter.count
 		self.stat_info.setText("Loaded {} of {} ".format(r, t))
 
 	def manga_display(self):

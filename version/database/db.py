@@ -15,8 +15,6 @@
 import os, sqlite3, threading, queue
 import logging
 
-from PyQt5.QtSql import QSqlDatabase
-
 from . import db_constants
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -24,12 +22,6 @@ log_d = log.debug
 log_w = log.warning
 log_e = log.error
 log_c = log.critical
-
-def init_db():
-	db = QSqlDatabase.addDatabase('QSQLITE')
-	db.setDatabaseName(db_constants.DB_PATH)
-	log_i('Open database: {}'.format(db.open()))
-	db_constants.DATABASE = db
 
 def hashes_sql(cols=False):
 	sql = """
