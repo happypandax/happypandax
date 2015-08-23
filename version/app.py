@@ -239,7 +239,7 @@ class AppWindow(QMainWindow):
 		log_d('Create manga display: OK')
 		# init the chapter view variables
 		#self.chapter_display()
-		self.m_l_view_index = self.display.addWidget(self.manga_list_main)
+		self.m_l_view_index = self.display.addWidget(self.manga_list_view)
 		self.m_t_view_index = self.display.addWidget(self.manga_table_view)
 		# init toolbar
 		self.init_toolbar()
@@ -421,22 +421,12 @@ class AppWindow(QMainWindow):
 	def manga_display(self):
 		"initiates the manga view"
 		#list view
-		self.manga_list_main = QWidget()
-		#self.manga_list_main.setContentsMargins(-10, -12, -10, -10)
-		self.manga_list_main.setContentsMargins(10, -9, -10, -10) # x, y, inverted_width, inverted_height
-		self.manga_list_layout = QHBoxLayout()
-		self.manga_list_main.setLayout(self.manga_list_layout)
-
 		self.manga_list_view = gallery.MangaView(self)
 		self.manga_list_view.clicked.connect(self.popup)
 		self.manga_list_view.manga_delegate.POPUP.connect(self.popup)
 		self.popup_window = self.manga_list_view.manga_delegate.popup_window
-		self.manga_list_layout.addWidget(self.manga_list_view)
 
 		#table view
-		self.manga_table_main = QWidget()
-		self.manga_table_layout = QVBoxLayout()
-		self.manga_table_main.setLayout(self.manga_table_layout)
 
 		self.manga_table_view = gallery.MangaTableView(self)
 		self.manga_table_view.gallery_model = self.manga_list_view.gallery_model
@@ -451,7 +441,6 @@ class AppWindow(QMainWindow):
 		self.manga_table_view.setColumnWidth(gui_constants.CHAPTERS, 60)
 		self.manga_table_view.setColumnWidth(gui_constants.LANGUAGE, 100)
 		self.manga_table_view.setColumnWidth(gui_constants.LINK, 400)
-		self.manga_table_layout.addWidget(self.manga_table_view)
 
 
 	def search(self, srch_string):

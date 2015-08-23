@@ -809,25 +809,33 @@ class CustomDelegate(QStyledItemDelegate):
 			#<font color="black">{}</font>
 			#""".format("chapter"))
 			#chapter_area.setTextWidth(w)
-
+			def center_img(width):
+				new_x = x
+				if width < w:
+					diff = w - width
+					offset = diff//2
+					new_x += offset
+				return new_x
 			# if we can't find a cached image
 			pix_cache = QPixmapCache.find(self.key(gallery.profile))
 			if isinstance(pix_cache, QPixmap):
 				self.image = pix_cache
+				img_x = center_img(self.image.width())
 				if self.image.height() < self.image.width(): #to keep aspect ratio
-					painter.drawPixmap(QPoint(x,y),
+					painter.drawPixmap(QPoint(img_x,y),
 							self.image)
 				else:
-					painter.drawPixmap(QPoint(x,y),
+					painter.drawPixmap(QPoint(img_x,y),
 							self.image)
 			else:
 				self.image = QPixmap(gallery.profile)
+				img_x = center_img(self.image.width())
 				QPixmapCache.insert(self.key(gallery.profile), self.image)
 				if self.image.height() < self.image.width(): #to keep aspect ratio
-					painter.drawPixmap(QPoint(x,y),
+					painter.drawPixmap(QPoint(img_x,y),
 							self.image)
 				else:
-					painter.drawPixmap(QPoint(x,y),
+					painter.drawPixmap(QPoint(img_x,y),
 							self.image)
 
 			# draw star if it's favorited
@@ -858,6 +866,7 @@ class CustomDelegate(QStyledItemDelegate):
 				rect = QRect(0, 0, w, lbl_h) #x, y, width, height
 				painter.fillRect(rect, box_color)
 				painter.restore()
+				return rect
 
 			if option.state & QStyle.State_MouseOver or\
 			    option.state & QStyle.State_Selected:
@@ -867,9 +876,9 @@ class CustomDelegate(QStyledItemDelegate):
 				a_h = artist_layout.boundingRect().height()
 
 				if gui_constants.GALLERY_FONT_ELIDE:
-					draw_text_label(min(t_h+a_h+3, gui_constants.GRIDBOX_LBL_H))
+					lbl_rect = draw_text_label(min(t_h+a_h+3, gui_constants.GRIDBOX_LBL_H))
 				else:
-					draw_text_label(gui_constants.GRIDBOX_LBL_H)
+					lbl_rect = draw_text_label(gui_constants.GRIDBOX_LBL_H)
 
 				clipping = QRectF(x, y+gui_constants.THUMB_H_SIZE, w, gui_constants.GRIDBOX_LBL_H - 10)
 				title_layout.draw(painter, QPointF(x, y+gui_constants.THUMB_H_SIZE),
@@ -879,9 +888,9 @@ class CustomDelegate(QStyledItemDelegate):
 				#painter.fillRect(option.rect, QColor)
 			else:
 				if gui_constants.GALLERY_FONT_ELIDE:
-					draw_text_label(self.text_label_h)
+					lbl_rect = draw_text_label(self.text_label_h)
 				else:
-					draw_text_label(gui_constants.GRIDBOX_LBL_H)
+					lbl_rect = draw_text_label(gui_constants.GRIDBOX_LBL_H)
 				# draw text
 				painter.save()
 				alignment = QTextOption(Qt.AlignCenter)
@@ -911,7 +920,8 @@ class CustomDelegate(QStyledItemDelegate):
 				self.popup_window.hide()
 
 			if option.state & QStyle.State_Selected:
-				painter.fillRect(option.rect, QColor(164,164,164,120))
+				painter.fillRect(QRect(x, y, w, lbl_rect.height()+gui_constants.THUMB_H_SIZE),
+					 QColor(164,164,164,120))
 
 			#if option.state & QStyle.State_Selected:
 			#	painter.setPen(QPen(option.palette.highlightedText().color()))
