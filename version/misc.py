@@ -63,7 +63,7 @@ class TransparentWidget(QWidget):
 			except AttributeError:
 				pass
 
-	def update_move(self, new_size):
+	def update_move(self, new_size=None):
 		if new_size:
 			self.move(new_size)
 			return
@@ -75,8 +75,12 @@ class Spinner(TransparentWidget):
 	"""
 	Loading spinning overlay widget
 	"""
+	activated = pyqtSignal()
+	deactivated = pyqtSignal()
+	about_to_show, about_to_hide = range(2)
 	def __init__(self, **kwargs):
 		super().__init__(flags=Qt.Window|Qt.FramelessWindowHint, **kwargs)
+		self.setAttribute(Qt.WA_ShowWithoutActivating)
 		self._movie = QMovie(gui_constants.SPINNER_PATH)
 		layout = QVBoxLayout(self)
 		self.gif = QLabel()
@@ -84,10 +88,39 @@ class Spinner(TransparentWidget):
 		self._lbl = QLabel('Please wait...')
 		layout.addWidget(self.gif)
 		layout.addWidget(self._lbl)
+		self.state_timer = QTimer()
+		self.current_state = self.about_to_show
+		self.state_timer.timeout.connect(super().hide)
+		self.state_timer.setSingleShot(True)
 		self._movie.start()
-	
 	def set_text(self, txt):
 		self._lbl.setText(txt)
+
+	def show_text(self, b):
+		if b:
+			self._lbl.show()
+		else:
+			self._lbl.hide()
+
+	def set_size(self, w, h):
+		self._movie.setScaledSize(QSize(w, h))
+		self.gif.resize(w, h)
+		self.resize(w,h)
+
+	def hide(self):
+		if self.current_state == self.about_to_hide:
+			return
+		self.current_state = self.about_to_hide
+		self.state_timer.start(5000)
+
+	def hideEvent(self, event):
+		self.deactivated.emit()
+
+	def showEvent(self, event):
+		self.current_state = self.about_to_show
+		self.state_timer.stop()
+		self.activated.emit()
+		return super().showEvent(event)
 
 
 class GalleryMenu(QMenu):

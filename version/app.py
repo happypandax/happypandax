@@ -444,7 +444,11 @@ class AppWindow(QMainWindow):
 
 		# fetching widget
 		self.spinner = misc.Spinner(parent=self)
-		self.move_listener.connect(lambda: self.spinner.update_move())
+		self.spinner.set_size(35,35)
+		self.spinner.show_text(False)
+		self.move_listener.connect(
+			lambda: self.spinner.update_move(
+				QPoint(self.pos().x()+self.width()-70, self.pos().y()+self.height()-70)))
 		self.manga_list_view.gallery_model.ADD_MORE.connect(self.spinner.show)
 		self.manga_list_view.gallery_model.db_emitter.START.connect(self.spinner.show)
 		self.manga_list_view.gallery_model.ADDED_ROWS.connect(self.spinner.hide)
@@ -851,6 +855,7 @@ class AppWindow(QMainWindow):
 			self.notification_bar.resize(event.size().width())
 		except AttributeError:
 			pass
+		self.move_listener.emit()
 		return super().resizeEvent(event)
 
 	def moveEvent(self, event):

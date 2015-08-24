@@ -25,7 +25,7 @@ from PyQt5.QtGui import (QPixmap, QBrush, QColor, QPainter,
 						 QMouseEvent, QHelpEvent,
 						 QPixmapCache, QCursor, QPalette, QKeyEvent,
 						 QFont, QTextOption, QFontMetrics, QFontMetricsF,
-						 QTextLayout)
+						 QTextLayout, QPainterPath)
 from PyQt5.QtWidgets import (QListView, QFrame, QLabel,
 							 QStyledItemDelegate, QStyle,
 							 QMenu, QAction, QToolTip, QVBoxLayout,
@@ -465,14 +465,12 @@ class GalleryModel(QAbstractTableModel):
 		self.db_emitter = gallerydb.DatabaseEmitter()
 		self.db_emitter.GALLERY_EMITTER.connect(self.insertRows)
 
-	def populate_data(self):
-		"Populates the model with data from database in a timely manner"
-		self._data = []
+	def populate_data(self, galleries):
+		"Populates the model in a timely manner"
 		t = 0
-		galleries = gallerydb.GalleryDB.get_all_gallery()
-		self._data_count = len(galleries)
+		self._data_count += len(galleries)
 		for pos, gallery in enumerate(galleries):
-			t += 80
+			t += 100
 			if not gallery.valid:
 				reasons = gallery.invalidities()
 			else:
@@ -977,11 +975,16 @@ class CustomDelegate(QStyledItemDelegate):
 
 			if option.state & QStyle.State_Selected:
 				painter.save()
-				selected_rect = QRect(x, y, w, lbl_rect.height()+gui_constants.THUMB_H_SIZE)
+				selected_rect = QRectF(x, y, w, lbl_rect.height()+gui_constants.THUMB_H_SIZE)
 				painter.setPen(Qt.NoPen)
 				painter.setBrush(QBrush(QColor(164,164,164,120)))
-				painter.drawRoundedRect(selected_rect, 5,5)
-				painter.fillRect(selected_rect, QColor(164,164,164,120))
+				p_path = QPainterPath()
+				p_path.setFillRule(Qt.WindingFill)
+				p_path.addRoundedRect(selected_rect, 5,5)
+				p_path.addRect(x,y, 20, 20)
+				p_path.addRect(x+w-20,y, 20, 20)
+				painter.drawPath(p_path.simplified())
+				#painter.fillRect(selected_rect, QColor(164,164,164,120))
 				painter.restore()
 
 			#if option.state & QStyle.State_Selected:
