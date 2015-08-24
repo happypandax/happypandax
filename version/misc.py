@@ -1,4 +1,4 @@
-#"""
+﻿#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@ from PyQt5.QtCore import (Qt, QDate, QPoint, pyqtSignal, QThread,
 						  QMargins)
 from PyQt5.QtGui import (QTextCursor, QIcon, QMouseEvent, QFont,
 						 QPixmapCache, QPalette, QPainter, QBrush,
-						 QColor, QPen, QPixmap)
+						 QColor, QPen, QPixmap, QMovie)
 from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QVBoxLayout, QHBoxLayout,
 							 QDialog, QGridLayout, QLineEdit,
@@ -50,6 +50,31 @@ log_d = log.debug
 log_w = log.warning
 log_e = log.error
 log_c = log.critical
+
+class TransparentWidget(QWidget):
+	def __init__(self, **kwargs):
+		super().__init__(**kwargs)
+		self.setAttribute(Qt.WA_TranslucentBackground)
+		self.setAttribute(Qt.WA_DeleteOnClose)
+
+class Spinner(TransparentWidget):
+	"""
+	Loading spinning overlay widget
+	"""
+	def __init__(self, **kwargs):
+		super().__init__(flags=Qt.Window|Qt.FramelessWindowHint, **kwargs)
+		self._movie = QMovie()
+		layout = QVBoxLayout(self)
+		self.gif = QLabel()
+		self.gif.setMovie(self._movie)
+		self._lbl = QLabel('Please wait...')
+		layout.addWidget(self.gif)
+		layout.addWidget(self._lbl)
+		self._movie.start()
+	
+	def set_text(self, txt):
+		self._lbl.setText(txt)
+
 
 class GalleryMenu(QMenu):
 	def __init__(self, view, index, gallery_model, app_window, selected_indexes=None):
@@ -259,7 +284,7 @@ class ClickedLabel(QLabel):
 		self.clicked.emit()
 		return super().mousePressEvent(event)
 
-class BasePopup(QWidget):
+class BasePopup(TransparentWidget):
 	graphics_blur = QGraphicsBlurEffect()
 	def __init__(self, parent=None, **kwargs):
 		if kwargs:
