@@ -438,6 +438,8 @@ class GalleryModel(QAbstractTableModel):
 	ROWCOUNT_CHANGE = pyqtSignal()
 	STATUSBAR_MSG = pyqtSignal(str)
 	CUSTOM_STATUS_MSG = pyqtSignal(str)
+	ADDED_ROWS = pyqtSignal()
+	ADD_MORE = pyqtSignal()
 	_data = []
 
 	def __init__(self, parent=None):
@@ -658,6 +660,7 @@ class GalleryModel(QAbstractTableModel):
 	def addRows(self, list_of_gallery, position=None,
 				rows=1, index = QModelIndex()):
 		"Adds new gallery data to model and to DB"
+		self.ADD_MORE.emit()
 		log_d('Adding {} rows'.format(rows))
 		if not position:
 			log_d('Add rows: No position specified')
@@ -673,11 +676,13 @@ class GalleryModel(QAbstractTableModel):
 		self.endInsertRows()
 		self.CUSTOM_STATUS_MSG.emit("Added item(s)")
 		self.ROWCOUNT_CHANGE.emit()
+		self.ADDED_ROWS.emit()
 		return True
 
 	def insertRows(self, list_of_gallery, position=None,
 				rows=None, index = QModelIndex(), data_count=True):
 		"Inserts new gallery data to the data list WITHOUT adding to DB"
+		self.ADD_MORE.emit()
 		position = len(self._data) if not position else position
 		rows = len(list_of_gallery) if not rows else 0
 		self.beginInsertRows(QModelIndex(), position, position + rows - 1)
@@ -689,6 +694,7 @@ class GalleryModel(QAbstractTableModel):
 		if data_count:
 			self.CUSTOM_STATUS_MSG.emit("Added item(s)")
 		self.ROWCOUNT_CHANGE.emit()
+		self.ADDED_ROWS.emit()
 		return True
 
 	def replaceRows(self, list_of_gallery, position, rows=1, index=QModelIndex()):

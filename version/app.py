@@ -14,7 +14,7 @@
 
 import sys, logging, os, threading, re, requests, scandir
 from PyQt5.QtCore import (Qt, QSize, pyqtSignal, QThread, QEvent, QTimer,
-						  QObject)
+						  QObject, QPoint)
 from PyQt5.QtGui import (QPixmap, QIcon, QMoveEvent, QCursor)
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QListView,
 							 QHBoxLayout, QFrame, QWidget, QVBoxLayout,
@@ -419,7 +419,7 @@ class AppWindow(QMainWindow):
 		self.stat_info.setText("Loaded {} of {} ".format(r, t))
 
 	def manga_display(self):
-		"initiates the manga view"
+		"initiates the manga view and related things"
 		#list view
 		self.manga_list_view = gallery.MangaView(self)
 		self.manga_list_view.clicked.connect(self.popup)
@@ -441,6 +441,13 @@ class AppWindow(QMainWindow):
 		self.manga_table_view.setColumnWidth(gui_constants.CHAPTERS, 60)
 		self.manga_table_view.setColumnWidth(gui_constants.LANGUAGE, 100)
 		self.manga_table_view.setColumnWidth(gui_constants.LINK, 400)
+
+		# fetching widget
+		self.spinner = misc.Spinner(parent=self)
+		self.move_listener.connect(lambda: self.spinner.update_move())
+		self.manga_list_view.gallery_model.ADD_MORE.connect(self.spinner.show)
+		self.manga_list_view.gallery_model.db_emitter.START.connect(self.spinner.show)
+		self.manga_list_view.gallery_model.ADDED_ROWS.connect(self.spinner.hide)
 
 
 	def search(self, srch_string):

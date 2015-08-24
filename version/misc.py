@@ -52,10 +52,24 @@ log_e = log.error
 log_c = log.critical
 
 class TransparentWidget(QWidget):
-	def __init__(self, **kwargs):
-		super().__init__(**kwargs)
+	def __init__(self, parent=None, **kwargs):
+		super().__init__(parent, **kwargs)
+		self.parent_widget = parent
 		self.setAttribute(Qt.WA_TranslucentBackground)
 		self.setAttribute(Qt.WA_DeleteOnClose)
+		if parent and kwargs.pop('move_listener', True):
+			try:
+				parent.move_listener.connect(self.update_move)
+			except AttributeError:
+				pass
+
+	def update_move(self, new_size):
+		if new_size:
+			self.move(new_size)
+			return
+		if self.parent_widget:
+			self.move(self.parent_widget.window().frameGeometry().center() -\
+				self.window().rect().center())
 
 class Spinner(TransparentWidget):
 	"""
@@ -63,7 +77,7 @@ class Spinner(TransparentWidget):
 	"""
 	def __init__(self, **kwargs):
 		super().__init__(flags=Qt.Window|Qt.FramelessWindowHint, **kwargs)
-		self._movie = QMovie()
+		self._movie = QMovie(gui_constants.SPINNER_PATH)
 		layout = QVBoxLayout(self)
 		self.gif = QLabel()
 		self.gif.setMovie(self._movie)
@@ -291,9 +305,6 @@ class BasePopup(TransparentWidget):
 			super().__init__(parent, **kwargs)
 		else:
 			super().__init__(parent, flags= Qt.Window | Qt.FramelessWindowHint)
-		self.parent_widget = parent
-		self.setAttribute(Qt.WA_TranslucentBackground)
-		self.setAttribute(Qt.WA_DeleteOnClose)
 		main_layout = QVBoxLayout()
 		self.main_widget = QFrame()
 		self.setLayout(main_layout)
@@ -311,10 +322,6 @@ class BasePopup(TransparentWidget):
 		self.curr_pos = QPoint()
 		if parent:
 			parent.setGraphicsEffect(self.graphics_blur)
-			try:
-				parent.move_listener.connect(self.update_move)
-			except AttributeError:
-				pass
 
 	def mousePressEvent(self, event):
 		self.curr_pos = event.pos()
@@ -326,11 +333,6 @@ class BasePopup(TransparentWidget):
 			newpos = self.pos()+diff
 			self.move(newpos)
 		return super().mouseMoveEvent(event)
-
-	def update_move(self):
-		if self.parent_widget:
-			self.move(self.parent_widget.window().frameGeometry().center() -\
-				self.window().rect().center())
 
 	def showEvent(self, event):
 		self.activateWindow()

@@ -1378,8 +1378,12 @@ class Bridge(QObject):
 class DatabaseEmitter(QObject):
 	"""
 	Fetches and emits database records
+	START: emitted when fetching from DB occurs
+	DONE: emitted when fetching from DB finishes
 	"""
 	GALLERY_EMITTER = pyqtSignal(list)
+	START = pyqtSignal()
+	DONE = pyqtSignal()
 	def __init__(self):
 		super().__init__()
 		self._current_data = []
@@ -1391,14 +1395,13 @@ class DatabaseEmitter(QObject):
 		self._fetching = False
 
 	def can_fetch_more(self):
-		print('can fetch more')
 		if len(self._current_data) < self.count:
 			return True
 		else:
 			return False
 	
 	def fetch_more(self):
-		print('fetching more')
+		self.START.emit()
 		def get_records():
 			self._fetching = True
 			remaining = self.count - len(self._current_data)
@@ -1412,6 +1415,7 @@ class DatabaseEmitter(QObject):
 			gallery_list = GalleryDB.gen_galleries(new_data)
 			self.GALLERY_EMITTER.emit(gallery_list)
 			self._fetching = False
+			self.DONE.emit()
 
 		if not self._fetching:
 			thread = threading.Thread(target=get_records, name='DatabaseEmitter')
