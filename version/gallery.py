@@ -194,7 +194,7 @@ class SortFilterModel(QSortFilterProxyModel):
 			self.filter_funcs.pop(name)
 			self.invalidateFilter()
 
-	def filterAcceptsRow(self, source_row, parent_index):
+	def filterAcceptsRow2(self, source_row, parent_index):
 		model = self.sourceModel()
 		funcs = []
 		validity = []
@@ -334,7 +334,7 @@ class SortFilterModel(QSortFilterProxyModel):
 		self.invalidateFilter()
 		self.ROWCOUNT_CHANGE.emit()
 
-	def filterAcceptsRow2(self, source_row, index_parent):
+	def filterAcceptsRow(self, source_row, index_parent):
 		allow = False
 		gallery = None
 
@@ -615,7 +615,11 @@ class GalleryModel(QAbstractTableModel):
 		return None
 
 	def rowCount(self, index = QModelIndex()):
-		return self._data_count
+		if not index.isValid():
+			print(self._data_count)
+			return self._data_count
+		else:
+			return 0
 
 	def columnCount(self, parent = QModelIndex()):
 		return len(gui_constants.COLUMNS)
@@ -691,7 +695,6 @@ class GalleryModel(QAbstractTableModel):
 			if data_count:
 				self._data_count += 1
 		self.endInsertRows()
-		print(self.rowCount())
 		gallerydb.add_method_queue(self.db_emitter.update_count, True)
 		if data_count:
 			self.CUSTOM_STATUS_MSG.emit("Added item(s)")
@@ -1044,8 +1047,6 @@ class MangaView(QListView):
 						 gui_constants.THUMB_H_SIZE))
 		# all items have the same size (perfomance)
 		self.setUniformItemSizes(True)
-		self.setSelectionBehavior(self.SelectItems)
-		self.setSelectionMode(self.ExtendedSelection)
 		# improve scrolling
 		self.setVerticalScrollMode(self.ScrollPerPixel)
 		self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -1059,6 +1060,8 @@ class MangaView(QListView):
 		self.sort_model.setSortCaseSensitivity(Qt.CaseInsensitive)
 		self.manga_delegate = CustomDelegate(parent)
 		self.setItemDelegate(self.manga_delegate)
+		self.setSelectionBehavior(self.SelectItems)
+		self.setSelectionMode(self.ExtendedSelection)
 		self.gallery_model = GalleryModel(parent)
 		self.sort_model.change_model(self.gallery_model)
 		self.sort_model.sort(0)
