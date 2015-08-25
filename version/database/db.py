@@ -1,4 +1,4 @@
-﻿#"""
+#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -327,12 +327,12 @@ def init_db(test=False):
 		c.execute(hashes_sql())
 
 	if test:
-		db_test_path = os.path.join(os.path.split(db_constants.DB_PATH)[0],'database_test.db')
+		db_test_path = os.path.join(os.path.split(db_constants.DB_PATH)[0],'sadpanda_test.db')
 		if os.path.isfile(db_test_path):
 			conn = sqlite3.connect(db_test_path, check_same_thread=False)
 			conn.row_factory = sqlite3.Row
 		else:
-			create_db_path('database_test.db')
+			create_db_path('sadpanda_test.db')
 			conn = sqlite3.connect(db_test_path, check_same_thread=False)
 			conn.row_factory = sqlite3.Row
 			c = conn.cursor()
