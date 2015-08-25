@@ -1,4 +1,4 @@
-#"""
+﻿#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -12,7 +12,7 @@
 #along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 #"""
 
-import datetime, os, scandir, threading, logging, queue, uuid, time # for unique filename
+import datetime, os, scandir, threading, logging, queue, uuid # for unique filename
 
 from PyQt5.QtCore import Qt, QObject, pyqtSignal
 from PyQt5.QtGui import QImage
@@ -1387,55 +1387,39 @@ class DatabaseEmitter(QObject):
 	def __init__(self):
 		super().__init__()
 		self._current_data = []
-		self._fresh_data = []
-		self._fresh_data_lock = False
 		self._fetch_count = 100
 		self._offset = 0
 		CommandQueue.put([["SELECT count(*) AS 'size' FROM series"]])
 		cursor = ResultQueue.get()
 		self.count = cursor.fetchone()['size']
 		self._fetching = False
-		self.start()
 
 	def can_fetch_more(self):
-		if len(self._current_data) < self.count and self._fresh_data:
+		if len(self._current_data) < self.count:
 			return True
 		else:
 			return False
-
-	def start(self):
+	
+	def fetch_more(self):
 		self.START.emit()
 		def get_records():
 			self._fetching = True
 			remaining = self.count - len(self._current_data)
-			while remaining > 0:
-				print(len(self._current_data))
-				rec_to_fetch = min(remaining, self._fetch_count)
-				CommandQueue.put([["SELECT * FROM series LIMIT {}, {}".format(
-					self._offset, rec_to_fetch)]])
-				self._offset += rec_to_fetch
-				c = ResultQueue.get()
-				new_data = c.fetchall()
-				self._current_data.extend(new_data)
-				gallery_list = GalleryDB.gen_galleries(new_data)
-				while self._fresh_data_lock:
-					time.sleep(0.05)
-				self._fresh_data.extend(gallery_list)
-				remaining = self.count - len(self._current_data)
+			rec_to_fetch = min(remaining, self._fetch_count)
+			CommandQueue.put([["SELECT * FROM series LIMIT {}, {}".format(
+				self._offset, rec_to_fetch)]])
+			self._offset += rec_to_fetch
+			c = ResultQueue.get()
+			new_data = c.fetchall()
+			self._current_data.extend(new_data)
+			gallery_list = GalleryDB.gen_galleries(new_data)
+			self.GALLERY_EMITTER.emit(gallery_list)
 			self._fetching = False
 			self.DONE.emit()
 
 		if not self._fetching:
 			thread = threading.Thread(target=get_records, name='DatabaseEmitter')
 			thread.start()
-	
-	def fetch_more(self):
-		print('fetching more')
-		self._fresh_data_lock = True
-		data_to_fetch = min(self._fetch_count, len(self._fresh_data))
-		self.GALLERY_EMITTER.emit(self._fresh_data[:data_to_fetch])
-		del self._fresh_data[data_to_fetch:]
-		self._fresh_data_lock = False
 
 
 if __name__ == '__main__':
