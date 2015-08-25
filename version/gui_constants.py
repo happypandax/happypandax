@@ -89,6 +89,7 @@ LOOK_NEW_GALLERY_AUTOADD = get(False, 'Application', 'look new gallery autoadd',
 ENABLE_MONITOR = get(True, 'Application', 'enable monitor', bool)
 MONITOR_PATHS = [x for x in get('', 'Application', 'monitor paths', str).split(',') if x]
 IGNORE_PATHS = [x for x in get('', 'Application', 'ignore paths', str).split(',') if x]
+LOOKED_NEW_GALLERY_STARTUP = False # if a scan for new galleries has been done
 
 # GENERAL
 OVERRIDE_MOVE_IMPORTED_IN_FETCH = False # set to true to make a fetch instance ignore moving files (will be set to false)
@@ -166,6 +167,8 @@ TOOLTIP_LAST_READ = get(True, 'Visual', 'tooltip last read', bool)
 TOOLTIP_TIMES_READ = get(True, 'Visual', 'tooltip times read', bool)
 TOOLTIP_PUB_DATE = get(False, 'Visual', 'tooltip pub date', bool)
 TOOLTIP_DATE_ADDED = get(True, 'Visual', 'tooltip date added', bool)
+
+GALLERY_DATA = [] # contains the most up to date gallery data
 
 EXHEN_COOKIE_TUTORIAL =\
 	"""

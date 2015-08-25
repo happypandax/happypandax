@@ -52,6 +52,7 @@ class Popup(QWidget):
 	def __init__(self, parent=None):
 		super().__init__(parent, Qt.Window | Qt.FramelessWindowHint)
 		self.setAttribute(Qt.WA_ShowWithoutActivating)
+		self.setAttribute(Qt.WA_DeleteOnClose)
 		self.initUI()
 		#self.resize(gui_constants.POPUP_WIDTH,gui_constants.POPUP_HEIGHT)
 		self.setFixedWidth(gui_constants.POPUP_WIDTH)
@@ -148,7 +149,7 @@ class SortFilterModel(QSortFilterProxyModel):
 	ROWCOUNT_CHANGE = pyqtSignal()
 	def __init__(self, parent=None):
 		super().__init__(parent)
-		self._data = []
+		self._data = gui_constants.GALLERY_DATA
 
 		# filtering
 		self.fav = False
@@ -440,7 +441,7 @@ class GalleryModel(QAbstractTableModel):
 	CUSTOM_STATUS_MSG = pyqtSignal(str)
 	ADDED_ROWS = pyqtSignal()
 	ADD_MORE = pyqtSignal()
-	_data = []
+	_data = gui_constants.GALLERY_DATA
 
 	def __init__(self, parent=None):
 		super().__init__(parent)
@@ -460,7 +461,6 @@ class GalleryModel(QAbstractTableModel):
 		self._DATE_ADDED = gui_constants.DATE_ADDED
 		self._PUB_DATE = gui_constants.PUB_DATE
 
-		self._data = []
 		self._data_count = 0 # number of items added to model
 		self.db_emitter = gallerydb.DatabaseEmitter()
 		self.db_emitter.GALLERY_EMITTER.connect(self.insertRows)
@@ -615,7 +615,7 @@ class GalleryModel(QAbstractTableModel):
 		return None
 
 	def rowCount(self, index = QModelIndex()):
-		return len(self._data)
+		return self._data_count
 
 	def columnCount(self, parent = QModelIndex()):
 		return len(gui_constants.COLUMNS)
@@ -672,6 +672,7 @@ class GalleryModel(QAbstractTableModel):
 			self._data_count += 1
 		log_d('Add rows: Finished inserting')
 		self.endInsertRows()
+		gallerydb.add_method_queue(self.db_emitter.update_count, True)
 		self.CUSTOM_STATUS_MSG.emit("Added item(s)")
 		self.ROWCOUNT_CHANGE.emit()
 		self.ADDED_ROWS.emit()
@@ -685,10 +686,13 @@ class GalleryModel(QAbstractTableModel):
 		rows = len(list_of_gallery) if not rows else 0
 		self.beginInsertRows(QModelIndex(), position, position + rows - 1)
 		for pos, gallery in enumerate(list_of_gallery, 1):
+			print('adding to model')
 			self._data.append(gallery)
 			if data_count:
 				self._data_count += 1
 		self.endInsertRows()
+		print(self.rowCount())
+		gallerydb.add_method_queue(self.db_emitter.update_count, True)
 		if data_count:
 			self.CUSTOM_STATUS_MSG.emit("Added item(s)")
 		self.ROWCOUNT_CHANGE.emit()
@@ -705,9 +709,12 @@ class GalleryModel(QAbstractTableModel):
 	def removeRows(self, position, rows=1, index=QModelIndex()):
 		"Deletes gallery data from the model data list. OBS: doesn't touch DB!"
 		self.beginRemoveRows(QModelIndex(), position, position + rows - 1)
-		self._data = self._data[:position] + self._data[position + rows:]
+		new_data = self._data[:position] + self._data[position + rows:]
+		self._data.clear()
+		self._data.extend(new_data)
 		self._data_count -= rows
 		self.endRemoveRows()
+		gallerydb.add_method_queue(self.db_emitter.update_count, True)
 		self.ROWCOUNT_CHANGE.emit()
 		return True
 
@@ -1178,7 +1185,7 @@ class MangaView(QListView):
 		notifbar = self.parent_widget.notification_bar
 		notifbar.add_text('Checking for duplicates...')
 		if simple:
-			galleries = self.gallery_model._data
+			galleries = self.gallery_model._data.copy()
 			duplicates = []
 			for g in galleries:
 				notifbar.add_text('Checking gallery {}'.format(g.id))
@@ -1266,7 +1273,8 @@ class MangaView(QListView):
 		index = self.sort_model.mapToSource(index)
 
 		selected = False
-		select_indexes = self.selectedIndexes()
+		select_indexes = self.sort_model.mapSelectionToSource(self.selectionModel().selection())
+		select_indexes = select_indexes.indexes()
 		if len(select_indexes) > 1:
 			selected = True
 
@@ -1464,7 +1472,8 @@ class MangaTableView(QTableView):
 		index = self.sort_model.mapToSource(index)
 
 		selected = False
-		select_indexes = self.selectedIndexes()
+		select_indexes = self.sort_model.mapSelectionToSource(self.selectionModel().selection())
+		select_indexes = select_indexes.indexes()
 		if len(select_indexes) > len(gui_constants.COLUMNS):
 			selected = True
 
