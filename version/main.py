@@ -31,8 +31,10 @@ def start(test=False):
 					 help='happypanda_debug_log.log will be created in main directory')
 	parser.add_argument('-t', '--test', action='store_true',
 					 help='Run happypanda in test mode. 5000 gallery will be preadded in DB.')
-	parser.add_argument('-v', '--version', action='version',
+	parser.add_argument('-v', '--versi on', action='version',
 					 version='Happypanda v{}'.format(gui_constants.vs))
+	parser.add_argument('-e', '--exceptions', action='store_true',
+					 help='Disable custom excepthook')
 
 	args = parser.parse_args()
 	if args.debug:
@@ -70,12 +72,13 @@ def start(test=False):
 	log_e = log.error
 	log_c = log.critical
 
-	def uncaught_exceptions(ex_type, ex, tb):
-		log_c(''.join(traceback.format_tb(tb)))
-		log_c('{}: {}'.format(ex_type, ex))
-		traceback.print_exception(ex_type, ex, tb)
+	if not args.exceptions:
+		def uncaught_exceptions(ex_type, ex, tb):
+			log_c(''.join(traceback.format_tb(tb)))
+			log_c('{}: {}'.format(ex_type, ex))
+			traceback.print_exception(ex_type, ex, tb)
 
-	sys.excepthook = uncaught_exceptions
+		sys.excepthook = uncaught_exceptions
 
 	application = QApplication(sys.argv)
 	application.setOrganizationName('Pewpews')

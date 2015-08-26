@@ -66,10 +66,10 @@ class Fetch(QObject):
 		self.galleries_in_queue = []
 		self.error_galleries = []
 
-		self.galleries_from_db = GalleryDB.get_all_gallery()
+		gallery_data = gui_constants.GALLERY_DATA
 		# filter
 		filter_list = []
-		for g in self.galleries_from_db:
+		for g in gallery_data:
 			filter_list.append(os.path.normcase(g.path))
 		self.galleries_from_db = sorted(filter_list)
 
