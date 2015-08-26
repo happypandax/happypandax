@@ -14,7 +14,7 @@
 
 import sys, logging, os, threading, re, requests, scandir
 from PyQt5.QtCore import (Qt, QSize, pyqtSignal, QThread, QEvent, QTimer,
-						  QObject)
+						  QObject, QPoint)
 from PyQt5.QtGui import (QPixmap, QIcon, QMoveEvent, QCursor)
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QListView,
 							 QHBoxLayout, QFrame, QWidget, QVBoxLayout,
@@ -52,7 +52,8 @@ class AppWindow(QMainWindow):
 		self.setAcceptDrops(True)
 		self.initUI()
 		self.start_up()
-		QTimer.singleShot(3000, self._check_update)
+		if not gui_constants.DEBUG:
+			QTimer.singleShot(3000, self._check_update)
 		self.setFocusPolicy(Qt.NoFocus)
 
 	def init_watchers(self):
@@ -93,94 +94,103 @@ class AppWindow(QMainWindow):
 		self.watchers.gallery_handler.MOVED_SIGNAL.connect(moved)
 		self.watchers.gallery_handler.DELETED_SIGNAL.connect(deleted)
 
-		if gui_constants.LOOK_NEW_GALLERY_STARTUP:
-			self.notification_bar.add_text("Looking for new galleries...")
-			try:
-				class ScanDir(QObject):
-					final_paths_and_galleries = pyqtSignal(list, list)
-					finished = pyqtSignal()
-					def __init__(self, parent=None):
-						super().__init__(parent)
-						self.scanned_data = []
-					def scan_dirs(self):
-						paths = []
-						for p in gui_constants.MONITOR_PATHS:
-							dir_content = scandir.scandir(p)
-							for d in dir_content:
-								paths.append(d.path)
+		print('hey!')
+		def scan_for_new_galleries():
+			print('scanning')
+			if gui_constants.LOOK_NEW_GALLERY_STARTUP and not gui_constants.LOOKED_NEW_GALLERY_STARTUP:
+				print('accepted')
+				gui_constants.LOOKED_NEW_GALLERY_STARTUP = True
+				self.notification_bar.add_text("Looking for new galleries...")
+				try:
+					class ScanDir(QObject):
+						final_paths_and_galleries = pyqtSignal(list, list)
+						finished = pyqtSignal()
+						def __init__(self, parent=None):
+							super().__init__(parent)
+							self.scanned_data = []
+						def scan_dirs(self):
+							paths = []
+							for p in gui_constants.MONITOR_PATHS:
+								dir_content = scandir.scandir(p)
+								for d in dir_content:
+									paths.append(d.path)
 
-						fetch_inst = fetch.Fetch(self)
-						fetch_inst.series_path = paths
-						def set_scanned_d(d):
-							self.scanned_data = d
-						fetch_inst.FINISHED.connect(set_scanned_d)
-						fetch_inst.local()
-						#contents = []
-						#for g in self.scanned_data:
-						#	contents.append(g)
+							fetch_inst = fetch.Fetch(self)
+							fetch_inst.series_path = paths
+							def set_scanned_d(d):
+								self.scanned_data = d
+							fetch_inst.FINISHED.connect(set_scanned_d)
+							fetch_inst.local()
+							#contents = []
+							#for g in self.scanned_data:
+							#	contents.append(g)
 
-						#paths = sorted(paths)
-						#new_galleries = []
-						#for x in contents:
-						#	y = utils.b_search(paths, os.path.normcase(x.path))
-						#	if not y:
-						#		new_galleries.append(x)
+							#paths = sorted(paths)
+							#new_galleries = []
+							#for x in contents:
+							#	y = utils.b_search(paths, os.path.normcase(x.path))
+							#	if not y:
+							#		new_galleries.append(x)
 
-						galleries = []
-						final_paths = []
-						if self.scanned_data:
-							for g in self.scanned_data:
-								try:
-									if g.is_archive:
-										g.profile = utils.get_gallery_img(g.chapters[0], g.path)
-									else:
-										g.profile = utils.get_gallery_img(g.chapters[0])
-									if not g.profile:
-										raise Exception
-								except:
-									g.profile = gui_constants.NO_IMAGE_PATH
+							galleries = []
+							final_paths = []
+							if self.scanned_data:
+								for g in self.scanned_data:
+									try:
+										if g.is_archive:
+											g.profile = utils.get_gallery_img(g.chapters[0], g.path)
+										else:
+											g.profile = utils.get_gallery_img(g.chapters[0])
+										if not g.profile:
+											raise Exception
+									except:
+										g.profile = gui_constants.NO_IMAGE_PATH
 							
-								galleries.append(g)
-								final_paths.append(g.path)
-						self.final_paths_and_galleries.emit(final_paths, galleries)
-						self.finished.emit()
-					#if gui_constants.LOOK_NEW_GALLERY_AUTOADD:
-					#	QTimer.singleShot(10000, self.gallery_populate(final_paths))
-					#	return
+									galleries.append(g)
+									final_paths.append(g.path)
+							self.final_paths_and_galleries.emit(final_paths, galleries)
+							self.finished.emit()
+						#if gui_constants.LOOK_NEW_GALLERY_AUTOADD:
+						#	QTimer.singleShot(10000, self.gallery_populate(final_paths))
+						#	return
 
-				def show_new_galleries(final_paths, galleries):
-					if final_paths and galleries:
-						gui_constants.OVERRIDE_MOVE_IMPORTED_IN_FETCH = True
-						if gui_constants.LOOK_NEW_GALLERY_AUTOADD:
-							self.gallery_populate(final_paths)
-						else:
-							if len(galleries) == 1:
-								self.notification_bar.add_text("{} new gallery was discovered in one of your monitored directories".format(len(galleries)))
-							else:
-								self.notification_bar.add_text("{} new galleries were discovered in one of your monitored directories".format(len(galleries)))
-							text = "These new galleries were discovered! Do you want to add them?"\
-								if len(galleries) > 1 else "This new gallery was discovered! Do you want to add it?"
-							g_popup = file_misc.GalleryPopup((text, galleries), self)
-							buttons = g_popup.add_buttons('Add', 'Close')
-
-							def populate_n_close():
-								g_popup.close()
+					def show_new_galleries(final_paths, galleries):
+						if final_paths and galleries:
+							gui_constants.OVERRIDE_MOVE_IMPORTED_IN_FETCH = True
+							if gui_constants.LOOK_NEW_GALLERY_AUTOADD:
 								self.gallery_populate(final_paths)
-							buttons[0].clicked.connect(populate_n_close)
-							buttons[1].clicked.connect(g_popup.close)
+							else:
+								if len(galleries) == 1:
+									self.notification_bar.add_text("{} new gallery was discovered in one of your monitored directories".format(len(galleries)))
+								else:
+									self.notification_bar.add_text("{} new galleries were discovered in one of your monitored directories".format(len(galleries)))
+								text = "These new galleries were discovered! Do you want to add them?"\
+									if len(galleries) > 1 else "This new gallery was discovered! Do you want to add it?"
+								g_popup = file_misc.GalleryPopup((text, galleries), self)
+								buttons = g_popup.add_buttons('Add', 'Close')
 
-				thread = QThread(self)
-				self.scan_inst = ScanDir()
-				self.scan_inst.moveToThread(thread)
-				self.scan_inst.final_paths_and_galleries.connect(show_new_galleries)
-				self.scan_inst.final_paths_and_galleries.connect(lambda a: self.scan_inst.deleteLater())
-				thread.started.connect(self.scan_inst.scan_dirs)
-				#self.scan_inst.scan_dirs()
-				thread.finished.connect(thread.deleteLater)
-				thread.start()
-			except:
-				self.notification_bar.add_text('An error occured while attempting to scan for new galleries. Check happypanda.log.')
-				log.exception('An error occured while attempting to scan for new galleries.')
+								def populate_n_close():
+									g_popup.close()
+									self.gallery_populate(final_paths)
+								buttons[0].clicked.connect(populate_n_close)
+								buttons[1].clicked.connect(g_popup.close)
+
+					thread = QThread(self)
+					self.scan_inst = ScanDir()
+					self.scan_inst.moveToThread(thread)
+					self.scan_inst.final_paths_and_galleries.connect(show_new_galleries)
+					self.scan_inst.final_paths_and_galleries.connect(lambda a: self.scan_inst.deleteLater())
+					thread.started.connect(self.scan_inst.scan_dirs)
+					#self.scan_inst.scan_dirs()
+					thread.finished.connect(thread.deleteLater)
+					thread.start()
+				except:
+					self.notification_bar.add_text('An error occured while attempting to scan for new galleries. Check happypanda.log.')
+					log.exception('An error occured while attempting to scan for new galleries.')
+		if self.manga_list_view.gallery_model.db_emitter.count == gui_constants.GALLERY_DATA:
+			scan_for_new_galleries()
+		else:
+			self.manga_list_view.gallery_model.db_emitter.DONE.connect(scan_for_new_galleries)
 
 	def start_up(self):
 		def normalize_first_time():
@@ -400,6 +410,7 @@ class AppWindow(QMainWindow):
 		self.temp_timer = QTimer()
 
 		self.manga_list_view.gallery_model.ROWCOUNT_CHANGE.connect(self.stat_row_info)
+		self.manga_list_view.gallery_model.db_emitter.COUNT_CHANGE.connect(self.stat_row_info)
 		self.manga_list_view.gallery_model.STATUSBAR_MSG.connect(self.stat_temp_msg)
 		self.manga_list_view.STATUS_BAR_MSG.connect(self.stat_temp_msg)
 		self.manga_table_view.STATUS_BAR_MSG.connect(self.stat_temp_msg)
@@ -416,10 +427,11 @@ class AppWindow(QMainWindow):
 	def stat_row_info(self):
 		r = self.manga_list_view.model().rowCount()
 		t = self.manga_list_view.gallery_model.db_emitter.count
+		print('row change:', r)
 		self.stat_info.setText("Loaded {} of {} ".format(r, t))
 
 	def manga_display(self):
-		"initiates the manga view"
+		"initiates the manga view and related things"
 		#list view
 		self.manga_list_view = gallery.MangaView(self)
 		self.manga_list_view.clicked.connect(self.popup)
@@ -441,6 +453,17 @@ class AppWindow(QMainWindow):
 		self.manga_table_view.setColumnWidth(gui_constants.CHAPTERS, 60)
 		self.manga_table_view.setColumnWidth(gui_constants.LANGUAGE, 100)
 		self.manga_table_view.setColumnWidth(gui_constants.LINK, 400)
+
+		# fetching widget
+		self.spinner = misc.Spinner(parent=self)
+		self.spinner.set_size(35,35)
+		self.spinner.show_text(False)
+		self.move_listener.connect(
+			lambda: self.spinner.update_move(
+				QPoint(self.pos().x()+self.width()-70, self.pos().y()+self.height()-70)))
+		self.manga_list_view.gallery_model.ADD_MORE.connect(self.spinner.show)
+		self.manga_list_view.gallery_model.db_emitter.START.connect(self.spinner.show)
+		self.manga_list_view.gallery_model.ADDED_ROWS.connect(self.spinner.hide)
 
 
 	def search(self, srch_string):
@@ -844,6 +867,7 @@ class AppWindow(QMainWindow):
 			self.notification_bar.resize(event.size().width())
 		except AttributeError:
 			pass
+		self.move_listener.emit()
 		return super().resizeEvent(event)
 
 	def moveEvent(self, event):

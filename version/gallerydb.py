@@ -530,7 +530,7 @@ class GalleryDB:
 		"""
 		#pdb.set_trace()
 		if not galleries:
-			galleries = GalleryDB.get_all_gallery()
+			galleries = gui_constants.GALLERY_DATA
 
 		if filter:
 			filter_list = []
@@ -1378,27 +1378,42 @@ class Bridge(QObject):
 class DatabaseEmitter(QObject):
 	"""
 	Fetches and emits database records
+	START: emitted when fetching from DB occurs
+	DONE: emitted when fetching from DB finishes
 	"""
 	GALLERY_EMITTER = pyqtSignal(list)
+	START = pyqtSignal()
+	DONE = pyqtSignal()
+	COUNT_CHANGE = pyqtSignal()
 	def __init__(self):
 		super().__init__()
-		self._current_data = []
+		self._current_data = gui_constants.GALLERY_DATA
 		self._fetch_count = 100
 		self._offset = 0
-		CommandQueue.put([["SELECT count(*) AS 'size' FROM series"]])
-		cursor = ResultQueue.get()
-		self.count = cursor.fetchone()['size']
 		self._fetching = False
+		self.count = 0
+		self.update_count()
+
+	def update_count(self):
+		if not self._fetching:
+			self._fetching = True
+			CommandQueue.put([["SELECT count(*) AS 'size' FROM series"]])
+			cursor = ResultQueue.get()
+			oldc = self.count
+			self.count = cursor.fetchone()['size']
+			if oldc != self.count:
+				self.COUNT_CHANGE.emit()
+			self._fetching = False
 
 	def can_fetch_more(self):
-		print('can fetch more')
 		if len(self._current_data) < self.count:
 			return True
 		else:
+			self.DONE.emit()
 			return False
 	
 	def fetch_more(self):
-		print('fetching more')
+		self.START.emit()
 		def get_records():
 			self._fetching = True
 			remaining = self.count - len(self._current_data)
@@ -1408,8 +1423,8 @@ class DatabaseEmitter(QObject):
 			self._offset += rec_to_fetch
 			c = ResultQueue.get()
 			new_data = c.fetchall()
-			self._current_data.extend(new_data)
 			gallery_list = GalleryDB.gen_galleries(new_data)
+			#self._current_data.extend(gallery_list)
 			self.GALLERY_EMITTER.emit(gallery_list)
 			self._fetching = False
 

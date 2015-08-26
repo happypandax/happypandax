@@ -52,28 +52,75 @@ log_e = log.error
 log_c = log.critical
 
 class TransparentWidget(QWidget):
-	def __init__(self, **kwargs):
-		super().__init__(**kwargs)
+	def __init__(self, parent=None, **kwargs):
+		super().__init__(parent, **kwargs)
+		self.parent_widget = parent
 		self.setAttribute(Qt.WA_TranslucentBackground)
 		self.setAttribute(Qt.WA_DeleteOnClose)
+		if parent and kwargs.pop('move_listener', True):
+			try:
+				parent.move_listener.connect(self.update_move)
+			except AttributeError:
+				pass
+
+	def update_move(self, new_size=None):
+		if new_size:
+			self.move(new_size)
+			return
+		if self.parent_widget:
+			self.move(self.parent_widget.window().frameGeometry().center() -\
+				self.window().rect().center())
 
 class Spinner(TransparentWidget):
 	"""
 	Loading spinning overlay widget
 	"""
+	activated = pyqtSignal()
+	deactivated = pyqtSignal()
+	about_to_show, about_to_hide = range(2)
 	def __init__(self, **kwargs):
 		super().__init__(flags=Qt.Window|Qt.FramelessWindowHint, **kwargs)
-		self._movie = QMovie()
+		self.setAttribute(Qt.WA_ShowWithoutActivating)
+		self._movie = QMovie(gui_constants.SPINNER_PATH)
 		layout = QVBoxLayout(self)
 		self.gif = QLabel()
 		self.gif.setMovie(self._movie)
 		self._lbl = QLabel('Please wait...')
 		layout.addWidget(self.gif)
 		layout.addWidget(self._lbl)
+		self.state_timer = QTimer()
+		self.current_state = self.about_to_show
+		self.state_timer.timeout.connect(super().hide)
+		self.state_timer.setSingleShot(True)
 		self._movie.start()
-	
 	def set_text(self, txt):
 		self._lbl.setText(txt)
+
+	def show_text(self, b):
+		if b:
+			self._lbl.show()
+		else:
+			self._lbl.hide()
+
+	def set_size(self, w, h):
+		self._movie.setScaledSize(QSize(w, h))
+		self.gif.resize(w, h)
+		self.resize(w,h)
+
+	def hide(self):
+		if self.current_state == self.about_to_hide:
+			return
+		self.current_state = self.about_to_hide
+		self.state_timer.start(5000)
+
+	def hideEvent(self, event):
+		self.deactivated.emit()
+
+	def showEvent(self, event):
+		self.current_state = self.about_to_show
+		self.state_timer.stop()
+		self.activated.emit()
+		return super().showEvent(event)
 
 
 class GalleryMenu(QMenu):
@@ -291,9 +338,6 @@ class BasePopup(TransparentWidget):
 			super().__init__(parent, **kwargs)
 		else:
 			super().__init__(parent, flags= Qt.Window | Qt.FramelessWindowHint)
-		self.parent_widget = parent
-		self.setAttribute(Qt.WA_TranslucentBackground)
-		self.setAttribute(Qt.WA_DeleteOnClose)
 		main_layout = QVBoxLayout()
 		self.main_widget = QFrame()
 		self.setLayout(main_layout)
@@ -311,10 +355,6 @@ class BasePopup(TransparentWidget):
 		self.curr_pos = QPoint()
 		if parent:
 			parent.setGraphicsEffect(self.graphics_blur)
-			try:
-				parent.move_listener.connect(self.update_move)
-			except AttributeError:
-				pass
 
 	def mousePressEvent(self, event):
 		self.curr_pos = event.pos()
@@ -326,11 +366,6 @@ class BasePopup(TransparentWidget):
 			newpos = self.pos()+diff
 			self.move(newpos)
 		return super().mouseMoveEvent(event)
-
-	def update_move(self):
-		if self.parent_widget:
-			self.move(self.parent_widget.window().frameGeometry().center() -\
-				self.window().rect().center())
 
 	def showEvent(self, event):
 		self.activateWindow()

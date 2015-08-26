@@ -25,7 +25,7 @@ from PyQt5.QtGui import (QPixmap, QBrush, QColor, QPainter,
 						 QMouseEvent, QHelpEvent,
 						 QPixmapCache, QCursor, QPalette, QKeyEvent,
 						 QFont, QTextOption, QFontMetrics, QFontMetricsF,
-						 QTextLayout)
+						 QTextLayout, QPainterPath)
 from PyQt5.QtWidgets import (QListView, QFrame, QLabel,
 							 QStyledItemDelegate, QStyle,
 							 QMenu, QAction, QToolTip, QVBoxLayout,
@@ -52,6 +52,7 @@ class Popup(QWidget):
 	def __init__(self, parent=None):
 		super().__init__(parent, Qt.Window | Qt.FramelessWindowHint)
 		self.setAttribute(Qt.WA_ShowWithoutActivating)
+		self.setAttribute(Qt.WA_DeleteOnClose)
 		self.initUI()
 		#self.resize(gui_constants.POPUP_WIDTH,gui_constants.POPUP_HEIGHT)
 		self.setFixedWidth(gui_constants.POPUP_WIDTH)
@@ -148,7 +149,7 @@ class SortFilterModel(QSortFilterProxyModel):
 	ROWCOUNT_CHANGE = pyqtSignal()
 	def __init__(self, parent=None):
 		super().__init__(parent)
-		self._data = []
+		self._data = gui_constants.GALLERY_DATA
 
 		# filtering
 		self.fav = False
@@ -193,7 +194,7 @@ class SortFilterModel(QSortFilterProxyModel):
 			self.filter_funcs.pop(name)
 			self.invalidateFilter()
 
-	def filterAcceptsRow(self, source_row, parent_index):
+	def filterAcceptsRow2(self, source_row, parent_index):
 		model = self.sourceModel()
 		funcs = []
 		validity = []
@@ -333,7 +334,7 @@ class SortFilterModel(QSortFilterProxyModel):
 		self.invalidateFilter()
 		self.ROWCOUNT_CHANGE.emit()
 
-	def filterAcceptsRow2(self, source_row, index_parent):
+	def filterAcceptsRow(self, source_row, index_parent):
 		allow = False
 		gallery = None
 
@@ -438,7 +439,9 @@ class GalleryModel(QAbstractTableModel):
 	ROWCOUNT_CHANGE = pyqtSignal()
 	STATUSBAR_MSG = pyqtSignal(str)
 	CUSTOM_STATUS_MSG = pyqtSignal(str)
-	_data = []
+	ADDED_ROWS = pyqtSignal()
+	ADD_MORE = pyqtSignal()
+	_data = gui_constants.GALLERY_DATA
 
 	def __init__(self, parent=None):
 		super().__init__(parent)
@@ -458,19 +461,16 @@ class GalleryModel(QAbstractTableModel):
 		self._DATE_ADDED = gui_constants.DATE_ADDED
 		self._PUB_DATE = gui_constants.PUB_DATE
 
-		self._data = []
 		self._data_count = 0 # number of items added to model
 		self.db_emitter = gallerydb.DatabaseEmitter()
 		self.db_emitter.GALLERY_EMITTER.connect(self.insertRows)
 
-	def populate_data(self):
-		"Populates the model with data from database in a timely manner"
-		self._data = []
+	def populate_data(self, galleries):
+		"Populates the model in a timely manner"
 		t = 0
-		galleries = gallerydb.GalleryDB.get_all_gallery()
-		self._data_count = len(galleries)
+		self._data_count += len(galleries)
 		for pos, gallery in enumerate(galleries):
-			t += 80
+			t += 100
 			if not gallery.valid:
 				reasons = gallery.invalidities()
 			else:
@@ -616,7 +616,8 @@ class GalleryModel(QAbstractTableModel):
 
 	def rowCount(self, index = QModelIndex()):
 		if not index.isValid():
-			return len(self._data)
+			print(self._data_count)
+			return self._data_count
 		else:
 			return 0
 
@@ -661,6 +662,7 @@ class GalleryModel(QAbstractTableModel):
 	def addRows(self, list_of_gallery, position=None,
 				rows=1, index = QModelIndex()):
 		"Adds new gallery data to model and to DB"
+		self.ADD_MORE.emit()
 		log_d('Adding {} rows'.format(rows))
 		if not position:
 			log_d('Add rows: No position specified')
@@ -674,24 +676,30 @@ class GalleryModel(QAbstractTableModel):
 			self._data_count += 1
 		log_d('Add rows: Finished inserting')
 		self.endInsertRows()
+		gallerydb.add_method_queue(self.db_emitter.update_count, True)
 		self.CUSTOM_STATUS_MSG.emit("Added item(s)")
 		self.ROWCOUNT_CHANGE.emit()
+		self.ADDED_ROWS.emit()
 		return True
 
 	def insertRows(self, list_of_gallery, position=None,
 				rows=None, index = QModelIndex(), data_count=True):
 		"Inserts new gallery data to the data list WITHOUT adding to DB"
+		self.ADD_MORE.emit()
 		position = len(self._data) if not position else position
 		rows = len(list_of_gallery) if not rows else 0
 		self.beginInsertRows(QModelIndex(), position, position + rows - 1)
 		for pos, gallery in enumerate(list_of_gallery, 1):
+			print('adding to model')
 			self._data.append(gallery)
 			if data_count:
 				self._data_count += 1
 		self.endInsertRows()
+		gallerydb.add_method_queue(self.db_emitter.update_count, True)
 		if data_count:
 			self.CUSTOM_STATUS_MSG.emit("Added item(s)")
 		self.ROWCOUNT_CHANGE.emit()
+		self.ADDED_ROWS.emit()
 		return True
 
 	def replaceRows(self, list_of_gallery, position, rows=1, index=QModelIndex()):
@@ -704,9 +712,12 @@ class GalleryModel(QAbstractTableModel):
 	def removeRows(self, position, rows=1, index=QModelIndex()):
 		"Deletes gallery data from the model data list. OBS: doesn't touch DB!"
 		self.beginRemoveRows(QModelIndex(), position, position + rows - 1)
-		self._data = self._data[:position] + self._data[position + rows:]
+		new_data = self._data[:position] + self._data[position + rows:]
+		self._data.clear()
+		self._data.extend(new_data)
 		self._data_count -= rows
 		self.endRemoveRows()
+		gallerydb.add_method_queue(self.db_emitter.update_count, True)
 		self.ROWCOUNT_CHANGE.emit()
 		return True
 
@@ -974,11 +985,16 @@ class CustomDelegate(QStyledItemDelegate):
 
 			if option.state & QStyle.State_Selected:
 				painter.save()
-				selected_rect = QRect(x, y, w, lbl_rect.height()+gui_constants.THUMB_H_SIZE)
+				selected_rect = QRectF(x, y, w, lbl_rect.height()+gui_constants.THUMB_H_SIZE)
 				painter.setPen(Qt.NoPen)
 				painter.setBrush(QBrush(QColor(164,164,164,120)))
-				painter.drawRoundedRect(selected_rect, 5,5)
-				painter.fillRect(selected_rect, QColor(164,164,164,120))
+				p_path = QPainterPath()
+				p_path.setFillRule(Qt.WindingFill)
+				p_path.addRoundedRect(selected_rect, 5,5)
+				p_path.addRect(x,y, 20, 20)
+				p_path.addRect(x+w-20,y, 20, 20)
+				painter.drawPath(p_path.simplified())
+				#painter.fillRect(selected_rect, QColor(164,164,164,120))
 				painter.restore()
 
 			#if option.state & QStyle.State_Selected:
@@ -1031,8 +1047,6 @@ class MangaView(QListView):
 						 gui_constants.THUMB_H_SIZE))
 		# all items have the same size (perfomance)
 		self.setUniformItemSizes(True)
-		self.setSelectionBehavior(self.SelectItems)
-		self.setSelectionMode(self.ExtendedSelection)
 		# improve scrolling
 		self.setVerticalScrollMode(self.ScrollPerPixel)
 		self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -1047,6 +1061,8 @@ class MangaView(QListView):
 		self.sort_model.setSortCaseSensitivity(Qt.CaseInsensitive)
 		self.manga_delegate = CustomDelegate(parent)
 		self.setItemDelegate(self.manga_delegate)
+		self.setSelectionBehavior(self.SelectItems)
+		self.setSelectionMode(self.ExtendedSelection)
 		self.gallery_model = GalleryModel(parent)
 		self.sort_model.change_model(self.gallery_model)
 		self.sort_model.sort(0)
@@ -1173,7 +1189,7 @@ class MangaView(QListView):
 		notifbar = self.parent_widget.notification_bar
 		notifbar.add_text('Checking for duplicates...')
 		if simple:
-			galleries = self.gallery_model._data
+			galleries = self.gallery_model._data.copy()
 			duplicates = []
 			for g in galleries:
 				notifbar.add_text('Checking gallery {}'.format(g.id))
@@ -1261,7 +1277,8 @@ class MangaView(QListView):
 		index = self.sort_model.mapToSource(index)
 
 		selected = False
-		select_indexes = self.selectedIndexes()
+		select_indexes = self.sort_model.mapSelectionToSource(self.selectionModel().selection())
+		select_indexes = select_indexes.indexes()
 		if len(select_indexes) > 1:
 			selected = True
 
@@ -1459,7 +1476,8 @@ class MangaTableView(QTableView):
 		index = self.sort_model.mapToSource(index)
 
 		selected = False
-		select_indexes = self.selectedIndexes()
+		select_indexes = self.sort_model.mapSelectionToSource(self.selectionModel().selection())
+		select_indexes = select_indexes.indexes()
 		if len(select_indexes) > len(gui_constants.COLUMNS):
 			selected = True
 
