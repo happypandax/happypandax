@@ -162,12 +162,12 @@ class SortFilterModel(QSortFilterProxyModel):
 
 	def fav_view(self):
 		self.fav = True
-		self.invalidateFilter()
+		self.invalidate()
 		self.ROWCOUNT_CHANGE.emit()
 
 	def catalog_view(self):
 		self.fav = False
-		self.invalidateFilter()
+		self.invalidate()
 		self.ROWCOUNT_CHANGE.emit()
 	
 
@@ -175,7 +175,7 @@ class SortFilterModel(QSortFilterProxyModel):
 		"""
 		Text used for pattern matching
 		"""
-		self.invalidateFilter()
+		self.invalidate()
 
 	def add_filter_func(self, name, n_func):
 		"""
@@ -184,7 +184,7 @@ class SortFilterModel(QSortFilterProxyModel):
 			and the current filterpattern. Returns False or True.
 		"""
 		self.filter_funcs[name] = n_func
-		self.invalidateFilter()
+		self.invalidate()
 
 	def remove_filter_func(self, name):
 		"""
@@ -192,7 +192,7 @@ class SortFilterModel(QSortFilterProxyModel):
 		"""
 		if name in self.filter_funcs:
 			self.filter_funcs.pop(name)
-			self.invalidateFilter()
+			self.invalidate()
 
 	def filterAcceptsRow2(self, source_row, parent_index):
 		model = self.sourceModel()
@@ -254,6 +254,13 @@ class SortFilterModel(QSortFilterProxyModel):
 	def addRows(self, list_of_gallery, position=None,
 				rows=1, index = QModelIndex()):
 		self.sourceModel().addRows(list_of_gallery, position, rows, index)
+		self.modelReset.emit()
+
+	def insertRows(self, list_of_gallery, position=None,
+				rows=None, index = QModelIndex(), data_count=True):
+		self.sourceModel().insertRows(list_of_gallery, position, rows,
+								index, data_count)
+		self.modelReset.emit()
 
 	def replaceRows(self, list_of_gallery, position, rows=1, index=QModelIndex()):
 		self.sourceModel().replaceRows(list_of_gallery, position, rows, index)
@@ -331,7 +338,7 @@ class SortFilterModel(QSortFilterProxyModel):
 		else:
 			self.allow_all = True
 
-		self.invalidate()
+		self.modelReset.emit()
 		self.ROWCOUNT_CHANGE.emit()
 
 	def filterAcceptsRow(self, source_row, index_parent):
@@ -545,7 +552,7 @@ class GalleryModel(QAbstractTableModel):
 		if role == Qt.BackgroundRole:
 			bg_color = QColor(242, 242, 242)
 			bg_brush = QBrush(bg_color)
-			return bg_brush
+			return bg_color
 
 		if gui_constants.GRID_TOOLTIP and role == Qt.ToolTipRole:
 			add_bold = []
@@ -616,7 +623,7 @@ class GalleryModel(QAbstractTableModel):
 
 	def rowCount(self, index = QModelIndex()):
 		if not index.isValid():
-			print(self._data_count)
+			#print(self._data_count)
 			return self._data_count
 		else:
 			return 0
@@ -712,12 +719,11 @@ class GalleryModel(QAbstractTableModel):
 	def removeRows(self, position, rows=1, index=QModelIndex()):
 		"Deletes gallery data from the model data list. OBS: doesn't touch DB!"
 		self.beginRemoveRows(QModelIndex(), position, position + rows - 1)
-		new_data = self._data[:position] + self._data[position + rows:]
-		self._data.clear()
-		self._data.extend(new_data)
+		for x, r in enumerate(range(rows)):
+			del self._data[position+x]
 		self._data_count -= rows
 		self.endRemoveRows()
-		gallerydb.add_method_queue(self.db_emitter.update_count, True)
+		gallerydb.add_method_queue(self.db_emitter.update_count, False)
 		self.ROWCOUNT_CHANGE.emit()
 		return True
 
@@ -1053,7 +1059,6 @@ class MangaView(QListView):
 		self.setLayoutMode(self.SinglePass)
 		self.setBatchSize(1)#gui_constants.PREFETCH_ITEM_AMOUNT)
 		self.setMouseTracking(True)
-		from modeltest import ModelTest
 		self.sort_model = SortFilterModel()
 		self.sort_model.setDynamicSortFilter(True)
 		self.sort_model.setFilterCaseSensitivity(Qt.CaseInsensitive)
@@ -1073,7 +1078,6 @@ class MangaView(QListView):
 		self.setViewportMargins(0,0,0,0)
 		self.current_sort = gui_constants.CURRENT_SORT
 		self.sort(self.current_sort)
-		self.model_test = ModelTest(self.gallery_model, self)
 		if gui_constants.DEBUG:
 			def debug_print(a):
 				print(a.data(Qt.UserRole+1))
@@ -1124,6 +1128,7 @@ class MangaView(QListView):
 	#	print('Found ', found)
 
 	def remove_gallery(self, index_list, local=False):
+		self.sort_model.setDynamicSortFilter(False)
 		msgbox = QMessageBox()
 		msgbox.setIcon(msgbox.Question)
 		msgbox.setStandardButtons(msgbox.Yes | msgbox.No)
@@ -1156,6 +1161,7 @@ class MangaView(QListView):
 												gallery.artist.encode()))
 			gallerydb.add_method_queue(gallerydb.GalleryDB.del_gallery, True, gallery_list, local)
 			self.STATUS_BAR_MSG.emit('Gallery removed!')
+		self.sort_model.setDynamicSortFilter(True)
 
 	def favorite(self, index):
 		assert isinstance(index, QModelIndex)
@@ -1277,8 +1283,12 @@ class MangaView(QListView):
 		index = self.sort_model.mapToSource(index)
 
 		selected = False
-		select_indexes = self.sort_model.mapSelectionToSource(self.selectionModel().selection())
-		select_indexes = select_indexes.indexes()
+		s_indexes = self.sort_model.mapSelectionToSource(
+			self.selectionModel().selection()).indexes()
+		select_indexes = []
+		for idx in s_indexes:
+			if idx.isValid():
+				select_indexes.append(idx)
 		if len(select_indexes) > 1:
 			selected = True
 
@@ -1395,7 +1405,7 @@ class MangaView(QListView):
 	def spawn_dialog(self, index=False):
 		if not index:
 			dialog = gallerydialog.GalleryDialog(self.parent_widget)
-			dialog.SERIES.connect(self.gallery_model.addRows)
+			dialog.SERIES.connect(self.sort_model.addRows)
 		else:
 			dialog = gallerydialog.GalleryDialog(self.parent_widget, [index])
 			dialog.SERIES_EDIT.connect(self.replace_edit_gallery)

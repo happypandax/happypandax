@@ -706,7 +706,7 @@ class AppWindow(QMainWindow):
 						def add_gallery(gallery_list):
 							print('add g')
 							def append_to_model(x):
-								self.manga_list_view.gallery_model.insertRows(x, None, len(x))
+								self.manga_list_view.sort_model.insertRows(x, None, len(x))
 
 							class A(QObject):
 								done = pyqtSignal()
