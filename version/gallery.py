@@ -331,7 +331,7 @@ class SortFilterModel(QSortFilterProxyModel):
 		else:
 			self.allow_all = True
 
-		self.invalidateFilter()
+		self.invalidate()
 		self.ROWCOUNT_CHANGE.emit()
 
 	def filterAcceptsRow(self, source_row, index_parent):
