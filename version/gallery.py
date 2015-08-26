@@ -527,7 +527,7 @@ class GalleryModel(QAbstractTableModel):
 				if qdate_g_pdt.isValid():
 					return qdate_g_pdt
 				else:
-					'No date set'
+					return 'No date set'
 
 		# TODO: name all these roles and put them in gui_constants...
 
@@ -1053,6 +1053,7 @@ class MangaView(QListView):
 		self.setLayoutMode(self.SinglePass)
 		self.setBatchSize(1)#gui_constants.PREFETCH_ITEM_AMOUNT)
 		self.setMouseTracking(True)
+		from modeltest import ModelTest
 		self.sort_model = SortFilterModel()
 		self.sort_model.setDynamicSortFilter(True)
 		self.sort_model.setFilterCaseSensitivity(Qt.CaseInsensitive)
@@ -1072,7 +1073,7 @@ class MangaView(QListView):
 		self.setViewportMargins(0,0,0,0)
 		self.current_sort = gui_constants.CURRENT_SORT
 		self.sort(self.current_sort)
-
+		self.model_test = ModelTest(self.gallery_model, self)
 		if gui_constants.DEBUG:
 			def debug_print(a):
 				print(a.data(Qt.UserRole+1))
