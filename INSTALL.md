@@ -29,7 +29,7 @@ Download from here https://www.python.org/downloads/
     
 2. Now go where you want happypanda to be downloaded (E.g. 'cd ~'), and write: git clone https://github.com/Pewpews/happypanda.git
   - If it fails with something like 'unrecognized command 'git'' then do: sudo pacman -S git (apt-get install git on Ubuntu), and try again
-3. Now enter the cloned directory (should be named 'happypanda') and write: python3 main.py
+3. Now enter the cloned directory (should be named 'happypanda') then in 'version' folder, and write: python3 main.py
 4. The program should now be running
 
 # Windows
