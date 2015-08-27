@@ -187,7 +187,7 @@ def start(test=False):
 			return application, WINDOW
 
 		sys.exit(application.exec_())
-
+		
 	def db_upgrade():
 		log_d('Database connection failed')
 		from PyQt5.QtGui import QIcon

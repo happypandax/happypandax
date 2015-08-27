@@ -282,6 +282,7 @@ class AppWindow(QMainWindow):
 			self.resize(gui_constants.MAIN_W, gui_constants.MAIN_H)
 		posx, posy = props.pos
 		self.move(posx, posy)
+		self.init_spinners()
 		self.show()
 		log_d('Show window: OK')
 
@@ -454,16 +455,25 @@ class AppWindow(QMainWindow):
 		self.manga_table_view.setColumnWidth(gui_constants.LANGUAGE, 100)
 		self.manga_table_view.setColumnWidth(gui_constants.LINK, 400)
 
-		# fetching widget
-		self.spinner = misc.Spinner(parent=self)
-		self.spinner.set_size(35,35)
-		self.spinner.show_text(False)
+
+	def init_spinners(self):
+		# fetching spinner
+		self.data_fetch_spinner = misc.Spinner(parent=self)
+		self.data_fetch_spinner.set_size(35,35)
+		self.data_fetch_spinner.show_text(False)
 		self.move_listener.connect(
-			lambda: self.spinner.update_move(
+			lambda: self.data_fetch_spinner.update_move(
 				QPoint(self.pos().x()+self.width()-70, self.pos().y()+self.height()-70)))
-		self.manga_list_view.gallery_model.ADD_MORE.connect(self.spinner.show)
-		self.manga_list_view.gallery_model.db_emitter.START.connect(self.spinner.show)
-		self.manga_list_view.gallery_model.ADDED_ROWS.connect(self.spinner.hide)
+		self.manga_list_view.gallery_model.ADD_MORE.connect(self.data_fetch_spinner.show)
+		self.manga_list_view.gallery_model.db_emitter.START.connect(self.data_fetch_spinner.show)
+		self.manga_list_view.gallery_model.ADDED_ROWS.connect(self.data_fetch_spinner.hide)
+
+		# deleting spinner
+		self.gallery_delete_spinner = misc.Spinner(parent=self)
+		self.gallery_delete_spinner.set_size(40,40)
+		self.gallery_delete_spinner.set_text('Removing...')
+		self.manga_list_view.gallery_model.rowsAboutToBeRemoved.connect(self.gallery_delete_spinner.show)
+		self.manga_list_view.gallery_model.rowsRemoved.connect(self.gallery_delete_spinner.hide)
 
 
 	def search(self, srch_string):
@@ -717,17 +727,13 @@ class AppWindow(QMainWindow):
 									self.galleries = []
 
 								def add_to_db(self):
-									gui_constants.NOTIF_BAR.begin_show()
-									gui_constants.NOTIF_BAR.add_text('Populating database...')
 									for y, x in enumerate(self.obj):
-										gui_constants.NOTIF_BAR.add_text('Populating database {}/{}'.format(y+1, len(self.obj)))
 										gallerydb.add_method_queue(
 											gallerydb.GalleryDB.add_gallery_return, False, x)
 										self.galleries.append(x)
 										y += 1
 										self.prog.emit(y)
 									append_to_model(self.galleries)
-									gui_constants.NOTIF_BAR.end_show()
 									self.done.emit()
 							loading.progress.setMaximum(len(gallery_list))
 							self.a_instance = A(gallery_list)

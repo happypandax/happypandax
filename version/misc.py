@@ -202,7 +202,7 @@ class GalleryMenu(QMenu):
 		remove_act.setMenu(remove_menu)
 		if not self.selected:
 			remove_g = remove_menu.addAction('Remove gallery',
-								lambda: self.parent_widget.manga_list_view.remove_gallery([self.index]))
+								lambda: self.view.remove_gallery([self.index]))
 			remove_ch = remove_menu.addAction('Remove chapter')
 			remove_ch_menu = QMenu(self)
 			remove_ch.setMenu(remove_ch_menu)
@@ -220,7 +220,7 @@ class GalleryMenu(QMenu):
 		remove_menu.addSeparator()
 		if not self.selected:
 			remove_source_g = remove_menu.addAction('Remove gallery and files',
-									   lambda: self.parent_widget.manga_list_view.remove_gallery(
+									   lambda: self.view.remove_gallery(
 										   [self.index], True))
 		else:
 			remove_source_select_g = remove_menu.addAction('Remove selected galleries and their files',
@@ -262,10 +262,7 @@ class GalleryMenu(QMenu):
 			log_i('Changed cover successfully!')
 
 	def remove_selection(self, source=False):
-		select = self.view.selectionModel().selection()
-		s_select = self.view.model().mapSelectionToSource(select)
-		indexes = s_select.indexes()
-		self.parent_widget.manga_list_view.remove_gallery(indexes)
+		self.view.remove_gallery(self.selected, source)
 
 	def op_link(self, select=False):
 		if select:

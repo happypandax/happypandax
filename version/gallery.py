@@ -253,17 +253,33 @@ class SortFilterModel(QSortFilterProxyModel):
 
 	def addRows(self, list_of_gallery, position=None,
 				rows=1, index = QModelIndex()):
+		if not position:
+			log_d('Add rows: No position specified')
+			position = len(self._data)
+		self.beginInsertRows(index, position, position + rows - 1)
 		self.sourceModel().addRows(list_of_gallery, position, rows, index)
-		self.modelReset.emit()
+		self.endInsertRows()
+		#self.modelReset.emit()
 
 	def insertRows(self, list_of_gallery, position=None,
 				rows=None, index = QModelIndex(), data_count=True):
+		position = len(self._data) if not position else position
+		rows = len(list_of_gallery) if not rows else 0
+		self.beginInsertRows(index, position, position + rows - 1)
 		self.sourceModel().insertRows(list_of_gallery, position, rows,
 								index, data_count)
-		self.modelReset.emit()
+		self.endInsertRows()
+		#self.modelReset.emit()
 
 	def replaceRows(self, list_of_gallery, position, rows=1, index=QModelIndex()):
 		self.sourceModel().replaceRows(list_of_gallery, position, rows, index)
+
+	def removeRows(self, position, rows=1, index=QModelIndex()):
+		"Deletes gallery data from the model data list. OBS: doesn't touch DB!"
+		self.beginRemoveRows(QModelIndex(), position, position + rows - 1)
+		self.sourceModel().removeRows(position, rows, index)
+		self.endRemoveRows()
+		return True
 
 	def search(self, term, title=True, artist=True, tags=True):
 		"""
@@ -449,6 +465,8 @@ class GalleryModel(QAbstractTableModel):
 	ADDED_ROWS = pyqtSignal()
 	ADD_MORE = pyqtSignal()
 	_data = gui_constants.GALLERY_DATA
+
+	REMOVING_ROWS = False
 
 	def __init__(self, parent=None):
 		super().__init__(parent)
@@ -669,6 +687,8 @@ class GalleryModel(QAbstractTableModel):
 	def addRows(self, list_of_gallery, position=None,
 				rows=1, index = QModelIndex()):
 		"Adds new gallery data to model and to DB"
+		if self.REMOVING_ROWS:
+			return False
 		self.ADD_MORE.emit()
 		log_d('Adding {} rows'.format(rows))
 		if not position:
@@ -692,6 +712,8 @@ class GalleryModel(QAbstractTableModel):
 	def insertRows(self, list_of_gallery, position=None,
 				rows=None, index = QModelIndex(), data_count=True):
 		"Inserts new gallery data to the data list WITHOUT adding to DB"
+		if self.REMOVING_ROWS:
+			return False
 		self.ADD_MORE.emit()
 		position = len(self._data) if not position else position
 		rows = len(list_of_gallery) if not rows else 0
@@ -719,8 +741,8 @@ class GalleryModel(QAbstractTableModel):
 	def removeRows(self, position, rows=1, index=QModelIndex()):
 		"Deletes gallery data from the model data list. OBS: doesn't touch DB!"
 		self.beginRemoveRows(QModelIndex(), position, position + rows - 1)
-		for x, r in enumerate(range(rows)):
-			del self._data[position+x]
+		for r in range(rows):
+			del self._data[position]
 		self._data_count -= rows
 		self.endRemoveRows()
 		gallerydb.add_method_queue(self.db_emitter.update_count, False)
@@ -1151,16 +1173,19 @@ class MangaView(QListView):
 		if msgbox.exec() == msgbox.Yes:
 			gallery_list = []
 			log_i('Removing {} galleries'.format(len(gallery_list)))
+			self.gallery_model.REMOVING_ROWS = True
 			for index in index_list:
+				print(type(index), index.row())
 				gallery = index.data(Qt.UserRole+1)
-				if index.isValid() and gallery:
-					#self.rowsAboutToBeRemoved(index.parent(), index.row(), index.row())
-					self.gallery_model.removeRows(index.row(), 1)
-					gallery_list.append(gallery)
-					log_i('Attempt to remove: {} by {}'.format(gallery.title.encode(),
-												gallery.artist.encode()))
+				gallery_list.append(gallery)
+				log_i('Attempt to remove: {} by {}'.format(gallery.title.encode(),
+											gallery.artist.encode()))
 			gallerydb.add_method_queue(gallerydb.GalleryDB.del_gallery, True, gallery_list, local)
+			rows = sorted([x.row() for x in index_list])
+			for x in range(len(rows), 0, -1):
+				self.sort_model.removeRows(rows[x-1])
 			self.STATUS_BAR_MSG.emit('Gallery removed!')
+			self.gallery_model.REMOVING_ROWS = False
 		self.sort_model.setDynamicSortFilter(True)
 
 	def favorite(self, index):
@@ -1283,12 +1308,11 @@ class MangaView(QListView):
 		index = self.sort_model.mapToSource(index)
 
 		selected = False
-		s_indexes = self.sort_model.mapSelectionToSource(
-			self.selectionModel().selection()).indexes()
+		s_indexes = self.selectedIndexes()
 		select_indexes = []
 		for idx in s_indexes:
-			if idx.isValid():
-				select_indexes.append(idx)
+			if idx.isValid() and idx.column() == 0:
+				select_indexes.append(self.sort_model.mapToSource(idx))
 		if len(select_indexes) > 1:
 			selected = True
 
@@ -1480,15 +1504,21 @@ class MangaTableView(QTableView):
 		#self.STATUS_BAR_MSG.emit("Refreshed")
 		pass
 
+	def remove_gallery(self, index_list, local=False):
+		self.parent_widget.manga_list_view.remove_gallery(index_list, local)
+
 	def contextMenuEvent(self, event):
 		handled = False
 		index = self.indexAt(event.pos())
 		index = self.sort_model.mapToSource(index)
 
 		selected = False
-		select_indexes = self.sort_model.mapSelectionToSource(self.selectionModel().selection())
-		select_indexes = select_indexes.indexes()
-		if len(select_indexes) > len(gui_constants.COLUMNS):
+		s_indexes = self.selectionModel().selectedRows()
+		select_indexes = []
+		for idx in s_indexes:
+			if idx.isValid():
+				select_indexes.append(self.sort_model.mapToSource(idx))
+		if len(select_indexes) > 1:
 			selected = True
 
 		if index.isValid():
