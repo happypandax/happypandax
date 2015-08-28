@@ -485,6 +485,7 @@ class AppWindow(QMainWindow):
 
 
 	def search(self, srch_string):
+		self.search_bar.setText(srch_string)
 		case_ins = srch_string.lower()
 		if not gui_constants.ALLOW_SEARCH_REGEX:
 			remove = '^$*+?{}\\|()[]'

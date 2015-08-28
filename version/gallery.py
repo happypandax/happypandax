@@ -49,7 +49,7 @@ log_e = log.error
 log_c = log.critical
 
 class GalleryMetaPopup(QWidget):
-	def __init__(self, parent=None):
+	def __init__(self, parent):
 		super().__init__(parent, Qt.Window | Qt.FramelessWindowHint)
 		self.setAttribute(Qt.WA_ShowWithoutActivating)
 		self.setAttribute(Qt.WA_DeleteOnClose)
@@ -57,7 +57,8 @@ class GalleryMetaPopup(QWidget):
 		#self.resize(gui_constants.POPUP_WIDTH,gui_constants.POPUP_HEIGHT)
 		self.setFixedWidth(gui_constants.POPUP_WIDTH)
 		self.setMaximumHeight(gui_constants.POPUP_HEIGHT)
-		self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
+		self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
+		self.parent_widget = parent
 	
 	def initUI(self):
 		main_layout = QVBoxLayout()
@@ -89,18 +90,20 @@ class GalleryMetaPopup(QWidget):
 		self.tags_scroll = QScrollArea()
 		self.tags_scroll.setFrameStyle(QFrame.NoFrame)
 		tag_widget = QWidget(self)
-		self.tags_scroll.setWidget(self.tag_widget)
+		self.tags_scroll.setWidget(tag_widget)
 		self.tags_scroll.setWidgetResizable(True)
-		self.tags_scroll.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-		self.tags = QFormLayout(self.tag_widget)
+		self.tags_scroll.setSizePolicy(QSizePolicy.MinimumExpanding,
+								 QSizePolicy.MinimumExpanding)
+		self.tags = QFormLayout(tag_widget)
 
 
 		self.pub_date = QLabel()
 		self.date_added = QLabel()
 
 		link_lbl = QLabel("Link:")
-		self.link = QLabel()
+		self.link = misc.ClickedLabel()
 		self.link.setWordWrap(True)
+		self.link.clicked.connect(lambda: utils.open_web_link(self.link.text()))
 
 		form_l.addRow(self.title_lbl, self.title)
 		form_l.addRow(self.artist_lbl, self.artist)
@@ -121,22 +124,25 @@ class GalleryMetaPopup(QWidget):
 						return False
 			return True
 
-		#if has_tags(gallery.tags):
-		#	self.tag_widget.show()
-		#	ns_layout = QFormLayout()
-		#	self.tags.addRow(ns_layout)
-		#	for namespace in gallery.tags:
-		#		tags_lbls = misc.FlowLayout()
-		#		if namespace == 'default':
-		#			self.tags.insertRow(0, tags_lbls)
-		#		else:
-		#			self.tags.addRow(namespace, tags_lbls)
+		if has_tags(gallery.tags):
+			self.tags_scroll.show()
+			ns_layout = QFormLayout()
+			self.tags.addRow(ns_layout)
+			for namespace in gallery.tags:
+				tags_lbls = misc.FlowLayout()
+				if namespace == 'default':
+					self.tags.insertRow(0, tags_lbls)
+				else:
+					self.tags.addRow(namespace, tags_lbls)
 
-		#		for n, tag in enumerate(gallery.tags[namespace], 1):
-		#			t = misc.TagText(tag)
-		#			tags_lbls.addWidget(t)
-		#else:
-		self.tags_scroll.hide()
+				for n, tag in enumerate(gallery.tags[namespace], 1):
+					t = misc.TagText(search_widget=self.parent_widget)
+					if not namespace == 'default':
+						t.namespace = namespace
+					t.setText(tag)
+					tags_lbls.addWidget(t)
+		else:
+			self.tags_scroll.hide()
 
 		self.title.setText(gallery.title)
 		self.artist.setText(gallery.artist)
@@ -146,6 +152,7 @@ class GalleryMetaPopup(QWidget):
 		self.type.setText(gallery.type)
 		self.status.setText(gallery.status)
 		self.link.setText(gallery.link)
+		self.adjustSize()
 
 	def hideEvent(self, event):
 		misc.clearLayout(self.tags)
