@@ -1,4 +1,4 @@
-﻿#"""
+#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -488,19 +488,17 @@ class GalleryModel(QAbstractTableModel):
 
 		self._data_count = 0 # number of items added to model
 		self.db_emitter = gallerydb.DatabaseEmitter()
-		self.db_emitter.GALLERY_EMITTER.connect(self.insertRows)
+		self.db_emitter.GALLERY_EMITTER.connect(lambda a: self.insertRows(a, emit_statusbar=False))
 
 	def populate_data(self, galleries):
 		"Populates the model in a timely manner"
 		t = 0
-		self._data_count += len(galleries)
 		for pos, gallery in enumerate(galleries):
 			t += 100
 			if not gallery.valid:
 				reasons = gallery.invalidities()
 			else:
-				QTimer.singleShot(t, functools.partial(self.insertRows, [gallery], pos,
-										   data_count=False))
+				QTimer.singleShot(t, functools.partial(self.insertRows, [gallery], pos))
 
 	def status_b_msg(self, msg):
 		self.STATUSBAR_MSG.emit(msg)
@@ -694,13 +692,13 @@ class GalleryModel(QAbstractTableModel):
 		if not position:
 			log_d('Add rows: No position specified')
 			position = len(self._data)
+		self._data_count += len(list_of_gallery)
 		self.beginInsertRows(QModelIndex(), position, position + rows - 1)
 		log_d('Add rows: Began inserting')
 		for gallery in list_of_gallery:
 			gallerydb.add_method_queue(gallerydb.GalleryDB.add_gallery_return, True, gallery)
 			gallery.profile = gallerydb.PROFILE_TO_MODEL.get()
 			self._data.insert(position, gallery)
-			self._data_count += 1
 		log_d('Add rows: Finished inserting')
 		self.endInsertRows()
 		gallerydb.add_method_queue(self.db_emitter.update_count, True)
@@ -710,22 +708,22 @@ class GalleryModel(QAbstractTableModel):
 		return True
 
 	def insertRows(self, list_of_gallery, position=None,
-				rows=None, index = QModelIndex(), data_count=True):
+				rows=None, index = QModelIndex(), emit_statusbar=True, data_count=True):
 		"Inserts new gallery data to the data list WITHOUT adding to DB"
 		if self.REMOVING_ROWS:
 			return False
 		self.ADD_MORE.emit()
 		position = len(self._data) if not position else position
 		rows = len(list_of_gallery) if not rows else 0
+		if data_count:
+			self._data_count += len(list_of_gallery)
 		self.beginInsertRows(QModelIndex(), position, position + rows - 1)
 		for pos, gallery in enumerate(list_of_gallery, 1):
 			print('adding to model')
 			self._data.append(gallery)
-			if data_count:
-				self._data_count += 1
 		self.endInsertRows()
 		gallerydb.add_method_queue(self.db_emitter.update_count, True)
-		if data_count:
+		if emit_statusbar:
 			self.CUSTOM_STATUS_MSG.emit("Added item(s)")
 		self.ROWCOUNT_CHANGE.emit()
 		self.ADDED_ROWS.emit()
@@ -740,10 +738,10 @@ class GalleryModel(QAbstractTableModel):
 
 	def removeRows(self, position, rows=1, index=QModelIndex()):
 		"Deletes gallery data from the model data list. OBS: doesn't touch DB!"
+		self._data_count -= rows
 		self.beginRemoveRows(QModelIndex(), position, position + rows - 1)
 		for r in range(rows):
 			del self._data[position]
-		self._data_count -= rows
 		self.endRemoveRows()
 		gallerydb.add_method_queue(self.db_emitter.update_count, False)
 		self.ROWCOUNT_CHANGE.emit()
