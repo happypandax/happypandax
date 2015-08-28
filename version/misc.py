@@ -16,7 +16,7 @@ from datetime import datetime
 
 from PyQt5.QtCore import (Qt, QDate, QPoint, pyqtSignal, QThread,
 						  QTimer, QObject, QSize, QRect, QFileInfo,
-						  QMargins)
+						  QMargins, QPropertyAnimation)
 from PyQt5.QtGui import (QTextCursor, QIcon, QMouseEvent, QFont,
 						 QPixmapCache, QPalette, QPainter, QBrush,
 						 QColor, QPen, QPixmap, QMovie)
@@ -50,6 +50,20 @@ log_d = log.debug
 log_w = log.warning
 log_e = log.error
 log_c = log.critical
+
+def clearLayout(layout):
+	if layout != None:
+		while layout.count():
+			child = layout.takeAt(0)
+			if child.widget() is not None:
+				child.widget().deleteLater()
+			elif child.layout() is not None:
+				clearLayout(child.layout())
+
+class TagText(QLabel):
+	def __init__(self, *args, **kwargs):
+		super().__init__(*args, **kwargs)
+		pass
 
 class TransparentWidget(QWidget):
 	def __init__(self, parent=None, **kwargs):
@@ -353,6 +367,13 @@ class BasePopup(TransparentWidget):
 		if parent:
 			parent.setGraphicsEffect(self.graphics_blur)
 
+		# animation
+		self.fade_animation = QPropertyAnimation(self, 'windowOpacity')
+		self.fade_animation.setDuration(1000)
+		self.fade_animation.setStartValue(0.0)
+		self.fade_animation.setEndValue(1.0)
+		self.setWindowOpacity(0.0)
+
 	def mousePressEvent(self, event):
 		self.curr_pos = event.pos()
 		return super().mousePressEvent(event)
@@ -366,6 +387,7 @@ class BasePopup(TransparentWidget):
 
 	def showEvent(self, event):
 		self.activateWindow()
+		self.fade_animation.start()
 		self.graphics_blur.setEnabled(True)
 		return super().showEvent(event)
 
@@ -400,6 +422,7 @@ class NotificationOverlay(QWidget):
 		super().__init__(parent)
 		self._main_layout = QHBoxLayout(self)
 		self._default_height = 20
+		self._dynamic_height = 0
 		self._lbl = QLabel()
 		self._main_layout.addWidget(self._lbl)
 		self._lbl.setAlignment(Qt.AlignCenter)
@@ -408,6 +431,15 @@ class NotificationOverlay(QWidget):
 		self.setContentsMargins(-10,-10,-10,-10)
 		self._click = False
 		self._override_hide = False
+
+		self.slide_animation = QPropertyAnimation(self, 'minimumHeight')
+		self.slide_animation.setDuration(500)
+		self.slide_animation.setStartValue(0)
+		self.slide_animation.setEndValue(self._default_height)
+		self.slide_animation.valueChanged.connect(self.set_dynamic_height)
+
+	def set_dynamic_height(self, h):
+		self._dynamic_height = h
 
 	def mousePressEvent(self, event):
 		if self._click:
@@ -419,7 +451,7 @@ class NotificationOverlay(QWidget):
 		self.setCursor(Qt.PointingHandCursor)
 
 	def resize(self, x, y=0):
-		return super().resize(x, self._default_height)
+		return super().resize(x, self._dynamic_height)
 
 	def add_text(self, text, autohide=True):
 		"""
@@ -453,6 +485,10 @@ class NotificationOverlay(QWidget):
 		self.unsetCursor()
 		self._click = False
 		self.clicked.disconnect()
+
+	def showEvent(self, event):
+		self.slide_animation.start()
+		return super().showEvent(event)
 
 class GalleryShowcaseWidget(QWidget):
 	"""

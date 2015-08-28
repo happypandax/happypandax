@@ -14,7 +14,7 @@
 
 import sys, logging, os, threading, re, requests, scandir
 from PyQt5.QtCore import (Qt, QSize, pyqtSignal, QThread, QEvent, QTimer,
-						  QObject, QPoint)
+						  QObject, QPoint, QPropertyAnimation)
 from PyQt5.QtGui import (QPixmap, QIcon, QMoveEvent, QCursor)
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QListView,
 							 QHBoxLayout, QFrame, QWidget, QVBoxLayout,
@@ -268,6 +268,14 @@ class AppWindow(QMainWindow):
 		self.system_tray.show()
 		log_d('Create system tray: OK')
 		#self.display.addWidget(self.chapter_main)
+
+		
+		# animation
+		self.fade_animation = QPropertyAnimation(self, 'windowOpacity')
+		self.fade_animation.setDuration(500)
+		self.fade_animation.setStartValue(0.0)
+		self.fade_animation.setEndValue(1.0)
+		self.setWindowOpacity(0.0)
 
 		self.setCentralWidget(self.center)
 		self.setWindowTitle("Happypanda")
@@ -879,6 +887,10 @@ class AppWindow(QMainWindow):
 	def moveEvent(self, event):
 		self.move_listener.emit()
 		return super().moveEvent(event)
+
+	def showEvent(self, event):
+		self.fade_animation.start()
+		return super().showEvent(event)
 
 	def closeEvent(self, event):
 		# watchers

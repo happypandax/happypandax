@@ -1,4 +1,4 @@
-#"""
+﻿#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -48,7 +48,7 @@ log_w = log.warning
 log_e = log.error
 log_c = log.critical
 
-class Popup(QWidget):
+class GalleryMetaPopup(QWidget):
 	def __init__(self, parent=None):
 		super().__init__(parent, Qt.Window | Qt.FramelessWindowHint)
 		self.setAttribute(Qt.WA_ShowWithoutActivating)
@@ -57,6 +57,7 @@ class Popup(QWidget):
 		#self.resize(gui_constants.POPUP_WIDTH,gui_constants.POPUP_HEIGHT)
 		self.setFixedWidth(gui_constants.POPUP_WIDTH)
 		self.setMaximumHeight(gui_constants.POPUP_HEIGHT)
+		self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
 	
 	def initUI(self):
 		main_layout = QVBoxLayout()
@@ -84,10 +85,15 @@ class Popup(QWidget):
 		self.status = QLabel()
 		type_status_l.addWidget(self.status, 0, Qt.AlignRight)
 
-		self.tags = QLabel()
-		self.tags.setTextFormat(Qt.RichText)
-		self.tags.setWordWrap(True)
 		self.tags_lbl = QLabel("Tags:")
+		self.tags_scroll = QScrollArea()
+		self.tags_scroll.setFrameStyle(QFrame.NoFrame)
+		tag_widget = QWidget(self)
+		self.tags_scroll.setWidget(self.tag_widget)
+		self.tags_scroll.setWidgetResizable(True)
+		self.tags_scroll.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+		self.tags = QFormLayout(self.tag_widget)
+
 
 		self.pub_date = QLabel()
 		self.date_added = QLabel()
@@ -101,40 +107,37 @@ class Popup(QWidget):
 		form_l.addRow(self.chapters_lbl, self.chapters)
 		form_l.addRow(self.info_lbl, self.info)
 		form_l.addRow(lang_lbl, self.lang)
-		form_l.addRow(self.tags_lbl, self.tags)
+		form_l.addRow(self.tags_lbl, self.tags_scroll)
 		form_l.addRow(link_lbl, self.link)
 
 	def set_gallery(self, gallery):
-		def tags_parser(tags):
-			string = ""
-			try:
-				if len(tags['default']) > 0:
-					has_default = True
-				else:
-					has_default = False
-			except KeyError:
-				has_default = False
+		def has_tags(tags):
+			t_len = len(tags)
+			if not t_len:
+				return False
+			if t_len == 1:
+				if 'default' in tags:
+					if not tags['default']:
+						return False
+			return True
 
-			for namespace in tags:
-				if namespace == 'default':
-					for n, tag in enumerate(tags[namespace], 1):
-						if n == 1:
-							string = tag + string
-						else:
-							string = tag + ', ' + string
-				else:
-					if not has_default:
-						string += '<b>'+namespace + ':</b> '
-						has_default = True
-					else:
-						string += '<br><b>' + namespace + ':</b> '
-					for n, tag in enumerate(tags[namespace], 1):
-						if n != len(tags[namespace]):
-							string += tag + ', '
-						else:
-							string += tag
+		#if has_tags(gallery.tags):
+		#	self.tag_widget.show()
+		#	ns_layout = QFormLayout()
+		#	self.tags.addRow(ns_layout)
+		#	for namespace in gallery.tags:
+		#		tags_lbls = misc.FlowLayout()
+		#		if namespace == 'default':
+		#			self.tags.insertRow(0, tags_lbls)
+		#		else:
+		#			self.tags.addRow(namespace, tags_lbls)
 
-			return string
+		#		for n, tag in enumerate(gallery.tags[namespace], 1):
+		#			t = misc.TagText(tag)
+		#			tags_lbls.addWidget(t)
+		#else:
+		self.tags_scroll.hide()
+
 		self.title.setText(gallery.title)
 		self.artist.setText(gallery.artist)
 		self.chapters.setText("{}".format(len(gallery.chapters)))
@@ -142,8 +145,11 @@ class Popup(QWidget):
 		self.lang.setText(gallery.language)
 		self.type.setText(gallery.type)
 		self.status.setText(gallery.status)
-		self.tags.setText(tags_parser(gallery.tags))
 		self.link.setText(gallery.link)
+
+	def hideEvent(self, event):
+		misc.clearLayout(self.tags)
+		return super().hideEvent(event)
 
 class SortFilterModel(QSortFilterProxyModel):
 	ROWCOUNT_CHANGE = pyqtSignal()
@@ -763,7 +769,7 @@ class CustomDelegate(QStyledItemDelegate):
 		super().__init__()
 		QPixmapCache.setCacheLimit(gui_constants.THUMBNAIL_CACHE_SIZE[0]*
 							 gui_constants.THUMBNAIL_CACHE_SIZE[1])
-		self.popup_window = Popup(parent)
+		self.popup_window = GalleryMetaPopup(parent)
 		self.popup_timer = QTimer()
 		self._painted_indexes = {}
 
@@ -1007,7 +1013,8 @@ class CustomDelegate(QStyledItemDelegate):
 					text_area.drawContents(painter)
 				##painter.resetTransform()
 				painter.restore()
-				self.popup_window.hide()
+				if not self.popup_window.underMouse():
+					self.popup_window.hide()
 
 			if option.state & QStyle.State_Selected:
 				painter.save()

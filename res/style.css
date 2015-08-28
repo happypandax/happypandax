@@ -1,4 +1,4 @@
-DoNotDelete {
+﻿DoNotDelete {
 	background-color: #F2F2F2; 
 }
 
@@ -10,11 +10,11 @@ QWidget#chapter_main {
 	background-color: #464646;
 }
 
-Popup {
+GalleryMetaPopup {
     background-color: #585858;
 }
 
-Popup > QLabel {
+GalleryMetaPopup > QLabel {
     color: white;
 }
 
@@ -172,6 +172,11 @@ QToolTip {
 
 NotificationOverlay > * {
     color:white;
+}
+
+TagText {
+    border: 1px solid rgba(0,0,0,0.85);
+    border-radius: 5px;
 }
 
 /*Window > QPlainTextEdit, QTextEdit, QGraphicsView {
