@@ -499,7 +499,7 @@ class AppWindow(QMainWindow):
 				re.compile(case_ins)
 			except re.error:
 				return
-		self.manga_list_view.sort_model.search(case_ins)
+		self.manga_list_view.sort_model.init_search(case_ins)
 
 	def popup(self, index):
 		if not self.popup_window.isVisible():

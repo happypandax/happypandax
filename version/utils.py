@@ -661,4 +661,3 @@ def delete_path(path):
 			log_e('Failed to delete: {}:{}'.format(error, p))
 			return False
 		return True
-

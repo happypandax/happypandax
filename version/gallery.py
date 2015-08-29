@@ -19,7 +19,7 @@ from PyQt5.QtCore import (Qt, QAbstractListModel, QModelIndex, QVariant,
 						  QSize, QRect, QEvent, pyqtSignal, QThread,
 						  QTimer, QPointF, QSortFilterProxyModel,
 						  QAbstractTableModel, QItemSelectionModel,
-						  QPoint, QRectF, QDate, QDateTime)
+						  QPoint, QRectF, QDate, QDateTime, QObject)
 from PyQt5.QtGui import (QPixmap, QBrush, QColor, QPainter, 
 						 QPen, QTextDocument,
 						 QMouseEvent, QHelpEvent,
@@ -158,219 +158,35 @@ class GalleryMetaPopup(QWidget):
 		misc.clearLayout(self.tags)
 		return super().hideEvent(event)
 
-class SortFilterModel(QSortFilterProxyModel):
-	ROWCOUNT_CHANGE = pyqtSignal()
-	def __init__(self, parent=None):
-		super().__init__(parent)
-		self._data = gui_constants.GALLERY_DATA
+class GallerySearch(QObject):
+	FINISHED = pyqtSignal()
+	def __init__(self, data):
+		super().__init__()
+		self._data = []
+		self.data = data
+		self.current_thread = QThread()
+		self.moveToThread(self.current_thread)
+		self.current_thread.start()
 
 		# filtering
 		self.fav = False
 		self.tags = {}
 		self.title = ""
 		self.artist = ""
-		self.allow_all = True
 		self.excludes = []
-		self.filter_funcs = {}
+		self.allow_all = False # to make it easier
 
-	def fav_view(self):
-		self.fav = True
-		self.invalidate()
-		self.ROWCOUNT_CHANGE.emit()
+	@property
+	def data(self):
+		return self._data
 
-	def catalog_view(self):
-		self.fav = False
-		self.invalidate()
-		self.ROWCOUNT_CHANGE.emit()
-	
+	@data.setter
+	def data(self, new_data):
+		self._data = new_data
+		self.result = {g.id: True for g in self._data}
+		print(self._data)
 
-	def setFilterString(self, text):
-		"""
-		Text used for pattern matching
-		"""
-		self.invalidate()
-
-	def add_filter_func(self, name, n_func):
-		"""
-		name: name of function, used as a key in dict
-		n_func: a new function which takes two args, the row to be tested
-			and the current filterpattern. Returns False or True.
-		"""
-		self.filter_funcs[name] = n_func
-		self.invalidate()
-
-	def remove_filter_func(self, name):
-		"""
-		name : name of func used in the add_filter_func method
-		"""
-		if name in self.filter_funcs:
-			self.filter_funcs.pop(name)
-			self.invalidate()
-
-	def filterAcceptsRow2(self, source_row, parent_index):
-		model = self.sourceModel()
-		funcs = []
-		validity = []
-		index = self.sourceModel().index(source_row, 0, parent_index)
-		if index.isValid():
-			gallery = index.data(Qt.UserRole+1)
-		else:
-			return False
-		if self.fav:
-			if gallery.fav:
-				validity.append(True)
-			else:
-				validity.append(False)
-
-		if self.artist:
-			validity.append(self.test_text(self.artist, gallery.artist))
-		else:
-			validity.append(True)
-
-		if self.title:
-			validity.append(self.test_text(self.title, gallery.title))
-		else:
-			validity.append(True)
-
-		if self.tags:
-			validity.append(self.test_tags(self.tags, self.excludes))
-		print(validity)
-		return all(validity)
-
-	def test_text(self, list_of_text, text_to_test):
-		valid = []
-		text = text_to_test.lower()
-		for t in list_of_text:
-			t = t.lower()
-			if t in text:
-				valid.append(True)
-			else:
-				valid.append(False)
-		if valid and all(valid):
-			return True
-		else:
-			return False
-
-	def test_tags(self, tags, excludes):
-		return True
-	
-	def change_model(self, model):
-		self.setSourceModel(model)
-		self._data = self.sourceModel()._data
-
-	def populate_data(self):
-		self.sourceModel().populate_data()
-
-	def status_b_msg(self, msg):
-		self.sourceModel().status_b_msg(msg)
-
-	def addRows(self, list_of_gallery, position=None,
-				rows=1, index = QModelIndex()):
-		if not position:
-			log_d('Add rows: No position specified')
-			position = len(self._data)
-		self.beginInsertRows(index, position, position + rows - 1)
-		self.sourceModel().addRows(list_of_gallery, position, rows, index)
-		self.endInsertRows()
-		#self.modelReset.emit()
-
-	def insertRows(self, list_of_gallery, position=None,
-				rows=None, index = QModelIndex(), data_count=True):
-		position = len(self._data) if not position else position
-		rows = len(list_of_gallery) if not rows else 0
-		self.beginInsertRows(index, position, position + rows - 1)
-		self.sourceModel().insertRows(list_of_gallery, position, rows,
-								index, data_count)
-		self.endInsertRows()
-		#self.modelReset.emit()
-
-	def replaceRows(self, list_of_gallery, position, rows=1, index=QModelIndex()):
-		self.sourceModel().replaceRows(list_of_gallery, position, rows, index)
-
-	def removeRows(self, position, rows=1, index=QModelIndex()):
-		"Deletes gallery data from the model data list. OBS: doesn't touch DB!"
-		self.beginRemoveRows(QModelIndex(), position, position + rows - 1)
-		self.sourceModel().removeRows(position, rows, index)
-		self.endRemoveRows()
-		return True
-
-	def search(self, term, title=True, artist=True, tags=True):
-		"""
-		Receives a search term.
-		If title/artist/tags True: searches in them
-		"""
-		self.excludes = []
-		def trim_for_non_tag(txt):
-			level = 0 # so we know if we are in a list
-			buffer = ""
-			stripped_set = set() # we only need unique values
-			for n, x in enumerate(txt, 1):
-				if x == '[':
-					level += 1 # we are now entering a list
-				if x == ']':
-					level -= 1 # we are now exiting a list
-				if x == ',': # if we meet a comma
-					# we trim our buffer if we are at top level
-					if level is 0:
-						# add to list
-						stripped_set.add(buffer.strip())
-						buffer = ""
-					else:
-						buffer += x
-				elif n == len(txt): # or at end of string
-					buffer += x
-					# add to list
-					stripped_set.add(buffer.strip())
-					buffer = ""
-				else:
-					buffer += x
-			for s in stripped_set:
-				if not ':' in s:
-					txt = s
-			txt = txt.split(' ')
-			txt = [x.strip() for x in txt]
-			return txt
-
-		if len(term) > 0:
-			self.allow_all = False
-			if title:
-				if 'title:' in term:
-					t = regex.search('(?<=title:)"([^"]*)"', term)
-					if t:
-						n = t.group()
-						term = term.replace('title:'+n, '')
-						t = n.replace('"', '')
-						self.title = [t]
-				else:
-					self.title = trim_for_non_tag(term)
-
-			if artist:
-				if 'artist:' in term:
-					a = regex.search('(?<=artist:)"([^"]*)"', term)
-					if a:
-						n = a.group()
-						term = term.replace('artist:'+n, '')
-						a = n.replace('"', '')
-						self.artist = a
-				elif 'author:' in term:
-					a = regex.search('(?<=author:)"([^"]*)"', term)
-					if a:
-						n = a.group()
-						term = term.replace('author:'+n, '')
-						a = n.replace('"', '')
-						self.artist = a
-				else:
-					self.artist = trim_for_non_tag(term)
-
-			if tags:
-				self.tags = utils.tag_to_dict(term)
-		else:
-			self.allow_all = True
-
-		self.modelReset.emit()
-		self.ROWCOUNT_CHANGE.emit()
-
-	def filterAcceptsRow(self, source_row, index_parent):
+	def test(self):
 		allow = False
 		gallery = None
 
@@ -387,6 +203,7 @@ class SortFilterModel(QSortFilterProxyModel):
 
 		def return_searched(where):
 			allow = False
+			self.result.clear()
 
 			def re_search(a, b):
 				"searches for a in b"
@@ -446,26 +263,192 @@ class SortFilterModel(QSortFilterProxyModel):
 
 			return allow
 
-		if self.sourceModel():
-			index = self.sourceModel().index(source_row, 0, index_parent)
-			if index.isValid():
-				gallery = index.data(Qt.UserRole+1)
-				if self.fav:
-					if gallery.fav == 1:
-						s = do_search()
-						if s:
-							allow = return_searched(s)
-						else: allow = True
-						if self.allow_all:
-							return True
-				else:
+		for gallery in self._data:
+			allow = False
+			if self.fav:
+				if gallery.fav == 1:
 					s = do_search()
 					if s:
 						allow = return_searched(s)
 					else: allow = True
-					if self.allow_all:
-						return True
-		return allow
+			else:
+				s = do_search()
+				if s:
+					allow = return_searched(s)
+				else: allow = True
+
+			if self.allow_all:
+				allow = True
+			self.result[gallery.id] = allow
+
+	def search(self, term):
+		self.excludes = []
+		def trim_for_non_tag(txt):
+			level = 0 # so we know if we are in a list
+			buffer = ""
+			stripped_set = set() # we only need unique values
+			for n, x in enumerate(txt, 1):
+				if x == '[':
+					level += 1 # we are now entering a list
+				if x == ']':
+					level -= 1 # we are now exiting a list
+				if x == ',': # if we meet a comma
+					# we trim our buffer if we are at top level
+					if level is 0:
+						# add to list
+						stripped_set.add(buffer.strip())
+						buffer = ""
+					else:
+						buffer += x
+				elif n == len(txt): # or at end of string
+					buffer += x
+					# add to list
+					stripped_set.add(buffer.strip())
+					buffer = ""
+				else:
+					buffer += x
+			for s in stripped_set:
+				if not ':' in s:
+					txt = s
+			txt = txt.split(' ')
+			txt = [x.strip() for x in txt]
+			return txt
+
+		if len(term) > 0:
+			self.allow_all = False
+			if 'title:' in term:
+				t = regex.search('(?<=title:)"([^"]*)"', term)
+				if t:
+					n = t.group()
+					term = term.replace('title:'+n, '')
+					t = n.replace('"', '')
+					self.title = [t]
+			else:
+				self.title = trim_for_non_tag(term)
+
+			if 'artist:' in term:
+				a = regex.search('(?<=artist:)"([^"]*)"', term)
+				if a:
+					n = a.group()
+					term = term.replace('artist:'+n, '')
+					a = n.replace('"', '')
+					self.artist = a
+			elif 'author:' in term:
+				a = regex.search('(?<=author:)"([^"]*)"', term)
+				if a:
+					n = a.group()
+					term = term.replace('author:'+n, '')
+					a = n.replace('"', '')
+					self.artist = a
+			else:
+				self.artist = trim_for_non_tag(term)
+
+			if tags:
+				self.tags = utils.tag_to_dict(term)
+		else:
+			self.allow_all = True
+
+		self.test()
+		self.FINISHED.emit()
+
+	def test_text(self, list_of_text, text_to_test):
+		valid = []
+		text = text_to_test.lower()
+		for t in list_of_text:
+			t = t.lower()
+			if t in text:
+				valid.append(True)
+			else:
+				valid.append(False)
+		if valid and all(valid):
+			return True
+		else:
+			return False
+
+	def test_tags(self, tags, excludes):
+		return True
+
+class SortFilterModel(QSortFilterProxyModel):
+	ROWCOUNT_CHANGE = pyqtSignal()
+	_DO_SEARCH = pyqtSignal(str)
+	def __init__(self, parent=None):
+		super().__init__(parent)
+		self._data = gui_constants.GALLERY_DATA
+
+		self.allow_all = True
+		self.excludes = []
+		self.gallery_search = GallerySearch(self._data)
+		self.gallery_search.FINISHED.connect(self.invalidateFilter)
+		self._DO_SEARCH.connect(self.gallery_search.search)
+
+	def fetchMore(self, index):
+		self.gallery_search.data = self._data
+		return super().fetchMore(index)
+
+	def fav_view(self):
+		self.gallery_search.fav = True
+		self.invalidate()
+		self.ROWCOUNT_CHANGE.emit()
+
+	def catalog_view(self):
+		self.gallery_search.fav = False
+		self.invalidate()
+		self.ROWCOUNT_CHANGE.emit()
+
+	def init_search(self, term):
+		"""
+		Receives a search term and initiates a search
+		"""
+		self._DO_SEARCH.emit(term)
+
+	def filterAcceptsRow(self, source_row, parent_index):
+		if self.sourceModel():
+			index = self.sourceModel().index(source_row, 0, parent_index)
+			if index.isValid():
+				gallery = index.data(Qt.UserRole+1)
+				return self.gallery_search.result[gallery.id]
+		return False
+	
+	def change_model(self, model):
+		self.setSourceModel(model)
+		self._data = self.sourceModel()._data
+		self.gallery_search.data = self._data
+
+	def populate_data(self):
+		self.sourceModel().populate_data()
+
+	def status_b_msg(self, msg):
+		self.sourceModel().status_b_msg(msg)
+
+	def addRows(self, list_of_gallery, position=None,
+				rows=1, index = QModelIndex()):
+		if not position:
+			log_d('Add rows: No position specified')
+			position = len(self._data)
+		self.beginInsertRows(index, position, position + rows - 1)
+		self.sourceModel().addRows(list_of_gallery, position, rows, index)
+		self.endInsertRows()
+		#self.modelReset.emit()
+
+	def insertRows(self, list_of_gallery, position=None,
+				rows=None, index = QModelIndex(), data_count=True):
+		position = len(self._data) if not position else position
+		rows = len(list_of_gallery) if not rows else 0
+		self.beginInsertRows(index, position, position + rows - 1)
+		self.sourceModel().insertRows(list_of_gallery, position, rows,
+								index, data_count)
+		self.endInsertRows()
+		#self.modelReset.emit()
+
+	def replaceRows(self, list_of_gallery, position, rows=1, index=QModelIndex()):
+		self.sourceModel().replaceRows(list_of_gallery, position, rows, index)
+
+	def removeRows(self, position, rows=1, index=QModelIndex()):
+		"Deletes gallery data from the model data list. OBS: doesn't touch DB!"
+		self.beginRemoveRows(QModelIndex(), position, position + rows - 1)
+		self.sourceModel().removeRows(position, rows, index)
+		self.endRemoveRows()
+		return True
 
 class GalleryModel(QAbstractTableModel):
 	"""
