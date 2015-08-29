@@ -62,11 +62,12 @@ def clearLayout(layout):
 
 class TransparentWidget(QWidget):
 	def __init__(self, parent=None, **kwargs):
+		move_listener = kwargs.pop('move_listener', True)
 		super().__init__(parent, **kwargs)
 		self.parent_widget = parent
 		self.setAttribute(Qt.WA_TranslucentBackground)
 		self.setAttribute(Qt.WA_DeleteOnClose)
-		if parent and kwargs.pop('move_listener', True):
+		if parent and move_listener:
 			try:
 				parent.move_listener.connect(self.update_move)
 			except AttributeError:
@@ -372,7 +373,7 @@ class BasePopup(TransparentWidget):
 
 		# animation
 		self.fade_animation = QPropertyAnimation(self, 'windowOpacity')
-		self.fade_animation.setDuration(1000)
+		self.fade_animation.setDuration(800)
 		self.fade_animation.setStartValue(0.0)
 		self.fade_animation.setEndValue(1.0)
 		self.setWindowOpacity(0.0)

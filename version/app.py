@@ -1,4 +1,4 @@
-﻿#"""
+#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -486,7 +486,7 @@ class AppWindow(QMainWindow):
 
 	def search(self, srch_string):
 		self.search_bar.setText(srch_string)
-		case_ins = srch_string.lower()
+		case_ins = ' '.join(srch_string.lower().split())
 		if not gui_constants.ALLOW_SEARCH_REGEX:
 			remove = '^$*+?{}\\|()[]'
 			for x in remove:
@@ -628,6 +628,9 @@ class AppWindow(QMainWindow):
 		self.toolbar.addWidget(self.grid_toggle)
 
 		self.search_bar = misc.LineEdit()
+		self.search_timer = QTimer(self)
+		self.search_timer.setSingleShot(True)
+		self.search_timer.timeout.connect(lambda: self.search(self.search_bar.text()))
 		if gui_constants.SEARCH_AUTOCOMPLETE:
 			completer = QCompleter(self)
 			completer.setModel(self.manga_list_view.gallery_model)
@@ -637,10 +640,9 @@ class AppWindow(QMainWindow):
 			completer.setCompletionColumn(gui_constants.TITLE)
 			completer.setFilterMode(Qt.MatchContains)
 			self.search_bar.setCompleter(completer)
-		if gui_constants.SEARCH_ON_ENTER:
 			self.search_bar.returnPressed.connect(lambda: self.search(self.search_bar.text()))
-		else:
-			self.search_bar.textChanged[str].connect(self.search)
+		if not gui_constants.SEARCH_ON_ENTER:
+			self.search_bar.textChanged.connect(lambda: self.search_timer.start(800))
 		self.search_bar.setPlaceholderText("Search title, artist, namespace & tags")
 		self.search_bar.setMinimumWidth(150)
 		self.search_bar.setMaximumWidth(500)

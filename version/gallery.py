@@ -1,4 +1,4 @@
-﻿#"""
+#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -48,9 +48,10 @@ log_w = log.warning
 log_e = log.error
 log_c = log.critical
 
-class GalleryMetaPopup(QWidget):
+class GalleryMetaPopup(QFrame):
 	def __init__(self, parent):
 		super().__init__(parent, Qt.Window | Qt.FramelessWindowHint)
+		self.setFrameShape(QFrame.StyledPanel)
 		self.setAttribute(Qt.WA_ShowWithoutActivating)
 		self.setAttribute(Qt.WA_DeleteOnClose)
 		self.initUI()
@@ -163,10 +164,6 @@ class GallerySearch(QObject):
 	def __init__(self, data):
 		super().__init__()
 		self._data = []
-		self.data = data
-		self.current_thread = QThread()
-		self.moveToThread(self.current_thread)
-		self.current_thread.start()
 
 		# filtering
 		self.fav = False
@@ -176,17 +173,20 @@ class GallerySearch(QObject):
 		self.excludes = []
 		self.allow_all = False # to make it easier
 
-	@property
-	def data(self):
-		return self._data
-
-	@data.setter
-	def data(self, new_data):
+	def set_data(self, new_data):
 		self._data = new_data
 		self.result = {g.id: True for g in self._data}
-		print(self._data)
+
+	def setup_search(self):
+		self.result = {g.id: True for g in self._data}
+		self.FINISHED.emit()
+
+	def set_fav(self, new_fav):
+		self.fav = new_fav
 
 	def test(self):
+		self.result.clear()
+		print('running')
 		allow = False
 		gallery = None
 
@@ -203,7 +203,6 @@ class GallerySearch(QObject):
 
 		def return_searched(where):
 			allow = False
-			self.result.clear()
 
 			def re_search(a, b):
 				"searches for a in b"
@@ -266,22 +265,26 @@ class GallerySearch(QObject):
 		for gallery in self._data:
 			allow = False
 			if self.fav:
+				print('fav')
 				if gallery.fav == 1:
 					s = do_search()
 					if s:
 						allow = return_searched(s)
 					else: allow = True
+					if self.allow_all: # allowing all FAVS
+						allow = True
 			else:
+				print('not fav')
 				s = do_search()
 				if s:
 					allow = return_searched(s)
 				else: allow = True
-
-			if self.allow_all:
-				allow = True
+				if self.allow_all:
+					allow = True
 			self.result[gallery.id] = allow
 
 	def search(self, term):
+		print('searching')
 		self.excludes = []
 		def trim_for_non_tag(txt):
 			level = 0 # so we know if we are in a list
@@ -343,8 +346,7 @@ class GallerySearch(QObject):
 			else:
 				self.artist = trim_for_non_tag(term)
 
-			if tags:
-				self.tags = utils.tag_to_dict(term)
+			self.tags = utils.tag_to_dict(term)
 		else:
 			self.allow_all = True
 
@@ -371,6 +373,8 @@ class GallerySearch(QObject):
 class SortFilterModel(QSortFilterProxyModel):
 	ROWCOUNT_CHANGE = pyqtSignal()
 	_DO_SEARCH = pyqtSignal(str)
+	_CHANGE_SEARCH_DATA = pyqtSignal(list)
+	_CHANGE_FAV = pyqtSignal(bool)
 	def __init__(self, parent=None):
 		super().__init__(parent)
 		self._data = gui_constants.GALLERY_DATA
@@ -379,26 +383,32 @@ class SortFilterModel(QSortFilterProxyModel):
 		self.excludes = []
 		self.gallery_search = GallerySearch(self._data)
 		self.gallery_search.FINISHED.connect(self.invalidateFilter)
+		self.gallery_search.FINISHED.connect(lambda: self.ROWCOUNT_CHANGE.emit())
+		self.gallery_search.FINISHED.connect(lambda: print('invalidating'))
+		self.gallery_search.FINISHED.connect(lambda: print(len(self.gallery_search._data)))
+		self.search_thread = QThread()
+		self.gallery_search.moveToThread(self.search_thread)
 		self._DO_SEARCH.connect(self.gallery_search.search)
+		self._CHANGE_SEARCH_DATA.connect(self.gallery_search.set_data)
+		self._CHANGE_FAV.connect(self.gallery_search.set_fav)
+		self.search_thread.start()
 
 	def fetchMore(self, index):
-		self.gallery_search.data = self._data
 		return super().fetchMore(index)
 
 	def fav_view(self):
-		self.gallery_search.fav = True
-		self.invalidate()
-		self.ROWCOUNT_CHANGE.emit()
+		self._CHANGE_FAV.emit(True)
+		self._DO_SEARCH.emit('')
 
 	def catalog_view(self):
-		self.gallery_search.fav = False
-		self.invalidate()
-		self.ROWCOUNT_CHANGE.emit()
+		self._CHANGE_FAV.emit(False)
+		self._DO_SEARCH.emit('')
 
-	def init_search(self, term):
+	def init_search(self, term=''):
 		"""
 		Receives a search term and initiates a search
 		"""
+		print(self.search_thread.isRunning())
 		self._DO_SEARCH.emit(term)
 
 	def filterAcceptsRow(self, source_row, parent_index):
@@ -406,13 +416,16 @@ class SortFilterModel(QSortFilterProxyModel):
 			index = self.sourceModel().index(source_row, 0, parent_index)
 			if index.isValid():
 				gallery = index.data(Qt.UserRole+1)
-				return self.gallery_search.result[gallery.id]
+				try:
+					return self.gallery_search.result[gallery.id]
+				except KeyError:
+					pass
 		return False
 	
 	def change_model(self, model):
 		self.setSourceModel(model)
 		self._data = self.sourceModel()._data
-		self.gallery_search.data = self._data
+		self._CHANGE_SEARCH_DATA.emit(self._data)
 
 	def populate_data(self):
 		self.sourceModel().populate_data()
@@ -630,6 +643,9 @@ class GalleryModel(QAbstractTableModel):
 				pub_date = "{}".format(current_gallery.pub_date)
 				qpub_date = QDateTime.fromString(pub_date, "yyyy-MM-dd HH:mm:ss")
 				return qpub_date
+
+		if role == Qt.UserRole+6:
+			return current_gallery.times_read
 
 		return None
 
@@ -1086,6 +1102,7 @@ class MangaView(QListView):
 		self.setSelectionBehavior(self.SelectItems)
 		self.setSelectionMode(self.ExtendedSelection)
 		self.gallery_model = GalleryModel(parent)
+		self.gallery_model.ADDED_ROWS.connect(self.sort_model.gallery_search.setup_search)
 		self.sort_model.change_model(self.gallery_model)
 		self.sort_model.sort(0)
 		self.sort_model.ROWCOUNT_CHANGE.connect(self.gallery_model.ROWCOUNT_CHANGE.emit)
@@ -1295,6 +1312,10 @@ class MangaView(QListView):
 			self.sort_model.setSortRole(Qt.UserRole+5)
 			self.sort_model.sort(0, Qt.DescendingOrder)
 			self.current_sort = 'pub_date'
+		elif name == 'times_read':
+			self.sort_model.setSortRole(Qt.UserRole+6)
+			self.sort_model.sort(0, Qt.DescendingOrder)
+			self.current_sort = 'times_read'
 
 	def contextMenuEvent(self, event):
 		handled = False
@@ -1353,6 +1374,9 @@ class MangaView(QListView):
 			s_pub_d = sort_actions.addAction(QAction("Date Published", sort_actions, checkable=True))
 			s_pub_d.triggered.connect(functools.partial(self.sort, 'pub_date'))
 			set_current_sort(s_pub_d, 'pub_date')
+			s_times_read = sort_actions.addAction(QAction("Read Count", sort_actions, checkable=True))
+			s_times_read.triggered.connect(functools.partial(self.sort, 'times_read'))
+			set_current_sort(s_times_read, 'times_read')
 
 			sort_menu.addAction(asc_desc_act)
 			sort_menu.addSeparator()
@@ -1360,6 +1384,7 @@ class MangaView(QListView):
 			sort_menu.addAction(s_artist)
 			sort_menu.addAction(s_date)
 			sort_menu.addAction(s_pub_d)
+			sort_menu.addAction(s_times_read)
 
 			handled = True
 

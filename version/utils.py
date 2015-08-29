@@ -1,4 +1,4 @@
-﻿#"""
+#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -624,6 +624,8 @@ def title_parser(title):
 
 import webbrowser
 def open_web_link(url):
+	if not url:
+		return
 	try:
 		webbrowser.open_new_tab(url)
 	except:
