@@ -170,6 +170,7 @@ class GallerySearch(QObject):
 		self.tags = {}
 		self.title = ""
 		self.artist = ""
+		self.other = ""
 		self.excludes = []
 		self.allow_all = False # to make it easier
 
@@ -186,7 +187,6 @@ class GallerySearch(QObject):
 
 	def test(self):
 		self.result.clear()
-		print('running')
 		allow = False
 		gallery = None
 
@@ -284,7 +284,20 @@ class GallerySearch(QObject):
 			self.result[gallery.id] = allow
 
 	def search(self, term):
-		print('searching')
+		term = ' '.join(term.lower().split())
+		if not gui_constants.ALLOW_SEARCH_REGEX:
+			remove = '^$*+?{}\\|()[]'
+			for x in remove:
+				if x == '[' or x == ']':
+					continue
+				else:
+					term = term.replace(x, '.')
+		else:
+			try:
+				regex.compile(case_ins)
+			except regex.error:
+				return
+
 		self.excludes = []
 		def trim_for_non_tag(txt):
 			level = 0 # so we know if we are in a list
@@ -353,7 +366,7 @@ class GallerySearch(QObject):
 		self.test()
 		self.FINISHED.emit()
 
-	def test_text(self, list_of_text, text_to_test):
+	def s_text(self, list_of_text, text_to_test):
 		valid = []
 		text = text_to_test.lower()
 		for t in list_of_text:
@@ -367,7 +380,7 @@ class GallerySearch(QObject):
 		else:
 			return False
 
-	def test_tags(self, tags, excludes):
+	def s_tags(self, tags, excludes):
 		return True
 
 class SortFilterModel(QSortFilterProxyModel):

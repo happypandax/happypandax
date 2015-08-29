@@ -486,20 +486,7 @@ class AppWindow(QMainWindow):
 
 	def search(self, srch_string):
 		self.search_bar.setText(srch_string)
-		case_ins = ' '.join(srch_string.lower().split())
-		if not gui_constants.ALLOW_SEARCH_REGEX:
-			remove = '^$*+?{}\\|()[]'
-			for x in remove:
-				if x == '[' or x == ']':
-					continue
-				else:
-					case_ins = case_ins.replace(x, '.')
-		else:
-			try:
-				re.compile(case_ins)
-			except re.error:
-				return
-		self.manga_list_view.sort_model.init_search(case_ins)
+		self.manga_list_view.sort_model.init_search(srch_string)
 
 	def popup(self, index):
 		if not self.popup_window.isVisible():
