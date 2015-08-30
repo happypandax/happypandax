@@ -1,4 +1,4 @@
-#"""
+﻿#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -365,6 +365,35 @@ class GallerySearch(QObject):
 
 		self.test()
 		self.FINISHED.emit()
+
+	def search(self, term):
+		term = ' '.join(term.lower().split())
+		terms = utils.get_terms(term)
+		self.excludes = []
+
+		def remove_abs_terms(term):
+			if term.startswith(('title:'):
+				term = term[6:]
+			elif term.startswith(('artist:')):
+				term = term[7:]
+			return term
+		d_terms = {}
+		# get excludes, title, artist
+		for t in terms:
+			if t[0] == '-':
+				term = t[1:]
+				self.excludes.append(remove_abs_terms(term))
+				continue
+			if t.startswith('title:'):
+				term = t[6:]
+				self.title = term
+				continue
+			if t.startswith('artist:'):
+				term = t[7:]
+				self.artist = term
+				continue
+
+			d_terms[t] = False
 
 	def s_text(self, list_of_text, text_to_test):
 		valid = []

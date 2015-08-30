@@ -1,4 +1,4 @@
-#"""
+﻿#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -663,3 +663,58 @@ def delete_path(path):
 			log_e('Failed to delete: {}:{}'.format(error, p))
 			return False
 		return True
+
+def get_terms(term):
+	"Dividies term into pieces. Returns a list with the pieces"
+	terms = []
+	buffer = ''
+	connected = False
+	qoutes = 0
+	for n, x in enumerate(term):
+		# if we meet a double qoute
+		if x == '"':
+			if qoutes > 0:
+				qoutes -= 1
+			else:
+				qoutes += 1
+		# if we meet a whitespace or end of word and are not in a double qoute
+		if (x == ' ' or n == len(term) -1) and qoutes == 0:
+			terms.append(buffer)
+			buffer = ''
+			continue
+
+		# else append to the buffer
+		if x != '"' and x!= ',':
+			if qoutes > 0: # we want to include whitespace if in double qoute
+				buffer += x
+			elif x != ' ':
+				buffer += x
+
+	#############
+	def remove_abs_terms(term):
+		if term.startswith(('title:')):
+			term = term[6:]
+		elif term.startswith(('artist:')):
+			term = term[7:]
+		return term
+
+	d_terms = {}
+	excludes = []
+	# get excludes, title, artist
+	for t in terms:
+		if t[0] == '-':
+			term = t[1:]
+			excludes.append(remove_abs_terms(term))
+			continue
+		if t.startswith('title:'):
+			term = t[6:]
+			title = term
+			continue
+		if t.startswith('artist:'):
+			term = t[7:]
+			artist = term
+			continue
+
+		d_terms[t] = False
+
+	return d_terms, excludes
