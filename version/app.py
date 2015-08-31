@@ -188,7 +188,6 @@ class AppWindow(QMainWindow):
 			scan_for_new_galleries()
 		else:
 			self.manga_list_view.gallery_model.db_emitter.DONE.connect(scan_for_new_galleries)
-			self.manga_list_view.gallery_model.db_emitter.DONE.connect(lambda: print('done'))
 
 
 	def start_up(self):
@@ -267,14 +266,6 @@ class AppWindow(QMainWindow):
 		self.system_tray.show()
 		log_d('Create system tray: OK')
 		#self.display.addWidget(self.chapter_main)
-
-		
-		# animation
-		self.fade_animation = QPropertyAnimation(self, 'windowOpacity')
-		self.fade_animation.setDuration(500)
-		self.fade_animation.setStartValue(0.0)
-		self.fade_animation.setEndValue(1.0)
-		self.setWindowOpacity(0.0)
 
 		self.setCentralWidget(self.center)
 		self.setWindowTitle("Happypanda")
@@ -469,6 +460,7 @@ class AppWindow(QMainWindow):
 		self.move_listener.connect(
 			lambda: self.data_fetch_spinner.update_move(
 				QPoint(self.pos().x()+self.width()-70, self.pos().y()+self.height()-70)))
+		
 		self.manga_list_view.gallery_model.ADD_MORE.connect(self.data_fetch_spinner.show)
 		self.manga_list_view.gallery_model.db_emitter.START.connect(self.data_fetch_spinner.show)
 		self.manga_list_view.gallery_model.ADDED_ROWS.connect(self.data_fetch_spinner.hide)
@@ -710,6 +702,8 @@ class AppWindow(QMainWindow):
 						def add_gallery(gallery_list):
 							def append_to_model(x):
 								self.manga_list_view.sort_model.insertRows(x, None, len(x))
+								self.manga_list_view.sort_model.init_search(
+									self.manga_list_view.sort_model.current_term)
 
 							class A(QObject):
 								done = pyqtSignal()
@@ -874,7 +868,6 @@ class AppWindow(QMainWindow):
 		return super().moveEvent(event)
 
 	def showEvent(self, event):
-		self.fade_animation.start()
 		return super().showEvent(event)
 
 	def closeEvent(self, event):

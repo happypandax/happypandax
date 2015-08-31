@@ -1,4 +1,4 @@
-﻿#"""
+#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -415,6 +415,7 @@ class SortFilterModel(QSortFilterProxyModel):
 		super().__init__(parent)
 		self._data = gui_constants.GALLERY_DATA
 		self._search_ready = False
+		self.current_term = ''
 
 	def fetchMore(self, index):
 		return super().fetchMore(index)
@@ -444,6 +445,7 @@ class SortFilterModel(QSortFilterProxyModel):
 		"""
 		Receives a search term and initiates a search
 		"""
+		self.current_term = term
 		self._DO_SEARCH.emit(term)
 
 	def filterAcceptsRow(self, source_row, parent_index):
@@ -452,7 +454,10 @@ class SortFilterModel(QSortFilterProxyModel):
 			if index.isValid():
 				if self._search_ready:
 					gallery = index.data(Qt.UserRole+1)
-					return self.gallery_search.result[gallery.id]
+					try:
+						return self.gallery_search.result[gallery.id]
+					except KeyError:
+						pass
 				else:
 					return True
 		return False
@@ -1483,6 +1488,7 @@ class MangaView(QListView):
 		if not index:
 			dialog = gallerydialog.GalleryDialog(self.parent_widget)
 			dialog.SERIES.connect(self.sort_model.addRows)
+			dialog.SERIES.connect(lambda: self.sort_model.init_search(self.sort_model.current_term))
 		else:
 			dialog = gallerydialog.GalleryDialog(self.parent_widget, [index])
 			dialog.SERIES_EDIT.connect(self.replace_edit_gallery)
