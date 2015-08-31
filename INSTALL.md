@@ -18,18 +18,23 @@ Download from here https://www.python.org/downloads/
 # Linux
 1. Install these dependencies:
   - Qt5 (Install this first) >= 5.4
-    + sudo pacman -S qt5-base ('apt-get install' on Ubuntu)
+    + sudo pacman -S qt5-base ('apt-get install qt5-default' on Ubuntu)
   - requests >= 2.6.0 & BeautifulSoup 4(PyPi)
     + Python 3.4 should've included pip on install. Incase it didn't: 'sudo pacman -S pip3'
     + To install 'requests': pip3 install requests
-    + To install 'BeautifulSoup 4': pip3 install bs4
+    + To install 'BeautifulSoup 4': pip3 install beautifulsoup4
     + To install 'scandir': pip3 install scandir
+    + To install 'rarfile': pip3 install rarfile
+    + To install 'watchdog': pip3 install watchdog
   - PyQt5
-    + I'm pretty sure you can install this through pip3, but if not: sudo pacman -S python-pyqt5 ('apt-get install python-pyqt5' on Ubuntu)
+    + I'm pretty sure you can install this through pip3, but if not: sudo pacman -S python-pyqt5 ('apt-get install python3-pyqt5' on Ubuntu)
+    + apt-get install PyQt5
+    + apt-get install python3-pyqt5
+    + apt-get install python3-pyqt5.qtsql
     
 2. Now go where you want happypanda to be downloaded (E.g. 'cd ~'), and write: git clone https://github.com/Pewpews/happypanda.git
   - If it fails with something like 'unrecognized command 'git'' then do: sudo pacman -S git (apt-get install git on Ubuntu), and try again
-3. Now enter the cloned directory (should be named 'happypanda') and write: python3 main.py
+3. Now enter the cloned directory (should be named 'happypanda') then in 'version' folder, and write: python3 main.py
 4. The program should now be running
 
 # Windows
