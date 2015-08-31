@@ -1,3 +1,19 @@
+*Happypanda v0.23*
+- Stability and perfomance increase for very large libraries
+	+ Instant startup: Galleries are now lazily loaded
+	+ Application now supports very large galleries (tested with 10k galleries)
+	+ Gallery searching will now scale with amount of galleries (means, no freezes when searching)
+	+ Same with adding new galleries.
+- The gallery window appearing when you click on a gallery is now interactable
+	+ Clicking on a link will open it in your default browser
+	+ Clicking on a tag will search for the tag
+- Added some animation and a spinner
+- Fixed bugs:
+	+ Fixed critical bug where slected galleries were not mapped properly. (Which sometimes resulted in wrong galleries being removed)
+	+ Fixed a bug where pressing CTRL + A to select all galleries would tell that i has selected the total amount of galleries multipled by 3
+	+ Fixed a bug where the notificationbar would sometiems not hide itself
+	+ & other minor bugs
+
 *Happypanda v0.22*
 - Added support for .rar files.
 	+ To enable rar support, specify the path to unrar in Settings -> Application -> General. Follow the instructions for your OS.
