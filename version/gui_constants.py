@@ -1,4 +1,4 @@
-﻿#This file is part of Happypanda.
+#This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
 #the Free Software Foundation, either version 2 of the License, or
@@ -15,7 +15,7 @@ import settings
 """Contains constants to be used by several modules"""
 
 # Version number
-vs  = '0.22'
+vs  = '0.23'
 DEBUG = False
 
 get = settings.get

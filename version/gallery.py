@@ -163,8 +163,8 @@ class GallerySearch(QObject):
 	FINISHED = pyqtSignal()
 	def __init__(self, data):
 		super().__init__()
-		self._data = []
-
+		self._data = data
+		self.result = {}
 		# filtering
 		self.fav = False
 		self.tags = {}
@@ -177,10 +177,6 @@ class GallerySearch(QObject):
 	def set_data(self, new_data):
 		self._data = new_data
 		self.result = {g.id: True for g in self._data}
-
-	def setup_search(self):
-		self.result = {g.id: True for g in self._data}
-		self.FINISHED.emit()
 
 	def set_fav(self, new_fav):
 		self.fav = new_fav
@@ -265,7 +261,6 @@ class GallerySearch(QObject):
 		for gallery in self._data:
 			allow = False
 			if self.fav:
-				print('fav')
 				if gallery.fav == 1:
 					s = do_search()
 					if s:
@@ -274,7 +269,6 @@ class GallerySearch(QObject):
 					if self.allow_all: # allowing all FAVS
 						allow = True
 			else:
-				print('not fav')
 				s = do_search()
 				if s:
 					allow = return_searched(s)
@@ -366,51 +360,51 @@ class GallerySearch(QObject):
 		self.test()
 		self.FINISHED.emit()
 
-	def search(self, term):
-		term = ' '.join(term.lower().split())
-		terms = utils.get_terms(term)
-		self.excludes = []
+	#def search(self, term):
+	#	term = ' '.join(term.lower().split())
+	#	terms = utils.get_terms(term)
+	#	self.excludes = []
 
-		def remove_abs_terms(term):
-			if term.startswith(('title:'):
-				term = term[6:]
-			elif term.startswith(('artist:')):
-				term = term[7:]
-			return term
-		d_terms = {}
-		# get excludes, title, artist
-		for t in terms:
-			if t[0] == '-':
-				term = t[1:]
-				self.excludes.append(remove_abs_terms(term))
-				continue
-			if t.startswith('title:'):
-				term = t[6:]
-				self.title = term
-				continue
-			if t.startswith('artist:'):
-				term = t[7:]
-				self.artist = term
-				continue
+	#	def remove_abs_terms(term):
+	#		if term.startswith(('title:')):
+	#			term = term[6:]
+	#		elif term.startswith(('artist:')):
+	#			term = term[7:]
+	#		return term
+	#	d_terms = {}
+	#	# get excludes, title, artist
+	#	for t in terms:
+	#		if t[0] == '-':
+	#			term = t[1:]
+	#			self.excludes.append(remove_abs_terms(term))
+	#			continue
+	#		if t.startswith('title:'):
+	#			term = t[6:]
+	#			self.title = term
+	#			continue
+	#		if t.startswith('artist:'):
+	#			term = t[7:]
+	#			self.artist = term
+	#			continue
 
-			d_terms[t] = False
+	#		d_terms[t] = False
 
-	def s_text(self, list_of_text, text_to_test):
-		valid = []
-		text = text_to_test.lower()
-		for t in list_of_text:
-			t = t.lower()
-			if t in text:
-				valid.append(True)
-			else:
-				valid.append(False)
-		if valid and all(valid):
-			return True
-		else:
-			return False
+	#def s_text(self, list_of_text, text_to_test):
+	#	valid = []
+	#	text = text_to_test.lower()
+	#	for t in list_of_text:
+	#		t = t.lower()
+	#		if t in text:
+	#			valid.append(True)
+	#		else:
+	#			valid.append(False)
+	#	if valid and all(valid):
+	#		return True
+	#	else:
+	#		return False
 
-	def s_tags(self, tags, excludes):
-		return True
+	#def s_tags(self, tags, excludes):
+	#	return True
 
 class SortFilterModel(QSortFilterProxyModel):
 	ROWCOUNT_CHANGE = pyqtSignal()
@@ -420,20 +414,7 @@ class SortFilterModel(QSortFilterProxyModel):
 	def __init__(self, parent=None):
 		super().__init__(parent)
 		self._data = gui_constants.GALLERY_DATA
-
-		self.allow_all = True
-		self.excludes = []
-		self.gallery_search = GallerySearch(self._data)
-		self.gallery_search.FINISHED.connect(self.invalidateFilter)
-		self.gallery_search.FINISHED.connect(lambda: self.ROWCOUNT_CHANGE.emit())
-		self.gallery_search.FINISHED.connect(lambda: print('invalidating'))
-		self.gallery_search.FINISHED.connect(lambda: print(len(self.gallery_search._data)))
-		self.search_thread = QThread()
-		self.gallery_search.moveToThread(self.search_thread)
-		self._DO_SEARCH.connect(self.gallery_search.search)
-		self._CHANGE_SEARCH_DATA.connect(self.gallery_search.set_data)
-		self._CHANGE_FAV.connect(self.gallery_search.set_fav)
-		self.search_thread.start()
+		self._search_ready = False
 
 	def fetchMore(self, index):
 		return super().fetchMore(index)
@@ -446,22 +427,34 @@ class SortFilterModel(QSortFilterProxyModel):
 		self._CHANGE_FAV.emit(False)
 		self._DO_SEARCH.emit('')
 
+	def setup_search(self):
+		if not self._search_ready:
+			self.gallery_search = GallerySearch(self._data)
+			self.gallery_search.FINISHED.connect(self.invalidateFilter)
+			self.gallery_search.FINISHED.connect(lambda: self.ROWCOUNT_CHANGE.emit())
+			self.search_thread = QThread()
+			self.gallery_search.moveToThread(self.search_thread)
+			self.search_thread.start()
+			self._DO_SEARCH.connect(self.gallery_search.search)
+			self._CHANGE_SEARCH_DATA.connect(self.gallery_search.set_data)
+			self._CHANGE_FAV.connect(self.gallery_search.set_fav)
+			self._search_ready = True
+
 	def init_search(self, term=''):
 		"""
 		Receives a search term and initiates a search
 		"""
-		print(self.search_thread.isRunning())
 		self._DO_SEARCH.emit(term)
 
 	def filterAcceptsRow(self, source_row, parent_index):
 		if self.sourceModel():
 			index = self.sourceModel().index(source_row, 0, parent_index)
 			if index.isValid():
-				gallery = index.data(Qt.UserRole+1)
-				try:
+				if self._search_ready:
+					gallery = index.data(Qt.UserRole+1)
 					return self.gallery_search.result[gallery.id]
-				except KeyError:
-					pass
+				else:
+					return True
 		return False
 	
 	def change_model(self, model):
@@ -773,7 +766,6 @@ class GalleryModel(QAbstractTableModel):
 			self._data_count += len(list_of_gallery)
 		self.beginInsertRows(QModelIndex(), position, position + rows - 1)
 		for pos, gallery in enumerate(list_of_gallery, 1):
-			print('adding to model')
 			self._data.append(gallery)
 		self.endInsertRows()
 		gallerydb.add_method_queue(self.db_emitter.update_count, True)
@@ -1144,7 +1136,7 @@ class MangaView(QListView):
 		self.setSelectionBehavior(self.SelectItems)
 		self.setSelectionMode(self.ExtendedSelection)
 		self.gallery_model = GalleryModel(parent)
-		self.gallery_model.ADDED_ROWS.connect(self.sort_model.gallery_search.setup_search)
+		self.gallery_model.db_emitter.DONE.connect(self.sort_model.setup_search)
 		self.sort_model.change_model(self.gallery_model)
 		self.sort_model.sort(0)
 		self.sort_model.ROWCOUNT_CHANGE.connect(self.gallery_model.ROWCOUNT_CHANGE.emit)
@@ -1229,7 +1221,6 @@ class MangaView(QListView):
 			log_i('Removing {} galleries'.format(len(gallery_list)))
 			self.gallery_model.REMOVING_ROWS = True
 			for index in index_list:
-				print(type(index), index.row())
 				gallery = index.data(Qt.UserRole+1)
 				gallery_list.append(gallery)
 				log_i('Attempt to remove: {} by {}'.format(gallery.title.encode(),

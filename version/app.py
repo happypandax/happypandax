@@ -94,11 +94,8 @@ class AppWindow(QMainWindow):
 		self.watchers.gallery_handler.MOVED_SIGNAL.connect(moved)
 		self.watchers.gallery_handler.DELETED_SIGNAL.connect(deleted)
 
-		print('hey!')
 		def scan_for_new_galleries():
-			print('scanning')
 			if gui_constants.LOOK_NEW_GALLERY_STARTUP and not gui_constants.LOOKED_NEW_GALLERY_STARTUP:
-				print('accepted')
 				gui_constants.LOOKED_NEW_GALLERY_STARTUP = True
 				self.notification_bar.add_text("Looking for new galleries...")
 				try:
@@ -191,6 +188,8 @@ class AppWindow(QMainWindow):
 			scan_for_new_galleries()
 		else:
 			self.manga_list_view.gallery_model.db_emitter.DONE.connect(scan_for_new_galleries)
+			self.manga_list_view.gallery_model.db_emitter.DONE.connect(lambda: print('done'))
+
 
 	def start_up(self):
 		def normalize_first_time():
@@ -302,7 +301,6 @@ class AppWindow(QMainWindow):
 		log_d('Create notificationbar: OK')
 
 		log_d('Window Create: OK')
-		print('Ok')
 
 	def _check_update(self):
 		class upd_chk(QObject):
@@ -436,7 +434,6 @@ class AppWindow(QMainWindow):
 	def stat_row_info(self):
 		r = self.manga_list_view.model().rowCount()
 		t = self.manga_list_view.gallery_model.db_emitter.count
-		print('row change:', r)
 		self.stat_info.setText("Loaded {} of {} ".format(r, t))
 
 	def manga_display(self):
@@ -706,13 +703,11 @@ class AppWindow(QMainWindow):
 			loading.show()
 
 			def finished(status):
-				print('hi')
 				def hide_loading():
 					loading.hide()
 				if status:
 					if len(status) != 0:
 						def add_gallery(gallery_list):
-							print('add g')
 							def append_to_model(x):
 								self.manga_list_view.sort_model.insertRows(x, None, len(x))
 

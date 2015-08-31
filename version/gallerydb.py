@@ -1,4 +1,4 @@
-﻿#"""
+#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -1388,7 +1388,7 @@ class DatabaseEmitter(QObject):
 	def __init__(self):
 		super().__init__()
 		self._current_data = gui_constants.GALLERY_DATA
-		self._fetch_count = 100
+		self._fetch_count = 200
 		self._offset = 0
 		self._fetching = False
 		self.count = 0
@@ -1404,12 +1404,15 @@ class DatabaseEmitter(QObject):
 			if oldc != self.count:
 				self.COUNT_CHANGE.emit()
 			self._fetching = False
+			self._finished = False
 
 	def can_fetch_more(self):
 		if len(self._current_data) < self.count:
 			return True
 		else:
-			self.DONE.emit()
+			if not self._finished:
+				self.DONE.emit()
+				self._finished = True
 			return False
 	
 	def fetch_more(self):
