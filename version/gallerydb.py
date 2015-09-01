@@ -1,4 +1,4 @@
-#"""
+﻿#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -769,8 +769,9 @@ class TagDB:
 	del_gallery_tags_mapping <- Deletes the tags and gallery mappings with corresponding series_ids from DB
 	get_gallery_tags -> Returns all tags and namespaces found for the given series_id;
 	get_tag_gallery -> Returns all galleries with the given tag
-	get_ns_tags -> Returns all tags linked to the given namespace
-	get_ns_tags_gallery -> Returns all galleries linked to the namespace tags
+	get_ns_tags -> "Returns a dict with namespace as key and list of tags as value"
+	get_ns_tags_to_gallery -> Returns all galleries linked to the namespace tags. Receives a dict like this: {"namespace":["tag1","tag2"]}
+	get_tags_from_namespace -> Returns all galleries linked to the namespace
 	add_tags <- Adds the given dict_of_tags to the given series_id
 	modify_tags <- Modifies the given tags
 	get_all_tags -> Returns all tags in database
@@ -813,7 +814,7 @@ class TagDB:
 	def get_gallery_tags(series_id):
 		"Returns all tags and namespaces found for the given series_id"
 		assert isinstance(series_id, int), "Please provide a valid gallery ID"
-		executing = [["SELECT tags_mappings_id FROM series_tags_map WHERE series_id=?",
+		executing = [["SELECT tags_mappings_id FROM series_tags_map WHEsqRE series_id=?",
 				(series_id,)]]
 		CommandQueue.put(executing)
 		cursor = ResultQueue.get()
@@ -967,14 +968,21 @@ class TagDB:
 		pass
 
 	@staticmethod
-	def get_ns_tags(namespace):
-		"Returns all tags linked to the given namespace"
+	def get_ns_tags():
+		"Returns a dict of all tags with namespace as key and list of tags as value"
 		pass
 
 	@staticmethod
-	def get_ns_tags_gallery(ns_tags):
-		"""Returns all galleries linked to the namespace tags.
-		Receives a dict like this: {"namespace":["tag1","tag2"]}"""
+	def get_tags_from_namespace(namespace):
+		"Returns a dict with namespace as key and list of tags as value"
+		pass
+
+	@staticmethod
+	def get_ns_tags_to_gallery(ns_tags):
+		"""
+		Returns all galleries linked to the namespace tags.
+		Receives a dict like this: {"namespace":["tag1","tag2"]}
+		"""
 		pass
 
 	@staticmethod
