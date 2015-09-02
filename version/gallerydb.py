@@ -76,6 +76,7 @@ def process_methods():
 
 		if not no_return:
 			method_return.put(r)
+		method_queue.task_done()
 
 method_queue_thread = threading.Thread(name='Method Queue Thread', target=process_methods,
 									   daemon=True)

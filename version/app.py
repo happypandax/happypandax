@@ -1,4 +1,4 @@
-#"""
+﻿#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -49,6 +49,9 @@ class AppWindow(QMainWindow):
 	move_listener = pyqtSignal()
 	def __init__(self):
 		super().__init__()
+		gui_constants.GENERAL_THREAD = QThread(self)
+		gui_constants.GENERAL_THREAD.finished(gui_constants.GENERAL_THREAD.deleteLater)
+		gui_constants.GENERAL_THREAD.start()
 		self.setAcceptDrops(True)
 		self.initUI()
 		self.start_up()
@@ -892,6 +895,16 @@ class AppWindow(QMainWindow):
 			log_d('Flush temp on exit: OK')
 		except:
 			log.exception('Flush temp on exit: FAIL')
+
+		# check if there is db activity
+		class DBActivityChecker(QObject):
+			FINISHED = pyqtSignal()
+			def __init__(self, **kwargs):
+				super().__init__(**kwargs)
+				gallerydb.method_queue.join()
+				self.FINISHED.emit()
+
+		gui_constants.GENERAL_THREAD.exit()
 		log_d('Normal Exit App: OK')
 		super().closeEvent(event)
 		#app = QApplication.instance()

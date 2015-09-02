@@ -1,4 +1,4 @@
-#This file is part of Happypanda.
+﻿#This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
 #the Free Software Foundation, either version 2 of the License, or
@@ -10,9 +10,10 @@
 #You should have received a copy of the GNU General Public License
 #along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Contains constants to be used by several modules"""
+
 import os, sys
 import settings
-"""Contains constants to be used by several modules"""
 
 # Version number
 vs  = '0.23'
@@ -65,6 +66,7 @@ DATE_ADDED = 10
 # Application
 SYSTEM_TRAY = None
 NOTIF_BAR = None # HACK: Cause of thread warnings!!
+GENERAL_THREAD = None
 
 # image paths
 SPINNER_PATH = os.path.join(static_dir, "spinner.gif")
