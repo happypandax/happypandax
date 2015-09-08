@@ -190,12 +190,3 @@ TagText {
     padding-right: 3px;
 
 }
-
-/*Window > QPlainTextEdit, QTextEdit, QGraphicsView {
-	background-color: #303030;
-	color: white;
-	border: none;
-
-QGraphicsTextItem {
-	color:white;
-} */

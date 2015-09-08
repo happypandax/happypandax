@@ -143,14 +143,23 @@ class ToolbarButton(QPushButton):
 		self._font_metrics = self.fontMetrics()
 		if txt:
 			self.setText(txt)
-		self.selected = False
+		self._selected = False
+
+	@property
+	def selected(self):
+		return self._selected
+
+	@selected.setter
+	def selected(self, b):
+		self._selected = b
+		self.update()
 
 	def paintEvent(self, event):
 		assert isinstance(event, QPaintEvent)
 		painter = QPainter(self)
 		painter.setPen(QColor(164,164,164,120))
 		painter.setBrush(Qt.NoBrush)
-		if self.selected:
+		if self._selected:
 			painter.setBrush(QBrush(QColor(164,164,164,120)))
 		#painter.setPen(Qt.NoPen)
 		painter.setRenderHint(painter.Antialiasing)

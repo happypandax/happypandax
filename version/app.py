@@ -510,17 +510,15 @@ class AppWindow(QMainWindow):
 
 	def favourite_display(self):
 		"Switches to favourite display"
-		if self.display.currentIndex() == self.m_l_view_index:
-			self.manga_list_view.sort_model.fav_view()
-		else:
-			self.manga_table_view.sort_model.fav_view()
+		self.manga_table_view.sort_model.fav_view()
+		self.favourite_btn.selected = True
+		self.library_btn.selected = False
 
 	def catalog_display(self):
 		"Switches to catalog display"
-		if self.display.currentIndex() == self.m_l_view_index:
-			self.manga_list_view.sort_model.catalog_view()
-		else:
-			self.manga_table_view.sort_model.catalog_view()
+		self.manga_table_view.sort_model.catalog_view()
+		self.library_btn.selected = True
+		self.favourite_btn.selected = False
 
 	def settings(self):
 		sett = settingsdialog.SettingsDialog(self)
@@ -542,14 +540,15 @@ class AppWindow(QMainWindow):
 		spacer_start.setFixedSize(QSize(10, 1))
 		self.toolbar.addWidget(spacer_start)
 
-		favourite = misc.ToolbarButton(self.toolbar, 'Favorites')
-		self.toolbar.addWidget(favourite)
-		favourite.clicked.connect(self.favourite_display) #need lambda to pass extra args
+		self.favourite_btn = misc.ToolbarButton(self.toolbar, 'Favorites')
+		self.toolbar.addWidget(self.favourite_btn)
+		self.favourite_btn.clicked.connect(self.favourite_display) #need lambda to pass extra args
 
-		library = misc.ToolbarButton(self.toolbar, 'Library')
-		self.toolbar.addWidget(library)
-		library.clicked.connect(self.catalog_display) #need lambda to pass extra args
-		library.selected = True
+		self.library_btn = misc.ToolbarButton(self.toolbar, 'Library')
+		self.library_btn.setFixedWidth(60)
+		self.toolbar.addWidget(self.library_btn)
+		self.library_btn.clicked.connect(self.catalog_display) #need lambda to pass extra args
+		self.library_btn.selected = True
 
 		self.toolbar.addSeparator()
 
@@ -645,9 +644,10 @@ class AppWindow(QMainWindow):
 		spacer_end.setFixedSize(QSize(10, 1))
 		self.toolbar.addWidget(spacer_end)
 
-		settings_widget = misc.ToolbarButton(self.toolbar, 'Settings')
-		self.toolbar.addWidget(settings_widget)
-		settings_widget.clicked.connect(self.settings)
+		settings_act = QToolButton(self.toolbar)
+		settings_act.setIcon(QIcon(gui_constants.SETTINGS_PATH))
+		settings_act.clicked.connect(self.settings)
+		self.toolbar.addWidget(settings_act)
 
 		spacer_end2 = QWidget() # aligns About action properly
 		spacer_end2.setFixedSize(QSize(5, 1))
