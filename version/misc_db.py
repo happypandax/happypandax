@@ -11,7 +11,7 @@
 #along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 
 from PyQt5.QtWidgets import (QTreeWidget, QTreeWidgetItem, QWidget,
-							 QVBoxLayout, QToolBar, QAction)
+							 QVBoxLayout, QTabWidget, QAction)
 from PyQt5.QtCore import Qt
 
 import gallerydb
@@ -20,15 +20,25 @@ class TagsTreeView(QWidget):
 	"""
 	
 	"""
-	def __init__(self, parent):
-		super().__init__(parent)
+	def __init__(self, parent, window=False):
+		if window:
+			super().__init__(parent, Qt.Window)
+		else:
+			super().__init__(parent)
 		main_layout = QVBoxLayout(self)
-		tool_bar = QToolBar(self)
-		main_layout.addWidget(tool_bar)
-		tool_bar.addAction('First')
-		self.tree_widget = QTreeWidget(self)
+		tabbar = QTabWidget(self)
+		main_layout.addWidget(tabbar)
+		self.tags_tree = QTreeWidget(self)
+		tabbar.addTab(self.tags_tree, 'Tags')
+		self.graphs
 
-	def make_window(self):
-		self.hide()
-		self.setWindowFlags(self.windowFlags()|Qt.Window)
-		self.show()
+	def setup_tags(self):
+		pass
+
+	def setup_graphs(self):
+		pass
+
+	def setup_about_db(self):
+		pass
+
+
