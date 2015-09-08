@@ -40,12 +40,12 @@ user_stylesheet_path = ""
 FIRST_TIME_LEVEL = get(3, 'Application', 'first time level', int)
 
 # sizes
-MAIN_W = 1029 # main window
+MAIN_W = 1061 # main window
 MAIN_H = 650 # main window
-GRIDBOX_H_SIZE = 230
+GRIDBOX_H_SIZE = 210
 GRIDBOX_W_SIZE = GRIDBOX_H_SIZE//1.40 #1.47
 GRIDBOX_LBL_H = 60
-GRIDBOX_H_SIZE += GRIDBOX_LBL_H - 10
+GRIDBOX_H_SIZE += GRIDBOX_LBL_H
 THUMB_H_SIZE = 200
 THUMB_W_SIZE = 143
 
@@ -69,6 +69,7 @@ NOTIF_BAR = None # HACK: Cause of thread warnings!!
 GENERAL_THREAD = None
 
 # image paths
+SORT_PATH = os.path.join(static_dir, "sort.png")
 SPINNER_PATH = os.path.join(static_dir, "spinner.gif")
 GALLERY_ICO_PATH = os.path.join(static_dir, "gallery_ico.ico")
 GALLERY_DEF_ICO_PATH = os.path.join(static_dir, "gallery_def_ico.ico")

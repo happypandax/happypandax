@@ -815,7 +815,7 @@ class TagDB:
 	def get_gallery_tags(series_id):
 		"Returns all tags and namespaces found for the given series_id"
 		assert isinstance(series_id, int), "Please provide a valid gallery ID"
-		executing = [["SELECT tags_mappings_id FROM series_tags_map WHEsqRE series_id=?",
+		executing = [["SELECT tags_mappings_id FROM series_tags_map WHERE series_id=?",
 				(series_id,)]]
 		CommandQueue.put(executing)
 		cursor = ResultQueue.get()
@@ -842,7 +842,10 @@ class TagDB:
 					executing = [["SELECT tag FROM tags WHERE tag_id=?", (row['tag_id'],)]]
 					CommandQueue.put(executing)
 					c = ResultQueue.get()
-					tag = c.fetchone()['tag']
+					try:
+						tag = c.fetchone()['tag']
+					except TypeError:
+						continue
 
 					# add them to dict
 					if not namespace in tags:

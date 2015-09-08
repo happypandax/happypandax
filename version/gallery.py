@@ -1,4 +1,4 @@
-#"""
+﻿#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -51,7 +51,7 @@ log_c = log.critical
 class GalleryMetaPopup(QFrame):
 	def __init__(self, parent):
 		super().__init__(parent, Qt.Window | Qt.FramelessWindowHint)
-		self.setFrameShape(QFrame.StyledPanel)
+		self.setFrameShape(QFrame.NoFrame)
 		self.setAttribute(Qt.WA_ShowWithoutActivating)
 		self.setAttribute(Qt.WA_DeleteOnClose)
 		self.initUI()
@@ -93,8 +93,8 @@ class GalleryMetaPopup(QFrame):
 		tag_widget = QWidget(self)
 		self.tags_scroll.setWidget(tag_widget)
 		self.tags_scroll.setWidgetResizable(True)
-		self.tags_scroll.setSizePolicy(QSizePolicy.MinimumExpanding,
-								 QSizePolicy.MinimumExpanding)
+		self.tags_scroll.setSizePolicy(QSizePolicy.Preferred,
+								 QSizePolicy.Preferred)
 		self.tags = QFormLayout(tag_widget)
 
 
@@ -1370,12 +1370,6 @@ class MangaView(QListView):
 		if len(select_indexes) > 1:
 			selected = True
 
-		def asc_desc():
-			if self.sort_model.sortOrder() == Qt.AscendingOrder:
-				self.sort_model.sort(0, Qt.DescendingOrder)
-			else:
-				self.sort_model.sort(0, Qt.AscendingOrder)
-
 		if index.isValid():
 			self.manga_delegate.CONTEXT_ON = True
 			if selected:
@@ -1384,46 +1378,6 @@ class MangaView(QListView):
 			else:
 				menu = misc.GalleryMenu(self, index, self.gallery_model,
 							   self.parent_widget)
-			handled = True
-		else:
-			menu = QMenu(self)
-			add_gallery = QAction("&Add new Gallery...", menu,
-						triggered = self.SERIES_DIALOG.emit)
-			menu.addAction(add_gallery)
-			def set_current_sort(act, key):
-				if self.current_sort == key:
-					act.setChecked(True)
-			sort_main = QAction("&Sort by", menu)
-			menu.addAction(sort_main)
-			sort_menu = QMenu()
-			sort_main.setMenu(sort_menu)
-			sort_actions = QActionGroup(sort_menu, exclusive=True)
-			asc_desc_act = QAction("Asc/Desc", sort_menu)
-			asc_desc_act.triggered.connect(asc_desc)
-			s_title = sort_actions.addAction(QAction("Title", sort_actions, checkable=True))
-			s_title.triggered.connect(functools.partial(self.sort, 'title'))
-			set_current_sort(s_title, 'title')
-			s_artist = sort_actions.addAction(QAction("Author", sort_actions, checkable=True))
-			s_artist.triggered.connect(functools.partial(self.sort, 'artist'))
-			set_current_sort(s_artist, 'artist')
-			s_date = sort_actions.addAction(QAction("Date Added", sort_actions, checkable=True))
-			s_date.triggered.connect(functools.partial(self.sort, 'date_added'))
-			set_current_sort(s_date, 'date_added')
-			s_pub_d = sort_actions.addAction(QAction("Date Published", sort_actions, checkable=True))
-			s_pub_d.triggered.connect(functools.partial(self.sort, 'pub_date'))
-			set_current_sort(s_pub_d, 'pub_date')
-			s_times_read = sort_actions.addAction(QAction("Read Count", sort_actions, checkable=True))
-			s_times_read.triggered.connect(functools.partial(self.sort, 'times_read'))
-			set_current_sort(s_times_read, 'times_read')
-
-			sort_menu.addAction(asc_desc_act)
-			sort_menu.addSeparator()
-			sort_menu.addAction(s_title)
-			sort_menu.addAction(s_artist)
-			sort_menu.addAction(s_date)
-			sort_menu.addAction(s_pub_d)
-			sort_menu.addAction(s_times_read)
-
 			handled = True
 
 		if handled:

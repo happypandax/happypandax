@@ -1,4 +1,4 @@
-#"""
+﻿#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -16,10 +16,10 @@ from datetime import datetime
 
 from PyQt5.QtCore import (Qt, QDate, QPoint, pyqtSignal, QThread,
 						  QTimer, QObject, QSize, QRect, QFileInfo,
-						  QMargins, QPropertyAnimation)
+						  QMargins, QPropertyAnimation, QRectF)
 from PyQt5.QtGui import (QTextCursor, QIcon, QMouseEvent, QFont,
 						 QPixmapCache, QPalette, QPainter, QBrush,
-						 QColor, QPen, QPixmap, QMovie)
+						 QColor, QPen, QPixmap, QMovie, QPaintEvent)
 from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QVBoxLayout, QHBoxLayout,
 							 QDialog, QGridLayout, QLineEdit,
@@ -34,7 +34,7 @@ from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QGridLayout, QScrollArea, QLayout, QButtonGroup,
 							 QRadioButton, QFileIconProvider, QFontDialog,
 							 QColorDialog, QScrollArea, QSystemTrayIcon,
-							 QMenu, QGraphicsBlurEffect)
+							 QMenu, QGraphicsBlurEffect, QActionGroup)
 
 from utils import (tag_to_string, tag_to_dict, title_parser, ARCHIVE_FILES,
 					 ArchiveFile, IMG_FILES, CreateArchiveFail)
@@ -60,12 +60,11 @@ def clearLayout(layout):
 			elif child.layout() is not None:
 				clearLayout(child.layout())
 
-class TransparentWidget(QWidget):
+class BaseMoveWidget(QWidget):
 	def __init__(self, parent=None, **kwargs):
 		move_listener = kwargs.pop('move_listener', True)
 		super().__init__(parent, **kwargs)
 		self.parent_widget = parent
-		self.setAttribute(Qt.WA_TranslucentBackground)
 		self.setAttribute(Qt.WA_DeleteOnClose)
 		if parent and move_listener:
 			try:
@@ -80,6 +79,114 @@ class TransparentWidget(QWidget):
 		if self.parent_widget:
 			self.move(self.parent_widget.window().frameGeometry().center() -\
 				self.window().rect().center())
+
+class SortMenu(QMenu):
+	def __init__(self, parent, mangaview):
+		super().__init__(parent)
+		self.manga_view = mangaview
+
+		self.sort_actions = QActionGroup(self, exclusive=True)
+		asc_desc_act = QAction("Asc/Desc", self)
+		asc_desc_act.triggered.connect(self.asc_desc)
+		s_title = self.sort_actions.addAction(QAction("Title", self.sort_actions, checkable=True))
+		s_title.triggered.connect(functools.partial(self.manga_view.sort, 'title'))
+		s_artist = self.sort_actions.addAction(QAction("Author", self.sort_actions, checkable=True))
+		s_artist.triggered.connect(functools.partial(self.manga_view.sort, 'artist'))
+		s_date = self.sort_actions.addAction(QAction("Date Added", self.sort_actions, checkable=True))
+		s_date.triggered.connect(functools.partial(self.manga_view.sort, 'date_added'))
+		s_pub_d = self.sort_actions.addAction(QAction("Date Published", self.sort_actions, checkable=True))
+		s_pub_d.triggered.connect(functools.partial(self.manga_view.sort, 'pub_date'))
+		s_times_read = self.sort_actions.addAction(QAction("Read Count", self.sort_actions, checkable=True))
+		s_times_read.triggered.connect(functools.partial(self.manga_view.sort, 'times_read'))
+
+		self.addAction(asc_desc_act)
+		self.addSeparator()
+		self.addAction(s_title)
+		self.addAction(s_artist)
+		self.addAction(s_date)
+		self.addAction(s_pub_d)
+		self.addAction(s_times_read)
+
+		self.set_current_sort()
+
+	def set_current_sort(self):
+		def check_key(act, key):
+			if self.manga_view.current_sort == key:
+				act.setChecked(True)
+
+		for act in self.sort_actions.actions():
+			if act.text() == 'Title':
+				check_key(act, 'title')
+			elif act.text() == 'Artist':
+				check_key(act, 'artist')
+			elif act.text() == 'Date Added':
+				check_key(act, 'date_added')
+			elif act.text() == 'Date Published':
+				check_key(act, 'pub_date')
+			elif act.text() == 'Read Count':
+				check_key(act, 'times_read')
+
+	def asc_desc(self):
+		if self.manga_view.sort_model.sortOrder() == Qt.AscendingOrder:
+			self.manga_view.sort_model.sort(0, Qt.DescendingOrder)
+		else:
+			self.manga_view.sort_model.sort(0, Qt.AscendingOrder)
+
+	def showEvent(self, event):
+		self.set_current_sort()
+		super().showEvent(event)
+
+class ToolbarButton(QPushButton):
+	def __init__(self, parent = None, txt=''):
+		super().__init__(parent)
+		self._text = ''
+		self._font_metrics = self.fontMetrics()
+		if txt:
+			self.setText(txt)
+		self.selected = False
+
+	def paintEvent(self, event):
+		assert isinstance(event, QPaintEvent)
+		painter = QPainter(self)
+		painter.setPen(QColor(164,164,164,120))
+		painter.setBrush(Qt.NoBrush)
+		if self.selected:
+			painter.setBrush(QBrush(QColor(164,164,164,120)))
+		#painter.setPen(Qt.NoPen)
+		painter.setRenderHint(painter.Antialiasing)
+		but_rect = QRectF(2.5,2.5, self.width()-5, self.height()-5)
+		select_rect = QRectF(0,0, self.width(), self.height())
+
+		painter.drawRoundedRect(but_rect, 2.5,2.5)
+		txt_to_draw = self._font_metrics.elidedText(self._text,
+											  Qt.ElideRight, but_rect.width())
+		text_rect = QRectF(but_rect.x()+8, but_rect.y(), but_rect.width()-1.5,
+					 but_rect.height()-1.5)
+		painter.setPen(QColor('white'))
+		painter.drawText(text_rect, txt_to_draw)
+
+		if self.underMouse():
+			painter.save()
+			painter.setPen(Qt.NoPen)
+			painter.setBrush(QBrush(QColor(164,164,164,90)))
+			painter.drawRoundedRect(select_rect, 5,5)
+			painter.restore()
+
+	def setText(self, txt):
+		self._text = txt
+		self.update()
+		super().setText(txt)
+		self.adjustSize()
+
+	def text(self):
+		return self._text
+		
+
+class TransparentWidget(BaseMoveWidget):
+	def __init__(self, parent=None, **kwargs):
+		super().__init__(parent, **kwargs)
+		self.setAttribute(Qt.WA_TranslucentBackground)
+
 
 class Spinner(TransparentWidget):
 	"""

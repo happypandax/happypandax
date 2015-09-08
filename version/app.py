@@ -50,7 +50,7 @@ class AppWindow(QMainWindow):
 	def __init__(self):
 		super().__init__()
 		gui_constants.GENERAL_THREAD = QThread(self)
-		gui_constants.GENERAL_THREAD.finished(gui_constants.GENERAL_THREAD.deleteLater)
+		gui_constants.GENERAL_THREAD.finished.connect(gui_constants.GENERAL_THREAD.deleteLater)
 		gui_constants.GENERAL_THREAD.start()
 		self.setAcceptDrops(True)
 		self.initUI()
@@ -243,7 +243,11 @@ class AppWindow(QMainWindow):
 	def initUI(self):
 		self.center = QWidget()
 		self.display = QStackedLayout()
-		self.center.setLayout(self.display)
+		self._main_layout = QVBoxLayout()
+		self._main_layout.setSpacing(0)
+		self._main_layout.setContentsMargins(0,0,0,0)
+		self._main_layout.addLayout(self.display)
+		self.center.setLayout(self._main_layout)
 		# init the manga view variables
 		self.manga_display()
 		log_d('Create manga display: OK')
@@ -532,23 +536,21 @@ class AppWindow(QMainWindow):
 		self.toolbar.setFloatable(False)
 		#self.toolbar.setIconSize(QSize(20,20))
 		self.toolbar.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+		self.toolbar.setIconSize(QSize(20,20))
 
 		spacer_start = QWidget() # aligns the first actions properly
 		spacer_start.setFixedSize(QSize(10, 1))
 		self.toolbar.addWidget(spacer_start)
 
-		favourite_view_icon = QIcon(gui_constants.STAR_BTN_PATH)
-		favourite_view_action = QAction(favourite_view_icon, "Favorites", self)
-		favourite_view_action.setToolTip('Show only favourite galleries')
-		favourite_view_action.triggered.connect(self.favourite_display) #need lambda to pass extra args
-		self.toolbar.addAction(favourite_view_action)
+		favourite = misc.ToolbarButton(self.toolbar, 'Favorites')
+		self.toolbar.addWidget(favourite)
+		favourite.clicked.connect(self.favourite_display) #need lambda to pass extra args
 
-		catalog_view_icon = QIcon(gui_constants.HOME_BTN_PATH)
-		catalog_view_action = QAction(catalog_view_icon, "Library", self)
-		catalog_view_action.setToolTip('Show all your galleries')
-		#catalog_view_action.setText("Catalog")
-		catalog_view_action.triggered.connect(self.catalog_display) #need lambda to pass extra args
-		self.toolbar.addAction(catalog_view_action)
+		library = misc.ToolbarButton(self.toolbar, 'Library')
+		self.toolbar.addWidget(library)
+		library.clicked.connect(self.catalog_display) #need lambda to pass extra args
+		library.selected = True
+
 		self.toolbar.addSeparator()
 
 		gallery_menu = QMenu()
@@ -575,7 +577,6 @@ class AppWindow(QMainWindow):
 		metadata_action.triggered.connect(self.get_metadata)
 		gallery_menu.addAction(metadata_action)
 		self.toolbar.addWidget(gallery_action)
-		self.toolbar.addSeparator()
 
 		misc_action = QToolButton()
 		misc_action.setText('Misc ')
@@ -594,6 +595,13 @@ class AppWindow(QMainWindow):
 		spacer_middle = QWidget() # aligns buttons to the right
 		spacer_middle.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 		self.toolbar.addWidget(spacer_middle)
+
+
+		sort_action = QToolButton()
+		sort_action.setIcon(QIcon(gui_constants.SORT_PATH))
+		sort_action.setMenu(misc.SortMenu(self.toolbar, self.manga_list_view))
+		sort_action.setPopupMode(QToolButton.InstantPopup)
+		self.toolbar.addWidget(sort_action)
 		
 		self.grid_toggle_g_icon = QIcon(gui_constants.GRID_PATH)
 		self.grid_toggle_l_icon = QIcon(gui_constants.LIST_PATH)
@@ -606,7 +614,12 @@ class AppWindow(QMainWindow):
 		self.grid_toggle.clicked.connect(self.toggle_view)
 		self.toolbar.addWidget(self.grid_toggle)
 
+		spacer_mid2 = QWidget() # aligns About action properly
+		spacer_mid2.setFixedSize(QSize(5, 1))
+		self.toolbar.addWidget(spacer_mid2)
+
 		self.search_bar = misc.LineEdit()
+		self.search_bar.setObjectName('search_bar')
 		self.search_timer = QTimer(self)
 		self.search_timer.setSingleShot(True)
 		self.search_timer.timeout.connect(lambda: self.search(self.search_bar.text()))
@@ -625,16 +638,20 @@ class AppWindow(QMainWindow):
 		self.search_bar.setPlaceholderText("Search title, artist, namespace & tags")
 		self.search_bar.setMinimumWidth(150)
 		self.search_bar.setMaximumWidth(500)
+		self.search_bar.setFixedHeight(19)
 		self.toolbar.addWidget(self.search_bar)
-		self.toolbar.addSeparator()
-		settings_icon = QIcon(gui_constants.SETTINGS_PATH)
-		settings_action = QAction("Set&tings", self)
-		settings_action.triggered.connect(self.settings)
-		self.toolbar.addAction(settings_action)
-		
+
 		spacer_end = QWidget() # aligns About action properly
 		spacer_end.setFixedSize(QSize(10, 1))
 		self.toolbar.addWidget(spacer_end)
+
+		settings_widget = misc.ToolbarButton(self.toolbar, 'Settings')
+		self.toolbar.addWidget(settings_widget)
+		settings_widget.clicked.connect(self.settings)
+
+		spacer_end2 = QWidget() # aligns About action properly
+		spacer_end2.setFixedSize(QSize(5, 1))
+		self.toolbar.addWidget(spacer_end2)
 		self.addToolBar(self.toolbar)
 
 	def toggle_view(self):
