@@ -1154,7 +1154,9 @@ class MangaView(QListView):
 		self.sort(self.current_sort)
 		if gui_constants.DEBUG:
 			def debug_print(a):
-				print(a.data(Qt.UserRole+1))
+				pass
+				#print(a.data(Qt.UserRole+1))
+
 			self.clicked.connect(debug_print)
 
 		QScroller.grabGesture(self, QScroller.MiddleMouseButtonGesture)
@@ -1202,6 +1204,14 @@ class MangaView(QListView):
 	#		row = None
 
 	#	print('Found ', found)
+
+	def keyPressEvent(self, event):
+		if event.key() == Qt.Key_Return:
+			s_idx = self.selectedIndexes()
+			if s_idx:
+				for idx in s_idx:
+					self.doubleClicked.emit(idx)
+		return super().keyPressEvent(event)
 
 	def event(self, event):
 		assert isinstance(event, QEvent)
@@ -1528,11 +1538,13 @@ class MangaTableView(QTableView):
 	#				return True
 	#	return super().viewportEvent(event)
 
-	def refresh(self):
-		#self.gallery_model.layoutChanged.emit()
-		##self.gallery_model.populate_data() # TODO: CAUSE OF CRASH! FIX ASAP
-		#self.STATUS_BAR_MSG.emit("Refreshed")
-		pass
+	def keyPressEvent(self, event):
+		if event.key() == Qt.Key_Return:
+			s_idx = self.selectedIndexes()
+			if s_idx:
+				for idx in s_idx:
+					self.doubleClicked.emit(idx)
+		return super().keyPressEvent(event)
 
 	def remove_gallery(self, index_list, local=False):
 		self.parent_widget.manga_list_view.remove_gallery(index_list, local)
