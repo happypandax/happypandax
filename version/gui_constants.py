@@ -67,10 +67,10 @@ DATE_ADDED = 10
 SYSTEM_TRAY = None
 NOTIF_BAR = None # HACK: Cause of thread warnings!!
 GENERAL_THREAD = None
+WHEEL_SCROLL_EFFECT = 10
 
 # image paths
 SORT_PATH = os.path.join(static_dir, "sort.png")
-SPINNER_PATH = os.path.join(static_dir, "spinner.gif")
 GALLERY_ICO_PATH = os.path.join(static_dir, "gallery_ico.ico")
 GALLERY_DEF_ICO_PATH = os.path.join(static_dir, "gallery_def_ico.ico")
 GALLERY_EXT_ICO_PATH = os.path.join(static_dir, "gallery_ext_ico.ico")

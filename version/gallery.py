@@ -19,20 +19,21 @@ from PyQt5.QtCore import (Qt, QAbstractListModel, QModelIndex, QVariant,
 						  QSize, QRect, QEvent, pyqtSignal, QThread,
 						  QTimer, QPointF, QSortFilterProxyModel,
 						  QAbstractTableModel, QItemSelectionModel,
-						  QPoint, QRectF, QDate, QDateTime, QObject)
+						  QPoint, QRectF, QDate, QDateTime, QObject,
+						  QEvent, QSizeF)
 from PyQt5.QtGui import (QPixmap, QBrush, QColor, QPainter, 
 						 QPen, QTextDocument,
 						 QMouseEvent, QHelpEvent,
 						 QPixmapCache, QCursor, QPalette, QKeyEvent,
 						 QFont, QTextOption, QFontMetrics, QFontMetricsF,
-						 QTextLayout, QPainterPath)
+						 QTextLayout, QPainterPath, QScrollPrepareEvent)
 from PyQt5.QtWidgets import (QListView, QFrame, QLabel,
 							 QStyledItemDelegate, QStyle,
 							 QMenu, QAction, QToolTip, QVBoxLayout,
 							 QSizePolicy, QTableWidget, QScrollArea,
 							 QHBoxLayout, QFormLayout, QDesktopWidget,
 							 QWidget, QHeaderView, QTableView, QApplication,
-							 QMessageBox, QActionGroup)
+							 QMessageBox, QActionGroup, QScroller)
 
 import gallerydb
 import gui_constants
@@ -1155,6 +1156,8 @@ class MangaView(QListView):
 			def debug_print(a):
 				print(a.data(Qt.UserRole+1))
 			self.clicked.connect(debug_print)
+
+		QScroller.grabGesture(self, QScroller.MiddleMouseButtonGesture)
 	#	self.ti = QTimer()
 	#	self.ti.timeout.connect(self.test_)
 	#	self.ti.start(5000)
@@ -1199,6 +1202,20 @@ class MangaView(QListView):
 	#		row = None
 
 	#	print('Found ', found)
+
+	def event(self, event):
+		assert isinstance(event, QEvent)
+		if event.type() == event.ScrollPrepare:
+			scroller = QScroller.scroller(self)
+			scroller.setSnapPositionsY(gui_constants.WHEEL_SCROLL_EFFECT,
+							  0.0)
+
+			s_prep_event = QScrollPrepareEvent(e)
+			s_prep_event.setViewportSize(QSizeF(self.size()))
+			s_prep_event.setContentPosRange(QRectF(0, 0, 0, gui_constants.WHEEL_SCROLL_EFFECT))
+			s_prep_event.setContentPos(QPointF(0, 0, gui_constants.WHEEL_SCROLL_EFFECT))
+
+		return super().event(event)
 
 	def remove_gallery(self, index_list, local=False):
 		self.sort_model.setDynamicSortFilter(False)

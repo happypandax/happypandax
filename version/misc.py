@@ -16,7 +16,8 @@ from datetime import datetime
 
 from PyQt5.QtCore import (Qt, QDate, QPoint, pyqtSignal, QThread,
 						  QTimer, QObject, QSize, QRect, QFileInfo,
-						  QMargins, QPropertyAnimation, QRectF)
+						  QMargins, QPropertyAnimation, QRectF,
+						  QTimeLine)
 from PyQt5.QtGui import (QTextCursor, QIcon, QMouseEvent, QFont,
 						 QPixmapCache, QPalette, QPainter, QBrush,
 						 QColor, QPen, QPixmap, QMovie, QPaintEvent)
@@ -79,6 +80,7 @@ class BaseMoveWidget(QWidget):
 		if self.parent_widget:
 			self.move(self.parent_widget.window().frameGeometry().center() -\
 				self.window().rect().center())
+		print('updating')
 
 class SortMenu(QMenu):
 	def __init__(self, parent, mangaview):
@@ -196,58 +198,121 @@ class TransparentWidget(BaseMoveWidget):
 		super().__init__(parent, **kwargs)
 		self.setAttribute(Qt.WA_TranslucentBackground)
 
-
 class Spinner(TransparentWidget):
 	"""
-	Loading spinning overlay widget
+	Spinner widget
 	"""
 	activated = pyqtSignal()
 	deactivated = pyqtSignal()
 	about_to_show, about_to_hide = range(2)
-	def __init__(self, **kwargs):
-		super().__init__(flags=Qt.Window|Qt.FramelessWindowHint, **kwargs)
+
+	def __init__(self, parent=None):
+		super().__init__(flags=Qt.Window|Qt.FramelessWindowHint|Qt.WindowStaysOnTopHint)
 		self.setAttribute(Qt.WA_ShowWithoutActivating)
-		self._movie = QMovie(gui_constants.SPINNER_PATH)
-		layout = QVBoxLayout(self)
-		self.gif = QLabel()
-		self.gif.setMovie(self._movie)
-		self._lbl = QLabel('Please wait...')
-		layout.addWidget(self.gif)
-		layout.addWidget(self._lbl)
+		self.fps = 21
+		self.border = 2
+		self.line_width = 5
+		self.arc_length = 100
+		self.seconds_per_spin = 1
+
+		self._timer = QTimer(self)
+		self._timer.timeout.connect(self._on_timer_timeout)
+
+		# keep track of the current start angle to avoid 
+		# unnecessary repaints
+		self._start_angle = 0
+
 		self.state_timer = QTimer()
 		self.current_state = self.about_to_show
 		self.state_timer.timeout.connect(super().hide)
 		self.state_timer.setSingleShot(True)
-		self._movie.start()
-	def set_text(self, txt):
-		self._lbl.setText(txt)
 
-	def show_text(self, b):
-		if b:
-			self._lbl.show()
-		else:
-			self._lbl.hide()
+		# animation
+		self.fade_animation = QPropertyAnimation(self, 'windowOpacity')
+		self.fade_animation.setDuration(800)
+		self.fade_animation.setStartValue(0.0)
+		self.fade_animation.setEndValue(1.0)
+		self.setWindowOpacity(0.0)
 
 	def set_size(self, w, h):
-		self._movie.setScaledSize(QSize(w, h))
-		self.gif.resize(w, h)
-		self.resize(w,h)
+		self.setFixedWidth(w)
+		self.setFixedHeight(h)
+		self.update()
 
-	def hide(self):
+	def set_text(self, txt):
+		pass
+
+	def paintEvent(self, event):
+		# call the base paint event:
+		super().paintEvent(event)
+
+		painter = QPainter()
+		painter.begin(self)
+		try:
+			painter.setRenderHint(QPainter.Antialiasing)
+
+			painter.save()
+			painter.setPen(Qt.NoPen)
+			painter.setBrush(QBrush(QColor(88,88,88,180)))
+			painter.drawRoundedRect(QRect(0,0, self.width(), self.height()), 5, 5)
+			painter.restore()
+
+			pen = QPen(QColor('#F2F2F2'))
+			pen.setWidth(self.line_width)
+			painter.setPen(pen)
+
+			border = self.border + int(math.ceil(self.line_width / 2.0))
+			r = QRectF(2.5, 2.5, self.width()-5, self.height()-5)
+			r.adjust(border, border, -border, -border)
+
+			# draw the arc:    
+			painter.drawArc(r, -self._start_angle * 16, self.arc_length * 16)
+			r = None
+
+		finally:
+			painter.end()
+			painter = None
+
+	def showEvent(self, event):
+		if not self._timer.isActive():
+			self.fade_animation.start()
+			self.current_state = self.about_to_show
+			self.state_timer.stop()
+			self.activated.emit()
+			self._timer.start(1000 / max(1, self.fps))
+		super().showEvent(event)
+
+	def hideEvent(self, event):
+		self._timer.stop()
+		self.deactivated.emit()
+		super().hideEvent(event)
+
+	def before_hide(self):
 		if self.current_state == self.about_to_hide:
 			return
 		self.current_state = self.about_to_hide
 		self.state_timer.start(5000)
 
-	def hideEvent(self, event):
-		self.deactivated.emit()
+	def closeEvent(self, event):
+		self._timer.stop()
+		super().closeEvent(event)
 
-	def showEvent(self, event):
-		self.current_state = self.about_to_show
-		self.state_timer.stop()
-		self.activated.emit()
-		return super().showEvent(event)
+	def _on_timer_timeout(self):
+		if not self.isVisible():
+			return
 
+		# calculate the spin angle as a function of the current time so that all 
+		# spinners appear in sync!
+		t = time.time()
+		whole_seconds = int(t)
+		p = (whole_seconds % self.seconds_per_spin) + (t - whole_seconds)
+		angle = int((360 * p)/self.seconds_per_spin)
+
+		if angle == self._start_angle:
+			return
+
+		self._start_angle = angle
+		self.update()
 
 class GalleryMenu(QMenu):
 	def __init__(self, view, index, gallery_model, app_window, selected_indexes=None):
@@ -468,7 +533,7 @@ class BasePopup(TransparentWidget):
 		if kwargs:
 			super().__init__(parent, **kwargs)
 		else:
-			super().__init__(parent, flags= Qt.Window | Qt.FramelessWindowHint)
+			super().__init__(parent, flags= Qt.Window | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
 		main_layout = QVBoxLayout()
 		self.main_widget = QFrame()
 		self.setLayout(main_layout)
