@@ -10,16 +10,17 @@
 #You should have received a copy of the GNU General Public License
 #along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys, random, matplotlib
-matplotlib.use('Qt5Agg')
-from numpy import arange, sin, pi
-
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.figure import Figure
+#import matplotlib
+#matplotlib.use('Qt5Agg')
+#from numpy import arange, sin, pi
+#from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+#from matplotlib.figure import Figure
+#from matplotlib import pyplot as plt
 
 from PyQt5.QtWidgets import (QTreeWidget, QTreeWidgetItem, QWidget,
-							 QVBoxLayout, QTabWidget, QAction, QGraphicsScene)
-from PyQt5.QtCore import Qt
+							 QVBoxLayout, QTabWidget, QAction, QGraphicsScene,
+							 QSizePolicy)
+from PyQt5.QtCore import Qt, QTimer
 
 import gallerydb
 
@@ -38,18 +39,20 @@ class TagsTreeView(QWidget):
 		self.tags_tree = QTreeWidget(self)
 		tabbar.addTab(self.tags_tree, 'Tags')
 		self.tags_layout = QVBoxLayout(self.tags_tree)
-		#self.graphs = QGra
-		fig = Figure()
-		ax = fig.add_subplot(111)
-		figure_canvas = FigureCanvas(fig)
-		self.tags_layout.addWidget(figure_canvas)
+		parent.manga_list_view.gallery_model.db_emitter.DONE.connect(self.setup_tags)
+
 	def setup_tags(self):
-		pass
+		tags = gallerydb.add_method_queue(gallerydb.TagDB.get_ns_tags, False)
+		items = []
+		for ns in tags:
+			top_item = QTreeWidgetItem(self.tags_tree)
+			top_item.setText(0, ns)
+			for tag in tags[ns]:
+				child_item = QTreeWidgetItem(top_item)
+				child_item.setText(0, tag)
 
 	def setup_graphs(self):
 		pass
 
 	def setup_about_db(self):
 		pass
-
-

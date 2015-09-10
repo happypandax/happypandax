@@ -357,29 +357,46 @@ def open_chapter(chapterpath, archive=None):
 			if x.endswith(IMG_FILES)][0]) # Find first page
 		return filepath
 
-	def find_f_img_archive():
-		gui_constants.NOTIF_BAR.add_text('Extracting...')
+	def find_f_img_archive(extract=True):
 		zip = ArchiveFile(temp_p)
-		t_p = os.path.join('temp', str(uuid.uuid4()))
-		os.mkdir(t_p)
-		if is_archive or chapterpath.endswith(ARCHIVE_FILES):
-			if os.path.isdir(chapterpath):
-				t_p = chapterpath
-			elif chapterpath.endswith(ARCHIVE_FILES):
-				zip2 = ArchiveFile(chapterpath)
-				f_d = sorted(zip2.dir_list(True))
-				if f_d:
-					f_d = f_d[0]
-					t_p = zip2.extract(f_d, t_p)
+		if extract:
+			gui_constants.NOTIF_BAR.add_text('Extracting...')
+			t_p = os.path.join('temp', str(uuid.uuid4()))
+			os.mkdir(t_p)
+			if is_archive or chapterpath.endswith(ARCHIVE_FILES):
+				if os.path.isdir(chapterpath):
+					t_p = chapterpath
+				elif chapterpath.endswith(ARCHIVE_FILES):
+					zip2 = ArchiveFile(chapterpath)
+					f_d = sorted(zip2.dir_list(True))
+					if f_d:
+						f_d = f_d[0]
+						t_p = zip2.extract(f_d, t_p)
+					else:
+						t_p = zip2.extract('', t_p)
 				else:
-					t_p = zip2.extract('', t_p)
+					t_p = zip.extract(chapterpath, t_p)
 			else:
-				t_p = zip.extract(chapterpath, t_p)
+				zip.extract_all(t_p) # Compatibility reasons.. TODO: REMOVE IN BETA
+			filepath = os.path.join(t_p, [x for x in sorted([y.name for y in scandir.scandir(t_p)])\
+ 				if x.endswith(IMG_FILES)][0]) # Find first page
+			filepath = os.path.abspath(filepath)
 		else:
-			zip.extract_all(t_p) # Compatibility reasons.. TODO: REMOVE IN BETA
-		filepath = os.path.join(t_p, [x for x in sorted([y.name for y in scandir.scandir(t_p)])\
- 			if x.endswith(IMG_FILES)][0]) # Find first page
-		filepath = os.path.abspath(filepath)
+			if is_archive:
+				con = zip.dir_contents(chapterpath)
+				f_img = [x for x in sorted(con) if x.endswith(IMG_FILES)]
+				if not f_img:
+					raise ValueError("No img in chapter path found")
+				f_img = f_img[0]
+				if 'honeyview' in gui_constants.EXTERNAL_VIEWER_PATH: # honeyview support
+					if chapterpath and '/' in f_img:
+						filepath = "{} | {}".format(archive, f_img)
+					else:
+						filepath = "{} | {}".format(archive, os.path.join(chapterpath, f_img))
+				else:
+					filepath = os.path.normpath(os.path.join(archive, f_img))
+			else:
+				raise ValueError("Unsupported gallery version")
 		return filepath
 
 	try:
@@ -387,14 +404,18 @@ def open_chapter(chapterpath, archive=None):
 			filepath = find_f_img_folder()
 		except NotADirectoryError: # archive
 			try:
-				filepath = find_f_img_archive()
+				if gui_constants.EXTRACT_CHAPTER_BEFORE_OPENING:
+					filepath = find_f_img_archive()
+				else:
+					filepath = find_f_img_archive(False)
 			except CreateArchiveFail:
 				log.exception('Could not open chapter')
 				gui_constants.NOTIF_BAR.add_text('Could not open chapter. Check happypanda.log for more details.')
 				return
 	except FileNotFoundError:
 		log.exception('Could not find chapter {}'.format(chapterpath))
-
+		return
+	print(filepath)
 	try:
 		gui_constants.NOTIF_BAR.add_text('Opening gallery...')
 		if not gui_constants.USE_EXTERNAL_VIEWER:

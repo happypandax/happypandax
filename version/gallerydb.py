@@ -974,7 +974,35 @@ class TagDB:
 	@staticmethod
 	def get_ns_tags():
 		"Returns a dict of all tags with namespace as key and list of tags as value"
-		pass
+		executing = [['SELECT namespace_id, tag_id FROM tags_mappings']]
+		CommandQueue.put(executing)
+		cursor = ResultQueue.get()
+		ns_tags = {}
+		ns_id_history = {} # to avoid unesseccary DB fetching
+		for t in cursor.fetchall():
+			try:
+				# get namespace
+				if not t['namespace_id'] in ns_id_history:
+					executing = [['SELECT namespace FROM namespaces WHERE namespace_id=?', (t['namespace_id'],)]]
+					CommandQueue.put(executing)
+					c = ResultQueue.get()
+					ns = c.fetchone()['namespace']
+					ns_id_history[t['namespace_id']] = ns
+				else:
+					ns = ns_id_history[t['namespace_id']]
+				# get tag
+				executing = [['SELECT tag FROM tags WHERE tag_id=?', (t['tag_id'],)]]
+				CommandQueue.put(executing)
+				c = ResultQueue.get()
+				tag = c.fetchone()['tag']
+				# put in dict
+				if ns in ns_tags:
+					ns_tags[ns].append(tag)
+				else:
+					ns_tags[ns] = [tag]
+			except:
+				continue
+		return ns_tags
 
 	@staticmethod
 	def get_tags_from_namespace(namespace):
@@ -1423,8 +1451,8 @@ class DatabaseEmitter(QObject):
 			return True
 		else:
 			if not self._finished:
-				self.DONE.emit()
 				self._finished = True
+				self.DONE.emit()
 			return False
 	
 	def fetch_more(self):

@@ -1522,7 +1522,6 @@ class MangaTableView(QTableView):
 		self.setPalette(palette)
 		self.setIconSize(QSize(0,0))
 		self.doubleClicked.connect(self.parent_widget.manga_list_view.open_chapter)
-
 	# display tooltip only for elided text
 	#def viewportEvent(self, event):
 	#	if event.type() == QEvent.ToolTip:
