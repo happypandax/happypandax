@@ -16,7 +16,7 @@ from datetime import datetime
 
 from PyQt5.QtCore import (Qt, QDate, QPoint, pyqtSignal, QThread,
 						  QTimer, QObject, QSize, QRect, QFileInfo,
-						  QMargins, QPropertyAnimation)
+						  QMargins, QPropertyAnimation, QByteArray)
 from PyQt5.QtGui import (QTextCursor, QIcon, QMouseEvent, QFont,
 						 QPixmapCache, QPalette, QPainter, QBrush,
 						 QColor, QPen, QPixmap, QMovie)
@@ -372,7 +372,8 @@ class BasePopup(TransparentWidget):
 			parent.setGraphicsEffect(self.graphics_blur)
 
 		# animation
-		self.fade_animation = QPropertyAnimation(self, 'windowOpacity')
+		property_b_array = QByteArray().append('windowOpacity')
+		self.fade_animation = QPropertyAnimation(self, property_b_array)
 		self.fade_animation.setDuration(800)
 		self.fade_animation.setStartValue(0.0)
 		self.fade_animation.setEndValue(1.0)
@@ -436,7 +437,8 @@ class NotificationOverlay(QWidget):
 		self._click = False
 		self._override_hide = False
 
-		self.slide_animation = QPropertyAnimation(self, 'minimumHeight')
+		property_b_array = QByteArray().append('minimumHeight')
+		self.slide_animation = QPropertyAnimation(self, property_b_array)
 		self.slide_animation.setDuration(500)
 		self.slide_animation.setStartValue(0)
 		self.slide_animation.setEndValue(self._default_height)
