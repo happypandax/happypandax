@@ -11,7 +11,7 @@
 #along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 
 from PyQt5.QtWidgets import (QTreeWidget, QTreeWidgetItem, QWidget,
-							 QVBoxLayout, QTabWidget, QAction)
+							 QVBoxLayout, QTabWidget, QAction, QGraphicsScene)
 from PyQt5.QtCore import Qt
 
 import gallerydb
@@ -30,7 +30,7 @@ class TagsTreeView(QWidget):
 		main_layout.addWidget(tabbar)
 		self.tags_tree = QTreeWidget(self)
 		tabbar.addTab(self.tags_tree, 'Tags')
-		self.graphs
+		#self.graphs = QGra
 
 	def setup_tags(self):
 		pass

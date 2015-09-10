@@ -36,6 +36,7 @@ import gallerydb
 import settings
 import pewnet
 import utils
+import misc_db
 
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -58,6 +59,8 @@ class AppWindow(QMainWindow):
 		if not gui_constants.DEBUG:
 			QTimer.singleShot(3000, self._check_update)
 		self.setFocusPolicy(Qt.NoFocus)
+		ts_wid = misc_db.TagsTreeView(self)
+		ts_wid.show()
 
 	def init_watchers(self):
 
@@ -271,6 +274,7 @@ class AppWindow(QMainWindow):
 		tray_menu.addAction(tray_quit)
 		tray_quit.triggered.connect(self.close)
 		self.system_tray.show()
+		self.system_tray.messageClicked.connect(self.activateWindow)
 		log_d('Create system tray: OK')
 		#self.display.addWidget(self.chapter_main)
 
@@ -890,6 +894,7 @@ class AppWindow(QMainWindow):
 		return super().showEvent(event)
 
 	def closeEvent(self, event):
+		self.system_tray.hide()
 		# watchers
 		try:
 			self.watchers.stop_all()
@@ -922,7 +927,7 @@ class AppWindow(QMainWindow):
 
 		gui_constants.GENERAL_THREAD.exit()
 		log_d('Normal Exit App: OK')
-		super().closeEvent(event)
+		return super().closeEvent(event)
 		#app = QApplication.instance()
 		#app.exit()
 		#sys.exit()
