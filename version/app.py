@@ -59,7 +59,7 @@ class AppWindow(QMainWindow):
 		if not gui_constants.DEBUG:
 			QTimer.singleShot(3000, self._check_update)
 		self.setFocusPolicy(Qt.NoFocus)
-		ts_wid = misc_db.TagsTreeView(self)
+		ts_wid = misc_db.TagsTreeView(self, True)
 		ts_wid.show()
 
 	def init_watchers(self):

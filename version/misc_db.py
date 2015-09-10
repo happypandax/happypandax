@@ -10,6 +10,13 @@
 #You should have received a copy of the GNU General Public License
 #along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 
+import sys, random, matplotlib
+matplotlib.use('Qt5Agg')
+from numpy import arange, sin, pi
+
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
+
 from PyQt5.QtWidgets import (QTreeWidget, QTreeWidgetItem, QWidget,
 							 QVBoxLayout, QTabWidget, QAction, QGraphicsScene)
 from PyQt5.QtCore import Qt
@@ -30,8 +37,12 @@ class TagsTreeView(QWidget):
 		main_layout.addWidget(tabbar)
 		self.tags_tree = QTreeWidget(self)
 		tabbar.addTab(self.tags_tree, 'Tags')
+		self.tags_layout = QVBoxLayout(self.tags_tree)
 		#self.graphs = QGra
-
+		fig = Figure()
+		ax = fig.add_subplot(111)
+		figure_canvas = FigureCanvas(fig)
+		self.tags_layout.addWidget(figure_canvas)
 	def setup_tags(self):
 		pass
 
