@@ -1,4 +1,4 @@
-#"""
+﻿#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -539,10 +539,13 @@ class ClickedLabel(QLabel):
 class TagText(QPushButton):
 	def __init__(self, *args, **kwargs):
 		self.search_widget = kwargs.pop('search_widget', None)
+		self.namespace = kwargs.pop('namespace', None)
 		super().__init__(*args, **kwargs)
-		self.namespace = ''
 		if self.search_widget:
-			self.clicked.connect(lambda: self.search_widget.search('{}:{}'.format(self.namespace, self.text())))
+			if self.namespace:
+				self.clicked.connect(lambda: self.search_widget.search('{}:{}'.format(self.namespace, self.text())))
+			else:
+				self.clicked.connect(lambda: self.search_widget.search('{}'.format(self.text())))
 
 class BasePopup(TransparentWidget):
 	graphics_blur = QGraphicsBlurEffect()

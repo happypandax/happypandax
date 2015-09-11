@@ -138,9 +138,11 @@ class GalleryMetaPopup(QFrame):
 					self.tags.addRow(namespace, tags_lbls)
 
 				for n, tag in enumerate(gallery.tags[namespace], 1):
-					t = misc.TagText(search_widget=self.parent_widget)
-					if not namespace == 'default':
-						t.namespace = namespace
+					if namespace == 'default':
+						t = misc.TagText(search_widget=self.parent_widget)
+					else:
+						t = misc.TagText(search_widget=self.parent_widget,
+					   namespace=namespace)
 					t.setText(tag)
 					tags_lbls.addWidget(t)
 		else:

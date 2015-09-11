@@ -1,4 +1,4 @@
-#"""
+﻿#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -326,7 +326,7 @@ class AppWindow(QMainWindow):
 					self.UPDATE_CHECK.emit(vs)
 				except:
 					log.exception('Checking Update: FAIL')
-					self.UPDATE_CHECK.emit('this is a very long text which is is sure to be over limit')
+					self.UPDATE_CHECK.emit('this is a very long text which is sure to be over limit')
 
 		def check_update(vs):
 			log_i('Received version: {}\nCurrent version: {}'.format(vs, gui_constants.vs))
