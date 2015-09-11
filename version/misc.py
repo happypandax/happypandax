@@ -1,4 +1,4 @@
-﻿#"""
+#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -214,6 +214,8 @@ class Spinner(TransparentWidget):
 		self.arc_length = 100
 		self.seconds_per_spin = 1
 
+		self.text = ''
+
 		self._timer = QTimer(self)
 		self._timer.timeout.connect(self._on_timer_timeout)
 
@@ -233,13 +235,14 @@ class Spinner(TransparentWidget):
 		self.fade_animation.setEndValue(1.0)
 		self.setWindowOpacity(0.0)
 
-	def set_size(self, w, h):
+	def set_size(self, w):
 		self.setFixedWidth(w)
-		self.setFixedHeight(h)
+		self.setFixedHeight(w+self.fontMetrics().height())
 		self.update()
 
 	def set_text(self, txt):
-		pass
+		self.text = txt
+		self.update()
 
 	def paintEvent(self, event):
 		# call the base paint event:
@@ -250,22 +253,37 @@ class Spinner(TransparentWidget):
 		try:
 			painter.setRenderHint(QPainter.Antialiasing)
 
+			txt_rect = QRectF(0,0,0,0)
+			if not self.text:
+				txt_rect.setHeight(self.fontMetrics().height())
+
 			painter.save()
 			painter.setPen(Qt.NoPen)
 			painter.setBrush(QBrush(QColor(88,88,88,180)))
-			painter.drawRoundedRect(QRect(0,0, self.width(), self.height()), 5, 5)
+			painter.drawRoundedRect(QRect(0,0, self.width(), self.height() - txt_rect.height()), 5, 5)
 			painter.restore()
 
 			pen = QPen(QColor('#F2F2F2'))
 			pen.setWidth(self.line_width)
 			painter.setPen(pen)
 
+			if self.text:
+				text_elided = self.fontMetrics().elidedText(self.text, Qt.ElideRight, self.width()-5)
+				txt_rect = painter.boundingRect(txt_rect, text_elided)
+
 			border = self.border + int(math.ceil(self.line_width / 2.0))
-			r = QRectF(2.5, 2.5, self.width()-5, self.height()-5)
+			r = QRectF((txt_rect.height())/2, (txt_rect.height()/2),
+			  self.width()-txt_rect.height(), self.width()-txt_rect.height())
 			r.adjust(border, border, -border, -border)
 
 			# draw the arc:    
 			painter.drawArc(r, -self._start_angle * 16, self.arc_length * 16)
+
+			# draw text if there is
+			if self.text:
+				painter.drawText(QRectF(5, self.height()-txt_rect.height()-2.5, txt_rect.width(), txt_rect.height()),
+					 text_elided)
+
 			r = None
 
 		finally:

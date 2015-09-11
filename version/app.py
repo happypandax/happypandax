@@ -1,4 +1,4 @@
-﻿#"""
+#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -470,7 +470,7 @@ class AppWindow(QMainWindow):
 	def init_spinners(self):
 		# fetching spinner
 		self.data_fetch_spinner = misc.Spinner(self)
-		self.data_fetch_spinner.set_size(50,50)
+		self.data_fetch_spinner.set_size(60)
 		self.move_listener.connect(
 			lambda: self.data_fetch_spinner.update_move(
 				QPoint(self.pos().x()+self.width()//2, self.pos().y()+self.height()//2)))
