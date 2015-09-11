@@ -48,6 +48,7 @@ log_c = log.critical
 class AppWindow(QMainWindow):
 	"The application's main window"
 	move_listener = pyqtSignal()
+	db_activity_checker = pyqtSignal()
 	def __init__(self):
 		super().__init__()
 		gui_constants.GENERAL_THREAD = QThread(self)
@@ -921,20 +922,49 @@ class AppWindow(QMainWindow):
 		except:
 			log.exception('Flush temp on exit: FAIL')
 
-		# check if there is db activity
-		class DBActivityChecker(QObject):
-			FINISHED = pyqtSignal()
-			def __init__(self, **kwargs):
-				super().__init__(**kwargs)
-				gallerydb.method_queue.join()
-				self.FINISHED.emit()
+		if self.tags_treeview:
+			self.tags_treeview.close()
 
-		gui_constants.GENERAL_THREAD.exit()
-		log_d('Normal Exit App: OK')
-		return super().closeEvent(event)
-		#app = QApplication.instance()
-		#app.exit()
-		#sys.exit()
+		# check if there is db activity
+		if not gallerydb.method_queue.empty():
+			class DBActivityChecker(QObject):
+				FINISHED = pyqtSignal()
+				def __init__(self, **kwargs):
+					super().__init__(**kwargs)
+
+				def check(self):
+					gallerydb.method_queue.join()
+					self.FINISHED.emit()
+					self.deleteLater()
+
+			db_activity = DBActivityChecker()
+			db_spinner = misc.Spinner(self)
+			self.db_activity_checker.connect(db_activity.check)
+			db_activity.moveToThread(gui_constants.GENERAL_THREAD)
+			db_activity.FINISHED.connect(db_spinner.close)
+			db_spinner.set_size(50)
+			db_spinner.set_text('Activity')
+			db_spinner.move(QPoint(self.pos().x()+self.width()-70, self.pos().y()+self.height()-70))
+			self.move_listener.connect(lambda: db_spinner.update_move(QPoint(self.pos().x()+self.width()-70,
+																	self.pos().y()+self.height()-70)))
+			db_spinner.show()
+			self.db_activity_checker.emit()
+			msg_box = QMessageBox(self)
+			msg_box.setText('Database activity detected!')
+			msg_box.setInformativeText("Closing now might result in data loss." +
+								 " Do you still want to close?\n(Wait for the spinner to hide before closing)")
+			msg_box.setIcon(QMessageBox.Critical)
+			msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+			msg_box.setDefaultButton(QMessageBox.No)
+			if msg_box.exec() == QMessageBox.Yes:
+				log_d('Force Exit App: OK')
+				super().closeEvent(event)
+			else:
+				log_d('Ignore Exit App')
+				event.ignore()
+		else:
+			log_d('Normal Exit App: OK')
+			super().closeEvent(event)
 
 if __name__ == '__main__':
 	raise NotImplementedError("Unit testing not implemented yet!")
