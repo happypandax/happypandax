@@ -11,6 +11,7 @@ from PyQt5.QtGui import QPalette, QPixmapCache
 from misc import FlowLayout, Spacer, PathLineEdit
 import settings
 import gui_constants
+import misc_db
 
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -24,14 +25,16 @@ class SettingsDialog(QWidget):
 	scroll_speed_changed = pyqtSignal()
 	def __init__(self, parent=None):
 		super().__init__(parent, flags=Qt.Window)
+		self.parent_widget = parent
 		self.setAttribute(Qt.WA_DeleteOnClose)
 		self.resize(700, 500)
-		self.show()
 		self.restore_values()
 		self.initUI()
+		self.setWindowTitle('Settings')
+		self.show()
 
 	def initUI(self):
-		main_layout = QVBoxLayout()
+		main_layout = QVBoxLayout(self)
 		sub_layout = QHBoxLayout()
 		# Left Panel
 		left_panel = QListWidget()
@@ -89,9 +92,6 @@ class SettingsDialog(QWidget):
 		main_layout.addLayout(bottom_layout)
 
 		self.restore_options()
-
-		self.setLayout(main_layout)
-		self.setWindowTitle('Settings')
 
 
 	def change(self, item):
@@ -209,6 +209,9 @@ class SettingsDialog(QWidget):
 		self.g_data_replace_fix_edit.setText(gui_constants.GALLERY_DATA_FIX_REPLACE)
 		self.g_data_fixer_title.setChecked(gui_constants.GALLERY_DATA_FIX_TITLE)
 		self.g_data_fixer_artist.setChecked(gui_constants.GALLERY_DATA_FIX_ARTIST)
+
+		# About / DB Overview
+		self.tags_treeview_on_start.setChecked(gui_constants.TAGS_TREEVIEW_ON_START)
 
 	def accept(self):
 		set = settings.set
@@ -375,6 +378,9 @@ class SettingsDialog(QWidget):
 		gui_constants.GALLERY_DATA_FIX_REPLACE = self.g_data_replace_fix_edit.text()
 		set(gui_constants.GALLERY_DATA_FIX_REPLACE, 'Advanced', 'gallery data fix replace')
 
+		# About / DB Overview
+		gui_constants.TAGS_TREEVIEW_ON_START = self.tags_treeview_on_start.isChecked()
+		set(gui_constants.TAGS_TREEVIEW_ON_START, 'Application', 'tags treeview on start')
 
 		settings.save()
 		self.close()
@@ -414,7 +420,7 @@ class SettingsDialog(QWidget):
 
 
 		# App
-		application = QTabWidget()
+		application = QTabWidget(self)
 		self.application_index = self.right_panel.addWidget(application)
 		application_general, app_general_m_l = new_tab('General', application, True)
 
@@ -509,8 +515,8 @@ class SettingsDialog(QWidget):
 		self.folders_layout = QFormLayout()
 		app_monitor_folders_m_l.addLayout(self.folders_layout)
 
-		app_ignore, app_ignore_m_l = new_tab('Ignore', application, True)
 		# App / Ignore
+		app_ignore, app_ignore_m_l = new_tab('Ignore', application, True)
 		app_ignore_group, app_ignore_list_l = groupbox('List', QVBoxLayout, app_monitor_dummy)
 		app_ignore_m_l.addRow(app_ignore_group)
 		add_buttons_l = QHBoxLayout()
@@ -525,7 +531,7 @@ class SettingsDialog(QWidget):
 		app_ignore_list_l.addLayout(self.ignore_path_l)
 
 		# Web
-		web = QTabWidget()
+		web = QTabWidget(self)
 		self.web_index = self.right_panel.addWidget(web)
 		web_general_page = QScrollArea()
 		web_general_page.setBackgroundRole(QPalette.Base)
@@ -576,7 +582,7 @@ class SettingsDialog(QWidget):
 		metadata_fetcher_m_l.addRow(self.always_first_hit)
 
 		# Web / Exhentai
-		exhentai_page = QWidget()
+		exhentai_page = QWidget(self)
 		web.addTab(exhentai_page, 'ExHentai')
 		ipb_layout = QFormLayout()
 		exhentai_page.setLayout(ipb_layout)
@@ -589,7 +595,7 @@ class SettingsDialog(QWidget):
 		ipb_layout.addRow(exh_tutorial)
 
 		# Visual
-		visual = QTabWidget()
+		visual = QTabWidget(self)
 		self.visual_index = self.right_panel.addWidget(visual)
 		visual_general_page = QWidget()
 		visual.addTab(visual_general_page, 'General')
@@ -688,14 +694,14 @@ class SettingsDialog(QWidget):
 		grid_colors_l.addRow('Title color:', self.grid_title_color)
 		grid_colors_l.addRow('Artist color:', self.grid_artist_color)
 
-		style_page = QWidget()
+		style_page = QWidget(self)
 		visual.addTab(style_page, 'Style')
 		visual.setTabEnabled(0, False)
 		visual.setTabEnabled(2, False)
 		visual.setCurrentIndex(1)
 
 		# Advanced
-		advanced = QTabWidget()
+		advanced = QTabWidget(self)
 		self.advanced_index = self.right_panel.addWidget(advanced)
 		advanced_misc_scroll = QScrollArea(self)
 		advanced_misc_scroll.setBackgroundRole(QPalette.Base)
@@ -795,13 +801,13 @@ class SettingsDialog(QWidget):
 
 
 		# Advanced / Database
-		advanced_db_page = QWidget()
+		advanced_db_page = QWidget(self)
 		advanced.addTab(advanced_db_page, 'Database')
 		advanced.setTabEnabled(2, False)
 
 
 		# About
-		about = QTabWidget()
+		about = QTabWidget(self)
 		self.about_index = self.right_panel.addWidget(about)
 		about_happypanda_page = QWidget()
 		about_troubleshoot_page = QWidget()
@@ -824,11 +830,28 @@ class SettingsDialog(QWidget):
 		gpl_lbl.setWordWrap(True)
 		about_layout.addWidget(gpl_lbl, 0, Qt.AlignTop)
 		about_layout.addWidget(Spacer('v'))
-		# About / Tags
-		about_tags_page = QWidget()
-		about.addTab(about_tags_page, 'Tags')
-		about.setTabEnabled(1, False)
-		# list of tags/namespaces here
+
+		# About / DB Overview
+		about_db_overview, about_db_overview_m_l = new_tab('DB Overview', about)
+		about_stats_tab_widget = misc_db.DBOverview(self.parent_widget)
+		about_db_overview_options = QHBoxLayout()
+		self.tags_treeview_on_start = QCheckBox('Start with application', about_db_overview)
+		make_window_btn = QPushButton('Open in window', about_db_overview)
+		make_window_btn.adjustSize()
+		make_window_btn.setFixedWidth(make_window_btn.width())
+		about_db_overview_options.addWidget(self.tags_treeview_on_start)
+		about_db_overview_options.addWidget(make_window_btn)
+		def make_tags_treeview_window():
+			self.parent_widget.tags_treeview = misc_db.DBOverview(self.parent_widget, True)
+			self.parent_widget.tags_treeview.about_to_close.connect(lambda: make_window_btn.setDisabled(False))
+			make_window_btn.setDisabled(True)
+			self.parent_widget.tags_treeview.show()
+		if self.parent_widget.tags_treeview:
+			self.parent_widget.tags_treeview.about_to_close.connect(lambda: make_window_btn.setDisabled(False))
+			make_window_btn.setDisabled(True)
+		make_window_btn.clicked.connect(make_tags_treeview_window)
+		about_db_overview_m_l.addRow(about_db_overview_options)
+		about_db_overview_m_l.addRow(about_stats_tab_widget)
 
 		# About / Troubleshooting
 		about.addTab(about_troubleshoot_page, 'Troubleshooting Guide')

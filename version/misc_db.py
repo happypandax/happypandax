@@ -19,40 +19,143 @@
 
 from PyQt5.QtWidgets import (QTreeWidget, QTreeWidgetItem, QWidget,
 							 QVBoxLayout, QTabWidget, QAction, QGraphicsScene,
-							 QSizePolicy)
-from PyQt5.QtCore import Qt, QTimer
+							 QSizePolicy, QMenu, QAction, QApplication,
+							 QListWidget)
+from PyQt5.QtCore import (Qt, QTimer, pyqtSignal)
+from PyQt5.QtGui import QIcon
 
 import gallerydb
+import gui_constants
+import utils
 
-class TagsTreeView(QWidget):
+class TagsTreeView(QTreeWidget):
+	def __init__(self, **kwargs):
+		self.parent_widget = kwargs.pop('app_window', None)
+		super().__init__(**kwargs)
+		self.setSelectionBehavior(self.SelectItems)
+		self.setSelectionMode(self.ExtendedSelection)
+		self.clipboard = QApplication.clipboard()
+
+	def search_tags(self, items):
+		if self.parent_widget:
+			tags = {}
+			for item in items:
+				ns_item = item.parent()
+				if ns_item.text(0) in tags:
+					tags[ns_item.text(0)].append(item.text(0))
+				else:
+					tags[ns_item.text(0)] = [item.text(0)]
+			
+			search_txt = utils.tag_to_string(tags)
+			self.parent_widget.search(search_txt)
+
+	def contextMenuEvent(self, event):
+		handled = False
+		selected = False
+		s_items = self.selectedItems()
+
+		if len(s_items) > 1:
+			selected = True
+
+		ns_count = 0
+		for item in s_items:
+			if not item.text(0).islower():
+				ns_count += 1
+		contains_ns =  True if ns_count > 0 else False
+
+		def copy(with_ns=False):
+			if with_ns:
+				ns_item = s_items[0].parent()
+				ns = ns_item.text(0)
+				tag = s_items[0].text(0)
+				txt = "{}:{}".format(ns, tag)
+				self.clipboard.setText(txt)
+			else:
+				item = s_items[0]
+				self.clipboard.setText(item.text(0))
+
+		if s_items:
+			menu = QMenu(self)
+			if not selected:
+				copy_act = menu.addAction('Copy')
+				copy_act.triggered.connect(copy)
+				if not contains_ns:
+					copy_ns_act = menu.addAction('Copy with namespace')
+					copy_ns_act.triggered.connect(lambda: copy(True))
+			if not contains_ns:
+				search_act = menu.addAction('Search')
+				search_act.triggered.connect(lambda: self.search_tags(s_items))
+			handled = True
+
+		if handled:
+			menu.exec_(event.globalPos())
+			event.accept()
+			del menu
+		else:
+			event.ignore()
+
+class DBOverview(QWidget):
 	"""
 	
 	"""
+	about_to_close = pyqtSignal()
 	def __init__(self, parent, window=False):
 		if window:
-			super().__init__(parent, Qt.Window)
+			super().__init__(None, Qt.Window)
 		else:
 			super().__init__(parent)
+		self.setAttribute(Qt.WA_DeleteOnClose)
+		self.parent_widget = parent
 		main_layout = QVBoxLayout(self)
 		tabbar = QTabWidget(self)
 		main_layout.addWidget(tabbar)
-		self.tags_tree = QTreeWidget(self)
-		tabbar.addTab(self.tags_tree, 'Tags')
+
+		# Tags tree
+		self.tags_tree = TagsTreeView(parent=self, app_window=self.parent_widget)
+		self.tags_tree.setHeaderHidden(True)
+		tabbar.addTab(self.tags_tree, 'Namespace and Tags')
 		self.tags_layout = QVBoxLayout(self.tags_tree)
-		parent.manga_list_view.gallery_model.db_emitter.DONE.connect(self.setup_tags)
+		if parent.manga_list_view.gallery_model.db_emitter._finished:
+			self.setup_tags()
+		else:
+			parent.manga_list_view.gallery_model.db_emitter.DONE.connect(self.setup_tags)
+		
+		# Tags stats
+		self.tags_stats = QListWidget(self)
+		tabbar.addTab(self.tags_stats, 'Statistics')
+		tabbar.setTabEnabled(1, False)
+
+		# About AD
+		self.about_db = QWidget(self)
+		tabbar.addTab(self.about_db, 'DB Info')
+		tabbar.setTabEnabled(2, False)
+
+		self.resize(300, 600)
+		self.setWindowTitle('DB Overview')
+		self.setWindowIcon(QIcon(gui_constants.APP_ICO_PATH))
 
 	def setup_tags(self):
+		self.tags_tree.clear()
 		tags = gallerydb.add_method_queue(gallerydb.TagDB.get_ns_tags, False)
 		items = []
 		for ns in tags:
 			top_item = QTreeWidgetItem(self.tags_tree)
-			top_item.setText(0, ns)
+			if ns == 'default':
+				top_item.setText(0, 'No namespace')
+			else:
+				top_item.setText(0, ns)
 			for tag in tags[ns]:
 				child_item = QTreeWidgetItem(top_item)
 				child_item.setText(0, tag)
+		self.tags_tree.sortItems(0, Qt.AscendingOrder)
 
-	def setup_graphs(self):
+	def setup_stats(self):
 		pass
 
 	def setup_about_db(self):
 		pass
+
+	def closeEvent(self, event):
+		self.about_to_close.emit()
+		return super().closeEvent(event)
+

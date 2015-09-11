@@ -103,7 +103,8 @@ OPEN_RANDOM_GALLERY_CHAPTERS = get(False, 'Application', 'open random gallery ch
 OVERRIDE_SUBFOLDER_AS_GALLERY = False # set to true to make a fetch instance treat subfolder as galleries (will be set to false)
 SUBFOLDER_AS_GALLERY = get(False, 'Application', 'subfolder as gallery', bool)
 RENAME_GALLERY_SOURCE = get(False, 'Application', 'rename gallery source', bool)
-EXTRACT_CHAPTER_BEFORE_OPENING = get(False, 'Application', 'extract chapter before opening', bool)
+EXTRACT_CHAPTER_BEFORE_OPENING = get(True, 'Application', 'extract chapter before opening', bool)
+TAGS_TREEVIEW_ON_START = get(False, 'Application', 'tags treeview on start', bool)
 
 # ADVANCED
 GALLERY_DATA_FIX_REGEX = get("", 'Advanced', 'gallery data fix regex', str)

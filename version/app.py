@@ -59,8 +59,6 @@ class AppWindow(QMainWindow):
 		if not gui_constants.DEBUG:
 			QTimer.singleShot(3000, self._check_update)
 		self.setFocusPolicy(Qt.NoFocus)
-		tags = misc_db.TagsTreeView(self, True)
-		tags.show()
 
 	def init_watchers(self):
 
@@ -265,6 +263,13 @@ class AppWindow(QMainWindow):
 		self.init_stat_bar()
 		log_d('Create statusbar: OK')
 
+		self.tags_treeview = None
+		if gui_constants.TAGS_TREEVIEW_ON_START:
+			def tags_tree_none(): self.tags_treeview = None
+			self.tags_treeview = misc_db.DBOverview(self, True)
+			self.tags_treeview.about_to_close.connect(tags_tree_none)
+			self.tags_treeview.show()
+
 		self.system_tray = misc.SystemTray(QIcon(gui_constants.APP_ICO_PATH), self)
 		gui_constants.SYSTEM_TRAY = self.system_tray
 		tray_menu = QMenu(self)
@@ -279,7 +284,6 @@ class AppWindow(QMainWindow):
 		#self.display.addWidget(self.chapter_main)
 
 		self.setCentralWidget(self.center)
-		self.setWindowTitle("Happypanda")
 		self.setWindowIcon(QIcon(gui_constants.APP_ICO_PATH))
 
 
