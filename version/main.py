@@ -12,7 +12,7 @@
 #along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 #"""
 
-import sys, logging, os, argparse, platform, scandir, traceback
+import sys, logging, logging.handlers, os, argparse, platform, scandir, traceback
 
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QFile
@@ -57,12 +57,12 @@ def start(test=False):
 			with open('happypanda.log', 'x') as f:
 				pass
 		except FileExistsError: pass
-
+		file_handler = logging.handlers.RotatingFileHandler(
+			'happypanda.log', maxBytes=1000000*10, encoding='utf-8', backupCount=2)
 		logging.basicConfig(level=logging.INFO,
 						format='%(asctime)-8s %(levelname)-6s %(name)-6s %(message)s',
 						datefmt='%d-%m %H:%M',
-						filename='happypanda.log',
-						filemode='a')
+						handlers=(file_handler,))
 
 
 	log = logging.getLogger(__name__)

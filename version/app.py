@@ -1,4 +1,4 @@
-#"""
+﻿#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -36,6 +36,7 @@ import gallerydb
 import settings
 import pewnet
 import utils
+import misc_db
 
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -47,8 +48,12 @@ log_c = log.critical
 class AppWindow(QMainWindow):
 	"The application's main window"
 	move_listener = pyqtSignal()
+	db_activity_checker = pyqtSignal()
 	def __init__(self):
 		super().__init__()
+		gui_constants.GENERAL_THREAD = QThread(self)
+		gui_constants.GENERAL_THREAD.finished.connect(gui_constants.GENERAL_THREAD.deleteLater)
+		gui_constants.GENERAL_THREAD.start()
 		self.setAcceptDrops(True)
 		self.initUI()
 		self.start_up()
@@ -240,7 +245,11 @@ class AppWindow(QMainWindow):
 	def initUI(self):
 		self.center = QWidget()
 		self.display = QStackedLayout()
-		self.center.setLayout(self.display)
+		self._main_layout = QVBoxLayout()
+		self._main_layout.setSpacing(0)
+		self._main_layout.setContentsMargins(0,0,0,0)
+		self._main_layout.addLayout(self.display)
+		self.center.setLayout(self._main_layout)
 		# init the manga view variables
 		self.manga_display()
 		log_d('Create manga display: OK')
@@ -255,6 +264,13 @@ class AppWindow(QMainWindow):
 		self.init_stat_bar()
 		log_d('Create statusbar: OK')
 
+		self.tags_treeview = None
+		if gui_constants.TAGS_TREEVIEW_ON_START:
+			def tags_tree_none(): self.tags_treeview = None
+			self.tags_treeview = misc_db.DBOverview(self, True)
+			self.tags_treeview.about_to_close.connect(tags_tree_none)
+			self.tags_treeview.show()
+
 		self.system_tray = misc.SystemTray(QIcon(gui_constants.APP_ICO_PATH), self)
 		gui_constants.SYSTEM_TRAY = self.system_tray
 		tray_menu = QMenu(self)
@@ -264,11 +280,11 @@ class AppWindow(QMainWindow):
 		tray_menu.addAction(tray_quit)
 		tray_quit.triggered.connect(self.close)
 		self.system_tray.show()
+		self.system_tray.messageClicked.connect(self.activateWindow)
 		log_d('Create system tray: OK')
 		#self.display.addWidget(self.chapter_main)
 
 		self.setCentralWidget(self.center)
-		self.setWindowTitle("Happypanda")
 		self.setWindowIcon(QIcon(gui_constants.APP_ICO_PATH))
 
 
@@ -311,7 +327,7 @@ class AppWindow(QMainWindow):
 					self.UPDATE_CHECK.emit(vs)
 				except:
 					log.exception('Checking Update: FAIL')
-					self.UPDATE_CHECK.emit('this is a very long text which is is sure to be over limit')
+					self.UPDATE_CHECK.emit('this is a very long text which is sure to be over limit')
 
 		def check_update(vs):
 			log_i('Received version: {}\nCurrent version: {}'.format(vs, gui_constants.vs))
@@ -343,6 +359,17 @@ class AppWindow(QMainWindow):
 		s_gallery_popup.USER_CHOICE.connect(queue.put)
 
 	def get_metadata(self, gal=None):
+		metadata_spinner = misc.Spinner(self)
+		def move_md_spinner():
+			metadata_spinner.update_move(
+			QPoint(
+				self.pos().x()+self.width()-65,
+				self.pos().y()+self.toolbar.height()+55))
+		metadata_spinner.set_text("Metadata")
+		metadata_spinner.set_size(55)
+		metadata_spinner.move(QPoint(self.pos().x()+self.width()-65,
+							   self.pos().y()+self.toolbar.height()+55))
+		self.move_listener.connect(move_md_spinner)
 		thread = QThread(self)
 		thread.setObjectName('App.get_metadata')
 		fetch_instance = fetch.Fetch()
@@ -381,13 +408,11 @@ class AppWindow(QMainWindow):
 		fetch_instance.AUTO_METADATA_PROGRESS.connect(self.notification_bar.add_text)
 		thread.started.connect(fetch_instance.auto_web_metadata)
 		fetch_instance.FINISHED.connect(done)
+		fetch_instance.FINISHED.connect(metadata_spinner.close)
+		fetch_instance.FINISHED.connect(lambda: self.move_listener.disconnect(move_md_spinner))
 		thread.finished.connect(thread.deleteLater)
 		thread.start()
-
-
-	#def style_tooltip(self):
-	#	palette = QToolTip.palette()
-	#	palette.setColor()
+		metadata_spinner.show()
 
 	def init_stat_bar(self):
 		self.status_bar = self.statusBar()
@@ -454,23 +479,22 @@ class AppWindow(QMainWindow):
 
 	def init_spinners(self):
 		# fetching spinner
-		self.data_fetch_spinner = misc.Spinner(parent=self)
-		self.data_fetch_spinner.set_size(35,35)
-		self.data_fetch_spinner.show_text(False)
+		self.data_fetch_spinner = misc.Spinner(self)
+		self.data_fetch_spinner.set_size(60)
 		self.move_listener.connect(
 			lambda: self.data_fetch_spinner.update_move(
-				QPoint(self.pos().x()+self.width()-70, self.pos().y()+self.height()-70)))
+				QPoint(self.pos().x()+self.width()//2, self.pos().y()+self.height()//2)))
 		
 		self.manga_list_view.gallery_model.ADD_MORE.connect(self.data_fetch_spinner.show)
 		self.manga_list_view.gallery_model.db_emitter.START.connect(self.data_fetch_spinner.show)
-		self.manga_list_view.gallery_model.ADDED_ROWS.connect(self.data_fetch_spinner.hide)
+		self.manga_list_view.gallery_model.ADDED_ROWS.connect(self.data_fetch_spinner.before_hide)
 
-		# deleting spinner
-		self.gallery_delete_spinner = misc.Spinner(parent=self)
-		self.gallery_delete_spinner.set_size(40,40)
-		self.gallery_delete_spinner.set_text('Removing...')
-		self.manga_list_view.gallery_model.rowsAboutToBeRemoved.connect(self.gallery_delete_spinner.show)
-		self.manga_list_view.gallery_model.rowsRemoved.connect(self.gallery_delete_spinner.hide)
+		## deleting spinner
+		#self.gallery_delete_spinner = misc.Spinner(self)
+		#self.gallery_delete_spinner.set_size(40,40)
+		##self.gallery_delete_spinner.set_text('Removing...')
+		#self.manga_list_view.gallery_model.rowsAboutToBeRemoved.connect(self.gallery_delete_spinner.show)
+		#self.manga_list_view.gallery_model.rowsRemoved.connect(self.gallery_delete_spinner.before_hide)
 
 
 	def search(self, srch_string):
@@ -479,15 +503,17 @@ class AppWindow(QMainWindow):
 
 	def popup(self, index):
 		if not self.popup_window.isVisible():
+			self.popup_window.set_gallery(index.data(Qt.UserRole+1))
 			m_x = QCursor.pos().x()
 			m_y = QCursor.pos().y()
 			d_w = QDesktopWidget().width()
 			d_h = QDesktopWidget().height()
-			p_w = gui_constants.POPUP_WIDTH
-			p_h = gui_constants.POPUP_HEIGHT
+			p_w = self.popup_window.width()
+			p_h = self.popup_window.height()
 			
 			index_rect = self.manga_list_view.visualRect(index)
 			index_point = self.manga_list_view.mapToGlobal(index_rect.topRight())
+			index_point_btm = self.manga_list_view.mapToGlobal(index_rect.bottomRight())
 			# adjust so it doesn't go offscreen
 			if d_w - m_x < p_w and d_h - m_y < p_h: # bottom
 				self.popup_window.move(m_x-p_w+5, m_y-p_h)
@@ -498,22 +524,19 @@ class AppWindow(QMainWindow):
 			else:
 				self.popup_window.move(index_point)
 
-			self.popup_window.set_gallery(index.data(Qt.UserRole+1))
 			self.popup_window.show()
 
 	def favourite_display(self):
 		"Switches to favourite display"
-		if self.display.currentIndex() == self.m_l_view_index:
-			self.manga_list_view.sort_model.fav_view()
-		else:
-			self.manga_table_view.sort_model.fav_view()
+		self.manga_table_view.sort_model.fav_view()
+		self.favourite_btn.selected = True
+		self.library_btn.selected = False
 
 	def catalog_display(self):
 		"Switches to catalog display"
-		if self.display.currentIndex() == self.m_l_view_index:
-			self.manga_list_view.sort_model.catalog_view()
-		else:
-			self.manga_table_view.sort_model.catalog_view()
+		self.manga_table_view.sort_model.catalog_view()
+		self.library_btn.selected = True
+		self.favourite_btn.selected = False
 
 	def settings(self):
 		sett = settingsdialog.SettingsDialog(self)
@@ -529,23 +552,22 @@ class AppWindow(QMainWindow):
 		self.toolbar.setFloatable(False)
 		#self.toolbar.setIconSize(QSize(20,20))
 		self.toolbar.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+		self.toolbar.setIconSize(QSize(20,20))
 
 		spacer_start = QWidget() # aligns the first actions properly
 		spacer_start.setFixedSize(QSize(10, 1))
 		self.toolbar.addWidget(spacer_start)
 
-		favourite_view_icon = QIcon(gui_constants.STAR_BTN_PATH)
-		favourite_view_action = QAction(favourite_view_icon, "Favorites", self)
-		favourite_view_action.setToolTip('Show only favourite galleries')
-		favourite_view_action.triggered.connect(self.favourite_display) #need lambda to pass extra args
-		self.toolbar.addAction(favourite_view_action)
+		self.favourite_btn = misc.ToolbarButton(self.toolbar, 'Favorites')
+		self.toolbar.addWidget(self.favourite_btn)
+		self.favourite_btn.clicked.connect(self.favourite_display) #need lambda to pass extra args
 
-		catalog_view_icon = QIcon(gui_constants.HOME_BTN_PATH)
-		catalog_view_action = QAction(catalog_view_icon, "Library", self)
-		catalog_view_action.setToolTip('Show all your galleries')
-		#catalog_view_action.setText("Catalog")
-		catalog_view_action.triggered.connect(self.catalog_display) #need lambda to pass extra args
-		self.toolbar.addAction(catalog_view_action)
+		self.library_btn = misc.ToolbarButton(self.toolbar, 'Library')
+		self.library_btn.setFixedWidth(60)
+		self.toolbar.addWidget(self.library_btn)
+		self.library_btn.clicked.connect(self.catalog_display) #need lambda to pass extra args
+		self.library_btn.selected = True
+
 		self.toolbar.addSeparator()
 
 		gallery_menu = QMenu()
@@ -572,7 +594,6 @@ class AppWindow(QMainWindow):
 		metadata_action.triggered.connect(self.get_metadata)
 		gallery_menu.addAction(metadata_action)
 		self.toolbar.addWidget(gallery_action)
-		self.toolbar.addSeparator()
 
 		misc_action = QToolButton()
 		misc_action.setText('Misc ')
@@ -591,6 +612,13 @@ class AppWindow(QMainWindow):
 		spacer_middle = QWidget() # aligns buttons to the right
 		spacer_middle.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 		self.toolbar.addWidget(spacer_middle)
+
+
+		sort_action = QToolButton()
+		sort_action.setIcon(QIcon(gui_constants.SORT_PATH))
+		sort_action.setMenu(misc.SortMenu(self.toolbar, self.manga_list_view))
+		sort_action.setPopupMode(QToolButton.InstantPopup)
+		self.toolbar.addWidget(sort_action)
 		
 		self.grid_toggle_g_icon = QIcon(gui_constants.GRID_PATH)
 		self.grid_toggle_l_icon = QIcon(gui_constants.LIST_PATH)
@@ -603,7 +631,12 @@ class AppWindow(QMainWindow):
 		self.grid_toggle.clicked.connect(self.toggle_view)
 		self.toolbar.addWidget(self.grid_toggle)
 
+		spacer_mid2 = QWidget() # aligns About action properly
+		spacer_mid2.setFixedSize(QSize(5, 1))
+		self.toolbar.addWidget(spacer_mid2)
+
 		self.search_bar = misc.LineEdit()
+		self.search_bar.setObjectName('search_bar')
 		self.search_timer = QTimer(self)
 		self.search_timer.setSingleShot(True)
 		self.search_timer.timeout.connect(lambda: self.search(self.search_bar.text()))
@@ -622,16 +655,21 @@ class AppWindow(QMainWindow):
 		self.search_bar.setPlaceholderText("Search title, artist, namespace & tags")
 		self.search_bar.setMinimumWidth(150)
 		self.search_bar.setMaximumWidth(500)
+		self.search_bar.setFixedHeight(19)
 		self.toolbar.addWidget(self.search_bar)
-		self.toolbar.addSeparator()
-		settings_icon = QIcon(gui_constants.SETTINGS_PATH)
-		settings_action = QAction("Set&tings", self)
-		settings_action.triggered.connect(self.settings)
-		self.toolbar.addAction(settings_action)
-		
+
 		spacer_end = QWidget() # aligns About action properly
 		spacer_end.setFixedSize(QSize(10, 1))
 		self.toolbar.addWidget(spacer_end)
+
+		settings_act = QToolButton(self.toolbar)
+		settings_act.setIcon(QIcon(gui_constants.SETTINGS_PATH))
+		settings_act.clicked.connect(self.settings)
+		self.toolbar.addWidget(settings_act)
+
+		spacer_end2 = QWidget() # aligns About action properly
+		spacer_end2.setFixedSize(QSize(5, 1))
+		self.toolbar.addWidget(spacer_end2)
 		self.addToolBar(self.toolbar)
 
 	def toggle_view(self):
@@ -871,6 +909,7 @@ class AppWindow(QMainWindow):
 		return super().showEvent(event)
 
 	def closeEvent(self, event):
+		self.system_tray.hide()
 		# watchers
 		try:
 			self.watchers.stop_all()
@@ -892,11 +931,50 @@ class AppWindow(QMainWindow):
 			log_d('Flush temp on exit: OK')
 		except:
 			log.exception('Flush temp on exit: FAIL')
-		log_d('Normal Exit App: OK')
-		super().closeEvent(event)
-		#app = QApplication.instance()
-		#app.exit()
-		#sys.exit()
+
+		if self.tags_treeview:
+			self.tags_treeview.close()
+
+		# check if there is db activity
+		if not gallerydb.method_queue.empty():
+			class DBActivityChecker(QObject):
+				FINISHED = pyqtSignal()
+				def __init__(self, **kwargs):
+					super().__init__(**kwargs)
+
+				def check(self):
+					gallerydb.method_queue.join()
+					self.FINISHED.emit()
+					self.deleteLater()
+
+			db_activity = DBActivityChecker()
+			db_spinner = misc.Spinner(self)
+			self.db_activity_checker.connect(db_activity.check)
+			db_activity.moveToThread(gui_constants.GENERAL_THREAD)
+			db_activity.FINISHED.connect(db_spinner.close)
+			db_spinner.set_size(50)
+			db_spinner.set_text('Activity')
+			db_spinner.move(QPoint(self.pos().x()+self.width()-70, self.pos().y()+self.height()-70))
+			self.move_listener.connect(lambda: db_spinner.update_move(QPoint(self.pos().x()+self.width()-70,
+																	self.pos().y()+self.height()-70)))
+			db_spinner.show()
+			self.db_activity_checker.emit()
+			msg_box = QMessageBox(self)
+			msg_box.setText('Database activity detected!')
+			msg_box.setInformativeText("Closing now might result in data loss." +
+								 " Do you still want to close?\n(Wait for the activity spinner to hide before closing)")
+			msg_box.setIcon(QMessageBox.Critical)
+			msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+			msg_box.setDefaultButton(QMessageBox.No)
+			if msg_box.exec() == QMessageBox.Yes:
+				log_d('Force Exit App: OK')
+				super().closeEvent(event)
+			else:
+				log_d('Ignore Exit App')
+				event.ignore()
+		else:
+			log_d('Normal Exit App: OK')
+			super().closeEvent(event)
 
 if __name__ == '__main__':
 	raise NotImplementedError("Unit testing not implemented yet!")

@@ -11,6 +11,7 @@ from PyQt5.QtGui import QPalette, QPixmapCache
 from misc import FlowLayout, Spacer, PathLineEdit
 import settings
 import gui_constants
+import misc_db
 
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -24,14 +25,16 @@ class SettingsDialog(QWidget):
 	scroll_speed_changed = pyqtSignal()
 	def __init__(self, parent=None):
 		super().__init__(parent, flags=Qt.Window)
+		self.parent_widget = parent
 		self.setAttribute(Qt.WA_DeleteOnClose)
 		self.resize(700, 500)
-		self.show()
 		self.restore_values()
 		self.initUI()
+		self.setWindowTitle('Settings')
+		self.show()
 
 	def initUI(self):
-		main_layout = QVBoxLayout()
+		main_layout = QVBoxLayout(self)
 		sub_layout = QHBoxLayout()
 		# Left Panel
 		left_panel = QListWidget()
@@ -90,9 +93,6 @@ class SettingsDialog(QWidget):
 
 		self.restore_options()
 
-		self.setLayout(main_layout)
-		self.setWindowTitle('Settings')
-
 
 	def change(self, item):
 		def curr_index(index):
@@ -127,11 +127,13 @@ class SettingsDialog(QWidget):
 	def restore_options(self):
 
 		# App / General
+		self.subfolder_as_chapters.setChecked(gui_constants.SUBFOLDER_AS_GALLERY)
+		self.extract_gallery_before_opening.setChecked(gui_constants.EXTRACT_CHAPTER_BEFORE_OPENING)
+		self.open_galleries_sequentially.setChecked(gui_constants.OPEN_GALLERIES_SEQUENTIALLY)
 		self.scroll_to_new_gallery.setChecked(gui_constants.SCROLL_TO_NEW_GALLERIES)
 		self.move_imported_gs.setChecked(gui_constants.MOVE_IMPORTED_GALLERIES)
 		self.move_imported_def_path.setText(gui_constants.IMPORTED_GALLERY_DEF_PATH)
 		self.open_random_g_chapters.setChecked(gui_constants.OPEN_RANDOM_GALLERY_CHAPTERS)
-		self.subfolder_as_chapters.setChecked(gui_constants.SUBFOLDER_AS_GALLERY)
 		self.rename_g_source_group.setChecked(gui_constants.RENAME_GALLERY_SOURCE)
 		self.path_to_unrar.setText(gui_constants.unrar_tool_path)
 
@@ -210,10 +212,19 @@ class SettingsDialog(QWidget):
 		self.g_data_fixer_title.setChecked(gui_constants.GALLERY_DATA_FIX_TITLE)
 		self.g_data_fixer_artist.setChecked(gui_constants.GALLERY_DATA_FIX_ARTIST)
 
+		# About / DB Overview
+		self.tags_treeview_on_start.setChecked(gui_constants.TAGS_TREEVIEW_ON_START)
+
 	def accept(self):
 		set = settings.set
 
 		# App / General
+		gui_constants.SUBFOLDER_AS_GALLERY = self.subfolder_as_chapters.isChecked()
+		set(gui_constants.SUBFOLDER_AS_GALLERY, 'Application', 'subfolder as gallery')
+		gui_constants.EXTRACT_CHAPTER_BEFORE_OPENING = self.extract_gallery_before_opening.isChecked()
+		set(gui_constants.EXTRACT_CHAPTER_BEFORE_OPENING, 'Application', 'extract chapter before opening')
+		gui_constants.OPEN_GALLERIES_SEQUENTIALLY = self.open_galleries_sequentially.isChecked()
+		set(gui_constants.OPEN_GALLERIES_SEQUENTIALLY, 'Application', 'open galleries sequentially')
 		gui_constants.SCROLL_TO_NEW_GALLERIES = self.scroll_to_new_gallery.isChecked()
 		set(gui_constants.SCROLL_TO_NEW_GALLERIES, 'Application', 'scroll to new galleries')
 		gui_constants.MOVE_IMPORTED_GALLERIES = self.move_imported_gs.isChecked()
@@ -223,8 +234,6 @@ class SettingsDialog(QWidget):
 			set(gui_constants.IMPORTED_GALLERY_DEF_PATH, 'Application', 'imported gallery def path')
 		gui_constants.OPEN_RANDOM_GALLERY_CHAPTERS = self.open_random_g_chapters.isChecked()
 		set(gui_constants.OPEN_RANDOM_GALLERY_CHAPTERS, 'Application', 'open random gallery chapters')
-		gui_constants.SUBFOLDER_AS_GALLERY = self.subfolder_as_chapters.isChecked()
-		set(gui_constants.SUBFOLDER_AS_GALLERY, 'Application', 'subfolder as gallery')
 		gui_constants.RENAME_GALLERY_SOURCE = self.rename_g_source_group.isChecked()
 		set(gui_constants.RENAME_GALLERY_SOURCE, 'Application', 'rename gallery source')
 		gui_constants.unrar_tool_path = self.path_to_unrar.text()
@@ -375,6 +384,9 @@ class SettingsDialog(QWidget):
 		gui_constants.GALLERY_DATA_FIX_REPLACE = self.g_data_replace_fix_edit.text()
 		set(gui_constants.GALLERY_DATA_FIX_REPLACE, 'Advanced', 'gallery data fix replace')
 
+		# About / DB Overview
+		gui_constants.TAGS_TREEVIEW_ON_START = self.tags_treeview_on_start.isChecked()
+		set(gui_constants.TAGS_TREEVIEW_ON_START, 'Application', 'tags treeview on start')
 
 		settings.save()
 		self.close()
@@ -414,7 +426,7 @@ class SettingsDialog(QWidget):
 
 
 		# App
-		application = QTabWidget()
+		application = QTabWidget(self)
 		self.application_index = self.right_panel.addWidget(application)
 		application_general, app_general_m_l = new_tab('General', application, True)
 
@@ -423,10 +435,16 @@ class SettingsDialog(QWidget):
 		app_gallery_group, app_gallery_l = groupbox('Gallery', QFormLayout, self)
 		app_general_m_l.addRow(app_gallery_group)
 		self.subfolder_as_chapters = QCheckBox("Treat subfolders as galleries (applies in archives too)")
+		extract_gallery_info = QLabel("Note: This option has no effect when turned off if path to viewer is not specified.")
+		self.extract_gallery_before_opening = QCheckBox("Extract archive before opening (only turn off if your viewer supports it)")
+		self.open_galleries_sequentially = QCheckBox("Open chapters sequentially (Note: has no effect if path to viewer is not specified)")
 		subf_info = QLabel("Behaviour of 'Scan for new galleries on startup' option will be affected.")
 		subf_info.setWordWrap(True)
 		app_gallery_l.addRow('Note:', subf_info)
 		app_gallery_l.addRow(self.subfolder_as_chapters)
+		app_gallery_l.addRow(extract_gallery_info)
+		app_gallery_l.addRow(self.extract_gallery_before_opening)
+		app_gallery_l.addRow(self.open_galleries_sequentially)
 		self.scroll_to_new_gallery = QCheckBox("Scroll to newly added gallery")
 		self.scroll_to_new_gallery.setDisabled(True)
 		app_gallery_l.addRow(self.scroll_to_new_gallery)
@@ -509,8 +527,8 @@ class SettingsDialog(QWidget):
 		self.folders_layout = QFormLayout()
 		app_monitor_folders_m_l.addLayout(self.folders_layout)
 
-		app_ignore, app_ignore_m_l = new_tab('Ignore', application, True)
 		# App / Ignore
+		app_ignore, app_ignore_m_l = new_tab('Ignore', application, True)
 		app_ignore_group, app_ignore_list_l = groupbox('List', QVBoxLayout, app_monitor_dummy)
 		app_ignore_m_l.addRow(app_ignore_group)
 		add_buttons_l = QHBoxLayout()
@@ -525,7 +543,7 @@ class SettingsDialog(QWidget):
 		app_ignore_list_l.addLayout(self.ignore_path_l)
 
 		# Web
-		web = QTabWidget()
+		web = QTabWidget(self)
 		self.web_index = self.right_panel.addWidget(web)
 		web_general_page = QScrollArea()
 		web_general_page.setBackgroundRole(QPalette.Base)
@@ -576,7 +594,7 @@ class SettingsDialog(QWidget):
 		metadata_fetcher_m_l.addRow(self.always_first_hit)
 
 		# Web / Exhentai
-		exhentai_page = QWidget()
+		exhentai_page = QWidget(self)
 		web.addTab(exhentai_page, 'ExHentai')
 		ipb_layout = QFormLayout()
 		exhentai_page.setLayout(ipb_layout)
@@ -589,7 +607,7 @@ class SettingsDialog(QWidget):
 		ipb_layout.addRow(exh_tutorial)
 
 		# Visual
-		visual = QTabWidget()
+		visual = QTabWidget(self)
 		self.visual_index = self.right_panel.addWidget(visual)
 		visual_general_page = QWidget()
 		visual.addTab(visual_general_page, 'General')
@@ -688,14 +706,14 @@ class SettingsDialog(QWidget):
 		grid_colors_l.addRow('Title color:', self.grid_title_color)
 		grid_colors_l.addRow('Artist color:', self.grid_artist_color)
 
-		style_page = QWidget()
+		style_page = QWidget(self)
 		visual.addTab(style_page, 'Style')
 		visual.setTabEnabled(0, False)
 		visual.setTabEnabled(2, False)
 		visual.setCurrentIndex(1)
 
 		# Advanced
-		advanced = QTabWidget()
+		advanced = QTabWidget(self)
 		self.advanced_index = self.right_panel.addWidget(advanced)
 		advanced_misc_scroll = QScrollArea(self)
 		advanced_misc_scroll.setBackgroundRole(QPalette.Base)
@@ -795,13 +813,13 @@ class SettingsDialog(QWidget):
 
 
 		# Advanced / Database
-		advanced_db_page = QWidget()
+		advanced_db_page = QWidget(self)
 		advanced.addTab(advanced_db_page, 'Database')
 		advanced.setTabEnabled(2, False)
 
 
 		# About
-		about = QTabWidget()
+		about = QTabWidget(self)
 		self.about_index = self.right_panel.addWidget(about)
 		about_happypanda_page = QWidget()
 		about_troubleshoot_page = QWidget()
@@ -824,11 +842,33 @@ class SettingsDialog(QWidget):
 		gpl_lbl.setWordWrap(True)
 		about_layout.addWidget(gpl_lbl, 0, Qt.AlignTop)
 		about_layout.addWidget(Spacer('v'))
-		# About / Tags
-		about_tags_page = QWidget()
-		about.addTab(about_tags_page, 'Tags')
-		about.setTabEnabled(1, False)
-		# list of tags/namespaces here
+
+		# About / DB Overview
+		about_db_overview, about_db_overview_m_l = new_tab('DB Overview', about)
+		about_stats_tab_widget = misc_db.DBOverview(self.parent_widget)
+		about_db_overview_options = QHBoxLayout()
+		self.tags_treeview_on_start = QCheckBox('Start with application', about_db_overview)
+		make_window_btn = QPushButton('Open in window', about_db_overview)
+		make_window_btn.adjustSize()
+		make_window_btn.setFixedWidth(make_window_btn.width())
+		about_db_overview_options.addWidget(self.tags_treeview_on_start)
+		about_db_overview_options.addWidget(make_window_btn)
+		def mk_btn_false():
+			try:
+				make_window_btn.setDisabled(False)
+			except RuntimeError:
+				pass
+		def make_tags_treeview_window():
+			self.parent_widget.tags_treeview = misc_db.DBOverview(self.parent_widget, True)
+			self.parent_widget.tags_treeview.about_to_close.connect(mk_btn_false)
+			make_window_btn.setDisabled(True)
+			self.parent_widget.tags_treeview.show()
+		if self.parent_widget.tags_treeview:
+			self.parent_widget.tags_treeview.about_to_close.connect(mk_btn_false)
+			make_window_btn.setDisabled(True)
+		make_window_btn.clicked.connect(make_tags_treeview_window)
+		about_db_overview_m_l.addRow(about_db_overview_options)
+		about_db_overview_m_l.addRow(about_stats_tab_widget)
 
 		# About / Troubleshooting
 		about.addTab(about_troubleshoot_page, 'Troubleshooting Guide')

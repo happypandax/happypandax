@@ -16,10 +16,11 @@ from datetime import datetime
 
 from PyQt5.QtCore import (Qt, QDate, QPoint, pyqtSignal, QThread,
 						  QTimer, QObject, QSize, QRect, QFileInfo,
-						  QMargins, QPropertyAnimation, QByteArray)
+						  QMargins, QPropertyAnimation, QRectF,
+						  QTimeLine, QMargins, QPropertyAnimation, QByteArray)
 from PyQt5.QtGui import (QTextCursor, QIcon, QMouseEvent, QFont,
 						 QPixmapCache, QPalette, QPainter, QBrush,
-						 QColor, QPen, QPixmap, QMovie)
+						 QColor, QPen, QPixmap, QMovie, QPaintEvent)
 from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QVBoxLayout, QHBoxLayout,
 							 QDialog, QGridLayout, QLineEdit,
@@ -34,7 +35,7 @@ from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QGridLayout, QScrollArea, QLayout, QButtonGroup,
 							 QRadioButton, QFileIconProvider, QFontDialog,
 							 QColorDialog, QScrollArea, QSystemTrayIcon,
-							 QMenu, QGraphicsBlurEffect)
+							 QMenu, QGraphicsBlurEffect, QActionGroup)
 
 from utils import (tag_to_string, tag_to_dict, title_parser, ARCHIVE_FILES,
 					 ArchiveFile, IMG_FILES, CreateArchiveFail)
@@ -60,12 +61,11 @@ def clearLayout(layout):
 			elif child.layout() is not None:
 				clearLayout(child.layout())
 
-class TransparentWidget(QWidget):
+class BaseMoveWidget(QWidget):
 	def __init__(self, parent=None, **kwargs):
 		move_listener = kwargs.pop('move_listener', True)
 		super().__init__(parent, **kwargs)
 		self.parent_widget = parent
-		self.setAttribute(Qt.WA_TranslucentBackground)
 		self.setAttribute(Qt.WA_DeleteOnClose)
 		if parent and move_listener:
 			try:
@@ -81,57 +81,256 @@ class TransparentWidget(QWidget):
 			self.move(self.parent_widget.window().frameGeometry().center() -\
 				self.window().rect().center())
 
+class SortMenu(QMenu):
+	def __init__(self, parent, mangaview):
+		super().__init__(parent)
+		self.manga_view = mangaview
+
+		self.sort_actions = QActionGroup(self, exclusive=True)
+		asc_desc_act = QAction("Asc/Desc", self)
+		asc_desc_act.triggered.connect(self.asc_desc)
+		s_title = self.sort_actions.addAction(QAction("Title", self.sort_actions, checkable=True))
+		s_title.triggered.connect(functools.partial(self.manga_view.sort, 'title'))
+		s_artist = self.sort_actions.addAction(QAction("Author", self.sort_actions, checkable=True))
+		s_artist.triggered.connect(functools.partial(self.manga_view.sort, 'artist'))
+		s_date = self.sort_actions.addAction(QAction("Date Added", self.sort_actions, checkable=True))
+		s_date.triggered.connect(functools.partial(self.manga_view.sort, 'date_added'))
+		s_pub_d = self.sort_actions.addAction(QAction("Date Published", self.sort_actions, checkable=True))
+		s_pub_d.triggered.connect(functools.partial(self.manga_view.sort, 'pub_date'))
+		s_times_read = self.sort_actions.addAction(QAction("Read Count", self.sort_actions, checkable=True))
+		s_times_read.triggered.connect(functools.partial(self.manga_view.sort, 'times_read'))
+
+		self.addAction(asc_desc_act)
+		self.addSeparator()
+		self.addAction(s_title)
+		self.addAction(s_artist)
+		self.addAction(s_date)
+		self.addAction(s_pub_d)
+		self.addAction(s_times_read)
+
+		self.set_current_sort()
+
+	def set_current_sort(self):
+		def check_key(act, key):
+			if self.manga_view.current_sort == key:
+				act.setChecked(True)
+
+		for act in self.sort_actions.actions():
+			if act.text() == 'Title':
+				check_key(act, 'title')
+			elif act.text() == 'Artist':
+				check_key(act, 'artist')
+			elif act.text() == 'Date Added':
+				check_key(act, 'date_added')
+			elif act.text() == 'Date Published':
+				check_key(act, 'pub_date')
+			elif act.text() == 'Read Count':
+				check_key(act, 'times_read')
+
+	def asc_desc(self):
+		if self.manga_view.sort_model.sortOrder() == Qt.AscendingOrder:
+			self.manga_view.sort_model.sort(0, Qt.DescendingOrder)
+		else:
+			self.manga_view.sort_model.sort(0, Qt.AscendingOrder)
+
+	def showEvent(self, event):
+		self.set_current_sort()
+		super().showEvent(event)
+
+class ToolbarButton(QPushButton):
+	def __init__(self, parent = None, txt=''):
+		super().__init__(parent)
+		self._text = ''
+		self._font_metrics = self.fontMetrics()
+		if txt:
+			self.setText(txt)
+		self._selected = False
+
+	@property
+	def selected(self):
+		return self._selected
+
+	@selected.setter
+	def selected(self, b):
+		self._selected = b
+		self.update()
+
+	def paintEvent(self, event):
+		assert isinstance(event, QPaintEvent)
+		painter = QPainter(self)
+		painter.setPen(QColor(164,164,164,120))
+		painter.setBrush(Qt.NoBrush)
+		if self._selected:
+			painter.setBrush(QBrush(QColor(164,164,164,120)))
+		#painter.setPen(Qt.NoPen)
+		painter.setRenderHint(painter.Antialiasing)
+		but_rect = QRectF(2.5,2.5, self.width()-5, self.height()-5)
+		select_rect = QRectF(0,0, self.width(), self.height())
+
+		painter.drawRoundedRect(but_rect, 2.5,2.5)
+		txt_to_draw = self._font_metrics.elidedText(self._text,
+											  Qt.ElideRight, but_rect.width())
+		text_rect = QRectF(but_rect.x()+8, but_rect.y(), but_rect.width()-1.5,
+					 but_rect.height()-1.5)
+		painter.setPen(QColor('white'))
+		painter.drawText(text_rect, txt_to_draw)
+
+		if self.underMouse():
+			painter.save()
+			painter.setPen(Qt.NoPen)
+			painter.setBrush(QBrush(QColor(164,164,164,90)))
+			painter.drawRoundedRect(select_rect, 5,5)
+			painter.restore()
+
+	def setText(self, txt):
+		self._text = txt
+		self.update()
+		super().setText(txt)
+		self.adjustSize()
+
+	def text(self):
+		return self._text
+		
+
+class TransparentWidget(BaseMoveWidget):
+	def __init__(self, parent=None, **kwargs):
+		super().__init__(parent, **kwargs)
+		self.setAttribute(Qt.WA_TranslucentBackground)
+
 class Spinner(TransparentWidget):
 	"""
-	Loading spinning overlay widget
+	Spinner widget
 	"""
 	activated = pyqtSignal()
 	deactivated = pyqtSignal()
 	about_to_show, about_to_hide = range(2)
-	def __init__(self, **kwargs):
-		super().__init__(flags=Qt.Window|Qt.FramelessWindowHint, **kwargs)
+
+	def __init__(self, parent=None):
+		super().__init__(parent, flags=Qt.Window|Qt.FramelessWindowHint)
 		self.setAttribute(Qt.WA_ShowWithoutActivating)
-		self._movie = QMovie(gui_constants.SPINNER_PATH)
-		layout = QVBoxLayout(self)
-		self.gif = QLabel()
-		self.gif.setMovie(self._movie)
-		self._lbl = QLabel('Please wait...')
-		layout.addWidget(self.gif)
-		layout.addWidget(self._lbl)
+		self.fps = 21
+		self.border = 2
+		self.line_width = 5
+		self.arc_length = 100
+		self.seconds_per_spin = 1
+
+		self.text = ''
+
+		self._timer = QTimer(self)
+		self._timer.timeout.connect(self._on_timer_timeout)
+
+		# keep track of the current start angle to avoid 
+		# unnecessary repaints
+		self._start_angle = 0
+
 		self.state_timer = QTimer()
 		self.current_state = self.about_to_show
 		self.state_timer.timeout.connect(super().hide)
 		self.state_timer.setSingleShot(True)
-		self._movie.start()
+
+		# animation
+		self.fade_animation = QPropertyAnimation(self, 'windowOpacity')
+		self.fade_animation.setDuration(800)
+		self.fade_animation.setStartValue(0.0)
+		self.fade_animation.setEndValue(1.0)
+		self.setWindowOpacity(0.0)
+		self.set_size(50)
+
+	def set_size(self, w):
+		self.setFixedWidth(w)
+		self.setFixedHeight(w+self.fontMetrics().height())
+		self.update()
+
 	def set_text(self, txt):
-		self._lbl.setText(txt)
+		self.text = txt
+		self.update()
 
-	def show_text(self, b):
-		if b:
-			self._lbl.show()
-		else:
-			self._lbl.hide()
+	def paintEvent(self, event):
+		# call the base paint event:
+		super().paintEvent(event)
 
-	def set_size(self, w, h):
-		self._movie.setScaledSize(QSize(w, h))
-		self.gif.resize(w, h)
-		self.resize(w,h)
+		painter = QPainter()
+		painter.begin(self)
+		try:
+			painter.setRenderHint(QPainter.Antialiasing)
 
-	def hide(self):
+			txt_rect = QRectF(0,0,0,0)
+			if not self.text:
+				txt_rect.setHeight(self.fontMetrics().height())
+
+			painter.save()
+			painter.setPen(Qt.NoPen)
+			painter.setBrush(QBrush(QColor(88,88,88,180)))
+			painter.drawRoundedRect(QRect(0,0, self.width(), self.height() - txt_rect.height()), 5, 5)
+			painter.restore()
+
+			pen = QPen(QColor('#F2F2F2'))
+			pen.setWidth(self.line_width)
+			painter.setPen(pen)
+
+			if self.text:
+				text_elided = self.fontMetrics().elidedText(self.text, Qt.ElideRight, self.width()-5)
+				txt_rect = painter.boundingRect(txt_rect, text_elided)
+
+			border = self.border + int(math.ceil(self.line_width / 2.0))
+			r = QRectF((txt_rect.height())/2, (txt_rect.height()/2),
+			  self.width()-txt_rect.height(), self.width()-txt_rect.height())
+			r.adjust(border, border, -border, -border)
+
+			# draw the arc:    
+			painter.drawArc(r, -self._start_angle * 16, self.arc_length * 16)
+
+			# draw text if there is
+			if self.text:
+				painter.drawText(QRectF(5, self.height()-txt_rect.height()-2.5, txt_rect.width(), txt_rect.height()),
+					 text_elided)
+
+			r = None
+
+		finally:
+			painter.end()
+			painter = None
+
+	def showEvent(self, event):
+		if not self._timer.isActive():
+			self.fade_animation.start()
+			self.current_state = self.about_to_show
+			self.state_timer.stop()
+			self.activated.emit()
+			self._timer.start(1000 / max(1, self.fps))
+		super().showEvent(event)
+
+	def hideEvent(self, event):
+		self._timer.stop()
+		self.deactivated.emit()
+		super().hideEvent(event)
+
+	def before_hide(self):
 		if self.current_state == self.about_to_hide:
 			return
 		self.current_state = self.about_to_hide
 		self.state_timer.start(5000)
 
-	def hideEvent(self, event):
-		self.deactivated.emit()
+	def closeEvent(self, event):
+		self._timer.stop()
+		super().closeEvent(event)
 
-	def showEvent(self, event):
-		self.current_state = self.about_to_show
-		self.state_timer.stop()
-		self.activated.emit()
-		return super().showEvent(event)
+	def _on_timer_timeout(self):
+		if not self.isVisible():
+			return
 
+		# calculate the spin angle as a function of the current time so that all 
+		# spinners appear in sync!
+		t = time.time()
+		whole_seconds = int(t)
+		p = (whole_seconds % self.seconds_per_spin) + (t - whole_seconds)
+		angle = int((360 * p)/self.seconds_per_spin)
+
+		if angle == self._start_angle:
+			return
+
+		self._start_angle = angle
+		self.update()
 
 class GalleryMenu(QMenu):
 	def __init__(self, view, index, gallery_model, app_window, selected_indexes=None):
@@ -341,10 +540,13 @@ class ClickedLabel(QLabel):
 class TagText(QPushButton):
 	def __init__(self, *args, **kwargs):
 		self.search_widget = kwargs.pop('search_widget', None)
+		self.namespace = kwargs.pop('namespace', None)
 		super().__init__(*args, **kwargs)
-		self.namespace = ''
 		if self.search_widget:
-			self.clicked.connect(lambda: self.search_widget.search('{}:{}'.format(self.namespace, self.text())))
+			if self.namespace:
+				self.clicked.connect(lambda: self.search_widget.search('{}:{}'.format(self.namespace, self.text())))
+			else:
+				self.clicked.connect(lambda: self.search_widget.search('{}'.format(self.text())))
 
 class BasePopup(TransparentWidget):
 	graphics_blur = QGraphicsBlurEffect()
@@ -352,7 +554,7 @@ class BasePopup(TransparentWidget):
 		if kwargs:
 			super().__init__(parent, **kwargs)
 		else:
-			super().__init__(parent, flags= Qt.Window | Qt.FramelessWindowHint)
+			super().__init__(parent, flags= Qt.Window | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
 		main_layout = QVBoxLayout()
 		self.main_widget = QFrame()
 		self.setLayout(main_layout)

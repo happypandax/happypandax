@@ -25,6 +25,12 @@ QLabel#image_box {
 QLabel#title {
     font-weight:bold;
     font-size:12px;
+
+}
+
+LineEdit#search_bar {
+    border:0px solid #ffd800;
+    border-radius:5px;
 }
 
 QLabel#author {
@@ -89,10 +95,12 @@ QScrollBar::handle {
 
 QScrollBar::handle:vertical {
     min-height: 50px;
+    border: 0px solid #9A9A9A;
 }
 
 QScrollBar::handle:horizontal {
     min-width: 50px;
+    border: 0px solid #9A9A9A;
 }
 
 QScrollBar::add-line:vertical {
@@ -150,7 +158,8 @@ QPushButton, QToolButton {
 }
 
 QPushButton:hover, QToolButton:hover {
-	background-color: #585858; 
+	background-color: #585858;
+    border:none;
 }
 
 /*GalleryDialog {
@@ -161,7 +170,7 @@ QPushButton:hover, QToolButton:hover {
 }*/
 
 QPushButton:pressed, QPushButton:checked {
-	background-color: #E1E1E1;
+	background-color: rgba(164,164,164,0.50);
 }
 
 QToolTip {
@@ -181,12 +190,3 @@ TagText {
     padding-right: 3px;
 
 }
-
-/*Window > QPlainTextEdit, QTextEdit, QGraphicsView {
-	background-color: #303030;
-	color: white;
-	border: none;
-
-QGraphicsTextItem {
-	color:white;
-} */

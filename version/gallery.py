@@ -19,20 +19,21 @@ from PyQt5.QtCore import (Qt, QAbstractListModel, QModelIndex, QVariant,
 						  QSize, QRect, QEvent, pyqtSignal, QThread,
 						  QTimer, QPointF, QSortFilterProxyModel,
 						  QAbstractTableModel, QItemSelectionModel,
-						  QPoint, QRectF, QDate, QDateTime, QObject)
+						  QPoint, QRectF, QDate, QDateTime, QObject,
+						  QEvent, QSizeF)
 from PyQt5.QtGui import (QPixmap, QBrush, QColor, QPainter, 
 						 QPen, QTextDocument,
 						 QMouseEvent, QHelpEvent,
 						 QPixmapCache, QCursor, QPalette, QKeyEvent,
 						 QFont, QTextOption, QFontMetrics, QFontMetricsF,
-						 QTextLayout, QPainterPath)
+						 QTextLayout, QPainterPath, QScrollPrepareEvent)
 from PyQt5.QtWidgets import (QListView, QFrame, QLabel,
 							 QStyledItemDelegate, QStyle,
 							 QMenu, QAction, QToolTip, QVBoxLayout,
 							 QSizePolicy, QTableWidget, QScrollArea,
 							 QHBoxLayout, QFormLayout, QDesktopWidget,
 							 QWidget, QHeaderView, QTableView, QApplication,
-							 QMessageBox, QActionGroup)
+							 QMessageBox, QActionGroup, QScroller)
 
 import gallerydb
 import gui_constants
@@ -51,14 +52,14 @@ log_c = log.critical
 class GalleryMetaPopup(QFrame):
 	def __init__(self, parent):
 		super().__init__(parent, Qt.Window | Qt.FramelessWindowHint)
-		self.setFrameShape(QFrame.StyledPanel)
+		self.setFrameShape(QFrame.NoFrame)
 		self.setAttribute(Qt.WA_ShowWithoutActivating)
 		self.setAttribute(Qt.WA_DeleteOnClose)
 		self.initUI()
 		#self.resize(gui_constants.POPUP_WIDTH,gui_constants.POPUP_HEIGHT)
 		self.setFixedWidth(gui_constants.POPUP_WIDTH)
 		self.setMaximumHeight(gui_constants.POPUP_HEIGHT)
-		self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
+		self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
 		self.parent_widget = parent
 	
 	def initUI(self):
@@ -90,12 +91,12 @@ class GalleryMetaPopup(QFrame):
 		self.tags_lbl = QLabel("Tags:")
 		self.tags_scroll = QScrollArea()
 		self.tags_scroll.setFrameStyle(QFrame.NoFrame)
-		tag_widget = QWidget(self)
-		self.tags_scroll.setWidget(tag_widget)
+		self.tag_widget = QWidget(self)
+		self.tags_scroll.setWidget(self.tag_widget)
 		self.tags_scroll.setWidgetResizable(True)
 		self.tags_scroll.setSizePolicy(QSizePolicy.MinimumExpanding,
 								 QSizePolicy.MinimumExpanding)
-		self.tags = QFormLayout(tag_widget)
+		self.tags = QFormLayout(self.tag_widget)
 
 
 		self.pub_date = QLabel()
@@ -137,13 +138,16 @@ class GalleryMetaPopup(QFrame):
 					self.tags.addRow(namespace, tags_lbls)
 
 				for n, tag in enumerate(gallery.tags[namespace], 1):
-					t = misc.TagText(search_widget=self.parent_widget)
-					if not namespace == 'default':
-						t.namespace = namespace
+					if namespace == 'default':
+						t = misc.TagText(search_widget=self.parent_widget)
+					else:
+						t = misc.TagText(search_widget=self.parent_widget,
+					   namespace=namespace)
 					t.setText(tag)
 					tags_lbls.addWidget(t)
 		else:
 			self.tags_scroll.hide()
+		self.tag_widget.adjustSize()
 
 		self.title.setText(gallery.title)
 		self.artist.setText(gallery.artist)
@@ -1153,8 +1157,12 @@ class MangaView(QListView):
 		self.sort(self.current_sort)
 		if gui_constants.DEBUG:
 			def debug_print(a):
-				print(a.data(Qt.UserRole+1))
+				pass
+				#print(a.data(Qt.UserRole+1))
+
 			self.clicked.connect(debug_print)
+
+		QScroller.grabGesture(self, QScroller.MiddleMouseButtonGesture)
 	#	self.ti = QTimer()
 	#	self.ti.timeout.connect(self.test_)
 	#	self.ti.start(5000)
@@ -1199,6 +1207,14 @@ class MangaView(QListView):
 	#		row = None
 
 	#	print('Found ', found)
+
+	def keyPressEvent(self, event):
+		if event.key() == Qt.Key_Return:
+			s_idx = self.selectedIndexes()
+			if s_idx:
+				for idx in s_idx:
+					self.doubleClicked.emit(idx)
+		return super().keyPressEvent(event)
 
 	def remove_gallery(self, index_list, local=False):
 		self.sort_model.setDynamicSortFilter(False)
@@ -1370,12 +1386,6 @@ class MangaView(QListView):
 		if len(select_indexes) > 1:
 			selected = True
 
-		def asc_desc():
-			if self.sort_model.sortOrder() == Qt.AscendingOrder:
-				self.sort_model.sort(0, Qt.DescendingOrder)
-			else:
-				self.sort_model.sort(0, Qt.AscendingOrder)
-
 		if index.isValid():
 			self.manga_delegate.CONTEXT_ON = True
 			if selected:
@@ -1384,46 +1394,6 @@ class MangaView(QListView):
 			else:
 				menu = misc.GalleryMenu(self, index, self.gallery_model,
 							   self.parent_widget)
-			handled = True
-		else:
-			menu = QMenu(self)
-			add_gallery = QAction("&Add new Gallery...", menu,
-						triggered = self.SERIES_DIALOG.emit)
-			menu.addAction(add_gallery)
-			def set_current_sort(act, key):
-				if self.current_sort == key:
-					act.setChecked(True)
-			sort_main = QAction("&Sort by", menu)
-			menu.addAction(sort_main)
-			sort_menu = QMenu()
-			sort_main.setMenu(sort_menu)
-			sort_actions = QActionGroup(sort_menu, exclusive=True)
-			asc_desc_act = QAction("Asc/Desc", sort_menu)
-			asc_desc_act.triggered.connect(asc_desc)
-			s_title = sort_actions.addAction(QAction("Title", sort_actions, checkable=True))
-			s_title.triggered.connect(functools.partial(self.sort, 'title'))
-			set_current_sort(s_title, 'title')
-			s_artist = sort_actions.addAction(QAction("Author", sort_actions, checkable=True))
-			s_artist.triggered.connect(functools.partial(self.sort, 'artist'))
-			set_current_sort(s_artist, 'artist')
-			s_date = sort_actions.addAction(QAction("Date Added", sort_actions, checkable=True))
-			s_date.triggered.connect(functools.partial(self.sort, 'date_added'))
-			set_current_sort(s_date, 'date_added')
-			s_pub_d = sort_actions.addAction(QAction("Date Published", sort_actions, checkable=True))
-			s_pub_d.triggered.connect(functools.partial(self.sort, 'pub_date'))
-			set_current_sort(s_pub_d, 'pub_date')
-			s_times_read = sort_actions.addAction(QAction("Read Count", sort_actions, checkable=True))
-			s_times_read.triggered.connect(functools.partial(self.sort, 'times_read'))
-			set_current_sort(s_times_read, 'times_read')
-
-			sort_menu.addAction(asc_desc_act)
-			sort_menu.addSeparator()
-			sort_menu.addAction(s_title)
-			sort_menu.addAction(s_artist)
-			sort_menu.addAction(s_date)
-			sort_menu.addAction(s_pub_d)
-			sort_menu.addAction(s_times_read)
-
 			handled = True
 
 		if handled:
@@ -1557,11 +1527,13 @@ class MangaTableView(QTableView):
 	#				return True
 	#	return super().viewportEvent(event)
 
-	def refresh(self):
-		#self.gallery_model.layoutChanged.emit()
-		##self.gallery_model.populate_data() # TODO: CAUSE OF CRASH! FIX ASAP
-		#self.STATUS_BAR_MSG.emit("Refreshed")
-		pass
+	def keyPressEvent(self, event):
+		if event.key() == Qt.Key_Return:
+			s_idx = self.selectionModel().selectedRows()
+			if s_idx:
+				for idx in s_idx:
+					self.doubleClicked.emit(idx)
+		return super().keyPressEvent(event)
 
 	def remove_gallery(self, index_list, local=False):
 		self.parent_widget.manga_list_view.remove_gallery(index_list, local)

@@ -10,12 +10,13 @@
 #You should have received a copy of the GNU General Public License
 #along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 
-import os, sys
-import settings
 """Contains constants to be used by several modules"""
 
+import os, sys
+import settings
+
 # Version number
-vs  = '0.23'
+vs  = '0.24'
 DEBUG = False
 
 get = settings.get
@@ -39,12 +40,12 @@ user_stylesheet_path = ""
 FIRST_TIME_LEVEL = get(3, 'Application', 'first time level', int)
 
 # sizes
-MAIN_W = 1029 # main window
+MAIN_W = 1061 # main window
 MAIN_H = 650 # main window
-GRIDBOX_H_SIZE = 230
+GRIDBOX_H_SIZE = 210
 GRIDBOX_W_SIZE = GRIDBOX_H_SIZE//1.40 #1.47
 GRIDBOX_LBL_H = 60
-GRIDBOX_H_SIZE += GRIDBOX_LBL_H - 10
+GRIDBOX_H_SIZE += GRIDBOX_LBL_H
 THUMB_H_SIZE = 200
 THUMB_W_SIZE = 143
 
@@ -65,9 +66,11 @@ DATE_ADDED = 10
 # Application
 SYSTEM_TRAY = None
 NOTIF_BAR = None # HACK: Cause of thread warnings!!
+GENERAL_THREAD = None
+WHEEL_SCROLL_EFFECT = 10
 
 # image paths
-SPINNER_PATH = os.path.join(static_dir, "spinner.gif")
+SORT_PATH = os.path.join(static_dir, "sort.png")
 GALLERY_ICO_PATH = os.path.join(static_dir, "gallery_ico.ico")
 GALLERY_DEF_ICO_PATH = os.path.join(static_dir, "gallery_def_ico.ico")
 GALLERY_EXT_ICO_PATH = os.path.join(static_dir, "gallery_ext_ico.ico")
@@ -100,6 +103,9 @@ OPEN_RANDOM_GALLERY_CHAPTERS = get(False, 'Application', 'open random gallery ch
 OVERRIDE_SUBFOLDER_AS_GALLERY = False # set to true to make a fetch instance treat subfolder as galleries (will be set to false)
 SUBFOLDER_AS_GALLERY = get(False, 'Application', 'subfolder as gallery', bool)
 RENAME_GALLERY_SOURCE = get(False, 'Application', 'rename gallery source', bool)
+EXTRACT_CHAPTER_BEFORE_OPENING = get(True, 'Application', 'extract chapter before opening', bool)
+TAGS_TREEVIEW_ON_START = get(False, 'Application', 'tags treeview on start', bool)
+OPEN_GALLERIES_SEQUENTIALLY = get(False, 'Application', 'open galleries sequentially', bool)
 
 # ADVANCED
 GALLERY_DATA_FIX_REGEX = get("", 'Advanced', 'gallery data fix regex', str)

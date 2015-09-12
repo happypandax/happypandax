@@ -1,4 +1,4 @@
-#"""
+﻿#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -76,6 +76,7 @@ def process_methods():
 
 		if not no_return:
 			method_return.put(r)
+		method_queue.task_done()
 
 method_queue_thread = threading.Thread(name='Method Queue Thread', target=process_methods,
 									   daemon=True)
@@ -769,8 +770,9 @@ class TagDB:
 	del_gallery_tags_mapping <- Deletes the tags and gallery mappings with corresponding series_ids from DB
 	get_gallery_tags -> Returns all tags and namespaces found for the given series_id;
 	get_tag_gallery -> Returns all galleries with the given tag
-	get_ns_tags -> Returns all tags linked to the given namespace
-	get_ns_tags_gallery -> Returns all galleries linked to the namespace tags
+	get_ns_tags -> "Returns a dict with namespace as key and list of tags as value"
+	get_ns_tags_to_gallery -> Returns all galleries linked to the namespace tags. Receives a dict like this: {"namespace":["tag1","tag2"]}
+	get_tags_from_namespace -> Returns all galleries linked to the namespace
 	add_tags <- Adds the given dict_of_tags to the given series_id
 	modify_tags <- Modifies the given tags
 	get_all_tags -> Returns all tags in database
@@ -840,7 +842,10 @@ class TagDB:
 					executing = [["SELECT tag FROM tags WHERE tag_id=?", (row['tag_id'],)]]
 					CommandQueue.put(executing)
 					c = ResultQueue.get()
-					tag = c.fetchone()['tag']
+					try:
+						tag = c.fetchone()['tag']
+					except TypeError:
+						continue
 
 					# add them to dict
 					if not namespace in tags:
@@ -967,14 +972,49 @@ class TagDB:
 		pass
 
 	@staticmethod
-	def get_ns_tags(namespace):
-		"Returns all tags linked to the given namespace"
+	def get_ns_tags():
+		"Returns a dict of all tags with namespace as key and list of tags as value"
+		executing = [['SELECT namespace_id, tag_id FROM tags_mappings']]
+		CommandQueue.put(executing)
+		cursor = ResultQueue.get()
+		ns_tags = {}
+		ns_id_history = {} # to avoid unesseccary DB fetching
+		for t in cursor.fetchall():
+			try:
+				# get namespace
+				if not t['namespace_id'] in ns_id_history:
+					executing = [['SELECT namespace FROM namespaces WHERE namespace_id=?', (t['namespace_id'],)]]
+					CommandQueue.put(executing)
+					c = ResultQueue.get()
+					ns = c.fetchone()['namespace']
+					ns_id_history[t['namespace_id']] = ns
+				else:
+					ns = ns_id_history[t['namespace_id']]
+				# get tag
+				executing = [['SELECT tag FROM tags WHERE tag_id=?', (t['tag_id'],)]]
+				CommandQueue.put(executing)
+				c = ResultQueue.get()
+				tag = c.fetchone()['tag']
+				# put in dict
+				if ns in ns_tags:
+					ns_tags[ns].append(tag)
+				else:
+					ns_tags[ns] = [tag]
+			except:
+				continue
+		return ns_tags
+
+	@staticmethod
+	def get_tags_from_namespace(namespace):
+		"Returns a dict with namespace as key and list of tags as value"
 		pass
 
 	@staticmethod
-	def get_ns_tags_gallery(ns_tags):
-		"""Returns all galleries linked to the namespace tags.
-		Receives a dict like this: {"namespace":["tag1","tag2"]}"""
+	def get_ns_tags_to_gallery(ns_tags):
+		"""
+		Returns all galleries linked to the namespace tags.
+		Receives a dict like this: {"namespace":["tag1","tag2"]}
+		"""
 		pass
 
 	@staticmethod
@@ -1411,8 +1451,8 @@ class DatabaseEmitter(QObject):
 			return True
 		else:
 			if not self._finished:
-				self.DONE.emit()
 				self._finished = True
+				self.DONE.emit()
 			return False
 	
 	def fetch_more(self):
