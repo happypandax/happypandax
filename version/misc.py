@@ -206,7 +206,7 @@ class Spinner(TransparentWidget):
 	about_to_show, about_to_hide = range(2)
 
 	def __init__(self, parent=None):
-		super().__init__(parent, flags=Qt.Window|Qt.FramelessWindowHint|Qt.WindowStaysOnTopHint)
+		super().__init__(parent, flags=Qt.Window|Qt.FramelessWindowHint)
 		self.setAttribute(Qt.WA_ShowWithoutActivating)
 		self.fps = 21
 		self.border = 2

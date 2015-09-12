@@ -409,7 +409,6 @@ def open_chapter(chapterpath, archive=None):
 	except FileNotFoundError:
 		log.exception('Could not find chapter {}'.format(chapterpath))
 		return
-	print(filepath)
 	try:
 		gui_constants.NOTIF_BAR.add_text('Opening gallery...')
 		if not gui_constants.USE_EXTERNAL_VIEWER:
@@ -420,7 +419,6 @@ def open_chapter(chapterpath, archive=None):
 			elif os.name == 'posix':
 				subprocess.call(('xdg-open', filepath))
 		else:
-			print('lol')
 			ext_path = gui_constants.EXTERNAL_VIEWER_PATH
 			viewer = external_viewer_checker(ext_path)
 			if viewer == 'honeyview':
