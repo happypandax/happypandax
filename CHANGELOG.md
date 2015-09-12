@@ -1,3 +1,28 @@
+*Happypanda v0.24*
+- Mostly gui fixes/improvements
+	+ Changed toolbar style and icons
+	+ Added new native spinners
+	+ Added spinner for the metadata fetching process
+	+ Added spinner for initial load
+	+ Added spinner for DB activity
+	+ Removed sort contextmenu and added it to the toolbar
+	+ Removed some space around galleries in grid view
+	+ Added kinetic scrolling when scrolling with middlemouse button
+- New DB Overview window and tab in settings dialog
+	+ you can now see all namespaces and tags in the `Namespace and Tags` tab
+- Pressing the return-key will now open selected galleries
+- New options in settings dialog
+	+ Make extracting archives before opening optional in `Application -> General`
+	+ Open chapters sequentially or all at once in `Application -> General`
+- Added a confirmation when closing while there is still DB activity to avoid data loss
+- Added log file rotation
+	+ When happypanda.log reaches `10 mb` a new file will be made (rotating between 3 files)
+- Fixed bugs:
+	+ Temporarily fixed a critical bug where galleries wouldn't load
+	+ Fixed a bug where the tray icon would stay even after closing the application
+	+ Fixed a bug where clicking on a tag with no namespace in the Gallery Metdata Popup would search the tag with a blank namespace
+	+ Fixed a minor bug where when opening the settings dialog a small window would appear first in a split second
+
 *Happypanda v0.23*
 - Stability and perfomance increase for very large libraries
 	+ Instant startup: Galleries are now lazily loaded

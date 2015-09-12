@@ -1,4 +1,4 @@
-﻿#"""
+#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -1215,20 +1215,6 @@ class MangaView(QListView):
 				for idx in s_idx:
 					self.doubleClicked.emit(idx)
 		return super().keyPressEvent(event)
-
-	def event(self, event):
-		assert isinstance(event, QEvent)
-		if event.type() == event.ScrollPrepare:
-			scroller = QScroller.scroller(self)
-			scroller.setSnapPositionsY(gui_constants.WHEEL_SCROLL_EFFECT,
-							  0.0)
-
-			s_prep_event = QScrollPrepareEvent(e)
-			s_prep_event.setViewportSize(QSizeF(self.size()))
-			s_prep_event.setContentPosRange(QRectF(0, 0, 0, gui_constants.WHEEL_SCROLL_EFFECT))
-			s_prep_event.setContentPos(QPointF(0, 0, gui_constants.WHEEL_SCROLL_EFFECT))
-
-		return super().event(event)
 
 	def remove_gallery(self, index_list, local=False):
 		self.sort_model.setDynamicSortFilter(False)
