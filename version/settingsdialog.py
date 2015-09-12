@@ -129,6 +129,7 @@ class SettingsDialog(QWidget):
 		# App / General
 		self.subfolder_as_chapters.setChecked(gui_constants.SUBFOLDER_AS_GALLERY)
 		self.extract_gallery_before_opening.setChecked(gui_constants.EXTRACT_CHAPTER_BEFORE_OPENING)
+		self.open_galleries_sequentially.setChecked(gui_constants.OPEN_GALLERIES_SEQUENTIALLY)
 		self.scroll_to_new_gallery.setChecked(gui_constants.SCROLL_TO_NEW_GALLERIES)
 		self.move_imported_gs.setChecked(gui_constants.MOVE_IMPORTED_GALLERIES)
 		self.move_imported_def_path.setText(gui_constants.IMPORTED_GALLERY_DEF_PATH)
@@ -222,6 +223,8 @@ class SettingsDialog(QWidget):
 		set(gui_constants.SUBFOLDER_AS_GALLERY, 'Application', 'subfolder as gallery')
 		gui_constants.EXTRACT_CHAPTER_BEFORE_OPENING = self.extract_gallery_before_opening.isChecked()
 		set(gui_constants.EXTRACT_CHAPTER_BEFORE_OPENING, 'Application', 'extract chapter before opening')
+		gui_constants.OPEN_GALLERIES_SEQUENTIALLY = self.open_galleries_sequentially.isChecked()
+		set(gui_constants.OPEN_GALLERIES_SEQUENTIALLY, 'Application', 'open galleries sequentially')
 		gui_constants.SCROLL_TO_NEW_GALLERIES = self.scroll_to_new_gallery.isChecked()
 		set(gui_constants.SCROLL_TO_NEW_GALLERIES, 'Application', 'scroll to new galleries')
 		gui_constants.MOVE_IMPORTED_GALLERIES = self.move_imported_gs.isChecked()
@@ -432,12 +435,16 @@ class SettingsDialog(QWidget):
 		app_gallery_group, app_gallery_l = groupbox('Gallery', QFormLayout, self)
 		app_general_m_l.addRow(app_gallery_group)
 		self.subfolder_as_chapters = QCheckBox("Treat subfolders as galleries (applies in archives too)")
+		extract_gallery_info = QLabel("Note: This option has no effect when turned off if path to viewer is not specified.")
 		self.extract_gallery_before_opening = QCheckBox("Extract archive before opening (only turn off if your viewer supports it)")
+		self.open_galleries_sequentially = QCheckBox("Open chapters sequentially (Note: has no effect if path to viewer is not specified)")
 		subf_info = QLabel("Behaviour of 'Scan for new galleries on startup' option will be affected.")
 		subf_info.setWordWrap(True)
 		app_gallery_l.addRow('Note:', subf_info)
 		app_gallery_l.addRow(self.subfolder_as_chapters)
+		app_gallery_l.addRow(extract_gallery_info)
 		app_gallery_l.addRow(self.extract_gallery_before_opening)
+		app_gallery_l.addRow(self.open_galleries_sequentially)
 		self.scroll_to_new_gallery = QCheckBox("Scroll to newly added gallery")
 		self.scroll_to_new_gallery.setDisabled(True)
 		app_gallery_l.addRow(self.scroll_to_new_gallery)
@@ -846,13 +853,18 @@ class SettingsDialog(QWidget):
 		make_window_btn.setFixedWidth(make_window_btn.width())
 		about_db_overview_options.addWidget(self.tags_treeview_on_start)
 		about_db_overview_options.addWidget(make_window_btn)
+		def mk_btn_false():
+			try:
+				make_window_btn.setDisabled(False)
+			except RuntimeError:
+				pass
 		def make_tags_treeview_window():
 			self.parent_widget.tags_treeview = misc_db.DBOverview(self.parent_widget, True)
-			self.parent_widget.tags_treeview.about_to_close.connect(lambda: make_window_btn.setDisabled(False))
+			self.parent_widget.tags_treeview.about_to_close.connect(mk_btn_false)
 			make_window_btn.setDisabled(True)
 			self.parent_widget.tags_treeview.show()
 		if self.parent_widget.tags_treeview:
-			self.parent_widget.tags_treeview.about_to_close.connect(lambda: make_window_btn.setDisabled(False))
+			self.parent_widget.tags_treeview.about_to_close.connect(mk_btn_false)
 			make_window_btn.setDisabled(True)
 		make_window_btn.clicked.connect(make_tags_treeview_window)
 		about_db_overview_m_l.addRow(about_db_overview_options)

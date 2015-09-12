@@ -105,6 +105,7 @@ SUBFOLDER_AS_GALLERY = get(False, 'Application', 'subfolder as gallery', bool)
 RENAME_GALLERY_SOURCE = get(False, 'Application', 'rename gallery source', bool)
 EXTRACT_CHAPTER_BEFORE_OPENING = get(False, 'Application', 'extract chapter before opening', bool)
 TAGS_TREEVIEW_ON_START = get(False, 'Application', 'tags treeview on start', bool)
+OPEN_GALLERIES_SEQUENTIALLY = get(True, 'Application', 'open galleries sequentially', bool)
 
 # ADVANCED
 GALLERY_DATA_FIX_REGEX = get("", 'Advanced', 'gallery data fix regex', str)

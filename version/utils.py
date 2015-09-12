@@ -398,10 +398,10 @@ def open_chapter(chapterpath, archive=None):
 			filepath = find_f_img_folder()
 		except NotADirectoryError: # archive
 			try:
-				if gui_constants.EXTRACT_CHAPTER_BEFORE_OPENING:
-					filepath = find_f_img_archive()
-				else:
+				if not gui_constants.EXTRACT_CHAPTER_BEFORE_OPENING and gui_constants.EXTERNAL_VIEWER_PATH:
 					filepath = find_f_img_archive(False)
+				else:
+					filepath = find_f_img_archive()
 			except CreateArchiveFail:
 				log.exception('Could not open chapter')
 				gui_constants.NOTIF_BAR.add_text('Could not open chapter. Check happypanda.log for more details.')
@@ -422,9 +422,15 @@ def open_chapter(chapterpath, archive=None):
 			ext_path = gui_constants.EXTERNAL_VIEWER_PATH
 			viewer = external_viewer_checker(ext_path)
 			if viewer == 'honeyview':
-				subprocess.call((ext_path, filepath))
+				if gui_constants.OPEN_GALLERIES_SEQUENTIALLY:
+					subprocess.call((ext_path, filepath))
+				else:
+					subprocess.Popen((ext_path, filepath))
 			else:
-				subprocess.check_call((ext_path, filepath))
+				if gui_constants.OPEN_GALLERIES_SEQUENTIALLY:
+					subprocess.check_call((ext_path, filepath))
+				else:
+					subprocess.Popen((ext_path, filepath))
 	except subprocess.CalledProcessError:
 		log.exception('Could not open chapter. Invalid external viewer.')
 	except:
