@@ -1,4 +1,4 @@
-﻿#This file is part of Happypanda.
+#This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
 #the Free Software Foundation, either version 2 of the License, or
@@ -39,15 +39,26 @@ class TagsTreeView(QTreeWidget):
 	def search_tags(self, items):
 		if self.parent_widget:
 			tags = {}
+			d_tags = []
 			for item in items:
 				ns_item = item.parent()
+				if ns_item.text(0) == 'No namespace':
+					d_tags.append(item.text(0))
+					continue
 				if ns_item.text(0) in tags:
 					tags[ns_item.text(0)].append(item.text(0))
 				else:
 					tags[ns_item.text(0)] = [item.text(0)]
 			
 			search_txt = utils.tag_to_string(tags)
-			self.parent_widget.search(search_txt)
+			d_search_txt = ''
+			for x, d_t in enumerate(d_tags, 1):
+				if x == len(d_tags):
+					d_search_txt += '{}'.format(d_t)
+				else:
+					d_search_txt += '{}, '.format(d_t)
+			final_txt = search_txt + ', ' + d_search_txt if search_txt else d_search_txt
+			self.parent_widget.search(final_txt)
 
 	def contextMenuEvent(self, event):
 		handled = False
@@ -80,8 +91,9 @@ class TagsTreeView(QTreeWidget):
 				copy_act = menu.addAction('Copy')
 				copy_act.triggered.connect(copy)
 				if not contains_ns:
-					copy_ns_act = menu.addAction('Copy with namespace')
-					copy_ns_act.triggered.connect(lambda: copy(True))
+					if s_items[0].parent().text(0) != 'No namespace':
+						copy_ns_act = menu.addAction('Copy with namespace')
+						copy_ns_act.triggered.connect(lambda: copy(True))
 			if not contains_ns:
 				search_act = menu.addAction('Search')
 				search_act.triggered.connect(lambda: self.search_tags(s_items))
