@@ -359,6 +359,17 @@ class AppWindow(QMainWindow):
 		s_gallery_popup.USER_CHOICE.connect(queue.put)
 
 	def get_metadata(self, gal=None):
+		metadata_spinner = misc.Spinner(self)
+		def move_md_spinner():
+			metadata_spinner.update_move(
+			QPoint(
+				self.pos().x()+self.width()-65,
+				self.pos().y()+self.toolbar.height()+55))
+		metadata_spinner.set_text("Metadata")
+		metadata_spinner.set_size(55)
+		metadata_spinner.move(QPoint(self.pos().x()+self.width()-65,
+							   self.pos().y()+self.toolbar.height()+55))
+		self.move_listener.connect(move_md_spinner)
 		thread = QThread(self)
 		thread.setObjectName('App.get_metadata')
 		fetch_instance = fetch.Fetch()
@@ -397,13 +408,11 @@ class AppWindow(QMainWindow):
 		fetch_instance.AUTO_METADATA_PROGRESS.connect(self.notification_bar.add_text)
 		thread.started.connect(fetch_instance.auto_web_metadata)
 		fetch_instance.FINISHED.connect(done)
+		fetch_instance.FINISHED.connect(metadata_spinner.close)
+		fetch_instance.FINISHED.connect(lambda: self.move_listener.disconnect(move_md_spinner))
 		thread.finished.connect(thread.deleteLater)
 		thread.start()
-
-
-	#def style_tooltip(self):
-	#	palette = QToolTip.palette()
-	#	palette.setColor()
+		metadata_spinner.show()
 
 	def init_stat_bar(self):
 		self.status_bar = self.statusBar()
@@ -952,7 +961,7 @@ class AppWindow(QMainWindow):
 			msg_box = QMessageBox(self)
 			msg_box.setText('Database activity detected!')
 			msg_box.setInformativeText("Closing now might result in data loss." +
-								 " Do you still want to close?\n(Wait for the spinner to hide before closing)")
+								 " Do you still want to close?\n(Wait for the activity spinner to hide before closing)")
 			msg_box.setIcon(QMessageBox.Critical)
 			msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
 			msg_box.setDefaultButton(QMessageBox.No)

@@ -234,6 +234,7 @@ class Spinner(TransparentWidget):
 		self.fade_animation.setStartValue(0.0)
 		self.fade_animation.setEndValue(1.0)
 		self.setWindowOpacity(0.0)
+		self.set_size(50)
 
 	def set_size(self, w):
 		self.setFixedWidth(w)
