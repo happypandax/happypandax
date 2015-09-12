@@ -383,18 +383,12 @@ def open_chapter(chapterpath, archive=None):
 			filepath = os.path.abspath(filepath)
 		else:
 			if is_archive:
-				con = zip.dir_contents(chapterpath)
+				con = zip.dir_contents('')
 				f_img = [x for x in sorted(con) if x.endswith(IMG_FILES)]
 				if not f_img:
-					raise ValueError("No img in chapter path found")
-				f_img = f_img[0]
-				if 'honeyview' in gui_constants.EXTERNAL_VIEWER_PATH: # honeyview support
-					if chapterpath and '/' in f_img:
-						filepath = "{} | {}".format(archive, f_img)
-					else:
-						filepath = "{} | {}".format(archive, os.path.join(chapterpath, f_img))
-				else:
-					filepath = os.path.normpath(os.path.join(archive, f_img))
+					log_w('Extracting archive.. There are no images in the top-folder. ({})'.format(archive))
+					return find_f_img_archive()
+				filepath = os.path.normpath(archive)
 			else:
 				raise ValueError("Unsupported gallery version")
 		return filepath
@@ -426,6 +420,7 @@ def open_chapter(chapterpath, archive=None):
 			elif os.name == 'posix':
 				subprocess.call(('xdg-open', filepath))
 		else:
+			print('lol')
 			ext_path = gui_constants.EXTERNAL_VIEWER_PATH
 			viewer = external_viewer_checker(ext_path)
 			if viewer == 'honeyview':

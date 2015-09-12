@@ -127,11 +127,12 @@ class SettingsDialog(QWidget):
 	def restore_options(self):
 
 		# App / General
+		self.subfolder_as_chapters.setChecked(gui_constants.SUBFOLDER_AS_GALLERY)
+		self.extract_gallery_before_opening.setChecked(gui_constants.EXTRACT_CHAPTER_BEFORE_OPENING)
 		self.scroll_to_new_gallery.setChecked(gui_constants.SCROLL_TO_NEW_GALLERIES)
 		self.move_imported_gs.setChecked(gui_constants.MOVE_IMPORTED_GALLERIES)
 		self.move_imported_def_path.setText(gui_constants.IMPORTED_GALLERY_DEF_PATH)
 		self.open_random_g_chapters.setChecked(gui_constants.OPEN_RANDOM_GALLERY_CHAPTERS)
-		self.subfolder_as_chapters.setChecked(gui_constants.SUBFOLDER_AS_GALLERY)
 		self.rename_g_source_group.setChecked(gui_constants.RENAME_GALLERY_SOURCE)
 		self.path_to_unrar.setText(gui_constants.unrar_tool_path)
 
@@ -217,6 +218,10 @@ class SettingsDialog(QWidget):
 		set = settings.set
 
 		# App / General
+		gui_constants.SUBFOLDER_AS_GALLERY = self.subfolder_as_chapters.isChecked()
+		set(gui_constants.SUBFOLDER_AS_GALLERY, 'Application', 'subfolder as gallery')
+		gui_constants.EXTRACT_CHAPTER_BEFORE_OPENING = self.extract_gallery_before_opening.isChecked()
+		set(gui_constants.EXTRACT_CHAPTER_BEFORE_OPENING, 'Application', 'extract chapter before opening')
 		gui_constants.SCROLL_TO_NEW_GALLERIES = self.scroll_to_new_gallery.isChecked()
 		set(gui_constants.SCROLL_TO_NEW_GALLERIES, 'Application', 'scroll to new galleries')
 		gui_constants.MOVE_IMPORTED_GALLERIES = self.move_imported_gs.isChecked()
@@ -226,8 +231,6 @@ class SettingsDialog(QWidget):
 			set(gui_constants.IMPORTED_GALLERY_DEF_PATH, 'Application', 'imported gallery def path')
 		gui_constants.OPEN_RANDOM_GALLERY_CHAPTERS = self.open_random_g_chapters.isChecked()
 		set(gui_constants.OPEN_RANDOM_GALLERY_CHAPTERS, 'Application', 'open random gallery chapters')
-		gui_constants.SUBFOLDER_AS_GALLERY = self.subfolder_as_chapters.isChecked()
-		set(gui_constants.SUBFOLDER_AS_GALLERY, 'Application', 'subfolder as gallery')
 		gui_constants.RENAME_GALLERY_SOURCE = self.rename_g_source_group.isChecked()
 		set(gui_constants.RENAME_GALLERY_SOURCE, 'Application', 'rename gallery source')
 		gui_constants.unrar_tool_path = self.path_to_unrar.text()
@@ -429,10 +432,12 @@ class SettingsDialog(QWidget):
 		app_gallery_group, app_gallery_l = groupbox('Gallery', QFormLayout, self)
 		app_general_m_l.addRow(app_gallery_group)
 		self.subfolder_as_chapters = QCheckBox("Treat subfolders as galleries (applies in archives too)")
+		self.extract_gallery_before_opening = QCheckBox("Extract archive before opening (only turn off if your viewer supports it)")
 		subf_info = QLabel("Behaviour of 'Scan for new galleries on startup' option will be affected.")
 		subf_info.setWordWrap(True)
 		app_gallery_l.addRow('Note:', subf_info)
 		app_gallery_l.addRow(self.subfolder_as_chapters)
+		app_gallery_l.addRow(self.extract_gallery_before_opening)
 		self.scroll_to_new_gallery = QCheckBox("Scroll to newly added gallery")
 		self.scroll_to_new_gallery.setDisabled(True)
 		app_gallery_l.addRow(self.scroll_to_new_gallery)

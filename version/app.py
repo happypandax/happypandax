@@ -503,15 +503,17 @@ class AppWindow(QMainWindow):
 
 	def popup(self, index):
 		if not self.popup_window.isVisible():
+			self.popup_window.set_gallery(index.data(Qt.UserRole+1))
 			m_x = QCursor.pos().x()
 			m_y = QCursor.pos().y()
 			d_w = QDesktopWidget().width()
 			d_h = QDesktopWidget().height()
-			p_w = gui_constants.POPUP_WIDTH
-			p_h = gui_constants.POPUP_HEIGHT
+			p_w = self.popup_window.width()
+			p_h = self.popup_window.height()
 			
 			index_rect = self.manga_list_view.visualRect(index)
 			index_point = self.manga_list_view.mapToGlobal(index_rect.topRight())
+			index_point_btm = self.manga_list_view.mapToGlobal(index_rect.bottomRight())
 			# adjust so it doesn't go offscreen
 			if d_w - m_x < p_w and d_h - m_y < p_h: # bottom
 				self.popup_window.move(m_x-p_w+5, m_y-p_h)
@@ -522,7 +524,6 @@ class AppWindow(QMainWindow):
 			else:
 				self.popup_window.move(index_point)
 
-			self.popup_window.set_gallery(index.data(Qt.UserRole+1))
 			self.popup_window.show()
 
 	def favourite_display(self):

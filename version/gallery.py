@@ -59,7 +59,7 @@ class GalleryMetaPopup(QFrame):
 		#self.resize(gui_constants.POPUP_WIDTH,gui_constants.POPUP_HEIGHT)
 		self.setFixedWidth(gui_constants.POPUP_WIDTH)
 		self.setMaximumHeight(gui_constants.POPUP_HEIGHT)
-		self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
+		self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
 		self.parent_widget = parent
 	
 	def initUI(self):
@@ -91,12 +91,12 @@ class GalleryMetaPopup(QFrame):
 		self.tags_lbl = QLabel("Tags:")
 		self.tags_scroll = QScrollArea()
 		self.tags_scroll.setFrameStyle(QFrame.NoFrame)
-		tag_widget = QWidget(self)
-		self.tags_scroll.setWidget(tag_widget)
+		self.tag_widget = QWidget(self)
+		self.tags_scroll.setWidget(self.tag_widget)
 		self.tags_scroll.setWidgetResizable(True)
-		self.tags_scroll.setSizePolicy(QSizePolicy.Preferred,
-								 QSizePolicy.Preferred)
-		self.tags = QFormLayout(tag_widget)
+		self.tags_scroll.setSizePolicy(QSizePolicy.MinimumExpanding,
+								 QSizePolicy.MinimumExpanding)
+		self.tags = QFormLayout(self.tag_widget)
 
 
 		self.pub_date = QLabel()
@@ -147,6 +147,7 @@ class GalleryMetaPopup(QFrame):
 					tags_lbls.addWidget(t)
 		else:
 			self.tags_scroll.hide()
+		self.tag_widget.adjustSize()
 
 		self.title.setText(gallery.title)
 		self.artist.setText(gallery.artist)
