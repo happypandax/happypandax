@@ -229,7 +229,8 @@ class Spinner(TransparentWidget):
 		self.state_timer.setSingleShot(True)
 
 		# animation
-		self.fade_animation = QPropertyAnimation(self, 'windowOpacity')
+		property_b_array = QByteArray().append('windowOpacity')
+		self.fade_animation = QPropertyAnimation(self, property_b_array)
 		self.fade_animation.setDuration(800)
 		self.fade_animation.setStartValue(0.0)
 		self.fade_animation.setEndValue(1.0)
