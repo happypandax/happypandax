@@ -16,7 +16,7 @@ import os, sys
 import settings
 
 # Version number
-vs  = '0.24'
+vs  = '0.24.1'
 DEBUG = False
 
 get = settings.get
