@@ -1,4 +1,4 @@
-#"""
+﻿#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -1239,14 +1239,14 @@ class MangaView(QListView):
 
 		if msgbox.exec() == msgbox.Yes:
 			gallery_list = []
-			log_i('Removing {} galleries'.format(len(gallery_list)))
+			log_i('Removing {} galleries'.format(len(index_list)))
 			self.gallery_model.REMOVING_ROWS = True
 			for index in index_list:
 				gallery = index.data(Qt.UserRole+1)
 				gallery_list.append(gallery)
 				log_i('Attempt to remove: {} by {}'.format(gallery.title.encode(),
 											gallery.artist.encode()))
-			gallerydb.add_method_queue(gallerydb.GalleryDB.del_gallery, True, gallery_list, local)
+			gallerydb.add_method_queue(gallerydb.GalleryDB.del_gallery, True, gallery_list, local=local)
 			rows = sorted([x.row() for x in index_list])
 			for x in range(len(rows), 0, -1):
 				self.sort_model.removeRows(rows[x-1])

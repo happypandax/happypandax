@@ -489,19 +489,19 @@ class GalleryDB:
 		"Deletes all galleries in the list recursively."
 		assert isinstance(list_of_gallery, list), "Please provide a valid list of galleries to delete"
 		for gallery in list_of_gallery:
-			if not gallery.validate():
-				log_d('Invalid gallery not removable')
-				continue
 			if local:
-				for chap in gallery.chapters:
-					path = gallery.chapters[chap]
-					s = delete_path(path)
-					if not s:
-						log_e('Failed to delete chapter {}:{}, {}'.format(chap,
-														gallery.id, gallery.title.encode('utf-8', 'ignore')))
-						continue
+				if gallery.is_archive:
+					s = delete_path(gallery.path)
+				else:
+					for chap in gallery.chapters:
+						path = gallery.chapters[chap]
+						s = delete_path(path)
+						if not s:
+							log_e('Failed to delete chapter {}:{}, {}'.format(chap,
+															gallery.id, gallery.title.encode('utf-8', 'ignore')))
+							continue	
 
-				s = delete_path(gallery.path)
+					s = delete_path(gallery.path)
 				if not s:
 					log_e('Failed to delete gallery:{}, {}'.format(gallery.id,
 													  gallery.title.encode('utf-8', 'ignore')))

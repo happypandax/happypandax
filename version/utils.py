@@ -666,10 +666,11 @@ def open_path(path):
 
 def delete_path(path):
 	"Deletes the provided recursively"
+	s = True
 	if os.path.exists(path):
 		error = ''
 		try:
-			if os.path.isfile:
+			if os.path.isfile(path):
 				os.remove(path)
 			else:
 				shutil.rmtree(path)
@@ -681,8 +682,8 @@ def delete_path(path):
 		if error:
 			p = os.path.split(path)[1]
 			log_e('Failed to delete: {}:{}'.format(error, p))
-			return False
-		return True
+			s = False
+	return s
 
 def get_terms(term):
 	"Dividies term into pieces. Returns a list with the pieces"
