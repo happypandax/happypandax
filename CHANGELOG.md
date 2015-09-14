@@ -1,3 +1,8 @@
+*Happypanda v0.24.1*
+- Fixed bugs:
+	+ Removing a gallery and its files should now work
+	+ Popups was staying on top of all windows
+
 *Happypanda v0.24*
 - Mostly gui fixes/improvements
 	+ Changed toolbar style and icons
