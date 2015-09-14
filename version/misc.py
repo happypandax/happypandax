@@ -555,7 +555,7 @@ class BasePopup(TransparentWidget):
 		if kwargs:
 			super().__init__(parent, **kwargs)
 		else:
-			super().__init__(parent, flags= Qt.Window | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+			super().__init__(parent, flags= Qt.Dialog | Qt.FramelessWindowHint)
 		main_layout = QVBoxLayout()
 		self.main_widget = QFrame()
 		self.setLayout(main_layout)

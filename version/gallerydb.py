@@ -1,4 +1,4 @@
-﻿#"""
+#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -489,9 +489,9 @@ class GalleryDB:
 		"Deletes all galleries in the list recursively."
 		assert isinstance(list_of_gallery, list), "Please provide a valid list of galleries to delete"
 		for gallery in list_of_gallery:
-			if not gallery.validate():
-				log_d('Invalid gallery not removable')
-				continue
+			#if not gallery.validate():
+			#	log_d('Invalid gallery not removable')
+			#	continue
 			if local:
 				for chap in gallery.chapters:
 					path = gallery.chapters[chap]
