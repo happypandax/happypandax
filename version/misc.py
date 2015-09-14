@@ -229,7 +229,8 @@ class Spinner(TransparentWidget):
 		self.state_timer.setSingleShot(True)
 
 		# animation
-		self.fade_animation = QPropertyAnimation(self, 'windowOpacity')
+		property_b_array = QByteArray().append('windowOpacity')
+		self.fade_animation = QPropertyAnimation(self, property_b_array)
 		self.fade_animation.setDuration(800)
 		self.fade_animation.setStartValue(0.0)
 		self.fade_animation.setEndValue(1.0)
@@ -554,7 +555,7 @@ class BasePopup(TransparentWidget):
 		if kwargs:
 			super().__init__(parent, **kwargs)
 		else:
-			super().__init__(parent, flags= Qt.Window | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+			super().__init__(parent, flags= Qt.Dialog | Qt.FramelessWindowHint)
 		main_layout = QVBoxLayout()
 		self.main_widget = QFrame()
 		self.setLayout(main_layout)

@@ -1,4 +1,4 @@
-﻿#"""
+#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -180,7 +180,7 @@ def start(test=False):
 					for name in dirs:
 						os.rmdir(os.path.join(root, name))
 			except:
-				log_d('Empty temp: FAIL')
+				log_i('Empty temp: FAIL')
 		log_d('Create temp: OK')
 
 		if test:

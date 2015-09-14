@@ -1,4 +1,4 @@
-﻿#"""
+#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -493,15 +493,15 @@ class GalleryDB:
 				if gallery.is_archive:
 					s = delete_path(gallery.path)
 				else:
-					for chap in gallery.chapters:
-						path = gallery.chapters[chap]
-						s = delete_path(path)
-						if not s:
-							log_e('Failed to delete chapter {}:{}, {}'.format(chap,
-															gallery.id, gallery.title.encode('utf-8', 'ignore')))
-							continue	
+				for chap in gallery.chapters:
+					path = gallery.chapters[chap]
+					s = delete_path(path)
+					if not s:
+						log_e('Failed to delete chapter {}:{}, {}'.format(chap,
+														gallery.id, gallery.title.encode('utf-8', 'ignore')))
+						continue
 
-					s = delete_path(gallery.path)
+				s = delete_path(gallery.path)
 				if not s:
 					log_e('Failed to delete gallery:{}, {}'.format(gallery.id,
 													  gallery.title.encode('utf-8', 'ignore')))
