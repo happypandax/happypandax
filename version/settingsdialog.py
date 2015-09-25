@@ -435,6 +435,7 @@ class SettingsDialog(QWidget):
 		app_gallery_group, app_gallery_l = groupbox('Gallery', QFormLayout, self)
 		app_general_m_l.addRow(app_gallery_group)
 		self.subfolder_as_chapters = QCheckBox("Treat subfolders as galleries (applies in archives too)")
+		self.subfolder_as_chapters.setToolTip("This option will treat subfolders as standalone galleries when scanning for galleries")
 		extract_gallery_info = QLabel("Note: This option has no effect when turned off if path to viewer is not specified.")
 		self.extract_gallery_before_opening = QCheckBox("Extract archive before opening (only turn off if your viewer supports it)")
 		self.open_galleries_sequentially = QCheckBox("Open chapters sequentially (Note: has no effect if path to viewer is not specified)")
@@ -451,6 +452,7 @@ class SettingsDialog(QWidget):
 		self.move_imported_gs, move_imported_gs_l = groupbox('Move imported galleries',
 													   QFormLayout, app_gallery_group)
 		self.move_imported_gs.setCheckable(True)
+		self.move_imported_gs.setToolTip("Move imported galleries to specified folder.")
 		self.move_imported_def_path = PathLineEdit()
 		move_imported_gs_l.addRow('Directory:', self.move_imported_def_path)
 		app_gallery_l.addRow(self.move_imported_gs)
@@ -743,7 +745,7 @@ class SettingsDialog(QWidget):
 		cache_size_spin_box = QSpinBox()
 		cache_size_spin_box.setFixedWidth(120)
 		cache_size_spin_box.setMaximum(999999999)
-		cache_size_spin_box.setToolTip('This will greatly improve the grid view.' +
+		cache_size_spin_box.setToolTip('This will greatly reduce lags/freezes in the grid view.' +
 								 ' Increase the value if you experience lag when scrolling'+
 								 ' through galleries. DEFAULT: 200 MiB')
 		def cache_size(c): self.cache_size = (self.cache_size[0], c)

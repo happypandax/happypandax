@@ -164,6 +164,8 @@ class Fetch(QObject):
 						new_gallery.artist = parsed['artist']
 						new_gallery.language = parsed['language']
 						new_gallery.info = "No description.."
+						if gui_constants.MOVE_IMPORTED_GALLERIES and not gui_constants.OVERRIDE_MOVE_IMPORTED_IN_FETCH:
+							new_gallery.path = utils.move_files(temp_p)
 
 						self.data.append(new_gallery)
 						log_i('Gallery successful created: {}'.format(folder_name.encode('utf-8', 'ignore')))
@@ -178,8 +180,6 @@ class Fetch(QObject):
 						folder_name = os.path.split(path)[1]
 					else:
 						path = os.path.join(self.series_path, folder_name)
-					if gui_constants.MOVE_IMPORTED_GALLERIES and not gui_constants.OVERRIDE_MOVE_IMPORTED_IN_FETCH:
-						path = utils.move_files(path)
 					if gui_constants.SUBFOLDER_AS_GALLERY or gui_constants.OVERRIDE_SUBFOLDER_AS_GALLERY:
 						if gui_constants.OVERRIDE_SUBFOLDER_AS_GALLERY:
 							gui_constants.OVERRIDE_SUBFOLDER_AS_GALLERY = False
