@@ -415,11 +415,31 @@ class SortFilterModel(QSortFilterProxyModel):
 	_DO_SEARCH = pyqtSignal(str)
 	_CHANGE_SEARCH_DATA = pyqtSignal(list)
 	_CHANGE_FAV = pyqtSignal(bool)
+
+	# Navigate terms
+	NEXT, PREV = range(2)
+
 	def __init__(self, parent=None):
 		super().__init__(parent)
 		self._data = gui_constants.GALLERY_DATA
 		self._search_ready = False
 		self.current_term = ''
+		self.terms_history = []
+		self.current_term_history = 0
+
+	def navigate_history(self, direction=PREV):
+		new_term = ''
+		if self.terms_history:
+			if direction == self.NEXT:
+				if self.current_term_history > 0:
+					self.current_term_history -= 1
+			else:
+				if self.current_term_history < len(self.terms_history):
+					self.current_term_history += 1
+			new_term = self.terms_history[self.current_term_history]
+			self.init_search(new_term, False)
+		return new_term
+
 
 	def fetchMore(self, index):
 		return super().fetchMore(index)
@@ -445,10 +465,14 @@ class SortFilterModel(QSortFilterProxyModel):
 			self._CHANGE_FAV.connect(self.gallery_search.set_fav)
 			self._search_ready = True
 
-	def init_search(self, term=''):
+	def init_search(self, term='', history=True):
 		"""
 		Receives a search term and initiates a search
 		"""
+		if term and history:
+			if len(self.terms_history) > 10:
+				self.terms_history = self.terms_history[:9]
+			self.terms_history.insert(0, term)
 		self.current_term = term
 		self._DO_SEARCH.emit(term)
 
