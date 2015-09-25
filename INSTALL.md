@@ -48,6 +48,8 @@ Download from here https://www.python.org/downloads/
     + pip install requests
     + pip install bs4
     + pip install scandir
+    + pip install rarfile
+    + pip install watchdog
   - PyQt5
     + I'm pretty sure you can install this through pip, but here is the download location
     http://www.riverbankcomputing.com/software/pyqt/download5 (see Binary Packages for windows)
@@ -76,6 +78,7 @@ Note: Try renaming the 'main.py' file to 'main.pyw' and then just doubleclick on
    + pip3 install beautifulsoup4
    + pip3 install watchdog
    + pip3 install scandir
+   + pip3 install rarfile
 4. Download HappyPanda
   - Go to github.com/Pewpews/happypanda
   - Press the "Download ZIP" button
@@ -87,5 +90,3 @@ Note: Try renaming the 'main.py' file to 'main.pyw' and then just doubleclick on
    + cd /where/ever/you/put/the/folder/happypanda-master/version
      + (For example cd /Users/username/Downloads/happypanda-master/version)
    + python3 main.py
-   + Press the button with the lines on it, on the right side of the search field
-   + Do NOT press this button again or Happypanda will crash
