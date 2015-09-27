@@ -1,4 +1,4 @@
-#"""
+﻿#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -276,10 +276,17 @@ class AppWindow(QMainWindow):
 		self.system_tray.setContextMenu(tray_menu)
 		self.system_tray.setToolTip('Happypanda {}'.format(gui_constants.vs))
 		tray_quit = QAction('Quit', tray_menu)
+		tray_update = tray_menu.addAction('Check for update')
+		tray_update.triggered.connect(self._check_update)
 		tray_menu.addAction(tray_quit)
 		tray_quit.triggered.connect(self.close)
 		self.system_tray.show()
-		self.system_tray.messageClicked.connect(self.activateWindow)
+		self.system_tray.messageClicked.connect(self.showNormal)
+		def tray_activate(r):
+			if r == QSystemTrayIcon.Trigger:
+				self.showNormal()
+				self.activateWindow()
+		self.system_tray.activated.connect(tray_activate)
 		log_d('Create system tray: OK')
 		#self.display.addWidget(self.chapter_main)
 
