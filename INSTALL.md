@@ -19,8 +19,7 @@ Download from here https://www.python.org/downloads/
 1. Install these dependencies:
   - Qt5 (Install this first) >= 5.4
     + sudo pacman -S qt5-base ('apt-get install qt5-default' on Ubuntu)
-  - requests >= 2.6.0 & BeautifulSoup 4(PyPi)
-    + Python 3.4 should've included pip on install. Incase it didn't: 'sudo pacman -S pip3'
+  - Python 3.4 should've included pip on install. Incase it didn't: 'sudo pacman -S python-pip'
     + To install 'requests': pip3 install requests
     + To install 'BeautifulSoup 4': pip3 install beautifulsoup4
     + To install 'scandir': pip3 install scandir
