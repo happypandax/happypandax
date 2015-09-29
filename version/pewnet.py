@@ -15,7 +15,9 @@
 import requests, logging, random, time, pickle, os, threading, html
 import re as regex
 from bs4 import BeautifulSoup
+from robobrowser import RoboBrowser
 from datetime import datetime
+from queue import Queue
 
 from PyQt5.QtCore import QObject, pyqtSignal
 
@@ -27,6 +29,64 @@ log_d = log.debug
 log_w = log.warning
 log_e = log.error
 log_c = log.critical
+
+class Downloader:
+	inc_queue = Queue()
+	download_list = []
+
+class HenManager(Downloader):
+	"G.e or Ex gallery manager"
+	_browser = RoboBrowser(
+		user_agent="Mozilla/5.0 (Windows NT 6.3; rv:36.0) Gecko/20100101 Firefox/36.0",
+		history=True
+		)
+	# download type
+	ARCHIVE, TORRENT = range(2)
+	# sites
+	GE, EX = range(2)
+
+	def _error(self):
+		pass
+
+	def _archive_url_d(self, gid, token, key, site):
+		ex_base = 'http://exhentai.org/archiver.php?'
+		g_base = 'http://g.e-hentai.org/archiver.php?'
+		if site == self.GE:
+			base = g_base
+		elif site == self.EX:
+			base = ex_base
+		d_url = base + 'gid=' + gid + '&token=' + token + '&or' + key
+		return d_url
+
+	def _torrent_url_d(self, gid, token, site):
+		ex_base = 'http://exhentai.org/gallerytorrents.php?'
+		g_base = 'http://g.e-hentai.org/gallerytorrents.php?'
+
+		if site == self.GE:
+			base = g_base
+		elif site == self.EX:
+			base = ex_base
+
+		torrent_page = base + 'gid=' + gid + '&t=' + token
+
+		# TODO: get torrents? make user choose?
+
+	def from_gallery_url(self, url, memb_id=None, pass_hash=None):
+		"""
+		Download gallery from url. Pass memb_id and pass_hash if from exhentai.
+		"""
+		self._browser.open(url)
+		if self._error():
+			return None
+		if memb_id and pass_hash:
+			hen = ExHen(memb_id, pass_hash)
+		else:
+			hen = EHen()
+		api_metadata, _ = hen.add_to_queue(url, True, False)
+		print(api_metadata)
+		#download_url = None
+		#if gui_constants.HEN_DOWNLOAD_TYPE == self.ARCHIVE:
+		#	download_url = self._archive_url_d()
 
 
 class CommenHen:
@@ -61,13 +121,20 @@ class CommenHen:
 		self.LAST_USED = time.time()
 		self.LOCK.release()
 
-	def add_to_queue(self, url, proc=False):
-		"Add url the the queue, when the queue has reached 25 entries will auto process"
+	def add_to_queue(self, url, proc=False, parse=True):
+		"""Add url the the queue, when the queue has reached 25 entries will auto process
+		:proc -> proccess queue
+		:parse -> return parsed metadata
+		"""
 		self.QUEUE.append(url)
 		log_i("Status on queue: {}/25".format(len(self.QUEUE)))
 		if proc:
+			if parse:
+				return self.parse_metadata(*self.process_queue())
 			return self.process_queue()
 		if len(self.QUEUE) > 24:
+			if parse:
+				return self.parse_metadata(*self.process_queue())
 			return self.process_queue()
 		else:
 			return 0
@@ -83,13 +150,13 @@ class CommenHen:
 			return None
 
 		if len(self.QUEUE) > 25:
-			data = self.get_metadata(self.QUEUE[:25])
+			api_data, galleryid_dict = self.get_metadata(self.QUEUE[:25])
 		else:
-			data = self.get_metadata(self.QUEUE)
+			api_data, galleryid_dict = self.get_metadata(self.QUEUE)
 
 		log_i("Flushing queue...")
 		self.QUEUE.clear()
-		return data
+		return api_data, galleryid_dict
 
 	def check_cookie(self, cookie):
 		assert isinstance(cookie, dict)
@@ -121,7 +188,8 @@ class CommenHen:
 			time.sleep(random.randint(10,50))
 		return True
 
-	def parse_url(self, url):
+	@staticmethod
+	def parse_url(url):
 		"Parses url into a list of gallery id and token"
 		gallery_id = int(regex.search('(\d+)(?=\S{4,})', url).group())
 		gallery_token = regex.search('(?<=\d/)(\S+)(?=/$)', url).group()
@@ -129,7 +197,8 @@ class CommenHen:
 		return parsed_url
 
 	def parse_metadata(self, metadata_json, dict_metadata):
-
+		"""If the povided list of urls contains more than 1 url,
+		a dict will be returned with url as key and tags as value"""
 		def invalid_token_check(g_dict):
 			if 'error' in g_dict:
 				return False
@@ -176,8 +245,7 @@ class CommenHen:
 		"""
 		Fetches the metadata from the provided list of urls
 		through the official API.
-		If the povided list of urls contains more than 1 url,
-		a dict will be returned with url as key and tags as value
+		returns raw api data and a dict with gallery id as key and url as value
 		"""
 		assert isinstance(list_of_urls, list)
 		if len(list_of_urls) > 25:
@@ -190,7 +258,7 @@ class CommenHen:
 			 }
 		dict_metadata = {}
 		for url in list_of_urls:
-			parsed_url = self.parse_url(url.strip())
+			parsed_url = CommenHen.parse_url(url.strip())
 			dict_metadata[parsed_url[0]] = url # gallery id
 			payload['gidlist'].append(parsed_url)
 
@@ -210,8 +278,7 @@ class CommenHen:
 		except:
 			log.exception('Could not fetch metadata: connection error')
 			return None
-		metadata = self.parse_metadata(r.json(), dict_metadata)
-		return metadata
+		return r.json(), dict_metadata
 
 	def eh_hash_search(self, hash_string, cookies=None):
 		"""

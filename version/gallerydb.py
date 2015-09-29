@@ -235,30 +235,45 @@ class GalleryDB:
 		raise Exception("GalleryDB should not be instantiated")
 
 	@staticmethod
-	def rebuild_gallery(gallery):
+	def rebuild_thumb(gallery):
+		"Rebuilds gallery thumbnail"
+		try:
+			log_i('Rebuilding thumb {}'.format(gallery.title.encode(errors='ignore')))
+			gallery.profile = gen_thumbnail(gallery)
+			GalleryDB.modify_gallery(
+				gallery.id,
+				profile=gallery.profile)
+		except:
+			log.exception("Failed rebuilding thumbnail")
+			return False
+		return True
+
+	@staticmethod
+	def rebuild_gallery(gallery, thumb=False):
 		"Rebuilds the galleries in DB"
 		try:
 			log_i('Rebuilding {}'.format(gallery.title.encode(errors='ignore')))
-			if gallery.validate():
-				log_i("Rebuilding gallery {}".format(gallery.id))
-				HashDB.del_gallery_hashes(gallery.id)
-				GalleryDB.modify_gallery(
-					gallery.id,
-					title=gallery.title,
-					artist=gallery.artist,
-					info=gallery.info,
-					type=gallery.type,
-					fav=gallery.fav,
-					tags=gallery.tags,
-					language=gallery.language,
-					status=gallery.status,
-					pub_date=gallery.pub_date,
-					link=gallery.link,
-					times_read=gallery.times_read,
-					_db_v=db_constants.CURRENT_DB_VERSION,
-					exed=gallery.exed,
-					is_archive=gallery.is_archive,
-					path_in_archive=gallery.path_in_archive)
+			log_i("Rebuilding gallery {}".format(gallery.id))
+			HashDB.del_gallery_hashes(gallery.id)
+			GalleryDB.modify_gallery(
+				gallery.id,
+				title=gallery.title,
+				artist=gallery.artist,
+				info=gallery.info,
+				type=gallery.type,
+				fav=gallery.fav,
+				tags=gallery.tags,
+				language=gallery.language,
+				status=gallery.status,
+				pub_date=gallery.pub_date,
+				link=gallery.link,
+				times_read=gallery.times_read,
+				_db_v=db_constants.CURRENT_DB_VERSION,
+				exed=gallery.exed,
+				is_archive=gallery.is_archive,
+				path_in_archive=gallery.path_in_archive)
+			if thumb:
+				GalleryDB.rebuild_thumb(gallery)
 		except:
 			log.exception('Failed rebuilding')
 			return False
