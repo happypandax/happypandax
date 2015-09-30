@@ -16,7 +16,7 @@ import os, sys
 import settings
 
 # Version number
-vs  = '0.24.1'
+vs  = '0.25'
 DEBUG = False
 
 get = settings.get
@@ -68,6 +68,7 @@ SYSTEM_TRAY = None
 NOTIF_BAR = None # HACK: Cause of thread warnings!!
 GENERAL_THREAD = None
 WHEEL_SCROLL_EFFECT = 10
+DOWNLOAD_MANAGER = None
 
 # image paths
 SORT_PATH = os.path.join(static_dir, "sort.png")
@@ -125,6 +126,7 @@ ALWAYS_CHOOSE_FIRST_HIT = get(False, 'Web', 'always choose first hit', bool)
 USE_JPN_TITLE = get(False, 'Web', 'use jpn title', bool)
 CONTINUE_AUTO_METADATA_FETCHER = get(True, 'Web', 'continue auto metadata fetcher', bool)
 HEN_DOWNLOAD_TYPE = get(0, 'Web', 'hen download type', int)
+DOWNLOAD_DIRECTORY = get('downloads', 'Web', 'download directory', str)
 
 # External Viewer
 EXTERNAL_VIEWER_SUPPORT = {'honeyview':['Honeyview.exe']}

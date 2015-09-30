@@ -12,7 +12,7 @@
 #along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 #"""
 
-import requests, logging, random, time, pickle, os, threading, html
+import requests, logging, random, time, threading, html, uuid, os
 import re as regex
 from bs4 import BeautifulSoup
 from robobrowser import RoboBrowser
@@ -30,63 +30,195 @@ log_w = log.warning
 log_e = log.error
 log_c = log.critical
 
-class Downloader:
-	inc_queue = Queue()
-	download_list = []
+class Downloader(QObject):
+	"""
+	A download manager.
+	Emits signal item_finished with tuple of url and path to file when a download finishes
+	"""
+	_inc_queue = Queue()
+	_browser_session = None
+	_threads = []
+	item_finished = pyqtSignal(tuple)
 
-class HenManager(Downloader):
+	def __init__(self):
+		super().__init__()
+		# download dir
+		self.base = os.path.abspath(gui_constants.DOWNLOAD_DIRECTORY)
+		if not os.path.exists(self.base):
+			os.mkdir(self.base)
+
+	@staticmethod
+	def add_to_queue(item, session=None, dir=None):
+		"""
+		Add an url to the queue or a tuple where first index is name of file.
+		An optional requests.Session object can be specified
+		A temp dir to be used can be specified
+		"""
+		if dir:
+			Downloader._inc_queue.put({'dir':dir, 'item':item})
+		else:
+			Downloader._inc_queue.put(item)
+		Downloader._session = session
+
+	def _downloading(self):
+		"The downloader. Put in a thread."
+		while True:
+			item = self._inc_queue.get()
+			temp_base = None
+			if isinstance(item, dict):
+				temp_base = item['dir']
+				item = item['item']
+
+			file_name = item[0] if isinstance(item, (tuple, list)) else str(uuid.uuid4())
+			file_name = os.path.join(self.base, file_name) if not temp_base else \
+				os.path.join(temp_base, file_name)
+			download_url = item[1] if isinstance(item, (tuple, list)) else item
+
+			if self._browser_session:
+				r = self._browser_session.get(download_url, stream=True)
+			else:
+				r = requests.get(download_url, stream=True)
+			with open(file_name, 'wb') as f:
+				for data in r.iter_content(chunk_size=1024):
+					if data:
+						f.write(data)
+						f.flush()
+			self.item_finished.emit((download_url, file_name))
+			self._inc_queue.task_done()
+
+	def start_manager(self, max_tasks):
+		"Starts download manager where max simultaneous is mask_tasks"
+		for x in range(max_tasks):
+			thread = threading.Thread(
+					target=self._downloading,
+					name='Downloader {}'.format(x),
+					daemon=True)
+			thread.start()
+			self._threads.append(thread)
+
+class HenItem(QObject):
+	"A convenience class that most methods in HenManager returns"
+	thumb_rdy = pyqtSignal(object)
+	file_rdy = pyqtSignal(object)
+	def __init__(self, session=None):
+		super().__init__()
+		self.session = session
+		self.thumb_url = "" # an url to gallery thumb
+		self.thumb = None
+		self.cost = ""
+		self.size = ""
+		self.name = ""
+		self.metadata = None
+		self.file = ""
+		self.download_url = ""
+		self.download_type = gui_constants.HEN_DOWNLOAD_TYPE
+
+	def fetch_thumb(self):
+		"Fetches thumbnail. Emits thumb_rdy, when done"
+		def thumb_fetched(dl):
+			if dl[0] == self.thumb_url:
+				self.thumb = dl[1]
+				self.thumb_rdy.emit(self)
+		gui_constants.DOWNLOAD_MANAGER.item_finished.connect(thumb_fetched)
+		Downloader.add_to_queue(self.thumb_url, self.session, gui_constants.temp_dir)
+
+	def _file_fetched(self, dl_data):
+		if self.download_url == dl_data[0]:
+			self.file = dl_data[1]
+			self.file_rdy.emit(self)
+
+class HenManager(QObject):
 	"G.e or Ex gallery manager"
-	_browser = RoboBrowser(
-		user_agent="Mozilla/5.0 (Windows NT 6.3; rv:36.0) Gecko/20100101 Firefox/36.0",
-		history=True
-		)
+	_browser = RoboBrowser(history=True,
+						user_agent="Mozilla/5.0 (Windows NT 6.3; rv:36.0) Gecko/20100101 Firefox/36.0",
+						parser='html.parser', allow_redirects=False)
 	# download type
-	ARCHIVE, TORRENT = range(2)
-	# sites
-	GE, EX = range(2)
+	ARCHIVE, TORRENT = False, False
+
+	def __init__(self):
+		super().__init__()
+		self.e_url = 'http://g.e-hentai.org/'
+		self.ARCHIVE, self.TORRENT = False, False
+		if gui_constants.HEN_DOWNLOAD_TYPE == 0:
+			self.ARCHIVE = True
+		elif gui_constants.HEN_DOWNLOAD_TYPE == 1:
+			self.TORRENT = True
 
 	def _error(self):
 		pass
 
-	def _archive_url_d(self, gid, token, key, site):
-		ex_base = 'http://exhentai.org/archiver.php?'
-		g_base = 'http://g.e-hentai.org/archiver.php?'
-		if site == self.GE:
-			base = g_base
-		elif site == self.EX:
-			base = ex_base
-		d_url = base + 'gid=' + gid + '&token=' + token + '&or' + key
+	def _archive_url_d(self, gid, token, key):
+		"Returns the archiver download url"
+		base = self.e_url + 'archiver.php?'
+		d_url = base + 'gid=' + str(gid) + '&token=' + token + '&or=' + key
 		return d_url
 
-	def _torrent_url_d(self, gid, token, site):
-		ex_base = 'http://exhentai.org/gallerytorrents.php?'
-		g_base = 'http://g.e-hentai.org/gallerytorrents.php?'
-
-		if site == self.GE:
-			base = g_base
-		elif site == self.EX:
-			base = ex_base
-
+	def _torrent_url_d(self, gid, token):
+		"Returns the torrent download url"
+		base = self.e_url + 'gallerytorrents.php?'
 		torrent_page = base + 'gid=' + gid + '&t=' + token
 
 		# TODO: get torrents? make user choose?
 
-	def from_gallery_url(self, url, memb_id=None, pass_hash=None):
+	def from_gallery_url(self, g_url):
 		"""
-		Download gallery from url. Pass memb_id and pass_hash if from exhentai.
+		Finds gallery download url and puts it in download queue
 		"""
-		self._browser.open(url)
-		if self._error():
-			return None
-		if memb_id and pass_hash:
-			hen = ExHen(memb_id, pass_hash)
+		if 'ipb_member_id' in self._browser.session.cookies and \
+			'ipb_pass_hash' in self._browser.session.cookies:
+			hen = ExHen(self._browser.session.cookies['ipb_member_id'],
+			   self._browser.session.cookies['ipb_pass_hash'])
 		else:
 			hen = EHen()
-		api_metadata, _ = hen.add_to_queue(url, True, False)
-		print(api_metadata)
-		#download_url = None
-		#if gui_constants.HEN_DOWNLOAD_TYPE == self.ARCHIVE:
-		#	download_url = self._archive_url_d()
+
+		api_metadata, gallery_gid_dict = hen.add_to_queue(g_url, True, False)
+		gallery = api_metadata['gmetadata'][0]
+
+		h_item = HenItem(self._browser.session)
+		h_item.metadata = CommenHen.parse_metadata(api_metadata, gallery_gid_dict)[g_url]
+		h_item.thumb_url = gallery['thumb']
+		h_item.name = gallery['title']
+		h_item.size = "{} MB".format(gallery['filesize'])
+
+		if self.ARCHIVE:
+			h_item.download_type = 0
+			d_url = self._archive_url_d(gallery['gid'], gallery['token'], gallery['archiver_key'])
+			self._browser.open(d_url)
+			download_btn = self._browser.get_form()
+			if download_btn:
+				f_div = self._browser.find('div', id='db')
+				divs = f_div.find_all('div')
+				h_item.cost = divs[0].find('strong').text
+				h_item.size = divs[1].find('strong').text
+				self._browser.submit_form(download_btn)
+			# get dl link
+			dl = self._browser.find('a').get('href')
+			self._browser.open(dl)
+			succes_test = self._browser.find('p')
+			if succes_test and 'successfully' in succes_test.text:
+				gallery_dl = self._browser.find('a').get('href')
+				gallery_dl = self._browser.url.split('/archive')[0] + gallery_dl
+				f_name = succes_test.find('strong').text
+				h_item.download_url = gallery_dl
+				h_item.fetch_thumb()
+				Downloader.add_to_queue((f_name, gallery_dl))
+				gui_constants.DOWNLOAD_MANAGER.item_finished.connect(h_item._file_fetched)
+				return h_item
+
+		elif self.TORRENT:
+			h_item.download_type = 1
+			pass
+		return False
+
+class ExHenManager(HenManager):
+	"ExHentai Manager"
+	def __init__(self, ipb_id, ipb_pass):
+		super().__init__()
+		cookies = {'ipb_member_id':ipb_id,
+				  'ipb_pass_hash':ipb_pass}
+		self._browser.session.cookies.update(cookies)
+		self.e_url = "http://exhentai.org/"
+
 
 
 class CommenHen:
@@ -130,11 +262,11 @@ class CommenHen:
 		log_i("Status on queue: {}/25".format(len(self.QUEUE)))
 		if proc:
 			if parse:
-				return self.parse_metadata(*self.process_queue())
+				return CommenHen.parse_metadata(*self.process_queue())
 			return self.process_queue()
 		if len(self.QUEUE) > 24:
 			if parse:
-				return self.parse_metadata(*self.process_queue())
+				return CommenHen.parse_metadata(*self.process_queue())
 			return self.process_queue()
 		else:
 			return 0
@@ -196,9 +328,14 @@ class CommenHen:
 		parsed_url = [gallery_id, gallery_token]
 		return parsed_url
 
-	def parse_metadata(self, metadata_json, dict_metadata):
-		"""If the povided list of urls contains more than 1 url,
-		a dict will be returned with url as key and tags as value"""
+	@staticmethod
+	def parse_metadata(metadata_json, dict_metadata):
+		"""
+		:metadata_json -> raw data provided by E-H API
+		:dict_metadata -> a dict with galleries as keys and url as value
+
+		returns a dict with url as key and gallery metadata as value
+		"""
 		def invalid_token_check(g_dict):
 			if 'error' in g_dict:
 				return False
@@ -424,7 +561,7 @@ class CommenHen:
 		return gallery
 
 class ExHen(CommenHen):
-	"Fetches galleries from exhen"
+	"Fetches gallery metadata from exhen"
 	def __init__(self, cookie_member_id, cookie_pass_hash):
 		self.cookies = {'ipb_member_id':cookie_member_id,
 				  'ipb_pass_hash':cookie_pass_hash}

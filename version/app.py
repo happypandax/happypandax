@@ -60,6 +60,16 @@ class AppWindow(QMainWindow):
 		QTimer.singleShot(3000, self._check_update)
 		self.setFocusPolicy(Qt.NoFocus)
 
+		ex = settings.ExProperties()
+		d = pewnet.ExHenManager(ex.ipb_id, ex.ipb_pass)
+		item = d.from_gallery_url('http://exhentai.org/g/857552/8f240bea25/')
+		def a(): print(item.file)
+		if not item.file:
+			item.file_rdy.connect(a)
+		else:
+			a()
+
+
 	def init_watchers(self):
 
 		def remove_gallery(g):
@@ -204,6 +214,9 @@ class AppWindow(QMainWindow):
 			if gui_constants.ENABLE_MONITOR and\
 				gui_constants.MONITOR_PATHS and all(gui_constants.MONITOR_PATHS):
 				self.init_watchers()
+			self.download_manager = pewnet.Downloader()
+			gui_constants.DOWNLOAD_MANAGER = self.download_manager
+			self.download_manager.start_manager(4)
 		if gui_constants.FIRST_TIME_LEVEL < 3:
 
 			class FirstTime(misc.BasePopup):
