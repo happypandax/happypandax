@@ -1335,6 +1335,7 @@ class Gallery:
 		self.hashes = []
 		self.exed = 0
 		self._cache_id = 0 # used by custom delegate to cache profile
+		self.state = 0
 
 	def gen_hashes(self):
 		"Generate hashes while inserting them into DB"

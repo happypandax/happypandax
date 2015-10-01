@@ -60,14 +60,14 @@ class AppWindow(QMainWindow):
 		QTimer.singleShot(3000, self._check_update)
 		self.setFocusPolicy(Qt.NoFocus)
 
-		ex = settings.ExProperties()
-		d = pewnet.ExHenManager(ex.ipb_id, ex.ipb_pass)
-		item = d.from_gallery_url('http://exhentai.org/g/857552/8f240bea25/')
-		def a(): print(item.file)
-		if not item.file:
-			item.file_rdy.connect(a)
-		else:
-			a()
+		#ex = settings.ExProperties()
+		#d = pewnet.ExHenManager(ex.ipb_id, ex.ipb_pass)
+		#item = d.from_gallery_url('http://exhentai.org/g/857552/8f240bea25/')
+		#def a(): print(item.file)
+		#if not item.file:
+		#	item.file_rdy.connect(a)
+		#else:
+		#	a()
 
 
 	def init_watchers(self):

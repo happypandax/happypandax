@@ -838,6 +838,9 @@ class CustomDelegate(QStyledItemDelegate):
 	POPUP = pyqtSignal()
 	CONTEXT_ON = False
 
+	# Gallery states
+	G_NORMAL, G_DOWNLOAD = range(2)
+
 	def __init__(self, parent=None):
 		super().__init__()
 		QPixmapCache.setCacheLimit(gui_constants.THUMBNAIL_CACHE_SIZE[0]*
@@ -884,8 +887,6 @@ class CustomDelegate(QStyledItemDelegate):
 			return str(k)
 
 	def paint(self, painter, option, index):
-		#self.initStyleOption(option, index)
-
 		assert isinstance(painter, QPainter)
 		if index.data(Qt.UserRole+1):
 			if gui_constants.HIGH_QUALITY_THUMBS:
@@ -1016,15 +1017,24 @@ class CustomDelegate(QStyledItemDelegate):
 					self.external_icon = self.file_icons.get_external_file_icon()
 				else:
 					self.external_icon = self.file_icons.get_default_file_icon()
+			
+			if gallery.state == self.G_DOWNLOAD:
+				painter.save()
+				dl_box = QRect(x, y, w, 20)
+				painter.setBrush(QBrush(QColor(0,0,0,123)))
+				painter.setPen(QColor('white'))
+				painter.drawRect(dl_box)
+				painter.drawText(dl_box, Qt.AlignCenter, 'Downloading...')
+				painter.restore()
+			else:
+				if gui_constants.DISPLAY_GALLERY_TYPE:
+					self.type_icon = self.file_icons.get_file_icon(gallery.path)
+					if self.type_icon and not self.type_icon.isNull():
+						self.type_icon.paint(painter, QRect(x+2, y+gui_constants.THUMB_H_SIZE-16, 16, 16))
 
-			if gui_constants.DISPLAY_GALLERY_TYPE:
-				self.type_icon = self.file_icons.get_file_icon(gallery.path)
-				if self.type_icon and not self.type_icon.isNull():
-					self.type_icon.paint(painter, QRect(x+2, y+gui_constants.THUMB_H_SIZE-16, 16, 16))
-
-			if gui_constants.USE_EXTERNAL_PROG_ICO:
-				if self.external_icon and not self.external_icon.isNull():
-					self.external_icon.paint(painter, QRect(x+w-30, y+gui_constants.THUMB_H_SIZE-28, 28, 28))
+				if gui_constants.USE_EXTERNAL_PROG_ICO:
+					if self.external_icon and not self.external_icon.isNull():
+						self.external_icon.paint(painter, QRect(x+w-30, y+gui_constants.THUMB_H_SIZE-28, 28, 28))
 
 			def draw_text_label(lbl_h):
 				#draw the label for text
@@ -1336,6 +1346,8 @@ class MangaView(QListView):
 			index = [index]
 		for x in index:
 			gallery = x.data(Qt.UserRole+1)
+			if gallery.state == CustomDelegate.G_DOWNLOAD:
+				continue
 			if len(index) > 1:
 				self.STATUS_BAR_MSG.emit("Opening chapters of selected galleries")
 			else:
@@ -1401,12 +1413,17 @@ class MangaView(QListView):
 		index = self.indexAt(event.pos())
 		index = self.sort_model.mapToSource(index)
 
+		if index.data(Qt.UserRole+1).state == CustomDelegate.G_DOWNLOAD:
+			event.ignore()
+			return
+
 		selected = False
 		s_indexes = self.selectedIndexes()
 		select_indexes = []
 		for idx in s_indexes:
 			if idx.isValid() and idx.column() == 0:
-				select_indexes.append(self.sort_model.mapToSource(idx))
+				if not idx.data(Qt.UserRole+1).state == CustomDelegate.G_DOWNLOAD:
+					select_indexes.append(self.sort_model.mapToSource(idx))
 		if len(select_indexes) > 1:
 			selected = True
 
@@ -1567,12 +1584,17 @@ class MangaTableView(QTableView):
 		index = self.indexAt(event.pos())
 		index = self.sort_model.mapToSource(index)
 
+		if index.data(Qt.UserRole+1).state == CustomDelegate.G_DOWNLOAD:
+			event.ignore()
+			return
+
 		selected = False
 		s_indexes = self.selectionModel().selectedRows()
 		select_indexes = []
 		for idx in s_indexes:
 			if idx.isValid():
-				select_indexes.append(self.sort_model.mapToSource(idx))
+				if not idx.data(Qt.UserRole+1).state == CustomDelegate.G_DOWNLOAD:
+					select_indexes.append(self.sort_model.mapToSource(idx))
 		if len(select_indexes) > 1:
 			selected = True
 
