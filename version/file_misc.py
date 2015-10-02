@@ -7,12 +7,15 @@ from PyQt5.QtCore import Qt, QObject, pyqtSignal, QTimer
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout,
 							 QLabel, QFrame, QPushButton, QMessageBox,
-							 QFileDialog, QScrollArea)
+							 QFileDialog, QScrollArea, QLineEdit,
+							 QFormLayout, QGroupBox, QSizePolicy)
 
 import gui_constants
 import misc
 import gallerydb
 import utils
+import pewnet
+import settings
 
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -21,20 +24,118 @@ log_w = log.warning
 log_e = log.error
 log_c = log.critical
 
-def update_gallery_path(new_path, gallery):
-	"Updates a gallery's & it's chapters' path"
-	for chap_numb in gallery.chapters:
-		chap_path = gallery.chapters[chap_numb]
-		head, tail = os.path.split(chap_path)
-		if gallery.path == chap_path:
-			chap_path = new_path
-		elif gallery.path == head:
-			chap_path = os.path.join(new_path, tail)
+class GalleryDownloaderItem(QWidget):
+	"""
+	"""
+	def __init__(self, hitem, parent=None):
+		assert isinstance(hitem, pewnet.HenItem)
+		super().__init__(parent)
+		self.setFixedHeight(50)
+		self.setContentsMargins(0,0,0,0)
+		self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+		self.setBackgroundRole(self.palette().Dark)
+		l = QHBoxLayout(self)
+		l.setContentsMargins(0,0,0,0)
+		self.item = hitem
 
-		gallery.chapters[chap_numb] = chap_path
+		separators = []
+		for s in range(2):
+			sep = QFrame()
+			sep.setFrameStyle(QFrame.VLine)
+			sep.setFrameShadow(QFrame.Sunken)
+			separators.append(sep)
+		
+		#thumb
+		self.profile = QLabel()
+		l.addWidget(self.profile)
+		l.addWidget(separators[0])
 
-	gallery.path = new_path
-	return gallery
+		def set_profile(item):
+			self.profile.setPixmap(QPixmap(item.thumb).scaled(
+				50, 25, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+		self.item.thumb_rdy.connect(set_profile)
+
+		# status
+		self.status_text = QLabel('Status:\nDownloading...')
+		def set_finished(item):
+			self.status_text.setText('Status:\nDone!')
+		self.item.file_rdy.connect(set_finished)
+
+		l.addWidget(self.status_text)
+		l.addWidget(separators[1])
+
+		# url 
+		v_l = QVBoxLayout()
+		title_lbl = QLabel(self.item.metadata['title']['def'])
+		small_h_l = QHBoxLayout()
+		cost_lbl = QLabel("Cost: {}".format(self.item.cost))
+		size_lbl = QLabel("Size: {}".format(self.item.size))
+		small_h_l.addWidget(cost_lbl)
+		small_h_l.addWidget(size_lbl, 1)
+		url_lbl = QLabel(self.item.gallery_url)
+		v_l.addWidget(title_lbl)
+		v_l.addLayout(small_h_l)
+		v_l.addWidget(url_lbl)
+		l.addLayout(v_l, 1)
+
+
+class GalleryDownloaderList(QGroupBox):
+	"""
+	"""
+	def __init__(self, parent=None):
+		super().__init__(parent)
+		self.setTitle('Download list')
+		self.main_layout = QFormLayout(self)
+
+	def add_entry(self, hitem):
+		assert isinstance(hitem, pewnet.HenItem)
+		item_widget = GalleryDownloaderItem(hitem)
+		self.main_layout.addRow(item_widget)
+
+
+class GalleryDownloader(QWidget):
+	"""
+	A gallery downloader window
+	"""
+	def __init__(self, parent=None):
+		super().__init__(parent, Qt.Window)
+		self.setAttribute(Qt.WA_DeleteOnClose)
+		main_layout = QVBoxLayout(self)
+		self.url_inserter = QLineEdit()
+		self.url_inserter.setPlaceholderText("Hover to see supported URLs")
+		self.url_inserter.setToolTip("Supported URLs:\nExhentai/g.e-hentai gallery links, e.g.:"+
+							   " http://g.e-hentai.org/g/618395/0439fa3666/")
+		self.url_inserter.returnPressed.connect(self.add_download_entry)
+		main_layout.addWidget(self.url_inserter)
+
+		self.download_list = GalleryDownloaderList(self)
+		download_list_scroll = QScrollArea(self)
+		download_list_scroll.setBackgroundRole(self.palette().Base)
+		download_list_scroll.setWidgetResizable(True)
+		download_list_scroll.setWidget(self.download_list)
+		main_layout.addWidget(download_list_scroll, 1)
+		self.resize(600,600)
+
+	def add_download_entry(self, url=None):
+		if not url:
+			url = self.url_inserter.text().lower()
+			if not url:
+				return
+			self.url_inserter.clear()
+		if 'g.e-hentai.org' in url:
+			manager = pewnet.HenManager()
+		elif 'exhentai.org' in url:
+			exprops = settings.ExProperties()
+			if exprops.check():
+				manager = pewnet.ExHenManager(exprops.ipb_id, exprops.ipb_pass)
+			else:
+				return
+		h_item = manager.from_gallery_url(url)
+		if h_item:
+			self.download_list.add_entry(h_item)
+
+	def closeEvent(self, event):
+		self.hide()
 
 class GalleryPopup(misc.BasePopup):
 	"""
@@ -116,7 +217,7 @@ class MovedPopup(misc.BasePopup):
 	def __init__(self, new_path, gallery, parent=None):
 		super().__init__(parent)
 		def commit():
-			g = update_gallery_path(new_path, gallery)
+			g = utils.update_gallery_path(new_path, gallery)
 			self.UPDATE_SIGNAL.emit(g)
 			self.close()
 		main_layout = QVBoxLayout()
@@ -172,7 +273,7 @@ class DeletedPopup(misc.BasePopup):
 				new_path = new_path[0]
 			else: return None
 			if new_path:
-				g = update_gallery_path(new_path, gallery)
+				g = utils.update_gallery_path(new_path, gallery)
 				self.UPDATE_SIGNAL.emit(g)
 				self.close()
 

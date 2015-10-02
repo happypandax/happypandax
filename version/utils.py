@@ -33,6 +33,21 @@ if not gui_constants.unrar_tool_path:
 	FILE_FILTER = '*.zip *.cbz'
 	ARCHIVE_FILES = ('.zip', '.cbz')
 
+def update_gallery_path(new_path, gallery):
+	"Updates a gallery's & it's chapters' path"
+	for chap_numb in gallery.chapters:
+		chap_path = gallery.chapters[chap_numb]
+		head, tail = os.path.split(chap_path)
+		if gallery.path == chap_path:
+			chap_path = new_path
+		elif gallery.path == head:
+			chap_path = os.path.join(new_path, tail)
+
+		gallery.chapters[chap_numb] = chap_path
+
+	gallery.path = new_path
+	return gallery
+
 def move_files(path, dest=''):
 	"""
 	Move files to a new destination. If dest is not set,

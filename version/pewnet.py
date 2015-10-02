@@ -39,6 +39,7 @@ class Downloader(QObject):
 	_browser_session = None
 	_threads = []
 	item_finished = pyqtSignal(tuple)
+	active_downloads = {}
 
 	def __init__(self):
 		super().__init__()
@@ -74,6 +75,8 @@ class Downloader(QObject):
 				os.path.join(temp_base, file_name)
 			download_url = item[1] if isinstance(item, (tuple, list)) else item
 
+			self.active_downloads[download_url] = True
+
 			if self._browser_session:
 				r = self._browser_session.get(download_url, stream=True)
 			else:
@@ -83,6 +86,7 @@ class Downloader(QObject):
 					if data:
 						f.write(data)
 						f.flush()
+			self.active_downloads[download_url] = False
 			self.item_finished.emit((download_url, file_name))
 			self._inc_queue.task_done()
 
@@ -111,6 +115,7 @@ class HenItem(QObject):
 		self.metadata = None
 		self.file = ""
 		self.download_url = ""
+		self.gallery_url = ""
 		self.download_type = gui_constants.HEN_DOWNLOAD_TYPE
 
 	def fetch_thumb(self):
@@ -175,6 +180,7 @@ class HenManager(QObject):
 		gallery = api_metadata['gmetadata'][0]
 
 		h_item = HenItem(self._browser.session)
+		h_item.gallery_url = g_url
 		h_item.metadata = CommenHen.parse_metadata(api_metadata, gallery_gid_dict)[g_url]
 		h_item.thumb_url = gallery['thumb']
 		h_item.name = gallery['title']

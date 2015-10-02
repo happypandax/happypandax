@@ -1,4 +1,4 @@
-#"""
+﻿#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -146,6 +146,12 @@ class ExProperties(Properties):
 	def ipb_pass(self, x):
 		self._ipb_pass = x
 		self.exconfig['ipb pass'] = x
+
+	def check(self):
+		"Returns true if usable"
+		if self.ipb_id and self.ipb_pass:
+			return True
+		return False
 
 class WinProperties(Properties):
 	def __init__(self):

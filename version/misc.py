@@ -1,4 +1,4 @@
-#"""
+﻿#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@ from PyQt5.QtCore import (Qt, QDate, QPoint, pyqtSignal, QThread,
 						  QTimeLine, QMargins, QPropertyAnimation, QByteArray)
 from PyQt5.QtGui import (QTextCursor, QIcon, QMouseEvent, QFont,
 						 QPixmapCache, QPalette, QPainter, QBrush,
-						 QColor, QPen, QPixmap, QMovie, QPaintEvent)
+						 QColor, QPen, QPixmap, QMovie, QPaintEvent, QFontMetrics)
 from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QVBoxLayout, QHBoxLayout,
 							 QDialog, QGridLayout, QLineEdit,
@@ -60,6 +60,13 @@ def clearLayout(layout):
 				child.widget().deleteLater()
 			elif child.layout() is not None:
 				clearLayout(child.layout())
+
+class ElidedLabel(QLabel):
+	def paintEvent(self, event):
+		painter = QPainter(self)
+		metrics = QFontMetrics(self.font())
+		elided = metrics.elidedText(self.text(), Qt.ElideRight, self.width())
+		painter.drawText(self.rect(), self.alignment(), elided)
 
 class BaseMoveWidget(QWidget):
 	def __init__(self, parent=None, **kwargs):

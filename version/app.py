@@ -269,6 +269,8 @@ class AppWindow(QMainWindow):
 		#self.chapter_display()
 		self.m_l_view_index = self.display.addWidget(self.manga_list_view)
 		self.m_t_view_index = self.display.addWidget(self.manga_table_view)
+		self.download_window = file_misc.GalleryDownloader(self)
+		self.download_window.hide()
 		# init toolbar
 		self.init_toolbar()
 		log_d('Create toolbar: OK')
@@ -608,7 +610,7 @@ class AppWindow(QMainWindow):
 		add_more_action.setStatusTip('Add galleries from different folders')
 		add_more_action.triggered.connect(lambda: self.populate(True))
 		gallery_menu.addAction(add_more_action)
-		populate_action = QAction(add_gallery_icon, "Add from directory/archive...", self)
+		populate_action = QAction(add_gallery_icon, "Populate from directory/archive...", self)
 		populate_action.setStatusTip('Populates the DB with galleries from a single folder or archive')
 		populate_action.triggered.connect(self.populate)
 		gallery_menu.addAction(populate_action)
@@ -619,7 +621,7 @@ class AppWindow(QMainWindow):
 		self.toolbar.addWidget(gallery_action)
 
 		misc_action = QToolButton()
-		misc_action.setText('Misc ')
+		misc_action.setText('Tools ')
 		misc_action_menu = QMenu()
 		misc_action.setMenu(misc_action_menu)
 		misc_action.setPopupMode(QToolButton.InstantPopup)
@@ -630,6 +632,9 @@ class AppWindow(QMainWindow):
 		duplicate_check_simple = QAction("Simple duplicate finder", misc_action_menu)
 		duplicate_check_simple.triggered.connect(lambda: self.manga_list_view.duplicate_check())
 		misc_action_menu.addAction(duplicate_check_simple)
+		gallery_downloader = QAction("Gallery Downloader", misc_action_menu)
+		gallery_downloader.triggered.connect(self.download_window.show)
+		misc_action_menu.addAction(gallery_downloader)
 		self.toolbar.addWidget(misc_action)
 
 		spacer_middle = QWidget() # aligns buttons to the right
