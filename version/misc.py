@@ -468,10 +468,14 @@ class GalleryMenu(QMenu):
 
 		new_cover = QFileDialog.getOpenFileName(self,
 							'Select a new gallery cover',
-							filter='Image (*.jpg *.bmp *.png)',
+							filter='Image {}'.format(utils.IMG_FILTER),
 							directory=path)[0]
 		if new_cover and new_cover.endswith(utils.IMG_FILES):
-			os.remove(gallery.profile)
+			if gallery.profile != gui_constants.NO_IMAGE_PATH:
+				try:
+					os.remove(gallery.profile)
+				except FileNotFoundError:
+					log.exception('Could not delete file')
 			gallery.profile = gallerydb.gen_thumbnail(gallery, img=new_cover)
 			gallery._cache = None
 			self.parent_widget.manga_list_view.replace_edit_gallery(gallery,
@@ -1454,7 +1458,8 @@ class CompleterTextEdit(QTextEdit):
 
 		cr = self.cursorRect()
 		cr.setWidth(self._completer.popup().sizeHintForColumn(0) + self._completer.popup().verticalScrollBar().sizeHint().width())
-		self._completer.complete(cr)
+		if self._completer:
+			self._completer.complete(cr)
 
 #class CompleterWithData(QCompleter):
 #	"""
@@ -1479,15 +1484,13 @@ class CompleterTextEdit(QTextEdit):
 
 
 
-def return_tag_completer_TextEdit(parent=None):
-	ns = gallerydb.TagDB.get_all_ns()
-	for t in gallerydb.TagDB.get_all_tags():
+def return_tag_completer(parent=None):
+	ns = gallerydb.add_method_queue(gallerydb.TagDB.get_all_ns, False)
+	for t in gallerydb.add_method_queue(gallerydb.TagDB.get_all_tags, False):
 		ns.append(t)
-	TextEditCompleter = CompleterTextEdit()
 	comp = QCompleter(ns, parent)
 	comp.setCaseSensitivity(Qt.CaseInsensitive)
-	TextEditCompleter.setCompleter(comp)
-	return TextEditCompleter
+	return comp
 
 from PyQt5.QtCore import QSortFilterProxyModel
 class DatabaseFilterProxyModel(QSortFilterProxyModel):

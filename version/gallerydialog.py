@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QDesktopWidget, QGroupBox,
 							 QDateEdit, QFileDialog, QMessageBox, QScrollArea)
 from PyQt5.QtCore import (pyqtSignal, Qt, QPoint, QDate, QThread, QTimer)
 
-from misc import return_tag_completer_TextEdit, ClickedLabel
+from misc import return_tag_completer, ClickedLabel, CompleterTextEdit
 import gui_constants
 import utils
 import gallerydb
@@ -139,7 +139,9 @@ class GalleryDialog(QWidget):
 					  " will be lowercased.")
 		tag_info.setToolTipDuration(99999999)
 		tags_l.addWidget(tag_info)
-		self.tags_edit = return_tag_completer_TextEdit(self)
+		self.tags_edit = CompleterTextEdit()
+		comp = return_tag_completer(self)
+		self.tags_edit.setCompleter(comp)
 		tags_l.addWidget(self.tags_edit, 3)
 		self.tags_edit.setFixedHeight(70)
 		self.tags_edit.setPlaceholderText("Press Tab to autocomplete (Ctrl + E to show popup)")

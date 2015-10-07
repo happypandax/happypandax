@@ -292,7 +292,7 @@ class GallerySearch(QObject):
 					term = term.replace(x, '.')
 		else:
 			try:
-				regex.compile(case_ins)
+				regex.compile(term)
 			except regex.error:
 				return
 
@@ -430,16 +430,11 @@ class SortFilterModel(QSortFilterProxyModel):
 	def navigate_history(self, direction=PREV):
 		new_term = ''
 		if self.terms_history:
-			print('triggered')
 			if direction == self.NEXT:
-				print('trig next')
 				if self.current_term_history < len(self.terms_history) - 1:
-					print('inc current')
 					self.current_term_history += 1
 			elif direction == self.PREV:
-				print('trig prev')
 				if self.current_term_history > 0:
-					print('dec current')
 					self.current_term_history -= 1
 			new_term = self.terms_history[self.current_term_history]
 			if new_term != self.current_term:

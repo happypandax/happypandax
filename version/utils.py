@@ -24,9 +24,10 @@ log_w = log.warning
 log_e = log.error
 log_c = log.critical
 
-IMG_FILES =  ('.jpg','.bmp','.png','.gif')
+IMG_FILES =  ('.jpg','.bmp','.png','.gif', '.jpeg')
 ARCHIVE_FILES = ('.zip', '.cbz', '.rar', '.cbr')
 FILE_FILTER = '*.zip *.cbz *.rar *.cbr'
+IMG_FILTER = '*.jpg *.bmp *.png *.jpeg'
 rarfile.PATH_SEP = '/'
 rarfile.UNRAR_TOOL = gui_constants.unrar_tool_path
 if not gui_constants.unrar_tool_path:
@@ -279,6 +280,7 @@ def check_archive(archive_path):
 	Returns a list with a path in archive to galleries
 	if there is no directories
 	"""
+	archive_path = archive_path.lower()
 	try:
 		zip = ArchiveFile(archive_path)
 	except CreateArchiveFail:
@@ -323,6 +325,7 @@ def recursive_gallery_check(path):
 	"""
 	gallery_dirs = []
 	gallery_arch = []
+	path = path.lower()
 	for root, subfolders, files in scandir.walk(path):
 		if files:
 			for f in files:
@@ -457,7 +460,10 @@ def get_gallery_img(path, archive=None):
 	Looks in archive if archive is set.
 	"""
 	# TODO: add chapter support
-	name = os.path.split(path)[1]
+	try:
+		name = os.path.split(path)[1]
+	except IndexError:
+		name = os.path.split(path)[0]
 	is_archive = True if archive or name.endswith(ARCHIVE_FILES) else False
 	real_path = archive if archive else path
 	img_path = None
@@ -620,10 +626,9 @@ import re as regex
 def title_parser(title):
 	"Receives a title to parse. Returns dict with 'title', 'artist' and language"
 	" ".join(title.split())
-	if title[-4:] in ARCHIVE_FILES:
-		title = title[:-4]
-	elif title[-3:] is '.7z':
-		title = title[:-3]
+	for x in ARCHIVE_FILES:
+		if title.endswith(x):
+			title = title[:-len(x)]
 
 	parsed_title = {'title':"", 'artist':"", 'language':"Other"}
 	try:

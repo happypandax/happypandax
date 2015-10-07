@@ -127,9 +127,12 @@ class AppWindow(QMainWindow):
 						def scan_dirs(self):
 							paths = []
 							for p in gui_constants.MONITOR_PATHS:
-								dir_content = scandir.scandir(p)
-								for d in dir_content:
-									paths.append(d.path)
+								if os.path.exists(p):
+									dir_content = scandir.scandir(p)
+									for d in dir_content:
+										paths.append(d.path)
+								else:
+									log_e("Monitored path does not exists: {}".format(p.encode(errors='ignore')))
 
 							fetch_inst = fetch.Fetch(self)
 							fetch_inst.series_path = paths
@@ -694,15 +697,9 @@ class AppWindow(QMainWindow):
 		self.toolbar.addWidget(self.search_bar)
 
 		def search_history(_, back=True): # clicked signal passes a bool
-			if back:
-				print('back')
-			else:
-				print('next')
 			sort_model =  self.manga_list_view.sort_model
 			nav = sort_model.PREV if back else sort_model.NEXT
 			history_term = sort_model.navigate_history(nav)
-			print(history_term, sort_model.current_term_history)
-			self.search_bar.setText(history_term)
 			if back:
 				self.search_forward.setVisible(True)
 
