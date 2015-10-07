@@ -15,7 +15,8 @@
 import sys, logging, os, threading, re, requests, scandir
 from PyQt5.QtCore import (Qt, QSize, pyqtSignal, QThread, QEvent, QTimer,
 						  QObject, QPoint, QPropertyAnimation)
-from PyQt5.QtGui import (QPixmap, QIcon, QMoveEvent, QCursor)
+from PyQt5.QtGui import (QPixmap, QIcon, QMoveEvent, QCursor,
+						 QKeySequence)
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QListView,
 							 QHBoxLayout, QFrame, QWidget, QVBoxLayout,
 							 QLabel, QStackedLayout, QToolBar, QMenuBar,
@@ -23,7 +24,8 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QListView,
 							 QSplitter, QMessageBox, QFileDialog,
 							 QDesktopWidget, QPushButton, QCompleter,
 							 QListWidget, QListWidgetItem, QToolTip,
-							 QProgressBar, QToolButton, QSystemTrayIcon)
+							 QProgressBar, QToolButton, QSystemTrayIcon,
+							 QShortcut)
 
 import gui_constants
 import misc
@@ -59,6 +61,7 @@ class AppWindow(QMainWindow):
 		self.start_up()
 		QTimer.singleShot(3000, self._check_update)
 		self.setFocusPolicy(Qt.NoFocus)
+		self.set_shortcuts()
 
 		#ex = settings.ExProperties()
 		#d = pewnet.ExHenManager(ex.ipb_id, ex.ipb_pass)
@@ -69,6 +72,8 @@ class AppWindow(QMainWindow):
 		#else:
 		#	a()
 
+	def set_shortcuts(self):
+		quit = QShortcut(QKeySequence('Ctrl+Q'), self, self.close)
 
 	def init_watchers(self):
 
@@ -524,6 +529,7 @@ class AppWindow(QMainWindow):
 
 	def search(self, srch_string):
 		self.search_bar.setText(srch_string)
+		self.search_backward.setVisible(True)
 		self.manga_list_view.sort_model.init_search(srch_string)
 
 	def popup(self, index):
@@ -659,7 +665,7 @@ class AppWindow(QMainWindow):
 		self.grid_toggle.clicked.connect(self.toggle_view)
 		self.toolbar.addWidget(self.grid_toggle)
 
-		spacer_mid2 = QWidget() # aligns About action properly
+		spacer_mid2 = QWidget()
 		spacer_mid2.setFixedSize(QSize(5, 1))
 		self.toolbar.addWidget(spacer_mid2)
 
@@ -668,6 +674,7 @@ class AppWindow(QMainWindow):
 		self.search_timer = QTimer(self)
 		self.search_timer.setSingleShot(True)
 		self.search_timer.timeout.connect(lambda: self.search(self.search_bar.text()))
+
 		if gui_constants.SEARCH_AUTOCOMPLETE:
 			completer = QCompleter(self)
 			completer.setModel(self.manga_list_view.gallery_model)
@@ -679,14 +686,43 @@ class AppWindow(QMainWindow):
 			self.search_bar.setCompleter(completer)
 			self.search_bar.returnPressed.connect(lambda: self.search(self.search_bar.text()))
 		if not gui_constants.SEARCH_ON_ENTER:
-			self.search_bar.textChanged.connect(lambda: self.search_timer.start(800))
+			self.search_bar.textEdited.connect(lambda: self.search_timer.start(800))
 		self.search_bar.setPlaceholderText("Search title, artist, namespace & tags")
 		self.search_bar.setMinimumWidth(150)
 		self.search_bar.setMaximumWidth(500)
 		self.search_bar.setFixedHeight(19)
 		self.toolbar.addWidget(self.search_bar)
 
-		spacer_end = QWidget() # aligns About action properly
+		def search_history(_, back=True): # clicked signal passes a bool
+			if back:
+				print('back')
+			else:
+				print('next')
+			sort_model =  self.manga_list_view.sort_model
+			nav = sort_model.PREV if back else sort_model.NEXT
+			history_term = sort_model.navigate_history(nav)
+			print(history_term, sort_model.current_term_history)
+			self.search_bar.setText(history_term)
+			if back:
+				self.search_forward.setVisible(True)
+
+		back = QShortcut(QKeySequence(QKeySequence.Back), self, lambda: search_history(None))
+		forward = QShortcut(QKeySequence(QKeySequence.Forward), self, lambda: search_history(None, False))
+
+		search_backbutton = QToolButton(self.toolbar)
+		search_backbutton.setText(u'\u25C0')
+		search_backbutton.setFixedWidth(15)
+		search_backbutton.clicked.connect(search_history)
+		self.search_backward = self.toolbar.addWidget(search_backbutton)
+		self.search_backward.setVisible(False)
+		search_forwardbutton = QToolButton(self.toolbar)
+		search_forwardbutton.setText(u'\u25B6')
+		search_forwardbutton.setFixedWidth(15)
+		search_forwardbutton.clicked.connect(lambda: search_history(None, False))
+		self.search_forward = self.toolbar.addWidget(search_forwardbutton)
+		self.search_forward.setVisible(False)
+
+		spacer_end = QWidget() # aligns settings action properly
 		spacer_end.setFixedSize(QSize(10, 1))
 		self.toolbar.addWidget(spacer_end)
 

@@ -430,14 +430,20 @@ class SortFilterModel(QSortFilterProxyModel):
 	def navigate_history(self, direction=PREV):
 		new_term = ''
 		if self.terms_history:
+			print('triggered')
 			if direction == self.NEXT:
-				if self.current_term_history > 0:
-					self.current_term_history -= 1
-			else:
-				if self.current_term_history < len(self.terms_history):
+				print('trig next')
+				if self.current_term_history < len(self.terms_history) - 1:
+					print('inc current')
 					self.current_term_history += 1
+			elif direction == self.PREV:
+				print('trig prev')
+				if self.current_term_history > 0:
+					print('dec current')
+					self.current_term_history -= 1
 			new_term = self.terms_history[self.current_term_history]
-			self.init_search(new_term, False)
+			if new_term != self.current_term:
+				self.init_search(new_term, False)
 		return new_term
 
 
@@ -471,8 +477,13 @@ class SortFilterModel(QSortFilterProxyModel):
 		"""
 		if term and history:
 			if len(self.terms_history) > 10:
-				self.terms_history = self.terms_history[:9]
-			self.terms_history.insert(0, term)
+				self.terms_history = self.terms_history[-10:]
+			self.terms_history.append(term)
+
+			self.current_term_history = len(self.terms_history) - 1
+			if self.current_term_history < 0:
+				self.current_term_history = 0
+
 		self.current_term = term
 		self._DO_SEARCH.emit(term)
 

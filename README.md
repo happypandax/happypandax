@@ -3,6 +3,10 @@ http://pewpews.github.io/happypanda
 
 Development is done in alpha branch
 
+For future plans, see [the wiki](https://github.com/Pewpews/happypanda/wiki)
+
+Also see [here](https://github.com/Pewpews/happypanda/wiki/Documentation), for documentation
+
 I'm here if you have any questions!
 
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Pewpews/happypanda?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
@@ -14,13 +18,13 @@ I'm here if you have any questions!
 <img src="misc/screenshot4.png" width="300">
 
 # How to install & run
-*(Tested on windows and linux)*
 
 For Mac & Linux see [INSTALL.md](INSTALL.md)
 
 1. Download the installer from [releases](https://github.com/Pewpews/happypanda/releases)
 2. Extract to desired location (avoid locations where you need admin rights)
 3. Run the program by clicking on Happypanda
+#
 
 # Features
 - Keep track of your galleries and organize them more easily

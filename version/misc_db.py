@@ -1,4 +1,4 @@
-#This file is part of Happypanda.
+﻿#This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
 #the Free Software Foundation, either version 2 of the License, or
@@ -125,7 +125,7 @@ class DBOverview(QWidget):
 		# Tags tree
 		self.tags_tree = TagsTreeView(parent=self, app_window=self.parent_widget)
 		self.tags_tree.setHeaderHidden(True)
-		tabbar.addTab(self.tags_tree, 'Namespace and Tags')
+		tabbar.addTab(self.tags_tree, 'Namespace && Tags')
 		self.tags_layout = QVBoxLayout(self.tags_tree)
 		if parent.manga_list_view.gallery_model.db_emitter._finished:
 			self.setup_tags()
