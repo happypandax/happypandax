@@ -120,7 +120,7 @@ def gen_thumbnail(gallery, width=gui_constants.THUMB_W_SIZE,
 		if not img_path:
 			raise IndexError
 		for ext in IMG_FILES:
-			if img_path.endswith(ext):
+			if img_path.lower().endswith(ext):
 				suff = ext # the image ext with dot
 		
 		# generate unique file name
@@ -1245,7 +1245,7 @@ class HashDB:
 			return False
 
 		# filter
-		imgs = [x.path for x in imgs if x.name.endswith(tuple(IMG_FILES))]
+		imgs = [x.path for x in imgs if x.name.lower().endswith(tuple(IMG_FILES))]
 
 		hashes = []
 		for n, i in enumerate(sorted(imgs)):

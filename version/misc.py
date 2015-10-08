@@ -470,7 +470,7 @@ class GalleryMenu(QMenu):
 							'Select a new gallery cover',
 							filter='Image {}'.format(utils.IMG_FILTER),
 							directory=path)[0]
-		if new_cover and new_cover.endswith(utils.IMG_FILES):
+		if new_cover and new_cover.lower().endswith(utils.IMG_FILES):
 			if gallery.profile != gui_constants.NO_IMAGE_PATH:
 				try:
 					os.remove(gallery.profile)
@@ -877,7 +877,7 @@ class FileIcon:
 				except utils.CreateArchiveFail:
 					return False
 				for name in zip.namelist():
-					if name.endswith(tuple(IMG_FILES)):
+					if name.lower().endswith(tuple(IMG_FILES)):
 						folder = os.path.join(
 							gui_constants.temp_dir,
 							'{}{}'.format(name, n))
@@ -887,7 +887,7 @@ class FileIcon:
 						break;
 			else:
 				for p in scandir.scandir(gallery.chapters[0]):
-					if p.name.endswith(tuple(IMG_FILES)):
+					if p.name.lower().endswith(tuple(IMG_FILES)):
 						file = p.path
 						break;
 			return file

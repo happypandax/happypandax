@@ -294,7 +294,7 @@ def check_archive(archive_path):
 		if con:
 			gallery_probability = len(con)
 			for n in con:
-				if not n.endswith(IMG_FILES):
+				if not n.lower().endswith(IMG_FILES):
 					gallery_probability -= 1
 			if gallery_probability >= (len(con)*0.8):
 				return d
@@ -325,7 +325,6 @@ def recursive_gallery_check(path):
 	"""
 	gallery_dirs = []
 	gallery_arch = []
-	path = path.lower()
 	for root, subfolders, files in scandir.walk(path):
 		if files:
 			for f in files:
@@ -339,7 +338,7 @@ def recursive_gallery_check(path):
 					continue
 				gallery_probability = len(files)
 				for f in files:
-					if not f.endswith(IMG_FILES):
+					if not f.lower().endswith(IMG_FILES):
 						gallery_probability -= 1
 				if gallery_probability >= (len(files)*0.8):
 					gallery_dirs.append(root)
@@ -372,7 +371,7 @@ def open_chapter(chapterpath, archive=None):
 	temp_p = archive if is_archive else chapterpath
 	def find_f_img_folder():
 		filepath = os.path.join(temp_p, [x for x in sorted([y.name for y in scandir.scandir(temp_p)])\
-			if x.endswith(IMG_FILES)][0]) # Find first page
+			if x.lower().endswith(IMG_FILES)][0]) # Find first page
 		return filepath
 
 	def find_f_img_archive(extract=True):
@@ -397,12 +396,12 @@ def open_chapter(chapterpath, archive=None):
 			else:
 				zip.extract_all(t_p) # Compatibility reasons.. TODO: REMOVE IN BETA
 			filepath = os.path.join(t_p, [x for x in sorted([y.name for y in scandir.scandir(t_p)])\
- 				if x.endswith(IMG_FILES)][0]) # Find first page
+ 				if x.lower().endswith(IMG_FILES)][0]) # Find first page
 			filepath = os.path.abspath(filepath)
 		else:
 			if is_archive:
 				con = zip.dir_contents('')
-				f_img = [x for x in sorted(con) if x.endswith(IMG_FILES)]
+				f_img = [x for x in sorted(con) if x.lower().endswith(IMG_FILES)]
 				if not f_img:
 					log_w('Extracting archive.. There are no images in the top-folder. ({})'.format(archive))
 					return find_f_img_archive()
@@ -474,16 +473,16 @@ def get_gallery_img(path, archive=None):
 			temp_path = os.path.join(gui_constants.temp_dir, str(uuid.uuid4()))
 			os.mkdir(temp_path)
 			if not archive:
-				f_img_name = sorted([img for img in zip.namelist() if img.endswith(IMG_FILES)])[0]
+				f_img_name = sorted([img for img in zip.namelist() if img.lower().endswith(IMG_FILES)])[0]
 			else:
-				f_img_name = sorted([img for img in zip.dir_contents(path) if img.endswith(IMG_FILES)])[0]
+				f_img_name = sorted([img for img in zip.dir_contents(path) if img.lower().endswith(IMG_FILES)])[0]
 			img_path = zip.extract(f_img_name, temp_path)
 			zip.close()
 		except CreateArchiveFail:
 			img_path = gui_constants.NO_IMAGE_PATH
 	elif os.path.isdir(real_path):
 		log_i('Getting image from folder')
-		first_img = sorted([img.name for img in scandir.scandir(real_path) if img.name.endswith(tuple(IMG_FILES))])[0]
+		first_img = sorted([img.name for img in scandir.scandir(real_path) if img.name.lower().endswith(tuple(IMG_FILES))])[0]
 		img_path = os.path.join(real_path, first_img)
 
 	if img_path:
