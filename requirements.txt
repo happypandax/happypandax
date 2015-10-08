@@ -1,0 +1,6 @@
+requests
+beautifulsoup4
+scandir
+rarfile
+watchdog
+robobrowser

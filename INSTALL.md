@@ -16,49 +16,40 @@ Download from here https://www.python.org/downloads/
 *Note: make sure to mark the 'Add to path' checkbox when available on windows*
 
 # Linux
-1. Install these dependencies:
+1. Go where you want happypanda to be downloaded (E.g. `cd ~`), and write `git clone https://github.com/Pewpews/happypanda.git`
+  - If it fails with something like 'unrecognized command 'git'' then do: `sudo pacman -S git` (`apt-get install git` on Ubuntu), and try again
+2. Install these dependencies:
   - Qt5 (Install this first) >= 5.4
-    + sudo pacman -S qt5-base ('apt-get install qt5-default' on Ubuntu)
-  - requests >= 2.6.0 & BeautifulSoup 4(PyPi)
-    + Python 3.4 should've included pip on install. Incase it didn't: 'sudo pacman -S pip3'
-    + To install 'requests': pip3 install requests
-    + To install 'BeautifulSoup 4': pip3 install beautifulsoup4
-    + To install 'scandir': pip3 install scandir
-    + To install 'rarfile': pip3 install rarfile
-    + To install 'watchdog': pip3 install watchdog
+    + `sudo pacman -S qt5-base` (`apt-get install qt5-default` on Ubuntu)
+  - pip
+    + Python 3.4 should've included pip on install. Incase it didn't: `sudo pacman -S python-pip`
+    + Enter the happypanda folder and write `pip3 install -r requirements.txt`
   - PyQt5
-    + I'm pretty sure you can install this through pip3, but if not: sudo pacman -S python-pyqt5 ('apt-get install python3-pyqt5' on Ubuntu)
-    + apt-get install PyQt5
-    + apt-get install python3-pyqt5
-    + apt-get install python3-pyqt5.qtsql
-    
-2. Now go where you want happypanda to be downloaded (E.g. 'cd ~'), and write: git clone https://github.com/Pewpews/happypanda.git
-  - If it fails with something like 'unrecognized command 'git'' then do: sudo pacman -S git (apt-get install git on Ubuntu), and try again
-3. Now enter the cloned directory (should be named 'happypanda') then in 'version' folder, and write: python3 main.py
+    + I'm pretty sure you can install this through pip3, but if not then just `sudo pacman -S python-pyqt5` on Arch
+    + On Ubuntu
+        - `apt-get install python3-pyqt5`
+        - `apt-get install PyQt5`
+        - `apt-get install python3-pyqt5`
+        - `apt-get install python3-pyqt5.qtsql`
+3. In the happypanda directory go to the *version* directory and write `python3 main.py`
 4. The program should now be running
 
 # Windows
-1. Install these dependencies:
+1. Go to the frontpage of the happypanda repo and click Download Zip
+2. Extract to desired location
+3. Install these dependencies:
   - Qt5 (Install this first) >= 5.4
     + Download from https://www.qt.io/download-open-source/#section-2
   - pip
     + Python 3.4 should've included pip on install. Incase it didn't https://pip.pypa.io/en/latest/installing.html
     Make sure python is in your PATH. (http://stackoverflow.com/questions/6318156/adding-python-path-on-windows-7)
-    + Now open cmd and write these commands:
-    + pip install requests
-    + pip install bs4
-    + pip install scandir
-    + pip install rarfile
-    + pip install watchdog
+    + Now open cmd and `cd` to the happypanda folder
+    + Write: `pip install -r requirements.txt` and press enter
   - PyQt5
     + I'm pretty sure you can install this through pip, but here is the download location
     http://www.riverbankcomputing.com/software/pyqt/download5 (see Binary Packages for windows)
-    
-2. Now go to the frontpage of the happypanda repo and click Download Zip
-3. Extract to desired location
-4. Open a cmd in that location. (in Windows you can write 'cmd' in the folder explorer url-bar and then press enter)
-5. Write in cmd: python main.py
-6. The program should now be running.
+4. Finally, write `python main.py` to run the program
+5. The program should now be running.
 
 Note: Try renaming the 'main.py' file to 'main.pyw' and then just doubleclick on it to try running without console (not guaranteed to work)
 
@@ -67,26 +58,21 @@ Note: Try renaming the 'main.py' file to 'main.pyw' and then just doubleclick on
 1. Install Homebrew (this makes everything easier)
   - Open Terminal
   - Run the following
-   + ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-   + brew update && brew upgrade --all
-2. Install Python3, PyQt5, and sip
-  - Run the following
-   + brew install PyQt5
-3. Install Requests, BeautifulSoup4, Watchdog, and Scandir
-  - Run the following
-   + pip3 install requests
-   + pip3 install beautifulsoup4
-   + pip3 install watchdog
-   + pip3 install scandir
-   + pip3 install rarfile
-4. Download HappyPanda
-  - Go to github.com/Pewpews/happypanda
-  - Press the "Download ZIP" button
-  - UnZip happypanda-master.zip
-  - Open the happypanda-master folder
-  - Put the res folder inside the version folder
+   + `ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"`
+   + `brew update && brew upgrade --all`
+2. To install Python3, PyQt5, and sip (*still in Terminal*)
+   + `brew install PyQt5`
+3. To install other dependencies
+  - Download HappyPanda
+    + Go to github.com/Pewpews/happypanda
+    + Press the "Download ZIP" button
+    + UnZip happypanda-master.zip
+    + Open the happypanda-master folder
+    + Put the res folder inside the version folder
+  - In Terminal, navigate to the happypanda-master folder (E.g.: `cd /where/ever/you/put/the/folder/happypanda-master`)
+    + Write `pip3 install -r requirements.txt`
 5. Running HappyPanda
   - Run the following
-   + cd /where/ever/you/put/the/folder/happypanda-master/version
-     + (For example cd /Users/username/Downloads/happypanda-master/version)
-   + python3 main.py
+   + `cd /where/ever/you/put/the/folder/happypanda-master/version`
+     + (For example `cd /Users/username/Downloads/happypanda-master/version`)
+   + `python3 main.py`
