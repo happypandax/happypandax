@@ -772,7 +772,7 @@ class SingleGalleryChoices(BasePopup):
 		main_layout.addWidget(self.list_w, 3)
 		main_layout.addLayout(self.buttons_layout)
 		for t in tuple_first_idx:
-			item = GalleryListItem(t)
+			item = CustomListItem(t)
 			item.setText(t[0])
 			self.list_w.addItem(item)
 		buttons = self.add_buttons('Choose')
@@ -1198,10 +1198,10 @@ class ChapterAddWidget(QWidget):
 		self.close()
 
 
-class GalleryListItem(QListWidgetItem):
-	def __init__(self, gallery=None, parent=None):
+class CustomListItem(QListWidgetItem):
+	def __init__(self, item=None, parent=None):
 		super().__init__(parent)
-		self.gallery = gallery
+		self.item = item
 
 
 class GalleryListView(QWidget):
@@ -1291,7 +1291,7 @@ class GalleryListView(QWidget):
 		and adds it to the view_list
 		"""
 		assert isinstance(name, str)
-		gallery_item = GalleryListItem(item)
+		gallery_item = CustomListItem(item)
 		gallery_item.setText(name)
 		gallery_item.setFlags(gallery_item.flags() | Qt.ItemIsUserCheckable)
 		gallery_item.setCheckState(Qt.Checked)
@@ -1311,7 +1311,7 @@ class GalleryListView(QWidget):
 				done = True
 			else:
 				if item.checkState() == Qt.Checked:
-					gallery_list.append(item.gallery)
+					gallery_list.append(item.item)
 				row += 1
 
 		self.SERIES.emit(gallery_list)

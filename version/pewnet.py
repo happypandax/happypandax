@@ -64,6 +64,7 @@ class Downloader(QObject):
 	def _downloading(self):
 		"The downloader. Put in a thread."
 		while True:
+			interrupt = False
 			item = self._inc_queue.get()
 			temp_base = None
 			if isinstance(item, dict):
@@ -73,6 +74,7 @@ class Downloader(QObject):
 			file_name = item[0] if isinstance(item, (tuple, list)) else str(uuid.uuid4())
 			file_name = os.path.join(self.base, file_name) if not temp_base else \
 				os.path.join(temp_base, file_name)
+			file_name_part = file_name + '.part'
 			download_url = item[1] if isinstance(item, (tuple, list)) else item
 
 			self.active_downloads[download_url] = True
@@ -81,13 +83,40 @@ class Downloader(QObject):
 				r = self._browser_session.get(download_url, stream=True)
 			else:
 				r = requests.get(download_url, stream=True)
-			with open(file_name, 'wb') as f:
+			with open(file_name_part, 'wb') as f:
 				for data in r.iter_content(chunk_size=1024):
+					if self.active_downloads[download_url] == False:
+						interrupt = True
+						break
 					if data:
 						f.write(data)
 						f.flush()
-			self.active_downloads[download_url] = False
-			self.item_finished.emit((download_url, file_name))
+			if not interrupt:
+				try:
+					os.rename(file_name_part, file_name)
+				except OSError:
+					n = 0
+					file_split = os.path.split(file_name)
+					while n < 100:
+						try:
+							if file_split[1]:
+								os.rename(file_name_part,
+											os.path.join(file_split[0],"({}){}".format(n, file_split[1])))
+							else:
+								os.rename(file_name_part, "({}){}".format(n, file_name))
+							break
+						except:
+							n += 1
+					if n > 100:
+						file_name = file_name_part
+
+				self.active_downloads[download_url] = False
+				self.item_finished.emit((download_url, file_name))
+			else:
+				try:
+					os.remove(file_name_part)
+				except:
+					pass
 			self._inc_queue.task_done()
 
 	def start_manager(self, max_tasks):

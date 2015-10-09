@@ -73,10 +73,12 @@ class Fetch(QObject):
 			filter_list.append(os.path.normcase(g.path))
 		self.galleries_from_db = sorted(filter_list)
 
-	def local(self):
+	def local(self, s_path=None):
 		"""
 		Do a local search in the given series_path.
 		"""
+		if s_path:
+			self.series_path = s_path
 		try:
 			gallery_l = sorted([p.name for p in scandir.scandir(self.series_path)]) #list of folders in the "Gallery" folder
 			mixed = False

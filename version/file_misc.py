@@ -3,12 +3,13 @@ from watchdog.events import FileSystemEventHandler, DirDeletedEvent
 from watchdog.observers import Observer
 from threading import Timer
 
-from PyQt5.QtCore import Qt, QObject, pyqtSignal, QTimer
-from PyQt5.QtGui import QPixmap
+from PyQt5.QtCore import Qt, QObject, pyqtSignal, QTimer, QSize
+from PyQt5.QtGui import QPixmap, QIcon, QColor
 from PyQt5.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout,
 							 QLabel, QFrame, QPushButton, QMessageBox,
 							 QFileDialog, QScrollArea, QLineEdit,
-							 QFormLayout, QGroupBox, QSizePolicy)
+							 QFormLayout, QGroupBox, QSizePolicy,
+							 QTableWidget, QTableWidgetItem)
 
 import gui_constants
 import misc
@@ -16,6 +17,7 @@ import gallerydb
 import utils
 import pewnet
 import settings
+import fetch
 
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -24,73 +26,97 @@ log_w = log.warning
 log_e = log.error
 log_c = log.critical
 
-class GalleryDownloaderItem(QWidget):
+class GalleryDownloaderItem():
 	"""
 	"""
-	def __init__(self, hitem, parent=None):
+	d_item_ready = pyqtSignal(object)
+	def __init__(self, hitem):
 		assert isinstance(hitem, pewnet.HenItem)
-		super().__init__(parent)
-		self.setFixedHeight(50)
-		self.setContentsMargins(0,0,0,0)
-		self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-		self.setBackgroundRole(self.palette().Dark)
-		l = QHBoxLayout(self)
-		l.setContentsMargins(0,0,0,0)
 		self.item = hitem
+		url = self.item.gallery_url
 
-		separators = []
-		for s in range(2):
-			sep = QFrame()
-			sep.setFrameStyle(QFrame.VLine)
-			sep.setFrameShadow(QFrame.Sunken)
-			separators.append(sep)
-		
-		#thumb
-		self.profile = QLabel()
-		l.addWidget(self.profile)
-		l.addWidget(separators[0])
-
+		self.profile_item = QTableWidgetItem(self.item.metadata['title']['def'])
+		self.profile_item.setToolTip(url)
 		def set_profile(item):
-			self.profile.setPixmap(QPixmap(item.thumb).scaled(
-				50, 25, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+			self.profile_item.setIcon(QIcon(item.thumb))
 		self.item.thumb_rdy.connect(set_profile)
 
 		# status
-		self.status_text = QLabel('Status:\nDownloading...')
+		self.status_item = QTableWidgetItem('Downloading...')
+		self.status_item.setToolTip(url)
 		def set_finished(item):
-			self.status_text.setText('Status:\nDone!')
+			self.status_item.setText('Finished downloading!')
+			self.hitem_ready.emit(self)
 		self.item.file_rdy.connect(set_finished)
 
-		l.addWidget(self.status_text)
-		l.addWidget(separators[1])
-
-		# url 
-		v_l = QVBoxLayout()
-		title_lbl = QLabel(self.item.metadata['title']['def'])
-		small_h_l = QHBoxLayout()
-		cost_lbl = QLabel("Cost: {}".format(self.item.cost))
-		size_lbl = QLabel("Size: {}".format(self.item.size))
-		small_h_l.addWidget(cost_lbl)
-		small_h_l.addWidget(size_lbl, 1)
-		url_lbl = QLabel(self.item.gallery_url)
-		v_l.addWidget(title_lbl)
-		v_l.addLayout(small_h_l)
-		v_l.addWidget(url_lbl)
-		l.addLayout(v_l, 1)
+		# other
+		self.cost_item = QTableWidgetItem(self.item.cost)
+		self.cost_item.setToolTip(url)
+		self.size_item = QTableWidgetItem(self.item.size)
+		self.size_item.setToolTip(url)
+		type = 'Archive' if hitem.download_type == 0 else 'Torrent'
+		self.type_item = QTableWidgetItem(type)
+		self.type_item.setToolTip(url)
 
 
-class GalleryDownloaderList(QGroupBox):
+class GalleryDownloaderList(QTableWidget):
 	"""
 	"""
+	init_fetch_instance = pyqtSignal(list)
 	def __init__(self, parent=None):
 		super().__init__(parent)
-		self.setTitle('Download list')
-		self.main_layout = QFormLayout(self)
+		self.setColumnCount(5)
+		self.setColumnWidth(0, 150)
+		self.setIconSize(QSize(50, 100))
+		self.setAlternatingRowColors(True)
+		self.horizontalHeader().setStretchLastSection(True)
+		v_header = self.verticalHeader()
+		v_header.setSectionResizeMode(v_header.Fixed)
+		v_header.setDefaultSectionSize(100)
+		v_header.hide()
+		self.setShowGrid(True)
+		self.setSelectionBehavior(self.SelectRows)
+		self.setSelectionMode(self.SingleSelection)
+		self.setSortingEnabled(True)
+		self.setDragEnabled(False)
+		palette = self.palette()
+		palette.setColor(palette.Highlight, QColor(88, 88, 88, 70))
+		palette.setColor(palette.HighlightedText, QColor('black'))
+		self.setPalette(palette)
+		self.setHorizontalHeaderLabels(
+			[' ', 'Status', 'Size', 'Cost', 'Type'])
+		self.insertRow(0)
+
+		self.fetch_instance = fetch.Fetch()
+		self.fetch_instance = download_items = []
+		self.fetch_instance.FINISHED.connect(self.gallery_to_model)
+		self.fetch_instance.moveToThread(gui_constants.GENERAL_THREAD)
 
 	def add_entry(self, hitem):
 		assert isinstance(hitem, pewnet.HenItem)
-		item_widget = GalleryDownloaderItem(hitem)
-		self.main_layout.addRow(item_widget)
+		g_item = GalleryDownloaderItem(hitem)
+		if hitem.download_type == 0:
+			g_item.d_item_ready.connect(self.init_gallery)
+		self.insertRow(0)
+		self.setSortingEnabled(False)
+		self.setItem(0, 0, g_item.profile_item)
+		self.setItem(0, 1, g_item.status_item)
+		self.setItem(0, 2, g_item.size_item)
+		self.setItem(0, 3, g_item.cost_item)
+		self.setItem(0, 4, g_item.type_item)
+		self.setSortingEnabled(True)
+		self.resizeColumnsToContents()
+
+	def init_gallery(self, download_item):
+		assert isinstance(download_item, GalleryDownloaderItem)
+		download_item.status_item.setText('Adding to library')
+		self.fetch_instance.download_items.append(download_item)
+		self.init_fetch_instance.emit([download_item.item.file])
+
+	def gallery_to_model(self, gallery_list):
+		item = self.fetch_instance.download_items.pop(0)
+		gallery = gallery_list[0]
+
 
 
 class GalleryDownloader(QWidget):
@@ -114,7 +140,7 @@ class GalleryDownloader(QWidget):
 		download_list_scroll.setWidgetResizable(True)
 		download_list_scroll.setWidget(self.download_list)
 		main_layout.addWidget(download_list_scroll, 1)
-		self.resize(600,600)
+		self.resize(480,600)
 
 	def add_download_entry(self, url=None):
 		if not url:
