@@ -995,6 +995,7 @@ class AppWindow(QMainWindow):
 
 		if self.tags_treeview:
 			self.tags_treeview.close()
+		self.download_window.close()
 
 		# check if there is db activity
 		if not gallerydb.method_queue.empty():

@@ -774,7 +774,7 @@ class SettingsDialog(QWidget):
 		# Advanced / Misc / Regex / search behaviour
 		self.search_every_keystroke = QRadioButton('Search on every keystroke *', misc_search)
 		misc_search_layout.addRow(self.search_every_keystroke)
-		self.search_on_enter = QRadioButton('Search on enter-key *', misc_search)
+		self.search_on_enter = QRadioButton('Search on return-key *', misc_search)
 		misc_search_layout.addRow(self.search_on_enter)
 
 		# Advanced / Misc / External Viewer

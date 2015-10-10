@@ -238,7 +238,7 @@ class GalleryDB:
 	def rebuild_thumb(gallery):
 		"Rebuilds gallery thumbnail"
 		try:
-			log_i('Rebuilding thumb {}'.format(gallery.title.encode(errors='ignore')))
+			log_i('Recreating thumb {}'.format(gallery.title.encode(errors='ignore')))
 			gallery.profile = gen_thumbnail(gallery)
 			GalleryDB.modify_gallery(
 				gallery.id,
