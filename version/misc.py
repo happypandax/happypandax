@@ -631,6 +631,38 @@ class BasePopup(TransparentWidget):
 			b.append(button)
 		return b
 
+class ApplicationPopup(BasePopup):
+	class progress(QProgressBar):
+		reached_maximum = pyqtSignal()
+		def __init__(self, parent=None):
+			super().__init__(parent)
+
+		def setValue(self, v):
+			if v == self.maximum():
+				self.reached_maximum.emit()
+			return super().setValue(v)
+
+	def __init__(self, parent):
+		super().__init__(parent)
+		self.parent_widget = parent
+		main_layout = QVBoxLayout()
+		self.info_lbl = QLabel("Hi there! I need to rebuild your galleries.")
+		self.info_lbl.setAlignment(Qt.AlignCenter)
+		main_layout.addWidget(self.info_lbl)
+		self.prog = progress(self)
+		self.prog.reached_maximum.connect(self.close)
+		main_layout.addWidget(self.prog)
+		main_layout.addWidget(QLabel('Note: This popup will close itself when everything is ready'))
+		main_layout.addWidget(QLabel('Please wait.. Restart if there is no sign of progress.'))
+		self.main_widget.setLayout(main_layout)
+
+	def closeEvent(self, event):
+		self.parent_widget.setEnabled(True)
+		return super().closeEvent(event)
+
+	def showEvent(self, event):
+		self.parent_widget.setEnabled(False)
+		return super().showEvent(event)
 
 class NotificationOverlay(QWidget):
 	"""

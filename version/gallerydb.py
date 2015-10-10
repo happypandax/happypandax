@@ -1414,7 +1414,7 @@ class Gallery:
 #		self.pages = 0
 #		self.in_archive = 0
 
-class Bridge(QObject):
+class AdminDB(QObject):
 	DONE = pyqtSignal(bool)
 	PROGRESS = pyqtSignal(int)
 	DATA_COUNT = pyqtSignal(int)
@@ -1428,6 +1428,15 @@ class Bridge(QObject):
 			log_i('Rebuilding galleries')
 			for n, g in enumerate(galleries, 1):
 				GalleryDB.rebuild_gallery(g)
+				self.PROGRESS.emit(n)
+		self.DONE.emit(True)
+
+	def rebuild_thumbs(self):
+		galleries = GalleryDB.get_all_gallery()
+		if galleries:
+			self.DATA_COUNT.emit(len(galleries))
+			log_i('Rebuilding galleries')
+			for n, g in enumerate(galleries, 1):
 				self.PROGRESS.emit(n)
 		self.DONE.emit(True)
 

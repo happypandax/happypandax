@@ -227,22 +227,9 @@ class AppWindow(QMainWindow):
 			self.download_manager.start_manager(4)
 		if gui_constants.FIRST_TIME_LEVEL < 3:
 
-			class FirstTime(misc.BasePopup):
-				def __init__(self, parent=None):
-					super().__init__(parent)
-					main_layout = QVBoxLayout()
-					info_lbl = QLabel("Hi there! I need to rebuild your galleries.\n"+
-					   "Please wait.. Restart if there is no sign of progress.")
-					info_lbl.setAlignment(Qt.AlignCenter)
-					main_layout.addWidget(info_lbl)
-					self.prog = QProgressBar(self)
-					main_layout.addWidget(self.prog)
-					main_layout.addWidget(QLabel('Note: This popup will close itself when everything is ready'))
-					self.main_widget.setLayout(main_layout)
-
-			ft_widget = FirstTime(self)
+			ft_widget = misc.ApplicationPopup(self)
 			log_i('Invoking first time level 3')
-			bridge = gallerydb.Bridge()
+			bridge = gallerydb.AdminDB()
 			thread = QThread(self)
 			thread.setObjectName('Startup')
 			bridge.moveToThread(thread)

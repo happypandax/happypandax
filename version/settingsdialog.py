@@ -23,6 +23,8 @@ log_c = log.critical
 class SettingsDialog(QWidget):
 	"A settings dialog"
 	scroll_speed_changed = pyqtSignal()
+	init_thumb_recache = pyqtSignal()
+	init_gallery_rebuild = pyqtSignal()
 	def __init__(self, parent=None):
 		super().__init__(parent, flags=Qt.Window)
 		self.parent_widget = parent
