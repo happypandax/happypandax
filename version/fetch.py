@@ -66,17 +66,22 @@ class Fetch(QObject):
 		self.galleries_in_queue = []
 		self.error_galleries = []
 
-		gallery_data = gui_constants.GALLERY_DATA
-		# filter
-		filter_list = []
-		for g in gallery_data:
-			filter_list.append(os.path.normcase(g.path))
-		self.galleries_from_db = sorted(filter_list)
+		#filter
+		self.galleries_from_db = []
+		self._refresh_filter_list()
+
+	def _refresh_filter_list(self):
+			gallery_data = gui_constants.GALLERY_DATA
+			filter_list = []
+			for g in gallery_data:
+				filter_list.append(os.path.normcase(g.path))
+			self.galleries_from_db = sorted(filter_list)
 
 	def local(self, s_path=None):
 		"""
 		Do a local search in the given series_path.
 		"""
+		self.data.clear()
 		if s_path:
 			self.series_path = s_path
 		try:
@@ -88,6 +93,8 @@ class Fetch(QObject):
 		if len(gallery_l) != 0: # if gallery path list is not empty
 			log_i('Gallery folder is not empty')
 			try:
+				if len(self.galleries_from_db) != len(gui_constants.GALLERY_DATA):
+					self._refresh_filter_list()
 				self.DATA_COUNT.emit(len(gallery_l)) #tell model how many items are going to be added
 				log_i('Found {} items'.format(len(gallery_l)))
 				progress = 0
@@ -233,6 +240,64 @@ class Fetch(QObject):
 			self.GALLERY_EMITTER.emit(gallery)
 			log_d('Success')
 
+	@staticmethod
+	def apply_metadata(g, data, append=True):
+		if gui_constants.USE_JPN_TITLE:
+			try:
+				title = data['title']['jpn']
+			except KeyError:
+				title = data['title']['def']
+		else:
+			title = data['title']['def']
+
+		if 'Language' in data['tags']:
+			try:
+				lang = [x for x in data['tags']['Language'] if not x == 'translated'][0].capitalize()
+			except IndexError:
+				lang = ""
+		else:
+			lang = ""
+
+		title_artist_dict = utils.title_parser(title)
+		if not append:
+			g.title = title_artist_dict['title']
+			if title_artist_dict['artist']:
+				g.artist = title_artist_dict['artist']
+			g.language = title_artist_dict['language'].capitalize()
+			if 'Artist' in data['tags']:
+				g.artist = data['tags']['Artist'][0].capitalize()
+			if lang:
+				g.language = lang
+			g.type = data['type']
+			g.pub_date = data['pub_date']
+			g.tags = data['tags']
+		else:
+			if not g.title:
+				g.title = title_artist_dict['title']
+			if not g.artist:
+				g.artist = title_artist_dict['artist']
+				if 'Artist' in data['tags']:
+					g.artist = data['tags']['Artist'][0].capitalize()
+			if not g.language:
+				g.language = title_artist_dict['language'].capitalize()
+				if lang:
+					g.language = lang
+			if not g.type or g.type == 'Other':
+				g.type = data['type']
+			if not g.pub_date:
+				g.pub_date = data['pub_date']
+			if not g.tags:
+				g.tags = data['tags']
+			else:
+				for ns in data['tags']:
+					if ns in g.tags:
+						for tag in data['tags'][ns]:
+							if not tag in g.tags[ns]:
+								g.tags[ns].append(tag)
+					else:
+						g.tags[ns] = data['tags'][ns]
+		return g
+
 	def fetch_metadata(self, gallery, hen, proc=False):
 		"""
 		Puts gallery in queue for metadata fetching. Applies received galleries and sends
@@ -267,61 +332,11 @@ class Fetch(QObject):
 				continue
 			log_i('({}/{}) Applying metadata for gallery: {}'.format(x, len(self.galleries_in_queue),
 															g.title.encode(errors='ignore')))
-			if gui_constants.USE_JPN_TITLE:
-				try:
-					title = data['title']['jpn']
-				except KeyError:
-					title = data['title']['def']
-			else:
-				title = data['title']['def']
-
-			if 'Language' in data['tags']:
-				try:
-					lang = [x for x in data['tags']['Language'] if not x == 'translated'][0].capitalize()
-				except IndexError:
-					lang = ""
-			else:
-				lang = ""
-
-			title_artist_dict = utils.title_parser(title)
 			if gui_constants.REPLACE_METADATA:
-				g.title = title_artist_dict['title']
-				if title_artist_dict['artist']:
-					g.artist = title_artist_dict['artist']
-				g.language = title_artist_dict['language'].capitalize()
-				if 'Artist' in data['tags']:
-					g.artist = data['tags']['Artist'][0].capitalize()
-				if lang:
-					g.language = lang
-				g.type = data['type']
-				g.pub_date = data['pub_date']
-				g.tags = data['tags']
+				g = Fetch.apply_metadata(g, data, False)
 				g.link = g.temp_url
 			else:
-				if not g.title:
-					g.title = title_artist_dict['title']
-				if not g.artist:
-					g.artist = title_artist_dict['artist']
-					if 'Artist' in data['tags']:
-						g.artist = data['tags']['Artist'][0].capitalize()
-				if not g.language:
-					g.language = title_artist_dict['language'].capitalize()
-					if lang:
-						g.language = lang
-				if not g.type or g.type == 'Other':
-					g.type = data['type']
-				if not g.pub_date:
-					g.pub_date = data['pub_date']
-				if not g.tags:
-					g.tags = data['tags']
-				else:
-					for ns in data['tags']:
-						if ns in g.tags:
-							for tag in data['tags'][ns]:
-								if not tag in g.tags[ns]:
-									g.tags[ns].append(tag)
-						else:
-							g.tags[ns] = data['tags'][ns]
+				g = Fetch.apply_metadata(g, data)
 				if not g.link:
 					g.link = g.temp_url
 			self._return_gallery_metadata(g)
@@ -378,7 +393,7 @@ class Fetch(QObject):
 
 				log_i("Checking gallery url")
 				if gallery.link:
-					check = self.website_checker(gallery.link)
+					check = self._website_checker(gallery.link)
 					if check == valid_url:
 						gallery.temp_url = gallery.link
 						checked_pre_url_galleries.append(gallery)
@@ -453,7 +468,7 @@ class Fetch(QObject):
 			self.AUTO_METADATA_PROGRESS.emit('Auto metadata fetcher is already running!')
 			self.FINISHED.emit(False)
 
-	def website_checker(self, url):
+	def _website_checker(self, url):
 		if not url:
 			return None
 		try:

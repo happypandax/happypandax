@@ -26,11 +26,12 @@ log_w = log.warning
 log_e = log.error
 log_c = log.critical
 
-class GalleryDownloaderItem():
+class GalleryDownloaderItem(QObject):
 	"""
 	"""
 	d_item_ready = pyqtSignal(object)
 	def __init__(self, hitem):
+		super().__init__()
 		assert isinstance(hitem, pewnet.HenItem)
 		self.item = hitem
 		url = self.item.gallery_url
@@ -46,7 +47,7 @@ class GalleryDownloaderItem():
 		self.status_item.setToolTip(url)
 		def set_finished(item):
 			self.status_item.setText('Finished downloading!')
-			self.hitem_ready.emit(self)
+			self.d_item_ready.emit(self)
 		self.item.file_rdy.connect(set_finished)
 
 		# other
@@ -63,10 +64,10 @@ class GalleryDownloaderList(QTableWidget):
 	"""
 	"""
 	init_fetch_instance = pyqtSignal(list)
-	def __init__(self, parent=None):
+	def __init__(self, gallery_model, parent):
 		super().__init__(parent)
+		self.gallery_model = gallery_model
 		self.setColumnCount(5)
-		self.setColumnWidth(0, 150)
 		self.setIconSize(QSize(50, 100))
 		self.setAlternatingRowColors(True)
 		self.horizontalHeader().setStretchLastSection(True)
@@ -88,9 +89,10 @@ class GalleryDownloaderList(QTableWidget):
 		self.insertRow(0)
 
 		self.fetch_instance = fetch.Fetch()
-		self.fetch_instance = download_items = []
+		self.fetch_instance.download_items = []
 		self.fetch_instance.FINISHED.connect(self.gallery_to_model)
 		self.fetch_instance.moveToThread(gui_constants.GENERAL_THREAD)
+		self.init_fetch_instance.connect(self.fetch_instance.local)
 
 	def add_entry(self, hitem):
 		assert isinstance(hitem, pewnet.HenItem)
@@ -105,28 +107,41 @@ class GalleryDownloaderList(QTableWidget):
 		self.setItem(0, 3, g_item.cost_item)
 		self.setItem(0, 4, g_item.type_item)
 		self.setSortingEnabled(True)
-		self.resizeColumnsToContents()
 
 	def init_gallery(self, download_item):
 		assert isinstance(download_item, GalleryDownloaderItem)
-		download_item.status_item.setText('Adding to library')
+		download_item.status_item.setText('Adding to library...')
 		self.fetch_instance.download_items.append(download_item)
 		self.init_fetch_instance.emit([download_item.item.file])
 
 	def gallery_to_model(self, gallery_list):
-		item = self.fetch_instance.download_items.pop(0)
-		gallery = gallery_list[0]
-
-
+		try:
+			d_item = self.fetch_instance.download_items.pop(0)
+		except IndexError:
+			return
+		if gallery_list:
+			gallery = gallery_list[0]
+			if d_item.item.metadata:
+				gallery = fetch.Fetch.apply_metadata(gallery, d_item.item.metadata)
+			gallery.link = d_item.item.gallery_url
+			gallerydb.add_method_queue(
+				gallerydb.GalleryDB.add_gallery_return, False, gallery)
+			self.gallery_model.insertRows([gallery], None, 1)
+			self.gallery_model.init_search(self.gallery_model.current_term)
+			d_item.status_item.setText('Added to library!')
+		else:
+			d_item.status_item.setText('Adding to library failed!')
 
 class GalleryDownloader(QWidget):
 	"""
 	A gallery downloader window
 	"""
-	def __init__(self, parent=None):
-		super().__init__(parent, Qt.Window)
+	def __init__(self, parent):
+		super().__init__(None,
+				   Qt.CustomizeWindowHint | Qt.WindowTitleHint | Qt.WindowMinMaxButtonsHint)
 		self.setAttribute(Qt.WA_DeleteOnClose)
 		main_layout = QVBoxLayout(self)
+		self.parent_widget = parent
 		self.url_inserter = QLineEdit()
 		self.url_inserter.setPlaceholderText("Hover to see supported URLs")
 		self.url_inserter.setToolTip("Supported URLs:\nExhentai/g.e-hentai gallery links, e.g.:"+
@@ -134,13 +149,17 @@ class GalleryDownloader(QWidget):
 		self.url_inserter.returnPressed.connect(self.add_download_entry)
 		main_layout.addWidget(self.url_inserter)
 
-		self.download_list = GalleryDownloaderList(self)
+		self.download_list = GalleryDownloaderList(parent.manga_list_view.sort_model, self)
 		download_list_scroll = QScrollArea(self)
 		download_list_scroll.setBackgroundRole(self.palette().Base)
 		download_list_scroll.setWidgetResizable(True)
 		download_list_scroll.setWidget(self.download_list)
 		main_layout.addWidget(download_list_scroll, 1)
+		close_button = QPushButton('Close', self)
+		close_button.clicked.connect(self.hide)
+		main_layout.addWidget(close_button)
 		self.resize(480,600)
+		self.setWindowIcon(QIcon(gui_constants.APP_ICO_PATH))
 
 	def add_download_entry(self, url=None):
 		if not url:
@@ -160,8 +179,11 @@ class GalleryDownloader(QWidget):
 		if h_item:
 			self.download_list.add_entry(h_item)
 
-	def closeEvent(self, event):
-		self.hide()
+	def show(self):
+		if self.isVisible():
+			self.activateWindow()
+		else:
+			super().show()
 
 class GalleryPopup(misc.BasePopup):
 	"""

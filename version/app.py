@@ -65,7 +65,7 @@ class AppWindow(QMainWindow):
 
 		#ex = settings.ExProperties()
 		#d = pewnet.ExHenManager(ex.ipb_id, ex.ipb_pass)
-		#item = d.from_gallery_url('http://exhentai.org/g/857552/8f240bea25/')
+		#item = d.from_gallery_url('http://exhentai.org/g/861957/02741dc584/')
 		#def a(): print(item.file)
 		#if not item.file:
 		#	item.file_rdy.connect(a)
