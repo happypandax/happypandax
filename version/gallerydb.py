@@ -239,6 +239,12 @@ class GalleryDB:
 		"Rebuilds gallery thumbnail"
 		try:
 			log_i('Recreating thumb {}'.format(gallery.title.encode(errors='ignore')))
+			if gallery.profile:
+				try:
+					if gallery.profile != gui_constants.NO_IMAGE_PATH:
+						os.remove(gallery.profile)
+				except:
+					pass
 			gallery.profile = gen_thumbnail(gallery)
 			GalleryDB.modify_gallery(
 				gallery.id,
@@ -1422,21 +1428,22 @@ class AdminDB(QObject):
 		super().__init__(parent)
 
 	def rebuild_galleries(self):
-		galleries = GalleryDB.get_all_gallery()
+		galleries = add_method_queue(GalleryDB.get_all_gallery, False)
 		if galleries:
 			self.DATA_COUNT.emit(len(galleries))
 			log_i('Rebuilding galleries')
 			for n, g in enumerate(galleries, 1):
-				GalleryDB.rebuild_gallery(g)
+				add_method_queue(GalleryDB.rebuild_gallery, False, g)
 				self.PROGRESS.emit(n)
 		self.DONE.emit(True)
 
 	def rebuild_thumbs(self):
-		galleries = GalleryDB.get_all_gallery()
+		galleries = add_method_queue(GalleryDB.get_all_gallery, False)
 		if galleries:
 			self.DATA_COUNT.emit(len(galleries))
 			log_i('Rebuilding galleries')
 			for n, g in enumerate(galleries, 1):
+				add_method_queue(GalleryDB.rebuild_thumb, False, g)
 				self.PROGRESS.emit(n)
 		self.DONE.emit(True)
 
@@ -1450,6 +1457,9 @@ class DatabaseEmitter(QObject):
 	START = pyqtSignal()
 	DONE = pyqtSignal()
 	COUNT_CHANGE = pyqtSignal()
+
+	RUN = False
+
 	def __init__(self):
 		super().__init__()
 		self._current_data = gui_constants.GALLERY_DATA
@@ -1481,6 +1491,8 @@ class DatabaseEmitter(QObject):
 			return False
 	
 	def fetch_more(self):
+		if not self.RUN:
+			return
 		self.START.emit()
 		def get_records():
 			self._fetching = True
@@ -1491,11 +1503,10 @@ class DatabaseEmitter(QObject):
 			self._offset += rec_to_fetch
 			c = ResultQueue.get()
 			new_data = c.fetchall()
-			gallery_list = GalleryDB.gen_galleries(new_data)
+			gallery_list = add_method_queue(GalleryDB.gen_galleries, False, new_data)
 			#self._current_data.extend(gallery_list)
 			self.GALLERY_EMITTER.emit(gallery_list)
 			self._fetching = False
-
 		if not self._fetching:
 			thread = threading.Thread(target=get_records, name='DatabaseEmitter')
 			thread.start()

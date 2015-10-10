@@ -8,10 +8,11 @@ from PyQt5.QtWidgets import (QVBoxLayout, QHBoxLayout, QListWidget, QWidget,
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtGui import QPalette, QPixmapCache
 
-from misc import FlowLayout, Spacer, PathLineEdit
+from misc import FlowLayout, Spacer, PathLineEdit, ApplicationPopup
 import settings
 import gui_constants
 import misc_db
+import gallerydb
 
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -23,10 +24,12 @@ log_c = log.critical
 class SettingsDialog(QWidget):
 	"A settings dialog"
 	scroll_speed_changed = pyqtSignal()
-	init_thumb_recache = pyqtSignal()
 	init_gallery_rebuild = pyqtSignal()
 	def __init__(self, parent=None):
 		super().__init__(parent, flags=Qt.Window)
+
+		self.init_gallery_rebuild.connect(self.accept)
+
 		self.parent_widget = parent
 		self.setAttribute(Qt.WA_DeleteOnClose)
 		self.resize(700, 500)
@@ -795,8 +798,31 @@ class SettingsDialog(QWidget):
 
 		# Advanced / Gallery
 		advanced_gallery, advanced_gallery_m_l = new_tab('Gallery', advanced)
-		advanced_gallery.setEnabled(False)
+		def rebuild_thumbs():
+			gallerydb.DatabaseEmitter.RUN = False
+			def start_db_activity(): gallerydb.DatabaseEmitter.RUN = True
+			app_popup = ApplicationPopup(self.parent_widget)
+			app_popup.info_lbl.setText("Recreating thumbnail cache... When done, please restart to use new thumbnails.")
+			app_popup.admin_db = gallerydb.AdminDB()
+			app_popup.admin_db.moveToThread(gui_constants.GENERAL_THREAD)
+			app_popup.admin_db.DONE.connect(app_popup.admin_db.deleteLater)
+			app_popup.admin_db.DONE.connect(start_db_activity)
+			app_popup.admin_db.DATA_COUNT.connect(app_popup.prog.setMaximum)
+			app_popup.admin_db.PROGRESS.connect(app_popup.prog.setValue)
+			self.init_gallery_rebuild.connect(app_popup.admin_db.rebuild_thumbs)
+			app_popup.adjustSize()
+			self.init_gallery_rebuild.emit()
+			app_popup.show()
+
+		rebuild_thumbs_info = QLabel("Clears thumbnail cache and rebuilds it, which can take a while. Tip: Useful when you change thumbnail size.")
+		rebuild_thumbs_btn = QPushButton('Rebuild Thumbnail Cache')
+		rebuild_thumbs_btn.adjustSize()
+		rebuild_thumbs_btn.setFixedWidth(rebuild_thumbs_btn.width())
+		rebuild_thumbs_btn.clicked.connect(rebuild_thumbs)
+		advanced_gallery_m_l.addRow(rebuild_thumbs_info)
+		advanced_gallery_m_l.addRow(rebuild_thumbs_btn)
 		g_data_fixer_group, g_data_fixer_l =  groupbox('Gallery Renamer', QFormLayout, advanced_gallery)
+		g_data_fixer_group.setEnabled(False)
 		advanced_gallery_m_l.addRow(g_data_fixer_group)
 		g_data_regex_fix_lbl = QLabel("Rename a gallery through regular expression."+
 								" A regex cheatsheet is located at About -> Regex Cheatsheet.")
@@ -815,12 +841,9 @@ class SettingsDialog(QWidget):
 		g_data_fixer_options.addWidget(self.g_data_fixer_title)
 		g_data_fixer_options.addWidget(self.g_data_fixer_artist)
 
-
 		# Advanced / Database
-		advanced_db_page = QWidget(self)
-		advanced.addTab(advanced_db_page, 'Database')
+		advanced_db_page, advanced_db_page_l = new_tab('Database', advanced)
 		advanced.setTabEnabled(2, False)
-
 
 		# About
 		about = QTabWidget(self)

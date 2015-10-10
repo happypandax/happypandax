@@ -211,13 +211,16 @@ class AppWindow(QMainWindow):
 		else:
 			self.manga_list_view.gallery_model.db_emitter.DONE.connect(scan_for_new_galleries)
 
-
+	admin_db_method_invoker = pyqtSignal()
 	def start_up(self):
+		level = 3
 		def normalize_first_time():
-			settings.set(3, 'Application', 'first time level')
+			settings.set(level, 'Application', 'first time level')
 			settings.save()
+
 		def done(status=True):
-			if gui_constants.FIRST_TIME_LEVEL != 3:
+			gallerydb.DatabaseEmitter.RUN = True
+			if gui_constants.FIRST_TIME_LEVEL != level:
 				normalize_first_time()
 			if gui_constants.ENABLE_MONITOR and\
 				gui_constants.MONITOR_PATHS and all(gui_constants.MONITOR_PATHS):
@@ -225,29 +228,22 @@ class AppWindow(QMainWindow):
 			self.download_manager = pewnet.Downloader()
 			gui_constants.DOWNLOAD_MANAGER = self.download_manager
 			self.download_manager.start_manager(4)
-		if gui_constants.FIRST_TIME_LEVEL < 3:
 
-			ft_widget = misc.ApplicationPopup(self)
-			log_i('Invoking first time level 3')
-			bridge = gallerydb.AdminDB()
-			thread = QThread(self)
-			thread.setObjectName('Startup')
-			bridge.moveToThread(thread)
-			thread.started.connect(bridge.rebuild_galleries)
-			bridge.DONE.connect(ft_widget.close)
-			bridge.DONE.connect(self.setEnabled)
-			bridge.DONE.connect(done)
-			bridge.DONE.connect(bridge.deleteLater)
-			bridge.DATA_COUNT.connect(ft_widget.prog.setMaximum)
-			bridge.PROGRESS.connect(ft_widget.prog.setValue)
-			thread.finished.connect(thread.deleteLater)
-			thread.start()
-			ft_widget.adjustSize()
-			ft_widget.show()
-			self.setEnabled(False)
+		if gui_constants.FIRST_TIME_LEVEL < level:
+			log_i('Invoking first time level {}'.format(level))
+			app_widget = misc.ApplicationPopup(self)
+			self.admin_db = gallerydb.AdminDB()
+			self.admin_db.moveToThread(gui_constants.GENERAL_THREAD)
+			self.admin_db.DONE.connect(done)
+			self.admin_db.DONE.connect(self.admin_db.deleteLater)
+			self.admin_db.DATA_COUNT.connect(app_widget.prog.setMaximum)
+			self.admin_db.PROGRESS.connect(app_widget.prog.setValue)
+			self.admin_db_method_invoker.connect(self.admin_db.rebuild_galleries)
+			self.admin_db_method_invoker.connect(app_widget.show)
+			app_widget.adjustSize()
+			self.admin_db_method_invoker.emit()
 		else:
 			done()
-
 
 	def initUI(self):
 		self.center = QWidget()

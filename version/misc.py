@@ -632,15 +632,6 @@ class BasePopup(TransparentWidget):
 		return b
 
 class ApplicationPopup(BasePopup):
-	class progress(QProgressBar):
-		reached_maximum = pyqtSignal()
-		def __init__(self, parent=None):
-			super().__init__(parent)
-
-		def setValue(self, v):
-			if v == self.maximum():
-				self.reached_maximum.emit()
-			return super().setValue(v)
 
 	def __init__(self, parent):
 		super().__init__(parent)
@@ -649,11 +640,27 @@ class ApplicationPopup(BasePopup):
 		self.info_lbl = QLabel("Hi there! I need to rebuild your galleries.")
 		self.info_lbl.setAlignment(Qt.AlignCenter)
 		main_layout.addWidget(self.info_lbl)
+
+		class progress(QProgressBar):
+			reached_maximum = pyqtSignal()
+			def __init__(self, parent=None):
+				super().__init__(parent)
+
+			def setValue(self, v):
+				if v == self.maximum():
+					self.reached_maximum.emit()
+				return super().setValue(v)
+
 		self.prog = progress(self)
+
 		self.prog.reached_maximum.connect(self.close)
 		main_layout.addWidget(self.prog)
-		main_layout.addWidget(QLabel('Note: This popup will close itself when everything is ready'))
-		main_layout.addWidget(QLabel('Please wait.. Restart if there is no sign of progress.'))
+		note_info = QLabel('Note: This popup will close itself when everything is ready')
+		note_info.setAlignment(Qt.AlignCenter)
+		restart_info = QLabel("Please wait.. It is safe to restart if there is no sign of progress.")
+		restart_info.setAlignment(Qt.AlignCenter)
+		main_layout.addWidget(note_info)
+		main_layout.addWidget(restart_info)
 		self.main_widget.setLayout(main_layout)
 
 	def closeEvent(self, event):
