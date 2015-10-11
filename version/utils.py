@@ -683,6 +683,12 @@ def open_path(path):
 	except:
 		log_e('Could not open path')
 
+def open_torrent(path):
+	if not gui_constants.TORRENT_CLIENT:
+		open_path(path)
+	else:
+		subprocess.Popen([gui_constants.TORRENT_CLIENT, path])
+
 def delete_path(path):
 	"Deletes the provided recursively"
 	s = True

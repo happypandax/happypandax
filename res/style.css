@@ -63,11 +63,11 @@ Loading > QWidget {
     background-color:rgba(0, 0, 0, 0.65);
 }
 
-BasePopup QLabel{
+BasePopup QLabel, BaseUserChoice QLabel{
     color:white;
 }
 
-BasePopup > QFrame {
+BasePopup > QFrame, BaseUserChoice > QFrame{
     background-color:rgba(0, 0, 0, 0.85);
     border: 1px solid rgba(0, 0, 0, 0.85);
     border-radius: 5px;

@@ -166,6 +166,15 @@ class SettingsDialog(QWidget):
 		self.continue_a_metadata_fetcher.setChecked(gui_constants.CONTINUE_AUTO_METADATA_FETCHER)
 		self.use_jpn_title.setChecked(gui_constants.USE_JPN_TITLE)
 
+		# Web / Download
+		if gui_constants.HEN_DOWNLOAD_TYPE == 0:
+			self.archive_download.setChecked(True)
+		else:
+			self.torrent_download.setChecked(True)
+
+		self.download_directory.setText(gui_constants.DOWNLOAD_DIRECTORY)
+		self.torrent_client.setText(gui_constants.TORRENT_CLIENT)
+
 		# Web / Exhentai
 		self.ipbid_edit.setText(self.exprops.ipb_id)
 		self.ipbpass_edit.setText(self.exprops.ipb_pass)
@@ -270,8 +279,21 @@ class SettingsDialog(QWidget):
 		set(paths, 'Application', 'ignore paths')
 		gui_constants.IGNORE_PATHS = paths
 
+		# Web / Downloader
 
-		# Web / General
+		if self.archive_download.isChecked():
+			gui_constants.HEN_DOWNLOAD_TYPE = 0
+		else:
+			gui_constants.HEN_DOWNLOAD_TYPE = 1
+		set(gui_constants.HEN_DOWNLOAD_TYPE, 'Web', 'hen download type')
+
+		gui_constants.DOWNLOAD_DIRECTORY = self.download_directory.text()
+		set(gui_constants.DOWNLOAD_DIRECTORY, 'Web', 'download directory')
+
+		gui_constants.TORRENT_CLIENT = self.torrent_client.text()
+		set(gui_constants.TORRENT_CLIENT, 'Web', 'torrent client')
+
+		# Web / Metdata
 		if self.default_ehen_url.isChecked():
 			gui_constants.DEFAULT_EHEN_URL = 'http://g.e-hentai.org/'
 		else:
@@ -406,6 +428,10 @@ class SettingsDialog(QWidget):
 		#	return title_lbl
 
 		def groupbox(name, layout, parent):
+			"""
+			Makes a groupbox and a layout for you
+			Returns groupbox and layout
+			"""
 			g = QGroupBox(name, parent)
 			l = layout(g)
 			return g, l
@@ -416,6 +442,10 @@ class SettingsDialog(QWidget):
 			return l, c
 
 		def new_tab(name, parent, scroll=False):
+			"""
+			Creates a new tab.
+			Returns new tab page widget and it's layout
+			"""
 			new_t = QWidget(parent)
 			new_l = QFormLayout(new_t)
 			if scroll:
@@ -508,8 +538,8 @@ class SettingsDialog(QWidget):
 		app_monitor_m_l.addWidget(app_monitor_misc_group)
 		app_monitor_misc_m_l = QFormLayout(app_monitor_misc_group)
 		monitor_info = QLabel('Directory monitoring will monitor the specified directories for any'+
-						' gallery events. For example if you delete a gallery source in one of your'+
-						' monitored directories the application will inform you about it, and ask if'+
+						' filesystem events. For example if you delete a gallery source in one of your'+
+						' monitored directories the application will inform you and ask if'+
 						' you want to delete the gallery from the application as well.')
 		monitor_info.setWordWrap(True)
 		app_monitor_misc_m_l.addRow(monitor_info)
@@ -552,53 +582,69 @@ class SettingsDialog(QWidget):
 		# Web
 		web = QTabWidget(self)
 		self.web_index = self.right_panel.addWidget(web)
-		web_general_page = QScrollArea()
-		web_general_page.setBackgroundRole(QPalette.Base)
-		web_general_page.setWidgetResizable(True)
-		web.addTab(web_general_page, 'General')
-		web_general_dummy = QWidget()
-		web_general_page.setWidget(web_general_dummy)
-		web_general_m_l = QVBoxLayout(web_general_dummy)
-		metadata_fetcher_group = QGroupBox('Metadata', self)
-		web_general_m_l.addWidget(metadata_fetcher_group)
-		metadata_fetcher_m_l = QFormLayout(metadata_fetcher_group)
-		self.default_ehen_url = QRadioButton('g.e-hentai.org', metadata_fetcher_group)
-		self.exhentai_ehen_url = QRadioButton('exhentai.org', metadata_fetcher_group)
+
+		# Web / Downloader
+		web_downloader, web_downloader_l = new_tab('Downloader', web)
+		hen_download_group, hen_download_group_l = groupbox('g.e-hentai/exhentai',
+													  QFormLayout, web_downloader)
+		web_downloader_l.addRow(hen_download_group)
+		self.archive_download = QRadioButton('Archive', hen_download_group)
+		self.torrent_download = QRadioButton('Torrent', hen_download_group)
+		download_type_l = QHBoxLayout()
+		download_type_l.addWidget(self.archive_download)
+		download_type_l.addWidget(self.torrent_download, 1)
+		hen_download_group_l.addRow('Download Type:', download_type_l)
+		self.download_directory = PathLineEdit(web_downloader)
+		web_downloader_l.addRow('Destination:', self.download_directory)
+		self.torrent_client = PathLineEdit(web_downloader, False, '')
+		web_downloader_l.addRow(QLabel("Leave empty to use default torrent client."))
+		web_downloader_l.addRow('Torrent client:', self.torrent_client)
+
+		# Web / Metadata
+		web_metadata_page = QScrollArea()
+		web_metadata_page.setBackgroundRole(QPalette.Base)
+		web_metadata_page.setWidgetResizable(True)
+		web.addTab(web_metadata_page, 'Metadata')
+		web_metadata_dummy = QWidget()
+		web_metadata_page.setWidget(web_metadata_dummy)
+		web_metadata_m_l = QFormLayout(web_metadata_dummy)
+		self.default_ehen_url = QRadioButton('g.e-hentai.org', web_metadata_page)
+		self.exhentai_ehen_url = QRadioButton('exhentai.org', web_metadata_page)
 		ehen_url_l = QHBoxLayout()
 		ehen_url_l.addWidget(self.default_ehen_url)
 		ehen_url_l.addWidget(self.exhentai_ehen_url, 1)
-		metadata_fetcher_m_l.addRow('Default URL:', ehen_url_l)
+		web_metadata_m_l.addRow('Default URL:', ehen_url_l)
 		self.continue_a_metadata_fetcher = QCheckBox('Continue from where auto metadata fetcher left off')
-		metadata_fetcher_m_l.addRow(self.continue_a_metadata_fetcher)
+		web_metadata_m_l.addRow(self.continue_a_metadata_fetcher)
 		self.use_jpn_title = QCheckBox('Use japanese title')
-		metadata_fetcher_m_l.addRow(self.use_jpn_title)
-		time_offset_info = QLabel('To avoid getting banned, we need to impose a delay between our requests.'+
+		web_metadata_m_l.addRow(self.use_jpn_title)
+		time_offset_info = QLabel('We need to impose a delay between our requests to avoid getting banned.'+
 							' I have made it so you cannot set the delay lower than the recommended (I don\'t'+
-							' want you to get banned, anon).\nSpecify the delay between requests in seconds.')
+							' want you to get banned, anon!).\nSpecify the delay between requests in seconds.')
 		time_offset_info.setWordWrap(True)
 		self.web_time_offset = QSpinBox()
 		self.web_time_offset.setMaximumWidth(40)
 		self.web_time_offset.setMinimum(4)
 		self.web_time_offset.setMaximum(99)
-		metadata_fetcher_m_l.addRow(time_offset_info)
-		metadata_fetcher_m_l.addRow('Requests delay in seconds', self.web_time_offset)
+		web_metadata_m_l.addRow(time_offset_info)
+		web_metadata_m_l.addRow('Requests delay in seconds', self.web_time_offset)
 		replace_metadata_info = QLabel('When fetching for metadata the new metadata will be appended'+
-								 ' to the gallery by default. This means that new data will only be set if'+
+								 ' to the gallery by default. This means that new data will only be added if'+
 								 ' the field was empty. There is however a special case for namespace & tags.'+
 								 ' We go through all the new namespace & tags to only add those that'+
 								 ' do not already exists.\n\nEnabling this option makes it so that a gallery\'s old data'+
 								 ' are deleted and replaced with the new data.')
 		replace_metadata_info.setWordWrap(True)
 		self.replace_metadata = QCheckBox('Replace old metadata with new metadata')
-		metadata_fetcher_m_l.addRow(replace_metadata_info)
-		metadata_fetcher_m_l.addRow(self.replace_metadata)
+		web_metadata_m_l.addRow(replace_metadata_info)
+		web_metadata_m_l.addRow(self.replace_metadata)
 		first_hit_info = QLabel('By default, you get to choose which gallery to extract metadata from when'+
 						  ' there is more than one gallery found when searching.\n'+
 						  'Enabling this option makes it choose the first hit, saving you from moving your mouse.')
 		first_hit_info.setWordWrap(True)
 		self.always_first_hit = QCheckBox('Always choose first hit')
-		metadata_fetcher_m_l.addRow(first_hit_info)
-		metadata_fetcher_m_l.addRow(self.always_first_hit)
+		web_metadata_m_l.addRow(first_hit_info)
+		web_metadata_m_l.addRow(self.always_first_hit)
 
 		# Web / Exhentai
 		exhentai_page = QWidget(self)
@@ -750,7 +796,7 @@ class SettingsDialog(QWidget):
 		cache_size_spin_box = QSpinBox()
 		cache_size_spin_box.setFixedWidth(120)
 		cache_size_spin_box.setMaximum(999999999)
-		cache_size_spin_box.setToolTip('This will greatly reduce lags/freezes in the grid view.' +
+		cache_size_spin_box.setToolTip('This can greatly reduce lags/freezes in the grid view.' +
 								 ' Increase the value if you experience lag when scrolling'+
 								 ' through galleries. DEFAULT: 200 MiB')
 		def cache_size(c): self.cache_size = (self.cache_size[0], c)

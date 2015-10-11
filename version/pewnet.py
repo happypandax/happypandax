@@ -22,6 +22,7 @@ from queue import Queue
 from PyQt5.QtCore import QObject, pyqtSignal
 
 import gui_constants
+import utils
 
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -75,6 +76,7 @@ class Downloader(QObject):
 			file_name = os.path.join(self.base, file_name) if not temp_base else \
 				os.path.join(temp_base, file_name)
 			file_name_part = file_name + '.part'
+
 			download_url = item[1] if isinstance(item, (tuple, list)) else item
 
 			self.active_downloads[download_url] = True
@@ -83,6 +85,7 @@ class Downloader(QObject):
 				r = self._browser_session.get(download_url, stream=True)
 			else:
 				r = requests.get(download_url, stream=True)
+
 			with open(file_name_part, 'wb') as f:
 				for data in r.iter_content(chunk_size=1024):
 					if self.active_downloads[download_url] == False:
@@ -146,6 +149,7 @@ class HenItem(QObject):
 		self.download_url = ""
 		self.gallery_url = ""
 		self.download_type = gui_constants.HEN_DOWNLOAD_TYPE
+		self.torrents_found = 0
 
 	def fetch_thumb(self):
 		"Fetches thumbnail. Emits thumb_rdy, when done"
@@ -159,6 +163,7 @@ class HenItem(QObject):
 	def _file_fetched(self, dl_data):
 		if self.download_url == dl_data[0]:
 			self.file = dl_data[1]
+			utils.open_torrent(self.file)
 			self.file_rdy.emit(self)
 
 class HenManager(QObject):
@@ -188,11 +193,36 @@ class HenManager(QObject):
 		return d_url
 
 	def _torrent_url_d(self, gid, token):
-		"Returns the torrent download url"
+		"Returns the torrent download url and filename"
 		base = self.e_url + 'gallerytorrents.php?'
-		torrent_page = base + 'gid=' + gid + '&t=' + token
+		torrent_page = base + 'gid=' + str(gid) + '&t=' + token
+		self._browser.open(torrent_page)
+		torrents = self._browser.find_all('table')
+		if not torrents:
+			return
+		torrent = None # [seeds, url, name]
+		for t in torrents:
+			parts = t.find_all('tr')
+			# url & name
+			url = parts[2].td.a.get('href')
+			name = parts[2].td.a.text + '.torrent'
 
-		# TODO: get torrents? make user choose?
+			# seeds peers etc... NOT uploader
+			meta = [x.text for x in parts[0].find_all('td')]
+			seed_txt = meta[3]
+			# extract number
+			seeds = int(seed_txt.split(' ')[1])
+
+			if not torrent:
+				torrent = [seeds, url, name]
+			else:
+				if seeds > torrent[0]:
+					torrent = [seeds, url, name]
+
+		_, url, name = torrent # just get download url
+
+		# TODO: make user choose?
+		return url, name
 
 	def from_gallery_url(self, g_url):
 		"""
@@ -213,11 +243,13 @@ class HenManager(QObject):
 		h_item.metadata = CommenHen.parse_metadata(api_metadata, gallery_gid_dict)[g_url]
 		h_item.thumb_url = gallery['thumb']
 		h_item.name = gallery['title']
-		h_item.size = "{} MB".format(gallery['filesize'])
+		h_item.size = "{0:.2f} MB".format(gallery['filesize']/1048576)
 
 		if self.ARCHIVE:
 			h_item.download_type = 0
 			d_url = self._archive_url_d(gallery['gid'], gallery['token'], gallery['archiver_key'])
+
+			# ex/g.e
 			self._browser.open(d_url)
 			download_btn = self._browser.get_form()
 			if download_btn:
@@ -236,13 +268,24 @@ class HenManager(QObject):
 				f_name = succes_test.find('strong').text
 				h_item.download_url = gallery_dl
 				h_item.fetch_thumb()
-				Downloader.add_to_queue((f_name, gallery_dl))
+				Downloader.add_to_queue((f_name, gallery_dl), self._browser.session)
 				gui_constants.DOWNLOAD_MANAGER.item_finished.connect(h_item._file_fetched)
 				return h_item
 
 		elif self.TORRENT:
 			h_item.download_type = 1
-			pass
+			h_item.torrents_found = int(gallery['torrentcount'])
+			h_item.fetch_thumb()
+			if  h_item.torrents_found > 0:
+				g_id_token = CommenHen.parse_url(g_url)
+				url_and_file = self._torrent_url_d(g_id_token[0], g_id_token[1])
+				if url_and_file:
+					h_item.download_url = url_and_file[0]
+					Downloader.add_to_queue((url_and_file[1], h_item.download_url), self._browser.session)
+					gui_constants.DOWNLOAD_MANAGER.item_finished.connect(h_item._file_fetched)
+					return h_item
+			else:
+				return h_item
 		return False
 
 class ExHenManager(HenManager):

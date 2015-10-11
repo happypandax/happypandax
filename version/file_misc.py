@@ -86,7 +86,6 @@ class GalleryDownloaderList(QTableWidget):
 		self.setPalette(palette)
 		self.setHorizontalHeaderLabels(
 			[' ', 'Status', 'Size', 'Cost', 'Type'])
-		self.insertRow(0)
 
 		self.fetch_instance = fetch.Fetch()
 		self.fetch_instance.download_items = []
@@ -99,6 +98,9 @@ class GalleryDownloaderList(QTableWidget):
 		g_item = GalleryDownloaderItem(hitem)
 		if hitem.download_type == 0:
 			g_item.d_item_ready.connect(self.init_gallery)
+		elif hitem.download_type == 1:
+			g_item.d_item_ready.connect(lambda: g_item.status_item.setText('Sent to torrent client!'))
+
 		self.insertRow(0)
 		self.setSortingEnabled(False)
 		self.setItem(0, 0, g_item.profile_item)

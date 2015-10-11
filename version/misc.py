@@ -823,8 +823,64 @@ class SingleGalleryChoices(BasePopup):
 		item = self.list_w.selectedItems()
 		if item:
 			item = item[0]
-			self.USER_CHOICE.emit(item.gallery)
+			self.USER_CHOICE.emit(item.item)
 			self.close()
+
+class BaseUserChoice(QDialog):
+	USER_CHOICE = pyqtSignal(object)
+	def __init__(self, parent, **kwargs):
+		super().__init__(parent, **kwargs)
+		self.setAttribute(Qt.WA_DeleteOnClose)
+		self.setAttribute(Qt.WA_TranslucentBackground)
+		main_widget = QFrame(self)
+		layout = QVBoxLayout(self)
+		layout.addWidget(main_widget)
+		self.main_layout = QFormLayout(main_widget)
+
+	def accept(self, choice):
+		self.USER_CHOICE.emit(choice)
+		super().accept()
+
+class TorrentItem:
+	def __init__(self, url, name="", date=None, size=None, seeds=None, peers=None, uploader=None):
+		self.url = url
+		self.name = name
+		self.date = date
+		self.size = size
+		self.seeds = seeds
+		self.peers = peers
+		self.uploader = uploader
+
+class TorrentUserChoice(BaseUserChoice):
+	def __init__(self, parent, torrentitems=[], **kwargs):
+		super().__init__(parent, **kwargs)
+		title = QLabel('Torrents')
+		title.setAlignment(Qt.AlignCenter)
+		self.main_layout.addRow(title)
+		self._list_w = QListWidget(self)
+		self.main_layout.addRow(self._list_w)
+		for t in torrentitems:
+			self.add_torrent_item(t)
+
+		btn_layout = QHBoxLayout()
+		choose_btn = QPushButton('Choose')
+		choose_btn.clicked.connect(self.accept)
+		btn_layout.addWidget(Spacer('h'))
+		btn_layout.addWidget(choose_btn)
+		self.main_layout.addRow(btn_layout)
+		
+
+	def add_torrent_item(self, item):
+		list_item = CustomListItem(item)
+		list_item.setText("{}\nSeeds:{}\tPeers:{}\tSize:{}\tDate:{}\tUploader:{}".format(
+			item.name, item.seeds, item.peers, item.size, item.date, item.uploader))
+		self._list_w.addItem(list_item)
+
+	def accept(self):
+		items = self._list_w.selectedItems()
+		if items:
+			item = items[0]
+			super().accept(item.item)
 
 class LoadingOverlay(QWidget):
 	
