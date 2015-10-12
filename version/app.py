@@ -231,6 +231,7 @@ class AppWindow(QMainWindow):
 
 	admin_db_method_invoker = pyqtSignal()
 	def start_up(self):
+		# TODO: Remove in beta
 		level = 4
 		def normalize_first_time():
 			settings.set(level, 'Application', 'first time level')
@@ -264,6 +265,8 @@ class AppWindow(QMainWindow):
 			log_i('Invoking first time level {}'.format(level))
 			settings.set([], 'Application', 'monitor paths')
 			settings.set([], 'Application', 'ignore paths')
+			gui_constants.MONITOR_PATHS = []
+			gui_constants.IGNORE_PATHS = []
 			settings.save()
 		else:
 			done()
