@@ -192,8 +192,8 @@ class GalleryPopup(misc.BasePopup):
 	Pass a tuple with text and a list of galleries
 	gallery profiles won't be scaled if scale is set to false
 	"""
-
-	def __init__(self, tup_gallery, parent = None):
+	gallery_doubleclicked = pyqtSignal(gallerydb.Gallery)
+	def __init__(self, tup_gallery, parent = None, menu = None):
 		super().__init__(parent)
 		self.setMaximumWidth(16777215)
 		assert isinstance(tup_gallery, tuple), "Incorrect type received, expected tuple"
@@ -202,7 +202,7 @@ class GalleryPopup(misc.BasePopup):
 		# todo make it scroll
 		scroll_area = QScrollArea()
 		dummy = QWidget()
-		gallery_layout = misc.FlowLayout(dummy)
+		self.gallery_layout = misc.FlowLayout(dummy)
 		scroll_area.setWidgetResizable(True)
 		scroll_area.setMaximumHeight(400)
 		scroll_area.setMidLineWidth(620)
@@ -213,9 +213,10 @@ class GalleryPopup(misc.BasePopup):
 		galleries = tup_gallery[1]
 		main_layout.addWidget(scroll_area, 3)
 		for g in galleries:
-			gall_w = misc.GalleryShowcaseWidget(parent=self)
+			gall_w = misc.GalleryShowcaseWidget(parent=self, menu=menu)
 			gall_w.set_gallery(g, (170//1.40, 170))
-			gallery_layout.addWidget(gall_w)
+			gall_w.double_clicked.connect(self.gallery_doubleclicked.emit)
+			self.gallery_layout.addWidget(gall_w)
 
 		text_lbl =  QLabel(text)
 		text_lbl.setAlignment(Qt.AlignCenter)
@@ -309,8 +310,8 @@ class DeletedPopup(misc.BasePopup):
 		def commit():
 			msgbox = QMessageBox(self)
 			msgbox.setIcon(QMessageBox.Question)
-			msgbox.setWindowTitle('Type of file')
-			msgbox.setInformativeText('What type of file is it?')
+			msgbox.setWindowTitle('Type of gallery source')
+			msgbox.setInformativeText('What type of gallery source is it?')
 			dir = msgbox.addButton('Directory', QMessageBox.YesRole)
 			archive = msgbox.addButton('Archive', QMessageBox.NoRole)
 			msgbox.exec()

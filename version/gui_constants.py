@@ -37,7 +37,7 @@ unrar_tool_path = get('', 'Application', 'unrar tool path')
 default_stylesheet_path = static_dir + '/' + "style.css"
 user_stylesheet_path = ""
 
-FIRST_TIME_LEVEL = get(3, 'Application', 'first time level', int)
+FIRST_TIME_LEVEL = get(4, 'Application', 'first time level', int)
 
 # sizes
 MAIN_W = 1061 # main window
@@ -91,8 +91,8 @@ OVERRIDE_MONITOR = False # set true to make watchers to ignore next item (will b
 LOOK_NEW_GALLERY_STARTUP = get(True, 'Application', 'look new gallery startup', bool)
 LOOK_NEW_GALLERY_AUTOADD = get(False, 'Application', 'look new gallery autoadd', bool)
 ENABLE_MONITOR = get(True, 'Application', 'enable monitor', bool)
-MONITOR_PATHS = [x for x in get('', 'Application', 'monitor paths', str).split(',') if x]
-IGNORE_PATHS = [x for x in get('', 'Application', 'ignore paths', str).split(',') if x]
+MONITOR_PATHS = get([], 'Application', 'monitor paths', list)
+IGNORE_PATHS = get([], 'Application', 'ignore paths', list)
 LOOKED_NEW_GALLERY_STARTUP = False # if a scan for new galleries has been done
 
 # GENERAL

@@ -597,7 +597,8 @@ class SettingsDialog(QWidget):
 		self.download_directory = PathLineEdit(web_downloader)
 		web_downloader_l.addRow('Destination:', self.download_directory)
 		self.torrent_client = PathLineEdit(web_downloader, False, '')
-		web_downloader_l.addRow(QLabel("Leave empty to use default torrent client."))
+		web_downloader_l.addRow(QLabel("Leave empty to use default torrent client."+
+								 "\nIt is NOT recommended to import a file while it's still downloading."))
 		web_downloader_l.addRow('Torrent client:', self.torrent_client)
 
 		# Web / Metadata

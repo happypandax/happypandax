@@ -1415,7 +1415,6 @@ class MangaView(QListView):
 
 	def contextMenuEvent(self, event):
 		handled = False
-		custom = False
 		index = self.indexAt(event.pos())
 		index = self.sort_model.mapToSource(index)
 

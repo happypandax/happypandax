@@ -753,12 +753,20 @@ class GalleryShowcaseWidget(QWidget):
 	"""
 	Pass a gallery or set a gallery via -> set_gallery
 	"""
-	def __init__(self, gallery=None, parent=None):
+
+	double_clicked = pyqtSignal(gallerydb.Gallery)
+
+	def __init__(self, gallery=None, parent=None, menu=None):
 		super().__init__(parent)
 		self.setAttribute(Qt.WA_DeleteOnClose)
 		self.main_layout = QVBoxLayout(self)
-		self.profile = QLabel()
-		self.text = QLabel()
+		self.parent_widget = parent
+		menu.gallery_widget = self
+		self._menu = menu
+		self.gallery = gallery
+		self.profile = QLabel(self)
+		self.profile.setAlignment(Qt.AlignCenter)
+		self.text = QLabel(self)
 		self.font_M = self.text.fontMetrics()
 		self.main_layout.addWidget(self.profile)
 		self.main_layout.addWidget(self.text)
@@ -768,13 +776,24 @@ class GalleryShowcaseWidget(QWidget):
 			self.h = 220
 			self.w = 143
 			self.set_gallery(gallery, (self.w, self.h))
+
 		self.resize(self.w, self.h)
+		self.setMouseTracking(True)
+
+	@property
+	def menu(self):
+		return self._menu
+
+	@menu.setter
+	def contextmenu(self, new_menu):
+		new_menu.gallery_widget = self
+		self._menu = new_menu
 
 	def set_gallery(self, gallery, size=(143, 220)):
 		assert isinstance(size, (list, tuple))
 		self.w = size[0]
 		self.h = size[1]
-
+		self.gallery = gallery
 		pixm = QPixmap(gallery.profile)
 		if pixm.isNull():
 			pixm = QPixmap(gui_constants.NO_IMAGE_PATH)
@@ -784,6 +803,33 @@ class GalleryShowcaseWidget(QWidget):
 		artist = self.font_M.elidedText(gallery.artist, Qt.ElideRight, self.w)
 		self.text.setText("{}\n{}".format(title, artist))
 		self.resize(self.w, self.h)
+
+	def paintEvent(self, event):
+		painter = QPainter(self)
+		if self.underMouse():
+			painter.setBrush(QBrush(QColor(164,164,164,120)))
+			painter.drawRect(self.text.pos().x()-2, self.profile.pos().y()-5,
+					self.text.width()+2, self.profile.height()+self.text.height()+12)
+		super().paintEvent(event)
+
+	def enterEvent(self, event):
+		self.update()
+		return super().enterEvent(event)
+
+	def leaveEvent(self, event):
+		self.update()
+		return super().leaveEvent(event)
+
+	def mouseDoubleClickEvent(self, event):
+		self.double_clicked.emit(self.gallery)
+		return super().mouseDoubleClickEvent(event)
+
+	def contextMenuEvent(self, event):
+		if self._menu:
+			self._menu.exec_(event.globalPos())
+			event.accept()
+		else:
+			event.ignore()
 
 class SingleGalleryChoices(BasePopup):
 	"""

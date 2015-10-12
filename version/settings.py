@@ -48,11 +48,10 @@ class Config(configparser.ConfigParser):
 
 config = Config()
 config.read('settings.ini')
-
 def save():
 	config.save()
 
-def get(default, section, key=None, type=str, subtype=None):
+def get(default, section, key=None, type_class=str, subtype_class=None):
 	"""
 	Tries to find the given entries in config,
 	returning default if none is found. Default type
@@ -77,14 +76,16 @@ def get(default, section, key=None, type=str, subtype=None):
 				value = True
 			elif value.lower() == 'none':
 				value = None
+			elif type_class in (list, tuple):
+				value = type_class([x for x in value.split('>|<') if x])
 			else:
-				if subtype:
+				if subtype_class:
 					try:
-						value = type(value)
+						value = type_class(value)
 					except:
-						value = subtype(value)
+						value = subtype_class(value)
 				else:
-					value = type(value)
+					value = type_class(value)
 		except AttributeError:
 			pass
 		except:
@@ -107,7 +108,9 @@ def set(value, section, key=None):
 			if n == len(value)-1:
 				val_as_str += "{}".format(v)
 			else:
-				val_as_str += "{},".format(v)
+				val_as_str += "{}>|<".format(v)
+	if not val_as_str:
+		return
 	if key:
 		config[section][key] = str(val_as_str)
 	else:

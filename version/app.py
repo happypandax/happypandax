@@ -179,13 +179,31 @@ class AppWindow(QMainWindow):
 							if gui_constants.LOOK_NEW_GALLERY_AUTOADD:
 								self.gallery_populate(final_paths)
 							else:
+
+								class NewGalleryMenu(QMenu):
+
+									def __init__(self, parent=None):
+										super().__init__(parent)
+
+										ignore_act = self.addAction('Add to ignore list')
+										ignore_act.triggered.connect(self.add_to_ignore)
+
+									def add_to_ignore(self):
+										gallery = self.gallery_widget.gallery
+										gui_constants.IGNORE_PATHS.append(gallery.path)
+										settings.set(gui_constants.IGNORE_PATHS, 'Application', 'ignore paths')
+										if self.gallery_widget.parent_widget.gallery_layout.isEmpty():
+											self.gallery_widget.parent_widget.close()
+										else:
+											self.gallery_widget.close()
+
 								if len(galleries) == 1:
 									self.notification_bar.add_text("{} new gallery was discovered in one of your monitored directories".format(len(galleries)))
 								else:
 									self.notification_bar.add_text("{} new galleries were discovered in one of your monitored directories".format(len(galleries)))
 								text = "These new galleries were discovered! Do you want to add them?"\
 									if len(galleries) > 1 else "This new gallery was discovered! Do you want to add it?"
-								g_popup = file_misc.GalleryPopup((text, galleries), self)
+								g_popup = file_misc.GalleryPopup((text, galleries), self, NewGalleryMenu())
 								buttons = g_popup.add_buttons('Add', 'Close')
 
 								def populate_n_close():
@@ -213,7 +231,7 @@ class AppWindow(QMainWindow):
 
 	admin_db_method_invoker = pyqtSignal()
 	def start_up(self):
-		level = 3
+		level = 4
 		def normalize_first_time():
 			settings.set(level, 'Application', 'first time level')
 			settings.save()
@@ -229,7 +247,7 @@ class AppWindow(QMainWindow):
 			gui_constants.DOWNLOAD_MANAGER = self.download_manager
 			self.download_manager.start_manager(4)
 
-		if gui_constants.FIRST_TIME_LEVEL < level:
+		if gui_constants.FIRST_TIME_LEVEL < 3:
 			log_i('Invoking first time level {}'.format(level))
 			app_widget = misc.ApplicationPopup(self)
 			self.admin_db = gallerydb.AdminDB()
@@ -242,6 +260,11 @@ class AppWindow(QMainWindow):
 			self.admin_db_method_invoker.connect(app_widget.show)
 			app_widget.adjustSize()
 			self.admin_db_method_invoker.emit()
+		elif gui_constants.FIRST_TIME_LEVEL < 4:
+			log_i('Invoking first time level {}'.format(level))
+			settings.set([], 'Application', 'monitor paths')
+			settings.set([], 'Application', 'ignore paths')
+			settings.save()
 		else:
 			done()
 
