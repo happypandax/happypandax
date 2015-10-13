@@ -426,6 +426,9 @@ class Fetch(QObject):
 					else:
 						user_choice = title_url_list[0]
 
+					if not user_choice:
+						continue
+
 					title = user_choice[0]
 					url = user_choice[1]
 
