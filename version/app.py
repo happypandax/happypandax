@@ -113,122 +113,6 @@ class AppWindow(QMainWindow):
 		self.watchers.gallery_handler.MOVED_SIGNAL.connect(moved)
 		self.watchers.gallery_handler.DELETED_SIGNAL.connect(deleted)
 
-		def scan_for_new_galleries():
-			if gui_constants.LOOK_NEW_GALLERY_STARTUP and not gui_constants.LOOKED_NEW_GALLERY_STARTUP:
-				gui_constants.LOOKED_NEW_GALLERY_STARTUP = True
-				self.notification_bar.add_text("Looking for new galleries...")
-				try:
-					class ScanDir(QObject):
-						final_paths_and_galleries = pyqtSignal(list, list)
-						finished = pyqtSignal()
-						def __init__(self, parent=None):
-							super().__init__(parent)
-							self.scanned_data = []
-						def scan_dirs(self):
-							paths = []
-							for p in gui_constants.MONITOR_PATHS:
-								if os.path.exists(p):
-									dir_content = scandir.scandir(p)
-									for d in dir_content:
-										paths.append(d.path)
-								else:
-									log_e("Monitored path does not exists: {}".format(p.encode(errors='ignore')))
-
-							fetch_inst = fetch.Fetch(self)
-							fetch_inst.series_path = paths
-							def set_scanned_d(d):
-								self.scanned_data = d
-							fetch_inst.FINISHED.connect(set_scanned_d)
-							fetch_inst.local()
-							#contents = []
-							#for g in self.scanned_data:
-							#	contents.append(g)
-
-							#paths = sorted(paths)
-							#new_galleries = []
-							#for x in contents:
-							#	y = utils.b_search(paths, os.path.normcase(x.path))
-							#	if not y:
-							#		new_galleries.append(x)
-
-							galleries = []
-							final_paths = []
-							if self.scanned_data:
-								for g in self.scanned_data:
-									try:
-										if g.is_archive:
-											g.profile = utils.get_gallery_img(g.chapters[0], g.path)
-										else:
-											g.profile = utils.get_gallery_img(g.chapters[0])
-										if not g.profile:
-											raise Exception
-									except:
-										g.profile = gui_constants.NO_IMAGE_PATH
-							
-									galleries.append(g)
-									final_paths.append(g.path)
-							self.final_paths_and_galleries.emit(final_paths, galleries)
-							self.finished.emit()
-						#if gui_constants.LOOK_NEW_GALLERY_AUTOADD:
-						#	QTimer.singleShot(10000, self.gallery_populate(final_paths))
-						#	return
-
-					def show_new_galleries(final_paths, galleries):
-						if final_paths and galleries:
-							gui_constants.OVERRIDE_MOVE_IMPORTED_IN_FETCH = True
-							if gui_constants.LOOK_NEW_GALLERY_AUTOADD:
-								self.gallery_populate(final_paths)
-							else:
-
-								class NewGalleryMenu(QMenu):
-
-									def __init__(self, parent=None):
-										super().__init__(parent)
-
-										ignore_act = self.addAction('Add to ignore list')
-										ignore_act.triggered.connect(self.add_to_ignore)
-
-									def add_to_ignore(self):
-										gallery = self.gallery_widget.gallery
-										gui_constants.IGNORE_PATHS.append(gallery.path)
-										settings.set(gui_constants.IGNORE_PATHS, 'Application', 'ignore paths')
-										if self.gallery_widget.parent_widget.gallery_layout.isEmpty():
-											self.gallery_widget.parent_widget.close()
-										else:
-											self.gallery_widget.close()
-
-								if len(galleries) == 1:
-									self.notification_bar.add_text("{} new gallery was discovered in one of your monitored directories".format(len(galleries)))
-								else:
-									self.notification_bar.add_text("{} new galleries were discovered in one of your monitored directories".format(len(galleries)))
-								text = "These new galleries were discovered! Do you want to add them?"\
-									if len(galleries) > 1 else "This new gallery was discovered! Do you want to add it?"
-								g_popup = file_misc.GalleryPopup((text, galleries), self, NewGalleryMenu())
-								buttons = g_popup.add_buttons('Add', 'Close')
-
-								def populate_n_close():
-									g_popup.close()
-									self.gallery_populate(final_paths)
-								buttons[0].clicked.connect(populate_n_close)
-								buttons[1].clicked.connect(g_popup.close)
-
-					thread = QThread(self)
-					self.scan_inst = ScanDir()
-					self.scan_inst.moveToThread(thread)
-					self.scan_inst.final_paths_and_galleries.connect(show_new_galleries)
-					self.scan_inst.final_paths_and_galleries.connect(lambda a: self.scan_inst.deleteLater())
-					thread.started.connect(self.scan_inst.scan_dirs)
-					#self.scan_inst.scan_dirs()
-					thread.finished.connect(thread.deleteLater)
-					thread.start()
-				except:
-					self.notification_bar.add_text('An error occured while attempting to scan for new galleries. Check happypanda.log.')
-					log.exception('An error occured while attempting to scan for new galleries.')
-		if self.manga_list_view.gallery_model.db_emitter.count == gui_constants.GALLERY_DATA:
-			scan_for_new_galleries()
-		else:
-			self.manga_list_view.gallery_model.db_emitter.DONE.connect(scan_for_new_galleries)
-
 	admin_db_method_invoker = pyqtSignal()
 	def start_up(self):
 		# TODO: Remove in beta
@@ -244,6 +128,11 @@ class AppWindow(QMainWindow):
 			if gui_constants.ENABLE_MONITOR and\
 				gui_constants.MONITOR_PATHS and all(gui_constants.MONITOR_PATHS):
 				self.init_watchers()
+				if gui_constants.LOOK_NEW_GALLERY_STARTUP:
+					if self.manga_list_view.gallery_model.db_emitter.count == gui_constants.GALLERY_DATA:
+						self.scan_for_new_galleries()
+					else:
+						self.manga_list_view.gallery_model.db_emitter.DONE.connect(self.scan_for_new_galleries)
 			self.download_manager = pewnet.Downloader()
 			gui_constants.DOWNLOAD_MANAGER = self.download_manager
 			self.download_manager.start_manager(4)
@@ -268,6 +157,7 @@ class AppWindow(QMainWindow):
 			gui_constants.MONITOR_PATHS = []
 			gui_constants.IGNORE_PATHS = []
 			settings.save()
+			done()
 		else:
 			done()
 
@@ -636,7 +526,12 @@ class AppWindow(QMainWindow):
 		metadata_action = QAction('Get metadata for all galleries', self)
 		metadata_action.triggered.connect(self.get_metadata)
 		gallery_menu.addAction(metadata_action)
+		scan_galleries_action = QAction('Scan for new galleries', self)
+		scan_galleries_action.triggered.connect(self.scan_for_new_galleries)
+		scan_galleries_action.setStatusTip('Scan monitored folders for new galleries')
+		gallery_menu.addAction(scan_galleries_action)
 		self.toolbar.addWidget(gallery_action)
+
 
 		misc_action = QToolButton()
 		misc_action.setText('Tools ')
@@ -920,6 +815,124 @@ class AppWindow(QMainWindow):
 			data_thread.start()
 			#fetch_instance.local()
 			log_i('Populating DB from directory/archive')
+
+	def scan_for_new_galleries(self):
+		available_folders =  gui_constants.ENABLE_MONITOR and\
+									gui_constants.MONITOR_PATHS and all(gui_constants.MONITOR_PATHS)
+		if available_folders and not gui_constants.SCANNING_FOR_GALLERIES:
+			gui_constants.SCANNING_FOR_GALLERIES = True
+			self.notification_bar.add_text("Scanning for new galleries...")
+			try:
+				class ScanDir(QObject):
+					final_paths_and_galleries = pyqtSignal(list, list)
+					finished = pyqtSignal()
+					def __init__(self, parent=None):
+						super().__init__(parent)
+						self.scanned_data = []
+					def scan_dirs(self):
+						paths = []
+						for p in gui_constants.MONITOR_PATHS:
+							if os.path.exists(p):
+								dir_content = scandir.scandir(p)
+								for d in dir_content:
+									paths.append(d.path)
+							else:
+								log_e("Monitored path does not exists: {}".format(p.encode(errors='ignore')))
+
+						fetch_inst = fetch.Fetch(self)
+						fetch_inst.series_path = paths
+						def set_scanned_d(d):
+							self.scanned_data = d
+						fetch_inst.FINISHED.connect(set_scanned_d)
+						fetch_inst.local()
+						#contents = []
+						#for g in self.scanned_data:
+						#	contents.append(g)
+
+						#paths = sorted(paths)
+						#new_galleries = []
+						#for x in contents:
+						#	y = utils.b_search(paths, os.path.normcase(x.path))
+						#	if not y:
+						#		new_galleries.append(x)
+
+						galleries = []
+						final_paths = []
+						if self.scanned_data:
+							for g in self.scanned_data:
+								try:
+									if g.is_archive:
+										g.profile = utils.get_gallery_img(g.chapters[0], g.path)
+									else:
+										g.profile = utils.get_gallery_img(g.chapters[0])
+									if not g.profile:
+										raise Exception
+								except:
+									g.profile = gui_constants.NO_IMAGE_PATH
+							
+								galleries.append(g)
+								final_paths.append(g.path)
+						self.final_paths_and_galleries.emit(final_paths, galleries)
+						self.finished.emit()
+						self.deleteLater()
+					#if gui_constants.LOOK_NEW_GALLERY_AUTOADD:
+					#	QTimer.singleShot(10000, self.gallery_populate(final_paths))
+					#	return
+
+				def show_new_galleries(final_paths, galleries):
+					if final_paths and galleries:
+						gui_constants.OVERRIDE_MOVE_IMPORTED_IN_FETCH = True
+						if gui_constants.LOOK_NEW_GALLERY_AUTOADD:
+							self.gallery_populate(final_paths)
+						else:
+
+							class NewGalleryMenu(QMenu):
+
+								def __init__(self, parent=None):
+									super().__init__(parent)
+
+									ignore_act = self.addAction('Add to ignore list')
+									ignore_act.triggered.connect(self.add_to_ignore)
+
+								def add_to_ignore(self):
+									gallery = self.gallery_widget.gallery
+									gui_constants.IGNORE_PATHS.append(gallery.path)
+									settings.set(gui_constants.IGNORE_PATHS, 'Application', 'ignore paths')
+									if self.gallery_widget.parent_widget.gallery_layout.isEmpty():
+										self.gallery_widget.parent_widget.close()
+									else:
+										self.gallery_widget.close()
+
+							if len(galleries) == 1:
+								self.notification_bar.add_text("{} new gallery was discovered in one of your monitored directories".format(len(galleries)))
+							else:
+								self.notification_bar.add_text("{} new galleries were discovered in one of your monitored directories".format(len(galleries)))
+							text = "These new galleries were discovered! Do you want to add them?"\
+								if len(galleries) > 1 else "This new gallery was discovered! Do you want to add it?"
+							g_popup = file_misc.GalleryPopup((text, galleries), self, NewGalleryMenu())
+							buttons = g_popup.add_buttons('Add', 'Close')
+
+							def populate_n_close():
+								g_popup.close()
+								self.gallery_populate(final_paths)
+							buttons[0].clicked.connect(populate_n_close)
+							buttons[1].clicked.connect(g_popup.close)
+
+				def finished(): gui_constants.SCANNING_FOR_GALLERIES = False
+
+				thread = QThread(self)
+				self.scan_inst = ScanDir()
+				self.scan_inst.moveToThread(thread)
+				self.scan_inst.final_paths_and_galleries.connect(show_new_galleries)
+				self.scan_inst.finished.connect(finished)
+				thread.started.connect(self.scan_inst.scan_dirs)
+				#self.scan_inst.scan_dirs()
+				thread.finished.connect(thread.deleteLater)
+				thread.start()
+			except:
+				self.notification_bar.add_text('An error occured while attempting to scan for new galleries. Check happypanda.log.')
+				log.exception('An error occured while attempting to scan for new galleries.')
+				gui_constants.SCANNING_FOR_GALLERIES = False
 
 	def dragEnterEvent(self, event):
 		if event.mimeData().hasUrls():

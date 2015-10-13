@@ -109,8 +109,7 @@ def set(value, section, key=None):
 				val_as_str += "{}".format(v)
 			else:
 				val_as_str += "{}>|<".format(v)
-	if not val_as_str:
-		return
+
 	if key:
 		config[section][key] = str(val_as_str)
 	else:

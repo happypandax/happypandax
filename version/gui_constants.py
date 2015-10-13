@@ -93,7 +93,7 @@ LOOK_NEW_GALLERY_AUTOADD = get(False, 'Application', 'look new gallery autoadd',
 ENABLE_MONITOR = get(True, 'Application', 'enable monitor', bool)
 MONITOR_PATHS = get([], 'Application', 'monitor paths', list)
 IGNORE_PATHS = get([], 'Application', 'ignore paths', list)
-LOOKED_NEW_GALLERY_STARTUP = False # if a scan for new galleries has been done
+SCANNING_FOR_GALLERIES = False # if a scan for new galleries is being done
 
 # GENERAL
 OVERRIDE_MOVE_IMPORTED_IN_FETCH = False # set to true to make a fetch instance ignore moving files (will be set to false)
