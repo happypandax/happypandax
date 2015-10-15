@@ -1368,8 +1368,37 @@ class MangaView(QListView):
 			if duplicates:
 				notifbar.add_text('Found {} duplicates!'.format(len(duplicates)))
 				log_d('Found {} duplicates'.format(len(duplicates)))
+
+				class GalleryContextMenu(QMenu):
+					app_inst = self.parent_widget
+					viewer = self
+					def __init__(self, parent=None):
+						super().__init__(parent)
+						show_in_library_act = self.addAction('Show in library')
+						show_in_library_act.triggered.connect(self.show_in_library)
+						delete_gallery = self.addAction('Remove gallery')
+						delete_gallery.triggered.connect(self.delete_gallery)
+						delete_gallery_source = self.addAction("Remove gallery and it's files")
+						delete_gallery_source.triggered.connect(lambda: self.delete_gallery(True))
+
+					def show_in_library(self):
+						index = self.viewer.find_index(self.gallery_widget.gallery.id, True)
+						if index:
+							self.viewer.scroll_to_index(index)
+							self.app_inst.manga_table_view.scroll_to_index(index)
+
+					def delete_gallery(self, source=False):
+						index = self.viewer.find_index(self.gallery_widget.gallery.id)
+						if index and index.isValid():
+							self.viewer.remove_gallery([index], source)
+							if self.gallery_widget.parent_widget.gallery_layout.count() == 1:
+								self.gallery_widget.parent_widget.close()
+							else:
+								self.gallery_widget.close()
+
 				g_widget = file_misc.GalleryPopup(("These galleries are found to"+
-										  " be duplicates.", duplicates), self.parentWidget())
+										  " be duplicates.", duplicates), self.parentWidget(), menu=GalleryContextMenu())
+				g_widget.graphics_blur.setEnabled(False)
 				buttons = g_widget.add_buttons("Close")
 				buttons[0].clicked.connect(g_widget.close)
 			else:

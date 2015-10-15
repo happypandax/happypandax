@@ -921,7 +921,7 @@ class AppWindow(QMainWindow):
 									gallery = self.gallery_widget.gallery
 									gui_constants.IGNORE_PATHS.append(gallery.path)
 									settings.set(gui_constants.IGNORE_PATHS, 'Application', 'ignore paths')
-									if self.gallery_widget.parent_widget.gallery_layout.isEmpty():
+									if self.gallery_widget.parent_widget.gallery_layout.count() == 1:
 										self.gallery_widget.parent_widget.close()
 									else:
 										self.gallery_widget.close()

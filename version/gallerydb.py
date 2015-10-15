@@ -1467,6 +1467,7 @@ class DatabaseEmitter(QObject):
 		self._offset = 0
 		self._fetching = False
 		self.count = 0
+		self._finished = False
 		self.update_count()
 
 	def update_count(self):
@@ -1479,7 +1480,6 @@ class DatabaseEmitter(QObject):
 			if oldc != self.count:
 				self.COUNT_CHANGE.emit()
 			self._fetching = False
-			self._finished = False
 
 	def can_fetch_more(self):
 		if len(self._current_data) < self.count:

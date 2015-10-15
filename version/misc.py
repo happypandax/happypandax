@@ -689,6 +689,7 @@ class NotificationOverlay(QWidget):
 		self.setContentsMargins(-10,-10,-10,-10)
 		self._click = False
 		self._override_hide = False
+		self.text_queue = []
 
 		property_b_array = QByteArray().append('minimumHeight')
 		self.slide_animation = QPropertyAnimation(self, property_b_array)
