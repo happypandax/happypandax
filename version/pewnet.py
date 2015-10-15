@@ -31,6 +31,8 @@ log_w = log.warning
 log_e = log.error
 log_c = log.critical
 
+class WrongURL(Exception): pass
+
 class Downloader(QObject):
 	"""
 	A download manager.
@@ -133,7 +135,7 @@ class Downloader(QObject):
 			self._threads.append(thread)
 
 class HenItem(QObject):
-	"A convenience class that most methods in HenManager returns"
+	"A convenience class that most methods in DLManager and it's subclasses returns"
 	thumb_rdy = pyqtSignal(object)
 	file_rdy = pyqtSignal(object)
 	def __init__(self, session=None):
@@ -141,7 +143,7 @@ class HenItem(QObject):
 		self.session = session
 		self.thumb_url = "" # an url to gallery thumb
 		self.thumb = None
-		self.cost = ""
+		self.cost = "0"
 		self.size = ""
 		self.name = ""
 		self.metadata = None
@@ -166,17 +168,15 @@ class HenItem(QObject):
 			utils.open_torrent(self.file)
 			self.file_rdy.emit(self)
 
-class HenManager(QObject):
-	"G.e or Ex gallery manager"
+class DLManager(QObject):
+	"Base class for site-specific download managers"
 	_browser = RoboBrowser(history=True,
 						user_agent="Mozilla/5.0 (Windows NT 6.3; rv:36.0) Gecko/20100101 Firefox/36.0",
 						parser='html.parser', allow_redirects=False)
 	# download type
 	ARCHIVE, TORRENT = False, False
-
 	def __init__(self):
 		super().__init__()
-		self.e_url = 'http://g.e-hentai.org/'
 		self.ARCHIVE, self.TORRENT = False, False
 		if gui_constants.HEN_DOWNLOAD_TYPE == 0:
 			self.ARCHIVE = True
@@ -185,6 +185,73 @@ class HenManager(QObject):
 
 	def _error(self):
 		pass
+
+	def from_gallery_url(self, url):
+		"""
+		Needs to be implemented in site-specific subclass
+		URL checking is done in GalleryDownloader class in file_misc.py
+		Basic procedure:
+		- open url with self._browser and do the parsing
+		- create HenItem and fill out it's parameters
+		- specify download type (important)... 0 for archive and 1 for torrent
+		- fetch optional thumbnail on HenItem
+		- set download url on HenItem (important)
+		- connect gallery downloader item finished signal to HenItem file_fetched (important)
+		- add download url (and optional file name) to download queue
+		- return h-item if everything went successfully, else return none
+
+		Metadata should imitiate the offical EH API response and then parsed with parse_metadata method in CommonHen
+		see archive_page method in ChaikaManager for an example
+		"""
+		raise NotImplementedError
+
+class ChaikaManager(DLManager):
+	"panda.chaika.moe manager"
+
+	def __init__(self):
+		super().__init__()
+		self.url = 'http://panda.chaika.moe/'
+
+	def _archive_page(self, a_url):
+		"returns archive a dict with metadata from the /archive/g_id page"
+		self._browser.open(a_url)
+		all_li = self._browser.find('li')
+		title = all_li[0].text
+		jp_title = all_li[1].text
+		ISC = all_li[2].text.split('>>') # img created, size, created
+		size = ISC[1].strip().replace('Size:', '').strip() # sorry
+		EPG = all_li[3].text.split('>>') # e-link, posted, g-link
+		pub_date = EPG[1] # parse needed
+		gallery_url = self.url + EPG[2].replace('Gallery link:', '').strip()[1:] # unreadable? sorry
+		ns_tags = {'default':[]}
+		ns_tags_li = all_li[4].ul.find_all('li')
+		for nt in ns_tags_li:
+			ns = ''
+
+
+	def from_gallery_url(self, url):
+		h_item = HenItem(self._browser.session)
+		h_item.download_type = 0
+		
+		if '/gallery/' in url:
+			pass
+		else:
+			m_data = self._archive_url_d(url)
+
+		if m_data:
+			h_item.name = m_data['name']
+			h_item.size = m_data['size']
+			h_item.download_url = m_data['archive']
+			gui_constants.DOWNLOAD_MANAGER.item_finished.connect(h_item._file_fetched)
+			Downloader.add_to_queue((m_data['name'].strip()+'.zip', h_item.download_url), self._browser.session)
+			return h_item
+
+class HenManager(DLManager):
+	"G.e or Ex gallery manager"
+
+	def __init__(self):
+		super().__init__()
+		self.e_url = 'http://g.e-hentai.org/'
 
 	def _archive_url_d(self, gid, token, key):
 		"Returns the archiver download url"
@@ -240,7 +307,11 @@ class HenManager(QObject):
 
 		h_item = HenItem(self._browser.session)
 		h_item.gallery_url = g_url
-		h_item.metadata = CommenHen.parse_metadata(api_metadata, gallery_gid_dict)[g_url]
+		h_item.metadata = CommenHen.parse_metadata(api_metadata, gallery_gid_dict)
+		try:
+			h_item.metadata[g_url]
+		except KeyError:
+			raise WrongURL
 		h_item.thumb_url = gallery['thumb']
 		h_item.name = gallery['title']
 		h_item.size = "{0:.2f} MB".format(gallery['filesize']/1048576)
@@ -268,8 +339,8 @@ class HenManager(QObject):
 				f_name = succes_test.find('strong').text
 				h_item.download_url = gallery_dl
 				h_item.fetch_thumb()
-				Downloader.add_to_queue((f_name, gallery_dl), self._browser.session)
 				gui_constants.DOWNLOAD_MANAGER.item_finished.connect(h_item._file_fetched)
+				Downloader.add_to_queue((f_name, gallery_dl), self._browser.session)
 				return h_item
 
 		elif self.TORRENT:
@@ -281,8 +352,8 @@ class HenManager(QObject):
 				url_and_file = self._torrent_url_d(g_id_token[0], g_id_token[1])
 				if url_and_file:
 					h_item.download_url = url_and_file[0]
-					Downloader.add_to_queue((url_and_file[1], h_item.download_url), self._browser.session)
 					gui_constants.DOWNLOAD_MANAGER.item_finished.connect(h_item._file_fetched)
+					Downloader.add_to_queue((url_and_file[1], h_item.download_url), self._browser.session)
 					return h_item
 			else:
 				return h_item
@@ -421,6 +492,7 @@ class CommenHen:
 
 		parsed_metadata = {}
 		for gallery in metadata_json['gmetadata']:
+			url = dict_metadata[gallery['gid']]
 			if invalid_token_check(gallery):
 				new_gallery = {}
 				def fix_titles(text):
@@ -449,7 +521,6 @@ class CommenHen:
 					else:
 						tags['default'].append(t.lower())
 				new_gallery['tags'] = tags
-				url = dict_metadata[gallery['gid']]
 				parsed_metadata[url] = new_gallery
 			else:
 				log_e("Error in received response with URL: {}".format(url))

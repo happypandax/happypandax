@@ -28,6 +28,7 @@ log_c = log.critical
 
 class GalleryDownloaderItem(QObject):
 	"""
+	Receives a HenItem
 	"""
 	d_item_ready = pyqtSignal(object)
 	def __init__(self, hitem):
@@ -36,7 +37,7 @@ class GalleryDownloaderItem(QObject):
 		self.item = hitem
 		url = self.item.gallery_url
 
-		self.profile_item = QTableWidgetItem(self.item.metadata['title']['def'])
+		self.profile_item = QTableWidgetItem(self.item.name)
 		self.profile_item.setToolTip(url)
 		def set_profile(item):
 			self.profile_item.setIcon(QIcon(item.thumb))
@@ -150,7 +151,10 @@ class GalleryDownloader(QWidget):
 							   " http://g.e-hentai.org/g/618395/0439fa3666/")
 		self.url_inserter.returnPressed.connect(self.add_download_entry)
 		main_layout.addWidget(self.url_inserter)
-
+		self.info_lbl = QLabel(self)
+		self.info_lbl.setAlignment(Qt.AlignCenter)
+		main_layout.addWidget(self.info_lbl)
+		self.info_lbl.hide()
 		self.download_list = GalleryDownloaderList(parent.manga_list_view.sort_model, self)
 		download_list_scroll = QScrollArea(self)
 		download_list_scroll.setBackgroundRole(self.palette().Base)
@@ -164,6 +168,7 @@ class GalleryDownloader(QWidget):
 		self.setWindowIcon(QIcon(gui_constants.APP_ICO_PATH))
 
 	def add_download_entry(self, url=None):
+		self.info_lbl.hide()
 		if not url:
 			url = self.url_inserter.text().lower()
 			if not url:
@@ -177,7 +182,13 @@ class GalleryDownloader(QWidget):
 				manager = pewnet.ExHenManager(exprops.ipb_id, exprops.ipb_pass)
 			else:
 				return
-		h_item = manager.from_gallery_url(url)
+		h_item = None
+		try:
+			h_item = manager.from_gallery_url(url)
+		except pewnet.WrongURL:
+			self.info_lbl.setText("<font color='red'>Failed to add to download list</font>")
+			self.info_lbl.show()
+			return
 		if h_item:
 			self.download_list.add_entry(h_item)
 

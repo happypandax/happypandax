@@ -220,7 +220,7 @@ class ArchiveFile():
 				(x.count('/') == 1 + dir_name.count('/') and x.endswith('/'))]
 		elif self.type == self.rar:
 			return [x for x in self.namelist() if x.startswith(dir_name) and \
-			    x.count('/') == 1 + dir_name.count('/')]
+				x.count('/') == 1 + dir_name.count('/')]
 		return []
 
 	def extract(self, file_to_ext, path=None):
@@ -396,7 +396,7 @@ def open_chapter(chapterpath, archive=None):
 			else:
 				zip.extract_all(t_p) # Compatibility reasons.. TODO: REMOVE IN BETA
 			filepath = os.path.join(t_p, [x for x in sorted([y.name for y in scandir.scandir(t_p)])\
- 				if x.lower().endswith(IMG_FILES)][0]) # Find first page
+				if x.lower().endswith(IMG_FILES)][0]) # Find first page
 			filepath = os.path.abspath(filepath)
 		else:
 			if is_archive:
