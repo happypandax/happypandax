@@ -327,7 +327,7 @@ class Fetch(QObject):
 				data = metadata[g.temp_url]
 			except KeyError:
 				self.AUTO_METADATA_PROGRESS.emit("No metadata found for gallery: {}".format(g.title))
-				self.error_galleries.append((g, "No metadata found"))
+				self.error_galleries.append((g, "No metadata found for gallery"))
 				log_w("No metadata found for gallery: {}".format(g.title.encode(errors='ignore')))
 				continue
 			log_i('({}/{}) Applying metadata for gallery: {}'.format(x, len(self.galleries_in_queue),
@@ -392,7 +392,7 @@ class Fetch(QObject):
 				gallery.hash = hash
 
 				log_i("Checking gallery url")
-				if gallery.link:
+				if gallery.link and gui_constants.USE_GALLERY_LINK:
 					check = self._website_checker(gallery.link)
 					if check == valid_url:
 						gallery.temp_url = gallery.link
@@ -455,8 +455,8 @@ class Fetch(QObject):
 			log_d('Auto metadata fetcher is done')
 			gui_constants.GLOBAL_EHEN_LOCK = False
 			if not self.error_galleries:
-				self.AUTO_METADATA_PROGRESS.emit('Done! Successfully fetched metadata for {} galleries.'.format(len(self.galleries)))
-				gui_constants.SYSTEM_TRAY.showMessage('Done', 'Successfully fetched metadata for {} galleries!', minimized=True)
+				self.AUTO_METADATA_PROGRESS.emit('Done! Went through {} galleries successfully!.'.format(len(self.galleries)))
+				gui_constants.SYSTEM_TRAY.showMessage('Done', 'Went through {} galleries successfully!', minimized=True)
 				self.FINISHED.emit(True)
 			else:
 				self.AUTO_METADATA_PROGRESS.emit('Done! Could not fetch metadata for {} galleries. Check happypanda.log for more details!'.format(len(self.error_galleries)))

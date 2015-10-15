@@ -761,7 +761,8 @@ class GalleryShowcaseWidget(QWidget):
 		self.setAttribute(Qt.WA_DeleteOnClose)
 		self.main_layout = QVBoxLayout(self)
 		self.parent_widget = parent
-		menu.gallery_widget = self
+		if menu:
+			menu.gallery_widget = self
 		self._menu = menu
 		self.gallery = gallery
 		self.profile = QLabel(self)
@@ -854,6 +855,9 @@ class SingleGalleryChoices(BasePopup):
 		else:
 			main_layout.addWidget(g_showcase, 0, Qt.AlignCenter)
 		self.list_w = QListWidget(self)
+		self.list_w.setAlternatingRowColors(True)
+		self.list_w.setWordWrap(True)
+		self.list_w.setTextElideMode(Qt.ElideNone)
 		main_layout.addWidget(self.list_w, 3)
 		main_layout.addLayout(self.buttons_layout)
 		for t in tuple_first_idx:
@@ -862,7 +866,7 @@ class SingleGalleryChoices(BasePopup):
 			self.list_w.addItem(item)
 		self.buttons = self.add_buttons('Skip', 'Choose',)
 		self.buttons[1].clicked.connect(self.finish)
-		self.buttons[0].clicked.connect(lambda: self.USER_CHOICE.emit(()))
+		self.buttons[0].clicked.connect(self.skip)
 		self.resize(400, 400)
 		self.show()
 
@@ -872,6 +876,10 @@ class SingleGalleryChoices(BasePopup):
 			item = item[0]
 			self.USER_CHOICE.emit(item.item)
 			self.close()
+
+	def skip(self):
+		self.USER_CHOICE.emit(())
+		self.close()
 
 class BaseUserChoice(QDialog):
 	USER_CHOICE = pyqtSignal(object)

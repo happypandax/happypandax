@@ -60,6 +60,11 @@ class AppWindow(QMainWindow):
 		self.initUI()
 		self.start_up()
 		QTimer.singleShot(3000, self._check_update)
+		def test():
+			print('go')
+			self.manga_list_view.scrollToBottom()
+			print('done')
+		#QTimer.singleShot(10000, test)
 		self.setFocusPolicy(Qt.NoFocus)
 		self.set_shortcuts()
 
@@ -78,7 +83,7 @@ class AppWindow(QMainWindow):
 	def init_watchers(self):
 
 		def remove_gallery(g):
-			index = self.manga_list_view.find_index(g.id)
+			index = self.manga_list_view.find_index(g.id, True)
 			if index:
 				self.manga_list_view.remove_gallery([index])
 
@@ -330,8 +335,26 @@ class AppWindow(QMainWindow):
 				galleries = []
 				for tup in status:
 					galleries.append(tup[0])
+
+				class GalleryContextMenu(QMenu):
+					app_instance = self
+					error_galleries = status
+					def __init__(self, parent=None):
+						super().__init__(parent)
+						self.error = [x for x in status if x[0].id]
+						show_in_library_act = self.addAction('Show in library')
+						show_in_library_act.triggered.connect(self.show_in_library)
+
+					def show_in_library(self):
+						viewer = self.app_instance.manga_list_view
+						index = viewer.find_index(self.gallery_widget.gallery.id, True)
+						if index:
+							self.app_instance.manga_table_view.scroll_to_index(index)
+							self.app_instance.manga_list_view.scroll_to_index(index)
+
 				g_popup = file_misc.GalleryPopup(('Fecthing metadata for these galleries failed.'+
-									  ' Check happypanda.log for details.', galleries), self)
+									  ' Check happypanda.log for details.', galleries), self, menu=GalleryContextMenu())
+				g_popup.graphics_blur.setEnabled(False)
 				close_button = g_popup.add_buttons('Close')[0]
 				close_button.clicked.connect(g_popup.close)
 

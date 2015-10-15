@@ -26,7 +26,8 @@ from PyQt5.QtGui import (QPixmap, QBrush, QColor, QPainter,
 						 QMouseEvent, QHelpEvent,
 						 QPixmapCache, QCursor, QPalette, QKeyEvent,
 						 QFont, QTextOption, QFontMetrics, QFontMetricsF,
-						 QTextLayout, QPainterPath, QScrollPrepareEvent)
+						 QTextLayout, QPainterPath, QScrollPrepareEvent,
+						 QWheelEvent)
 from PyQt5.QtWidgets import (QListView, QFrame, QLabel,
 							 QStyledItemDelegate, QStyle,
 							 QMenu, QAction, QToolTip, QVBoxLayout,
@@ -1202,10 +1203,37 @@ class MangaView(QListView):
 
 			self.clicked.connect(debug_print)
 
-		QScroller.grabGesture(self, QScroller.MiddleMouseButtonGesture)
+		#self.viewport().grabGesture(Qt.SwipeGesture)
+		self.k_scroller = QScroller.scroller(self)
+		#self.k_scroller = QScroller.scroller(self)
+		#self.k_scroller.grabGesture(self)
+		#self._scroll_pos = QPoint()
 	#	self.ti = QTimer()
 	#	self.ti.timeout.connect(self.test_)
 	#	self.ti.start(5000)
+
+	def scroll_to_index(self, idx, select=True):
+		rect = self.visualRect(idx)
+		self.k_scroller.ensureVisible(QRectF(rect), 0, 0)
+		if select:
+			self.setCurrentIndex(idx)
+
+	# unusable code
+	def event(self, event):
+		#if event.type() == QEvent.ToolTip:
+		#	help_event = QHelpEvent(event)
+		#	index = self.indexAt(help_event.globalPos())
+		#	if index is not -1:
+		#		QToolTip.showText(help_event.globalPos(), "Tooltip!")
+		#	else:
+		#		QToolTip().hideText()
+		#		event.ignore()
+		#	return True
+
+		if event.type() == QEvent.Gesture:
+			print("yes!")
+		else:
+			return super().event(event)
 
 	#def test_(self):
 	#	"find all galleries in viewport"
@@ -1418,7 +1446,7 @@ class MangaView(QListView):
 		index = self.indexAt(event.pos())
 		index = self.sort_model.mapToSource(index)
 
-		if index.data(Qt.UserRole+1).state == CustomDelegate.G_DOWNLOAD:
+		if index.data(Qt.UserRole+1) and index.data(Qt.UserRole+1).state == CustomDelegate.G_DOWNLOAD:
 			event.ignore()
 			return
 
@@ -1455,12 +1483,14 @@ class MangaView(QListView):
 		super().resizeEvent(resizeevent)
 		#print(resizeevent.size())
 
-	def find_index(self, gallery_id):
+	def find_index(self, gallery_id, sort_model=False):
 		"Finds and returns the index associated with the gallery id"
 		index = None
-		rows = self.gallery_model.rowCount()
+		model = self.sort_model if sort_model else self.gallery_model
+		rows = model.rowCount()
+		print(rows)
 		for r in range(rows):
-			indx = self.gallery_model.index(r, 1)
+			indx = model.index(r, 0)
 			m_gallery = indx.data(Qt.UserRole+1)
 			if m_gallery.id == gallery_id:
 				index = indx
@@ -1515,25 +1545,6 @@ class MangaView(QListView):
 		super().updateGeometries()
 		self.verticalScrollBar().setSingleStep(gui_constants.SCROLL_SPEED)
 
-	#unusable code
-	#def event(self, event):
-	#	#if event.type() == QEvent.ToolTip:
-	#	#	help_event = QHelpEvent(event)
-	#	#	index = self.indexAt(help_event.globalPos())
-	#	#	if index is not -1:
-	#	#		QToolTip.showText(help_event.globalPos(), "Tooltip!")
-	#	#	else:
-	#	#		QToolTip().hideText()
-	#	#		event.ignore()
-	#	#	return True
-	#	if event.type() == QEvent.Enter:
-	#		print("hovered")
-	#	else:
-	#		return super().event(event)
-
-	def entered(*args, **kwargs):
-		return super().entered(**kwargs)
-
 class MangaTableView(QTableView):
 	STATUS_BAR_MSG = pyqtSignal(str)
 	SERIES_DIALOG = pyqtSignal()
@@ -1557,6 +1568,9 @@ class MangaTableView(QTableView):
 		self.setPalette(palette)
 		self.setIconSize(QSize(0,0))
 		self.doubleClicked.connect(self.parent_widget.manga_list_view.open_chapter)
+		self.grabGesture(Qt.SwipeGesture)
+		self.k_scroller = QScroller.scroller(self)
+		self.k_scroller.grabGesture(self, QScroller.TouchGesture)
 
 	# display tooltip only for elided text
 	#def viewportEvent(self, event):
@@ -1572,6 +1586,12 @@ class MangaTableView(QTableView):
 	#				QToolTip.hideText()
 	#				return True
 	#	return super().viewportEvent(event)
+
+	def scroll_to_index(self, idx, select=True):
+		rect = self.visualRect(idx)
+		self.k_scroller.ensureVisible(QRectF(rect), 0, 0)
+		if select:
+			self.selectRow(idx.row())
 
 	def keyPressEvent(self, event):
 		if event.key() == Qt.Key_Return:

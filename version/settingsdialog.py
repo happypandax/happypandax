@@ -165,6 +165,7 @@ class SettingsDialog(QWidget):
 		self.web_time_offset.setValue(gui_constants.GLOBAL_EHEN_TIME)
 		self.continue_a_metadata_fetcher.setChecked(gui_constants.CONTINUE_AUTO_METADATA_FETCHER)
 		self.use_jpn_title.setChecked(gui_constants.USE_JPN_TITLE)
+		self.use_gallery_link.setChecked(gui_constants.USE_GALLERY_LINK)
 
 		# Web / Download
 		if gui_constants.HEN_DOWNLOAD_TYPE == 0:
@@ -314,6 +315,9 @@ class SettingsDialog(QWidget):
 
 		gui_constants.USE_JPN_TITLE = self.use_jpn_title.isChecked()
 		set(gui_constants.USE_JPN_TITLE, 'Web', 'use jpn title')
+
+		gui_constants.USE_GALLERY_LINK = self.use_gallery_link.isChecked()
+		set(gui_constants.USE_GALLERY_LINK, 'Web', 'use gallery link')
 
 		# Web / ExHentai
 		self.exprops.ipb_id = self.ipbid_edit.text()
@@ -618,6 +622,7 @@ class SettingsDialog(QWidget):
 		self.continue_a_metadata_fetcher = QCheckBox('Continue from where auto metadata fetcher left off')
 		web_metadata_m_l.addRow(self.continue_a_metadata_fetcher)
 		self.use_jpn_title = QCheckBox('Use japanese title')
+		self.use_jpn_title.setToolTip('Choose the japenese title over the english one')
 		web_metadata_m_l.addRow(self.use_jpn_title)
 		time_offset_info = QLabel('We need to impose a delay between our requests to avoid getting banned.'+
 							' I have made it so you cannot set the delay lower than the recommended (I don\'t'+
@@ -646,6 +651,10 @@ class SettingsDialog(QWidget):
 		self.always_first_hit = QCheckBox('Always choose first hit')
 		web_metadata_m_l.addRow(first_hit_info)
 		web_metadata_m_l.addRow(self.always_first_hit)
+		self.use_gallery_link = QCheckBox('Use current gallery link')
+		self.use_gallery_link.setToolTip("Metadata will be fetched from the current gallery link"+
+								   " if it's a valid ex/g.e gallery url")
+		web_metadata_m_l.addRow(self.use_gallery_link)
 
 		# Web / Exhentai
 		exhentai_page = QWidget(self)

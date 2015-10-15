@@ -123,6 +123,7 @@ GLOBAL_EHEN_LOCK = False
 DEFAULT_EHEN_URL = get('http://g.e-hentai.org/', 'Web', 'default ehen url', str)
 REPLACE_METADATA = get(False, 'Web', 'replace metadata', bool)
 ALWAYS_CHOOSE_FIRST_HIT = get(False, 'Web', 'always choose first hit', bool)
+USE_GALLERY_LINK = get(True, 'Web', 'use gallery link', bool)
 USE_JPN_TITLE = get(False, 'Web', 'use jpn title', bool)
 CONTINUE_AUTO_METADATA_FETCHER = get(True, 'Web', 'continue auto metadata fetcher', bool)
 HEN_DOWNLOAD_TYPE = get(0, 'Web', 'hen download type', int)
