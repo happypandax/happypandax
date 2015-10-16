@@ -406,9 +406,12 @@ class GalleryMenu(QMenu):
 			edit = self.addAction('Edit', lambda: self.parent_widget.manga_list_view.spawn_dialog(self.index))
 			text = 'folder' if not self.index.data(Qt.UserRole+1).is_archive else 'archive'
 			op_folder_act = self.addAction('Open {}'.format(text), self.op_folder)
+			op_cont_folder_act = self.addAction('Show in folder', lambda: self.op_folder(containing=True))
 		else:
 			text = 'folders' if not self.index.data(Qt.UserRole+1).is_archive else 'archives'
 			op_folder_select = self.addAction('Open {}'.format(text), lambda: self.op_folder(True))
+			op_cont_folder_select = self.addAction('Show in folders', lambda: self.op_folder(True, True))
+
 		if self.index.data(Qt.UserRole+1).link and not self.selected:
 			op_link = self.addAction('Open URL', self.op_link)
 		if self.selected and all([idx.data(Qt.UserRole+1).link for idx in self.selected]):
@@ -494,18 +497,23 @@ class GalleryMenu(QMenu):
 			utils.open_web_link(self.index.data(Qt.UserRole+1).link)
 			
 
-	def op_folder(self, select=False):
+	def op_folder(self, select=False, containing=False):
 		if select:
 			for x in self.selected:
 				text = 'Opening archives...' if self.index.data(Qt.UserRole+1).is_archive else 'Opening folders...'
+				text = 'Opening containing folders...' if containing else text
 				self.view.STATUS_BAR_MSG.emit(text)
 				gal = x.data(Qt.UserRole+1)
-				utils.open_path(gal.path)
+				path = os.path.split(gal.path)[0] if containing else gal.path
+				utils.open_path(path, gal.path)
 		else:
 			text = 'Opening archive...' if self.index.data(Qt.UserRole+1).is_archive else 'Opening folder...'
+			text = 'Opening containing folder...' if containing else text
 			self.view.STATUS_BAR_MSG.emit(text)
 			gal = self.index.data(Qt.UserRole+1)
-			utils.open_path(gal.path)
+			path = os.path.split(gal.path)[0] if containing else gal.path
+			utils.open_path(path, gal.path)
+
 
 	def add_chapters(self):
 		def add_chdb(chaps_dict):

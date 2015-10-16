@@ -670,12 +670,16 @@ def open_web_link(url):
 	except:
 		log_e('Could not open URL in browser')
 
-def open_path(path):
+def open_path(path, select=''):
+	""
 	try:
 		if sys.platform.startswith('darwin'):
 			subprocess.Popen(['open', path])
 		elif os.name == 'nt':
-			os.startfile(path)
+			if select:
+				subprocess.Popen(r'explorer.exe /select,"{}"'.format(os.path.normcase(select)), shell=True)
+			else:
+				os.startfile(path)
 		elif os.name == 'posix':
 			subprocess.Popen(('xdg-open', path))
 		else:
