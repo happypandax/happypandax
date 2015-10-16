@@ -235,11 +235,11 @@ class DLManager(QObject):
 	def from_gallery_url(self, url):
 		"""
 		Needs to be implemented in site-specific subclass
-		URL checking is done in GalleryDownloader class in file_misc.py
-		Basic procedure:
+		URL checking  and class instantiating is done in GalleryDownloader class in file_misc.py
+		Basic procedure for this method:
 		- open url with self._browser and do the parsing
 		- create HenItem and fill out it's parameters
-		- specify download type (important)... 0 for archive and 1 for torrent
+		- specify download type (important)... 0 for archive and 1 for torrent 2 for other
 		- fetch optional thumbnail on HenItem
 		- set download url on HenItem (important)
 		- connect gallery downloader item finished signal to HenItem file_fetched (important)
@@ -260,35 +260,45 @@ class ChaikaManager(DLManager):
 		super().__init__()
 		self.url = 'http://panda.chaika.moe/'
 
+	def from_gallery_url(self, url):
+		h_item = HenItem(self._browser.session)
+		h_item.download_type = 0
+		
+		if '/gallery/' in url:
+			a_url = self._gallery_page(url, h_item)
+			self._archive_page(a_url, h_item)
+		elif '/archive' in url:
+			g_url = self._archive_page(url, h_item)
+			self._gallery_page(g_url, h_item)
+		else:
+			return 
+		h_item.commit_metadata()
+		gui_constants.DOWNLOAD_MANAGER.item_finished.connect(h_item._file_fetched)
+		Downloader.add_to_queue((h_item.name+'.zip', h_item.download_url), self._browser.session)
+		return h_item
+
 	def _gallery_page(self, g_url, h_item):
-		"Returns a dict and updates h_item metadata from the /gallery/g_id page"
+		"Returns url to archive and updates h_item metadata from the /gallery/g_id page"
 		self._browser.open(g_url)
 
-	def _archive_page(self, a_url, h_item):
-		"Returns a dict and updates h_item metadata from the /archive/a_id page"
-		self._browser.open(a_url)
-		archive_dict = {}
-		
 		all_li = self._browser.find_all('li')
 
-		title = all_li[0].text
+		title = all_li[0].text.split(':')[1]
 		h_item.update_metadata('title', title)
-		archive_dict['name'] = title
-
-		jp_title = all_li[1].text
-		h_item.update_metadata('title_jpn', jp_title)
-
-		ISC = all_li[2].text.split('>>') # img created, size, created
-		size = ISC[1].strip().replace('Size:', '').strip() # unreadable? sorry
-		archive_dict['size'] = size
-		size_in_bytes = int(float(size.replace('MB', '').strip()) * 1048576)
-		h_item.update_metadata('filesize', jp_title)
-
-		EPG = all_li[3].text.split('>>') # e-link, posted, g-link
-
-		pub_date = EPG[1].replace('Posted:', '').strip()
-		pub_date = pub_date.replace('.', '').replace(',', '')
-		month, day, year = pub_date.split(' ')
+		jpn_title = all_li[1].text.split(':')[1]
+		h_item.update_metadata('title_jpn', jpn_title)
+		type = all_li[2].text.split(':')[1]
+		h_item.update_metadata('category', type)
+		rating = all_li[3].text.split(':')[1]
+		h_item.update_metadata('rating', rating)
+		f_count = all_li[4].text.split(':')[1]
+		h_item.update_metadata('filecount', f_count)
+		f_size_in_mb = all_li[5].text.split(':')[1]
+		f_size_in_bytes = int(float(f_size_in_mb.replace('MB', '').strip()) * 1048576)
+		h_item.update_metadata('filesize', f_size_in_bytes)
+		posted = all_li[7].text.split(':')[1]
+		posted = posted.replace('.', '').replace(',', '')
+		month, day, year = posted.split(' ')
 		# sigh.. Sep abbreviated as Sept.. really?!?
 		if month.startswith('Jan'):
 			month = '01'
@@ -314,11 +324,25 @@ class ChaikaManager(DLManager):
 			month = '11'
 		elif month.startswith('Dec'):
 			month = '12'
-		pub_date = time.mktime(datetime.strptime(month+day+year, '%m%d%Y').timetuple())
-		h_item.update_metadata('posted', pub_date)
+		posted = time.mktime(datetime.strptime(month+day+year, '%m%d%Y').timetuple())
+		h_item.update_metadata('posted', posted)
+
+		h_item.name = title
+		h_item.size = f_size_in_mb
+
+		archive_page = all_li[len(all_li)-1].a.get('href')
+		archive_page_url = self.url + archive_page[1:]
+		return archive_page_url
+
+	def _archive_page(self, a_url, h_item):
+		"Returns url to gallery and updates h_item metadata from the /archive/a_id page"
+		self._browser.open(a_url)		
+		all_li = self._browser.find_all('li')
+
+		EPG = all_li[3].text.split('>>') # e-link, posted, g-link
 
 		gallery_url = self.url + EPG[2].replace('Gallery link:', '').strip()[1:] # unreadable? sorry
-		archive_dict['gallery_url'] = gallery_url
+		h_item.gallery_url = gallery_url
 
 		tags = []
 		ns_tags_li = all_li[4].ul.find_all('li')
@@ -335,29 +359,8 @@ class ChaikaManager(DLManager):
 
 		archive = self._browser.find('li', {'class':'pagination_cen'}).a.get('href')
 		archive_url = self.url + archive[1:]
-		archive_dict['archive'] = archive_url
-		return archive_dict
-
-	def from_gallery_url(self, url):
-		h_item = HenItem(self._browser.session)
-		h_item.download_type = 0
-		
-		if '/gallery/' in url:
-			pass
-		elif '/archive' in url:
-			m_data = self._archive_page(url, h_item)
-		else:
-			return 
-
-		if m_data:
-			h_item.commit_metadata()
-			h_item.name = m_data['name']
-			h_item.size = m_data['size']
-			h_item.gallery_url = m_data['gallery_url']
-			h_item.download_url = m_data['archive']
-			gui_constants.DOWNLOAD_MANAGER.item_finished.connect(h_item._file_fetched)
-			Downloader.add_to_queue((m_data['name'].strip()+'.zip', h_item.download_url), self._browser.session)
-			return h_item
+		h_item.download_url = archive_url
+		return gallery_url
 
 class HenManager(DLManager):
 	"G.e or Ex gallery manager"

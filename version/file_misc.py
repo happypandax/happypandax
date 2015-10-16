@@ -149,8 +149,8 @@ class GalleryDownloader(QWidget):
 		self.parent_widget = parent
 		self.url_inserter = QLineEdit()
 		self.url_inserter.setPlaceholderText("Hover to see supported URLs")
-		self.url_inserter.setToolTip("Supported URLs:\nExhentai/g.e-hentai gallery links, e.g.:"+
-							   " http://g.e-hentai.org/g/618395/0439fa3666/")
+		self.url_inserter.setToolTip(gui_constants.SUPPORTED_DOWNLOAD_URLS)
+		self.url_inserter.setToolTipDuration(999999999)
 		self.url_inserter.returnPressed.connect(self.add_download_entry)
 		main_layout.addWidget(self.url_inserter)
 		self.info_lbl = QLabel(self)

@@ -276,3 +276,11 @@ Some things to note when searching:
 - terms are seperated by a comma
 """
 
+SUPPORTED_DOWNLOAD_URLS=\
+	"""Supported URLs:
+- exhentai/g.e-hentai gallery urls, e.g.: http://g.e-hentai.org/g/618395/0439fa3666/
+- panda.chaika.moe gallery and archive urls
+	http://panda.chaika.moe/[0]/[1]/ where [0] is 'gallery' or 'archive' and [1] is a number
+	"""
+
+
