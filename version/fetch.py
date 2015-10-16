@@ -455,7 +455,7 @@ class Fetch(QObject):
 			log_d('Auto metadata fetcher is done')
 			gui_constants.GLOBAL_EHEN_LOCK = False
 			if not self.error_galleries:
-				self.AUTO_METADATA_PROGRESS.emit('Done! Went through {} galleries successfully!.'.format(len(self.galleries)))
+				self.AUTO_METADATA_PROGRESS.emit('Done! Went through {} galleries successfully!'.format(len(self.galleries)))
 				gui_constants.SYSTEM_TRAY.showMessage('Done', 'Went through {} galleries successfully!', minimized=True)
 				self.FINISHED.emit(True)
 			else:

@@ -75,6 +75,11 @@ class Downloader(QObject):
 				item = item['item']
 
 			file_name = item[0] if isinstance(item, (tuple, list)) else str(uuid.uuid4())
+			
+			invalid_chars = '\\/:*?"<>|'
+			for x in invalid_chars:
+				file_name = file_name.replace(x, '')
+
 			file_name = os.path.join(self.base, file_name) if not temp_base else \
 				os.path.join(temp_base, file_name)
 			file_name_part = file_name + '.part'
@@ -146,7 +151,7 @@ class HenItem(QObject):
 		self.cost = "0"
 		self.size = ""
 		self.name = ""
-		self.metadata = None
+		self.metadata = {}
 		self.file = ""
 		self.download_url = ""
 		self.gallery_url = ""
@@ -165,8 +170,49 @@ class HenItem(QObject):
 	def _file_fetched(self, dl_data):
 		if self.download_url == dl_data[0]:
 			self.file = dl_data[1]
-			utils.open_torrent(self.file)
+			if self.download_type == 1:
+				utils.open_torrent(self.file)
 			self.file_rdy.emit(self)
+
+	def update_metadata(self, key, value):
+		"""
+		Recommended way of inserting metadata. Keeps the original EH API response structure
+		Remember to call commit_metadata when done!
+		"""
+		if not self.metadata:
+			self.metadata = {
+					"gmetadata": [
+						{
+								"gid":1,
+								"title": "",
+								"title_jpn": "",
+								"category": "Manga",
+								"uploader": "",
+								"Posted": "",
+								"filecount": "0",
+								"filesize": 0,
+								"expunged": False,
+								"rating": "0",
+								"torrentcount": "0",
+								"tags":[]
+							}
+						]
+				}
+		try:
+			metadata = self.metadata['gmetadata'][0]
+		except KeyError:
+			return
+
+		metadata[key] = value
+
+	def commit_metadata(self):
+		"Call this method when done updating metadata"
+		g_id = 'sample'
+		try:
+			d_m = {self.metadata['gmetadata'][0]['gid']:g_id}
+		except KeyError:
+			return
+		self.metadata = CommenHen.parse_metadata(self.metadata, d_m)[g_id]
 
 class DLManager(QObject):
 	"Base class for site-specific download managers"
@@ -200,8 +246,10 @@ class DLManager(QObject):
 		- add download url (and optional file name) to download queue
 		- return h-item if everything went successfully, else return none
 
-		Metadata should imitiate the offical EH API response and then parsed with parse_metadata method in CommonHen
-		see archive_page method in ChaikaManager for an example
+		Metadata should imitiate the offical EH API response.
+		It is recommended to use update_metadata in HenItem when setting metadata
+		see the ChaikaManager class for a complete example
+		EH API: http://ehwiki.org/wiki/API
 		"""
 		raise NotImplementedError
 
@@ -212,22 +260,83 @@ class ChaikaManager(DLManager):
 		super().__init__()
 		self.url = 'http://panda.chaika.moe/'
 
-	def _archive_page(self, a_url):
-		"returns archive a dict with metadata from the /archive/g_id page"
+	def _gallery_page(self, g_url, h_item):
+		"Returns a dict and updates h_item metadata from the /gallery/g_id page"
+		self._browser.open(g_url)
+
+	def _archive_page(self, a_url, h_item):
+		"Returns a dict and updates h_item metadata from the /archive/a_id page"
 		self._browser.open(a_url)
-		all_li = self._browser.find('li')
+		archive_dict = {}
+		
+		all_li = self._browser.find_all('li')
+
 		title = all_li[0].text
+		h_item.update_metadata('title', title)
+		archive_dict['name'] = title
+
 		jp_title = all_li[1].text
+		h_item.update_metadata('title_jpn', jp_title)
+
 		ISC = all_li[2].text.split('>>') # img created, size, created
-		size = ISC[1].strip().replace('Size:', '').strip() # sorry
+		size = ISC[1].strip().replace('Size:', '').strip() # unreadable? sorry
+		archive_dict['size'] = size
+		size_in_bytes = int(float(size.replace('MB', '').strip()) * 1048576)
+		h_item.update_metadata('filesize', jp_title)
+
 		EPG = all_li[3].text.split('>>') # e-link, posted, g-link
-		pub_date = EPG[1] # parse needed
+
+		pub_date = EPG[1].replace('Posted:', '').strip()
+		pub_date = pub_date.replace('.', '').replace(',', '')
+		month, day, year = pub_date.split(' ')
+		# sigh.. Sep abbreviated as Sept.. really?!?
+		if month.startswith('Jan'):
+			month = '01'
+		elif month.startswith('Feb'):
+			month = '02'
+		elif month.startswith('Mar'):
+			month = '03'
+		elif month.startswith('Apr'):
+			month = '04'
+		elif month.startswith('May'):
+			month = '05'
+		elif month.startswith('Jun'):
+			month = '06'
+		elif month.startswith('Jul'):
+			month = '07'
+		elif month.startswith('Aug'):
+			month = '08'
+		elif month.startswith('Sep'):
+			month = '09'
+		elif month.startswith('Oct'):
+			month = '10'
+		elif month.startswith('Nov'):
+			month = '11'
+		elif month.startswith('Dec'):
+			month = '12'
+		pub_date = time.mktime(datetime.strptime(month+day+year, '%m%d%Y').timetuple())
+		h_item.update_metadata('posted', pub_date)
+
 		gallery_url = self.url + EPG[2].replace('Gallery link:', '').strip()[1:] # unreadable? sorry
-		ns_tags = {'default':[]}
+		archive_dict['gallery_url'] = gallery_url
+
+		tags = []
 		ns_tags_li = all_li[4].ul.find_all('li')
 		for nt in ns_tags_li:
-			ns = ''
+			# namespace
+			ns = nt.find('label')
+			ns = ns.text if ns else ''
+			# tags
+			all_tags = nt.find_all('a')
+			for t in all_tags:
+				tag = t.text
+				tags.append(ns + tag)
+		h_item.update_metadata('tags', tags)
 
+		archive = self._browser.find('li', {'class':'pagination_cen'}).a.get('href')
+		archive_url = self.url + archive[1:]
+		archive_dict['archive'] = archive_url
+		return archive_dict
 
 	def from_gallery_url(self, url):
 		h_item = HenItem(self._browser.session)
@@ -235,12 +344,16 @@ class ChaikaManager(DLManager):
 		
 		if '/gallery/' in url:
 			pass
+		elif '/archive' in url:
+			m_data = self._archive_page(url, h_item)
 		else:
-			m_data = self._archive_url_d(url)
+			return 
 
 		if m_data:
+			h_item.commit_metadata()
 			h_item.name = m_data['name']
 			h_item.size = m_data['size']
+			h_item.gallery_url = m_data['gallery_url']
 			h_item.download_url = m_data['archive']
 			gui_constants.DOWNLOAD_MANAGER.item_finished.connect(h_item._file_fetched)
 			Downloader.add_to_queue((m_data['name'].strip()+'.zip', h_item.download_url), self._browser.session)
@@ -480,8 +593,8 @@ class CommenHen:
 	@staticmethod
 	def parse_metadata(metadata_json, dict_metadata):
 		"""
-		:metadata_json -> raw data provided by E-H API
-		:dict_metadata -> a dict with galleries as keys and url as value
+		:metadata_json <- raw data provided by E-H API
+		:dict_metadata <- a dict with gallery id's as keys and url as value
 
 		returns a dict with url as key and gallery metadata as value
 		"""

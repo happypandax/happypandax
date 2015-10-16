@@ -71,11 +71,13 @@ class GalleryDownloaderList(QTableWidget):
 		self.setColumnCount(5)
 		self.setIconSize(QSize(50, 100))
 		self.setAlternatingRowColors(True)
+		self.setEditTriggers(self.NoEditTriggers)
 		self.horizontalHeader().setStretchLastSection(True)
 		v_header = self.verticalHeader()
 		v_header.setSectionResizeMode(v_header.Fixed)
 		v_header.setDefaultSectionSize(100)
 		v_header.hide()
+		self.setDragEnabled(False)
 		self.setShowGrid(True)
 		self.setSelectionBehavior(self.SelectRows)
 		self.setSelectionMode(self.SingleSelection)
@@ -169,21 +171,26 @@ class GalleryDownloader(QWidget):
 
 	def add_download_entry(self, url=None):
 		self.info_lbl.hide()
-		if not url:
-			url = self.url_inserter.text().lower()
-			if not url:
-				return
-			self.url_inserter.clear()
-		if 'g.e-hentai.org' in url:
-			manager = pewnet.HenManager()
-		elif 'exhentai.org' in url:
-			exprops = settings.ExProperties()
-			if exprops.check():
-				manager = pewnet.ExHenManager(exprops.ipb_id, exprops.ipb_pass)
-			else:
-				return
 		h_item = None
 		try:
+			if not url:
+				url = self.url_inserter.text().lower()
+				if not url:
+					return
+				self.url_inserter.clear()
+			if 'g.e-hentai.org' in url:
+				manager = pewnet.HenManager()
+			elif 'exhentai.org' in url:
+				exprops = settings.ExProperties()
+				if exprops.check():
+					manager = pewnet.ExHenManager(exprops.ipb_id, exprops.ipb_pass)
+				else:
+					return
+			elif 'panda.chaika.moe' in url and ('/archive/' in url or '/gallery/' in url):
+				manager = pewnet.ChaikaManager()
+			else:
+				raise pewnet.WrongURL
+
 			h_item = manager.from_gallery_url(url)
 		except pewnet.WrongURL:
 			self.info_lbl.setText("<font color='red'>Failed to add to download list</font>")

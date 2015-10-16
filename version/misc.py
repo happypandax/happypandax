@@ -1400,6 +1400,7 @@ class GalleryListView(QWidget):
 		self.view_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
 		self.view_list.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
 		self.view_list.setAlternatingRowColors(True)
+		self.view_list.setEditTriggers(self.view_list.NoEditTriggers)
 		layout.addWidget(self.view_list)
 		
 		add_btn = QPushButton('Add checked')
