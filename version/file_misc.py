@@ -137,6 +137,12 @@ class GalleryDownloaderList(QTableWidget):
 		else:
 			d_item.status_item.setText('Adding to library failed!')
 
+	def clear_list(self):
+		for r in range(self.rowCount()-1, -1, -1):
+			status = self.item(r, 1)
+			if '!' in status.text():
+				self.removeRow(r)
+
 class GalleryDownloader(QWidget):
 	"""
 	A gallery downloader window
@@ -157,7 +163,14 @@ class GalleryDownloader(QWidget):
 		self.info_lbl.setAlignment(Qt.AlignCenter)
 		main_layout.addWidget(self.info_lbl)
 		self.info_lbl.hide()
+		buttons_layout = QHBoxLayout()
+		clear_all_btn = QPushButton('Clear List')
+		clear_all_btn.adjustSize()
+		clear_all_btn.setFixedWidth(clear_all_btn.width())
+		buttons_layout.addWidget(clear_all_btn, 0, Qt.AlignRight)
+		main_layout.addLayout(buttons_layout)
 		self.download_list = GalleryDownloaderList(parent.manga_list_view.sort_model, self)
+		clear_all_btn.clicked.connect(self.download_list.clear_list)
 		download_list_scroll = QScrollArea(self)
 		download_list_scroll.setBackgroundRole(self.palette().Base)
 		download_list_scroll.setWidgetResizable(True)

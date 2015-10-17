@@ -607,6 +607,9 @@ class AppWindow(QMainWindow):
 
 		if gui_constants.SEARCH_AUTOCOMPLETE:
 			completer = QCompleter(self)
+			completer_view = misc.CompleterPopupView()
+			completer.setPopup(completer_view)
+			completer_view._setup()
 			completer.setModel(self.manga_list_view.gallery_model)
 			completer.setCaseSensitivity(Qt.CaseInsensitive)
 			completer.setCompletionMode(QCompleter.PopupCompletion)
@@ -621,6 +624,7 @@ class AppWindow(QMainWindow):
 		self.search_bar.setMinimumWidth(150)
 		self.search_bar.setMaximumWidth(500)
 		self.search_bar.setFixedHeight(19)
+		self.manga_list_view.sort_model.HISTORY_SEARCH_TERM.connect(lambda a: self.search_bar.setText(a))
 		self.toolbar.addWidget(self.search_bar)
 
 		def search_history(_, back=True): # clicked signal passes a bool

@@ -61,6 +61,25 @@ def clearLayout(layout):
 			elif child.layout() is not None:
 				clearLayout(child.layout())
 
+
+class CompleterPopupView(QListView):
+	def __init__(self, *args, **kwargs):
+		super().__init__(*args, **kwargs)
+
+	def _setup(self):
+		property_b_array = QByteArray().append('windowOpacity')
+		self.fade_animation = QPropertyAnimation(self, property_b_array)
+		self.fade_animation.setDuration(200)
+		self.fade_animation.setStartValue(0.0)
+		self.fade_animation.setEndValue(1.0)
+		self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+		self.setFrameStyle(self.StyledPanel)
+
+	def showEvent(self, event):
+		self.setWindowOpacity(0)
+		self.fade_animation.start()
+		super().showEvent(event)
+
 class ElidedLabel(QLabel):
 	def paintEvent(self, event):
 		painter = QPainter(self)

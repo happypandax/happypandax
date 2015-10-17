@@ -417,6 +417,7 @@ class SortFilterModel(QSortFilterProxyModel):
 	_CHANGE_SEARCH_DATA = pyqtSignal(list)
 	_CHANGE_FAV = pyqtSignal(bool)
 
+	HISTORY_SEARCH_TERM = pyqtSignal(str)
 	# Navigate terms
 	NEXT, PREV = range(2)
 
@@ -429,6 +430,7 @@ class SortFilterModel(QSortFilterProxyModel):
 		self.current_term_history = 0
 
 	def navigate_history(self, direction=PREV):
+		print(self.terms_history)
 		new_term = ''
 		if self.terms_history:
 			if direction == self.NEXT:
@@ -440,6 +442,7 @@ class SortFilterModel(QSortFilterProxyModel):
 			new_term = self.terms_history[self.current_term_history]
 			if new_term != self.current_term:
 				self.init_search(new_term, False)
+		print(new_term)
 		return new_term
 
 
@@ -481,6 +484,8 @@ class SortFilterModel(QSortFilterProxyModel):
 				self.current_term_history = 0
 
 		self.current_term = term
+		if not history:
+			self.HISTORY_SEARCH_TERM.emit(term)
 		self._DO_SEARCH.emit(term)
 
 	def filterAcceptsRow(self, source_row, parent_index):
