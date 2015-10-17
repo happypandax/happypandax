@@ -430,7 +430,6 @@ class SortFilterModel(QSortFilterProxyModel):
 		self.current_term_history = 0
 
 	def navigate_history(self, direction=PREV):
-		print(self.terms_history)
 		new_term = ''
 		if self.terms_history:
 			if direction == self.NEXT:
@@ -442,7 +441,6 @@ class SortFilterModel(QSortFilterProxyModel):
 			new_term = self.terms_history[self.current_term_history]
 			if new_term != self.current_term:
 				self.init_search(new_term, False)
-		print(new_term)
 		return new_term
 
 
@@ -1224,21 +1222,21 @@ class MangaView(QListView):
 			self.setCurrentIndex(idx)
 
 	# unusable code
-	def event(self, event):
-		#if event.type() == QEvent.ToolTip:
-		#	help_event = QHelpEvent(event)
-		#	index = self.indexAt(help_event.globalPos())
-		#	if index is not -1:
-		#		QToolTip.showText(help_event.globalPos(), "Tooltip!")
-		#	else:
-		#		QToolTip().hideText()
-		#		event.ignore()
-		#	return True
+	#def event(self, event):
+	#	#if event.type() == QEvent.ToolTip:
+	#	#	help_event = QHelpEvent(event)
+	#	#	index = self.indexAt(help_event.globalPos())
+	#	#	if index is not -1:
+	#	#		QToolTip.showText(help_event.globalPos(), "Tooltip!")
+	#	#	else:
+	#	#		QToolTip().hideText()
+	#	#		event.ignore()
+	#	#	return True
 
-		if event.type() == QEvent.Gesture:
-			print("yes!")
-		else:
-			return super().event(event)
+	#	if event.type() == QEvent.Gesture:
+	#		print("yes!")
+	#	else:
+	#		return super().event(event)
 
 	#def test_(self):
 	#	"find all galleries in viewport"
@@ -1522,7 +1520,6 @@ class MangaView(QListView):
 		index = None
 		model = self.sort_model if sort_model else self.gallery_model
 		rows = model.rowCount()
-		print(rows)
 		for r in range(rows):
 			indx = model.index(r, 0)
 			m_gallery = indx.data(Qt.UserRole+1)
@@ -1643,7 +1640,7 @@ class MangaTableView(QTableView):
 		index = self.indexAt(event.pos())
 		index = self.sort_model.mapToSource(index)
 
-		if index.data(Qt.UserRole+1).state == CustomDelegate.G_DOWNLOAD:
+		if index.data(Qt.UserRole+1) and index.data(Qt.UserRole+1).state == CustomDelegate.G_DOWNLOAD:
 			event.ignore()
 			return
 

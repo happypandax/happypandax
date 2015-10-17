@@ -1,11 +1,6 @@
-# Website
-http://pewpews.github.io/happypanda
-
 Development is done in alpha branch
 
 For future plans, see [the wiki](https://github.com/Pewpews/happypanda/wiki)
-
-Also see [here](https://github.com/Pewpews/happypanda/wiki/Documentation), for documentation
 
 I'm here if you have any questions!
 
@@ -27,24 +22,18 @@ For Mac & Linux see [INSTALL.md](INSTALL.md)
 #
 
 # Features
-- Keep track of your galleries and organize them more easily
-- Search for galleries through title, artist or namespaces & tags
-- Fetch metadata which includes namespace & tags from the web (Currently only supports g.e-hentai and exhentai) without getting you banned
-- Favourite your favourite galleries and keep them in a seperate view
-- View your galleries with high-quality thumbnails or in a simple table list
-- Add your galleries easily without worrying about adding duplicates:
-	+ Add a single detailed gallery. *Note: this way you can add even if the gallery already exist*
-	+ Add galleries from different locations
-	+ Or if you want it easy then just populate from a single folder containing all your galleries
-- Can add galleries recursively, treating each subfolder as a gallery (applies to archives too)
-- Supports ZIP/CBZ, RAR/CBR and directories with loose files
-- Keep track of on-going galleries and add new released chapters to your gallery easily
-- Monitor 1 or more folders for events and be notified:
-	+ Renaming a gallery source  will prompt the program to ask if you want to update the renamed gallery's source
-	+ Deleting a gallery source will prompt the program to ask if you want to remove the gallery from the program as well
-	+ Adding new gallery sources will prompt the program to ask you if you want to add them
-- Customize your program with lots of options in the settings
-- And lots more...
+- Keep track of your galleries and organize them more easily!
+- Tag your galleries with namespaces & tags for better management!
+- Fetch metadata which includes namespace & tags from the web (Currently only supports g.e-hentai, exhentai and indirectly panda.chaika.moe) without getting you banned!
+- Download gallery archives (which will automatically be added to your library) or torrents from the web! (Currently supports g.e-hentai, exhentai and panda.chaika.moe)
+- View your galleries with high-quality thumbnails or in a simple table list!
+- Add your galleries easily without worrying about adding duplicates!
+- Multiple ways of adding galleries to make it as convienient as possible! (like folder monitoring, etc.)
+- Can add galleries recursively, treating each subfolder as a gallery (applies to archives too)!
+- Supports ZIP/CBZ, RAR/CBR and directories with loose files!
+- Keep track of on-going galleries and add new released chapters to your gallery easily!
+- Customize and make the program behave just as you like it with lots of options in the settings!
+- And lots more...!
 
 # Dependencies
 - Qt5 (Install this first) >= 5.4

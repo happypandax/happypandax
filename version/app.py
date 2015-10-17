@@ -61,9 +61,7 @@ class AppWindow(QMainWindow):
 		self.start_up()
 		QTimer.singleShot(3000, self._check_update)
 		def test():
-			print('go')
 			self.manga_list_view.scrollToBottom()
-			print('done')
 		#QTimer.singleShot(10000, test)
 		self.setFocusPolicy(Qt.NoFocus)
 		self.set_shortcuts()

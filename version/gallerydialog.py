@@ -415,7 +415,7 @@ class GalleryDialog(QWidget):
 			
 	def set_web_metadata(self, metadata):
 		assert isinstance(metadata, gallerydb.Gallery)
-		self.link_edit.setText(metadata.link)
+		self.link_lbl.setText(metadata.link)
 		self.title_edit.setText(metadata.title)
 		self.author_edit.setText(metadata.artist)
 		tags = ""

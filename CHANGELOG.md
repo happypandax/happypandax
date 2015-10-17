@@ -1,3 +1,39 @@
+*Happypanda v0.25*
+- Added *Show in folder* entry in gallery contextmenu
+- Gallery popups
+	+ A contextmenu will now be shown when you rightclick a gallery
+	+ Added *Skip* button in the metadata gallery chooser popup (the one asking you which gallery you want to extract metadata from)
+	+ The text in metadata gallery chooser popups will now wrap
+	+ Added tooltips displaying title and artist when hovering galleries in some popups
+- Settings
+	+ A new button allowing you to recreate your thumbnail cache is now in *Settings* -> *Advanced* -> *Gallery*
+	+ Added new tab *Downloader* in *Web* section
+	+ Renamed *General* tab in *Web* section to *Metadata*
+	+ Some options in settings will now show a tooltip explaining the option on hover
+- You can now go back to previous or to next search terms with the two new buttons beside the search bar (hidden until you actually search something)
+	+ Back and Forward keys has been bound to these two buttons (very OS dependent but something like `ALT + LEFT ARROW` etc.) Back and Forward buttons on your mouse should also probably work (*shrugs*)
+	+ Added *Use current gallery link* checkbox option in *Web* section
+- Toolbar
+	+ Renamed *Misc* to *Tools*
+	+ New *Scan for new galleries* entry in *Gallery*
+	+ New *Gallery Downloader* entry in *Tools*
+- Gallery downloading
+	+ Supports archive and torrent downloading
+	+ archives will be automatically imported while torrents will be sent to your torrent client
+	+ Currently supports ex/g.e gallery urls and panda.chaika.moe gallery/archive urls
+		- Note: downloading archives from ex/g.e will be handled the same way as if you did it in your browser, i.e. it will cost you GP/credits.
+- Tray icon
+	+ You can now manually check for a new update by right clicking on the tray icon
+	+ Triggering the tray icon, i.e. clicking on it, will now activate (showing it) the Happypanda window
+- Fixed bugs:
+	+ Fixed a bug where skipped galleries/paths would get moved
+	+ Fixed a bug where gallery archives/folders containing images with `.jpeg` and/or capitalized (`.JPG`, etc.) extensions were treated as invalid gallery sources, or causing the program to behave very weird if they managed to get imported somehow
+	+ Fixed a bug where you couldn't search with the Regex option turned on
+	+ Fixed a bug where changing gallery covers would fail if the previous cover was not deleted or found.
+	+ Fixed a bug where non-existent monitored folders were not detected
+	+ Fixed a bug in the user settings (*settings.ini*) parsing, hence the reset
+	+ Fixed other minor misc. bugs
+
 *Happypanda v0.24.1*
 - Fixed bugs:
 	+ Removing a gallery and its files should now work
