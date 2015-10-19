@@ -283,4 +283,8 @@ SUPPORTED_DOWNLOAD_URLS=\
 	http://panda.chaika.moe/[0]/[1]/ where [0] is 'gallery' or 'archive' and [1] is a number
 	"""
 
-
+# Exceptions
+class ChapterExists(Exception): pass
+class ChapterWrongParentGallery(Exception): pass
+class CreateArchiveFail(Exception): pass
+class FileNotFoundInArchive(Exception): pass

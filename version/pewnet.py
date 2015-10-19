@@ -238,7 +238,7 @@ class DLManager(QObject):
 		URL checking  and class instantiating is done in GalleryDownloader class in file_misc.py
 		Basic procedure for this method:
 		- open url with self._browser and do the parsing
-		- create HenItem and fill out it's parameters
+		- create HenItem and fill out it's attributes
 		- specify download type (important)... 0 for archive and 1 for torrent 2 for other
 		- fetch optional thumbnail on HenItem
 		- set download url on HenItem (important)

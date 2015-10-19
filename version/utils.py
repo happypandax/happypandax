@@ -124,9 +124,6 @@ def generate_img_hash(src):
 		buffer = src.read(chunk)
 	return sha1.hexdigest()
 
-class CreateArchiveFail(Exception): pass
-class FileNotFoundInArchive(Exception): pass
-
 class ArchiveFile():
 	"""
 	Work with archive files, raises exception if instance fails.
@@ -152,13 +149,13 @@ class ArchiveFile():
 				# test for corruption
 				if b_f:
 					log_w('Bad file found in archive {}'.format(filepath.encode(errors='ignore')))
-					raise CreateArchiveFail
+					raise gui_constants.gui_constants.CreateArchiveFail
 			else:
 				log_e('Archive: Unsupported file format')
-				raise CreateArchiveFail
+				raise gui_constants.gui_constants.CreateArchiveFail
 		except:
 			log.exception('Create archive: FAIL')
-			raise CreateArchiveFail
+			raise gui_constants.gui_constants.CreateArchiveFail
 
 	def namelist(self):
 		filelist = self.archive.namelist()
@@ -172,7 +169,7 @@ class ArchiveFile():
 			return False
 		if not name in self.namelist():
 			log_e('File {} not found in archive'.format(name))
-			raise FileNotFoundInArchive
+			raise gui_constants.FileNotFoundInArchive
 		if self.type == self.zip:
 			if name.endswith('/'):
 				return True
@@ -206,7 +203,7 @@ class ArchiveFile():
 		"""
 		if dir_name and not dir_name in self.namelist():
 			log_e('Directory {} not found in archive'.format(dir_name))
-			raise FileNotFoundInArchive
+			raise gui_constants.FileNotFoundInArchive
 		if not dir_name:
 			if self.type == self.zip:
 				con =  [x for x in self.namelist() if x.count('/') == 0 or \
@@ -283,7 +280,7 @@ def check_archive(archive_path):
 	archive_path = archive_path.lower()
 	try:
 		zip = ArchiveFile(archive_path)
-	except CreateArchiveFail:
+	except gui_constants.CreateArchiveFail:
 		return []
 	if not zip:
 		return []
@@ -419,7 +416,7 @@ def open_chapter(chapterpath, archive=None):
 					filepath = find_f_img_archive(False)
 				else:
 					filepath = find_f_img_archive()
-			except CreateArchiveFail:
+			except gui_constants.CreateArchiveFail:
 				log.exception('Could not open chapter')
 				gui_constants.NOTIF_BAR.add_text('Could not open chapter. Check happypanda.log for more details.')
 				return
@@ -478,7 +475,7 @@ def get_gallery_img(path, archive=None):
 				f_img_name = sorted([img for img in zip.dir_contents(path) if img.lower().endswith(IMG_FILES)])[0]
 			img_path = zip.extract(f_img_name, temp_path)
 			zip.close()
-		except CreateArchiveFail:
+		except gui_constants.CreateArchiveFail:
 			img_path = gui_constants.NO_IMAGE_PATH
 	elif os.path.isdir(real_path):
 		log_i('Getting image from folder')
@@ -714,57 +711,69 @@ def delete_path(path):
 			s = False
 	return s
 
+def regex_search(a, b):
+	"Looks for a in b"
+	try:
+		if regex.search(a, b, regex.IGNORECASE):
+			return True
+	except regex.error:
+		pass
+	return False
+
 def get_terms(term):
 	"Dividies term into pieces. Returns a list with the pieces"
-	terms = []
-	buffer = ''
-	connected = False
-	qoutes = 0
+	pieces = []
+	piece = ''
+	qoute_level = 0
+	blacklist = ['"', ',']
 	for n, x in enumerate(term):
 		# if we meet a double qoute
 		if x == '"':
-			if qoutes > 0:
-				qoutes -= 1
+			if qoute_level > 0:
+				qoute_level -= 1
 			else:
-				qoutes += 1
-		# if we meet a whitespace or end of word and are not in a double qoute
-		if (x == ' ' or n == len(term) -1) and qoutes == 0:
-			terms.append(buffer)
-			buffer = ''
+				qoute_level += 1
+		# if we meet a whitespace or end of term and are not in a double qoute
+		if (x == ' ' or n == len(term) - 1) and qoute_level == 0:
+			# if end of term and x is allowed
+			if (n == len(term) - 1) and not x in blacklist and x != ' ':
+				piece += x
+			pieces.append(piece)
+			piece = ''
 			continue
 
 		# else append to the buffer
-		if x != '"' and x!= ',':
-			if qoutes > 0: # we want to include whitespace if in double qoute
-				buffer += x
+		if not x in blacklist:
+			if qoute_level > 0: # we want to include whitespace if in double qoute
+				piece += x
 			elif x != ' ':
-				buffer += x
+				piece += x
 
 	#############
-	def remove_abs_terms(term):
-		if term.startswith(('title:')):
-			term = term[6:]
-		elif term.startswith(('artist:')):
-			term = term[7:]
-		return term
+	#def remove_abs_terms(term):
+	#	if term.startswith(('title:')):
+	#		term = term[6:]
+	#	elif term.startswith(('artist:')):
+	#		term = term[7:]
+	#	return term
 
-	d_terms = {}
-	excludes = []
-	# get excludes, title, artist
-	for t in terms:
-		if t[0] == '-':
-			term = t[1:]
-			excludes.append(remove_abs_terms(term))
-			continue
-		if t.startswith('title:'):
-			term = t[6:]
-			title = term
-			continue
-		if t.startswith('artist:'):
-			term = t[7:]
-			artist = term
-			continue
+	#d_terms = {}
+	#excludes = []
+	## get excludes, title, artist
+	#for t in terms:
+	#	if t[0] == '-':
+	#		term = t[1:]
+	#		excludes.append(remove_abs_terms(term))
+	#		continue
+	#	if t.startswith('title:'):
+	#		term = t[6:]
+	#		title = term
+	#		continue
+	#	if t.startswith('artist:'):
+	#		term = t[7:]
+	#		artist = term
+	#		continue
 
-		d_terms[t] = False
+	#	d_terms[t] = False
 
-	return d_terms, excludes
+	return pieces

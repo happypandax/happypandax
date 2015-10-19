@@ -383,7 +383,7 @@ class Fetch(QObject):
 						hash = hash_dict['mid']
 					else:
 						hash = gallery.hashes[random.randint(0, len(gallery.hashes)-1)]
-				except utils.CreateArchiveFail:
+				except gui_constants.gui_constants.CreateArchiveFail:
 					pass
 				if not hash:
 					self.error_galleries.append((gallery, "Could not generate hash"))

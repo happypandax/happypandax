@@ -170,246 +170,133 @@ class GallerySearch(QObject):
 		super().__init__()
 		self._data = data
 		self.result = {}
+
 		# filtering
 		self.fav = False
-		self.tags = {}
-		self.title = ""
-		self.artist = ""
-		self.other = ""
 		self.excludes = []
-		self.allow_all = False # to make it easier
+		self.search_test_methods = [
+			self._s_title,
+			self._s_artist,
+			self._s_language,
+			]
+
+	def _s_title(self, txt, g):
+		if gui_constants.ALLOW_SEARCH_REGEX:
+			if utils.regex_search(txt, g.title):
+				return True
+		else:
+			if txt in g.title.lower():
+				return True
+		return False
+
+	def _s_artist(self, txt, g):
+		if gui_constants.ALLOW_SEARCH_REGEX:
+			if utils.regex_search(txt, g.artist):
+				return True
+		else:
+			if txt in g.artist.lower():
+				return True
+		return False
+
+	def _s_language(self, txt, g):
+		if g.language:
+			if gui_constants.ALLOW_SEARCH_REGEX:
+				if utils.regex_search(txt, g.language):
+					return True
+			else:
+				if txt in g.language.lower():
+					return True
+		return False
 
 	def set_data(self, new_data):
 		self._data = new_data
 		self.result = {g.id: True for g in self._data}
 
 	def set_fav(self, new_fav):
+		"slot"
 		self.fav = new_fav
-
-	def test(self):
-		self.result.clear()
-		allow = False
-		gallery = None
-
-		def do_search():
-			l = {'title':False, 'artist':False, 'tags':False}
-			if self.title:
-				l['title'] = True
-			if self.artist:
-				l['artist'] = True
-			if self.tags:
-				l['tags'] = True
-			
-			return l
-
-		def return_searched(where):
-			allow = False
-
-			def re_search(a, b):
-				"searches for a in b"
-				try:
-					m = regex.search("({})".format(a), b, regex.IGNORECASE)
-				except regex.error:
-					return None
-				return m
-
-			if where['tags']:
-				tag_allow = []
-				ser_tags = gallery.tags
-				for ns in self.tags:
-					if ns == 'default':
-						if ns in ser_tags:
-							for tag in self.tags[ns]:
-								if tag in ser_tags[ns]:
-									tag_allow.append(True)
-								else:
-									tag_allow.append(False)
-									#print(self.tags)
-						else: continue
-					else:
-						if ns in ser_tags:
-							for tag in self.tags[ns]:
-								if tag in ser_tags[ns]:
-									tag_allow.append(True)
-								else:
-									tag_allow.append(False)
-								#print(self.tags)
-						else:
-							tag_allow.append(False)
-				if len(tag_allow) != 0 and all(tag_allow):
-					allow = True
-			if where['title']:
-				title_allow = []
-				#print(self.title)
-				if all(self.title):
-					for t in self.title:
-						if re_search(t, gallery.title):
-							title_allow.append(True)
-						else:
-							title_allow.append(False)
-					if len(title_allow) > 0 and all(title_allow):
-						allow = True
-			if where['artist']:
-				artist_allow = []
-				#print(self.artist)
-				if all(self.artist):
-					for a in self.artist:
-						if re_search(a, gallery.artist):
-							artist_allow.append(True)
-						else:
-							artist_allow.append(False)
-					if len(artist_allow) > 0 and all(artist_allow):
-						allow = True
-
-			return allow
-
-		for gallery in self._data:
-			allow = False
-			if self.fav:
-				if gallery.fav == 1:
-					s = do_search()
-					if s:
-						allow = return_searched(s)
-					else: allow = True
-					if self.allow_all: # allowing all FAVS
-						allow = True
-			else:
-				s = do_search()
-				if s:
-					allow = return_searched(s)
-				else: allow = True
-				if self.allow_all:
-					allow = True
-			self.result[gallery.id] = allow
 
 	def search(self, term):
 		term = ' '.join(term.lower().split())
-		if not gui_constants.ALLOW_SEARCH_REGEX:
-			remove = '^$*+?{}\\|()[]'
-			for x in remove:
-				if x == '[' or x == ']':
-					continue
-				else:
-					term = term.replace(x, '.')
-		else:
-			try:
-				regex.compile(term)
-			except regex.error:
-				return
+		search_pieces = utils.get_terms(term)
+		#self.excludes = []
 
-		self.excludes = []
-		def trim_for_non_tag(txt):
-			level = 0 # so we know if we are in a list
-			buffer = ""
-			stripped_set = set() # we only need unique values
-			for n, x in enumerate(txt, 1):
-				if x == '[':
-					level += 1 # we are now entering a list
-				if x == ']':
-					level -= 1 # we are now exiting a list
-				if x == ',': # if we meet a comma
-					# we trim our buffer if we are at top level
-					if level is 0:
-						# add to list
-						stripped_set.add(buffer.strip())
-						buffer = ""
-					else:
-						buffer += x
-				elif n == len(txt): # or at end of string
-					buffer += x
-					# add to list
-					stripped_set.add(buffer.strip())
-					buffer = ""
-				else:
-					buffer += x
-			for s in stripped_set:
-				if not ':' in s:
-					txt = s
-			txt = txt.split(' ')
-			txt = [x.strip() for x in txt]
-			return txt
+		def remove_abs_terms(term):
+			if term.startswith('title:'):
+				term = term[6:]
+			elif term.startswith('artist:'):
+				term = term[7:]
+			elif term.startswith('language:'):
+				term = term[9:]
+			return term
 
-		if len(term) > 0:
-			self.allow_all = False
-			if 'title:' in term:
-				t = regex.search('(?<=title:)"([^"]*)"', term)
-				if t:
-					n = t.group()
-					term = term.replace('title:'+n, '')
-					t = n.replace('"', '')
-					self.title = [t]
-			else:
-				self.title = trim_for_non_tag(term)
+		title = artist = language = ''
+		terms = []
+		# get excludes, title, artist
+		for t in search_pieces:
+			#if t[0] == '-':
+			#	term = t[1:]
+			#	self.excludes.append(remove_abs_terms(term))
+				#continue
+			if t.startswith('title:'):
+				title = remove_abs_terms(t)
+				continue
+			elif t.startswith('artist:'):
+				artist = remove_abs_terms(t)
+				continue
+			elif t.startswith('language:'):
+				language = remove_abs_terms(t)
+				continue
+			terms.append(t)
 
-			if 'artist:' in term:
-				a = regex.search('(?<=artist:)"([^"]*)"', term)
-				if a:
-					n = a.group()
-					term = term.replace('artist:'+n, '')
-					a = n.replace('"', '')
-					self.artist = a
-			elif 'author:' in term:
-				a = regex.search('(?<=author:)"([^"]*)"', term)
-				if a:
-					n = a.group()
-					term = term.replace('author:'+n, '')
-					a = n.replace('"', '')
-					self.artist = a
-			else:
-				self.artist = trim_for_non_tag(term)
-
-			self.tags = utils.tag_to_dict(term)
-		else:
-			self.allow_all = True
-
-		self.test()
+		self._test(terms, title, artist, language)
 		self.FINISHED.emit()
 
-	#def search(self, term):
-	#	term = ' '.join(term.lower().split())
-	#	terms = utils.get_terms(term)
-	#	self.excludes = []
+	def _test(self, terms, title='', artist='', language=''):
+		self.result.clear()
+		print(terms)
+		for gallery in self._data:
+			all_terms = {t: False for t in terms}
+			allow = False if terms else True
+			if allow and (not title and not artist and not language):
+				self.result[gallery.id] = allow
+				continue
 
-	#	def remove_abs_terms(term):
-	#		if term.startswith(('title:')):
-	#			term = term[6:]
-	#		elif term.startswith(('artist:')):
-	#			term = term[7:]
-	#		return term
-	#	d_terms = {}
-	#	# get excludes, title, artist
-	#	for t in terms:
-	#		if t[0] == '-':
-	#			term = t[1:]
-	#			self.excludes.append(remove_abs_terms(term))
-	#			continue
-	#		if t.startswith('title:'):
-	#			term = t[6:]
-	#			self.title = term
-	#			continue
-	#		if t.startswith('artist:'):
-	#			term = t[7:]
-	#			self.artist = term
-	#			continue
+			if title:
+				a_title = self._s_title(title, gallery)
+				if not a_title:
+					allow = 'title:'+title in gallery
+					if not allow:
+						continue
 
-	#		d_terms[t] = False
+			if artist:
+				a_artist = self._s_artist(artist, gallery)
+				if not a_artist:
+					allow = 'artist:'+ artist in gallery
+					if not allow:
+						continue
 
-	#def s_text(self, list_of_text, text_to_test):
-	#	valid = []
-	#	text = text_to_test.lower()
-	#	for t in list_of_text:
-	#		t = t.lower()
-	#		if t in text:
-	#			valid.append(True)
-	#		else:
-	#			valid.append(False)
-	#	if valid and all(valid):
-	#		return True
-	#	else:
-	#		return False
+			if language:
+				a_lang = self._s_language(language, gallery)
+				if not a_lang:
+					allow = 'language:'+language in gallery
+					if not allow:
+						continue
 
-	#def s_tags(self, tags, excludes):
-	#	return True
+			for t in terms:
+				found = False # no need to search any further
+				for m in self.search_test_methods:
+					if m(t, gallery):
+						all_terms[t] = True
+						found = True
+				if not found:
+					if t in gallery: # tags
+						all_terms[t] = True
+
+			if all(all_terms.values()):
+				allow = True
+
+			self.result[gallery.id] = allow
 
 class SortFilterModel(QSortFilterProxyModel):
 	ROWCOUNT_CHANGE = pyqtSignal()
@@ -460,9 +347,7 @@ class SortFilterModel(QSortFilterProxyModel):
 			self.gallery_search = GallerySearch(self._data)
 			self.gallery_search.FINISHED.connect(self.invalidateFilter)
 			self.gallery_search.FINISHED.connect(lambda: self.ROWCOUNT_CHANGE.emit())
-			self.search_thread = QThread()
-			self.gallery_search.moveToThread(self.search_thread)
-			self.search_thread.start()
+			self.gallery_search.moveToThread(gui_constants.GENERAL_THREAD)
 			self._DO_SEARCH.connect(self.gallery_search.search)
 			self._CHANGE_SEARCH_DATA.connect(self.gallery_search.set_data)
 			self._CHANGE_FAV.connect(self.gallery_search.set_fav)

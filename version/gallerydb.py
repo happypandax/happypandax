@@ -13,16 +13,18 @@
 #"""
 
 import datetime, os, scandir, threading, logging, queue, uuid # for unique filename
+import re as regex
 
 from PyQt5.QtCore import Qt, QObject, pyqtSignal
 from PyQt5.QtGui import QImage
 
 from utils import (today, ArchiveFile, generate_img_hash, delete_path,
-					 ARCHIVE_FILES, get_gallery_img, IMG_FILES, CreateArchiveFail)
-from database.db import CommandQueue, ResultQueue
+					 ARCHIVE_FILES, get_gallery_img, IMG_FILES)
 from database import db_constants
+from database.db import CommandQueue, ResultQueue
 
 import gui_constants
+import utils
 
 PROFILE_TO_MODEL = queue.Queue()
 TestQueue = queue.Queue()
@@ -1157,7 +1159,7 @@ class HashDB:
 					zip = ArchiveFile(gallery.path)
 				else:
 					zip = ArchiveFile(chap_path)
-			except CreateArchiveFail:
+			except gui_constants.CreateArchiveFail:
 				log_e('Could not generate hash: CreateZipFail')
 				return {}
 			pages = {}
@@ -1242,7 +1244,7 @@ class HashDB:
 					chap_path = t_p
 					zip = ArchiveFile(gallery.chapters[0])
 					zip.extract_all(chap_path)
-			except CreateArchiveFail:
+			except gui_constants.CreateArchiveFail:
 				log_e('Could not generate hashes: CreateZipFail')
 				return []
 			imgs = scandir.scandir(chap_path)
@@ -1323,12 +1325,12 @@ class Gallery:
 		self.path_in_archive = ""
 		self.is_archive = 0
 		self.artist = None
-		self.chapters = {}
+		self.chapters = None
 		self.info = None
 		self.fav = 0
 		self.type = None
 		self.link = ""
-		self.language = None
+		self.language = ""
 		self.status = None
 		self.tags = {}
 		self.pub_date = None
@@ -1377,6 +1379,38 @@ class Gallery:
 		"""
 		return []
 
+	def __contains__(self, key):
+		if isinstance(key, Chapter):
+			return self.chapters.__contains__(key)
+		elif isinstance(key, str):
+			if key:
+				key = key.lower()
+				tags = key.split(':')
+				ns = tag = ''
+				if len(tags) > 1:
+					ns = tags[0].capitalize()
+					tag = tags[1].lower()
+				else:
+					tag = tags[0].lower()
+
+				if gui_constants.ALLOW_SEARCH_REGEX:
+					if ns:
+						for x in self.tags:
+							if utils.regex_search(ns, x):
+								for t in self.tags[x]:
+									if utils.regex_search(tag, t):
+										return True
+				else:
+					if ns:
+						if ns in self.tags:
+							if tag in self.tags[ns]:
+								return True
+					else:
+						for x in self.tags:
+							if tag in self.tags[x]:
+								return True
+		return False
+
 	def __str__(self):
 		string = """
 		ID: {}
@@ -1403,22 +1437,130 @@ class Gallery:
 			 self.pub_date, self.date_added, self.exed, len(self.hashes), "".format(self.chapters).encode(errors='ignore'))
 		return string
 
-#class Chapter:
-#	"""
-#	Base class for a chapter
-#	Contains following attributes:
-#	parent_id -> parent gallery id
-#	path -> path to chapter
-#	number -> chapter number
-#	pages -> chapter pages
-#	in_archive -> 1 if the chapter path is in an archive else 0
-#	"""
-#	def __init__(self, parent_id=0):
-#		self.parent_id = parent_id
-#		self.path = ""
-#		self.number = 0
-#		self.pages = 0
-#		self.in_archive = 0
+class Chapter:
+	"""
+	Base class for a chapter
+	Contains following attributes:
+	parent -> The ChapterContainer it belongs in
+	gallery -> The Gallery it belongs to
+	path -> path to chapter
+	number -> chapter number
+	pages -> chapter pages
+	in_archive -> 1 if the chapter path is in an archive else 0
+	"""
+	def __init__(self, parent, gallery, number=0, path="", pages=0, in_archive=0):
+		self.parent = parent
+		self.gallery = gallery
+		self.path = path
+		self.number = number
+		self.pages = pages
+		self.in_archive = in_archive
+
+	def __lt__(self, other):
+		return self.number < other.number
+
+	def __str__(self):
+		s = """
+		Chapter {}
+		Path: {}
+		Pages: {}
+		in_archive: {}
+		""".format(self.number, self.path, self.pages, self.in_archive)
+		return s
+
+	@property
+	def next_chapter(self):
+		try:
+			return self.parent[self.number+1]
+		except KeyError:
+			return None
+
+	@property
+	def previous_chapter(self):
+		try:
+			return self.parent[self.number-1]
+		except KeyError:
+			return None
+
+	# TODO: implement this
+	def open(self):
+		pass
+
+class ChaptersContainer:
+	"""
+	A container for chapters.
+	Acts like a list of chapters.
+	"""
+	def __init__(self, gallery):
+		self.parent = gallery
+		self._data = {}
+
+	def add_chapter(self, chp, overwrite=True, db=False):
+		"Add a chapter of Chapter class to this container"
+		assert isinstance(chp, Chapter), "Chapter must be an instantiated Chapter class"
+		
+		if not overwrite:
+			try:
+				_ = self._data[chp.number]
+				raise gui_constants.ChapterExists
+			except KeyError:
+				pass
+		self[chp.number] = chp
+
+		if db:
+			# TODO: implement this
+			pass
+
+	def create_chapter(self):
+		"""
+		Creates Chapter class with the next chapter number and adds to container
+		The chapter will be returned
+		"""
+		next_number = 0
+		for n in list(self._data.keys()):
+			if n > next_number:
+				next_number = n
+		chp = Chapter(self, self.parent, number=next_number)
+		self[next_number] = chp
+		return chp
+
+	def get_chapter(self, number):
+		return self[number]
+
+	def __len__(self):
+		return len(self._data)
+
+	def __getitem__(self, key):
+		return self._data[key]
+
+	def __setitem__(self, key, value):
+		assert isinstance(key, int), "Key must be a chapter number"
+		assert isinstance(value, Chapter), "Value must be an instantiated Chapter class"
+		
+		if value.gallery != self.parent:
+			raise gui_constants.ChapterWrongParentGallery
+		self._data[key] = value
+
+	def __delitem__(self, key):
+		del self._data[key]
+
+	def __iter__(self):
+		return iter(self._data)
+
+	def __bool__(self):
+		return bool(self._data)
+
+	def __str__(self):
+		s = ""
+		for c in self:
+			s += '\n' + '{}'.format(c)
+		return s
+
+	def __contains__(self, key):
+		if key.gallery == self.parent and key in self._data:
+			return True
+		return False
+
 
 class AdminDB(QObject):
 	DONE = pyqtSignal(bool)
