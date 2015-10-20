@@ -16,6 +16,8 @@ dist
 Happypanda
 setup.py
 *.ini
+*.swp
+.DS_Store
 
 # User-specific files
 *.suo

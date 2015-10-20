@@ -67,8 +67,6 @@ Note: Try renaming the 'main.py' file to 'main.pyw' and then just doubleclick on
     + Go to github.com/Pewpews/happypanda
     + Press the "Download ZIP" button
     + UnZip happypanda-master.zip
-    + Open the happypanda-master folder
-    + Put the res folder inside the version folder
   - In Terminal, navigate to the happypanda-master folder (E.g.: `cd /where/ever/you/put/the/folder/happypanda-master`)
     + Write `pip3 install -r requirements.txt`
 5. Running HappyPanda
