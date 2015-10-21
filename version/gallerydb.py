@@ -124,7 +124,7 @@ def gen_thumbnail(gallery, width=gui_constants.THUMB_W_SIZE,
 		for ext in IMG_FILES:
 			if img_path.lower().endswith(ext):
 				suff = ext # the image ext with dot
-		
+
 		# generate unique file name
 		file_name = str(uuid.uuid4()) + suff
 		new_img_path = os.path.join(db_constants.THUMBNAIL_PATH, (file_name))
@@ -217,6 +217,7 @@ def default_exec(object):
 class GalleryDB:
 	"""
 	Provides the following s methods:
+		rebuild_thumb -> Rebuilds gallery thumbnail
 		rebuild_galleries -> Rebuilds the galleries in DB
 		modify_gallery -> Modifies gallery with given gallery id
 		fav_gallery_set -> Set fav on gallery with given gallery id, and returns the gallery
@@ -232,6 +233,8 @@ class GalleryDB:
 		gallery_count -> returns amount of gallery (can be used for indexing)
 		del_gallery -> deletes the gallery with the given id recursively
 		check_exists -> Checks if provided string exists
+		clear_thumb -> Deletes a thumbnail
+		clear_thumb_dir -> Dletes everything in the thumbnail directory
 	"""
 	def __init__(self):
 		raise Exception("GalleryDB should not be instantiated")
@@ -242,11 +245,7 @@ class GalleryDB:
 		try:
 			log_i('Recreating thumb {}'.format(gallery.title.encode(errors='ignore')))
 			if gallery.profile:
-				try:
-					if gallery.profile != gui_constants.NO_IMAGE_PATH:
-						os.remove(gallery.profile)
-				except:
-					pass
+				GalleryDB.clear_thumb(gallery.profile)
 			gallery.profile = gen_thumbnail(gallery)
 			GalleryDB.modify_gallery(
 				gallery.id,
@@ -255,6 +254,21 @@ class GalleryDB:
 			log.exception("Failed rebuilding thumbnail")
 			return False
 		return True
+
+	@staticmethod
+	def clear_thumb(path):
+		"Deletes a thumbnail"
+		try:
+			if path != gui_constants.NO_IMAGE_PATH:
+				os.unlink(path)
+		except:
+			log.exception('Failed to delete thumb {}'.format(os.path.split(path)[1].encode(errors='ignore')))
+
+	@staticmethod
+	def clear_thumb_dir():
+		"Deletes everything in the thumbnail directory"
+		for thumbfile in scandir.scandir(db_constants.THUMBNAIL_PATH):
+			GalleryDB.clear_thumb(thumbfile.path)
 
 	@staticmethod
 	def rebuild_gallery(gallery, thumb=False):
@@ -296,55 +310,55 @@ class GalleryDB:
 		executing = []
 		assert isinstance(series_id, int)
 		executing = []
-		if title:
+		if title != None:
 			assert isinstance(title, str)
 			executing.append(["UPDATE series SET title=? WHERE series_id=?", (title, series_id)])
-		if profile:
+		if profile != None:
 			assert isinstance(profile, str)
 			executing.append(["UPDATE series SET profile=? WHERE series_id=?", (str.encode(profile), series_id)])
-		if artist:
+		if artist != None:
 			assert isinstance(artist, str)
 			executing.append(["UPDATE series SET artist=? WHERE series_id=?", (artist, series_id)])
-		if info:
+		if info != None:
 			assert isinstance(info, str)
 			executing.append(["UPDATE series SET info=? WHERE series_id=?", (info, series_id)])
-		if type:
+		if type != None:
 			assert isinstance(type, str)
 			executing.append(["UPDATE series SET type=? WHERE series_id=?", (type, series_id)])
-		if fav:
+		if fav != None:
 			assert isinstance(fav, int)
 			executing.append(["UPDATE series SET fav=? WHERE series_id=?", (fav, series_id)])
-		if language:
+		if language != None:
 			assert isinstance(language, str)
 			executing.append(["UPDATE series SET language=? WHERE series_id=?", (language, series_id)])
-		if status:
+		if status != None:
 			assert isinstance(status, str)
 			executing.append(["UPDATE series SET status=? WHERE series_id=?", (status, series_id)])
-		if pub_date:
+		if pub_date != None:
 			executing.append(["UPDATE series SET pub_date=? WHERE series_id=?", (pub_date, series_id)])
-		if link:
+		if link != None:
 			executing.append(["UPDATE series SET link=? WHERE series_id=?", (link, series_id)])
-		if times_read:
+		if times_read != None:
 			executing.append(["UPDATE series SET times_read=? WHERE series_id=?", (times_read, series_id)])
-		if series_path:
+		if series_path != None:
 			executing.append(["UPDATE series SET series_path=? WHERE series_id=?", (str.encode(series_path), series_id)])
-		if _db_v:
+		if _db_v != None:
 			executing.append(["UPDATE series SET db_v=? WHERE series_id=?", (_db_v, series_id)])
-		if exed:
+		if exed != None:
 			executing.append(["UPDATE series SET exed=? WHERE series_id=?", (exed, series_id)])
-		if is_archive:
+		if is_archive != None:
 			executing.append(["UPDATE series SET is_archive=? WHERE series_id=?", (is_archive, series_id)])
-		if path_in_archive:
+		if path_in_archive != None:
 			executing.append(["UPDATE series SET path_in_archive=? WHERE series_id=?", (path_in_archive, series_id)])
 
-		if tags:
+		if tags != None:
 			assert isinstance(tags, dict)
 			TagDB.modify_tags(series_id, tags)
-		if chapters:
+		if chapters != None:
 			assert isinstance(chapters, Gallery)
 			ChapterDB.update_chapter(chapters)
 
-		if hashes:
+		if hashes != None:
 			assert isinstance(hashes, Gallery)
 			HashDB.rebuild_gallery_hashes(hashes)
 
@@ -358,7 +372,7 @@ class GalleryDB:
 		"Set fav on gallery with given gallery id, and returns the gallery"
 		# NOTE: USELESS BECAUSE OF THE METHOD ABOVE; CONSIDER REVISING & DELETING
 		executing = [["UPDATE series SET fav=? WHERE series_id=?", (fav, series_id)]]
-		GalleryDB.modify_gallery(series_id, fav=fav)		
+		GalleryDB.modify_gallery(series_id, fav=fav)
 
 	@staticmethod
 	def get_all_gallery():
@@ -455,7 +469,7 @@ class GalleryDB:
 		executing = [["SELECT * FROM series WHERE fav=?", (x,)]]
 		CommandQueue.put(executing)
 		cursor = ResultQueue.get()
-		
+
 		gallery_list = []
 		for row in cursor.fetchall():
 			gallery = Gallery()
@@ -585,7 +599,7 @@ class GalleryDB:
 #			return "None"
 #		else:
 #			return obj
-#	executing = [["""INSERT INTO series(title, artist, profile, series_path, 
+#	executing = [["""INSERT INTO series(title, artist, profile, series_path,
 #					info, type, fav, status, pub_date, date_added, last_read, link, last_update,
 #					times_read, exed)
 #				VALUES(:title, :artist, :profile, :series_path, :info, :type, :fav,
@@ -643,7 +657,7 @@ class ChapterDB:
 		if not chapters:
 			chapters = range(len(gallery.chapters))
 		executing = []
-	
+
 		for numb in chapters:
 			new_path = gallery.chapters[numb]
 			executing.append(
@@ -694,7 +708,7 @@ class ChapterDB:
 			CommandQueue.put(executing)
 			d = ResultQueue.get()
 			del d
-				
+
 
 	@staticmethod
 	def get_chapters_for_gallery(series_id):
@@ -848,7 +862,7 @@ class TagDB:
 			try:
 				if not tag_map_row:
 					continue
-				# get tag and namespace 
+				# get tag and namespace
 				executing = [["""SELECT namespace_id, tag_id FROM tags_mappings
 								WHERE tags_mappings_id=?""", (tag_map_row['tags_mappings_id'],)]]
 				CommandQueue.put(executing)
@@ -884,7 +898,7 @@ class TagDB:
 	def add_tags(object):
 		"Adds the given dict_of_tags to the given series_id"
 		assert isinstance(object, Gallery), "Please provide a valid gallery of class gallery"
-		
+
 		series_id = object.id
 		dict_of_tags = object.tags
 
@@ -904,7 +918,7 @@ class TagDB:
 
 		tags_mappings_id_list = []
 		# first let's add the tags and namespaces to db
-		for namespace in dict_of_tags: 
+		for namespace in dict_of_tags:
 			tags_list = dict_of_tags[namespace]
 			# don't add if it already exists
 			try:
@@ -917,7 +931,7 @@ class TagDB:
 				CommandQueue.put(executing)
 				c = ResultQueue.get()
 				namespace_id = c.lastrowid
-			
+
 			tags_id_list = []
 			for tag in tags_list:
 				try:
@@ -930,7 +944,7 @@ class TagDB:
 					CommandQueue.put(executing)
 					c = ResultQueue.get()
 					tag_id = c.lastrowid
-				
+
 				tags_id_list.append(tag_id)
 
 
@@ -1259,7 +1273,7 @@ class HashDB:
 		for n, i in enumerate(sorted(imgs)):
 			with open(i, 'rb') as img:
 				hashes.append(generate_img_hash(img))
-		
+
 		if gallery.id and chap_id:
 			executing = []
 			for hash in hashes:
@@ -1317,7 +1331,7 @@ class Gallery:
 	valid <- a bool indicating the validity of the gallery
 	"""
 	def __init__(self):
-		
+
 		self.id = None # Will be defaulted.
 		self.title = None
 		self.profile = None
@@ -1583,6 +1597,18 @@ class AdminDB(QObject):
 		self.DONE.emit(True)
 
 	def rebuild_thumbs(self):
+		# add_method_queue(GalleryDB.clear_thumb_dir, True)
+		# TODO okay, so I added this method above in order to completely clear
+		# the thumbnail cache, because I noticed that sometimes
+		# the database and thumbnail cache might be inconsistent, I could not
+		# reproduce the case in which this happened, even though it did
+		# so I just implemented it just in case, maybe you could add
+		# a new confirmation dialog for the user to select if he would
+		# like to do a complete wipe of the cache
+		# I might do this later, depending on how you prefer, I'm not very
+		# experienced with Qt, though. So, yeah, you could just wipe this
+		# and things would be fine, probably.
+
 		galleries = add_method_queue(GalleryDB.get_all_gallery, False)
 		if galleries:
 			self.DATA_COUNT.emit(len(galleries))
@@ -1596,7 +1622,7 @@ class DatabaseEmitter(QObject):
 	"""
 	Fetches and emits database records
 	START: emitted when fetching from DB occurs
-	DONE: emitted when fetching from DB finishes
+	DONE: emitted when the initial fetching from DB finishes
 	"""
 	GALLERY_EMITTER = pyqtSignal(list)
 	START = pyqtSignal()
@@ -1634,7 +1660,7 @@ class DatabaseEmitter(QObject):
 				self._finished = True
 				self.DONE.emit()
 			return False
-	
+
 	def fetch_more(self):
 		if not self.RUN:
 			return
@@ -1653,12 +1679,11 @@ class DatabaseEmitter(QObject):
 			self.GALLERY_EMITTER.emit(gallery_list)
 			self._fetching = False
 		if not self._fetching:
+			# TODO: redo this? 
 			thread = threading.Thread(target=get_records, name='DatabaseEmitter')
 			thread.start()
 
 
 if __name__ == '__main__':
 	#unit testing here
-	date = today()
-	print(date)
-	#raise RuntimeError("Unit testing still not implemented")
+	pass

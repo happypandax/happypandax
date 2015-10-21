@@ -20,8 +20,13 @@ log_w = log.warning
 log_e = log.error
 log_c = log.critical
 
-if not os.path.isfile('settings.ini'):
-	open('settings.ini', 'x')
+if os.name == 'posix':
+	settings_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'settings.ini')
+else:
+	settings_path = 'settings.ini'
+
+if not os.path.isfile(settings_path):
+	open(settings_path, 'x')
 
 class Config(configparser.ConfigParser):
 	def __init__(self):
@@ -47,7 +52,7 @@ class Config(configparser.ConfigParser):
 			log.exception('Could not save settings')
 
 config = Config()
-config.read('settings.ini')
+config.read(settings_path)
 def save():
 	config.save()
 
