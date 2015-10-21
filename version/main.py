@@ -25,6 +25,14 @@ import gallerydb
 #IMPORTANT STUFF
 def start(test=False):
 
+	if os.name == 'posix':
+		main_path = os.path.dirname(os.path.realpath(__file__))
+		log_path = os.path.join(main_path, 'happypanda.log')
+		debug_log_path = os.path.join(main_path, 'happypanda_debug.log')
+	else:
+		log_path = 'happypanda.log'
+		debug_log_path = 'happypanda_debug.log'
+
 	parser = argparse.ArgumentParser(prog='Happypanda',
 								  description='A manga/doujinshi manager with tagging support')
 	parser.add_argument('-d', '--debug', action='store_true',
@@ -41,7 +49,7 @@ def start(test=False):
 		print("happypanda_debug.log created at {}".format(os.getcwd()))
 		# create log
 		try:
-			with open('happypanda_debug.log', 'x') as f:
+			with open(debug_log_path, 'x') as f:
 				pass
 		except FileExistsError:
 			pass
@@ -54,11 +62,11 @@ def start(test=False):
 		gui_constants.DEBUG = True
 	else:
 		try:
-			with open('happypanda.log', 'x') as f:
+			with open(log_path, 'x') as f:
 				pass
 		except FileExistsError: pass
 		file_handler = logging.handlers.RotatingFileHandler(
-			'happypanda.log', maxBytes=1000000*10, encoding='utf-8', backupCount=2)
+			log_path, maxBytes=1000000*10, encoding='utf-8', backupCount=2)
 		logging.basicConfig(level=logging.INFO,
 						format='%(asctime)-8s %(levelname)-6s %(name)-6s %(message)s',
 						datefmt='%d-%m %H:%M',
@@ -155,7 +163,7 @@ def start(test=False):
 		# styling
 		d_style = gui_constants.default_stylesheet_path
 		u_style =  gui_constants.user_stylesheet_path
-	
+
 		if len(u_style) is not 0:
 			try:
 				style_file = QFile(u_style)
@@ -171,7 +179,7 @@ def start(test=False):
 		style = str(style_file.readAll(), 'utf-8')
 		application.setStyleSheet(style)
 		try:
-			os.mkdir('temp')
+			os.mkdir(gui_constants.temp_dir)
 		except FileExistsError:
 			try:
 				for root, dirs, files in scandir.walk('temp', topdown=False):
@@ -187,7 +195,7 @@ def start(test=False):
 			return application, WINDOW
 
 		sys.exit(application.exec_())
-		
+
 	def db_upgrade():
 		log_d('Database connection failed')
 		from PyQt5.QtGui import QIcon

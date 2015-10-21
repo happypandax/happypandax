@@ -124,7 +124,7 @@ def gen_thumbnail(gallery, width=gui_constants.THUMB_W_SIZE,
 		for ext in IMG_FILES:
 			if img_path.lower().endswith(ext):
 				suff = ext # the image ext with dot
-		
+
 		# generate unique file name
 		file_name = str(uuid.uuid4()) + suff
 		new_img_path = os.path.join(db_constants.THUMBNAIL_PATH, (file_name))
@@ -232,6 +232,7 @@ class GalleryDB:
 		gallery_count -> returns amount of gallery (can be used for indexing)
 		del_gallery -> deletes the gallery with the given id recursively
 		check_exists -> Checks if provided string exists
+		remove_thumbs -> Clears the thumbnail cache
 	"""
 	def __init__(self):
 		raise Exception("GalleryDB should not be instantiated")
@@ -241,12 +242,8 @@ class GalleryDB:
 		"Rebuilds gallery thumbnail"
 		try:
 			log_i('Recreating thumb {}'.format(gallery.title.encode(errors='ignore')))
-			if gallery.profile:
-				try:
-					if gallery.profile != gui_constants.NO_IMAGE_PATH:
-						os.remove(gallery.profile)
-				except:
-					pass
+			if gallery.profile and gallery.profile != gui_constants.NO_IMAGE_PATH:
+				clear_thumb(gallery)
 			gallery.profile = gen_thumbnail(gallery)
 			GalleryDB.modify_gallery(
 				gallery.id,
@@ -255,6 +252,24 @@ class GalleryDB:
 			log.exception("Failed rebuilding thumbnail")
 			return False
 		return True
+
+	@staticmethod
+	def clear_thumb(gallery):
+			try:
+				if gallery.profile != gui_constants.NO_IMAGE_PATH:
+					os.remove(gallery.profile)
+			except:
+				pass
+
+	@staticmethod
+	def remove_thumbs():
+		for thumbfile in os.listdir(db_constants.THUMBNAIL_PATH):
+			file_path = os.path.join(db_constants.THUMBNAIL_PATH, thumbfile)
+			try:
+				if os.path.isfile(file_path):
+					os.unlink(file_path)
+			except:
+				pass
 
 	@staticmethod
 	def rebuild_gallery(gallery, thumb=False):
@@ -311,7 +326,7 @@ class GalleryDB:
 		if type:
 			assert isinstance(type, str)
 			executing.append(["UPDATE series SET type=? WHERE series_id=?", (type, series_id)])
-		if fav:
+		if fav != "":
 			assert isinstance(fav, int)
 			executing.append(["UPDATE series SET fav=? WHERE series_id=?", (fav, series_id)])
 		if language:
@@ -358,7 +373,7 @@ class GalleryDB:
 		"Set fav on gallery with given gallery id, and returns the gallery"
 		# NOTE: USELESS BECAUSE OF THE METHOD ABOVE; CONSIDER REVISING & DELETING
 		executing = [["UPDATE series SET fav=? WHERE series_id=?", (fav, series_id)]]
-		GalleryDB.modify_gallery(series_id, fav=fav)		
+		GalleryDB.modify_gallery(series_id, fav=fav)
 
 	@staticmethod
 	def get_all_gallery():
@@ -455,7 +470,7 @@ class GalleryDB:
 		executing = [["SELECT * FROM series WHERE fav=?", (x,)]]
 		CommandQueue.put(executing)
 		cursor = ResultQueue.get()
-		
+
 		gallery_list = []
 		for row in cursor.fetchall():
 			gallery = Gallery()
@@ -585,7 +600,7 @@ class GalleryDB:
 #			return "None"
 #		else:
 #			return obj
-#	executing = [["""INSERT INTO series(title, artist, profile, series_path, 
+#	executing = [["""INSERT INTO series(title, artist, profile, series_path,
 #					info, type, fav, status, pub_date, date_added, last_read, link, last_update,
 #					times_read, exed)
 #				VALUES(:title, :artist, :profile, :series_path, :info, :type, :fav,
@@ -643,7 +658,7 @@ class ChapterDB:
 		if not chapters:
 			chapters = range(len(gallery.chapters))
 		executing = []
-	
+
 		for numb in chapters:
 			new_path = gallery.chapters[numb]
 			executing.append(
@@ -694,7 +709,7 @@ class ChapterDB:
 			CommandQueue.put(executing)
 			d = ResultQueue.get()
 			del d
-				
+
 
 	@staticmethod
 	def get_chapters_for_gallery(series_id):
@@ -848,7 +863,7 @@ class TagDB:
 			try:
 				if not tag_map_row:
 					continue
-				# get tag and namespace 
+				# get tag and namespace
 				executing = [["""SELECT namespace_id, tag_id FROM tags_mappings
 								WHERE tags_mappings_id=?""", (tag_map_row['tags_mappings_id'],)]]
 				CommandQueue.put(executing)
@@ -884,7 +899,7 @@ class TagDB:
 	def add_tags(object):
 		"Adds the given dict_of_tags to the given series_id"
 		assert isinstance(object, Gallery), "Please provide a valid gallery of class gallery"
-		
+
 		series_id = object.id
 		dict_of_tags = object.tags
 
@@ -904,7 +919,7 @@ class TagDB:
 
 		tags_mappings_id_list = []
 		# first let's add the tags and namespaces to db
-		for namespace in dict_of_tags: 
+		for namespace in dict_of_tags:
 			tags_list = dict_of_tags[namespace]
 			# don't add if it already exists
 			try:
@@ -917,7 +932,7 @@ class TagDB:
 				CommandQueue.put(executing)
 				c = ResultQueue.get()
 				namespace_id = c.lastrowid
-			
+
 			tags_id_list = []
 			for tag in tags_list:
 				try:
@@ -930,7 +945,7 @@ class TagDB:
 					CommandQueue.put(executing)
 					c = ResultQueue.get()
 					tag_id = c.lastrowid
-				
+
 				tags_id_list.append(tag_id)
 
 
@@ -1259,7 +1274,7 @@ class HashDB:
 		for n, i in enumerate(sorted(imgs)):
 			with open(i, 'rb') as img:
 				hashes.append(generate_img_hash(img))
-		
+
 		if gallery.id and chap_id:
 			executing = []
 			for hash in hashes:
@@ -1317,7 +1332,7 @@ class Gallery:
 	valid <- a bool indicating the validity of the gallery
 	"""
 	def __init__(self):
-		
+
 		self.id = None # Will be defaulted.
 		self.title = None
 		self.profile = None
@@ -1583,6 +1598,18 @@ class AdminDB(QObject):
 		self.DONE.emit(True)
 
 	def rebuild_thumbs(self):
+		# add_method_queue(GalleryDB.remove_thumbs, True)
+		# TODO okay, so I added this method above in order to completely clear
+		# the thumbnail cache, because I noticed that sometimes
+		# the database and thumbnail cache might be inconsistent, I could not
+		# reproduce the case in which this happened, even though it did
+		# so I just implemented it just in case, maybe you could add
+		# a new confirmation dialog for the user to select if he would
+		# like to do a complete wipe of the cache
+		# I might do this later, depending on how you prefer, I'm not very
+		# experienced with Qt, though. So, yeah, you could just wipe this
+		# and things would be fine, probably.
+
 		galleries = add_method_queue(GalleryDB.get_all_gallery, False)
 		if galleries:
 			self.DATA_COUNT.emit(len(galleries))
@@ -1634,7 +1661,7 @@ class DatabaseEmitter(QObject):
 				self._finished = True
 				self.DONE.emit()
 			return False
-	
+
 	def fetch_more(self):
 		if not self.RUN:
 			return
