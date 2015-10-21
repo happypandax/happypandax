@@ -217,6 +217,7 @@ def default_exec(object):
 class GalleryDB:
 	"""
 	Provides the following s methods:
+		rebuild_thumb -> Rebuilds gallery thumbnail
 		rebuild_galleries -> Rebuilds the galleries in DB
 		modify_gallery -> Modifies gallery with given gallery id
 		fav_gallery_set -> Set fav on gallery with given gallery id, and returns the gallery
@@ -232,7 +233,8 @@ class GalleryDB:
 		gallery_count -> returns amount of gallery (can be used for indexing)
 		del_gallery -> deletes the gallery with the given id recursively
 		check_exists -> Checks if provided string exists
-		remove_thumbs -> Clears the thumbnail cache
+		clear_thumb -> Deletes a thumbnail
+		clear_thumb_dir -> Dletes everything in the thumbnail directory
 	"""
 	def __init__(self):
 		raise Exception("GalleryDB should not be instantiated")
@@ -242,8 +244,8 @@ class GalleryDB:
 		"Rebuilds gallery thumbnail"
 		try:
 			log_i('Recreating thumb {}'.format(gallery.title.encode(errors='ignore')))
-			if gallery.profile and gallery.profile != gui_constants.NO_IMAGE_PATH:
-				clear_thumb(gallery)
+			if gallery.profile:
+				GalleryDB.clear_thumb(gallery.profile)
 			gallery.profile = gen_thumbnail(gallery)
 			GalleryDB.modify_gallery(
 				gallery.id,
@@ -254,22 +256,19 @@ class GalleryDB:
 		return True
 
 	@staticmethod
-	def clear_thumb(gallery):
-			try:
-				if gallery.profile != gui_constants.NO_IMAGE_PATH:
-					os.remove(gallery.profile)
-			except:
-				pass
+	def clear_thumb(path):
+		"Deletes a thumbnail"
+		try:
+			if path != gui_constants.NO_IMAGE_PATH:
+				os.unlink(path)
+		except:
+			log.exception('Failed to delete thumb {}'.format(os.path.split(path)[1].encode(errors='ignore')))
 
 	@staticmethod
-	def remove_thumbs():
-		for thumbfile in os.listdir(db_constants.THUMBNAIL_PATH):
-			file_path = os.path.join(db_constants.THUMBNAIL_PATH, thumbfile)
-			try:
-				if os.path.isfile(file_path):
-					os.unlink(file_path)
-			except:
-				pass
+	def clear_thumb_dir():
+		"Deletes everything in the thumbnail directory"
+		for thumbfile in scandir.scandir(db_constants.THUMBNAIL_PATH):
+			GalleryDB.clear_thumb(thumbfile.path)
 
 	@staticmethod
 	def rebuild_gallery(gallery, thumb=False):
@@ -311,55 +310,55 @@ class GalleryDB:
 		executing = []
 		assert isinstance(series_id, int)
 		executing = []
-		if title:
+		if title != None:
 			assert isinstance(title, str)
 			executing.append(["UPDATE series SET title=? WHERE series_id=?", (title, series_id)])
-		if profile:
+		if profile != None:
 			assert isinstance(profile, str)
 			executing.append(["UPDATE series SET profile=? WHERE series_id=?", (str.encode(profile), series_id)])
-		if artist:
+		if artist != None:
 			assert isinstance(artist, str)
 			executing.append(["UPDATE series SET artist=? WHERE series_id=?", (artist, series_id)])
-		if info:
+		if info != None:
 			assert isinstance(info, str)
 			executing.append(["UPDATE series SET info=? WHERE series_id=?", (info, series_id)])
-		if type:
+		if type != None:
 			assert isinstance(type, str)
 			executing.append(["UPDATE series SET type=? WHERE series_id=?", (type, series_id)])
-		if fav != "":
+		if fav != None:
 			assert isinstance(fav, int)
 			executing.append(["UPDATE series SET fav=? WHERE series_id=?", (fav, series_id)])
-		if language:
+		if language != None:
 			assert isinstance(language, str)
 			executing.append(["UPDATE series SET language=? WHERE series_id=?", (language, series_id)])
-		if status:
+		if status != None:
 			assert isinstance(status, str)
 			executing.append(["UPDATE series SET status=? WHERE series_id=?", (status, series_id)])
-		if pub_date:
+		if pub_date != None:
 			executing.append(["UPDATE series SET pub_date=? WHERE series_id=?", (pub_date, series_id)])
-		if link:
+		if link != None:
 			executing.append(["UPDATE series SET link=? WHERE series_id=?", (link, series_id)])
-		if times_read:
+		if times_read != None:
 			executing.append(["UPDATE series SET times_read=? WHERE series_id=?", (times_read, series_id)])
-		if series_path:
+		if series_path != None:
 			executing.append(["UPDATE series SET series_path=? WHERE series_id=?", (str.encode(series_path), series_id)])
-		if _db_v:
+		if _db_v != None:
 			executing.append(["UPDATE series SET db_v=? WHERE series_id=?", (_db_v, series_id)])
-		if exed:
+		if exed != None:
 			executing.append(["UPDATE series SET exed=? WHERE series_id=?", (exed, series_id)])
-		if is_archive:
+		if is_archive != None:
 			executing.append(["UPDATE series SET is_archive=? WHERE series_id=?", (is_archive, series_id)])
-		if path_in_archive:
+		if path_in_archive != None:
 			executing.append(["UPDATE series SET path_in_archive=? WHERE series_id=?", (path_in_archive, series_id)])
 
-		if tags:
+		if tags != None:
 			assert isinstance(tags, dict)
 			TagDB.modify_tags(series_id, tags)
-		if chapters:
+		if chapters != None:
 			assert isinstance(chapters, Gallery)
 			ChapterDB.update_chapter(chapters)
 
-		if hashes:
+		if hashes != None:
 			assert isinstance(hashes, Gallery)
 			HashDB.rebuild_gallery_hashes(hashes)
 
@@ -1598,7 +1597,7 @@ class AdminDB(QObject):
 		self.DONE.emit(True)
 
 	def rebuild_thumbs(self):
-		# add_method_queue(GalleryDB.remove_thumbs, True)
+		# add_method_queue(GalleryDB.clear_thumb_dir, True)
 		# TODO okay, so I added this method above in order to completely clear
 		# the thumbnail cache, because I noticed that sometimes
 		# the database and thumbnail cache might be inconsistent, I could not
@@ -1623,7 +1622,7 @@ class DatabaseEmitter(QObject):
 	"""
 	Fetches and emits database records
 	START: emitted when fetching from DB occurs
-	DONE: emitted when fetching from DB finishes
+	DONE: emitted when the initial fetching from DB finishes
 	"""
 	GALLERY_EMITTER = pyqtSignal(list)
 	START = pyqtSignal()
@@ -1680,12 +1679,11 @@ class DatabaseEmitter(QObject):
 			self.GALLERY_EMITTER.emit(gallery_list)
 			self._fetching = False
 		if not self._fetching:
+			# TODO: redo this? 
 			thread = threading.Thread(target=get_records, name='DatabaseEmitter')
 			thread.start()
 
 
 if __name__ == '__main__':
 	#unit testing here
-	date = today()
-	print(date)
-	#raise RuntimeError("Unit testing still not implemented")
+	pass
