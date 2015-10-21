@@ -1383,6 +1383,9 @@ class Gallery:
 		if isinstance(key, Chapter):
 			return self.chapters.__contains__(key)
 		elif isinstance(key, str):
+			is_exclude = False if key[0] == '-' else True
+			key = key[1:] if not is_exclude else key
+			default = False if is_exclude else True
 			if key:
 				key = key.lower()
 				tags = key.split(':')
@@ -1399,17 +1402,17 @@ class Gallery:
 							if utils.regex_search(ns, x):
 								for t in self.tags[x]:
 									if utils.regex_search(tag, t):
-										return True
+										return is_exclude
 				else:
 					if ns:
 						if ns in self.tags:
 							if tag in self.tags[ns]:
-								return True
+								return is_exclude
 					else:
 						for x in self.tags:
 							if tag in self.tags[x]:
-								return True
-		return False
+								return is_exclude
+		return default
 
 	def __str__(self):
 		string = """

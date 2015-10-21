@@ -12,7 +12,7 @@
 #along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 #"""
 
-import time, datetime, os, subprocess, sys, logging, zipfile
+import datetime, os, subprocess, sys, logging, zipfile
 import hashlib, shutil, uuid, re, scandir, rarfile
 
 import gui_constants
@@ -714,66 +714,98 @@ def delete_path(path):
 def regex_search(a, b):
 	"Looks for a in b"
 	try:
-		if regex.search(a, b, regex.IGNORECASE):
-			return True
+		if gui_constants.GALLERY_SEARCH_CASE:
+			if regex.search(a, b):
+				return True
+		else:
+			if regex.search(a, b, regex.IGNORECASE):
+				return True
 	except regex.error:
 		pass
 	return False
 
+def search_term(a, b, override_case=False):
+	"Searches for a in b"
+	if not gui_constants.GALLERY_SEARCH_CASE or override_case:
+		b = b.lower()
+		a = a.lower()
+
+	if gui_constants.GALLERY_SEARCH_STRICT:
+		if a == b:
+			return True
+	else:
+		if a in b:
+			return True
+	return False
+
 def get_terms(term):
 	"Dividies term into pieces. Returns a list with the pieces"
+
+	# some variables we will use
 	pieces = []
 	piece = ''
 	qoute_level = 0
-	blacklist = ['"', ',']
+	bracket_level = 0
+	brackets_tags = {}
+	current_bracket_ns = ''
+	end_of_bracket = False
+	blacklist = ['[', ']', '"', ',']
+
 	for n, x in enumerate(term):
+		# if we meet brackets
+		if x == '[':
+			bracket_level += 1
+			brackets_tags[piece] = set() # we want unique tags!
+			current_bracket_ns = piece
+		elif x == ']':
+			bracket_level -= 1
+			end_of_bracket = True
+
 		# if we meet a double qoute
 		if x == '"':
 			if qoute_level > 0:
 				qoute_level -= 1
 			else:
 				qoute_level += 1
-		# if we meet a whitespace or end of term and are not in a double qoute
-		if (x == ' ' or n == len(term) - 1) and qoute_level == 0:
+
+		# if we meet a whitespace, comma or end of term and are not in a double qoute
+		if (x == ' ' or x == ',' or n == len(term) - 1) and qoute_level == 0:
 			# if end of term and x is allowed
 			if (n == len(term) - 1) and not x in blacklist and x != ' ':
 				piece += x
-			pieces.append(piece)
+			if piece:
+				if bracket_level > 0 or end_of_bracket: # if we are inside a bracket we put piece in the set
+					end_of_bracket = False
+					if piece.startswith(current_bracket_ns):
+						piece = piece[len(current_bracket_ns):]
+					if piece:
+						brackets_tags[current_bracket_ns].add(piece)
+				else:
+					pieces.append(piece) # else put it in the normal list
 			piece = ''
 			continue
 
-		# else append to the buffer
+		# else append to the buffers
 		if not x in blacklist:
-			if qoute_level > 0: # we want to include whitespace if in double qoute
+			if qoute_level > 0: # we want to include everything if in double qoute
 				piece += x
 			elif x != ' ':
 				piece += x
 
-	#############
-	#def remove_abs_terms(term):
-	#	if term.startswith(('title:')):
-	#		term = term[6:]
-	#	elif term.startswith(('artist:')):
-	#		term = term[7:]
-	#	return term
+	# now for the bracket tags
+	for ns in brackets_tags:
+		for tag in brackets_tags[ns]:
+			ns_tag = ns
+			# if they want to exlucde this tag
+			if tag[0] == '-':
+				if ns_tag[0] != '-':
+					ns_tag = '-' + ns
+				tag = tag[1:] # remove the '-'
 
-	#d_terms = {}
-	#excludes = []
-	## get excludes, title, artist
-	#for t in terms:
-	#	if t[0] == '-':
-	#		term = t[1:]
-	#		excludes.append(remove_abs_terms(term))
-	#		continue
-	#	if t.startswith('title:'):
-	#		term = t[6:]
-	#		title = term
-	#		continue
-	#	if t.startswith('artist:'):
-	#		term = t[7:]
-	#		artist = term
-	#		continue
+			# put them together
+			ns_tag += tag
 
-	#	d_terms[t] = False
+			# done
+			pieces.append(ns_tag)
 
 	return pieces

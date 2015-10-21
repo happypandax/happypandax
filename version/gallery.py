@@ -174,39 +174,19 @@ class GallerySearch(QObject):
 		# filtering
 		self.fav = False
 		self.excludes = []
-		self.search_test_methods = [
-			self._s_title,
-			self._s_artist,
-			self._s_language,
-			]
 
-	def _s_title(self, txt, g):
-		if gui_constants.ALLOW_SEARCH_REGEX:
-			if utils.regex_search(txt, g.title):
-				return True
-		else:
-			if txt in g.title.lower():
-				return True
-		return False
-
-	def _s_artist(self, txt, g):
-		if gui_constants.ALLOW_SEARCH_REGEX:
-			if utils.regex_search(txt, g.artist):
-				return True
-		else:
-			if txt in g.artist.lower():
-				return True
-		return False
-
-	def _s_language(self, txt, g):
-		if g.language:
+	def _s_abs(self, txt, g_term):
+		is_exclude = False if txt[0] == '-' else True
+		txt = txt[1:] if not is_exclude else txt
+		default = False if is_exclude else True
+		if g_term:
 			if gui_constants.ALLOW_SEARCH_REGEX:
-				if utils.regex_search(txt, g.language):
-					return True
+				if utils.regex_search(txt, g_term):
+					return is_exclude
 			else:
-				if txt in g.language.lower():
-					return True
-		return False
+				if utils.search_term(txt, g_term):
+					return is_exclude
+		return default
 
 	def set_data(self, new_data):
 		self._data = new_data
@@ -217,34 +197,30 @@ class GallerySearch(QObject):
 		self.fav = new_fav
 
 	def search(self, term):
-		term = ' '.join(term.lower().split())
+		term = ' '.join(term.split())
 		search_pieces = utils.get_terms(term)
 		#self.excludes = []
 
 		def remove_abs_terms(term):
-			if term.startswith('title:'):
-				term = term[6:]
-			elif term.startswith('artist:'):
-				term = term[7:]
-			elif term.startswith('language:'):
-				term = term[9:]
+			if 'title:' in term.lower():
+				term = '-' + term[7:] if term[0] == '-' else term[6:]
+			elif 'artist:' in term.lower():
+				term = '-' + term[8:] if term[0] == '-' else term[7:]
+			elif 'language' in term.lower():
+				term = '-' + term[10:] if term[0] == '-' else term[9:]
 			return term
 
 		title = artist = language = ''
 		terms = []
-		# get excludes, title, artist
+		# get title, artist, language
 		for t in search_pieces:
-			#if t[0] == '-':
-			#	term = t[1:]
-			#	self.excludes.append(remove_abs_terms(term))
-				#continue
-			if t.startswith('title:'):
+			if 'title:' in t.lower():
 				title = remove_abs_terms(t)
 				continue
-			elif t.startswith('artist:'):
+			elif 'artist:' in t.lower():
 				artist = remove_abs_terms(t)
 				continue
-			elif t.startswith('language:'):
+			elif 'language:' in t.lower():
 				language = remove_abs_terms(t)
 				continue
 			terms.append(t)
@@ -254,7 +230,8 @@ class GallerySearch(QObject):
 
 	def _test(self, terms, title='', artist='', language=''):
 		self.result.clear()
-		print(terms)
+		print(terms, 'title='+title, 'artist='+artist, 'lang='+language)
+		test = []
 		for gallery in self._data:
 			all_terms = {t: False for t in terms}
 			allow = False if terms else True
@@ -262,41 +239,42 @@ class GallerySearch(QObject):
 				self.result[gallery.id] = allow
 				continue
 
+			# TODO: refactor this!
 			if title:
-				a_title = self._s_title(title, gallery)
+				a_title = self._s_abs(title, gallery.title)
 				if not a_title:
-					allow = 'title:'+title in gallery
-					if not allow:
+					if not ('-title:'+title[1:] if title[0] == '-' else 'title:'+title) in gallery: # unreadable? sorry!
 						continue
 
 			if artist:
-				a_artist = self._s_artist(artist, gallery)
+				a_artist = self._s_abs(artist, gallery.artist)
 				if not a_artist:
-					allow = 'artist:'+ artist in gallery
-					if not allow:
+					if not ('-artist:'+artist[1:] if artist[0] == '-' else 'artist:'+artist) in gallery: # unreadable? sorry!
 						continue
 
 			if language:
-				a_lang = self._s_language(language, gallery)
+				a_lang = self._s_abs(language, gallery.language)
 				if not a_lang:
-					allow = 'language:'+language in gallery
-					if not allow:
+					if not ('-language:'+language[1:] if language[0] == '-' else 'language:'+language) in gallery: # unreadable? sorry!
 						continue
 
+			# TODO: weird behaviour
 			for t in terms:
-				found = False # no need to search any further
-				for m in self.search_test_methods:
-					if m(t, gallery):
-						all_terms[t] = True
-						found = True
-				if not found:
-					if t in gallery: # tags
+				if t in gallery: # tags
+					#all_terms[t] = True
+					continue
+
+				for g_t in [gallery.title, gallery.artist, gallery.language]:
+					if self._s_abs(t, g_t):
+						test.append('allow')
 						all_terms[t] = True
 
+			print(all_terms)
 			if all(all_terms.values()):
 				allow = True
 
 			self.result[gallery.id] = allow
+		#print(len(test))
 
 class SortFilterModel(QSortFilterProxyModel):
 	ROWCOUNT_CHANGE = pyqtSignal()
