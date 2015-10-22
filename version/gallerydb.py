@@ -1401,31 +1401,50 @@ class Gallery:
 			key = key[1:] if not is_exclude else key
 			default = False if is_exclude else True
 			if key:
-				key = key.lower()
-				tags = key.split(':')
-				ns = tag = ''
-				if len(tags) > 1:
-					ns = tags[0].capitalize()
-					tag = tags[1].lower()
-				else:
-					tag = tags[0].lower()
+				# check in title/artist/language
+				found = False
+				if not ':' in key:
+					for g_attr in [self.title, self.artist, self.language]:
+						if not g_attr:
+							continue
+						if gui_constants.ALLOW_SEARCH_REGEX:
+							if utils.regex_search(key, g_attr):
+								found = True
+								break
+						else:
+							if utils.search_term(key, g_attr):
+								found = True
+								break
 
-				if gui_constants.ALLOW_SEARCH_REGEX:
-					if ns:
-						for x in self.tags:
-							if utils.regex_search(ns, x):
-								for t in self.tags[x]:
-									if utils.regex_search(tag, t):
-										return is_exclude
-				else:
-					if ns:
-						if ns in self.tags:
-							if tag in self.tags[ns]:
-								return is_exclude
+				# check in tag
+				if not found:
+					key = key.lower()
+					tags = key.split(':')
+					ns = tag = ''
+					if len(tags) > 1:
+						ns = tags[0].capitalize()
+						tag = tags[1].lower()
 					else:
-						for x in self.tags:
-							if tag in self.tags[x]:
-								return is_exclude
+						tag = tags[0].lower()
+
+					if gui_constants.ALLOW_SEARCH_REGEX:
+						if ns:
+							for x in self.tags:
+								if utils.regex_search(ns, x):
+									for t in self.tags[x]:
+										if utils.regex_search(tag, t):
+											return is_exclude
+					else:
+						if ns:
+							if ns in self.tags:
+								if tag in self.tags[ns]:
+									return is_exclude
+						else:
+							for x in self.tags:
+								if tag in self.tags[x]:
+									return is_exclude
+				else:
+					return is_exclude
 		return default
 
 	def __str__(self):

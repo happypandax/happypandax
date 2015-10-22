@@ -184,8 +184,12 @@ class GallerySearch(QObject):
 				if utils.regex_search(txt, g_term):
 					return is_exclude
 			else:
+				#if not is_exclude:
+				#	print('will return false because they want to exclude')
 				if utils.search_term(txt, g_term):
+					#print('Found term! returning')
 					return is_exclude
+			#print('returning default')
 		return default
 
 	def set_data(self, new_data):
@@ -199,82 +203,27 @@ class GallerySearch(QObject):
 	def search(self, term):
 		term = ' '.join(term.split())
 		search_pieces = utils.get_terms(term)
-		#self.excludes = []
 
-		def remove_abs_terms(term):
-			if 'title:' in term.lower():
-				term = '-' + term[7:] if term[0] == '-' else term[6:]
-			elif 'artist:' in term.lower():
-				term = '-' + term[8:] if term[0] == '-' else term[7:]
-			elif 'language' in term.lower():
-				term = '-' + term[10:] if term[0] == '-' else term[9:]
-			return term
-
-		title = artist = language = ''
-		terms = []
-		# get title, artist, language
-		for t in search_pieces:
-			if 'title:' in t.lower():
-				title = remove_abs_terms(t)
-				continue
-			elif 'artist:' in t.lower():
-				artist = remove_abs_terms(t)
-				continue
-			elif 'language:' in t.lower():
-				language = remove_abs_terms(t)
-				continue
-			terms.append(t)
-
-		self._test(terms, title, artist, language)
+		self._test(search_pieces)
 		self.FINISHED.emit()
 
-	def _test(self, terms, title='', artist='', language=''):
+	def _test(self, terms):
 		self.result.clear()
-		print(terms, 'title='+title, 'artist='+artist, 'lang='+language)
-		test = []
 		for gallery in self._data:
 			all_terms = {t: False for t in terms}
-			allow = False if terms else True
-			if allow and (not title and not artist and not language):
-				self.result[gallery.id] = allow
+			allow = False
+			if utils.all_opposite(terms):
+				self.result[gallery.id] = True
 				continue
-
-			# TODO: refactor this!
-			if title:
-				a_title = self._s_abs(title, gallery.title)
-				if not a_title:
-					if not ('-title:'+title[1:] if title[0] == '-' else 'title:'+title) in gallery: # unreadable? sorry!
-						continue
-
-			if artist:
-				a_artist = self._s_abs(artist, gallery.artist)
-				if not a_artist:
-					if not ('-artist:'+artist[1:] if artist[0] == '-' else 'artist:'+artist) in gallery: # unreadable? sorry!
-						continue
-
-			if language:
-				a_lang = self._s_abs(language, gallery.language)
-				if not a_lang:
-					if not ('-language:'+language[1:] if language[0] == '-' else 'language:'+language) in gallery: # unreadable? sorry!
-						continue
-
-			# TODO: weird behaviour
+			
 			for t in terms:
-				if t in gallery: # tags
-					#all_terms[t] = True
-					continue
+				if t in gallery:
+					all_terms[t] = True
 
-				for g_t in [gallery.title, gallery.artist, gallery.language]:
-					if self._s_abs(t, g_t):
-						test.append('allow')
-						all_terms[t] = True
-
-			print(all_terms)
 			if all(all_terms.values()):
 				allow = True
 
 			self.result[gallery.id] = allow
-		#print(len(test))
 
 class SortFilterModel(QSortFilterProxyModel):
 	ROWCOUNT_CHANGE = pyqtSignal()

@@ -34,6 +34,14 @@ if not gui_constants.unrar_tool_path:
 	FILE_FILTER = '*.zip *.cbz'
 	ARCHIVE_FILES = ('.zip', '.cbz')
 
+def all_opposite(*args):
+	"Returns true if all items in iterable evaluaeto false"
+	for iterable in args:
+		for x in iterable:
+			if x:
+				return False
+	return True
+
 def update_gallery_path(new_path, gallery):
 	"Updates a gallery's & it's chapters' path"
 	for chap_numb in gallery.chapters:
@@ -779,7 +787,10 @@ def get_terms(term):
 					if piece.startswith(current_bracket_ns):
 						piece = piece[len(current_bracket_ns):]
 					if piece:
-						brackets_tags[current_bracket_ns].add(piece)
+						try:
+							brackets_tags[current_bracket_ns].add(piece)
+						except KeyError: # keyerror when there is a closing bracket without a starting bracket
+							pass
 				else:
 					pieces.append(piece) # else put it in the normal list
 			piece = ''
