@@ -783,7 +783,7 @@ class AppWindow(QMainWindow):
 							for ser in status:
 								if ser.is_archive and gui_constants.SUBFOLDER_AS_GALLERY:
 									p = os.path.split(ser.path)[1]
-									if ser.chapters[0]:
+									if ser.chapters[0].path:
 										pt_in_arch = os.path.split(ser.path_in_archive)
 										pt_in_arch = pt_in_arch[1] or pt_in_arch[0]
 										text = '{}: {}'.format(p, pt_in_arch)
@@ -887,9 +887,9 @@ class AppWindow(QMainWindow):
 							for g in self.scanned_data:
 								try:
 									if g.is_archive:
-										g.profile = utils.get_gallery_img(g.chapters[0], g.path)
+										g.profile = utils.get_gallery_img(g.chapters[0].path, g.path)
 									else:
-										g.profile = utils.get_gallery_img(g.chapters[0])
+										g.profile = utils.get_gallery_img(g.chapters[0].path)
 									if not g.profile:
 										raise Exception
 								except:

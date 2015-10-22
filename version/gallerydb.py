@@ -114,9 +114,9 @@ def gen_thumbnail(gallery, width=gui_constants.THUMB_W_SIZE,
 	try:
 		if not img:
 			if gallery.is_archive:
-				img_path = get_gallery_img(gallery.chapters[0], gallery.path)
+				img_path = get_gallery_img(gallery.chapters[0].path, gallery.path)
 			else:
-				img_path = get_gallery_img(gallery.chapters[0])
+				img_path = get_gallery_img(gallery.chapters[0].path)
 		else:
 			img_path = img
 		if not img_path:
@@ -142,6 +142,13 @@ def gen_thumbnail(gallery, width=gui_constants.THUMB_W_SIZE,
 
 	abs_path = os.path.abspath(new_img_path)
 	return abs_path
+
+def chapter_map(row, chapter):
+	assert isinstance(chapter, Chapter)
+	chapter.path = bytes.decode(row['chapter_path'])
+	chapter.pages = row['pages']
+	chapter.in_archive = row['in_archive']
+	return chapter
 
 def gallery_map(row, gallery):
 	gallery.title = row['title']
@@ -177,6 +184,26 @@ def gallery_map(row, gallery):
 	gallery.hashes = HashDB.get_gallery_hashes(gallery.id)
 
 	return gallery
+
+def default_chap_exec(gallery_or_id, chap):
+	"Pass a Gallery object or gallery id and a Chapter object"
+	if isinstance(gallery_or_id, Gallery):
+		gid = gallery_or_id.id
+		in_archive = gallery_or_id.is_archive
+	else:
+		gid = gallery_or_id
+		in_archive = chap.in_archive
+
+	execute = ["""
+			INSERT INTO chapters(series_id, chapter_number, chapter_path, in_archive)
+			VALUES(:series_id, :chapter_number, :chapter_path, :pages, :in_archive)""",
+			{'series_id':gid,
+			'chapter_number':chap.number,
+			'chapter_path':str.encode(chap.path),
+			'pages':chap.pages,
+			'in_archive':in_archive}
+			]
+	return execute
 
 def default_exec(object):
 	def check(obj):
@@ -355,7 +382,7 @@ class GalleryDB:
 			assert isinstance(tags, dict)
 			TagDB.modify_tags(series_id, tags)
 		if chapters != None:
-			assert isinstance(chapters, Gallery)
+			assert isinstance(chapters, ChaptersContainer)
 			ChapterDB.update_chapter(chapters)
 
 		if hashes != None:
@@ -531,7 +558,7 @@ class GalleryDB:
 					s = delete_path(gallery.path)
 				else:
 					for chap in gallery.chapters:
-						path = gallery.chapters[chap]
+						path = chap.path
 						s = delete_path(path)
 						if not s:
 							log_e('Failed to delete chapter {}:{}, {}'.format(chap,
@@ -647,22 +674,26 @@ class ChapterDB:
 		raise Exception("ChapterDB should not be instantiated")
 
 	@staticmethod
-	def update_chapter(gallery, chapters=[]):
+	def update_chapter(chapter_container, numbers=[]):
 		"""
 		Updates an existing chapter in DB.
-		Pass a gallery. Specify which chapters to update with list of ints,
+		Pass a gallery's ChapterContainer, specify number with a list of ints
 		leave empty to update all chapters.
 		"""
 		assert isinstance(gallery, Gallery) and isinstance(chapters, (list, tuple))
-		if not chapters:
-			chapters = range(len(gallery.chapters))
+		if numbers:
+			chapters = []
+			for n in numbers:
+				chapters.append(chapter_container[n])
+		else:
+			chapters = chapter_container.get_all_chapters()
 		executing = []
 
-		for numb in chapters:
-			new_path = gallery.chapters[numb]
+		for chap in chapters:
+			new_path = chap.path
 			executing.append(
 			["UPDATE chapters SET chapter_path=?, in_archive=? WHERE series_id=? AND chapter_number=?", (
-				str.encode(new_path), gallery.is_archive, gallery.id, numb)])
+				str.encode(new_path), chap.in_archive, chap.gallery.id, chap.number)])
 		CommandQueue.put(executing)
 		c = ResultQueue.get()
 		del c
@@ -672,80 +703,66 @@ class ChapterDB:
 		"Adds chapters linked to gallery into database"
 		assert isinstance(gallery_object, Gallery), "Parent gallery need to be of class Gallery"
 		series_id = gallery_object.id
-		for chap_number in gallery_object.chapters:
-			chap_path = str.encode(gallery_object.chapters[chap_number])
-			executing = [["""
-			INSERT INTO chapters(series_id, chapter_number, chapter_path, in_archive)
-			VALUES(:series_id, :chapter_number, :chapter_path, :in_archive)""",
-			{'series_id':series_id,
-			'chapter_number':chap_number,
-			'chapter_path':chap_path,
-			'in_archive':gallery_object.is_archive}
-			]]
-			CommandQueue.put(executing)
-			# neccessary to keep order... feels awkward, will prolly redo this.
-			d = ResultQueue.get()
-			del d
+		executing = []
+		for chap in gallery_object.chapters:
+			executing.append(default_chap_exec(gallery_object, chap))
 
-	def add_chapters_raw(series_id, chapters_dict):
+		CommandQueue.put(executing)
+		# neccessary to keep order... feels awkward, will prolly redo this.
+		d = ResultQueue.get()
+		del d
+
+	def add_chapters_raw(series_id, chapters_container):
 		"Adds chapter(s) to a gallery with the received series_id"
-		assert isinstance(chapters_dict, dict), "chapters_dict must be a dictionary: {numb:path}"
-		for chap_number in chapters_dict:
-			chap_path = str.encode(chapters_dict[chap_number])
-			if not ChapterDB.get_chapter(series_id, chap_number):
-				executing = [["""
-				INSERT INTO chapters(series_id, chapter_number, chapter_path)
-				VALUES(:series_id, :chapter_number, :chapter_path)""",
-				{'series_id':series_id,
-				'chapter_number':chap_number,
-				'chapter_path':chap_path}
-				]]
+		assert isinstance(chapters_container, ChaptersContainer), "chapters_container must be of class ChaptersContainer"
+		executing = []
+		for chap in chapters_container:
+			if not ChapterDB.get_chapter(series_id, chap.number):
+				executing.append(default_chap_exec(series_id, chap))
 			else:
-				executing = [["""
-				UPDATE chapters SET chapter_path=?
+				executing.append(["""
+				UPDATE chapters SET chapter_path=?, pages=?, in_archive=?
 				WHERE series_id=? AND chapter_number=?""",
-				(series_id, chap_number,)]]
-			CommandQueue.put(executing)
-			d = ResultQueue.get()
-			del d
+				(chap.path, chap.pages, chap.in_archive, series_id, chap.number,)])
+		CommandQueue.put(executing)
+		d = ResultQueue.get()
+		del d
 
 
 	@staticmethod
 	def get_chapters_for_gallery(series_id):
-		"""Returns a dict of chapters matching the received series_id
-		{<chap_number>:<chap_path>}
+		"""
+		Returns a ChaptersContainer of chapters matching the received series_id
 		"""
 		assert isinstance(series_id, int), "Please provide a valid gallery ID"
-		executing = [["""SELECT chapter_number, chapter_path
-							FROM chapters WHERE series_id=?""",
+		executing = [["""SELECT * FROM chapters WHERE series_id=?""",
 							(series_id,)]]
 		CommandQueue.put(executing)
 		cursor = ResultQueue.get()
 		rows = cursor.fetchall()
-		chapters = {}
+		chapters = ChaptersContainer()
 		for row in rows:
-			chapters[row['chapter_number']] = bytes.decode(row['chapter_path'])
-
+			chap = chapters.create_chapter(row['chapter_number'])
+			chapter_map(row, chap)
 		return chapters
 
 
 	@staticmethod
 	def get_chapter(series_id, chap_numb):
-		"""Returns a dict of chapter matching the recieved chapter_number
-		{<chap_number>:<chap_path>}
+		"""Returns a ChaptersContainer of chapters matching the recieved chapter_number
 		return None for no match
 		"""
 		assert isinstance(chap_numb, int), "Please provide a valid chapter number"
-		executing = [["""SELECT chapter_number, chapter_path
-							FROM chapters WHERE series_id=? AND chapter_number=?""",
+		executing = [["""SELECT * FROM chapters WHERE series_id=? AND chapter_number=?""",
 							(series_id, chap_numb,)]]
 		CommandQueue.put(executing)
 		cursor = ResultQueue.get()
 		try:
 			rows = cursor.fetchall()
-			chapters = {}
+			chapters = ChaptersContainer()
 			for row in rows:
-				chapters[row['chapter_number']] = bytes.decode(row['chapter_path'])
+				chap = chapters.create_chapter(row['chapter_number'])
+				chapter_map(row, chap)
 		except TypeError:
 			return None
 		return chapters
@@ -769,9 +786,9 @@ class ChapterDB:
 			return None
 
 	@staticmethod
-	def chapter_size(series_id):
+	def chapter_size(gallery_id):
 		"""Returns the amount of chapters for the given
-		manga id
+		gallery id
 		"""
 		pass
 
@@ -794,8 +811,6 @@ class ChapterDB:
 		CommandQueue.put(executing)
 		c = ResultQueue.get()
 		del c
-
-
 
 class TagDB:
 	"""
@@ -1147,11 +1162,11 @@ class HashDB:
 			assert isinstance(page, (int, str))
 		if gallery.id:
 			chap_id = ChapterDB.get_chapter_id(gallery.id, chapter)
-		chap_path = gallery.chapters[chapter]
+		chap = gallery.chapters[chapter]
 		try:
 			if gallery.is_archive:
 				raise NotADirectoryError
-			imgs = sorted([x.path for x in scandir.scandir(chap_path)])
+			imgs = sorted([x.path for x in scandir.scandir(chap.path)])
 			pages = {}
 			for n, i in enumerate(imgs):
 				pages[n] = i
@@ -1172,7 +1187,7 @@ class HashDB:
 				if is_archive:
 					zip = ArchiveFile(gallery.path)
 				else:
-					zip = ArchiveFile(chap_path)
+					zip = ArchiveFile(chap.path)
 			except gui_constants.CreateArchiveFail:
 				log_e('Could not generate hash: CreateZipFail')
 				return {}
@@ -1181,7 +1196,7 @@ class HashDB:
 				p = 0
 				if page == 'mid':
 					if is_archive:
-						con = zip.dir_contents(chap_path)
+						con = zip.dir_contents(chap.path)
 						p = len(con)//2
 						img = con[p]
 					else:
@@ -1190,7 +1205,7 @@ class HashDB:
 				else:
 					p = page
 					if is_archive:
-						con = zip.dir_contents(chap_path)
+						con = zip.dir_contents(chap.path)
 						img = con[p]
 					else:
 						img = zip.namelist()[p]
@@ -1198,7 +1213,7 @@ class HashDB:
 
 			else:
 				if is_archive:
-					temp_dir = zip.extract(chap_path, temp_dir)
+					temp_dir = zip.extract(chap.path, temp_dir)
 				else:
 					zip.extract_all(temp_dir)
 				imgs = sorted([x.path for x in scandir.scandir(temp_dir)])
@@ -1241,11 +1256,11 @@ class HashDB:
 		"Generates hashes for gallery's first chapter and inserts them to DB"
 		if gallery.id:
 			chap_id = ChapterDB.get_chapter_id(gallery.id, 0)
+		chap = gallery.chapters[0]
 		try:
 			if gallery.is_archive:
 				raise NotADirectoryError
-			chap_path = gallery.chapters[0]
-			imgs = scandir.scandir(chap_path)
+			imgs = scandir.scandir(chap.path)
 			# filter
 		except NotADirectoryError:
 			# HACK: Do not need to extract all.. can read bytes from acrhive!!!
@@ -1253,10 +1268,10 @@ class HashDB:
 			try:
 				if gallery.is_archive:
 					zip = ArchiveFile(gallery.path)
-					chap_path = zip.extract(gallery.chapters[0], t_p)
+					chap_path = zip.extract(chap.path, t_p)
 				else:
 					chap_path = t_p
-					zip = ArchiveFile(gallery.chapters[0])
+					zip = ArchiveFile(chap.path)
 					zip.extract_all(chap_path)
 			except gui_constants.CreateArchiveFail:
 				log_e('Could not generate hashes: CreateZipFail')
@@ -1329,6 +1344,8 @@ class Gallery:
 	hashes <- a list of hashes of the gallery's chapters
 	exed <- indicator on if gallery metadata has been fetched
 	valid <- a bool indicating the validity of the gallery
+
+	Takes ownership of ChaptersContainer
 	"""
 	def __init__(self):
 
@@ -1339,7 +1356,7 @@ class Gallery:
 		self.path_in_archive = ""
 		self.is_archive = 0
 		self.artist = None
-		self.chapters = None
+		self._chaps_container = ChaptersContainer(self)
 		self.info = None
 		self.fav = 0
 		self.type = None
@@ -1358,6 +1375,16 @@ class Gallery:
 		self.exed = 0
 		self._cache_id = 0 # used by custom delegate to cache profile
 		self.state = 0
+
+	@property
+	def chapters(self):
+		return self._chaps_container
+
+	@chapters.setter
+	def chapters(self, chp_cont):
+		assert isinstance(chp_cont, ChaptersContainer)
+		chp_cont.parent = self
+		self._chps = chp_cont
 
 	def gen_hashes(self):
 		"Generate hashes while inserting them into DB"
@@ -1525,11 +1552,16 @@ class Chapter:
 class ChaptersContainer:
 	"""
 	A container for chapters.
-	Acts like a list of chapters.
+	Acts like a list/dict of chapters.
+
+	Sets to gallery.chapters
 	"""
-	def __init__(self, gallery):
+	def __init__(self, gallery=None):
 		self.parent = gallery
+		if gallery:
+			gallery.chapters = self
 		self._data = {}
+
 
 	def add_chapter(self, chp, overwrite=True, db=False):
 		"Add a chapter of Chapter class to this container"
@@ -1547,21 +1579,30 @@ class ChaptersContainer:
 			# TODO: implement this
 			pass
 
-	def create_chapter(self):
+	def create_chapter(self, number=None):
 		"""
-		Creates Chapter class with the next chapter number and adds to container
+		Creates Chapter class with the next chapter number or passed number arg and adds to container
 		The chapter will be returned
 		"""
-		next_number = 0
-		for n in list(self._data.keys()):
-			if n > next_number:
-				next_number = n
-		chp = Chapter(self, self.parent, number=next_number)
-		self[next_number] = chp
+		if number:
+			chp = Chapter(self, self.parent, number=number)
+		else:
+			next_number = 0
+			for n in list(self._data.keys()):
+				if n > next_number:
+					next_number = n
+			chp = Chapter(self, self.parent, number=next_number)
+			self[next_number] = chp
 		return chp
 
 	def get_chapter(self, number):
 		return self[number]
+
+	def get_all_chapters(self):
+		return list(self._data.values())
+
+	def pop(self, key, default=None):
+		return self._data.pop(key, default)
 
 	def __len__(self):
 		return len(self._data)
