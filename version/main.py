@@ -134,7 +134,6 @@ def start(test=False):
 		#		s.artist = 'Author {}'.format(x)
 		#		s.path = gui_constants.static_dir
 		#		s.type = 'Test'
-		#		s.chapters = {0:gui_constants.static_dir}
 		#		s.language = 'English'
 		#		s.info = 'I am number {}'.format(x)
 		#		ser_list.append(s)

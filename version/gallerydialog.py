@@ -314,6 +314,7 @@ class GalleryDialog(QWidget):
 
 	def set_chapters(self, gallery_object, add_to_model=True):
 		path = gallery_object.path
+		chap_container = gallerydb.ChaptersContainer(gallery_object)
 		try:
 			log_d('Listing dir...')
 			con = scandir.scandir(path) # list all folders in gallery dir
@@ -323,12 +324,15 @@ class GalleryDialog(QWidget):
 			# if gallery has chapters divided into sub folders
 			if len(chapters) != 0:
 				log_d('Chapters divided in folders..')
-				for numb, ch in enumerate(chapters):
-					chap_path = os.path.join(path, ch)
-					gallery_object.chapters[numb] = chap_path
+				for ch in chapters:
+					chap = chap_container.create_chapter()
+					chap.path = os.path.join(path, ch)
+					chap.pages = len(scandir.scandir(chap.path))
 
 			else: #else assume that all images are in gallery folder
-				gallery_object.chapters[0] = path
+				chap = chap_container.create_chapter()
+				chap.path = path
+				chap.pages = len(scandir.scandir(path))
 				
 			#find last edited file
 			times = set()
@@ -339,13 +343,18 @@ class GalleryDialog(QWidget):
 					times.add(os.path.getmtime(fp))
 			gallery_object.last_update = time.asctime(time.gmtime(max(times)))
 			log_d('Found last update')
+
 		except NotADirectoryError:
 			if path.endswith(utils.ARCHIVE_FILES):
 				gallery_object.is_archive = 1
 				log_i("Gallery source is an archive")
 				archive_g = sorted(utils.check_archive(path))
-				for n, g in enumerate(archive_g):
-					gallery_object.chapters[n] = g
+				for g in archive_g:
+					chap = chap_container.create_chapter()
+					chap.path = g
+					arch = utils.ArchiveFile(path)
+					chap.pages = len(arch.dir_contents(g))
+					arch.close()
 
 		if add_to_model:
 			self.SERIES.emit([gallery_object])
@@ -461,13 +470,11 @@ class GalleryDialog(QWidget):
 			new_gallery.link = self.link_lbl.text()
 			log_d('Adding gallery link')
 			if not new_gallery.chapters:
-				def do_chapters(gallery):
-					log_d('Starting chapters')
-					thread = threading.Thread(target=self.set_chapters, args=(gallery,add_to_model), daemon=True)
-					thread.start()
-					thread.join()
-					log_d('Finished chapters')
-				do_chapters(new_gallery)
+				log_d('Starting chapters')
+				thread = threading.Thread(target=self.set_chapters, args=(new_gallery,add_to_model), daemon=True)
+				thread.start()
+				thread.join()
+				log_d('Finished chapters')
 			return new_gallery
 
 

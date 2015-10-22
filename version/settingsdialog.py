@@ -13,6 +13,7 @@ import settings
 import gui_constants
 import misc_db
 import gallerydb
+import utils
 
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -852,6 +853,12 @@ class SettingsDialog(QWidget):
 		self.external_viewer_path.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
 		misc_external_viewer_l.addRow('Path:', self.external_viewer_path)
 
+		open_hp_folder = QPushButton('Open Happypanda Directory')
+		open_hp_folder.clicked.connect(self.open_hp_folder)
+		open_hp_folder.adjustSize()
+		open_hp_folder.setFixedWidth(open_hp_folder.width())
+		misc_controls_layout.addRow(open_hp_folder)
+
 		# Advanced / Gallery
 		advanced_gallery, advanced_gallery_m_l = new_tab('Gallery', advanced)
 		def rebuild_thumbs():
@@ -1053,6 +1060,12 @@ class SettingsDialog(QWidget):
 		if tup[1]:
 			self.font_lbl.setText(font.family())
 			self.font_size_lbl.setValue(font.pointSize())
+
+	def open_hp_folder(self):
+		if os.name == 'posix':
+			utils.open_path(gui_constants.posix_program_dir)
+		else:
+			utils.open_path(os.getcwd())
 
 	def reject(self):
 		self.close()

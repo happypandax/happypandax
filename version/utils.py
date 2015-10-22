@@ -43,16 +43,13 @@ def all_opposite(*args):
 	return True
 
 def update_gallery_path(new_path, gallery):
-	"Updates a gallery's & it's chapters' path"
-	for chap_numb in gallery.chapters:
-		chap_path = gallery.chapters[chap_numb]
-		head, tail = os.path.split(chap_path)
-		if gallery.path == chap_path:
-			chap_path = new_path
+	"Updates a gallery's chapters path"
+	for chap in gallery.chapters:
+		head, tail = os.path.split(chap.path)
+		if gallery.path == chap.path:
+			chap.path = new_path
 		elif gallery.path == head:
-			chap_path = os.path.join(new_path, tail)
-
-		gallery.chapters[chap_numb] = chap_path
+			chap.path = os.path.join(new_path, tail)
 
 	gallery.path = new_path
 	return gallery

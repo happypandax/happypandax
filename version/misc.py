@@ -535,10 +535,10 @@ class GalleryMenu(QMenu):
 
 
 	def add_chapters(self):
-		def add_chdb(chaps_dict):
+		def add_chdb(chaps_container):
 			gallery = self.index.data(Qt.UserRole+1)
 			log_i('Adding new chapter for {}'.format(gallery.title.encode(errors='ignore')))
-			gallerydb.add_method_queue(gallerydb.ChapterDB.add_chapters_raw, False, gallery.id, {'chapters_dict':chaps_dict})
+			gallerydb.add_method_queue(gallerydb.ChapterDB.add_chapters_raw, False, gallery.id, {'chapters_container':chaps_container})
 			gallery = gallerydb.GalleryDB.get_gallery_by_id(gallery.id)
 			self.gallery_model.replaceRows([gallery], self.index.row())
 		ch_widget = ChapterAddWidget(self.index.data(Qt.UserRole+1), self.parent_widget)
@@ -1065,7 +1065,7 @@ class FileIcon:
 							folder, name)
 						break;
 			else:
-				for p in scandir.scandir(gallery.chapters[0]):
+				for p in scandir.scandir(gallery.chapters[0].path):
 					if p.name.lower().endswith(tuple(IMG_FILES)):
 						file = p.path
 						break;
@@ -1273,13 +1273,14 @@ class PathLineEdit(QLineEdit):
 		super().mousePressEvent(event)
 
 class ChapterAddWidget(QWidget):
-	CHAPTERS = pyqtSignal(dict)
+	CHAPTERS = pyqtSignal(gallerydb.ChaptersContainer)
 	def __init__(self, gallery, parent=None):
 		super().__init__(parent)
 		self.setWindowFlags(Qt.Window)
 		self.setAttribute(Qt.WA_DeleteOnClose)
 		self.current_chapters = len(gallery.chapters)
 		self.added_chaps = 0
+		self.gallery = gallery
 
 		layout = QFormLayout()
 		self.setLayout(layout)
@@ -1355,7 +1356,7 @@ class ChapterAddWidget(QWidget):
 		self.chapter_l.addLayout(chap_layout)
 
 	def finish(self):
-		chapters = {}
+		chapters = self.gallery.chapters
 		widgets = []
 		x = True
 		while x:
@@ -1372,7 +1373,15 @@ class ChapterAddWidget(QWidget):
 			p = line_edit.text()
 			c = spin_box.value() - 1 # because of 0-based index
 			if os.path.exists(p):
-				chapters[c] = p
+				chap = chapters.create_chapter(c)
+				chap.path = p
+				if os.path.isdir(p):
+					chap.pages = len(scandir.scandir(p))
+				elif p.endswith(utils.ARCHIVE_FILES):
+					arch = utils.ArchiveFile(p)
+					chap.pages = len(arch.dir_contents(''))
+					arch.close()
+
 		self.CHAPTERS.emit(chapters)
 		self.close()
 

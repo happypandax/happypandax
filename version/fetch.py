@@ -114,12 +114,15 @@ class Fetch(QObject):
 							# if gallery has chapters divided into sub folders
 							if len(chapters) != 0:
 								log_i('Gallery has chapters divided in directories')
-								for numb, ch in enumerate(chapters):
-									chap_path = os.path.join(path, ch)
-									new_gallery.chapters[numb] = chap_path
+								for ch in chapters:
+									chap = new_gallery.chapters.create_chapter()
+									chap.path = os.path.join(path, ch)
+									chap.pages = len(scandir.scandir(chap.path))
 
 							else: #else assume that all images are in gallery folder
-								new_gallery.chapters[0] = path
+								chap = new_gallery.chapters.create_chapter()
+								chap.path = path
+								chap.pages = len(scandir.scandir(path))
 				
 							##find last edited file
 							#times = set()
@@ -155,10 +158,18 @@ class Fetch(QObject):
 											if not archive_g:
 												log_w('No chapters found for {}'.format(temp_p.encode(errors='ignore')))
 												raise ValueError
-											for n, g in enumerate(archive_g):
-												new_gallery.chapters[n] = g
+											for g in archive_g:
+												chap = new_gallery.chapters.create_chapter()
+												chap.path = g
+												arch = utils.ArchiveFile(temp_p)
+												chap.pages = len(arch.dir_contents(g))
+												arch.close()
 										else:
-											new_gallery.chapters[0] = path
+											chap = new_gallery.chapters.create_chapter()
+											chap.path = path
+											arch = utils.ArchiveFile(path)
+											chap.pages = len(arch.dir_contents(''))
+											arch.close()
 									else:
 										raise ValueError
 								else:

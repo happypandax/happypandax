@@ -21,11 +21,11 @@ DEBUG = False
 
 get = settings.get
 
-#current_dir, f = os.path.split(os.path.realpath(__file__))
+posix_program_dir = os.path.dirname(os.path.realpath(__file__))
 if os.name == 'posix':
-     static_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../res')
-     bin_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'bin')
-     temp_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'temp')
+	 static_dir = os.path.join(posix_program_dir, '../res')
+	 bin_dir = os.path.join(posix_program_dir, 'bin')
+	 temp_dir = os.path.join(posix_program_dir, 'temp')
 else:
 	bin_dir = os.path.join(os.getcwd(), 'bin')
 	static_dir = os.path.join(os.getcwd(), "res")

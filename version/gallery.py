@@ -1216,9 +1216,9 @@ class MangaView(QListView):
 				self.STATUS_BAR_MSG.emit("Opening chapter {} of {}".format(chap_numb+1, gallery.title))
 			try:
 				if gallery.is_archive:
-					gallerydb.add_method_queue(utils.open_chapter, True, gallery.chapters[chap_numb], gallery.path)
+					gallerydb.add_method_queue(utils.open_chapter, True, gallery.chapters[chap_numb].path, gallery.path)
 				else:
-					gallerydb.add_method_queue(utils.open_chapter, True, gallery.chapters[chap_numb])
+					gallerydb.add_method_queue(utils.open_chapter, True, gallery.chapters[chap_numb].path)
 				if not gallery.times_read:
 					gallery.times_read = 0
 				gallery.times_read += 1
@@ -1349,7 +1349,7 @@ class MangaView(QListView):
 			 'tags':gallery.tags,
 			 'link':gallery.link,
 			 'series_path':gallery.path,
-			 'chapters':gallery,
+			 'chapters':gallery.chapters,
 			 'exed':gallery.exed}
 
 			gallerydb.add_method_queue(gallerydb.GalleryDB.modify_gallery,

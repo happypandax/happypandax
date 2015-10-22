@@ -103,6 +103,7 @@ def chapters_sql(cols=False):
 					series_id INTEGER,
 					chapter_number INTEGER,
 					chapter_path BLOB,
+					pages INTEGER,
 					in_archive INTEGER,
 					FOREIGN KEY(series_id) REFERENCES series(series_id))
 		"""
@@ -111,6 +112,7 @@ def chapters_sql(cols=False):
 		'series_id INTEGER',
 		'chapter_number INTEGER',
 		'chapter_path BLOB',
+		'pages INTEGER',
 		'in_archive INTEGER',
 		]
 	if cols:
