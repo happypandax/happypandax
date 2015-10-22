@@ -173,43 +173,27 @@ class GallerySearch(QObject):
 
 		# filtering
 		self.fav = False
-		self.excludes = []
-
-	def _s_abs(self, txt, g_term):
-		is_exclude = False if txt[0] == '-' else True
-		txt = txt[1:] if not is_exclude else txt
-		default = False if is_exclude else True
-		if g_term:
-			if gui_constants.ALLOW_SEARCH_REGEX:
-				if utils.regex_search(txt, g_term):
-					return is_exclude
-			else:
-				#if not is_exclude:
-				#	print('will return false because they want to exclude')
-				if utils.search_term(txt, g_term):
-					#print('Found term! returning')
-					return is_exclude
-			#print('returning default')
-		return default
 
 	def set_data(self, new_data):
 		self._data = new_data
 		self.result = {g.id: True for g in self._data}
 
 	def set_fav(self, new_fav):
-		"slot"
 		self.fav = new_fav
 
 	def search(self, term):
 		term = ' '.join(term.split())
 		search_pieces = utils.get_terms(term)
 
-		self._test(search_pieces)
+		self._filter(search_pieces)
 		self.FINISHED.emit()
 
-	def _test(self, terms):
+	def _filter(self, terms):
 		self.result.clear()
 		for gallery in self._data:
+			if self.fav:
+				if not gallery.fav:
+					continue
 			all_terms = {t: False for t in terms}
 			allow = False
 			if utils.all_opposite(terms):
