@@ -1356,7 +1356,7 @@ class Gallery:
 		self.path_in_archive = ""
 		self.is_archive = 0
 		self.artist = None
-		self._chaps_container = ChaptersContainer(self)
+		self._chapters = ChaptersContainer(self)
 		self.info = None
 		self.fav = 0
 		self.type = None
@@ -1378,13 +1378,13 @@ class Gallery:
 
 	@property
 	def chapters(self):
-		return self._chaps_container
+		return self._chapters
 
 	@chapters.setter
 	def chapters(self, chp_cont):
 		assert isinstance(chp_cont, ChaptersContainer)
 		chp_cont.parent = self
-		self._chps = chp_cont
+		self._chapters = chp_cont
 
 	def gen_hashes(self):
 		"Generate hashes while inserting them into DB"
@@ -1497,7 +1497,7 @@ class Gallery:
 		Chapters: {}
 		""".format(self.id, self.title, self.profile, self.path.encode(errors='ignore'), self.path_in_archive.encode(errors='ignore'),
 			 self.is_archive, self.artist, self.info, self.fav, self.type, self.language, self.status, self.tags,
-			 self.pub_date, self.date_added, self.exed, len(self.hashes), "".format(self.chapters).encode(errors='ignore'))
+			 self.pub_date, self.date_added, self.exed, len(self.hashes), self._chapters)
 		return string
 
 class Chapter:
@@ -1524,7 +1524,7 @@ class Chapter:
 
 	def __str__(self):
 		s = """
-		Chapter {}
+		Chapter: {}
 		Path: {}
 		Pages: {}
 		in_archive: {}
@@ -1554,6 +1554,7 @@ class ChaptersContainer:
 	A container for chapters.
 	Acts like a list/dict of chapters.
 
+	Iterable returns a ordered list of chapters
 	Sets to gallery.chapters
 	"""
 	def __init__(self, gallery=None):
@@ -1622,7 +1623,7 @@ class ChaptersContainer:
 		del self._data[key]
 
 	def __iter__(self):
-		return iter(self._data)
+		return iter(sorted([self._data[c] for c in self._data]))
 
 	def __bool__(self):
 		return bool(self._data)
@@ -1634,7 +1635,7 @@ class ChaptersContainer:
 		return s
 
 	def __contains__(self, key):
-		if key.gallery == self.parent and key in self._data:
+		if key.gallery == self.parent and key in [self.data[c] for c in self._data]:
 			return True
 		return False
 

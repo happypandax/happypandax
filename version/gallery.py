@@ -997,8 +997,7 @@ class MangaView(QListView):
 		self.sort(self.current_sort)
 		if gui_constants.DEBUG:
 			def debug_print(a):
-				pass
-				#print(a.data(Qt.UserRole+1))
+				print(a.data(Qt.UserRole+1))
 
 			self.clicked.connect(debug_print)
 

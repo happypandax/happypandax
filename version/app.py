@@ -412,6 +412,7 @@ class AppWindow(QMainWindow):
 		self.manga_list_view.clicked.connect(self.popup)
 		self.manga_list_view.manga_delegate.POPUP.connect(self.popup)
 		self.popup_window = misc.GalleryMetaWindow(self)
+		self.popup_window.arrow_size = (10,10)
 
 		#table view
 

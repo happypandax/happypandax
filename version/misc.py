@@ -22,7 +22,7 @@ from PyQt5.QtCore import (Qt, QDate, QPoint, pyqtSignal, QThread,
 from PyQt5.QtGui import (QTextCursor, QIcon, QMouseEvent, QFont,
 						 QPixmapCache, QPalette, QPainter, QBrush,
 						 QColor, QPen, QPixmap, QMovie, QPaintEvent, QFontMetrics,
-						 QPolygonF)
+						 QPolygonF, QRegion)
 from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QVBoxLayout, QHBoxLayout,
 							 QDialog, QGridLayout, QLineEdit,
@@ -233,20 +233,37 @@ class GalleryMetaWindow(TransparentWidget):
 		self.setAttribute(Qt.WA_ShowWithoutActivating)
 		self.setMouseTracking(True)
 		self.direction = self.LEFT
-		self.arrow_size = QSizeF(20, 20)
+		self._arrow_size = QSizeF(20, 20)
+
+		# gallery data stuff
+		self.current_gallery = None
+		self.g_title_lbl = QLabel(self)
+		self.g_title_lbl.setWordWrap(True)
+		self.g_title_lbl.setStyleSheet('color:red')
+		self.g_artist_lbl = QLabel(self)
+
 		self.resize(300,300)
 
 	def leaveEvent(self, event):
 		self.hide()
 		super().leaveEvent(event)
 
-	def set_arrow_size(self, width, height):
-		if self.direction in (self.LEFT, self.RIGHT):
-			s = QSizeF(height, width)
-		else:
-			s = QSizeF(width, height)
+	@property
+	def arrow_size(self):
+		return self._arrow_size
 
-		self.arrow_size = s
+	@arrow_size.setter
+	def arrow_size(self, w_h_tuple):
+		"a tuple of width and height"
+		if not isinstance(w_h_tuple, (tuple, list)) or len(w_h_tuple) != 2:
+			return
+
+		if self.direction in (self.LEFT, self.RIGHT):
+			s = QSizeF(w_h_tuple[1], w_h_tuple[0])
+		else:
+			s = QSizeF(w_h_tuple[0], w_h_tuple[1])
+
+		self._arrow_size = s
 		self.update()
 
 	def show_gallery(self, index, view):
@@ -262,21 +279,33 @@ class GalleryMetaWindow(TransparentWidget):
 		index_btm_left = view.mapToGlobal(index_rect.bottomLeft())
 		index_btm_right = view.mapToGlobal(index_rect.bottomRight())
 
+		for idx in (index_top_left, index_top_right, index_btm_left, index_btm_right):
+			print(idx.x(), idx.y())
+
 		# adjust placement
 
 		def check_left():
-			#left = index_top_left.x() - self.width() - margin_offset
-			#if left > 0:
-			#	return True
+			middle = (index_top_left.y() + index_btm_left.y())/2 # middle of gallery left side
+			left = (index_top_left.x() - self.width() - margin_offset) > 0 # if the width can be there
+			top = (middle - (self.height()/2) - margin_offset) > 0 # if the top half of window can be there
+			btm = (middle + (self.height()/2) + margin_offset) < desktop_h # same as above, just for the bottom
+			if left and top and btm:
+				self.direction = self.RIGHT
+				x = index_top_left.x() - gallery_touch_offset - self.width()
+				y = middle - (self.height()/2)
+				appear_point = QPoint(int(x), int(y))
+				self.move(appear_point)
+				return True
 			return False
 
-		def check_right(override=False):
+		def check_right():
 			middle = (index_top_right.y() + index_btm_right.y())/2 # middle of gallery right side
 			right = (index_top_right.x() + self.width() + margin_offset) < desktop_w # if the width can be there
-			top = (index_top_right.y() + middle - (self.height()/2) - margin_offset) > 0 # if the top half of window can be there
-			btm = (index_btm_right.y() - middle + (self.height()/2) + margin_offset) < desktop_h # same as above, just for the bottom
+			top = (middle - (self.height()/2) - margin_offset) > 0 # if the top half of window can be there
+			btm = (middle + (self.height()/2) + margin_offset) < desktop_h # same as above, just for the bottom
 
-			if (right and top and btm) or override:
+			if right and top and btm:
+				self.direction = self.LEFT
 				x = index_top_right.x() + gallery_touch_offset
 				y = middle - (self.height()/2)
 				appear_point = QPoint(int(x), int(y))
@@ -285,23 +314,43 @@ class GalleryMetaWindow(TransparentWidget):
 			return False
 
 		def check_top():
+			middle = (index_top_left.x() + index_top_right.x())/2 # middle of gallery top side
+			top = (index_top_right.y() - self.height() - margin_offset) > 0 # if the height can be there
+			left = (middle - (self.width()/2) - margin_offset) > 0 # if the left half of window can be there
+			right = (middle + (self.width()/2) + margin_offset) < desktop_w # same as above, just for the right
+
+			if top and left and right:
+				self.direction = self.BOTTOM
+				x = middle - (self.width()/2)
+				y = index_top_left.y() - gallery_touch_offset - self.height()
+				appear_point = QPoint(int(x), int(y))
+				self.move(appear_point)
+				return True
 			return False
 
 		def check_bottom(override=False):
+			middle = (index_btm_left.x() + index_btm_right.x())/2 # middle of gallery bottom side
+			btm = (index_btm_right.y() + self.height() + margin_offset) < desktop_h # if the height can be there
+			left = (middle - (self.width()/2) - margin_offset) > 0 # if the left half of window can be there
+			right = (middle + (self.width()/2) + margin_offset) < desktop_w # same as above, just for the right
+
+			if (btm and left and right) or override:
+				self.direction = self.TOP
+				x = middle - (self.width()/2)
+				y = index_btm_left.y() + gallery_touch_offset
+				appear_point = QPoint(int(x), int(y))
+				self.move(appear_point)
+				return True
 			return False
 
-		for pos in (check_bottom, check_right, check_top, check_left):
+		for pos in (check_bottom, check_right, check_left, check_top):
 			if pos():
 				break
 		else: # default pos is bottom
-			check_right(True)
+			check_bottom(True)
 
-
-		self._init_gallery(index.data(Qt.UserRole+1))
+		self.set_gallery(index.data(Qt.UserRole+1))
 		self.show()
-
-	def _init_gallery(self, gallery):
-		pass
 
 	def paintEvent(self, event):
 		assert isinstance(event, QPaintEvent)
@@ -360,6 +409,42 @@ class GalleryMetaWindow(TransparentWidget):
 
 		# draw it!
 		painter.drawPolygon(QPolygonF(arrow_points))
+
+		if self.current_gallery:
+			self.paint_gallery(painter)
+		# render gallery layout
+		#if self._gallery_layout:
+
+		#	g_content_margins = 0
+		#	g_start = QPoint(100, 100)
+
+		#	g_rect = QRect(
+		#		g_start.x(),
+		#		g_start.y(),
+		#		background_rect.width()-g_content_margins,
+		#		background_rect.height()-g_content_margins)
+		#	region = QRegion(g_rect)
+		#	self._gallery_layout.render(self, g_start, region)
+
+	def set_gallery(self, gallery):
+		self.current_gallery = gallery
+		self.g_title_lbl.setText(gallery.title)
+
+
+	def paint_gallery(self, painter):
+		if self.direction == self.LEFT:
+			start_point = QPoint(self.arrow_size.width()+50, 0)
+		elif self.direction == self.TOP:
+			start_point = QPoint(0, self.arrow_size.height()+50)
+		else:
+			start_point = QPoint(0, 0)
+		print(start_point.x(), start_point.y())
+		start_point = painter.deviceTransform().map(start_point)
+		# title 
+		test = self.mapToParent(start_point)
+		self.g_title_lbl.adjustSize()
+		title_region = painter.deviceTransform().map(QRegion(test.x(), test.y(), self.g_title_lbl.width(), self.g_title_lbl.height()))
+		self.g_title_lbl.render(painter, start_point, flags=self.DrawWindowBackground)
 
 class Spinner(TransparentWidget):
 	"""
