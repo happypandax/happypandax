@@ -411,7 +411,7 @@ class AppWindow(QMainWindow):
 		self.manga_list_view = gallery.MangaView(self)
 		self.manga_list_view.clicked.connect(self.popup)
 		self.manga_list_view.manga_delegate.POPUP.connect(self.popup)
-		self.popup_window = self.manga_list_view.manga_delegate.popup_window
+		self.popup_window = misc.GalleryMetaWindow(self)
 
 		#table view
 
@@ -457,7 +457,7 @@ class AppWindow(QMainWindow):
 
 	def popup(self, index):
 		if not self.popup_window.isVisible():
-			self.popup_window.set_gallery(index.data(Qt.UserRole+1))
+			#self.popup_window.set_gallery(index.data(Qt.UserRole+1))
 			m_x = QCursor.pos().x()
 			m_y = QCursor.pos().y()
 			d_w = QDesktopWidget().width()
@@ -469,16 +469,16 @@ class AppWindow(QMainWindow):
 			index_point = self.manga_list_view.mapToGlobal(index_rect.topRight())
 			index_point_btm = self.manga_list_view.mapToGlobal(index_rect.bottomRight())
 			# adjust so it doesn't go offscreen
-			if d_w - m_x < p_w and d_h - m_y < p_h: # bottom
-				self.popup_window.move(m_x-p_w+5, m_y-p_h)
-			elif d_w - m_x > p_w and d_h - m_y < p_h:
-				self.popup_window.move(m_x+5, m_y-p_h)
-			elif d_w - m_x < p_w:
-				self.popup_window.move(m_x-p_w+5, m_y+5)
-			else:
-				self.popup_window.move(index_point)
+			#if d_w - m_x < p_w and d_h - m_y < p_h: # bottom
+			#	self.popup_window.move(m_x-p_w+5, m_y-p_h)
+			#elif d_w - m_x > p_w and d_h - m_y < p_h:
+			#	self.popup_window.move(m_x+5, m_y-p_h)
+			#elif d_w - m_x < p_w:
+			#	self.popup_window.move(m_x-p_w+5, m_y+5)
+			#else:
+			#	self.popup_window.move(index_point)
 
-			self.popup_window.show()
+			self.popup_window.show_gallery(index, self.manga_list_view)
 
 	def favourite_display(self):
 		"Switches to favourite display"

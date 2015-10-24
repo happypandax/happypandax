@@ -17,10 +17,12 @@ from datetime import datetime
 from PyQt5.QtCore import (Qt, QDate, QPoint, pyqtSignal, QThread,
 						  QTimer, QObject, QSize, QRect, QFileInfo,
 						  QMargins, QPropertyAnimation, QRectF,
-						  QTimeLine, QMargins, QPropertyAnimation, QByteArray)
+						  QTimeLine, QMargins, QPropertyAnimation, QByteArray,
+						  QPointF, QSizeF)
 from PyQt5.QtGui import (QTextCursor, QIcon, QMouseEvent, QFont,
 						 QPixmapCache, QPalette, QPainter, QBrush,
-						 QColor, QPen, QPixmap, QMovie, QPaintEvent, QFontMetrics)
+						 QColor, QPen, QPixmap, QMovie, QPaintEvent, QFontMetrics,
+						 QPolygonF)
 from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QVBoxLayout, QHBoxLayout,
 							 QDialog, QGridLayout, QLineEdit,
@@ -222,6 +224,142 @@ class TransparentWidget(BaseMoveWidget):
 	def __init__(self, parent=None, **kwargs):
 		super().__init__(parent, **kwargs)
 		self.setAttribute(Qt.WA_TranslucentBackground)
+
+class GalleryMetaWindow(TransparentWidget):
+	LEFT, RIGHT, TOP, BOTTOM = range(4)
+
+	def __init__(self, parent):
+		super().__init__(parent, flags=Qt.Window | Qt.FramelessWindowHint, move_listener=False)
+		self.setAttribute(Qt.WA_ShowWithoutActivating)
+		self.setMouseTracking(True)
+		self.direction = self.LEFT
+		self.arrow_size = QSizeF(20, 20)
+		self.resize(300,300)
+
+	def leaveEvent(self, event):
+		self.hide()
+		super().leaveEvent(event)
+
+	def set_arrow_size(self, width, height):
+		if self.direction in (self.LEFT, self.RIGHT):
+			s = QSizeF(height, width)
+		else:
+			s = QSizeF(width, height)
+
+		self.arrow_size = s
+		self.update()
+
+	def show_gallery(self, index, view):
+		desktop_w = QDesktopWidget().width()
+		desktop_h = QDesktopWidget().height()
+		
+		margin_offset = 50 # should be higher than gallery_touch_offset
+		gallery_touch_offset = 10 # How far away the window is from touching gallery
+
+		index_rect = view.visualRect(index)
+		index_top_left = view.mapToGlobal(index_rect.topLeft())
+		index_top_right = view.mapToGlobal(index_rect.topRight())
+		index_btm_left = view.mapToGlobal(index_rect.bottomLeft())
+		index_btm_right = view.mapToGlobal(index_rect.bottomRight())
+
+		# adjust placement
+
+		def check_left():
+			#left = index_top_left.x() - self.width() - margin_offset
+			#if left > 0:
+			#	return True
+			return False
+
+		def check_right(override=False):
+			middle = (index_top_right.y() + index_btm_right.y())/2 # middle of gallery right side
+			right = (index_top_right.x() + self.width() + margin_offset) < desktop_w # if the width can be there
+			top = (index_top_right.y() + middle - (self.height()/2) - margin_offset) > 0 # if the top half of window can be there
+			btm = (index_btm_right.y() - middle + (self.height()/2) + margin_offset) < desktop_h # same as above, just for the bottom
+
+			if (right and top and btm) or override:
+				x = index_top_right.x() + gallery_touch_offset
+				y = middle - (self.height()/2)
+				appear_point = QPoint(int(x), int(y))
+				self.move(appear_point)
+				return True
+			return False
+
+		def check_top():
+			return False
+
+		def check_bottom(override=False):
+			return False
+
+		for pos in (check_bottom, check_right, check_top, check_left):
+			if pos():
+				break
+		else: # default pos is bottom
+			check_right(True)
+
+
+		self._init_gallery(index.data(Qt.UserRole+1))
+		self.show()
+
+	def _init_gallery(self, gallery):
+		pass
+
+	def paintEvent(self, event):
+		assert isinstance(event, QPaintEvent)
+
+		painter = QPainter(self)
+		painter.setRenderHint(painter.Antialiasing)
+		painter.setBrush(QBrush(QColor('#34495e')))
+		painter.setPen(QPen(QColor('#34495e')))
+
+		size = self.size()
+		if self.direction in (self.LEFT, self.RIGHT):
+			actual_size = QSizeF(size.width()-self.arrow_size.width(), size.height())
+		else:
+			actual_size = QSizeF(size.width(), size.height()-self.arrow_size.height())
+
+		starting_point = QPointF(0, 0)
+		if self.direction == self.LEFT:
+			starting_point = QPointF(self.arrow_size.width(), 0)
+		elif self.direction == self.TOP:
+			starting_point = QPointF(0, self.arrow_size.height())
+
+		# draw background
+		background_rect = QRectF(starting_point, actual_size)
+		painter.drawRoundedRect(background_rect, 5, 5)
+
+		# calculate the arrow
+		arrow_points = []
+		if self.direction == self.LEFT:
+			middle_point = QPointF(0, actual_size.height()/2)
+			arrow_1 = QPointF(self.arrow_size.width(), middle_point.y()-self.arrow_size.height()/2)
+			arrow_2 = QPointF(self.arrow_size.width(), middle_point.y()+self.arrow_size.height()/2)
+			arrow_points.append(arrow_1)
+			arrow_points.append(middle_point)
+			arrow_points.append(arrow_2)
+		elif self.direction == self.RIGHT:
+			middle_point = QPointF(actual_size.width()+self.arrow_size.width(), actual_size.height()/2)
+			arrow_1 = QPointF(actual_size.width(), middle_point.y()+self.arrow_size.height()/2)
+			arrow_2 = QPointF(actual_size.width(), middle_point.y()-self.arrow_size.height()/2)
+			arrow_points.append(arrow_1)
+			arrow_points.append(middle_point)
+			arrow_points.append(arrow_2)
+		elif self.direction == self.TOP:
+			middle_point = QPointF(actual_size.width()/2, 0)
+			arrow_1 = QPointF(actual_size.width()/2+self.arrow_size.width()/2, self.arrow_size.height())
+			arrow_2 = QPointF(actual_size.width()/2-self.arrow_size.width()/2, self.arrow_size.height())
+			arrow_points.append(arrow_1)
+			arrow_points.append(middle_point)
+			arrow_points.append(arrow_2)
+		elif self.direction == self.BOTTOM:
+			middle_point = QPointF(actual_size.width()/2, actual_size.height()+self.arrow_size.height())
+			arrow_1 = QPointF(actual_size.width()/2-self.arrow_size.width()/2, actual_size.height())
+			arrow_2 = QPointF(actual_size.width()/2+self.arrow_size.width()/2, actual_size.height())
+			arrow_points.append(arrow_1)
+			arrow_points.append(middle_point)
+			arrow_points.append(arrow_2)
+
+		# draw it!
+		painter.drawPolygon(QPolygonF(arrow_points))
 
 class Spinner(TransparentWidget):
 	"""
