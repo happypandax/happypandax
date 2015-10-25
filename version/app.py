@@ -25,7 +25,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QListView,
 							 QDesktopWidget, QPushButton, QCompleter,
 							 QListWidget, QListWidgetItem, QToolTip,
 							 QProgressBar, QToolButton, QSystemTrayIcon,
-							 QShortcut)
+							 QShortcut, QGraphicsBlurEffect)
 
 import gui_constants
 import misc
@@ -51,6 +51,7 @@ class AppWindow(QMainWindow):
 	"The application's main window"
 	move_listener = pyqtSignal()
 	db_activity_checker = pyqtSignal()
+	graphics_blur = QGraphicsBlurEffect()
 	def __init__(self):
 		super().__init__()
 		gui_constants.GENERAL_THREAD = QThread(self)
@@ -65,7 +66,7 @@ class AppWindow(QMainWindow):
 		#QTimer.singleShot(10000, test)
 		self.setFocusPolicy(Qt.NoFocus)
 		self.set_shortcuts()
-
+		self.graphics_blur.setParent(self)
 		#ex = settings.ExProperties()
 		#d = pewnet.ExHenManager(ex.ipb_id, ex.ipb_pass)
 		#item = d.from_gallery_url('http://exhentai.org/g/861957/02741dc584/')

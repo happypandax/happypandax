@@ -232,17 +232,19 @@ class GalleryMetaWindow(TransparentWidget):
 		super().__init__(parent, flags=Qt.Window | Qt.FramelessWindowHint, move_listener=False)
 		self.setAttribute(Qt.WA_ShowWithoutActivating)
 		self.setMouseTracking(True)
+		self.resize(400,300)
 		self.direction = self.LEFT
 		self._arrow_size = QSizeF(20, 20)
 
 		# gallery data stuff
 		self.current_gallery = None
-		self.g_title_lbl = QLabel(self)
+		self.g_title_lbl = QLabel()
 		self.g_title_lbl.setWordWrap(True)
 		self.g_title_lbl.setStyleSheet('color:red')
+		self.g_title_lbl.resize(400, 300)
+		self.g_title_lbl.setAlignment(Qt.AlignCenter)
 		self.g_artist_lbl = QLabel(self)
 
-		self.resize(300,300)
 
 	def leaveEvent(self, event):
 		self.hide()
@@ -432,19 +434,21 @@ class GalleryMetaWindow(TransparentWidget):
 
 
 	def paint_gallery(self, painter):
+
+		margin = 10
+
 		if self.direction == self.LEFT:
-			start_point = QPoint(self.arrow_size.width()+50, 0)
+			start_point = QPoint(self.arrow_size.width()+margin, margin)
 		elif self.direction == self.TOP:
-			start_point = QPoint(0, self.arrow_size.height()+50)
+			start_point = QPoint(margin, self.arrow_size.height()+margin)
 		else:
-			start_point = QPoint(0, 0)
+			start_point = QPoint(margin, margin)
+		test = self.g_title_lbl.mapToParent(start_point)
 		print(start_point.x(), start_point.y())
-		start_point = painter.deviceTransform().map(start_point)
 		# title 
-		test = self.mapToParent(start_point)
 		self.g_title_lbl.adjustSize()
-		title_region = painter.deviceTransform().map(QRegion(test.x(), test.y(), self.g_title_lbl.width(), self.g_title_lbl.height()))
-		self.g_title_lbl.render(painter, start_point, flags=self.DrawWindowBackground)
+		title_region = QRegion(0, 0, self.g_title_lbl.width(), self.g_title_lbl.height())
+		self.g_title_lbl.render(painter, start_point, title_region, flags=self.DrawChildren)
 
 class Spinner(TransparentWidget):
 	"""
@@ -811,7 +815,6 @@ class TagText(QPushButton):
 				self.clicked.connect(lambda: self.search_widget.search('{}'.format(self.text())))
 
 class BasePopup(TransparentWidget):
-	graphics_blur = QGraphicsBlurEffect()
 	def __init__(self, parent=None, **kwargs):
 		if kwargs:
 			super().__init__(parent, **kwargs)
@@ -832,8 +835,13 @@ class BasePopup(TransparentWidget):
 		self.setMaximumWidth(500)
 		self.resize(500,350)
 		self.curr_pos = QPoint()
+		self.graphics_bur = None
 		if parent:
-			parent.setGraphicsEffect(self.graphics_blur)
+			try:
+				self.graphics_blur = parent.graphics_blur
+				parent.setGraphicsEffect(self.graphics_blur)
+			except AttributeError:
+				pass
 
 		# animation
 		property_b_array = QByteArray().append('windowOpacity')
@@ -857,15 +865,18 @@ class BasePopup(TransparentWidget):
 	def showEvent(self, event):
 		self.activateWindow()
 		self.fade_animation.start()
-		self.graphics_blur.setEnabled(True)
+		if self.graphics_blur:
+			self.graphics_blur.setEnabled(True)
 		return super().showEvent(event)
 
 	def closeEvent(self, event):
-		self.graphics_blur.setEnabled(False)
+		if self.graphics_blur:	
+			self.graphics_blur.setEnabled(False)
 		return super().closeEvent(event)
 
 	def hideEvent(self, event):
-		self.graphics_blur.setEnabled(False)
+		if self.graphics_blur:
+			self.graphics_blur.setEnabled(False)
 		return super().hideEvent(event)
 
 	def add_buttons(self, *args):
