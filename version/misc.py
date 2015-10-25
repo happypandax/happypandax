@@ -63,6 +63,15 @@ def clearLayout(layout):
 			elif child.layout() is not None:
 				clearLayout(child.layout())
 
+class Line(QFrame):
+	"'v' for vertical line or 'h' for horizontail line, color is hex string"
+	def __init__(self, orentiation, parent=None):
+		super().__init__(parent)
+		if orentiation == 'v':
+			self.setFrameShape(self.VLine)
+		else:
+			self.setFrameShape(self.HLine)
+		self.setFrameShadow(self.Sunken)
 
 class CompleterPopupView(QListView):
 	def __init__(self, *args, **kwargs):
@@ -83,6 +92,8 @@ class CompleterPopupView(QListView):
 		super().showEvent(event)
 
 class ElidedLabel(QLabel):
+	def __init__(self, *args, **kwargs):
+		super().__init__(*args, **kwargs)
 	def paintEvent(self, event):
 		painter = QPainter(self)
 		metrics = QFontMetrics(self.font())
@@ -225,30 +236,18 @@ class TransparentWidget(BaseMoveWidget):
 		super().__init__(parent, **kwargs)
 		self.setAttribute(Qt.WA_TranslucentBackground)
 
-class GalleryMetaWindow(TransparentWidget):
+class ArrowWindow(TransparentWidget):
 	LEFT, RIGHT, TOP, BOTTOM = range(4)
 
 	def __init__(self, parent):
 		super().__init__(parent, flags=Qt.Window | Qt.FramelessWindowHint, move_listener=False)
 		self.setAttribute(Qt.WA_ShowWithoutActivating)
-		self.setMouseTracking(True)
 		self.resize(400,300)
 		self.direction = self.LEFT
 		self._arrow_size = QSizeF(20, 20)
-
-		# gallery data stuff
-		self.current_gallery = None
-		self.g_title_lbl = QLabel()
-		self.g_title_lbl.setWordWrap(True)
-		self.g_title_lbl.setStyleSheet('color:red')
-		self.g_title_lbl.resize(400, 300)
-		self.g_title_lbl.setAlignment(Qt.AlignCenter)
-		self.g_artist_lbl = QLabel(self)
+		self.content_margin = 0
 
 
-	def leaveEvent(self, event):
-		self.hide()
-		super().leaveEvent(event)
 
 	@property
 	def arrow_size(self):
@@ -267,6 +266,116 @@ class GalleryMetaWindow(TransparentWidget):
 
 		self._arrow_size = s
 		self.update()
+
+
+	def paintEvent(self, event):
+		assert isinstance(event, QPaintEvent)
+
+		painter = QPainter(self)
+		painter.setRenderHint(painter.Antialiasing)
+		painter.setBrush(QBrush(QColor('#585858')))
+		painter.setPen(QPen(QColor('#585858')))
+
+		size = self.size()
+		if self.direction in (self.LEFT, self.RIGHT):
+			actual_size = QSizeF(size.width()-self.arrow_size.width(), size.height())
+		else:
+			actual_size = QSizeF(size.width(), size.height()-self.arrow_size.height())
+
+		starting_point = QPointF(0, 0)
+		if self.direction == self.LEFT:
+			starting_point = QPointF(self.arrow_size.width(), 0)
+		elif self.direction == self.TOP:
+			starting_point = QPointF(0, self.arrow_size.height())
+
+		# draw background
+		background_rect = QRectF(starting_point, actual_size)
+		painter.drawRoundedRect(background_rect, 5, 5)
+
+		# calculate the arrow
+		arrow_points = []
+		if self.direction == self.LEFT:
+			middle_point = QPointF(0, actual_size.height()/2)
+			arrow_1 = QPointF(self.arrow_size.width(), middle_point.y()-self.arrow_size.height()/2)
+			arrow_2 = QPointF(self.arrow_size.width(), middle_point.y()+self.arrow_size.height()/2)
+			arrow_points.append(arrow_1)
+			arrow_points.append(middle_point)
+			arrow_points.append(arrow_2)
+		elif self.direction == self.RIGHT:
+			middle_point = QPointF(actual_size.width()+self.arrow_size.width(), actual_size.height()/2)
+			arrow_1 = QPointF(actual_size.width(), middle_point.y()+self.arrow_size.height()/2)
+			arrow_2 = QPointF(actual_size.width(), middle_point.y()-self.arrow_size.height()/2)
+			arrow_points.append(arrow_1)
+			arrow_points.append(middle_point)
+			arrow_points.append(arrow_2)
+		elif self.direction == self.TOP:
+			middle_point = QPointF(actual_size.width()/2, 0)
+			arrow_1 = QPointF(actual_size.width()/2+self.arrow_size.width()/2, self.arrow_size.height())
+			arrow_2 = QPointF(actual_size.width()/2-self.arrow_size.width()/2, self.arrow_size.height())
+			arrow_points.append(arrow_1)
+			arrow_points.append(middle_point)
+			arrow_points.append(arrow_2)
+		elif self.direction == self.BOTTOM:
+			middle_point = QPointF(actual_size.width()/2, actual_size.height()+self.arrow_size.height())
+			arrow_1 = QPointF(actual_size.width()/2-self.arrow_size.width()/2, actual_size.height())
+			arrow_2 = QPointF(actual_size.width()/2+self.arrow_size.width()/2, actual_size.height())
+			arrow_points.append(arrow_1)
+			arrow_points.append(middle_point)
+			arrow_points.append(arrow_2)
+
+		# draw it!
+		painter.drawPolygon(QPolygonF(arrow_points))
+
+class GalleryMetaWindow(ArrowWindow):
+
+	class GalleryLayout(QFrame):
+		
+		def __init__(self, gallery, w=300, h=300):
+			super().__init__()
+			self.resize(w, h)
+			self.setStyleSheet('color:#bdc3c7;')
+			def get_label(txt):
+				lbl = QLabel(txt)
+				lbl.setWordWrap(True)
+				return lbl
+			self.main_layout = QFormLayout(self)
+			self.g_title_lbl = get_label(gallery.title)
+			self.g_title_lbl.setStyleSheet('color:white;font-weight:bold;')
+			self.main_layout.addRow(self.g_title_lbl)
+			self.g_artist_lbl = get_label(gallery.artist)
+			#self.g_artist_lbl.setStyleSheet('color:#bdc3c7;')
+			self.main_layout.addRow(self.g_artist_lbl)
+			for lbl in (self.g_title_lbl, self.g_artist_lbl):
+				lbl.setAlignment(Qt.AlignCenter)
+			self.main_layout.addRow(Line('h'))
+
+			first_layout = QHBoxLayout()
+			self.g_lang_lbl = get_label(gallery.language)
+			chap_txt = "chapters" if gallery.chapters.count() > 1 else "chapter"
+			self.g_chapters_lbl = get_label('{} {}'.format(gallery.chapters.count(), chap_txt))
+			self.g_type_lbl = get_label(gallery.type)
+			first_layout.addWidget(self.g_lang_lbl, 0, Qt.AlignLeft)
+			first_layout.addWidget(self.g_chapters_lbl, 0, Qt.AlignCenter)
+			first_layout.addWidget(self.g_type_lbl, 0, Qt.AlignRight)
+			self.main_layout.addRow(first_layout)
+			self.g_info_lbl = get_label(gallery.info)
+			self.main_layout.addRow(self.g_info_lbl)
+
+			if gallery.link:
+				self.g_url_lbl = ClickedLabel(gallery.link)
+				self.g_url_lbl.clicked.connect(lambda: utils.open_web_link(self.g_url_lbl.text()))
+				self.g_url_lbl.setWordWrap(True)
+				self.main_layout.addRow('URL:', self.g_url_lbl)
+
+
+	def __init__(self, parent):
+		super().__init__(parent)
+
+		self.setMouseTracking(True)
+		# gallery data stuff
+		self.content_margin = 10
+		self.current_gallery = None
+		self.g_widget = None
 
 	def show_gallery(self, index, view):
 		desktop_w = QDesktopWidget().width()
@@ -354,101 +463,32 @@ class GalleryMetaWindow(TransparentWidget):
 		self.set_gallery(index.data(Qt.UserRole+1))
 		self.show()
 
-	def paintEvent(self, event):
-		assert isinstance(event, QPaintEvent)
-
-		painter = QPainter(self)
-		painter.setRenderHint(painter.Antialiasing)
-		painter.setBrush(QBrush(QColor('#34495e')))
-		painter.setPen(QPen(QColor('#34495e')))
-
-		size = self.size()
-		if self.direction in (self.LEFT, self.RIGHT):
-			actual_size = QSizeF(size.width()-self.arrow_size.width(), size.height())
-		else:
-			actual_size = QSizeF(size.width(), size.height()-self.arrow_size.height())
-
-		starting_point = QPointF(0, 0)
-		if self.direction == self.LEFT:
-			starting_point = QPointF(self.arrow_size.width(), 0)
-		elif self.direction == self.TOP:
-			starting_point = QPointF(0, self.arrow_size.height())
-
-		# draw background
-		background_rect = QRectF(starting_point, actual_size)
-		painter.drawRoundedRect(background_rect, 5, 5)
-
-		# calculate the arrow
-		arrow_points = []
-		if self.direction == self.LEFT:
-			middle_point = QPointF(0, actual_size.height()/2)
-			arrow_1 = QPointF(self.arrow_size.width(), middle_point.y()-self.arrow_size.height()/2)
-			arrow_2 = QPointF(self.arrow_size.width(), middle_point.y()+self.arrow_size.height()/2)
-			arrow_points.append(arrow_1)
-			arrow_points.append(middle_point)
-			arrow_points.append(arrow_2)
-		elif self.direction == self.RIGHT:
-			middle_point = QPointF(actual_size.width()+self.arrow_size.width(), actual_size.height()/2)
-			arrow_1 = QPointF(actual_size.width(), middle_point.y()+self.arrow_size.height()/2)
-			arrow_2 = QPointF(actual_size.width(), middle_point.y()-self.arrow_size.height()/2)
-			arrow_points.append(arrow_1)
-			arrow_points.append(middle_point)
-			arrow_points.append(arrow_2)
-		elif self.direction == self.TOP:
-			middle_point = QPointF(actual_size.width()/2, 0)
-			arrow_1 = QPointF(actual_size.width()/2+self.arrow_size.width()/2, self.arrow_size.height())
-			arrow_2 = QPointF(actual_size.width()/2-self.arrow_size.width()/2, self.arrow_size.height())
-			arrow_points.append(arrow_1)
-			arrow_points.append(middle_point)
-			arrow_points.append(arrow_2)
-		elif self.direction == self.BOTTOM:
-			middle_point = QPointF(actual_size.width()/2, actual_size.height()+self.arrow_size.height())
-			arrow_1 = QPointF(actual_size.width()/2-self.arrow_size.width()/2, actual_size.height())
-			arrow_2 = QPointF(actual_size.width()/2+self.arrow_size.width()/2, actual_size.height())
-			arrow_points.append(arrow_1)
-			arrow_points.append(middle_point)
-			arrow_points.append(arrow_2)
-
-		# draw it!
-		painter.drawPolygon(QPolygonF(arrow_points))
-
-		if self.current_gallery:
-			self.paint_gallery(painter)
-		# render gallery layout
-		#if self._gallery_layout:
-
-		#	g_content_margins = 0
-		#	g_start = QPoint(100, 100)
-
-		#	g_rect = QRect(
-		#		g_start.x(),
-		#		g_start.y(),
-		#		background_rect.width()-g_content_margins,
-		#		background_rect.height()-g_content_margins)
-		#	region = QRegion(g_rect)
-		#	self._gallery_layout.render(self, g_start, region)
-
 	def set_gallery(self, gallery):
 		self.current_gallery = gallery
-		self.g_title_lbl.setText(gallery.title)
+		self.g_widget = self.GalleryLayout(gallery, self.width()-self.content_margin,
+									 self.height()-self.content_margin)
 
+	def paintEvent(self, event):
+		super().paintEvent(event)
+		if self.current_gallery:
+			self.paint_gallery()
 
-	def paint_gallery(self, painter):
+	def paint_gallery(self):
+		if self.g_widget:
+			if self.direction == self.LEFT:
+				start_point = QPoint(self.arrow_size.width(), 0)
+			elif self.direction == self.TOP:
+				start_point = QPoint(0, self.arrow_size.height())
+			else:
+				start_point = QPoint(0, 0)
+			print(start_point.x(), start_point.y())
+			# title 
+			#title_region = QRegion(0, 0, self.g_title_lbl.width(), self.g_title_lbl.height())
+			self.g_widget.render(self, start_point, flags=self.DrawChildren)
 
-		margin = 10
-
-		if self.direction == self.LEFT:
-			start_point = QPoint(self.arrow_size.width()+margin, margin)
-		elif self.direction == self.TOP:
-			start_point = QPoint(margin, self.arrow_size.height()+margin)
-		else:
-			start_point = QPoint(margin, margin)
-		test = self.g_title_lbl.mapToParent(start_point)
-		print(start_point.x(), start_point.y())
-		# title 
-		self.g_title_lbl.adjustSize()
-		title_region = QRegion(0, 0, self.g_title_lbl.width(), self.g_title_lbl.height())
-		self.g_title_lbl.render(painter, start_point, title_region, flags=self.DrawChildren)
+	def leaveEvent(self, event):
+		self.hide()
+		super().leaveEvent(event)
 
 class Spinner(TransparentWidget):
 	"""
@@ -870,7 +910,7 @@ class BasePopup(TransparentWidget):
 		return super().showEvent(event)
 
 	def closeEvent(self, event):
-		if self.graphics_blur:	
+		if self.graphics_blur:
 			self.graphics_blur.setEnabled(False)
 		return super().closeEvent(event)
 

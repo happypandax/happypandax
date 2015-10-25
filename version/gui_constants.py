@@ -50,7 +50,7 @@ THUMB_H_SIZE = 200
 THUMB_W_SIZE = 143
 
 # Columns
-COLUMNS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+COLUMNS = tuple(range(11))
 TITLE = 0
 ARTIST = 1
 DESCR = 2
@@ -91,7 +91,7 @@ OVERRIDE_MONITOR = False # set true to make watchers to ignore next item (will b
 LOOK_NEW_GALLERY_STARTUP = get(True, 'Application', 'look new gallery startup', bool)
 LOOK_NEW_GALLERY_AUTOADD = get(False, 'Application', 'look new gallery autoadd', bool)
 ENABLE_MONITOR = get(True, 'Application', 'enable monitor', bool)
-MONITOR_PATHS = get([], 'Application', 'monitor paths', list)
+MONITOR_PATHS = [p for p in get([], 'Application', 'monitor paths', list) if os.path.exists(p)]
 IGNORE_PATHS = get([], 'Application', 'ignore paths', list)
 SCANNING_FOR_GALLERIES = False # if a scan for new galleries is being done
 
@@ -150,8 +150,8 @@ POPUP_HEIGHT = get(220, 'Visual', 'popup.h', int)
 # Gallery
 CURRENT_SORT = get('title', 'General', 'current sort')
 HIGH_QUALITY_THUMBS = get(False, 'Visual', 'high quality thumbs', bool)
-USE_EXTERNAL_PROG_ICO = get(True, 'Visual', 'use external prog ico', bool) if not sys.platform.startswith('darwin')  else False
-DISPLAY_GALLERY_TYPE = get(True, 'Visual', 'display gallery type', bool) if not sys.platform.startswith('darwin') else False
+USE_EXTERNAL_PROG_ICO = get(False, 'Visual', 'use external prog ico', bool) if not sys.platform.startswith('darwin')  else False
+DISPLAY_GALLERY_TYPE = get(False, 'Visual', 'display gallery type', bool) if not sys.platform.startswith('darwin') else False
 GALLERY_FONT = (get('Segoe UI', 'Visual', 'gallery font family', str),
 				get(11, 'Visual', 'gallery font size', int))
 GALLERY_FONT_ELIDE = get(True, 'Visual', 'gallery font elide', bool)

@@ -195,7 +195,7 @@ def default_chap_exec(gallery_or_id, chap):
 		in_archive = chap.in_archive
 
 	execute = ["""
-			INSERT INTO chapters(series_id, chapter_number, chapter_path, in_archive)
+			INSERT INTO chapters(series_id, chapter_number, chapter_path, pages, in_archive)
 			VALUES(:series_id, :chapter_number, :chapter_path, :pages, :in_archive)""",
 			{'series_id':gid,
 			'chapter_number':chap.number,
@@ -680,7 +680,7 @@ class ChapterDB:
 		Pass a gallery's ChapterContainer, specify number with a list of ints
 		leave empty to update all chapters.
 		"""
-		assert isinstance(gallery, Gallery) and isinstance(chapters, (list, tuple))
+		assert isinstance(chapter_container, ChaptersContainer) and isinstance(numbers, (list, tuple))
 		if numbers:
 			chapters = []
 			for n in numbers:
@@ -706,7 +706,6 @@ class ChapterDB:
 		executing = []
 		for chap in gallery_object.chapters:
 			executing.append(default_chap_exec(gallery_object, chap))
-
 		CommandQueue.put(executing)
 		# neccessary to keep order... feels awkward, will prolly redo this.
 		d = ResultQueue.get()
@@ -1497,7 +1496,7 @@ class Gallery:
 		Chapters: {}
 		""".format(self.id, self.title, self.profile, self.path.encode(errors='ignore'), self.path_in_archive.encode(errors='ignore'),
 			 self.is_archive, self.artist, self.info, self.fav, self.type, self.language, self.status, self.tags,
-			 self.pub_date, self.date_added, self.exed, len(self.hashes), self._chapters)
+			 self.pub_date, self.date_added, self.exed, len(self.hashes), self.chapters)
 		return string
 
 class Chapter:
@@ -1602,6 +1601,9 @@ class ChaptersContainer:
 	def get_all_chapters(self):
 		return list(self._data.values())
 
+	def count(self):
+		return len(self)
+
 	def pop(self, key, default=None):
 		return self._data.pop(key, default)
 
@@ -1623,7 +1625,7 @@ class ChaptersContainer:
 		del self._data[key]
 
 	def __iter__(self):
-		return iter(sorted([self._data[c] for c in self._data]))
+		return iter([self[c] for c in sorted(self._data.keys())])
 
 	def __bool__(self):
 		return bool(self._data)
@@ -1632,6 +1634,8 @@ class ChaptersContainer:
 		s = ""
 		for c in self:
 			s += '\n' + '{}'.format(c)
+		if not s:
+			return '{}'
 		return s
 
 	def __contains__(self, key):
@@ -1737,7 +1741,8 @@ class DatabaseEmitter(QObject):
 			new_data = c.fetchall()
 			gallery_list = add_method_queue(GalleryDB.gen_galleries, False, new_data)
 			#self._current_data.extend(gallery_list)
-			self.GALLERY_EMITTER.emit(gallery_list)
+			if gallery_list:
+				self.GALLERY_EMITTER.emit(gallery_list)
 			self._fetching = False
 		if not self._fetching:
 			# TODO: redo this? 

@@ -413,6 +413,7 @@ class AppWindow(QMainWindow):
 		self.manga_list_view.clicked.connect(self.popup)
 		self.manga_list_view.manga_delegate.POPUP.connect(self.popup)
 		self.popup_window = misc.GalleryMetaWindow(self)
+		#self.popup_window = gallery.GalleryMetaPopup(self)
 		self.popup_window.arrow_size = (10,10)
 
 		#table view
@@ -471,16 +472,17 @@ class AppWindow(QMainWindow):
 			index_point = self.manga_list_view.mapToGlobal(index_rect.topRight())
 			index_point_btm = self.manga_list_view.mapToGlobal(index_rect.bottomRight())
 			# adjust so it doesn't go offscreen
-			#if d_w - m_x < p_w and d_h - m_y < p_h: # bottom
-			#	self.popup_window.move(m_x-p_w+5, m_y-p_h)
-			#elif d_w - m_x > p_w and d_h - m_y < p_h:
-			#	self.popup_window.move(m_x+5, m_y-p_h)
-			#elif d_w - m_x < p_w:
-			#	self.popup_window.move(m_x-p_w+5, m_y+5)
-			#else:
-			#	self.popup_window.move(index_point)
+			if d_w - m_x < p_w and d_h - m_y < p_h: # bottom
+				self.popup_window.move(m_x-p_w+5, m_y-p_h)
+			elif d_w - m_x > p_w and d_h - m_y < p_h:
+				self.popup_window.move(m_x+5, m_y-p_h)
+			elif d_w - m_x < p_w:
+				self.popup_window.move(m_x-p_w+5, m_y+5)
+			else:
+				self.popup_window.move(index_point)
 
 			self.popup_window.show_gallery(index, self.manga_list_view)
+			#self.popup_window.show()
 
 	def favourite_display(self):
 		"Switches to favourite display"
@@ -829,7 +831,7 @@ class AppWindow(QMainWindow):
 
 			def a_progress(prog):
 				loading.progress.setValue(prog)
-				loading.setText("Searching for galleries...")
+				loading.setText("Preparing galleries...")
 
 			self.g_populate_inst.moveToThread(data_thread)
 			self.g_populate_inst.DATA_COUNT.connect(loading.progress.setMaximum)
