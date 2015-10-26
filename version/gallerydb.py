@@ -165,10 +165,16 @@ def gallery_map(row, gallery):
 	gallery.status = row['status']
 	gallery.type = row['type']
 	gallery.fav = row['fav']
-	gallery.pub_date = row['pub_date']
+
+	def convert_date(date_str):
+		#2015-10-25 21:44:38
+		if date_str and date_str != 'None':
+			return datetime.datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S")
+
+	gallery.pub_date = convert_date(row['pub_date'])
 	gallery.last_update = row['last_update']
-	gallery.last_read = row['last_read']
-	gallery.date_added = row['date_added']
+	gallery.last_read = convert_date(row['last_read'])
+	gallery.date_added = convert_date(row['date_added'])
 	gallery.times_read = row['times_read']
 	gallery._db_v = row['db_v']
 	gallery.exed = row['exed']
@@ -1382,7 +1388,7 @@ class Gallery:
 	@chapters.setter
 	def chapters(self, chp_cont):
 		assert isinstance(chp_cont, ChaptersContainer)
-		chp_cont.parent = self
+		chp_cont.set_parent(self)
 		self._chapters = chp_cont
 
 	def gen_hashes(self):
@@ -1557,11 +1563,18 @@ class ChaptersContainer:
 	Sets to gallery.chapters
 	"""
 	def __init__(self, gallery=None):
-		self.parent = gallery
-		if gallery:
-			gallery.chapters = self
+		self.parent = None
 		self._data = {}
 
+		if gallery:
+			gallery.chapters = self
+
+	def set_parent(self, gallery):
+		assert isinstance(gallery, (Gallery, None))
+		self.parent = gallery
+		for n in self._data:
+			chap = self._data[n]
+			chap.gallery = gallery
 
 	def add_chapter(self, chp, overwrite=True, db=False):
 		"Add a chapter of Chapter class to this container"
@@ -1573,7 +1586,10 @@ class ChaptersContainer:
 				raise gui_constants.ChapterExists
 			except KeyError:
 				pass
+		chp.gallery = self.parent
+		chp.parent = self
 		self[chp.number] = chp
+		
 
 		if db:
 			# TODO: implement this

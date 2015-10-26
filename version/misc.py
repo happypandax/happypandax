@@ -330,7 +330,7 @@ class GalleryMetaWindow(ArrowWindow):
 
 	class GalleryLayout(QFrame):
 		
-		def __init__(self, gallery, w=300, h=300):
+		def __init__(self, gallery, w=350, h=350):
 			super().__init__()
 			self.resize(w, h)
 			self.setStyleSheet('color:#bdc3c7;')
@@ -358,6 +358,28 @@ class GalleryMetaWindow(ArrowWindow):
 			first_layout.addWidget(self.g_chapters_lbl, 0, Qt.AlignCenter)
 			first_layout.addWidget(self.g_type_lbl, 0, Qt.AlignRight)
 			self.main_layout.addRow(first_layout)
+
+			second_layout = QHBoxLayout()
+			self.g_status_lbl = get_label(gallery.status)
+			self.g_d_added_lbl = get_label('Added: {}'.format(gallery.date_added.strftime('%d %b %Y')))
+			if gallery.pub_date:
+				print(gallery.pub_date)
+				self.g_pub_lbl = get_label('Pub.: {}'.format(gallery.pub_date.strftime('%d %b %Y')))
+			else:
+				self.g_pub_lbl = get_label('Unknown')
+			second_layout.addWidget(self.g_pub_lbl, 0, Qt.AlignLeft)
+			second_layout.addWidget(self.g_status_lbl, 0, Qt.AlignCenter)
+			second_layout.addWidget(self.g_d_added_lbl, 0, Qt.AlignRight)
+			self.main_layout.addRow(second_layout)
+
+			third_layout = QHBoxLayout()
+			last_read_txt = 'Last read {}'.format(utils.get_date_age(gallery.last_read)) if gallery.last_read else "Haven't read this yet!"
+			self.g_last_read_lbl = get_label(last_read_txt)
+			self.g_read_count_lbl = get_label('Read {} times'.format(gallery.times_read))
+			third_layout.addWidget(self.g_last_read_lbl, 0, Qt.AlignLeft)
+			third_layout.addWidget(self.g_read_count_lbl, 0, Qt.AlignRight)
+			self.main_layout.addRow(third_layout)
+
 			self.g_info_lbl = get_label(gallery.info)
 			self.main_layout.addRow(self.g_info_lbl)
 
@@ -366,6 +388,10 @@ class GalleryMetaWindow(ArrowWindow):
 				self.g_url_lbl.clicked.connect(lambda: utils.open_web_link(self.g_url_lbl.text()))
 				self.g_url_lbl.setWordWrap(True)
 				self.main_layout.addRow('URL:', self.g_url_lbl)
+
+		def mousePressEvent(self, event):
+			print('hi')
+			return super().mousePressEvent(event)
 
 
 	def __init__(self, parent):
