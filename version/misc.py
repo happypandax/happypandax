@@ -37,7 +37,8 @@ from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QGridLayout, QScrollArea, QLayout, QButtonGroup,
 							 QRadioButton, QFileIconProvider, QFontDialog,
 							 QColorDialog, QScrollArea, QSystemTrayIcon,
-							 QMenu, QGraphicsBlurEffect, QActionGroup)
+							 QMenu, QGraphicsBlurEffect, QActionGroup,
+							 QCommonStyle)
 
 from utils import (tag_to_string, tag_to_dict, title_parser, ARCHIVE_FILES,
 					 ArchiveFile, IMG_FILES)
@@ -67,6 +68,7 @@ class Line(QFrame):
 	"'v' for vertical line or 'h' for horizontail line, color is hex string"
 	def __init__(self, orentiation, parent=None):
 		super().__init__(parent)
+		self.setFrameStyle(self.StyledPanel)
 		if orentiation == 'v':
 			self.setFrameShape(self.VLine)
 		else:
@@ -330,64 +332,121 @@ class GalleryMetaWindow(ArrowWindow):
 
 	class GalleryLayout(QFrame):
 		
-		def __init__(self, gallery, w=350, h=350):
-			super().__init__()
-			self.resize(w, h)
-			self.setStyleSheet('color:#bdc3c7;')
+		def __init__(self, parent):
+			super().__init__(parent)
+			self.setStyleSheet('color:white;')
+			self.main_layout = QFormLayout(self)
 			def get_label(txt):
 				lbl = QLabel(txt)
 				lbl.setWordWrap(True)
 				return lbl
-			self.main_layout = QFormLayout(self)
-			self.g_title_lbl = get_label(gallery.title)
+			self.g_title_lbl = get_label('')
 			self.g_title_lbl.setStyleSheet('color:white;font-weight:bold;')
 			self.main_layout.addRow(self.g_title_lbl)
-			self.g_artist_lbl = get_label(gallery.artist)
-			#self.g_artist_lbl.setStyleSheet('color:#bdc3c7;')
+			self.g_artist_lbl = get_label('')
+			self.g_artist_lbl.setStyleSheet('color:#bdc3c7;')
 			self.main_layout.addRow(self.g_artist_lbl)
 			for lbl in (self.g_title_lbl, self.g_artist_lbl):
 				lbl.setAlignment(Qt.AlignCenter)
 			self.main_layout.addRow(Line('h'))
 
 			first_layout = QHBoxLayout()
-			self.g_lang_lbl = get_label(gallery.language)
-			chap_txt = "chapters" if gallery.chapters.count() > 1 else "chapter"
-			self.g_chapters_lbl = get_label('{} {}'.format(gallery.chapters.count(), chap_txt))
-			self.g_type_lbl = get_label(gallery.type)
+			self.g_lang_lbl = get_label('')
+			self.g_chapters_lbl = get_label('')
+			self.g_type_lbl = get_label('')
 			first_layout.addWidget(self.g_lang_lbl, 0, Qt.AlignLeft)
 			first_layout.addWidget(self.g_chapters_lbl, 0, Qt.AlignCenter)
 			first_layout.addWidget(self.g_type_lbl, 0, Qt.AlignRight)
 			self.main_layout.addRow(first_layout)
 
 			second_layout = QHBoxLayout()
-			self.g_status_lbl = get_label(gallery.status)
-			self.g_d_added_lbl = get_label('Added: {}'.format(gallery.date_added.strftime('%d %b %Y')))
-			if gallery.pub_date:
-				print(gallery.pub_date)
-				self.g_pub_lbl = get_label('Pub.: {}'.format(gallery.pub_date.strftime('%d %b %Y')))
-			else:
-				self.g_pub_lbl = get_label('Unknown')
+			self.g_status_lbl = get_label('')
+			self.g_d_added_lbl = get_label('')
+			self.g_pub_lbl = get_label('Unknown')
 			second_layout.addWidget(self.g_pub_lbl, 0, Qt.AlignLeft)
 			second_layout.addWidget(self.g_status_lbl, 0, Qt.AlignCenter)
 			second_layout.addWidget(self.g_d_added_lbl, 0, Qt.AlignRight)
 			self.main_layout.addRow(second_layout)
 
 			third_layout = QHBoxLayout()
-			last_read_txt = 'Last read {}'.format(utils.get_date_age(gallery.last_read)) if gallery.last_read else "Haven't read this yet!"
-			self.g_last_read_lbl = get_label(last_read_txt)
-			self.g_read_count_lbl = get_label('Read {} times'.format(gallery.times_read))
+			self.g_last_read_lbl = get_label('')
+			self.g_read_count_lbl = get_label('')
 			third_layout.addWidget(self.g_last_read_lbl, 0, Qt.AlignLeft)
 			third_layout.addWidget(self.g_read_count_lbl, 0, Qt.AlignRight)
 			self.main_layout.addRow(third_layout)
 
-			self.g_info_lbl = get_label(gallery.info)
+			self.g_info_lbl = get_label('')
 			self.main_layout.addRow(self.g_info_lbl)
 
-			if gallery.link:
-				self.g_url_lbl = ClickedLabel(gallery.link)
-				self.g_url_lbl.clicked.connect(lambda: utils.open_web_link(self.g_url_lbl.text()))
-				self.g_url_lbl.setWordWrap(True)
-				self.main_layout.addRow('URL:', self.g_url_lbl)
+			self.g_url_lbl = ClickedLabel()
+			self.g_url_lbl.clicked.connect(lambda: utils.open_web_link(self.g_url_lbl.text()))
+			self.g_url_lbl.setWordWrap(True)
+			self.main_layout.addRow('URL:', self.g_url_lbl)
+			self.main_layout.addRow(Line('h'))
+
+			self.tags_scroll = QScrollArea(self)
+			self.tags_widget = QWidget(self)
+			self.tags_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+			self.tags_layout = QFormLayout(self.tags_widget)
+			self.tags_layout.setSizeConstraint(self.tags_layout.SetMinAndMaxSize)
+			self.tags_scroll.setWidget(self.tags_widget)
+			self.tags_scroll.setWidgetResizable(True)
+			self.tags_scroll.setStyleSheet("background-color: #585858;")
+			self.tags_scroll.setFrameShape(QFrame.NoFrame)
+			self.main_layout.addRow(self.tags_scroll)
+
+
+		def has_tags(self, tags):
+			t_len = len(tags)
+			if not t_len:
+				return False
+			if t_len == 1:
+				if 'default' in tags:
+					if not tags['default']:
+						return False
+			return True
+
+		def apply_gallery(self, gallery):
+			print(self.tags_scroll.sizeHint())
+			self.g_title_lbl.setText(gallery.title)
+			self.g_artist_lbl.setText(gallery.artist)
+			self.g_lang_lbl.setText(gallery.language)
+			chap_txt = "chapters" if gallery.chapters.count() > 1 else "chapter"
+			self.g_chapters_lbl.setText('{} {}'.format(gallery.chapters.count(), chap_txt))
+			self.g_type_lbl.setText(gallery.type)
+			self.g_status_lbl.setText(gallery.status)
+			self.g_d_added_lbl.setText('Added: {}'.format(gallery.date_added.strftime('%d %b %Y')))
+			if gallery.pub_date:
+				self.g_pub_lbl.setText('Pub.: {}'.format(gallery.pub_date.strftime('%d %b %Y')))
+			else:
+				self.g_pub_lbl.setText('Unknown')
+			last_read_txt = 'Last read {}'.format(utils.get_date_age(gallery.last_read)) if gallery.last_read else "Haven't read this yet!"
+			self.g_last_read_lbl.setText(last_read_txt)
+			self.g_read_count_lbl.setText('Read {} times'.format(gallery.times_read))
+			self.g_info_lbl.setText(gallery.info)
+			self.g_url_lbl.setText(gallery.link)
+
+			
+			clearLayout(self.tags_layout)
+			if self.has_tags(gallery.tags):
+				ns_layout = QFormLayout()
+				self.tags_layout.addRow(ns_layout)
+				for namespace in gallery.tags:
+					tags_lbls = FlowLayout()
+					if namespace == 'default':
+						self.tags_layout.insertRow(0, tags_lbls)
+					else:
+						self.tags_layout.addRow(namespace, tags_lbls)
+
+					for n, tag in enumerate(gallery.tags[namespace], 1):
+						if namespace == 'default':
+							t = TagText()
+						else:
+							t = TagText()
+						t.setText(tag)
+						tags_lbls.addWidget(t)
+			self.tags_widget.adjustSize()
+
 
 		def mousePressEvent(self, event):
 			print('hi')
@@ -401,7 +460,7 @@ class GalleryMetaWindow(ArrowWindow):
 		# gallery data stuff
 		self.content_margin = 10
 		self.current_gallery = None
-		self.g_widget = None
+		self.g_widget = self.GalleryLayout(self)
 
 	def show_gallery(self, index, view):
 		desktop_w = QDesktopWidget().width()
@@ -491,26 +550,19 @@ class GalleryMetaWindow(ArrowWindow):
 
 	def set_gallery(self, gallery):
 		self.current_gallery = gallery
-		self.g_widget = self.GalleryLayout(gallery, self.width()-self.content_margin,
+		self.g_widget.apply_gallery(gallery)
+		self.g_widget.resize(self.width()-self.content_margin,
 									 self.height()-self.content_margin)
-
-	def paintEvent(self, event):
-		super().paintEvent(event)
-		if self.current_gallery:
-			self.paint_gallery()
-
-	def paint_gallery(self):
-		if self.g_widget:
-			if self.direction == self.LEFT:
-				start_point = QPoint(self.arrow_size.width(), 0)
-			elif self.direction == self.TOP:
-				start_point = QPoint(0, self.arrow_size.height())
-			else:
-				start_point = QPoint(0, 0)
-			print(start_point.x(), start_point.y())
-			# title 
-			#title_region = QRegion(0, 0, self.g_title_lbl.width(), self.g_title_lbl.height())
-			self.g_widget.render(self, start_point, flags=self.DrawChildren)
+		if self.direction == self.LEFT:
+			start_point = QPoint(self.arrow_size.width(), 0)
+		elif self.direction == self.TOP:
+			start_point = QPoint(0, self.arrow_size.height())
+		else:
+			start_point = QPoint(0, 0)
+		print(start_point.x(), start_point.y())
+		# title 
+		#title_region = QRegion(0, 0, self.g_title_lbl.width(), self.g_title_lbl.height())
+		self.g_widget.move(start_point)
 
 	def leaveEvent(self, event):
 		self.hide()

@@ -93,14 +93,10 @@ QScrollBar::handle {
 
 }
 
-QScrollBar::handle:vertical {
+QScrollBar::handle:vertical, QScrollBar::handle:horizontal {
 	min-height: 50px;
 	border: 0px solid #9A9A9A;
-}
-
-QScrollBar::handle:horizontal {
-	min-width: 50px;
-	border: 0px solid #9A9A9A;
+	border-radius: 4px;
 }
 
 QScrollBar::add-line:vertical {
@@ -129,6 +125,10 @@ QScrollBar::sub-line:horizontal {
 	width: 0px;
 	subcontrol-position: left;
 	subcontrol-origin: margin;
+}
+
+QScrollBar::add-page, QScrollBar::sub-page {
+	background: none;
 }
 
 QMenu {
