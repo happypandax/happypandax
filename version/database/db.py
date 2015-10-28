@@ -13,7 +13,7 @@
 #"""
 
 import os, sqlite3, threading, queue
-import logging
+import logging, time
 
 from . import db_constants
 log = logging.getLogger(__name__)
@@ -324,6 +324,7 @@ def init_db(test=False):
 class DBBase:
 	"The base DB class. _DB_CONN should be set at runtime on startup"
 	_DB_CONN = None
+	_LOCK = False
 
 	def __init__(self, **kwargs):
 		pass
@@ -343,7 +344,7 @@ class DBBase:
 		log_d('DB Query: {}'.format(args).encode(errors='ignore'))
 		with self._DB_CONN:
 			return self._DB_CONN.executemany(*args)
-
+		self._LOCK = False
 if __name__ == '__main__':
 	raise RuntimeError("Unit tests not yet implemented")
 	# unit tests here!

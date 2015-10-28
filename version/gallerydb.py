@@ -1539,7 +1539,7 @@ class DatabaseEmitter(QObject):
 		if not self._fetching:
 			self._fetching = True
 			oldc = self.count
-			self.count = add_method_queue(GalleryDB.gallery_count, False)
+			self.count = GalleryDB.gallery_count()
 			if oldc != self.count:
 				self.COUNT_CHANGE.emit()
 			self._fetching = False
