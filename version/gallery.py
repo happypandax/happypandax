@@ -1126,12 +1126,12 @@ class MangaView(QListView):
 		if gallery.fav == 1:
 			gallery.fav = 0
 			#self.model().replaceRows([gallery], index.row(), 1, index)
-			gallerydb.add_method_queue(gallerydb.GalleryDB.fav_gallery_set, True, gallery.id, 0)
+			gallerydb.add_method_queue(gallerydb.GalleryDB.modify_gallery, True, gallery.id, {'fav':0})
 			self.gallery_model.CUSTOM_STATUS_MSG.emit("Unfavorited")
 		else:
 			gallery.fav = 1
 			#self.model().replaceRows([gallery], index.row(), 1, index)
-			gallerydb.add_method_queue(gallerydb.GalleryDB.fav_gallery_set, True, gallery.id, 1)
+			gallerydb.add_method_queue(gallerydb.GalleryDB.modify_gallery, True, gallery.id, {'fav':1})
 			self.gallery_model.CUSTOM_STATUS_MSG.emit("Favorited")
 
 	def open_random_gallery(self):

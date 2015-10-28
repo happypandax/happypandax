@@ -117,12 +117,12 @@ class Fetch(QObject):
 								for ch in chapters:
 									chap = new_gallery.chapters.create_chapter()
 									chap.path = os.path.join(path, ch)
-									chap.pages = len(scandir.scandir(chap.path))
+									chap.pages = len(list(scandir.scandir(chap.path)))
 
 							else: #else assume that all images are in gallery folder
 								chap = new_gallery.chapters.create_chapter()
 								chap.path = path
-								chap.pages = len(scandir.scandir(path))
+								chap.pages = len(list(scandir.scandir(path)))
 				
 							##find last edited file
 							#times = set()

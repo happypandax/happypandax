@@ -21,7 +21,7 @@ from PyQt5.QtGui import QImage
 from utils import (today, ArchiveFile, generate_img_hash, delete_path,
 					 ARCHIVE_FILES, get_gallery_img, IMG_FILES)
 from database import db_constants
-from database.db import CommandQueue, ResultQueue
+from database.db import DBBase
 
 import gui_constants
 import utils
@@ -47,9 +47,11 @@ def process_methods():
 	method. Named arguments are put in a dict.
 	"""
 	while True:
+		print('waiting for method')
 		l = method_queue.get()
-		log_i('Processing a method from queue...')
+		log_d('Processing a method from queue...')
 		method = l.pop(0)
+		log_d(method)
 		args = []
 		kwargs = {}
 		get_args = 1
@@ -67,6 +69,7 @@ def process_methods():
 			except IndexError:
 				get_args = 0
 		args = tuple(args)
+		print('calling')
 		if args and kwargs:
 			r = method(*args, **kwargs)
 		elif args:
@@ -75,7 +78,7 @@ def process_methods():
 			r = method(**kwargs)
 		else:
 			r = method()
-
+		print('called method')
 		if not no_return:
 			method_return.put(r)
 		method_queue.task_done()
@@ -85,7 +88,7 @@ method_queue_thread = threading.Thread(name='Method Queue Thread', target=proces
 method_queue_thread.start()
 
 def add_method_queue(method, no_return, *args, **kwargs):
-	log_i('Added method to queue')
+	log_d('Added method to queue')
 	log_d('Method name: {}'.format(method.__name__))
 	arg_list = [method]
 	if no_return:
@@ -96,6 +99,7 @@ def add_method_queue(method, no_return, *args, **kwargs):
 	if kwargs:
 		arg_list.append(kwargs)
 	method_queue.put(arg_list)
+	print('putted method to queue')
 	if not no_return:
 		return method_return.get()
 
@@ -191,7 +195,7 @@ def gallery_map(row, gallery):
 
 	return gallery
 
-def default_chap_exec(gallery_or_id, chap):
+def default_chap_exec(gallery_or_id, chap, only_values=False):
 	"Pass a Gallery object or gallery id and a Chapter object"
 	if isinstance(gallery_or_id, Gallery):
 		gid = gallery_or_id.id
@@ -200,15 +204,18 @@ def default_chap_exec(gallery_or_id, chap):
 		gid = gallery_or_id
 		in_archive = chap.in_archive
 
-	execute = ["""
-			INSERT INTO chapters(series_id, chapter_number, chapter_path, pages, in_archive)
-			VALUES(:series_id, :chapter_number, :chapter_path, :pages, :in_archive)""",
-			{'series_id':gid,
-			'chapter_number':chap.number,
-			'chapter_path':str.encode(chap.path),
-			'pages':chap.pages,
-			'in_archive':in_archive}
-			]
+	if only_values:
+		execute = (gid, chap.number, str.encode(chap.path), in_archive, chap.pages,)
+	else:
+		execute = ("""
+				INSERT INTO chapters(series_id, chapter_number, chapter_path, pages, in_archive)
+				VALUES(:series_id, :chapter_number, :chapter_path, :pages, :in_archive)""",
+				{'series_id':gid,
+				'chapter_number':chap.number,
+				'chapter_path':str.encode(chap.path),
+				'pages':chap.pages,
+				'in_archive':in_archive}
+				)
 	return execute
 
 def default_exec(object):
@@ -217,7 +224,7 @@ def default_exec(object):
 			return "None"
 		else:
 			return obj
-	executing = [["""INSERT INTO series(title, artist, profile, series_path, is_archive,
+	executing = ["""INSERT INTO series(title, artist, profile, series_path, is_archive,
 					info, type, fav, status, pub_date, date_added, last_read, link, last_update,
 					times_read, exed)
 				VALUES(:title, :artist, :profile, :series_path, :is_archive, :info, :type, :fav,
@@ -244,10 +251,10 @@ def default_exec(object):
 				'db_v':check(db_constants.REAL_DB_VERSION),
 				'exed':check(object.exed)
 				}
-				]]
+				]
 	return executing
 
-class GalleryDB:
+class GalleryDB(DBBase):
 	"""
 	Provides the following s methods:
 		rebuild_thumb -> Rebuilds gallery thumbnail
@@ -256,10 +263,6 @@ class GalleryDB:
 		fav_gallery_set -> Set fav on gallery with given gallery id, and returns the gallery
 		get_all_gallery -> returns a list of all gallery (<Gallery> class) currently in DB
 		get_gallery_by_id -> Returns gallery with given id
-		get_gallery_by_artist -> Returns gallery with given artist
-		get_gallery_by_title -> Returns gallery with given title
-		get_gallery_by_tags -> Returns gallery with given list of tags
-		get_gallery_by_path -> Returns gallery with given path
 		add_gallery -> adds gallery into db
 		add_gallery_return -> adds gallery into db AND returns the added gallery
 		set_gallery_title -> changes gallery title
@@ -334,13 +337,12 @@ class GalleryDB:
 			return False
 		return True
 
-	@staticmethod
-	def modify_gallery(series_id, title=None, profile=None, artist=None, info=None, type=None, fav=None,
+	@classmethod
+	def modify_gallery(cls, series_id, title=None, profile=None, artist=None, info=None, type=None, fav=None,
 				   tags=None, language=None, status=None, pub_date=None, link=None,
 				   times_read=None, series_path=None, chapters=None, _db_v=None,
 				   hashes=None, exed=None, is_archive=None, path_in_archive=None):
 		"Modifies gallery with given gallery id"
-		executing = []
 		assert isinstance(series_id, int)
 		executing = []
 		if title != None:
@@ -395,25 +397,16 @@ class GalleryDB:
 			assert isinstance(hashes, Gallery)
 			HashDB.rebuild_gallery_hashes(hashes)
 
-		CommandQueue.put(executing)
-		c = ResultQueue.get()
-		del c
+		for query in executing:
+			cls.execute(cls, *query)
 
-
-	@staticmethod
-	def fav_gallery_set(series_id, fav):
-		"Set fav on gallery with given gallery id, and returns the gallery"
-		# NOTE: USELESS BECAUSE OF THE METHOD ABOVE; CONSIDER REVISING & DELETING
-		executing = [["UPDATE series SET fav=? WHERE series_id=?", (fav, series_id)]]
-		GalleryDB.modify_gallery(series_id, fav=fav)
-
-	@staticmethod
-	def get_all_gallery():
-		"""Careful, might crash with very large libraries i think...
-		Returns a list of all galleries (<Gallery> class) currently in DB"""
-		executing = [["SELECT * FROM series"]]
-		CommandQueue.put(executing)
-		cursor = ResultQueue.get()
+	@classmethod
+	def get_all_gallery(cls):
+		"""
+		Careful, might crash with very large libraries i think...
+		Returns a list of all galleries (<Gallery> class) currently in DB
+		"""
+		cursor = cls.execute(cls, 'SELECT * FROM series')
 		all_gallery = cursor.fetchall()
 		return GalleryDB.gen_galleries(all_gallery)
 
@@ -432,13 +425,11 @@ class GalleryDB:
 
 		return gallery_list
 
-	@staticmethod
-	def get_gallery_by_id(id):
+	@classmethod
+	def get_gallery_by_id(cls, id):
 		"Returns gallery with given id"
 		assert isinstance(id, int), "Provided ID is invalid"
-		executing = [["SELECT * FROM series WHERE series_id=?", (id,)]]
-		CommandQueue.put(executing)
-		cursor = ResultQueue.get()
+		cursor = cls.execute(cls, 'SELECT * FROM series WHERE series_id=?', (id,))
 		row = cursor.fetchone()
 		gallery = Gallery()
 		try:
@@ -448,71 +439,8 @@ class GalleryDB:
 		except TypeError:
 			return None
 
-
-	@staticmethod
-	def get_gallery_by_artist(artist):
-		"Returns gallery with given artist"
-		assert isinstance(artist, str), "Provided artist is invalid"
-		executing = [["SELECT * FROM series WHERE artist=?", (artist,)]]
-		CommandQueue.put(executing)
-		cursor = ResultQueue.get()
-		row = cursor.fetchone() # TODO: an artist can have multiple galleries :^)
-		gallery = Gallery()
-		gallery.id = row['series_id']
-		gallery = gallery_map(row, gallery)
-		return gallery
-
-	@staticmethod
-	def get_gallery_by_title(title):
-		"Returns gallery with given title"
-		assert isinstance(id, int), "Provided title is invalid"
-		executing = [["SELECT * FROM series WHERE title=?", (title,)]]
-		CommandQueue.put(executing)
-		cursor = ResultQueue.get()
-		row = cursor.fetchone()
-		gallery = Gallery()
-		gallery.id = row['series_id']
-		gallery = gallery_map(row, gallery)
-		return gallery
-
-	@staticmethod
-	def get_gallery_by_tags(list_of_tags):
-		"Returns gallery with given list of tags"
-		assert isinstance(list_of_tags, list), "Provided tag(s) is/are invalid"
-		pass
-
-	@staticmethod
-	def get_gallery_by_path(path):
-		"Returns gallery with given path"
-		assert isinstance(path, str), "Provided path should be a str"
-		executing = [["SELECT * FROM series where series_path=?", (str.encode(path),)]]
-		CommandQueue.put(executing)
-		cursor = ResultQueue.get()
-		row = cursor.fetchone()
-		if row:
-			gallery = Gallery()
-			gallery.id = row['series_id']
-			gallery = gallery_map(row, gallery)
-			return gallery
-
-	@staticmethod
-	def get_gallery_by_fav():
-		"Returns a list of all gallery with fav set to true (1)"
-		x = 1
-		executing = [["SELECT * FROM series WHERE fav=?", (x,)]]
-		CommandQueue.put(executing)
-		cursor = ResultQueue.get()
-
-		gallery_list = []
-		for row in cursor.fetchall():
-			gallery = Gallery()
-			gallery.id = row["series_id"]
-			gallery = gallery_map(row, gallery)
-			gallery_list.append(gallery)
-		return gallery_list
-
-	@staticmethod
-	def add_gallery(object, test_mode=False):
+	@classmethod
+	def add_gallery(cls, object, test_mode=False):
 		"Receives an object of class gallery, and appends it to DB"
 		"Adds gallery of <Gallery> class into database"
 		assert isinstance(object, Gallery), "add_gallery method only accepts gallery items"
@@ -520,17 +448,15 @@ class GalleryDB:
 
 		object.profile = gen_thumbnail(object)
 
-		executing = default_exec(object)
-		CommandQueue.put(executing)
-		cursor = ResultQueue.get()
+		cursor = cls.execute(cls, *default_exec(object))
 		series_id = cursor.lastrowid
 		object.id = series_id
 		if object.tags:
 			TagDB.add_tags(object)
 		ChapterDB.add_chapters(object)
 
-	@staticmethod
-	def add_gallery_return(object):
+	@classmethod
+	def add_gallery_return(cls, object):
 		"""Adds gallery of <Gallery> class into database AND returns the profile generated"""
 		assert isinstance(object, Gallery), "[add_gallery_return] method only accept gallery items"
 		log_i('Recevied gallery: {}'.format(object.path.encode(errors='ignore')))
@@ -538,9 +464,7 @@ class GalleryDB:
 		object.profile = gen_thumbnail(object)
 		PROFILE_TO_MODEL.put(object.profile)
 
-		executing = default_exec(object)
-		CommandQueue.put(executing)
-		cursor = ResultQueue.get()
+		cursor = cls.execute(cls, *default_exec(object))
 		series_id = cursor.lastrowid
 		object.id = series_id
 		if object.tags:
@@ -548,14 +472,16 @@ class GalleryDB:
 		ChapterDB.add_chapters(object)
 		return GalleryDB.get_gallery_by_id(object.id)
 
-	@staticmethod
-	def gallery_count():
-		"""Returns the amount of galleries in db.
+	@classmethod
+	def gallery_count(cls):
 		"""
-		pass
+		Returns the amount of galleries in db.
+		"""
+		cursor = cls.execute(cls, "SELECT count(*) AS 'size' FROM series")
+		return cursor.fetchone()['size']
 
-	@staticmethod
-	def del_gallery(list_of_gallery, local=False):
+	@classmethod
+	def del_gallery(cls, list_of_gallery, local=False):
 		"Deletes all galleries in the list recursively."
 		assert isinstance(list_of_gallery, list), "Please provide a valid list of galleries to delete"
 		for gallery in list_of_gallery:
@@ -582,10 +508,7 @@ class GalleryDB:
 					os.remove(gallery.profile)
 				except FileNotFoundError:
 					pass
-			executing = [["DELETE FROM series WHERE series_id=?", (gallery.id,)]]
-			CommandQueue.put(executing)
-			c = ResultQueue.get()
-			del c
+			cls.execute(cls, 'DELETE FROM series WHERE series_id=?', (gallery.id,))
 			ChapterDB.del_all_chapters(gallery.id)
 			TagDB.del_gallery_mapping(gallery.id)
 			HashDB.del_gallery_hashes(gallery.id)
@@ -626,43 +549,7 @@ class GalleryDB:
 
 		return binary_search(os.path.normcase(name))
 
-#def default_chap_exec(object):
-#	def check(obj):
-#		if obj == None:
-#			return "None"
-#		else:
-#			return obj
-#	executing = [["""INSERT INTO series(title, artist, profile, series_path,
-#					info, type, fav, status, pub_date, date_added, last_read, link, last_update,
-#					times_read, exed)
-#				VALUES(:title, :artist, :profile, :series_path, :info, :type, :fav,
-#					:status, :pub_date, :date_added, :last_read, :link, :last_update,
-#					:times_read, :exed)""",
-#				{
-#				'title':check(object.title),
-#				'artist':check(object.artist),
-#				'profile':str.encode(object.profile),
-#				'series_path':str.encode(object.path),
-#				'is_archive':check(object.is_archive),
-#				'path_in_archive':str.encode(object.path_in_archive),
-#				'info':check(object.info),
-#				'fav':check(object.fav),
-#				'type':check(object.type),
-#				'language':check(object.language),
-#				'status':check(object.status),
-#				'pub_date':check(object.pub_date),
-#				'date_added':check(object.date_added),
-#				'last_read':check(object.last_read),
-#				'last_update':check(object.last_update),
-#				'link':str.encode(object.link),
-#				'times_read':check(object.times_read),
-#				'db_v':check(db_constants.REAL_DB_VERSION),
-#				'exed':check(object.exed)
-#				}
-#				]]
-#	return executing
-
-class ChapterDB:
+class ChapterDB(DBBase):
 	"""
 	Provides the following database methods:
 		update_chapter -> Updates an existing chapter in DB
@@ -679,8 +566,8 @@ class ChapterDB:
 	def __init__(self):
 		raise Exception("ChapterDB should not be instantiated")
 
-	@staticmethod
-	def update_chapter(chapter_container, numbers=[]):
+	@classmethod
+	def update_chapter(cls, chapter_container, numbers=[]):
 		"""
 		Updates an existing chapter in DB.
 		Pass a gallery's ChapterContainer, specify number with a list of ints
@@ -693,57 +580,47 @@ class ChapterDB:
 				chapters.append(chapter_container[n])
 		else:
 			chapters = chapter_container.get_all_chapters()
-		executing = []
 
+		executing = []
 		for chap in chapters:
 			new_path = chap.path
-			executing.append(
-			["UPDATE chapters SET chapter_path=?, in_archive=? WHERE series_id=? AND chapter_number=?", (
-				str.encode(new_path), chap.in_archive, chap.gallery.id, chap.number)])
-		CommandQueue.put(executing)
-		c = ResultQueue.get()
-		del c
+			executing.append((str.encode(new_path), chap.in_archive, chap.gallery.id, chap.number,))
 
-	@staticmethod
-	def add_chapters(gallery_object):
+		cls.executemany(cls, "UPDATE chapters SET chapter_path=?, in_archive=? WHERE series_id=? AND chapter_number=?",
+			executing)
+
+	@classmethod
+	def add_chapters(cls, gallery_object):
 		"Adds chapters linked to gallery into database"
 		assert isinstance(gallery_object, Gallery), "Parent gallery need to be of class Gallery"
 		series_id = gallery_object.id
 		executing = []
 		for chap in gallery_object.chapters:
-			executing.append(default_chap_exec(gallery_object, chap))
-		CommandQueue.put(executing)
-		# neccessary to keep order... feels awkward, will prolly redo this.
-		d = ResultQueue.get()
-		del d
+			executing.append(default_chap_exec(gallery_object, chap, True))
+		cls.executemany(cls, 'INSERT INTO chapters VALUES(?, ?, ?, ?, ?)', executing)
 
-	def add_chapters_raw(series_id, chapters_container):
+	@classmethod
+	def add_chapters_raw(cls, series_id, chapters_container):
 		"Adds chapter(s) to a gallery with the received series_id"
 		assert isinstance(chapters_container, ChaptersContainer), "chapters_container must be of class ChaptersContainer"
 		executing = []
+		executing2 = []
 		for chap in chapters_container:
 			if not ChapterDB.get_chapter(series_id, chap.number):
-				executing.append(default_chap_exec(series_id, chap))
+				executing.append(default_chap_exec(series_id, chap, True))
 			else:
-				executing.append(["""
-				UPDATE chapters SET chapter_path=?, pages=?, in_archive=?
-				WHERE series_id=? AND chapter_number=?""",
-				(chap.path, chap.pages, chap.in_archive, series_id, chap.number,)])
-		CommandQueue.put(executing)
-		d = ResultQueue.get()
-		del d
+				cls.update_chapter(cls, chapters_container, [chap.number])
+
+		cls.executemany(cls, 'INSERT INTO chapters VALUES(?, ?, ?, ?, ?)', executing)
 
 
-	@staticmethod
-	def get_chapters_for_gallery(series_id):
+	@classmethod
+	def get_chapters_for_gallery(cls, series_id):
 		"""
 		Returns a ChaptersContainer of chapters matching the received series_id
 		"""
 		assert isinstance(series_id, int), "Please provide a valid gallery ID"
-		executing = [["""SELECT * FROM chapters WHERE series_id=?""",
-							(series_id,)]]
-		CommandQueue.put(executing)
-		cursor = ResultQueue.get()
+		cursor = cls.execute(cls, 'SELECT * FROM chapters WHERE series_id=?', (series_id,))
 		rows = cursor.fetchall()
 		chapters = ChaptersContainer()
 		for row in rows:
@@ -752,16 +629,13 @@ class ChapterDB:
 		return chapters
 
 
-	@staticmethod
-	def get_chapter(series_id, chap_numb):
+	@classmethod
+	def get_chapter(cls, series_id, chap_numb):
 		"""Returns a ChaptersContainer of chapters matching the recieved chapter_number
 		return None for no match
 		"""
 		assert isinstance(chap_numb, int), "Please provide a valid chapter number"
-		executing = [["""SELECT * FROM chapters WHERE series_id=? AND chapter_number=?""",
-							(series_id, chap_numb,)]]
-		CommandQueue.put(executing)
-		cursor = ResultQueue.get()
+		cls.execute(cls, 'SELECT * FROM chapters WHERE series_id=? AND chapter_number=?', (series_id, chap_numb,))
 		try:
 			rows = cursor.fetchall()
 			chapters = ChaptersContainer()
@@ -772,15 +646,13 @@ class ChapterDB:
 			return None
 		return chapters
 
-	@staticmethod
-	def get_chapter_id(series_id, chapter_number):
+	@classmethod
+	def get_chapter_id(cls, series_id, chapter_number):
 		"Returns id of the chapter number"
 		assert isinstance(series_id, int) and isinstance(chapter_number, int),\
 			"Passed args must be of int not {} and {}".format(type(series_id), type(chapter_number))
-		executing = [["SELECT chapter_id FROM chapters WHERE series_id=? AND chapter_number=?",
-						(series_id, chapter_number,)]]
-		CommandQueue.put(executing)
-		cursor = ResultQueue.get()
+		cls.execute(cls, 'SELECT chapter_id FROM chapters WHERE series_id=? AND chapter_number=?',
+						(series_id, chapter_number,))
 		try:
 			row = cursor.fetchone()
 			chp_id = row['chapter_id']
@@ -797,27 +669,21 @@ class ChapterDB:
 		"""
 		pass
 
-	@staticmethod
-	def del_all_chapters(series_id):
+	@classmethod
+	def del_all_chapters(cls, series_id):
 		"Deletes all chapters with the given series_id"
 		assert isinstance(series_id, int), "Please provide a valid gallery ID"
-		executing = [["DELETE FROM chapters WHERE series_id=?", (series_id,)]]
-		CommandQueue.put(executing)
-		c = ResultQueue.get()
-		del c
+		cls.execute(cls, 'DELETE FROM chapters WHERE series_id=?', (series_id,))
 
-	@staticmethod
-	def del_chapter(series_id, chap_number):
+	@classmethod
+	def del_chapter(cls, series_id, chap_number):
 		"Deletes chapter with the given number from gallery"
 		assert isinstance(series_id, int), "Please provide a valid gallery ID"
 		assert isinstance(chap_number, int), "Please provide a valid chapter number"
-		executing = [["DELETE FROM chapters WHERE series_id=? AND chapter_number=?",
-				(series_id, chap_number,)]]
-		CommandQueue.put(executing)
-		c = ResultQueue.get()
-		del c
+		cls.execute(cls, 'DELETE FROM chapters WHERE series_id=? AND chapter_number=?',
+				(series_id, chap_number,))
 
-class TagDB:
+class TagDB(DBBase):
 	"""
 	Tags are returned in a dict where {"namespace":["tag1","tag2"]}
 	The namespace "default" will be used for tags without namespaces.
@@ -844,38 +710,32 @@ class TagDB:
 		"Deletes the tags with corresponding tag_ids from DB"
 		pass
 
-	@staticmethod
-	def del_gallery_mapping(series_id):
+	@classmethod
+	def del_gallery_mapping(cls, series_id):
 		"Deletes the tags and gallery mappings with corresponding series_ids from DB"
 		assert isinstance(series_id, int), "Please provide a valid gallery id"
 		# We first get all the current tags_mappings_ids related to gallery
 		tag_m_ids = []
-		executing = [["SELECT tags_mappings_id FROM series_tags_map WHERE series_id=?",
-				(series_id,)]]
-		CommandQueue.put(executing)
-		c = ResultQueue.get()
+		c = cls.execute(cls, 'SELECT tags_mappings_id FROM series_tags_map WHERE series_id=?',
+				(series_id,))
 		for tmd in c.fetchall():
 			tag_m_ids.append(tmd['tags_mappings_id'])
 
 		# Then we delete all mappings related to the given series_id
-		executing = [["DELETE FROM series_tags_map WHERE series_id=?", (series_id,)]]
+		cls.execute(cls, 'DELETE FROM series_tags_map WHERE series_id=?', (series_id,))
 
+		executing = []
 		for tmd_id in tag_m_ids:
-			executing.append(["DELETE FROM tags_mappings WHERE tags_mappings_id=?",
-					 (tmd_id,)])
+			executing.append((tmd_id,))
 
-		CommandQueue.put(executing)
-		c = ResultQueue.get()
-		del c
+		cls.executemany(cls, 'DELETE FROM tags_mappings WHERE tags_mappings_id=?', executing)
 
-	@staticmethod
-	def get_gallery_tags(series_id):
+	@classmethod
+	def get_gallery_tags(cls, series_id):
 		"Returns all tags and namespaces found for the given series_id"
 		assert isinstance(series_id, int), "Please provide a valid gallery ID"
-		executing = [["SELECT tags_mappings_id FROM series_tags_map WHERE series_id=?",
-				(series_id,)]]
-		CommandQueue.put(executing)
-		cursor = ResultQueue.get()
+		cursor = cls.execute(cls, 'SELECT tags_mappings_id FROM series_tags_map WHERE series_id=?',
+				(series_id,))
 		tags = {}
 		result = cursor.fetchall()
 		for tag_map_row in result: # iterate all tag_mappings_ids
@@ -883,22 +743,16 @@ class TagDB:
 				if not tag_map_row:
 					continue
 				# get tag and namespace
-				executing = [["""SELECT namespace_id, tag_id FROM tags_mappings
-								WHERE tags_mappings_id=?""", (tag_map_row['tags_mappings_id'],)]]
-				CommandQueue.put(executing)
-				c = ResultQueue.get()
+				c = cls.execute(cls, 'SELECT namespace_id, tag_id FROM tags_mappings WHERE tags_mappings_id=?',
+				  (tag_map_row['tags_mappings_id'],))
 				for row in c.fetchall(): # iterate all rows
 					# get namespace
-					executing = [["SELECT namespace FROM namespaces WHERE namespace_id=?",
-					(row['namespace_id'],)]]
-					CommandQueue.put(executing)
-					c = ResultQueue.get()
+					c = cls.execute(cls, 'SELECT namespace FROM namespaces WHERE namespace_id=?',
+						(row['namespace_id'],))
 					namespace = c.fetchone()['namespace']
 
 					# get tag
-					executing = [["SELECT tag FROM tags WHERE tag_id=?", (row['tag_id'],)]]
-					CommandQueue.put(executing)
-					c = ResultQueue.get()
+					c = cls.execute(cls, 'SELECT tag FROM tags WHERE tag_id=?', (row['tag_id'],))
 					try:
 						tag = c.fetchone()['tag']
 					except TypeError:
@@ -914,8 +768,8 @@ class TagDB:
 				continue
 		return tags
 
-	@staticmethod
-	def add_tags(object):
+	@classmethod
+	def add_tags(cls, object):
 		"Adds the given dict_of_tags to the given series_id"
 		assert isinstance(object, Gallery), "Please provide a valid gallery of class gallery"
 
@@ -925,10 +779,8 @@ class TagDB:
 		def look_exists(tag_or_ns, what):
 			"""check if tag or namespace already exists in base
 			returns id, else returns None"""
-			executing = [["SELECT {}_id FROM {}s WHERE {} = ?".format(what, what, what),
-				(tag_or_ns,)]]
-			CommandQueue.put(executing)
-			c = ResultQueue.get()
+			c = cls.execute(cls, 'SELECT {}_id FROM {}s WHERE {} = ?'.format(what, what, what),
+				(tag_or_ns,))
 			try: # exists
 				return c.fetchone()['{}_id'.format(what)]
 			except TypeError: # doesnt exist
@@ -946,10 +798,7 @@ class TagDB:
 				if not namespace_id:
 					raise ValueError
 			except ValueError:
-				executing = [["""INSERT INTO namespaces(namespace)
-								VALUES(?)""", (namespace,)]]
-				CommandQueue.put(executing)
-				c = ResultQueue.get()
+				c = cls.execute(cls, 'INSERT INTO namespaces(namespace) VALUES(?)', (namespace,))
 				namespace_id = c.lastrowid
 
 			tags_id_list = []
@@ -959,10 +808,7 @@ class TagDB:
 					if not tag_id:
 						raise ValueError
 				except ValueError:
-					executing = [["""INSERT INTO tags(tag)
-								VALUES(?)""", (tag,)]]
-					CommandQueue.put(executing)
-					c = ResultQueue.get()
+					c = cls.execute(cls, 'INSERT INTO tags(tag) VALUES(?)', (tag,))
 					tag_id = c.lastrowid
 
 				tags_id_list.append(tag_id)
@@ -970,10 +816,8 @@ class TagDB:
 
 			def look_exist_tag_map(tag_id):
 				"Checks DB if the tag_id already exists with the namespace_id, returns id else None"
-				executing = [["""SELECT tags_mappings_id FROM tags_mappings
-								WHERE namespace_id=? AND tag_id=?""", (namespace_id, tag_id,)]]
-				CommandQueue.put(executing)
-				c = ResultQueue.get()
+				c = cls.execute(cls, 'SELECT tags_mappings_id FROM tags_mappings WHERE namespace_id=? AND tag_id=?',
+					(namespace_id, tag_id,))
 				try: # exists
 					return c.fetchone()['tags_mappings_id']
 				except TypeError: # doesnt exist
@@ -991,22 +835,16 @@ class TagDB:
 					else:
 						raise TypeError
 				except TypeError:
-					executing = [["""
-					INSERT INTO tags_mappings(namespace_id, tag_id)
-					VALUES(?, ?)""", (namespace_id, tag_id,)]]
-					CommandQueue.put(executing)
-					c = ResultQueue.get()
+					c = cls.execute(cls, 'INSERT INTO tags_mappings(namespace_id, tag_id) VALUES(?, ?)',
+					 (namespace_id, tag_id,))
 					# add the tags_mappings_id to our list
 					tags_mappings_id_list.append(c.lastrowid)
 
 		# Lastly we map the series_id to the tags_mappings
+		executing = []
 		for tags_map in tags_mappings_id_list:
-				executing = [["""
-				INSERT INTO series_tags_map(series_id, tags_mappings_id)
-				VALUES(?, ?)""", (series_id, tags_map,)]]
-				CommandQueue.put(executing)
-				c = ResultQueue.get()
-				del c
+				executing.append((series_id, tags_map,))
+		cls.executemany(cls, 'INSERT INTO series_tags_map(series_id, tags_mappings_id) VALUES(?, ?)', executing)
 
 	@staticmethod
 	def modify_tags(series_id, dict_of_tags):
@@ -1028,29 +866,23 @@ class TagDB:
 		"Returns all galleries with the given tag"
 		pass
 
-	@staticmethod
-	def get_ns_tags():
+	@classmethod
+	def get_ns_tags(cls):
 		"Returns a dict of all tags with namespace as key and list of tags as value"
-		executing = [['SELECT namespace_id, tag_id FROM tags_mappings']]
-		CommandQueue.put(executing)
-		cursor = ResultQueue.get()
+		cursor = cls.execute(cls, 'SELECT namespace_id, tag_id FROM tags_mappings')
 		ns_tags = {}
 		ns_id_history = {} # to avoid unesseccary DB fetching
 		for t in cursor.fetchall():
 			try:
 				# get namespace
 				if not t['namespace_id'] in ns_id_history:
-					executing = [['SELECT namespace FROM namespaces WHERE namespace_id=?', (t['namespace_id'],)]]
-					CommandQueue.put(executing)
-					c = ResultQueue.get()
+					c = cls.execute(cls, 'SELECT namespace FROM namespaces WHERE namespace_id=?', (t['namespace_id'],))
 					ns = c.fetchone()['namespace']
 					ns_id_history[t['namespace_id']] = ns
 				else:
 					ns = ns_id_history[t['namespace_id']]
 				# get tag
-				executing = [['SELECT tag FROM tags WHERE tag_id=?', (t['tag_id'],)]]
-				CommandQueue.put(executing)
-				c = ResultQueue.get()
+				c = cls.execute(cls, 'SELECT tag FROM tags WHERE tag_id=?', (t['tag_id'],))
 				tag = c.fetchone()['tag']
 				# put in dict
 				if ns in ns_tags:
@@ -1074,30 +906,26 @@ class TagDB:
 		"""
 		pass
 
-	@staticmethod
-	def get_all_tags():
+	@classmethod
+	def get_all_tags(cls):
 		"""
 		Returns all tags in database in a list
 		"""
-		executing = [['SELECT tag FROM tags']]
-		CommandQueue.put(executing)
-		cursor = ResultQueue.get()
+		cursor = cls.execute(cls, 'SELECT tag FROM tags')
 		tags = [t['tag'] for t in cursor.fetchall()]
 		return tags
 
-	@staticmethod
-	def get_all_ns():
+	@classmethod
+	def get_all_ns(cls):
 		"""
 		Returns all namespaces in database in a list
 		"""
-		executing = [['SELECT namespace FROM namespaces']]
-		CommandQueue.put(executing)
-		cursor = ResultQueue.get()
+		cursor = cls.execute(cls, 'SELECT namespace FROM namespaces')
 		ns = [n['namespace'] for n in cursor.fetchall()]
 		return ns
 
 
-class HashDB:
+class HashDB(DBBase):
 	"""
 	Contains the following methods:
 
@@ -1107,25 +935,21 @@ class HashDB:
 	rebuild_gallery_hashes <- inserts hashes into DB only if it doesnt already exist
 	"""
 
-	@staticmethod
-	def get_gallery_hashes(gallery_id):
+	@classmethod
+	def get_gallery_hashes(cls, gallery_id):
 		"Returns all hashes with the given gallery id in a list"
-		executing = [['SELECT hash FROM hashes WHERE series_id=?',
-				(gallery_id,)]]
-		CommandQueue.put(executing)
-		cursor = ResultQueue.get()
-		rows = cursor.fetchall()
-
+		cursor = cls.execute(cls, 'SELECT hash FROM hashes WHERE series_id=?',
+				(gallery_id,))
 		hashes = []
 		try:
-			for row in rows:
+			for row in cursor.fetchall():
 				hashes.append(row['hash'])
 		except IndexError:
 			return []
 		return hashes
 
-	@staticmethod
-	def get_gallery_hash(gallery_id, chapter, page=None):
+	@classmethod
+	def get_gallery_hash(cls, gallery_id, chapter, page=None):
 		"""
 		returns hash of chapter. If page is specified, returns hash of chapter page
 		"""
@@ -1136,16 +960,14 @@ class HashDB:
 		chap_id = ChapterDB.get_chapter_id(gallery_id, chapter)
 		if not chap_id:
 			return None
-		exceuting = []
 		if page:
-			exceuting.append(["SELECT hash FROM hashes WHERE series_id=? AND chapter_id=? AND page=?",
-					 (gallery_id, chap_id, page)])
+			exceuting = ["SELECT hash FROM hashes WHERE series_id=? AND chapter_id=? AND page=?",
+					 (gallery_id, chap_id, page)]
 		else:
-			exceuting.append(["SELECT hash FROM hashes WHERE series_id=? AND chapter_id=?",
-					 (gallery_id, chap_id)])
+			exceuting = ["SELECT hash FROM hashes WHERE series_id=? AND chapter_id=?",
+					 (gallery_id, chap_id)]
 		hashes = []
-		CommandQueue.put(exceuting)
-		c = ResultQueue.get()
+		c = cls.execute(cls, *exceuting)
 		for h in c.fetchall():
 			try:
 				hashes.append(h['hash'])
@@ -1153,8 +975,8 @@ class HashDB:
 				pass
 		return hashes
 
-	@staticmethod
-	def gen_gallery_hash(gallery, chapter, page=None):
+	@classmethod
+	def gen_gallery_hash(cls, gallery, chapter, page=None):
 		"""
 		Generate hash for a specific chapter.
 		Set page to only generate specific page
@@ -1228,10 +1050,7 @@ class HashDB:
 		def look_exists(hash):
 			"""check if hash already exists in database
 			returns hash, else returns None"""
-			executing = [["SELECT hash FROM hashes WHERE hash = ?",
-				(hash,)]]
-			CommandQueue.put(executing)
-			c = ResultQueue.get()
+			c = cls.execute(cls, 'SELECT hash FROM hashes WHERE hash = ?', (hash,))
 			try: # exists
 				return c.fetchone()['hash']
 			except TypeError: # doesnt exist
@@ -1246,18 +1065,16 @@ class HashDB:
 			executing = []
 			for h in hashes:
 				if not look_exists(hashes[h]):
-					executing.append(["""INSERT INTO hashes(hash, series_id, chapter_id, page)
-					VALUES(?, ?, ?, ?)""", (hashes[h], gallery.id, chap_id, h)])
-			CommandQueue.put(executing)
-			c = ResultQueue.get()
-			del c
+					executing.append((hashes[h], gallery.id, chap_id, h,))
+			cls.executemany(cls, 'INSERT INTO hashes(hash, series_id, chapter_id, page) VALUES(?, ?, ?, ?)',
+				   executing)
 		if page == 'mid':
 			return {'mid':list(hashes.values())[0]}
 		else:
 			return hashes
 
-	@staticmethod
-	def gen_gallery_hashes(gallery):
+	@classmethod
+	def gen_gallery_hashes(cls, gallery):
 		"Generates hashes for gallery's first chapter and inserts them to DB"
 		if gallery.id:
 			chap_id = ChapterDB.get_chapter_id(gallery.id, 0)
@@ -1297,12 +1114,10 @@ class HashDB:
 		if gallery.id and chap_id:
 			executing = []
 			for hash in hashes:
-				executing.append(["""INSERT INTO hashes(hash, series_id, chapter_id, page)
-				VALUES(?, ?, ?, ?)""", (hash, gallery.id, chap_id, n)])
+				executing.append((hash, gallery.id, chap_id, n,))
 
-			CommandQueue.put(executing)
-			c = ResultQueue.get()
-			del c
+			cls.executemany(cls, 'INSERT INTO hashes(hash, series_id, chapter_id, page) VALUES(?, ?, ?, ?)',
+				   executing)
 		return hashes
 
 	@staticmethod
@@ -1315,13 +1130,10 @@ class HashDB:
 			hashes = HashDB.gen_gallery_hashes(gallery)
 		return hashes
 
-	@staticmethod
-	def del_gallery_hashes(gallery_id):
+	@classmethod
+	def del_gallery_hashes(cls, gallery_id):
 		"Deletes all hashes linked to the given gallery id"
-		executing = [["DELETE FROM hashes WHERE series_id=?", (gallery_id,)]]
-		CommandQueue.put(executing)
-		c = ResultQueue.get()
-		del c
+		cls.execute(cls, 'DELETE FROM hashes WHERE series_id=', (gallery_id,))
 
 
 class Gallery:
@@ -1709,6 +1521,7 @@ class DatabaseEmitter(QObject):
 	START = pyqtSignal()
 	DONE = pyqtSignal()
 	COUNT_CHANGE = pyqtSignal()
+	_DB = DBBase()
 
 	RUN = False
 
@@ -1725,10 +1538,8 @@ class DatabaseEmitter(QObject):
 	def update_count(self):
 		if not self._fetching:
 			self._fetching = True
-			CommandQueue.put([["SELECT count(*) AS 'size' FROM series"]])
-			cursor = ResultQueue.get()
 			oldc = self.count
-			self.count = cursor.fetchone()['size']
+			self.count = add_method_queue(GalleryDB.gallery_count, False)
 			if oldc != self.count:
 				self.COUNT_CHANGE.emit()
 			self._fetching = False
@@ -1750,10 +1561,9 @@ class DatabaseEmitter(QObject):
 			self._fetching = True
 			remaining = self.count - len(self._current_data)
 			rec_to_fetch = min(remaining, self._fetch_count)
-			CommandQueue.put([["SELECT * FROM series LIMIT {}, {}".format(
-				self._offset, rec_to_fetch)]])
+			c = add_method_queue(self._DB.execute, False, 'SELECT * FROM series LIMIT {}, {}'.format(
+				self._offset, rec_to_fetch))
 			self._offset += rec_to_fetch
-			c = ResultQueue.get()
 			new_data = c.fetchall()
 			gallery_list = add_method_queue(GalleryDB.gen_galleries, False, new_data)
 			#self._current_data.extend(gallery_list)

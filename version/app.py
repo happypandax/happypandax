@@ -851,6 +851,7 @@ class AppWindow(QMainWindow):
 		if available_folders and not gui_constants.SCANNING_FOR_GALLERIES:
 			gui_constants.SCANNING_FOR_GALLERIES = True
 			self.notification_bar.add_text("Scanning for new galleries...")
+			log_i('Scanning for new galleries...')
 			try:
 				class ScanDir(QObject):
 					final_paths_and_galleries = pyqtSignal(list, list)

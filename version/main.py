@@ -123,7 +123,7 @@ def start(test=False):
 			sys.exit()
 
 	def start_main_window(conn):
-		DB = db.DBThread(conn)
+		db.DBBase._DB_CONN = conn
 		#if args.test:
 		#	import threading, time
 		#	ser_list = []
@@ -212,11 +212,7 @@ def start(test=False):
 
 			import threading
 			db_p = db_constants.DB_PATH
-			threading.Thread(target=db.add_db_revisions,
-					args=(db_p,)).start()
-			done = None
-			while not done:
-				done = db.ResultQueue.get()
+			db.add_db_revisions(db_p)
 			conn = db.init_db()
 			start_main_window(conn)
 		else:

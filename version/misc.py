@@ -1728,7 +1728,7 @@ class ChapterAddWidget(QWidget):
 				chap = chapters.create_chapter(c)
 				chap.path = p
 				if os.path.isdir(p):
-					chap.pages = len(scandir.scandir(p))
+					chap.pages = len(list(scandir.scandir(p)))
 				elif p.endswith(utils.ARCHIVE_FILES):
 					arch = utils.ArchiveFile(p)
 					chap.pages = len(arch.dir_contents(''))

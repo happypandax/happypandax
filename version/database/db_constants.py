@@ -28,3 +28,5 @@ REAL_DB_VERSION = DB_VERSION[len(DB_VERSION)-1]
 METHOD_QUEUE = None
 METHOD_RETURN = None
 DATABASE = None
+
+class NoDatabaseConnection(Exception): pass
