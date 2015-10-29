@@ -176,7 +176,11 @@ class Fetch(QObject):
 									raise ValueError
 							except ValueError:
 								log_w('Skipped {} in local search'.format(path.encode(errors='ignore')))
-								self.skipped_paths.append(temp_p)
+								self.skipped_paths.append((temp_p, 'Empty archive',))
+								return
+							except gui_constants.CreateArchiveFail:
+								log_w('Skipped {} in local search'.format(path.encode(errors='ignore')))
+								self.skipped_paths.append((temp_p, 'Error creating archive',))
 								return
 
 						new_gallery.title = parsed['title']
@@ -191,7 +195,7 @@ class Fetch(QObject):
 						log_i('Gallery successful created: {}'.format(folder_name.encode('utf-8', 'ignore')))
 					else:
 						log_i('Gallery already exists: {}'.format(folder_name.encode('utf-8', 'ignore')))
-						self.skipped_paths.append(temp_p)
+						self.skipped_paths.append((temp_p, 'Already exists'))
 
 				for folder_name in gallery_l: # folder_name = gallery folder title
 					self._curr_gallery = folder_name
@@ -216,12 +220,23 @@ class Fetch(QObject):
 							for g in utils.check_archive(path):
 								create_gallery(g, os.path.split(g)[1], False, archive=path)
 					else:
-						if (os.path.isdir(path) and os.listdir(path)) or path.endswith(utils.ARCHIVE_FILES):
+						try:
+
+							if os.path.isdir(path):
+								if not list(scandir.scandir(path)):
+									raise ValueError
+							elif not path.endswith(utils.ARCHIVE_FILES):
+								raise NotADirectoryError
+
 							log_i("Treating each subfolder as chapter")
 							create_gallery(path, folder_name, do_chapters=True)
-						else:
-							self.skipped_paths.append(path)
+
+						except ValueError:
+							self.skipped_paths.append((path, 'Empty directory'))
 							log_w('Directory is empty: {}'.format(path.encode(errors='ignore')))
+						except NotADirectoryError:
+							self.skipped_paths.append((path, 'Unsupported file'))
+							log_w('Unsupported file: {}'.format(path.encode(errors='ignore')))
 
 					progress += 1 # update the progress bar
 					self.PROGRESS.emit(progress)

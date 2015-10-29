@@ -25,7 +25,8 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QListView,
 							 QDesktopWidget, QPushButton, QCompleter,
 							 QListWidget, QListWidgetItem, QToolTip,
 							 QProgressBar, QToolButton, QSystemTrayIcon,
-							 QShortcut, QGraphicsBlurEffect)
+							 QShortcut, QGraphicsBlurEffect, QTableWidget,
+							 QTableWidgetItem)
 
 import gui_constants
 import misc
@@ -337,10 +338,8 @@ class AppWindow(QMainWindow):
 
 				class GalleryContextMenu(QMenu):
 					app_instance = self
-					error_galleries = status
 					def __init__(self, parent=None):
 						super().__init__(parent)
-						self.error = [x for x in status if x[0].id]
 						show_in_library_act = self.addAction('Show in library')
 						show_in_library_act.triggered.connect(self.show_in_library)
 
@@ -353,6 +352,9 @@ class AppWindow(QMainWindow):
 
 				g_popup = file_misc.GalleryPopup(('Fecthing metadata for these galleries failed.'+
 									  ' Check happypanda.log for details.', galleries), self, menu=GalleryContextMenu())
+				#errors = {g[0].id: g[1] for g in status}
+				#for g_item in g_popup.get_all_items():
+				#	g_item.setToolTip(errors[g_item.gallery.id])
 				g_popup.graphics_blur.setEnabled(False)
 				close_button = g_popup.add_buttons('Close')[0]
 				close_button.clicked.connect(g_popup.close)
@@ -821,12 +823,28 @@ class AppWindow(QMainWindow):
 				msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
 				msg_box.setDefaultButton(QMessageBox.No)
 				if msg_box.exec() == QMessageBox.Yes:
-					list_wid = QListWidget(self)
-					for g in s_list:
-						list_wid.addItem(g)
+					list_wid = QTableWidget(self)
+					list_wid.setRowCount(len(s_list))
+					list_wid.setColumnCount(2)
+					list_wid.setAlternatingRowColors(True)
+					list_wid.setEditTriggers(list_wid.NoEditTriggers)
+					list_wid.setHorizontalHeaderLabels(['Reason', 'Path'])
+					list_wid.setSelectionBehavior(list_wid.SelectRows)
+					list_wid.setSelectionMode(list_wid.SingleSelection)
+					list_wid.setSortingEnabled(True)
+					list_wid.verticalHeader().hide()
+					list_wid.setAutoScroll(False)
+					for x, g in enumerate(s_list):
+						list_wid.setItem(x, 0, QTableWidgetItem(g[1]))
+						list_wid.setItem(x, 1, QTableWidgetItem(g[0]))
+					list_wid.resizeColumnsToContents()
 					list_wid.setWindowTitle('{} skipped paths'.format(len(s_list)))
 					list_wid.setWindowFlags(Qt.Window)
-					list_wid.resize(500,500)
+					list_wid.resize(900,400)
+
+					list_wid.doubleClicked.connect(lambda i: utils.open_path(
+						list_wid.item(i.row(), 1).text(), list_wid.item(i.row(), 1).text()))
+
 					list_wid.show()
 
 			def a_progress(prog):

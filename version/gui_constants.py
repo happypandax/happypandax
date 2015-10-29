@@ -224,17 +224,6 @@ if it does then comment the last iteration of your log contents)</i><br/>
 - If for some reason you don't want anything to do with github, <br/>then feel free to email me: happypandabugs@gmail.com
 """
 
-SUPPORTED_EXTERNAL_VIEWER_LBL =\
-	"""Currently only these programs are officially supported (tested and works):
-
-Windows: Default Viewer, Honeyview, Irfanview
-Linux: Default Viewer
-Mac: Default Viewer
-
-Note: Your viewer *might* still work, even though it's not on the list.
-Is your preffered viewer not on the list? Hit me up on github/gitter-chat to add official support.
-"""
-
 SEARCH_TUTORIAL_TIT_AUT =\
 	"""There are two ways to search for title/author:
 - 'term' or 'title:"term"'

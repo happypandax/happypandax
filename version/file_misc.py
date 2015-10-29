@@ -82,7 +82,6 @@ class GalleryDownloaderList(QTableWidget):
 		self.setSelectionBehavior(self.SelectRows)
 		self.setSelectionMode(self.SingleSelection)
 		self.setSortingEnabled(True)
-		self.setDragEnabled(False)
 		palette = self.palette()
 		palette.setColor(palette.Highlight, QColor(88, 88, 88, 70))
 		palette.setColor(palette.HighlightedText, QColor('black'))
@@ -258,6 +257,14 @@ class GalleryPopup(misc.BasePopup):
 		self.setMaximumWidth(620)
 		self.resize(620, 500)
 		self.show()
+
+	#def get_all_items(self):
+	#	n = self.gallery_layout.rowCount()
+	#	items = []
+	#	for x in range(n):
+	#		item = self.gallery_layout.itemAt(x)
+	#		items.append(item.widget())
+	#	return items
 
 class ModifiedPopup(misc.BasePopup):
 	def __init__(self, path, gallery_id, parent=None):

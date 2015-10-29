@@ -262,6 +262,7 @@ class GalleryDB(DBBase):
 		modify_gallery -> Modifies gallery with given gallery id
 		fav_gallery_set -> Set fav on gallery with given gallery id, and returns the gallery
 		get_all_gallery -> returns a list of all gallery (<Gallery> class) currently in DB
+		get_gallery_by_path -> Returns gallery with given path
 		get_gallery_by_id -> Returns gallery with given id
 		add_gallery -> adds gallery into db
 		add_gallery_return -> adds gallery into db AND returns the added gallery
@@ -424,6 +425,20 @@ class GalleryDB(DBBase):
 			gallery_list.append(gallery)
 
 		return gallery_list
+
+	@classmethod
+	def get_gallery_by_path(cls, path):
+		"Returns gallery with given path"
+		assert isinstance(path, str), "Provided path is invalid"
+		cursor = cls.execute(cls, 'SELECT * FROM series WHERE series_path=?', (path,))
+		row = cursor.fetchone()
+		gallery = Gallery()
+		try:
+			gallery.id = row['series_id']
+			gallery = gallery_map(row, gallery)
+			return gallery
+		except TypeError:
+			return None
 
 	@classmethod
 	def get_gallery_by_id(cls, id):
@@ -597,7 +612,9 @@ class ChapterDB(DBBase):
 		executing = []
 		for chap in gallery_object.chapters:
 			executing.append(default_chap_exec(gallery_object, chap, True))
-		cls.executemany(cls, 'INSERT INTO chapters VALUES(?, ?, ?, ?, ?)', executing)
+		if not executing:
+			raise Exception
+		cls.executemany(cls, 'INSERT INTO chapters VALUES(NULL, ?, ?, ?, ?, ?)', executing)
 
 	@classmethod
 	def add_chapters_raw(cls, series_id, chapters_container):
@@ -611,7 +628,7 @@ class ChapterDB(DBBase):
 			else:
 				cls.update_chapter(cls, chapters_container, [chap.number])
 
-		cls.executemany(cls, 'INSERT INTO chapters VALUES(?, ?, ?, ?, ?)', executing)
+		cls.executemany(cls, 'INSERT INTO chapters VALUES(NULL, ?, ?, ?, ?, ?)', executing)
 
 
 	@classmethod
@@ -651,7 +668,7 @@ class ChapterDB(DBBase):
 		"Returns id of the chapter number"
 		assert isinstance(series_id, int) and isinstance(chapter_number, int),\
 			"Passed args must be of int not {} and {}".format(type(series_id), type(chapter_number))
-		cls.execute(cls, 'SELECT chapter_id FROM chapters WHERE series_id=? AND chapter_number=?',
+		cursor = cls.execute(cls, 'SELECT chapter_id FROM chapters WHERE series_id=? AND chapter_number=?',
 						(series_id, chapter_number,))
 		try:
 			row = cursor.fetchone()
@@ -1133,7 +1150,7 @@ class HashDB(DBBase):
 	@classmethod
 	def del_gallery_hashes(cls, gallery_id):
 		"Deletes all hashes linked to the given gallery id"
-		cls.execute(cls, 'DELETE FROM hashes WHERE series_id=', (gallery_id,))
+		cls.execute(cls, 'DELETE FROM hashes WHERE series_id=?', (gallery_id,))
 
 
 class Gallery:

@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import (QVBoxLayout, QHBoxLayout, QListWidget, QWidget,
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtGui import QPalette, QPixmapCache
 
-from misc import FlowLayout, Spacer, PathLineEdit, ApplicationPopup
+from misc import FlowLayout, Spacer, PathLineEdit, ApplicationPopup, Line
 import settings
 import gui_constants
 import misc_db
@@ -844,7 +844,8 @@ class SettingsDialog(QWidget):
 		misc_controls_layout.addWidget(misc_external_viewer)
 		misc_external_viewer_l = QFormLayout()
 		misc_external_viewer.setLayout(misc_external_viewer_l)
-		misc_external_viewer_l.addRow(QLabel(gui_constants.SUPPORTED_EXTERNAL_VIEWER_LBL))
+		misc_external_viewer_l.addRow(QLabel("Most image viewers should work. Incase it doesn't," +
+									   " hit me up on email/github/gitter-chat to add support."))
 		self.external_viewer_path = PathLineEdit(misc_external_viewer, False, '')
 		self.external_viewer_path.setPlaceholderText('Right/Left-click to open folder explorer.'+
 							  ' Leave empty to use default viewer')
@@ -853,6 +854,8 @@ class SettingsDialog(QWidget):
 		self.external_viewer_path.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
 		misc_external_viewer_l.addRow('Path:', self.external_viewer_path)
 
+		misc_controls_layout.addRow(Line('H'))
+		
 		open_hp_folder = QPushButton('Open Happypanda Directory')
 		open_hp_folder.clicked.connect(self.open_hp_folder)
 		open_hp_folder.adjustSize()
