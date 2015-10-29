@@ -208,11 +208,11 @@ class AppWindow(QMainWindow):
 		tray_menu.addAction(tray_quit)
 		tray_quit.triggered.connect(self.close)
 		self.system_tray.show()
-		self.system_tray.messageClicked.connect(self.showNormal)
-		def tray_activate(r):
-			if r == QSystemTrayIcon.Trigger:
+		def tray_activate(r=None):
+			if not r or r == QSystemTrayIcon.Trigger:
 				self.showNormal()
 				self.activateWindow()
+		self.system_tray.messageClicked.connect(tray_activate)
 		self.system_tray.activated.connect(tray_activate)
 		log_d('Create system tray: OK')
 		#self.display.addWidget(self.chapter_main)
@@ -412,11 +412,6 @@ class AppWindow(QMainWindow):
 		"initiates the manga view and related things"
 		#list view
 		self.manga_list_view = gallery.MangaView(self)
-		self.manga_list_view.clicked.connect(self.popup)
-		self.manga_list_view.manga_delegate.POPUP.connect(self.popup)
-		self.popup_window = misc.GalleryMetaWindow(self)
-		#self.popup_window = gallery.GalleryMetaPopup(self)
-		self.popup_window.arrow_size = (10,10)
 
 		#table view
 
@@ -460,31 +455,6 @@ class AppWindow(QMainWindow):
 		self.search_backward.setVisible(True)
 		self.manga_list_view.sort_model.init_search(srch_string)
 
-	def popup(self, index):
-		if not self.popup_window.isVisible():
-			#self.popup_window.set_gallery(index.data(Qt.UserRole+1))
-			m_x = QCursor.pos().x()
-			m_y = QCursor.pos().y()
-			d_w = QDesktopWidget().width()
-			d_h = QDesktopWidget().height()
-			p_w = self.popup_window.width()
-			p_h = self.popup_window.height()
-			
-			index_rect = self.manga_list_view.visualRect(index)
-			index_point = self.manga_list_view.mapToGlobal(index_rect.topRight())
-			index_point_btm = self.manga_list_view.mapToGlobal(index_rect.bottomRight())
-			# adjust so it doesn't go offscreen
-			if d_w - m_x < p_w and d_h - m_y < p_h: # bottom
-				self.popup_window.move(m_x-p_w+5, m_y-p_h)
-			elif d_w - m_x > p_w and d_h - m_y < p_h:
-				self.popup_window.move(m_x+5, m_y-p_h)
-			elif d_w - m_x < p_w:
-				self.popup_window.move(m_x-p_w+5, m_y+5)
-			else:
-				self.popup_window.move(index_point)
-
-			self.popup_window.show_gallery(index, self.manga_list_view)
-			#self.popup_window.show()
 
 	def favourite_display(self):
 		"Switches to favourite display"
@@ -824,6 +794,7 @@ class AppWindow(QMainWindow):
 				msg_box.setDefaultButton(QMessageBox.No)
 				if msg_box.exec() == QMessageBox.Yes:
 					list_wid = QTableWidget(self)
+					list_wid.setAttribute(Qt.WA_DeleteOnClose)
 					list_wid.setRowCount(len(s_list))
 					list_wid.setColumnCount(2)
 					list_wid.setAlternatingRowColors(True)

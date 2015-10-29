@@ -1288,6 +1288,33 @@ class Gallery:
 					else:
 						tag = tags[0].lower()
 
+					if ns:
+						key_word = ['none', 'null']
+						if ns == 'Tag' and tag in key_word:
+							if not self.tags:
+								return is_exclude
+						elif ns == 'Artist' and tag in key_word:
+							if not self.artist:
+								return is_exclude
+						elif ns == 'Status' and tag in key_word:
+							if not self.status or self.status == 'Unknown':
+								return is_exclude
+						elif ns == 'Language' and tag in key_word:
+							if not self.language:
+								return is_exclude
+						elif ns == 'Url' and tag in key_word:
+							if not self.link:
+								return is_exclude
+						elif ns in ('Descr', 'Description') and tag in key_word:
+							if not self.info or self.info == 'No description..':
+								return is_exclude
+						elif ns == 'Type' and tag in key_word:
+							if not self.type:
+								return is_exclude
+						elif ns in ('Publication', 'Pub_date', 'Pub date') and tag in key_word:
+							if not self.pub_date:
+								return is_exclude 
+
 					if gui_constants.ALLOW_SEARCH_REGEX:
 						if ns:
 							for x in self.tags:

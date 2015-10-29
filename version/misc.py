@@ -914,8 +914,14 @@ class ClickedLabel(QLabel):
 	clicked = pyqtSignal()
 	def __init__(self, s="", **kwargs):
 		super().__init__(s, **kwargs)
-		self.setCursor(Qt.PointingHandCursor)
 		self.setTextInteractionFlags(Qt.LinksAccessibleByMouse | Qt.LinksAccessibleByKeyboard)
+
+	def enterEvent(self, event):
+		if self.text():
+			self.setCursor(Qt.PointingHandCursor)
+		else:
+			self.setCursor(Qt.ArrowCursor)
+		return super().enterEvent(event)
 
 	def mousePressEvent(self, event):
 		self.clicked.emit()

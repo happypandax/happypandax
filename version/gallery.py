@@ -50,120 +50,6 @@ log_w = log.warning
 log_e = log.error
 log_c = log.critical
 
-class GalleryMetaPopup(QFrame):
-	def __init__(self, parent):
-		super().__init__(parent, Qt.Window | Qt.FramelessWindowHint)
-		self.setFrameShape(QFrame.NoFrame)
-		self.setAttribute(Qt.WA_ShowWithoutActivating)
-		self.setAttribute(Qt.WA_DeleteOnClose)
-		self.initUI()
-		#self.resize(gui_constants.POPUP_WIDTH,gui_constants.POPUP_HEIGHT)
-		self.setFixedWidth(gui_constants.POPUP_WIDTH)
-		self.setMaximumHeight(gui_constants.POPUP_HEIGHT)
-		self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
-		self.parent_widget = parent
-	
-	def initUI(self):
-		main_layout = QVBoxLayout()
-		self.setLayout(main_layout)
-		form_l = QFormLayout()
-		main_layout.addLayout(form_l)
-		self.title = QLabel()
-		self.title.setWordWrap(True)
-		self.title_lbl = QLabel("Title:")
-		self.artist = QLabel()
-		self.artist.setWordWrap(True)
-		self.artist_lbl = QLabel("Author:")
-		self.chapters = QLabel()
-		self.chapters_lbl = QLabel("Chapters:")
-		self.info = QLabel()
-		self.info_lbl = QLabel("Description:")
-		self.info.setWordWrap(True)
-
-		self.lang = QLabel()
-		lang_lbl = QLabel("Language:")
-
-		type_status_l = QHBoxLayout()
-		self.type = QLabel()
-		type_status_l.addWidget(self.type, 0, Qt.AlignLeft)
-		self.status = QLabel()
-		type_status_l.addWidget(self.status, 0, Qt.AlignRight)
-
-		self.tags_lbl = QLabel("Tags:")
-		self.tags_scroll = QScrollArea()
-		self.tags_scroll.setFrameStyle(QFrame.NoFrame)
-		self.tag_widget = QWidget(self)
-		self.tags_scroll.setWidget(self.tag_widget)
-		self.tags_scroll.setWidgetResizable(True)
-		self.tags_scroll.setSizePolicy(QSizePolicy.MinimumExpanding,
-								 QSizePolicy.MinimumExpanding)
-		self.tags = QFormLayout(self.tag_widget)
-
-
-		self.pub_date = QLabel()
-		self.date_added = QLabel()
-
-		link_lbl = QLabel("Link:")
-		self.link = misc.ClickedLabel()
-		self.link.setWordWrap(True)
-		self.link.clicked.connect(lambda: utils.open_web_link(self.link.text()))
-
-		form_l.addRow(self.title_lbl, self.title)
-		form_l.addRow(self.artist_lbl, self.artist)
-		form_l.addRow(self.chapters_lbl, self.chapters)
-		form_l.addRow(self.info_lbl, self.info)
-		form_l.addRow(lang_lbl, self.lang)
-		form_l.addRow(self.tags_lbl, self.tags_scroll)
-		form_l.addRow(link_lbl, self.link)
-
-	def set_gallery(self, gallery):
-		def has_tags(tags):
-			t_len = len(tags)
-			if not t_len:
-				return False
-			if t_len == 1:
-				if 'default' in tags:
-					if not tags['default']:
-						return False
-			return True
-
-		if has_tags(gallery.tags):
-			self.tags_scroll.show()
-			ns_layout = QFormLayout()
-			self.tags.addRow(ns_layout)
-			for namespace in gallery.tags:
-				tags_lbls = misc.FlowLayout()
-				if namespace == 'default':
-					self.tags.insertRow(0, tags_lbls)
-				else:
-					self.tags.addRow(namespace, tags_lbls)
-
-				for n, tag in enumerate(gallery.tags[namespace], 1):
-					if namespace == 'default':
-						t = misc.TagText(search_widget=self.parent_widget)
-					else:
-						t = misc.TagText(search_widget=self.parent_widget,
-					   namespace=namespace)
-					t.setText(tag)
-					tags_lbls.addWidget(t)
-		else:
-			self.tags_scroll.hide()
-		self.tag_widget.adjustSize()
-
-		self.title.setText(gallery.title)
-		self.artist.setText(gallery.artist)
-		self.chapters.setText("{}".format(len(gallery.chapters)))
-		self.info.setText(gallery.info)
-		self.lang.setText(gallery.language)
-		self.type.setText(gallery.type)
-		self.status.setText(gallery.status)
-		self.link.setText(gallery.link)
-		self.adjustSize()
-
-	def hideEvent(self, event):
-		misc.clearLayout(self.tags)
-		return super().hideEvent(event)
-
 class GallerySearch(QObject):
 	FINISHED = pyqtSignal()
 	def __init__(self, data):
@@ -651,8 +537,6 @@ class CustomDelegate(QStyledItemDelegate):
 		super().__init__()
 		QPixmapCache.setCacheLimit(gui_constants.THUMBNAIL_CACHE_SIZE[0]*
 							 gui_constants.THUMBNAIL_CACHE_SIZE[1])
-		self.popup_window = GalleryMetaPopup(parent)
-		self.popup_timer = QTimer()
 		self._painted_indexes = {}
 
 		#misc.FileIcon.refresh_default_icon()
@@ -681,7 +565,6 @@ class CustomDelegate(QStyledItemDelegate):
 		self.text_label_h = a_h + t_h * 2
 		self.W = gui_constants.THUMB_W_SIZE
 		self.H = gui_constants.THUMB_H_SIZE + gui_constants.GRIDBOX_LBL_H#self.text_label_h #+ gui_constants.GRIDBOX_LBL_H
-		#self.popup_timer.timeout.connect(self.POPUP.emit)
 
 	def key(self, key):
 		"Assigns an unique key to indexes"
@@ -902,8 +785,6 @@ class CustomDelegate(QStyledItemDelegate):
 					text_area.drawContents(painter)
 				##painter.resetTransform()
 				painter.restore()
-				if not self.popup_window.underMouse():
-					self.popup_window.hide()
 
 			if option.state & QStyle.State_Selected:
 				painter.save()
@@ -993,6 +874,11 @@ class MangaView(QListView):
 		self.SERIES_DIALOG.connect(self.spawn_dialog)
 		self.doubleClicked.connect(self.open_chapter)
 		self.setViewportMargins(0,0,0,0)
+
+		self.gallery_window = misc.GalleryMetaWindow(parent if parent else self)
+		self.gallery_window.arrow_size = (10,10,)
+		self.clicked.connect(lambda idx: self.gallery_window.show_gallery(idx, self))
+
 		self.current_sort = gui_constants.CURRENT_SORT
 		self.sort(self.current_sort)
 		if gui_constants.DEBUG:
