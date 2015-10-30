@@ -1021,8 +1021,8 @@ class MangaView(QListView):
 			self.gallery_model.CUSTOM_STATUS_MSG.emit("Favorited")
 
 	def open_random_gallery(self):
-		g = random.randint(0, self.gallery_model._data_count-1)
-		indx = self.gallery_model.index(g, 1)
+		g = random.randint(0, self.sort_model.rowCount()-1)
+		indx = self.sort_model.index(g, 1)
 		chap_numb = 0
 		if gui_constants.OPEN_RANDOM_GALLERY_CHAPTERS:
 			gallery = indx.data(Qt.UserRole+1)

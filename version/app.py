@@ -493,7 +493,6 @@ class AppWindow(QMainWindow):
 		self.favourite_btn.clicked.connect(self.favourite_display) #need lambda to pass extra args
 
 		self.library_btn = misc.ToolbarButton(self.toolbar, 'Library')
-		self.library_btn.setFixedWidth(60)
 		self.toolbar.addWidget(self.library_btn)
 		self.library_btn.clicked.connect(self.catalog_display) #need lambda to pass extra args
 		self.library_btn.selected = True
@@ -527,6 +526,8 @@ class AppWindow(QMainWindow):
 		scan_galleries_action.triggered.connect(self.scan_for_new_galleries)
 		scan_galleries_action.setStatusTip('Scan monitored folders for new galleries')
 		gallery_menu.addAction(scan_galleries_action)
+		gallery_action_random = gallery_menu.addAction("Open random gallery")
+		gallery_action_random.triggered.connect(self.manga_list_view.open_random_gallery)
 		self.toolbar.addWidget(gallery_action)
 
 
@@ -542,9 +543,6 @@ class AppWindow(QMainWindow):
 		duplicate_check_simple = QAction("Simple Duplicate Finder", misc_action_menu)
 		duplicate_check_simple.triggered.connect(lambda: self.manga_list_view.duplicate_check())
 		misc_action_menu.addAction(duplicate_check_simple)
-		misc_action_random = QAction("Random Gallery Opener", misc_action_menu)
-		misc_action_random.triggered.connect(self.manga_list_view.open_random_gallery)
-		misc_action_menu.addAction(misc_action_random)
 		self.toolbar.addWidget(misc_action)
 
 		spacer_middle = QWidget() # aligns buttons to the right

@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import (QVBoxLayout, QHBoxLayout, QListWidget, QWidget,
 							 QListWidgetItem, QStackedLayout, QPushButton,
 							 QLabel, QTabWidget, QLineEdit, QGroupBox, QFormLayout,
 							 QCheckBox, QRadioButton, QSpinBox, QSizePolicy,
-							 QScrollArea, QFontDialog, QMessageBox)
+							 QScrollArea, QFontDialog, QMessageBox, QComboBox)
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtGui import QPalette, QPixmapCache
 
@@ -432,13 +432,18 @@ class SettingsDialog(QWidget):
 		#	title_lbl.setFont(f)
 		#	return title_lbl
 
-		def groupbox(name, layout, parent):
+		def groupbox(name, layout, parent, add_in_layout=None):
 			"""
 			Makes a groupbox and a layout for you
 			Returns groupbox and layout
 			"""
 			g = QGroupBox(name, parent)
 			l = layout(g)
+			if add_in_layout:
+				if isinstance(add_in_layout, QFormLayout):
+					add_in_layout.addRow(g)
+				else:
+					add_in_layout.addLayout(g)
 			return g, l
 
 		def option_lbl_checkbox(text, optiontext, parent=None):
@@ -922,7 +927,13 @@ class SettingsDialog(QWidget):
 
 		# Advanced / Import/Export
 		advanced_impexp, advanced_impexp_l = new_tab('Import/Export', advanced)
-		export_group, export_group_l = groupbox('Export', QHBoxLayout, advanced_impexp)
+		export_format = QComboBox(advanced_db_page)
+		export_format.addItem('Text File', 0)
+		export_format.addItem('JSON', 1)
+		export_format.adjustSize()
+		export_format.setFixedWidth(export_format.width())
+		advanced_impexp_l.addRow('Export Format:', export_format)
+		export_group, export_group_l = groupbox('Export', QHBoxLayout, advanced_impexp, advanced_impexp_l)
 
 
 

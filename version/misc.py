@@ -211,7 +211,7 @@ class ToolbarButton(QPushButton):
 		painter.drawRoundedRect(but_rect, 2.5,2.5)
 		txt_to_draw = self._font_metrics.elidedText(self._text,
 											  Qt.ElideRight, but_rect.width())
-		text_rect = QRectF(but_rect.x()+8, but_rect.y(), but_rect.width()-1.5,
+		text_rect = QRectF(but_rect.x()+3, but_rect.y(), but_rect.width()-1.5,
 					 but_rect.height()-1.5)
 		painter.setPen(QColor('white'))
 		painter.drawText(text_rect, txt_to_draw)
@@ -227,7 +227,6 @@ class ToolbarButton(QPushButton):
 		self._text = txt
 		self.update()
 		super().setText(txt)
-		self.adjustSize()
 
 	def text(self):
 		return self._text
