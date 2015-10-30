@@ -131,11 +131,11 @@ class GalleryDialog(QWidget):
 		self.lang_box.setCurrentIndex(0)
 		tags_l = QVBoxLayout()
 		tag_info = ClickedLabel("How do i write namespace & tags? (hover)", parent=self)
-		tag_info.setToolTip("Ways to write tags:\n\nWithout namespaces:\ntag1, tag2, tag3\n\n"+
-					  "Namespaces with single tags:\nns1:tag1, ns1:tag2\n\nNamespaces with more than"+
-					  " one tag:\nns1:[tag1, tag2, tag3], ns2:[tag1, tag2]\n\n"+
+		tag_info.setToolTip("Ways to write tags:\n\nNormal tags:\ntag1, tag2, tag3\n\n"+
+					  "Namespaced tags:\nns1:tag1, ns1:tag2\n\nNamespaced tags with one or more"+
+					  " tags under same namespace:\nns1:[tag1, tag2, tag3], ns2:[tag1, tag2]\n\n"+
 					  "Those three ways of writing namespace & tags can be combined freely.\n"+
-					  "Tags are seperated by a comma.\nNamespaces will be capitalized while tags"+
+					  "Tags are seperated by a comma, NOT whitespace.\nNamespaces will be capitalized while tags"+
 					  " will be lowercased.")
 		tag_info.setToolTipDuration(99999999)
 		tags_l.addWidget(tag_info)

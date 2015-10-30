@@ -107,8 +107,6 @@ RENAME_GALLERY_SOURCE = get(False, 'Application', 'rename gallery source', bool)
 EXTRACT_CHAPTER_BEFORE_OPENING = get(True, 'Application', 'extract chapter before opening', bool)
 TAGS_TREEVIEW_ON_START = get(False, 'Application', 'tags treeview on start', bool)
 OPEN_GALLERIES_SEQUENTIALLY = get(False, 'Application', 'open galleries sequentially', bool)
-GALLERY_SEARCH_STRICT = get(False, 'Application', 'gallery search strict', bool)
-GALLERY_SEARCH_CASE = get(False, 'Application', 'gallery search case', bool)
 
 # ADVANCED
 GALLERY_DATA_FIX_REGEX = get("", 'Advanced', 'gallery data fix regex', str)
@@ -165,6 +163,8 @@ GRID_VIEW_LABEL_COLOR = get('#F2F2F2', 'Visual', 'grid view label color', str)
 SEARCH_AUTOCOMPLETE = get(True, 'Advanced', 'search autocomplete', bool)
 ALLOW_SEARCH_REGEX = get(False, 'Advanced', 'allow search regex', bool)
 SEARCH_ON_ENTER = get(False, 'Advanced', 'search on enter', bool)
+GALLERY_SEARCH_STRICT = get(False, 'Application', 'gallery search strict', bool)
+GALLERY_SEARCH_CASE = get(False, 'Application', 'gallery search case', bool)
 
 # Grid Tooltip
 GRID_TOOLTIP = get(True, 'Visual', 'grid tooltip', bool)

@@ -758,31 +758,33 @@ def delete_path(path):
 			s = False
 	return s
 
-def regex_search(a, b):
+def regex_search(a, b, override_case=False):
 	"Looks for a in b"
-	try:
-		if gui_constants.GALLERY_SEARCH_CASE:
-			if regex.search(a, b):
-				return True
-		else:
-			if regex.search(a, b, regex.IGNORECASE):
-				return True
-	except regex.error:
-		pass
+	if a and b:
+		try:
+			if not gui_constants.GALLERY_SEARCH_CASE or override_case:
+				if regex.search(a, b, regex.IGNORECASE):
+					return True
+			else:
+				if regex.search(a, b):
+					return True
+		except regex.error:
+			pass
 	return False
 
 def search_term(a, b, override_case=False):
 	"Searches for a in b"
-	if not gui_constants.GALLERY_SEARCH_CASE or override_case:
-		b = b.lower()
-		a = a.lower()
+	if a and b:
+		if not gui_constants.GALLERY_SEARCH_CASE or override_case:
+			b = b.lower()
+			a = a.lower()
 
-	if gui_constants.GALLERY_SEARCH_STRICT:
-		if a == b:
-			return True
-	else:
-		if a in b:
-			return True
+		if gui_constants.GALLERY_SEARCH_STRICT:
+			if a == b:
+				return True
+		else:
+			if a in b:
+				return True
 	return False
 
 def get_terms(term):

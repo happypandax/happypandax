@@ -1254,6 +1254,50 @@ class Gallery:
 		"""
 		return []
 
+	def _keyword_search(self, ns, tag, regex=False):
+		term = ''
+		def _search(term):
+			if regex:
+				if utils.regex_search(tag, term):
+					return True
+			else:
+				print(tag, term)
+				if utils.search_term(tag, term):
+					return True
+			return False
+
+		if ns == 'Title':
+			term = self.title
+		elif ns in ['Language', 'Lang']:
+			tag = tag.lower()
+			term = self.language.lower()
+		elif ns == 'Type':
+			tag = tag.lower()
+			term = self.type.lower()
+		elif ns == 'Status':
+			tag = tag.lower()
+			term = self.status.lower()
+		elif ns == 'Artist':
+			term = self.artist
+		elif ns in ['Descr', 'Description']:
+			term = self.info
+		elif ns in ['Chapter', 'Chapters']:
+			try:
+				if int(tag) == self.chapters.count():
+					return True
+			except ValueError:
+				pass
+			return False
+		elif ns in ['Read_count', 'Read count']:
+			try:
+				if int(tag) == self.times_read:
+					return True
+			except ValueError:
+				pass
+			return False
+
+		return _search(term)
+
 	def __contains__(self, key):
 		if isinstance(key, Chapter):
 			return self.chapters.__contains__(key)
@@ -1275,19 +1319,21 @@ class Gallery:
 						else:
 							if utils.search_term(key, g_attr):
 								found = True
+								print('found')
 								break
 
 				# check in tag
 				if not found:
-					key = key.lower()
 					tags = key.split(':')
 					ns = tag = ''
+					# only namespace is lowered and capitalized for now
 					if len(tags) > 1:
-						ns = tags[0].capitalize()
-						tag = tags[1].lower()
+						ns = tags[0].lower().capitalize()
+						tag = tags[1]
 					else:
-						tag = tags[0].lower()
+						tag = tags[0]
 
+					# very special keywords
 					if ns:
 						key_word = ['none', 'null']
 						if ns == 'Tag' and tag in key_word:
@@ -1313,24 +1359,37 @@ class Gallery:
 								return is_exclude
 						elif ns in ('Publication', 'Pub_date', 'Pub date') and tag in key_word:
 							if not self.pub_date:
-								return is_exclude 
+								return is_exclude
 
 					if gui_constants.ALLOW_SEARCH_REGEX:
 						if ns:
+							if self._keyword_search(ns, tag, True):
+								return is_exclude
+
 							for x in self.tags:
 								if utils.regex_search(ns, x):
 									for t in self.tags[x]:
-										if utils.regex_search(tag, t):
+										if utils.regex_search(tag, t, True):
 											return is_exclude
-					else:
-						if ns:
-							if ns in self.tags:
-								if tag in self.tags[ns]:
-									return is_exclude
 						else:
 							for x in self.tags:
-								if tag in self.tags[x]:
-									return is_exclude
+								for t in self.tags[x]:
+									if utils.regex_search(tag, t, True):
+										return is_exclude
+					else:
+						if ns:
+							if self._keyword_search(ns, tag):
+								return is_exclude
+
+							if ns in self.tags:
+								for t in self.tags[ns]:
+									if utils.search_term(tag, t, True):
+										return is_exclude
+						else:
+							for x in self.tags:
+								for t in self.tags[x]:
+									if utils.search_term(tag, t, True):
+										return is_exclude
 				else:
 					return is_exclude
 		return default

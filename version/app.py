@@ -571,7 +571,30 @@ class AppWindow(QMainWindow):
 		spacer_mid2.setFixedSize(QSize(5, 1))
 		self.toolbar.addWidget(spacer_mid2)
 
+		def set_search_case(b):
+			print(b)
+			gui_constants.GALLERY_SEARCH_CASE = b
+			settings.set(b, 'Application', 'gallery search case')
+			settings.save()
+
+		def set_search_strict(b):
+			gui_constants.GALLERY_SEARCH_STRICT = b
+			settings.set(b, 'Application', 'gallery search strict')
+			settings.save()
+
 		self.search_bar = misc.LineEdit()
+		search_options = self.search_bar.addAction(QIcon(gui_constants.APP_ICO_PATH), QLineEdit.TrailingPosition)
+		search_options_menu = QMenu(self)
+		search_options.triggered.connect(lambda: search_options_menu.popup(QCursor.pos()))
+		search_options.setMenu(search_options_menu)
+		case_search_option = search_options_menu.addAction('Case Sensitive')
+		case_search_option.setCheckable(True)
+		case_search_option.setChecked(gui_constants.GALLERY_SEARCH_CASE)
+		case_search_option.toggled.connect(set_search_case)
+		strict_search_option = search_options_menu.addAction('Match whole terms')
+		strict_search_option.setCheckable(True)
+		strict_search_option.setChecked(gui_constants.GALLERY_SEARCH_STRICT)
+		strict_search_option.toggled.connect(set_search_strict)
 		self.search_bar.setObjectName('search_bar')
 		self.search_timer = QTimer(self)
 		self.search_timer.setSingleShot(True)
