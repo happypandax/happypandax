@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import (QVBoxLayout, QHBoxLayout, QListWidget, QWidget,
 							 QListWidgetItem, QStackedLayout, QPushButton,
 							 QLabel, QTabWidget, QLineEdit, QGroupBox, QFormLayout,
 							 QCheckBox, QRadioButton, QSpinBox, QSizePolicy,
-							 QScrollArea, QFontDialog)
+							 QScrollArea, QFontDialog, QMessageBox)
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtGui import QPalette, QPixmapCache
 
@@ -25,7 +25,7 @@ log_c = log.critical
 class SettingsDialog(QWidget):
 	"A settings dialog"
 	scroll_speed_changed = pyqtSignal()
-	init_gallery_rebuild = pyqtSignal()
+	init_gallery_rebuild = pyqtSignal(bool)
 	def __init__(self, parent=None):
 		super().__init__(parent, flags=Qt.Window)
 
@@ -865,23 +865,32 @@ class SettingsDialog(QWidget):
 		# Advanced / Gallery
 		advanced_gallery, advanced_gallery_m_l = new_tab('Gallery', advanced)
 		def rebuild_thumbs():
-			gallerydb.DatabaseEmitter.RUN = False
-			def start_db_activity(): gallerydb.DatabaseEmitter.RUN = True
-			app_popup = ApplicationPopup(self.parent_widget)
-			app_popup.info_lbl.setText("Recreating thumbnail cache... When done, please restart to use new thumbnails.")
-			app_popup.admin_db = gallerydb.AdminDB()
-			app_popup.admin_db.moveToThread(gui_constants.GENERAL_THREAD)
-			app_popup.admin_db.DONE.connect(app_popup.admin_db.deleteLater)
-			app_popup.admin_db.DONE.connect(start_db_activity)
-			app_popup.admin_db.DATA_COUNT.connect(app_popup.prog.setMaximum)
-			app_popup.admin_db.PROGRESS.connect(app_popup.prog.setValue)
-			self.init_gallery_rebuild.connect(app_popup.admin_db.rebuild_thumbs)
-			app_popup.adjustSize()
-			self.init_gallery_rebuild.emit()
-			app_popup.show()
+			confirm_msg = QMessageBox(QMessageBox.Question, '', 'Are you sure you want to regenerate your thumbnails.',
+							 QMessageBox.Yes | QMessageBox.No, self)
+			if confirm_msg.exec() == QMessageBox.Yes:
+				clear_cache_confirm = QMessageBox(QMessageBox.Question, '',
+									  'Do you want to delete all old thumbnails before regenerating?', QMessageBox.Yes | QMessageBox.No,
+									  self)
+				clear_cache = False
+				if clear_cache_confirm.exec() == QMessageBox.Yes:
+					clear_cache = True
+				gallerydb.DatabaseEmitter.RUN = False
+				def start_db_activity(): gallerydb.DatabaseEmitter.RUN = True
+				app_popup = ApplicationPopup(self.parent_widget)
+				app_popup.info_lbl.setText("Regenerating thumbnails...")
+				app_popup.admin_db = gallerydb.AdminDB()
+				app_popup.admin_db.moveToThread(gui_constants.GENERAL_THREAD)
+				app_popup.admin_db.DONE.connect(app_popup.admin_db.deleteLater)
+				app_popup.admin_db.DONE.connect(start_db_activity)
+				app_popup.admin_db.DATA_COUNT.connect(app_popup.prog.setMaximum)
+				app_popup.admin_db.PROGRESS.connect(app_popup.prog.setValue)
+				self.init_gallery_rebuild.connect(app_popup.admin_db.rebuild_thumbs)
+				app_popup.adjustSize()
+				self.init_gallery_rebuild.emit(clear_cache)
+				app_popup.show()
 
-		rebuild_thumbs_info = QLabel("Clears thumbnail cache and rebuilds it, which can take a while. Tip: Useful when you change thumbnail size.")
-		rebuild_thumbs_btn = QPushButton('Rebuild Thumbnail Cache')
+		rebuild_thumbs_info = QLabel("Clears thumbnail cache and rebuilds it, which can take a while. Tip: Useful when changing thumbnail size.")
+		rebuild_thumbs_btn = QPushButton('Regenerate Thumbnails')
 		rebuild_thumbs_btn.adjustSize()
 		rebuild_thumbs_btn.setFixedWidth(rebuild_thumbs_btn.width())
 		rebuild_thumbs_btn.clicked.connect(rebuild_thumbs)
@@ -910,6 +919,13 @@ class SettingsDialog(QWidget):
 		# Advanced / Database
 		advanced_db_page, advanced_db_page_l = new_tab('Database', advanced)
 		advanced.setTabEnabled(2, False)
+
+		# Advanced / Import/Export
+		advanced_impexp, advanced_impexp_l = new_tab('Import/Export', advanced)
+		export_group, export_group_l = groupbox('Export', QHBoxLayout, advanced_impexp)
+
+
+
 
 		# About
 		about = QTabWidget(self)

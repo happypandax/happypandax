@@ -149,6 +149,14 @@ QLabel {
 		color: #3A404B;
 }
 
+QPushButton {
+	border-left: 6px solid #464646;  
+	border-right: 6px solid #464646;  
+	border-top: 3px solid #464646;  
+	border-bottom: 3px solid #464646;  
+	border-radius: 3px;
+}
+
 QPushButton, QToolButton {
 	background-color: #464646;
 	/*height: 20px;

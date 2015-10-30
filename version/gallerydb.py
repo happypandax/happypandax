@@ -1184,19 +1184,19 @@ class Gallery:
 	def __init__(self):
 
 		self.id = None # Will be defaulted.
-		self.title = None
-		self.profile = None
-		self.path = None
+		self.title = ""
+		self.profile = ""
+		self.path = ""
 		self.path_in_archive = ""
 		self.is_archive = 0
-		self.artist = None
+		self.artist = ""
 		self._chapters = ChaptersContainer(self)
-		self.info = None
+		self.info = ""
 		self.fav = 0
-		self.type = None
+		self.type = ""
 		self.link = ""
 		self.language = ""
-		self.status = None
+		self.status = ""
 		self.tags = {}
 		self.pub_date = None
 		self.date_added = datetime.datetime.now().replace(microsecond=0)
@@ -1533,24 +1533,13 @@ class AdminDB(QObject):
 				self.PROGRESS.emit(n)
 		self.DONE.emit(True)
 
-	def rebuild_thumbs(self):
-		# add_method_queue(GalleryDB.clear_thumb_dir, True)
-		# TODO okay, so I added this method above in order to completely clear
-		# the thumbnail cache, because I noticed that sometimes
-		# the database and thumbnail cache might be inconsistent, I could not
-		# reproduce the case in which this happened, even though it did
-		# so I just implemented it just in case, maybe you could add
-		# a new confirmation dialog for the user to select if he would
-		# like to do a complete wipe of the cache
-		# I might do this later, depending on how you prefer, I'm not very
-		# experienced with Qt, though. So, yeah, you could just wipe this
-		# and things would be fine, probably.
-
-		galleries = add_method_queue(GalleryDB.get_all_gallery, False)
-		if galleries:
-			self.DATA_COUNT.emit(len(galleries))
+	def rebuild_thumbs(self, clear_first=False):
+		if clear_first:
+			GalleryDB.clear_thumb_dir()
+		if gui_constants.GALLERY_DATA:
+			self.DATA_COUNT.emit(len(gui_constants.GALLERY_DATA))
 			log_i('Rebuilding galleries')
-			for n, g in enumerate(galleries, 1):
+			for n, g in enumerate(gui_constants.GALLERY_DATA, 1):
 				add_method_queue(GalleryDB.rebuild_thumb, False, g)
 				self.PROGRESS.emit(n)
 		self.DONE.emit(True)
