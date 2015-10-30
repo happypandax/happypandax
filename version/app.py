@@ -250,14 +250,14 @@ class AppWindow(QMainWindow):
 			def fetch_vs(self):
 				import requests
 				import time
+				log_d('Checking Update')
+				time.sleep(1.5)
 				try:
-					log_d('Checking Update')
-					time.sleep(1.5)
-					if gui_constants.DEBUG:
-						r = requests.get("https://raw.githubusercontent.com/Pewpews/happypanda/master/VS.txt")
-					else:
+					if os.path.exists('cacert.pem'):
 						r = requests.get("https://raw.githubusercontent.com/Pewpews/happypanda/master/VS.txt",
-						  verify='cacert.pem')
+							  verify='cacert.pem')
+					else:
+						r = requests.get("https://raw.githubusercontent.com/Pewpews/happypanda/master/VS.txt")
 					a = r.text
 					vs = a.strip()
 					self.UPDATE_CHECK.emit(vs)
