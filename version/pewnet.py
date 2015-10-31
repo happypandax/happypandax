@@ -425,7 +425,7 @@ class HenManager(DLManager):
 		h_item.gallery_url = g_url
 		h_item.metadata = CommenHen.parse_metadata(api_metadata, gallery_gid_dict)
 		try:
-			h_item.metadata[g_url]
+			h_item.metadata = h_item.metadata[g_url]
 		except KeyError:
 			raise WrongURL
 		h_item.thumb_url = gallery['thumb']

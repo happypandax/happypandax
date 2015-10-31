@@ -182,6 +182,7 @@ class GalleryDownloader(QWidget):
 		self.setWindowIcon(QIcon(gui_constants.APP_ICO_PATH))
 
 	def add_download_entry(self, url=None):
+		log_i('Adding download entry: {}'.format(url))
 		self.info_lbl.hide()
 		h_item = None
 		try:
@@ -209,6 +210,7 @@ class GalleryDownloader(QWidget):
 			self.info_lbl.show()
 			return
 		if h_item:
+			log_i('Successfully added download entry')
 			self.download_list.add_entry(h_item)
 
 	def show(self):

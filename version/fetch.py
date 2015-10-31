@@ -268,6 +268,8 @@ class Fetch(QObject):
 
 	@staticmethod
 	def apply_metadata(g, data, append=True):
+		print(g)
+		print(data)
 		if gui_constants.USE_JPN_TITLE:
 			try:
 				title = data['title']['jpn']
