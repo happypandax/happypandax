@@ -454,6 +454,10 @@ class AppWindow(QMainWindow):
 		self.search_bar.setText(srch_string)
 		self.search_backward.setVisible(True)
 		self.manga_list_view.sort_model.init_search(srch_string)
+		old_cursor_pos = self._search_cursor_pos[0]
+		self.search_bar.end(False)
+		if self.search_bar.cursorPosition() != old_cursor_pos+1:
+			self.search_bar.setCursorPosition(old_cursor_pos)
 
 
 	def favourite_display(self):
@@ -599,6 +603,11 @@ class AppWindow(QMainWindow):
 		self.search_timer = QTimer(self)
 		self.search_timer.setSingleShot(True)
 		self.search_timer.timeout.connect(lambda: self.search(self.search_bar.text()))
+		self._search_cursor_pos = [0, 0]
+		def set_cursor_pos(old, new):
+			self._search_cursor_pos[0] = old
+			self._search_cursor_pos[1] = new
+		self.search_bar.cursorPositionChanged.connect(set_cursor_pos)
 
 		if gui_constants.SEARCH_AUTOCOMPLETE:
 			completer = QCompleter(self)
