@@ -583,7 +583,7 @@ class AppWindow(QMainWindow):
 			settings.save()
 
 		self.search_bar = misc.LineEdit()
-		search_options = self.search_bar.addAction(QIcon(gui_constants.APP_ICO_PATH), QLineEdit.TrailingPosition)
+		search_options = self.search_bar.addAction(QIcon(gui_constants.SEARCH_OPTIONS_PATH), QLineEdit.TrailingPosition)
 		search_options_menu = QMenu(self)
 		search_options.triggered.connect(lambda: search_options_menu.popup(QCursor.pos()))
 		search_options.setMenu(search_options_menu)

@@ -85,6 +85,7 @@ SETTINGS_PATH = os.path.join(static_dir, "settings.png")
 GRID_PATH = os.path.join(static_dir, "grid.png")
 LIST_PATH = os.path.join(static_dir, "list.png")
 NO_IMAGE_PATH = os.path.join(static_dir, "default.jpg")
+SEARCH_OPTIONS_PATH = os.path.join(static_dir, "search_options.png")
 
 # Monitored Paths
 OVERRIDE_MONITOR = False # set true to make watchers to ignore next item (will be set to False)
