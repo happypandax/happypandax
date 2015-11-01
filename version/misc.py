@@ -331,7 +331,7 @@ class GalleryMetaWindow(ArrowWindow):
 
 	class GalleryLayout(QFrame):
 		
-		def __init__(self, parent):
+		def __init__(self, parent, appwindow):
 			super().__init__(parent)
 			self.setStyleSheet('color:white;')
 			self.main_layout = QFormLayout(self)
@@ -342,8 +342,11 @@ class GalleryMetaWindow(ArrowWindow):
 			self.g_title_lbl = get_label('')
 			self.g_title_lbl.setStyleSheet('color:white;font-weight:bold;')
 			self.main_layout.addRow(self.g_title_lbl)
-			self.g_artist_lbl = get_label('')
+			self.g_artist_lbl = ClickedLabel()
+			self.g_artist_lbl.setWordWrap(True)
+			self.g_artist_lbl.clicked.connect(appwindow.search)
 			self.g_artist_lbl.setStyleSheet('color:#bdc3c7;')
+			self.g_artist_lbl.setToolTip("Click to see more from this artist")
 			self.main_layout.addRow(self.g_artist_lbl)
 			for lbl in (self.g_title_lbl, self.g_artist_lbl):
 				lbl.setAlignment(Qt.AlignCenter)
@@ -459,7 +462,7 @@ class GalleryMetaWindow(ArrowWindow):
 		# gallery data stuff
 		self.content_margin = 10
 		self.current_gallery = None
-		self.g_widget = self.GalleryLayout(self)
+		self.g_widget = self.GalleryLayout(self, parent)
 
 	def show_gallery(self, index, view):
 		desktop_w = QDesktopWidget().width()
@@ -910,7 +913,7 @@ class ClickedLabel(QLabel):
 	"""
 	A QLabel which emits clicked signal on click
 	"""
-	clicked = pyqtSignal()
+	clicked = pyqtSignal(str)
 	def __init__(self, s="", **kwargs):
 		super().__init__(s, **kwargs)
 		self.setTextInteractionFlags(Qt.LinksAccessibleByMouse | Qt.LinksAccessibleByKeyboard)
@@ -923,7 +926,7 @@ class ClickedLabel(QLabel):
 		return super().enterEvent(event)
 
 	def mousePressEvent(self, event):
-		self.clicked.emit()
+		self.clicked.emit(self.text())
 		return super().mousePressEvent(event)
 
 class TagText(QPushButton):

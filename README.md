@@ -1,6 +1,8 @@
 Development is done in alpha branch
 
-For future plans, see [the wiki](https://github.com/Pewpews/happypanda/wiki)
+For future plans, see [Roadmap in the wiki](https://github.com/Pewpews/happypanda/wiki/Roadmap)
+
+For general documentation, check the [wiki](https://github.com/Pewpews/happypanda/wiki)
 
 I'm here if you have any questions!
 
@@ -22,18 +24,18 @@ For Mac & Linux see [INSTALL.md](INSTALL.md)
 #
 
 # Features
-- Keep track of your galleries and organize them more easily!
-- Tag your galleries with namespaces & tags for better management!
-- Fetch metadata which includes namespace & tags from the web (Currently only supports g.e-hentai, exhentai and indirectly panda.chaika.moe) without getting you banned!
+- Keep track of your galleries and organize them more easily
+- Tag your galleries with namespaces & tags for better management
+- Fetch metadata which includes namespace & tags from the web (Currently only supports g.e-hentai, exhentai and indirectly panda.chaika.moe) without getting you banned
 - Download gallery archives (which will automatically be added to your library) or torrents from the web! (Currently supports g.e-hentai, exhentai and panda.chaika.moe)
-- View your galleries with high-quality thumbnails or in a simple table list!
-- Add your galleries easily without worrying about adding duplicates!
-- Multiple ways of adding galleries to make it as convienient as possible! (like folder monitoring, etc.)
+- View your galleries with high-quality thumbnails or in a simple table list
+- Add your galleries easily without worrying about adding duplicates
+- Multiple ways of adding galleries to make it as convienient as possible! (like folder monitoring, etc.
 - Can add galleries recursively, treating each subfolder as a gallery (applies to archives too)!
-- Supports ZIP/CBZ, RAR/CBR and directories with loose files!
-- Keep track of on-going galleries and add new released chapters to your gallery easily!
-- Customize and make the program behave just as you like it with lots of options in the settings!
-- And lots more...!
+- Supports ZIP/CBZ, RAR/CBR and directories with loose files
+- Keep track of on-going galleries and add new released chapters to your gallery easily
+- Customize and make the program behave just as you like it with lots of options in the settings
+- And lots more...
 
 # Dependencies
 - Qt5 (Install this first) >= 5.4
