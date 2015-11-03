@@ -124,14 +124,6 @@ class Fetch(QObject):
 								chap.path = path
 								chap.pages = len(list(scandir.scandir(path)))
 				
-							##find last edited file
-							#times = set()
-							#for root, dirs, files in os.walk(path, topdown=False):
-							#	for img in files:
-							#		fp = os.path.join(root, img)
-							#		times.add( os.path.getmtime(fp) )
-							#last_updated = time.asctime(time.gmtime(max(times)))
-							#new_gallery.last_update = last_updated
 							parsed = utils.title_parser(folder_name)
 						except NotADirectoryError:
 							try:

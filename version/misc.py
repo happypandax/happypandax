@@ -243,7 +243,7 @@ class ArrowWindow(TransparentWidget):
 	def __init__(self, parent):
 		super().__init__(parent, flags=Qt.Window | Qt.FramelessWindowHint, move_listener=False)
 		self.setAttribute(Qt.WA_ShowWithoutActivating)
-		self.resize(400,300)
+		self.resize(550,300)
 		self.direction = self.LEFT
 		self._arrow_size = QSizeF(20, 20)
 		self.content_margin = 0
@@ -334,68 +334,74 @@ class GalleryMetaWindow(ArrowWindow):
 		def __init__(self, parent, appwindow):
 			super().__init__(parent)
 			self.setStyleSheet('color:white;')
-			self.main_layout = QFormLayout(self)
+			main_layout = QHBoxLayout(self)
+			self.left_layout = QFormLayout()
+			self.main_left_layout = QVBoxLayout()
+			self.main_left_layout.addLayout(self.left_layout)
+			self.right_layout = QFormLayout()
+			main_layout.addLayout(self.main_left_layout, 1)
+			main_layout.addWidget(Line('v'))
+			main_layout.addLayout(self.right_layout)
 			def get_label(txt):
 				lbl = QLabel(txt)
 				lbl.setWordWrap(True)
 				return lbl
 			self.g_title_lbl = get_label('')
 			self.g_title_lbl.setStyleSheet('color:white;font-weight:bold;')
-			self.main_layout.addRow(self.g_title_lbl)
+			self.left_layout.addRow(self.g_title_lbl)
 			self.g_artist_lbl = ClickedLabel()
 			self.g_artist_lbl.setWordWrap(True)
 			self.g_artist_lbl.clicked.connect(appwindow.search)
 			self.g_artist_lbl.setStyleSheet('color:#bdc3c7;')
 			self.g_artist_lbl.setToolTip("Click to see more from this artist")
-			self.main_layout.addRow(self.g_artist_lbl)
+			self.left_layout.addRow(self.g_artist_lbl)
 			for lbl in (self.g_title_lbl, self.g_artist_lbl):
 				lbl.setAlignment(Qt.AlignCenter)
-			self.main_layout.addRow(Line('h'))
+			self.left_layout.addRow(Line('h'))
 
 			first_layout = QHBoxLayout()
-			self.g_lang_lbl = get_label('')
+			self.g_lang_lbl = QLabel()
 			self.g_chapters_lbl = get_label('')
-			self.g_type_lbl = get_label('')
-			first_layout.addWidget(self.g_lang_lbl, 0, Qt.AlignLeft)
+			self.g_type_lbl = QLabel()
+			self.right_layout.addRow(self.g_type_lbl)
+			self.right_layout.addRow(self.g_lang_lbl)
+			#first_layout.addWidget(self.g_lang_lbl, 0, Qt.AlignLeft)
 			first_layout.addWidget(self.g_chapters_lbl, 0, Qt.AlignCenter)
-			first_layout.addWidget(self.g_type_lbl, 0, Qt.AlignRight)
-			self.main_layout.addRow(first_layout)
+			#first_layout.addWidget(self.g_type_lbl, 0, Qt.AlignRight)
+			self.left_layout.addRow(first_layout)
 
-			second_layout = QHBoxLayout()
-			self.g_status_lbl = get_label('')
-			self.g_d_added_lbl = get_label('')
-			self.g_pub_lbl = get_label('Unknown')
-			second_layout.addWidget(self.g_pub_lbl, 0, Qt.AlignLeft)
-			second_layout.addWidget(self.g_status_lbl, 0, Qt.AlignCenter)
-			second_layout.addWidget(self.g_d_added_lbl, 0, Qt.AlignRight)
-			self.main_layout.addRow(second_layout)
-
-			third_layout = QHBoxLayout()
-			self.g_last_read_lbl = get_label('')
-			self.g_read_count_lbl = get_label('')
-			third_layout.addWidget(self.g_last_read_lbl, 0, Qt.AlignLeft)
-			third_layout.addWidget(self.g_read_count_lbl, 0, Qt.AlignRight)
-			self.main_layout.addRow(third_layout)
+			self.g_status_lbl = QLabel()
+			self.g_d_added_lbl = QLabel()
+			self.g_pub_lbl = QLabel()
+			self.g_last_read_lbl = QLabel()
+			self.g_read_count_lbl = QLabel()
+			self.g_pages_total_lbl = QLabel()
+			self.right_layout.addRow('Status:', self.g_status_lbl)
+			self.right_layout.addRow('Added:', self.g_d_added_lbl)
+			self.right_layout.addRow('Published:', self.g_pub_lbl)
+			self.right_layout.addRow('Last read:', self.g_last_read_lbl)
+			self.right_layout.addRow(self.g_read_count_lbl)
+			self.right_layout.addRow('Pages:', self.g_pages_total_lbl)
 
 			self.g_info_lbl = get_label('')
-			self.main_layout.addRow(self.g_info_lbl)
+			self.left_layout.addRow(self.g_info_lbl)
 
 			self.g_url_lbl = ClickedLabel()
 			self.g_url_lbl.clicked.connect(lambda: utils.open_web_link(self.g_url_lbl.text()))
 			self.g_url_lbl.setWordWrap(True)
-			self.main_layout.addRow('URL:', self.g_url_lbl)
-			self.main_layout.addRow(Line('h'))
+			self.left_layout.addRow('URL:', self.g_url_lbl)
+			#self.left_layout.addRow(Line('h'))
 
 			self.tags_scroll = QScrollArea(self)
-			self.tags_widget = QWidget(self)
+			self.tags_widget = QWidget(self.tags_scroll)
 			self.tags_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 			self.tags_layout = QFormLayout(self.tags_widget)
-			self.tags_layout.setSizeConstraint(self.tags_layout.SetMinAndMaxSize)
+			self.tags_layout.setSizeConstraint(self.tags_layout.SetMaximumSize)
 			self.tags_scroll.setWidget(self.tags_widget)
 			self.tags_scroll.setWidgetResizable(True)
 			self.tags_scroll.setStyleSheet("background-color: #585858;")
 			self.tags_scroll.setFrameShape(QFrame.NoFrame)
-			self.main_layout.addRow(self.tags_scroll)
+			self.main_left_layout.addWidget(self.tags_scroll)
 
 
 		def has_tags(self, tags):
@@ -409,7 +415,6 @@ class GalleryMetaWindow(ArrowWindow):
 			return True
 
 		def apply_gallery(self, gallery):
-			print(self.tags_scroll.sizeHint())
 			self.g_title_lbl.setText(gallery.title)
 			self.g_artist_lbl.setText(gallery.artist)
 			self.g_lang_lbl.setText(gallery.language)
@@ -417,14 +422,18 @@ class GalleryMetaWindow(ArrowWindow):
 			self.g_chapters_lbl.setText('{} {}'.format(gallery.chapters.count(), chap_txt))
 			self.g_type_lbl.setText(gallery.type)
 			self.g_status_lbl.setText(gallery.status)
-			self.g_d_added_lbl.setText('Added: {}'.format(gallery.date_added.strftime('%d %b %Y')))
+			self.g_d_added_lbl.setText(gallery.date_added.strftime('%d %b %Y'))
 			if gallery.pub_date:
-				self.g_pub_lbl.setText('Pub.: {}'.format(gallery.pub_date.strftime('%d %b %Y')))
+				self.g_pub_lbl.setText(gallery.pub_date.strftime('%d %b %Y'))
 			else:
 				self.g_pub_lbl.setText('Unknown')
-			last_read_txt = 'Last read {}'.format(utils.get_date_age(gallery.last_read)) if gallery.last_read else "Haven't read this yet!"
+			last_read_txt = 'Last read {}'.format(utils.get_date_age(gallery.last_read)) if gallery.last_read else "Never!"
 			self.g_last_read_lbl.setText(last_read_txt)
 			self.g_read_count_lbl.setText('Read {} times'.format(gallery.times_read))
+			pages = 0
+			for ch in gallery.chapters:
+				pages += ch.pages
+			self.g_pages_total_lbl.setText('{}'.format(pages))
 			self.g_info_lbl.setText(gallery.info)
 			self.g_url_lbl.setText(gallery.link)
 
@@ -468,7 +477,7 @@ class GalleryMetaWindow(ArrowWindow):
 		desktop_w = QDesktopWidget().width()
 		desktop_h = QDesktopWidget().height()
 		
-		margin_offset = 50 # should be higher than gallery_touch_offset
+		margin_offset = 20 # should be higher than gallery_touch_offset
 		gallery_touch_offset = 10 # How far away the window is from touching gallery
 
 		index_rect = view.visualRect(index)

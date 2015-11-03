@@ -205,7 +205,7 @@ def default_chap_exec(gallery_or_id, chap, only_values=False):
 		in_archive = chap.in_archive
 
 	if only_values:
-		execute = (gid, chap.number, str.encode(chap.path), in_archive, chap.pages,)
+		execute = (gid, chap.number, str.encode(chap.path), chap.pages, in_archive)
 	else:
 		execute = ("""
 				INSERT INTO chapters(series_id, chapter_number, chapter_path, pages, in_archive)
