@@ -479,8 +479,9 @@ class SettingsDialog(QWidget):
 
 		app_gallery_group, app_gallery_l = groupbox('Gallery', QFormLayout, self)
 		app_general_m_l.addRow(app_gallery_group)
-		self.subfolder_as_chapters = QCheckBox("Treat subfolders as galleries (applies in archives too)")
-		self.subfolder_as_chapters.setToolTip("This option will treat subfolders as standalone galleries when scanning for galleries")
+		self.subfolder_as_chapters = QCheckBox("Subdirectiories should be treated as standalone galleries instead of chapters (applies in archives too)")
+		self.subfolder_as_chapters.setToolTip("This option will enable creating standalone galleries for each subdirectiories found recursively when importing."+
+										"\nDefault action is treating each subfolder found as chapters of a gallery.")
 		extract_gallery_info = QLabel("Note: This option has no effect when turned off if path to viewer is not specified.")
 		self.extract_gallery_before_opening = QCheckBox("Extract archive before opening (only turn off if your viewer supports it)")
 		self.open_galleries_sequentially = QCheckBox("Open chapters sequentially (Note: has no effect if path to viewer is not specified)")

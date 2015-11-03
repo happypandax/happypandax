@@ -376,12 +376,12 @@ class GalleryMetaWindow(ArrowWindow):
 			self.g_last_read_lbl = QLabel()
 			self.g_read_count_lbl = QLabel()
 			self.g_pages_total_lbl = QLabel()
+			self.right_layout.addRow('Pages:', self.g_pages_total_lbl)
 			self.right_layout.addRow('Status:', self.g_status_lbl)
 			self.right_layout.addRow('Added:', self.g_d_added_lbl)
 			self.right_layout.addRow('Published:', self.g_pub_lbl)
 			self.right_layout.addRow('Last read:', self.g_last_read_lbl)
 			self.right_layout.addRow(self.g_read_count_lbl)
-			self.right_layout.addRow('Pages:', self.g_pages_total_lbl)
 
 			self.g_info_lbl = get_label('')
 			self.left_layout.addRow(self.g_info_lbl)
@@ -421,6 +421,10 @@ class GalleryMetaWindow(ArrowWindow):
 			chap_txt = "chapters" if gallery.chapters.count() > 1 else "chapter"
 			self.g_chapters_lbl.setText('{} {}'.format(gallery.chapters.count(), chap_txt))
 			self.g_type_lbl.setText(gallery.type)
+			pages = 0
+			for ch in gallery.chapters:
+				pages += ch.pages
+			self.g_pages_total_lbl.setText('{}'.format(pages))
 			self.g_status_lbl.setText(gallery.status)
 			self.g_d_added_lbl.setText(gallery.date_added.strftime('%d %b %Y'))
 			if gallery.pub_date:
@@ -430,12 +434,12 @@ class GalleryMetaWindow(ArrowWindow):
 			last_read_txt = 'Last read {}'.format(utils.get_date_age(gallery.last_read)) if gallery.last_read else "Never!"
 			self.g_last_read_lbl.setText(last_read_txt)
 			self.g_read_count_lbl.setText('Read {} times'.format(gallery.times_read))
-			pages = 0
-			for ch in gallery.chapters:
-				pages += ch.pages
-			self.g_pages_total_lbl.setText('{}'.format(pages))
 			self.g_info_lbl.setText(gallery.info)
-			self.g_url_lbl.setText(gallery.link)
+			if gallery.link:
+				self.g_url_lbl.setText(gallery.link)
+				self.g_url_lbl.show()
+			else:
+				self.g_url_lbl.hide()
 
 			
 			clearLayout(self.tags_layout)
@@ -880,14 +884,20 @@ class GalleryMenu(QMenu):
 				self.view.STATUS_BAR_MSG.emit(text)
 				gal = x.data(Qt.UserRole+1)
 				path = os.path.split(gal.path)[0] if containing else gal.path
-				utils.open_path(path, gal.path)
+				if containing:
+					utils.open_path(path, gal.path)
+				else:
+					utils.open_path(path)
 		else:
 			text = 'Opening archive...' if self.index.data(Qt.UserRole+1).is_archive else 'Opening folder...'
 			text = 'Opening containing folder...' if containing else text
 			self.view.STATUS_BAR_MSG.emit(text)
 			gal = self.index.data(Qt.UserRole+1)
 			path = os.path.split(gal.path)[0] if containing else gal.path
-			utils.open_path(path, gal.path)
+			if containing:
+				utils.open_path(path, gal.path)
+			else:
+				utils.open_path(path)
 
 
 	def add_chapters(self):

@@ -369,12 +369,14 @@ def recursive_gallery_check(path):
 	"""
 	gallery_dirs = []
 	gallery_arch = []
+	found_paths = 0
 	for root, subfolders, files in scandir.walk(path):
 		if files:
 			for f in files:
 				if f.endswith(ARCHIVE_FILES):
 					arch_path = os.path.join(root, f)
 					for g in check_archive(arch_path):
+						found_paths += 1
 						gallery_arch.append((g, arch_path))
 									
 			if not subfolders:
@@ -385,7 +387,9 @@ def recursive_gallery_check(path):
 					if not f.lower().endswith(IMG_FILES):
 						gallery_probability -= 1
 				if gallery_probability >= (len(files)*0.8):
+					found_paths += 1
 					gallery_dirs.append(root)
+	log_i('Found {} in {}'.format(found_paths, path).encode(errors='ignore'))
 	return gallery_dirs, gallery_arch
 
 def today():

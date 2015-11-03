@@ -72,7 +72,6 @@ def start(test=False):
 						datefmt='%d-%m %H:%M',
 						handlers=(file_handler,))
 
-
 	log = logging.getLogger(__name__)
 	log_i = log.info
 	log_d = log.debug

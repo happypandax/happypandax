@@ -96,7 +96,7 @@ class Fetch(QObject):
 				if len(self.galleries_from_db) != len(gui_constants.GALLERY_DATA):
 					self._refresh_filter_list()
 				self.DATA_COUNT.emit(len(gallery_l)) #tell model how many items are going to be added
-				log_i('Found {} items'.format(len(gallery_l)))
+				log_i('Received {} paths'.format(len(gallery_l)))
 				progress = 0
 				def create_gallery(path, folder_name, do_chapters=True, archive=None):
 					is_archive = True if archive else False
@@ -112,8 +112,9 @@ class Fetch(QObject):
 							chapters = sorted([sub.path for sub in con if sub.is_dir() or sub.name.endswith(utils.ARCHIVE_FILES)])\
 							    if do_chapters else [] #subfolders
 							# if gallery has chapters divided into sub folders
-							if len(chapters) != 0:
-								log_i('Gallery has chapters divided in directories')
+							numb_of_chapters = len(chapters)
+							if numb_of_chapters != 0:
+								log_i('Gallery has {} chapters'.format(numb_of_chapters))
 								for ch in chapters:
 									chap = new_gallery.chapters.create_chapter()
 									chap.path = os.path.join(path, ch)
@@ -213,7 +214,6 @@ class Fetch(QObject):
 								create_gallery(g, os.path.split(g)[1], False, archive=path)
 					else:
 						try:
-
 							if os.path.isdir(path):
 								if not list(scandir.scandir(path)):
 									raise ValueError

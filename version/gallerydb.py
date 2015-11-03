@@ -1193,10 +1193,10 @@ class Gallery:
 		self._chapters = ChaptersContainer(self)
 		self.info = ""
 		self.fav = 0
-		self.type = ""
+		self.type = "Other"
 		self.link = ""
-		self.language = ""
-		self.status = ""
+		self.language = "Other"
+		self.status = "Unknown"
 		self.tags = {}
 		self.pub_date = None
 		self.date_added = datetime.datetime.now().replace(microsecond=0)
@@ -1522,6 +1522,8 @@ class ChaptersContainer:
 			for n in list(self._data.keys()):
 				if n > next_number:
 					next_number = n
+				else:
+					next_number += 1
 			chp = Chapter(self, self.parent, number=next_number)
 			self[next_number] = chp
 		return chp
