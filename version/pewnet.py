@@ -235,7 +235,7 @@ class DLManager(QObject):
 	def from_gallery_url(self, url):
 		"""
 		Needs to be implemented in site-specific subclass
-		URL checking  and class instantiating is done in GalleryDownloader class in file_misc.py
+		URL checking  and class instantiating is done in GalleryDownloader class in io_misc.py
 		Basic procedure for this method:
 		- open url with self._browser and do the parsing
 		- create HenItem and fill out it's attributes

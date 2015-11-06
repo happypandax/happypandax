@@ -421,7 +421,6 @@ class GalleryDB(DBBase):
 			gallery = Gallery()
 			gallery.id = gallery_row['series_id']
 			gallery = gallery_map(gallery_row, gallery)
-			gallery.validate()
 			gallery_list.append(gallery)
 
 		return gallery_list
@@ -946,12 +945,52 @@ class HashDB(DBBase):
 	"""
 	Contains the following methods:
 
+	find_gallery -> returns galleries which matches the given list of hashes
 	get_gallery_hashes -> returns all hashes with the given gallery id in a list
 	get_gallery_hash -> returns hash of chapter specified. If page is specified, returns hash of chapter page
 	gen_gallery_hashes <- generates hashes for gallery's chapters and inserts them to db
 	rebuild_gallery_hashes <- inserts hashes into DB only if it doesnt already exist
 	"""
 
+	@classmethod
+	def find_gallery(cls, hashes):
+		assert isinstance(hashes, list)
+		gallery_ids = {}
+		hash_status = []
+		for hash in hashes:
+			r = cls.execute(cls, 'SELECT series_id FROM hashes WHERE hash=?', (hash,))
+			try:
+				g_ids = r.fetchall()
+				for r in g_ids:
+					g_id = r['series_id']
+					if g_id not in gallery_ids:
+						gallery_ids[g_id] = 1
+					else:
+						gallery_ids[g_id] = gallery_ids[g_id] + 1
+				if g_ids:
+					hash_status.append(True)
+				else:
+					hash_status.append(False)
+			except KeyError:
+				hash_status.append(False)
+			except TypeError:
+				hash_status.append(False)
+
+		if all(hash_status):
+			# the one with most matching hashes
+			g_id = None
+			h_match_count = 0
+			for g in gallery_ids:
+				if gallery_ids[g] > h_match_count:
+					h_match_count = gallery_ids[h]
+					g_id = g
+			if g_id:
+				weak_gallery = Gallery()
+				weak_gallery.id = g_id
+				return weak_gallery
+
+		return None
+	
 	@classmethod
 	def get_gallery_hashes(cls, gallery_id):
 		"Returns all hashes with the given gallery id in a list"
@@ -1004,87 +1043,118 @@ class HashDB(DBBase):
 		assert isinstance(chapter, int)
 		if page:
 			assert isinstance(page, (int, str))
+		skip_gen = False
 		if gallery.id:
 			chap_id = ChapterDB.get_chapter_id(gallery.id, chapter)
-		chap = gallery.chapters[chapter]
-		try:
-			if gallery.is_archive:
-				raise NotADirectoryError
-			imgs = sorted([x.path for x in scandir.scandir(chap.path)])
-			pages = {}
-			for n, i in enumerate(imgs):
-				pages[n] = i
+			
+			c = cls.execute(cls, 'SELECT hash, page FROM hashes WHERE series_id=? AND chapter_id=?',
+				   (gallery.id, chap_id,))
+			hashes = {}
+			for r in c.fetchall():
+				try:
+					if r['hash'] and r['page'] != None:
+						hashes[r['page']] = r['hash']
+				except TypeError:
+					pass
+			print(gallery.chapters[chapter].pages, len(hashes.keys()))
+			if gallery.chapters[chapter].pages == len(hashes.keys()):
+				skip_gen = True
 
-			if page:
-				pages = {}
-				if page == 'mid':
-					imgs = imgs[len(imgs)//2]
-					pages[len(imgs)//2] = imgs
-				else:
-					imgs = imgs[page]
-					pages = {page:imgs}
+		if not skip_gen:
 
-		except NotADirectoryError:
-			temp_dir = os.path.join(gui_constants.temp_dir, str(uuid.uuid4()))
-			is_archive = gallery.is_archive
+			def look_exists(page):
+				"""check if hash already exists in database
+				returns hash, else returns None"""
+				c = cls.execute(cls, 'SELECT hash FROM hashes WHERE page=? AND chapter_id=?',
+					   (page, chap_id,))
+				try: # exists
+					return c.fetchone()['hash']
+				except TypeError: # doesnt exist
+					return None
+				except IndexError:
+					return None
+
+			chap = gallery.chapters[chapter]
+			executing = []
 			try:
-				if is_archive:
-					zip = ArchiveFile(gallery.path)
+				if gallery.is_archive:
+					raise NotADirectoryError
+				imgs = sorted([x.path for x in scandir.scandir(chap.path)])
+				pages = {}
+				for n, i in enumerate(imgs):
+					pages[n] = i
+
+				if page:
+					pages = {}
+					if page == 'mid':
+						imgs = imgs[len(imgs)//2]
+						pages[len(imgs)//2] = imgs
+					else:
+						imgs = imgs[page]
+						pages = {page:imgs}
+
+				hashes = {}
+				if gallery.id:
+					for p in pages:
+						h = look_exists(p)
+						if not h:
+							with open(pages[p], 'rb') as f:
+								h = generate_img_hash(f)
+							executing.append((h, gallery.id, chap_id, p,))
+						hashes[p] = h
 				else:
-					zip = ArchiveFile(chap.path)
-			except gui_constants.CreateArchiveFail:
-				log_e('Could not generate hash: CreateZipFail')
-				return {}
-			pages = {}
-			if page:
-				p = 0
-				if page == 'mid':
+					for i in pages:
+						with open(pages[i], 'rb') as f:
+							hashes[i] = generate_img_hash(f)
+
+			except NotADirectoryError:
+				temp_dir = os.path.join(gui_constants.temp_dir, str(uuid.uuid4()))
+				is_archive = gallery.is_archive
+				try:
 					if is_archive:
+						zip = ArchiveFile(gallery.path)
+					else:
+						zip = ArchiveFile(chap.path)
+				except gui_constants.CreateArchiveFail:
+					log_e('Could not generate hash: CreateZipFail')
+					zip.close()
+					return {}
+
+				pages = {}
+				if page:
+					p = 0
+					if page == 'mid':
 						con = zip.dir_contents(chap.path)
 						p = len(con)//2
 						img = con[p]
 					else:
-						img = zip.namelist()[len(zip.namelist())//2]
-						p = len(zip.namelist())//2
-				else:
-					p = page
-					if is_archive:
+						p = page
 						con = zip.dir_contents(chap.path)
 						img = con[p]
-					else:
-						img = zip.namelist()[p]
-				pages = {p:zip.extract(img, temp_dir)}
 
-			else:
-				if is_archive:
-					temp_dir = zip.extract(chap.path, temp_dir)
+					pages = {p:zip.open(img, True)}
+
 				else:
-					zip.extract_all(temp_dir)
-				imgs = sorted([x.path for x in scandir.scandir(temp_dir)])
-				for n, i in enumerate(imgs):
-					pages[n] = i
+					imgs = sorted(zip.dir_contents(chap.path))
+					for n, img in enumerate(imgs):
+						pages[n] = zip.open(img, True)
+				zip.close()
 
-		def look_exists(hash):
-			"""check if hash already exists in database
-			returns hash, else returns None"""
-			c = cls.execute(cls, 'SELECT hash FROM hashes WHERE hash = ?', (hash,))
-			try: # exists
-				return c.fetchone()['hash']
-			except TypeError: # doesnt exist
-				return None
-			except IndexError:
-				return None
-		hashes = {}
-		for i in pages:
-			with open(pages[i], 'rb') as f:
-				hashes[i] = generate_img_hash(f)
-		if gallery.id:
-			executing = []
-			for h in hashes:
-				if not look_exists(hashes[h]):
-					executing.append((hashes[h], gallery.id, chap_id, h,))
-			cls.executemany(cls, 'INSERT INTO hashes(hash, series_id, chapter_id, page) VALUES(?, ?, ?, ?)',
-				   executing)
+				hashes = {}
+				if gallery.id:
+					for p in pages:
+						h = look_exists(p)
+						if not h:
+							h = generate_img_hash(pages[p])
+							executing.append((h, gallery.id, chap_id, p,))
+						hashes[p] = h
+				else:
+					for i in pages:
+						hashes[i] = generate_img_hash(pages[i])
+
+			if executing:
+				cls.executemany(cls, 'INSERT INTO hashes(hash, series_id, chapter_id, page) VALUES(?, ?, ?, ?)',
+					   executing)
 		if page == 'mid':
 			return {'mid':list(hashes.values())[0]}
 		else:
@@ -1093,49 +1163,7 @@ class HashDB(DBBase):
 	@classmethod
 	def gen_gallery_hashes(cls, gallery):
 		"Generates hashes for gallery's first chapter and inserts them to DB"
-		if gallery.id:
-			chap_id = ChapterDB.get_chapter_id(gallery.id, 0)
-		chap = gallery.chapters[0]
-		try:
-			if gallery.is_archive:
-				raise NotADirectoryError
-			imgs = scandir.scandir(chap.path)
-			# filter
-		except NotADirectoryError:
-			# HACK: Do not need to extract all.. can read bytes from acrhive!!!
-			t_p = os.path.join(gui_constants.temp_dir, str(uuid.uuid4()))
-			try:
-				if gallery.is_archive:
-					zip = ArchiveFile(gallery.path)
-					chap_path = zip.extract(chap.path, t_p)
-				else:
-					chap_path = t_p
-					zip = ArchiveFile(chap.path)
-					zip.extract_all(chap_path)
-			except gui_constants.CreateArchiveFail:
-				log_e('Could not generate hashes: CreateZipFail')
-				return []
-			imgs = scandir.scandir(chap_path)
-
-		except FileNotFoundError:
-			return False
-
-		# filter
-		imgs = [x.path for x in imgs if x.name.lower().endswith(tuple(IMG_FILES))]
-
-		hashes = []
-		for n, i in enumerate(sorted(imgs)):
-			with open(i, 'rb') as img:
-				hashes.append(generate_img_hash(img))
-
-		if gallery.id and chap_id:
-			executing = []
-			for hash in hashes:
-				executing.append((hash, gallery.id, chap_id, n,))
-
-			cls.executemany(cls, 'INSERT INTO hashes(hash, series_id, chapter_id, page) VALUES(?, ?, ?, ?)',
-				   executing)
-		return hashes
+		return HashDB.gen_gallery_hash(gallery, 0)
 
 	@staticmethod
 	def rebuild_gallery_hashes(gallery):

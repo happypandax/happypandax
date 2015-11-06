@@ -17,6 +17,8 @@ import hashlib, shutil, uuid, re, scandir, rarfile
 
 import gui_constants
 
+from database import db_constants
+
 log = logging.getLogger(__name__)
 log_i = log.info
 log_d = log.debug
@@ -33,6 +35,22 @@ rarfile.UNRAR_TOOL = gui_constants.unrar_tool_path
 if not gui_constants.unrar_tool_path:
 	FILE_FILTER = '*.zip *.cbz'
 	ARCHIVE_FILES = ('.zip', '.cbz')
+
+def backup_database():
+	date = "".format(datetime.datetime.today()).split(' ')[0]
+	base_path = os.path.split(db_constants.DB_PATH)[0]
+	db_name = "{}-{}".format(date, db_constants.DB_NAME)
+
+	current_try = 0
+	while current_try < 50:
+		if current_try:
+			db_name = "{}({})-{}".format(date, current_try, db_name)
+		try:
+			dst_path = os.path.join(base_path, db_name)
+			shutil.copyfile(db_constants.DB_PATH, dst_path)
+			break
+		except:
+			current_try += 1
 
 def get_date_age(date):
 	'''Take a datetime and return its "age" as a string.

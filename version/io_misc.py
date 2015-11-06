@@ -1,9 +1,9 @@
-﻿import logging, os
+﻿import logging, os, json, datetime
 from watchdog.events import FileSystemEventHandler, DirDeletedEvent
 from watchdog.observers import Observer
 from threading import Timer
 
-from PyQt5.QtCore import Qt, QObject, pyqtSignal, QTimer, QSize
+from PyQt5.QtCore import Qt, QObject, pyqtSignal, QTimer, QSize, QThread
 from PyQt5.QtGui import QPixmap, QIcon, QColor
 from PyQt5.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout,
 							 QLabel, QFrame, QPushButton, QMessageBox,
@@ -476,3 +476,70 @@ class Watchers:
 	def stop_all(self):
 		for watcher in self.watchers:
 			watcher.stop()
+
+class ImpExpData:
+
+	def __init__(self, format=1):
+		self.type = format
+		if format == 0:
+			self.structure = ""
+		else:
+			self.structure = {}
+
+	def add_data(self, name, data):
+		if self.type == 0:
+			pass
+		else:
+			self.structure[name] = data
+
+	def save(self, file_path):
+		file_name = os.path.join(file_path,
+						   'happypanda-db-{}.json'.format(
+							  datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S")))
+		with open(file_name, 'w', encoding='utf-8') as fp:
+			json.dump(self.structure, fp, indent=4)
+
+
+class ImportExport(QObject):
+	finished = pyqtSignal()
+	progress = pyqtSignal(int)
+	amount = pyqtSignal(int)
+
+	def __init__(self):
+		super().__init__()
+
+	def import_data(self):
+		pass
+
+	def export_data(self, gallery=None):
+		galleries = []
+		if gallery:
+			galleries.append(gallery)
+		else:
+			galleries = gui_constants.GALLERY_DATA
+
+		data = ImpExpData(gui_constants.EXPORT_FORMAT)
+		self.amount.emit(len(galleries))
+		for n, g in enumerate(galleries, 1):
+			g_data = {}
+			g_data['title'] = g.title
+			g_data['artist'] = g.artist
+			g_data['info'] = g.info
+			g_data['fav'] = g.fav
+			g_data['type'] = g.type
+			g_data['link'] = g.link
+			g_data['language'] = g.language
+			g_data['status'] = g.status
+			g_data['pub_date'] = "{}".format(g.pub_date)
+			g_data['last_read'] = "{}".format(g.last_read)
+			g_data['times_read'] = "{}".format(g.times_read)
+			g_data['exed'] = "{}".format(g.exed)
+			g_data['db_v'] = "{}".format(g._db_v)
+			g_data['tags'] = g.tags.copy()
+			g_data['identifier'] = gallerydb.HashDB.gen_gallery_hash(g, 0)
+			data.add_data(str(g.id), g_data)
+			self.progress.emit(n)
+
+		data.save(gui_constants.EXPORT_PATH)
+		self.finished.emit()
+

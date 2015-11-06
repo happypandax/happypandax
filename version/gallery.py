@@ -40,7 +40,7 @@ import gallerydb
 import gui_constants
 import misc
 import gallerydialog
-import file_misc
+import io_misc
 import utils
 
 log = logging.getLogger(__name__)
@@ -1080,7 +1080,7 @@ class MangaView(QListView):
 							else:
 								self.gallery_widget.close()
 
-				g_widget = file_misc.GalleryPopup(("These galleries are found to"+
+				g_widget = io_misc.GalleryPopup(("These galleries are found to"+
 										  " be duplicates.", duplicates), self.parentWidget(), menu=GalleryContextMenu())
 				g_widget.graphics_blur.setEnabled(False)
 				buttons = g_widget.add_buttons("Close")

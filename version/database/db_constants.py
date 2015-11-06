@@ -14,13 +14,14 @@
 
 import os
 
+DB_NAME = 'sadpanda.db'
 if os.name == 'posix':
     DB_ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../db')
-    THUMBNAIL_PATH = os.path.join(DB_ROOT, "thumbnails")
-    DB_PATH = os.path.join(DB_ROOT,"sadpanda.db")
+    THUMBNAIL_PATH = os.path.join(DB_ROOT, DB_NAME)
+    DB_PATH = os.path.join(DB_ROOT,DB_NAME)
 else:
     THUMBNAIL_PATH = os.path.join("db", "thumbnails")
-    DB_PATH = os.path.join("db", "sadpanda.db")
+    DB_PATH = os.path.join("db", DB_NAME)
 
 DB_VERSION = [0.22] # a list of accepted db versions. E.g. v3.5 will be backward compatible with v3.1 etc.
 CURRENT_DB_VERSION = DB_VERSION[0]

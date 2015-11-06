@@ -1043,7 +1043,7 @@ class ApplicationPopup(BasePopup):
 		super().__init__(parent)
 		self.parent_widget = parent
 		main_layout = QVBoxLayout()
-		self.info_lbl = QLabel("Hi there! I need to rebuild your galleries.")
+		self.info_lbl = QLabel("Updating your galleries to newest version.")
 		self.info_lbl.setAlignment(Qt.AlignCenter)
 		main_layout.addWidget(self.info_lbl)
 

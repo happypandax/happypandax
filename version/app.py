@@ -31,7 +31,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QListView,
 import gui_constants
 import misc
 import gallery
-import file_misc
+import io_misc
 import settingsdialog
 import gallerydialog
 import fetch
@@ -100,19 +100,19 @@ class AppWindow(QMainWindow):
 				log_e('Could not find gallery to update from Watcher')
 
 		def created(path):
-			c_popup = file_misc.CreatedPopup(path, self)
+			c_popup = io_misc.CreatedPopup(path, self)
 			c_popup.ADD_SIGNAL.connect(create_gallery)
 		def modified(path, gallery):
-			mod_popup = file_misc.ModifiedPopup(path, gallery, self)
+			mod_popup = io_misc.ModifiedPopup(path, gallery, self)
 		def deleted(path, gallery):
-			d_popup = file_misc.DeletedPopup(path, gallery, self)
+			d_popup = io_misc.DeletedPopup(path, gallery, self)
 			d_popup.UPDATE_SIGNAL.connect(update_gallery)
 			d_popup.REMOVE_SIGNAL.connect(remove_gallery)
 		def moved(new_path, gallery):
-			mov_popup = file_misc.MovedPopup(new_path, gallery, self)
+			mov_popup = io_misc.MovedPopup(new_path, gallery, self)
 			mov_popup.UPDATE_SIGNAL.connect(update_gallery)
 
-		self.watchers = file_misc.Watchers()
+		self.watchers = io_misc.Watchers()
 		self.watchers.gallery_handler.CREATE_SIGNAL.connect(created)
 		self.watchers.gallery_handler.MODIFIED_SIGNAL.connect(modified)
 		self.watchers.gallery_handler.MOVED_SIGNAL.connect(moved)
@@ -181,7 +181,7 @@ class AppWindow(QMainWindow):
 		#self.chapter_display()
 		self.m_l_view_index = self.display.addWidget(self.manga_list_view)
 		self.m_t_view_index = self.display.addWidget(self.manga_table_view)
-		self.download_window = file_misc.GalleryDownloader(self)
+		self.download_window = io_misc.GalleryDownloader(self)
 		self.download_window.hide()
 		# init toolbar
 		self.init_toolbar()
@@ -350,7 +350,7 @@ class AppWindow(QMainWindow):
 							self.app_instance.manga_table_view.scroll_to_index(index)
 							self.app_instance.manga_list_view.scroll_to_index(index)
 
-				g_popup = file_misc.GalleryPopup(('Fecthing metadata for these galleries failed.'+
+				g_popup = io_misc.GalleryPopup(('Fecthing metadata for these galleries failed.'+
 									  ' Check happypanda.log for details.', galleries), self, menu=GalleryContextMenu())
 				#errors = {g[0].id: g[1] for g in status}
 				#for g_item in g_popup.get_all_items():
@@ -958,7 +958,7 @@ class AppWindow(QMainWindow):
 								self.notification_bar.add_text("{} new galleries were discovered in one of your monitored directories".format(len(galleries)))
 							text = "These new galleries were discovered! Do you want to add them?"\
 								if len(galleries) > 1 else "This new gallery was discovered! Do you want to add it?"
-							g_popup = file_misc.GalleryPopup((text, galleries), self, NewGalleryMenu())
+							g_popup = io_misc.GalleryPopup((text, galleries), self, NewGalleryMenu())
 							buttons = g_popup.add_buttons('Add', 'Close')
 
 							def populate_n_close():

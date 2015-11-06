@@ -115,6 +115,10 @@ GALLERY_DATA_FIX_TITLE = get(True, 'Advanced', 'gallery data fix title', bool)
 GALLERY_DATA_FIX_ARTIST = get(True, 'Advanced', 'gallery data fix artist', bool)
 GALLERY_DATA_FIX_REPLACE = get("", 'Advanced', 'gallery data fix replace', str)
 
+# Import/Export
+EXPORT_FORMAT = get(1, 'Advanced', 'export format', int)
+EXPORT_PATH = ''
+
 # HASH
 HASH_GALLERY_PAGES = get('all', 'Advanced', 'hash gallery pages', int, str)
 
@@ -133,8 +137,8 @@ TORRENT_CLIENT = get('', 'Web', 'torrent client', str)
 
 # External Viewer
 EXTERNAL_VIEWER_SUPPORT = {'honeyview':['Honeyview.exe']}
-USE_EXTERNAL_VIEWER = get(False, 'Advanced', 'use external viewer', bool)
-EXTERNAL_VIEWER_PATH = os.path.normcase(get('', 'Advanced', 'external viewer path', str))
+USE_EXTERNAL_VIEWER = get(False, 'Application', 'use external viewer', bool)
+EXTERNAL_VIEWER_PATH = os.path.normcase(get('', 'Application', 'external viewer path', str))
 _REFRESH_EXTERNAL_VIEWER = False
 
 # controls
@@ -161,9 +165,9 @@ GRID_VIEW_ARTIST_COLOR = get('#585858', 'Visual', 'grid view artist color', str)
 GRID_VIEW_LABEL_COLOR = get('#F2F2F2', 'Visual', 'grid view label color', str)
 
 # Search
-SEARCH_AUTOCOMPLETE = get(True, 'Advanced', 'search autocomplete', bool)
-ALLOW_SEARCH_REGEX = get(False, 'Advanced', 'allow search regex', bool)
-SEARCH_ON_ENTER = get(False, 'Advanced', 'search on enter', bool)
+SEARCH_AUTOCOMPLETE = get(True, 'Application', 'search autocomplete', bool)
+ALLOW_SEARCH_REGEX = get(False, 'Application', 'allow search regex', bool)
+SEARCH_ON_ENTER = get(False, 'Application', 'search on enter', bool)
 GALLERY_SEARCH_STRICT = get(False, 'Application', 'gallery search strict', bool)
 GALLERY_SEARCH_CASE = get(False, 'Application', 'gallery search case', bool)
 
@@ -209,20 +213,19 @@ TROUBLE_GUIDE =\
 <b>Can you start a new instance of happypanda and reproduce the bug?</b><br/>
 	- If that's not the case then skip the steps below and go to <i>How to report</i>:<br/>
 	1. First close all instances of Happypanda.<br/>
-	2. Open a console and navigate to where Happypanda is installed. <i>Eg.: cd path/to/happypanda</i><br/>
-	3. Now type: <i>Happypanda.exe -d</i> or <i>main.py -d</i> depending on what the main file is called.<br/>
+	2. Open a command prompt (termial in *nix) and navigate to where Happypanda is installed.<br/><i>Eg.: cd path/to/happypanda</i><br/>
+	3. Now type the name of the executable with a <i>-d</i> following <br/>eg.: <i>happypanda.exe -d</i> or <i>main.py -d</i> if you're running from source.<br/>
 	4. The program will now open, and create a new file named <i>happypanda_debug.log</i>.<br/>
-	5. Reproduce the error/bug<br/>
+	5. Now you try to reproduce the error/bug<br/>
 	<br/>
 <b>How to report</b><br/>
-If you did the steps written above, then be sure to include the <i>happypanda_debug.log</i> file which was created<br/>
-and how you reproduced the error/bug. <br/>
-1. Navigate to where you installed Happypanda with a file explorer, <br/>and find <i>happypanda.log<i>. Send it to me with a description of the bug.<br/>
+If you completed the steps above, be sure to include the <i>happypanda_debug.log</i> file <br/> which was created
+and a description of how you reproduced the error/bug. <br/>
+1. Navigate to where you installed Happypanda with a file explorer, <br/>and find files named <i>happypanda.log<i>. Send it to me with a description of the bug.<br/>
 2. You have 3 options of contacting me:<br/>
-- Go to the github repo issue page <a href='https://github.com/Pewpews/happypanda/issues'>here</a>, <br/>and create a new issue <i>(if it doesn't already exist, 
-if it does then comment the last iteration of your log contents)</i><br/>
-- Enter the chat <a href='https://gitter.im/Pewpews/happypanda'>here</a>, and tell me about your issue.<br/>
-- If for some reason you don't want anything to do with github, <br/>then feel free to email me: happypandabugs@gmail.com
+- Go to the github repo issue page <a href='https://github.com/Pewpews/happypanda/issues'>here</a> and create a new issue <br/>
+- Enter the gitter chat <a href='https://gitter.im/Pewpews/happypanda'>here</a> and tell me about your issue.<br/>
+- If for some reason you don't want anything to do with github, <br/>feel free to email me: happypandabugs@gmail.com
 """
 
 SEARCH_TUTORIAL_TIT_AUT =\

@@ -14,6 +14,7 @@ import gui_constants
 import misc_db
 import gallerydb
 import utils
+import io_misc
 
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -26,6 +27,7 @@ class SettingsDialog(QWidget):
 	"A settings dialog"
 	scroll_speed_changed = pyqtSignal()
 	init_gallery_rebuild = pyqtSignal(bool)
+	init_gallery_eximport = pyqtSignal()
 	def __init__(self, parent=None):
 		super().__init__(parent, flags=Qt.Window)
 
@@ -142,6 +144,8 @@ class SettingsDialog(QWidget):
 		self.open_random_g_chapters.setChecked(gui_constants.OPEN_RANDOM_GALLERY_CHAPTERS)
 		self.rename_g_source_group.setChecked(gui_constants.RENAME_GALLERY_SOURCE)
 		self.path_to_unrar.setText(gui_constants.unrar_tool_path)
+		# App / General / External Viewer
+		self.external_viewer_path.setText(gui_constants.EXTERNAL_VIEWER_PATH)
 
 		# App / Monitor / Misc
 		self.enable_monitor.setChecked(gui_constants.ENABLE_MONITOR)
@@ -219,8 +223,6 @@ class SettingsDialog(QWidget):
 		self.grid_title_color.setText(gui_constants.GRID_VIEW_TITLE_COLOR)
 		self.grid_artist_color.setText(gui_constants.GRID_VIEW_ARTIST_COLOR)
 
-		# Advanced / Misc / External Viewer
-		self.external_viewer_path.setText(gui_constants.EXTERNAL_VIEWER_PATH)
 
 		# Advanced / Gallery / Gallery Text Fixer
 		self.g_data_regex_fix_edit.setText(gui_constants.GALLERY_DATA_FIX_REGEX)
@@ -234,7 +236,7 @@ class SettingsDialog(QWidget):
 	def accept(self):
 		set = settings.set
 
-		# App / General
+		# App / General / Gallery
 		gui_constants.SUBFOLDER_AS_GALLERY = self.subfolder_as_chapters.isChecked()
 		set(gui_constants.SUBFOLDER_AS_GALLERY, 'Application', 'subfolder as gallery')
 		gui_constants.EXTRACT_CHAPTER_BEFORE_OPENING = self.extract_gallery_before_opening.isChecked()
@@ -254,6 +256,26 @@ class SettingsDialog(QWidget):
 		set(gui_constants.RENAME_GALLERY_SOURCE, 'Application', 'rename gallery source')
 		gui_constants.unrar_tool_path = self.path_to_unrar.text()
 		set(gui_constants.unrar_tool_path, 'Application', 'unrar tool path')
+		# App / General / Search
+		gui_constants.ALLOW_SEARCH_REGEX = self.search_allow_regex.isChecked()
+		set(gui_constants.ALLOW_SEARCH_REGEX, 'Application', 'allow search regex')
+		gui_constants.SEARCH_AUTOCOMPLETE = self.search_autocomplete.isChecked()
+		set(gui_constants.SEARCH_AUTOCOMPLETE, 'Application', 'search autocomplete')
+		if self.search_on_enter.isChecked():
+			gui_constants.SEARCH_ON_ENTER = True
+		else:
+			gui_constants.SEARCH_ON_ENTER = False
+		set(gui_constants.SEARCH_ON_ENTER, 'Application', 'search on enter')
+		# App / General / External Viewer
+		if not self.external_viewer_path.text():
+			gui_constants.USE_EXTERNAL_VIEWER = False
+			set(False, 'Application', 'use external viewer')
+		else:
+			gui_constants.USE_EXTERNAL_VIEWER = True
+			set(True, 'Application', 'use external viewer')
+			gui_constants._REFRESH_EXTERNAL_VIEWER = True
+		gui_constants.EXTERNAL_VIEWER_PATH = self.external_viewer_path.text()
+		set(gui_constants.EXTERNAL_VIEWER_PATH,'Application', 'external viewer path')
 		# App / Monitor / misc
 		gui_constants.ENABLE_MONITOR = self.enable_monitor.isChecked()
 		set(gui_constants.ENABLE_MONITOR, 'Application', 'enable monitor')
@@ -384,27 +406,7 @@ class SettingsDialog(QWidget):
 		set(self.cache_size[1], 'Advanced', 'cache size')
 		QPixmapCache.setCacheLimit(self.cache_size[0]*
 							 self.cache_size[1])
-		# Advanced / Misc / Search
-		gui_constants.ALLOW_SEARCH_REGEX = self.search_allow_regex.isChecked()
-		set(gui_constants.ALLOW_SEARCH_REGEX, 'Advanced', 'allow search regex')
-		gui_constants.SEARCH_AUTOCOMPLETE = self.search_autocomplete.isChecked()
-		set(gui_constants.SEARCH_AUTOCOMPLETE, 'Advanced', 'search autocomplete')
-		if self.search_on_enter.isChecked():
-			gui_constants.SEARCH_ON_ENTER = True
-		else:
-			gui_constants.SEARCH_ON_ENTER = False
-		set(gui_constants.SEARCH_ON_ENTER, 'Advanced', 'search on enter')
 
-		# Advanced / Misc / External Viewer
-		if not self.external_viewer_path.text():
-			gui_constants.USE_EXTERNAL_VIEWER = False
-			set(False, 'Advanced', 'use external viewer')
-		else:
-			gui_constants.USE_EXTERNAL_VIEWER = True
-			set(True, 'Advanced', 'use external viewer')
-			gui_constants._REFRESH_EXTERNAL_VIEWER = True
-		gui_constants.EXTERNAL_VIEWER_PATH = self.external_viewer_path.text()
-		set(gui_constants.EXTERNAL_VIEWER_PATH,'Advanced', 'external viewer path')
 
 		# Advanced / General / Gallery Text Fixer
 		gui_constants.GALLERY_DATA_FIX_REGEX = self.g_data_regex_fix_edit.text()
@@ -443,7 +445,7 @@ class SettingsDialog(QWidget):
 				if isinstance(add_in_layout, QFormLayout):
 					add_in_layout.addRow(g)
 				else:
-					add_in_layout.addLayout(g)
+					add_in_layout.addWidget(g)
 			return g, l
 
 		def option_lbl_checkbox(text, optiontext, parent=None):
@@ -476,9 +478,7 @@ class SettingsDialog(QWidget):
 		application_general, app_general_m_l = new_tab('General', application, True)
 
 		# App / General / gallery
-
-		app_gallery_group, app_gallery_l = groupbox('Gallery', QFormLayout, self)
-		app_general_m_l.addRow(app_gallery_group)
+		app_gallery_page, app_gallery_l = new_tab('Gallery', application, True)
 		self.subfolder_as_chapters = QCheckBox("Subdirectiories should be treated as standalone galleries instead of chapters (applies in archives too)")
 		self.subfolder_as_chapters.setToolTip("This option will enable creating standalone galleries for each subdirectiories found recursively when importing."+
 										"\nDefault action is treating each subfolder found as chapters of a gallery.")
@@ -496,14 +496,14 @@ class SettingsDialog(QWidget):
 		self.scroll_to_new_gallery.setDisabled(True)
 		app_gallery_l.addRow(self.scroll_to_new_gallery)
 		self.move_imported_gs, move_imported_gs_l = groupbox('Move imported galleries',
-													   QFormLayout, app_gallery_group)
+													   QFormLayout, app_gallery_page)
 		self.move_imported_gs.setCheckable(True)
 		self.move_imported_gs.setToolTip("Move imported galleries to specified folder.")
 		self.move_imported_def_path = PathLineEdit()
 		move_imported_gs_l.addRow('Directory:', self.move_imported_def_path)
 		app_gallery_l.addRow(self.move_imported_gs)
 		self.rename_g_source_group, rename_g_source_l = groupbox('Rename gallery source',
-													  QFormLayout, app_gallery_group)
+													  QFormLayout, app_gallery_page)
 		self.rename_g_source_group.setCheckable(True)
 		self.rename_g_source_group.setDisabled(True)
 		app_gallery_l.addRow(self.rename_g_source_group)
@@ -518,10 +518,45 @@ class SettingsDialog(QWidget):
 		rename_g_source_flow_l.addWidget(self.rename_artist)
 		rename_g_source_flow_l.addWidget(self.rename_title)
 		rename_g_source_flow_l.addWidget(self.rename_lang)
-		random_gallery_opener, random_g_opener_l = groupbox('Random Gallery Opener', QFormLayout, app_gallery_group)
+		random_gallery_opener, random_g_opener_l = groupbox('Random Gallery Opener', QFormLayout, app_gallery_page)
 		app_gallery_l.addRow(random_gallery_opener)
 		self.open_random_g_chapters = QCheckBox("Open random gallery chapters")
 		random_g_opener_l.addRow(self.open_random_g_chapters)
+
+		# App / General / Search
+		app_search, app_search_layout = groupbox('Search', QFormLayout, application_general)
+		app_general_m_l.addRow(app_search)
+		search_allow_regex_l = QHBoxLayout()
+		self.search_allow_regex = QCheckBox()
+		self.search_allow_regex.setChecked(gui_constants.ALLOW_SEARCH_REGEX)
+		self.search_allow_regex.adjustSize()
+		self.search_allow_regex.setToolTip('A regex cheatsheet is located at About->Regex Cheatsheet')
+		search_allow_regex_l.addWidget(self.search_allow_regex)
+		search_allow_regex_l.addWidget(QLabel('A regex cheatsheet is located at About->Regex Cheatsheet'))
+		search_allow_regex_l.addWidget(Spacer('h'))
+		app_search_layout.addRow('Regex:', search_allow_regex_l)
+		# App / General / Search / autocomplete
+		self.search_autocomplete = QCheckBox('*')
+		self.search_autocomplete.setChecked(gui_constants.SEARCH_AUTOCOMPLETE)
+		self.search_autocomplete.setToolTip('Turn autocomplete on/off')
+		app_search_layout.addRow('Autocomplete', self.search_autocomplete)
+		# App / General / Search / search behaviour
+		self.search_every_keystroke = QRadioButton('Search on every keystroke *', app_search)
+		app_search_layout.addRow(self.search_every_keystroke)
+		self.search_on_enter = QRadioButton('Search on return-key *', app_search)
+		app_search_layout.addRow(self.search_on_enter)
+
+		# App / General / External Viewer
+		app_external_viewer, app_external_viewer_l = groupbox('External Viewer', QFormLayout, application_general, app_general_m_l)
+		app_external_viewer_l.addRow(QLabel("Most image viewers should work. Incase it doesn't," +
+									   " hit me up on email/github/gitter-chat to add support."))
+		self.external_viewer_path = PathLineEdit(app_external_viewer, False, '')
+		self.external_viewer_path.setPlaceholderText('Right/Left-click to open folder explorer.'+
+							  ' Leave empty to use default viewer')
+		self.external_viewer_path.setToolTip('Right/Left-click to open folder explorer.'+
+							  ' Leave empty to use default viewer')
+		self.external_viewer_path.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+		app_external_viewer_l.addRow('Path:', self.external_viewer_path)
 
 		# App / General / Rar Support
 		app_rar_group, app_rar_layout = groupbox('RAR Support *', QFormLayout, self)
@@ -696,7 +731,7 @@ class SettingsDialog(QWidget):
 		grid_tooltip_layout = QFormLayout()
 		self.grid_tooltip_group.setLayout(grid_tooltip_layout)
 		grid_tooltip_layout.addRow(QLabel('Control what is'+
-									' displayed in the tooltip'))
+									' displayed in the tooltip when hovering a gallery'))
 		grid_tooltips_hlayout = FlowLayout()
 		grid_tooltip_layout.addRow(grid_tooltips_hlayout)
 		self.visual_grid_tooltip_title = QCheckBox('Title')
@@ -730,7 +765,7 @@ class SettingsDialog(QWidget):
 		grid_gallery_main_l.setFormAlignment(Qt.AlignLeft)
 		grid_gallery_group.setLayout(grid_gallery_main_l)
 		grid_gallery_display = FlowLayout()
-		grid_gallery_main_l.addRow('Display on gallery:', grid_gallery_display)
+		grid_gallery_main_l.addRow('Display icon on gallery:', grid_gallery_display)
 		self.external_viewer_ico = QCheckBox('External Viewer')
 		grid_gallery_display.addWidget(self.external_viewer_ico)
 		self.gallery_type_ico = QCheckBox('File Type')
@@ -819,54 +854,7 @@ class SettingsDialog(QWidget):
 		def cache_size(c): self.cache_size = (self.cache_size[0], c)
 		cache_size_spin_box.setValue(self.cache_size[1])
 		cache_size_spin_box.valueChanged[int].connect(cache_size)
-		misc_gridview_layout.addRow('Cache Size (MiB):', cache_size_spin_box)		
-		# Advanced / Misc / Regex
-		misc_search = QGroupBox('Search')
-		misc_controls_layout.addWidget(misc_search)
-		misc_search_layout = QFormLayout()
-		misc_search.setLayout(misc_search_layout)
-		search_allow_regex_l = QHBoxLayout()
-		self.search_allow_regex = QCheckBox()
-		self.search_allow_regex.setChecked(gui_constants.ALLOW_SEARCH_REGEX)
-		self.search_allow_regex.adjustSize()
-		self.search_allow_regex.setToolTip('A regex cheatsheet is located at About->Regex Cheatsheet')
-		search_allow_regex_l.addWidget(self.search_allow_regex)
-		search_allow_regex_l.addWidget(QLabel('A regex cheatsheet is located at About->Regex Cheatsheet'))
-		search_allow_regex_l.addWidget(Spacer('h'))
-		misc_search_layout.addRow('Regex:', search_allow_regex_l)
-		# Advanced / Misc / Regex / autocomplete
-		self.search_autocomplete = QCheckBox('*')
-		self.search_autocomplete.setChecked(gui_constants.SEARCH_AUTOCOMPLETE)
-		self.search_autocomplete.setToolTip('Turn autocomplete on/off')
-		misc_search_layout.addRow('Autocomplete', self.search_autocomplete)
-		# Advanced / Misc / Regex / search behaviour
-		self.search_every_keystroke = QRadioButton('Search on every keystroke *', misc_search)
-		misc_search_layout.addRow(self.search_every_keystroke)
-		self.search_on_enter = QRadioButton('Search on return-key *', misc_search)
-		misc_search_layout.addRow(self.search_on_enter)
-
-		# Advanced / Misc / External Viewer
-		misc_external_viewer = QGroupBox('External Viewer')
-		misc_controls_layout.addWidget(misc_external_viewer)
-		misc_external_viewer_l = QFormLayout()
-		misc_external_viewer.setLayout(misc_external_viewer_l)
-		misc_external_viewer_l.addRow(QLabel("Most image viewers should work. Incase it doesn't," +
-									   " hit me up on email/github/gitter-chat to add support."))
-		self.external_viewer_path = PathLineEdit(misc_external_viewer, False, '')
-		self.external_viewer_path.setPlaceholderText('Right/Left-click to open folder explorer.'+
-							  ' Leave empty to use default viewer')
-		self.external_viewer_path.setToolTip('Right/Left-click to open folder explorer.'+
-							  ' Leave empty to use default viewer')
-		self.external_viewer_path.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-		misc_external_viewer_l.addRow('Path:', self.external_viewer_path)
-
-		misc_controls_layout.addRow(Line('H'))
-		
-		open_hp_folder = QPushButton('Open Happypanda Directory')
-		open_hp_folder.clicked.connect(self.open_hp_folder)
-		open_hp_folder.adjustSize()
-		open_hp_folder.setFixedWidth(open_hp_folder.width())
-		misc_controls_layout.addRow(open_hp_folder)
+		misc_gridview_layout.addRow('Cache Size (MiB):', cache_size_spin_box)
 
 		# Advanced / Gallery
 		advanced_gallery, advanced_gallery_m_l = new_tab('Gallery', advanced)
@@ -924,19 +912,42 @@ class SettingsDialog(QWidget):
 
 		# Advanced / Database
 		advanced_db_page, advanced_db_page_l = new_tab('Database', advanced)
-		advanced.setTabEnabled(2, False)
+		# Advanced / Database / Import/Export
+		def init_export():
+			confirm_msg = QMessageBox(QMessageBox.Question, '', 'Are you sure you want export your database? This might take a long time.',
+							 QMessageBox.Yes | QMessageBox.No, self)
+			if confirm_msg.exec() == QMessageBox.Yes:
+				app_popup = ApplicationPopup(self.parent_widget)
+				app_popup.info_lbl.setText("Exporting database...")
+				app_popup.export_instance = io_misc.ImportExport()
+				app_popup.export_instance.moveToThread(gui_constants.GENERAL_THREAD)
+				app_popup.export_instance.finished.connect(app_popup.export_instance.deleteLater)
+				app_popup.export_instance.finished.connect(app_popup.close)
+				app_popup.export_instance.amount.connect(app_popup.prog.setMaximum)
+				app_popup.export_instance.progress.connect(app_popup.prog.setValue)
+				self.init_gallery_eximport.connect(app_popup.export_instance.export_data)
+				self.init_gallery_eximport.emit()
+				app_popup.adjustSize()
+				app_popup.show()
+				self.close()
 
-		# Advanced / Import/Export
-		advanced_impexp, advanced_impexp_l = new_tab('Import/Export', advanced)
-		export_format = QComboBox(advanced_db_page)
-		export_format.addItem('Text File', 0)
-		export_format.addItem('JSON', 1)
-		export_format.adjustSize()
-		export_format.setFixedWidth(export_format.width())
-		advanced_impexp_l.addRow('Export Format:', export_format)
-		export_group, export_group_l = groupbox('Export', QHBoxLayout, advanced_impexp, advanced_impexp_l)
-
-
+		advanced_impexp, advanced_impexp_l = groupbox('Import/Export', QFormLayout, advanced_db_page)
+		advanced_db_page_l.addRow(advanced_impexp)
+		self.export_format = QComboBox(advanced_db_page)
+		#self.export_format.addItem('Text File', 0)
+		self.export_format.addItem('JSON', 1)
+		self.export_format.adjustSize()
+		self.export_format.setFixedWidth(self.export_format.width())
+		advanced_impexp_l.addRow('Export Format:', self.export_format)
+		self.export_path = PathLineEdit(advanced_impexp, filters='')
+		advanced_impexp_l.addRow('Export Path:', self.export_path)
+		import_btn = QPushButton('Import database')
+		export_btn = QPushButton('Export database')
+		export_btn.clicked.connect(init_export)
+		ex_imp_btn_l = QHBoxLayout()
+		ex_imp_btn_l.addWidget(import_btn)
+		ex_imp_btn_l.addWidget(export_btn)
+		advanced_impexp_l.addRow(ex_imp_btn_l)
 
 
 		# About
@@ -947,7 +958,7 @@ class SettingsDialog(QWidget):
 		about.addTab(about_happypanda_page, 'About Happypanda')
 		about_layout = QVBoxLayout()
 		about_happypanda_page.setLayout(about_layout)
-		info_lbl = QLabel('<b>Author:</b> <a href=\'https://github.com/Pewpews\'>'+
+		info_lbl = QLabel('<b>Creator:</b> <a href=\'https://github.com/Pewpews\'>'+
 					'Pewpews</a><br/>'+
 					'Chat: <a href=\'https://gitter.im/Pewpews/happypanda\'>'+
 					'Gitter chat</a><br/>'+
@@ -955,7 +966,8 @@ class SettingsDialog(QWidget):
 					'<b>Current version {}</b><br/>'.format(gui_constants.vs)+
 					'Happypanda was created using:<br/>'+
 					'- Python 3.4<br/>'+
-					'- The Qt5 Framework')
+					'- The Qt5 Framework<br/>'+
+					'- Various python libraries (see github repo)')
 		info_lbl.setOpenExternalLinks(True)
 		about_layout.addWidget(info_lbl, 0, Qt.AlignTop)
 		gpl_lbl = QLabel(gui_constants.GPL)
@@ -963,6 +975,11 @@ class SettingsDialog(QWidget):
 		gpl_lbl.setWordWrap(True)
 		about_layout.addWidget(gpl_lbl, 0, Qt.AlignTop)
 		about_layout.addWidget(Spacer('v'))
+		open_hp_folder = QPushButton('Open Happypanda Directory')
+		open_hp_folder.clicked.connect(self.open_hp_folder)
+		open_hp_folder.adjustSize()
+		open_hp_folder.setFixedWidth(open_hp_folder.width())
+		about_layout.addWidget(open_hp_folder)
 
 		# About / DB Overview
 		about_db_overview, about_db_overview_m_l = new_tab('DB Overview', about)
@@ -992,7 +1009,7 @@ class SettingsDialog(QWidget):
 		about_db_overview_m_l.addRow(about_stats_tab_widget)
 
 		# About / Troubleshooting
-		about.addTab(about_troubleshoot_page, 'Troubleshooting Guide')
+		about.addTab(about_troubleshoot_page, 'Bug Reporting')
 		troubleshoot_layout = QVBoxLayout()
 		about_troubleshoot_page.setLayout(troubleshoot_layout)
 		guide_lbl = QLabel(gui_constants.TROUBLE_GUIDE)
