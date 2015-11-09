@@ -1036,13 +1036,13 @@ class HashDB(DBBase):
 		"""
 		Generate hash for a specific chapter.
 		Set page to only generate specific page
-		page: 'mid' or number
+		page: 'mid' or number or list of numbers
 		Returns dict with chapter number or 'mid' as key and hash as value
 		"""
 		assert isinstance(gallery, Gallery)
 		assert isinstance(chapter, int)
 		if page:
-			assert isinstance(page, (int, str))
+			assert isinstance(page, (int, str, list))
 		skip_gen = False
 		if gallery.id:
 			chap_id = ChapterDB.get_chapter_id(gallery.id, chapter)
@@ -1056,9 +1056,25 @@ class HashDB(DBBase):
 						hashes[r['page']] = r['hash']
 				except TypeError:
 					pass
-			print(gallery.chapters[chapter].pages, len(hashes.keys()))
-			if gallery.chapters[chapter].pages == len(hashes.keys()):
+			if isinstance(page, (int, list)):
+				if isinstance(page, int):
+					page = [page]
+				h = {}
+				t = False
+				for p in page:
+					if p in hashes:
+						h[p] = hashes[p]
+					else:
+						t = True
+				if not t:
+					skip_gen = True
+					hashes = h
+
+			elif gallery.chapters[chapter].pages == len(hashes.keys()):
 				skip_gen = True
+				if page == "mid":
+					hashes = {'mid':hashes[len(hashes)//2]}
+
 
 		if not skip_gen:
 
@@ -1089,12 +1105,15 @@ class HashDB(DBBase):
 					if page == 'mid':
 						imgs = imgs[len(imgs)//2]
 						pages[len(imgs)//2] = imgs
+					elif isinstance(page, list):
+						for p in page:
+							pages[p] = imgs[p]
 					else:
 						imgs = imgs[page]
 						pages = {page:imgs}
 
 				hashes = {}
-				if gallery.id:
+				if gallery.id != None:
 					for p in pages:
 						h = look_exists(p)
 						if not h:
@@ -1123,16 +1142,21 @@ class HashDB(DBBase):
 				pages = {}
 				if page:
 					p = 0
+					con = zip.dir_contents(chap.path)
+					print(len(con))
+					print(page)
 					if page == 'mid':
-						con = zip.dir_contents(chap.path)
 						p = len(con)//2
 						img = con[p]
+						pages = {p:zip.open(img, True)}
+					elif isinstance(page, list):
+						for x in page:
+							pages[x] = zip.open(con[x], True)
 					else:
 						p = page
-						con = zip.dir_contents(chap.path)
 						img = con[p]
+						pages = {p:zip.open(img, True)}
 
-					pages = {p:zip.open(img, True)}
 
 				else:
 					imgs = sorted(zip.dir_contents(chap.path))
@@ -1141,7 +1165,7 @@ class HashDB(DBBase):
 				zip.close()
 
 				hashes = {}
-				if gallery.id:
+				if gallery.id != None:
 					for p in pages:
 						h = look_exists(p)
 						if not h:

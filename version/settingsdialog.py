@@ -935,7 +935,7 @@ class SettingsDialog(QWidget):
 		advanced_db_page_l.addRow(advanced_impexp)
 		self.export_format = QComboBox(advanced_db_page)
 		#self.export_format.addItem('Text File', 0)
-		self.export_format.addItem('JSON', 1)
+		self.export_format.addItem('HPDB', 1)
 		self.export_format.adjustSize()
 		self.export_format.setFixedWidth(self.export_format.width())
 		advanced_impexp_l.addRow('Export Format:', self.export_format)

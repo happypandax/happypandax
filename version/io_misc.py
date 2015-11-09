@@ -1,4 +1,4 @@
-﻿import logging, os, json, datetime
+﻿import logging, os, json, datetime, random
 from watchdog.events import FileSystemEventHandler, DirDeletedEvent
 from watchdog.observers import Observer
 from threading import Timer
@@ -494,11 +494,13 @@ class ImpExpData:
 
 	def save(self, file_path):
 		file_name = os.path.join(file_path,
-						   'happypanda-db-{}.json'.format(
+						   'happypanda-{}.hpdb'.format(
 							  datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S")))
 		with open(file_name, 'w', encoding='utf-8') as fp:
 			json.dump(self.structure, fp, indent=4)
 
+	def find_pair(self):
+		pass
 
 class ImportExport(QObject):
 	finished = pyqtSignal()
@@ -508,8 +510,10 @@ class ImportExport(QObject):
 	def __init__(self):
 		super().__init__()
 
-	def import_data(self):
-		pass
+	def import_data(self, path):
+		with open(path, 'r', encoding='utf-8') as fp:
+			data = json.load(fp)
+
 
 	def export_data(self, gallery=None):
 		galleries = []
@@ -520,7 +524,7 @@ class ImportExport(QObject):
 
 		data = ImpExpData(gui_constants.EXPORT_FORMAT)
 		self.amount.emit(len(galleries))
-		for n, g in enumerate(galleries, 1):
+		for prog, g in enumerate(galleries, 1):
 			g_data = {}
 			g_data['title'] = g.title
 			g_data['artist'] = g.artist
@@ -536,9 +540,22 @@ class ImportExport(QObject):
 			g_data['exed'] = "{}".format(g.exed)
 			g_data['db_v'] = "{}".format(g._db_v)
 			g_data['tags'] = g.tags.copy()
-			g_data['identifier'] = gallerydb.HashDB.gen_gallery_hash(g, 0)
+			g_data['identifier'] = {}
+			numbers = []
+			for x in range(4):
+				n = None
+				while n == None or n in numbers:
+					n = random.randint(0, g.chapters[0].pages-1)
+					if not n in numbers:
+						numbers.append(n)
+						break
+			h_list = gallerydb.HashDB.gen_gallery_hash(g, 0, numbers)
+			print(h_list)
+			for n in numbers:
+				g_data['identifier'][n] = h_list[n]
+
 			data.add_data(str(g.id), g_data)
-			self.progress.emit(n)
+			self.progress.emit(prog)
 
 		data.save(gui_constants.EXPORT_PATH)
 		self.finished.emit()
