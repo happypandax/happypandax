@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout,
 							 QFormLayout, QGroupBox, QSizePolicy,
 							 QTableWidget, QTableWidgetItem)
 
-import gui_constants
+import app_constants
 import misc
 import gallerydb
 import utils
@@ -92,7 +92,7 @@ class GalleryDownloaderList(QTableWidget):
 		self.fetch_instance = fetch.Fetch()
 		self.fetch_instance.download_items = []
 		self.fetch_instance.FINISHED.connect(self.gallery_to_model)
-		self.fetch_instance.moveToThread(gui_constants.GENERAL_THREAD)
+		self.fetch_instance.moveToThread(app_constants.GENERAL_THREAD)
 		self.init_fetch_instance.connect(self.fetch_instance.local)
 
 	def add_entry(self, hitem):
@@ -154,7 +154,7 @@ class GalleryDownloader(QWidget):
 		self.parent_widget = parent
 		self.url_inserter = QLineEdit()
 		self.url_inserter.setPlaceholderText("Hover to see supported URLs")
-		self.url_inserter.setToolTip(gui_constants.SUPPORTED_DOWNLOAD_URLS)
+		self.url_inserter.setToolTip(app_constants.SUPPORTED_DOWNLOAD_URLS)
 		self.url_inserter.setToolTipDuration(999999999)
 		self.url_inserter.returnPressed.connect(self.add_download_entry)
 		main_layout.addWidget(self.url_inserter)
@@ -179,7 +179,7 @@ class GalleryDownloader(QWidget):
 		close_button.clicked.connect(self.hide)
 		main_layout.addWidget(close_button)
 		self.resize(480,600)
-		self.setWindowIcon(QIcon(gui_constants.APP_ICO_PATH))
+		self.setWindowIcon(QIcon(app_constants.APP_ICO_PATH))
 
 	def add_download_entry(self, url=None):
 		log_i('Adding download entry: {}'.format(url))
@@ -429,41 +429,41 @@ class GalleryHandler(FileSystemEventHandler, QObject):
 	#	self.g_queue = []
 
 	def on_created(self, event):
-		if not gui_constants.OVERRIDE_MONITOR:
+		if not app_constants.OVERRIDE_MONITOR:
 			if self.file_filter(event):
 				t = Timer(8, self.CREATE_SIGNAL.emit, args=(event.src_path,))
 				t.start()
 		else:
-			gui_constants.OVERRIDE_MONITOR = False
+			app_constants.OVERRIDE_MONITOR = False
 
 	def on_deleted(self, event):
-		if not gui_constants.OVERRIDE_MONITOR:
+		if not app_constants.OVERRIDE_MONITOR:
 			path = event.src_path
 			gallery = gallerydb.GalleryDB.get_gallery_by_path(path)
 			if gallery:
 				self.DELETED_SIGNAL.emit(path, gallery)
 		else:
-			gui_constants.OVERRIDE_MONITOR = False
+			app_constants.OVERRIDE_MONITOR = False
 
 	def on_modified(self, event):
 		pass
 
 	def on_moved(self, event):
-		if not gui_constants.OVERRIDE_MONITOR:
+		if not app_constants.OVERRIDE_MONITOR:
 			if self.file_filter(event):
 				old_path = event.src_path
 				gallery = gallerydb.GalleryDB.get_gallery_by_path(old_path)
 				if gallery:
 					self.MOVED_SIGNAL.emit(event.dest_path, gallery)
 		else:
-			gui_constants.OVERRIDE_MONITOR = False
+			app_constants.OVERRIDE_MONITOR = False
 
 class Watchers:
 	def __init__(self):
 
 		self.gallery_handler = GalleryHandler()
 		self.watchers = []
-		for path in gui_constants.MONITOR_PATHS:
+		for path in app_constants.MONITOR_PATHS:
 			gallery_observer = Observer()
 
 			try:
@@ -485,6 +485,21 @@ class ImpExpData:
 			self.structure = ""
 		else:
 			self.structure = {}
+		self.hash_pages_count = 4
+
+	def get_pages(self, pages):
+		"Returns pages to generate hashes from"
+		p = []
+		if pages < self.hash_pages_count+1:
+			for x in range(pages):
+				p.append(x)
+		else:
+			x = 0
+			i = pages//self.hash_pages_count
+			for t in range(self.hash_pages_count):
+				x += i
+				p.append(x-1)
+		return p
 
 	def add_data(self, name, data):
 		if self.type == 0:
@@ -499,20 +514,86 @@ class ImpExpData:
 		with open(file_name, 'w', encoding='utf-8') as fp:
 			json.dump(self.structure, fp, indent=4)
 
-	def find_pair(self):
-		pass
+	def find_pair(self, found_pairs):
+		identifier = self.structure['identifier']
+		found = None
+		for g in app_constants.GALLERY_DATA:
+			if not g in found_pairs and g.chapters[0].pages == identifier['pages']:
+				pages = self.get_pages(g.chapters[0].pages)
+				hashes = gallerydb.HashDB.gen_gallery_hash(g, 0, pages)
+				for p in hashes:
+					if hashes[p] != identifier[p]:
+						break
+				else:
+					found = g
+					g.title = self.structure['title']
+					g.artist = self.structure['artist']
+					if self.structure['pub_date']:
+						g.pub_date = datetime.datetime.strptime(
+							self.structure['pub_date'], "%Y-%m-%d %H:%M:%S")
+					g.type = self.structure['type']
+					g.status = self.structure['status']
+					if self.structure['last_read']:
+						g.last_read = datetime.datetime.strptime(
+							self.structure['last_read'], "%Y-%m-%d %H:%M:%S")
+					g.times_read += self.structure['times_read']
+					g._db_v = self.structure['db_v']
+					g.language = self.structure['language']
+					g.link = self.structure['link']
+					for ns in self.structure['tags']:
+						if not ns in g.tags:
+							g.tags[ns] = []
+						for tag in self.structure['tags'][ns]:
+							if not tag in g.tags[ns]:
+								g.tags[ns].append(tag)
+					g.exed = self.structure['exed']
+					g.info = self.structure['info']
+					g.fav = self.structure['fav']
+					gallerydb.GalleryDB.modify_gallery(
+						g.id,
+						g.title,
+						aritst=g.artist,
+						info=g.info,
+						type=g.type,
+						fav=g.fav,
+						tags=g.tags,
+						language=g.language,
+						status=g.status,
+						pub_date=g.pub_date,
+						link=g.link,
+						times_read=g.times_read,
+						_db_v=g._db_v,
+						exed=g_exed
+						)
+
+			if found:
+				break
+
+		return found
 
 class ImportExport(QObject):
 	finished = pyqtSignal()
+	imported_g = pyqtSignal(int)
 	progress = pyqtSignal(int)
 	amount = pyqtSignal(int)
 
 	def __init__(self):
 		super().__init__()
-
+	
 	def import_data(self, path):
 		with open(path, 'r', encoding='utf-8') as fp:
 			data = json.load(fp)
+			self.amount.emit(len(data))
+			pairs_found = []
+			for prog, g_id in enumerate(data, 1):
+				g_data = ImpExpData()
+				g_data.structure.update(data[g_id])
+				g = g_data.find_pair(pairs_found)
+				if g:
+					pairs_found.append(g)
+				self.progress.emit(prog)
+			self.imported_g.emit(len(pairs_found))
+			self.finished.emit()
 
 
 	def export_data(self, gallery=None):
@@ -520,9 +601,9 @@ class ImportExport(QObject):
 		if gallery:
 			galleries.append(gallery)
 		else:
-			galleries = gui_constants.GALLERY_DATA
+			galleries = app_constants.GALLERY_DATA
 
-		data = ImpExpData(gui_constants.EXPORT_FORMAT)
+		data = ImpExpData(app_constants.EXPORT_FORMAT)
 		self.amount.emit(len(galleries))
 		for prog, g in enumerate(galleries, 1):
 			g_data = {}
@@ -536,27 +617,20 @@ class ImportExport(QObject):
 			g_data['status'] = g.status
 			g_data['pub_date'] = "{}".format(g.pub_date)
 			g_data['last_read'] = "{}".format(g.last_read)
-			g_data['times_read'] = "{}".format(g.times_read)
-			g_data['exed'] = "{}".format(g.exed)
-			g_data['db_v'] = "{}".format(g._db_v)
+			g_data['times_read'] = g.times_read
+			g_data['exed'] = g.exed
+			g_data['db_v'] = g._db_v
 			g_data['tags'] = g.tags.copy()
-			g_data['identifier'] = {}
-			numbers = []
-			for x in range(4):
-				n = None
-				while n == None or n in numbers:
-					n = random.randint(0, g.chapters[0].pages-1)
-					if not n in numbers:
-						numbers.append(n)
-						break
-			h_list = gallerydb.HashDB.gen_gallery_hash(g, 0, numbers)
+			g_data['identifier'] = {'pages':g.chapters[0].pages}
+			pages = data.get_pages(g.chapters[0].pages)
+			h_list = gallerydb.HashDB.gen_gallery_hash(g, 0, pages)
 			print(h_list)
-			for n in numbers:
+			for n in pages:
 				g_data['identifier'][n] = h_list[n]
 
 			data.add_data(str(g.id), g_data)
 			self.progress.emit(prog)
 
-		data.save(gui_constants.EXPORT_PATH)
+		data.save(app_constants.EXPORT_PATH)
 		self.finished.emit()
 

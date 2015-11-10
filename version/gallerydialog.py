@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QDesktopWidget, QGroupBox,
 from PyQt5.QtCore import (pyqtSignal, Qt, QPoint, QDate, QThread, QTimer)
 
 from misc import return_tag_completer, ClickedLabel, CompleterTextEdit
-import gui_constants
+import app_constants
 import utils
 import gallerydb
 import fetch
@@ -291,7 +291,7 @@ class GalleryDialog(QWidget):
 			self.file_exists_lbl.setText('<font color="red">Invalid gallery source.</font>')
 			self.file_exists_lbl.show()
 			self.done.hide()
-		if gui_constants.SUBFOLDER_AS_GALLERY:
+		if app_constants.SUBFOLDER_AS_GALLERY:
 			if gs > 1:
 				self.file_exists_lbl.setText('<font color="red">Source contains more than one gallery.</font>')
 				self.file_exists_lbl.show()
@@ -443,8 +443,8 @@ class GalleryDialog(QWidget):
 			new_gallery.artist = self.author_edit.text()
 			log_d('Adding gallery artist')
 			log_d('Adding gallery path')
-			if new and gui_constants.MOVE_IMPORTED_GALLERIES:
-				gui_constants.OVERRIDE_MONITOR = True
+			if new and app_constants.MOVE_IMPORTED_GALLERIES:
+				app_constants.OVERRIDE_MONITOR = True
 				new_gallery.path = utils.move_files(self.path_lbl.text())
 			else:
 				new_gallery.path = self.path_lbl.text()

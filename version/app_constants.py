@@ -19,6 +19,8 @@ import settings
 vs  = '0.25'
 DEBUG = False
 
+APP_RESTART_CODE = 0
+
 get = settings.get
 
 posix_program_dir = os.path.dirname(os.path.realpath(__file__))

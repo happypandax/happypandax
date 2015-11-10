@@ -23,7 +23,7 @@ from utils import (today, ArchiveFile, generate_img_hash, delete_path,
 from database import db_constants
 from database.db import DBBase
 
-import gui_constants
+import app_constants
 import utils
 
 PROFILE_TO_MODEL = queue.Queue()
@@ -103,8 +103,8 @@ def add_method_queue(method, no_return, *args, **kwargs):
 	if not no_return:
 		return method_return.get()
 
-def gen_thumbnail(gallery, width=gui_constants.THUMB_W_SIZE,
-				height=gui_constants.THUMB_H_SIZE, img=None):
+def gen_thumbnail(gallery, width=app_constants.THUMB_W_SIZE,
+				height=app_constants.THUMB_H_SIZE, img=None):
 	"""Generates a thumbnail with unique filename in the cache dir.
 	Returns absolute path to the created thumbnail
 	"""
@@ -142,7 +142,7 @@ def gen_thumbnail(gallery, width=gui_constants.THUMB_W_SIZE,
 		image = image.scaled(width, height, Qt.KeepAspectRatio, Qt.SmoothTransformation)
 		image.save(new_img_path, quality=100)
 	except IndexError:
-		new_img_path = gui_constants.NO_IMAGE_PATH
+		new_img_path = app_constants.NO_IMAGE_PATH
 
 	abs_path = os.path.abspath(new_img_path)
 	return abs_path
@@ -220,8 +220,8 @@ def default_chap_exec(gallery_or_id, chap, only_values=False):
 
 def default_exec(object):
 	def check(obj):
-		if obj == None:
-			return "None"
+		if obj == "None":
+			return None
 		else:
 			return obj
 	executing = ["""INSERT INTO series(title, artist, profile, series_path, is_archive,
@@ -296,7 +296,7 @@ class GalleryDB(DBBase):
 	def clear_thumb(path):
 		"Deletes a thumbnail"
 		try:
-			if path != gui_constants.NO_IMAGE_PATH:
+			if path != app_constants.NO_IMAGE_PATH:
 				os.unlink(path)
 		except:
 			log.exception('Failed to delete thumb {}'.format(os.path.split(path)[1].encode(errors='ignore')))
@@ -517,7 +517,7 @@ class GalleryDB(DBBase):
 													  gallery.title.encode('utf-8', 'ignore')))
 					continue
 
-			if gallery.profile != os.path.abspath(gui_constants.NO_IMAGE_PATH):
+			if gallery.profile != os.path.abspath(app_constants.NO_IMAGE_PATH):
 				try:
 					os.remove(gallery.profile)
 				except FileNotFoundError:
@@ -527,7 +527,7 @@ class GalleryDB(DBBase):
 			TagDB.del_gallery_mapping(gallery.id)
 			HashDB.del_gallery_hashes(gallery.id)
 			log_i('Successfully deleted: {}'.format(gallery.title.encode('utf-8', 'ignore')))
-			gui_constants.NOTIF_BAR.add_text('Successfully deleted: {}'.format(gallery.title))
+			app_constants.NOTIF_BAR.add_text('Successfully deleted: {}'.format(gallery.title))
 
 	@staticmethod
 	def check_exists(name, galleries=None, filter=True):
@@ -538,7 +538,7 @@ class GalleryDB(DBBase):
 		"""
 		#pdb.set_trace()
 		if not galleries:
-			galleries = gui_constants.GALLERY_DATA
+			galleries = app_constants.GALLERY_DATA
 
 		if filter:
 			filter_list = []
@@ -1127,14 +1127,14 @@ class HashDB(DBBase):
 							hashes[i] = generate_img_hash(f)
 
 			except NotADirectoryError:
-				temp_dir = os.path.join(gui_constants.temp_dir, str(uuid.uuid4()))
+				temp_dir = os.path.join(app_constants.temp_dir, str(uuid.uuid4()))
 				is_archive = gallery.is_archive
 				try:
 					if is_archive:
 						zip = ArchiveFile(gallery.path)
 					else:
 						zip = ArchiveFile(chap.path)
-				except gui_constants.CreateArchiveFail:
+				except app_constants.CreateArchiveFail:
 					log_e('Could not generate hash: CreateZipFail')
 					zip.close()
 					return {}
@@ -1364,7 +1364,7 @@ class Gallery:
 					for g_attr in [self.title, self.artist, self.language]:
 						if not g_attr:
 							continue
-						if gui_constants.ALLOW_SEARCH_REGEX:
+						if app_constants.ALLOW_SEARCH_REGEX:
 							if utils.regex_search(key, g_attr):
 								found = True
 								break
@@ -1413,7 +1413,7 @@ class Gallery:
 							if not self.pub_date:
 								return is_exclude
 
-					if gui_constants.ALLOW_SEARCH_REGEX:
+					if app_constants.ALLOW_SEARCH_REGEX:
 						if ns:
 							if self._keyword_search(ns, tag, True):
 								return is_exclude
@@ -1550,7 +1550,7 @@ class ChaptersContainer:
 		if not overwrite:
 			try:
 				_ = self._data[chp.number]
-				raise gui_constants.ChapterExists
+				raise app_constants.ChapterExists
 			except KeyError:
 				pass
 		chp.gallery = self.parent
@@ -1603,7 +1603,7 @@ class ChaptersContainer:
 		assert isinstance(value, Chapter), "Value must be an instantiated Chapter class"
 		
 		if value.gallery != self.parent:
-			raise gui_constants.ChapterWrongParentGallery
+			raise app_constants.ChapterWrongParentGallery
 		self._data[key] = value
 
 	def __delitem__(self, key):
@@ -1649,10 +1649,10 @@ class AdminDB(QObject):
 	def rebuild_thumbs(self, clear_first=False):
 		if clear_first:
 			GalleryDB.clear_thumb_dir()
-		if gui_constants.GALLERY_DATA:
-			self.DATA_COUNT.emit(len(gui_constants.GALLERY_DATA))
+		if app_constants.GALLERY_DATA:
+			self.DATA_COUNT.emit(len(app_constants.GALLERY_DATA))
 			log_i('Rebuilding galleries')
-			for n, g in enumerate(gui_constants.GALLERY_DATA, 1):
+			for n, g in enumerate(app_constants.GALLERY_DATA, 1):
 				add_method_queue(GalleryDB.rebuild_thumb, False, g)
 				self.PROGRESS.emit(n)
 		self.DONE.emit(True)
@@ -1673,7 +1673,7 @@ class DatabaseEmitter(QObject):
 
 	def __init__(self):
 		super().__init__()
-		self._current_data = gui_constants.GALLERY_DATA
+		self._current_data = app_constants.GALLERY_DATA
 		self._fetch_count = 200
 		self._offset = 0
 		self._fetching = False

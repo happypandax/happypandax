@@ -15,7 +15,7 @@
 import datetime, os, subprocess, sys, logging, zipfile
 import hashlib, shutil, uuid, re, scandir, rarfile
 
-import gui_constants
+import app_constants
 
 from database import db_constants
 
@@ -31,8 +31,8 @@ ARCHIVE_FILES = ('.zip', '.cbz', '.rar', '.cbr')
 FILE_FILTER = '*.zip *.cbz *.rar *.cbr'
 IMG_FILTER = '*.jpg *.bmp *.png *.jpeg'
 rarfile.PATH_SEP = '/'
-rarfile.UNRAR_TOOL = gui_constants.unrar_tool_path
-if not gui_constants.unrar_tool_path:
+rarfile.UNRAR_TOOL = app_constants.unrar_tool_path
+if not app_constants.unrar_tool_path:
 	FILE_FILTER = '*.zip *.cbz'
 	ARCHIVE_FILES = ('.zip', '.cbz')
 
@@ -120,7 +120,7 @@ def move_files(path, dest=''):
 	imported_galleries_def_path will be used instead.
 	"""
 	if not dest:
-		dest = gui_constants.IMPORTED_GALLERY_DEF_PATH
+		dest = app_constants.IMPORTED_GALLERY_DEF_PATH
 		if not dest:
 			return path
 	f = os.path.split(path)[1]
@@ -135,14 +135,14 @@ def move_files(path, dest=''):
 
 def check_ignore_list(key):
 	k = os.path.normcase(key)
-	for path in gui_constants.IGNORE_PATHS:
+	for path in app_constants.IGNORE_PATHS:
 		p = os.path.normcase(path)
 		if p in k:
 			return False
 	return True
 
 def gallery_text_fixer(gallery):
-	regex_str = gui_constants.GALLERY_DATA_FIX_REGEX
+	regex_str = app_constants.GALLERY_DATA_FIX_REGEX
 	if regex_str:
 		try:
 			valid_regex = re.compile(regex_str)
@@ -152,12 +152,12 @@ def gallery_text_fixer(gallery):
 			return None
 
 		def replace_regex(text):
-			new_text = re.sub(regex_str, gui_constants.GALLERY_DATA_FIX_REPLACE, text)
+			new_text = re.sub(regex_str, app_constants.GALLERY_DATA_FIX_REPLACE, text)
 			return new_text
 
-		if gui_constants.GALLERY_DATA_FIX_TITLE:
+		if app_constants.GALLERY_DATA_FIX_TITLE:
 			gallery.title = replace_regex(gallery.title)
-		if gui_constants.GALLERY_DATA_FIX_ARTIST:
+		if app_constants.GALLERY_DATA_FIX_ARTIST:
 			gallery.artist = replace_regex(gallery.artist)
 
 		return gallery
@@ -214,13 +214,13 @@ class ArchiveFile():
 				# test for corruption
 				if b_f:
 					log_w('Bad file found in archive {}'.format(filepath.encode(errors='ignore')))
-					raise gui_constants.CreateArchiveFail
+					raise app_constants.CreateArchiveFail
 			else:
 				log_e('Archive: Unsupported file format')
-				raise gui_constants.CreateArchiveFail
+				raise app_constants.CreateArchiveFail
 		except:
 			log.exception('Create archive: FAIL')
-			raise gui_constants.CreateArchiveFail
+			raise app_constants.CreateArchiveFail
 
 	def namelist(self):
 		filelist = self.archive.namelist()
@@ -234,7 +234,7 @@ class ArchiveFile():
 			return False
 		if not name in self.namelist():
 			log_e('File {} not found in archive'.format(name))
-			raise gui_constants.FileNotFoundInArchive
+			raise app_constants.FileNotFoundInArchive
 		if self.type == self.zip:
 			if name.endswith('/'):
 				return True
@@ -268,7 +268,7 @@ class ArchiveFile():
 		"""
 		if dir_name and not dir_name in self.namelist():
 			log_e('Directory {} not found in archive'.format(dir_name))
-			raise gui_constants.FileNotFoundInArchive
+			raise app_constants.FileNotFoundInArchive
 		if not dir_name:
 			if self.type == self.zip:
 				con =  [x for x in self.namelist() if x.count('/') == 0 or \
@@ -292,7 +292,7 @@ class ArchiveFile():
 		Returns path to the extracted file
 		"""
 		if not path:
-			path = os.path.join(gui_constants.temp_dir, str(uuid.uuid4()))
+			path = os.path.join(app_constants.temp_dir, str(uuid.uuid4()))
 			os.mkdir(path)
 
 		if not file_to_ext:
@@ -317,7 +317,7 @@ class ArchiveFile():
 		If path is not specified, a temp dir will be created
 		"""
 		if not path:
-			path = os.path.join(gui_constants.temp_dir, str(uuid.uuid4()))
+			path = os.path.join(app_constants.temp_dir, str(uuid.uuid4()))
 			os.mkdir(path)
 		if member:
 			self.archive.extractall(path, member)
@@ -345,7 +345,7 @@ def check_archive(archive_path):
 	archive_path = archive_path.lower()
 	try:
 		zip = ArchiveFile(archive_path)
-	except gui_constants.CreateArchiveFail:
+	except app_constants.CreateArchiveFail:
 		return []
 	if not zip:
 		return []
@@ -419,7 +419,7 @@ def today():
 	return [day, month, year]
 
 def external_viewer_checker(path):
-	check_dict = gui_constants.EXTERNAL_VIEWER_SUPPORT
+	check_dict = app_constants.EXTERNAL_VIEWER_SUPPORT
 	viewer = os.path.split(path)[1]
 	for x in check_dict:
 		allow = False
@@ -443,7 +443,7 @@ def open_chapter(chapterpath, archive=None):
 	def find_f_img_archive(extract=True):
 		zip = ArchiveFile(temp_p)
 		if extract:
-			gui_constants.NOTIF_BAR.add_text('Extracting...')
+			app_constants.NOTIF_BAR.add_text('Extracting...')
 			t_p = os.path.join('temp', str(uuid.uuid4()))
 			os.mkdir(t_p)
 			if is_archive or chapterpath.endswith(ARCHIVE_FILES):
@@ -481,20 +481,20 @@ def open_chapter(chapterpath, archive=None):
 			filepath = find_f_img_folder()
 		except NotADirectoryError: # archive
 			try:
-				if not gui_constants.EXTRACT_CHAPTER_BEFORE_OPENING and gui_constants.EXTERNAL_VIEWER_PATH:
+				if not app_constants.EXTRACT_CHAPTER_BEFORE_OPENING and app_constants.EXTERNAL_VIEWER_PATH:
 					filepath = find_f_img_archive(False)
 				else:
 					filepath = find_f_img_archive()
-			except gui_constants.CreateArchiveFail:
+			except app_constants.CreateArchiveFail:
 				log.exception('Could not open chapter')
-				gui_constants.NOTIF_BAR.add_text('Could not open chapter. Check happypanda.log for more details.')
+				app_constants.NOTIF_BAR.add_text('Could not open chapter. Check happypanda.log for more details.')
 				return
 	except FileNotFoundError:
 		log.exception('Could not find chapter {}'.format(chapterpath))
 		return
 	try:
-		gui_constants.NOTIF_BAR.add_text('Opening gallery...')
-		if not gui_constants.USE_EXTERNAL_VIEWER:
+		app_constants.NOTIF_BAR.add_text('Opening gallery...')
+		if not app_constants.USE_EXTERNAL_VIEWER:
 			if sys.platform.startswith('darwin'):
 				subprocess.call(('open', filepath))
 			elif os.name == 'nt':
@@ -502,15 +502,15 @@ def open_chapter(chapterpath, archive=None):
 			elif os.name == 'posix':
 				subprocess.call(('xdg-open', filepath))
 		else:
-			ext_path = gui_constants.EXTERNAL_VIEWER_PATH
+			ext_path = app_constants.EXTERNAL_VIEWER_PATH
 			viewer = external_viewer_checker(ext_path)
 			if viewer == 'honeyview':
-				if gui_constants.OPEN_GALLERIES_SEQUENTIALLY:
+				if app_constants.OPEN_GALLERIES_SEQUENTIALLY:
 					subprocess.call((ext_path, filepath))
 				else:
 					subprocess.Popen((ext_path, filepath))
 			else:
-				if gui_constants.OPEN_GALLERIES_SEQUENTIALLY:
+				if app_constants.OPEN_GALLERIES_SEQUENTIALLY:
 					subprocess.check_call((ext_path, filepath))
 				else:
 					subprocess.Popen((ext_path, filepath))
@@ -536,7 +536,7 @@ def get_gallery_img(path, archive=None):
 		try:
 			log_i('Getting image from archive')
 			zip = ArchiveFile(real_path)
-			temp_path = os.path.join(gui_constants.temp_dir, str(uuid.uuid4()))
+			temp_path = os.path.join(app_constants.temp_dir, str(uuid.uuid4()))
 			os.mkdir(temp_path)
 			if not archive:
 				f_img_name = sorted([img for img in zip.namelist() if img.lower().endswith(IMG_FILES)])[0]
@@ -544,8 +544,8 @@ def get_gallery_img(path, archive=None):
 				f_img_name = sorted([img for img in zip.dir_contents(path) if img.lower().endswith(IMG_FILES)])[0]
 			img_path = zip.extract(f_img_name, temp_path)
 			zip.close()
-		except gui_constants.CreateArchiveFail:
-			img_path = gui_constants.NO_IMAGE_PATH
+		except app_constants.CreateArchiveFail:
+			img_path = app_constants.NO_IMAGE_PATH
 	elif os.path.isdir(real_path):
 		log_i('Getting image from folder')
 		first_img = sorted([img.name for img in scandir.scandir(real_path) if img.name.lower().endswith(tuple(IMG_FILES))])[0]
@@ -754,10 +754,10 @@ def open_path(path, select=''):
 		log_e('Could not open path')
 
 def open_torrent(path):
-	if not gui_constants.TORRENT_CLIENT:
+	if not app_constants.TORRENT_CLIENT:
 		open_path(path)
 	else:
-		subprocess.Popen([gui_constants.TORRENT_CLIENT, path])
+		subprocess.Popen([app_constants.TORRENT_CLIENT, path])
 
 def delete_path(path):
 	"Deletes the provided recursively"
@@ -784,7 +784,7 @@ def regex_search(a, b, override_case=False):
 	"Looks for a in b"
 	if a and b:
 		try:
-			if not gui_constants.GALLERY_SEARCH_CASE or override_case:
+			if not app_constants.GALLERY_SEARCH_CASE or override_case:
 				if regex.search(a, b, regex.IGNORECASE):
 					return True
 			else:
@@ -797,11 +797,11 @@ def regex_search(a, b, override_case=False):
 def search_term(a, b, override_case=False):
 	"Searches for a in b"
 	if a and b:
-		if not gui_constants.GALLERY_SEARCH_CASE or override_case:
+		if not app_constants.GALLERY_SEARCH_CASE or override_case:
 			b = b.lower()
 			a = a.lower()
 
-		if gui_constants.GALLERY_SEARCH_STRICT:
+		if app_constants.GALLERY_SEARCH_STRICT:
 			if a == b:
 				return True
 		else:

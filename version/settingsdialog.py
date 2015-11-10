@@ -10,7 +10,7 @@ from PyQt5.QtGui import QPalette, QPixmapCache
 
 from misc import FlowLayout, Spacer, PathLineEdit, ApplicationPopup, Line
 import settings
-import gui_constants
+import app_constants
 import misc_db
 import gallerydb
 import utils
@@ -63,7 +63,7 @@ class SettingsDialog(QWidget):
 		self.about = QListWidgetItem()
 		self.about.setText('About')
 
-		#main.setIcon(QIcon(os.path.join(gui_constants.static_dir, 'plus2.png')))
+		#main.setIcon(QIcon(os.path.join(app_constants.static_dir, 'plus2.png')))
 		left_panel.addItem(self.application)
 		left_panel.addItem(self.web)
 		left_panel.addItem(self.visual)
@@ -122,167 +122,167 @@ class SettingsDialog(QWidget):
 		self.exprops = settings.ExProperties()
 
 		# Visual
-		self.high_quality_thumbs = gui_constants.HIGH_QUALITY_THUMBS
-		self.popup_width = gui_constants.POPUP_WIDTH
-		self.popup_height = gui_constants.POPUP_HEIGHT
-		self.style_sheet = gui_constants.user_stylesheet_path
+		self.high_quality_thumbs = app_constants.HIGH_QUALITY_THUMBS
+		self.popup_width = app_constants.POPUP_WIDTH
+		self.popup_height = app_constants.POPUP_HEIGHT
+		self.style_sheet = app_constants.user_stylesheet_path
 
 		# Advanced
-		self.scroll_speed = gui_constants.SCROLL_SPEED
-		self.cache_size = gui_constants.THUMBNAIL_CACHE_SIZE
-		self.prefetch_item_amnt = gui_constants.PREFETCH_ITEM_AMOUNT
+		self.scroll_speed = app_constants.SCROLL_SPEED
+		self.cache_size = app_constants.THUMBNAIL_CACHE_SIZE
+		self.prefetch_item_amnt = app_constants.PREFETCH_ITEM_AMOUNT
 
 	def restore_options(self):
 
 		# App / General
-		self.subfolder_as_chapters.setChecked(gui_constants.SUBFOLDER_AS_GALLERY)
-		self.extract_gallery_before_opening.setChecked(gui_constants.EXTRACT_CHAPTER_BEFORE_OPENING)
-		self.open_galleries_sequentially.setChecked(gui_constants.OPEN_GALLERIES_SEQUENTIALLY)
-		self.scroll_to_new_gallery.setChecked(gui_constants.SCROLL_TO_NEW_GALLERIES)
-		self.move_imported_gs.setChecked(gui_constants.MOVE_IMPORTED_GALLERIES)
-		self.move_imported_def_path.setText(gui_constants.IMPORTED_GALLERY_DEF_PATH)
-		self.open_random_g_chapters.setChecked(gui_constants.OPEN_RANDOM_GALLERY_CHAPTERS)
-		self.rename_g_source_group.setChecked(gui_constants.RENAME_GALLERY_SOURCE)
-		self.path_to_unrar.setText(gui_constants.unrar_tool_path)
+		self.subfolder_as_chapters.setChecked(app_constants.SUBFOLDER_AS_GALLERY)
+		self.extract_gallery_before_opening.setChecked(app_constants.EXTRACT_CHAPTER_BEFORE_OPENING)
+		self.open_galleries_sequentially.setChecked(app_constants.OPEN_GALLERIES_SEQUENTIALLY)
+		self.scroll_to_new_gallery.setChecked(app_constants.SCROLL_TO_NEW_GALLERIES)
+		self.move_imported_gs.setChecked(app_constants.MOVE_IMPORTED_GALLERIES)
+		self.move_imported_def_path.setText(app_constants.IMPORTED_GALLERY_DEF_PATH)
+		self.open_random_g_chapters.setChecked(app_constants.OPEN_RANDOM_GALLERY_CHAPTERS)
+		self.rename_g_source_group.setChecked(app_constants.RENAME_GALLERY_SOURCE)
+		self.path_to_unrar.setText(app_constants.unrar_tool_path)
 		# App / General / External Viewer
-		self.external_viewer_path.setText(gui_constants.EXTERNAL_VIEWER_PATH)
+		self.external_viewer_path.setText(app_constants.EXTERNAL_VIEWER_PATH)
 
 		# App / Monitor / Misc
-		self.enable_monitor.setChecked(gui_constants.ENABLE_MONITOR)
-		self.look_new_gallery_startup.setChecked(gui_constants.LOOK_NEW_GALLERY_STARTUP)
-		self.auto_add_new_galleries.setChecked(gui_constants.LOOK_NEW_GALLERY_AUTOADD)
+		self.enable_monitor.setChecked(app_constants.ENABLE_MONITOR)
+		self.look_new_gallery_startup.setChecked(app_constants.LOOK_NEW_GALLERY_STARTUP)
+		self.auto_add_new_galleries.setChecked(app_constants.LOOK_NEW_GALLERY_AUTOADD)
 		# App / Monitor / Folders
-		for path in gui_constants.MONITOR_PATHS:
+		for path in app_constants.MONITOR_PATHS:
 			self.add_folder_monitor(path)
 
 		# App / Monitor / Ignore list
-		for path in gui_constants.IGNORE_PATHS:
+		for path in app_constants.IGNORE_PATHS:
 			self.add_ignore_path(path)
 
 		# Web / General
-		if 'g.e-hentai' in gui_constants.DEFAULT_EHEN_URL:
+		if 'g.e-hentai' in app_constants.DEFAULT_EHEN_URL:
 			self.default_ehen_url.setChecked(True)
 		else:
 			self.exhentai_ehen_url.setChecked(True)
 		
-		self.replace_metadata.setChecked(gui_constants.REPLACE_METADATA)
-		self.always_first_hit.setChecked(gui_constants.ALWAYS_CHOOSE_FIRST_HIT)
-		self.web_time_offset.setValue(gui_constants.GLOBAL_EHEN_TIME)
-		self.continue_a_metadata_fetcher.setChecked(gui_constants.CONTINUE_AUTO_METADATA_FETCHER)
-		self.use_jpn_title.setChecked(gui_constants.USE_JPN_TITLE)
-		self.use_gallery_link.setChecked(gui_constants.USE_GALLERY_LINK)
+		self.replace_metadata.setChecked(app_constants.REPLACE_METADATA)
+		self.always_first_hit.setChecked(app_constants.ALWAYS_CHOOSE_FIRST_HIT)
+		self.web_time_offset.setValue(app_constants.GLOBAL_EHEN_TIME)
+		self.continue_a_metadata_fetcher.setChecked(app_constants.CONTINUE_AUTO_METADATA_FETCHER)
+		self.use_jpn_title.setChecked(app_constants.USE_JPN_TITLE)
+		self.use_gallery_link.setChecked(app_constants.USE_GALLERY_LINK)
 
 		# Web / Download
-		if gui_constants.HEN_DOWNLOAD_TYPE == 0:
+		if app_constants.HEN_DOWNLOAD_TYPE == 0:
 			self.archive_download.setChecked(True)
 		else:
 			self.torrent_download.setChecked(True)
 
-		self.download_directory.setText(gui_constants.DOWNLOAD_DIRECTORY)
-		self.torrent_client.setText(gui_constants.TORRENT_CLIENT)
+		self.download_directory.setText(app_constants.DOWNLOAD_DIRECTORY)
+		self.torrent_client.setText(app_constants.TORRENT_CLIENT)
 
 		# Web / Exhentai
 		self.ipbid_edit.setText(self.exprops.ipb_id)
 		self.ipbpass_edit.setText(self.exprops.ipb_pass)
 
 		# Visual / Grid View / Tooltip
-		self.grid_tooltip_group.setChecked(gui_constants.GRID_TOOLTIP)
-		self.visual_grid_tooltip_title.setChecked(gui_constants.TOOLTIP_TITLE)
-		self.visual_grid_tooltip_author.setChecked(gui_constants.TOOLTIP_AUTHOR)
-		self.visual_grid_tooltip_chapters.setChecked(gui_constants.TOOLTIP_CHAPTERS)
-		self.visual_grid_tooltip_status.setChecked(gui_constants.TOOLTIP_STATUS)
-		self.visual_grid_tooltip_type.setChecked(gui_constants.TOOLTIP_TYPE)
-		self.visual_grid_tooltip_lang.setChecked(gui_constants.TOOLTIP_LANG)
-		self.visual_grid_tooltip_descr.setChecked(gui_constants.TOOLTIP_DESCR)
-		self.visual_grid_tooltip_tags.setChecked(gui_constants.TOOLTIP_TAGS)
-		self.visual_grid_tooltip_last_read.setChecked(gui_constants.TOOLTIP_LAST_READ)
-		self.visual_grid_tooltip_times_read.setChecked(gui_constants.TOOLTIP_TIMES_READ)
-		self.visual_grid_tooltip_pub_date.setChecked(gui_constants.TOOLTIP_PUB_DATE)
-		self.visual_grid_tooltip_date_added.setChecked(gui_constants.TOOLTIP_DATE_ADDED)
+		self.grid_tooltip_group.setChecked(app_constants.GRID_TOOLTIP)
+		self.visual_grid_tooltip_title.setChecked(app_constants.TOOLTIP_TITLE)
+		self.visual_grid_tooltip_author.setChecked(app_constants.TOOLTIP_AUTHOR)
+		self.visual_grid_tooltip_chapters.setChecked(app_constants.TOOLTIP_CHAPTERS)
+		self.visual_grid_tooltip_status.setChecked(app_constants.TOOLTIP_STATUS)
+		self.visual_grid_tooltip_type.setChecked(app_constants.TOOLTIP_TYPE)
+		self.visual_grid_tooltip_lang.setChecked(app_constants.TOOLTIP_LANG)
+		self.visual_grid_tooltip_descr.setChecked(app_constants.TOOLTIP_DESCR)
+		self.visual_grid_tooltip_tags.setChecked(app_constants.TOOLTIP_TAGS)
+		self.visual_grid_tooltip_last_read.setChecked(app_constants.TOOLTIP_LAST_READ)
+		self.visual_grid_tooltip_times_read.setChecked(app_constants.TOOLTIP_TIMES_READ)
+		self.visual_grid_tooltip_pub_date.setChecked(app_constants.TOOLTIP_PUB_DATE)
+		self.visual_grid_tooltip_date_added.setChecked(app_constants.TOOLTIP_DATE_ADDED)
 		# Visual / Grid View / Gallery
-		self.external_viewer_ico.setChecked(gui_constants.USE_EXTERNAL_PROG_ICO)
-		self.gallery_type_ico.setChecked(gui_constants.DISPLAY_GALLERY_TYPE)
-		if gui_constants.GALLERY_FONT_ELIDE:
+		self.external_viewer_ico.setChecked(app_constants.USE_EXTERNAL_PROG_ICO)
+		self.gallery_type_ico.setChecked(app_constants.DISPLAY_GALLERY_TYPE)
+		if app_constants.GALLERY_FONT_ELIDE:
 			self.gallery_text_elide.setChecked(True)
 		else:
 			self.gallery_text_fit.setChecked(True)
-		self.font_lbl.setText(gui_constants.GALLERY_FONT[0])
-		self.font_size_lbl.setValue(gui_constants.GALLERY_FONT[1])
+		self.font_lbl.setText(app_constants.GALLERY_FONT[0])
+		self.font_size_lbl.setValue(app_constants.GALLERY_FONT[1])
 
 		def re_enforce(s):
 			if s:
 				self.search_on_enter.setChecked(True)
 		self.search_allow_regex.clicked.connect(re_enforce)
 
-		if gui_constants.SEARCH_ON_ENTER:
+		if app_constants.SEARCH_ON_ENTER:
 			self.search_on_enter.setChecked(True)
 		else:
 			self.search_every_keystroke.setChecked(True)
 		# Visual / Grid View / Colors
-		self.grid_label_color.setText(gui_constants.GRID_VIEW_LABEL_COLOR)
-		self.grid_title_color.setText(gui_constants.GRID_VIEW_TITLE_COLOR)
-		self.grid_artist_color.setText(gui_constants.GRID_VIEW_ARTIST_COLOR)
+		self.grid_label_color.setText(app_constants.GRID_VIEW_LABEL_COLOR)
+		self.grid_title_color.setText(app_constants.GRID_VIEW_TITLE_COLOR)
+		self.grid_artist_color.setText(app_constants.GRID_VIEW_ARTIST_COLOR)
 
 
 		# Advanced / Gallery / Gallery Text Fixer
-		self.g_data_regex_fix_edit.setText(gui_constants.GALLERY_DATA_FIX_REGEX)
-		self.g_data_replace_fix_edit.setText(gui_constants.GALLERY_DATA_FIX_REPLACE)
-		self.g_data_fixer_title.setChecked(gui_constants.GALLERY_DATA_FIX_TITLE)
-		self.g_data_fixer_artist.setChecked(gui_constants.GALLERY_DATA_FIX_ARTIST)
+		self.g_data_regex_fix_edit.setText(app_constants.GALLERY_DATA_FIX_REGEX)
+		self.g_data_replace_fix_edit.setText(app_constants.GALLERY_DATA_FIX_REPLACE)
+		self.g_data_fixer_title.setChecked(app_constants.GALLERY_DATA_FIX_TITLE)
+		self.g_data_fixer_artist.setChecked(app_constants.GALLERY_DATA_FIX_ARTIST)
 
 		# About / DB Overview
-		self.tags_treeview_on_start.setChecked(gui_constants.TAGS_TREEVIEW_ON_START)
+		self.tags_treeview_on_start.setChecked(app_constants.TAGS_TREEVIEW_ON_START)
 
 	def accept(self):
 		set = settings.set
 
 		# App / General / Gallery
-		gui_constants.SUBFOLDER_AS_GALLERY = self.subfolder_as_chapters.isChecked()
-		set(gui_constants.SUBFOLDER_AS_GALLERY, 'Application', 'subfolder as gallery')
-		gui_constants.EXTRACT_CHAPTER_BEFORE_OPENING = self.extract_gallery_before_opening.isChecked()
-		set(gui_constants.EXTRACT_CHAPTER_BEFORE_OPENING, 'Application', 'extract chapter before opening')
-		gui_constants.OPEN_GALLERIES_SEQUENTIALLY = self.open_galleries_sequentially.isChecked()
-		set(gui_constants.OPEN_GALLERIES_SEQUENTIALLY, 'Application', 'open galleries sequentially')
-		gui_constants.SCROLL_TO_NEW_GALLERIES = self.scroll_to_new_gallery.isChecked()
-		set(gui_constants.SCROLL_TO_NEW_GALLERIES, 'Application', 'scroll to new galleries')
-		gui_constants.MOVE_IMPORTED_GALLERIES = self.move_imported_gs.isChecked()
-		set(gui_constants.MOVE_IMPORTED_GALLERIES, 'Application', 'move imported galleries')
+		app_constants.SUBFOLDER_AS_GALLERY = self.subfolder_as_chapters.isChecked()
+		set(app_constants.SUBFOLDER_AS_GALLERY, 'Application', 'subfolder as gallery')
+		app_constants.EXTRACT_CHAPTER_BEFORE_OPENING = self.extract_gallery_before_opening.isChecked()
+		set(app_constants.EXTRACT_CHAPTER_BEFORE_OPENING, 'Application', 'extract chapter before opening')
+		app_constants.OPEN_GALLERIES_SEQUENTIALLY = self.open_galleries_sequentially.isChecked()
+		set(app_constants.OPEN_GALLERIES_SEQUENTIALLY, 'Application', 'open galleries sequentially')
+		app_constants.SCROLL_TO_NEW_GALLERIES = self.scroll_to_new_gallery.isChecked()
+		set(app_constants.SCROLL_TO_NEW_GALLERIES, 'Application', 'scroll to new galleries')
+		app_constants.MOVE_IMPORTED_GALLERIES = self.move_imported_gs.isChecked()
+		set(app_constants.MOVE_IMPORTED_GALLERIES, 'Application', 'move imported galleries')
 		if not self.move_imported_def_path.text() or os.path.exists(self.move_imported_def_path.text()):
-			gui_constants.IMPORTED_GALLERY_DEF_PATH = self.move_imported_def_path.text()
-			set(gui_constants.IMPORTED_GALLERY_DEF_PATH, 'Application', 'imported gallery def path')
-		gui_constants.OPEN_RANDOM_GALLERY_CHAPTERS = self.open_random_g_chapters.isChecked()
-		set(gui_constants.OPEN_RANDOM_GALLERY_CHAPTERS, 'Application', 'open random gallery chapters')
-		gui_constants.RENAME_GALLERY_SOURCE = self.rename_g_source_group.isChecked()
-		set(gui_constants.RENAME_GALLERY_SOURCE, 'Application', 'rename gallery source')
-		gui_constants.unrar_tool_path = self.path_to_unrar.text()
-		set(gui_constants.unrar_tool_path, 'Application', 'unrar tool path')
+			app_constants.IMPORTED_GALLERY_DEF_PATH = self.move_imported_def_path.text()
+			set(app_constants.IMPORTED_GALLERY_DEF_PATH, 'Application', 'imported gallery def path')
+		app_constants.OPEN_RANDOM_GALLERY_CHAPTERS = self.open_random_g_chapters.isChecked()
+		set(app_constants.OPEN_RANDOM_GALLERY_CHAPTERS, 'Application', 'open random gallery chapters')
+		app_constants.RENAME_GALLERY_SOURCE = self.rename_g_source_group.isChecked()
+		set(app_constants.RENAME_GALLERY_SOURCE, 'Application', 'rename gallery source')
+		app_constants.unrar_tool_path = self.path_to_unrar.text()
+		set(app_constants.unrar_tool_path, 'Application', 'unrar tool path')
 		# App / General / Search
-		gui_constants.ALLOW_SEARCH_REGEX = self.search_allow_regex.isChecked()
-		set(gui_constants.ALLOW_SEARCH_REGEX, 'Application', 'allow search regex')
-		gui_constants.SEARCH_AUTOCOMPLETE = self.search_autocomplete.isChecked()
-		set(gui_constants.SEARCH_AUTOCOMPLETE, 'Application', 'search autocomplete')
+		app_constants.ALLOW_SEARCH_REGEX = self.search_allow_regex.isChecked()
+		set(app_constants.ALLOW_SEARCH_REGEX, 'Application', 'allow search regex')
+		app_constants.SEARCH_AUTOCOMPLETE = self.search_autocomplete.isChecked()
+		set(app_constants.SEARCH_AUTOCOMPLETE, 'Application', 'search autocomplete')
 		if self.search_on_enter.isChecked():
-			gui_constants.SEARCH_ON_ENTER = True
+			app_constants.SEARCH_ON_ENTER = True
 		else:
-			gui_constants.SEARCH_ON_ENTER = False
-		set(gui_constants.SEARCH_ON_ENTER, 'Application', 'search on enter')
+			app_constants.SEARCH_ON_ENTER = False
+		set(app_constants.SEARCH_ON_ENTER, 'Application', 'search on enter')
 		# App / General / External Viewer
 		if not self.external_viewer_path.text():
-			gui_constants.USE_EXTERNAL_VIEWER = False
+			app_constants.USE_EXTERNAL_VIEWER = False
 			set(False, 'Application', 'use external viewer')
 		else:
-			gui_constants.USE_EXTERNAL_VIEWER = True
+			app_constants.USE_EXTERNAL_VIEWER = True
 			set(True, 'Application', 'use external viewer')
-			gui_constants._REFRESH_EXTERNAL_VIEWER = True
-		gui_constants.EXTERNAL_VIEWER_PATH = self.external_viewer_path.text()
-		set(gui_constants.EXTERNAL_VIEWER_PATH,'Application', 'external viewer path')
+			app_constants._REFRESH_EXTERNAL_VIEWER = True
+		app_constants.EXTERNAL_VIEWER_PATH = self.external_viewer_path.text()
+		set(app_constants.EXTERNAL_VIEWER_PATH,'Application', 'external viewer path')
 		# App / Monitor / misc
-		gui_constants.ENABLE_MONITOR = self.enable_monitor.isChecked()
-		set(gui_constants.ENABLE_MONITOR, 'Application', 'enable monitor')
-		gui_constants.LOOK_NEW_GALLERY_STARTUP = self.look_new_gallery_startup.isChecked()
-		set(gui_constants.LOOK_NEW_GALLERY_STARTUP, 'Application', 'look new gallery startup')
-		gui_constants.LOOK_NEW_GALLERY_AUTOADD = self.auto_add_new_galleries.isChecked()
-		set(gui_constants.LOOK_NEW_GALLERY_AUTOADD, 'Application', 'look new gallery autoadd')
+		app_constants.ENABLE_MONITOR = self.enable_monitor.isChecked()
+		set(app_constants.ENABLE_MONITOR, 'Application', 'enable monitor')
+		app_constants.LOOK_NEW_GALLERY_STARTUP = self.look_new_gallery_startup.isChecked()
+		set(app_constants.LOOK_NEW_GALLERY_STARTUP, 'Application', 'look new gallery startup')
+		app_constants.LOOK_NEW_GALLERY_AUTOADD = self.auto_add_new_galleries.isChecked()
+		set(app_constants.LOOK_NEW_GALLERY_AUTOADD, 'Application', 'look new gallery autoadd')
 		# App / Monitor / folders
 		paths = []
 		folder_p_widgets = self.take_all_layout_widgets(self.folders_layout)
@@ -292,7 +292,7 @@ class SettingsDialog(QWidget):
 				paths.append(p)
 
 		set(paths, 'Application', 'monitor paths')
-		gui_constants.MONITOR_PATHS = paths
+		app_constants.MONITOR_PATHS = paths
 		# App / Monitor / ignore list
 		paths = []
 		ignore_p_widgets = self.take_all_layout_widgets(self.ignore_path_l)
@@ -301,126 +301,126 @@ class SettingsDialog(QWidget):
 			if p:
 				paths.append(p)
 		set(paths, 'Application', 'ignore paths')
-		gui_constants.IGNORE_PATHS = paths
+		app_constants.IGNORE_PATHS = paths
 
 		# Web / Downloader
 
 		if self.archive_download.isChecked():
-			gui_constants.HEN_DOWNLOAD_TYPE = 0
+			app_constants.HEN_DOWNLOAD_TYPE = 0
 		else:
-			gui_constants.HEN_DOWNLOAD_TYPE = 1
-		set(gui_constants.HEN_DOWNLOAD_TYPE, 'Web', 'hen download type')
+			app_constants.HEN_DOWNLOAD_TYPE = 1
+		set(app_constants.HEN_DOWNLOAD_TYPE, 'Web', 'hen download type')
 
-		gui_constants.DOWNLOAD_DIRECTORY = self.download_directory.text()
-		set(gui_constants.DOWNLOAD_DIRECTORY, 'Web', 'download directory')
+		app_constants.DOWNLOAD_DIRECTORY = self.download_directory.text()
+		set(app_constants.DOWNLOAD_DIRECTORY, 'Web', 'download directory')
 
-		gui_constants.TORRENT_CLIENT = self.torrent_client.text()
-		set(gui_constants.TORRENT_CLIENT, 'Web', 'torrent client')
+		app_constants.TORRENT_CLIENT = self.torrent_client.text()
+		set(app_constants.TORRENT_CLIENT, 'Web', 'torrent client')
 
 		# Web / Metdata
 		if self.default_ehen_url.isChecked():
-			gui_constants.DEFAULT_EHEN_URL = 'http://g.e-hentai.org/'
+			app_constants.DEFAULT_EHEN_URL = 'http://g.e-hentai.org/'
 		else:
-			gui_constants.DEFAULT_EHEN_URL = 'http://exhentai.org/'
-		set(gui_constants.DEFAULT_EHEN_URL, 'Web', 'default ehen url')
+			app_constants.DEFAULT_EHEN_URL = 'http://exhentai.org/'
+		set(app_constants.DEFAULT_EHEN_URL, 'Web', 'default ehen url')
 
-		gui_constants.REPLACE_METADATA = self.replace_metadata.isChecked()
-		set(gui_constants.REPLACE_METADATA, 'Web', 'replace metadata')
+		app_constants.REPLACE_METADATA = self.replace_metadata.isChecked()
+		set(app_constants.REPLACE_METADATA, 'Web', 'replace metadata')
 
-		gui_constants.ALWAYS_CHOOSE_FIRST_HIT = self.always_first_hit.isChecked()
-		set(gui_constants.ALWAYS_CHOOSE_FIRST_HIT, 'Web', 'always choose first hit')
+		app_constants.ALWAYS_CHOOSE_FIRST_HIT = self.always_first_hit.isChecked()
+		set(app_constants.ALWAYS_CHOOSE_FIRST_HIT, 'Web', 'always choose first hit')
 
-		gui_constants.GLOBAL_EHEN_TIME = self.web_time_offset.value()
-		set(gui_constants.GLOBAL_EHEN_TIME, 'Web', 'global ehen time offset')
+		app_constants.GLOBAL_EHEN_TIME = self.web_time_offset.value()
+		set(app_constants.GLOBAL_EHEN_TIME, 'Web', 'global ehen time offset')
 
-		gui_constants.CONTINUE_AUTO_METADATA_FETCHER = self.continue_a_metadata_fetcher.isChecked()
-		set(gui_constants.CONTINUE_AUTO_METADATA_FETCHER, 'Web', 'continue auto metadata fetcher')
+		app_constants.CONTINUE_AUTO_METADATA_FETCHER = self.continue_a_metadata_fetcher.isChecked()
+		set(app_constants.CONTINUE_AUTO_METADATA_FETCHER, 'Web', 'continue auto metadata fetcher')
 
-		gui_constants.USE_JPN_TITLE = self.use_jpn_title.isChecked()
-		set(gui_constants.USE_JPN_TITLE, 'Web', 'use jpn title')
+		app_constants.USE_JPN_TITLE = self.use_jpn_title.isChecked()
+		set(app_constants.USE_JPN_TITLE, 'Web', 'use jpn title')
 
-		gui_constants.USE_GALLERY_LINK = self.use_gallery_link.isChecked()
-		set(gui_constants.USE_GALLERY_LINK, 'Web', 'use gallery link')
+		app_constants.USE_GALLERY_LINK = self.use_gallery_link.isChecked()
+		set(app_constants.USE_GALLERY_LINK, 'Web', 'use gallery link')
 
 		# Web / ExHentai
 		self.exprops.ipb_id = self.ipbid_edit.text()
 		self.exprops.ipb_pass = self.ipbpass_edit.text()
 
 		# Visual / Grid View / Tooltip
-		gui_constants.GRID_TOOLTIP = self.grid_tooltip_group.isChecked()
-		set(gui_constants.GRID_TOOLTIP, 'Visual', 'grid tooltip')
-		gui_constants.TOOLTIP_TITLE = self.visual_grid_tooltip_title.isChecked()
-		set(gui_constants.TOOLTIP_TITLE, 'Visual', 'tooltip title')
-		gui_constants.TOOLTIP_AUTHOR = self.visual_grid_tooltip_author.isChecked()
-		set(gui_constants.TOOLTIP_AUTHOR, 'Visual', 'tooltip author')
-		gui_constants.TOOLTIP_CHAPTERS = self.visual_grid_tooltip_chapters.isChecked()
-		set(gui_constants.TOOLTIP_CHAPTERS, 'Visual', 'tooltip chapters')
-		gui_constants.TOOLTIP_STATUS = self.visual_grid_tooltip_status.isChecked()
-		set(gui_constants.TOOLTIP_STATUS, 'Visual', 'tooltip status')
-		gui_constants.TOOLTIP_TYPE = self.visual_grid_tooltip_type.isChecked()
-		set(gui_constants.TOOLTIP_TYPE, 'Visual', 'tooltip type')
-		gui_constants.TOOLTIP_LANG = self.visual_grid_tooltip_lang.isChecked()
-		set(gui_constants.TOOLTIP_LANG, 'Visual', 'tooltip lang')
-		gui_constants.TOOLTIP_DESCR = self.visual_grid_tooltip_descr.isChecked()
-		set(gui_constants.TOOLTIP_DESCR, 'Visual', 'tooltip descr')
-		gui_constants.TOOLTIP_TAGS = self.visual_grid_tooltip_tags.isChecked()
-		set(gui_constants.TOOLTIP_TAGS, 'Visual', 'tooltip tags')
-		gui_constants.TOOLTIP_LAST_READ = self.visual_grid_tooltip_last_read.isChecked()
-		set(gui_constants.TOOLTIP_LAST_READ, 'Visual', 'tooltip last read')
-		gui_constants.TOOLTIP_TIMES_READ = self.visual_grid_tooltip_times_read.isChecked()
-		set(gui_constants.TOOLTIP_TIMES_READ, 'Visual', 'tooltip times read')
-		gui_constants.TOOLTIP_PUB_DATE = self.visual_grid_tooltip_pub_date.isChecked()
-		set(gui_constants.TOOLTIP_PUB_DATE, 'Visual', 'tooltip pub date')
-		gui_constants.TOOLTIP_DATE_ADDED = self.visual_grid_tooltip_date_added.isChecked()
-		set(gui_constants.TOOLTIP_DATE_ADDED, 'Visual', 'tooltip date added')
+		app_constants.GRID_TOOLTIP = self.grid_tooltip_group.isChecked()
+		set(app_constants.GRID_TOOLTIP, 'Visual', 'grid tooltip')
+		app_constants.TOOLTIP_TITLE = self.visual_grid_tooltip_title.isChecked()
+		set(app_constants.TOOLTIP_TITLE, 'Visual', 'tooltip title')
+		app_constants.TOOLTIP_AUTHOR = self.visual_grid_tooltip_author.isChecked()
+		set(app_constants.TOOLTIP_AUTHOR, 'Visual', 'tooltip author')
+		app_constants.TOOLTIP_CHAPTERS = self.visual_grid_tooltip_chapters.isChecked()
+		set(app_constants.TOOLTIP_CHAPTERS, 'Visual', 'tooltip chapters')
+		app_constants.TOOLTIP_STATUS = self.visual_grid_tooltip_status.isChecked()
+		set(app_constants.TOOLTIP_STATUS, 'Visual', 'tooltip status')
+		app_constants.TOOLTIP_TYPE = self.visual_grid_tooltip_type.isChecked()
+		set(app_constants.TOOLTIP_TYPE, 'Visual', 'tooltip type')
+		app_constants.TOOLTIP_LANG = self.visual_grid_tooltip_lang.isChecked()
+		set(app_constants.TOOLTIP_LANG, 'Visual', 'tooltip lang')
+		app_constants.TOOLTIP_DESCR = self.visual_grid_tooltip_descr.isChecked()
+		set(app_constants.TOOLTIP_DESCR, 'Visual', 'tooltip descr')
+		app_constants.TOOLTIP_TAGS = self.visual_grid_tooltip_tags.isChecked()
+		set(app_constants.TOOLTIP_TAGS, 'Visual', 'tooltip tags')
+		app_constants.TOOLTIP_LAST_READ = self.visual_grid_tooltip_last_read.isChecked()
+		set(app_constants.TOOLTIP_LAST_READ, 'Visual', 'tooltip last read')
+		app_constants.TOOLTIP_TIMES_READ = self.visual_grid_tooltip_times_read.isChecked()
+		set(app_constants.TOOLTIP_TIMES_READ, 'Visual', 'tooltip times read')
+		app_constants.TOOLTIP_PUB_DATE = self.visual_grid_tooltip_pub_date.isChecked()
+		set(app_constants.TOOLTIP_PUB_DATE, 'Visual', 'tooltip pub date')
+		app_constants.TOOLTIP_DATE_ADDED = self.visual_grid_tooltip_date_added.isChecked()
+		set(app_constants.TOOLTIP_DATE_ADDED, 'Visual', 'tooltip date added')
 		# Visual / Grid View / Gallery
-		gui_constants.USE_EXTERNAL_PROG_ICO = self.external_viewer_ico.isChecked()
-		set(gui_constants.USE_EXTERNAL_PROG_ICO, 'Visual', 'use external prog ico')
-		gui_constants.DISPLAY_GALLERY_TYPE = self.gallery_type_ico.isChecked()
-		set(gui_constants.DISPLAY_GALLERY_TYPE, 'Visual', 'display gallery type')
+		app_constants.USE_EXTERNAL_PROG_ICO = self.external_viewer_ico.isChecked()
+		set(app_constants.USE_EXTERNAL_PROG_ICO, 'Visual', 'use external prog ico')
+		app_constants.DISPLAY_GALLERY_TYPE = self.gallery_type_ico.isChecked()
+		set(app_constants.DISPLAY_GALLERY_TYPE, 'Visual', 'display gallery type')
 		if self.gallery_text_elide.isChecked():
-			gui_constants.GALLERY_FONT_ELIDE = True
+			app_constants.GALLERY_FONT_ELIDE = True
 		else:
-			gui_constants.GALLERY_FONT_ELIDE = False
-		set(gui_constants.GALLERY_FONT_ELIDE, 'Visual', 'gallery font elide')
-		gui_constants.GALLERY_FONT = (self.font_lbl.text(), self.font_size_lbl.value())
-		set(gui_constants.GALLERY_FONT[0], 'Visual', 'gallery font family')
-		set(gui_constants.GALLERY_FONT[1], 'Visual', 'gallery font size')
+			app_constants.GALLERY_FONT_ELIDE = False
+		set(app_constants.GALLERY_FONT_ELIDE, 'Visual', 'gallery font elide')
+		app_constants.GALLERY_FONT = (self.font_lbl.text(), self.font_size_lbl.value())
+		set(app_constants.GALLERY_FONT[0], 'Visual', 'gallery font family')
+		set(app_constants.GALLERY_FONT[1], 'Visual', 'gallery font size')
 		# Visual / Grid View / Colors
 		if self.color_checker(self.grid_title_color.text()):
-			gui_constants.GRID_VIEW_TITLE_COLOR = self.grid_title_color.text()
-			set(gui_constants.GRID_VIEW_TITLE_COLOR, 'Visual', 'grid view title color')
+			app_constants.GRID_VIEW_TITLE_COLOR = self.grid_title_color.text()
+			set(app_constants.GRID_VIEW_TITLE_COLOR, 'Visual', 'grid view title color')
 		if self.color_checker(self.grid_artist_color.text()):
-			gui_constants.GRID_VIEW_ARTIST_COLOR = self.grid_artist_color.text()
-			set(gui_constants.GRID_VIEW_ARTIST_COLOR, 'Visual', 'grid view artist color')
+			app_constants.GRID_VIEW_ARTIST_COLOR = self.grid_artist_color.text()
+			set(app_constants.GRID_VIEW_ARTIST_COLOR, 'Visual', 'grid view artist color')
 		if self.color_checker(self.grid_label_color.text()):
-			gui_constants.GRID_VIEW_LABEL_COLOR = self.grid_label_color.text()
-			set(gui_constants.GRID_VIEW_LABEL_COLOR, 'Visual', 'grid view label color')
+			app_constants.GRID_VIEW_LABEL_COLOR = self.grid_label_color.text()
+			set(app_constants.GRID_VIEW_LABEL_COLOR, 'Visual', 'grid view label color')
 
 		# Advanced / Misc
 		# Advanced / Misc / Grid View
-		gui_constants.SCROLL_SPEED = self.scroll_speed
+		app_constants.SCROLL_SPEED = self.scroll_speed
 		set(self.scroll_speed, 'Advanced', 'scroll speed')
 		self.scroll_speed_changed.emit()
-		gui_constants.THUMBNAIL_CACHE_SIZE = self.cache_size
+		app_constants.THUMBNAIL_CACHE_SIZE = self.cache_size
 		set(self.cache_size[1], 'Advanced', 'cache size')
 		QPixmapCache.setCacheLimit(self.cache_size[0]*
 							 self.cache_size[1])
 
 
 		# Advanced / General / Gallery Text Fixer
-		gui_constants.GALLERY_DATA_FIX_REGEX = self.g_data_regex_fix_edit.text()
-		set(gui_constants.GALLERY_DATA_FIX_REGEX, 'Advanced', 'gallery data fix regex')
-		gui_constants.GALLERY_DATA_FIX_TITLE = self.g_data_fixer_title.isChecked()
-		set(gui_constants.GALLERY_DATA_FIX_TITLE, 'Advanced', 'gallery data fix title')
-		gui_constants.GALLERY_DATA_FIX_ARTIST = self.g_data_fixer_artist.isChecked()
-		set(gui_constants.GALLERY_DATA_FIX_ARTIST, 'Advanced', 'gallery data fix artist')
-		gui_constants.GALLERY_DATA_FIX_REPLACE = self.g_data_replace_fix_edit.text()
-		set(gui_constants.GALLERY_DATA_FIX_REPLACE, 'Advanced', 'gallery data fix replace')
+		app_constants.GALLERY_DATA_FIX_REGEX = self.g_data_regex_fix_edit.text()
+		set(app_constants.GALLERY_DATA_FIX_REGEX, 'Advanced', 'gallery data fix regex')
+		app_constants.GALLERY_DATA_FIX_TITLE = self.g_data_fixer_title.isChecked()
+		set(app_constants.GALLERY_DATA_FIX_TITLE, 'Advanced', 'gallery data fix title')
+		app_constants.GALLERY_DATA_FIX_ARTIST = self.g_data_fixer_artist.isChecked()
+		set(app_constants.GALLERY_DATA_FIX_ARTIST, 'Advanced', 'gallery data fix artist')
+		app_constants.GALLERY_DATA_FIX_REPLACE = self.g_data_replace_fix_edit.text()
+		set(app_constants.GALLERY_DATA_FIX_REPLACE, 'Advanced', 'gallery data fix replace')
 
 		# About / DB Overview
-		gui_constants.TAGS_TREEVIEW_ON_START = self.tags_treeview_on_start.isChecked()
-		set(gui_constants.TAGS_TREEVIEW_ON_START, 'Application', 'tags treeview on start')
+		app_constants.TAGS_TREEVIEW_ON_START = self.tags_treeview_on_start.isChecked()
+		set(app_constants.TAGS_TREEVIEW_ON_START, 'Application', 'tags treeview on start')
 
 		settings.save()
 		self.close()
@@ -528,7 +528,7 @@ class SettingsDialog(QWidget):
 		app_general_m_l.addRow(app_search)
 		search_allow_regex_l = QHBoxLayout()
 		self.search_allow_regex = QCheckBox()
-		self.search_allow_regex.setChecked(gui_constants.ALLOW_SEARCH_REGEX)
+		self.search_allow_regex.setChecked(app_constants.ALLOW_SEARCH_REGEX)
 		self.search_allow_regex.adjustSize()
 		self.search_allow_regex.setToolTip('A regex cheatsheet is located at About->Regex Cheatsheet')
 		search_allow_regex_l.addWidget(self.search_allow_regex)
@@ -537,7 +537,7 @@ class SettingsDialog(QWidget):
 		app_search_layout.addRow('Regex:', search_allow_regex_l)
 		# App / General / Search / autocomplete
 		self.search_autocomplete = QCheckBox('*')
-		self.search_autocomplete.setChecked(gui_constants.SEARCH_AUTOCOMPLETE)
+		self.search_autocomplete.setChecked(app_constants.SEARCH_AUTOCOMPLETE)
 		self.search_autocomplete.setToolTip('Turn autocomplete on/off')
 		app_search_layout.addRow('Autocomplete', self.search_autocomplete)
 		# App / General / Search / search behaviour
@@ -705,7 +705,7 @@ class SettingsDialog(QWidget):
 		exhentai_page.setLayout(ipb_layout)
 		self.ipbid_edit = QLineEdit()
 		self.ipbpass_edit = QLineEdit()
-		exh_tutorial = QLabel(gui_constants.EXHEN_COOKIE_TUTORIAL)
+		exh_tutorial = QLabel(app_constants.EXHEN_COOKIE_TUTORIAL)
 		exh_tutorial.setTextFormat(Qt.RichText)
 		ipb_layout.addRow('IPB Member ID:', self.ipbid_edit)
 		ipb_layout.addRow('IPB Pass Hash:', self.ipbpass_edit)
@@ -873,7 +873,7 @@ class SettingsDialog(QWidget):
 				app_popup = ApplicationPopup(self.parent_widget)
 				app_popup.info_lbl.setText("Regenerating thumbnails...")
 				app_popup.admin_db = gallerydb.AdminDB()
-				app_popup.admin_db.moveToThread(gui_constants.GENERAL_THREAD)
+				app_popup.admin_db.moveToThread(app_constants.GENERAL_THREAD)
 				app_popup.admin_db.DONE.connect(app_popup.admin_db.deleteLater)
 				app_popup.admin_db.DONE.connect(start_db_activity)
 				app_popup.admin_db.DATA_COUNT.connect(app_popup.prog.setMaximum)
@@ -920,7 +920,7 @@ class SettingsDialog(QWidget):
 				app_popup = ApplicationPopup(self.parent_widget)
 				app_popup.info_lbl.setText("Exporting database...")
 				app_popup.export_instance = io_misc.ImportExport()
-				app_popup.export_instance.moveToThread(gui_constants.GENERAL_THREAD)
+				app_popup.export_instance.moveToThread(app_constants.GENERAL_THREAD)
 				app_popup.export_instance.finished.connect(app_popup.export_instance.deleteLater)
 				app_popup.export_instance.finished.connect(app_popup.close)
 				app_popup.export_instance.amount.connect(app_popup.prog.setMaximum)
@@ -963,14 +963,14 @@ class SettingsDialog(QWidget):
 					'Chat: <a href=\'https://gitter.im/Pewpews/happypanda\'>'+
 					'Gitter chat</a><br/>'+
 					'Email: happypandabugs@gmail.com<br/>'+
-					'<b>Current version {}</b><br/>'.format(gui_constants.vs)+
+					'<b>Current version {}</b><br/>'.format(app_constants.vs)+
 					'Happypanda was created using:<br/>'+
 					'- Python 3.4<br/>'+
 					'- The Qt5 Framework<br/>'+
 					'- Various python libraries (see github repo)')
 		info_lbl.setOpenExternalLinks(True)
 		about_layout.addWidget(info_lbl, 0, Qt.AlignTop)
-		gpl_lbl = QLabel(gui_constants.GPL)
+		gpl_lbl = QLabel(app_constants.GPL)
 		gpl_lbl.setOpenExternalLinks(True)
 		gpl_lbl.setWordWrap(True)
 		about_layout.addWidget(gpl_lbl, 0, Qt.AlignTop)
@@ -1012,7 +1012,7 @@ class SettingsDialog(QWidget):
 		about.addTab(about_troubleshoot_page, 'Bug Reporting')
 		troubleshoot_layout = QVBoxLayout()
 		about_troubleshoot_page.setLayout(troubleshoot_layout)
-		guide_lbl = QLabel(gui_constants.TROUBLE_GUIDE)
+		guide_lbl = QLabel(app_constants.TROUBLE_GUIDE)
 		guide_lbl.setTextFormat(Qt.RichText)
 		guide_lbl.setOpenExternalLinks(True)
 		troubleshoot_layout.addWidget(guide_lbl, 0, Qt.AlignTop)
@@ -1055,19 +1055,19 @@ class SettingsDialog(QWidget):
 		about_search_tut_l.addWidget(about_search_general)
 		about_search_general_l = QFormLayout()
 		about_search_general.setLayout(about_search_general_l)
-		about_search_general_l.addRow(QLabel(gui_constants.SEARCH_TUTORIAL_GENERAL))
+		about_search_general_l.addRow(QLabel(app_constants.SEARCH_TUTORIAL_GENERAL))
 		# Title & Author
 		about_search_tit_aut = QGroupBox('Title and Author')
 		about_search_tut_l.addWidget(about_search_tit_aut)
 		about_search_tit_l = QFormLayout()
 		about_search_tit_aut.setLayout(about_search_tit_l)
-		about_search_tit_l.addRow(QLabel(gui_constants.SEARCH_TUTORIAL_TIT_AUT))
+		about_search_tit_l.addRow(QLabel(app_constants.SEARCH_TUTORIAL_TIT_AUT))
 		# Namespace & Tags
 		about_search_tags = QGroupBox('Namespace and Tags')
 		about_search_tut_l.addWidget(about_search_tags)
 		about_search_tags_l = QFormLayout()
 		about_search_tags.setLayout(about_search_tags_l)
-		about_search_tags_l.addRow(QLabel(gui_constants.SEARCH_TUTORIAL_TAGS))
+		about_search_tags_l.addRow(QLabel(app_constants.SEARCH_TUTORIAL_TAGS))
 		about_search_scroll.setWidget(about_search_tut)
 
 	def add_folder_monitor(self, path=''):
@@ -1111,7 +1111,7 @@ class SettingsDialog(QWidget):
 
 	def open_hp_folder(self):
 		if os.name == 'posix':
-			utils.open_path(gui_constants.posix_program_dir)
+			utils.open_path(app_constants.posix_program_dir)
 		else:
 			utils.open_path(os.getcwd())
 

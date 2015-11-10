@@ -37,7 +37,7 @@ from PyQt5.QtWidgets import (QListView, QFrame, QLabel,
 							 QMessageBox, QActionGroup, QScroller)
 
 import gallerydb
-import gui_constants
+import app_constants
 import misc
 import gallerydialog
 import io_misc
@@ -107,7 +107,7 @@ class SortFilterModel(QSortFilterProxyModel):
 
 	def __init__(self, parent=None):
 		super().__init__(parent)
-		self._data = gui_constants.GALLERY_DATA
+		self._data = app_constants.GALLERY_DATA
 		self._search_ready = False
 		self.current_term = ''
 		self.terms_history = []
@@ -144,7 +144,7 @@ class SortFilterModel(QSortFilterProxyModel):
 			self.gallery_search = GallerySearch(self._data)
 			self.gallery_search.FINISHED.connect(self.invalidateFilter)
 			self.gallery_search.FINISHED.connect(lambda: self.ROWCOUNT_CHANGE.emit())
-			self.gallery_search.moveToThread(gui_constants.GENERAL_THREAD)
+			self.gallery_search.moveToThread(app_constants.GENERAL_THREAD)
 			self._DO_SEARCH.connect(self.gallery_search.search)
 			self._CHANGE_SEARCH_DATA.connect(self.gallery_search.set_data)
 			self._CHANGE_FAV.connect(self.gallery_search.set_fav)
@@ -233,7 +233,7 @@ class GalleryModel(QAbstractTableModel):
 	CUSTOM_STATUS_MSG = pyqtSignal(str)
 	ADDED_ROWS = pyqtSignal()
 	ADD_MORE = pyqtSignal()
-	_data = gui_constants.GALLERY_DATA
+	_data = app_constants.GALLERY_DATA
 
 	REMOVING_ROWS = False
 
@@ -243,17 +243,17 @@ class GalleryModel(QAbstractTableModel):
 		self.dataChanged.connect(lambda: self.ROWCOUNT_CHANGE.emit())
 		self.layoutChanged.connect(lambda: self.ROWCOUNT_CHANGE.emit())
 		self.CUSTOM_STATUS_MSG.connect(self.status_b_msg)
-		self._TITLE = gui_constants.TITLE
-		self._ARTIST = gui_constants.ARTIST
-		self._TAGS = gui_constants.TAGS
-		self._TYPE = gui_constants.TYPE
-		self._FAV = gui_constants.FAV
-		self._CHAPTERS = gui_constants.CHAPTERS
-		self._LANGUAGE = gui_constants.LANGUAGE
-		self._LINK = gui_constants.LINK
-		self._DESCR = gui_constants.DESCR
-		self._DATE_ADDED = gui_constants.DATE_ADDED
-		self._PUB_DATE = gui_constants.PUB_DATE
+		self._TITLE = app_constants.TITLE
+		self._ARTIST = app_constants.ARTIST
+		self._TAGS = app_constants.TAGS
+		self._TYPE = app_constants.TYPE
+		self._FAV = app_constants.FAV
+		self._CHAPTERS = app_constants.CHAPTERS
+		self._LANGUAGE = app_constants.LANGUAGE
+		self._LINK = app_constants.LINK
+		self._DESCR = app_constants.DESCR
+		self._DATE_ADDED = app_constants.DATE_ADDED
+		self._PUB_DATE = app_constants.PUB_DATE
 
 		self._data_count = 0 # number of items added to model
 		self.db_emitter = gallerydb.DatabaseEmitter()
@@ -321,7 +321,7 @@ class GalleryModel(QAbstractTableModel):
 				else:
 					return 'No date set'
 
-		# TODO: name all these roles and put them in gui_constants...
+		# TODO: name all these roles and put them in app_constants...
 
 		if role == Qt.DisplayRole:
 			return column_checker()
@@ -339,44 +339,44 @@ class GalleryModel(QAbstractTableModel):
 			bg_brush = QBrush(bg_color)
 			return bg_color
 
-		if gui_constants.GRID_TOOLTIP and role == Qt.ToolTipRole:
+		if app_constants.GRID_TOOLTIP and role == Qt.ToolTipRole:
 			add_bold = []
 			add_tips = []
-			if gui_constants.TOOLTIP_TITLE:
+			if app_constants.TOOLTIP_TITLE:
 				add_bold.append('<b>Title:</b>')
 				add_tips.append(current_gallery.title)
-			if gui_constants.TOOLTIP_AUTHOR:
+			if app_constants.TOOLTIP_AUTHOR:
 				add_bold.append('<b>Author:</b>')
 				add_tips.append(current_gallery.artist)
-			if gui_constants.TOOLTIP_CHAPTERS:
+			if app_constants.TOOLTIP_CHAPTERS:
 				add_bold.append('<b>Chapters:</b>')
 				add_tips.append(len(current_gallery.chapters))
-			if gui_constants.TOOLTIP_STATUS:
+			if app_constants.TOOLTIP_STATUS:
 				add_bold.append('<b>Status:</b>')
 				add_tips.append(current_gallery.status)
-			if gui_constants.TOOLTIP_TYPE:
+			if app_constants.TOOLTIP_TYPE:
 				add_bold.append('<b>Type:</b>')
 				add_tips.append(current_gallery.type)
-			if gui_constants.TOOLTIP_LANG:
+			if app_constants.TOOLTIP_LANG:
 				add_bold.append('<b>Language:</b>')
 				add_tips.append(current_gallery.language)
-			if gui_constants.TOOLTIP_DESCR:
+			if app_constants.TOOLTIP_DESCR:
 				add_bold.append('<b>Description:</b><br />')
 				add_tips.append(current_gallery.info)
-			if gui_constants.TOOLTIP_TAGS:
+			if app_constants.TOOLTIP_TAGS:
 				add_bold.append('<b>Tags:</b>')
 				add_tips.append(utils.tag_to_string(
 					current_gallery.tags))
-			if gui_constants.TOOLTIP_LAST_READ:
+			if app_constants.TOOLTIP_LAST_READ:
 				add_bold.append('<b>Last read:</b>')
 				add_tips.append(current_gallery.last_read)
-			if gui_constants.TOOLTIP_TIMES_READ:
+			if app_constants.TOOLTIP_TIMES_READ:
 				add_bold.append('<b>Times read:</b>')
 				add_tips.append(current_gallery.times_read)
-			if gui_constants.TOOLTIP_PUB_DATE:
+			if app_constants.TOOLTIP_PUB_DATE:
 				add_bold.append('<b>Publication Date:</b>')
 				add_tips.append('{}'.format(current_gallery.pub_date).split(' ')[0])
-			if gui_constants.TOOLTIP_DATE_ADDED:
+			if app_constants.TOOLTIP_DATE_ADDED:
 				add_bold.append('<b>Date added:</b>')
 				add_tips.append('{}'.format(current_gallery.date_added).split(' ')[0])
 
@@ -417,7 +417,7 @@ class GalleryModel(QAbstractTableModel):
 			return 0
 
 	def columnCount(self, parent = QModelIndex()):
-		return len(gui_constants.COLUMNS)
+		return len(app_constants.COLUMNS)
 
 	def headerData(self, section, orientation, role = Qt.DisplayRole):
 		if role == Qt.TextAlignmentRole:
@@ -535,19 +535,19 @@ class CustomDelegate(QStyledItemDelegate):
 
 	def __init__(self, parent=None):
 		super().__init__()
-		QPixmapCache.setCacheLimit(gui_constants.THUMBNAIL_CACHE_SIZE[0]*
-							 gui_constants.THUMBNAIL_CACHE_SIZE[1])
+		QPixmapCache.setCacheLimit(app_constants.THUMBNAIL_CACHE_SIZE[0]*
+							 app_constants.THUMBNAIL_CACHE_SIZE[1])
 		self._painted_indexes = {}
 
 		#misc.FileIcon.refresh_default_icon()
 		self.file_icons = misc.FileIcon()
-		if gui_constants.USE_EXTERNAL_VIEWER:
+		if app_constants.USE_EXTERNAL_VIEWER:
 			self.external_icon = self.file_icons.get_external_file_icon()
 		else:
 			self.external_icon = self.file_icons.get_default_file_icon()
 
-		self.font_size = gui_constants.GALLERY_FONT[1]
-		self.font_name = gui_constants.GALLERY_FONT[0]
+		self.font_size = app_constants.GALLERY_FONT[1]
+		self.font_name = app_constants.GALLERY_FONT[0]
 		if not self.font_name:
 			self.font_name = QWidget().font().family()
 		self.title_font = QFont()
@@ -563,8 +563,8 @@ class CustomDelegate(QStyledItemDelegate):
 		t_h = self.title_font_m.height()
 		a_h = self.artist_font_m.height()
 		self.text_label_h = a_h + t_h * 2
-		self.W = gui_constants.THUMB_W_SIZE
-		self.H = gui_constants.THUMB_H_SIZE + gui_constants.GRIDBOX_LBL_H#self.text_label_h #+ gui_constants.GRIDBOX_LBL_H
+		self.W = app_constants.THUMB_W_SIZE
+		self.H = app_constants.THUMB_H_SIZE + app_constants.GRIDBOX_LBL_H#self.text_label_h #+ app_constants.GRIDBOX_LBL_H
 
 	def key(self, key):
 		"Assigns an unique key to indexes"
@@ -578,15 +578,15 @@ class CustomDelegate(QStyledItemDelegate):
 	def paint(self, painter, option, index):
 		assert isinstance(painter, QPainter)
 		if index.data(Qt.UserRole+1):
-			if gui_constants.HIGH_QUALITY_THUMBS:
+			if app_constants.HIGH_QUALITY_THUMBS:
 				painter.setRenderHint(QPainter.SmoothPixmapTransform)
 			painter.setRenderHint(QPainter.Antialiasing)
 			gallery = index.data(Qt.UserRole+1)
 			title = gallery.title
 			artist = gallery.artist
-			title_color = gui_constants.GRID_VIEW_TITLE_COLOR
-			artist_color = gui_constants.GRID_VIEW_ARTIST_COLOR
-			label_color = gui_constants.GRID_VIEW_LABEL_COLOR
+			title_color = app_constants.GRID_VIEW_TITLE_COLOR
+			artist_color = app_constants.GRID_VIEW_ARTIST_COLOR
+			label_color = app_constants.GRID_VIEW_LABEL_COLOR
 			# Enable this to see the defining box
 			#painter.drawRect(option.rect)
 			# define font size
@@ -699,10 +699,10 @@ class CustomDelegate(QStyledItemDelegate):
 
 			# draw star if it's favorited
 			if gallery.fav == 1:
-				painter.drawPixmap(QPointF(x,y), QPixmap(gui_constants.STAR_PATH))
+				painter.drawPixmap(QPointF(x,y), QPixmap(app_constants.STAR_PATH))
 			
-			if gui_constants._REFRESH_EXTERNAL_VIEWER:
-				if gui_constants.USE_EXTERNAL_VIEWER:
+			if app_constants._REFRESH_EXTERNAL_VIEWER:
+				if app_constants.USE_EXTERNAL_VIEWER:
 					self.external_icon = self.file_icons.get_external_file_icon()
 				else:
 					self.external_icon = self.file_icons.get_default_file_icon()
@@ -716,19 +716,19 @@ class CustomDelegate(QStyledItemDelegate):
 				painter.drawText(dl_box, Qt.AlignCenter, 'Downloading...')
 				painter.restore()
 			else:
-				if gui_constants.DISPLAY_GALLERY_TYPE:
+				if app_constants.DISPLAY_GALLERY_TYPE:
 					self.type_icon = self.file_icons.get_file_icon(gallery.path)
 					if self.type_icon and not self.type_icon.isNull():
-						self.type_icon.paint(painter, QRect(x+2, y+gui_constants.THUMB_H_SIZE-16, 16, 16))
+						self.type_icon.paint(painter, QRect(x+2, y+app_constants.THUMB_H_SIZE-16, 16, 16))
 
-				if gui_constants.USE_EXTERNAL_PROG_ICO:
+				if app_constants.USE_EXTERNAL_PROG_ICO:
 					if self.external_icon and not self.external_icon.isNull():
-						self.external_icon.paint(painter, QRect(x+w-30, y+gui_constants.THUMB_H_SIZE-28, 28, 28))
+						self.external_icon.paint(painter, QRect(x+w-30, y+app_constants.THUMB_H_SIZE-28, 28, 28))
 
 			def draw_text_label(lbl_h):
 				#draw the label for text
 				painter.save()
-				painter.translate(x, y+gui_constants.THUMB_H_SIZE)
+				painter.translate(x, y+app_constants.THUMB_H_SIZE)
 				box_color = QBrush(QColor(label_color))#QColor(0,0,0,123))
 				painter.setBrush(box_color)
 				rect = QRect(0, 0, w, lbl_h) #x, y, width, height
@@ -743,22 +743,22 @@ class CustomDelegate(QStyledItemDelegate):
 				t_h = title_layout.boundingRect().height()
 				a_h = artist_layout.boundingRect().height()
 
-				if gui_constants.GALLERY_FONT_ELIDE:
-					lbl_rect = draw_text_label(min(t_h+a_h+3, gui_constants.GRIDBOX_LBL_H))
+				if app_constants.GALLERY_FONT_ELIDE:
+					lbl_rect = draw_text_label(min(t_h+a_h+3, app_constants.GRIDBOX_LBL_H))
 				else:
-					lbl_rect = draw_text_label(gui_constants.GRIDBOX_LBL_H)
+					lbl_rect = draw_text_label(app_constants.GRIDBOX_LBL_H)
 
-				clipping = QRectF(x, y+gui_constants.THUMB_H_SIZE, w, gui_constants.GRIDBOX_LBL_H - 10)
-				title_layout.draw(painter, QPointF(x, y+gui_constants.THUMB_H_SIZE),
+				clipping = QRectF(x, y+app_constants.THUMB_H_SIZE, w, app_constants.GRIDBOX_LBL_H - 10)
+				title_layout.draw(painter, QPointF(x, y+app_constants.THUMB_H_SIZE),
 					  clip=clipping)
-				artist_layout.draw(painter, QPointF(x, y+gui_constants.THUMB_H_SIZE+t_h),
+				artist_layout.draw(painter, QPointF(x, y+app_constants.THUMB_H_SIZE+t_h),
 					   clip=clipping)
 				#painter.fillRect(option.rect, QColor)
 			else:
-				if gui_constants.GALLERY_FONT_ELIDE:
+				if app_constants.GALLERY_FONT_ELIDE:
 					lbl_rect = draw_text_label(self.text_label_h)
 				else:
-					lbl_rect = draw_text_label(gui_constants.GRIDBOX_LBL_H)
+					lbl_rect = draw_text_label(app_constants.GRIDBOX_LBL_H)
 				# draw text
 				painter.save()
 				alignment = QTextOption(Qt.AlignCenter)
@@ -766,8 +766,8 @@ class CustomDelegate(QStyledItemDelegate):
 				title_rect = QRectF(0,0,w, self.title_font_m.height())
 				artist_rect = QRectF(0,self.artist_font_m.height(),w,
 						 self.artist_font_m.height())
-				painter.translate(x, y+gui_constants.THUMB_H_SIZE)
-				if gui_constants.GALLERY_FONT_ELIDE:
+				painter.translate(x, y+app_constants.THUMB_H_SIZE)
+				if app_constants.GALLERY_FONT_ELIDE:
 					painter.setFont(self.title_font)
 					painter.setPen(QColor(title_color))
 					painter.drawText(title_rect,
@@ -788,7 +788,7 @@ class CustomDelegate(QStyledItemDelegate):
 
 			if option.state & QStyle.State_Selected:
 				painter.save()
-				selected_rect = QRectF(x, y, w, lbl_rect.height()+gui_constants.THUMB_H_SIZE)
+				selected_rect = QRectF(x, y, w, lbl_rect.height()+app_constants.THUMB_H_SIZE)
 				painter.setPen(Qt.NoPen)
 				painter.setBrush(QBrush(QColor(164,164,164,120)))
 				p_path = QPainterPath()
@@ -842,19 +842,19 @@ class MangaView(QListView):
 		super().__init__(parent)
 		self.parent_widget = parent
 		self.setViewMode(self.IconMode)
-		self.H = gui_constants.GRIDBOX_H_SIZE
-		self.W = gui_constants.GRIDBOX_W_SIZE
+		self.H = app_constants.GRIDBOX_H_SIZE
+		self.W = app_constants.GRIDBOX_W_SIZE
 		self.setGridSize(QSize(self.W, self.H))
 		self.setResizeMode(self.Adjust)
-		self.setIconSize(QSize(gui_constants.THUMB_W_SIZE,
-						 gui_constants.THUMB_H_SIZE))
+		self.setIconSize(QSize(app_constants.THUMB_W_SIZE,
+						 app_constants.THUMB_H_SIZE))
 		# all items have the same size (perfomance)
 		self.setUniformItemSizes(True)
 		# improve scrolling
 		self.setVerticalScrollMode(self.ScrollPerPixel)
 		self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 		self.setLayoutMode(self.SinglePass)
-		self.setBatchSize(1)#gui_constants.PREFETCH_ITEM_AMOUNT)
+		self.setBatchSize(1)#app_constants.PREFETCH_ITEM_AMOUNT)
 		self.setMouseTracking(True)
 		self.sort_model = SortFilterModel()
 		self.sort_model.setDynamicSortFilter(True)
@@ -879,9 +879,9 @@ class MangaView(QListView):
 		self.gallery_window.arrow_size = (10,10,)
 		self.clicked.connect(lambda idx: self.gallery_window.show_gallery(idx, self))
 
-		self.current_sort = gui_constants.CURRENT_SORT
+		self.current_sort = app_constants.CURRENT_SORT
 		self.sort(self.current_sort)
-		if gui_constants.DEBUG:
+		if app_constants.DEBUG:
 			def debug_print(a):
 				print(a.data(Qt.UserRole+1))
 
@@ -1024,7 +1024,7 @@ class MangaView(QListView):
 		g = random.randint(0, self.sort_model.rowCount()-1)
 		indx = self.sort_model.index(g, 1)
 		chap_numb = 0
-		if gui_constants.OPEN_RANDOM_GALLERY_CHAPTERS:
+		if app_constants.OPEN_RANDOM_GALLERY_CHAPTERS:
 			gallery = indx.data(Qt.UserRole+1)
 			b = len(gallery.chapters)
 			if b > 1:
@@ -1255,7 +1255,7 @@ class MangaView(QListView):
 
 	def updateGeometries(self):
 		super().updateGeometries()
-		self.verticalScrollBar().setSingleStep(gui_constants.SCROLL_SPEED)
+		self.verticalScrollBar().setSingleStep(app_constants.SCROLL_SPEED)
 
 class MangaTableView(QTableView):
 	STATUS_BAR_MSG = pyqtSignal(str)

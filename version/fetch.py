@@ -18,7 +18,7 @@ import re as regex
 from PyQt5.QtCore import QObject, pyqtSignal # need this for interaction with main thread
 
 from gallerydb import Gallery, GalleryDB, HashDB, add_method_queue
-import gui_constants
+import app_constants
 import pewnet
 import settings
 import utils
@@ -61,7 +61,7 @@ class Fetch(QObject):
 		self.skipped_paths = []
 
 		# web
-		self._default_ehen_url = gui_constants.DEFAULT_EHEN_URL
+		self._default_ehen_url = app_constants.DEFAULT_EHEN_URL
 		self.galleries = []
 		self.galleries_in_queue = []
 		self.error_galleries = []
@@ -71,7 +71,7 @@ class Fetch(QObject):
 		self._refresh_filter_list()
 
 	def _refresh_filter_list(self):
-			gallery_data = gui_constants.GALLERY_DATA
+			gallery_data = app_constants.GALLERY_DATA
 			filter_list = []
 			for g in gallery_data:
 				filter_list.append(os.path.normcase(g.path))
@@ -93,7 +93,7 @@ class Fetch(QObject):
 		if len(gallery_l) != 0: # if gallery path list is not empty
 			log_i('Gallery folder is not empty')
 			try:
-				if len(self.galleries_from_db) != len(gui_constants.GALLERY_DATA):
+				if len(self.galleries_from_db) != len(app_constants.GALLERY_DATA):
 					self._refresh_filter_list()
 				self.DATA_COUNT.emit(len(gallery_l)) #tell model how many items are going to be added
 				log_i('Received {} paths'.format(len(gallery_l)))
@@ -171,7 +171,7 @@ class Fetch(QObject):
 								log_w('Skipped {} in local search'.format(path.encode(errors='ignore')))
 								self.skipped_paths.append((temp_p, 'Empty archive',))
 								return
-							except gui_constants.CreateArchiveFail:
+							except app_constants.CreateArchiveFail:
 								log_w('Skipped {} in local search'.format(path.encode(errors='ignore')))
 								self.skipped_paths.append((temp_p, 'Error creating archive',))
 								return
@@ -181,7 +181,7 @@ class Fetch(QObject):
 						new_gallery.artist = parsed['artist']
 						new_gallery.language = parsed['language']
 						new_gallery.info = "No description.."
-						if gui_constants.MOVE_IMPORTED_GALLERIES and not gui_constants.OVERRIDE_MOVE_IMPORTED_IN_FETCH:
+						if app_constants.MOVE_IMPORTED_GALLERIES and not app_constants.OVERRIDE_MOVE_IMPORTED_IN_FETCH:
 							new_gallery.path = utils.move_files(temp_p)
 
 						self.data.append(new_gallery)
@@ -197,9 +197,9 @@ class Fetch(QObject):
 						folder_name = os.path.split(path)[1]
 					else:
 						path = os.path.join(self.series_path, folder_name)
-					if gui_constants.SUBFOLDER_AS_GALLERY or gui_constants.OVERRIDE_SUBFOLDER_AS_GALLERY:
-						if gui_constants.OVERRIDE_SUBFOLDER_AS_GALLERY:
-							gui_constants.OVERRIDE_SUBFOLDER_AS_GALLERY = False
+					if app_constants.SUBFOLDER_AS_GALLERY or app_constants.OVERRIDE_SUBFOLDER_AS_GALLERY:
+						if app_constants.OVERRIDE_SUBFOLDER_AS_GALLERY:
+							app_constants.OVERRIDE_SUBFOLDER_AS_GALLERY = False
 						log_i("Treating each subfolder as gallery")
 						if os.path.isdir(path):
 							gallery_folders, gallery_archives = utils.recursive_gallery_check(path)
@@ -234,15 +234,15 @@ class Fetch(QObject):
 					self.PROGRESS.emit(progress)
 			except:
 				log.exception('Local Search Error:')
-				gui_constants.OVERRIDE_MOVE_IMPORTED_IN_FETCH = True # sanity check
+				app_constants.OVERRIDE_MOVE_IMPORTED_IN_FETCH = True # sanity check
 				self.FINISHED.emit(False)
 		else: # if gallery folder is empty
 			log_e('Local search error: Invalid directory')
 			log_e('Gallery folder is empty')
-			gui_constants.OVERRIDE_MOVE_IMPORTED_IN_FETCH = True # sanity check
+			app_constants.OVERRIDE_MOVE_IMPORTED_IN_FETCH = True # sanity check
 			self.FINISHED.emit(False)
 			# might want to include an error message
-		gui_constants.OVERRIDE_MOVE_IMPORTED_IN_FETCH = False
+		app_constants.OVERRIDE_MOVE_IMPORTED_IN_FETCH = False
 		# everything went well
 		log_i('Local search: OK')
 		log_i('Created {} items'.format(len(self.data)))
@@ -260,9 +260,7 @@ class Fetch(QObject):
 
 	@staticmethod
 	def apply_metadata(g, data, append=True):
-		print(g)
-		print(data)
-		if gui_constants.USE_JPN_TITLE:
+		if app_constants.USE_JPN_TITLE:
 			try:
 				title = data['title']['jpn']
 			except KeyError:
@@ -352,7 +350,7 @@ class Fetch(QObject):
 				continue
 			log_i('({}/{}) Applying metadata for gallery: {}'.format(x, len(self.galleries_in_queue),
 															g.title.encode(errors='ignore')))
-			if gui_constants.REPLACE_METADATA:
+			if app_constants.REPLACE_METADATA:
 				g = Fetch.apply_metadata(g, data, False)
 				g.link = g.temp_url
 			else:
@@ -371,9 +369,9 @@ class Fetch(QObject):
 		Appends or replaces metadata with the new fetched metadata.
 		"""
 		log_i('Initiating auto metadata fetcher')
-		if self.galleries and not gui_constants.GLOBAL_EHEN_LOCK:
+		if self.galleries and not app_constants.GLOBAL_EHEN_LOCK:
 			log_i('Auto metadata fetcher is now running')
-			gui_constants.GLOBAL_EHEN_LOCK = True
+			app_constants.GLOBAL_EHEN_LOCK = True
 			if 'exhentai' in self._default_ehen_url:
 				try:
 					exprops = settings.ExProperties()
@@ -403,7 +401,7 @@ class Fetch(QObject):
 						hash = hash_dict['mid']
 					else:
 						hash = gallery.hashes[random.randint(0, len(gallery.hashes)-1)]
-				except gui_constants.gui_constants.CreateArchiveFail:
+				except app_constants.app_constants.CreateArchiveFail:
 					pass
 				if not hash:
 					self.error_galleries.append((gallery, "Could not generate hash"))
@@ -412,7 +410,7 @@ class Fetch(QObject):
 				gallery.hash = hash
 
 				log_i("Checking gallery url")
-				if gallery.link and gui_constants.USE_GALLERY_LINK:
+				if gallery.link and app_constants.USE_GALLERY_LINK:
 					check = self._website_checker(gallery.link)
 					if check == valid_url:
 						gallery.temp_url = gallery.link
@@ -423,7 +421,7 @@ class Fetch(QObject):
 				self.AUTO_METADATA_PROGRESS.emit("({}/{}) Finding url for gallery: {}".format(x, len(self.galleries), gallery.title))
 				found_url = hen.eh_hash_search(gallery.hash)
 				if found_url == 'error':
-					gui_constants.GLOBAL_EHEN_LOCK = False
+					app_constants.GLOBAL_EHEN_LOCK = False
 					self.FINISHED.emit(True)
 					return
 				if not gallery.hash in found_url:
@@ -432,13 +430,13 @@ class Fetch(QObject):
 					log_w('Could not find url for gallery: {}'.format(gallery.title.encode(errors='ignore')))
 					continue
 				title_url_list = found_url[gallery.hash]
-				if gui_constants.ALWAYS_CHOOSE_FIRST_HIT:
+				if app_constants.ALWAYS_CHOOSE_FIRST_HIT:
 					title = title_url_list[0][0]
 					url = title_url_list[0][1]
 				else:
 					if len(title_url_list) > 1:
 						self.AUTO_METADATA_PROGRESS.emit("Multiple galleries found for gallery: {}".format(gallery.title))
-						gui_constants.SYSTEM_TRAY.showMessage('Happypanda', 'Multiple galleries found for gallery:\n{}'.format(gallery.title),
+						app_constants.SYSTEM_TRAY.showMessage('Happypanda', 'Multiple galleries found for gallery:\n{}'.format(gallery.title),
 											minimized=True)
 						log_w("Multiple galleries found for gallery: {}".format(gallery.title.encode(errors='ignore')))
 						self.GALLERY_PICKER.emit(gallery, title_url_list, self.GALLERY_PICKER_QUEUE)
@@ -473,14 +471,14 @@ class Fetch(QObject):
 						self.fetch_metadata(gallery, hen)
 
 			log_d('Auto metadata fetcher is done')
-			gui_constants.GLOBAL_EHEN_LOCK = False
+			app_constants.GLOBAL_EHEN_LOCK = False
 			if not self.error_galleries:
 				self.AUTO_METADATA_PROGRESS.emit('Done! Went through {} galleries successfully!'.format(len(self.galleries)))
-				gui_constants.SYSTEM_TRAY.showMessage('Done', 'Went through {} galleries successfully!', minimized=True)
+				app_constants.SYSTEM_TRAY.showMessage('Done', 'Went through {} galleries successfully!', minimized=True)
 				self.FINISHED.emit(True)
 			else:
 				self.AUTO_METADATA_PROGRESS.emit('Done! Could not fetch metadata for {} galleries. Check happypanda.log for more details!'.format(len(self.error_galleries)))
-				gui_constants.SYSTEM_TRAY.showMessage('Done!',
+				app_constants.SYSTEM_TRAY.showMessage('Done!',
 										  'Could not fetch metadata for {} galleries. Check happypanda.log for more details!'.format(len(self.error_galleries)),
 										  minimized=True)
 				for tup in self.error_galleries:

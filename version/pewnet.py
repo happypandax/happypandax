@@ -21,7 +21,7 @@ from queue import Queue
 
 from PyQt5.QtCore import QObject, pyqtSignal
 
-import gui_constants
+import app_constants
 import utils
 
 log = logging.getLogger(__name__)
@@ -47,7 +47,7 @@ class Downloader(QObject):
 	def __init__(self):
 		super().__init__()
 		# download dir
-		self.base = os.path.abspath(gui_constants.DOWNLOAD_DIRECTORY)
+		self.base = os.path.abspath(app_constants.DOWNLOAD_DIRECTORY)
 		if not os.path.exists(self.base):
 			os.mkdir(self.base)
 
@@ -155,7 +155,7 @@ class HenItem(QObject):
 		self.file = ""
 		self.download_url = ""
 		self.gallery_url = ""
-		self.download_type = gui_constants.HEN_DOWNLOAD_TYPE
+		self.download_type = app_constants.HEN_DOWNLOAD_TYPE
 		self.torrents_found = 0
 
 	def fetch_thumb(self):
@@ -164,8 +164,8 @@ class HenItem(QObject):
 			if dl[0] == self.thumb_url:
 				self.thumb = dl[1]
 				self.thumb_rdy.emit(self)
-		gui_constants.DOWNLOAD_MANAGER.item_finished.connect(thumb_fetched)
-		Downloader.add_to_queue(self.thumb_url, self.session, gui_constants.temp_dir)
+		app_constants.DOWNLOAD_MANAGER.item_finished.connect(thumb_fetched)
+		Downloader.add_to_queue(self.thumb_url, self.session, app_constants.temp_dir)
 
 	def _file_fetched(self, dl_data):
 		if self.download_url == dl_data[0]:
@@ -224,9 +224,9 @@ class DLManager(QObject):
 	def __init__(self):
 		super().__init__()
 		self.ARCHIVE, self.TORRENT = False, False
-		if gui_constants.HEN_DOWNLOAD_TYPE == 0:
+		if app_constants.HEN_DOWNLOAD_TYPE == 0:
 			self.ARCHIVE = True
-		elif gui_constants.HEN_DOWNLOAD_TYPE == 1:
+		elif app_constants.HEN_DOWNLOAD_TYPE == 1:
 			self.TORRENT = True
 
 	def _error(self):
@@ -273,7 +273,7 @@ class ChaikaManager(DLManager):
 		else:
 			return 
 		h_item.commit_metadata()
-		gui_constants.DOWNLOAD_MANAGER.item_finished.connect(h_item._file_fetched)
+		app_constants.DOWNLOAD_MANAGER.item_finished.connect(h_item._file_fetched)
 		Downloader.add_to_queue((h_item.name+'.zip', h_item.download_url), self._browser.session)
 		return h_item
 
@@ -455,7 +455,7 @@ class HenManager(DLManager):
 				f_name = succes_test.find('strong').text
 				h_item.download_url = gallery_dl
 				h_item.fetch_thumb()
-				gui_constants.DOWNLOAD_MANAGER.item_finished.connect(h_item._file_fetched)
+				app_constants.DOWNLOAD_MANAGER.item_finished.connect(h_item._file_fetched)
 				Downloader.add_to_queue((f_name, gallery_dl), self._browser.session)
 				return h_item
 
@@ -468,7 +468,7 @@ class HenManager(DLManager):
 				url_and_file = self._torrent_url_d(g_id_token[0], g_id_token[1])
 				if url_and_file:
 					h_item.download_url = url_and_file[0]
-					gui_constants.DOWNLOAD_MANAGER.item_finished.connect(h_item._file_fetched)
+					app_constants.DOWNLOAD_MANAGER.item_finished.connect(h_item._file_fetched)
 					Downloader.add_to_queue((url_and_file[1], h_item.download_url), self._browser.session)
 					return h_item
 			else:
@@ -489,7 +489,7 @@ class ExHenManager(HenManager):
 class CommenHen:
 	"Contains common methods"
 	LOCK = threading.Lock()
-	TIME_RAND = gui_constants.GLOBAL_EHEN_TIME
+	TIME_RAND = app_constants.GLOBAL_EHEN_TIME
 	QUEUE = []
 	COOKIES = {}
 	LAST_USED = time.time()
@@ -572,12 +572,12 @@ class CommenHen:
 		content_type = response.headers['content-type']
 		text = response.text
 		if 'image/gif' in content_type:
-			gui_constants.NOTIF_BAR.add_text('Provided exhentai credentials are incorrect!')
+			app_constants.NOTIF_BAR.add_text('Provided exhentai credentials are incorrect!')
 			log_e('Provided exhentai credentials are incorrect!')
 			time.sleep(5)
 			return False
 		elif 'text/html' and 'Your IP address has been' in text:
-			gui_constants.NOTIF_BAR.add_text("Your IP address has been temporarily banned from g.e-/exhentai")
+			app_constants.NOTIF_BAR.add_text("Your IP address has been temporarily banned from g.e-/exhentai")
 			log_e('Your IP address has been temp banned from g.e- and ex-hentai')
 			time.sleep(5)
 			return False
@@ -700,7 +700,7 @@ class CommenHen:
 					return False
 			return True
 
-		hash_url = gui_constants.DEFAULT_EHEN_URL + '?f_shash='
+		hash_url = app_constants.DEFAULT_EHEN_URL + '?f_shash='
 		found_galleries = {}
 		log_i('Initiating hash search on ehentai')
 		for h in hash_string:

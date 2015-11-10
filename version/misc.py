@@ -43,7 +43,7 @@ from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 from utils import (tag_to_string, tag_to_dict, title_parser, ARCHIVE_FILES,
 					 ArchiveFile, IMG_FILES)
 import utils
-import gui_constants
+import app_constants
 import gallerydb
 import fetch
 import settings
@@ -841,8 +841,8 @@ class GalleryMenu(QMenu):
 		if gallery.is_archive:
 			try:
 				zip = utils.ArchiveFile(gallery.path)
-			except utils.gui_constants.CreateArchiveFail:
-				gui_constants.NOTIF_BAR.add_text('Attempt to change cover failed. Could not create archive.')
+			except utils.app_constants.CreateArchiveFail:
+				app_constants.NOTIF_BAR.add_text('Attempt to change cover failed. Could not create archive.')
 				return
 			path = zip.extract_all()
 		else:
@@ -853,7 +853,7 @@ class GalleryMenu(QMenu):
 							filter='Image {}'.format(utils.IMG_FILTER),
 							directory=path)[0]
 		if new_cover and new_cover.lower().endswith(utils.IMG_FILES):
-			if gallery.profile != gui_constants.NO_IMAGE_PATH:
+			if gallery.profile != app_constants.NO_IMAGE_PATH:
 				try:
 					os.remove(gallery.profile)
 				except FileNotFoundError:
@@ -1061,12 +1061,12 @@ class ApplicationPopup(BasePopup):
 
 		self.prog.reached_maximum.connect(self.close)
 		main_layout.addWidget(self.prog)
-		note_info = QLabel('Note: This popup will close itself when everything is ready')
-		note_info.setAlignment(Qt.AlignCenter)
-		restart_info = QLabel("Please wait.. It is safe to restart if there is no sign of progress.")
-		restart_info.setAlignment(Qt.AlignCenter)
-		main_layout.addWidget(note_info)
-		main_layout.addWidget(restart_info)
+		self.note_info = QLabel('Note: This popup will close itself when everything is ready')
+		self.note_info.setAlignment(Qt.AlignCenter)
+		self.restart_info = QLabel("Please wait.. It is safe to restart if there is no sign of progress.")
+		self.restart_info.setAlignment(Qt.AlignCenter)
+		main_layout.addWidget(self.note_info)
+		main_layout.addWidget(self.restart_info)
 		self.main_widget.setLayout(main_layout)
 
 	def closeEvent(self, event):
@@ -1076,6 +1076,14 @@ class ApplicationPopup(BasePopup):
 	def showEvent(self, event):
 		self.parent_widget.setEnabled(False)
 		return super().showEvent(event)
+
+	def init_restart(self):
+		self.prog.hide()
+		self.note_info.hide()
+		self.restart_info.hide()
+		self.note_info.setText("Restarting application...")
+		self.parent_widget.cleanup_exit()
+
 
 class NotificationOverlay(QWidget):
 	"""
@@ -1204,7 +1212,7 @@ class GalleryShowcaseWidget(QWidget):
 		self.gallery = gallery
 		pixm = QPixmap(gallery.profile)
 		if pixm.isNull():
-			pixm = QPixmap(gui_constants.NO_IMAGE_PATH)
+			pixm = QPixmap(app_constants.NO_IMAGE_PATH)
 		pixm = pixm.scaled(self.w, self.h-20, Qt.KeepAspectRatio, Qt.FastTransformation)
 		self.profile.setPixmap(pixm)
 		title = self.font_M.elidedText(gallery.title, Qt.ElideRight, self.w)
@@ -1407,22 +1415,22 @@ class FileIcon:
 
 	@staticmethod
 	def get_external_file_icon():
-		if gui_constants._REFRESH_EXTERNAL_VIEWER:
-			if os.path.exists(gui_constants.GALLERY_EXT_ICO_PATH):
-				os.remove(gui_constants.GALLERY_EXT_ICO_PATH)
-			info = QFileInfo(gui_constants.EXTERNAL_VIEWER_PATH)
+		if app_constants._REFRESH_EXTERNAL_VIEWER:
+			if os.path.exists(app_constants.GALLERY_EXT_ICO_PATH):
+				os.remove(app_constants.GALLERY_EXT_ICO_PATH)
+			info = QFileInfo(app_constants.EXTERNAL_VIEWER_PATH)
 			icon =  QFileIconProvider().icon(info)
 			pixmap = icon.pixmap(QSize(32, 32))
-			pixmap.save(gui_constants.GALLERY_EXT_ICO_PATH, quality=100)
-			gui_constants._REFRESH_EXTERNAL_VIEWER = False
+			pixmap.save(app_constants.GALLERY_EXT_ICO_PATH, quality=100)
+			app_constants._REFRESH_EXTERNAL_VIEWER = False
 
-		return QIcon(gui_constants.GALLERY_EXT_ICO_PATH)
+		return QIcon(app_constants.GALLERY_EXT_ICO_PATH)
 
 	@staticmethod
 	def refresh_default_icon():
 
-		if os.path.exists(gui_constants.GALLERY_DEF_ICO_PATH):
-			os.remove(gui_constants.GALLERY_DEF_ICO_PATH)
+		if os.path.exists(app_constants.GALLERY_DEF_ICO_PATH):
+			os.remove(app_constants.GALLERY_DEF_ICO_PATH)
 
 		def get_file(n):
 			gallery = gallerydb.GalleryDB.get_gallery_by_id(n)
@@ -1432,12 +1440,12 @@ class FileIcon:
 			if gallery.path.endswith(tuple(ARCHIVE_FILES)):
 				try:
 					zip = ArchiveFile(gallery.path)
-				except utils.gui_constants.CreateArchiveFail:
+				except utils.app_constants.CreateArchiveFail:
 					return False
 				for name in zip.namelist():
 					if name.lower().endswith(tuple(IMG_FILES)):
 						folder = os.path.join(
-							gui_constants.temp_dir,
+							app_constants.temp_dir,
 							'{}{}'.format(name, n))
 						zip.extract(name, folder)
 						file = os.path.join(
@@ -1457,23 +1465,23 @@ class FileIcon:
 				break
 			except FileNotFoundError:
 				continue
-			except gui_constants.CreateArchiveFail:
+			except app_constants.CreateArchiveFail:
 				continue
 
 		if not file:
 			return None
 		icon = QFileIconProvider().icon(QFileInfo(file))
 		pixmap = icon.pixmap(QSize(32, 32))
-		pixmap.save(gui_constants.GALLERY_DEF_ICO_PATH, quality=100)
+		pixmap.save(app_constants.GALLERY_DEF_ICO_PATH, quality=100)
 		return True
 
 	@staticmethod
 	def get_default_file_icon():
 		s = True
-		if not os.path.isfile(gui_constants.GALLERY_DEF_ICO_PATH):
+		if not os.path.isfile(app_constants.GALLERY_DEF_ICO_PATH):
 			s = FileIcon.refresh_default_icon()
 		if s:
-			return QIcon(gui_constants.GALLERY_DEF_ICO_PATH)
+			return QIcon(app_constants.GALLERY_DEF_ICO_PATH)
 		else: return None
 
 #def center_parent(parent, child):

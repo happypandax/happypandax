@@ -25,7 +25,7 @@ from PyQt5.QtCore import (Qt, QTimer, pyqtSignal)
 from PyQt5.QtGui import QIcon
 
 import gallerydb
-import gui_constants
+import app_constants
 import utils
 
 class TagsTreeView(QTreeWidget):
@@ -144,7 +144,7 @@ class DBOverview(QWidget):
 
 		self.resize(300, 600)
 		self.setWindowTitle('DB Overview')
-		self.setWindowIcon(QIcon(gui_constants.APP_ICO_PATH))
+		self.setWindowIcon(QIcon(app_constants.APP_ICO_PATH))
 
 	def setup_tags(self):
 		self.tags_tree.clear()

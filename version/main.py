@@ -19,11 +19,12 @@ from PyQt5.QtCore import QFile
 
 from database import db, db_constants
 import app
-import gui_constants
+import app_constants
 import gallerydb
 
 #IMPORTANT STUFF
 def start(test=False):
+	app_constants.APP_RESTART_CODE = -123456789
 
 	if os.name == 'posix':
 		main_path = os.path.dirname(os.path.realpath(__file__))
@@ -40,7 +41,7 @@ def start(test=False):
 	parser.add_argument('-t', '--test', action='store_true',
 					 help='Run happypanda in test mode. 5000 gallery will be preadded in DB.')
 	parser.add_argument('-v', '--versi on', action='version',
-					 version='Happypanda v{}'.format(gui_constants.vs))
+					 version='Happypanda v{}'.format(app_constants.vs))
 	parser.add_argument('-e', '--exceptions', action='store_true',
 					 help='Disable custom excepthook')
 
@@ -59,7 +60,7 @@ def start(test=False):
 						datefmt='%d-%m %H:%M',
 						filename='happypanda_debug.log',
 						filemode='w')
-		gui_constants.DEBUG = True
+		app_constants.DEBUG = True
 	else:
 		try:
 			with open(log_path, 'x') as f:
@@ -92,8 +93,8 @@ def start(test=False):
 	application.setOrganizationDomain('https://github.com/Pewpews/happypanda')
 	application.setApplicationName('Happypanda')
 	application.setApplicationDisplayName('Happypanda')
-	application.setApplicationVersion('v{}'.format(gui_constants.vs))
-	log_i('Happypanda Version {}'.format(gui_constants.vs))
+	application.setApplicationVersion('v{}'.format(app_constants.vs))
+	log_i('Happypanda Version {}'.format(app_constants.vs))
 	log_i('OS: {} {}\n'.format(platform.system(), platform.release()))
 	try:
 		if args.test:
@@ -108,7 +109,7 @@ def start(test=False):
 		from PyQt5.QtGui import QIcon
 		from PyQt5.QtWidgets import QMessageBox
 		msg_box = QMessageBox()
-		msg_box.setWindowIcon(QIcon(gui_constants.APP_ICO_PATH))
+		msg_box.setWindowIcon(QIcon(app_constants.APP_ICO_PATH))
 		msg_box.setText('Invalid database')
 		msg_box.setInformativeText("Do you want to create a new database?")
 		msg_box.setIcon(QMessageBox.Critical)
@@ -128,10 +129,10 @@ def start(test=False):
 		#	ser_list = []
 		#	for x in range(5000):
 		#		s = gallerydb.gallery()
-		#		s.profile = gui_constants.NO_IMAGE_PATH
+		#		s.profile = app_constants.NO_IMAGE_PATH
 		#		s.title = 'Test {}'.format(x)
 		#		s.artist = 'Author {}'.format(x)
-		#		s.path = gui_constants.static_dir
+		#		s.path = app_constants.static_dir
 		#		s.type = 'Test'
 		#		s.language = 'English'
 		#		s.info = 'I am number {}'.format(x)
@@ -159,8 +160,8 @@ def start(test=False):
 		WINDOW = app.AppWindow()
 
 		# styling
-		d_style = gui_constants.default_stylesheet_path
-		u_style =  gui_constants.user_stylesheet_path
+		d_style = app_constants.default_stylesheet_path
+		u_style =  app_constants.user_stylesheet_path
 
 		if len(u_style) is not 0:
 			try:
@@ -177,7 +178,7 @@ def start(test=False):
 		style = str(style_file.readAll(), 'utf-8')
 		application.setStyleSheet(style)
 		try:
-			os.mkdir(gui_constants.temp_dir)
+			os.mkdir(app_constants.temp_dir)
 		except FileExistsError:
 			try:
 				for root, dirs, files in scandir.walk('temp', topdown=False):
@@ -192,7 +193,7 @@ def start(test=False):
 		if test:
 			return application, WINDOW
 
-		sys.exit(application.exec_())
+		return application.exec_()
 
 	def db_upgrade():
 		log_d('Database connection failed')
@@ -200,7 +201,7 @@ def start(test=False):
 		from PyQt5.QtWidgets import QMessageBox
 
 		msg_box = QMessageBox()
-		msg_box.setWindowIcon(QIcon(gui_constants.APP_ICO_PATH))
+		msg_box.setWindowIcon(QIcon(app_constants.APP_ICO_PATH))
 		msg_box.setText('Incompatible database!')
 		msg_box.setInformativeText("Do you want to upgrade to newest version?" +
 							 " It shouldn't take more than a second. Don't start a new instance!")
@@ -213,16 +214,19 @@ def start(test=False):
 			db_p = db_constants.DB_PATH
 			db.add_db_revisions(db_p)
 			conn = db.init_db()
-			start_main_window(conn)
+			return start_main_window(conn)
 		else:
 			application.exit()
 			log_d('Normal Exit App: OK')
-			sys.exit()
+			return 0
 
 	if conn:
-		start_main_window(conn)
+		return start_main_window(conn)
 	else:
-		db_upgrade()
+		return db_upgrade()
 
 if __name__ == '__main__':
-	start()
+	current_exit_code = 0
+	while current_exit_code == app_constants.APP_RESTART_CODE:
+		current_exit_code = start()
+	sys.exit(current_exit_code)
