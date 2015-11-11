@@ -18,7 +18,7 @@ from PyQt5.QtCore import (Qt, QDate, QPoint, pyqtSignal, QThread,
 						  QTimer, QObject, QSize, QRect, QFileInfo,
 						  QMargins, QPropertyAnimation, QRectF,
 						  QTimeLine, QMargins, QPropertyAnimation, QByteArray,
-						  QPointF, QSizeF)
+						  QPointF, QSizeF, QProcess)
 from PyQt5.QtGui import (QTextCursor, QIcon, QMouseEvent, QFont,
 						 QPixmapCache, QPalette, QPainter, QBrush,
 						 QColor, QPen, QPixmap, QMovie, QPaintEvent, QFontMetrics,
@@ -38,7 +38,7 @@ from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QRadioButton, QFileIconProvider, QFontDialog,
 							 QColorDialog, QScrollArea, QSystemTrayIcon,
 							 QMenu, QGraphicsBlurEffect, QActionGroup,
-							 QCommonStyle)
+							 QCommonStyle, QApplication)
 
 from utils import (tag_to_string, tag_to_dict, title_parser, ARCHIVE_FILES,
 					 ArchiveFile, IMG_FILES)
@@ -1061,7 +1061,7 @@ class ApplicationPopup(BasePopup):
 
 		self.prog.reached_maximum.connect(self.close)
 		main_layout.addWidget(self.prog)
-		self.note_info = QLabel('Note: This popup will close itself when everything is ready')
+		self.note_info = QLabel("Note: This popup will close itself when everything is ready")
 		self.note_info.setAlignment(Qt.AlignCenter)
 		self.restart_info = QLabel("Please wait.. It is safe to restart if there is no sign of progress.")
 		self.restart_info.setAlignment(Qt.AlignCenter)
@@ -1081,8 +1081,8 @@ class ApplicationPopup(BasePopup):
 		self.prog.hide()
 		self.note_info.hide()
 		self.restart_info.hide()
-		self.note_info.setText("Restarting application...")
-		self.parent_widget.cleanup_exit()
+		log_i('Application requires restart')
+		self.note_info.setText("Application requires restart!")
 
 
 class NotificationOverlay(QWidget):

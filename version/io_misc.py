@@ -521,19 +521,21 @@ class ImpExpData:
 			if not g in found_pairs and g.chapters[0].pages == identifier['pages']:
 				pages = self.get_pages(g.chapters[0].pages)
 				hashes = gallerydb.HashDB.gen_gallery_hash(g, 0, pages)
+				#print(hashes.keys())
+				#print(pages)
 				for p in hashes:
-					if hashes[p] != identifier[p]:
+					if hashes[p] != identifier[str(p)]:
 						break
 				else:
 					found = g
 					g.title = self.structure['title']
 					g.artist = self.structure['artist']
-					if self.structure['pub_date']:
+					if self.structure['pub_date'] and self.structure['pub_date'] != 'None':
 						g.pub_date = datetime.datetime.strptime(
 							self.structure['pub_date'], "%Y-%m-%d %H:%M:%S")
 					g.type = self.structure['type']
 					g.status = self.structure['status']
-					if self.structure['last_read']:
+					if self.structure['last_read'] and self.structure['last_read'] != 'None':
 						g.last_read = datetime.datetime.strptime(
 							self.structure['last_read'], "%Y-%m-%d %H:%M:%S")
 					g.times_read += self.structure['times_read']
@@ -552,7 +554,7 @@ class ImpExpData:
 					gallerydb.GalleryDB.modify_gallery(
 						g.id,
 						g.title,
-						aritst=g.artist,
+						artist=g.artist,
 						info=g.info,
 						type=g.type,
 						fav=g.fav,
@@ -563,7 +565,7 @@ class ImpExpData:
 						link=g.link,
 						times_read=g.times_read,
 						_db_v=g._db_v,
-						exed=g_exed
+						exed=g.exed
 						)
 
 			if found:
@@ -573,7 +575,7 @@ class ImpExpData:
 
 class ImportExport(QObject):
 	finished = pyqtSignal()
-	imported_g = pyqtSignal(int)
+	imported_g = pyqtSignal(str)
 	progress = pyqtSignal(int)
 	amount = pyqtSignal(int)
 
@@ -591,10 +593,9 @@ class ImportExport(QObject):
 				g = g_data.find_pair(pairs_found)
 				if g:
 					pairs_found.append(g)
+				self.imported_g.emit("Importing database file... ({} imported)".format(len(pairs_found)))
 				self.progress.emit(prog)
-			self.imported_g.emit(len(pairs_found))
 			self.finished.emit()
-
 
 	def export_data(self, gallery=None):
 		galleries = []
@@ -603,9 +604,12 @@ class ImportExport(QObject):
 		else:
 			galleries = app_constants.GALLERY_DATA
 
+		amount = len(galleries)
+		log_i("Exporting {} galleries".format(amount))
 		data = ImpExpData(app_constants.EXPORT_FORMAT)
-		self.amount.emit(len(galleries))
+		self.amount.emit(amount)
 		for prog, g in enumerate(galleries, 1):
+			log_d("Exporting {} out of {} galleries".format(prog, amount))
 			g_data = {}
 			g_data['title'] = g.title
 			g_data['artist'] = g.artist
@@ -624,13 +628,13 @@ class ImportExport(QObject):
 			g_data['identifier'] = {'pages':g.chapters[0].pages}
 			pages = data.get_pages(g.chapters[0].pages)
 			h_list = gallerydb.HashDB.gen_gallery_hash(g, 0, pages)
-			print(h_list)
 			for n in pages:
 				g_data['identifier'][n] = h_list[n]
 
 			data.add_data(str(g.id), g_data)
 			self.progress.emit(prog)
 
+		log_i("Finished exporting galleries!")
 		data.save(app_constants.EXPORT_PATH)
 		self.finished.emit()
 

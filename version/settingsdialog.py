@@ -4,7 +4,8 @@ from PyQt5.QtWidgets import (QVBoxLayout, QHBoxLayout, QListWidget, QWidget,
 							 QListWidgetItem, QStackedLayout, QPushButton,
 							 QLabel, QTabWidget, QLineEdit, QGroupBox, QFormLayout,
 							 QCheckBox, QRadioButton, QSpinBox, QSizePolicy,
-							 QScrollArea, QFontDialog, QMessageBox, QComboBox)
+							 QScrollArea, QFontDialog, QMessageBox, QComboBox,
+							 QFileDialog)
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtGui import QPalette, QPixmapCache
 
@@ -27,7 +28,7 @@ class SettingsDialog(QWidget):
 	"A settings dialog"
 	scroll_speed_changed = pyqtSignal()
 	init_gallery_rebuild = pyqtSignal(bool)
-	init_gallery_eximport = pyqtSignal()
+	init_gallery_eximport = pyqtSignal(object)
 	def __init__(self, parent=None):
 		super().__init__(parent, flags=Qt.Window)
 
@@ -926,7 +927,29 @@ class SettingsDialog(QWidget):
 				app_popup.export_instance.amount.connect(app_popup.prog.setMaximum)
 				app_popup.export_instance.progress.connect(app_popup.prog.setValue)
 				self.init_gallery_eximport.connect(app_popup.export_instance.export_data)
-				self.init_gallery_eximport.emit()
+				self.init_gallery_eximport.emit(None)
+				app_popup.adjustSize()
+				app_popup.show()
+				self.close()
+
+		def init_import():
+			path = QFileDialog.getOpenFileName(self,
+									  'Choose happypanda database file', filter='*.hpdb')
+			path = path[0]
+			if len(path) != 0:
+				app_popup = ApplicationPopup(self.parent_widget)
+				app_popup.restart_info.hide()
+				app_popup.info_lbl.setText("Importing database file...")
+				app_popup.note_info.setText("Application requires a restart after importing")
+				app_popup.import_instance = io_misc.ImportExport()
+				app_popup.import_instance.moveToThread(app_constants.GENERAL_THREAD)
+				app_popup.import_instance.finished.connect(app_popup.import_instance.deleteLater)
+				app_popup.import_instance.finished.connect(app_popup.init_restart)
+				app_popup.import_instance.amount.connect(app_popup.prog.setMaximum)
+				app_popup.import_instance.imported_g.connect(app_popup.info_lbl.setText)
+				app_popup.import_instance.progress.connect(app_popup.prog.setValue)
+				self.init_gallery_eximport.connect(app_popup.import_instance.import_data)
+				self.init_gallery_eximport.emit(path)
 				app_popup.adjustSize()
 				app_popup.show()
 				self.close()
@@ -942,6 +965,7 @@ class SettingsDialog(QWidget):
 		self.export_path = PathLineEdit(advanced_impexp, filters='')
 		advanced_impexp_l.addRow('Export Path:', self.export_path)
 		import_btn = QPushButton('Import database')
+		import_btn.clicked.connect(init_import)
 		export_btn = QPushButton('Export database')
 		export_btn.clicked.connect(init_export)
 		ex_imp_btn_l = QHBoxLayout()

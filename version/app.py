@@ -62,9 +62,6 @@ class AppWindow(QMainWindow):
 		self.initUI()
 		self.start_up()
 		QTimer.singleShot(3000, self._check_update)
-		def test():
-			self.manga_list_view.scrollToBottom()
-		#QTimer.singleShot(10000, test)
 		self.setFocusPolicy(Qt.NoFocus)
 		self.set_shortcuts()
 		self.graphics_blur.setParent(self)

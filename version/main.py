@@ -12,7 +12,8 @@
 #along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 #"""
 
-import sys, logging, logging.handlers, os, argparse, platform, scandir, traceback
+import sys, logging, logging.handlers, os, argparse, platform, scandir
+import traceback, gc
 
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QFile
@@ -40,7 +41,7 @@ def start(test=False):
 					 help='happypanda_debug_log.log will be created in main directory')
 	parser.add_argument('-t', '--test', action='store_true',
 					 help='Run happypanda in test mode. 5000 gallery will be preadded in DB.')
-	parser.add_argument('-v', '--versi on', action='version',
+	parser.add_argument('-v', '--version', action='version',
 					 version='Happypanda v{}'.format(app_constants.vs))
 	parser.add_argument('-e', '--exceptions', action='store_true',
 					 help='Disable custom excepthook')
