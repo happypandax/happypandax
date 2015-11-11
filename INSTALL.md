@@ -12,6 +12,7 @@ First make sure you have python of minimum version 3.4 installed.
 Download from here https://www.python.org/downloads/
 - arch: sudo pacman -S python3
 - ubuntu: apt-get install python3
+- OSX: see below
 
 *Note: make sure to mark the 'Add to path' checkbox when available on windows*
 
@@ -58,15 +59,16 @@ Note: Try renaming the 'main.py' file to 'main.pyw' and then just doubleclick on
 1. Install Homebrew (this makes everything easier)
   - Open Terminal
   - Run the following
-   + `ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"`
-   + `brew update && brew upgrade --all`
+     + `ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"`
+     + `brew update && brew upgrade --all`
+    
 2. To install Python3, PyQt5, and sip (*still in Terminal*)
-   + `brew install PyQt5`
+     + `brew install PyQt5`
 3. To install other dependencies
-  - Download HappyPanda
-    + Go to github.com/Pewpews/happypanda
-    + Press the "Download ZIP" button
-    + UnZip happypanda-master.zip
+     - Download HappyPanda
+        + Go to github.com/Pewpews/happypanda
+        + Press the "Download ZIP" button
+        + UnZip happypanda-master.zip
   - In Terminal, navigate to the happypanda-master folder (E.g.: `cd /where/ever/you/put/the/folder/happypanda-master`)
     + Write `pip3 install -r requirements.txt`
 5. Running HappyPanda
