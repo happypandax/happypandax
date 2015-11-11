@@ -376,12 +376,12 @@ class GalleryMetaWindow(ArrowWindow):
 			self.g_last_read_lbl = QLabel()
 			self.g_read_count_lbl = QLabel()
 			self.g_pages_total_lbl = QLabel()
+			self.right_layout.addRow(self.g_read_count_lbl)
 			self.right_layout.addRow('Pages:', self.g_pages_total_lbl)
 			self.right_layout.addRow('Status:', self.g_status_lbl)
 			self.right_layout.addRow('Added:', self.g_d_added_lbl)
 			self.right_layout.addRow('Published:', self.g_pub_lbl)
 			self.right_layout.addRow('Last read:', self.g_last_read_lbl)
-			self.right_layout.addRow(self.g_read_count_lbl)
 
 			self.g_info_lbl = get_label('')
 			self.left_layout.addRow(self.g_info_lbl)
@@ -431,7 +431,7 @@ class GalleryMetaWindow(ArrowWindow):
 				self.g_pub_lbl.setText(gallery.pub_date.strftime('%d %b %Y'))
 			else:
 				self.g_pub_lbl.setText('Unknown')
-			last_read_txt = 'Last read {}'.format(utils.get_date_age(gallery.last_read)) if gallery.last_read else "Never!"
+			last_read_txt = '{} ago'.format(utils.get_date_age(gallery.last_read)) if gallery.last_read else "Never!"
 			self.g_last_read_lbl.setText(last_read_txt)
 			self.g_read_count_lbl.setText('Read {} times'.format(gallery.times_read))
 			self.g_info_lbl.setText(gallery.info)

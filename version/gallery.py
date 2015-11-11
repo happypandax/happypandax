@@ -12,7 +12,7 @@
 #along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 #"""
 
-import threading, logging, os, math, functools, random
+import threading, logging, os, math, functools, random, datetime
 import re as regex
 
 from PyQt5.QtCore import (Qt, QAbstractListModel, QModelIndex, QVariant,
@@ -1088,7 +1088,7 @@ class MangaView(QListView):
 			else:
 				notifbar.add_text('No duplicates found!')
 
-	def open_chapter(self, index, chap_numb=0):
+	def open_chapter(self, index, chap_numb=0): # TODO: move this to Gallery class!!
 		if not isinstance(index, list):
 			index = [index]
 		for x in index:
@@ -1107,7 +1107,9 @@ class MangaView(QListView):
 				if not gallery.times_read:
 					gallery.times_read = 0
 				gallery.times_read += 1
-				gallerydb.add_method_queue(gallerydb.GalleryDB.modify_gallery, True, gallery.id, times_read=gallery.times_read)
+				gallery.last_read = datetime.datetime.now().replace(microsecond=0)
+				gallerydb.add_method_queue(gallerydb.GalleryDB.modify_gallery, True, gallery.id, times_read=gallery.times_read,
+							   last_read=gallery.last_read)
 			except IndexError:
 				pass
 

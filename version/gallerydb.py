@@ -176,7 +176,6 @@ def gallery_map(row, gallery):
 			return datetime.datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S")
 
 	gallery.pub_date = convert_date(row['pub_date'])
-	gallery.last_update = row['last_update']
 	gallery.last_read = convert_date(row['last_read'])
 	gallery.date_added = convert_date(row['date_added'])
 	gallery.times_read = row['times_read']
@@ -245,7 +244,6 @@ def default_exec(object):
 				'pub_date':check(object.pub_date),
 				'date_added':check(object.date_added),
 				'last_read':check(object.last_read),
-				'last_update':check(object.last_update),
 				'link':str.encode(object.link),
 				'times_read':check(object.times_read),
 				'db_v':check(db_constants.REAL_DB_VERSION),
@@ -327,6 +325,7 @@ class GalleryDB(DBBase):
 				pub_date=gallery.pub_date,
 				link=gallery.link,
 				times_read=gallery.times_read,
+				last_read=gallery.last_read,
 				_db_v=db_constants.CURRENT_DB_VERSION,
 				exed=gallery.exed,
 				is_archive=gallery.is_archive,
@@ -341,7 +340,7 @@ class GalleryDB(DBBase):
 	@classmethod
 	def modify_gallery(cls, series_id, title=None, profile=None, artist=None, info=None, type=None, fav=None,
 				   tags=None, language=None, status=None, pub_date=None, link=None,
-				   times_read=None, series_path=None, chapters=None, _db_v=None,
+				   times_read=None, last_read=None, series_path=None, chapters=None, _db_v=None,
 				   hashes=None, exed=None, is_archive=None, path_in_archive=None):
 		"Modifies gallery with given gallery id"
 		assert isinstance(series_id, int)
@@ -376,6 +375,8 @@ class GalleryDB(DBBase):
 			executing.append(["UPDATE series SET link=? WHERE series_id=?", (link, series_id)])
 		if times_read != None:
 			executing.append(["UPDATE series SET times_read=? WHERE series_id=?", (times_read, series_id)])
+		if last_read != None:
+			executing.append(["UPDATE series SET last_read=? WHERE series_id=?", (last_read, series_id)])
 		if series_path != None:
 			executing.append(["UPDATE series SET series_path=? WHERE series_id=?", (str.encode(series_path), series_id)])
 		if _db_v != None:
@@ -1225,8 +1226,7 @@ class Gallery:
 	pub_date <- date
 	date_added <- date, will be defaulted to today if not specified
 	last_read <- timestamp (e.g. time.time())
-	last_update <- last updated file
-	last_read <- an integer telling us how many times the gallery has been opened
+	times_read <- an integer telling us how many times the gallery has been opened
 	hashes <- a list of hashes of the gallery's chapters
 	exed <- indicator on if gallery metadata has been fetched
 	valid <- a bool indicating the validity of the gallery
@@ -1253,7 +1253,6 @@ class Gallery:
 		self.pub_date = None
 		self.date_added = datetime.datetime.now().replace(microsecond=0)
 		self.last_read = None
-		self.last_update = None
 		self.times_read = 0
 		self.valid = False
 		self._db_v = None
@@ -1463,13 +1462,15 @@ class Gallery:
 		Tags: {}
 		Publication Date: {}
 		Date Added: {}
+		Last Read: {}
+		Times Read: {}
 		Exed: {}
 		Hashes: {}
 
 		Chapters: {}
 		""".format(self.id, self.title, self.profile, self.path.encode(errors='ignore'), self.path_in_archive.encode(errors='ignore'),
 			 self.is_archive, self.artist, self.info, self.fav, self.type, self.language, self.status, self.tags,
-			 self.pub_date, self.date_added, self.exed, len(self.hashes), self.chapters)
+			 self.pub_date, self.date_added, self.last_read, self.times_read, self.exed, len(self.hashes), self.chapters)
 		return string
 
 class Chapter:

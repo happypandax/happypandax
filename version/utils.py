@@ -36,6 +36,15 @@ if not app_constants.unrar_tool_path:
 	FILE_FILTER = '*.zip *.cbz'
 	ARCHIVE_FILES = ('.zip', '.cbz')
 
+def gallery_metafile(path, archive_path=None):
+	if archive_path != None:
+		pass
+	else:
+		try:
+			metafile = 1
+		except IndexError:
+			return None
+
 def backup_database():
 	date = "".format(datetime.datetime.today()).split(' ')[0]
 	base_path = os.path.split(db_constants.DB_PATH)[0]
@@ -76,6 +85,7 @@ def get_date_age(date):
 	class PrettyDelta:
 		def __init__(self, dt):
 			now = datetime.datetime.now()
+
 			delta = now - dt
 			self.day = delta.days
 			self.second = delta.seconds
@@ -88,11 +98,11 @@ def get_date_age(date):
 		def format(self):
 			for period in ['year', 'month', 'day', 'hour', 'minute', 'second']:
 				n = getattr(self, period)
-				if n > 0:
+				if n > 0.9:
 					return formatn(n, period)
 			return "0 second"
 
-	return PrettyDelta(date).format() + ' ago'
+	return PrettyDelta(date).format()
 
 def all_opposite(*args):
 	"Returns true if all items in iterable evaluaeto false"

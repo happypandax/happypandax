@@ -65,7 +65,6 @@ def series_sql(cols=False):
 					pub_date TEXT,
 					date_added TEXT,
 					last_read TEXT,
-					last_update TEXT,
 					times_read INTEGER,
 					exed INTEGER NOT NULL DEFAULT 0,
 					db_v REAL);
@@ -87,7 +86,6 @@ def series_sql(cols=False):
 		'pub_date TEXT',
 		'date_added TEXT',
 		'last_read TEXT',
-		'last_update TEXT',
 		'times_read INTEGER',
 		'exed INTEGER NOT NULL DEFAULT 0',
 		'db_v REAL',

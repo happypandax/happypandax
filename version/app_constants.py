@@ -153,6 +153,7 @@ POPUP_WIDTH = get(450, 'Visual', 'popup.w', int)
 POPUP_HEIGHT = get(220, 'Visual', 'popup.h', int)
 
 # Gallery
+GALLERY_METAFILE_KEYWORDS = ['info.txt']
 CURRENT_SORT = get('title', 'General', 'current sort')
 HIGH_QUALITY_THUMBS = get(False, 'Visual', 'high quality thumbs', bool)
 USE_EXTERNAL_PROG_ICO = get(False, 'Visual', 'use external prog ico', bool) if not sys.platform.startswith('darwin')  else False
