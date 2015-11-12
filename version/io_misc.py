@@ -3,13 +3,14 @@ from watchdog.events import FileSystemEventHandler, DirDeletedEvent
 from watchdog.observers import Observer
 from threading import Timer
 
-from PyQt5.QtCore import Qt, QObject, pyqtSignal, QTimer, QSize, QThread
-from PyQt5.QtGui import QPixmap, QIcon, QColor
+from PyQt5.QtCore import (Qt, QObject, pyqtSignal, QTimer, QSize, QThread)
+from PyQt5.QtGui import (QPixmap, QIcon, QColor, QTextOption, QKeySequence)
 from PyQt5.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout,
 							 QLabel, QFrame, QPushButton, QMessageBox,
 							 QFileDialog, QScrollArea, QLineEdit,
 							 QFormLayout, QGroupBox, QSizePolicy,
-							 QTableWidget, QTableWidgetItem)
+							 QTableWidget, QTableWidgetItem, QPlainTextEdit,
+							 QShortcut)
 
 import app_constants
 import misc
@@ -25,6 +26,32 @@ log_d = log.debug
 log_w = log.warning
 log_e = log.error
 log_c = log.critical
+
+class GalleryDownloaderUrlExtracter(QWidget):
+
+	url_emit = pyqtSignal(str)
+
+	def __init__(self, parent=None):
+		super().__init__(parent, flags=Qt.Window|Qt.WindowStaysOnTopHint)
+		self.main_layout = QVBoxLayout(self)
+		self.text_area = QPlainTextEdit(self)
+		self.text_area.setPlaceholderText("URLs are seperated by a newline")
+		self.main_layout.addWidget(self.text_area)
+		self.text_area.setWordWrapMode(QTextOption.NoWrap)
+		add_to_queue = QPushButton('Add to queue')
+		add_to_queue.adjustSize()
+		add_to_queue.setFixedWidth(add_to_queue.width())
+		add_to_queue.clicked.connect(self.add_to_queue)
+		self.main_layout.addWidget(add_to_queue, 0, Qt.AlignRight)
+		self.setWindowIcon(QIcon(app_constants.APP_ICO_PATH))
+		self.show()
+
+	def add_to_queue(self):
+		txt = self.text_area.document().toPlainText()
+		urls = txt.split('\n')
+		for u in urls:
+			if u:
+				self.url_emit.emit(u)
 
 class GalleryDownloaderItem(QObject):
 	"""
@@ -163,9 +190,17 @@ class GalleryDownloader(QWidget):
 		main_layout.addWidget(self.info_lbl)
 		self.info_lbl.hide()
 		buttons_layout = QHBoxLayout()
+		url_window_btn = QPushButton('Batch URLs')
+		url_window_btn.adjustSize()
+		url_window_btn.setFixedWidth(url_window_btn.width())
+		def batch_url_win():
+			self._batch_url = GalleryDownloaderUrlExtracter()
+			self._batch_url.url_emit.connect(self.add_download_entry)
+		url_window_btn.clicked.connect(batch_url_win)
 		clear_all_btn = QPushButton('Clear List')
 		clear_all_btn.adjustSize()
 		clear_all_btn.setFixedWidth(clear_all_btn.width())
+		buttons_layout.addWidget(url_window_btn, 0, Qt.AlignLeft)
 		buttons_layout.addWidget(clear_all_btn, 0, Qt.AlignRight)
 		main_layout.addLayout(buttons_layout)
 		self.download_list = GalleryDownloaderList(parent.manga_list_view.sort_model, self)
