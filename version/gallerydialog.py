@@ -326,11 +326,13 @@ class GalleryDialog(QWidget):
 				log_d('Chapters divided in folders..')
 				for ch in chapters:
 					chap = chap_container.create_chapter()
+					chap.title = utils.title_parser(ch)['title']
 					chap.path = os.path.join(path, ch)
 					chap.pages = len(list(scandir.scandir(chap.path)))
 
 			else: #else assume that all images are in gallery folder
 				chap = chap_container.create_chapter()
+				chap.title = utils.title_parser(os.path.split(path)[1])['title']
 				chap.path = path
 				chap.pages = len(list(scandir.scandir(path)))
 				

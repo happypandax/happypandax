@@ -99,6 +99,7 @@ def chapters_sql(cols=False):
 		CREATE TABLE IF NOT EXISTS chapters(
 					chapter_id INTEGER PRIMARY KEY,
 					series_id INTEGER,
+					chapter_title TEXT NOT NULL DEFAULT '',
 					chapter_number INTEGER,
 					chapter_path BLOB,
 					pages INTEGER,
@@ -108,6 +109,7 @@ def chapters_sql(cols=False):
 	col_list = [
 		'chapter_id INTEGER PRIMARY KEY',
 		'series_id INTEGER',
+		"chapter_title TEXT NOT NULL DEFAULT ''",
 		'chapter_number INTEGER',
 		'chapter_path BLOB',
 		'pages INTEGER',

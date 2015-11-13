@@ -94,7 +94,7 @@ class AppWindow(QMainWindow):
 			if index:
 				self.manga_list_view.replace_edit_gallery([g], index.row())
 			else:
-				log_e('Could not find gallery to update from Watcher')
+				log_e('Could not find gallery to update from watcher')
 
 		def created(path):
 			c_popup = io_misc.CreatedPopup(path, self)

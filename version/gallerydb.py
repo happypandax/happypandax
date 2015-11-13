@@ -149,6 +149,7 @@ def gen_thumbnail(gallery, width=app_constants.THUMB_W_SIZE,
 
 def chapter_map(row, chapter):
 	assert isinstance(chapter, Chapter)
+	chapter.title = row['chapter_title']
 	chapter.path = bytes.decode(row['chapter_path'])
 	chapter.pages = row['pages']
 	chapter.in_archive = row['in_archive']
@@ -204,12 +205,13 @@ def default_chap_exec(gallery_or_id, chap, only_values=False):
 		in_archive = chap.in_archive
 
 	if only_values:
-		execute = (gid, chap.number, str.encode(chap.path), chap.pages, in_archive)
+		execute = (gid, chap.title, chap.number, str.encode(chap.path), chap.pages, in_archive)
 	else:
 		execute = ("""
-				INSERT INTO chapters(series_id, chapter_number, chapter_path, pages, in_archive)
-				VALUES(:series_id, :chapter_number, :chapter_path, :pages, :in_archive)""",
+				INSERT INTO chapters(series_id, chapter_title, chapter_number, chapter_path, pages, in_archive)
+				VALUES(:series_id, :chapter_title, :chapter_number, :chapter_path, :pages, :in_archive)""",
 				{'series_id':gid,
+				'chapter_title':chap.title,
 				'chapter_number':chap.number,
 				'chapter_path':str.encode(chap.path),
 				'pages':chap.pages,
@@ -224,11 +226,10 @@ def default_exec(object):
 		else:
 			return obj
 	executing = ["""INSERT INTO series(title, artist, profile, series_path, is_archive,
-					info, type, fav, status, pub_date, date_added, last_read, link, last_update,
+					info, type, fav, status, pub_date, date_added, last_read, link,
 					times_read, exed)
 				VALUES(:title, :artist, :profile, :series_path, :is_archive, :info, :type, :fav,
-					:status, :pub_date, :date_added, :last_read, :link, :last_update,
-					:times_read, :exed)""",
+					:status, :pub_date, :date_added, :last_read, :link, :times_read, :exed)""",
 				{
 				'title':check(object.title),
 				'artist':check(object.artist),
@@ -599,9 +600,9 @@ class ChapterDB(DBBase):
 		executing = []
 		for chap in chapters:
 			new_path = chap.path
-			executing.append((str.encode(new_path), chap.in_archive, chap.gallery.id, chap.number,))
+			executing.append((chap.title, str.encode(new_path), chap.in_archive, chap.gallery.id, chap.number,))
 
-		cls.executemany(cls, "UPDATE chapters SET chapter_path=?, in_archive=? WHERE series_id=? AND chapter_number=?",
+		cls.executemany(cls, "UPDATE chapters SET chapter_title=?, chapter_path=?, in_archive=? WHERE series_id=? AND chapter_number=?",
 			executing)
 
 	@classmethod
@@ -614,7 +615,7 @@ class ChapterDB(DBBase):
 			executing.append(default_chap_exec(gallery_object, chap, True))
 		if not executing:
 			raise Exception
-		cls.executemany(cls, 'INSERT INTO chapters VALUES(NULL, ?, ?, ?, ?, ?)', executing)
+		cls.executemany(cls, 'INSERT INTO chapters VALUES(NULL, ?, ?, ?, ?, ?, ?)', executing)
 
 	@classmethod
 	def add_chapters_raw(cls, series_id, chapters_container):
@@ -628,7 +629,7 @@ class ChapterDB(DBBase):
 			else:
 				cls.update_chapter(cls, chapters_container, [chap.number])
 
-		cls.executemany(cls, 'INSERT INTO chapters VALUES(NULL, ?, ?, ?, ?, ?)', executing)
+		cls.executemany(cls, 'INSERT INTO chapters VALUES(NULL, ?, ?, ?, ?, ?, ?)', executing)
 
 
 	@classmethod
@@ -1479,14 +1480,16 @@ class Chapter:
 	Contains following attributes:
 	parent -> The ChapterContainer it belongs in
 	gallery -> The Gallery it belongs to
+	title -> title of chapter
 	path -> path to chapter
 	number -> chapter number
 	pages -> chapter pages
 	in_archive -> 1 if the chapter path is in an archive else 0
 	"""
-	def __init__(self, parent, gallery, number=0, path="", pages=0, in_archive=0):
+	def __init__(self, parent, gallery, number=0, path='', pages=0, in_archive=0, title=''):
 		self.parent = parent
 		self.gallery = gallery
+		self.title = title
 		self.path = path
 		self.number = number
 		self.pages = pages
@@ -1498,10 +1501,11 @@ class Chapter:
 	def __str__(self):
 		s = """
 		Chapter: {}
+		Title: {}
 		Path: {}
 		Pages: {}
 		in_archive: {}
-		""".format(self.number, self.path, self.pages, self.in_archive)
+		""".format(self.number, self.title, self.path, self.pages, self.in_archive)
 		return s
 
 	@property

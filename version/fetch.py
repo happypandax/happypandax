@@ -117,11 +117,13 @@ class Fetch(QObject):
 								log_i('Gallery has {} chapters'.format(numb_of_chapters))
 								for ch in chapters:
 									chap = new_gallery.chapters.create_chapter()
+									chap.title = utils.title_parser(ch)['title']
 									chap.path = os.path.join(path, ch)
 									chap.pages = len(list(scandir.scandir(chap.path)))
 
 							else: #else assume that all images are in gallery folder
 								chap = new_gallery.chapters.create_chapter()
+								chap.title = utils.title_parser(os.path.split(path)[1])['title']
 								chap.path = path
 								chap.pages = len(list(scandir.scandir(path)))
 				
@@ -153,12 +155,14 @@ class Fetch(QObject):
 												raise ValueError
 											for g in archive_g:
 												chap = new_gallery.chapters.create_chapter()
+												chap.title = utils.title_parser(g)['title']
 												chap.path = g
 												arch = utils.ArchiveFile(temp_p)
 												chap.pages = len(arch.dir_contents(g))
 												arch.close()
 										else:
 											chap = new_gallery.chapters.create_chapter()
+											chap.title = utils.title_parser(os.path.split(path)[1])['title']
 											chap.path = path
 											arch = utils.ArchiveFile(path)
 											chap.pages = len(arch.dir_contents(''))
