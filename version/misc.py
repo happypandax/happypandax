@@ -38,7 +38,8 @@ from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QRadioButton, QFileIconProvider, QFontDialog,
 							 QColorDialog, QScrollArea, QSystemTrayIcon,
 							 QMenu, QGraphicsBlurEffect, QActionGroup,
-							 QCommonStyle, QApplication)
+							 QCommonStyle, QApplication, QTableWidget,
+							 QTableWidgetItem, QTableView)
 
 from utils import (tag_to_string, tag_to_dict, title_parser, ARCHIVE_FILES,
 					 ArchiveFile, IMG_FILES)
@@ -329,145 +330,6 @@ class ArrowWindow(TransparentWidget):
 
 class GalleryMetaWindow(ArrowWindow):
 
-	class GalleryLayout(QFrame):
-		
-		def __init__(self, parent, appwindow):
-			super().__init__(parent)
-			self.setStyleSheet('color:white;')
-			main_layout = QHBoxLayout(self)
-			self.left_layout = QFormLayout()
-			self.main_left_layout = QVBoxLayout()
-			self.main_left_layout.addLayout(self.left_layout)
-			self.right_layout = QFormLayout()
-			main_layout.addLayout(self.main_left_layout, 1)
-			main_layout.addWidget(Line('v'))
-			main_layout.addLayout(self.right_layout)
-			def get_label(txt):
-				lbl = QLabel(txt)
-				lbl.setWordWrap(True)
-				return lbl
-			self.g_title_lbl = get_label('')
-			self.g_title_lbl.setStyleSheet('color:white;font-weight:bold;')
-			self.left_layout.addRow(self.g_title_lbl)
-			self.g_artist_lbl = ClickedLabel()
-			self.g_artist_lbl.setWordWrap(True)
-			self.g_artist_lbl.clicked.connect(appwindow.search)
-			self.g_artist_lbl.setStyleSheet('color:#bdc3c7;')
-			self.g_artist_lbl.setToolTip("Click to see more from this artist")
-			self.left_layout.addRow(self.g_artist_lbl)
-			for lbl in (self.g_title_lbl, self.g_artist_lbl):
-				lbl.setAlignment(Qt.AlignCenter)
-			self.left_layout.addRow(Line('h'))
-
-			first_layout = QHBoxLayout()
-			self.g_lang_lbl = QLabel()
-			self.g_chapters_lbl = get_label('')
-			self.g_type_lbl = QLabel()
-			self.right_layout.addRow(self.g_type_lbl)
-			self.right_layout.addRow(self.g_lang_lbl)
-			#first_layout.addWidget(self.g_lang_lbl, 0, Qt.AlignLeft)
-			first_layout.addWidget(self.g_chapters_lbl, 0, Qt.AlignCenter)
-			#first_layout.addWidget(self.g_type_lbl, 0, Qt.AlignRight)
-			self.left_layout.addRow(first_layout)
-
-			self.g_status_lbl = QLabel()
-			self.g_d_added_lbl = QLabel()
-			self.g_pub_lbl = QLabel()
-			self.g_last_read_lbl = QLabel()
-			self.g_read_count_lbl = QLabel()
-			self.g_pages_total_lbl = QLabel()
-			self.right_layout.addRow(self.g_read_count_lbl)
-			self.right_layout.addRow('Pages:', self.g_pages_total_lbl)
-			self.right_layout.addRow('Status:', self.g_status_lbl)
-			self.right_layout.addRow('Added:', self.g_d_added_lbl)
-			self.right_layout.addRow('Published:', self.g_pub_lbl)
-			self.right_layout.addRow('Last read:', self.g_last_read_lbl)
-
-			self.g_info_lbl = get_label('')
-			self.left_layout.addRow(self.g_info_lbl)
-
-			self.g_url_lbl = ClickedLabel()
-			self.g_url_lbl.clicked.connect(lambda: utils.open_web_link(self.g_url_lbl.text()))
-			self.g_url_lbl.setWordWrap(True)
-			self.left_layout.addRow('URL:', self.g_url_lbl)
-			#self.left_layout.addRow(Line('h'))
-
-			self.tags_scroll = QScrollArea(self)
-			self.tags_widget = QWidget(self.tags_scroll)
-			self.tags_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-			self.tags_layout = QFormLayout(self.tags_widget)
-			self.tags_layout.setSizeConstraint(self.tags_layout.SetMaximumSize)
-			self.tags_scroll.setWidget(self.tags_widget)
-			self.tags_scroll.setWidgetResizable(True)
-			self.tags_scroll.setStyleSheet("background-color: #585858;")
-			self.tags_scroll.setFrameShape(QFrame.NoFrame)
-			self.main_left_layout.addWidget(self.tags_scroll)
-
-
-		def has_tags(self, tags):
-			t_len = len(tags)
-			if not t_len:
-				return False
-			if t_len == 1:
-				if 'default' in tags:
-					if not tags['default']:
-						return False
-			return True
-
-		def apply_gallery(self, gallery):
-			self.g_title_lbl.setText(gallery.title)
-			self.g_artist_lbl.setText(gallery.artist)
-			self.g_lang_lbl.setText(gallery.language)
-			chap_txt = "chapters" if gallery.chapters.count() > 1 else "chapter"
-			self.g_chapters_lbl.setText('{} {}'.format(gallery.chapters.count(), chap_txt))
-			self.g_type_lbl.setText(gallery.type)
-			pages = 0
-			for ch in gallery.chapters:
-				pages += ch.pages
-			self.g_pages_total_lbl.setText('{}'.format(pages))
-			self.g_status_lbl.setText(gallery.status)
-			self.g_d_added_lbl.setText(gallery.date_added.strftime('%d %b %Y'))
-			if gallery.pub_date:
-				self.g_pub_lbl.setText(gallery.pub_date.strftime('%d %b %Y'))
-			else:
-				self.g_pub_lbl.setText('Unknown')
-			last_read_txt = '{} ago'.format(utils.get_date_age(gallery.last_read)) if gallery.last_read else "Never!"
-			self.g_last_read_lbl.setText(last_read_txt)
-			self.g_read_count_lbl.setText('Read {} times'.format(gallery.times_read))
-			self.g_info_lbl.setText(gallery.info)
-			if gallery.link:
-				self.g_url_lbl.setText(gallery.link)
-				self.g_url_lbl.show()
-			else:
-				self.g_url_lbl.hide()
-
-			
-			clearLayout(self.tags_layout)
-			if self.has_tags(gallery.tags):
-				ns_layout = QFormLayout()
-				self.tags_layout.addRow(ns_layout)
-				for namespace in gallery.tags:
-					tags_lbls = FlowLayout()
-					if namespace == 'default':
-						self.tags_layout.insertRow(0, tags_lbls)
-					else:
-						self.tags_layout.addRow(namespace, tags_lbls)
-
-					for n, tag in enumerate(gallery.tags[namespace], 1):
-						if namespace == 'default':
-							t = TagText()
-						else:
-							t = TagText()
-						t.setText(tag)
-						tags_lbls.addWidget(t)
-			self.tags_widget.adjustSize()
-
-
-		def mousePressEvent(self, event):
-			print('hi')
-			return super().mousePressEvent(event)
-
-
 	def __init__(self, parent):
 		super().__init__(parent)
 
@@ -582,6 +444,213 @@ class GalleryMetaWindow(ArrowWindow):
 	def leaveEvent(self, event):
 		self.hide()
 		super().leaveEvent(event)
+
+	class GalleryLayout(QFrame):
+		class ChapterList(QTableWidget):
+			def __init__(self, parent):
+				super().__init__(parent)
+				self.setColumnCount(3)
+				self.setEditTriggers(self.NoEditTriggers)
+				self.setFocusPolicy(Qt.NoFocus)
+				self.verticalHeader().setSectionResizeMode(self.verticalHeader().ResizeToContents)
+				self.horizontalHeader().setSectionResizeMode(0, self.horizontalHeader().ResizeToContents)
+				self.horizontalHeader().setSectionResizeMode(1, self.horizontalHeader().Stretch)
+				self.horizontalHeader().setSectionResizeMode(2, self.horizontalHeader().ResizeToContents)
+				self.horizontalHeader().hide()
+				self.verticalHeader().hide()
+				self.setSelectionMode(self.SingleSelection)
+				self.setSelectionBehavior(self.SelectRows)
+				self.setShowGrid(False)
+				self.viewport().setBackgroundRole(self.palette().Dark)
+				palette = self.viewport().palette()
+				palette.setColor(palette.Highlight, QColor(88, 88, 88, 70))
+				palette.setColor(palette.HighlightedText, QColor('black'))
+				self.viewport().setPalette(palette)
+				self.setWordWrap(False)
+				self.setTextElideMode(Qt.ElideRight)
+				self.doubleClicked.connect(self.open_chapter)
+
+			def set_chapters(self, chapter_container):
+				for r in range(self.rowCount()):
+					self.removeRow(0)
+				def t_item(txt=''):
+					t = QTableWidgetItem(txt)
+					t.setBackground(QBrush(QColor('#585858')))
+					return t
+
+				for chap in chapter_container:
+					c_row = self.rowCount()+1
+					self.setRowCount(c_row)
+					c_row -= 1
+					n = t_item()
+					n.setData(Qt.DisplayRole, chap.number+1)
+					n.setData(Qt.UserRole+1, chap)
+					self.setItem(c_row, 0, n)
+					title = chap.title
+					if not title:
+						title = chap.gallery.title
+					t = t_item(title)
+					self.setItem(c_row, 1, t)
+					p = t_item(str(chap.pages))
+					self.setItem(c_row, 2, p)
+				self.sortItems(0)
+
+			def open_chapter(self, idx):
+				r = idx.row()
+				t = self.item(r, 0)
+				chap = t.data(Qt.UserRole+1)
+				chap.open()
+		
+		def __init__(self, parent, appwindow):
+			super().__init__(parent)
+			self.setStyleSheet('color:white;')
+			main_layout = QHBoxLayout(self)
+			stacked_l = QStackedLayout()
+			general_info = QWidget(self)
+			chapter_info = QWidget(self)
+			chapter_layout = QVBoxLayout(chapter_info)
+			self.general_index = stacked_l.addWidget(general_info)
+			self.chap_index = stacked_l.addWidget(chapter_info)
+			self.chapter_list = self.ChapterList(self)
+			back_btn = TagText('Back')
+			back_btn.clicked.connect(lambda: stacked_l.setCurrentIndex(self.general_index))
+			chapter_layout.addWidget(back_btn, 0, Qt.AlignCenter)
+			chapter_layout.addWidget(self.chapter_list)
+			self.left_layout = QFormLayout()
+			self.main_left_layout = QVBoxLayout(general_info)
+			self.main_left_layout.addLayout(self.left_layout)
+			self.right_layout = QFormLayout()
+			main_layout.addLayout(stacked_l, 1)
+			main_layout.addWidget(Line('v'))
+			main_layout.addLayout(self.right_layout)
+			def get_label(txt):
+				lbl = QLabel(txt)
+				lbl.setWordWrap(True)
+				return lbl
+			self.g_title_lbl = get_label('')
+			self.g_title_lbl.setStyleSheet('color:white;font-weight:bold;')
+			self.left_layout.addRow(self.g_title_lbl)
+			self.g_artist_lbl = ClickedLabel()
+			self.g_artist_lbl.setWordWrap(True)
+			self.g_artist_lbl.clicked.connect(appwindow.search)
+			self.g_artist_lbl.setStyleSheet('color:#bdc3c7;')
+			self.g_artist_lbl.setToolTip("Click to see more from this artist")
+			self.left_layout.addRow(self.g_artist_lbl)
+			for lbl in (self.g_title_lbl, self.g_artist_lbl):
+				lbl.setAlignment(Qt.AlignCenter)
+			self.left_layout.addRow(Line('h'))
+
+			first_layout = QHBoxLayout()
+			self.g_lang_lbl = QLabel()
+			self.g_chapters_lbl = TagText('Chapter list')
+			self.g_chapters_lbl.clicked.connect(lambda: stacked_l.setCurrentIndex(self.chap_index))
+			self.g_type_lbl = QLabel()
+			self.g_chap_count_lbl = QLabel()
+			self.right_layout.addRow(self.g_type_lbl)
+			self.right_layout.addRow(self.g_lang_lbl)
+			self.right_layout.addRow(self.g_chap_count_lbl)
+			#first_layout.addWidget(self.g_lang_lbl, 0, Qt.AlignLeft)
+			first_layout.addWidget(self.g_chapters_lbl, 0, Qt.AlignCenter)
+			#first_layout.addWidget(self.g_type_lbl, 0, Qt.AlignRight)
+			self.left_layout.addRow(first_layout)
+
+			self.g_status_lbl = QLabel()
+			self.g_d_added_lbl = QLabel()
+			self.g_pub_lbl = QLabel()
+			self.g_last_read_lbl = QLabel()
+			self.g_read_count_lbl = QLabel()
+			self.g_pages_total_lbl = QLabel()
+			self.right_layout.addRow(self.g_read_count_lbl)
+			self.right_layout.addRow('Pages:', self.g_pages_total_lbl)
+			self.right_layout.addRow('Status:', self.g_status_lbl)
+			self.right_layout.addRow('Added:', self.g_d_added_lbl)
+			self.right_layout.addRow('Published:', self.g_pub_lbl)
+			self.right_layout.addRow('Last read:', self.g_last_read_lbl)
+
+			self.g_info_lbl = get_label('')
+			self.left_layout.addRow(self.g_info_lbl)
+
+			self.g_url_lbl = ClickedLabel()
+			self.g_url_lbl.clicked.connect(lambda: utils.open_web_link(self.g_url_lbl.text()))
+			self.g_url_lbl.setWordWrap(True)
+			self.left_layout.addRow('URL:', self.g_url_lbl)
+			#self.left_layout.addRow(Line('h'))
+
+			self.tags_scroll = QScrollArea(self)
+			self.tags_widget = QWidget(self.tags_scroll)
+			self.tags_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+			self.tags_layout = QFormLayout(self.tags_widget)
+			self.tags_layout.setSizeConstraint(self.tags_layout.SetMaximumSize)
+			self.tags_scroll.setWidget(self.tags_widget)
+			self.tags_scroll.setWidgetResizable(True)
+			self.tags_scroll.setStyleSheet("background-color: #585858;")
+			self.tags_scroll.setFrameShape(QFrame.NoFrame)
+			self.main_left_layout.addWidget(self.tags_scroll)
+
+
+		def has_tags(self, tags):
+			t_len = len(tags)
+			if not t_len:
+				return False
+			if t_len == 1:
+				if 'default' in tags:
+					if not tags['default']:
+						return False
+			return True
+
+		def apply_gallery(self, gallery):
+			self.chapter_list.set_chapters(gallery.chapters)
+			self.g_title_lbl.setText(gallery.title)
+			self.g_artist_lbl.setText(gallery.artist)
+			self.g_lang_lbl.setText(gallery.language)
+			chap_txt = "chapters" if gallery.chapters.count() > 1 else "chapter"
+			self.g_chap_count_lbl.setText('{} {}'.format(gallery.chapters.count(), chap_txt))
+			self.g_type_lbl.setText(gallery.type)
+			pages = 0
+			for ch in gallery.chapters:
+				pages += ch.pages
+			self.g_pages_total_lbl.setText('{}'.format(pages))
+			self.g_status_lbl.setText(gallery.status)
+			self.g_d_added_lbl.setText(gallery.date_added.strftime('%d %b %Y'))
+			if gallery.pub_date:
+				self.g_pub_lbl.setText(gallery.pub_date.strftime('%d %b %Y'))
+			else:
+				self.g_pub_lbl.setText('Unknown')
+			last_read_txt = '{} ago'.format(utils.get_date_age(gallery.last_read)) if gallery.last_read else "Never!"
+			self.g_last_read_lbl.setText(last_read_txt)
+			self.g_read_count_lbl.setText('Read {} times'.format(gallery.times_read))
+			self.g_info_lbl.setText(gallery.info)
+			if gallery.link:
+				self.g_url_lbl.setText(gallery.link)
+				self.g_url_lbl.show()
+			else:
+				self.g_url_lbl.hide()
+
+			
+			clearLayout(self.tags_layout)
+			if self.has_tags(gallery.tags):
+				ns_layout = QFormLayout()
+				self.tags_layout.addRow(ns_layout)
+				for namespace in gallery.tags:
+					tags_lbls = FlowLayout()
+					if namespace == 'default':
+						self.tags_layout.insertRow(0, tags_lbls)
+					else:
+						self.tags_layout.addRow(namespace, tags_lbls)
+
+					for n, tag in enumerate(gallery.tags[namespace], 1):
+						if namespace == 'default':
+							t = TagText()
+						else:
+							t = TagText()
+						t.setText(tag)
+						tags_lbls.addWidget(t)
+			self.tags_widget.adjustSize()
+
+
+		def mousePressEvent(self, event):
+			print('hi')
+			return super().mousePressEvent(event)
 
 class Spinner(TransparentWidget):
 	"""
@@ -726,12 +795,14 @@ class GalleryMenu(QMenu):
 		self.view = view
 		self.gallery_model = gallery_model
 		self.index = index
+		self.gallery = index.data(Qt.UserRole+1)
+
 		self.selected = selected_indexes
 		if not self.selected:
 			favourite_act = self.addAction('Favorite',
 									 lambda: self.parent_widget.manga_list_view.favorite(self.index))
 			favourite_act.setCheckable(True)
-			if self.index.data(Qt.UserRole+1).fav:
+			if self.gallery.fav:
 				favourite_act.setChecked(True)
 				favourite_act.setText('Unfavorite')
 			else:
@@ -752,24 +823,19 @@ class GalleryMenu(QMenu):
 				favourite_act.setChecked(False)
 
 		self.addSeparator()
-		if not self.selected:
+		if not self.selected and isinstance(view, QTableView):
 			chapters_menu = self.addAction('Chapters')
 			open_chapters = QMenu(self)
 			chapters_menu.setMenu(open_chapters)
-			for number, chap_number in enumerate(range(len(
-				index.data(Qt.UserRole+1).chapters)), 1):
+			for number, chap in enumerate(gallery.chapters, 1):
 				chap_action = QAction("Open chapter {}".format(number),
 							 open_chapters,
-							 triggered = functools.partial(
-								 self.parent_widget.manga_list_view.open_chapter,
-								 index,
-								 chap_number))
+							 triggered = functools.partial(chap.open))
 				open_chapters.addAction(chap_action)
+		if self.selected:
+			open_f_chapters = self.addAction('Open first chapters', self.open_first_chapters)
 		if not self.selected:
 			add_chapters = self.addAction('Add chapters', self.add_chapters)
-		if self.selected:
-			open_f_chapters = self.addAction('Open first chapters',
-									lambda: self.parent_widget.manga_list_view.open_chapter(self.selected, 0))
 		self.addSeparator()
 		if not self.selected:
 			get_metadata = self.addAction('Get metadata',
@@ -863,6 +929,12 @@ class GalleryMenu(QMenu):
 			self.parent_widget.manga_list_view.replace_edit_gallery(gallery,
 														   self.index.row())
 			log_i('Changed cover successfully!')
+
+	def open_first_chapters(self):
+		txt = "Opening first chapters of selected galleries"
+		app_constants.STAT_MSG_METHOD(txt)
+		for idx in self.selected:
+			idx.data(Qt.UserRole+1).chapters[0].open(False)
 
 	def remove_selection(self, source=False):
 		self.view.remove_gallery(self.selected, source)

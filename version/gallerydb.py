@@ -1522,9 +1522,18 @@ class Chapter:
 		except KeyError:
 			return None
 
-	# TODO: implement this
-	def open(self):
-		pass
+	def open(self, stat_msg=True):
+		if stat_msg:
+			txt = "Opening chapter {} of {}".format(self.number+1, self.gallery.title)
+			app_constants.STAT_MSG_METHOD(txt)
+		if self.in_archive:
+			add_method_queue(utils.open_chapter, True, self.path, self.gallery.path)
+		else:
+			add_method_queue(utils.open_chapter, True, self.path)
+		self.gallery.times_read += 1
+		self.gallery.last_read = datetime.datetime.now().replace(microsecond=0)
+		add_method_queue(GalleryDB.modify_gallery, True, self.gallery.id, times_read=self.gallery.times_read,
+							   last_read=self.gallery.last_read)
 
 class ChaptersContainer:
 	"""

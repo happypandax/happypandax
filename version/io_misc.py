@@ -620,7 +620,8 @@ class ImportExport(QObject):
 	def import_data(self, path):
 		with open(path, 'r', encoding='utf-8') as fp:
 			data = json.load(fp)
-			self.amount.emit(len(data))
+			data_count = len(data)
+			self.amount.emit(data_count)
 			pairs_found = []
 			for prog, g_id in enumerate(data, 1):
 				g_data = ImpExpData()
@@ -628,7 +629,8 @@ class ImportExport(QObject):
 				g = g_data.find_pair(pairs_found)
 				if g:
 					pairs_found.append(g)
-				self.imported_g.emit("Importing database file... ({} imported)".format(len(pairs_found)))
+				self.imported_g.emit(
+					"Importing database file... ({}/{} imported)".format(len(pairs_found), data_count))
 				self.progress.emit(prog)
 			self.finished.emit()
 

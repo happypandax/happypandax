@@ -148,6 +148,7 @@ class Fetch(QObject):
 											parsed = utils.title_parser(n)
 										else:
 											parsed = utils.title_parser(folder_name)
+												
 										if do_chapters:
 											archive_g = sorted(contents)
 											if not archive_g:

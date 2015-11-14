@@ -10,14 +10,6 @@ QWidget#chapter_main {
 	background-color: #464646;
 }
 
-GalleryMetaPopup {
-	background-color: #585858;
-}
-
-GalleryMetaPopup > QLabel {
-	color: white;
-}
-
 QLabel#image_box {
 	border:1px solid #ffd800;
 }

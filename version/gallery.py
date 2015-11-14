@@ -872,7 +872,7 @@ class MangaView(QListView):
 		self.sort_model.ROWCOUNT_CHANGE.connect(self.gallery_model.ROWCOUNT_CHANGE.emit)
 		self.setModel(self.sort_model)
 		self.SERIES_DIALOG.connect(self.spawn_dialog)
-		self.doubleClicked.connect(self.open_chapter)
+		self.doubleClicked.connect(lambda idx: idx.data(Qt.UserRole+1).chapters[0].open())
 		self.setViewportMargins(0,0,0,0)
 
 		self.gallery_window = misc.GalleryMetaWindow(parent if parent else self)
@@ -1030,7 +1030,7 @@ class MangaView(QListView):
 			if b > 1:
 				chap_numb = random.randint(0, b-1)
 
-		self.open_chapter(indx, chap_numb)
+		indx.data(Qt.UserRole+1).chapters[chap_numb].open()
 
 	def duplicate_check(self, simple=True):
 		mode = 'simple' if simple else 'advanced'
@@ -1088,31 +1088,6 @@ class MangaView(QListView):
 			else:
 				notifbar.add_text('No duplicates found!')
 
-	def open_chapter(self, index, chap_numb=0): # TODO: move this to Gallery class!!
-		if not isinstance(index, list):
-			index = [index]
-		for x in index:
-			gallery = x.data(Qt.UserRole+1)
-			if gallery.state == CustomDelegate.G_DOWNLOAD:
-				continue
-			if len(index) > 1:
-				self.STATUS_BAR_MSG.emit("Opening chapters of selected galleries")
-			else:
-				self.STATUS_BAR_MSG.emit("Opening chapter {} of {}".format(chap_numb+1, gallery.title))
-			try:
-				if gallery.is_archive:
-					gallerydb.add_method_queue(utils.open_chapter, True, gallery.chapters[chap_numb].path, gallery.path)
-				else:
-					gallerydb.add_method_queue(utils.open_chapter, True, gallery.chapters[chap_numb].path)
-				if not gallery.times_read:
-					gallery.times_read = 0
-				gallery.times_read += 1
-				gallery.last_read = datetime.datetime.now().replace(microsecond=0)
-				gallerydb.add_method_queue(gallerydb.GalleryDB.modify_gallery, True, gallery.id, times_read=gallery.times_read,
-							   last_read=gallery.last_read)
-			except IndexError:
-				pass
-
 	def del_chapter(self, index, chap_numb):
 		gallery = index.data(Qt.UserRole+1)
 		if len(gallery.chapters) < 2:
@@ -1128,11 +1103,6 @@ class MangaView(QListView):
 				gallery.chapters.pop(chap_numb, None)
 				self.gallery_model.replaceRows([gallery], index.row())
 				gallerydb.add_method_queue(gallerydb.ChapterDB.del_chapter, True, gallery.id, chap_numb)
-
-	def refresh(self):
-		#self.gallery_model.layoutChanged.emit() # TODO: CAUSE OF CRASH! FIX ASAP
-		#self.STATUS_BAR_MSG.emit("Refreshed")
-		pass
 
 	def sort(self, name):
 		if name == 'title':
@@ -1281,7 +1251,7 @@ class MangaTableView(QTableView):
 		palette.setColor(palette.HighlightedText, QColor('black'))
 		self.setPalette(palette)
 		self.setIconSize(QSize(0,0))
-		self.doubleClicked.connect(self.parent_widget.manga_list_view.open_chapter)
+		self.doubleClicked.connect(lambda idx: idx.data(Qt.UserRole+1).chapters[0].open())
 		self.grabGesture(Qt.SwipeGesture)
 		self.k_scroller = QScroller.scroller(self)
 		self.k_scroller.grabGesture(self, QScroller.TouchGesture)

@@ -701,6 +701,14 @@ import re as regex
 def title_parser(title):
 	"Receives a title to parse. Returns dict with 'title', 'artist' and language"
 	" ".join(title.split())
+	if '/' in title:
+		try:
+			title = os.path.split(title)[1]
+			if not title:
+				title = title
+		except IndexError:
+			pass
+
 	for x in ARCHIVE_FILES:
 		if title.endswith(x):
 			title = title[:-len(x)]

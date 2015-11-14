@@ -391,6 +391,7 @@ class AppWindow(QMainWindow):
 		self.manga_list_view.STATUS_BAR_MSG.connect(self.stat_temp_msg)
 		self.manga_table_view.STATUS_BAR_MSG.connect(self.stat_temp_msg)
 		self.stat_row_info()
+		app_constants.STAT_MSG_METHOD = self.stat_temp_msg
 
 	def stat_temp_msg(self, msg):
 		self.temp_timer.stop()

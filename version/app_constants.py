@@ -68,6 +68,7 @@ DATE_ADDED = 10
 # Application
 SYSTEM_TRAY = None
 NOTIF_BAR = None # HACK: Cause of thread warnings!!
+STAT_MSG_METHOD = None
 GENERAL_THREAD = None
 WHEEL_SCROLL_EFFECT = 10
 DOWNLOAD_MANAGER = None
