@@ -960,6 +960,15 @@ class MangaView(QListView):
 
 	#	print('Found ', found)
 
+	def wheelEvent(self, event):
+		if self.gallery_window.isVisible():
+			self.gallery_window.hide_animation.start()
+		return super().wheelEvent(event)
+
+	def mouseMoveEvent(self, event):
+		self.gallery_window.mouseMoveEvent(event)
+		return super().mouseMoveEvent(event)
+
 	def keyPressEvent(self, event):
 		if event.key() == Qt.Key_Return:
 			s_idx = self.selectedIndexes()

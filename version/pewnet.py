@@ -349,11 +349,11 @@ class ChaikaManager(DLManager):
 		for nt in ns_tags_li:
 			# namespace
 			ns = nt.find('label')
-			ns = ns.text if ns else ''
+			ns = ns.text.replace('_', ' ') if ns else ''
 			# tags
 			all_tags = nt.find_all('a')
 			for t in all_tags:
-				tag = t.text
+				tag = t.text.replace('_', ' ')
 				tags.append(ns + tag)
 		h_item.update_metadata('tags', tags)
 

@@ -52,6 +52,7 @@ class GalleryDownloaderUrlExtracter(QWidget):
 		for u in urls:
 			if u:
 				self.url_emit.emit(u)
+		self.close()
 
 class GalleryDownloaderItem(QObject):
 	"""
@@ -100,6 +101,7 @@ class GalleryDownloaderList(QTableWidget):
 		self.setAlternatingRowColors(True)
 		self.setEditTriggers(self.NoEditTriggers)
 		self.horizontalHeader().setStretchLastSection(True)
+		self.horizontalHeader().setSectionResizeMode(0, self.horizontalHeader().Stretch)
 		v_header = self.verticalHeader()
 		v_header.setSectionResizeMode(v_header.Fixed)
 		v_header.setDefaultSectionSize(100)

@@ -22,7 +22,7 @@ from PyQt5.QtCore import (Qt, QDate, QPoint, pyqtSignal, QThread,
 from PyQt5.QtGui import (QTextCursor, QIcon, QMouseEvent, QFont,
 						 QPixmapCache, QPalette, QPainter, QBrush,
 						 QColor, QPen, QPixmap, QMovie, QPaintEvent, QFontMetrics,
-						 QPolygonF, QRegion)
+						 QPolygonF, QRegion, QCursor)
 from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QVBoxLayout, QHBoxLayout,
 							 QDialog, QGridLayout, QLineEdit,
@@ -65,6 +65,10 @@ def clearLayout(layout):
 			elif child.layout() is not None:
 				clearLayout(child.layout())
 
+def create_animation(parent, prop):
+	p_array = QByteArray().append(prop)
+	return QPropertyAnimation(parent, p_array)
+
 class Line(QFrame):
 	"'v' for vertical line or 'h' for horizontail line, color is hex string"
 	def __init__(self, orentiation, parent=None):
@@ -81,8 +85,7 @@ class CompleterPopupView(QListView):
 		super().__init__(*args, **kwargs)
 
 	def _setup(self):
-		property_b_array = QByteArray().append('windowOpacity')
-		self.fade_animation = QPropertyAnimation(self, property_b_array)
+		self.fade_animation = create_animation(self, 'windowOpacity')
 		self.fade_animation.setDuration(200)
 		self.fade_animation.setStartValue(0.0)
 		self.fade_animation.setEndValue(1.0)
@@ -332,14 +335,51 @@ class GalleryMetaWindow(ArrowWindow):
 
 	def __init__(self, parent):
 		super().__init__(parent)
-
 		self.setMouseTracking(True)
 		# gallery data stuff
+
 		self.content_margin = 10
 		self.current_gallery = None
 		self.g_widget = self.GalleryLayout(self, parent)
+		self.hide_timer = QTimer()
+		self.hide_timer.timeout.connect(self.delayed_hide)
+		self.hide_timer.setSingleShot(True)
+		self.hide_animation = create_animation(self, 'windowOpacity')
+		self.hide_animation.setDuration(400)
+		self.hide_animation.setStartValue(1.0)
+		self.hide_animation.setEndValue(0.0)
+		self.hide_animation.finished.connect(self.hide)
+		self.show_animation = create_animation(self, 'windowOpacity')
+		self.show_animation.setDuration(350)
+		self.show_animation.setStartValue(0.0)
+		self.show_animation.setEndValue(1.0)
+
+	def show(self):
+		self.setWindowOpacity(0)
+		super().show()
+		self.show_animation.start()
+
+	def _mouse_in_gallery(self):
+		mouse_p = QCursor.pos()
+		h = self.idx_top_l.x() <= mouse_p.x() <= self.idx_top_r.x()
+		v = self.idx_top_l.y() <= mouse_p.y() <= self.idx_btm_l.y()
+		if h and v:
+			return True
+		return False
+
+	def mouseMoveEvent(self, event):
+		if self.isVisible():
+			if not self._mouse_in_gallery():
+				if not self.hide_timer.isActive():
+					self.hide_timer.start(400)
+		return super().mouseMoveEvent(event)
+
+	def delayed_hide(self):
+		if not self.underMouse() and not self._mouse_in_gallery():
+			self.hide_animation.start()
 
 	def show_gallery(self, index, view):
+		self.view = view
 		desktop_w = QDesktopWidget().width()
 		desktop_h = QDesktopWidget().height()
 		
@@ -347,9 +387,9 @@ class GalleryMetaWindow(ArrowWindow):
 		gallery_touch_offset = 10 # How far away the window is from touching gallery
 
 		index_rect = view.visualRect(index)
-		index_top_left = view.mapToGlobal(index_rect.topLeft())
-		index_top_right = view.mapToGlobal(index_rect.topRight())
-		index_btm_left = view.mapToGlobal(index_rect.bottomLeft())
+		self.idx_top_l = index_top_left = view.mapToGlobal(index_rect.topLeft())
+		self.idx_top_r = index_top_right = view.mapToGlobal(index_rect.topRight())
+		self.idx_btm_l = index_btm_left = view.mapToGlobal(index_rect.bottomLeft())
 		index_btm_right = view.mapToGlobal(index_rect.bottomRight())
 
 		for idx in (index_top_left, index_top_right, index_btm_left, index_btm_right):
@@ -422,10 +462,10 @@ class GalleryMetaWindow(ArrowWindow):
 		else: # default pos is bottom
 			check_bottom(True)
 
-		self.set_gallery(index.data(Qt.UserRole+1))
+		self._set_gallery(index.data(Qt.UserRole+1))
 		self.show()
 
-	def set_gallery(self, gallery):
+	def _set_gallery(self, gallery):
 		self.current_gallery = gallery
 		self.g_widget.apply_gallery(gallery)
 		self.g_widget.resize(self.width()-self.content_margin,
@@ -436,14 +476,9 @@ class GalleryMetaWindow(ArrowWindow):
 			start_point = QPoint(0, self.arrow_size.height())
 		else:
 			start_point = QPoint(0, 0)
-		print(start_point.x(), start_point.y())
 		# title 
 		#title_region = QRegion(0, 0, self.g_title_lbl.width(), self.g_title_lbl.height())
 		self.g_widget.move(start_point)
-
-	def leaveEvent(self, event):
-		self.hide()
-		super().leaveEvent(event)
 
 	class GalleryLayout(QFrame):
 		class ChapterList(QTableWidget):
@@ -468,7 +503,7 @@ class GalleryMetaWindow(ArrowWindow):
 				self.viewport().setPalette(palette)
 				self.setWordWrap(False)
 				self.setTextElideMode(Qt.ElideRight)
-				self.doubleClicked.connect(self.open_chapter)
+				self.doubleClicked.connect(lambda idx: self._get_chap(idx).open())
 
 			def set_chapters(self, chapter_container):
 				for r in range(self.rowCount()):
@@ -495,12 +530,30 @@ class GalleryMetaWindow(ArrowWindow):
 					self.setItem(c_row, 2, p)
 				self.sortItems(0)
 
-			def open_chapter(self, idx):
+			def _get_chap(self, idx):
 				r = idx.row()
 				t = self.item(r, 0)
-				chap = t.data(Qt.UserRole+1)
-				chap.open()
-		
+				return t.data(Qt.UserRole+1)
+
+			def contextMenuEvent(self, event):
+				idx = self.indexAt(event.pos())
+				if idx.isValid():
+					chap = self._get_chap(idx)
+					menu = QMenu(self)
+					open = menu.addAction('Open', lambda: chap.open())
+					def open_source():
+						text = 'Opening archive...' if chap.in_archive else 'Opening folder...'
+						app_constants.STAT_MSG_METHOD(text)
+						path = chap.gallery.path if chap.in_archive else chap.path
+						utils.open_path(path)
+					t = "Open archive" if chap.in_archive else "Open folder"
+					open_path = menu.addAction(t, open_source)
+					menu.exec_(event.globalPos())
+					event.accept()
+					del menu
+				else:
+					event.ignore()
+
 		def __init__(self, parent, appwindow):
 			super().__init__(parent)
 			self.setStyleSheet('color:white;')
@@ -684,8 +737,7 @@ class Spinner(TransparentWidget):
 		self.state_timer.setSingleShot(True)
 
 		# animation
-		property_b_array = QByteArray().append('windowOpacity')
-		self.fade_animation = QPropertyAnimation(self, property_b_array)
+		self.fade_animation = create_animation(self, 'windowOpacity')
 		self.fade_animation.setDuration(800)
 		self.fade_animation.setStartValue(0.0)
 		self.fade_animation.setEndValue(1.0)
@@ -1061,8 +1113,7 @@ class BasePopup(TransparentWidget):
 				pass
 
 		# animation
-		property_b_array = QByteArray().append('windowOpacity')
-		self.fade_animation = QPropertyAnimation(self, property_b_array)
+		self.fade_animation = create_animation(self, 'windowOpacity')
 		self.fade_animation.setDuration(800)
 		self.fade_animation.setStartValue(0.0)
 		self.fade_animation.setEndValue(1.0)
@@ -1177,8 +1228,7 @@ class NotificationOverlay(QWidget):
 		self._override_hide = False
 		self.text_queue = []
 
-		property_b_array = QByteArray().append('minimumHeight')
-		self.slide_animation = QPropertyAnimation(self, property_b_array)
+		self.slide_animation = create_animation(self, 'minimumHeight')
 		self.slide_animation.setDuration(500)
 		self.slide_animation.setStartValue(0)
 		self.slide_animation.setEndValue(self._default_height)
