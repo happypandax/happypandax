@@ -56,6 +56,7 @@ Note: Try renaming the 'main.py' file to 'main.pyw' and then just doubleclick on
 
 # Mac OS X
 (Note: PyQt5 MUST be installed via Homebrew and NOT via Pip)
+
 1. Install Homebrew (this makes everything easier)
   - Open Terminal
   - Run the following
