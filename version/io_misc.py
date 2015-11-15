@@ -62,6 +62,7 @@ class GalleryDownloaderItem(QObject):
 	def __init__(self, hitem):
 		super().__init__()
 		assert isinstance(hitem, pewnet.HenItem)
+		self.d_item_ready.connect(self.done)
 		self.item = hitem
 		url = self.item.gallery_url
 
@@ -72,10 +73,10 @@ class GalleryDownloaderItem(QObject):
 		self.item.thumb_rdy.connect(set_profile)
 
 		# status
-		self.status_item = QTableWidgetItem('Downloading...')
+		self.status_item = QTableWidgetItem('In queue...')
 		self.status_item.setToolTip(url)
 		def set_finished(item):
-			self.status_item.setText('Finished downloading!')
+			self.status_item.setText('Finished!')
 			self.d_item_ready.emit(self)
 		self.item.file_rdy.connect(set_finished)
 
@@ -88,6 +89,26 @@ class GalleryDownloaderItem(QObject):
 		self.type_item = QTableWidgetItem(type)
 		self.type_item.setToolTip(url)
 
+		self.status_timer = QTimer()
+		self.status_timer.timeout.connect(self.check_progress)
+		self.status_timer.start(500)
+
+	def check_progress(self):
+		if self.item.current_state == self.item.DOWNLOADING:
+			btomb = 1048576
+			self.status_item.setText("{0:.2f}/{1:.2f} MB".format(self.item.current_size/btomb,
+															  self.item.total_size/btomb))
+			self.size_item.setText("{0:.2f} MB".format(self.item.total_size/btomb))
+		elif self.item.current_state == self.item.CANCELLED:
+			self.status_item.setText("Cancelled!")
+			self.status_timer.stop()
+
+	def done(self):
+		self.status_timer.stop()
+		if self.item.download_type == 0:
+			self.status_item.setText("Sent to library!")
+		else:
+			self.status_item.setText("Sent to torrent client!")
 
 class GalleryDownloaderList(QTableWidget):
 	"""
@@ -100,8 +121,7 @@ class GalleryDownloaderList(QTableWidget):
 		self.setIconSize(QSize(50, 100))
 		self.setAlternatingRowColors(True)
 		self.setEditTriggers(self.NoEditTriggers)
-		self.horizontalHeader().setStretchLastSection(True)
-		self.horizontalHeader().setSectionResizeMode(0, self.horizontalHeader().Stretch)
+		self.setFocusPolicy(Qt.NoFocus)
 		v_header = self.verticalHeader()
 		v_header.setSectionResizeMode(v_header.Fixed)
 		v_header.setDefaultSectionSize(100)
@@ -117,6 +137,12 @@ class GalleryDownloaderList(QTableWidget):
 		self.setPalette(palette)
 		self.setHorizontalHeaderLabels(
 			[' ', 'Status', 'Size', 'Cost', 'Type'])
+		self.horizontalHeader().setStretchLastSection(True)
+		self.horizontalHeader().setSectionResizeMode(0, self.horizontalHeader().Stretch)
+		self.horizontalHeader().setSectionResizeMode(1, self.horizontalHeader().ResizeToContents)
+		self.horizontalHeader().setSectionResizeMode(2, self.horizontalHeader().ResizeToContents)
+		self.horizontalHeader().setSectionResizeMode(3, self.horizontalHeader().ResizeToContents)
+		self.horizontalHeader().setSectionResizeMode(4, self.horizontalHeader().ResizeToContents)
 
 		self.fetch_instance = fetch.Fetch()
 		self.fetch_instance.download_items = []
@@ -129,8 +155,6 @@ class GalleryDownloaderList(QTableWidget):
 		g_item = GalleryDownloaderItem(hitem)
 		if hitem.download_type == 0:
 			g_item.d_item_ready.connect(self.init_gallery)
-		elif hitem.download_type == 1:
-			g_item.d_item_ready.connect(lambda: g_item.status_item.setText('Sent to torrent client!'))
 
 		self.insertRow(0)
 		self.setSortingEnabled(False)
@@ -143,7 +167,6 @@ class GalleryDownloaderList(QTableWidget):
 
 	def init_gallery(self, download_item):
 		assert isinstance(download_item, GalleryDownloaderItem)
-		download_item.status_item.setText('Adding to library...')
 		self.fetch_instance.download_items.append(download_item)
 		self.init_fetch_instance.emit([download_item.item.file])
 
@@ -243,7 +266,7 @@ class GalleryDownloader(QWidget):
 
 			h_item = manager.from_gallery_url(url)
 		except pewnet.WrongURL:
-			self.info_lbl.setText("<font color='red'>Failed to add to download list</font>")
+			self.info_lbl.setText("<font color='red'>Failed to add to add:\n{}</font>".format(url))
 			self.info_lbl.show()
 			return
 		if h_item:

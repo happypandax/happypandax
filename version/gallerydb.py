@@ -47,7 +47,6 @@ def process_methods():
 	method. Named arguments are put in a dict.
 	"""
 	while True:
-		print('waiting for method')
 		l = method_queue.get()
 		log_d('Processing a method from queue...')
 		method = l.pop(0)
@@ -69,7 +68,6 @@ def process_methods():
 			except IndexError:
 				get_args = 0
 		args = tuple(args)
-		print('calling')
 		if args and kwargs:
 			r = method(*args, **kwargs)
 		elif args:
@@ -78,7 +76,6 @@ def process_methods():
 			r = method(**kwargs)
 		else:
 			r = method()
-		print('called method')
 		if not no_return:
 			method_return.put(r)
 		method_queue.task_done()
@@ -99,7 +96,6 @@ def add_method_queue(method, no_return, *args, **kwargs):
 	if kwargs:
 		arg_list.append(kwargs)
 	method_queue.put(arg_list)
-	print('putted method to queue')
 	if not no_return:
 		return method_return.get()
 

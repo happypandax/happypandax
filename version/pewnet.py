@@ -33,6 +33,26 @@ log_c = log.critical
 
 class WrongURL(Exception): pass
 
+class DownloaderItem(QObject):
+	"Convenience class"
+	IN_QUEUE, DOWNLOADING, FINISHED, CANCELLED = range(4)
+	file_rdy = pyqtSignal(object)
+	def __init__(self, url="", session=None):
+		super().__init__()
+		self.session = session
+		self.download_url = url
+		self.file = ""
+		self.download_url = ""
+		self.name = ""
+
+		self.total_size = 0
+		self.current_size = 0
+		self.current_state = self.IN_QUEUE
+
+	def cancel(self):
+		self.current_state = self.CANCELLED
+
+
 class Downloader(QObject):
 	"""
 	A download manager.
@@ -41,8 +61,8 @@ class Downloader(QObject):
 	_inc_queue = Queue()
 	_browser_session = None
 	_threads = []
-	item_finished = pyqtSignal(tuple)
-	active_downloads = {}
+	item_finished = pyqtSignal(object)
+	active_items = []
 
 	def __init__(self):
 		super().__init__()
@@ -54,27 +74,38 @@ class Downloader(QObject):
 	@staticmethod
 	def add_to_queue(item, session=None, dir=None):
 		"""
-		Add an url to the queue or a tuple where first index is name of file.
+		Add a DownloaderItem or url
 		An optional requests.Session object can be specified
 		A temp dir to be used can be specified
+
+		Returns a downloader item
 		"""
+		if isinstance(item, str):
+			item = DownloaderItem(item)
+
+		log_i("Adding item to download queue: {}".format(item.download_url))
 		if dir:
 			Downloader._inc_queue.put({'dir':dir, 'item':item})
 		else:
 			Downloader._inc_queue.put(item)
 		Downloader._session = session
 
+		return item
+
 	def _downloading(self):
 		"The downloader. Put in a thread."
 		while True:
+			log_d("Download items in queue: {}".format(self._inc_queue.qsize()))
+			print('Starting item download')
 			interrupt = False
 			item = self._inc_queue.get()
+			item.current_state = item.DOWNLOADING
 			temp_base = None
 			if isinstance(item, dict):
 				temp_base = item['dir']
 				item = item['item']
 
-			file_name = item[0] if isinstance(item, (tuple, list)) else str(uuid.uuid4())
+			file_name = item.name if item.name else str(uuid.uuid4())
 			
 			invalid_chars = '\\/:*?"<>|'
 			for x in invalid_chars:
@@ -84,21 +115,23 @@ class Downloader(QObject):
 				os.path.join(temp_base, file_name)
 			file_name_part = file_name + '.part'
 
-			download_url = item[1] if isinstance(item, (tuple, list)) else item
+			download_url = item.download_url
 
-			self.active_downloads[download_url] = True
+			self.active_items.append(item)
 
 			if self._browser_session:
 				r = self._browser_session.get(download_url, stream=True)
 			else:
 				r = requests.get(download_url, stream=True)
+			item.total_size = int(r.headers['content-length'])
 
 			with open(file_name_part, 'wb') as f:
 				for data in r.iter_content(chunk_size=1024):
-					if self.active_downloads[download_url] == False:
+					if item.current_state == item.CANCELLED:
 						interrupt = True
 						break
 					if data:
+						item.current_size += len(data)
 						f.write(data)
 						f.flush()
 			if not interrupt:
@@ -120,17 +153,24 @@ class Downloader(QObject):
 					if n > 100:
 						file_name = file_name_part
 
-				self.active_downloads[download_url] = False
-				self.item_finished.emit((download_url, file_name))
+				item.file = file_name
+				item.current_state = item.FINISHED
+				item.file_rdy.emit(item)
+				self.item_finished.emit(item)
 			else:
 				try:
 					os.remove(file_name_part)
 				except:
 					pass
+			print("finished item download")
+			print("items till in queue", self._inc_queue.empty())
+			log_d("Finished downloading: {}".format(download_url))
+			self.active_items.remove(item)
 			self._inc_queue.task_done()
 
 	def start_manager(self, max_tasks):
 		"Starts download manager where max simultaneous is mask_tasks"
+		log_i("Starting download manager with {} jobs".format(max_tasks))
 		for x in range(max_tasks):
 			thread = threading.Thread(
 					target=self._downloading,
@@ -139,40 +179,33 @@ class Downloader(QObject):
 			thread.start()
 			self._threads.append(thread)
 
-class HenItem(QObject):
+class HenItem(DownloaderItem):
 	"A convenience class that most methods in DLManager and it's subclasses returns"
 	thumb_rdy = pyqtSignal(object)
-	file_rdy = pyqtSignal(object)
 	def __init__(self, session=None):
-		super().__init__()
-		self.session = session
+		super().__init__(session=session)
 		self.thumb_url = "" # an url to gallery thumb
 		self.thumb = None
 		self.cost = "0"
 		self.size = ""
-		self.name = ""
 		self.metadata = {}
-		self.file = ""
-		self.download_url = ""
+		self.gallery_name = ""
 		self.gallery_url = ""
 		self.download_type = app_constants.HEN_DOWNLOAD_TYPE
 		self.torrents_found = 0
+		self.file_rdy.connect(self.check_type)
 
 	def fetch_thumb(self):
 		"Fetches thumbnail. Emits thumb_rdy, when done"
-		def thumb_fetched(dl):
-			if dl[0] == self.thumb_url:
-				self.thumb = dl[1]
-				self.thumb_rdy.emit(self)
-		app_constants.DOWNLOAD_MANAGER.item_finished.connect(thumb_fetched)
-		Downloader.add_to_queue(self.thumb_url, self.session, app_constants.temp_dir)
+		def thumb_fetched():
+			self.thumb = self._thumb_item.file
+			self.thumb_rdy.emit(self)
+		self._thumb_item = Downloader.add_to_queue(self.thumb_url, self.session, app_constants.temp_dir)
+		self._thumb_item.file_rdy.connect(thumb_fetched)
 
-	def _file_fetched(self, dl_data):
-		if self.download_url == dl_data[0]:
-			self.file = dl_data[1]
-			if self.download_type == 1:
-				utils.open_torrent(self.file)
-			self.file_rdy.emit(self)
+	def check_type(self):
+		if self.download_type == 1:
+			utils.open_torrent(self.file)
 
 	def update_metadata(self, key, value):
 		"""
@@ -242,12 +275,11 @@ class DLManager(QObject):
 		- specify download type (important)... 0 for archive and 1 for torrent 2 for other
 		- fetch optional thumbnail on HenItem
 		- set download url on HenItem (important)
-		- connect gallery downloader item finished signal to HenItem file_fetched (important)
-		- add download url (and optional file name) to download queue
+		- add h_item to download queue
 		- return h-item if everything went successfully, else return none
 
 		Metadata should imitiate the offical EH API response.
-		It is recommended to use update_metadata in HenItem when setting metadata
+		It is recommended to use update_metadata in HenItem when adding metadata
 		see the ChaikaManager class for a complete example
 		EH API: http://ehwiki.org/wiki/API
 		"""
@@ -273,8 +305,8 @@ class ChaikaManager(DLManager):
 		else:
 			return 
 		h_item.commit_metadata()
-		app_constants.DOWNLOAD_MANAGER.item_finished.connect(h_item._file_fetched)
-		Downloader.add_to_queue((h_item.name+'.zip', h_item.download_url), self._browser.session)
+		h_item.name = h_item.gallery_name+'.zip'
+		Downloader.add_to_queue(h_item, self._browser.session)
 		return h_item
 
 	def _gallery_page(self, g_url, h_item):
@@ -327,7 +359,7 @@ class ChaikaManager(DLManager):
 		posted = time.mktime(datetime.strptime(month+day+year, '%m%d%Y').timetuple())
 		h_item.update_metadata('posted', posted)
 
-		h_item.name = title
+		h_item.gallery_name = title
 		h_item.size = f_size_in_mb
 
 		archive_page = all_li[len(all_li)-1].a.get('href')
@@ -429,7 +461,7 @@ class HenManager(DLManager):
 		except KeyError:
 			raise WrongURL
 		h_item.thumb_url = gallery['thumb']
-		h_item.name = gallery['title']
+		h_item.gallery_name = gallery['title']
 		h_item.size = "{0:.2f} MB".format(gallery['filesize']/1048576)
 
 		if self.ARCHIVE:
@@ -455,8 +487,8 @@ class HenManager(DLManager):
 				f_name = succes_test.find('strong').text
 				h_item.download_url = gallery_dl
 				h_item.fetch_thumb()
-				app_constants.DOWNLOAD_MANAGER.item_finished.connect(h_item._file_fetched)
-				Downloader.add_to_queue((f_name, gallery_dl), self._browser.session)
+				h_item.name = f_name
+				Downloader.add_to_queue(h_item, self._browser.session)
 				return h_item
 
 		elif self.TORRENT:
@@ -468,8 +500,8 @@ class HenManager(DLManager):
 				url_and_file = self._torrent_url_d(g_id_token[0], g_id_token[1])
 				if url_and_file:
 					h_item.download_url = url_and_file[0]
-					app_constants.DOWNLOAD_MANAGER.item_finished.connect(h_item._file_fetched)
-					Downloader.add_to_queue((url_and_file[1], h_item.download_url), self._browser.session)
+					h_item.name = url_and_file[1]
+					Downloader.add_to_queue(h_item, self._browser.session)
 					return h_item
 			else:
 				return h_item

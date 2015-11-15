@@ -234,7 +234,6 @@ class ToolbarButton(QPushButton):
 
 	def text(self):
 		return self._text
-		
 
 class TransparentWidget(BaseMoveWidget):
 	def __init__(self, parent=None, **kwargs):
@@ -379,6 +378,7 @@ class GalleryMetaWindow(ArrowWindow):
 			self.hide_animation.start()
 
 	def show_gallery(self, index, view):
+
 		self.view = view
 		desktop_w = QDesktopWidget().width()
 		desktop_h = QDesktopWidget().height()
@@ -558,7 +558,7 @@ class GalleryMetaWindow(ArrowWindow):
 			super().__init__(parent)
 			self.setStyleSheet('color:white;')
 			main_layout = QHBoxLayout(self)
-			stacked_l = QStackedLayout()
+			self.stacked_l = stacked_l = QStackedLayout()
 			general_info = QWidget(self)
 			chapter_info = QWidget(self)
 			chapter_layout = QVBoxLayout(chapter_info)
@@ -652,6 +652,7 @@ class GalleryMetaWindow(ArrowWindow):
 			return True
 
 		def apply_gallery(self, gallery):
+			self.stacked_l.setCurrentIndex(self.general_index)
 			self.chapter_list.set_chapters(gallery.chapters)
 			self.g_title_lbl.setText(gallery.title)
 			self.g_artist_lbl.setText(gallery.artist)
