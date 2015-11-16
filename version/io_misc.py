@@ -10,7 +10,7 @@ from PyQt5.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout,
 							 QFileDialog, QScrollArea, QLineEdit,
 							 QFormLayout, QGroupBox, QSizePolicy,
 							 QTableWidget, QTableWidgetItem, QPlainTextEdit,
-							 QShortcut)
+							 QShortcut, QMenu, qApp)
 
 import app_constants
 import misc
@@ -67,6 +67,7 @@ class GalleryDownloaderItem(QObject):
 		url = self.item.gallery_url
 
 		self.profile_item = QTableWidgetItem(self.item.name)
+		self.profile_item.setData(Qt.UserRole+1, hitem)
 		self.profile_item.setToolTip(url)
 		def set_profile(item):
 			self.profile_item.setIcon(QIcon(item.thumb))
@@ -146,15 +147,21 @@ class GalleryDownloaderList(QTableWidget):
 
 		self.fetch_instance = fetch.Fetch()
 		self.fetch_instance.download_items = []
-		self.fetch_instance.FINISHED.connect(self.gallery_to_model)
+		self.fetch_instance.FINISHED.connect(self._gallery_to_model)
 		self.fetch_instance.moveToThread(app_constants.GENERAL_THREAD)
 		self.init_fetch_instance.connect(self.fetch_instance.local)
+
+		def open_item(idx):
+			hitem = self._get_hitem(idx)
+			if hitem.current_state == hitem.DOWNLOADING:
+				hitem.open(True)
+		self.doubleClicked.connect(open_item)
 
 	def add_entry(self, hitem):
 		assert isinstance(hitem, pewnet.HenItem)
 		g_item = GalleryDownloaderItem(hitem)
 		if hitem.download_type == 0:
-			g_item.d_item_ready.connect(self.init_gallery)
+			g_item.d_item_ready.connect(self._init_gallery)
 
 		self.insertRow(0)
 		self.setSortingEnabled(False)
@@ -165,12 +172,38 @@ class GalleryDownloaderList(QTableWidget):
 		self.setItem(0, 4, g_item.type_item)
 		self.setSortingEnabled(True)
 
-	def init_gallery(self, download_item):
+	def _get_hitem(self, idx):
+		r = idx.row()
+		return self.item(r, 0).data(Qt.UserRole+1)
+
+	def contextMenuEvent(self, event):
+		idx = self.indexAt(event.pos())
+		if idx.isValid():
+			hitem = self._get_hitem(idx)
+			clipboard = qApp.clipboard()
+			menu = QMenu()
+			if hitem.current_state == hitem.DOWNLOADING:
+				menu.addAction("Cancel", hitem.cancel)
+			if hitem.current_state == hitem.FINISHED:
+				menu.addAction("Open", hitem.open)
+				menu.addAction("Show in folder", lambda: hitem.open(True))
+			menu.addAction("Copy path", lambda: clipboard.setText(hitem.file))
+			menu.addAction("Copy gallery URL", lambda: clipboard.setText(hitem.gallery_url))
+			menu.addAction("Copy download URL", lambda: clipboard.setText(hitem.download_url))
+			if not hitem.current_state == hitem.DOWNLOADING:
+				menu.addAction("Remove", lambda: self.removeRow(idx.row()))
+			menu.exec_(event.globalPos())
+			event.accept()
+			del menu
+		else:
+			event.ignore()
+
+	def _init_gallery(self, download_item):
 		assert isinstance(download_item, GalleryDownloaderItem)
 		self.fetch_instance.download_items.append(download_item)
 		self.init_fetch_instance.emit([download_item.item.file])
 
-	def gallery_to_model(self, gallery_list):
+	def _gallery_to_model(self, gallery_list):
 		try:
 			d_item = self.fetch_instance.download_items.pop(0)
 		except IndexError:

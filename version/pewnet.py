@@ -42,7 +42,6 @@ class DownloaderItem(QObject):
 		self.session = session
 		self.download_url = url
 		self.file = ""
-		self.download_url = ""
 		self.name = ""
 
 		self.total_size = 0
@@ -52,6 +51,13 @@ class DownloaderItem(QObject):
 	def cancel(self):
 		self.current_state = self.CANCELLED
 
+	def open(self, containing=False):
+		if self.file:
+			if containing:
+				p = os.path.split(self.file)[0]
+				utils.open_path(p, self.file)
+			else:
+				utils.open_path(self.file)
 
 class Downloader(QObject):
 	"""
