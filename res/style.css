@@ -183,12 +183,16 @@ NotificationOverlay > * {
 	color:white;
 }
 
-TagText {
+TagText:pressed, TagText:hover {
 	border: 1px solid rgba(0,0,0,0.85);
-	border-radius: 5px;
-	padding-left: 3px;
-	padding-right: 3px;
+}
 
+TagText {
+	padding-right: 3px;
+	padding-left: 3px;
+	border-radius: 5px;
+	border: 1px solid rgba(164,164,164,0.50);
+	background-color: rgba(164,164,164,0.50);
 }
 
 /*GalleryDownloaderItem > *{

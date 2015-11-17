@@ -915,7 +915,7 @@ class SettingsDialog(QWidget):
 		advanced_db_page, advanced_db_page_l = new_tab('Database', advanced)
 		# Advanced / Database / Import/Export
 		def init_export():
-			confirm_msg = QMessageBox(QMessageBox.Question, '', 'Are you sure you want export your database? This might take a long time.',
+			confirm_msg = QMessageBox(QMessageBox.Question, '', 'Are you sure you want to export your database? This might take a long time.',
 							 QMessageBox.Yes | QMessageBox.No, self)
 			if confirm_msg.exec() == QMessageBox.Yes:
 				app_popup = ApplicationPopup(self.parent_widget)
@@ -977,27 +977,11 @@ class SettingsDialog(QWidget):
 		# About
 		about = QTabWidget(self)
 		self.about_index = self.right_panel.addWidget(about)
-		about_happypanda_page = QWidget()
-		about_troubleshoot_page = QWidget()
-		about.addTab(about_happypanda_page, 'About Happypanda')
-		about_layout = QVBoxLayout()
-		about_happypanda_page.setLayout(about_layout)
-		info_lbl = QLabel('<b>Creator:</b> <a href=\'https://github.com/Pewpews\'>'+
-					'Pewpews</a><br/>'+
-					'Chat: <a href=\'https://gitter.im/Pewpews/happypanda\'>'+
-					'Gitter chat</a><br/>'+
-					'Email: happypandabugs@gmail.com<br/>'+
-					'<b>Current version {}</b><br/>'.format(app_constants.vs)+
-					'Happypanda was created using:<br/>'+
-					'- Python 3.4<br/>'+
-					'- The Qt5 Framework<br/>'+
-					'- Various python libraries (see github repo)')
+		about_happypanda_page, about_layout = new_tab("About Happypanda", about, False)
+		info_lbl = QLabel(app_constants.ABOUT)
+		info_lbl.setWordWrap(True)
 		info_lbl.setOpenExternalLinks(True)
-		about_layout.addWidget(info_lbl, 0, Qt.AlignTop)
-		gpl_lbl = QLabel(app_constants.GPL)
-		gpl_lbl.setOpenExternalLinks(True)
-		gpl_lbl.setWordWrap(True)
-		about_layout.addWidget(gpl_lbl, 0, Qt.AlignTop)
+		about_layout.addWidget(info_lbl)
 		about_layout.addWidget(Spacer('v'))
 		open_hp_folder = QPushButton('Open Happypanda Directory')
 		open_hp_folder.clicked.connect(self.open_hp_folder)
@@ -1033,66 +1017,28 @@ class SettingsDialog(QWidget):
 		about_db_overview_m_l.addRow(about_stats_tab_widget)
 
 		# About / Troubleshooting
+		about_troubleshoot_page = QWidget()
 		about.addTab(about_troubleshoot_page, 'Bug Reporting')
 		troubleshoot_layout = QVBoxLayout()
 		about_troubleshoot_page.setLayout(troubleshoot_layout)
 		guide_lbl = QLabel(app_constants.TROUBLE_GUIDE)
 		guide_lbl.setTextFormat(Qt.RichText)
 		guide_lbl.setOpenExternalLinks(True)
+		guide_lbl.setWordWrap(True)
 		troubleshoot_layout.addWidget(guide_lbl, 0, Qt.AlignTop)
 		troubleshoot_layout.addWidget(Spacer('v'))
-		# About / Regex Cheatsheet
-		about_s_regex = QGroupBox('Regex')
-		about.addTab(about_s_regex, 'Regex Cheatsheet')
-		about_s_regex_l = QFormLayout()
-		about_s_regex.setLayout(about_s_regex_l)
-		about_s_regex_l.addRow('\\\\\\\\', QLabel('Match literally \\'))
-		about_s_regex_l.addRow('.', QLabel('Match any single character'))
-		about_s_regex_l.addRow('^', QLabel('Start of string'))
-		about_s_regex_l.addRow('$', QLabel('End of string'))
-		about_s_regex_l.addRow('\\d', QLabel('Match any decimal digit'))
-		about_s_regex_l.addRow('\\D', QLabel('Match any non-digit character'))
-		about_s_regex_l.addRow('\\s', QLabel('Match any whitespace character'))
-		about_s_regex_l.addRow('\\S', QLabel('Match any non-whitespace character'))
-		about_s_regex_l.addRow('\\w', QLabel('Match any alphanumeric character'))
-		about_s_regex_l.addRow('\\W', QLabel('Match any non-alphanumeric character'))
-		about_s_regex_l.addRow('*', QLabel('Repeat previous character zero or more times'))
-		about_s_regex_l.addRow('+', QLabel('Repeat previous character one or more times'))
-		about_s_regex_l.addRow('?', QLabel('Repeat previous character one or zero times'))
-		about_s_regex_l.addRow('{m, n}', QLabel('Repeat previous character atleast <i>m</i> times but no more than <i>n</i> times'))
-		about_s_regex_l.addRow('(...)', QLabel('Match everything enclosed'))
-		about_s_regex_l.addRow('(a|b)', QLabel('Match either a or b'))
-		about_s_regex_l.addRow('[abc]', QLabel('Match a single character of: a, b or c'))
-		about_s_regex_l.addRow('[^abc]', QLabel('Match a character except: a, b or c'))
-		about_s_regex_l.addRow('[a-z]', QLabel('Match a character in the range'))
-		about_s_regex_l.addRow('[^a-z]', QLabel('Match a character not in the range'))
+
 		# About / Search tutorial
-		about_search_scroll = QScrollArea()
-		about_search_scroll.setBackgroundRole(QPalette.Base)
-		about_search_scroll.setWidgetResizable(True)
-		about_search_tut = QWidget()
-		about.addTab(about_search_scroll, 'Search Guide')
-		about_search_tut_l = QVBoxLayout()
-		about_search_tut.setLayout(about_search_tut_l)
-		# General
-		about_search_general = QGroupBox('General')
-		about_search_tut_l.addWidget(about_search_general)
-		about_search_general_l = QFormLayout()
-		about_search_general.setLayout(about_search_general_l)
-		about_search_general_l.addRow(QLabel(app_constants.SEARCH_TUTORIAL_GENERAL))
-		# Title & Author
-		about_search_tit_aut = QGroupBox('Title and Author')
-		about_search_tut_l.addWidget(about_search_tit_aut)
-		about_search_tit_l = QFormLayout()
-		about_search_tit_aut.setLayout(about_search_tit_l)
-		about_search_tit_l.addRow(QLabel(app_constants.SEARCH_TUTORIAL_TIT_AUT))
-		# Namespace & Tags
-		about_search_tags = QGroupBox('Namespace and Tags')
-		about_search_tut_l.addWidget(about_search_tags)
-		about_search_tags_l = QFormLayout()
-		about_search_tags.setLayout(about_search_tags_l)
-		about_search_tags_l.addRow(QLabel(app_constants.SEARCH_TUTORIAL_TAGS))
-		about_search_scroll.setWidget(about_search_tut)
+		about_search_tut, about_search_tut_l = new_tab("Search Guide", about, True)
+		g_search_lbl = QLabel(app_constants.SEARCH_TUTORIAL_TAGS)
+		g_search_lbl.setWordWrap(True)
+		about_search_tut_l.addRow(g_search_lbl)
+
+		# About / Regex Cheatsheet
+		about_s_regex, about_s_regex_l = new_tab("Regex Cheatsheet", about, True)
+		reg_info = QLabel(app_constants.REGEXCHEAT)
+		reg_info.setWordWrap(True)
+		about_s_regex_l.addRow(reg_info)
 
 	def add_folder_monitor(self, path=''):
 		if not isinstance(path, str):

@@ -556,6 +556,7 @@ class GalleryMetaWindow(ArrowWindow):
 
 		def __init__(self, parent, appwindow):
 			super().__init__(parent)
+			self.appwindow = appwindow
 			self.setStyleSheet('color:white;')
 			main_layout = QHBoxLayout(self)
 			self.stacked_l = stacked_l = QStackedLayout()
@@ -595,7 +596,7 @@ class GalleryMetaWindow(ArrowWindow):
 
 			first_layout = QHBoxLayout()
 			self.g_lang_lbl = QLabel()
-			self.g_chapters_lbl = TagText('Chapter list')
+			self.g_chapters_lbl = TagText('Chapters')
 			self.g_chapters_lbl.clicked.connect(lambda: stacked_l.setCurrentIndex(self.chap_index))
 			self.g_type_lbl = QLabel()
 			self.g_chap_count_lbl = QLabel()
@@ -694,17 +695,12 @@ class GalleryMetaWindow(ArrowWindow):
 
 					for n, tag in enumerate(gallery.tags[namespace], 1):
 						if namespace == 'default':
-							t = TagText()
+							t = TagText(search_widget=self.appwindow)
 						else:
-							t = TagText()
+							t = TagText(search_widget=self.appwindow, namespace=namespace)
 						t.setText(tag)
 						tags_lbls.addWidget(t)
 			self.tags_widget.adjustSize()
-
-
-		def mousePressEvent(self, event):
-			print('hi')
-			return super().mousePressEvent(event)
 
 class Spinner(TransparentWidget):
 	"""
@@ -1083,6 +1079,13 @@ class TagText(QPushButton):
 				self.clicked.connect(lambda: self.search_widget.search('{}:{}'.format(self.namespace, self.text())))
 			else:
 				self.clicked.connect(lambda: self.search_widget.search('{}'.format(self.text())))
+
+	def enterEvent(self, event):
+		if self.text():
+			self.setCursor(Qt.PointingHandCursor)
+		else:
+			self.setCursor(Qt.ArrowCursor)
+		return super().enterEvent(event)
 
 class BasePopup(TransparentWidget):
 	def __init__(self, parent=None, **kwargs):

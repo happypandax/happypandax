@@ -62,12 +62,13 @@ def backup_database():
 			current_try += 1
 
 def get_date_age(date):
-	'''Take a datetime and return its "age" as a string.
+	"""
+	Take a datetime and return its "age" as a string.
 	The age can be in second, minute, hour, day, month or year. Only the
 	biggest unit is considered, e.g. if it's 2 days and 3 hours, "2 days" will
 	be returned.
 	Make sure date is not in the future, or else it won't work.
-	'''
+	"""
 
 	def formatn(n, s):
 		'''Add "s" if it's plural'''
@@ -105,7 +106,7 @@ def get_date_age(date):
 	return PrettyDelta(date).format()
 
 def all_opposite(*args):
-	"Returns true if all items in iterable evaluaeto false"
+	"Returns true if all items in iterable evaluae to false"
 	for iterable in args:
 		for x in iterable:
 			if x:

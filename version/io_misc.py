@@ -204,6 +204,7 @@ class GalleryDownloaderList(QTableWidget):
 		self.init_fetch_instance.emit([download_item.item.file])
 
 	def _gallery_to_model(self, gallery_list):
+		log_i("Adding downloaded gallery to library")
 		try:
 			d_item = self.fetch_instance.download_items.pop(0)
 		except IndexError:
@@ -218,8 +219,10 @@ class GalleryDownloaderList(QTableWidget):
 			self.gallery_model.insertRows([gallery], None, 1)
 			self.gallery_model.init_search(self.gallery_model.current_term)
 			d_item.status_item.setText('Added to library!')
+			log_i("Added downloaded gallery to library")
 		else:
 			d_item.status_item.setText('Adding to library failed!')
+			log_i("Could not add downloaded gallery to library")
 
 	def clear_list(self):
 		for r in range(self.rowCount()-1, -1, -1):
