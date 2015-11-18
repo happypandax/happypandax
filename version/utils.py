@@ -45,10 +45,10 @@ def gallery_metafile(path, archive_path=None):
 		except IndexError:
 			return None
 
-def backup_database():
-	date = "".format(datetime.datetime.today()).split(' ')[0]
-	base_path = os.path.split(db_constants.DB_PATH)[0]
-	db_name = "{}-{}".format(date, db_constants.DB_NAME)
+def backup_database(db_path=db_constants.DB_PATH):
+	date = "{}".format(datetime.datetime.today()).split(' ')[0]
+	base_path, name = os.path.split(db_path)
+	db_name = "{}-{}".format(date, name)
 
 	current_try = 0
 	while current_try < 50:
@@ -56,7 +56,7 @@ def backup_database():
 			db_name = "{}({})-{}".format(date, current_try, db_name)
 		try:
 			dst_path = os.path.join(base_path, db_name)
-			shutil.copyfile(db_constants.DB_PATH, dst_path)
+			shutil.copyfile(db_path, dst_path)
 			break
 		except:
 			current_try += 1

@@ -97,6 +97,7 @@ def start(test=False):
 	application.setApplicationVersion('v{}'.format(app_constants.vs))
 	log_i('Happypanda Version {}'.format(app_constants.vs))
 	log_i('OS: {} {}\n'.format(platform.system(), platform.release()))
+	conn = None
 	try:
 		if args.test:
 			conn = db.init_db(True)
@@ -188,7 +189,7 @@ def start(test=False):
 					for name in dirs:
 						os.rmdir(os.path.join(root, name))
 			except:
-				log_i('Empty temp: FAIL')
+				log.exception("Empty temp: FAIL")
 		log_d('Create temp: OK')
 
 		if test:

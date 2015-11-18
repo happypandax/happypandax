@@ -13,7 +13,7 @@
 #"""
 
 import os, sqlite3, threading, queue
-import logging, time
+import logging, time, shutil
 
 from . import db_constants
 log = logging.getLogger(__name__)
@@ -242,21 +242,13 @@ def add_db_revisions(old_db):
 	conn.close()
 	return
 
-def create_db_path(db_name=None):
-	t_path = os.path.split(db_constants.DB_PATH)
-	if db_name:
-		db_path = os.path.join(t_path[0], db_name)
-		t_path = (t_path[0], db_name)
-	else:
-		db_path = db_constants.DB_PATH
-
-	for p in t_path[:-1]:
-		if not os.path.isdir(p):
-			os.mkdir(p)
-	else:
-		if not os.path.isfile(db_path):
-			with open(db_path, 'x') as f:
-				pass
+def create_db_path(db_path=db_constants.DB_PATH):
+	head = os.path.split(db_path)[0]
+	os.makedirs(head, exist_ok=True)
+	if not os.path.isfile(db_path):
+		with open(db_path, 'x') as f:
+			pass
+	return db_path
 
 
 def check_db_version(conn):
@@ -277,7 +269,7 @@ def check_db_version(conn):
 	return True
 	
 
-def init_db(test=False):
+def init_db(path=''):
 	"""Initialises the DB. Returns a sqlite3 connection,
 	which will be passed to the db thread.
 	"""
@@ -293,32 +285,30 @@ def init_db(test=False):
 
 		c.executescript(STRUCTURE_SCRIPT)
 
-	if test:
-		db_test_path = os.path.join(os.path.split(db_constants.DB_PATH)[0],'database_test.db')
-		if os.path.isfile(db_test_path):
-			conn = sqlite3.connect(db_test_path, check_same_thread=False)
-			conn.row_factory = sqlite3.Row
-		else:
-			create_db_path('database_test.db')
-			conn = sqlite3.connect(db_test_path, check_same_thread=False)
-			conn.row_factory = sqlite3.Row
+	def new_db(p, new=False):
+		conn = sqlite3.connect(p, check_same_thread=False)
+		conn.row_factory = sqlite3.Row
+		if new:
 			c = conn.cursor()
 			db_layout(c)
 			conn.commit()
 		return conn
 
+	if path:
+		if os.path.isfile(path):
+			conn = new_db(path)
+		else:
+			create_db_path(path)
+			conn = new_db(path, True)
+		return conn
+
 	if os.path.isfile(db_constants.DB_PATH):
-		conn = sqlite3.connect(db_constants.DB_PATH, check_same_thread=False)
-		conn.row_factory = sqlite3.Row
+		conn = new_db(db_constants.DB_PATH)
 		if not check_db_version(conn):
 			return None
 	else:
 		create_db_path()
-		conn = sqlite3.connect(db_constants.DB_PATH, check_same_thread=False)
-		conn.row_factory = sqlite3.Row
-		c = conn.cursor()
-		db_layout(c)
-		conn.commit()
+		conn = new_db(db_constants.DB_PATH, True)
 	return conn
 
 class DBBase:

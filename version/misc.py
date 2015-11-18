@@ -344,7 +344,7 @@ class GalleryMetaWindow(ArrowWindow):
 		self.hide_timer.timeout.connect(self.delayed_hide)
 		self.hide_timer.setSingleShot(True)
 		self.hide_animation = create_animation(self, 'windowOpacity')
-		self.hide_animation.setDuration(400)
+		self.hide_animation.setDuration(250)
 		self.hide_animation.setStartValue(1.0)
 		self.hide_animation.setEndValue(0.0)
 		self.hide_animation.finished.connect(self.hide)
@@ -370,7 +370,7 @@ class GalleryMetaWindow(ArrowWindow):
 		if self.isVisible():
 			if not self._mouse_in_gallery():
 				if not self.hide_timer.isActive():
-					self.hide_timer.start(400)
+					self.hide_timer.start(300)
 		return super().mouseMoveEvent(event)
 
 	def delayed_hide(self):
@@ -1170,7 +1170,7 @@ class ApplicationPopup(BasePopup):
 		super().__init__(parent)
 		self.parent_widget = parent
 		main_layout = QVBoxLayout()
-		self.info_lbl = QLabel("Updating your galleries to newest version.")
+		self.info_lbl = QLabel("Updating your galleries to newest version...")
 		self.info_lbl.setAlignment(Qt.AlignCenter)
 		main_layout.addWidget(self.info_lbl)
 

@@ -39,7 +39,7 @@ unrar_tool_path = get('', 'Application', 'unrar tool path')
 default_stylesheet_path = static_dir + '/' + "style.css"
 user_stylesheet_path = ""
 
-FIRST_TIME_LEVEL = get(4, 'Application', 'first time level', int)
+FIRST_TIME_LEVEL = get(5, 'Application', 'first time level', int)
 
 # sizes
 MAIN_W = 1061 # main window

@@ -21,6 +21,7 @@ from PyQt5.QtGui import QImage
 from utils import (today, ArchiveFile, generate_img_hash, delete_path,
 					 ARCHIVE_FILES, get_gallery_img, IMG_FILES)
 from database import db_constants
+from database import db
 from database.db import DBBase
 
 import app_constants
@@ -151,7 +152,7 @@ def chapter_map(row, chapter):
 	chapter.in_archive = row['in_archive']
 	return chapter
 
-def gallery_map(row, gallery):
+def gallery_map(row, gallery, chapters=True, tags=True, hashes=True):
 	gallery.title = row['title']
 	gallery.artist = row['artist']
 	gallery.profile = bytes.decode(row['profile'])
@@ -183,11 +184,14 @@ def gallery_map(row, gallery):
 	except TypeError:
 		gallery.link = row['link']
 
-	gallery.chapters = ChapterDB.get_chapters_for_gallery(gallery.id)
+	if chapters:
+		gallery.chapters = ChapterDB.get_chapters_for_gallery(gallery.id)
 
-	gallery.tags = TagDB.get_gallery_tags(gallery.id)
-
-	gallery.hashes = HashDB.get_gallery_hashes(gallery.id)
+	if tags:
+		gallery.tags = TagDB.get_gallery_tags(gallery.id)
+	
+	if hashes:
+		gallery.hashes = HashDB.get_gallery_hashes(gallery.id)
 
 	return gallery
 
@@ -400,17 +404,17 @@ class GalleryDB(DBBase):
 			cls.execute(cls, *query)
 
 	@classmethod
-	def get_all_gallery(cls):
+	def get_all_gallery(cls, chapters=True, tags=True, hashes=True):
 		"""
 		Careful, might crash with very large libraries i think...
 		Returns a list of all galleries (<Gallery> class) currently in DB
 		"""
 		cursor = cls.execute(cls, 'SELECT * FROM series')
 		all_gallery = cursor.fetchall()
-		return GalleryDB.gen_galleries(all_gallery)
+		return GalleryDB.gen_galleries(all_gallery, chapters, tags, hashes)
 
 	@staticmethod
-	def gen_galleries(gallery_dict):
+	def gen_galleries(gallery_dict, chapters=True, tags=True, hashes=True):
 		"""
 		Map galleries fetched from DB
 		"""
@@ -418,7 +422,7 @@ class GalleryDB(DBBase):
 		for gallery_row in gallery_dict:
 			gallery = Gallery()
 			gallery.id = gallery_row['series_id']
-			gallery = gallery_map(gallery_row, gallery)
+			gallery = gallery_map(gallery_row, gallery, chapters, tags, hashes)
 			gallery_list.append(gallery)
 
 		return gallery_list
@@ -763,7 +767,10 @@ class TagDB(DBBase):
 					# get namespace
 					c = cls.execute(cls, 'SELECT namespace FROM namespaces WHERE namespace_id=?',
 						(row['namespace_id'],))
-					namespace = c.fetchone()['namespace']
+					try:
+						namespace = c.fetchone()['namespace']
+					except TypeError:
+						continue
 
 					# get tag
 					c = cls.execute(cls, 'SELECT tag FROM tags WHERE tag_id=?', (row['tag_id'],))
@@ -1645,6 +1652,88 @@ class AdminDB(QObject):
 	DATA_COUNT = pyqtSignal(int)
 	def __init__(self, parent=None):
 		super().__init__(parent)
+
+	def rebuild_db(self, old_db_path=db_constants.DB_PATH):
+		log_i("Started rebuilding database")
+		if DBBase._DB_CONN:
+			DBBase._DB_CONN.close()
+		DBBase._DB_CONN= db.init_db(old_db_path)
+		db_galleries = add_method_queue(GalleryDB.get_all_gallery, False, False, True, True)
+		galleries = []
+		for g in db_galleries:
+			if not os.path.exists(g.path):
+				log_i("Gallery doesn't exist anymore: {}".format(g.title.encode(errors="ignore")))
+			else:
+				galleries.append(g)
+
+		n_galleries = []
+		# get all chapters
+		log_i("Getting chapters...")
+		chap_rows = DBBase().execute("SELECT * FROM chapters").fetchall()
+		data_count = len(chap_rows)*2
+		self.DATA_COUNT.emit(data_count)
+		for n, chap_row in enumerate(chap_rows, -1):
+			log_d('Next chapter row')
+			for gallery in galleries:
+				if gallery.id == chap_row['series_id']:
+					log_d('Found gallery for chapter row')
+					chaps = ChaptersContainer(gallery)
+					chap = chaps.create_chapter(chap_row['chapter_number'])
+					c_path = bytes.decode(chap_row['chapter_path'])
+					if c_path:
+						try:
+							t = utils.title_parser(os.path.split(c_path)[1])['title']
+						except IndexError:
+							t = c_path
+					else:
+						t = ''
+					chap.title = t
+					chap.path = c_path
+					chap.in_archive = chap_row['in_archive']
+					if gallery.is_archive:
+						zip = utils.ArchiveFile(gallery.path)
+						chap.pages = len(zip.dir_contents(chap.path))
+						zip.close()
+					else:
+						chap.pages = len(list(scandir.scandir(gallery.path)))
+					n_galleries.append(gallery)
+					galleries.remove(gallery)
+					break
+			self.PROGRESS.emit(n)
+		log_d("G: {} C:{}".format(len(n_galleries), data_count-1))
+		log_i("Database magic...")
+		if os.path.exists(db_constants.THUMBNAIL_PATH):
+			for root, dirs, files in scandir.walk(db_constants.THUMBNAIL_PATH, topdown=False):
+				for name in files:
+					os.remove(os.path.join(root, name))
+				for name in dirs:
+					os.rmdir(os.path.join(root, name))
+
+		head = os.path.split(old_db_path)[0]
+		DBBase._DB_CONN.close()
+		t_db_path = os.path.join(head, 'temp.db')
+		conn = db.init_db(t_db_path)
+		DBBase._DB_CONN = conn
+		for n, g in enumerate(n_galleries, len(chap_rows)-1):
+			log_d('Adding new gallery')
+			GalleryDB.add_gallery(g)
+			self.PROGRESS.emit(n)
+
+		conn.commit()
+		conn.close()
+
+		log_i("Cleaning up...")
+		if os.path.exists(old_db_path):
+			utils.backup_database(old_db_path)
+			os.remove(old_db_path)
+		if os.path.exists(db_constants.DB_PATH):
+			os.remove(db_constants.DB_PATH)
+
+		os.rename(t_db_path, db_constants.DB_PATH)
+		self.PROGRESS.emit(data_count)
+		log_i("Finished rebuilding database")
+		self.DONE.emit(True)
+		return True
 
 	def rebuild_galleries(self):
 		galleries = add_method_queue(GalleryDB.get_all_gallery, False)
