@@ -193,6 +193,7 @@ def gallery_map(row, gallery, chapters=True, tags=True, hashes=True):
 	if hashes:
 		gallery.hashes = HashDB.get_gallery_hashes(gallery.id)
 
+	gallery.set_defaults()
 	return gallery
 
 def default_chap_exec(gallery_or_id, chap, only_values=False):
@@ -220,6 +221,7 @@ def default_chap_exec(gallery_or_id, chap, only_values=False):
 	return execute
 
 def default_exec(object):
+	object.set_defaults()
 	def check(obj):
 		if obj == "None":
 			return None
@@ -1247,10 +1249,10 @@ class Gallery:
 		self._chapters = ChaptersContainer(self)
 		self.info = ""
 		self.fav = 0
-		self.type = "Other"
+		self.type = ""
 		self.link = ""
-		self.language = "Other"
-		self.status = "Unknown"
+		self.language = ""
+		self.status = ""
 		self.tags = {}
 		self.pub_date = None
 		self.date_added = datetime.datetime.now().replace(microsecond=0)
@@ -1262,6 +1264,14 @@ class Gallery:
 		self.exed = 0
 		self._cache_id = 0 # used by custom delegate to cache profile
 		self.state = 0
+
+	def set_defaults(self):
+		if not self.type:
+			self.type = "Other"
+		if not self.language:
+			self.language = "Other"
+		if not self.status:
+			self.status = "Unknown"
 
 	@property
 	def chapters(self):

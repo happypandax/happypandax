@@ -883,7 +883,7 @@ class GalleryMenu(QMenu):
 			chapters_menu = self.addAction('Chapters')
 			open_chapters = QMenu(self)
 			chapters_menu.setMenu(open_chapters)
-			for number, chap in enumerate(gallery.chapters, 1):
+			for number, chap in enumerate(self.gallery.chapters, 1):
 				chap_action = QAction("Open chapter {}".format(number),
 							 open_chapters,
 							 triggered = functools.partial(chap.open))
