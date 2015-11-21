@@ -642,7 +642,6 @@ class ChapterDB(DBBase):
 		assert isinstance(series_id, int), "Please provide a valid gallery ID"
 		cursor = cls.execute(cls, 'SELECT * FROM chapters WHERE series_id=?', (series_id,))
 		rows = cursor.fetchall()
-		if len(rows) > 1:
 		chapters = ChaptersContainer()
 
 		for row in rows:

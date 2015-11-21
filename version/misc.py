@@ -2201,13 +2201,26 @@ class CompleterTextEdit(QTextEdit):
 
 
 
-def return_tag_completer(parent=None):
-	ns = gallerydb.add_method_queue(gallerydb.TagDB.get_all_ns, False)
-	for t in gallerydb.add_method_queue(gallerydb.TagDB.get_all_tags, False):
-		ns.append(t)
-	comp = QCompleter(ns, parent)
-	comp.setCaseSensitivity(Qt.CaseInsensitive)
-	return comp
+class GCompleter(QCompleter):
+	def __init__(self, parent=None, title=True, artist=True, tags=True):
+		self.all_data = []
+		d = set()
+		for g in app_constants.GALLERY_DATA:
+			if title:
+				d.add(g.title)
+			if artist:
+				d.add(g.artist)
+			if tags:
+				for ns in g.tags:
+					d.add(ns)
+					for t in g.tags[ns]:
+						d.add(t)
+
+		self.all_data.extend(d)
+		super().__init__(self.all_data, parent)
+		self.setCaseSensitivity(Qt.CaseInsensitive)
+
+
 
 from PyQt5.QtCore import QSortFilterProxyModel
 class DatabaseFilterProxyModel(QSortFilterProxyModel):

@@ -7,11 +7,11 @@ from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QDesktopWidget, QGroupBox,
 							 QDateEdit, QFileDialog, QMessageBox, QScrollArea)
 from PyQt5.QtCore import (pyqtSignal, Qt, QPoint, QDate, QThread, QTimer)
 
-from misc import return_tag_completer, ClickedLabel, CompleterTextEdit
 import app_constants
 import utils
 import gallerydb
 import fetch
+import misc
 
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -123,6 +123,9 @@ class GalleryDialog(QWidget):
 
 		self.title_edit = QLineEdit()
 		self.author_edit = QLineEdit()
+		author_completer = misc.GCompleter(self, False, True, False)
+		author_completer.setCaseSensitivity(Qt.CaseInsensitive)
+		self.author_edit.setCompleter(author_completer)
 		self.descr_edit = QTextEdit()
 		self.descr_edit.setFixedHeight(45)
 		self.descr_edit.setAcceptRichText(True)
@@ -130,7 +133,7 @@ class GalleryDialog(QWidget):
 		self.lang_box.addItems(["English", "Japanese", "Other"])
 		self.lang_box.setCurrentIndex(0)
 		tags_l = QVBoxLayout()
-		tag_info = ClickedLabel("How do i write namespace & tags? (hover)", parent=self)
+		tag_info = misc.ClickedLabel("How do i write namespace & tags? (hover)", parent=self)
 		tag_info.setToolTip("Ways to write tags:\n\nNormal tags:\ntag1, tag2, tag3\n\n"+
 					  "Namespaced tags:\nns1:tag1, ns1:tag2\n\nNamespaced tags with one or more"+
 					  " tags under same namespace:\nns1:[tag1, tag2, tag3], ns2:[tag1, tag2]\n\n"+
@@ -139,9 +142,8 @@ class GalleryDialog(QWidget):
 					  " will be lowercased.")
 		tag_info.setToolTipDuration(99999999)
 		tags_l.addWidget(tag_info)
-		self.tags_edit = CompleterTextEdit()
-		comp = return_tag_completer(self)
-		self.tags_edit.setCompleter(comp)
+		self.tags_edit = misc.CompleterTextEdit()
+		self.tags_edit.setCompleter(misc.GCompleter(self, False, False))
 		tags_l.addWidget(self.tags_edit, 3)
 		self.tags_edit.setFixedHeight(70)
 		self.tags_edit.setPlaceholderText("Press Tab to autocomplete (Ctrl + E to show popup)")

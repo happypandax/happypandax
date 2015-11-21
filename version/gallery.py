@@ -369,7 +369,8 @@ class GalleryModel(QAbstractTableModel):
 					current_gallery.tags))
 			if app_constants.TOOLTIP_LAST_READ:
 				add_bold.append('<b>Last read:</b>')
-				add_tips.append(current_gallery.last_read)
+				add_tips.append(
+					'{} ago'.format(utils.get_date_age(current_gallery.last_read)) if current_gallery.last_read else "Never!")
 			if app_constants.TOOLTIP_TIMES_READ:
 				add_bold.append('<b>Times read:</b>')
 				add_tips.append(current_gallery.times_read)
@@ -882,7 +883,10 @@ class MangaView(QListView):
 		self.sort(self.current_sort)
 		if app_constants.DEBUG:
 			def debug_print(a):
-				print(a.data(Qt.UserRole+1))
+				try:
+					print(a.data(Qt.UserRole+1))
+				except:
+					print("{}".format(a.data(Qt.UserRole+1)).encode(errors='ignore'))
 
 			self.clicked.connect(debug_print)
 
