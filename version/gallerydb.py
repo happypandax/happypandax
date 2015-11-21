@@ -1148,8 +1148,6 @@ class HashDB(DBBase):
 				if page:
 					p = 0
 					con = zip.dir_contents(chap.path)
-					print(len(con))
-					print(page)
 					if page == 'mid':
 						p = len(con)//2
 						img = con[p]
@@ -1316,7 +1314,8 @@ class Gallery:
 				if utils.regex_search(tag, term):
 					return True
 			else:
-				print(tag, term)
+				if app_constants.DEBUG:
+					print(tag, term)
 				if utils.search_term(tag, term):
 					return True
 			return False
@@ -1374,7 +1373,6 @@ class Gallery:
 						else:
 							if utils.search_term(key, g_attr):
 								found = True
-								print('found')
 								break
 
 				# check in tag

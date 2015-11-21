@@ -14,7 +14,7 @@
 
 import sys, logging, os, threading, re, requests, scandir
 from PyQt5.QtCore import (Qt, QSize, pyqtSignal, QThread, QEvent, QTimer,
-						  QObject, QPoint, QPropertyAnimationl)
+						  QObject, QPoint, QPropertyAnimation)
 from PyQt5.QtGui import (QPixmap, QIcon, QMoveEvent, QCursor,
 						 QKeySequence)
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QListView,
@@ -580,7 +580,6 @@ class AppWindow(QMainWindow):
 		self.toolbar.addWidget(spacer_mid2)
 
 		def set_search_case(b):
-			print(b)
 			app_constants.GALLERY_SEARCH_CASE = b
 			settings.set(b, 'Application', 'gallery search case')
 			settings.save()

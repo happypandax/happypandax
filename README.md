@@ -1,6 +1,6 @@
 Development is done in alpha branch
 
-For future plans, see [Roadmap in the wiki](https://github.com/Pewpews/happypanda/wiki/Roadmap)
+For future plans, see [Roadmap in the wiki](https://github.com/Pewpews/happypanda/wiki/2.-Roadmap)
 
 For general documentation, check the [wiki](https://github.com/Pewpews/happypanda/wiki)
 

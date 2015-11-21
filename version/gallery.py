@@ -411,7 +411,6 @@ class GalleryModel(QAbstractTableModel):
 
 	def rowCount(self, index = QModelIndex()):
 		if not index.isValid():
-			#print(self._data_count)
 			return self._data_count
 		else:
 			return 0
@@ -1174,11 +1173,6 @@ class MangaView(QListView):
 			del menu
 		else:
 			event.ignore()
-
-	#need this for debugging purposes
-	def resizeEvent(self, resizeevent):
-		super().resizeEvent(resizeevent)
-		#print(resizeevent.size())
 
 	def find_index(self, gallery_id, sort_model=False):
 		"Finds and returns the index associated with the gallery id"

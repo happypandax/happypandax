@@ -50,7 +50,6 @@ class GMetafile:
 			}
 		self.files = []
 		if path is None:
-			print('no path')
 			return
 		if archive:
 			zip = ArchiveFile(archive)
@@ -65,18 +64,16 @@ class GMetafile:
 		if self.files:
 			self.detect()
 		else:
-			print('no files found...')
+			log_i('No metafile found...')
 
 	def detect(self):
-		print('detecting...')
 		for fp in self.files:
-			print('testing')
 			with fp:
 				j = json.load(fp)
 				eze = ['gallery_info', 'image_api_key', 'image_info']
 				# eze
 				if all(x in j for x in eze):
-					print('found eze')
+					log_i('Detected metafile: eze')
 					ezedata = j['gallery_info']
 					t_parser = title_parser(ezedata['title'])
 					self.metadata['title'] = t_parser['title']
@@ -97,13 +94,13 @@ class GMetafile:
 					l = ezedata['source']
 					self.metadata['link'] = 'http://'+l['site']+'.org/g/'+str(l['gid'])+'/'+l['token']
 				else:
-					print('didnt find anything')
+					log_i('Incompatible metafiles found')
 
 	def update(self, other):
 		self.metadata.update((x, y) for x, y in other.metadata.items() if y)
 
 	def apply_gallery(self, gallery):
-		print('applying to gallery')
+		log_i('Applying metafile to gallery')
 		if self.metadata['title']:
 			gallery.title = self.metadata['title']
 		if self.metadata['artist']:

@@ -354,10 +354,14 @@ class GalleryMetaWindow(ArrowWindow):
 		self.show_animation.setEndValue(1.0)
 
 	def show(self):
-		if not self.hide_timer.isActive():
+		if not self.hide_animation.Running:
 			self.setWindowOpacity(0)
-		super().show()
-		if not self.hide_timer.isActive():
+			super().show()
+			self.show_animation.start()
+		else:
+			self.hide_animation.stop()
+			super().show()
+			self.show_animation.setStartValue(self.windowOpacity())
 			self.show_animation.start()
 
 	def _mouse_in_gallery(self):
@@ -394,8 +398,9 @@ class GalleryMetaWindow(ArrowWindow):
 		self.idx_btm_l = index_btm_left = view.mapToGlobal(index_rect.bottomLeft())
 		index_btm_right = view.mapToGlobal(index_rect.bottomRight())
 
-		for idx in (index_top_left, index_top_right, index_btm_left, index_btm_right):
-			print(idx.x(), idx.y())
+		if app_constants.DEBUG:
+			for idx in (index_top_left, index_top_right, index_btm_left, index_btm_right):
+				print(idx.x(), idx.y())
 
 		# adjust placement
 

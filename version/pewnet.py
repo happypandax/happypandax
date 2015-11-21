@@ -102,9 +102,9 @@ class Downloader(QObject):
 		"The downloader. Put in a thread."
 		while True:
 			log_d("Download items in queue: {}".format(self._inc_queue.qsize()))
-			print('Starting item download')
 			interrupt = False
 			item = self._inc_queue.get()
+			log_d("Stating item download")
 			item.current_state = item.DOWNLOADING
 			temp_base = None
 			if isinstance(item, dict):
@@ -122,6 +122,7 @@ class Downloader(QObject):
 			file_name_part = file_name + '.part'
 
 			download_url = item.download_url
+			log_d("Download url:{}".format(download_url))
 
 			self.active_items.append(item)
 
@@ -168,8 +169,7 @@ class Downloader(QObject):
 					os.remove(file_name_part)
 				except:
 					pass
-			print("finished item download")
-			print("items till in queue", self._inc_queue.empty())
+			log_d("Items in queue {}".format(self._inc_queue.empty()))
 			log_d("Finished downloading: {}".format(download_url))
 			self.active_items.remove(item)
 			self._inc_queue.task_done()

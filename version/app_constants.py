@@ -192,6 +192,19 @@ TOOLTIP_DATE_ADDED = get(True, 'Visual', 'tooltip date added', bool)
 
 GALLERY_DATA = [] # contains the most up to date gallery data
 
+SUPPORTED_DOWNLOAD_URLS=\
+	"""Supported URLs:
+- exhentai/g.e-hentai gallery urls, e.g.: http://g.e-hentai.org/g/618395/0439fa3666/
+- panda.chaika.moe gallery and archive urls
+	http://panda.chaika.moe/[0]/[1]/ where [0] is 'gallery' or 'archive' and [1] is a number
+	"""
+
+# Exceptions
+class ChapterExists(Exception): pass
+class ChapterWrongParentGallery(Exception): pass
+class CreateArchiveFail(Exception): pass
+class FileNotFoundInArchive(Exception): pass
+
 EXHEN_COOKIE_TUTORIAL =\
 	"""
 How do you find these two values? <br \>
@@ -546,6 +559,7 @@ SEARCH_TUTORIAL_TAGS =\
 <li><code>term</code> means… well, your term… what you want to search for… any kind of characters not in <strong>Constrains</strong> above</li>
 <li><code>integer</code> means that only numbers are allowed</li>
 </ul>
+<hr>
 <table>
 <thead>
 <tr>
@@ -635,36 +649,3 @@ SEARCH_TUTORIAL_TAGS =\
 
 </body></html>
 	"""
-#SEARCH_TUTORIAL_TAGS =\
-#	"""There are three ways to search for namespaces and tags:
-#tag_term, namespace:tag_term and namespace:[tag_term1, tag_term2]
-
-#Examples:
-#Say we want to find a gallery with the namespace & tags: "tag1, ns:tag1, ns2:[tag1, tag2]"
-
-#First search entry: 'tag1'
-#Result: All galleries with a tag which is not in a namespace + the word 'tag1' in their title or author
-#Second search entry: 'ns:tag1'
-#Result: All galleries with the tag 'tag1' in namespace 'ns'
-#Third search entry: 'ns2:[tag1, tag2]'
-#Result: All galleries with 'tag1' AND 'tag2' in namespace 'ns2'
-#"""
-
-SEARCH_TUTORIAL_GENERAL=\
-	"""Term excluding and case sensitive searching are not yet supported. (Will be in the near future)
-Some things to note when searching:
-- terms are seperated by a comma
-"""
-
-SUPPORTED_DOWNLOAD_URLS=\
-	"""Supported URLs:
-- exhentai/g.e-hentai gallery urls, e.g.: http://g.e-hentai.org/g/618395/0439fa3666/
-- panda.chaika.moe gallery and archive urls
-	http://panda.chaika.moe/[0]/[1]/ where [0] is 'gallery' or 'archive' and [1] is a number
-	"""
-
-# Exceptions
-class ChapterExists(Exception): pass
-class ChapterWrongParentGallery(Exception): pass
-class CreateArchiveFail(Exception): pass
-class FileNotFoundInArchive(Exception): pass

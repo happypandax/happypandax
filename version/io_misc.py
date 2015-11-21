@@ -618,8 +618,6 @@ class ImpExpData:
 			if not g in found_pairs and g.chapters[0].pages == identifier['pages']:
 				pages = self.get_pages(g.chapters[0].pages)
 				hashes = gallerydb.HashDB.gen_gallery_hash(g, 0, pages)
-				#print(hashes.keys())
-				#print(pages)
 				for p in hashes:
 					if hashes[p] != identifier[str(p)]:
 						break
