@@ -309,7 +309,7 @@ class ChaikaManager(DLManager):
 			g_url = self._archive_page(url, h_item)
 			self._gallery_page(g_url, h_item)
 		else:
-			return 
+			return
 		h_item.commit_metadata()
 		h_item.name = h_item.gallery_name+'.zip'
 		Downloader.add_to_queue(h_item, self._browser.session)

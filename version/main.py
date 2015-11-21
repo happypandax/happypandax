@@ -22,6 +22,7 @@ from database import db, db_constants
 import app
 import app_constants
 import gallerydb
+import utils
 
 #IMPORTANT STUFF
 def start(test=False):
@@ -211,7 +212,7 @@ def start(test=False):
 		msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
 		msg_box.setDefaultButton(QMessageBox.Yes)
 		if msg_box.exec() == QMessageBox.Yes:
-
+			utils.backup_database()
 			import threading
 			db_p = db_constants.DB_PATH
 			db.add_db_revisions(db_p)

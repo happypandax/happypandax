@@ -1009,6 +1009,7 @@ class MangaView(QListView):
 											gallery.artist.encode()))
 			gallerydb.add_method_queue(gallerydb.GalleryDB.del_gallery, True, gallery_list, local=local)
 			rows = sorted([x.row() for x in index_list])
+
 			for x in range(len(rows), 0, -1):
 				self.sort_model.removeRows(rows[x-1])
 			self.STATUS_BAR_MSG.emit('Gallery removed!')
@@ -1155,6 +1156,8 @@ class MangaView(QListView):
 			selected = True
 
 		if index.isValid():
+			if self.gallery_window.isVisible():
+				self.gallery_window.hide_animation.start()
 			self.manga_delegate.CONTEXT_ON = True
 			if selected:
 				menu = misc.GalleryMenu(self, index, self.gallery_model,

@@ -1529,6 +1529,7 @@ class Chapter:
 		if stat_msg:
 			txt = "Opening chapter {} of {}".format(self.number+1, self.gallery.title)
 			app_constants.STAT_MSG_METHOD(txt)
+			app_constants.NOTIF_BAR.add_text(txt)
 		if self.in_archive:
 			add_method_queue(utils.open_chapter, True, self.path, self.gallery.path)
 		else:
@@ -1765,6 +1766,7 @@ class DatabaseEmitter(QObject):
 	GALLERY_EMITTER = pyqtSignal(list)
 	START = pyqtSignal()
 	DONE = pyqtSignal()
+	CANNOT_FETCH_MORE = pyqtSignal()
 	COUNT_CHANGE = pyqtSignal()
 	_DB = DBBase()
 
@@ -1796,6 +1798,7 @@ class DatabaseEmitter(QObject):
 			if not self._finished:
 				self._finished = True
 				self.DONE.emit()
+			self.CANNOT_FETCH_MORE.emit()
 			return False
 
 	def fetch_more(self):
@@ -1809,11 +1812,12 @@ class DatabaseEmitter(QObject):
 			c = add_method_queue(self._DB.execute, False, 'SELECT * FROM series LIMIT {}, {}'.format(
 				self._offset, rec_to_fetch))
 			self._offset += rec_to_fetch
-			new_data = c.fetchall()
-			gallery_list = add_method_queue(GalleryDB.gen_galleries, False, new_data)
-			#self._current_data.extend(gallery_list)
-			if gallery_list:
-				self.GALLERY_EMITTER.emit(gallery_list)
+			if c:
+				new_data = c.fetchall()
+				gallery_list = add_method_queue(GalleryDB.gen_galleries, False, new_data)
+				#self._current_data.extend(gallery_list)
+				if gallery_list:
+					self.GALLERY_EMITTER.emit(gallery_list)
 			self._fetching = False
 		if not self._fetching:
 			# TODO: redo this? 

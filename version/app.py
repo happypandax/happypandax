@@ -14,7 +14,7 @@
 
 import sys, logging, os, threading, re, requests, scandir
 from PyQt5.QtCore import (Qt, QSize, pyqtSignal, QThread, QEvent, QTimer,
-						  QObject, QPoint, QPropertyAnimation)
+						  QObject, QPoint, QPropertyAnimationl)
 from PyQt5.QtGui import (QPixmap, QIcon, QMoveEvent, QCursor,
 						 QKeySequence)
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QListView,
@@ -444,6 +444,7 @@ class AppWindow(QMainWindow):
 		self.manga_list_view.gallery_model.ADD_MORE.connect(self.data_fetch_spinner.show)
 		self.manga_list_view.gallery_model.db_emitter.START.connect(self.data_fetch_spinner.show)
 		self.manga_list_view.gallery_model.ADDED_ROWS.connect(self.data_fetch_spinner.before_hide)
+		self.manga_list_view.gallery_model.db_emitter.CANNOT_FETCH_MORE.connect(self.data_fetch_spinner.before_hide)
 
 		## deleting spinner
 		#self.gallery_delete_spinner = misc.Spinner(self)
@@ -864,7 +865,7 @@ class AppWindow(QMainWindow):
 			data_thread.finished.connect(data_thread.deleteLater)
 			data_thread.started.connect(self.g_populate_inst.local)
 			data_thread.start()
-			#fetch_instance.local()
+			#.g_populate_inst.local()
 			log_i('Populating DB from directory/archive')
 
 	def scan_for_new_galleries(self):

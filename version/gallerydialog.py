@@ -293,7 +293,7 @@ class GalleryDialog(QWidget):
 			self.done.hide()
 		if app_constants.SUBFOLDER_AS_GALLERY:
 			if gs > 1:
-				self.file_exists_lbl.setText('<font color="red">Source contains more than one gallery.</font>')
+				self.file_exists_lbl.setText('<font color="red">More than one galleries detected in source! Use other methods to add.</font>')
 				self.file_exists_lbl.show()
 				self.done.hide()
 
@@ -315,6 +315,7 @@ class GalleryDialog(QWidget):
 	def set_chapters(self, gallery_object, add_to_model=True):
 		path = gallery_object.path
 		chap_container = gallerydb.ChaptersContainer(gallery_object)
+		metafile = utils.GMetafile()
 		try:
 			log_d('Listing dir...')
 			con = scandir.scandir(path) # list all folders in gallery dir
@@ -328,23 +329,15 @@ class GalleryDialog(QWidget):
 					chap = chap_container.create_chapter()
 					chap.title = utils.title_parser(ch)['title']
 					chap.path = os.path.join(path, ch)
+					metafile.update(utils.GMetafile(chap.path))
 					chap.pages = len(list(scandir.scandir(chap.path)))
 
 			else: #else assume that all images are in gallery folder
 				chap = chap_container.create_chapter()
 				chap.title = utils.title_parser(os.path.split(path)[1])['title']
 				chap.path = path
+				metafile.update(utils.GMetafile(path))
 				chap.pages = len(list(scandir.scandir(path)))
-				
-			#find last edited file
-			times = set()
-			log_d('Finding last update...')
-			for root, dirs, files in scandir.walk(path, topdown=False):
-				for img in files:
-					fp = os.path.join(root, img)
-					times.add(os.path.getmtime(fp))
-			gallery_object.last_update = time.asctime(time.gmtime(max(times)))
-			log_d('Found last update')
 
 		except NotADirectoryError:
 			if path.endswith(utils.ARCHIVE_FILES):
@@ -354,10 +347,12 @@ class GalleryDialog(QWidget):
 				for g in archive_g:
 					chap = chap_container.create_chapter()
 					chap.path = g
+					metafile.update(utils.GMetafile(g, path))
 					arch = utils.ArchiveFile(path)
 					chap.pages = len(arch.dir_contents(g))
 					arch.close()
 
+		metafile.apply_gallery(gallery_object)
 		if add_to_model:
 			self.SERIES.emit([gallery_object])
 			log_d('Sent gallery to model')

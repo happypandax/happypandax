@@ -67,7 +67,7 @@ DATE_ADDED = 10
 
 # Application
 SYSTEM_TRAY = None
-NOTIF_BAR = None # HACK: Cause of thread warnings!!
+NOTIF_BAR = None
 STAT_MSG_METHOD = None
 GENERAL_THREAD = None
 WHEEL_SCROLL_EFFECT = 10
@@ -154,7 +154,7 @@ POPUP_WIDTH = get(450, 'Visual', 'popup.w', int)
 POPUP_HEIGHT = get(220, 'Visual', 'popup.h', int)
 
 # Gallery
-GALLERY_METAFILE_KEYWORDS = ['info.txt']
+GALLERY_METAFILE_KEYWORDS = ('info.json')
 CURRENT_SORT = get('title', 'General', 'current sort')
 HIGH_QUALITY_THUMBS = get(False, 'Visual', 'high quality thumbs', bool)
 USE_EXTERNAL_PROG_ICO = get(False, 'Visual', 'use external prog ico', bool) if not sys.platform.startswith('darwin')  else False

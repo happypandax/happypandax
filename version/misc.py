@@ -354,9 +354,11 @@ class GalleryMetaWindow(ArrowWindow):
 		self.show_animation.setEndValue(1.0)
 
 	def show(self):
-		self.setWindowOpacity(0)
+		if not self.hide_timer.isActive():
+			self.setWindowOpacity(0)
 		super().show()
-		self.show_animation.start()
+		if not self.hide_timer.isActive():
+			self.show_animation.start()
 
 	def _mouse_in_gallery(self):
 		mouse_p = QCursor.pos()
@@ -1217,6 +1219,10 @@ class NotificationOverlay(QWidget):
 	A notifaction bar
 	"""
 	clicked = pyqtSignal()
+	_show_signal = pyqtSignal()
+	_hide_signal = pyqtSignal()
+	_unset_cursor = pyqtSignal()
+	_set_cursor = pyqtSignal(object)
 	def __init__(self, parent=None):
 		super().__init__(parent)
 		self._main_layout = QHBoxLayout(self)
@@ -1237,6 +1243,10 @@ class NotificationOverlay(QWidget):
 		self.slide_animation.setStartValue(0)
 		self.slide_animation.setEndValue(self._default_height)
 		self.slide_animation.valueChanged.connect(self.set_dynamic_height)
+		self._show_signal.connect(self.show)
+		self._hide_signal.connect(self.hide)
+		self._unset_cursor.connect(self.unsetCursor)
+		self._set_cursor.connect(self.setCursor)
 
 	def set_dynamic_height(self, h):
 		self._dynamic_height = h
@@ -1248,7 +1258,7 @@ class NotificationOverlay(QWidget):
 
 	def set_clickable(self, d=True):
 		self._click = d
-		self.setCursor(Qt.PointingHandCursor)
+		self._set_cursor.emit(Qt.PointingHandCursor)
 
 	def resize(self, x, y=0):
 		return super().resize(x, self._dynamic_height)
@@ -1262,11 +1272,11 @@ class NotificationOverlay(QWidget):
 		except TypeError:
 			pass
 		if not self.isVisible():
-			self.show()
+			self._show_signal.emit()
 		self._lbl.setText(text)
 		if autohide:
 			if not self._override_hide:
-				t = threading.Timer(10, self.hide)
+				t = threading.Timer(10, self._hide_signal.emit)
 				t.start()
 
 	def begin_show(self):
@@ -1275,14 +1285,14 @@ class NotificationOverlay(QWidget):
 		end_show() must be called to hide the bar.
 		"""
 		self._override_hide = True
-		self.show()
+		self._show_signal.emit()
 
 	def end_show(self):
 		self._override_hide = False
-		QTimer.singleShot(5000, self.hide)
+		QTimer.singleShot(5000, self._hide_signal.emit)
 
 	def _reset(self):
-		self.unsetCursor()
+		self._unset_cursor.emit()
 		self._click = False
 		self.clicked.disconnect()
 

@@ -106,6 +106,7 @@ class Fetch(QObject):
 						log_i('Creating gallery: {}'.format(folder_name.encode('utf-8', 'ignore')))
 						new_gallery = Gallery()
 						images_paths = []
+						metafile = utils.GMetafile()
 						try:
 							con = scandir.scandir(temp_p) #all of content in the gallery folder
 							log_i('Gallery source is a directory')
@@ -120,11 +121,13 @@ class Fetch(QObject):
 									chap.title = utils.title_parser(ch)['title']
 									chap.path = os.path.join(path, ch)
 									chap.pages = len(list(scandir.scandir(chap.path)))
+									metafile.update(utils.GMetafile(chap.path))
 
 							else: #else assume that all images are in gallery folder
 								chap = new_gallery.chapters.create_chapter()
 								chap.title = utils.title_parser(os.path.split(path)[1])['title']
 								chap.path = path
+								metafile.update(utils.GMetafile(chap.path))
 								chap.pages = len(list(scandir.scandir(path)))
 				
 							parsed = utils.title_parser(folder_name)
@@ -158,6 +161,7 @@ class Fetch(QObject):
 												chap = new_gallery.chapters.create_chapter()
 												chap.title = utils.title_parser(g)['title']
 												chap.path = g
+												metafile.update(utils.GMetafile(g, temp_p))
 												arch = utils.ArchiveFile(temp_p)
 												chap.pages = len(arch.dir_contents(g))
 												arch.close()
@@ -165,7 +169,8 @@ class Fetch(QObject):
 											chap = new_gallery.chapters.create_chapter()
 											chap.title = utils.title_parser(os.path.split(path)[1])['title']
 											chap.path = path
-											arch = utils.ArchiveFile(path)
+											metafile.update(utils.GMetafile(path, temp_p))
+											arch = utils.ArchiveFile(temp_p)
 											chap.pages = len(arch.dir_contents(''))
 											arch.close()
 									else:
@@ -185,7 +190,8 @@ class Fetch(QObject):
 						new_gallery.path = temp_p
 						new_gallery.artist = parsed['artist']
 						new_gallery.language = parsed['language']
-						new_gallery.info = "No description.."
+						new_gallery.info = ""
+						metafile.apply_gallery(new_gallery)
 						if app_constants.MOVE_IMPORTED_GALLERIES and not app_constants.OVERRIDE_MOVE_IMPORTED_IN_FETCH:
 							new_gallery.path = utils.move_files(temp_p)
 

@@ -13,7 +13,7 @@
 #"""
 
 import datetime, os, subprocess, sys, logging, zipfile
-import hashlib, shutil, uuid, re, scandir, rarfile
+import hashlib, shutil, uuid, re, scandir, rarfile, json
 
 import app_constants
 
@@ -36,14 +36,89 @@ if not app_constants.unrar_tool_path:
 	FILE_FILTER = '*.zip *.cbz'
 	ARCHIVE_FILES = ('.zip', '.cbz')
 
-def gallery_metafile(path, archive_path=None):
-	if archive_path != None:
-		pass
-	else:
-		try:
-			metafile = 1
-		except IndexError:
-			return None
+class GMetafile:
+	def __init__(self, path=None, archive=''):
+		self.metadata = {
+			"title":'',
+			"artist":'',
+			"type":'',
+			"tags":{},
+			"language":'',
+			"pub_date":'',
+			"link":'',
+
+			}
+		self.files = []
+		if path is None:
+			print('no path')
+			return
+		if archive:
+			zip = ArchiveFile(archive)
+			c = zip.dir_contents(path)
+			for x in c:
+				if x.endswith(app_constants.GALLERY_METAFILE_KEYWORDS):
+					self.files.append(open(zip.extract(x)))
+		else:
+			for p in scandir.scandir(path):
+				if p.name in app_constants.GALLERY_METAFILE_KEYWORDS:
+					self.files.append(open(p.path))
+		if self.files:
+			self.detect()
+		else:
+			print('no files found...')
+
+	def detect(self):
+		print('detecting...')
+		for fp in self.files:
+			print('testing')
+			with fp:
+				j = json.load(fp)
+				eze = ['gallery_info', 'image_api_key', 'image_info']
+				# eze
+				if all(x in j for x in eze):
+					print('found eze')
+					ezedata = j['gallery_info']
+					t_parser = title_parser(ezedata['title'])
+					self.metadata['title'] = t_parser['title']
+					self.metadata['type'] = ezedata['category']
+					for ns in ezedata['tags']:
+						self.metadata['tags'][ns.capitalize()] = ezedata['tags'][ns]
+					self.metadata['tags']['default'] = self.metadata['tags'].pop('Misc', [])
+					self.metadata['artist'] = self.metadata['tags']['Artist'][0].capitalize()\
+					    if 'Artist' in self.metadata['tags'] else t_parser['artist']
+					self.metadata['language'] = ezedata['language']
+					d = ezedata['upload_date']
+					# should be zero padded
+					d[1] = int("0"+str(d[1])) if len(str(d[1])) == 1 else d[1]
+					d[3] = int("0"+str(d[1])) if len(str(d[1])) == 1 else d[1] 
+					self.metadata['pub_date'] = datetime.datetime.strptime(
+						"{} {} {}".format(d[0], d[1], d[3]), "%Y %m %d")
+					# http://exhentai.org/g/875077/7b729c6270/
+					l = ezedata['source']
+					self.metadata['link'] = 'http://'+l['site']+'.org/g/'+str(l['gid'])+'/'+l['token']
+				else:
+					print('didnt find anything')
+
+	def update(self, other):
+		self.metadata.update((x, y) for x, y in other.metadata.items() if y)
+
+	def apply_gallery(self, gallery):
+		print('applying to gallery')
+		if self.metadata['title']:
+			gallery.title = self.metadata['title']
+		if self.metadata['artist']:
+			gallery.artist = self.metadata['artist']
+		if self.metadata['type']:
+			gallery.type = self.metadata['type']
+		if self.metadata['tags']:
+			gallery.tags = self.metadata['tags']
+		if self.metadata['language']:
+			gallery.language = self.metadata['language']
+		if self.metadata['pub_date']:
+			gallery.pub_date = self.metadata['pub_date']
+		if self.metadata['link']:
+			gallery.link = self.metadata['link']
+		return gallery
 
 def backup_database(db_path=db_constants.DB_PATH):
 	date = "{}".format(datetime.datetime.today()).split(' ')[0]
@@ -60,6 +135,7 @@ def backup_database(db_path=db_constants.DB_PATH):
 			break
 		except:
 			current_try += 1
+	return True
 
 def get_date_age(date):
 	"""
