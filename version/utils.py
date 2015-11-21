@@ -632,13 +632,14 @@ def get_gallery_img(path, archive=None):
 			img_path = app_constants.NO_IMAGE_PATH
 	elif os.path.isdir(real_path):
 		log_i('Getting image from folder')
-		first_img = sorted([img.name for img in scandir.scandir(real_path) if img.name.lower().endswith(tuple(IMG_FILES))])[0]
-		img_path = os.path.join(real_path, first_img)
+		first_img = sorted([img.name for img in scandir.scandir(real_path) if img.name.lower().endswith(tuple(IMG_FILES))])
+		if first_img:
+			img_path = os.path.join(real_path, first_img[0])
 
 	if img_path:
 		return os.path.abspath(img_path)
 	else:
-		log_e("Could not get image")
+		log_e("Could not get gallery image")
 
 def tag_to_string(gallery_tag, simple=False):
 	"""
