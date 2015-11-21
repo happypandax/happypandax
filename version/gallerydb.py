@@ -642,7 +642,9 @@ class ChapterDB(DBBase):
 		assert isinstance(series_id, int), "Please provide a valid gallery ID"
 		cursor = cls.execute(cls, 'SELECT * FROM chapters WHERE series_id=?', (series_id,))
 		rows = cursor.fetchall()
+		if len(rows) > 1:
 		chapters = ChaptersContainer()
+
 		for row in rows:
 			chap = chapters.create_chapter(row['chapter_number'])
 			chapter_map(row, chap)
@@ -1595,6 +1597,7 @@ class ChaptersContainer:
 		"""
 		if number:
 			chp = Chapter(self, self.parent, number=number)
+			self[number] = chp
 		else:
 			next_number = 0
 			for n in list(self._data.keys()):
