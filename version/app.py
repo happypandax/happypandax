@@ -12,7 +12,7 @@
 #along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 #"""
 
-import sys, logging, os, threading, re, requests, scandir
+import sys, logging, os, threading, re, requests, scandir, random
 from PyQt5.QtCore import (Qt, QSize, pyqtSignal, QThread, QEvent, QTimer,
 						  QObject, QPoint, QPropertyAnimation)
 from PyQt5.QtGui import (QPixmap, QIcon, QMoveEvent, QCursor,
@@ -118,7 +118,9 @@ class AppWindow(QMainWindow):
 
 	admin_db_method_invoker = pyqtSignal(str)
 	def start_up(self):
-		# TODO: Remove in beta
+		hello = ["Hello!", "Hi!", "Onii-chan!", "Senpai!", "Hisashiburi!", "Welcome!", "Okaerinasai!", "Welcome back!"]
+		self.notification_bar.add_text("{} Please don't hesitate to report any bugs you find.".format(hello[random.randint(0, len(hello)-1)])+
+								 " Go to Settings -> About -> Bug Reporting for more info!")
 		level = 5
 		def normalize_first_time():
 			settings.set(level, 'Application', 'first time level')
