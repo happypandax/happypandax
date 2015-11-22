@@ -104,13 +104,13 @@ class Downloader(QObject):
 			log_d("Download items in queue: {}".format(self._inc_queue.qsize()))
 			interrupt = False
 			item = self._inc_queue.get()
-			log_d("Stating item download")
-			item.current_state = item.DOWNLOADING
 			temp_base = None
 			if isinstance(item, dict):
 				temp_base = item['dir']
 				item = item['item']
 
+			log_d("Stating item download")
+			item.current_state = item.DOWNLOADING
 			file_name = item.name if item.name else str(uuid.uuid4())
 			
 			invalid_chars = '\\/:*?"<>|'
@@ -296,18 +296,28 @@ class ChaikaManager(DLManager):
 
 	def __init__(self):
 		super().__init__()
-		self.url = 'http://panda.chaika.moe/'
+		self.url = "http://panda.chaika.moe/"
+		self.api = "http://panda.chaika.moe/jsearch/?"
 
 	def from_gallery_url(self, url):
 		h_item = HenItem(self._browser.session)
 		h_item.download_type = 0
-		
+		chaika_id = os.path.split(url)
+		if chaika_id[1]:
+			chaika_id = chaika_id[1]
+		else:
+			chaika_id = os.path.split(chaika_id[0])[1]
+
 		if '/gallery/' in url:
-			a_url = self._gallery_page(url, h_item)
-			self._archive_page(a_url, h_item)
+			a_id = self._gallery_page(chaika_id, h_item)
+			if not a_id:
+				return
+			self._archive_page(a_id, h_item)
 		elif '/archive' in url:
-			g_url = self._archive_page(url, h_item)
-			self._gallery_page(g_url, h_item)
+			g_id = self._archive_page(chaika_id, h_item)
+			if not g_id:
+				return
+			self._gallery_page(g_id, h_item)
 		else:
 			return
 		h_item.commit_metadata()
@@ -315,91 +325,48 @@ class ChaikaManager(DLManager):
 		Downloader.add_to_queue(h_item, self._browser.session)
 		return h_item
 
-	def _gallery_page(self, g_url, h_item):
+	def _gallery_page(self, g_id, h_item):
 		"Returns url to archive and updates h_item metadata from the /gallery/g_id page"
-		self._browser.open(g_url)
+		g_url = self.api + "gallery={}".format(g_id)
+		r = requests.get(g_url)
+		try:
+			r.raise_for_status()
+			chaika = r.json()
 
-		all_li = self._browser.find_all('li')
+			h_item.update_metadata('title', chaika['title'])
+			h_item.update_metadata('title_jpn', chaika['title_jpn'])
+			h_item.update_metadata('category', chaika['category'])
+			h_item.update_metadata('rating', chaika['rating'])
+			h_item.update_metadata('filecount', chaika['filecount'])
+			h_item.update_metadata('filesize', chaika['filesize'])
+			h_item.update_metadata('posted', chaika['posted'])
 
-		title = all_li[0].text.split(':')[1]
-		h_item.update_metadata('title', title)
-		jpn_title = all_li[1].text.split(':')[1]
-		h_item.update_metadata('title_jpn', jpn_title)
-		type = all_li[2].text.split(':')[1]
-		h_item.update_metadata('category', type)
-		rating = all_li[3].text.split(':')[1]
-		h_item.update_metadata('rating', rating)
-		f_count = all_li[4].text.split(':')[1]
-		h_item.update_metadata('filecount', f_count)
-		f_size_in_mb = all_li[5].text.split(':')[1]
-		f_size_in_bytes = int(float(f_size_in_mb.replace('MB', '').strip()) * 1048576)
-		h_item.update_metadata('filesize', f_size_in_bytes)
-		posted = all_li[7].text.split(':')[1]
-		posted = posted.replace('.', '').replace(',', '')
-		month, day, year = posted.split(' ')
-		# sigh.. Sep abbreviated as Sept.. really?!?
-		if month.startswith('Jan'):
-			month = '01'
-		elif month.startswith('Feb'):
-			month = '02'
-		elif month.startswith('Mar'):
-			month = '03'
-		elif month.startswith('Apr'):
-			month = '04'
-		elif month.startswith('May'):
-			month = '05'
-		elif month.startswith('Jun'):
-			month = '06'
-		elif month.startswith('Jul'):
-			month = '07'
-		elif month.startswith('Aug'):
-			month = '08'
-		elif month.startswith('Sep'):
-			month = '09'
-		elif month.startswith('Oct'):
-			month = '10'
-		elif month.startswith('Nov'):
-			month = '11'
-		elif month.startswith('Dec'):
-			month = '12'
-		posted = time.mktime(datetime.strptime(month+day+year, '%m%d%Y').timetuple())
-		h_item.update_metadata('posted', posted)
+			h_item.gallery_name = chaika['title']
+			h_item.gallery_url = self.url + "gallery/{}".format(g_id)
+			h_item.size = "{0:.2f} MB".format(chaika['filesize']/1048576)
+			tags = []
+			for t in chaika['tags']:
+				tag = t.replace('_', ' ')
+				tags.append(tag)
+			h_item.update_metadata('tags', tags)
 
-		h_item.gallery_name = title
-		h_item.size = f_size_in_mb
+			if chaika['archives']:
+				h_item.download_url = self.url + chaika['archives'][0]['download'][1:]
+				return chaika['archives'][0]['id']
+		except:
+			log.exception("Error parsing chaika")
 
-		archive_page = all_li[len(all_li)-1].a.get('href')
-		archive_page_url = self.url + archive_page[1:]
-		return archive_page_url
-
-	def _archive_page(self, a_url, h_item):
+	def _archive_page(self, a_id, h_item):
 		"Returns url to gallery and updates h_item metadata from the /archive/a_id page"
-		self._browser.open(a_url)		
-		all_li = self._browser.find_all('li')
-
-		EPG = all_li[3].text.split('>>') # e-link, posted, g-link
-
-		gallery_url = self.url + EPG[2].replace('Gallery link:', '').strip()[1:] # unreadable? sorry
-		h_item.gallery_url = gallery_url
-
-		tags = []
-		ns_tags_li = all_li[4].ul.find_all('li')
-		for nt in ns_tags_li:
-			# namespace
-			ns = nt.find('label')
-			ns = ns.text.replace('_', ' ') if ns else ''
-			# tags
-			all_tags = nt.find_all('a')
-			for t in all_tags:
-				tag = t.text.replace('_', ' ')
-				tags.append(ns + tag)
-		h_item.update_metadata('tags', tags)
-
-		archive = self._browser.find('li', {'class':'pagination_cen'}).a.get('href')
-		archive_url = self.url + archive[1:]
-		h_item.download_url = archive_url
-		return gallery_url
-
+		a_url = self.api + "archive={}".format(a_id)
+		r = requests.get(a_url)
+		try:
+			r.raise_for_status()
+			chaika = r.json()
+			return chaika['gallery']
+		except:
+			log.exception('Error parsing chaika')
+		
 class HenManager(DLManager):
 	"G.e or Ex gallery manager"
 

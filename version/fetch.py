@@ -159,6 +159,7 @@ class Fetch(QObject):
 												raise ValueError
 											for g in archive_g:
 												chap = new_gallery.chapters.create_chapter()
+												chap.in_archive = 1
 												chap.title = utils.title_parser(g)['title']
 												chap.path = g
 												metafile.update(utils.GMetafile(g, temp_p))
@@ -168,6 +169,7 @@ class Fetch(QObject):
 										else:
 											chap = new_gallery.chapters.create_chapter()
 											chap.title = utils.title_parser(os.path.split(path)[1])['title']
+											chap.in_archive = 1
 											chap.path = path
 											metafile.update(utils.GMetafile(path, temp_p))
 											arch = utils.ArchiveFile(temp_p)

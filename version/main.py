@@ -13,7 +13,7 @@
 #"""
 
 import sys, logging, logging.handlers, os, argparse, platform, scandir
-import traceback, gc
+import traceback
 
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QFile

@@ -624,12 +624,11 @@ class ChapterDB(DBBase):
 		"Adds chapter(s) to a gallery with the received series_id"
 		assert isinstance(chapters_container, ChaptersContainer), "chapters_container must be of class ChaptersContainer"
 		executing = []
-		executing2 = []
 		for chap in chapters_container:
 			if not ChapterDB.get_chapter(series_id, chap.number):
 				executing.append(default_chap_exec(series_id, chap, True))
 			else:
-				cls.update_chapter(cls, chapters_container, [chap.number])
+				ChapterDB.update_chapter(chapters_container, [chap.number])
 
 		cls.executemany(cls, 'INSERT INTO chapters VALUES(NULL, ?, ?, ?, ?, ?, ?)', executing)
 
@@ -656,7 +655,7 @@ class ChapterDB(DBBase):
 		return None for no match
 		"""
 		assert isinstance(chap_numb, int), "Please provide a valid chapter number"
-		cls.execute(cls, 'SELECT * FROM chapters WHERE series_id=? AND chapter_number=?', (series_id, chap_numb,))
+		cursor = cls.execute(cls, 'SELECT * FROM chapters WHERE series_id=? AND chapter_number=?', (series_id, chap_numb,))
 		try:
 			rows = cursor.fetchall()
 			chapters = ChaptersContainer()
@@ -1540,7 +1539,10 @@ class Chapter:
 			app_constants.STAT_MSG_METHOD(txt)
 			app_constants.NOTIF_BAR.add_text(txt)
 		if self.in_archive:
-			add_method_queue(utils.open_chapter, True, self.path, self.gallery.path)
+			if self.gallery.is_archive:
+				add_method_queue(utils.open_chapter, True, self.path, self.gallery.path)
+			else:
+				add_method_queue(utils.open_chapter, True, '', self.path)
 		else:
 			add_method_queue(utils.open_chapter, True, self.path)
 		self.gallery.times_read += 1

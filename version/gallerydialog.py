@@ -349,6 +349,7 @@ class GalleryDialog(QWidget):
 				for g in archive_g:
 					chap = chap_container.create_chapter()
 					chap.path = g
+					chap.in_archive = 1
 					metafile.update(utils.GMetafile(g, path))
 					arch = utils.ArchiveFile(path)
 					chap.pages = len(arch.dir_contents(g))

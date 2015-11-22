@@ -1032,8 +1032,7 @@ class GalleryMenu(QMenu):
 		def add_chdb(chaps_container):
 			gallery = self.index.data(Qt.UserRole+1)
 			log_i('Adding new chapter for {}'.format(gallery.title.encode(errors='ignore')))
-			gallerydb.add_method_queue(gallerydb.ChapterDB.add_chapters_raw, False, gallery.id, {'chapters_container':chaps_container})
-			gallery = gallerydb.GalleryDB.get_gallery_by_id(gallery.id)
+			gallerydb.add_method_queue(gallerydb.ChapterDB.add_chapters_raw, False, gallery.id, chaps_container)
 			self.gallery_model.replaceRows([gallery], self.index.row())
 		ch_widget = ChapterAddWidget(self.index.data(Qt.UserRole+1), self.parent_widget)
 		ch_widget.CHAPTERS.connect(add_chdb)
@@ -1806,7 +1805,7 @@ class ChapterAddWidget(QWidget):
 		super().__init__(parent)
 		self.setWindowFlags(Qt.Window)
 		self.setAttribute(Qt.WA_DeleteOnClose)
-		self.current_chapters = len(gallery.chapters)
+		self.current_chapters = gallery.chapters.count()
 		self.added_chaps = 0
 		self.gallery = gallery
 
@@ -1902,10 +1901,12 @@ class ChapterAddWidget(QWidget):
 			c = spin_box.value() - 1 # because of 0-based index
 			if os.path.exists(p):
 				chap = chapters.create_chapter(c)
+				chap.title = utils.title_parser(os.path.split(p)[1])['title']
 				chap.path = p
 				if os.path.isdir(p):
 					chap.pages = len(list(scandir.scandir(p)))
 				elif p.endswith(utils.ARCHIVE_FILES):
+					chap.in_archive = 1
 					arch = utils.ArchiveFile(p)
 					chap.pages = len(arch.dir_contents(''))
 					arch.close()

@@ -519,6 +519,7 @@ def open_chapter(chapterpath, archive=None):
 	if not is_archive:
 		chapterpath = os.path.normpath(chapterpath)
 	temp_p = archive if is_archive else chapterpath
+
 	def find_f_img_folder():
 		filepath = os.path.join(temp_p, [x for x in sorted([y.name for y in scandir.scandir(temp_p)])\
 			if x.lower().endswith(IMG_FILES)][0]) # Find first page
@@ -549,7 +550,7 @@ def open_chapter(chapterpath, archive=None):
 				if x.lower().endswith(IMG_FILES)][0]) # Find first page
 			filepath = os.path.abspath(filepath)
 		else:
-			if is_archive:
+			if is_archive or chapterpath.endswith(ARCHIVE_FILES):
 				con = zip.dir_contents('')
 				f_img = [x for x in sorted(con) if x.lower().endswith(IMG_FILES)]
 				if not f_img:
@@ -557,6 +558,7 @@ def open_chapter(chapterpath, archive=None):
 					return find_f_img_archive()
 				filepath = os.path.normpath(archive)
 			else:
+				app_constants.NOTIF_BAR.add_text("Fatal error: Unsupported gallery!")
 				raise ValueError("Unsupported gallery version")
 		return filepath
 
@@ -575,9 +577,11 @@ def open_chapter(chapterpath, archive=None):
 				return
 	except FileNotFoundError:
 		log.exception('Could not find chapter {}'.format(chapterpath))
+		app_constants.NOTIF_BAR.add_text("Chapter does no longer exist!")
 		return
+
 	try:
-		app_constants.NOTIF_BAR.add_text('Opening gallery...')
+		app_constants.NOTIF_BAR.add_text('Opening chapter...')
 		if not app_constants.USE_EXTERNAL_VIEWER:
 			if sys.platform.startswith('darwin'):
 				subprocess.call(('open', filepath))
@@ -599,8 +603,10 @@ def open_chapter(chapterpath, archive=None):
 				else:
 					subprocess.Popen((ext_path, filepath))
 	except subprocess.CalledProcessError:
+		app_constants.NOTIF_BAR.add_text("Could not open chapter. Invalid external viewer.")
 		log.exception('Could not open chapter. Invalid external viewer.')
 	except:
+		app_constants.NOTIF_BAR.add_text("Could not open chapter for unknown reasons. Check happypanda.log!")
 		log_e('Could not open chapter {}'.format(os.path.split(chapterpath)[1]))
 
 def get_gallery_img(path, archive=None):
@@ -842,8 +848,10 @@ def open_path(path, select=''):
 		elif os.name == 'posix':
 			subprocess.Popen(('xdg-open', path))
 		else:
+			app_constants.NOTIF_BAR.add_text("I don't know how you've managed to do this.. If you see this, you're in deep trouble...")
 			log_e('Could not open path: no OS found')
 	except:
+		app_constants.NOTIF_BAR.add_text("Could not open specified location. It might not exist anymore.")
 		log_e('Could not open path')
 
 def open_torrent(path):
