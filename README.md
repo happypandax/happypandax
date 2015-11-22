@@ -15,9 +15,13 @@ I'm here if you have any questions!
 <img src="misc/screenshot4.png" width="300">
 
 # How to install and run
+#### Windows
 1. Download the archive from [releases](https://github.com/Pewpews/happypanda/releases)
 2. Extract the archive in it's own folder (for the sake of cleanliness)
-3. Find Happypanda (Happypanda.exe on windows) and double click on it!
+3. Happypanda.exe on windows and double click on it!
+
+#### Mac and Linux
+see [INSTALL.md](install.md)
 
 # Features
 - Portable, self-contained in folder and cross-platform
