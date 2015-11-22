@@ -118,7 +118,7 @@ class AppWindow(QMainWindow):
 
 	admin_db_method_invoker = pyqtSignal(str)
 	def start_up(self):
-		hello = ["Hello!", "Hi!", "Onii-chan!", "Senpai!", "Hisashiburi!", "Welcome!", "Okaerinasai!", "Welcome back!"]
+		hello = ["Hello!", "Hi!", "Onii-chan!", "Senpai!", "Hisashiburi!", "Welcome!", "Okaerinasai!", "Welcome back!", "Hajimemashite!"]
 		self.notification_bar.add_text("{} Please don't hesitate to report any bugs you find.".format(hello[random.randint(0, len(hello)-1)])+
 								 " Go to Settings -> About -> Bug Reporting for more info!")
 		level = 5
