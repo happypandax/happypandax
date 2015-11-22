@@ -1,3 +1,53 @@
+*Happypanda v0.26*
+- Startup is now slighty faster
+- New redesigned gallery metadata window!
+	+ New chapter view in the metadata window
+	+ Artist field is now clickable to issue a search for galleries with same artist
+- Some GUI changes
+- New advanced gallery search **(make sure to read the search guide found in `Settings -> About -> Search Guide`)**
+	+ Case sensitive searching
+	+ Whole terms match searching
+	+ Terms excluding
+	+ New special namespaced tags (Read about them in `Settings -> About -> Search Guide`)
+- New import/export database feature found in `Settings -> About -> Database`
+- Added new column in `Skipped paths` window to show what reason caused a file to be skipped
+- Gallery downloader
+	+ Added new batch urls window to gallery downloader
+	+ Gallery downloading from `panda.chaika.moe` is now using its new api
+	+ Added context menu's to download items
+	+ Added download progress on download items
+	+ Doubleclicking on finished download items will open its containing folder
+- Added autocomplete on the artist field in gallery edit dialog
+- Activated the `last read` attribute on galleries
+- Improved hash generation
+- Introducing metafiles:
+	+ Files containing gallery metadata in same folder/archive is now detected on import
+	+ Only supports [eze](https://github.com/dnsev-h/eze)'s `info.json` files for now
+- Settings
+	+ Moved alot of options around. **Note: Some options will be reset**
+	+ Reworded some options and fixed typos
+	+ Enabled the `Database` tab in *About* section with import/export database feature
+- Updated the database to version 0.22
+	+ Database will now be backed up before upgrading
+- Clicking on the tray icon ballon will now activate Happypanda
+- Thumbnail regenerating
+	+ Added confirmation popup when about to regenerate thumbnails
+	+ Application restart is no longer required after regenerating thumbnails
+	+ Added confirmation popup asking about if the thumbnail cache should be cleaned before regenerating
+- Renamed `Random Gallery Opener` to `Open random gallery` and also moved it to the Gallery menu on the toolbar
+- `Open random gallery` will now only pick a random gallery in current view.
+	+ *E.g. switching to the favorite view will make it pick a random gallery among the favorites*
+- Fixed bugs:
+	+ Fixed a bug causing archives downloaded from g.e/ex to fail when trying to add to library
+	+ Fixed a bug where fetching galleries from the database would sometimes throw an exception
+	+ Fixed a bug causing people running from source to never see the new update notification
+	+ Fixed some popup blur bug
+	+ Fixed an annoyance where the text cursor would always move to the end when searching
+	+ Fixed a bug where `Show in Folder` and `Open folder/archive` in gallery context menu was doing the same thing
+	+ Fixed a bug where tags fetched from chaika included underscores
+	+ Fixed bug where the notification widget would sometimes not show messages
+	+ Fixed bug where chapters added to gallery with directory source would not open correctly
+
 *Happypanda v0.25*
 - Added *Show in folder* entry in gallery contextmenu
 - Gallery popups
