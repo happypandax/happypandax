@@ -12,10 +12,12 @@
 #along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 #"""
 
-import time, datetime, os, subprocess, sys, logging, zipfile
-import hashlib, shutil, uuid, re, scandir, rarfile
+import datetime, os, subprocess, sys, logging, zipfile
+import hashlib, shutil, uuid, re, scandir, rarfile, json
 
-import gui_constants
+import app_constants
+
+from database import db_constants
 
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -29,22 +31,169 @@ ARCHIVE_FILES = ('.zip', '.cbz', '.rar', '.cbr')
 FILE_FILTER = '*.zip *.cbz *.rar *.cbr'
 IMG_FILTER = '*.jpg *.bmp *.png *.jpeg'
 rarfile.PATH_SEP = '/'
-rarfile.UNRAR_TOOL = gui_constants.unrar_tool_path
-if not gui_constants.unrar_tool_path:
+rarfile.UNRAR_TOOL = app_constants.unrar_tool_path
+if not app_constants.unrar_tool_path:
 	FILE_FILTER = '*.zip *.cbz'
 	ARCHIVE_FILES = ('.zip', '.cbz')
 
-def update_gallery_path(new_path, gallery):
-	"Updates a gallery's & it's chapters' path"
-	for chap_numb in gallery.chapters:
-		chap_path = gallery.chapters[chap_numb]
-		head, tail = os.path.split(chap_path)
-		if gallery.path == chap_path:
-			chap_path = new_path
-		elif gallery.path == head:
-			chap_path = os.path.join(new_path, tail)
+class GMetafile:
+	def __init__(self, path=None, archive=''):
+		self.metadata = {
+			"title":'',
+			"artist":'',
+			"type":'',
+			"tags":{},
+			"language":'',
+			"pub_date":'',
+			"link":'',
 
-		gallery.chapters[chap_numb] = chap_path
+			}
+		self.files = []
+		if path is None:
+			return
+		if archive:
+			zip = ArchiveFile(archive)
+			c = zip.dir_contents(path)
+			for x in c:
+				if x.endswith(app_constants.GALLERY_METAFILE_KEYWORDS):
+					self.files.append(open(zip.extract(x)))
+		else:
+			for p in scandir.scandir(path):
+				if p.name in app_constants.GALLERY_METAFILE_KEYWORDS:
+					self.files.append(open(p.path))
+		if self.files:
+			self.detect()
+		else:
+			log_i('No metafile found...')
+
+	def detect(self):
+		for fp in self.files:
+			with fp:
+				j = json.load(fp)
+				eze = ['gallery_info', 'image_api_key', 'image_info']
+				# eze
+				if all(x in j for x in eze):
+					log_i('Detected metafile: eze')
+					ezedata = j['gallery_info']
+					t_parser = title_parser(ezedata['title'])
+					self.metadata['title'] = t_parser['title']
+					self.metadata['type'] = ezedata['category']
+					for ns in ezedata['tags']:
+						self.metadata['tags'][ns.capitalize()] = ezedata['tags'][ns]
+					self.metadata['tags']['default'] = self.metadata['tags'].pop('Misc', [])
+					self.metadata['artist'] = self.metadata['tags']['Artist'][0].capitalize()\
+					    if 'Artist' in self.metadata['tags'] else t_parser['artist']
+					self.metadata['language'] = ezedata['language']
+					d = ezedata['upload_date']
+					# should be zero padded
+					d[1] = int("0"+str(d[1])) if len(str(d[1])) == 1 else d[1]
+					d[3] = int("0"+str(d[1])) if len(str(d[1])) == 1 else d[1] 
+					self.metadata['pub_date'] = datetime.datetime.strptime(
+						"{} {} {}".format(d[0], d[1], d[3]), "%Y %m %d")
+					# http://exhentai.org/g/875077/7b729c6270/
+					l = ezedata['source']
+					self.metadata['link'] = 'http://'+l['site']+'.org/g/'+str(l['gid'])+'/'+l['token']
+				else:
+					log_i('Incompatible metafiles found')
+
+	def update(self, other):
+		self.metadata.update((x, y) for x, y in other.metadata.items() if y)
+
+	def apply_gallery(self, gallery):
+		log_i('Applying metafile to gallery')
+		if self.metadata['title']:
+			gallery.title = self.metadata['title']
+		if self.metadata['artist']:
+			gallery.artist = self.metadata['artist']
+		if self.metadata['type']:
+			gallery.type = self.metadata['type']
+		if self.metadata['tags']:
+			gallery.tags = self.metadata['tags']
+		if self.metadata['language']:
+			gallery.language = self.metadata['language']
+		if self.metadata['pub_date']:
+			gallery.pub_date = self.metadata['pub_date']
+		if self.metadata['link']:
+			gallery.link = self.metadata['link']
+		return gallery
+
+def backup_database(db_path=db_constants.DB_PATH):
+	date = "{}".format(datetime.datetime.today()).split(' ')[0]
+	base_path, name = os.path.split(db_path)
+	db_name = "{}-{}".format(date, name)
+
+	current_try = 0
+	while current_try < 50:
+		if current_try:
+			db_name = "{}({})-{}".format(date, current_try, db_name)
+		try:
+			dst_path = os.path.join(base_path, db_name)
+			shutil.copyfile(db_path, dst_path)
+			break
+		except:
+			current_try += 1
+	return True
+
+def get_date_age(date):
+	"""
+	Take a datetime and return its "age" as a string.
+	The age can be in second, minute, hour, day, month or year. Only the
+	biggest unit is considered, e.g. if it's 2 days and 3 hours, "2 days" will
+	be returned.
+	Make sure date is not in the future, or else it won't work.
+	"""
+
+	def formatn(n, s):
+		'''Add "s" if it's plural'''
+
+		if n == 1:
+			return "1 %s" % s
+		elif n > 1:
+			return "%d %ss" % (n, s)
+
+	def q_n_r(a, b):
+		'''Return quotient and remaining'''
+
+		return a / b, a % b
+
+	class PrettyDelta:
+		def __init__(self, dt):
+			now = datetime.datetime.now()
+
+			delta = now - dt
+			self.day = delta.days
+			self.second = delta.seconds
+
+			self.year, self.day = q_n_r(self.day, 365)
+			self.month, self.day = q_n_r(self.day, 30)
+			self.hour, self.second = q_n_r(self.second, 3600)
+			self.minute, self.second = q_n_r(self.second, 60)
+
+		def format(self):
+			for period in ['year', 'month', 'day', 'hour', 'minute', 'second']:
+				n = getattr(self, period)
+				if n > 0.9:
+					return formatn(n, period)
+			return "0 second"
+
+	return PrettyDelta(date).format()
+
+def all_opposite(*args):
+	"Returns true if all items in iterable evaluae to false"
+	for iterable in args:
+		for x in iterable:
+			if x:
+				return False
+	return True
+
+def update_gallery_path(new_path, gallery):
+	"Updates a gallery's chapters path"
+	for chap in gallery.chapters:
+		head, tail = os.path.split(chap.path)
+		if gallery.path == chap.path:
+			chap.path = new_path
+		elif gallery.path == head:
+			chap.path = os.path.join(new_path, tail)
 
 	gallery.path = new_path
 	return gallery
@@ -55,7 +204,7 @@ def move_files(path, dest=''):
 	imported_galleries_def_path will be used instead.
 	"""
 	if not dest:
-		dest = gui_constants.IMPORTED_GALLERY_DEF_PATH
+		dest = app_constants.IMPORTED_GALLERY_DEF_PATH
 		if not dest:
 			return path
 	f = os.path.split(path)[1]
@@ -70,14 +219,14 @@ def move_files(path, dest=''):
 
 def check_ignore_list(key):
 	k = os.path.normcase(key)
-	for path in gui_constants.IGNORE_PATHS:
+	for path in app_constants.IGNORE_PATHS:
 		p = os.path.normcase(path)
 		if p in k:
 			return False
 	return True
 
 def gallery_text_fixer(gallery):
-	regex_str = gui_constants.GALLERY_DATA_FIX_REGEX
+	regex_str = app_constants.GALLERY_DATA_FIX_REGEX
 	if regex_str:
 		try:
 			valid_regex = re.compile(regex_str)
@@ -87,12 +236,12 @@ def gallery_text_fixer(gallery):
 			return None
 
 		def replace_regex(text):
-			new_text = re.sub(regex_str, gui_constants.GALLERY_DATA_FIX_REPLACE, text)
+			new_text = re.sub(regex_str, app_constants.GALLERY_DATA_FIX_REPLACE, text)
 			return new_text
 
-		if gui_constants.GALLERY_DATA_FIX_TITLE:
+		if app_constants.GALLERY_DATA_FIX_TITLE:
 			gallery.title = replace_regex(gallery.title)
-		if gui_constants.GALLERY_DATA_FIX_ARTIST:
+		if app_constants.GALLERY_DATA_FIX_ARTIST:
 			gallery.artist = replace_regex(gallery.artist)
 
 		return gallery
@@ -124,9 +273,6 @@ def generate_img_hash(src):
 		buffer = src.read(chunk)
 	return sha1.hexdigest()
 
-class CreateArchiveFail(Exception): pass
-class FileNotFoundInArchive(Exception): pass
-
 class ArchiveFile():
 	"""
 	Work with archive files, raises exception if instance fails.
@@ -152,13 +298,13 @@ class ArchiveFile():
 				# test for corruption
 				if b_f:
 					log_w('Bad file found in archive {}'.format(filepath.encode(errors='ignore')))
-					raise CreateArchiveFail
+					raise app_constants.CreateArchiveFail
 			else:
 				log_e('Archive: Unsupported file format')
-				raise CreateArchiveFail
+				raise app_constants.CreateArchiveFail
 		except:
 			log.exception('Create archive: FAIL')
-			raise CreateArchiveFail
+			raise app_constants.CreateArchiveFail
 
 	def namelist(self):
 		filelist = self.archive.namelist()
@@ -172,7 +318,7 @@ class ArchiveFile():
 			return False
 		if not name in self.namelist():
 			log_e('File {} not found in archive'.format(name))
-			raise FileNotFoundInArchive
+			raise app_constants.FileNotFoundInArchive
 		if self.type == self.zip:
 			if name.endswith('/'):
 				return True
@@ -206,7 +352,7 @@ class ArchiveFile():
 		"""
 		if dir_name and not dir_name in self.namelist():
 			log_e('Directory {} not found in archive'.format(dir_name))
-			raise FileNotFoundInArchive
+			raise app_constants.FileNotFoundInArchive
 		if not dir_name:
 			if self.type == self.zip:
 				con =  [x for x in self.namelist() if x.count('/') == 0 or \
@@ -230,7 +376,7 @@ class ArchiveFile():
 		Returns path to the extracted file
 		"""
 		if not path:
-			path = os.path.join(gui_constants.temp_dir, str(uuid.uuid4()))
+			path = os.path.join(app_constants.temp_dir, str(uuid.uuid4()))
 			os.mkdir(path)
 
 		if not file_to_ext:
@@ -255,7 +401,7 @@ class ArchiveFile():
 		If path is not specified, a temp dir will be created
 		"""
 		if not path:
-			path = os.path.join(gui_constants.temp_dir, str(uuid.uuid4()))
+			path = os.path.join(app_constants.temp_dir, str(uuid.uuid4()))
 			os.mkdir(path)
 		if member:
 			self.archive.extractall(path, member)
@@ -283,7 +429,7 @@ def check_archive(archive_path):
 	archive_path = archive_path.lower()
 	try:
 		zip = ArchiveFile(archive_path)
-	except CreateArchiveFail:
+	except app_constants.CreateArchiveFail:
 		return []
 	if not zip:
 		return []
@@ -325,12 +471,14 @@ def recursive_gallery_check(path):
 	"""
 	gallery_dirs = []
 	gallery_arch = []
+	found_paths = 0
 	for root, subfolders, files in scandir.walk(path):
 		if files:
 			for f in files:
 				if f.endswith(ARCHIVE_FILES):
 					arch_path = os.path.join(root, f)
 					for g in check_archive(arch_path):
+						found_paths += 1
 						gallery_arch.append((g, arch_path))
 									
 			if not subfolders:
@@ -341,7 +489,9 @@ def recursive_gallery_check(path):
 					if not f.lower().endswith(IMG_FILES):
 						gallery_probability -= 1
 				if gallery_probability >= (len(files)*0.8):
+					found_paths += 1
 					gallery_dirs.append(root)
+	log_i('Found {} in {}'.format(found_paths, path).encode(errors='ignore'))
 	return gallery_dirs, gallery_arch
 
 def today():
@@ -353,7 +503,7 @@ def today():
 	return [day, month, year]
 
 def external_viewer_checker(path):
-	check_dict = gui_constants.EXTERNAL_VIEWER_SUPPORT
+	check_dict = app_constants.EXTERNAL_VIEWER_SUPPORT
 	viewer = os.path.split(path)[1]
 	for x in check_dict:
 		allow = False
@@ -369,6 +519,7 @@ def open_chapter(chapterpath, archive=None):
 	if not is_archive:
 		chapterpath = os.path.normpath(chapterpath)
 	temp_p = archive if is_archive else chapterpath
+
 	def find_f_img_folder():
 		filepath = os.path.join(temp_p, [x for x in sorted([y.name for y in scandir.scandir(temp_p)])\
 			if x.lower().endswith(IMG_FILES)][0]) # Find first page
@@ -377,7 +528,7 @@ def open_chapter(chapterpath, archive=None):
 	def find_f_img_archive(extract=True):
 		zip = ArchiveFile(temp_p)
 		if extract:
-			gui_constants.NOTIF_BAR.add_text('Extracting...')
+			app_constants.NOTIF_BAR.add_text('Extracting...')
 			t_p = os.path.join('temp', str(uuid.uuid4()))
 			os.mkdir(t_p)
 			if is_archive or chapterpath.endswith(ARCHIVE_FILES):
@@ -399,7 +550,7 @@ def open_chapter(chapterpath, archive=None):
 				if x.lower().endswith(IMG_FILES)][0]) # Find first page
 			filepath = os.path.abspath(filepath)
 		else:
-			if is_archive:
+			if is_archive or chapterpath.endswith(ARCHIVE_FILES):
 				con = zip.dir_contents('')
 				f_img = [x for x in sorted(con) if x.lower().endswith(IMG_FILES)]
 				if not f_img:
@@ -407,6 +558,7 @@ def open_chapter(chapterpath, archive=None):
 					return find_f_img_archive()
 				filepath = os.path.normpath(archive)
 			else:
+				app_constants.NOTIF_BAR.add_text("Fatal error: Unsupported gallery!")
 				raise ValueError("Unsupported gallery version")
 		return filepath
 
@@ -415,20 +567,22 @@ def open_chapter(chapterpath, archive=None):
 			filepath = find_f_img_folder()
 		except NotADirectoryError: # archive
 			try:
-				if not gui_constants.EXTRACT_CHAPTER_BEFORE_OPENING and gui_constants.EXTERNAL_VIEWER_PATH:
+				if not app_constants.EXTRACT_CHAPTER_BEFORE_OPENING and app_constants.EXTERNAL_VIEWER_PATH:
 					filepath = find_f_img_archive(False)
 				else:
 					filepath = find_f_img_archive()
-			except CreateArchiveFail:
+			except app_constants.CreateArchiveFail:
 				log.exception('Could not open chapter')
-				gui_constants.NOTIF_BAR.add_text('Could not open chapter. Check happypanda.log for more details.')
+				app_constants.NOTIF_BAR.add_text('Could not open chapter. Check happypanda.log for more details.')
 				return
 	except FileNotFoundError:
 		log.exception('Could not find chapter {}'.format(chapterpath))
+		app_constants.NOTIF_BAR.add_text("Chapter does no longer exist!")
 		return
+
 	try:
-		gui_constants.NOTIF_BAR.add_text('Opening gallery...')
-		if not gui_constants.USE_EXTERNAL_VIEWER:
+		app_constants.NOTIF_BAR.add_text('Opening chapter...')
+		if not app_constants.USE_EXTERNAL_VIEWER:
 			if sys.platform.startswith('darwin'):
 				subprocess.call(('open', filepath))
 			elif os.name == 'nt':
@@ -436,21 +590,23 @@ def open_chapter(chapterpath, archive=None):
 			elif os.name == 'posix':
 				subprocess.call(('xdg-open', filepath))
 		else:
-			ext_path = gui_constants.EXTERNAL_VIEWER_PATH
+			ext_path = app_constants.EXTERNAL_VIEWER_PATH
 			viewer = external_viewer_checker(ext_path)
 			if viewer == 'honeyview':
-				if gui_constants.OPEN_GALLERIES_SEQUENTIALLY:
+				if app_constants.OPEN_GALLERIES_SEQUENTIALLY:
 					subprocess.call((ext_path, filepath))
 				else:
 					subprocess.Popen((ext_path, filepath))
 			else:
-				if gui_constants.OPEN_GALLERIES_SEQUENTIALLY:
+				if app_constants.OPEN_GALLERIES_SEQUENTIALLY:
 					subprocess.check_call((ext_path, filepath))
 				else:
 					subprocess.Popen((ext_path, filepath))
 	except subprocess.CalledProcessError:
+		app_constants.NOTIF_BAR.add_text("Could not open chapter. Invalid external viewer.")
 		log.exception('Could not open chapter. Invalid external viewer.')
 	except:
+		app_constants.NOTIF_BAR.add_text("Could not open chapter for unknown reasons. Check happypanda.log!")
 		log_e('Could not open chapter {}'.format(os.path.split(chapterpath)[1]))
 
 def get_gallery_img(path, archive=None):
@@ -470,7 +626,7 @@ def get_gallery_img(path, archive=None):
 		try:
 			log_i('Getting image from archive')
 			zip = ArchiveFile(real_path)
-			temp_path = os.path.join(gui_constants.temp_dir, str(uuid.uuid4()))
+			temp_path = os.path.join(app_constants.temp_dir, str(uuid.uuid4()))
 			os.mkdir(temp_path)
 			if not archive:
 				f_img_name = sorted([img for img in zip.namelist() if img.lower().endswith(IMG_FILES)])[0]
@@ -478,17 +634,18 @@ def get_gallery_img(path, archive=None):
 				f_img_name = sorted([img for img in zip.dir_contents(path) if img.lower().endswith(IMG_FILES)])[0]
 			img_path = zip.extract(f_img_name, temp_path)
 			zip.close()
-		except CreateArchiveFail:
-			img_path = gui_constants.NO_IMAGE_PATH
+		except app_constants.CreateArchiveFail:
+			img_path = app_constants.NO_IMAGE_PATH
 	elif os.path.isdir(real_path):
 		log_i('Getting image from folder')
-		first_img = sorted([img.name for img in scandir.scandir(real_path) if img.name.lower().endswith(tuple(IMG_FILES))])[0]
-		img_path = os.path.join(real_path, first_img)
+		first_img = sorted([img.name for img in scandir.scandir(real_path) if img.name.lower().endswith(tuple(IMG_FILES))])
+		if first_img:
+			img_path = os.path.join(real_path, first_img[0])
 
 	if img_path:
 		return os.path.abspath(img_path)
 	else:
-		log_e("Could not get image")
+		log_e("Could not get gallery image")
 
 def tag_to_string(gallery_tag, simple=False):
 	"""
@@ -625,6 +782,14 @@ import re as regex
 def title_parser(title):
 	"Receives a title to parse. Returns dict with 'title', 'artist' and language"
 	" ".join(title.split())
+	if '/' in title:
+		try:
+			title = os.path.split(title)[1]
+			if not title:
+				title = title
+		except IndexError:
+			pass
+
 	for x in ARCHIVE_FILES:
 		if title.endswith(x):
 			title = title[:-len(x)]
@@ -683,15 +848,17 @@ def open_path(path, select=''):
 		elif os.name == 'posix':
 			subprocess.Popen(('xdg-open', path))
 		else:
+			app_constants.NOTIF_BAR.add_text("I don't know how you've managed to do this.. If you see this, you're in deep trouble...")
 			log_e('Could not open path: no OS found')
 	except:
+		app_constants.NOTIF_BAR.add_text("Could not open specified location. It might not exist anymore.")
 		log_e('Could not open path')
 
 def open_torrent(path):
-	if not gui_constants.TORRENT_CLIENT:
+	if not app_constants.TORRENT_CLIENT:
 		open_path(path)
 	else:
-		subprocess.Popen([gui_constants.TORRENT_CLIENT, path])
+		subprocess.Popen([app_constants.TORRENT_CLIENT, path])
 
 def delete_path(path):
 	"Deletes the provided recursively"
@@ -714,57 +881,106 @@ def delete_path(path):
 			s = False
 	return s
 
+def regex_search(a, b, override_case=False):
+	"Looks for a in b"
+	if a and b:
+		try:
+			if not app_constants.GALLERY_SEARCH_CASE or override_case:
+				if regex.search(a, b, regex.IGNORECASE):
+					return True
+			else:
+				if regex.search(a, b):
+					return True
+		except regex.error:
+			pass
+	return False
+
+def search_term(a, b, override_case=False):
+	"Searches for a in b"
+	if a and b:
+		if not app_constants.GALLERY_SEARCH_CASE or override_case:
+			b = b.lower()
+			a = a.lower()
+
+		if app_constants.GALLERY_SEARCH_STRICT:
+			if a == b:
+				return True
+		else:
+			if a in b:
+				return True
+	return False
+
 def get_terms(term):
 	"Dividies term into pieces. Returns a list with the pieces"
-	terms = []
-	buffer = ''
-	connected = False
-	qoutes = 0
+
+	# some variables we will use
+	pieces = []
+	piece = ''
+	qoute_level = 0
+	bracket_level = 0
+	brackets_tags = {}
+	current_bracket_ns = ''
+	end_of_bracket = False
+	blacklist = ['[', ']', '"', ',']
+
 	for n, x in enumerate(term):
+		# if we meet brackets
+		if x == '[':
+			bracket_level += 1
+			brackets_tags[piece] = set() # we want unique tags!
+			current_bracket_ns = piece
+		elif x == ']':
+			bracket_level -= 1
+			end_of_bracket = True
+
 		# if we meet a double qoute
 		if x == '"':
-			if qoutes > 0:
-				qoutes -= 1
+			if qoute_level > 0:
+				qoute_level -= 1
 			else:
-				qoutes += 1
-		# if we meet a whitespace or end of word and are not in a double qoute
-		if (x == ' ' or n == len(term) -1) and qoutes == 0:
-			terms.append(buffer)
-			buffer = ''
+				qoute_level += 1
+
+		# if we meet a whitespace, comma or end of term and are not in a double qoute
+		if (x == ' ' or x == ',' or n == len(term) - 1) and qoute_level == 0:
+			# if end of term and x is allowed
+			if (n == len(term) - 1) and not x in blacklist and x != ' ':
+				piece += x
+			if piece:
+				if bracket_level > 0 or end_of_bracket: # if we are inside a bracket we put piece in the set
+					end_of_bracket = False
+					if piece.startswith(current_bracket_ns):
+						piece = piece[len(current_bracket_ns):]
+					if piece:
+						try:
+							brackets_tags[current_bracket_ns].add(piece)
+						except KeyError: # keyerror when there is a closing bracket without a starting bracket
+							pass
+				else:
+					pieces.append(piece) # else put it in the normal list
+			piece = ''
 			continue
 
-		# else append to the buffer
-		if x != '"' and x!= ',':
-			if qoutes > 0: # we want to include whitespace if in double qoute
-				buffer += x
+		# else append to the buffers
+		if not x in blacklist:
+			if qoute_level > 0: # we want to include everything if in double qoute
+				piece += x
 			elif x != ' ':
-				buffer += x
+				piece += x
 
-	#############
-	def remove_abs_terms(term):
-		if term.startswith(('title:')):
-			term = term[6:]
-		elif term.startswith(('artist:')):
-			term = term[7:]
-		return term
+	# now for the bracket tags
+	for ns in brackets_tags:
+		for tag in brackets_tags[ns]:
+			ns_tag = ns
+			# if they want to exlucde this tag
+			if tag[0] == '-':
+				if ns_tag[0] != '-':
+					ns_tag = '-' + ns
+				tag = tag[1:] # remove the '-'
 
-	d_terms = {}
-	excludes = []
-	# get excludes, title, artist
-	for t in terms:
-		if t[0] == '-':
-			term = t[1:]
-			excludes.append(remove_abs_terms(term))
-			continue
-		if t.startswith('title:'):
-			term = t[6:]
-			title = term
-			continue
-		if t.startswith('artist:'):
-			term = t[7:]
-			artist = term
-			continue
+			# put them together
+			ns_tag += tag
 
-		d_terms[t] = False
+			# done
+			pieces.append(ns_tag)
 
-	return d_terms, excludes
+	return pieces

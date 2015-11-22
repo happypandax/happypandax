@@ -12,7 +12,7 @@
 #along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 #"""
 
-import sys, logging, os, threading, re, requests, scandir
+import sys, logging, os, threading, re, requests, scandir, random
 from PyQt5.QtCore import (Qt, QSize, pyqtSignal, QThread, QEvent, QTimer,
 						  QObject, QPoint, QPropertyAnimation)
 from PyQt5.QtGui import (QPixmap, QIcon, QMoveEvent, QCursor,
@@ -25,12 +25,13 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QListView,
 							 QDesktopWidget, QPushButton, QCompleter,
 							 QListWidget, QListWidgetItem, QToolTip,
 							 QProgressBar, QToolButton, QSystemTrayIcon,
-							 QShortcut)
+							 QShortcut, QGraphicsBlurEffect, QTableWidget,
+							 QTableWidgetItem)
 
-import gui_constants
+import app_constants
 import misc
 import gallery
-import file_misc
+import io_misc
 import settingsdialog
 import gallerydialog
 import fetch
@@ -39,6 +40,7 @@ import settings
 import pewnet
 import utils
 import misc_db
+import database
 
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -51,21 +53,19 @@ class AppWindow(QMainWindow):
 	"The application's main window"
 	move_listener = pyqtSignal()
 	db_activity_checker = pyqtSignal()
+	graphics_blur = QGraphicsBlurEffect()
 	def __init__(self):
 		super().__init__()
-		gui_constants.GENERAL_THREAD = QThread(self)
-		gui_constants.GENERAL_THREAD.finished.connect(gui_constants.GENERAL_THREAD.deleteLater)
-		gui_constants.GENERAL_THREAD.start()
+		app_constants.GENERAL_THREAD = QThread(self)
+		app_constants.GENERAL_THREAD.finished.connect(app_constants.GENERAL_THREAD.deleteLater)
+		app_constants.GENERAL_THREAD.start()
 		self.setAcceptDrops(True)
 		self.initUI()
 		self.start_up()
 		QTimer.singleShot(3000, self._check_update)
-		def test():
-			self.manga_list_view.scrollToBottom()
-		#QTimer.singleShot(10000, test)
 		self.setFocusPolicy(Qt.NoFocus)
 		self.set_shortcuts()
-
+		self.graphics_blur.setParent(self)
 		#ex = settings.ExProperties()
 		#d = pewnet.ExHenManager(ex.ipb_id, ex.ipb_pass)
 		#item = d.from_gallery_url('http://exhentai.org/g/861957/02741dc584/')
@@ -95,72 +95,78 @@ class AppWindow(QMainWindow):
 			if index:
 				self.manga_list_view.replace_edit_gallery([g], index.row())
 			else:
-				log_e('Could not find gallery to update from Watcher')
+				log_e('Could not find gallery to update from watcher')
 
 		def created(path):
-			c_popup = file_misc.CreatedPopup(path, self)
+			c_popup = io_misc.CreatedPopup(path, self)
 			c_popup.ADD_SIGNAL.connect(create_gallery)
 		def modified(path, gallery):
-			mod_popup = file_misc.ModifiedPopup(path, gallery, self)
+			mod_popup = io_misc.ModifiedPopup(path, gallery, self)
 		def deleted(path, gallery):
-			d_popup = file_misc.DeletedPopup(path, gallery, self)
+			d_popup = io_misc.DeletedPopup(path, gallery, self)
 			d_popup.UPDATE_SIGNAL.connect(update_gallery)
 			d_popup.REMOVE_SIGNAL.connect(remove_gallery)
 		def moved(new_path, gallery):
-			mov_popup = file_misc.MovedPopup(new_path, gallery, self)
+			mov_popup = io_misc.MovedPopup(new_path, gallery, self)
 			mov_popup.UPDATE_SIGNAL.connect(update_gallery)
 
-		self.watchers = file_misc.Watchers()
+		self.watchers = io_misc.Watchers()
 		self.watchers.gallery_handler.CREATE_SIGNAL.connect(created)
 		self.watchers.gallery_handler.MODIFIED_SIGNAL.connect(modified)
 		self.watchers.gallery_handler.MOVED_SIGNAL.connect(moved)
 		self.watchers.gallery_handler.DELETED_SIGNAL.connect(deleted)
 
-	admin_db_method_invoker = pyqtSignal()
+	admin_db_method_invoker = pyqtSignal(str)
 	def start_up(self):
-		# TODO: Remove in beta
-		level = 4
+		hello = ["Hello!", "Hi!", "Onii-chan!", "Senpai!", "Hisashiburi!", "Welcome!", "Okaerinasai!", "Welcome back!", "Hajimemashite!"]
+		self.notification_bar.add_text("{} Please don't hesitate to report any bugs you find.".format(hello[random.randint(0, len(hello)-1)])+
+								 " Go to Settings -> About -> Bug Reporting for more info!")
+		level = 5
 		def normalize_first_time():
 			settings.set(level, 'Application', 'first time level')
 			settings.save()
 
 		def done(status=True):
 			gallerydb.DatabaseEmitter.RUN = True
-			if gui_constants.FIRST_TIME_LEVEL != level:
+			if app_constants.FIRST_TIME_LEVEL != level:
 				normalize_first_time()
-			if gui_constants.ENABLE_MONITOR and\
-				gui_constants.MONITOR_PATHS and all(gui_constants.MONITOR_PATHS):
+			if app_constants.ENABLE_MONITOR and\
+				app_constants.MONITOR_PATHS and all(app_constants.MONITOR_PATHS):
 				self.init_watchers()
-				if gui_constants.LOOK_NEW_GALLERY_STARTUP:
-					if self.manga_list_view.gallery_model.db_emitter.count == gui_constants.GALLERY_DATA:
+				if app_constants.LOOK_NEW_GALLERY_STARTUP:
+					if self.manga_list_view.gallery_model.db_emitter.count == app_constants.GALLERY_DATA:
 						self.scan_for_new_galleries()
 					else:
 						self.manga_list_view.gallery_model.db_emitter.DONE.connect(self.scan_for_new_galleries)
 			self.download_manager = pewnet.Downloader()
-			gui_constants.DOWNLOAD_MANAGER = self.download_manager
+			app_constants.DOWNLOAD_MANAGER = self.download_manager
 			self.download_manager.start_manager(4)
 
-		if gui_constants.FIRST_TIME_LEVEL < 3:
-			log_i('Invoking first time level {}'.format(level))
+		if app_constants.FIRST_TIME_LEVEL < 4:
+			log_i('Invoking first time level {}'.format(4))
+			settings.set([], 'Application', 'monitor paths')
+			settings.set([], 'Application', 'ignore paths')
+			app_constants.MONITOR_PATHS = []
+			app_constants.IGNORE_PATHS = []
+			settings.save()
+			done()
+		elif app_constants.FIRST_TIME_LEVEL < 5:
+			log_i('Invoking first time level {}'.format(5))
 			app_widget = misc.ApplicationPopup(self)
+			app_widget.note_info.setText("<font color='red'>IMPORTANT:</font> Application restart is required when done")
+			app_widget.restart_info.hide()
 			self.admin_db = gallerydb.AdminDB()
-			self.admin_db.moveToThread(gui_constants.GENERAL_THREAD)
+			self.admin_db.moveToThread(app_constants.GENERAL_THREAD)
 			self.admin_db.DONE.connect(done)
+			self.admin_db.DONE.connect(lambda: app_constants.NOTIF_BAR.add_text("Application requires a restart"))
 			self.admin_db.DONE.connect(self.admin_db.deleteLater)
 			self.admin_db.DATA_COUNT.connect(app_widget.prog.setMaximum)
 			self.admin_db.PROGRESS.connect(app_widget.prog.setValue)
-			self.admin_db_method_invoker.connect(self.admin_db.rebuild_galleries)
+			self.admin_db_method_invoker.connect(self.admin_db.rebuild_db)
 			self.admin_db_method_invoker.connect(app_widget.show)
 			app_widget.adjustSize()
-			self.admin_db_method_invoker.emit()
-		elif gui_constants.FIRST_TIME_LEVEL < 4:
-			log_i('Invoking first time level {}'.format(level))
-			settings.set([], 'Application', 'monitor paths')
-			settings.set([], 'Application', 'ignore paths')
-			gui_constants.MONITOR_PATHS = []
-			gui_constants.IGNORE_PATHS = []
-			settings.save()
-			done()
+			db_p = os.path.join(os.path.split(database.db_constants.DB_PATH)[0], 'sadpanda.db')
+			self.admin_db_method_invoker.emit(db_p)
 		else:
 			done()
 
@@ -179,7 +185,7 @@ class AppWindow(QMainWindow):
 		#self.chapter_display()
 		self.m_l_view_index = self.display.addWidget(self.manga_list_view)
 		self.m_t_view_index = self.display.addWidget(self.manga_table_view)
-		self.download_window = file_misc.GalleryDownloader(self)
+		self.download_window = io_misc.GalleryDownloader(self)
 		self.download_window.hide()
 		# init toolbar
 		self.init_toolbar()
@@ -189,34 +195,34 @@ class AppWindow(QMainWindow):
 		log_d('Create statusbar: OK')
 
 		self.tags_treeview = None
-		if gui_constants.TAGS_TREEVIEW_ON_START:
+		if app_constants.TAGS_TREEVIEW_ON_START:
 			def tags_tree_none(): self.tags_treeview = None
 			self.tags_treeview = misc_db.DBOverview(self, True)
 			self.tags_treeview.about_to_close.connect(tags_tree_none)
 			self.tags_treeview.show()
 
-		self.system_tray = misc.SystemTray(QIcon(gui_constants.APP_ICO_PATH), self)
-		gui_constants.SYSTEM_TRAY = self.system_tray
+		self.system_tray = misc.SystemTray(QIcon(app_constants.APP_ICO_PATH), self)
+		app_constants.SYSTEM_TRAY = self.system_tray
 		tray_menu = QMenu(self)
 		self.system_tray.setContextMenu(tray_menu)
-		self.system_tray.setToolTip('Happypanda {}'.format(gui_constants.vs))
+		self.system_tray.setToolTip('Happypanda {}'.format(app_constants.vs))
 		tray_quit = QAction('Quit', tray_menu)
 		tray_update = tray_menu.addAction('Check for update')
 		tray_update.triggered.connect(self._check_update)
 		tray_menu.addAction(tray_quit)
 		tray_quit.triggered.connect(self.close)
 		self.system_tray.show()
-		self.system_tray.messageClicked.connect(self.showNormal)
-		def tray_activate(r):
-			if r == QSystemTrayIcon.Trigger:
+		def tray_activate(r=None):
+			if not r or r == QSystemTrayIcon.Trigger:
 				self.showNormal()
 				self.activateWindow()
+		self.system_tray.messageClicked.connect(tray_activate)
 		self.system_tray.activated.connect(tray_activate)
 		log_d('Create system tray: OK')
 		#self.display.addWidget(self.chapter_main)
 
 		self.setCentralWidget(self.center)
-		self.setWindowIcon(QIcon(gui_constants.APP_ICO_PATH))
+		self.setWindowIcon(QIcon(app_constants.APP_ICO_PATH))
 
 
 		props = settings.win_read(self, 'AppWindow')
@@ -224,7 +230,7 @@ class AppWindow(QMainWindow):
 			x, y = props.resize
 			self.resize(x, y)
 		else:
-			self.resize(gui_constants.MAIN_W, gui_constants.MAIN_H)
+			self.resize(app_constants.MAIN_W, app_constants.MAIN_H)
 		posx, posy = props.pos
 		self.move(posx, posy)
 		self.init_spinners()
@@ -235,7 +241,7 @@ class AppWindow(QMainWindow):
 		p = self.toolbar.pos()
 		self.notification_bar.move(p.x(), p.y()+self.toolbar.height())
 		self.notification_bar.resize(self.width())
-		gui_constants.NOTIF_BAR = self.notification_bar
+		app_constants.NOTIF_BAR = self.notification_bar
 		log_d('Create notificationbar: OK')
 
 		log_d('Window Create: OK')
@@ -248,14 +254,14 @@ class AppWindow(QMainWindow):
 			def fetch_vs(self):
 				import requests
 				import time
+				log_d('Checking Update')
+				time.sleep(1.5)
 				try:
-					log_d('Checking Update')
-					time.sleep(1.5)
-					if gui_constants.DEBUG:
-						r = requests.get("https://raw.githubusercontent.com/Pewpews/happypanda/master/VS.txt")
-					else:
+					if os.path.exists('cacert.pem'):
 						r = requests.get("https://raw.githubusercontent.com/Pewpews/happypanda/master/VS.txt",
-						  verify='cacert.pem')
+							  verify='cacert.pem')
+					else:
+						r = requests.get("https://raw.githubusercontent.com/Pewpews/happypanda/master/VS.txt")
 					a = r.text
 					vs = a.strip()
 					self.UPDATE_CHECK.emit(vs)
@@ -264,8 +270,8 @@ class AppWindow(QMainWindow):
 					self.UPDATE_CHECK.emit('this is a very long text which is sure to be over limit')
 
 		def check_update(vs):
-			log_i('Received version: {}\nCurrent version: {}'.format(vs, gui_constants.vs))
-			if vs != gui_constants.vs:
+			log_i('Received version: {}\nCurrent version: {}'.format(vs, app_constants.vs))
+			if vs != app_constants.vs:
 				if len(vs) < 10:
 					self.notification_bar.begin_show()
 					self.notification_bar.add_text("Version {} of Happypanda is".format(vs)+
@@ -314,7 +320,7 @@ class AppWindow(QMainWindow):
 			else:
 				galleries = gal
 		else:
-			if gui_constants.CONTINUE_AUTO_METADATA_FETCHER:
+			if app_constants.CONTINUE_AUTO_METADATA_FETCHER:
 				galleries = [g for g in self.manga_list_view.gallery_model._data if not g.exed]
 			else:
 				galleries = self.manga_list_view.gallery_model._data
@@ -336,10 +342,8 @@ class AppWindow(QMainWindow):
 
 				class GalleryContextMenu(QMenu):
 					app_instance = self
-					error_galleries = status
 					def __init__(self, parent=None):
 						super().__init__(parent)
-						self.error = [x for x in status if x[0].id]
 						show_in_library_act = self.addAction('Show in library')
 						show_in_library_act.triggered.connect(self.show_in_library)
 
@@ -350,8 +354,11 @@ class AppWindow(QMainWindow):
 							self.app_instance.manga_table_view.scroll_to_index(index)
 							self.app_instance.manga_list_view.scroll_to_index(index)
 
-				g_popup = file_misc.GalleryPopup(('Fecthing metadata for these galleries failed.'+
+				g_popup = io_misc.GalleryPopup(('Fecthing metadata for these galleries failed.'+
 									  ' Check happypanda.log for details.', galleries), self, menu=GalleryContextMenu())
+				#errors = {g[0].id: g[1] for g in status}
+				#for g_item in g_popup.get_all_items():
+				#	g_item.setToolTip(errors[g_item.gallery.id])
 				g_popup.graphics_blur.setEnabled(False)
 				close_button = g_popup.add_buttons('Close')[0]
 				close_button.clicked.connect(g_popup.close)
@@ -391,6 +398,7 @@ class AppWindow(QMainWindow):
 		self.manga_list_view.STATUS_BAR_MSG.connect(self.stat_temp_msg)
 		self.manga_table_view.STATUS_BAR_MSG.connect(self.stat_temp_msg)
 		self.stat_row_info()
+		app_constants.STAT_MSG_METHOD = self.stat_temp_msg
 
 	def stat_temp_msg(self, msg):
 		self.temp_timer.stop()
@@ -409,9 +417,6 @@ class AppWindow(QMainWindow):
 		"initiates the manga view and related things"
 		#list view
 		self.manga_list_view = gallery.MangaView(self)
-		self.manga_list_view.clicked.connect(self.popup)
-		self.manga_list_view.manga_delegate.POPUP.connect(self.popup)
-		self.popup_window = self.manga_list_view.manga_delegate.popup_window
 
 		#table view
 
@@ -420,14 +425,14 @@ class AppWindow(QMainWindow):
 		self.manga_table_view.sort_model = self.manga_list_view.sort_model
 		self.manga_table_view.setModel(self.manga_table_view.sort_model)
 		self.manga_table_view.sort_model.change_model(self.manga_table_view.gallery_model)
-		self.manga_table_view.setColumnWidth(gui_constants.FAV, 20)
-		self.manga_table_view.setColumnWidth(gui_constants.ARTIST, 200)
-		self.manga_table_view.setColumnWidth(gui_constants.TITLE, 400)
-		self.manga_table_view.setColumnWidth(gui_constants.TAGS, 300)
-		self.manga_table_view.setColumnWidth(gui_constants.TYPE, 60)
-		self.manga_table_view.setColumnWidth(gui_constants.CHAPTERS, 60)
-		self.manga_table_view.setColumnWidth(gui_constants.LANGUAGE, 100)
-		self.manga_table_view.setColumnWidth(gui_constants.LINK, 400)
+		self.manga_table_view.setColumnWidth(app_constants.FAV, 20)
+		self.manga_table_view.setColumnWidth(app_constants.ARTIST, 200)
+		self.manga_table_view.setColumnWidth(app_constants.TITLE, 400)
+		self.manga_table_view.setColumnWidth(app_constants.TAGS, 300)
+		self.manga_table_view.setColumnWidth(app_constants.TYPE, 60)
+		self.manga_table_view.setColumnWidth(app_constants.CHAPTERS, 60)
+		self.manga_table_view.setColumnWidth(app_constants.LANGUAGE, 100)
+		self.manga_table_view.setColumnWidth(app_constants.LINK, 400)
 
 
 	def init_spinners(self):
@@ -441,6 +446,7 @@ class AppWindow(QMainWindow):
 		self.manga_list_view.gallery_model.ADD_MORE.connect(self.data_fetch_spinner.show)
 		self.manga_list_view.gallery_model.db_emitter.START.connect(self.data_fetch_spinner.show)
 		self.manga_list_view.gallery_model.ADDED_ROWS.connect(self.data_fetch_spinner.before_hide)
+		self.manga_list_view.gallery_model.db_emitter.CANNOT_FETCH_MORE.connect(self.data_fetch_spinner.before_hide)
 
 		## deleting spinner
 		#self.gallery_delete_spinner = misc.Spinner(self)
@@ -454,31 +460,11 @@ class AppWindow(QMainWindow):
 		self.search_bar.setText(srch_string)
 		self.search_backward.setVisible(True)
 		self.manga_list_view.sort_model.init_search(srch_string)
+		old_cursor_pos = self._search_cursor_pos[0]
+		self.search_bar.end(False)
+		if self.search_bar.cursorPosition() != old_cursor_pos+1:
+			self.search_bar.setCursorPosition(old_cursor_pos)
 
-	def popup(self, index):
-		if not self.popup_window.isVisible():
-			self.popup_window.set_gallery(index.data(Qt.UserRole+1))
-			m_x = QCursor.pos().x()
-			m_y = QCursor.pos().y()
-			d_w = QDesktopWidget().width()
-			d_h = QDesktopWidget().height()
-			p_w = self.popup_window.width()
-			p_h = self.popup_window.height()
-			
-			index_rect = self.manga_list_view.visualRect(index)
-			index_point = self.manga_list_view.mapToGlobal(index_rect.topRight())
-			index_point_btm = self.manga_list_view.mapToGlobal(index_rect.bottomRight())
-			# adjust so it doesn't go offscreen
-			if d_w - m_x < p_w and d_h - m_y < p_h: # bottom
-				self.popup_window.move(m_x-p_w+5, m_y-p_h)
-			elif d_w - m_x > p_w and d_h - m_y < p_h:
-				self.popup_window.move(m_x+5, m_y-p_h)
-			elif d_w - m_x < p_w:
-				self.popup_window.move(m_x-p_w+5, m_y+5)
-			else:
-				self.popup_window.move(index_point)
-
-			self.popup_window.show()
 
 	def favourite_display(self):
 		"Switches to favourite display"
@@ -517,7 +503,6 @@ class AppWindow(QMainWindow):
 		self.favourite_btn.clicked.connect(self.favourite_display) #need lambda to pass extra args
 
 		self.library_btn = misc.ToolbarButton(self.toolbar, 'Library')
-		self.library_btn.setFixedWidth(60)
 		self.toolbar.addWidget(self.library_btn)
 		self.library_btn.clicked.connect(self.catalog_display) #need lambda to pass extra args
 		self.library_btn.selected = True
@@ -530,7 +515,7 @@ class AppWindow(QMainWindow):
 		gallery_action.setPopupMode(QToolButton.InstantPopup)
 		gallery_action.setToolTip('Contains various gallery related features')
 		gallery_action.setMenu(gallery_menu)
-		add_gallery_icon = QIcon(gui_constants.PLUS_PATH)
+		add_gallery_icon = QIcon(app_constants.PLUS_PATH)
 		gallery_action_add = QAction(add_gallery_icon, "Add single gallery...", self)
 		gallery_action_add.triggered.connect(self.manga_list_view.SERIES_DIALOG.emit)
 		gallery_action_add.setToolTip('Add a single gallery thoroughly')
@@ -551,6 +536,8 @@ class AppWindow(QMainWindow):
 		scan_galleries_action.triggered.connect(self.scan_for_new_galleries)
 		scan_galleries_action.setStatusTip('Scan monitored folders for new galleries')
 		gallery_menu.addAction(scan_galleries_action)
+		gallery_action_random = gallery_menu.addAction("Open random gallery")
+		gallery_action_random.triggered.connect(self.manga_list_view.open_random_gallery)
 		self.toolbar.addWidget(gallery_action)
 
 
@@ -566,9 +553,6 @@ class AppWindow(QMainWindow):
 		duplicate_check_simple = QAction("Simple Duplicate Finder", misc_action_menu)
 		duplicate_check_simple.triggered.connect(lambda: self.manga_list_view.duplicate_check())
 		misc_action_menu.addAction(duplicate_check_simple)
-		misc_action_random = QAction("Random Gallery Opener", misc_action_menu)
-		misc_action_random.triggered.connect(self.manga_list_view.open_random_gallery)
-		misc_action_menu.addAction(misc_action_random)
 		self.toolbar.addWidget(misc_action)
 
 		spacer_middle = QWidget() # aligns buttons to the right
@@ -577,13 +561,13 @@ class AppWindow(QMainWindow):
 
 
 		sort_action = QToolButton()
-		sort_action.setIcon(QIcon(gui_constants.SORT_PATH))
+		sort_action.setIcon(QIcon(app_constants.SORT_PATH))
 		sort_action.setMenu(misc.SortMenu(self.toolbar, self.manga_list_view))
 		sort_action.setPopupMode(QToolButton.InstantPopup)
 		self.toolbar.addWidget(sort_action)
 		
-		self.grid_toggle_g_icon = QIcon(gui_constants.GRID_PATH)
-		self.grid_toggle_l_icon = QIcon(gui_constants.LIST_PATH)
+		self.grid_toggle_g_icon = QIcon(app_constants.GRID_PATH)
+		self.grid_toggle_l_icon = QIcon(app_constants.LIST_PATH)
 		self.grid_toggle = QToolButton()
 		if self.display.currentIndex() == self.m_l_view_index:
 			self.grid_toggle.setIcon(self.grid_toggle_l_icon)
@@ -597,13 +581,40 @@ class AppWindow(QMainWindow):
 		spacer_mid2.setFixedSize(QSize(5, 1))
 		self.toolbar.addWidget(spacer_mid2)
 
+		def set_search_case(b):
+			app_constants.GALLERY_SEARCH_CASE = b
+			settings.set(b, 'Application', 'gallery search case')
+			settings.save()
+
+		def set_search_strict(b):
+			app_constants.GALLERY_SEARCH_STRICT = b
+			settings.set(b, 'Application', 'gallery search strict')
+			settings.save()
+
 		self.search_bar = misc.LineEdit()
+		search_options = self.search_bar.addAction(QIcon(app_constants.SEARCH_OPTIONS_PATH), QLineEdit.TrailingPosition)
+		search_options_menu = QMenu(self)
+		search_options.triggered.connect(lambda: search_options_menu.popup(QCursor.pos()))
+		search_options.setMenu(search_options_menu)
+		case_search_option = search_options_menu.addAction('Case Sensitive')
+		case_search_option.setCheckable(True)
+		case_search_option.setChecked(app_constants.GALLERY_SEARCH_CASE)
+		case_search_option.toggled.connect(set_search_case)
+		strict_search_option = search_options_menu.addAction('Match whole terms')
+		strict_search_option.setCheckable(True)
+		strict_search_option.setChecked(app_constants.GALLERY_SEARCH_STRICT)
+		strict_search_option.toggled.connect(set_search_strict)
 		self.search_bar.setObjectName('search_bar')
 		self.search_timer = QTimer(self)
 		self.search_timer.setSingleShot(True)
 		self.search_timer.timeout.connect(lambda: self.search(self.search_bar.text()))
+		self._search_cursor_pos = [0, 0]
+		def set_cursor_pos(old, new):
+			self._search_cursor_pos[0] = old
+			self._search_cursor_pos[1] = new
+		self.search_bar.cursorPositionChanged.connect(set_cursor_pos)
 
-		if gui_constants.SEARCH_AUTOCOMPLETE:
+		if app_constants.SEARCH_AUTOCOMPLETE:
 			completer = QCompleter(self)
 			completer_view = misc.CompleterPopupView()
 			completer.setPopup(completer_view)
@@ -612,11 +623,11 @@ class AppWindow(QMainWindow):
 			completer.setCaseSensitivity(Qt.CaseInsensitive)
 			completer.setCompletionMode(QCompleter.PopupCompletion)
 			completer.setCompletionRole(Qt.DisplayRole)
-			completer.setCompletionColumn(gui_constants.TITLE)
+			completer.setCompletionColumn(app_constants.TITLE)
 			completer.setFilterMode(Qt.MatchContains)
 			self.search_bar.setCompleter(completer)
 			self.search_bar.returnPressed.connect(lambda: self.search(self.search_bar.text()))
-		if not gui_constants.SEARCH_ON_ENTER:
+		if not app_constants.SEARCH_ON_ENTER:
 			self.search_bar.textEdited.connect(lambda: self.search_timer.start(800))
 		self.search_bar.setPlaceholderText("Search title, artist, namespace & tags")
 		self.search_bar.setMinimumWidth(150)
@@ -653,7 +664,7 @@ class AppWindow(QMainWindow):
 		self.toolbar.addWidget(spacer_end)
 
 		settings_act = QToolButton(self.toolbar)
-		settings_act.setIcon(QIcon(gui_constants.SETTINGS_PATH))
+		settings_act.setIcon(QIcon(app_constants.SETTINGS_PATH))
 		settings_act.clicked.connect(self.settings)
 		self.toolbar.addWidget(settings_act)
 
@@ -693,7 +704,7 @@ class AppWindow(QMainWindow):
 				if not path:
 					return
 				msg_box.close()
-				gui_constants.OVERRIDE_SUBFOLDER_AS_GALLERY = True
+				app_constants.OVERRIDE_SUBFOLDER_AS_GALLERY = True
 				self.gallery_populate(path, True)
 			def from_arch():
 				path = QFileDialog.getOpenFileName(self, 'Choose an archive containing your galleries',
@@ -702,7 +713,7 @@ class AppWindow(QMainWindow):
 				if not all(path) or not path:
 					return
 				msg_box.close()
-				gui_constants.OVERRIDE_SUBFOLDER_AS_GALLERY = True
+				app_constants.OVERRIDE_SUBFOLDER_AS_GALLERY = True
 				self.gallery_populate(path, True)
 
 			buttons = msg_box.add_buttons('Directory', 'Archive', 'Close')
@@ -781,9 +792,9 @@ class AppWindow(QMainWindow):
 							gallery_list = misc.GalleryListView(self)
 							gallery_list.SERIES.connect(add_gallery)
 							for ser in status:
-								if ser.is_archive and gui_constants.SUBFOLDER_AS_GALLERY:
+								if ser.is_archive and app_constants.SUBFOLDER_AS_GALLERY:
 									p = os.path.split(ser.path)[1]
-									if ser.chapters[0]:
+									if ser.chapters[0].path:
 										pt_in_arch = os.path.split(ser.path_in_archive)
 										pt_in_arch = pt_in_arch[1] or pt_in_arch[0]
 										text = '{}: {}'.format(p, pt_in_arch)
@@ -817,17 +828,34 @@ class AppWindow(QMainWindow):
 				msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
 				msg_box.setDefaultButton(QMessageBox.No)
 				if msg_box.exec() == QMessageBox.Yes:
-					list_wid = QListWidget(self)
-					for g in s_list:
-						list_wid.addItem(g)
+					list_wid = QTableWidget(self)
+					list_wid.setAttribute(Qt.WA_DeleteOnClose)
+					list_wid.setRowCount(len(s_list))
+					list_wid.setColumnCount(2)
+					list_wid.setAlternatingRowColors(True)
+					list_wid.setEditTriggers(list_wid.NoEditTriggers)
+					list_wid.setHorizontalHeaderLabels(['Reason', 'Path'])
+					list_wid.setSelectionBehavior(list_wid.SelectRows)
+					list_wid.setSelectionMode(list_wid.SingleSelection)
+					list_wid.setSortingEnabled(True)
+					list_wid.verticalHeader().hide()
+					list_wid.setAutoScroll(False)
+					for x, g in enumerate(s_list):
+						list_wid.setItem(x, 0, QTableWidgetItem(g[1]))
+						list_wid.setItem(x, 1, QTableWidgetItem(g[0]))
+					list_wid.resizeColumnsToContents()
 					list_wid.setWindowTitle('{} skipped paths'.format(len(s_list)))
 					list_wid.setWindowFlags(Qt.Window)
-					list_wid.resize(500,500)
+					list_wid.resize(900,400)
+
+					list_wid.doubleClicked.connect(lambda i: utils.open_path(
+						list_wid.item(i.row(), 1).text(), list_wid.item(i.row(), 1).text()))
+
 					list_wid.show()
 
 			def a_progress(prog):
 				loading.progress.setValue(prog)
-				loading.setText("Searching for galleries...")
+				loading.setText("Preparing galleries...")
 
 			self.g_populate_inst.moveToThread(data_thread)
 			self.g_populate_inst.DATA_COUNT.connect(loading.progress.setMaximum)
@@ -838,15 +866,16 @@ class AppWindow(QMainWindow):
 			data_thread.finished.connect(data_thread.deleteLater)
 			data_thread.started.connect(self.g_populate_inst.local)
 			data_thread.start()
-			#fetch_instance.local()
+			#.g_populate_inst.local()
 			log_i('Populating DB from directory/archive')
 
 	def scan_for_new_galleries(self):
-		available_folders =  gui_constants.ENABLE_MONITOR and\
-									gui_constants.MONITOR_PATHS and all(gui_constants.MONITOR_PATHS)
-		if available_folders and not gui_constants.SCANNING_FOR_GALLERIES:
-			gui_constants.SCANNING_FOR_GALLERIES = True
+		available_folders =  app_constants.ENABLE_MONITOR and\
+									app_constants.MONITOR_PATHS and all(app_constants.MONITOR_PATHS)
+		if available_folders and not app_constants.SCANNING_FOR_GALLERIES:
+			app_constants.SCANNING_FOR_GALLERIES = True
 			self.notification_bar.add_text("Scanning for new galleries...")
+			log_i('Scanning for new galleries...')
 			try:
 				class ScanDir(QObject):
 					final_paths_and_galleries = pyqtSignal(list, list)
@@ -856,7 +885,7 @@ class AppWindow(QMainWindow):
 						self.scanned_data = []
 					def scan_dirs(self):
 						paths = []
-						for p in gui_constants.MONITOR_PATHS:
+						for p in app_constants.MONITOR_PATHS:
 							if os.path.exists(p):
 								dir_content = scandir.scandir(p)
 								for d in dir_content:
@@ -887,27 +916,27 @@ class AppWindow(QMainWindow):
 							for g in self.scanned_data:
 								try:
 									if g.is_archive:
-										g.profile = utils.get_gallery_img(g.chapters[0], g.path)
+										g.profile = utils.get_gallery_img(g.chapters[0].path, g.path)
 									else:
-										g.profile = utils.get_gallery_img(g.chapters[0])
+										g.profile = utils.get_gallery_img(g.chapters[0].path)
 									if not g.profile:
 										raise Exception
 								except:
-									g.profile = gui_constants.NO_IMAGE_PATH
+									g.profile = app_constants.NO_IMAGE_PATH
 							
 								galleries.append(g)
 								final_paths.append(g.path)
 						self.final_paths_and_galleries.emit(final_paths, galleries)
 						self.finished.emit()
 						self.deleteLater()
-					#if gui_constants.LOOK_NEW_GALLERY_AUTOADD:
+					#if app_constants.LOOK_NEW_GALLERY_AUTOADD:
 					#	QTimer.singleShot(10000, self.gallery_populate(final_paths))
 					#	return
 
 				def show_new_galleries(final_paths, galleries):
 					if final_paths and galleries:
-						gui_constants.OVERRIDE_MOVE_IMPORTED_IN_FETCH = True
-						if gui_constants.LOOK_NEW_GALLERY_AUTOADD:
+						app_constants.OVERRIDE_MOVE_IMPORTED_IN_FETCH = True
+						if app_constants.LOOK_NEW_GALLERY_AUTOADD:
 							self.gallery_populate(final_paths)
 						else:
 
@@ -921,8 +950,8 @@ class AppWindow(QMainWindow):
 
 								def add_to_ignore(self):
 									gallery = self.gallery_widget.gallery
-									gui_constants.IGNORE_PATHS.append(gallery.path)
-									settings.set(gui_constants.IGNORE_PATHS, 'Application', 'ignore paths')
+									app_constants.IGNORE_PATHS.append(gallery.path)
+									settings.set(app_constants.IGNORE_PATHS, 'Application', 'ignore paths')
 									if self.gallery_widget.parent_widget.gallery_layout.count() == 1:
 										self.gallery_widget.parent_widget.close()
 									else:
@@ -934,7 +963,7 @@ class AppWindow(QMainWindow):
 								self.notification_bar.add_text("{} new galleries were discovered in one of your monitored directories".format(len(galleries)))
 							text = "These new galleries were discovered! Do you want to add them?"\
 								if len(galleries) > 1 else "This new gallery was discovered! Do you want to add it?"
-							g_popup = file_misc.GalleryPopup((text, galleries), self, NewGalleryMenu())
+							g_popup = io_misc.GalleryPopup((text, galleries), self, NewGalleryMenu())
 							buttons = g_popup.add_buttons('Add', 'Close')
 
 							def populate_n_close():
@@ -943,7 +972,7 @@ class AppWindow(QMainWindow):
 							buttons[0].clicked.connect(populate_n_close)
 							buttons[1].clicked.connect(g_popup.close)
 
-				def finished(): gui_constants.SCANNING_FOR_GALLERIES = False
+				def finished(): app_constants.SCANNING_FOR_GALLERIES = False
 
 				thread = QThread(self)
 				self.scan_inst = ScanDir()
@@ -957,7 +986,7 @@ class AppWindow(QMainWindow):
 			except:
 				self.notification_bar.add_text('An error occured while attempting to scan for new galleries. Check happypanda.log.')
 				log.exception('An error occured while attempting to scan for new galleries.')
-				gui_constants.SCANNING_FOR_GALLERIES = False
+				app_constants.SCANNING_FOR_GALLERIES = False
 
 	def dragEnterEvent(self, event):
 		if event.mimeData().hasUrls():
@@ -987,7 +1016,7 @@ class AppWindow(QMainWindow):
 			else:
 				f_item = utils.recursive_gallery_check(f_item)
 			f_item_l = len(f_item) < 2
-			subfolder_as_c = not gui_constants.SUBFOLDER_AS_GALLERY
+			subfolder_as_c = not app_constants.SUBFOLDER_AS_GALLERY
 			if l and subfolder_as_c or l and f_item_l:
 				g_d = gallerydialog.GalleryDialog(self, acceptable[0])
 				g_d.SERIES.connect(self.manga_list_view.gallery_model.addRows)
@@ -1016,7 +1045,7 @@ class AppWindow(QMainWindow):
 	def showEvent(self, event):
 		return super().showEvent(event)
 
-	def closeEvent(self, event):
+	def cleanup_exit(self):
 		self.system_tray.hide()
 		# watchers
 		try:
@@ -1026,7 +1055,7 @@ class AppWindow(QMainWindow):
 
 		# settings
 		settings.set(self.manga_list_view.current_sort, 'General', 'current sort')
-		settings.set(gui_constants.IGNORE_PATHS, 'Application', 'ignore paths')
+		settings.set(app_constants.IGNORE_PATHS, 'Application', 'ignore paths')
 		settings.win_save(self, 'AppWindow')
 
 		# temp dir
@@ -1059,7 +1088,7 @@ class AppWindow(QMainWindow):
 			db_activity = DBActivityChecker()
 			db_spinner = misc.Spinner(self)
 			self.db_activity_checker.connect(db_activity.check)
-			db_activity.moveToThread(gui_constants.GENERAL_THREAD)
+			db_activity.moveToThread(app_constants.GENERAL_THREAD)
 			db_activity.FINISHED.connect(db_spinner.close)
 			db_spinner.set_size(50)
 			db_spinner.set_text('Activity')
@@ -1076,11 +1105,20 @@ class AppWindow(QMainWindow):
 			msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
 			msg_box.setDefaultButton(QMessageBox.No)
 			if msg_box.exec() == QMessageBox.Yes:
-				log_d('Force Exit App: OK')
-				super().closeEvent(event)
+				return 1
 			else:
-				log_d('Ignore Exit App')
-				event.ignore()
+				return 2
+		else:
+			return 0
+
+	def closeEvent(self, event):
+		r_code = self.cleanup_exit()
+		if r_code == 1:
+			log_d('Force Exit App: OK')
+			super().closeEvent(event)
+		elif r_code == 2:
+			log_d('Ignore Exit App')
+			event.ignore()
 		else:
 			log_d('Normal Exit App: OK')
 			super().closeEvent(event)

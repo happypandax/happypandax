@@ -12,18 +12,29 @@
 #along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 #"""
 
-import sys, logging, logging.handlers, os, argparse, platform, scandir, traceback
+import sys, logging, logging.handlers, os, argparse, platform, scandir
+import traceback
 
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QFile
 
 from database import db, db_constants
 import app
-import gui_constants
+import app_constants
 import gallerydb
+import utils
 
 #IMPORTANT STUFF
 def start(test=False):
+	app_constants.APP_RESTART_CODE = -123456789
+
+	if os.name == 'posix':
+		main_path = os.path.dirname(os.path.realpath(__file__))
+		log_path = os.path.join(main_path, 'happypanda.log')
+		debug_log_path = os.path.join(main_path, 'happypanda_debug.log')
+	else:
+		log_path = 'happypanda.log'
+		debug_log_path = 'happypanda_debug.log'
 
 	parser = argparse.ArgumentParser(prog='Happypanda',
 								  description='A manga/doujinshi manager with tagging support')
@@ -31,8 +42,8 @@ def start(test=False):
 					 help='happypanda_debug_log.log will be created in main directory')
 	parser.add_argument('-t', '--test', action='store_true',
 					 help='Run happypanda in test mode. 5000 gallery will be preadded in DB.')
-	parser.add_argument('-v', '--versi on', action='version',
-					 version='Happypanda v{}'.format(gui_constants.vs))
+	parser.add_argument('-v', '--version', action='version',
+					 version='Happypanda v{}'.format(app_constants.vs))
 	parser.add_argument('-e', '--exceptions', action='store_true',
 					 help='Disable custom excepthook')
 
@@ -41,7 +52,7 @@ def start(test=False):
 		print("happypanda_debug.log created at {}".format(os.getcwd()))
 		# create log
 		try:
-			with open('happypanda_debug.log', 'x') as f:
+			with open(debug_log_path, 'x') as f:
 				pass
 		except FileExistsError:
 			pass
@@ -51,19 +62,18 @@ def start(test=False):
 						datefmt='%d-%m %H:%M',
 						filename='happypanda_debug.log',
 						filemode='w')
-		gui_constants.DEBUG = True
+		app_constants.DEBUG = True
 	else:
 		try:
-			with open('happypanda.log', 'x') as f:
+			with open(log_path, 'x') as f:
 				pass
 		except FileExistsError: pass
 		file_handler = logging.handlers.RotatingFileHandler(
-			'happypanda.log', maxBytes=1000000*10, encoding='utf-8', backupCount=2)
+			log_path, maxBytes=1000000*10, encoding='utf-8', backupCount=2)
 		logging.basicConfig(level=logging.INFO,
 						format='%(asctime)-8s %(levelname)-6s %(name)-6s %(message)s',
 						datefmt='%d-%m %H:%M',
 						handlers=(file_handler,))
-
 
 	log = logging.getLogger(__name__)
 	log_i = log.info
@@ -85,9 +95,10 @@ def start(test=False):
 	application.setOrganizationDomain('https://github.com/Pewpews/happypanda')
 	application.setApplicationName('Happypanda')
 	application.setApplicationDisplayName('Happypanda')
-	application.setApplicationVersion('v{}'.format(gui_constants.vs))
-	log_i('Happypanda Version {}'.format(gui_constants.vs))
+	application.setApplicationVersion('v{}'.format(app_constants.vs))
+	log_i('Happypanda Version {}'.format(app_constants.vs))
 	log_i('OS: {} {}\n'.format(platform.system(), platform.release()))
+	conn = None
 	try:
 		if args.test:
 			conn = db.init_db(True)
@@ -101,7 +112,7 @@ def start(test=False):
 		from PyQt5.QtGui import QIcon
 		from PyQt5.QtWidgets import QMessageBox
 		msg_box = QMessageBox()
-		msg_box.setWindowIcon(QIcon(gui_constants.APP_ICO_PATH))
+		msg_box.setWindowIcon(QIcon(app_constants.APP_ICO_PATH))
 		msg_box.setText('Invalid database')
 		msg_box.setInformativeText("Do you want to create a new database?")
 		msg_box.setIcon(QMessageBox.Critical)
@@ -115,18 +126,17 @@ def start(test=False):
 			sys.exit()
 
 	def start_main_window(conn):
-		DB = db.DBThread(conn)
+		db.DBBase._DB_CONN = conn
 		#if args.test:
 		#	import threading, time
 		#	ser_list = []
 		#	for x in range(5000):
 		#		s = gallerydb.gallery()
-		#		s.profile = gui_constants.NO_IMAGE_PATH
+		#		s.profile = app_constants.NO_IMAGE_PATH
 		#		s.title = 'Test {}'.format(x)
 		#		s.artist = 'Author {}'.format(x)
-		#		s.path = gui_constants.static_dir
+		#		s.path = app_constants.static_dir
 		#		s.type = 'Test'
-		#		s.chapters = {0:gui_constants.static_dir}
 		#		s.language = 'English'
 		#		s.info = 'I am number {}'.format(x)
 		#		ser_list.append(s)
@@ -153,9 +163,9 @@ def start(test=False):
 		WINDOW = app.AppWindow()
 
 		# styling
-		d_style = gui_constants.default_stylesheet_path
-		u_style =  gui_constants.user_stylesheet_path
-	
+		d_style = app_constants.default_stylesheet_path
+		u_style =  app_constants.user_stylesheet_path
+
 		if len(u_style) is not 0:
 			try:
 				style_file = QFile(u_style)
@@ -171,7 +181,7 @@ def start(test=False):
 		style = str(style_file.readAll(), 'utf-8')
 		application.setStyleSheet(style)
 		try:
-			os.mkdir('temp')
+			os.mkdir(app_constants.temp_dir)
 		except FileExistsError:
 			try:
 				for root, dirs, files in scandir.walk('temp', topdown=False):
@@ -180,21 +190,21 @@ def start(test=False):
 					for name in dirs:
 						os.rmdir(os.path.join(root, name))
 			except:
-				log_i('Empty temp: FAIL')
+				log.exception("Empty temp: FAIL")
 		log_d('Create temp: OK')
 
 		if test:
 			return application, WINDOW
 
-		sys.exit(application.exec_())
-		
+		return application.exec_()
+
 	def db_upgrade():
 		log_d('Database connection failed')
 		from PyQt5.QtGui import QIcon
 		from PyQt5.QtWidgets import QMessageBox
 
 		msg_box = QMessageBox()
-		msg_box.setWindowIcon(QIcon(gui_constants.APP_ICO_PATH))
+		msg_box.setWindowIcon(QIcon(app_constants.APP_ICO_PATH))
 		msg_box.setText('Incompatible database!')
 		msg_box.setInformativeText("Do you want to upgrade to newest version?" +
 							 " It shouldn't take more than a second. Don't start a new instance!")
@@ -202,25 +212,24 @@ def start(test=False):
 		msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
 		msg_box.setDefaultButton(QMessageBox.Yes)
 		if msg_box.exec() == QMessageBox.Yes:
-
+			utils.backup_database()
 			import threading
 			db_p = db_constants.DB_PATH
-			threading.Thread(target=db.add_db_revisions,
-					args=(db_p,)).start()
-			done = None
-			while not done:
-				done = db.ResultQueue.get()
+			db.add_db_revisions(db_p)
 			conn = db.init_db()
-			start_main_window(conn)
+			return start_main_window(conn)
 		else:
 			application.exit()
 			log_d('Normal Exit App: OK')
-			sys.exit()
+			return 0
 
 	if conn:
-		start_main_window(conn)
+		return start_main_window(conn)
 	else:
-		db_upgrade()
+		return db_upgrade()
 
 if __name__ == '__main__':
-	start()
+	current_exit_code = 0
+	while current_exit_code == app_constants.APP_RESTART_CODE:
+		current_exit_code = start()
+	sys.exit(current_exit_code)

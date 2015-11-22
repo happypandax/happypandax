@@ -1,17 +1,19 @@
-﻿import logging, os
+﻿import logging, os, json, datetime, random
+
 from watchdog.events import FileSystemEventHandler, DirDeletedEvent
 from watchdog.observers import Observer
 from threading import Timer
 
-from PyQt5.QtCore import Qt, QObject, pyqtSignal, QTimer, QSize
-from PyQt5.QtGui import QPixmap, QIcon, QColor
+from PyQt5.QtCore import (Qt, QObject, pyqtSignal, QTimer, QSize, QThread)
+from PyQt5.QtGui import (QPixmap, QIcon, QColor, QTextOption, QKeySequence)
 from PyQt5.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout,
 							 QLabel, QFrame, QPushButton, QMessageBox,
 							 QFileDialog, QScrollArea, QLineEdit,
 							 QFormLayout, QGroupBox, QSizePolicy,
-							 QTableWidget, QTableWidgetItem)
+							 QTableWidget, QTableWidgetItem, QPlainTextEdit,
+							 QShortcut, QMenu, qApp)
 
-import gui_constants
+import app_constants
 import misc
 import gallerydb
 import utils
@@ -26,6 +28,33 @@ log_w = log.warning
 log_e = log.error
 log_c = log.critical
 
+class GalleryDownloaderUrlExtracter(QWidget):
+
+	url_emit = pyqtSignal(str)
+
+	def __init__(self, parent=None):
+		super().__init__(parent, flags=Qt.Window|Qt.WindowStaysOnTopHint)
+		self.main_layout = QVBoxLayout(self)
+		self.text_area = QPlainTextEdit(self)
+		self.text_area.setPlaceholderText("URLs are seperated by a newline")
+		self.main_layout.addWidget(self.text_area)
+		self.text_area.setWordWrapMode(QTextOption.NoWrap)
+		add_to_queue = QPushButton('Add to queue')
+		add_to_queue.adjustSize()
+		add_to_queue.setFixedWidth(add_to_queue.width())
+		add_to_queue.clicked.connect(self.add_to_queue)
+		self.main_layout.addWidget(add_to_queue, 0, Qt.AlignRight)
+		self.setWindowIcon(QIcon(app_constants.APP_ICO_PATH))
+		self.show()
+
+	def add_to_queue(self):
+		txt = self.text_area.document().toPlainText()
+		urls = txt.split('\n')
+		for u in urls:
+			if u:
+				self.url_emit.emit(u)
+		self.close()
+
 class GalleryDownloaderItem(QObject):
 	"""
 	Receives a HenItem
@@ -34,20 +63,22 @@ class GalleryDownloaderItem(QObject):
 	def __init__(self, hitem):
 		super().__init__()
 		assert isinstance(hitem, pewnet.HenItem)
+		self.d_item_ready.connect(self.done)
 		self.item = hitem
 		url = self.item.gallery_url
 
 		self.profile_item = QTableWidgetItem(self.item.name)
+		self.profile_item.setData(Qt.UserRole+1, hitem)
 		self.profile_item.setToolTip(url)
 		def set_profile(item):
 			self.profile_item.setIcon(QIcon(item.thumb))
 		self.item.thumb_rdy.connect(set_profile)
 
 		# status
-		self.status_item = QTableWidgetItem('Downloading...')
+		self.status_item = QTableWidgetItem('In queue...')
 		self.status_item.setToolTip(url)
 		def set_finished(item):
-			self.status_item.setText('Finished downloading!')
+			self.status_item.setText('Finished!')
 			self.d_item_ready.emit(self)
 		self.item.file_rdy.connect(set_finished)
 
@@ -60,6 +91,26 @@ class GalleryDownloaderItem(QObject):
 		self.type_item = QTableWidgetItem(type)
 		self.type_item.setToolTip(url)
 
+		self.status_timer = QTimer()
+		self.status_timer.timeout.connect(self.check_progress)
+		self.status_timer.start(500)
+
+	def check_progress(self):
+		if self.item.current_state == self.item.DOWNLOADING:
+			btomb = 1048576
+			self.status_item.setText("{0:.2f}/{1:.2f} MB".format(self.item.current_size/btomb,
+															  self.item.total_size/btomb))
+			self.size_item.setText("{0:.2f} MB".format(self.item.total_size/btomb))
+		elif self.item.current_state == self.item.CANCELLED:
+			self.status_item.setText("Cancelled!")
+			self.status_timer.stop()
+
+	def done(self):
+		self.status_timer.stop()
+		if self.item.download_type == 0:
+			self.status_item.setText("Sent to library!")
+		else:
+			self.status_item.setText("Sent to torrent client!")
 
 class GalleryDownloaderList(QTableWidget):
 	"""
@@ -72,7 +123,7 @@ class GalleryDownloaderList(QTableWidget):
 		self.setIconSize(QSize(50, 100))
 		self.setAlternatingRowColors(True)
 		self.setEditTriggers(self.NoEditTriggers)
-		self.horizontalHeader().setStretchLastSection(True)
+		self.setFocusPolicy(Qt.NoFocus)
 		v_header = self.verticalHeader()
 		v_header.setSectionResizeMode(v_header.Fixed)
 		v_header.setDefaultSectionSize(100)
@@ -82,27 +133,36 @@ class GalleryDownloaderList(QTableWidget):
 		self.setSelectionBehavior(self.SelectRows)
 		self.setSelectionMode(self.SingleSelection)
 		self.setSortingEnabled(True)
-		self.setDragEnabled(False)
 		palette = self.palette()
 		palette.setColor(palette.Highlight, QColor(88, 88, 88, 70))
 		palette.setColor(palette.HighlightedText, QColor('black'))
 		self.setPalette(palette)
 		self.setHorizontalHeaderLabels(
 			[' ', 'Status', 'Size', 'Cost', 'Type'])
+		self.horizontalHeader().setStretchLastSection(True)
+		self.horizontalHeader().setSectionResizeMode(0, self.horizontalHeader().Stretch)
+		self.horizontalHeader().setSectionResizeMode(1, self.horizontalHeader().ResizeToContents)
+		self.horizontalHeader().setSectionResizeMode(2, self.horizontalHeader().ResizeToContents)
+		self.horizontalHeader().setSectionResizeMode(3, self.horizontalHeader().ResizeToContents)
+		self.horizontalHeader().setSectionResizeMode(4, self.horizontalHeader().ResizeToContents)
 
 		self.fetch_instance = fetch.Fetch()
 		self.fetch_instance.download_items = []
-		self.fetch_instance.FINISHED.connect(self.gallery_to_model)
-		self.fetch_instance.moveToThread(gui_constants.GENERAL_THREAD)
+		self.fetch_instance.FINISHED.connect(self._gallery_to_model)
+		self.fetch_instance.moveToThread(app_constants.GENERAL_THREAD)
 		self.init_fetch_instance.connect(self.fetch_instance.local)
+
+		def open_item(idx):
+			hitem = self._get_hitem(idx)
+			if hitem.current_state == hitem.DOWNLOADING:
+				hitem.open(True)
+		self.doubleClicked.connect(open_item)
 
 	def add_entry(self, hitem):
 		assert isinstance(hitem, pewnet.HenItem)
 		g_item = GalleryDownloaderItem(hitem)
 		if hitem.download_type == 0:
-			g_item.d_item_ready.connect(self.init_gallery)
-		elif hitem.download_type == 1:
-			g_item.d_item_ready.connect(lambda: g_item.status_item.setText('Sent to torrent client!'))
+			g_item.d_item_ready.connect(self._init_gallery)
 
 		self.insertRow(0)
 		self.setSortingEnabled(False)
@@ -113,13 +173,39 @@ class GalleryDownloaderList(QTableWidget):
 		self.setItem(0, 4, g_item.type_item)
 		self.setSortingEnabled(True)
 
-	def init_gallery(self, download_item):
+	def _get_hitem(self, idx):
+		r = idx.row()
+		return self.item(r, 0).data(Qt.UserRole+1)
+
+	def contextMenuEvent(self, event):
+		idx = self.indexAt(event.pos())
+		if idx.isValid():
+			hitem = self._get_hitem(idx)
+			clipboard = qApp.clipboard()
+			menu = QMenu()
+			if hitem.current_state == hitem.DOWNLOADING:
+				menu.addAction("Cancel", hitem.cancel)
+			if hitem.current_state == hitem.FINISHED:
+				menu.addAction("Open", hitem.open)
+				menu.addAction("Show in folder", lambda: hitem.open(True))
+			menu.addAction("Copy path", lambda: clipboard.setText(hitem.file))
+			menu.addAction("Copy gallery URL", lambda: clipboard.setText(hitem.gallery_url))
+			menu.addAction("Copy download URL", lambda: clipboard.setText(hitem.download_url))
+			if not hitem.current_state == hitem.DOWNLOADING:
+				menu.addAction("Remove", lambda: self.removeRow(idx.row()))
+			menu.exec_(event.globalPos())
+			event.accept()
+			del menu
+		else:
+			event.ignore()
+
+	def _init_gallery(self, download_item):
 		assert isinstance(download_item, GalleryDownloaderItem)
-		download_item.status_item.setText('Adding to library...')
 		self.fetch_instance.download_items.append(download_item)
 		self.init_fetch_instance.emit([download_item.item.file])
 
-	def gallery_to_model(self, gallery_list):
+	def _gallery_to_model(self, gallery_list):
+		log_i("Adding downloaded gallery to library")
 		try:
 			d_item = self.fetch_instance.download_items.pop(0)
 		except IndexError:
@@ -134,8 +220,10 @@ class GalleryDownloaderList(QTableWidget):
 			self.gallery_model.insertRows([gallery], None, 1)
 			self.gallery_model.init_search(self.gallery_model.current_term)
 			d_item.status_item.setText('Added to library!')
+			log_i("Added downloaded gallery to library")
 		else:
 			d_item.status_item.setText('Adding to library failed!')
+			log_i("Could not add downloaded gallery to library")
 
 	def clear_list(self):
 		for r in range(self.rowCount()-1, -1, -1):
@@ -155,7 +243,7 @@ class GalleryDownloader(QWidget):
 		self.parent_widget = parent
 		self.url_inserter = QLineEdit()
 		self.url_inserter.setPlaceholderText("Hover to see supported URLs")
-		self.url_inserter.setToolTip(gui_constants.SUPPORTED_DOWNLOAD_URLS)
+		self.url_inserter.setToolTip(app_constants.SUPPORTED_DOWNLOAD_URLS)
 		self.url_inserter.setToolTipDuration(999999999)
 		self.url_inserter.returnPressed.connect(self.add_download_entry)
 		main_layout.addWidget(self.url_inserter)
@@ -164,9 +252,17 @@ class GalleryDownloader(QWidget):
 		main_layout.addWidget(self.info_lbl)
 		self.info_lbl.hide()
 		buttons_layout = QHBoxLayout()
+		url_window_btn = QPushButton('Batch URLs')
+		url_window_btn.adjustSize()
+		url_window_btn.setFixedWidth(url_window_btn.width())
+		def batch_url_win():
+			self._batch_url = GalleryDownloaderUrlExtracter()
+			self._batch_url.url_emit.connect(self.add_download_entry)
+		url_window_btn.clicked.connect(batch_url_win)
 		clear_all_btn = QPushButton('Clear List')
 		clear_all_btn.adjustSize()
 		clear_all_btn.setFixedWidth(clear_all_btn.width())
+		buttons_layout.addWidget(url_window_btn, 0, Qt.AlignLeft)
 		buttons_layout.addWidget(clear_all_btn, 0, Qt.AlignRight)
 		main_layout.addLayout(buttons_layout)
 		self.download_list = GalleryDownloaderList(parent.manga_list_view.sort_model, self)
@@ -180,9 +276,10 @@ class GalleryDownloader(QWidget):
 		close_button.clicked.connect(self.hide)
 		main_layout.addWidget(close_button)
 		self.resize(480,600)
-		self.setWindowIcon(QIcon(gui_constants.APP_ICO_PATH))
+		self.setWindowIcon(QIcon(app_constants.APP_ICO_PATH))
 
 	def add_download_entry(self, url=None):
+		log_i('Adding download entry: {}'.format(url))
 		self.info_lbl.hide()
 		h_item = None
 		try:
@@ -206,10 +303,11 @@ class GalleryDownloader(QWidget):
 
 			h_item = manager.from_gallery_url(url)
 		except pewnet.WrongURL:
-			self.info_lbl.setText("<font color='red'>Failed to add to download list</font>")
+			self.info_lbl.setText("<font color='red'>Failed to add to add:\n{}</font>".format(url))
 			self.info_lbl.show()
 			return
 		if h_item:
+			log_i('Successfully added download entry')
 			self.download_list.add_entry(h_item)
 
 	def show(self):
@@ -258,6 +356,14 @@ class GalleryPopup(misc.BasePopup):
 		self.setMaximumWidth(620)
 		self.resize(620, 500)
 		self.show()
+
+	#def get_all_items(self):
+	#	n = self.gallery_layout.rowCount()
+	#	items = []
+	#	for x in range(n):
+	#		item = self.gallery_layout.itemAt(x)
+	#		items.append(item.widget())
+	#	return items
 
 class ModifiedPopup(misc.BasePopup):
 	def __init__(self, path, gallery_id, parent=None):
@@ -420,41 +526,41 @@ class GalleryHandler(FileSystemEventHandler, QObject):
 	#	self.g_queue = []
 
 	def on_created(self, event):
-		if not gui_constants.OVERRIDE_MONITOR:
+		if not app_constants.OVERRIDE_MONITOR:
 			if self.file_filter(event):
 				t = Timer(8, self.CREATE_SIGNAL.emit, args=(event.src_path,))
 				t.start()
 		else:
-			gui_constants.OVERRIDE_MONITOR = False
+			app_constants.OVERRIDE_MONITOR = False
 
 	def on_deleted(self, event):
-		if not gui_constants.OVERRIDE_MONITOR:
+		if not app_constants.OVERRIDE_MONITOR:
 			path = event.src_path
 			gallery = gallerydb.GalleryDB.get_gallery_by_path(path)
 			if gallery:
 				self.DELETED_SIGNAL.emit(path, gallery)
 		else:
-			gui_constants.OVERRIDE_MONITOR = False
+			app_constants.OVERRIDE_MONITOR = False
 
 	def on_modified(self, event):
 		pass
 
 	def on_moved(self, event):
-		if not gui_constants.OVERRIDE_MONITOR:
+		if not app_constants.OVERRIDE_MONITOR:
 			if self.file_filter(event):
 				old_path = event.src_path
 				gallery = gallerydb.GalleryDB.get_gallery_by_path(old_path)
 				if gallery:
 					self.MOVED_SIGNAL.emit(event.dest_path, gallery)
 		else:
-			gui_constants.OVERRIDE_MONITOR = False
+			app_constants.OVERRIDE_MONITOR = False
 
 class Watchers:
 	def __init__(self):
 
 		self.gallery_handler = GalleryHandler()
 		self.watchers = []
-		for path in gui_constants.MONITOR_PATHS:
+		for path in app_constants.MONITOR_PATHS:
 			gallery_observer = Observer()
 
 			try:
@@ -467,3 +573,165 @@ class Watchers:
 	def stop_all(self):
 		for watcher in self.watchers:
 			watcher.stop()
+
+class ImpExpData:
+
+	def __init__(self, format=1):
+		self.type = format
+		if format == 0:
+			self.structure = ""
+		else:
+			self.structure = {}
+		self.hash_pages_count = 4
+
+	def get_pages(self, pages):
+		"Returns pages to generate hashes from"
+		p = []
+		if pages < self.hash_pages_count+1:
+			for x in range(pages):
+				p.append(x)
+		else:
+			x = 0
+			i = pages//self.hash_pages_count
+			for t in range(self.hash_pages_count):
+				x += i
+				p.append(x-1)
+		return p
+
+	def add_data(self, name, data):
+		if self.type == 0:
+			pass
+		else:
+			self.structure[name] = data
+
+	def save(self, file_path):
+		file_name = os.path.join(file_path,
+						   'happypanda-{}.hpdb'.format(
+							  datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S")))
+		with open(file_name, 'w', encoding='utf-8') as fp:
+			json.dump(self.structure, fp, indent=4)
+
+	def find_pair(self, found_pairs):
+		identifier = self.structure['identifier']
+		found = None
+		for g in app_constants.GALLERY_DATA:
+			if not g in found_pairs and g.chapters[0].pages == identifier['pages']:
+				pages = self.get_pages(g.chapters[0].pages)
+				hashes = gallerydb.HashDB.gen_gallery_hash(g, 0, pages)
+				for p in hashes:
+					if hashes[p] != identifier[str(p)]:
+						break
+				else:
+					found = g
+					g.title = self.structure['title']
+					g.artist = self.structure['artist']
+					if self.structure['pub_date'] and self.structure['pub_date'] != 'None':
+						g.pub_date = datetime.datetime.strptime(
+							self.structure['pub_date'], "%Y-%m-%d %H:%M:%S")
+					g.type = self.structure['type']
+					g.status = self.structure['status']
+					if self.structure['last_read'] and self.structure['last_read'] != 'None':
+						g.last_read = datetime.datetime.strptime(
+							self.structure['last_read'], "%Y-%m-%d %H:%M:%S")
+					g.times_read += self.structure['times_read']
+					g._db_v = self.structure['db_v']
+					g.language = self.structure['language']
+					g.link = self.structure['link']
+					for ns in self.structure['tags']:
+						if not ns in g.tags:
+							g.tags[ns] = []
+						for tag in self.structure['tags'][ns]:
+							if not tag in g.tags[ns]:
+								g.tags[ns].append(tag)
+					g.exed = self.structure['exed']
+					g.info = self.structure['info']
+					g.fav = self.structure['fav']
+					gallerydb.GalleryDB.modify_gallery(
+						g.id,
+						g.title,
+						artist=g.artist,
+						info=g.info,
+						type=g.type,
+						fav=g.fav,
+						tags=g.tags,
+						language=g.language,
+						status=g.status,
+						pub_date=g.pub_date,
+						link=g.link,
+						times_read=g.times_read,
+						_db_v=g._db_v,
+						exed=g.exed
+						)
+
+			if found:
+				break
+
+		return found
+
+class ImportExport(QObject):
+	finished = pyqtSignal()
+	imported_g = pyqtSignal(str)
+	progress = pyqtSignal(int)
+	amount = pyqtSignal(int)
+
+	def __init__(self):
+		super().__init__()
+	
+	def import_data(self, path):
+		with open(path, 'r', encoding='utf-8') as fp:
+			data = json.load(fp)
+			data_count = len(data)
+			self.amount.emit(data_count)
+			pairs_found = []
+			for prog, g_id in enumerate(data, 1):
+				g_data = ImpExpData()
+				g_data.structure.update(data[g_id])
+				g = g_data.find_pair(pairs_found)
+				if g:
+					pairs_found.append(g)
+				self.imported_g.emit(
+					"Importing database file... ({}/{} imported)".format(len(pairs_found), data_count))
+				self.progress.emit(prog)
+			self.finished.emit()
+
+	def export_data(self, gallery=None):
+		galleries = []
+		if gallery:
+			galleries.append(gallery)
+		else:
+			galleries = app_constants.GALLERY_DATA
+
+		amount = len(galleries)
+		log_i("Exporting {} galleries".format(amount))
+		data = ImpExpData(app_constants.EXPORT_FORMAT)
+		self.amount.emit(amount)
+		for prog, g in enumerate(galleries, 1):
+			log_d("Exporting {} out of {} galleries".format(prog, amount))
+			g_data = {}
+			g_data['title'] = g.title
+			g_data['artist'] = g.artist
+			g_data['info'] = g.info
+			g_data['fav'] = g.fav
+			g_data['type'] = g.type
+			g_data['link'] = g.link
+			g_data['language'] = g.language
+			g_data['status'] = g.status
+			g_data['pub_date'] = "{}".format(g.pub_date)
+			g_data['last_read'] = "{}".format(g.last_read)
+			g_data['times_read'] = g.times_read
+			g_data['exed'] = g.exed
+			g_data['db_v'] = g._db_v
+			g_data['tags'] = g.tags.copy()
+			g_data['identifier'] = {'pages':g.chapters[0].pages}
+			pages = data.get_pages(g.chapters[0].pages)
+			h_list = gallerydb.HashDB.gen_gallery_hash(g, 0, pages)
+			for n in pages:
+				g_data['identifier'][n] = h_list[n]
+
+			data.add_data(str(g.id), g_data)
+			self.progress.emit(prog)
+
+		log_i("Finished exporting galleries!")
+		data.save(app_constants.EXPORT_PATH)
+		self.finished.emit()
+

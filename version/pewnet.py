@@ -21,7 +21,7 @@ from queue import Queue
 
 from PyQt5.QtCore import QObject, pyqtSignal
 
-import gui_constants
+import app_constants
 import utils
 
 log = logging.getLogger(__name__)
@@ -33,6 +33,32 @@ log_c = log.critical
 
 class WrongURL(Exception): pass
 
+class DownloaderItem(QObject):
+	"Convenience class"
+	IN_QUEUE, DOWNLOADING, FINISHED, CANCELLED = range(4)
+	file_rdy = pyqtSignal(object)
+	def __init__(self, url="", session=None):
+		super().__init__()
+		self.session = session
+		self.download_url = url
+		self.file = ""
+		self.name = ""
+
+		self.total_size = 0
+		self.current_size = 0
+		self.current_state = self.IN_QUEUE
+
+	def cancel(self):
+		self.current_state = self.CANCELLED
+
+	def open(self, containing=False):
+		if self.file:
+			if containing:
+				p = os.path.split(self.file)[0]
+				utils.open_path(p, self.file)
+			else:
+				utils.open_path(self.file)
+
 class Downloader(QObject):
 	"""
 	A download manager.
@@ -41,32 +67,41 @@ class Downloader(QObject):
 	_inc_queue = Queue()
 	_browser_session = None
 	_threads = []
-	item_finished = pyqtSignal(tuple)
-	active_downloads = {}
+	item_finished = pyqtSignal(object)
+	active_items = []
 
 	def __init__(self):
 		super().__init__()
 		# download dir
-		self.base = os.path.abspath(gui_constants.DOWNLOAD_DIRECTORY)
+		self.base = os.path.abspath(app_constants.DOWNLOAD_DIRECTORY)
 		if not os.path.exists(self.base):
 			os.mkdir(self.base)
 
 	@staticmethod
 	def add_to_queue(item, session=None, dir=None):
 		"""
-		Add an url to the queue or a tuple where first index is name of file.
+		Add a DownloaderItem or url
 		An optional requests.Session object can be specified
 		A temp dir to be used can be specified
+
+		Returns a downloader item
 		"""
+		if isinstance(item, str):
+			item = DownloaderItem(item)
+
+		log_i("Adding item to download queue: {}".format(item.download_url))
 		if dir:
 			Downloader._inc_queue.put({'dir':dir, 'item':item})
 		else:
 			Downloader._inc_queue.put(item)
 		Downloader._session = session
 
+		return item
+
 	def _downloading(self):
 		"The downloader. Put in a thread."
 		while True:
+			log_d("Download items in queue: {}".format(self._inc_queue.qsize()))
 			interrupt = False
 			item = self._inc_queue.get()
 			temp_base = None
@@ -74,7 +109,9 @@ class Downloader(QObject):
 				temp_base = item['dir']
 				item = item['item']
 
-			file_name = item[0] if isinstance(item, (tuple, list)) else str(uuid.uuid4())
+			log_d("Stating item download")
+			item.current_state = item.DOWNLOADING
+			file_name = item.name if item.name else str(uuid.uuid4())
 			
 			invalid_chars = '\\/:*?"<>|'
 			for x in invalid_chars:
@@ -84,21 +121,24 @@ class Downloader(QObject):
 				os.path.join(temp_base, file_name)
 			file_name_part = file_name + '.part'
 
-			download_url = item[1] if isinstance(item, (tuple, list)) else item
+			download_url = item.download_url
+			log_d("Download url:{}".format(download_url))
 
-			self.active_downloads[download_url] = True
+			self.active_items.append(item)
 
 			if self._browser_session:
 				r = self._browser_session.get(download_url, stream=True)
 			else:
 				r = requests.get(download_url, stream=True)
+			item.total_size = int(r.headers['content-length'])
 
 			with open(file_name_part, 'wb') as f:
 				for data in r.iter_content(chunk_size=1024):
-					if self.active_downloads[download_url] == False:
+					if item.current_state == item.CANCELLED:
 						interrupt = True
 						break
 					if data:
+						item.current_size += len(data)
 						f.write(data)
 						f.flush()
 			if not interrupt:
@@ -120,17 +160,23 @@ class Downloader(QObject):
 					if n > 100:
 						file_name = file_name_part
 
-				self.active_downloads[download_url] = False
-				self.item_finished.emit((download_url, file_name))
+				item.file = file_name
+				item.current_state = item.FINISHED
+				item.file_rdy.emit(item)
+				self.item_finished.emit(item)
 			else:
 				try:
 					os.remove(file_name_part)
 				except:
 					pass
+			log_d("Items in queue {}".format(self._inc_queue.empty()))
+			log_d("Finished downloading: {}".format(download_url))
+			self.active_items.remove(item)
 			self._inc_queue.task_done()
 
 	def start_manager(self, max_tasks):
 		"Starts download manager where max simultaneous is mask_tasks"
+		log_i("Starting download manager with {} jobs".format(max_tasks))
 		for x in range(max_tasks):
 			thread = threading.Thread(
 					target=self._downloading,
@@ -139,40 +185,33 @@ class Downloader(QObject):
 			thread.start()
 			self._threads.append(thread)
 
-class HenItem(QObject):
+class HenItem(DownloaderItem):
 	"A convenience class that most methods in DLManager and it's subclasses returns"
 	thumb_rdy = pyqtSignal(object)
-	file_rdy = pyqtSignal(object)
 	def __init__(self, session=None):
-		super().__init__()
-		self.session = session
+		super().__init__(session=session)
 		self.thumb_url = "" # an url to gallery thumb
 		self.thumb = None
 		self.cost = "0"
 		self.size = ""
-		self.name = ""
 		self.metadata = {}
-		self.file = ""
-		self.download_url = ""
+		self.gallery_name = ""
 		self.gallery_url = ""
-		self.download_type = gui_constants.HEN_DOWNLOAD_TYPE
+		self.download_type = app_constants.HEN_DOWNLOAD_TYPE
 		self.torrents_found = 0
+		self.file_rdy.connect(self.check_type)
 
 	def fetch_thumb(self):
 		"Fetches thumbnail. Emits thumb_rdy, when done"
-		def thumb_fetched(dl):
-			if dl[0] == self.thumb_url:
-				self.thumb = dl[1]
-				self.thumb_rdy.emit(self)
-		gui_constants.DOWNLOAD_MANAGER.item_finished.connect(thumb_fetched)
-		Downloader.add_to_queue(self.thumb_url, self.session, gui_constants.temp_dir)
+		def thumb_fetched():
+			self.thumb = self._thumb_item.file
+			self.thumb_rdy.emit(self)
+		self._thumb_item = Downloader.add_to_queue(self.thumb_url, self.session, app_constants.temp_dir)
+		self._thumb_item.file_rdy.connect(thumb_fetched)
 
-	def _file_fetched(self, dl_data):
-		if self.download_url == dl_data[0]:
-			self.file = dl_data[1]
-			if self.download_type == 1:
-				utils.open_torrent(self.file)
-			self.file_rdy.emit(self)
+	def check_type(self):
+		if self.download_type == 1:
+			utils.open_torrent(self.file)
 
 	def update_metadata(self, key, value):
 		"""
@@ -224,9 +263,9 @@ class DLManager(QObject):
 	def __init__(self):
 		super().__init__()
 		self.ARCHIVE, self.TORRENT = False, False
-		if gui_constants.HEN_DOWNLOAD_TYPE == 0:
+		if app_constants.HEN_DOWNLOAD_TYPE == 0:
 			self.ARCHIVE = True
-		elif gui_constants.HEN_DOWNLOAD_TYPE == 1:
+		elif app_constants.HEN_DOWNLOAD_TYPE == 1:
 			self.TORRENT = True
 
 	def _error(self):
@@ -235,19 +274,18 @@ class DLManager(QObject):
 	def from_gallery_url(self, url):
 		"""
 		Needs to be implemented in site-specific subclass
-		URL checking  and class instantiating is done in GalleryDownloader class in file_misc.py
+		URL checking  and class instantiating is done in GalleryDownloader class in io_misc.py
 		Basic procedure for this method:
 		- open url with self._browser and do the parsing
-		- create HenItem and fill out it's parameters
+		- create HenItem and fill out it's attributes
 		- specify download type (important)... 0 for archive and 1 for torrent 2 for other
 		- fetch optional thumbnail on HenItem
 		- set download url on HenItem (important)
-		- connect gallery downloader item finished signal to HenItem file_fetched (important)
-		- add download url (and optional file name) to download queue
+		- add h_item to download queue
 		- return h-item if everything went successfully, else return none
 
 		Metadata should imitiate the offical EH API response.
-		It is recommended to use update_metadata in HenItem when setting metadata
+		It is recommended to use update_metadata in HenItem when adding metadata
 		see the ChaikaManager class for a complete example
 		EH API: http://ehwiki.org/wiki/API
 		"""
@@ -258,110 +296,77 @@ class ChaikaManager(DLManager):
 
 	def __init__(self):
 		super().__init__()
-		self.url = 'http://panda.chaika.moe/'
+		self.url = "http://panda.chaika.moe/"
+		self.api = "http://panda.chaika.moe/jsearch/?"
 
 	def from_gallery_url(self, url):
 		h_item = HenItem(self._browser.session)
 		h_item.download_type = 0
-		
-		if '/gallery/' in url:
-			a_url = self._gallery_page(url, h_item)
-			self._archive_page(a_url, h_item)
-		elif '/archive' in url:
-			g_url = self._archive_page(url, h_item)
-			self._gallery_page(g_url, h_item)
+		chaika_id = os.path.split(url)
+		if chaika_id[1]:
+			chaika_id = chaika_id[1]
 		else:
-			return 
+			chaika_id = os.path.split(chaika_id[0])[1]
+
+		if '/gallery/' in url:
+			a_id = self._gallery_page(chaika_id, h_item)
+			if not a_id:
+				return
+			self._archive_page(a_id, h_item)
+		elif '/archive' in url:
+			g_id = self._archive_page(chaika_id, h_item)
+			if not g_id:
+				return
+			self._gallery_page(g_id, h_item)
+		else:
+			return
 		h_item.commit_metadata()
-		gui_constants.DOWNLOAD_MANAGER.item_finished.connect(h_item._file_fetched)
-		Downloader.add_to_queue((h_item.name+'.zip', h_item.download_url), self._browser.session)
+		h_item.name = h_item.gallery_name+'.zip'
+		Downloader.add_to_queue(h_item, self._browser.session)
 		return h_item
 
-	def _gallery_page(self, g_url, h_item):
+	def _gallery_page(self, g_id, h_item):
 		"Returns url to archive and updates h_item metadata from the /gallery/g_id page"
-		self._browser.open(g_url)
+		g_url = self.api + "gallery={}".format(g_id)
+		r = requests.get(g_url)
+		try:
+			r.raise_for_status()
+			chaika = r.json()
 
-		all_li = self._browser.find_all('li')
+			h_item.update_metadata('title', chaika['title'])
+			h_item.update_metadata('title_jpn', chaika['title_jpn'])
+			h_item.update_metadata('category', chaika['category'])
+			h_item.update_metadata('rating', chaika['rating'])
+			h_item.update_metadata('filecount', chaika['filecount'])
+			h_item.update_metadata('filesize', chaika['filesize'])
+			h_item.update_metadata('posted', chaika['posted'])
 
-		title = all_li[0].text.split(':')[1]
-		h_item.update_metadata('title', title)
-		jpn_title = all_li[1].text.split(':')[1]
-		h_item.update_metadata('title_jpn', jpn_title)
-		type = all_li[2].text.split(':')[1]
-		h_item.update_metadata('category', type)
-		rating = all_li[3].text.split(':')[1]
-		h_item.update_metadata('rating', rating)
-		f_count = all_li[4].text.split(':')[1]
-		h_item.update_metadata('filecount', f_count)
-		f_size_in_mb = all_li[5].text.split(':')[1]
-		f_size_in_bytes = int(float(f_size_in_mb.replace('MB', '').strip()) * 1048576)
-		h_item.update_metadata('filesize', f_size_in_bytes)
-		posted = all_li[7].text.split(':')[1]
-		posted = posted.replace('.', '').replace(',', '')
-		month, day, year = posted.split(' ')
-		# sigh.. Sep abbreviated as Sept.. really?!?
-		if month.startswith('Jan'):
-			month = '01'
-		elif month.startswith('Feb'):
-			month = '02'
-		elif month.startswith('Mar'):
-			month = '03'
-		elif month.startswith('Apr'):
-			month = '04'
-		elif month.startswith('May'):
-			month = '05'
-		elif month.startswith('Jun'):
-			month = '06'
-		elif month.startswith('Jul'):
-			month = '07'
-		elif month.startswith('Aug'):
-			month = '08'
-		elif month.startswith('Sep'):
-			month = '09'
-		elif month.startswith('Oct'):
-			month = '10'
-		elif month.startswith('Nov'):
-			month = '11'
-		elif month.startswith('Dec'):
-			month = '12'
-		posted = time.mktime(datetime.strptime(month+day+year, '%m%d%Y').timetuple())
-		h_item.update_metadata('posted', posted)
+			h_item.gallery_name = chaika['title']
+			h_item.gallery_url = self.url + "gallery/{}".format(g_id)
+			h_item.size = "{0:.2f} MB".format(chaika['filesize']/1048576)
+			tags = []
+			for t in chaika['tags']:
+				tag = t.replace('_', ' ')
+				tags.append(tag)
+			h_item.update_metadata('tags', tags)
 
-		h_item.name = title
-		h_item.size = f_size_in_mb
+			if chaika['archives']:
+				h_item.download_url = self.url + chaika['archives'][0]['download'][1:]
+				return chaika['archives'][0]['id']
+		except:
+			log.exception("Error parsing chaika")
 
-		archive_page = all_li[len(all_li)-1].a.get('href')
-		archive_page_url = self.url + archive_page[1:]
-		return archive_page_url
-
-	def _archive_page(self, a_url, h_item):
+	def _archive_page(self, a_id, h_item):
 		"Returns url to gallery and updates h_item metadata from the /archive/a_id page"
-		self._browser.open(a_url)		
-		all_li = self._browser.find_all('li')
-
-		EPG = all_li[3].text.split('>>') # e-link, posted, g-link
-
-		gallery_url = self.url + EPG[2].replace('Gallery link:', '').strip()[1:] # unreadable? sorry
-		h_item.gallery_url = gallery_url
-
-		tags = []
-		ns_tags_li = all_li[4].ul.find_all('li')
-		for nt in ns_tags_li:
-			# namespace
-			ns = nt.find('label')
-			ns = ns.text if ns else ''
-			# tags
-			all_tags = nt.find_all('a')
-			for t in all_tags:
-				tag = t.text
-				tags.append(ns + tag)
-		h_item.update_metadata('tags', tags)
-
-		archive = self._browser.find('li', {'class':'pagination_cen'}).a.get('href')
-		archive_url = self.url + archive[1:]
-		h_item.download_url = archive_url
-		return gallery_url
-
+		a_url = self.api + "archive={}".format(a_id)
+		r = requests.get(a_url)
+		try:
+			r.raise_for_status()
+			chaika = r.json()
+			return chaika['gallery']
+		except:
+			log.exception('Error parsing chaika')
+		
 class HenManager(DLManager):
 	"G.e or Ex gallery manager"
 
@@ -425,11 +430,11 @@ class HenManager(DLManager):
 		h_item.gallery_url = g_url
 		h_item.metadata = CommenHen.parse_metadata(api_metadata, gallery_gid_dict)
 		try:
-			h_item.metadata[g_url]
+			h_item.metadata = h_item.metadata[g_url]
 		except KeyError:
 			raise WrongURL
 		h_item.thumb_url = gallery['thumb']
-		h_item.name = gallery['title']
+		h_item.gallery_name = gallery['title']
 		h_item.size = "{0:.2f} MB".format(gallery['filesize']/1048576)
 
 		if self.ARCHIVE:
@@ -455,8 +460,8 @@ class HenManager(DLManager):
 				f_name = succes_test.find('strong').text
 				h_item.download_url = gallery_dl
 				h_item.fetch_thumb()
-				gui_constants.DOWNLOAD_MANAGER.item_finished.connect(h_item._file_fetched)
-				Downloader.add_to_queue((f_name, gallery_dl), self._browser.session)
+				h_item.name = f_name
+				Downloader.add_to_queue(h_item, self._browser.session)
 				return h_item
 
 		elif self.TORRENT:
@@ -468,8 +473,8 @@ class HenManager(DLManager):
 				url_and_file = self._torrent_url_d(g_id_token[0], g_id_token[1])
 				if url_and_file:
 					h_item.download_url = url_and_file[0]
-					gui_constants.DOWNLOAD_MANAGER.item_finished.connect(h_item._file_fetched)
-					Downloader.add_to_queue((url_and_file[1], h_item.download_url), self._browser.session)
+					h_item.name = url_and_file[1]
+					Downloader.add_to_queue(h_item, self._browser.session)
 					return h_item
 			else:
 				return h_item
@@ -489,7 +494,7 @@ class ExHenManager(HenManager):
 class CommenHen:
 	"Contains common methods"
 	LOCK = threading.Lock()
-	TIME_RAND = gui_constants.GLOBAL_EHEN_TIME
+	TIME_RAND = app_constants.GLOBAL_EHEN_TIME
 	QUEUE = []
 	COOKIES = {}
 	LAST_USED = time.time()
@@ -572,12 +577,12 @@ class CommenHen:
 		content_type = response.headers['content-type']
 		text = response.text
 		if 'image/gif' in content_type:
-			gui_constants.NOTIF_BAR.add_text('Provided exhentai credentials are incorrect!')
+			app_constants.NOTIF_BAR.add_text('Provided exhentai credentials are incorrect!')
 			log_e('Provided exhentai credentials are incorrect!')
 			time.sleep(5)
 			return False
 		elif 'text/html' and 'Your IP address has been' in text:
-			gui_constants.NOTIF_BAR.add_text("Your IP address has been temporarily banned from g.e-/exhentai")
+			app_constants.NOTIF_BAR.add_text("Your IP address has been temporarily banned from g.e-/exhentai")
 			log_e('Your IP address has been temp banned from g.e- and ex-hentai')
 			time.sleep(5)
 			return False
@@ -700,7 +705,7 @@ class CommenHen:
 					return False
 			return True
 
-		hash_url = gui_constants.DEFAULT_EHEN_URL + '?f_shash='
+		hash_url = app_constants.DEFAULT_EHEN_URL + '?f_shash='
 		found_galleries = {}
 		log_i('Initiating hash search on ehentai')
 		for h in hash_string:

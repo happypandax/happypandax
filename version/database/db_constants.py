@@ -1,4 +1,4 @@
-#"""
+﻿#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -14,11 +14,20 @@
 
 import os
 
-THUMBNAIL_PATH = os.path.join("db", "thumbnails")
-DB_PATH = os.path.join("db","sadpanda.db")
-DB_VERSION = [0.21] # a list of accepted db versions. E.g. v3.5 will be backward compatible with v3.1 etc.
+DB_NAME = 'happypanda.db'
+if os.name == 'posix':
+    DB_ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../db')
+    THUMBNAIL_PATH = os.path.join(DB_ROOT, DB_NAME)
+    DB_PATH = os.path.join(DB_ROOT, DB_NAME)
+else:
+    THUMBNAIL_PATH = os.path.join("db", "thumbnails")
+    DB_PATH = os.path.join("db", DB_NAME)
+
+DB_VERSION = [0.22] # a list of accepted db versions. E.g. v3.5 will be backward compatible with v3.1 etc.
 CURRENT_DB_VERSION = DB_VERSION[0]
 REAL_DB_VERSION = DB_VERSION[len(DB_VERSION)-1]
 METHOD_QUEUE = None
 METHOD_RETURN = None
 DATABASE = None
+
+class NoDatabaseConnection(Exception): pass

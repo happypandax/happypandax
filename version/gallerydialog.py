@@ -7,11 +7,11 @@ from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QDesktopWidget, QGroupBox,
 							 QDateEdit, QFileDialog, QMessageBox, QScrollArea)
 from PyQt5.QtCore import (pyqtSignal, Qt, QPoint, QDate, QThread, QTimer)
 
-from misc import return_tag_completer, ClickedLabel, CompleterTextEdit
-import gui_constants
+import app_constants
 import utils
 import gallerydb
 import fetch
+import misc
 
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -123,6 +123,9 @@ class GalleryDialog(QWidget):
 
 		self.title_edit = QLineEdit()
 		self.author_edit = QLineEdit()
+		author_completer = misc.GCompleter(self, False, True, False)
+		author_completer.setCaseSensitivity(Qt.CaseInsensitive)
+		self.author_edit.setCompleter(author_completer)
 		self.descr_edit = QTextEdit()
 		self.descr_edit.setFixedHeight(45)
 		self.descr_edit.setAcceptRichText(True)
@@ -130,18 +133,17 @@ class GalleryDialog(QWidget):
 		self.lang_box.addItems(["English", "Japanese", "Other"])
 		self.lang_box.setCurrentIndex(0)
 		tags_l = QVBoxLayout()
-		tag_info = ClickedLabel("How do i write namespace & tags? (hover)", parent=self)
-		tag_info.setToolTip("Ways to write tags:\n\nWithout namespaces:\ntag1, tag2, tag3\n\n"+
-					  "Namespaces with single tags:\nns1:tag1, ns1:tag2\n\nNamespaces with more than"+
-					  " one tag:\nns1:[tag1, tag2, tag3], ns2:[tag1, tag2]\n\n"+
+		tag_info = misc.ClickedLabel("How do i write namespace & tags? (hover)", parent=self)
+		tag_info.setToolTip("Ways to write tags:\n\nNormal tags:\ntag1, tag2, tag3\n\n"+
+					  "Namespaced tags:\nns1:tag1, ns1:tag2\n\nNamespaced tags with one or more"+
+					  " tags under same namespace:\nns1:[tag1, tag2, tag3], ns2:[tag1, tag2]\n\n"+
 					  "Those three ways of writing namespace & tags can be combined freely.\n"+
-					  "Tags are seperated by a comma.\nNamespaces will be capitalized while tags"+
+					  "Tags are seperated by a comma, NOT whitespace.\nNamespaces will be capitalized while tags"+
 					  " will be lowercased.")
 		tag_info.setToolTipDuration(99999999)
 		tags_l.addWidget(tag_info)
-		self.tags_edit = CompleterTextEdit()
-		comp = return_tag_completer(self)
-		self.tags_edit.setCompleter(comp)
+		self.tags_edit = misc.CompleterTextEdit()
+		self.tags_edit.setCompleter(misc.GCompleter(self, False, False))
 		tags_l.addWidget(self.tags_edit, 3)
 		self.tags_edit.setFixedHeight(70)
 		self.tags_edit.setPlaceholderText("Press Tab to autocomplete (Ctrl + E to show popup)")
@@ -291,9 +293,9 @@ class GalleryDialog(QWidget):
 			self.file_exists_lbl.setText('<font color="red">Invalid gallery source.</font>')
 			self.file_exists_lbl.show()
 			self.done.hide()
-		if gui_constants.SUBFOLDER_AS_GALLERY:
+		if app_constants.SUBFOLDER_AS_GALLERY:
 			if gs > 1:
-				self.file_exists_lbl.setText('<font color="red">Source contains more than one gallery.</font>')
+				self.file_exists_lbl.setText('<font color="red">More than one galleries detected in source! Use other methods to add.</font>')
 				self.file_exists_lbl.show()
 				self.done.hide()
 
@@ -314,6 +316,8 @@ class GalleryDialog(QWidget):
 
 	def set_chapters(self, gallery_object, add_to_model=True):
 		path = gallery_object.path
+		chap_container = gallerydb.ChaptersContainer(gallery_object)
+		metafile = utils.GMetafile()
 		try:
 			log_d('Listing dir...')
 			con = scandir.scandir(path) # list all folders in gallery dir
@@ -323,30 +327,35 @@ class GalleryDialog(QWidget):
 			# if gallery has chapters divided into sub folders
 			if len(chapters) != 0:
 				log_d('Chapters divided in folders..')
-				for numb, ch in enumerate(chapters):
-					chap_path = os.path.join(path, ch)
-					gallery_object.chapters[numb] = chap_path
+				for ch in chapters:
+					chap = chap_container.create_chapter()
+					chap.title = utils.title_parser(ch)['title']
+					chap.path = os.path.join(path, ch)
+					metafile.update(utils.GMetafile(chap.path))
+					chap.pages = len(list(scandir.scandir(chap.path)))
 
 			else: #else assume that all images are in gallery folder
-				gallery_object.chapters[0] = path
-				
-			#find last edited file
-			times = set()
-			log_d('Finding last update...')
-			for root, dirs, files in scandir.walk(path, topdown=False):
-				for img in files:
-					fp = os.path.join(root, img)
-					times.add(os.path.getmtime(fp))
-			gallery_object.last_update = time.asctime(time.gmtime(max(times)))
-			log_d('Found last update')
+				chap = chap_container.create_chapter()
+				chap.title = utils.title_parser(os.path.split(path)[1])['title']
+				chap.path = path
+				metafile.update(utils.GMetafile(path))
+				chap.pages = len(list(scandir.scandir(path)))
+
 		except NotADirectoryError:
 			if path.endswith(utils.ARCHIVE_FILES):
 				gallery_object.is_archive = 1
 				log_i("Gallery source is an archive")
 				archive_g = sorted(utils.check_archive(path))
-				for n, g in enumerate(archive_g):
-					gallery_object.chapters[n] = g
+				for g in archive_g:
+					chap = chap_container.create_chapter()
+					chap.path = g
+					chap.in_archive = 1
+					metafile.update(utils.GMetafile(g, path))
+					arch = utils.ArchiveFile(path)
+					chap.pages = len(arch.dir_contents(g))
+					arch.close()
 
+		metafile.apply_gallery(gallery_object)
 		if add_to_model:
 			self.SERIES.emit([gallery_object])
 			log_d('Sent gallery to model')
@@ -434,8 +443,8 @@ class GalleryDialog(QWidget):
 			new_gallery.artist = self.author_edit.text()
 			log_d('Adding gallery artist')
 			log_d('Adding gallery path')
-			if new and gui_constants.MOVE_IMPORTED_GALLERIES:
-				gui_constants.OVERRIDE_MONITOR = True
+			if new and app_constants.MOVE_IMPORTED_GALLERIES:
+				app_constants.OVERRIDE_MONITOR = True
 				new_gallery.path = utils.move_files(self.path_lbl.text())
 			else:
 				new_gallery.path = self.path_lbl.text()
@@ -461,13 +470,11 @@ class GalleryDialog(QWidget):
 			new_gallery.link = self.link_lbl.text()
 			log_d('Adding gallery link')
 			if not new_gallery.chapters:
-				def do_chapters(gallery):
-					log_d('Starting chapters')
-					thread = threading.Thread(target=self.set_chapters, args=(gallery,add_to_model), daemon=True)
-					thread.start()
-					thread.join()
-					log_d('Finished chapters')
-				do_chapters(new_gallery)
+				log_d('Starting chapters')
+				thread = threading.Thread(target=self.set_chapters, args=(new_gallery,add_to_model), daemon=True)
+				thread.start()
+				thread.join()
+				log_d('Finished chapters')
 			return new_gallery
 
 
