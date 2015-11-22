@@ -21,7 +21,7 @@ I'm here if you have any questions!
 3. Happypanda.exe on windows and double click on it!
 
 #### Mac and Linux
-see [INSTALL.md](install.md)
+see [INSTALL.md](INSTALL.md)
 
 # Features
 - Portable, self-contained in folder and cross-platform
