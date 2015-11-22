@@ -1095,7 +1095,8 @@ class MangaView(QListView):
 
 				g_widget = io_misc.GalleryPopup(("These galleries are found to"+
 										  " be duplicates.", duplicates), self.parentWidget(), menu=GalleryContextMenu())
-				g_widget.graphics_blur.setEnabled(False)
+				if g_widget.graphics_blur:
+					g_widget.graphics_blur.setEnabled(False)
 				buttons = g_widget.add_buttons("Close")
 				buttons[0].clicked.connect(g_widget.close)
 			else:

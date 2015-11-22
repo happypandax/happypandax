@@ -1094,6 +1094,7 @@ class TagText(QPushButton):
 		return super().enterEvent(event)
 
 class BasePopup(TransparentWidget):
+	graphics_blur = None
 	def __init__(self, parent=None, **kwargs):
 		if kwargs:
 			super().__init__(parent, **kwargs)
@@ -1114,7 +1115,6 @@ class BasePopup(TransparentWidget):
 		self.setMaximumWidth(500)
 		self.resize(500,350)
 		self.curr_pos = QPoint()
-		self.graphics_bur = None
 		if parent:
 			try:
 				self.graphics_blur = parent.graphics_blur
