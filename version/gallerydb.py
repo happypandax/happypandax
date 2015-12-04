@@ -1262,7 +1262,9 @@ class Gallery:
 		self._db_v = None
 		self.hashes = []
 		self.exed = 0
+
 		self._cache_id = 0 # used by custom delegate to cache profile
+		self.dead_link = False
 		self.state = 0
 
 	def set_defaults(self):

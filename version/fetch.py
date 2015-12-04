@@ -65,6 +65,7 @@ class Fetch(QObject):
 		self.galleries = []
 		self.galleries_in_queue = []
 		self.error_galleries = []
+		self.multiple_hit_galleries = []
 
 		#filter
 		self.galleries_from_db = []
@@ -382,6 +383,7 @@ class Fetch(QObject):
 		Appends or replaces metadata with the new fetched metadata.
 		"""
 		log_i('Initiating auto metadata fetcher')
+		self.multiple_hit_galleries.clear()
 		if self.galleries and not app_constants.GLOBAL_EHEN_LOCK:
 			log_i('Auto metadata fetcher is now running')
 			app_constants.GLOBAL_EHEN_LOCK = True
@@ -391,14 +393,17 @@ class Fetch(QObject):
 					if exprops.ipb_id and exprops.ipb_pass:
 						hen = pewnet.ExHen(exprops.ipb_id, exprops.ipb_pass)
 						valid_url = 'exhen'
+						log_i("Using ExHentai")
 					else:
 						raise ValueError
 				except ValueError:
 					hen = pewnet.EHen()
 					valid_url = 'ehen'
+					log_i("Using G.Ehentai")
 			else:
 				hen = pewnet.EHen()
 				valid_url = 'ehen'
+				log_i("Using Exhentai")
 			hen.LAST_USED = time.time()
 			self.AUTO_METADATA_PROGRESS.emit("Checking gallery urls...")
 
@@ -448,13 +453,10 @@ class Fetch(QObject):
 					url = title_url_list[0][1]
 				else:
 					if len(title_url_list) > 1:
-						self.AUTO_METADATA_PROGRESS.emit("Multiple galleries found for gallery: {}".format(gallery.title))
-						app_constants.SYSTEM_TRAY.showMessage('Happypanda', 'Multiple galleries found for gallery:\n{}'.format(gallery.title),
-											minimized=True)
-						log_w("Multiple galleries found for gallery: {}".format(gallery.title.encode(errors='ignore')))
-						self.GALLERY_PICKER.emit(gallery, title_url_list, self.GALLERY_PICKER_QUEUE)
-						user_choice = self.GALLERY_PICKER_QUEUE.get()
+						self.multiple_hit_galleries.append([gallery, title_url_list])
+						continue
 					else:
+						continue
 						user_choice = title_url_list[0]
 
 					if not user_choice:
@@ -483,7 +485,35 @@ class Fetch(QObject):
 					else:
 						self.fetch_metadata(gallery, hen)
 
-			log_d('Auto metadata fetcher is done')
+			if self.multiple_hit_galleries:
+				for x, g_data in enumerate(self.multiple_hit_galleries):
+					gallery = g_data[0]
+					title_url_list = g_data[1]
+					self.AUTO_METADATA_PROGRESS.emit("Multiple galleries found for gallery: {}".format(gallery.title))
+					app_constants.SYSTEM_TRAY.showMessage('Happypanda', 'Multiple galleries found for gallery:\n{}'.format(gallery.title),
+										minimized=True)
+					log_w("Multiple galleries found for gallery: {}".format(gallery.title.encode(errors='ignore')))
+					self.GALLERY_PICKER.emit(gallery, title_url_list, self.GALLERY_PICKER_QUEUE)
+					user_choice = self.GALLERY_PICKER_QUEUE.get()
+
+					if not user_choice:
+						continue
+
+					title = user_choice[0]
+					url = user_choice[1]
+
+					if not gallery.link:
+						gallery.link = url
+					self.GALLERY_EMITTER.emit(gallery)
+					gallery.temp_url = url
+					self.AUTO_METADATA_PROGRESS.emit("({}/{}) Adding to queue: {}".format(
+						x, len(self.multiple_hit_galleries), gallery.title))
+					if x == len(self.multiple_hit_galleries):
+						self.fetch_metadata(gallery, hen, True)
+					else:
+						self.fetch_metadata(gallery, hen)
+
+			log_i('Auto metadata fetcher is done')
 			app_constants.GLOBAL_EHEN_LOCK = False
 			if not self.error_galleries:
 				self.AUTO_METADATA_PROGRESS.emit('Done! Went through {} galleries successfully!'.format(len(self.galleries)))

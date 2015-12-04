@@ -126,6 +126,7 @@ class BaseMoveWidget(QWidget):
 			self.move(self.parent_widget.window().frameGeometry().center() -\
 				self.window().rect().center())
 
+
 class SortMenu(QMenu):
 	def __init__(self, parent, mangaview):
 		super().__init__(parent)
@@ -1096,7 +1097,9 @@ class TagText(QPushButton):
 class BasePopup(TransparentWidget):
 	graphics_blur = None
 	def __init__(self, parent=None, **kwargs):
+		blur = True
 		if kwargs:
+			blur = kwargs.pop('blur', True)
 			super().__init__(parent, **kwargs)
 		else:
 			super().__init__(parent, flags= Qt.Dialog | Qt.FramelessWindowHint)
@@ -1115,7 +1118,7 @@ class BasePopup(TransparentWidget):
 		self.setMaximumWidth(500)
 		self.resize(500,350)
 		self.curr_pos = QPoint()
-		if parent:
+		if parent and blur:
 			try:
 				self.graphics_blur = parent.graphics_blur
 				parent.setGraphicsEffect(self.graphics_blur)
@@ -1169,6 +1172,48 @@ class BasePopup(TransparentWidget):
 			self.buttons_layout.addWidget(button)
 			b.append(button)
 		return b
+
+class ApplicationNotif(BasePopup):
+	"For application notifications"
+	def __init__(self, parent, **kwargs):
+		super().__init__(parent, flags= Qt.Window | Qt.FramelessWindowHint, blur=False, move_listener=False)
+		self.hide_timer = QTimer(self)
+		self.hide_timer.timeout.connect(self.hide)
+		self.setMaximumHeight(100)
+		main_layout = QVBoxLayout(self.main_widget)
+		self.title = QLabel()
+		main_layout.addWidget(self.title)
+		self.content = QLabel()
+		main_layout.addWidget(self.content)
+		if parent:
+			try:
+				parent.move_listener.connect(self.update_move)
+			except AttributeError:
+				pass
+
+	def update_text(self, txt, title="", duration=100):
+		"Duration in seconds!"
+		if self.hide_timer.isActive():
+			self.hide_timer.stop()
+		self.adjustSize()
+		self.show()
+		self.title.setText('<h3>{}</h3>'.format(title))
+		self.content.setText(txt)
+		self.update_move()
+		self.hide_timer.start(duration*1000)
+
+	def update_move(self, new_size=None):
+		if new_size:
+			self.move(new_size)
+			return
+		if self.parent_widget:
+			p =	self.parent_widget.window().frameGeometry().center() -\
+					self.window().rect().center()
+			p.setY(p.y()+(self.parent_widget.height()//2)-self.height())
+			self.move(p)
+
+
+
 
 class ApplicationPopup(BasePopup):
 

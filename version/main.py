@@ -1,4 +1,4 @@
-#"""
+﻿#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -96,6 +96,9 @@ def start(test=False):
 	application.setApplicationName('Happypanda')
 	application.setApplicationDisplayName('Happypanda')
 	application.setApplicationVersion('v{}'.format(app_constants.vs))
+	log_i('Starting Happypanda...'.format(app_constants.vs))
+	if args.debug:
+		log_i('Running in debug mode'.format(app_constants.vs))
 	log_i('Happypanda Version {}'.format(app_constants.vs))
 	log_i('OS: {} {}\n'.format(platform.system(), platform.release()))
 	conn = None

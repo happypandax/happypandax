@@ -491,6 +491,8 @@ class GalleryModel(QAbstractTableModel):
 			self._data_count += len(list_of_gallery)
 		self.beginInsertRows(QModelIndex(), position, position + rows - 1)
 		for pos, gallery in enumerate(list_of_gallery, 1):
+			if not os.path.exists(gallery.path):
+				gallery.dead_link = True
 			self._data.append(gallery)
 		self.endInsertRows()
 		gallerydb.add_method_queue(self.db_emitter.update_count, True)
@@ -800,6 +802,19 @@ class CustomDelegate(QStyledItemDelegate):
 				#painter.fillRect(selected_rect, QColor(164,164,164,120))
 				painter.restore()
 
+			if gallery.dead_link:
+				painter.save()
+				selected_rect = QRectF(x, y, w, lbl_rect.height()+app_constants.THUMB_H_SIZE)
+				painter.setPen(Qt.NoPen)
+				painter.setBrush(QBrush(QColor(255,0,0,120)))
+				p_path = QPainterPath()
+				p_path.setFillRule(Qt.WindingFill)
+				p_path.addRoundedRect(selected_rect, 5,5)
+				p_path.addRect(x,y, 20, 20)
+				p_path.addRect(x+w-20,y, 20, 20)
+				painter.drawPath(p_path.simplified())
+				#painter.fillRect(selected_rect, QColor(164,164,164,120))
+				painter.restore()
 			#if option.state & QStyle.State_Selected:
 			#	painter.setPen(QPen(option.palette.highlightedText().color()))
 		else:
@@ -1253,6 +1268,8 @@ class MangaTableView(QTableView):
 		self.setSelectionMode(self.ExtendedSelection)
 		self.setShowGrid(True)
 		self.setSortingEnabled(True)
+		h_header = self.horizontalHeader()
+		h_header.setSortIndicatorShown(True)
 		v_header = self.verticalHeader()
 		v_header.sectionResizeMode(QHeaderView.Fixed)
 		v_header.setDefaultSectionSize(24)
