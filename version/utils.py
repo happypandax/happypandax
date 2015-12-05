@@ -56,11 +56,11 @@ class GMetafile:
 			c = zip.dir_contents(path)
 			for x in c:
 				if x.endswith(app_constants.GALLERY_METAFILE_KEYWORDS):
-					self.files.append(open(zip.extract(x)))
+					self.files.append(open(zip.extract(x), encoding='utf-8'))
 		else:
 			for p in scandir.scandir(path):
 				if p.name in app_constants.GALLERY_METAFILE_KEYWORDS:
-					self.files.append(open(p.path))
+					self.files.append(open(p.path, encoding='utf-8'))
 		if self.files:
 			self.detect()
 		else:
@@ -69,7 +69,7 @@ class GMetafile:
 	def detect(self):
 		for fp in self.files:
 			with fp:
-				j = json.load(fp)
+				j = json.load(fp, encoding='utf-8')
 				eze = ['gallery_info', 'image_api_key', 'image_info']
 				# eze
 				if all(x in j for x in eze):
