@@ -112,7 +112,7 @@ class Downloader(QObject):
 			log_d("Stating item download")
 			item.current_state = item.DOWNLOADING
 			file_name = item.name if item.name else str(uuid.uuid4())
-			
+
 			invalid_chars = '\\/:*?"<>|'
 			for x in invalid_chars:
 				file_name = file_name.replace(x, '')
@@ -366,7 +366,7 @@ class ChaikaManager(DLManager):
 			return chaika['gallery']
 		except:
 			log.exception('Error parsing chaika')
-		
+
 class HenManager(DLManager):
 	"G.e or Ex gallery manager"
 
@@ -422,7 +422,7 @@ class HenManager(DLManager):
 			   self._browser.session.cookies['ipb_pass_hash'])
 		else:
 			hen = EHen()
-
+		log_d("Using {}".format(hen.__repr__()))
 		api_metadata, gallery_gid_dict = hen.add_to_queue(g_url, True, False)
 		gallery = api_metadata['gmetadata'][0]
 
@@ -443,14 +443,20 @@ class HenManager(DLManager):
 
 			# ex/g.e
 			self._browser.open(d_url)
+			log_d("Opening {}".format(d_url))
 			download_btn = self._browser.get_form()
 			if download_btn:
+				log_d("Parsing download button!")
 				f_div = self._browser.find('div', id='db')
 				divs = f_div.find_all('div')
 				h_item.cost = divs[0].find('strong').text
 				h_item.size = divs[1].find('strong').text
 				self._browser.submit_form(download_btn)
+				log_d("Submitted download button!")
 			# get dl link
+			log_d("Getting download URL!")
+			with open("exHtmlRandomFileName123.html", 'w') as f:
+				f.write(self._browser.parsed.prettify())
 			dl = self._browser.find('a').get('href')
 			self._browser.open(dl)
 			succes_test = self._browser.find('p')
@@ -517,7 +523,7 @@ class CommenHen:
 			time.sleep(t)
 		t2 = time.time() - t1
 		log_d("Slept for {}".format(t2))
-	
+
 	def end_lock(self):
 		log_d('unlocked')
 		self.LAST_USED = time.time()
@@ -733,7 +739,7 @@ class CommenHen:
 						visible_galleries = soup.find_all('div', attrs={'class':'id1'})
 					elif type == 'table':
 						visible_galleries = soup.find_all('div', attrs={'class':'it5'})
-				
+
 					log_i('Found {} visible galleries'.format(len(visible_galleries)))
 					for gallery in visible_galleries:
 						title = gallery.text

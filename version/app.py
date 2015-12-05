@@ -231,8 +231,6 @@ class AppWindow(QMainWindow):
 			self.resize(x, y)
 		else:
 			self.resize(app_constants.MAIN_W, app_constants.MAIN_H)
-		posx, posy = props.pos
-		self.move(posx, posy)
 		self.init_spinners()
 		self.show()
 		log_d('Show window: OK')
