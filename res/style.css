@@ -1,5 +1,5 @@
 DoNotDelete {
-	background-color: #F2F2F2; 
+	background-color: #F2F2F2;
 }
 
 AppWindow {
@@ -11,18 +11,16 @@ QWidget#chapter_main {
 }
 
 QLabel#image_box {
-	border:1px solid #ffd800;
+	border:5px solid #ffd800;
 }
 
 QLabel#title {
 	font-weight:bold;
-	font-size:12px;
-
 }
 
 LineEdit#search_bar {
 	border:0px solid #ffd800;
-	border-radius:5px;
+	border-radius:0.45em;
 }
 
 QLabel#author {
@@ -61,21 +59,21 @@ BasePopup QLabel, BaseUserChoice QLabel{
 
 BasePopup > QFrame, BaseUserChoice > QFrame{
 	background-color:rgba(0, 0, 0, 0.85);
-	border: 1px solid rgba(0, 0, 0, 0.85);
-	border-radius: 5px;
+	border: 1em solid rgba(0, 0, 0, 0.85);
+	border-radius: 3px;
 }
 
 QScrollBar:vertical {
 	border: 0px solid #9A9A9A;
 	background:none;
-	width:10px;
+	width:1em;
 	margin: 0px 0px 0px 0px;
 	}
 
 QScrollBar:horizontal {
 	border: 0px solid #9A9A9A;
 	background:none;
-	height:10px;
+	height:1em;
 	margin: 0px 0px 0px 0px;
 	}
 
@@ -86,9 +84,9 @@ QScrollBar::handle {
 }
 
 QScrollBar::handle:vertical, QScrollBar::handle:horizontal {
-	min-height: 50px;
+	min-height: 7em;
 	border: 0px solid #9A9A9A;
-	border-radius: 4px;
+	border-radius: 0.45em;
 }
 
 QScrollBar::add-line:vertical {
@@ -142,18 +140,18 @@ QLabel {
 }
 
 QPushButton {
-	border-left: 6px solid #464646;  
-	border-right: 6px solid #464646;  
-	border-top: 3px solid #464646;  
-	border-bottom: 3px solid #464646;  
-	border-radius: 3px;
+	border-left: 0.50em solid #464646;
+	border-right: 0.50em solid #464646;
+	border-top: 0.35em solid #464646;
+	border-bottom: 0.35em solid #464646;
+	border-radius: 0.55em;
 }
 
 QPushButton, QToolButton {
 	background-color: #464646;
 	/*height: 20px;
 	border: 0.5px solid #303030;*/
-	font-size: 13px;
+	font-size: 1.2em;
 	color: white;
 }
 
@@ -184,14 +182,16 @@ NotificationOverlay > * {
 }
 
 TagText:pressed, TagText:hover {
-	border: 1px solid rgba(0,0,0,0.85);
+	border: 0.1em solid rgba(0,0,0,0.85);
 }
 
 TagText {
-	padding-right: 3px;
-	padding-left: 3px;
-	border-radius: 5px;
-	border: 1px solid rgba(164,164,164,0.50);
+	padding-right: 0.7em;
+	padding-left: 0.7em;
+	padding-bottom: 0.2em;
+	padding-top: 0.1em;
+	border-radius: 0.45em;
+	border: 0.1em solid rgba(164,164,164,0.50);
 	background-color: rgba(164,164,164,0.50);
 }
 
