@@ -210,14 +210,16 @@ class ToolbarButton(QPushButton):
 			painter.setBrush(QBrush(QColor(164,164,164,120)))
 		#painter.setPen(Qt.NoPen)
 		painter.setRenderHint(painter.Antialiasing)
-		but_rect = QRectF(2.5,2.5, self.width()-5, self.height()-5)
+		ch_width = self._font_metrics.averageCharWidth()/2
+		but_rect = QRectF(ch_width, ch_width, self.width()-ch_width*2, self.height()-ch_width*2)
 		select_rect = QRectF(0,0, self.width(), self.height())
 
-		painter.drawRoundedRect(but_rect, 2.5,2.5)
+		painter.drawRoundedRect(but_rect, ch_width,ch_width)
 		txt_to_draw = self._font_metrics.elidedText(self._text,
 											  Qt.ElideRight, but_rect.width())
-		text_rect = QRectF(but_rect.x()+3, but_rect.y(), but_rect.width()-1.5,
-					 but_rect.height()-1.5)
+
+		text_rect = QRectF(but_rect.x()+ch_width*2, but_rect.y(), but_rect.width(),
+					 but_rect.height())
 		painter.setPen(QColor('white'))
 		painter.drawText(text_rect, txt_to_draw)
 

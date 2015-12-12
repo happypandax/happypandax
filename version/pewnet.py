@@ -457,7 +457,8 @@ class HenManager(DLManager):
 			log_d("Getting download URL!")
 			with open("exHtmlRandomFileName123.html", 'w') as f:
 				f.write(self._browser.parsed.prettify())
-			dl = self._browser.find('a').get('href')
+			dl_a = self._browser.find('a')
+			dl = dl_a.get('href')
 			self._browser.open(dl)
 			succes_test = self._browser.find('p')
 			if succes_test and 'successfully' in succes_test.text:

@@ -374,7 +374,6 @@ class AppWindow(QMainWindow):
 
 	def init_stat_bar(self):
 		self.status_bar = self.statusBar()
-		self.status_bar.setMaximumHeight(20)
 		self.status_bar.setSizeGripEnabled(False)
 		self.stat_info = QLabel()
 		self.stat_info.setIndent(5)
@@ -483,7 +482,8 @@ class AppWindow(QMainWindow):
 
 	def init_toolbar(self):
 		self.toolbar = QToolBar()
-		self.toolbar.setFixedHeight(25)
+		self.toolbar.adjustSize()
+		#self.toolbar.setFixedHeight()
 		self.toolbar.setWindowTitle("Show") # text for the contextmenu
 		#self.toolbar.setStyleSheet("QToolBar {border:0px}") # make it user defined?
 		self.toolbar.setMovable(False)
@@ -629,8 +629,8 @@ class AppWindow(QMainWindow):
 			self.search_bar.textEdited.connect(lambda: self.search_timer.start(800))
 		self.search_bar.setPlaceholderText("Search title, artist, namespace & tags")
 		self.search_bar.setMinimumWidth(150)
-		self.search_bar.setMaximumWidth(500)
-		self.search_bar.setFixedHeight(19)
+		#self.search_bar.setMaximumWidth(500)
+		self.search_bar.setFixedHeight(self.toolbar.height()*2)
 		self.manga_list_view.sort_model.HISTORY_SEARCH_TERM.connect(lambda a: self.search_bar.setText(a))
 		self.toolbar.addWidget(self.search_bar)
 
