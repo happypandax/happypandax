@@ -1143,7 +1143,6 @@ class HashDB(DBBase):
 						zip = ArchiveFile(chap.path)
 				except app_constants.CreateArchiveFail:
 					log_e('Could not generate hash: CreateZipFail')
-					zip.close()
 					return {}
 
 				pages = {}

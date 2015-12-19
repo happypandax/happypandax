@@ -408,6 +408,8 @@ class GalleryModel(QAbstractTableModel):
 		if role == Qt.UserRole+6:
 			return current_gallery.times_read
 
+
+
 		return None
 
 	def rowCount(self, index = QModelIndex()):
@@ -467,10 +469,12 @@ class GalleryModel(QAbstractTableModel):
 		self._data_count += len(list_of_gallery)
 		self.beginInsertRows(QModelIndex(), position, position + rows - 1)
 		log_d('Add rows: Began inserting')
+		gallerydb.GalleryDB.begin()
 		for gallery in list_of_gallery:
 			gallerydb.add_method_queue(gallerydb.GalleryDB.add_gallery_return, True, gallery)
 			gallery.profile = gallerydb.PROFILE_TO_MODEL.get()
 			self._data.insert(position, gallery)
+		gallerydb.add_method_queue(gallerydb.GalleryDB.end, True)
 		log_d('Add rows: Finished inserting')
 		self.endInsertRows()
 		gallerydb.add_method_queue(self.db_emitter.update_count, True)
@@ -1207,12 +1211,14 @@ class MangaView(QListView):
 				break
 		return index
 
-	def replace_edit_gallery(self, list_of_gallery, pos=None):
+	def replace_edit_gallery(self, list_of_gallery, pos=None, db_optimize=True):
 		"Replaces the view and DB with given list of gallery, at given position"
 		assert isinstance(list_of_gallery, (list, gallerydb.Gallery)), "Please pass a gallery to replace with"
 		if isinstance(list_of_gallery, gallerydb.Gallery):
 			list_of_gallery = [list_of_gallery]
 		log_d('Replacing {} galleries'.format(len(list_of_gallery)))
+		if db_optimize:
+			gallerydb.GalleryDB.begin()
 		for gallery in list_of_gallery:
 			if not pos:
 				index = self.find_index(gallery.id)
@@ -1237,8 +1243,10 @@ class MangaView(QListView):
 
 			gallerydb.add_method_queue(gallerydb.GalleryDB.modify_gallery,
 							 True, gallery.id, **kwdict)
-		assert isinstance(pos, int)
-		self.gallery_model.replaceRows([gallery], pos, len(list_of_gallery))
+		if db_optimize:
+			gallerydb.add_method_queue(gallerydb.GalleryDB.end, True)
+		#assert isinstance(pos, int)
+		#self.gallery_model.replaceRows([gallery], pos, len(list_of_gallery))
 
 	def spawn_dialog(self, index=False):
 		if not index:

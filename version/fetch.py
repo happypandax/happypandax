@@ -48,7 +48,7 @@ class Fetch(QObject):
 	SKIPPED = pyqtSignal(list)
 
 	# WEB signals
-	GALLERY_EMITTER = pyqtSignal(Gallery)
+	GALLERY_EMITTER = pyqtSignal(Gallery, object, object)
 	AUTO_METADATA_PROGRESS = pyqtSignal(str)
 	GALLERY_PICKER = pyqtSignal(object, list, queue.Queue)
 	GALLERY_PICKER_QUEUE = queue.Queue()
@@ -269,7 +269,7 @@ class Fetch(QObject):
 		assert isinstance(gallery, Gallery)
 		if gallery:
 			gallery.exed = 1
-			self.GALLERY_EMITTER.emit(gallery)
+			self.GALLERY_EMITTER.emit(gallery, None, False)
 			log_d('Success')
 
 	@staticmethod
@@ -416,10 +416,11 @@ class Fetch(QObject):
 				try:
 					if not gallery.hashes:
 						hash_dict = add_method_queue(HashDB.gen_gallery_hash, False, gallery, 0, 'mid')
-						hash = hash_dict['mid']
+						if hash_dict:
+							hash = hash_dict['mid']
 					else:
 						hash = gallery.hashes[random.randint(0, len(gallery.hashes)-1)]
-				except app_constants.app_constants.CreateArchiveFail:
+				except app_constants.CreateArchiveFail:
 					pass
 				if not hash:
 					self.error_galleries.append((gallery, "Could not generate hash"))
@@ -467,7 +468,7 @@ class Fetch(QObject):
 
 				if not gallery.link:
 					gallery.link = url
-					self.GALLERY_EMITTER.emit(gallery)
+					self.GALLERY_EMITTER.emit(gallery, None, None)
 				gallery.temp_url = url
 				self.AUTO_METADATA_PROGRESS.emit("({}/{}) Adding to queue: {}".format(
 					x, len(self.galleries), gallery.title))
@@ -504,7 +505,7 @@ class Fetch(QObject):
 
 					if not gallery.link:
 						gallery.link = url
-					self.GALLERY_EMITTER.emit(gallery)
+					self.GALLERY_EMITTER.emit(gallery, None, None)
 					gallery.temp_url = url
 					self.AUTO_METADATA_PROGRESS.emit("({}/{}) Adding to queue: {}".format(
 						x, len(self.multiple_hit_galleries), gallery.title))

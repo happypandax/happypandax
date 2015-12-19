@@ -315,16 +315,32 @@ class DBBase:
 	"The base DB class. _DB_CONN should be set at runtime on startup"
 	_DB_CONN = None
 	_LOCK = False
+	_AUTO_COMMIT = True
 
 	def __init__(self, **kwargs):
 		pass
+
+	@classmethod
+	def begin(cls):
+		"Useful when modifying for a large amount of data"
+		cls._AUTO_COMMIT = False
+		cls.execute(cls, "BEGIN TRANSACTION")
+
+	@classmethod
+	def end(cls):
+		"Called to commit and end transaction"
+		cls._AUTO_COMMIT = True
+		cls._DB_CONN.commit()
 
 	def execute(self, *args):
 		"Same as cursor.execute"
 		if not self._DB_CONN:
 			raise db_constants.NoDatabaseConnection
 		log_d('DB Query: {}'.format(args).encode(errors='ignore'))
-		with self._DB_CONN:
+		if self._AUTO_COMMIT:
+			with self._DB_CONN:
+				return self._DB_CONN.execute(*args)
+		else:
 			return self._DB_CONN.execute(*args)
 	
 	def executemany(self, *args):
@@ -332,9 +348,16 @@ class DBBase:
 		if not self._DB_CONN:
 			raise db_constants.NoDatabaseConnection
 		log_d('DB Query: {}'.format(args).encode(errors='ignore'))
-		with self._DB_CONN:
+		if self._AUTO_COMMIT:
+			with self._DB_CONN:
+				return self._DB_CONN.executemany(*args)
+		else:
 			return self._DB_CONN.executemany(*args)
 		self._LOCK = False
+
+	def commit(self):
+		self._DB_CONN.commit()
+
 if __name__ == '__main__':
 	raise RuntimeError("Unit tests not yet implemented")
 	# unit tests here!

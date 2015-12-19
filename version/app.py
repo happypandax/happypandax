@@ -93,7 +93,7 @@ class AppWindow(QMainWindow):
 		def update_gallery(g):
 			index = self.manga_list_view.find_index(g.id)
 			if index:
-				self.manga_list_view.replace_edit_gallery([g], index.row())
+				self.manga_list_view.replace_edit_gallery([g], pos=index.row())
 			else:
 				log_e('Could not find gallery to update from watcher')
 
@@ -332,6 +332,7 @@ class AppWindow(QMainWindow):
 
 		def done(status):
 			self.notification_bar.end_show()
+			gallerydb.add_method_queue(database.db.DBBase.end, True)
 			fetch_instance.deleteLater()
 			if not isinstance(status, bool):
 				galleries = []
@@ -361,6 +362,7 @@ class AppWindow(QMainWindow):
 				close_button = g_popup.add_buttons('Close')[0]
 				close_button.clicked.connect(g_popup.close)
 
+		database.db.DBBase.begin()
 		fetch_instance.GALLERY_PICKER.connect(self._web_metadata_picker)
 		fetch_instance.GALLERY_EMITTER.connect(self.manga_list_view.replace_edit_gallery)
 		fetch_instance.AUTO_METADATA_PROGRESS.connect(self.notification_bar.add_text)
