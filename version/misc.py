@@ -1219,50 +1219,71 @@ class ApplicationNotif(BasePopup):
 
 class ApplicationPopup(BasePopup):
 
-	def __init__(self, parent):
-		super().__init__(parent)
+	# modes
+	PROGRESS, MESSAGE = range(2)
+	closing_down = pyqtSignal()
+
+	def __init__(self, parent, mode=PROGRESS):
+		self.mode = mode
+		if mode == self.MESSAGE:
+			super().__init__(parent, flags=Qt.Dialog)
+		else:
+			super().__init__(parent)
 		self.parent_widget = parent
 		main_layout = QVBoxLayout()
-		self.info_lbl = QLabel("Updating your galleries to newest version...")
+
+		self.info_lbl = QLabel()
 		self.info_lbl.setAlignment(Qt.AlignCenter)
 		main_layout.addWidget(self.info_lbl)
+		if mode == self.PROGRESS:
+			self.info_lbl.setText("Updating your galleries to newest version...")
+			class progress(QProgressBar):
+				reached_maximum = pyqtSignal()
+				def __init__(self, parent=None):
+					super().__init__(parent)
 
-		class progress(QProgressBar):
-			reached_maximum = pyqtSignal()
-			def __init__(self, parent=None):
-				super().__init__(parent)
+				def setValue(self, v):
+					if v == self.maximum():
+						self.reached_maximum.emit()
+					return super().setValue(v)
 
-			def setValue(self, v):
-				if v == self.maximum():
-					self.reached_maximum.emit()
-				return super().setValue(v)
+			self.prog = progress(self)
 
-		self.prog = progress(self)
+			self.prog.reached_maximum.connect(self.close)
+			main_layout.addWidget(self.prog)
+			self.note_info = QLabel("Note: This popup will close itself when everything is ready")
+			self.note_info.setAlignment(Qt.AlignCenter)
+			self.restart_info = QLabel("Please wait.. It is safe to restart if there is no sign of progress.")
+			self.restart_info.setAlignment(Qt.AlignCenter)
+			main_layout.addWidget(self.note_info)
+			main_layout.addWidget(self.restart_info)
+		elif mode == self.MESSAGE:
+			self.info_lbl.setText("<font color='red'>An exception has ben encountered.\nContact the developer to get this fixed."+
+						 "\nStability from this point on won't be guaranteed.</font>")
+			self.setWindowTitle("It was too big!")
 
-		self.prog.reached_maximum.connect(self.close)
-		main_layout.addWidget(self.prog)
-		self.note_info = QLabel("Note: This popup will close itself when everything is ready")
-		self.note_info.setAlignment(Qt.AlignCenter)
-		self.restart_info = QLabel("Please wait.. It is safe to restart if there is no sign of progress.")
-		self.restart_info.setAlignment(Qt.AlignCenter)
-		main_layout.addWidget(self.note_info)
-		main_layout.addWidget(self.restart_info)
 		self.main_widget.setLayout(main_layout)
+		self.adjustSize()
 
 	def closeEvent(self, event):
 		self.parent_widget.setEnabled(True)
-		return super().closeEvent(event)
+		if self.mode == self.MESSAGE:
+			self.closing_down.emit()
+			return super().closeEvent(event)
+		else:
+			return super().closeEvent(event)
 
 	def showEvent(self, event):
 		self.parent_widget.setEnabled(False)
 		return super().showEvent(event)
 
 	def init_restart(self):
-		self.prog.hide()
-		self.note_info.hide()
-		self.restart_info.hide()
-		log_i('Application requires restart')
-		self.note_info.setText("Application requires restart!")
+		if self.mode == self.PROGRESS:
+			self.prog.hide()
+			self.note_info.hide()
+			self.restart_info.hide()
+			log_i('Application requires restart')
+			self.note_info.setText("Application requires restart!")
 
 
 class NotificationOverlay(QWidget):

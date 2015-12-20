@@ -12,7 +12,7 @@
 #along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 #"""
 
-import sys, logging, os, threading, re, requests, scandir, random
+import sys, logging, os, threading, re, requests, scandir, random, traceback
 from PyQt5.QtCore import (Qt, QSize, pyqtSignal, QThread, QEvent, QTimer,
 						  QObject, QPoint, QPropertyAnimation)
 from PyQt5.QtGui import (QPixmap, QIcon, QMoveEvent, QCursor,
@@ -54,7 +54,7 @@ class AppWindow(QMainWindow):
 	move_listener = pyqtSignal()
 	db_activity_checker = pyqtSignal()
 	graphics_blur = QGraphicsBlurEffect()
-	def __init__(self):
+	def __init__(self, disable_excepthook=False):
 		super().__init__()
 		app_constants.GENERAL_THREAD = QThread(self)
 		app_constants.GENERAL_THREAD.finished.connect(app_constants.GENERAL_THREAD.deleteLater)
@@ -66,6 +66,10 @@ class AppWindow(QMainWindow):
 		self.setFocusPolicy(Qt.NoFocus)
 		self.set_shortcuts()
 		self.graphics_blur.setParent(self)
+
+		if not disable_excepthook:
+			sys.excepthook = self.excepthook
+
 		#ex = settings.ExProperties()
 		#d = pewnet.ExHenManager(ex.ipb_id, ex.ipb_pass)
 		#item = d.from_gallery_url('http://exhentai.org/g/861957/02741dc584/')
@@ -688,6 +692,9 @@ class AppWindow(QMainWindow):
 	# so user can edit data before inserting (make it a choice)
 	def populate(self, mixed=None):
 		"Populates the database with gallery from local drive'"
+
+		hmmm = []
+		hmmm.append(lol)
 		if mixed:
 			gallery_view = misc.GalleryListView(self, True)
 			gallery_view.SERIES.connect(self.gallery_populate)
@@ -753,12 +760,14 @@ class AppWindow(QMainWindow):
 									self.galleries = []
 
 								def add_to_db(self):
+									database.db.DBBase.begin()
 									for y, x in enumerate(self.obj):
 										gallerydb.add_method_queue(
 											gallerydb.GalleryDB.add_gallery_return, False, x)
 										self.galleries.append(x)
 										y += 1
 										self.prog.emit(y)
+									gallerydb.add_method_queue(database.db.DBBase.end, True)
 									append_to_model(self.galleries)
 									self.done.emit()
 							loading.progress.setMaximum(len(gallery_list))
@@ -1110,6 +1119,13 @@ class AppWindow(QMainWindow):
 				return 2
 		else:
 			return 0
+
+	def excepthook(self, ex_type, ex, tb):
+		w = misc.ApplicationPopup(self, misc.ApplicationPopup.MESSAGE)
+		w.show()
+		log_c(''.join(traceback.format_tb(tb)))
+		log_c('{}: {}'.format(ex_type, ex))
+		traceback.print_exception(ex_type, ex, tb)
 
 	def closeEvent(self, event):
 		r_code = self.cleanup_exit()

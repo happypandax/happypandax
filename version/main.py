@@ -163,7 +163,7 @@ def start(test=False):
 		#		except IndexError:
 		#			done = True
 
-		WINDOW = app.AppWindow()
+		WINDOW = app.AppWindow(args.exceptions)
 
 		# styling
 		d_style = app_constants.default_stylesheet_path
