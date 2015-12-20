@@ -11,7 +11,7 @@
 #You should have received a copy of the GNU General Public License
 #along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 #"""
-import json, configparser, os, logging
+import json, configparser, os, logging, pickle
 
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -22,8 +22,10 @@ log_c = log.critical
 
 if os.name == 'posix':
 	settings_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'settings.ini')
+	phappypanda_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '.happypanda')
 else:
 	settings_path = 'settings.ini'
+	phappypanda_path = '.happypanda'
 
 if not os.path.isfile(settings_path):
 	open(settings_path, 'x')
@@ -53,8 +55,10 @@ class Config(configparser.ConfigParser):
 
 config = Config()
 config.read(settings_path)
+
 def save():
 	config.save()
+	ExProperties.save()
 
 def get(default, section, key=None, type_class=str, subtype_class=None):
 	"""
@@ -125,38 +129,64 @@ class Properties:
 	pass
 
 class ExProperties(Properties):
-	def __init__(self):
-		if not 'ExHentai' in config:
-			config['ExHentai'] = {}
-		self.exconfig = config['ExHentai']
-		try:
-			self._ipb_id = self.exconfig['ipb id']
-			self._ipb_pass = self.exconfig['ipb pass']
-		except KeyError:
-			self._ipb_id = ''
-			self._ipb_pass = ''
+	# sites
+	EHENTAI = 0
+	sites = (EHENTAI,)
+
+	_INFO = {}
+	def __init__(self, site=EHENTAI):
+		self.site = site
+		if not self._INFO:
+			if os.path.exists(phappypanda_path):
+				with open(phappypanda_path, 'rb') as f:
+					self._INFO = pickle.load(f)
+
+	@classmethod
+	def save(self):
+		if self._INFO:
+			with open(phappypanda_path, 'wb') as f:
+				pickle.dump(self._INFO, f, 4)
 
 	@property
-	def ipb_id(self):
-		return self._ipb_id
+	def cookies(self):
+		if self._INFO:
+			return self._INFO[self.site]['cookies']
+		return {}
 
-	@ipb_id.setter
-	def ipb_id(self, x):
-		self._ipb_id = x
-		self.exconfig['ipb id'] = x
+	@cookies.setter
+	def cookies(self, c):
+		if not self.site in self._INFO:
+			self._INFO[self.site] = {}
+		self._INFO[self.site]['cookies'] = c
 
 	@property
-	def ipb_pass(self):
-		return self._ipb_pass
+	def username(self):
+		if self._INFO:
+			return self._INFO[self.site]['username']
 
-	@ipb_pass.setter
-	def ipb_pass(self, x):
-		self._ipb_pass = x
-		self.exconfig['ipb pass'] = x
+	@username.setter
+	def username(self, us):
+		if not self.site in self._INFO:
+			self._INFO[self.site] = {}
+		self._INFO[self.site]['username'] = us
+
+	@property
+	def password(self):
+		if self._INFO:
+			return self._INFO[self.site]['password']
+
+	@password.setter
+	def password(self, ps):
+		if not self.site in self._INFO:
+			self._INFO[self.site] = {}
+		self._INFO[self.site]['password'] = ps
 
 	def check(self):
 		"Returns true if usable"
-		if self.ipb_id and self.ipb_pass:
+		if self.site == self.EHENTAI:
+			if "ipb_member_id" in self.cookies and "ipb_pass_hash" in self.cookies:
+				return True
+		else:
 			return True
 		return False
 

@@ -16,6 +16,7 @@ import misc_db
 import gallerydb
 import utils
 import io_misc
+import pewnet
 
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -119,9 +120,6 @@ class SettingsDialog(QWidget):
 			curr_index(self.about_index)
 
 	def restore_values(self):
-		#Web
-		self.exprops = settings.ExProperties()
-
 		# Visual
 		self.high_quality_thumbs = app_constants.HIGH_QUALITY_THUMBS
 		self.popup_width = app_constants.POPUP_WIDTH
@@ -181,10 +179,6 @@ class SettingsDialog(QWidget):
 
 		self.download_directory.setText(app_constants.DOWNLOAD_DIRECTORY)
 		self.torrent_client.setText(app_constants.TORRENT_CLIENT)
-
-		# Web / Exhentai
-		self.ipbid_edit.setText(self.exprops.ipb_id)
-		self.ipbpass_edit.setText(self.exprops.ipb_pass)
 
 		# Visual / Grid View / Tooltip
 		self.grid_tooltip_group.setChecked(app_constants.GRID_TOOLTIP)
@@ -343,10 +337,6 @@ class SettingsDialog(QWidget):
 		app_constants.USE_GALLERY_LINK = self.use_gallery_link.isChecked()
 		set(app_constants.USE_GALLERY_LINK, 'Web', 'use gallery link')
 
-		# Web / ExHentai
-		self.exprops.ipb_id = self.ipbid_edit.text()
-		self.exprops.ipb_pass = self.ipbpass_edit.text()
-
 		# Visual / Grid View / Tooltip
 		app_constants.GRID_TOOLTIP = self.grid_tooltip_group.isChecked()
 		set(app_constants.GRID_TOOLTIP, 'Visual', 'grid tooltip')
@@ -435,18 +425,18 @@ class SettingsDialog(QWidget):
 		#	title_lbl.setFont(f)
 		#	return title_lbl
 
-		def groupbox(name, layout, parent, add_in_layout=None):
+		def groupbox(name, layout, parent, add_groupbox_in_layout=None):
 			"""
 			Makes a groupbox and a layout for you
 			Returns groupbox and layout
 			"""
 			g = QGroupBox(name, parent)
 			l = layout(g)
-			if add_in_layout:
-				if isinstance(add_in_layout, QFormLayout):
-					add_in_layout.addRow(g)
+			if add_groupbox_in_layout:
+				if isinstance(add_groupbox_in_layout, QFormLayout):
+					add_groupbox_in_layout.addRow(g)
 				else:
-					add_in_layout.addWidget(g)
+					add_groupbox_in_layout.addWidget(g)
 			return g, l
 
 		def option_lbl_checkbox(text, optiontext, parent=None):
@@ -630,9 +620,47 @@ class SettingsDialog(QWidget):
 		web = QTabWidget(self)
 		self.web_index = self.right_panel.addWidget(web)
 
+		# Web / Logins
+		logins_page, logins_layout = new_tab("Logins", web, True)
+
+		def login(userlineedit, passlineedit, statuslbl, baseHen_class):
+			statuslbl.setText("Logging in...")
+			statuslbl.show()
+			try:
+				if baseHen_class.login(userlineedit.text(), passlineedit.text()):
+					statuslbl.setText("<font color='green'>Logged in!</font>")
+				else:
+					statuslbl.setText("<font color='red'>Logging in failed!</font>")
+			except app_constants.WrongLogin:
+				statuslbl.setText("<font color='red'>Wrong login information!</font>")
+		
+		def make_login_forms(layout, cookies, baseHen_class):
+			status = QLabel(logins_page)
+			status.setText("<font color='red'>Not logged in!</font>")
+			layout.addRow(status)
+			user = QLineEdit(logins_page)
+			layout.addRow("Username:", user)
+			passw = QLineEdit(logins_page)
+			layout.addRow("Password:", passw)
+			passw.setEchoMode(QLineEdit.Password)
+			log_btn = QPushButton("Login")
+			b_l = QHBoxLayout()
+			layout.addRow(b_l)
+			b_l.addWidget(Spacer('h'))
+			b_l.addWidget(log_btn)
+			log_btn.clicked.connect(lambda: login(user, passw, status, baseHen_class))
+			if baseHen_class.check_login(cookies):
+				status.setText("<font color='green'>Logged in!</font>")
+			return user, passw, status
+
+		# ehentai
+		ehentai_group, ehentai_l = groupbox("E-Hentai", QFormLayout, logins_page)
+		logins_layout.addRow(ehentai_group)
+		ehentai_user, ehentai_pass, ehentai_status = make_login_forms(ehentai_l, settings.ExProperties().cookies, pewnet.CommenHen)
+
 		# Web / Downloader
 		web_downloader, web_downloader_l = new_tab('Downloader', web)
-		hen_download_group, hen_download_group_l = groupbox('g.e-hentai/exhentai',
+		hen_download_group, hen_download_group_l = groupbox('E-Hentai',
 													  QFormLayout, web_downloader)
 		web_downloader_l.addRow(hen_download_group)
 		self.archive_download = QRadioButton('Archive', hen_download_group)
@@ -698,19 +726,6 @@ class SettingsDialog(QWidget):
 		self.use_gallery_link.setToolTip("Metadata will be fetched from the current gallery link"+
 								   " if it's a valid ex/g.e gallery url")
 		web_metadata_m_l.addRow(self.use_gallery_link)
-
-		# Web / Exhentai
-		exhentai_page = QWidget(self)
-		web.addTab(exhentai_page, 'ExHentai')
-		ipb_layout = QFormLayout()
-		exhentai_page.setLayout(ipb_layout)
-		self.ipbid_edit = QLineEdit()
-		self.ipbpass_edit = QLineEdit()
-		exh_tutorial = QLabel(app_constants.EXHEN_COOKIE_TUTORIAL)
-		exh_tutorial.setTextFormat(Qt.RichText)
-		ipb_layout.addRow('IPB Member ID:', self.ipbid_edit)
-		ipb_layout.addRow('IPB Pass Hash:', self.ipbpass_edit)
-		ipb_layout.addRow(exh_tutorial)
 
 		# Visual
 		visual = QTabWidget(self)

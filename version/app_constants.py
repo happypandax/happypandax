@@ -204,6 +204,9 @@ class ChapterExists(Exception): pass
 class ChapterWrongParentGallery(Exception): pass
 class CreateArchiveFail(Exception): pass
 class FileNotFoundInArchive(Exception): pass
+class WrongURL(Exception): pass
+class NeedLogin(Exception): pass
+class WrongLogin(Exception): pass
 
 EXHEN_COOKIE_TUTORIAL =\
 	"""

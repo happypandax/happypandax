@@ -26,7 +26,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QListView,
 							 QListWidget, QListWidgetItem, QToolTip,
 							 QProgressBar, QToolButton, QSystemTrayIcon,
 							 QShortcut, QGraphicsBlurEffect, QTableWidget,
-							 QTableWidgetItem)
+							 QTableWidgetItem, QStyle)
 
 import app_constants
 import misc
@@ -235,6 +235,13 @@ class AppWindow(QMainWindow):
 			self.resize(x, y)
 		else:
 			self.resize(app_constants.MAIN_W, app_constants.MAIN_H)
+		self.setGeometry(
+			QStyle.alignedRect(
+				Qt.LeftToRight,
+				Qt.AlignCenter,
+				self.size(),
+				QApplication.desktop().availableGeometry()
+			))
 		self.init_spinners()
 		self.show()
 		log_d('Show window: OK')

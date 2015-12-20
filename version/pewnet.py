@@ -23,6 +23,7 @@ from PyQt5.QtCore import QObject, pyqtSignal
 
 import app_constants
 import utils
+import settings
 
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -30,8 +31,6 @@ log_d = log.debug
 log_w = log.warning
 log_e = log.error
 log_c = log.critical
-
-class WrongURL(Exception): pass
 
 class DownloaderItem(QObject):
 	"Convenience class"
@@ -374,6 +373,17 @@ class HenManager(DLManager):
 		super().__init__()
 		self.e_url = 'http://g.e-hentai.org/'
 
+		exprops = settings.ExProperties()
+		cookies = exprops.cookies
+		if not cookies:
+			if exprops.username and exprops.password:
+				cookies = CommenHen.login(exprops.username, exprops.password)
+			else:
+				raise app_constants.NeedLogin
+
+		self._browser.session.cookies.update(cookies)
+
+
 	def _archive_url_d(self, gid, token, key):
 		"Returns the archiver download url"
 		base = self.e_url + 'archiver.php?'
@@ -418,8 +428,7 @@ class HenManager(DLManager):
 		"""
 		if 'ipb_member_id' in self._browser.session.cookies and \
 			'ipb_pass_hash' in self._browser.session.cookies:
-			hen = ExHen(self._browser.session.cookies['ipb_member_id'],
-			   self._browser.session.cookies['ipb_pass_hash'])
+			hen = ExHen(self._browser.session.cookies)
 		else:
 			hen = EHen()
 		log_d("Using {}".format(hen.__repr__()))
@@ -432,7 +441,7 @@ class HenManager(DLManager):
 		try:
 			h_item.metadata = h_item.metadata[g_url]
 		except KeyError:
-			raise WrongURL
+			raise app_constants.WrongURL
 		h_item.thumb_url = gallery['thumb']
 		h_item.gallery_name = gallery['title']
 		h_item.size = "{0:.2f} MB".format(gallery['filesize']/1048576)
@@ -450,15 +459,22 @@ class HenManager(DLManager):
 				f_div = self._browser.find('div', id='db')
 				divs = f_div.find_all('div')
 				h_item.cost = divs[0].find('strong').text
+				h_item.cost = divs[0].find('strong').text
 				h_item.size = divs[1].find('strong').text
 				self._browser.submit_form(download_btn)
 				log_d("Submitted download button!")
+
+			if self._browser.response.status_code == 302:
+				self._browser.open(self._browser.response.headers['location'], "post")
+
 			# get dl link
 			log_d("Getting download URL!")
-			with open("exHtmlRandomFileName123.html", 'w') as f:
-				f.write(self._browser.parsed.prettify())
-			dl_a = self._browser.find('a')
-			dl = dl_a.get('href')
+			continue_p = self._browser.find("p", id="continue")
+			if continue_p:
+				dl = continue_p.a.get('href')
+			else:
+				dl_a = self._browser.find('a')
+				dl = dl_a.get('href')
 			self._browser.open(dl)
 			succes_test = self._browser.find('p')
 			if succes_test and 'successfully' in succes_test.text:
@@ -489,11 +505,8 @@ class HenManager(DLManager):
 
 class ExHenManager(HenManager):
 	"ExHentai Manager"
-	def __init__(self, ipb_id, ipb_pass):
+	def __init__(self):
 		super().__init__()
-		cookies = {'ipb_member_id':ipb_id,
-				  'ipb_pass_hash':ipb_pass}
-		self._browser.session.cookies.update(cookies)
 		self.e_url = "http://exhentai.org/"
 
 
@@ -567,8 +580,57 @@ class CommenHen:
 		self.QUEUE.clear()
 		return api_data, galleryid_dict
 
+	@staticmethod
+	def login(user, password):
+		"""
+		Logs into g.e-h
+		"""
+		eh_c = {}
+		exprops = settings.ExProperties()
+		if CommenHen.COOKIES:
+			if CommenHen.check_login(CommenHen.COOKIES):
+				return CommenHen.COOKIES
+		elif exprops.cookies:
+			if CommenHen.check_login(exprops.cookies):
+				CommenHen.COOKIES.update(exprops.cookies)
+				return CommenHen.COOKIES
+
+		p = {
+			'CookieDate': '1',
+			'b':'d', 
+			'bt':'1-1',
+			'UserName':user,
+			'PassWord':password
+			}
+
+		eh_c = requests.post('https://forums.e-hentai.org/index.php?act=Login&CODE=01', data=p).cookies.get_dict()
+		exh_c = requests.get('http://exhentai.org', cookies=eh_c).cookies.get_dict()
+
+		eh_c.update(exh_c)
+
+		if not CommenHen.check_login(eh_c):
+			raise app_constants.WrongLogin
+
+		exprops.cookies = eh_c
+		exprops.username = user
+		exprops.password = password
+		exprops.save()
+		CommenHen.COOKIES.update(eh_c)
+
+		return eh_c
+
+	@staticmethod
+	def check_login(cookies):
+		"""
+		Checks if user is logged in
+		"""
+
+		if 'ipb_member_id' in cookies:
+			return True
+		else:
+			return False
+
 	def check_cookie(self, cookie):
-		assert isinstance(cookie, dict)
 		cookies = self.COOKIES.keys()
 		present = []
 		for c in cookie:
@@ -578,7 +640,10 @@ class CommenHen:
 				present.append(False)
 		if not all(present):
 			log_i("Updating cookies...")
-			self.COOKIES.update(cookie)
+			try:
+				self.COOKIES.update(cookie)
+			except requests.cookies.CookieConflictError:
+				pass
 
 	def handle_error(self, response):
 		content_type = response.headers['content-type']
@@ -839,9 +904,8 @@ class CommenHen:
 
 class ExHen(CommenHen):
 	"Fetches gallery metadata from exhen"
-	def __init__(self, cookie_member_id, cookie_pass_hash):
-		self.cookies = {'ipb_member_id':cookie_member_id,
-				  'ipb_pass_hash':cookie_pass_hash}
+	def __init__(self, cookies):
+		self.cookies = cookies
 		self.e_url = "http://exhentai.org/api.php"
 
 	def get_metadata(self, list_of_urls):

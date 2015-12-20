@@ -390,8 +390,8 @@ class Fetch(QObject):
 			if 'exhentai' in self._default_ehen_url:
 				try:
 					exprops = settings.ExProperties()
-					if exprops.ipb_id and exprops.ipb_pass:
-						hen = pewnet.ExHen(exprops.ipb_id, exprops.ipb_pass)
+					if exprops.check():
+						hen = pewnet.ExHen(exprops.cookies)
 						valid_url = 'exhen'
 						log_i("Using ExHentai")
 					else:
@@ -509,7 +509,7 @@ class Fetch(QObject):
 			app_constants.GLOBAL_EHEN_LOCK = False
 			if not self.error_galleries:
 				self.AUTO_METADATA_PROGRESS.emit('Done! Went through {} galleries successfully!'.format(len(self.galleries)))
-				app_constants.SYSTEM_TRAY.showMessage('Done', 'Went through {} galleries successfully!', minimized=True)
+				app_constants.SYSTEM_TRAY.showMessage('Done', 'Went through {} galleries successfully!'.format(len(self.galleries)), minimized=True)
 				self.FINISHED.emit(True)
 			else:
 				self.AUTO_METADATA_PROGRESS.emit('Done! Could not fetch metadata for {} galleries. Check happypanda.log for more details!'.format(len(self.error_galleries)))

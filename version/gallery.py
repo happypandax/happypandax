@@ -494,10 +494,7 @@ class GalleryModel(QAbstractTableModel):
 		if data_count:
 			self._data_count += len(list_of_gallery)
 		self.beginInsertRows(QModelIndex(), position, position + rows - 1)
-		for pos, gallery in enumerate(list_of_gallery, 1):
-			if not os.path.exists(gallery.path):
-				gallery.dead_link = True
-			self._data.append(gallery)
+		self._data.extend(list_of_gallery)
 		self.endInsertRows()
 		gallerydb.add_method_queue(self.db_emitter.update_count, True)
 		if emit_statusbar:

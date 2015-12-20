@@ -425,6 +425,8 @@ class GalleryDB(DBBase):
 			gallery = Gallery()
 			gallery.id = gallery_row['series_id']
 			gallery = gallery_map(gallery_row, gallery, chapters, tags, hashes)
+			if not os.path.exists(gallery.path):
+				gallery.dead_link = True
 			gallery_list.append(gallery)
 
 		return gallery_list

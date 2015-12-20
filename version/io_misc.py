@@ -1,4 +1,4 @@
-﻿import logging, os, json, datetime, random
+﻿import logging, os, json, datetime, random, re
 
 from watchdog.events import FileSystemEventHandler, DirDeletedEvent
 from watchdog.observers import Observer
@@ -284,31 +284,56 @@ class GalleryDownloader(QWidget):
 		h_item = None
 		try:
 			if not url:
-				url = self.url_inserter.text().lower()
+				url = self.url_inserter.text()
 				if not url:
 					return
 				self.url_inserter.clear()
-			if 'g.e-hentai.org' in url:
-				manager = pewnet.HenManager()
-			elif 'exhentai.org' in url:
-				exprops = settings.ExProperties()
-				if exprops.check():
-					manager = pewnet.ExHenManager(exprops.ipb_id, exprops.ipb_pass)
-				else:
-					return
-			elif 'panda.chaika.moe' in url and ('/archive/' in url or '/gallery/' in url):
-				manager = pewnet.ChaikaManager()
-			else:
-				raise pewnet.WrongURL
-
+			url = url.lower()
+			
+			manager = self.website_validator(url)
 			h_item = manager.from_gallery_url(url)
-		except pewnet.WrongURL:
+		except app_constants.WrongURL:
 			self.info_lbl.setText("<font color='red'>Failed to add to add:\n{}</font>".format(url))
+			self.info_lbl.show()
+			return
+		except app_constants.NeedLogin:
+			self.info_lbl.setText("<font color='red'>Login is required to download:\n{}</font>".format(url))
+			self.info_lbl.show()
+			return
+		except app_constants.WrongLogin:
+			self.info_lbl.setText("<font color='red'Wrong login info to download:\n{}</font>".format(url))
 			self.info_lbl.show()
 			return
 		if h_item:
 			log_i('Successfully added download entry')
 			self.download_list.add_entry(h_item)
+
+	def website_validator(self, url):
+		match_prefix = "^(http\:\/\/|https\:\/\/)?(www\.)?([^\.]?)" # http:// or https:// + www.
+		match_base = "(.*\.)+" # base. Replace with domain
+		match_tld = "[a-zA-Z0-9][a-zA-Z0-9\-]*" # com
+
+		# ATTENTION: the prefix will automatically get prepended to the pattern string! Don't try to match it.
+
+		def regex_validate(r):
+			if re.match(match_prefix+r, url):
+				return True
+			return False
+
+		if regex_validate("([^\.]?)((g\.e-hentai)\.org\/g\/[0-9]+\/[a-z0-9]+)"):
+			manager = pewnet.HenManager()
+		elif regex_validate("([^\.]?)((exhentai)\.org\/g\/[0-9]+\/[a-z0-9]+)"):
+			exprops = settings.ExProperties()
+			if exprops.check():
+				manager = pewnet.ExHenManager()
+			else:
+				return
+		elif regex_validate("(panda\.chaika\.moe\/(archive|gallery)\/[0-9]+)"):
+			manager = pewnet.ChaikaManager()
+		else:
+			raise app_constants.WrongURL
+
+		return manager
 
 	def show(self):
 		if self.isVisible():
