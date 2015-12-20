@@ -449,22 +449,13 @@ class Fetch(QObject):
 					log_w('Could not find url for gallery: {}'.format(gallery.title.encode(errors='ignore')))
 					continue
 				title_url_list = found_url[gallery.hash]
-				if app_constants.ALWAYS_CHOOSE_FIRST_HIT:
+
+				if not len(title_url_list) > 1 or app_constants.ALWAYS_CHOOSE_FIRST_HIT:
 					title = title_url_list[0][0]
 					url = title_url_list[0][1]
 				else:
-					if len(title_url_list) > 1:
-						self.multiple_hit_galleries.append([gallery, title_url_list])
-						continue
-					else:
-						continue
-						user_choice = title_url_list[0]
-
-					if not user_choice:
-						continue
-
-					title = user_choice[0]
-					url = user_choice[1]
+					self.multiple_hit_galleries.append([gallery, title_url_list])
+					continue
 
 				if not gallery.link:
 					gallery.link = url
@@ -487,7 +478,7 @@ class Fetch(QObject):
 						self.fetch_metadata(gallery, hen)
 
 			if self.multiple_hit_galleries:
-				for x, g_data in enumerate(self.multiple_hit_galleries):
+				for x, g_data in enumerate(self.multiple_hit_galleries, 1):
 					gallery = g_data[0]
 					title_url_list = g_data[1]
 					self.AUTO_METADATA_PROGRESS.emit("Multiple galleries found for gallery: {}".format(gallery.title))
@@ -505,7 +496,7 @@ class Fetch(QObject):
 
 					if not gallery.link:
 						gallery.link = url
-					self.GALLERY_EMITTER.emit(gallery, None, None)
+						self.GALLERY_EMITTER.emit(gallery, None, None)
 					gallery.temp_url = url
 					self.AUTO_METADATA_PROGRESS.emit("({}/{}) Adding to queue: {}".format(
 						x, len(self.multiple_hit_galleries), gallery.title))

@@ -1245,8 +1245,8 @@ class MangaView(QListView):
 							 True, gallery.id, **kwdict)
 		if db_optimize:
 			gallerydb.add_method_queue(gallerydb.GalleryDB.end, True)
-		#assert isinstance(pos, int)
-		#self.gallery_model.replaceRows([gallery], pos, len(list_of_gallery))
+		assert isinstance(pos, int)
+		self.gallery_model.replaceRows([gallery], pos, len(list_of_gallery))
 
 	def spawn_dialog(self, index=False):
 		if not index:
