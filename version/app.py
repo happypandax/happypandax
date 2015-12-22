@@ -70,17 +70,12 @@ class AppWindow(QMainWindow):
 		if not disable_excepthook:
 			sys.excepthook = self.excepthook
 
-		#ex = settings.ExProperties()
-		#d = pewnet.ExHenManager(ex.ipb_id, ex.ipb_pass)
-		#item = d.from_gallery_url('http://exhentai.org/g/861957/02741dc584/')
-		#def a(): print(item.file)
-		#if not item.file:
-		#	item.file_rdy.connect(a)
-		#else:
-		#	a()
-
 	def set_shortcuts(self):
 		quit = QShortcut(QKeySequence('Ctrl+Q'), self, self.close)
+		search_focus = QShortcut(QKeySequence('Ctrl+F'), self, lambda:self.search_bar.setFocus(Qt.ShortcutFocusReason))
+		new_gallery = QShortcut(QKeySequence('Ctrl+N'), self, self.manga_list_view.SERIES_DIALOG.emit)
+		new_galleries = QShortcut(QKeySequence('Ctrl+Shift+N'), self, lambda: self.populate(True))
+		new_populate = QShortcut(QKeySequence('Ctrl+Alt+N'), self, self.populate)
 
 	def init_watchers(self):
 
@@ -700,8 +695,6 @@ class AppWindow(QMainWindow):
 	def populate(self, mixed=None):
 		"Populates the database with gallery from local drive'"
 
-		hmmm = []
-		hmmm.append(lol)
 		if mixed:
 			gallery_view = misc.GalleryListView(self, True)
 			gallery_view.SERIES.connect(self.gallery_populate)

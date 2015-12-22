@@ -320,9 +320,9 @@ class GalleryDownloader(QWidget):
 				return True
 			return False
 
-		if regex_validate("([^\.]?)((g\.e-hentai)\.org\/g\/[0-9]+\/[a-z0-9]+)"):
+		if regex_validate("((g\.e-hentai)\.org\/g\/[0-9]+\/[a-z0-9]+)"):
 			manager = pewnet.HenManager()
-		elif regex_validate("([^\.]?)((exhentai)\.org\/g\/[0-9]+\/[a-z0-9]+)"):
+		elif regex_validate("((exhentai)\.org\/g\/[0-9]+\/[a-z0-9]+)"):
 			exprops = settings.ExProperties()
 			if exprops.check():
 				manager = pewnet.ExHenManager()

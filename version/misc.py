@@ -211,6 +211,7 @@ class ToolbarButton(QPushButton):
 		#painter.setPen(Qt.NoPen)
 		painter.setRenderHint(painter.Antialiasing)
 		ch_width = self._font_metrics.averageCharWidth()/2
+		ch_height = self._font_metrics.height()
 		but_rect = QRectF(ch_width, ch_width, self.width()-ch_width*2, self.height()-ch_width*2)
 		select_rect = QRectF(0,0, self.width(), self.height())
 
@@ -218,7 +219,8 @@ class ToolbarButton(QPushButton):
 		txt_to_draw = self._font_metrics.elidedText(self._text,
 											  Qt.ElideRight, but_rect.width())
 
-		text_rect = QRectF(but_rect.x()+ch_width*2, but_rect.y(), but_rect.width(),
+		but_center = (but_rect.height() - ch_height)/2
+		text_rect = QRectF(but_rect.x()+ch_width*2, but_rect.y()+but_center, but_rect.width(),
 					 but_rect.height())
 		painter.setPen(QColor('white'))
 		painter.drawText(text_rect, txt_to_draw)
@@ -1107,6 +1109,8 @@ class BasePopup(TransparentWidget):
 			super().__init__(parent, flags= Qt.Dialog | Qt.FramelessWindowHint)
 		main_layout = QVBoxLayout()
 		self.main_widget = QFrame()
+		self.main_widget.setFrameStyle(QFrame.StyledPanel)
+		self.main_widget.setFrameShape(QFrame.StyledPanel)
 		self.setLayout(main_layout)
 		main_layout.addWidget(self.main_widget)
 		self.generic_buttons = QHBoxLayout()
