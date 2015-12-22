@@ -72,10 +72,10 @@ class AppWindow(QMainWindow):
 
 	def set_shortcuts(self):
 		quit = QShortcut(QKeySequence('Ctrl+Q'), self, self.close)
-		search_focus = QShortcut(QKeySequence('Ctrl+F'), self, lambda:self.search_bar.setFocus(Qt.ShortcutFocusReason))
-		new_gallery = QShortcut(QKeySequence('Ctrl+N'), self, self.manga_list_view.SERIES_DIALOG.emit)
-		new_galleries = QShortcut(QKeySequence('Ctrl+Shift+N'), self, lambda: self.populate(True))
-		new_populate = QShortcut(QKeySequence('Ctrl+Alt+N'), self, self.populate)
+		search_focus = QShortcut(QKeySequence(QKeySequence.Find), self, lambda:self.search_bar.setFocus(Qt.ShortcutFocusReason))
+		prev_view = QShortcut(QKeySequence(QKeySequence.PreviousChild), self, self.switch_display)
+		next_view = QShortcut(QKeySequence(QKeySequence.NextChild), self, self.switch_display)
+		help = QShortcut(QKeySequence(QKeySequence.HelpContents), self, lambda:utils.open_web_link("https://github.com/Pewpews/happypanda/wiki"))
 
 	def init_watchers(self):
 
@@ -464,7 +464,6 @@ class AppWindow(QMainWindow):
 		if self.search_bar.cursorPosition() != old_cursor_pos+1:
 			self.search_bar.setCursorPosition(old_cursor_pos)
 
-
 	def favourite_display(self):
 		"Switches to favourite display"
 		self.manga_table_view.sort_model.fav_view()
@@ -476,6 +475,14 @@ class AppWindow(QMainWindow):
 		self.manga_table_view.sort_model.catalog_view()
 		self.library_btn.selected = True
 		self.favourite_btn.selected = False
+
+	def switch_display(self):
+		"Switches between fav and catalog display"
+		if self.manga_table_view.sort_model.current_view == \
+			self.manga_table_view.sort_model.CAT_VIEW:
+			self.favourite_display()
+		else:
+			self.catalog_display()
 
 	def settings(self):
 		sett = settingsdialog.SettingsDialog(self)
@@ -509,8 +516,17 @@ class AppWindow(QMainWindow):
 
 		self.toolbar.addSeparator()
 
+		gallery_k = QKeySequence('Alt+G')
+		new_gallery_k = QKeySequence('Ctrl+N')
+		new_galleries_k = QKeySequence('Ctrl+Shift+N')
+		new_populate_k = QKeySequence('Ctrl+Alt+N')
+		scan_galleries_k = QKeySequence('Ctrl+Alt+S')
+		open_random_k = QKeySequence(QKeySequence.Open)
+		get_all_metadata_k = QKeySequence('Ctrl+Alt+M')
+
 		gallery_menu = QMenu()
 		gallery_action = QToolButton()
+		gallery_action.setShortcut(gallery_k)
 		gallery_action.setText('Gallery ')
 		gallery_action.setPopupMode(QToolButton.InstantPopup)
 		gallery_action.setToolTip('Contains various gallery related features')
@@ -519,30 +535,37 @@ class AppWindow(QMainWindow):
 		gallery_action_add = QAction(add_gallery_icon, "Add single gallery...", self)
 		gallery_action_add.triggered.connect(self.manga_list_view.SERIES_DIALOG.emit)
 		gallery_action_add.setToolTip('Add a single gallery thoroughly')
+		gallery_action_add.setShortcut(new_gallery_k)
 		gallery_menu.addAction(gallery_action_add)
 		add_more_action = QAction(add_gallery_icon, "Add galleries...", self)
 		add_more_action.setStatusTip('Add galleries from different folders')
+		add_more_action.setShortcut(new_galleries_k)
 		add_more_action.triggered.connect(lambda: self.populate(True))
 		gallery_menu.addAction(add_more_action)
 		populate_action = QAction(add_gallery_icon, "Populate from directory/archive...", self)
 		populate_action.setStatusTip('Populates the DB with galleries from a single folder or archive')
 		populate_action.triggered.connect(self.populate)
+		populate_action.setShortcut(new_populate_k)
 		gallery_menu.addAction(populate_action)
 		gallery_menu.addSeparator()
 		metadata_action = QAction('Get metadata for all galleries', self)
 		metadata_action.triggered.connect(self.get_metadata)
+		metadata_action.setShortcut(get_all_metadata_k)
 		gallery_menu.addAction(metadata_action)
 		scan_galleries_action = QAction('Scan for new galleries', self)
 		scan_galleries_action.triggered.connect(self.scan_for_new_galleries)
 		scan_galleries_action.setStatusTip('Scan monitored folders for new galleries')
+		scan_galleries_action.setShortcut(scan_galleries_k)
 		gallery_menu.addAction(scan_galleries_action)
 		gallery_action_random = gallery_menu.addAction("Open random gallery")
 		gallery_action_random.triggered.connect(self.manga_list_view.open_random_gallery)
+		gallery_action_random.setShortcut(open_random_k)
 		self.toolbar.addWidget(gallery_action)
 
-
+		tools_k = QKeySequence('Alt+T')
 		misc_action = QToolButton()
 		misc_action.setText('Tools ')
+		misc_action.setShortcut(tools_k)
 		misc_action_menu = QMenu()
 		misc_action.setMenu(misc_action_menu)
 		misc_action.setPopupMode(QToolButton.InstantPopup)
@@ -559,16 +582,21 @@ class AppWindow(QMainWindow):
 		spacer_middle.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 		self.toolbar.addWidget(spacer_middle)
 
+		sort_k = QKeySequence('Alt+S')
 
 		sort_action = QToolButton()
+		sort_action.setShortcut(sort_k)
 		sort_action.setIcon(QIcon(app_constants.SORT_PATH))
 		sort_action.setMenu(misc.SortMenu(self.toolbar, self.manga_list_view))
 		sort_action.setPopupMode(QToolButton.InstantPopup)
 		self.toolbar.addWidget(sort_action)
 		
+		togle_view_k = QKeySequence('Alt+Space')
+
 		self.grid_toggle_g_icon = QIcon(app_constants.GRID_PATH)
 		self.grid_toggle_l_icon = QIcon(app_constants.LIST_PATH)
 		self.grid_toggle = QToolButton()
+		self.grid_toggle.setShortcut(togle_view_k)
 		if self.display.currentIndex() == self.m_l_view_index:
 			self.grid_toggle.setIcon(self.grid_toggle_l_icon)
 		else:
@@ -643,19 +671,21 @@ class AppWindow(QMainWindow):
 			if back:
 				self.search_forward.setVisible(True)
 
-		back = QShortcut(QKeySequence(QKeySequence.Back), self, lambda: search_history(None))
-		forward = QShortcut(QKeySequence(QKeySequence.Forward), self, lambda: search_history(None, False))
+		back_k = QKeySequence(QKeySequence.Back)
+		forward_k = QKeySequence(QKeySequence.Forward)
 
 		search_backbutton = QToolButton(self.toolbar)
 		search_backbutton.setText(u'\u25C0')
 		search_backbutton.setFixedWidth(15)
 		search_backbutton.clicked.connect(search_history)
+		search_backbutton.setShortcut(back_k)
 		self.search_backward = self.toolbar.addWidget(search_backbutton)
 		self.search_backward.setVisible(False)
 		search_forwardbutton = QToolButton(self.toolbar)
 		search_forwardbutton.setText(u'\u25B6')
 		search_forwardbutton.setFixedWidth(15)
 		search_forwardbutton.clicked.connect(lambda: search_history(None, False))
+		search_forwardbutton.setShortcut(forward_k)
 		self.search_forward = self.toolbar.addWidget(search_forwardbutton)
 		self.search_forward.setVisible(False)
 
@@ -663,7 +693,10 @@ class AppWindow(QMainWindow):
 		spacer_end.setFixedSize(QSize(10, 1))
 		self.toolbar.addWidget(spacer_end)
 
+		settings_k = QKeySequence("Ctrl+P")
+
 		settings_act = QToolButton(self.toolbar)
+		settings_act.setShortcut(settings_k)
 		settings_act.setIcon(QIcon(app_constants.SETTINGS_PATH))
 		settings_act.clicked.connect(self.settings)
 		self.toolbar.addWidget(settings_act)
