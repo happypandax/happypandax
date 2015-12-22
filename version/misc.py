@@ -56,6 +56,21 @@ log_w = log.warning
 log_e = log.error
 log_c = log.critical
 
+def centerWidget(widget, parent_widget=None):
+	if parent_widget:
+		r = parent_widget.rect()
+	else:
+		r = QDesktopWidget().availableGeometry()
+
+	widget.setGeometry(
+		QCommonStyle.alignedRect(
+			Qt.LeftToRight,
+			Qt.AlignCenter,
+			widget.size(),
+			r
+			)
+		)
+
 def clearLayout(layout):
 	if layout != None:
 		while layout.count():
@@ -123,8 +138,7 @@ class BaseMoveWidget(QWidget):
 			self.move(new_size)
 			return
 		if self.parent_widget:
-			self.move(self.parent_widget.window().frameGeometry().center() -\
-				self.window().rect().center())
+			centerWidget(self, self.parent_widget)
 
 
 class SortMenu(QMenu):

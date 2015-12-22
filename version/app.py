@@ -17,7 +17,7 @@ from PyQt5.QtCore import (Qt, QSize, pyqtSignal, QThread, QEvent, QTimer,
 						  QObject, QPoint, QPropertyAnimation)
 from PyQt5.QtGui import (QPixmap, QIcon, QMoveEvent, QCursor,
 						 QKeySequence)
-from PyQt5.QtWidgets import (QApplication, QMainWindow, QListView,
+from PyQt5.QtWidgets import (QMainWindow, QListView,
 							 QHBoxLayout, QFrame, QWidget, QVBoxLayout,
 							 QLabel, QStackedLayout, QToolBar, QMenuBar,
 							 QSizePolicy, QMenu, QAction, QLineEdit,
@@ -26,7 +26,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QListView,
 							 QListWidget, QListWidgetItem, QToolTip,
 							 QProgressBar, QToolButton, QSystemTrayIcon,
 							 QShortcut, QGraphicsBlurEffect, QTableWidget,
-							 QTableWidgetItem, QStyle)
+							 QTableWidgetItem)
 
 import app_constants
 import misc
@@ -230,13 +230,7 @@ class AppWindow(QMainWindow):
 			self.resize(x, y)
 		else:
 			self.resize(app_constants.MAIN_W, app_constants.MAIN_H)
-		self.setGeometry(
-			QStyle.alignedRect(
-				Qt.LeftToRight,
-				Qt.AlignCenter,
-				self.size(),
-				QApplication.desktop().availableGeometry()
-			))
+		misc.centerWidget(self)
 		self.init_spinners()
 		self.show()
 		log_d('Show window: OK')
