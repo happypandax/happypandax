@@ -80,7 +80,7 @@ class AppWindow(QMainWindow):
 	def init_watchers(self):
 
 		def remove_gallery(g):
-			index = self.manga_list_view.find_index(g.id, True)
+			index = gallery.CommonView.find_index(self.get_current_view(), g.id, True)
 			if index:
 				self.manga_list_view.remove_gallery([index])
 
@@ -90,7 +90,7 @@ class AppWindow(QMainWindow):
 			g_dia.show()
 
 		def update_gallery(g):
-			index = self.manga_list_view.find_index(g.id)
+			index = gallery.CommonView.find_index(self.get_current_view(), g.id)
 			if index:
 				self.manga_list_view.replace_edit_gallery([g], pos=index.row())
 			else:
@@ -347,11 +347,9 @@ class AppWindow(QMainWindow):
 						show_in_library_act.triggered.connect(self.show_in_library)
 
 					def show_in_library(self):
-						viewer = self.app_instance.manga_list_view
-						index = viewer.find_index(self.gallery_widget.gallery.id, True)
+						index = gallery.CommonView.find_index(self.app_instance.get_current_view(), self.gallery_widget.gallery.id, True)
 						if index:
-							self.app_instance.manga_table_view.scroll_to_index(index)
-							self.app_instance.manga_list_view.scroll_to_index(index)
+							gallery.CommonView.scroll_to_index(self.app_instance.get_current_view(), index)
 
 				g_popup = io_misc.GalleryPopup(('Fecthing metadata for these galleries failed.'+
 									  ' Check happypanda.log for details.', galleries), self, menu=GalleryContextMenu())
@@ -557,8 +555,9 @@ class AppWindow(QMainWindow):
 		scan_galleries_action.setStatusTip('Scan monitored folders for new galleries')
 		scan_galleries_action.setShortcut(scan_galleries_k)
 		gallery_menu.addAction(scan_galleries_action)
+
 		gallery_action_random = gallery_menu.addAction("Open random gallery")
-		gallery_action_random.triggered.connect(self.manga_list_view.open_random_gallery)
+		gallery_action_random.triggered.connect(lambda: gallery.CommonView.open_random_gallery(self.get_current_view()))
 		gallery_action_random.setShortcut(open_random_k)
 		self.toolbar.addWidget(gallery_action)
 
@@ -577,6 +576,16 @@ class AppWindow(QMainWindow):
 		duplicate_check_simple.triggered.connect(lambda: self.manga_list_view.duplicate_check())
 		misc_action_menu.addAction(duplicate_check_simple)
 		self.toolbar.addWidget(misc_action)
+
+		# debug specfic code
+		if app_constants.DEBUG:
+			def debug_func():
+				gallery.CommonView.scroll_to_index(self.get_current_view(), self.get_current_view().currentIndex())
+
+			debug_btn = QToolButton()
+			debug_btn.setText("DEBUG BUTTON")
+			self.toolbar.addWidget(debug_btn)
+			debug_btn.clicked.connect(debug_func)
 
 		spacer_middle = QWidget() # aligns buttons to the right
 		spacer_middle.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -706,6 +715,12 @@ class AppWindow(QMainWindow):
 		self.toolbar.addWidget(spacer_end2)
 		self.addToolBar(self.toolbar)
 
+	def get_current_view(self):
+		if self.display.currentIndex() == self.m_l_view_index:
+			return self.manga_list_view
+		else:
+			return self.manga_table_view
+
 	def toggle_view(self):
 		"""
 		Toggles the current display view
@@ -777,6 +792,12 @@ class AppWindow(QMainWindow):
 								self.manga_list_view.sort_model.insertRows(x, None, len(x))
 								self.manga_list_view.sort_model.init_search(
 									self.manga_list_view.sort_model.current_term)
+								if app_constants.SCROLL_TO_NEW_GALLERIES:
+									idx = gallery.CommonView.find_index(
+										self.get_current_view(),
+										x[len(x)-1].id,
+										True)
+									gallery.CommonView.scroll_to_index(self.get_current_view(), idx)
 
 							class A(QObject):
 								done = pyqtSignal()

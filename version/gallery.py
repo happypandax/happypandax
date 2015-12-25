@@ -849,7 +849,7 @@ class CustomDelegate(QStyledItemDelegate):
 		layout.endLayout()
 		return layout
 
-	def sizeHint(self, StyleOptionViewItem, QModelIndex):
+	def sizeHint(self, option, index):
 		return QSize(self.W, self.H)
 
 class MangaView(QListView):
@@ -876,7 +876,6 @@ class MangaView(QListView):
 		self.setVerticalScrollMode(self.ScrollPerPixel)
 		self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 		self.setLayoutMode(self.SinglePass)
-		self.setBatchSize(1)#app_constants.PREFETCH_ITEM_AMOUNT)
 		self.setMouseTracking(True)
 		self.sort_model = SortFilterModel()
 		self.sort_model.setDynamicSortFilter(True)
@@ -912,20 +911,7 @@ class MangaView(QListView):
 
 			self.clicked.connect(debug_print)
 
-		#self.viewport().grabGesture(Qt.SwipeGesture)
 		self.k_scroller = QScroller.scroller(self)
-		#self.k_scroller = QScroller.scroller(self)
-		#self.k_scroller.grabGesture(self)
-		#self._scroll_pos = QPoint()
-	#	self.ti = QTimer()
-	#	self.ti.timeout.connect(self.test_)
-	#	self.ti.start(5000)
-
-	def scroll_to_index(self, idx, select=True):
-		rect = self.visualRect(idx)
-		self.k_scroller.ensureVisible(QRectF(rect), 0, 0)
-		if select:
-			self.setCurrentIndex(idx)
 
 	# unusable code
 	#def event(self, event):
@@ -1055,18 +1041,6 @@ class MangaView(QListView):
 			gallerydb.add_method_queue(gallerydb.GalleryDB.modify_gallery, True, gallery.id, {'fav':1})
 			self.gallery_model.CUSTOM_STATUS_MSG.emit("Favorited")
 
-	def open_random_gallery(self):
-		g = random.randint(0, self.sort_model.rowCount()-1)
-		indx = self.sort_model.index(g, 1)
-		chap_numb = 0
-		if app_constants.OPEN_RANDOM_GALLERY_CHAPTERS:
-			gallery = indx.data(Qt.UserRole+1)
-			b = len(gallery.chapters)
-			if b > 1:
-				chap_numb = random.randint(0, b-1)
-
-		indx.data(Qt.UserRole+1).chapters[chap_numb].open()
-
 	def duplicate_check(self, simple=True):
 		mode = 'simple' if simple else 'advanced'
 		log_i('Checking for duplicates in mode: {}'.format(mode))
@@ -1101,13 +1075,13 @@ class MangaView(QListView):
 						delete_gallery_source.triggered.connect(lambda: self.delete_gallery(True))
 
 					def show_in_library(self):
-						index = self.viewer.find_index(self.gallery_widget.gallery.id, True)
+						index = CommonView.find_index(self.viewer, self.gallery_widget.gallery.id, True)
 						if index:
-							self.viewer.scroll_to_index(index)
+							CommonView.scroll_to_index(self.viewer, index)
 							self.app_inst.manga_table_view.scroll_to_index(index)
 
 					def delete_gallery(self, source=False):
-						index = self.viewer.find_index(self.gallery_widget.gallery.id)
+						index = CommonView.find_index(self.viewer, self.gallery_widget.gallery.id, True)
 						if index and index.isValid():
 							self.viewer.remove_gallery([index], source)
 							if self.gallery_widget.parent_widget.gallery_layout.count() == 1:
@@ -1201,19 +1175,7 @@ class MangaView(QListView):
 		else:
 			event.ignore()
 
-	def find_index(self, gallery_id, sort_model=False):
-		"Finds and returns the index associated with the gallery id"
-		index = None
-		model = self.sort_model if sort_model else self.gallery_model
-		rows = model.rowCount()
-		for r in range(rows):
-			indx = model.index(r, 0)
-			m_gallery = indx.data(Qt.UserRole+1)
-			if m_gallery.id == gallery_id:
-				index = indx
-				break
-		return index
-
+	# TODO: move to CommonView
 	def replace_edit_gallery(self, list_of_gallery, pos=None, db_optimize=True):
 		"Replaces the view and DB with given list of gallery, at given position"
 		assert isinstance(list_of_gallery, (list, gallerydb.Gallery)), "Please pass a gallery to replace with"
@@ -1224,7 +1186,7 @@ class MangaView(QListView):
 			gallerydb.GalleryDB.begin()
 		for gallery in list_of_gallery:
 			if not pos:
-				index = self.find_index(gallery.id)
+				index = CommonView.find_index(self, gallery.id)
 				if not index:
 					log_e('Could not find index for gallery to edit: {}'.format(
 						gallery.title.encode(errors='ignore')))
@@ -1254,7 +1216,10 @@ class MangaView(QListView):
 	def spawn_dialog(self, index=False):
 		if not index:
 			dialog = gallerydialog.GalleryDialog(self.parent_widget)
-			dialog.SERIES.connect(self.sort_model.addRows)
+			def add_to_model(g_list):
+				self.sort_model.addRows(g_list)
+				self.sort_model.init_search(self.sort_model.current_term)
+			dialog.SERIES.connect(add_to_model)
 			dialog.SERIES.connect(lambda: self.sort_model.init_search(self.sort_model.current_term))
 		else:
 			dialog = gallerydialog.GalleryDialog(self.parent_widget, [index])
@@ -1293,7 +1258,6 @@ class MangaTableView(QTableView):
 		self.doubleClicked.connect(lambda idx: idx.data(Qt.UserRole+1).chapters[0].open())
 		self.grabGesture(Qt.SwipeGesture)
 		self.k_scroller = QScroller.scroller(self)
-		self.k_scroller.grabGesture(self, QScroller.TouchGesture)
 
 	# display tooltip only for elided text
 	#def viewportEvent(self, event):
@@ -1309,12 +1273,6 @@ class MangaTableView(QTableView):
 	#				QToolTip.hideText()
 	#				return True
 	#	return super().viewportEvent(event)
-
-	def scroll_to_index(self, idx, select=True):
-		rect = self.visualRect(idx)
-		self.k_scroller.ensureVisible(QRectF(rect), 0, 0)
-		if select:
-			self.selectRow(idx.row())
 
 	def keyPressEvent(self, event):
 		if event.key() == Qt.Key_Return:
@@ -1363,6 +1321,53 @@ class MangaTableView(QTableView):
 			del menu
 		else:
 			event.ignore()
+
+class CommonView:
+	"""
+	Contains identical view implentations
+	"""
+	@staticmethod
+	def find_index(view_cls, gallery_id, sort_model=False):
+		"Finds and returns the index associated with the gallery id"
+		index = None
+		model = view_cls.sort_model if sort_model else view_cls.gallery_model
+		rows = model.rowCount()
+		for r in range(rows):
+			indx = model.index(r, 0)
+			m_gallery = indx.data(Qt.UserRole+1)
+			if m_gallery.id == gallery_id:
+				index = indx
+				break
+		return index
+
+	@staticmethod
+	def open_random_gallery(view_cls):
+		g = random.randint(0, view_cls.sort_model.rowCount()-1)
+		indx = view_cls.sort_model.index(g, 1)
+		chap_numb = 0
+		if app_constants.OPEN_RANDOM_GALLERY_CHAPTERS:
+			gallery = indx.data(Qt.UserRole+1)
+			b = len(gallery.chapters)
+			if b > 1:
+				chap_numb = random.randint(0, b-1)
+
+		CommonView.scroll_to_index(view_cls, view_cls.sort_model.index(indx.row(), 0))
+		indx.data(Qt.UserRole+1).chapters[chap_numb].open()
+
+	@staticmethod
+	def scroll_to_index(view_cls, idx, select=True):
+		old_value = view_cls.verticalScrollBar().value()
+		view_cls.setUpdatesEnabled(False)
+		view_cls.verticalScrollBar().setValue(0)
+		idx_rect = view_cls.visualRect(idx)
+		view_cls.verticalScrollBar().setValue(old_value)
+		view_cls.setUpdatesEnabled(True)
+		rect = QRectF(idx_rect)
+		if app_constants.DEBUG:
+			print("Scrolling to index:", rect.getRect())
+		view_cls.k_scroller.ensureVisible(rect, 0, 0)
+		if select:
+			view_cls.setCurrentIndex(idx)
 
 if __name__ == '__main__':
 	raise NotImplementedError("Unit testing not yet implemented")

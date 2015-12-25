@@ -103,7 +103,6 @@ SCANNING_FOR_GALLERIES = False # if a scan for new galleries is being done
 OVERRIDE_MOVE_IMPORTED_IN_FETCH = False # set to true to make a fetch instance ignore moving files (will be set to false)
 MOVE_IMPORTED_GALLERIES = get(False, 'Application', 'move imported galleries', bool)
 IMPORTED_GALLERY_DEF_PATH = get('', 'Application', 'imported gallery def path', str)
-SCROLL_TO_NEW_GALLERIES = get(False, 'Application', 'scroll to new galleries', bool)
 OPEN_RANDOM_GALLERY_CHAPTERS = get(False, 'Application', 'open random gallery chapters', bool)
 OVERRIDE_SUBFOLDER_AS_GALLERY = False # set to true to make a fetch instance treat subfolder as galleries (will be set to false)
 SUBFOLDER_AS_GALLERY = get(False, 'Application', 'subfolder as gallery', bool)

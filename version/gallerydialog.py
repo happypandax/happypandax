@@ -27,7 +27,6 @@ class GalleryDialog(QWidget):
 	or pass a path to preset path
 	"""
 
-	gallery_queue = queue.Queue()
 	SERIES = pyqtSignal(list)
 	SERIES_EDIT = pyqtSignal(list, int)
 	#gallery_list = [] # might want to extend this to allow mass gallery adding

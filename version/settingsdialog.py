@@ -137,7 +137,6 @@ class SettingsDialog(QWidget):
 		self.subfolder_as_chapters.setChecked(app_constants.SUBFOLDER_AS_GALLERY)
 		self.extract_gallery_before_opening.setChecked(app_constants.EXTRACT_CHAPTER_BEFORE_OPENING)
 		self.open_galleries_sequentially.setChecked(app_constants.OPEN_GALLERIES_SEQUENTIALLY)
-		self.scroll_to_new_gallery.setChecked(app_constants.SCROLL_TO_NEW_GALLERIES)
 		self.move_imported_gs.setChecked(app_constants.MOVE_IMPORTED_GALLERIES)
 		self.move_imported_def_path.setText(app_constants.IMPORTED_GALLERY_DEF_PATH)
 		self.open_random_g_chapters.setChecked(app_constants.OPEN_RANDOM_GALLERY_CHAPTERS)
@@ -238,8 +237,6 @@ class SettingsDialog(QWidget):
 		set(app_constants.EXTRACT_CHAPTER_BEFORE_OPENING, 'Application', 'extract chapter before opening')
 		app_constants.OPEN_GALLERIES_SEQUENTIALLY = self.open_galleries_sequentially.isChecked()
 		set(app_constants.OPEN_GALLERIES_SEQUENTIALLY, 'Application', 'open galleries sequentially')
-		app_constants.SCROLL_TO_NEW_GALLERIES = self.scroll_to_new_gallery.isChecked()
-		set(app_constants.SCROLL_TO_NEW_GALLERIES, 'Application', 'scroll to new galleries')
 		app_constants.MOVE_IMPORTED_GALLERIES = self.move_imported_gs.isChecked()
 		set(app_constants.MOVE_IMPORTED_GALLERIES, 'Application', 'move imported galleries')
 		if not self.move_imported_def_path.text() or os.path.exists(self.move_imported_def_path.text()):
@@ -483,9 +480,6 @@ class SettingsDialog(QWidget):
 		app_gallery_l.addRow(extract_gallery_info)
 		app_gallery_l.addRow(self.extract_gallery_before_opening)
 		app_gallery_l.addRow(self.open_galleries_sequentially)
-		self.scroll_to_new_gallery = QCheckBox("Scroll to newly added gallery")
-		self.scroll_to_new_gallery.setDisabled(True)
-		app_gallery_l.addRow(self.scroll_to_new_gallery)
 		self.move_imported_gs, move_imported_gs_l = groupbox('Move imported galleries',
 													   QFormLayout, app_gallery_page)
 		self.move_imported_gs.setCheckable(True)
