@@ -91,7 +91,7 @@ def start(test=False):
 		sys.excepthook = uncaught_exceptions
 
 	if app_constants.FORCE_HIGH_DPI_SUPPORT:
-		print("hi")
+		log_i("Enablind high DPI display support")
 		os.environ.putenv("QT_DEVICE_PIXEL_RATIO", "auto")
 
 	application = QApplication(sys.argv)

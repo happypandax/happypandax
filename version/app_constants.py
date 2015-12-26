@@ -45,12 +45,13 @@ FORCE_HIGH_DPI_SUPPORT = get(False, 'Advanced', 'force high dpi support', bool)
 # sizes
 MAIN_W = 1061 # main window
 MAIN_H = 650 # main window
-GRIDBOX_H_SIZE = 210
+SIZE_FACTOR = get(10, 'Visual', 'size factor', int)
+GRIDBOX_H_SIZE = 200 + SIZE_FACTOR
 GRIDBOX_W_SIZE = GRIDBOX_H_SIZE//1.40 #1.47
-GRIDBOX_LBL_H = 60
+GRIDBOX_LBL_H = 50 + SIZE_FACTOR
 GRIDBOX_H_SIZE += GRIDBOX_LBL_H
-THUMB_H_SIZE = 200
-THUMB_W_SIZE = 143
+THUMB_H_SIZE = 190 + SIZE_FACTOR
+THUMB_W_SIZE = 133 + SIZE_FACTOR
 
 # Columns
 COLUMNS = tuple(range(11))

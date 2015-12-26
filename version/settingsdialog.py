@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import (QVBoxLayout, QHBoxLayout, QListWidget, QWidget,
 							 QLabel, QTabWidget, QLineEdit, QGroupBox, QFormLayout,
 							 QCheckBox, QRadioButton, QSpinBox, QSizePolicy,
 							 QScrollArea, QFontDialog, QMessageBox, QComboBox,
-							 QFileDialog)
+							 QFileDialog, QSlider)
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtGui import QPalette, QPixmapCache
 
@@ -212,6 +212,7 @@ class SettingsDialog(QWidget):
 			self.search_on_enter.setChecked(True)
 		else:
 			self.search_every_keystroke.setChecked(True)
+		self.gallery_size.setValue(app_constants.SIZE_FACTOR//10)
 		# Visual / Grid View / Colors
 		self.grid_label_color.setText(app_constants.GRID_VIEW_LABEL_COLOR)
 		self.grid_title_color.setText(app_constants.GRID_VIEW_TITLE_COLOR)
@@ -376,6 +377,9 @@ class SettingsDialog(QWidget):
 		app_constants.GALLERY_FONT = (self.font_lbl.text(), self.font_size_lbl.value())
 		set(app_constants.GALLERY_FONT[0], 'Visual', 'gallery font family')
 		set(app_constants.GALLERY_FONT[1], 'Visual', 'gallery font size')
+		app_constants.SIZE_FACTOR = self.gallery_size.value() * 10
+		set(app_constants.SIZE_FACTOR, 'Visual', 'size factor')
+
 		# Visual / Grid View / Colors
 		if self.color_checker(self.grid_title_color.text()):
 			app_constants.GRID_VIEW_TITLE_COLOR = self.grid_title_color.text()
@@ -785,7 +789,8 @@ class SettingsDialog(QWidget):
 		self.gallery_type_ico = QCheckBox('File Type')
 		grid_gallery_display.addWidget(self.gallery_type_ico)
 		if sys.platform.startswith('darwin'):
-			grid_gallery_group.setEnabled(False)
+			self.external_viewer_ico.setEnabled(False)
+			self.gallery_type_ico.setEnabled(False)
 		gallery_text_mode = QWidget()
 		grid_gallery_main_l.addRow('Text Mode:', gallery_text_mode)
 		gallery_text_mode_l = QHBoxLayout()
@@ -808,6 +813,22 @@ class SettingsDialog(QWidget):
 		gallery_font.addWidget(self.font_size_lbl, 0, Qt.AlignLeft)
 		gallery_font.addWidget(choose_font, 0, Qt.AlignLeft)
 		gallery_font.addWidget(Spacer('h'), 1, Qt.AlignLeft)
+
+		gallery_size_lbl = QLabel(self)
+		self.gallery_size = QSlider(Qt.Horizontal, self)
+		self.gallery_size.valueChanged.connect(lambda x: gallery_size_lbl.setText(str(x+2)))
+		self.gallery_size.setMinimum(-2)
+		self.gallery_size.setMaximum(10)
+		self.gallery_size.setSingleStep(1)
+		self.gallery_size.setPageStep(3)
+		self.gallery_size.setTickInterval(1)
+		self.gallery_size.setTickPosition(QSlider.TicksBothSides)
+		self.gallery_size.setToolTip("Changes size of grid in gridview. Remember to re-generate thumbnails! DEFAULT=3")
+		gallery_size_l = QHBoxLayout()
+		gallery_size_l.addWidget(gallery_size_lbl)
+		gallery_size_l.addWidget(self.gallery_size)
+		grid_gallery_main_l.addRow("Gallery Size *", gallery_size_l)
+
 		# grid view / colors
 		grid_colors_group = QGroupBox('Colors', grid_view_general_page)
 		grid_view_layout.addWidget(grid_colors_group, 1, Qt.AlignTop)

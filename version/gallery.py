@@ -640,8 +640,8 @@ class CustomDelegate(QStyledItemDelegate):
 			#area
 			{{
 				display:flex;
-				width:140px;
-				height:10px
+				width:{6}px;
+				height:{7}px
 			}}
 			#title {{
 			position:absolute;
@@ -668,7 +668,8 @@ class CustomDelegate(QStyledItemDelegate):
 			</div>
 			</center>
 			</body>
-			""".format(title_size, artist_size, title, artist, title_color, artist_color))
+			""".format(title_size, artist_size, title, artist, title_color, artist_color,
+			  130+app_constants.SIZE_FACTOR, 1+app_constants.SIZE_FACTOR))
 			text_area.setTextWidth(w)
 
 			#chapter_area = QTextDocument()
@@ -684,27 +685,41 @@ class CustomDelegate(QStyledItemDelegate):
 					offset = diff//2
 					new_x += offset
 				return new_x
+
+			def img_too_big(start_x):
+				txt_layout = self.text_layout("Image is too big!", w, self.title_font, self.title_font_m)
+
+				clipping = QRectF(x, y+h//4, w, app_constants.GRIDBOX_LBL_H - 10)
+				txt_layout.draw(painter, QPointF(x, y+h//4),
+					  clip=clipping)
+
 			# if we can't find a cached image
 			pix_cache = QPixmapCache.find(self.key(gallery.profile))
 			if isinstance(pix_cache, QPixmap):
 				self.image = pix_cache
 				img_x = center_img(self.image.width())
-				if self.image.height() < self.image.width(): #to keep aspect ratio
-					painter.drawPixmap(QPoint(img_x,y),
-							self.image)
+				if self.image.width() > w or self.image.height() > h:
+					img_too_big(img_x)
 				else:
-					painter.drawPixmap(QPoint(img_x,y),
-							self.image)
+					if self.image.height() < self.image.width(): #to keep aspect ratio
+						painter.drawPixmap(QPoint(img_x,y),
+								self.image)
+					else:
+						painter.drawPixmap(QPoint(img_x,y),
+								self.image)
 			else:
 				self.image = QPixmap(gallery.profile)
 				img_x = center_img(self.image.width())
 				QPixmapCache.insert(self.key(gallery.profile), self.image)
-				if self.image.height() < self.image.width(): #to keep aspect ratio
-					painter.drawPixmap(QPoint(img_x,y),
-							self.image)
+				if self.image.width() > w or self.image.height() > h:
+					img_too_big(img_x)
 				else:
-					painter.drawPixmap(QPoint(img_x,y),
-							self.image)
+					if self.image.height() < self.image.width(): #to keep aspect ratio
+						painter.drawPixmap(QPoint(img_x,y),
+								self.image)
+					else:
+						painter.drawPixmap(QPoint(img_x,y),
+								self.image)
 
 			# draw star if it's favorited
 			if gallery.fav == 1:
@@ -803,8 +818,9 @@ class CustomDelegate(QStyledItemDelegate):
 				p_path = QPainterPath()
 				p_path.setFillRule(Qt.WindingFill)
 				p_path.addRoundedRect(selected_rect, 5,5)
-				p_path.addRect(x,y, 20, 20)
-				p_path.addRect(x+w-20,y, 20, 20)
+				s_factor = app_constants.SIZE_FACTOR + 10
+				p_path.addRect(x,y, s_factor, s_factor)
+				p_path.addRect(x+w-s_factor,y, s_factor, s_factor)
 				painter.drawPath(p_path.simplified())
 				#painter.fillRect(selected_rect, QColor(164,164,164,120))
 				painter.restore()
@@ -865,7 +881,7 @@ class MangaView(QListView):
 		self.parent_widget = parent
 		self.setViewMode(self.IconMode)
 		self.H = app_constants.GRIDBOX_H_SIZE
-		self.W = app_constants.GRIDBOX_W_SIZE
+		self.W = app_constants.GRIDBOX_W_SIZE + (app_constants.SIZE_FACTOR//5)
 		self.setGridSize(QSize(self.W, self.H))
 		self.setResizeMode(self.Adjust)
 		self.setIconSize(QSize(app_constants.THUMB_W_SIZE,
@@ -913,63 +929,30 @@ class MangaView(QListView):
 
 		self.k_scroller = QScroller.scroller(self)
 
-	# unusable code
-	#def event(self, event):
-	#	#if event.type() == QEvent.ToolTip:
-	#	#	help_event = QHelpEvent(event)
-	#	#	index = self.indexAt(help_event.globalPos())
-	#	#	if index is not -1:
-	#	#		QToolTip.showText(help_event.globalPos(), "Tooltip!")
-	#	#	else:
-	#	#		QToolTip().hideText()
-	#	#		event.ignore()
-	#	#	return True
+	def get_visible_indexes(self, column=0):
+		"find all galleries in viewport"
+		gridW = self.W
+		gridH = self.H
+		region = self.viewport().visibleRegion()
+		idx_found = []
 
-	#	if event.type() == QEvent.Gesture:
-	#		print("yes!")
-	#	else:
-	#		return super().event(event)
+		def idx_is_visible(idx):
+			idx_rect = self.visualRect(idx)
+			return region.contains(idx_rect) or region.intersects(idx_rect)
 
-	#def test_(self):
-	#	"find all galleries in viewport"
-	#	def col_next_prepare(index):
-	#		"Calculates where the next index is"
-	#		rect = self.visualRect(index)
-	#		new_col = QPoint(rect.x() + rect.width() + rect.width(),
-	#					   rect.y())
-	#		return new_col
+		#get first index
+		first_idx = self.indexAt(QPoint(gridW//2, 0)) # to get indexes on the way out of view
+		if not first_idx.isValid():
+			first_idx = self.indexAt(QPoint(gridW//2, gridH//2))
 
-	#	#find first index locatiion. A wild guess!!
-	#	f_indx = self.indexAt(QPoint(87,130))
-	#	found = 1
-	#	f_rect = self.visualRect(f_indx) # need the first index's rect
-	#	row = 1 # which row are we on
-	#	while row: # while row is is valid
-	#		rect = self.visualRect(f_indx) # rect of current index
-	#		next_col_point = col_next_prepare(f_indx)
-	#		#calculate the next row
-	#		next_row_point = QPoint(f_rect.x()+10,
-	#					   rect.y()+rect.height()+(rect.height()//2))
-	#		found += 1
-	#		# while there are stil more colums
-	#		while self.viewport().rect().contains(next_col_point,
-	#								  proper=True):
-	#			next_indx = self.indexAt(next_col_point) # find the next index
-	#			if not next_indx:
-	#				break
-	#			found += 1
-	#			# time to prepare the next iteration
-	#			next_col_point = col_next_prepare(next_indx)
-	#			print('Moving to next col')
+		if first_idx.isValid():
+			nxt_idx = first_idx
+			# now traverse items until index isn't visible
+			while(idx_is_visible(nxt_idx)):
+				idx_found.append(nxt_idx)
+				nxt_idx = nxt_idx.sibling(nxt_idx.row()+1, column)
 			
-	#		if self.viewport().rect().contains(next_row_point, proper=True):
-	#			f_indx = self.indexAt(next_row_point)
-	#			if f_indx.isValid():
-	#				row += 1
-	#				print('Moving to next row')
-	#		row = None
-
-	#	print('Found ', found)
+		return idx_found
 
 	def wheelEvent(self, event):
 		if self.gallery_window.isVisible():

@@ -580,7 +580,7 @@ class AppWindow(QMainWindow):
 		# debug specfic code
 		if app_constants.DEBUG:
 			def debug_func():
-				os.environ.putenv("QT_DEVICE_PIXEL_RATIO", "2")
+				self.manga_list_view.get_visible_indexes()
 
 			debug_btn = QToolButton()
 			debug_btn.setText("DEBUG BUTTON")
