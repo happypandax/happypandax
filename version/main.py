@@ -16,7 +16,7 @@ import sys, logging, logging.handlers, os, argparse, platform, scandir
 import traceback
 
 from PyQt5.QtWidgets import QApplication
-from PyQt5.QtCore import QFile
+from PyQt5.QtCore import QFile, Qt
 
 from database import db, db_constants
 import app
@@ -90,12 +90,17 @@ def start(test=False):
 
 		sys.excepthook = uncaught_exceptions
 
+	if app_constants.FORCE_HIGH_DPI_SUPPORT:
+		print("hi")
+		os.environ.putenv("QT_DEVICE_PIXEL_RATIO", "auto")
+
 	application = QApplication(sys.argv)
 	application.setOrganizationName('Pewpews')
 	application.setOrganizationDomain('https://github.com/Pewpews/happypanda')
 	application.setApplicationName('Happypanda')
 	application.setApplicationDisplayName('Happypanda')
 	application.setApplicationVersion('v{}'.format(app_constants.vs))
+	application.setAttribute(Qt.AA_UseHighDpiPixmaps)
 	log_i('Starting Happypanda...'.format(app_constants.vs))
 	if args.debug:
 		log_i('Running in debug mode'.format(app_constants.vs))

@@ -40,6 +40,7 @@ default_stylesheet_path = static_dir + '/' + "style.css"
 user_stylesheet_path = ""
 
 FIRST_TIME_LEVEL = get(5, 'Application', 'first time level', int)
+FORCE_HIGH_DPI_SUPPORT = get(False, 'Advanced', 'force high dpi support', bool)
 
 # sizes
 MAIN_W = 1061 # main window

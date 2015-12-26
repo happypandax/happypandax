@@ -217,6 +217,8 @@ class SettingsDialog(QWidget):
 		self.grid_title_color.setText(app_constants.GRID_VIEW_TITLE_COLOR)
 		self.grid_artist_color.setText(app_constants.GRID_VIEW_ARTIST_COLOR)
 
+		# Advanced / Misc
+		self.force_high_dpi_support.setChecked(app_constants.FORCE_HIGH_DPI_SUPPORT)
 
 		# Advanced / Gallery / Gallery Text Fixer
 		self.g_data_regex_fix_edit.setText(app_constants.GALLERY_DATA_FIX_REGEX)
@@ -395,6 +397,8 @@ class SettingsDialog(QWidget):
 		QPixmapCache.setCacheLimit(self.cache_size[0]*
 							 self.cache_size[1])
 
+		app_constants.FORCE_HIGH_DPI_SUPPORT = self.force_high_dpi_support.isChecked()
+		set(app_constants.FORCE_HIGH_DPI_SUPPORT, 'Advanced', 'force high dpi support')
 
 		# Advanced / General / Gallery Text Fixer
 		app_constants.GALLERY_DATA_FIX_REGEX = self.g_data_regex_fix_edit.text()
@@ -865,6 +869,11 @@ class SettingsDialog(QWidget):
 		cache_size_spin_box.setValue(self.cache_size[1])
 		cache_size_spin_box.valueChanged[int].connect(cache_size)
 		misc_gridview_layout.addRow('Cache Size (MiB):', cache_size_spin_box)
+
+		high_dpi_info = QLabel("Warning: This option may incur some scaling or painting artifacts")
+		misc_controls_layout.addRow(high_dpi_info)
+		self.force_high_dpi_support = QCheckBox("Force High DPI support *", self)
+		misc_controls_layout.addRow(self.force_high_dpi_support)
 
 		# Advanced / Gallery
 		advanced_gallery, advanced_gallery_m_l = new_tab('Gallery', advanced)

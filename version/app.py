@@ -580,7 +580,7 @@ class AppWindow(QMainWindow):
 		# debug specfic code
 		if app_constants.DEBUG:
 			def debug_func():
-				gallery.CommonView.scroll_to_index(self.get_current_view(), self.get_current_view().currentIndex())
+				os.environ.putenv("QT_DEVICE_PIXEL_RATIO", "2")
 
 			debug_btn = QToolButton()
 			debug_btn.setText("DEBUG BUTTON")
