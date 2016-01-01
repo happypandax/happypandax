@@ -687,9 +687,7 @@ class GalleryMetaWindow(ArrowWindow):
 			chap_txt = "chapters" if gallery.chapters.count() > 1 else "chapter"
 			self.g_chap_count_lbl.setText('{} {}'.format(gallery.chapters.count(), chap_txt))
 			self.g_type_lbl.setText(gallery.type)
-			pages = 0
-			for ch in gallery.chapters:
-				pages += ch.pages
+			pages = gallery.chapters.pages()
 			self.g_pages_total_lbl.setText('{}'.format(pages))
 			self.g_status_lbl.setText(gallery.status)
 			self.g_d_added_lbl.setText(gallery.date_added.strftime('%d %b %Y'))

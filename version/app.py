@@ -230,6 +230,8 @@ class AppWindow(QMainWindow):
 			self.resize(x, y)
 		else:
 			self.resize(app_constants.MAIN_W, app_constants.MAIN_H)
+		self.setMinimumWidth(600)
+		self.setMinimumHeight(400)
 		misc.centerWidget(self)
 		self.init_spinners()
 		self.show()
@@ -422,14 +424,14 @@ class AppWindow(QMainWindow):
 		self.manga_table_view.sort_model = self.manga_list_view.sort_model
 		self.manga_table_view.setModel(self.manga_table_view.sort_model)
 		self.manga_table_view.sort_model.change_model(self.manga_table_view.gallery_model)
-		self.manga_table_view.setColumnWidth(app_constants.FAV, 20)
-		self.manga_table_view.setColumnWidth(app_constants.ARTIST, 200)
-		self.manga_table_view.setColumnWidth(app_constants.TITLE, 400)
-		self.manga_table_view.setColumnWidth(app_constants.TAGS, 300)
-		self.manga_table_view.setColumnWidth(app_constants.TYPE, 60)
-		self.manga_table_view.setColumnWidth(app_constants.CHAPTERS, 60)
-		self.manga_table_view.setColumnWidth(app_constants.LANGUAGE, 100)
-		self.manga_table_view.setColumnWidth(app_constants.LINK, 400)
+		#self.manga_table_view.setColumnWidth(app_constants.FAV, 20)
+		#self.manga_table_view.setColumnWidth(app_constants.ARTIST, 200)
+		#self.manga_table_view.setColumnWidth(app_constants.TITLE, 400)
+		#self.manga_table_view.setColumnWidth(app_constants.TAGS, 300)
+		#self.manga_table_view.setColumnWidth(app_constants.TYPE, 60)
+		#self.manga_table_view.setColumnWidth(app_constants.CHAPTERS, 60)
+		#self.manga_table_view.setColumnWidth(app_constants.LANGUAGE, 100)
+		#self.manga_table_view.setColumnWidth(app_constants.LINK, 400)
 
 
 	def init_spinners(self):

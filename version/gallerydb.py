@@ -739,18 +739,15 @@ class TagDB(DBBase):
 		# We first get all the current tags_mappings_ids related to gallery
 		tag_m_ids = []
 		c = cls.execute(cls, 'SELECT tags_mappings_id FROM series_tags_map WHERE series_id=?',
-				(series_id,))
+				[int(series_id)])
 		for tmd in c.fetchall():
-			tag_m_ids.append(tmd['tags_mappings_id'])
+			tag_m_ids.append((tmd['tags_mappings_id'],))
 
 		# Then we delete all mappings related to the given series_id
-		cls.execute(cls, 'DELETE FROM series_tags_map WHERE series_id=?', (series_id,))
+		cls.execute(cls, 'DELETE FROM series_tags_map WHERE series_id=?', [series_id])
 
-		executing = []
-		for tmd_id in tag_m_ids:
-			executing.append((tmd_id,))
-
-		cls.executemany(cls, 'DELETE FROM tags_mappings WHERE tags_mappings_id=?', executing)
+		print(tag_m_ids)
+		cls.executemany(cls, 'DELETE FROM tags_mappings WHERE tags_mappings_id=?', tag_m_ids)
 
 	@classmethod
 	def get_gallery_tags(cls, series_id):
@@ -1612,6 +1609,12 @@ class ChaptersContainer:
 			chp = Chapter(self, self.parent, number=next_number)
 			self[next_number] = chp
 		return chp
+
+	def pages(self):
+		p = 0
+		for c in self:
+			p += c.pages
+		return p
 
 	def get_chapter(self, number):
 		return self[number]

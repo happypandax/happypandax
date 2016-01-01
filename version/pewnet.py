@@ -250,7 +250,7 @@ class HenItem(DownloaderItem):
 			d_m = {self.metadata['gmetadata'][0]['gid']:g_id}
 		except KeyError:
 			return
-		self.metadata = CommenHen.parse_metadata(self.metadata, d_m)[g_id]
+		self.metadata = EHen.parse_metadata(self.metadata, d_m)[g_id]
 
 class DLManager(QObject):
 	"Base class for site-specific download managers"
@@ -377,7 +377,7 @@ class HenManager(DLManager):
 		cookies = exprops.cookies
 		if not cookies:
 			if exprops.username and exprops.password:
-				cookies = CommenHen.login(exprops.username, exprops.password)
+				cookies = EHen.login(exprops.username, exprops.password)
 			else:
 				raise app_constants.NeedLogin
 
@@ -437,7 +437,7 @@ class HenManager(DLManager):
 
 		h_item = HenItem(self._browser.session)
 		h_item.gallery_url = g_url
-		h_item.metadata = CommenHen.parse_metadata(api_metadata, gallery_gid_dict)
+		h_item.metadata = EHen.parse_metadata(api_metadata, gallery_gid_dict)
 		try:
 			h_item.metadata = h_item.metadata[g_url]
 		except KeyError:
@@ -492,7 +492,7 @@ class HenManager(DLManager):
 			h_item.torrents_found = int(gallery['torrentcount'])
 			h_item.fetch_thumb()
 			if  h_item.torrents_found > 0:
-				g_id_token = CommenHen.parse_url(g_url)
+				g_id_token = EHen.parse_url(g_url)
 				url_and_file = self._torrent_url_d(g_id_token[0], g_id_token[1])
 				if url_and_file:
 					h_item.download_url = url_and_file[0]
@@ -520,14 +520,6 @@ class CommenHen:
 	LAST_USED = time.time()
 	HEADERS = {'user-agent':"Mozilla/5.0 (Windows NT 6.3; rv:36.0) Gecko/20100101 Firefox/36.0"}
 
-	@staticmethod
-	def hash_search(g_hash):
-		"""
-		Searches ex or g.e for a gallery with the hash value
-		Return list with titles of galleries found.
-		"""
-		raise NotImplementedError
-
 	def begin_lock(self):
 		log_d('locked')
 		self.LOCK.acquire()
@@ -552,11 +544,11 @@ class CommenHen:
 		log_i("Status on queue: {}/25".format(len(self.QUEUE)))
 		if proc:
 			if parse:
-				return CommenHen.parse_metadata(*self.process_queue())
+				return self.parse_metadata(*self.process_queue())
 			return self.process_queue()
 		if len(self.QUEUE) > 24:
 			if parse:
-				return CommenHen.parse_metadata(*self.process_queue())
+				return self.parse_metadata(*self.process_queue())
 			return self.process_queue()
 		else:
 			return 0
@@ -580,55 +572,13 @@ class CommenHen:
 		self.QUEUE.clear()
 		return api_data, galleryid_dict
 
-	@staticmethod
-	def login(user, password):
-		"""
-		Logs into g.e-h
-		"""
-		eh_c = {}
-		exprops = settings.ExProperties()
-		if CommenHen.COOKIES:
-			if CommenHen.check_login(CommenHen.COOKIES):
-				return CommenHen.COOKIES
-		elif exprops.cookies:
-			if CommenHen.check_login(exprops.cookies):
-				CommenHen.COOKIES.update(exprops.cookies)
-				return CommenHen.COOKIES
+	@classmethod
+	def login(cls, user, password):
+		pass
 
-		p = {
-			'CookieDate': '1',
-			'b':'d', 
-			'bt':'1-1',
-			'UserName':user,
-			'PassWord':password
-			}
-
-		eh_c = requests.post('https://forums.e-hentai.org/index.php?act=Login&CODE=01', data=p).cookies.get_dict()
-		exh_c = requests.get('http://exhentai.org', cookies=eh_c).cookies.get_dict()
-
-		eh_c.update(exh_c)
-
-		if not CommenHen.check_login(eh_c):
-			raise app_constants.WrongLogin
-
-		exprops.cookies = eh_c
-		exprops.username = user
-		exprops.password = password
-		exprops.save()
-		CommenHen.COOKIES.update(eh_c)
-
-		return eh_c
-
-	@staticmethod
-	def check_login(cookies):
-		"""
-		Checks if user is logged in
-		"""
-
-		if 'ipb_member_id' in cookies:
-			return True
-		else:
-			return False
+	@classmethod
+	def check_login(cls, cookies):
+		pass
 
 	def check_cookie(self, cookie):
 		cookies = self.COOKIES.keys()
@@ -644,6 +594,115 @@ class CommenHen:
 				self.COOKIES.update(cookie)
 			except requests.cookies.CookieConflictError:
 				pass
+
+	def handle_error(self, response):
+		pass
+
+	@classmethod
+	def parse_metadata(cls, metadata_json, dict_metadata):
+		"""
+		:metadata_json <- raw data provided by site
+		:dict_metadata <- a dict with gallery id's as keys and url as value
+
+		returns a dict with url as key and gallery metadata as value
+		"""
+		pass
+
+	def get_metadata(self, list_of_urls, cookies=None):
+		"""
+		Fetches the metadata from the provided list of urls
+		returns raw api data and a dict with gallery id as key and url as value
+		"""
+		pass
+
+	@classmethod
+	def apply_metadata(cls, gallery, data, append=True):
+		"""
+		Applies fetched metadata to gallery
+		"""
+		pass
+
+	def search(self, search_string, cookies=None):
+		"""
+		Searches ehentai for the provided string or list of hashes,
+		returns a dict with search_string:[list of title,url tuples] of hits found or emtpy dict if no hits are found.
+		"""
+		pass
+
+
+class EHen(CommenHen):
+	"Fetches galleries from ehen"
+	def __init__(self):
+		self.e_url = "http://g.e-hentai.org/api.php"
+
+	@classmethod
+	def apply_metadata(cls, g, data, append = True):
+		if app_constants.USE_JPN_TITLE:
+			try:
+				title = data['title']['jpn']
+			except KeyError:
+				title = data['title']['def']
+		else:
+			title = data['title']['def']
+
+		if 'Language' in data['tags']:
+			try:
+				lang = [x for x in data['tags']['Language'] if not x == 'translated'][0].capitalize()
+			except IndexError:
+				lang = ""
+		else:
+			lang = ""
+
+		title_artist_dict = utils.title_parser(title)
+		if not append:
+			g.title = title_artist_dict['title']
+			if title_artist_dict['artist']:
+				g.artist = title_artist_dict['artist']
+			g.language = title_artist_dict['language'].capitalize()
+			if 'Artist' in data['tags']:
+				g.artist = data['tags']['Artist'][0].capitalize()
+			if lang:
+				g.language = lang
+			g.type = data['type']
+			g.pub_date = data['pub_date']
+			g.tags = data['tags']
+		else:
+			if not g.title:
+				g.title = title_artist_dict['title']
+			if not g.artist:
+				g.artist = title_artist_dict['artist']
+				if 'Artist' in data['tags']:
+					g.artist = data['tags']['Artist'][0].capitalize()
+			if not g.language:
+				g.language = title_artist_dict['language'].capitalize()
+				if lang:
+					g.language = lang
+			if not g.type or g.type == 'Other':
+				g.type = data['type']
+			if not g.pub_date:
+				g.pub_date = data['pub_date']
+			if not g.tags:
+				g.tags = data['tags']
+			else:
+				for ns in data['tags']:
+					if ns in g.tags:
+						for tag in data['tags'][ns]:
+							if not tag in g.tags[ns]:
+								g.tags[ns].append(tag)
+					else:
+						g.tags[ns] = data['tags'][ns]
+		return g
+
+	@classmethod
+	def check_login(cls, cookies):
+		"""
+		Checks if user is logged in
+		"""
+
+		if 'ipb_member_id' in cookies:
+			return True
+		else:
+			return False
 
 	def handle_error(self, response):
 		content_type = response.headers['content-type']
@@ -662,16 +721,55 @@ class CommenHen:
 			time.sleep(random.randint(10,50))
 		return True
 
-	@staticmethod
-	def parse_url(url):
+	@classmethod
+	def parse_url(cls, url):
 		"Parses url into a list of gallery id and token"
 		gallery_id = int(regex.search('(\d+)(?=\S{4,})', url).group())
 		gallery_token = regex.search('(?<=\d/)(\S+)(?=/$)', url).group()
 		parsed_url = [gallery_id, gallery_token]
 		return parsed_url
 
-	@staticmethod
-	def parse_metadata(metadata_json, dict_metadata):
+	def get_metadata(self, list_of_urls, cookies=None):
+		"""
+		Fetches the metadata from the provided list of urls
+		through the official API.
+		returns raw api data and a dict with gallery id as key and url as value
+		"""
+		assert isinstance(list_of_urls, list)
+		if len(list_of_urls) > 25:
+			log_e('More than 25 urls are provided. Aborting.')
+			return None
+
+		payload = {"method": "gdata",
+			 "gidlist": [],
+			 "namespace": 1
+			 }
+		dict_metadata = {}
+		for url in list_of_urls:
+			parsed_url = EHen.parse_url(url.strip())
+			dict_metadata[parsed_url[0]] = url # gallery id
+			payload['gidlist'].append(parsed_url)
+
+		if payload['gidlist']:
+			self.begin_lock()
+			if cookies:
+				self.check_cookie(cookies)
+				r = requests.post(self.e_url, json=payload, timeout=30, headers=self.HEADERS, cookies=self.COOKIES)
+			else:
+				r = requests.post(self.e_url, json=payload, timeout=30, headers=self.HEADERS)
+			if not self.handle_error(r):
+				return 'error'
+			self.end_lock()
+		else: return None
+		try:
+			r.raise_for_status()
+		except:
+			log.exception('Could not fetch metadata: connection error')
+			return None
+		return r.json(), dict_metadata
+
+	@classmethod
+	def parse_metadata(cls, metadata_json, dict_metadata):
 		"""
 		:metadata_json <- raw data provided by E-H API
 		:dict_metadata <- a dict with gallery id's as keys and url as value
@@ -720,53 +818,56 @@ class CommenHen:
 
 		return parsed_metadata
 
-	def get_metadata(self, list_of_urls, cookies=None):
+	@classmethod
+	def login(cls, user, password):
 		"""
-		Fetches the metadata from the provided list of urls
-		through the official API.
-		returns raw api data and a dict with gallery id as key and url as value
+		Logs into g.e-h
 		"""
-		assert isinstance(list_of_urls, list)
-		if len(list_of_urls) > 25:
-			log_e('More than 25 urls are provided. Aborting.')
-			return None
+		log_i("Attempting EH Login")
+		eh_c = {}
+		exprops = settings.ExProperties()
+		if cls.COOKIES:
+			if cls.check_login(cls.COOKIES):
+				return cls.COOKIES
+		elif exprops.cookies:
+			if cls.check_login(exprops.cookies):
+				cls.COOKIES.update(exprops.cookies)
+				return cls.COOKIES
 
-		payload = {"method": "gdata",
-			 "gidlist": [],
-			 "namespace": 1
-			 }
-		dict_metadata = {}
-		for url in list_of_urls:
-			parsed_url = CommenHen.parse_url(url.strip())
-			dict_metadata[parsed_url[0]] = url # gallery id
-			payload['gidlist'].append(parsed_url)
+		p = {
+			'CookieDate': '1',
+			'b':'d', 
+			'bt':'1-1',
+			'UserName':user,
+			'PassWord':password
+			}
 
-		if payload['gidlist']:
-			self.begin_lock()
-			if cookies:
-				self.check_cookie(cookies)
-				r = requests.post(self.e_url, json=payload, timeout=30, headers=self.HEADERS, cookies=self.COOKIES)
-			else:
-				r = requests.post(self.e_url, json=payload, timeout=30, headers=self.HEADERS)
-			if not self.handle_error(r):
-				return 'error'
-			self.end_lock()
-		else: return None
-		try:
-			r.raise_for_status()
-		except:
-			log.exception('Could not fetch metadata: connection error')
-			return None
-		return r.json(), dict_metadata
+		eh_c = requests.post('https://forums.e-hentai.org/index.php?act=Login&CODE=01', data=p).cookies.get_dict()
+		exh_c = requests.get('http://exhentai.org', cookies=eh_c).cookies.get_dict()
 
-	def eh_hash_search(self, hash_string, cookies=None):
+		eh_c.update(exh_c)
+
+		if not cls.check_login(eh_c):
+			log_w("EH login failed")
+			raise app_constants.WrongLogin
+
+		log_i("EH login succes")
+		exprops.cookies = eh_c
+		exprops.username = user
+		exprops.password = password
+		exprops.save()
+		cls.COOKIES.update(eh_c)
+
+		return eh_c
+
+	def search(self, search_string, cookies=None):
 		"""
 		Searches ehentai for the provided string or list of hashes,
 		returns a dict with hash:[list of title,url tuples] of hits found or emtpy dict if no hits are found.
 		"""
-		assert isinstance(hash_string, (str, list))
-		if isinstance(hash_string, str):
-			hash_string = [hash_string]
+		assert isinstance(search_string, (str, list))
+		if isinstance(search_string, str):
+			search_string = [search_string]
 
 		def no_hits_found_check(html):
 			"return true if hits are found"
@@ -780,7 +881,7 @@ class CommenHen:
 		hash_url = app_constants.DEFAULT_EHEN_URL + '?f_shash='
 		found_galleries = {}
 		log_i('Initiating hash search on ehentai')
-		for h in hash_string:
+		for h in search_string:
 			log_d('Hash search: {}'.format(h))
 			self.begin_lock()
 			if cookies:
@@ -817,92 +918,13 @@ class CommenHen:
 				continue
 
 		if found_galleries:
-			log_i('Found {} out of {} galleries'.format(len(found_galleries), len(hash_string)))
+			log_i('Found {} out of {} galleries'.format(len(found_galleries), len(search_string)))
 			return found_galleries
 		else:
 			log_w('Could not find any galleries')
 			return {}
 
-	def eh_gallery_parser(self, url, cookies=None):
-		"""
-		Parses an ehentai page for metadata.
-		Returns gallery dict with following metadata:
-		- title
-		- jap_title
-		- type
-		- language
-		- publication date
-		- namespace & tags
-		"""
-		self.begin_lock()
-		if cookies:
-			self.check_cookie(cookies)
-			r = requests.get(url, headers=self.HEADERS, timeout=30, cookies=self.COOKIES)
-		else:
-			r = requests.get(url, headers=self.HEADERS, timeout=30)
-		self.end_lock()
-		if not self.handle_error(r):
-			return {}
-		html = r.text
-		if len(html)<5000:
-			log_w("Length of HTML response is only {} => Failure".format(len(html)))
-			return {}
-
-		gallery = {}
-		soup = BeautifulSoup(html)
-
-		#title
-		div_gd2 = soup.body.find('div', id='gd2')
-		# normal
-		title = div_gd2.find('h1', id='gn').text.strip()
-		# japanese
-		jap_title = div_gd2.find('h1', id='gj').text.strip()
-
-		gallery['title'] = title
-		gallery['jap_title'] = jap_title
-
-		# Type
-		div_gd3 = soup.body.find('div', id='gd3')
-		gallery['type'] = div_gd3.find('img').get('alt')
-
-		# corrects name
-		if gallery['type'] == 'artistcg':
-			gallery['type'] = 'artist cg sets'
-		elif gallery['type'] == 'imageset':
-			gallery['type'] = 'image sets'
-		elif gallery['type'] == 'gamecg':
-			gallery['type'] = 'game cg sets'
-		elif gallery['type'] == 'asianporn':
-			gallery['type'] = 'asian porn'
-
-		# Language
-		lang_tag = soup.find('td', text='Language:').next_sibling
-		lang = lang_tag.text.split(' ')[0]
-		gallery['language'] = lang
-
-		# Publication date
-		pub_tag = soup.find('td', text='Posted:').next_sibling
-		pub_date = datetime.strptime(pub_tag.text.split(' ')[0], '%Y-%m-%d').date()
-		gallery['published'] = pub_date
-
-		# Namespace & Tags
-		found_tags = {}
-		def tags_in_ns(tags):
-			return not tags.has_attr('class')
-		tag_table = soup.find('div', id='taglist').next_element
-		namespaces = tag_table.find_all('tr')
-		for ns in namespaces:
-			namespace = ns.next_element.text.replace(':', '')
-			namespace = namespace.capitalize()
-			found_tags[namespace] = []
-			tags = ns.find(tags_in_ns).find_all('div')
-			for tag in tags:
-				found_tags[namespace].append(tag.text)
-
-		gallery['tags'] = found_tags
-		return gallery
-
-class ExHen(CommenHen):
+class ExHen(EHen):
 	"Fetches gallery metadata from exhen"
 	def __init__(self, cookies):
 		self.cookies = cookies
@@ -911,14 +933,7 @@ class ExHen(CommenHen):
 	def get_metadata(self, list_of_urls):
 		return super().get_metadata(list_of_urls, self.cookies)
 
-	def eh_gallery_parser(self, url):
-		return super().eh_gallery_parser(url, self.cookies)
+	def search(self, hash_string):
+		return super().search(hash_string, self.cookies)
 
-	def eh_hash_search(self, hash_string):
-		return super().eh_hash_search(hash_string, self.cookies)
-
-class EHen(CommenHen):
-	"Fetches galleries from ehen"
-	def __init__(self):
-		self.e_url = "http://g.e-hentai.org/api.php"
 

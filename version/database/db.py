@@ -325,12 +325,14 @@ class DBBase:
 		"Useful when modifying for a large amount of data"
 		cls._AUTO_COMMIT = False
 		cls.execute(cls, "BEGIN TRANSACTION")
+		print("STARTED DB OPTIMIZE")
 
 	@classmethod
 	def end(cls):
 		"Called to commit and end transaction"
 		cls._AUTO_COMMIT = True
 		cls._DB_CONN.commit()
+		print("ENDED DB OPTIMIZE")
 
 	def execute(self, *args):
 		"Same as cursor.execute"
@@ -339,9 +341,21 @@ class DBBase:
 		log_d('DB Query: {}'.format(args).encode(errors='ignore'))
 		if self._AUTO_COMMIT:
 			with self._DB_CONN:
-				return self._DB_CONN.execute(*args)
+				try:
+					return self._DB_CONN.execute(*args)
+				except:
+					print("with autocommit")
+					print(args)
+					print(type(args[1][0]))
+					raise RuntimeError
 		else:
-			return self._DB_CONN.execute(*args)
+			try:
+				return self._DB_CONN.execute(*args)
+			except:
+				print("no autocommit")
+				print(args)
+				print(type(args[1][0]))
+				raise RuntimeError
 	
 	def executemany(self, *args):
 		"Same as cursor.executemany"

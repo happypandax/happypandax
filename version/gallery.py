@@ -534,6 +534,185 @@ class GalleryModel(QAbstractTableModel):
 		self.db_emitter.fetch_more()
 
 class CustomDelegate(QStyledItemDelegate):
+	def __init__(self, parent=None):
+		super().__init__(parent)
+
+	def text_layout(self, text, width, font, font_metrics, alignment=Qt.AlignCenter):
+		"Lays out wrapped text"
+		text_option = QTextOption(alignment)
+		text_option.setUseDesignMetrics(True)
+		text_option.setWrapMode(QTextOption.WordWrap)
+		layout = QTextLayout(text, font)
+		layout.setTextOption(text_option)
+		leading = font_metrics.leading()
+		height = 0
+		layout.setCacheEnabled(True)
+		layout.beginLayout()
+		while True:
+			line = layout.createLine()
+			if not line.isValid():
+				break
+			line.setLineWidth(width)
+			height += leading
+			line.setPosition(QPointF(0, height))
+			height += line.height()
+		layout.endLayout()
+		return layout
+
+class ListDelegate(CustomDelegate):
+	"A custom delegate for the model/view framework"
+
+	def __init__(self, parent):
+		super().__init__(parent)
+		self.dynamic_width = app_constants.LISTBOX_W_SIZE
+		self.dynamic_height = app_constants.LISTBOX_H_SIZE
+		self.parent_font_m = parent.fontMetrics()
+		self.parent_font = parent.font()
+		self.title_font = QFont()
+		self.title_font.setPointSize(10)
+		self.title_font.setBold(True)
+		self.artist_font = QFont()
+		self.artist_font.setPointSize(9)
+		self.artist_font_m = QFontMetrics(self.artist_font)
+		self.title_font_m = QFontMetrics(self.title_font)
+
+		self.pic_width = 122
+		self.pic_height = 172
+		self._pic_margin = 10
+
+	def paint(self, painter, option, index):
+		assert isinstance(painter, QPainter)
+		if index.data(Qt.UserRole+1):
+			c_gallery = index.data(Qt.UserRole+1)
+
+			start_x = x = option.rect.x()
+			y = option.rect.y()
+			w = option.rect.width()
+			h = option.rect.height()
+
+			if app_constants.HIGH_QUALITY_THUMBS:
+				painter.setRenderHint(QPainter.SmoothPixmapTransform)
+			painter.setRenderHint(QPainter.Antialiasing)
+
+			# border
+			painter.setPen(QColor("#A6A6B7"))
+			painter.drawRect(option.rect)
+
+			# background
+			painter.setBrush(QBrush(QColor("#464646")))
+			painter.drawRect(option.rect)
+
+			# pic
+			pic_rect = QRect(x+self._pic_margin, y+self._pic_margin, self.pic_width, self.pic_height)
+			painter.setBrush(QBrush(QColor("white")))
+			painter.drawRect(pic_rect)
+
+			# remaining rect with left margin
+			star_x = x + w - self._pic_margin
+			x = pic_rect.x() + pic_rect.width() + self._pic_margin*2
+			w -= (pic_rect.width() + self._pic_margin)
+
+			# title & artist
+			title_margin = 40
+			title_top_margin = 15
+			title_x = x + title_margin
+			title_y = y + title_top_margin
+			title_width = w - title_margin
+			title_layout = self.text_layout(c_gallery.title, title_width-title_margin, self.title_font, self.title_font_m)
+			painter.setPen(QColor("white"))
+			title_layout.draw(painter, QPointF(title_x, title_y))
+
+			artist_layout = self.text_layout(c_gallery.artist, title_width-title_margin, self.artist_font, self.artist_font_m)
+			painter.setPen(QColor("#A6A6B7"))
+			title_rect = title_layout.boundingRect()
+			artist_y = title_y+title_rect.height()
+			artist_layout.draw(painter, QPointF(title_x, artist_y))
+
+			# meta info
+			start_y = y + title_rect.height()+title_top_margin+artist_layout.boundingRect().height()
+			txt_height = painter.fontMetrics().height()
+			txt_list = self.gallery_info(c_gallery)
+			for g_data in txt_list:
+				painter.drawText(x, start_y, g_data)
+				start_y += txt_height + 3
+			# descr
+			descr_y = artist_y + artist_layout.boundingRect().height()
+			descr_x = title_x + (painter.fontMetrics().width(txt_list[6])*1.1)
+			descr_layout = self.text_layout(c_gallery.info, title_width, painter.font(), painter.fontMetrics(), Qt.AlignLeft)
+			descr_layout.draw(painter, QPointF(descr_x, descr_y))
+
+			# tags
+			tags_y = descr_y + descr_layout.boundingRect().height()
+			tags_h = painter.fontMetrics().height() * 1.1
+			tags_y += tags_h
+
+			for ns in c_gallery.tags:
+				ns_text = "{}:".format(ns)
+				painter.drawText(descr_x, tags_y, ns_text)
+				tag_x = descr_x + painter.fontMetrics().width(ns_text) * 1.2
+				tags_txt = self.tags_text(c_gallery.tags[ns])
+				tags_layout = self.text_layout(tags_txt, w-(tag_x*1.1 - x), painter.font(), painter.fontMetrics(), Qt.AlignLeft)
+				tags_layout.draw(painter, QPointF(tag_x, tags_y-tags_h*0.7))
+				tags_y += tags_layout.boundingRect().height()
+
+			# fav star
+			if c_gallery.fav:
+				star_pix = QPixmap(app_constants.STAR_PATH)
+				star_x -= star_pix.width()
+				painter.drawPixmap(star_x, y+5, star_pix)
+
+		else:
+			return super().paint(painter, option, index)
+
+	def tags_text(self, tag_list):
+		tag_txt = ""
+		l = len(tag_list)
+		for n, tag in enumerate(tag_list, 1):
+			if n == l:
+				tag_txt += tag
+			else:
+				tag_txt += "{}, ".format(tag)
+		return tag_txt
+
+	def gallery_info(self, c_gallery):
+		txt_list = ["Type: {}".format(c_gallery.type), "Chapters: {}".format(c_gallery.chapters.count()),
+			   "Language: {}".format(c_gallery.language), "Pages: {}".format(c_gallery.chapters.pages()),
+			   "Status: {}".format(c_gallery.status), "Added: {}".format(c_gallery.date_added.strftime('%d %b %Y')),
+			   "Published: {}".format(c_gallery.pub_date.strftime('%d %b %Y') if c_gallery.pub_date else "Unknown"),
+			   "Last read: {}".format('{} ago'.format(utils.get_date_age(c_gallery.last_read)) if c_gallery.last_read else "Never!")]
+		return txt_list
+
+	def sizeHint(self, option, index):
+		g = index.data(Qt.UserRole+1)
+		margin = 10
+		w = option.rect.width()-(self.pic_width+self._pic_margin*2+
+						   self.parent_font_m.width("Added: {}".format(g.date_added.strftime('%d %b %Y'))))
+		w = abs(w)
+		h = self.text_layout(g.info, w, self.parent_font, self.parent_font_m, Qt.AlignLeft).boundingRect().height()
+		for ns in g.tags:
+			tags = g.tags[ns]
+			txt = self.tags_text(tags)
+			txt_layout = self.text_layout(txt, w, self.parent_font, self.parent_font_m, Qt.AlignLeft)
+			h += txt_layout.boundingRect().height()
+
+		h2 = 0
+		title_layout = self.text_layout(g.title, w, self.title_font, self.title_font_m)
+		h2 += title_layout.boundingRect().height() + self.title_font_m.height()
+		artist_layout = self.text_layout(g.artist, w, self.artist_font, self.artist_font_m)
+		h2 += artist_layout.boundingRect().height() + self.artist_font_m.height()
+		h2 += self.parent_font_m.height()*len(self.gallery_info(g))
+		print("h:", h, "h2", h2)
+		if h > app_constants.LISTBOX_H_SIZE:
+			dynamic_height = h - self.title_font_m.height()
+		else:
+			dynamic_height = app_constants.LISTBOX_H_SIZE
+
+		if h2 > app_constants.LISTBOX_H_SIZE > h:
+			dynamic_height = h2 + self.title_font_m.height()
+
+		return QSize(self.dynamic_width, dynamic_height)
+
+class GridDelegate(CustomDelegate):
 	"A custom delegate for the model/view framework"
 
 	POPUP = pyqtSignal()
@@ -543,7 +722,7 @@ class CustomDelegate(QStyledItemDelegate):
 	G_NORMAL, G_DOWNLOAD = range(2)
 
 	def __init__(self, parent=None):
-		super().__init__()
+		super().__init__(parent)
 		QPixmapCache.setCacheLimit(app_constants.THUMBNAIL_CACHE_SIZE[0]*
 							 app_constants.THUMBNAIL_CACHE_SIZE[1])
 		self._painted_indexes = {}
@@ -843,34 +1022,88 @@ class CustomDelegate(QStyledItemDelegate):
 		else:
 			super().paint(painter, option, index)
 
-	def text_layout(self, text, width, font, font_metrics):
-		"Lays out wrapped text"
-		text_option = QTextOption(Qt.AlignCenter)
-		text_option.setUseDesignMetrics(True)
-		text_option.setWrapMode(QTextOption.WordWrap)
-		layout = QTextLayout(text, font)
-		layout.setTextOption(text_option)
-		leading = font_metrics.leading()
-		height = 0
-		layout.setCacheEnabled(True)
-		layout.beginLayout()
-		while True:
-			line = layout.createLine()
-			if not line.isValid():
-				break
-			line.setLineWidth(width)
-			height += leading
-			line.setPosition(QPointF(0, height))
-			height += line.height()
-		layout.endLayout()
-		return layout
-
 	def sizeHint(self, option, index):
 		return QSize(self.W, self.H)
 
+class MangaTableView(QListView):
+	"""
+	"""
+	STATUS_BAR_MSG = pyqtSignal(str)
+	SERIES_DIALOG = pyqtSignal()
+
+	def __init__(self, parent=None):
+		super().__init__(parent)
+		self.parent_widget = parent
+		self.setViewMode(self.IconMode)
+		#self.H = app_constants.GRIDBOX_H_SIZE
+		#self.W = app_constants.GRIDBOX_W_SIZE + (app_constants.SIZE_FACTOR//5)
+		self.setResizeMode(self.Adjust)
+		#self.setIconSize(QSize(app_constants.THUMB_W_SIZE-app_constants.SIZE_FACTOR,
+		#				 app_constants.THUMB_H_SIZE-app_constants.SIZE_FACTOR))
+		# all items have the same size (perfomance)
+		#self.setUniformItemSizes(True)
+		# improve scrolling
+		self.setVerticalScrollMode(self.ScrollPerPixel)
+		self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+		self.setLayoutMode(self.SinglePass)
+		self.setMouseTracking(True)
+		#self.sort_model = SortFilterModel()
+		#self.sort_model.setDynamicSortFilter(True)
+		#self.sort_model.setFilterCaseSensitivity(Qt.CaseInsensitive)
+		#self.sort_model.setSortLocaleAware(True)
+		#self.sort_model.setSortCaseSensitivity(Qt.CaseInsensitive)
+		self.manga_delegate = ListDelegate(parent)
+		self.setItemDelegate(self.manga_delegate)
+		self.setSelectionBehavior(self.SelectItems)
+		self.setSelectionMode(self.ExtendedSelection)
+		#self.gallery_model = GalleryModel(parent)
+		#self.gallery_model.db_emitter.DONE.connect(self.sort_model.setup_search)
+		#self.sort_model.change_model(self.gallery_model)
+		#self.sort_model.sort(0)
+		#self.sort_model.ROWCOUNT_CHANGE.connect(self.gallery_model.ROWCOUNT_CHANGE.emit)
+		#self.setModel(self.sort_model)
+		#self.SERIES_DIALOG.connect(self.spawn_dialog)
+		self.doubleClicked.connect(lambda idx: idx.data(Qt.UserRole+1).chapters[0].open())
+		self.setViewportMargins(0,0,0,0)
+
+		self.gallery_window = misc.GalleryMetaWindow(parent if parent else self)
+		self.gallery_window.arrow_size = (10,10,)
+		self.clicked.connect(lambda idx: self.gallery_window.show_gallery(idx, self))
+
+		self.current_sort = app_constants.CURRENT_SORT
+		#self.sort(self.current_sort)
+		if app_constants.DEBUG:
+			def debug_print(a):
+				try:
+					print(a.data(Qt.UserRole+1))
+				except:
+					print("{}".format(a.data(Qt.UserRole+1)).encode(errors='ignore'))
+
+			self.clicked.connect(debug_print)
+
+		self.k_scroller = QScroller.scroller(self)
+
+	def resizeEvent(self, event):
+		from PyQt5.QtGui import QResizeEvent
+		width = event.size().width()
+		if width >= app_constants.LISTBOX_W_SIZE:
+			possible = self.width()//app_constants.LISTBOX_W_SIZE
+			print(possible)
+			new_width = self.width()//possible-9 # 9 because.. reasons
+
+			self.manga_delegate.dynamic_width = new_width
+			#self.setGridSize(QSize(new_width, app_constants.LISTBOX_H_SIZE))
+			#self.setIconSize(QSize(new_width, app_constants.LISTBOX_H_SIZE))
+		else:
+			self.manga_delegate.dynamic_width = width
+			#self.setGridSize(QSize(width, app_constants.LISTBOX_H_SIZE))
+
+		return super().resizeEvent(event)
+
+
 class MangaView(QListView):
 	"""
-	TODO: (zoom-in/zoom-out) mousekeys
+	Grid View
 	"""
 
 	STATUS_BAR_MSG = pyqtSignal(str)
@@ -898,7 +1131,7 @@ class MangaView(QListView):
 		self.sort_model.setFilterCaseSensitivity(Qt.CaseInsensitive)
 		self.sort_model.setSortLocaleAware(True)
 		self.sort_model.setSortCaseSensitivity(Qt.CaseInsensitive)
-		self.manga_delegate = CustomDelegate(parent)
+		self.manga_delegate = GridDelegate(parent)
 		self.setItemDelegate(self.manga_delegate)
 		self.setSelectionBehavior(self.SelectItems)
 		self.setSelectionMode(self.ExtendedSelection)
@@ -1124,7 +1357,7 @@ class MangaView(QListView):
 		index = self.indexAt(event.pos())
 		index = self.sort_model.mapToSource(index)
 
-		if index.data(Qt.UserRole+1) and index.data(Qt.UserRole+1).state == CustomDelegate.G_DOWNLOAD:
+		if index.data(Qt.UserRole+1) and index.data(Qt.UserRole+1).state == GridDelegate.G_DOWNLOAD:
 			event.ignore()
 			return
 
@@ -1133,7 +1366,7 @@ class MangaView(QListView):
 		select_indexes = []
 		for idx in s_indexes:
 			if idx.isValid() and idx.column() == 0:
-				if not idx.data(Qt.UserRole+1).state == CustomDelegate.G_DOWNLOAD:
+				if not idx.data(Qt.UserRole+1).state == GridDelegate.G_DOWNLOAD:
 					select_indexes.append(self.sort_model.mapToSource(idx))
 		if len(select_indexes) > 1:
 			selected = True
@@ -1214,96 +1447,96 @@ class MangaView(QListView):
 		super().updateGeometries()
 		self.verticalScrollBar().setSingleStep(app_constants.SCROLL_SPEED)
 
-class MangaTableView(QTableView):
-	STATUS_BAR_MSG = pyqtSignal(str)
-	SERIES_DIALOG = pyqtSignal()
+#class MangaTableView(QTableView):
+#	STATUS_BAR_MSG = pyqtSignal(str)
+#	SERIES_DIALOG = pyqtSignal()
 
-	def __init__(self, parent=None):
-		super().__init__(parent)
-		# options
-		self.parent_widget = parent
-		self.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-		self.setSelectionBehavior(self.SelectRows)
-		self.setSelectionMode(self.ExtendedSelection)
-		self.setShowGrid(True)
-		self.setSortingEnabled(True)
-		h_header = self.horizontalHeader()
-		h_header.setSortIndicatorShown(True)
-		v_header = self.verticalHeader()
-		v_header.sectionResizeMode(QHeaderView.Fixed)
-		v_header.setDefaultSectionSize(24)
-		v_header.hide()
-		palette = self.palette()
-		palette.setColor(palette.Highlight, QColor(88, 88, 88, 70))
-		palette.setColor(palette.HighlightedText, QColor('black'))
-		self.setPalette(palette)
-		self.setIconSize(QSize(0,0))
-		self.doubleClicked.connect(lambda idx: idx.data(Qt.UserRole+1).chapters[0].open())
-		self.grabGesture(Qt.SwipeGesture)
-		self.k_scroller = QScroller.scroller(self)
+#	def __init__(self, parent=None):
+#		super().__init__(parent)
+#		# options
+#		self.parent_widget = parent
+#		self.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+#		self.setSelectionBehavior(self.SelectRows)
+#		self.setSelectionMode(self.ExtendedSelection)
+#		self.setShowGrid(True)
+#		self.setSortingEnabled(True)
+#		h_header = self.horizontalHeader()
+#		h_header.setSortIndicatorShown(True)
+#		v_header = self.verticalHeader()
+#		v_header.sectionResizeMode(QHeaderView.Fixed)
+#		v_header.setDefaultSectionSize(24)
+#		v_header.hide()
+#		palette = self.palette()
+#		palette.setColor(palette.Highlight, QColor(88, 88, 88, 70))
+#		palette.setColor(palette.HighlightedText, QColor('black'))
+#		self.setPalette(palette)
+#		self.setIconSize(QSize(0,0))
+#		self.doubleClicked.connect(lambda idx: idx.data(Qt.UserRole+1).chapters[0].open())
+#		self.grabGesture(Qt.SwipeGesture)
+#		self.k_scroller = QScroller.scroller(self)
 
-	# display tooltip only for elided text
-	#def viewportEvent(self, event):
-	#	if event.type() == QEvent.ToolTip:
-	#		h_event = QHelpEvent(event)
-	#		index = self.indexAt(h_event.pos())
-	#		if index.isValid():
-	#			size_hint = self.itemDelegate(index).sizeHint(self.viewOptions(),
-	#											  index)
-	#			rect = QRect(0, 0, size_hint.width(), size_hint.height())
-	#			rect_visual = self.visualRect(index)
-	#			if rect.width() <= rect_visual.width():
-	#				QToolTip.hideText()
-	#				return True
-	#	return super().viewportEvent(event)
+#	# display tooltip only for elided text
+#	#def viewportEvent(self, event):
+#	#	if event.type() == QEvent.ToolTip:
+#	#		h_event = QHelpEvent(event)
+#	#		index = self.indexAt(h_event.pos())
+#	#		if index.isValid():
+#	#			size_hint = self.itemDelegate(index).sizeHint(self.viewOptions(),
+#	#											  index)
+#	#			rect = QRect(0, 0, size_hint.width(), size_hint.height())
+#	#			rect_visual = self.visualRect(index)
+#	#			if rect.width() <= rect_visual.width():
+#	#				QToolTip.hideText()
+#	#				return True
+#	#	return super().viewportEvent(event)
 
-	def keyPressEvent(self, event):
-		if event.key() == Qt.Key_Return:
-			s_idx = self.selectionModel().selectedRows()
-			if s_idx:
-				for idx in s_idx:
-					self.doubleClicked.emit(idx)
-		return super().keyPressEvent(event)
+#	def keyPressEvent(self, event):
+#		if event.key() == Qt.Key_Return:
+#			s_idx = self.selectionModel().selectedRows()
+#			if s_idx:
+#				for idx in s_idx:
+#					self.doubleClicked.emit(idx)
+#		return super().keyPressEvent(event)
 
-	def remove_gallery(self, index_list, local=False):
-		self.parent_widget.manga_list_view.remove_gallery(index_list, local)
+#	def remove_gallery(self, index_list, local=False):
+#		self.parent_widget.manga_list_view.remove_gallery(index_list, local)
 
-	def contextMenuEvent(self, event):
-		handled = False
-		index = self.indexAt(event.pos())
-		index = self.sort_model.mapToSource(index)
+#	def contextMenuEvent(self, event):
+#		handled = False
+#		index = self.indexAt(event.pos())
+#		index = self.sort_model.mapToSource(index)
 
-		if index.data(Qt.UserRole+1) and index.data(Qt.UserRole+1).state == CustomDelegate.G_DOWNLOAD:
-			event.ignore()
-			return
+#		if index.data(Qt.UserRole+1) and index.data(Qt.UserRole+1).state == CustomDelegate.G_DOWNLOAD:
+#			event.ignore()
+#			return
 
-		selected = False
-		s_indexes = self.selectionModel().selectedRows()
-		select_indexes = []
-		for idx in s_indexes:
-			if idx.isValid():
-				if not idx.data(Qt.UserRole+1).state == CustomDelegate.G_DOWNLOAD:
-					select_indexes.append(self.sort_model.mapToSource(idx))
-		if len(select_indexes) > 1:
-			selected = True
+#		selected = False
+#		s_indexes = self.selectionModel().selectedRows()
+#		select_indexes = []
+#		for idx in s_indexes:
+#			if idx.isValid():
+#				if not idx.data(Qt.UserRole+1).state == CustomDelegate.G_DOWNLOAD:
+#					select_indexes.append(self.sort_model.mapToSource(idx))
+#		if len(select_indexes) > 1:
+#			selected = True
 
-		if index.isValid():
-			if selected:
-				menu = misc.GalleryMenu(self, 
-							index,
-							self.parent_widget.manga_list_view.gallery_model,
-							self.parent_widget, select_indexes)
-			else:
-				menu = misc.GalleryMenu(self, index, self.gallery_model,
-							   self.parent_widget)
-			handled = True
+#		if index.isValid():
+#			if selected:
+#				menu = misc.GalleryMenu(self, 
+#							index,
+#							self.parent_widget.manga_list_view.gallery_model,
+#							self.parent_widget, select_indexes)
+#			else:
+#				menu = misc.GalleryMenu(self, index, self.gallery_model,
+#							   self.parent_widget)
+#			handled = True
 
-		if handled:
-			menu.exec_(event.globalPos())
-			event.accept()
-			del menu
-		else:
-			event.ignore()
+#		if handled:
+#			menu.exec_(event.globalPos())
+#			event.accept()
+#			del menu
+#		else:
+#			event.ignore()
 
 class CommonView:
 	"""
