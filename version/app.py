@@ -171,19 +171,24 @@ class AppWindow(QMainWindow):
 
 	def initUI(self):
 		self.center = QWidget()
-		self.display = QStackedLayout()
-		self._main_layout = QVBoxLayout()
+		self.splitter = misc.Splitter(Qt.Horizontal, self.center)
+		self.display_widget = QWidget(self.center)
+		self.display_layout = QStackedLayout(self.display_widget)
+		self._main_layout = QHBoxLayout(self.center)
 		self._main_layout.setSpacing(0)
 		self._main_layout.setContentsMargins(0,0,0,0)
-		self._main_layout.addLayout(self.display)
-		self.center.setLayout(self._main_layout)
+		self._main_layout.addWidget(self.splitter)
+
 		# init the manga view variables
 		self.manga_display()
+
+		self.sidebar_list = misc_db.SideBarWidget(self)
+		self.splitter.addWidget(self.sidebar_list)
+		self.splitter.addWidget(self.display_widget)
 		log_d('Create manga display: OK')
 		# init the chapter view variables
-		#self.chapter_display()
-		self.m_l_view_index = self.display.addWidget(self.manga_list_view)
-		self.m_t_view_index = self.display.addWidget(self.manga_table_view)
+		self.m_l_view_index = self.display_layout.addWidget(self.manga_list_view)
+		self.m_t_view_index = self.display_layout.addWidget(self.manga_table_view)
 		self.download_window = io_misc.GalleryDownloader(self)
 		self.download_window.hide()
 		# init toolbar
@@ -192,13 +197,6 @@ class AppWindow(QMainWindow):
 		# init status bar
 		self.init_stat_bar()
 		log_d('Create statusbar: OK')
-
-		self.tags_treeview = None
-		if app_constants.TAGS_TREEVIEW_ON_START:
-			def tags_tree_none(): self.tags_treeview = None
-			self.tags_treeview = misc_db.DBOverview(self, True)
-			self.tags_treeview.about_to_close.connect(tags_tree_none)
-			self.tags_treeview.show()
 
 		self.system_tray = misc.SystemTray(QIcon(app_constants.APP_ICO_PATH), self)
 		app_constants.SYSTEM_TRAY = self.system_tray
@@ -608,7 +606,7 @@ class AppWindow(QMainWindow):
 		self.grid_toggle_l_icon = QIcon(app_constants.LIST_PATH)
 		self.grid_toggle = QToolButton()
 		self.grid_toggle.setShortcut(togle_view_k)
-		if self.display.currentIndex() == self.m_l_view_index:
+		if self.display_layout.currentIndex() == self.m_l_view_index:
 			self.grid_toggle.setIcon(self.grid_toggle_l_icon)
 		else:
 			self.grid_toggle.setIcon(self.grid_toggle_g_icon)
@@ -718,7 +716,7 @@ class AppWindow(QMainWindow):
 		self.addToolBar(self.toolbar)
 
 	def get_current_view(self):
-		if self.display.currentIndex() == self.m_l_view_index:
+		if self.display_layout.currentIndex() == self.m_l_view_index:
 			return self.manga_list_view
 		else:
 			return self.manga_table_view
@@ -727,11 +725,11 @@ class AppWindow(QMainWindow):
 		"""
 		Toggles the current display view
 		"""
-		if self.display.currentIndex() == self.m_l_view_index:
-			self.display.setCurrentIndex(self.m_t_view_index)
+		if self.display_layout.currentIndex() == self.m_l_view_index:
+			self.display_layout.setCurrentIndex(self.m_t_view_index)
 			self.grid_toggle.setIcon(self.grid_toggle_g_icon)
 		else:
-			self.display.setCurrentIndex(self.m_l_view_index)
+			self.display_layout.setCurrentIndex(self.m_l_view_index)
 			self.grid_toggle.setIcon(self.grid_toggle_l_icon)
 
 	# TODO: Improve this so that it adds to the gallery dialog,
@@ -1128,8 +1126,6 @@ class AppWindow(QMainWindow):
 		except:
 			log.exception('Flush temp on exit: FAIL')
 
-		if self.tags_treeview:
-			self.tags_treeview.close()
 		self.download_window.close()
 
 		# check if there is db activity

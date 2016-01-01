@@ -39,7 +39,8 @@ from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QColorDialog, QScrollArea, QSystemTrayIcon,
 							 QMenu, QGraphicsBlurEffect, QActionGroup,
 							 QCommonStyle, QApplication, QTableWidget,
-							 QTableWidgetItem, QTableView)
+							 QTableWidgetItem, QTableView, QSplitter,
+							 QSplitterHandle)
 
 from utils import (tag_to_string, tag_to_dict, title_parser, ARCHIVE_FILES,
 					 ArchiveFile, IMG_FILES)
@@ -83,6 +84,56 @@ def clearLayout(layout):
 def create_animation(parent, prop):
 	p_array = QByteArray().append(prop)
 	return QPropertyAnimation(parent, p_array)
+
+class SplitterHandle(QSplitterHandle):
+	"Custom QSplitterHandle"
+	IN, OUT = range(2)
+	def __init__(self, orentation, parent):
+		super().__init__(orentation, parent)
+		self.current_arrow = self.IN
+		self.arrow_height = 20
+
+	def paintEvent(self, event):
+		rect = event.rect()
+		x, y, w, h = rect.getRect()
+		painter = QPainter(self)
+		painter.setPen(QColor("white"))
+		painter.setBrush(QBrush(QColor(0,0,0,100)))
+		painter.fillRect(rect, QColor(0,0,0,100))
+
+		arrow_points = []
+
+		# for horizontal
+		if self.current_arrow == self.IN:
+			arrow_1 = QPointF(x+w, h/2-self.arrow_height/2)
+			middle_point = QPointF(x, h/2)
+			arrow_2 = QPointF(x+w, h/2+self.arrow_height/2)
+		else:
+			arrow_1 = QPointF(x, h/2-self.arrow_height/2)
+			middle_point = QPointF(x+w, h/2)
+			arrow_2 = QPointF(x, h/2+self.arrow_height/2)
+
+		arrow_points.append(arrow_1)
+		arrow_points.append(middle_point)
+		arrow_points.append(arrow_2)
+		painter.drawPolygon(QPolygonF(arrow_points))
+
+	def mousePressEvent(self, event):
+		if event.button() == Qt.LeftButton:
+			if self.current_arrow == self.IN:
+				self.current_arrow = self.OUT
+			else:
+				self.current_arrow = self.IN
+			self.update()
+		return super().mousePressEvent(event)
+
+class Splitter(QSplitter):
+	"Custom QSplitter"
+	def __init__(self, orentation, parent):
+		super().__init__(orentation, parent)
+
+	def createHandle(self):
+		return SplitterHandle(self.orientation(), self)
 
 class Line(QFrame):
 	"'v' for vertical line or 'h' for horizontail line, color is hex string"
@@ -1122,7 +1173,6 @@ class BasePopup(TransparentWidget):
 		main_layout = QVBoxLayout()
 		self.main_widget = QFrame()
 		self.main_widget.setFrameStyle(QFrame.StyledPanel)
-		self.main_widget.setFrameShape(QFrame.StyledPanel)
 		self.setLayout(main_layout)
 		main_layout.addWidget(self.main_widget)
 		self.generic_buttons = QHBoxLayout()

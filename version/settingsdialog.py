@@ -227,9 +227,6 @@ class SettingsDialog(QWidget):
 		self.g_data_fixer_title.setChecked(app_constants.GALLERY_DATA_FIX_TITLE)
 		self.g_data_fixer_artist.setChecked(app_constants.GALLERY_DATA_FIX_ARTIST)
 
-		# About / DB Overview
-		self.tags_treeview_on_start.setChecked(app_constants.TAGS_TREEVIEW_ON_START)
-
 	def accept(self):
 		set = settings.set
 
@@ -1031,29 +1028,8 @@ class SettingsDialog(QWidget):
 		# About / DB Overview
 		about_db_overview, about_db_overview_m_l = new_tab('DB Overview', about)
 		about_stats_tab_widget = misc_db.DBOverview(self.parent_widget)
-		about_db_overview_options = QHBoxLayout()
-		self.tags_treeview_on_start = QCheckBox('Start with application', about_db_overview)
-		make_window_btn = QPushButton('Open in window', about_db_overview)
-		make_window_btn.adjustSize()
-		make_window_btn.setFixedWidth(make_window_btn.width())
-		about_db_overview_options.addWidget(self.tags_treeview_on_start)
-		about_db_overview_options.addWidget(make_window_btn)
-		def mk_btn_false():
-			try:
-				make_window_btn.setDisabled(False)
-			except RuntimeError:
-				pass
-		def make_tags_treeview_window():
-			self.parent_widget.tags_treeview = misc_db.DBOverview(self.parent_widget, True)
-			self.parent_widget.tags_treeview.about_to_close.connect(mk_btn_false)
-			make_window_btn.setDisabled(True)
-			self.parent_widget.tags_treeview.show()
-		if self.parent_widget.tags_treeview:
-			self.parent_widget.tags_treeview.about_to_close.connect(mk_btn_false)
-			make_window_btn.setDisabled(True)
-		make_window_btn.clicked.connect(make_tags_treeview_window)
-		about_db_overview_m_l.addRow(about_db_overview_options)
 		about_db_overview_m_l.addRow(about_stats_tab_widget)
+		about_db_overview.setEnabled(False)
 
 		# About / Troubleshooting
 		about_troubleshoot_page = QWidget()

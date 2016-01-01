@@ -6,10 +6,6 @@ AppWindow {
 	background-color: #F2F2F2;
 }
 
-QWidget#chapter_main {
-	background-color: #464646;
-}
-
 QLabel#image_box {
 	border:5px solid #ffd800;
 }
@@ -27,7 +23,7 @@ QLabel#author {
 	font-weight:lighter;
 }
 
-AppWindow > QToolBar, QStatusBar {
+AppWindow > QToolBar, QStatusBar, SideBarWidget {
 	background-color: #464646;
 	border: none;
 }

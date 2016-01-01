@@ -20,7 +20,8 @@
 from PyQt5.QtWidgets import (QTreeWidget, QTreeWidgetItem, QWidget,
 							 QVBoxLayout, QTabWidget, QAction, QGraphicsScene,
 							 QSizePolicy, QMenu, QAction, QApplication,
-							 QListWidget)
+							 QListWidget, QHBoxLayout, QPushButton, QStackedLayout,
+							 QFrame, QSizePolicy)
 from PyQt5.QtCore import (Qt, QTimer, pyqtSignal)
 from PyQt5.QtGui import QIcon
 
@@ -121,16 +122,6 @@ class DBOverview(QWidget):
 		main_layout = QVBoxLayout(self)
 		tabbar = QTabWidget(self)
 		main_layout.addWidget(tabbar)
-
-		# Tags tree
-		self.tags_tree = TagsTreeView(parent=self, app_window=self.parent_widget)
-		self.tags_tree.setHeaderHidden(True)
-		tabbar.addTab(self.tags_tree, 'Namespace && Tags')
-		self.tags_layout = QVBoxLayout(self.tags_tree)
-		if parent.manga_list_view.gallery_model.db_emitter._finished:
-			self.setup_tags()
-		else:
-			parent.manga_list_view.gallery_model.db_emitter.DONE.connect(self.setup_tags)
 		
 		# Tags stats
 		self.tags_stats = QListWidget(self)
@@ -146,6 +137,52 @@ class DBOverview(QWidget):
 		self.setWindowTitle('DB Overview')
 		self.setWindowIcon(QIcon(app_constants.APP_ICO_PATH))
 
+	def setup_stats(self):
+		pass
+
+	def setup_about_db(self):
+		pass
+
+	def closeEvent(self, event):
+		self.about_to_close.emit()
+		return super().closeEvent(event)
+
+import misc
+class SideBarWidget(QFrame):
+	"""
+	"""
+	def __init__(self, parent):
+		super().__init__(parent)
+		self.parent_widget = parent
+		self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Preferred)
+		#self.setContentsMargins(-10,0,0,0)
+		self.main_layout = QVBoxLayout(self)
+		self.main_buttons_layout = QHBoxLayout()
+		self.main_layout.addLayout(self.main_buttons_layout)
+
+		# buttons
+		self.artist_btn = QPushButton("Artist")
+		self.ns_tags_btn = QPushButton("NS & Tags")
+		self.custom_btn = QPushButton("Custom")
+		self.main_buttons_layout.addWidget(self.artist_btn)
+		self.main_buttons_layout.addWidget(self.ns_tags_btn)
+		self.main_buttons_layout.addWidget(self.custom_btn)
+
+		# buttons contents
+		self.stacked_layout = QStackedLayout()
+		self.main_layout.addLayout(self.stacked_layout)
+
+		# ns_tags
+		self.tags_tree = TagsTreeView(app_window=parent)
+		self.tags_tree.setHeaderHidden(True)
+		self.tags_layout = QVBoxLayout(self.tags_tree)
+		ns_tags_index = self.stacked_layout.addWidget(self.tags_tree)
+		self.ns_tags_btn.clicked.connect(lambda:self.stacked_layout.setCurrentIndex(ns_tags_index))
+		if parent.manga_list_view.gallery_model.db_emitter._finished:
+			self.setup_tags()
+		else:
+			parent.manga_list_view.gallery_model.db_emitter.DONE.connect(self.setup_tags)
+
 	def setup_tags(self):
 		self.tags_tree.clear()
 		tags = gallerydb.add_method_queue(gallerydb.TagDB.get_ns_tags, False)
@@ -160,14 +197,3 @@ class DBOverview(QWidget):
 				child_item = QTreeWidgetItem(top_item)
 				child_item.setText(0, tag)
 		self.tags_tree.sortItems(0, Qt.AscendingOrder)
-
-	def setup_stats(self):
-		pass
-
-	def setup_about_db(self):
-		pass
-
-	def closeEvent(self, event):
-		self.about_to_close.emit()
-		return super().closeEvent(event)
-
