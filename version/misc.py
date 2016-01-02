@@ -85,16 +85,19 @@ def create_animation(parent, prop):
 	p_array = QByteArray().append(prop)
 	return QPropertyAnimation(parent, p_array)
 
-class SplitterHandle(QSplitterHandle):
-	"Custom QSplitterHandle"
+class ArrowHandle(QWidget):
+	"Arrow Handle"
 	IN, OUT = range(2)
-	def __init__(self, orentation, parent):
-		super().__init__(orentation, parent)
+	CLICKED = pyqtSignal(int)
+	def __init__(self, parent):
+		super().__init__(parent)
+		self.parent_widget = parent
 		self.current_arrow = self.IN
 		self.arrow_height = 20
+		self.setFixedWidth(10)
 
 	def paintEvent(self, event):
-		rect = event.rect()
+		rect = self.rect()
 		x, y, w, h = rect.getRect()
 		painter = QPainter(self)
 		painter.setPen(QColor("white"))
@@ -122,18 +125,12 @@ class SplitterHandle(QSplitterHandle):
 		if event.button() == Qt.LeftButton:
 			if self.current_arrow == self.IN:
 				self.current_arrow = self.OUT
+				self.CLICKED.emit(1)
 			else:
 				self.current_arrow = self.IN
+				self.CLICKED.emit(0)
 			self.update()
 		return super().mousePressEvent(event)
-
-class Splitter(QSplitter):
-	"Custom QSplitter"
-	def __init__(self, orentation, parent):
-		super().__init__(orentation, parent)
-
-	def createHandle(self):
-		return SplitterHandle(self.orientation(), self)
 
 class Line(QFrame):
 	"'v' for vertical line or 'h' for horizontail line, color is hex string"

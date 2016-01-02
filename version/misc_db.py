@@ -22,7 +22,7 @@ from PyQt5.QtWidgets import (QTreeWidget, QTreeWidgetItem, QWidget,
 							 QSizePolicy, QMenu, QAction, QApplication,
 							 QListWidget, QHBoxLayout, QPushButton, QStackedLayout,
 							 QFrame, QSizePolicy)
-from PyQt5.QtCore import (Qt, QTimer, pyqtSignal)
+from PyQt5.QtCore import (Qt, QTimer, pyqtSignal, QRect, QSize, QEasingCurve)
 from PyQt5.QtGui import QIcon
 
 import gallerydb
@@ -154,9 +154,21 @@ class SideBarWidget(QFrame):
 	def __init__(self, parent):
 		super().__init__(parent)
 		self.parent_widget = parent
-		self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Preferred)
-		#self.setContentsMargins(-10,0,0,0)
-		self.main_layout = QVBoxLayout(self)
+		self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
+		widget_layout = QHBoxLayout(self)
+
+		# widget stuff
+		self._d_widget = QWidget(self)
+		widget_layout.addWidget(self._d_widget)
+		self.main_layout = QVBoxLayout(self._d_widget)
+		self.main_layout.setSpacing(0)
+		self.main_layout.setContentsMargins(0,0,0,0)
+		self.arrow_handle = misc.ArrowHandle(self)
+		self.arrow_handle.CLICKED.connect(self.slide)
+
+		widget_layout.addWidget(self.arrow_handle)
+		self.setContentsMargins(0,0,-self.arrow_handle.width(),0)
+
 		self.main_buttons_layout = QHBoxLayout()
 		self.main_layout.addLayout(self.main_buttons_layout)
 
@@ -183,6 +195,12 @@ class SideBarWidget(QFrame):
 		else:
 			parent.manga_list_view.gallery_model.db_emitter.DONE.connect(self.setup_tags)
 
+		self.adjustSize()
+		self.slide_animation = misc.create_animation(self, "maximumSize")
+		self.slide_animation.stateChanged.connect(self._slide_hide)
+		self.slide_animation.setEasingCurve(QEasingCurve.InOutQuad)
+		self._max_width = 300
+
 	def setup_tags(self):
 		self.tags_tree.clear()
 		tags = gallerydb.add_method_queue(gallerydb.TagDB.get_ns_tags, False)
@@ -197,3 +215,27 @@ class SideBarWidget(QFrame):
 				child_item = QTreeWidgetItem(top_item)
 				child_item.setText(0, tag)
 		self.tags_tree.sortItems(0, Qt.AscendingOrder)
+
+	def _slide_hide(self, state):
+		if state == self.slide_animation.Stopped:
+			if self.arrow_handle.current_arrow == self.arrow_handle.OUT:
+				self._d_widget.hide()
+		elif self.slide_animation.Running:
+			if self.arrow_handle.current_arrow == self.arrow_handle.IN:
+				self._d_widget.show()
+
+	def slide(self, state):
+		self.slide_animation.setEndValue(QSize(self.arrow_handle.width()*2, self.height()))
+
+		if state:
+			self.slide_animation.setDirection(self.slide_animation.Forward)
+			self.slide_animation.start()
+		else:
+			self.slide_animation.setDirection(self.slide_animation.Backward)
+			self.slide_animation.start()
+
+	def resizeEvent(self, event):
+		self._max_width = self.parent_widget.width()*0.2
+		self.setMaximumWidth(self._max_width)
+		self.slide_animation.setStartValue(QSize(self._max_width, event.size().height()))
+		return super().resizeEvent(event)

@@ -171,20 +171,19 @@ class AppWindow(QMainWindow):
 
 	def initUI(self):
 		self.center = QWidget()
-		self.splitter = misc.Splitter(Qt.Horizontal, self.center)
 		self.display_widget = QWidget(self.center)
 		self.display_layout = QStackedLayout(self.display_widget)
 		self._main_layout = QHBoxLayout(self.center)
 		self._main_layout.setSpacing(0)
 		self._main_layout.setContentsMargins(0,0,0,0)
-		self._main_layout.addWidget(self.splitter)
 
 		# init the manga view variables
 		self.manga_display()
 
+		self.display_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
 		self.sidebar_list = misc_db.SideBarWidget(self)
-		self.splitter.addWidget(self.sidebar_list)
-		self.splitter.addWidget(self.display_widget)
+		self._main_layout.addWidget(self.sidebar_list)
+		self._main_layout.addWidget(self.display_widget)
 		log_d('Create manga display: OK')
 		# init the chapter view variables
 		self.m_l_view_index = self.display_layout.addWidget(self.manga_list_view)
