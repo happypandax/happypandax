@@ -412,8 +412,6 @@ class SettingsDialog(QWidget):
 		set(app_constants.GALLERY_DATA_FIX_REPLACE, 'Advanced', 'gallery data fix replace')
 
 		# About / DB Overview
-		app_constants.TAGS_TREEVIEW_ON_START = self.tags_treeview_on_start.isChecked()
-		set(app_constants.TAGS_TREEVIEW_ON_START, 'Application', 'tags treeview on start')
 
 		settings.save()
 		self.close()

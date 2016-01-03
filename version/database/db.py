@@ -32,7 +32,8 @@ def hashes_sql(cols=False):
 					chapter_id INTEGER,
 					page INTEGER,
 					FOREIGN KEY(series_id) REFERENCES series(series_id),
-					FOREIGN KEY(chapter_id) REFERENCES chapters(chapter_id));
+					FOREIGN KEY(chapter_id) REFERENCES chapters(chapter_id)
+					UNIQUE(hash, series_id, chapter_id, page));
 	"""
 
 	col_list = [
@@ -154,7 +155,8 @@ def tags_mappings_sql(cols=False):
 					namespace_id INTEGER,
 					tag_id INTEGER,
 					FOREIGN KEY(namespace_id) REFERENCES namespaces(namespace_id),
-					FOREIGN KEY(tag_id) REFERENCES tags(tag_id));
+					FOREIGN KEY(tag_id) REFERENCES tags(tag_id)
+					UNIQUE(namespace_id, tag_id));
 		"""
 	col_list = [
 		'tags_mappings_id INTEGER PRIMARY KEY',
@@ -171,7 +173,8 @@ def series_tags_mappings_sql(cols=False):
 					series_id INTEGER,
 					tags_mappings_id INTEGER,
 					FOREIGN KEY(series_id) REFERENCES series(series_id),
-					FOREIGN KEY(tags_mappings_id) REFERENCES tags_mappings(tags_mappings_id));
+					FOREIGN KEY(tags_mappings_id) REFERENCES tags_mappings(tags_mappings_id)
+					UNIQUE(series_id, tags_mappings_id));
 		"""
 	col_list = [
 		'series_id INTEGER',
@@ -201,7 +204,8 @@ def series_list_map_sql(cols=False):
 					list_id INTEGER NOT NULL,
 					series_id INTEGER INTEGER NOT NULL,
 					FOREIGN KEY(list_id) REFERENCES list(list_id),
-					FOREIGN KEY(series_id) REFERENCES series(series_id));
+					FOREIGN KEY(series_id) REFERENCES series(series_id)
+					UNIQUE(list_id, series_id));
 		"""
 	col_list = [
 		'list_id INTEGER NOT NULL',
@@ -343,8 +347,8 @@ def init_db(path=''):
 	else:
 		create_db_path()
 		conn = new_db(db_constants.DB_PATH, True)
-		conn.execute("PRAGMA foreign_keys = on")
 
+	conn.execute("PRAGMA foreign_keys = on")
 	return conn
 
 class DBBase:
@@ -376,33 +380,32 @@ class DBBase:
 			raise db_constants.NoDatabaseConnection
 		log_d('DB Query: {}'.format(args).encode(errors='ignore'))
 		if self._AUTO_COMMIT:
-			with self._DB_CONN:
-				try:
-					return self._DB_CONN.execute(*args)
-				except:
-					print("with autocommit")
-					print(args)
-					print(type(args[1][0]))
-					raise RuntimeError
-		else:
 			try:
-				return self._DB_CONN.execute(*args)
-			except:
-				print("no autocommit")
+				try:
+					with self._DB_CONN:
+						return self._DB_CONN.execute(*args)
+				except sqlite3.InterfaceError:
+						return self._DB_CONN.execute(*args)
+			except sqlite3.IntegrityError:
 				print(args)
-				print(type(args[1][0]))
-				raise RuntimeError
+
+		else:
+			return self._DB_CONN.execute(*args)
 	
 	def executemany(self, *args):
 		"Same as cursor.executemany"
 		if not self._DB_CONN:
 			raise db_constants.NoDatabaseConnection
 		log_d('DB Query: {}'.format(args).encode(errors='ignore'))
-		if self._AUTO_COMMIT:
-			with self._DB_CONN:
+		try:
+			if self._AUTO_COMMIT:
+				with self._DB_CONN:
+					return self._DB_CONN.executemany(*args)
+			else:
 				return self._DB_CONN.executemany(*args)
-		else:
-			return self._DB_CONN.executemany(*args)
+		except sqlite3.IntegrityError:
+			print(args)
+			raise ValueError
 		self._LOCK = False
 
 	def commit(self):

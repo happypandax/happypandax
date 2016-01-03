@@ -16,7 +16,7 @@ import datetime, os, scandir, threading, logging, queue, uuid # for unique filen
 import re as regex
 
 from PyQt5.QtCore import Qt, QObject, pyqtSignal
-from PyQt5.QtGui import QImage
+from PyQt5.QtGui import QImage, QPainter, QBrush, QPen
 
 from utils import (today, ArchiveFile, generate_img_hash, delete_path,
 					 ARCHIVE_FILES, get_gallery_img, IMG_FILES)
@@ -127,17 +127,29 @@ def gen_thumbnail(gallery, width=app_constants.THUMB_W_SIZE,
 				suff = ext # the image ext with dot
 
 		# generate unique file name
-		file_name = str(uuid.uuid4()) + suff
+		file_name = str(uuid.uuid4()) + ".png"
 		new_img_path = os.path.join(db_constants.THUMBNAIL_PATH, (file_name))
 		if not os.path.isfile(img_path):
 			raise IndexError
+
 		# Do the scaling
 		image = QImage()
 		image.load(img_path)
 		if image.isNull():
 			raise IndexError
 		image = image.scaled(width, height, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-		image.save(new_img_path, quality=100)
+		r_image = QImage(image.width(), image.height(), QImage.Format_ARGB32)
+		r_image.fill(Qt.transparent)
+		p = QPainter()
+		pen = QPen(Qt.darkGray)
+		pen.setJoinStyle(Qt.RoundJoin)
+		p.begin(r_image)
+		p.setRenderHint(p.Antialiasing)
+		p.setPen(Qt.NoPen)
+		p.setBrush(QBrush(image))
+		p.drawRoundedRect(0, 0, r_image.width(), r_image.height(), 5, 5)
+		p.end()
+		r_image.save(new_img_path, "PNG", quality=100)
 	except IndexError:
 		new_img_path = app_constants.NO_IMAGE_PATH
 
@@ -866,8 +878,10 @@ class TagDB(DBBase):
 		# Lastly we map the series_id to the tags_mappings
 		executing = []
 		for tags_map in tags_mappings_id_list:
-				executing.append((series_id, tags_map,))
-		cls.executemany(cls, 'INSERT INTO series_tags_map(series_id, tags_mappings_id) VALUES(?, ?)', executing)
+			#executing.append((series_id, tags_map,))
+			cls.execute(cls, 'INSERT INTO series_tags_map(series_id, tags_mappings_id) VALUES(?, ?)', (series_id, tags_map,))
+		print(executing)
+		#cls.executemany(cls, 'INSERT INTO series_tags_map(series_id, tags_mappings_id) VALUES(?, ?)', executing)
 
 	@staticmethod
 	def modify_tags(series_id, dict_of_tags):
@@ -978,11 +992,19 @@ class ListDB(DBBase):
 	@classmethod
 	def add_list(cls, gallery_list):
 		"Adds a list of GalleryList class to DB"
-		pass
+		assert isinstance(gallery_list, GalleryList)
+		if gallery_list._id:
+			cls.execute(cls, 'INSERT OR IGNORE INTO list(list_id, list_name) VALUES(?, ?)', (gallery_list._id, gallery_list.name,))
+		else:
+			c = cls.execute(cls, 'INSERT INTO list(list_name) VALUES(?)', (gallery_list.name,))
+			gallery_list._id = c.lastrowid
+
+		ListDB.add_gallery_to_list(gallery_list.galleries(), gallery_list)
 
 	@classmethod
 	def add_gallery_to_list(cls, gallery_or_id_or_list, gallery_list):
 		"Maps provided gallery or list of galleries or gallery id to list"
+		assert isinstance(gallery_list, GalleryList)
 		if isinstance(gallery_or_id_or_list, (Gallery, int)):
 			gallery_or_id_or_list = [gallery_or_id_or_list]
 
@@ -990,11 +1012,8 @@ class ListDB(DBBase):
 			if isinstance(gallery_or_id_or_list[0], Gallery):
 				gallery_or_id_or_list = [g.id for g in gallery_or_id_or_list]
 
-		g_ids = gallery_or_id_or_list
-
-
-
-
+		values = [(gallery_list._id, x) for x in gallery_or_id_or_list]
+		cls.executemany(cls, 'INSERT INTO series_list_map(list_id, series_id) VALUES(?, ?)', values)
 
 class HashDB(DBBase):
 	"""
@@ -1268,24 +1287,28 @@ class GalleryList:
 	def __init__(self, name, list_of_galleries=[], id=None):
 		self._id = id # shouldnt ever be touched
 		self.name = name
+		self._galleries = set()
 		for g in list_of_galleries:
 			self.add_gallery(g)
 
 	def add_gallery(self, gallery):
 		"add_gallery <- adds a gallery of Gallery class to list"
-		pass
+		self._galleries.add(gallery)
 
 	def remove_gallery(self, gallery_id):
 		"remove_gallery <- removes galleries matching the provided gallery id"
-		pass
+		for g in self._galleries:
+			if g.id == gallery_id:
+				self._galleries.remove(g)
+				break
 
 	def clear(self):
 		"removes all galleries from the list"
-		pass
+		self._galleries.clear()
 
 	def galleries(self):
 		"returns a list with all galleries in list"
-		pass
+		return list(self._galleries)
 
 class Gallery:
 	"""
@@ -1751,7 +1774,7 @@ class AdminDB(QObject):
 	def __init__(self, parent=None):
 		super().__init__(parent)
 
-	def rebuild_db(self, old_db_path=db_constants.DB_PATH):
+	def from_v021_to_v022(self, old_db_path=db_constants.DB_PATH):
 		log_i("Started rebuilding database")
 		if DBBase._DB_CONN:
 			DBBase._DB_CONN.close()
@@ -1830,6 +1853,35 @@ class AdminDB(QObject):
 		os.rename(t_db_path, db_constants.DB_PATH)
 		self.PROGRESS.emit(data_count)
 		log_i("Finished rebuilding database")
+		self.DONE.emit(True)
+		return True
+
+	def rebuild_database(self):
+		"Rebuilds database"
+		log_i("Initiating datbase rebuild")
+		utils.backup_database()
+		log_i("Getting galleries...")
+		GalleryDB.begin()
+		galleries = GalleryDB.get_all_gallery()
+		self.DATA_COUNT.emit(len(galleries))
+		GalleryDB.end()
+		db.DBBase._DB_CONN.close()
+		log_i("Removing old database...")
+		os.remove(db_constants.DB_PATH)
+		log_i("Initiating new database...")
+		db.DBBase._DB_CONN = db.init_db()
+		GalleryDB.begin()
+		log_i("Adding galleries...")
+		GalleryDB.clear_thumb_dir()
+		for n, g in enumerate(galleries):
+			if not os.path.exists(g.path):
+				log_i("Gallery doesn't exist anymore: {}".format(g.title.encode(errors="ignore")))
+			else:
+				GalleryDB.add_gallery(g)
+			self.PROGRESS.emit(n)
+		GalleryDB.end()
+		self.PROGRESS.emit(len(galleries))
+		log_i("Succesfully rebuilt database")
 		self.DONE.emit(True)
 		return True
 

@@ -115,12 +115,12 @@ class AppWindow(QMainWindow):
 		self.watchers.gallery_handler.MOVED_SIGNAL.connect(moved)
 		self.watchers.gallery_handler.DELETED_SIGNAL.connect(deleted)
 
-	admin_db_method_invoker = pyqtSignal(str)
+	admin_db_method_invoker = pyqtSignal(object)
 	def start_up(self):
 		hello = ["Hello!", "Hi!", "Onii-chan!", "Senpai!", "Hisashiburi!", "Welcome!", "Okaerinasai!", "Welcome back!", "Hajimemashite!"]
 		self.notification_bar.add_text("{} Please don't hesitate to report any bugs you find.".format(hello[random.randint(0, len(hello)-1)])+
 								 " Go to Settings -> About -> Bug Reporting for more info!")
-		level = 5
+		level = 6
 		def normalize_first_time():
 			settings.set(level, 'Application', 'first time level')
 			settings.save()
@@ -143,6 +143,7 @@ class AppWindow(QMainWindow):
 
 		if app_constants.FIRST_TIME_LEVEL < 4:
 			log_i('Invoking first time level {}'.format(4))
+			level = 4
 			settings.set([], 'Application', 'monitor paths')
 			settings.set([], 'Application', 'ignore paths')
 			app_constants.MONITOR_PATHS = []
@@ -151,6 +152,7 @@ class AppWindow(QMainWindow):
 			done()
 		elif app_constants.FIRST_TIME_LEVEL < 5:
 			log_i('Invoking first time level {}'.format(5))
+			level = 5
 			app_widget = misc.ApplicationPopup(self)
 			app_widget.note_info.setText("<font color='red'>IMPORTANT:</font> Application restart is required when done")
 			app_widget.restart_info.hide()
@@ -161,11 +163,27 @@ class AppWindow(QMainWindow):
 			self.admin_db.DONE.connect(self.admin_db.deleteLater)
 			self.admin_db.DATA_COUNT.connect(app_widget.prog.setMaximum)
 			self.admin_db.PROGRESS.connect(app_widget.prog.setValue)
-			self.admin_db_method_invoker.connect(self.admin_db.rebuild_db)
+			self.admin_db_method_invoker.connect(self.admin_db.from_v021_to_v022)
 			self.admin_db_method_invoker.connect(app_widget.show)
 			app_widget.adjustSize()
 			db_p = os.path.join(os.path.split(database.db_constants.DB_PATH)[0], 'sadpanda.db')
 			self.admin_db_method_invoker.emit(db_p)
+		elif app_constants.FIRST_TIME_LEVEL < 6:
+			log_i('Invoking first time level {}'.format(6))
+			app_widget = misc.ApplicationPopup(self)
+			app_widget.note_info.setText("<font color='red'>IMPORTANT:</font> Application restart is required when done")
+			app_widget.restart_info.hide()
+			self.admin_db = gallerydb.AdminDB()
+			self.admin_db.moveToThread(app_constants.GENERAL_THREAD)
+			self.admin_db.DONE.connect(done)
+			self.admin_db.DONE.connect(lambda: app_constants.NOTIF_BAR.add_text("Application requires a restart"))
+			self.admin_db.DONE.connect(self.admin_db.deleteLater)
+			self.admin_db.DATA_COUNT.connect(app_widget.prog.setMaximum)
+			self.admin_db.PROGRESS.connect(app_widget.prog.setValue)
+			self.admin_db_method_invoker.connect(self.admin_db.rebuild_database)
+			self.admin_db_method_invoker.connect(app_widget.show)
+			app_widget.adjustSize()
+			self.admin_db_method_invoker.emit(True)
 		else:
 			done()
 
@@ -579,7 +597,10 @@ class AppWindow(QMainWindow):
 		# debug specfic code
 		if app_constants.DEBUG:
 			def debug_func():
-				gallerydb.ListDB.init_lists()
+				g = gallerydb.GalleryList("example 2")
+				for x in range(5):
+					g.add_gallery(app_constants.GALLERY_DATA[x])
+				gallerydb.ListDB.add_list(g)
 
 			debug_btn = QToolButton()
 			debug_btn.setText("DEBUG BUTTON")

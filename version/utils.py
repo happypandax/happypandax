@@ -118,6 +118,7 @@ class GMetafile:
 		return gallery
 
 def backup_database(db_path=db_constants.DB_PATH):
+	log_i("Perfoming database backup")
 	date = "{}".format(datetime.datetime.today()).split(' ')[0]
 	base_path, name = os.path.split(db_path)
 	db_name = "{}-{}".format(date, name)
@@ -128,10 +129,13 @@ def backup_database(db_path=db_constants.DB_PATH):
 			db_name = "{}({})-{}".format(date, current_try, db_name)
 		try:
 			dst_path = os.path.join(base_path, db_name)
+			if os.path.exists(dst_path):
+				raise ValueError
 			shutil.copyfile(db_path, dst_path)
 			break
 		except:
 			current_try += 1
+	log_i("Database backup perfomed: {}".format(db_name))
 	return True
 
 def get_date_age(date):
