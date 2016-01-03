@@ -427,6 +427,7 @@ class GalleryDB(DBBase):
 			gallery = gallery_map(gallery_row, gallery, chapters, tags, hashes)
 			if not os.path.exists(gallery.path):
 				gallery.dead_link = True
+			ListDB.query_gallery(gallery)
 			gallery_list.append(gallery)
 
 		return gallery_list
@@ -946,6 +947,54 @@ class TagDB(DBBase):
 		ns = [n['namespace'] for n in cursor.fetchall()]
 		return ns
 
+class ListDB(DBBase):
+	"""
+	"""
+
+
+	@classmethod
+	def init_lists(cls):
+		"Creates and returns lists fetched from DB"
+		lists = []
+		c = cls.execute(cls, 'SELECT * FROM list')
+		list_rows = c.fetchall()
+		for l_row in list_rows:
+			l = GalleryList(l_row['list_name'], id=l_row['list_id'])
+			lists.append(l)
+			app_constants.GALLERY_LISTS.add(l)
+
+		return lists
+
+	@classmethod
+	def query_gallery(cls, gallery):
+		"Maps gallery to the correct lists"
+
+		c = cls.execute(cls, 'SELECT list_id FROM series_list_map WHERE series_id=?', (gallery.id,))
+		list_rows = [x['list_id'] for x in c.fetchall()]
+		for l in app_constants.GALLERY_LISTS:
+			if l._id in list_rows:
+				l.add_gallery(gallery)
+
+	@classmethod
+	def add_list(cls, gallery_list):
+		"Adds a list of GalleryList class to DB"
+		pass
+
+	@classmethod
+	def add_gallery_to_list(cls, gallery_or_id_or_list, gallery_list):
+		"Maps provided gallery or list of galleries or gallery id to list"
+		if isinstance(gallery_or_id_or_list, (Gallery, int)):
+			gallery_or_id_or_list = [gallery_or_id_or_list]
+
+		if isinstance(gallery_or_id_or_list, list):
+			if isinstance(gallery_or_id_or_list[0], Gallery):
+				gallery_or_id_or_list = [g.id for g in gallery_or_id_or_list]
+
+		g_ids = gallery_or_id_or_list
+
+
+
+
 
 class HashDB(DBBase):
 	"""
@@ -1207,6 +1256,36 @@ class HashDB(DBBase):
 		"Deletes all hashes linked to the given gallery id"
 		cls.execute(cls, 'DELETE FROM hashes WHERE series_id=?', (gallery_id,))
 
+class GalleryList:
+	"""
+	Provides access to lists..
+	methods:
+	- add_gallery <- adds a gallery of Gallery class to list
+	- remove_gallery <- removes galleries matching the provided gallery id
+	- clear <- removes all galleries from the list
+	- galleries -> returns a list with all galleries in list
+	"""
+	def __init__(self, name, list_of_galleries=[], id=None):
+		self._id = id # shouldnt ever be touched
+		self.name = name
+		for g in list_of_galleries:
+			self.add_gallery(g)
+
+	def add_gallery(self, gallery):
+		"add_gallery <- adds a gallery of Gallery class to list"
+		pass
+
+	def remove_gallery(self, gallery_id):
+		"remove_gallery <- removes galleries matching the provided gallery id"
+		pass
+
+	def clear(self):
+		"removes all galleries from the list"
+		pass
+
+	def galleries(self):
+		"returns a list with all galleries in list"
+		pass
 
 class Gallery:
 	"""
@@ -1792,6 +1871,7 @@ class DatabaseEmitter(QObject):
 
 	def __init__(self):
 		super().__init__()
+		ListDB.init_lists()
 		self._current_data = app_constants.GALLERY_DATA
 		self._fetch_count = 200
 		self._offset = 0

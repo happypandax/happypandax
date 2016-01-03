@@ -181,8 +181,38 @@ def series_tags_mappings_sql(cols=False):
 		return sql, col_list
 	return sql
 
+def list_sql(cols=False):
+	sql ="""
+		CREATE TABLE IF NOT EXISTS list(
+					list_id INTEGER PRIMARY KEY,
+					list_name TEXT NOT NULL DEFAULT '');
+		"""
+	col_list = [
+		'list_id INTEGER PRIMARY KEY',
+		"list_name TEXT NOT NULL DEFAULT ''",
+		]
+	if cols:
+		return sql, col_list
+	return sql
+
+def series_list_map_sql(cols=False):
+	sql ="""
+		CREATE TABLE IF NOT EXISTS series_list_map(
+					list_id INTEGER NOT NULL,
+					series_id INTEGER INTEGER NOT NULL,
+					FOREIGN KEY(list_id) REFERENCES list(list_id),
+					FOREIGN KEY(series_id) REFERENCES series(series_id));
+		"""
+	col_list = [
+		'list_id INTEGER NOT NULL',
+		'series_id INTEGER INTEGER NOT NULL',
+		]
+	if cols:
+		return sql, col_list
+	return sql
+
 STRUCTURE_SCRIPT = series_sql()+chapters_sql()+namespaces_sql()+tags_sql()+tags_mappings_sql()+\
-	series_tags_mappings_sql()+hashes_sql()
+	series_tags_mappings_sql()+hashes_sql()+list_sql()+series_list_map_sql()
 
 def global_db_convert(conn):
 	"""
@@ -198,6 +228,8 @@ def global_db_convert(conn):
 	tags_mappings, tags_mappings_cols = tags_mappings_sql(True)
 	series_tags_mappings, series_tags_mappings_cols = series_tags_mappings_sql(True)
 	hashes, hashes_cols = hashes_sql(True)
+	_list, list_cols = list_sql(True)
+	series_list_map, series_list_map_cols = series_list_map_sql(True)
 	
 	t_d = {}
 	t_d['series'] = series_cols
@@ -207,6 +239,8 @@ def global_db_convert(conn):
 	t_d['tags_mappings'] = tags_mappings_cols
 	t_d['series_tags_mappings'] = series_tags_mappings_cols
 	t_d['hashes'] = hashes_cols
+	t_d['list'] = list_cols
+	t_d['series_list_map'] = series_list_map_cols
 
 	log_d('Checking table structures')
 	c.executescript(STRUCTURE_SCRIPT)
@@ -309,6 +343,8 @@ def init_db(path=''):
 	else:
 		create_db_path()
 		conn = new_db(db_constants.DB_PATH, True)
+		conn.execute("PRAGMA foreign_keys = on")
+
 	return conn
 
 class DBBase:

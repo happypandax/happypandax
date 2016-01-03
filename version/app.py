@@ -579,7 +579,7 @@ class AppWindow(QMainWindow):
 		# debug specfic code
 		if app_constants.DEBUG:
 			def debug_func():
-				self.manga_list_view.get_visible_indexes()
+				gallerydb.ListDB.init_lists()
 
 			debug_btn = QToolButton()
 			debug_btn.setText("DEBUG BUTTON")

@@ -193,6 +193,7 @@ TOOLTIP_PUB_DATE = get(False, 'Visual', 'tooltip pub date', bool)
 TOOLTIP_DATE_ADDED = get(True, 'Visual', 'tooltip date added', bool)
 
 GALLERY_DATA = [] # contains the most up to date gallery data
+GALLERY_LISTS = set() # contains the most up to dat gallery lists
 
 SUPPORTED_DOWNLOAD_URLS=\
 	"""Supported URLs:

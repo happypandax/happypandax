@@ -193,6 +193,9 @@ class SortFilterModel(QSortFilterProxyModel):
 		self._data = self.sourceModel()._data
 		self._CHANGE_SEARCH_DATA.emit(self._data)
 
+	def change_data(self, data):
+		self._CHANGE_SEARCH_DATA.emit(data)
+
 	def populate_data(self):
 		self.sourceModel().populate_data()
 
