@@ -1135,6 +1135,7 @@ class MangaView(QListView):
 		# all items have the same size (perfomance)
 		self.setUniformItemSizes(True)
 		# improve scrolling
+		self.setAutoScroll(False)
 		self.setVerticalScrollMode(self.ScrollPerPixel)
 		self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 		self.setLayoutMode(self.SinglePass)
@@ -1269,63 +1270,6 @@ class MangaView(QListView):
 			#self.model().replaceRows([gallery], index.row(), 1, index)
 			gallerydb.add_method_queue(gallerydb.GalleryDB.modify_gallery, True, gallery.id, {'fav':1})
 			self.gallery_model.CUSTOM_STATUS_MSG.emit("Favorited")
-
-	def duplicate_check(self, simple=True):
-		mode = 'simple' if simple else 'advanced'
-		log_i('Checking for duplicates in mode: {}'.format(mode))
-		notifbar = self.parent_widget.notification_bar
-		notifbar.add_text('Checking for duplicates...')
-		if simple:
-			galleries = self.gallery_model._data.copy()
-			duplicates = []
-			for g in galleries:
-				notifbar.add_text('Checking gallery {}'.format(g.id))
-				for y in galleries:
-					title = g.title.strip().lower() == y.title.strip().lower()
-					path = os.path.normcase(g.path) == os.path.normcase(y.path)
-					if g.id != y.id and (title or path):
-						if g not in duplicates:
-							duplicates.append(y)
-							duplicates.append(g)
-			if duplicates:
-				notifbar.add_text('Found {} duplicates!'.format(len(duplicates)))
-				log_d('Found {} duplicates'.format(len(duplicates)))
-
-				class GalleryContextMenu(QMenu):
-					app_inst = self.parent_widget
-					viewer = self
-					def __init__(self, parent=None):
-						super().__init__(parent)
-						show_in_library_act = self.addAction('Show in library')
-						show_in_library_act.triggered.connect(self.show_in_library)
-						delete_gallery = self.addAction('Remove gallery')
-						delete_gallery.triggered.connect(self.delete_gallery)
-						delete_gallery_source = self.addAction("Remove gallery and it's files")
-						delete_gallery_source.triggered.connect(lambda: self.delete_gallery(True))
-
-					def show_in_library(self):
-						index = CommonView.find_index(self.viewer, self.gallery_widget.gallery.id, True)
-						if index:
-							CommonView.scroll_to_index(self.viewer, index)
-							self.app_inst.manga_table_view.scroll_to_index(index)
-
-					def delete_gallery(self, source=False):
-						index = CommonView.find_index(self.viewer, self.gallery_widget.gallery.id, True)
-						if index and index.isValid():
-							self.viewer.remove_gallery([index], source)
-							if self.gallery_widget.parent_widget.gallery_layout.count() == 1:
-								self.gallery_widget.parent_widget.close()
-							else:
-								self.gallery_widget.close()
-
-				g_widget = io_misc.GalleryPopup(("These galleries are found to"+
-										  " be duplicates.", duplicates), self.parentWidget(), menu=GalleryContextMenu())
-				if g_widget.graphics_blur:
-					g_widget.graphics_blur.setEnabled(False)
-				buttons = g_widget.add_buttons("Close")
-				buttons[0].clicked.connect(g_widget.close)
-			else:
-				notifbar.add_text('No duplicates found!')
 
 	def del_chapter(self, index, chap_numb):
 		gallery = index.data(Qt.UserRole+1)

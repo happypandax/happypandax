@@ -12,7 +12,15 @@
 #along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 #"""
 
-import sys, logging, os, threading, re, requests, scandir, random, traceback
+import sys
+import logging
+import os
+import threading
+import re
+import requests
+import scandir
+import random
+import traceback
 from PyQt5.QtCore import (Qt, QSize, pyqtSignal, QThread, QEvent, QTimer,
 						  QObject, QPoint, QPropertyAnimation)
 from PyQt5.QtGui import (QPixmap, QIcon, QMoveEvent, QCursor,
@@ -51,9 +59,13 @@ log_c = log.critical
 
 class AppWindow(QMainWindow):
 	"The application's main window"
+
 	move_listener = pyqtSignal()
+	duplicate_check_invoker = pyqtSignal()
+	admin_db_method_invoker = pyqtSignal(object)
 	db_activity_checker = pyqtSignal()
 	graphics_blur = QGraphicsBlurEffect()
+
 	def __init__(self, disable_excepthook=False):
 		super().__init__()
 		app_constants.GENERAL_THREAD = QThread(self)
@@ -115,11 +127,9 @@ class AppWindow(QMainWindow):
 		self.watchers.gallery_handler.MOVED_SIGNAL.connect(moved)
 		self.watchers.gallery_handler.DELETED_SIGNAL.connect(deleted)
 
-	admin_db_method_invoker = pyqtSignal(object)
 	def start_up(self):
 		hello = ["Hello!", "Hi!", "Onii-chan!", "Senpai!", "Hisashiburi!", "Welcome!", "Okaerinasai!", "Welcome back!", "Hajimemashite!"]
-		self.notification_bar.add_text("{} Please don't hesitate to report any bugs you find.".format(hello[random.randint(0, len(hello)-1)])+
-								 " Go to Settings -> About -> Bug Reporting for more info!")
+		self.notification_bar.add_text("{} Please don't hesitate to report any bugs you find.".format(hello[random.randint(0, len(hello) - 1)]) + " Go to Settings -> About -> Bug Reporting for more info!")
 		level = 6
 		def normalize_first_time():
 			settings.set(level, 'Application', 'first time level')
@@ -129,7 +139,7 @@ class AppWindow(QMainWindow):
 			gallerydb.DatabaseEmitter.RUN = True
 			if app_constants.FIRST_TIME_LEVEL != level:
 				normalize_first_time()
-			if app_constants.ENABLE_MONITOR and\
+			if app_constants.ENABLE_MONITOR and \
 				app_constants.MONITOR_PATHS and all(app_constants.MONITOR_PATHS):
 				self.init_watchers()
 				if app_constants.LOOK_NEW_GALLERY_STARTUP:
@@ -254,7 +264,7 @@ class AppWindow(QMainWindow):
 
 		self.notification_bar = misc.NotificationOverlay(self)
 		p = self.toolbar.pos()
-		self.notification_bar.move(p.x(), p.y()+self.toolbar.height())
+		self.notification_bar.move(p.x(), p.y() + self.toolbar.height())
 		self.notification_bar.resize(self.width())
 		app_constants.NOTIF_BAR = self.notification_bar
 		log_d('Create notificationbar: OK')
@@ -289,10 +299,8 @@ class AppWindow(QMainWindow):
 			if vs != app_constants.vs:
 				if len(vs) < 10:
 					self.notification_bar.begin_show()
-					self.notification_bar.add_text("Version {} of Happypanda is".format(vs)+
-									   " available. Click here to update!", False)
-					self.notification_bar.clicked.connect(lambda: utils.open_web_link(
-						'https://github.com/Pewpews/happypanda/releases'))
+					self.notification_bar.add_text("Version {} of Happypanda is".format(vs) + " available. Click here to update!", False)
+					self.notification_bar.clicked.connect(lambda: utils.open_web_link('https://github.com/Pewpews/happypanda/releases'))
 					self.notification_bar.set_clickable(True)
 				else:
 					self.notification_bar.add_text("An error occurred while checking for new version")
@@ -317,14 +325,12 @@ class AppWindow(QMainWindow):
 	def get_metadata(self, gal=None):
 		metadata_spinner = misc.Spinner(self)
 		def move_md_spinner():
-			metadata_spinner.update_move(
-			QPoint(
-				self.pos().x()+self.width()-65,
-				self.pos().y()+self.toolbar.height()+55))
+			metadata_spinner.update_move(QPoint(self.pos().x() + self.width() - 65,
+				self.pos().y() + self.toolbar.height() + 55))
 		metadata_spinner.set_text("Metadata")
 		metadata_spinner.set_size(55)
-		metadata_spinner.move(QPoint(self.pos().x()+self.width()-65,
-							   self.pos().y()+self.toolbar.height()+55))
+		metadata_spinner.move(QPoint(self.pos().x() + self.width() - 65,
+							   self.pos().y() + self.toolbar.height() + 55))
 		self.move_listener.connect(move_md_spinner)
 		thread = QThread(self)
 		thread.setObjectName('App.get_metadata')
@@ -368,8 +374,7 @@ class AppWindow(QMainWindow):
 						if index:
 							gallery.CommonView.scroll_to_index(self.app_instance.get_current_view(), index)
 
-				g_popup = io_misc.GalleryPopup(('Fecthing metadata for these galleries failed.'+
-									  ' Check happypanda.log for details.', galleries), self, menu=GalleryContextMenu())
+				g_popup = io_misc.GalleryPopup(('Fecthing metadata for these galleries failed.' + ' Check happypanda.log for details.', galleries), self, menu=GalleryContextMenu())
 				#errors = {g[0].id: g[1] for g in status}
 				#for g_item in g_popup.get_all_items():
 				#	g_item.setToolTip(errors[g_item.gallery.id])
@@ -453,9 +458,6 @@ class AppWindow(QMainWindow):
 		# fetching spinner
 		self.data_fetch_spinner = misc.Spinner(self)
 		self.data_fetch_spinner.set_size(60)
-		self.move_listener.connect(
-			lambda: self.data_fetch_spinner.update_move(
-				QPoint(self.pos().x()+self.width()//2, self.pos().y()+self.height()//2)))
 		
 		self.manga_list_view.gallery_model.ADD_MORE.connect(self.data_fetch_spinner.show)
 		self.manga_list_view.gallery_model.db_emitter.START.connect(self.data_fetch_spinner.show)
@@ -476,7 +478,7 @@ class AppWindow(QMainWindow):
 		self.manga_list_view.sort_model.init_search(srch_string)
 		old_cursor_pos = self._search_cursor_pos[0]
 		self.search_bar.end(False)
-		if self.search_bar.cursorPosition() != old_cursor_pos+1:
+		if self.search_bar.cursorPosition() != old_cursor_pos + 1:
 			self.search_bar.setCursorPosition(old_cursor_pos)
 
 	def favourite_display(self):
@@ -590,7 +592,7 @@ class AppWindow(QMainWindow):
 		gallery_downloader.triggered.connect(self.download_window.show)
 		misc_action_menu.addAction(gallery_downloader)
 		duplicate_check_simple = QAction("Simple Duplicate Finder", misc_action_menu)
-		duplicate_check_simple.triggered.connect(lambda: self.manga_list_view.duplicate_check())
+		duplicate_check_simple.triggered.connect(lambda: self.duplicate_check()) # triggered emits False
 		misc_action_menu.addAction(duplicate_check_simple)
 		self.toolbar.addWidget(misc_action)
 
@@ -693,12 +695,12 @@ class AppWindow(QMainWindow):
 		self.search_bar.setPlaceholderText("Search title, artist, namespace & tags")
 		self.search_bar.setMinimumWidth(150)
 		#self.search_bar.setMaximumWidth(500)
-		self.search_bar.setFixedHeight(self.toolbar.height()*2)
+		self.search_bar.setFixedHeight(self.toolbar.height() * 2)
 		self.manga_list_view.sort_model.HISTORY_SEARCH_TERM.connect(lambda a: self.search_bar.setText(a))
 		self.toolbar.addWidget(self.search_bar)
 
 		def search_history(_, back=True): # clicked signal passes a bool
-			sort_model =  self.manga_list_view.sort_model
+			sort_model = self.manga_list_view.sort_model
 			nav = sort_model.PREV if back else sort_model.NEXT
 			history_term = sort_model.navigate_history(nav)
 			if back:
@@ -814,12 +816,10 @@ class AppWindow(QMainWindow):
 						def add_gallery(gallery_list):
 							def append_to_model(x):
 								self.manga_list_view.sort_model.insertRows(x, None, len(x))
-								self.manga_list_view.sort_model.init_search(
-									self.manga_list_view.sort_model.current_term)
+								self.manga_list_view.sort_model.init_search(self.manga_list_view.sort_model.current_term)
 								if app_constants.SCROLL_TO_NEW_GALLERIES:
-									idx = gallery.CommonView.find_index(
-										self.get_current_view(),
-										x[len(x)-1].id,
+									idx = gallery.CommonView.find_index(self.get_current_view(),
+										x[len(x) - 1].id,
 										True)
 									gallery.CommonView.scroll_to_index(self.get_current_view(), idx)
 
@@ -834,8 +834,7 @@ class AppWindow(QMainWindow):
 								def add_to_db(self):
 									database.db.DBBase.begin()
 									for y, x in enumerate(self.obj):
-										gallerydb.add_method_queue(
-											gallerydb.GalleryDB.add_gallery_return, False, x)
+										gallerydb.add_method_queue(gallerydb.GalleryDB.add_gallery_return, False, x)
 										self.galleries.append(x)
 										y += 1
 										self.prog.emit(y)
@@ -849,8 +848,7 @@ class AppWindow(QMainWindow):
 							def loading_show(numb):
 								if loading.isHidden():
 									loading.show()
-								loading.setText('Populating database ({}/{})\nPlease wait...'.format(
-									numb, loading.progress.maximum()))
+								loading.setText('Populating database ({}/{})\nPlease wait...'.format(numb, loading.progress.maximum()))
 								loading.progress.setValue(numb)
 								loading.show()
 
@@ -929,8 +927,7 @@ class AppWindow(QMainWindow):
 					list_wid.setWindowFlags(Qt.Window)
 					list_wid.resize(900,400)
 
-					list_wid.doubleClicked.connect(lambda i: utils.open_path(
-						list_wid.item(i.row(), 1).text(), list_wid.item(i.row(), 1).text()))
+					list_wid.doubleClicked.connect(lambda i: utils.open_path(list_wid.item(i.row(), 1).text(), list_wid.item(i.row(), 1).text()))
 
 					list_wid.show()
 
@@ -951,7 +948,7 @@ class AppWindow(QMainWindow):
 			log_i('Populating DB from directory/archive')
 
 	def scan_for_new_galleries(self):
-		available_folders =  app_constants.ENABLE_MONITOR and\
+		available_folders = app_constants.ENABLE_MONITOR and \
 									app_constants.MONITOR_PATHS and all(app_constants.MONITOR_PATHS)
 		if available_folders and not app_constants.SCANNING_FOR_GALLERIES:
 			app_constants.SCANNING_FOR_GALLERIES = True
@@ -1175,16 +1172,12 @@ class AppWindow(QMainWindow):
 			db_activity.moveToThread(app_constants.GENERAL_THREAD)
 			db_activity.FINISHED.connect(db_spinner.close)
 			db_spinner.set_size(50)
-			db_spinner.set_text('Activity')
-			db_spinner.move(QPoint(self.pos().x()+self.width()-70, self.pos().y()+self.height()-70))
-			self.move_listener.connect(lambda: db_spinner.update_move(QPoint(self.pos().x()+self.width()-70,
-																	self.pos().y()+self.height()-70)))
+			db_spinner.set_text('DB Activity')
 			db_spinner.show()
 			self.db_activity_checker.emit()
 			msg_box = QMessageBox(self)
 			msg_box.setText('Database activity detected!')
-			msg_box.setInformativeText("Closing now might result in data loss." +
-								 " Do you still want to close?\n(Wait for the activity spinner to hide before closing)")
+			msg_box.setInformativeText("Closing now might result in data loss." + " Do you still want to close?\n(Wait for the activity spinner to hide before closing)")
 			msg_box.setIcon(QMessageBox.Critical)
 			msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
 			msg_box.setDefaultButton(QMessageBox.No)
@@ -1194,6 +1187,88 @@ class AppWindow(QMainWindow):
 				return 2
 		else:
 			return 0
+
+	def duplicate_check(self, simple=True):
+		try:
+			self.duplicate_check_invoker.disconnect()
+		except TypeError:
+			pass
+		mode = 'simple' if simple else 'advanced'
+		log_i('Checking for duplicates in mode: {}'.format(mode))
+		notifbar = app_constants.NOTIF_BAR
+		notifbar.add_text('Checking for duplicates...')
+		duplicate_spinner = misc.Spinner(self)
+		duplicate_spinner.set_text("Duplicate Check")
+		duplicate_spinner.show()
+
+		class GalleryContextMenu(QMenu):
+			app_inst = self
+			viewer = self.get_current_view()
+			def __init__(self, parent=None):
+				super().__init__(parent)
+				show_in_library_act = self.addAction('Show in library')
+				show_in_library_act.triggered.connect(self.show_in_library)
+				delete_gallery = self.addAction('Remove gallery')
+				delete_gallery.triggered.connect(self.delete_gallery)
+				delete_gallery_source = self.addAction("Remove gallery and it's files")
+				delete_gallery_source.triggered.connect(lambda: self.delete_gallery(True))
+
+			def show_in_library(self):
+				index = gallery.CommonView.find_index(self.viewer, self.gallery_widget.gallery.id, True)
+				if index:
+					gallery.CommonView.scroll_to_index(self.viewer, index)
+
+			def delete_gallery(self, source=False):
+				index = gallery.CommonView.find_index(self.viewer, self.gallery_widget.gallery.id, True)
+				if index and index.isValid():
+					self.viewer.remove_gallery([index], source)
+					if self.gallery_widget.parent_widget.gallery_layout.count() == 1:
+						self.gallery_widget.parent_widget.close()
+					else:
+						self.gallery_widget.close()
+
+		def show_duplicates(duplicates):
+			duplicate_spinner.before_hide()
+			if duplicates:
+				notifbar.add_text('Found {} duplicates!'.format(len(duplicates)))
+				log_d('Found {} duplicates'.format(len(duplicates)))
+
+				g_widget = io_misc.GalleryPopup(("These galleries are found to" + " be duplicates.", duplicates), self, menu=GalleryContextMenu())
+				if g_widget.graphics_blur:
+					g_widget.graphics_blur.setEnabled(False)
+				buttons = g_widget.add_buttons("Close")
+				buttons[0].clicked.connect(g_widget.close)
+			else:
+				notifbar.add_text('No duplicates found!')
+
+		class DuplicateCheck(QObject):
+			found_duplicates = pyqtSignal(list)
+			def __init__(self):
+				super().__init__()
+
+			def checkSimple(self):
+				galleries = app_constants.GALLERY_DATA
+
+				duplicates = []
+				for g in galleries:
+					notifbar.add_text('Checking gallery {}'.format(g.id))
+					log_d('Checking gallery {}'.format(g.title.encode(errors="ignore")))
+					for y in galleries:
+						title = g.title.strip().lower() == y.title.strip().lower()
+						path = os.path.normcase(g.path) == os.path.normcase(y.path)
+						if g.id != y.id and (title or path):
+							if g not in duplicates:
+								duplicates.append(y)
+								duplicates.append(g)
+				self.found_duplicates.emit(duplicates)
+
+		self._d_checker = DuplicateCheck()
+		self._d_checker.moveToThread(app_constants.GENERAL_THREAD)
+		self._d_checker.found_duplicates.connect(show_duplicates)
+		self._d_checker.found_duplicates.connect(self._d_checker.deleteLater)
+		if simple:
+			self.duplicate_check_invoker.connect(self._d_checker.checkSimple)
+		self.duplicate_check_invoker.emit()
 
 	def excepthook(self, ex_type, ex, tb):
 		w = misc.ApplicationPopup(self, misc.ApplicationPopup.MESSAGE)

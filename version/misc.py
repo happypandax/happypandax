@@ -782,7 +782,7 @@ class Spinner(TransparentWidget):
 	deactivated = pyqtSignal()
 	about_to_show, about_to_hide = range(2)
 
-	def __init__(self, parent=None):
+	def __init__(self, parent):
 		super().__init__(parent, flags=Qt.Window|Qt.FramelessWindowHint)
 		self.setAttribute(Qt.WA_ShowWithoutActivating)
 		self.fps = 21
@@ -812,6 +812,7 @@ class Spinner(TransparentWidget):
 		self.fade_animation.setEndValue(1.0)
 		self.setWindowOpacity(0.0)
 		self.set_size(50)
+		parent.move_listener.connect(lambda: self.update_move(QPoint(parent.pos().x() + parent.width() // 2, parent.pos().y() + parent.height() // 2)))
 
 	def set_size(self, w):
 		self.setFixedWidth(w)
@@ -1411,8 +1412,7 @@ class NotificationOverlay(QWidget):
 		self._lbl.setText(text)
 		if autohide:
 			if not self._override_hide:
-				t = threading.Timer(10, self._hide_signal.emit)
-				t.start()
+				threading.Timer(10, self._hide_signal.emit).start()
 
 	def begin_show(self):
 		"""

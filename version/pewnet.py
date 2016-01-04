@@ -493,12 +493,13 @@ class HenManager(DLManager):
 			h_item.fetch_thumb()
 			if  h_item.torrents_found > 0:
 				g_id_token = EHen.parse_url(g_url)
-				url_and_file = self._torrent_url_d(g_id_token[0], g_id_token[1])
-				if url_and_file:
-					h_item.download_url = url_and_file[0]
-					h_item.name = url_and_file[1]
-					Downloader.add_to_queue(h_item, self._browser.session)
-					return h_item
+				if g_id_token:
+					url_and_file = self._torrent_url_d(g_id_token[0], g_id_token[1])
+					if url_and_file:
+						h_item.download_url = url_and_file[0]
+						h_item.name = url_and_file[1]
+						Downloader.add_to_queue(h_item, self._browser.session)
+						return h_item
 			else:
 				return h_item
 		return False
@@ -724,8 +725,16 @@ class EHen(CommenHen):
 	@classmethod
 	def parse_url(cls, url):
 		"Parses url into a list of gallery id and token"
-		gallery_id = int(regex.search('(\d+)(?=\S{4,})', url).group())
-		gallery_token = regex.search('(?<=\d/)(\S+)(?=/$)', url).group()
+		gallery_id = regex.search('(\d+)(?=\S{4,})', url)
+		if not gallery_id:
+			log_e("Error extracting g_id from url: {}".format(url))
+			return None
+		gallery_id = int(gallery_id.group())
+		gallery_token = regex.search('(?<=\d/)(\S+)(?=/$)', url)
+		if not gallery_token:
+			log_e("Error extracting token from url: {}".format(url))
+			return None
+		gallery_token = gallery_token.group()
 		parsed_url = [gallery_id, gallery_token]
 		return parsed_url
 
@@ -747,8 +756,9 @@ class EHen(CommenHen):
 		dict_metadata = {}
 		for url in list_of_urls:
 			parsed_url = EHen.parse_url(url.strip())
-			dict_metadata[parsed_url[0]] = url # gallery id
-			payload['gidlist'].append(parsed_url)
+			if parsed_url:
+				dict_metadata[parsed_url[0]] = url # gallery id
+				payload['gidlist'].append(parsed_url)
 
 		if payload['gidlist']:
 			self.begin_lock()
