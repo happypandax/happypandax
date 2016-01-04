@@ -307,7 +307,7 @@ def check_db_version(conn):
 	return True
 	
 
-def init_db(path=''):
+def init_db(path=db_constants.DB_PATH):
 	"""Initialises the DB. Returns a sqlite3 connection,
 	which will be passed to the db thread.
 	"""
@@ -332,30 +332,23 @@ def init_db(path=''):
 			conn.commit()
 		return conn
 
-	if path:
-		if os.path.isfile(path):
-			conn = new_db(path)
-		else:
-			create_db_path(path)
-			conn = new_db(path, True)
-		return conn
-
-	if os.path.isfile(db_constants.DB_PATH):
-		conn = new_db(db_constants.DB_PATH)
-		if not check_db_version(conn):
+	if os.path.isfile(path):
+		conn = new_db(path)
+		if path == db_constants.DB_PATH and not check_db_version(conn):
 			return None
 	else:
 		create_db_path()
-		conn = new_db(db_constants.DB_PATH, True)
+		conn = new_db(path, True)
 
+	conn.isolation_level = None
 	conn.execute("PRAGMA foreign_keys = on")
 	return conn
 
 class DBBase:
 	"The base DB class. _DB_CONN should be set at runtime on startup"
 	_DB_CONN = None
-	_LOCK = False
 	_AUTO_COMMIT = True
+	_ACTIVE = True
 
 	def __init__(self, **kwargs):
 		pass
@@ -370,8 +363,11 @@ class DBBase:
 	@classmethod
 	def end(cls):
 		"Called to commit and end transaction"
+		try:
+			cls.execute(cls, "COMMIT")
+		except sqlite3.OperationalError:
+			pass
 		cls._AUTO_COMMIT = True
-		cls._DB_CONN.commit()
 		print("ENDED DB OPTIMIZE")
 
 	def execute(self, *args):
@@ -381,13 +377,10 @@ class DBBase:
 		log_d('DB Query: {}'.format(args).encode(errors='ignore'))
 		if self._AUTO_COMMIT:
 			try:
-				try:
-					with self._DB_CONN:
-						return self._DB_CONN.execute(*args)
-				except sqlite3.InterfaceError:
-						return self._DB_CONN.execute(*args)
-			except sqlite3.IntegrityError:
-				print(args)
+				with self._DB_CONN:
+					return self._DB_CONN.execute(*args)
+			except sqlite3.InterfaceError:
+					return self._DB_CONN.execute(*args)
 
 		else:
 			return self._DB_CONN.execute(*args)
@@ -397,16 +390,12 @@ class DBBase:
 		if not self._DB_CONN:
 			raise db_constants.NoDatabaseConnection
 		log_d('DB Query: {}'.format(args).encode(errors='ignore'))
-		try:
-			if self._AUTO_COMMIT:
-				with self._DB_CONN:
-					return self._DB_CONN.executemany(*args)
-			else:
+		if self._AUTO_COMMIT:
+			with self._DB_CONN:
 				return self._DB_CONN.executemany(*args)
-		except sqlite3.IntegrityError:
-			print(args)
-			raise ValueError
-		self._LOCK = False
+		else:
+			c = self._DB_CONN.executemany(*args)
+			return c
 
 	def commit(self):
 		self._DB_CONN.commit()

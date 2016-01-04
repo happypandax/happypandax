@@ -597,11 +597,15 @@ class AppWindow(QMainWindow):
 		# debug specfic code
 		if app_constants.DEBUG:
 			def debug_func():
-				g = gallerydb.GalleryList("example 2")
-				for x in range(5):
-					g.add_gallery(app_constants.GALLERY_DATA[x])
-				gallerydb.ListDB.add_list(g)
-
+				import time
+				x = 0
+				for g in app_constants.GALLERY_DATA:
+					x += 1
+					if x > 70:
+						time.sleep(1)
+						print(g.title.encode(errors="ignore"))
+						print(g.id)
+		
 			debug_btn = QToolButton()
 			debug_btn.setText("DEBUG BUTTON")
 			self.toolbar.addWidget(debug_btn)

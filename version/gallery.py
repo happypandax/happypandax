@@ -1020,6 +1020,15 @@ class GridDelegate(CustomDelegate):
 				painter.drawPath(p_path.simplified())
 				#painter.fillRect(selected_rect, QColor(164,164,164,120))
 				painter.restore()
+
+			if app_constants.DEBUG:
+				painter.save()
+				painter.setBrush(QBrush(QColor("red")))
+				painter.setPen(QColor("white"))
+				txt_l = self.title_font_m.width(str(gallery.id))
+				painter.drawRect(x, y, txt_l*2, self.title_font_m.height())
+				painter.drawText(x+1, y+11, str(gallery.id))
+				painter.restore()
 			#if option.state & QStyle.State_Selected:
 			#	painter.setPen(QPen(option.palette.highlightedText().color()))
 		else:

@@ -878,10 +878,9 @@ class TagDB(DBBase):
 		# Lastly we map the series_id to the tags_mappings
 		executing = []
 		for tags_map in tags_mappings_id_list:
-			#executing.append((series_id, tags_map,))
-			cls.execute(cls, 'INSERT INTO series_tags_map(series_id, tags_mappings_id) VALUES(?, ?)', (series_id, tags_map,))
-		print(executing)
-		#cls.executemany(cls, 'INSERT INTO series_tags_map(series_id, tags_mappings_id) VALUES(?, ?)', executing)
+			executing.append((series_id, tags_map,))
+			#cls.execute(cls, 'INSERT INTO series_tags_map(series_id, tags_mappings_id) VALUES(?, ?)', (series_id, tags_map,))
+		cls.executemany(cls, 'INSERT OR IGNORE INTO series_tags_map(series_id, tags_mappings_id) VALUES(?, ?)', executing)
 
 	@staticmethod
 	def modify_tags(series_id, dict_of_tags):
@@ -1861,16 +1860,16 @@ class AdminDB(QObject):
 		log_i("Initiating datbase rebuild")
 		utils.backup_database()
 		log_i("Getting galleries...")
-		GalleryDB.begin()
 		galleries = GalleryDB.get_all_gallery()
 		self.DATA_COUNT.emit(len(galleries))
-		GalleryDB.end()
 		db.DBBase._DB_CONN.close()
 		log_i("Removing old database...")
-		os.remove(db_constants.DB_PATH)
 		log_i("Initiating new database...")
-		db.DBBase._DB_CONN = db.init_db()
-		GalleryDB.begin()
+		temp_db = os.path.join(db_constants.DB_ROOT, "happypanda_temp.db")
+		if os.path.exists(temp_db):
+			os.remove(temp_db)
+		db.DBBase._DB_CONN = db.init_db(temp_db)
+		DBBase.begin()
 		log_i("Adding galleries...")
 		GalleryDB.clear_thumb_dir()
 		for n, g in enumerate(galleries):
@@ -1879,7 +1878,10 @@ class AdminDB(QObject):
 			else:
 				GalleryDB.add_gallery(g)
 			self.PROGRESS.emit(n)
-		GalleryDB.end()
+		DBBase.end()
+		DBBase._DB_CONN.close()
+		os.remove(db_constants.DB_PATH)
+		os.rename(temp_db, db_constants.DB_PATH)
 		self.PROGRESS.emit(len(galleries))
 		log_i("Succesfully rebuilt database")
 		self.DONE.emit(True)
