@@ -1,9 +1,7 @@
 DoNotDelete {
-	background-color: #F2F2F2;
 }
 
 AppWindow {
-	background-color: #F2F2F2;
 }
 
 QLabel#image_box {
@@ -126,7 +124,6 @@ QMenu::item:selected {
 }
 
 MangaView {
-	background-color: #F2F2F2;
 	border: 0px solid #F2F2F2;
 }
 

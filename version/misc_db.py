@@ -28,6 +28,7 @@ from PyQt5.QtGui import QIcon
 import gallerydb
 import app_constants
 import utils
+import misc
 
 class TagsTreeView(QTreeWidget):
 	def __init__(self, **kwargs):
@@ -147,7 +148,6 @@ class DBOverview(QWidget):
 		self.about_to_close.emit()
 		return super().closeEvent(event)
 
-import misc
 class SideBarWidget(QFrame):
 	"""
 	"""

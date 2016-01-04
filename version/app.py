@@ -1150,6 +1150,11 @@ class AppWindow(QMainWindow):
 		except:
 			log.exception('Flush temp on exit: FAIL')
 
+		# DB
+		log_i("Analyzing database...")
+		gallerydb.GalleryDB.analyze()
+		log_i("Closing database...")
+		gallerydb.GalleryDB.close()
 		self.download_window.close()
 
 		# check if there is db activity

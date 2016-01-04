@@ -997,13 +997,14 @@ class GridDelegate(CustomDelegate):
 				selected_rect = QRectF(x, y, w, lbl_rect.height()+app_constants.THUMB_H_SIZE)
 				painter.setPen(Qt.NoPen)
 				painter.setBrush(QBrush(QColor(164,164,164,120)))
-				p_path = QPainterPath()
-				p_path.setFillRule(Qt.WindingFill)
-				p_path.addRoundedRect(selected_rect, 5,5)
-				s_factor = app_constants.SIZE_FACTOR + 10
-				p_path.addRect(x,y, s_factor, s_factor)
-				p_path.addRect(x+w-s_factor,y, s_factor, s_factor)
-				painter.drawPath(p_path.simplified())
+				#p_path = QPainterPath()
+				#p_path.setFillRule(Qt.WindingFill)
+				#p_path.addRoundedRect(selected_rect, 5,5)
+				#s_factor = app_constants.SIZE_FACTOR + 10
+				#p_path.addRect(x,y, s_factor, s_factor)
+				#p_path.addRect(x+w-s_factor,y, s_factor, s_factor)
+				#painter.drawPath(p_path.simplified())
+				painter.drawRoundedRect(selected_rect, 5, 5)
 				#painter.fillRect(selected_rect, QColor(164,164,164,120))
 				painter.restore()
 

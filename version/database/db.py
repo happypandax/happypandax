@@ -31,8 +31,8 @@ def hashes_sql(cols=False):
 					series_id INTEGER,
 					chapter_id INTEGER,
 					page INTEGER,
-					FOREIGN KEY(series_id) REFERENCES series(series_id),
-					FOREIGN KEY(chapter_id) REFERENCES chapters(chapter_id)
+					FOREIGN KEY(series_id) REFERENCES series(series_id) ON DELETE CASCADE,
+					FOREIGN KEY(chapter_id) REFERENCES chapters(chapter_id) ON DELETE CASCADE,
 					UNIQUE(hash, series_id, chapter_id, page));
 	"""
 
@@ -105,7 +105,7 @@ def chapters_sql(cols=False):
 					chapter_path BLOB,
 					pages INTEGER,
 					in_archive INTEGER,
-					FOREIGN KEY(series_id) REFERENCES series(series_id));
+					FOREIGN KEY(series_id) REFERENCES series(series_id) ON DELETE CASCADE);
 		"""
 	col_list = [
 		'chapter_id INTEGER PRIMARY KEY',
@@ -154,8 +154,8 @@ def tags_mappings_sql(cols=False):
 					tags_mappings_id INTEGER PRIMARY KEY,
 					namespace_id INTEGER,
 					tag_id INTEGER,
-					FOREIGN KEY(namespace_id) REFERENCES namespaces(namespace_id),
-					FOREIGN KEY(tag_id) REFERENCES tags(tag_id)
+					FOREIGN KEY(namespace_id) REFERENCES namespaces(namespace_id) ON DELETE CASCADE,
+					FOREIGN KEY(tag_id) REFERENCES tags(tag_id) ON DELETE CASCADE,
 					UNIQUE(namespace_id, tag_id));
 		"""
 	col_list = [
@@ -172,8 +172,8 @@ def series_tags_mappings_sql(cols=False):
 		CREATE TABLE IF NOT EXISTS series_tags_map(
 					series_id INTEGER,
 					tags_mappings_id INTEGER,
-					FOREIGN KEY(series_id) REFERENCES series(series_id),
-					FOREIGN KEY(tags_mappings_id) REFERENCES tags_mappings(tags_mappings_id)
+					FOREIGN KEY(series_id) REFERENCES series(series_id) ON DELETE CASCADE,
+					FOREIGN KEY(tags_mappings_id) REFERENCES tags_mappings(tags_mappings_id) ON DELETE CASCADE,
 					UNIQUE(series_id, tags_mappings_id));
 		"""
 	col_list = [
@@ -203,8 +203,8 @@ def series_list_map_sql(cols=False):
 		CREATE TABLE IF NOT EXISTS series_list_map(
 					list_id INTEGER NOT NULL,
 					series_id INTEGER INTEGER NOT NULL,
-					FOREIGN KEY(list_id) REFERENCES list(list_id),
-					FOREIGN KEY(series_id) REFERENCES series(series_id)
+					FOREIGN KEY(list_id) REFERENCES list(list_id) ON DELETE CASCADE,
+					FOREIGN KEY(series_id) REFERENCES series(series_id) ON DELETE CASCADE,
 					UNIQUE(list_id, series_id));
 		"""
 	col_list = [
@@ -399,6 +399,14 @@ class DBBase:
 
 	def commit(self):
 		self._DB_CONN.commit()
+
+	@classmethod
+	def analyze(cls):
+		cls._DB_CONN.execute('ANALYZE')
+
+	@classmethod
+	def close(cls):
+		cls._DB_CONN.close()
 
 if __name__ == '__main__':
 	raise RuntimeError("Unit tests not yet implemented")

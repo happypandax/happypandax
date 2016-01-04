@@ -542,9 +542,6 @@ class GalleryDB(DBBase):
 				except FileNotFoundError:
 					pass
 			cls.execute(cls, 'DELETE FROM series WHERE series_id=?', (gallery.id,))
-			ChapterDB.del_all_chapters(gallery.id)
-			TagDB.del_gallery_mapping(gallery.id)
-			HashDB.del_gallery_hashes(gallery.id)
 			log_i('Successfully deleted: {}'.format(gallery.title.encode('utf-8', 'ignore')))
 			app_constants.NOTIF_BAR.add_text('Successfully deleted: {}'.format(gallery.title))
 
@@ -749,18 +746,9 @@ class TagDB(DBBase):
 	def del_gallery_mapping(cls, series_id):
 		"Deletes the tags and gallery mappings with corresponding series_ids from DB"
 		assert isinstance(series_id, int), "Please provide a valid gallery id"
-		# We first get all the current tags_mappings_ids related to gallery
-		tag_m_ids = []
-		c = cls.execute(cls, 'SELECT tags_mappings_id FROM series_tags_map WHERE series_id=?',
-				[int(series_id)])
-		for tmd in c.fetchall():
-			tag_m_ids.append((tmd['tags_mappings_id'],))
 
-		# Then we delete all mappings related to the given series_id
+		# delete all mappings related to the given series_id
 		cls.execute(cls, 'DELETE FROM series_tags_map WHERE series_id=?', [series_id])
-
-		print(tag_m_ids)
-		cls.executemany(cls, 'DELETE FROM tags_mappings WHERE tags_mappings_id=?', tag_m_ids)
 
 	@classmethod
 	def get_gallery_tags(cls, series_id):

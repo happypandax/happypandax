@@ -352,6 +352,14 @@ class Fetch(QObject):
 			fetched_galleries = []
 			checked_pre_url_galleries = []
 			for x, gallery in enumerate(self.galleries, 1):
+				log_i("Checking gallery url")
+				if gallery.link and app_constants.USE_GALLERY_LINK:
+					check = self._website_checker(gallery.link)
+					if check == valid_url:
+						gallery.temp_url = gallery.link
+						checked_pre_url_galleries.append(gallery)
+						continue
+
 				self.AUTO_METADATA_PROGRESS.emit("({}/{}) Generating gallery hash: {}".format(x, len(self.galleries), gallery.title))
 				log_i("Generating gallery hash: {}".format(gallery.title.encode(errors='ignore')))
 				hash = None
@@ -369,14 +377,6 @@ class Fetch(QObject):
 					log_e("Could not generate hash for gallery: {}".format(gallery.title.encode(errors='ignore')))
 					continue
 				gallery.hash = hash
-
-				log_i("Checking gallery url")
-				if gallery.link and app_constants.USE_GALLERY_LINK:
-					check = self._website_checker(gallery.link)
-					if check == valid_url:
-						gallery.temp_url = gallery.link
-						checked_pre_url_galleries.append(gallery)
-						continue
 
 				# dict -> hash:[list of title,url tuples] or None
 				self.AUTO_METADATA_PROGRESS.emit("({}/{}) Finding url for gallery: {}".format(x, len(self.galleries), gallery.title))
