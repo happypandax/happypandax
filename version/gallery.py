@@ -536,33 +536,7 @@ class GalleryModel(QAbstractTableModel):
 	def fetchMore(self, index):
 		self.db_emitter.fetch_more()
 
-class CustomDelegate(QStyledItemDelegate):
-	def __init__(self, parent=None):
-		super().__init__(parent)
-
-	def text_layout(self, text, width, font, font_metrics, alignment=Qt.AlignCenter):
-		"Lays out wrapped text"
-		text_option = QTextOption(alignment)
-		text_option.setUseDesignMetrics(True)
-		text_option.setWrapMode(QTextOption.WordWrap)
-		layout = QTextLayout(text, font)
-		layout.setTextOption(text_option)
-		leading = font_metrics.leading()
-		height = 0
-		layout.setCacheEnabled(True)
-		layout.beginLayout()
-		while True:
-			line = layout.createLine()
-			if not line.isValid():
-				break
-			line.setLineWidth(width)
-			height += leading
-			line.setPosition(QPointF(0, height))
-			height += line.height()
-		layout.endLayout()
-		return layout
-
-class ListDelegate(CustomDelegate):
+class ListDelegate(QStyledItemDelegate):
 	"A custom delegate for the model/view framework"
 
 	def __init__(self, parent):
@@ -641,7 +615,7 @@ class ListDelegate(CustomDelegate):
 			# descr
 			descr_y = artist_y + artist_layout.boundingRect().height()
 			descr_x = title_x + (painter.fontMetrics().width(txt_list[6])*1.1)
-			descr_layout = self.text_layout(c_gallery.info, title_width, painter.font(), painter.fontMetrics(), Qt.AlignLeft)
+			descr_layout = misc.text_layout(c_gallery.info, title_width, painter.font(), painter.fontMetrics(), Qt.AlignLeft)
 			descr_layout.draw(painter, QPointF(descr_x, descr_y))
 
 			# tags
@@ -654,7 +628,7 @@ class ListDelegate(CustomDelegate):
 				painter.drawText(descr_x, tags_y, ns_text)
 				tag_x = descr_x + painter.fontMetrics().width(ns_text) * 1.2
 				tags_txt = self.tags_text(c_gallery.tags[ns])
-				tags_layout = self.text_layout(tags_txt, w-(tag_x*1.1 - x), painter.font(), painter.fontMetrics(), Qt.AlignLeft)
+				tags_layout = misc.text_layout(tags_txt, w-(tag_x*1.1 - x), painter.font(), painter.fontMetrics(), Qt.AlignLeft)
 				tags_layout.draw(painter, QPointF(tag_x, tags_y-tags_h*0.7))
 				tags_y += tags_layout.boundingRect().height()
 
@@ -691,17 +665,17 @@ class ListDelegate(CustomDelegate):
 		w = option.rect.width()-(self.pic_width+self._pic_margin*2+
 						   self.parent_font_m.width("Added: {}".format(g.date_added.strftime('%d %b %Y'))))
 		w = abs(w)
-		h = self.text_layout(g.info, w, self.parent_font, self.parent_font_m, Qt.AlignLeft).boundingRect().height()
+		h = misc.text_layout(g.info, w, self.parent_font, self.parent_font_m, Qt.AlignLeft).boundingRect().height()
 		for ns in g.tags:
 			tags = g.tags[ns]
 			txt = self.tags_text(tags)
-			txt_layout = self.text_layout(txt, w, self.parent_font, self.parent_font_m, Qt.AlignLeft)
+			txt_layout = misc.text_layout(txt, w, self.parent_font, self.parent_font_m, Qt.AlignLeft)
 			h += txt_layout.boundingRect().height()
 
 		h2 = 0
-		title_layout = self.text_layout(g.title, w, self.title_font, self.title_font_m)
+		title_layout = misc.text_layout(g.title, w, self.title_font, self.title_font_m)
 		h2 += title_layout.boundingRect().height() + self.title_font_m.height()
-		artist_layout = self.text_layout(g.artist, w, self.artist_font, self.artist_font_m)
+		artist_layout = misc.text_layout(g.artist, w, self.artist_font, self.artist_font_m)
 		h2 += artist_layout.boundingRect().height() + self.artist_font_m.height()
 		h2 += self.parent_font_m.height()*len(self.gallery_info(g))
 		print("h:", h, "h2", h2)
@@ -715,7 +689,7 @@ class ListDelegate(CustomDelegate):
 
 		return QSize(self.dynamic_width, dynamic_height)
 
-class GridDelegate(CustomDelegate):
+class GridDelegate(QStyledItemDelegate):
 	"A custom delegate for the model/view framework"
 
 	POPUP = pyqtSignal()
@@ -944,8 +918,8 @@ class GridDelegate(CustomDelegate):
 
 			if option.state & QStyle.State_MouseOver or\
 			    option.state & QStyle.State_Selected:
-				title_layout = self.text_layout(title, w, self.title_font, self.title_font_m)
-				artist_layout = self.text_layout(artist, w, self.artist_font, self.artist_font_m)
+				title_layout = misc.text_layout(title, w, self.title_font, self.title_font_m)
+				artist_layout = misc.text_layout(artist, w, self.artist_font, self.artist_font_m)
 				t_h = title_layout.boundingRect().height()
 				a_h = artist_layout.boundingRect().height()
 

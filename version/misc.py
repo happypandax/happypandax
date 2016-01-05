@@ -22,7 +22,7 @@ from PyQt5.QtCore import (Qt, QDate, QPoint, pyqtSignal, QThread,
 from PyQt5.QtGui import (QTextCursor, QIcon, QMouseEvent, QFont,
 						 QPixmapCache, QPalette, QPainter, QBrush,
 						 QColor, QPen, QPixmap, QMovie, QPaintEvent, QFontMetrics,
-						 QPolygonF, QRegion, QCursor)
+						 QPolygonF, QRegion, QCursor, QTextOption, QTextLayout)
 from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QVBoxLayout, QHBoxLayout,
 							 QDialog, QGridLayout, QLineEdit,
@@ -56,6 +56,28 @@ log_d = log.debug
 log_w = log.warning
 log_e = log.error
 log_c = log.critical
+
+def text_layout(text, width, font, font_metrics, alignment=Qt.AlignCenter):
+	"Lays out wrapped text"
+	text_option = QTextOption(alignment)
+	text_option.setUseDesignMetrics(True)
+	text_option.setWrapMode(QTextOption.WordWrap)
+	layout = QTextLayout(text, font)
+	layout.setTextOption(text_option)
+	leading = font_metrics.leading()
+	height = 0
+	layout.setCacheEnabled(True)
+	layout.beginLayout()
+	while True:
+		line = layout.createLine()
+		if not line.isValid():
+			break
+		line.setLineWidth(width)
+		height += leading
+		line.setPosition(QPointF(0, height))
+		height += line.height()
+	layout.endLayout()
+	return layout
 
 def centerWidget(widget, parent_widget=None):
 	if parent_widget:
@@ -781,17 +803,21 @@ class Spinner(TransparentWidget):
 	activated = pyqtSignal()
 	deactivated = pyqtSignal()
 	about_to_show, about_to_hide = range(2)
+	_OFFSET_X_TOPRIGHT = [0]
 
-	def __init__(self, parent):
-		super().__init__(parent, flags=Qt.Window|Qt.FramelessWindowHint)
+	def __init__(self, parent, position='topright'):
+		"Position can be: 'center', 'topright' or QPoint"
+		super().__init__(parent, flags=Qt.Window|Qt.FramelessWindowHint, move_listener=False)
 		self.setAttribute(Qt.WA_ShowWithoutActivating)
 		self.fps = 21
 		self.border = 2
 		self.line_width = 5
 		self.arc_length = 100
 		self.seconds_per_spin = 1
+		self.text_layout = None
 
 		self.text = ''
+		self._text_margin = 5
 
 		self._timer = QTimer(self)
 		self._timer.timeout.connect(self._on_timer_timeout)
@@ -799,6 +825,11 @@ class Spinner(TransparentWidget):
 		# keep track of the current start angle to avoid 
 		# unnecessary repaints
 		self._start_angle = 0
+
+		self._offset_x_topright = self._OFFSET_X_TOPRIGHT[0]
+		self.margin = 10
+		self._position = position
+		self._min_size = 0
 
 		self.state_timer = QTimer()
 		self.current_state = self.about_to_show
@@ -811,17 +842,42 @@ class Spinner(TransparentWidget):
 		self.fade_animation.setStartValue(0.0)
 		self.fade_animation.setEndValue(1.0)
 		self.setWindowOpacity(0.0)
+		self._update_layout()
 		self.set_size(50)
-		parent.move_listener.connect(lambda: self.update_move(QPoint(parent.pos().x() + parent.width() // 2, parent.pos().y() + parent.height() // 2)))
+		self._set_position(position)
+
+	def _update_layout(self):
+		self.text_layout = text_layout(self.text, self.width()-self._text_margin, self.font(), self.fontMetrics())
+		self.setFixedHeight(self._min_size+self.text_layout.boundingRect().height())
 
 	def set_size(self, w):
 		self.setFixedWidth(w)
-		self.setFixedHeight(w+self.fontMetrics().height())
+		self._min_size = w
+		self._update_layout()
 		self.update()
 
 	def set_text(self, txt):
 		self.text = txt
+		self._update_layout()
 		self.update()
+
+	def _set_position(self, new_pos):
+		"'center', 'topright' or QPoint"
+		p = self.parent_widget
+
+		# topleft
+		if new_pos == "topright":
+			def topright():
+				return QPoint(p.pos().x() + p.width() - 65 - self._offset_x_topright, p.pos().y() + p.toolbar.height() + 55)
+			self.move(topright())
+			p.move_listener.connect(lambda: self.update_move(topright()))
+
+		elif new_pos == "center":
+			p.move_listener.connect(lambda: self.update_move(QPoint(p.pos().x() + p.width() // 2,
+																p.pos().y() + p.height() // 2)))
+
+		elif isinstance(new_pos, QPoint):
+			p.move_listener.connect(lambda: self.update_move(new_pos))
 
 	def paintEvent(self, event):
 		# call the base paint event:
@@ -846,10 +902,6 @@ class Spinner(TransparentWidget):
 			pen.setWidth(self.line_width)
 			painter.setPen(pen)
 
-			if self.text:
-				text_elided = self.fontMetrics().elidedText(self.text, Qt.ElideRight, self.width()-5)
-				txt_rect = painter.boundingRect(txt_rect, text_elided)
-
 			border = self.border + int(math.ceil(self.line_width / 2.0))
 			r = QRectF((txt_rect.height())/2, (txt_rect.height()/2),
 			  self.width()-txt_rect.height(), self.width()-txt_rect.height())
@@ -860,8 +912,8 @@ class Spinner(TransparentWidget):
 
 			# draw text if there is
 			if self.text:
-				painter.drawText(QRectF(5, self.height()-txt_rect.height()-2.5, txt_rect.width(), txt_rect.height()),
-					 text_elided)
+				txt_rect = self.text_layout.boundingRect()
+				self.text_layout.draw(painter, QPointF(self._text_margin, self.height()-txt_rect.height()-self._text_margin/2))
 
 			r = None
 
@@ -870,6 +922,8 @@ class Spinner(TransparentWidget):
 			painter = None
 
 	def showEvent(self, event):
+		if self._position == "topright":
+			self._OFFSET_X_TOPRIGHT[0] += + self.width() + self.margin
 		if not self._timer.isActive():
 			self.fade_animation.start()
 			self.current_state = self.about_to_show
@@ -887,6 +941,8 @@ class Spinner(TransparentWidget):
 		if self.current_state == self.about_to_hide:
 			return
 		self.current_state = self.about_to_hide
+		if self._position == "topright":
+			self._OFFSET_X_TOPRIGHT[0] -= self.width() + self.margin
 		self.state_timer.start(5000)
 
 	def closeEvent(self, event):

@@ -324,14 +324,8 @@ class AppWindow(QMainWindow):
 
 	def get_metadata(self, gal=None):
 		metadata_spinner = misc.Spinner(self)
-		def move_md_spinner():
-			metadata_spinner.update_move(QPoint(self.pos().x() + self.width() - 65,
-				self.pos().y() + self.toolbar.height() + 55))
 		metadata_spinner.set_text("Metadata")
 		metadata_spinner.set_size(55)
-		metadata_spinner.move(QPoint(self.pos().x() + self.width() - 65,
-							   self.pos().y() + self.toolbar.height() + 55))
-		self.move_listener.connect(move_md_spinner)
 		thread = QThread(self)
 		thread.setObjectName('App.get_metadata')
 		fetch_instance = fetch.Fetch()
@@ -456,7 +450,7 @@ class AppWindow(QMainWindow):
 
 	def init_spinners(self):
 		# fetching spinner
-		self.data_fetch_spinner = misc.Spinner(self)
+		self.data_fetch_spinner = misc.Spinner(self, "center")
 		self.data_fetch_spinner.set_size(60)
 		
 		self.manga_list_view.gallery_model.ADD_MORE.connect(self.data_fetch_spinner.show)
@@ -599,14 +593,9 @@ class AppWindow(QMainWindow):
 		# debug specfic code
 		if app_constants.DEBUG:
 			def debug_func():
-				import time
-				x = 0
-				for g in app_constants.GALLERY_DATA:
-					x += 1
-					if x > 70:
-						time.sleep(1)
-						print(g.title.encode(errors="ignore"))
-						print(g.id)
+				s = misc.Spinner(self)
+				s.set_text("this is a really long text")
+				s.show()
 		
 			debug_btn = QToolButton()
 			debug_btn.setText("DEBUG BUTTON")
@@ -1052,11 +1041,16 @@ class AppWindow(QMainWindow):
 
 				def finished(): app_constants.SCANNING_FOR_GALLERIES = False
 
+				new_gall_spinner = misc.Spinner(self)
+				new_gall_spinner.set_text("Gallery Scan")
+				new_gall_spinner.show()
+
 				thread = QThread(self)
 				self.scan_inst = ScanDir()
 				self.scan_inst.moveToThread(thread)
 				self.scan_inst.final_paths_and_galleries.connect(show_new_galleries)
 				self.scan_inst.finished.connect(finished)
+				self.scan_inst.finished.connect(new_gall_spinner.before_hide)
 				thread.started.connect(self.scan_inst.scan_dirs)
 				#self.scan_inst.scan_dirs()
 				thread.finished.connect(thread.deleteLater)
@@ -1065,6 +1059,8 @@ class AppWindow(QMainWindow):
 				self.notification_bar.add_text('An error occured while attempting to scan for new galleries. Check happypanda.log.')
 				log.exception('An error occured while attempting to scan for new galleries.')
 				app_constants.SCANNING_FOR_GALLERIES = False
+		else:
+			self.notification_bar.add_text("Please specify directory in settings to scan for new galleries!")
 
 	def dragEnterEvent(self, event):
 		if event.mimeData().hasUrls():
@@ -1171,7 +1167,6 @@ class AppWindow(QMainWindow):
 			self.db_activity_checker.connect(db_activity.check)
 			db_activity.moveToThread(app_constants.GENERAL_THREAD)
 			db_activity.FINISHED.connect(db_spinner.close)
-			db_spinner.set_size(50)
 			db_spinner.set_text('DB Activity')
 			db_spinner.show()
 			self.db_activity_checker.emit()
