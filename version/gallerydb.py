@@ -103,7 +103,7 @@ def add_method_queue(method, no_return, *args, **kwargs):
 def gen_thumbnail(gallery, width=app_constants.THUMB_W_SIZE,
 				height=app_constants.THUMB_H_SIZE, img=None):
 	"""Generates a thumbnail with unique filename in the cache dir.
-	Returns absolute path to the created thumbnail
+	Returns relative path to the created thumbnail
 	"""
 	assert isinstance(gallery, Gallery), "gallery should be an instance of Gallery class"
 
@@ -153,8 +153,7 @@ def gen_thumbnail(gallery, width=app_constants.THUMB_W_SIZE,
 	except IndexError:
 		new_img_path = app_constants.NO_IMAGE_PATH
 
-	abs_path = os.path.abspath(new_img_path)
-	return abs_path
+	return new_img_path
 
 def chapter_map(row, chapter):
 	assert isinstance(chapter, Chapter)
@@ -317,8 +316,11 @@ class GalleryDB(DBBase):
 	@staticmethod
 	def clear_thumb_dir():
 		"Deletes everything in the thumbnail directory"
-		for thumbfile in scandir.scandir(db_constants.THUMBNAIL_PATH):
-			GalleryDB.clear_thumb(thumbfile.path)
+		try:
+			for thumbfile in scandir.scandir(db_constants.THUMBNAIL_PATH):
+				GalleryDB.clear_thumb(thumbfile.path)
+		except FileNotFoundError:
+			pass
 
 	@staticmethod
 	def rebuild_gallery(gallery, thumb=False):
