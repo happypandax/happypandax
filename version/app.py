@@ -593,9 +593,9 @@ class AppWindow(QMainWindow):
 		# debug specfic code
 		if app_constants.DEBUG:
 			def debug_func():
-				s = misc.Spinner(self)
-				s.set_text("this is a really long text")
-				s.show()
+				from pyqtgraph import examples
+				print("yes!")
+				examples.run()
 		
 			debug_btn = QToolButton()
 			debug_btn.setText("DEBUG BUTTON")

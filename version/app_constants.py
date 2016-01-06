@@ -50,7 +50,7 @@ GRIDBOX_H_SIZE = 200 + SIZE_FACTOR
 GRIDBOX_W_SIZE = GRIDBOX_H_SIZE//1.40 #1.47
 LISTBOX_H_SIZE = 190
 LISTBOX_W_SIZE = 950
-GRIDBOX_LBL_H = 50 + SIZE_FACTOR
+GRIDBOX_LBL_H = 60
 GRIDBOX_H_SIZE += GRIDBOX_LBL_H
 THUMB_H_SIZE = 190 + SIZE_FACTOR
 THUMB_W_SIZE = 133 + SIZE_FACTOR
@@ -161,6 +161,7 @@ CURRENT_SORT = get('title', 'General', 'current sort')
 HIGH_QUALITY_THUMBS = get(False, 'Visual', 'high quality thumbs', bool)
 USE_EXTERNAL_PROG_ICO = get(False, 'Visual', 'use external prog ico', bool) if not sys.platform.startswith('darwin')  else False
 DISPLAY_GALLERY_TYPE = get(False, 'Visual', 'display gallery type', bool) if not sys.platform.startswith('darwin') else False
+DISPLAY_GALLERY_RIBBON = get(True, 'Visual', 'display gallery ribbon', bool)
 GALLERY_FONT = (get('Segoe UI', 'Visual', 'gallery font family', str),
 				get(11, 'Visual', 'gallery font size', int))
 GALLERY_FONT_ELIDE = get(True, 'Visual', 'gallery font elide', bool)
@@ -169,6 +170,16 @@ GALLERY_FONT_ELIDE = get(True, 'Visual', 'gallery font elide', bool)
 GRID_VIEW_TITLE_COLOR = get('#323232', 'Visual', 'grid view title color', str)
 GRID_VIEW_ARTIST_COLOR = get('#585858', 'Visual', 'grid view artist color', str)
 GRID_VIEW_LABEL_COLOR = get('#F2F2F2', 'Visual', 'grid view label color', str)
+
+GRID_VIEW_T_MANGA_COLOR = get('#3498db', 'Visual', 'grid view t manga color', str)
+GRID_VIEW_T_DOUJIN_COLOR = get('#e74c3c', 'Visual', 'grid view t doujin color', str)
+GRID_VIEW_T_ARTIST_CG_COLOR = get('#16a085', 'Visual', 'grid view t artist cg color', str)
+GRID_VIEW_T_GAME_CG_COLOR = get('#2ecc71', 'Visual', 'grid view t game cg color', str)
+GRID_VIEW_T_WESTERN_COLOR = get('#ecf0f1', 'Visual', 'grid view t western color', str)
+GRID_VIEW_T_IMAGE_COLOR = get('#f39c12', 'Visual', 'grid view t image color', str)
+GRID_VIEW_T_NON_H_COLOR = get('#f1c40f', 'Visual', 'grid view t non-h color', str)
+GRID_VIEW_T_COSPLAY_COLOR = get('#9b59b6', 'Visual', 'grid view t cosplay color', str)
+GRID_VIEW_T_OTHER_COLOR = get('#34495e', 'Visual', 'grid view t other color', str)
 
 # Search
 SEARCH_AUTOCOMPLETE = get(True, 'Application', 'search autocomplete', bool)

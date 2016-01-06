@@ -218,6 +218,17 @@ class SettingsDialog(QWidget):
 		self.grid_title_color.setText(app_constants.GRID_VIEW_TITLE_COLOR)
 		self.grid_artist_color.setText(app_constants.GRID_VIEW_ARTIST_COLOR)
 
+		self.colors_ribbon_group.setChecked(app_constants.DISPLAY_GALLERY_RIBBON)
+		self.ribbon_manga_color.setText(app_constants.GRID_VIEW_T_MANGA_COLOR)
+		self.ribbon_doujin_color.setText(app_constants.GRID_VIEW_T_DOUJIN_COLOR)
+		self.ribbon_artist_cg_color.setText(app_constants.GRID_VIEW_T_ARTIST_CG_COLOR)
+		self.ribbon_game_cg_color.setText(app_constants.GRID_VIEW_T_GAME_CG_COLOR)
+		self.ribbon_western_color.setText(app_constants.GRID_VIEW_T_WESTERN_COLOR)
+		self.ribbon_image_color.setText(app_constants.GRID_VIEW_T_IMAGE_COLOR)
+		self.ribbon_non_h_color.setText(app_constants.GRID_VIEW_T_NON_H_COLOR)
+		self.ribbon_cosplay_color.setText(app_constants.GRID_VIEW_T_COSPLAY_COLOR)
+		self.ribbon_other_color.setText(app_constants.GRID_VIEW_T_OTHER_COLOR)
+
 		# Advanced / Misc
 		self.force_high_dpi_support.setChecked(app_constants.FORCE_HIGH_DPI_SUPPORT)
 
@@ -378,6 +389,8 @@ class SettingsDialog(QWidget):
 		set(app_constants.SIZE_FACTOR, 'Visual', 'size factor')
 
 		# Visual / Grid View / Colors
+		app_constants.DISPLAY_GALLERY_RIBBON = self.colors_ribbon_group.isChecked()
+		set(app_constants.DISPLAY_GALLERY_RIBBON, 'Visual', 'display gallery ribbon')
 		if self.color_checker(self.grid_title_color.text()):
 			app_constants.GRID_VIEW_TITLE_COLOR = self.grid_title_color.text()
 			set(app_constants.GRID_VIEW_TITLE_COLOR, 'Visual', 'grid view title color')
@@ -387,6 +400,35 @@ class SettingsDialog(QWidget):
 		if self.color_checker(self.grid_label_color.text()):
 			app_constants.GRID_VIEW_LABEL_COLOR = self.grid_label_color.text()
 			set(app_constants.GRID_VIEW_LABEL_COLOR, 'Visual', 'grid view label color')
+
+		if self.color_checker(self.ribbon_manga_color.text()):
+			app_constants.GRID_VIEW_T_MANGA_COLOR = self.ribbon_manga_color.text()
+			set(app_constants.GRID_VIEW_T_MANGA_COLOR, 'Visual', 'grid view t manga color')
+		if self.color_checker(self.ribbon_doujin_color.text()):
+			app_constants.GRID_VIEW_T_DOUJIN_COLOR = self.ribbon_doujin_color.text()
+			set(app_constants.GRID_VIEW_T_DOUJIN_COLOR, 'Visual', 'grid view t doujin color')
+		if self.color_checker(self.ribbon_artist_cg_color.text()):
+			app_constants.GRID_VIEW_T_ARTIST_CG_COLOR = self.ribbon_artist_cg_color.text()
+			set(app_constants.GRID_VIEW_T_ARTIST_CG_COLOR, 'Visual', 'grid view t artist cg color')
+		if self.color_checker(self.ribbon_game_cg_color.text()):
+			app_constants.GRID_VIEW_T_GAME_CG_COLOR = self.ribbon_game_cg_color.text()
+			set(app_constants.GRID_VIEW_T_GAME_CG_COLOR, 'Visual', 'grid view t game cg color')
+		if self.color_checker(self.ribbon_western_color.text()):
+			app_constants.GRID_VIEW_T_WESTERN_COLOR = self.ribbon_western_color.text()
+			set(app_constants.GRID_VIEW_T_WESTERN_COLOR, 'Visual', 'grid view t western color')
+		if self.color_checker(self.ribbon_image_color.text()):
+			app_constants.GRID_VIEW_T_IMAGE_COLOR = self.ribbon_image_color.text()
+			set(app_constants.GRID_VIEW_T_IMAGE_COLOR, 'Visual', 'grid view t image color')
+		if self.color_checker(self.ribbon_non_h_color.text()):
+			app_constants.GRID_VIEW_T_NON_H_COLOR = self.ribbon_non_h_color.text()
+			set(app_constants.GRID_VIEW_T_NON_H_COLOR, 'Visual', 'grid view t non-h color')
+		if self.color_checker(self.ribbon_cosplay_color.text()):
+			app_constants.GRID_VIEW_T_COSPLAY_COLOR = self.ribbon_cosplay_color.text()
+			set(app_constants.GRID_VIEW_T_COSPLAY_COLOR, 'Visual', 'grid view t cosplay color')
+		if self.color_checker(self.ribbon_other_color.text()):
+			app_constants.GRID_VIEW_T_OTHER_COLOR = self.ribbon_other_color.text()
+			set(app_constants.GRID_VIEW_T_OTHER_COLOR, 'Visual', 'grid view t other color')
+
 
 		# Advanced / Misc
 		# Advanced / Misc / Grid View
@@ -730,17 +772,12 @@ class SettingsDialog(QWidget):
 		visual_general_page = QWidget()
 		visual.addTab(visual_general_page, 'General')
 
-		grid_view_general_page = QWidget()
-		visual.addTab(grid_view_general_page, 'Grid View')
-		grid_view_layout = QVBoxLayout()
-		grid_view_layout.addWidget(QLabel('Options marked with * requires application restart'),
-						   0, Qt.AlignTop)
-		grid_view_general_page.setLayout(grid_view_layout)
 		# grid view
+		grid_view_general_page, grid_view_layout = new_tab("Grid View", visual, True)
 		# grid view / tooltip
 		self.grid_tooltip_group = QGroupBox('Tooltip', grid_view_general_page)
 		self.grid_tooltip_group.setCheckable(True)
-		grid_view_layout.addWidget(self.grid_tooltip_group, 0, Qt.AlignTop)
+		grid_view_layout.addRow(self.grid_tooltip_group)
 		grid_tooltip_layout = QFormLayout()
 		self.grid_tooltip_group.setLayout(grid_tooltip_layout)
 		grid_tooltip_layout.addRow(QLabel('Control what is'+
@@ -773,7 +810,7 @@ class SettingsDialog(QWidget):
 		grid_tooltips_hlayout.addWidget(self.visual_grid_tooltip_date_added)
 		# grid view / gallery
 		grid_gallery_group = QGroupBox('Gallery', grid_view_general_page)
-		grid_view_layout.addWidget(grid_gallery_group, 0, Qt.AlignTop)
+		grid_view_layout.addRow(grid_gallery_group)
 		grid_gallery_main_l = QFormLayout()
 		grid_gallery_main_l.setFormAlignment(Qt.AlignLeft)
 		grid_gallery_group.setLayout(grid_gallery_main_l)
@@ -826,7 +863,7 @@ class SettingsDialog(QWidget):
 
 		# grid view / colors
 		grid_colors_group = QGroupBox('Colors', grid_view_general_page)
-		grid_view_layout.addWidget(grid_colors_group, 1, Qt.AlignTop)
+		grid_view_layout.addRow(grid_colors_group)
 		grid_colors_l = QFormLayout()
 		grid_colors_group.setLayout(grid_colors_l)
 		def color_lineedit():
@@ -841,6 +878,30 @@ class SettingsDialog(QWidget):
 		grid_colors_l.addRow('Title color:', self.grid_title_color)
 		grid_colors_l.addRow('Artist color:', self.grid_artist_color)
 
+		# grid view / colors / ribbon
+		self.colors_ribbon_group, colors_ribbon_l = groupbox('Ribbon', QFormLayout, grid_colors_group)
+		self.colors_ribbon_group.setCheckable(True)
+		grid_colors_l.addRow(self.colors_ribbon_group)
+		self.ribbon_manga_color = color_lineedit()
+		self.ribbon_doujin_color = color_lineedit()
+		self.ribbon_artist_cg_color = color_lineedit()
+		self.ribbon_game_cg_color = color_lineedit()
+		self.ribbon_western_color = color_lineedit()
+		self.ribbon_image_color = color_lineedit()
+		self.ribbon_non_h_color = color_lineedit()
+		self.ribbon_cosplay_color = color_lineedit()
+		self.ribbon_other_color = color_lineedit()
+		colors_ribbon_l.addRow('Manga', self.ribbon_manga_color)
+		colors_ribbon_l.addRow('Doujinshi', self.ribbon_doujin_color)
+		colors_ribbon_l.addRow('Artist CG', self.ribbon_artist_cg_color)
+		colors_ribbon_l.addRow('Game CG', self.ribbon_game_cg_color)
+		colors_ribbon_l.addRow('Western', self.ribbon_western_color)
+		colors_ribbon_l.addRow('Image', self.ribbon_image_color)
+		colors_ribbon_l.addRow('Non-H', self.ribbon_non_h_color)
+		colors_ribbon_l.addRow('Cosplay', self.ribbon_cosplay_color)
+		colors_ribbon_l.addRow('Other', self.ribbon_other_color)
+
+		# Style
 		style_page = QWidget(self)
 		visual.addTab(style_page, 'Style')
 		visual.setTabEnabled(0, False)

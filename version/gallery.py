@@ -27,7 +27,7 @@ from PyQt5.QtGui import (QPixmap, QBrush, QColor, QPainter,
 						 QPixmapCache, QCursor, QPalette, QKeyEvent,
 						 QFont, QTextOption, QFontMetrics, QFontMetricsF,
 						 QTextLayout, QPainterPath, QScrollPrepareEvent,
-						 QWheelEvent)
+						 QWheelEvent, QPolygonF)
 from PyQt5.QtWidgets import (QListView, QFrame, QLabel,
 							 QStyledItemDelegate, QStyle,
 							 QMenu, QAction, QToolTip, QVBoxLayout,
@@ -877,9 +877,51 @@ class GridDelegate(QStyledItemDelegate):
 						painter.drawPixmap(QPoint(img_x,y),
 								self.image)
 
-			# draw star if it's favorited
+			# draw ribbon type
+			painter.save()
+			painter.setPen(Qt.NoPen)
+			if app_constants.DISPLAY_GALLERY_RIBBON:
+				type_ribbon_w = type_ribbon_l = w*0.11
+				rib_top_1 = QPointF(x+w-type_ribbon_l-type_ribbon_w, y)
+				rib_top_2 = QPointF(x+w-type_ribbon_l, y)
+				rib_side_1 = QPointF(x+w, y+type_ribbon_l)
+				rib_side_2 = QPointF(x+w, y+type_ribbon_l+type_ribbon_w)
+				ribbon_polygon = QPolygonF([rib_top_1, rib_top_2, rib_side_1, rib_side_2])
+				ribbon_path = QPainterPath()
+				ribbon_path.setFillRule(Qt.WindingFill)
+				ribbon_path.addPolygon(ribbon_polygon)
+				ribbon_path.closeSubpath()
+				painter.setBrush(QBrush(QColor(self._ribbon_color(gallery.type))))
+				painter.drawPath(ribbon_path)
+
+			# draw if favourited
 			if gallery.fav == 1:
-				painter.drawPixmap(QPointF(x,y), QPixmap(app_constants.STAR_PATH))
+				star_ribbon_w = star_ribbon_l = w*0.08
+				rib_top_1 = QPointF(x+star_ribbon_l, y)
+				rib_side_1 = QPointF(x, y+star_ribbon_l)
+				rib_top_2 = QPointF(x+star_ribbon_l+star_ribbon_w, y)
+				rib_side_2 = QPointF(x, y+star_ribbon_l+star_ribbon_w)
+				rib_star_mid_1 = QPointF((rib_top_1.x()+rib_side_1.x())/2, (rib_top_1.y()+rib_side_1.y())/2)
+				rib_star_factor = star_ribbon_l/4
+				rib_star_p1_1 = rib_star_mid_1 + QPointF(rib_star_factor, -rib_star_factor)
+				rib_star_p1_2 = rib_star_p1_1 + QPointF(-rib_star_factor, -rib_star_factor)
+				rib_star_p1_3 = rib_star_mid_1 + QPointF(-rib_star_factor, rib_star_factor)
+				rib_star_p1_4 = rib_star_p1_3 + QPointF(-rib_star_factor, -rib_star_factor)
+
+				crown_1 = QPolygonF([rib_star_p1_1, rib_star_p1_2, rib_star_mid_1, rib_star_p1_4, rib_star_p1_3])
+				painter.setBrush(QBrush(QColor("yellow")))
+				painter.drawPolygon(crown_1)
+
+				ribbon_polygon = QPolygonF([rib_top_1, rib_side_1, rib_side_2, rib_top_2])
+				ribbon_path = QPainterPath()
+				ribbon_path.setFillRule(Qt.WindingFill)
+				ribbon_path.addPolygon(ribbon_polygon)
+				ribbon_path.closeSubpath()
+				painter.drawPath(ribbon_path)
+				#painter.setPen(QColor("#d35400"))
+				#painter.drawPolyline(rib_top_1, rib_star_p1_1, rib_star_p1_2, rib_star_mid_1, rib_star_p1_4, rib_star_p1_3, rib_side_1)
+				#painter.drawLine(rib_top_2, rib_side_2)
+			painter.restore()
 			
 			if app_constants._REFRESH_EXTERNAL_VIEWER:
 				if app_constants.USE_EXTERNAL_VIEWER:
@@ -971,13 +1013,6 @@ class GridDelegate(QStyledItemDelegate):
 				selected_rect = QRectF(x, y, w, lbl_rect.height()+app_constants.THUMB_H_SIZE)
 				painter.setPen(Qt.NoPen)
 				painter.setBrush(QBrush(QColor(164,164,164,120)))
-				#p_path = QPainterPath()
-				#p_path.setFillRule(Qt.WindingFill)
-				#p_path.addRoundedRect(selected_rect, 5,5)
-				#s_factor = app_constants.SIZE_FACTOR + 10
-				#p_path.addRect(x,y, s_factor, s_factor)
-				#p_path.addRect(x+w-s_factor,y, s_factor, s_factor)
-				#painter.drawPath(p_path.simplified())
 				painter.drawRoundedRect(selected_rect, 5, 5)
 				#painter.fillRect(selected_rect, QColor(164,164,164,120))
 				painter.restore()
@@ -996,18 +1031,40 @@ class GridDelegate(QStyledItemDelegate):
 				#painter.fillRect(selected_rect, QColor(164,164,164,120))
 				painter.restore()
 
-			if app_constants.DEBUG:
-				painter.save()
-				painter.setBrush(QBrush(QColor("red")))
-				painter.setPen(QColor("white"))
-				txt_l = self.title_font_m.width(str(gallery.id))
-				painter.drawRect(x, y, txt_l*2, self.title_font_m.height())
-				painter.drawText(x+1, y+11, str(gallery.id))
-				painter.restore()
+			#if app_constants.DEBUG:
+			#	painter.save()
+			#	painter.setBrush(QBrush(QColor("red")))
+			#	painter.setPen(QColor("white"))
+			#	txt_l = self.title_font_m.width(str(gallery.id))
+			#	painter.drawRect(x, y, txt_l*2, self.title_font_m.height())
+			#	painter.drawText(x+1, y+11, str(gallery.id))
+			#	painter.restore()
 			#if option.state & QStyle.State_Selected:
 			#	painter.setPen(QPen(option.palette.highlightedText().color()))
 		else:
 			super().paint(painter, option, index)
+
+	def _ribbon_color(self, gallery_type):
+		if gallery_type:
+			gallery_type = gallery_type.lower()
+		if gallery_type == "manga":
+			return app_constants.GRID_VIEW_T_MANGA_COLOR
+		elif gallery_type == "doujinshi":
+			return app_constants.GRID_VIEW_T_DOUJIN_COLOR
+		elif "artist cg" in gallery_type:
+			return app_constants.GRID_VIEW_T_ARTIST_CG_COLOR
+		elif "game cg" in gallery_type:
+			return app_constants.GRID_VIEW_T_GAME_CG_COLOR
+		elif gallery_type == "western":
+			return app_constants.GRID_VIEW_T_WESTERN_COLOR
+		elif "image" in gallery_type:
+			return app_constants.GRID_VIEW_T_IMAGE_COLOR
+		elif gallery_type == "non-h":
+			return app_constants.GRID_VIEW_T_NON_H_COLOR
+		elif gallery_type == "cosplay":
+			return app_constants.GRID_VIEW_T_COSPLAY_COLOR
+		else:
+			return app_constants.GRID_VIEW_T_OTHER_COLOR
 
 	def sizeHint(self, option, index):
 		return QSize(self.W, self.H)
@@ -1028,7 +1085,7 @@ class MangaTableView(QListView):
 		#self.setIconSize(QSize(app_constants.THUMB_W_SIZE-app_constants.SIZE_FACTOR,
 		#				 app_constants.THUMB_H_SIZE-app_constants.SIZE_FACTOR))
 		# all items have the same size (perfomance)
-		#self.setUniformItemSizes(True)
+		self.setUniformItemSizes(True)
 		# improve scrolling
 		self.setVerticalScrollMode(self.ScrollPerPixel)
 		self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -1107,7 +1164,7 @@ class MangaView(QListView):
 		self.setIconSize(QSize(app_constants.THUMB_W_SIZE,
 						 app_constants.THUMB_H_SIZE))
 		# all items have the same size (perfomance)
-		self.setUniformItemSizes(True)
+		#self.setUniformItemSizes(True)
 		# improve scrolling
 		self.setAutoScroll(False)
 		self.setVerticalScrollMode(self.ScrollPerPixel)
