@@ -1198,10 +1198,12 @@ class MangaView(QListView):
 		self.sort(self.current_sort)
 		if app_constants.DEBUG:
 			def debug_print(a):
+				g = a.data(Qt.UserRole+1)
 				try:
-					print(a.data(Qt.UserRole+1))
+					print(g)
 				except:
-					print("{}".format(a.data(Qt.UserRole+1)).encode(errors='ignore'))
+					print("{}".format(g).encode(errors='ignore'))
+				log_d(gallerydb.HashDB.gen_gallery_hash(g, 0, 'mid')['mid'])
 
 			self.clicked.connect(debug_print)
 

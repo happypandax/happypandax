@@ -520,6 +520,7 @@ class CommenHen:
 	COOKIES = {}
 	LAST_USED = time.time()
 	HEADERS = {'user-agent':"Mozilla/5.0 (Windows NT 6.3; rv:36.0) Gecko/20100101 Firefox/36.0"}
+	_QUEUE_LIMIT = 25
 
 	def begin_lock(self):
 		log_d('locked')
@@ -537,40 +538,46 @@ class CommenHen:
 		self.LOCK.release()
 
 	def add_to_queue(self, url, proc=False, parse=True):
-		"""Add url the the queue, when the queue has reached 25 entries will auto process
+		"""Add url the the queue, when the queue has reached _QUEUE_LIMIT entries will auto process
 		:proc -> proccess queue
 		:parse -> return parsed metadata
 		"""
 		self.QUEUE.append(url)
-		log_i("Status on queue: {}/25".format(len(self.QUEUE)))
-		if proc:
-			if parse:
-				return self.parse_metadata(*self.process_queue())
-			return self.process_queue()
-		if len(self.QUEUE) > 24:
-			if parse:
-				return self.parse_metadata(*self.process_queue())
-			return self.process_queue()
-		else:
-			return 0
+		log_i("Status on queue: {}/{}".format(len(self.QUEUE), self._QUEUE_LIMIT))
+		try:
+			if proc:
+				if parse:
+					return self.parse_metadata(*self.process_queue())
+				return self.process_queue()
+			if len(self.QUEUE) >= self._QUEUE_LIMIT:
+				if parse:
+					return self.parse_metadata(*self.process_queue())
+				return self.process_queue()
+			else:
+				return 0
+		except TypeError:
+			return None
 
 	def process_queue(self):
 		"""
 		Process the queue if entries exists, deletes entries.
-		Note: Will only process 25 entries (first come first out) while
+		Note: Will only process _QUEUE_LIMIT entries (first come first out) while
 			additional entries will get deleted.
 		"""
 		log_i("Processing queue...")
 		if len(self.QUEUE) < 1:
 			return None
 
-		if len(self.QUEUE) > 25:
-			api_data, galleryid_dict = self.get_metadata(self.QUEUE[:25])
-		else:
-			api_data, galleryid_dict = self.get_metadata(self.QUEUE)
-
-		log_i("Flushing queue...")
-		self.QUEUE.clear()
+		try:
+			if len(self.QUEUE) >= self._QUEUE_LIMIT:
+				api_data, galleryid_dict = self.get_metadata(self.QUEUE[:self._QUEUE_LIMIT])
+			else:
+				api_data, galleryid_dict = self.get_metadata(self.QUEUE)
+		except TypeError:
+			return None
+		finally:
+			log_i("Flushing queue...")
+			self.QUEUE.clear()
 		return api_data, galleryid_dict
 
 	@classmethod
@@ -625,8 +632,8 @@ class CommenHen:
 
 	def search(self, search_string, cookies=None):
 		"""
-		Searches ehentai for the provided string or list of hashes,
-		returns a dict with search_string:[list of title,url tuples] of hits found or emtpy dict if no hits are found.
+		Searches for the provided string or list of hashes,
+		returns a dict with search_string:[list of title & url tuples] of hits found or emtpy dict if no hits are found.
 		"""
 		pass
 
@@ -638,6 +645,7 @@ class EHen(CommenHen):
 
 	@classmethod
 	def apply_metadata(cls, g, data, append = True):
+		"Applies metadata to gallery, returns gallery"
 		if app_constants.USE_JPN_TITLE:
 			try:
 				title = data['title']['jpn']
@@ -667,6 +675,10 @@ class EHen(CommenHen):
 			g.type = data['type']
 			g.pub_date = data['pub_date']
 			g.tags = data['tags']
+			if 'url' in data:
+				g.link = data['url']
+			else:
+				g.link = g.temp_url
 		else:
 			if not g.title:
 				g.title = title_artist_dict['title']
@@ -692,6 +704,12 @@ class EHen(CommenHen):
 								g.tags[ns].append(tag)
 					else:
 						g.tags[ns] = data['tags'][ns]
+			if 'url' in data:
+				if not g.link:
+					g.link = data['url']
+			else:
+				if not g.link:
+					g.link = g.temp_url
 		return g
 
 	@classmethod
@@ -873,7 +891,7 @@ class EHen(CommenHen):
 	def search(self, search_string, cookies=None):
 		"""
 		Searches ehentai for the provided string or list of hashes,
-		returns a dict with hash:[list of title,url tuples] of hits found or emtpy dict if no hits are found.
+		returns a dict with search_string:[list of title & url tuples] of hits found or emtpy dict if no hits are found.
 		"""
 		assert isinstance(search_string, (str, list))
 		if isinstance(search_string, str):
@@ -946,4 +964,82 @@ class ExHen(EHen):
 	def search(self, hash_string):
 		return super().search(hash_string, self.cookies)
 
+class ChaikaHen(CommenHen):
+	"Fetches gallery metadata from panda.chaika.moe"
+	g_url = "http://panda.chaika.moe/gallery/"
+	def __init__(self):
+		self.url = "http://panda.chaika.moe/jsearch?sha1="
+		self._QUEUE_LIMIT = 1
 
+	def search(self, search_string):
+		"""
+		search_string should be a list of hashes
+		will actually just put urls together
+		return search_string:[list of title & url tuples]
+		"""
+		if not isinstance(search_string, (list,tuple)):
+			search_string = [search_string]
+		x = {}
+		for h in search_string:
+			x[h] = [("", self.url+h)]
+		return x
+
+	def get_metadata(self, list_of_urls):
+		"""
+		Fetches the metadata from the provided list of urls
+		through the official API.
+		returns raw api data and a dict with gallery id as key and url as value
+		"""
+		data = []
+		g_id_data = {}
+		g_id = 1
+		for url in list_of_urls:
+			try:
+				r = requests.get(url)
+				r.raise_for_status()
+				if not r.json():
+					return None
+				g_data = r.json()[0] # TODO: multiple archives can be returned! Please fix!
+				g_data['gid'] = g_id
+				data.append(g_data)
+				g_id_data[g_id] = url
+				g_id += 1
+			except requests.RequestException:
+				log_e("Could not fetch metadata: connection error")
+				return None
+		return data, g_id_data
+
+	@classmethod
+	def parse_metadata(cls, data, dict_metadata):
+		
+		eh_api_data = {
+				"gmetadata":[]
+			}
+		g_urls = {}
+		for d in data:
+			eh_api_data['gmetadata'].append(d)
+			# to get correct gallery urls
+			g_urls[dict_metadata[d['gid']]] = cls.g_url + str(d['gallery']) + '/'
+		p_metadata =  EHen.parse_metadata(eh_api_data, dict_metadata)
+		# to get correct gallery urls instead of .....jsearch?sha1=----long-hash----
+		for url in g_urls:
+			p_metadata[url]['url'] = g_urls[url]
+		return p_metadata
+
+	@classmethod
+	def apply_metadata(cls, g, data, append = True):
+		"Applies metadata to gallery, returns gallery"
+		return EHen.apply_metadata(g, data, append)
+		
+
+
+def hen_list_init():
+	h_list = []
+	for h in app_constants.HEN_LIST:
+		if h == "ehen":
+			hen_list.append(EHen)
+		elif h == "exhen":
+			hen_list.append(ExHen)
+		elif h == "chaikahen":
+			hen_list.append(ChaikaHen)
+	return h_list

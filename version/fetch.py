@@ -308,11 +308,8 @@ class Fetch(QObject):
 															g.title.encode(errors='ignore')))
 			if app_constants.REPLACE_METADATA:
 				g = hen.apply_metadata(g, data, False)
-				g.link = g.temp_url
 			else:
 				g = hen.apply_metadata(g, data)
-				if not g.link:
-					g.link = g.temp_url
 			self._return_gallery_metadata(g)
 			log_i('Successfully applied metadata to gallery: {}'.format(g.title.encode(errors='ignore')))
 		self.galleries_in_queue.clear()
@@ -346,6 +343,7 @@ class Fetch(QObject):
 				hen = pewnet.EHen()
 				valid_url = 'ehen'
 				log_i("Using Exhentai")
+			#hen = pewnet.ChaikaHen()
 			hen.LAST_USED = time.time()
 			self.AUTO_METADATA_PROGRESS.emit("Checking gallery urls...")
 
@@ -401,7 +399,8 @@ class Fetch(QObject):
 
 				if not gallery.link:
 					gallery.link = url
-					self.GALLERY_EMITTER.emit(gallery, None, None)
+					if isinstance(hen, (pewnet.EHen, pewnet.ExHen)):
+						self.GALLERY_EMITTER.emit(gallery, None, None)
 				gallery.temp_url = url
 				self.AUTO_METADATA_PROGRESS.emit("({}/{}) Adding to queue: {}".format(
 					x, len(self.galleries), gallery.title))
@@ -438,7 +437,8 @@ class Fetch(QObject):
 
 					if not gallery.link:
 						gallery.link = url
-						self.GALLERY_EMITTER.emit(gallery, None, None)
+						if isinstance(hen, (pewnet.EHen, pewnet.ExHen)):
+							self.GALLERY_EMITTER.emit(gallery, None, None)
 					gallery.temp_url = url
 					self.AUTO_METADATA_PROGRESS.emit("({}/{}) Adding to queue: {}".format(
 						x, len(self.multiple_hit_galleries), gallery.title))

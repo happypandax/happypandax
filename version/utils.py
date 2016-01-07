@@ -430,7 +430,6 @@ def check_archive(archive_path):
 	Returns a list with a path in archive to galleries
 	if there is no directories
 	"""
-	archive_path = archive_path.lower()
 	try:
 		zip = ArchiveFile(archive_path)
 	except app_constants.CreateArchiveFail:
