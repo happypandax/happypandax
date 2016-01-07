@@ -126,7 +126,6 @@ class GalleryDialog(QWidget):
 		author_completer.setCaseSensitivity(Qt.CaseInsensitive)
 		self.author_edit.setCompleter(author_completer)
 		self.descr_edit = QTextEdit()
-		self.descr_edit.setFixedHeight(45)
 		self.descr_edit.setAcceptRichText(True)
 		self.lang_box = QComboBox()
 		self.lang_box.addItems(["English", "Japanese", "Other"])
@@ -144,7 +143,6 @@ class GalleryDialog(QWidget):
 		self.tags_edit = misc.CompleterTextEdit()
 		self.tags_edit.setCompleter(misc.GCompleter(self, False, False))
 		tags_l.addWidget(self.tags_edit, 3)
-		self.tags_edit.setFixedHeight(70)
 		self.tags_edit.setPlaceholderText("Press Tab to autocomplete (Ctrl + E to show popup)")
 		self.type_box = QComboBox()
 		self.type_box.addItems(["Manga", "Doujinshi", "Artist CG Sets", "Game CG Sets",
@@ -155,7 +153,7 @@ class GalleryDialog(QWidget):
 		#self.doujin_parent.setVisible(False)
 		self.status_box = QComboBox()
 		self.status_box.addItems(["Unknown", "Ongoing", "Completed"])
-		self.status_box.setCurrentIndex(0)
+		self.status_box.setCurrentIndex(2)
 		self.pub_edit = QDateEdit()
 		self.pub_edit.setCalendarPopup(True)
 		self.pub_edit.setDate(QDate.currentDate())
@@ -191,6 +189,11 @@ class GalleryDialog(QWidget):
 		gallery_layout.addRow("Link:", link_layout)
 
 		self.title_edit.setFocus()
+
+	def resizeEvent(self, event):
+		self.tags_edit.setFixedHeight(event.size().height()//8)
+		self.descr_edit.setFixedHeight(event.size().height()//12.5)
+		return super().resizeEvent(event)
 
 	def _find_combobox_match(self, combobox, key, default):
 		f_index = combobox.findText(key, Qt.MatchFixedString)

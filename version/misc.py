@@ -1329,10 +1329,7 @@ class ApplicationNotif(BasePopup):
 			self.move(new_size)
 			return
 		if self.parent_widget:
-			p =	self.parent_widget.window().frameGeometry().center() -\
-					self.window().rect().center()
-			p.setY(p.y()+(self.parent_widget.height()//2)-self.height())
-			self.move(p)
+			centerWidget(self, self.parent_widget)
 
 
 

@@ -1363,7 +1363,7 @@ class Gallery:
 		if not self.language:
 			self.language = "Other"
 		if not self.status:
-			self.status = "Unknown"
+			self.status = "Completed"
 
 	@property
 	def chapters(self):
