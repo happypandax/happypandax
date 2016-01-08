@@ -128,7 +128,7 @@ EXPORT_PATH = ''
 HASH_GALLERY_PAGES = get('all', 'Advanced', 'hash gallery pages', int, str)
 
 # WEB
-GLOBAL_EHEN_TIME = get(10, 'Web', 'global ehen time offset', int)
+GLOBAL_EHEN_TIME = get(6, 'Web', 'global ehen time offset', int)
 GLOBAL_EHEN_LOCK = False
 DEFAULT_EHEN_URL = get('http://g.e-hentai.org/', 'Web', 'default ehen url', str)
 REPLACE_METADATA = get(False, 'Web', 'replace metadata', bool)
@@ -139,7 +139,7 @@ CONTINUE_AUTO_METADATA_FETCHER = get(True, 'Web', 'continue auto metadata fetche
 HEN_DOWNLOAD_TYPE = get(0, 'Web', 'hen download type', int)
 DOWNLOAD_DIRECTORY = get('downloads', 'Web', 'download directory', str)
 TORRENT_CLIENT = get('', 'Web', 'torrent client', str)
-HEN_LIST = get(['ehen'], 'Web', 'hen list', list)
+HEN_LIST = get(['chaikahen'], 'Web', 'hen list', list)
 
 # External Viewer
 EXTERNAL_VIEWER_SUPPORT = {'honeyview':['Honeyview.exe']}

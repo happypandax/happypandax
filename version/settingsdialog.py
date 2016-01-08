@@ -859,7 +859,7 @@ class SettingsDialog(QWidget):
 		gallery_size_l = QHBoxLayout()
 		gallery_size_l.addWidget(gallery_size_lbl)
 		gallery_size_l.addWidget(self.gallery_size)
-		grid_gallery_main_l.addRow("Gallery Size *", gallery_size_l)
+		grid_gallery_main_l.addRow("Gallery Size:*", gallery_size_l)
 
 		# grid view / colors
 		grid_colors_group = QGroupBox('Colors', grid_view_general_page)

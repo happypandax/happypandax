@@ -843,7 +843,7 @@ class GridDelegate(QStyledItemDelegate):
 				return new_x
 
 			def img_too_big(start_x):
-				txt_layout = self.text_layout("Image is too big!", w, self.title_font, self.title_font_m)
+				txt_layout = misc.text_layout("Image is too big!", w, self.title_font, self.title_font_m)
 
 				clipping = QRectF(x, y+h//4, w, app_constants.GRIDBOX_LBL_H - 10)
 				txt_layout.draw(painter, QPointF(x, y+h//4),
@@ -1203,7 +1203,7 @@ class MangaView(QListView):
 					print(g)
 				except:
 					print("{}".format(g).encode(errors='ignore'))
-				log_d(gallerydb.HashDB.gen_gallery_hash(g, 0, 'mid')['mid'])
+				#log_d(gallerydb.HashDB.gen_gallery_hash(g, 0, 'mid')['mid'])
 
 			self.clicked.connect(debug_print)
 

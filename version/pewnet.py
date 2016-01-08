@@ -554,7 +554,7 @@ class CommenHen:
 					return self.parse_metadata(*self.process_queue())
 				return self.process_queue()
 			else:
-				return 0
+				return 1
 		except TypeError:
 			return None
 
@@ -967,6 +967,8 @@ class ExHen(EHen):
 class ChaikaHen(CommenHen):
 	"Fetches gallery metadata from panda.chaika.moe"
 	g_url = "http://panda.chaika.moe/gallery/"
+	g_api_url = "http://panda.chaika.moe/jsearch?gallery="
+	a_api_url = "http://panda.chaika.moe/jsearch?archive="
 	def __init__(self):
 		self.url = "http://panda.chaika.moe/jsearch?sha1="
 		self._QUEUE_LIMIT = 1
@@ -994,15 +996,35 @@ class ChaikaHen(CommenHen):
 		g_id_data = {}
 		g_id = 1
 		for url in list_of_urls:
+			hash_search = True
+			chaika_g_id = None
+			old_url = url
+			re_string = "^(http\:\/\/|https\:\/\/)?(www\.)?([^\.]?)(panda\.chaika\.moe\/(archive|gallery)\/[0-9]+)" # to validate chaika urls
+			if regex.match(re_string, url):
+				g_or_a_id = regex.search("([0-9]+)", url).group()
+				if 'gallery' in url:
+					url = self.g_api_url+g_or_a_id
+					chaika_g_id = g_or_a_id
+				else:
+					url = self.a_api_url+g_or_a_id
+				hash_search = False
 			try:
 				r = requests.get(url)
 				r.raise_for_status()
 				if not r.json():
 					return None
-				g_data = r.json()[0] # TODO: multiple archives can be returned! Please fix!
+				if hash_search:
+					g_data = r.json()[0] # TODO: multiple archives can be returned! Please fix!
+				else:
+					g_data = r.json()
+				if chaika_g_id:
+					g_data['gallery'] = chaika_g_id
 				g_data['gid'] = g_id
 				data.append(g_data)
-				g_id_data[g_id] = url
+				if hash_search:
+					g_id_data[g_id] = url
+				else:
+					g_id_data[g_id] = old_url
 				g_id += 1
 			except requests.RequestException:
 				log_e("Could not fetch metadata: connection error")
@@ -1037,9 +1059,9 @@ def hen_list_init():
 	h_list = []
 	for h in app_constants.HEN_LIST:
 		if h == "ehen":
-			hen_list.append(EHen)
+			h_list.append(EHen)
 		elif h == "exhen":
-			hen_list.append(ExHen)
+			h_list.append(ExHen)
 		elif h == "chaikahen":
-			hen_list.append(ChaikaHen)
+			h_list.append(ChaikaHen)
 	return h_list

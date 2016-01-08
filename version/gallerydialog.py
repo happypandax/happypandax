@@ -414,7 +414,7 @@ class GalleryDialog(QWidget):
 			status(False)
 			return None
 
-		dummy_gallery.link = url
+		dummy_gallery._g_dialog_url = url
 		f.galleries = [dummy_gallery]
 		f.moveToThread(thread)
 		f.GALLERY_PICKER.connect(gallery_picker)
