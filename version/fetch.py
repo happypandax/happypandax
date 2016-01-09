@@ -331,7 +331,7 @@ class Fetch(QObject):
 			log_i("Checking gallery url")
 
 			# coming from GalleryDialog
-			try:
+			if hasattr(gallery, "_g_dialog_url"):
 				if gallery._g_dialog_url:
 					gallery.temp_url = gallery._g_dialog_url
 					checked_pre_url_galleries.append(gallery)
@@ -339,8 +339,6 @@ class Fetch(QObject):
 					if x == len(galleries):
 						self.fetch_metadata(hen=hen)
 					continue
-			except AttributeError:
-				pass
 
 			if gallery.link and app_constants.USE_GALLERY_LINK:
 				check = self._website_checker(gallery.link)

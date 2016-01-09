@@ -21,14 +21,53 @@ from PyQt5.QtWidgets import (QTreeWidget, QTreeWidgetItem, QWidget,
 							 QVBoxLayout, QTabWidget, QAction, QGraphicsScene,
 							 QSizePolicy, QMenu, QAction, QApplication,
 							 QListWidget, QHBoxLayout, QPushButton, QStackedLayout,
-							 QFrame, QSizePolicy)
-from PyQt5.QtCore import (Qt, QTimer, pyqtSignal, QRect, QSize, QEasingCurve)
-from PyQt5.QtGui import QIcon
+							 QFrame, QSizePolicy, QListView)
+from PyQt5.QtCore import (Qt, QTimer, pyqtSignal, QRect, QSize, QEasingCurve,
+						  QSortFilterProxyModel, QIdentityProxyModel)
+from PyQt5.QtGui import QIcon, QStandardItem
 
 import gallerydb
 import app_constants
 import utils
 import misc
+
+class NoTooltipModel(QIdentityProxyModel):
+
+	def __init__(self, model, parent=None):
+		super().__init__(parent)
+		self.setSourceModel(model)
+
+	def data(self, index, role = Qt.DisplayRole):
+		if role == Qt.ToolTipRole:
+			return None
+		return self.sourceModel().data(index, role)
+
+class UniqueInfoModel(QSortFilterProxyModel):
+	def __init__(self, gallerymodel, role, parent=None):
+		super().__init__(parent)
+		self.setSourceModel(NoTooltipModel(gallerymodel, parent))
+		self._unique = set()
+		self._unique_role = role
+
+	def filterAcceptsRow(self, source_row, parent_index):
+		if self.sourceModel():
+			idx = self.sourceModel().index(source_row, 0, parent_index)
+			if idx.isValid():
+				unique = idx.data(self._unique_role)
+				if unique:
+					if not unique in self._unique:
+						self._unique.add(unique)
+						return True
+		return False
+
+class GalleryArtistsList(QListView):
+	def __init__(self, gallerymodel, parent=None):
+		super().__init__(parent)
+		self.g_artists_model = UniqueInfoModel(gallerymodel, gallerymodel.ARTIST_ROLE, self)
+		self.setModel(self.g_artists_model)
+		self.setModelColumn(app_constants.ARTIST)
+		self.g_artists_model.setSortRole(gallerymodel.ARTIST_ROLE)
+		self.g_artists_model.sort(0)
 
 class TagsTreeView(QTreeWidget):
 	def __init__(self, **kwargs):
@@ -183,6 +222,11 @@ class SideBarWidget(QFrame):
 		# buttons contents
 		self.stacked_layout = QStackedLayout()
 		self.main_layout.addLayout(self.stacked_layout)
+
+		# artists
+		self.artists_list = GalleryArtistsList(parent.manga_list_view.gallery_model, self)
+		artists_list_index = self.stacked_layout.addWidget(self.artists_list)
+		self.artist_btn.clicked.connect(lambda:self.stacked_layout.setCurrentIndex(artists_list_index))
 
 		# ns_tags
 		self.tags_tree = TagsTreeView(app_window=parent)

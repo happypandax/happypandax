@@ -4,8 +4,7 @@ from watchdog.events import FileSystemEventHandler, DirDeletedEvent
 from watchdog.observers import Observer
 from threading import Timer
 
-from PyQt5.QtCore import (Qt, QObject, pyqtSignal, QTimer, QSize, QThread,
-						  QAbstractItemModel, QModelIndex)
+from PyQt5.QtCore import (Qt, QObject, pyqtSignal, QTimer, QSize, QThread)
 from PyQt5.QtGui import (QPixmap, QIcon, QColor, QTextOption, QKeySequence)
 from PyQt5.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout,
 							 QLabel, QFrame, QPushButton, QMessageBox,
@@ -28,15 +27,6 @@ log_d = log.debug
 log_w = log.warning
 log_e = log.error
 log_c = log.critical
-
-#class GalleryInfoModel(QAbstractItemModel):
-#	def __init__(self, parent=None):
-#		super().__init__(parent)
-
-#	def index(self, row, column, parent = QModelIndex()):
-#		if not parent.isValid():
-#			parentitem = 
-#		return super().index(row, column, parent)
 
 class GalleryDownloaderUrlExtracter(QWidget):
 

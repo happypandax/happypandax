@@ -229,6 +229,8 @@ class SortMenu(QMenu):
 		s_pub_d.triggered.connect(functools.partial(self.manga_view.sort, 'pub_date'))
 		s_times_read = self.sort_actions.addAction(QAction("Read Count", self.sort_actions, checkable=True))
 		s_times_read.triggered.connect(functools.partial(self.manga_view.sort, 'times_read'))
+		s_last_read = self.sort_actions.addAction(QAction("Last Read", self.sort_actions, checkable=True))
+		s_last_read.triggered.connect(functools.partial(self.manga_view.sort, 'last_read'))
 
 		self.addAction(asc_desc_act)
 		self.addSeparator()
@@ -237,6 +239,7 @@ class SortMenu(QMenu):
 		self.addAction(s_date)
 		self.addAction(s_pub_d)
 		self.addAction(s_times_read)
+		self.addAction(s_last_read)
 
 		self.set_current_sort()
 
@@ -256,6 +259,8 @@ class SortMenu(QMenu):
 				check_key(act, 'pub_date')
 			elif act.text() == 'Read Count':
 				check_key(act, 'times_read')
+			elif act.text() == 'Last Read':
+				check_key(act, 'last_read')
 
 	def asc_desc(self):
 		if self.manga_view.sort_model.sortOrder() == Qt.AscendingOrder:

@@ -50,6 +50,50 @@ log_w = log.warning
 log_e = log.error
 log_c = log.critical
 
+# attempt at implementing treemodel
+#class TreeNode:
+#	def __init__(self, parent, row):
+#		self.parent = parent
+#		self.row = row
+#		self.subnodes = self._get_children()
+
+#	def _get_children(self):
+#		raise NotImplementedError()
+
+#class GalleryInfoModel(QAbstractItemModel):
+#	def __init__(self, parent=None):
+#		super().__init__(parent)
+#		self.root_nodes = self._get_root_nodes()
+
+#	def _get_root_nodes(self):
+#		raise NotImplementedError()
+
+#	def index(self, row, column, parent):
+#		if not parent.isValid():
+#			return self.createIndex(row, column, self.root_nodes[row])
+#		parent_node = parent.internalPointer()
+#		return self.createIndex(row, column, parent_node[row])
+
+#	def parent(self, index):
+#		if not index.isValid():
+#			return QModelIndex()
+
+#		node = index.internalPointer()
+#		if not node.parent:
+#			return QModelIndex()
+#		else:
+#			return self.createIndex(node.parent.row, 0, node.parent)
+
+#	def reset(self):
+#		self.root_nodes = self._get_root_nodes()
+#		super().resetInternalData()
+
+#	def rowCount(self, parent = QModelIndex()):
+#		if not parent.isValid():
+#			return len(self.root_nodes)
+#		node = parent.internalPointer()
+#		return len(node.subnodes)
+
 class GallerySearch(QObject):
 	FINISHED = pyqtSignal()
 	def __init__(self, data):
@@ -236,6 +280,13 @@ class GalleryModel(QAbstractTableModel):
 	"""
 	Model for Model/View/Delegate framework
 	"""
+	GALLERY_ROLE = Qt.UserRole+1
+	ARTIST_ROLE = Qt.UserRole+2
+	FAV_ROLE = Qt.UserRole+3
+	DATE_ADDED_ROLE = Qt.UserRole+4
+	PUB_DATE_ROLE = Qt.UserRole+5
+	TIMES_READ_ROLE = Qt.UserRole+6
+	LAST_READ_ROLE = Qt.UserRole+7
 
 	ROWCOUNT_CHANGE = pyqtSignal()
 	STATUSBAR_MSG = pyqtSignal(str)
@@ -335,7 +386,7 @@ class GalleryModel(QAbstractTableModel):
 		if role == Qt.DisplayRole:
 			return column_checker()
 		# for artist searching
-		if role == Qt.UserRole+2:
+		if role == self.ARTIST_ROLE:
 			artist = current_gallery.artist
 			return artist
 
@@ -396,28 +447,32 @@ class GalleryModel(QAbstractTableModel):
 				tooltip += "{} {}<br />".format(tip[0], tip[1])
 			return tooltip
 
-		if role == Qt.UserRole+1:
+		if role == self.GALLERY_ROLE:
 			return current_gallery
 
 		# favorite satus
-		if role == Qt.UserRole+3:
+		if role == self.FAV_ROLE:
 			return current_gallery.fav
 
-		if role == Qt.UserRole+4:
+		if role == self.DATE_ADDED_ROLE:
 			date_added = "{}".format(current_gallery.date_added)
 			qdate_added = QDateTime.fromString(date_added, "yyyy-MM-dd HH:mm:ss")
 			return qdate_added
 		
-		if role == Qt.UserRole+5:
+		if role == self.PUB_DATE_ROLE:
 			if current_gallery.pub_date:
 				pub_date = "{}".format(current_gallery.pub_date)
 				qpub_date = QDateTime.fromString(pub_date, "yyyy-MM-dd HH:mm:ss")
 				return qpub_date
 
-		if role == Qt.UserRole+6:
+		if role == self.TIMES_READ_ROLE:
 			return current_gallery.times_read
 
-
+		if role == self.LAST_READ_ROLE:
+			if current_gallery.last_read:
+				last_read = "{}".format(current_gallery.last_read)
+				qlast_read = QDateTime.fromString(last_read, "yyyy-MM-dd HH:mm:ss")
+				return qlast_read
 
 		return None
 
@@ -1326,21 +1381,25 @@ class MangaView(QListView):
 			self.sort_model.sort(0, Qt.AscendingOrder)
 			self.current_sort = 'title'
 		elif name == 'artist':
-			self.sort_model.setSortRole(Qt.UserRole+2)
+			self.sort_model.setSortRole(GalleryModel.ARTIST_ROLE)
 			self.sort_model.sort(0, Qt.AscendingOrder)
 			self.current_sort = 'artist'
 		elif name == 'date_added':
-			self.sort_model.setSortRole(Qt.UserRole+4)
+			self.sort_model.setSortRole(GalleryModel.DATE_ADDED_ROLE)
 			self.sort_model.sort(0, Qt.DescendingOrder)
 			self.current_sort = 'date_added'
 		elif name == 'pub_date':
-			self.sort_model.setSortRole(Qt.UserRole+5)
+			self.sort_model.setSortRole(GalleryModel.PUB_DATE_ROLE)
 			self.sort_model.sort(0, Qt.DescendingOrder)
 			self.current_sort = 'pub_date'
 		elif name == 'times_read':
-			self.sort_model.setSortRole(Qt.UserRole+6)
+			self.sort_model.setSortRole(GalleryModel.TIMES_READ_ROLE)
 			self.sort_model.sort(0, Qt.DescendingOrder)
 			self.current_sort = 'times_read'
+		elif name == 'last_read':
+			self.sort_model.setSortRole(GalleryModel.LAST_READ_ROLE)
+			self.sort_model.sort(0, Qt.DescendingOrder)
+			self.current_sort = 'last_read'
 
 	def contextMenuEvent(self, event):
 		handled = False
