@@ -16,13 +16,14 @@ import os
 
 DB_NAME = '2016-01-04-happypanda.db'
 DB_NAME = 'happypanda.db'
+THUMB_NAME = "thumbnails"
 if os.name == 'posix':
 	DB_ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../db')
-	THUMBNAIL_PATH = os.path.join(DB_ROOT, DB_NAME)
+	THUMBNAIL_PATH = os.path.join(DB_ROOT, THUMB_NAME)
 	DB_PATH = os.path.join(DB_ROOT, DB_NAME)
 else:
 	DB_ROOT = "db"
-	THUMBNAIL_PATH = os.path.join("db", "thumbnails")
+	THUMBNAIL_PATH = os.path.join("db", THUMB_NAME)
 	DB_PATH = os.path.join(DB_ROOT, DB_NAME)
 
 DB_VERSION = [0.23] # a list of accepted db versions. E.g. v3.5 will be backward compatible with v3.1 etc.

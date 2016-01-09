@@ -673,7 +673,7 @@ class SettingsDialog(QWidget):
 			except app_constants.WrongLogin:
 				statuslbl.setText("<font color='red'>Wrong login information!</font>")
 		
-		def make_login_forms(layout, cookies, baseHen_class):
+		def make_login_forms(layout, exprops, baseHen_class):
 			status = QLabel(logins_page)
 			status.setText("<font color='red'>Not logged in!</font>")
 			layout.addRow(status)
@@ -688,19 +688,22 @@ class SettingsDialog(QWidget):
 			b_l.addWidget(Spacer('h'))
 			b_l.addWidget(log_btn)
 			log_btn.clicked.connect(lambda: login(user, passw, status, baseHen_class))
-			if baseHen_class.check_login(cookies):
+			if baseHen_class.check_login(exprops.cookies):
 				status.setText("<font color='green'>Logged in!</font>")
+				user.setText(exprops.username)
+				passw.setText(exprops.password)
 			return user, passw, status
 
 		# ehentai
+		exprops = settings.ExProperties
 		ehentai_group, ehentai_l = groupbox("E-Hentai", QFormLayout, logins_page)
 		logins_layout.addRow(ehentai_group)
-		ehentai_user, ehentai_pass, ehentai_status = make_login_forms(ehentai_l, settings.ExProperties().cookies, pewnet.EHen)
+		ehentai_user, ehentai_pass, ehentai_status = make_login_forms(ehentai_l, exprops(), pewnet.EHen)
 
 		# nhentai
-		nhentai_group, nhentai_l = groupbox("NHentai", QFormLayout, logins_page)
-		logins_layout.addRow(nhentai_group)
-		nhentai_user, nhentai_pass, nhentai_status = make_login_forms(nhentai_l, settings.ExProperties().cookies, pewnet.EHen)
+		#nhentai_group, nhentai_l = groupbox("NHentai", QFormLayout, logins_page)
+		#logins_layout.addRow(nhentai_group)
+		#nhentai_user, nhentai_pass, nhentai_status = make_login_forms(nhentai_l, exprops(exprops.NHENTAI), pewnet.NHen)
 
 
 		# Web / Downloader

@@ -521,6 +521,7 @@ class CommenHen:
 	LAST_USED = time.time()
 	HEADERS = {'user-agent':"Mozilla/5.0 (Windows NT 6.3; rv:36.0) Gecko/20100101 Firefox/36.0"}
 	_QUEUE_LIMIT = 25
+	_browser = RoboBrowser(user_agent=HEADERS['user-agent'], parser='html.parser')
 
 	def begin_lock(self):
 		log_d('locked')
@@ -644,11 +645,47 @@ class NHen(CommenHen):
 
 	@classmethod
 	def login(cls, user, password):
-		pass
+		exprops = settings.ExProperties(settings.ExProperties.NHENTAI)
+		if cls.COOKIES:
+			if cls.check_login(cls.COOKIES):
+				return cls.COOKIES
+		elif exprops.cookies:
+			if cls.check_login(exprops.cookies):
+				cls.COOKIES.update(exprops.cookies)
+				return cls.COOKIES
+
+		cls._browser.open(cls.LOGIN_URL)
+		login_form = cls._browser.get_form()
+		if login_form:
+			login_form['username'].value = user
+			login_form['password'].value = password
+			cls._browser.submit_form(login_form)
+
+		n_c = cls._browser.session.cookies.get_dict()
+		if not cls.check_login(n_c):
+			log_w("NH login failed")
+			raise app_constants.WrongLogin
+
+		log_i("NH login succes")
+		exprops.cookies = n_c
+		exprops.username = user
+		exprops.password = password
+		exprops.save()
+		cls.COOKIES.update(n_c)
+		return n_c
 
 	@classmethod
 	def check_login(cls, cookies):
+		if "sessionid" in cookies:
+			return True
+
+	@classmethod
+	def apply_metadata(cls, gallery, data, append = True):
+		return super().apply_metadata(gallery, data, append)
+
+	def search(self, search_string, cookies = None):
 		pass
+
 
 class EHen(CommenHen):
 	"Fetches galleries from ehen"
@@ -1045,7 +1082,12 @@ class ChaikaHen(CommenHen):
 
 	@classmethod
 	def parse_metadata(cls, data, dict_metadata):
-		
+		"""
+		:data <- raw data provided by site
+		:dict_metadata <- a dict with gallery id's as keys and url as value
+
+		returns a dict with url as key and gallery metadata as value
+		"""
 		eh_api_data = {
 				"gmetadata":[]
 			}

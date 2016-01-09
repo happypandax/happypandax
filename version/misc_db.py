@@ -173,12 +173,12 @@ class SideBarWidget(QFrame):
 		self.main_layout.addLayout(self.main_buttons_layout)
 
 		# buttons
-		self.artist_btn = QPushButton("Artist")
-		self.ns_tags_btn = QPushButton("NS & Tags")
-		self.custom_btn = QPushButton("Custom")
+		self.artist_btn = QPushButton("Artists")
+		self.ns_tags_btn = QPushButton("NS && Tags")
+		self.lists_btn = QPushButton("Lists")
+		self.main_buttons_layout.addWidget(self.lists_btn)
 		self.main_buttons_layout.addWidget(self.artist_btn)
 		self.main_buttons_layout.addWidget(self.ns_tags_btn)
-		self.main_buttons_layout.addWidget(self.custom_btn)
 
 		# buttons contents
 		self.stacked_layout = QStackedLayout()

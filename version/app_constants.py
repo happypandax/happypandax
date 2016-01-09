@@ -207,13 +207,6 @@ TOOLTIP_DATE_ADDED = get(True, 'Visual', 'tooltip date added', bool)
 GALLERY_DATA = [] # contains the most up to date gallery data
 GALLERY_LISTS = set() # contains the most up to dat gallery lists
 
-SUPPORTED_DOWNLOAD_URLS=\
-	"""Supported URLs:
-- exhentai/g.e-hentai gallery urls, e.g.: http://g.e-hentai.org/g/618395/0439fa3666/
-- panda.chaika.moe gallery and archive urls
-	http://panda.chaika.moe/[0]/[1]/ where [0] is 'gallery' or 'archive' and [1] is a number
-	"""
-
 # Exceptions
 class ChapterExists(Exception): pass
 class ChapterWrongParentGallery(Exception): pass
@@ -223,17 +216,20 @@ class WrongURL(Exception): pass
 class NeedLogin(Exception): pass
 class WrongLogin(Exception): pass
 
-EXHEN_COOKIE_TUTORIAL =\
+
+SUPPORTED_DOWNLOAD_URLS=\
+	"""Supported URLs:
+- exhentai/g.e-hentai gallery urls, e.g.: http://g.e-hentai.org/g/618395/0439fa3666/
+- panda.chaika.moe gallery and archive urls
+	http://panda.chaika.moe/[0]/[1]/ where [0] is 'gallery' or 'archive' and [1] is numbers
 	"""
-How do you find these two values? <br \>
-<b>Firefox/Chrome/Others</b> <br \>
-1. Navigate to exhentai.org <br \>
-2. Right click --> Inspect element <br \>
-3. Go on 'Console' tab <br \>
-4. Write : 'document.cookie' <br \>
-5. A line of values should appear that correspond to active cookies <br \>
-6. Look for the 'ipb_member_id' and 'ipb_hash_pass' values <br \>
-"""
+
+SUPPORTED_METADATA_URLS=\
+	"""Supported gallery URLs:
+- exhentai/g.e-hentai gallery urls, e.g.: http://g.e-hentai.org/g/618395/0439fa3666/
+- panda.chaika.moe gallery and archive urls
+	http://panda.chaika.moe/[0]/[1]/ where [0] is 'gallery' or 'archive' and [1] is numbers
+	"""
 
 REGEXCHEAT =\
 	"""

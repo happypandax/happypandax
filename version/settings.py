@@ -139,7 +139,7 @@ class ExProperties(Properties):
 		if not self._INFO:
 			if os.path.exists(phappypanda_path):
 				with open(phappypanda_path, 'rb') as f:
-					self._INFO = pickle.load(f)
+					self.__class__._INFO = pickle.load(f)
 
 	@classmethod
 	def save(self):
@@ -150,7 +150,8 @@ class ExProperties(Properties):
 	@property
 	def cookies(self):
 		if self._INFO:
-			return self._INFO[self.site]['cookies']
+			if self.site in self._INFO:
+				return self._INFO[self.site]['cookies']
 		return {}
 
 	@cookies.setter
@@ -162,7 +163,8 @@ class ExProperties(Properties):
 	@property
 	def username(self):
 		if self._INFO:
-			return self._INFO[self.site]['username']
+			if self.site in self._INFO:
+				return self._INFO[self.site]['username']
 
 	@username.setter
 	def username(self, us):
@@ -173,7 +175,8 @@ class ExProperties(Properties):
 	@property
 	def password(self):
 		if self._INFO:
-			return self._INFO[self.site]['password']
+			if self.site in self._INFO:
+				return self._INFO[self.site]['password']
 
 	@password.setter
 	def password(self, ps):

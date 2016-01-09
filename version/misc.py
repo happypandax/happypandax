@@ -2363,29 +2363,6 @@ class CompleterTextEdit(QTextEdit):
 		if self._completer:
 			self._completer.complete(cr)
 
-#class CompleterWithData(QCompleter):
-#	"""
-#	Instantiate a QCompleter with predefined data
-#	"""
-#	insertText = pyqtSignal(str)
-
-#	def __init__(self, data, parent=None):
-#		assert isinstance(data, list)
-#		super().__init__(data, parent)
-#		#self.activated[str].connect(self.changeCompletion)
-#		self.setModelSorting(QCompleter.CaseInsensitivelySortedModel)
-#		self.setCaseSensitivity(Qt.CaseInsensitive)
-#		self.setWrapAround(False)
-#		log_d('Instantiate CompleterWithData: OK')
-
-#	#def changeCompletion(self, completion):
-#	#	if completion.find('(') != -1:
-#	#		completion = completion[:completion.find('(')]
-#	#	#print(completion)
-#	#	self.insertText.emit(completion)
-
-
-
 class GCompleter(QCompleter):
 	def __init__(self, parent=None, title=True, artist=True, tags=True):
 		self.all_data = []
@@ -2404,42 +2381,4 @@ class GCompleter(QCompleter):
 		self.all_data.extend(d)
 		super().__init__(self.all_data, parent)
 		self.setCaseSensitivity(Qt.CaseInsensitive)
-
-
-
-from PyQt5.QtCore import QSortFilterProxyModel
-class DatabaseFilterProxyModel(QSortFilterProxyModel):
-	"""
-	A proxy model to hide items already in database
-	Pass a tuple with entries to 'filters' param if you need a custom filter.
-	"""
-	def __init__(self, filters="", parent=None):
-		super().__init__(parent)
-		self.filters = tuple(filters)
-		self.role = Qt.DisplayRole
-		db_data = gallerydb.GalleryDB.get_all_gallery()
-		filter_list = []
-		for gallery in db_data:
-			p = os.path.split(gallery.path)
-			filter_list.append(p[1])
-		self.filter_list = sorted(filter_list)
-		#print('Instatiated')
-
-	def set_name_role(self, role):
-		self.role = role
-		self.invalidateFilter()
-
-	def filterAcceptsRow(self, source_row, index_parent):
-		#print('Using')
-		allow = False
-		index = self.sourceModel().index(source_row, 0, index_parent)
-
-		if self.sourceModel() and index.isValid():
-			allow = True
-			name = index.data(self.role)
-			if name.endswith(self.filters):
-				if binary_search(name):
-					#print('Hiding {}'.format(name))
-					allow = True
-		return allow
 
