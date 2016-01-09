@@ -130,8 +130,8 @@ class Properties:
 
 class ExProperties(Properties):
 	# sites
-	EHENTAI = 0
-	sites = (EHENTAI,)
+	EHENTAI, NHENTAI = range(2)
+	sites = (EHENTAI, NHENTAI,)
 
 	_INFO = {}
 	def __init__(self, site=EHENTAI):
@@ -185,6 +185,9 @@ class ExProperties(Properties):
 		"Returns true if usable"
 		if self.site == self.EHENTAI:
 			if "ipb_member_id" in self.cookies and "ipb_pass_hash" in self.cookies:
+				return True
+		elif self.site == self.NHENTAI:
+			if "sessionid" in self.cookies:
 				return True
 		else:
 			return True

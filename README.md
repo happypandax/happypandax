@@ -25,6 +25,7 @@ see [INSTALL.md](INSTALL.md)
 
 # Features
 - Portable, self-contained in folder and cross-platform
+- Low memory footprint
 - 2 view modes: thumbnails in a grid and a simple table
 - Advanced gallery search with regex support
 - Gallery tagging: userdefined namespaces and tags

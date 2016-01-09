@@ -273,27 +273,31 @@ class Fetch(QObject):
 			self.GALLERY_EMITTER.emit(gallery, None, False)
 			log_d('Success')
 
-	def fetch_metadata(self, gallery, hen, proc=False):
+	def fetch_metadata(self, gallery=None, hen=None, proc=False):
 		"""
 		Puts gallery in queue for metadata fetching. Applies received galleries and sends
 		them to gallery model.
 		Set proc to true if you want to process the queue immediately
 		"""
-		log_i("Fetching metadata for gallery: {}".format(gallery.title.encode(errors='ignore')))
-		log_i("Adding to queue: {}".format(gallery.title.encode(errors='ignore')))
-		if proc:
-			metadata = hen.add_to_queue(gallery.temp_url, True)
+		if gallery:
+			log_i("Fetching metadata for gallery: {}".format(gallery.title.encode(errors='ignore')))
+			log_i("Adding to queue: {}".format(gallery.title.encode(errors='ignore')))
+			if proc:
+				metadata = hen.add_to_queue(gallery.temp_url, True)
+			else:
+				metadata = hen.add_to_queue(gallery.temp_url)
+			self.galleries_in_queue.append(gallery)
 		else:
-			metadata = hen.add_to_queue(gallery.temp_url)
-		self.galleries_in_queue.append(gallery)
+			metadata = hen.add_to_queue(proc=True)
 
 		if metadata == 1: # Gallery is now put in queue
 			return None
 		# We received something from get_metadata
 		if not metadata: # metadata fetching failed
-			self.error_galleries.append((gallery, "Metadata fetching failed"))
-			log_i("An error occured while fetching metadata with gallery: {}".format(
-				gallery.title.encode(errors='ignore')))
+			if gallery:
+				self.error_galleries.append((gallery, "Metadata fetching failed"))
+				log_i("An error occured while fetching metadata with gallery: {}".format(
+					gallery.title.encode(errors='ignore')))
 			return None
 		self.AUTO_METADATA_PROGRESS.emit("Applying metadata...")
 
@@ -331,6 +335,9 @@ class Fetch(QObject):
 				if gallery._g_dialog_url:
 					gallery.temp_url = gallery._g_dialog_url
 					checked_pre_url_galleries.append(gallery)
+					# to process even if this gallery is last and fails
+					if x == len(galleries):
+						self.fetch_metadata(hen=hen)
 					continue
 			except AttributeError:
 				pass
@@ -340,6 +347,8 @@ class Fetch(QObject):
 				if check == valid_url:
 					gallery.temp_url = gallery.link
 					checked_pre_url_galleries.append(gallery)
+					if x == len(galleries):
+						self.fetch_metadata(hen=hen)
 					continue
 
 			self.AUTO_METADATA_PROGRESS.emit("({}/{}) Generating gallery hash: {}".format(x, len(galleries), gallery.title))
@@ -357,6 +366,8 @@ class Fetch(QObject):
 			if not hash:
 				self.error_galleries.append((gallery, "Could not generate hash"))
 				log_e("Could not generate hash for gallery: {}".format(gallery.title.encode(errors='ignore')))
+				if x == len(galleries):
+					self.fetch_metadata(hen=hen)
 				continue
 			gallery.hash = hash
 
@@ -371,6 +382,8 @@ class Fetch(QObject):
 				self.error_galleries.append((gallery, "Could not find url for gallery"))
 				self.AUTO_METADATA_PROGRESS.emit("Could not find url for gallery: {}".format(gallery.title))
 				log_w('Could not find url for gallery: {}'.format(gallery.title.encode(errors='ignore')))
+				if x == len(galleries):
+					self.fetch_metadata(hen=hen)
 				continue
 			title_url_list = found_url[gallery.hash]
 
@@ -379,28 +392,25 @@ class Fetch(QObject):
 				url = title_url_list[0][1]
 			else:
 				self.multiple_hit_galleries.append([gallery, title_url_list])
+				if x == len(galleries):
+					self.fetch_metadata(hen=hen)
 				continue
 
 			if not gallery.link:
-				gallery.link = url
 				if isinstance(hen, (pewnet.EHen, pewnet.ExHen)):
+					gallery.link = url
 					self.GALLERY_EMITTER.emit(gallery, None, None)
 			gallery.temp_url = url
 			self.AUTO_METADATA_PROGRESS.emit("({}/{}) Adding to queue: {}".format(
 				x, len(galleries), gallery.title))
-			if x == len(galleries):
-				self.fetch_metadata(gallery, hen, True)
-			else:
-				self.fetch_metadata(gallery, hen)
+
+			self.fetch_metadata(gallery, hen, x == len(galleries))
 
 		if checked_pre_url_galleries:
 			for x, gallery in enumerate(checked_pre_url_galleries, 1):
 				self.AUTO_METADATA_PROGRESS.emit("({}/{}) Adding to queue: {}".format(
 					x, len(checked_pre_url_galleries), gallery.title))
-				if x == len(checked_pre_url_galleries):
-					self.fetch_metadata(gallery, hen, True)
-				else:
-					self.fetch_metadata(gallery, hen)
+				self.fetch_metadata(gallery, hen, x == len(checked_pre_url_galleries))
 
 		if self.multiple_hit_galleries:
 			for x, g_data in enumerate(self.multiple_hit_galleries, 1):
@@ -414,6 +424,8 @@ class Fetch(QObject):
 				user_choice = self.GALLERY_PICKER_QUEUE.get()
 
 				if not user_choice:
+					if x == len(galleries):
+						self.fetch_metadata(hen=hen)
 					continue
 
 				title = user_choice[0]
@@ -426,10 +438,7 @@ class Fetch(QObject):
 				gallery.temp_url = url
 				self.AUTO_METADATA_PROGRESS.emit("({}/{}) Adding to queue: {}".format(
 					x, len(self.multiple_hit_galleries), gallery.title))
-				if x == len(self.multiple_hit_galleries):
-					self.fetch_metadata(gallery, hen, True)
-				else:
-					self.fetch_metadata(gallery, hen)
+				self.fetch_metadata(gallery, hen, x == len(self.multiple_hit_galleries))
 
 	def _website_checker(self, url):
 		if not url:

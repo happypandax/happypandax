@@ -697,6 +697,12 @@ class SettingsDialog(QWidget):
 		logins_layout.addRow(ehentai_group)
 		ehentai_user, ehentai_pass, ehentai_status = make_login_forms(ehentai_l, settings.ExProperties().cookies, pewnet.EHen)
 
+		# nhentai
+		nhentai_group, nhentai_l = groupbox("NHentai", QFormLayout, logins_page)
+		logins_layout.addRow(nhentai_group)
+		nhentai_user, nhentai_pass, nhentai_status = make_login_forms(nhentai_l, settings.ExProperties().cookies, pewnet.EHen)
+
+
 		# Web / Downloader
 		web_downloader, web_downloader_l = new_tab('Downloader', web)
 		hen_download_group, hen_download_group_l = groupbox('E-Hentai',

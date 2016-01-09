@@ -537,13 +537,14 @@ class CommenHen:
 		self.LAST_USED = time.time()
 		self.LOCK.release()
 
-	def add_to_queue(self, url, proc=False, parse=True):
+	def add_to_queue(self, url='', proc=False, parse=True):
 		"""Add url the the queue, when the queue has reached _QUEUE_LIMIT entries will auto process
 		:proc -> proccess queue
 		:parse -> return parsed metadata
 		"""
-		self.QUEUE.append(url)
-		log_i("Status on queue: {}/{}".format(len(self.QUEUE), self._QUEUE_LIMIT))
+		if url:
+			self.QUEUE.append(url)
+			log_i("Status on queue: {}/{}".format(len(self.QUEUE), self._QUEUE_LIMIT))
 		try:
 			if proc:
 				if parse:
@@ -637,6 +638,17 @@ class CommenHen:
 		"""
 		pass
 
+class NHen(CommenHen):
+	"Fetches galleries from nhen"
+	LOGIN_URL = "http://nhentai.net/login/"
+
+	@classmethod
+	def login(cls, user, password):
+		pass
+
+	@classmethod
+	def check_login(cls, cookies):
+		pass
 
 class EHen(CommenHen):
 	"Fetches galleries from ehen"
