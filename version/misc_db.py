@@ -48,6 +48,7 @@ class UniqueInfoModel(QSortFilterProxyModel):
 		self.setSourceModel(NoTooltipModel(gallerymodel, parent))
 		self._unique = set()
 		self._unique_role = role
+		self.setDynamicSortFilter(True)
 
 	def filterAcceptsRow(self, source_row, parent_index):
 		if self.sourceModel():
@@ -61,6 +62,8 @@ class UniqueInfoModel(QSortFilterProxyModel):
 		return False
 
 class GalleryArtistsList(QListView):
+	artist_clicked = pyqtSignal(str)
+
 	def __init__(self, gallerymodel, parent=None):
 		super().__init__(parent)
 		self.g_artists_model = UniqueInfoModel(gallerymodel, gallerymodel.ARTIST_ROLE, self)
@@ -68,6 +71,12 @@ class GalleryArtistsList(QListView):
 		self.setModelColumn(app_constants.ARTIST)
 		self.g_artists_model.setSortRole(gallerymodel.ARTIST_ROLE)
 		self.g_artists_model.sort(0)
+		self.doubleClicked.connect(self._artist_clicked)
+		self.ARTIST_ROLE = gallerymodel.ARTIST_ROLE
+
+	def _artist_clicked(self, idx):
+		if idx.isValid():
+			self.artist_clicked.emit(idx.data(self.ARTIST_ROLE))
 
 class TagsTreeView(QTreeWidget):
 	def __init__(self, **kwargs):
@@ -76,6 +85,7 @@ class TagsTreeView(QTreeWidget):
 		self.setSelectionBehavior(self.SelectItems)
 		self.setSelectionMode(self.ExtendedSelection)
 		self.clipboard = QApplication.clipboard()
+		self.itemDoubleClicked.connect(lambda i: self.search_tags([i]) if i.parent() else None)
 
 	def search_tags(self, items):
 		if self.parent_widget:
@@ -147,45 +157,45 @@ class TagsTreeView(QTreeWidget):
 		else:
 			event.ignore()
 
-class DBOverview(QWidget):
-	"""
-	
-	"""
-	about_to_close = pyqtSignal()
-	def __init__(self, parent, window=False):
-		if window:
-			super().__init__(None, Qt.Window)
+class GalleryLists(QListWidget):
+	CREATE_LIST_TYPE = misc.CustomListItem.UserType+1
+	GALLERY_LIST_CLICKED = pyqtSignal(gallerydb.GalleryList)
+	def __init__(self, parent):
+		super().__init__(parent)
+		add_item = misc.CustomListItem(txt="<i>Create new list...</i>", parent=self, type=self.CREATE_LIST_TYPE)
+		add_item.setTextAlignment(Qt.AlignCenter)
+		add_item.setFlags(Qt.ItemIsEnabled)
+		self.itemDoubleClicked.connect(self._item_double_clicked)
+		self.itemDelegate().closeEditor.connect(self._add_new_list)
+		self.setEditTriggers(self.NoEditTriggers)
+		self._in_proccess_item = None
+
+
+	def _add_new_list(self, lineedit=None, hint=None):
+		if not self._in_proccess_item.text():
+			self.takeItem(self.row(self._in_proccess_item))
+			return
+		new_item = self._in_proccess_item
+		new_list = gallerydb.GalleryList(new_item.text(), app_constants.GALLERY_DATA[:5])
+		new_item.item = new_list
+
+	def create_new_list(self, name=None):
+		new_item = misc.CustomListItem()
+		self._in_proccess_item = new_item
+		new_item.setFlags(new_item.flags() | Qt.ItemIsEditable)
+		self.insertItem(1, new_item)
+		if name:
+			new_item.setText(name)
+			self._add_new_list()
 		else:
-			super().__init__(parent)
-		self.setAttribute(Qt.WA_DeleteOnClose)
-		self.parent_widget = parent
-		main_layout = QVBoxLayout(self)
-		tabbar = QTabWidget(self)
-		main_layout.addWidget(tabbar)
-		
-		# Tags stats
-		self.tags_stats = QListWidget(self)
-		tabbar.addTab(self.tags_stats, 'Statistics')
-		tabbar.setTabEnabled(1, False)
+			self.editItem(new_item)
 
-		# About AD
-		self.about_db = QWidget(self)
-		tabbar.addTab(self.about_db, 'DB Info')
-		tabbar.setTabEnabled(2, False)
-
-		self.resize(300, 600)
-		self.setWindowTitle('DB Overview')
-		self.setWindowIcon(QIcon(app_constants.APP_ICO_PATH))
-
-	def setup_stats(self):
-		pass
-
-	def setup_about_db(self):
-		pass
-
-	def closeEvent(self, event):
-		self.about_to_close.emit()
-		return super().closeEvent(event)
+	def _item_double_clicked(self, item):
+		if item:
+			if item.type() == self.CREATE_LIST_TYPE:
+				self.create_new_list()
+			else:
+				self.GALLERY_LIST_CLICKED.emit(item.item)
 
 class SideBarWidget(QFrame):
 	"""
@@ -212,9 +222,9 @@ class SideBarWidget(QFrame):
 		self.main_layout.addLayout(self.main_buttons_layout)
 
 		# buttons
+		self.lists_btn = QPushButton("Lists")
 		self.artist_btn = QPushButton("Artists")
 		self.ns_tags_btn = QPushButton("NS && Tags")
-		self.lists_btn = QPushButton("Lists")
 		self.main_buttons_layout.addWidget(self.lists_btn)
 		self.main_buttons_layout.addWidget(self.artist_btn)
 		self.main_buttons_layout.addWidget(self.ns_tags_btn)
@@ -223,8 +233,15 @@ class SideBarWidget(QFrame):
 		self.stacked_layout = QStackedLayout()
 		self.main_layout.addLayout(self.stacked_layout)
 
+		# lists
+		self.lists = GalleryLists(self)
+		lists_index = self.stacked_layout.addWidget(self.lists)
+		self.lists.GALLERY_LIST_CLICKED.connect(parent.manga_list_view.sort_model.set_gallery_list)
+		self.lists_btn.clicked.connect(lambda:self.stacked_layout.setCurrentIndex(lists_index))
+
 		# artists
 		self.artists_list = GalleryArtistsList(parent.manga_list_view.gallery_model, self)
+		self.artists_list.artist_clicked.connect(lambda a: parent.search('artist:"{}"'.format(a)))
 		artists_list_index = self.stacked_layout.addWidget(self.artists_list)
 		self.artist_btn.clicked.connect(lambda:self.stacked_layout.setCurrentIndex(artists_list_index))
 
@@ -283,3 +300,44 @@ class SideBarWidget(QFrame):
 		self.setMaximumWidth(self._max_width)
 		self.slide_animation.setStartValue(QSize(self._max_width, event.size().height()))
 		return super().resizeEvent(event)
+
+
+class DBOverview(QWidget):
+	"""
+	
+	"""
+	about_to_close = pyqtSignal()
+	def __init__(self, parent, window=False):
+		if window:
+			super().__init__(None, Qt.Window)
+		else:
+			super().__init__(parent)
+		self.setAttribute(Qt.WA_DeleteOnClose)
+		self.parent_widget = parent
+		main_layout = QVBoxLayout(self)
+		tabbar = QTabWidget(self)
+		main_layout.addWidget(tabbar)
+		
+		# Tags stats
+		self.tags_stats = QListWidget(self)
+		tabbar.addTab(self.tags_stats, 'Statistics')
+		tabbar.setTabEnabled(1, False)
+
+		# About AD
+		self.about_db = QWidget(self)
+		tabbar.addTab(self.about_db, 'DB Info')
+		tabbar.setTabEnabled(2, False)
+
+		self.resize(300, 600)
+		self.setWindowTitle('DB Overview')
+		self.setWindowIcon(QIcon(app_constants.APP_ICO_PATH))
+
+	def setup_stats(self):
+		pass
+
+	def setup_about_db(self):
+		pass
+
+	def closeEvent(self, event):
+		self.about_to_close.emit()
+		return super().closeEvent(event)

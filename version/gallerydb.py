@@ -1277,12 +1277,17 @@ class GalleryList:
 		self._id = id # shouldnt ever be touched
 		self.name = name
 		self._galleries = set()
+		self._ids_chache = []
 		for g in list_of_galleries:
 			self.add_gallery(g)
 
 	def add_gallery(self, gallery):
 		"add_gallery <- adds a gallery of Gallery class to list"
 		self._galleries.add(gallery)
+		if not utils.b_search(self._ids_chache, gallery.id):
+			self._ids_chache.append(gallery.id)
+			# uses timsort algo so it's ok
+			self._ids_chache.sort()
 
 	def remove_gallery(self, gallery_id):
 		"remove_gallery <- removes galleries matching the provided gallery id"
@@ -1290,14 +1295,22 @@ class GalleryList:
 			if g.id == gallery_id:
 				self._galleries.remove(g)
 				break
+		try:
+			self._ids_chache.remove(gallery_id)
+		except ValueError:
+			pass
 
 	def clear(self):
 		"removes all galleries from the list"
 		self._galleries.clear()
+		self._ids_chache.clear()
 
 	def galleries(self):
 		"returns a list with all galleries in list"
 		return list(self._galleries)
+
+	def __contains__(self, g):
+		return utils.b_search(self._ids_chache, g.id)
 
 class Gallery:
 	"""

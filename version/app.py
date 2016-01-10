@@ -465,7 +465,7 @@ class AppWindow(QMainWindow):
 		#self.manga_list_view.gallery_model.rowsRemoved.connect(self.gallery_delete_spinner.before_hide)
 
 
-	def search(self, srch_string):
+	def search(self, srch_string, strict=None, case=None):
 		self.search_bar.setText(srch_string)
 		self.search_backward.setVisible(True)
 		self.manga_list_view.sort_model.init_search(srch_string)

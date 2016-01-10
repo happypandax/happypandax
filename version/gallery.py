@@ -103,6 +103,10 @@ class GallerySearch(QObject):
 
 		# filtering
 		self.fav = False
+		self._gallery_list = None
+
+	def set_gallery_list(self, g_list):
+		self._gallery_list = g_list
 
 	def set_data(self, new_data):
 		self._data = new_data
@@ -124,6 +128,9 @@ class GallerySearch(QObject):
 			if self.fav:
 				if not gallery.fav:
 					continue
+			if self._gallery_list:
+				if not gallery in self._gallery_list:
+					continue
 			all_terms = {t: False for t in terms}
 			allow = False
 			if utils.all_opposite(terms):
@@ -144,6 +151,7 @@ class SortFilterModel(QSortFilterProxyModel):
 	_DO_SEARCH = pyqtSignal(str)
 	_CHANGE_SEARCH_DATA = pyqtSignal(list)
 	_CHANGE_FAV = pyqtSignal(bool)
+	_SET_GALLERY_LIST = pyqtSignal(object)
 
 	HISTORY_SEARCH_TERM = pyqtSignal(str)
 	# Navigate terms
@@ -175,6 +183,9 @@ class SortFilterModel(QSortFilterProxyModel):
 				self.init_search(new_term, False)
 		return new_term
 
+	def set_gallery_list(self, g_list=None):
+		self._SET_GALLERY_LIST.emit(g_list)
+		self._DO_SEARCH.emit('')
 
 	def fetchMore(self, index):
 		return super().fetchMore(index)
@@ -196,9 +207,11 @@ class SortFilterModel(QSortFilterProxyModel):
 			self.gallery_search.FINISHED.connect(lambda: self.ROWCOUNT_CHANGE.emit())
 			self.gallery_search.moveToThread(app_constants.GENERAL_THREAD)
 			self._DO_SEARCH.connect(self.gallery_search.search)
+			self._SET_GALLERY_LIST.connect(self.gallery_search.set_gallery_list)
 			self._CHANGE_SEARCH_DATA.connect(self.gallery_search.set_data)
 			self._CHANGE_FAV.connect(self.gallery_search.set_fav)
 			self._search_ready = True
+
 
 	def init_search(self, term='', history=True):
 		"""

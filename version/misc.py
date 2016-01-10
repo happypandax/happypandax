@@ -2105,8 +2105,8 @@ class ChapterAddWidget(QWidget):
 
 
 class CustomListItem(QListWidgetItem):
-	def __init__(self, item=None, parent=None):
-		super().__init__(parent)
+	def __init__(self, item=None, parent=None, txt='', type=QListWidgetItem.Type):
+		super().__init__(txt, parent, type)
 		self.item = item
 
 
