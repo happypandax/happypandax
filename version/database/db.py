@@ -188,11 +188,13 @@ def list_sql(cols=False):
 	sql ="""
 		CREATE TABLE IF NOT EXISTS list(
 					list_id INTEGER PRIMARY KEY,
-					list_name TEXT NOT NULL DEFAULT '');
+					list_name TEXT NOT NULL DEFAULT '',
+					list_filter TEXT);
 		"""
 	col_list = [
 		'list_id INTEGER PRIMARY KEY',
 		"list_name TEXT NOT NULL DEFAULT ''",
+		'list_filter TEXT'
 		]
 	if cols:
 		return sql, col_list

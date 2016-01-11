@@ -21,10 +21,11 @@ from PyQt5.QtWidgets import (QTreeWidget, QTreeWidgetItem, QWidget,
 							 QVBoxLayout, QTabWidget, QAction, QGraphicsScene,
 							 QSizePolicy, QMenu, QAction, QApplication,
 							 QListWidget, QHBoxLayout, QPushButton, QStackedLayout,
-							 QFrame, QSizePolicy, QListView)
+							 QFrame, QSizePolicy, QListView, QFormLayout, QLineEdit,
+							 QLabel)
 from PyQt5.QtCore import (Qt, QTimer, pyqtSignal, QRect, QSize, QEasingCurve,
 						  QSortFilterProxyModel, QIdentityProxyModel)
-from PyQt5.QtGui import QIcon, QStandardItem
+from PyQt5.QtGui import QIcon, QStandardItem, QFont
 
 import gallerydb
 import app_constants
@@ -79,37 +80,36 @@ class GalleryArtistsList(QListView):
 			self.artist_clicked.emit(idx.data(self.ARTIST_ROLE))
 
 class TagsTreeView(QTreeWidget):
-	def __init__(self, **kwargs):
-		self.parent_widget = kwargs.pop('app_window', None)
-		super().__init__(**kwargs)
+	TAG_SEARCH = pyqtSignal(str)
+	def __init__(self, parent):
+		super().__init__(parent)
 		self.setSelectionBehavior(self.SelectItems)
 		self.setSelectionMode(self.ExtendedSelection)
 		self.clipboard = QApplication.clipboard()
 		self.itemDoubleClicked.connect(lambda i: self.search_tags([i]) if i.parent() else None)
 
 	def search_tags(self, items):
-		if self.parent_widget:
-			tags = {}
-			d_tags = []
-			for item in items:
-				ns_item = item.parent()
-				if ns_item.text(0) == 'No namespace':
-					d_tags.append(item.text(0))
-					continue
-				if ns_item.text(0) in tags:
-					tags[ns_item.text(0)].append(item.text(0))
-				else:
-					tags[ns_item.text(0)] = [item.text(0)]
+		tags = {}
+		d_tags = []
+		for item in items:
+			ns_item = item.parent()
+			if ns_item.text(0) == 'No namespace':
+				d_tags.append(item.text(0))
+				continue
+			if ns_item.text(0) in tags:
+				tags[ns_item.text(0)].append(item.text(0))
+			else:
+				tags[ns_item.text(0)] = [item.text(0)]
 			
-			search_txt = utils.tag_to_string(tags)
-			d_search_txt = ''
-			for x, d_t in enumerate(d_tags, 1):
-				if x == len(d_tags):
-					d_search_txt += '{}'.format(d_t)
-				else:
-					d_search_txt += '{}, '.format(d_t)
-			final_txt = search_txt + ', ' + d_search_txt if search_txt else d_search_txt
-			self.parent_widget.search(final_txt)
+		search_txt = utils.tag_to_string(tags)
+		d_search_txt = ''
+		for x, d_t in enumerate(d_tags, 1):
+			if x == len(d_tags):
+				d_search_txt += '{}'.format(d_t)
+			else:
+				d_search_txt += '{}, '.format(d_t)
+		final_txt = search_txt + ', ' + d_search_txt if search_txt else d_search_txt
+		self.TAG_SEARCH.emit(final_txt)
 
 	def contextMenuEvent(self, event):
 		handled = False
@@ -157,36 +157,116 @@ class TagsTreeView(QTreeWidget):
 		else:
 			event.ignore()
 
+	def setup_tags(self):
+		self.clear()
+		tags = gallerydb.add_method_queue(gallerydb.TagDB.get_ns_tags, False)
+		items = []
+		for ns in tags:
+			top_item = QTreeWidgetItem(self)
+			if ns == 'default':
+				top_item.setText(0, 'No namespace')
+			else:
+				top_item.setText(0, ns)
+			for tag in tags[ns]:
+				child_item = QTreeWidgetItem(top_item)
+				child_item.setText(0, tag)
+		self.sortItems(0, Qt.AscendingOrder)
+
+class GalleryListEdit(misc.BasePopup):
+	def __init__(self, gallery_list, item, parent):
+		super().__init__(parent, blur=False)
+		self.gallery_list = gallery_list
+		self.item = item
+		main_layout = QFormLayout(self.main_widget)
+		self.name_edit = QLineEdit(gallery_list.name, self)
+		main_layout.addRow("Name:", self.name_edit)
+		self.filter_edit = QLineEdit(self)
+		if gallery_list.filter:
+			self.filter_edit.setText(gallery_list.filter)
+		what_is_filter = misc.ClickedLabel("What is filter? (Hover)")
+		what_is_filter.setToolTip(app_constants.WHAT_IS_FILTER)
+		what_is_filter.setToolTipDuration(9999999999)
+		main_layout.addRow(what_is_filter)
+		main_layout.addRow("Filter", self.filter_edit)
+		main_layout.addRow(self.buttons_layout)
+		self.add_buttons("Close")[0].clicked.connect(self.close)
+		self.add_buttons("Apply")[0].clicked.connect(self.accept)
+		self.adjustSize()
+
+	def accept(self):
+		name = self.name_edit.text()
+		self.item.setText(name)
+		self.gallery_list.name = name
+		self.gallery_list.filter = self.filter_edit.text()
+		gallerydb.add_method_queue(gallerydb.ListDB.modify_list, True, self.gallery_list, True, True)
+		gallerydb.add_method_queue(self.gallery_list.scan, True)
+		self.close()
+
+class GalleryListContextMenu(QMenu):
+	def __init__(self, item, parent):
+		super().__init__(parent)
+		self.parent_widget = parent
+		self.item = item
+		self.gallery_list = item.item
+		edit = self.addAction("Edit", self.edit_list)
+		clear = self.addAction("Clear", self.clear_list)
+		remove = self.addAction("Delete", self.remove_list)
+
+	def edit_list(self):
+		l_edit = GalleryListEdit(self.gallery_list, self.item, self.parent_widget)
+		l_edit.show()
+
+	def remove_list(self):
+		self.parent_widget.takeItem(self.parent_widget.row(self.item))
+		gallerydb.add_method_queue(gallerydb.ListDB.remove_list, True, self.gallery_list)
+		self.parent_widget.GALLERY_LIST_REMOVED.emit()
+
+	def clear_list(self):
+		self.gallery_list.clear()
+		self.parent_widget.GALLERY_LIST_CLICKED.emit(self.gallery_list)
+
 class GalleryLists(QListWidget):
 	CREATE_LIST_TYPE = misc.CustomListItem.UserType+1
 	GALLERY_LIST_CLICKED = pyqtSignal(gallerydb.GalleryList)
+	GALLERY_LIST_REMOVED = pyqtSignal()
 	def __init__(self, parent):
 		super().__init__(parent)
-		add_item = misc.CustomListItem(txt="<i>Create new list...</i>", parent=self, type=self.CREATE_LIST_TYPE)
+		add_item = misc.CustomListItem(txt="Create new list...", parent=self, type=self.CREATE_LIST_TYPE)
+		font = QFont(self.font())
+		font.setBold(True)
+		font.setItalic(True)
+		add_item.setFont(font)
 		add_item.setTextAlignment(Qt.AlignCenter)
 		add_item.setFlags(Qt.ItemIsEnabled)
+		add_item.setToolTip("Double click to create new list")
 		self.itemDoubleClicked.connect(self._item_double_clicked)
 		self.itemDelegate().closeEditor.connect(self._add_new_list)
 		self.setEditTriggers(self.NoEditTriggers)
 		self._in_proccess_item = None
 
 
-	def _add_new_list(self, lineedit=None, hint=None):
+	def _add_new_list(self, lineedit=None, hint=None, gallery_list=None):
 		if not self._in_proccess_item.text():
 			self.takeItem(self.row(self._in_proccess_item))
 			return
 		new_item = self._in_proccess_item
-		new_list = gallerydb.GalleryList(new_item.text(), app_constants.GALLERY_DATA[:5])
+		if not gallery_list:
+			new_list = gallerydb.GalleryList(new_item.text())
+			new_list.add_to_db()
+			app_constants.GALLERY_LISTS.add(new_list)
+			new_list.add_gallery(app_constants.GALLERY_DATA[:5])
+		else:
+			new_list = gallery_list
 		new_item.item = new_list
 
-	def create_new_list(self, name=None):
+	def create_new_list(self, name=None, gallery_list=None):
 		new_item = misc.CustomListItem()
 		self._in_proccess_item = new_item
 		new_item.setFlags(new_item.flags() | Qt.ItemIsEditable)
 		self.insertItem(1, new_item)
 		if name:
 			new_item.setText(name)
-			self._add_new_list()
+			self._add_new_list(gallery_list=gallery_list)
 		else:
 			self.editItem(new_item)
 
@@ -195,7 +275,22 @@ class GalleryLists(QListWidget):
 			if item.type() == self.CREATE_LIST_TYPE:
 				self.create_new_list()
 			else:
+				if item.item.filter:
+					gallerydb.add_method_queue(item.item.scan, True)
 				self.GALLERY_LIST_CLICKED.emit(item.item)
+
+	def setup_lists(self):
+		for g_l in app_constants.GALLERY_LISTS:
+			self.create_new_list(g_l.name, g_l)
+
+	def contextMenuEvent(self, event):
+		item = self.itemAt(event.pos())
+		if item and item.type() != self.CREATE_LIST_TYPE:
+			menu = GalleryListContextMenu(item, self)
+			menu.exec_(event.globalPos())
+			event.accept()
+			return
+		event.ignore()
 
 class SideBarWidget(QFrame):
 	"""
@@ -218,6 +313,9 @@ class SideBarWidget(QFrame):
 		widget_layout.addWidget(self.arrow_handle)
 		self.setContentsMargins(0,0,-self.arrow_handle.width(),0)
 
+		self.show_all_galleries_btn = QPushButton("Show all galleries")
+		self.show_all_galleries_btn.clicked.connect(lambda:parent.manga_list_view.sort_model.set_gallery_list())
+		self.main_layout.addWidget(self.show_all_galleries_btn)
 		self.main_buttons_layout = QHBoxLayout()
 		self.main_layout.addLayout(self.main_buttons_layout)
 
@@ -237,45 +335,37 @@ class SideBarWidget(QFrame):
 		self.lists = GalleryLists(self)
 		lists_index = self.stacked_layout.addWidget(self.lists)
 		self.lists.GALLERY_LIST_CLICKED.connect(parent.manga_list_view.sort_model.set_gallery_list)
+		self.lists.GALLERY_LIST_REMOVED.connect(self.show_all_galleries_btn.click)
 		self.lists_btn.clicked.connect(lambda:self.stacked_layout.setCurrentIndex(lists_index))
+		self.show_all_galleries_btn.clicked.connect(self.lists.clearSelection)
 
 		# artists
 		self.artists_list = GalleryArtistsList(parent.manga_list_view.gallery_model, self)
 		self.artists_list.artist_clicked.connect(lambda a: parent.search('artist:"{}"'.format(a)))
 		artists_list_index = self.stacked_layout.addWidget(self.artists_list)
 		self.artist_btn.clicked.connect(lambda:self.stacked_layout.setCurrentIndex(artists_list_index))
+		self.show_all_galleries_btn.clicked.connect(self.artists_list.clearSelection)
 
 		# ns_tags
-		self.tags_tree = TagsTreeView(app_window=parent)
+		self.tags_tree = TagsTreeView(self)
+		self.tags_tree.TAG_SEARCH.connect(parent.search)
 		self.tags_tree.setHeaderHidden(True)
+		self.show_all_galleries_btn.clicked.connect(self.tags_tree.clearSelection)
 		self.tags_layout = QVBoxLayout(self.tags_tree)
 		ns_tags_index = self.stacked_layout.addWidget(self.tags_tree)
 		self.ns_tags_btn.clicked.connect(lambda:self.stacked_layout.setCurrentIndex(ns_tags_index))
 		if parent.manga_list_view.gallery_model.db_emitter._finished:
-			self.setup_tags()
+			self.tags_tree.setup_tags()
+			self.lists.setup_lists()
 		else:
-			parent.manga_list_view.gallery_model.db_emitter.DONE.connect(self.setup_tags)
+			parent.manga_list_view.gallery_model.db_emitter.DONE.connect(self.tags_tree.setup_tags)
+			parent.manga_list_view.gallery_model.db_emitter.DONE.connect(self.lists.setup_lists)
 
 		self.adjustSize()
 		self.slide_animation = misc.create_animation(self, "maximumSize")
 		self.slide_animation.stateChanged.connect(self._slide_hide)
 		self.slide_animation.setEasingCurve(QEasingCurve.InOutQuad)
 		self._max_width = 300
-
-	def setup_tags(self):
-		self.tags_tree.clear()
-		tags = gallerydb.add_method_queue(gallerydb.TagDB.get_ns_tags, False)
-		items = []
-		for ns in tags:
-			top_item = QTreeWidgetItem(self.tags_tree)
-			if ns == 'default':
-				top_item.setText(0, 'No namespace')
-			else:
-				top_item.setText(0, ns)
-			for tag in tags[ns]:
-				child_item = QTreeWidgetItem(top_item)
-				child_item.setText(0, tag)
-		self.tags_tree.sortItems(0, Qt.AscendingOrder)
 
 	def _slide_hide(self, state):
 		if state == self.slide_animation.Stopped:

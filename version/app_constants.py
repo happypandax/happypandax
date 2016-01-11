@@ -216,6 +216,15 @@ class WrongURL(Exception): pass
 class NeedLogin(Exception): pass
 class WrongLogin(Exception): pass
 
+WHAT_IS_FILTER =\
+	"""Filters are basically predefined gallery search terms.
+Every time a gallery matches the specific filter it gets automatically added to the list!
+
+Filter works the same way a gallery search do so make sure to read the guide in
+Settings -> About -> Search Guide.
+You can write any valid gallery search term.
+Regex works only if enabled in settings.
+"""
 
 SUPPORTED_DOWNLOAD_URLS=\
 	"""Supported URLs:

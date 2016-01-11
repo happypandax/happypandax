@@ -962,7 +962,7 @@ class ListDB(DBBase):
 		c = cls.execute(cls, 'SELECT * FROM list')
 		list_rows = c.fetchall()
 		for l_row in list_rows:
-			l = GalleryList(l_row['list_name'], id=l_row['list_id'])
+			l = GalleryList(l_row['list_name'], filter=l_row['list_filter'], id=l_row['list_id'])
 			lists.append(l)
 			app_constants.GALLERY_LISTS.add(l)
 
@@ -976,33 +976,75 @@ class ListDB(DBBase):
 		list_rows = [x['list_id'] for x in c.fetchall()]
 		for l in app_constants.GALLERY_LISTS:
 			if l._id in list_rows:
-				l.add_gallery(gallery)
+				l.add_gallery(gallery, False)
+
+	@classmethod
+	def modify_list(cls, gallery_list, name=False, filter=False):
+		assert isinstance(gallery_list, GalleryList)
+		if gallery_list._id:
+			if name and filter:
+				cls.execute(cls, 'UPDATE list SET list_name=?, list_filter=? WHERE list_id=?',
+				   (gallery_list.name, gallery_list.filter, gallery_list._id))
+			elif name:
+				cls.execute(cls, 'UPDATE list SET list_name=? WHERE list_id=?',
+				   (gallery_list.name, gallery_list._id))
+			elif filter:
+				cls.execute(cls, 'UPDATE list SET list_filter=? WHERE list_id=?',
+				   (gallery_list.filter, gallery_list._id))
 
 	@classmethod
 	def add_list(cls, gallery_list):
 		"Adds a list of GalleryList class to DB"
 		assert isinstance(gallery_list, GalleryList)
 		if gallery_list._id:
-			cls.execute(cls, 'INSERT OR IGNORE INTO list(list_id, list_name) VALUES(?, ?)', (gallery_list._id, gallery_list.name,))
+			ListDB.modify_list(gallery_list, True, True)
 		else:
-			c = cls.execute(cls, 'INSERT INTO list(list_name) VALUES(?)', (gallery_list.name,))
+			c = cls.execute(cls, 'INSERT INTO list(list_name, list_filter) VALUES(?, ?)', (gallery_list.name, gallery_list.filter))
 			gallery_list._id = c.lastrowid
 
 		ListDB.add_gallery_to_list(gallery_list.galleries(), gallery_list)
 
 	@classmethod
-	def add_gallery_to_list(cls, gallery_or_id_or_list, gallery_list):
-		"Maps provided gallery or list of galleries or gallery id to list"
-		assert isinstance(gallery_list, GalleryList)
+	def _g_id_or_list(cls, gallery_or_id_or_list):
+		"Returns gallery ids"
 		if isinstance(gallery_or_id_or_list, (Gallery, int)):
 			gallery_or_id_or_list = [gallery_or_id_or_list]
 
 		if isinstance(gallery_or_id_or_list, list):
-			if isinstance(gallery_or_id_or_list[0], Gallery):
-				gallery_or_id_or_list = [g.id for g in gallery_or_id_or_list]
+			if gallery_or_id_or_list:
+				if isinstance(gallery_or_id_or_list[0], Gallery):
+					gallery_or_id_or_list = [g.id for g in gallery_or_id_or_list]
+		return gallery_or_id_or_list
 
-		values = [(gallery_list._id, x) for x in gallery_or_id_or_list]
-		cls.executemany(cls, 'INSERT INTO series_list_map(list_id, series_id) VALUES(?, ?)', values)
+	@classmethod
+	def add_gallery_to_list(cls, gallery_or_id_or_list, gallery_list):
+		assert isinstance(gallery_list, GalleryList)
+		"Maps provided gallery or list of galleries or gallery id to list"
+		g_ids = ListDB._g_id_or_list(gallery_or_id_or_list)
+
+		values = [(gallery_list._id, x) for x in g_ids]
+		cls.executemany(cls, 'INSERT OR IGNORE INTO series_list_map(list_id, series_id) VALUES(?, ?)', values)
+
+	@classmethod
+	def remove_list(cls, gallery_list):
+		"Deletes list from DB"
+		assert isinstance(gallery_list, GalleryList)
+		if gallery_list._id:
+			cls.execute(cls, 'DELETE FROM list WHERE list_id=?', (gallery_list._id,))
+		try:
+			app_constants.GALLERY_LISTS.remove(gallery_list)
+		except KeyError:
+			pass
+
+	@classmethod
+	def remove_gallery_from_list(cls, gallery_or_id_or_list, gallery_list):
+		assert isinstance(gallery_list, GalleryList)
+		"Removes provided gallery or list of galleries or gallery id from list"
+		if gallery_list._id:
+			g_ids = ListDB._g_id_or_list(gallery_or_id_or_list)
+
+			values = [(gallery_list._id, x) for x in g_ids]
+			cls.executemany(cls, 'DELETE FROM series_list_map WHERE list_id=? AND series_id=?', values)
 
 class HashDB(DBBase):
 	"""
@@ -1272,22 +1314,31 @@ class GalleryList:
 	- remove_gallery <- removes galleries matching the provided gallery id
 	- clear <- removes all galleries from the list
 	- galleries -> returns a list with all galleries in list
+	- scan <- scans for galleries matching the listfilter and adds them to gallery
 	"""
-	def __init__(self, name, list_of_galleries=[], id=None):
+	def __init__(self, name, list_of_galleries=[], filter=None, id=None, _db=True):
 		self._id = id # shouldnt ever be touched
 		self.name = name
+		self.filter = filter
 		self._galleries = set()
 		self._ids_chache = []
-		for g in list_of_galleries:
-			self.add_gallery(g)
+		self.add_gallery(list_of_galleries, _db)
 
-	def add_gallery(self, gallery):
+	def add_gallery(self, gallery_or_list_of, _db=True):
 		"add_gallery <- adds a gallery of Gallery class to list"
-		self._galleries.add(gallery)
-		if not utils.b_search(self._ids_chache, gallery.id):
-			self._ids_chache.append(gallery.id)
-			# uses timsort algo so it's ok
-			self._ids_chache.sort()
+		assert isinstance(gallery_or_list_of, (Gallery, list))
+		if isinstance(gallery_or_list_of, Gallery):
+			gallery_or_list_of = [gallery_or_list_of]
+		new_galleries = []
+		for gallery in gallery_or_list_of:
+			self._galleries.add(gallery)
+			if not utils.b_search(self._ids_chache, gallery.id):
+				new_galleries.append(gallery)
+				self._ids_chache.append(gallery.id)
+				# uses timsort algorithm so it's ok
+				self._ids_chache.sort()
+		if _db:
+			add_method_queue(ListDB.add_gallery_to_list, True, new_galleries, self)
 
 	def remove_gallery(self, gallery_id):
 		"remove_gallery <- removes galleries matching the provided gallery id"
@@ -1295,6 +1346,7 @@ class GalleryList:
 			if g.id == gallery_id:
 				self._galleries.remove(g)
 				break
+				add_method_queue(ListDB.remove_gallery_from_list, True, gallery_id, self)
 		try:
 			self._ids_chache.remove(gallery_id)
 		except ValueError:
@@ -1302,6 +1354,8 @@ class GalleryList:
 
 	def clear(self):
 		"removes all galleries from the list"
+		if self._galleries:
+			add_method_queue(ListDB.remove_gallery_from_list, True, list(self._galleries), self)
 		self._galleries.clear()
 		self._ids_chache.clear()
 
@@ -1311,6 +1365,25 @@ class GalleryList:
 
 	def __contains__(self, g):
 		return utils.b_search(self._ids_chache, g.id)
+
+	def add_to_db(self):
+		add_method_queue(ListDB.add_list, True, self)
+
+	def scan(self):
+		if self.filter:
+			new_galleries = []
+			filter_term = ' '.join(self.filter.split())
+			search_pieces = utils.get_terms(filter_term)
+			for gallery in app_constants.GALLERY_DATA:
+				all_terms = {t: False for t in search_pieces}
+
+				for t in search_pieces:
+					if t in gallery:
+						all_terms[t] = True
+
+				if all(all_terms.values()):
+					new_galleries.append(gallery)
+			self.add_gallery(new_galleries)
 
 class Gallery:
 	"""
