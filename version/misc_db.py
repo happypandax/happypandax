@@ -81,6 +81,7 @@ class GalleryArtistsList(QListView):
 
 class TagsTreeView(QTreeWidget):
 	TAG_SEARCH = pyqtSignal(str)
+	NEW_LIST = pyqtSignal(str, gallerydb.GalleryList)
 	def __init__(self, parent):
 		super().__init__(parent)
 		self.setSelectionBehavior(self.SelectItems)
@@ -88,7 +89,7 @@ class TagsTreeView(QTreeWidget):
 		self.clipboard = QApplication.clipboard()
 		self.itemDoubleClicked.connect(lambda i: self.search_tags([i]) if i.parent() else None)
 
-	def search_tags(self, items):
+	def _convert_to_str(self, items):
 		tags = {}
 		d_tags = []
 		for item in items:
@@ -109,7 +110,16 @@ class TagsTreeView(QTreeWidget):
 			else:
 				d_search_txt += '{}, '.format(d_t)
 		final_txt = search_txt + ', ' + d_search_txt if search_txt else d_search_txt
-		self.TAG_SEARCH.emit(final_txt)
+		return final_txt
+
+	def search_tags(self, items):
+		self.TAG_SEARCH.emit(self._convert_to_str(items))
+
+	def create_list(self, items):
+		g_list = gallerydb.GalleryList("New List", filter=self._convert_to_str(items))
+		g_list.add_to_db()
+		
+		self.NEW_LIST.emit(g_list.name, g_list)
 
 	def contextMenuEvent(self, event):
 		handled = False
@@ -148,6 +158,8 @@ class TagsTreeView(QTreeWidget):
 			if not contains_ns:
 				search_act = menu.addAction('Search')
 				search_act.triggered.connect(lambda: self.search_tags(s_items))
+				create_list_filter_act = menu.addAction('Create list with selected')
+				create_list_filter_act.triggered.connect(lambda: self.create_list(s_items))
 			handled = True
 
 		if handled:
@@ -253,8 +265,6 @@ class GalleryLists(QListWidget):
 		if not gallery_list:
 			new_list = gallerydb.GalleryList(new_item.text())
 			new_list.add_to_db()
-			app_constants.GALLERY_LISTS.add(new_list)
-			new_list.add_gallery(app_constants.GALLERY_DATA[:5])
 		else:
 			new_list = gallery_list
 		new_item.item = new_list
@@ -315,6 +325,8 @@ class SideBarWidget(QFrame):
 
 		self.show_all_galleries_btn = QPushButton("Show all galleries")
 		self.show_all_galleries_btn.clicked.connect(lambda:parent.manga_list_view.sort_model.set_gallery_list())
+		self.show_all_galleries_btn.clicked.connect(self.show_all_galleries_btn.hide)
+		self.show_all_galleries_btn.hide()
 		self.main_layout.addWidget(self.show_all_galleries_btn)
 		self.main_buttons_layout = QHBoxLayout()
 		self.main_layout.addLayout(self.main_buttons_layout)
@@ -335,6 +347,7 @@ class SideBarWidget(QFrame):
 		self.lists = GalleryLists(self)
 		lists_index = self.stacked_layout.addWidget(self.lists)
 		self.lists.GALLERY_LIST_CLICKED.connect(parent.manga_list_view.sort_model.set_gallery_list)
+		self.lists.GALLERY_LIST_CLICKED.connect(self.show_all_galleries_btn.show)
 		self.lists.GALLERY_LIST_REMOVED.connect(self.show_all_galleries_btn.click)
 		self.lists_btn.clicked.connect(lambda:self.stacked_layout.setCurrentIndex(lists_index))
 		self.show_all_galleries_btn.clicked.connect(self.lists.clearSelection)
@@ -349,6 +362,7 @@ class SideBarWidget(QFrame):
 		# ns_tags
 		self.tags_tree = TagsTreeView(self)
 		self.tags_tree.TAG_SEARCH.connect(parent.search)
+		self.tags_tree.NEW_LIST.connect(self.lists.create_new_list)
 		self.tags_tree.setHeaderHidden(True)
 		self.show_all_galleries_btn.clicked.connect(self.tags_tree.clearSelection)
 		self.tags_layout = QVBoxLayout(self.tags_tree)

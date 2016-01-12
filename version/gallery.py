@@ -166,6 +166,7 @@ class SortFilterModel(QSortFilterProxyModel):
 		self.current_term = ''
 		self.terms_history = []
 		self.current_term_history = 0
+		self.current_gallery_list = None
 
 		self.current_view = self.CAT_VIEW
 
@@ -184,6 +185,7 @@ class SortFilterModel(QSortFilterProxyModel):
 		return new_term
 
 	def set_gallery_list(self, g_list=None):
+		self.current_gallery_list = g_list
 		self._SET_GALLERY_LIST.emit(g_list)
 		self._DO_SEARCH.emit('')
 
@@ -1438,10 +1440,10 @@ class MangaView(QListView):
 				self.gallery_window.hide_animation.start()
 			self.manga_delegate.CONTEXT_ON = True
 			if selected:
-				menu = misc.GalleryMenu(self, index, self.gallery_model,
+				menu = misc.GalleryMenu(self, index, self.sort_model,
 							   self.parent_widget, select_indexes)
 			else:
-				menu = misc.GalleryMenu(self, index, self.gallery_model,
+				menu = misc.GalleryMenu(self, index, self.sort_model,
 							   self.parent_widget)
 			handled = True
 

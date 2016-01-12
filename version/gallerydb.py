@@ -1340,17 +1340,24 @@ class GalleryList:
 		if _db:
 			add_method_queue(ListDB.add_gallery_to_list, True, new_galleries, self)
 
-	def remove_gallery(self, gallery_id):
+	def remove_gallery(self, gallery_id_or_list_of):
 		"remove_gallery <- removes galleries matching the provided gallery id"
+		if isinstance(gallery_id_or_list_of, int):
+			gallery_id_or_list_of = [gallery_id_or_list_of]
+		g_ids = gallery_id_or_list_of
+		g_ids_to_delete = []
+		g_to_delete = []
 		for g in self._galleries:
-			if g.id == gallery_id:
-				self._galleries.remove(g)
-				break
-				add_method_queue(ListDB.remove_gallery_from_list, True, gallery_id, self)
-		try:
-			self._ids_chache.remove(gallery_id)
-		except ValueError:
-			pass
+			if g.id in g_ids:
+				g_to_delete.append(g)
+				try:
+					self._ids_chache.remove(g.id)
+				except ValueError:
+					pass
+				g_ids_to_delete.append(g.id)
+		for g in g_to_delete:
+			self._galleries.remove(g)
+		add_method_queue(ListDB.remove_gallery_from_list, True, g_ids_to_delete, self)
 
 	def clear(self):
 		"removes all galleries from the list"
@@ -1367,6 +1374,7 @@ class GalleryList:
 		return utils.b_search(self._ids_chache, g.id)
 
 	def add_to_db(self):
+		app_constants.GALLERY_LISTS.add(self)
 		add_method_queue(ListDB.add_list, True, self)
 
 	def scan(self):

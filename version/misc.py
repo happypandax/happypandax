@@ -972,11 +972,11 @@ class Spinner(TransparentWidget):
 		self.update()
 
 class GalleryMenu(QMenu):
-	def __init__(self, view, index, gallery_model, app_window, selected_indexes=None):
+	def __init__(self, view, index, sort_model, app_window, selected_indexes=None):
 		super().__init__(app_window)
 		self.parent_widget = app_window
 		self.view = view
-		self.gallery_model = gallery_model
+		self.sort_model = sort_model
 		self.index = index
 		self.gallery = index.data(Qt.UserRole+1)
 
@@ -1019,6 +1019,12 @@ class GalleryMenu(QMenu):
 			open_f_chapters = self.addAction('Open first chapters', self.open_first_chapters)
 		if not self.selected:
 			add_chapters = self.addAction('Add chapters', self.add_chapters)
+		add_to_list_txt = "Add selected to list" if self.selected else "Add to list"
+		add_to_list = self.addAction(add_to_list_txt)
+		add_to_list_menu = QMenu(self)
+		add_to_list.setMenu(add_to_list_menu)
+		for g_list in app_constants.GALLERY_LISTS:
+			add_to_list_menu.addAction(g_list.name, functools.partial(self.add_to_list, g_list))
 		self.addSeparator()
 		if not self.selected:
 			get_metadata = self.addAction('Get metadata',
@@ -1048,6 +1054,9 @@ class GalleryMenu(QMenu):
 		remove_act = self.addAction('Remove')
 		remove_menu = QMenu(self)
 		remove_act.setMenu(remove_menu)
+		if self.sort_model.current_gallery_list:
+			remove_f_g_list_txt = "Remove selected from list" if self.selected else "Remove from list"
+			remove_f_g_list = remove_menu.addAction(remove_f_g_list_txt, self.remove_from_list)
 		if not self.selected:
 			remove_g = remove_menu.addAction('Remove gallery',
 								lambda: self.view.remove_gallery([self.index]))
@@ -1064,14 +1073,14 @@ class GalleryMenu(QMenu):
 							  chap_number))
 				remove_ch_menu.addAction(chap_action)
 		else:
-			remove_select_g = remove_menu.addAction('Remove selected galleries', self.remove_selection)
+			remove_select_g = remove_menu.addAction('Remove selected', self.remove_selection)
 		remove_menu.addSeparator()
 		if not self.selected:
-			remove_source_g = remove_menu.addAction('Remove gallery and files',
+			remove_source_g = remove_menu.addAction('Remove and delete files',
 									   lambda: self.view.remove_gallery(
 										   [self.index], True))
 		else:
-			remove_source_select_g = remove_menu.addAction('Remove selected galleries and their files',
+			remove_source_select_g = remove_menu.addAction('Remove selected and delete files',
 										   lambda: self.remove_selection(True))
 		self.addSeparator()
 		if not self.selected:
@@ -1079,6 +1088,33 @@ class GalleryMenu(QMenu):
 			adv_menu = QMenu(self)
 			advanced.setMenu(adv_menu)
 			change_cover = adv_menu.addAction('Change cover...', self.change_cover)
+			allow_metadata_txt = "Include in auto metadata fetch" if self.gallery.exed else "Exclude in auto metadata fetch"
+			adv_menu.addAction(allow_metadata_txt, self.allow_metadata_fetch)
+
+	def allow_metadata_fetch(self):
+		exed = 0 if self.gallery.exed else 1
+		self.gallery.exed = exed
+		gallerydb.add_method_queue(gallerydb.GalleryDB.modify_gallery, True, self.gallery.id, {'exed':exed})
+
+	def add_to_list(self, g_list):
+		galleries = []
+		if self.selected:
+			for idx in self.selected:
+				galleries.append(idx.data(Qt.UserRole+1))
+		else:
+			galleries.append(self.gallery)
+		g_list.add_gallery(galleries)
+
+	def remove_from_list(self):
+		g_list = self.sort_model.current_gallery_list
+		if self.selected:
+			g_ids = []
+			for idx in self.selected:
+				g_ids.append(idx.data(Qt.UserRole+1).id)
+		else:
+			g_ids = self.gallery.id
+		self.sort_model.current_gallery_list.remove_gallery(g_ids)
+		self.sort_model.init_search(self.sort_model.current_term)
 
 	def favourite_select(self):
 		for idx in self.selected:
@@ -1160,7 +1196,6 @@ class GalleryMenu(QMenu):
 			gallery = self.index.data(Qt.UserRole+1)
 			log_i('Adding new chapter for {}'.format(gallery.title.encode(errors='ignore')))
 			gallerydb.add_method_queue(gallerydb.ChapterDB.add_chapters_raw, False, gallery.id, chaps_container)
-			self.gallery_model.replaceRows([gallery], self.index.row())
 		ch_widget = ChapterAddWidget(self.index.data(Qt.UserRole+1), self.parent_widget)
 		ch_widget.CHAPTERS.connect(add_chdb)
 		ch_widget.show()
