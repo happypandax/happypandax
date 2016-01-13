@@ -10,22 +10,16 @@
 #You should have received a copy of the GNU General Public License
 #along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 
-#import matplotlib
-#matplotlib.use('Qt5Agg')
-#from numpy import arange, sin, pi
-#from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-#from matplotlib.figure import Figure
-#from matplotlib import pyplot as plt
-
 from PyQt5.QtWidgets import (QTreeWidget, QTreeWidgetItem, QWidget,
 							 QVBoxLayout, QTabWidget, QAction, QGraphicsScene,
 							 QSizePolicy, QMenu, QAction, QApplication,
 							 QListWidget, QHBoxLayout, QPushButton, QStackedLayout,
 							 QFrame, QSizePolicy, QListView, QFormLayout, QLineEdit,
-							 QLabel)
+							 QLabel, QStyledItemDelegate, QStyleOptionViewItem)
 from PyQt5.QtCore import (Qt, QTimer, pyqtSignal, QRect, QSize, QEasingCurve,
-						  QSortFilterProxyModel, QIdentityProxyModel)
-from PyQt5.QtGui import QIcon, QStandardItem, QFont
+						  QSortFilterProxyModel, QIdentityProxyModel, QModelIndex,
+						  QPointF, QRectF)
+from PyQt5.QtGui import QIcon, QStandardItem, QFont, QPainter, QColor, QBrush
 
 import gallerydb
 import app_constants
@@ -62,6 +56,18 @@ class UniqueInfoModel(QSortFilterProxyModel):
 						return True
 		return False
 
+class ListDelegate(QStyledItemDelegate):
+	def __init__(self, parent=None):
+		self.parent_widget = parent
+		super().__init__(parent)
+		self.create_new_list_txt = 'Create new list...'
+	
+	def sizeHint(self, option, index):
+		size = super().sizeHint(option, index)
+		if index.data(Qt.DisplayRole) == self.create_new_list_txt:
+			return size
+		return QSize(size.width(), size.height()*2)
+
 class GalleryArtistsList(QListView):
 	artist_clicked = pyqtSignal(str)
 
@@ -74,6 +80,7 @@ class GalleryArtistsList(QListView):
 		self.g_artists_model.sort(0)
 		self.doubleClicked.connect(self._artist_clicked)
 		self.ARTIST_ROLE = gallerymodel.ARTIST_ROLE
+		self.setItemDelegate(ListDelegate(self))
 
 	def _artist_clicked(self, idx):
 		if idx.isValid():
@@ -252,6 +259,7 @@ class GalleryLists(QListWidget):
 		add_item.setFlags(Qt.ItemIsEnabled)
 		add_item.setToolTip("Double click to create new list")
 		self.itemDoubleClicked.connect(self._item_double_clicked)
+		self.setItemDelegate(ListDelegate(self))
 		self.itemDelegate().closeEditor.connect(self._add_new_list)
 		self.setEditTriggers(self.NoEditTriggers)
 		self._in_proccess_item = None
