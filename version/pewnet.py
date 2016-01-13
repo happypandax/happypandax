@@ -882,12 +882,12 @@ class EHen(CommenHen):
 					if ':' in t:
 						ns_tag = t.split(':')
 						namespace = ns_tag[0].capitalize()
-						tag = ns_tag[1].lower()
+						tag = ns_tag[1].lower().replace('_', ' ')
 						if not namespace in tags:
 							tags[namespace] = []
 						tags[namespace].append(tag)
 					else:
-						tags['default'].append(t.lower())
+						tags['default'].append(t.lower().replace('_', ' '))
 				new_gallery['tags'] = tags
 				parsed_metadata[url] = new_gallery
 			else:

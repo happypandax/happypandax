@@ -134,6 +134,7 @@ class SettingsDialog(QWidget):
 	def restore_options(self):
 
 		# App / General
+		self.send_2_trash.setChecked(app_constants.SEND_FILES_TO_TRASH)
 		self.subfolder_as_chapters.setChecked(app_constants.SUBFOLDER_AS_GALLERY)
 		self.extract_gallery_before_opening.setChecked(app_constants.EXTRACT_CHAPTER_BEFORE_OPENING)
 		self.open_galleries_sequentially.setChecked(app_constants.OPEN_GALLERIES_SEQUENTIALLY)
@@ -157,7 +158,7 @@ class SettingsDialog(QWidget):
 		for path in app_constants.IGNORE_PATHS:
 			self.add_ignore_path(path)
 
-		# Web / General
+		# Web / metadata
 		if 'g.e-hentai' in app_constants.DEFAULT_EHEN_URL:
 			self.default_ehen_url.setChecked(True)
 		else:
@@ -169,6 +170,7 @@ class SettingsDialog(QWidget):
 		self.continue_a_metadata_fetcher.setChecked(app_constants.CONTINUE_AUTO_METADATA_FETCHER)
 		self.use_jpn_title.setChecked(app_constants.USE_JPN_TITLE)
 		self.use_gallery_link.setChecked(app_constants.USE_GALLERY_LINK)
+		self.fallback_chaika.setChecked(True) if 'chaikahen' in app_constants.HEN_LIST else None
 
 		# Web / Download
 		if app_constants.HEN_DOWNLOAD_TYPE == 0:
@@ -240,6 +242,10 @@ class SettingsDialog(QWidget):
 
 	def accept(self):
 		set = settings.set
+
+		# App / General
+		app_constants.SEND_FILES_TO_TRASH = self.send_2_trash.isChecked()
+		set(app_constants.SEND_FILES_TO_TRASH, 'Application', 'send files to trash')
 
 		# App / General / Gallery
 		app_constants.SUBFOLDER_AS_GALLERY = self.subfolder_as_chapters.isChecked()
@@ -344,6 +350,12 @@ class SettingsDialog(QWidget):
 
 		app_constants.USE_GALLERY_LINK = self.use_gallery_link.isChecked()
 		set(app_constants.USE_GALLERY_LINK, 'Web', 'use gallery link')
+		# fallback sources
+		henlist = []
+		if self.fallback_chaika.isChecked():
+			henlist.append('chaikahen')
+		app_constants.HEN_LIST = henlist
+		set(app_constants.HEN_LIST, 'Web', 'hen list')
 
 		# Visual / Grid View / Tooltip
 		app_constants.GRID_TOOLTIP = self.grid_tooltip_group.isChecked()
@@ -510,48 +522,10 @@ class SettingsDialog(QWidget):
 		self.application_index = self.right_panel.addWidget(application)
 		application_general, app_general_m_l = new_tab('General', application, True)
 
-		# App / General / gallery
-		app_gallery_page, app_gallery_l = new_tab('Gallery', application, True)
-		self.subfolder_as_chapters = QCheckBox("Subdirectiories should be treated as standalone galleries instead of chapters (applies in archives too)")
-		self.subfolder_as_chapters.setToolTip("This option will enable creating standalone galleries for each subdirectiories found recursively when importing."+
-										"\nDefault action is treating each subfolder found as chapters of a gallery.")
-		extract_gallery_info = QLabel("Note: This option has no effect when turned off if path to viewer is not specified.")
-		self.extract_gallery_before_opening = QCheckBox("Extract archive before opening (only turn off if your viewer supports it)")
-		self.open_galleries_sequentially = QCheckBox("Open chapters sequentially (Note: has no effect if path to viewer is not specified)")
-		subf_info = QLabel("Behaviour of 'Scan for new galleries on startup' option will be affected.")
-		subf_info.setWordWrap(True)
-		app_gallery_l.addRow('Note:', subf_info)
-		app_gallery_l.addRow(self.subfolder_as_chapters)
-		app_gallery_l.addRow(extract_gallery_info)
-		app_gallery_l.addRow(self.extract_gallery_before_opening)
-		app_gallery_l.addRow(self.open_galleries_sequentially)
-		self.move_imported_gs, move_imported_gs_l = groupbox('Move imported galleries',
-													   QFormLayout, app_gallery_page)
-		self.move_imported_gs.setCheckable(True)
-		self.move_imported_gs.setToolTip("Move imported galleries to specified folder.")
-		self.move_imported_def_path = PathLineEdit()
-		move_imported_gs_l.addRow('Directory:', self.move_imported_def_path)
-		app_gallery_l.addRow(self.move_imported_gs)
-		self.rename_g_source_group, rename_g_source_l = groupbox('Rename gallery source',
-													  QFormLayout, app_gallery_page)
-		self.rename_g_source_group.setCheckable(True)
-		self.rename_g_source_group.setDisabled(True)
-		app_gallery_l.addRow(self.rename_g_source_group)
-		rename_g_source_l.addRow(QLabel("Check what to include when renaming gallery source. (Same order)"))
-		rename_g_source_flow_l = FlowLayout()
-		rename_g_source_l.addRow(rename_g_source_flow_l)
-		self.rename_artist = QCheckBox("Artist")
-		self.rename_title = QCheckBox("Title")
-		self.rename_lang = QCheckBox("Language")
-		self.rename_title.setChecked(True)
-		self.rename_title.setDisabled(True)
-		rename_g_source_flow_l.addWidget(self.rename_artist)
-		rename_g_source_flow_l.addWidget(self.rename_title)
-		rename_g_source_flow_l.addWidget(self.rename_lang)
-		random_gallery_opener, random_g_opener_l = groupbox('Random Gallery Opener', QFormLayout, app_gallery_page)
-		app_gallery_l.addRow(random_gallery_opener)
-		self.open_random_g_chapters = QCheckBox("Open random gallery chapters")
-		random_g_opener_l.addRow(self.open_random_g_chapters)
+		# App / General
+		self.send_2_trash = QCheckBox("Send deleted files to recycle bin", self)
+		self.send_2_trash.setToolTip("When unchecked, files will get deleted permanently and be unrecoverable!")
+		app_general_m_l.addRow(self.send_2_trash)
 
 		# App / General / Search
 		app_search, app_search_layout = groupbox('Search', QFormLayout, application_general)
@@ -600,6 +574,49 @@ class SettingsDialog(QWidget):
 		app_rar_layout.addRow(rar_info)
 		self.path_to_unrar = PathLineEdit(self, False, filters='')
 		app_rar_layout.addRow('UnRAR tool path:', self.path_to_unrar)
+
+		# App / Gallery
+		app_gallery_page, app_gallery_l = new_tab('Gallery', application, True)
+		self.subfolder_as_chapters = QCheckBox("Subdirectiories should be treated as standalone galleries instead of chapters (applies in archives too)")
+		self.subfolder_as_chapters.setToolTip("This option will enable creating standalone galleries for each subdirectiories found recursively when importing."+
+										"\nDefault action is treating each subfolder found as chapters of a gallery.")
+		extract_gallery_info = QLabel("Note: This option has no effect when turned off if path to viewer is not specified.")
+		self.extract_gallery_before_opening = QCheckBox("Extract archive before opening (only turn off if your viewer supports it)")
+		self.open_galleries_sequentially = QCheckBox("Open chapters sequentially (Note: has no effect if path to viewer is not specified)")
+		subf_info = QLabel("Behaviour of 'Scan for new galleries on startup' option will be affected.")
+		subf_info.setWordWrap(True)
+		app_gallery_l.addRow('Note:', subf_info)
+		app_gallery_l.addRow(self.subfolder_as_chapters)
+		app_gallery_l.addRow(extract_gallery_info)
+		app_gallery_l.addRow(self.extract_gallery_before_opening)
+		app_gallery_l.addRow(self.open_galleries_sequentially)
+		self.move_imported_gs, move_imported_gs_l = groupbox('Move imported galleries',
+													   QFormLayout, app_gallery_page)
+		self.move_imported_gs.setCheckable(True)
+		self.move_imported_gs.setToolTip("Move imported galleries to specified folder.")
+		self.move_imported_def_path = PathLineEdit()
+		move_imported_gs_l.addRow('Directory:', self.move_imported_def_path)
+		app_gallery_l.addRow(self.move_imported_gs)
+		self.rename_g_source_group, rename_g_source_l = groupbox('Rename gallery source (Coming soon)',
+													  QFormLayout, app_gallery_page)
+		self.rename_g_source_group.setCheckable(True)
+		self.rename_g_source_group.setDisabled(True)
+		app_gallery_l.addRow(self.rename_g_source_group)
+		rename_g_source_l.addRow(QLabel("Check what to include when renaming gallery source. (Same order)"))
+		rename_g_source_flow_l = FlowLayout()
+		rename_g_source_l.addRow(rename_g_source_flow_l)
+		self.rename_artist = QCheckBox("Artist")
+		self.rename_title = QCheckBox("Title")
+		self.rename_lang = QCheckBox("Language")
+		self.rename_title.setChecked(True)
+		self.rename_title.setDisabled(True)
+		rename_g_source_flow_l.addWidget(self.rename_artist)
+		rename_g_source_flow_l.addWidget(self.rename_title)
+		rename_g_source_flow_l.addWidget(self.rename_lang)
+		random_gallery_opener, random_g_opener_l = groupbox('Random Gallery Opener', QFormLayout, app_gallery_page)
+		app_gallery_l.addRow(random_gallery_opener)
+		self.open_random_g_chapters = QCheckBox("Open random gallery chapters")
+		random_g_opener_l.addRow(self.open_random_g_chapters)
 
 		# App / Monitor
 		app_monitor_page = QScrollArea()
@@ -737,43 +754,41 @@ class SettingsDialog(QWidget):
 		ehen_url_l = QHBoxLayout()
 		ehen_url_l.addWidget(self.default_ehen_url)
 		ehen_url_l.addWidget(self.exhentai_ehen_url, 1)
-		web_metadata_m_l.addRow('Default URL:', ehen_url_l)
-		self.continue_a_metadata_fetcher = QCheckBox('Continue from where auto metadata fetcher left off')
+		web_metadata_m_l.addRow('Default EH:', ehen_url_l)
+		self.continue_a_metadata_fetcher = QCheckBox('Skip galleries that has already been processed in auto metadata fetcher')
 		web_metadata_m_l.addRow(self.continue_a_metadata_fetcher)
-		self.use_jpn_title = QCheckBox('Use japanese title')
-		self.use_jpn_title.setToolTip('Choose the japenese title over the english one')
+		self.use_jpn_title = QCheckBox('Apply japanese title instead of english title')
+		self.use_jpn_title.setToolTip('Applies the japanese title instead of the english')
 		web_metadata_m_l.addRow(self.use_jpn_title)
-		time_offset_info = QLabel('We need to impose a delay between our requests to avoid getting banned.'+
-							' I have made it so you cannot set the delay lower than the recommended (I don\'t'+
-							' want you to get banned, anon!).\nSpecify the delay between requests in seconds.')
-		time_offset_info.setWordWrap(True)
+		time_offset_info = QLabel('A delay between EH requests to avoid getting temp banned.')
 		self.web_time_offset = QSpinBox()
 		self.web_time_offset.setMaximumWidth(40)
-		self.web_time_offset.setMinimum(4)
+		self.web_time_offset.setMinimum(3)
 		self.web_time_offset.setMaximum(99)
 		web_metadata_m_l.addRow(time_offset_info)
-		web_metadata_m_l.addRow('Requests delay in seconds', self.web_time_offset)
-		replace_metadata_info = QLabel('When fetching for metadata the new metadata will be appended'+
-								 ' to the gallery by default. This means that new data will only be added if'+
-								 ' the field was empty. There is however a special case for namespace & tags.'+
-								 ' We go through all the new namespace & tags to only add those that'+
-								 ' do not already exists.\n\nEnabling this option makes it so that a gallery\'s old data'+
-								 ' are deleted and replaced with the new data.')
+		web_metadata_m_l.addRow('Delay in seconds:', self.web_time_offset)
+		replace_metadata_info = QLabel('By default metadata is appended to a gallery.\n'+
+								 'Enabling this option makes it so that a gallery\'s old data'+
+								 ' is deleted and replaced with the new data.')
 		replace_metadata_info.setWordWrap(True)
 		self.replace_metadata = QCheckBox('Replace old metadata with new metadata')
 		web_metadata_m_l.addRow(replace_metadata_info)
 		web_metadata_m_l.addRow(self.replace_metadata)
-		first_hit_info = QLabel('By default, you get to choose which gallery to extract metadata from when'+
-						  ' there is more than one gallery found when searching.\n'+
-						  'Enabling this option makes it choose the first hit, saving you from moving your mouse.')
-		first_hit_info.setWordWrap(True)
-		self.always_first_hit = QCheckBox('Always choose first hit')
-		web_metadata_m_l.addRow(first_hit_info)
+		self.always_first_hit = QCheckBox('Always choose first gallery found')
 		web_metadata_m_l.addRow(self.always_first_hit)
-		self.use_gallery_link = QCheckBox('Use current gallery link')
-		self.use_gallery_link.setToolTip("Metadata will be fetched from the current gallery link"+
-								   " if it's a valid ex/g.e gallery url")
+		use_gallery_link_info = QLabel("Enable this option to fetch metadata using the currently applied URL on the gallery")
+		self.use_gallery_link = QCheckBox('Use currently applied gallery URL')
+		self.use_gallery_link.setToolTip("Metadata will be fetched from the current gallery URL"+
+								   " if it's a supported gallery url")
+		web_metadata_m_l.addRow(use_gallery_link_info)
 		web_metadata_m_l.addRow(self.use_gallery_link)
+		fallback_source_info = QLabel("Specify which sources metadata fetcher should fallback to when a gallery is not found.")
+		fallback_source_l = FlowLayout()
+		web_metadata_m_l.addRow(fallback_source_info)
+		web_metadata_m_l.addRow(fallback_source_l)
+		self.fallback_chaika = QCheckBox("panda.chaika.moe")
+		fallback_source_l.addWidget(self.fallback_chaika)
+
 
 		# Visual
 		visual = QTabWidget(self)
@@ -868,7 +883,7 @@ class SettingsDialog(QWidget):
 		gallery_size_l = QHBoxLayout()
 		gallery_size_l.addWidget(gallery_size_lbl)
 		gallery_size_l.addWidget(self.gallery_size)
-		grid_gallery_main_l.addRow("Gallery Size:*", gallery_size_l)
+		grid_gallery_main_l.addRow("Thumbnail Size:*", gallery_size_l)
 
 		# grid view / colors
 		grid_colors_group = QGroupBox('Colors', grid_view_general_page)

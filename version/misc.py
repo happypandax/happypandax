@@ -1138,11 +1138,7 @@ class GalleryMenu(QMenu):
 							filter='Image {}'.format(utils.IMG_FILTER),
 							directory=path)[0]
 		if new_cover and new_cover.lower().endswith(utils.IMG_FILES):
-			if gallery.profile != app_constants.NO_IMAGE_PATH:
-				try:
-					os.remove(gallery.profile)
-				except FileNotFoundError:
-					log.exception('Could not delete file')
+			gallerydb.GalleryDB.clear_thumb(gallery.profile)
 			gallery.profile = gallerydb.gen_thumbnail(gallery, img=new_cover)
 			gallery._cache = None
 			self.parent_widget.manga_list_view.replace_edit_gallery(gallery,

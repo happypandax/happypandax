@@ -308,7 +308,7 @@ class GalleryDB(DBBase):
 	def clear_thumb(path):
 		"Deletes a thumbnail"
 		try:
-			if path != app_constants.NO_IMAGE_PATH:
+			if not os.path.samefile(path, app_constants.NO_IMAGE_PATH):
 				os.unlink(path)
 		except:
 			log.exception('Failed to delete thumb {}'.format(os.path.split(path)[1].encode(errors='ignore')))
@@ -538,11 +538,7 @@ class GalleryDB(DBBase):
 													  gallery.title.encode('utf-8', 'ignore')))
 					continue
 
-			if gallery.profile != os.path.abspath(app_constants.NO_IMAGE_PATH):
-				try:
-					os.remove(gallery.profile)
-				except FileNotFoundError:
-					pass
+			GalleryDB.clear_thumb(gallery.profile)
 			cls.execute(cls, 'DELETE FROM series WHERE series_id=?', (gallery.id,))
 			log_i('Successfully deleted: {}'.format(gallery.title.encode('utf-8', 'ignore')))
 			app_constants.NOTIF_BAR.add_text('Successfully deleted: {}'.format(gallery.title))

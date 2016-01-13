@@ -14,6 +14,7 @@
 
 import datetime, os, subprocess, sys, logging, zipfile
 import hashlib, shutil, uuid, re, scandir, rarfile, json
+import send2trash
 
 import app_constants
 
@@ -868,15 +869,22 @@ def delete_path(path):
 	s = True
 	if os.path.exists(path):
 		error = ''
-		try:
-			if os.path.isfile(path):
-				os.remove(path)
-			else:
-				shutil.rmtree(path)
-		except PermissionError:
-			error = 'PermissionError'
-		except FileNotFoundError:
-			pass
+		if app_constants.SEND_FILES_TO_TRASH:
+			try:
+				send2trash.send2trash(path)
+			except:
+				log.exception("Unable to send file to trash")
+				error = 'Unable to send file to trash'
+		else:
+			try:
+				if os.path.isfile(path):
+					os.remove(path)
+				else:
+					shutil.rmtree(path)
+			except PermissionError:
+				error = 'PermissionError'
+			except FileNotFoundError:
+				pass
 
 		if error:
 			p = os.path.split(path)[1]

@@ -113,6 +113,7 @@ SUBFOLDER_AS_GALLERY = get(False, 'Application', 'subfolder as gallery', bool)
 RENAME_GALLERY_SOURCE = get(False, 'Application', 'rename gallery source', bool)
 EXTRACT_CHAPTER_BEFORE_OPENING = get(True, 'Application', 'extract chapter before opening', bool)
 OPEN_GALLERIES_SEQUENTIALLY = get(False, 'Application', 'open galleries sequentially', bool)
+SEND_FILES_TO_TRASH = get(True, 'Application', 'send files to trash', bool)
 
 # ADVANCED
 GALLERY_DATA_FIX_REGEX = get("", 'Advanced', 'gallery data fix regex', str)
