@@ -19,7 +19,7 @@ from PyQt5.QtWidgets import (QTreeWidget, QTreeWidgetItem, QWidget,
 from PyQt5.QtCore import (Qt, QTimer, pyqtSignal, QRect, QSize, QEasingCurve,
 						  QSortFilterProxyModel, QIdentityProxyModel, QModelIndex,
 						  QPointF, QRectF)
-from PyQt5.QtGui import QIcon, QStandardItem, QFont, QPainter, QColor, QBrush
+from PyQt5.QtGui import QIcon, QStandardItem, QFont, QPainter, QColor, QBrush, QPixmap
 
 import gallerydb
 import app_constants
@@ -35,6 +35,8 @@ class NoTooltipModel(QIdentityProxyModel):
 	def data(self, index, role = Qt.DisplayRole):
 		if role == Qt.ToolTipRole:
 			return None
+		if role == Qt.DecorationRole:
+			return QPixmap(app_constants.GARTIST_PATH)
 		return self.sourceModel().data(index, role)
 
 class UniqueInfoModel(QSortFilterProxyModel):
@@ -80,7 +82,6 @@ class GalleryArtistsList(QListView):
 		self.g_artists_model.sort(0)
 		self.doubleClicked.connect(self._artist_clicked)
 		self.ARTIST_ROLE = gallerymodel.ARTIST_ROLE
-		self.setItemDelegate(ListDelegate(self))
 
 	def _artist_clicked(self, idx):
 		if idx.isValid():
@@ -254,6 +255,7 @@ class GalleryLists(QListWidget):
 		self.setSpacing(0)
 		add_item = misc.CustomListItem(txt="Create new list...", parent=self, type=self.CREATE_LIST_TYPE)
 		add_item.setForeground(QBrush(QColor("gray")))
+		self._g_list_icon = QIcon(app_constants.GLIST_PATH)
 		self._font_selected = QFont(self.font())
 		self._font_selected.setBold(True)
 		self._font_selected.setUnderline(True)
@@ -282,6 +284,7 @@ class GalleryLists(QListWidget):
 		else:
 			new_list = gallery_list
 		new_item.item = new_list
+		new_item.setIcon(self._g_list_icon)
 
 	def create_new_list(self, name=None, gallery_list=None):
 		new_item = misc.CustomListItem()
@@ -300,13 +303,16 @@ class GalleryLists(QListWidget):
 			if item.type() == self.CREATE_LIST_TYPE:
 				self.create_new_list()
 			else:
-				if self.current_selected:
-					self.current_selected.setFont(self.font())
+				self._reset_selected()
 				if item.item.filter:
 					gallerydb.add_method_queue(item.item.scan, True)
 				self.GALLERY_LIST_CLICKED.emit(item.item)
 				item.setFont(self._font_selected)
 				self.current_selected = item
+
+	def _reset_selected(self):
+		if self.current_selected:
+			self.current_selected.setFont(self.font())
 
 	def setup_lists(self):
 		for g_l in app_constants.GALLERY_LISTS:
@@ -370,6 +376,7 @@ class SideBarWidget(QFrame):
 		self.lists.GALLERY_LIST_REMOVED.connect(self.show_all_galleries_btn.click)
 		self.lists_btn.clicked.connect(lambda:self.stacked_layout.setCurrentIndex(lists_index))
 		self.show_all_galleries_btn.clicked.connect(self.lists.clearSelection)
+		self.show_all_galleries_btn.clicked.connect(self.lists._reset_selected)
 
 		# artists
 		self.artists_list = GalleryArtistsList(parent.manga_list_view.gallery_model, self)
@@ -418,10 +425,17 @@ class SideBarWidget(QFrame):
 			self.slide_animation.setDirection(self.slide_animation.Backward)
 			self.slide_animation.start()
 
-	def resizeEvent(self, event):
+	def showEvent(self, event):
+		return super().showEvent(event)
+
+	def _init_size(self, event=None):
+		h = event.size().height() if event else self.parent_widget.height()
 		self._max_width = self.parent_widget.width()*0.2
 		self.setMaximumWidth(self._max_width)
-		self.slide_animation.setStartValue(QSize(self._max_width, event.size().height()))
+		self.slide_animation.setStartValue(QSize(self._max_width, h))
+
+	def resizeEvent(self, event):
+		self._init_size(event)
 		return super().resizeEvent(event)
 
 

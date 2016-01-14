@@ -275,6 +275,8 @@ class AppWindow(QMainWindow):
 		self.notification_bar.resize(self.width())
 		self.notif_bubble = misc.AppBubble(self)
 		app_constants.NOTIF_BAR = self.notification_bar
+		app_constants.NOTIF_BUBBLE = self.notif_bubble
+
 		log_d('Create notificationbar: OK')
 
 		log_d('Window Create: OK')
@@ -1137,7 +1139,7 @@ class AppWindow(QMainWindow):
 		# settings
 		settings.set(self.manga_list_view.current_sort, 'General', 'current sort')
 		settings.set(app_constants.IGNORE_PATHS, 'Application', 'ignore paths')
-		if not self.isFullScreen():
+		if not self.isMaximized():
 			settings.win_save(self, 'AppWindow')
 
 		# temp dir

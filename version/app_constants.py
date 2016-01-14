@@ -74,6 +74,7 @@ DATE_ADDED = 10
 # Application
 SYSTEM_TRAY = None
 NOTIF_BAR = None
+NOTIF_BUBBLE = None
 STAT_MSG_METHOD = None
 GENERAL_THREAD = None
 WHEEL_SCROLL_EFFECT = 10
@@ -95,6 +96,12 @@ GRID_PATH = os.path.join(static_dir, "grid.png")
 LIST_PATH = os.path.join(static_dir, "list.png")
 NO_IMAGE_PATH = os.path.join(static_dir, "default.jpg")
 SEARCH_OPTIONS_PATH = os.path.join(static_dir, "search_options.png")
+typicons_root = os.path.join(static_dir, "typicons")
+PLUS_PATH = os.path.join(typicons_root, "plus-outline.svg")
+GLIST_PATH = os.path.join(typicons_root, "media-stop-outline.svg")
+GARTIST_PATH = os.path.join(typicons_root, "user-outline.svg")
+GROUP_PATH = os.path.join(typicons_root, "group-outline.svg")
+TAG_PATH = os.path.join(typicons_root, "tags.svg")
 
 # Monitored Paths
 OVERRIDE_MONITOR = False # set true to make watchers to ignore next item (will be set to False)

@@ -144,15 +144,18 @@ class ArrowHandle(QWidget):
 		arrow_points.append(arrow_2)
 		painter.drawPolygon(QPolygonF(arrow_points))
 
+	def click(self):
+		if self.current_arrow == self.IN:
+			self.current_arrow = self.OUT
+			self.CLICKED.emit(1)
+		else:
+			self.current_arrow = self.IN
+			self.CLICKED.emit(0)
+		self.update()
+
 	def mousePressEvent(self, event):
 		if event.button() == Qt.LeftButton:
-			if self.current_arrow == self.IN:
-				self.current_arrow = self.OUT
-				self.CLICKED.emit(1)
-			else:
-				self.current_arrow = self.IN
-				self.CLICKED.emit(0)
-			self.update()
+			self.click()
 		return super().mousePressEvent(event)
 
 class Line(QFrame):
@@ -1339,7 +1342,7 @@ class AppBubble(BasePopup):
 		super().__init__(parent, flags= Qt.Window | Qt.FramelessWindowHint, blur=False)
 		self.hide_timer = QTimer(self)
 		self.hide_timer.timeout.connect(self.hide)
-		self.setMaximumHeight(100)
+		self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Minimum) 
 		main_layout = QVBoxLayout(self.main_widget)
 		self.title = QLabel()
 		self.title.setTextFormat(Qt.RichText)
