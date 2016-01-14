@@ -9,7 +9,7 @@ from PyQt5.QtWidgets import (QVBoxLayout, QHBoxLayout, QListWidget, QWidget,
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtGui import QPalette, QPixmapCache
 
-from misc import FlowLayout, Spacer, PathLineEdit, ApplicationPopup, Line
+from misc import FlowLayout, Spacer, PathLineEdit, AppDialog, Line
 import settings
 import app_constants
 import misc_db
@@ -990,7 +990,7 @@ class SettingsDialog(QWidget):
 					clear_cache = True
 				gallerydb.DatabaseEmitter.RUN = False
 				def start_db_activity(): gallerydb.DatabaseEmitter.RUN = True
-				app_popup = ApplicationPopup(self.parent_widget)
+				app_popup = AppDialog(self.parent_widget)
 				app_popup.info_lbl.setText("Regenerating thumbnails...")
 				app_popup.admin_db = gallerydb.AdminDB()
 				app_popup.admin_db.moveToThread(app_constants.GENERAL_THREAD)
@@ -1037,7 +1037,7 @@ class SettingsDialog(QWidget):
 			confirm_msg = QMessageBox(QMessageBox.Question, '', 'Are you sure you want to export your database? This might take a long time.',
 							 QMessageBox.Yes | QMessageBox.No, self)
 			if confirm_msg.exec() == QMessageBox.Yes:
-				app_popup = ApplicationPopup(self.parent_widget)
+				app_popup = AppDialog(self.parent_widget)
 				app_popup.info_lbl.setText("Exporting database...")
 				app_popup.export_instance = io_misc.ImportExport()
 				app_popup.export_instance.moveToThread(app_constants.GENERAL_THREAD)
@@ -1056,7 +1056,7 @@ class SettingsDialog(QWidget):
 									  'Choose happypanda database file', filter='*.hpdb')
 			path = path[0]
 			if len(path) != 0:
-				app_popup = ApplicationPopup(self.parent_widget)
+				app_popup = AppDialog(self.parent_widget)
 				app_popup.restart_info.hide()
 				app_popup.info_lbl.setText("Importing database file...")
 				app_popup.note_info.setText("Application requires a restart after importing")

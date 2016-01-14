@@ -117,6 +117,7 @@ class ArrowHandle(QWidget):
 		self.current_arrow = self.IN
 		self.arrow_height = 20
 		self.setFixedWidth(10)
+		self.setCursor(Qt.PointingHandCursor)
 
 	def paintEvent(self, event):
 		rect = self.rect()
@@ -208,7 +209,8 @@ class BaseMoveWidget(QWidget):
 			self.move(new_size)
 			return
 		if self.parent_widget:
-			centerWidget(self, self.parent_widget)
+			self.move(self.parent_widget.window().frameGeometry().center() -\
+				self.window().rect().center())
 
 
 class SortMenu(QMenu):
@@ -1331,46 +1333,48 @@ class BasePopup(TransparentWidget):
 			b.append(button)
 		return b
 
-class ApplicationNotif(BasePopup):
+class AppBubble(BasePopup):
 	"For application notifications"
-	def __init__(self, parent, **kwargs):
-		super().__init__(parent, flags= Qt.Window | Qt.FramelessWindowHint, blur=False, move_listener=False)
+	def __init__(self, parent):
+		super().__init__(parent, flags= Qt.Window | Qt.FramelessWindowHint, blur=False)
 		self.hide_timer = QTimer(self)
 		self.hide_timer.timeout.connect(self.hide)
 		self.setMaximumHeight(100)
 		main_layout = QVBoxLayout(self.main_widget)
 		self.title = QLabel()
+		self.title.setTextFormat(Qt.RichText)
 		main_layout.addWidget(self.title)
 		self.content = QLabel()
+		self.content.setWordWrap(True)
+		self.content.setTextFormat(Qt.RichText)
+		self.content.setOpenExternalLinks(True)
 		main_layout.addWidget(self.content)
-		if parent:
-			try:
-				parent.move_listener.connect(self.update_move)
-			except AttributeError:
-				pass
+		self.adjustSize()
 
-	def update_text(self, txt, title="", duration=100):
+	def update_text(self, title, txt='', duration=20):
 		"Duration in seconds!"
 		if self.hide_timer.isActive():
 			self.hide_timer.stop()
-		self.adjustSize()
-		self.show()
 		self.title.setText('<h3>{}</h3>'.format(title))
 		self.content.setText(txt)
-		self.update_move()
 		self.hide_timer.start(duration*1000)
+		self.show()
+		self.adjustSize()
+		self.update_move()
 
-	def update_move(self, new_size=None):
-		if new_size:
-			self.move(new_size)
-			return
+	def update_move(self):
 		if self.parent_widget:
-			centerWidget(self, self.parent_widget)
+			tl = self.parent_widget.geometry().topLeft()
+			x =  tl.x() + self.parent_widget.width() - self.width() - 10
+			y = tl.y() + self.parent_widget.height() - self.height() - self.parent_widget.statusBar().height()
+			self.move(x, y)
 
+	def mousePressEvent(self, event):
+		if event.button() == Qt.RightButton:
+			self.close()
+		super().mousePressEvent(event)
 
-
-
-class ApplicationPopup(BasePopup):
+class AppDialog(BasePopup):
 
 	# modes
 	PROGRESS, MESSAGE = range(2)

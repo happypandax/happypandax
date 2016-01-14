@@ -250,11 +250,17 @@ class GalleryLists(QListWidget):
 	GALLERY_LIST_REMOVED = pyqtSignal()
 	def __init__(self, parent):
 		super().__init__(parent)
+		self.setContentsMargins(0,0,0,0)
+		self.setSpacing(0)
 		add_item = misc.CustomListItem(txt="Create new list...", parent=self, type=self.CREATE_LIST_TYPE)
-		font = QFont(self.font())
-		font.setBold(True)
-		font.setItalic(True)
-		add_item.setFont(font)
+		add_item.setForeground(QBrush(QColor("gray")))
+		self._font_selected = QFont(self.font())
+		self._font_selected.setBold(True)
+		self._font_selected.setUnderline(True)
+		self._font = QFont(self.font())
+		self._font.setItalic(True)
+		self._font.setUnderline(True)
+		add_item.setFont(self._font)
 		add_item.setTextAlignment(Qt.AlignCenter)
 		add_item.setFlags(Qt.ItemIsEnabled)
 		add_item.setToolTip("Double click to create new list")
@@ -263,7 +269,7 @@ class GalleryLists(QListWidget):
 		self.itemDelegate().closeEditor.connect(self._add_new_list)
 		self.setEditTriggers(self.NoEditTriggers)
 		self._in_proccess_item = None
-
+		self.current_selected = None
 
 	def _add_new_list(self, lineedit=None, hint=None, gallery_list=None):
 		if not self._in_proccess_item.text():
@@ -281,6 +287,7 @@ class GalleryLists(QListWidget):
 		new_item = misc.CustomListItem()
 		self._in_proccess_item = new_item
 		new_item.setFlags(new_item.flags() | Qt.ItemIsEditable)
+		new_item.setIcon(QIcon(app_constants.LIST_PATH))
 		self.insertItem(1, new_item)
 		if name:
 			new_item.setText(name)
@@ -293,9 +300,13 @@ class GalleryLists(QListWidget):
 			if item.type() == self.CREATE_LIST_TYPE:
 				self.create_new_list()
 			else:
+				if self.current_selected:
+					self.current_selected.setFont(self.font())
 				if item.item.filter:
 					gallerydb.add_method_queue(item.item.scan, True)
 				self.GALLERY_LIST_CLICKED.emit(item.item)
+				item.setFont(self._font_selected)
+				self.current_selected = item
 
 	def setup_lists(self):
 		for g_l in app_constants.GALLERY_LISTS:

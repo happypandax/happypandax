@@ -68,6 +68,8 @@ class AppWindow(QMainWindow):
 
 	def __init__(self, disable_excepthook=False):
 		super().__init__()
+		if not disable_excepthook:
+			sys.excepthook = self.excepthook
 		app_constants.GENERAL_THREAD = QThread(self)
 		app_constants.GENERAL_THREAD.finished.connect(app_constants.GENERAL_THREAD.deleteLater)
 		app_constants.GENERAL_THREAD.start()
@@ -78,9 +80,6 @@ class AppWindow(QMainWindow):
 		self.setFocusPolicy(Qt.NoFocus)
 		self.set_shortcuts()
 		self.graphics_blur.setParent(self)
-
-		if not disable_excepthook:
-			sys.excepthook = self.excepthook
 
 	def set_shortcuts(self):
 		quit = QShortcut(QKeySequence('Ctrl+Q'), self, self.close)
@@ -128,17 +127,24 @@ class AppWindow(QMainWindow):
 		self.watchers.gallery_handler.DELETED_SIGNAL.connect(deleted)
 
 	def start_up(self):
-		hello = ["Hello!", "Hi!", "Onii-chan!", "Senpai!", "Hisashiburi!", "Welcome!", "Okaerinasai!", "Welcome back!", "Hajimemashite!"]
-		self.notification_bar.add_text("{} Please don't hesitate to report any bugs you find.".format(hello[random.randint(0, len(hello) - 1)]) + " Go to Settings -> About -> Bug Reporting for more info!")
-		level = 6
 		def normalize_first_time():
-			settings.set(level, 'Application', 'first time level')
+			settings.set(app_constants.INTERNAL_LEVEL, 'Application', 'first time level')
 			settings.save()
 
 		def done(status=True):
 			gallerydb.DatabaseEmitter.RUN = True
-			if app_constants.FIRST_TIME_LEVEL != level:
+			if app_constants.FIRST_TIME_LEVEL != app_constants.INTERNAL_LEVEL:
 				normalize_first_time()
+			else:
+				settings.set(app_constants.vs, 'Application', 'version')
+			if app_constants.UPDATE_VERSION != app_constants.vs:
+				self.notif_bubble.update_text(
+					"Happypanda has been udated!",
+					"Good job updating! Don't forget to check out what's new in this version <a href='https://github.com/Pewpews/happypanda/blob/master/CHANGELOG.md'>by clicking here!</a>")
+			else:
+				hello = ["Hello!", "Hi!", "Onii-chan!", "Senpai!", "Hisashiburi!", "Welcome!", "Okaerinasai!", "Welcome back!", "Hajimemashite!"]
+				self.notif_bubble.update_text("{}".format(hello[random.randint(0, len(hello) - 1)]), "Please don't hesitate to report any bugs you find.")
+
 			if app_constants.ENABLE_MONITOR and \
 				app_constants.MONITOR_PATHS and all(app_constants.MONITOR_PATHS):
 				self.init_watchers()
@@ -153,7 +159,7 @@ class AppWindow(QMainWindow):
 
 		if app_constants.FIRST_TIME_LEVEL < 4:
 			log_i('Invoking first time level {}'.format(4))
-			level = 4
+			app_constants.INTERNAL_LEVEL = 4
 			settings.set([], 'Application', 'monitor paths')
 			settings.set([], 'Application', 'ignore paths')
 			app_constants.MONITOR_PATHS = []
@@ -162,8 +168,8 @@ class AppWindow(QMainWindow):
 			done()
 		elif app_constants.FIRST_TIME_LEVEL < 5:
 			log_i('Invoking first time level {}'.format(5))
-			level = 5
-			app_widget = misc.ApplicationPopup(self)
+			app_constants.INTERNAL_LEVEL = 5
+			app_widget = misc.AppDialog(self)
 			app_widget.note_info.setText("<font color='red'>IMPORTANT:</font> Application restart is required when done")
 			app_widget.restart_info.hide()
 			self.admin_db = gallerydb.AdminDB()
@@ -180,7 +186,8 @@ class AppWindow(QMainWindow):
 			self.admin_db_method_invoker.emit(db_p)
 		elif app_constants.FIRST_TIME_LEVEL < 6:
 			log_i('Invoking first time level {}'.format(6))
-			app_widget = misc.ApplicationPopup(self)
+			app_constants.INTERNAL_LEVEL = 6
+			app_widget = misc.AppDialog(self)
 			app_widget.note_info.setText("<font color='red'>IMPORTANT:</font> Application restart is required when done")
 			app_widget.restart_info.hide()
 			self.admin_db = gallerydb.AdminDB()
@@ -266,6 +273,7 @@ class AppWindow(QMainWindow):
 		p = self.toolbar.pos()
 		self.notification_bar.move(p.x(), p.y() + self.toolbar.height())
 		self.notification_bar.resize(self.width())
+		self.notif_bubble = misc.AppBubble(self)
 		app_constants.NOTIF_BAR = self.notification_bar
 		log_d('Create notificationbar: OK')
 
@@ -1266,7 +1274,7 @@ class AppWindow(QMainWindow):
 		self.duplicate_check_invoker.emit()
 
 	def excepthook(self, ex_type, ex, tb):
-		w = misc.ApplicationPopup(self, misc.ApplicationPopup.MESSAGE)
+		w = misc.AppDialog(self, misc.AppDialog.MESSAGE)
 		w.show()
 		log_c(''.join(traceback.format_tb(tb)))
 		log_c('{}: {}'.format(ex_type, ex))
