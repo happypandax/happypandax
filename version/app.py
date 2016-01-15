@@ -1,4 +1,4 @@
-﻿#"""
+#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -817,12 +817,6 @@ class AppWindow(QMainWindow):
 							def append_to_model(x):
 								self.manga_list_view.sort_model.insertRows(x, None, len(x))
 								self.manga_list_view.sort_model.init_search(self.manga_list_view.sort_model.current_term)
-								if app_constants.SCROLL_TO_NEW_GALLERIES:
-									idx = gallery.CommonView.find_index(self.get_current_view(),
-										x[len(x) - 1].id,
-										True)
-									gallery.CommonView.scroll_to_index(self.get_current_view(), idx)
-
 							class A(QObject):
 								done = pyqtSignal()
 								prog = pyqtSignal(int)
@@ -1156,10 +1150,13 @@ class AppWindow(QMainWindow):
 			log.exception('Flush temp on exit: FAIL')
 
 		# DB
-		log_i("Analyzing database...")
-		gallerydb.GalleryDB.analyze()
-		log_i("Closing database...")
-		gallerydb.GalleryDB.close()
+		try:
+			log_i("Analyzing database...")
+			gallerydb.GalleryDB.analyze()
+			log_i("Closing database...")
+			gallerydb.GalleryDB.close()
+		except:
+			pass
 		self.download_window.close()
 
 		# check if there is db activity

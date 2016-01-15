@@ -1,4 +1,4 @@
-﻿#"""
+#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -129,7 +129,10 @@ class Downloader(QObject):
 				r = self._browser_session.get(download_url, stream=True)
 			else:
 				r = requests.get(download_url, stream=True)
-			item.total_size = int(r.headers['content-length'])
+			try:
+				item.total_size = int(r.headers['content-length'])
+			except KeyError:
+				item.total_size = 0
 
 			with open(file_name_part, 'wb') as f:
 				for data in r.iter_content(chunk_size=1024):
@@ -426,9 +429,8 @@ class HenManager(DLManager):
 		"""
 		Finds gallery download url and puts it in download queue
 		"""
-		if 'ipb_member_id' in self._browser.session.cookies and \
-			'ipb_pass_hash' in self._browser.session.cookies:
-			hen = ExHen(self._browser.session.cookies)
+		if 'exhentai' in g_url:
+			hen = ExHen(settings.ExProperties().cookies)
 		else:
 			hen = EHen()
 		log_d("Using {}".format(hen.__repr__()))
@@ -689,7 +691,8 @@ class NHen(CommenHen):
 
 class EHen(CommenHen):
 	"Fetches galleries from ehen"
-	def __init__(self):
+	def __init__(self, cookies = None):
+		self.cookies = cookies
 		self.e_url = "http://g.e-hentai.org/api.php"
 
 	@classmethod
@@ -1003,8 +1006,8 @@ class EHen(CommenHen):
 
 class ExHen(EHen):
 	"Fetches gallery metadata from exhen"
-	def __init__(self, cookies):
-		self.cookies = cookies
+	def __init__(self, cookies=None):
+		super().__init__(cookies)
 		self.e_url = "http://exhentai.org/api.php"
 
 	def get_metadata(self, list_of_urls):
