@@ -251,21 +251,10 @@ class GalleryLists(QListWidget):
 	GALLERY_LIST_REMOVED = pyqtSignal()
 	def __init__(self, parent):
 		super().__init__(parent)
-		self.setContentsMargins(0,0,0,0)
-		self.setSpacing(0)
-		add_item = misc.CustomListItem(txt="Create new list...", parent=self, type=self.CREATE_LIST_TYPE)
-		add_item.setForeground(QBrush(QColor("gray")))
 		self._g_list_icon = QIcon(app_constants.GLIST_PATH)
 		self._font_selected = QFont(self.font())
 		self._font_selected.setBold(True)
 		self._font_selected.setUnderline(True)
-		self._font = QFont(self.font())
-		self._font.setItalic(True)
-		self._font.setUnderline(True)
-		add_item.setFont(self._font)
-		add_item.setTextAlignment(Qt.AlignCenter)
-		add_item.setFlags(Qt.ItemIsEnabled)
-		add_item.setToolTip("Double click to create new list")
 		self.itemDoubleClicked.connect(self._item_double_clicked)
 		self.setItemDelegate(ListDelegate(self))
 		self.itemDelegate().closeEditor.connect(self._add_new_list)
@@ -285,13 +274,14 @@ class GalleryLists(QListWidget):
 			new_list = gallery_list
 		new_item.item = new_list
 		new_item.setIcon(self._g_list_icon)
+		self.sortItems()
 
 	def create_new_list(self, name=None, gallery_list=None):
 		new_item = misc.CustomListItem()
 		self._in_proccess_item = new_item
 		new_item.setFlags(new_item.flags() | Qt.ItemIsEditable)
 		new_item.setIcon(QIcon(app_constants.LIST_PATH))
-		self.insertItem(1, new_item)
+		self.insertItem(0, new_item)
 		if name:
 			new_item.setText(name)
 			self._add_new_list(gallery_list=gallery_list)
@@ -369,8 +359,21 @@ class SideBarWidget(QFrame):
 		self.main_layout.addLayout(self.stacked_layout)
 
 		# lists
+		gallery_lists_dummy = QWidget(self)
 		self.lists = GalleryLists(self)
-		lists_index = self.stacked_layout.addWidget(self.lists)
+		create_new_list_btn = QPushButton()
+		create_new_list_btn.setIcon(QIcon(app_constants.PLUS_PATH))
+		create_new_list_btn.setIconSize(QSize(15, 15))
+		create_new_list_btn.clicked.connect(lambda: self.lists.create_new_list())
+		create_new_list_btn.adjustSize()
+		create_new_list_btn.setFixedSize(create_new_list_btn.width(), create_new_list_btn.height())
+		create_new_list_btn.setToolTip("Create a new list!")
+		lists_l = QVBoxLayout(gallery_lists_dummy)
+		lists_l.setContentsMargins(0,0,0,0)
+		lists_l.setSpacing(0)
+		lists_l.addWidget(self.lists)
+		lists_l.addWidget(create_new_list_btn)
+		lists_index = self.stacked_layout.addWidget(gallery_lists_dummy)
 		self.lists.GALLERY_LIST_CLICKED.connect(parent.manga_list_view.sort_model.set_gallery_list)
 		self.lists.GALLERY_LIST_CLICKED.connect(self.show_all_galleries_btn.show)
 		self.lists.GALLERY_LIST_REMOVED.connect(self.show_all_galleries_btn.click)

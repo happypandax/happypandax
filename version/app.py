@@ -140,10 +140,10 @@ class AppWindow(QMainWindow):
 			if app_constants.UPDATE_VERSION != app_constants.vs:
 				self.notif_bubble.update_text(
 					"Happypanda has been udated!",
-					"Good job updating! Don't forget to check out what's new in this version <a href='https://github.com/Pewpews/happypanda/blob/master/CHANGELOG.md'>by clicking here!</a>")
+					"Don't forget to check out what's new in this version <a href='https://github.com/Pewpews/happypanda/blob/master/CHANGELOG.md'>by clicking here!</a>")
 			else:
 				hello = ["Hello!", "Hi!", "Onii-chan!", "Senpai!", "Hisashiburi!", "Welcome!", "Okaerinasai!", "Welcome back!", "Hajimemashite!"]
-				self.notif_bubble.update_text("{}".format(hello[random.randint(0, len(hello) - 1)]), "Please don't hesitate to report any bugs you find.")
+				self.notif_bubble.update_text("{}".format(hello[random.randint(0, len(hello) - 1)]), "Please don't hesitate to report any bugs you find.", 10)
 
 			if app_constants.ENABLE_MONITOR and \
 				app_constants.MONITOR_PATHS and all(app_constants.MONITOR_PATHS):

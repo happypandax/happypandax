@@ -76,7 +76,6 @@ class GMetafile:
 		# eze
 		if all(x in j for x in eze):
 			log_i('Detected metafile: eze')
-			print('using eze')
 			ezedata = j['gallery_info']
 			t_parser = title_parser(ezedata['title'])
 			self.metadata['title'] = t_parser['title']
@@ -103,7 +102,6 @@ class GMetafile:
 			return
 		lines = fp.readlines()
 		if lines:
-			print('using h downloader')
 			for line in lines:
 				splitted = line.split(':')
 				if len(splitted) > 1:

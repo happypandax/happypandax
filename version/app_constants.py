@@ -16,7 +16,7 @@ import os, sys
 import settings
 
 # Version number
-vs  = '0.26'
+vs  = '0.27'
 DEBUG = False
 
 APP_RESTART_CODE = 0
