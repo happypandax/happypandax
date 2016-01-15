@@ -817,11 +817,6 @@ class AppWindow(QMainWindow):
 							def append_to_model(x):
 								self.manga_list_view.sort_model.insertRows(x, None, len(x))
 								self.manga_list_view.sort_model.init_search(self.manga_list_view.sort_model.current_term)
-								if app_constants.SCROLL_TO_NEW_GALLERIES:
-									idx = gallery.CommonView.find_index(self.get_current_view(),
-										x[len(x) - 1].id,
-										True)
-									gallery.CommonView.scroll_to_index(self.get_current_view(), idx)
 
 							class A(QObject):
 								done = pyqtSignal()

@@ -19,7 +19,8 @@ from PyQt5.QtWidgets import (QTreeWidget, QTreeWidgetItem, QWidget,
 from PyQt5.QtCore import (Qt, QTimer, pyqtSignal, QRect, QSize, QEasingCurve,
 						  QSortFilterProxyModel, QIdentityProxyModel, QModelIndex,
 						  QPointF, QRectF)
-from PyQt5.QtGui import QIcon, QStandardItem, QFont, QPainter, QColor, QBrush, QPixmap
+from PyQt5.QtGui import (QIcon, QStandardItem, QFont, QPainter, QColor, QBrush,
+						 QPixmap, QPalette)
 
 import gallerydb
 import app_constants
