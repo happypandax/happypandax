@@ -945,7 +945,9 @@ class GridDelegate(QStyledItemDelegate):
 				p_path.addRect(x,y, 20, 20)
 				p_path.addRect(x+w-20,y, 20, 20)
 				painter.drawPath(p_path.simplified())
-				#painter.fillRect(selected_rect, QColor(164,164,164,120))
+				painter.setPen(QColor("white"))
+				txt_layout = misc.text_layout("Cannot find gallery source!", w, self.title_font, self.title_font_m)
+				txt_layout.draw(painter, QPointF(x, y+h*0.3))
 				painter.restore()
 
 			#if app_constants.DEBUG:

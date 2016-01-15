@@ -47,6 +47,7 @@ class GMetafile:
 			"language":'',
 			"pub_date":'',
 			"link":'',
+			"info":'',
 
 			}
 		self.files = []
@@ -65,36 +66,75 @@ class GMetafile:
 		if self.files:
 			self.detect()
 		else:
-			log_i('No metafile found...')
+			log_d('No metafile found...')
+
+	def _eze(self, fp):
+		if not fp.name.endswith('.json'):
+			return
+		j = json.load(fp, encoding='utf-8')
+		eze = ['gallery_info', 'image_api_key', 'image_info']
+		# eze
+		if all(x in j for x in eze):
+			log_i('Detected metafile: eze')
+			print('using eze')
+			ezedata = j['gallery_info']
+			t_parser = title_parser(ezedata['title'])
+			self.metadata['title'] = t_parser['title']
+			self.metadata['type'] = ezedata['category']
+			for ns in ezedata['tags']:
+				self.metadata['tags'][ns.capitalize()] = ezedata['tags'][ns]
+			self.metadata['tags']['default'] = self.metadata['tags'].pop('Misc', [])
+			self.metadata['artist'] = self.metadata['tags']['Artist'][0].capitalize()\
+				if 'Artist' in self.metadata['tags'] else t_parser['artist']
+			self.metadata['language'] = ezedata['language']
+			d = ezedata['upload_date']
+			# should be zero padded
+			d[1] = int("0"+str(d[1])) if len(str(d[1])) == 1 else d[1]
+			d[3] = int("0"+str(d[1])) if len(str(d[1])) == 1 else d[1] 
+			self.metadata['pub_date'] = datetime.datetime.strptime(
+				"{} {} {}".format(d[0], d[1], d[3]), "%Y %m %d")
+			l = ezedata['source']
+			self.metadata['link'] = 'http://'+l['site']+'.org/g/'+str(l['gid'])+'/'+l['token']
+			return True
+
+	def _hdoujindler(self, fp):
+		"HDoujin Downloader"
+		if not fp.name.endswith('info.txt'):
+			return
+		lines = fp.readlines()
+		if lines:
+			print('using h downloader')
+			for line in lines:
+				splitted = line.split(':')
+				if len(splitted) > 1:
+					other = splitted[1].strip()
+					if not other:
+						continue
+					l = splitted[0].lower()
+					if "title" == l:
+						self.metadata['title'] = other
+					if "artist" == l:
+						self.metadata['artist'] = other.capitalize()
+					if "tags" == l:
+						self.metadata['tags'].update(tag_to_dict(other))
+					if "description" == l:
+						self.metadata['info'] = other
+					if "circle" in l:
+						if not "group" in self.metadata['tags']:
+							self.metadata['tags']['group'] = []
+							self.metadata['tags']['group'].append(other.strip().lower())
+
+			return True
 
 	def detect(self):
 		for fp in self.files:
 			with fp:
-				j = json.load(fp, encoding='utf-8')
-				eze = ['gallery_info', 'image_api_key', 'image_info']
-				# eze
-				if all(x in j for x in eze):
-					log_i('Detected metafile: eze')
-					ezedata = j['gallery_info']
-					t_parser = title_parser(ezedata['title'])
-					self.metadata['title'] = t_parser['title']
-					self.metadata['type'] = ezedata['category']
-					for ns in ezedata['tags']:
-						self.metadata['tags'][ns.capitalize()] = ezedata['tags'][ns]
-					self.metadata['tags']['default'] = self.metadata['tags'].pop('Misc', [])
-					self.metadata['artist'] = self.metadata['tags']['Artist'][0].capitalize()\
-					    if 'Artist' in self.metadata['tags'] else t_parser['artist']
-					self.metadata['language'] = ezedata['language']
-					d = ezedata['upload_date']
-					# should be zero padded
-					d[1] = int("0"+str(d[1])) if len(str(d[1])) == 1 else d[1]
-					d[3] = int("0"+str(d[1])) if len(str(d[1])) == 1 else d[1] 
-					self.metadata['pub_date'] = datetime.datetime.strptime(
-						"{} {} {}".format(d[0], d[1], d[3]), "%Y %m %d")
-					# http://exhentai.org/g/875077/7b729c6270/
-					l = ezedata['source']
-					self.metadata['link'] = 'http://'+l['site']+'.org/g/'+str(l['gid'])+'/'+l['token']
-				else:
+				z = False
+				for x in [self._eze, self._hdoujindler]:
+					if x(fp):
+						z = True
+						break
+				if not z:
 					log_i('Incompatible metafiles found')
 
 	def update(self, other):
@@ -116,6 +156,8 @@ class GMetafile:
 			gallery.pub_date = self.metadata['pub_date']
 		if self.metadata['link']:
 			gallery.link = self.metadata['link']
+		if self.metadata['info']:
+			gallery.info = self.metadata['info']
 		return gallery
 
 def backup_database(db_path=db_constants.DB_PATH):
@@ -892,6 +934,7 @@ def delete_path(path):
 		if error:
 			p = os.path.split(path)[1]
 			log_e('Failed to delete: {}:{}'.format(error, p))
+			app_constants.NOTIF_BAR.add_text('An error occured while trying to delete: {}'.format(error))
 			s = False
 	return s
 
