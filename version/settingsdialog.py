@@ -134,6 +134,13 @@ class SettingsDialog(QWidget):
 	def restore_options(self):
 
 		# App / General
+		self.g_languages.addItems(app_constants.G_LANGUAGES)
+		self.g_languages.addItems(app_constants.G_CUSTOM_LANGUAGES)
+		self._find_combobox_match(self.g_languages, app_constants.G_DEF_LANGUAGE, 0)
+		self.g_type.addItems(app_constants.G_TYPES)
+		self._find_combobox_match(self.g_type, app_constants.G_DEF_TYPE, 0)
+		self.g_status.addItems(app_constants.G_STATUS)
+		self._find_combobox_match(self.g_status, app_constants.G_DEF_STATUS, 0)
 		self.send_2_trash.setChecked(app_constants.SEND_FILES_TO_TRASH)
 		self.subfolder_as_chapters.setChecked(app_constants.SUBFOLDER_AS_GALLERY)
 		self.extract_gallery_before_opening.setChecked(app_constants.EXTRACT_CHAPTER_BEFORE_OPENING)
@@ -248,6 +255,22 @@ class SettingsDialog(QWidget):
 		set(app_constants.SEND_FILES_TO_TRASH, 'Application', 'send files to trash')
 
 		# App / General / Gallery
+		g_custom_lang = []
+		for x in range(self.g_languages.count()):
+			l = self.g_languages.itemText(x).capitalize()
+			if l and not l in app_constants.G_LANGUAGES:
+				g_custom_lang.append(l)
+
+		app_constants.G_CUSTOM_LANGUAGES = g_custom_lang
+		print(g_custom_lang)
+		set(app_constants.G_CUSTOM_LANGUAGES, 'General', 'gallery custom languages')
+		if self.g_languages.currentText():
+			app_constants.G_DEF_LANGUAGE = self.g_languages.currentText()
+			set(app_constants.G_DEF_LANGUAGE, 'General', 'gallery default language')
+		app_constants.G_DEF_STATUS = self.g_status.currentText()
+		set(app_constants.G_DEF_STATUS, 'General', 'gallery default status')
+		app_constants.G_DEF_TYPE = self.g_type.currentText()
+		set(app_constants.G_DEF_TYPE, 'General', 'gallery default type')
 		app_constants.SUBFOLDER_AS_GALLERY = self.subfolder_as_chapters.isChecked()
 		set(app_constants.SUBFOLDER_AS_GALLERY, 'Application', 'subfolder as gallery')
 		app_constants.EXTRACT_CHAPTER_BEFORE_OPENING = self.extract_gallery_before_opening.isChecked()
@@ -577,6 +600,18 @@ class SettingsDialog(QWidget):
 
 		# App / Gallery
 		app_gallery_page, app_gallery_l = new_tab('Gallery', application, True)
+
+		g_def_values, g_def_values_l = groupbox("Default values", QFormLayout, app_gallery_page)
+		app_gallery_l.addRow(g_def_values)
+		self.g_languages = QComboBox(self)
+		self.g_languages.setInsertPolicy(QComboBox.InsertAlphabetically)
+		self.g_languages.setEditable(True)
+		g_def_values_l.addRow("Default Language", self.g_languages)
+		self.g_type = QComboBox(self)
+		g_def_values_l.addRow("Default Status", self.g_type)
+		self.g_status = QComboBox(self)
+		g_def_values_l.addRow("Default Type", self.g_status)
+
 		self.subfolder_as_chapters = QCheckBox("Subdirectiories should be treated as standalone galleries instead of chapters (applies in archives too)")
 		self.subfolder_as_chapters.setToolTip("This option will enable creating standalone galleries for each subdirectiories found recursively when importing."+
 										"\nDefault action is treating each subfolder found as chapters of a gallery.")
@@ -1185,5 +1220,13 @@ class SettingsDialog(QWidget):
 
 	def reject(self):
 		self.close()
+		
+
+	def _find_combobox_match(self, combobox, key, default):
+		f_index = combobox.findText(key, Qt.MatchFixedString)
+		if f_index != -1:
+			combobox.setCurrentIndex(f_index)
+		else:
+			combobox.setCurrentIndex(default)
 
 

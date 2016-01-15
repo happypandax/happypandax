@@ -1449,11 +1449,11 @@ class Gallery:
 
 	def set_defaults(self):
 		if not self.type:
-			self.type = "Other"
+			self.type = app_constants.G_DEF_TYPE.capitalize()
 		if not self.language:
-			self.language = "Other"
+			self.language = app_constants.G_DEF_LANGUAGE.capitalize()
 		if not self.status:
-			self.status = "Completed"
+			self.status = app_constants.G_DEF_STATUS.capitalize()
 
 	@property
 	def chapters(self):

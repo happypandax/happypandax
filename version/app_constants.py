@@ -176,6 +176,14 @@ GALLERY_FONT = (get('Segoe UI', 'Visual', 'gallery font family', str),
 				get(11, 'Visual', 'gallery font size', int))
 GALLERY_FONT_ELIDE = get(True, 'Visual', 'gallery font elide', bool)
 
+G_DEF_LANGUAGE = get('English', 'General', 'gallery default language', str)
+G_CUSTOM_LANGUAGES = get([], 'General', 'gallery custom languages', list)
+G_DEF_STATUS = get('Completed', 'General', 'gallery default status', str)
+G_DEF_TYPE = get('Doujinshi', 'General', 'gallery default type', str)
+G_LANGUAGES = ["English", "Japanese", "Other"]
+G_STATUS = ["Ongoing", "Completed", "Unknown"]
+G_TYPES = ["Manga", "Doujinshi", "Artist CG Sets", "Game CG Sets", "Western", "Image Sets", "Non-H", "Cosplay", "Other"]
+
 # Colors
 GRID_VIEW_TITLE_COLOR = get('#323232', 'Visual', 'grid view title color', str)
 GRID_VIEW_ARTIST_COLOR = get('#585858', 'Visual', 'grid view artist color', str)

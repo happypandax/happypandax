@@ -132,8 +132,9 @@ class GalleryDialog(QWidget):
 		self.descr_edit = QTextEdit()
 		self.descr_edit.setAcceptRichText(True)
 		self.lang_box = QComboBox()
-		self.lang_box.addItems(["English", "Japanese", "Other"])
-		self.lang_box.setCurrentIndex(0)
+		self.lang_box.addItems(app_constants.G_LANGUAGES)
+		self.lang_box.addItems(app_constants.G_CUSTOM_LANGUAGES)
+		self._find_combobox_match(self.lang_box, app_constants.G_DEF_LANGUAGE, 0)
 		tags_l = QVBoxLayout()
 		tag_info = misc.ClickedLabel("How do i write namespace & tags? (hover)", parent=self)
 		tag_info.setToolTip("Ways to write tags:\n\nNormal tags:\ntag1, tag2, tag3\n\n"+
@@ -149,15 +150,14 @@ class GalleryDialog(QWidget):
 		tags_l.addWidget(self.tags_edit, 3)
 		self.tags_edit.setPlaceholderText("Press Tab to autocomplete (Ctrl + E to show popup)")
 		self.type_box = QComboBox()
-		self.type_box.addItems(["Manga", "Doujinshi", "Artist CG Sets", "Game CG Sets",
-						  "Western", "Image Sets", "Non-H", "Cosplay", "Other"])
-		self.type_box.setCurrentIndex(0)
+		self.type_box.addItems(app_constants.G_TYPES)
+		self._find_combobox_match(self.type_box, app_constants.G_DEF_TYPE, 0)
 		#self.type_box.currentIndexChanged[int].connect(self.doujin_show)
 		#self.doujin_parent = QLineEdit()
 		#self.doujin_parent.setVisible(False)
 		self.status_box = QComboBox()
-		self.status_box.addItems(["Unknown", "Ongoing", "Completed"])
-		self.status_box.setCurrentIndex(2)
+		self.status_box.addItems(app_constants.G_STATUS)
+		self._find_combobox_match(self.status_box, app_constants.G_DEF_STATUS, 0)
 		self.pub_edit = QDateEdit()
 		self.pub_edit.setCalendarPopup(True)
 		self.pub_edit.setDate(QDate.currentDate())
@@ -202,9 +202,10 @@ class GalleryDialog(QWidget):
 
 	def _find_combobox_match(self, combobox, key, default):
 		f_index = combobox.findText(key, Qt.MatchFixedString)
-		try:
+		print(key)
+		if f_index != -1:
 			combobox.setCurrentIndex(f_index)
-		except:
+		else:
 			combobox.setCurrentIndex(default)
 
 	def setGallery(self, gallery):
