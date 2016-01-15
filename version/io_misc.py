@@ -212,9 +212,9 @@ class GalleryDownloaderList(QTableWidget):
 			return
 		if gallery_list:
 			gallery = gallery_list[0]
+			gallery.link = d_item.item.gallery_url
 			if d_item.item.metadata:
 				gallery = pewnet.EHen.apply_metadata(gallery, d_item.item.metadata)
-			gallery.link = d_item.item.gallery_url
 			gallerydb.add_method_queue(
 				gallerydb.GalleryDB.add_gallery_return, False, gallery)
 			self.gallery_model.insertRows([gallery], None, 1)
