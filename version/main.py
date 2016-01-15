@@ -1,4 +1,4 @@
-#"""
+﻿#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -17,6 +17,7 @@ import traceback
 
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QFile, Qt
+from PyQt5.QtGui import QFontDatabase
 
 from database import db, db_constants
 import app
@@ -94,6 +95,11 @@ def start(test=False):
 		log_i("Enabling high DPI display support")
 		os.environ.putenv("QT_DEVICE_PIXEL_RATIO", "auto")
 
+	effects = [Qt.UI_AnimateCombo, Qt.UI_FadeMenu, Qt.UI_AnimateMenu,
+			Qt.UI_AnimateTooltip, Qt.UI_FadeTooltip]
+	for effect in effects:
+		QApplication.setEffectEnabled(effect)
+
 	application = QApplication(sys.argv)
 	application.setOrganizationName('Pewpews')
 	application.setOrganizationDomain('https://github.com/Pewpews/happypanda')
@@ -101,6 +107,7 @@ def start(test=False):
 	application.setApplicationDisplayName('Happypanda')
 	application.setApplicationVersion('v{}'.format(app_constants.vs))
 	application.setAttribute(Qt.AA_UseHighDpiPixmaps)
+
 	log_i('Starting Happypanda...'.format(app_constants.vs))
 	if args.debug:
 		log_i('Running in debug mode'.format(app_constants.vs))

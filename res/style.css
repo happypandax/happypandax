@@ -1,45 +1,21 @@
 DoNotDelete {
 }
 
-AppWindow {
-}
-
-QLabel#image_box {
-	border:5px solid #ffd800;
-}
-
-QLabel#title {
-	font-weight:bold;
-}
-
-LineEdit#search_bar {
-	border:0px solid #ffd800;
-	border-radius:0.45em;
-}
-
 QLabel#author {
 	font-weight:lighter;
 }
 
 AppWindow > QToolBar, QStatusBar, SideBarWidget {
-	background-color: #464646;
+	background-color: #333333;
 	border: none;
 }
 
-AppWindow > QToolBar::sunken {
+AppWindow > QToolBar::sunken, AppWindow > QStatusBar::item {
 	border: none;
 }
 
-AppWindow > QStatusBar > QWidget {
+AppWindow > QStatusBar > QWidget, QStatusBar > QLabel {
 	color:white;
-	border: none;
-}
-
-AppWindow > QStatusBar > QLabel {
-	color:white;
-	border: none;
-}
-AppWindow > QStatusBar::item {
 	border: none;
 }
 
@@ -57,54 +33,54 @@ BasePopup > QFrame, BaseUserChoice > QFrame{
 }
 
 QScrollBar:vertical {
-	border: 0px solid #9A9A9A;
-	background:none;
 	width:1em;
-	margin: 0px 0px 0px 0px;
-	}
+}
 
 QScrollBar:horizontal {
-	border: 0px solid #9A9A9A;
-	background:none;
 	height:1em;
+	}
+
+QScrollBar:vertical, QScrollBar:horizontal {
+	border: 0px solid #333333;
+	background:none;
 	margin: 0px 0px 0px 0px;
 	}
 
 QScrollBar::handle {
-	background: #464646;
-	border: 0px solid #464646;
+	background: #333333;
+	border: 0px solid #333333;
 
 }
 
 QScrollBar::handle:vertical, QScrollBar::handle:horizontal {
 	min-height: 7em;
-	border: 0px solid #9A9A9A;
+	border: 0px solid #333333;
 	border-radius: 0.45em;
 }
 
 QScrollBar::add-line:vertical {
-	background: #464646;
+	background: #333333;
 	height: 0px;
 	subcontrol-position: bottom;
 	subcontrol-origin: margin;
 }
 
 QScrollBar::add-line:horizontal {
-	background: #464646;
+	background: #333333;
 	width: 0px;
 	subcontrol-position: right;
 	subcontrol-origin: margin;
 }
 
 QScrollBar::sub-line:vertical {
-	background: #464646;
+	background: #333333;
 	height: 0px;
 	subcontrol-position: top;
 	subcontrol-origin: margin;
 }
 
 QScrollBar::sub-line:horizontal {
-	background: #464646;
+	background: #333333;
 	width: 0px;
 	subcontrol-position: left;
 	subcontrol-origin: margin;
@@ -115,16 +91,16 @@ QScrollBar::add-page, QScrollBar::sub-page {
 }
 
 QMenu {
-	background-color: #464646;
+	background-color: #333333;
 	color: white;
 }
 
 QMenu::item:selected {
-	background-color: #808080;
+	background-color: #585858;
 }
 
 MangaView {
-	border: 0px solid #F2F2F2;
+	border: 0px solid;
 }
 
 QLabel {
@@ -132,15 +108,15 @@ QLabel {
 }
 
 QPushButton {
-	border-left: 0.50em solid #464646;
-	border-right: 0.50em solid #464646;
-	border-top: 0.35em solid #464646;
-	border-bottom: 0.35em solid #464646;
-	border-radius: 0.55em;
+	border-left: 0.50em solid #333333;
+	border-right: 0.50em solid #333333;
+	border-top: 0.35em solid #333333;
+	border-bottom: 0.35em solid #333333;
+	border-radius: 0.35em;
 }
 
 QPushButton, QToolButton {
-	background-color: #464646;
+	background-color: #333333;
 	/*height: 20px;
 	border: 0.5px solid #303030;*/
 	font-size: 1.2em;
@@ -165,7 +141,7 @@ QPushButton:pressed, QPushButton:checked {
 
 QToolTip {
 	border-style: none;
-	background-color: #464646;
+	background-color: #333333;
 	color: white;
 }
 

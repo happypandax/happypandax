@@ -447,14 +447,14 @@ class AppWindow(QMainWindow):
 		self.manga_table_view.sort_model = self.manga_list_view.sort_model
 		self.manga_table_view.setModel(self.manga_table_view.sort_model)
 		self.manga_table_view.sort_model.change_model(self.manga_table_view.gallery_model)
-		#self.manga_table_view.setColumnWidth(app_constants.FAV, 20)
-		#self.manga_table_view.setColumnWidth(app_constants.ARTIST, 200)
-		#self.manga_table_view.setColumnWidth(app_constants.TITLE, 400)
-		#self.manga_table_view.setColumnWidth(app_constants.TAGS, 300)
-		#self.manga_table_view.setColumnWidth(app_constants.TYPE, 60)
-		#self.manga_table_view.setColumnWidth(app_constants.CHAPTERS, 60)
-		#self.manga_table_view.setColumnWidth(app_constants.LANGUAGE, 100)
-		#self.manga_table_view.setColumnWidth(app_constants.LINK, 400)
+		self.manga_table_view.setColumnWidth(app_constants.FAV, 20)
+		self.manga_table_view.setColumnWidth(app_constants.ARTIST, 200)
+		self.manga_table_view.setColumnWidth(app_constants.TITLE, 400)
+		self.manga_table_view.setColumnWidth(app_constants.TAGS, 300)
+		self.manga_table_view.setColumnWidth(app_constants.TYPE, 60)
+		self.manga_table_view.setColumnWidth(app_constants.CHAPTERS, 60)
+		self.manga_table_view.setColumnWidth(app_constants.LANGUAGE, 100)
+		self.manga_table_view.setColumnWidth(app_constants.LINK, 400)
 
 
 	def init_spinners(self):
@@ -543,6 +543,7 @@ class AppWindow(QMainWindow):
 		scan_galleries_k = QKeySequence('Ctrl+Alt+S')
 		open_random_k = QKeySequence(QKeySequence.Open)
 		get_all_metadata_k = QKeySequence('Ctrl+Alt+M')
+		gallery_downloader_k = QKeySequence('Ctrl+Alt+D')
 
 		gallery_menu = QMenu()
 		gallery_action = QToolButton()
@@ -593,6 +594,7 @@ class AppWindow(QMainWindow):
 		misc_action.setToolTip("Contains misc. features")
 		gallery_downloader = QAction("Gallery Downloader", misc_action_menu)
 		gallery_downloader.triggered.connect(self.download_window.show)
+		gallery_downloader.setShortcut(gallery_downloader_k)
 		misc_action_menu.addAction(gallery_downloader)
 		duplicate_check_simple = QAction("Simple Duplicate Finder", misc_action_menu)
 		duplicate_check_simple.triggered.connect(lambda: self.duplicate_check()) # triggered emits False

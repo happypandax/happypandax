@@ -629,7 +629,7 @@ class GridDelegate(QStyledItemDelegate):
 			self.external_icon = self.file_icons.get_default_file_icon()
 
 		self.font_size = app_constants.GALLERY_FONT[1]
-		self.font_name = app_constants.GALLERY_FONT[0]
+		self.font_name =0 # app_constants.GALLERY_FONT[0]
 		if not self.font_name:
 			self.font_name = QWidget().font().family()
 		self.title_font = QFont()
@@ -1341,7 +1341,7 @@ class MangaTableView(QTableView):
 		index = self.indexAt(event.pos())
 		index = self.sort_model.mapToSource(index)
 
-		if index.data(Qt.UserRole+1) and index.data(Qt.UserRole+1).state == CustomDelegate.G_DOWNLOAD:
+		if index.data(Qt.UserRole+1) and index.data(Qt.UserRole+1).state == GridDelegate.G_DOWNLOAD:
 			event.ignore()
 			return
 
@@ -1350,7 +1350,7 @@ class MangaTableView(QTableView):
 		select_indexes = []
 		for idx in s_indexes:
 			if idx.isValid():
-				if not idx.data(Qt.UserRole+1).state == CustomDelegate.G_DOWNLOAD:
+				if not idx.data(Qt.UserRole+1).state == GridDelegate.G_DOWNLOAD:
 					select_indexes.append(self.sort_model.mapToSource(idx))
 		if len(select_indexes) > 1:
 			selected = True
@@ -1359,10 +1359,10 @@ class MangaTableView(QTableView):
 			if selected:
 				menu = misc.GalleryMenu(self, 
 							index,
-							self.parent_widget.manga_list_view.gallery_model,
+							self.sort_model,
 							self.parent_widget, select_indexes)
 			else:
-				menu = misc.GalleryMenu(self, index, self.gallery_model,
+				menu = misc.GalleryMenu(self, index, self.sort_model,
 							   self.parent_widget)
 			handled = True
 

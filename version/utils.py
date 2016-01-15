@@ -527,7 +527,7 @@ def open_chapter(chapterpath, archive=None):
 	def find_f_img_folder():
 		filepath = os.path.join(temp_p, [x for x in sorted([y.name for y in scandir.scandir(temp_p)])\
 			if x.lower().endswith(IMG_FILES)][0]) # Find first page
-		return filepath
+		return temp_p if app_constants.USE_EXTERNAL_VIEWER else filepath
 
 	def find_f_img_archive(extract=True):
 		zip = ArchiveFile(temp_p)
@@ -550,9 +550,12 @@ def open_chapter(chapterpath, archive=None):
 					t_p = zip.extract(chapterpath, t_p)
 			else:
 				zip.extract_all(t_p) # Compatibility reasons.. TODO: REMOVE IN BETA
-			filepath = os.path.join(t_p, [x for x in sorted([y.name for y in scandir.scandir(t_p)])\
-				if x.lower().endswith(IMG_FILES)][0]) # Find first page
-			filepath = os.path.abspath(filepath)
+			if app_constants.USE_EXTERNAL_VIEWER:
+				filepath = os.path.join(t_p, [x for x in sorted([y.name for y in scandir.scandir(t_p)])\
+					if x.lower().endswith(IMG_FILES)][0]) # Find first page
+				filepath = t_p
+			else:
+				filepath = os.path.abspath(filepath)
 		else:
 			if is_archive or chapterpath.endswith(ARCHIVE_FILES):
 				con = zip.dir_contents('')

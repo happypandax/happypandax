@@ -36,7 +36,7 @@ else:
 unrar_tool_path = get('', 'Application', 'unrar tool path')
 
 #default stylesheet path
-default_stylesheet_path = static_dir + '/' + "style.css"
+default_stylesheet_path = os.path.join(static_dir,"style.css")
 user_stylesheet_path = ""
 
 INTERNAL_LEVEL = 6
@@ -97,7 +97,6 @@ LIST_PATH = os.path.join(static_dir, "list.png")
 NO_IMAGE_PATH = os.path.join(static_dir, "default.jpg")
 SEARCH_OPTIONS_PATH = os.path.join(static_dir, "search_options.png")
 typicons_root = os.path.join(static_dir, "typicons")
-PLUS_PATH = os.path.join(typicons_root, "plus-outline.svg")
 GLIST_PATH = os.path.join(typicons_root, "media-stop-outline.svg")
 GARTIST_PATH = os.path.join(typicons_root, "user-outline.svg")
 GROUP_PATH = os.path.join(typicons_root, "group-outline.svg")
