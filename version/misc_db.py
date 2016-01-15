@@ -325,18 +325,18 @@ class SideBarWidget(QFrame):
 		super().__init__(parent)
 		self.parent_widget = parent
 		self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
-		widget_layout = QHBoxLayout(self)
+		self._widget_layout = QHBoxLayout(self)
 
 		# widget stuff
 		self._d_widget = QWidget(self)
-		widget_layout.addWidget(self._d_widget)
+		self._widget_layout.addWidget(self._d_widget)
 		self.main_layout = QVBoxLayout(self._d_widget)
 		self.main_layout.setSpacing(0)
 		self.main_layout.setContentsMargins(0,0,0,0)
 		self.arrow_handle = misc.ArrowHandle(self)
 		self.arrow_handle.CLICKED.connect(self.slide)
 
-		widget_layout.addWidget(self.arrow_handle)
+		self._widget_layout.addWidget(self.arrow_handle)
 		self.setContentsMargins(0,0,-self.arrow_handle.width(),0)
 
 		self.show_all_galleries_btn = QPushButton("Show all galleries")
@@ -405,19 +405,19 @@ class SideBarWidget(QFrame):
 			parent.manga_list_view.gallery_model.db_emitter.DONE.connect(self.tags_tree.setup_tags)
 			parent.manga_list_view.gallery_model.db_emitter.DONE.connect(self.lists.setup_lists)
 
-		self.adjustSize()
 		self.slide_animation = misc.create_animation(self, "maximumSize")
 		self.slide_animation.stateChanged.connect(self._slide_hide)
 		self.slide_animation.setEasingCurve(QEasingCurve.InOutQuad)
-		self._max_width = 300
 
 	def _slide_hide(self, state):
+		size = self.sizeHint()
 		if state == self.slide_animation.Stopped:
 			if self.arrow_handle.current_arrow == self.arrow_handle.OUT:
 				self._d_widget.hide()
 		elif self.slide_animation.Running:
 			if self.arrow_handle.current_arrow == self.arrow_handle.IN:
 				self._d_widget.show()
+
 
 	def slide(self, state):
 		self.slide_animation.setEndValue(QSize(self.arrow_handle.width()*2, self.height()))
@@ -430,11 +430,13 @@ class SideBarWidget(QFrame):
 			self.slide_animation.start()
 
 	def showEvent(self, event):
-		return super().showEvent(event)
+		super().showEvent(event)
+		#self.arrow_handle.click()
 
 	def _init_size(self, event=None):
-		h = event.size().height() if event else self.parent_widget.height()
+		h = self.parent_widget.height()
 		self._max_width = self.parent_widget.width()*0.2
+		self.updateGeometry()
 		self.setMaximumWidth(self._max_width)
 		self.slide_animation.setStartValue(QSize(self._max_width, h))
 

@@ -1,4 +1,4 @@
-﻿#"""
+#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -360,7 +360,7 @@ class DBBase:
 		"Useful when modifying for a large amount of data"
 		cls._AUTO_COMMIT = False
 		cls.execute(cls, "BEGIN TRANSACTION")
-		print("STARTED DB OPTIMIZE")
+		#print("STARTED DB OPTIMIZE")
 
 	@classmethod
 	def end(cls):
@@ -370,7 +370,7 @@ class DBBase:
 		except sqlite3.OperationalError:
 			pass
 		cls._AUTO_COMMIT = True
-		print("ENDED DB OPTIMIZE")
+		#print("ENDED DB OPTIMIZE")
 
 	def execute(self, *args):
 		"Same as cursor.execute"

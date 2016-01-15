@@ -262,7 +262,6 @@ class SettingsDialog(QWidget):
 				g_custom_lang.append(l)
 
 		app_constants.G_CUSTOM_LANGUAGES = g_custom_lang
-		print(g_custom_lang)
 		set(app_constants.G_CUSTOM_LANGUAGES, 'General', 'gallery custom languages')
 		if self.g_languages.currentText():
 			app_constants.G_DEF_LANGUAGE = self.g_languages.currentText()

@@ -604,9 +604,7 @@ class AppWindow(QMainWindow):
 		# debug specfic code
 		if app_constants.DEBUG:
 			def debug_func():
-				from pyqtgraph import examples
-				print("yes!")
-				examples.run()
+				pass
 		
 			debug_btn = QToolButton()
 			debug_btn.setText("DEBUG BUTTON")
@@ -1110,6 +1108,7 @@ class AppWindow(QMainWindow):
 			self.notification_bar.add_text('Some unsupported files did not get added')
 
 	def resizeEvent(self, event):
+		print("parent resize")
 		try:
 			self.notification_bar.resize(event.size().width())
 		except AttributeError:

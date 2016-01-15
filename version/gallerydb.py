@@ -1,4 +1,4 @@
-﻿#"""
+#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -1174,7 +1174,6 @@ class HashDB(DBBase):
 			elif gallery.chapters[chapter].pages == len(hashes.keys()):
 				skip_gen = True
 				if page == "mid":
-					print("Len of hashes", len(hashes))
 					hashes = {'mid':hashes[len(hashes)//2]}
 
 
