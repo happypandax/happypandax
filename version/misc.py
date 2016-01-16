@@ -1397,6 +1397,7 @@ class AppDialog(BasePopup):
 		main_layout.addWidget(self.info_lbl)
 		if mode == self.PROGRESS:
 			self.info_lbl.setText("Updating your galleries to newest version...")
+			self.info_lbl.setWordWrap(True)
 			class progress(QProgressBar):
 				reached_maximum = pyqtSignal()
 				def __init__(self, parent=None):
@@ -1419,7 +1420,7 @@ class AppDialog(BasePopup):
 			main_layout.addWidget(self.restart_info)
 		elif mode == self.MESSAGE:
 			self.info_lbl.setText("<font color='red'>An exception has ben encountered.\nContact the developer to get this fixed."+
-						 "\nStability from this point on won't be guaranteed.</font>")
+						 "\nStability from this point onward cannot be guaranteed.</font>")
 			self.setWindowTitle("It was too big!")
 
 		self.main_widget.setLayout(main_layout)

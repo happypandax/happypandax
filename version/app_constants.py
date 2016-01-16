@@ -122,6 +122,7 @@ RENAME_GALLERY_SOURCE = get(False, 'Application', 'rename gallery source', bool)
 EXTRACT_CHAPTER_BEFORE_OPENING = get(True, 'Application', 'extract chapter before opening', bool)
 OPEN_GALLERIES_SEQUENTIALLY = get(False, 'Application', 'open galleries sequentially', bool)
 SEND_FILES_TO_TRASH = get(True, 'Application', 'send files to trash', bool)
+SHOW_SIDEBAR_WIDGET = get(False, 'Application', 'show sidebar widget', bool)
 
 # ADVANCED
 GALLERY_DATA_FIX_REGEX = get("", 'Advanced', 'gallery data fix regex', str)
@@ -237,7 +238,7 @@ WHAT_IS_FILTER =\
 	"""Filters are basically predefined gallery search terms.
 Every time a gallery matches the specific filter it gets automatically added to the list!
 
-Filter works the same way a gallery search do so make sure to read the guide in
+Filter works the same way a gallery search does so make sure to read the guide in
 Settings -> About -> Search Guide.
 You can write any valid gallery search term.
 Regex works only if enabled in settings.

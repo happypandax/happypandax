@@ -837,7 +837,9 @@ class GridDelegate(QStyledItemDelegate):
 				painter.drawPath(ribbon_path)
 				#painter.setPen(QColor("#d35400"))
 				#painter.drawPolyline(rib_top_1, rib_star_p1_1, rib_star_p1_2, rib_star_mid_1, rib_star_p1_4, rib_star_p1_3, rib_side_1)
+				#painter.drawLine(rib_top_1, rib_top_2)
 				#painter.drawLine(rib_top_2, rib_side_2)
+				#painter.drawLine(rib_side_1, rib_side_2)
 			painter.restore()
 			
 			if app_constants._REFRESH_EXTERNAL_VIEWER:
@@ -888,8 +890,10 @@ class GridDelegate(QStyledItemDelegate):
 					lbl_rect = draw_text_label(app_constants.GRIDBOX_LBL_H)
 
 				clipping = QRectF(x, y+app_constants.THUMB_H_SIZE, w, app_constants.GRIDBOX_LBL_H - 10)
+				painter.setPen(QColor(title_color))
 				title_layout.draw(painter, QPointF(x, y+app_constants.THUMB_H_SIZE),
 					  clip=clipping)
+				painter.setPen(QColor(artist_color))
 				artist_layout.draw(painter, QPointF(x, y+app_constants.THUMB_H_SIZE+t_h),
 					   clip=clipping)
 				#painter.fillRect(option.rect, QColor)
@@ -950,16 +954,16 @@ class GridDelegate(QStyledItemDelegate):
 				txt_layout.draw(painter, QPointF(x, y+h*0.3))
 				painter.restore()
 
-			#if app_constants.DEBUG:
-			#	painter.save()
-			#	painter.setBrush(QBrush(QColor("red")))
-			#	painter.setPen(QColor("white"))
-			#	txt_l = self.title_font_m.width(str(gallery.id))
-			#	painter.drawRect(x, y, txt_l*2, self.title_font_m.height())
-			#	painter.drawText(x+1, y+11, str(gallery.id))
-			#	painter.restore()
-			#if option.state & QStyle.State_Selected:
-			#	painter.setPen(QPen(option.palette.highlightedText().color()))
+			if app_constants.DEBUG:
+				painter.save()
+				painter.setBrush(QBrush(QColor("red")))
+				painter.setPen(QColor("white"))
+				txt_l = self.title_font_m.width(str(gallery.id))
+				painter.drawRect(x, y+40, txt_l*2, self.title_font_m.height())
+				painter.drawText(x+1, y+51, str(gallery.id))
+				painter.restore()
+			if option.state & QStyle.State_Selected:
+				painter.setPen(QPen(option.palette.highlightedText().color()))
 		else:
 			super().paint(painter, option, index)
 

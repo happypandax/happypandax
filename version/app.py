@@ -604,9 +604,7 @@ class AppWindow(QMainWindow):
 		# debug specfic code
 		if app_constants.DEBUG:
 			def debug_func():
-				from pyqtgraph import examples
-				print("yes!")
-				examples.run()
+				pass
 		
 			debug_btn = QToolButton()
 			debug_btn.setText("DEBUG BUTTON")
@@ -817,7 +815,6 @@ class AppWindow(QMainWindow):
 							def append_to_model(x):
 								self.manga_list_view.sort_model.insertRows(x, None, len(x))
 								self.manga_list_view.sort_model.init_search(self.manga_list_view.sort_model.current_term)
-
 							class A(QObject):
 								done = pyqtSignal()
 								prog = pyqtSignal(int)
@@ -1151,10 +1148,13 @@ class AppWindow(QMainWindow):
 			log.exception('Flush temp on exit: FAIL')
 
 		# DB
-		log_i("Analyzing database...")
-		gallerydb.GalleryDB.analyze()
-		log_i("Closing database...")
-		gallerydb.GalleryDB.close()
+		try:
+			log_i("Analyzing database...")
+			gallerydb.GalleryDB.analyze()
+			log_i("Closing database...")
+			gallerydb.GalleryDB.close()
+		except:
+			pass
 		self.download_window.close()
 
 		# check if there is db activity

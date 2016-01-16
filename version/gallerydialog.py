@@ -1,4 +1,4 @@
-﻿import queue, os, threading, random, logging, time, scandir
+import queue, os, threading, random, logging, time, scandir
 from datetime import datetime
 
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QDesktopWidget, QGroupBox,
@@ -202,7 +202,6 @@ class GalleryDialog(QWidget):
 
 	def _find_combobox_match(self, combobox, key, default):
 		f_index = combobox.findText(key, Qt.MatchFixedString)
-		print(key)
 		if f_index != -1:
 			combobox.setCurrentIndex(f_index)
 		else:

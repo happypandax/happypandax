@@ -141,6 +141,7 @@ class SettingsDialog(QWidget):
 		self._find_combobox_match(self.g_type, app_constants.G_DEF_TYPE, 0)
 		self.g_status.addItems(app_constants.G_STATUS)
 		self._find_combobox_match(self.g_status, app_constants.G_DEF_STATUS, 0)
+		self.sidebar_widget_hidden.setChecked(app_constants.SHOW_SIDEBAR_WIDGET)
 		self.send_2_trash.setChecked(app_constants.SEND_FILES_TO_TRASH)
 		self.subfolder_as_chapters.setChecked(app_constants.SUBFOLDER_AS_GALLERY)
 		self.extract_gallery_before_opening.setChecked(app_constants.EXTRACT_CHAPTER_BEFORE_OPENING)
@@ -251,6 +252,8 @@ class SettingsDialog(QWidget):
 		set = settings.set
 
 		# App / General
+		app_constants.SHOW_SIDEBAR_WIDGET = self.sidebar_widget_hidden.isChecked()
+		set(app_constants.SHOW_SIDEBAR_WIDGET, 'Application', 'show sidebar widget')
 		app_constants.SEND_FILES_TO_TRASH = self.send_2_trash.isChecked()
 		set(app_constants.SEND_FILES_TO_TRASH, 'Application', 'send files to trash')
 
@@ -262,7 +265,6 @@ class SettingsDialog(QWidget):
 				g_custom_lang.append(l)
 
 		app_constants.G_CUSTOM_LANGUAGES = g_custom_lang
-		print(g_custom_lang)
 		set(app_constants.G_CUSTOM_LANGUAGES, 'General', 'gallery custom languages')
 		if self.g_languages.currentText():
 			app_constants.G_DEF_LANGUAGE = self.g_languages.currentText()
@@ -546,6 +548,8 @@ class SettingsDialog(QWidget):
 		application_general, app_general_m_l = new_tab('General', application, True)
 
 		# App / General
+		self.sidebar_widget_hidden = QCheckBox("Show sidebar widget on startup")
+		app_general_m_l.addRow(self.sidebar_widget_hidden)
 		self.send_2_trash = QCheckBox("Send deleted files to recycle bin", self)
 		self.send_2_trash.setToolTip("When unchecked, files will get deleted permanently and be unrecoverable!")
 		app_general_m_l.addRow(self.send_2_trash)
@@ -615,8 +619,8 @@ class SettingsDialog(QWidget):
 		self.subfolder_as_chapters = QCheckBox("Subdirectiories should be treated as standalone galleries instead of chapters (applies in archives too)")
 		self.subfolder_as_chapters.setToolTip("This option will enable creating standalone galleries for each subdirectiories found recursively when importing."+
 										"\nDefault action is treating each subfolder found as chapters of a gallery.")
-		extract_gallery_info = QLabel("Note: This option has no effect when turned off if path to viewer is not specified.")
-		self.extract_gallery_before_opening = QCheckBox("Extract archive before opening (only turn off if your viewer supports it)")
+		extract_gallery_info = QLabel("Note: This option has no effect when turned off if path to external viewer is not specified.")
+		self.extract_gallery_before_opening = QCheckBox("Extract archive before opening (Uncheck only if your viewer supports it)")
 		self.open_galleries_sequentially = QCheckBox("Open chapters sequentially (Note: has no effect if path to viewer is not specified)")
 		subf_info = QLabel("Behaviour of 'Scan for new galleries on startup' option will be affected.")
 		subf_info.setWordWrap(True)

@@ -1,4 +1,4 @@
-﻿#"""
+#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -591,10 +591,10 @@ def open_chapter(chapterpath, archive=None):
 			else:
 				zip.extract_all(t_p) # Compatibility reasons.. TODO: REMOVE IN BETA
 			if app_constants.USE_EXTERNAL_VIEWER:
-				filepath = os.path.join(t_p, [x for x in sorted([y.name for y in scandir.scandir(t_p)])\
-					if x.lower().endswith(IMG_FILES)][0]) # Find first page
 				filepath = t_p
 			else:
+				filepath = os.path.join(t_p, [x for x in sorted([y.name for y in scandir.scandir(t_p)])\
+					if x.lower().endswith(IMG_FILES)][0]) # Find first page
 				filepath = os.path.abspath(filepath)
 		else:
 			if is_archive or chapterpath.endswith(ARCHIVE_FILES):

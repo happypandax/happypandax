@@ -310,6 +310,8 @@ class GalleryDB(DBBase):
 		try:
 			if not os.path.samefile(path, app_constants.NO_IMAGE_PATH):
 				os.unlink(path)
+		except FileNotFoundError:
+			pass
 		except:
 			log.exception('Failed to delete thumb {}'.format(os.path.split(path)[1].encode(errors='ignore')))
 
