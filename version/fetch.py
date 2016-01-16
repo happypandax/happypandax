@@ -411,7 +411,7 @@ class Fetch(QObject):
 				self.fetch_metadata(gallery, hen, x == len(checked_pre_url_galleries))
 
 		if multiple_hit_galleries:
-			for x, g_data in enumerate(self.multiple_hit_galleries, 1):
+			for x, g_data in enumerate(multiple_hit_galleries, 1):
 				gallery = g_data[0]
 				title_url_list = g_data[1]
 				self.AUTO_METADATA_PROGRESS.emit("Multiple galleries found for gallery: {}".format(gallery.title))
