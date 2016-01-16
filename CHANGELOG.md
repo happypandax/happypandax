@@ -1,20 +1,19 @@
 *Happypanda v0.27*
 - Many visual changes
-- New ribbon indicating gallery type in gridview
+	+ Including new ribbon indicating gallery type in gridview
 - New sidebar widget:
 	+ New feature: Gallery lists
 	+ New feature: Artists list
 	+ Moved *NS & Tags* treelist from settings to sidebar widget
-- Added a "gallery source is missing" indicator in grid view
 - Metadata fetcher:
 	+ Galleries with multiple hits found will now come last in the fetching process
 	+ Added fallback system to fetch metadata from other sources than EH
 		+ Currently supports panda.chaika.moe
-
+- Added a "gallery source is missing" indicator in grid view
 - Removed EH member_id and pass_hash in favor for EH login method
 - Added new sort option: *last read*
 - Added option to exclude/include gallery from auto metadata fetcher in the contextmenu
-- Added general key shortcuts (read about the not so obvious shortcuts in the wiki)
+- Added general key shortcuts (read about the not so obvious shortcuts [here](https://github.com/Pewpews/happypanda/wiki/Keyboard-Shortcuts))
 - Added support for new metafile: *HDoujin downloader*'s default into.txt file
 - Updated database to version 0.23:
 	- Gallery lists addition
@@ -41,6 +40,7 @@
 	+ Fixed hand when checking for duplicates
 	+ Fixed database rebuild issues
 	+ Potentially fixed a bug preventing archives from being imported, courtesy of KuroiKitsu
+	+ Many other minor bugs
 
 *Happypanda v0.26*
 - Startup is now slighty faster

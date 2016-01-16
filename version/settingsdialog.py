@@ -1147,11 +1147,11 @@ class SettingsDialog(QWidget):
 		open_hp_folder.setFixedWidth(open_hp_folder.width())
 		about_layout.addWidget(open_hp_folder)
 
-		# About / DB Overview
-		about_db_overview, about_db_overview_m_l = new_tab('DB Overview', about)
-		about_stats_tab_widget = misc_db.DBOverview(self.parent_widget)
-		about_db_overview_m_l.addRow(about_stats_tab_widget)
-		about_db_overview.setEnabled(False)
+		## About / DB Overview
+		#about_db_overview, about_db_overview_m_l = new_tab('DB Overview', about)
+		#about_stats_tab_widget = misc_db.DBOverview(self.parent_widget)
+		#about_db_overview_m_l.addRow(about_stats_tab_widget)
+		#about_db_overview.setEnabled(False)
 
 		# About / Troubleshooting
 		about_troubleshoot_page = QWidget()
@@ -1176,6 +1176,12 @@ class SettingsDialog(QWidget):
 		reg_info = QLabel(app_constants.REGEXCHEAT)
 		reg_info.setWordWrap(True)
 		about_s_regex_l.addRow(reg_info)
+
+		# About / Keyboard shortcuts
+		about_k_shortcuts, about_k_shortcuts_l = new_tab("Keyboard Shortcuts", about, True)
+		k_short_info = QLabel(app_constants.KEYBOARD_SHORTCUTS_INFO)
+		k_short_info.setWordWrap(True)
+		about_k_shortcuts_l.addRow(k_short_info)
 
 	def add_folder_monitor(self, path=''):
 		if not isinstance(path, str):

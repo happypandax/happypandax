@@ -1,4 +1,4 @@
-﻿#"""
+#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -65,7 +65,6 @@ class Fetch(QObject):
 		self.galleries = []
 		self.galleries_in_queue = []
 		self.error_galleries = []
-		self.multiple_hit_galleries = []
 		self._hen_list = []
 
 		#filter
@@ -327,6 +326,7 @@ class Fetch(QObject):
 
 		fetched_galleries = []
 		checked_pre_url_galleries = []
+		multiple_hit_galleries = []
 		for x, gallery in enumerate(galleries, 1):
 			log_i("Checking gallery url")
 
@@ -389,7 +389,7 @@ class Fetch(QObject):
 				title = title_url_list[0][0]
 				url = title_url_list[0][1]
 			else:
-				self.multiple_hit_galleries.append([gallery, title_url_list])
+				multiple_hit_galleries.append([gallery, title_url_list])
 				if x == len(galleries):
 					self.fetch_metadata(hen=hen)
 				continue
@@ -410,7 +410,7 @@ class Fetch(QObject):
 					x, len(checked_pre_url_galleries), gallery.title))
 				self.fetch_metadata(gallery, hen, x == len(checked_pre_url_galleries))
 
-		if self.multiple_hit_galleries:
+		if multiple_hit_galleries:
 			for x, g_data in enumerate(self.multiple_hit_galleries, 1):
 				gallery = g_data[0]
 				title_url_list = g_data[1]
@@ -422,7 +422,7 @@ class Fetch(QObject):
 				user_choice = self.GALLERY_PICKER_QUEUE.get()
 
 				if not user_choice:
-					if x == len(galleries):
+					if x == len(multiple_hit_galleries):
 						self.fetch_metadata(hen=hen)
 					continue
 
@@ -435,8 +435,9 @@ class Fetch(QObject):
 						self.GALLERY_EMITTER.emit(gallery, None, None)
 				gallery.temp_url = url
 				self.AUTO_METADATA_PROGRESS.emit("({}/{}) Adding to queue: {}".format(
-					x, len(self.multiple_hit_galleries), gallery.title))
-				self.fetch_metadata(gallery, hen, x == len(self.multiple_hit_galleries))
+					x, len(multiple_hit_galleries), gallery.title))
+				self.fetch_metadata(gallery, hen, x == len(multiple_hit_galleries))
+
 
 	def _website_checker(self, url):
 		if not url:
@@ -457,7 +458,6 @@ class Fetch(QObject):
 		Appends or replaces metadata with the new fetched metadata.
 		"""
 		log_i('Initiating auto metadata fetcher')
-		self.multiple_hit_galleries.clear()
 		self._hen_list = pewnet.hen_list_init()
 		if self.galleries and not app_constants.GLOBAL_EHEN_LOCK:
 			log_i('Auto metadata fetcher is now running')

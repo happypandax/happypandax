@@ -1,4 +1,4 @@
-﻿#"""
+#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -36,6 +36,8 @@ def start(test=False):
 	else:
 		log_path = 'happypanda.log'
 		debug_log_path = 'happypanda_debug.log'
+	if os.path.exists('cacert.pem'):
+		os.environ["REQUESTS_CA_BUNDLE"] = os.path.join(os.getcwd(), "cacert.pem")
 
 	parser = argparse.ArgumentParser(prog='Happypanda',
 								  description='A manga/doujinshi manager with tagging support')

@@ -1,4 +1,4 @@
-﻿#"""
+#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -292,11 +292,7 @@ class AppWindow(QMainWindow):
 				log_d('Checking Update')
 				time.sleep(1.5)
 				try:
-					if os.path.exists('cacert.pem'):
-						r = requests.get("https://raw.githubusercontent.com/Pewpews/happypanda/master/VS.txt",
-							  verify='cacert.pem')
-					else:
-						r = requests.get("https://raw.githubusercontent.com/Pewpews/happypanda/master/VS.txt")
+					r = requests.get("https://raw.githubusercontent.com/Pewpews/happypanda/master/VS.txt")
 					a = r.text
 					vs = a.strip()
 					self.UPDATE_CHECK.emit(vs)

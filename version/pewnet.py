@@ -922,7 +922,7 @@ class EHen(CommenHen):
 			'PassWord':password
 			}
 
-		eh_c = requests.post('https://forums.e-hentai.org/index.php?act=Login&CODE=01', data=p, verify='cacert.pem').cookies.get_dict()
+		eh_c = requests.post('https://forums.e-hentai.org/index.php?act=Login&CODE=01', data=p).cookies.get_dict()
 		exh_c = requests.get('http://exhentai.org', cookies=eh_c).cookies.get_dict()
 
 		eh_c.update(exh_c)
