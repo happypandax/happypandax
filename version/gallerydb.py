@@ -1174,8 +1174,10 @@ class HashDB(DBBase):
 			elif gallery.chapters[chapter].pages == len(hashes.keys()):
 				skip_gen = True
 				if page == "mid":
-					print("Len of hashes", len(hashes))
-					hashes = {'mid':hashes[len(hashes)//2]}
+					try:
+						hashes = {'mid':hashes[len(hashes)//2]}
+					except KeyError:
+						skip_gen = False
 
 
 		if not skip_gen:
