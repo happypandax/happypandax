@@ -1,3 +1,47 @@
+*Happypanda v0.27*
+- Many visual changes
+- New ribbon indicating gallery type in gridview
+- New sidebar widget:
+	+ New feature: Gallery lists
+	+ New feature: Artists list
+	+ Moved *NS & Tags* treelist from settings to sidebar widget
+- Added a "gallery source is missing" indicator in grid view
+- Metadata fetcher:
+	+ Galleries with multiple hits found will now come last in the fetching process
+	+ Added fallback system to fetch metadata from other sources than EH
+		+ Currently supports panda.chaika.moe
+
+- Removed EH member_id and pass_hash in favor for EH login method
+- Added new sort option: *last read*
+- Added option to exclude/include gallery from auto metadata fetcher in the contextmenu
+- Added general key shortcuts (read about the not so obvious shortcuts in the wiki)
+- Added support for new metafile: *HDoujin downloader*'s default into.txt file
+- Updated database to version 0.23:
+	- Gallery lists addition
+	- New unique indexes in some tables
+	- Thumbnail paths are now relative (removing the need to rebuild thumbs when moving Happypanda folder)
+- Settings:
+	+ Added option to force support for high DPI displays
+	+ Added option to control the gallery size in grid view
+	+ Enabled most *Gallery* options in the *Visual* section for OSX
+	+ Added options to customize gallery type ribbon colors
+	+ Added options to set default gallery values
+	+ Added a way to add custom languages in settings
+	+ Added option to send deleted files  to recycle bin
+	+ Added option to hide the sidebar widget on startup
+- Bug fixes:
+	+ Fixed a bug causing some external viewers to only be able to view the first image
+	+ Fixed metadata disappearance bug (hopefully, for real this time!)
+	+ Fixed decoding issues preventing some galleries from getting imported
+	+ Fixed lots of critical database issues requiring a rebuild for updating users
+	+ Fixed gallery downloading from g.e-hentai
+	+ Fixed bug causing "Show in library" to not work properly
+	+ Fixed a bug causing a hang while fetching metadata
+	+ Fixed a bug causing autometadata fetcher to sometimes fail fetching for some galleries
+	+ Fixed hand when checking for duplicates
+	+ Fixed database rebuild issues
+	+ Potentially fixed a bug preventing archives from being imported, courtesy of KuroiKitsu
+
 *Happypanda v0.26*
 - Startup is now slighty faster
 - New redesigned gallery metadata window!
