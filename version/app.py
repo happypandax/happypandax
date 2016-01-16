@@ -1,4 +1,4 @@
-#"""
+﻿#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -374,7 +374,7 @@ class AppWindow(QMainWindow):
 						if index:
 							gallery.CommonView.scroll_to_index(self.app_instance.get_current_view(), index)
 
-				g_popup = io_misc.GalleryPopup(('Fecthing metadata for these galleries failed.' + ' Check happypanda.log for details.', galleries), self, menu=GalleryContextMenu())
+				g_popup = io_misc.GalleryPopup(('Fecthing metadata for these galleries failed.' + ' Check happypanda.log for details.', galleries), self, menu=GalleryContextMenu)
 				#errors = {g[0].id: g[1] for g in status}
 				#for g_item in g_popup.get_all_items():
 				#	g_item.setToolTip(errors[g_item.gallery.id])
@@ -1029,7 +1029,7 @@ class AppWindow(QMainWindow):
 								self.notification_bar.add_text("{} new galleries were discovered in one of your monitored directories".format(len(galleries)))
 							text = "These new galleries were discovered! Do you want to add them?"\
 								if len(galleries) > 1 else "This new gallery was discovered! Do you want to add it?"
-							g_popup = io_misc.GalleryPopup((text, galleries), self, NewGalleryMenu())
+							g_popup = io_misc.GalleryPopup((text, galleries), self, NewGalleryMenu)
 							buttons = g_popup.add_buttons('Add', 'Close')
 
 							def populate_n_close():
@@ -1231,7 +1231,7 @@ class AppWindow(QMainWindow):
 				notifbar.add_text('Found {} duplicates!'.format(len(duplicates)))
 				log_d('Found {} duplicates'.format(len(duplicates)))
 
-				g_widget = io_misc.GalleryPopup(("These galleries are found to" + " be duplicates.", duplicates), self, menu=GalleryContextMenu())
+				g_widget = io_misc.GalleryPopup(("These galleries are found to" + " be duplicates.", duplicates), self, menu=GalleryContextMenu)
 				if g_widget.graphics_blur:
 					g_widget.graphics_blur.setEnabled(False)
 				buttons = g_widget.add_buttons("Close")
