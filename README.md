@@ -17,8 +17,8 @@ I'm here if you have any questions!
 # How to install and run
 #### Windows
 1. Download the archive from [releases](https://github.com/Pewpews/happypanda/releases)
-2. Extract the archive in it's own folder (for the sake of cleanliness)
-3. Happypanda.exe on windows and double click on it!
+2. Extract the archive in it's own folder
+3. Find Happypanda.exe and double click on it!
 
 #### Mac and Linux
 see [INSTALL.md](INSTALL.md)
@@ -26,14 +26,13 @@ see [INSTALL.md](INSTALL.md)
 # Features
 - Portable, self-contained in folder and cross-platform
 - Low memory footprint
-- 2 view modes: thumbnails in a grid and a simple table
 - Advanced gallery search with regex support
 - Gallery tagging: userdefined namespaces and tags
-- Gallery metadata fetching from the web (Currently only supports g.e-hentai, exhentai and indirectly panda.chaika.moe)
-- Gallery downloading from the web (Currently supports g.e-hentai, exhentai and panda.chaika.moe URLs)
-- Duplicate detecting when adding galleries
-- Multiple ways of adding galleries to make it as convienient as possible! (like folder monitoring, etc.
-- Recursive directory/archive scanning. Can treat each subfolder as a gallery (applies to archives too), or as chapters of gallery!
+- Gallery metadata fetching from the web (supports various sources)
+- Gallery downloading from the web (supports various sources)
+- Folder monitoring
+- Multiple ways of adding galleries to make it as convienient as possible!
+- Recursive directory/archive scanning
 - Supports ZIP/CBZ, RAR/CBR and directories with loose files
 - Customizable by lots of settings
 - And lots more...

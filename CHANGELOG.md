@@ -16,6 +16,7 @@
 - Added option to exclude/include gallery from auto metadata fetcher in the contextmenu
 - Added general key shortcuts (read about the not so obvious shortcuts [here](https://github.com/Pewpews/happypanda/wiki/Keyboard-Shortcuts))
 - Added support for new metafile: *HDoujin downloader*'s default into.txt file
+- Added support for panda.chaika.moe URLs when fetching metadata
 - Updated database to version 0.23:
 	- Gallery lists addition
 	- New unique indexes in some tables
