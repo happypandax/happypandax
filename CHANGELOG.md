@@ -9,6 +9,7 @@
 	+ Galleries with multiple hits found will now come last in the fetching process
 	+ Added fallback system to fetch metadata from other sources than EH
 		+ Currently supports panda.chaika.moe
+- Gallery downloader should now be more tolerant to mistakes in URLs
 - Added a "gallery source is missing" indicator in grid view
 - Removed EH member_id and pass_hash in favor for EH login method
 - Added new sort option: *last read*
