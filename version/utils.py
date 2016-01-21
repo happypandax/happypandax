@@ -841,7 +841,7 @@ def title_parser(title):
 		if title.endswith(x):
 			title = title[:-len(x)]
 
-	parsed_title = {'title':"", 'artist':"", 'language':"Other"}
+	parsed_title = {'title':"", 'artist':"", 'language':""}
 	try:
 		a = regex.findall('((?<=\[) *[^\]]+( +\S+)* *(?=\]))', title)
 		assert len(a) != 0

@@ -233,16 +233,17 @@ def default_chap_exec(gallery_or_id, chap, only_values=False):
 
 def default_exec(object):
 	object.set_defaults()
+	print(object.language)
 	def check(obj):
 		if obj == "None":
 			return None
 		else:
 			return obj
-	executing = ["""INSERT INTO series(title, artist, profile, series_path, is_archive,
-					info, type, fav, status, pub_date, date_added, last_read, link,
-					times_read, exed)
-				VALUES(:title, :artist, :profile, :series_path, :is_archive, :info, :type, :fav,
-					:status, :pub_date, :date_added, :last_read, :link, :times_read, :exed)""",
+	executing = ["""INSERT INTO series(title, artist, profile, series_path, is_archive, path_in_archive,
+					info, type, fav, language, status, pub_date, date_added, last_read, link,
+					times_read, db_v, exed)
+				VALUES(:title, :artist, :profile, :series_path, :is_archive, :path_in_archive, :info, :type, :fav, :language,
+					:status, :pub_date, :date_added, :last_read, :link, :times_read, :db_v, :exed)""",
 				{
 				'title':check(object.title),
 				'artist':check(object.artist),

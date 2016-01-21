@@ -550,7 +550,8 @@ class GalleryModel(QAbstractTableModel):
 		log_d('Add rows: Began inserting')
 		gallerydb.GalleryDB.begin()
 		for gallery in list_of_gallery:
-			gallerydb.add_method_queue(gallerydb.GalleryDB.add_gallery_return, True, gallery)
+			gallerydb.GalleryDB.add_gallery_return(gallery)
+			#gallerydb.add_method_queue(gallerydb.GalleryDB.add_gallery_return, True, gallery)
 			gallery.profile = gallerydb.PROFILE_TO_MODEL.get()
 			self._data.insert(position, gallery)
 		gallerydb.add_method_queue(gallerydb.GalleryDB.end, True)
