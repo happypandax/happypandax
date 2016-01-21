@@ -612,9 +612,9 @@ class SettingsDialog(QWidget):
 		self.g_languages.setEditable(True)
 		g_def_values_l.addRow("Default Language", self.g_languages)
 		self.g_type = QComboBox(self)
-		g_def_values_l.addRow("Default Status", self.g_type)
+		g_def_values_l.addRow("Default Type", self.g_type)
 		self.g_status = QComboBox(self)
-		g_def_values_l.addRow("Default Type", self.g_status)
+		g_def_values_l.addRow("Default Status", self.g_status)
 
 		self.subfolder_as_chapters = QCheckBox("Subdirectiories should be treated as standalone galleries instead of chapters (applies in archives too)")
 		self.subfolder_as_chapters.setToolTip("This option will enable creating standalone galleries for each subdirectiories found recursively when importing."+
