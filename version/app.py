@@ -1217,7 +1217,7 @@ class AppWindow(QMainWindow):
 					gallery.CommonView.scroll_to_index(self.viewer, index)
 
 			def delete_gallery(self, source=False):
-				index = gallery.CommonView.find_index(self.viewer, self.gallery_widget.gallery.id, True)
+				index = gallery.CommonView.find_index(self.viewer, self.gallery_widget.gallery.id, False)
 				if index and index.isValid():
 					self.viewer.remove_gallery([index], source)
 					if self.gallery_widget.parent_widget.gallery_layout.count() == 1:
