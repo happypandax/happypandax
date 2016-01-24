@@ -187,7 +187,7 @@ class ExProperties(Properties):
 	def check(self):
 		"Returns true if usable"
 		if self.site == self.EHENTAI:
-			if "ipb_member_id" in self.cookies and "ipb_pass_hash" in self.cookies:
+			if "ipb_session_id" in self.cookies and "ipb_pass_hash" in self.cookies:
 				return True
 		elif self.site == self.NHENTAI:
 			if "sessionid" in self.cookies:

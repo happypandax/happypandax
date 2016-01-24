@@ -770,7 +770,7 @@ class EHen(CommenHen):
 		Checks if user is logged in
 		"""
 
-		if 'ipb_member_id' in cookies:
+		if 'ipb_session_id' in cookies:
 			return True
 		else:
 			return False
