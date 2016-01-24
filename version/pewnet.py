@@ -924,6 +924,9 @@ class EHen(CommenHen):
 
 		eh_c = requests.post('https://forums.e-hentai.org/index.php?act=Login&CODE=01', data=p).cookies.get_dict()
 		exh_c = requests.get('http://exhentai.org', cookies=eh_c).cookies.get_dict()
+		if app_constants.DEBUG:
+			print("EH Cookies:", eh_c)
+			print("EX Cookies:", exh_c)
 
 		eh_c.update(exh_c)
 
