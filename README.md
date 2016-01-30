@@ -1,3 +1,4 @@
+[![Stories in Ready](https://badge.waffle.io/Pewpews/happypanda.png?label=ready&title=Ready)](https://waffle.io/Pewpews/happypanda)
 Development is done in alpha branch
 
 For future plans, see [issues](https://github.com/Pewpews/happypanda/issues)
