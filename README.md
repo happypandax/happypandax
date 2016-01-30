@@ -1,13 +1,14 @@
-[![Stories in Ready](https://badge.waffle.io/Pewpews/happypanda.png?label=ready&title=Ready)](https://waffle.io/Pewpews/happypanda)
+I'm here if you have any questions!
+
+[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Pewpews/happypanda?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 Development is done in alpha branch
+
+[![Stories in Ready](https://badge.waffle.io/Pewpews/happypanda.png?label=In%20Progress&title=Features%20In%20Progress)](https://waffle.io/Pewpews/happypanda)
 
 For future plans, see [issues](https://github.com/Pewpews/happypanda/issues)
 
 For general documentation, check the [wiki](https://github.com/Pewpews/happypanda/wiki)
-
-I'm here if you have any questions!
-
-[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Pewpews/happypanda?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 # Screenshots
 <img src="misc/screenshot1.png" width="300">
