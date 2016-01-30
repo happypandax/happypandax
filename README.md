@@ -16,15 +16,6 @@ For general documentation, check the [wiki](https://github.com/Pewpews/happypand
 <img src="misc/screenshot3.png" width="300">
 <img src="misc/screenshot4.png" width="300">
 
-# How to install and run
-#### Windows
-1. Download the archive from [releases](https://github.com/Pewpews/happypanda/releases)
-2. Extract the archive in it's own folder
-3. Find Happypanda.exe and double click on it!
-
-#### Mac and Linux
-see [INSTALL.md](INSTALL.md)
-
 # Features
 - Portable, self-contained in folder and cross-platform
 - Low memory footprint
@@ -38,6 +29,19 @@ see [INSTALL.md](INSTALL.md)
 - Supports ZIP/CBZ, RAR/CBR and directories with loose files
 - Customizable by lots of settings
 - And lots more...
+
+# How to install and run
+#### Windows
+1. Download the archive from [releases](https://github.com/Pewpews/happypanda/releases)
+2. Extract the archive in it's own folder
+3. Find Happypanda.exe and double click on it!
+
+#### Mac and Linux
+see [INSTALL.md](INSTALL.md)
+
+# How to update
+Overwrite your previous installation.
+More info in the [wiki](https://github.com/Pewpews/happypanda/wiki)
 
 # Dependencies
 - Qt5 (Install this first) >= 5.4
