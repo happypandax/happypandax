@@ -45,6 +45,9 @@ see [INSTALL.md](INSTALL.md)
 Overwrite your previous installation.
 More info in the [wiki](https://github.com/Pewpews/happypanda/wiki)
 
+# Misc.
+People wanting to import galleries from the Pururin database torrent should find [this](https://github.com/Exedge/Convertor) useful.
+
 # Dependencies
 - Qt5 (Install this first) >= 5.4
 - PyQt5
