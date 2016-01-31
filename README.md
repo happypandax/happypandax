@@ -4,7 +4,9 @@ I'm here if you have any questions!
 
 Development is done in alpha branch
 
-[![Stories in Ready](https://badge.waffle.io/Pewpews/happypanda.png?label=In%20Progress&title=Features%20In%20Progress)](https://waffle.io/Pewpews/happypanda)
+[![Stories in Progress](https://badge.waffle.io/Pewpews/happypanda.png?label=In%20Progress&title=Features%20In%20Progress)](https://waffle.io/Pewpews/happypanda)
+
+[![Stories in Before next release](https://badge.waffle.io/Pewpews/happypanda.png?label=Before%20next%20release&title=Before%20next%20release)](https://waffle.io/Pewpews/happypanda)
 
 For future plans, see [issues](https://github.com/Pewpews/happypanda/issues)
 
