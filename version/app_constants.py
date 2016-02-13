@@ -118,6 +118,7 @@ LOOK_NEW_GALLERY_AUTOADD = get(False, 'Application', 'look new gallery autoadd',
 ENABLE_MONITOR = get(True, 'Application', 'enable monitor', bool)
 MONITOR_PATHS = [p for p in get([], 'Application', 'monitor paths', list) if os.path.exists(p)]
 IGNORE_PATHS = get([], 'Application', 'ignore paths', list)
+IGNORE_EXTS = get([], 'Application', 'ignore exts', list)
 SCANNING_FOR_GALLERIES = False # if a scan for new galleries is being done
 
 # GENERAL

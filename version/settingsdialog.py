@@ -163,6 +163,18 @@ class SettingsDialog(QWidget):
 			self.add_folder_monitor(path)
 
 		# App / Monitor / Ignore list
+		for ext in app_constants.IGNORE_EXTS:
+			if ext == 'Folder':
+				self.ignore_folder.setChecked(True)
+			if ext == 'ZIP':
+				self.ignore_zip.setChecked(True)
+			if ext == 'CBZ':
+				self.ignore_cbz.setChecked(True)
+			if ext == 'RAR':
+				self.ignore_rar.setChecked(True)
+			if ext == 'CBR':
+				self.ignore_cbr.setChecked(True)
+
 		for path in app_constants.IGNORE_PATHS:
 			self.add_ignore_path(path)
 
@@ -328,6 +340,13 @@ class SettingsDialog(QWidget):
 		set(paths, 'Application', 'monitor paths')
 		app_constants.MONITOR_PATHS = paths
 		# App / Monitor / ignore list
+		exts_list = []
+		for ext in [self.ignore_folder, self.ignore_zip, self.ignore_cbz, self.ignore_rar, self.ignore_cbr]:
+			if ext.isChecked():
+				exts_list.append(ext.text())
+		set(exts_list, 'Application', 'ignore exts')
+		app_constants.IGNORE_EXTS = exts_list
+
 		paths = []
 		ignore_p_widgets = self.take_all_layout_widgets(self.ignore_path_l)
 		for x, l_edit in enumerate(ignore_p_widgets):
@@ -698,6 +717,21 @@ class SettingsDialog(QWidget):
 
 		# App / Ignore
 		app_ignore, app_ignore_m_l = new_tab('Ignore', application, True)
+		ignore_ext_group, ignore_ext_l = groupbox('Folder && File extensions (Check to ignore)', QVBoxLayout, app_monitor_dummy)
+		app_ignore_m_l.addRow(ignore_ext_group)
+		ignore_ext_list_l = FlowLayout()
+		ignore_ext_l.addLayout(ignore_ext_list_l)
+		self.ignore_folder = QCheckBox("Folder", ignore_ext_group)
+		ignore_ext_list_l.addWidget(self.ignore_folder)
+		self.ignore_zip = QCheckBox("ZIP", ignore_ext_group)
+		ignore_ext_list_l.addWidget(self.ignore_zip)
+		self.ignore_cbz = QCheckBox("CBZ", ignore_ext_group)
+		ignore_ext_list_l.addWidget(self.ignore_cbz)
+		self.ignore_rar = QCheckBox("RAR", ignore_ext_group)
+		ignore_ext_list_l.addWidget(self.ignore_rar)
+		self.ignore_cbr = QCheckBox("CBR", ignore_ext_group)
+		ignore_ext_list_l.addWidget(self.ignore_cbr)
+
 		app_ignore_group, app_ignore_list_l = groupbox('List', QVBoxLayout, app_monitor_dummy)
 		app_ignore_m_l.addRow(app_ignore_group)
 		add_buttons_l = QHBoxLayout()

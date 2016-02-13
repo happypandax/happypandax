@@ -542,10 +542,14 @@ class GalleryHandler(FileSystemEventHandler, QObject):
 		#self.g_queue = []
 
 	def file_filter(self, event):
-		name = os.path.split(event.src_path)[1]
-		if event.is_directory or name.endswith(tuple(utils.ARCHIVE_FILES)):
+		_, ext = os.path.splitext(event.src_path)
+		if event.is_directory or ext in utils.ARCHIVE_FILES:
+			if event.is_directory and "Folder" in app_constants.IGNORE_EXTS:
+				return False
+			if ext[1:].upper() in app_constants.IGNORE_EXTS:
+				return False
 			return True
-		else: return False
+		return False
 
 	#def process_queue(self, type):
 	#	if self.g_queue:
