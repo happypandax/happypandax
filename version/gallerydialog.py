@@ -283,6 +283,8 @@ class GalleryDialog(QWidget):
 		self.title_edit.setText(parsed['title'])
 		self.author_edit.setText(parsed['artist'])
 		self.path_lbl.setText(name)
+		if not parsed['language']:
+			parsed['language'] = app_constants.G_DEF_LANGUAGE
 		l_i = self.lang_box.findText(parsed['language'])
 		if l_i != -1:
 			self.lang_box.setCurrentIndex(l_i)

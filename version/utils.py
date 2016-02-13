@@ -850,13 +850,17 @@ def title_parser(title):
 
 		try:
 			assert a[1]
-			lang = ['English', 'Japanese']
+			lang = app_constants.G_LANGUAGES + app_constants.G_CUSTOM_LANGUAGES
 			for x in a:
 				l = x[0].strip()
 				l = l.lower()
 				l = l.capitalize()
 				if l in lang:
-					parsed_title['langauge'] = l
+					parsed_title['language'] = l
+					break
+			else:
+				parsed_title['language'] = app_constants.G_DEF_LANGUAGE
+
 		except IndexError:
 			pass
 
@@ -867,11 +871,11 @@ def title_parser(title):
 		t = t.replace('[]', '')
 		final_title = t.strip()
 		parsed_title['title'] = final_title
-
-		return parsed_title
 	except AssertionError:
 		parsed_title['title'] = title
-		return parsed_title
+
+	print(parsed_title)
+	return parsed_title
 
 import webbrowser
 def open_web_link(url):

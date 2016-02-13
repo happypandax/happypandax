@@ -190,7 +190,7 @@ G_DEF_LANGUAGE = get('English', 'General', 'gallery default language', str)
 G_CUSTOM_LANGUAGES = get([], 'General', 'gallery custom languages', list)
 G_DEF_STATUS = get('Completed', 'General', 'gallery default status', str)
 G_DEF_TYPE = get('Doujinshi', 'General', 'gallery default type', str)
-G_LANGUAGES = ["English", "Japanese", "Other"]
+G_LANGUAGES = ["English", "Japanese", "Chinese", "Other"]
 G_STATUS = ["Ongoing", "Completed", "Unknown"]
 G_TYPES = ["Manga", "Doujinshi", "Artist CG Sets", "Game CG Sets", "Western", "Image Sets", "Non-H", "Cosplay", "Other"]
 
