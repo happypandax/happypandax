@@ -697,12 +697,12 @@ def get_gallery_img(path, archive=None):
 def tag_to_string(gallery_tag, simple=False):
 	"""
 	Takes gallery tags and converts it to string, returns string
-	if simple is set to True, returns a CSV string, else a dict looking string
+	if simple is set to True, returns a CSV string, else a dict-like string
 	"""
 	assert isinstance(gallery_tag, dict), "Please provide a dict like this: {'namespace':['tag1']}"
 	string = ""
 	if not simple:
-		for n, namespace in enumerate(gallery_tag, 1):
+		for n, namespace in enumerate(sorted(gallery_tag), 1):
 			if len(gallery_tag[namespace]) != 0:
 				if namespace != 'default':
 					string += namespace + ":"
@@ -710,7 +710,7 @@ def tag_to_string(gallery_tag, simple=False):
 				# find tags
 				if namespace != 'default' and len(gallery_tag[namespace]) > 1:
 					string += '['
-				for x, tag in enumerate(gallery_tag[namespace], 1):
+				for x, tag in enumerate(sorted(gallery_tag[namespace]), 1):
 					# if we are at the end of the list
 					if x == len(gallery_tag[namespace]):
 						string += tag
@@ -723,13 +723,13 @@ def tag_to_string(gallery_tag, simple=False):
 				if not n == len(gallery_tag):
 					string += ', '
 	else:
-		for n, namespace in enumerate(gallery_tag, 1):
+		for n, namespace in enumerate(sorted(gallery_tag), 1):
 			if len(gallery_tag[namespace]) != 0:
 				if namespace != 'default':
 					string += namespace + ","
 
 				# find tags
-				for x, tag in enumerate(gallery_tag[namespace], 1):
+				for x, tag in enumerate(sorted(gallery_tag[namespace]), 1):
 					# if we are at the end of the list
 					if x == len(gallery_tag[namespace]):
 						string += tag

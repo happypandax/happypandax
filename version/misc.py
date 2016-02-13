@@ -790,14 +790,14 @@ class GalleryMetaWindow(ArrowWindow):
 			if self.has_tags(gallery.tags):
 				ns_layout = QFormLayout()
 				self.tags_layout.addRow(ns_layout)
-				for namespace in gallery.tags:
+				for namespace in sorted(gallery.tags):
 					tags_lbls = FlowLayout()
 					if namespace == 'default':
 						self.tags_layout.insertRow(0, tags_lbls)
 					else:
 						self.tags_layout.addRow(namespace, tags_lbls)
 
-					for n, tag in enumerate(gallery.tags[namespace], 1):
+					for n, tag in enumerate(sorted(gallery.tags[namespace]), 1):
 						if namespace == 'default':
 							t = TagText(search_widget=self.appwindow)
 						else:
