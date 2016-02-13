@@ -20,6 +20,14 @@ import database
 vs  = '0.27'
 DEBUG = False
 
+OS_NAME = ''
+if sys.platform.startswith('darwin'):
+	OS_NAME = "darwin"
+elif os.name == 'nt':
+	OS_NAME = "windows"
+elif os.name == 'posix':
+	OS_NAME = "linux"
+
 APP_RESTART_CODE = 0
 
 get = settings.get
