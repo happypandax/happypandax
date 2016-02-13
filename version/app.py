@@ -332,69 +332,72 @@ class AppWindow(QMainWindow):
 		s_gallery_popup.USER_CHOICE.connect(queue.put)
 
 	def get_metadata(self, gal=None):
-		metadata_spinner = misc.Spinner(self)
-		metadata_spinner.set_text("Metadata")
-		metadata_spinner.set_size(55)
-		thread = QThread(self)
-		thread.setObjectName('App.get_metadata')
-		fetch_instance = fetch.Fetch()
-		if gal:
-			if not isinstance(gal, list):
-				galleries = [gal]
+		if not app_constants.GLOBAL_EHEN_LOCK:
+			metadata_spinner = misc.Spinner(self)
+			metadata_spinner.set_text("Metadata")
+			metadata_spinner.set_size(55)
+			thread = QThread(self)
+			thread.setObjectName('App.get_metadata')
+			fetch_instance = fetch.Fetch()
+			if gal:
+				if not isinstance(gal, list):
+					galleries = [gal]
+				else:
+					galleries = gal
 			else:
-				galleries = gal
+				if app_constants.CONTINUE_AUTO_METADATA_FETCHER:
+					galleries = [g for g in self.manga_list_view.gallery_model._data if not g.exed]
+				else:
+					galleries = self.manga_list_view.gallery_model._data
+				if not galleries:
+					self.notification_bar.add_text('Looks like we\'ve already gone through all galleries!')
+					return None
+			fetch_instance.galleries = galleries
+
+			self.notification_bar.begin_show()
+			fetch_instance.moveToThread(thread)
+
+			def done(status):
+				self.notification_bar.end_show()
+				gallerydb.add_method_queue(database.db.DBBase.end, True)
+				fetch_instance.deleteLater()
+				if not isinstance(status, bool):
+					galleries = []
+					for tup in status:
+						galleries.append(tup[0])
+
+					class GalleryContextMenu(QMenu):
+						app_instance = self
+						def __init__(self, parent=None):
+							super().__init__(parent)
+							show_in_library_act = self.addAction('Show in library')
+							show_in_library_act.triggered.connect(self.show_in_library)
+
+						def show_in_library(self):
+							index = gallery.CommonView.find_index(self.app_instance.get_current_view(), self.gallery_widget.gallery.id, True)
+							if index:
+								gallery.CommonView.scroll_to_index(self.app_instance.get_current_view(), index)
+
+					g_popup = io_misc.GalleryPopup(('Fecthing metadata for these galleries failed.' + ' Check happypanda.log for details.', galleries), self, menu=GalleryContextMenu)
+					#errors = {g[0].id: g[1] for g in status}
+					#for g_item in g_popup.get_all_items():
+					#	g_item.setToolTip(errors[g_item.gallery.id])
+					g_popup.graphics_blur.setEnabled(False)
+					close_button = g_popup.add_buttons('Close')[0]
+					close_button.clicked.connect(g_popup.close)
+
+			database.db.DBBase.begin()
+			fetch_instance.GALLERY_PICKER.connect(self._web_metadata_picker)
+			fetch_instance.GALLERY_EMITTER.connect(self.manga_list_view.replace_edit_gallery)
+			fetch_instance.AUTO_METADATA_PROGRESS.connect(self.notification_bar.add_text)
+			thread.started.connect(fetch_instance.auto_web_metadata)
+			fetch_instance.FINISHED.connect(done)
+			fetch_instance.FINISHED.connect(metadata_spinner.before_hide)
+			thread.finished.connect(thread.deleteLater)
+			thread.start()
+			metadata_spinner.show()
 		else:
-			if app_constants.CONTINUE_AUTO_METADATA_FETCHER:
-				galleries = [g for g in self.manga_list_view.gallery_model._data if not g.exed]
-			else:
-				galleries = self.manga_list_view.gallery_model._data
-			if not galleries:
-				self.notification_bar.add_text('Looks like we\'ve already gone through all galleries!')
-				return None
-		fetch_instance.galleries = galleries
-
-		self.notification_bar.begin_show()
-		fetch_instance.moveToThread(thread)
-
-		def done(status):
-			self.notification_bar.end_show()
-			gallerydb.add_method_queue(database.db.DBBase.end, True)
-			fetch_instance.deleteLater()
-			if not isinstance(status, bool):
-				galleries = []
-				for tup in status:
-					galleries.append(tup[0])
-
-				class GalleryContextMenu(QMenu):
-					app_instance = self
-					def __init__(self, parent=None):
-						super().__init__(parent)
-						show_in_library_act = self.addAction('Show in library')
-						show_in_library_act.triggered.connect(self.show_in_library)
-
-					def show_in_library(self):
-						index = gallery.CommonView.find_index(self.app_instance.get_current_view(), self.gallery_widget.gallery.id, True)
-						if index:
-							gallery.CommonView.scroll_to_index(self.app_instance.get_current_view(), index)
-
-				g_popup = io_misc.GalleryPopup(('Fecthing metadata for these galleries failed.' + ' Check happypanda.log for details.', galleries), self, menu=GalleryContextMenu)
-				#errors = {g[0].id: g[1] for g in status}
-				#for g_item in g_popup.get_all_items():
-				#	g_item.setToolTip(errors[g_item.gallery.id])
-				g_popup.graphics_blur.setEnabled(False)
-				close_button = g_popup.add_buttons('Close')[0]
-				close_button.clicked.connect(g_popup.close)
-
-		database.db.DBBase.begin()
-		fetch_instance.GALLERY_PICKER.connect(self._web_metadata_picker)
-		fetch_instance.GALLERY_EMITTER.connect(self.manga_list_view.replace_edit_gallery)
-		fetch_instance.AUTO_METADATA_PROGRESS.connect(self.notification_bar.add_text)
-		thread.started.connect(fetch_instance.auto_web_metadata)
-		fetch_instance.FINISHED.connect(done)
-		fetch_instance.FINISHED.connect(metadata_spinner.before_hide)
-		thread.finished.connect(thread.deleteLater)
-		thread.start()
-		metadata_spinner.show()
+			self.notif_bubble.update_text("Oops!", "Auto metadata fetcher is already running...")
 
 	def init_stat_bar(self):
 		self.status_bar = self.statusBar()

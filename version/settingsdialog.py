@@ -943,8 +943,15 @@ class SettingsDialog(QWidget):
 		gallery_font.addWidget(choose_font, 0, Qt.AlignLeft)
 		gallery_font.addWidget(Spacer('h'), 1, Qt.AlignLeft)
 
+		class NoWheelSlider(QSlider):
+			def __init__(self, ori, p):
+				super().__init__(ori, p)
+
+			def wheelEvent(self, ev):
+				ev.ignore()
+
 		gallery_size_lbl = QLabel(self)
-		self.gallery_size = QSlider(Qt.Horizontal, self)
+		self.gallery_size = NoWheelSlider(Qt.Horizontal, self)
 		self.gallery_size.valueChanged.connect(lambda x: gallery_size_lbl.setText(str(x+2)))
 		self.gallery_size.setMinimum(-2)
 		self.gallery_size.setMaximum(10)
