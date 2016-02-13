@@ -95,6 +95,8 @@ class AppWindow(QMainWindow):
 			index = gallery.CommonView.find_index(self.get_current_view(), g.id, True)
 			if index:
 				self.manga_list_view.remove_gallery([index])
+			else:
+				log_e('Could not find gallery to remove from watcher')
 
 		def create_gallery(path):
 			g_dia = gallerydialog.GalleryDialog(self, path)

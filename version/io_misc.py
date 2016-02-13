@@ -433,6 +433,9 @@ class MovedPopup(misc.BasePopup):
 			g = utils.update_gallery_path(new_path, gallery)
 			self.UPDATE_SIGNAL.emit(g)
 			self.close()
+		def cancel():
+			gallery.dead_link = True
+			self.close()
 		main_layout = QVBoxLayout()
 		inner_layout = QHBoxLayout()
 		title = QLabel(gallery.title)
@@ -443,14 +446,15 @@ class MovedPopup(misc.BasePopup):
 		img = QPixmap(gallery.profile)
 		cover.setPixmap(img)
 		text = QLabel("The path to this gallery has been renamed\n"+
-				"\n{}\n".format(gallery.path)+u'\u2192'+"\n{}".format(new_path))
+				"\n{}\n".format(os.path.basename(gallery.path))+u'\u2192'+"\n{}".format(os.path.basename(new_path)))
+		
 		text.setWordWrap(True)
 		text.setAlignment(Qt.AlignCenter)
 		button_layout = QHBoxLayout()
 		update_btn = QPushButton('Update')
 		update_btn.clicked.connect(commit)
 		close_btn = QPushButton('Close')
-		close_btn.clicked.connect(self.close)
+		close_btn.clicked.connect(cancel)
 		button_layout.addWidget(update_btn)
 		button_layout.addWidget(close_btn)
 
@@ -468,7 +472,7 @@ class DeletedPopup(misc.BasePopup):
 	UPDATE_SIGNAL = pyqtSignal(object)
 	def __init__(self, path, gallery, parent=None):
 		super().__init__(parent)
-		
+		gallery.dead_link = True
 		def commit():
 			msgbox = QMessageBox(self)
 			msgbox.setIcon(QMessageBox.Question)

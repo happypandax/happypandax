@@ -33,12 +33,14 @@ class NoTooltipModel(QIdentityProxyModel):
 		super().__init__(parent)
 		self.setSourceModel(model)
 
-	def data(self, index, role = Qt.DisplayRole):
+	def data(self, index, role=Qt.DisplayRole):
 		if role == Qt.ToolTipRole:
 			return None
 		if role == Qt.DecorationRole:
 			return QPixmap(app_constants.GARTIST_PATH)
 		return self.sourceModel().data(index, role)
+
+
 
 class UniqueInfoModel(QSortFilterProxyModel):
 	def __init__(self, gallerymodel, role, parent=None):
@@ -46,6 +48,7 @@ class UniqueInfoModel(QSortFilterProxyModel):
 		self.setSourceModel(NoTooltipModel(gallerymodel, parent))
 		self._unique = set()
 		self._unique_role = role
+		self.custom_filter = None
 		self.setDynamicSortFilter(True)
 
 	def filterAcceptsRow(self, source_row, parent_index):
@@ -55,9 +58,16 @@ class UniqueInfoModel(QSortFilterProxyModel):
 				unique = idx.data(self._unique_role)
 				if unique:
 					if not unique in self._unique:
+						if self.custom_filter != None:
+							if not idx.data(Qt.UserRole + 1) in self.custom_filter:
+								return False
 						self._unique.add(unique)
 						return True
 		return False
+
+	def invalidate(self):
+		self._unique.clear()
+		super().invalidate()
 
 class ListDelegate(QStyledItemDelegate):
 	def __init__(self, parent=None):
@@ -69,7 +79,7 @@ class ListDelegate(QStyledItemDelegate):
 		size = super().sizeHint(option, index)
 		if index.data(Qt.DisplayRole) == self.create_new_list_txt:
 			return size
-		return QSize(size.width(), size.height()*2)
+		return QSize(size.width(), size.height() * 2)
 
 class GalleryArtistsList(QListView):
 	artist_clicked = pyqtSignal(str)
@@ -87,6 +97,14 @@ class GalleryArtistsList(QListView):
 	def _artist_clicked(self, idx):
 		if idx.isValid():
 			self.artist_clicked.emit(idx.data(self.ARTIST_ROLE))
+
+	def set_current_glist(self, g_list=None):
+		if g_list:
+			self.g_artists_model.custom_filter = g_list
+		else:
+			self.g_artists_model.custom_filter = None
+		print("setting");
+		self.g_artists_model.invalidate()
 
 class TagsTreeView(QTreeWidget):
 	TAG_SEARCH = pyqtSignal(str)
@@ -142,7 +160,7 @@ class TagsTreeView(QTreeWidget):
 		for item in s_items:
 			if not item.text(0).islower():
 				ns_count += 1
-		contains_ns =  True if ns_count > 0 else False
+		contains_ns = True if ns_count > 0 else False
 
 		def copy(with_ns=False):
 			if with_ns:
@@ -247,7 +265,7 @@ class GalleryListContextMenu(QMenu):
 		self.parent_widget.GALLERY_LIST_CLICKED.emit(self.gallery_list)
 
 class GalleryLists(QListWidget):
-	CREATE_LIST_TYPE = misc.CustomListItem.UserType+1
+	CREATE_LIST_TYPE = misc.CustomListItem.UserType + 1
 	GALLERY_LIST_CLICKED = pyqtSignal(gallerydb.GalleryList)
 	GALLERY_LIST_REMOVED = pyqtSignal()
 	def __init__(self, parent):
@@ -387,7 +405,9 @@ class SideBarWidget(QFrame):
 		self.artists_list.artist_clicked.connect(lambda a: parent.search('artist:"{}"'.format(a)))
 		artists_list_index = self.stacked_layout.addWidget(self.artists_list)
 		self.artist_btn.clicked.connect(lambda:self.stacked_layout.setCurrentIndex(artists_list_index))
+		#self.lists.GALLERY_LIST_CLICKED.connect(self.artists_list.set_current_glist)
 		self.show_all_galleries_btn.clicked.connect(self.artists_list.clearSelection)
+		#self.show_all_galleries_btn.clicked.connect(lambda:self.artists_list.set_current_glist())
 
 		# ns_tags
 		self.tags_tree = TagsTreeView(self)
@@ -420,7 +440,7 @@ class SideBarWidget(QFrame):
 
 
 	def slide(self, state):
-		self.slide_animation.setEndValue(QSize(self.arrow_handle.width()*2, self.height()))
+		self.slide_animation.setEndValue(QSize(self.arrow_handle.width() * 2, self.height()))
 
 		if state:
 			self.slide_animation.setDirection(self.slide_animation.Forward)
@@ -436,7 +456,7 @@ class SideBarWidget(QFrame):
 
 	def _init_size(self, event=None):
 		h = self.parent_widget.height()
-		self._max_width = self.parent_widget.width()*0.2
+		self._max_width = self.parent_widget.width() * 0.2
 		self.updateGeometry()
 		self.setMaximumWidth(self._max_width)
 		self.slide_animation.setStartValue(QSize(self._max_width, h))

@@ -453,10 +453,10 @@ class GalleryDB(DBBase):
 	def get_gallery_by_path(cls, path):
 		"Returns gallery with given path"
 		assert isinstance(path, str), "Provided path is invalid"
-		cursor = cls.execute(cls, 'SELECT * FROM series WHERE series_path=?', (path,))
+		cursor = cls.execute(cls, 'SELECT * FROM series WHERE series_path=?', (str.encode(path),))
 		row = cursor.fetchone()
-		gallery = Gallery()
 		try:
+			gallery = Gallery()
 			gallery.id = row['series_id']
 			gallery = gallery_map(row, gallery)
 			return gallery
@@ -1644,6 +1644,9 @@ class Gallery:
 				else:
 					return is_exclude
 		return default
+
+	def __lt__(self, other):
+		return self.id < other.id
 
 	def __str__(self):
 		string = """
