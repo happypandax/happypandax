@@ -187,19 +187,19 @@ class SortFilterModel(QSortFilterProxyModel):
 	def set_gallery_list(self, g_list=None):
 		self.current_gallery_list = g_list
 		self._SET_GALLERY_LIST.emit(g_list)
-		self._DO_SEARCH.emit('')
+		self._DO_SEARCH.emit(self.current_term)
 
 	def fetchMore(self, index):
 		return super().fetchMore(index)
 
 	def fav_view(self):
 		self._CHANGE_FAV.emit(True)
-		self._DO_SEARCH.emit('')
+		self._DO_SEARCH.emit(self.current_term)
 		self.current_view = self.FAV_VIEW
 
 	def catalog_view(self):
 		self._CHANGE_FAV.emit(False)
-		self._DO_SEARCH.emit('')
+		self._DO_SEARCH.emit(self.current_term)
 		self.current_view = self.CAT_VIEW
 
 	def setup_search(self):
