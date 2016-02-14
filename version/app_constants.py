@@ -14,7 +14,7 @@
 
 import os, sys
 import settings
-import database
+from database import db_constants
 
 # Version number
 vs  = '0.27'
@@ -90,6 +90,7 @@ WHEEL_SCROLL_EFFECT = 10
 DOWNLOAD_MANAGER = None
 
 # image paths
+SAMPLE_PATH = os.path.join(static_dir, "sample.png")
 SORT_PATH = os.path.join(static_dir, "sort.png")
 GALLERY_ICO_PATH = os.path.join(static_dir, "gallery_ico.ico")
 GALLERY_DEF_ICO_PATH = os.path.join(static_dir, "gallery_def_ico.ico")
@@ -543,7 +544,7 @@ ABOUT =\
 Moshidesu, peaceanpizza, utterbull, LePearlo</p>
 
 </body></html>
-	""".format(vs, database.db_constants.CURRENT_DB_VERSION)
+	""".format(vs, db_constants.CURRENT_DB_VERSION)
 
 TROUBLE_GUIDE =\
 	"""

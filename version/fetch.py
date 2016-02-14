@@ -354,7 +354,7 @@ class Fetch(QObject):
 			hash = None
 			try:
 				if not gallery.hashes:
-					hash_dict = add_method_queue(HashDB.gen_gallery_hash, False, gallery, 0, 'mid')
+					hash_dict = add_method_queue(HashDB.gen_gallery_hash, False, gallery, 0, 'mid', True)
 					if hash_dict:
 						hash = hash_dict['mid']
 				else:

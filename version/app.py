@@ -395,7 +395,8 @@ class AppWindow(QMainWindow):
 			fetch_instance.FINISHED.connect(done)
 			fetch_instance.FINISHED.connect(metadata_spinner.before_hide)
 			thread.finished.connect(thread.deleteLater)
-			thread.start()
+			#thread.start()
+			fetch_instance.auto_web_metadata()
 			metadata_spinner.show()
 		else:
 			self.notif_bubble.update_text("Oops!", "Auto metadata fetcher is already running...")
@@ -607,7 +608,13 @@ class AppWindow(QMainWindow):
 		# debug specfic code
 		if app_constants.DEBUG:
 			def debug_func():
-				pass
+				from PyQt5.QtGui import QImageReader
+				m = QMessageBox(self)
+				m.setText("{}".format(QImageReader.supportedImageFormats()))
+				m.exec()
+				self._lbl = QLabel()
+				self._lbl.setPixmap(QPixmap('horopic.jpg'))
+				self._lbl.show()
 		
 			debug_btn = QToolButton()
 			debug_btn.setText("DEBUG BUTTON")

@@ -968,11 +968,12 @@ class EHen(CommenHen):
 		for h in search_string:
 			log_d('Hash search: {}'.format(h))
 			self.begin_lock()
+			hash_search = hash_url + h + '&fs_exp=1' # to enable expunged
 			if cookies:
 				self.check_cookie(cookies)
-				r = requests.get(hash_url+h, timeout=30, headers=self.HEADERS, cookies=self.COOKIES)
+				r = requests.get(hash_search, timeout=30, headers=self.HEADERS, cookies=self.COOKIES)
 			else:
-				r = requests.get(hash_url+h, timeout=30, headers=self.HEADERS)
+				r = requests.get(hash_search, timeout=30, headers=self.HEADERS)
 			self.end_lock()
 			if not self.handle_error(r):
 				return 'error'

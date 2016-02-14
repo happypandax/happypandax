@@ -12,7 +12,7 @@
 #along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 #"""
 
-import datetime, os, scandir, threading, logging, queue, uuid # for unique filename
+import datetime, os, scandir, threading, logging, queue, io, uuid # for unique filename
 import re as regex
 
 from PyQt5.QtCore import Qt, QObject, pyqtSignal
@@ -133,6 +133,7 @@ def gen_thumbnail(gallery, width=app_constants.THUMB_W_SIZE,
 			raise IndexError
 
 		# Do the scaling
+		
 		image = QImage()
 		image.load(img_path)
 		if image.isNull():
@@ -1136,16 +1137,17 @@ class HashDB(DBBase):
 		return hashes
 
 	@classmethod
-	def gen_gallery_hash(cls, gallery, chapter, page=None):
+	def gen_gallery_hash(cls, gallery, chapter, page=None, color_img=False, _name=None):
 		"""
 		Generate hash for a specific chapter.
 		Set page to only generate specific page
 		page: 'mid' or number or list of numbers
+		color_img: if true then a hash to colored img will be returned if possible
 		Returns dict with chapter number or 'mid' as key and hash as value
 		"""
 		assert isinstance(gallery, Gallery)
 		assert isinstance(chapter, int)
-		if page:
+		if page != None:
 			assert isinstance(page, (int, str, list))
 		skip_gen = False
 		if gallery.id:
@@ -1162,10 +1164,10 @@ class HashDB(DBBase):
 					pass
 			if isinstance(page, (int, list)):
 				if isinstance(page, int):
-					page = [page]
+					_page = [page]
 				h = {}
 				t = False
-				for p in page:
+				for p in _page:
 					if p in hashes:
 						h[p] = hashes[p]
 					else:
@@ -1183,7 +1185,7 @@ class HashDB(DBBase):
 						skip_gen = False
 
 
-		if not skip_gen:
+		if not skip_gen or color_img:
 
 			def look_exists(page):
 				"""check if hash already exists in database
@@ -1207,8 +1209,13 @@ class HashDB(DBBase):
 				for n, i in enumerate(imgs):
 					pages[n] = i
 
-				if page:
+				if page != None:
 					pages = {}
+					if color_img:
+						print("trying color img")
+						# if first img is colored, then return hash of that
+						if not utils.image_greyscale(imgs[0]):
+							cls.gen_gallery_hash(gallery, chapter, 0, _name=page)
 					if page == 'mid':
 						imgs = imgs[len(imgs)//2]
 						pages[len(imgs)//2] = imgs
@@ -1246,9 +1253,13 @@ class HashDB(DBBase):
 					return {}
 
 				pages = {}
-				if page:
+				if page != None:
 					p = 0
 					con = zip.dir_contents(chap.path)
+					if color_img:
+						# if first img is colored, then return hash of that
+						if not utils.image_greyscale(io.BytesIO(zip.open(con[0], False))):
+							return cls.gen_gallery_hash(gallery, chapter, 0, _name=page)
 					if page == 'mid':
 						p = len(con)//2
 						img = con[p]
@@ -1283,10 +1294,19 @@ class HashDB(DBBase):
 			if executing:
 				cls.executemany(cls, 'INSERT INTO hashes(hash, series_id, chapter_id, page) VALUES(?, ?, ?, ?)',
 					   executing)
+
+
 		if page == 'mid':
-			return {'mid':list(hashes.values())[0]}
+			r_hash = {'mid':list(hashes.values())[0]}
 		else:
-			return hashes
+			r_hash = hashes
+
+		if _name != None:
+			try:
+				r_hash[_name] = r_hash[page]
+			except KeyError:
+				pass
+		return r_hash
 
 	@classmethod
 	def gen_gallery_hashes(cls, gallery):

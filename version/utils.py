@@ -12,9 +12,22 @@
 #along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 #"""
 
-import datetime, os, subprocess, sys, logging, zipfile
-import hashlib, shutil, uuid, re, scandir, rarfile, json
+import datetime
+import os
+import subprocess
+import sys
+import logging
+import zipfile
+import hashlib
+import shutil
+import uuid
+import re
+import scandir
+import rarfile
+import json
 import send2trash
+
+from PIL import Image,ImageChops
 
 import app_constants
 
@@ -27,7 +40,7 @@ log_w = log.warning
 log_e = log.error
 log_c = log.critical
 
-IMG_FILES =  ('.jpg','.bmp','.png','.gif', '.jpeg')
+IMG_FILES = ('.jpg','.bmp','.png','.gif', '.jpeg')
 ARCHIVE_FILES = ('.zip', '.cbz', '.rar', '.cbr')
 FILE_FILTER = '*.zip *.cbz *.rar *.cbr'
 IMG_FILTER = '*.jpg *.bmp *.png *.jpeg'
@@ -88,12 +101,11 @@ class GMetafile:
 			self.metadata['language'] = ezedata['language']
 			d = ezedata['upload_date']
 			# should be zero padded
-			d[1] = int("0"+str(d[1])) if len(str(d[1])) == 1 else d[1]
-			d[3] = int("0"+str(d[1])) if len(str(d[1])) == 1 else d[1] 
-			self.metadata['pub_date'] = datetime.datetime.strptime(
-				"{} {} {}".format(d[0], d[1], d[3]), "%Y %m %d")
+			d[1] = int("0" + str(d[1])) if len(str(d[1])) == 1 else d[1]
+			d[3] = int("0" + str(d[1])) if len(str(d[1])) == 1 else d[1] 
+			self.metadata['pub_date'] = datetime.datetime.strptime("{} {} {}".format(d[0], d[1], d[3]), "%Y %m %d")
 			l = ezedata['source']
-			self.metadata['link'] = 'http://'+l['site']+'.org/g/'+str(l['gid'])+'/'+l['token']
+			self.metadata['link'] = 'http://' + l['site'] + '.org/g/' + str(l['gid']) + '/' + l['token']
 			return True
 
 	def _hdoujindler(self, fp):
@@ -400,7 +412,7 @@ class ArchiveFile():
 			raise app_constants.FileNotFoundInArchive
 		if not dir_name:
 			if self.type == self.zip:
-				con =  [x for x in self.namelist() if x.count('/') == 0 or \
+				con = [x for x in self.namelist() if x.count('/') == 0 or \
 					(x.count('/') == 1 and x.endswith('/'))]
 			elif self.type == self.rar:
 				con = [x for x in self.namelist() if x.count('/') == 0]
@@ -486,7 +498,7 @@ def check_archive(archive_path):
 			for n in con:
 				if not n.lower().endswith(IMG_FILES):
 					gallery_probability -= 1
-			if gallery_probability >= (len(con)*0.8):
+			if gallery_probability >= (len(con) * 0.8):
 				return d
 	if zip_dirs: # There are directories in the top folder
 		# check parent
@@ -532,7 +544,7 @@ def recursive_gallery_check(path):
 				for f in files:
 					if not f.lower().endswith(IMG_FILES):
 						gallery_probability -= 1
-				if gallery_probability >= (len(files)*0.8):
+				if gallery_probability >= (len(files) * 0.8):
 					found_paths += 1
 					gallery_dirs.append(root)
 	log_i('Found {} in {}'.format(found_paths, path).encode(errors='ignore'))
@@ -589,7 +601,7 @@ def open_chapter(chapterpath, archive=None):
 				else:
 					t_p = zip.extract(chapterpath, t_p)
 			else:
-				zip.extract_all(t_p) # Compatibility reasons.. TODO: REMOVE IN BETA
+				zip.extract_all(t_p) # Compatibility reasons..  TODO: REMOVE IN BETA
 			if app_constants.USE_EXTERNAL_VIEWER:
 				filepath = t_p
 			else:
@@ -1042,3 +1054,21 @@ def get_terms(term):
 			pieces.append(ns_tag)
 
 	return pieces
+
+def image_greyscale(filepath):
+	"""
+	Check if image is monochrome (1 channel or 3 identical channels)
+	"""
+	im = Image.open(filepath).convert("RGB")
+	if im.mode not in ("L", "RGB"):
+		return False
+
+	if im.mode == "RGB":
+		rgb = im.split()
+		if ImageChops.difference(rgb[0],rgb[1]).getextrema()[1] != 0: 
+			return False
+		if ImageChops.difference(rgb[0],rgb[2]).getextrema()[1] != 0: 
+			return False
+	return True
+
+
