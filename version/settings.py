@@ -188,7 +188,11 @@ class ExProperties(Properties):
 		"Returns true if usable"
 		if self.site == self.EHENTAI:
 			if "ipb_session_id" in self.cookies and "ipb_pass_hash" in self.cookies:
-				return True
+				return 2
+			elif 'ipb_session_id' in self.cookies:
+				return 1
+			else:
+				return 0
 		elif self.site == self.NHENTAI:
 			if "sessionid" in self.cookies:
 				return True

@@ -253,6 +253,11 @@ class SettingsDialog(QWidget):
 
 		# Advanced / Misc
 		self.force_high_dpi_support.setChecked(app_constants.FORCE_HIGH_DPI_SUPPORT)
+		exprops = settings.ExProperties()
+		c_h = exprops.cookies
+		print(c_h)
+		self.ipbid_edit.setText(c_h.pop('ipb_member_id', ''))
+		self.ipbpass_edit.setText(c_h.pop('ipb_pass_hash', ''))
 
 		# Advanced / Gallery / Gallery Text Fixer
 		self.g_data_regex_fix_edit.setText(app_constants.GALLERY_DATA_FIX_REGEX)
@@ -487,6 +492,12 @@ class SettingsDialog(QWidget):
 
 
 		# Advanced / Misc
+		exprops = settings.ExProperties()
+		c_h = exprops.cookies
+		c_h['ipb_member_id'] = self.ipbid_edit.text()
+		c_h['ipb_pass_hash'] = self.ipbpass_edit.text()
+		exprops.cookies = c_h
+
 		# Advanced / Misc / Grid View
 		app_constants.SCROLL_SPEED = self.scroll_speed
 		set(self.scroll_speed, 'Advanced', 'scroll speed')
@@ -752,18 +763,22 @@ class SettingsDialog(QWidget):
 		# Web / Logins
 		logins_page, logins_layout = new_tab("Logins", web, True)
 
-		def login(userlineedit, passlineedit, statuslbl, baseHen_class):
+		def login(userlineedit, passlineedit, statuslbl, baseHen_class, partial_txt):
 			statuslbl.setText("Logging in...")
 			statuslbl.show()
 			try:
-				if baseHen_class.login(userlineedit.text(), passlineedit.text()):
+				c_h = baseHen_class.login(userlineedit.text(), passlineedit.text())
+				result = baseHen_class.check_login(c_h)
+				if result == 1:
+					statuslbl.setText("<font color='green'>{}</font>".format(partial_txt))
+				elif result:
 					statuslbl.setText("<font color='green'>Logged in!</font>")
 				else:
 					statuslbl.setText("<font color='red'>Logging in failed!</font>")
 			except app_constants.WrongLogin:
 				statuslbl.setText("<font color='red'>Wrong login information!</font>")
 		
-		def make_login_forms(layout, exprops, baseHen_class):
+		def make_login_forms(layout, exprops, baseHen_class, partial_txt='You have partial access!'):
 			status = QLabel(logins_page)
 			status.setText("<font color='red'>Not logged in!</font>")
 			layout.addRow(status)
@@ -777,18 +792,24 @@ class SettingsDialog(QWidget):
 			layout.addRow(b_l)
 			b_l.addWidget(Spacer('h'))
 			b_l.addWidget(log_btn)
-			log_btn.clicked.connect(lambda: login(user, passw, status, baseHen_class))
-			if baseHen_class.check_login(exprops.cookies):
+			log_btn.clicked.connect(lambda: login(user, passw, status, baseHen_class, partial_txt))
+			result = baseHen_class.check_login(exprops.cookies)
+			if result == 1:
+				status.setText("<font color='orange'>{}</font>".format(partial_txt))
+			elif result:
 				status.setText("<font color='green'>Logged in!</font>")
+			if result:
 				user.setText(exprops.username)
 				passw.setText(exprops.password)
+
 			return user, passw, status
 
 		# ehentai
 		exprops = settings.ExProperties
 		ehentai_group, ehentai_l = groupbox("E-Hentai", QFormLayout, logins_page)
 		logins_layout.addRow(ehentai_group)
-		ehentai_user, ehentai_pass, ehentai_status = make_login_forms(ehentai_l, exprops(), pewnet.EHen)
+		ehentai_user, ehentai_pass, ehentai_status = make_login_forms(ehentai_l, exprops(), pewnet.EHen,
+																"You have partial access (g.e-hentai). Enter details in the Advanced section to access exhentai.")
 
 		# nhentai
 		#nhentai_group, nhentai_l = groupbox("NHentai", QFormLayout, logins_page)
@@ -1025,9 +1046,15 @@ class SettingsDialog(QWidget):
 		advanced_misc.setLayout(advanced_misc_main_layout)
 		misc_controls_layout = QFormLayout()
 		advanced_misc_main_layout.addLayout(misc_controls_layout)
+
+		high_dpi_info = QLabel("Warning: This option may incur some scaling or painting artifacts")
+		misc_controls_layout.addRow(high_dpi_info)
+		self.force_high_dpi_support = QCheckBox("Force High DPI support *", self)
+		misc_controls_layout.addRow(self.force_high_dpi_support)
+
 		# Advanced / Misc / Grid View
 		misc_gridview = QGroupBox('Grid View')
-		misc_controls_layout.addWidget(misc_gridview)
+		misc_controls_layout.addRow(misc_gridview)
 		misc_gridview_layout = QFormLayout()
 		misc_gridview.setLayout(misc_gridview_layout)
 		# Advanced / Misc / Grid View / scroll speed
@@ -1051,10 +1078,17 @@ class SettingsDialog(QWidget):
 		cache_size_spin_box.valueChanged[int].connect(cache_size)
 		misc_gridview_layout.addRow('Cache Size (MiB):', cache_size_spin_box)
 
-		high_dpi_info = QLabel("Warning: This option may incur some scaling or painting artifacts")
-		misc_controls_layout.addRow(high_dpi_info)
-		self.force_high_dpi_support = QCheckBox("Force High DPI support *", self)
-		misc_controls_layout.addRow(self.force_high_dpi_support)
+		exhentai_group, exhentai_group_l = groupbox("ExHentai Details", QFormLayout, advanced_misc)
+		misc_controls_layout.addRow(exhentai_group)
+		self.ipbid_edit = QLineEdit()
+		self.ipbpass_edit = QLineEdit()
+		self.ipbpass_edit.setEchoMode(QLineEdit.Password)
+		exh_tutorial = QLabel(app_constants.EXHEN_COOKIE_TUTORIAL)
+		exh_tutorial.setTextFormat(Qt.RichText)
+		exhentai_group_l.addRow(QLabel("Warning: Only enter these values if you weren't able to gain access to exhentai by logging in at Web->Logins!"))
+		exhentai_group_l.addRow('IPB Member ID:', self.ipbid_edit)
+		exhentai_group_l.addRow('IPB Pass Hash:', self.ipbpass_edit)
+		exhentai_group_l.addRow(exh_tutorial)
 
 		# Advanced / Gallery
 		advanced_gallery, advanced_gallery_m_l = new_tab('Gallery', advanced)

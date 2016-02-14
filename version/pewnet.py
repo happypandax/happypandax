@@ -769,11 +769,12 @@ class EHen(CommenHen):
 		"""
 		Checks if user is logged in
 		"""
-
-		if 'ipb_session_id' in cookies:
-			return True
+		if "ipb_session_id" in cookies and "ipb_pass_hash" in cookies:
+			return 2
+		elif 'ipb_session_id' in cookies:
+			return 1
 		else:
-			return False
+			return 0
 
 	def handle_error(self, response):
 		content_type = response.headers['content-type']
