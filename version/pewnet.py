@@ -634,7 +634,7 @@ class CommenHen:
 		"""
 		pass
 
-	def search(self, search_string, cookies=None):
+	def search(self, search_string, **kwargs):
 		"""
 		Searches for the provided string or list of hashes,
 		returns a dict with search_string:[list of title & url tuples] of hits found or emtpy dict if no hits are found.
@@ -685,7 +685,7 @@ class NHen(CommenHen):
 	def apply_metadata(cls, gallery, data, append = True):
 		return super().apply_metadata(gallery, data, append)
 
-	def search(self, search_string, cookies = None):
+	def search(self, search_string, cookies = None, **kwargs):
 		pass
 
 
@@ -694,6 +694,7 @@ class EHen(CommenHen):
 	def __init__(self, cookies = None):
 		self.cookies = cookies
 		self.e_url = "http://g.e-hentai.org/api.php"
+		self.e_url_o = "http://g.e-hentai.org/"
 
 	@classmethod
 	def apply_metadata(cls, g, data, append = True):
@@ -944,7 +945,7 @@ class EHen(CommenHen):
 
 		return eh_c
 
-	def search(self, search_string, cookies=None):
+	def search(self, search_string, **kwargs):
 		"""
 		Searches ehentai for the provided string or list of hashes,
 		returns a dict with search_string:[list of title & url tuples] of hits found or emtpy dict if no hits are found.
@@ -953,34 +954,53 @@ class EHen(CommenHen):
 		if isinstance(search_string, str):
 			search_string = [search_string]
 
-		def no_hits_found_check(html):
+		cookies = kwargs.pop('cookies', None)
+
+		def no_hits_found_check(soup):
 			"return true if hits are found"
-			soup = BeautifulSoup(html, "html.parser")
 			f_div = soup.body.find_all('div')
 			for d in f_div:
 				if 'No hits found' in d.text:
 					return False
 			return True
 
-		hash_url = app_constants.DEFAULT_EHEN_URL + '?f_shash='
 		found_galleries = {}
 		log_i('Initiating hash search on ehentai')
 		for h in search_string:
 			log_d('Hash search: {}'.format(h))
 			self.begin_lock()
-			hash_search = hash_url + h + '&fs_exp=1' # to enable expunged
-			if cookies:
-				self.check_cookie(cookies)
-				r = requests.get(hash_search, timeout=30, headers=self.HEADERS, cookies=self.COOKIES)
+			if 'color' in kwargs:
+				file_search = self.e_url_o + '?filesearch=1'
+				if cookies:
+					self.check_cookie(cookies)
+					self._browser.session.cookies.update(self.COOKIES)
+				self._browser.open(file_search)
+				file_form = self._browser.get_forms()[1]
+				print(file_form['sfile'])
+				f_obj = open(h, 'rb')
+				file_form['sfile'].value = f_obj
+				self._browser.submit_form(file_form)
+				print(self._browser.url)
+				print(h)
+				f_obj.close()
+
+				soup = self._browser.parsed
 			else:
-				r = requests.get(hash_search, timeout=30, headers=self.HEADERS)
+				hash_url = self.e_url_o + '?f_shash='
+				hash_search = hash_url + h + '&fs_exp=1' # to enable expunged.. maybe make this an option?
+				if cookies:
+					self.check_cookie(cookies)
+					r = requests.get(hash_search, timeout=30, headers=self.HEADERS, cookies=self.COOKIES)
+				else:
+					r = requests.get(hash_search, timeout=30, headers=self.HEADERS)
+				if not self.handle_error(r):
+					return 'error'
+				soup = BeautifulSoup(r.text, "html.parser")
+
 			self.end_lock()
-			if not self.handle_error(r):
-				return 'error'
-			if not no_hits_found_check(r.text):
+			if not no_hits_found_check(soup):
 				log_e('No hits found with hash: {}'.format(h))
 				continue
-			soup = BeautifulSoup(r.text, "html.parser")
 			log_i('Parsing html')
 			try:
 				if soup.body:
@@ -1014,12 +1034,13 @@ class ExHen(EHen):
 	def __init__(self, cookies=None):
 		super().__init__(cookies)
 		self.e_url = "http://exhentai.org/api.php"
+		self.e_url_o = "http://exhentai.org/"
 
 	def get_metadata(self, list_of_urls):
 		return super().get_metadata(list_of_urls, self.cookies)
 
-	def search(self, hash_string):
-		return super().search(hash_string, self.cookies)
+	def search(self, hash_string, **kwargs):
+		return super().search(hash_string, cookies=self.cookies, **kwargs)
 
 class ChaikaHen(CommenHen):
 	"Fetches gallery metadata from panda.chaika.moe"
@@ -1030,7 +1051,7 @@ class ChaikaHen(CommenHen):
 		self.url = "http://panda.chaika.moe/jsearch?sha1="
 		self._QUEUE_LIMIT = 1
 
-	def search(self, search_string):
+	def search(self, search_string, **kwargs):
 		"""
 		search_string should be a list of hashes
 		will actually just put urls together

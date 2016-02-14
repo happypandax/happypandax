@@ -395,8 +395,8 @@ class AppWindow(QMainWindow):
 			fetch_instance.FINISHED.connect(done)
 			fetch_instance.FINISHED.connect(metadata_spinner.before_hide)
 			thread.finished.connect(thread.deleteLater)
-			#thread.start()
-			fetch_instance.auto_web_metadata()
+			thread.start()
+			#fetch_instance.auto_web_metadata()
 			metadata_spinner.show()
 		else:
 			self.notif_bubble.update_text("Oops!", "Auto metadata fetcher is already running...")

@@ -1212,10 +1212,9 @@ class HashDB(DBBase):
 				if page != None:
 					pages = {}
 					if color_img:
-						print("trying color img")
-						# if first img is colored, then return hash of that
+						# if first img is colored, then return filepath of that
 						if not utils.image_greyscale(imgs[0]):
-							cls.gen_gallery_hash(gallery, chapter, 0, _name=page)
+							return {'color':imgs[0]}
 					if page == 'mid':
 						imgs = imgs[len(imgs)//2]
 						pages[len(imgs)//2] = imgs
@@ -1255,11 +1254,13 @@ class HashDB(DBBase):
 				pages = {}
 				if page != None:
 					p = 0
-					con = zip.dir_contents(chap.path)
+					con = sorted(zip.dir_contents(chap.path))
 					if color_img:
 						# if first img is colored, then return hash of that
-						if not utils.image_greyscale(io.BytesIO(zip.open(con[0], False))):
-							return cls.gen_gallery_hash(gallery, chapter, 0, _name=page)
+						f_bytes = io.BytesIO(zip.open(con[0], False))
+						if not utils.image_greyscale(f_bytes):
+							return {'color':zip.extract(con[0])}
+						f_bytes.close()
 					if page == 'mid':
 						p = len(con)//2
 						img = con[p]

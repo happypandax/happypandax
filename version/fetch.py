@@ -320,10 +320,11 @@ class Fetch(QObject):
 		self.AUTO_METADATA_PROGRESS.emit('Finished applying metadata')
 		log_i('Finished applying metadata')
 
-	def _auto_metadata_process(self, galleries, hen, valid_url):
+	def _auto_metadata_process(self, galleries, hen, valid_url, **kwargs):
 		hen.LAST_USED = time.time()
 		self.AUTO_METADATA_PROGRESS.emit("Checking gallery urls...")
 
+		custom_args = {} # send to hen class
 		fetched_galleries = []
 		checked_pre_url_galleries = []
 		multiple_hit_galleries = []
@@ -354,8 +355,12 @@ class Fetch(QObject):
 			hash = None
 			try:
 				if not gallery.hashes:
-					hash_dict = add_method_queue(HashDB.gen_gallery_hash, False, gallery, 0, 'mid', True)
-					if hash_dict:
+					color_img = kwargs['color'] if 'color' in kwargs else False # used for similarity search on EH
+					hash_dict = add_method_queue(HashDB.gen_gallery_hash, False, gallery, 0, 'mid', color_img)
+					if color_img and 'color' in hash_dict:
+						custom_args['color'] = hash_dict['color'] # will be path to filename
+						hash = hash_dict['color']
+					elif hash_dict:
 						hash = hash_dict['mid']
 				else:
 					hash = gallery.hashes[random.randint(0, len(gallery.hashes)-1)]
@@ -371,7 +376,7 @@ class Fetch(QObject):
 
 			# dict -> hash:[list of title,url tuples] or None
 			self.AUTO_METADATA_PROGRESS.emit("({}/{}) Finding url for gallery: {}".format(x, len(galleries), gallery.title))
-			found_url = hen.search(gallery.hash)
+			found_url = hen.search(gallery.hash, **custom_args)
 			if found_url == 'error':
 				app_constants.GLOBAL_EHEN_LOCK = False
 				self.FINISHED.emit(True)
@@ -480,7 +485,7 @@ class Fetch(QObject):
 				hen = pewnet.EHen()
 				valid_url = 'ehen'
 				log_i("Using Exhentai")
-			self._auto_metadata_process(self.galleries, hen, valid_url)
+			self._auto_metadata_process(self.galleries, hen, valid_url, color=True)
 
 			if self.error_galleries:
 				if self._hen_list:
