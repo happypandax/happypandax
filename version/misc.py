@@ -1551,10 +1551,13 @@ class GalleryShowcaseWidget(QWidget):
 			menu.gallery_widget = self
 		self._menu = menu
 		self.gallery = gallery
+		self.extra_text = QLabel()
 		self.profile = QLabel(self)
 		self.profile.setAlignment(Qt.AlignCenter)
 		self.text = QLabel(self)
 		self.font_M = self.text.fontMetrics()
+		self.main_layout.addWidget(self.extra_text)
+		self.extra_text.hide()
 		self.main_layout.addWidget(self.profile)
 		self.main_layout.addWidget(self.text)
 		self.h = 0
@@ -1914,6 +1917,10 @@ class FlowLayout(QLayout):
 
 	def count(self):
 		return len(self.itemList)
+
+	# to keep it in style with the others..
+	def rowCount(self):
+		return self.count()
 
 	def itemAt(self, index):
 		if index >= 0 and index < len(self.itemList):

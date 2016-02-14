@@ -382,13 +382,13 @@ class GalleryPopup(misc.BasePopup):
 		self.resize(620, 500)
 		self.show()
 
-	#def get_all_items(self):
-	#	n = self.gallery_layout.rowCount()
-	#	items = []
-	#	for x in range(n):
-	#		item = self.gallery_layout.itemAt(x)
-	#		items.append(item.widget())
-	#	return items
+	def get_all_items(self):
+		n = self.gallery_layout.rowCount()
+		items = []
+		for x in range(n):
+			item = self.gallery_layout.itemAt(x)
+			items.append(item.widget())
+		return items
 
 class ModifiedPopup(misc.BasePopup):
 	def __init__(self, path, gallery_id, parent=None):

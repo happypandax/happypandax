@@ -379,9 +379,10 @@ class AppWindow(QMainWindow):
 								gallery.CommonView.scroll_to_index(self.app_instance.get_current_view(), index)
 
 					g_popup = io_misc.GalleryPopup(('Fecthing metadata for these galleries failed.' + ' Check happypanda.log for details.', galleries), self, menu=GalleryContextMenu)
-					#errors = {g[0].id: g[1] for g in status}
-					#for g_item in g_popup.get_all_items():
-					#	g_item.setToolTip(errors[g_item.gallery.id])
+					errors = {g[0].id: g[1] for g in status}
+					for g_item in g_popup.get_all_items():
+						g_item.extra_text.setText("<font color='red'>{}</font>".format(errors[g_item.gallery.id]))
+						g_item.extra_text.show()
 					g_popup.graphics_blur.setEnabled(False)
 					close_button = g_popup.add_buttons('Close')[0]
 					close_button.clicked.connect(g_popup.close)

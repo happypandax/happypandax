@@ -255,7 +255,6 @@ class SettingsDialog(QWidget):
 		self.force_high_dpi_support.setChecked(app_constants.FORCE_HIGH_DPI_SUPPORT)
 		exprops = settings.ExProperties()
 		c_h = exprops.cookies
-		print(c_h)
 		self.ipbid_edit.setText(c_h.pop('ipb_member_id', ''))
 		self.ipbpass_edit.setText(c_h.pop('ipb_pass_hash', ''))
 

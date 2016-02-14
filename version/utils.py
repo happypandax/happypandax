@@ -874,7 +874,6 @@ def title_parser(title):
 	except AssertionError:
 		parsed_title['title'] = title
 
-	print(parsed_title)
 	return parsed_title
 
 import webbrowser

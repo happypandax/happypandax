@@ -294,7 +294,7 @@ class Fetch(QObject):
 		# We received something from get_metadata
 		if not metadata: # metadata fetching failed
 			if gallery:
-				self.error_galleries.append((gallery, "Metadata fetching failed"))
+				self.error_galleries.append((gallery, "No metadata found for gallery"))
 				log_i("An error occured while fetching metadata with gallery: {}".format(
 					gallery.title.encode(errors='ignore')))
 			return None
