@@ -12,7 +12,14 @@
 #along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 #"""
 
-import datetime, os, scandir, threading, logging, queue, io, uuid # for unique filename
+import datetime
+import os
+import scandir
+import threading
+import logging
+import queue
+import io
+import uuid # for unique filename
 import re as regex
 
 from PyQt5.QtCore import Qt, QObject, pyqtSignal
@@ -133,11 +140,13 @@ def gen_thumbnail(gallery, width=app_constants.THUMB_W_SIZE,
 			raise IndexError
 
 		# Do the scaling
-		
-		image = QImage()
-		image.load(img_path)
+		im_data = utils.PToQImageHelper(img_path)
+		image = QImage(im_data['data'], im_data['im'].size[0], im_data['im'].size[1], im_data['format'])
+		if im_data['colortable']:
+			image.setColorTable(im_data['colortable'])
 		if image.isNull():
 			raise IndexError
+		radius = 5
 		image = image.scaled(width, height, Qt.KeepAspectRatio, Qt.SmoothTransformation)
 		r_image = QImage(image.width(), image.height(), QImage.Format_ARGB32)
 		r_image.fill(Qt.transparent)
@@ -148,7 +157,7 @@ def gen_thumbnail(gallery, width=app_constants.THUMB_W_SIZE,
 		p.setRenderHint(p.Antialiasing)
 		p.setPen(Qt.NoPen)
 		p.setBrush(QBrush(image))
-		p.drawRoundedRect(0, 0, r_image.width(), r_image.height(), 5, 5)
+		p.drawRoundedRect(0, 0, r_image.width(), r_image.height(), radius, radius)
 		p.end()
 		r_image.save(new_img_path, "PNG", quality=100)
 	except IndexError:
@@ -228,8 +237,7 @@ def default_chap_exec(gallery_or_id, chap, only_values=False):
 				'chapter_number':chap.number,
 				'chapter_path':str.encode(chap.path),
 				'pages':chap.pages,
-				'in_archive':in_archive}
-				)
+				'in_archive':in_archive})
 	return execute
 
 def default_exec(object):
@@ -264,8 +272,7 @@ def default_exec(object):
 				'times_read':check(object.times_read),
 				'db_v':check(db_constants.REAL_DB_VERSION),
 				'exed':check(object.exed)
-				}
-				]
+				}]
 	return executing
 
 class GalleryDB(DBBase):
@@ -298,8 +305,7 @@ class GalleryDB(DBBase):
 			if gallery.profile:
 				GalleryDB.clear_thumb(gallery.profile)
 			gallery.profile = gen_thumbnail(gallery)
-			GalleryDB.modify_gallery(
-				gallery.id,
+			GalleryDB.modify_gallery(gallery.id,
 				profile=gallery.profile)
 		except:
 			log.exception("Failed rebuilding thumbnail")
@@ -333,8 +339,7 @@ class GalleryDB(DBBase):
 			log_i('Rebuilding {}'.format(gallery.title.encode(errors='ignore')))
 			log_i("Rebuilding gallery {}".format(gallery.id))
 			HashDB.del_gallery_hashes(gallery.id)
-			GalleryDB.modify_gallery(
-				gallery.id,
+			GalleryDB.modify_gallery(gallery.id,
 				title=gallery.title,
 				artist=gallery.artist,
 				info=gallery.info,
@@ -869,7 +874,8 @@ class TagDB(DBBase):
 		executing = []
 		for tags_map in tags_mappings_id_list:
 			executing.append((series_id, tags_map,))
-			#cls.execute(cls, 'INSERT INTO series_tags_map(series_id, tags_mappings_id) VALUES(?, ?)', (series_id, tags_map,))
+			#cls.execute(cls, 'INSERT INTO series_tags_map(series_id, tags_mappings_id)
+			#VALUES(?, ?)', (series_id, tags_map,))
 		cls.executemany(cls, 'INSERT OR IGNORE INTO series_tags_map(series_id, tags_mappings_id) VALUES(?, ?)', executing)
 
 	@staticmethod
@@ -1180,7 +1186,7 @@ class HashDB(DBBase):
 				skip_gen = True
 				if page == "mid":
 					try:
-						hashes = {'mid':hashes[len(hashes)//2]}
+						hashes = {'mid':hashes[len(hashes) // 2]}
 					except KeyError:
 						skip_gen = False
 
@@ -1216,8 +1222,8 @@ class HashDB(DBBase):
 						if not utils.image_greyscale(imgs[0]):
 							return {'color':imgs[0]}
 					if page == 'mid':
-						imgs = imgs[len(imgs)//2]
-						pages[len(imgs)//2] = imgs
+						imgs = imgs[len(imgs) // 2]
+						pages[len(imgs) // 2] = imgs
 					elif isinstance(page, list):
 						for p in page:
 							pages[p] = imgs[p]
@@ -1262,7 +1268,7 @@ class HashDB(DBBase):
 							return {'color':zip.extract(con[0])}
 						f_bytes.close()
 					if page == 'mid':
-						p = len(con)//2
+						p = len(con) // 2
 						img = con[p]
 						pages = {p:zip.open(img, True)}
 					elif isinstance(page, list):
@@ -1734,20 +1740,20 @@ class Chapter:
 	@property
 	def next_chapter(self):
 		try:
-			return self.parent[self.number+1]
+			return self.parent[self.number + 1]
 		except KeyError:
 			return None
 
 	@property
 	def previous_chapter(self):
 		try:
-			return self.parent[self.number-1]
+			return self.parent[self.number - 1]
 		except KeyError:
 			return None
 
 	def open(self, stat_msg=True):
 		if stat_msg:
-			txt = "Opening chapter {} of {}".format(self.number+1, self.gallery.title)
+			txt = "Opening chapter {} of {}".format(self.number + 1, self.gallery.title)
 			app_constants.STAT_MSG_METHOD(txt)
 			app_constants.NOTIF_BAR.add_text(txt)
 		if self.in_archive:
@@ -1888,7 +1894,7 @@ class AdminDB(QObject):
 		log_i("Started rebuilding database")
 		if DBBase._DB_CONN:
 			DBBase._DB_CONN.close()
-		DBBase._DB_CONN= db.init_db(old_db_path)
+		DBBase._DB_CONN = db.init_db(old_db_path)
 		db_galleries = add_method_queue(GalleryDB.get_all_gallery, False, False, True, True)
 		galleries = []
 		for g in db_galleries:
@@ -1901,7 +1907,7 @@ class AdminDB(QObject):
 		# get all chapters
 		log_i("Getting chapters...")
 		chap_rows = DBBase().execute("SELECT * FROM chapters").fetchall()
-		data_count = len(chap_rows)*2
+		data_count = len(chap_rows) * 2
 		self.DATA_COUNT.emit(data_count)
 		for n, chap_row in enumerate(chap_rows, -1):
 			log_d('Next chapter row')
@@ -1931,7 +1937,7 @@ class AdminDB(QObject):
 					galleries.remove(gallery)
 					break
 			self.PROGRESS.emit(n)
-		log_d("G: {} C:{}".format(len(n_galleries), data_count-1))
+		log_d("G: {} C:{}".format(len(n_galleries), data_count - 1))
 		log_i("Database magic...")
 		if os.path.exists(db_constants.THUMBNAIL_PATH):
 			for root, dirs, files in scandir.walk(db_constants.THUMBNAIL_PATH, topdown=False):
@@ -1945,7 +1951,7 @@ class AdminDB(QObject):
 		t_db_path = os.path.join(head, 'temp.db')
 		conn = db.init_db(t_db_path)
 		DBBase._DB_CONN = conn
-		for n, g in enumerate(n_galleries, len(chap_rows)-1):
+		for n, g in enumerate(n_galleries, len(chap_rows) - 1):
 			log_d('Adding new gallery')
 			GalleryDB.add_gallery(g)
 			self.PROGRESS.emit(n)
@@ -2072,8 +2078,7 @@ class DatabaseEmitter(QObject):
 			self._fetching = True
 			remaining = self.count - len(self._current_data)
 			rec_to_fetch = min(remaining, self._fetch_count)
-			c = add_method_queue(self._DB.execute, False, 'SELECT * FROM series LIMIT {}, {}'.format(
-				self._offset, rec_to_fetch))
+			c = add_method_queue(self._DB.execute, False, 'SELECT * FROM series LIMIT {}, {}'.format(self._offset, rec_to_fetch))
 			self._offset += rec_to_fetch
 			if c:
 				new_data = c.fetchall()
@@ -2083,7 +2088,7 @@ class DatabaseEmitter(QObject):
 					self.GALLERY_EMITTER.emit(gallery_list)
 			self._fetching = False
 		if not self._fetching:
-			# TODO: redo this? 
+			# TODO: redo this?
 			thread = threading.Thread(target=get_records, name='DatabaseEmitter')
 			thread.start()
 

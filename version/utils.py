@@ -26,7 +26,10 @@ import scandir
 import rarfile
 import json
 import send2trash
+import functools
+import time
 
+from PyQt5.QtGui import QImage, qRgba
 from PIL import Image,ImageChops
 
 import app_constants
@@ -1071,4 +1074,99 @@ def image_greyscale(filepath):
 			return False
 	return True
 
+def PToQImageHelper(im):
+	"""
+	The Python Imaging Library (PIL) is
 
+	Copyright © 1997-2011 by Secret Labs AB
+	Copyright © 1995-2011 by Fredrik Lundh
+	"""
+	def rgb(r, g, b, a=255):
+		"""(Internal) Turns an RGB color into a Qt compatible color integer."""
+		# use qRgb to pack the colors, and then turn the resulting long
+		# into a negative integer with the same bitpattern.
+		return (qRgba(r, g, b, a) & 0xffffffff)
+
+	def align8to32(bytes, width, mode):
+		"""
+		converts each scanline of data from 8 bit to 32 bit aligned
+		"""
+
+		bits_per_pixel = {
+			'1': 1,
+			'L': 8,
+			'P': 8,
+		}[mode]
+
+		# calculate bytes per line and the extra padding if needed
+		bits_per_line = bits_per_pixel * width
+		full_bytes_per_line, remaining_bits_per_line = divmod(bits_per_line, 8)
+		bytes_per_line = full_bytes_per_line + (1 if remaining_bits_per_line else 0)
+
+		extra_padding = -bytes_per_line % 4
+
+		# already 32 bit aligned by luck
+		if not extra_padding:
+			return bytes
+
+		new_data = []
+		for i in range(len(bytes) // bytes_per_line):
+			new_data.append(bytes[i*bytes_per_line:(i+1)*bytes_per_line] + b'\x00' * extra_padding)
+
+		return b''.join(new_data)
+
+	data = None
+	colortable = None
+
+	# handle filename, if given instead of image name
+	if hasattr(im, "toUtf8"):
+		# FIXME - is this really the best way to do this?
+		if str is bytes:
+			im = unicode(im.toUtf8(), "utf-8")
+		else:
+			im = str(im.toUtf8(), "utf-8")
+	if isinstance(im, (bytes, str)):
+		im = Image.open(im)
+
+	if im.mode == "1":
+		format = QImage.Format_Mono
+	elif im.mode == "L":
+		format = QImage.Format_Indexed8
+		colortable = []
+		for i in range(256):
+			colortable.append(rgb(i, i, i))
+	elif im.mode == "P":
+		format = QImage.Format_Indexed8
+		colortable = []
+		palette = im.getpalette()
+		for i in range(0, len(palette), 3):
+			colortable.append(rgb(*palette[i:i+3]))
+	elif im.mode == "RGB":
+		data = im.tobytes("raw", "BGRX")
+		format = QImage.Format_RGB32
+	elif im.mode == "RGBA":
+		try:
+			data = im.tobytes("raw", "BGRA")
+		except SystemError:
+			# workaround for earlier versions
+			r, g, b, a = im.split()
+			im = Image.merge("RGBA", (b, g, r, a))
+		format = QImage.Format_ARGB32
+	else:
+		raise ValueError("unsupported image mode %r" % im.mode)
+
+	# must keep a reference, or Qt will crash!
+	__data = data or align8to32(im.tobytes(), im.size[0], im.mode)
+	return {
+		'data': __data, 'im': im, 'format': format, 'colortable': colortable
+	}
+
+def timeit(func):
+	@functools.wraps(func)
+	def newfunc(*args, **kwargs):
+		startTime = time.time()
+		func(*args, **kwargs)
+		elapsedTime = time.time() - startTime
+		print('function [{}] finished in {} ms'.format(
+			func.__name__, int(elapsedTime * 1000)))
+	return newfunc
