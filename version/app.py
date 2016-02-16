@@ -435,12 +435,18 @@ class AppWindow(QMainWindow):
 		self.temp_timer.start(5000)
 
 	def stat_row_info(self):
-		r = self.manga_list_view.model().rowCount()
-		t = self.manga_list_view.gallery_model.db_emitter.count
-		self.stat_info.setText("Loaded {} of {} ".format(r, t))
+		r = self.get_current_view().model().rowCount()
+		t = self.get_current_view().gallery_model.db_emitter.count
+		g_l = self.get_current_view().sort_model.current_gallery_list
+		if g_l:
+			self.stat_info.setText(
+				"<b><i>{}</i></b> | Loaded {} of {} ".format(g_l.name, r, t))
+		else:
+			self.stat_info.setText("Loaded {} of {} ".format(r, t))
 
 	def manga_display(self):
 		"initiates the manga view and related things"
+
 		#list view
 		self.manga_list_view = gallery.MangaView(self)
 

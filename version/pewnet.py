@@ -797,17 +797,13 @@ class EHen(CommenHen):
 	@classmethod
 	def parse_url(cls, url):
 		"Parses url into a list of gallery id and token"
-		gallery_id = regex.search('(\d+)(?=\S{4,})', url)
-		if not gallery_id:
-			log_e("Error extracting g_id from url: {}".format(url))
+		gallery_id_token = regex.search('(?<=g/)([0-9]+)/([a-zA-Z0-9]+)', url)
+		if not gallery_id_token:
+			log_e("Error extracting g_id and g_token from url: {}".format(url))
 			return None
-		gallery_id = int(gallery_id.group())
-		gallery_token = regex.search('(?<=\d/)(\S+)(?=/$)', url)
-		if not gallery_token:
-			log_e("Error extracting token from url: {}".format(url))
-			return None
-		gallery_token = gallery_token.group()
-		parsed_url = [gallery_id, gallery_token]
+		gallery_id_token = gallery_id_token.group()
+		gallery_id, gallery_token = gallery_id_token.split('/')
+		parsed_url = [int(gallery_id), gallery_token]
 		return parsed_url
 
 	def get_metadata(self, list_of_urls, cookies=None):

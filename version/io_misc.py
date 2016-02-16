@@ -293,7 +293,7 @@ class GalleryDownloader(QWidget):
 			manager = self.website_validator(url)
 			h_item = manager.from_gallery_url(url)
 		except app_constants.WrongURL:
-			self.info_lbl.setText("<font color='red'>Failed to add to add:\n{}</font>".format(url))
+			self.info_lbl.setText("<font color='red'>Failed to add:\n{}</font>".format(url))
 			self.info_lbl.show()
 			return
 		except app_constants.NeedLogin:
@@ -312,11 +312,12 @@ class GalleryDownloader(QWidget):
 		match_prefix = "^(http\:\/\/|https\:\/\/)?(www\.)?([^\.]?)" # http:// or https:// + www.
 		match_base = "(.*\.)+" # base. Replace with domain
 		match_tld = "[a-zA-Z0-9][a-zA-Z0-9\-]*" # com
+		end = "/?$"
 
 		# ATTENTION: the prefix will automatically get prepended to the pattern string! Don't try to match it.
 
 		def regex_validate(r):
-			if re.match(match_prefix+r, url):
+			if re.fullmatch(match_prefix+r+end, url):
 				return True
 			return False
 
