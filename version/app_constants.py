@@ -141,6 +141,8 @@ GALLERY_DATA_FIX_TITLE = get(True, 'Advanced', 'gallery data fix title', bool)
 GALLERY_DATA_FIX_ARTIST = get(True, 'Advanced', 'gallery data fix artist', bool)
 GALLERY_DATA_FIX_REPLACE = get("", 'Advanced', 'gallery data fix replace', str)
 
+EXTERNAL_VIEWER_ARGS = get("{$folder}", 'Advanced', 'external viewer args', str)
+
 # Import/Export
 EXPORT_FORMAT = get(1, 'Advanced', 'export format', int)
 EXPORT_PATH = ''
@@ -244,6 +246,13 @@ class FileNotFoundInArchive(Exception): pass
 class WrongURL(Exception): pass
 class NeedLogin(Exception): pass
 class WrongLogin(Exception): pass
+
+EXTERNAL_VIEWER_INFO =\
+	"""{$folder} = path to folder
+{$file} = path to first image
+
+Tip: IrfanView uses {$file}
+	"""
 
 WHAT_IS_FILTER =\
 	"""Filters are basically predefined gallery search terms.

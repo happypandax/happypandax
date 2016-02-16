@@ -579,10 +579,25 @@ def open_chapter(chapterpath, archive=None):
 		chapterpath = os.path.normpath(chapterpath)
 	temp_p = archive if is_archive else chapterpath
 
+	custom_args = app_constants.EXTERNAL_VIEWER_ARGS
+	send_folder_t = '{$folder}'
+	send_image_t = '{$file}'
+
+	send_folder = True
+
+	if app_constants.USE_EXTERNAL_VIEWER:
+		send_folder = True
+
+	if custom_args:
+		if send_folder_t in custom_args:
+			send_folder = True
+		elif send_image_t in custom_args:
+			send_folder = False
+
 	def find_f_img_folder():
 		filepath = os.path.join(temp_p, [x for x in sorted([y.name for y in scandir.scandir(temp_p)])\
 			if x.lower().endswith(IMG_FILES)][0]) # Find first page
-		return temp_p if app_constants.USE_EXTERNAL_VIEWER else filepath
+		return temp_p if send_folder else filepath
 
 	def find_f_img_archive(extract=True):
 		zip = ArchiveFile(temp_p)
@@ -605,7 +620,7 @@ def open_chapter(chapterpath, archive=None):
 					t_p = zip.extract(chapterpath, t_p)
 			else:
 				zip.extract_all(t_p) # Compatibility reasons..  TODO: REMOVE IN BETA
-			if app_constants.USE_EXTERNAL_VIEWER:
+			if send_folder:
 				filepath = t_p
 			else:
 				filepath = os.path.join(t_p, [x for x in sorted([y.name for y in scandir.scandir(t_p)])\
@@ -642,28 +657,36 @@ def open_chapter(chapterpath, archive=None):
 		app_constants.NOTIF_BAR.add_text("Chapter does no longer exist!")
 		return
 
+	if send_folder_t in custom_args:
+		custom_args = custom_args.replace(send_folder_t, filepath)
+	elif send_image_t in custom_args:
+		custom_args = custom_args.replace(send_image_t, filepath)
+	else:
+		custom_args = filepath
+
+	print(custom_args)
 	try:
 		app_constants.NOTIF_BAR.add_text('Opening chapter...')
 		if not app_constants.USE_EXTERNAL_VIEWER:
 			if sys.platform.startswith('darwin'):
-				subprocess.call(('open', filepath))
+				subprocess.call(('open', custom_args))
 			elif os.name == 'nt':
-				os.startfile(filepath)
+				os.startfile(custom_args)
 			elif os.name == 'posix':
-				subprocess.call(('xdg-open', filepath))
+				subprocess.call(('xdg-open', custom_args))
 		else:
 			ext_path = app_constants.EXTERNAL_VIEWER_PATH
 			viewer = external_viewer_checker(ext_path)
 			if viewer == 'honeyview':
 				if app_constants.OPEN_GALLERIES_SEQUENTIALLY:
-					subprocess.call((ext_path, filepath))
+					subprocess.call((ext_path, custom_args))
 				else:
-					subprocess.Popen((ext_path, filepath))
+					subprocess.Popen((ext_path, custom_args))
 			else:
 				if app_constants.OPEN_GALLERIES_SEQUENTIALLY:
-					subprocess.check_call((ext_path, filepath))
+					subprocess.check_call((ext_path, custom_args))
 				else:
-					subprocess.Popen((ext_path, filepath))
+					subprocess.Popen((ext_path, custom_args))
 	except subprocess.CalledProcessError:
 		app_constants.NOTIF_BAR.add_text("Could not open chapter. Invalid external viewer.")
 		log.exception('Could not open chapter. Invalid external viewer.')

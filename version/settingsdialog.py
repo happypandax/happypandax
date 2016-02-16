@@ -252,6 +252,7 @@ class SettingsDialog(QWidget):
 		self.ribbon_other_color.setText(app_constants.GRID_VIEW_T_OTHER_COLOR)
 
 		# Advanced / Misc
+		self.external_viewer_args.setText(app_constants.EXTERNAL_VIEWER_ARGS)
 		self.force_high_dpi_support.setChecked(app_constants.FORCE_HIGH_DPI_SUPPORT)
 		exprops = settings.ExProperties()
 		c_h = exprops.cookies
@@ -491,6 +492,9 @@ class SettingsDialog(QWidget):
 
 
 		# Advanced / Misc
+		app_constants.EXTERNAL_VIEWER_ARGS = self.external_viewer_args.text()
+		set(app_constants.EXTERNAL_VIEWER_ARGS, 'Advanced', 'external viewer args')
+
 		exprops = settings.ExProperties()
 		c_h = exprops.cookies
 		c_h['ipb_member_id'] = self.ipbid_edit.text()
@@ -608,8 +612,9 @@ class SettingsDialog(QWidget):
 
 		# App / General / External Viewer
 		app_external_viewer, app_external_viewer_l = groupbox('External Viewer', QFormLayout, application_general, app_general_m_l)
-		app_external_viewer_l.addRow(QLabel("Most image viewers should work. Incase it doesn't," +
-									   " hit me up on email/github/gitter-chat to add support."))
+		external_viewer_p_info = QLabel("Note: If your preffered image viewer doesn't work, try changing the arguments sent in the Advanced section")
+		external_viewer_p_info.setWordWrap(True)
+		app_external_viewer_l.addRow(external_viewer_p_info)
 		self.external_viewer_path = PathLineEdit(app_external_viewer, False, '')
 		self.external_viewer_path.setPlaceholderText('Right/Left-click to open folder explorer.'+
 							  ' Leave empty to use default viewer')
@@ -1051,6 +1056,14 @@ class SettingsDialog(QWidget):
 		self.force_high_dpi_support = QCheckBox("Force High DPI support *", self)
 		misc_controls_layout.addRow(self.force_high_dpi_support)
 
+		external_view_group, external_view_l = groupbox("External Viewer Arguments", QFormLayout, advanced)
+		misc_controls_layout.addRow(external_view_group)
+		external_viewer_info = QLabel(app_constants.EXTERNAL_VIEWER_INFO)
+		external_viewer_info.setWordWrap(True)
+		self.external_viewer_args = QLineEdit(advanced)
+		external_view_l.addRow("Available tokens:", external_viewer_info)
+		external_view_l.addRow("Arguments:", self.external_viewer_args)
+
 		# Advanced / Misc / Grid View
 		misc_gridview = QGroupBox('Grid View')
 		misc_controls_layout.addRow(misc_gridview)
@@ -1084,7 +1097,9 @@ class SettingsDialog(QWidget):
 		self.ipbpass_edit.setEchoMode(QLineEdit.Password)
 		exh_tutorial = QLabel(app_constants.EXHEN_COOKIE_TUTORIAL)
 		exh_tutorial.setTextFormat(Qt.RichText)
-		exhentai_group_l.addRow(QLabel("Warning: Only enter these values if you weren't able to gain access to exhentai by logging in at Web->Logins!"))
+		exh_info = QLabel("Warning: Only enter these values if you weren't able to gain access to exhentai by logging in at Web->Logins!")
+		exh_info.setWordWrap(True)
+		exhentai_group_l.addRow(exh_info)
 		exhentai_group_l.addRow('IPB Member ID:', self.ipbid_edit)
 		exhentai_group_l.addRow('IPB Pass Hash:', self.ipbpass_edit)
 		exhentai_group_l.addRow(exh_tutorial)
