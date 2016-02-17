@@ -18,6 +18,8 @@ setup.py
 *.ini
 *.swp
 .DS_Store
+downloads
+.happypanda
 
 # User-specific files
 *.suo
