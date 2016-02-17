@@ -94,7 +94,7 @@ class AppWindow(QMainWindow):
 		def remove_gallery(g):
 			index = gallery.CommonView.find_index(self.get_current_view(), g.id, True)
 			if index:
-				self.manga_list_view.remove_gallery([index])
+				gallery.CommonView.remove_gallery(self.get_current_view(), [index])
 			else:
 				log_e('Could not find gallery to remove from watcher')
 
@@ -1100,7 +1100,7 @@ class AppWindow(QMainWindow):
 		if event.mimeData().hasUrls():
 			event.acceptProposedAction()
 		else:
-			self.notification_bar.add_text('File is not supported')
+			super().dragEnterEvent(event)
 
 	def dropEvent(self, event):
 		acceptable = []
@@ -1137,6 +1137,7 @@ class AppWindow(QMainWindow):
 
 		if unaccept:
 			self.notification_bar.add_text('Some unsupported files did not get added')
+		super().dropEvent(event)
 
 	def resizeEvent(self, event):
 		try:
@@ -1254,7 +1255,7 @@ class AppWindow(QMainWindow):
 			def delete_gallery(self, source=False):
 				index = gallery.CommonView.find_index(self.viewer, self.gallery_widget.gallery.id, False)
 				if index and index.isValid():
-					self.viewer.remove_gallery([index], source)
+					gallery.CommonView.remove_gallery(self.viewer, [index], source)
 					if self.gallery_widget.parent_widget.gallery_layout.count() == 1:
 						self.gallery_widget.parent_widget.close()
 					else:

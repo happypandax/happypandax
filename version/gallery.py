@@ -12,7 +12,7 @@
 #along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 #"""
 
-import threading, logging, os, math, functools, random, datetime
+import threading, logging, os, math, functools, random, datetime, pickle
 import re as regex
 
 from PyQt5.QtCore import (Qt, QAbstractListModel, QModelIndex, QVariant,
@@ -20,7 +20,7 @@ from PyQt5.QtCore import (Qt, QAbstractListModel, QModelIndex, QVariant,
 						  QTimer, QPointF, QSortFilterProxyModel,
 						  QAbstractTableModel, QItemSelectionModel,
 						  QPoint, QRectF, QDate, QDateTime, QObject,
-						  QEvent, QSizeF)
+						  QEvent, QSizeF, QMimeData, QByteArray)
 from PyQt5.QtGui import (QPixmap, QBrush, QColor, QPainter, 
 						 QPen, QTextDocument,
 						 QMouseEvent, QHelpEvent,
@@ -159,8 +159,9 @@ class SortFilterModel(QSortFilterProxyModel):
 	# Views
 	CAT_VIEW, FAV_VIEW = range(2)
 
-	def __init__(self, parent=None):
+	def __init__(self, parent):
 		super().__init__(parent)
+		self.parent_widget = parent
 		self._data = app_constants.GALLERY_DATA
 		self._search_ready = False
 		self.current_term = ''
@@ -291,6 +292,51 @@ class SortFilterModel(QSortFilterProxyModel):
 		self.endRemoveRows()
 		return True
 
+	def canDropMimeData(self, data, action, row, coloumn, index):
+		if not data.hasFormat("list/gallery"):
+			return False
+		return True
+
+	def dropMimeData(self, data, action, row, coloumn, index):
+		if not self.canDropMimeData(data, action, row, coloumn, index):
+			return False
+		if action == Qt.IgnoreAction:
+			return True
+		
+		# if the drop occured on an item
+		if not index.isValid():
+			return False
+
+		g_list = pickle.loads(data.data("list/gallery").data())
+		item_g = index.data(GalleryModel.GALLERY_ROLE)
+		# ignore false positive
+		for g in g_list:
+			if g.id == item_g.id:
+				return False
+
+		txt = 'galleries' if len(g_list) > 1 else 'gallery'
+		msg = QMessageBox(self.parent_widget)
+		msg.setText("Are you sure you want to to merge the galleries into this gallery as chapters?".format(txt))
+		msg.setStandardButtons(msg.Yes | msg.No)
+		if msg.exec() == msg.No:
+			return False
+		
+
+		return True
+
+	def mimeTypes():
+		return ['list/gallery'] + super().mimeTypes()
+
+	def mimeData(self, index_list):
+		data = QMimeData()
+		g_list = []
+		for idx in index_list:
+			g = idx.data(GalleryModel.GALLERY_ROLE)
+			if g != None:
+				g_list.append(g)
+		data.setData("list/gallery", QByteArray(pickle.dumps(g_list)))
+		return data
+
 	def flags(self, index):
 		default_flags = super().flags(index);
 
@@ -300,7 +346,7 @@ class SortFilterModel(QSortFilterProxyModel):
 			return Qt.ItemIsDropEnabled | default_flags
 
 	def supportedDragActions(self):
-		return Qt.MoveAction
+		return Qt.ActionMask
 
 class GalleryModel(QAbstractTableModel):
 	"""
@@ -1032,7 +1078,7 @@ class MangaView(QListView):
 		self.setDropIndicatorShown(True)
 		self.setDragDropMode(self.DragDrop)
 
-		self.sort_model = SortFilterModel()
+		self.sort_model = SortFilterModel(self)
 		self.sort_model.setDynamicSortFilter(True)
 		self.sort_model.setFilterCaseSensitivity(Qt.CaseInsensitive)
 		self.sort_model.setSortLocaleAware(True)
@@ -1118,46 +1164,11 @@ class MangaView(QListView):
 			if s_idx:
 				for idx in s_idx:
 					self.doubleClicked.emit(idx)
+		elif event.modifiers() == Qt.ShiftModifier and event.key() == Qt.Key_Delete:
+			CommonView.remove_selected(self, True)
+		elif event.key() == Qt.Key_Delete:
+			CommonView.remove_selected(self)
 		return super().keyPressEvent(event)
-
-	def remove_gallery(self, index_list, local=False):
-		self.sort_model.setDynamicSortFilter(False)
-		msgbox = QMessageBox()
-		msgbox.setIcon(msgbox.Question)
-		msgbox.setStandardButtons(msgbox.Yes | msgbox.No)
-		if len(index_list) > 1:
-			if not local:
-				msg = 'Are you sure you want to remove {} selected galleries?'.format(
-				len(index_list))
-			else:
-				msg = 'Are you sure you want to remove {} selected galleries and their files/directories?'.format(
-				len(index_list))
-
-			msgbox.setText(msg)
-		else:
-			if not local:
-				msg = 'Are you sure you want to remove this gallery?'
-			else:
-				msg = 'Are you sure you want to remove this gallery and its file/directory?'
-			msgbox.setText(msg)
-
-		if msgbox.exec() == msgbox.Yes:
-			gallery_list = []
-			log_i('Removing {} galleries'.format(len(index_list)))
-			self.gallery_model.REMOVING_ROWS = True
-			for index in index_list:
-				gallery = index.data(Qt.UserRole+1)
-				gallery_list.append(gallery)
-				log_i('Attempt to remove: {} by {}'.format(gallery.title.encode(),
-											gallery.artist.encode()))
-			gallerydb.add_method_queue(gallerydb.GalleryDB.del_gallery, True, gallery_list, local=local)
-			rows = sorted([x.row() for x in index_list])
-
-			for x in range(len(rows), 0, -1):
-				self.sort_model.removeRows(rows[x-1])
-			self.STATUS_BAR_MSG.emit('Gallery removed!')
-			self.gallery_model.REMOVING_ROWS = False
-		self.sort_model.setDynamicSortFilter(True)
 
 	def favorite(self, index):
 		assert isinstance(index, QModelIndex)
@@ -1176,7 +1187,7 @@ class MangaView(QListView):
 	def del_chapter(self, index, chap_numb):
 		gallery = index.data(Qt.UserRole+1)
 		if len(gallery.chapters) < 2:
-			self.remove_gallery([index])
+			CommonView.remove_gallery(self, [index])
 		else:
 			msgbox = QMessageBox(self)
 			msgbox.setText('Are you sure you want to delete:')
@@ -1216,43 +1227,7 @@ class MangaView(QListView):
 			self.current_sort = 'last_read'
 
 	def contextMenuEvent(self, event):
-		handled = False
-		index = self.indexAt(event.pos())
-		index = self.sort_model.mapToSource(index)
-
-		if index.data(Qt.UserRole+1) and index.data(Qt.UserRole+1).state == GridDelegate.G_DOWNLOAD:
-			event.ignore()
-			return
-
-		selected = False
-		s_indexes = self.selectedIndexes()
-		select_indexes = []
-		for idx in s_indexes:
-			if idx.isValid() and idx.column() == 0:
-				if not idx.data(Qt.UserRole+1).state == GridDelegate.G_DOWNLOAD:
-					select_indexes.append(self.sort_model.mapToSource(idx))
-		if len(select_indexes) > 1:
-			selected = True
-
-		if index.isValid():
-			if self.gallery_window.isVisible():
-				self.gallery_window.hide_animation.start()
-			self.manga_delegate.CONTEXT_ON = True
-			if selected:
-				menu = misc.GalleryMenu(self, index, self.sort_model,
-							   self.parent_widget, select_indexes)
-			else:
-				menu = misc.GalleryMenu(self, index, self.sort_model,
-							   self.parent_widget)
-			handled = True
-
-		if handled:
-			menu.exec_(event.globalPos())
-			self.manga_delegate.CONTEXT_ON = False
-			event.accept()
-			del menu
-		else:
-			event.ignore()
+		CommonView.contextMenuEvent(self, event)
 
 	# TODO: move to CommonView
 	def replace_edit_gallery(self, list_of_gallery, pos=None, db_optimize=True):
@@ -1359,52 +1334,72 @@ class MangaTableView(QTableView):
 			if s_idx:
 				for idx in s_idx:
 					self.doubleClicked.emit(idx)
+		elif event.modifiers() == Qt.ShiftModifier and event.key() == Qt.Key_Delete:
+			CommonView.remove_selected(self, True)
+		elif event.key() == Qt.Key_Delete:
+			CommonView.remove_selected(self)
 		return super().keyPressEvent(event)
 
-	def remove_gallery(self, index_list, local=False):
-		self.parent_widget.manga_list_view.remove_gallery(index_list, local)
-
 	def contextMenuEvent(self, event):
-		handled = False
-		index = self.indexAt(event.pos())
-		index = self.sort_model.mapToSource(index)
-
-		if index.data(Qt.UserRole+1) and index.data(Qt.UserRole+1).state == GridDelegate.G_DOWNLOAD:
-			event.ignore()
-			return
-
-		selected = False
-		s_indexes = self.selectionModel().selectedRows()
-		select_indexes = []
-		for idx in s_indexes:
-			if idx.isValid():
-				if not idx.data(Qt.UserRole+1).state == GridDelegate.G_DOWNLOAD:
-					select_indexes.append(self.sort_model.mapToSource(idx))
-		if len(select_indexes) > 1:
-			selected = True
-
-		if index.isValid():
-			if selected:
-				menu = misc.GalleryMenu(self, 
-							index,
-							self.sort_model,
-							self.parent_widget, select_indexes)
-			else:
-				menu = misc.GalleryMenu(self, index, self.sort_model,
-							   self.parent_widget)
-			handled = True
-
-		if handled:
-			menu.exec_(event.globalPos())
-			event.accept()
-			del menu
-		else:
-			event.ignore()
+		CommonView.contextMenuEvent(self, event)
 
 class CommonView:
 	"""
 	Contains identical view implentations
 	"""
+
+	@staticmethod
+	def remove_selected(view_cls, source=False):
+		s_indexes = []
+		if isinstance(view_cls, QListView):
+			s_indexes = view_cls.selectedIndexes()
+		elif isinstance(view_cls, QTableView):
+			s_indexes = view_cls.selectionModel().selectedRows()
+
+		CommonView.remove_gallery(view_cls, s_indexes, source)
+
+	@staticmethod
+	def remove_gallery(view_cls, index_list, local=False):
+		view_cls.sort_model.setDynamicSortFilter(False)
+		msgbox = QMessageBox(view_cls)
+		msgbox.setIcon(msgbox.Question)
+		msgbox.setStandardButtons(msgbox.Yes | msgbox.No)
+		if len(index_list) > 1:
+			if not local:
+				msg = 'Are you sure you want to remove {} selected galleries?'.format(
+				len(index_list))
+			else:
+				msg = 'Are you sure you want to remove {} selected galleries and their files/directories?'.format(
+				len(index_list))
+
+			msgbox.setText(msg)
+		else:
+			if not local:
+				msg = 'Are you sure you want to remove this gallery?'
+			else:
+				msg = 'Are you sure you want to remove this gallery and its file/directory?'
+			msgbox.setText(msg)
+
+		if msgbox.exec() == msgbox.Yes:
+			view_cls.setUpdatesEnabled(False)
+			gallery_list = []
+			log_i('Removing {} galleries'.format(len(index_list)))
+			view_cls.gallery_model.REMOVING_ROWS = True
+			for index in index_list:
+				gallery = index.data(Qt.UserRole+1)
+				gallery_list.append(gallery)
+				log_i('Attempt to remove: {} by {}'.format(gallery.title.encode(),
+											gallery.artist.encode()))
+			gallerydb.add_method_queue(gallerydb.GalleryDB.del_gallery, True, gallery_list, local=local)
+			rows = sorted([x.row() for x in index_list])
+
+			for x in range(len(rows), 0, -1):
+				view_cls.sort_model.removeRows(rows[x-1])
+			view_cls.STATUS_BAR_MSG.emit('Gallery removed!')
+			view_cls.gallery_model.REMOVING_ROWS = False
+			view_cls.setUpdatesEnabled(True)
+		view_cls.sort_model.setDynamicSortFilter(True)
+
 	@staticmethod
 	def find_index(view_cls, gallery_id, sort_model=False):
 		"Finds and returns the index associated with the gallery id"
@@ -1449,6 +1444,59 @@ class CommonView:
 		if select:
 			view_cls.setCurrentIndex(idx)
 		view_cls.setAutoScroll(True)
+
+	@staticmethod
+	def contextMenuEvent(view_cls, event):
+		grid_view = False
+		table_view = False
+		if isinstance(view_cls, QListView):
+			grid_view = True
+		elif isinstance(view_cls, QTableView):
+			table_view = True
+
+		handled = False
+		index = view_cls.indexAt(event.pos())
+		index = view_cls.sort_model.mapToSource(index)
+
+		if index.data(Qt.UserRole+1) and index.data(Qt.UserRole+1).state == GridDelegate.G_DOWNLOAD:
+			event.ignore()
+			return
+
+		selected = False
+		if table_view:
+			s_indexes = view_cls.selectionModel().selectedRows()
+		else:
+			s_indexes = view_cls.selectedIndexes()
+		select_indexes = []
+		for idx in s_indexes:
+			if idx.isValid() and idx.column() == 0:
+				if not idx.data(Qt.UserRole+1).state == GridDelegate.G_DOWNLOAD:
+					select_indexes.append(view_cls.sort_model.mapToSource(idx))
+		if len(select_indexes) > 1:
+			selected = True
+
+		if index.isValid():
+			if grid_view:
+				if view_cls.gallery_window.isVisible():
+					view_cls.gallery_window.hide_animation.start()
+				view_cls.manga_delegate.CONTEXT_ON = True
+			if selected:
+				menu = misc.GalleryMenu(view_cls, index, view_cls.sort_model,
+							   view_cls.parent_widget, select_indexes)
+			else:
+				menu = misc.GalleryMenu(view_cls, index, view_cls.sort_model,
+							   view_cls.parent_widget)
+			menu.delete_galleries.connect(lambda s: CommonView.remove_gallery(view_cls, select_indexes, s))
+			handled = True
+
+		if handled:
+			menu.exec_(event.globalPos())
+			if grid_view:
+				view_cls.manga_delegate.CONTEXT_ON = False
+			event.accept()
+			del menu
+		else:
+			event.ignore()
 
 if __name__ == '__main__':
 	raise NotImplementedError("Unit testing not yet implemented")

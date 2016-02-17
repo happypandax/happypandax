@@ -977,6 +977,8 @@ class Spinner(TransparentWidget):
 		self.update()
 
 class GalleryMenu(QMenu):
+	delete_galleries = pyqtSignal(bool)
+
 	def __init__(self, view, index, sort_model, app_window, selected_indexes=None):
 		super().__init__(app_window)
 		self.parent_widget = app_window
@@ -1064,7 +1066,7 @@ class GalleryMenu(QMenu):
 			remove_f_g_list = remove_menu.addAction(remove_f_g_list_txt, self.remove_from_list)
 		if not self.selected:
 			remove_g = remove_menu.addAction('Remove gallery',
-								lambda: self.view.remove_gallery([self.index]))
+								lambda: self.delete_galleries.emit(False))
 			remove_ch = remove_menu.addAction('Remove chapter')
 			remove_ch_menu = QMenu(self)
 			remove_ch.setMenu(remove_ch_menu)
@@ -1078,15 +1080,14 @@ class GalleryMenu(QMenu):
 							  chap_number))
 				remove_ch_menu.addAction(chap_action)
 		else:
-			remove_select_g = remove_menu.addAction('Remove selected', self.remove_selection)
+			remove_select_g = remove_menu.addAction('Remove selected', lambda: self.delete_galleries.emit(False))
 		remove_menu.addSeparator()
 		if not self.selected:
 			remove_source_g = remove_menu.addAction('Remove and delete files',
-									   lambda: self.view.remove_gallery(
-										   [self.index], True))
+									   lambda: self.delete_galleries.emit(True))
 		else:
 			remove_source_select_g = remove_menu.addAction('Remove selected and delete files',
-										   lambda: self.remove_selection(True))
+										   lambda: self.delete_galleries.emit(True))
 		self.addSeparator()
 		if not self.selected:
 			advanced = self.addAction('Advanced')
@@ -1155,9 +1156,6 @@ class GalleryMenu(QMenu):
 		app_constants.STAT_MSG_METHOD(txt)
 		for idx in self.selected:
 			idx.data(Qt.UserRole+1).chapters[0].open(False)
-
-	def remove_selection(self, source=False):
-		self.view.remove_gallery(self.selected, source)
 
 	def op_link(self, select=False):
 		if select:
