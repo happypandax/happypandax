@@ -2067,7 +2067,7 @@ class DatabaseEmitter(QObject):
 		super().__init__()
 		ListDB.init_lists()
 		self._current_data = app_constants.GALLERY_DATA
-		self._fetch_count = 200
+		self._fetch_count = 500
 		self._offset = 0
 		self._fetching = False
 		self.count = 0

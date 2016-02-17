@@ -291,6 +291,17 @@ class SortFilterModel(QSortFilterProxyModel):
 		self.endRemoveRows()
 		return True
 
+	def flags(self, index):
+		default_flags = super().flags(index);
+
+		if (index.isValid()):
+			return Qt.ItemIsDragEnabled | Qt.ItemIsDropEnabled | default_flags
+		else:
+			return Qt.ItemIsDropEnabled | default_flags
+
+	def supportedDragActions(self):
+		return Qt.MoveAction
+
 class GalleryModel(QAbstractTableModel):
 	"""
 	Model for Model/View/Delegate framework
@@ -991,7 +1002,7 @@ class GridDelegate(QStyledItemDelegate):
 			return app_constants.GRID_VIEW_T_OTHER_COLOR
 
 	def sizeHint(self, option, index):
-		return QSize(self.W, self.H)
+		return QSize(app_constants.GRIDBOX_W_SIZE, app_constants.GRIDBOX_H_SIZE)
 
 class MangaView(QListView):
 	"""
@@ -1005,20 +1016,22 @@ class MangaView(QListView):
 		super().__init__(parent)
 		self.parent_widget = parent
 		self.setViewMode(self.IconMode)
-		self.H = app_constants.GRIDBOX_H_SIZE
-		self.W = app_constants.GRIDBOX_W_SIZE + (app_constants.SIZE_FACTOR//5)
-		self.setGridSize(QSize(self.W, self.H))
 		self.setResizeMode(self.Adjust)
-		self.setIconSize(QSize(app_constants.THUMB_W_SIZE,
-						 app_constants.THUMB_H_SIZE))
+		self.setWrapping(True)
 		# all items have the same size (perfomance)
-		#self.setUniformItemSizes(True)
+		self.setUniformItemSizes(True)
 		# improve scrolling
-		self.setAutoScroll(False)
+		self.setAutoScroll(True)
 		self.setVerticalScrollMode(self.ScrollPerPixel)
 		self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-		self.setLayoutMode(self.SinglePass)
+		self.setLayoutMode(self.Batched)
 		self.setMouseTracking(True)
+		self.setAcceptDrops(True)
+		self.setDragEnabled(True)
+		self.viewport().setAcceptDrops(True)
+		self.setDropIndicatorShown(True)
+		self.setDragDropMode(self.DragDrop)
+
 		self.sort_model = SortFilterModel()
 		self.sort_model.setDynamicSortFilter(True)
 		self.sort_model.setFilterCaseSensitivity(Qt.CaseInsensitive)
@@ -1026,6 +1039,9 @@ class MangaView(QListView):
 		self.sort_model.setSortCaseSensitivity(Qt.CaseInsensitive)
 		self.manga_delegate = GridDelegate(parent)
 		self.setItemDelegate(self.manga_delegate)
+		self.setSpacing(app_constants.GRID_SPACING)
+		self.setFlow(QListView.LeftToRight)
+		self.setIconSize(QSize(self.manga_delegate.W, self.manga_delegate.H))
 		self.setSelectionBehavior(self.SelectItems)
 		self.setSelectionMode(self.ExtendedSelection)
 		self.gallery_model = GalleryModel(parent)
@@ -1059,8 +1075,8 @@ class MangaView(QListView):
 
 	def get_visible_indexes(self, column=0):
 		"find all galleries in viewport"
-		gridW = self.W
-		gridH = self.H
+		gridW = self.manga_delegate.W + app_constants.GRID_SPACING*2
+		gridH = self.manga_delegate.H + app_constants.GRID_SPACING*2
 		region = self.viewport().visibleRegion()
 		idx_found = []
 
@@ -1086,6 +1102,11 @@ class MangaView(QListView):
 		if self.gallery_window.isVisible():
 			self.gallery_window.hide_animation.start()
 		return super().wheelEvent(event)
+
+	def focusOutEvent(self, event):
+		if self.gallery_window.isVisible():
+			self.gallery_window.hide_animation.start()
+		return super().focusOutEvent(event)
 
 	def mouseMoveEvent(self, event):
 		self.gallery_window.mouseMoveEvent(event)
@@ -1415,6 +1436,7 @@ class CommonView:
 	@staticmethod
 	def scroll_to_index(view_cls, idx, select=True):
 		old_value = view_cls.verticalScrollBar().value()
+		view_cls.setAutoScroll(False)
 		view_cls.setUpdatesEnabled(False)
 		view_cls.verticalScrollBar().setValue(0)
 		idx_rect = view_cls.visualRect(idx)
@@ -1426,6 +1448,7 @@ class CommonView:
 		view_cls.k_scroller.ensureVisible(rect, 0, 0)
 		if select:
 			view_cls.setCurrentIndex(idx)
+		view_cls.setAutoScroll(True)
 
 if __name__ == '__main__':
 	raise NotImplementedError("Unit testing not yet implemented")
