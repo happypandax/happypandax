@@ -1028,7 +1028,7 @@ class GalleryMenu(QMenu):
 		add_to_list = self.addAction(add_to_list_txt)
 		add_to_list_menu = QMenu(self)
 		add_to_list.setMenu(add_to_list_menu)
-		for g_list in app_constants.GALLERY_LISTS:
+		for g_list in sorted(app_constants.GALLERY_LISTS):
 			add_to_list_menu.addAction(g_list.name, functools.partial(self.add_to_list, g_list))
 		self.addSeparator()
 		if not self.selected:

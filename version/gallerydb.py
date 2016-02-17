@@ -969,6 +969,13 @@ class ListDB(DBBase):
 		list_rows = c.fetchall()
 		for l_row in list_rows:
 			l = GalleryList(l_row['list_name'], filter=l_row['list_filter'], id=l_row['list_id'])
+			if l_row['type'] == GalleryList.COLLECTION:
+				l.type = GalleryList.COLLECTION
+			elif l_row['type'] == GalleryList.REGULAR:
+				l.type = GalleryList.REGULAR
+			profile = l_row['profile']
+			if profile:
+				l.profile = bytes.decode(profile)
 			lists.append(l)
 			app_constants.GALLERY_LISTS.add(l)
 
@@ -985,7 +992,7 @@ class ListDB(DBBase):
 				l.add_gallery(gallery, False)
 
 	@classmethod
-	def modify_list(cls, gallery_list, name=False, filter=False):
+	def modify_list(cls, gallery_list, name=False, filter=False, profile=False, type=False):
 		assert isinstance(gallery_list, GalleryList)
 		if gallery_list._id:
 			if name and filter:
@@ -997,15 +1004,22 @@ class ListDB(DBBase):
 			elif filter:
 				cls.execute(cls, 'UPDATE list SET list_filter=? WHERE list_id=?',
 				   (gallery_list.filter, gallery_list._id))
+			elif profile:
+				cls.execute(cls, 'UPDATE list SET profile=? WHERE list_id=?',
+				   (str.encode(gallery_list.profile), gallery_list._id))
+			elif type:
+				cls.execute(cls, 'UPDATE list SET type=? WHERE list_id=?',
+				   (gallery_list.type, gallery_list._id))
 
 	@classmethod
 	def add_list(cls, gallery_list):
 		"Adds a list of GalleryList class to DB"
 		assert isinstance(gallery_list, GalleryList)
 		if gallery_list._id:
-			ListDB.modify_list(gallery_list, True, True)
+			ListDB.modify_list(gallery_list, True, True, True, True)
 		else:
-			c = cls.execute(cls, 'INSERT INTO list(list_name, list_filter) VALUES(?, ?)', (gallery_list.name, gallery_list.filter))
+			c = cls.execute(cls, 'INSERT INTO list(list_name, list_filter, profile, type) VALUES(?, ?, ?, ?)',
+				   (gallery_list.name, gallery_list.filter, str.encode(gallery_list.type), gallery_list.type))
 			gallery_list._id = c.lastrowid
 
 		ListDB.add_gallery_to_list(gallery_list.galleries(), gallery_list)
@@ -1345,9 +1359,14 @@ class GalleryList:
 	- galleries -> returns a list with all galleries in list
 	- scan <- scans for galleries matching the listfilter and adds them to gallery
 	"""
+	# types
+	REGULAR, COLLECTION = range(2)
+
 	def __init__(self, name, list_of_galleries=[], filter=None, id=None, _db=True):
 		self._id = id # shouldnt ever be touched
 		self.name = name
+		self.profile = ''
+		self.type = self.REGULAR
 		self.filter = filter
 		self._galleries = set()
 		self._ids_chache = []
@@ -1422,6 +1441,9 @@ class GalleryList:
 					new_galleries.append(gallery)
 			self.add_gallery(new_galleries)
 
+	def __lt__(self, other):
+		return self.name < other.name
+
 class Gallery:
 	"""
 	Base class for a gallery.
@@ -1452,6 +1474,7 @@ class Gallery:
 	def __init__(self):
 
 		self.id = None # Will be defaulted.
+		self.parent = None
 		self.title = ""
 		self.profile = ""
 		self.path = ""

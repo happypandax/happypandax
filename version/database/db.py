@@ -189,12 +189,16 @@ def list_sql(cols=False):
 		CREATE TABLE IF NOT EXISTS list(
 					list_id INTEGER PRIMARY KEY,
 					list_name TEXT NOT NULL DEFAULT '',
-					list_filter TEXT);
+					list_filter TEXT,
+					profile BLOB,
+					type INTEGER DEFAULT 0);
 		"""
 	col_list = [
 		'list_id INTEGER PRIMARY KEY',
 		"list_name TEXT NOT NULL DEFAULT ''",
-		'list_filter TEXT'
+		'list_filter TEXT',
+		"profile BLOB",
+		"type INTEGER DEFAULT 0",
 		]
 	if cols:
 		return sql, col_list

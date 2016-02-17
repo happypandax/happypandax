@@ -325,7 +325,8 @@ class GalleryLists(QListWidget):
 
 	def setup_lists(self):
 		for g_l in app_constants.GALLERY_LISTS:
-			self.create_new_list(g_l.name, g_l)
+			if g_l.type == gallerydb.GalleryList.REGULAR:
+				self.create_new_list(g_l.name, g_l)
 
 	def contextMenuEvent(self, event):
 		item = self.itemAt(event.pos())
