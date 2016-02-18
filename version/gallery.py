@@ -1049,7 +1049,7 @@ class GridDelegate(QStyledItemDelegate):
 			return app_constants.GRID_VIEW_T_OTHER_COLOR
 
 	def sizeHint(self, option, index):
-		return QSize(app_constants.GRIDBOX_W_SIZE, app_constants.GRIDBOX_H_SIZE)
+		return QSize(self.W, self.H)
 
 class MangaView(QListView):
 	"""

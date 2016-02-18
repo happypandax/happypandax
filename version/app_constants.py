@@ -57,13 +57,10 @@ FORCE_HIGH_DPI_SUPPORT = get(False, 'Advanced', 'force high dpi support', bool)
 MAIN_W = 1061 # main window
 MAIN_H = 650 # main window
 SIZE_FACTOR = get(10, 'Visual', 'size factor', int)
-GRID_SPACING = get(10, 'Visual', 'grid spacing', int)
-GRIDBOX_H_SIZE = 200 + SIZE_FACTOR
-GRIDBOX_W_SIZE = GRIDBOX_H_SIZE//1.38 #1.47
+GRID_SPACING = get(20, 'Visual', 'grid spacing', int)
 LISTBOX_H_SIZE = 190
 LISTBOX_W_SIZE = 950
 GRIDBOX_LBL_H = 60
-GRIDBOX_H_SIZE += GRIDBOX_LBL_H
 THUMB_H_SIZE = 190 + SIZE_FACTOR
 THUMB_W_SIZE = 133 + SIZE_FACTOR
 
@@ -122,6 +119,7 @@ MONITOR_PATHS = [p for p in get([], 'Application', 'monitor paths', list) if os.
 IGNORE_PATHS = get([], 'Application', 'ignore paths', list)
 IGNORE_EXTS = get([], 'Application', 'ignore exts', list)
 SCANNING_FOR_GALLERIES = False # if a scan for new galleries is being done
+TEMP_PATH_IGNORE = []
 
 # GENERAL
 OVERRIDE_MOVE_IMPORTED_IN_FETCH = False # set to true to make a fetch instance ignore moving files (will be set to false)

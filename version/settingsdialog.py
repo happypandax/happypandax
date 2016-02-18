@@ -988,6 +988,7 @@ class SettingsDialog(QWidget):
 		gallery_size_l = QHBoxLayout()
 		gallery_size_l.addWidget(gallery_size_lbl)
 		gallery_size_l.addWidget(self.gallery_size)
+		grid_gallery_main_l.addRow(QLabel("Note: A manual re-generation of thumbnails is required. Advanced -> Gallery"))
 		grid_gallery_main_l.addRow("Thumbnail Size:*", gallery_size_l)
 
 		# grid view / colors
