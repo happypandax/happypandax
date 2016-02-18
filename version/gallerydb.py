@@ -1019,7 +1019,7 @@ class ListDB(DBBase):
 			ListDB.modify_list(gallery_list, True, True, True, True)
 		else:
 			c = cls.execute(cls, 'INSERT INTO list(list_name, list_filter, profile, type) VALUES(?, ?, ?, ?)',
-				   (gallery_list.name, gallery_list.filter, str.encode(gallery_list.type), gallery_list.type))
+				   (gallery_list.name, gallery_list.filter, str.encode(gallery_list.profile), gallery_list.type))
 			gallery_list._id = c.lastrowid
 
 		ListDB.add_gallery_to_list(gallery_list.galleries(), gallery_list)
