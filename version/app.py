@@ -1131,6 +1131,7 @@ class AppWindow(QMainWindow):
 				g_d.show()
 			else:
 				self.gallery_populate(acceptable, True)
+			event.accept()
 		else:
 			text = 'File not supported' if len(unaccept) < 2 else 'Files not supported'
 			self.notification_bar.add_text(text)

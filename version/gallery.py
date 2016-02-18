@@ -316,11 +316,12 @@ class SortFilterModel(QSortFilterProxyModel):
 
 		txt = 'galleries' if len(g_list) > 1 else 'gallery'
 		msg = QMessageBox(self.parent_widget)
-		msg.setText("Are you sure you want to to merge the galleries into this gallery as chapters?".format(txt))
+		msg.setText("Are you sure you want to merge the galleries into this gallery as chapter(s)?".format(txt))
 		msg.setStandardButtons(msg.Yes | msg.No)
 		if msg.exec() == msg.No:
 			return False
 		
+		# TODO: finish this
 
 		return True
 

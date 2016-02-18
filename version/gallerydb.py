@@ -1521,6 +1521,10 @@ class Gallery:
 		chp_cont.set_parent(self)
 		self._chapters = chp_cont
 
+	def merge(galleries):
+		"Merge galleries into this galleries, adding them as chapters"
+		pass
+
 	def gen_hashes(self):
 		"Generate hashes while inserting them into DB"
 		if not self.hashes:
