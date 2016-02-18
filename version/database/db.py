@@ -191,7 +191,11 @@ def list_sql(cols=False):
 					list_name TEXT NOT NULL DEFAULT '',
 					list_filter TEXT,
 					profile BLOB,
-					type INTEGER DEFAULT 0);
+					type INTEGER DEFAULT 0,
+					enforce INTEGER DEFAULT 0,
+					regex INTEGER DEFAULT 0,
+					l_case INTEGER DEFAULT 0,
+					strict INTEGER DEFAULT 0);
 		"""
 	col_list = [
 		'list_id INTEGER PRIMARY KEY',
@@ -199,6 +203,10 @@ def list_sql(cols=False):
 		'list_filter TEXT',
 		"profile BLOB",
 		"type INTEGER DEFAULT 0",
+		"enforce INTEGER DEFAULT 0",
+		"regex INTEGER DEFAULT 0",
+		"l_case INTEGER DEFAULT 0",
+		"strict INTEGER DEFAULT 0",
 		]
 	if cols:
 		return sql, col_list

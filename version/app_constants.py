@@ -266,7 +266,8 @@ Every time a gallery matches the specific filter it gets automatically added to 
 Filter works the same way a gallery search does so make sure to read the guide in
 Settings -> About -> Search Guide.
 You can write any valid gallery search term.
-Regex works only if enabled in settings.
+
+Enabling Enforce will only allow galleries matching the specified filter in the ist.
 """
 
 SUPPORTED_DOWNLOAD_URLS=\

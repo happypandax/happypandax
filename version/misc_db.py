@@ -16,7 +16,8 @@ from PyQt5.QtWidgets import (QTreeWidget, QTreeWidgetItem, QWidget,
 							 QSizePolicy, QMenu, QAction, QApplication,
 							 QListWidget, QHBoxLayout, QPushButton, QStackedLayout,
 							 QFrame, QSizePolicy, QListView, QFormLayout, QLineEdit,
-							 QLabel, QStyledItemDelegate, QStyleOptionViewItem)
+							 QLabel, QStyledItemDelegate, QStyleOptionViewItem,
+							 QCheckBox)
 from PyQt5.QtCore import (Qt, QTimer, pyqtSignal, QRect, QSize, QEasingCurve,
 						  QSortFilterProxyModel, QIdentityProxyModel, QModelIndex,
 						  QPointF, QRectF)
@@ -220,34 +221,55 @@ class TagsTreeView(QTreeWidget):
 		self.sortItems(0, Qt.AscendingOrder)
 
 class GalleryListEdit(misc.BasePopup):
-	def __init__(self, gallery_list, item, parent):
+	apply = pyqtSignal()
+	def __init__(self, parent):
 		super().__init__(parent, blur=False)
-		self.gallery_list = gallery_list
-		self.item = item
 		main_layout = QFormLayout(self.main_widget)
-		self.name_edit = QLineEdit(gallery_list.name, self)
+		self.name_edit = QLineEdit(self)
 		main_layout.addRow("Name:", self.name_edit)
 		self.filter_edit = QLineEdit(self)
-		if gallery_list.filter:
-			self.filter_edit.setText(gallery_list.filter)
-		what_is_filter = misc.ClickedLabel("What is filter? (Hover)")
+		what_is_filter = misc.ClickedLabel("What is filter/enforce? (Hover)")
 		what_is_filter.setToolTip(app_constants.WHAT_IS_FILTER)
 		what_is_filter.setToolTipDuration(9999999999)
+		self.enforce = QCheckBox(self)
+		self.regex = QCheckBox(self)
+		self.case = QCheckBox(self)
+		self.strict = QCheckBox(self)
 		main_layout.addRow(what_is_filter)
 		main_layout.addRow("Filter", self.filter_edit)
+		main_layout.addRow("Enforce", self.enforce)
+		main_layout.addRow("Regex", self.regex)
+		main_layout.addRow("Case sensitive", self.case)
+		main_layout.addRow("Match whole terms", self.strict)
 		main_layout.addRow(self.buttons_layout)
-		self.add_buttons("Close")[0].clicked.connect(self.close)
+		self.add_buttons("Close")[0].clicked.connect(self.hide)
 		self.add_buttons("Apply")[0].clicked.connect(self.accept)
+
+	def set_list(self, gallery_list, item):
+		self.gallery_list = gallery_list
+		self.name_edit.setText(gallery_list.name)
+		self.enforce.setChecked(gallery_list.enforce)
+		self.regex.setChecked(gallery_list.regex)
+		self.case.setChecked(gallery_list.case)
+		self.strict.setChecked(gallery_list.strict)
+		self.item = item
+		if gallery_list.filter:
+			self.filter_edit.setText(gallery_list.filter)
 		self.adjustSize()
+		self.setFixedWidth(self.parent_widget.width())
 
 	def accept(self):
 		name = self.name_edit.text()
 		self.item.setText(name)
 		self.gallery_list.name = name
 		self.gallery_list.filter = self.filter_edit.text()
-		gallerydb.add_method_queue(gallerydb.ListDB.modify_list, True, self.gallery_list, True, True)
-		gallerydb.add_method_queue(self.gallery_list.scan, True)
-		self.close()
+		self.gallery_list.enforce = self.enforce.isChecked()
+		self.gallery_list.regex = self.regex.isChecked()
+		self.gallery_list.case = self.case.isChecked()
+		self.gallery_list.strict = self.strict.isChecked()
+		gallerydb.add_method_queue(gallerydb.ListDB.modify_list, True, self.gallery_list)
+		self.apply.emit()
+		self.hide()
 
 class GalleryListContextMenu(QMenu):
 	def __init__(self, item, parent):
@@ -260,8 +282,8 @@ class GalleryListContextMenu(QMenu):
 		remove = self.addAction("Delete", self.remove_list)
 
 	def edit_list(self):
-		l_edit = GalleryListEdit(self.gallery_list, self.item, self.parent_widget)
-		l_edit.show()
+		self.parent_widget.gallery_list_edit.set_list(self.gallery_list, self.item)
+		self.parent_widget.gallery_list_edit.show()
 
 	def remove_list(self):
 		self.parent_widget.takeItem(self.parent_widget.row(self.item))
@@ -278,6 +300,8 @@ class GalleryLists(QListWidget):
 	GALLERY_LIST_REMOVED = pyqtSignal()
 	def __init__(self, parent):
 		super().__init__(parent)
+		self.gallery_list_edit = GalleryListEdit(parent)
+		self.gallery_list_edit.hide()
 		self._g_list_icon = QIcon(app_constants.GLIST_PATH)
 		self._font_selected = QFont(self.font())
 		self._font_selected.setBold(True)
@@ -289,6 +313,7 @@ class GalleryLists(QListWidget):
 		self.viewport().setAcceptDrops(True)
 		self._in_proccess_item = None
 		self.current_selected = None
+		self.gallery_list_edit.apply.connect(lambda: self._item_double_clicked(self.current_selected))
 
 	def dragEnterEvent(self, event):
 		if event.mimeData().hasFormat("list/gallery"):

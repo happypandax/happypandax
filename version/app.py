@@ -496,7 +496,7 @@ class AppWindow(QMainWindow):
 			args.append(app_constants.Search.Case)
 		if app_constants.GALLERY_SEARCH_STRICT:
 			args.append(app_constants.Search.Strict)
-		self.manga_list_view.sort_model.init_search(srch_string, *args)
+		self.manga_list_view.sort_model.init_search(srch_string, args)
 		old_cursor_pos = self._search_cursor_pos[0]
 		self.search_bar.end(False)
 		if self.search_bar.cursorPosition() != old_cursor_pos + 1:

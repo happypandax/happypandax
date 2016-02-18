@@ -216,10 +216,13 @@ class SortFilterModel(QSortFilterProxyModel):
 			self._search_ready = True
 
 
-	def init_search(self, term, *args, **kwargs):
+	def init_search(self, term, args=None, **kwargs):
 		"""
 		Receives a search term and initiates a search
+		args should be a list of Search enums
 		"""
+		if not args:
+			args = self.current_args
 		history = kwargs.pop('history', True)
 		if history:
 			if len(self.terms_history) > 10:

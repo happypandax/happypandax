@@ -976,6 +976,10 @@ class ListDB(DBBase):
 			profile = l_row['profile']
 			if profile:
 				l.profile = bytes.decode(profile)
+			l.enforce = bool(l_row['enforce'])
+			l.regex = bool(l_row['regex'])
+			l.case = bool(l_row['l_case'])
+			l.strict = bool(l_row['strict'])
 			lists.append(l)
 			app_constants.GALLERY_LISTS.add(l)
 
@@ -989,37 +993,30 @@ class ListDB(DBBase):
 		list_rows = [x['list_id'] for x in c.fetchall()]
 		for l in app_constants.GALLERY_LISTS:
 			if l._id in list_rows:
-				l.add_gallery(gallery, False)
+				l.add_gallery(gallery, False, _check_filter=False)
 
 	@classmethod
-	def modify_list(cls, gallery_list, name=False, filter=False, profile=False, type=False):
+	def modify_list(cls, gallery_list):
 		assert isinstance(gallery_list, GalleryList)
 		if gallery_list._id:
-			if name and filter:
-				cls.execute(cls, 'UPDATE list SET list_name=?, list_filter=? WHERE list_id=?',
-				   (gallery_list.name, gallery_list.filter, gallery_list._id))
-			elif name:
-				cls.execute(cls, 'UPDATE list SET list_name=? WHERE list_id=?',
-				   (gallery_list.name, gallery_list._id))
-			elif filter:
-				cls.execute(cls, 'UPDATE list SET list_filter=? WHERE list_id=?',
-				   (gallery_list.filter, gallery_list._id))
-			elif profile:
-				cls.execute(cls, 'UPDATE list SET profile=? WHERE list_id=?',
-				   (str.encode(gallery_list.profile), gallery_list._id))
-			elif type:
-				cls.execute(cls, 'UPDATE list SET type=? WHERE list_id=?',
-				   (gallery_list.type, gallery_list._id))
+			cls.execute(cls,
+			   """UPDATE list SET list_name=?, list_filter=?, profile=?,
+			   type=?, enforce=?, regex=?, l_case=?, strict=? WHERE list_id=?""",
+				   (gallery_list.name, gallery_list.filter, str.encode(gallery_list.profile),
+					gallery_list.type, int(gallery_list.enforce), int(gallery_list.regex), int(gallery_list.case),
+				   int(gallery_list.strict), gallery_list._id))
 
 	@classmethod
 	def add_list(cls, gallery_list):
 		"Adds a list of GalleryList class to DB"
 		assert isinstance(gallery_list, GalleryList)
 		if gallery_list._id:
-			ListDB.modify_list(gallery_list, True, True, True, True)
+			ListDB.modify_list(gallery_list)
 		else:
-			c = cls.execute(cls, 'INSERT INTO list(list_name, list_filter, profile, type) VALUES(?, ?, ?, ?)',
-				   (gallery_list.name, gallery_list.filter, str.encode(gallery_list.profile), gallery_list.type))
+			c = cls.execute(cls, """INSERT INTO list(list_name, list_filter, profile, type,
+							enforce, regex, l_case, strict) VALUES(?, ?, ?, ?, ?, ?, ?, ?)""",
+				   (gallery_list.name, gallery_list.filter, str.encode(gallery_list.profile), gallery_list.type,
+						int(gallery_list.enforce), int(gallery_list.regex), int(gallery_list.case), int(gallery_list.strict)))
 			gallery_list._id = c.lastrowid
 
 		ListDB.add_gallery_to_list(gallery_list.galleries(), gallery_list)
@@ -1368,15 +1365,23 @@ class GalleryList:
 		self.profile = ''
 		self.type = self.REGULAR
 		self.filter = filter
+		self.enforce = False
+		self.regex = False
+		self.case = False
+		self.strict = False
 		self._galleries = set()
 		self._ids_chache = []
+		self._scanning = False
 		self.add_gallery(list_of_galleries, _db)
 
-	def add_gallery(self, gallery_or_list_of, _db=True):
+	def add_gallery(self, gallery_or_list_of, _db=True, _check_filter=True):
 		"add_gallery <- adds a gallery of Gallery class to list"
 		assert isinstance(gallery_or_list_of, (Gallery, list))
 		if isinstance(gallery_or_list_of, Gallery):
 			gallery_or_list_of = [gallery_or_list_of]
+		if _check_filter and self.filter and self.enforce:
+			add_method_queue(self.scan, True, gallery_or_list_of)
+			return
 		new_galleries = []
 		for gallery in gallery_or_list_of:
 			self._galleries.add(gallery)
@@ -1425,21 +1430,48 @@ class GalleryList:
 		app_constants.GALLERY_LISTS.add(self)
 		add_method_queue(ListDB.add_list, True, self)
 
-	def scan(self):
-		if self.filter:
+	def scan(self, galleries=None):
+		if self.filter and not self._scanning:
+			self._scanning = True
+			if isinstance(galleries, Gallery):
+				galleries = [galleries]
+			if not galleries:
+				galleries = app_constants.GALLERY_DATA
 			new_galleries = []
 			filter_term = ' '.join(self.filter.split())
+			args = []
+			if self.regex:
+				args.append(app_constants.Search.Regex)
+			if self.case:
+				args.append(app_constants.Search.Case)
+			if self.strict:
+				args.append(app_constants.Search.Strict)
 			search_pieces = utils.get_terms(filter_term)
-			for gallery in app_constants.GALLERY_DATA:
+
+			def _search_g(gallery):
 				all_terms = {t: False for t in search_pieces}
 
 				for t in search_pieces:
-					if t in gallery:
+					if gallery.contains(t, args):
 						all_terms[t] = True
 
 				if all(all_terms.values()):
+					return True
+				return False
+
+			for gallery in galleries:
+				if _search_g(gallery):
 					new_galleries.append(gallery)
-			self.add_gallery(new_galleries)
+
+			if self.enforce:
+				g_to_remove = []
+				for g in self.galleries():
+					if not _search_g(g):
+						g_to_remove.append(g.id)
+				if g_to_remove:
+					self.remove_gallery(g_to_remove)
+			self.add_gallery(new_galleries, _check_filter=False)
+			self._scanning = False
 
 	def __lt__(self, other):
 		return self.name < other.name
@@ -1559,30 +1591,27 @@ class Gallery:
 		"""
 		return []
 
-	def _keyword_search(self, ns, tag, regex=False):
+	def _keyword_search(self, ns, tag, args=[]):
 		term = ''
 		def _search(term):
-			if regex:
-				if utils.regex_search(tag, term):
+			if app_constants.Search.Regex in args:
+				if utils.regex_search(tag, term, args):
 					return True
 			else:
 				if app_constants.DEBUG:
 					print(tag, term)
-				if utils.search_term(tag, term):
+				if utils.search_term(tag, term, args):
 					return True
 			return False
 
 		if ns == 'Title':
 			term = self.title
 		elif ns in ['Language', 'Lang']:
-			tag = tag.lower()
-			term = self.language.lower()
+			term = self.language
 		elif ns == 'Type':
-			tag = tag.lower()
-			term = self.type.lower()
+			term = self.type
 		elif ns == 'Status':
-			tag = tag.lower()
-			term = self.status.lower()
+			term = self.status
 		elif ns == 'Artist':
 			term = self.artist
 		elif ns in ['Descr', 'Description']:
