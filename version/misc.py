@@ -1089,18 +1089,38 @@ class GalleryMenu(QMenu):
 			remove_source_select_g = remove_menu.addAction('Remove selected and delete files',
 										   lambda: self.delete_galleries.emit(True))
 		self.addSeparator()
+		advanced = self.addAction('Advanced')
+		adv_menu = QMenu(self)
+		advanced.setMenu(adv_menu)
 		if not self.selected:
-			advanced = self.addAction('Advanced')
-			adv_menu = QMenu(self)
-			advanced.setMenu(adv_menu)
 			change_cover = adv_menu.addAction('Change cover...', self.change_cover)
-			allow_metadata_txt = "Include in auto metadata fetch" if self.gallery.exed else "Exclude in auto metadata fetch"
-			adv_menu.addAction(allow_metadata_txt, self.allow_metadata_fetch)
+
+		if self.selected:
+			allow_metadata_count = 0
+			for i in self.selected:
+				if i.data(Qt.UserRole+1).exed:
+					allow_metadata_count += 1
+			self.allow_metadata_exed = allow_metadata_count >= len(self.selected)//2
+		else:
+			self.allow_metadata_exed = False if not self.gallery.exed else True
+
+		print(self.allow_metadata_exed)
+		if self.selected:
+			allow_metadata_txt = "Include selected in auto metadata fetch" if self.allow_metadata_exed else "Exclude selected in auto metadata fetch"
+		else:
+			allow_metadata_txt = "Include in auto metadata fetch" if self.allow_metadata_exed else "Exclude in auto metadata fetch"
+		adv_menu.addAction(allow_metadata_txt, self.allow_metadata_fetch)
 
 	def allow_metadata_fetch(self):
-		exed = 0 if self.gallery.exed else 1
-		self.gallery.exed = exed
-		gallerydb.add_method_queue(gallerydb.GalleryDB.modify_gallery, True, self.gallery.id, {'exed':exed})
+		exed = 0 if self.allow_metadata_exed else 1
+		if self.selected:
+			for idx in self.selected:
+				g = idx.data(Qt.UserRole+1)
+				g.exed = exed
+				gallerydb.add_method_queue(gallerydb.GalleryDB.modify_gallery, True, g.id, {'exed':exed})
+		else:
+			self.gallery.exed = exed
+			gallerydb.add_method_queue(gallerydb.GalleryDB.modify_gallery, True, self.gallery.id, {'exed':exed})
 
 	def add_to_list(self, g_list):
 		galleries = []
