@@ -177,6 +177,9 @@ def backup_database(db_path=db_constants.DB_PATH):
 	log_i("Perfoming database backup")
 	date = "{}".format(datetime.datetime.today()).split(' ')[0]
 	base_path, name = os.path.split(db_path)
+	backup_dir = os.path.join(base_path, 'backup')
+	if not os.path.isdir(backup_dir):
+		os.mkdir(backup_dir)
 	db_name = "{}-{}".format(date, name)
 
 	current_try = 0
@@ -184,12 +187,12 @@ def backup_database(db_path=db_constants.DB_PATH):
 		if current_try:
 			db_name = "{}({})-{}".format(date, current_try, db_name)
 		try:
-			dst_path = os.path.join(base_path, db_name)
+			dst_path = os.path.join(backup_dir, db_name)
 			if os.path.exists(dst_path):
 				raise ValueError
 			shutil.copyfile(db_path, dst_path)
 			break
-		except:
+		except ValueError:
 			current_try += 1
 	log_i("Database backup perfomed: {}".format(db_name))
 	return True

@@ -977,6 +977,8 @@ class Spinner(TransparentWidget):
 		self.update()
 
 class GalleryMenu(QMenu):
+	delete_galleries = pyqtSignal(bool)
+
 	def __init__(self, view, index, sort_model, app_window, selected_indexes=None):
 		super().__init__(app_window)
 		self.parent_widget = app_window
@@ -1028,7 +1030,7 @@ class GalleryMenu(QMenu):
 		add_to_list = self.addAction(add_to_list_txt)
 		add_to_list_menu = QMenu(self)
 		add_to_list.setMenu(add_to_list_menu)
-		for g_list in app_constants.GALLERY_LISTS:
+		for g_list in sorted(app_constants.GALLERY_LISTS):
 			add_to_list_menu.addAction(g_list.name, functools.partial(self.add_to_list, g_list))
 		self.addSeparator()
 		if not self.selected:
@@ -1064,7 +1066,7 @@ class GalleryMenu(QMenu):
 			remove_f_g_list = remove_menu.addAction(remove_f_g_list_txt, self.remove_from_list)
 		if not self.selected:
 			remove_g = remove_menu.addAction('Remove gallery',
-								lambda: self.view.remove_gallery([self.index]))
+								lambda: self.delete_galleries.emit(False))
 			remove_ch = remove_menu.addAction('Remove chapter')
 			remove_ch_menu = QMenu(self)
 			remove_ch.setMenu(remove_ch_menu)
@@ -1078,28 +1080,47 @@ class GalleryMenu(QMenu):
 							  chap_number))
 				remove_ch_menu.addAction(chap_action)
 		else:
-			remove_select_g = remove_menu.addAction('Remove selected', self.remove_selection)
+			remove_select_g = remove_menu.addAction('Remove selected', lambda: self.delete_galleries.emit(False))
 		remove_menu.addSeparator()
 		if not self.selected:
 			remove_source_g = remove_menu.addAction('Remove and delete files',
-									   lambda: self.view.remove_gallery(
-										   [self.index], True))
+									   lambda: self.delete_galleries.emit(True))
 		else:
 			remove_source_select_g = remove_menu.addAction('Remove selected and delete files',
-										   lambda: self.remove_selection(True))
+										   lambda: self.delete_galleries.emit(True))
 		self.addSeparator()
+		advanced = self.addAction('Advanced')
+		adv_menu = QMenu(self)
+		advanced.setMenu(adv_menu)
 		if not self.selected:
-			advanced = self.addAction('Advanced')
-			adv_menu = QMenu(self)
-			advanced.setMenu(adv_menu)
 			change_cover = adv_menu.addAction('Change cover...', self.change_cover)
-			allow_metadata_txt = "Include in auto metadata fetch" if self.gallery.exed else "Exclude in auto metadata fetch"
-			adv_menu.addAction(allow_metadata_txt, self.allow_metadata_fetch)
+
+		if self.selected:
+			allow_metadata_count = 0
+			for i in self.selected:
+				if i.data(Qt.UserRole+1).exed:
+					allow_metadata_count += 1
+			self.allow_metadata_exed = allow_metadata_count >= len(self.selected)//2
+		else:
+			self.allow_metadata_exed = False if not self.gallery.exed else True
+
+		print(self.allow_metadata_exed)
+		if self.selected:
+			allow_metadata_txt = "Include selected in auto metadata fetch" if self.allow_metadata_exed else "Exclude selected in auto metadata fetch"
+		else:
+			allow_metadata_txt = "Include in auto metadata fetch" if self.allow_metadata_exed else "Exclude in auto metadata fetch"
+		adv_menu.addAction(allow_metadata_txt, self.allow_metadata_fetch)
 
 	def allow_metadata_fetch(self):
-		exed = 0 if self.gallery.exed else 1
-		self.gallery.exed = exed
-		gallerydb.add_method_queue(gallerydb.GalleryDB.modify_gallery, True, self.gallery.id, {'exed':exed})
+		exed = 0 if self.allow_metadata_exed else 1
+		if self.selected:
+			for idx in self.selected:
+				g = idx.data(Qt.UserRole+1)
+				g.exed = exed
+				gallerydb.add_method_queue(gallerydb.GalleryDB.modify_gallery, True, g.id, {'exed':exed})
+		else:
+			self.gallery.exed = exed
+			gallerydb.add_method_queue(gallerydb.GalleryDB.modify_gallery, True, self.gallery.id, {'exed':exed})
 
 	def add_to_list(self, g_list):
 		galleries = []
@@ -1155,9 +1176,6 @@ class GalleryMenu(QMenu):
 		app_constants.STAT_MSG_METHOD(txt)
 		for idx in self.selected:
 			idx.data(Qt.UserRole+1).chapters[0].open(False)
-
-	def remove_selection(self, source=False):
-		self.view.remove_gallery(self.selected, source)
 
 	def op_link(self, select=False):
 		if select:

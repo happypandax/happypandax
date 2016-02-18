@@ -9,6 +9,7 @@
 #GNU General Public License for more details.
 #You should have received a copy of the GNU General Public License
 #along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
+import pickle, logging
 
 from PyQt5.QtWidgets import (QTreeWidget, QTreeWidgetItem, QWidget,
 							 QVBoxLayout, QTabWidget, QAction, QGraphicsScene,
@@ -26,6 +27,13 @@ import gallerydb
 import app_constants
 import utils
 import misc
+
+log = logging.getLogger(__name__)
+log_i = log.info
+log_d = log.debug
+log_w = log.warning
+log_e = log.error
+log_c = log.critical
 
 class NoTooltipModel(QIdentityProxyModel):
 
@@ -278,8 +286,37 @@ class GalleryLists(QListWidget):
 		self.setItemDelegate(ListDelegate(self))
 		self.itemDelegate().closeEditor.connect(self._add_new_list)
 		self.setEditTriggers(self.NoEditTriggers)
+		self.viewport().setAcceptDrops(True)
 		self._in_proccess_item = None
 		self.current_selected = None
+
+	def dragEnterEvent(self, event):
+		if event.mimeData().hasFormat("list/gallery"):
+			event.acceptProposedAction()
+		else:
+			event.ignore()
+
+	def dragMoveEvent(self, event):
+		item = self.itemAt(event.pos())
+		self.clearSelection()
+		if item:
+			item.setSelected(True)
+		event.accept()
+
+	def dropEvent(self, event):
+		galleries = []
+
+		galleries = pickle.loads(event.mimeData().data("list/gallery").data())
+
+		g_list_item = self.itemAt(event.pos())
+		if galleries and g_list_item:
+			txt = "galleries" if len(galleries) > 1 else "gallery"
+			app_constants.NOTIF_BUBBLE.update_text(g_list_item.item.name, 'Added {} to list...'.format(txt), 5)
+			log_i('Adding gallery to list')
+			g_list_item.item.add_gallery(galleries)
+
+		super().dropEvent(event)
+
 
 	def _add_new_list(self, lineedit=None, hint=None, gallery_list=None):
 		if not self._in_proccess_item.text():
@@ -309,15 +346,13 @@ class GalleryLists(QListWidget):
 
 	def _item_double_clicked(self, item):
 		if item:
-			if item.type() == self.CREATE_LIST_TYPE:
-				self.create_new_list()
-			else:
-				self._reset_selected()
-				if item.item.filter:
-					gallerydb.add_method_queue(item.item.scan, True)
-				self.GALLERY_LIST_CLICKED.emit(item.item)
-				item.setFont(self._font_selected)
-				self.current_selected = item
+			self._reset_selected()
+			if item.item.filter:
+				app_constants.NOTIF_BUBBLE.update_text(item.item.name, "Updating list..", 5)
+				gallerydb.add_method_queue(item.item.scan, True)
+			self.GALLERY_LIST_CLICKED.emit(item.item)
+			item.setFont(self._font_selected)
+			self.current_selected = item
 
 	def _reset_selected(self):
 		if self.current_selected:
@@ -325,7 +360,8 @@ class GalleryLists(QListWidget):
 
 	def setup_lists(self):
 		for g_l in app_constants.GALLERY_LISTS:
-			self.create_new_list(g_l.name, g_l)
+			if g_l.type == gallerydb.GalleryList.REGULAR:
+				self.create_new_list(g_l.name, g_l)
 
 	def contextMenuEvent(self, event):
 		item = self.itemAt(event.pos())
@@ -341,6 +377,7 @@ class SideBarWidget(QFrame):
 	"""
 	def __init__(self, parent):
 		super().__init__(parent)
+		self.setAcceptDrops(True)
 		self.parent_widget = parent
 		self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
 		self._widget_layout = QHBoxLayout(self)
