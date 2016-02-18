@@ -12,7 +12,7 @@
 
 """Contains constants to be used by several modules"""
 
-import os, sys
+import os, sys, enum
 import settings
 from database import db_constants
 
@@ -214,10 +214,16 @@ GRID_VIEW_T_OTHER_COLOR = get('#34495e', 'Visual', 'grid view t other color', st
 
 # Search
 SEARCH_AUTOCOMPLETE = get(True, 'Application', 'search autocomplete', bool)
-ALLOW_SEARCH_REGEX = get(False, 'Application', 'allow search regex', bool)
+GALLERY_SEARCH_REGEX = get(False, 'Application', 'allow search regex', bool)
 SEARCH_ON_ENTER = get(False, 'Application', 'search on enter', bool)
 GALLERY_SEARCH_STRICT = get(False, 'Application', 'gallery search strict', bool)
 GALLERY_SEARCH_CASE = get(False, 'Application', 'gallery search case', bool)
+
+@enum.unique
+class Search(enum.Enum):
+	Strict = 1
+	Case = 2
+	Regex = 3
 
 # Grid Tooltip
 GRID_TOOLTIP = get(True, 'Visual', 'grid tooltip', bool)

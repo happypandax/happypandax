@@ -692,7 +692,7 @@ class GalleryMetaWindow(ArrowWindow):
 			self.left_layout.addRow(self.g_title_lbl)
 			self.g_artist_lbl = ClickedLabel()
 			self.g_artist_lbl.setWordWrap(True)
-			self.g_artist_lbl.clicked.connect(appwindow.search)
+			self.g_artist_lbl.clicked.connect(lambda a: appwindow.search("artist:{}".format(a)))
 			self.g_artist_lbl.setStyleSheet('color:#bdc3c7;')
 			self.g_artist_lbl.setToolTip("Click to see more from this artist")
 			self.left_layout.addRow(self.g_artist_lbl)

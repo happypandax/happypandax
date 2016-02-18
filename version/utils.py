@@ -980,11 +980,11 @@ def delete_path(path):
 			s = False
 	return s
 
-def regex_search(a, b, override_case=False):
+def regex_search(a, b, override_case=False, args=[]):
 	"Looks for a in b"
 	if a and b:
 		try:
-			if not app_constants.GALLERY_SEARCH_CASE or override_case:
+			if not app_constants.Search.Case in args or override_case:
 				if regex.search(a, b, regex.IGNORECASE):
 					return True
 			else:
@@ -994,14 +994,14 @@ def regex_search(a, b, override_case=False):
 			pass
 	return False
 
-def search_term(a, b, override_case=False):
+def search_term(a, b, override_case=False, args=[]):
 	"Searches for a in b"
 	if a and b:
-		if not app_constants.GALLERY_SEARCH_CASE or override_case:
+		if not app_constants.Search.Case in args or override_case:
 			b = b.lower()
 			a = a.lower()
 
-		if app_constants.GALLERY_SEARCH_STRICT:
+		if app_constants.Search.Strict in args:
 			if a == b:
 				return True
 		else:

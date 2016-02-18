@@ -35,7 +35,7 @@ from PyQt5.QtWidgets import (QMainWindow, QListView,
 							 QListWidget, QListWidgetItem, QToolTip,
 							 QProgressBar, QToolButton, QSystemTrayIcon,
 							 QShortcut, QGraphicsBlurEffect, QTableWidget,
-							 QTableWidgetItem)
+							 QTableWidgetItem, QActionGroup)
 
 import app_constants
 import misc
@@ -485,10 +485,18 @@ class AppWindow(QMainWindow):
 		#self.manga_list_view.gallery_model.rowsRemoved.connect(self.gallery_delete_spinner.before_hide)
 
 
-	def search(self, srch_string, strict=None, case=None):
+	def search(self, srch_string):
+		"Args should be Search Enums"
 		self.search_bar.setText(srch_string)
 		self.search_backward.setVisible(True)
-		self.manga_list_view.sort_model.init_search(srch_string)
+		args = []
+		if app_constants.GALLERY_SEARCH_REGEX:
+			args.append(app_constants.Search.Regex)
+		if app_constants.GALLERY_SEARCH_CASE:
+			args.append(app_constants.Search.Case)
+		if app_constants.GALLERY_SEARCH_STRICT:
+			args.append(app_constants.Search.Strict)
+		self.manga_list_view.sort_model.init_search(srch_string, *args)
 		old_cursor_pos = self._search_cursor_pos[0]
 		self.search_bar.end(False)
 		if self.search_bar.cursorPosition() != old_cursor_pos + 1:
@@ -673,15 +681,6 @@ class AppWindow(QMainWindow):
 		spacer_mid2.setFixedSize(QSize(5, 1))
 		self.toolbar.addWidget(spacer_mid2)
 
-		def set_search_case(b):
-			app_constants.GALLERY_SEARCH_CASE = b
-			settings.set(b, 'Application', 'gallery search case')
-			settings.save()
-
-		def set_search_strict(b):
-			app_constants.GALLERY_SEARCH_STRICT = b
-			settings.set(b, 'Application', 'gallery search strict')
-			settings.save()
 
 		self.search_bar = misc.LineEdit()
 		search_options = self.search_bar.addAction(QIcon(app_constants.SEARCH_OPTIONS_PATH), QLineEdit.TrailingPosition)
@@ -691,11 +690,43 @@ class AppWindow(QMainWindow):
 		case_search_option = search_options_menu.addAction('Case Sensitive')
 		case_search_option.setCheckable(True)
 		case_search_option.setChecked(app_constants.GALLERY_SEARCH_CASE)
+
+		def set_search_case(b):
+			app_constants.GALLERY_SEARCH_CASE = b
+			settings.set(b, 'Application', 'gallery search case')
+			settings.save()
+
 		case_search_option.toggled.connect(set_search_case)
+
 		strict_search_option = search_options_menu.addAction('Match whole terms')
 		strict_search_option.setCheckable(True)
 		strict_search_option.setChecked(app_constants.GALLERY_SEARCH_STRICT)
+
+
+		regex_search_option = search_options_menu.addAction('Regex')
+		regex_search_option.setCheckable(True)
+		regex_search_option.setChecked(app_constants.GALLERY_SEARCH_REGEX)
+
+		def set_search_strict(b):
+			if b:
+				if regex_search_option.isChecked():
+					regex_search_option.toggle()
+			app_constants.GALLERY_SEARCH_STRICT = b
+			settings.set(b, 'Application', 'gallery search strict')
+			settings.save()
+
 		strict_search_option.toggled.connect(set_search_strict)
+
+		def set_search_regex(b):
+			if b:
+				if strict_search_option.isChecked():
+					strict_search_option.toggle()
+			app_constants.GALLERY_SEARCH_REGEX = b
+			settings.set(b, 'Application', 'allow search regex')
+			settings.save()
+
+		regex_search_option.toggled.connect(set_search_regex)
+
 		self.search_bar.setObjectName('search_bar')
 		self.search_timer = QTimer(self)
 		self.search_timer.setSingleShot(True)

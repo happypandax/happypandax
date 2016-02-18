@@ -225,11 +225,6 @@ class SettingsDialog(QWidget):
 		self.font_lbl.setText(app_constants.GALLERY_FONT[0])
 		self.font_size_lbl.setValue(app_constants.GALLERY_FONT[1])
 
-		def re_enforce(s):
-			if s:
-				self.search_on_enter.setChecked(True)
-		self.search_allow_regex.clicked.connect(re_enforce)
-
 		if app_constants.SEARCH_ON_ENTER:
 			self.search_on_enter.setChecked(True)
 		else:
@@ -308,8 +303,6 @@ class SettingsDialog(QWidget):
 		app_constants.unrar_tool_path = self.path_to_unrar.text()
 		set(app_constants.unrar_tool_path, 'Application', 'unrar tool path')
 		# App / General / Search
-		app_constants.ALLOW_SEARCH_REGEX = self.search_allow_regex.isChecked()
-		set(app_constants.ALLOW_SEARCH_REGEX, 'Application', 'allow search regex')
 		app_constants.SEARCH_AUTOCOMPLETE = self.search_autocomplete.isChecked()
 		set(app_constants.SEARCH_AUTOCOMPLETE, 'Application', 'search autocomplete')
 		if self.search_on_enter.isChecked():
@@ -590,15 +583,6 @@ class SettingsDialog(QWidget):
 		# App / General / Search
 		app_search, app_search_layout = groupbox('Search', QFormLayout, application_general)
 		app_general_m_l.addRow(app_search)
-		search_allow_regex_l = QHBoxLayout()
-		self.search_allow_regex = QCheckBox()
-		self.search_allow_regex.setChecked(app_constants.ALLOW_SEARCH_REGEX)
-		self.search_allow_regex.adjustSize()
-		self.search_allow_regex.setToolTip('A regex cheatsheet is located at About->Regex Cheatsheet')
-		search_allow_regex_l.addWidget(self.search_allow_regex)
-		search_allow_regex_l.addWidget(QLabel('A regex cheatsheet is located at About->Regex Cheatsheet'))
-		search_allow_regex_l.addWidget(Spacer('h'))
-		app_search_layout.addRow('Regex:', search_allow_regex_l)
 		# App / General / Search / autocomplete
 		self.search_autocomplete = QCheckBox('*')
 		self.search_autocomplete.setChecked(app_constants.SEARCH_AUTOCOMPLETE)

@@ -115,14 +115,14 @@ class GallerySearch(QObject):
 	def set_fav(self, new_fav):
 		self.fav = new_fav
 
-	def search(self, term):
+	def search(self, term, args):
 		term = ' '.join(term.split())
 		search_pieces = utils.get_terms(term)
 
-		self._filter(search_pieces)
+		self._filter(search_pieces, args)
 		self.FINISHED.emit()
 
-	def _filter(self, terms):
+	def _filter(self, terms, args):
 		self.result.clear()
 		for gallery in self._data:
 			if self.fav:
@@ -138,7 +138,7 @@ class GallerySearch(QObject):
 				continue
 			
 			for t in terms:
-				if t in gallery:
+				if gallery.contains(t, args):
 					all_terms[t] = True
 
 			if all(all_terms.values()):
@@ -148,7 +148,7 @@ class GallerySearch(QObject):
 
 class SortFilterModel(QSortFilterProxyModel):
 	ROWCOUNT_CHANGE = pyqtSignal()
-	_DO_SEARCH = pyqtSignal(str)
+	_DO_SEARCH = pyqtSignal(str, object)
 	_CHANGE_SEARCH_DATA = pyqtSignal(list)
 	_CHANGE_FAV = pyqtSignal(bool)
 	_SET_GALLERY_LIST = pyqtSignal(object)
@@ -168,7 +168,7 @@ class SortFilterModel(QSortFilterProxyModel):
 		self.terms_history = []
 		self.current_term_history = 0
 		self.current_gallery_list = None
-
+		self.current_args = []
 		self.current_view = self.CAT_VIEW
 
 	def navigate_history(self, direction=PREV):
@@ -182,25 +182,25 @@ class SortFilterModel(QSortFilterProxyModel):
 					self.current_term_history -= 1
 			new_term = self.terms_history[self.current_term_history]
 			if new_term != self.current_term:
-				self.init_search(new_term, False)
+				self.init_search(new_term, history=False)
 		return new_term
 
 	def set_gallery_list(self, g_list=None):
 		self.current_gallery_list = g_list
 		self._SET_GALLERY_LIST.emit(g_list)
-		self._DO_SEARCH.emit(self.current_term)
+		self._DO_SEARCH.emit(self.current_term, self.current_args)
 
 	def fetchMore(self, index):
 		return super().fetchMore(index)
 
 	def fav_view(self):
 		self._CHANGE_FAV.emit(True)
-		self._DO_SEARCH.emit(self.current_term)
+		self._DO_SEARCH.emit(self.current_term, self.current_args)
 		self.current_view = self.FAV_VIEW
 
 	def catalog_view(self):
 		self._CHANGE_FAV.emit(False)
-		self._DO_SEARCH.emit(self.current_term)
+		self._DO_SEARCH.emit(self.current_term, self.current_args)
 		self.current_view = self.CAT_VIEW
 
 	def setup_search(self):
@@ -216,11 +216,12 @@ class SortFilterModel(QSortFilterProxyModel):
 			self._search_ready = True
 
 
-	def init_search(self, term='', history=True):
+	def init_search(self, term, *args, **kwargs):
 		"""
 		Receives a search term and initiates a search
 		"""
-		if term and history:
+		history = kwargs.pop('history', True)
+		if history:
 			if len(self.terms_history) > 10:
 				self.terms_history = self.terms_history[-10:]
 			self.terms_history.append(term)
@@ -232,7 +233,8 @@ class SortFilterModel(QSortFilterProxyModel):
 		self.current_term = term
 		if not history:
 			self.HISTORY_SEARCH_TERM.emit(term)
-		self._DO_SEARCH.emit(term)
+		self.current_args = args
+		self._DO_SEARCH.emit(term, args)
 
 	def filterAcceptsRow(self, source_row, parent_index):
 		if self.sourceModel():
@@ -1294,6 +1296,11 @@ class MangaTableView(QTableView):
 		super().__init__(parent)
 		# options
 		self.parent_widget = parent
+		self.setAcceptDrops(True)
+		self.setDragEnabled(True)
+		self.viewport().setAcceptDrops(True)
+		self.setDropIndicatorShown(True)
+		self.setDragDropMode(self.DragDrop)
 		self.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
 		self.setSelectionBehavior(self.SelectRows)
 		self.setSelectionMode(self.ExtendedSelection)

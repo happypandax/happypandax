@@ -1605,98 +1605,101 @@ class Gallery:
 		return _search(term)
 
 	def __contains__(self, key):
-		if isinstance(key, Chapter):
-			return self.chapters.__contains__(key)
-		elif isinstance(key, str):
-			is_exclude = False if key[0] == '-' else True
-			key = key[1:] if not is_exclude else key
-			default = False if is_exclude else True
-			if key:
-				# check in title/artist/language
-				found = False
-				if not ':' in key:
-					for g_attr in [self.title, self.artist, self.language]:
-						if not g_attr:
-							continue
-						if app_constants.ALLOW_SEARCH_REGEX:
-							if utils.regex_search(key, g_attr):
-								found = True
-								break
-						else:
-							if utils.search_term(key, g_attr):
-								found = True
-								break
+		assert isinstance(key, Chapter), "Can only check for chapters in gallery"
+		return self.chapters.__contains__(key)
 
-				# check in tag
-				if not found:
-					tags = key.split(':')
-					ns = tag = ''
-					# only namespace is lowered and capitalized for now
-					if len(tags) > 1:
-						ns = tags[0].lower().capitalize()
-						tag = tags[1]
+
+	def contains(self, key, args=[]):
+		"Check if gallery contains keyword"
+		is_exclude = False if key[0] == '-' else True
+		key = key[1:] if not is_exclude else key
+		default = False if is_exclude else True
+		if key:
+			# check in title/artist/language
+			found = False
+			if not ':' in key:
+				for g_attr in [self.title, self.artist, self.language]:
+					if not g_attr:
+						continue
+					if app_constants.Search.Regex in args:
+						if utils.regex_search(key, g_attr, args=args):
+							found = True
+							break
 					else:
-						tag = tags[0]
+						if utils.search_term(key, g_attr, args=args):
+							found = True
+							break
 
-					# very special keywords
-					if ns:
-						key_word = ['none', 'null']
-						if ns == 'Tag' and tag in key_word:
-							if not self.tags:
-								return is_exclude
-						elif ns == 'Artist' and tag in key_word:
-							if not self.artist:
-								return is_exclude
-						elif ns == 'Status' and tag in key_word:
-							if not self.status or self.status == 'Unknown':
-								return is_exclude
-						elif ns == 'Language' and tag in key_word:
-							if not self.language:
-								return is_exclude
-						elif ns == 'Url' and tag in key_word:
-							if not self.link:
-								return is_exclude
-						elif ns in ('Descr', 'Description') and tag in key_word:
-							if not self.info or self.info == 'No description..':
-								return is_exclude
-						elif ns == 'Type' and tag in key_word:
-							if not self.type:
-								return is_exclude
-						elif ns in ('Publication', 'Pub_date', 'Pub date') and tag in key_word:
-							if not self.pub_date:
-								return is_exclude
-
-					if app_constants.ALLOW_SEARCH_REGEX:
-						if ns:
-							if self._keyword_search(ns, tag, True):
-								return is_exclude
-
-							for x in self.tags:
-								if utils.regex_search(ns, x):
-									for t in self.tags[x]:
-										if utils.regex_search(tag, t, True):
-											return is_exclude
-						else:
-							for x in self.tags:
-								for t in self.tags[x]:
-									if utils.regex_search(tag, t, True):
-										return is_exclude
-					else:
-						if ns:
-							if self._keyword_search(ns, tag):
-								return is_exclude
-
-							if ns in self.tags:
-								for t in self.tags[ns]:
-									if utils.search_term(tag, t, True):
-										return is_exclude
-						else:
-							for x in self.tags:
-								for t in self.tags[x]:
-									if utils.search_term(tag, t, True):
-										return is_exclude
+			# check in tag
+			if not found:
+				tags = key.split(':')
+				ns = tag = ''
+				# only namespace is lowered and capitalized for now
+				if len(tags) > 1:
+					ns = tags[0].lower().capitalize()
+					tag = tags[1]
 				else:
-					return is_exclude
+					tag = tags[0]
+
+				# very special keywords
+				if ns:
+					key_word = ['none', 'null']
+					if ns == 'Tag' and tag in key_word:
+						if not self.tags:
+							return is_exclude
+					elif ns == 'Artist' and tag in key_word:
+						if not self.artist:
+							return is_exclude
+					elif ns == 'Status' and tag in key_word:
+						if not self.status or self.status == 'Unknown':
+							return is_exclude
+					elif ns == 'Language' and tag in key_word:
+						if not self.language:
+							return is_exclude
+					elif ns == 'Url' and tag in key_word:
+						if not self.link:
+							return is_exclude
+					elif ns in ('Descr', 'Description') and tag in key_word:
+						if not self.info or self.info == 'No description..':
+							return is_exclude
+					elif ns == 'Type' and tag in key_word:
+						if not self.type:
+							return is_exclude
+					elif ns in ('Publication', 'Pub_date', 'Pub date') and tag in key_word:
+						if not self.pub_date:
+							return is_exclude
+
+				if app_constants.Search.Regex in args:
+					if ns:
+						if self._keyword_search(ns, tag, True, args=args):
+							return is_exclude
+
+						for x in self.tags:
+							if utils.regex_search(ns, x):
+								for t in self.tags[x]:
+									if utils.regex_search(tag, t, True, args=args):
+										return is_exclude
+					else:
+						for x in self.tags:
+							for t in self.tags[x]:
+								if utils.regex_search(tag, t, True, args=args):
+									return is_exclude
+				else:
+					if ns:
+						if self._keyword_search(ns, tag, args=args):
+							return is_exclude
+
+						if ns in self.tags:
+							for t in self.tags[ns]:
+								if utils.search_term(tag, t, True, args=args):
+									return is_exclude
+					else:
+						for x in self.tags:
+							for t in self.tags[x]:
+								if utils.search_term(tag, t, True, args=args):
+									return is_exclude
+			else:
+				return is_exclude
 		return default
 
 	def __lt__(self, other):
