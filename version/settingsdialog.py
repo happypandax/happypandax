@@ -230,6 +230,7 @@ class SettingsDialog(QWidget):
 		else:
 			self.search_every_keystroke.setChecked(True)
 		self.gallery_size.setValue(app_constants.SIZE_FACTOR//10)
+		self.grid_spacing.setValue(app_constants.GRID_SPACING)
 		# Visual / Grid View / Colors
 		self.grid_label_color.setText(app_constants.GRID_VIEW_LABEL_COLOR)
 		self.grid_title_color.setText(app_constants.GRID_VIEW_TITLE_COLOR)
@@ -441,6 +442,8 @@ class SettingsDialog(QWidget):
 		set(app_constants.GALLERY_FONT[1], 'Visual', 'gallery font size')
 		app_constants.SIZE_FACTOR = self.gallery_size.value() * 10
 		set(app_constants.SIZE_FACTOR, 'Visual', 'size factor')
+		app_constants.GRID_SPACING = self.grid_spacing.value()
+		set(app_constants.GRID_SPACING, 'Visual', 'grid spacing')
 
 		# Visual / Grid View / Colors
 		app_constants.DISPLAY_GALLERY_RIBBON = self.colors_ribbon_group.isChecked()
@@ -596,7 +599,7 @@ class SettingsDialog(QWidget):
 
 		# App / General / External Viewer
 		app_external_viewer, app_external_viewer_l = groupbox('External Viewer', QFormLayout, application_general, app_general_m_l)
-		external_viewer_p_info = QLabel("Note: If your preffered image viewer doesn't work, try changing the arguments sent in the Advanced section")
+		external_viewer_p_info = QLabel("Tip: If your preffered image viewer doesn't work, try changing the arguments sent in the Advanced section")
 		external_viewer_p_info.setWordWrap(True)
 		app_external_viewer_l.addRow(external_viewer_p_info)
 		self.external_viewer_path = PathLineEdit(app_external_viewer, False, '')
@@ -974,6 +977,13 @@ class SettingsDialog(QWidget):
 		gallery_size_l.addWidget(self.gallery_size)
 		grid_gallery_main_l.addRow(QLabel("Note: A manual re-generation of thumbnails is required. Advanced -> Gallery"))
 		grid_gallery_main_l.addRow("Thumbnail Size:*", gallery_size_l)
+		self.grid_spacing = QSpinBox(self)
+		self.grid_spacing.setMinimum(1)
+		self.grid_spacing.setMaximum(99)
+		self.grid_spacing.setToolTip("Changes space between thumbnails in gridview. DEFAULT=15")
+		self.grid_spacing.adjustSize()
+		self.grid_spacing.setFixedWidth(self.grid_spacing.width())
+		grid_gallery_main_l.addRow("Spacing:*", self.grid_spacing)
 
 		# grid view / colors
 		grid_colors_group = QGroupBox('Colors', grid_view_general_page)
