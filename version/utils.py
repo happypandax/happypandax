@@ -282,7 +282,6 @@ def move_files(path, dest=''):
 
 def check_ignore_list(key):
 	k = os.path.normcase(key)
-	print(app_constants.IGNORE_EXTS)
 	if os.path.isdir(key) and 'Folder' in app_constants.IGNORE_EXTS:
 		return False
 	_, ext = os.path.splitext(key)
