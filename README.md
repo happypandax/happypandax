@@ -1,3 +1,5 @@
+##### I will be taking a longer break from Happypanda to focus on my other projects (and more on school since exams are coming up), so the next update will be a *bugfixes-only* update with fixed bugs accumulated from this version. I can't give a date on when I'll be back but sometime after exams I guess, which is in 3-4 months.. I'll still be available to answer issues, mails and gitter chat. 
+
 I'm here if you have any questions!
 
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Pewpews/happypanda?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
