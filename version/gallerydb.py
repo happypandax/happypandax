@@ -21,6 +21,7 @@ import queue
 import io
 import uuid # for unique filename
 import re as regex
+from dateutil import parser as dateparser
 
 from PyQt5.QtCore import Qt, QObject, pyqtSignal
 from PyQt5.QtGui import QImage, QPainter, QBrush, QPen
@@ -1593,6 +1594,7 @@ class Gallery:
 
 	def _keyword_search(self, ns, tag, args=[]):
 		term = ''
+		lt, gt = range(2)
 		def _search(term):
 			if app_constants.Search.Regex in args:
 				if utils.regex_search(tag, term, args):
@@ -1603,6 +1605,42 @@ class Gallery:
 				if utils.search_term(tag, term, args):
 					return True
 			return False
+
+		def _operator_parse(tag):
+			o = None
+			print(tag)
+			if tag:
+				if tag[0] == '<':
+					o = lt
+					tag = tag[1:]
+					print('lt', tag)
+				elif tag[0] == '>':
+					o = gt
+					tag = tag[1:]
+					print('gt', tag)
+			return tag, o
+
+		def _operator_supported(attr, date=False):
+			try:
+				o_tag, o = _operator_parse(tag)
+				if date:
+					o_tag = dateparser.parse(o_tag, dayfirst=True)
+					if o_tag:
+						o_tag = o_tag.date()
+				else:
+					o_tag = int(o_tag)
+				print("o_tag", o_tag)
+				if o != None:
+					if o == gt:
+						print("trying gt", o_tag > attr, attr)
+						return o_tag < attr
+					elif o == lt:
+						print("trying lt", o_tag < attr, attr)
+						return o_tag > attr
+				else:
+					return o_tag == attr
+			except ValueError:
+				return False
 
 		if ns == 'Title':
 			term = self.title
@@ -1617,20 +1655,19 @@ class Gallery:
 		elif ns in ['Descr', 'Description']:
 			term = self.info
 		elif ns in ['Chapter', 'Chapters']:
-			try:
-				if int(tag) == self.chapters.count():
-					return True
-			except ValueError:
-				pass
+			return _operator_supported(self.chapters.count())
+		elif ns in ['Read_count', 'Read count', 'Times_read', 'Times read']:
+			return _operator_supported(self.times_read)
+		elif ns in ['Date_added', 'Date added']:
+			return _operator_supported(self.date_added.date(), True)
+		elif ns in ['Pub_date', 'Publication', 'Pub date']:
+			if self.pub_date:
+				return _operator_supported(self.pub_date.date(), True)
 			return False
-		elif ns in ['Read_count', 'Read count']:
-			try:
-				if int(tag) == self.times_read:
-					return True
-			except ValueError:
-				pass
+		elif ns in ['Last_read', 'Last read']:
+			if self.last_read:
+				return _operator_supported(self.last_read.date(), True)
 			return False
-
 		return _search(term)
 
 	def __contains__(self, key):

@@ -113,6 +113,8 @@ def start(test=False):
 	log_i('Starting Happypanda...'.format(app_constants.vs))
 	if args.debug:
 		log_i('Running in debug mode'.format(app_constants.vs))
+		import pprint
+		sys.displayhook = pprint.pprint
 	log_i('Happypanda Version {}'.format(app_constants.vs))
 	log_i('OS: {} {}\n'.format(platform.system(), platform.release()))
 	conn = None
