@@ -667,7 +667,6 @@ def open_chapter(chapterpath, archive=None):
 	else:
 		custom_args = filepath
 
-	print(custom_args)
 	try:
 		app_constants.NOTIF_BAR.add_text('Opening chapter...')
 		if not app_constants.USE_EXTERNAL_VIEWER:

@@ -298,6 +298,7 @@ class SortFilterModel(QSortFilterProxyModel):
 		return True
 
 	def canDropMimeData(self, data, action, row, coloumn, index):
+		return False
 		if not data.hasFormat("list/gallery"):
 			return False
 		return True
@@ -330,7 +331,7 @@ class SortFilterModel(QSortFilterProxyModel):
 
 		return True
 
-	def mimeTypes():
+	def mimeTypes(self):
 		return ['list/gallery'] + super().mimeTypes()
 
 	def mimeData(self, index_list):
@@ -1112,12 +1113,9 @@ class MangaView(QListView):
 
 		self.current_sort = app_constants.CURRENT_SORT
 		self.sort(self.current_sort)
-		self.chp = misc.ChapterWidget()
 		if app_constants.DEBUG:
 			def debug_print(a):
 				g = a.data(Qt.UserRole+1)
-				self.chp.add_gallery(g)
-				self.chp.show()
 				try:
 					print(g)
 				except:

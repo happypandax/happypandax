@@ -1,4 +1,4 @@
-﻿#This file is part of Happypanda.
+#This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
 #the Free Software Foundation, either version 2 of the License, or
@@ -17,7 +17,7 @@ import settings
 from database import db_constants
 
 # Version number
-vs  = '0.27'
+vs  = '0.28'
 DEBUG = False
 
 OS_NAME = ''

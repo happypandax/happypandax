@@ -1,4 +1,4 @@
-﻿#"""
+#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -1104,7 +1104,6 @@ class GalleryMenu(QMenu):
 		else:
 			self.allow_metadata_exed = False if not self.gallery.exed else True
 
-		print(self.allow_metadata_exed)
 		if self.selected:
 			allow_metadata_txt = "Include selected in auto metadata fetch" if self.allow_metadata_exed else "Exclude selected in auto metadata fetch"
 		else:
@@ -2502,24 +2501,6 @@ class ChapterListItem(QFrame):
 		else:
 			self.chapter_lbl.setText("Chapter "+str(chapter.number+1))
 
-
-class ChapterWidget(QWidget):
-	""
-	def __init__(self, parent=None):
-		super().__init__(parent)
-		main_layout = QFormLayout(self)
-		self.list_layout = QVBoxLayout()
-		main_layout.addRow(self.list_layout)
-
-	def move_item(self, d, item):
-		pass
-
-	def add_gallery(self, gallery):
-		assert isinstance(gallery, gallerydb.Gallery)
-		for c in gallery.chapters:
-			ch_item = ChapterListItem(c, self)
-			ch_item.move_pos.connect(self.move_item)
-			self.list_layout.addWidget(ch_item)
 
 
 

@@ -1,4 +1,4 @@
-﻿#"""
+#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -922,9 +922,6 @@ class EHen(CommenHen):
 
 		eh_c = requests.post('https://forums.e-hentai.org/index.php?act=Login&CODE=01', data=p).cookies.get_dict()
 		exh_c = requests.get('http://exhentai.org', cookies=eh_c).cookies.get_dict()
-		if app_constants.DEBUG:
-			print("EH Cookies:", eh_c)
-			print("EX Cookies:", exh_c)
 
 		eh_c.update(exh_c)
 
@@ -972,12 +969,9 @@ class EHen(CommenHen):
 					self._browser.session.cookies.update(self.COOKIES)
 				self._browser.open(file_search)
 				file_form = self._browser.get_forms()[1]
-				print(file_form['sfile'])
 				f_obj = open(h, 'rb')
 				file_form['sfile'].value = f_obj
 				self._browser.submit_form(file_form)
-				print(self._browser.url)
-				print(h)
 				f_obj.close()
 
 				soup = self._browser.parsed
