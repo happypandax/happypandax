@@ -1,27 +1,22 @@
+I'm here if you have any questions!
+
+[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Pewpews/happypanda?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 Development is done in alpha branch
+
+[![Stories in Progress](https://badge.waffle.io/Pewpews/happypanda.png?label=In%20Progress&title=Features%20In%20Progress)](https://waffle.io/Pewpews/happypanda)
+
+[![Stories in Before next release](https://badge.waffle.io/Pewpews/happypanda.png?label=Before%20next%20release&title=Before%20next%20release)](https://waffle.io/Pewpews/happypanda)
 
 For future plans, see [issues](https://github.com/Pewpews/happypanda/issues)
 
 For general documentation, check the [wiki](https://github.com/Pewpews/happypanda/wiki)
-
-I'm here if you have any questions!
-
-[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Pewpews/happypanda?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 # Screenshots
 <img src="misc/screenshot1.png" width="300">
 <img src="misc/screenshot2.png" width="300">
 <img src="misc/screenshot3.png" width="300">
 <img src="misc/screenshot4.png" width="300">
-
-# How to install and run
-#### Windows
-1. Download the archive from [releases](https://github.com/Pewpews/happypanda/releases)
-2. Extract the archive in it's own folder
-3. Find Happypanda.exe and double click on it!
-
-#### Mac and Linux
-see [INSTALL.md](INSTALL.md)
 
 # Features
 - Portable, self-contained in folder and cross-platform
@@ -36,6 +31,22 @@ see [INSTALL.md](INSTALL.md)
 - Supports ZIP/CBZ, RAR/CBR and directories with loose files
 - Customizable by lots of settings
 - And lots more...
+
+# How to install and run
+#### Windows
+1. Download the archive from [releases](https://github.com/Pewpews/happypanda/releases)
+2. Extract the archive in it's own folder
+3. Find Happypanda.exe and double click on it!
+
+#### Mac and Linux
+see [INSTALL.md](INSTALL.md)
+
+# How to update
+Overwrite your previous installation.
+More info in the [wiki](https://github.com/Pewpews/happypanda/wiki)
+
+# Misc.
+People wanting to import galleries from the Pururin database torrent should find [this](https://github.com/Exedge/Convertor) useful.
 
 # Dependencies
 - Qt5 (Install this first) >= 5.4
