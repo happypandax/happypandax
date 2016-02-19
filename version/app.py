@@ -622,28 +622,7 @@ class AppWindow(QMainWindow):
 		# debug specfic code
 		if app_constants.DEBUG:
 			def debug_func():
-				from PIL import Image
-				from PyQt5.QtGui import QImageReader, QImage
-				m = QMessageBox(self)
-				m.setText("{}".format(QImageReader.supportedImageFormats()))
-				m.exec()
-				f_n = 'horopic.jpg'
-				self._lbl = QLabel()
-				im_data = utils.PToQImageHelper(f_n)
-				pic = image = QImage(im_data['data'], im_data['im'].size[0], im_data['im'].size[1], im_data['format'])
-				if im_data['colortable']:
-					image.setColorTable(im_data['colortable'])
-				print("P is null:", pic.isNull())
-				im = Image.open(f_n)
-				im.verify()
-				print("Format:", im.format)
-				print("Dic:", im.info)
-				print("Mode:", im.mode)
-				if pic.isNull():
-					pic = QImage()
-					print("New Load P", pic.load(f_n))
-				#self._lbl.setPixmap(pic)
-				#self._lbl.show()
+				pass
 		
 			debug_btn = QToolButton()
 			debug_btn.setText("DEBUG BUTTON")

@@ -1112,9 +1112,12 @@ class MangaView(QListView):
 
 		self.current_sort = app_constants.CURRENT_SORT
 		self.sort(self.current_sort)
+		self.chp = misc.ChapterWidget()
 		if app_constants.DEBUG:
 			def debug_print(a):
 				g = a.data(Qt.UserRole+1)
+				self.chp.add_gallery(g)
+				self.chp.show()
 				try:
 					print(g)
 				except:
