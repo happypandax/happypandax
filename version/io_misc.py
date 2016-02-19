@@ -1,4 +1,4 @@
-﻿import logging, os, json, datetime, random, re
+import logging, os, json, datetime, random, re
 
 from watchdog.events import FileSystemEventHandler, DirDeletedEvent
 from watchdog.observers import Observer
@@ -547,6 +547,7 @@ class GalleryHandler(FileSystemEventHandler, QObject):
 		if event.src_path in app_constants.TEMP_PATH_IGNORE:
 			app_constants.TEMP_PATH_IGNORE.remove(event.src_path)
 			return False
+		# TODO: use utils.check_ignore_list?
 		_, ext = os.path.splitext(event.src_path)
 		if event.is_directory or ext in utils.ARCHIVE_FILES:
 			if event.is_directory and "Folder" in app_constants.IGNORE_EXTS:

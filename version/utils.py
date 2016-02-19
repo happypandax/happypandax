@@ -282,6 +282,11 @@ def move_files(path, dest=''):
 
 def check_ignore_list(key):
 	k = os.path.normcase(key)
+	if os.path.isdir(key) and 'Folder' in app_constants.IGNORE_EXTS:
+		return False
+	_, ext = os.path.splitext(key)
+	if ext in app_constants.IGNORE_EXTS:
+		return False
 	for path in app_constants.IGNORE_PATHS:
 		p = os.path.normcase(path)
 		if p in k:
@@ -667,7 +672,6 @@ def open_chapter(chapterpath, archive=None):
 	else:
 		custom_args = filepath
 
-	print(custom_args)
 	try:
 		app_constants.NOTIF_BAR.add_text('Opening chapter...')
 		if not app_constants.USE_EXTERNAL_VIEWER:

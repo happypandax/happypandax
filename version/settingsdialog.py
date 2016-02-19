@@ -252,8 +252,8 @@ class SettingsDialog(QWidget):
 		self.force_high_dpi_support.setChecked(app_constants.FORCE_HIGH_DPI_SUPPORT)
 		exprops = settings.ExProperties()
 		c_h = exprops.cookies
-		self.ipbid_edit.setText(c_h.pop('ipb_member_id', ''))
-		self.ipbpass_edit.setText(c_h.pop('ipb_pass_hash', ''))
+		self.ipbid_edit.setText(c_h.get('ipb_member_id', ''))
+		self.ipbpass_edit.setText(c_h.get('ipb_pass_hash', ''))
 
 		# Advanced / Gallery / Gallery Text Fixer
 		self.g_data_regex_fix_edit.setText(app_constants.GALLERY_DATA_FIX_REGEX)
@@ -493,9 +493,11 @@ class SettingsDialog(QWidget):
 
 		exprops = settings.ExProperties()
 		c_h = exprops.cookies
-		c_h['ipb_member_id'] = self.ipbid_edit.text()
-		c_h['ipb_pass_hash'] = self.ipbpass_edit.text()
-		exprops.cookies = c_h
+		if self.ipbid_edit.text():
+			c_h['ipb_member_id'] = self.ipbid_edit.text()
+		if self.ipbpass_edit.text():
+			c_h['ipb_pass_hash'] = self.ipbpass_edit.text()
+		exprops.save()
 
 		# Advanced / Misc / Grid View
 		app_constants.SCROLL_SPEED = self.scroll_speed

@@ -1,4 +1,4 @@
-﻿#"""
+#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -243,7 +243,6 @@ def default_chap_exec(gallery_or_id, chap, only_values=False):
 
 def default_exec(object):
 	object.set_defaults()
-	print(object.language)
 	def check(obj):
 		if obj == "None":
 			return None
@@ -1608,16 +1607,13 @@ class Gallery:
 
 		def _operator_parse(tag):
 			o = None
-			print(tag)
 			if tag:
 				if tag[0] == '<':
 					o = lt
 					tag = tag[1:]
-					print('lt', tag)
 				elif tag[0] == '>':
 					o = gt
 					tag = tag[1:]
-					print('gt', tag)
 			return tag, o
 
 		def _operator_supported(attr, date=False):
@@ -1629,13 +1625,10 @@ class Gallery:
 						o_tag = o_tag.date()
 				else:
 					o_tag = int(o_tag)
-				print("o_tag", o_tag)
 				if o != None:
 					if o == gt:
-						print("trying gt", o_tag > attr, attr)
 						return o_tag < attr
 					elif o == lt:
-						print("trying lt", o_tag < attr, attr)
 						return o_tag > attr
 				else:
 					return o_tag == attr

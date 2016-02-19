@@ -1,4 +1,4 @@
-﻿#This file is part of Happypanda.
+#This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
 #the Free Software Foundation, either version 2 of the License, or
@@ -17,7 +17,7 @@ import settings
 from database import db_constants
 
 # Version number
-vs  = '0.27'
+vs  = '0.28'
 DEBUG = False
 
 OS_NAME = ''
@@ -140,7 +140,7 @@ GALLERY_DATA_FIX_TITLE = get(True, 'Advanced', 'gallery data fix title', bool)
 GALLERY_DATA_FIX_ARTIST = get(True, 'Advanced', 'gallery data fix artist', bool)
 GALLERY_DATA_FIX_REPLACE = get("", 'Advanced', 'gallery data fix replace', str)
 
-EXTERNAL_VIEWER_ARGS = get("{$folder}", 'Advanced', 'external viewer args', str)
+EXTERNAL_VIEWER_ARGS = get("{file}", 'Advanced', 'external viewer args', str)
 
 # Import/Export
 EXPORT_FORMAT = get(1, 'Advanced', 'export format', int)

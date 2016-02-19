@@ -1,3 +1,46 @@
+*Happypanda v0.28*
+- Improved perfomance of grid view significantly
+- Galleries are now draggable
+	+ It is now possible to add galleries to a list by dragging them to the list
+- Improved metadata fetching accuracy from EH
+- Improved gallery lists with new options
+	+ It is now possible to enable several search options on per gallerylist basis
+	+ A new *Enforce* option to enforce the gallerylist filter
+- Improved gallery search
+	+ New special namespaced tags: `read_count`, `date_added` and `last_read`
+		+ Read more about them in the gallery searching guide
+	+ New `<` less than and `>` greater than operator to be used with some special namespaced tags
+		+ Read about it in the special namespaced tags section in the gallery searching guide
+- Brought back the old way of gaining access to EX
+	- Only to be used if you can't gain access to EX by logging in normally
+- Added ability to specify arguments sent to viewer in settings (in the `Advanced` section)
+	+ If when opening a gallery only the first image was viewable by your viewer, try change the arguments sent to the viewer
+- Updated the database to version 0.24 with the addition of new gallerylist fields
+- Moved regex search option to searchbar
+- Added grid spacing option in settings (`Visual->Grid View`)
+- Added folder and file extensions ignoring in settings (`Application->Ignore`)
+	+ Folder and file extensions ignoring will work for the directory monitor and *Add gallery..* and *Populate from folder* gallery adding methods
+- Added new default language: Chinese
+- Improved and fixed URL parser in gallery-downloader
+- Custom languages will now be parsed from filenames along with the default languages
+- Tags are now sorted alphabetically everywhere
+- Gallerylists in contextmenu are also now sorted
+- Reason for why metdata fecthing failed is now shown in the failed-to-get-metadata-gallery popup
+- The current search term will now be upkeeped (upkept?) when switching between views
+- Disabled some tray messages on linux to prevent crash
+- The current gallerylist context will now be shown on the statusbar
+- The keys `del` and `shift + del` are now bound to gallery deletion
+- Added *exclude/include in auto metadata fetcher* in contextmenu for selection
+- Bug fixes:
+	+ No thumbnails were created for images with incorrect extensions (namely png images with .jpg extension)
+	+ Only accounts with access to EX were able to login
+	+ Some filesystem events were not being detected
+	+ Name parser was not parsing languages
+	+ Some gallery attributes to not be added to the db on initial gallery creation
+	+ Attempting to fetch metadata while an instance of auto metadata fetcher was already running caused an exception
+	+ Gallery wasn't removed in view when removing from the duplicate-galleries popup
+	+ Other minor bugs
+
 *Happypanda v0.27*
 - Many visual changes
 	+ Including new ribbon indicating gallery type in gridview

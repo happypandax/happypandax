@@ -201,8 +201,8 @@ class Fetch(QObject):
 						self.data.append(new_gallery)
 						log_i('Gallery successful created: {}'.format(folder_name.encode('utf-8', 'ignore')))
 					else:
-						log_i('Gallery already exists: {}'.format(folder_name.encode('utf-8', 'ignore')))
-						self.skipped_paths.append((temp_p, 'Already exists'))
+						log_i('Gallery already exists or ignored: {}'.format(folder_name.encode('utf-8', 'ignore')))
+						self.skipped_paths.append((temp_p, 'Already exists or ignored'))
 
 				for folder_name in gallery_l: # folder_name = gallery folder title
 					self._curr_gallery = folder_name
