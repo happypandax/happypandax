@@ -5,3 +5,4 @@ rarfile
 watchdog
 robobrowser
 Send2Trash
+pillow

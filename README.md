@@ -47,6 +47,7 @@ see [INSTALL.md](INSTALL.md)
 - rarfile (pip)
 - robobrowser (pip)
 - Send2Trash (pip)
+- Pillow (pip) or PIL
 
 # Contributing
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Pewpews/happypanda?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
