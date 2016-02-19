@@ -254,6 +254,8 @@ class GalleryListEdit(misc.BasePopup):
 		self.item = item
 		if gallery_list.filter:
 			self.filter_edit.setText(gallery_list.filter)
+		else:
+			self.filter_edit.setText('')
 		self.adjustSize()
 		self.setFixedWidth(self.parent_widget.width())
 
