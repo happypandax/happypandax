@@ -140,7 +140,7 @@ GALLERY_DATA_FIX_TITLE = get(True, 'Advanced', 'gallery data fix title', bool)
 GALLERY_DATA_FIX_ARTIST = get(True, 'Advanced', 'gallery data fix artist', bool)
 GALLERY_DATA_FIX_REPLACE = get("", 'Advanced', 'gallery data fix replace', str)
 
-EXTERNAL_VIEWER_ARGS = get("{$folder}", 'Advanced', 'external viewer args', str)
+EXTERNAL_VIEWER_ARGS = get("{file}", 'Advanced', 'external viewer args', str)
 
 # Import/Export
 EXPORT_FORMAT = get(1, 'Advanced', 'export format', int)

@@ -497,7 +497,6 @@ class SettingsDialog(QWidget):
 			c_h['ipb_member_id'] = self.ipbid_edit.text()
 		if self.ipbpass_edit.text():
 			c_h['ipb_pass_hash'] = self.ipbpass_edit.text()
-		print(exprops.cookies)
 		exprops.save()
 
 		# Advanced / Misc / Grid View
