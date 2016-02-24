@@ -1156,11 +1156,6 @@ class MangaView(QListView):
 			self.gallery_window.hide_animation.start()
 		return super().wheelEvent(event)
 
-	def focusOutEvent(self, event):
-		if self.gallery_window.isVisible():
-			self.gallery_window.hide_animation.start()
-		return super().focusOutEvent(event)
-
 	def mouseMoveEvent(self, event):
 		self.gallery_window.mouseMoveEvent(event)
 		return super().mouseMoveEvent(event)

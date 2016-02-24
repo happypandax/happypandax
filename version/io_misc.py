@@ -544,7 +544,6 @@ class GalleryHandler(FileSystemEventHandler, QObject):
 		#self.g_queue = []
 
 	def file_filter(self, event):
-		print(event.src_path, app_constants.TEMP_PATH_IGNORE)
 		if os.path.normcase(event.src_path) in app_constants.TEMP_PATH_IGNORE:
 			app_constants.TEMP_PATH_IGNORE.remove(os.path.normcase(event.src_path))
 			return False

@@ -463,6 +463,10 @@ class GalleryMetaWindow(ArrowWindow):
 			self.show_animation.setStartValue(self.windowOpacity())
 			self.show_animation.start()
 
+	def focusOutEvent(self, event):
+		self.delayed_hide()
+		return super().focusOutEvent(event)
+
 	def _mouse_in_gallery(self):
 		mouse_p = QCursor.pos()
 		h = self.idx_top_l.x() <= mouse_p.x() <= self.idx_top_r.x()

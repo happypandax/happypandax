@@ -105,6 +105,8 @@ class Fetch(QObject):
 					folder_name = folder_name or path if folder_name or path else os.path.split(archive)[1]
 					if utils.check_ignore_list(temp_p) and not GalleryDB.check_exists(temp_p, self.galleries_from_db, False):
 						log_i('Creating gallery: {}'.format(folder_name.encode('utf-8', 'ignore')))
+						if app_constants.MOVE_IMPORTED_GALLERIES and not app_constants.OVERRIDE_MOVE_IMPORTED_IN_FETCH:
+							temp_p = utils.move_files(temp_p)
 						new_gallery = Gallery()
 						images_paths = []
 						metafile = utils.GMetafile()
@@ -195,8 +197,6 @@ class Fetch(QObject):
 						new_gallery.language = parsed['language']
 						new_gallery.info = ""
 						metafile.apply_gallery(new_gallery)
-						if app_constants.MOVE_IMPORTED_GALLERIES and not app_constants.OVERRIDE_MOVE_IMPORTED_IN_FETCH:
-							new_gallery.path = utils.move_files(temp_p)
 
 						self.data.append(new_gallery)
 						log_i('Gallery successful created: {}'.format(folder_name.encode('utf-8', 'ignore')))

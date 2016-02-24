@@ -979,8 +979,8 @@ class AppWindow(QMainWindow):
 			self.g_populate_inst.SKIPPED.connect(skipped_gs)
 			data_thread.finished.connect(data_thread.deleteLater)
 			data_thread.started.connect(self.g_populate_inst.local)
-			data_thread.start()
-			#.g_populate_inst.local()
+			#data_thread.start()
+			self.g_populate_inst.local()
 			log_i('Populating DB from directory/archive')
 
 	def scan_for_new_galleries(self):
