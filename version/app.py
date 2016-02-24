@@ -204,6 +204,15 @@ class AppWindow(QMainWindow):
 			self.admin_db_method_invoker.connect(app_widget.show)
 			app_widget.adjustSize()
 			self.admin_db_method_invoker.emit(True)
+		elif app_constants.FIRST_TIME_LEVEL < 7:
+			log_i('Invoking first time level {}'.format(7))
+			app_constants.INTERNAL_LEVEL = 7
+			if app_constants.EXTERNAL_VIEWER_ARGS == '{file}':
+				app_constants.EXTERNAL_VIEWER_ARGS = '{$file}'
+				settings.set('{$file}','Advanced', 'external viewer args')
+				settings.save()
+			done()
+
 		else:
 			done()
 
@@ -979,8 +988,8 @@ class AppWindow(QMainWindow):
 			self.g_populate_inst.SKIPPED.connect(skipped_gs)
 			data_thread.finished.connect(data_thread.deleteLater)
 			data_thread.started.connect(self.g_populate_inst.local)
-			#data_thread.start()
-			self.g_populate_inst.local()
+			data_thread.start()
+			#self.g_populate_inst.local()
 			log_i('Populating DB from directory/archive')
 
 	def scan_for_new_galleries(self):

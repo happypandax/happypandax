@@ -48,8 +48,8 @@ unrar_tool_path = get('', 'Application', 'unrar tool path')
 default_stylesheet_path = os.path.join(static_dir,"style.css")
 user_stylesheet_path = ""
 
-INTERNAL_LEVEL = 6
-FIRST_TIME_LEVEL = get(6, 'Application', 'first time level', int)
+INTERNAL_LEVEL = 7
+FIRST_TIME_LEVEL = get(7, 'Application', 'first time level', int)
 UPDATE_VERSION = get('0.25', 'Application', 'version', str)
 FORCE_HIGH_DPI_SUPPORT = get(False, 'Advanced', 'force high dpi support', bool)
 
@@ -150,7 +150,7 @@ EXPORT_PATH = ''
 HASH_GALLERY_PAGES = get('all', 'Advanced', 'hash gallery pages', int, str)
 
 # WEB
-GLOBAL_EHEN_TIME = get(6, 'Web', 'global ehen time offset', int)
+GLOBAL_EHEN_TIME = get(5, 'Web', 'global ehen time offset', int)
 GLOBAL_EHEN_LOCK = False
 DEFAULT_EHEN_URL = get('http://g.e-hentai.org/', 'Web', 'default ehen url', str)
 REPLACE_METADATA = get(False, 'Web', 'replace metadata', bool)
