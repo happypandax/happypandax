@@ -141,10 +141,14 @@ def gen_thumbnail(gallery, width=app_constants.THUMB_W_SIZE,
 			raise IndexError
 
 		# Do the scaling
-		im_data = utils.PToQImageHelper(img_path)
-		image = QImage(im_data['data'], im_data['im'].size[0], im_data['im'].size[1], im_data['format'])
-		if im_data['colortable']:
-			image.setColorTable(im_data['colortable'])
+		try:
+			im_data = utils.PToQImageHelper(img_path)
+			image = QImage(im_data['data'], im_data['im'].size[0], im_data['im'].size[1], im_data['format'])
+			if im_data['colortable']:
+				image.setColorTable(im_data['colortable'])
+		except ValueError:
+			image = QImage()
+			image.load(img_path)
 		if image.isNull():
 			raise IndexError
 		radius = 5
@@ -1730,7 +1734,7 @@ class Gallery:
 
 				if app_constants.Search.Regex in args:
 					if ns:
-						if self._keyword_search(ns, tag, True, args=args):
+						if self._keyword_search(ns, tag, args=args):
 							return is_exclude
 
 						for x in self.tags:

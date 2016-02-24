@@ -201,7 +201,7 @@ class GalleryDownloaderList(QTableWidget):
 
 	def _init_gallery(self, download_item):
 		assert isinstance(download_item, GalleryDownloaderItem)
-		app_constants.TEMP_PATH_IGNORE.append(download_item.item.file)
+		app_constants.TEMP_PATH_IGNORE.append(os.path.normcase(download_item.item.file))
 		self.fetch_instance.download_items.append(download_item)
 		self.init_fetch_instance.emit([download_item.item.file])
 
@@ -544,8 +544,9 @@ class GalleryHandler(FileSystemEventHandler, QObject):
 		#self.g_queue = []
 
 	def file_filter(self, event):
-		if event.src_path in app_constants.TEMP_PATH_IGNORE:
-			app_constants.TEMP_PATH_IGNORE.remove(event.src_path)
+		print(event.src_path, app_constants.TEMP_PATH_IGNORE)
+		if os.path.normcase(event.src_path) in app_constants.TEMP_PATH_IGNORE:
+			app_constants.TEMP_PATH_IGNORE.remove(os.path.normcase(event.src_path))
 			return False
 		# TODO: use utils.check_ignore_list?
 		_, ext = os.path.splitext(event.src_path)

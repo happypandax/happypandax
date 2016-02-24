@@ -324,11 +324,11 @@ class Fetch(QObject):
 		hen.LAST_USED = time.time()
 		self.AUTO_METADATA_PROGRESS.emit("Checking gallery urls...")
 
-		custom_args = {} # send to hen class
 		fetched_galleries = []
 		checked_pre_url_galleries = []
 		multiple_hit_galleries = []
 		for x, gallery in enumerate(galleries, 1):
+			custom_args = {} # send to hen class
 			log_i("Checking gallery url")
 
 			# coming from GalleryDialog

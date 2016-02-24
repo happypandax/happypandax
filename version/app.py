@@ -142,7 +142,7 @@ class AppWindow(QMainWindow):
 				settings.set(app_constants.vs, 'Application', 'version')
 			if app_constants.UPDATE_VERSION != app_constants.vs:
 				self.notif_bubble.update_text(
-					"Happypanda has been udated!",
+					"Happypanda has been updated!",
 					"Don't forget to check out what's new in this version <a href='https://github.com/Pewpews/happypanda/blob/master/CHANGELOG.md'>by clicking here!</a>")
 			else:
 				hello = ["Hello!", "Hi!", "Onii-chan!", "Senpai!", "Hisashiburi!", "Welcome!", "Okaerinasai!", "Welcome back!", "Hajimemashite!"]
@@ -360,7 +360,10 @@ class AppWindow(QMainWindow):
 			def done(status):
 				self.notification_bar.end_show()
 				gallerydb.add_method_queue(database.db.DBBase.end, True)
-				fetch_instance.deleteLater()
+				try:
+					fetch_instance.deleteLater()
+				except RuntimeError:
+					pass
 				if not isinstance(status, bool):
 					galleries = []
 					for tup in status:

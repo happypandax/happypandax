@@ -770,9 +770,9 @@ class EHen(CommenHen):
 		"""
 		Checks if user is logged in
 		"""
-		if "ipb_session_id" in cookies and "ipb_pass_hash" in cookies:
+		if cookies.get('ipb_member_id') and cookies.get('ipb_pass_hash'):
 			return 2
-		elif 'ipb_session_id' in cookies:
+		elif cookies.get('ipb_session_id'):
 			return 1
 		else:
 			return 0
