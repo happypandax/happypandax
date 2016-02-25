@@ -52,6 +52,7 @@ class Fetch(QObject):
 	AUTO_METADATA_PROGRESS = pyqtSignal(str)
 	GALLERY_PICKER = pyqtSignal(object, list, queue.Queue)
 	GALLERY_PICKER_QUEUE = queue.Queue()
+	
 
 	def __init__(self, parent=None):
 		super().__init__(parent)
@@ -419,6 +420,7 @@ class Fetch(QObject):
 			for x, g_data in enumerate(multiple_hit_galleries, 1):
 				gallery = g_data[0]
 				title_url_list = g_data[1]
+
 				self.AUTO_METADATA_PROGRESS.emit("Multiple galleries found for gallery: {}".format(gallery.title))
 				app_constants.SYSTEM_TRAY.showMessage('Happypanda', 'Multiple galleries found for gallery:\n{}'.format(gallery.title),
 									minimized=True)

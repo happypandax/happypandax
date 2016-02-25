@@ -88,6 +88,11 @@ class GalleryDialog(QWidget):
 		frect.moveCenter(QDesktopWidget().availableGeometry().center())
 		self.move(frect.topLeft())
 		#self.setAttribute(Qt.WA_DeleteOnClose)
+		self._fetch_inst = fetch.Fetch()
+		self._fetch_thread = QThread(self)
+		self._fetch_thread.setObjectName("GalleryDialog metadata thread")
+		self._fetch_inst.moveToThread(self._fetch_thread)
+		self._fetch_thread.started.connect(self._fetch_inst.auto_web_metadata)
 
 	def commonUI(self):
 		f_web = QGroupBox("Metadata from the Web")
@@ -384,9 +389,6 @@ class GalleryDialog(QWidget):
 
 	def web_metadata(self, url, btn_widget, pgr_widget):
 		self.link_lbl.setText(url)
-		f = fetch.Fetch()
-		thread = QThread(self)
-		thread.setObjectName('Gallerydialog web metadata')
 		btn_widget.hide()
 		pgr_widget.show()
 
@@ -408,7 +410,6 @@ class GalleryDialog(QWidget):
 					border: .px solid black;}"""
 				pgr_widget.setStyleSheet(danger)
 				QTimer.singleShot(3000, do_hide)
-			f.deleteLater()
 
 		def gallery_picker(gallery, title_url_list, q):
 			self.parent_widget._web_metadata_picker(gallery, title_url_list, q, self)
@@ -422,14 +423,12 @@ class GalleryDialog(QWidget):
 			return None
 
 		dummy_gallery._g_dialog_url = url
-		f.galleries = [dummy_gallery]
-		f.moveToThread(thread)
-		f.GALLERY_PICKER.connect(gallery_picker)
-		f.GALLERY_EMITTER.connect(self.set_web_metadata)
-		thread.started.connect(f.auto_web_metadata)
-		thread.finished.connect(thread.deleteLater)
-		f.FINISHED.connect(status)
-		thread.start()
+		self._fetch_inst.galleries = [dummy_gallery]
+		self._disconnect()
+		self._fetch_inst.GALLERY_PICKER.connect(gallery_picker)
+		self._fetch_inst.GALLERY_EMITTER.connect(self.set_web_metadata)
+		self._fetch_inst.FINISHED.connect(status)
+		self._fetch_thread.start()
 			
 	def set_web_metadata(self, metadata):
 		assert isinstance(metadata, gallerydb.Gallery)
@@ -503,20 +502,35 @@ class GalleryDialog(QWidget):
 		self.link_btn.hide()
 		self.link_btn2.show()
 
+	def _disconnect(self):
+		try:
+			self._fetch_inst.GALLERY_PICKER.disconnect()
+			self._fetch_inst.GALLERY_EMITTER.disconnect()
+			self._fetch_inst.FINISHED.disconnect()
+		except TypeError:
+			pass
+
+	def delayed_close(self):
+		if self._fetch_thread.isRunning():
+			self._fetch_thread.finished.connect(self.close)
+			self.hide()
+		else:
+			self.close()
+
 	def accept(self):
 		new_gallery = self.make_gallery(gallerydb.Gallery(), new=True)
 
 		if new_gallery:
-			self.close()
+			self.delayed_close()
 
 	def accept_edit(self):
 		new_gallery = self.make_gallery(self.gallery)
 		#for ser in self.gallery:
 		if new_gallery:
 			self.SERIES_EDIT.emit([new_gallery], self.position)
-			self.close()
+			self.delayed_close()
 
 	def reject_edit(self):
-		self.close()
+		self.delayed_close()
 
 
