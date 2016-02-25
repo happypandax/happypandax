@@ -1,3 +1,16 @@
+*Happypanda v0.28.1*
+- Fixed bugs:
+	+ Fixed typo in external viewer args
+	+ Fixed regex not working when in namespace
+	+ Fixed thumbnail generation causing an unhandled exception
+	+ Moved directories kept their old path
+	+ Fixed auto metdata fetcher failing when mixing galleries with colored covers and galleries with greyscale covers
+	+ Gallery Metadata window wouldn't stay open
+	+ Fixed a DB bug causing all kinds of errors, including:
+		+ Editing a gallery while fetching its metadata would cause an exception
+	+ Closing the gallery dialog while fetching metadata would cause an exception
+
+
 *Happypanda v0.28*
 - Improved perfomance of grid view significantly
 - Galleries are now draggable
