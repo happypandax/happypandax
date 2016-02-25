@@ -362,7 +362,7 @@ class DBBase:
 	"The base DB class. _DB_CONN should be set at runtime on startup"
 	_DB_CONN = None
 	_AUTO_COMMIT = True
-	_ACTIVE = True
+	_STATE = {'active':False}
 
 	def __init__(self, **kwargs):
 		pass
@@ -370,18 +370,22 @@ class DBBase:
 	@classmethod
 	def begin(cls):
 		"Useful when modifying for a large amount of data"
-		cls._AUTO_COMMIT = False
-		cls.execute(cls, "BEGIN TRANSACTION")
+		if not cls._STATE['active']:
+			cls._AUTO_COMMIT = False
+			cls.execute(cls, "BEGIN TRANSACTION")
+			cls._STATE['active'] = True
 		#print("STARTED DB OPTIMIZE")
 
 	@classmethod
 	def end(cls):
 		"Called to commit and end transaction"
-		try:
-			cls.execute(cls, "COMMIT")
-		except sqlite3.OperationalError:
-			pass
-		cls._AUTO_COMMIT = True
+		if cls._STATE['active']:
+			try:
+				cls.execute(cls, "COMMIT")
+			except sqlite3.OperationalError:
+				pass
+			cls._AUTO_COMMIT = True
+			cls._STATE['active'] = False
 		#print("ENDED DB OPTIMIZE")
 
 	def execute(self, *args):
