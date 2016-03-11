@@ -874,7 +874,7 @@ def tag_to_dict(string, ns_capitalize=True):
 import re as regex
 def title_parser(title):
 	"Receives a title to parse. Returns dict with 'title', 'artist' and language"
-	" ".join(title.split())
+	title = " ".join(title.split())
 	if '/' in title:
 		try:
 			title = os.path.split(title)[1]
@@ -906,9 +906,8 @@ def title_parser(title):
 					break
 			else:
 				parsed_title['language'] = app_constants.G_DEF_LANGUAGE
-
 		except IndexError:
-			pass
+			parsed_title['language'] = app_constants.G_DEF_LANGUAGE
 
 		t = title
 		for x in a:

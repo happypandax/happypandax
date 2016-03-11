@@ -209,8 +209,10 @@ class GalleryDialog(QWidget):
 		f_index = combobox.findText(key, Qt.MatchFixedString)
 		if f_index != -1:
 			combobox.setCurrentIndex(f_index)
+			return True
 		else:
 			combobox.setCurrentIndex(default)
+			return False
 
 	def setGallery(self, gallery):
 		"To be used for when editing a gallery"
@@ -225,9 +227,12 @@ class GalleryDialog(QWidget):
 		self.tags_edit.setText(utils.tag_to_string(gallery.tags))
 
 
-		self._find_combobox_match(self.lang_box, gallery.language, 2)
-		self._find_combobox_match(self.type_box, gallery.type, 0)
-		self._find_combobox_match(self.status_box, gallery.status, 0)
+		if not self._find_combobox_match(self.lang_box, gallery.language, 1):
+			self._find_combobox_match(self.lang_box, app_constants.G_DEF_LANGUAGE, 1)
+		if not self._find_combobox_match(self.type_box, gallery.type, 0):
+			self._find_combobox_match(self.type_box, app_constants.G_DEF_TYPE, 0)
+		if not self._find_combobox_match(self.status_box, gallery.status, 0):
+			self._find_combobox_match(self.status_box, app_constants.G_DEF_STATUS, 0)
 
 		gallery_pub_date = "{}".format(gallery.pub_date).split(' ')
 		try:
