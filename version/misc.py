@@ -433,7 +433,6 @@ class GalleryMetaWindow(ArrowWindow):
 
 	def __init__(self, parent):
 		super().__init__(parent)
-		self.setMouseTracking(True)
 		# gallery data stuff
 
 		self.content_margin = 10
@@ -451,6 +450,7 @@ class GalleryMetaWindow(ArrowWindow):
 		self.show_animation.setDuration(350)
 		self.show_animation.setStartValue(0.0)
 		self.show_animation.setEndValue(1.0)
+		self.setFocusPolicy(Qt.NoFocus)
 
 	def show(self):
 		if not self.hide_animation.Running:
@@ -574,6 +574,10 @@ class GalleryMetaWindow(ArrowWindow):
 
 		self._set_gallery(index.data(Qt.UserRole+1))
 		self.show()
+
+	def closeEvent(self, ev):
+		ev.ignore()
+		self.delayed_hide()
 
 	def _set_gallery(self, gallery):
 		self.current_gallery = gallery
