@@ -830,11 +830,15 @@ class EHen(CommenHen):
 
 		if payload['gidlist']:
 			self.begin_lock()
-			if cookies:
-				self.check_cookie(cookies)
-				r = requests.post(self.e_url, json=payload, timeout=30, headers=self.HEADERS, cookies=self.COOKIES)
-			else:
-				r = requests.post(self.e_url, json=payload, timeout=30, headers=self.HEADERS)
+			try:
+				if cookies:
+					self.check_cookie(cookies)
+					r = requests.post(self.e_url, json=payload, timeout=30, headers=self.HEADERS, cookies=self.COOKIES)
+				else:
+					r = requests.post(self.e_url, json=payload, timeout=30, headers=self.HEADERS)
+			except requests.ConnectionError as err:
+				log_e("Could not fetch metadata: {}".format(err))
+				raise app_constants.MetadataFetchFail("connection error")
 			if not self.handle_error(r):
 				return 'error'
 			self.end_lock()
@@ -842,7 +846,7 @@ class EHen(CommenHen):
 		try:
 			r.raise_for_status()
 		except:
-			log.exception('Could not fetch metadata: connection error')
+			log.exception('Could not fetch metadata: status error')
 			return None
 		return r.json(), dict_metadata
 
@@ -962,30 +966,34 @@ class EHen(CommenHen):
 		for h in search_string:
 			log_d('Hash search: {}'.format(h))
 			self.begin_lock()
-			if 'color' in kwargs:
-				file_search = self.e_url_o + '?filesearch=1'
-				if cookies:
-					self.check_cookie(cookies)
-					self._browser.session.cookies.update(self.COOKIES)
-				self._browser.open(file_search)
-				file_form = self._browser.get_forms()[1]
-				f_obj = open(h, 'rb')
-				file_form['sfile'].value = f_obj
-				self._browser.submit_form(file_form)
-				f_obj.close()
+			try:
+				if 'color' in kwargs:
+					file_search = self.e_url_o + '?filesearch=1'
+					if cookies:
+						self.check_cookie(cookies)
+						self._browser.session.cookies.update(self.COOKIES)
+					self._browser.open(file_search)
+					file_form = self._browser.get_forms()[1]
+					f_obj = open(h, 'rb')
+					file_form['sfile'].value = f_obj
+					self._browser.submit_form(file_form)
+					f_obj.close()
 
-				soup = self._browser.parsed
-			else:
-				hash_url = self.e_url_o + '?f_shash='
-				hash_search = hash_url + h + '&fs_exp=1' # to enable expunged.. maybe make this an option?
-				if cookies:
-					self.check_cookie(cookies)
-					r = requests.get(hash_search, timeout=30, headers=self.HEADERS, cookies=self.COOKIES)
+					soup = self._browser.parsed
 				else:
-					r = requests.get(hash_search, timeout=30, headers=self.HEADERS)
-				if not self.handle_error(r):
-					return 'error'
-				soup = BeautifulSoup(r.text, "html.parser")
+					hash_url = self.e_url_o + '?f_shash='
+					hash_search = hash_url + h + '&fs_exp=1' # to enable expunged.. maybe make this an option?
+					if cookies:
+						self.check_cookie(cookies)
+						r = requests.get(hash_search, timeout=30, headers=self.HEADERS, cookies=self.COOKIES)
+					else:
+						r = requests.get(hash_search, timeout=30, headers=self.HEADERS)
+					if not self.handle_error(r):
+						return 'error'
+					soup = BeautifulSoup(r.text, "html.parser")
+			except requests.ConnectionError as err:
+				log_e("Could not search for gallery: {}".format(err))
+				raise app_constants.MetadataFetchFail("connection error")
 
 			self.end_lock()
 			if not no_hits_found_check(soup):
@@ -1077,7 +1085,11 @@ class ChaikaHen(CommenHen):
 					url = self.a_api_url+g_or_a_id
 				hash_search = False
 			try:
-				r = requests.get(url)
+				try:
+					r = requests.get(url)
+				except requests.ConnectionError as err:
+					log_e("Could not fetch metadata: {}".format(err))
+					raise app_constants.MetadataFetchFail("connection error")
 				r.raise_for_status()
 				if not r.json():
 					return None
@@ -1095,7 +1107,7 @@ class ChaikaHen(CommenHen):
 					g_id_data[g_id] = old_url
 				g_id += 1
 			except requests.RequestException:
-				log_e("Could not fetch metadata: connection error")
+				log_e("Could not fetch metadata: status error")
 				return None
 		return data, g_id_data
 

@@ -244,6 +244,7 @@ GALLERY_DATA = [] # contains the most up to date gallery data
 GALLERY_LISTS = set() # contains the most up to dat gallery lists
 
 # Exceptions
+class MetadataFetchFail(Exception): pass
 class InternalPagesMismatch(Exception): pass
 class ChapterExists(Exception): pass
 class ChapterWrongParentGallery(Exception): pass

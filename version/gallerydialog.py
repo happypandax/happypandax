@@ -346,14 +346,14 @@ class GalleryDialog(QWidget):
 					chap.title = utils.title_parser(ch)['title']
 					chap.path = os.path.join(path, ch)
 					metafile.update(utils.GMetafile(chap.path))
-					chap.pages = len(list(scandir.scandir(chap.path)))
+					chap.pages = len([x for x in scandir.scandir(chap.path) if x.name.endswith(utils.IMG_FILES)])
 
 			else: #else assume that all images are in gallery folder
 				chap = chap_container.create_chapter()
 				chap.title = utils.title_parser(os.path.split(path)[1])['title']
 				chap.path = path
 				metafile.update(utils.GMetafile(path))
-				chap.pages = len(list(scandir.scandir(path)))
+				chap.pages = len([x for x in scandir.scandir(path) if x.endswith(utils.IMG_FILES)])
 
 		except NotADirectoryError:
 			if path.endswith(utils.ARCHIVE_FILES):

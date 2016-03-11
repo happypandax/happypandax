@@ -124,7 +124,7 @@ class Fetch(QObject):
 									chap = new_gallery.chapters.create_chapter()
 									chap.title = utils.title_parser(ch)['title']
 									chap.path = os.path.join(path, ch)
-									chap.pages = len(list(scandir.scandir(chap.path)))
+									chap.pages = len([x for x in scandir.scandir(chap.path) if x.name.endswith(utils.IMG_FILES)])
 									metafile.update(utils.GMetafile(chap.path))
 
 							else: #else assume that all images are in gallery folder
@@ -168,7 +168,7 @@ class Fetch(QObject):
 												chap.path = g
 												metafile.update(utils.GMetafile(g, temp_p))
 												arch = utils.ArchiveFile(temp_p)
-												chap.pages = len(arch.dir_contents(g))
+												chap.pages = len([x for x in arch.dir_contents(g) if x.endswith(utils.IMG_FILES)])
 												arch.close()
 										else:
 											chap = new_gallery.chapters.create_chapter()
@@ -470,6 +470,16 @@ class Fetch(QObject):
 			log_i('Auto metadata fetcher is now running')
 			app_constants.GLOBAL_EHEN_LOCK = True
 
+			def fetch_cancelled(rsn=''):
+				if rsn:
+					self.AUTO_METADATA_PROGRESS.emit("Metadata fetching cancelled: {}".format(rsn))
+					app_constants.SYSTEM_TRAY.showMessage("Metadata", "Metadata fetching cancelled: {}".format(rsn), minimized=True)
+				else:
+					self.AUTO_METADATA_PROGRESS.emit("Metadata fetching cancelled!")
+					app_constants.SYSTEM_TRAY.showMessage("Metadata", "Metadata fetching cancelled!", minimized=True)
+				app_constants.GLOBAL_EHEN_LOCK = False
+				self.FINISHED.emit(False)
+
 			if 'exhentai' in self._default_ehen_url:
 				try:
 					exprops = settings.ExProperties()
@@ -487,7 +497,11 @@ class Fetch(QObject):
 				hen = pewnet.EHen()
 				valid_url = 'ehen'
 				log_i("Using Exhentai")
-			self._auto_metadata_process(self.galleries, hen, valid_url, color=True)
+			try:
+				self._auto_metadata_process(self.galleries, hen, valid_url, color=True)
+			except app_constants.MetadataFetchFail as err:
+				fetch_cancelled(err)
+				return
 
 			if self.error_galleries:
 				if self._hen_list:
@@ -504,9 +518,11 @@ class Fetch(QObject):
 						if hen == pewnet.ChaikaHen:
 							valid_url = "chaikahen"
 							log_i("using chaika hen")
-
-						self._auto_metadata_process(galleries, hen(), valid_url)
-
+						try:
+							self._auto_metadata_process(galleries, hen(), valid_url)
+						except app_constants.MetadataFetchFail as err:
+							fetch_cancelled(err)
+							return
 
 			if not self.error_galleries:
 				self.AUTO_METADATA_PROGRESS.emit('Successfully fetched metadata! Went through {} galleries successfully!'.format(len(self.galleries)))
@@ -515,8 +531,8 @@ class Fetch(QObject):
 			else:
 				self.AUTO_METADATA_PROGRESS.emit('Finished fetching metadata! Could not fetch metadata for {} galleries. Check happypanda.log for more details!'.format(len(self.error_galleries)))
 				app_constants.SYSTEM_TRAY.showMessage('Finished fetching metadata',
-										  'Could not fetch metadata for {} galleries. Check happypanda.log for more details!'.format(len(self.error_galleries)),
-										  minimized=True)
+											'Could not fetch metadata for {} galleries. Check happypanda.log for more details!'.format(len(self.error_galleries)),
+											minimized=True)
 				for tup in self.error_galleries:
 					log_e("{}: {}".format(tup[1], tup[0].title.encode(errors='ignore')))
 				self.FINISHED.emit(self.error_galleries)
