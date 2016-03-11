@@ -1225,7 +1225,7 @@ class HashDB(DBBase):
 			try:
 				if gallery.is_archive:
 					raise NotADirectoryError
-				imgs = sorted([x.path for x in scandir.scandir(chap.path)])
+				imgs = sorted([x.path for x in scandir.scandir(chap.path) if utils.is_image(x.path)])
 				pages = {}
 				for n, i in enumerate(imgs):
 					pages[n] = i
