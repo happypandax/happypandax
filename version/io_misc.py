@@ -567,17 +567,24 @@ class GalleryHandler(FileSystemEventHandler, QObject):
 	def on_created(self, event):
 		if not app_constants.OVERRIDE_MONITOR:
 			if self.file_filter(event):
-				t = Timer(8, self.CREATE_SIGNAL.emit, args=(event.src_path,))
-				t.start()
+				gs = 0
+				if event.src_path.endswith(utils.ARCHIVE_FILES):
+					gs = len(utils.check_archive(event.src_path))
+				elif event.is_directory:
+					g_dirs, g_archs = utils.recursive_gallery_check(event.src_path)
+					gs = len(g_dirs) + len(g_archs)
+				if gs:
+					self.CREATE_SIGNAL.emit(event.src_path)
 		else:
 			app_constants.OVERRIDE_MONITOR = False
 
 	def on_deleted(self, event):
 		if not app_constants.OVERRIDE_MONITOR:
-			path = event.src_path
-			gallery = gallerydb.GalleryDB.get_gallery_by_path(path)
-			if gallery:
-				self.DELETED_SIGNAL.emit(path, gallery)
+			if self.file_filter(event):
+				path = event.src_path
+				gallery = gallerydb.GalleryDB.get_gallery_by_path(path)
+				if gallery:
+					self.DELETED_SIGNAL.emit(path, gallery)
 		else:
 			app_constants.OVERRIDE_MONITOR = False
 
