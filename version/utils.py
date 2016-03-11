@@ -1201,3 +1201,19 @@ def timeit(func):
 		print('function [{}] finished in {} ms'.format(
 			func.__name__, int(elapsedTime * 1000)))
 	return newfunc
+
+
+def is_image(path):
+	"""
+	Return True if filepath ends with image extension, False if doesn't
+
+	:param path: file path
+	:return: bool
+	"""
+
+	formats = (".jpg", "jpeg", "gif", ".png")
+
+	for formatEntry in formats:
+		if path.endswith(formatEntry):
+			return True
+	return False
