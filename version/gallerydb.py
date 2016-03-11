@@ -174,8 +174,8 @@ def chapter_map(row, chapter):
 	assert isinstance(chapter, Chapter)
 	chapter.title = row['chapter_title']
 	chapter.path = bytes.decode(row['chapter_path'])
-	chapter.pages = row['pages']
 	chapter.in_archive = row['in_archive']
+	chapter.pages = row['pages']
 	return chapter
 
 def gallery_map(row, gallery, chapters=True, tags=True, hashes=True):
@@ -625,9 +625,9 @@ class ChapterDB(DBBase):
 		executing = []
 		for chap in chapters:
 			new_path = chap.path
-			executing.append((chap.title, str.encode(new_path), chap.in_archive, chap.gallery.id, chap.number,))
+			executing.append((chap.title, str.encode(new_path), chap.pages, chap.in_archive, chap.gallery.id, chap.number,))
 
-		cls.executemany(cls, "UPDATE chapters SET chapter_title=?, chapter_path=?, in_archive=? WHERE series_id=? AND chapter_number=?",
+		cls.executemany(cls, "UPDATE chapters SET chapter_title=?, chapter_path=?, pages=?, in_archive=? WHERE series_id=? AND chapter_number=?",
 			executing)
 
 	@classmethod
@@ -1186,6 +1186,8 @@ class HashDB(DBBase):
 			if isinstance(page, (int, list)):
 				if isinstance(page, int):
 					_page = [page]
+				else:
+					_page = page
 				h = {}
 				t = False
 				for p in _page:
@@ -1220,12 +1222,16 @@ class HashDB(DBBase):
 				except IndexError:
 					return None
 
+			if gallery.dead_link:
+				log_e("Could not generate hash of dead gallery: {}".format(gallery.title.encode(errors='ignore')))
+				return {}
+
 			chap = gallery.chapters[chapter]
 			executing = []
 			try:
 				if gallery.is_archive:
 					raise NotADirectoryError
-				imgs = sorted([x.path for x in scandir.scandir(chap.path) if utils.is_image(x.path)])
+				imgs = sorted([x.path for x in scandir.scandir(chap.path) if x.path.endswith(utils.IMG_FILES)])
 				pages = {}
 				for n, i in enumerate(imgs):
 					pages[n] = i
@@ -1240,8 +1246,11 @@ class HashDB(DBBase):
 						imgs = imgs[len(imgs) // 2]
 						pages[len(imgs) // 2] = imgs
 					elif isinstance(page, list):
-						for p in page:
-							pages[p] = imgs[p]
+						try:
+							for p in page:
+								pages[p] = imgs[p]
+						except IndexError:
+							raise app_constants.InternalPagesMismatch
 					else:
 						imgs = imgs[page]
 						pages = {page:imgs}
@@ -1920,6 +1929,21 @@ class ChaptersContainer:
 			chp = Chapter(self, self.parent, number=next_number)
 			self[next_number] = chp
 		return chp
+
+	def update_chapter_pages(self, number):
+		"Returns status on success"
+		if self.parent.dead_link:
+			return False
+		chap = self[number]
+		if chap.in_archive:
+			_archive = utils.ArchiveFile(chap.gallery.path)
+			chap.pages = len([x for x in _archive.dir_contents(chap.path) if x.endswith(IMG_FILES)])
+			_archive.close()
+		else:
+			chap.pages = len([x for x in scandir.scandir(chap.path) if x.path.endswith(IMG_FILES)])
+
+		add_method_queue(ChapterDB.update_chapter, True, self, [chap.number])
+		return True
 
 	def pages(self):
 		p = 0

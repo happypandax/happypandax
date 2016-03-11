@@ -236,3 +236,4 @@ FakesAssemblies/
 /res/typicons
 /res/gallery_ext_ico.ico
 /res/sample.png
+*.hpdb

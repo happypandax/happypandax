@@ -763,7 +763,17 @@ class ImportExport(QObject):
 			g_data['tags'] = g.tags.copy()
 			g_data['identifier'] = {'pages':g.chapters[0].pages}
 			pages = data.get_pages(g.chapters[0].pages)
-			h_list = gallerydb.HashDB.gen_gallery_hash(g, 0, pages)
+			try:
+				h_list = gallerydb.HashDB.gen_gallery_hash(g, 0, pages)
+			except app_constants.InternalPagesMismatch:
+				if g.chapters.update_chapter_pages(0):
+					pages = data.get_pages(g.chapters[0].pages)
+					h_list = gallerydb.HashDB.gen_gallery_hash(g, 0, pages)
+				else:
+					h_list = {}
+			if not h_list:
+				log_e("Failed to export gallery: {}".format(g.title.encode(errors='ignore')))
+				continue
 			for n in pages:
 				g_data['identifier'][n] = h_list[n]
 

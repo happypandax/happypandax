@@ -1159,7 +1159,7 @@ class SettingsDialog(QWidget):
 		advanced_db_page, advanced_db_page_l = new_tab('Database', advanced)
 		# Advanced / Database / Import/Export
 		def init_export():
-			confirm_msg = QMessageBox(QMessageBox.Question, '', 'Are you sure you want to export your database? This might take a long time.',
+			confirm_msg = QMessageBox(QMessageBox.Question, '', 'Are you sure you want to export your database?',
 							 QMessageBox.Yes | QMessageBox.No, self)
 			if confirm_msg.exec() == QMessageBox.Yes:
 				app_popup = AppDialog(self.parent_widget)
