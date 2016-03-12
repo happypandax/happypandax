@@ -829,19 +829,19 @@ class EHen(CommenHen):
 				payload['gidlist'].append(parsed_url)
 
 		if payload['gidlist']:
-			self.begin_lock()
 			try:
+				self.begin_lock()
 				if cookies:
 					self.check_cookie(cookies)
 					r = requests.post(self.e_url, json=payload, timeout=30, headers=self.HEADERS, cookies=self.COOKIES)
 				else:
 					r = requests.post(self.e_url, json=payload, timeout=30, headers=self.HEADERS)
+				self.end_lock()
 			except requests.ConnectionError as err:
 				log_e("Could not fetch metadata: {}".format(err))
 				raise app_constants.MetadataFetchFail("connection error")
 			if not self.handle_error(r):
 				return 'error'
-			self.end_lock()
 		else: return None
 		try:
 			r.raise_for_status()
@@ -951,35 +951,48 @@ class EHen(CommenHen):
 		if isinstance(search_string, str):
 			search_string = [search_string]
 
-		cookies = kwargs.pop('cookies', None)
+		cookies = kwargs.pop('cookies', {})
 
 		def no_hits_found_check(soup):
 			"return true if hits are found"
+			if not soup:
+				log_e("There is no soup!")
 			f_div = soup.body.find_all('div')
 			for d in f_div:
 				if 'No hits found' in d.text:
 					return False
 			return True
 
+		def do_filesearch(filepath):
+			if "exhentai" in self.e_url_o:
+				f_url = "http://ul.exhentai.org/image_lookup.php/"
+			else:
+				f_url = "https://upload.e-hentai.org/image_lookup.php/"
+			if cookies:
+				self.check_cookie(cookies)
+				self._browser.session.cookies.update(self.COOKIES)
+			log_d("searching with color img: {}".format(f_url))
+			files = {'sfile': open(filepath,'rb')}
+			values = {'fs_similar': '1', 'fs_exp': '1'}
+			r = self._browser.session.post(f_url, files=files, data=values)
+			s = BeautifulSoup(r.text, "html.parser")
+			if "Please wait a bit longer between each file search." in "{}".format(s):
+				file_search_delay = 4
+				log_e("Retrying filesearch due to interval response with delay: {}".format(file_search_delay))
+				time.sleep(file_search_delay)
+				s = do_filesearch(filepath)
+			return s
+
+
 		found_galleries = {}
 		log_i('Initiating hash search on ehentai')
+		log_d("search strings: ".format(search_string))
 		for h in search_string:
 			log_d('Hash search: {}'.format(h))
-			self.begin_lock()
 			try:
+				self.begin_lock()
 				if 'color' in kwargs:
-					file_search = self.e_url_o + '?filesearch=1'
-					if cookies:
-						self.check_cookie(cookies)
-						self._browser.session.cookies.update(self.COOKIES)
-					self._browser.open(file_search)
-					file_form = self._browser.get_forms()[1]
-					f_obj = open(h, 'rb')
-					file_form['sfile'].value = f_obj
-					self._browser.submit_form(file_form)
-					f_obj.close()
-
-					soup = self._browser.parsed
+					soup = do_filesearch(h)
 				else:
 					hash_url = self.e_url_o + '?f_shash='
 					hash_search = hash_url + h + '&fs_exp=1' # to enable expunged.. maybe make this an option?
@@ -988,16 +1001,17 @@ class EHen(CommenHen):
 						r = requests.get(hash_search, timeout=30, headers=self.HEADERS, cookies=self.COOKIES)
 					else:
 						r = requests.get(hash_search, timeout=30, headers=self.HEADERS)
+					log_d("searching with greyscale img: {}".format(hash_search))
 					if not self.handle_error(r):
 						return 'error'
 					soup = BeautifulSoup(r.text, "html.parser")
+				self.end_lock()
 			except requests.ConnectionError as err:
 				log_e("Could not search for gallery: {}".format(err))
 				raise app_constants.MetadataFetchFail("connection error")
 
-			self.end_lock()
 			if not no_hits_found_check(soup):
-				log_e('No hits found with hash: {}'.format(h))
+				log_e('No hits found with hash/image: {}'.format(h))
 				continue
 			log_i('Parsing html')
 			try:

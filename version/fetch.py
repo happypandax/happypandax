@@ -417,20 +417,26 @@ class Fetch(QObject):
 				self.fetch_metadata(gallery, hen, x == len(checked_pre_url_galleries))
 
 		if multiple_hit_galleries:
+			skip_all = False
+			multiple_hit_g_queue = []
 			for x, g_data in enumerate(multiple_hit_galleries, 1):
 				gallery = g_data[0]
+				log_w("Multiple galleries found for gallery: {}".format(gallery.title.encode(errors='ignore')))
+				if skip_all:
+					log_w("Skipping gallery")
+					continue
 				title_url_list = g_data[1]
 
 				self.AUTO_METADATA_PROGRESS.emit("Multiple galleries found for gallery: {}".format(gallery.title))
 				app_constants.SYSTEM_TRAY.showMessage('Happypanda', 'Multiple galleries found for gallery:\n{}'.format(gallery.title),
 									minimized=True)
-				log_w("Multiple galleries found for gallery: {}".format(gallery.title.encode(errors='ignore')))
 				self.GALLERY_PICKER.emit(gallery, title_url_list, self.GALLERY_PICKER_QUEUE)
 				user_choice = self.GALLERY_PICKER_QUEUE.get()
 
+				if user_choice == None:
+					skip_all = True
 				if not user_choice:
-					if x == len(multiple_hit_galleries):
-						self.fetch_metadata(hen=hen)
+					log_w("Skipping gallery")
 					continue
 
 				title = user_choice[0]
@@ -443,7 +449,10 @@ class Fetch(QObject):
 				gallery.temp_url = url
 				self.AUTO_METADATA_PROGRESS.emit("({}/{}) Adding to queue: {}".format(
 					x, len(multiple_hit_galleries), gallery.title))
-				self.fetch_metadata(gallery, hen, x == len(multiple_hit_galleries))
+				multiple_hit_g_queue.append(gallery)
+
+			for x, g in enumerate(multiple_hit_g_queue, 1):
+				self.fetch_metadata(g, hen, x == len(multiple_hit_g_queue))
 
 
 	def _website_checker(self, url):

@@ -1653,7 +1653,7 @@ class SingleGalleryChoices(BasePopup):
 	Pass a gallery and a list of tuple/list where the first index is a string in each
 	if text is passed, the text will be shown alongside gallery, else gallery be centered
 	"""
-	USER_CHOICE = pyqtSignal(tuple)
+	USER_CHOICE = pyqtSignal(object)
 	def __init__(self, gallery, tuple_first_idx, text=None, parent = None):
 		super().__init__(parent, flags= Qt.Dialog | Qt.FramelessWindowHint)
 		main_layout = QVBoxLayout()
@@ -1679,9 +1679,10 @@ class SingleGalleryChoices(BasePopup):
 			item = CustomListItem(t)
 			item.setText(t[0])
 			self.list_w.addItem(item)
-		self.buttons = self.add_buttons('Skip', 'Choose',)
-		self.buttons[1].clicked.connect(self.finish)
-		self.buttons[0].clicked.connect(self.skip)
+		self.buttons = self.add_buttons('Skip All', 'Skip', 'Choose',)
+		self.buttons[2].clicked.connect(self.finish)
+		self.buttons[1].clicked.connect(self.skip)
+		self.buttons[0].clicked.connect(self.skipall)
 		self.resize(400, 400)
 		self.show()
 
@@ -1694,6 +1695,10 @@ class SingleGalleryChoices(BasePopup):
 
 	def skip(self):
 		self.USER_CHOICE.emit(())
+		self.close()
+
+	def skipall(self):
+		self.USER_CHOICE.emit(None)
 		self.close()
 
 class BaseUserChoice(QDialog):
