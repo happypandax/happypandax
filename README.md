@@ -61,6 +61,7 @@ People wanting to import galleries from the Pururin database torrent should find
 - robobrowser (pip)
 - Send2Trash (pip)
 - Pillow (pip) or PIL
+- python-dateutil (pip)
 
 # Contributing
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Pewpews/happypanda?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
