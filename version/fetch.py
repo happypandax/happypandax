@@ -79,6 +79,114 @@ class Fetch(QObject):
 				filter_list.append(os.path.normcase(g.path))
 			self.galleries_from_db = sorted(filter_list)
 
+	def create_gallery(self, path, folder_name, do_chapters=True, archive=None):
+		is_archive = True if archive else False
+		temp_p = archive if is_archive else path
+		folder_name = folder_name or path if folder_name or path else os.path.split(archive)[1]
+		if utils.check_ignore_list(temp_p) and not GalleryDB.check_exists(temp_p, self.galleries_from_db, False):
+			log_i('Creating gallery: {}'.format(folder_name.encode('utf-8', 'ignore')))
+			new_gallery = Gallery()
+			images_paths = []
+			metafile = utils.GMetafile()
+			try:
+				con = scandir.scandir(temp_p) #all of content in the gallery folder
+				log_i('Gallery source is a directory')
+				chapters = sorted([sub.path for sub in con if sub.is_dir() or sub.name.endswith(utils.ARCHIVE_FILES)])\
+					if do_chapters else [] #subfolders
+				# if gallery has chapters divided into sub folders
+				numb_of_chapters = len(chapters)
+				if numb_of_chapters != 0:
+					log_i('Gallery has {} chapters'.format(numb_of_chapters))
+					for ch in chapters:
+						chap = new_gallery.chapters.create_chapter()
+						chap.title = utils.title_parser(ch)['title']
+						chap.path = os.path.join(path, ch)
+						chap.pages = len([x for x in scandir.scandir(chap.path) if x.name.endswith(utils.IMG_FILES)])
+						metafile.update(utils.GMetafile(chap.path))
+
+				else: #else assume that all images are in gallery folder
+					chap = new_gallery.chapters.create_chapter()
+					chap.title = utils.title_parser(os.path.split(path)[1])['title']
+					chap.path = path
+					metafile.update(utils.GMetafile(chap.path))
+					chap.pages = len(list(scandir.scandir(path)))
+				
+				parsed = utils.title_parser(folder_name)
+			except NotADirectoryError:
+				try:
+					if is_archive or temp_p.endswith(utils.ARCHIVE_FILES):
+						log_i('Gallery source is an archive')
+						contents = utils.check_archive(temp_p)
+						if contents:
+							new_gallery.is_archive = 1
+							new_gallery.path_in_archive = '' if not is_archive else path
+							if folder_name.endswith('/'):
+								folder_name = folder_name[:-1]
+								fn = os.path.split(folder_name)
+								folder_name = fn[1] or fn[2]
+							folder_name = folder_name.replace('/','')
+							if folder_name.endswith(utils.ARCHIVE_FILES):
+								n = folder_name
+								for ext in utils.ARCHIVE_FILES:
+									n = n.replace(ext, '')
+								parsed = utils.title_parser(n)
+							else:
+								parsed = utils.title_parser(folder_name)
+												
+							if do_chapters:
+								archive_g = sorted(contents)
+								if not archive_g:
+									log_w('No chapters found for {}'.format(temp_p.encode(errors='ignore')))
+									raise ValueError
+								for g in archive_g:
+									chap = new_gallery.chapters.create_chapter()
+									chap.in_archive = 1
+									chap.title = utils.title_parser(g)['title']
+									chap.path = g
+									metafile.update(utils.GMetafile(g, temp_p))
+									arch = utils.ArchiveFile(temp_p)
+									chap.pages = len([x for x in arch.dir_contents(g) if x.endswith(utils.IMG_FILES)])
+									arch.close()
+							else:
+								chap = new_gallery.chapters.create_chapter()
+								chap.title = utils.title_parser(os.path.split(path)[1])['title']
+								chap.in_archive = 1
+								chap.path = path
+								metafile.update(utils.GMetafile(path, temp_p))
+								arch = utils.ArchiveFile(temp_p)
+								chap.pages = len(arch.dir_contents(''))
+								arch.close()
+						else:
+							raise ValueError
+					else:
+						raise ValueError
+				except ValueError:
+					log_w('Skipped {} in local search'.format(path.encode(errors='ignore')))
+					self.skipped_paths.append((temp_p, 'Empty archive',))
+					return
+				except app_constants.CreateArchiveFail:
+					log_w('Skipped {} in local search'.format(path.encode(errors='ignore')))
+					self.skipped_paths.append((temp_p, 'Error creating archive',))
+					return
+
+			new_gallery.title = parsed['title']
+			new_gallery.path = temp_p
+			new_gallery.artist = parsed['artist']
+			new_gallery.language = parsed['language']
+			new_gallery.info = ""
+			metafile.apply_gallery(new_gallery)
+
+			if app_constants.MOVE_IMPORTED_GALLERIES and not app_constants.OVERRIDE_MOVE_IMPORTED_IN_FETCH:
+				new_gallery.move_gallery()
+
+			self.data.append(new_gallery)
+			log_i('Gallery successful created: {}'.format(folder_name.encode('utf-8', 'ignore')))
+			return True
+		else:
+			log_i('Gallery already exists or ignored: {}'.format(folder_name.encode('utf-8', 'ignore')))
+			self.skipped_paths.append((temp_p, 'Already exists or ignored'))
+			return False
+
 	def local(self, s_path=None):
 		"""
 		Do a local search in the given series_path.
@@ -94,163 +202,54 @@ class Fetch(QObject):
 			mixed = True
 		if len(gallery_l) != 0: # if gallery path list is not empty
 			log_i('Gallery folder is not empty')
-			try:
-				if len(self.galleries_from_db) != len(app_constants.GALLERY_DATA):
-					self._refresh_filter_list()
-				self.DATA_COUNT.emit(len(gallery_l)) #tell model how many items are going to be added
-				log_i('Received {} paths'.format(len(gallery_l)))
-				progress = 0
-				def create_gallery(path, folder_name, do_chapters=True, archive=None):
-					is_archive = True if archive else False
-					temp_p = archive if is_archive else path
-					folder_name = folder_name or path if folder_name or path else os.path.split(archive)[1]
-					if utils.check_ignore_list(temp_p) and not GalleryDB.check_exists(temp_p, self.galleries_from_db, False):
-						log_i('Creating gallery: {}'.format(folder_name.encode('utf-8', 'ignore')))
-						if app_constants.MOVE_IMPORTED_GALLERIES and not app_constants.OVERRIDE_MOVE_IMPORTED_IN_FETCH:
-							temp_p = utils.move_files(temp_p)
-						new_gallery = Gallery()
-						images_paths = []
-						metafile = utils.GMetafile()
-						try:
-							con = scandir.scandir(temp_p) #all of content in the gallery folder
-							log_i('Gallery source is a directory')
-							chapters = sorted([sub.path for sub in con if sub.is_dir() or sub.name.endswith(utils.ARCHIVE_FILES)])\
-							    if do_chapters else [] #subfolders
-							# if gallery has chapters divided into sub folders
-							numb_of_chapters = len(chapters)
-							if numb_of_chapters != 0:
-								log_i('Gallery has {} chapters'.format(numb_of_chapters))
-								for ch in chapters:
-									chap = new_gallery.chapters.create_chapter()
-									chap.title = utils.title_parser(ch)['title']
-									chap.path = os.path.join(path, ch)
-									chap.pages = len([x for x in scandir.scandir(chap.path) if x.name.endswith(utils.IMG_FILES)])
-									metafile.update(utils.GMetafile(chap.path))
+			if len(self.galleries_from_db) != len(app_constants.GALLERY_DATA):
+				self._refresh_filter_list()
+			self.DATA_COUNT.emit(len(gallery_l)) #tell model how many items are going to be added
+			log_i('Received {} paths'.format(len(gallery_l)))
+			progress = 0
 
-							else: #else assume that all images are in gallery folder
-								chap = new_gallery.chapters.create_chapter()
-								chap.title = utils.title_parser(os.path.split(path)[1])['title']
-								chap.path = path
-								metafile.update(utils.GMetafile(chap.path))
-								chap.pages = len(list(scandir.scandir(path)))
-				
-							parsed = utils.title_parser(folder_name)
-						except NotADirectoryError:
-							try:
-								if is_archive or temp_p.endswith(utils.ARCHIVE_FILES):
-									log_i('Gallery source is an archive')
-									contents = utils.check_archive(temp_p)
-									if contents:
-										new_gallery.is_archive = 1
-										new_gallery.path_in_archive = '' if not is_archive else path
-										if folder_name.endswith('/'):
-											folder_name = folder_name[:-1]
-											fn = os.path.split(folder_name)
-											folder_name = fn[1] or fn[2]
-										folder_name = folder_name.replace('/','')
-										if folder_name.endswith(utils.ARCHIVE_FILES):
-											n = folder_name
-											for ext in utils.ARCHIVE_FILES:
-												n = n.replace(ext, '')
-											parsed = utils.title_parser(n)
-										else:
-											parsed = utils.title_parser(folder_name)
-												
-										if do_chapters:
-											archive_g = sorted(contents)
-											if not archive_g:
-												log_w('No chapters found for {}'.format(temp_p.encode(errors='ignore')))
-												raise ValueError
-											for g in archive_g:
-												chap = new_gallery.chapters.create_chapter()
-												chap.in_archive = 1
-												chap.title = utils.title_parser(g)['title']
-												chap.path = g
-												metafile.update(utils.GMetafile(g, temp_p))
-												arch = utils.ArchiveFile(temp_p)
-												chap.pages = len([x for x in arch.dir_contents(g) if x.endswith(utils.IMG_FILES)])
-												arch.close()
-										else:
-											chap = new_gallery.chapters.create_chapter()
-											chap.title = utils.title_parser(os.path.split(path)[1])['title']
-											chap.in_archive = 1
-											chap.path = path
-											metafile.update(utils.GMetafile(path, temp_p))
-											arch = utils.ArchiveFile(temp_p)
-											chap.pages = len(arch.dir_contents(''))
-											arch.close()
-									else:
-										raise ValueError
-								else:
-									raise ValueError
-							except ValueError:
-								log_w('Skipped {} in local search'.format(path.encode(errors='ignore')))
-								self.skipped_paths.append((temp_p, 'Empty archive',))
-								return
-							except app_constants.CreateArchiveFail:
-								log_w('Skipped {} in local search'.format(path.encode(errors='ignore')))
-								self.skipped_paths.append((temp_p, 'Error creating archive',))
-								return
-
-						new_gallery.title = parsed['title']
-						new_gallery.path = temp_p
-						new_gallery.artist = parsed['artist']
-						new_gallery.language = parsed['language']
-						new_gallery.info = ""
-						metafile.apply_gallery(new_gallery)
-
-						self.data.append(new_gallery)
-						log_i('Gallery successful created: {}'.format(folder_name.encode('utf-8', 'ignore')))
-					else:
-						log_i('Gallery already exists or ignored: {}'.format(folder_name.encode('utf-8', 'ignore')))
-						self.skipped_paths.append((temp_p, 'Already exists or ignored'))
-
-				for folder_name in gallery_l: # folder_name = gallery folder title
-					self._curr_gallery = folder_name
-					if mixed:
-						path = folder_name
-						folder_name = os.path.split(path)[1]
-					else:
-						path = os.path.join(self.series_path, folder_name)
-					if app_constants.SUBFOLDER_AS_GALLERY or app_constants.OVERRIDE_SUBFOLDER_AS_GALLERY:
-						if app_constants.OVERRIDE_SUBFOLDER_AS_GALLERY:
-							app_constants.OVERRIDE_SUBFOLDER_AS_GALLERY = False
-						log_i("Treating each subfolder as gallery")
-						if os.path.isdir(path):
-							gallery_folders, gallery_archives = utils.recursive_gallery_check(path)
-							for gs in gallery_folders:
-									create_gallery(gs, os.path.split(gs)[1], False)
-							p_saving = {}
-							for gs in gallery_archives:
+			for folder_name in gallery_l: # folder_name = gallery folder title
+				self._curr_gallery = folder_name
+				if mixed:
+					path = folder_name
+					folder_name = os.path.split(path)[1]
+				else:
+					path = os.path.join(self.series_path, folder_name)
+				if app_constants.SUBFOLDER_AS_GALLERY or app_constants.OVERRIDE_SUBFOLDER_AS_GALLERY:
+					if app_constants.OVERRIDE_SUBFOLDER_AS_GALLERY:
+						app_constants.OVERRIDE_SUBFOLDER_AS_GALLERY = False
+					log_i("Treating each subfolder as gallery")
+					if os.path.isdir(path):
+						gallery_folders, gallery_archives = utils.recursive_gallery_check(path)
+						for gs in gallery_folders:
+								self.create_gallery(gs, os.path.split(gs)[1], False)
+						p_saving = {}
+						for gs in gallery_archives:
 									
-									create_gallery(gs[0], os.path.split(gs[0])[1], False, archive=gs[1])
-						elif path.endswith(utils.ARCHIVE_FILES):
-							for g in utils.check_archive(path):
-								create_gallery(g, os.path.split(g)[1], False, archive=path)
-					else:
-						try:
-							if os.path.isdir(path):
-								if not list(scandir.scandir(path)):
-									raise ValueError
-							elif not path.endswith(utils.ARCHIVE_FILES):
-								raise NotADirectoryError
+								self.create_gallery(gs[0], os.path.split(gs[0])[1], False, archive=gs[1])
+					elif path.endswith(utils.ARCHIVE_FILES):
+						for g in utils.check_archive(path):
+							self.create_gallery(g, os.path.split(g)[1], False, archive=path)
+				else:
+					try:
+						if os.path.isdir(path):
+							if not list(scandir.scandir(path)):
+								raise ValueError
+						elif not path.endswith(utils.ARCHIVE_FILES):
+							raise NotADirectoryError
 
-							log_i("Treating each subfolder as chapter")
-							create_gallery(path, folder_name, do_chapters=True)
+						log_i("Treating each subfolder as chapter")
+						self.create_gallery(path, folder_name, do_chapters=True)
 
-						except ValueError:
-							self.skipped_paths.append((path, 'Empty directory'))
-							log_w('Directory is empty: {}'.format(path.encode(errors='ignore')))
-						except NotADirectoryError:
-							self.skipped_paths.append((path, 'Unsupported file'))
-							log_w('Unsupported file: {}'.format(path.encode(errors='ignore')))
+					except ValueError:
+						self.skipped_paths.append((path, 'Empty directory'))
+						log_w('Directory is empty: {}'.format(path.encode(errors='ignore')))
+					except NotADirectoryError:
+						self.skipped_paths.append((path, 'Unsupported file'))
+						log_w('Unsupported file: {}'.format(path.encode(errors='ignore')))
 
-					progress += 1 # update the progress bar
-					self.PROGRESS.emit(progress)
-			except:
-				log.exception('Local Search Error:')
-				app_constants.OVERRIDE_MOVE_IMPORTED_IN_FETCH = True # sanity check
-				self.FINISHED.emit(False)
+				progress += 1 # update the progress bar
+				self.PROGRESS.emit(progress)
 		else: # if gallery folder is empty
 			log_e('Local search error: Invalid directory')
 			log_e('Gallery folder is empty')

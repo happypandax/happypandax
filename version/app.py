@@ -514,25 +514,13 @@ class AppWindow(QMainWindow):
 		if self.search_bar.cursorPosition() != old_cursor_pos + 1:
 			self.search_bar.setCursorPosition(old_cursor_pos)
 
-	def favourite_display(self):
-		"Switches to favourite display"
-		self.manga_table_view.sort_model.fav_view()
-		self.favourite_btn.selected = True
-		self.library_btn.selected = False
-
-	def catalog_display(self):
-		"Switches to catalog display"
-		self.manga_table_view.sort_model.catalog_view()
-		self.library_btn.selected = True
-		self.favourite_btn.selected = False
-
 	def switch_display(self):
 		"Switches between fav and catalog display"
 		if self.manga_table_view.sort_model.current_view == \
 			self.manga_table_view.sort_model.CAT_VIEW:
-			self.favourite_display()
+			self.tab_manager.favorite_btn.click()
 		else:
-			self.catalog_display()
+			self.tab_manager.library_btn.click()
 
 	def settings(self):
 		sett = settingsdialog.SettingsDialog(self)
@@ -555,16 +543,10 @@ class AppWindow(QMainWindow):
 		spacer_start.setFixedSize(QSize(10, 1))
 		self.toolbar.addWidget(spacer_start)
 
-		self.favourite_btn = misc.ToolbarButton(self.toolbar, 'Favorites')
-		self.toolbar.addWidget(self.favourite_btn)
-		self.favourite_btn.clicked.connect(self.favourite_display) #need lambda to pass extra args
-
-		self.library_btn = misc.ToolbarButton(self.toolbar, 'Library')
-		self.toolbar.addWidget(self.library_btn)
-		self.library_btn.clicked.connect(self.catalog_display) #need lambda to pass extra args
-		self.library_btn.selected = True
-
-		self.toolbar.addSeparator()
+		self.tab_manager = misc.ToolbarTabManager(self.toolbar, self)
+		self.tab_manager.favorite_btn.clicked.connect(self.get_current_view().sort_model.fav_view)
+		self.tab_manager.library_btn.click()
+		self.tab_manager.library_btn.clicked.connect(self.get_current_view().sort_model.catalog_view)
 
 		gallery_k = QKeySequence('Alt+G')
 		new_gallery_k = QKeySequence('Ctrl+N')
@@ -634,7 +616,7 @@ class AppWindow(QMainWindow):
 		# debug specfic code
 		if app_constants.DEBUG:
 			def debug_func():
-				pass
+				self.tab_manager.addTab("DEbug")
 		
 			debug_btn = QToolButton()
 			debug_btn.setText("DEBUG BUTTON")
@@ -879,32 +861,21 @@ class AppWindow(QMainWindow):
 								def add_to_db(self):
 									database.db.DBBase.begin()
 									for y, x in enumerate(self.obj):
-										gallerydb.add_method_queue(gallerydb.GalleryDB.add_gallery_return, False, x)
+										gallerydb.add_method_queue(gallerydb.GalleryDB.add_gallery, False, x)
 										self.galleries.append(x)
 										y += 1
 										self.prog.emit(y)
 									gallerydb.add_method_queue(database.db.DBBase.end, True)
 									append_to_model(self.galleries)
 									self.done.emit()
-							loading.progress.setMaximum(len(gallery_list))
 							self.a_instance = A(gallery_list)
 							thread = QThread(self)
 							thread.setObjectName('Database populate')
-							def loading_show(numb):
-								if loading.isHidden():
-									loading.show()
-								loading.setText('Populating database ({}/{})\nPlease wait...'.format(numb, loading.progress.maximum()))
-								loading.progress.setValue(numb)
-								loading.show()
-
-							def loading_hide():
-								loading.close()
-								self.manga_list_view.gallery_model.ROWCOUNT_CHANGE.emit()
 
 							self.a_instance.moveToThread(thread)
-							self.a_instance.prog.connect(loading_show)
+							self.a_instance.prog.connect(lambda n: self.notif_bubble.update_text("Populating Database",
+																			"{} galleries left!".format(len(gallery_list)-n)))
 							thread.started.connect(self.a_instance.add_to_db)
-							self.a_instance.done.connect(loading_hide)
 							self.a_instance.done.connect(self.a_instance.deleteLater)
 							#a_instance.add_to_db()
 							thread.finished.connect(thread.deleteLater)
@@ -1038,10 +1009,7 @@ class AppWindow(QMainWindow):
 						if self.scanned_data:
 							for g in self.scanned_data:
 								try:
-									if g.is_archive:
-										g.profile = utils.get_gallery_img(g.chapters[0].path, g.path)
-									else:
-										g.profile = utils.get_gallery_img(g.chapters[0].path)
+									g.profile = utils.get_gallery_img(g)
 									if not g.profile:
 										raise Exception
 								except:

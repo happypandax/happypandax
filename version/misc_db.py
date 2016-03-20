@@ -519,7 +519,7 @@ class SideBarWidget(QFrame):
 
 	def _init_size(self, event=None):
 		h = self.parent_widget.height()
-		self._max_width = self.parent_widget.width() * 0.2
+		self._max_width = 200
 		self.updateGeometry()
 		self.setMaximumWidth(self._max_width)
 		self.slide_animation.setStartValue(QSize(self._max_width, h))

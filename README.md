@@ -1,14 +1,12 @@
-###### I will be taking a longer break from Happypanda to focus on my other projects (and more on school since exams are coming up). I can't give a date on when I'll be back but sometime after exams I guess, which is in 3-4 months.. I'll still be available to answer issues, mails and gitter chat.
+###### *[updated 13/3]* I will be taking a longer break from Happypanda to focus on my other projects (and more on school since exams are coming up). I'll probably start working on new features again in summer.. I'll still be available to answer issues, mails and gitter chat.
 
-I'm here if you have any questions!
+I'm available in the gitter chat if you have any questions!
 
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Pewpews/happypanda?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Stories in Progress](https://badge.waffle.io/Pewpews/happypanda.png?label=In%20Progress&title=Features%20In%20Progress)](https://waffle.io/Pewpews/happypanda)
+[![Stories in Before next release](https://badge.waffle.io/Pewpews/happypanda.png?label=Before%20next%20release&title=Before%20next%20release)](https://waffle.io/Pewpews/happypanda)
 
 Development is done in alpha branch
-
-[![Stories in Progress](https://badge.waffle.io/Pewpews/happypanda.png?label=In%20Progress&title=Features%20In%20Progress)](https://waffle.io/Pewpews/happypanda)
-
-[![Stories in Before next release](https://badge.waffle.io/Pewpews/happypanda.png?label=Before%20next%20release&title=Before%20next%20release)](https://waffle.io/Pewpews/happypanda)
 
 For future plans, see [issues](https://github.com/Pewpews/happypanda/issues)
 
@@ -64,5 +62,4 @@ People wanting to import galleries from the Pururin database torrent should find
 - python-dateutil (pip)
 
 # Contributing
-[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Pewpews/happypanda?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-I'm available there! Also, please check the wiki.
+Please check the wiki.

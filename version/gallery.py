@@ -614,9 +614,7 @@ class GalleryModel(QAbstractTableModel):
 		log_d('Add rows: Began inserting')
 		gallerydb.GalleryDB.begin()
 		for gallery in list_of_gallery:
-			gallerydb.GalleryDB.add_gallery_return(gallery)
-			#gallerydb.add_method_queue(gallerydb.GalleryDB.add_gallery_return, True, gallery)
-			gallery.profile = gallerydb.PROFILE_TO_MODEL.get()
+			gallerydb.GalleryDB.add_gallery(gallery)
 			self._data.insert(position, gallery)
 		gallerydb.add_method_queue(gallerydb.GalleryDB.end, True)
 		log_d('Add rows: Finished inserting')
@@ -831,33 +829,34 @@ class GridDelegate(QStyledItemDelegate):
 				txt_layout.draw(painter, QPointF(x, y+h//4),
 					  clip=clipping)
 
-			# if we can't find a cached image
-			pix_cache = QPixmapCache.find(self.key(gallery.profile))
-			if isinstance(pix_cache, QPixmap):
-				self.image = pix_cache
-				img_x = center_img(self.image.width())
-				if self.image.width() > w or self.image.height() > h:
-					img_too_big(img_x)
-				else:
-					if self.image.height() < self.image.width(): #to keep aspect ratio
-						painter.drawPixmap(QPoint(img_x,y),
-								self.image)
+			if gallery.profile:
+				# if we can't find a cached image
+				pix_cache = QPixmapCache.find(self.key(gallery.profile))
+				if isinstance(pix_cache, QPixmap):
+					self.image = pix_cache
+					img_x = center_img(self.image.width())
+					if self.image.width() > w or self.image.height() > h:
+						img_too_big(img_x)
 					else:
-						painter.drawPixmap(QPoint(img_x,y),
-								self.image)
-			else:
-				self.image = QPixmap(gallery.profile)
-				img_x = center_img(self.image.width())
-				QPixmapCache.insert(self.key(gallery.profile), self.image)
-				if self.image.width() > w or self.image.height() > h:
-					img_too_big(img_x)
+						if self.image.height() < self.image.width(): #to keep aspect ratio
+							painter.drawPixmap(QPoint(img_x,y),
+									self.image)
+						else:
+							painter.drawPixmap(QPoint(img_x,y),
+									self.image)
 				else:
-					if self.image.height() < self.image.width(): #to keep aspect ratio
-						painter.drawPixmap(QPoint(img_x,y),
-								self.image)
+					self.image = QPixmap(gallery.profile)
+					img_x = center_img(self.image.width())
+					QPixmapCache.insert(self.key(gallery.profile), self.image)
+					if self.image.width() > w or self.image.height() > h:
+						img_too_big(img_x)
 					else:
-						painter.drawPixmap(QPoint(img_x,y),
-								self.image)
+						if self.image.height() < self.image.width(): #to keep aspect ratio
+							painter.drawPixmap(QPoint(img_x,y),
+									self.image)
+						else:
+							painter.drawPixmap(QPoint(img_x,y),
+									self.image)
 
 			# draw ribbon type
 			painter.save()

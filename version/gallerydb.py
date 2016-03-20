@@ -19,7 +19,6 @@ import threading
 import logging
 import queue
 import io
-import uuid # for unique filename
 import re as regex
 from dateutil import parser as dateparser
 
@@ -31,12 +30,10 @@ from utils import (today, ArchiveFile, generate_img_hash, delete_path,
 from database import db_constants
 from database import db
 from database.db import DBBase
+from executors import Executors
 
 import app_constants
 import utils
-
-PROFILE_TO_MODEL = queue.Queue()
-TestQueue = queue.Queue()
 
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -122,10 +119,7 @@ def gen_thumbnail(gallery, width=app_constants.THUMB_W_SIZE,
 
 	try:
 		if not img:
-			if gallery.is_archive:
-				img_path = get_gallery_img(gallery.chapters[0].path, gallery.path)
-			else:
-				img_path = get_gallery_img(gallery.chapters[0].path)
+			img_path = get_gallery_img(gallery)
 		else:
 			img_path = img
 		if not img_path:
@@ -285,12 +279,10 @@ class GalleryDB(DBBase):
 		rebuild_thumb -> Rebuilds gallery thumbnail
 		rebuild_galleries -> Rebuilds the galleries in DB
 		modify_gallery -> Modifies gallery with given gallery id
-		fav_gallery_set -> Set fav on gallery with given gallery id, and returns the gallery
 		get_all_gallery -> returns a list of all gallery (<Gallery> class) currently in DB
 		get_gallery_by_path -> Returns gallery with given path
 		get_gallery_by_id -> Returns gallery with given id
 		add_gallery -> adds gallery into db
-		add_gallery_return -> adds gallery into db AND returns the added gallery
 		set_gallery_title -> changes gallery title
 		gallery_count -> returns amount of gallery (can be used for indexing)
 		del_gallery -> deletes the gallery with the given id recursively
@@ -308,7 +300,7 @@ class GalleryDB(DBBase):
 			log_i('Recreating thumb {}'.format(gallery.title.encode(errors='ignore')))
 			if gallery.profile:
 				GalleryDB.clear_thumb(gallery.profile)
-			gallery.profile = gen_thumbnail(gallery)
+			gallery.profile = Executors.generate_thumbnail(gallery, blocking=True)
 			GalleryDB.modify_gallery(gallery.id,
 				profile=gallery.profile)
 		except:
@@ -494,31 +486,13 @@ class GalleryDB(DBBase):
 		assert isinstance(object, Gallery), "add_gallery method only accepts gallery items"
 		log_i('Recevied gallery: {}'.format(object.path.encode(errors='ignore')))
 
-		object.profile = gen_thumbnail(object)
-
 		cursor = cls.execute(cls, *default_exec(object))
 		series_id = cursor.lastrowid
 		object.id = series_id
+		Executors.generate_thumbnail(object, on_method=object.set_profile)
 		if object.tags:
 			TagDB.add_tags(object)
 		ChapterDB.add_chapters(object)
-
-	@classmethod
-	def add_gallery_return(cls, object):
-		"""Adds gallery of <Gallery> class into database AND returns the profile generated"""
-		assert isinstance(object, Gallery), "[add_gallery_return] method only accept gallery items"
-		log_i('Recevied gallery: {}'.format(object.path.encode(errors='ignore')))
-
-		object.profile = gen_thumbnail(object)
-		PROFILE_TO_MODEL.put(object.profile)
-
-		cursor = cls.execute(cls, *default_exec(object))
-		series_id = cursor.lastrowid
-		object.id = series_id
-		if object.tags:
-			TagDB.add_tags(object)
-		ChapterDB.add_chapters(object)
-		return GalleryDB.get_gallery_by_id(object.id)
 
 	@classmethod
 	def gallery_count(cls):
@@ -1556,6 +1530,11 @@ class Gallery:
 		if not self.status:
 			self.status = app_constants.G_DEF_STATUS.capitalize()
 
+	def set_profile(self, future):
+		"set with profile with future object"
+		self.profile = future.result()
+		add_method_queue(GalleryDB.modify_gallery, self.id, True, {"profile":self.profile})
+
 	@property
 	def chapters(self):
 		return self._chapters
@@ -1773,6 +1752,28 @@ class Gallery:
 			else:
 				return is_exclude
 		return default
+
+	def move_gallery(self, new_path=''):
+		log_i("Moving gallery...")
+		log_d("Old gallery path: {}".format(self.path))
+		old_head, old_tail = os.path.split(self.path)
+		self.path = utils.move_files(self.path, new_path)
+		new_head, new_tail = os.path.split(self.path)
+		for chap in self.chapters:
+			if not chap.in_archive:
+				head, tail = os.path.split(chap.path)
+				log_d("old chapter path: {}".format(chap.path))
+				if os.path.exists(os.path.join(self.path, tail)):
+					chap.path = os.path.join(self.path, tail)
+					continue
+				if os.path.join(old_head, old_tail) == os.path.join(head, tail):
+					chap.path = self.path
+					continue
+
+				if self.is_archive:
+					utils.move_files(chap.path, os.path.join(new_head, tail))
+				else:
+					utils.move_files(chap.path, os.path.join(self.path, tail))
 
 	def __lt__(self, other):
 		return self.id < other.id

@@ -217,7 +217,7 @@ class GalleryDownloaderList(QTableWidget):
 			if d_item.item.metadata:
 				gallery = pewnet.EHen.apply_metadata(gallery, d_item.item.metadata)
 			gallerydb.add_method_queue(
-				gallerydb.GalleryDB.add_gallery_return, False, gallery)
+				gallerydb.GalleryDB.add_gallery, False, gallery)
 			self.gallery_model.insertRows([gallery], None, 1)
 			self.gallery_model.init_search(self.gallery_model.current_term)
 			d_item.status_item.setText('Added to library!')

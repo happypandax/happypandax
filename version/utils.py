@@ -272,6 +272,7 @@ def move_files(path, dest=''):
 			return path
 	f = os.path.split(path)[1]
 	new_path = os.path.join(dest, f)
+	log_i("Moving to: {}".format(new_path))
 	if new_path == os.path.join(*os.path.split(path)): # need to unpack to make sure we get the corrct sep
 		return path
 	if not os.path.exists(new_path):
@@ -702,11 +703,18 @@ def open_chapter(chapterpath, archive=None):
 		app_constants.NOTIF_BAR.add_text("Could not open chapter for unknown reasons. Check happypanda.log!")
 		log_e('Could not open chapter {}'.format(os.path.split(chapterpath)[1]))
 
-def get_gallery_img(path, archive=None):
+def get_gallery_img(gallery_or_path, chap_number=0):
 	"""
-	Returns a path to a gallery's cover
-	Looks in archive if archive is set.
+	Returns a path to image in gallery chapter
 	"""
+	archive = None
+	if isinstance(gallery_or_path, str):
+		path = gallery_or_path
+	else:
+		path = gallery_or_path.chapters[chap_number].path
+		if gallery_or_path.is_archive:
+			archive = gallery_or_path.path
+
 	# TODO: add chapter support
 	try:
 		name = os.path.split(path)[1]

@@ -558,7 +558,7 @@ ABOUT =\
 <li>Various python libraries (see github repo)</li>
 </ul>
 <p>Contributors (github):
-Moshidesu, peaceanpizza, utterbull, LePearlo</p>
+nonamethanks, ImoutoChan, Moshidesu, peaceanpizza, utterbull, LePearlo</p>
 
 </body></html>
 	""".format(vs, db_constants.CURRENT_DB_VERSION)

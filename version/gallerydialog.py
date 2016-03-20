@@ -455,12 +455,8 @@ class GalleryDialog(QWidget):
 			log_d('Adding gallery title')
 			new_gallery.artist = self.author_edit.text()
 			log_d('Adding gallery artist')
+			new_gallery.path = self.path_lbl.text()
 			log_d('Adding gallery path')
-			if new and app_constants.MOVE_IMPORTED_GALLERIES:
-				app_constants.OVERRIDE_MONITOR = True
-				new_gallery.path = utils.move_files(self.path_lbl.text())
-			else:
-				new_gallery.path = self.path_lbl.text()
 			new_gallery.info = self.descr_edit.toPlainText()
 			log_d('Adding gallery descr')
 			new_gallery.type = self.type_box.currentText()
@@ -488,6 +484,9 @@ class GalleryDialog(QWidget):
 				thread.start()
 				thread.join()
 				log_d('Finished chapters')
+				if new and app_constants.MOVE_IMPORTED_GALLERIES:
+					app_constants.OVERRIDE_MONITOR = True
+					new_gallery.move_gallery()
 			return new_gallery
 
 

@@ -49,8 +49,14 @@ def start(test=False):
 					 version='Happypanda v{}'.format(app_constants.vs))
 	parser.add_argument('-e', '--exceptions', action='store_true',
 					 help='Disable custom excepthook')
+	parser.add_argument('-x', '--dev', action='store_true',
+					 help='Development Switch')
 
 	args = parser.parse_args()
+	log_handlers = []
+	log_level = logging.INFO
+	if args.dev:
+		log_handlers.append(logging.StreamHandler())
 	if args.debug:
 		print("happypanda_debug.log created at {}".format(os.getcwd()))
 		# create log
@@ -60,23 +66,21 @@ def start(test=False):
 		except FileExistsError:
 			pass
 
-		logging.basicConfig(level=logging.DEBUG,
-						format='%(asctime)-8s %(levelname)-6s %(name)-6s %(message)s',
-						datefmt='%d-%m %H:%M',
-						filename='happypanda_debug.log',
-						filemode='w')
+		log_handlers.append(logging.FileHandler('happypanda_debug.log', 'w', 'utf-8'))
+		log_level = logging.DEBUG
 		app_constants.DEBUG = True
 	else:
 		try:
 			with open(log_path, 'x') as f:
 				pass
 		except FileExistsError: pass
-		file_handler = logging.handlers.RotatingFileHandler(
-			log_path, maxBytes=1000000*10, encoding='utf-8', backupCount=2)
-		logging.basicConfig(level=logging.INFO,
-						format='%(asctime)-8s %(levelname)-6s %(name)-6s %(message)s',
-						datefmt='%d-%m %H:%M',
-						handlers=(file_handler,))
+		log_handlers.append(logging.handlers.RotatingFileHandler(
+			log_path, maxBytes=1000000*10, encoding='utf-8', backupCount=2))
+
+	logging.basicConfig(level=log_level,
+					format='%(asctime)-8s %(levelname)-6s %(name)-6s %(message)s',
+					datefmt='%d-%m %H:%M',
+					handlers=tuple(log_handlers))
 
 	log = logging.getLogger(__name__)
 	log_i = log.info

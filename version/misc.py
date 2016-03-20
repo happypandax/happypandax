@@ -44,6 +44,7 @@ from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 
 from utils import (tag_to_string, tag_to_dict, title_parser, ARCHIVE_FILES,
 					 ArchiveFile, IMG_FILES)
+from executors import Executors
 import utils
 import app_constants
 import gallerydb
@@ -278,13 +279,17 @@ class SortMenu(QMenu):
 		super().showEvent(event)
 
 class ToolbarButton(QPushButton):
+	select = pyqtSignal(object)
+	close_tab = pyqtSignal(object)
 	def __init__(self, parent = None, txt=''):
 		super().__init__(parent)
-		self._text = ''
+		self._text = txt
 		self._font_metrics = self.fontMetrics()
 		if txt:
 			self.setText(txt)
 		self._selected = False
+		self.clicked.connect(lambda: self.select.emit(self))
+		self._enable_contextmenu = True
 
 	@property
 	def selected(self):
@@ -294,6 +299,15 @@ class ToolbarButton(QPushButton):
 	def selected(self, b):
 		self._selected = b
 		self.update()
+
+	def contextMenuEvent(self, event):
+		if self._enable_contextmenu:
+			m = QMenu(self)
+			m.addAction("Close Tab").triggered.connect(lambda: self.close_tab.emit(self))
+			m.exec_(event.globalPos())
+			event.accept()
+		else:
+			event.ignore()
 
 	def paintEvent(self, event):
 		assert isinstance(event, QPaintEvent)
@@ -1176,10 +1190,8 @@ class GalleryMenu(QMenu):
 							directory=path)[0]
 		if new_cover and new_cover.lower().endswith(utils.IMG_FILES):
 			gallerydb.GalleryDB.clear_thumb(gallery.profile)
-			gallery.profile = gallerydb.gen_thumbnail(gallery, img=new_cover)
+			Executors.generate_thumbnail(gallery, img=new_cover, on_method=gallery.set_profile)
 			gallery._cache = None
-			self.parent_widget.manga_list_view.replace_edit_gallery(gallery,
-														   self.index.row())
 			log_i('Changed cover successfully!')
 
 	def open_first_chapters(self):
@@ -2519,5 +2531,49 @@ class ChapterListItem(QFrame):
 			self.chapter_lbl.setText("Chapter "+str(chapter.number+1))
 
 
+class ToolbarTabManager(QObject):
+	""
+	def __init__(self, toolbar, parent=None):
+		super().__init__(parent)
+		self.toolbar =  toolbar
+		self._actions = []
+		self._last_selected = None
+		self.idx_widget = self.toolbar.addWidget(QWidget(self.toolbar))
+		self.idx_widget.setVisible(False)
+		self.favorite_btn = self.addTab("Favorites")
+		self.library_btn = None
+		self.library_btn = self.addTab("Library")
+		self.toolbar.addSeparator()
+		self.idx_widget = self.toolbar.addWidget(QWidget(self.toolbar))
+		self.idx_widget.setVisible(False)
 
+	def _manage_selected(self, b):
+		if self._last_selected:
+			self._last_selected.selected = False
+		b.selected = True
+		self._last_selected = b
 
+	def addTab(self, name):
+		if self.toolbar:
+			t = ToolbarButton(self.toolbar, name)
+			t.select.connect(self._manage_selected)
+			t.close_tab.connect(self.removeTab)
+			if self.library_btn:
+				t.close_tab.connect(lambda:self.library_btn.click())
+			self._actions.append(self.toolbar.insertWidget(self.idx_widget, t))
+			return t
+
+	def removeTab(self, button_or_index):
+		if self.toolbar:
+			if isinstance(button_or_index, int):
+				self.toolbar.removeAction(self._actions.pop(button_or_index))
+			else:
+				act_to_remove = None
+				for act in self._actions:
+					w = self.toolbar.widgetForAction(act)
+					if w == button_or_index:
+						self.toolbar.removeAction(act)
+						act_to_remove = act
+						break
+				if act_to_remove:
+					self._actions.remove(act)
