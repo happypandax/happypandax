@@ -14,6 +14,7 @@
 
 import datetime
 import os
+import enum
 import scandir
 import threading
 import logging
@@ -199,6 +200,7 @@ def gallery_map(row, gallery, chapters=True, tags=True, hashes=True):
 	gallery.times_read = row['times_read']
 	gallery._db_v = row['db_v']
 	gallery.exed = row['exed']
+	gallery.view = row['view']
 	try:
 		gallery.link = bytes.decode(row['link'])
 	except TypeError:
@@ -248,9 +250,9 @@ def default_exec(object):
 			return obj
 	executing = ["""INSERT INTO series(title, artist, profile, series_path, is_archive, path_in_archive,
 					info, type, fav, language, status, pub_date, date_added, last_read, link,
-					times_read, db_v, exed)
+					times_read, db_v, exed, view)
 				VALUES(:title, :artist, :profile, :series_path, :is_archive, :path_in_archive, :info, :type, :fav, :language,
-					:status, :pub_date, :date_added, :last_read, :link, :times_read, :db_v, :exed)""",
+					:status, :pub_date, :date_added, :last_read, :link, :times_read, :db_v, :exed, :view)""",
 				{
 				'title':check(object.title),
 				'artist':check(object.artist),
@@ -269,7 +271,8 @@ def default_exec(object):
 				'link':str.encode(object.link),
 				'times_read':check(object.times_read),
 				'db_v':check(db_constants.REAL_DB_VERSION),
-				'exed':check(object.exed)
+				'exed':check(object.exed),
+				'view':check(object.view)
 				}]
 	return executing
 
@@ -351,7 +354,8 @@ class GalleryDB(DBBase):
 				_db_v=db_constants.CURRENT_DB_VERSION,
 				exed=gallery.exed,
 				is_archive=gallery.is_archive,
-				path_in_archive=gallery.path_in_archive)
+				path_in_archive=gallery.path_in_archive,
+				view=gallery.view)
 			if thumb:
 				GalleryDB.rebuild_thumb(gallery)
 		except:
@@ -363,7 +367,7 @@ class GalleryDB(DBBase):
 	def modify_gallery(cls, series_id, title=None, profile=None, artist=None, info=None, type=None, fav=None,
 				   tags=None, language=None, status=None, pub_date=None, link=None,
 				   times_read=None, last_read=None, series_path=None, chapters=None, _db_v=None,
-				   hashes=None, exed=None, is_archive=None, path_in_archive=None):
+				   hashes=None, exed=None, is_archive=None, path_in_archive=None, view=None):
 		"Modifies gallery with given gallery id"
 		assert isinstance(series_id, int)
 		executing = []
@@ -409,6 +413,8 @@ class GalleryDB(DBBase):
 			executing.append(["UPDATE series SET is_archive=? WHERE series_id=?", (is_archive, series_id)])
 		if path_in_archive != None:
 			executing.append(["UPDATE series SET path_in_archive=? WHERE series_id=?", (path_in_archive, series_id)])
+		if view != None:
+			executing.append(["UPDATE series SET view=? WHERE series_id=?", (view, series_id)])
 
 		if tags != None:
 			assert isinstance(tags, dict)
@@ -1490,6 +1496,12 @@ class Gallery:
 
 	Takes ownership of ChaptersContainer
 	"""
+
+	@enum.unique
+	class PType(enum.Enum):
+		Default = 1
+		Small = 2
+
 	def __init__(self):
 
 		self.id = None # Will be defaulted.
@@ -1516,9 +1528,12 @@ class Gallery:
 		self._db_v = None
 		self.hashes = []
 		self.exed = 0
+		self.view = app_constants.ViewType.Default # default view
 
 		self._cache_id = 0 # used by custom delegate to cache profile
 		self._grid_visible = False
+		self._profile_qimage = {}
+		self._profile_load_status = {}
 		self.dead_link = False
 		self.state = 0
 
@@ -1529,6 +1544,26 @@ class Gallery:
 			self.language = app_constants.G_DEF_LANGUAGE.capitalize()
 		if not self.status:
 			self.status = app_constants.G_DEF_STATUS.capitalize()
+
+	def _profile_loaded(self, ptype, on_method):
+		self._profile_load_status[ptype]= False
+		if on_method:
+			on_method(self)
+
+	def get_profile(self, ptype, on_method=None):
+		psize = app_constants.THUMB_DEFAULT
+		if ptype == self.PType.Small:
+			psize = app_constants.THUMB_SMALL
+
+		if ptype in self._profile_qimage:
+			f = self._profile_qimage[ptype]
+			if f.done():
+				img = f.result()
+				if img:
+					return img
+		if not self._profile_load_status.get(ptype):
+			self._profile_load_status[ptype]= True
+			self._profile_qimage[ptype] = Executors.load_thumbnail(self.profile, psize, lambda a:self._profile_loaded(ptype, on_method))
 
 	def set_profile(self, future):
 		"set with profile with future object"

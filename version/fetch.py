@@ -42,6 +42,7 @@ class Fetch(QObject):
 	"""
 
 	# local signals
+	LOCAL_EMITTER = pyqtSignal(Gallery)
 	FINISHED = pyqtSignal(object)
 	DATA_COUNT = pyqtSignal(int)
 	PROGRESS = pyqtSignal(int)
@@ -174,11 +175,13 @@ class Fetch(QObject):
 			new_gallery.artist = parsed['artist']
 			new_gallery.language = parsed['language']
 			new_gallery.info = ""
+			new_gallery.view = app_constants.ViewType.Addition
 			metafile.apply_gallery(new_gallery)
 
 			if app_constants.MOVE_IMPORTED_GALLERIES and not app_constants.OVERRIDE_MOVE_IMPORTED_IN_FETCH:
 				new_gallery.move_gallery()
 
+			self.LOCAL_EMITTER.emit(new_gallery)
 			self.data.append(new_gallery)
 			log_i('Gallery successful created: {}'.format(folder_name.encode('utf-8', 'ignore')))
 			return True

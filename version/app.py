@@ -37,6 +37,8 @@ from PyQt5.QtWidgets import (QMainWindow, QListView,
 							 QShortcut, QGraphicsBlurEffect, QTableWidget,
 							 QTableWidgetItem, QActionGroup)
 
+from executors import Executors
+
 import app_constants
 import misc
 import gallery
@@ -218,30 +220,32 @@ class AppWindow(QMainWindow):
 
 	def initUI(self):
 		self.center = QWidget()
-		self.display_widget = QWidget(self.center)
-		self.display_layout = QStackedLayout(self.display_widget)
 		self._main_layout = QHBoxLayout(self.center)
 		self._main_layout.setSpacing(0)
 		self._main_layout.setContentsMargins(0,0,0,0)
 
-		# init the manga view variables
-		self.manga_display()
+		self.init_stat_bar()
+		self.manga_views = {}
+		self._current_manga_view = None
+		self.default_manga_view = gallery.MangaViews(app_constants.ViewType.Default, self)
+		self.manga_list_view = self.default_manga_view.list_view
+		self.manga_table_view = self.default_manga_view.table_view
+		self.manga_list_view.gallery_model.STATUSBAR_MSG.connect(self.stat_temp_msg)
+		self.manga_list_view.STATUS_BAR_MSG.connect(self.stat_temp_msg)
+		self.manga_table_view.STATUS_BAR_MSG.connect(self.stat_temp_msg)
 
-		self.display_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
 		self.sidebar_list = misc_db.SideBarWidget(self)
 		self._main_layout.addWidget(self.sidebar_list)
-		self._main_layout.addWidget(self.display_widget)
-		log_d('Create manga display: OK')
-		# init the chapter view variables
-		self.m_l_view_index = self.display_layout.addWidget(self.manga_list_view)
-		self.m_t_view_index = self.display_layout.addWidget(self.manga_table_view)
+		self.current_manga_view = self.default_manga_view
+
+		#self.display_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+		self.stat_row_info()
+
 		self.download_window = io_misc.GalleryDownloader(self)
 		self.download_window.hide()
 		# init toolbar
 		self.init_toolbar()
-		log_d('Create toolbar: OK')
-		# init status bar
-		self.init_stat_bar()
+
 		log_d('Create statusbar: OK')
 
 		self.system_tray = misc.SystemTray(QIcon(app_constants.APP_ICO_PATH), self)
@@ -266,7 +270,6 @@ class AppWindow(QMainWindow):
 
 		self.setCentralWidget(self.center)
 		self.setWindowIcon(QIcon(app_constants.APP_ICO_PATH))
-
 
 		props = settings.win_read(self, 'AppWindow')
 		if props.resize:
@@ -430,12 +433,6 @@ class AppWindow(QMainWindow):
 		self.temp_msg = QLabel()
 		self.temp_timer = QTimer()
 
-		self.manga_list_view.gallery_model.ROWCOUNT_CHANGE.connect(self.stat_row_info)
-		self.manga_list_view.gallery_model.db_emitter.COUNT_CHANGE.connect(self.stat_row_info)
-		self.manga_list_view.gallery_model.STATUSBAR_MSG.connect(self.stat_temp_msg)
-		self.manga_list_view.STATUS_BAR_MSG.connect(self.stat_temp_msg)
-		self.manga_table_view.STATUS_BAR_MSG.connect(self.stat_temp_msg)
-		self.stat_row_info()
 		app_constants.STAT_MSG_METHOD = self.stat_temp_msg
 
 	def stat_temp_msg(self, msg):
@@ -447,37 +444,29 @@ class AppWindow(QMainWindow):
 		self.temp_timer.start(5000)
 
 	def stat_row_info(self):
-		r = self.get_current_view().model().rowCount()
-		t = self.get_current_view().gallery_model.db_emitter.count
+		r = self.current_manga_view.get_current_view().sort_model.rowCount()
+		t = self.current_manga_view.get_current_view().gallery_model.rowCount()
 		g_l = self.get_current_view().sort_model.current_gallery_list
 		if g_l:
 			self.stat_info.setText(
-				"<b><i>{}</i></b> | Loaded {} of {} ".format(g_l.name, r, t))
+				"<b><i>{}</i></b> | Showing {} of {} ".format(g_l.name, r, t))
 		else:
-			self.stat_info.setText("Loaded {} of {} ".format(r, t))
+			self.stat_info.setText("Showing {} of {} ".format(r, t))
 
-	def manga_display(self):
-		"initiates the manga view and related things"
+	def set_current_manga_view(self, v):
+		self.current_manga_view = v
 
-		#list view
-		self.manga_list_view = gallery.MangaView(self)
+	@property
+	def current_manga_view(self):
+		return self._current_manga_view
 
-		#table view
-
-		self.manga_table_view = gallery.MangaTableView(self)
-		self.manga_table_view.gallery_model = self.manga_list_view.gallery_model
-		self.manga_table_view.sort_model = self.manga_list_view.sort_model
-		self.manga_table_view.setModel(self.manga_table_view.sort_model)
-		self.manga_table_view.sort_model.change_model(self.manga_table_view.gallery_model)
-		self.manga_table_view.setColumnWidth(app_constants.FAV, 20)
-		self.manga_table_view.setColumnWidth(app_constants.ARTIST, 200)
-		self.manga_table_view.setColumnWidth(app_constants.TITLE, 400)
-		self.manga_table_view.setColumnWidth(app_constants.TAGS, 300)
-		self.manga_table_view.setColumnWidth(app_constants.TYPE, 60)
-		self.manga_table_view.setColumnWidth(app_constants.CHAPTERS, 60)
-		self.manga_table_view.setColumnWidth(app_constants.LANGUAGE, 100)
-		self.manga_table_view.setColumnWidth(app_constants.LINK, 400)
-
+	@current_manga_view.setter
+	def current_manga_view(self, new_view):
+		if self._current_manga_view:
+			self._main_layout.takeAt(1)
+		self._current_manga_view = new_view
+		self._main_layout.insertLayout(1, new_view.view_layout, 1)
+		self.stat_row_info()
 
 	def init_spinners(self):
 		# fetching spinner
@@ -516,11 +505,10 @@ class AppWindow(QMainWindow):
 
 	def switch_display(self):
 		"Switches between fav and catalog display"
-		if self.manga_table_view.sort_model.current_view == \
-			self.manga_table_view.sort_model.CAT_VIEW:
-			self.tab_manager.favorite_btn.click()
-		else:
+		if self.current_manga_view.fav_is_current():
 			self.tab_manager.library_btn.click()
+		else:
+			self.tab_manager.favorite_btn.click()
 
 	def settings(self):
 		sett = settingsdialog.SettingsDialog(self)
@@ -543,10 +531,18 @@ class AppWindow(QMainWindow):
 		spacer_start.setFixedSize(QSize(10, 1))
 		self.toolbar.addWidget(spacer_start)
 
-		self.tab_manager = misc.ToolbarTabManager(self.toolbar, self)
-		self.tab_manager.favorite_btn.clicked.connect(self.get_current_view().sort_model.fav_view)
+		def switch_view(fav):
+			if fav:
+				self.default_manga_view.get_current_view().sort_model.fav_view()
+			else:
+				self.default_manga_view.get_current_view().sort_model.catalog_view()
+
+		self.tab_manager = misc_db.ToolbarTabManager(self.toolbar, self)
+		self.tab_manager.favorite_btn.clicked.connect(lambda: switch_view(True))
 		self.tab_manager.library_btn.click()
-		self.tab_manager.library_btn.clicked.connect(self.get_current_view().sort_model.catalog_view)
+		self.tab_manager.library_btn.clicked.connect(lambda: switch_view(False))
+
+		self.addition_tab = self.tab_manager.addTab("Inbox", app_constants.ViewType.Addition)
 
 		gallery_k = QKeySequence('Alt+G')
 		new_gallery_k = QKeySequence('Ctrl+N')
@@ -616,7 +612,8 @@ class AppWindow(QMainWindow):
 		# debug specfic code
 		if app_constants.DEBUG:
 			def debug_func():
-				self.tab_manager.addTab("DEbug")
+				t = self.tab_manager.addTab("Duplicate", gallery.MangaViews.VType.Duplicate)
+				log_d("Current Manga View: {}".format(self.current_manga_view))
 		
 			debug_btn = QToolButton()
 			debug_btn.setText("DEBUG BUTTON")
@@ -642,7 +639,7 @@ class AppWindow(QMainWindow):
 		self.grid_toggle_l_icon = QIcon(app_constants.LIST_PATH)
 		self.grid_toggle = QToolButton()
 		self.grid_toggle.setShortcut(togle_view_k)
-		if self.display_layout.currentIndex() == self.m_l_view_index:
+		if self.current_manga_view.current_view == gallery.MangaViews.View.List:
 			self.grid_toggle.setIcon(self.grid_toggle_l_icon)
 		else:
 			self.grid_toggle.setIcon(self.grid_toggle_g_icon)
@@ -775,21 +772,18 @@ class AppWindow(QMainWindow):
 		self.addToolBar(self.toolbar)
 
 	def get_current_view(self):
-		if self.display_layout.currentIndex() == self.m_l_view_index:
-			return self.manga_list_view
-		else:
-			return self.manga_table_view
+		return self.current_manga_view.get_current_view()
 
 	def toggle_view(self):
 		"""
 		Toggles the current display view
 		"""
-		if self.display_layout.currentIndex() == self.m_l_view_index:
-			self.display_layout.setCurrentIndex(self.m_t_view_index)
-			self.grid_toggle.setIcon(self.grid_toggle_g_icon)
-		else:
-			self.display_layout.setCurrentIndex(self.m_l_view_index)
+		if self.current_manga_view.current_view == gallery.MangaViews.View.Table:
+			self.current_manga_view.changeTo(self.current_manga_view.m_l_view_index)
 			self.grid_toggle.setIcon(self.grid_toggle_l_icon)
+		else:
+			self.current_manga_view.changeTo(self.current_manga_view.m_t_view_index)
+			self.grid_toggle.setIcon(self.grid_toggle_g_icon)
 
 	# TODO: Improve this so that it adds to the gallery dialog,
 	# so user can edit data before inserting (make it a choice)
@@ -836,84 +830,22 @@ class AppWindow(QMainWindow):
 		if len(path) is not 0:
 			data_thread = QThread(self)
 			data_thread.setObjectName('General gallery populate')
-			loading = misc.Loading(self)
+			self.addition_tab.click()
 			self.g_populate_inst = fetch.Fetch()
 			self.g_populate_inst.series_path = path
-			loading.show()
+			self._g_populate_count = 0
+
+			fetch_spinner = misc.Spinner(self)
+			fetch_spinner.set_size(60)
+			fetch_spinner.set_text("Populating")
+			fetch_spinner.show()
 
 			def finished(status):
-				def hide_loading():
-					loading.hide()
-				if status:
-					if len(status) != 0:
-						def add_gallery(gallery_list):
-							def append_to_model(x):
-								self.manga_list_view.sort_model.insertRows(x, None, len(x))
-								self.manga_list_view.sort_model.init_search(self.manga_list_view.sort_model.current_term)
-							class A(QObject):
-								done = pyqtSignal()
-								prog = pyqtSignal(int)
-								def __init__(self, obj, parent=None):
-									super().__init__(parent)
-									self.obj = obj
-									self.galleries = []
-
-								def add_to_db(self):
-									database.db.DBBase.begin()
-									for y, x in enumerate(self.obj):
-										gallerydb.add_method_queue(gallerydb.GalleryDB.add_gallery, False, x)
-										self.galleries.append(x)
-										y += 1
-										self.prog.emit(y)
-									gallerydb.add_method_queue(database.db.DBBase.end, True)
-									append_to_model(self.galleries)
-									self.done.emit()
-							self.a_instance = A(gallery_list)
-							thread = QThread(self)
-							thread.setObjectName('Database populate')
-
-							self.a_instance.moveToThread(thread)
-							self.a_instance.prog.connect(lambda n: self.notif_bubble.update_text("Populating Database",
-																			"{} galleries left!".format(len(gallery_list)-n)))
-							thread.started.connect(self.a_instance.add_to_db)
-							self.a_instance.done.connect(self.a_instance.deleteLater)
-							#a_instance.add_to_db()
-							thread.finished.connect(thread.deleteLater)
-							thread.start()
-						#data_thread.quit
-						hide_loading()
-						log_i('Populating DB from gallery folder: OK')
-						if validate:
-							gallery_list = misc.GalleryListView(self)
-							gallery_list.SERIES.connect(add_gallery)
-							for ser in status:
-								if ser.is_archive and app_constants.SUBFOLDER_AS_GALLERY:
-									p = os.path.split(ser.path)[1]
-									if ser.chapters[0].path:
-										pt_in_arch = os.path.split(ser.path_in_archive)
-										pt_in_arch = pt_in_arch[1] or pt_in_arch[0]
-										text = '{}: {}'.format(p, pt_in_arch)
-									else:
-										text = p
-									gallery_list.add_gallery(ser, text)
-								else:
-									gallery_list.add_gallery(ser, os.path.split(ser.path)[1])
-							#self.manga_list_view.gallery_model.populate_data()
-							gallery_list.update_count()
-							gallery_list.show()
-						else:
-							add_gallery(status)
-					else:
-						log_d('No new gallery was found')
-						loading.setText("No new gallery found")
-						#data_thread.quit
-
-				else:
+				fetch_spinner.hide()
+				if not status:
 					log_e('Populating DB from gallery folder: Nothing was added!')
-					loading.setText("<font color=red>Nothing was added. Check happypanda_log for details..</font>")
-					loading.progress.setStyleSheet("background-color:red;")
-					data_thread.quit
-					QTimer.singleShot(8000, loading.close)
+					self.notif_bubble.update_text("Gallery Populate",
+								   "<font color='red'>Nothing was added. Check happypanda_log for details..</font>")
 
 			def skipped_gs(s_list):
 				"Skipped galleries"
@@ -948,12 +880,19 @@ class AppWindow(QMainWindow):
 					list_wid.show()
 
 			def a_progress(prog):
-				loading.progress.setValue(prog)
-				loading.setText("Preparing galleries...")
+				fetch_spinner.set_text("Populating... {}/{}".format(prog, self._g_populate_count))
+
+			def add_to_model(gallery):
+				Executors.generate_thumbnail(gallery, on_method=gallery.set_profile)
+				self.addition_tab.view.add_gallery(gallery)
+
+			def set_count(c):
+				self._g_populate_count = c
 
 			self.g_populate_inst.moveToThread(data_thread)
-			self.g_populate_inst.DATA_COUNT.connect(loading.progress.setMaximum)
 			self.g_populate_inst.PROGRESS.connect(a_progress)
+			self.g_populate_inst.DATA_COUNT.connect(set_count)
+			self.g_populate_inst.LOCAL_EMITTER.connect(add_to_model)
 			self.g_populate_inst.FINISHED.connect(finished)
 			self.g_populate_inst.FINISHED.connect(self.g_populate_inst.deleteLater)
 			self.g_populate_inst.SKIPPED.connect(skipped_gs)
@@ -972,11 +911,16 @@ class AppWindow(QMainWindow):
 			log_i('Scanning for new galleries...')
 			try:
 				class ScanDir(QObject):
-					final_paths_and_galleries = pyqtSignal(list, list)
 					finished = pyqtSignal()
-					def __init__(self, parent=None):
+					fetch_inst = fetch.Fetch(self)
+					def __init__(self, addition_view, parent=None):
 						super().__init__(parent)
-						self.scanned_data = []
+						self.addition_view = addition_view
+
+					def add_gallery(self, gallery):
+						Executors.generate_thumbnail(gallery, on_method=gallery.set_profile)
+						self.addition_view.add_gallery(gallery)
+
 					def scan_dirs(self):
 						paths = []
 						for p in app_constants.MONITOR_PATHS:
@@ -987,12 +931,9 @@ class AppWindow(QMainWindow):
 							else:
 								log_e("Monitored path does not exists: {}".format(p.encode(errors='ignore')))
 
-						fetch_inst = fetch.Fetch(self)
-						fetch_inst.series_path = paths
-						def set_scanned_d(d):
-							self.scanned_data = d
-						fetch_inst.FINISHED.connect(set_scanned_d)
-						fetch_inst.local()
+						self.fetch_inst.series_path = paths
+						self.fetch_inst.LOCAL_EMITTER.connect(self.add_gallery)
+						self.fetch_inst.local()
 						#contents = []
 						#for g in self.scanned_data:
 						#	contents.append(g)
@@ -1003,21 +944,6 @@ class AppWindow(QMainWindow):
 						#	y = utils.b_search(paths, os.path.normcase(x.path))
 						#	if not y:
 						#		new_galleries.append(x)
-
-						galleries = []
-						final_paths = []
-						if self.scanned_data:
-							for g in self.scanned_data:
-								try:
-									g.profile = utils.get_gallery_img(g)
-									if not g.profile:
-										raise Exception
-								except:
-									g.profile = app_constants.NO_IMAGE_PATH
-							
-								galleries.append(g)
-								final_paths.append(g.path)
-						self.final_paths_and_galleries.emit(final_paths, galleries)
 						self.finished.emit()
 						self.deleteLater()
 					#if app_constants.LOOK_NEW_GALLERY_AUTOADD:
@@ -1063,22 +989,22 @@ class AppWindow(QMainWindow):
 							buttons[0].clicked.connect(populate_n_close)
 							buttons[1].clicked.connect(g_popup.close)
 
-				def finished(): app_constants.SCANNING_FOR_GALLERIES = False
+				def finished(): app_constants.SCANNING_FOR_GALLERIES = False;
 
 				new_gall_spinner = misc.Spinner(self)
 				new_gall_spinner.set_text("Gallery Scan")
 				new_gall_spinner.show()
 
 				thread = QThread(self)
-				self.scan_inst = ScanDir()
+				self.scan_inst = ScanDir(self.addition_tab.view)
 				self.scan_inst.moveToThread(thread)
-				self.scan_inst.final_paths_and_galleries.connect(show_new_galleries)
 				self.scan_inst.finished.connect(finished)
 				self.scan_inst.finished.connect(new_gall_spinner.before_hide)
 				thread.started.connect(self.scan_inst.scan_dirs)
 				#self.scan_inst.scan_dirs()
 				thread.finished.connect(thread.deleteLater)
 				thread.start()
+				self.addition_tab.click()
 			except:
 				self.notification_bar.add_text('An error occured while attempting to scan for new galleries. Check happypanda.log.')
 				log.exception('An error occured while attempting to scan for new galleries.')

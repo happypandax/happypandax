@@ -64,6 +64,9 @@ GRIDBOX_LBL_H = 60
 THUMB_H_SIZE = 190 + SIZE_FACTOR
 THUMB_W_SIZE = 133 + SIZE_FACTOR
 
+THUMB_DEFAULT = (THUMB_W_SIZE, THUMB_H_SIZE)
+THUMB_SMALL = (140, 93)
+
 # Columns
 COLUMNS = tuple(range(11))
 TITLE = 0
@@ -77,6 +80,12 @@ LANGUAGE = 7
 LINK = 8
 PUB_DATE = 9
 DATE_ADDED = 10
+
+@enum.unique
+class ViewType(enum.Enum):
+	Default = 1
+	Addition = 2
+	Duplicate = 3
 
 # Application
 SYSTEM_TRAY = None
@@ -240,6 +249,7 @@ TOOLTIP_TIMES_READ = get(True, 'Visual', 'tooltip times read', bool)
 TOOLTIP_PUB_DATE = get(False, 'Visual', 'tooltip pub date', bool)
 TOOLTIP_DATE_ADDED = get(True, 'Visual', 'tooltip date added', bool)
 
+GALLERY_ADDITION_DATA = []
 GALLERY_DATA = [] # contains the most up to date gallery data
 GALLERY_LISTS = set() # contains the most up to dat gallery lists
 

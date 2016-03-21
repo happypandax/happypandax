@@ -1620,21 +1620,22 @@ class GalleryShowcaseWidget(QWidget):
 		new_menu.gallery_widget = self
 		self._menu = new_menu
 
-	def set_gallery(self, gallery, size=(143, 220)):
+	def set_pixmap(self, gallery):
+		self.profile.setPixmap(QPixmap.fromImage(gallery.get_profile(gallery.PType.Small)))
+
+	def set_gallery(self, gallery, size=app_constants.THUMB_SMALL):
 		assert isinstance(size, (list, tuple))
 		self.w = size[0]
 		self.h = size[1]
 		self.gallery = gallery
-		pixm = QPixmap(gallery.profile)
-		if pixm.isNull():
-			pixm = QPixmap(app_constants.NO_IMAGE_PATH)
-		pixm = pixm.scaled(self.w, self.h-20, Qt.KeepAspectRatio, Qt.FastTransformation)
-		self.profile.setPixmap(pixm)
+		img = gallery.get_profile(gallery.PType.Small, self.set_pixmap)
+		if img:
+			self.profile.setPixmap(QPixmap.fromImage(img))
 		title = self.font_M.elidedText(gallery.title, Qt.ElideRight, self.w)
 		artist = self.font_M.elidedText(gallery.artist, Qt.ElideRight, self.w)
 		self.text.setText("{}\n{}".format(title, artist))
 		self.setToolTip("{}\n{}".format(gallery.title, gallery.artist))
-		self.resize(self.w, self.h)
+		self.resize(self.w, self.h+50)
 
 	def paintEvent(self, event):
 		painter = QPainter(self)
@@ -2529,51 +2530,3 @@ class ChapterListItem(QFrame):
 			self.chapter_lbl.setText(chapter.title)
 		else:
 			self.chapter_lbl.setText("Chapter "+str(chapter.number+1))
-
-
-class ToolbarTabManager(QObject):
-	""
-	def __init__(self, toolbar, parent=None):
-		super().__init__(parent)
-		self.toolbar =  toolbar
-		self._actions = []
-		self._last_selected = None
-		self.idx_widget = self.toolbar.addWidget(QWidget(self.toolbar))
-		self.idx_widget.setVisible(False)
-		self.favorite_btn = self.addTab("Favorites")
-		self.library_btn = None
-		self.library_btn = self.addTab("Library")
-		self.toolbar.addSeparator()
-		self.idx_widget = self.toolbar.addWidget(QWidget(self.toolbar))
-		self.idx_widget.setVisible(False)
-
-	def _manage_selected(self, b):
-		if self._last_selected:
-			self._last_selected.selected = False
-		b.selected = True
-		self._last_selected = b
-
-	def addTab(self, name):
-		if self.toolbar:
-			t = ToolbarButton(self.toolbar, name)
-			t.select.connect(self._manage_selected)
-			t.close_tab.connect(self.removeTab)
-			if self.library_btn:
-				t.close_tab.connect(lambda:self.library_btn.click())
-			self._actions.append(self.toolbar.insertWidget(self.idx_widget, t))
-			return t
-
-	def removeTab(self, button_or_index):
-		if self.toolbar:
-			if isinstance(button_or_index, int):
-				self.toolbar.removeAction(self._actions.pop(button_or_index))
-			else:
-				act_to_remove = None
-				for act in self._actions:
-					w = self.toolbar.widgetForAction(act)
-					if w == button_or_index:
-						self.toolbar.removeAction(act)
-						act_to_remove = act
-						break
-				if act_to_remove:
-					self._actions.remove(act)

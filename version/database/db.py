@@ -68,7 +68,8 @@ def series_sql(cols=False):
 					last_read TEXT,
 					times_read INTEGER,
 					exed INTEGER NOT NULL DEFAULT 0,
-					db_v REAL);
+					db_v REAL,
+					view INTEGER DEFAULT 1);
 		"""
 	col_list = [
 		'series_id INTEGER PRIMARY KEY',
@@ -90,6 +91,7 @@ def series_sql(cols=False):
 		'times_read INTEGER',
 		'exed INTEGER NOT NULL DEFAULT 0',
 		'db_v REAL',
+		'view INTEGER DEFAULT 1'
 		]
 	if cols:
 		return sql, col_list

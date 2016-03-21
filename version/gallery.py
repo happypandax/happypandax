@@ -12,7 +12,7 @@
 #along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 #"""
 
-import threading, logging, os, math, functools, random, datetime, pickle
+import threading, logging, os, math, functools, random, datetime, pickle, enum
 import re as regex
 
 from PyQt5.QtCore import (Qt, QAbstractListModel, QModelIndex, QVariant,
@@ -34,7 +34,7 @@ from PyQt5.QtWidgets import (QListView, QFrame, QLabel,
 							 QSizePolicy, QTableWidget, QScrollArea,
 							 QHBoxLayout, QFormLayout, QDesktopWidget,
 							 QWidget, QHeaderView, QTableView, QApplication,
-							 QMessageBox, QActionGroup, QScroller)
+							 QMessageBox, QActionGroup, QScroller, QStackedLayout)
 
 import gallerydb
 import app_constants
@@ -213,6 +213,8 @@ class SortFilterModel(QSortFilterProxyModel):
 			self._SET_GALLERY_LIST.connect(self.gallery_search.set_gallery_list)
 			self._CHANGE_SEARCH_DATA.connect(self.gallery_search.set_data)
 			self._CHANGE_FAV.connect(self.gallery_search.set_fav)
+			self.sourceModel().rowsInserted.connect(lambda: self._DO_SEARCH.emit(self.current_term, self.current_args))
+			self.rowsInserted.connect(lambda: self._DO_SEARCH.emit(self.current_term, self.current_args))
 			self._search_ready = True
 
 
@@ -372,11 +374,10 @@ class GalleryModel(QAbstractTableModel):
 	CUSTOM_STATUS_MSG = pyqtSignal(str)
 	ADDED_ROWS = pyqtSignal()
 	ADD_MORE = pyqtSignal()
-	_data = app_constants.GALLERY_DATA
 
 	REMOVING_ROWS = False
 
-	def __init__(self, parent=None):
+	def __init__(self, data, parent=None):
 		super().__init__(parent)
 		self.dataChanged.connect(lambda: self.status_b_msg("Edited"))
 		self.dataChanged.connect(lambda: self.ROWCOUNT_CHANGE.emit())
@@ -394,9 +395,10 @@ class GalleryModel(QAbstractTableModel):
 		self._DATE_ADDED = app_constants.DATE_ADDED
 		self._PUB_DATE = app_constants.PUB_DATE
 
+		self._data = data
 		self._data_count = 0 # number of items added to model
+
 		self.db_emitter = gallerydb.DatabaseEmitter()
-		self.db_emitter.GALLERY_EMITTER.connect(lambda a: self.insertRows(a, emit_statusbar=False))
 
 	def populate_data(self, galleries):
 		"Populates the model in a timely manner"
@@ -716,9 +718,9 @@ class GridDelegate(QStyledItemDelegate):
 		if key in self._painted_indexes:
 			return self._painted_indexes[key]
 		else:
-			k = hash(key)
-			self._painted_indexes[key] = str(k)
-			return str(k)
+			k = str(key)
+			self._painted_indexes[key] = k
+			return k
 
 	def paint(self, painter, option, index):
 		assert isinstance(painter, QPainter)
@@ -823,15 +825,16 @@ class GridDelegate(QStyledItemDelegate):
 				return new_x
 
 			def img_too_big(start_x):
-				txt_layout = misc.text_layout("Image is too big!", w, self.title_font, self.title_font_m)
+				txt_layout = misc.text_layout("Thumbnail regeneration needed!", w, self.title_font, self.title_font_m)
 
 				clipping = QRectF(x, y+h//4, w, app_constants.GRIDBOX_LBL_H - 10)
 				txt_layout.draw(painter, QPointF(x, y+h//4),
 					  clip=clipping)
 
-			if gallery.profile:
+			loaded_image = gallery.get_profile(gallery.PType.Default)
+			if loaded_image:
 				# if we can't find a cached image
-				pix_cache = QPixmapCache.find(self.key(gallery.profile))
+				pix_cache = QPixmapCache.find(self.key(loaded_image.cacheKey()))
 				if isinstance(pix_cache, QPixmap):
 					self.image = pix_cache
 					img_x = center_img(self.image.width())
@@ -845,9 +848,9 @@ class GridDelegate(QStyledItemDelegate):
 							painter.drawPixmap(QPoint(img_x,y),
 									self.image)
 				else:
-					self.image = QPixmap(gallery.profile)
+					self.image = QPixmap.fromImage(loaded_image)
 					img_x = center_img(self.image.width())
-					QPixmapCache.insert(self.key(gallery.profile), self.image)
+					QPixmapCache.insert(self.key(loaded_image.cacheKey()), self.image)
 					if self.image.width() > w or self.image.height() > h:
 						img_too_big(img_x)
 					else:
@@ -857,6 +860,8 @@ class GridDelegate(QStyledItemDelegate):
 						else:
 							painter.drawPixmap(QPoint(img_x,y),
 									self.image)
+			else:
+				pass
 
 			# draw ribbon type
 			painter.save()
@@ -1064,7 +1069,7 @@ class MangaView(QListView):
 	STATUS_BAR_MSG = pyqtSignal(str)
 	SERIES_DIALOG = pyqtSignal()
 
-	def __init__(self, parent=None):
+	def __init__(self, model, filter_model=None, parent=None):
 		super().__init__(parent)
 		self.parent_widget = parent
 		self.setViewMode(self.IconMode)
@@ -1084,7 +1089,7 @@ class MangaView(QListView):
 		self.setDropIndicatorShown(True)
 		self.setDragDropMode(self.DragDrop)
 
-		self.sort_model = SortFilterModel(self)
+		self.sort_model = filter_model if filter_model else SortFilterModel(self)
 		self.sort_model.setDynamicSortFilter(True)
 		self.sort_model.setFilterCaseSensitivity(Qt.CaseInsensitive)
 		self.sort_model.setSortLocaleAware(True)
@@ -1096,8 +1101,7 @@ class MangaView(QListView):
 		self.setIconSize(QSize(self.manga_delegate.W, self.manga_delegate.H))
 		self.setSelectionBehavior(self.SelectItems)
 		self.setSelectionMode(self.ExtendedSelection)
-		self.gallery_model = GalleryModel(parent)
-		self.gallery_model.db_emitter.DONE.connect(self.sort_model.setup_search)
+		self.gallery_model = model
 		self.sort_model.change_model(self.gallery_model)
 		self.sort_model.sort(0)
 		self.sort_model.ROWCOUNT_CHANGE.connect(self.gallery_model.ROWCOUNT_CHANGE.emit)
@@ -1503,6 +1507,78 @@ class CommonView:
 			del menu
 		else:
 			event.ignore()
+
+
+class MangaViews:
+
+	@enum.unique
+	class View(enum.Enum):
+		List = 1
+		Table = 2
+
+	def __init__(self, v_type, parent):
+
+		if v_type == app_constants.ViewType.Default:
+			model = GalleryModel(app_constants.GALLERY_DATA, parent)
+			model.db_emitter.GALLERY_EMITTER.connect(lambda a: model.insertRows(a, emit_statusbar=False))
+		elif v_type == app_constants.ViewType.Addition:
+			model = GalleryModel(app_constants.GALLERY_ADDITION_DATA, parent)
+		elif v_type == app_constants.ViewType.Duplicate:
+			model = GalleryModel([], parent)
+
+		#list view
+		self.list_view = MangaView(model, parent=parent)
+		self.list_view.sort_model.setup_search()
+		#table view
+		self.table_view = MangaTableView(parent)
+		self.table_view.gallery_model = self.list_view.gallery_model
+		self.table_view.sort_model = self.list_view.sort_model
+		self.table_view.sort_model.change_model(self.table_view.gallery_model)
+		self.table_view.setModel(self.table_view.sort_model)
+		self.table_view.setColumnWidth(app_constants.FAV, 20)
+		self.table_view.setColumnWidth(app_constants.ARTIST, 200)
+		self.table_view.setColumnWidth(app_constants.TITLE, 400)
+		self.table_view.setColumnWidth(app_constants.TAGS, 300)
+		self.table_view.setColumnWidth(app_constants.TYPE, 60)
+		self.table_view.setColumnWidth(app_constants.CHAPTERS, 60)
+		self.table_view.setColumnWidth(app_constants.LANGUAGE, 100)
+		self.table_view.setColumnWidth(app_constants.LINK, 400)
+
+
+		self.view_layout = QStackedLayout()
+		# init the chapter view variables
+		self.m_l_view_index = self.view_layout.addWidget(self.list_view)
+		self.m_t_view_index = self.view_layout.addWidget(self.table_view)
+
+		self.current_view = self.View.List
+
+	def add_gallery(self, gallery):
+		self.list_view.sort_model.insertRows([gallery], None, 1)
+
+	def changeTo(self, idx):
+		self.view_layout.setCurrentIndex(idx)
+		if idx == self.m_l_view_index:
+			self.current_view = self.View.List
+		elif idx == self.m_t_view_index:
+			self.current_view = self.View.Table
+
+	def get_current_view(self):
+		if self.current_view == self.View.List:
+			return self.list_view
+		else:
+			return self.table_view
+
+	def fav_is_current(self):
+		if self.table_view.sort_model.current_view == \
+			self.table_view.sort_model.CAT_VIEW:
+			return False
+		return True
+
+	def hide(self):
+		self.view_layout.currentWidget().hide()
+
+	def show(self):
+		self.view_layout.currentWidget().show()
 
 if __name__ == '__main__':
 	raise NotImplementedError("Unit testing not yet implemented")
