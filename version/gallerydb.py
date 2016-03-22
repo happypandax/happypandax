@@ -1473,6 +1473,7 @@ class Gallery:
 
 		self._cache_id = 0 # used by custom delegate to cache profile
 		self._grid_visible = False
+		self._grid_selected = False
 		self._profile_qimage = {}
 		self._profile_load_status = {}
 		self.dead_link = False

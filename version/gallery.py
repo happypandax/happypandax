@@ -12,7 +12,7 @@
 #along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 #"""
 
-import threading, logging, os, math, functools, random, datetime, pickle, enum
+import threading, logging, os, math, functools, random, datetime, pickle, enum, time
 import re as regex
 
 from PyQt5.QtCore import (Qt, QAbstractListModel, QModelIndex, QVariant,
@@ -587,11 +587,12 @@ class GridDelegate(QStyledItemDelegate):
 	# Gallery states
 	G_NORMAL, G_DOWNLOAD = range(2)
 
-	def __init__(self, parent=None):
+	def __init__(self, parent):
 		super().__init__(parent)
 		QPixmapCache.setCacheLimit(app_constants.THUMBNAIL_CACHE_SIZE[0]*
 							 app_constants.THUMBNAIL_CACHE_SIZE[1])
 		self._painted_indexes = {}
+		self.parent_widget = parent
 
 		#misc.FileIcon.refresh_default_icon()
 		self.file_icons = misc.FileIcon()
@@ -631,6 +632,7 @@ class GridDelegate(QStyledItemDelegate):
 
 	def paint(self, painter, option, index):
 		assert isinstance(painter, QPainter)
+		self.initStyleOption(option, index)
 		if index.data(Qt.UserRole+1):
 			if app_constants.HIGH_QUALITY_THUMBS:
 				painter.setRenderHint(QPainter.SmoothPixmapTransform)
@@ -668,7 +670,7 @@ class GridDelegate(QStyledItemDelegate):
 
 			#painter.setPen(QPen(Qt.NoPen))
 			#option.rect = option.rect.adjusted(11, 10, 0, 0)
-			option.rect.setWidth(self.W)
+			#option.rect.setWidth(self.W)
 
 			option.rect.setHeight(self.H)
 			rec = option.rect.getRect()
@@ -768,7 +770,15 @@ class GridDelegate(QStyledItemDelegate):
 							painter.drawPixmap(QPoint(img_x,y),
 									self.image)
 			else:
-				pass
+
+				painter.save()
+				painter.setPen(QColor(164,164,164,200))
+				txt_layout = misc.text_layout("Loading...", w, self.title_font, self.title_font_m)
+
+				clipping = QRectF(x, y+h//4, w, app_constants.GRIDBOX_LBL_H - 10)
+				txt_layout.draw(painter, QPointF(x, y+h//4),
+					  clip=clipping)
+				painter.restore()
 
 			# draw ribbon type
 			painter.save()
@@ -906,6 +916,7 @@ class GridDelegate(QStyledItemDelegate):
 				painter.restore()
 
 			if option.state & QStyle.State_Selected:
+				self.sizeHintChanged.emit(index)
 				painter.save()
 				selected_rect = QRectF(x, y, w, lbl_rect.height()+app_constants.THUMB_H_SIZE)
 				painter.setPen(Qt.NoPen)
@@ -966,6 +977,7 @@ class GridDelegate(QStyledItemDelegate):
 			return app_constants.GRID_VIEW_T_OTHER_COLOR
 
 	def sizeHint(self, option, index):
+		self.initStyleOption(option, index)
 		return QSize(self.W, self.H)
 
 class MangaView(QListView):
