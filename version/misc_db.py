@@ -1,4 +1,4 @@
-#This file is part of Happypanda.
+﻿#This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
 #the Free Software Foundation, either version 2 of the License, or
@@ -268,7 +268,7 @@ class TagsTreeView(QTreeWidget):
 
 	def setup_tags(self):
 		self.clear()
-		tags = gallerydb.add_method_queue(gallerydb.TagDB.get_ns_tags, False)
+		tags = gallerydb.execute(gallerydb.TagDB.get_ns_tags, False)
 		items = []
 		for ns in tags:
 			top_item = QTreeWidgetItem(self)
@@ -330,7 +330,7 @@ class GalleryListEdit(misc.BasePopup):
 		self.gallery_list.regex = self.regex.isChecked()
 		self.gallery_list.case = self.case.isChecked()
 		self.gallery_list.strict = self.strict.isChecked()
-		gallerydb.add_method_queue(gallerydb.ListDB.modify_list, True, self.gallery_list)
+		gallerydb.execute(gallerydb.ListDB.modify_list, True, self.gallery_list)
 		self.apply.emit()
 		self.hide()
 
@@ -350,7 +350,7 @@ class GalleryListContextMenu(QMenu):
 
 	def remove_list(self):
 		self.parent_widget.takeItem(self.parent_widget.row(self.item))
-		gallerydb.add_method_queue(gallerydb.ListDB.remove_list, True, self.gallery_list)
+		gallerydb.execute(gallerydb.ListDB.remove_list, True, self.gallery_list)
 		self.parent_widget.GALLERY_LIST_REMOVED.emit()
 
 	def clear_list(self):
@@ -437,7 +437,7 @@ class GalleryLists(QListWidget):
 			self._reset_selected()
 			if item.item.filter:
 				app_constants.NOTIF_BUBBLE.update_text(item.item.name, "Updating list..", 5)
-				gallerydb.add_method_queue(item.item.scan, True)
+				gallerydb.execute(item.item.scan, True)
 			self.GALLERY_LIST_CLICKED.emit(item.item)
 			item.setFont(self._font_selected)
 			self.current_selected = item

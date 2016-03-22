@@ -1,4 +1,4 @@
-#"""
+﻿#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@ import re as regex
 
 from PyQt5.QtCore import QObject, pyqtSignal # need this for interaction with main thread
 
-from gallerydb import Gallery, GalleryDB, HashDB, add_method_queue
+from gallerydb import Gallery, GalleryDB, HashDB, execute
 import app_constants
 import pewnet
 import settings
@@ -359,7 +359,7 @@ class Fetch(QObject):
 			try:
 				if not gallery.hashes:
 					color_img = kwargs['color'] if 'color' in kwargs else False # used for similarity search on EH
-					hash_dict = add_method_queue(HashDB.gen_gallery_hash, False, gallery, 0, 'mid', color_img)
+					hash_dict = execute(HashDB.gen_gallery_hash, False, gallery, 0, 'mid', color_img)
 					if color_img and 'color' in hash_dict:
 						custom_args['color'] = hash_dict['color'] # will be path to filename
 						hash = hash_dict['color']

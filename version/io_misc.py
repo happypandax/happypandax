@@ -1,4 +1,4 @@
-import logging, os, json, datetime, random, re
+﻿import logging, os, json, datetime, random, re
 
 from watchdog.events import FileSystemEventHandler, DirDeletedEvent
 from watchdog.observers import Observer
@@ -216,7 +216,7 @@ class GalleryDownloaderList(QTableWidget):
 			gallery.link = d_item.item.gallery_url
 			if d_item.item.metadata:
 				gallery = pewnet.EHen.apply_metadata(gallery, d_item.item.metadata)
-			gallerydb.add_method_queue(
+			gallerydb.execute(
 				gallerydb.GalleryDB.add_gallery, False, gallery)
 			self.gallery_model.insertRows([gallery], None, 1)
 			self.gallery_model.init_search(self.gallery_model.current_term)

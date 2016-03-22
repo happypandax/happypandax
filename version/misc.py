@@ -1,4 +1,4 @@
-#"""
+﻿#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -1142,10 +1142,10 @@ class GalleryMenu(QMenu):
 			for idx in self.selected:
 				g = idx.data(Qt.UserRole+1)
 				g.exed = exed
-				gallerydb.add_method_queue(gallerydb.GalleryDB.modify_gallery, True, g.id, {'exed':exed})
+				gallerydb.execute(gallerydb.GalleryDB.modify_gallery, True, g.id, {'exed':exed})
 		else:
 			self.gallery.exed = exed
-			gallerydb.add_method_queue(gallerydb.GalleryDB.modify_gallery, True, self.gallery.id, {'exed':exed})
+			gallerydb.execute(gallerydb.GalleryDB.modify_gallery, True, self.gallery.id, {'exed':exed})
 
 	def add_to_list(self, g_list):
 		galleries = []
@@ -1237,7 +1237,7 @@ class GalleryMenu(QMenu):
 		def add_chdb(chaps_container):
 			gallery = self.index.data(Qt.UserRole+1)
 			log_i('Adding new chapter for {}'.format(gallery.title.encode(errors='ignore')))
-			gallerydb.add_method_queue(gallerydb.ChapterDB.add_chapters_raw, False, gallery.id, chaps_container)
+			gallerydb.execute(gallerydb.ChapterDB.add_chapters_raw, False, gallery.id, chaps_container)
 		ch_widget = ChapterAddWidget(self.index.data(Qt.UserRole+1), self.parent_widget)
 		ch_widget.CHAPTERS.connect(add_chdb)
 		ch_widget.show()

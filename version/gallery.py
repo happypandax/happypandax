@@ -192,16 +192,16 @@ class SortFilterModel(QSortFilterProxyModel):
 	def set_gallery_list(self, g_list=None):
 		self.current_gallery_list = g_list
 		self._SET_GALLERY_LIST.emit(g_list)
-		self._DO_SEARCH.emit(self.current_term, self.current_args)
+		self.refresh()
 
 	def fav_view(self):
 		self._CHANGE_FAV.emit(True)
-		self._DO_SEARCH.emit(self.current_term, self.current_args)
+		self.refresh()
 		self.current_view = self.FAV_VIEW
 
 	def catalog_view(self):
 		self._CHANGE_FAV.emit(False)
-		self._DO_SEARCH.emit(self.current_term, self.current_args)
+		self.refresh()
 		self.current_view = self.CAT_VIEW
 
 	def setup_search(self):
@@ -214,9 +214,11 @@ class SortFilterModel(QSortFilterProxyModel):
 			self._SET_GALLERY_LIST.connect(self.gallery_search.set_gallery_list)
 			self._CHANGE_SEARCH_DATA.connect(self.gallery_search.set_data)
 			self._CHANGE_FAV.connect(self.gallery_search.set_fav)
-			self.sourceModel().rowsInserted.connect(lambda: self._DO_SEARCH.emit(self.current_term, self.current_args))
+			self.sourceModel().rowsInserted.connect(self.refresh)
 			self._search_ready = True
 
+	def refresh(self):
+		self._DO_SEARCH.emit(self.current_term, self.current_args)
 
 	def init_search(self, term, args=None, **kwargs):
 		"""
@@ -259,6 +261,7 @@ class SortFilterModel(QSortFilterProxyModel):
 		self.setSourceModel(model)
 		self._data = self.sourceModel()._data
 		self._CHANGE_SEARCH_DATA.emit(self._data)
+		self.refresh()
 
 	def change_data(self, data):
 		self._CHANGE_SEARCH_DATA.emit(data)
@@ -365,6 +368,7 @@ class GalleryModel(QAbstractTableModel):
 		self._data = data
 		self._data_count = 0 # number of items added to model
 		self._gallery_to_add = []
+		self._gallery_to_remove = []
 
 	def status_b_msg(self, msg):
 		self.STATUSBAR_MSG.emit(msg)
@@ -574,7 +578,7 @@ class GalleryModel(QAbstractTableModel):
 		self._data_count -= rows
 		self.beginRemoveRows(QModelIndex(), position, position + rows - 1)
 		for r in range(rows):
-			self._data.pop(position)
+			self._data.remove(self._gallery_to_remove.pop())
 		self.endRemoveRows()
 		return True
 
@@ -632,7 +636,6 @@ class GridDelegate(QStyledItemDelegate):
 
 	def paint(self, painter, option, index):
 		assert isinstance(painter, QPainter)
-		self.initStyleOption(option, index)
 		if index.data(Qt.UserRole+1):
 			if app_constants.HIGH_QUALITY_THUMBS:
 				painter.setRenderHint(QPainter.SmoothPixmapTransform)
@@ -977,7 +980,6 @@ class GridDelegate(QStyledItemDelegate):
 			return app_constants.GRID_VIEW_T_OTHER_COLOR
 
 	def sizeHint(self, option, index):
-		self.initStyleOption(option, index)
 		return QSize(self.W, self.H)
 
 class MangaView(QListView):
@@ -1095,12 +1097,12 @@ class MangaView(QListView):
 		if gallery.fav == 1:
 			gallery.fav = 0
 			#self.model().replaceRows([gallery], index.row(), 1, index)
-			gallerydb.add_method_queue(gallerydb.GalleryDB.modify_gallery, True, gallery.id, {'fav':0})
+			gallerydb.execute(gallerydb.GalleryDB.modify_gallery, True, gallery.id, {'fav':0})
 			self.gallery_model.CUSTOM_STATUS_MSG.emit("Unfavorited")
 		else:
 			gallery.fav = 1
 			#self.model().replaceRows([gallery], index.row(), 1, index)
-			gallerydb.add_method_queue(gallerydb.GalleryDB.modify_gallery, True, gallery.id, {'fav':1})
+			gallerydb.execute(gallerydb.GalleryDB.modify_gallery, True, gallery.id, {'fav':1})
 			self.gallery_model.CUSTOM_STATUS_MSG.emit("Favorited")
 
 	def del_chapter(self, index, chap_numb):
@@ -1117,7 +1119,7 @@ class MangaView(QListView):
 			if msgbox.exec() == msgbox.Yes:
 				gallery.chapters.pop(chap_numb, None)
 				self.gallery_model.replaceRows([gallery], index.row())
-				gallerydb.add_method_queue(gallerydb.ChapterDB.del_chapter, True, gallery.id, chap_numb)
+				gallerydb.execute(gallerydb.ChapterDB.del_chapter, True, gallery.id, chap_numb)
 
 	def sort(self, name):
 		if name == 'title':
@@ -1179,10 +1181,10 @@ class MangaView(QListView):
 			 'chapters':gallery.chapters,
 			 'exed':gallery.exed}
 
-			gallerydb.add_method_queue(gallerydb.GalleryDB.modify_gallery,
+			gallerydb.execute(gallerydb.GalleryDB.modify_gallery,
 							 True, gallery.id, **kwdict)
 		if db_optimize:
-			gallerydb.add_method_queue(gallerydb.GalleryDB.end, True)
+			gallerydb.execute(gallerydb.GalleryDB.end, True)
 		assert isinstance(pos, int)
 		self.gallery_model.replaceRows([gallery], pos, len(list_of_gallery))
 
@@ -1284,7 +1286,7 @@ class CommonView:
 
 	@staticmethod
 	def remove_gallery(view_cls, index_list, local=False):
-		view_cls.sort_model.setDynamicSortFilter(False)
+		#view_cls.sort_model.setDynamicSortFilter(False)
 		msgbox = QMessageBox(view_cls)
 		msgbox.setIcon(msgbox.Question)
 		msgbox.setStandardButtons(msgbox.Yes | msgbox.No)
@@ -1305,24 +1307,26 @@ class CommonView:
 			msgbox.setText(msg)
 
 		if msgbox.exec() == msgbox.Yes:
-			view_cls.setUpdatesEnabled(False)
+			#view_cls.setUpdatesEnabled(False)
 			gallery_list = []
+			gallery_db_list = []
 			log_i('Removing {} galleries'.format(len(index_list)))
-			view_cls.gallery_model.REMOVING_ROWS = True
 			for index in index_list:
 				gallery = index.data(Qt.UserRole+1)
 				gallery_list.append(gallery)
-				log_i('Attempt to remove: {} by {}'.format(gallery.title.encode(),
-											gallery.artist.encode()))
-			gallerydb.add_method_queue(gallerydb.GalleryDB.del_gallery, True, gallery_list, local=local)
-			rows = sorted([x.row() for x in index_list])
+				log_i('Attempt to remove: {} by {}'.format(gallery.title.encode(errors="ignore"),
+											gallery.artist.encode(errors="ignore")))
+				if gallery.id:
+					gallery_db_list.append(gallery)
+			gallerydb.execute(gallerydb.GalleryDB.del_gallery, True, gallery_db_list, local=local)
 
-			for x in range(len(rows), 0, -1):
-				view_cls.sort_model.removeRows(rows[x-1])
-			view_cls.STATUS_BAR_MSG.emit('Gallery removed!')
-			view_cls.gallery_model.REMOVING_ROWS = False
-			view_cls.setUpdatesEnabled(True)
-		view_cls.sort_model.setDynamicSortFilter(True)
+			rows = len(gallery_list)
+			view_cls.gallery_model._gallery_to_remove.extend(gallery_list)
+			view_cls.gallery_model.removeRows(view_cls.gallery_model.rowCount()-rows, rows)
+
+			#view_cls.STATUS_BAR_MSG.emit('Gallery removed!')
+			#view_cls.setUpdatesEnabled(True)
+		#view_cls.sort_model.setDynamicSortFilter(True)
 
 	@staticmethod
 	def find_index(view_cls, gallery_id, sort_model=False):
@@ -1431,6 +1435,7 @@ class MangaViews:
 		Table = 2
 
 	def __init__(self, v_type, parent):
+		self.view_type = v_type
 
 		if v_type == app_constants.ViewType.Default:
 			model = GalleryModel(app_constants.GALLERY_DATA, parent)
@@ -1442,11 +1447,13 @@ class MangaViews:
 		#list view
 		self.list_view = MangaView(model, parent=parent)
 		self.list_view.sort_model.setup_search()
+		self.sort_model = self.list_view.sort_model
+		self.gallery_model = self.list_view.gallery_model
 		#table view
 		self.table_view = MangaTableView(parent)
-		self.table_view.gallery_model = self.list_view.gallery_model
-		self.table_view.sort_model = self.list_view.sort_model
-		self.table_view.setModel(self.list_view.gallery_model)
+		self.table_view.gallery_model = self.gallery_model
+		self.table_view.sort_model = self.sort_model
+		self.table_view.setModel(self.sort_model)
 		self.table_view.setColumnWidth(app_constants.FAV, 20)
 		self.table_view.setColumnWidth(app_constants.ARTIST, 200)
 		self.table_view.setColumnWidth(app_constants.TITLE, 400)
@@ -1456,7 +1463,6 @@ class MangaViews:
 		self.table_view.setColumnWidth(app_constants.LANGUAGE, 100)
 		self.table_view.setColumnWidth(app_constants.LINK, 400)
 
-
 		self.view_layout = QStackedLayout()
 		# init the chapter view variables
 		self.m_l_view_index = self.view_layout.addWidget(self.list_view)
@@ -1464,14 +1470,22 @@ class MangaViews:
 
 		self.current_view = self.View.List
 
-	def add_gallery(self, gallery):
+	def add_gallery(self, gallery, db=False):
 		if isinstance(gallery, list):
+			for g in gallery:
+				g.view = self.view_type
+				if db:
+					gallerydb.execute(gallerydb.GalleryDB.add_gallery, True, g)
 			rows = len(gallery)
 			self.list_view.gallery_model._gallery_to_add.extend(gallery)
 		else:
+			gallery.view = self.view_type
 			rows = 1
 			self.list_view.gallery_model._gallery_to_add.append(gallery)
+			if db:
+				gallerydb.execute(gallerydb.GalleryDB.add_gallery, True, gallery)
 		self.list_view.gallery_model.insertRows(self.list_view.gallery_model.rowCount(), rows)
+		
 
 	def changeTo(self, idx):
 		self.view_layout.setCurrentIndex(idx)

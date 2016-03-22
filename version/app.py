@@ -1,4 +1,4 @@
-#"""
+﻿#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -232,6 +232,9 @@ class AppWindow(QMainWindow):
 		self.manga_views = {}
 		self._current_manga_view = None
 		self.default_manga_view = gallery.MangaViews(app_constants.ViewType.Default, self)
+		def refresh_view():
+			self.current_manga_view.sort_model.refresh()
+		self.db_startup.DONE.connect(refresh_view)
 		self.manga_list_view = self.default_manga_view.list_view
 		self.manga_table_view = self.default_manga_view.table_view
 		self.manga_list_view.gallery_model.STATUSBAR_MSG.connect(self.stat_temp_msg)
@@ -375,7 +378,7 @@ class AppWindow(QMainWindow):
 
 			def done(status):
 				self.notification_bar.end_show()
-				gallerydb.add_method_queue(database.db.DBBase.end, True)
+				gallerydb.execute(database.db.DBBase.end, True)
 				try:
 					fetch_instance.deleteLater()
 				except RuntimeError:
@@ -502,7 +505,7 @@ class AppWindow(QMainWindow):
 			args.append(app_constants.Search.Case)
 		if app_constants.GALLERY_SEARCH_STRICT:
 			args.append(app_constants.Search.Strict)
-		self.current_manga_view.sort_model.init_search(srch_string, args)
+		self.current_manga_view.get_current_view().sort_model.init_search(srch_string, args)
 		old_cursor_pos = self._search_cursor_pos[0]
 		self.search_bar.end(False)
 		if self.search_bar.cursorPosition() != old_cursor_pos + 1:
@@ -617,10 +620,8 @@ class AppWindow(QMainWindow):
 		# debug specfic code
 		if app_constants.DEBUG:
 			def debug_func():
-				print(self.manga_list_view.gallery_model)
-				print(self.manga_list_view.sort_model.sourceModel().rowCount())
-				#t = self.tab_manager.addTab("Duplicate", gallery.MangaViews.VType.Duplicate)
-				#log_d("Current Manga View: {}".format(self.current_manga_view))
+				print(self.current_manga_view.gallery_model.rowCount())
+				print(self.current_manga_view.sort_model.rowCount())
 		
 			debug_btn = QToolButton()
 			debug_btn.setText("DEBUG BUTTON")

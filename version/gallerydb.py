@@ -1,4 +1,4 @@
-#"""
+﻿#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -91,7 +91,7 @@ method_queue_thread = threading.Thread(name='Method Queue Thread', target=proces
 									   daemon=True)
 method_queue_thread.start()
 
-def add_method_queue(method, no_return, *args, **kwargs):
+def execute(method, no_return, *args, **kwargs):
 	log_d('Added method to queue')
 	log_d('Method name: {}'.format(method.__name__))
 	arg_list = [method]
@@ -433,10 +433,13 @@ class GalleryDB(DBBase):
 		assert isinstance(object, Gallery), "add_gallery method only accepts gallery items"
 		log_i('Recevied gallery: {}'.format(object.path.encode(errors='ignore')))
 
+		#TODO: implement mass gallery adding! User execute_many method for effeciency!
+
 		cursor = cls.execute(cls, *default_exec(object))
 		series_id = cursor.lastrowid
 		object.id = series_id
-		Executors.generate_thumbnail(object, on_method=object.set_profile)
+		if not object.profile:
+			Executors.generate_thumbnail(object, on_method=object.set_profile)
 		if object.tags:
 			TagDB.add_tags(object)
 		ChapterDB.add_chapters(object)
@@ -1314,7 +1317,7 @@ class GalleryList:
 		if isinstance(gallery_or_list_of, Gallery):
 			gallery_or_list_of = [gallery_or_list_of]
 		if _check_filter and self.filter and self.enforce:
-			add_method_queue(self.scan, True, gallery_or_list_of)
+			execute(self.scan, True, gallery_or_list_of)
 			return
 		new_galleries = []
 		for gallery in gallery_or_list_of:
@@ -1325,7 +1328,7 @@ class GalleryList:
 				# uses timsort algorithm so it's ok
 				self._ids_chache.sort()
 		if _db:
-			add_method_queue(ListDB.add_gallery_to_list, True, new_galleries, self)
+			execute(ListDB.add_gallery_to_list, True, new_galleries, self)
 
 	def remove_gallery(self, gallery_id_or_list_of):
 		"remove_gallery <- removes galleries matching the provided gallery id"
@@ -1344,12 +1347,12 @@ class GalleryList:
 				g_ids_to_delete.append(g.id)
 		for g in g_to_delete:
 			self._galleries.remove(g)
-		add_method_queue(ListDB.remove_gallery_from_list, True, g_ids_to_delete, self)
+		execute(ListDB.remove_gallery_from_list, True, g_ids_to_delete, self)
 
 	def clear(self):
 		"removes all galleries from the list"
 		if self._galleries:
-			add_method_queue(ListDB.remove_gallery_from_list, True, list(self._galleries), self)
+			execute(ListDB.remove_gallery_from_list, True, list(self._galleries), self)
 		self._galleries.clear()
 		self._ids_chache.clear()
 
@@ -1362,7 +1365,7 @@ class GalleryList:
 
 	def add_to_db(self):
 		app_constants.GALLERY_LISTS.add(self)
-		add_method_queue(ListDB.add_list, True, self)
+		execute(ListDB.add_list, True, self)
 
 	def scan(self, galleries=None):
 		if self.filter and not self._scanning:
@@ -1473,7 +1476,7 @@ class Gallery:
 
 		self._cache_id = 0 # used by custom delegate to cache profile
 		self._grid_visible = False
-		self._grid_selected = False
+		self._list_view_selected = False
 		self._profile_qimage = {}
 		self._profile_load_status = {}
 		self.dead_link = False
@@ -1510,7 +1513,7 @@ class Gallery:
 	def set_profile(self, future):
 		"set with profile with future object"
 		self.profile = future.result()
-		add_method_queue(GalleryDB.modify_gallery, self.id, True, {"profile":self.profile})
+		execute(GalleryDB.modify_gallery, self.id, True, {"profile":self.profile})
 
 	@property
 	def chapters(self):
@@ -1838,14 +1841,14 @@ class Chapter:
 			app_constants.NOTIF_BAR.add_text(txt)
 		if self.in_archive:
 			if self.gallery.is_archive:
-				add_method_queue(utils.open_chapter, True, self.path, self.gallery.path)
+				execute(utils.open_chapter, True, self.path, self.gallery.path)
 			else:
-				add_method_queue(utils.open_chapter, True, '', self.path)
+				execute(utils.open_chapter, True, '', self.path)
 		else:
-			add_method_queue(utils.open_chapter, True, self.path)
+			execute(utils.open_chapter, True, self.path)
 		self.gallery.times_read += 1
 		self.gallery.last_read = datetime.datetime.now().replace(microsecond=0)
-		add_method_queue(GalleryDB.modify_gallery, True, self.gallery.id, times_read=self.gallery.times_read,
+		execute(GalleryDB.modify_gallery, True, self.gallery.id, times_read=self.gallery.times_read,
 							   last_read=self.gallery.last_read)
 
 class ChaptersContainer:
@@ -1920,7 +1923,7 @@ class ChaptersContainer:
 		else:
 			chap.pages = len([x for x in scandir.scandir(chap.path) if x.path.endswith(IMG_FILES)])
 
-		add_method_queue(ChapterDB.update_chapter, True, self, [chap.number])
+		execute(ChapterDB.update_chapter, True, self, [chap.number])
 		return True
 
 	def pages(self):
@@ -1990,7 +1993,7 @@ class AdminDB(QObject):
 		if DBBase._DB_CONN:
 			DBBase._DB_CONN.close()
 		DBBase._DB_CONN = db.init_db(old_db_path)
-		db_galleries = add_method_queue(GalleryDB.get_all_gallery, False, False, True, True)
+		db_galleries = execute(GalleryDB.get_all_gallery, False, False, True, True)
 		galleries = []
 		for g in db_galleries:
 			if not os.path.exists(g.path):
@@ -2100,12 +2103,12 @@ class AdminDB(QObject):
 		return True
 
 	def rebuild_galleries(self):
-		galleries = add_method_queue(GalleryDB.get_all_gallery, False)
+		galleries = execute(GalleryDB.get_all_gallery, False)
 		if galleries:
 			self.DATA_COUNT.emit(len(galleries))
 			log_i('Rebuilding galleries')
 			for n, g in enumerate(galleries, 1):
-				add_method_queue(GalleryDB.rebuild_gallery, False, g)
+				execute(GalleryDB.rebuild_gallery, False, g)
 				self.PROGRESS.emit(n)
 		self.DONE.emit(True)
 
@@ -2116,7 +2119,7 @@ class AdminDB(QObject):
 			self.DATA_COUNT.emit(len(app_constants.GALLERY_DATA))
 			log_i('Rebuilding galleries')
 			for n, g in enumerate(app_constants.GALLERY_DATA, 1):
-				add_method_queue(GalleryDB.rebuild_thumb, False, g)
+				execute(GalleryDB.rebuild_thumb, False, g)
 				self.PROGRESS.emit(n)
 		self.DONE.emit(True)
 
@@ -2164,10 +2167,10 @@ class DatabaseStartup(QObject):
 		self.DONE.emit()
 
 	def fetch_galleries(self, f, t, model):
-		c = add_method_queue(self._DB.execute, False, 'SELECT * FROM series LIMIT {}, {}'.format(f, t))
+		c = execute(self._DB.execute, False, 'SELECT * FROM series LIMIT {}, {}'.format(f, t))
 		if c:
 			new_data = c.fetchall()
-			gallery_list = add_method_queue(GalleryDB.gen_galleries, False, new_data, {"chapters":False, "tags":False, "hashes":False})
+			gallery_list = execute(GalleryDB.gen_galleries, False, new_data, {"chapters":False, "tags":False, "hashes":False})
 			#self._current_data.extend(gallery_list)
 			if gallery_list:
 				self._loaded_galleries.extend(gallery_list)
@@ -2176,15 +2179,15 @@ class DatabaseStartup(QObject):
 
 	def fetch_chapters(self):
 		for g in self._loaded_galleries:
-			g.chapters = add_method_queue(ChapterDB.get_chapters_for_gallery, False, g.id)
+			g.chapters = execute(ChapterDB.get_chapters_for_gallery, False, g.id)
 
 	def fetch_tags(self):
 		for g in self._loaded_galleries:
-			g.tags = add_method_queue(TagDB.get_gallery_tags, False, g.id)
+			g.tags = execute(TagDB.get_gallery_tags, False, g.id)
 
 	def fetch_hashes(self):
 		for g in self._loaded_galleries:
-			g.hashes = add_method_queue(HashDB.get_gallery_hashes, False, g.id)
+			g.hashes = execute(HashDB.get_gallery_hashes, False, g.id)
 
 
 if __name__ == '__main__':
