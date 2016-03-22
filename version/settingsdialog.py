@@ -10,6 +10,7 @@ from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtGui import QPalette, QPixmapCache
 
 from misc import FlowLayout, Spacer, PathLineEdit, AppDialog, Line
+import misc
 import settings
 import app_constants
 import misc_db
@@ -1113,20 +1114,16 @@ class SettingsDialog(QWidget):
 				clear_cache = False
 				if clear_cache_confirm.exec() == QMessageBox.Yes:
 					clear_cache = True
-				gallerydb.DatabaseStartup.RUN = False
-				def start_db_activity(): gallerydb.DatabaseStartup.RUN = True
-				app_popup = AppDialog(self.parent_widget)
-				app_popup.info_lbl.setText("Regenerating thumbnails...")
-				app_popup.admin_db = gallerydb.AdminDB()
-				app_popup.admin_db.moveToThread(app_constants.GENERAL_THREAD)
-				app_popup.admin_db.DONE.connect(app_popup.admin_db.deleteLater)
-				app_popup.admin_db.DONE.connect(start_db_activity)
-				app_popup.admin_db.DATA_COUNT.connect(app_popup.prog.setMaximum)
-				app_popup.admin_db.PROGRESS.connect(app_popup.prog.setValue)
-				self.init_gallery_rebuild.connect(app_popup.admin_db.rebuild_thumbs)
-				app_popup.adjustSize()
+				app_spinner = misc.Spinner(self.parent_widget)
+				app_spinner.set_size(55)
+				app_spinner.set_text("Thumbnails...")
+				app_spinner.admin_db = gallerydb.AdminDB()
+				app_spinner.admin_db.moveToThread(app_constants.GENERAL_THREAD)
+				app_spinner.admin_db.DONE.connect(app_spinner.admin_db.deleteLater)
+				app_spinner.admin_db.DONE.connect(app_spinner.before_hide)
+				self.init_gallery_rebuild.connect(app_spinner.admin_db.rebuild_thumbs)
 				self.init_gallery_rebuild.emit(clear_cache)
-				app_popup.show()
+				app_spinner.show()
 
 		rebuild_thumbs_info = QLabel("Clears thumbnail cache and rebuilds it, which can take a while. Tip: Useful when changing thumbnail size.")
 		rebuild_thumbs_btn = QPushButton('Regenerate Thumbnails')

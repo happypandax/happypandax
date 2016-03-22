@@ -43,10 +43,20 @@ log_w = log.warning
 log_e = log.error
 log_c = log.critical
 
-method_queue = queue.Queue()
+
+method_queue = queue.PriorityQueue()
 method_return = queue.Queue()
 db_constants.METHOD_QUEUE = method_queue
 db_constants.METHOD_RETURN = method_return
+
+class PriorityObject:
+	def __init__(self, priority, data):
+		self.p = priority
+		self.data = data
+
+	def __lt__(self, other):
+		return self.p < other.p
+
 def process_methods():
 	"""
 	Methods are objects.
@@ -54,7 +64,7 @@ def process_methods():
 	method. Named arguments are put in a dict.
 	"""
 	while True:
-		l = method_queue.get()
+		l = method_queue.get().data
 		log_d('Processing a method from queue...')
 		method = l.pop(0)
 		log_d(method)
@@ -95,6 +105,7 @@ def execute(method, no_return, *args, **kwargs):
 	log_d('Added method to queue')
 	log_d('Method name: {}'.format(method.__name__))
 	arg_list = [method]
+	priority = kwargs.pop("priority", 999)
 	if no_return:
 		arg_list.append('no return')
 	if args:
@@ -102,7 +113,7 @@ def execute(method, no_return, *args, **kwargs):
 			arg_list.append(x)
 	if kwargs:
 		arg_list.append(kwargs)
-	method_queue.put(arg_list)
+	method_queue.put(PriorityObject(priority, arg_list))
 	if not no_return:
 		return method_return.get()
 
@@ -256,8 +267,13 @@ class GalleryDB(DBBase):
 	def clear_thumb(path):
 		"Deletes a thumbnail"
 		try:
-			if not os.path.samefile(path, app_constants.NO_IMAGE_PATH):
-				os.unlink(path)
+			if os.path.samefile(path, app_constants.NO_IMAGE_PATH):
+				return
+		except FileNotFoundError:
+			pass
+
+		try:
+			os.unlink(path)
 		except FileNotFoundError:
 			pass
 		except:
@@ -266,11 +282,9 @@ class GalleryDB(DBBase):
 	@staticmethod
 	def clear_thumb_dir():
 		"Deletes everything in the thumbnail directory"
-		try:
+		if os.path.exists(db_constants.THUMBNAIL_PATH):
 			for thumbfile in scandir.scandir(db_constants.THUMBNAIL_PATH):
 				GalleryDB.clear_thumb(thumbfile.path)
-		except FileNotFoundError:
-			pass
 
 	@staticmethod
 	def rebuild_gallery(gallery, thumb=False):
@@ -311,6 +325,7 @@ class GalleryDB(DBBase):
 				   hashes=None, exed=None, is_archive=None, path_in_archive=None, view=None):
 		"Modifies gallery with given gallery id"
 		assert isinstance(series_id, int)
+		assert not isinstance(series_id, bool)
 		executing = []
 		if title != None:
 			assert isinstance(title, str)
@@ -477,6 +492,7 @@ class GalleryDB(DBBase):
 
 			GalleryDB.clear_thumb(gallery.profile)
 			cls.execute(cls, 'DELETE FROM series WHERE series_id=?', (gallery.id,))
+			gallery.id = None
 			log_i('Successfully deleted: {}'.format(gallery.title.encode('utf-8', 'ignore')))
 			app_constants.NOTIF_BAR.add_text('Successfully deleted: {}'.format(gallery.title))
 
@@ -688,7 +704,8 @@ class TagDB(DBBase):
 	@classmethod
 	def get_gallery_tags(cls, series_id):
 		"Returns all tags and namespaces found for the given series_id"
-		assert isinstance(series_id, int), "Please provide a valid gallery ID"
+		if not isinstance(series_id, int):
+			return {}
 		cursor = cls.execute(cls, 'SELECT tags_mappings_id FROM series_tags_map WHERE series_id=?',
 				(series_id,))
 		tags = {}
@@ -1441,11 +1458,6 @@ class Gallery:
 	Takes ownership of ChaptersContainer
 	"""
 
-	@enum.unique
-	class PType(enum.Enum):
-		Default = 1
-		Small = 2
-
 	def __init__(self):
 
 		self.id = None # Will be defaulted.
@@ -1497,7 +1509,7 @@ class Gallery:
 
 	def get_profile(self, ptype, on_method=None):
 		psize = app_constants.THUMB_DEFAULT
-		if ptype == self.PType.Small:
+		if ptype == app_constants.ProfileType.Small:
 			psize = app_constants.THUMB_SMALL
 
 		if ptype in self._profile_qimage:
@@ -1513,7 +1525,8 @@ class Gallery:
 	def set_profile(self, future):
 		"set with profile with future object"
 		self.profile = future.result()
-		execute(GalleryDB.modify_gallery, self.id, True, {"profile":self.profile})
+		if self.id != None:
+			execute(GalleryDB.modify_gallery, True, self.id, profile=self.profile, priority=0)
 
 	@property
 	def chapters(self):
@@ -2112,8 +2125,9 @@ class AdminDB(QObject):
 				self.PROGRESS.emit(n)
 		self.DONE.emit(True)
 
-	def rebuild_thumbs(self, clear_first=False):
+	def rebuild_thumbs(self, clear_first):
 		if clear_first:
+			log_i("Clearing thumbanils dir..")
 			GalleryDB.clear_thumb_dir()
 		if app_constants.GALLERY_DATA:
 			self.DATA_COUNT.emit(len(app_constants.GALLERY_DATA))
@@ -2145,7 +2159,7 @@ class DatabaseStartup(QObject):
 		self._finished = False
 		self._loaded_galleries = []
 
-	def startup(self, model):
+	def startup(self, manga_views):
 		self.START.emit()
 		self._fetching = True
 		self.count = GalleryDB.gallery_count()
@@ -2153,7 +2167,7 @@ class DatabaseStartup(QObject):
 		while remaining > 0:
 			self.PROGRESS.emit("Loading galleries: {}".format(remaining))
 			rec_to_fetch = min(remaining, self._fetch_count)
-			self.fetch_galleries(self._offset, rec_to_fetch, model)
+			self.fetch_galleries(self._offset, rec_to_fetch, manga_views)
 			self._offset += rec_to_fetch
 			remaining = self.count - self._offset
 
@@ -2166,7 +2180,7 @@ class DatabaseStartup(QObject):
 		self._fetching = False
 		self.DONE.emit()
 
-	def fetch_galleries(self, f, t, model):
+	def fetch_galleries(self, f, t, manga_views):
 		c = execute(self._DB.execute, False, 'SELECT * FROM series LIMIT {}, {}'.format(f, t))
 		if c:
 			new_data = c.fetchall()
@@ -2174,8 +2188,10 @@ class DatabaseStartup(QObject):
 			#self._current_data.extend(gallery_list)
 			if gallery_list:
 				self._loaded_galleries.extend(gallery_list)
-				model._gallery_to_add = gallery_list
-				model.insertRows(model.rowCount(), len(gallery_list))
+				for view in manga_views:
+					view_galleries = [g for g in gallery_list if g.view == view.view_type]
+					view.gallery_model._gallery_to_add = view_galleries
+					view.gallery_model.insertRows(view.gallery_model.rowCount(), len(view_galleries))
 
 	def fetch_chapters(self):
 		for g in self._loaded_galleries:

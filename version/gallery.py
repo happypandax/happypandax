@@ -743,7 +743,7 @@ class GridDelegate(QStyledItemDelegate):
 				txt_layout.draw(painter, QPointF(x, y+h//4),
 					  clip=clipping)
 
-			loaded_image = gallery.get_profile(gallery.PType.Default)
+			loaded_image = gallery.get_profile(app_constants.ProfileType.Default)
 			if loaded_image:
 				# if we can't find a cached image
 				pix_cache = QPixmapCache.find(self.key(loaded_image.cacheKey()))
@@ -919,7 +919,6 @@ class GridDelegate(QStyledItemDelegate):
 				painter.restore()
 
 			if option.state & QStyle.State_Selected:
-				self.sizeHintChanged.emit(index)
 				painter.save()
 				selected_rect = QRectF(x, y, w, lbl_rect.height()+app_constants.THUMB_H_SIZE)
 				painter.setPen(Qt.NoPen)
@@ -1318,7 +1317,7 @@ class CommonView:
 											gallery.artist.encode(errors="ignore")))
 				if gallery.id:
 					gallery_db_list.append(gallery)
-			gallerydb.execute(gallerydb.GalleryDB.del_gallery, True, gallery_db_list, local=local)
+			gallerydb.execute(gallerydb.GalleryDB.del_gallery, True, gallery_db_list, local=local, priority=0)
 
 			rows = len(gallery_list)
 			view_cls.gallery_model._gallery_to_remove.extend(gallery_list)
@@ -1429,6 +1428,8 @@ class CommonView:
 
 class MangaViews:
 
+	manga_views = []
+	
 	@enum.unique
 	class View(enum.Enum):
 		List = 1
@@ -1469,6 +1470,8 @@ class MangaViews:
 		self.m_t_view_index = self.view_layout.addWidget(self.table_view)
 
 		self.current_view = self.View.List
+		self.manga_views.append(self)
+
 
 	def add_gallery(self, gallery, db=False):
 		if isinstance(gallery, list):
@@ -1476,6 +1479,9 @@ class MangaViews:
 				g.view = self.view_type
 				if db:
 					gallerydb.execute(gallerydb.GalleryDB.add_gallery, True, g)
+				else:
+					if not g.profile:
+						Executors.generate_thumbnail(g, on_method=g.set_profile)
 			rows = len(gallery)
 			self.list_view.gallery_model._gallery_to_add.extend(gallery)
 		else:
@@ -1484,6 +1490,9 @@ class MangaViews:
 			self.list_view.gallery_model._gallery_to_add.append(gallery)
 			if db:
 				gallerydb.execute(gallerydb.GalleryDB.add_gallery, True, gallery)
+			else:
+				if not gallery.profile:
+					Executors.generate_thumbnail(gallery, on_method=gallery.set_profile)
 		self.list_view.gallery_model.insertRows(self.list_view.gallery_model.rowCount(), rows)
 		
 

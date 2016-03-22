@@ -64,7 +64,7 @@ class AppWindow(QMainWindow):
 	"The application's main window"
 
 	move_listener = pyqtSignal()
-	db_startup_invoker = pyqtSignal(gallery.GalleryModel)
+	db_startup_invoker = pyqtSignal(list)
 	duplicate_check_invoker = pyqtSignal()
 	admin_db_method_invoker = pyqtSignal(object)
 	db_activity_checker = pyqtSignal()
@@ -86,7 +86,7 @@ class AppWindow(QMainWindow):
 		self.db_startup_invoker.connect(self.db_startup.startup)
 		self.setAcceptDrops(True)
 		self.initUI()
-		self.start_up()
+		self.startup()
 		QTimer.singleShot(3000, self._check_update)
 		self.setFocusPolicy(Qt.NoFocus)
 		self.set_shortcuts()
@@ -139,13 +139,13 @@ class AppWindow(QMainWindow):
 		self.watchers.gallery_handler.MOVED_SIGNAL.connect(moved)
 		self.watchers.gallery_handler.DELETED_SIGNAL.connect(deleted)
 
-	def start_up(self):
+	def startup(self):
 		def normalize_first_time():
 			settings.set(app_constants.INTERNAL_LEVEL, 'Application', 'first time level')
 			settings.save()
 
 		def done(status=True):
-			self.db_startup_invoker.emit(self.manga_list_view.gallery_model)
+			self.db_startup_invoker.emit(gallery.MangaViews.manga_views)
 			#self.db_startup.startup()
 			if app_constants.FIRST_TIME_LEVEL != app_constants.INTERNAL_LEVEL:
 				normalize_first_time()
@@ -891,8 +891,7 @@ class AppWindow(QMainWindow):
 				fetch_spinner.set_text("Populating... {}/{}".format(prog, self._g_populate_count))
 
 			def add_to_model(gallery):
-				Executors.generate_thumbnail(gallery, on_method=gallery.set_profile)
-				self.addition_tab.view.add_gallery(gallery)
+				self.addition_tab.view.add_gallery(gallery, app_constants.KEEP_ADDED_GALLERIES)
 
 			def set_count(c):
 				self._g_populate_count = c
@@ -926,8 +925,7 @@ class AppWindow(QMainWindow):
 						self.addition_view = addition_view
 
 					def add_gallery(self, gallery):
-						Executors.generate_thumbnail(gallery, on_method=gallery.set_profile)
-						self.addition_view.add_gallery(gallery)
+						self.addition_view.add_gallery(gallery, app_constants.KEEP_ADDED_GALLERIES)
 
 					def scan_dirs(self):
 						paths = []

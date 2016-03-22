@@ -1,4 +1,4 @@
-#This file is part of Happypanda.
+﻿#This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
 #the Free Software Foundation, either version 2 of the License, or
@@ -82,10 +82,15 @@ PUB_DATE = 9
 DATE_ADDED = 10
 
 @enum.unique
-class ViewType(enum.Enum):
+class ViewType(enum.IntEnum):
 	Default = 1
 	Addition = 2
 	Duplicate = 3
+
+@enum.unique
+class ProfileType(enum.Enum):
+	Default = 1
+	Small = 2
 
 # Application
 SYSTEM_TRAY = None
@@ -188,6 +193,7 @@ POPUP_WIDTH = get(450, 'Visual', 'popup.w', int)
 POPUP_HEIGHT = get(220, 'Visual', 'popup.h', int)
 
 # Gallery
+KEEP_ADDED_GALLERIES = get(True, 'Application', 'keep added galleries', bool)
 GALLERY_METAFILE_KEYWORDS = ('info.json', 'info.txt')
 CURRENT_SORT = get('title', 'General', 'current sort')
 HIGH_QUALITY_THUMBS = get(False, 'Visual', 'high quality thumbs', bool)
