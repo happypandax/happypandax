@@ -170,6 +170,10 @@ class SortFilterModel(QSortFilterProxyModel):
 		self.current_gallery_list = None
 		self.current_args = []
 		self.current_view = self.CAT_VIEW
+		self.setDynamicSortFilter(True)
+		self.setFilterCaseSensitivity(Qt.CaseInsensitive)
+		self.setSortLocaleAware(True)
+		self.setSortCaseSensitivity(Qt.CaseInsensitive)
 
 	def navigate_history(self, direction=PREV):
 		new_term = ''
@@ -190,9 +194,6 @@ class SortFilterModel(QSortFilterProxyModel):
 		self._SET_GALLERY_LIST.emit(g_list)
 		self._DO_SEARCH.emit(self.current_term, self.current_args)
 
-	def fetchMore(self, index):
-		return super().fetchMore(index)
-
 	def fav_view(self):
 		self._CHANGE_FAV.emit(True)
 		self._DO_SEARCH.emit(self.current_term, self.current_args)
@@ -205,7 +206,7 @@ class SortFilterModel(QSortFilterProxyModel):
 
 	def setup_search(self):
 		if not self._search_ready:
-			self.gallery_search = GallerySearch(self._data)
+			self.gallery_search = GallerySearch(self.sourceModel()._data)
 			self.gallery_search.FINISHED.connect(self.invalidateFilter)
 			self.gallery_search.FINISHED.connect(lambda: self.ROWCOUNT_CHANGE.emit())
 			self.gallery_search.moveToThread(app_constants.GENERAL_THREAD)
@@ -214,7 +215,6 @@ class SortFilterModel(QSortFilterProxyModel):
 			self._CHANGE_SEARCH_DATA.connect(self.gallery_search.set_data)
 			self._CHANGE_FAV.connect(self.gallery_search.set_fav)
 			self.sourceModel().rowsInserted.connect(lambda: self._DO_SEARCH.emit(self.current_term, self.current_args))
-			self.rowsInserted.connect(lambda: self._DO_SEARCH.emit(self.current_term, self.current_args))
 			self._search_ready = True
 
 
@@ -263,41 +263,8 @@ class SortFilterModel(QSortFilterProxyModel):
 	def change_data(self, data):
 		self._CHANGE_SEARCH_DATA.emit(data)
 
-	def populate_data(self):
-		self.sourceModel().populate_data()
-
 	def status_b_msg(self, msg):
 		self.sourceModel().status_b_msg(msg)
-
-	def addRows(self, list_of_gallery, position=None,
-				rows=1, index = QModelIndex()):
-		if not position:
-			log_d('Add rows: No position specified')
-			position = len(self._data)
-		self.beginInsertRows(index, position, position + rows - 1)
-		self.sourceModel().addRows(list_of_gallery, position, rows, index)
-		self.endInsertRows()
-		#self.modelReset.emit()
-
-	def insertRows(self, list_of_gallery, position=None,
-				rows=None, index = QModelIndex(), data_count=True):
-		position = len(self._data) if not position else position
-		rows = len(list_of_gallery) if not rows else 0
-		self.beginInsertRows(index, position, position + rows - 1)
-		self.sourceModel().insertRows(list_of_gallery, position, rows,
-								index, data_count)
-		self.endInsertRows()
-		#self.modelReset.emit()
-
-	def replaceRows(self, list_of_gallery, position, rows=1, index=QModelIndex()):
-		self.sourceModel().replaceRows(list_of_gallery, position, rows, index)
-
-	def removeRows(self, position, rows=1, index=QModelIndex()):
-		"Deletes gallery data from the model data list. OBS: doesn't touch DB!"
-		self.beginRemoveRows(QModelIndex(), position, position + rows - 1)
-		self.sourceModel().removeRows(position, rows, index)
-		self.endRemoveRows()
-		return True
 
 	def canDropMimeData(self, data, action, row, coloumn, index):
 		return False
@@ -397,18 +364,7 @@ class GalleryModel(QAbstractTableModel):
 
 		self._data = data
 		self._data_count = 0 # number of items added to model
-
-		self.db_emitter = gallerydb.DatabaseEmitter()
-
-	def populate_data(self, galleries):
-		"Populates the model in a timely manner"
-		t = 0
-		for pos, gallery in enumerate(galleries):
-			t += 100
-			if not gallery.valid:
-				reasons = gallery.invalidities()
-			else:
-				QTimer.singleShot(t, functools.partial(self.insertRows, [gallery], pos))
+		self._gallery_to_add = []
 
 	def status_b_msg(self, msg):
 		self.STATUSBAR_MSG.emit(msg)
@@ -558,10 +514,9 @@ class GalleryModel(QAbstractTableModel):
 		return None
 
 	def rowCount(self, index = QModelIndex()):
-		if not index.isValid():
-			return self._data_count
-		else:
+		if index.isValid():
 			return 0
+		return len(self._data)
 
 	def columnCount(self, parent = QModelIndex()):
 		return len(app_constants.COLUMNS)
@@ -595,56 +550,17 @@ class GalleryModel(QAbstractTableModel):
 			elif section == self._PUB_DATE:
 				return 'Published'
 		return section + 1
-	#def flags(self, index):
-	#	if not index.isValid():
-	#		return Qt.ItemIsEnabled
-	#	return Qt.ItemFlags(QAbstractListModel.flags(self, index) |
-	#				  Qt.ItemIsEditable)
 
-	def addRows(self, list_of_gallery, position=None,
-				rows=1, index = QModelIndex()):
-		"Adds new gallery data to model and to DB"
-		if self.REMOVING_ROWS:
-			return False
-		self.ADD_MORE.emit()
-		log_d('Adding {} rows'.format(rows))
-		if not position:
-			log_d('Add rows: No position specified')
-			position = len(self._data)
-		self._data_count += len(list_of_gallery)
-		self.beginInsertRows(QModelIndex(), position, position + rows - 1)
-		log_d('Add rows: Began inserting')
-		gallerydb.GalleryDB.begin()
-		for gallery in list_of_gallery:
-			gallerydb.GalleryDB.add_gallery(gallery)
-			self._data.insert(position, gallery)
-		gallerydb.add_method_queue(gallerydb.GalleryDB.end, True)
-		log_d('Add rows: Finished inserting')
-		self.endInsertRows()
-		gallerydb.add_method_queue(self.db_emitter.update_count, True)
-		self.CUSTOM_STATUS_MSG.emit("Added item(s)")
-		self.ROWCOUNT_CHANGE.emit()
-		self.ADDED_ROWS.emit()
-		return True
 
-	def insertRows(self, list_of_gallery, position=None,
-				rows=None, index = QModelIndex(), emit_statusbar=True, data_count=True):
-		"Inserts new gallery data to the data list WITHOUT adding to DB"
-		if self.REMOVING_ROWS:
+	def insertRows(self, position, rows, index = QModelIndex()):
+		self._data_count += rows
+		if not self._gallery_to_add:
 			return False
-		self.ADD_MORE.emit()
-		position = len(self._data) if not position else position
-		rows = len(list_of_gallery) if not rows else 0
-		if data_count:
-			self._data_count += len(list_of_gallery)
-		self.beginInsertRows(QModelIndex(), position, position + rows - 1)
-		self._data.extend(list_of_gallery)
+
+		self.beginInsertRows(QModelIndex(), position, position+rows-1)
+		for r in range(rows):
+			self._data.insert(position, self._gallery_to_add.pop())
 		self.endInsertRows()
-		gallerydb.add_method_queue(self.db_emitter.update_count, True)
-		if emit_statusbar:
-			self.CUSTOM_STATUS_MSG.emit("Added item(s)")
-		self.ROWCOUNT_CHANGE.emit()
-		self.ADDED_ROWS.emit()
 		return True
 
 	def replaceRows(self, list_of_gallery, position, rows=1, index=QModelIndex()):
@@ -654,22 +570,13 @@ class GalleryModel(QAbstractTableModel):
 			self._data.insert(position+pos, gallery)
 		self.dataChanged.emit(index, index, [Qt.UserRole+1, Qt.DecorationRole])
 
-	def removeRows(self, position, rows=1, index=QModelIndex()):
-		"Deletes gallery data from the model data list. OBS: doesn't touch DB!"
+	def removeRows(self, position, rows, index=QModelIndex()):
 		self._data_count -= rows
 		self.beginRemoveRows(QModelIndex(), position, position + rows - 1)
 		for r in range(rows):
-			del self._data[position]
+			self._data.pop(position)
 		self.endRemoveRows()
-		gallerydb.add_method_queue(self.db_emitter.update_count, False)
-		self.ROWCOUNT_CHANGE.emit()
 		return True
-
-	def canFetchMore(self, index):
-		return self.db_emitter.can_fetch_more()
-
-	def fetchMore(self, index):
-		self.db_emitter.fetch_more()
 
 class GridDelegate(QStyledItemDelegate):
 	"A custom delegate for the model/view framework"
@@ -1090,10 +997,6 @@ class MangaView(QListView):
 		self.setDragDropMode(self.DragDrop)
 
 		self.sort_model = filter_model if filter_model else SortFilterModel(self)
-		self.sort_model.setDynamicSortFilter(True)
-		self.sort_model.setFilterCaseSensitivity(Qt.CaseInsensitive)
-		self.sort_model.setSortLocaleAware(True)
-		self.sort_model.setSortCaseSensitivity(Qt.CaseInsensitive)
 		self.manga_delegate = GridDelegate(parent)
 		self.setItemDelegate(self.manga_delegate)
 		self.setSpacing(app_constants.GRID_SPACING)
@@ -1104,7 +1007,6 @@ class MangaView(QListView):
 		self.gallery_model = model
 		self.sort_model.change_model(self.gallery_model)
 		self.sort_model.sort(0)
-		self.sort_model.ROWCOUNT_CHANGE.connect(self.gallery_model.ROWCOUNT_CHANGE.emit)
 		self.setModel(self.sort_model)
 		self.SERIES_DIALOG.connect(self.spawn_dialog)
 		self.doubleClicked.connect(lambda idx: idx.data(Qt.UserRole+1).chapters[0].open())
@@ -1520,7 +1422,6 @@ class MangaViews:
 
 		if v_type == app_constants.ViewType.Default:
 			model = GalleryModel(app_constants.GALLERY_DATA, parent)
-			model.db_emitter.GALLERY_EMITTER.connect(lambda a: model.insertRows(a, emit_statusbar=False))
 		elif v_type == app_constants.ViewType.Addition:
 			model = GalleryModel(app_constants.GALLERY_ADDITION_DATA, parent)
 		elif v_type == app_constants.ViewType.Duplicate:
@@ -1533,8 +1434,7 @@ class MangaViews:
 		self.table_view = MangaTableView(parent)
 		self.table_view.gallery_model = self.list_view.gallery_model
 		self.table_view.sort_model = self.list_view.sort_model
-		self.table_view.sort_model.change_model(self.table_view.gallery_model)
-		self.table_view.setModel(self.table_view.sort_model)
+		self.table_view.setModel(self.list_view.gallery_model)
 		self.table_view.setColumnWidth(app_constants.FAV, 20)
 		self.table_view.setColumnWidth(app_constants.ARTIST, 200)
 		self.table_view.setColumnWidth(app_constants.TITLE, 400)
@@ -1553,7 +1453,13 @@ class MangaViews:
 		self.current_view = self.View.List
 
 	def add_gallery(self, gallery):
-		self.list_view.sort_model.insertRows([gallery], None, 1)
+		if isinstance(gallery, list):
+			rows = len(gallery)
+			self.list_view.gallery_model._gallery_to_add.extend(gallery)
+		else:
+			rows = 1
+			self.list_view.gallery_model._gallery_to_add.append(gallery)
+		self.list_view.gallery_model.insertRows(self.list_view.gallery_model.rowCount(), rows)
 
 	def changeTo(self, idx):
 		self.view_layout.setCurrentIndex(idx)

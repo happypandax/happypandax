@@ -1113,8 +1113,8 @@ class SettingsDialog(QWidget):
 				clear_cache = False
 				if clear_cache_confirm.exec() == QMessageBox.Yes:
 					clear_cache = True
-				gallerydb.DatabaseEmitter.RUN = False
-				def start_db_activity(): gallerydb.DatabaseEmitter.RUN = True
+				gallerydb.DatabaseStartup.RUN = False
+				def start_db_activity(): gallerydb.DatabaseStartup.RUN = True
 				app_popup = AppDialog(self.parent_widget)
 				app_popup.info_lbl.setText("Regenerating thumbnails...")
 				app_popup.admin_db = gallerydb.AdminDB()

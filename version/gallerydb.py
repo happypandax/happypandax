@@ -106,65 +106,6 @@ def add_method_queue(method, no_return, *args, **kwargs):
 	if not no_return:
 		return method_return.get()
 
-def gen_thumbnail(gallery, width=app_constants.THUMB_W_SIZE,
-				height=app_constants.THUMB_H_SIZE, img=None):
-	"""Generates a thumbnail with unique filename in the cache dir.
-	Returns relative path to the created thumbnail
-	"""
-	assert isinstance(gallery, Gallery), "gallery should be an instance of Gallery class"
-
-	img_path_queue = queue.Queue()
-	# generate a cache dir if required
-	if not os.path.isdir(db_constants.THUMBNAIL_PATH):
-		os.mkdir(db_constants.THUMBNAIL_PATH)
-
-	try:
-		if not img:
-			img_path = get_gallery_img(gallery)
-		else:
-			img_path = img
-		if not img_path:
-			raise IndexError
-		for ext in IMG_FILES:
-			if img_path.lower().endswith(ext):
-				suff = ext # the image ext with dot
-
-		# generate unique file name
-		file_name = str(uuid.uuid4()) + ".png"
-		new_img_path = os.path.join(db_constants.THUMBNAIL_PATH, (file_name))
-		if not os.path.isfile(img_path):
-			raise IndexError
-
-		# Do the scaling
-		try:
-			im_data = utils.PToQImageHelper(img_path)
-			image = QImage(im_data['data'], im_data['im'].size[0], im_data['im'].size[1], im_data['format'])
-			if im_data['colortable']:
-				image.setColorTable(im_data['colortable'])
-		except ValueError:
-			image = QImage()
-			image.load(img_path)
-		if image.isNull():
-			raise IndexError
-		radius = 5
-		image = image.scaled(width, height, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-		r_image = QImage(image.width(), image.height(), QImage.Format_ARGB32)
-		r_image.fill(Qt.transparent)
-		p = QPainter()
-		pen = QPen(Qt.darkGray)
-		pen.setJoinStyle(Qt.RoundJoin)
-		p.begin(r_image)
-		p.setRenderHint(p.Antialiasing)
-		p.setPen(Qt.NoPen)
-		p.setBrush(QBrush(image))
-		p.drawRoundedRect(0, 0, r_image.width(), r_image.height(), radius, radius)
-		p.end()
-		r_image.save(new_img_path, "PNG", quality=100)
-	except IndexError:
-		new_img_path = app_constants.NO_IMAGE_PATH
-
-	return new_img_path
-
 def chapter_map(row, chapter):
 	assert isinstance(chapter, Chapter)
 	chapter.title = row['chapter_title']
@@ -2178,72 +2119,71 @@ class AdminDB(QObject):
 				self.PROGRESS.emit(n)
 		self.DONE.emit(True)
 
-class DatabaseEmitter(QObject):
+class DatabaseStartup(QObject):
 	"""
 	Fetches and emits database records
 	START: emitted when fetching from DB occurs
 	DONE: emitted when the initial fetching from DB finishes
 	"""
-	GALLERY_EMITTER = pyqtSignal(list)
 	START = pyqtSignal()
 	DONE = pyqtSignal()
-	CANNOT_FETCH_MORE = pyqtSignal()
-	COUNT_CHANGE = pyqtSignal()
+	PROGRESS = pyqtSignal(str)
 	_DB = DBBase()
 
-	RUN = False
 
 	def __init__(self):
 		super().__init__()
 		ListDB.init_lists()
-		self._current_data = app_constants.GALLERY_DATA
 		self._fetch_count = 500
 		self._offset = 0
 		self._fetching = False
 		self.count = 0
 		self._finished = False
-		self.update_count()
+		self._loaded_galleries = []
 
-	def update_count(self):
-		if not self._fetching:
-			self._fetching = True
-			oldc = self.count
-			self.count = GalleryDB.gallery_count()
-			if oldc != self.count:
-				self.COUNT_CHANGE.emit()
-			self._fetching = False
-
-	def can_fetch_more(self):
-		if len(self._current_data) < self.count:
-			return True
-		else:
-			if not self._finished:
-				self._finished = True
-				self.DONE.emit()
-			self.CANNOT_FETCH_MORE.emit()
-			return False
-
-	def fetch_more(self):
-		if not self.RUN:
-			return
+	def startup(self, model):
 		self.START.emit()
-		def get_records():
-			self._fetching = True
-			remaining = self.count - len(self._current_data)
+		self._fetching = True
+		self.count = GalleryDB.gallery_count()
+		remaining = self.count
+		while remaining > 0:
+			self.PROGRESS.emit("Loading galleries: {}".format(remaining))
 			rec_to_fetch = min(remaining, self._fetch_count)
-			c = add_method_queue(self._DB.execute, False, 'SELECT * FROM series LIMIT {}, {}'.format(self._offset, rec_to_fetch))
+			self.fetch_galleries(self._offset, rec_to_fetch, model)
 			self._offset += rec_to_fetch
-			if c:
-				new_data = c.fetchall()
-				gallery_list = add_method_queue(GalleryDB.gen_galleries, False, new_data)
-				#self._current_data.extend(gallery_list)
-				if gallery_list:
-					self.GALLERY_EMITTER.emit(gallery_list)
-			self._fetching = False
-		if not self._fetching:
-			# TODO: redo this?
-			thread = threading.Thread(target=get_records, name='DatabaseEmitter')
-			thread.start()
+			remaining = self.count - self._offset
+
+		self.PROGRESS.emit("Loading chapters...")
+		self.fetch_chapters()
+		self.PROGRESS.emit("Loading tags...")
+		self.fetch_tags()
+		self.PROGRESS.emit("Loading hashes...")
+		self.fetch_hashes()
+		self._fetching = False
+		self.DONE.emit()
+
+	def fetch_galleries(self, f, t, model):
+		c = add_method_queue(self._DB.execute, False, 'SELECT * FROM series LIMIT {}, {}'.format(f, t))
+		if c:
+			new_data = c.fetchall()
+			gallery_list = add_method_queue(GalleryDB.gen_galleries, False, new_data, {"chapters":False, "tags":False, "hashes":False})
+			#self._current_data.extend(gallery_list)
+			if gallery_list:
+				self._loaded_galleries.extend(gallery_list)
+				model._gallery_to_add = gallery_list
+				model.insertRows(model.rowCount(), len(gallery_list))
+
+	def fetch_chapters(self):
+		for g in self._loaded_galleries:
+			g.chapters = add_method_queue(ChapterDB.get_chapters_for_gallery, False, g.id)
+
+	def fetch_tags(self):
+		for g in self._loaded_galleries:
+			g.tags = add_method_queue(TagDB.get_gallery_tags, False, g.id)
+
+	def fetch_hashes(self):
+		for g in self._loaded_galleries:
+			g.hashes = add_method_queue(HashDB.get_gallery_hashes, False, g.id)
 
 
 if __name__ == '__main__':

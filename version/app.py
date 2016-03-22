@@ -64,6 +64,7 @@ class AppWindow(QMainWindow):
 	"The application's main window"
 
 	move_listener = pyqtSignal()
+	db_startup_invoker = pyqtSignal(gallery.GalleryModel)
 	duplicate_check_invoker = pyqtSignal()
 	admin_db_method_invoker = pyqtSignal(object)
 	db_activity_checker = pyqtSignal()
@@ -76,6 +77,13 @@ class AppWindow(QMainWindow):
 		app_constants.GENERAL_THREAD = QThread(self)
 		app_constants.GENERAL_THREAD.finished.connect(app_constants.GENERAL_THREAD.deleteLater)
 		app_constants.GENERAL_THREAD.start()
+		self._db_startup_thread = QThread(self)
+		self._db_startup_thread.finished.connect(self._db_startup_thread.deleteLater)
+		self.db_startup = gallerydb.DatabaseStartup()
+		self._db_startup_thread.start()
+		self.db_startup.moveToThread(self._db_startup_thread)
+		self.db_startup.DONE.connect(lambda: self.scan_for_new_galleries() if app_constants.LOOK_NEW_GALLERY_STARTUP else None)
+		self.db_startup_invoker.connect(self.db_startup.startup)
 		self.setAcceptDrops(True)
 		self.initUI()
 		self.start_up()
@@ -102,7 +110,7 @@ class AppWindow(QMainWindow):
 
 		def create_gallery(path):
 			g_dia = gallerydialog.GalleryDialog(self, path)
-			g_dia.SERIES.connect(self.manga_list_view.gallery_model.addRows)
+			g_dia.SERIES.connect(self.default_manga_view.add_gallery)
 			g_dia.show()
 
 		def update_gallery(g):
@@ -137,7 +145,8 @@ class AppWindow(QMainWindow):
 			settings.save()
 
 		def done(status=True):
-			gallerydb.DatabaseEmitter.RUN = True
+			self.db_startup_invoker.emit(self.manga_list_view.gallery_model)
+			#self.db_startup.startup()
 			if app_constants.FIRST_TIME_LEVEL != app_constants.INTERNAL_LEVEL:
 				normalize_first_time()
 			else:
@@ -153,11 +162,6 @@ class AppWindow(QMainWindow):
 			if app_constants.ENABLE_MONITOR and \
 				app_constants.MONITOR_PATHS and all(app_constants.MONITOR_PATHS):
 				self.init_watchers()
-				if app_constants.LOOK_NEW_GALLERY_STARTUP:
-					if self.manga_list_view.gallery_model.db_emitter.count == app_constants.GALLERY_DATA:
-						self.scan_for_new_galleries()
-					else:
-						self.manga_list_view.gallery_model.db_emitter.DONE.connect(self.scan_for_new_galleries)
 			self.download_manager = pewnet.Downloader()
 			app_constants.DOWNLOAD_MANAGER = self.download_manager
 			self.download_manager.start_manager(4)
@@ -235,12 +239,12 @@ class AppWindow(QMainWindow):
 		self.manga_table_view.STATUS_BAR_MSG.connect(self.stat_temp_msg)
 
 		self.sidebar_list = misc_db.SideBarWidget(self)
+		self.db_startup.DONE.connect(self.sidebar_list.tags_tree.setup_tags)
+		self.db_startup.DONE.connect(self.sidebar_list.lists.setup_lists)
 		self._main_layout.addWidget(self.sidebar_list)
 		self.current_manga_view = self.default_manga_view
 
 		#self.display_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
-		self.stat_row_info()
-
 		self.download_window = io_misc.GalleryDownloader(self)
 		self.download_window.hide()
 		# init toolbar
@@ -471,12 +475,13 @@ class AppWindow(QMainWindow):
 	def init_spinners(self):
 		# fetching spinner
 		self.data_fetch_spinner = misc.Spinner(self, "center")
-		self.data_fetch_spinner.set_size(60)
+		self.data_fetch_spinner.set_size(80)
 		
 		self.manga_list_view.gallery_model.ADD_MORE.connect(self.data_fetch_spinner.show)
-		self.manga_list_view.gallery_model.db_emitter.START.connect(self.data_fetch_spinner.show)
+		self.db_startup.START.connect(self.data_fetch_spinner.show)
+		self.db_startup.PROGRESS.connect(self.data_fetch_spinner.set_text)
 		self.manga_list_view.gallery_model.ADDED_ROWS.connect(self.data_fetch_spinner.before_hide)
-		self.manga_list_view.gallery_model.db_emitter.CANNOT_FETCH_MORE.connect(self.data_fetch_spinner.before_hide)
+		self.db_startup.DONE.connect(self.data_fetch_spinner.before_hide)
 
 		## deleting spinner
 		#self.gallery_delete_spinner = misc.Spinner(self)
@@ -497,7 +502,7 @@ class AppWindow(QMainWindow):
 			args.append(app_constants.Search.Case)
 		if app_constants.GALLERY_SEARCH_STRICT:
 			args.append(app_constants.Search.Strict)
-		self.manga_list_view.sort_model.init_search(srch_string, args)
+		self.current_manga_view.sort_model.init_search(srch_string, args)
 		old_cursor_pos = self._search_cursor_pos[0]
 		self.search_bar.end(False)
 		if self.search_bar.cursorPosition() != old_cursor_pos + 1:
@@ -612,8 +617,10 @@ class AppWindow(QMainWindow):
 		# debug specfic code
 		if app_constants.DEBUG:
 			def debug_func():
-				t = self.tab_manager.addTab("Duplicate", gallery.MangaViews.VType.Duplicate)
-				log_d("Current Manga View: {}".format(self.current_manga_view))
+				print(self.manga_list_view.gallery_model)
+				print(self.manga_list_view.sort_model.sourceModel().rowCount())
+				#t = self.tab_manager.addTab("Duplicate", gallery.MangaViews.VType.Duplicate)
+				#log_d("Current Manga View: {}".format(self.current_manga_view))
 		
 			debug_btn = QToolButton()
 			debug_btn.setText("DEBUG BUTTON")
@@ -1043,7 +1050,7 @@ class AppWindow(QMainWindow):
 			subfolder_as_c = not app_constants.SUBFOLDER_AS_GALLERY
 			if l and subfolder_as_c or l and f_item_l:
 				g_d = gallerydialog.GalleryDialog(self, acceptable[0])
-				g_d.SERIES.connect(self.manga_list_view.gallery_model.addRows)
+				g_d.SERIES.connect(self.default_manga_view.add_gallery)
 				g_d.show()
 			else:
 				self.gallery_populate(acceptable, True)

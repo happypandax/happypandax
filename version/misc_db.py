@@ -59,12 +59,14 @@ class ToolbarTabManager(QObject):
 			return
 		if self._last_selected:
 			self._last_selected.selected = False
-			self._last_selected.view.list_view.sort_model.ROWCOUNT_CHANGE.disconnect(self.parent_widget.stat_row_info)
+			self._last_selected.view.list_view.sort_model.rowsInserted.disconnect(self.parent_widget.stat_row_info)
+			self._last_selected.view.list_view.sort_model.rowsRemoved.disconnect(self.parent_widget.stat_row_info)
 			self._last_selected.view.hide()
 		b.selected = True
 		self._last_selected = b
 		self.parent_widget.current_manga_view = b.view
-		b.view.list_view.sort_model.ROWCOUNT_CHANGE.connect(self.parent_widget.stat_row_info)
+		b.view.list_view.sort_model.rowsInserted.connect(self.parent_widget.stat_row_info)
+		b.view.list_view.sort_model.rowsRemoved.connect(self.parent_widget.stat_row_info)
 		b.view.show()
 
 	def addTab(self, name, view_type=app_constants.ViewType.Default):
@@ -541,12 +543,6 @@ class SideBarWidget(QFrame):
 		self.tags_layout = QVBoxLayout(self.tags_tree)
 		ns_tags_index = self.stacked_layout.addWidget(self.tags_tree)
 		self.ns_tags_btn.clicked.connect(lambda:self.stacked_layout.setCurrentIndex(ns_tags_index))
-		if parent.manga_list_view.gallery_model.db_emitter._finished:
-			self.tags_tree.setup_tags()
-			self.lists.setup_lists()
-		else:
-			parent.manga_list_view.gallery_model.db_emitter.DONE.connect(self.tags_tree.setup_tags)
-			parent.manga_list_view.gallery_model.db_emitter.DONE.connect(self.lists.setup_lists)
 
 		self.slide_animation = misc.create_animation(self, "maximumSize")
 		self.slide_animation.stateChanged.connect(self._slide_hide)
