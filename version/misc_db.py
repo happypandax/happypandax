@@ -48,8 +48,8 @@ class ToolbarTabManager(QObject):
 		self.idx_widget = self.toolbar.addWidget(QWidget(self.toolbar))
 		self.idx_widget.setVisible(False)
 		self.library_btn = None
-		self.favorite_btn = self.addTab("Favorites")
-		self.library_btn = self.addTab("Library")
+		self.favorite_btn = self.addTab("Favorites", delegate_paint=False)
+		self.library_btn = self.addTab("Library", delegate_paint=False)
 		self.toolbar.addSeparator()
 		self.idx_widget = self.toolbar.addWidget(QWidget(self.toolbar))
 		self.idx_widget.setVisible(False)
@@ -69,7 +69,7 @@ class ToolbarTabManager(QObject):
 		b.view.list_view.sort_model.rowsRemoved.connect(self.parent_widget.stat_row_info)
 		b.view.show()
 
-	def addTab(self, name, view_type=app_constants.ViewType.Default):
+	def addTab(self, name, view_type=app_constants.ViewType.Default, delegate_paint=True):
 		if self.toolbar:
 			t = misc.ToolbarButton(self.toolbar, name)
 			t.select.connect(self._manage_selected)
@@ -80,6 +80,8 @@ class ToolbarTabManager(QObject):
 				t.close_tab.connect(lambda:self.library_btn.click())
 			else:
 				t.view = self.parent_widget.default_manga_view
+			if delegate_paint:
+				t.view.list_view.manga_delegate._paint_level = 9000 # over nine thousand!!!
 			self._actions.append(self.toolbar.insertWidget(self.idx_widget, t))
 			return t
 

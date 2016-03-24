@@ -20,7 +20,7 @@ from PyQt5.QtCore import (Qt, QAbstractListModel, QModelIndex, QVariant,
 						  QTimer, QPointF, QSortFilterProxyModel,
 						  QAbstractTableModel, QItemSelectionModel,
 						  QPoint, QRectF, QDate, QDateTime, QObject,
-						  QEvent, QSizeF, QMimeData, QByteArray)
+						  QEvent, QSizeF, QMimeData, QByteArray, QTime)
 from PyQt5.QtGui import (QPixmap, QBrush, QColor, QPainter, 
 						 QPen, QTextDocument,
 						 QMouseEvent, QHelpEvent,
@@ -341,6 +341,7 @@ class GalleryModel(QAbstractTableModel):
 	PUB_DATE_ROLE = Qt.UserRole+5
 	TIMES_READ_ROLE = Qt.UserRole+6
 	LAST_READ_ROLE = Qt.UserRole+7
+	TIME_ROLE = Qt.UserRole+8
 
 	ROWCOUNT_CHANGE = pyqtSignal()
 	STATUSBAR_MSG = pyqtSignal(str)
@@ -518,6 +519,9 @@ class GalleryModel(QAbstractTableModel):
 				qlast_read = QDateTime.fromString(last_read, "yyyy-MM-dd HH:mm:ss")
 				return qlast_read
 
+		if role == self.TIME_ROLE:
+			return current_gallery.qtime
+
 		return None
 
 	def rowCount(self, index = QModelIndex()):
@@ -581,7 +585,10 @@ class GalleryModel(QAbstractTableModel):
 		self._data_count -= rows
 		self.beginRemoveRows(QModelIndex(), position, position + rows - 1)
 		for r in range(rows):
-			self._data.remove(self._gallery_to_remove.pop())
+			try:
+				self._data.remove(self._gallery_to_remove.pop())
+			except ValueError:
+				return False
 		self.endRemoveRows()
 		return True
 
@@ -816,7 +823,7 @@ class GridDelegate(QStyledItemDelegate):
 				rib_star_p1_4 = rib_star_p1_3 + QPointF(-rib_star_factor, -rib_star_factor)
 
 				crown_1 = QPolygonF([rib_star_p1_1, rib_star_p1_2, rib_star_mid_1, rib_star_p1_4, rib_star_p1_3])
-				painter.setBrush(QBrush(QColor("yellow")))
+				painter.setBrush(QBrush(QColor(255, 255, 0, 200)))
 				painter.drawPolygon(crown_1)
 
 				ribbon_polygon = QPolygonF([rib_top_1, rib_side_1, rib_side_2, rib_top_2])
@@ -951,7 +958,7 @@ class GridDelegate(QStyledItemDelegate):
 				#painter.fillRect(selected_rect, QColor(164,164,164,120))
 				painter.restore()
 
-			if gallery.dead_link:
+			def warning(txt):
 				painter.save()
 				selected_rect = QRectF(x, y, w, lbl_rect.height()+app_constants.THUMB_H_SIZE)
 				painter.setPen(Qt.NoPen)
@@ -963,18 +970,28 @@ class GridDelegate(QStyledItemDelegate):
 				p_path.addRect(x+w-20,y, 20, 20)
 				painter.drawPath(p_path.simplified())
 				painter.setPen(QColor("white"))
-				txt_layout = misc.text_layout("Cannot find gallery source!", w, self.title_font, self.title_font_m)
+				txt_layout = misc.text_layout(txt, w, self.title_font, self.title_font_m)
 				txt_layout.draw(painter, QPointF(x, y+h*0.3))
 				painter.restore()
 
-			if app_constants.DEBUG:
+			if not gallery.id:
+				warning("This gallery does not exist anymore!")
+			elif gallery.dead_link:
+				warning("Cannot find gallery source!")
+
+
+			if app_constants.DEBUG or self.view.view_type == app_constants.ViewType.Duplicate:
 				painter.save()
-				painter.setBrush(QBrush(QColor("red")))
-				painter.setPen(QColor("white"))
-				txt_l = self.title_font_m.width(str(gallery.id))
-				painter.drawRect(x, y+40, txt_l*2, self.title_font_m.height())
-				painter.drawText(x+1, y+51, str(gallery.id))
+				painter.setPen(QPen(Qt.white))
+				id_txt = "ID: {}".format(gallery.id)
+				type_w = painter.fontMetrics().width(id_txt)
+				type_h = painter.fontMetrics().height()
+				type_p = QPoint(x+4, y+50-type_h-5)
+				type_rect = QRect(type_p.x()-2, type_p.y()-1, type_w+4, type_h+1)
+				painter.fillRect(type_rect, QColor(239, 0, 0, 200))
+				painter.drawText(type_p.x(), type_p.y()+painter.fontMetrics().height()-4, id_txt)
 				painter.restore()
+
 			if option.state & QStyle.State_Selected:
 				painter.setPen(QPen(option.palette.highlightedText().color()))
 		else:
@@ -1059,7 +1076,7 @@ class MangaView(QListView):
 
 		self.current_sort = app_constants.CURRENT_SORT
 		if self.view_type == app_constants.ViewType.Duplicate:
-			pass
+			self.sort_model.setSortRole(GalleryModel.TIME_ROLE)
 		else:
 			self.sort(self.current_sort)
 		if app_constants.DEBUG:
@@ -1206,7 +1223,6 @@ class MangaView(QListView):
 
 class MangaTableView(QTableView):
 	STATUS_BAR_MSG = pyqtSignal(str)
-	SERIES_DIALOG = pyqtSignal()
 
 	def __init__(self, v_type, parent=None):
 		super().__init__(parent)
@@ -1438,6 +1454,8 @@ class MangaViews:
 		Table = 2
 
 	def __init__(self, v_type, parent):
+		self._delete_proxy_model = None
+
 		self.view_type = v_type
 
 		if v_type == app_constants.ViewType.Default:
@@ -1477,8 +1495,18 @@ class MangaViews:
 		if v_type in (app_constants.ViewType.Default, app_constants.ViewType.Addition):
 			self.sort_model.enable_drag = True
 
-	def add_gallery(self, gallery, db=False):
-		if isinstance(gallery, list):
+	def _delegate_delete(self):
+		if self._delete_proxy_model:
+			gs = [g for g in self.gallery_model._gallery_to_remove]
+			self._delete_proxy_model._gallery_to_remove = gs
+			self._delete_proxy_model.removeRows(self._delete_proxy_model.rowCount()-len(gs), len(gs))
+
+	def set_delete_proxy(self, other_model):
+		self._delete_proxy_model = other_model
+		self.gallery_model.rowsAboutToBeRemoved.connect(self._delegate_delete, Qt.DirectConnection)
+
+	def add_gallery(self, gallery, db=False, record_time=False):
+		if isinstance(gallery, (list, tuple)):
 			for g in gallery:
 				g.view = self.view_type
 				g.state = app_constants.GalleryState.New
@@ -1489,11 +1517,15 @@ class MangaViews:
 						Executors.generate_thumbnail(g, on_method=g.set_profile)
 			rows = len(gallery)
 			self.list_view.gallery_model._gallery_to_add.extend(gallery)
+			if record_time:
+				g.qtime = QTime.currentTime()
 		else:
 			gallery.view = self.view_type
 			gallery.state = app_constants.GalleryState.New
 			rows = 1
 			self.list_view.gallery_model._gallery_to_add.append(gallery)
+			if record_time:
+				g.qtime = QTime.currentTime()
 			if db:
 				gallerydb.execute(gallerydb.GalleryDB.add_gallery, True, gallery)
 			else:

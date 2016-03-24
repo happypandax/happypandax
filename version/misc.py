@@ -1055,14 +1055,16 @@ class GalleryMenu(QMenu):
 				open_chapters.addAction(chap_action)
 		if self.selected:
 			open_f_chapters = self.addAction('Open first chapters', self.open_first_chapters)
-		if not self.selected:
-			add_chapters = self.addAction('Add chapters', self.add_chapters)
-		add_to_list_txt = "Add selected to list" if self.selected else "Add to list"
-		add_to_list = self.addAction(add_to_list_txt)
-		add_to_list_menu = QMenu(self)
-		add_to_list.setMenu(add_to_list_menu)
-		for g_list in sorted(app_constants.GALLERY_LISTS):
-			add_to_list_menu.addAction(g_list.name, functools.partial(self.add_to_list, g_list))
+
+		if self.view.view_type != app_constants.ViewType.Duplicate:
+			if not self.selected:
+				add_chapters = self.addAction('Add chapters', self.add_chapters)
+			add_to_list_txt = "Add selected to list" if self.selected else "Add to list"
+			add_to_list = self.addAction(add_to_list_txt)
+			add_to_list_menu = QMenu(self)
+			add_to_list.setMenu(add_to_list_menu)
+			for g_list in sorted(app_constants.GALLERY_LISTS):
+				add_to_list_menu.addAction(g_list.name, functools.partial(self.add_to_list, g_list))
 		self.addSeparator()
 		if not self.selected:
 			get_metadata = self.addAction('Get metadata',

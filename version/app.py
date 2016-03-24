@@ -65,7 +65,7 @@ class AppWindow(QMainWindow):
 
 	move_listener = pyqtSignal()
 	db_startup_invoker = pyqtSignal(list)
-	duplicate_check_invoker = pyqtSignal()
+	duplicate_check_invoker = pyqtSignal(gallery.GalleryModel)
 	admin_db_method_invoker = pyqtSignal(object)
 	db_activity_checker = pyqtSignal()
 	graphics_blur = QGraphicsBlurEffect()
@@ -1122,58 +1122,21 @@ class AppWindow(QMainWindow):
 		duplicate_spinner = misc.Spinner(self)
 		duplicate_spinner.set_text("Duplicate Check")
 		duplicate_spinner.show()
-
-		class GalleryContextMenu(QMenu):
-			app_inst = self
-			viewer = self.get_current_view()
-			def __init__(self, parent=None):
-				super().__init__(parent)
-				show_in_library_act = self.addAction('Show in library')
-				show_in_library_act.triggered.connect(self.show_in_library)
-				delete_gallery = self.addAction('Remove gallery')
-				delete_gallery.triggered.connect(self.delete_gallery)
-				delete_gallery_source = self.addAction("Remove gallery and it's files")
-				delete_gallery_source.triggered.connect(lambda: self.delete_gallery(True))
-
-			def show_in_library(self):
-				index = gallery.CommonView.find_index(self.viewer, self.gallery_widget.gallery.id, True)
-				if index:
-					gallery.CommonView.scroll_to_index(self.viewer, index)
-
-			def delete_gallery(self, source=False):
-				index = gallery.CommonView.find_index(self.viewer, self.gallery_widget.gallery.id, False)
-				if index and index.isValid():
-					gallery.CommonView.remove_gallery(self.viewer, [index], source)
-					if self.gallery_widget.parent_widget.gallery_layout.count() == 1:
-						self.gallery_widget.parent_widget.close()
-					else:
-						self.gallery_widget.close()
-
-		def show_duplicates(duplicates):
-			duplicate_spinner.before_hide()
-			if duplicates:
-				notifbar.add_text('Found {} duplicates!'.format(len(duplicates)))
-				log_d('Found {} duplicates'.format(len(duplicates)))
-
-				g_widget = io_misc.GalleryPopup(("These galleries are found to" + " be duplicates.", duplicates), self, menu=GalleryContextMenu)
-				if g_widget.graphics_blur:
-					g_widget.graphics_blur.setEnabled(False)
-				buttons = g_widget.add_buttons("Close")
-				buttons[0].clicked.connect(g_widget.close)
-			else:
-				notifbar.add_text('No duplicates found!')
+		dup_tab = self.tab_manager.addTab("Duplicate", app_constants.ViewType.Duplicate)
+		dup_tab.view.set_delete_proxy(self.default_manga_view.gallery_model)
 
 		class DuplicateCheck(QObject):
-			found_duplicates = pyqtSignal(list)
+			found_duplicates = pyqtSignal(tuple)
+			finished = pyqtSignal()
 			def __init__(self):
 				super().__init__()
 
-			def checkSimple(self):
-				galleries = app_constants.GALLERY_DATA
+			def checkSimple(self, model):
+				galleries = model._data
 
 				duplicates = []
-				for g in galleries:
-					notifbar.add_text('Checking gallery {}'.format(g.id))
+				for n, g in enumerate(galleries, 1):
+					notifbar.add_text('Checking gallery {}'.format(n))
 					log_d('Checking gallery {}'.format(g.title.encode(errors="ignore")))
 					for y in galleries:
 						title = g.title.strip().lower() == y.title.strip().lower()
@@ -1182,15 +1145,18 @@ class AppWindow(QMainWindow):
 							if g not in duplicates:
 								duplicates.append(y)
 								duplicates.append(g)
-				self.found_duplicates.emit(duplicates)
+								self.found_duplicates.emit((g, y))
+				self.finished.emit()
 
 		self._d_checker = DuplicateCheck()
 		self._d_checker.moveToThread(app_constants.GENERAL_THREAD)
-		self._d_checker.found_duplicates.connect(show_duplicates)
-		self._d_checker.found_duplicates.connect(self._d_checker.deleteLater)
+		self._d_checker.found_duplicates.connect(lambda t: dup_tab.view.add_gallery(t, record_time=True))
+		self._d_checker.finished.connect(dup_tab.click)
+		self._d_checker.finished.connect(self._d_checker.deleteLater)
+		self._d_checker.finished.connect(duplicate_spinner.before_hide)
 		if simple:
 			self.duplicate_check_invoker.connect(self._d_checker.checkSimple)
-		self.duplicate_check_invoker.emit()
+		self.duplicate_check_invoker.emit(self.default_manga_view.gallery_model)
 
 	def excepthook(self, ex_type, ex, tb):
 		w = misc.AppDialog(self, misc.AppDialog.MESSAGE)

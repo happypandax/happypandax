@@ -16,8 +16,7 @@ import datetime, os, enum, scandir, threading, logging, queue, io, uuid, functoo
 import re as regex
 from dateutil import parser as dateparser
 
-from PyQt5.QtCore import Qt, QObject, pyqtSignal
-from PyQt5.QtGui import QImage, QPainter, QBrush, QPen
+from PyQt5.QtCore import QObject, pyqtSignal, QTime
 
 from utils import (today, ArchiveFile, generate_img_hash, delete_path,
 					 ARCHIVE_FILES, get_gallery_img, IMG_FILES)
@@ -1487,6 +1486,7 @@ class Gallery:
 		self._profile_load_status = {}
 		self.dead_link = False
 		self.state = app_constants.GalleryState.Default
+		self.qtime = QTime() # used by views to record addition
 
 	@property
 	def path(self):
