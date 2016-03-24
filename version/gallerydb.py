@@ -1457,7 +1457,7 @@ class Gallery:
 		self.parent = None
 		self.title = ""
 		self.profile = ""
-		self.path = ""
+		self._path = ""
 		self.path_in_archive = ""
 		self.is_archive = 0
 		self.artist = ""
@@ -1477,6 +1477,7 @@ class Gallery:
 		self._db_v = None
 		self.hashes = []
 		self.exed = 0
+		self.file_type = "folder"
 		self.view = app_constants.ViewType.Default # default view
 
 		self._cache_id = 0 # used by custom delegate to cache profile
@@ -1486,6 +1487,17 @@ class Gallery:
 		self._profile_load_status = {}
 		self.dead_link = False
 		self.state = app_constants.GalleryState.Default
+
+	@property
+	def path(self):
+		return self._path
+
+	@path.setter
+	def path(self, n_p):
+		self._path = n_p
+		_, ext = os.path.splitext(n_p)
+		if ext:
+			self.file_type = ext[1:].lower() # remove dot
 
 	def set_defaults(self):
 		if not self.type:
@@ -2152,7 +2164,7 @@ class DatabaseStartup(QObject):
 	def __init__(self):
 		super().__init__()
 		ListDB.init_lists()
-		self._fetch_count = 50
+		self._fetch_count = 500
 		self._offset = 0
 		self._fetching = False
 		self.count = 0
@@ -2170,11 +2182,12 @@ class DatabaseStartup(QObject):
 			self.fetch_galleries(self._offset, rec_to_fetch, manga_views)
 			self._offset += rec_to_fetch
 			remaining = self.count - self._offset
-
+		[v.list_view.manga_delegate._increment_paint_level() for v in manga_views]
 		self.PROGRESS.emit("Loading chapters...")
 		self.fetch_chapters()
 		self.PROGRESS.emit("Loading tags...")
 		self.fetch_tags()
+		[v.list_view.manga_delegate._increment_paint_level() for v in manga_views]
 		self.PROGRESS.emit("Loading hashes...")
 		self.fetch_hashes()
 		self._fetching = False
@@ -2189,11 +2202,9 @@ class DatabaseStartup(QObject):
 			if gallery_list:
 				self._loaded_galleries.extend(gallery_list)
 				for view in manga_views:
-					view.list_view.setUpdatesEnabled(False)
 					view_galleries = [g for g in gallery_list if g.view == view.view_type]
 					view.gallery_model._gallery_to_add = view_galleries
 					view.gallery_model.insertRows(view.gallery_model.rowCount(), len(view_galleries))
-					view.list_view.setUpdatesEnabled(True)
 
 	def fetch_chapters(self):
 		for g in self._loaded_galleries:

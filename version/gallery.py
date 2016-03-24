@@ -591,12 +591,14 @@ class GridDelegate(QStyledItemDelegate):
 	POPUP = pyqtSignal()
 	CONTEXT_ON = False
 
-	def __init__(self, parent):
+	def __init__(self, app_inst, parent):
 		super().__init__(parent)
 		QPixmapCache.setCacheLimit(app_constants.THUMBNAIL_CACHE_SIZE[0]*
 							 app_constants.THUMBNAIL_CACHE_SIZE[1])
 		self._painted_indexes = {}
-		self.parent_widget = parent
+		self.view = parent
+		self.parent_widget = app_inst
+		self._paint_level = 0
 
 		#misc.FileIcon.refresh_default_icon()
 		self.file_icons = misc.FileIcon()
@@ -634,11 +636,20 @@ class GridDelegate(QStyledItemDelegate):
 			self._painted_indexes[key] = k
 			return k
 
+	def _increment_paint_level(self):
+		self._paint_level += 1
+		self.view.update()
+
 	def paint(self, painter, option, index):
 		assert isinstance(painter, QPainter)
-		if index.data(Qt.UserRole+1):
-			if app_constants.HIGH_QUALITY_THUMBS:
-				painter.setRenderHint(QPainter.SmoothPixmapTransform)
+		rec = option.rect.getRect()
+		x = rec[0]
+		y = rec[1]
+		w = rec[2]
+		h = rec[3]
+		if self._paint_level:
+			#if app_constants.HIGH_QUALITY_THUMBS:
+			#	painter.setRenderHint(QPainter.SmoothPixmapTransform)
 			painter.setRenderHint(QPainter.Antialiasing)
 			gallery = index.data(Qt.UserRole+1)
 			title = gallery.title
@@ -670,12 +681,6 @@ class GridDelegate(QStyledItemDelegate):
 				artist_size = "font-size:{}px;".format(self.font_size-2)
 			else:
 				artist_size = "font-size:{}px;".format(self.font_size)
-
-			rec = option.rect.getRect()
-			x = rec[0]
-			y = rec[1]
-			w = rec[2]
-			h = rec[3]
 
 			text_area = QTextDocument()
 			text_area.setDefaultFont(option.font)
@@ -739,7 +744,7 @@ class GridDelegate(QStyledItemDelegate):
 					  clip=clipping)
 
 			loaded_image = gallery.get_profile(app_constants.ProfileType.Default)
-			if loaded_image:
+			if loaded_image and self._paint_level > 1 and self.view.scroll_speed < 1000:
 				# if we can't find a cached image
 				pix_cache = QPixmapCache.find(self.key(loaded_image.cacheKey()))
 				if isinstance(pix_cache, QPixmap):
@@ -826,22 +831,41 @@ class GridDelegate(QStyledItemDelegate):
 				painter.drawLine(rib_top_2, rib_side_2)
 				painter.drawLine(rib_side_1, rib_side_2)
 			painter.restore()
-			
-			if app_constants._REFRESH_EXTERNAL_VIEWER:
-				if app_constants.USE_EXTERNAL_VIEWER:
-					self.external_icon = self.file_icons.get_external_file_icon()
-				else:
-					self.external_icon = self.file_icons.get_default_file_icon()
+
+			if self._paint_level > 1:
+				if app_constants._REFRESH_EXTERNAL_VIEWER:
+					if app_constants.USE_EXTERNAL_VIEWER:
+						self.external_icon = self.file_icons.get_external_file_icon()
+					else:
+						self.external_icon = self.file_icons.get_default_file_icon()
 			
 
-			if app_constants.DISPLAY_GALLERY_TYPE:
-				self.type_icon = self.file_icons.get_file_icon(gallery.path)
-				if self.type_icon and not self.type_icon.isNull():
-					self.type_icon.paint(painter, QRect(x+2, y+app_constants.THUMB_H_SIZE-16, 16, 16))
+				if app_constants.DISPLAY_GALLERY_TYPE:
+					type_color = QColor(239, 0, 0, 200)
+					if gallery.file_type == "zip":
+						type_color = QColor(241, 0, 83, 200)
+					elif gallery.file_type == "cbz":
+						type_color = QColor(0, 139, 0, 200)
+					elif gallery.file_type == "rar":
+						type_color = QColor(30, 127, 150, 200)
+					elif gallery.file_type == "cbr":
+						type_color = QColor(210, 0, 13, 200)
 
-			if app_constants.USE_EXTERNAL_PROG_ICO:
-				if self.external_icon and not self.external_icon.isNull():
-					self.external_icon.paint(painter, QRect(x+w-30, y+app_constants.THUMB_H_SIZE-28, 28, 28))
+					painter.save()
+					painter.setPen(QPen(Qt.white))
+					type_w = painter.fontMetrics().width(gallery.file_type)
+					type_h = painter.fontMetrics().height()
+					type_p = QPoint(x+4, y+app_constants.THUMB_H_SIZE-type_h-5)
+					type_rect = QRect(type_p.x()-2, type_p.y()-1, type_w+4, type_h+1)
+					painter.fillRect(type_rect, type_color)
+					painter.drawText(type_p.x(), type_p.y()+painter.fontMetrics().height()-4, gallery.file_type)
+					painter.restore()
+					
+
+
+				if app_constants.USE_EXTERNAL_PROG_ICO:
+					if self.external_icon and not self.external_icon.isNull():
+						self.external_icon.paint(painter, QRect(x+w-30, y+app_constants.THUMB_H_SIZE-28, 28, 28))
 
 			if gallery.state == app_constants.GalleryState.New:
 				painter.save()
@@ -954,7 +978,13 @@ class GridDelegate(QStyledItemDelegate):
 			if option.state & QStyle.State_Selected:
 				painter.setPen(QPen(option.palette.highlightedText().color()))
 		else:
-			super().paint(painter, option, index)
+			painter.fillRect(option.rect, QColor(164,164,164,100))
+			painter.setPen(QColor(164,164,164,200))
+			txt_layout = misc.text_layout("Fetching...", w, self.title_font, self.title_font_m)
+
+			clipping = QRectF(x, y+h//4, w, app_constants.GRIDBOX_LBL_H - 10)
+			txt_layout.draw(painter, QPointF(x, y+h//4),
+					clip=clipping)
 
 	def _ribbon_color(self, gallery_type):
 		if gallery_type:
@@ -1009,7 +1039,7 @@ class MangaView(QListView):
 		self.setDropIndicatorShown(True)
 		self.setDragDropMode(self.DragDrop)
 		self.sort_model = filter_model if filter_model else SortFilterModel(self)
-		self.manga_delegate = GridDelegate(parent)
+		self.manga_delegate = GridDelegate(parent, self)
 		self.setItemDelegate(self.manga_delegate)
 		self.setSpacing(app_constants.GRID_SPACING)
 		self.setFlow(QListView.LeftToRight)
@@ -1044,6 +1074,25 @@ class MangaView(QListView):
 			self.clicked.connect(debug_print)
 
 		self.k_scroller = QScroller.scroller(self)
+		self._scroll_speed_timer = QTimer(self)
+		self._scroll_speed_timer.timeout.connect(self._calculate_scroll_speed)
+		self._scroll_speed_timer.setInterval(500) # ms
+		self._old_scroll_value = 0
+		self._scroll_speed = 0
+		self._scroll_speed_timer.start()
+
+	@property
+	def scroll_speed(self):
+		return self._scroll_speed
+
+	def _calculate_scroll_speed(self):
+		new_value = self.verticalScrollBar().value()
+		self._scroll_speed = abs(self._old_scroll_value-new_value)
+		self._old_scroll_value = new_value
+		
+		# update view if not scrolling
+		if new_value == 0 and self._old_scroll_value != 0:
+			self.update()
 
 	def get_visible_indexes(self, column=0):
 		"find all galleries in viewport"
@@ -1323,6 +1372,7 @@ class CommonView:
 		if select:
 			view_cls.setCurrentIndex(idx)
 		view_cls.setAutoScroll(True)
+		view_cls.update()
 
 	@staticmethod
 	def contextMenuEvent(view_cls, event):
