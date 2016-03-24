@@ -398,53 +398,6 @@ class GalleryDialog(QWidget):
 
 		return True
 
-	def set_chapters(self, gallery_object, add_to_model=True):
-		path = gallery_object.path
-		chap_container = gallerydb.ChaptersContainer(gallery_object)
-		metafile = utils.GMetafile()
-		try:
-			log_d('Listing dir...')
-			con = scandir.scandir(path) # list all folders in gallery dir
-			log_i('Gallery source is a directory')
-			log_d('Sorting')
-			chapters = sorted([sub.path for sub in con if sub.is_dir() or sub.name.endswith(utils.ARCHIVE_FILES)]) #subfolders
-			# if gallery has chapters divided into sub folders
-			if len(chapters) != 0:
-				log_d('Chapters divided in folders..')
-				for ch in chapters:
-					chap = chap_container.create_chapter()
-					chap.title = utils.title_parser(ch)['title']
-					chap.path = os.path.join(path, ch)
-					metafile.update(utils.GMetafile(chap.path))
-					chap.pages = len([x for x in scandir.scandir(chap.path) if x.name.endswith(utils.IMG_FILES)])
-
-			else: #else assume that all images are in gallery folder
-				chap = chap_container.create_chapter()
-				chap.title = utils.title_parser(os.path.split(path)[1])['title']
-				chap.path = path
-				metafile.update(utils.GMetafile(path))
-				chap.pages = len([x for x in scandir.scandir(path) if x.name.endswith(utils.IMG_FILES)])
-
-		except NotADirectoryError:
-			if path.endswith(utils.ARCHIVE_FILES):
-				gallery_object.is_archive = 1
-				log_i("Gallery source is an archive")
-				archive_g = sorted(utils.check_archive(path))
-				for g in archive_g:
-					chap = chap_container.create_chapter()
-					chap.path = g
-					chap.in_archive = 1
-					metafile.update(utils.GMetafile(g, path))
-					arch = utils.ArchiveFile(path)
-					chap.pages = len(arch.dir_contents(g))
-					arch.close()
-
-		metafile.apply_gallery(gallery_object)
-		if add_to_model:
-			self.parent_widget.default_manga_view.add_gallery(gallery_object, True)
-			log_i('Sent gallery to model')
-		
-
 	def reject(self):
 		if self.check():
 			msgbox = QMessageBox()
@@ -458,6 +411,8 @@ class GalleryDialog(QWidget):
 			self.close()
 
 	def web_metadata(self, url, btn_widget, pgr_widget):
+		if not self.path_lbl.text():
+			return
 		self.link_lbl.setText(url)
 		btn_widget.hide()
 		pgr_widget.show()
@@ -487,7 +442,7 @@ class GalleryDialog(QWidget):
 		try:
 			dummy_gallery = self.make_gallery(self.gallery, False)
 		except AttributeError:
-			dummy_gallery = self.make_gallery(gallerydb.Gallery(), False)
+			dummy_gallery = self.make_gallery(gallerydb.Gallery(), False, True)
 		if not dummy_gallery:
 			status(False)
 			return None
@@ -559,13 +514,16 @@ class GalleryDialog(QWidget):
 			if new:
 				if not new_gallery.chapters:
 					log_d('Starting chapters')
-					thread = threading.Thread(target=self.set_chapters, args=(new_gallery,add_to_model))
+					thread = threading.Thread(target=utils.make_chapters, args=(new_gallery,))
 					thread.start()
 					thread.join()
 					log_d('Finished chapters')
 					if new and app_constants.MOVE_IMPORTED_GALLERIES:
 						app_constants.OVERRIDE_MONITOR = True
 						new_gallery.move_gallery()
+				if add_to_model:
+					self.parent_widget.default_manga_view.add_gallery(new_gallery, True)
+					log_i('Sent gallery to model')
 			else:
 				if add_to_model:
 					self.parent_widget.default_manga_view.replace_gallery([new_gallery], False)

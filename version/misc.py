@@ -1043,7 +1043,7 @@ class GalleryMenu(QMenu):
 
 			send_to_lib = self.addAction('Send to library',
 								self.send_to_lib)
-			add_to_ignore = self.addAction('Remove and ignore',
+			add_to_ignore = self.addAction('Ignore and remove',
 								  self.add_to_ignore)
 		self.addSeparator()
 		if not self.selected and isinstance(view, QTableView):

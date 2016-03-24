@@ -473,6 +473,7 @@ class SideBarWidget(QFrame):
 		self.setAcceptDrops(True)
 		self.parent_widget = parent
 		self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
+		self.parent_widget
 		self._widget_layout = QHBoxLayout(self)
 
 		# widget stuff

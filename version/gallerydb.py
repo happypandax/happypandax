@@ -497,7 +497,7 @@ class GalleryDB(DBBase):
 		"""
 		#pdb.set_trace()
 		if not galleries:
-			galleries = app_constants.GALLERY_DATA
+			galleries = app_constants.GALLERY_DATA + app_constants.GALLERY_ADDITION_DATA
 
 		if filter:
 			filter_list = []
@@ -1159,7 +1159,15 @@ class HashDB(DBBase):
 				log_e("Could not generate hash of dead gallery: {}".format(gallery.title.encode(errors='ignore')))
 				return {}
 
-			chap = gallery.chapters[chapter]
+			try:
+				chap = gallery.chapters[chapter]
+			except KeyError:
+				utils.make_chapters(gallery)
+				try:
+					chap = gallery.chapters[chapter]
+				except KeyError:
+					return {}
+				
 			executing = []
 			try:
 				if gallery.is_archive:

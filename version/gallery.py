@@ -974,7 +974,7 @@ class GridDelegate(QStyledItemDelegate):
 				txt_layout.draw(painter, QPointF(x, y+h*0.3))
 				painter.restore()
 
-			if not gallery.id:
+			if not gallery.id and self.view.view_type != app_constants.ViewType.Addition:
 				warning("This gallery does not exist anymore!")
 			elif gallery.dead_link:
 				warning("Cannot find gallery source!")
@@ -1360,7 +1360,10 @@ class CommonView:
 
 	@staticmethod
 	def open_random_gallery(view_cls):
-		g = random.randint(0, view_cls.sort_model.rowCount()-1)
+		try:
+			g = random.randint(0, view_cls.sort_model.rowCount()-1)
+		except ValueError:
+			return
 		indx = view_cls.sort_model.index(g, 1)
 		chap_numb = 0
 		if app_constants.OPEN_RANDOM_GALLERY_CHAPTERS:

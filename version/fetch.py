@@ -74,7 +74,7 @@ class Fetch(QObject):
 		self._refresh_filter_list()
 
 	def _refresh_filter_list(self):
-			gallery_data = app_constants.GALLERY_DATA
+			gallery_data = app_constants.GALLERY_DATA + app_constants.GALLERY_ADDITION_DATA
 			filter_list = []
 			for g in gallery_data:
 				filter_list.append(os.path.normcase(g.path))

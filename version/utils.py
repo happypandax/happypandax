@@ -1199,6 +1199,49 @@ def PToQImageHelper(im):
 		'data': __data, 'im': im, 'format': format, 'colortable': colortable
 	}
 
+def make_chapters(gallery_object):
+	chap_container = gallery_object.chapters
+	path = gallery_object.path
+	metafile = GMetafile()
+	try:
+		log_d('Listing dir...')
+		con = scandir.scandir(path) # list all folders in gallery dir
+		log_i('Gallery source is a directory')
+		log_d('Sorting')
+		chapters = sorted([sub.path for sub in con if sub.is_dir() or sub.name.endswith(ARCHIVE_FILES)]) #subfolders
+		# if gallery has chapters divided into sub folders
+		if len(chapters) != 0:
+			log_d('Chapters divided in folders..')
+			for ch in chapters:
+				chap = chap_container.create_chapter()
+				chap.title = title_parser(ch)['title']
+				chap.path = os.path.join(path, ch)
+				metafile.update(GMetafile(chap.path))
+				chap.pages = len([x for x in scandir.scandir(chap.path) if x.name.endswith(IMG_FILES)])
+
+		else: #else assume that all images are in gallery folder
+			chap = chap_container.create_chapter()
+			chap.title = title_parser(os.path.split(path)[1])['title']
+			chap.path = path
+			metafile.update(GMetafile(path))
+			chap.pages = len([x for x in scandir.scandir(path) if x.name.endswith(IMG_FILES)])
+
+	except NotADirectoryError:
+		if path.endswith(ARCHIVE_FILES):
+			gallery_object.is_archive = 1
+			log_i("Gallery source is an archive")
+			archive_g = sorted(check_archive(path))
+			for g in archive_g:
+				chap = chap_container.create_chapter()
+				chap.path = g
+				chap.in_archive = 1
+				metafile.update(GMetafile(g, path))
+				arch = ArchiveFile(path)
+				chap.pages = len(arch.dir_contents(g))
+				arch.close()
+
+	metafile.apply_gallery(gallery_object)
+
 def timeit(func):
 	@functools.wraps(func)
 	def newfunc(*args, **kwargs):
