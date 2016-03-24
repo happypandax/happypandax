@@ -123,8 +123,6 @@ class SettingsDialog(QWidget):
 	def restore_values(self):
 		# Visual
 		self.high_quality_thumbs = app_constants.HIGH_QUALITY_THUMBS
-		self.popup_width = app_constants.POPUP_WIDTH
-		self.popup_height = app_constants.POPUP_HEIGHT
 		self.style_sheet = app_constants.user_stylesheet_path
 
 		# Advanced
@@ -152,13 +150,14 @@ class SettingsDialog(QWidget):
 		self.open_random_g_chapters.setChecked(app_constants.OPEN_RANDOM_GALLERY_CHAPTERS)
 		self.rename_g_source_group.setChecked(app_constants.RENAME_GALLERY_SOURCE)
 		self.path_to_unrar.setText(app_constants.unrar_tool_path)
+		self.keep_added_gallery.setChecked(not app_constants.KEEP_ADDED_GALLERIES)
 		# App / General / External Viewer
 		self.external_viewer_path.setText(app_constants.EXTERNAL_VIEWER_PATH)
 
 		# App / Monitor / Misc
 		self.enable_monitor.setChecked(app_constants.ENABLE_MONITOR)
 		self.look_new_gallery_startup.setChecked(app_constants.LOOK_NEW_GALLERY_STARTUP)
-		self.auto_add_new_galleries.setChecked(app_constants.LOOK_NEW_GALLERY_AUTOADD)
+
 		# App / Monitor / Folders
 		for path in app_constants.MONITOR_PATHS:
 			self.add_folder_monitor(path)
@@ -201,7 +200,11 @@ class SettingsDialog(QWidget):
 
 		self.download_directory.setText(app_constants.DOWNLOAD_DIRECTORY)
 		self.torrent_client.setText(app_constants.TORRENT_CLIENT)
+		self.download_gallery_lib.setChecked(app_constants.DOWNLOAD_GALLERY_TO_LIB)
 
+		# Visual / Grid View
+		self.g_popup_width.setValue(app_constants.POPUP_WIDTH)
+		self.g_popup_height.setValue(app_constants.POPUP_HEIGHT)
 		# Visual / Grid View / Tooltip
 		self.grid_tooltip_group.setChecked(app_constants.GRID_TOOLTIP)
 		self.visual_grid_tooltip_title.setChecked(app_constants.TOOLTIP_TITLE)
@@ -272,6 +275,10 @@ class SettingsDialog(QWidget):
 		set(app_constants.SEND_FILES_TO_TRASH, 'Application', 'send files to trash')
 
 		# App / General / Gallery
+
+		app_constants.KEEP_ADDED_GALLERIES = not self.keep_added_gallery.isChecked()
+		set(app_constants.KEEP_ADDED_GALLERIES, 'Application', 'keep added galleries')
+
 		g_custom_lang = []
 		for x in range(self.g_languages.count()):
 			l = self.g_languages.itemText(x).capitalize()
@@ -327,8 +334,6 @@ class SettingsDialog(QWidget):
 		set(app_constants.ENABLE_MONITOR, 'Application', 'enable monitor')
 		app_constants.LOOK_NEW_GALLERY_STARTUP = self.look_new_gallery_startup.isChecked()
 		set(app_constants.LOOK_NEW_GALLERY_STARTUP, 'Application', 'look new gallery startup')
-		app_constants.LOOK_NEW_GALLERY_AUTOADD = self.auto_add_new_galleries.isChecked()
-		set(app_constants.LOOK_NEW_GALLERY_AUTOADD, 'Application', 'look new gallery autoadd')
 		# App / Monitor / folders
 		paths = []
 		folder_p_widgets = self.take_all_layout_widgets(self.folders_layout)
@@ -370,6 +375,9 @@ class SettingsDialog(QWidget):
 		app_constants.TORRENT_CLIENT = self.torrent_client.text()
 		set(app_constants.TORRENT_CLIENT, 'Web', 'torrent client')
 
+		app_constants.DOWNLOAD_GALLERY_TO_LIB = self.download_gallery_lib.isChecked()
+		set(app_constants.DOWNLOAD_GALLERY_TO_LIB, 'Web', 'download galleries to library')
+
 		# Web / Metdata
 		if self.default_ehen_url.isChecked():
 			app_constants.DEFAULT_EHEN_URL = 'http://g.e-hentai.org/'
@@ -400,6 +408,12 @@ class SettingsDialog(QWidget):
 			henlist.append('chaikahen')
 		app_constants.HEN_LIST = henlist
 		set(app_constants.HEN_LIST, 'Web', 'hen list')
+
+		# Visual / Grid View
+		app_constants.POPUP_WIDTH = self.g_popup_width.value()
+		set(app_constants.POPUP_WIDTH, 'Visual', 'popup.w')
+		app_constants.POPUP_HEIGHT = self.g_popup_height.value()
+		set(app_constants.POPUP_HEIGHT, 'Visual', 'popup.h')
 
 		# Visual / Grid View / Tooltip
 		app_constants.GRID_TOOLTIP = self.grid_tooltip_group.isChecked()
@@ -585,6 +599,9 @@ class SettingsDialog(QWidget):
 		self.send_2_trash = QCheckBox("Send deleted files to recycle bin", self)
 		self.send_2_trash.setToolTip("When unchecked, files will get deleted permanently and be unrecoverable!")
 		app_general_m_l.addRow(self.send_2_trash)
+		self.keep_added_gallery = QCheckBox("Remove galleries added in inbox on exit")
+		self.keep_added_gallery.setToolTip("When turned off, galleries in inbox will not be deleted on exit")
+		app_general_m_l.addRow(self.keep_added_gallery)
 
 		# App / General / Search
 		app_search, app_search_layout = groupbox('Search', QFormLayout, application_general)
@@ -648,11 +665,13 @@ class SettingsDialog(QWidget):
 		self.open_galleries_sequentially = QCheckBox("Open chapters sequentially (Note: has no effect if path to viewer is not specified)")
 		subf_info = QLabel("Behaviour of 'Scan for new galleries on startup' option will be affected.")
 		subf_info.setWordWrap(True)
+		
 		app_gallery_l.addRow('Note:', subf_info)
 		app_gallery_l.addRow(self.subfolder_as_chapters)
 		app_gallery_l.addRow(extract_gallery_info)
 		app_gallery_l.addRow(self.extract_gallery_before_opening)
 		app_gallery_l.addRow(self.open_galleries_sequentially)
+
 		self.move_imported_gs, move_imported_gs_l = groupbox('Move imported galleries',
 													   QFormLayout, app_gallery_page)
 		self.move_imported_gs.setCheckable(True)
@@ -701,12 +720,8 @@ class SettingsDialog(QWidget):
 		app_monitor_misc_m_l.addRow(monitor_info)
 		self.enable_monitor = QCheckBox('Enable directory monitoring')
 		app_monitor_misc_m_l.addRow(self.enable_monitor)
-		self.look_new_gallery_startup = QGroupBox('Scan for new galleries on startup', self)
+		self.look_new_gallery_startup = QCheckBox('Scan for new galleries on startup')
 		app_monitor_misc_m_l.addRow(self.look_new_gallery_startup)
-		self.look_new_gallery_startup.setCheckable(True)
-		look_new_gallery_startup_m_l = QVBoxLayout(self.look_new_gallery_startup)
-		self.auto_add_new_galleries = QCheckBox('Automatically add found galleries')
-		look_new_gallery_startup_m_l.addWidget(self.auto_add_new_galleries)
 
 		# App / Monitor / folders
 		app_monitor_group = QGroupBox('Directories *', self)
@@ -828,6 +843,8 @@ class SettingsDialog(QWidget):
 		web_downloader_l.addRow(QLabel("Leave empty to use default torrent client."+
 								 "\nIt is NOT recommended to import a file while it's still downloading."))
 		web_downloader_l.addRow('Torrent client:', self.torrent_client)
+		self.download_gallery_lib = QCheckBox("Send downloaded galleries directly to library")
+		web_downloader_l.addRow(self.download_gallery_lib)
 
 		# Web / Metadata
 		web_metadata_page = QScrollArea()
@@ -886,6 +903,18 @@ class SettingsDialog(QWidget):
 
 		# grid view
 		grid_view_general_page, grid_view_layout = new_tab("Grid View", visual, True)
+		# grid view / popup
+		grid_popup, grid_popup_l = groupbox("Popup", QFormLayout, grid_view_general_page)
+		grid_view_layout.addRow(grid_popup)
+		self.g_popup_width = QSpinBox(grid_popup)
+		self.g_popup_width.setRange(200, 100000)
+		self.g_popup_width.setFixedWidth(120)
+		grid_popup_l.addRow("Popup Width:", self.g_popup_width)
+		self.g_popup_height = QSpinBox(grid_popup)
+		self.g_popup_height.setRange(100, 1000000)
+		self.g_popup_height.setFixedWidth(120)
+		grid_popup_l.addRow("Popup Height:", self.g_popup_height)
+
 		# grid view / tooltip
 		self.grid_tooltip_group = QGroupBox('Tooltip', grid_view_general_page)
 		self.grid_tooltip_group.setCheckable(True)
@@ -1115,8 +1144,8 @@ class SettingsDialog(QWidget):
 				if clear_cache_confirm.exec() == QMessageBox.Yes:
 					clear_cache = True
 				app_spinner = misc.Spinner(self.parent_widget)
-				app_spinner.set_size(55)
-				app_spinner.set_text("Thumbnails...")
+				app_spinner.set_size(60)
+				app_spinner.set_text("Thumbnails")
 				app_spinner.admin_db = gallerydb.AdminDB()
 				app_spinner.admin_db.moveToThread(app_constants.GENERAL_THREAD)
 				app_spinner.admin_db.DONE.connect(app_spinner.admin_db.deleteLater)

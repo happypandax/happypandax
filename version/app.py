@@ -234,7 +234,7 @@ class AppWindow(QMainWindow):
 		self.init_stat_bar()
 		self.manga_views = {}
 		self._current_manga_view = None
-		self.default_manga_view = gallery.MangaViews(app_constants.ViewType.Default, self)
+		self.default_manga_view = gallery.MangaViews(app_constants.ViewType.Default, self, True)
 		def refresh_view():
 			self.current_manga_view.sort_model.refresh()
 		self.db_startup.DONE.connect(refresh_view)

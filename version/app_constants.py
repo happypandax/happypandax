@@ -127,7 +127,6 @@ TAG_PATH = os.path.join(typicons_root, "tags.svg")
 # Monitored Paths
 OVERRIDE_MONITOR = False # set true to make watchers to ignore next item (will be set to False)
 LOOK_NEW_GALLERY_STARTUP = get(True, 'Application', 'look new gallery startup', bool)
-LOOK_NEW_GALLERY_AUTOADD = get(False, 'Application', 'look new gallery autoadd', bool)
 ENABLE_MONITOR = get(True, 'Application', 'enable monitor', bool)
 MONITOR_PATHS = [p for p in get([], 'Application', 'monitor paths', list) if os.path.exists(p)]
 IGNORE_PATHS = get([], 'Application', 'ignore paths', list)
@@ -190,8 +189,8 @@ PREFETCH_ITEM_AMOUNT = get(50, 'Advanced', 'prefetch item amount', int)# amount 
 SCROLL_SPEED = get(7, 'Advanced', 'scroll speed', int) # controls how many steps it takes when scrolling
 
 # POPUP
-POPUP_WIDTH = get(450, 'Visual', 'popup.w', int)
-POPUP_HEIGHT = get(220, 'Visual', 'popup.h', int)
+POPUP_WIDTH = get(500, 'Visual', 'popup.w', int)
+POPUP_HEIGHT = get(300, 'Visual', 'popup.h', int)
 
 # Gallery
 KEEP_ADDED_GALLERIES = get(True, 'Application', 'keep added galleries', bool)

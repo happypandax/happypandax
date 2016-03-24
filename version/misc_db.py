@@ -69,15 +69,17 @@ class ToolbarTabManager(QObject):
 		b.view.list_view.sort_model.rowsRemoved.connect(self.parent_widget.stat_row_info)
 		b.view.show()
 
-	def addTab(self, name, view_type=app_constants.ViewType.Default, delegate_paint=True):
+	def addTab(self, name, view_type=app_constants.ViewType.Default, delegate_paint=True, allow_sidebarwidget=False):
 		if self.toolbar:
 			t = misc.ToolbarButton(self.toolbar, name)
 			t.select.connect(self._manage_selected)
 			t.close_tab.connect(self.removeTab)
 			if self.library_btn:
-				t.view = gallery.MangaViews(view_type, self.parent_widget)
+				t.view = gallery.MangaViews(view_type, self.parent_widget, allow_sidebarwidget)
 				t.view.hide()
 				t.close_tab.connect(lambda:self.library_btn.click())
+				if not allow_sidebarwidget:
+					t.clicked.connect(self.parent_widget.sidebar_list.arrow_handle.click)
 			else:
 				t.view = self.parent_widget.default_manga_view
 			if delegate_paint:
@@ -558,7 +560,11 @@ class SideBarWidget(QFrame):
 				self._d_widget.hide()
 		elif self.slide_animation.Running:
 			if self.arrow_handle.current_arrow == self.arrow_handle.IN:
-				self._d_widget.show()
+				if not self.parent_widget.current_manga_view.allow_sidebarwidget:
+					self.arrow_handle.current_arrow = self.arrow_handle.OUT
+					self.arrow_handle.update()
+				else:
+					self._d_widget.show()
 
 
 	def slide(self, state):

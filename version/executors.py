@@ -75,16 +75,17 @@ def _task_thumbnail(gallery_or_path, img=None, width=app_constants.THUMB_W_SIZE,
 
 	return new_img_path
 
-def _task_load_thumbnail(ppath, thumb_size):
+def _task_load_thumbnail(ppath, thumb_size, on_method=None, **kwargs):
 	if ppath:
 		img = QImage(ppath)
 		if not img.isNull():
 			size = img.size()
-			if size.width() == thumb_size[0]:
-				return img
-			else:
+			if size.width() != thumb_size[0]:
 				# TODO: use _task_thumbnail
-				return _rounded_qimage(img.scaled(thumb_size[0], thumb_size[1], Qt.KeepAspectRatio, Qt.SmoothTransformation), 5)
+				img = _rounded_qimage(img.scaled(thumb_size[0], thumb_size[1], Qt.KeepAspectRatio, Qt.SmoothTransformation), 5)
+			if on_method:
+				on_method(img, **kwargs)
+			return img
 
 class Executors:
 	_thumbnail_exec = futures.ThreadPoolExecutor(3)
@@ -107,8 +108,6 @@ class Executors:
 	@classmethod
 	def load_thumbnail(cls, ppath, thumb_size=app_constants.THUMB_DEFAULT, on_method=None, **kwargs):
 		"**kwargs will be passed to on_method"
-		f = cls._profile_exec.submit(_task_load_thumbnail, ppath, thumb_size)
-		if on_method:
-			f.add_done_callback(lambda a: on_method(a, **kwargs))
+		f = cls._profile_exec.submit(_task_load_thumbnail, ppath, thumb_size, on_method, **kwargs)
 		return f
 

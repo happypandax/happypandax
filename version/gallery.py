@@ -751,7 +751,7 @@ class GridDelegate(QStyledItemDelegate):
 					  clip=clipping)
 
 			loaded_image = gallery.get_profile(app_constants.ProfileType.Default)
-			if loaded_image and self._paint_level > 1 and self.view.scroll_speed < 1000:
+			if loaded_image and self._paint_level > 0 and self.view.scroll_speed < 1000:
 				# if we can't find a cached image
 				pix_cache = QPixmapCache.find(self.key(loaded_image.cacheKey()))
 				if isinstance(pix_cache, QPixmap):
@@ -1453,7 +1453,8 @@ class MangaViews:
 		List = 1
 		Table = 2
 
-	def __init__(self, v_type, parent):
+	def __init__(self, v_type, parent, allow_sidebarwidget=False):
+		self.allow_sidebarwidget = allow_sidebarwidget
 		self._delete_proxy_model = None
 
 		self.view_type = v_type
@@ -1509,7 +1510,8 @@ class MangaViews:
 		if isinstance(gallery, (list, tuple)):
 			for g in gallery:
 				g.view = self.view_type
-				g.state = app_constants.GalleryState.New
+				if self.view_type != app_constants.ViewType.Duplicate:
+					g.state = app_constants.GalleryState.New
 				if db:
 					gallerydb.execute(gallerydb.GalleryDB.add_gallery, True, g)
 				else:
@@ -1521,7 +1523,8 @@ class MangaViews:
 				g.qtime = QTime.currentTime()
 		else:
 			gallery.view = self.view_type
-			gallery.state = app_constants.GalleryState.New
+			if self.view_type != app_constants.ViewType.Duplicate:
+				gallery.state = app_constants.GalleryState.New
 			rows = 1
 			self.list_view.gallery_model._gallery_to_add.append(gallery)
 			if record_time:

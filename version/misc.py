@@ -502,7 +502,7 @@ class GalleryMetaWindow(ArrowWindow):
 			self.hide_animation.start()
 
 	def show_gallery(self, index, view):
-
+		self.resize(app_constants.POPUP_WIDTH, app_constants.POPUP_HEIGHT)
 		self.view = view
 		desktop_w = QDesktopWidget().width()
 		desktop_h = QDesktopWidget().height()
@@ -1043,6 +1043,8 @@ class GalleryMenu(QMenu):
 
 			send_to_lib = self.addAction('Send to library',
 								self.send_to_lib)
+			add_to_ignore = self.addAction('Remove and ignore',
+								  self.add_to_ignore)
 		self.addSeparator()
 		if not self.selected and isinstance(view, QTableView):
 			chapters_menu = self.addAction('Chapters')
@@ -1059,12 +1061,13 @@ class GalleryMenu(QMenu):
 		if self.view.view_type != app_constants.ViewType.Duplicate:
 			if not self.selected:
 				add_chapters = self.addAction('Add chapters', self.add_chapters)
-			add_to_list_txt = "Add selected to list" if self.selected else "Add to list"
-			add_to_list = self.addAction(add_to_list_txt)
-			add_to_list_menu = QMenu(self)
-			add_to_list.setMenu(add_to_list_menu)
-			for g_list in sorted(app_constants.GALLERY_LISTS):
-				add_to_list_menu.addAction(g_list.name, functools.partial(self.add_to_list, g_list))
+			if self.view.view_type == app_constants.ViewType.Default:
+				add_to_list_txt = "Add selected to list" if self.selected else "Add to list"
+				add_to_list = self.addAction(add_to_list_txt)
+				add_to_list_menu = QMenu(self)
+				add_to_list.setMenu(add_to_list_menu)
+				for g_list in sorted(app_constants.GALLERY_LISTS):
+					add_to_list_menu.addAction(g_list.name, functools.partial(self.add_to_list, g_list))
 		self.addSeparator()
 		if not self.selected:
 			get_metadata = self.addAction('Get metadata',
@@ -1145,6 +1148,25 @@ class GalleryMenu(QMenu):
 			allow_metadata_txt = "Include in auto metadata fetch" if self.allow_metadata_exed else "Exclude in auto metadata fetch"
 		adv_menu.addAction(allow_metadata_txt, self.allow_metadata_fetch)
 
+	def add_to_ignore(self):
+		if self.selected:
+			gs = self.selected
+		else:
+			gs = [self.index]
+		galleries = [idx.data(Qt.UserRole+1) for idx in gs]
+
+		paths = set()
+		for g in galleries:
+			for chap in g.chapters:
+				if not chap.in_archive:
+					paths.add(chap.path)
+				else:
+					paths.add(g.path)
+		app_constants.IGNORE_PATHS.extend(paths)
+
+		settings.set(app_constants.IGNORE_PATHS, 'Application', 'ignore paths')
+		self.delete_galleries.emit(False)
+
 	def send_to_lib(self):
 		if self.selected:
 			gs = self.selected
@@ -1214,7 +1236,7 @@ class GalleryMenu(QMenu):
 		if new_cover and new_cover.lower().endswith(utils.IMG_FILES):
 			gallerydb.GalleryDB.clear_thumb(gallery.profile)
 			Executors.generate_thumbnail(gallery, img=new_cover, on_method=gallery.set_profile)
-			gallery._cache = None
+			gallery.reset_profile()
 			log_i('Changed cover successfully!')
 
 	def open_first_chapters(self):

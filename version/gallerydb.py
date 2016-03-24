@@ -1479,7 +1479,6 @@ class Gallery:
 		self.file_type = "folder"
 		self.view = app_constants.ViewType.Default # default view
 
-		self._cache_id = 0 # used by custom delegate to cache profile
 		self._grid_visible = False
 		self._list_view_selected = False
 		self._profile_qimage = {}
@@ -1507,9 +1506,12 @@ class Gallery:
 		if not self.status:
 			self.status = app_constants.G_DEF_STATUS.capitalize()
 
-	def _profile_loaded(self, f, ptype=None, method=None):
-		self._profile_load_status[ptype]= f
-		img = f.result()
+	def reset_profile(self):
+		self._profile_load_status.clear()
+		self._profile_qimage.clear()
+
+	def _profile_loaded(self, img, ptype=None, method=None):
+		self._profile_load_status[ptype] = img
 		if method and img:
 			method(self, img)
 
@@ -1524,12 +1526,14 @@ class Gallery:
 				return
 			if f.result():
 				return f.result()
-		f = self._profile_load_status.get(ptype)
-		if not f or not f.result():
+		img = self._profile_load_status.get(ptype)
+		if not img:
 			self._profile_qimage[ptype] = Executors.load_thumbnail(
 				self.profile, psize,
 				on_method=self._profile_loaded,
 				ptype=ptype, method=on_method)
+
+		return img
 
 	def set_profile(self, future):
 		"set with profile with future object"
@@ -2146,6 +2150,7 @@ class AdminDB(QObject):
 		log_i('Regenerating thumbnails')
 		for n, g in enumerate(gs, 1):
 			execute(GalleryDB.rebuild_thumb, False, g)
+			g.reset_profile()
 			self.PROGRESS.emit(n)
 		self.DONE.emit(True)
 
