@@ -797,7 +797,8 @@ class GridDelegate(QStyledItemDelegate):
 
 			# draw if favourited
 			if gallery.fav == 1:
-				star_ribbon_w = star_ribbon_l = w*0.08
+				star_ribbon_w = w*0.1
+				star_ribbon_l = w*0.08
 				rib_top_1 = QPointF(x+star_ribbon_l, y)
 				rib_side_1 = QPointF(x, y+star_ribbon_l)
 				rib_top_2 = QPointF(x+star_ribbon_l+star_ribbon_w, y)
@@ -819,11 +820,11 @@ class GridDelegate(QStyledItemDelegate):
 				ribbon_path.addPolygon(ribbon_polygon)
 				ribbon_path.closeSubpath()
 				painter.drawPath(ribbon_path)
-				#painter.setPen(QColor("#d35400"))
-				#painter.drawPolyline(rib_top_1, rib_star_p1_1, rib_star_p1_2, rib_star_mid_1, rib_star_p1_4, rib_star_p1_3, rib_side_1)
-				#painter.drawLine(rib_top_1, rib_top_2)
-				#painter.drawLine(rib_top_2, rib_side_2)
-				#painter.drawLine(rib_side_1, rib_side_2)
+				painter.setPen(QColor(255, 0, 0, 100))
+				painter.drawPolyline(rib_top_1, rib_star_p1_1, rib_star_p1_2, rib_star_mid_1, rib_star_p1_4, rib_star_p1_3, rib_side_1)
+				painter.drawLine(rib_top_1, rib_top_2)
+				painter.drawLine(rib_top_2, rib_side_2)
+				painter.drawLine(rib_side_1, rib_side_2)
 			painter.restore()
 			
 			if app_constants._REFRESH_EXTERNAL_VIEWER:
@@ -1007,7 +1008,6 @@ class MangaView(QListView):
 		self.viewport().setAcceptDrops(True)
 		self.setDropIndicatorShown(True)
 		self.setDragDropMode(self.DragDrop)
-
 		self.sort_model = filter_model if filter_model else SortFilterModel(self)
 		self.manga_delegate = GridDelegate(parent)
 		self.setItemDelegate(self.manga_delegate)
@@ -1028,7 +1028,10 @@ class MangaView(QListView):
 		self.clicked.connect(lambda idx: self.gallery_window.show_gallery(idx, self))
 
 		self.current_sort = app_constants.CURRENT_SORT
-		self.sort(self.current_sort)
+		if self.view_type == app_constants.ViewType.Duplicate:
+			pass
+		else:
+			self.sort(self.current_sort)
 		if app_constants.DEBUG:
 			def debug_print(a):
 				g = a.data(Qt.UserRole+1)
@@ -1119,30 +1122,31 @@ class MangaView(QListView):
 				gallerydb.execute(gallerydb.ChapterDB.del_chapter, True, gallery.id, chap_numb)
 
 	def sort(self, name):
-		if name == 'title':
-			self.sort_model.setSortRole(Qt.DisplayRole)
-			self.sort_model.sort(0, Qt.AscendingOrder)
-			self.current_sort = 'title'
-		elif name == 'artist':
-			self.sort_model.setSortRole(GalleryModel.ARTIST_ROLE)
-			self.sort_model.sort(0, Qt.AscendingOrder)
-			self.current_sort = 'artist'
-		elif name == 'date_added':
-			self.sort_model.setSortRole(GalleryModel.DATE_ADDED_ROLE)
-			self.sort_model.sort(0, Qt.DescendingOrder)
-			self.current_sort = 'date_added'
-		elif name == 'pub_date':
-			self.sort_model.setSortRole(GalleryModel.PUB_DATE_ROLE)
-			self.sort_model.sort(0, Qt.DescendingOrder)
-			self.current_sort = 'pub_date'
-		elif name == 'times_read':
-			self.sort_model.setSortRole(GalleryModel.TIMES_READ_ROLE)
-			self.sort_model.sort(0, Qt.DescendingOrder)
-			self.current_sort = 'times_read'
-		elif name == 'last_read':
-			self.sort_model.setSortRole(GalleryModel.LAST_READ_ROLE)
-			self.sort_model.sort(0, Qt.DescendingOrder)
-			self.current_sort = 'last_read'
+		if not self.view_type == app_constants.ViewType.Duplicate:
+			if name == 'title':
+				self.sort_model.setSortRole(Qt.DisplayRole)
+				self.sort_model.sort(0, Qt.AscendingOrder)
+				self.current_sort = 'title'
+			elif name == 'artist':
+				self.sort_model.setSortRole(GalleryModel.ARTIST_ROLE)
+				self.sort_model.sort(0, Qt.AscendingOrder)
+				self.current_sort = 'artist'
+			elif name == 'date_added':
+				self.sort_model.setSortRole(GalleryModel.DATE_ADDED_ROLE)
+				self.sort_model.sort(0, Qt.DescendingOrder)
+				self.current_sort = 'date_added'
+			elif name == 'pub_date':
+				self.sort_model.setSortRole(GalleryModel.PUB_DATE_ROLE)
+				self.sort_model.sort(0, Qt.DescendingOrder)
+				self.current_sort = 'pub_date'
+			elif name == 'times_read':
+				self.sort_model.setSortRole(GalleryModel.TIMES_READ_ROLE)
+				self.sort_model.sort(0, Qt.DescendingOrder)
+				self.current_sort = 'times_read'
+			elif name == 'last_read':
+				self.sort_model.setSortRole(GalleryModel.LAST_READ_ROLE)
+				self.sort_model.sort(0, Qt.DescendingOrder)
+				self.current_sort = 'last_read'
 
 	def contextMenuEvent(self, event):
 		CommonView.contextMenuEvent(self, event)

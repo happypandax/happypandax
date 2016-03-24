@@ -218,25 +218,26 @@ class BaseMoveWidget(QWidget):
 
 
 class SortMenu(QMenu):
-	def __init__(self, parent, mangaview):
+	new_sort = pyqtSignal(str)
+	def __init__(self, app_inst, parent=None):
 		super().__init__(parent)
-		self.manga_view = mangaview
+		self.parent_widget = app_inst
 
 		self.sort_actions = QActionGroup(self, exclusive=True)
 		asc_desc_act = QAction("Asc/Desc", self)
 		asc_desc_act.triggered.connect(self.asc_desc)
 		s_title = self.sort_actions.addAction(QAction("Title", self.sort_actions, checkable=True))
-		s_title.triggered.connect(functools.partial(self.manga_view.sort, 'title'))
+		s_title.triggered.connect(functools.partial(self.new_sort.emit, 'title'))
 		s_artist = self.sort_actions.addAction(QAction("Author", self.sort_actions, checkable=True))
-		s_artist.triggered.connect(functools.partial(self.manga_view.sort, 'artist'))
+		s_artist.triggered.connect(functools.partial(self.new_sort.emit, 'artist'))
 		s_date = self.sort_actions.addAction(QAction("Date Added", self.sort_actions, checkable=True))
-		s_date.triggered.connect(functools.partial(self.manga_view.sort, 'date_added'))
+		s_date.triggered.connect(functools.partial(self.new_sort.emit, 'date_added'))
 		s_pub_d = self.sort_actions.addAction(QAction("Date Published", self.sort_actions, checkable=True))
-		s_pub_d.triggered.connect(functools.partial(self.manga_view.sort, 'pub_date'))
+		s_pub_d.triggered.connect(functools.partial(self.new_sort.emit, 'pub_date'))
 		s_times_read = self.sort_actions.addAction(QAction("Read Count", self.sort_actions, checkable=True))
-		s_times_read.triggered.connect(functools.partial(self.manga_view.sort, 'times_read'))
+		s_times_read.triggered.connect(functools.partial(self.new_sort.emit, 'times_read'))
 		s_last_read = self.sort_actions.addAction(QAction("Last Read", self.sort_actions, checkable=True))
-		s_last_read.triggered.connect(functools.partial(self.manga_view.sort, 'last_read'))
+		s_last_read.triggered.connect(functools.partial(self.new_sort.emit, 'last_read'))
 
 		self.addAction(asc_desc_act)
 		self.addSeparator()
@@ -251,7 +252,7 @@ class SortMenu(QMenu):
 
 	def set_current_sort(self):
 		def check_key(act, key):
-			if self.manga_view.current_sort == key:
+			if self.parent_widget.current_manga_view.list_view.current_sort == key:
 				act.setChecked(True)
 
 		for act in self.sort_actions.actions():
@@ -269,10 +270,10 @@ class SortMenu(QMenu):
 				check_key(act, 'last_read')
 
 	def asc_desc(self):
-		if self.manga_view.sort_model.sortOrder() == Qt.AscendingOrder:
-			self.manga_view.sort_model.sort(0, Qt.DescendingOrder)
+		if self.parent_widget.current_manga_view.sort_model.sortOrder() == Qt.AscendingOrder:
+			self.parent_widget.current_manga_view.sort_model.sort(0, Qt.DescendingOrder)
 		else:
-			self.manga_view.sort_model.sort(0, Qt.AscendingOrder)
+			self.parent_widget.current_manga_view.sort_model.sort(0, Qt.AscendingOrder)
 
 	def showEvent(self, event):
 		self.set_current_sort()

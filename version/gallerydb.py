@@ -2152,7 +2152,7 @@ class DatabaseStartup(QObject):
 	def __init__(self):
 		super().__init__()
 		ListDB.init_lists()
-		self._fetch_count = 500
+		self._fetch_count = 50
 		self._offset = 0
 		self._fetching = False
 		self.count = 0
@@ -2189,9 +2189,11 @@ class DatabaseStartup(QObject):
 			if gallery_list:
 				self._loaded_galleries.extend(gallery_list)
 				for view in manga_views:
+					view.list_view.setUpdatesEnabled(False)
 					view_galleries = [g for g in gallery_list if g.view == view.view_type]
 					view.gallery_model._gallery_to_add = view_galleries
 					view.gallery_model.insertRows(view.gallery_model.rowCount(), len(view_galleries))
+					view.list_view.setUpdatesEnabled(True)
 
 	def fetch_chapters(self):
 		for g in self._loaded_galleries:

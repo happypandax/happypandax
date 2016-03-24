@@ -377,6 +377,7 @@ class GalleryLists(QListWidget):
 		self._in_proccess_item = None
 		self.current_selected = None
 		self.gallery_list_edit.apply.connect(lambda: self._item_double_clicked(self.current_selected))
+		self.setup_lists()
 
 	def dragEnterEvent(self, event):
 		if event.mimeData().hasFormat("list/gallery"):

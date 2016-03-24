@@ -246,7 +246,6 @@ class AppWindow(QMainWindow):
 
 		self.sidebar_list = misc_db.SideBarWidget(self)
 		self.db_startup.DONE.connect(self.sidebar_list.tags_tree.setup_tags)
-		self.db_startup.DONE.connect(self.sidebar_list.lists.setup_lists)
 		self._main_layout.addWidget(self.sidebar_list)
 		self.current_manga_view = self.default_manga_view
 
@@ -637,10 +636,15 @@ class AppWindow(QMainWindow):
 
 		sort_k = QKeySequence('Alt+S')
 
+		def set_new_sort(s):
+			self.current_manga_view.list_view.sort(s)
+
 		sort_action = QToolButton()
 		sort_action.setShortcut(sort_k)
 		sort_action.setIcon(QIcon(app_constants.SORT_PATH))
-		sort_action.setMenu(misc.SortMenu(self.toolbar, self.manga_list_view))
+		sort_menu = misc.SortMenu(self, self.toolbar)
+		sort_menu.new_sort.connect(set_new_sort)
+		sort_action.setMenu(sort_menu)
 		sort_action.setPopupMode(QToolButton.InstantPopup)
 		self.toolbar.addWidget(sort_action)
 		
