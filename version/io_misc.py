@@ -108,7 +108,7 @@ class GalleryDownloaderItem(QObject):
 	def done(self):
 		self.status_timer.stop()
 		if self.item.download_type == 0:
-			self.status_item.setText("Sent to library!")
+			self.status_item.setText("Creating gallery...")
 		else:
 			self.status_item.setText("Sent to torrent client!")
 
@@ -116,9 +116,9 @@ class GalleryDownloaderList(QTableWidget):
 	"""
 	"""
 	init_fetch_instance = pyqtSignal(list)
-	def __init__(self, gallery_model, parent):
+	def __init__(self, app_inst, parent=None):
 		super().__init__(parent)
-		self.gallery_model = gallery_model
+		self.app_inst = app_inst
 		self.setColumnCount(5)
 		self.setIconSize(QSize(50, 100))
 		self.setAlternatingRowColors(True)
@@ -216,14 +216,16 @@ class GalleryDownloaderList(QTableWidget):
 			gallery.link = d_item.item.gallery_url
 			if d_item.item.metadata:
 				gallery = pewnet.EHen.apply_metadata(gallery, d_item.item.metadata)
-			gallerydb.execute(
-				gallerydb.GalleryDB.add_gallery, False, gallery)
-			self.gallery_model.insertRows([gallery], None, 1)
-			self.gallery_model.init_search(self.gallery_model.current_term)
-			d_item.status_item.setText('Added to library!')
-			log_i("Added downloaded gallery to library")
+			if app_constants.DOWNLOAD_GALLERY_TO_LIB:
+				self.app_inst.default_manga_view.add_gallery(gallery, True)
+				d_item.status_item.setText('Added to library!')
+				log_i("Added downloaded gallery to library")
+			else:
+				self.app_inst.addition_tab.view.add_gallery(gallery, True)
+				d_item.status_item.setText('Added to inbox!')
+				log_i("Added downloaded gallery to inbox")
 		else:
-			d_item.status_item.setText('Adding to library failed!')
+			d_item.status_item.setText('Gallery could not be added!')
 			log_i("Could not add downloaded gallery to library")
 
 	def clear_list(self):
@@ -266,7 +268,7 @@ class GalleryDownloader(QWidget):
 		buttons_layout.addWidget(url_window_btn, 0, Qt.AlignLeft)
 		buttons_layout.addWidget(clear_all_btn, 0, Qt.AlignRight)
 		main_layout.addLayout(buttons_layout)
-		self.download_list = GalleryDownloaderList(parent.manga_list_view.sort_model, self)
+		self.download_list = GalleryDownloaderList(parent, self)
 		clear_all_btn.clicked.connect(self.download_list.clear_list)
 		download_list_scroll = QScrollArea(self)
 		download_list_scroll.setBackgroundRole(self.palette().Base)

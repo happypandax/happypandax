@@ -4,7 +4,8 @@ from datetime import datetime
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QDesktopWidget, QGroupBox,
 							 QHBoxLayout, QFormLayout, QLabel, QLineEdit,
 							 QPushButton, QProgressBar, QTextEdit, QComboBox,
-							 QDateEdit, QFileDialog, QMessageBox, QScrollArea)
+							 QDateEdit, QFileDialog, QMessageBox, QScrollArea,
+							 QCheckBox, QSizePolicy)
 from PyQt5.QtCore import (pyqtSignal, Qt, QPoint, QDate, QThread, QTimer)
 
 import app_constants
@@ -12,6 +13,7 @@ import utils
 import gallerydb
 import fetch
 import misc
+import database
 
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -27,15 +29,10 @@ class GalleryDialog(QWidget):
 	or pass a path to preset path
 	"""
 
-	SERIES = pyqtSignal(list)
-	SERIES_EDIT = pyqtSignal(list, int)
-	#gallery_list = [] # might want to extend this to allow mass gallery adding
-
-	def __init__(self, parent=None, arg=None):
+	def __init__(self, parent, arg=None):
 		super().__init__(parent, Qt.Dialog)
 		self.setAttribute(Qt.WA_DeleteOnClose)
 		self.parent_widget = parent
-		log_d('Triggered Gallery Edit/Add Dialog')
 		m_l = QVBoxLayout()
 		self.main_layout = QVBoxLayout()
 		dummy = QWidget(self)
@@ -54,6 +51,8 @@ class GalleryDialog(QWidget):
 		cancel = QPushButton("Cancel")
 		final_buttons.addWidget(cancel)
 		final_buttons.addWidget(self.done)
+		self._multiple_galleries = False
+		self._edit_galleries = []
 
 		def new_gallery():
 			self.setWindowTitle('Add a new gallery')
@@ -63,13 +62,16 @@ class GalleryDialog(QWidget):
 			cancel.clicked.connect(self.reject)
 
 		if arg:
-			if isinstance(arg, list):
-				self.setWindowTitle('Edit gallery')
-				self.position = arg[0].row()
-				for index in arg:
-					gallery = index.data(Qt.UserRole+1)
-					self.commonUI()
-					self.setGallery(gallery)
+			if isinstance(arg, (list, gallerydb.Gallery)):
+				if isinstance(arg, gallerydb.Gallery):
+					self.setWindowTitle('Edit gallery')
+					self._edit_galleries.append(arg)
+				else:
+					self.setWindowTitle('Edit {} galleries'.format(len(arg)))
+					self._multiple_galleries = True
+					self._edit_galleries.extend(arg)
+				self.commonUI()
+				self.setGallery(arg)
 				self.done.clicked.connect(self.accept_edit)
 				cancel.clicked.connect(self.reject_edit)
 			elif isinstance(arg, str):
@@ -79,15 +81,14 @@ class GalleryDialog(QWidget):
 			new_gallery()
 
 		log_d('GalleryDialog: Create UI: successful')
-		#TODO: Implement a way to mass add galleries
-		#IDEA: Extend dialog in a ScrollArea with more forms...
-
 		self.setLayout(m_l)
-		self.resize(500,560)
+		if self._multiple_galleries:
+			self.resize(500, 400)
+		else:
+			self.resize(500, 600)
 		frect = self.frameGeometry()
 		frect.moveCenter(QDesktopWidget().availableGeometry().center())
 		self.move(frect.topLeft())
-		#self.setAttribute(Qt.WA_DeleteOnClose)
 		self._fetch_inst = fetch.Fetch()
 		self._fetch_thread = QThread(self)
 		self._fetch_thread.setObjectName("GalleryDialog metadata thread")
@@ -95,17 +96,33 @@ class GalleryDialog(QWidget):
 		self._fetch_thread.started.connect(self._fetch_inst.auto_web_metadata)
 
 	def commonUI(self):
-		f_web = QGroupBox("Metadata from the Web")
-		f_web.setCheckable(False)
-		self.main_layout.addWidget(f_web)
-		web_main_layout = QVBoxLayout()
-		web_info = misc.ClickedLabel("Which gallery URLs are supported? (hover)", parent=self)
-		web_info.setToolTip(app_constants.SUPPORTED_METADATA_URLS)
-		web_info.setToolTipDuration(999999999)
-		web_main_layout.addWidget(web_info)
-		web_layout = QHBoxLayout()
-		web_main_layout.addLayout(web_layout)
-		f_web.setLayout(web_main_layout)
+		if not self._multiple_galleries:
+			f_web = QGroupBox("Metadata from the Web")
+			f_web.setCheckable(False)
+			self.main_layout.addWidget(f_web)
+			web_main_layout = QVBoxLayout()
+			web_info = misc.ClickedLabel("Which gallery URLs are supported? (hover)", parent=self)
+			web_info.setToolTip(app_constants.SUPPORTED_METADATA_URLS)
+			web_info.setToolTipDuration(999999999)
+			web_main_layout.addWidget(web_info)
+			web_layout = QHBoxLayout()
+			web_main_layout.addLayout(web_layout)
+			f_web.setLayout(web_main_layout)
+			def basic_web(name):
+				return QLabel(name), QLineEdit(), QPushButton("Get metadata"), QProgressBar()
+
+			url_lbl, self.url_edit, url_btn, url_prog = basic_web("URL:")
+			url_btn.clicked.connect(lambda: self.web_metadata(self.url_edit.text(), url_btn,
+												url_prog))
+			url_prog.setTextVisible(False)
+			url_prog.setMinimum(0)
+			url_prog.setMaximum(0)
+			web_layout.addWidget(url_lbl, 0, Qt.AlignLeft)
+			web_layout.addWidget(self.url_edit, 0)
+			web_layout.addWidget(url_btn, 0, Qt.AlignRight)
+			web_layout.addWidget(url_prog, 0, Qt.AlignRight)
+			self.url_edit.setPlaceholderText("Insert supported gallery URLs or just press the button!")
+			url_prog.hide()
 
 		f_gallery = QGroupBox("Gallery Info")
 		f_gallery.setCheckable(False)
@@ -113,30 +130,30 @@ class GalleryDialog(QWidget):
 		gallery_layout = QFormLayout()
 		f_gallery.setLayout(gallery_layout)
 
-		def basic_web(name):
-			return QLabel(name), QLineEdit(), QPushButton("Get metadata"), QProgressBar()
+		def checkbox_layout(widget):
+			if self._multiple_galleries:
+				l = QHBoxLayout()
+				l.addWidget(widget.g_check)
+				widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+				l.addWidget(widget)
+				return l
+			else:
+				widget.g_check.setChecked(True)
+				widget.g_check.hide()
+				return widget
 
-		url_lbl, self.url_edit, url_btn, url_prog = basic_web("URL:")
-		url_btn.clicked.connect(lambda: self.web_metadata(self.url_edit.text(), url_btn,
-											url_prog))
-		url_prog.setTextVisible(False)
-		url_prog.setMinimum(0)
-		url_prog.setMaximum(0)
-		web_layout.addWidget(url_lbl, 0, Qt.AlignLeft)
-		web_layout.addWidget(self.url_edit, 0)
-		web_layout.addWidget(url_btn, 0, Qt.AlignRight)
-		web_layout.addWidget(url_prog, 0, Qt.AlignRight)
-		self.url_edit.setPlaceholderText("Insert supported gallery URLs or just press the button!")
-		url_prog.hide()
+		def add_check(widget):
+			widget.g_check = QCheckBox(self)
+			return widget
 
-		self.title_edit = QLineEdit()
-		self.author_edit = QLineEdit()
+		self.title_edit = add_check(QLineEdit())
+		self.author_edit = add_check(QLineEdit())
 		author_completer = misc.GCompleter(self, False, True, False)
 		author_completer.setCaseSensitivity(Qt.CaseInsensitive)
 		self.author_edit.setCompleter(author_completer)
-		self.descr_edit = QTextEdit()
+		self.descr_edit = add_check(QTextEdit())
 		self.descr_edit.setAcceptRichText(True)
-		self.lang_box = QComboBox()
+		self.lang_box = add_check(QComboBox())
 		self.lang_box.addItems(app_constants.G_LANGUAGES)
 		self.lang_box.addItems(app_constants.G_CUSTOM_LANGUAGES)
 		self._find_combobox_match(self.lang_box, app_constants.G_DEF_LANGUAGE, 0)
@@ -150,20 +167,23 @@ class GalleryDialog(QWidget):
 					  " will be lowercased.")
 		tag_info.setToolTipDuration(99999999)
 		tags_l.addWidget(tag_info)
-		self.tags_edit = misc.CompleterTextEdit()
+		self.tags_edit = add_check(misc.CompleterTextEdit())
 		self.tags_edit.setCompleter(misc.GCompleter(self, False, False))
-		tags_l.addWidget(self.tags_edit, 3)
+		if self._multiple_galleries:
+			tags_l.addLayout(checkbox_layout(self.tags_edit), 3)
+		else:
+			tags_l.addWidget(checkbox_layout(self.tags_edit), 3)
 		self.tags_edit.setPlaceholderText("Press Tab to autocomplete (Ctrl + E to show popup)")
-		self.type_box = QComboBox()
+		self.type_box = add_check(QComboBox())
 		self.type_box.addItems(app_constants.G_TYPES)
 		self._find_combobox_match(self.type_box, app_constants.G_DEF_TYPE, 0)
 		#self.type_box.currentIndexChanged[int].connect(self.doujin_show)
 		#self.doujin_parent = QLineEdit()
 		#self.doujin_parent.setVisible(False)
-		self.status_box = QComboBox()
+		self.status_box = add_check(QComboBox())
 		self.status_box.addItems(app_constants.G_STATUS)
 		self._find_combobox_match(self.status_box, app_constants.G_DEF_STATUS, 0)
-		self.pub_edit = QDateEdit()
+		self.pub_edit = add_check(QDateEdit())
 		self.pub_edit.setCalendarPopup(True)
 		self.pub_edit.setDate(QDate.currentDate())
 		self.path_lbl = misc.ClickedLabel("")
@@ -171,11 +191,14 @@ class GalleryDialog(QWidget):
 		self.path_lbl.clicked.connect(lambda a: utils.open_path(a, a) if a else None)
 
 		link_layout = QHBoxLayout()
-		self.link_lbl = QLabel("")
+		self.link_lbl = add_check(QLabel(""))
 		self.link_lbl.setWordWrap(True)
 		self.link_edit = QLineEdit()
 		link_layout.addWidget(self.link_edit)
-		link_layout.addWidget(self.link_lbl)
+		if self._multiple_galleries:
+			link_layout.addLayout(checkbox_layout(self.link_lbl))
+		else:
+			link_layout.addWidget(checkbox_layout(self.link_lbl))
 		self.link_edit.hide()
 		self.link_btn = QPushButton("Modify")
 		self.link_btn.setFixedWidth(50)
@@ -187,14 +210,14 @@ class GalleryDialog(QWidget):
 		link_layout.addWidget(self.link_btn2)
 		self.link_btn2.hide()
 
-		gallery_layout.addRow("Title:", self.title_edit)
-		gallery_layout.addRow("Author:", self.author_edit)
-		gallery_layout.addRow("Description:", self.descr_edit)
-		gallery_layout.addRow("Language:", self.lang_box)
+		gallery_layout.addRow("Title:", checkbox_layout(self.title_edit))
+		gallery_layout.addRow("Author:", checkbox_layout(self.author_edit))
+		gallery_layout.addRow("Description:", checkbox_layout(self.descr_edit))
+		gallery_layout.addRow("Language:", checkbox_layout(self.lang_box))
 		gallery_layout.addRow("Tags:", tags_l)
-		gallery_layout.addRow("Type:", self.type_box)
-		gallery_layout.addRow("Status:", self.status_box)
-		gallery_layout.addRow("Publication Date:", self.pub_edit)
+		gallery_layout.addRow("Type:", checkbox_layout(self.type_box))
+		gallery_layout.addRow("Status:", checkbox_layout(self.status_box))
+		gallery_layout.addRow("Publication Date:", checkbox_layout(self.pub_edit))
 		gallery_layout.addRow("Path:", self.path_lbl)
 		gallery_layout.addRow("Link:", link_layout)
 
@@ -216,34 +239,75 @@ class GalleryDialog(QWidget):
 
 	def setGallery(self, gallery):
 		"To be used for when editing a gallery"
-		self.gallery = gallery
+		if isinstance(gallery, gallerydb.Gallery):
+			self.gallery = gallery
 
-		self.url_edit.setText(gallery.link)
+			if not self._multiple_galleries:
+				self.url_edit.setText(gallery.link)
 
-		self.title_edit.setText(gallery.title)
-		self.author_edit.setText(gallery.artist)
-		self.descr_edit.setText(gallery.info)
+			self.title_edit.setText(gallery.title)
+			self.author_edit.setText(gallery.artist)
+			self.descr_edit.setText(gallery.info)
 
-		self.tags_edit.setText(utils.tag_to_string(gallery.tags))
+			self.tags_edit.setText(utils.tag_to_string(gallery.tags))
 
 
-		if not self._find_combobox_match(self.lang_box, gallery.language, 1):
-			self._find_combobox_match(self.lang_box, app_constants.G_DEF_LANGUAGE, 1)
-		if not self._find_combobox_match(self.type_box, gallery.type, 0):
-			self._find_combobox_match(self.type_box, app_constants.G_DEF_TYPE, 0)
-		if not self._find_combobox_match(self.status_box, gallery.status, 0):
-			self._find_combobox_match(self.status_box, app_constants.G_DEF_STATUS, 0)
+			if not self._find_combobox_match(self.lang_box, gallery.language, 1):
+				self._find_combobox_match(self.lang_box, app_constants.G_DEF_LANGUAGE, 1)
+			if not self._find_combobox_match(self.type_box, gallery.type, 0):
+				self._find_combobox_match(self.type_box, app_constants.G_DEF_TYPE, 0)
+			if not self._find_combobox_match(self.status_box, gallery.status, 0):
+				self._find_combobox_match(self.status_box, app_constants.G_DEF_STATUS, 0)
 
-		gallery_pub_date = "{}".format(gallery.pub_date).split(' ')
-		try:
-			self.gallery_time = datetime.strptime(gallery_pub_date[1], '%H:%M:%S').time()
-		except IndexError:
-			pass
-		qdate_pub_date = QDate.fromString(gallery_pub_date[0], "yyyy-MM-dd")
-		self.pub_edit.setDate(qdate_pub_date)
+			gallery_pub_date = "{}".format(gallery.pub_date).split(' ')
+			try:
+				self.gallery_time = datetime.strptime(gallery_pub_date[1], '%H:%M:%S').time()
+			except IndexError:
+				pass
+			qdate_pub_date = QDate.fromString(gallery_pub_date[0], "yyyy-MM-dd")
+			self.pub_edit.setDate(qdate_pub_date)
 
-		self.link_lbl.setText(gallery.link)
-		self.path_lbl.setText(gallery.path)
+			self.link_lbl.setText(gallery.link)
+			self.path_lbl.setText(gallery.path)
+
+		elif isinstance(gallery, list):
+			g = gallery[0]
+			if all(map(lambda x: x.title == g.title, gallery)):
+				self.title_edit.setText(g.title)
+				self.title_edit.g_check.setChecked(True)
+			if all(map(lambda x: x.artist == g.artist, gallery)):
+				self.author_edit.setText(g.artist)
+				self.author_edit.g_check.setChecked(True)
+			if all(map(lambda x: x.info == g.info, gallery)):
+				self.descr_edit.setText(g.info)
+				self.descr_edit.g_check.setChecked(True)
+			if all(map(lambda x: x.tags == g.tags, gallery)):
+				self.tags_edit.setText(utils.tag_to_string(g.tags))
+				self.tags_edit.g_check.setChecked(True)
+			if all(map(lambda x: x.language == g.language, gallery)):
+				if not self._find_combobox_match(self.lang_box, g.language, 1):
+					self._find_combobox_match(self.lang_box, app_constants.G_DEF_LANGUAGE, 1)
+				self.lang_box.g_check.setChecked(True)
+			if all(map(lambda x: x.type == g.type, gallery)):
+				if not self._find_combobox_match(self.type_box, g.type, 0):
+					self._find_combobox_match(self.type_box, app_constants.G_DEF_TYPE, 0)
+				self.type_box.g_check.setChecked(True)
+			if all(map(lambda x: x.status == g.status, gallery)):
+				if not self._find_combobox_match(self.status_box, g.status, 0):
+					self._find_combobox_match(self.status_box, app_constants.G_DEF_STATUS, 0)
+				self.status_box.g_check.setChecked(True)
+			if all(map(lambda x: x.pub_date == g.pub_date, gallery)):
+				gallery_pub_date = "{}".format(g.pub_date).split(' ')
+				try:
+					self.gallery_time = datetime.strptime(gallery_pub_date[1], '%H:%M:%S').time()
+				except IndexError:
+					pass
+				qdate_pub_date = QDate.fromString(gallery_pub_date[0], "yyyy-MM-dd")
+				self.pub_edit.setDate(qdate_pub_date)
+				self.pub_edit.g_check.setChecked(True)
+			if all(map(lambda x: x.link == g.link, gallery)):
+				self.link_lbl.setText(g.link)
+				self.link_lbl.g_check.setChecked(True)
 
 	def newUI(self):
 
@@ -319,17 +383,18 @@ class GalleryDialog(QWidget):
 				self.done.hide()
 
 	def check(self):
-		if len(self.title_edit.text()) is 0:
-			self.title_edit.setFocus()
-			self.title_edit.setStyleSheet("border-style:outset;border-width:2px;border-color:red;")
-			return False
-		elif len(self.author_edit.text()) is 0:
-			self.author_edit.setText("Unknown")
+		if not self._multiple_galleries:
+			if len(self.title_edit.text()) is 0:
+				self.title_edit.setFocus()
+				self.title_edit.setStyleSheet("border-style:outset;border-width:2px;border-color:red;")
+				return False
+			elif len(self.author_edit.text()) is 0:
+				self.author_edit.setText("Unknown")
 
-		if len(self.path_lbl.text()) == 0 or self.path_lbl.text() == 'No path specified':
-			self.path_lbl.setStyleSheet("color:red")
-			self.path_lbl.setText('No path specified')
-			return False
+			if len(self.path_lbl.text()) == 0 or self.path_lbl.text() == 'No path specified':
+				self.path_lbl.setStyleSheet("color:red")
+				self.path_lbl.setText('No path specified')
+				return False
 
 		return True
 
@@ -376,8 +441,8 @@ class GalleryDialog(QWidget):
 
 		metafile.apply_gallery(gallery_object)
 		if add_to_model:
-			self.SERIES.emit([gallery_object])
-			log_d('Sent gallery to model')
+			self.parent_widget.default_manga_view.add_gallery(gallery_object, True)
+			log_i('Sent gallery to model')
 		
 
 	def reject(self):
@@ -420,7 +485,7 @@ class GalleryDialog(QWidget):
 			self.parent_widget._web_metadata_picker(gallery, title_url_list, q, self)
 
 		try:
-			dummy_gallery = self.make_gallery(self.gallery)
+			dummy_gallery = self.make_gallery(self.gallery, False)
 		except AttributeError:
 			dummy_gallery = self.make_gallery(gallerydb.Gallery(), False)
 		if not dummy_gallery:
@@ -450,43 +515,60 @@ class GalleryDialog(QWidget):
 		self._find_combobox_match(self.type_box, metadata.type, 0)
 
 	def make_gallery(self, new_gallery, add_to_model=True, new=False):
+		def is_checked(widget):
+			return widget.g_check.isChecked()
 		if self.check():
-			new_gallery.title = self.title_edit.text()
-			log_d('Adding gallery title')
-			new_gallery.artist = self.author_edit.text()
-			log_d('Adding gallery artist')
-			new_gallery.path = self.path_lbl.text()
-			log_d('Adding gallery path')
-			new_gallery.info = self.descr_edit.toPlainText()
-			log_d('Adding gallery descr')
-			new_gallery.type = self.type_box.currentText()
-			log_d('Adding gallery type')
-			new_gallery.language = self.lang_box.currentText()
-			log_d('Adding gallery lang')
-			new_gallery.status = self.status_box.currentText()
-			log_d('Adding gallery status')
-			new_gallery.tags = utils.tag_to_dict(self.tags_edit.toPlainText())
-			log_d('Adding gallery: tagging to dict')
-			qpub_d = self.pub_edit.date().toString("ddMMyyyy")
-			dpub_d = datetime.strptime(qpub_d, "%d%m%Y").date()
-			try:
-				d_t = self.gallery_time
-			except AttributeError:
-				d_t = datetime.now().time().replace(microsecond=0)
-			dpub_d = datetime.combine(dpub_d, d_t)
-			new_gallery.pub_date = dpub_d
-			log_d('Adding gallery pub date')
-			new_gallery.link = self.link_lbl.text()
-			log_d('Adding gallery link')
-			if not new_gallery.chapters:
-				log_d('Starting chapters')
-				thread = threading.Thread(target=self.set_chapters, args=(new_gallery,add_to_model), daemon=True)
-				thread.start()
-				thread.join()
-				log_d('Finished chapters')
-				if new and app_constants.MOVE_IMPORTED_GALLERIES:
-					app_constants.OVERRIDE_MONITOR = True
-					new_gallery.move_gallery()
+			if is_checked(self.title_edit):
+				new_gallery.title = self.title_edit.text()
+				log_d('Adding gallery title')
+			if is_checked(self.author_edit):
+				new_gallery.artist = self.author_edit.text()
+				log_d('Adding gallery artist')
+			if not self._multiple_galleries:
+				new_gallery.path = self.path_lbl.text()
+				log_d('Adding gallery path')
+			if is_checked(self.descr_edit):
+				new_gallery.info = self.descr_edit.toPlainText()
+				log_d('Adding gallery descr')
+			if is_checked(self.type_box):
+				new_gallery.type = self.type_box.currentText()
+				log_d('Adding gallery type')
+			if is_checked(self.lang_box):
+				new_gallery.language = self.lang_box.currentText()
+				log_d('Adding gallery lang')
+			if is_checked(self.status_box):
+				new_gallery.status = self.status_box.currentText()
+				log_d('Adding gallery status')
+			if is_checked(self.tags_edit):
+				new_gallery.tags = utils.tag_to_dict(self.tags_edit.toPlainText())
+				log_d('Adding gallery: tagging to dict')
+			if is_checked(self.pub_edit):
+				qpub_d = self.pub_edit.date().toString("ddMMyyyy")
+				dpub_d = datetime.strptime(qpub_d, "%d%m%Y").date()
+				try:
+					d_t = self.gallery_time
+				except AttributeError:
+					d_t = datetime.now().time().replace(microsecond=0)
+				dpub_d = datetime.combine(dpub_d, d_t)
+				new_gallery.pub_date = dpub_d
+				log_d('Adding gallery pub date')
+			if is_checked(self.link_lbl):
+				new_gallery.link = self.link_lbl.text()
+				log_d('Adding gallery link')
+
+			if new:
+				if not new_gallery.chapters:
+					log_d('Starting chapters')
+					thread = threading.Thread(target=self.set_chapters, args=(new_gallery,add_to_model))
+					thread.start()
+					thread.join()
+					log_d('Finished chapters')
+					if new and app_constants.MOVE_IMPORTED_GALLERIES:
+						app_constants.OVERRIDE_MONITOR = True
+						new_gallery.move_gallery()
+			else:
+				if add_to_model:
+					self.parent_widget.default_manga_view.replace_gallery([new_gallery], False)
 			return new_gallery
 
 
@@ -522,17 +604,15 @@ class GalleryDialog(QWidget):
 			self.close()
 
 	def accept(self):
-		new_gallery = self.make_gallery(gallerydb.Gallery(), new=True)
-
-		if new_gallery:
-			self.delayed_close()
+		self.make_gallery(gallerydb.Gallery(), new=True)
+		self.delayed_close()
 
 	def accept_edit(self):
-		new_gallery = self.make_gallery(self.gallery)
-		#for ser in self.gallery:
-		if new_gallery:
-			self.SERIES_EDIT.emit([new_gallery], self.position)
-			self.delayed_close()
+		gallerydb.execute(database.db.DBBase.begin, True)
+		for g in self._edit_galleries:
+			self.make_gallery(g)
+		self.delayed_close()
+		gallerydb.execute(database.db.DBBase.end, True)
 
 	def reject_edit(self):
 		self.delayed_close()

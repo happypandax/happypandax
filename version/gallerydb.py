@@ -12,14 +12,7 @@
 #along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 #"""
 
-import datetime
-import os
-import enum
-import scandir
-import threading
-import logging
-import queue
-import io
+import datetime, os, enum, scandir, threading, logging, queue, io, uuid, functools
 import re as regex
 from dateutil import parser as dateparser
 
@@ -1492,7 +1485,7 @@ class Gallery:
 		self._profile_qimage = {}
 		self._profile_load_status = {}
 		self.dead_link = False
-		self.state = 0
+		self.state = app_constants.GalleryState.Default
 
 	def set_defaults(self):
 		if not self.type:
@@ -1502,10 +1495,11 @@ class Gallery:
 		if not self.status:
 			self.status = app_constants.G_DEF_STATUS.capitalize()
 
-	def _profile_loaded(self, ptype, on_method):
-		self._profile_load_status[ptype]= False
-		if on_method:
-			on_method(self)
+	def _profile_loaded(self, f, ptype=None, method=None):
+		self._profile_load_status[ptype]= f
+		img = f.result()
+		if method and img:
+			method(self, img)
 
 	def get_profile(self, ptype, on_method=None):
 		psize = app_constants.THUMB_DEFAULT
@@ -1514,13 +1508,16 @@ class Gallery:
 
 		if ptype in self._profile_qimage:
 			f = self._profile_qimage[ptype]
-			if f.done():
-				img = f.result()
-				if img:
-					return img
-		if not self._profile_load_status.get(ptype):
-			self._profile_load_status[ptype]= True
-			self._profile_qimage[ptype] = Executors.load_thumbnail(self.profile, psize, lambda a:self._profile_loaded(ptype, on_method))
+			if not f.done():
+				return
+			if f.result():
+				return f.result()
+		f = self._profile_load_status.get(ptype)
+		if not f or not f.result():
+			self._profile_qimage[ptype] = Executors.load_thumbnail(
+				self.profile, psize,
+				on_method=self._profile_loaded,
+				ptype=ptype, method=on_method)
 
 	def set_profile(self, future):
 		"set with profile with future object"
@@ -2129,12 +2126,15 @@ class AdminDB(QObject):
 		if clear_first:
 			log_i("Clearing thumbanils dir..")
 			GalleryDB.clear_thumb_dir()
-		if app_constants.GALLERY_DATA:
-			self.DATA_COUNT.emit(len(app_constants.GALLERY_DATA))
-			log_i('Rebuilding galleries')
-			for n, g in enumerate(app_constants.GALLERY_DATA, 1):
-				execute(GalleryDB.rebuild_thumb, False, g)
-				self.PROGRESS.emit(n)
+
+		gs = []
+		gs.extend(app_constants.GALLERY_DATA)
+		gs.extend(app_constants.GALLERY_ADDITION_DATA)
+		self.DATA_COUNT.emit(len(app_constants.GALLERY_DATA))
+		log_i('Regenerating thumbnails')
+		for n, g in enumerate(gs, 1):
+			execute(GalleryDB.rebuild_thumb, False, g)
+			self.PROGRESS.emit(n)
 		self.DONE.emit(True)
 
 class DatabaseStartup(QObject):

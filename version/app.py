@@ -116,9 +116,12 @@ class AppWindow(QMainWindow):
 		def update_gallery(g):
 			index = gallery.CommonView.find_index(self.get_current_view(), g.id)
 			if index:
-				self.manga_list_view.replace_edit_gallery([g], pos=index.row())
+				gal = index.data(gallery.GalleryModel.GALLERY_ROLE)
+				gal.path = g.path
+				gal.chapters = g.chapters
 			else:
 				log_e('Could not find gallery to update from watcher')
+			self.default_manga_view.replace_gallery(g, False)
 
 		def created(path):
 			c_popup = io_misc.CreatedPopup(path, self)
@@ -365,9 +368,9 @@ class AppWindow(QMainWindow):
 					galleries = gal
 			else:
 				if app_constants.CONTINUE_AUTO_METADATA_FETCHER:
-					galleries = [g for g in self.manga_list_view.gallery_model._data if not g.exed]
+					galleries = [g for g in self.current_manga_view.gallery_model._data if not g.exed]
 				else:
-					galleries = self.manga_list_view.gallery_model._data
+					galleries = self.current_manga_view.gallery_model._data
 				if not galleries:
 					self.notification_bar.add_text('Looks like we\'ve already gone through all galleries!')
 					return None
@@ -411,7 +414,7 @@ class AppWindow(QMainWindow):
 
 			database.db.DBBase.begin()
 			fetch_instance.GALLERY_PICKER.connect(self._web_metadata_picker)
-			fetch_instance.GALLERY_EMITTER.connect(self.manga_list_view.replace_edit_gallery)
+			fetch_instance.GALLERY_EMITTER.connect(self.default_manga_view.replace_gallery)
 			fetch_instance.AUTO_METADATA_PROGRESS.connect(self.notification_bar.add_text)
 			thread.started.connect(fetch_instance.auto_web_metadata)
 			fetch_instance.FINISHED.connect(done)
@@ -570,7 +573,7 @@ class AppWindow(QMainWindow):
 		gallery_action.setMenu(gallery_menu)
 		add_gallery_icon = QIcon(app_constants.PLUS_PATH)
 		gallery_action_add = QAction(add_gallery_icon, "Add single gallery...", self)
-		gallery_action_add.triggered.connect(self.manga_list_view.SERIES_DIALOG.emit)
+		gallery_action_add.triggered.connect(lambda: gallery.CommonView.spawn_dialog(self))
 		gallery_action_add.setToolTip('Add a single gallery thoroughly')
 		gallery_action_add.setShortcut(new_gallery_k)
 		gallery_menu.addAction(gallery_action_add)
@@ -924,9 +927,6 @@ class AppWindow(QMainWindow):
 						super().__init__(parent)
 						self.addition_view = addition_view
 
-					def add_gallery(self, gallery):
-						self.addition_view.add_gallery(gallery, app_constants.KEEP_ADDED_GALLERIES)
-
 					def scan_dirs(self):
 						paths = []
 						for p in app_constants.MONITOR_PATHS:
@@ -938,7 +938,7 @@ class AppWindow(QMainWindow):
 								log_e("Monitored path does not exists: {}".format(p.encode(errors='ignore')))
 
 						self.fetch_inst.series_path = paths
-						self.fetch_inst.LOCAL_EMITTER.connect(self.add_gallery)
+						self.fetch_inst.LOCAL_EMITTER.connect(lambda g:self.addition_view.add_gallery(g, app_constants.KEEP_ADDED_GALLERIES))
 						self.fetch_inst.local()
 						#contents = []
 						#for g in self.scanned_data:
@@ -956,44 +956,6 @@ class AppWindow(QMainWindow):
 					#	QTimer.singleShot(10000, self.gallery_populate(final_paths))
 					#	return
 
-				def show_new_galleries(final_paths, galleries):
-					if final_paths and galleries:
-						app_constants.OVERRIDE_MOVE_IMPORTED_IN_FETCH = True
-						if app_constants.LOOK_NEW_GALLERY_AUTOADD:
-							self.gallery_populate(final_paths)
-						else:
-
-							class NewGalleryMenu(QMenu):
-
-								def __init__(self, parent=None):
-									super().__init__(parent)
-
-									ignore_act = self.addAction('Add to ignore list')
-									ignore_act.triggered.connect(self.add_to_ignore)
-
-								def add_to_ignore(self):
-									gallery = self.gallery_widget.gallery
-									app_constants.IGNORE_PATHS.append(gallery.path)
-									settings.set(app_constants.IGNORE_PATHS, 'Application', 'ignore paths')
-									if self.gallery_widget.parent_widget.gallery_layout.count() == 1:
-										self.gallery_widget.parent_widget.close()
-									else:
-										self.gallery_widget.close()
-
-							if len(galleries) == 1:
-								self.notification_bar.add_text("{} new gallery was discovered in one of your monitored directories".format(len(galleries)))
-							else:
-								self.notification_bar.add_text("{} new galleries were discovered in one of your monitored directories".format(len(galleries)))
-							text = "These new galleries were discovered! Do you want to add them?"\
-								if len(galleries) > 1 else "This new gallery was discovered! Do you want to add it?"
-							g_popup = io_misc.GalleryPopup((text, galleries), self, NewGalleryMenu)
-							buttons = g_popup.add_buttons('Add', 'Close')
-
-							def populate_n_close():
-								g_popup.close()
-								self.gallery_populate(final_paths)
-							buttons[0].clicked.connect(populate_n_close)
-							buttons[1].clicked.connect(g_popup.close)
 
 				def finished(): app_constants.SCANNING_FOR_GALLERIES = False;
 
@@ -1049,7 +1011,6 @@ class AppWindow(QMainWindow):
 			subfolder_as_c = not app_constants.SUBFOLDER_AS_GALLERY
 			if l and subfolder_as_c or l and f_item_l:
 				g_d = gallerydialog.GalleryDialog(self, acceptable[0])
-				g_d.SERIES.connect(self.default_manga_view.add_gallery)
 				g_d.show()
 			else:
 				self.gallery_populate(acceptable, True)

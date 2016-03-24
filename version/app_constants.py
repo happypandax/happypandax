@@ -176,6 +176,7 @@ HEN_DOWNLOAD_TYPE = get(0, 'Web', 'hen download type', int)
 DOWNLOAD_DIRECTORY = get('downloads', 'Web', 'download directory', str)
 TORRENT_CLIENT = get('', 'Web', 'torrent client', str)
 HEN_LIST = get(['chaikahen'], 'Web', 'hen list', list)
+DOWNLOAD_GALLERY_TO_LIB = get(False, 'Web', 'download galleries to library', bool)
 
 # External Viewer
 EXTERNAL_VIEWER_SUPPORT = {'honeyview':['Honeyview.exe']}
@@ -211,6 +212,11 @@ G_DEF_TYPE = get('Doujinshi', 'General', 'gallery default type', str)
 G_LANGUAGES = ["English", "Japanese", "Chinese", "Other"]
 G_STATUS = ["Ongoing", "Completed", "Unknown"]
 G_TYPES = ["Manga", "Doujinshi", "Artist CG Sets", "Game CG Sets", "Western", "Image Sets", "Non-H", "Cosplay", "Other"]
+
+@enum.unique
+class GalleryState(enum.Enum):
+	Default = 1
+	New = 2
 
 # Colors
 GRID_VIEW_TITLE_COLOR = get('#323232', 'Visual', 'grid view title color', str)

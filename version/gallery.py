@@ -27,7 +27,7 @@ from PyQt5.QtGui import (QPixmap, QBrush, QColor, QPainter,
 						 QPixmapCache, QCursor, QPalette, QKeyEvent,
 						 QFont, QTextOption, QFontMetrics, QFontMetricsF,
 						 QTextLayout, QPainterPath, QScrollPrepareEvent,
-						 QWheelEvent, QPolygonF)
+						 QWheelEvent, QPolygonF, QLinearGradient)
 from PyQt5.QtWidgets import (QListView, QFrame, QLabel,
 							 QStyledItemDelegate, QStyle,
 							 QMenu, QAction, QToolTip, QVBoxLayout,
@@ -174,6 +174,7 @@ class SortFilterModel(QSortFilterProxyModel):
 		self.setFilterCaseSensitivity(Qt.CaseInsensitive)
 		self.setSortLocaleAware(True)
 		self.setSortCaseSensitivity(Qt.CaseInsensitive)
+		self.enable_drag = False
 
 	def navigate_history(self, direction=PREV):
 		new_term = ''
@@ -318,11 +319,13 @@ class SortFilterModel(QSortFilterProxyModel):
 
 	def flags(self, index):
 		default_flags = super().flags(index);
-
-		if (index.isValid()):
-			return Qt.ItemIsDragEnabled | Qt.ItemIsDropEnabled | default_flags
-		else:
-			return Qt.ItemIsDropEnabled | default_flags
+		
+		if self.enable_drag:
+			if (index.isValid()):
+				return Qt.ItemIsDragEnabled | Qt.ItemIsDropEnabled | default_flags
+			else:
+				return Qt.ItemIsDropEnabled | default_flags
+		return default_flags
 
 	def supportedDragActions(self):
 		return Qt.ActionMask
@@ -588,9 +591,6 @@ class GridDelegate(QStyledItemDelegate):
 	POPUP = pyqtSignal()
 	CONTEXT_ON = False
 
-	# Gallery states
-	G_NORMAL, G_DOWNLOAD = range(2)
-
 	def __init__(self, parent):
 		super().__init__(parent)
 		QPixmapCache.setCacheLimit(app_constants.THUMBNAIL_CACHE_SIZE[0]*
@@ -623,7 +623,7 @@ class GridDelegate(QStyledItemDelegate):
 		a_h = self.artist_font_m.height()
 		self.text_label_h = a_h + t_h * 2
 		self.W = app_constants.THUMB_W_SIZE
-		self.H = app_constants.THUMB_H_SIZE + app_constants.GRIDBOX_LBL_H#self.text_label_h #+ app_constants.GRIDBOX_LBL_H
+		self.H = app_constants.THUMB_H_SIZE + app_constants.GRIDBOX_LBL_H
 
 	def key(self, key):
 		"Assigns an unique key to indexes"
@@ -671,11 +671,6 @@ class GridDelegate(QStyledItemDelegate):
 			else:
 				artist_size = "font-size:{}px;".format(self.font_size)
 
-			#painter.setPen(QPen(Qt.NoPen))
-			#option.rect = option.rect.adjusted(11, 10, 0, 0)
-			#option.rect.setWidth(self.W)
-
-			option.rect.setHeight(self.H)
 			rec = option.rect.getRect()
 			x = rec[0]
 			y = rec[1]
@@ -837,23 +832,27 @@ class GridDelegate(QStyledItemDelegate):
 				else:
 					self.external_icon = self.file_icons.get_default_file_icon()
 			
-			if gallery.state == self.G_DOWNLOAD:
-				painter.save()
-				dl_box = QRect(x, y, w, 20)
-				painter.setBrush(QBrush(QColor(0,0,0,123)))
-				painter.setPen(QColor('white'))
-				painter.drawRect(dl_box)
-				painter.drawText(dl_box, Qt.AlignCenter, 'Downloading...')
-				painter.restore()
-			else:
-				if app_constants.DISPLAY_GALLERY_TYPE:
-					self.type_icon = self.file_icons.get_file_icon(gallery.path)
-					if self.type_icon and not self.type_icon.isNull():
-						self.type_icon.paint(painter, QRect(x+2, y+app_constants.THUMB_H_SIZE-16, 16, 16))
 
-				if app_constants.USE_EXTERNAL_PROG_ICO:
-					if self.external_icon and not self.external_icon.isNull():
-						self.external_icon.paint(painter, QRect(x+w-30, y+app_constants.THUMB_H_SIZE-28, 28, 28))
+			if app_constants.DISPLAY_GALLERY_TYPE:
+				self.type_icon = self.file_icons.get_file_icon(gallery.path)
+				if self.type_icon and not self.type_icon.isNull():
+					self.type_icon.paint(painter, QRect(x+2, y+app_constants.THUMB_H_SIZE-16, 16, 16))
+
+			if app_constants.USE_EXTERNAL_PROG_ICO:
+				if self.external_icon and not self.external_icon.isNull():
+					self.external_icon.paint(painter, QRect(x+w-30, y+app_constants.THUMB_H_SIZE-28, 28, 28))
+
+			if gallery.state == app_constants.GalleryState.New:
+				painter.save()
+				painter.setPen(Qt.NoPen)
+				gradient = QLinearGradient()
+				gradient.setStart(x, y+app_constants.THUMB_H_SIZE/2)
+				gradient.setFinalStop(x, y+app_constants.THUMB_H_SIZE)
+				gradient.setColorAt(0, QColor(255, 255, 255, 0))
+				gradient.setColorAt(1, QColor(0, 255, 0, 150))
+				painter.setBrush(QBrush(gradient))
+				painter.drawRoundedRect(QRectF(x, y+app_constants.THUMB_H_SIZE/2, w, app_constants.THUMB_H_SIZE/2), 2, 2)
+				painter.restore()
 
 			def draw_text_label(lbl_h):
 				#draw the label for text
@@ -987,11 +986,11 @@ class MangaView(QListView):
 	"""
 
 	STATUS_BAR_MSG = pyqtSignal(str)
-	SERIES_DIALOG = pyqtSignal()
 
-	def __init__(self, model, filter_model=None, parent=None):
+	def __init__(self, model, v_type, filter_model=None, parent=None):
 		super().__init__(parent)
 		self.parent_widget = parent
+		self.view_type = v_type
 		self.setViewMode(self.IconMode)
 		self.setResizeMode(self.Adjust)
 		self.setWrapping(True)
@@ -1021,7 +1020,6 @@ class MangaView(QListView):
 		self.sort_model.change_model(self.gallery_model)
 		self.sort_model.sort(0)
 		self.setModel(self.sort_model)
-		self.SERIES_DIALOG.connect(self.spawn_dialog)
 		self.doubleClicked.connect(lambda idx: idx.data(Qt.UserRole+1).chapters[0].open())
 		self.setViewportMargins(0,0,0,0)
 
@@ -1149,58 +1147,6 @@ class MangaView(QListView):
 	def contextMenuEvent(self, event):
 		CommonView.contextMenuEvent(self, event)
 
-	# TODO: move to CommonView
-	def replace_edit_gallery(self, list_of_gallery, pos=None, db_optimize=True):
-		"Replaces the view and DB with given list of gallery, at given position"
-		assert isinstance(list_of_gallery, (list, gallerydb.Gallery)), "Please pass a gallery to replace with"
-		if isinstance(list_of_gallery, gallerydb.Gallery):
-			list_of_gallery = [list_of_gallery]
-		log_d('Replacing {} galleries'.format(len(list_of_gallery)))
-		if db_optimize:
-			gallerydb.GalleryDB.begin()
-		for gallery in list_of_gallery:
-			if not pos:
-				index = CommonView.find_index(self, gallery.id)
-				if not index:
-					log_e('Could not find index for gallery to edit: {}'.format(
-						gallery.title.encode(errors='ignore')))
-					continue
-				pos = index.row()
-			kwdict = {'title':gallery.title,
-			 'profile':gallery.profile,
-			 'artist':gallery.artist,
-			 'info':gallery.info,
-			 'type':gallery.type,
-			 'language':gallery.language,
-			 'status':gallery.status,
-			 'pub_date':gallery.pub_date,
-			 'tags':gallery.tags,
-			 'link':gallery.link,
-			 'series_path':gallery.path,
-			 'chapters':gallery.chapters,
-			 'exed':gallery.exed}
-
-			gallerydb.execute(gallerydb.GalleryDB.modify_gallery,
-							 True, gallery.id, **kwdict)
-		if db_optimize:
-			gallerydb.execute(gallerydb.GalleryDB.end, True)
-		assert isinstance(pos, int)
-		self.gallery_model.replaceRows([gallery], pos, len(list_of_gallery))
-
-	def spawn_dialog(self, index=False):
-		if not index:
-			dialog = gallerydialog.GalleryDialog(self.parent_widget)
-			def add_to_model(g_list):
-				self.sort_model.addRows(g_list)
-				self.sort_model.init_search(self.sort_model.current_term)
-			dialog.SERIES.connect(add_to_model)
-			dialog.SERIES.connect(lambda: self.sort_model.init_search(self.sort_model.current_term))
-		else:
-			dialog = gallerydialog.GalleryDialog(self.parent_widget, [index])
-			dialog.SERIES_EDIT.connect(self.replace_edit_gallery)
-		
-		dialog.show()
-
 	def updateGeometries(self):
 		super().updateGeometries()
 		self.verticalScrollBar().setSingleStep(app_constants.SCROLL_SPEED)
@@ -1209,8 +1155,10 @@ class MangaTableView(QTableView):
 	STATUS_BAR_MSG = pyqtSignal(str)
 	SERIES_DIALOG = pyqtSignal()
 
-	def __init__(self, parent=None):
+	def __init__(self, v_type, parent=None):
 		super().__init__(parent)
+		self.view_type = v_type
+
 		# options
 		self.parent_widget = parent
 		self.setAcceptDrops(True)
@@ -1385,10 +1333,6 @@ class CommonView:
 		index = view_cls.indexAt(event.pos())
 		index = view_cls.sort_model.mapToSource(index)
 
-		if index.data(Qt.UserRole+1) and index.data(Qt.UserRole+1).state == GridDelegate.G_DOWNLOAD:
-			event.ignore()
-			return
-
 		selected = False
 		if table_view:
 			s_indexes = view_cls.selectionModel().selectedRows()
@@ -1397,8 +1341,7 @@ class CommonView:
 		select_indexes = []
 		for idx in s_indexes:
 			if idx.isValid() and idx.column() == 0:
-				if not idx.data(Qt.UserRole+1).state == GridDelegate.G_DOWNLOAD:
-					select_indexes.append(view_cls.sort_model.mapToSource(idx))
+				select_indexes.append(view_cls.sort_model.mapToSource(idx))
 		if len(select_indexes) > 1:
 			selected = True
 
@@ -1414,6 +1357,7 @@ class CommonView:
 				menu = misc.GalleryMenu(view_cls, index, view_cls.sort_model,
 							   view_cls.parent_widget)
 			menu.delete_galleries.connect(lambda s: CommonView.remove_gallery(view_cls, select_indexes, s))
+			menu.edit_gallery.connect(CommonView.spawn_dialog)
 			handled = True
 
 		if handled:
@@ -1425,6 +1369,10 @@ class CommonView:
 		else:
 			event.ignore()
 
+	@staticmethod
+	def spawn_dialog(app_inst, gallery=None):
+		dialog = gallerydialog.GalleryDialog(app_inst, gallery)
+		dialog.show()
 
 class MangaViews:
 
@@ -1446,12 +1394,12 @@ class MangaViews:
 			model = GalleryModel([], parent)
 
 		#list view
-		self.list_view = MangaView(model, parent=parent)
+		self.list_view = MangaView(model, v_type, parent=parent)
 		self.list_view.sort_model.setup_search()
 		self.sort_model = self.list_view.sort_model
 		self.gallery_model = self.list_view.gallery_model
 		#table view
-		self.table_view = MangaTableView(parent)
+		self.table_view = MangaTableView(v_type, parent)
 		self.table_view.gallery_model = self.gallery_model
 		self.table_view.sort_model = self.sort_model
 		self.table_view.setModel(self.sort_model)
@@ -1472,11 +1420,14 @@ class MangaViews:
 		self.current_view = self.View.List
 		self.manga_views.append(self)
 
+		if v_type in (app_constants.ViewType.Default, app_constants.ViewType.Addition):
+			self.sort_model.enable_drag = True
 
 	def add_gallery(self, gallery, db=False):
 		if isinstance(gallery, list):
 			for g in gallery:
 				g.view = self.view_type
+				g.state = app_constants.GalleryState.New
 				if db:
 					gallerydb.execute(gallerydb.GalleryDB.add_gallery, True, g)
 				else:
@@ -1486,6 +1437,7 @@ class MangaViews:
 			self.list_view.gallery_model._gallery_to_add.extend(gallery)
 		else:
 			gallery.view = self.view_type
+			gallery.state = app_constants.GalleryState.New
 			rows = 1
 			self.list_view.gallery_model._gallery_to_add.append(gallery)
 			if db:
@@ -1495,8 +1447,36 @@ class MangaViews:
 					Executors.generate_thumbnail(gallery, on_method=gallery.set_profile)
 		self.list_view.gallery_model.insertRows(self.list_view.gallery_model.rowCount(), rows)
 		
+	def replace_gallery(self, list_of_gallery, db_optimize=True):
+		"Replaces the view and DB with given list of gallery, at given position"
+		assert isinstance(list_of_gallery, (list, gallerydb.Gallery)), "Please pass a gallery to replace with"
+		if isinstance(list_of_gallery, gallerydb.Gallery):
+			list_of_gallery = [list_of_gallery]
+		log_d('Replacing {} galleries'.format(len(list_of_gallery)))
+		if db_optimize:
+			gallerydb.execute(gallerydb.GalleryDB.begin, True)
+		for gallery in list_of_gallery:
+			kwdict = {'title':gallery.title,
+			 'profile':gallery.profile,
+			 'artist':gallery.artist,
+			 'info':gallery.info,
+			 'type':gallery.type,
+			 'language':gallery.language,
+			 'status':gallery.status,
+			 'pub_date':gallery.pub_date,
+			 'tags':gallery.tags,
+			 'link':gallery.link,
+			 'series_path':gallery.path,
+			 'chapters':gallery.chapters,
+			 'exed':gallery.exed}
+
+			gallerydb.execute(gallerydb.GalleryDB.modify_gallery,
+							 True, gallery.id, **kwdict)
+		if db_optimize:
+			gallerydb.execute(gallerydb.GalleryDB.end, True)
 
 	def changeTo(self, idx):
+		"change view"
 		self.view_layout.setCurrentIndex(idx)
 		if idx == self.m_l_view_index:
 			self.current_view = self.View.List

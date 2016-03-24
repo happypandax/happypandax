@@ -1,6 +1,5 @@
-﻿import logging
-import uuid
-import os
+﻿import logging, uuid, os
+
 from concurrent import futures
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QImage, QPainter, QBrush, QPen
@@ -106,9 +105,10 @@ class Executors:
 		log_d("Returning future")
 
 	@classmethod
-	def load_thumbnail(cls, ppath, thumb_size=app_constants.THUMB_DEFAULT, on_method=None):
+	def load_thumbnail(cls, ppath, thumb_size=app_constants.THUMB_DEFAULT, on_method=None, **kwargs):
+		"**kwargs will be passed to on_method"
 		f = cls._profile_exec.submit(_task_load_thumbnail, ppath, thumb_size)
 		if on_method:
-			f.add_done_callback(on_method)
+			f.add_done_callback(lambda a: on_method(a, **kwargs))
 		return f
 

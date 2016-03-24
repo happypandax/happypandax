@@ -1004,6 +1004,7 @@ class Spinner(TransparentWidget):
 
 class GalleryMenu(QMenu):
 	delete_galleries = pyqtSignal(bool)
+	edit_gallery = pyqtSignal(object, object)
 
 	def __init__(self, view, index, sort_model, app_window, selected_indexes=None):
 		super().__init__(app_window)
@@ -1012,32 +1013,35 @@ class GalleryMenu(QMenu):
 		self.sort_model = sort_model
 		self.index = index
 		self.gallery = index.data(Qt.UserRole+1)
-
 		self.selected = selected_indexes
-		if not self.selected:
-			favourite_act = self.addAction('Favorite',
-									 lambda: self.parent_widget.manga_list_view.favorite(self.index))
-			favourite_act.setCheckable(True)
-			if self.gallery.fav:
-				favourite_act.setChecked(True)
-				favourite_act.setText('Unfavorite')
-			else:
-				favourite_act.setChecked(False)
-		else:
-			favourite_act = self.addAction('Favorite selected', self.favourite_select)
-			favourite_act.setCheckable(True)
-			f = []
-			for idx in self.selected:
-				if idx.data(Qt.UserRole+1).fav:
-					f.append(True)
+		if self.view.view_type == app_constants.ViewType.Default:
+			if not self.selected:
+				favourite_act = self.addAction('Favorite',
+										 lambda: self.parent_widget.manga_list_view.favorite(self.index))
+				favourite_act.setCheckable(True)
+				if self.gallery.fav:
+					favourite_act.setChecked(True)
+					favourite_act.setText('Unfavorite')
 				else:
-					f.append(False)
-			if all(f):
-				favourite_act.setChecked(True)
-				favourite_act.setText('Unfavorite selected')
+					favourite_act.setChecked(False)
 			else:
-				favourite_act.setChecked(False)
+				favourite_act = self.addAction('Favorite selected', self.favourite_select)
+				favourite_act.setCheckable(True)
+				f = []
+				for idx in self.selected:
+					if idx.data(Qt.UserRole+1).fav:
+						f.append(True)
+					else:
+						f.append(False)
+				if all(f):
+					favourite_act.setChecked(True)
+					favourite_act.setText('Unfavorite selected')
+				else:
+					favourite_act.setChecked(False)
+		elif self.view.view_type == app_constants.ViewType.Addition:
 
+			send_to_lib = self.addAction('Send to library',
+								self.send_to_lib)
 		self.addSeparator()
 		if not self.selected and isinstance(view, QTableView):
 			chapters_menu = self.addAction('Chapters')
@@ -1069,8 +1073,9 @@ class GalleryMenu(QMenu):
 			get_select_metadata = self.addAction('Get metadata for selected',
 										lambda: self.parent_widget.get_metadata(gals))
 		self.addSeparator()
+		edit = self.addAction('Edit', lambda: self.edit_gallery.emit(self.parent_widget,
+											self.index.data(Qt.UserRole+1) if not self.selected else [idx.data(Qt.UserRole+1) for idx in self.selected]))
 		if not self.selected:
-			edit = self.addAction('Edit', lambda: self.parent_widget.manga_list_view.spawn_dialog(self.index))
 			text = 'folder' if not self.index.data(Qt.UserRole+1).is_archive else 'archive'
 			op_folder_act = self.addAction('Open {}'.format(text), self.op_folder)
 			op_cont_folder_act = self.addAction('Show in folder', lambda: self.op_folder(containing=True))
@@ -1087,9 +1092,10 @@ class GalleryMenu(QMenu):
 		remove_act = self.addAction('Remove')
 		remove_menu = QMenu(self)
 		remove_act.setMenu(remove_menu)
-		if self.sort_model.current_gallery_list:
-			remove_f_g_list_txt = "Remove selected from list" if self.selected else "Remove from list"
-			remove_f_g_list = remove_menu.addAction(remove_f_g_list_txt, self.remove_from_list)
+		if self.view.view_type == app_constants.ViewType.Default:
+			if self.sort_model.current_gallery_list:
+				remove_f_g_list_txt = "Remove selected from list" if self.selected else "Remove from list"
+				remove_f_g_list = remove_menu.addAction(remove_f_g_list_txt, self.remove_from_list)
 		if not self.selected:
 			remove_g = remove_menu.addAction('Remove gallery',
 								lambda: self.delete_galleries.emit(False))
@@ -1135,6 +1141,20 @@ class GalleryMenu(QMenu):
 		else:
 			allow_metadata_txt = "Include in auto metadata fetch" if self.allow_metadata_exed else "Exclude in auto metadata fetch"
 		adv_menu.addAction(allow_metadata_txt, self.allow_metadata_fetch)
+
+	def send_to_lib(self):
+		if self.selected:
+			gs = self.selected
+		else:
+			gs = [self.index]
+		galleries = [idx.data(Qt.UserRole+1) for idx in gs]
+		rows = len(galleries)
+		self.view.gallery_model._gallery_to_remove.extend(galleries)
+		self.view.gallery_model.removeRows(self.view.gallery_model.rowCount()-rows, rows)
+		self.parent_widget.default_manga_view.add_gallery(galleries)
+		for g in galleries:
+			gallerydb.execute(gallerydb.GalleryDB.modify_gallery,
+								True, g.id, view=g.view)
 
 	def allow_metadata_fetch(self):
 		exed = 0 if self.allow_metadata_exed else 1
@@ -1620,15 +1640,15 @@ class GalleryShowcaseWidget(QWidget):
 		new_menu.gallery_widget = self
 		self._menu = new_menu
 
-	def set_pixmap(self, gallery):
-		self.profile.setPixmap(QPixmap.fromImage(gallery.get_profile(gallery.PType.Small)))
+	def set_pixmap(self, gallery, img):
+		self.profile.setPixmap(QPixmap.fromImage(img))
 
 	def set_gallery(self, gallery, size=app_constants.THUMB_SMALL):
 		assert isinstance(size, (list, tuple))
 		self.w = size[0]
 		self.h = size[1]
 		self.gallery = gallery
-		img = gallery.get_profile(gallery.PType.Small, self.set_pixmap)
+		img = gallery.get_profile(app_constants.ProfileType.Small, self.set_pixmap)
 		if img:
 			self.profile.setPixmap(QPixmap.fromImage(img))
 		title = self.font_M.elidedText(gallery.title, Qt.ElideRight, self.w)
