@@ -184,6 +184,7 @@ class SettingsDialog(QWidget):
 		else:
 			self.exhentai_ehen_url.setChecked(True)
 		
+		self.include_expunged.setChecked(app_constants.INCLUDE_EH_EXPUNGED)
 		self.replace_metadata.setChecked(app_constants.REPLACE_METADATA)
 		self.always_first_hit.setChecked(app_constants.ALWAYS_CHOOSE_FIRST_HIT)
 		self.web_time_offset.setValue(app_constants.GLOBAL_EHEN_TIME)
@@ -384,6 +385,9 @@ class SettingsDialog(QWidget):
 		else:
 			app_constants.DEFAULT_EHEN_URL = 'http://exhentai.org/'
 		set(app_constants.DEFAULT_EHEN_URL, 'Web', 'default ehen url')
+
+		app_constants.INCLUDE_EH_EXPUNGED = self.include_expunged.isChecked()
+		set(app_constants.INCLUDE_EH_EXPUNGED, 'Web', 'include eh expunged')
 
 		app_constants.REPLACE_METADATA = self.replace_metadata.isChecked()
 		set(app_constants.REPLACE_METADATA, 'Web', 'replace metadata')
@@ -860,6 +864,8 @@ class SettingsDialog(QWidget):
 		ehen_url_l.addWidget(self.default_ehen_url)
 		ehen_url_l.addWidget(self.exhentai_ehen_url, 1)
 		web_metadata_m_l.addRow('Default EH:', ehen_url_l)
+		self.include_expunged = QCheckBox('Allow fetching from expunged galleries')
+		web_metadata_m_l.addRow(self.include_expunged)
 		self.continue_a_metadata_fetcher = QCheckBox('Skip galleries that has already been processed in auto metadata fetcher')
 		web_metadata_m_l.addRow(self.continue_a_metadata_fetcher)
 		self.use_jpn_title = QCheckBox('Apply japanese title instead of english title')
