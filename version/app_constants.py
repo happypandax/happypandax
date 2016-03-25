@@ -17,7 +17,7 @@ import settings
 from database import db_constants
 
 # Version number
-vs  = '0.28.1'
+vs  = '0.29'
 DEBUG = False
 
 OS_NAME = ''
