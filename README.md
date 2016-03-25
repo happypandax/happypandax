@@ -20,8 +20,8 @@ For general documentation, check the [wiki](https://github.com/Pewpews/happypand
 
 # Features
 - Portable, self-contained in folder and cross-platform
-- Low memory footprint
 - Advanced gallery search with regex support
+- Low memory footprint
 - Gallery tagging: userdefined namespaces and tags
 - Gallery metadata fetching from the web (supports various sources)
 - Gallery downloading from the web (supports various sources)

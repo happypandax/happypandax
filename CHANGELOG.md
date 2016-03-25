@@ -1,3 +1,31 @@
+*Happypanda v0.29*
+- Increased and improved stability and perfomance
+- Shortened startup time
+- Galleries are now added dynamically
+- New feature: Tabs
+	- New inbox tab for new gallery additions
+	- Checking for duplicates will also make a new tab
+- Gallery deletion will now process smoothly
+- It is now possible to edit multiple galleries
+- Type and Langauge in metadata popup window are now clickable to issue a search
+- Updated DB to version 0.25
+	- Added views in series table
+- Visual changes in gridview
+	- Added a recently added indicator
+	- Gallery filetypes will now be displayed with text
+- Added new options in settings
+	- Removed option: autoadd scanned galleries
+- Fixed bugs:
+	+ Fixed some metadata fetchings bugs
+	+ Fixed database import and export issues
+	+ Closing gallery metadata popup window caused an exception
+	+ Fetching metadata with no internet connection caused an exception
+	+ Invalid folders/archives were being picked up by the monitor
+	+ Fixed default language issues
+	+ Metadata would sometimes fail when doing a filesearch
+	+ Thumbnail cache dir was not being cleared
+	+ Adding from directory was not possible with single gallery add method
+
 *Happypanda v0.28.1*
 - Fixed bugs:
 	+ Fixed typo in external viewer args
