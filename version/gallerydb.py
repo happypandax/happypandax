@@ -496,8 +496,9 @@ class GalleryDB(DBBase):
 		Note: key will be normcased
 		"""
 		#pdb.set_trace()
-		if not galleries:
+		if galleries is None:
 			galleries = app_constants.GALLERY_DATA + app_constants.GALLERY_ADDITION_DATA
+			filter = True
 
 		if filter:
 			filter_list = []
