@@ -783,7 +783,11 @@ class GridDelegate(QStyledItemDelegate):
 
 				painter.save()
 				painter.setPen(QColor(164,164,164,200))
-				txt_layout = misc.text_layout("Loading...", w, self.title_font, self.title_font_m)
+				if gallery.profile:
+					thumb_text = "Loading..."
+				else:
+					thumb_text = "Thumbnail regeneration needed!"
+				txt_layout = misc.text_layout(thumb_text, w, self.title_font, self.title_font_m)
 
 				clipping = QRectF(x, y+h//4, w, app_constants.GRIDBOX_LBL_H - 10)
 				txt_layout.draw(painter, QPointF(x, y+h//4),
@@ -1095,6 +1099,7 @@ class MangaView(QListView):
 		self._scroll_speed_timer.timeout.connect(self._calculate_scroll_speed)
 		self._scroll_speed_timer.setInterval(500) # ms
 		self._old_scroll_value = 0
+		self._scroll_zero_once = True
 		self._scroll_speed = 0
 		self._scroll_speed_timer.start()
 
@@ -1107,9 +1112,17 @@ class MangaView(QListView):
 		self._scroll_speed = abs(self._old_scroll_value-new_value)
 		self._old_scroll_value = new_value
 		
-		# update view if not scrolling
-		if new_value == 0 and self._old_scroll_value != 0:
+		if self.verticalScrollBar().value() in (0, self.verticalScrollBar().maximum()):
+			self._scroll_zero_once = True
+
+		if self._scroll_zero_once:
 			self.update()
+			self._scroll_zero_once = False
+
+		# update view if not scrolling
+		if new_value < 500 and self._old_scroll_value > 500:
+			self.update()
+
 
 	def get_visible_indexes(self, column=0):
 		"find all galleries in viewport"

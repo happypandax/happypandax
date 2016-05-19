@@ -2132,6 +2132,7 @@ class AdminDB(QObject):
 		DBBase._DB_CONN.close()
 		os.remove(db_constants.DB_PATH)
 		os.rename(temp_db, db_constants.DB_PATH)
+		db.DBBase._DB_CONN = db.init_db(db_constants.DB_PATH)
 		self.PROGRESS.emit(len(galleries))
 		log_i("Succesfully rebuilt database")
 		self.DONE.emit(True)

@@ -196,9 +196,16 @@ class AppWindow(QMainWindow):
 			app_widget.adjustSize()
 			db_p = os.path.join(os.path.split(database.db_constants.DB_PATH)[0], 'sadpanda.db')
 			self.admin_db_method_invoker.emit(db_p)
-		elif app_constants.FIRST_TIME_LEVEL < 6:
-			log_i('Invoking first time level {}'.format(6))
-			app_constants.INTERNAL_LEVEL = 6
+		elif app_constants.FIRST_TIME_LEVEL < 7:
+			log_i('Invoking first time level {}'.format(7))
+			app_constants.INTERNAL_LEVEL = 7
+			if app_constants.EXTERNAL_VIEWER_ARGS == '{file}':
+				app_constants.EXTERNAL_VIEWER_ARGS = '{$file}'
+				settings.set('{$file}','Advanced', 'external viewer args')
+				settings.save()
+		elif app_constants.FIRST_TIME_LEVEL < 8:
+			log_i('Invoking first time level {}'.format(8))
+			app_constants.INTERNAL_LEVEL = 8
 			app_widget = misc.AppDialog(self)
 			app_widget.note_info.setText("<font color='red'>IMPORTANT:</font> Application restart is required when done")
 			app_widget.restart_info.hide()
@@ -213,14 +220,6 @@ class AppWindow(QMainWindow):
 			self.admin_db_method_invoker.connect(app_widget.show)
 			app_widget.adjustSize()
 			self.admin_db_method_invoker.emit(True)
-		elif app_constants.FIRST_TIME_LEVEL < 7:
-			log_i('Invoking first time level {}'.format(7))
-			app_constants.INTERNAL_LEVEL = 7
-			if app_constants.EXTERNAL_VIEWER_ARGS == '{file}':
-				app_constants.EXTERNAL_VIEWER_ARGS = '{$file}'
-				settings.set('{$file}','Advanced', 'external viewer args')
-				settings.save()
-			done()
 
 		else:
 			done()
@@ -927,9 +926,16 @@ class AppWindow(QMainWindow):
 				class ScanDir(QObject):
 					finished = pyqtSignal()
 					fetch_inst = fetch.Fetch(self)
-					def __init__(self, addition_view, parent=None):
+					def __init__(self, addition_view, addition_tab, parent=None):
 						super().__init__(parent)
 						self.addition_view = addition_view
+						self.addition_tab = addition_tab
+						self._switched = False
+
+					def switch_tab(self):
+						if not self._switched:
+							self.addition_tab.click()
+							self._switched = True
 
 					def scan_dirs(self):
 						paths = []
@@ -943,6 +949,7 @@ class AppWindow(QMainWindow):
 
 						self.fetch_inst.series_path = paths
 						self.fetch_inst.LOCAL_EMITTER.connect(lambda g:self.addition_view.add_gallery(g, app_constants.KEEP_ADDED_GALLERIES))
+						self.fetch_inst.LOCAL_EMITTER.connect(self.switch_tab)
 						self.fetch_inst.local()
 						#contents = []
 						#for g in self.scanned_data:
@@ -968,7 +975,7 @@ class AppWindow(QMainWindow):
 				new_gall_spinner.show()
 
 				thread = QThread(self)
-				self.scan_inst = ScanDir(self.addition_tab.view)
+				self.scan_inst = ScanDir(self.addition_tab.view, self.addition_tab)
 				self.scan_inst.moveToThread(thread)
 				self.scan_inst.finished.connect(finished)
 				self.scan_inst.finished.connect(new_gall_spinner.before_hide)
@@ -976,7 +983,6 @@ class AppWindow(QMainWindow):
 				#self.scan_inst.scan_dirs()
 				thread.finished.connect(thread.deleteLater)
 				thread.start()
-				self.addition_tab.click()
 			except:
 				self.notification_bar.add_text('An error occured while attempting to scan for new galleries. Check happypanda.log.')
 				log.exception('An error occured while attempting to scan for new galleries.')
