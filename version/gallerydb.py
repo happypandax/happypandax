@@ -1444,6 +1444,7 @@ class Gallery:
 	chapter_size <- int of number of chapters
 	info <- str
 	fav <- int (1 for true 0 for false)
+	rating <- float
 	type <- str (Manga? Doujin? Other?)
 	language <- str
 	status <- "unknown", "completed" or "ongoing"
@@ -1472,6 +1473,7 @@ class Gallery:
 		self._chapters = ChaptersContainer(self)
 		self.info = ""
 		self.fav = 0
+		self.rating = 5
 		self.type = ""
 		self.link = ""
 		self.language = ""
