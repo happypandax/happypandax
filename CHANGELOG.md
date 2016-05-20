@@ -1,3 +1,15 @@
+*Happypanda v0.30*
+- Someone finally convinced me to add star ratings
+    - *Note:* Ratings won't be fetched from EH since I find them useless... Though I might make it an option later on. 
+- Visual make-over
+- Improved how thumbnails are loaded in gridview
+- Moving files into a monitored folder will now automatically add the galleries into your inbox 
+- Updated DB to version 0.26
+    - Added `Rating` metadata
+- Fixed bugs:
+    - Adding galleries on a fresh install caused an exception
+    - Moving files into a monitored folder, and then accepting the pop-up would cause an exception
+
 *Happypanda v0.29*
 - Increased and improved stability and perfomance
 - Shortened startup time
