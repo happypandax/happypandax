@@ -32,6 +32,7 @@ class GalleryDialog(QWidget):
 	def __init__(self, parent, arg=None):
 		super().__init__(parent, Qt.Dialog)
 		self.setAttribute(Qt.WA_DeleteOnClose)
+		self.setAutoFillBackground(True)
 		self.parent_widget = parent
 		m_l = QVBoxLayout()
 		self.main_layout = QVBoxLayout()

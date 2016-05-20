@@ -40,7 +40,7 @@ from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
 							 QMenu, QGraphicsBlurEffect, QActionGroup,
 							 QCommonStyle, QApplication, QTableWidget,
 							 QTableWidgetItem, QTableView, QSplitter,
-							 QSplitterHandle, QStyledItemDelegate)
+							 QSplitterHandle, QStyledItemDelegate, QStyleOption)
 
 from utils import (tag_to_string, tag_to_dict, title_parser, ARCHIVE_FILES,
 					 ArchiveFile, IMG_FILES)
@@ -365,8 +365,6 @@ class ArrowWindow(TransparentWidget):
 		self._arrow_size = QSizeF(20, 20)
 		self.content_margin = 0
 
-
-
 	@property
 	def arrow_size(self):
 		return self._arrow_size
@@ -389,10 +387,11 @@ class ArrowWindow(TransparentWidget):
 	def paintEvent(self, event):
 		assert isinstance(event, QPaintEvent)
 
+		opt = QStyleOption()
+		opt.initFrom(self)
+
 		painter = QPainter(self)
 		painter.setRenderHint(painter.Antialiasing)
-		painter.setBrush(QBrush(QColor('#585858')))
-		painter.setPen(QPen(QColor('#585858')))
 
 		size = self.size()
 		if self.direction in (self.LEFT, self.RIGHT):
@@ -406,9 +405,15 @@ class ArrowWindow(TransparentWidget):
 		elif self.direction == self.TOP:
 			starting_point = QPointF(0, self.arrow_size.height())
 
+		#painter.save()
+		#painter.translate(starting_point)
+		self.style().drawPrimitive(QCommonStyle.PE_Widget, opt, painter, self);
+		#painter.restore()
+		painter.setBrush(QBrush(painter.pen().color()))
+
 		# draw background
 		background_rect = QRectF(starting_point, actual_size)
-		painter.drawRoundedRect(background_rect, 5, 5)
+		#painter.drawRoundedRect(background_rect, 5, 5)
 
 		# calculate the arrow
 		arrow_points = []
@@ -770,7 +775,6 @@ class GalleryMetaWindow(ArrowWindow):
 			self.tags_layout.setSizeConstraint(self.tags_layout.SetMaximumSize)
 			self.tags_scroll.setWidget(self.tags_widget)
 			self.tags_scroll.setWidgetResizable(True)
-			self.tags_scroll.setStyleSheet("background-color: #585858;")
 			self.tags_scroll.setFrameShape(QFrame.NoFrame)
 			self.main_left_layout.addWidget(self.tags_scroll)
 
@@ -831,6 +835,7 @@ class GalleryMetaWindow(ArrowWindow):
 							t = TagText(search_widget=self.appwindow, namespace=namespace)
 						t.setText(tag)
 						tags_lbls.addWidget(t)
+						t.setAutoFillBackground(True)
 			self.tags_widget.adjustSize()
 
 class Spinner(TransparentWidget):
