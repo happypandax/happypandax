@@ -1644,6 +1644,7 @@ class MangaViews:
              'info':gallery.info,
              'type':gallery.type,
              'language':gallery.language,
+             'rating':gallery.rating,
              'status':gallery.status,
              'pub_date':gallery.pub_date,
              'tags':gallery.tags,

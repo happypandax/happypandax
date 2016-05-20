@@ -790,6 +790,12 @@ SEARCH_TUTORIAL_TAGS =\
 <td>Galleries last read on <code>date</code> <strong>OR</strong> has matching namespace &amp; tag</td>
 <td>*</td>
 </tr>
+<tr>
+<td><code>rating:integer</code>, <code>stars:integer</code></td>
+<td></td>
+<td>Galleries that has been rated <code>integer</code> <strong>OR</strong> has matching namespace &amp; tag</td>
+<td>*</td>
+</tr>
 </tbody>
 </table>
 

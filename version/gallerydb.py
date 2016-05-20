@@ -138,6 +138,7 @@ def gallery_map(row, gallery, chapters=True, tags=True, hashes=True):
         pass
     gallery.info = row['info']
     gallery.language = row['language']
+    gallery.rating = row['rating']
     gallery.status = row['status']
     gallery.type = row['type']
     gallery.fav = row['fav']
@@ -202,10 +203,10 @@ def default_exec(object):
         else:
             return obj
     executing = ["""INSERT INTO series(title, artist, profile, series_path, is_archive, path_in_archive,
-                    info, type, fav, language, status, pub_date, date_added, last_read, link,
+                    info, type, fav, language, rating, status, pub_date, date_added, last_read, link,
                     times_read, db_v, exed, view)
                 VALUES(:title, :artist, :profile, :series_path, :is_archive, :path_in_archive, :info, :type, :fav, :language,
-                    :status, :pub_date, :date_added, :last_read, :link, :times_read, :db_v, :exed, :view)""",
+                    :rating, :status, :pub_date, :date_added, :last_read, :link, :times_read, :db_v, :exed, :view)""",
                 {
                 'title':check(object.title),
                 'artist':check(object.artist),
@@ -217,6 +218,7 @@ def default_exec(object):
                 'fav':check(object.fav),
                 'type':check(object.type),
                 'language':check(object.language),
+                'rating':check(object.rating),
                 'status':check(object.status),
                 'pub_date':check(object.pub_date),
                 'date_added':check(object.date_added),
@@ -302,6 +304,7 @@ class GalleryDB(DBBase):
                 fav=gallery.fav,
                 tags=gallery.tags,
                 language=gallery.language,
+                rating=gallery.rating,
                 status=gallery.status,
                 pub_date=gallery.pub_date,
                 link=gallery.link,
@@ -321,7 +324,7 @@ class GalleryDB(DBBase):
 
     @classmethod
     def modify_gallery(cls, series_id, title=None, profile=None, artist=None, info=None, type=None, fav=None,
-                   tags=None, language=None, status=None, pub_date=None, link=None,
+                   tags=None, language=None, rating=None, status=None, pub_date=None, link=None,
                    times_read=None, last_read=None, series_path=None, chapters=None, _db_v=None,
                    hashes=None, exed=None, is_archive=None, path_in_archive=None, view=None):
         "Modifies gallery with given gallery id"
@@ -349,6 +352,9 @@ class GalleryDB(DBBase):
         if language != None:
             assert isinstance(language, str)
             executing.append(["UPDATE series SET language=? WHERE series_id=?", (language, series_id)])
+        if rating != None:
+            assert isinstance(rating, int)
+            executing.append(["UPDATE series SET rating=? WHERE series_id=?", (rating, series_id)])
         if status != None:
             assert isinstance(status, str)
             executing.append(["UPDATE series SET status=? WHERE series_id=?", (status, series_id)])
@@ -1483,7 +1489,7 @@ class Gallery:
         self._chapters = ChaptersContainer(self)
         self.info = ""
         self.fav = 0
-        self.rating = 5
+        self.rating = 0
         self.type = ""
         self.link = ""
         self.language = ""
@@ -1669,6 +1675,8 @@ class Gallery:
             return _operator_supported(self.chapters.count())
         elif ns in ['Read_count', 'Read count', 'Times_read', 'Times read']:
             return _operator_supported(self.times_read)
+        elif ns in ['Rating', 'Stars']:
+            return _operator_supported(self.rating)
         elif ns in ['Date_added', 'Date added']:
             return _operator_supported(self.date_added.date(), True)
         elif ns in ['Pub_date', 'Publication', 'Pub date']:
