@@ -707,6 +707,12 @@ SEARCH_TUTORIAL_TAGS =\
 <td></td>
 </tr>
 <tr>
+<td><code>path:none</code>, <code>path:null</code></td>
+<td>*</td>
+<td>Galleries that has been <strong>moved/deleted</strong> from the filesystem</td>
+<td></td>
+</tr>
+<tr>
 <td><code>descr:none</code>, <code>descr:null</code>, <code>description:none</code>, <code>description:null</code></td>
 <td>*</td>
 <td>Galleries with <strong>no</strong> description set</td>

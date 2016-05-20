@@ -6,7 +6,7 @@ QLabel#author {
 }
 
 AppWindow > QToolBar, QStatusBar, SideBarWidget {
-	background-color: #2b303a;
+	background-color: #2A2D31;
 	border: none;
 }
 
@@ -41,13 +41,13 @@ QScrollBar:horizontal {
 	}
 
 QScrollBar:vertical, QScrollBar:horizontal {
-	border: 0px solid #2b303a;
+	border: 0px solid #2A2D31;
 	background:none;
 	margin: 0px 0px 0px 0px;
 	}
 
 QScrollBar::handle {
-	background: #2b303a;
+	background: #2A2D31;
 }
 
 QScrollBar::handle:vertical, QScrollBar::handle:horizontal {
@@ -55,28 +55,28 @@ QScrollBar::handle:vertical, QScrollBar::handle:horizontal {
 }
 
 QScrollBar::add-line:vertical {
-	background: #2b303a;
+	background: #2A2D31;
 	height: 0px;
 	subcontrol-position: bottom;
 	subcontrol-origin: margin;
 }
 
 QScrollBar::add-line:horizontal {
-	background: #2b303a;
+	background: #2A2D31;
 	width: 0px;
 	subcontrol-position: right;
 	subcontrol-origin: margin;
 }
 
 QScrollBar::sub-line:vertical {
-	background: #2b303a;
+	background: #2A2D31;
 	height: 0px;
 	subcontrol-position: top;
 	subcontrol-origin: margin;
 }
 
 QScrollBar::sub-line:horizontal {
-	background: #2b303a;
+	background: #2A2D31;
 	width: 0px;
 	subcontrol-position: left;
 	subcontrol-origin: margin;
@@ -87,7 +87,7 @@ QScrollBar::add-page, QScrollBar::sub-page {
 }
 
 QMenu {
-	background-color: #2b303a;
+	background-color: #2A2D31;
 	color: white;
 }
 
@@ -104,13 +104,13 @@ QLabel {
 }
 
 QPushButton {
-	border: 1px solid #555555;
-    border-radius: 2px;
+	border: 1px solid #3E4249;
+    border-radius: 1px;
     padding: 5px;
 }
 
 QPushButton, QToolButton {
-	background-color: #2b303a;
+	background-color: #3E4249;
 	color: white;
 }
 
@@ -124,7 +124,7 @@ QPushButton:pressed, QPushButton:checked {
 
 QToolTip {
 	border-style: none;
-	background-color: #2b303a;
+	background-color: #2A2D31;
 	color: white;
 }
 
@@ -139,30 +139,30 @@ TagText {
 	padding-top: 0.1em;
 	border-radius: 0.45em;
 	border: 0.1em solid #d64933;
-	background-color: rgba(25,100,126,0.50) !important;
+	background-color: rgba(62, 66, 73,0.50) !important;
 }
 
 ArrowWindow {
-    background-color: #2b303a;
+    background-color: #2A2D31;
     color: #d64933;
     border: 1px solid #d64933;
     border-radius: 5px;
 }
 
 GalleryMetaWindow QScrollArea QWidget, QHeaderView::section, QHeaderView::section::checked {
-    background-color: #2b303a;
+    background-color: #2A2D31;
 }
 
 SettingsDialog, SettingsDialog QScrollArea QWidget, GalleryDialog, GalleryDialog QScrollArea QWidget {
-    color: #2b303a;
+    color: #2A2D31;
 }
 
 GalleryDialog QScrollArea QWidget QPushButton, SettingsDialog QScrollArea QWidget QPushButton{
     color: white;
 }
 
-QGroupBox::title, QHeaderView::section {
-	color: #ff3516;
+QHeaderView::section {
+    color: white;
 }
 
 QHeaderView::section {
@@ -170,7 +170,7 @@ QHeaderView::section {
     padding: 5px;
 }
 
-QHeaderView::down-arrow, QHeaderView::up-arrow {
+QGroupBox::title, QHeaderView::down-arrow, QHeaderView::up-arrow {
 	color: #d64933;
 }
 
@@ -179,7 +179,7 @@ QListView, QTableView {
 }
 
 QProgressBar {
-    border: 2px solid 2b303a;
+    border: 2px solid #3E4249;
     border-radius: 5px;
 }
 
