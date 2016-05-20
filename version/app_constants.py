@@ -48,7 +48,7 @@ unrar_tool_path = get('', 'Application', 'unrar tool path')
 default_stylesheet_path = os.path.join(static_dir,"style.css")
 user_stylesheet_path = ""
 
-INTERNAL_LEVEL = 8
+INTERNAL_LEVEL = 7
 FIRST_TIME_LEVEL = get(7, 'Application', 'first time level', int)
 UPDATE_VERSION = get('0.25', 'Application', 'version', str)
 FORCE_HIGH_DPI_SUPPORT = get(False, 'Advanced', 'force high dpi support', bool)

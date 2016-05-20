@@ -1,4 +1,4 @@
-﻿#"""
+#"""
 #This file is part of Happypanda.
 #Happypanda is free software: you can redistribute it and/or modify
 #it under the terms of the GNU General Public License as published by
@@ -163,16 +163,7 @@ class AppWindow(QMainWindow):
             app_constants.DOWNLOAD_MANAGER = self.download_manager
             self.download_manager.start_manager(4)
 
-        if app_constants.FIRST_TIME_LEVEL < 4:
-            log_i('Invoking first time level {}'.format(4))
-            app_constants.INTERNAL_LEVEL = 4
-            settings.set([], 'Application', 'monitor paths')
-            settings.set([], 'Application', 'ignore paths')
-            app_constants.MONITOR_PATHS = []
-            app_constants.IGNORE_PATHS = []
-            settings.save()
-            done()
-        elif app_constants.FIRST_TIME_LEVEL < 5:
+        if app_constants.FIRST_TIME_LEVEL < 5:
             log_i('Invoking first time level {}'.format(5))
             app_constants.INTERNAL_LEVEL = 5
             app_widget = misc.AppDialog(self)
@@ -197,24 +188,7 @@ class AppWindow(QMainWindow):
                 app_constants.EXTERNAL_VIEWER_ARGS = '{$file}'
                 settings.set('{$file}','Advanced', 'external viewer args')
                 settings.save()
-        elif app_constants.FIRST_TIME_LEVEL < 8:
-            log_i('Invoking first time level {}'.format(8))
-            app_constants.INTERNAL_LEVEL = 8
-            app_widget = misc.AppDialog(self)
-            app_widget.note_info.setText("<font color='red'>IMPORTANT:</font> Application restart is required when done")
-            app_widget.restart_info.hide()
-            self.admin_db = gallerydb.AdminDB()
-            self.admin_db.moveToThread(app_constants.GENERAL_THREAD)
-            self.admin_db.DONE.connect(done)
-            self.admin_db.DONE.connect(lambda: app_constants.NOTIF_BAR.add_text("Application requires a restart"))
-            self.admin_db.DONE.connect(self.admin_db.deleteLater)
-            self.admin_db.DATA_COUNT.connect(app_widget.prog.setMaximum)
-            self.admin_db.PROGRESS.connect(app_widget.prog.setValue)
-            self.admin_db_method_invoker.connect(self.admin_db.rebuild_database)
-            self.admin_db_method_invoker.connect(app_widget.show)
-            app_widget.adjustSize()
-            self.admin_db_method_invoker.emit(True)
-
+            done()
         else:
             done()
 
