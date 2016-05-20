@@ -7,7 +7,7 @@
 - Updated DB to version 0.26
     - Added `Rating` metadata
 - Fixed bugs:
-    - Adding galleries on a fresh install caused an exception
+    - Attempting to add galleries on a fresh install was causing an exception
     - Moving files into a monitored folder, and then accepting the pop-up would cause an exception
 
 *Happypanda v0.29*
