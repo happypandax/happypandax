@@ -1565,8 +1565,6 @@ class NotificationOverlay(QWidget):
         self._lbl = QLabel()
         self._main_layout.addWidget(self._lbl)
         self._lbl.setAlignment(Qt.AlignCenter)
-        self.setAutoFillBackground(True)
-        self.setBackgroundRole(self.palette().Shadow)
         self.setContentsMargins(-10,-10,-10,-10)
         self._click = False
         self._override_hide = False

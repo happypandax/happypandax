@@ -128,8 +128,10 @@ QToolTip {
 	color: white;
 }
 
-NotificationOverlay > * {
-	color:white;
+NotificationOverlay > QLabel {
+	color: white;
+    background-color: #3E4249;
+	border-style: none;
 }
 
 TagText {

@@ -824,7 +824,7 @@ class GridDelegate(QStyledItemDelegate):
                       clip=clipping)
 
             loaded_image = gallery.get_profile(app_constants.ProfileType.Default)
-            if loaded_image and self._paint_level > 0 and self.view.scroll_speed < 1000:
+            if loaded_image and self._paint_level > 0 and self.view.scroll_speed < 600:
                 # if we can't find a cached image
                 pix_cache = QPixmapCache.find(self.key(loaded_image.cacheKey()))
                 if isinstance(pix_cache, QPixmap):
@@ -1199,7 +1199,7 @@ class MangaView(QListView):
             self._scroll_zero_once = False
 
         # update view if not scrolling
-        if new_value < 500 and self._old_scroll_value > 500:
+        if new_value < 400 and self._old_scroll_value > 400:
             self.update()
 
 

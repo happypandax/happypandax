@@ -108,11 +108,6 @@ class AppWindow(QMainWindow):
             else:
                 log_e('Could not find gallery to remove from watcher')
 
-        def create_gallery(path):
-            g_dia = gallerydialog.GalleryDialog(self, path)
-            g_dia.SERIES.connect(self.default_manga_view.add_gallery)
-            g_dia.show()
-
         def update_gallery(g):
             index = gallery.CommonView.find_index(self.get_current_view(), g.id)
             if index:
@@ -124,8 +119,8 @@ class AppWindow(QMainWindow):
             self.default_manga_view.replace_gallery(g, False)
 
         def created(path):
-            c_popup = io_misc.CreatedPopup(path, self)
-            c_popup.ADD_SIGNAL.connect(create_gallery)
+            self.gallery_populate([path])
+
         def modified(path, gallery):
             mod_popup = io_misc.ModifiedPopup(path, gallery, self)
         def deleted(path, gallery):

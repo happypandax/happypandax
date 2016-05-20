@@ -402,32 +402,32 @@ class ModifiedPopup(misc.BasePopup):
 		self.main_widget.setLayout(main_layout)
 		self.show()
 
-class CreatedPopup(misc.BasePopup):
-	ADD_SIGNAL = pyqtSignal(str)
-	def __init__(self, path, parent=None):
-		super().__init__(parent)
-		def commit():
-			self.ADD_SIGNAL.emit(path)
-			self.close()
-		main_layout = QVBoxLayout()
-		inner_layout = QHBoxLayout()
-		name = os.path.split(path)[1]
-		cover = QLabel()
-		img = QPixmap(utils.get_gallery_img(path))
-		if img:
-			cover.setPixmap(img.scaled(350, 200, Qt.KeepAspectRatio, Qt.SmoothTransformation))
-		info_lbl = QLabel('New gallery detected!\n\n{}\n\nDo you want to add it?'.format(name))
-		info_lbl.setWordWrap(True)
-		info_lbl.setAlignment(Qt.AlignCenter)
-		inner_layout.addWidget(cover)
-		inner_layout.addWidget(info_lbl)
-		main_layout.addLayout(inner_layout)
-		main_layout.addLayout(self.generic_buttons)
-		self.main_widget.setLayout(main_layout)
-		self.yes_button.clicked.connect(commit)
-		self.no_button.clicked.connect(self.close)
-		self.adjustSize()
-		self.show()
+#class CreatedPopup(misc.BasePopup):
+#	ADD_SIGNAL = pyqtSignal(str)
+#	def __init__(self, path, parent=None):
+#		super().__init__(parent)
+#		def commit():
+#			self.ADD_SIGNAL.emit(path)
+#			self.close()
+#		main_layout = QVBoxLayout()
+#		inner_layout = QHBoxLayout()
+#		name = os.path.split(path)[1]
+#		cover = QLabel()
+#		img = QPixmap(utils.get_gallery_img(path))
+#		if img:
+#			cover.setPixmap(img.scaled(350, 200, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+#		info_lbl = QLabel('New gallery detected!\n\n{}\n\nDo you want to add it?'.format(name))
+#		info_lbl.setWordWrap(True)
+#		info_lbl.setAlignment(Qt.AlignCenter)
+#		inner_layout.addWidget(cover)
+#		inner_layout.addWidget(info_lbl)
+#		main_layout.addLayout(inner_layout)
+#		main_layout.addLayout(self.generic_buttons)
+#		self.main_widget.setLayout(main_layout)
+#		self.yes_button.clicked.connect(commit)
+#		self.no_button.clicked.connect(self.close)
+#		self.adjustSize()
+#		self.show()
 
 class MovedPopup(misc.BasePopup):
 	UPDATE_SIGNAL = pyqtSignal(object)
