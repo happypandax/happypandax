@@ -221,7 +221,7 @@ class SettingsDialog(QWidget):
 		self.visual_grid_tooltip_pub_date.setChecked(app_constants.TOOLTIP_PUB_DATE)
 		self.visual_grid_tooltip_date_added.setChecked(app_constants.TOOLTIP_DATE_ADDED)
 		# Visual / Grid View / Gallery
-		self.external_viewer_ico.setChecked(app_constants.USE_EXTERNAL_PROG_ICO)
+		self.gallery_rating.setChecked(app_constants.DISPLAY_RATING)
 		self.gallery_type_ico.setChecked(app_constants.DISPLAY_GALLERY_TYPE)
 		if app_constants.GALLERY_FONT_ELIDE:
 			self.gallery_text_elide.setChecked(True)
@@ -447,8 +447,8 @@ class SettingsDialog(QWidget):
 		app_constants.TOOLTIP_DATE_ADDED = self.visual_grid_tooltip_date_added.isChecked()
 		set(app_constants.TOOLTIP_DATE_ADDED, 'Visual', 'tooltip date added')
 		# Visual / Grid View / Gallery
-		app_constants.USE_EXTERNAL_PROG_ICO = self.external_viewer_ico.isChecked()
-		set(app_constants.USE_EXTERNAL_PROG_ICO, 'Visual', 'use external prog ico')
+		app_constants.DISPLAY_RATING = self.gallery_rating.isChecked()
+		set(app_constants.DISPLAY_RATING, 'Visual', 'display gallery rating')
 		app_constants.DISPLAY_GALLERY_TYPE = self.gallery_type_ico.isChecked()
 		set(app_constants.DISPLAY_GALLERY_TYPE, 'Visual', 'display gallery type')
 		if self.gallery_text_elide.isChecked():
@@ -962,13 +962,13 @@ class SettingsDialog(QWidget):
 		grid_gallery_main_l.setFormAlignment(Qt.AlignLeft)
 		grid_gallery_group.setLayout(grid_gallery_main_l)
 		grid_gallery_display = FlowLayout()
-		grid_gallery_main_l.addRow('Display icon on gallery:', grid_gallery_display)
-		self.external_viewer_ico = QCheckBox('External Viewer')
-		grid_gallery_display.addWidget(self.external_viewer_ico)
+		grid_gallery_main_l.addRow('Display on gallery:', grid_gallery_display)
+		self.gallery_rating = QCheckBox('Rating')
+		grid_gallery_display.addWidget(self.gallery_rating)
 		self.gallery_type_ico = QCheckBox('File Type')
 		grid_gallery_display.addWidget(self.gallery_type_ico)
 		if sys.platform.startswith('darwin'):
-			self.external_viewer_ico.setEnabled(False)
+			self.gallery_rating.setEnabled(False)
 			self.gallery_type_ico.setEnabled(False)
 		gallery_text_mode = QWidget()
 		grid_gallery_main_l.addRow('Text Mode:', gallery_text_mode)

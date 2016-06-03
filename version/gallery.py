@@ -944,18 +944,14 @@ class GridDelegate(QStyledItemDelegate):
                     painter.fillRect(type_rect, type_color)
                     painter.drawText(type_p.x(), type_p.y() + painter.fontMetrics().height() - 4, gallery.file_type)
                     painter.restore()
-                    
-                star_start_x = type_rect.x()+type_rect.width() if app_constants.DISPLAY_GALLERY_TYPE else x
-                star_width = star_rating.sizeHint().width()
-                star_start_x += ((x+w-star_start_x)-(star_width))/2
-                star_rating.paint(painter,
-                    QRect(star_start_x, type_rect.y(), star_width, type_rect.height()))
+                
 
-                #if app_constants.USE_EXTERNAL_PROG_ICO:
-                #	if self.external_icon and not self.external_icon.isNull():
-                #		self.external_icon.paint(painter, QRect(x+w-30,
-                #		y+app_constants.THUMB_H_SIZE-28, 28, 28))
-
+                if app_constants.DISPLAY_RATING and gallery.rating:
+                    star_start_x = type_rect.x()+type_rect.width() if app_constants.DISPLAY_GALLERY_TYPE else x
+                    star_width = star_rating.sizeHint().width()
+                    star_start_x += ((x+w-star_start_x)-(star_width))/2
+                    star_rating.paint(painter,
+                        QRect(star_start_x, type_rect.y(), star_width, type_rect.height()))
 
             if gallery.state == app_constants.GalleryState.New:
                 painter.save()
