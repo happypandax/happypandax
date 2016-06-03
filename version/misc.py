@@ -1094,8 +1094,16 @@ class GalleryMenu(QMenu):
             get_select_metadata = self.addAction('Get metadata for selected',
                                         lambda: self.parent_widget.get_metadata(gals))
         self.addSeparator()
+        rating = self.addAction('Set rating')
+        rating_menu = QMenu(self)
+        rating.setMenu(rating_menu)
+        for x in range(1, 6):
+            rating_menu.addAction('{}'.format(x), functools.partial(self.set_rating, x))
         edit = self.addAction('Edit', lambda: self.edit_gallery.emit(self.parent_widget,
                                             self.index.data(Qt.UserRole + 1) if not self.selected else [idx.data(Qt.UserRole + 1) for idx in self.selected]))
+        
+        self.addSeparator()
+
         if not self.selected:
             text = 'folder' if not self.index.data(Qt.UserRole + 1).is_archive else 'archive'
             op_folder_act = self.addAction('Open {}'.format(text), self.op_folder)
@@ -1160,6 +1168,18 @@ class GalleryMenu(QMenu):
         else:
             allow_metadata_txt = "Include in auto metadata fetch" if self.allow_metadata_exed else "Exclude in auto metadata fetch"
         adv_menu.addAction(allow_metadata_txt, self.allow_metadata_fetch)
+
+    def set_rating(self, x):
+
+        def save_rating(g):
+            gallerydb.execute(gallerydb.GalleryDB.modify_gallery,
+                                True, g.id, rating=g.rating)
+        if self.selected:
+           [(setattr(g, "rating", x), save_rating(g)) for g in [idx.data(Qt.UserRole + 1) for idx in self.selected]]
+        else:
+             self.gallery.rating = x
+             save_rating(self.gallery)
+
 
     def add_to_ignore(self):
         if self.selected:

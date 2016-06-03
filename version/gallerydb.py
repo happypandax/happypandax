@@ -1816,32 +1816,10 @@ class Gallery:
         return self.id < other.id
 
     def __str__(self):
-        string = """
-        ID: {}
-        Title: {}
-        Profile Path: {}
-        Path: {}
-        Path In Archive: {}
-        Is Archive: {}
-        Author: {}
-        Description: {}
-        Favorite: {}
-        Type: {}
-        Language: {}
-        Status: {}
-        Tags: {}
-        Publication Date: {}
-        Date Added: {}
-        Last Read: {}
-        Times Read: {}
-        Exed: {}
-        Hashes: {}
-
-        Chapters: {}
-        """.format(self.id, self.title, self.profile, self.path.encode(errors='ignore'), self.path_in_archive.encode(errors='ignore'),
-             self.is_archive, self.artist, self.info, self.fav, self.type, self.language, self.status, self.tags,
-             self.pub_date, self.date_added, self.last_read, self.times_read, self.exed, len(self.hashes), self.chapters)
-        return string
+        s = ""
+        for x in sorted(self.__dict__):
+            s += "{:>20}: {:>15}\n".format(x, str(self.__dict__[x]))
+        return s
 
 class Chapter:
     """
