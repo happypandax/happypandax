@@ -12,8 +12,16 @@
 #along with Happypanda.  If not, see <http://www.gnu.org/licenses/>.
 #"""
 
-import os, sqlite3, threading, queue
-import logging, time, shutil
+import os
+import sqlite3
+import threading
+import queue
+import logging
+import time
+import shutil
+from sqlalchemy.orm import sessionmaker, relationship, backref
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import create_engine, Column, Integer, String, BLOB, ForeignKey
 
 from . import db_constants
 log = logging.getLogger(__name__)
@@ -22,6 +30,37 @@ log_d = log.debug
 log_w = log.warning
 log_e = log.error
 log_c = log.critical
+
+Base = declarative_base()
+
+class Hash(Base):
+    __tablename__ = 'hash'
+
+    id = Column(Integer, primary_key=True)
+    hash = Column(BLOB)
+
+    def __repr__(self):
+        return "Hash ID:{}\nHash:{}".format(self.id, self.hash)
+
+class Page(Base):
+    __tablename__ = 'page'
+    id = Column(Integer, primary_key=True)
+    profile = Column(String)
+    number = Column(Integer)
+    hash_id = Column(Integer, ForeignKey('hash.id'))
+
+    hash = relationship("Hash")
+
+    def __repr__(self):
+        return "Page ID:{}\Page:{}\nProfile:{}\nPageHash:{}".format(self.id, self.number, self.profile, self.hash)
+
+class Gallery(Base):
+    __tablename__ = 'gallery'
+    id = Column(Integer, primary_key=True)
+    parent_id = Column(Integer, ForeignKey('gallery.id'))
+
+    children = relationship("Gallery", backref=backref('parent', remote_side=[id]))
+
 
 def hashes_sql(cols=False):
     sql = """
@@ -36,13 +75,11 @@ def hashes_sql(cols=False):
                     UNIQUE(hash, series_id, chapter_id, page));
     """
 
-    col_list = [
-    'hash_id INTEGER PRIMARY KEY',
+    col_list = ['hash_id INTEGER PRIMARY KEY',
     'hash BLOB',
     'series_id INTEGER',
     'chapter_id INTEGER',
-    'page INTEGER'
-    ]
+    'page INTEGER']
     if cols:
         return sql, col_list
     return sql
@@ -72,8 +109,7 @@ def series_sql(cols=False):
                     db_v REAL,
                     view INTEGER DEFAULT 1);
         """
-    col_list = [
-        'series_id INTEGER PRIMARY KEY',
+    col_list = ['series_id INTEGER PRIMARY KEY',
         'title TEXT',
         'artist TEXT',
         'profile BLOB',
@@ -93,8 +129,7 @@ def series_sql(cols=False):
         'times_read INTEGER',
         'exed INTEGER NOT NULL DEFAULT 0',
         'db_v REAL',
-        'view INTEGER DEFAULT 1'
-        ]
+        'view INTEGER DEFAULT 1']
     if cols:
         return sql, col_list
     return sql
@@ -111,15 +146,13 @@ def chapters_sql(cols=False):
                     in_archive INTEGER,
                     FOREIGN KEY(series_id) REFERENCES series(series_id) ON DELETE CASCADE);
         """
-    col_list = [
-        'chapter_id INTEGER PRIMARY KEY',
+    col_list = ['chapter_id INTEGER PRIMARY KEY',
         'series_id INTEGER',
         "chapter_title TEXT NOT NULL DEFAULT ''",
         'chapter_number INTEGER',
         'chapter_path BLOB',
         'pages INTEGER',
-        'in_archive INTEGER',
-        ]
+        'in_archive INTEGER',]
     if cols:
         return sql, col_list
     return sql
@@ -130,10 +163,8 @@ def namespaces_sql(cols=False):
                     namespace_id INTEGER PRIMARY KEY,
                     namespace TEXT NOT NULL UNIQUE);
         """
-    col_list = [
-        'namespace_id INTEGER PRIMARY KEY',
-        'namespace TEXT NOT NULL UNIQUE'
-        ]
+    col_list = ['namespace_id INTEGER PRIMARY KEY',
+        'namespace TEXT NOT NULL UNIQUE']
     if cols:
         return sql, col_list
     return sql
@@ -144,16 +175,14 @@ def tags_sql(cols=False):
                     tag_id INTEGER PRIMARY KEY,
                     tag TEXT NOT NULL UNIQUE);
         """
-    col_list = [
-        'tag_id INTEGER PRIMARY KEY',
-        'tag TEXT NOT NULL UNIQUE'
-        ]
+    col_list = ['tag_id INTEGER PRIMARY KEY',
+        'tag TEXT NOT NULL UNIQUE']
     if cols:
         return sql, col_list
     return sql
 
 def tags_mappings_sql(cols=False):
-    sql ="""
+    sql = """
         CREATE TABLE IF NOT EXISTS tags_mappings(
                     tags_mappings_id INTEGER PRIMARY KEY,
                     namespace_id INTEGER,
@@ -162,17 +191,15 @@ def tags_mappings_sql(cols=False):
                     FOREIGN KEY(tag_id) REFERENCES tags(tag_id) ON DELETE CASCADE,
                     UNIQUE(namespace_id, tag_id));
         """
-    col_list = [
-        'tags_mappings_id INTEGER PRIMARY KEY',
+    col_list = ['tags_mappings_id INTEGER PRIMARY KEY',
         'namespace_id INTEGER',
-        'tag_id INTEGER'
-        ]
+        'tag_id INTEGER']
     if cols:
         return sql, col_list
     return sql
 
 def series_tags_mappings_sql(cols=False):
-    sql ="""
+    sql = """
         CREATE TABLE IF NOT EXISTS series_tags_map(
                     series_id INTEGER,
                     tags_mappings_id INTEGER,
@@ -180,16 +207,14 @@ def series_tags_mappings_sql(cols=False):
                     FOREIGN KEY(tags_mappings_id) REFERENCES tags_mappings(tags_mappings_id) ON DELETE CASCADE,
                     UNIQUE(series_id, tags_mappings_id));
         """
-    col_list = [
-        'series_id INTEGER',
-        'tags_mappings_id INTEGER'
-        ]
+    col_list = ['series_id INTEGER',
+        'tags_mappings_id INTEGER']
     if cols:
         return sql, col_list
     return sql
 
 def list_sql(cols=False):
-    sql ="""
+    sql = """
         CREATE TABLE IF NOT EXISTS list(
                     list_id INTEGER PRIMARY KEY,
                     list_name TEXT NOT NULL DEFAULT '',
@@ -201,8 +226,7 @@ def list_sql(cols=False):
                     l_case INTEGER DEFAULT 0,
                     strict INTEGER DEFAULT 0);
         """
-    col_list = [
-        'list_id INTEGER PRIMARY KEY',
+    col_list = ['list_id INTEGER PRIMARY KEY',
         "list_name TEXT NOT NULL DEFAULT ''",
         'list_filter TEXT',
         "profile BLOB",
@@ -210,14 +234,13 @@ def list_sql(cols=False):
         "enforce INTEGER DEFAULT 0",
         "regex INTEGER DEFAULT 0",
         "l_case INTEGER DEFAULT 0",
-        "strict INTEGER DEFAULT 0",
-        ]
+        "strict INTEGER DEFAULT 0",]
     if cols:
         return sql, col_list
     return sql
 
 def series_list_map_sql(cols=False):
-    sql ="""
+    sql = """
         CREATE TABLE IF NOT EXISTS series_list_map(
                     list_id INTEGER NOT NULL,
                     series_id INTEGER INTEGER NOT NULL,
@@ -225,16 +248,14 @@ def series_list_map_sql(cols=False):
                     FOREIGN KEY(series_id) REFERENCES series(series_id) ON DELETE CASCADE,
                     UNIQUE(list_id, series_id));
         """
-    col_list = [
-        'list_id INTEGER NOT NULL',
-        'series_id INTEGER INTEGER NOT NULL',
-        ]
+    col_list = ['list_id INTEGER NOT NULL',
+        'series_id INTEGER INTEGER NOT NULL',]
     if cols:
         return sql, col_list
     return sql
 
-STRUCTURE_SCRIPT = series_sql()+chapters_sql()+namespaces_sql()+tags_sql()+tags_mappings_sql()+\
-    series_tags_mappings_sql()+hashes_sql()+list_sql()+series_list_map_sql()
+STRUCTURE_SCRIPT = series_sql() + chapters_sql() + namespaces_sql() + tags_sql() + tags_mappings_sql() + \
+    series_tags_mappings_sql() + hashes_sql() + list_sql() + series_list_map_sql()
 
 def global_db_convert(conn):
     """
@@ -339,9 +360,11 @@ def init_db(path=db_constants.DB_PATH):
 
         c.execute("""INSERT INTO version(version) VALUES(?)""", (db_constants.CURRENT_DB_VERSION,))
 
-        c.executescript(STRUCTURE_SCRIPT)
+        Base.metadata.create_all(engine)
 
     def new_db(p, new=False):
+        engine = create_engine("sqlite:///"+db_constants.DB_PATH, echo=True)
+        Session = sessionmaker(bind=engine)
         conn = sqlite3.connect(p, check_same_thread=False)
         conn.row_factory = sqlite3.Row
         if new:
