@@ -1,8 +1,9 @@
 from sqlalchemy.orm import sessionmaker, relationship, backref
 from sqlalchemy.engine import Engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import (create_engine, event, and_, Boolean, Column, Integer, String, ForeignKey,
+from sqlalchemy import (create_engine, event, and_, or_, Boolean, Column, Integer, String, ForeignKey,
                         Table, Date, DateTime, UniqueConstraint)
+from sqlalchemy_utils.functions import dependent_objects
 
 import datetime
 
@@ -67,13 +68,16 @@ class NamespaceTags(Base):
     __tablename__ = 'namespace_tags'
 
     id = Column(Integer, primary_key=True)
-    tag_id = Column(Integer, ForeignKey('tag.id', ondelete="cascade"))
-    namespace_id = Column(Integer, ForeignKey('namespace.id', ondelete="cascade"))
+    tag_id = Column(Integer, ForeignKey('tag.id'))
+    namespace_id = Column(Integer, ForeignKey('namespace.id'))
     __table_args__ = (UniqueConstraint('tag_id', 'namespace_id'),)
 
+    tag = relationship("Tag", cascade="save-update, merge, refresh-expire")
+    namespace = relationship("Namespace", cascade="save-update, merge, refresh-expire")
+
     def __init__(self, ns, tag):
-        self.namespace_id = ns.id
-        self.tag_id = tag.id
+        self.namespace = ns
+        self.tag = tag
 
 class Tag(Base):
     __tablename__ = 'tag'
@@ -111,8 +115,8 @@ class Artist(Base):
     galleries = relationship("Gallery", secondary=gallery_artists, back_populates='artists', lazy="dynamic")
 
 gallery_circles = Table('gallery_circles', Base.metadata,
-                        Column('circle_id', Integer, ForeignKey('circle.id')),
-                        Column('gallery_id', Integer, ForeignKey('gallery.id')),
+                        Column('circle_id', Integer, ForeignKey('circle.id',)),
+                        Column('gallery_id', Integer, ForeignKey('gallery.id',)),
                         UniqueConstraint('circle_id', 'gallery_id'))
 
 class Circle(Base):
@@ -121,14 +125,6 @@ class Circle(Base):
     name = Column(String, nullable=False, default='', unique=True)
 
     galleries = relationship("Gallery", secondary=gallery_circles, back_populates='circles', lazy="dynamic")
-
-class Convention(Base):
-    __tablename__ = 'convention'
-    id = Column(Integer, primary_key=True)
-    name = Column(String, nullable=False, default='', unique=True)
-
-    galleries = relationship("Gallery", back_populates='convention')
-
 
 gallery_lists = Table('gallery_lists', Base.metadata,
                         Column('list_id', Integer, ForeignKey('list.id')),
@@ -157,7 +153,17 @@ class GalleryNamespace(Base):
     galleries = relationship("Gallery", back_populates="namespace")
 
     def __repr__(self):
-        return "ID:{} - nGNamespace:{}".format(self.id, self.name)
+        return "ID:{} - G-Namespace:{}".format(self.id, self.name)
+
+class Convention(Base):
+    __tablename__ = 'convention'
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False, unique=True)
+
+    galleries = relationship("Gallery", back_populates='convention')
+
+    def __repr__(self):
+        return "ID:{} - Convention:{}".format(self.id, self.name)
 
 class Gallery(Base):
     __tablename__ = 'gallery'
@@ -180,10 +186,10 @@ class Gallery(Base):
     exed = Column(Boolean, default=False)
     view = Column(Integer, nullable=False, default=1)
 
-    urls = relationship("GalleryUrl", back_populates="gallery", cascade="all,delete-orphan", passive_deletes=True)
-    chapters = relationship("Chapter", back_populates="gallery", cascade="all, delete")
+    urls = relationship("GalleryUrl", back_populates="gallery", cascade="all,delete-orphan")
+    chapters = relationship("Chapter", back_populates="gallery", cascade="all", lazy="dynamic")
     convention = relationship("Convention", back_populates="galleries", cascade="save-update, merge, refresh-expire")
-    namespace = relationship("GalleryNamespace", back_populates="galleries", cascade="all, delete")
+    namespace = relationship("GalleryNamespace", back_populates="galleries", cascade="save-update, merge, refresh-expire")
     circles = relationship("Circle", secondary=gallery_circles, back_populates='galleries', lazy="dynamic", cascade="save-update, merge, refresh-expire")
     artists = relationship("Artist", secondary=gallery_artists, back_populates='galleries', lazy="dynamic", cascade="save-update, merge, refresh-expire")
     lists = relationship("List", secondary=gallery_lists, back_populates='galleries', lazy="dynamic")
@@ -196,15 +202,15 @@ chapter_tags = Table('chapter_tags', Base.metadata,
 class Chapter(Base):
     __tablename__ = 'chapter'
     id = Column(Integer, primary_key=True)
-    gallery_id = Column(Integer, ForeignKey('gallery.id', ondelete="cascade", onupdate="cascade"), nullable=False)
+    gallery_id = Column(Integer, ForeignKey('gallery.id', ondelete="cascade"), nullable=False)
     title = Column(String, nullable=False, default='')
     path = Column(String, nullable=False, default='')
     number = Column(Integer, nullable=False, default=0)
     in_archive = Column(Boolean, default=False)
 
     gallery = relationship("Gallery", back_populates="chapters")
-    pages = relationship("Page", back_populates="chapter", cascade="all,delete-orphan", passive_deletes=True)
-    tags = relationship("NamespaceTags", secondary=chapter_tags, lazy="dynamic", cascade="all,delete")
+    pages = relationship("Page", back_populates="chapter", cascade="all,delete-orphan")
+    tags = relationship("NamespaceTags", secondary=chapter_tags, lazy="dynamic")
 
 class Page(Base):
     __tablename__ = 'page'
@@ -212,7 +218,7 @@ class Page(Base):
     profile = Column(String)
     number = Column(Integer)
     hash_id = Column(Integer, ForeignKey('hash.id'))
-    chapter_id = Column(Integer, ForeignKey('chapter.id', ondelete="cascade", onupdate="cascade"), nullable=False)
+    chapter_id = Column(Integer, ForeignKey('chapter.id'), nullable=False)
 
     hash = relationship("Hash", cascade="save-update, merge, refresh-expire")
     chapter = relationship("Chapter", back_populates="pages")
@@ -221,10 +227,10 @@ class Page(Base):
         return "Page ID:{}\nPage:{}\nProfile:{}\nPageHash:{}".format(self.id, self.number, self.profile, self.hash)
 
 class GalleryUrl(Base):
-    __tablename__ = 'galleryurl'
+    __tablename__ = 'gallery_url'
     id = Column(Integer, primary_key=True)
     url = Column(String, nullable=False, default='')
-    gallery_id = Column(Integer, ForeignKey('gallery.id', ondelete="cascade", onupdate="cascade"))
+    gallery_id = Column(Integer, ForeignKey('gallery.id'))
 
     gallery = relationship("Gallery", back_populates="urls")
 
@@ -232,27 +238,39 @@ class GalleryUrl(Base):
 engine = create_engine("sqlite:///dbtest.db")
 Session = sessionmaker(bind=engine)
 
-@event.listens_for(Session, 'after_flush')
-def delete_artist_orphans(session, ctx):
+@event.listens_for(Session, 'before_commit')
+def delete_artist_orphans(session):
     session.query(Artist).filter(~Artist.galleries.any()).delete(synchronize_session=False)
 
-@event.listens_for(Session, 'after_flush')
-def delete_tag_orphans(session, ctx):
+@event.listens_for(Session, 'before_commit')
+def delete_tag_orphans(session):
     session.query(Tag).filter(~Tag.namespaces.any()).delete(synchronize_session=False)
 
-@event.listens_for(Session, 'after_flush')
-def delete_tag_orphans(session, ctx):
+@event.listens_for(Session, 'before_commit')
+def delete_namespace_orphans(session):
+    session.query(Namespace).filter(~Namespace.tags.any()).delete(synchronize_session=False)
+
+@event.listens_for(Session, 'before_commit')
+def delete_namespacetags_orphans(session):
+    session.query(NamespaceTags).filter(or_(NamespaceTags.namespace == None, NamespaceTags.tag == None)).delete(synchronize_session=False)
+
+@event.listens_for(Session, 'before_commit')
+def delete_circle_orphans(session):
     session.query(Circle).filter(~Circle.galleries.any()).delete(synchronize_session=False)
 
-@event.listens_for(Session, 'after_flush')
-def delete_tag_orphans(session, ctx):
+@event.listens_for(Session, 'before_commit')
+def delete_convention_orphans(session):
     session.query(Convention).filter(~Convention.galleries.any()).delete(synchronize_session=False)
 
-@event.listens_for(Engine, "connect")
-def set_sqlite_pragma(dbapi_connection, connection_record):
-    cursor = dbapi_connection.cursor()
-    cursor.execute("PRAGMA foreign_keys=ON")
-    cursor.close()
+@event.listens_for(Session, 'before_commit')
+def delete_gallery_namespace_orphans(session):
+    session.query(GalleryNamespace).filter(~GalleryNamespace.galleries.any()).delete(synchronize_session=False)
+
+#@event.listens_for(Engine, "connect")
+#def set_sqlite_pragma(dbapi_connection, connection_record):
+#    cursor = dbapi_connection.cursor()
+#    cursor.execute("PRAGMA foreign_keys=ON")
+#    cursor.close()
 
 Base.metadata.create_all(engine)
 
@@ -270,7 +288,7 @@ if __name__ == '__main__':
             if os.path.exists("dbunittest.db"):
                 os.remove("dbunittest.db")
             engine = create_engine("sqlite:///dbunittest.db")
-            Session = sessionmaker(bind=engine)
+            Session.configure(bind=engine)
             Base.metadata.create_all(engine)
 
             self.session = Session()
@@ -330,8 +348,6 @@ if __name__ == '__main__':
                 tag.name = "tag" + str(x)
                 ns = Namespace()
                 ns.name = "ns" + str(x)
-                self.session.add_all([tag, ns])
-                self.session.commit()
                 nstag = NamespaceTags(ns, tag)
                 self.chapter.tags.append(nstag)
             self.session.commit()
@@ -361,7 +377,7 @@ if __name__ == '__main__':
             if os.path.exists("dblistunittest.db"):
                 os.remove("dblistunittest.db")
             engine = create_engine("sqlite:///dblistunittest.db")
-            Session = sessionmaker(bind=engine)
+            Session.configure(bind=engine)
             Base.metadata.create_all(engine)
 
             self.session = Session()
@@ -409,7 +425,7 @@ if __name__ == '__main__':
             if os.path.exists("dbartistunittest.db"):
                 os.remove("dbartistunittest.db")
             engine = create_engine("sqlite:///dbartistunittest.db")
-            Session = sessionmaker(bind=engine)
+            Session.configure(bind=engine)
             Base.metadata.create_all(engine)
 
             self.session = Session()
@@ -422,7 +438,6 @@ if __name__ == '__main__':
             self.session.commit()
 
             self.assertEqual(self.artist.id, self.galleries[0].artists[0].id)
-
 
         def test_delete(self):
             self.session.delete(self.artist)
@@ -452,7 +467,7 @@ if __name__ == '__main__':
             if os.path.exists("dbcircleunittest.db"):
                 os.remove("dbcircleunittest.db")
             engine = create_engine("sqlite:///dbcircleunittest.db")
-            Session = sessionmaker(bind=engine)
+            Session.configure(bind=engine)
             Base.metadata.create_all(engine)
 
             self.session = Session()
@@ -496,7 +511,7 @@ if __name__ == '__main__':
             if os.path.exists("dbhashunittest.db"):
                 os.remove("dbhashunittest.db")
             engine = create_engine("sqlite:///dbhashunittest.db")
-            Session = sessionmaker(bind=engine)
+            Session.configure(bind=engine)
             Base.metadata.create_all(engine)
 
             self.session = Session()
@@ -553,7 +568,7 @@ if __name__ == '__main__':
             if os.path.exists("dbgallerynsunittest.db"):
                 os.remove("dbgallerynsunittest.db")
             engine = create_engine("sqlite:///dbgallerynsunittest.db")
-            Session = sessionmaker(bind=engine)
+            Session.configure(bind=engine)
             Base.metadata.create_all(engine)
 
             self.session = Session()
@@ -598,7 +613,7 @@ if __name__ == '__main__':
             if os.path.exists("dbconunittest.db"):
                 os.remove("dbconunittest.db")
             engine = create_engine("sqlite:///dbconunittest.db")
-            Session = sessionmaker(bind=engine)
+            Session.configure(bind=engine)
             Base.metadata.create_all(engine)
 
             self.session = Session()
@@ -606,9 +621,10 @@ if __name__ == '__main__':
             self.con = Convention()
             self.con.name = "Con1"
             self.galleries = [Gallery(title="title"+str(x)) for x in range(10)]
-            self.session.add_all(self.galleries)
             self.con.galleries.extend(self.galleries)
+            self.session.add(self.con)
             self.session.commit()
+            self.assertEqual(self.session.query(Convention).count(), 1)
             self.assertEqual(self.con.id, self.galleries[0].convention_id)
 
         def test_delete(self):
@@ -644,7 +660,7 @@ if __name__ == '__main__':
             if os.path.exists("dbchapunittest.db"):
                 os.remove("dbchapunittest.db")
             engine = create_engine("sqlite:///dbchapunittest.db")
-            Session = sessionmaker(bind=engine)
+            Session.configure(bind=engine)
             Base.metadata.create_all(engine)
 
             self.session = Session()
@@ -659,7 +675,7 @@ if __name__ == '__main__':
             self.session.commit()
 
             for g in self.galleries:
-                self.assertEqual(len(g.chapters), 2)
+                self.assertEqual(g.chapters.count(), 2)
 
         def test_delete(self):
             self.session.query(Chapter).delete()
@@ -683,7 +699,8 @@ if __name__ == '__main__':
             self.assertEqual(self.session.query(Chapter).count(), 19)
 
         def test_no_orphans(self):
-            self.session.query(Gallery).delete()
+            for g in self.galleries:
+                self.session.delete(g)
             self.session.commit()
 
             self.assertEqual(self.session.query(Gallery).count(), 0)
@@ -699,7 +716,7 @@ if __name__ == '__main__':
             if os.path.exists("dburlunittest.db"):
                 os.remove("dburlunittest.db")
             engine = create_engine("sqlite:///dburlunittest.db")
-            Session = sessionmaker(bind=engine)
+            Session.configure(bind=engine)
             Base.metadata.create_all(engine)
 
             self.session = Session()
@@ -724,7 +741,7 @@ if __name__ == '__main__':
             self.assertEqual(self.session.query(Gallery).count(), 1)
 
         def test_no_orphans(self):
-            self.session.query(Gallery).delete()
+            self.session.delete(self.gallery)
             self.session.commit()
 
             self.assertEqual(self.session.query(GalleryUrl).count(), 0)
@@ -740,7 +757,7 @@ if __name__ == '__main__':
             if os.path.exists("dbtagunittest.db"):
                 os.remove("dbtagunittest.db")
             engine = create_engine("sqlite:///dbtagunittest.db")
-            Session = sessionmaker(bind=engine)
+            Session.configure(bind=engine)
             Base.metadata.create_all(engine)
 
             self.session = Session()
@@ -769,16 +786,25 @@ if __name__ == '__main__':
             self.assertEqual(self.session.query(NamespaceTags).count(), 20)
 
         def test_delete(self):
-            self.session.delete(self.artist)
+            self.session.delete(self.tags[0])
             self.session.commit()
-            self.assertEqual(self.session.query(Gallery).count(), 10)
-            self.assertEqual(self.session.query(Artist).count(), 0)
+            self.assertEqual(self.session.query(Tag).count(), 9)
+            self.assertTrue(self.session.query(Namespace).count() != 0)
 
         def test_delete2(self):
-            self.session.delete(self.galleries[0])
+            self.session.delete(self.tags[0].namespaces[0])
             self.session.commit()
-            self.assertEqual(self.session.query(Gallery).count(), 9)
-            self.assertEqual(self.session.query(Artist).count(), 1)
+            self.assertEqual(self.session.query(Tag).count(), 10)
+            self.assertEqual(self.session.query(Namespace).count(), 19)
+
+        def test_delete3(self):
+            self.session.delete(self.chapters[0])
+            self.session.commit()
+            self.assertEqual(self.session.query(Gallery).count(), 1)
+            self.assertEqual(self.session.query(Chapter).count(), 4)
+            self.assertTrue(self.session.query(NamespaceTags).count() != 0)
+            self.assertTrue(self.session.query(Tag).count() != 0)
+            self.assertTrue(self.session.query(Namespace).count() != 0)
 
         def test_no_orphans(self):
             self.session.delete(self.gallery)
