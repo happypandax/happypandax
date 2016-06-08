@@ -1,4 +1,4 @@
-from sqlalchemy.orm import sessionmaker, relationship, backref
+from sqlalchemy.orm import sessionmaker, relationship, backref, object_session
 from sqlalchemy.engine import Engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import (create_engine, event, and_, or_, Boolean, Column, Integer, String, ForeignKey,
@@ -251,8 +251,16 @@ def delete_namespace_orphans(session):
     session.query(Namespace).filter(~Namespace.tags.any()).delete(synchronize_session=False)
 
 @event.listens_for(Session, 'before_commit')
+def delete_namespace_orphans(session):
+    session.query(Namespace).filter(~Namespace.tags.any()).delete(synchronize_session=False)
+
+@event.listens_for(Session, 'before_commit')
 def delete_namespacetags_orphans(session):
-    session.query(NamespaceTags).filter(or_(NamespaceTags.namespace == None, NamespaceTags.tag == None)).delete(synchronize_session=False)
+    tagids = [r.id for r in session.query(Tag.id).all()]
+    if tagids:
+        session.query(NamespaceTags).filter(~NamespaceTags.tag_id.in_(tagids)).delete(synchronize_session=False)
+    else:
+        session.query(NamespaceTags).delete(synchronize_session=False)
 
 @event.listens_for(Session, 'before_commit')
 def delete_circle_orphans(session):
