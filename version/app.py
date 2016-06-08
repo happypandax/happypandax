@@ -77,13 +77,13 @@ class AppWindow(QMainWindow):
         app_constants.GENERAL_THREAD = QThread(self)
         app_constants.GENERAL_THREAD.finished.connect(app_constants.GENERAL_THREAD.deleteLater)
         app_constants.GENERAL_THREAD.start()
-        self._db_startup_thread = QThread(self)
-        self._db_startup_thread.finished.connect(self._db_startup_thread.deleteLater)
-        self.db_startup = gallerydb.DatabaseStartup()
-        self._db_startup_thread.start()
-        self.db_startup.moveToThread(self._db_startup_thread)
-        self.db_startup.DONE.connect(lambda: self.scan_for_new_galleries() if app_constants.LOOK_NEW_GALLERY_STARTUP else None)
-        self.db_startup_invoker.connect(self.db_startup.startup)
+        #self._db_startup_thread = QThread(self)
+        #self._db_startup_thread.finished.connect(self._db_startup_thread.deleteLater)
+        #self.db_startup = gallerydb.DatabaseStartup()
+        #self._db_startup_thread.start()
+        #self.db_startup.moveToThread(self._db_startup_thread)
+        #self.db_startup.DONE.connect(lambda: self.scan_for_new_galleries() if app_constants.LOOK_NEW_GALLERY_STARTUP else None)
+        #self.db_startup_invoker.connect(self.db_startup.startup)
         self.setAcceptDrops(True)
         self.initUI()
         self.startup()
@@ -143,7 +143,7 @@ class AppWindow(QMainWindow):
             settings.save()
 
         def done(status=True):
-            self.db_startup_invoker.emit(gallery.MangaViews.manga_views)
+            self.db_startup_invoker.emit(gallery.ViewManager.gallery_views)
             #self.db_startup.startup()
             if app_constants.FIRST_TIME_LEVEL != app_constants.INTERNAL_LEVEL:
                 normalize_first_time()
@@ -201,10 +201,9 @@ class AppWindow(QMainWindow):
         self.init_stat_bar()
         self.manga_views = {}
         self._current_manga_view = None
-        self.default_manga_view = gallery.MangaViews(app_constants.ViewType.Default, self, True)
+        self.default_manga_view = gallery.ViewManager(app_constants.ViewType.Default, self, True)
         def refresh_view():
             self.current_manga_view.sort_model.refresh()
-        self.db_startup.DONE.connect(refresh_view)
         self.manga_list_view = self.default_manga_view.list_view
         self.manga_table_view = self.default_manga_view.table_view
         self.manga_list_view.gallery_model.STATUSBAR_MSG.connect(self.stat_temp_msg)
@@ -212,7 +211,6 @@ class AppWindow(QMainWindow):
         self.manga_table_view.STATUS_BAR_MSG.connect(self.stat_temp_msg)
 
         self.sidebar_list = misc_db.SideBarWidget(self)
-        self.db_startup.DONE.connect(self.sidebar_list.tags_tree.setup_tags)
         self._main_layout.addWidget(self.sidebar_list)
         self.current_manga_view = self.default_manga_view
 
@@ -450,10 +448,7 @@ class AppWindow(QMainWindow):
         self.data_fetch_spinner.set_size(80)
         
         self.manga_list_view.gallery_model.ADD_MORE.connect(self.data_fetch_spinner.show)
-        self.db_startup.START.connect(self.data_fetch_spinner.show)
-        self.db_startup.PROGRESS.connect(self.data_fetch_spinner.set_text)
         self.manga_list_view.gallery_model.ADDED_ROWS.connect(self.data_fetch_spinner.before_hide)
-        self.db_startup.DONE.connect(self.data_fetch_spinner.before_hide)
 
         ## deleting spinner
         #self.gallery_delete_spinner = misc.Spinner(self)
@@ -623,7 +618,7 @@ class AppWindow(QMainWindow):
         self.grid_toggle = QToolButton()
         self.grid_toggle.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
         self.grid_toggle.setShortcut(togle_view_k)
-        if self.current_manga_view.current_view == gallery.MangaViews.View.List:
+        if self.current_manga_view.current_view == gallery.ViewManager.View.List:
             self.grid_toggle.setIcon(self.grid_toggle_l_icon)
         else:
             self.grid_toggle.setIcon(self.grid_toggle_g_icon)
@@ -761,7 +756,7 @@ class AppWindow(QMainWindow):
         """
         Toggles the current display view
         """
-        if self.current_manga_view.current_view == gallery.MangaViews.View.Table:
+        if self.current_manga_view.current_view == gallery.ViewManager.View.Table:
             self.current_manga_view.changeTo(self.current_manga_view.m_l_view_index)
             self.grid_toggle.setIcon(self.grid_toggle_l_icon)
         else:

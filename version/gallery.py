@@ -36,7 +36,8 @@ from PyQt5.QtGui import (QPixmap, QBrush, QColor, QPainter,
                          QPixmapCache, QCursor, QPalette, QKeyEvent,
                          QFont, QTextOption, QFontMetrics, QFontMetricsF,
                          QTextLayout, QPainterPath, QScrollPrepareEvent,
-                         QWheelEvent, QPolygonF, QLinearGradient)
+                         QWheelEvent, QPolygonF, QLinearGradient, QStandardItemModel,
+                         QStandardItem)
 from PyQt5.QtWidgets import (QListView, QFrame, QLabel,
                              QStyledItemDelegate, QStyle,
                              QMenu, QAction, QToolTip, QVBoxLayout,
@@ -51,6 +52,7 @@ import misc
 import gallerydialog
 import io_misc
 import utils
+import db
 
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -60,48 +62,104 @@ log_e = log.error
 log_c = log.critical
 
 # attempt at implementing treemodel
-#class TreeNode:
-#	def __init__(self, parent, row):
-#		self.parent = parent
-#		self.row = row
-#		self.subnodes = self._get_children()
 
-#	def _get_children(self):
-#		raise NotImplementedError()
+class CollectionItem(QStandardItem):
 
-#class GalleryInfoModel(QAbstractItemModel):
-#	def __init__(self, parent=None):
-#		super().__init__(parent)
-#		self.root_nodes = self._get_root_nodes()
+    def __init__(self, collection):
+        assert isinstance(collection, db.Collection)
+        super().__init__()
+        self._item = collection
 
-#	def _get_root_nodes(self):
-#		raise NotImplementedError()
+    def data(self, role = Qt.UserRole+1):
 
-#	def index(self, row, column, parent):
-#		if not parent.isValid():
-#			return self.createIndex(row, column, self.root_nodes[row])
-#		parent_node = parent.internalPointer()
-#		return self.createIndex(row, column, parent_node[row])
+        if role == Qt.DisplayRole:
+            return self._item.title
+        elif role == app_constants.ITEM_ROLE:
+            return self._item
+        elif role == app_constants.TITLE_ROLE:
+            return self._item.title
+        elif role == app_constants.INFO_ROLE:
+            return self._item.info
 
-#	def parent(self, index):
-#		if not index.isValid():
-#			return QModelIndex()
+    def setData(self, value, role = Qt.UserRole+1):
 
-#		node = index.internalPointer()
-#		if not node.parent:
-#			return QModelIndex()
-#		else:
-#			return self.createIndex(node.parent.row, 0, node.parent)
+        if role == Qt.DisplayRole:
+            self._item.title = value
+        elif role == app_constants.TITLE_ROLE:
+            self._item.title = value
+        elif role == app_constants.INFO_ROLE:
+            self._item.info = value
 
-#	def reset(self):
-#		self.root_nodes = self._get_root_nodes()
-#		super().resetInternalData()
+        self.emitDataChanged.emit()
 
-#	def rowCount(self, parent = QModelIndex()):
-#		if not parent.isValid():
-#			return len(self.root_nodes)
-#		node = parent.internalPointer()
-#		return len(node.subnodes)
+    def type(self):
+        return self.UserType+1
+
+class GalleryItem(QStandardItem):
+
+    def __init__(self, gallery):
+        assert isinstance(gallery, db.Gallery)
+        super().__init__()
+        self._item = gallery
+
+    def data(self, role = Qt.UserRole+1):
+
+        if role == Qt.DisplayRole:
+            return self._item.title
+        elif role == app_constants.ITEM_ROLE:
+            return self._item
+        elif role == app_constants.TITLE_ROLE:
+            return self._item.title
+        elif role == app_constants.ARTIST_ROLE:
+            return self._item.artists
+        elif role == app_constants.FAV_ROLE:
+            return self._item.fav
+        elif role == app_constants.INFO_ROLE:
+            return self._item.info
+        elif role == app_constants.TYPE_ROLE:
+            return self._item.type
+        elif role == app_constants.LANGUAGE_ROLE:
+            return self._item.language
+        elif role == app_constants.RATING_ROLE:
+            return self._item.rating
+        elif role == app_constants.TIMES_READ_ROLE:
+            return self._item.times_read
+        elif role == app_constants.STATUS_ROLE:
+            return self._item.status
+        elif role == app_constants.PUB_DATE_ROLE:
+            return self._item.pub_date
+        elif role == app_constants.DATE_ADDED_ROLE:
+            return self._item.timestamp
+        elif role == app_constants.NUMBER_ROLE:
+            return self._item.number
+        elif role == app_constants.CONVENTION_ROLE:
+            return self._item.convention
+        elif role == app_constants.NAMESPACE_ROLE:
+            return self._item.namespace
+        elif role == app_constants.COLLECTION_ROLE:
+            return self._item.parent
+        elif role == app_constants.TAGS_ROLE:
+            return self._item.tags
+        elif role == app_constants.CIRCLES_ROLE:
+            return self._item.circles
+        elif role == app_constants.URLS_ROLE:
+            return self._item.urls
+
+    def setData(self, value, role = Qt.UserRole+1):
+
+        if role == Qt.DisplayRole:
+            self._item.title = value
+        elif role == app_constants.TITLE_ROLE:
+            self._item.title = value
+        elif role == app_constants.INFO_ROLE:
+            self._item.info = value
+
+        self.emitDataChanged.emit()
+
+    def type(self):
+        return self.UserType+2
+
+
 class GallerySearch(QObject):
     FINISHED = pyqtSignal()
     def __init__(self, data):
@@ -1107,6 +1165,35 @@ class GridDelegate(QStyledItemDelegate):
     def sizeHint(self, option, index):
         return QSize(self.W, self.H)
 
+class GridView(QListView):
+    """
+    Grid View
+    """
+
+    def __init__(self, model, v_type):
+        super().__init__()
+        self.setViewMode(self.IconMode)
+        self.setResizeMode(self.Adjust)
+        self.setWrapping(True)
+        self.setUniformItemSizes(True)
+        # improve scrolling
+        self.setAutoScroll(True)
+        self.setVerticalScrollMode(self.ScrollPerPixel)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setLayoutMode(self.Batched)
+        self.setMouseTracking(True)
+
+        self.setModel(model)
+        print(model.rowCount())
+        self.clicked.connect(self.setRootIndex)
+
+        self.setSpacing(app_constants.GRID_SPACING)
+        self.setFlow(QListView.LeftToRight)
+        self.setIconSize(QSize(100, 200))
+        self.setSelectionBehavior(self.SelectItems)
+        self.setSelectionMode(self.ExtendedSelection)
+
+
 class MangaView(QListView):
     """
     Grid View
@@ -1533,9 +1620,9 @@ class CommonView:
         dialog = gallerydialog.GalleryDialog(app_inst, gallery)
         dialog.show()
 
-class MangaViews:
+class ViewManager:
 
-    manga_views = []
+    gallery_views = []
     
     @enum.unique
     class View(enum.Enum):
@@ -1576,14 +1663,25 @@ class MangaViews:
 
         self.view_layout = QStackedLayout()
         # init the chapter view variables
+        self.m_l_view_index = self.view_layout.addWidget(GridView(self.create_model(), v_type))
         self.m_l_view_index = self.view_layout.addWidget(self.list_view)
         self.m_t_view_index = self.view_layout.addWidget(self.table_view)
 
         self.current_view = self.View.List
-        self.manga_views.append(self)
+        self.gallery_views.append(self)
 
         if v_type in (app_constants.ViewType.Default, app_constants.ViewType.Addition):
             self.sort_model.enable_drag = True
+
+    def create_model(self):
+        model = QStandardItemModel()
+        parent = model.invisibleRootItem()
+        for x in range(10):
+            pitem = CollectionItem(db.Collection(title="Collection "+str(x)))
+            parent.appendRow(pitem)
+            for y in range(20):
+                pitem.appendRow(GalleryItem(db.Gallery(title="Gallery "+str(y))))
+        return model
 
     def _delegate_delete(self):
         if self._delete_proxy_model:

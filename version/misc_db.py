@@ -77,7 +77,7 @@ class ToolbarTabManager(QObject):
             t.select.connect(self._manage_selected)
             t.close_tab.connect(self.removeTab)
             if self.library_btn:
-                t.view = gallery.MangaViews(view_type, self.parent_widget, allow_sidebarwidget)
+                t.view = gallery.ViewManager(view_type, self.parent_widget, allow_sidebarwidget)
                 t.view.hide()
                 t.close_tab.connect(lambda:self.library_btn.click())
                 if not allow_sidebarwidget:

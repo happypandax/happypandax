@@ -8,6 +8,7 @@ from dateutil import parser as dateparser
 
 import datetime
 import logging
+import os
 
 import db_constants
 import app_constants
@@ -73,6 +74,10 @@ class Life(Base):
 
     version = Column(Float, nullable=False, default=db_constants.CURRENT_DB_VERSION, primary_key=True)
     times_opened = Column(Integer, nullable=False, default=0)
+
+    def __init__(self):
+        self.version = db_constants.CURRENT_DB_VERSION
+        self.times_opened = 0
 
     def __repr__(self):
         return "<Version: {}, times_opened:{}>".format(self.version, self.times_opened)
@@ -445,7 +450,10 @@ class GalleryUrl(Base):
     gallery = relationship("Gallery", back_populates="urls")
 
 
-Session = sessionmaker()
+if __name__ == '__main__':
+    Session = sessionmaker()
+else:
+    Session = scoped_session(sessionmaker())
 
 @event.listens_for(Session, 'before_commit')
 def delete_artist_orphans(session):
@@ -519,7 +527,6 @@ def check_db_version(sess):
 def init_db():
     engine = create_engine(os.path.join("sqlite:///", db_constants.DB_PATH), echo=app_constants.DEBUG)
     Base.metadata.create_all(engine)
-    Session = scoped_session(Session)
     Session.configure(bind=engine)
     db_constants.SESSION = Session
 

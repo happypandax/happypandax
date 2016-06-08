@@ -15,6 +15,7 @@
 import os, sys, enum
 import settings
 import db_constants
+from PyQt5.QtCore import Qt
 
 # Version number
 vs  = '0.30'
@@ -66,6 +67,29 @@ THUMB_W_SIZE = 133 + SIZE_FACTOR
 
 THUMB_DEFAULT = (THUMB_W_SIZE, THUMB_H_SIZE)
 THUMB_SMALL = (140, 93)
+
+# Model Roles
+ITEM_ROLE = Qt.UserRole
+TITLE_ROLE = Qt.UserRole + 1
+ARTIST_ROLE = Qt.UserRole + 2
+INFO_ROLE = Qt.UserRole + 3
+DATE_ADDED_ROLE = Qt.UserRole + 4
+PUB_DATE_ROLE = Qt.UserRole + 5
+TIMES_READ_ROLE = Qt.UserRole + 6
+LAST_READ_ROLE = Qt.UserRole + 7
+TYPE_ROLE = Qt.UserRole + 8
+RATING_ROLE = Qt.UserRole + 9
+LANGUAGE_ROLE = Qt.UserRole + 10
+NUMBER_ROLE = Qt.UserRole + 11
+CONVENTION_ROLE = Qt.UserRole + 12
+CIRCLES_ROLE = Qt.UserRole + 13
+TAGS_ROLE = Qt.UserRole + 14
+NAMESPACE_ROLE = Qt.UserRole + 15
+URLS_ROLE = Qt.UserRole + 16
+COLLECTION_ROLE = Qt.UserRole + 17
+PATH_ROLE = Qt.UserRole + 18
+STATUS_ROLE = Qt.UserRole + 19
+FAV_ROLE = Qt.UserRole + 20
 
 # Columns
 COLUMNS = tuple(range(11))
