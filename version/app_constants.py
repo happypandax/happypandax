@@ -14,7 +14,7 @@
 
 import os, sys, enum
 import settings
-from database import db_constants
+import db_constants
 
 # Version number
 vs  = '0.30'

@@ -1,11 +1,24 @@
-from sqlalchemy.orm import sessionmaker, relationship, backref, object_session
+from sqlalchemy.orm import sessionmaker, relationship, validates, object_session, scoped_session
 from sqlalchemy.engine import Engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import (create_engine, event, and_, or_, Boolean, Column, Integer, String, ForeignKey,
-                        Table, Date, DateTime, UniqueConstraint)
-from sqlalchemy_utils.functions import dependent_objects
+                        Table, Date, DateTime, UniqueConstraint, Float)
+from sqlalchemy import exc
+from dateutil import parser as dateparser
 
 import datetime
+import logging
+
+import db_constants
+import app_constants
+import utils
+
+log = logging.getLogger(__name__)
+log_i = log.info
+log_d = log.debug
+log_w = log.warning
+log_e = log.error
+log_c = log.critical
 
 Base = declarative_base()
 
@@ -54,6 +67,26 @@ def configure_listener(class_, key, inst):
             return validator(value)
         else:
             return value
+
+class Life(Base):
+    __tablename__ = 'life'
+
+    version = Column(Float, nullable=False, default=db_constants.CURRENT_DB_VERSION, primary_key=True)
+    times_opened = Column(Integer, nullable=False, default=0)
+
+    def __repr__(self):
+        return "<Version: {}, times_opened:{}>".format(self.version, self.times_opened)
+
+class History(Base):
+    __tablename__ = 'history'
+
+    id = Column(Integer, primary_key=True)
+    gallery_id = Column(Integer, ForeignKey('gallery.id'))
+    date = Column(Date, nullable=False, default=datetime.date.today())
+    gallery = relationship("Gallery")
+
+    def __init__(self, gallery):
+        self.gallery = gallery
 
 class Hash(Base):
     __tablename__ = 'hash'
@@ -165,10 +198,24 @@ class Convention(Base):
     def __repr__(self):
         return "ID:{} - Convention:{}".format(self.id, self.name)
 
+gallery_tags = Table('gallery_tags', Base.metadata,
+                        Column('namespace_tag_id', Integer, ForeignKey('namespace_tags.id')),
+                        Column('gallery_id', Integer, ForeignKey('gallery.id')),
+                        UniqueConstraint('namespace_tag_id', 'gallery_id'))
+
+class Collection(Base):
+    __tablename__ = 'collection'
+    id = Column(Integer, primary_key=True)
+    title = Column(String, nullable=False, default='')
+    info = Column(String, nullable=False, default='')
+
+    galleries = relationship("Gallery", back_populates="parent", cascade="all,delete-orphan", lazy="dynamic")
+
 class Gallery(Base):
     __tablename__ = 'gallery'
     id = Column(Integer, primary_key=True)
     path = Column(String, nullable=False, default='')
+    path_in_archive = Column(String, nullable=False, default='')
     title = Column(String, nullable=False, default='')
     info = Column(String, nullable=False, default='')
     fav = Column(Boolean, default=False)
@@ -180,37 +227,200 @@ class Gallery(Base):
     pub_date = Column(Date)
     timestamp = Column(DateTime, nullable=False, default=datetime.datetime.now())
     last_read = Column(DateTime)
+    number = Column(Integer, nullable=False, default=0)
+    in_archive = Column(Boolean, default=False)
     convention_id = Column(Integer, ForeignKey('convention.id'))
     namespace_id = Column(Integer, ForeignKey('gallery_namespace.id'))
+    parent_id = Column(Integer, ForeignKey('collection.id'))
 
     exed = Column(Boolean, default=False)
     view = Column(Integer, nullable=False, default=1)
 
+    parent = relationship("Collection", back_populates="galleries", cascade="save-update, merge, refresh-expire")
     urls = relationship("GalleryUrl", back_populates="gallery", cascade="all,delete-orphan")
-    chapters = relationship("Chapter", back_populates="gallery", cascade="all", lazy="dynamic")
     convention = relationship("Convention", back_populates="galleries", cascade="save-update, merge, refresh-expire")
     namespace = relationship("GalleryNamespace", back_populates="galleries", cascade="save-update, merge, refresh-expire")
     circles = relationship("Circle", secondary=gallery_circles, back_populates='galleries', lazy="dynamic", cascade="save-update, merge, refresh-expire")
     artists = relationship("Artist", secondary=gallery_artists, back_populates='galleries', lazy="dynamic", cascade="save-update, merge, refresh-expire")
     lists = relationship("List", secondary=gallery_lists, back_populates='galleries', lazy="dynamic")
+    pages = relationship("Page", back_populates="gallery", cascade="all,delete-orphan")
+    tags = relationship("NamespaceTags", secondary=gallery_tags, lazy="dynamic")
 
-chapter_tags = Table('chapter_tags', Base.metadata,
-                        Column('namespace_tag_id', Integer, ForeignKey('namespace_tags.id')),
-                        Column('chapter_id', Integer, ForeignKey('chapter.id')),
-                        UniqueConstraint('namespace_tag_id', 'chapter_id'))
+    @validates("times_read")
+    def _add_history(self, key, value):
+        sess = object_session(self)
+        sess.add(History(self))
+        return value
 
-class Chapter(Base):
-    __tablename__ = 'chapter'
-    id = Column(Integer, primary_key=True)
-    gallery_id = Column(Integer, ForeignKey('gallery.id', ondelete="cascade"), nullable=False)
-    title = Column(String, nullable=False, default='')
-    path = Column(String, nullable=False, default='')
-    number = Column(Integer, nullable=False, default=0)
-    in_archive = Column(Boolean, default=False)
+    def _keyword_search(self, ns, tag, args=[]):
+        term = ''
+        lt, gt = range(2)
+        def _search(term):
+            if app_constants.Search.Regex in args:
+                if utils.regex_search(tag, term, args):
+                    return True
+            else:
+                if app_constants.DEBUG:
+                    print(tag, term)
+                if utils.search_term(tag, term, args):
+                    return True
+            return False
 
-    gallery = relationship("Gallery", back_populates="chapters")
-    pages = relationship("Page", back_populates="chapter", cascade="all,delete-orphan")
-    tags = relationship("NamespaceTags", secondary=chapter_tags, lazy="dynamic")
+        def _operator_parse(tag):
+            o = None
+            if tag:
+                if tag[0] == '<':
+                    o = lt
+                    tag = tag[1:]
+                elif tag[0] == '>':
+                    o = gt
+                    tag = tag[1:]
+            return tag, o
+
+        def _operator_supported(attr, date=False):
+            try:
+                o_tag, o = _operator_parse(tag)
+                if date:
+                    o_tag = dateparser.parse(o_tag, dayfirst=True)
+                    if o_tag:
+                        o_tag = o_tag.date()
+                else:
+                    o_tag = int(o_tag)
+                if o != None:
+                    if o == gt:
+                        return o_tag < attr
+                    elif o == lt:
+                        return o_tag > attr
+                else:
+                    return o_tag == attr
+            except ValueError:
+                return False
+
+        if ns == 'Title':
+            term = self.title
+        elif ns in ['Language', 'Lang']:
+            term = self.language
+        elif ns == 'Type':
+            term = self.type
+        elif ns == 'Status':
+            term = self.status
+        elif ns == 'Artist':
+            term = self.artist
+        elif ns in ['Descr', 'Description']:
+            term = self.info
+        elif ns in ['Chapter', 'Chapters']:
+            return _operator_supported(self.chapters.count())
+        elif ns in ['Read_count', 'Read count', 'Times_read', 'Times read']:
+            return _operator_supported(self.times_read)
+        elif ns in ['Rating', 'Stars']:
+            return _operator_supported(self.rating)
+        elif ns in ['Date_added', 'Date added']:
+            return _operator_supported(self.date_added.date(), True)
+        elif ns in ['Pub_date', 'Publication', 'Pub date']:
+            if self.pub_date:
+                return _operator_supported(self.pub_date.date(), True)
+            return False
+        elif ns in ['Last_read', 'Last read']:
+            if self.last_read:
+                return _operator_supported(self.last_read.date(), True)
+            return False
+        return _search(term)
+
+    def contains(self, key, args=[]):
+        "Check if gallery contains keyword"
+        is_exclude = False if key[0] == '-' else True
+        key = key[1:] if not is_exclude else key
+        default = False if is_exclude else True
+        if key:
+            # check in title/artist/language
+            found = False
+            if not ':' in key:
+                for g_attr in [self.title, self.artist, self.language]:
+                    if not g_attr:
+                        continue
+                    if app_constants.Search.Regex in args:
+                        if utils.regex_search(key, g_attr, args=args):
+                            found = True
+                            break
+                    else:
+                        if utils.search_term(key, g_attr, args=args):
+                            found = True
+                            break
+
+            # check in tag
+            if not found:
+                tags = key.split(':')
+                ns = tag = ''
+                # only namespace is lowered and capitalized for now
+                if len(tags) > 1:
+                    ns = tags[0].lower().capitalize()
+                    tag = tags[1]
+                else:
+                    tag = tags[0]
+
+                # very special keywords
+                if ns:
+                    key_word = ['none', 'null']
+                    if ns == 'Tag' and tag in key_word:
+                        if not self.tags:
+                            return is_exclude
+                    elif ns == 'Artist' and tag in key_word:
+                        if not self.artist:
+                            return is_exclude
+                    elif ns == 'Status' and tag in key_word:
+                        if not self.status or self.status == 'Unknown':
+                            return is_exclude
+                    elif ns == 'Language' and tag in key_word:
+                        if not self.language:
+                            return is_exclude
+                    elif ns == 'Url' and tag in key_word:
+                        if not self.link:
+                            return is_exclude
+                    elif ns in ('Descr', 'Description') and tag in key_word:
+                        if not self.info or self.info == 'No description..':
+                            return is_exclude
+                    elif ns == 'Type' and tag in key_word:
+                        if not self.type:
+                            return is_exclude
+                    elif ns in ('Publication', 'Pub_date', 'Pub date') and tag in key_word:
+                        if not self.pub_date:
+                            return is_exclude
+                    elif ns == 'Path' and tag in key_word:
+                        if self.dead_link:
+                            return is_exclude
+
+                if app_constants.Search.Regex in args:
+                    if ns:
+                        if self._keyword_search(ns, tag, args = args):
+                            return is_exclude
+
+                        for x in self.tags:
+                            if utils.regex_search(ns, x):
+                                for t in self.tags[x]:
+                                    if utils.regex_search(tag, t, True, args=args):
+                                        return is_exclude
+                    else:
+                        for x in self.tags:
+                            for t in self.tags[x]:
+                                if utils.regex_search(tag, t, True, args=args):
+                                    return is_exclude
+                else:
+                    if ns:
+                        if self._keyword_search(ns, tag, args=args):
+                            return is_exclude
+
+                        if ns in self.tags:
+                            for t in self.tags[ns]:
+                                if utils.search_term(tag, t, True, args=args):
+                                    return is_exclude
+                    else:
+                        for x in self.tags:
+                            for t in self.tags[x]:
+                                if utils.search_term(tag, t, True, args=args):
+                                    return is_exclude
+            else:
+                return is_exclude
+        return default
 
 class Page(Base):
     __tablename__ = 'page'
@@ -218,10 +428,10 @@ class Page(Base):
     profile = Column(String)
     number = Column(Integer)
     hash_id = Column(Integer, ForeignKey('hash.id'))
-    chapter_id = Column(Integer, ForeignKey('chapter.id'), nullable=False)
+    gallery_id = Column(Integer, ForeignKey('gallery.id'), nullable=False)
 
     hash = relationship("Hash", cascade="save-update, merge, refresh-expire")
-    chapter = relationship("Chapter", back_populates="pages")
+    gallery = relationship("Gallery", back_populates="pages")
 
     def __repr__(self):
         return "Page ID:{}\nPage:{}\nProfile:{}\nPageHash:{}".format(self.id, self.number, self.profile, self.hash)
@@ -235,8 +445,7 @@ class GalleryUrl(Base):
     gallery = relationship("Gallery", back_populates="urls")
 
 
-engine = create_engine("sqlite:///dbtest.db")
-Session = sessionmaker(bind=engine)
+Session = sessionmaker()
 
 @event.listens_for(Session, 'before_commit')
 def delete_artist_orphans(session):
@@ -249,6 +458,10 @@ def delete_tag_orphans(session):
 @event.listens_for(Session, 'before_commit')
 def delete_namespace_orphans(session):
     session.query(Namespace).filter(~Namespace.tags.any()).delete(synchronize_session=False)
+
+@event.listens_for(Session, 'before_commit')
+def delete_collection_orphans(session):
+    session.query(Collection).filter(~Collection.galleries.any()).delete(synchronize_session=False)
 
 @event.listens_for(Session, 'before_commit')
 def delete_namespace_orphans(session):
@@ -280,7 +493,37 @@ def delete_gallery_namespace_orphans(session):
 #    cursor.execute("PRAGMA foreign_keys=ON")
 #    cursor.close()
 
-Base.metadata.create_all(engine)
+def check_db_version(sess):
+    "Checks if DB version is allowed. Raises dialog if not"
+    try:
+        life = sess.query(Life).one_or_none()
+    except exc.NoSuchTableError:
+        raise db_constants.DatabaseInitError("Invalid Database")
+    if life:
+        if life.version not in db_constants.DB_VERSION:
+            log_c("Incompatible database version")
+            log_d('Local database version: {}\nProgram database version:{}'.format(life.version,
+                                                                         db_constants.CURRENT_DB_VERSION))
+            return False
+    else:
+        life = Life()
+        life.version = db_constants.CURRENT_DB_VERSION
+        log_i("Succesfully initiated database")
+        log_i("DB Version: {}".format(db_constants.REAL_DB_VERSION))
+
+    db_constants.REAL_DB_VERSION = life.version
+    life.times_opened += 1
+    sess.commit()
+    return True
+
+def init_db():
+    engine = create_engine(os.path.join("sqlite:///", db_constants.DB_PATH), echo=app_constants.DEBUG)
+    Base.metadata.create_all(engine)
+    Session = scoped_session(Session)
+    Session.configure(bind=engine)
+    db_constants.SESSION = Session
+
+    return check_db_version(Session())
 
 
 # unit test
@@ -302,8 +545,6 @@ if __name__ == '__main__':
             self.session = Session()
             self.gallery = Gallery()
             self.session.add(self.gallery)
-            self.chapter = Chapter()
-            self.gallery.chapters.append(self.chapter)
             self.session.commit()
 
         def test_types(self):
@@ -314,6 +555,19 @@ if __name__ == '__main__':
             self.gallery.timestamp = datetime.datetime.now()
             self.gallery.last_read = datetime.datetime.now()
             self.session.commit()
+
+        def test_history(self):
+            self.gallery.times_read += 1
+            self.assertEqual(self.session.query(History).count(), 1)
+            self.gallery.times_read += 1
+            self.session.commit()
+            self.assertEqual(self.session.query(History).count(), 2)
+
+            self.session.delete(self.gallery)
+
+            self.assertEqual(self.session.query(History).count(), 2)
+
+            self.assertIsNone(self.session.query(History).all()[0].gallery)
 
 
         def test_typesfail(self):
@@ -337,18 +591,18 @@ if __name__ == '__main__':
         def test_page(self):
             page = Page()
             page.number = 1
-            self.chapter.pages.append(page)
+            self.gallery.pages.append(page)
             self.session.commit()
-            self.assertEqual(page.chapter_id, self.chapter.id)
+            self.assertEqual(page.gallery_id, self.gallery.id)
             page.hash = Hash(name="hello")
             self.session.commit()
             self.assertEqual(page.hash.name, "hello")
 
         def test_pages(self):
             pages = [Page(number=str(x)) for x in range(10)]
-            self.chapter.pages.extend(pages)
+            self.gallery.pages.extend(pages)
             self.session.commit()
-            self.assertEqual(pages[0].chapter_id, self.chapter.id)
+            self.assertEqual(pages[0].gallery_id, self.gallery.id)
 
         def test_tag_and_ns(self):
             for x in range(10):
@@ -357,10 +611,10 @@ if __name__ == '__main__':
                 ns = Namespace()
                 ns.name = "ns" + str(x)
                 nstag = NamespaceTags(ns, tag)
-                self.chapter.tags.append(nstag)
+                self.gallery.tags.append(nstag)
             self.session.commit()
 
-            self.assertEqual(self.chapter.tags.count(), 10)
+            self.assertEqual(self.gallery.tags.count(), 10)
 
         def test_many_to_many(self):
             artists = [Artist(name="Artist"+str(x)) for x in range(10)]
@@ -379,6 +633,57 @@ if __name__ == '__main__':
             self.session.close()
             if os.path.exists("dbunittest.db"):
                 os.remove("dbunittest.db")
+
+    class CollectionRelationship(unittest.TestCase):
+        def setUp(self):
+            if os.path.exists("dbcollectionunittest.db"):
+                os.remove("dbcollectionunittest.db")
+            engine = create_engine("sqlite:///dbcollectionunittest.db")
+            Session.configure(bind=engine)
+            Base.metadata.create_all(engine)
+
+            self.session = Session()
+
+            self.collections = [Collection(title="col"+str(x)) for x in range(2)]
+            self.galleries = [Gallery(title="title"+str(x)) for x in range(10)]
+            self.session.add_all(self.galleries)
+            self.collections[0].galleries.extend(self.galleries[:5])
+            self.collections[1].galleries.extend(self.galleries[5:])
+            self.session.commit()
+
+            self.assertEqual(self.session.query(Gallery).count(), 10)
+            self.assertEqual(self.session.query(Collection).count(), 2)
+
+        def test_delete(self):
+            self.session.delete(self.collections[0])
+            self.session.commit()
+            self.assertEqual(self.session.query(Gallery).count(), 5)
+            self.assertEqual(self.session.query(Collection).count(), 1)
+
+        def test_delete2(self):
+            self.session.delete(self.galleries[0])
+            self.session.commit()
+            self.assertEqual(self.session.query(Gallery).count(), 9)
+            self.assertEqual(self.session.query(Collection).count(), 2)
+            self.assertEqual(self.collections[0].galleries.count(), 4)
+
+        def test_no_orphans(self):
+            self.session.query(Gallery).delete()
+            self.session.commit()
+            self.assertEqual(self.session.query(Gallery).count(), 0)
+            self.assertEqual(self.session.query(Collection).count(), 0)
+
+        def test_no_orphans2(self):
+            for c in self.collections:
+                self.session.delete(c)
+            self.session.commit()
+            self.assertEqual(self.session.query(Gallery).count(), 0)
+            self.assertEqual(self.session.query(Collection).count(), 0)
+
+        def tearDown(self):
+            self.session.close()
+            if os.path.exists("dbcollectionunittest.db"):
+                os.remove("dbcollectionunittest.db")
 
     class ListRelationship(unittest.TestCase):
         def setUp(self):
@@ -525,17 +830,15 @@ if __name__ == '__main__':
             self.session = Session()
             self.gallery = Gallery()
             self.session.add(self.gallery)
-            self.chapter = Chapter()
-            self.gallery.chapters.append(self.chapter)
             self.session.commit()
 
             self.hash = Hash()
             self.hash.name = "Hash1"
             self.pages = [Page(number=x) for x in range(10)]
-            self.chapter.pages.extend(self.pages)
+            self.gallery.pages.extend(self.pages)
             self.session.commit()
 
-            self.assertEqual(self.chapter.id, self.pages[0].chapter_id)
+            self.assertEqual(self.gallery.id, self.pages[0].gallery_id)
 
             for p in self.pages:
                 p.hash = self.hash
@@ -662,63 +965,6 @@ if __name__ == '__main__':
             if os.path.exists("dbconunittest.db"):
                 os.remove("dbconunittest.db")
 
-
-    class ChapterRelationship(unittest.TestCase):
-        def setUp(self):
-            if os.path.exists("dbchapunittest.db"):
-                os.remove("dbchapunittest.db")
-            engine = create_engine("sqlite:///dbchapunittest.db")
-            Session.configure(bind=engine)
-            Base.metadata.create_all(engine)
-
-            self.session = Session()
-
-            self.chapters = [Chapter(title="ch"+str(x)) for x in range(20)]
-
-            self.galleries = [Gallery(title="title"+str(x)) for x in range(10)]
-            self.session.add_all(self.galleries)
-            chaps = doublegen(self.chapters)
-            for n, x in enumerate(self.galleries):
-                x.chapters.extend(next(chaps))
-            self.session.commit()
-
-            for g in self.galleries:
-                self.assertEqual(g.chapters.count(), 2)
-
-        def test_delete(self):
-            self.session.query(Chapter).delete()
-            self.session.commit()
-
-            self.assertEqual(self.session.query(Gallery).count(), 10)
-            self.assertEqual(self.session.query(Chapter).count(), 0)
-
-        def test_delete2(self):
-            self.session.delete(self.galleries[0])
-            self.session.commit()
-
-            self.assertEqual(self.session.query(Gallery).count(), 9)
-            self.assertEqual(self.session.query(Chapter).count(), 18)
-
-        def test_delete3(self):
-            self.session.delete(self.galleries[0].chapters[0])
-            self.session.commit()
-
-            self.assertEqual(self.session.query(Gallery).count(), 10)
-            self.assertEqual(self.session.query(Chapter).count(), 19)
-
-        def test_no_orphans(self):
-            for g in self.galleries:
-                self.session.delete(g)
-            self.session.commit()
-
-            self.assertEqual(self.session.query(Gallery).count(), 0)
-            self.assertEqual(self.session.query(Chapter).count(), 0)
-
-        def tearDown(self):
-            self.session.close()
-            if os.path.exists("dbchapunittest.db"):
-                os.remove("dbchapunittest.db")
-
     class UrlRelationship(unittest.TestCase):
         def setUp(self):
             if os.path.exists("dburlunittest.db"):
@@ -730,8 +976,6 @@ if __name__ == '__main__':
             self.session = Session()
             self.gallery = Gallery()
             self.session.add(self.gallery)
-            self.chapter = Chapter()
-            self.gallery.chapters.append(self.chapter)
             self.session.commit()
 
             self.urls = [GalleryUrl(url="http://google.com") for x in range(10)]
@@ -770,12 +1014,10 @@ if __name__ == '__main__':
 
             self.session = Session()
 
-            self.gallery = Gallery(title="title1")
             self.namespaces = [Namespace(name="ns"+str(x)) for x in range(20)]
             self.tags = [Tag(name="tag"+str(x)) for x in range(10)]
-            self.chapters = [Chapter(title="ch"+str(x)) for x in range(5)]
-            self.session.add(self.gallery)
-            self.gallery.chapters.extend(self.chapters)
+            self.galleries = [Gallery(title="title"+str(x)) for x in range(5)]
+            self.session.add_all(self.galleries)
             self.nstags = []
             nsgen = doublegen(self.namespaces)
             for x, tag in enumerate(self.tags):
@@ -783,12 +1025,11 @@ if __name__ == '__main__':
                 self.nstags.append(NamespaceTags(doublens[0], tag))
                 self.nstags.append(NamespaceTags(doublens[1], tag))
 
-            for x, ch in enumerate(self.chapters):
+            for x, ch in enumerate(self.galleries):
                 ch.tags.extend(self.nstags)
             self.session.commit()
 
-            self.assertEqual(self.session.query(Gallery).count(), 1)
-            self.assertEqual(self.session.query(Chapter).count(), 5)
+            self.assertEqual(self.session.query(Gallery).count(), 5)
             self.assertEqual(self.session.query(Tag).count(), 10)
             self.assertEqual(self.session.query(Namespace).count(), 20)
             self.assertEqual(self.session.query(NamespaceTags).count(), 20)
@@ -806,19 +1047,17 @@ if __name__ == '__main__':
             self.assertEqual(self.session.query(Namespace).count(), 19)
 
         def test_delete3(self):
-            self.session.delete(self.chapters[0])
+            self.session.delete(self.galleries[0])
             self.session.commit()
-            self.assertEqual(self.session.query(Gallery).count(), 1)
-            self.assertEqual(self.session.query(Chapter).count(), 4)
+            self.assertEqual(self.session.query(Gallery).count(), 4)
             self.assertTrue(self.session.query(NamespaceTags).count() != 0)
             self.assertTrue(self.session.query(Tag).count() != 0)
             self.assertTrue(self.session.query(Namespace).count() != 0)
 
         def test_no_orphans(self):
-            self.session.delete(self.gallery)
+            self.session.query(Gallery).delete()
             self.session.commit()
             self.assertEqual(self.session.query(Gallery).count(), 0)
-            self.assertEqual(self.session.query(Chapter).count(), 0)
 
             self.session.query(Namespace).delete()
             self.session.commit()

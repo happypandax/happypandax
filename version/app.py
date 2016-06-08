@@ -51,7 +51,7 @@ import settings
 import pewnet
 import utils
 import misc_db
-import database
+import db_constants
 
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -179,7 +179,7 @@ class AppWindow(QMainWindow):
             self.admin_db_method_invoker.connect(self.admin_db.from_v021_to_v022)
             self.admin_db_method_invoker.connect(app_widget.show)
             app_widget.adjustSize()
-            db_p = os.path.join(os.path.split(database.db_constants.DB_PATH)[0], 'sadpanda.db')
+            db_p = os.path.join(os.path.split(db_constants.DB_PATH)[0], 'sadpanda.db')
             self.admin_db_method_invoker.emit(db_p)
         elif app_constants.FIRST_TIME_LEVEL < 7:
             log_i('Invoking first time level {}'.format(7))

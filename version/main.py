@@ -19,9 +19,10 @@ from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QFile, Qt
 from PyQt5.QtGui import QFontDatabase
 
-from database import db, db_constants
+import db
 import app
 import app_constants
+import db_constants
 import gallerydb
 import utils
 
@@ -121,17 +122,13 @@ def start(test=False):
 		sys.displayhook = pprint.pprint
 	log_i('Happypanda Version {}'.format(app_constants.vs))
 	log_i('OS: {} {}\n'.format(platform.system(), platform.release()))
-	conn = None
 	try:
 		if args.test:
-			conn = db.init_db(True)
+			db_inited = db.init_db(True)
 		else:
-			conn = db.init_db()
-		log_d('Init DB Conn: OK')
-		log_i("DB Version: {}".format(db_constants.REAL_DB_VERSION))
-	except:
-		log_c('Invalid database')
-		log.exception('Database connection failed!')
+			db_inited = db.init_db()
+	except db_constants.DatabaseInitError:
+		log.exception('Database initiation failed!')
 		from PyQt5.QtGui import QIcon
 		from PyQt5.QtWidgets import QMessageBox
 		msg_box = QMessageBox()
@@ -148,8 +145,7 @@ def start(test=False):
 			log_d('Normal Exit App: OK')
 			sys.exit()
 
-	def start_main_window(conn):
-		db.DBBase._DB_CONN = conn
+	def start_main_window():
 		#if args.test:
 		#	import threading, time
 		#	ser_list = []
@@ -222,7 +218,7 @@ def start(test=False):
 		return application.exec_()
 
 	def db_upgrade():
-		log_d('Database connection failed')
+		log_d('Incompatible database encountered. Attempting upgrade.')
 		from PyQt5.QtGui import QIcon
 		from PyQt5.QtWidgets import QMessageBox
 
@@ -238,16 +234,15 @@ def start(test=False):
 			utils.backup_database()
 			import threading
 			db_p = db_constants.DB_PATH
-			db.add_db_revisions(db_p)
-			conn = db.init_db()
-			return start_main_window(conn)
+			# TODO: UPGRADE DATABASE HERE
+			return start_main_window()
 		else:
 			application.exit()
 			log_d('Normal Exit App: OK')
 			return 0
 
-	if conn:
-		return start_main_window(conn)
+	if db_inited:
+		return start_main_window()
 	else:
 		return db_upgrade()
 

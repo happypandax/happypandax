@@ -31,36 +31,6 @@ log_w = log.warning
 log_e = log.error
 log_c = log.critical
 
-Base = declarative_base()
-
-class Hash(Base):
-    __tablename__ = 'hash'
-
-    id = Column(Integer, primary_key=True)
-    hash = Column(BLOB)
-
-    def __repr__(self):
-        return "Hash ID:{}\nHash:{}".format(self.id, self.hash)
-
-class Page(Base):
-    __tablename__ = 'page'
-    id = Column(Integer, primary_key=True)
-    profile = Column(String)
-    number = Column(Integer)
-    hash_id = Column(Integer, ForeignKey('hash.id'))
-
-    hash = relationship("Hash")
-
-    def __repr__(self):
-        return "Page ID:{}\Page:{}\nProfile:{}\nPageHash:{}".format(self.id, self.number, self.profile, self.hash)
-
-class Gallery(Base):
-    __tablename__ = 'gallery'
-    id = Column(Integer, primary_key=True)
-    parent_id = Column(Integer, ForeignKey('gallery.id'))
-
-    children = relationship("Gallery", backref=backref('parent', remote_side=[id]))
-
 
 def hashes_sql(cols=False):
     sql = """

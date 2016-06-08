@@ -33,8 +33,7 @@ from PyQt5.QtGui import QImage, qRgba
 from PIL import Image,ImageChops
 
 import app_constants
-
-from database import db_constants
+import db_constants
 
 log = logging.getLogger(__name__)
 log_i = log.info
