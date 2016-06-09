@@ -205,10 +205,7 @@ class AppWindow(QMainWindow):
         def refresh_view():
             self.current_manga_view.sort_model.refresh()
         self.manga_list_view = self.default_manga_view.list_view
-        self.manga_table_view = self.default_manga_view.table_view
-        self.manga_list_view.gallery_model.STATUSBAR_MSG.connect(self.stat_temp_msg)
         self.manga_list_view.STATUS_BAR_MSG.connect(self.stat_temp_msg)
-        self.manga_table_view.STATUS_BAR_MSG.connect(self.stat_temp_msg)
 
         self.sidebar_list = misc_db.SideBarWidget(self)
         self._main_layout.addWidget(self.sidebar_list)
@@ -447,9 +444,6 @@ class AppWindow(QMainWindow):
         self.data_fetch_spinner = misc.Spinner(self, "center")
         self.data_fetch_spinner.set_size(80)
         
-        self.manga_list_view.gallery_model.ADD_MORE.connect(self.data_fetch_spinner.show)
-        self.manga_list_view.gallery_model.ADDED_ROWS.connect(self.data_fetch_spinner.before_hide)
-
         ## deleting spinner
         #self.gallery_delete_spinner = misc.Spinner(self)
         #self.gallery_delete_spinner.set_size(40,40)

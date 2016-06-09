@@ -84,12 +84,15 @@ NUMBER_ROLE = Qt.UserRole + 11
 CONVENTION_ROLE = Qt.UserRole + 12
 CIRCLES_ROLE = Qt.UserRole + 13
 TAGS_ROLE = Qt.UserRole + 14
-NAMESPACE_ROLE = Qt.UserRole + 15
+PARENT_ROLE = Qt.UserRole + 15
 URLS_ROLE = Qt.UserRole + 16
 COLLECTION_ROLE = Qt.UserRole + 17
 PATH_ROLE = Qt.UserRole + 18
 STATUS_ROLE = Qt.UserRole + 19
 FAV_ROLE = Qt.UserRole + 20
+HASH_ROLE = Qt.UserRole + 20
+DELEGATE_ROLE = Qt.UserRole + 21
+QITEM_ROLE = Qt.UserRole + 22
 
 # Columns
 COLUMNS = tuple(range(11))

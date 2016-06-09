@@ -85,7 +85,7 @@ class ToolbarTabManager(QObject):
             else:
                 t.view = self.parent_widget.default_manga_view
             if delegate_paint:
-                t.view.list_view.manga_delegate._paint_level = 9000 # over nine thousand!!!
+                t.view.list_view.grid_delegate._paint_level = 9000 # over nine thousand!!!
             self._actions.append(self.toolbar.insertWidget(self.idx_widget, t))
             return t
 
@@ -544,14 +544,14 @@ class SideBarWidget(QFrame):
         self.show_all_galleries_btn.clicked.connect(self.lists.clearSelection)
         self.show_all_galleries_btn.clicked.connect(self.lists._reset_selected)
 
-        # artists
-        self.artists_list = GalleryArtistsList(parent.manga_list_view.gallery_model, self)
-        self.artists_list.artist_clicked.connect(lambda a: parent.search('artist:"{}"'.format(a)))
-        artists_list_index = self.stacked_layout.addWidget(self.artists_list)
-        self.artist_btn.clicked.connect(lambda:self.stacked_layout.setCurrentIndex(artists_list_index))
-        #self.lists.GALLERY_LIST_CLICKED.connect(self.artists_list.set_current_glist)
-        self.show_all_galleries_btn.clicked.connect(self.artists_list.clearSelection)
-        #self.show_all_galleries_btn.clicked.connect(lambda:self.artists_list.set_current_glist())
+        ## artists
+        #self.artists_list = GalleryArtistsList(parent.manga_list_view.gallery_model, self)
+        #self.artists_list.artist_clicked.connect(lambda a: parent.search('artist:"{}"'.format(a)))
+        #artists_list_index = self.stacked_layout.addWidget(self.artists_list)
+        #self.artist_btn.clicked.connect(lambda:self.stacked_layout.setCurrentIndex(artists_list_index))
+        ##self.lists.GALLERY_LIST_CLICKED.connect(self.artists_list.set_current_glist)
+        #self.show_all_galleries_btn.clicked.connect(self.artists_list.clearSelection)
+        ##self.show_all_galleries_btn.clicked.connect(lambda:self.artists_list.set_current_glist())
 
         # ns_tags
         self.tags_tree = TagsTreeView(self)

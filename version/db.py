@@ -187,8 +187,9 @@ class GalleryNamespace(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False, unique=True)
+    profile = Column(String, nullable=False, default='')
 
-    galleries = relationship("Gallery", back_populates="namespace")
+    galleries = relationship("Gallery", back_populates="parent", lazy="dynamic", cascade="all, delete-orphan")
 
     def __repr__(self):
         return "ID:{} - G-Namespace:{}".format(self.id, self.name)
@@ -211,14 +212,16 @@ gallery_tags = Table('gallery_tags', Base.metadata,
 class Collection(Base):
     __tablename__ = 'collection'
     id = Column(Integer, primary_key=True)
+    profile = Column(String, nullable=False, default='')
     title = Column(String, nullable=False, default='')
     info = Column(String, nullable=False, default='')
 
-    galleries = relationship("Gallery", back_populates="parent", cascade="all,delete-orphan", lazy="dynamic")
+    galleries = relationship("Gallery", back_populates="collection", cascade="save-update, merge, refresh-expire", lazy="dynamic")
 
 class Gallery(Base):
     __tablename__ = 'gallery'
     id = Column(Integer, primary_key=True)
+    profile = Column(String, nullable=False, default='')
     path = Column(String, nullable=False, default='')
     path_in_archive = Column(String, nullable=False, default='')
     title = Column(String, nullable=False, default='')
@@ -235,16 +238,16 @@ class Gallery(Base):
     number = Column(Integer, nullable=False, default=0)
     in_archive = Column(Boolean, default=False)
     convention_id = Column(Integer, ForeignKey('convention.id'))
-    namespace_id = Column(Integer, ForeignKey('gallery_namespace.id'))
-    parent_id = Column(Integer, ForeignKey('collection.id'))
+    collection_id = Column(Integer, ForeignKey('collection.id'))
+    parent_id = Column(Integer, ForeignKey('gallery_namespace.id'))
 
     exed = Column(Boolean, default=False)
     view = Column(Integer, nullable=False, default=1)
 
-    parent = relationship("Collection", back_populates="galleries", cascade="save-update, merge, refresh-expire")
+    parent = relationship("GalleryNamespace", back_populates="galleries", cascade="save-update, merge, refresh-expire")
+    collection = relationship("Collection", back_populates="galleries", cascade="save-update, merge, refresh-expire")
     urls = relationship("GalleryUrl", back_populates="gallery", cascade="all,delete-orphan")
     convention = relationship("Convention", back_populates="galleries", cascade="save-update, merge, refresh-expire")
-    namespace = relationship("GalleryNamespace", back_populates="galleries", cascade="save-update, merge, refresh-expire")
     circles = relationship("Circle", secondary=gallery_circles, back_populates='galleries', lazy="dynamic", cascade="save-update, merge, refresh-expire")
     artists = relationship("Artist", secondary=gallery_artists, back_populates='galleries', lazy="dynamic", cascade="save-update, merge, refresh-expire")
     lists = relationship("List", secondary=gallery_lists, back_populates='galleries', lazy="dynamic")
@@ -254,8 +257,14 @@ class Gallery(Base):
     @validates("times_read")
     def _add_history(self, key, value):
         sess = object_session(self)
-        sess.add(History(self))
+        if sess:
+            sess.add(History(self))
+        else:
+            log_w("Cannot add gallery history because no session exists for this object")
         return value
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     def _keyword_search(self, ns, tag, args=[]):
         term = ''
@@ -430,8 +439,8 @@ class Gallery(Base):
 class Page(Base):
     __tablename__ = 'page'
     id = Column(Integer, primary_key=True)
-    profile = Column(String)
-    number = Column(Integer)
+    profile = Column(String, nullable=False, default='')
+    number = Column(Integer, nullable=False, default=0)
     hash_id = Column(Integer, ForeignKey('hash.id'))
     gallery_id = Column(Integer, ForeignKey('gallery.id'), nullable=False)
 
@@ -664,7 +673,7 @@ if __name__ == '__main__':
         def test_delete(self):
             self.session.delete(self.collections[0])
             self.session.commit()
-            self.assertEqual(self.session.query(Gallery).count(), 5)
+            self.assertEqual(self.session.query(Gallery).count(), 10)
             self.assertEqual(self.session.query(Collection).count(), 1)
 
         def test_delete2(self):
@@ -674,15 +683,15 @@ if __name__ == '__main__':
             self.assertEqual(self.session.query(Collection).count(), 2)
             self.assertEqual(self.collections[0].galleries.count(), 4)
 
-        def test_no_orphans(self):
-            self.session.query(Gallery).delete()
-            self.session.commit()
-            self.assertEqual(self.session.query(Gallery).count(), 0)
-            self.assertEqual(self.session.query(Collection).count(), 0)
-
-        def test_no_orphans2(self):
+        def test_delete3(self):
             for c in self.collections:
                 self.session.delete(c)
+            self.session.commit()
+            self.assertEqual(self.session.query(Gallery).count(), 10)
+            self.assertEqual(self.session.query(Collection).count(), 0)
+
+        def test_no_orphans(self):
+            self.session.query(Gallery).delete()
             self.session.commit()
             self.assertEqual(self.session.query(Gallery).count(), 0)
             self.assertEqual(self.session.query(Collection).count(), 0)
@@ -890,28 +899,29 @@ if __name__ == '__main__':
             Base.metadata.create_all(engine)
 
             self.session = Session()
-            self.galleryns = GalleryNamespace(name="gns 1")
+            self.galleryns = [GalleryNamespace(name="gns"+str(x)) for x in range(2)]
             self.galleries = [Gallery(title="title"+str(x)) for x in range(10)]
-            self.galleryns.galleries.extend(self.galleries)
-            self.session.add(self.galleryns)
+            self.galleryns[0].galleries.extend(self.galleries[:5])
+            self.galleryns[1].galleries.extend(self.galleries[5:])
+            self.session.add_all(self.galleryns)
+            self.session.commit()
+
+            self.assertEqual(self.session.query(GalleryNamespace).count(), 2)
+            self.assertEqual(self.session.query(Gallery).count(), 10)
+            self.assertEqual(self.galleries[0].parent_id, self.galleryns[0].id)
+
+        def test_delete(self):
+            self.session.delete(self.galleryns[0])
             self.session.commit()
 
             self.assertEqual(self.session.query(GalleryNamespace).count(), 1)
-            self.assertEqual(self.session.query(Gallery).count(), 10)
-            self.assertEqual(self.galleries[0].namespace_id, self.galleryns.id)
-
-        def test_delete(self):
-            self.session.delete(self.galleryns)
-            self.session.commit()
-
-            self.assertEqual(self.session.query(GalleryNamespace).count(), 0)
-            self.assertEqual(self.session.query(Gallery).count(), 10)
+            self.assertEqual(self.session.query(Gallery).count(), 5)
 
         def test_delete2(self):
             self.session.delete(self.galleries[0])
             self.session.commit()
 
-            self.assertEqual(self.session.query(GalleryNamespace).count(), 1)
+            self.assertEqual(self.session.query(GalleryNamespace).count(), 2)
             self.assertEqual(self.session.query(Gallery).count(), 9)
 
         def test_no_orphans(self):
@@ -920,6 +930,15 @@ if __name__ == '__main__':
 
             self.assertEqual(self.session.query(GalleryNamespace).count(), 0)
             self.assertEqual(self.session.query(Gallery).count(), 0)
+
+        def test_change_ns(self):
+            self.galleryns[1].galleries.append(self.galleries[0])
+            self.session.commit()
+
+            self.assertEqual(self.session.query(GalleryNamespace).count(), 2)
+            self.assertEqual(self.session.query(Gallery).count(), 10)
+            self.assertEqual(self.galleryns[1].galleries.count(), 6)
+            self.assertEqual(self.galleryns[0].galleries.count(), 4)
 
         def tearDown(self):
             self.session.close()
