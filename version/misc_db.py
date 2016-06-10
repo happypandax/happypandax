@@ -84,8 +84,8 @@ class ToolbarTabManager(QObject):
                     t.clicked.connect(self.parent_widget.sidebar_list.arrow_handle.click)
             else:
                 t.view = self.parent_widget.default_manga_view
-            if delegate_paint:
-                t.view.list_view.grid_delegate._paint_level = 9000 # over nine thousand!!!
+            #if delegate_paint:
+            #    t.view.list_view.grid_delegate._paint_level = 9000 # over nine thousand!!!
             self._actions.append(self.toolbar.insertWidget(self.idx_widget, t))
             return t
 
