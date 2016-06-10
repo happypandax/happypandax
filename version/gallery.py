@@ -953,7 +953,7 @@ class ViewMetaWindow(misc.ArrowWindow):
         self.current_item = item
 
         if isinstance(item, db.Gallery):
-            self.g_widget.apply_gallery(gallery)
+            self.g_widget.apply_gallery(item)
             self.g_widget.resize(self.width() - self.content_margin,
                                          self.height() - self.content_margin)
         if self.direction == self.LEFT:
@@ -1055,7 +1055,6 @@ class ViewMetaWindow(misc.ArrowWindow):
 
         def apply_gallery(self, gallery):
             self.stacked_l.setCurrentIndex(self.general_index)
-            self.chapter_list.set_chapters(gallery.chapters)
             self.g_title_lbl.setText(gallery.title)
 
             misc.clearLayout(self.artists_layout)
@@ -1071,7 +1070,8 @@ class ViewMetaWindow(misc.ArrowWindow):
             self.g_type_lbl.setText(gallery.type)
             self.g_pages_total_lbl.setText('{}'.format(gallery.pages.count() if gallery.pages else 0))
             self.g_status_lbl.setText(gallery.status)
-            self.g_d_added_lbl.setText(gallery.date_added.strftime('%d %b %Y'))
+            if gallery.timestamp:
+                self.g_d_added_lbl.setText(gallery.timestamp.strftime('%d %b %Y'))
             if gallery.pub_date:
                 self.g_pub_lbl.setText(gallery.pub_date.strftime('%d %b %Y'))
             else:
@@ -2024,14 +2024,12 @@ class PathView(QWidget):
 
     def update_path(self, idx):
 
-        self.view.setUpdatesEnabled(False)
         if idx.isValid() and idx.data(app_constants.QITEM_ROLE).type() == CollectionItem.type():
             dlg = GalleryDelegate(self.view.parent_widget, self.view)
             self.view.setItemDelegate(dlg)
             self.view.grid_delegate = dlg
         else:
-            self.view.setItemDelegate(DefaultDelegate(self.view))
-        self.view.setUpdatesEnabled(True)
+            self.view.setItemDelegate(QStyledItemDelegate(self.view))
         
 
         if not (idx.isValid() and not idx.child(0,0).isValid()):
