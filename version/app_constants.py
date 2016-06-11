@@ -149,7 +149,7 @@ def load_icons():
     global GALLERY_ICON
     global DOTS_ICON
 
-    G_LISTS_ICON = qta.icon("fa.th-list", color="white")
+    G_LISTS_ICON = qta.icon("fa.list", color="white")
     ARTISTS_ICON = qta.icon("fa.users", color="white")
     NSTAGS_ICON = qta.icon("fa.sitemap", color="white")
     PLUS_ICON = qta.icon("fa.plus", color="white")
@@ -163,8 +163,10 @@ def load_icons():
     DOWNLOADER_ICON = qta.icon("fa.tasks", color="white")
     GALLERY_ICON = qta.icon("fa.th-large", color="white")
     DOTS_ICON = qta.icon("fa.ellipsis-h", color="white")
+    
 
 # image paths
+LIST_PATH = os.path.join(static_dir, "list.png")
 SAMPLE_PATH = os.path.join(static_dir, "sample.png")
 SORT_PATH = os.path.join(static_dir, "sort.png")
 GALLERY_ICO_PATH = os.path.join(static_dir, "gallery_ico.ico")
@@ -174,8 +176,6 @@ APP_ICO_PATH = os.path.join(static_dir, "happypanda.ico")
 HOME_BTN_PATH = os.path.join(static_dir, "home.png")
 SETTINGS_PATH = os.path.join(static_dir, "settings.png")
 GRID_PATH = os.path.join(static_dir, "grid.png")
-LIST_PATH = os.path.join(static_dir, "list.png")
-NO_IMAGE_PATH = os.path.join(static_dir, "default.jpg")
 typicons_root = os.path.join(static_dir, "typicons")
 GLIST_PATH = os.path.join(typicons_root, "media-stop-outline.svg")
 GARTIST_PATH = os.path.join(typicons_root, "user-outline.svg")

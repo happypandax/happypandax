@@ -204,7 +204,7 @@ class AppWindow(QMainWindow):
         self.default_manga_view = gallery.ViewManager(app_constants.ViewType.Default, self, True)
         def refresh_view():
             self.current_manga_view.sort_model.refresh()
-        self.manga_list_view = self.default_manga_view.list_view
+        self.manga_list_view = self.default_manga_view.grid_view
         self.manga_list_view.STATUS_BAR_MSG.connect(self.stat_temp_msg)
 
         self.sidebar_list = misc_db.SideBarWidget(self)
@@ -332,9 +332,9 @@ class AppWindow(QMainWindow):
                     galleries = gal
             else:
                 if app_constants.CONTINUE_AUTO_METADATA_FETCHER:
-                    galleries = [g for g in self.current_manga_view.gallery_model._data if not g.exed]
+                    galleries = [g for g in self.current_manga_view.item_model._data if not g.exed]
                 else:
-                    galleries = self.current_manga_view.gallery_model._data
+                    galleries = self.current_manga_view.item_model._data
                 if not galleries:
                     self.notification_bar.add_text('Looks like we\'ve already gone through all galleries!')
                     return None
@@ -595,7 +595,7 @@ class AppWindow(QMainWindow):
         sort_k = QKeySequence('Alt+S')
 
         def set_new_sort(s):
-            self.current_manga_view.list_view.sort(s)
+            self.current_manga_view.grid_view.sort(s)
 
         sort_action = QToolButton()
         sort_action.setShortcut(sort_k)
@@ -613,7 +613,7 @@ class AppWindow(QMainWindow):
         self.grid_toggle = QToolButton()
         self.grid_toggle.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
         self.grid_toggle.setShortcut(togle_view_k)
-        if self.current_manga_view.current_view == gallery.ViewManager.View.List:
+        if self.current_manga_view.current_view == gallery.ViewManager.View.Grid:
             self.grid_toggle.setIcon(self.grid_toggle_l_icon)
         else:
             self.grid_toggle.setIcon(self.grid_toggle_g_icon)
@@ -764,11 +764,11 @@ class AppWindow(QMainWindow):
         """
         Toggles the current display view
         """
-        if self.current_manga_view.current_view == gallery.ViewManager.View.Table:
-            self.current_manga_view.changeTo(self.current_manga_view.m_l_view_index)
+        if self.current_manga_view.current_view == gallery.ViewManager.View.List:
+            self.current_manga_view.changeTo(self.current_manga_view.grid_view_index)
             self.grid_toggle.setIcon(self.grid_toggle_l_icon)
         else:
-            self.current_manga_view.changeTo(self.current_manga_view.m_t_view_index)
+            self.current_manga_view.changeTo(self.current_manga_view.list_view_index)
             self.grid_toggle.setIcon(self.grid_toggle_g_icon)
 
     # TODO: Improve this so that it adds to the gallery dialog,
@@ -1102,7 +1102,7 @@ class AppWindow(QMainWindow):
         duplicate_spinner.set_text("Duplicate Check")
         duplicate_spinner.show()
         dup_tab = self.tab_manager.addTab("Duplicate", app_constants.ViewType.Duplicate)
-        dup_tab.view.set_delete_proxy(self.default_manga_view.gallery_model)
+        dup_tab.view.set_delete_proxy(self.default_manga_view.item_model)
 
         class DuplicateCheck(QObject):
             found_duplicates = pyqtSignal(tuple)
@@ -1135,7 +1135,7 @@ class AppWindow(QMainWindow):
         self._d_checker.finished.connect(duplicate_spinner.before_hide)
         if simple:
             self.duplicate_check_invoker.connect(self._d_checker.checkSimple)
-        self.duplicate_check_invoker.emit(self.default_manga_view.gallery_model)
+        self.duplicate_check_invoker.emit(self.default_manga_view.item_model)
 
     def excepthook(self, ex_type, ex, tb):
         w = misc.AppDialog(self, misc.AppDialog.MESSAGE)

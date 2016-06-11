@@ -29,7 +29,8 @@ from PyQt5.QtCore import (Qt, QAbstractListModel, QModelIndex, QVariant,
                           QTimer, QPointF, QSortFilterProxyModel,
                           QAbstractTableModel, QItemSelectionModel,
                           QPoint, QRectF, QDate, QDateTime, QObject,
-                          QEvent, QSizeF, QMimeData, QByteArray, QTime)
+                          QEvent, QSizeF, QMimeData, QByteArray, QTime,
+                          QEasingCurve)
 from PyQt5.QtGui import (QPixmap, QBrush, QColor, QPainter, 
                          QPen, QTextDocument,
                          QMouseEvent, QHelpEvent,
@@ -1552,7 +1553,7 @@ class GalleryDelegate(QStyledItemDelegate):
     def sizeHint(self, option, index):
         return QSize(self.W, self.H)
 
-class GridView(QListView):
+class BaseView(QListView):
     """
     Grid View
     """
@@ -1563,15 +1564,11 @@ class GridView(QListView):
         super().__init__(parent)
         self.parent_widget = parent
         self.view_type = v_type
-        self.setViewMode(self.IconMode)
-        self.setResizeMode(self.Adjust)
-        self.setWrapping(True)
         # all items have the same size (perfomance)
         self.setUniformItemSizes(True)
         # improve scrolling
         self.setEditTriggers(self.NoEditTriggers)
         self.setAutoScroll(True)
-        self.setVerticalScrollMode(self.ScrollPerPixel)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setLayoutMode(self.Batched)
         self.setMouseTracking(True)
@@ -1581,7 +1578,6 @@ class GridView(QListView):
         #self.setDropIndicatorShown(True)
         self.setDragDropMode(self.DragDrop)
         self.sort_model = filter_model if filter_model else SortFilterModel(self)
-        self.setSpacing(app_constants.GRID_SPACING)
         self.setSelectionBehavior(self.SelectItems)
         self.setSelectionMode(self.ExtendedSelection)
         self.gallery_model = model
@@ -1750,69 +1746,18 @@ class GridView(QListView):
         super().updateGeometries()
         self.verticalScrollBar().setSingleStep(app_constants.SCROLL_SPEED)
 
-class MangaTableView(QTableView):
-    STATUS_BAR_MSG = pyqtSignal(str)
+class GridView(BaseView):
+    def __init__(self, model, v_type, filter_model=None, parent=None):
+        super().__init__(model, v_type, filter_model, parent)
+        self.setViewMode(self.IconMode)
+        self.setWrapping(True)
+        self.setVerticalScrollMode(self.ScrollPerPixel)
+        self.setSpacing(app_constants.GRID_SPACING)
 
-    def __init__(self, v_type, parent=None):
-        super().__init__(parent)
-        self.view_type = v_type
-
-        # options
-        self.parent_widget = parent
-        self.setAcceptDrops(True)
-        self.setDragEnabled(True)
-        self.viewport().setAcceptDrops(True)
-        self.setDropIndicatorShown(True)
-        self.setDragDropMode(self.DragDrop)
-        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-        self.setSelectionBehavior(self.SelectRows)
-        self.setSelectionMode(self.ExtendedSelection)
-        self.setShowGrid(True)
-        self.setSortingEnabled(True)
-        h_header = self.horizontalHeader()
-        h_header.setSortIndicatorShown(True)
-        v_header = self.verticalHeader()
-        v_header.sectionResizeMode(QHeaderView.Fixed)
-        v_header.setDefaultSectionSize(24)
-        v_header.hide()
-        palette = self.palette()
-        palette.setColor(palette.Highlight, QColor(88, 88, 88, 70))
-        palette.setColor(palette.HighlightedText, QColor('black'))
-        self.setPalette(palette)
-        self.setIconSize(QSize(0,0))
-        self.doubleClicked.connect(lambda idx: idx.data(Qt.UserRole + 1).chapters[0].open())
-        self.grabGesture(Qt.SwipeGesture)
-        self.k_scroller = QScroller.scroller(self)
-
-    # display tooltip only for elided text
-    #def viewportEvent(self, event):
-    #	if event.type() == QEvent.ToolTip:
-    #		h_event = QHelpEvent(event)
-    #		index = self.indexAt(h_event.pos())
-    #		if index.isValid():
-    #			size_hint = self.itemDelegate(index).sizeHint(self.viewOptions(),
-    #											  index)
-    #			rect = QRect(0, 0, size_hint.width(), size_hint.height())
-    #			rect_visual = self.visualRect(index)
-    #			if rect.width() <= rect_visual.width():
-    #				QToolTip.hideText()
-    #				return True
-    #	return super().viewportEvent(event)
-
-    def keyPressEvent(self, event):
-        if event.key() == Qt.Key_Return:
-            s_idx = self.selectionModel().selectedRows()
-            if s_idx:
-                for idx in s_idx:
-                    self.doubleClicked.emit(idx)
-        elif event.modifiers() == Qt.ShiftModifier and event.key() == Qt.Key_Delete:
-            CommonView.remove_selected(self, True)
-        elif event.key() == Qt.Key_Delete:
-            CommonView.remove_selected(self)
-        return super().keyPressEvent(event)
-
-    def contextMenuEvent(self, event):
-        CommonView.contextMenuEvent(self, event)
+class ListView(BaseView):
+    def __init__(self, model, v_type, filter_model=None, parent=None):
+        super().__init__(model, v_type, filter_model, parent)
+        self.setViewMode(self.ListMode)
 
 class CommonView:
     """
@@ -1974,6 +1919,11 @@ class CommonView:
         dialog = gallerydialog.GalleryDialog(app_inst, gallery)
         dialog.show()
 
+class GalleryWindow(QFrame):
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
 class PathView(QWidget):
 
     HEIGHT = 22
@@ -2001,8 +1951,37 @@ class PathView(QWidget):
         top_layout.addLayout(self.path_layout, 1)
         self.path_layout.setAlignment(Qt.AlignLeft)
         main_layout.addLayout(top_layout)
+
+        self.gallery_window = GalleryWindow(self)
+        self.gallery_window.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        main_layout.addWidget(self.gallery_window)
+        main_layout.addWidget(misc.Line("h"))
+
+        self.g_window_slide = misc.create_animation(self.gallery_window, "maximumHeight")
+        self.g_window_slide.setEasingCurve(QEasingCurve.InOutQuad)
+        self.g_window_slide.setStartValue(0)
+        self.g_window_slide.setEndValue(app_constants.THUMB_H_SIZE+app_constants.GRIDBOX_LBL_H//2)
+
         main_layout.addWidget(view)
         self.install_to_view(view)
+        self.gallery_window.hide()
+
+    def show_g_window(self):
+        if not self.gallery_window.isVisible():
+            self.g_window_slide.setDirection(self.g_window_slide.Forward)
+            self.gallery_window.show()
+            try:
+                self.g_window_slide.finished.disconnect()
+            except TypeError:
+                pass
+            self.g_window_slide.start()
+
+    def hide_g_window(self):
+        if self.gallery_window.isVisible():
+            self.g_window_slide.setDirection(self.g_window_slide.Backward)
+            self.g_window_slide.finished.connect(self.gallery_window.hide)
+            self.g_window_slide.start()
+
 
     def add_arrow(self):
         arrow = QPushButton(app_constants.ARROW_RIGHT_ICON, "")
@@ -2024,7 +2003,7 @@ class PathView(QWidget):
         
         self.path_layout.insertWidget(0, path_bar, Qt.AlignLeft)
 
-    def update_path(self, idx):
+    def update_path(self, idx, toogle_window=True):
 
         if idx.isValid() and idx.data(app_constants.QITEM_ROLE).type() == CollectionItem.type():
             dlg = GalleryDelegate(self.view.parent_widget, self.view)
@@ -2033,6 +2012,11 @@ class PathView(QWidget):
         else:
             self.view.setItemDelegate(QStyledItemDelegate(self.view))
         
+        if idx.isValid() and idx.data(app_constants.QITEM_ROLE).type() in (GalleryItem.type(), PageItem.type()):
+            self.show_g_window()
+            # TODO: apply gallery to gallery_window here
+        else:
+            self.hide_g_window()
 
         if not (idx.isValid() and not idx.child(0,0).isValid()):
             self.view.setRootIndex(idx)
@@ -2057,8 +2041,8 @@ class ViewManager:
     
     @enum.unique
     class View(enum.Enum):
-        List = 1
-        Table = 2
+        Grid = 1
+        List = 2
 
     def __init__(self, v_type, parent, allow_sidebarwidget=False):
         self.allow_sidebarwidget = allow_sidebarwidget
@@ -2073,16 +2057,17 @@ class ViewManager:
         elif v_type == app_constants.ViewType.Duplicate:
             model = GalleryModel([], parent)
 
-        #list view
-        self.list_view = GridView(self.create_model(), v_type, parent=parent)
+        self.item_model = self.create_model()
+        self.grid_view = GridView(self.item_model, v_type, parent=parent)
+        self.list_view = ListView(self.item_model, v_type, parent=parent)
         #self.list_view.sort_model.setup_search()
-        self.sort_model = self.list_view.sort_model
-        self.gallery_model = self.list_view.gallery_model
+        self.sort_model = self.grid_view.sort_model
 
         self.view_layout = QStackedLayout()
-        self.m_l_view_index = self.view_layout.addWidget(PathView(self.list_view))
+        self.grid_view_index = self.view_layout.addWidget(PathView(self.grid_view))
+        self.list_view_index = self.view_layout.addWidget(PathView(self.list_view))
 
-        self.current_view = self.View.List
+        self.current_view = self.View.Grid
         self.gallery_views.append(self)
 
         if v_type in (app_constants.ViewType.Default, app_constants.ViewType.Addition):
@@ -2126,13 +2111,13 @@ class ViewManager:
 
     def _delegate_delete(self):
         if self._delete_proxy_model:
-            gs = [g for g in self.gallery_model._gallery_to_remove]
+            gs = [g for g in self.item_model._gallery_to_remove]
             self._delete_proxy_model._gallery_to_remove = gs
             self._delete_proxy_model.removeRows(self._delete_proxy_model.rowCount() - len(gs), len(gs))
 
     def set_delete_proxy(self, other_model):
         self._delete_proxy_model = other_model
-        self.gallery_model.rowsAboutToBeRemoved.connect(self._delegate_delete, Qt.DirectConnection)
+        self.item_model.rowsAboutToBeRemoved.connect(self._delegate_delete, Qt.DirectConnection)
 
     def add_gallery(self, gallery, db=False, record_time=False):
         if isinstance(gallery, (list, tuple)):
@@ -2146,7 +2131,7 @@ class ViewManager:
                     if not g.profile:
                         Executors.generate_thumbnail(g, on_method=g.set_profile)
             rows = len(gallery)
-            self.list_view.gallery_model._gallery_to_add.extend(gallery)
+            self.grid_view.gallery_model._gallery_to_add.extend(gallery)
             if record_time:
                 g.qtime = QTime.currentTime()
         else:
@@ -2154,7 +2139,7 @@ class ViewManager:
             if self.view_type != app_constants.ViewType.Duplicate:
                 gallery.state = app_constants.GalleryState.New
             rows = 1
-            self.list_view.gallery_model._gallery_to_add.append(gallery)
+            self.grid_view.gallery_model._gallery_to_add.append(gallery)
             if record_time:
                 g.qtime = QTime.currentTime()
             if db:
@@ -2162,7 +2147,7 @@ class ViewManager:
             else:
                 if not gallery.profile:
                     Executors.generate_thumbnail(gallery, on_method=gallery.set_profile)
-        self.list_view.gallery_model.insertRows(self.list_view.gallery_model.rowCount(), rows)
+        self.grid_view.gallery_model.insertRows(self.grid_view.gallery_model.rowCount(), rows)
         
     def replace_gallery(self, list_of_gallery, db_optimize=True):
         "Replaces the view and DB with given list of gallery, at given position"
@@ -2195,21 +2180,23 @@ class ViewManager:
 
     def changeTo(self, idx):
         "change view"
+        r_itemidx = self.view_layout.currentWidget().view.rootIndex()
         self.view_layout.setCurrentIndex(idx)
-        if idx == self.m_l_view_index:
+        if idx == self.grid_view_index:
+            self.current_view = self.View.Grid
+        elif idx == self.list_view_index:
             self.current_view = self.View.List
-        elif idx == self.m_t_view_index:
-            self.current_view = self.View.Table
+        self.view_layout.currentWidget().update_path(r_itemidx)
 
     def get_current_view(self):
-        if self.current_view == self.View.List:
-            return self.list_view
+        if self.current_view == self.View.Grid:
+            return self.grid_view
         else:
-            return self.table_view
+            return self.list_view
 
     def fav_is_current(self):
-        if self.table_view.sort_model.current_view == \
-            self.table_view.sort_model.CAT_VIEW:
+        if self.list_view.sort_model.current_view == \
+            self.list_view.sort_model.CAT_VIEW:
             return False
         return True
 

@@ -460,7 +460,7 @@ class GalleryLists(QListWidget):
         new_item = misc.CustomListItem()
         self._in_proccess_item = new_item
         new_item.setFlags(new_item.flags() | Qt.ItemIsEditable)
-        new_item.setIcon(QIcon(app_constants.LIST_PATH))
+        new_item.setIcon(app_constants.G_LISTS_ICON)
         self.insertItem(0, new_item)
         if name:
             new_item.setText(name)

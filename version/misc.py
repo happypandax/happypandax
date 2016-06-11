@@ -257,7 +257,7 @@ class SortMenu(QMenu):
 
     def set_current_sort(self):
         def check_key(act, key):
-            if self.parent_widget.current_manga_view.list_view.current_sort == key:
+            if self.parent_widget.current_manga_view.grid_view.current_sort == key:
                 act.setChecked(True)
 
         for act in self.sort_actions.actions():

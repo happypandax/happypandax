@@ -114,6 +114,7 @@ def start(test=False):
     application.setApplicationDisplayName('Happypanda')
     application.setApplicationVersion('v{}'.format(app_constants.vs))
     application.setAttribute(Qt.AA_UseHighDpiPixmaps)
+    application.font().setStyleStrategy(application.font().PreferAntialias)
 
     log_i('Starting Happypanda...'.format(app_constants.vs))
     app_constants.load_icons()
