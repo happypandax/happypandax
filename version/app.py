@@ -208,6 +208,8 @@ class AppWindow(QMainWindow):
         self.manga_list_view.STATUS_BAR_MSG.connect(self.stat_temp_msg)
 
         self.sidebar_list = misc_db.SideBarWidget(self)
+
+        self.tab_manager = misc_db.TabManager(self.sidebar_list, self)
         self._main_layout.addWidget(self.sidebar_list)
         self.current_manga_view = self.default_manga_view
 
@@ -490,26 +492,14 @@ class AppWindow(QMainWindow):
                                                    #defined?
         self.toolbar.setMovable(False)
         self.toolbar.setFloatable(False)
-        #self.toolbar.setIconSize(QSize(20,20))
         self.toolbar.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         self.toolbar.setIconSize(QSize(20,20))
 
         spacer_start = QWidget() # aligns the first actions properly
-        spacer_start.setFixedSize(QSize(10, 1))
+        spacer_start.setFixedSize(QSize(5, 1))
         self.toolbar.addWidget(spacer_start)
 
-        def switch_view(fav):
-            if fav:
-                self.default_manga_view.get_current_view().sort_model.fav_view()
-            else:
-                self.default_manga_view.get_current_view().sort_model.catalog_view()
-
-        self.tab_manager = misc_db.ToolbarTabManager(self.toolbar, self)
-        self.tab_manager.favorite_btn.clicked.connect(lambda: switch_view(True))
-        self.tab_manager.library_btn.click()
-        self.tab_manager.library_btn.clicked.connect(lambda: switch_view(False))
-
-        self.addition_tab = self.tab_manager.addTab("Inbox", app_constants.ViewType.Addition)
+        self.addition_tab = self.tab_manager.addTab("Inbox", app_constants.ViewType.Addition, icon=app_constants.INBOX_ICON, left_align=True)
 
         gallery_k = QKeySequence('Alt+G')
         new_gallery_k = QKeySequence('Ctrl+N')
@@ -522,12 +512,14 @@ class AppWindow(QMainWindow):
 
         gallery_menu = QMenu()
         gallery_action = QToolButton()
+        gallery_action.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         gallery_action.setShortcut(gallery_k)
-        gallery_action.setText('Gallery ')
+        gallery_action.setIcon(app_constants.GALLERY_ICON)
+        gallery_action.setText('Gallery')
         gallery_action.setPopupMode(QToolButton.InstantPopup)
         gallery_action.setToolTip('Contains various gallery related features')
         gallery_action.setMenu(gallery_menu)
-        add_gallery_icon = QIcon(app_constants.PLUS_PATH)
+        add_gallery_icon = app_constants.PLUS_ICON
         gallery_action_add = QAction(add_gallery_icon, "Add single gallery...", self)
         gallery_action_add.triggered.connect(lambda: gallery.CommonView.spawn_dialog(self))
         gallery_action_add.setToolTip('Add a single gallery thoroughly')
@@ -561,29 +553,38 @@ class AppWindow(QMainWindow):
 
         tools_k = QKeySequence('Alt+T')
         misc_action = QToolButton()
-        misc_action.setText('Tools ')
+        misc_action.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        misc_action.setIcon(app_constants.DOTS_ICON)
+        misc_action.setText('Utilities')
         misc_action.setShortcut(tools_k)
         misc_action_menu = QMenu()
         misc_action.setMenu(misc_action_menu)
         misc_action.setPopupMode(QToolButton.InstantPopup)
         misc_action.setToolTip("Contains misc. features")
-        gallery_downloader = QAction("Gallery Downloader", misc_action_menu)
-        gallery_downloader.triggered.connect(self.download_window.show)
-        gallery_downloader.setShortcut(gallery_downloader_k)
-        misc_action_menu.addAction(gallery_downloader)
         duplicate_check_simple = QAction("Simple Duplicate Finder", misc_action_menu)
         duplicate_check_simple.triggered.connect(lambda: self.duplicate_check()) # triggered emits False
         misc_action_menu.addAction(duplicate_check_simple)
         self.toolbar.addWidget(misc_action)
+        self.toolbar.addSeparator()
+
+        gallery_downloader = QToolButton()
+        gallery_downloader.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        gallery_downloader.setIcon(app_constants.DOWNLOADER_ICON)
+        gallery_downloader.setText("Downloader")
+        gallery_downloader.clicked.connect(self.download_window.show)
+        gallery_downloader.setShortcut(gallery_downloader_k)
+        self.toolbar.addWidget(gallery_downloader)
+
 
         # debug specfic code
         if app_constants.DEBUG:
             def debug_func():
-                print(self.current_manga_view.gallery_model.rowCount())
-                print(self.current_manga_view.sort_model.rowCount())
+                view = self.current_manga_view.get_current_view()
+                print(view.isIndexHidden(view.currentIndex()))
         
             debug_btn = QToolButton()
             debug_btn.setText("DEBUG BUTTON")
+            self.toolbar.addSeparator()
             self.toolbar.addWidget(debug_btn)
             debug_btn.clicked.connect(debug_func)
 
@@ -624,11 +625,12 @@ class AppWindow(QMainWindow):
         spacer_mid2.setFixedSize(QSize(5, 1))
         self.toolbar.addWidget(spacer_mid2)
 
-
-        self.search_bar = misc.LineEdit()
-        search_options = self.search_bar.addAction(QIcon(app_constants.SEARCH_OPTIONS_PATH), QLineEdit.TrailingPosition)
+        search_options = QToolButton()
+        search_options.setIconSize(QSize(15,15))
+        search_options.setPopupMode(QToolButton.InstantPopup)
+        self.toolbar.addWidget(search_options)
+        search_options.setIcon(app_constants.SEARCH_ICON)
         search_options_menu = QMenu(self)
-        search_options.triggered.connect(lambda: search_options_menu.popup(QCursor.pos()))
         search_options.setMenu(search_options_menu)
         case_search_option = search_options_menu.addAction('Case Sensitive')
         case_search_option.setCheckable(True)
@@ -640,7 +642,7 @@ class AppWindow(QMainWindow):
             settings.save()
 
         case_search_option.toggled.connect(set_search_case)
-
+        search_options_menu.addSeparator()
         strict_search_option = search_options_menu.addAction('Match whole terms')
         strict_search_option.setCheckable(True)
         strict_search_option.setChecked(app_constants.GALLERY_SEARCH_STRICT)
@@ -669,6 +671,18 @@ class AppWindow(QMainWindow):
             settings.save()
 
         regex_search_option.toggled.connect(set_search_regex)
+
+        self.search_bar = misc.LineEdit()
+        remove_txt = self.search_bar.addAction(QIcon(app_constants.CROSS_ICON), QLineEdit.LeadingPosition)
+        remove_txt.setVisible(False)
+        def clear_txt():
+            self.search_bar.setText("")
+            if app_constants.SEARCH_ON_ENTER:
+                self.search_bar.returnPressed.emit()
+        remove_txt.triggered.connect(clear_txt)
+        def hide_cross(txt):
+            remove_txt.setVisible(bool(txt))
+        self.search_bar.textChanged.connect(hide_cross)
 
         self.search_bar.setObjectName('search_bar')
         self.search_timer = QTimer(self)

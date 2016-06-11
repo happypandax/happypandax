@@ -28,6 +28,7 @@ import json
 import send2trash
 import functools
 import time
+import misaka
 
 from PyQt5.QtGui import QImage, qRgba
 from PIL import Image,ImageChops
@@ -51,6 +52,7 @@ rarfile.UNRAR_TOOL = app_constants.unrar_tool_path
 if not app_constants.unrar_tool_path:
 	FILE_FILTER = '*.zip *.cbz'
 	ARCHIVE_FILES = ('.zip', '.cbz')
+
 
 class GMetafile:
 	def __init__(self, path=None, archive=''):
@@ -1240,6 +1242,14 @@ def make_chapters(gallery_object):
 				arch.close()
 
 	metafile.apply_gallery(gallery_object)
+
+def md_to_html(md_path):
+    "Pass a path to markdown file"
+    md_txt = ""
+    with open(md_path, 'r', encoding='utf-8') as md:
+        md_txt = md.read()
+
+    return misaka.html(md_txt, extensions=("table", "strikethrough", "quote", "highlight", "underline", "fenced-code")) 
 
 def timeit(func):
 	@functools.wraps(func)

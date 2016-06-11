@@ -18,7 +18,7 @@ from PyQt5.QtWidgets import (QTreeWidget, QTreeWidgetItem, QWidget,
                              QListWidget, QHBoxLayout, QPushButton, QStackedLayout,
                              QFrame, QSizePolicy, QListView, QFormLayout, QLineEdit,
                              QLabel, QStyledItemDelegate, QStyleOptionViewItem,
-                             QCheckBox, QButtonGroup)
+                             QCheckBox, QButtonGroup, QSpacerItem)
 from PyQt5.QtCore import (Qt, QTimer, pyqtSignal, QRect, QSize, QEasingCurve,
                           QSortFilterProxyModel, QIdentityProxyModel, QModelIndex,
                           QPointF, QRectF, QObject)
@@ -38,25 +38,51 @@ log_w = log.warning
 log_e = log.error
 log_c = log.critical
 
-class ToolbarTabManager(QObject):
+class TabButton(QPushButton):
+    close_tab = pyqtSignal(object)
+
+    def __init__(self, txt, parent=None):
+        super().__init__(txt, parent)
+
+class TabManager(QObject):
     ""
-    def __init__(self, toolbar, parent=None):
+    def __init__(self, sidebar, parent=None):
         super().__init__(parent)
         self.parent_widget = parent
-        self.toolbar = toolbar
-        self._actions = []
+        self.sidebar = sidebar
         self._last_selected = None
-        self.idx_widget = self.toolbar.addWidget(QWidget(self.toolbar))
-        self.idx_widget.setVisible(False)
-        self.library_btn = None
-        self.favorite_btn = self.addTab("Favorites", delegate_paint=False)
-        self.library_btn = self.addTab("Library", delegate_paint=False)
-        self.toolbar.addSeparator()
-        self.idx_widget = self.toolbar.addWidget(QWidget(self.toolbar))
-        self.idx_widget.setVisible(False)
-        self.toolbar.addSeparator()
+
+        self.agroup = QButtonGroup(self)
+        self.agroup.setExclusive(True)
+
+        self.sidebar.main_layout.insertSpacing(0, 50)
+        self.sidebar.main_layout.insertSpacing(0, 5)
+
+        self.library_btn = QPushButton(app_constants.GRID_ICON, "Library")
+        self.library_btn.view = self.parent_widget.default_manga_view
+        self.library_btn.setStyleSheet("text-align:left")
+        self.library_btn.setCheckable(True)
+        self.agroup.addButton(self.library_btn)
+        self.sidebar.main_layout.insertWidget(0, self.library_btn)
+        self.sidebar.main_layout.insertSpacing(0, 5)
+
+        self.favorite_btn = QPushButton(app_constants.STAR_ICON, "Favorites")
+        self.favorite_btn.setStyleSheet("text-align:left")
+        self.favorite_btn.setCheckable(True)
+        self.agroup.addButton(self.favorite_btn)
+        self.sidebar.main_layout.insertWidget(0, self.favorite_btn)
+
+        def switch_view(fav):
+            if fav:
+                self.default_manga_view.get_current_view().sort_model.fav_view()
+            else:
+                self.default_manga_view.get_current_view().sort_model.catalog_view()
+        #self.favorite_btn.clicked.connect(lambda: switch_view(True))
+        #self.library_btn.click()
+        #self.library_btn.clicked.connect(lambda: switch_view(False))
 
     def _manage_selected(self, b):
+        return
         if self._last_selected == b:
             return
         if self._last_selected:
@@ -71,34 +97,37 @@ class ToolbarTabManager(QObject):
         b.view.list_view.sort_model.rowsRemoved.connect(self.parent_widget.stat_row_info)
         b.view.show()
 
-    def addTab(self, name, view_type=app_constants.ViewType.Default, delegate_paint=True, allow_sidebarwidget=False):
-        if self.toolbar:
-            t = misc.ToolbarButton(self.toolbar, name)
-            t.select.connect(self._manage_selected)
+    def addTab(self, name, view_type=app_constants.ViewType.Default, delegate_paint=True, allow_sidebarwidget=False, icon=None, left_align=False):
+        if self.sidebar:
+            t = TabButton(name)
+            t.setCheckable(True)
+            if icon:
+                t.setIcon(icon)
+            if left_align:
+                t.setStyleSheet("text-align:left")
+            self.agroup.addButton(t)
+            t.clicked.connect(self._manage_selected)
             t.close_tab.connect(self.removeTab)
-            if self.library_btn:
-                t.view = gallery.ViewManager(view_type, self.parent_widget, allow_sidebarwidget)
-                t.view.hide()
-                t.close_tab.connect(lambda:self.library_btn.click())
-                if not allow_sidebarwidget:
-                    t.clicked.connect(self.parent_widget.sidebar_list.arrow_handle.click)
-            else:
-                t.view = self.parent_widget.default_manga_view
+            t.view = gallery.ViewManager(view_type, self.parent_widget, allow_sidebarwidget)
+            t.view.hide()
+            t.close_tab.connect(lambda:self.library_btn.click())
+                #if not allow_sidebarwidget:
+                #    t.clicked.connect(self.parent_widget.sidebar_list.arrow_handle.click)
             #if delegate_paint:
             #    t.view.list_view.grid_delegate._paint_level = 9000 # over nine thousand!!!
-            self._actions.append(self.toolbar.insertWidget(self.idx_widget, t))
+            self.sidebar.main_layout.insertWidget(4, t)
             return t
 
     def removeTab(self, button_or_index):
-        if self.toolbar:
+        if self.sidebar:
             if isinstance(button_or_index, int):
-                self.toolbar.removeAction(self._actions.pop(button_or_index))
+                self.sidebar.removeAction(self._actions.pop(button_or_index))
             else:
                 act_to_remove = None
                 for act in self._actions:
-                    w = self.toolbar.widgetForAction(act)
+                    w = self.sidebar.widgetForAction(act)
                     if w == button_or_index:
-                        self.toolbar.removeAction(act)
+                        self.sidebar.removeAction(act)
                         act_to_remove = act
                         break
                 if act_to_remove:
@@ -473,6 +502,7 @@ class SideBarWidget(QFrame):
     def __init__(self, parent):
         super().__init__(parent)
         self.setAcceptDrops(True)
+        self.setFixedWidth(200)
         self.parent_widget = parent
         self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Expanding)
         self.parent_widget
@@ -484,11 +514,11 @@ class SideBarWidget(QFrame):
         self.main_layout = QVBoxLayout(self._d_widget)
         self.main_layout.setSpacing(0)
         self.main_layout.setContentsMargins(0,0,0,0)
-        self.arrow_handle = misc.ArrowHandle(self)
-        self.arrow_handle.CLICKED.connect(self.slide)
+        #self.arrow_handle = misc.ArrowHandle(self)
+        #self.arrow_handle.CLICKED.connect(self.slide)
 
-        self._widget_layout.addWidget(self.arrow_handle)
-        self.setContentsMargins(0,0,-self.arrow_handle.width(),0)
+        #self._widget_layout.addWidget(self.arrow_handle)
+        #self.setContentsMargins(0,0,-self.arrow_handle.width(),0)
 
         self.show_all_galleries_btn = QPushButton("Show all galleries")
         self.show_all_galleries_btn.clicked.connect(lambda:parent.manga_list_view.sort_model.set_gallery_list())
@@ -501,13 +531,13 @@ class SideBarWidget(QFrame):
         # buttons
         bgroup = QButtonGroup(self)
         bgroup.setExclusive(True)
-        self.lists_btn = QPushButton("Lists")
+        self.lists_btn = QPushButton(app_constants.G_LISTS_ICON, "")
         self.lists_btn.setCheckable(True)
         bgroup.addButton(self.lists_btn)
-        self.artist_btn = QPushButton("Artists")
+        self.artist_btn = QPushButton(app_constants.ARTISTS_ICON, "")
         self.artist_btn.setCheckable(True)
         bgroup.addButton(self.artist_btn)
-        self.ns_tags_btn = QPushButton("NS && Tags")
+        self.ns_tags_btn = QPushButton(app_constants.NSTAGS_ICON, "")
         self.ns_tags_btn.setCheckable(True)
         bgroup.addButton(self.ns_tags_btn)
         self.lists_btn.setChecked(True)
@@ -525,7 +555,7 @@ class SideBarWidget(QFrame):
         gallery_lists_dummy = QWidget(self)
         self.lists = GalleryLists(self)
         create_new_list_btn = QPushButton()
-        create_new_list_btn.setIcon(QIcon(app_constants.PLUS_PATH))
+        create_new_list_btn.setIcon(app_constants.PLUS_ICON)
         create_new_list_btn.setIconSize(QSize(15, 15))
         create_new_list_btn.clicked.connect(lambda: self.lists.create_new_list())
         create_new_list_btn.adjustSize()
@@ -563,48 +593,48 @@ class SideBarWidget(QFrame):
         ns_tags_index = self.stacked_layout.addWidget(self.tags_tree)
         self.ns_tags_btn.clicked.connect(lambda:self.stacked_layout.setCurrentIndex(ns_tags_index))
 
-        self.slide_animation = misc.create_animation(self, "maximumSize")
-        self.slide_animation.stateChanged.connect(self._slide_hide)
-        self.slide_animation.setEasingCurve(QEasingCurve.InOutQuad)
+    #    self.slide_animation = misc.create_animation(self, "maximumSize")
+    #    self.slide_animation.stateChanged.connect(self._slide_hide)
+    #    self.slide_animation.setEasingCurve(QEasingCurve.InOutQuad)
 
-    def _slide_hide(self, state):
-        size = self.sizeHint()
-        if state == self.slide_animation.Stopped:
-            if self.arrow_handle.current_arrow == self.arrow_handle.OUT:
-                self._d_widget.hide()
-        elif self.slide_animation.Running:
-            if self.arrow_handle.current_arrow == self.arrow_handle.IN:
-                if not self.parent_widget.current_manga_view.allow_sidebarwidget:
-                    self.arrow_handle.current_arrow = self.arrow_handle.OUT
-                    self.arrow_handle.update()
-                else:
-                    self._d_widget.show()
+    #def _slide_hide(self, state):
+    #    size = self.sizeHint()
+    #    if state == self.slide_animation.Stopped:
+    #        if self.arrow_handle.current_arrow == self.arrow_handle.OUT:
+    #            self._d_widget.hide()
+    #    elif self.slide_animation.Running:
+    #        if self.arrow_handle.current_arrow == self.arrow_handle.IN:
+    #            if not self.parent_widget.current_manga_view.allow_sidebarwidget:
+    #                self.arrow_handle.current_arrow = self.arrow_handle.OUT
+    #                self.arrow_handle.update()
+    #            else:
+    #                self._d_widget.show()
 
 
-    def slide(self, state):
-        self.slide_animation.setEndValue(QSize(self.arrow_handle.width() * 2, self.height()))
+    #def slide(self, state):
+    #    self.slide_animation.setEndValue(QSize(self.arrow_handle.width() * 2, self.height()))
 
-        if state:
-            self.slide_animation.setDirection(self.slide_animation.Forward)
-            self.slide_animation.start()
-        else:
-            self.slide_animation.setDirection(self.slide_animation.Backward)
-            self.slide_animation.start()
+    #    if state:
+    #        self.slide_animation.setDirection(self.slide_animation.Forward)
+    #        self.slide_animation.start()
+    #    else:
+    #        self.slide_animation.setDirection(self.slide_animation.Backward)
+    #        self.slide_animation.start()
 
     def showEvent(self, event):
         super().showEvent(event)
-        if not app_constants.SHOW_SIDEBAR_WIDGET:
-            self.arrow_handle.click()
+        #if not app_constants.SHOW_SIDEBAR_WIDGET:
+        #    self.arrow_handle.click()
 
-    def _init_size(self, event=None):
-        h = self.parent_widget.height()
-        self._max_width = 200
-        self.updateGeometry()
-        self.setMaximumWidth(self._max_width)
-        self.slide_animation.setStartValue(QSize(self._max_width, h))
+    #def _init_size(self, event=None):
+    #    h = self.parent_widget.height()
+    #    self._max_width = 200
+    #    self.updateGeometry()
+    #    self.setMaximumWidth(self._max_width)
+    #    self.slide_animation.setStartValue(QSize(self._max_width, h))
 
     def resizeEvent(self, event):
-        self._init_size(event)
+        #self._init_size(event)
         return super().resizeEvent(event)
 
 

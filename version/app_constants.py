@@ -13,9 +13,12 @@
 """Contains constants to be used by several modules"""
 
 import os, sys, enum
+import qtawesome as qta
+from PyQt5.QtCore import Qt
+
+
 import settings
 import db_constants
-from PyQt5.QtCore import Qt
 
 # Version number
 vs  = '0.30'
@@ -128,6 +131,39 @@ GENERAL_THREAD = None
 WHEEL_SCROLL_EFFECT = 10
 DOWNLOAD_MANAGER = None
 
+# ICONS
+
+def load_icons():
+    global G_LISTS_ICON
+    global ARTISTS_ICON
+    global NSTAGS_ICON
+    global PLUS_ICON
+    global HOME_ICON
+    global ARROW_RIGHT_ICON
+    global STAR_ICON
+    global GRID_ICON
+    global INBOX_ICON
+    global SEARCH_ICON
+    global CROSS_ICON
+    global DOWNLOADER_ICON
+    global GALLERY_ICON
+    global DOTS_ICON
+
+    G_LISTS_ICON = qta.icon("fa.th-list", color="white")
+    ARTISTS_ICON = qta.icon("fa.users", color="white")
+    NSTAGS_ICON = qta.icon("fa.sitemap", color="white")
+    PLUS_ICON = qta.icon("fa.plus", color="white")
+    HOME_ICON = qta.icon("fa.home", color="white")
+    ARROW_RIGHT_ICON = qta.icon("fa.angle-double-right", color="white")
+    STAR_ICON = qta.icon("fa.star", color="white")
+    GRID_ICON = qta.icon("fa.th", color="white")
+    INBOX_ICON = qta.icon("fa.inbox", color="white")
+    SEARCH_ICON = qta.icon("fa.search", color="white")
+    CROSS_ICON = qta.icon("fa.times", color="black")
+    DOWNLOADER_ICON = qta.icon("fa.tasks", color="white")
+    GALLERY_ICON = qta.icon("fa.th-large", color="white")
+    DOTS_ICON = qta.icon("fa.ellipsis-h", color="white")
+
 # image paths
 SAMPLE_PATH = os.path.join(static_dir, "sample.png")
 SORT_PATH = os.path.join(static_dir, "sort.png")
@@ -135,16 +171,11 @@ GALLERY_ICO_PATH = os.path.join(static_dir, "gallery_ico.ico")
 GALLERY_DEF_ICO_PATH = os.path.join(static_dir, "gallery_def_ico.ico")
 GALLERY_EXT_ICO_PATH = os.path.join(static_dir, "gallery_ext_ico.ico")
 APP_ICO_PATH = os.path.join(static_dir, "happypanda.ico")
-STAR_BTN_PATH = os.path.join(static_dir, "btn_star.png")
-STAR_PATH = os.path.join(static_dir, "star.png")
-STAR_SMALL_PATH = os.path.join(static_dir, "star_small.png")
-PLUS_PATH = os.path.join(static_dir, "plus.png")
 HOME_BTN_PATH = os.path.join(static_dir, "home.png")
 SETTINGS_PATH = os.path.join(static_dir, "settings.png")
 GRID_PATH = os.path.join(static_dir, "grid.png")
 LIST_PATH = os.path.join(static_dir, "list.png")
 NO_IMAGE_PATH = os.path.join(static_dir, "default.jpg")
-SEARCH_OPTIONS_PATH = os.path.join(static_dir, "search_options.png")
 typicons_root = os.path.join(static_dir, "typicons")
 GLIST_PATH = os.path.join(typicons_root, "media-stop-outline.svg")
 GARTIST_PATH = os.path.join(typicons_root, "user-outline.svg")

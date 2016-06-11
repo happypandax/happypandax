@@ -803,9 +803,10 @@ class ViewMetaWindow(misc.ArrowWindow):
     def __init__(self, parent):
         super().__init__(parent)
         # gallery data stuff
-
         self.content_margin = 10
         self.current_item = None
+        self.current_idx = None
+        self.view = None
         self.g_widget = self.GalleryLayout(self, parent)
         self.hide_timer = QTimer()
         self.hide_timer.timeout.connect(self.delayed_hide)
@@ -837,11 +838,12 @@ class ViewMetaWindow(misc.ArrowWindow):
         return super().focusOutEvent(event)
 
     def _mouse_in_item(self):
-        mouse_p = QCursor.pos()
-        h = self.idx_top_l.x() <= mouse_p.x() <= self.idx_top_r.x()
-        v = self.idx_top_l.y() <= mouse_p.y() <= self.idx_btm_l.y()
-        if h and v:
-            return True
+        if self.current_idx and self.view:
+            mouse_p = QCursor.pos()
+            h = self.idx_top_l.x() <= mouse_p.x() <= self.idx_top_r.x()
+            v = self.idx_top_l.y() <= mouse_p.y() <= self.idx_btm_l.y()
+            if h and v:
+                return True
         return False
 
     def mouseMoveEvent(self, event):
@@ -856,7 +858,6 @@ class ViewMetaWindow(misc.ArrowWindow):
             self.hide_animation.start()
 
     def show_item(self, index, view):
-        print("showing")
         self.resize(app_constants.POPUP_WIDTH, app_constants.POPUP_HEIGHT)
         self.view = view
         desktop_w = QDesktopWidget().width()
@@ -1568,15 +1569,16 @@ class GridView(QListView):
         # all items have the same size (perfomance)
         self.setUniformItemSizes(True)
         # improve scrolling
+        self.setEditTriggers(self.NoEditTriggers)
         self.setAutoScroll(True)
         self.setVerticalScrollMode(self.ScrollPerPixel)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setLayoutMode(self.Batched)
         self.setMouseTracking(True)
         self.setAcceptDrops(True)
-        self.setDragEnabled(True)
+        #self.setDragEnabled(True)
         self.viewport().setAcceptDrops(True)
-        self.setDropIndicatorShown(True)
+        #self.setDropIndicatorShown(True)
         self.setDragDropMode(self.DragDrop)
         self.sort_model = filter_model if filter_model else SortFilterModel(self)
         self.setSpacing(app_constants.GRID_SPACING)
@@ -1588,9 +1590,9 @@ class GridView(QListView):
         self.setModel(self.gallery_model)
         self.setViewportMargins(0,0,0,0)
 
-        self.view_window = ViewMetaWindow(parent if parent else self)
-        self.view_window.arrow_size = (10,10,)
-        self.clicked.connect(lambda idx: self.view_window.show_item(idx, self))
+        self.item_window = ViewMetaWindow(parent if parent else self)
+        self.item_window.arrow_size = (10,10,)
+        self.clicked.connect(lambda idx: self.item_window.show_item(idx, self))
 
         self.current_sort = app_constants.CURRENT_SORT
         #if self.view_type == app_constants.ViewType.Duplicate:
@@ -1664,12 +1666,12 @@ class GridView(QListView):
         return idx_found
 
     def wheelEvent(self, event):
-        if self.view_window.isVisible():
-            self.view_window.hide_animation.start()
+        if self.item_window.isVisible():
+            self.item_window.hide_animation.start()
         return super().wheelEvent(event)
 
     def mouseMoveEvent(self, event):
-        self.view_window.mouseMoveEvent(event)
+        self.item_window.mouseMoveEvent(event)
         return super().mouseMoveEvent(event)
 
     def keyPressEvent(self, event):
@@ -1945,8 +1947,8 @@ class CommonView:
 
         if index.isValid():
             if grid_view:
-                if view_cls.view_window.isVisible():
-                    view_cls.view_window.hide_animation.start()
+                if view_cls.item_window.isVisible():
+                    view_cls.item_window.hide_animation.start()
                 view_cls.grid_delegate.CONTEXT_ON = True
             if selected:
                 menu = misc.GalleryMenu(view_cls, index, view_cls.sort_model,
@@ -1988,9 +1990,7 @@ class PathView(QWidget):
         persistent_layout = QHBoxLayout()
         top_layout.addLayout(persistent_layout)
 
-        self.idxs = {}
-
-        self.home_btn = QPushButton("Home")
+        self.home_btn = QPushButton(app_constants.HOME_ICON, "")
         self.home_btn.clicked.connect(lambda: self.update_path(QModelIndex()))
         self.home_btn.adjustSize()
         self.home_btn.setFixedSize(self.home_btn.width(), self.HEIGHT)
@@ -2005,7 +2005,9 @@ class PathView(QWidget):
         self.install_to_view(view)
 
     def add_arrow(self):
-        arrow = QLabel(">")
+        arrow = QPushButton(app_constants.ARROW_RIGHT_ICON, "")
+        arrow.setDisabled(True)
+        arrow.setStyleSheet("border:0; border-radius:0;")
         arrow.adjustSize()
         arrow.setFixedWidth(arrow.width())
         arrow.setFixedHeight(self.HEIGHT)
@@ -2034,8 +2036,9 @@ class PathView(QWidget):
 
         if not (idx.isValid() and not idx.child(0,0).isValid()):
             self.view.setRootIndex(idx)
+            if hasattr(self.view, "item_window"):
+                self.view.item_window.delayed_hide()
         misc.clearLayout(self.path_layout)
-        self.idxs.clear()
 
         parent = idx
         while parent.isValid():
@@ -2043,6 +2046,7 @@ class PathView(QWidget):
                 self.add_item(parent)
                 self.add_arrow()
             parent = parent.parent()
+
 
     def install_to_view(self, view):
         view.doubleClicked.connect(self.update_path)
