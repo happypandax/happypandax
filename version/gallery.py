@@ -105,6 +105,8 @@ class CollectionItem(BaseItem):
             return self._item
         elif role == app_constants.INFO_ROLE:
             return self._item.info
+        elif role == app_constants.RATING_ROLE:
+            return self._item.rating
 
         return super().data(role)
 
@@ -1125,7 +1127,7 @@ class DefaultDelegate(QStyledItemDelegate):
             painter.drawRoundedRect(option.rect, 5, 5)
             painter.restore()
 
-class GalleryDelegate(QStyledItemDelegate):
+class GridDelegate(QStyledItemDelegate):
     "A custom delegate for the model/view framework"
 
     POPUP = pyqtSignal()
@@ -1153,9 +1155,6 @@ class GalleryDelegate(QStyledItemDelegate):
             self.artist_font.setPixelSize(self.font_size)
         self.title_font_m = QFontMetrics(self.title_font)
         self.artist_font_m = QFontMetrics(self.artist_font)
-        t_h = self.title_font_m.height()
-        a_h = self.artist_font_m.height()
-        self.text_label_h = a_h + t_h * 2
         self.W = app_constants.THUMB_W_SIZE
         self.H = app_constants.THUMB_H_SIZE + app_constants.GRIDBOX_LBL_H
 
@@ -1179,86 +1178,95 @@ class GalleryDelegate(QStyledItemDelegate):
         y = rec[1]
         w = rec[2]
         h = rec[3]
-        if self._paint_level:
-            #if app_constants.HIGH_QUALITY_THUMBS:
-            #	painter.setRenderHint(QPainter.SmoothPixmapTransform)
-            painter.setRenderHint(QPainter.Antialiasing)
-            star_rating = StarRating(index.data(app_constants.RATING_ROLE))
-            title = index.data(app_constants.TITLE_ROLE)
-            artists = index.data(app_constants.ARTIST_ROLE)
-            artist = ""
-            for n, a in enumerate(artists, 1):
-                artist += a.name
-                if n != len(artists):
-                    artist += " & "
 
+        item = index.data(app_constants.ITEM_ROLE)
+        qitem = index.data(app_constants.QITEM_ROLE)
+        is_gallery = qitem.type() == GalleryItem.type()
+        is_page = qitem.type() == PageItem.type()
+        is_collection = qitem.type() == CollectionItem.type()
+
+        if self._paint_level:
+            painter.setRenderHint(QPainter.Antialiasing)
+
+
+            star_rating = StarRating(index.data(app_constants.RATING_ROLE))
             title_color = app_constants.GRID_VIEW_TITLE_COLOR
             artist_color = app_constants.GRID_VIEW_ARTIST_COLOR
             label_color = app_constants.GRID_VIEW_LABEL_COLOR
-            # Enable this to see the defining box
-            #painter.drawRect(option.rect)
-            # define font size
-            if 20 > len(title) > 15:
-                title_size = "font-size:{}pt;".format(self.font_size)
-            elif 30 > len(title) > 20:
-                title_size = "font-size:{}pt;".format(self.font_size - 1)
-            elif 40 > len(title) >= 30:
-                title_size = "font-size:{}pt;".format(self.font_size - 2)
-            elif 50 > len(title) >= 40:
-                title_size = "font-size:{}pt;".format(self.font_size - 3)
-            elif len(title) >= 50:
-                title_size = "font-size:{}pt;".format(self.font_size - 4)
-            else:
-                title_size = "font-size:{}pt;".format(self.font_size)
+            title = index.data(Qt.DisplayRole)
 
-            if 30 > len(artist) > 20:
-                artist_size = "font-size:{}pt;".format(self.font_size)
-            elif 40 > len(artist) >= 30:
-                artist_size = "font-size:{}pt;".format(self.font_size - 1)
-            elif len(artist) >= 40:
-                artist_size = "font-size:{}pt;".format(self.font_size - 2)
-            else:
-                artist_size = "font-size:{}pt;".format(self.font_size)
+            if is_gallery:
+                artists = index.data(app_constants.ARTIST_ROLE)
+                artist = ""
+                for n, a in enumerate(artists, 1):
+                    artist += a.name
+                    if n != len(artists):
+                        artist += " & "
 
-            text_area = QTextDocument()
-            text_area.setDefaultFont(option.font)
-            text_area.setHtml("""
-            <head>
-            <style>
-            #area
-            {{
-                display:flex;
-                width:{6}pt;
-                height:{7}pt;
-            }}
-            #title {{
-            position:absolute;
-            color: {4};
-            font-weight:bold;
-            {0}
-            }}
-            #artist {{
-            position:absolute;
-            color: {5};
-            top:20pt;
-            right:0;
-            {1}
-            }}
-            </style>
-            </head>
-            <body>
-            <div id="area">
-            <center>
-            <div id="title">{2}
-            </div>
-            <div id="artist">{3}
-            </div>
-            </div>
-            </center>
-            </body>
-            """.format(title_size, artist_size, title, artist, title_color, artist_color,
-                130 + app_constants.SIZE_FACTOR, 1 + app_constants.SIZE_FACTOR))
-            text_area.setTextWidth(w)
+                # Enable this to see the defining box
+                #painter.drawRect(option.rect)
+                # define font size
+                if 20 > len(title) > 15:
+                    title_size = "font-size:{}pt;".format(self.font_size)
+                elif 30 > len(title) > 20:
+                    title_size = "font-size:{}pt;".format(self.font_size - 1)
+                elif 40 > len(title) >= 30:
+                    title_size = "font-size:{}pt;".format(self.font_size - 2)
+                elif 50 > len(title) >= 40:
+                    title_size = "font-size:{}pt;".format(self.font_size - 3)
+                elif len(title) >= 50:
+                    title_size = "font-size:{}pt;".format(self.font_size - 4)
+                else:
+                    title_size = "font-size:{}pt;".format(self.font_size)
+
+                if 30 > len(artist) > 20:
+                    artist_size = "font-size:{}pt;".format(self.font_size)
+                elif 40 > len(artist) >= 30:
+                    artist_size = "font-size:{}pt;".format(self.font_size - 1)
+                elif len(artist) >= 40:
+                    artist_size = "font-size:{}pt;".format(self.font_size - 2)
+                else:
+                    artist_size = "font-size:{}pt;".format(self.font_size)
+
+                text_area = QTextDocument()
+                text_area.setDefaultFont(option.font)
+                text_area.setHtml("""
+                <head>
+                <style>
+                #area
+                {{
+                    display:flex;
+                    width:{6}pt;
+                    height:{7}pt;
+                }}
+                #title {{
+                position:absolute;
+                color: {4};
+                font-weight:bold;
+                {0}
+                }}
+                #artist {{
+                position:absolute;
+                color: {5};
+                top:20pt;
+                right:0;
+                {1}
+                }}
+                </style>
+                </head>
+                <body>
+                <div id="area">
+                <center>
+                <div id="title">{2}
+                </div>
+                <div id="artist">{3}
+                </div>
+                </div>
+                </center>
+                </body>
+                """.format(title_size, artist_size, title, artist, title_color, artist_color,
+                    130 + app_constants.SIZE_FACTOR, 1 + app_constants.SIZE_FACTOR))
+                text_area.setTextWidth(w)
 
             def center_img(width):
                 new_x = x
@@ -1319,87 +1327,90 @@ class GalleryDelegate(QStyledItemDelegate):
                         clip=clipping)
                 painter.restore()
 
-            # draw ribbon type
-            painter.save()
-            painter.setPen(Qt.NoPen)
-            if app_constants.DISPLAY_GALLERY_RIBBON:
-                type_ribbon_w = type_ribbon_l = w * 0.11
-                rib_top_1 = QPointF(x + w - type_ribbon_l - type_ribbon_w, y)
-                rib_top_2 = QPointF(x + w - type_ribbon_l, y)
-                rib_side_1 = QPointF(x + w, y + type_ribbon_l)
-                rib_side_2 = QPointF(x + w, y + type_ribbon_l + type_ribbon_w)
-                ribbon_polygon = QPolygonF([rib_top_1, rib_top_2, rib_side_1, rib_side_2])
-                ribbon_path = QPainterPath()
-                ribbon_path.setFillRule(Qt.WindingFill)
-                ribbon_path.addPolygon(ribbon_polygon)
-                ribbon_path.closeSubpath()
-                painter.setBrush(QBrush(QColor(self._ribbon_color(index.data(app_constants.TYPE_ROLE)))))
-                painter.drawPath(ribbon_path)
+            if is_gallery:
+                # draw ribbon type
+                painter.save()
+                painter.setPen(Qt.NoPen)
+                if app_constants.DISPLAY_GALLERY_RIBBON:
+                    type_ribbon_w = type_ribbon_l = w * 0.11
+                    rib_top_1 = QPointF(x + w - type_ribbon_l - type_ribbon_w, y)
+                    rib_top_2 = QPointF(x + w - type_ribbon_l, y)
+                    rib_side_1 = QPointF(x + w, y + type_ribbon_l)
+                    rib_side_2 = QPointF(x + w, y + type_ribbon_l + type_ribbon_w)
+                    ribbon_polygon = QPolygonF([rib_top_1, rib_top_2, rib_side_1, rib_side_2])
+                    ribbon_path = QPainterPath()
+                    ribbon_path.setFillRule(Qt.WindingFill)
+                    ribbon_path.addPolygon(ribbon_polygon)
+                    ribbon_path.closeSubpath()
+                    painter.setBrush(QBrush(QColor(self._ribbon_color(index.data(app_constants.TYPE_ROLE)))))
+                    painter.drawPath(ribbon_path)
 
-            # draw if favourited
-            if index.data(app_constants.FAV_ROLE):
-                star_ribbon_w = w * 0.1
-                star_ribbon_l = w * 0.08
-                rib_top_1 = QPointF(x + star_ribbon_l, y)
-                rib_side_1 = QPointF(x, y + star_ribbon_l)
-                rib_top_2 = QPointF(x + star_ribbon_l + star_ribbon_w, y)
-                rib_side_2 = QPointF(x, y + star_ribbon_l + star_ribbon_w)
-                rib_star_mid_1 = QPointF((rib_top_1.x() + rib_side_1.x()) / 2, (rib_top_1.y() + rib_side_1.y()) / 2)
-                rib_star_factor = star_ribbon_l / 4
-                rib_star_p1_1 = rib_star_mid_1 + QPointF(rib_star_factor, -rib_star_factor)
-                rib_star_p1_2 = rib_star_p1_1 + QPointF(-rib_star_factor, -rib_star_factor)
-                rib_star_p1_3 = rib_star_mid_1 + QPointF(-rib_star_factor, rib_star_factor)
-                rib_star_p1_4 = rib_star_p1_3 + QPointF(-rib_star_factor, -rib_star_factor)
+                # draw if favourited
+                if index.data(app_constants.FAV_ROLE):
+                    star_ribbon_w = w * 0.1
+                    star_ribbon_l = w * 0.08
+                    rib_top_1 = QPointF(x + star_ribbon_l, y)
+                    rib_side_1 = QPointF(x, y + star_ribbon_l)
+                    rib_top_2 = QPointF(x + star_ribbon_l + star_ribbon_w, y)
+                    rib_side_2 = QPointF(x, y + star_ribbon_l + star_ribbon_w)
+                    rib_star_mid_1 = QPointF((rib_top_1.x() + rib_side_1.x()) / 2, (rib_top_1.y() + rib_side_1.y()) / 2)
+                    rib_star_factor = star_ribbon_l / 4
+                    rib_star_p1_1 = rib_star_mid_1 + QPointF(rib_star_factor, -rib_star_factor)
+                    rib_star_p1_2 = rib_star_p1_1 + QPointF(-rib_star_factor, -rib_star_factor)
+                    rib_star_p1_3 = rib_star_mid_1 + QPointF(-rib_star_factor, rib_star_factor)
+                    rib_star_p1_4 = rib_star_p1_3 + QPointF(-rib_star_factor, -rib_star_factor)
 
-                crown_1 = QPolygonF([rib_star_p1_1, rib_star_p1_2, rib_star_mid_1, rib_star_p1_4, rib_star_p1_3])
-                painter.setBrush(QBrush(QColor(255, 255, 0, 200)))
-                painter.drawPolygon(crown_1)
+                    crown_1 = QPolygonF([rib_star_p1_1, rib_star_p1_2, rib_star_mid_1, rib_star_p1_4, rib_star_p1_3])
+                    painter.setBrush(QBrush(QColor(255, 255, 0, 200)))
+                    painter.drawPolygon(crown_1)
 
-                ribbon_polygon = QPolygonF([rib_top_1, rib_side_1, rib_side_2, rib_top_2])
-                ribbon_path = QPainterPath()
-                ribbon_path.setFillRule(Qt.WindingFill)
-                ribbon_path.addPolygon(ribbon_polygon)
-                ribbon_path.closeSubpath()
-                painter.drawPath(ribbon_path)
-                painter.setPen(QColor(255, 0, 0, 100))
-                painter.drawPolyline(rib_top_1, rib_star_p1_1, rib_star_p1_2, rib_star_mid_1, rib_star_p1_4, rib_star_p1_3, rib_side_1)
-                painter.drawLine(rib_top_1, rib_top_2)
-                painter.drawLine(rib_top_2, rib_side_2)
-                painter.drawLine(rib_side_1, rib_side_2)
-            painter.restore()
+                    ribbon_polygon = QPolygonF([rib_top_1, rib_side_1, rib_side_2, rib_top_2])
+                    ribbon_path = QPainterPath()
+                    ribbon_path.setFillRule(Qt.WindingFill)
+                    ribbon_path.addPolygon(ribbon_polygon)
+                    ribbon_path.closeSubpath()
+                    painter.drawPath(ribbon_path)
+                    painter.setPen(QColor(255, 0, 0, 100))
+                    painter.drawPolyline(rib_top_1, rib_star_p1_1, rib_star_p1_2, rib_star_mid_1, rib_star_p1_4, rib_star_p1_3, rib_side_1)
+                    painter.drawLine(rib_top_1, rib_top_2)
+                    painter.drawLine(rib_top_2, rib_side_2)
+                    painter.drawLine(rib_side_1, rib_side_2)
+                painter.restore()
 
             if self._paint_level > 0:
-                pass
-                #type_w = painter.fontMetrics().width(gallery.file_type)
-                #type_h = painter.fontMetrics().height()
-                #type_p = QPoint(x + 4, y + app_constants.THUMB_H_SIZE - type_h - 5)
-                #type_rect = QRect(type_p.x() - 2, type_p.y() - 1, type_w + 4, type_h + 1)
-                #if app_constants.DISPLAY_GALLERY_TYPE:
-                #    type_color = QColor(239, 0, 0, 200)
-                #    if gallery.file_type == "zip":
-                #        type_color = QColor(241, 0, 83, 200)
-                #    elif gallery.file_type == "cbz":
-                #        type_color = QColor(0, 139, 0, 200)
-                #    elif gallery.file_type == "rar":
-                #        type_color = QColor(30, 127, 150, 200)
-                #    elif gallery.file_type == "cbr":
-                #        type_color = QColor(210, 0, 13, 200)
+                type_h = painter.fontMetrics().height()
+                type_p = QPoint(x + 4, y + app_constants.THUMB_H_SIZE - type_h - 5)
+                if is_gallery or is_page:
+                    type_w = painter.fontMetrics().width(item.file_type)
+                    type_rect = QRect(type_p.x() - 2, type_p.y() - 1, type_w + 4, type_h + 1)
+                    if app_constants.DISPLAY_GALLERY_TYPE:
+                        type_color = QColor(239, 0, 0, 200)
+                        if item.file_type in ("zip", "jpg"):
+                            type_color = QColor(241, 0, 83, 200)
+                        elif item.file_type in ("cbz", "png"):
+                            type_color = QColor(0, 139, 0, 200)
+                        elif item.file_type == "rar":
+                            type_color = QColor(30, 127, 150, 200)
+                        elif item.file_type == "cbr":
+                            type_color = QColor(210, 0, 13, 200)
 
-                #    painter.save()
-                #    painter.setPen(QPen(Qt.white))
-                #    painter.fillRect(type_rect, type_color)
-                #    painter.drawText(type_p.x(), type_p.y() + painter.fontMetrics().height() - 4, gallery.file_type)
-                #    painter.restore()
+                        painter.save()
+                        painter.setPen(QPen(Qt.white))
+                        painter.fillRect(type_rect, type_color)
+                        painter.drawText(type_p.x(), type_p.y() + painter.fontMetrics().height() - 4, item.file_type)
+                        painter.restore()
+                else:
+                    type_rect = QRect(type_p.x() - 2, type_p.y() - 1, x, type_h)
                 
 
-                #if app_constants.DISPLAY_RATING and index.data(app_constants.RATING_ROLE):
-                #    star_start_x = type_rect.x()+type_rect.width() if app_constants.DISPLAY_GALLERY_TYPE else x
-                #    star_width = star_rating.sizeHint().width()
-                #    star_start_x += ((x+w-star_start_x)-(star_width))/2
-                #    star_rating.paint(painter,
-                #        QRect(star_start_x, type_rect.y(), star_width, type_rect.height()))
+                if app_constants.DISPLAY_RATING and index.data(app_constants.RATING_ROLE) and (is_gallery or is_collection):
+                    star_start_x = type_rect.x()+type_rect.width() if app_constants.DISPLAY_GALLERY_TYPE and is_gallery else x
+                    star_width = star_rating.sizeHint().width()
+                    star_start_x += ((x+w-star_start_x)-(star_width))/2
+                    star_rating.paint(painter,
+                        QRect(star_start_x, type_rect.y(), star_width, type_rect.height()))
 
-            #if gallery.state == app_constants.GalleryState.New:
+            #if item.state == app_constants.GalleryState.New:
             #    painter.save()
             #    painter.setPen(Qt.NoPen)
             #    gradient = QLinearGradient()
@@ -1424,13 +1435,22 @@ class GalleryDelegate(QStyledItemDelegate):
 
             if option.state & QStyle.State_MouseOver or \
                 option.state & QStyle.State_Selected:
-                title_layout = misc.text_layout(title, w, self.title_font, self.title_font_m)
-                artist_layout = misc.text_layout(artist, w, self.artist_font, self.artist_font_m)
-                t_h = title_layout.boundingRect().height()
-                a_h = artist_layout.boundingRect().height()
+
+                def draw_text(txt, _width, _font, _fontmetrics):
+                    txt_layout = misc.text_layout(txt, _width, _font, _fontmetrics)
+                    txt_h = txt_layout.boundingRect().height()
+                    return txt_layout, txt_h
+
+                artist_layout = None
+                if is_gallery:
+                    title_layout, t_h = draw_text(title, w, self.title_font, self.title_font_m)
+                    artist_layout, a_h = draw_text(artist, w, self.artist_font, self.artist_font_m)
+                    txt_height = t_h + a_h
+                else:
+                    title_layout, txt_height = draw_text(index.data(app_constants.TITLE_ROLE), w, self.title_font, self.title_font_m)
 
                 if app_constants.GALLERY_FONT_ELIDE:
-                    lbl_rect = draw_text_label(min(t_h + a_h + 3, app_constants.GRIDBOX_LBL_H))
+                    lbl_rect = draw_text_label(min(txt_height + 3, app_constants.GRIDBOX_LBL_H))
                 else:
                     lbl_rect = draw_text_label(app_constants.GRIDBOX_LBL_H)
 
@@ -1438,13 +1458,22 @@ class GalleryDelegate(QStyledItemDelegate):
                 painter.setPen(QColor(title_color))
                 title_layout.draw(painter, QPointF(x, y + app_constants.THUMB_H_SIZE),
                         clip=clipping)
-                painter.setPen(QColor(artist_color))
-                artist_layout.draw(painter, QPointF(x, y + app_constants.THUMB_H_SIZE + t_h),
-                        clip=clipping)
+
+                if artist_layout:
+                    painter.setPen(QColor(artist_color))
+                    artist_layout.draw(painter, QPointF(x, y + app_constants.THUMB_H_SIZE + t_h),
+                            clip=clipping)
                 #painter.fillRect(option.rect, QColor)
             else:
                 if app_constants.GALLERY_FONT_ELIDE:
-                    lbl_rect = draw_text_label(self.text_label_h)
+                    t_h = self.title_font_m.height()
+                    if is_gallery:
+                        a_h = self.artist_font_m.height()
+                        text_label_h = a_h + t_h * 2
+                    else:
+                        text_label_h = t_h * 2
+
+                    lbl_rect = draw_text_label(text_label_h)
                 else:
                     lbl_rect = draw_text_label(app_constants.GRIDBOX_LBL_H)
                 # draw text
@@ -1452,25 +1481,27 @@ class GalleryDelegate(QStyledItemDelegate):
                 alignment = QTextOption(Qt.AlignCenter)
                 alignment.setUseDesignMetrics(True)
                 title_rect = QRectF(0,0,w, self.title_font_m.height())
-                artist_rect = QRectF(0,self.artist_font_m.height(),w,
-                            self.artist_font_m.height())
+                if is_gallery:
+                    artist_rect = QRectF(0,self.artist_font_m.height(),w,
+                                self.artist_font_m.height())
                 painter.translate(x, y + app_constants.THUMB_H_SIZE)
-                if app_constants.GALLERY_FONT_ELIDE:
+                if not app_constants.GALLERY_FONT_ELIDE and is_gallery:
+                    text_area.setDefaultFont(QFont(self.font_name))
+                    text_area.drawContents(painter)
+                else:
                     painter.setFont(self.title_font)
                     painter.setPen(QColor(title_color))
                     painter.drawText(title_rect,
                                 self.title_font_m.elidedText(title, Qt.ElideRight, w - 10),
                                 alignment)
-                
-                    painter.setPen(QColor(artist_color))
-                    painter.setFont(self.artist_font)
-                    alignment.setWrapMode(QTextOption.NoWrap)
-                    painter.drawText(artist_rect,
-                                self.title_font_m.elidedText(artist, Qt.ElideRight, w - 10),
-                                alignment)
-                else:
-                    text_area.setDefaultFont(QFont(self.font_name))
-                    text_area.drawContents(painter)
+                    
+                    if is_gallery:
+                        painter.setPen(QColor(artist_color))
+                        painter.setFont(self.artist_font)
+                        alignment.setWrapMode(QTextOption.NoWrap)
+                        painter.drawText(artist_rect,
+                                    self.title_font_m.elidedText(artist, Qt.ElideRight, w - 10),
+                                    alignment)
                 ##painter.resetTransform()
                 painter.restore()
 
@@ -1753,11 +1784,14 @@ class GridView(BaseView):
         self.setWrapping(True)
         self.setVerticalScrollMode(self.ScrollPerPixel)
         self.setSpacing(app_constants.GRID_SPACING)
+        self.grid_delegate = GridDelegate(parent, self)
+        self.setItemDelegate(self.grid_delegate)
 
 class ListView(BaseView):
     def __init__(self, model, v_type, filter_model=None, parent=None):
         super().__init__(model, v_type, filter_model, parent)
         self.setViewMode(self.ListMode)
+        self.setAlternatingRowColors(True)
 
 class CommonView:
     """
@@ -2005,13 +2039,6 @@ class PathView(QWidget):
 
     def update_path(self, idx, toogle_window=True):
 
-        if idx.isValid() and idx.data(app_constants.QITEM_ROLE).type() == CollectionItem.type():
-            dlg = GalleryDelegate(self.view.parent_widget, self.view)
-            self.view.setItemDelegate(dlg)
-            self.view.grid_delegate = dlg
-        else:
-            self.view.setItemDelegate(QStyledItemDelegate(self.view))
-        
         if idx.isValid() and idx.data(app_constants.QITEM_ROLE).type() in (GalleryItem.type(), PageItem.type()):
             self.show_g_window()
             # TODO: apply gallery to gallery_window here
@@ -2034,6 +2061,9 @@ class PathView(QWidget):
 
     def install_to_view(self, view):
         view.doubleClicked.connect(self.update_path)
+
+    def delegate_for_item(self, itemtype):
+        pass
 
 class ViewManager:
 

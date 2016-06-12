@@ -109,6 +109,17 @@ def clearLayout(layout):
             elif child.layout() is not None:
                 clearLayout(child.layout())
 
+def fixed_widget_size(widget, s='w'):
+    "s: 'w' or 'h' or 'both'"
+    widget.adjustSize()
+    if s.lower() == 'both':
+        widget.setFixedWidth(widget.width())
+        widget.setFixedHeight(widget.height())
+    elif s.lower() == 'h':
+        widget.setFixedHeight(widget.height())
+    else:
+        widget.setFixedWidth(widget.width())
+
 def create_animation(parent, prop):
     p_array = QByteArray().append(prop)
     return QPropertyAnimation(parent, p_array)

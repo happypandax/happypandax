@@ -9,6 +9,7 @@ from dateutil import parser as dateparser
 import datetime
 import logging
 import os
+import random
 
 import db_constants
 import app_constants
@@ -21,7 +22,18 @@ log_w = log.warning
 log_e = log.error
 log_c = log.critical
 
-Base = declarative_base()
+class BaseID:
+    id = Column(Integer, primary_key=True)
+
+class NameMixin:
+    name = Column(String, nullable=False, default='', unique=True)
+
+class ProfileMixin:
+
+    def get_profile(self, profile_type):
+        return ''
+
+Base = declarative_base(cls=BaseID)
 
 def validate_int(value):
     if isinstance(value, str):
@@ -69,6 +81,14 @@ def configure_listener(class_, key, inst):
         else:
             return value
 
+def profile_association(table_name):
+    column = '{}_id'.format(table_name)
+    assoc = Table('{}_profiles'.format(table_name), Base.metadata,
+                        Column('profile_id', Integer, ForeignKey('profile.id')),
+                        Column(column, Integer, ForeignKey('{}.id'.format(table_name))),
+                        UniqueConstraint('profile_id', column))
+    return assoc
+
 class Life(Base):
     __tablename__ = 'life'
 
@@ -82,10 +102,19 @@ class Life(Base):
     def __repr__(self):
         return "<Version: {}, times_opened:{}>".format(self.version, self.times_opened)
 
+class Profile(Base):
+    __tablename__ = 'profile'
+
+    path = Column(String, nullable=False, default='')
+    type = Column(Integer, nullable=False, default=0)
+
+    def __repr__(self):
+        return "Profile ID:{} Type:{} Path:{}".format(self.id, self.type, self.path)
+
+
 class History(Base):
     __tablename__ = 'history'
 
-    id = Column(Integer, primary_key=True)
     gallery_id = Column(Integer, ForeignKey('gallery.id'))
     date = Column(Date, nullable=False, default=datetime.date.today())
     gallery = relationship("Gallery")
@@ -93,19 +122,15 @@ class History(Base):
     def __init__(self, gallery):
         self.gallery = gallery
 
-class Hash(Base):
+class Hash(NameMixin, Base):
     __tablename__ = 'hash'
 
-    id = Column(Integer, primary_key=True)
-    name = Column(String, nullable=False, unique=True)
-
     def __repr__(self):
-        return "Hash ID:{}\nHash:{}".format(self.id, self.name)
+        return "Hash ID:{}Hash:{}".format(self.id, self.name)
 
 class NamespaceTags(Base):
     __tablename__ = 'namespace_tags'
 
-    id = Column(Integer, primary_key=True)
     tag_id = Column(Integer, ForeignKey('tag.id'))
     namespace_id = Column(Integer, ForeignKey('namespace.id'))
     __table_args__ = (UniqueConstraint('tag_id', 'namespace_id'),)
@@ -117,22 +142,16 @@ class NamespaceTags(Base):
         self.namespace = ns
         self.tag = tag
 
-class Tag(Base):
+class Tag(NameMixin, Base):
     __tablename__ = 'tag'
-
-    id = Column(Integer, primary_key=True)
-    name = Column(String, nullable=False, unique=True)
 
     namespaces = relationship("Namespace", secondary='namespace_tags', back_populates='tags', lazy="dynamic")
 
     def __repr__(self):
         return "ID:{} -Tag:{}".format(self.id, self.name)
 
-class Namespace(Base):
+class Namespace(NameMixin, Base):
     __tablename__ = 'namespace'
-
-    id = Column(Integer, primary_key=True)
-    name = Column(String, nullable=False, unique=True)
 
     tags = relationship("Tag", secondary='namespace_tags', back_populates='namespaces', lazy="dynamic")
 
@@ -145,10 +164,8 @@ gallery_artists = Table('gallery_artists', Base.metadata,
                         UniqueConstraint('artist_id', 'gallery_id'))
 
 
-class Artist(Base):
+class Artist(NameMixin, Base):
     __tablename__ = 'artist'
-    id = Column(Integer, primary_key=True)
-    name = Column(String, nullable=False, default='', unique=True)
 
     galleries = relationship("Gallery", secondary=gallery_artists, back_populates='artists', lazy="dynamic")
 
@@ -157,10 +174,8 @@ gallery_circles = Table('gallery_circles', Base.metadata,
                         Column('gallery_id', Integer, ForeignKey('gallery.id',)),
                         UniqueConstraint('circle_id', 'gallery_id'))
 
-class Circle(Base):
+class Circle(NameMixin, Base):
     __tablename__ = 'circle'
-    id = Column(Integer, primary_key=True)
-    name = Column(String, nullable=False, default='', unique=True)
 
     galleries = relationship("Gallery", secondary=gallery_circles, back_populates='circles', lazy="dynamic")
 
@@ -169,35 +184,32 @@ gallery_lists = Table('gallery_lists', Base.metadata,
                         Column('gallery_id', Integer, ForeignKey('gallery.id')),
                         UniqueConstraint('list_id', 'gallery_id'))
 
-class List(Base):
+list_profiles = profile_association("list")
+
+class List(ProfileMixin, NameMixin, Base):
     __tablename__ = 'list'
-    id = Column(Integer, primary_key=True)
-    name = Column(String, nullable=False, default='')
     filter = Column(String, nullable=False, default='')
-    profile = Column(String, nullable=False, default='')
     enforce = Column(Boolean, nullable=False, default=False)
     regex = Column(Boolean, nullable=False, default=False)
     l_case = Column(Boolean, nullable=False, default=False)
     strict = Column(Boolean, nullable=False, default=False)
 
     galleries = relationship("Gallery", secondary=gallery_lists, back_populates='lists', lazy="dynamic")
+    profiles = relationship("Profile", secondary=list_profiles, cascade="all")
 
-class GalleryNamespace(Base):
+g_ns_profiles = profile_association("gallery_namespace")
+
+class GalleryNamespace(ProfileMixin, NameMixin, Base):
     __tablename__ = 'gallery_namespace'
 
-    id = Column(Integer, primary_key=True)
-    name = Column(String, nullable=False, unique=True)
-    profile = Column(String, nullable=False, default='')
-
     galleries = relationship("Gallery", back_populates="parent", lazy="dynamic", cascade="all, delete-orphan")
+    profiles = relationship("Profile", secondary=g_ns_profiles, cascade="all")
 
     def __repr__(self):
         return "ID:{} - G-Namespace:{}".format(self.id, self.name)
 
-class Convention(Base):
+class Convention(NameMixin, Base):
     __tablename__ = 'convention'
-    id = Column(Integer, primary_key=True)
-    name = Column(String, nullable=False, unique=True)
 
     galleries = relationship("Gallery", back_populates='convention')
 
@@ -209,19 +221,25 @@ gallery_tags = Table('gallery_tags', Base.metadata,
                         Column('gallery_id', Integer, ForeignKey('gallery.id')),
                         UniqueConstraint('namespace_tag_id', 'gallery_id'))
 
-class Collection(Base):
+collection_profiles = profile_association("collection")
+
+class Collection(ProfileMixin, Base):
     __tablename__ = 'collection'
-    id = Column(Integer, primary_key=True)
-    profile = Column(String, nullable=False, default='')
     title = Column(String, nullable=False, default='')
     info = Column(String, nullable=False, default='')
 
     galleries = relationship("Gallery", back_populates="collection", cascade="save-update, merge, refresh-expire", lazy="dynamic")
+    profiles = relationship("Profile", secondary=collection_profiles, cascade="all")
 
-class Gallery(Base):
+    @property
+    def rating(self):
+        "Calculates average rating from galleries"
+        return 5
+
+gallery_profiles = profile_association("gallery")
+
+class Gallery(ProfileMixin, Base):
     __tablename__ = 'gallery'
-    id = Column(Integer, primary_key=True)
-    profile = Column(String, nullable=False, default='')
     path = Column(String, nullable=False, default='')
     path_in_archive = Column(String, nullable=False, default='')
     title = Column(String, nullable=False, default='')
@@ -253,6 +271,7 @@ class Gallery(Base):
     lists = relationship("List", secondary=gallery_lists, back_populates='galleries', lazy="dynamic")
     pages = relationship("Page", back_populates="gallery", cascade="all,delete-orphan")
     tags = relationship("NamespaceTags", secondary=gallery_tags, lazy="dynamic")
+    profiles = relationship("Profile", secondary=gallery_profiles, cascade="all")
 
     @validates("times_read")
     def _add_history(self, key, value):
@@ -265,6 +284,10 @@ class Gallery(Base):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.rating = 0
+
+        self.file_type = "folder"
+
 
     def _keyword_search(self, ns, tag, args=[]):
         term = ''
@@ -436,23 +459,28 @@ class Gallery(Base):
                 return is_exclude
         return default
 
-class Page(Base):
+page_profiles = profile_association("page")
+
+class Page(ProfileMixin, Base):
     __tablename__ = 'page'
-    id = Column(Integer, primary_key=True)
-    profile = Column(String, nullable=False, default='')
     number = Column(Integer, nullable=False, default=0)
     hash_id = Column(Integer, ForeignKey('hash.id'))
     gallery_id = Column(Integer, ForeignKey('gallery.id'), nullable=False)
 
     hash = relationship("Hash", cascade="save-update, merge, refresh-expire")
     gallery = relationship("Gallery", back_populates="pages")
+    profiles = relationship("Profile", secondary=page_profiles, cascade="all")
 
     def __repr__(self):
         return "Page ID:{}\nPage:{}\nProfile:{}\nPageHash:{}".format(self.id, self.number, self.profile, self.hash)
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        self.file_type = "jpg"
+
 class GalleryUrl(Base):
     __tablename__ = 'gallery_url'
-    id = Column(Integer, primary_key=True)
     url = Column(String, nullable=False, default='')
     gallery_id = Column(Integer, ForeignKey('gallery.id'))
 
@@ -1095,5 +1123,86 @@ if __name__ == '__main__':
             self.session.close()
             if os.path.exists("dbtagunittest.db"):
                 os.remove("dbtagunittest.db")
+
+
+    class ProfileRelationship(unittest.TestCase):
+        def setUp(self):
+            if os.path.exists("dbprofileunittest.db"):
+                os.remove("dbprofileunittest.db")
+            engine = create_engine("sqlite:///dbprofileunittest.db")
+            Session.configure(bind=engine)
+            Base.metadata.create_all(engine)
+
+            self.session = Session()
+
+            self.lists = [List(name="list"+str(x)) for x in range(5)]
+            self.gns = [GalleryNamespace(name="gns"+str(x)) for x in range(5)]
+            self.galleries = [Gallery(title="title"+str(x)) for x in range(5)]
+            self.collections = [Collection(title="title"+str(x)) for x in range(5)]
+            self.pages = [Page(number=x) for x in range(5)]
+
+            for n, x in enumerate(self.galleries):
+                self.collections[n].galleries.append(x)
+                self.pages[n].gallery = x
+                self.gns[n].galleries.append(x)
+
+            self.session.add_all(self.galleries)
+            self.session.add_all(self.lists)
+            self.session.commit()
+
+            self.assertEqual(self.session.query(Gallery).count(), 5)
+            self.assertEqual(self.session.query(GalleryNamespace).count(), 5)
+            self.assertEqual(self.session.query(Collection).count(), 5)
+            self.assertEqual(self.session.query(Page).count(), 5)
+            self.assertEqual(self.session.query(List).count(), 5)
+
+            self.profiles = [Profile(path="p"+str(x), type=x) for x in range(5)]
+
+            for x in (self.lists, self.gns, self.galleries, self.collections, self.pages):
+                for y in x:
+                    y.profiles.append(self.profiles[random.randint(0, 4)])
+
+            self.session.commit()
+
+            self.assertEqual(self.session.query(Profile).count(), 5)
+
+
+        def test_delete(self):
+            self.session.delete(self.profiles[0])
+            self.session.commit()
+            self.assertEqual(self.session.query(Gallery).count(), 5)
+            self.assertEqual(self.session.query(GalleryNamespace).count(), 5)
+            self.assertEqual(self.session.query(Collection).count(), 5)
+            self.assertEqual(self.session.query(Page).count(), 5)
+            self.assertEqual(self.session.query(List).count(), 5)
+            self.assertEqual(self.session.query(Profile).count(), 4)
+
+        def test_delete2(self):
+            self.session.delete(self.pages[0])
+            self.session.commit()
+            self.assertEqual(self.session.query(Gallery).count(), 5)
+            self.assertEqual(self.session.query(GalleryNamespace).count(), 5)
+            self.assertEqual(self.session.query(Collection).count(), 5)
+            self.assertEqual(self.session.query(Page).count(), 4)
+            self.assertEqual(self.session.query(List).count(), 5)
+            self.assertEqual(self.session.query(Profile).count(), 4)
+
+        def test_no_orphans(self):
+            for x in (self.lists, self.gns):
+                for y in x:
+                    self.session.delete(y)
+            self.session.commit()
+
+            self.assertEqual(self.session.query(Gallery).count(), 0)
+            self.assertEqual(self.session.query(GalleryNamespace).count(), 0)
+            self.assertEqual(self.session.query(Collection).count(), 0)
+            self.assertEqual(self.session.query(Page).count(), 0)
+            self.assertEqual(self.session.query(List).count(), 0)
+            self.assertEqual(self.session.query(Profile).count(), 0)
+
+        def tearDown(self):
+            self.session.close()
+            if os.path.exists("dbprofileunittest.db"):
+                os.remove("dbprofileunittest.db")
 
     unittest.main(verbosity=2)

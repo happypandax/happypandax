@@ -5,7 +5,8 @@ from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QDesktopWidget, QGroupBox,
                              QHBoxLayout, QFormLayout, QLabel, QLineEdit,
                              QPushButton, QProgressBar, QTextEdit, QComboBox,
                              QDateEdit, QFileDialog, QMessageBox, QScrollArea,
-                             QCheckBox, QSizePolicy, QSpinBox)
+                             QCheckBox, QSizePolicy, QSpinBox, QDialog, QTabWidget,
+                             QListView, QDialogButtonBox)
 from PyQt5.QtCore import (pyqtSignal, Qt, QPoint, QDate, QThread, QTimer)
 
 import app_constants
@@ -599,4 +600,87 @@ class GalleryDialog(QWidget):
     def reject_edit(self):
         self.delayed_close()
 
+class Item:
+    pass
 
+class ItemList(QListView):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+class ItemsBase(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+    def items(self):
+        return
+
+class GalleryItems(ItemsBase):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        main_layout = QVBoxLayout(self)
+        
+        add_box = QGroupBox("Add Gallery", self)
+        main_layout.addWidget(add_box)
+        add_box_l = QHBoxLayout(add_box)
+        add_box_l.setAlignment(Qt.AlignLeft)
+        add_gallery_btn = QPushButton(app_constants.PLUS_ICON, "Add folder/archive")
+        misc.fixed_widget_size(add_gallery_btn)
+        populate_btn = QPushButton(app_constants.PLUS_ICON, "Populate from folder/archive")
+        misc.fixed_widget_size(populate_btn)
+        add_box_l.addWidget(add_gallery_btn)
+        add_box_l.addWidget(misc.Line("v"))
+        add_box_l.addWidget(populate_btn)
+
+        self.item_list = ItemList(self)
+        self.item_list.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        main_layout.addWidget(self.item_list, 2)
+
+
+class CollectionItems(ItemsBase):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        main_layout = QVBoxLayout(self)
+        
+        add_box = QGroupBox("Add Collection", self)
+        main_layout.addWidget(add_box)
+        add_box_l = QHBoxLayout(add_box)
+        add_box_l.setAlignment(Qt.AlignLeft)
+        new_collection = QPushButton(app_constants.PLUS_ICON, "New Collection")
+        misc.fixed_widget_size(new_collection)
+        collection_name = QLineEdit(self)
+        collection_name.setPlaceholderText("New collection name...")
+        add_box_l.addWidget(new_collection)
+        add_box_l.addWidget(misc.Line("v"))
+        add_box_l.addWidget(collection_name)
+
+        self.item_list = ItemList(self)
+        self.item_list.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        main_layout.addWidget(self.item_list, 2)
+
+
+class ItemManager(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        main_layout = QVBoxLayout(self)
+
+        self.tabwidget = QTabWidget(self)
+        self.tabwidget.addTab(GalleryItems(), "&Gallery")
+        self.tabwidget.addTab(CollectionItems(), "&Collection")
+
+        buttonbox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Close)
+        buttonbox.accepted.connect(self.accept)
+        buttonbox.rejected.connect(self.reject)
+
+        main_layout.addWidget(self.tabwidget)
+        main_layout.addWidget(buttonbox)
+        self.setWindowTitle("Addition Manager")
+        self.setAttribute(Qt.WA_DeleteOnClose)
+        self.resize(700, 700)
+        self.show()
+        
+    def accept(self):
+        pass
+
+        return super().accept()
