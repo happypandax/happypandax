@@ -84,7 +84,7 @@ TYPE_ROLE = Qt.UserRole + 8
 RATING_ROLE = Qt.UserRole + 9
 LANGUAGE_ROLE = Qt.UserRole + 10
 NUMBER_ROLE = Qt.UserRole + 11
-CONVENTION_ROLE = Qt.UserRole + 12
+# 12
 CIRCLES_ROLE = Qt.UserRole + 13
 TAGS_ROLE = Qt.UserRole + 14
 PARENT_ROLE = Qt.UserRole + 15
@@ -145,7 +145,8 @@ def load_icons():
     global INBOX_ICON
     global SEARCH_ICON
     global CROSS_ICON
-    global DOWNLOADER_ICON
+    global MANAGER_ICON
+    global DOWNLOAD_ICON
     global GALLERY_ICON
     global DOTS_ICON
 
@@ -160,7 +161,8 @@ def load_icons():
     INBOX_ICON = qta.icon("fa.inbox", color="white")
     SEARCH_ICON = qta.icon("fa.search", color="white")
     CROSS_ICON = qta.icon("fa.times", color="black")
-    DOWNLOADER_ICON = qta.icon("fa.tasks", color="white")
+    MANAGER_ICON = qta.icon("fa.tasks", color="white")
+    DOWNLOAD_ICON = qta.icon("fa.download", color="white")
     GALLERY_ICON = qta.icon("fa.th-large", color="white")
     DOTS_ICON = qta.icon("fa.ellipsis-h", color="white")
     

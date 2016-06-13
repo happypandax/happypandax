@@ -164,8 +164,6 @@ class GalleryItem(BaseItem):
             return self._item.timestamp
         elif role == app_constants.NUMBER_ROLE:
             return self._item.number
-        elif role == app_constants.CONVENTION_ROLE:
-            return self._item.convention
         elif role == app_constants.PARENT_ROLE:
             return self._item.parent
         elif role == app_constants.COLLECTION_ROLE:
@@ -1560,6 +1558,9 @@ class GridDelegate(QStyledItemDelegate):
                     clip=clipping)
 
     def _ribbon_color(self, gallery_type):
+        if not gallery_type:
+            return
+        gallery_type = gallery_type.name
         if gallery_type:
             gallery_type = gallery_type.lower()
         if gallery_type == "manga":
@@ -2115,16 +2116,13 @@ class ViewManager:
             pitem = CollectionItem(coll)
             parent.appendRow(pitem)
             for y in range(20):
-                gall = db.Gallery(title="Gallery "+str(y))
+                gall = db.Gallery()
                 gall.profile = os.path.join(db_constants.THUMBNAIL_PATH, "thumb.png")
                 gall.path = "C:/hello"
                 gall.info = "A lonely girl"
                 gall.fav = True if y % 2 == 0 else False
-                gall.type = "Doujinshi"
-                gall.language = "English"
                 gall.rating = 5
                 gall.times_read = 20
-                gall.status = "Finished"
                 gall.pub_date = datetime.date.today()
                 gall.last_read = datetime.datetime.now()
                 gall.parent = gns

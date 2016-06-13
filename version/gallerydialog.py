@@ -622,56 +622,104 @@ class GalleryItems(ItemsBase):
         
         add_box = QGroupBox("Add Gallery", self)
         main_layout.addWidget(add_box)
-        add_box_l = QHBoxLayout(add_box)
+        add_box_main_l = QVBoxLayout(add_box)
+        add_box_l = QHBoxLayout()
+        add_box_main_l.addLayout(add_box_l)
         add_box_l.setAlignment(Qt.AlignLeft)
         add_gallery_btn = QPushButton(app_constants.PLUS_ICON, "Add folder/archive")
         misc.fixed_widget_size(add_gallery_btn)
         populate_btn = QPushButton(app_constants.PLUS_ICON, "Populate from folder/archive")
         misc.fixed_widget_size(populate_btn)
+        self.same_namespace = QCheckBox("Put subfolders or -archives in same namespace", self)
+        self.skip_existing = QCheckBox("Skip already existing galleries", self)
         add_box_l.addWidget(add_gallery_btn)
         add_box_l.addWidget(misc.Line("v"))
         add_box_l.addWidget(populate_btn)
+        add_box_main_l.addWidget(self.same_namespace)
+        add_box_main_l.addWidget(self.skip_existing)
 
         self.item_list = ItemList(self)
         self.item_list.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
         main_layout.addWidget(self.item_list, 2)
 
 
-class CollectionItems(ItemsBase):
+class MiscItems(ItemsBase):
     def __init__(self, parent=None):
         super().__init__(parent)
 
         main_layout = QVBoxLayout(self)
         
-        add_box = QGroupBox("Add Collection", self)
-        main_layout.addWidget(add_box)
-        add_box_l = QHBoxLayout(add_box)
-        add_box_l.setAlignment(Qt.AlignLeft)
+        add_collection = QGroupBox("Add Collection", self)
+        main_layout.addWidget(add_collection)
+        add_collection_l = QFormLayout(add_collection)
+        add_collection_l.setAlignment(Qt.AlignLeft)
+        self.collection_name = QLineEdit(self)
+        self.collection_name.setPlaceholderText("New collection name...")
+        self.collection_cover = misc.PathLineEdit(self)
+        self.collection_info = QTextEdit(self)
+        self.collection_info.setAcceptRichText(True)
         new_collection = QPushButton(app_constants.PLUS_ICON, "New Collection")
         misc.fixed_widget_size(new_collection)
-        collection_name = QLineEdit(self)
-        collection_name.setPlaceholderText("New collection name...")
-        add_box_l.addWidget(new_collection)
-        add_box_l.addWidget(misc.Line("v"))
-        add_box_l.addWidget(collection_name)
+        add_collection_l.addRow("Name:", self.collection_name)
+        add_collection_l.addRow("Cover:", self.collection_cover)
+        add_collection_l.addRow("Description:", self.collection_info)
+        add_collection_l.addRow(new_collection)
 
-        self.item_list = ItemList(self)
-        self.item_list.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
-        main_layout.addWidget(self.item_list, 2)
+        add_language = QGroupBox("Language", self)
+        main_layout.addWidget(add_language)
+        add_language_l = QVBoxLayout(add_language)
+        self.new_language = QLineEdit(self)
+        self.new_language.returnPressed.connect(self.add_language)
+        self.new_language.setPlaceholderText("New language (Click to remove)")
+        add_language_l.addWidget(self.new_language)
+        self.languages = misc.FlowLayout()
+        add_language_l.addLayout(self.languages)
+
+        add_status = QGroupBox("Status", self)
+        main_layout.addWidget(add_status)
+        add_status_l = QVBoxLayout(add_status)
+        self.new_status = QLineEdit(self)
+        self.new_status.returnPressed.connect(self.add_status)
+        self.new_status.setPlaceholderText("New status (Click to remove)")
+        add_status_l.addWidget(self.new_status)
+        self.status = misc.FlowLayout()
+        add_status_l.addLayout(self.status)
+
+    def add_language(self):
+        lang = self.new_language.text()
+        self.new_language.clear()
+        lang_btn = misc.TagText(lang)
+        lang_btn.clicked.connect(lambda: self.remove_language(lang_btn))
+        self.languages.addWidget(lang_btn)
+
+    def remove_language(self, widget):
+        self.languages.removeWidget(widget)
+        widget.setParent(None)
+
+    def add_status(self):
+        status = self.new_status.text()
+        self.new_status.clear()
+        status_btn = misc.TagText(status)
+        status_btn.clicked.connect(lambda: self.remove_language(status_btn))
+        self.status.addWidget(status_btn)
+
+    def remove_status(self, widget):
+        self.status.removeWidget(widget)
+        widget.setParent(None)
 
 
-class ItemManager(QDialog):
+class ItemManager(QWidget):
     def __init__(self, parent=None):
-        super().__init__(parent)
+        super().__init__(parent, Qt.Dialog)
         main_layout = QVBoxLayout(self)
 
         self.tabwidget = QTabWidget(self)
         self.tabwidget.addTab(GalleryItems(), "&Gallery")
-        self.tabwidget.addTab(CollectionItems(), "&Collection")
+        self.tabwidget.addTab(MiscItems(), "&Misc")
 
         buttonbox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Close)
         buttonbox.accepted.connect(self.accept)
-        buttonbox.rejected.connect(self.reject)
+        buttonbox.rejected.connect(self.close)
 
         main_layout.addWidget(self.tabwidget)
         main_layout.addWidget(buttonbox)
@@ -683,4 +731,21 @@ class ItemManager(QDialog):
     def accept(self):
         pass
 
-        return super().accept()
+class MetadataManager(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent, Qt.Dialog)
+        main_layout = QVBoxLayout(self)
+
+        self.tabwidget = QTabWidget(self)
+        self.tabwidget.addTab(GalleryItems(), "&Gallery")
+        self.tabwidget.addTab(MiscItems(), "&Misc")
+
+        buttonbox = QDialogButtonBox(QDialogButtonBox.Close)
+        buttonbox.rejected.connect(self.close)
+
+        main_layout.addWidget(self.tabwidget)
+        main_layout.addWidget(buttonbox)
+        self.setWindowTitle("Metadata Manager")
+        self.setAttribute(Qt.WA_DeleteOnClose)
+        self.resize(700, 700)
+        

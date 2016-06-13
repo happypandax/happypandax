@@ -217,6 +217,8 @@ class AppWindow(QMainWindow):
         #QSizePolicy.Preferred)
         self.download_window = io_misc.GalleryDownloader(self)
         self.download_window.hide()
+        self.metadata_window = gallerydialog.MetadataManager(self)
+        self.metadata_window.hide()
         # init toolbar
         self.init_toolbar()
 
@@ -507,7 +509,7 @@ class AppWindow(QMainWindow):
         new_populate_k = QKeySequence('Ctrl+Alt+N')
         scan_galleries_k = QKeySequence('Ctrl+S')
         open_random_k = QKeySequence(QKeySequence.Open)
-        get_all_metadata_k = QKeySequence('Ctrl+Alt+M')
+        gallery_metadata_k = QKeySequence('Ctrl+Alt+M')
         gallery_downloader_k = QKeySequence('Ctrl+Alt+D')
 
         gallery_action = QToolButton()
@@ -533,10 +535,6 @@ class AppWindow(QMainWindow):
         duplicate_check_simple.triggered.connect(lambda: self.duplicate_check()) # triggered emits False
         misc_action_menu.addAction(duplicate_check_simple)
 
-        metadata_action = QAction('Get metadata for all galleries', self)
-        metadata_action.triggered.connect(self.get_metadata)
-        metadata_action.setShortcut(get_all_metadata_k)
-        misc_action_menu.addAction(metadata_action)
         scan_galleries_action = QAction('Scan for new galleries', self)
         scan_galleries_action.triggered.connect(self.scan_for_new_galleries)
         scan_galleries_action.setStatusTip('Scan monitored folders for new galleries')
@@ -552,11 +550,19 @@ class AppWindow(QMainWindow):
 
         gallery_downloader = QToolButton()
         gallery_downloader.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
-        gallery_downloader.setIcon(app_constants.DOWNLOADER_ICON)
+        gallery_downloader.setIcon(app_constants.DOWNLOAD_ICON)
         gallery_downloader.setText("Downloader")
         gallery_downloader.clicked.connect(self.download_window.show)
         gallery_downloader.setShortcut(gallery_downloader_k)
         self.toolbar.addWidget(gallery_downloader)
+
+        gallery_metadata = QToolButton()
+        gallery_metadata.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        gallery_metadata.setIcon(app_constants.MANAGER_ICON)
+        gallery_metadata.setText("Metadata")
+        gallery_metadata.clicked.connect(self.metadata_window.show)
+        gallery_metadata.setShortcut(gallery_metadata_k)
+        self.toolbar.addWidget(gallery_metadata)
 
 
         # debug specfic code
