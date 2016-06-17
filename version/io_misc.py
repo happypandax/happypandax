@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout,
 							 QFileDialog, QScrollArea, QLineEdit,
 							 QFormLayout, QGroupBox, QSizePolicy,
 							 QTableWidget, QTableWidgetItem, QPlainTextEdit,
-							 QShortcut, QMenu, qApp)
+							 QShortcut, QMenu, qApp, QTabWidget)
 
 import app_constants
 import misc
@@ -344,6 +344,7 @@ class GalleryDownloader(QWidget):
 			self.activateWindow()
 		else:
 			super().show()
+
 
 class GalleryPopup(misc.BasePopup):
 	"""

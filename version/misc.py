@@ -2212,3 +2212,18 @@ class ChapterListItem(QFrame):
             self.chapter_lbl.setText(chapter.title)
         else:
             self.chapter_lbl.setText("Chapter " + str(chapter.number + 1))
+
+class DefaultTableWidget(QTableWidget):
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setAlternatingRowColors(True)
+        self.setEditTriggers(self.NoEditTriggers)
+        self.setFocusPolicy(Qt.NoFocus)
+        self.setDragEnabled(False)
+        self.setShowGrid(True)
+        palette = self.palette()
+        palette.setColor(palette.Highlight, QColor(88, 88, 88, 70))
+        palette.setColor(palette.HighlightedText, QColor('black'))
+        self.setPalette(palette)
+        self.horizontalHeader().setStretchLastSection(True)

@@ -6,15 +6,15 @@ from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QDesktopWidget, QGroupBox,
                              QPushButton, QProgressBar, QTextEdit, QComboBox,
                              QDateEdit, QFileDialog, QMessageBox, QScrollArea,
                              QCheckBox, QSizePolicy, QSpinBox, QDialog, QTabWidget,
-                             QListView, QDialogButtonBox)
-from PyQt5.QtCore import (pyqtSignal, Qt, QPoint, QDate, QThread, QTimer)
+                             QListView, QDialogButtonBox, QTableWidgetItem, QFrame)
+from PyQt5.QtCore import (pyqtSignal, Qt, QPoint, QDate, QThread, QTimer, QSize)
 
 import app_constants
 import utils
 import gallerydb
 import fetch
 import misc
-import database
+import db
 
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -601,11 +601,26 @@ class GalleryDialog(QWidget):
         self.delayed_close()
 
 class Item:
-    pass
+    def __init__(self, gallery):
+        assert isinstance(gallery, db.Gallery)
+        self.title = QTableWidgetItem(gallery.title)
 
-class ItemList(QListView):
+class ItemList(misc.DefaultTableWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.setColumnCount(3)
+        self.setIconSize(QSize(50, 100))
+        self.setHorizontalHeaderLabels(
+	        [' ', 'Title', 'Status'])
+        self.horizontalHeader().setSectionResizeMode(1, self.horizontalHeader().Stretch)
+        self.horizontalHeader().setSectionResizeMode(1, self.horizontalHeader().ResizeToContents)
+        self.horizontalHeader().setSectionResizeMode(2, self.horizontalHeader().ResizeToContents)
+
+    def add_item(self, item):
+        assert isinstance(item, Item)
+        self.insertRow(self.rowCount()+1)
+        row = self.rowCount()-1
+        self.setItem(row, 1, item.title)
 
 class ItemsBase(QWidget):
     def __init__(self, parent=None):
@@ -614,9 +629,12 @@ class ItemsBase(QWidget):
     def items(self):
         return
 
-class GalleryItems(ItemsBase):
+class GalleryAddItems(ItemsBase):
     def __init__(self, parent=None):
         super().__init__(parent)
+        thread = QThread(self)
+        scan = fetch.GalleryScan()
+        scan.moveToThread(thread)
 
         main_layout = QVBoxLayout(self)
         
@@ -642,6 +660,82 @@ class GalleryItems(ItemsBase):
         self.item_list.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
         main_layout.addWidget(self.item_list, 2)
 
+class GalleryMetadataWidget(QWidget):
+    up = pyqtSignal(object)
+    down = pyqtSignal(object)
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setContentsMargins(0,0,0,0)
+        main_layout = QVBoxLayout(self)
+        main_layout.setSpacing(0)
+        self.checkbox = QCheckBox()
+        self.label = QLabel("E-Hentai")
+        self.label.setAlignment(Qt.AlignLeft)
+        up_btn = QPushButton(app_constants.ARROW_UP_ICON, '')
+        misc.fixed_widget_size(up_btn)
+        up_btn.clicked.connect(self.up.emit)
+        down_btn = QPushButton(app_constants.ARROW_DOWN_ICON, '')
+        down_btn.clicked.connect(self.down.emit)
+        misc.fixed_widget_size(down_btn)
+        h_l = QHBoxLayout()
+        h_l.setSpacing(0)
+        h_l.addWidget(self.checkbox)
+        h_l.addWidget(self.label, 0, Qt.AlignLeft)
+        h_l.addWidget(up_btn)
+        h_l.addWidget(down_btn)
+        main_layout.addLayout(h_l)
+        main_layout.addWidget(misc.Line("h"))
+
+class GalleryMetadataItems(ItemsBase):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        main_layout = QVBoxLayout(self)
+        
+        settings_l = QVBoxLayout()
+        settings_l.setSpacing(0)
+
+        metadata_group = QGroupBox("Metadata Providers", self)
+        metadata_group_l = QVBoxLayout(metadata_group)
+        metadata_group_l.setSpacing(0)
+        for x in range(3):
+            metadata_group_l.addWidget(GalleryMetadataWidget(self))
+        settings_l.addWidget(metadata_group)
+
+        settings_btn_l = QHBoxLayout()
+        settings_btn_l.setAlignment(Qt.AlignRight)
+        settings_l.addLayout(settings_btn_l)
+        main_layout.addLayout(settings_l)
+        fetch_btn = QPushButton("Start")
+        misc.fixed_widget_size(fetch_btn)
+        stop_btn = QPushButton("Stop")
+        misc.fixed_widget_size(stop_btn)
+        self.auto_fetch = QCheckBox("Start fetching automatically", self)
+        settings_btn_l.addWidget(self.auto_fetch, 0, Qt.AlignLeft)
+        settings_btn_l.addWidget(fetch_btn, 0, Qt.AlignRight)
+        settings_btn_l.addWidget(stop_btn, 0, Qt.AlignRight)
+
+        self.item_list = ItemList(self)
+        self.item_list.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        main_layout.addWidget(self.item_list, 2)
+
+class GalleryTypeWidget(QFrame):
+    remove = pyqtSignal(object)
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setFrameShape(self.StyledPanel)
+        main_layout = QFormLayout(self)
+        self.name = QLineEdit()
+        self.name.setPlaceholderText("Name")
+        self.color = QLineEdit()
+        self.color.setPlaceholderText("Color")
+        main_layout.addRow(self.name, self.color)
+        self.setCursor(Qt.PointingHandCursor)
+
+    def mousePressEvent(self, ev):
+        if ev.button() & Qt.LeftButton:
+            self.remove.emit(self)
+        return super().mousePressEvent(ev)
 
 class MiscItems(ItemsBase):
     def __init__(self, parent=None):
@@ -665,6 +759,16 @@ class MiscItems(ItemsBase):
         add_collection_l.addRow("Description:", self.collection_info)
         add_collection_l.addRow(new_collection)
 
+        add_gtype = QGroupBox("Gallery Type", self)
+        main_layout.addWidget(add_gtype)
+        add_gtype_l = QVBoxLayout(add_gtype)
+        self.new_gtype = QPushButton(app_constants.PLUS_ICON, "New Gallery Type")
+        misc.fixed_widget_size(self.new_gtype)
+        self.new_gtype.clicked.connect(self.add_gtype)
+        add_gtype_l.addWidget(self.new_gtype)
+        self.gtypes = misc.FlowLayout()
+        add_gtype_l.addLayout(self.gtypes)
+
         add_language = QGroupBox("Language", self)
         main_layout.addWidget(add_language)
         add_language_l = QVBoxLayout(add_language)
@@ -684,6 +788,15 @@ class MiscItems(ItemsBase):
         add_status_l.addWidget(self.new_status)
         self.status = misc.FlowLayout()
         add_status_l.addLayout(self.status)
+
+    def add_gtype(self):
+        gtype = GalleryTypeWidget(self)
+        gtype.remove.connect(self.remove_gtype)
+        self.gtypes.addWidget(gtype)
+
+    def remove_gtype(self, widget):
+        self.gtypes.removeWidget(widget)
+        widget.setParent(None)
 
     def add_language(self):
         lang = self.new_language.text()
@@ -714,7 +827,7 @@ class ItemManager(QWidget):
         main_layout = QVBoxLayout(self)
 
         self.tabwidget = QTabWidget(self)
-        self.tabwidget.addTab(GalleryItems(), "&Gallery")
+        self.tabwidget.addTab(GalleryAddItems(), "&Gallery")
         self.tabwidget.addTab(MiscItems(), "&Misc")
 
         buttonbox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Close)
@@ -731,21 +844,18 @@ class ItemManager(QWidget):
     def accept(self):
         pass
 
+
 class MetadataManager(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent, Qt.Dialog)
         main_layout = QVBoxLayout(self)
 
         self.tabwidget = QTabWidget(self)
-        self.tabwidget.addTab(GalleryItems(), "&Gallery")
-        self.tabwidget.addTab(MiscItems(), "&Misc")
-
-        buttonbox = QDialogButtonBox(QDialogButtonBox.Close)
-        buttonbox.rejected.connect(self.close)
+        self.tabwidget.addTab(GalleryMetadataItems(), "&Queue")
 
         main_layout.addWidget(self.tabwidget)
-        main_layout.addWidget(buttonbox)
         self.setWindowTitle("Metadata Manager")
-        self.setAttribute(Qt.WA_DeleteOnClose)
         self.resize(700, 700)
-        
+
+    def closeEvent(self, event):
+        self.hide()

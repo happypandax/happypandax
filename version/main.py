@@ -16,7 +16,7 @@ import sys, logging, logging.handlers, os, argparse, platform, scandir
 import traceback
 
 from PyQt5.QtWidgets import QApplication
-from PyQt5.QtCore import QFile, Qt
+from PyQt5.QtCore import QFile, Qt, QTranslator, QLocale, QLibraryInfo
 from PyQt5.QtGui import QFontDatabase
 
 import db
@@ -115,6 +115,9 @@ def start(test=False):
     application.setApplicationVersion('v{}'.format(app_constants.vs))
     application.setAttribute(Qt.AA_UseHighDpiPixmaps)
     application.font().setStyleStrategy(application.font().PreferAntialias)
+    qt_translator = QTranslator()
+    qt_translator.load("qt_"+QLocale.system().name(), QLibraryInfo.location(QLibraryInfo.TranslationsPath))
+    application.installTranslator(qt_translator)
 
     log_i('Starting Happypanda...'.format(app_constants.vs))
     app_constants.load_icons()
