@@ -53,13 +53,18 @@ class GalleryScanItem:
 
 class GalleryScan(QObject):
     ""
+    from_path_s = pyqtSignal(str, tuple)
+    scan_path_s = pyqtSignal(str, tuple)
+
     class Options(enum.Enum):
-        pass
+        CheckExist = 0
 
     class Error(enum.Enum):
         PathDoesNotExist = 0
         MultipleGalleryFound = 1
         UnsupportedFile = 2
+        NoGalleryPagesFound = 3
+        GalleryExists = 4
 
     galleryitem = pyqtSignal(GalleryScanItem)
     finished = pyqtSignal()
@@ -67,10 +72,50 @@ class GalleryScan(QObject):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.from_path_s.connect(self.from_path)
+        self.scan_path_s.connect(self.scan_path)
 
-    def _from_dir(self, dir_p):
+    def _from_dir(self, dir_p, *options):
         "Create gallery from folder"
-        pass
+        pages = [x for x in os.listdir(dir_p) if x.endswith(utils.IMG_FILES)]
+        if pages:
+            gallery = db.Gallery()
+            gallery.path = dir_p
+            if self.Options.CheckExist in options and gallery.exists():
+                self.galleryitem.emit(GalleryScanItem(None, self.Error.GalleryExists, dir_p))
+                return
+            head, tail = os.path.split(dir_p)
+            parsed_name = utils.title_parser(tail if tail else head)
+
+            title = db.Title()
+            title.name = parsed_name['title']
+            if parsed_name['language']:
+                language = db.Language()
+                language.name = parsed_name['language']
+                dblang = language.exists(True)
+                if dblang:
+                    language = dblang
+
+                title.language = language
+                gallery.language = language
+
+            gallery.titles.append(title)
+
+            if parsed_name['artist']:
+                artist = db.Artist()
+                artist.name = parsed_name['artist']
+                dbartist = artist.exists(True, True)
+                if dbartist:
+                    artist = dbartist
+                gallery.artists.append(artist)
+
+            dbpages = [db.Page(number=n, name=x, gallery=gallery) for n, x in enumerate(sorted(pages))]
+
+            self.galleryitem.emit(GalleryScanItem(gallery))
+
+        else:
+            self.galleryitem.emit(GalleryScanItem(None, self.Error.NoGalleryPagesFound, dir_p))
+
 
     def _from_archive(self, archive_p):
         "Create gallery from archive"
@@ -84,9 +129,9 @@ class GalleryScan(QObject):
     def _contains_multiple(self, path):
         "Checks if there are multiple gallery in given path"
         if path.endswith(utils.ARCHIVE_FILES):
-            gs = len(utils.check_archive(name))
+            gs = len(utils.check_archive(path))
         elif os.path.isdir(path):
-            g_dirs, g_archs = utils.recursive_gallery_check(name)
+            g_dirs, g_archs = utils.recursive_gallery_check(path)
             gs = len(g_dirs) + len(g_archs)
         return gs > 1
 

@@ -151,6 +151,8 @@ def load_icons():
     global DOTS_ICON
     global ARROW_UP_ICON
     global ARROW_DOWN_ICON
+    global PLAY_ICON
+    global PAUSE_ICON
 
     G_LISTS_ICON = qta.icon("fa.list", color="white")
     ARTISTS_ICON = qta.icon("fa.users", color="white")
@@ -169,6 +171,8 @@ def load_icons():
     DOTS_ICON = qta.icon("fa.ellipsis-h", color="white")
     ARROW_UP_ICON = qta.icon("fa.arrow-up", color="white")
     ARROW_DOWN_ICON = qta.icon("fa.arrow-down", color="white")
+    PLAY_ICON = qta.icon("fa.play", color="white")
+    PAUSE_ICON = qta.icon("fa.pause", color="white")
     
 
 # image paths

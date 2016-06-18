@@ -10,6 +10,7 @@ from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QDesktopWidget, QGroupBox,
 from PyQt5.QtCore import (pyqtSignal, Qt, QPoint, QDate, QThread, QTimer, QSize)
 
 import app_constants
+import db_constants
 import utils
 import gallerydb
 import fetch
@@ -633,8 +634,10 @@ class GalleryAddItems(ItemsBase):
     def __init__(self, parent=None):
         super().__init__(parent)
         thread = QThread(self)
-        scan = fetch.GalleryScan()
-        scan.moveToThread(thread)
+        self.scan = fetch.GalleryScan()
+        self.scan.moveToThread(thread)
+        self.scan.galleryitem.connect(self.add_scanitem)
+        self.session = db_constants.SESSION()
 
         main_layout = QVBoxLayout(self)
         
@@ -644,21 +647,60 @@ class GalleryAddItems(ItemsBase):
         add_box_l = QHBoxLayout()
         add_box_main_l.addLayout(add_box_l)
         add_box_l.setAlignment(Qt.AlignLeft)
-        add_gallery_btn = QPushButton(app_constants.PLUS_ICON, "Add folder/archive")
-        misc.fixed_widget_size(add_gallery_btn)
-        populate_btn = QPushButton(app_constants.PLUS_ICON, "Populate from folder/archive")
-        misc.fixed_widget_size(populate_btn)
-        self.same_namespace = QCheckBox("Put subfolders or -archives in same namespace", self)
+        add_gallery_group = QGroupBox(self)
+        add_gallery_l = QHBoxLayout(add_gallery_group)
+        from_folder = QPushButton(app_constants.PLUS_ICON, "Add folder")
+        from_folder.clicked.connect(lambda: self.file_or_folder('f'))
+        from_archive = QPushButton(app_constants.PLUS_ICON, "Add archive")
+        from_archive.clicked.connect(lambda: self.file_or_folder('a'))
+        misc.fixed_widget_size(from_archive)
+        misc.fixed_widget_size(from_folder)
+        add_gallery_l.addWidget(from_archive)
+        add_gallery_l.addWidget(from_folder)
+        populate_group = QGroupBox(self)
+        populate_group_l = QHBoxLayout(populate_group)
+        populate_folder = QPushButton(app_constants.PLUS_ICON, "Populate from folder")
+        misc.fixed_widget_size(populate_folder)
+        populate_group_l.addWidget(populate_folder)
+        self.same_namespace = QCheckBox("Put folders and/or archives in same namespace", self)
         self.skip_existing = QCheckBox("Skip already existing galleries", self)
-        add_box_l.addWidget(add_gallery_btn)
-        add_box_l.addWidget(misc.Line("v"))
-        add_box_l.addWidget(populate_btn)
-        add_box_main_l.addWidget(self.same_namespace)
+        populate_group_l.addWidget(self.same_namespace)
+        add_box_l.addWidget(add_gallery_group)
+        add_box_l.addWidget(populate_group)
         add_box_main_l.addWidget(self.skip_existing)
 
         self.item_list = ItemList(self)
         self.item_list.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
         main_layout.addWidget(self.item_list, 2)
+
+    def file_or_folder(self, mode):
+        """
+        Pass which mode to open the folder explorer in:
+        'f': directory
+        'a': files
+        Or pass a predefined path
+        """
+        if mode == 'a':
+            name = QFileDialog.getOpenFileName(self, 'Choose archive',
+                                              filter=utils.FILE_FILTER)
+            name = name[0]
+        elif mode == 'f':
+            name = QFileDialog.getExistingDirectory(self, 'Choose folder')
+        elif mode:
+            if os.path.exists(mode):
+                name = mode
+            else:
+                return None
+        if name:
+            pass
+        self.scan.from_path_s.emit(name, tuple())
+
+    def add_scanitem(self, item):
+        assert isinstance(item, fetch.GalleryScanItem)
+        self.session.add(item.gallery)
+        self.session.commit()
+        print(item.gallery)
+       
 
 class GalleryMetadataWidget(QWidget):
     up = pyqtSignal(object)
@@ -706,14 +748,11 @@ class GalleryMetadataItems(ItemsBase):
         settings_btn_l.setAlignment(Qt.AlignRight)
         settings_l.addLayout(settings_btn_l)
         main_layout.addLayout(settings_l)
-        fetch_btn = QPushButton("Start")
+        fetch_btn = QPushButton("Fetch")
         misc.fixed_widget_size(fetch_btn)
-        stop_btn = QPushButton("Stop")
-        misc.fixed_widget_size(stop_btn)
         self.auto_fetch = QCheckBox("Start fetching automatically", self)
         settings_btn_l.addWidget(self.auto_fetch, 0, Qt.AlignLeft)
         settings_btn_l.addWidget(fetch_btn, 0, Qt.AlignRight)
-        settings_btn_l.addWidget(stop_btn, 0, Qt.AlignRight)
 
         self.item_list = ItemList(self)
         self.item_list.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)

@@ -28,6 +28,25 @@ class BaseID:
 class NameMixin:
     name = Column(String, nullable=False, default='', unique=True)
 
+    def exists(self, full=False, strict=False):
+        "Full: queries for the full object and returns it"
+        sess = db_constants.SESSION()
+        if full:
+            if strict:
+                e = sess.query(self.__class__).filter_by(name=self.name).scalar()
+            else:
+                e = sess.query(self.__class__).filter(self.__class__.name.ilike("%{}%".format(self.name))).scalar()
+        else:
+            if strict:
+                e = sess.query(self.__class__.id).filter_by(name=self.name).scalar() is not None
+            else:
+                e = sess.query(self.__class__.id).filter(self.__class__.name.ilike("%{}%".format(self.name))).scalar() is not None
+        sess.close()
+        return e
+
+    def __repr__(self):
+        return "<{}(ID: {}, Name: {})>".format(self.__class__.__name__, self.id, self.name)
+
 class ProfileMixin:
 
     def get_profile(self, profile_type):
@@ -125,9 +144,6 @@ class History(Base):
 class Hash(NameMixin, Base):
     __tablename__ = 'hash'
 
-    def __repr__(self):
-        return "Hash ID:{}Hash:{}".format(self.id, self.name)
-
 class NamespaceTags(Base):
     __tablename__ = 'namespace_tags'
 
@@ -147,16 +163,10 @@ class Tag(NameMixin, Base):
 
     namespaces = relationship("Namespace", secondary='namespace_tags', back_populates='tags', lazy="dynamic")
 
-    def __repr__(self):
-        return "ID:{} -Tag:{}".format(self.id, self.name)
-
 class Namespace(NameMixin, Base):
     __tablename__ = 'namespace'
 
     tags = relationship("Tag", secondary='namespace_tags', back_populates='namespaces', lazy="dynamic")
-
-    def __repr__(self):
-        return "ID:{} - nNamespace:{}".format(self.id, self.name)
 
 gallery_artists = Table('gallery_artists', Base.metadata,
                         Column('artist_id', Integer, ForeignKey('artist.id')),
@@ -213,24 +223,15 @@ class Language(NameMixin, Base):
 
     galleries = relationship("Gallery", back_populates='language')
 
-    def __repr__(self):
-        return "ID:{} - Language:{}".format(self.id, self.name)
-
 class GalleryType(NameMixin, Base):
     __tablename__ = 'type'
 
     galleries = relationship("Gallery", back_populates='type')
 
-    def __repr__(self):
-        return "ID:{} - Type:{}".format(self.id, self.name)
-
 class Status(NameMixin, Base):
     __tablename__ = 'status'
 
     galleries = relationship("Gallery", back_populates='status')
-
-    def __repr__(self):
-        return "ID:{} - Status:{}".format(self.id, self.name)
 
 gallery_tags = Table('gallery_tags', Base.metadata,
                         Column('namespace_tag_id', Integer, ForeignKey('namespace_tags.id')),
@@ -305,6 +306,8 @@ class Gallery(ProfileMixin, Base):
         self._title = None
         self.rating = 0
         self.file_type = "folder"
+        self.path = ''
+        self.in_archive = False
 
     @property
     def title(self):
@@ -316,6 +319,39 @@ class Gallery(ProfileMixin, Base):
         if self._title:
             self._title.name = t
             # save object here.
+
+    def exists(self):
+        "Checks if gallery exists by path"
+        #TODO: may want to return the found gallery to inform user
+        e = False
+        g = self.__class__
+        if self.path:
+            head, tail = os.path.split(self.path)
+            p, ext = os.path.splitext(tail if tail else head)
+            sess = db_constants.SESSION()
+            if self.in_archive:
+                head, tail = os.path.split(self.path_in_archive)
+                p_a = tail if tail else head
+                e = sess.query(self.__class__.id).filter(and_(g.path.ilike("%{}%".format(p)),
+                                                          g.path_in_archive.ilike("%{}%".format(p_a)))).scalar() is not None
+            else:
+                e = sess.query(self.__class__.id).filter(and_(g.path.ilike("%{}%".format(p)))).scalar() is not None
+            sess.close()
+        else:
+            log_w("Could not query for existence because no path was set.")
+        return e
+
+    def __repr__(self):
+        return """
+<Gallery - {}>
+Titles: {}
+Artists: {}
+Path: {}
+In Archive: {}
+Path In Archive: {}
+language: {}
+<Gallery END - {}>
+""".format(self.id, self.titles, self.artists, self.path, self.in_archive, self.path_in_archive, self.language, self.id)
 
     def _keyword_search(self, ns, tag, args=[]):
         term = ''
@@ -492,6 +528,7 @@ page_profiles = profile_association("page")
 class Page(ProfileMixin, Base):
     __tablename__ = 'page'
     number = Column(Integer, nullable=False, default=0)
+    name = Column(String, nullable=False, default='')
     hash_id = Column(Integer, ForeignKey('hash.id'))
     gallery_id = Column(Integer, ForeignKey('gallery.id'), nullable=False)
 
@@ -502,10 +539,12 @@ class Page(ProfileMixin, Base):
     def __repr__(self):
         return "Page ID:{}\nPage:{}\nProfile:{}\nPageHash:{}".format(self.id, self.number, self.profile, self.hash)
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-        self.file_type = "jpg"
+    @property
+    def file_type(self):
+        ext = ''
+        if self.name:
+            _, ext = os.path.splitext(self.name)
+        return ext.lower()
 
 class Title(Base):
     __tablename__ = 'title'
@@ -621,11 +660,42 @@ if __name__ == '__main__':
             engine = create_engine("sqlite:///dbunittest.db")
             Session.configure(bind=engine)
             Base.metadata.create_all(engine)
-
+            db_constants.SESSION = Session
             self.session = Session()
             self.gallery = Gallery()
             self.session.add(self.gallery)
             self.session.commit()
+
+        def test_exists(self):
+            self.gallery.artists.append(Artist(name="lol"))
+            self.session.commit()
+            self.assertEqual(self.session.query(Artist).count(), 1)
+
+            artist = Artist(name="lol")
+            self.assertTrue(artist.exists())
+            artist.name = "lol2"
+            self.assertFalse(artist.exists())
+
+            p = "hello/here.zip"
+            p_a = "gallery"
+            self.gallery.path = p
+            self.session.commit()
+            g = Gallery()
+            g.path = p
+            self.assertTrue(g.exists())
+            g.path = "nope"
+            self.assertFalse(g.exists())
+            
+            self.gallery.path_in_archive = p_a
+            self.session.commit()
+            g.path = p
+            g.path_in_archive = p_a
+            g.in_archive = True
+            self.assertTrue(g.exists())
+            g.path_in_archive = "nope"
+            self.assertFalse(g.exists())
+
+
 
         def test_types(self):
             self.gallery.title = ""
