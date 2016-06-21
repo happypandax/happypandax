@@ -551,24 +551,33 @@ def recursive_gallery_check(path):
     gallery_arch = []
     found_paths = 0
     for root, subfolders, files in scandir.walk(path):
+        log_d("Walking in: {}".format(root))
         if files:
+            log_d("Found {} files".format(len(files)))
             for f in files:
                 if f.endswith(ARCHIVE_FILES):
                     arch_path = os.path.join(root, f)
                     for g in check_archive(arch_path):
                         found_paths += 1
                         gallery_arch.append((g, arch_path))
-                                    
+                else:
+                    log_d("File not supported: {}".format(f))
+                            
             if not subfolders:
+                log_d("Entered folder: {}".format(root))
                 if not files:
+                    log_d("Folder has no files, skipping...")
                     continue
                 gallery_probability = len(files)
                 for f in files:
                     if not f.lower().endswith(IMG_FILES):
                         gallery_probability -= 1
+
                 if gallery_probability >= (len(files) * 0.8):
                     found_paths += 1
                     gallery_dirs.append(root)
+                else:
+                    log_d("Gallery probability too low, skipping...")
     log_i('Found {} in {}'.format(found_paths, path).encode(errors='ignore'))
     return gallery_dirs, gallery_arch
 

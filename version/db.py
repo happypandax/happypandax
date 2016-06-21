@@ -318,7 +318,6 @@ class Gallery(ProfileMixin, Base):
     def title(self, t):
         if self._title:
             self._title.name = t
-            # save object here.
 
     def exists(self):
         "Checks if gallery exists by path"

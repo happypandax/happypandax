@@ -601,27 +601,49 @@ class GalleryDialog(QWidget):
     def reject_edit(self):
         self.delayed_close()
 
-class Item:
+class Item(QWidget):
     def __init__(self, gallery):
+        super().__init__()
         assert isinstance(gallery, db.Gallery)
-        self.title = QTableWidgetItem(gallery.title)
+        mainlayout = QHBoxLayout(self)
+        self.profile = QLabel(self)
+        self.profile.setFixedWidth(50)
+        mainlayout.addWidget(self.profile)
+
+        rightlayout = QVBoxLayout()
+        mainlayout.addLayout(rightlayout)
+
+        self.title = QLabel(gallery.title, self)
+        self.title.setWordWrap(True)
+        if gallery.in_archive:
+            self.path = QLabel("In archive: {}".format(gallery.path), self)
+        else:
+            self.path = QLabel(gallery.path, self)
+        self.path.setWordWrap(True)
+        rightlayout.addWidget(self.title)
+        rightlayout.addWidget(self.path)
+        self.setFixedHeight(100)
+
 
 class ItemList(misc.DefaultTableWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setColumnCount(3)
-        self.setIconSize(QSize(50, 100))
+        self.setColumnCount(2)
+        self.setIconSize(QSize(20, 20))
         self.setHorizontalHeaderLabels(
-	        [' ', 'Title', 'Status'])
-        self.horizontalHeader().setSectionResizeMode(1, self.horizontalHeader().Stretch)
-        self.horizontalHeader().setSectionResizeMode(1, self.horizontalHeader().ResizeToContents)
-        self.horizontalHeader().setSectionResizeMode(2, self.horizontalHeader().ResizeToContents)
+	        ['Status', 'Gallery'])
+        self.horizontalHeader().setSectionResizeMode(0, self.horizontalHeader().ResizeToContents)
+        self.horizontalHeader().setStretchLastSection(True)
+        v_header = self.verticalHeader()
+        v_header.hide()
 
-    def add_item(self, item):
-        assert isinstance(item, Item)
-        self.insertRow(self.rowCount()+1)
-        row = self.rowCount()-1
-        self.setItem(row, 1, item.title)
+    def add_item(self, col1item, col2item):
+        assert isinstance(col1item, QTableWidgetItem)
+        assert isinstance(col2item, QTableWidgetItem)
+        self.insertRow(0)
+        self.setItem(0, 0, col1item)
+        self.setItem(0, 1, col2item)
+        self.resizeColumnToContents(0)
 
 class ItemsBase(QWidget):
     def __init__(self, parent=None):
@@ -631,13 +653,20 @@ class ItemsBase(QWidget):
         return
 
 class GalleryAddItems(ItemsBase):
+    from_path_s = pyqtSignal(str, tuple)
+
+    scan_path_s = pyqtSignal(str, tuple)
+
     def __init__(self, parent=None):
         super().__init__(parent)
         thread = QThread(self)
         self.scan = fetch.GalleryScan()
         self.scan.moveToThread(thread)
+        self.scan.scan_finished.connect(self.toggle_progress)
         self.scan.galleryitem.connect(self.add_scanitem)
         self.session = db_constants.SESSION()
+        self.scan_path_s.connect(self.scan.scan_path)
+        self.from_path_s.connect(self.scan.from_path)
 
         main_layout = QVBoxLayout(self)
         
@@ -657,29 +686,43 @@ class GalleryAddItems(ItemsBase):
         misc.fixed_widget_size(from_folder)
         add_gallery_l.addWidget(from_archive)
         add_gallery_l.addWidget(from_folder)
-        populate_group = QGroupBox(self)
-        populate_group_l = QHBoxLayout(populate_group)
+        self.populate_group = QGroupBox(self)
+        populate_group_l = QHBoxLayout(self.populate_group)
         populate_folder = QPushButton(app_constants.PLUS_ICON, "Populate from folder")
+        populate_folder.clicked.connect(lambda: self.file_or_folder('f', True))
         misc.fixed_widget_size(populate_folder)
         populate_group_l.addWidget(populate_folder)
         self.same_namespace = QCheckBox("Put folders and/or archives in same namespace", self)
         self.skip_existing = QCheckBox("Skip already existing galleries", self)
         populate_group_l.addWidget(self.same_namespace)
         add_box_l.addWidget(add_gallery_group)
-        add_box_l.addWidget(populate_group)
+        self.populate_progress = QProgressBar(self)
+        self.populate_progress.setMaximum(0)
+        add_box_l.addWidget(self.populate_progress)
+        self.populate_progress.hide()
+        add_box_l.addWidget(self.populate_group)
         add_box_main_l.addWidget(self.skip_existing)
 
         self.item_list = ItemList(self)
         self.item_list.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
         main_layout.addWidget(self.item_list, 2)
 
-    def file_or_folder(self, mode):
+    def toggle_progress(self):
+        if self.populate_progress.isVisible():
+            self.populate_progress.hide()
+            self.populate_group.show()
+        else:
+            self.populate_group.hide()
+            self.populate_progress.show()
+
+    def file_or_folder(self, mode, scan=False):
         """
         Pass which mode to open the folder explorer in:
         'f': directory
         'a': files
         Or pass a predefined path
         """
+        name = None
         if mode == 'a':
             name = QFileDialog.getOpenFileName(self, 'Choose archive',
                                               filter=utils.FILE_FILTER)
@@ -691,15 +734,17 @@ class GalleryAddItems(ItemsBase):
                 name = mode
             else:
                 return None
-        if name:
-            pass
-        self.scan.from_path_s.emit(name, tuple())
+        if not name:
+            return
+        if scan:
+            self.toggle_progress()
+            self.scan_path_s.emit(name, tuple())
+        else:
+            self.from_path_s.emit(name, tuple())
 
     def add_scanitem(self, item):
         assert isinstance(item, fetch.GalleryScanItem)
-        self.session.add(item.gallery)
-        self.session.commit()
-        print(item.gallery)
+        self.item_list.add_item(QTableWidgetItem(app_constants.CROSS_ICON, ''), QTableWidgetItem(item.gallery.title))
        
 
 class GalleryMetadataWidget(QWidget):

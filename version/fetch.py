@@ -53,8 +53,6 @@ class GalleryScanItem:
 
 class GalleryScan(QObject):
     ""
-    from_path_s = pyqtSignal(str, tuple)
-    scan_path_s = pyqtSignal(str, tuple)
 
     class Options(enum.Enum):
         CheckExist = 0
@@ -68,16 +66,38 @@ class GalleryScan(QObject):
 
     galleryitem = pyqtSignal(GalleryScanItem)
     finished = pyqtSignal()
-    scan = pyqtSignal()
+    scan_finished = pyqtSignal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.from_path_s.connect(self.from_path)
-        self.scan_path_s.connect(self.scan_path)
+
+    def _make_gallery(self, gallery, parsed_name):
+        title = db.Title()
+        title.name = parsed_name['title']
+        if parsed_name['language']:
+            language = db.Language()
+            language.name = parsed_name['language']
+            dblang = language.exists(True)
+            if dblang:
+                language = dblang
+
+            title.language = language
+            gallery.language = language
+
+        gallery.titles.append(title)
+
+        if parsed_name['artist']:
+            artist = db.Artist()
+            artist.name = parsed_name['artist']
+            dbartist = artist.exists(True, True)
+            if dbartist:
+                artist = dbartist
+            gallery.artists.append(artist)
+        return gallery
 
     def _from_dir(self, dir_p, *options):
         "Create gallery from folder"
-        pages = [x for x in os.listdir(dir_p) if x.endswith(utils.IMG_FILES)]
+        pages = [x.name for x in os.scandir(dir_p) if x.name.endswith(utils.IMG_FILES)]
         if pages:
             gallery = db.Gallery()
             gallery.path = dir_p
@@ -87,27 +107,7 @@ class GalleryScan(QObject):
             head, tail = os.path.split(dir_p)
             parsed_name = utils.title_parser(tail if tail else head)
 
-            title = db.Title()
-            title.name = parsed_name['title']
-            if parsed_name['language']:
-                language = db.Language()
-                language.name = parsed_name['language']
-                dblang = language.exists(True)
-                if dblang:
-                    language = dblang
-
-                title.language = language
-                gallery.language = language
-
-            gallery.titles.append(title)
-
-            if parsed_name['artist']:
-                artist = db.Artist()
-                artist.name = parsed_name['artist']
-                dbartist = artist.exists(True, True)
-                if dbartist:
-                    artist = dbartist
-                gallery.artists.append(artist)
+            gallery = self._make_gallery(gallery, parsed_name)
 
             dbpages = [db.Page(number=n, name=x, gallery=gallery) for n, x in enumerate(sorted(pages))]
 
@@ -116,12 +116,30 @@ class GalleryScan(QObject):
         else:
             self.galleryitem.emit(GalleryScanItem(None, self.Error.NoGalleryPagesFound, dir_p))
 
-
-    def _from_archive(self, archive_p):
+    def _from_archive(self, archive_p, path_in_archive='', *options):
         "Create gallery from archive"
         try:
             with utils.ArchiveFile(archive_p) as archive:
-                pass
+                pages = [x for x in archive.dir_contents(path_in_archive) if x.endswith(utils.IMG_FILES)]
+                full_path = os.path.join(archive_p, path_in_archive)
+                if pages:
+                    gallery = db.Gallery()
+                    gallery.path = archive_p
+                    gallery.path_in_archive = path_in_archive
+                    if self.Options.CheckExist in options and gallery.exists():
+                        self.galleryitem.emit(GalleryScanItem(None, self.Error.GalleryExists, full_path))
+                        return
+                    head, tail = os.path.split(archive_p if not path_in_archive else path_in_archive)
+                    parsed_name = utils.title_parser(tail if tail else head)
+
+                    gallery = self._make_gallery(gallery, parsed_name)
+
+                    dbpages = [db.Page(number=n, name=x, gallery=gallery) for n, x in enumerate(sorted(pages))]
+
+                    self.galleryitem.emit(GalleryScanItem(gallery))
+                else:
+                    self.galleryitem.emit(GalleryScanItem(None, self.Error.NoGalleryPagesFound, full_path))
+
         except (app_constants.CreateArchiveFail, app_constants.FileNotFoundInArchive) as e:
              self.galleryitem.emit(GalleryScanItem(None, e.args, path))
 
@@ -135,8 +153,9 @@ class GalleryScan(QObject):
             gs = len(g_dirs) + len(g_archs)
         return gs > 1
 
-    def from_path(self, path, args):
+    def from_path(self, path, args=tuple()):
         log_i("GalleryScan - from path: {}".format(path))
+        error = None
         if os.path.exists(path):
             if not self._contains_multiple(path):
                 if path.endswith(utils.ARCHIVE_FILES):
@@ -144,23 +163,55 @@ class GalleryScan(QObject):
                 elif os.path.isdir(path):
                     self._from_dir(path)
                 else:
-                    self.galleryitem.emit(GalleryScanItem(None, self.Error.UnsupportedFile, path))
+                    error = self.Error.UnsupportedFile
             else:
-                self.galleryitem.emit(GalleryScanItem(None, self.Error.MultipleGalleryFound, path))
+                error = self.Error.MultipleGalleryFound
         else:
-            self.galleryitem.emit(GalleryScanItem(None, self.Error.PathDoesNotExist, path))
+            error = self.Error.PathDoesNotExist
+        if error is not None:
+            self.galleryitem.emit(GalleryScanItem(None, error, path))
         self.finished.emit()
 
-    def scan_path(self, path, args):
+    def scan_path(self, path, args=tuple()):
         log_i("GalleryScan - scan path: {}".format(path))
+        error = None
         if os.path.exists(path):
             if path.endswith(utils.ARCHIVE_FILES):
-                self._from_archive(path)
+                gs = utils.check_archive(path)
             elif os.path.isdir(path):
-                self._from_dir(path)
+                for root, subfolders, files in scandir.walk(path):
+                    log_d("Walking in: {}".format(root))
+                    if files:
+                        log_d("Found {} files".format(len(files)))
+                        for f in files:
+                            if f.endswith(ARCHIVE_FILES):
+                                arch_path = os.path.join(root, f)
+                                for g in check_archive(arch_path):
+                                    self._from_archive(g, arch_path)
+                            else:
+                                log_d("File not supported: {}".format(f))
+                            
+                        if not subfolders:
+                            log_d("Entered folder: {}".format(root))
+                            if not files:
+                                log_d("Folder has no files, skipping...")
+                                continue
+                            gallery_probability = len(files)
+                            for f in files:
+                                if not f.lower().endswith(IMG_FILES):
+                                    gallery_probability -= 1
+
+                            if gallery_probability >= (len(files) * 0.8):
+                                self._from_dir(root)
+                            else:
+                                log_d("Gallery probability too low, skipping...")
+
         else:
-            self.galleryitem.emit(GalleryScanItem(None, self.Error.PathDoesNotExist, path))
+            error = self.Error.PathDoesNotExist
+        if error is not None:
+            self.galleryitem.emit(GalleryScanItem(None, error, path))
         self.finished.emit()
+        self.scan_finished.emit()
 
 class Fetch(QObject):
     """
