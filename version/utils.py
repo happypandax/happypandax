@@ -769,12 +769,33 @@ def get_gallery_img(gallery_or_path, chap_number=0):
     else:
         log_e("Could not get gallery image")
 
-def tag_to_string(gallery_tag, simple=False):
+def nstag_to_dict(namespacetags):
+    """
+    """
+    tags_dict = {}
+    for nstag in namespacetags:
+        ns_name = nstag.namespace.name
+        if not ns_name in tags:
+            tags_dict[ns_name] = tags
+        else:
+            tags = tags_dict[ns_name]
+        tag_name = nstag.tag.name
+        if not tag_name in tags:
+            tags.append(tag_name)
+    return tags_dict
+
+def dict_to_nstag(nstags_dict):
+    """
+    """
+    pass
+
+def nstags_to_string(namespacetags, simple=False):
     """
     Takes gallery tags and converts it to string, returns string
     if simple is set to True, returns a CSV string, else a dict-like string
     """
-    assert isinstance(gallery_tag, dict), "Please provide a dict like this: {'namespace':['tag1']}"
+    #assert isinstance(gallery_tag, dict), "Please provide a dict like this: {'namespace':['tag1']}"
+
     string = ""
     if not simple:
         for n, namespace in enumerate(sorted(gallery_tag), 1):
@@ -817,7 +838,7 @@ def tag_to_string(gallery_tag, simple=False):
 
     return string
 
-def tag_to_dict(string, ns_capitalize=True):
+def string_to_nstags(string, ns_capitalize=True):
     "Receives a string of tags and converts it to a dict of tags"
     namespace_tags = {'default':[]}
     level = 0 # so we know if we are in a list
