@@ -371,8 +371,11 @@ class ArchiveFile():
                     log_w('Bad file found in archive {}'.format(filepath.encode(errors='ignore')))
                     raise app_constants.CreateArchiveFail("Bad file found in archive")
             else:
-                log_e('Archive: Unsupported file format')
-                raise app_constants.CreateArchiveFail("Unsupported file format")
+                head, ext = os.path.splitext(filepath)
+                ext = ext if ext else head
+
+                log_e('Archive: Unsupported file format: ' + ext)
+                raise app_constants.CreateArchiveFail("Unsupported file format: " + ext)
         except:
             log.exception('Create archive: FAIL')
             raise app_constants.CreateArchiveFail("Failed to create archive")

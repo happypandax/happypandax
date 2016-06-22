@@ -207,13 +207,20 @@ class List(ProfileMixin, NameMixin, Base):
     galleries = relationship("Gallery", secondary=gallery_lists, back_populates='lists', lazy="dynamic")
     profiles = relationship("Profile", secondary=list_profiles, cascade="all")
 
+class Status(NameMixin, Base):
+    __tablename__ = 'status'
+
+    gnamespaces = relationship("GalleryNamespace", back_populates='status')
+
 g_ns_profiles = profile_association("gallery_namespace")
 
 class GalleryNamespace(ProfileMixin, NameMixin, Base):
     __tablename__ = 'gallery_namespace'
+    status_id = Column(Integer, ForeignKey('status.id'))
 
     galleries = relationship("Gallery", back_populates="parent", lazy="dynamic", cascade="all, delete-orphan")
     profiles = relationship("Profile", secondary=g_ns_profiles, cascade="all")
+    status = relationship("Status", back_populates="gnamespaces", cascade="save-update, merge, refresh-expire")
 
     def __repr__(self):
         return "ID:{} - G-Namespace:{}".format(self.id, self.name)
@@ -227,11 +234,6 @@ class GalleryType(NameMixin, Base):
     __tablename__ = 'type'
 
     galleries = relationship("Gallery", back_populates='type')
-
-class Status(NameMixin, Base):
-    __tablename__ = 'status'
-
-    galleries = relationship("Gallery", back_populates='status')
 
 gallery_tags = Table('gallery_tags', Base.metadata,
                         Column('namespace_tag_id', Integer, ForeignKey('namespace_tags.id')),
@@ -269,7 +271,6 @@ class Gallery(ProfileMixin, Base):
     number = Column(Integer, nullable=False, default=0)
     in_archive = Column(Boolean, default=False)
     type_id = Column(Integer, ForeignKey('type.id'))
-    status_id = Column(Integer, ForeignKey('status.id'))
     language_id = Column(Integer, ForeignKey('language.id'))
     collection_id = Column(Integer, ForeignKey('collection.id'))
     parent_id = Column(Integer, ForeignKey('gallery_namespace.id'))
@@ -281,7 +282,6 @@ class Gallery(ProfileMixin, Base):
     collection = relationship("Collection", back_populates="galleries", cascade="save-update, merge, refresh-expire")
     urls = relationship("GalleryUrl", back_populates="gallery", cascade="all,delete-orphan")
     language = relationship("Language", back_populates="galleries", cascade="save-update, merge, refresh-expire")
-    status = relationship("Status", back_populates="galleries", cascade="save-update, merge, refresh-expire")
     type = relationship("GalleryType", back_populates="galleries", cascade="save-update, merge, refresh-expire")
     circles = relationship("Circle", secondary=gallery_circles, back_populates='galleries', lazy="dynamic", cascade="save-update, merge, refresh-expire")
     artists = relationship("Artist", secondary=gallery_artists, back_populates='galleries', lazy="dynamic", cascade="save-update, merge, refresh-expire")
@@ -312,7 +312,13 @@ class Gallery(ProfileMixin, Base):
     @property
     def title(self):
         "Returns default title"
-        return 'Gallery'
+        if not self._title:
+            if len(self.titles) == 1:
+                self._title = self.titles[0]
+            else:
+                # TODO: title in default language here
+                pass
+        return self._title
 
     @title.setter
     def title(self, t):
@@ -1210,34 +1216,41 @@ if __name__ == '__main__':
             self.session = Session()
 
             self.status = Status()
-            self.status.name = "Con1"
+            self.status.name = "Stat1"
+            self.galleryns = [GalleryNamespace(name="gns"+str(x)) for x in range(2)]
             self.galleries = [Gallery() for x in range(10)]
-            self.status.galleries.extend(self.galleries)
+            self.galleryns[0].galleries.extend(self.galleries[:5])
+            self.galleryns[1].galleries.extend(self.galleries[5:])
+            for gns in self.galleryns:
+                gns.status = self.status
+            self.session.add_all(self.galleryns)
             self.session.add(self.status)
             self.session.commit()
             self.assertEqual(self.session.query(Status).count(), 1)
-            self.assertEqual(self.status.id, self.galleries[0].status_id)
+            self.assertEqual(self.session.query(GalleryNamespace).count(), 2)
+            self.assertEqual(self.session.query(Gallery).count(), 10)
+            self.assertEqual(self.status, self.galleryns[0].status)
 
         def test_delete(self):
             self.session.query(Status).delete()
             self.session.commit()
 
-            self.assertIsNone(self.galleries[0].status)
-            self.assertEqual(self.session.query(Gallery).count(), 10)
+            self.assertIsNone(self.galleryns[0].status)
+            self.assertEqual(self.session.query(GalleryNamespace).count(), 2)
             self.assertEqual(self.session.query(Status).count(), 0)
 
         def test_delete2(self):
-            self.session.delete(self.galleries[0])
+            self.session.delete(self.galleryns[0])
             self.session.commit()
 
-            self.assertEqual(self.session.query(Gallery).count(), 9)
+            self.assertEqual(self.session.query(GalleryNamespace).count(), 1)
             self.assertEqual(self.session.query(Status).count(), 1)
 
         def test_orphans(self):
-            self.session.query(Gallery).delete()
+            self.session.query(GalleryNamespace).delete()
             self.session.commit()
 
-            self.assertEqual(self.session.query(Gallery).count(), 0)
+            self.assertEqual(self.session.query(GalleryNamespace).count(), 0)
             self.assertEqual(self.session.query(Status).count(), 1)
 
         def tearDown(self):

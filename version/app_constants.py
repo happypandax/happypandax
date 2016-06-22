@@ -145,6 +145,7 @@ def load_icons():
     global INBOX_ICON
     global SEARCH_ICON
     global CROSS_ICON
+    global CROSS_RED_ICON
     global MANAGER_ICON
     global DOWNLOAD_ICON
     global GALLERY_ICON
@@ -153,6 +154,7 @@ def load_icons():
     global ARROW_DOWN_ICON
     global PLAY_ICON
     global PAUSE_ICON
+    global CHECK_ICON
 
     G_LISTS_ICON = qta.icon("fa.list", color="white")
     ARTISTS_ICON = qta.icon("fa.users", color="white")
@@ -165,6 +167,7 @@ def load_icons():
     INBOX_ICON = qta.icon("fa.inbox", color="white")
     SEARCH_ICON = qta.icon("fa.search", color="white")
     CROSS_ICON = qta.icon("fa.times", color="black")
+    CROSS_RED_ICON = qta.icon("fa.times", color="red")
     MANAGER_ICON = qta.icon("fa.tasks", color="white")
     DOWNLOAD_ICON = qta.icon("fa.download", color="white")
     GALLERY_ICON = qta.icon("fa.th-large", color="white")
@@ -173,6 +176,7 @@ def load_icons():
     ARROW_DOWN_ICON = qta.icon("fa.arrow-down", color="white")
     PLAY_ICON = qta.icon("fa.play", color="white")
     PAUSE_ICON = qta.icon("fa.pause", color="white")
+    CHECK_ICON = qta.icon("fa.check", color="green")
     
 
 # image paths

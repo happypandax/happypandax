@@ -141,7 +141,7 @@ class GalleryScan(QObject):
                     self.galleryitem.emit(GalleryScanItem(None, self.Error.NoGalleryPagesFound, full_path))
 
         except (app_constants.CreateArchiveFail, app_constants.FileNotFoundInArchive) as e:
-             self.galleryitem.emit(GalleryScanItem(None, e.args, path))
+             self.galleryitem.emit(GalleryScanItem(None, e.args, os.path.join(archive_p, path_in_archive)))
 
 
     def _contains_multiple(self, path):
@@ -153,7 +153,7 @@ class GalleryScan(QObject):
             gs = len(g_dirs) + len(g_archs)
         return gs > 1
 
-    def from_path(self, path, args=tuple()):
+    def from_path(self, path, *options):
         log_i("GalleryScan - from path: {}".format(path))
         error = None
         if os.path.exists(path):
@@ -172,7 +172,7 @@ class GalleryScan(QObject):
             self.galleryitem.emit(GalleryScanItem(None, error, path))
         self.finished.emit()
 
-    def scan_path(self, path, args=tuple()):
+    def scan_path(self, path, *options):
         log_i("GalleryScan - scan path: {}".format(path))
         error = None
         if os.path.exists(path):
@@ -184,10 +184,10 @@ class GalleryScan(QObject):
                     if files:
                         log_d("Found {} files".format(len(files)))
                         for f in files:
-                            if f.endswith(ARCHIVE_FILES):
+                            if f.endswith(utils.ARCHIVE_FILES):
                                 arch_path = os.path.join(root, f)
-                                for g in check_archive(arch_path):
-                                    self._from_archive(g, arch_path)
+                                for g in utils.check_archive(arch_path):
+                                    self._from_archive(arch_path, g)
                             else:
                                 log_d("File not supported: {}".format(f))
                             
@@ -198,7 +198,7 @@ class GalleryScan(QObject):
                                 continue
                             gallery_probability = len(files)
                             for f in files:
-                                if not f.lower().endswith(IMG_FILES):
+                                if not f.lower().endswith(utils.IMG_FILES):
                                     gallery_probability -= 1
 
                             if gallery_probability >= (len(files) * 0.8):

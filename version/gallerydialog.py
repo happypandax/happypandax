@@ -653,20 +653,21 @@ class ItemsBase(QWidget):
         return
 
 class GalleryAddItems(ItemsBase):
-    from_path_s = pyqtSignal(str, tuple)
-
-    scan_path_s = pyqtSignal(str, tuple)
+    from_path = pyqtSignal(str, tuple)
+    scan_path = pyqtSignal(str, tuple)
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        thread = QThread(self)
+        self._thread = QThread(self)
+        self._thread.start()
+        self.session = db_constants.SESSION()
         self.scan = fetch.GalleryScan()
-        self.scan.moveToThread(thread)
+
+        self.scan.moveToThread(self._thread)
         self.scan.scan_finished.connect(self.toggle_progress)
         self.scan.galleryitem.connect(self.add_scanitem)
-        self.session = db_constants.SESSION()
-        self.scan_path_s.connect(self.scan.scan_path)
-        self.from_path_s.connect(self.scan.from_path)
+        self.scan_path.connect(self.scan.scan_path)
+        self.from_path.connect(self.scan.from_path)
 
         main_layout = QVBoxLayout(self)
         
@@ -738,13 +739,32 @@ class GalleryAddItems(ItemsBase):
             return
         if scan:
             self.toggle_progress()
-            self.scan_path_s.emit(name, tuple())
+            self.scan_path.emit(name, tuple())
         else:
-            self.from_path_s.emit(name, tuple())
+            self.from_path.emit(name, tuple())
+
+    def closeEvent(self, ev):
+        self._thread.exit()
+        self._thread.deleteLater()
+        return super().closeEvent(ev)
 
     def add_scanitem(self, item):
         assert isinstance(item, fetch.GalleryScanItem)
-        self.item_list.add_item(QTableWidgetItem(app_constants.CROSS_ICON, ''), QTableWidgetItem(item.gallery.title))
+        print("Added 1 item")
+        t_item = QTableWidgetItem()
+        icon = app_constants.CHECK_ICON
+        if item.error:
+            icon = app_constants.CROSS_RED_ICON
+        if item.gallery:
+            t_item.setText(item.gallery.title.name)
+            t_item.setData(app_constants.ITEM_ROLE, item.gallery)
+        else:
+            t_item.setText("Failed adding gallery: {}".format(item.string_error()))
+
+        self.item_list.add_item(QTableWidgetItem(icon, ''), t_item)
+
+    def items(self):
+        print(self.item_list.columnAt(1))
        
 
 class GalleryMetadataWidget(QWidget):
