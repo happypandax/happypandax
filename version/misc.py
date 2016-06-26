@@ -51,7 +51,7 @@ from PyQt5.QtWidgets import (QWidget, QProgressBar, QLabel,
                              QTableWidgetItem, QTableView, QSplitter,
                              QSplitterHandle, QStyledItemDelegate, QStyleOption)
 
-from utils import (tag_to_string, tag_to_dict, title_parser, ARCHIVE_FILES,
+from utils import (title_parser, ARCHIVE_FILES,
                      ArchiveFile, IMG_FILES)
 from executors import Executors
 import utils

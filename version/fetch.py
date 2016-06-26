@@ -77,9 +77,7 @@ class GalleryScan(QObject):
         if parsed_name['language']:
             language = db.Language()
             language.name = parsed_name['language']
-            dblang = language.exists(True)
-            if dblang:
-                language = dblang
+            language = language.exists(True)
 
             title.language = language
             gallery.language = language
@@ -89,9 +87,7 @@ class GalleryScan(QObject):
         if parsed_name['artist']:
             artist = db.Artist()
             artist.name = parsed_name['artist']
-            dbartist = artist.exists(True, True)
-            if dbartist:
-                artist = dbartist
+            artist = artist.exists(True, True)
             gallery.artists.append(artist)
         return gallery
 

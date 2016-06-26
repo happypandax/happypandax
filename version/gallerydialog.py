@@ -61,7 +61,7 @@ class GalleryInfo(QWidget):
         self.lang_box.addItems(app_constants.G_LANGUAGES)
         self.lang_box.addItems(app_constants.G_CUSTOM_LANGUAGES)
         self.rating_box = add_check(QComboBox())
-        self.rating_box.addItems([str(x)+" stars" if x != 1 else " star" for x in range(5, 1)])
+        self.rating_box.addItems([str(x)+" stars" if x != 1 else str(x)+" star" for x in range(6)])
         [self.rating_box.setItemData(x, x+1) for x in range(5)]
         self._find_combobox_match(self.lang_box, app_constants.G_DEF_LANGUAGE, 0)
         tags_l = QVBoxLayout()
@@ -75,14 +75,12 @@ class GalleryInfo(QWidget):
         tag_info.setToolTipDuration(99999999)
         tags_l.addWidget(tag_info)
         self.tags_edit = add_check(misc.CompleterTextEdit())
-        self.tags_edit.setCompleter(misc.GCompleter(self, False, False))
+        #self.tags_edit.setCompleter(misc.GCompleter(self, False, False))
         self.tags_edit.setPlaceholderText("Press Tab to autocomplete (Ctrl + E to show popup)")
+        tags_l.addWidget(self.tags_edit)
         self.type_box = add_check(QComboBox())
         self.type_box.addItems(app_constants.G_TYPES)
         self._find_combobox_match(self.type_box, app_constants.G_DEF_TYPE, 0)
-        self.status_box = add_check(QComboBox())
-        self.status_box.addItems(app_constants.G_STATUS)
-        self._find_combobox_match(self.status_box, app_constants.G_DEF_STATUS, 0)
         self.pub_edit = add_check(QDateEdit())
         self.pub_edit.setCalendarPopup(True)
         self.pub_edit.setDate(QDate.currentDate())
@@ -136,15 +134,13 @@ class GalleryInfo(QWidget):
 
             self.descr_edit.setText(gallery.info)
 
-            self.tags_edit.setText(utils.tag_to_string(gallery.tags.all()))
+            self.tags_edit.setText(gallery.tags_to_string())
 
-
-            if not self._find_combobox_match(self.lang_box, gallery.language, 1):
+            self._find_combobox_match(self.rating_box, self.rating_box.itemText(gallery.rating), 0)
+            if not self._find_combobox_match(self.lang_box, gallery.language.name, 1):
                 self._find_combobox_match(self.lang_box, app_constants.G_DEF_LANGUAGE, 1)
             if not self._find_combobox_match(self.type_box, gallery.type, 0):
                 self._find_combobox_match(self.type_box, app_constants.G_DEF_TYPE, 0)
-            if not self._find_combobox_match(self.status_box, gallery.status, 0):
-                self._find_combobox_match(self.status_box, app_constants.G_DEF_STATUS, 0)
 
             gallery_pub_date = "{}".format(gallery.pub_date).split(' ')
             try:
@@ -162,23 +158,19 @@ class GalleryInfo(QWidget):
                 self.descr_edit.setText(g.info)
                 self.descr_edit.g_check.setChecked(True)
             if all(map(lambda x: x.tags == g.tags, galleries)):
-                self.tags_edit.setText(utils.tag_to_string(g.tags.all()))
+                self.tags_edit.setText(g.tags_to_string())
                 self.tags_edit.g_check.setChecked(True)
             if all(map(lambda x: x.language == g.language, galleries)):
-                if not self._find_combobox_match(self.lang_box, g.language, 1):
+                if not self._find_combobox_match(self.lang_box, g.language.name, 1):
                     self._find_combobox_match(self.lang_box, app_constants.G_DEF_LANGUAGE, 1)
                 self.lang_box.g_check.setChecked(True)
             if all(map(lambda x: x.rating == g.rating, galleries)):
-                self.rating_box.setValue(g.rating)
+                self._find_combobox_match(self.rating_box, self.rating_box.itemText(g.rating), 0)
                 self.rating_box.g_check.setChecked(True)
             if all(map(lambda x: x.type == g.type, galleries)):
                 if not self._find_combobox_match(self.type_box, g.type, 0):
                     self._find_combobox_match(self.type_box, app_constants.G_DEF_TYPE, 0)
                 self.type_box.g_check.setChecked(True)
-            if all(map(lambda x: x.status == g.status, galleries)):
-                if not self._find_combobox_match(self.status_box, g.status, 0):
-                    self._find_combobox_match(self.status_box, app_constants.G_DEF_STATUS, 0)
-                self.status_box.g_check.setChecked(True)
             if all(map(lambda x: x.pub_date == g.pub_date, galleries)):
                 gallery_pub_date = "{}".format(g.pub_date).split(' ')
                 try:
@@ -223,7 +215,6 @@ class GalleryDialog(QDialog):
             self.setWindowTitle('Edit {} galleries'.format(len(galleries)))
 
         self.tabwidget.addTab(GalleryInfo(galleries, self), "&Gallery Info")
-        self.setLayout(m_l)
         if self._multiple_galleries:
             self.resize(500, 400)
         else:
