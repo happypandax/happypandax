@@ -10,6 +10,7 @@ from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QDesktopWidget, QGroupBox,
                              QMenu)
 from PyQt5.QtCore import (pyqtSignal, Qt, QPoint, QDate, QThread, QTimer, QSize)
 
+from executors import Executors
 import app_constants
 import db_constants
 import utils
@@ -224,7 +225,7 @@ class GalleryDialog(QDialog):
         self.close()
 
     def accept(self):
-        pass
+        return True
 
 class GalleryEditMenu(QMenu):
     remove = pyqtSignal(list)
@@ -300,8 +301,8 @@ class ItemsBase(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-    def items(self):
-        return
+    def accept(self):
+        return True
 
 class GalleryAddItems(ItemsBase):
     from_path = pyqtSignal(str, tuple)
@@ -311,8 +312,14 @@ class GalleryAddItems(ItemsBase):
         super().__init__(parent)
         self._thread = QThread(self)
         self._thread.start()
+        self._scan_proc_running = 0
         self.session = db_constants.SESSION()
         self.scan = fetch.GalleryScan()
+        def _reset_scan_proc():
+            self._scan_proc_running -= 1
+            if not self._scan_proc_running:
+                self.add_progress.hide()
+        self.scan.finished.connect(_reset_scan_proc)
 
         self.scan.moveToThread(self._thread)
         self.scan.scan_finished.connect(self.toggle_progress)
@@ -346,6 +353,13 @@ class GalleryAddItems(ItemsBase):
         populate_group_l.addWidget(populate_folder)
         self.same_namespace = QCheckBox("Put folders and/or archives in same namespace", self)
         self.skip_existing = QCheckBox("Skip already existing galleries", self)
+        progress_l = QHBoxLayout()
+        self.add_progress = QProgressBar()
+        self.add_progress.setMaximum(0)
+        self.add_progress.setMinimum(0)
+        self.add_progress.hide()
+        progress_l.addWidget(self.skip_existing)
+        progress_l.addWidget(self.add_progress)
         populate_group_l.addWidget(self.same_namespace)
         add_box_l.addWidget(add_gallery_group)
         self.populate_progress = QProgressBar(self)
@@ -353,7 +367,7 @@ class GalleryAddItems(ItemsBase):
         add_box_l.addWidget(self.populate_progress)
         self.populate_progress.hide()
         add_box_l.addWidget(self.populate_group)
-        add_box_main_l.addWidget(self.skip_existing)
+        add_box_main_l.addLayout(progress_l)
 
         self.item_list = ItemList(self)
         self.item_list.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
@@ -391,16 +405,15 @@ class GalleryAddItems(ItemsBase):
         if scan:
             self.toggle_progress()
             self.scan_path.emit(name, tuple())
+            self._scan_proc_running += 1
         else:
             if not isinstance(name, list):
                 name = [name]
             for n in name:
                 self.from_path.emit(n, tuple())
-
-    def closeEvent(self, ev):
-        self._thread.exit()
-        self._thread.deleteLater()
-        return super().closeEvent(ev)
+                #self.scan.from_path(n, tuple())
+                self._scan_proc_running += 1
+        self.add_progress.show()
 
     def add_scanitem(self, item):
         assert isinstance(item, fetch.GalleryScanItem)
@@ -416,9 +429,28 @@ class GalleryAddItems(ItemsBase):
 
         self.item_list.add_item(QTableWidgetItem(icon, ''), t_item)
 
-    def items(self):
-        print(self.item_list.columnAt(1))
-       
+    def accept(self):
+        ""
+        if self._scan_proc_running:
+            msg = QMessageBox(QMessageBox.Information, "Are you sure?",
+                              "Scan is still in process.\nAre you sure you want to close?",
+                              QMessageBox.Yes|QMessageBox.No)
+            if msg.exec() == msg.No:
+                return False
+        galleries = []
+
+        r = 0
+        it = self.item_list.item(r, 1)
+        while it:
+            r += 1
+            g = it.data(app_constants.ITEM_ROLE)
+            if g:
+                galleries.append(g)
+            it = self.item_list.item(r, 1)
+
+        Executors.add_gallery(galleries)
+        return galleries if galleries else True
+
 
 class GalleryMetadataWidget(QWidget):
     up = pyqtSignal(object)
@@ -597,10 +629,19 @@ class ItemManager(QWidget):
         self.setAttribute(Qt.WA_DeleteOnClose)
         self.resize(700, 700)
         self.show()
-        
-    def accept(self):
-        pass
 
+    def accept(self):
+        x = 0
+        w = self.tabwidget.widget(x)
+        while w:
+            x += 1
+            if not w.accept():
+                return
+            if hasattr(w, '_thread'):
+                w._thread.exit()
+                w._thread.deleteLater()
+            w = self.tabwidget.widget(x)
+        self.hide()
 
 class MetadataManager(QWidget):
     def __init__(self, parent=None):

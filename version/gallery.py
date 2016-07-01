@@ -24,6 +24,8 @@ import enum
 import time
 import re as regex
 
+from sqlalchemy.orm import joinedload
+
 from PyQt5.QtCore import (Qt, QAbstractListModel, QModelIndex, QVariant,
                           QSize, QRect, QEvent, pyqtSignal, QThread,
                           QTimer, QPointF, QSortFilterProxyModel,
@@ -64,7 +66,32 @@ log_w = log.warning
 log_e = log.error
 log_c = log.critical
 
-# attempt at implementing treemodel
+class ModelDataLoader(QObject):
+    ""
+
+    gall_loaded = pyqtSignal(db.Gallery)
+    finished = pyqtSignal()
+
+    def __init__(self, modeldatatype):
+        super().__init__()
+        self.other_thread = QThread(self)
+        self.moveToThread(self.other_thread)
+        self.other_thread.start()
+        self._last_id = None
+        self.datatype = modeldatatype
+
+    def fetch_more(self):
+        ""
+        self.session = db_constants.SESSION()
+        q = self.session.query(db.Gallery)
+        if self._last_id:
+            q = self.session.query(db.Gallery).filter(db.Gallery.id > self._last_id)
+
+        for it in q.options(joinedload(db.Gallery.collection)).options(joinedload(db.Gallery.pages)).order_by(db.Gallery.id).limit(200):
+            self._last_id = it.id
+            self.session.expunge_all()
+            self.gall_loaded.emit(it)
+        self.finished.emit()
 
 class BaseItem(QStandardItem):
 
@@ -798,6 +825,53 @@ class GalleryModel(QAbstractTableModel):
                 return False
         self.endRemoveRows()
         return True
+
+class BaseModel(QStandardItemModel):
+
+    fetch_sig = pyqtSignal()
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._loader = None
+        self._loader_timer = QTimer(self)
+        self._loader_timer.setInterval(3000)
+        self._fetching = False
+        self._session = db_constants.SESSION()
+        self._cache = {
+            'coll':{},
+            'gall':{}}
+
+    def fetch_more(self):
+        if not self._fetching:
+            self._fetching = True
+            self.fetch_sig.emit()
+
+    def append_gallery(self, gallery):
+        #if not gallery in self._session:
+        #    self._session.add(gallery)
+        coll = utils.b_search(sorted(list(self._cache['coll'])), gallery.collection.id)
+        if coll:
+            coll_item = self._cache['coll'][coll]
+        else:
+            parent = self.invisibleRootItem()
+            gallery.collection.profile = os.path.join(db_constants.THUMBNAIL_PATH, "thumb2.png")
+            coll_item = CollectionItem(gallery.collection)
+            parent.appendRow(coll_item)
+
+        g_item = GalleryItem(gallery)
+        gallery.profile = os.path.join(db_constants.THUMBNAIL_PATH, "thumb.png")
+
+        for p in gallery.pages:
+            p.profile = os.path.join(db_constants.THUMBNAIL_PATH, "thumb3.png")
+            g_item.appendRow(PageItem(p))
+
+    def attach_loader(self, loader):
+        assert isinstance(loader, ModelDataLoader)
+        self._loader = loader
+        self._loader_timer.timeout.connect(self._loader.fetch_more)
+        self._loader.gall_loaded.connect(self.append_gallery)
+        self._loader.finished.connect(lambda: setattr(self, '_fetching', False))
+        self._loader_timer.start()
 
 class ViewMetaWindow(misc.ArrowWindow):
 
@@ -2088,7 +2162,7 @@ class ViewManager:
         elif v_type == app_constants.ViewType.Duplicate:
             model = GalleryModel([], parent)
 
-        self.item_model = self.create_model()
+        self.item_model = self.create_model(None)
         self.grid_view = GridView(self.item_model, v_type, parent=parent)
         self.list_view = ListView(self.item_model, v_type, parent=parent)
         #self.list_view.sort_model.setup_search()
@@ -2104,37 +2178,10 @@ class ViewManager:
         if v_type in (app_constants.ViewType.Default, app_constants.ViewType.Addition):
             self.sort_model.enable_drag = True
 
-    def create_model(self):
-        model = QStandardItemModel()
-        parent = model.invisibleRootItem()
-        gns = db.GalleryNamespace(name="A Gallery Namespace")
-        gartists = [db.Artist(name="Artist"+str(x)) for x in range(2)]
-        for x in range(10):
-            coll = db.Collection(title="Collection "+str(x))
-            coll.profile = os.path.join(db_constants.THUMBNAIL_PATH, "thumb2.png")
-            coll.info = "A lonely collection"
-            pitem = CollectionItem(coll)
-            parent.appendRow(pitem)
-            for y in range(20):
-                gall = db.Gallery()
-                gall.profile = os.path.join(db_constants.THUMBNAIL_PATH, "thumb.png")
-                gall.path = "C:/hello"
-                gall.info = "A lonely girl"
-                gall.fav = True if y % 2 == 0 else False
-                gall.rating = 5
-                gall.times_read = 20
-                gall.pub_date = datetime.date.today()
-                gall.last_read = datetime.datetime.now()
-                gall.parent = gns
-                gall.urls.extend([db.GalleryUrl(url="www.hello.com") for x in range(2)])
-                gall.artists.extend(gartists)
-
-                gitem = GalleryItem(gall)
-                pitem.appendRow(gitem)
-                for z in range(30):
-                    page = db.Page(number=z)
-                    page.profile = os.path.join(db_constants.THUMBNAIL_PATH, "thumb3.png")
-                    gitem.appendRow(PageItem(page))
+    def create_model(self, modeldatatype):
+        model = BaseModel()
+        loader = ModelDataLoader(modeldatatype)
+        model.attach_loader(loader)
         return model
 
     def _delegate_delete(self):

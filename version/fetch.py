@@ -37,6 +37,42 @@ log_w = log.warning
 log_e = log.error
 log_c = log.critical
 
+class GalleryScanCache:
+    ""
+    def __init__(self):
+        self._data = {
+            'lang':[],
+            'artist':[],
+            'gns':[],}
+
+    def exists(self, item):
+        ""
+        result = None
+        if isinstance(item, db.Language):
+            items = self._data['lang']
+            result = list(filter(lambda i: i.name == item.name, items))
+        elif isinstance(item, db.Artist):
+            items = self._data['artist']
+            result = list(filter(lambda i: i.name == item.name, items))
+        elif isinstance(item, db.GalleryNamespace):
+            items = self._data['gns']
+            result = list(filter(lambda i: i.name == item.name, items))
+        else:
+            raise NotImplementedError
+
+        return (result[0], True) if result else (item, False)
+
+    def add(self, item):
+        ""
+        if isinstance(item, db.Language):
+            self._data['lang'].append(item)
+        elif isinstance(item, db.Artist):
+            self._data['artist'].append(item)
+        elif isinstance(item, db.GalleryNamespace):
+            self._data['gns'].append(item)
+        else:
+            raise NotImplementedError
+
 class GalleryScanItem:
     "Convinience item"
     def __init__(self, gallery, error=None, path=None):
@@ -53,6 +89,7 @@ class GalleryScanItem:
 
 class GalleryScan(QObject):
     ""
+    _cache = GalleryScanCache()
 
     class Options(enum.Enum):
         CheckExist = 0
@@ -71,24 +108,40 @@ class GalleryScan(QObject):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-    def _make_gallery(self, gallery, parsed_name):
+    @classmethod
+    def _make_gallery(cls, gallery, parsed_name):
         title = db.Title()
         title.name = parsed_name['title']
         if parsed_name['language']:
             language = db.Language()
             language.name = parsed_name['language']
-            language = language.exists(True)
-
+            language, found = cls._cache.exists(language)
+            if not found:
+                language = language.exists(True)
+                cls._cache.add(language)
             title.language = language
             gallery.language = language
 
         gallery.titles.append(title)
 
+        if not gallery.parent:
+            gns = db.GalleryNamespace()
+            gns.name = title.name
+            gns, found = cls._cache.exists(gns)
+            if not found:
+                gns = gns.exists(True, True)
+                cls._cache.add(gns)
+            gallery.parent = gns
+
         if parsed_name['artist']:
             artist = db.Artist()
             artist.name = parsed_name['artist']
-            artist = artist.exists(True, True)
+            artist, found = cls._cache.exists(artist)
+            if not found:
+                artist = artist.exists(True, strict=True)
+                cls._cache.add(artist)
             gallery.artists.append(artist)
+
         return gallery
 
     def _from_dir(self, dir_p, *options):

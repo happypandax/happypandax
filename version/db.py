@@ -25,6 +25,12 @@ log_c = log.critical
 class BaseID:
     id = Column(Integer, primary_key=True)
 
+    def delete(self):
+        sess = object_session(self)
+        if not sess:
+            sess = db_constants.SESSION()
+        sess.delete(self)
+
 class NameMixin:
     name = Column(String, nullable=False, default='', unique=True)
 
@@ -113,12 +119,8 @@ def profile_association(table_name):
 class Life(Base):
     __tablename__ = 'life'
 
-    version = Column(Float, nullable=False, default=db_constants.CURRENT_DB_VERSION, primary_key=True)
+    version = Column(Float, nullable=False, default=db_constants.CURRENT_DB_VERSION,)
     times_opened = Column(Integer, nullable=False, default=0)
-
-    def __init__(self):
-        self.version = db_constants.CURRENT_DB_VERSION
-        self.times_opened = 0
 
     def __repr__(self):
         return "<Version: {}, times_opened:{}>".format(self.version, self.times_opened)
@@ -301,7 +303,6 @@ class Gallery(ProfileMixin, Base):
     tags = relationship("NamespaceTags", secondary=gallery_tags, lazy="dynamic")
     profiles = relationship("Profile", secondary=gallery_profiles, cascade="all")
 
-    
     @validates("times_read")
     def _add_history(self, key, value):
         sess = object_session(self)
@@ -313,7 +314,6 @@ class Gallery(ProfileMixin, Base):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self._title = None
         self.rating = 0
         self.file_type = "folder"
         self.path = ''
@@ -322,12 +322,12 @@ class Gallery(ProfileMixin, Base):
     @property
     def title(self):
         "Returns default title"
-        if not self._title:
+        if not hasattr(self, '_title') or not self._title:
             if len(self.titles) == 1:
                 self._title = self.titles[0]
             else:
                 # TODO: title in default language here
-                pass
+                raise NotImplementedError
         return self._title
 
     @title.setter
@@ -752,6 +752,15 @@ if __name__ == '__main__':
 else:
     Session = scoped_session(sessionmaker())
 
+@event.listens_for(Session, 'after_flush_postexec')
+def assign_default_collection(session, f_ctx):
+    for g in session.query(Gallery).filter(Gallery.collection == None).all():
+        coll = session.query(Collection).filter(Collection.title == "No Collection").scalar()
+        if not coll:
+            log_e("Could not assign default collection. No such collection exists.")
+            return
+        g.collection = coll
+
 @event.listens_for(Session, 'before_commit')
 def delete_artist_orphans(session):
     session.query(Artist).filter(~Artist.galleries.any()).delete(synchronize_session=False)
@@ -766,7 +775,7 @@ def delete_namespace_orphans(session):
 
 @event.listens_for(Session, 'before_commit')
 def delete_collection_orphans(session):
-    session.query(Collection).filter(~Collection.galleries.any()).delete(synchronize_session=False)
+    session.query(Collection).filter(and_(~Collection.galleries.any(), Collection.title != "No Collection")).delete(synchronize_session=False)
 
 @event.listens_for(Session, 'before_commit')
 def delete_namespace_orphans(session):
@@ -794,6 +803,16 @@ def delete_gallery_namespace_orphans(session):
 #    cursor.execute("PRAGMA foreign_keys=ON")
 #    cursor.close()
 
+def init_defaults(sess):
+    ""
+    coll = sess.query(Collection).filter(Collection.title == "No Collection").scalar()
+    if not coll:
+       coll = Collection()
+       coll.title = "No Collection"
+       coll.info = "Galleries not in any collections end up here"
+       sess.add(coll)
+       sess.commit()
+
 def check_db_version(sess):
     "Checks if DB version is allowed. Raises dialog if not"
     try:
@@ -808,13 +827,17 @@ def check_db_version(sess):
             return False
     else:
         life = Life()
+        sess.add(life)
         life.version = db_constants.CURRENT_DB_VERSION
+        life.times_opened = 0
         log_i("Succesfully initiated database")
         log_i("DB Version: {}".format(db_constants.REAL_DB_VERSION))
 
     db_constants.REAL_DB_VERSION = life.version
     life.times_opened += 1
+    t = life.id
     sess.commit()
+    init_defaults(sess)
     return True
 
 def init_db():
@@ -894,7 +917,7 @@ if __name__ == '__main__':
             self.session.commit()
             self.assertEqual(self.session.query(History).count(), 2)
 
-            self.session.delete(self.gallery)
+            self.gallery.delete()
 
             self.assertEqual(self.session.query(History).count(), 2)
 
@@ -945,7 +968,7 @@ if __name__ == '__main__':
             self.assertEqual(self.session.query(Title).count(), 1)
             self.assertEqual(self.session.query(Language).count(), 1)
             #test delete
-            self.session.delete(title)
+            title.delete()
             self.assertEqual(self.session.query(Title).count(), 0)
             self.assertEqual(self.session.query(Gallery).count(), 1)
             self.assertEqual(self.session.query(Language).count(), 1)
@@ -959,7 +982,7 @@ if __name__ == '__main__':
             self.assertEqual(self.session.query(Title).count(), 10)
             self.assertEqual(self.session.query(Language).count(), 1)
             #test delete
-            self.session.delete(self.gallery)
+            self.gallery.delete()
             self.assertEqual(self.session.query(Title).count(), 0)
             self.assertEqual(self.session.query(Language).count(), 1)
             self.assertEqual(self.session.query(Gallery).count(), 0)
@@ -1013,6 +1036,19 @@ if __name__ == '__main__':
 
             self.assertEqual(self.session.query(Gallery).count(), 10)
             self.assertEqual(self.session.query(Collection).count(), 2)
+
+        def default(self):
+            init_defaults(self.session)
+            self.assertIsNotNone(self.session.query(Collection).filter(Collection.title == "No Collection").scalar())
+
+            self.session.delete(self.collections[0])
+            self.session.delete(self.collections[1])
+            self.session.commit()
+            self.assertEqual(self.session.query(Collection).count(), 1)
+            for g in self.galleries:
+                self.assertIsNotNone(g.collection)
+                self.assertTrue(g.collection.title == "No Collection")
+
 
         def test_delete(self):
             self.session.delete(self.collections[0])

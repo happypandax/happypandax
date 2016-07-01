@@ -118,6 +118,11 @@ class ViewType(enum.IntEnum):
 	Duplicate = 3
 
 @enum.unique
+class ModelDataType(enum.Enum):
+    Standard = 1
+    Addition = 2
+
+@enum.unique
 class ProfileType(enum.Enum):
 	Default = 1
 	Small = 2
