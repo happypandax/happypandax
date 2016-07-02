@@ -296,10 +296,10 @@ class Gallery(ProfileMixin, Base):
     language = relationship("Language", back_populates="galleries", cascade="save-update, merge, refresh-expire")
     type = relationship("GalleryType", back_populates="galleries", cascade="save-update, merge, refresh-expire")
     circles = relationship("Circle", secondary=gallery_circles, back_populates='galleries', lazy="dynamic", cascade="save-update, merge, refresh-expire")
-    artists = relationship("Artist", secondary=gallery_artists, back_populates='galleries', lazy="dynamic", cascade="save-update, merge, refresh-expire")
+    artists = relationship("Artist", secondary=gallery_artists, back_populates='galleries', lazy="joined", cascade="save-update, merge, refresh-expire")
     lists = relationship("List", secondary=gallery_lists, back_populates='galleries', lazy="dynamic")
     pages = relationship("Page", back_populates="gallery", cascade="all,delete-orphan")
-    titles = relationship("Title", back_populates="gallery", cascade="all,delete-orphan")
+    titles = relationship("Title", back_populates="gallery", lazy='joined', cascade="all,delete-orphan")
     tags = relationship("NamespaceTags", secondary=gallery_tags, lazy="dynamic")
     profiles = relationship("Profile", secondary=gallery_profiles, cascade="all")
 
@@ -315,7 +315,6 @@ class Gallery(ProfileMixin, Base):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.rating = 0
-        self.file_type = "folder"
         self.path = ''
         self.in_archive = False
 
@@ -334,6 +333,15 @@ class Gallery(ProfileMixin, Base):
     def title(self, t):
         if self._title:
             self._title.name = t
+
+    @property
+    def file_type(self):
+        ""
+        if not hasattr(self, '_file_type'):
+            _, self._file_type = os.path.splitext(self.path)
+            if not self._file_type:
+                self._file_type = 'folder'
+        return self._file_type
 
     def exists(self):
         "Checks if gallery exists by path"
@@ -734,7 +742,7 @@ class Title(Base):
     gallery_id = Column(Integer, ForeignKey('gallery.id'), nullable=False)
 
     language = relationship("Language", cascade="save-update, merge, refresh-expire")
-    gallery = relationship("Gallery", back_populates="titles")
+    gallery = relationship("Gallery", lazy='joined', back_populates="titles")
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

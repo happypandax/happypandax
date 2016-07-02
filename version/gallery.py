@@ -69,7 +69,7 @@ log_c = log.critical
 class ModelDataLoader(QObject):
     ""
 
-    gall_loaded = pyqtSignal(db.Gallery)
+    item_loaded = pyqtSignal(QModelIndex, db.Base)
     finished = pyqtSignal()
 
     def __init__(self, modeldatatype):
@@ -77,20 +77,37 @@ class ModelDataLoader(QObject):
         self.other_thread = QThread(self)
         self.moveToThread(self.other_thread)
         self.other_thread.start()
-        self._last_id = None
-        self.datatype = modeldatatype
+        self._idtrack = {'coll':None}
 
-    def fetch_more(self):
+    def fetch_more(self, idx):
         ""
+        assert isinstance(idx, QModelIndex)
         self.session = db_constants.SESSION()
-        q = self.session.query(db.Gallery)
-        if self._last_id:
-            q = self.session.query(db.Gallery).filter(db.Gallery.id > self._last_id)
+        dbitem = idx.data(app_constants.ITEM_ROLE)
+        if not dbitem:
+            dbmodel = db.Collection
+            q = self.session.query(dbmodel)
+            dbitem = 'coll'
+        elif isinstance(dbitem, db.Collection):
+            dbmodel = db.Gallery
+            q = self.session.query(dbmodel).filter(dbmodel.collection == dbitem)
+        elif isinstance(dbitem, db.Gallery):
+            dbmodel = db.Page
+            q = self.session.query(dbmodel).filter(dbmodel.gallery == dbitem)
+        else:
+            raise NotImplementedError
 
-        for it in q.options(joinedload(db.Gallery.collection)).options(joinedload(db.Gallery.pages)).order_by(db.Gallery.id).limit(200):
-            self._last_id = it.id
+        if not dbitem in self._idtrack:
+            self._idtrack[dbitem] = None
+        last_id = self._idtrack[dbitem]
+
+        if last_id:
+            q = self.session.query(dbmodel).filter(dbmodel.id > last_id)
+
+        for it in q.order_by(dbmodel.id):
+            self._idtrack[dbitem] = it.id
             self.session.expunge_all()
-            self.gall_loaded.emit(it)
+            self.item_loaded.emit(idx, it)
         self.finished.emit()
 
 class BaseItem(QStandardItem):
@@ -168,9 +185,9 @@ class GalleryItem(BaseItem):
         elif role == app_constants.ITEM_ROLE:
             return self._item
         elif role == app_constants.ARTIST_ROLE:
-            if not self._item.artists.all():
+            if not self._item.artists:
                 return []
-            return self._item.artists.all()
+            return self._item.artists
         elif role == app_constants.FAV_ROLE:
             return self._item.fav
         elif role == app_constants.INFO_ROLE:
@@ -828,50 +845,54 @@ class GalleryModel(QAbstractTableModel):
 
 class BaseModel(QStandardItemModel):
 
-    fetch_sig = pyqtSignal()
+    _fetch_sig = pyqtSignal(QModelIndex)
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self._loader = None
-        self._loader_timer = QTimer(self)
-        self._loader_timer.setInterval(3000)
         self._fetching = False
         self._session = db_constants.SESSION()
-        self._cache = {
-            'coll':{},
-            'gall':{}}
 
-    def fetch_more(self):
+    def fetch_more(self, idx):
         if not self._fetching:
             self._fetching = True
-            self.fetch_sig.emit()
+            self._fetch_sig.emit(idx)
 
-    def append_gallery(self, gallery):
-        #if not gallery in self._session:
-        #    self._session.add(gallery)
-        coll = utils.b_search(sorted(list(self._cache['coll'])), gallery.collection.id)
-        if coll:
-            coll_item = self._cache['coll'][coll]
+    def append_item(self, idx, dbitem):
+        ""
+        pitem = None
+        item = None
+        if isinstance(dbitem, db.Collection):
+            pitem = self.invisibleRootItem()
+            dbitem.profile = os.path.join(db_constants.THUMBNAIL_PATH, "thumb2.png")
+            item = CollectionItem(dbitem)
+        elif isinstance(dbitem, db.Gallery):
+            item = GalleryItem(dbitem)
+            dbitem.profile = os.path.join(db_constants.THUMBNAIL_PATH, "thumb.png")
+            pitem = idx.data(app_constants.QITEM_ROLE)
+        elif isinstance(dbitem, db.Page):
+            item = PageItem(dbitem)
+            dbitem.profile = os.path.join(db_constants.THUMBNAIL_PATH, "thumb3.png")
+            pitem = idx.data(app_constants.QITEM_ROLE)
         else:
-            parent = self.invisibleRootItem()
-            gallery.collection.profile = os.path.join(db_constants.THUMBNAIL_PATH, "thumb2.png")
-            coll_item = CollectionItem(gallery.collection)
-            parent.appendRow(coll_item)
+            raise NotImplementedError
 
-        g_item = GalleryItem(gallery)
-        gallery.profile = os.path.join(db_constants.THUMBNAIL_PATH, "thumb.png")
+        if not dbitem in self._session:
+            try:
+                self._session.add(dbitem)
+            except db.exc.InvalidRequestError:
+                self._session.merge(dbitem)
 
-        for p in gallery.pages:
-            p.profile = os.path.join(db_constants.THUMBNAIL_PATH, "thumb3.png")
-            g_item.appendRow(PageItem(p))
+        if pitem and item:
+            pitem.appendRow(item)
 
     def attach_loader(self, loader):
         assert isinstance(loader, ModelDataLoader)
         self._loader = loader
-        self._loader_timer.timeout.connect(self._loader.fetch_more)
-        self._loader.gall_loaded.connect(self.append_gallery)
+        self._fetch_sig.connect(self._loader.fetch_more)
+        self._loader.item_loaded.connect(self.append_item)
         self._loader.finished.connect(lambda: setattr(self, '_fetching', False))
-        self._loader_timer.start()
+        self._fetch_sig.emit(QModelIndex())
 
 class ViewMetaWindow(misc.ArrowWindow):
 
@@ -1131,7 +1152,7 @@ class ViewMetaWindow(misc.ArrowWindow):
 
         def apply_gallery(self, gallery):
             self.stacked_l.setCurrentIndex(self.general_index)
-            self.g_title_lbl.setText(gallery.title)
+            self.g_title_lbl.setText(gallery.title.name)
 
             misc.clearLayout(self.artists_layout)
             for artist in gallery.artists:
@@ -1142,10 +1163,12 @@ class ViewMetaWindow(misc.ArrowWindow):
                 g_artist_lbl.setToolTip("Click to see more from this artist")
                 self.artists_layout.addWidget(g_artist_lbl)
 
-            self.g_lang_lbl.setText(gallery.language)
-            self.g_type_lbl.setText(gallery.type)
-            self.g_pages_total_lbl.setText('{}'.format(gallery.pages.count() if gallery.pages else 0))
-            self.g_status_lbl.setText(gallery.status)
+            if gallery.type:
+                self.g_lang_lbl.setText(gallery.language.name)
+            if gallery.type:
+                self.g_type_lbl.setText(gallery.type.name)
+            #self.g_pages_total_lbl.setText('{}'.format(gallery.pages.count() if gallery.pages else 0))
+            #self.g_status_lbl.setText(gallery.status.name)
             if gallery.timestamp:
                 self.g_d_added_lbl.setText(gallery.timestamp.strftime('%d %b %Y'))
             if gallery.pub_date:
@@ -1157,7 +1180,7 @@ class ViewMetaWindow(misc.ArrowWindow):
             self.g_read_count_lbl.setText('Read {} times'.format(gallery.times_read))
             self.g_info_lbl.setText(gallery.info)
             if 2 == 1:
-                self.g_url_lbl.setText(gallery.link)
+                self.g_url_lbl.setText(gallery.urls)
                 self.g_url_lbl.show()
             else:
                 self.g_url_lbl.hide()
@@ -1266,6 +1289,7 @@ class GridDelegate(QStyledItemDelegate):
             artist_color = app_constants.GRID_VIEW_ARTIST_COLOR
             label_color = app_constants.GRID_VIEW_LABEL_COLOR
             title = index.data(Qt.DisplayRole)
+            title_text = title.name if is_gallery else title
 
             if is_gallery:
                 artists = index.data(app_constants.ARTIST_ROLE)
@@ -1278,15 +1302,15 @@ class GridDelegate(QStyledItemDelegate):
                 # Enable this to see the defining box
                 #painter.drawRect(option.rect)
                 # define font size
-                if 20 > len(title) > 15:
+                if 20 > len(title_text) > 15:
                     title_size = "font-size:{}pt;".format(self.font_size)
-                elif 30 > len(title) > 20:
+                elif 30 > len(title_text) > 20:
                     title_size = "font-size:{}pt;".format(self.font_size - 1)
-                elif 40 > len(title) >= 30:
+                elif 40 > len(title_text) >= 30:
                     title_size = "font-size:{}pt;".format(self.font_size - 2)
-                elif 50 > len(title) >= 40:
+                elif 50 > len(title_text) >= 40:
                     title_size = "font-size:{}pt;".format(self.font_size - 3)
-                elif len(title) >= 50:
+                elif len(title_text) >= 50:
                     title_size = "font-size:{}pt;".format(self.font_size - 4)
                 else:
                     title_size = "font-size:{}pt;".format(self.font_size)
@@ -1336,7 +1360,7 @@ class GridDelegate(QStyledItemDelegate):
                 </div>
                 </center>
                 </body>
-                """.format(title_size, artist_size, title, artist, title_color, artist_color,
+                """.format(title_size, artist_size, title_text, artist, title_color, artist_color,
                     130 + app_constants.SIZE_FACTOR, 1 + app_constants.SIZE_FACTOR))
                 text_area.setTextWidth(w)
 
@@ -1515,7 +1539,7 @@ class GridDelegate(QStyledItemDelegate):
 
                 artist_layout = None
                 if is_gallery:
-                    title_layout, t_h = draw_text(title, w, self.title_font, self.title_font_m)
+                    title_layout, t_h = draw_text(title_text, w, self.title_font, self.title_font_m)
                     artist_layout, a_h = draw_text(artist, w, self.artist_font, self.artist_font_m)
                     txt_height = t_h + a_h
                 else:
@@ -1564,7 +1588,7 @@ class GridDelegate(QStyledItemDelegate):
                     painter.setFont(self.title_font)
                     painter.setPen(QColor(title_color))
                     painter.drawText(title_rect,
-                                self.title_font_m.elidedText(title, Qt.ElideRight, w - 10),
+                                self.title_font_m.elidedText(title_text, Qt.ElideRight, w - 10),
                                 alignment)
                     
                     if is_gallery:
@@ -1705,7 +1729,7 @@ class BaseView(QListView):
             def debug_print(a):
                 g = a.data(app_constants.ITEM_ROLE)
                 try:
-                    print(g)
+                    print("\n",hash(g))
                 except:
                     print("{}".format(g).encode(errors='ignore'))
                 #log_d(gallerydb.HashDB.gen_gallery_hash(g, 0, 'mid')['mid'])
@@ -2103,7 +2127,10 @@ class PathView(QWidget):
         self.path_layout.insertWidget(0, arrow, Qt.AlignLeft)
 
     def add_item(self, idx):
-        path_bar = QPushButton(idx.data(Qt.DisplayRole))
+        txt = idx.data(Qt.DisplayRole)
+        if idx.data(app_constants.QITEM_ROLE).type() == GalleryItem.type():
+            txt = txt.name
+        path_bar = QPushButton(txt)
         path_bar.setStyleSheet("border:0; border-radius:0;")
         path_bar.setFixedHeight(self.HEIGHT)
         path_bar.adjustSize()
@@ -2111,28 +2138,37 @@ class PathView(QWidget):
         path_bar.clicked.connect(lambda: self.view.doubleClicked.emit(idx))
         
         self.path_layout.insertWidget(0, path_bar, Qt.AlignLeft)
+        return path_bar
 
     def update_path(self, idx, toogle_window=True):
-
-        if idx.isValid() and idx.data(app_constants.QITEM_ROLE).type() in (GalleryItem.type(), PageItem.type()):
+        item_type = idx.data(app_constants.QITEM_ROLE)
+        if item_type:
+            item_type = item_type.type()
+        if idx.isValid() and item_type in (GalleryItem.type(), PageItem.type()):
             self.show_g_window()
             # TODO: apply gallery to gallery_window here
         else:
             self.hide_g_window()
 
-        if not (idx.isValid() and not idx.child(0,0).isValid()):
+        if item_type != PageItem.type():
+            if idx.isValid():
+                self.view.model().fetch_more(idx)
             self.view.setRootIndex(idx)
-            if hasattr(self.view, "item_window"):
-                self.view.item_window.delayed_hide()
+        if hasattr(self.view, "item_window"):
+            self.view.item_window.delayed_hide()
         misc.clearLayout(self.path_layout)
 
         parent = idx
+        _last_path = None
         while parent.isValid():
             if parent.data(app_constants.QITEM_ROLE).type() != PageItem.type():
-                self.add_item(parent)
+                pbar = self.add_item(parent)
+                if not _last_path:
+                    _last_path = pbar
                 self.add_arrow()
             parent = parent.parent()
-
+        if _last_path:
+            _last_path.setDisabled(True)
 
     def install_to_view(self, view):
         view.doubleClicked.connect(self.update_path)
