@@ -420,9 +420,9 @@ class AppWindow(QMainWindow):
         self.temp_timer.start(5000)
 
     def stat_row_info(self):
-        r = self.current_manga_view.get_current_view().sort_model.rowCount()
-        t = self.current_manga_view.get_current_view().gallery_model.rowCount()
-        g_l = self.get_current_view().sort_model.current_gallery_list
+        r = self.current_manga_view.get_current_view().filter_model.rowCount()
+        t = self.current_manga_view.get_current_view().base_model.rowCount()
+        g_l = self.get_current_view().filter_model.current_gallery_list
         if g_l:
             self.stat_info.setText("<b><i>{}</i></b> | Showing {} of {} ".format(g_l.name, r, t))
         else:
@@ -467,7 +467,7 @@ class AppWindow(QMainWindow):
             args.append(app_constants.Search.Case)
         if app_constants.GALLERY_SEARCH_STRICT:
             args.append(app_constants.Search.Strict)
-        self.current_manga_view.get_current_view().sort_model.init_search(srch_string, args)
+        self.current_manga_view.get_current_view().filter_model.init_search(srch_string, args)
         old_cursor_pos = self._search_cursor_pos[0]
         self.search_bar.end(False)
         if self.search_bar.cursorPosition() != old_cursor_pos + 1:
@@ -688,7 +688,7 @@ class AppWindow(QMainWindow):
             completer_view = misc.CompleterPopupView()
             completer.setPopup(completer_view)
             completer_view._setup()
-            completer.setModel(self.manga_list_view.gallery_model)
+            completer.setModel(self.manga_list_view.base_model)
             completer.setCaseSensitivity(Qt.CaseInsensitive)
             completer.setCompletionMode(QCompleter.PopupCompletion)
             completer.setCompletionRole(Qt.DisplayRole)
@@ -701,11 +701,11 @@ class AppWindow(QMainWindow):
         self.search_bar.setPlaceholderText("Search title, artist, namespace & tags")
         self.search_bar.setMinimumWidth(400)
         self.search_bar.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
-        self.manga_list_view.sort_model.HISTORY_SEARCH_TERM.connect(lambda a: self.search_bar.setText(a))
+        self.manga_list_view.filter_model.HISTORY_SEARCH_TERM.connect(lambda a: self.search_bar.setText(a))
         self.toolbar.addWidget(self.search_bar)
 
         def search_history(_, back=True): # clicked signal passes a bool
-            sort_model = self.manga_list_view.sort_model
+            sort_model = self.manga_list_view.filter_model
             nav = sort_model.PREV if back else sort_model.NEXT
             history_term = sort_model.navigate_history(nav)
             if back:

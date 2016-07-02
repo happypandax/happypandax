@@ -1148,3 +1148,17 @@ def timeit(func):
         elapsedTime = time.time() - startTime
         print('function [{}] finished in {} ms'.format(func.__name__, int(elapsedTime * 1000)))
     return newfunc
+
+class _ValidContainerHelper:
+    "Little Helper class for search"
+    def __init__(self):
+        self.valid = []
+
+    def add(self, it):
+        if it:
+            self.valid.extend(it)
+
+    def done(self):
+        if self.valid:
+            return set(self.valid)
+        return [None]

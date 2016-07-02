@@ -828,8 +828,8 @@ class GalleryMenu(QMenu):
             gs = [self.index]
         galleries = [idx.data(Qt.UserRole + 1) for idx in gs]
         rows = len(galleries)
-        self.view.gallery_model._gallery_to_remove.extend(galleries)
-        self.view.gallery_model.removeRows(self.view.gallery_model.rowCount() - rows, rows)
+        self.view.base_model._gallery_to_remove.extend(galleries)
+        self.view.base_model.removeRows(self.view.base_model.rowCount() - rows, rows)
         self.parent_widget.default_manga_view.add_gallery(galleries)
         for g in galleries:
             gallerydb.execute(gallerydb.GalleryDB.modify_gallery,

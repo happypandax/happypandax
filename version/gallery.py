@@ -280,23 +280,21 @@ class PageItem(BaseItem):
         return self.UserType+3
 
 
-class GallerySearch(QObject):
+class DBSearch(QObject):
     FINISHED = pyqtSignal()
-    def __init__(self, data):
+    def __init__(self):
         super().__init__()
-        self._data = data
-        self.result = {}
+        self.allowed_collections = set()
+        self.allowed_galleries = set()
+        self._session = None
 
         # filtering
         self.fav = False
-        self._gallery_list = None
+        self._item_list = None
+
 
     def set_gallery_list(self, g_list):
-        self._gallery_list = g_list
-
-    def set_data(self, new_data):
-        self._data = new_data
-        self.result = {g.id: True for g in self._data}
+        self._item_list = g_list
 
     def set_fav(self, new_fav):
         self.fav = new_fav
@@ -309,33 +307,22 @@ class GallerySearch(QObject):
         self.FINISHED.emit()
 
     def _filter(self, terms, args):
-        self.result.clear()
-        for gallery in self._data:
-            if self.fav:
-                if not gallery.fav:
-                    continue
-            if self._gallery_list:
-                if not gallery in self._gallery_list:
-                    continue
-            all_terms = {t: False for t in terms}
-            allow = False
-            if utils.all_opposite(terms):
-                self.result[gallery.id] = True
-                continue
-            
-            for t in terms:
-                if gallery.contains(t, args):
-                    all_terms[t] = True
+        if self._session:
+            self._session = db_constants.SESSION()
+        self.allowed_collections.clear()
+        self.allowed_galleries.clear()
+        if not terms:
+            terms = ['']
+        for term in terms:
+            [self.allowed_collections.add(x[0]) for x in db.Collection.search(term, session=self._session) if x]
+            [self.allowed_galleries.add(x[0]) for x in db.Gallery.search(term, session=self._session) if x]
 
-            if all(all_terms.values()):
-                allow = True
-
-            self.result[gallery.id] = allow
+        if app_constants.DEBUG:
+            print(self.allowed_collections)
+            print(self.allowed_galleries)
 
 class SortFilterModel(QSortFilterProxyModel):
-    ROWCOUNT_CHANGE = pyqtSignal()
     _DO_SEARCH = pyqtSignal(str, object)
-    _CHANGE_SEARCH_DATA = pyqtSignal(list)
     _CHANGE_FAV = pyqtSignal(bool)
     _SET_GALLERY_LIST = pyqtSignal(object)
 
@@ -361,6 +348,13 @@ class SortFilterModel(QSortFilterProxyModel):
         self.setSortLocaleAware(True)
         self.setSortCaseSensitivity(Qt.CaseInsensitive)
         self.enable_drag = False
+
+        self._db_search = DBSearch()
+        self._db_search.FINISHED.connect(self.invalidateFilter)
+        self._db_search.moveToThread(app_constants.GENERAL_THREAD)
+        self._DO_SEARCH.connect(self._db_search.search)
+        self._SET_GALLERY_LIST.connect(self._db_search.set_gallery_list)
+        self._CHANGE_FAV.connect(self._db_search.set_fav)
 
     def navigate_history(self, direction=PREV):
         new_term = ''
@@ -390,19 +384,6 @@ class SortFilterModel(QSortFilterProxyModel):
         self._CHANGE_FAV.emit(False)
         self.refresh()
         self.current_view = self.CAT_VIEW
-
-    def setup_search(self):
-        if not self._search_ready:
-            self.gallery_search = GallerySearch(self.sourceModel()._data)
-            self.gallery_search.FINISHED.connect(self.invalidateFilter)
-            self.gallery_search.FINISHED.connect(lambda: self.ROWCOUNT_CHANGE.emit())
-            self.gallery_search.moveToThread(app_constants.GENERAL_THREAD)
-            self._DO_SEARCH.connect(self.gallery_search.search)
-            self._SET_GALLERY_LIST.connect(self.gallery_search.set_gallery_list)
-            self._CHANGE_SEARCH_DATA.connect(self.gallery_search.set_data)
-            self._CHANGE_FAV.connect(self.gallery_search.set_fav)
-            self.sourceModel().rowsInserted.connect(self.refresh)
-            self._search_ready = True
 
     def refresh(self):
         self._DO_SEARCH.emit(self.current_term, self.current_args)
@@ -434,24 +415,23 @@ class SortFilterModel(QSortFilterProxyModel):
         if self.sourceModel():
             index = self.sourceModel().index(source_row, 0, parent_index)
             if index.isValid():
-                if self._search_ready:
-                    gallery = index.data(Qt.UserRole + 1)
-                    try:
-                        return self.gallery_search.result[gallery.id]
-                    except KeyError:
-                        pass
+                itemtype = index.data(app_constants.QITEM_ROLE).type()
+                itemid = index.data(app_constants.ITEM_ROLE).id
+                if itemtype == CollectionItem.type():
+                    if itemid in self._db_search.allowed_collections:
+                        return True
+                elif itemtype == GalleryItem.type():
+                    if itemid in self._db_search.allowed_galleries:
+                        return True
                 else:
                     return True
         return False
     
     def change_model(self, model):
         self.setSourceModel(model)
-        self._data = self.sourceModel()._data
-        self._CHANGE_SEARCH_DATA.emit(self._data)
+        if hasattr(model, '_loader'):
+            model._loader.finished.connect(self.refresh)
         self.refresh()
-
-    def change_data(self, data):
-        self._CHANGE_SEARCH_DATA.emit(data)
 
     def status_b_msg(self, msg):
         self.sourceModel().status_b_msg(msg)
@@ -1707,13 +1687,13 @@ class BaseView(QListView):
         self.viewport().setAcceptDrops(True)
         #self.setDropIndicatorShown(True)
         self.setDragDropMode(self.DragDrop)
-        self.sort_model = filter_model if filter_model else SortFilterModel(self)
+        self.filter_model = filter_model if filter_model else SortFilterModel(self)
         self.setSelectionBehavior(self.SelectItems)
         self.setSelectionMode(self.ExtendedSelection)
-        self.gallery_model = model
-        #self.sort_model.change_model(self.gallery_model)
+        self.base_model = model
+        self.filter_model.change_model(self.base_model)
         #self.sort_model.sort(0)
-        self.setModel(self.gallery_model)
+        self.setModel(self.filter_model)
         self.setViewportMargins(0,0,0,0)
 
         self.item_window = ViewMetaWindow(parent if parent else self)
@@ -1819,12 +1799,12 @@ class BaseView(QListView):
             gallery.fav = 0
             #self.model().replaceRows([gallery], index.row(), 1, index)
             gallerydb.execute(gallerydb.GalleryDB.modify_gallery, True, gallery.id, {'fav':0})
-            self.gallery_model.CUSTOM_STATUS_MSG.emit("Unfavorited")
+            self.base_model.CUSTOM_STATUS_MSG.emit("Unfavorited")
         else:
             gallery.fav = 1
             #self.model().replaceRows([gallery], index.row(), 1, index)
             gallerydb.execute(gallerydb.GalleryDB.modify_gallery, True, gallery.id, {'fav':1})
-            self.gallery_model.CUSTOM_STATUS_MSG.emit("Favorited")
+            self.base_model.CUSTOM_STATUS_MSG.emit("Favorited")
 
     def del_chapter(self, index, chap_numb):
         gallery = index.data(Qt.UserRole + 1)
@@ -1839,34 +1819,34 @@ class BaseView(QListView):
             msgbox.setStandardButtons(msgbox.Yes | msgbox.No)
             if msgbox.exec() == msgbox.Yes:
                 gallery.chapters.pop(chap_numb, None)
-                self.gallery_model.replaceRows([gallery], index.row())
+                self.base_model.replaceRows([gallery], index.row())
                 gallerydb.execute(gallerydb.ChapterDB.del_chapter, True, gallery.id, chap_numb)
 
     def sort(self, name):
         if not self.view_type == app_constants.ViewType.Duplicate:
             if name == 'title':
-                self.sort_model.setSortRole(Qt.DisplayRole)
-                self.sort_model.sort(0, Qt.AscendingOrder)
+                self.filter_model.setSortRole(Qt.DisplayRole)
+                self.filter_model.sort(0, Qt.AscendingOrder)
                 self.current_sort = 'title'
             elif name == 'artist':
-                self.sort_model.setSortRole(GalleryModel.ARTIST_ROLE)
-                self.sort_model.sort(0, Qt.AscendingOrder)
+                self.filter_model.setSortRole(GalleryModel.ARTIST_ROLE)
+                self.filter_model.sort(0, Qt.AscendingOrder)
                 self.current_sort = 'artist'
             elif name == 'date_added':
-                self.sort_model.setSortRole(GalleryModel.DATE_ADDED_ROLE)
-                self.sort_model.sort(0, Qt.DescendingOrder)
+                self.filter_model.setSortRole(GalleryModel.DATE_ADDED_ROLE)
+                self.filter_model.sort(0, Qt.DescendingOrder)
                 self.current_sort = 'date_added'
             elif name == 'pub_date':
-                self.sort_model.setSortRole(GalleryModel.PUB_DATE_ROLE)
-                self.sort_model.sort(0, Qt.DescendingOrder)
+                self.filter_model.setSortRole(GalleryModel.PUB_DATE_ROLE)
+                self.filter_model.sort(0, Qt.DescendingOrder)
                 self.current_sort = 'pub_date'
             elif name == 'times_read':
-                self.sort_model.setSortRole(GalleryModel.TIMES_READ_ROLE)
-                self.sort_model.sort(0, Qt.DescendingOrder)
+                self.filter_model.setSortRole(GalleryModel.TIMES_READ_ROLE)
+                self.filter_model.sort(0, Qt.DescendingOrder)
                 self.current_sort = 'times_read'
             elif name == 'last_read':
-                self.sort_model.setSortRole(GalleryModel.LAST_READ_ROLE)
-                self.sort_model.sort(0, Qt.DescendingOrder)
+                self.filter_model.setSortRole(GalleryModel.LAST_READ_ROLE)
+                self.filter_model.sort(0, Qt.DescendingOrder)
                 self.current_sort = 'last_read'
 
     def contextMenuEvent(self, event):
@@ -1942,8 +1922,8 @@ class CommonView:
             gallerydb.execute(gallerydb.GalleryDB.del_gallery, True, gallery_db_list, local=local, priority=0)
 
             rows = len(gallery_list)
-            view_cls.gallery_model._gallery_to_remove.extend(gallery_list)
-            view_cls.gallery_model.removeRows(view_cls.gallery_model.rowCount() - rows, rows)
+            view_cls.base_model._gallery_to_remove.extend(gallery_list)
+            view_cls.base_model.removeRows(view_cls.base_model.rowCount() - rows, rows)
 
             #view_cls.STATUS_BAR_MSG.emit('Gallery removed!')
             #view_cls.setUpdatesEnabled(True)
@@ -1953,7 +1933,7 @@ class CommonView:
     def find_index(view_cls, gallery_id, sort_model=False):
         "Finds and returns the index associated with the gallery id"
         index = None
-        model = view_cls.sort_model if sort_model else view_cls.gallery_model
+        model = view_cls.filter_model if sort_model else view_cls.base_model
         rows = model.rowCount()
         for r in range(rows):
             indx = model.index(r, 0)
@@ -1966,10 +1946,10 @@ class CommonView:
     @staticmethod
     def open_random_gallery(view_cls):
         try:
-            g = random.randint(0, view_cls.sort_model.rowCount() - 1)
+            g = random.randint(0, view_cls.filter_model.rowCount() - 1)
         except ValueError:
             return
-        indx = view_cls.sort_model.index(g, 1)
+        indx = view_cls.filter_model.index(g, 1)
         chap_numb = 0
         if app_constants.OPEN_RANDOM_GALLERY_CHAPTERS:
             gallery = indx.data(Qt.UserRole + 1)
@@ -1977,7 +1957,7 @@ class CommonView:
             if b > 1:
                 chap_numb = random.randint(0, b - 1)
 
-        CommonView.scroll_to_index(view_cls, view_cls.sort_model.index(indx.row(), 0))
+        CommonView.scroll_to_index(view_cls, view_cls.filter_model.index(indx.row(), 0))
         indx.data(Qt.UserRole + 1).chapters[chap_numb].open()
 
     @staticmethod
@@ -2009,7 +1989,7 @@ class CommonView:
 
         handled = False
         index = view_cls.indexAt(event.pos())
-        index = view_cls.sort_model.mapToSource(index)
+        index = view_cls.filter_model.mapToSource(index)
 
         selected = False
         if table_view:
@@ -2019,7 +1999,7 @@ class CommonView:
         select_indexes = []
         for idx in s_indexes:
             if idx.isValid() and idx.column() == 0:
-                select_indexes.append(view_cls.sort_model.mapToSource(idx))
+                select_indexes.append(view_cls.filter_model.mapToSource(idx))
         if len(select_indexes) > 1:
             selected = True
 
@@ -2029,10 +2009,10 @@ class CommonView:
                     view_cls.item_window.hide_animation.start()
                 view_cls.grid_delegate.CONTEXT_ON = True
             if selected:
-                menu = misc.GalleryMenu(view_cls, index, view_cls.sort_model,
+                menu = misc.GalleryMenu(view_cls, index, view_cls.filter_model,
                                view_cls.parent_widget, select_indexes)
             else:
-                menu = misc.GalleryMenu(view_cls, index, view_cls.sort_model,
+                menu = misc.GalleryMenu(view_cls, index, view_cls.filter_model,
                                view_cls.parent_widget)
             menu.delete_galleries.connect(lambda s: CommonView.remove_gallery(view_cls, select_indexes, s))
             menu.edit_gallery.connect(CommonView.spawn_dialog)
@@ -2152,7 +2132,7 @@ class PathView(QWidget):
 
         if item_type != PageItem.type():
             if idx.isValid():
-                self.view.model().fetch_more(idx)
+                self.view.base_model.fetch_more(idx)
             self.view.setRootIndex(idx)
         if hasattr(self.view, "item_window"):
             self.view.item_window.delayed_hide()
@@ -2202,7 +2182,7 @@ class ViewManager:
         self.grid_view = GridView(self.item_model, v_type, parent=parent)
         self.list_view = ListView(self.item_model, v_type, parent=parent)
         #self.list_view.sort_model.setup_search()
-        self.sort_model = self.grid_view.sort_model
+        self.sort_model = self.grid_view.filter_model
 
         self.view_layout = QStackedLayout()
         self.grid_view_index = self.view_layout.addWidget(PathView(self.grid_view))
@@ -2242,7 +2222,7 @@ class ViewManager:
                     if not g.profile:
                         Executors.generate_thumbnail(g, on_method=g.set_profile)
             rows = len(gallery)
-            self.grid_view.gallery_model._gallery_to_add.extend(gallery)
+            self.grid_view.base_model._gallery_to_add.extend(gallery)
             if record_time:
                 g.qtime = QTime.currentTime()
         else:
@@ -2250,7 +2230,7 @@ class ViewManager:
             if self.view_type != app_constants.ViewType.Duplicate:
                 gallery.state = app_constants.GalleryState.New
             rows = 1
-            self.grid_view.gallery_model._gallery_to_add.append(gallery)
+            self.grid_view.base_model._gallery_to_add.append(gallery)
             if record_time:
                 g.qtime = QTime.currentTime()
             if db:
@@ -2258,7 +2238,7 @@ class ViewManager:
             else:
                 if not gallery.profile:
                     Executors.generate_thumbnail(gallery, on_method=gallery.set_profile)
-        self.grid_view.gallery_model.insertRows(self.grid_view.gallery_model.rowCount(), rows)
+        self.grid_view.base_model.insertRows(self.grid_view.base_model.rowCount(), rows)
         
     def replace_gallery(self, list_of_gallery, db_optimize=True):
         "Replaces the view and DB with given list of gallery, at given position"
@@ -2306,8 +2286,8 @@ class ViewManager:
             return self.list_view
 
     def fav_is_current(self):
-        if self.list_view.sort_model.current_view == \
-            self.list_view.sort_model.CAT_VIEW:
+        if self.list_view.filter_model.current_view == \
+            self.list_view.filter_model.CAT_VIEW:
             return False
         return True
 

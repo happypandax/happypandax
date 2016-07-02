@@ -521,7 +521,7 @@ class SideBarWidget(QFrame):
         #self.setContentsMargins(0,0,-self.arrow_handle.width(),0)
 
         self.show_all_galleries_btn = QPushButton("Show all galleries")
-        self.show_all_galleries_btn.clicked.connect(lambda:parent.manga_list_view.sort_model.set_gallery_list())
+        self.show_all_galleries_btn.clicked.connect(lambda:parent.manga_list_view.filter_model.set_gallery_list())
         self.show_all_galleries_btn.clicked.connect(self.show_all_galleries_btn.hide)
         self.show_all_galleries_btn.hide()
         self.main_layout.addWidget(self.show_all_galleries_btn)
@@ -567,7 +567,7 @@ class SideBarWidget(QFrame):
         lists_l.addWidget(self.lists)
         lists_l.addWidget(create_new_list_btn)
         lists_index = self.stacked_layout.addWidget(gallery_lists_dummy)
-        self.lists.GALLERY_LIST_CLICKED.connect(parent.manga_list_view.sort_model.set_gallery_list)
+        self.lists.GALLERY_LIST_CLICKED.connect(parent.manga_list_view.filter_model.set_gallery_list)
         self.lists.GALLERY_LIST_CLICKED.connect(self.show_all_galleries_btn.show)
         self.lists.GALLERY_LIST_REMOVED.connect(self.show_all_galleries_btn.click)
         self.lists_btn.clicked.connect(lambda:self.stacked_layout.setCurrentIndex(lists_index))

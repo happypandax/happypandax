@@ -1,9 +1,12 @@
-from sqlalchemy.orm import sessionmaker, relationship, validates, object_session, scoped_session
 from sqlalchemy.engine import Engine
+from sqlalchemy import String as _String
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import (create_engine, event, and_, or_, Boolean, Column, Integer, String, ForeignKey,
+from sqlalchemy.ext.compiler import compiles
+from sqlalchemy.sql.expression import BinaryExpression, func, literal
+from sqlalchemy.sql.operators import custom_op
+from sqlalchemy.orm import sessionmaker, relationship, validates, object_session, scoped_session
+from sqlalchemy import (create_engine, event, exc, and_, or_, Boolean, Column, Integer, ForeignKey,
                         Table, Date, DateTime, UniqueConstraint, Float)
-from sqlalchemy import exc
 from dateutil import parser as dateparser
 
 import datetime
@@ -21,6 +24,42 @@ log_d = log.debug
 log_w = log.warning
 log_e = log.error
 log_c = log.critical
+
+class String(_String):
+    """Enchanced version of standard SQLAlchemy's :class:`String`.
+    Supports additional operators that can be used while constructing
+    filter expressions.
+    """
+    class comparator_factory(_String.comparator_factory):
+        """Contains implementation of :class:`String` operators
+        related to regular expressions.
+        """
+        def regexp(self, other):
+            return RegexMatchExpression(self.expr, literal(other), custom_op('~'))
+
+        def iregexp(self, other):
+            return RegexMatchExpression(self.expr, literal(other), custom_op('~*'))
+
+        def not_regexp(self, other):
+            return RegexMatchExpression(self.expr, literal(other), custom_op('!~'))
+
+        def not_iregexp(self, other):
+            return RegexMatchExpression(self.expr, literal(other), custom_op('!~*'))
+
+
+class RegexMatchExpression(BinaryExpression):
+    """Represents matching of a column againsts a regular expression."""
+
+SQLITE_REGEX_FUNCTIONS = {
+    '~': ('REGEXP',
+          lambda value, regex: bool(re.match(regex, value))),
+    '~*': ('IREGEXP',
+           lambda value, regex: bool(re.match(regex, value, re.IGNORECASE))),
+    '!~': ('NOT_REGEXP',
+           lambda value, regex: not re.match(regex, value)),
+    '!~*': ('NOT_IREGEXP',
+            lambda value, regex: not re.match(regex, value, re.IGNORECASE)),
+}
 
 class BaseID:
     id = Column(Integer, primary_key=True)
@@ -266,6 +305,28 @@ class Collection(ProfileMixin, Base):
     def rating(self):
         "Calculates average rating from galleries"
         return 5
+
+    @classmethod
+    def search(cls, key, args=[], session=None):
+        "Check if gallery contains keyword"
+        if not session:
+            session = db_constants.SESSION()
+        q = session.query(cls.id)
+        if key:
+            is_exclude = False if key[0] == '-' else True
+            key = key[1:] if not is_exclude else key
+            helper = utils._ValidContainerHelper()
+            if not ':' in key:
+                for g_attr in [cls.title, cls.info]:
+                    if app_constants.Search.Regex in args:
+                        helper.add(q.filter(g_attr.ilike(key)).all())
+                    else:
+                        helper.add(q.filter(g_attr.ilike("%{}%".format(key))).all())
+
+            return helper.done()
+        else:
+            ids = q.all()
+            return ids if ids else None
 
 gallery_profiles = profile_association("gallery")
 
@@ -616,101 +677,102 @@ language: {}
             return False
         return _search(term)
 
-    def contains(self, key, args=[]):
+    @classmethod
+    def search(cls, key, args=[], session=None):
         "Check if gallery contains keyword"
-        is_exclude = False if key[0] == '-' else True
-        key = key[1:] if not is_exclude else key
-        default = False if is_exclude else True
+        if not session:
+            session = db_constants.SESSION()
+        q = session.query(cls.id)
         if key:
+            is_exclude = False if key[0] == '-' else True
+            key = key[1:] if not is_exclude else key
+            helper = utils._ValidContainerHelper()
             # check in title/artist/language
             found = False
             if not ':' in key:
-                for g_attr in [self.title, self.artist, self.language]:
-                    if not g_attr:
-                        continue
+                for g_attr in [Title, Artist, Language]:
                     if app_constants.Search.Regex in args:
-                        if utils.regex_search(key, g_attr, args=args):
-                            found = True
-                            break
+                        helper.add(q.filter(g_attr.name.ilike(key)).all())
                     else:
-                        if utils.search_term(key, g_attr, args=args):
-                            found = True
-                            break
+                        helper.add(q.filter(g_attr.name.ilike("%{}%".format(key))).all())
 
-            # check in tag
-            if not found:
-                tags = key.split(':')
-                ns = tag = ''
-                # only namespace is lowered and capitalized for now
-                if len(tags) > 1:
-                    ns = tags[0].lower().capitalize()
-                    tag = tags[1]
-                else:
-                    tag = tags[0]
+            ## check in tag
+            #if not found:
+            #    tags = key.split(':')
+            #    ns = tag = ''
+            #    # only namespace is lowered and capitalized for now
+            #    if len(tags) > 1:
+            #        ns = tags[0].lower().capitalize()
+            #        tag = tags[1]
+            #    else:
+            #        tag = tags[0]
 
-                # very special keywords
-                if ns:
-                    key_word = ['none', 'null']
-                    if ns == 'Tag' and tag in key_word:
-                        if not self.tags:
-                            return is_exclude
-                    elif ns == 'Artist' and tag in key_word:
-                        if not self.artist:
-                            return is_exclude
-                    elif ns == 'Status' and tag in key_word:
-                        if not self.status or self.status == 'Unknown':
-                            return is_exclude
-                    elif ns == 'Language' and tag in key_word:
-                        if not self.language:
-                            return is_exclude
-                    elif ns == 'Url' and tag in key_word:
-                        if not self.link:
-                            return is_exclude
-                    elif ns in ('Descr', 'Description') and tag in key_word:
-                        if not self.info or self.info == 'No description..':
-                            return is_exclude
-                    elif ns == 'Type' and tag in key_word:
-                        if not self.type:
-                            return is_exclude
-                    elif ns in ('Publication', 'Pub_date', 'Pub date') and tag in key_word:
-                        if not self.pub_date:
-                            return is_exclude
-                    elif ns == 'Path' and tag in key_word:
-                        if self.dead_link:
-                            return is_exclude
+            #    # very special keywords
+            #    if ns:
+            #        key_word = ['none', 'null']
+            #        if ns == 'Tag' and tag in key_word:
+            #            if not cls.tags:
+            #                return is_exclude
+            #        elif ns == 'Artist' and tag in key_word:
+            #            if not cls.artist:
+            #                return is_exclude
+            #        elif ns == 'Status' and tag in key_word:
+            #            if not cls.status or cls.status == 'Unknown':
+            #                return is_exclude
+            #        elif ns == 'Language' and tag in key_word:
+            #            if not cls.language:
+            #                return is_exclude
+            #        elif ns == 'Url' and tag in key_word:
+            #            if not cls.link:
+            #                return is_exclude
+            #        elif ns in ('Descr', 'Description') and tag in key_word:
+            #            if not cls.info or cls.info == 'No description..':
+            #                return is_exclude
+            #        elif ns == 'Type' and tag in key_word:
+            #            if not cls.type:
+            #                return is_exclude
+            #        elif ns in ('Publication', 'Pub_date', 'Pub date') and tag in key_word:
+            #            if not cls.pub_date:
+            #                return is_exclude
+            #        elif ns == 'Path' and tag in key_word:
+            #            if cls.dead_link:
+            #                return is_exclude
 
-                if app_constants.Search.Regex in args:
-                    if ns:
-                        if self._keyword_search(ns, tag, args = args):
-                            return is_exclude
+            #    if app_constants.Search.Regex in args:
+            #        if ns:
+            #            if cls._keyword_search(ns, tag, args = args):
+            #                return is_exclude
 
-                        for x in self.tags:
-                            if utils.regex_search(ns, x):
-                                for t in self.tags[x]:
-                                    if utils.regex_search(tag, t, True, args=args):
-                                        return is_exclude
-                    else:
-                        for x in self.tags:
-                            for t in self.tags[x]:
-                                if utils.regex_search(tag, t, True, args=args):
-                                    return is_exclude
-                else:
-                    if ns:
-                        if self._keyword_search(ns, tag, args=args):
-                            return is_exclude
+            #            for x in cls.tags:
+            #                if utils.regex_search(ns, x):
+            #                    for t in cls.tags[x]:
+            #                        if utils.regex_search(tag, t, True, args=args):
+            #                            return is_exclude
+            #        else:
+            #            for x in cls.tags:
+            #                for t in cls.tags[x]:
+            #                    if utils.regex_search(tag, t, True, args=args):
+            #                        return is_exclude
+            #    else:
+            #        if ns:
+            #            if cls._keyword_search(ns, tag, args=args):
+            #                return is_exclude
 
-                        if ns in self.tags:
-                            for t in self.tags[ns]:
-                                if utils.search_term(tag, t, True, args=args):
-                                    return is_exclude
-                    else:
-                        for x in self.tags:
-                            for t in self.tags[x]:
-                                if utils.search_term(tag, t, True, args=args):
-                                    return is_exclude
-            else:
-                return is_exclude
-        return default
+            #            if ns in cls.tags:
+            #                for t in cls.tags[ns]:
+            #                    if utils.search_term(tag, t, True, args=args):
+            #                        return is_exclude
+            #        else:
+            #            for x in cls.tags:
+            #                for t in cls.tags[x]:
+            #                    if utils.search_term(tag, t, True, args=args):
+            #                        return is_exclude
+            #else:
+            #    return is_exclude
+            return helper.done()
+        else:
+            ids = q.all()
+            return ids if ids else [None]
 
 page_profiles = profile_association("page")
 
@@ -805,11 +867,38 @@ def delete_circle_orphans(session):
 def delete_gallery_namespace_orphans(session):
     session.query(GalleryNamespace).filter(~GalleryNamespace.galleries.any()).delete(synchronize_session=False)
 
-#@event.listens_for(Engine, "connect")
-#def set_sqlite_pragma(dbapi_connection, connection_record):
-#    cursor = dbapi_connection.cursor()
-#    cursor.execute("PRAGMA foreign_keys=ON")
-#    cursor.close()
+@compiles(RegexMatchExpression, 'sqlite')
+def sqlite_regex_match(element, compiler, **kw):
+    """Compile the SQL expression representing a regular expression match
+    for the SQLite engine.
+    """
+    # determine the name of a custom SQLite function to use for the operator
+    operator = element.operator.opstring
+    try:
+        func_name, _ = SQLITE_REGEX_FUNCTIONS[operator]
+    except (KeyError, ValueError) as e:
+        would_be_sql_string = ' '.join((compiler.process(element.left),
+                                        operator,
+                                        compiler.process(element.right)))
+        raise exc.StatementError(
+            "unknown regular expression match operator: %s" % operator,
+            would_be_sql_string, None, e)
+
+    # compile the expression as an invocation of the custom function
+    regex_func = getattr(func, func_name)
+    regex_func_call = regex_func(element.left, element.right)
+    return compiler.process(regex_func_call)
+    
+
+@event.listens_for(Engine, 'connect')
+def sqlite_engine_connect(dbapi_connection, connection_record):
+    """Listener for the event of establishing connection to a SQLite database.
+    Creates the functions handling regular expression operators
+    within SQLite engine, pointing them to their Python implementations above.
+    """
+
+    for name, function in SQLITE_REGEX_FUNCTIONS.values():
+        dbapi_connection.create_function(name, 2, function)
 
 def init_defaults(sess):
     ""
