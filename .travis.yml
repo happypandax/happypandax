@@ -5,7 +5,5 @@ install:
 - "pip install -r requirements.txt"
 script:
 - "python version/db.py"
-virtualenv:
-  system_site_packages: true
 before_install:
 - "sudo apt-get install qt5-default python3-pyqt5 pyqt5"
