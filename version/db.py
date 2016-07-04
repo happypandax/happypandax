@@ -394,7 +394,7 @@ class Gallery(ProfileMixin, Base):
 
     @title.setter
     def title(self, t):
-        if self._title:
+        if hasattr(self, '_title') and self._title:
             self._title.name = t
 
     @property
@@ -1154,7 +1154,7 @@ if __name__ == '__main__':
 
             self.session.commit()
 
-            self.assertGreater(self.gallery.artists.count(), 0)
+            self.assertGreater(len(self.gallery.artists), 0)
             self.assertGreater(self.gallery.circles.count(), 0)
             self.assertTrue(artists[0].galleries[0].id == self.gallery.id)
 

@@ -1,10 +1,9 @@
-###### *[updated 13/3]* I will be taking a longer break from Happypanda to focus on my other projects (and more on school since exams are coming up). I'll probably start working on new features again in summer.. I'll still be available to answer issues, mails and gitter chat.
-
 I'm available in the gitter chat if you have any questions!
 
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Pewpews/happypanda?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Stories in Progress](https://badge.waffle.io/Pewpews/happypanda.png?label=In%20Progress&title=Features%20In%20Progress)](https://waffle.io/Pewpews/happypanda)
 [![Stories in Before next release](https://badge.waffle.io/Pewpews/happypanda.png?label=Before%20next%20release&title=Before%20next%20release)](https://waffle.io/Pewpews/happypanda)
+[![Build Status](https://travis-ci.org/Pewpews/happypanda.svg?branch=newDB)](https://travis-ci.org/Pewpews/happypanda)
 
 Development is done in alpha branch
 
