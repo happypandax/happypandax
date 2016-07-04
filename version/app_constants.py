@@ -71,6 +71,11 @@ THUMB_W_SIZE = 133 + SIZE_FACTOR
 THUMB_DEFAULT = (THUMB_W_SIZE, THUMB_H_SIZE)
 THUMB_SMALL = (140, 93)
 
+# Model Item Types
+COLLECTION_TYPE = Qt.UserRole + 1
+GALLERY_TYPE = Qt.UserRole + 2
+PAGE_TYPE = Qt.UserRole + 3
+
 # Model Roles
 ITEM_ROLE = Qt.UserRole
 TITLE_ROLE = Qt.UserRole + 1

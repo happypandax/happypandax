@@ -517,7 +517,7 @@ class AppWindow(QMainWindow):
         gallery_action.setShortcut(gallery_k)
         gallery_action.setIcon(app_constants.GALLERY_ICON)
         gallery_action.setText('Add')
-        gallery_action.clicked.connect(lambda: gallerydialog.ItemManager(self))
+        gallery_action.clicked.connect(lambda: gallerydialog.GalleryManager(self))
 
         self.toolbar.addWidget(gallery_action)
 

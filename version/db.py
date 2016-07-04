@@ -69,6 +69,7 @@ class BaseID:
         if not sess:
             sess = db_constants.SESSION()
         sess.delete(self)
+        return sess
 
 class NameMixin:
     name = Column(String, nullable=False, default='', unique=True)
@@ -297,6 +298,7 @@ class Collection(ProfileMixin, Base):
     __tablename__ = 'collection'
     title = Column(String, nullable=False, default='')
     info = Column(String, nullable=False, default='')
+    cover = Column(String, nullable=False, default='')
 
     galleries = relationship("Gallery", back_populates="collection", cascade="save-update, merge, refresh-expire", lazy="dynamic")
     profiles = relationship("Profile", secondary=collection_profiles, cascade="all")
@@ -603,7 +605,7 @@ language: {}
 <Gallery END - {}>
 """.format(self.id, self.titles, self.artists, self.path, self.in_archive, self.path_in_archive, self.language, self.id)
 
-    def _keyword_search(self, ns, tag, args=[]):
+    def __keyword_search(self, ns, tag, args=[]):
         term = ''
         lt, gt = range(2)
         def _search(term):
@@ -678,6 +680,17 @@ language: {}
         return _search(term)
 
     @classmethod
+    def _keyword_search(cls, helper, query, attr, tag, custom_filter=None, args=[]):
+        if tag in ('none', 'null'):
+            helper.add(query.filter(attr.in_((None, ''))).all())
+        else:
+            try:
+                f = custom_filter if custom_filter else attr.ilike("%{}%".format(tag))
+                helper.add(query.filter(f).all())
+            except exc.InvalidRequestError: # pretty sure it occurs when no such attr is found on a gallery
+                pass
+
+    @classmethod
     def search(cls, key, args=[], session=None):
         "Check if gallery contains keyword"
         if not session:
@@ -689,12 +702,48 @@ language: {}
             helper = utils._ValidContainerHelper()
             # check in title/artist/language
             found = False
-            if not ':' in key:
-                for g_attr in [Title, Artist, Language]:
+            has_namespace = False
+            if ':' in key and key[len(key)-1] != ':':
+                has_namespace = True
+
+            tags = key.split(':')
+            ns = tag = ''
+            # only namespace is lowered and capitalized for now
+            if len(tags) > 1:
+                ns = tags[0].lower().capitalize()
+                tag = tags[1]
+            else:
+                tag = tags[0]
+
+            if not has_namespace:
+                for g_attr, attr in [(Gallery.artists, Artist), (Gallery.titles, Title), (Language, Language)]:
                     if app_constants.Search.Regex in args:
-                        helper.add(q.filter(g_attr.name.ilike(key)).all())
+                        helper.add(q.join(g_attr).filter(attr.name.ilike(key)).all())
                     else:
-                        helper.add(q.filter(g_attr.name.ilike("%{}%".format(key))).all())
+                        helper.add(q.join(g_attr).filter(attr.name.ilike("%{}%".format(key))).all())
+            else:
+                if ns == 'Title':
+                    cls._keyword_search(helper, q.join(Gallery.titles), Title.name, tag, args=args)
+                elif ns == 'Type':
+                    cls._keyword_search(helper, q.join(GalleryType), GalleryType.name, tag, args=args)
+                elif ns == 'Status':
+                    cls._keyword_search(helper, q.join(Status), Status.name, tag, args=args)
+                elif ns == 'Artist':
+                    cls._keyword_search(helper, q.join(Gallery.artists), Artist.name, tag, args=args)
+                elif ns in ('Language', 'Lang'):
+                    cls._keyword_search(helper, q.join(Language), Language.name, tag, args=args)
+                elif ns in ('Descr', 'Description'):
+                    cls._keyword_search(helper, q, Gallery.info, tag, args=args)
+                #elif ns in ('Read_count', 'Read count', 'Times_read', 'Times read'):
+                #    cls._keyword_search(helper, q, Gallery.times_read, tag, custom_filter=Gallery.times_read==tag, args=args)
+                #elif ns in ('Rating', 'Stars'):
+                #    cls._keyword_search(helper, q, Gallery.rating, tag, custom_filter=Gallery.rating==tag, args=args)
+                #elif ns in ('Date_added', 'Date added'):
+                #    cls._keyword_search(helper, q, Gallery.rating, tag, custom_filter=Gallery.rating==tag, args=args)
+                #elif ns in ('Pub_date', 'Publication', 'Pub date'):
+                #    cls._keyword_search(helper, q, Gallery.rating, tag, custom_filter=Gallery.rating==tag, args=args)
+                #elif ns in ('Last_read', 'Last read'):
+                #    pass
 
             ## check in tag
             #if not found:

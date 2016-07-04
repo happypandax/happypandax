@@ -5,12 +5,12 @@ QLabel#author {
 	font-weight:lighter;
 }
 
-AppWindow > QToolBar, QStatusBar, SideBarWidget {
+QToolBar, QStatusBar, SideBarWidget {
 	background-color: #2A2D31;
 	border: none;
 }
 
-AppWindow > QToolBar::sunken, AppWindow > QStatusBar::item {
+QToolBar::sunken, AppWindow > QStatusBar::item {
 	border: none;
 }
 

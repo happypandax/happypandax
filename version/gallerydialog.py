@@ -1,4 +1,11 @@
-import queue, os, threading, random, logging, time, scandir
+import queue
+import os
+import threading
+import random
+import logging
+import time
+import scandir
+import enum
 from datetime import datetime
 
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QDesktopWidget, QGroupBox,
@@ -7,7 +14,7 @@ from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QDesktopWidget, QGroupBox,
                              QDateEdit, QFileDialog, QMessageBox, QScrollArea,
                              QCheckBox, QSizePolicy, QSpinBox, QDialog, QTabWidget,
                              QListView, QDialogButtonBox, QTableWidgetItem, QFrame,
-                             QMenu)
+                             QMenu, QStackedLayout, QToolBar)
 from PyQt5.QtCore import (pyqtSignal, Qt, QPoint, QDate, QThread, QTimer, QSize)
 
 from executors import Executors
@@ -62,17 +69,12 @@ class GalleryInfo(QWidget):
         self.lang_box.addItems(app_constants.G_LANGUAGES)
         self.lang_box.addItems(app_constants.G_CUSTOM_LANGUAGES)
         self.rating_box = add_check(QComboBox())
-        self.rating_box.addItems([str(x)+" stars" if x != 1 else str(x)+" star" for x in range(6)])
-        [self.rating_box.setItemData(x, x+1) for x in range(5)]
+        self.rating_box.addItems([str(x) + " stars" if x != 1 else str(x) + " star" for x in range(6)])
+        [self.rating_box.setItemData(x, x + 1) for x in range(5)]
         self._find_combobox_match(self.lang_box, app_constants.G_DEF_LANGUAGE, 0)
         tags_l = QVBoxLayout()
         tag_info = misc.ClickedLabel("How do i write namespace & tags? (hover)", parent=self)
-        tag_info.setToolTip("Ways to write tags:\n\nNormal tags:\ntag1, tag2, tag3\n\n"+
-                      "Namespaced tags:\nns1:tag1, ns1:tag2\n\nNamespaced tags with one or more"+
-                      " tags under same namespace:\nns1:[tag1, tag2, tag3], ns2:[tag1, tag2]\n\n"+
-                      "Those three ways of writing namespace & tags can be combined freely.\n"+
-                      "Tags are seperated by a comma, NOT whitespace.\nNamespaces will be capitalized while tags"+
-                      " will be lowercased.")
+        tag_info.setToolTip("Ways to write tags:\n\nNormal tags:\ntag1, tag2, tag3\n\n" + "Namespaced tags:\nns1:tag1, ns1:tag2\n\nNamespaced tags with one or more" + " tags under same namespace:\nns1:[tag1, tag2, tag3], ns2:[tag1, tag2]\n\n" + "Those three ways of writing namespace & tags can be combined freely.\n" + "Tags are seperated by a comma, NOT whitespace.\nNamespaces will be capitalized while tags" + " will be lowercased.")
         tag_info.setToolTipDuration(99999999)
         tags_l.addWidget(tag_info)
         self.tags_edit = add_check(misc.CompleterTextEdit())
@@ -271,8 +273,7 @@ class ItemList(misc.DefaultTableWidget):
         super().__init__(parent)
         self.setColumnCount(2)
         self.setIconSize(QSize(20, 20))
-        self.setHorizontalHeaderLabels(
-	        ['Status', 'Gallery'])
+        self.setHorizontalHeaderLabels(['Status', 'Gallery'])
         self.horizontalHeader().setSectionResizeMode(0, self.horizontalHeader().ResizeToContents)
         self.horizontalHeader().setStretchLastSection(True)
         v_header = self.verticalHeader()
@@ -298,18 +299,18 @@ class ItemList(misc.DefaultTableWidget):
             ev.ignore()
 
 class ItemsBase(QWidget):
-    def __init__(self, parent=None):
-        super().__init__(parent)
+    def __init__(self, parent, *args):
+        super().__init__(parent, *args)
 
     def accept(self):
         return True
 
-class GalleryAddItems(ItemsBase):
+class GalleryManager(ItemsBase):
     from_path = pyqtSignal(str, tuple)
     scan_path = pyqtSignal(str, tuple)
 
     def __init__(self, parent=None):
-        super().__init__(parent)
+        super().__init__(parent, Qt.Dialog)
         self._thread = QThread(self)
         self._thread.start()
         self._scan_proc_running = 0
@@ -373,6 +374,16 @@ class GalleryAddItems(ItemsBase):
         self.item_list.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
         main_layout.addWidget(self.item_list, 2)
 
+        buttonbox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Close)
+        buttonbox.accepted.connect(self.accept)
+        buttonbox.rejected.connect(self.close)
+
+        main_layout.addWidget(buttonbox)
+        self.setWindowTitle("Addition Manager")
+        self.setAttribute(Qt.WA_DeleteOnClose)
+        self.resize(700, 700)
+        self.show()
+
     def toggle_progress(self):
         if self.populate_progress.isVisible():
             self.populate_progress.hide()
@@ -434,7 +445,7 @@ class GalleryAddItems(ItemsBase):
         if self._scan_proc_running:
             msg = QMessageBox(QMessageBox.Information, "Are you sure?",
                               "Scan is still in process.\nAre you sure you want to close?",
-                              QMessageBox.Yes|QMessageBox.No)
+                              QMessageBox.Yes | QMessageBox.No)
             if msg.exec() == msg.No:
                 return False
         galleries = []
@@ -449,7 +460,7 @@ class GalleryAddItems(ItemsBase):
             it = self.item_list.item(r, 1)
 
         Executors.add_gallery(galleries)
-        return galleries if galleries else True
+        self.hide()
 
 
 class GalleryMetadataWidget(QWidget):
@@ -527,26 +538,13 @@ class GalleryTypeWidget(QFrame):
         return super().mousePressEvent(ev)
 
 class MiscItems(ItemsBase):
+    STATUS = set()
+    LANGUAGE = set()
+
     def __init__(self, parent=None):
         super().__init__(parent)
 
         main_layout = QVBoxLayout(self)
-        
-        add_collection = QGroupBox("Add Collection", self)
-        main_layout.addWidget(add_collection)
-        add_collection_l = QFormLayout(add_collection)
-        add_collection_l.setAlignment(Qt.AlignLeft)
-        self.collection_name = QLineEdit(self)
-        self.collection_name.setPlaceholderText("New collection name...")
-        self.collection_cover = misc.PathLineEdit(self)
-        self.collection_info = QTextEdit(self)
-        self.collection_info.setAcceptRichText(True)
-        new_collection = QPushButton(app_constants.PLUS_ICON, "New Collection")
-        misc.fixed_widget_size(new_collection)
-        add_collection_l.addRow("Name:", self.collection_name)
-        add_collection_l.addRow("Cover:", self.collection_cover)
-        add_collection_l.addRow("Description:", self.collection_info)
-        add_collection_l.addRow(new_collection)
 
         add_gtype = QGroupBox("Gallery Type", self)
         main_layout.addWidget(add_gtype)
@@ -558,90 +556,9 @@ class MiscItems(ItemsBase):
         self.gtypes = misc.FlowLayout()
         add_gtype_l.addLayout(self.gtypes)
 
-        add_language = QGroupBox("Language", self)
-        main_layout.addWidget(add_language)
-        add_language_l = QVBoxLayout(add_language)
-        self.new_language = QLineEdit(self)
-        self.new_language.returnPressed.connect(self.add_language)
-        self.new_language.setPlaceholderText("New language (Click to remove)")
-        add_language_l.addWidget(self.new_language)
-        self.languages = misc.FlowLayout()
-        add_language_l.addLayout(self.languages)
-
-        add_status = QGroupBox("Status", self)
-        main_layout.addWidget(add_status)
-        add_status_l = QVBoxLayout(add_status)
-        self.new_status = QLineEdit(self)
-        self.new_status.returnPressed.connect(self.add_status)
-        self.new_status.setPlaceholderText("New status (Click to remove)")
-        add_status_l.addWidget(self.new_status)
-        self.status = misc.FlowLayout()
-        add_status_l.addLayout(self.status)
-
-    def add_gtype(self):
-        gtype = GalleryTypeWidget(self)
-        gtype.remove.connect(self.remove_gtype)
-        self.gtypes.addWidget(gtype)
-
-    def remove_gtype(self, widget):
-        self.gtypes.removeWidget(widget)
-        widget.setParent(None)
-
-    def add_language(self):
-        lang = self.new_language.text()
-        self.new_language.clear()
-        lang_btn = misc.TagText(lang)
-        lang_btn.clicked.connect(lambda: self.remove_language(lang_btn))
-        self.languages.addWidget(lang_btn)
-
-    def remove_language(self, widget):
-        self.languages.removeWidget(widget)
-        widget.setParent(None)
-
-    def add_status(self):
-        status = self.new_status.text()
-        self.new_status.clear()
-        status_btn = misc.TagText(status)
-        status_btn.clicked.connect(lambda: self.remove_language(status_btn))
-        self.status.addWidget(status_btn)
-
-    def remove_status(self, widget):
-        self.status.removeWidget(widget)
-        widget.setParent(None)
-
-
-class ItemManager(QWidget):
-    def __init__(self, parent=None):
-        super().__init__(parent, Qt.Dialog)
-        main_layout = QVBoxLayout(self)
-
-        self.tabwidget = QTabWidget(self)
-        self.tabwidget.addTab(GalleryAddItems(), "&Gallery")
-        self.tabwidget.addTab(MiscItems(), "&Misc")
-
-        buttonbox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Close)
-        buttonbox.accepted.connect(self.accept)
-        buttonbox.rejected.connect(self.close)
-
-        main_layout.addWidget(self.tabwidget)
-        main_layout.addWidget(buttonbox)
-        self.setWindowTitle("Addition Manager")
-        self.setAttribute(Qt.WA_DeleteOnClose)
-        self.resize(700, 700)
-        self.show()
 
     def accept(self):
-        x = 0
-        w = self.tabwidget.widget(x)
-        while w:
-            x += 1
-            if not w.accept():
-                return
-            if hasattr(w, '_thread'):
-                w._thread.exit()
-                w._thread.deleteLater()
-            w = self.tabwidget.widget(x)
-        self.hide()
+        return super().accept()
 
 class MetadataManager(QWidget):
     def __init__(self, parent=None):
@@ -657,3 +574,230 @@ class MetadataManager(QWidget):
 
     def closeEvent(self, event):
         self.hide()
+
+
+class ContextBar(QWidget):
+    
+    class Context(enum.Enum):
+        Collection = 1
+        Gallery = 2
+        Page = 3
+
+    class CollectionBar(QToolBar):
+
+        def __init__(self, parent=None):
+            super().__init__(parent)
+            self.setIconSize(QSize(15, 15))
+            self.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+
+
+    class GalleryBar(QToolBar):
+
+        def __init__(self, parent=None):
+            super().__init__(parent)
+            self.setIconSize(QSize(15, 15))
+            self.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+            new_gtype = self.addAction(app_constants.PLUS_ICON, "Gallery Types", self.gtypes)
+            new_status = self.addAction(app_constants.PLUS_ICON, "Gallery Status", self.gstatus)
+            new_lang = self.addAction(app_constants.PLUS_ICON, "Languages", self.glanguage)
+
+        def new_dialog(self, title, accept=None):
+            dia = QDialog(self)
+            dia.resize(300, 300)
+            dia.setWindowTitle(title)
+            l = QVBoxLayout(dia)
+            dia_l = QFormLayout(dia)
+            l.addLayout(dia_l)
+            buttonbox = QDialogButtonBox(QDialogButtonBox.Ok|QDialogButtonBox.Close)
+            buttonbox.accepted.connect(accept if accept else dia.accept)
+            buttonbox.rejected.connect(dia.reject)
+            l.addWidget(buttonbox)
+            return dia, dia_l
+
+        def glanguage(self):
+            dia, dia_l = self.new_dialog("Languages")
+            languages = misc.FlowLayout()
+            new_language = QLineEdit(self)
+            def rem_l(w):
+                lang = w.language
+                msg = QMessageBox(QMessageBox.Warning, "Are you sure?",
+                                    "Some galleries may have a reference to this language.\nAre you sure you want to delete?",
+                                    QMessageBox.Yes|QMessageBox.No, parent=self)
+                if msg.exec() == QMessageBox.No:
+                    return
+                lang.delete().commit()
+                languages.removeWidget(w)
+                w.setParent(None)
+
+            def add_l():
+                txt = new_language.text()
+                if txt:
+                    new_language.clear()
+                    lang = db.Language()
+                    lang.name = txt
+                    lang = lang.exists(True)
+                    if not lang.id:
+                        tagtxt = misc.TagText(txt)
+                        tagtxt.language = lang
+                        tagtxt.clicked.connect(lambda: rem_l(tagtxt))
+                        languages.addWidget(tagtxt)
+                        sess = db_constants.SESSION()
+                        sess.add(lang)
+                        sess.commit()
+
+            new_language.setPlaceholderText("New language name")
+            add_btn = QPushButton("Add")
+            add_btn.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
+            add_btn.clicked.connect(add_l)
+            lang_l = QHBoxLayout()
+            lang_l.addWidget(new_language)
+            lang_l.addWidget(add_btn)
+            dia_l.addRow(lang_l)
+            dia_l.addRow(languages)
+            for l in db_constants.SESSION().query(db.Language).all():
+                w = misc.TagText(l.name)
+                w.clicked.connect(lambda: rem_l(w))
+                w.language = l
+                languages.addWidget(w)
+            dia.exec()
+
+        def gstatus(self):
+            dia, dia_l = self.new_dialog("Gallery Status")
+            status = misc.FlowLayout()
+            new_status = QLineEdit(self)
+
+            def rem(w):
+                stat = w.status
+                msg = QMessageBox(QMessageBox.Warning, "Are you sure?",
+                                    "Some gallery namespaces may have a reference to this status.\nAre you sure you want to delete?",
+                                    QMessageBox.Yes|QMessageBox.No, parent=self)
+                if msg.exec() == QMessageBox.No:
+                    return
+                stat.delete().commit()
+                status.removeWidget(w)
+                w.setParent(None)
+
+            def add():
+                txt = new_status.text()
+                if txt:
+                    new_status.clear()
+                    stat = db.Status()
+                    stat.name = txt
+                    stat = stat.exists(True)
+                    if not stat.id:
+                        tagtxt = misc.TagText(txt)
+                        tagtxt.status = stat
+                        tagtxt.clicked.connect(lambda: rem(tagtxt))
+                        status.addWidget(tagtxt)
+                        sess = db_constants.SESSION()
+                        sess.add(stat)
+                        sess.commit()
+
+            new_status.setPlaceholderText("New status name")
+            add_btn = QPushButton("Add")
+            add_btn.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
+            add_btn.clicked.connect(add)
+            hoz_l = QHBoxLayout()
+            hoz_l.addWidget(new_status)
+            hoz_l.addWidget(add_btn)
+            dia_l.addRow(hoz_l)
+            dia_l.addRow(status)
+
+            for i in db_constants.SESSION().query(db.Status).all():
+                w = misc.TagText(i.name)
+                w.clicked.connect(lambda: rem(w))
+                w.status = i
+                status.addWidget(w)
+            dia.exec()
+
+        def gtypes(self):
+            dia, dia_l = self.new_dialog("Gallery Types")
+            types = misc.FlowLayout()
+            new_gtype = QLineEdit(self)
+
+            def rem(w):
+                gtype = w.gtype
+                msg = QMessageBox(QMessageBox.Warning, "Are you sure?",
+                                    "Some galleries may have a reference to this type.\nAre you sure you want to delete?",
+                                    QMessageBox.Yes|QMessageBox.No, parent=self)
+                if msg.exec() == QMessageBox.No:
+                    return
+                gtype.delete().commit()
+                types.removeWidget(w)
+                w.setParent(None)
+
+            def add():
+                txt = new_gtype.text().capitalize()
+                if txt:
+                    new_gtype.clear()
+                    gtype = db.GalleryType()
+                    gtype.name = txt
+                    gtype = gtype.exists(True)
+                    if not gtype.id:
+                        tagtxt = misc.TagText(txt)
+                        tagtxt.gtype = gtype
+                        tagtxt.clicked.connect(lambda: rem(tagtxt))
+                        types.addWidget(tagtxt)
+                        sess = db_constants.SESSION()
+                        sess.add(gtype)
+                        sess.commit()
+
+            new_gtype.setPlaceholderText("New gallery type name")
+            add_btn = QPushButton("Add")
+            add_btn.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
+            add_btn.clicked.connect(add)
+            hoz_l = QHBoxLayout()
+            hoz_l.addWidget(new_gtype)
+            hoz_l.addWidget(add_btn)
+            dia_l.addRow(hoz_l)
+            dia_l.addRow(types)
+
+            for i in db_constants.SESSION().query(db.GalleryType).all():
+                w = misc.TagText(i.name)
+                w.clicked.connect(lambda: rem(w))
+                w.gtype = i
+                types.addWidget(w)
+            dia.exec()
+
+    class PageBar(QToolBar):
+
+        def __init__(self, parent=None):
+            super().__init__(parent)
+            self.setIconSize(QSize(15, 15))
+            self.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum)
+        self.setContentsMargins(0,0,0,0)
+        self._layout = QVBoxLayout(self)
+        self._layout.setContentsMargins(0,0,0,0)
+        self._layout.setSpacing(0)
+        self._layout.setSizeConstraint(self._layout.SetNoConstraint)
+        self.handle = misc.ArrowHandle(Qt.Horizontal, self)
+        self._layout.addWidget(self.handle)
+        self.stack_layout = QStackedLayout()
+        self.stack_layout.setContentsMargins(0,0,0,0)
+        self.stack_layout.setSpacing(0)
+        self._layout.addLayout(self.stack_layout)
+        
+        self.collection_idx = self.stack_layout.addWidget(self.CollectionBar(self))
+        self.gallery_idx = self.stack_layout.addWidget(self.GalleryBar(self))
+        self.page_idx = self.stack_layout.addWidget(self.PageBar(self))
+
+    def setContext(self, ctx):
+        ""
+        assert isinstance(ctx, self.Context)
+
+        if ctx == self.Context.Collection:
+            self.stack_layout.setCurrentIndex(self.collection_idx)
+        elif ctx == self.Context.Gallery:
+            self.stack_layout.setCurrentIndex(self.gallery_idx)
+        elif ctx == self.Context.Page:
+            self.stack_layout.setCurrentIndex(self.page_idx)
+
+
+
+
+
+
