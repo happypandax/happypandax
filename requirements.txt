@@ -7,3 +7,4 @@ robobrowser
 Send2Trash
 pillow
 python-dateutil
+sqlalchemy
