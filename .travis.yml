@@ -3,7 +3,6 @@ python:
 - "3.5"
 install:
 - "pip install -r requirements.txt"
+- "pip install pyqt5"
 script:
 - "python version/db.py"
-before_install:
-- "sudo apt-get install qt5-default python3-pyqt5 pyqt5"
