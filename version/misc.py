@@ -273,7 +273,7 @@ class SortMenu(QMenu):
 
     def set_current_sort(self):
         def check_key(act, key):
-            if self.parent_widget.current_manga_view.grid_view.current_sort == key:
+            if self.parent_widget.current_view_manager.current_sort == key:
                 act.setChecked(True)
 
         for act in self.sort_actions.actions():
@@ -291,10 +291,10 @@ class SortMenu(QMenu):
                 check_key(act, 'last_read')
 
     def asc_desc(self):
-        if self.parent_widget.current_manga_view.sort_model.sortOrder() == Qt.AscendingOrder:
-            self.parent_widget.current_manga_view.sort_model.sort(0, Qt.DescendingOrder)
+        if self.parent_widget.current_view_manager.current_sort_order == Qt.AscendingOrder:
+            self.parent_widget.current_view_manager.sort_order(Qt.DescendingOrder)
         else:
-            self.parent_widget.current_manga_view.sort_model.sort(0, Qt.AscendingOrder)
+            self.parent_widget.current_view_manager.sort_order(Qt.AscendingOrder)
 
     def showEvent(self, event):
         self.set_current_sort()

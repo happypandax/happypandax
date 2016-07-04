@@ -46,9 +46,9 @@ class TabButton(QPushButton):
 
 class TabManager(QObject):
     ""
-    def __init__(self, sidebar, parent=None):
-        super().__init__(parent)
-        self.parent_widget = parent
+    def __init__(self, sidebar, app_widget):
+        super().__init__(app_widget)
+        self.parent_widget = app_widget
         self.sidebar = sidebar
         self._last_selected = None
 
@@ -62,6 +62,7 @@ class TabManager(QObject):
         self.library_btn.view = self.parent_widget.default_manga_view
         self.library_btn.setStyleSheet("text-align:left")
         self.library_btn.setCheckable(True)
+        self.library_btn.clicked.connect(lambda: app_widget.current_view_manager.set_fav(False))
         self.agroup.addButton(self.library_btn)
         self.sidebar.main_layout.insertWidget(0, self.library_btn)
         self.sidebar.main_layout.insertSpacing(0, 5)
@@ -69,17 +70,11 @@ class TabManager(QObject):
         self.favorite_btn = QPushButton(app_constants.STAR_ICON, "Favorites")
         self.favorite_btn.setStyleSheet("text-align:left")
         self.favorite_btn.setCheckable(True)
+        self.favorite_btn.clicked.connect(lambda: app_widget.current_view_manager.set_fav(True))
         self.agroup.addButton(self.favorite_btn)
         self.sidebar.main_layout.insertWidget(0, self.favorite_btn)
 
-        def switch_view(fav):
-            if fav:
-                self.default_manga_view.get_current_view().sort_model.fav_view()
-            else:
-                self.default_manga_view.get_current_view().sort_model.catalog_view()
-        #self.favorite_btn.clicked.connect(lambda: switch_view(True))
-        #self.library_btn.click()
-        #self.library_btn.clicked.connect(lambda: switch_view(False))
+        self.library_btn.setChecked(True)
 
     def _manage_selected(self, b):
         return
@@ -567,7 +562,7 @@ class SideBarWidget(QFrame):
         lists_l.addWidget(self.lists)
         lists_l.addWidget(create_new_list_btn)
         lists_index = self.stacked_layout.addWidget(gallery_lists_dummy)
-        self.lists.GALLERY_LIST_CLICKED.connect(parent.manga_list_view.filter_model.set_gallery_list)
+        self.lists.GALLERY_LIST_CLICKED.connect(parent.default_manga_view.filter_model.set_gallery_list)
         self.lists.GALLERY_LIST_CLICKED.connect(self.show_all_galleries_btn.show)
         self.lists.GALLERY_LIST_REMOVED.connect(self.show_all_galleries_btn.click)
         self.lists_btn.clicked.connect(lambda:self.stacked_layout.setCurrentIndex(lists_index))

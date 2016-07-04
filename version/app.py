@@ -200,18 +200,16 @@ class AppWindow(QMainWindow):
 
         self.init_stat_bar()
         self.manga_views = {}
-        self._current_manga_view = None
+        self._current_view_manager = None
         self.default_manga_view = gallery.ViewManager(app_constants.ViewType.Default, self, True)
-        def refresh_view():
-            self.current_manga_view.sort_model.refresh()
-        self.manga_list_view = self.default_manga_view.grid_view
-        self.manga_list_view.STATUS_BAR_MSG.connect(self.stat_temp_msg)
 
         self.sidebar_list = misc_db.SideBarWidget(self)
 
         self.tab_manager = misc_db.TabManager(self.sidebar_list, self)
         self._main_layout.addWidget(self.sidebar_list)
-        self.current_manga_view = self.default_manga_view
+        self.current_view_manager = self.default_manga_view
+
+
 
         #self.display_widget.setSizePolicy(QSizePolicy.Expanding,
         #QSizePolicy.Preferred)
@@ -334,9 +332,9 @@ class AppWindow(QMainWindow):
                     galleries = gal
             else:
                 if app_constants.CONTINUE_AUTO_METADATA_FETCHER:
-                    galleries = [g for g in self.current_manga_view.item_model._data if not g.exed]
+                    galleries = [g for g in self.current_view_manager.item_model._data if not g.exed]
                 else:
-                    galleries = self.current_manga_view.item_model._data
+                    galleries = self.current_view_manager.item_model._data
                 if not galleries:
                     self.notification_bar.add_text('Looks like we\'ve already gone through all galleries!')
                     return None
@@ -420,26 +418,26 @@ class AppWindow(QMainWindow):
         self.temp_timer.start(5000)
 
     def stat_row_info(self):
-        r = self.current_manga_view.get_current_view().filter_model.rowCount()
-        t = self.current_manga_view.get_current_view().base_model.rowCount()
+        r = self.current_view_manager.get_current_view().filter_model.rowCount()
+        t = self.current_view_manager.get_current_view().base_model.rowCount()
         g_l = self.get_current_view().filter_model.current_gallery_list
         if g_l:
             self.stat_info.setText("<b><i>{}</i></b> | Showing {} of {} ".format(g_l.name, r, t))
         else:
             self.stat_info.setText("Showing {} of {} ".format(r, t))
 
-    def set_current_manga_view(self, v):
-        self.current_manga_view = v
+    def set_current_view_manager(self, v):
+        self.current_view_manager = v
 
     @property
-    def current_manga_view(self):
-        return self._current_manga_view
+    def current_view_manager(self):
+        return self._current_view_manager
 
-    @current_manga_view.setter
-    def current_manga_view(self, new_view):
-        if self._current_manga_view:
+    @current_view_manager.setter
+    def current_view_manager(self, new_view):
+        if self._current_view_manager:
             self._main_layout.takeAt(1)
-        self._current_manga_view = new_view
+        self._current_view_manager = new_view
         self._main_layout.insertLayout(1, new_view.view_layout, 1)
         self.stat_row_info()
 
@@ -467,7 +465,7 @@ class AppWindow(QMainWindow):
             args.append(app_constants.Search.Case)
         if app_constants.GALLERY_SEARCH_STRICT:
             args.append(app_constants.Search.Strict)
-        self.current_manga_view.get_current_view().filter_model.init_search(srch_string, args)
+        self.current_view_manager.get_current_view().filter_model.init_search(srch_string, args)
         old_cursor_pos = self._search_cursor_pos[0]
         self.search_bar.end(False)
         if self.search_bar.cursorPosition() != old_cursor_pos + 1:
@@ -475,14 +473,14 @@ class AppWindow(QMainWindow):
 
     def switch_display(self):
         "Switches between fav and catalog display"
-        if self.current_manga_view.fav_is_current():
+        if self.current_view_manager.fav_is_current():
             self.tab_manager.library_btn.click()
         else:
             self.tab_manager.favorite_btn.click()
 
     def settings(self):
         sett = settingsdialog.SettingsDialog(self)
-        sett.scroll_speed_changed.connect(self.manga_list_view.updateGeometries)
+        sett.scroll_speed_changed.connect(self.current_view_manager.grid_view.updateGeometries)
         #sett.show()
 
     def init_toolbar(self):
@@ -568,7 +566,7 @@ class AppWindow(QMainWindow):
         # debug specfic code
         if app_constants.DEBUG:
             def debug_func():
-                view = self.current_manga_view.get_current_view()
+                view = self.current_view_manager.get_current_view()
                 print(view.isIndexHidden(view.currentIndex()))
         
             debug_btn = QToolButton()
@@ -584,7 +582,7 @@ class AppWindow(QMainWindow):
         sort_k = QKeySequence('Alt+S')
 
         def set_new_sort(s):
-            self.current_manga_view.grid_view.sort(s)
+            self.current_view_manager.grid_view.sort(s)
 
         sort_action = QToolButton()
         sort_action.setShortcut(sort_k)
@@ -602,7 +600,7 @@ class AppWindow(QMainWindow):
         self.grid_toggle = QToolButton()
         self.grid_toggle.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
         self.grid_toggle.setShortcut(togle_view_k)
-        if self.current_manga_view.current_view == gallery.ViewManager.View.Grid:
+        if self.current_view_manager.current_view == gallery.ViewManager.View.Grid:
             self.grid_toggle.setIcon(self.grid_toggle_l_icon)
         else:
             self.grid_toggle.setIcon(self.grid_toggle_g_icon)
@@ -683,29 +681,29 @@ class AppWindow(QMainWindow):
             self._search_cursor_pos[1] = new
         self.search_bar.cursorPositionChanged.connect(set_cursor_pos)
 
-        if app_constants.SEARCH_AUTOCOMPLETE:
-            completer = QCompleter(self)
-            completer_view = misc.CompleterPopupView()
-            completer.setPopup(completer_view)
-            completer_view._setup()
-            completer.setModel(self.manga_list_view.base_model)
-            completer.setCaseSensitivity(Qt.CaseInsensitive)
-            completer.setCompletionMode(QCompleter.PopupCompletion)
-            completer.setCompletionRole(Qt.DisplayRole)
-            completer.setCompletionColumn(app_constants.TITLE)
-            completer.setFilterMode(Qt.MatchContains)
-            self.search_bar.setCompleter(completer)
-            self.search_bar.returnPressed.connect(lambda: self.search(self.search_bar.text()))
+        #if app_constants.SEARCH_AUTOCOMPLETE:
+        #    completer = QCompleter(self)
+        #    completer_view = misc.CompleterPopupView()
+        #    completer.setPopup(completer_view)
+        #    completer_view._setup()
+        #    completer.setModel(self.manga_list_view.base_model)
+        #    completer.setCaseSensitivity(Qt.CaseInsensitive)
+        #    completer.setCompletionMode(QCompleter.PopupCompletion)
+        #    completer.setCompletionRole(Qt.DisplayRole)
+        #    completer.setCompletionColumn(app_constants.TITLE)
+        #    completer.setFilterMode(Qt.MatchContains)
+        #    self.search_bar.setCompleter(completer)
+        #    self.search_bar.returnPressed.connect(lambda: self.search(self.search_bar.text()))
         if not app_constants.SEARCH_ON_ENTER:
             self.search_bar.textEdited.connect(lambda: self.search_timer.start(800))
         self.search_bar.setPlaceholderText("Search title, artist, namespace & tags")
         self.search_bar.setMinimumWidth(400)
         self.search_bar.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
-        self.manga_list_view.filter_model.HISTORY_SEARCH_TERM.connect(lambda a: self.search_bar.setText(a))
+        self.current_view_manager.filter_model.HISTORY_SEARCH_TERM.connect(lambda a: self.search_bar.setText(a))
         self.toolbar.addWidget(self.search_bar)
 
         def search_history(_, back=True): # clicked signal passes a bool
-            sort_model = self.manga_list_view.filter_model
+            sort_model = self.current_view_manager.filter_model
             nav = sort_model.PREV if back else sort_model.NEXT
             history_term = sort_model.navigate_history(nav)
             if back:
@@ -747,17 +745,17 @@ class AppWindow(QMainWindow):
         self.addToolBar(self.toolbar)
 
     def get_current_view(self):
-        return self.current_manga_view.get_current_view()
+        return self.current_view_manager.get_current_view()
 
     def toggle_view(self):
         """
         Toggles the current display view
         """
-        if self.current_manga_view.current_view == gallery.ViewManager.View.List:
-            self.current_manga_view.changeTo(self.current_manga_view.grid_view_index)
+        if self.current_view_manager.current_view == gallery.ViewManager.View.List:
+            self.current_view_manager.changeTo(self.current_view_manager.grid_view_index)
             self.grid_toggle.setIcon(self.grid_toggle_l_icon)
         else:
-            self.current_manga_view.changeTo(self.current_manga_view.list_view_index)
+            self.current_view_manager.changeTo(self.current_view_manager.list_view_index)
             self.grid_toggle.setIcon(self.grid_toggle_g_icon)
 
     # TODO: Improve this so that it adds to the gallery dialog,
@@ -1019,7 +1017,7 @@ class AppWindow(QMainWindow):
             pass
 
         # settings
-        settings.set(self.manga_list_view.current_sort, 'General', 'current sort')
+        settings.set(self.current_view_manager.current_sort, 'General', 'current sort')
         settings.set(app_constants.IGNORE_PATHS, 'Application', 'ignore paths')
         if not self.isMaximized():
             settings.win_save(self, 'AppWindow')

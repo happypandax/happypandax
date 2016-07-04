@@ -691,11 +691,14 @@ language: {}
                 pass
 
     @classmethod
-    def search(cls, key, args=[], session=None):
+    def search(cls, key, args=[], fav=False, session=None):
         "Check if gallery contains keyword"
         if not session:
             session = db_constants.SESSION()
-        q = session.query(cls.id)
+        if fav:
+            q = session.query(cls.id).filter(cls.fav == True)
+        else:
+            q = session.query(cls.id)
         if key:
             is_exclude = False if key[0] == '-' else True
             key = key[1:] if not is_exclude else key

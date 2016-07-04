@@ -796,9 +796,10 @@ class DBSearch(QObject):
         excluded_gall = set()
         for term in terms:
             coll_set = set()
-            [coll_set.add(x[0]) for x in db.Collection.search(term, session=self._session) if x]
+            if not self.fav:
+                [coll_set.add(x[0]) for x in db.Collection.search(term, session=self._session) if x]
             gall_set = set()
-            [gall_set.add(x[0]) for x in db.Gallery.search(term, session=self._session) if x]
+            [gall_set.add(x[0]) for x in db.Gallery.search(term, fav=self.fav, session=self._session) if x]
             
             is_exclude = True if term and term[0] == '-' else False
             if is_exclude:
@@ -2198,11 +2199,6 @@ class BaseView(QListView):
         self.item_window.arrow_size = (10,10,)
         self.clicked.connect(lambda idx: self.item_window.show_item(idx, self))
 
-        self.current_sort = app_constants.CURRENT_SORT
-        #if self.view_type == app_constants.ViewType.Duplicate:
-        #    self.sort_model.setSortRole(GalleryModel.TIME_ROLE)
-        #else:
-        #    self.sort(self.current_sort)
         if app_constants.DEBUG:
             def debug_print(a):
                 g = a.data(app_constants.ITEM_ROLE)
@@ -2243,6 +2239,8 @@ class BaseView(QListView):
         if new_value < 400 and self._old_scroll_value > 400:
             self.update()
 
+    def refresh(self):
+        pass
 
     def get_visible_indexes(self, column=0):
         "find all galleries in viewport"
@@ -2319,33 +2317,6 @@ class BaseView(QListView):
                 gallery.chapters.pop(chap_numb, None)
                 self.base_model.replaceRows([gallery], index.row())
                 gallerydb.execute(gallerydb.ChapterDB.del_chapter, True, gallery.id, chap_numb)
-
-    def sort(self, name):
-        if not self.view_type == app_constants.ViewType.Duplicate:
-            if name == 'title':
-                self.filter_model.setSortRole(Qt.DisplayRole)
-                self.filter_model.sort(0, Qt.AscendingOrder)
-                self.current_sort = 'title'
-            elif name == 'artist':
-                self.filter_model.setSortRole(GalleryModel.ARTIST_ROLE)
-                self.filter_model.sort(0, Qt.AscendingOrder)
-                self.current_sort = 'artist'
-            elif name == 'date_added':
-                self.filter_model.setSortRole(GalleryModel.DATE_ADDED_ROLE)
-                self.filter_model.sort(0, Qt.DescendingOrder)
-                self.current_sort = 'date_added'
-            elif name == 'pub_date':
-                self.filter_model.setSortRole(GalleryModel.PUB_DATE_ROLE)
-                self.filter_model.sort(0, Qt.DescendingOrder)
-                self.current_sort = 'pub_date'
-            elif name == 'times_read':
-                self.filter_model.setSortRole(GalleryModel.TIMES_READ_ROLE)
-                self.filter_model.sort(0, Qt.DescendingOrder)
-                self.current_sort = 'times_read'
-            elif name == 'last_read':
-                self.filter_model.setSortRole(GalleryModel.LAST_READ_ROLE)
-                self.filter_model.sort(0, Qt.DescendingOrder)
-                self.current_sort = 'last_read'
 
     def contextMenuEvent(self, event):
         CommonView.contextMenuEvent(self, event)
@@ -2689,7 +2660,7 @@ class ViewManager:
         self.grid_view = GridView(self.item_model, v_type, parent=parent)
         self.list_view = ListView(self.item_model, v_type, parent=parent)
         #self.list_view.sort_model.setup_search()
-        self.sort_model = self.grid_view.filter_model
+        self.filter_model = self.grid_view.filter_model
 
         self.view_layout = QStackedLayout()
         self.grid_view_index = self.view_layout.addWidget(PathView(self.grid_view))
@@ -2699,7 +2670,11 @@ class ViewManager:
         self.gallery_views.append(self)
 
         if v_type in (app_constants.ViewType.Default, app_constants.ViewType.Addition):
-            self.sort_model.enable_drag = True
+            self.filter_model.enable_drag = True
+
+        self.current_sort = app_constants.CURRENT_SORT
+        self.current_sort_order = Qt.DescendingOrder
+        self.sort(self.current_sort)
 
     def create_model(self, modeldatatype):
         model = BaseModel()
@@ -2791,6 +2766,45 @@ class ViewManager:
             return self.grid_view
         else:
             return self.list_view
+
+    def sort_order(self, qt_order):
+        self.current_sort_order = qt_order
+        self.filter_model.sort(0, qt_order)
+
+    def sort(self, name):
+        if not self.view_type == app_constants.ViewType.Duplicate:
+            if name == 'title':
+                self.filter_model.setSortRole(Qt.DisplayRole)
+                self.sort_order(Qt.AscendingOrder)
+                self.current_sort = 'title'
+            elif name == 'artist':
+                self.filter_model.setSortRole(GalleryModel.ARTIST_ROLE)
+                self.sort_order(Qt.AscendingOrder)
+                self.current_sort = 'artist'
+            elif name == 'date_added':
+                self.filter_model.setSortRole(GalleryModel.DATE_ADDED_ROLE)
+                self.sort_order(Qt.DescendingOrder)
+                self.current_sort = 'date_added'
+            elif name == 'pub_date':
+                self.filter_model.setSortRole(GalleryModel.PUB_DATE_ROLE)
+                self.sort_order(Qt.DescendingOrder)
+                self.current_sort = 'pub_date'
+            elif name == 'times_read':
+                self.filter_model.setSortRole(GalleryModel.TIMES_READ_ROLE)
+                self.sort_order(Qt.DescendingOrder)
+                self.current_sort = 'times_read'
+            elif name == 'last_read':
+                self.filter_model.setSortRole(GalleryModel.LAST_READ_ROLE)
+                self.sort_order(Qt.DescendingOrder)
+                self.current_sort = 'last_read'
+
+    def set_fav(self, f):
+        if not isinstance(self.get_current_view().model(), SortFilterModel):
+            return
+        if f:
+            self.get_current_view().model().fav_view()
+        else:
+            self.get_current_view().model().catalog_view()
 
     def fav_is_current(self):
         if self.list_view.filter_model.current_view == \
