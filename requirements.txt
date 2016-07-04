@@ -8,3 +8,4 @@ Send2Trash
 pillow
 python-dateutil
 sqlalchemy
+qtawesome
