@@ -35,7 +35,7 @@ from PyQt5.QtWidgets import (QMainWindow, QListView,
                              QListWidget, QListWidgetItem, QToolTip,
                              QProgressBar, QToolButton, QSystemTrayIcon,
                              QShortcut, QGraphicsBlurEffect, QTableWidget,
-                             QTableWidgetItem, QActionGroup)
+                             QTableWidgetItem, QActionGroup, QComboBox)
 
 from executors import Executors
 
@@ -65,7 +65,7 @@ class AppWindow(QMainWindow):
 
     move_listener = pyqtSignal()
     db_startup_invoker = pyqtSignal(list)
-    duplicate_check_invoker = pyqtSignal(gallery.GalleryModel)
+    duplicate_check_invoker = pyqtSignal()
     admin_db_method_invoker = pyqtSignal(object)
     db_activity_checker = pyqtSignal()
     graphics_blur = QGraphicsBlurEffect()
@@ -143,7 +143,7 @@ class AppWindow(QMainWindow):
             settings.save()
 
         def done(status=True):
-            self.db_startup_invoker.emit(gallery.ViewManager.gallery_views)
+            self.db_startup_invoker.emit(gallery.ViewManager.Managers)
             #self.db_startup.startup()
             if app_constants.FIRST_TIME_LEVEL != app_constants.INTERNAL_LEVEL:
                 normalize_first_time()
@@ -199,15 +199,15 @@ class AppWindow(QMainWindow):
         self._main_layout.setContentsMargins(0,0,0,0)
 
         self.init_stat_bar()
-        self.manga_views = {}
-        self._current_view_manager = None
-        self.default_manga_view = gallery.ViewManager(app_constants.ViewType.Default, self, True)
+        self._manager_layout = QStackedLayout()
+        self.default_manga_view = gallery.ViewManager(app_constants.ViewType.Default, self)
 
         self.sidebar_list = misc_db.SideBarWidget(self)
 
         self.tab_manager = misc_db.TabManager(self.sidebar_list, self)
         self._main_layout.addWidget(self.sidebar_list)
-        self.current_view_manager = self.default_manga_view
+        self._main_layout.addLayout(self._manager_layout)
+        self.current_view_manager = self.default_manga_view.index
 
 
 
@@ -418,27 +418,21 @@ class AppWindow(QMainWindow):
         self.temp_timer.start(5000)
 
     def stat_row_info(self):
-        r = self.current_view_manager.get_current_view().filter_model.rowCount()
-        t = self.current_view_manager.get_current_view().base_model.rowCount()
-        g_l = self.get_current_view().filter_model.current_gallery_list
+        r = self.current_view_manager.filter_model.rowCount()
+        t = self.current_view_manager.item_model.rowCount()
+        g_l = self.current_view_manager.filter_model.current_gallery_list
         if g_l:
             self.stat_info.setText("<b><i>{}</i></b> | Showing {} of {} ".format(g_l.name, r, t))
         else:
             self.stat_info.setText("Showing {} of {} ".format(r, t))
 
-    def set_current_view_manager(self, v):
-        self.current_view_manager = v
-
     @property
     def current_view_manager(self):
-        return self._current_view_manager
+        return self._manager_layout.currentWidget()
 
     @current_view_manager.setter
-    def current_view_manager(self, new_view):
-        if self._current_view_manager:
-            self._main_layout.takeAt(1)
-        self._current_view_manager = new_view
-        self._main_layout.insertLayout(1, new_view.view_layout, 1)
+    def current_view_manager(self, manager_idx):
+        self._manager_layout.setCurrentIndex(manager_idx)
         self.stat_row_info()
 
     def init_spinners(self):
@@ -566,8 +560,7 @@ class AppWindow(QMainWindow):
         # debug specfic code
         if app_constants.DEBUG:
             def debug_func():
-                view = self.current_view_manager.get_current_view()
-                print(view.isIndexHidden(view.currentIndex()))
+                print(self.default_manga_view.item_model.rowCount())
         
             debug_btn = QToolButton()
             debug_btn.setText("DEBUG BUTTON")
@@ -606,7 +599,7 @@ class AppWindow(QMainWindow):
             self.grid_toggle.setIcon(self.grid_toggle_g_icon)
         self.grid_toggle.setObjectName('gridtoggle')
         self.grid_toggle.clicked.connect(self.toggle_view)
-        self.toolbar.addWidget(self.grid_toggle)
+        self.grid_toggle_action = self.toolbar.addWidget(self.grid_toggle)
 
         spacer_mid2 = QWidget()
         spacer_mid2.setFixedSize(QSize(5, 1))
@@ -752,10 +745,10 @@ class AppWindow(QMainWindow):
         Toggles the current display view
         """
         if self.current_view_manager.current_view == gallery.ViewManager.View.List:
-            self.current_view_manager.changeTo(self.current_view_manager.grid_view_index)
+            self.current_view_manager.changeView(self.current_view_manager.grid_view_index)
             self.grid_toggle.setIcon(self.grid_toggle_l_icon)
         else:
-            self.current_view_manager.changeTo(self.current_view_manager.list_view_index)
+            self.current_view_manager.changeView(self.current_view_manager.list_view_index)
             self.grid_toggle.setIcon(self.grid_toggle_g_icon)
 
     # TODO: Improve this so that it adds to the gallery dialog,

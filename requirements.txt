@@ -1,4 +1,4 @@
-pyqt5
+pyqt5==5.7
 requests
 beautifulsoup4
 scandir

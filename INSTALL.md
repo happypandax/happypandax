@@ -14,7 +14,7 @@ Download from here https://www.python.org/downloads/
 - ubuntu: apt-get install python3
 - OSX: see below
 
-*Note: make sure to mark the 'Add to path' checkbox when available on windows*
+*IMPORTANT: make sure to mark the 'Add to path' checkbox when available on windows*
 
 # Linux
 1. Go where you want happypanda to be downloaded (E.g. `cd ~`), and write `git clone https://github.com/Pewpews/happypanda.git`

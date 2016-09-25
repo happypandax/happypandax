@@ -24,7 +24,7 @@ import enum
 import time
 import re as regex
 
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, subqueryload
 
 from PyQt5.QtCore import (Qt, QAbstractListModel, QModelIndex, QVariant,
                           QSize, QRect, QEvent, pyqtSignal, QThread,
@@ -395,7 +395,6 @@ class HierarchicalFilteringProxyModel(QSortFilterProxyModel):
         :returns:               True if a child of the item is accepted by the filter
         """
         model = idx.model()
-
         # check to see if any children of this item are known to have been accepted:
         child_accepted = self._child_accepted_cache.get(idx)
         if child_accepted != None:
@@ -518,31 +517,43 @@ class HierarchicalFilteringProxyModel(QSortFilterProxyModel):
 class ModelDataLoader(QObject):
     ""
 
-    item_loaded = pyqtSignal(QModelIndex, db.Base)
     finished = pyqtSignal()
 
-    def __init__(self, modeldatatype):
-        super().__init__()
-        self.other_thread = QThread(self)
+    def __init__(self, dataroottype, parent):
+        super().__init__(parent)
+        self._idtrack = {}
+        self.model = None
+        self.roottype = dataroottype
+        self.other_thread = QThread(parent)
         self.moveToThread(self.other_thread)
         self.other_thread.start()
-        self._idtrack = {'coll':None}
 
     def fetch_more(self, idx):
         ""
         assert isinstance(idx, QModelIndex)
+        if not self.model:
+            return
         self.session = db_constants.SESSION()
         dbitem = idx.data(app_constants.ITEM_ROLE)
         if not dbitem:
-            dbmodel = db.Collection
-            q = self.session.query(dbmodel)
-            dbitem = 'coll'
+            if self.roottype == app_constants.ModelLoaderType.Gallery:
+                dbmodel = db.Gallery
+                q = self.session.query(dbmodel)
+                item_cls = GalleryItem
+            elif self.roottype == app_constants.ModelLoaderType.Collection:
+                dbmodel = db.Collection
+                q = self.session.query(dbmodel).options(joinedload(dbmodel.galleries))
+                item_cls = CollectionItem
+            else:
+                raise NotImplementedError
         elif isinstance(dbitem, db.Collection):
             dbmodel = db.Gallery
-            q = self.session.query(dbmodel).filter(dbmodel.collection == dbitem)
+            q = self.session.query(dbmodel).filter(dbmodel.collection_id == dbitem.id)
+            item_cls = GalleryItem
         elif isinstance(dbitem, db.Gallery):
             dbmodel = db.Page
-            q = self.session.query(dbmodel).filter(dbmodel.gallery == dbitem)
+            q = self.session.query(dbmodel).filter(dbmodel.gallery_id == dbitem.id)
+            item_cls = PageItem
         else:
             raise NotImplementedError
 
@@ -553,10 +564,17 @@ class ModelDataLoader(QObject):
         if last_id:
             q = self.session.query(dbmodel).filter(dbmodel.id > last_id)
 
+        t = time.time()
+        print("\n\nStarting...\n\n")
+        items = []
         for it in q.order_by(dbmodel.id):
             self._idtrack[dbitem] = it.id
-            self.session.expunge_all()
-            self.item_loaded.emit(idx, it)
+
+            items.append(item_cls(it))
+        print("\n\nExecution:", time.time()-t, "\n\n")
+        print(len(items))
+        qitem = idx.data(app_constants.QITEM_ROLE) or self.model.invisibleRootItem()
+        qitem.appendRows(items)
         self.finished.emit()
 
 class BaseItem(QStandardItem):
@@ -589,14 +607,15 @@ class CollectionItem(BaseItem):
         self._item = collection
 
     def data(self, role = Qt.UserRole+1):
-        sess = db.object_session(self._item)
-        if not sess:
-            sess = db_constants.SESSION()
-            sess.merge(self._item)
+        #sess = db.object_session(self._item)
+        #if not sess:
+        #    sess = db_constants.SESSION()
+        #    sess.merge(self._item)
 
         if role in (Qt.DisplayRole, app_constants.TITLE_ROLE):
             return self._item.title
         elif role == Qt.DecorationRole:
+            return QImage(os.path.join(db_constants.THUMBNAIL_PATH, "thumb2.png"))
             return QImage(self._item.profile)
         elif role == app_constants.ITEM_ROLE:
             return self._item
@@ -638,6 +657,7 @@ class GalleryItem(BaseItem):
         if role in (Qt.DisplayRole, app_constants.TITLE_ROLE):
             return self._item.title
         elif role == Qt.DecorationRole:
+            return QImage(os.path.join(db_constants.THUMBNAIL_PATH, "thumb.png"))
             return QImage(self._item.profile)
         elif role == app_constants.ITEM_ROLE:
             return self._item
@@ -712,6 +732,7 @@ class PageItem(BaseItem):
                 pname += " " + str(self._item.number)
             return pname
         elif role == Qt.DecorationRole:
+            return QImage(os.path.join(db_constants.THUMBNAIL_PATH, "thumb3.png"))
             return QImage(self._item.profile)
         elif role == app_constants.ITEM_ROLE:
             return self._item
@@ -928,8 +949,8 @@ class SortFilterModel(HierarchicalFilteringProxyModel):
 
     def change_model(self, model):
         self.setSourceModel(model)
-        if hasattr(model, '_loader'):
-            model._loader.finished.connect(self.refresh)
+        #if hasattr(model, '_loader'):
+        #    model._loader.finished.connect(self.refresh)
         self.refresh()
 
     def status_b_msg(self, msg):
@@ -1058,270 +1079,6 @@ class StarRating():
 
         painter.restore()
 
-class GalleryModel(QAbstractTableModel):
-    """
-    Model for Model/View/Delegate framework
-    """
-    GALLERY_ROLE = Qt.UserRole + 1
-    ARTIST_ROLE = Qt.UserRole + 2
-    FAV_ROLE = Qt.UserRole + 3
-    DATE_ADDED_ROLE = Qt.UserRole + 4
-    PUB_DATE_ROLE = Qt.UserRole + 5
-    TIMES_READ_ROLE = Qt.UserRole + 6
-    LAST_READ_ROLE = Qt.UserRole + 7
-    TIME_ROLE = Qt.UserRole + 8
-    RATING_ROLE = Qt.UserRole + 9
-
-    ROWCOUNT_CHANGE = pyqtSignal()
-    STATUSBAR_MSG = pyqtSignal(str)
-    CUSTOM_STATUS_MSG = pyqtSignal(str)
-    ADDED_ROWS = pyqtSignal()
-    ADD_MORE = pyqtSignal()
-
-    REMOVING_ROWS = False
-
-    def __init__(self, data, parent=None):
-        super().__init__(parent)
-        self.dataChanged.connect(lambda: self.status_b_msg("Edited"))
-        self.dataChanged.connect(lambda: self.ROWCOUNT_CHANGE.emit())
-        self.layoutChanged.connect(lambda: self.ROWCOUNT_CHANGE.emit())
-        self.CUSTOM_STATUS_MSG.connect(self.status_b_msg)
-        self._TITLE = app_constants.TITLE
-        self._ARTIST = app_constants.ARTIST
-        self._TAGS = app_constants.TAGS
-        self._TYPE = app_constants.TYPE
-        self._FAV = app_constants.FAV
-        self._CHAPTERS = app_constants.CHAPTERS
-        self._LANGUAGE = app_constants.LANGUAGE
-        self._LINK = app_constants.LINK
-        self._DESCR = app_constants.DESCR
-        self._DATE_ADDED = app_constants.DATE_ADDED
-        self._PUB_DATE = app_constants.PUB_DATE
-
-        self._data = data
-        self._data_count = 0 # number of items added to model
-        self._gallery_to_add = []
-        self._gallery_to_remove = []
-
-    def status_b_msg(self, msg):
-        self.STATUSBAR_MSG.emit(msg)
-
-    def data(self, index, role=Qt.DisplayRole):
-        if not index.isValid():
-            return QVariant()
-        if index.row() >= len(self._data) or \
-            index.row() < 0:
-            return QVariant()
-
-        current_row = index.row() 
-        current_gallery = self._data[current_row]
-        current_column = index.column()
-
-        def column_checker():
-            if current_column == self._TITLE:
-                title = current_gallery.title
-                return title
-            elif current_column == self._ARTIST:
-                artist = current_gallery.artist
-                return artist
-            elif current_column == self._TAGS:
-                tags = utils.tag_to_string(current_gallery.tags)
-                return tags
-            elif current_column == self._TYPE:
-                type = current_gallery.type
-                return type
-            elif current_column == self._FAV:
-                if current_gallery.fav == 1:
-                    return u'\u2605'
-                else:
-                    return ''
-            elif current_column == self._CHAPTERS:
-                return len(current_gallery.chapters)
-            elif current_column == self._LANGUAGE:
-                return current_gallery.language
-            elif current_column == self._LINK:
-                return current_gallery.link
-            elif current_column == self._DESCR:
-                return current_gallery.info
-            elif current_column == self._DATE_ADDED:
-                g_dt = "{}".format(current_gallery.date_added)
-                qdate_g_dt = QDateTime.fromString(g_dt, "yyyy-MM-dd HH:mm:ss")
-                return qdate_g_dt
-            elif current_column == self._PUB_DATE:
-                g_pdt = "{}".format(current_gallery.pub_date)
-                qdate_g_pdt = QDateTime.fromString(g_pdt, "yyyy-MM-dd HH:mm:ss")
-                if qdate_g_pdt.isValid():
-                    return qdate_g_pdt
-                else:
-                    return 'No date set'
-
-        # TODO: name all these roles and put them in app_constants...
-
-        if role == Qt.DisplayRole:
-            return column_checker()
-        # for artist searching
-        if role == self.ARTIST_ROLE:
-            artist = current_gallery.artist
-            return artist
-
-        if role == Qt.DecorationRole:
-            pixmap = current_gallery.profile
-            return pixmap
-        
-        if role == Qt.BackgroundRole:
-            bg_color = QColor(242, 242, 242)
-            bg_brush = QBrush(bg_color)
-            return bg_color
-
-        if app_constants.GRID_TOOLTIP and role == Qt.ToolTipRole:
-            add_bold = []
-            add_tips = []
-            if app_constants.TOOLTIP_TITLE:
-                add_bold.append('<b>Title:</b>')
-                add_tips.append(current_gallery.title)
-            if app_constants.TOOLTIP_AUTHOR:
-                add_bold.append('<b>Author:</b>')
-                add_tips.append(current_gallery.artist)
-            if app_constants.TOOLTIP_CHAPTERS:
-                add_bold.append('<b>Chapters:</b>')
-                add_tips.append(len(current_gallery.chapters))
-            if app_constants.TOOLTIP_STATUS:
-                add_bold.append('<b>Status:</b>')
-                add_tips.append(current_gallery.status)
-            if app_constants.TOOLTIP_TYPE:
-                add_bold.append('<b>Type:</b>')
-                add_tips.append(current_gallery.type)
-            if app_constants.TOOLTIP_LANG:
-                add_bold.append('<b>Language:</b>')
-                add_tips.append(current_gallery.language)
-            if app_constants.TOOLTIP_DESCR:
-                add_bold.append('<b>Description:</b><br />')
-                add_tips.append(current_gallery.info)
-            if app_constants.TOOLTIP_TAGS:
-                add_bold.append('<b>Tags:</b>')
-                add_tips.append(utils.tag_to_string(current_gallery.tags))
-            if app_constants.TOOLTIP_LAST_READ:
-                add_bold.append('<b>Last read:</b>')
-                add_tips.append('{} ago'.format(utils.get_date_age(current_gallery.last_read)) if current_gallery.last_read else "Never!")
-            if app_constants.TOOLTIP_TIMES_READ:
-                add_bold.append('<b>Times read:</b>')
-                add_tips.append(current_gallery.times_read)
-            if app_constants.TOOLTIP_PUB_DATE:
-                add_bold.append('<b>Publication Date:</b>')
-                add_tips.append('{}'.format(current_gallery.pub_date).split(' ')[0])
-            if app_constants.TOOLTIP_DATE_ADDED:
-                add_bold.append('<b>Date added:</b>')
-                add_tips.append('{}'.format(current_gallery.date_added).split(' ')[0])
-
-            tooltip = ""
-            tips = list(zip(add_bold, add_tips))
-            for tip in tips:
-                tooltip += "{} {}<br />".format(tip[0], tip[1])
-            return tooltip
-
-        if role == self.GALLERY_ROLE:
-            return current_gallery
-
-        # favorite satus
-        if role == self.FAV_ROLE:
-            return current_gallery.fav
-
-        if role == self.DATE_ADDED_ROLE:
-            date_added = "{}".format(current_gallery.date_added)
-            qdate_added = QDateTime.fromString(date_added, "yyyy-MM-dd HH:mm:ss")
-            return qdate_added
-        
-        if role == self.PUB_DATE_ROLE:
-            if current_gallery.pub_date:
-                pub_date = "{}".format(current_gallery.pub_date)
-                qpub_date = QDateTime.fromString(pub_date, "yyyy-MM-dd HH:mm:ss")
-                return qpub_date
-
-        if role == self.TIMES_READ_ROLE:
-            return current_gallery.times_read
-
-        if role == self.LAST_READ_ROLE:
-            if current_gallery.last_read:
-                last_read = "{}".format(current_gallery.last_read)
-                qlast_read = QDateTime.fromString(last_read, "yyyy-MM-dd HH:mm:ss")
-                return qlast_read
-
-        if role == self.TIME_ROLE:
-            return current_gallery.qtime
-
-        if role == self.RATING_ROLE:
-            return StarRating(current_gallery.rating)
-
-        return None
-
-    def rowCount(self, index=QModelIndex()):
-        if index.isValid():
-            return 0
-        return len(self._data)
-
-    def columnCount(self, parent=QModelIndex()):
-        return len(app_constants.COLUMNS)
-
-    def headerData(self, section, orientation, role=Qt.DisplayRole):
-        if role == Qt.TextAlignmentRole:
-            return Qt.AlignLeft
-        if role != Qt.DisplayRole:
-            return None
-        if orientation == Qt.Horizontal:
-            if section == self._TITLE:
-                return 'Title'
-            elif section == self._ARTIST:
-                return 'Author'
-            elif section == self._TAGS:
-                return 'Tags'
-            elif section == self._TYPE:
-                return 'Type'
-            elif section == self._FAV:
-                return u'\u2605'
-            elif section == self._CHAPTERS:
-                return 'Chapters'
-            elif section == self._LANGUAGE:
-                return 'Language'
-            elif section == self._LINK:
-                return 'Link'
-            elif section == self._DESCR:
-                return 'Description'
-            elif section == self._DATE_ADDED:
-                return 'Date Added'
-            elif section == self._PUB_DATE:
-                return 'Published'
-        return section + 1
-
-
-    def insertRows(self, position, rows, index=QModelIndex()):
-        self._data_count += rows
-        if not self._gallery_to_add:
-            return False
-
-        self.beginInsertRows(QModelIndex(), position, position + rows - 1)
-        for r in range(rows):
-            self._data.insert(position, self._gallery_to_add.pop())
-        self.endInsertRows()
-        return True
-
-    def replaceRows(self, list_of_gallery, position, rows=1, index=QModelIndex()):
-        "replaces gallery data to the data list WITHOUT adding to DB"
-        for pos, gallery in enumerate(list_of_gallery):
-            del self._data[position + pos]
-            self._data.insert(position + pos, gallery)
-        self.dataChanged.emit(index, index, [Qt.UserRole + 1, Qt.DecorationRole])
-
-    def removeRows(self, position, rows, index=QModelIndex()):
-        self._data_count -= rows
-        self.beginRemoveRows(QModelIndex(), position, position + rows - 1)
-        for r in range(rows):
-            try:
-                self._data.remove(self._gallery_to_remove.pop())
-            except ValueError:
-                return False
-        self.endRemoveRows()
-        return True
-
 class BaseModel(QStandardItemModel):
 
     _fetch_sig = pyqtSignal(QModelIndex)
@@ -1337,41 +1094,13 @@ class BaseModel(QStandardItemModel):
             self._fetching = True
             self._fetch_sig.emit(idx)
 
-    def append_item(self, idx, dbitem):
-        ""
-        pitem = None
-        item = None
-        if isinstance(dbitem, db.Collection):
-            pitem = self.invisibleRootItem()
-            dbitem.profile = os.path.join(db_constants.THUMBNAIL_PATH, "thumb2.png")
-            item = CollectionItem(dbitem)
-        elif isinstance(dbitem, db.Gallery):
-            item = GalleryItem(dbitem)
-            dbitem.profile = os.path.join(db_constants.THUMBNAIL_PATH, "thumb.png")
-            pitem = idx.data(app_constants.QITEM_ROLE)
-        elif isinstance(dbitem, db.Page):
-            item = PageItem(dbitem)
-            dbitem.profile = os.path.join(db_constants.THUMBNAIL_PATH, "thumb3.png")
-            pitem = idx.data(app_constants.QITEM_ROLE)
-        else:
-            raise NotImplementedError
-
-        if not dbitem in self._session:
-            try:
-                self._session.add(dbitem)
-            except db.exc.InvalidRequestError:
-                self._session.merge(dbitem)
-
-        if pitem and item:
-            pitem.appendRow(item)
-
     def attach_loader(self, loader):
         assert isinstance(loader, ModelDataLoader)
         self._loader = loader
+        self._loader.model = self
         self._fetch_sig.connect(self._loader.fetch_more)
-        self._loader.item_loaded.connect(self.append_item)
         self._loader.finished.connect(lambda: setattr(self, '_fetching', False))
-        self._fetch_sig.emit(QModelIndex())
+        self.fetch_more(QModelIndex())
 
 class ViewMetaWindow(misc.ArrowWindow):
 
@@ -1692,14 +1421,9 @@ class DefaultDelegate(QStyledItemDelegate):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-    def paint(self, painter, option, index):
-        super().paint(painter, option, index)
-        if option.state & QStyle.State_Selected:
-            painter.save()
-            painter.setPen(Qt.NoPen)
-            painter.setBrush(QBrush(QColor(164,164,164,120)))
-            painter.drawRoundedRect(option.rect, 5, 5)
-            painter.restore()
+    def sizeHint(self, option, index):
+        return QSize(200, app_constants.THUMB_W_SIZE)
+
 
 class GridDelegate(QStyledItemDelegate):
     "A custom delegate for the model/view framework"
@@ -2169,10 +1893,11 @@ class BaseView(QListView):
 
     STATUS_BAR_MSG = pyqtSignal(str)
 
-    def __init__(self, model, v_type, filter_model=None, parent=None):
+    def __init__(self, model, v_type, manager, filter_model=None, parent=None):
         super().__init__(parent)
         self.parent_widget = parent
         self.view_type = v_type
+        self.manager = manager
         # all items have the same size (perfomance)
         self.setUniformItemSizes(True)
         # improve scrolling
@@ -2326,18 +2051,18 @@ class BaseView(QListView):
         self.verticalScrollBar().setSingleStep(app_constants.SCROLL_SPEED)
 
 class GridView(BaseView):
-    def __init__(self, model, v_type, filter_model=None, parent=None):
-        super().__init__(model, v_type, filter_model, parent)
+    def __init__(self, model, v_type, manager, filter_model=None, parent=None):
+        super().__init__(model, v_type, manager, filter_model, parent)
         self.setViewMode(self.IconMode)
         self.setWrapping(True)
         self.setVerticalScrollMode(self.ScrollPerPixel)
         self.setSpacing(app_constants.GRID_SPACING)
-        self.grid_delegate = GridDelegate(parent, self)
-        self.setItemDelegate(self.grid_delegate)
+        #self.grid_delegate = GridDelegate(parent, self)
+        #self.setItemDelegate(self.grid_delegate)
 
 class ListView(BaseView):
-    def __init__(self, model, v_type, filter_model=None, parent=None):
-        super().__init__(model, v_type, filter_model, parent)
+    def __init__(self, model, v_type, manager, filter_model=None, parent=None):
+        super().__init__(model, v_type, manager, filter_model, parent)
         self.setViewMode(self.ListMode)
         self.setAlternatingRowColors(True)
 
@@ -2476,7 +2201,6 @@ class CommonView:
             if grid_view:
                 if view_cls.item_window.isVisible():
                     view_cls.item_window.hide_animation.start()
-                view_cls.grid_delegate.CONTEXT_ON = True
             if selected:
                 menu = misc.BaseViewMenu(view_cls, index, view_cls.parent_widget, select_indexes)
             else:
@@ -2487,8 +2211,6 @@ class CommonView:
 
         if handled:
             menu.exec_(event.globalPos())
-            if grid_view:
-                view_cls.grid_delegate.CONTEXT_ON = False
             event.accept()
             del menu
         else:
@@ -2519,6 +2241,22 @@ class PathView(QWidget):
 
         persistent_layout = QHBoxLayout()
         top_layout.addLayout(persistent_layout)
+
+        self.view_mode = QPushButton("Collection")
+        self.view_mode_menu = QMenu(self)
+        coll_action = QAction("Collection", self.view_mode_menu)
+        coll_action.triggered.connect(lambda: self.view_mode.setText("Collection"))
+        coll_action.triggered.connect(lambda: self.view.manager.changeMode(app_constants.ModelLoaderType.Collection))
+        self.view_mode_menu.addAction(coll_action)
+        gall_action = QAction("Galleries", self.view_mode_menu)
+        gall_action.triggered.connect(lambda: self.view_mode.setText("Galleries"))
+        gall_action.triggered.connect(lambda: self.view.manager.changeMode(app_constants.ModelLoaderType.Gallery))
+        self.view_mode_menu.addAction(gall_action)
+        self.view_mode.setMenu(self.view_mode_menu)
+        self.view_mode.adjustSize()
+        self.view_mode.setFixedSize(self.view_mode.width(), self.HEIGHT)
+        self.view_mode.setStyleSheet("border:0; border-radius:0;")
+        persistent_layout.addWidget(self.view_mode)
 
         self.home_btn = QPushButton(app_constants.HOME_ICON, "")
         self.home_btn.clicked.connect(lambda: self.update_path(QModelIndex()))
@@ -2634,53 +2372,88 @@ class PathView(QWidget):
     def delegate_for_item(self, itemtype):
         pass
 
-class ViewManager:
+class ViewManager(QWidget):
 
-    gallery_views = []
+    Managers = []
     
     @enum.unique
     class View(enum.Enum):
         Grid = 1
         List = 2
 
-    def __init__(self, v_type, parent, allow_sidebarwidget=False):
-        self.allow_sidebarwidget = allow_sidebarwidget
+    def __init__(self, v_type, parent):
+        super().__init__(parent)
+        self.index = parent._manager_layout.addWidget(self)
         self._delete_proxy_model = None
-
+        self._parent = parent
         self.view_type = v_type
+        self.view_layout = QStackedLayout(self)
 
-        if v_type == app_constants.ViewType.Default:
-            model = GalleryModel(app_constants.GALLERY_DATA, parent)
-        elif v_type == app_constants.ViewType.Addition:
-            model = GalleryModel(app_constants.GALLERY_ADDITION_DATA, parent)
-        elif v_type == app_constants.ViewType.Duplicate:
-            model = GalleryModel([], parent)
+        self.list_view_index = None
+        self.grid_view_index = None
 
-        self.item_model = self.create_model(None)
-        self.grid_view = GridView(self.item_model, v_type, parent=parent)
-        self.list_view = ListView(self.item_model, v_type, parent=parent)
-        #self.list_view.sort_model.setup_search()
-        self.filter_model = self.grid_view.filter_model
+        self.current_loader_type = None
+        self.item_model = None
+        self.list_view = None
+        self.grid_view = None
 
-        self.view_layout = QStackedLayout()
-        self.grid_view_index = self.view_layout.addWidget(PathView(self.grid_view))
-        self.list_view_index = self.view_layout.addWidget(PathView(self.list_view))
+        self._filter_model = None
+        self.current_view = None
+        self.current_layout = None
+        self.current_sort = None
+        self._views = {}
+        self.modes = (app_constants.ModelLoaderType.Collection, app_constants.ModelLoaderType.Gallery)
+        for x in self.modes:
+            self._views[x] = self._create_view(x)
 
-        self.current_view = self.View.Grid
-        self.gallery_views.append(self)
+        self.Managers.append(self)
 
-        if v_type in (app_constants.ViewType.Default, app_constants.ViewType.Addition):
-            self.filter_model.enable_drag = True
-
+        self.changeMode(app_constants.ModelLoaderType.Collection)
         self.current_sort = app_constants.CURRENT_SORT
         self.current_sort_order = Qt.DescendingOrder
         self.sort(self.current_sort)
 
-    def create_model(self, modeldatatype):
+
+    @property
+    def filter_model(self):
+        if self.current_view == self.View.Grid:
+            it = self.current_layout.widget(self.grid_view_index)
+        else:
+            it = self.current_layout.widget(self.list_view_index)
+        return it.view.filter_model
+
+    def _create_view(self, loadertype):
+        item_model = self._create_model(loadertype)
+        grid_view = GridView(item_model, self.view_type, self, parent=self._parent)
+        list_view = ListView(item_model, self.view_type, self, parent=self._parent)
+        filter_model = grid_view.filter_model
+
+        dummy = QWidget()
+        layout = QStackedLayout(dummy)
+
+        self.grid_view_index = layout.addWidget(PathView(grid_view))
+        self.list_view_index = layout.addWidget(PathView(list_view))
+
+        if self.view_type in (app_constants.ViewType.Default, app_constants.ViewType.Addition):
+            filter_model.enable_drag = True
+        return self.view_layout.addWidget(dummy)
+
+    def _create_model(self, modelloadertype):
         model = BaseModel()
-        loader = ModelDataLoader(modeldatatype)
+        loader = ModelDataLoader(modelloadertype, self._parent)
         model.attach_loader(loader)
         return model
+
+    def changeMode(self, loadertype):
+        "Change root item"
+        idx = self._views[loadertype]
+        self.view_layout.setCurrentIndex(idx)
+        self.current_layout = self.view_layout.currentWidget().layout()
+        self.current_loader_type = loadertype
+        self.list_view = self.current_layout.widget(self.list_view_index)
+        self.grid_view = self.current_layout.widget(self.grid_view_index)
+        self.item_model = self.list_view.view.base_model
+        self.changeView(self.grid_view_index)
 
     def _delegate_delete(self):
         if self._delete_proxy_model:
@@ -2751,50 +2524,53 @@ class ViewManager:
         if db_optimize:
             gallerydb.execute(gallerydb.GalleryDB.end, True)
 
-    def changeTo(self, idx):
-        "change view"
-        r_itemidx = self.view_layout.currentWidget().view.rootIndex()
-        self.view_layout.setCurrentIndex(idx)
+    def set_gallery_list(self, glist):
+        pass
+
+    def changeView(self, idx):
+        "Change between Grid and List view"
+        r_itemidx = self.current_layout.currentWidget().view.rootIndex()
+        self.current_layout.setCurrentIndex(idx)
         if idx == self.grid_view_index:
             self.current_view = self.View.Grid
         elif idx == self.list_view_index:
             self.current_view = self.View.List
-        self.view_layout.currentWidget().update_path(r_itemidx)
+        self.current_layout.currentWidget().update_path(r_itemidx)
 
     def get_current_view(self):
         if self.current_view == self.View.Grid:
-            return self.grid_view
+            return self.grid_view.view
         else:
-            return self.list_view
+            return self.list_view.view
 
     def sort_order(self, qt_order):
         self.current_sort_order = qt_order
         self.filter_model.sort(0, qt_order)
 
     def sort(self, name):
-        if not self.view_type == app_constants.ViewType.Duplicate:
+        if not self.view_type == app_constants.ViewType.Duplicate and self.filter_model:
             if name == 'title':
                 self.filter_model.setSortRole(Qt.DisplayRole)
                 self.sort_order(Qt.AscendingOrder)
                 self.current_sort = 'title'
             elif name == 'artist':
-                self.filter_model.setSortRole(GalleryModel.ARTIST_ROLE)
+                self.filter_model.setSortRole(app_constants.ARTIST_ROLE)
                 self.sort_order(Qt.AscendingOrder)
                 self.current_sort = 'artist'
             elif name == 'date_added':
-                self.filter_model.setSortRole(GalleryModel.DATE_ADDED_ROLE)
+                self.filter_model.setSortRole(app_constants.DATE_ADDED_ROLE)
                 self.sort_order(Qt.DescendingOrder)
                 self.current_sort = 'date_added'
             elif name == 'pub_date':
-                self.filter_model.setSortRole(GalleryModel.PUB_DATE_ROLE)
+                self.filter_model.setSortRole(app_constants.PUB_DATE_ROLE)
                 self.sort_order(Qt.DescendingOrder)
                 self.current_sort = 'pub_date'
             elif name == 'times_read':
-                self.filter_model.setSortRole(GalleryModel.TIMES_READ_ROLE)
+                self.filter_model.setSortRole(app_constants.TIMES_READ_ROLE)
                 self.sort_order(Qt.DescendingOrder)
                 self.current_sort = 'times_read'
             elif name == 'last_read':
-                self.filter_model.setSortRole(GalleryModel.LAST_READ_ROLE)
+                self.filter_model.setSortRole(app_constants.LAST_READ_ROLE)
                 self.sort_order(Qt.DescendingOrder)
                 self.current_sort = 'last_read'
 
@@ -2807,16 +2583,16 @@ class ViewManager:
             self.get_current_view().model().catalog_view()
 
     def fav_is_current(self):
-        if self.list_view.filter_model.current_view == \
+        if self.filter_model == \
             self.list_view.filter_model.CAT_VIEW:
             return False
         return True
 
     def hide(self):
-        self.view_layout.currentWidget().hide()
+        self.current_layout.currentWidget().hide()
 
     def show(self):
-        self.view_layout.currentWidget().show()
+        self.current_layout.currentWidget().show()
 
 if __name__ == '__main__':
     raise NotImplementedError("Unit testing not yet implemented")

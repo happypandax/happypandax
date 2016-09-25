@@ -87,7 +87,7 @@ class TabManager(QObject):
             self._last_selected.view.hide()
         b.selected = True
         self._last_selected = b
-        self.parent_widget.current_manga_view = b.view
+        self.parent_widget.current_manga_view = b.view.index
         b.view.list_view.sort_model.rowsInserted.connect(self.parent_widget.stat_row_info)
         b.view.list_view.sort_model.rowsRemoved.connect(self.parent_widget.stat_row_info)
         b.view.show()
@@ -103,8 +103,7 @@ class TabManager(QObject):
             self.agroup.addButton(t)
             t.clicked.connect(self._manage_selected)
             t.close_tab.connect(self.removeTab)
-            t.view = gallery.ViewManager(view_type, self.parent_widget, allow_sidebarwidget)
-            t.view.hide()
+            t.view = gallery.ViewManager(view_type, self.parent_widget)
             t.close_tab.connect(lambda:self.library_btn.click())
                 #if not allow_sidebarwidget:
                 #    t.clicked.connect(self.parent_widget.sidebar_list.arrow_handle.click)
@@ -562,7 +561,7 @@ class SideBarWidget(QFrame):
         lists_l.addWidget(self.lists)
         lists_l.addWidget(create_new_list_btn)
         lists_index = self.stacked_layout.addWidget(gallery_lists_dummy)
-        self.lists.GALLERY_LIST_CLICKED.connect(parent.default_manga_view.filter_model.set_gallery_list)
+        self.lists.GALLERY_LIST_CLICKED.connect(lambda l: parent.current_view_manager.set_gallery_list(l))
         self.lists.GALLERY_LIST_CLICKED.connect(self.show_all_galleries_btn.show)
         self.lists.GALLERY_LIST_REMOVED.connect(self.show_all_galleries_btn.click)
         self.lists_btn.clicked.connect(lambda:self.stacked_layout.setCurrentIndex(lists_index))

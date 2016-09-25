@@ -89,7 +89,7 @@ TYPE_ROLE = Qt.UserRole + 8
 RATING_ROLE = Qt.UserRole + 9
 LANGUAGE_ROLE = Qt.UserRole + 10
 NUMBER_ROLE = Qt.UserRole + 11
-# 12
+ID_ROLE = Qt.UserRole + 12
 CIRCLES_ROLE = Qt.UserRole + 13
 TAGS_ROLE = Qt.UserRole + 14
 PARENT_ROLE = Qt.UserRole + 15
@@ -123,9 +123,10 @@ class ViewType(enum.IntEnum):
 	Duplicate = 3
 
 @enum.unique
-class ModelDataType(enum.Enum):
-    Standard = 1
-    Addition = 2
+class ModelLoaderType(enum.Enum):
+    Collection = 1
+    Gallery = 2
+    Namespace = 3
 
 @enum.unique
 class ProfileType(enum.Enum):

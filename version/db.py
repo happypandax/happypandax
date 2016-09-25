@@ -300,7 +300,7 @@ class Collection(ProfileMixin, Base):
     info = Column(String, nullable=False, default='')
     cover = Column(String, nullable=False, default='')
 
-    galleries = relationship("Gallery", back_populates="collection", cascade="save-update, merge, refresh-expire", lazy="dynamic")
+    galleries = relationship("Gallery", back_populates="collection", cascade="save-update, merge, refresh-expire")
     profiles = relationship("Profile", secondary=collection_profiles, cascade="all")
 
     @property
@@ -329,6 +329,9 @@ class Collection(ProfileMixin, Base):
         else:
             ids = q.all()
             return ids if ids else None
+
+    def __repr__(self):
+        return "ID:{} - Collection Title:{}\nCollection Cover:{}".format(self.id, self.title, self.cover)
 
 gallery_profiles = profile_association("gallery")
 
@@ -594,6 +597,7 @@ class Gallery(ProfileMixin, Base):
         return string
 
     def __repr__(self):
+        return ''
         return """
 <Gallery - {}>
 Titles: {}
@@ -840,6 +844,7 @@ class Page(ProfileMixin, Base):
     profiles = relationship("Profile", secondary=page_profiles, cascade="all")
 
     def __repr__(self):
+        return ''
         return "Page ID:{}\nPage:{}\nProfile:{}\nPageHash:{}".format(self.id, self.number, self.profile, self.hash)
 
     @property
