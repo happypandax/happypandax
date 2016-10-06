@@ -4,4 +4,4 @@ python:
 install:
 - "pip install -r requirements.txt"
 script:
-- "python version/db.py"
+- "python test/main.py"
