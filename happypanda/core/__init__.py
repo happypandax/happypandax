@@ -1,1 +1,1 @@
-__all__ = ["db", "plugins"]
+__all__ = ["db", "plugins", "interface"]

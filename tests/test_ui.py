@@ -1,1 +1,1 @@
-from .context import happypanda
+import happypanda

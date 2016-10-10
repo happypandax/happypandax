@@ -1,10 +1,19 @@
 ﻿import os
 
 version = "0.0.1"
+debug = False
 
 ## PATHS & FILENAMES ##
 
-log_dir = "logs"
-error_log = os.path.join(log_dir, "error.log")
-normal_log = os.path.join(log_dir, "activity.log")
-debug_log = os.path.join(log_dir, "debug.log")
+dir_data = "data"
+dir_cache = "cache"
+dir_log = "logs"
+log_error = os.path.join(dir_log, "error.log")
+log_normal = os.path.join(dir_log, "activity.log")
+log_debug = os.path.join(dir_log, "debug.log")
+db_path = os.path.join(dir_data, "happypanda.db")
+
+## DATABASE
+
+db_version = [0]
+db_session = None

@@ -5,6 +5,6 @@ from os import chdir, path
 chdir(path.abspath(path.dirname(__file__)))
 
 if __name__ == '__main__':
-    from happypanda import app
+    from happypanda.core import interface
 
-    exit(app.exec_())
+    interface.interactive()

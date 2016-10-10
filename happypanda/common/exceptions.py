@@ -1,7 +1,19 @@
 
+import logging
+
+log = logging.getLogger(__name__)
+log_i = log.info
+log_d = log.debug
+log_w = log.warning
+log_e = log.error
+log_c = log.critical
+
 class HappypandaError(Exception):
     "Base Happypanda exception, all exceptions will derive from this"
-    pass
+    
+    def __init__(self, msg):
+        super().__init__()
+        log_e(msg)
 
 ## CORE ##
 
@@ -14,6 +26,7 @@ class CoreError(HappypandaError):
     """
     
     def __init__(self, where, message):
+        super().__init__(message)
         self.where = where
         self.msg = message
 
@@ -42,3 +55,27 @@ class PluginNameError(PluginIDError):
 class PluginMethodError(PluginError):
     ""
     pass
+
+class PluginAttributeError(PluginError):
+    ""
+    pass
+
+class PluginHookError(PluginError):
+    ""
+    pass
+
+class PluginHandlerError(PluginError):
+    ""
+    pass
+
+
+    ## DATABASE ##
+
+class DatabaseError(CoreError):
+    """Base database exception, all database exceptions will derive from this"""
+    pass
+
+class DatabaseInitError(CoreError):
+    ""
+    def __init__(self, msg):
+        super().__init__("An error occured in the database initialization process: " + msg)
