@@ -7,8 +7,6 @@ from happypanda.common import constants, exceptions
 
 
 clients = set()
-input_queue = {}
-output_queue = {}
 
 class ClientManager(threading.Thread):
     "Manages clients"
@@ -23,15 +21,11 @@ class ClientManager(threading.Thread):
 
     def processInput(self):
         try:
-            next_data = output_queue[client].get_nowait()
+            next_data = self.iqueue.get_nowait()
         except queue.Empty:
-            del output_queue[client]
+            return
         else:
-            try:
-                client.sendall(next_data)
-            except socket.error:
-                pass
-                # log error
+            pass
 
     def processOutput(self):
         pass
@@ -44,9 +38,6 @@ class ClientManager(threading.Thread):
 def disconnectClient(client):
     client.close()
     clients.remove(client)
-    del input_queue[client]
-    if client in output_queue:
-        del output_queue[client]
     # log remove?
 
 def startServer():
@@ -65,7 +56,12 @@ def startServer():
 
 
     while constants.status:
-        readers, writers, errors = select.select(clients, output_queue.keys(), clients)
+        try:
+            ready_odata = oqueue.get_nowait()
+        except queue.Empty:
+            ready_odata = {}
+
+        readers, writers, errors = select.select(clients, ready_odata.keys(), clients)
 
         for client in readers:
             if client == hpserver:
@@ -73,8 +69,6 @@ def startServer():
                 # log address
                 new_client.setblocking(0)
                 clients.add(new_client)
-                input_queue[new_client] = queue.Queue()
-
             else:
                 try:
                     clent_data = client.recv(constants.data_size)
@@ -83,21 +77,17 @@ def startServer():
                     # log error
 
                 if client_data:
-                   input_queue[client].put(client_data)
+                   iqueue.put((client, client_data))
                 else:
                     disconnectClient(client)
 
         for client in writers:
+            next_data = ready_odata[client]
             try:
-                next_data = output_queue[client].get_nowait()
-            except queue.Empty:
-                del output_queue[client]
-            else:
-                try:
-                    client.sendall(next_data)
-                except socket.error:
-                    pass
-                    # log error
+                client.sendall(next_data)
+            except socket.error:
+                pass
+                # log error
 
         for client in errors:
             # log that an error occured with this client, client.getpeername()
