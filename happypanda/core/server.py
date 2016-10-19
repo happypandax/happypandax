@@ -14,18 +14,27 @@ class ClientManager(threading.Thread):
         super().__init__()
         self.iqueue = iqueue
         self.oqueue = oqueue
-        self.data_length = {}
+        self.client_buffer = {}
+
+    def handleClient(self, client, data):
+        pass
 
     def sendToClient(self,):
         pass
 
     def processInput(self):
         try:
-            next_data = self.iqueue.get_nowait()
+            client, data = self.iqueue.get_nowait()
         except queue.Empty:
             return
         else:
-            pass
+            if not client in self.client_buffer:
+                self.client_buffer[client] = b''
+            if b'end' in data:
+                self.handleClient(client, self.client_buffer[client])
+                self.client_buffer[client] = b''
+            else:
+                self.client_buffer[client] += data
 
     def processOutput(self):
         pass
@@ -33,7 +42,6 @@ class ClientManager(threading.Thread):
     def run(self):
         while constants.status:
             self.processInput()
-            self.processOutput()
 
 def disconnectClient(client):
     client.close()
@@ -41,11 +49,12 @@ def disconnectClient(client):
     # log remove?
 
 def startServer():
+
     hpserver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     if constants.public_server:
         hpserver.bind((socket.gethostname(), constants.public_port))
     else:
-        hpserver.bind(constants.host, constants.local_port)
+        hpserver.bind((constants.host, constants.local_port))
     hpserver.listen(constants.connections)
     clients.add(hpserver)
 
@@ -55,6 +64,7 @@ def startServer():
     manager.start()
 
 
+    print("Started server")
     while constants.status:
         try:
             ready_odata = oqueue.get_nowait()
@@ -71,7 +81,7 @@ def startServer():
                 clients.add(new_client)
             else:
                 try:
-                    clent_data = client.recv(constants.data_size)
+                    client_data = client.recv(constants.data_size)
                 except socket.error:
                     client_data = b""
                     # log error
@@ -92,3 +102,7 @@ def startServer():
         for client in errors:
             # log that an error occured with this client, client.getpeername()
             disconnectClient(client)
+
+
+if __name__ == '__main__':
+    startServer()

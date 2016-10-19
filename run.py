@@ -5,7 +5,7 @@ from os import chdir, path
 chdir(path.abspath(path.dirname(__file__)))
 
 if __name__ == '__main__':
-    from happypanda.core import interface
+    from happypanda.core import interface, server
 
-    interface.interactive()
+    server.startServer()
 

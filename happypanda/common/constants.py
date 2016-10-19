@@ -20,7 +20,7 @@ db_session = None
 
 ## SERVER
 status = True
-local_port = 0
+local_port = 5577
 host = "localhost"
 connections = 10
 data_size = 1024
