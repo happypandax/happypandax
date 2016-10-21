@@ -19,10 +19,9 @@ db_version = [0]
 db_session = None
 
 ## SERVER
-status = True
 local_port = 5577
 host = "localhost"
-connections = 10
+client_limit = None
 data_size = 1024
 public_port = 80
 public_server = False
