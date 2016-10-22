@@ -2,6 +2,7 @@
 from gevent.server import StreamServer
 
 from happypanda.common import constants, exceptions
+from happypanda.core import interface
 
 class HPServer:
     ""
