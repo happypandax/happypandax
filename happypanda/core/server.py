@@ -1,4 +1,4 @@
-﻿from gevent import socket, pool
+﻿from gevent import socket, pool, queue
 from gevent.server import StreamServer
 
 from happypanda.common import constants, exceptions
@@ -12,6 +12,7 @@ class HPServer:
             params = (constants.host, constants.local_port)
         self._pool = pool.Pool(constants.client_limit)
         self._server = StreamServer(params, self._handle, spawn=self._pool)
+        self._clients = set()
 
     def parse(self, xml_data):
         "Parse message in XML format"
@@ -20,31 +21,36 @@ class HPServer:
 
     def _handle(self, client, address):
         # log client connected
-        client.sendall("Welcome")
+        print("Client connected")
+        self._clients.add(client)
+        client.sendall(b"Welcome")
         try:
             buffer = b''
-            rclient = client.makefile(mode='rb')
             while True:
-                line = rclient.readline()
-                if not line:
+                if buffer.endswith(b'end'):
+                    d = self.parse(buffer)
+                    client.sendall(d)
+                    client.sendall(constants.postfix)
+                    buffer = b''
+                r = client.recv(constants.data_size)
+                if not r:
                     # log client disconnected
                     break
-                if line.lower.strip() == b'end':
-                    d = parse(buffer)
-                    client.sendall(d)
-                    client.sendall(b'end')
-                    buffer = b''
                 else:
-                    buffer += line
+                    buffer += r
         except socket.error as e:
             # log errpr
-            print(e)
+            print("Client disconnected", e)
         finally:
-            rclient.close()
+            self._clients.remove(client)
 
     def run(self):
         "Start the server"
-        self._server.serve_forever()
+        try:
+            self._server.serve_forever()
+        except socket.error as e:
+            # log error
+            print("Error: Port might already be in use")
 
 
 

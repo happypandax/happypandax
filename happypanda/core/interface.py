@@ -1,5 +1,7 @@
 import code, sys
 
+## CORE ##
+
 def interactive():
     
     # exception trick to pick up the current frame
@@ -14,6 +16,13 @@ def interactive():
 
     code.interact("======== Start Happypanda Debugging ========", local=namespace)
     print("======== END ========")
+
+
+## DATABASE ##
+
+
+
+## GALLERY ##
 
 
 

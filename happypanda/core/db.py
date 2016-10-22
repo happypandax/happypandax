@@ -592,7 +592,7 @@ def check_db_version(sess):
     init_defaults(sess)
     return True
 
-def init_db():
+def init():
     engine = create_engine(os.path.join("sqlite:///", constants.db_path), echo=constants.debug)
     Base.metadata.create_all(engine)
     Session.configure(bind=engine)

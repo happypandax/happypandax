@@ -22,6 +22,7 @@ db_session = None
 local_port = 5577
 host = "localhost"
 client_limit = None
+postfix = b'end'
 data_size = 1024
 public_port = 80
 public_server = False
