@@ -5,8 +5,3 @@ def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
 
 
-class MethodResult:
-    "Encapsulates return values from methods in the interface module"
-    pass
-
-

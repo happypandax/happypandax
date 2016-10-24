@@ -17,6 +17,10 @@ def interactive():
     code.interact("======== Start Happypanda Debugging ========", local=namespace)
     print("======== END ========")
 
+class MethodResult:
+    "Encapsulates return values from methods in the interface module"
+
+    pass
 
 ## DATABASE ##
 
@@ -24,6 +28,28 @@ def interactive():
 
 ## GALLERY ##
 
+def fetchGallery(offset=None, from_gallery=None):
+    """
+    Fetch galleries from the database.
+    Params:
+        offset -- where to start fetching from, an int
+        from_gallery -- which gallery id(index) to start fetching from, an int
+    Returns:
+        Gallery objects
+    """
+    pass
+
+def addGallery(galleries=None, paths=None):
+    """
+    Add galleries to the database.
+    Params:
+        galleries -- gallery objects parsed from XML
+        Returns: Status
+
+        paths -- list of paths to the galleries
+        Returns: Gallery objects
+    """
+    pass
 
 
 
