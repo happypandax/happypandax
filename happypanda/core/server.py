@@ -5,7 +5,7 @@ from happypanda.common import constants, exceptions
 from happypanda.core import interface
 
 class HPServer:
-    ""
+    "Happypanda Server"
     def __init__(self):
         if constants.public_server:
             params = (socket.gethostname(), constants.public_port)
@@ -21,6 +21,7 @@ class HPServer:
         return b'<xml>Received</xml>'
 
     def _handle(self, client, address):
+        "Client handle function"
         # log client connected
         print("Client connected")
         self._clients.add(client)

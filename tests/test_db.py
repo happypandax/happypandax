@@ -16,6 +16,7 @@ class GeneralTest(unittest.TestCase):
         Base.metadata.create_all(engine)
         db_constants.SESSION = Session
         self.session = Session()
+        init_defaults(self.session)
         self.gallery = Gallery()
         self.session.add(self.gallery)
         self.session.commit()
@@ -174,8 +175,8 @@ class CollectionRelationship(unittest.TestCase):
         engine = create_engine("sqlite:///dbcollectionunittest.db")
         Session.configure(bind=engine)
         Base.metadata.create_all(engine)
-
         self.session = Session()
+        init_defaults(self.session)
 
         self.collections = [Collection(title="col"+str(x)) for x in range(2)]
         self.galleries = [Gallery() for x in range(10)]
@@ -240,6 +241,7 @@ class ListRelationship(unittest.TestCase):
         Base.metadata.create_all(engine)
 
         self.session = Session()
+        init_defaults(self.session)
 
         self.glists = [List(name="list"+str(x)) for x in range(2)]
         self.galleries = [Gallery() for x in range(10)]
@@ -288,6 +290,7 @@ class ArtistRelationship(unittest.TestCase):
         Base.metadata.create_all(engine)
 
         self.session = Session()
+        init_defaults(self.session)
 
         self.artist = Artist()
         self.artist.name = "Artist1"
@@ -330,6 +333,7 @@ class CircleRelationship(unittest.TestCase):
         Base.metadata.create_all(engine)
 
         self.session = Session()
+        init_defaults(self.session)
 
         self.artist = Circle()
         self.artist.name = "Artist1"
@@ -372,6 +376,7 @@ class HashRelationship(unittest.TestCase):
         engine = create_engine("sqlite:///dbhashunittest.db")
         Session.configure(bind=engine)
         Base.metadata.create_all(engine)
+        init_defaults(self.session)
 
         self.session = Session()
         self.gallery = Gallery()
@@ -429,6 +434,8 @@ class GalleryNSRelationship(unittest.TestCase):
         Base.metadata.create_all(engine)
 
         self.session = Session()
+        init_defaults(self.session)
+
         self.galleryns = [GalleryNamespace(name="gns"+str(x)) for x in range(2)]
         self.galleries = [Gallery() for x in range(10)]
         self.galleryns[0].galleries.extend(self.galleries[:5])
@@ -484,6 +491,7 @@ class LanguageRelationship(unittest.TestCase):
         Base.metadata.create_all(engine)
 
         self.session = Session()
+        init_defaults(self.session)
 
         self.lang = Language()
         self.lang.name = "Con1"
@@ -530,6 +538,7 @@ class TypeRelationship(unittest.TestCase):
         Base.metadata.create_all(engine)
 
         self.session = Session()
+        init_defaults(self.session)
 
         self.type = GalleryType()
         self.type.name = "Con1"
@@ -576,6 +585,7 @@ class StatusRelationship(unittest.TestCase):
         Base.metadata.create_all(engine)
 
         self.session = Session()
+        init_defaults(self.session)
 
         self.status = Status()
         self.status.name = "Stat1"
@@ -629,6 +639,8 @@ class UrlRelationship(unittest.TestCase):
         Base.metadata.create_all(engine)
 
         self.session = Session()
+        init_defaults(self.session)
+
         self.gallery = Gallery()
         self.session.add(self.gallery)
         self.session.commit()
@@ -668,6 +680,7 @@ class TagRelationship(unittest.TestCase):
         Base.metadata.create_all(engine)
 
         self.session = Session()
+        init_defaults(self.session)
 
         self.namespaces = [Namespace(name="ns"+str(x)) for x in range(20)]
         self.tags = [Tag(name="tag"+str(x)) for x in range(10)]
@@ -735,6 +748,7 @@ class ProfileRelationship(unittest.TestCase):
         Base.metadata.create_all(engine)
 
         self.session = Session()
+        init_defaults(self.session)
 
         self.lists = [List(name="list"+str(x)) for x in range(5)]
         self.gns = [GalleryNamespace(name="gns"+str(x)) for x in range(5)]
