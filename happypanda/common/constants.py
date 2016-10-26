@@ -19,6 +19,7 @@ db_version = [0]
 db_session = None
 
 ## SERVER
+
 local_port = 5577
 host = "localhost"
 client_limit = None

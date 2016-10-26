@@ -40,7 +40,7 @@ class HPServer:
                 else:
                     buffer += r
         except socket.error as e:
-            # log errpr
+            # log error
             print("Client disconnected", e)
         finally:
             self._clients.remove(client)
