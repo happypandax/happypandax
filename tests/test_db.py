@@ -1,9 +1,13 @@
-import unittest, os, sys
+import unittest, os, sys, itertools
 sys.path.insert(0, os.path.abspath('..'))
+from sqlalchemy.orm import sessionmaker
+from happypanda.common import constants
+Session = sessionmaker()
+constants.db_session = Session
 
+# import that this is imported AFTER  creating a Session object
 from happypanda.core.db import *
 
-Session = sessionmaker()
 
 def doublegen(it):
     while it:
@@ -770,15 +774,17 @@ class ProfileRelationship(unittest.TestCase):
 
         self.assertEqual(self.session.query(Gallery).count(), 5)
         self.assertEqual(self.session.query(GalleryNamespace).count(), 5)
-        self.assertEqual(self.session.query(Collection).count(), 5)
+        self.assertEqual(self.session.query(Collection).count(), 6)
         self.assertEqual(self.session.query(Page).count(), 5)
         self.assertEqual(self.session.query(List).count(), 5)
 
         self.profiles = [Profile(path="p"+str(x), type=x) for x in range(5)]
 
+        profile_nmb = itertools.cycle(range(5))
+
         for x in (self.lists, self.gns, self.galleries, self.collections, self.pages):
             for y in x:
-                y.profiles.append(self.profiles[random.randint(0, 4)])
+                y.profiles.append(self.profiles[next(profile_nmb)])
 
         self.session.commit()
 
@@ -790,7 +796,7 @@ class ProfileRelationship(unittest.TestCase):
         self.session.commit()
         self.assertEqual(self.session.query(Gallery).count(), 5)
         self.assertEqual(self.session.query(GalleryNamespace).count(), 5)
-        self.assertEqual(self.session.query(Collection).count(), 5)
+        self.assertEqual(self.session.query(Collection).count(), 6)
         self.assertEqual(self.session.query(Page).count(), 5)
         self.assertEqual(self.session.query(List).count(), 5)
         self.assertEqual(self.session.query(Profile).count(), 4)
@@ -800,7 +806,7 @@ class ProfileRelationship(unittest.TestCase):
         self.session.commit()
         self.assertEqual(self.session.query(Gallery).count(), 5)
         self.assertEqual(self.session.query(GalleryNamespace).count(), 5)
-        self.assertEqual(self.session.query(Collection).count(), 5)
+        self.assertEqual(self.session.query(Collection).count(), 6)
         self.assertEqual(self.session.query(Page).count(), 4)
         self.assertEqual(self.session.query(List).count(), 5)
         self.assertEqual(self.session.query(Profile).count(), 4)
@@ -813,7 +819,7 @@ class ProfileRelationship(unittest.TestCase):
 
         self.assertEqual(self.session.query(Gallery).count(), 0)
         self.assertEqual(self.session.query(GalleryNamespace).count(), 0)
-        self.assertEqual(self.session.query(Collection).count(), 0)
+        self.assertEqual(self.session.query(Collection).count(), 1)
         self.assertEqual(self.session.query(Page).count(), 0)
         self.assertEqual(self.session.query(List).count(), 0)
         self.assertEqual(self.session.query(Profile).count(), 0)

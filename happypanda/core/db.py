@@ -480,9 +480,7 @@ class GalleryUrl(Base):
     gallery = relationship("Gallery", back_populates="urls")
 
 
-Session = scoped_session(sessionmaker())
-
-@event.listens_for(Session, 'after_flush_postexec')
+@event.listens_for(constants.db_session, 'after_flush_postexec')
 def assign_default_collection(session, f_ctx):
     for g in session.query(Gallery).filter(Gallery.collection == None).all():
         coll = session.query(Collection).filter(Collection._type == Collection.CollectionType.default).scalar()
@@ -491,27 +489,27 @@ def assign_default_collection(session, f_ctx):
             return
         g.collection = coll
 
-@event.listens_for(Session, 'before_commit')
+@event.listens_for(constants.db_session, 'before_commit')
 def delete_artist_orphans(session):
     session.query(Artist).filter(~Artist.galleries.any()).delete(synchronize_session=False)
 
-@event.listens_for(Session, 'before_commit')
+@event.listens_for(constants.db_session, 'before_commit')
 def delete_tag_orphans(session):
     session.query(Tag).filter(~Tag.namespaces.any()).delete(synchronize_session=False)
 
-@event.listens_for(Session, 'before_commit')
+@event.listens_for(constants.db_session, 'before_commit')
 def delete_namespace_orphans(session):
     session.query(Namespace).filter(~Namespace.tags.any()).delete(synchronize_session=False)
 
-@event.listens_for(Session, 'before_commit')
+@event.listens_for(constants.db_session, 'before_commit')
 def delete_collection_orphans(session):
     session.query(Collection).filter(and_(~Collection.galleries.any(), Collection._type != Collection.CollectionType.default)).delete(synchronize_session=False)
 
-@event.listens_for(Session, 'before_commit')
+@event.listens_for(constants.db_session, 'before_commit')
 def delete_namespace_orphans(session):
     session.query(Namespace).filter(~Namespace.tags.any()).delete(synchronize_session=False)
 
-@event.listens_for(Session, 'before_commit')
+@event.listens_for(constants.db_session, 'before_commit')
 def delete_namespacetags_orphans(session):
     tagids = [r.id for r in session.query(Tag.id).all()]
     if tagids:
@@ -519,11 +517,11 @@ def delete_namespacetags_orphans(session):
     else:
         session.query(NamespaceTags).delete(synchronize_session=False)
 
-@event.listens_for(Session, 'before_commit')
+@event.listens_for(constants.db_session, 'before_commit')
 def delete_circle_orphans(session):
     session.query(Circle).filter(~Circle.galleries.any()).delete(synchronize_session=False)
 
-@event.listens_for(Session, 'before_commit')
+@event.listens_for(constants.db_session, 'before_commit')
 def delete_gallery_namespace_orphans(session):
     session.query(GalleryNamespace).filter(~GalleryNamespace.galleries.any()).delete(synchronize_session=False)
 
@@ -567,7 +565,7 @@ def init_defaults(sess):
        coll = Collection()
        coll.title = "Default Collection"
        coll.info = "Galleries not in any collections end up here"
-       coll.type = Collection.CollectionType.default
+       coll._type = Collection.CollectionType.default
        sess.add(coll)
        sess.commit()
 
@@ -598,6 +596,7 @@ def check_db_version(sess):
     return True
 
 def init():
+    Session = scoped_session(sessionmaker())
     engine = create_engine(os.path.join("sqlite:///", constants.db_path), echo=constants.debug)
     Base.metadata.create_all(engine)
     Session.configure(bind=engine)
