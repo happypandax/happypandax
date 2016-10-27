@@ -3,6 +3,8 @@ sys.path.insert(0, os.path.abspath('..'))
 
 from happypanda.core.db import *
 
+Session = sessionmaker()
+
 def doublegen(it):
     while it:
         yield (it.pop(), it.pop())
@@ -14,7 +16,7 @@ class GeneralTest(unittest.TestCase):
         engine = create_engine("sqlite:///dbunittest.db")
         Session.configure(bind=engine)
         Base.metadata.create_all(engine)
-        db_constants.SESSION = Session
+        constants.db_session = Session
         self.session = Session()
         init_defaults(self.session)
         self.gallery = Gallery()
@@ -186,7 +188,7 @@ class CollectionRelationship(unittest.TestCase):
         self.session.commit()
 
         self.assertEqual(self.session.query(Gallery).count(), 10)
-        self.assertEqual(self.session.query(Collection).count(), 2)
+        self.assertEqual(self.session.query(Collection).count(), 3) # the default collection is also there
 
     def default(self):
         init_defaults(self.session)
@@ -205,27 +207,27 @@ class CollectionRelationship(unittest.TestCase):
         self.session.delete(self.collections[0])
         self.session.commit()
         self.assertEqual(self.session.query(Gallery).count(), 10)
-        self.assertEqual(self.session.query(Collection).count(), 1)
+        self.assertEqual(self.session.query(Collection).count(), 2) # the default collection is also there
 
     def test_delete2(self):
         self.session.delete(self.galleries[0])
         self.session.commit()
         self.assertEqual(self.session.query(Gallery).count(), 9)
-        self.assertEqual(self.session.query(Collection).count(), 2)
-        self.assertEqual(self.collections[0].galleries.count(), 4)
+        self.assertEqual(self.session.query(Collection).count(), 3) # the default collection is also there
+        self.assertEqual(len(self.collections[0].galleries), 4)
 
     def test_delete3(self):
         for c in self.collections:
             self.session.delete(c)
         self.session.commit()
         self.assertEqual(self.session.query(Gallery).count(), 10)
-        self.assertEqual(self.session.query(Collection).count(), 0)
+        self.assertEqual(self.session.query(Collection).count(), 1) # the default collection is also there
 
     def test_no_orphans(self):
         self.session.query(Gallery).delete()
         self.session.commit()
         self.assertEqual(self.session.query(Gallery).count(), 0)
-        self.assertEqual(self.session.query(Collection).count(), 0)
+        self.assertEqual(self.session.query(Collection).count(), 1) # the default collection is also there
 
     def tearDown(self):
         self.session.close()
@@ -376,9 +378,10 @@ class HashRelationship(unittest.TestCase):
         engine = create_engine("sqlite:///dbhashunittest.db")
         Session.configure(bind=engine)
         Base.metadata.create_all(engine)
-        init_defaults(self.session)
 
         self.session = Session()
+        init_defaults(self.session)
+
         self.gallery = Gallery()
         self.session.add(self.gallery)
         self.session.commit()

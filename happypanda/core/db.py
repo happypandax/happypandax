@@ -6,13 +6,14 @@ from sqlalchemy.sql.expression import BinaryExpression, func, literal
 from sqlalchemy.sql.operators import custom_op
 from sqlalchemy.orm import sessionmaker, relationship, validates, object_session, scoped_session
 from sqlalchemy import (create_engine, event, exc, and_, or_, Boolean, Column, Integer, ForeignKey,
-                        Table, Date, DateTime, UniqueConstraint, Float)
+                        Table, Date, DateTime, UniqueConstraint, Float, Enum)
 from dateutil import parser as dateparser
 
 import datetime
 import logging
 import os
 import random
+import enum
 
 from happypanda.common import constants, exceptions
 
@@ -106,25 +107,25 @@ def validate_int(value):
         try:
             value = int(value)
         except:
-            raise AssertionError("Column only accepts integer, not {}".format(type(value)))
+            raise AssertionError("Column only accepts integer, not {}".format(_type(value)))
     else:
-        assert isinstance(value, int) or value is None, "Column only accepts integer, not {}".format(type(value))
+        assert isinstance(value, int) or value is None, "Column only accepts integer, not {}".format(_type(value))
     return value
 
 def validate_string(value):
-    assert isinstance(value, str) or value is None, "Column only accepts string, not {}".format(type(value))
+    assert isinstance(value, str) or value is None, "Column only accepts string, not {}".format(_type(value))
     return value
 
 def validate_datetime(value):
-    assert isinstance(value, datetime.datetime) or value is None, "Column only accepts datetime, not {}".format(type(value))
+    assert isinstance(value, datetime.datetime) or value is None, "Column only accepts datetime, not {}".format(_type(value))
     return value
 
 def validate_date(value):
-    assert isinstance(value, datetime.date) or value is None, "Column only accepts date, not {}".format(type(value))
+    assert isinstance(value, datetime.date) or value is None, "Column only accepts date, not {}".format(_type(value))
     return value
 
 def validate_bool(value):
-    assert isinstance(value, bool) or value is None, "Column only accepts boolean, not {}".format(type(value))
+    assert isinstance(value, bool) or value is None, "Column only accepts boolean, not {}".format(_type(value))
     return value
 
 validators = {
@@ -294,10 +295,16 @@ gallery_tags = Table('gallery_tags', Base.metadata,
 collection_profiles = profile_association("collection")
 
 class Collection(ProfileMixin, Base):
+
+    class CollectionType(enum.Enum):
+        default = 1
+        user = 2
+
     __tablename__ = 'collection'
     title = Column(String, nullable=False, default='')
     info = Column(String, nullable=False, default='')
     cover = Column(String, nullable=False, default='')
+    _type = Column(Enum(CollectionType), nullable=False, default=CollectionType.user)
 
     galleries = relationship("Gallery", back_populates="collection", cascade="save-update, merge, refresh-expire")
     profiles = relationship("Profile", secondary=collection_profiles, cascade="all")
@@ -473,15 +480,12 @@ class GalleryUrl(Base):
     gallery = relationship("Gallery", back_populates="urls")
 
 
-if __name__ == '__main__':
-    Session = sessionmaker()
-else:
-    Session = scoped_session(sessionmaker())
+Session = scoped_session(sessionmaker())
 
 @event.listens_for(Session, 'after_flush_postexec')
 def assign_default_collection(session, f_ctx):
     for g in session.query(Gallery).filter(Gallery.collection == None).all():
-        coll = session.query(Collection).filter(Collection.title == "No Collection").scalar()
+        coll = session.query(Collection).filter(Collection._type == Collection.CollectionType.default).scalar()
         if not coll:
             log_e("Could not assign default collection. No such collection exists.")
             return
@@ -501,7 +505,7 @@ def delete_namespace_orphans(session):
 
 @event.listens_for(Session, 'before_commit')
 def delete_collection_orphans(session):
-    session.query(Collection).filter(and_(~Collection.galleries.any(), Collection.title != "No Collection")).delete(synchronize_session=False)
+    session.query(Collection).filter(and_(~Collection.galleries.any(), Collection._type != Collection.CollectionType.default)).delete(synchronize_session=False)
 
 @event.listens_for(Session, 'before_commit')
 def delete_namespace_orphans(session):
@@ -558,11 +562,12 @@ def sqlite_engine_connect(dbapi_connection, connection_record):
 
 def init_defaults(sess):
     ""
-    coll = sess.query(Collection).filter(Collection.title == "No Collection").scalar()
+    coll = sess.query(Collection).filter(Collection._type == Collection.CollectionType.default).scalar()
     if not coll:
        coll = Collection()
-       coll.title = "No Collection"
+       coll.title = "Default Collection"
        coll.info = "Galleries not in any collections end up here"
+       coll.type = Collection.CollectionType.default
        sess.add(coll)
        sess.commit()
 

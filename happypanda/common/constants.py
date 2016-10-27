@@ -17,6 +17,7 @@ db_path = os.path.join(dir_data, "happypanda.db")
 
 db_version = [0]
 db_session = None
+default_collection = "No Collection"
 
 ## SERVER
 
