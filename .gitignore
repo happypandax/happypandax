@@ -234,3 +234,6 @@ FakesAssemblies/
 /res/gallery_ext_ico.ico
 /res/sample.png
 *.hpdb
+*.db
+*.opendb
+*.db-journal

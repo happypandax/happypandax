@@ -21,9 +21,10 @@ db_session = None
 ## SERVER
 
 local_port = 5577
-host = "localhost"
+web_port = local_port + 1
+same_network = True
+host = '0.0.0.0' if same_network else "localhost"
 client_limit = None
 postfix = b'end'
 data_size = 1024
-public_port = 80
 public_server = False

@@ -1,0 +1,44 @@
+﻿* {
+    margin: 0;
+    padding: 0;
+}
+
+body
+{
+    width: 80%;
+    margin: auto;
+}
+
+nav {
+    background-color: rgba(0, 0, 0, 0.5);
+    margin: auto;
+    margin-top: 50pt;
+    border-radius: 2px;
+    padding: 5pt;
+}
+
+nav ul {
+    list-style: none;
+}
+
+nav ul li {
+    display: inline-block;
+    margin: 0 5pt;
+    color: white;
+}
+
+ul#galleries {
+    margin: auto;
+    list-style: none;
+    padding: 10pt;
+}
+
+ul#galleries li.gallery {
+    display: inline-block;
+    width: 200px;
+    height: 300px;
+    border-radius: 3px;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    padding: 1px;
+}

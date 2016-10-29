@@ -1,4 +1,6 @@
-import code, sys
+from gevent import monkey
+monkey.patch_all()
+import code, sys, enum
 
 ## CORE ##
 
@@ -17,10 +19,19 @@ def interactive():
     code.interact("======== Start Happypanda Debugging ========", local=namespace)
     print("======== END ========")
 
-class MethodResult:
+class Result:
     "Encapsulates return values from methods in the interface module"
 
-    pass
+    class ResultType(enum.Enum):
+        Status = 1
+        Gallery = 2
+
+    def __init__(self):
+        self._galleries = set()
+
+    def toXML(self):
+        ""
+        pass
 
 ## DATABASE ##
 
@@ -43,7 +54,7 @@ def addGallery(galleries=None, paths=None):
     """
     Add galleries to the database.
     Params:
-        galleries -- gallery objects parsed from XML
+        galleries -- list of gallery objects parsed from XML
         Returns: Status
 
         paths -- list of paths to the galleries

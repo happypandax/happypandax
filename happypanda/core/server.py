@@ -1,8 +1,10 @@
 ﻿from gevent import socket, pool, queue
 from gevent.server import StreamServer
+from gevent.wsgi import WSGIServer
 
 from happypanda.common import constants, exceptions
 from happypanda.core import interface
+from happypanda.clients import web as hweb
 
 class HPServer:
     "Happypanda Server"
@@ -13,6 +15,7 @@ class HPServer:
             params = (constants.host, constants.local_port)
         self._pool = pool.Pool(constants.client_limit)
         self._server = StreamServer(params, self._handle, spawn=self._pool)
+        self._web_server = None
         self._clients = set()
 
     def parse(self, xml_data):
@@ -46,16 +49,22 @@ class HPServer:
         finally:
             self._clients.remove(client)
 
-    def run(self):
-        "Start the server"
+    def run(self, web=False):
+        "Run the server forever, blocking"
+        if web:
+            # start webserver
+            try:
+                self._web_server = WSGIServer((constants.host, constants.web_port), hweb.happyweb)
+                self._web_server.start()
+            except socket.error as e:
+                # log error
+                print("Error: Port might already be in use")
+                return
         try:
             self._server.serve_forever()
         except socket.error as e:
             # log error
             print("Error: Port might already be in use")
-
-
-
 
 if __name__ == '__main__':
     server = HPServer()
