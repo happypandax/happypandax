@@ -4,4 +4,4 @@ python:
 install:
 - "pip install -r requirements-dev.txt"
 script:
-- "python -m pytest"
+- "python -m pytest --cov=happypanda --cov-config=.coveragerc"
