@@ -11,3 +11,4 @@ python-dateutil
 sqlalchemy
 qtawesome
 gevent==1.1.2
+Flask==0.11.1
