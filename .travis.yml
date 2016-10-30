@@ -4,5 +4,4 @@ python:
 install:
 - "pip install -r requirements-dev.txt"
 script:
-- "python run_tests.py"
 - "python -m pytest"
