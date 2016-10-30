@@ -2,6 +2,8 @@ language: python
 python:
 - "3.5"
 install:
-- "pip install -r requirements.txt"
+- "pip install -r requirements-dev.txt"
 script:
-- "python run_tests.py"
+- "python -m pytest --cov=happypanda --cov-config=.coveragerc"
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
