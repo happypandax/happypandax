@@ -17,7 +17,6 @@ def interactive():
     namespace.update(frame.f_locals)
 
     code.interact("======== Start Happypanda Debugging ========", local=namespace)
-    print("======== END ========")
 
 class Result:
     "Encapsulates return values from methods in the interface module"
@@ -50,7 +49,7 @@ def fetchGallery(offset=None, from_gallery=None):
     """
     pass
 
-def addGallery(galleries=None, paths=None):
+def addGallery(gallery_boject=None, paths=None):
     """
     Add galleries to the database.
     Params:

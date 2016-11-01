@@ -7,12 +7,14 @@ log_w = log.warning
 log_e = log.error
 log_c = log.critical
 
-class HappypandaError(Exception):
+class HappypandaError(RuntimeError):
     "Base Happypanda exception, all exceptions will derive from this"
     
     def __init__(self, msg):
         super().__init__()
+        from happypanda.common.utils import eprint # HACK: check if importing from __init__ works
         log_e(msg)
+        eprint(msg)
 
 ## CORE ##
 
@@ -75,6 +77,42 @@ class DatabaseError(CoreError):
     pass
 
 class DatabaseInitError(CoreError):
-    ""
+    "Database initialization error"
     def __init__(self, msg):
         super().__init__("An error occured in the database initialization process: " + msg)
+
+
+    ## SERVER ##
+
+class ServerError(CoreError):
+    """Base server exception, all server exceptions will derive from this"""
+    pass
+
+class ClientDisconnectError(ServerError):
+    "Client disconnected"
+    pass
+
+    ## CLIENT ##
+
+class ClientError(ServerError):
+    """Base client exception, all client exceptions will derive from this
+    
+    Params:
+        name -- name of client
+        msg -- error message
+    """
+    def __init__(self, name, msg):
+        super().__init__("An error occured in client '{}':\t{} ".format(name, msg))
+
+class ServerDisconnectError(ClientError):
+    "Server disconnected"
+    pass
+
+    ## ETC. ##
+
+class XMLParseError(ClientError, ServerError):
+    ""
+    def __init__(self, xml_data, name, msg):
+        pass
+        # TODO: init both classs. log xml_data.
+        

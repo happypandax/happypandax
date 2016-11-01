@@ -2,7 +2,7 @@
 from gevent.server import StreamServer
 from gevent.wsgi import WSGIServer
 
-from happypanda.common import constants, exceptions
+from happypanda.common import constants, exceptions, utils
 from happypanda.core import interface
 from happypanda.clients import web as hweb
 
@@ -32,7 +32,7 @@ class HPServer:
         try:
             buffer = b''
             while True:
-                if buffer.endswith(b'end'):
+                if buffer.endswith(constants.postfix):
                     d = self.parse(buffer)
                     client.sendall(d)
                     client.sendall(constants.postfix)
@@ -45,7 +45,7 @@ class HPServer:
                     buffer += r
         except socket.error as e:
             # log error
-            print("Client disconnected", e)
+            utils.eprint("Client disconnected", e)
         finally:
             self._clients.remove(client)
 
@@ -58,13 +58,13 @@ class HPServer:
                 self._web_server.start()
             except socket.error as e:
                 # log error
-                print("Error: Port might already be in use")
+                utils.eprint("Error: Port might already be in use")
                 return
         try:
             self._server.serve_forever()
         except socket.error as e:
             # log error
-            print("Error: Port might already be in use")
+            utils.eprint("Error: Port might already be in use")
 
 if __name__ == '__main__':
     server = HPServer()
