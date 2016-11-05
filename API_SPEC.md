@@ -78,7 +78,7 @@ Functions are invoked with the `<function>` element with `fname` attribute to sp
 ```
 
 **Returns:**  
-`gallery_objects`: `status`  
-`paths`: `<gallery> objects`
+`gallery_objects` -- `status`  
+`paths` -- `<gallery> objects`  
 
 
