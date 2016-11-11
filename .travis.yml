@@ -4,6 +4,7 @@ python:
 install:
 - "pip install -r requirements-dev.txt"
 script:
+- 'python -m flake8 --config=./setup.cfg'
 - "python -m pytest --cov=happypanda --cov-config=.coveragerc"
 after_success:
   - bash <(curl -s https://codecov.io/bash)
