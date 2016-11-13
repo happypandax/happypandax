@@ -1,5 +1,5 @@
 ﻿from flask import render_template, flash, request, url_for, redirect, abort, g
-from happypanda.clients.web import happyweb
+from happypanda.clients.web.main import happyweb
 
 @happyweb.before_request
 def beforeRequest():

@@ -4,7 +4,7 @@ from gevent.wsgi import WSGIServer
 
 from happypanda.common import constants, exceptions, utils
 from happypanda.core import interface
-from happypanda.clients import web as hweb
+from happypanda.clients.web import main as hweb
 
 class HPServer:
     "Happypanda Server"

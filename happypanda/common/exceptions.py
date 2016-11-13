@@ -108,6 +108,33 @@ class ServerDisconnectError(ClientError):
     "Server disconnected"
     pass
 
+    ## ARCHIVE ##
+
+class ArchiveError(HappypandaError):
+    """Base archive exception, all acrhive exceptions will derive from this
+    """
+    pass
+
+class CreateArchiveError(ArchiveError):
+    "Could not create archive object"
+    def __init__(self, filepath, error):
+        return super().__init__("Failed creating archive object ({}):{}".format(error, filepath))
+
+class BadArchiveError(ArchiveError):
+    "Bad file found in archive"
+    def __init__(self, filepath):
+        return super().__init__("Bad file found in archive:{}".format(filepath))
+
+class FileInArchiveNotFoundError(ArchiveError):
+    "File not found in archive"
+    def __init__(self, f, archive_f):
+        return super().__init__("File ({}) not found in archive:{}".format(f, archive_f))
+
+class UnsupportedArchiveError(ArchiveError):
+    "Unsupported archive"
+    def __init__(self, f):
+        return super().__init__("Unsupported:{}".format(f))
+
     ## ETC. ##
 
 class XMLParseError(ClientError, ServerError):
@@ -115,4 +142,5 @@ class XMLParseError(ClientError, ServerError):
     def __init__(self, xml_data, name, msg):
         pass
         # TODO: init both classs. log xml_data.
+
         

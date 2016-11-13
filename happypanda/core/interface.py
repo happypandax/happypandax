@@ -61,5 +61,16 @@ def addGallery(gallery_boject=None, paths=None):
     """
     pass
 
+def scanGallery(paths=[], add_after=False, ignore_exist=True):
+    """
+    Scan folders for galleries
+    Params:
+        paths -- list of paths to folders to scan for galleries
+        add_after -- add found galleries after scan
+        ignore_exist -- ignore existing galleries
+    Returns:
+        Paths to the galleries
+    """
+    pass
 
 
