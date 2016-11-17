@@ -24,7 +24,7 @@ def interactive():
 
 ## GALLERY ##
 
-def fetchGallery(offset=None, from_gallery=None):
+def fetchGallery(offset=None, from_gallery_id=None):
     """
     Fetch galleries from the database.
     Params:
