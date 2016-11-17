@@ -10,4 +10,3 @@ if __name__ == '__main__':
     from happypanda.core import interface, server
 
     server.HPServer().run(web=True)
-

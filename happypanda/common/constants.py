@@ -1,6 +1,7 @@
 ﻿import os
 
 version = "0.0.1"
+version_api = "0"
 debug = False
 
 ## PATHS & FILENAMES ##

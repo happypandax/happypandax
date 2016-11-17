@@ -1,6 +1,6 @@
 from gevent import monkey
 monkey.patch_all()
-import code, sys, enum
+import code, sys
 
 ## CORE ##
 
@@ -17,20 +17,6 @@ def interactive():
     namespace.update(frame.f_locals)
 
     code.interact("======== Start Happypanda Debugging ========", local=namespace)
-
-class Result:
-    "Encapsulates return values from methods in the interface module"
-
-    class ResultType(enum.Enum):
-        Status = 1
-        Gallery = 2
-
-    def __init__(self):
-        self._galleries = set()
-
-    def toXML(self):
-        ""
-        pass
 
 ## DATABASE ##
 

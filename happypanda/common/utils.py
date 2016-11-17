@@ -11,7 +11,6 @@ def eprint(*args, **kwargs):
     "Prints to stderr"
     print(*args, file=sys.stderr, **kwargs)
 
-
 ## SERVER ##
 class Client:
     "A common wrapper for communicating with server"
