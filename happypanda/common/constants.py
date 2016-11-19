@@ -1,8 +1,12 @@
 ﻿import os
 
+debug = False
+
+## VERSIONING ##
+
 version = "0.0.1"
 version_api = "0"
-debug = False
+version_db = (0,)
 
 ## PATHS & FILENAMES ##
 
@@ -17,7 +21,6 @@ db_path = os.path.join(dir_data, db_name)
 
 ## DATABASE
 
-db_version = [0]
 db_session = None
 
 ## SERVER

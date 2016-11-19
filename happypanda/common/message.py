@@ -9,16 +9,39 @@ from happypanda.core import db
 
 def finalize(xml):
     "Finalize XML message before sending"
-    return etree.tostring(E.hp(xml, api=constants.version_api), encoding='utf-8')
+    xml_string = b''
+    enc = 'utf-8'
+    if isinstance(xml, (list, tuple)): # unpack
+        etree.tostring(E.hp(*xml, api=constants.version_api), encoding=enc)
+    else:
+        etree.tostring(E.hp(xml, api=constants.version_api), encoding=enc)
+
+    return xml_string
 
 def msg(cnt, type=str):
-    "Compose a quick finalized XML message"
+    """Compose a quick finalized XML message.
+
+    params:
+        cnt -- content
+        type -- type of content ( str(class), int(class), "timestamp")
+    returns:
+        bytes
+    """
     m = CoreMessage.string
     if type is int:
         m = CoreMessage.int
     elif type == 'timestamp': ## probably confusing?
         m = CoreMessage.timestamp
     return finalize(m(cnt))
+
+def serverInfo():
+    "Serializes server, api and database versions"
+    v = E.version
+    xml_tuple = (
+        v(constants.version, name="server"),
+        v(constants.version_db, name="database"),
+        )
+    return finalize(xml_tuple)
 
 class CoreMessage:
     "Encapsulates return values from methods in the interface module"
@@ -119,6 +142,6 @@ class Gallery(CoreMessage):
         return self.safe('')
 
     def _unpackAttrib(self, model_attrib):
-        "Helper method to unpack a SQLalchemy attribute"
+        "Helper method to unpack a foreign SQLalchemy attribute"
         return self.safe('')
 

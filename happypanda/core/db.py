@@ -158,7 +158,7 @@ def profile_association(table_name):
 class Life(Base):
     __tablename__ = 'life'
 
-    version = Column(Float, nullable=False, default=constants.db_version,)
+    version = Column(Float, nullable=False, default=constants.version_db,)
     times_opened = Column(Integer, nullable=False, default=0)
 
     def __repr__(self):
@@ -577,15 +577,15 @@ def checkDBVersion(sess):
     except exc.NoSuchTableError:
         raise exceptions.DatabaseInitError("Invalid Database")
     if life:
-        if life.version not in constants.db_version:
+        if life.version not in constants.version_db:
             log_c("Incompatible database version")
             log_d('Local database version: {}\nProgram database version:{}'.format(life.version,
-                                                                         constants.db_version))
+                                                                         constants.version_db))
             return False
     else:
         life = Life()
         sess.add(life)
-        life.version = constants.db_version[0]
+        life.version = constants.version_db[0]
         life.times_opened = 0
         log_i("Succesfully initiated database")
         log_i("DB Version: {}".format(life.version))

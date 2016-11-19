@@ -16,7 +16,7 @@ class Client:
     """A common wrapper for communicating with server.
 
     Params:
-    name -- name of client
+        name -- name of client
     """
 
     def __init__(self, name):

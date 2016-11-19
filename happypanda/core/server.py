@@ -24,14 +24,15 @@ class HPServer:
     def parse(self, xml_data):
         "Parse message in XML format"
         print(xml_data)
-        return b'<xml>Received</xml>'
+        return message.msg("Received")
 
     def _handle(self, client, address):
         "Client handle function"
         # log client connected
         print("Client connected")
         self._clients.add(client)
-        client.sendall(message.msg("Welcome"))
+        # send server info
+        client.sendall(message.serverInfo())
         client.sendall(constants.postfix)
         try:
             buffer = b''
