@@ -13,20 +13,22 @@ def eprint(*args, **kwargs):
 
 ## SERVER ##
 class Client:
-    "A common wrapper for communicating with server"
+    """A common wrapper for communicating with server.
+
+    Params:
+    name -- name of client
+    """
 
     def __init__(self, name):
-        "name -- name of client"
         self.name = name
         self._server = (constants.host, constants.local_port)
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self._connect()
 
     def _connect(self):
         try:
             self._sock.connect(self._server)
         except socket.error:
-            raise exceptions.ClientError(self.name, "Could not establish server connection")
+            raise exceptions.ClientError(self.name, "Failed to establish server connection")
 
     def _communicate(self, xmlmsg):
         """Send and receive data with server

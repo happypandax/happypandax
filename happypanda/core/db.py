@@ -17,7 +17,6 @@ import enum
 
 from happypanda.common import constants, exceptions
 
-
 log = logging.getLogger(__name__)
 log_i = log.info
 log_d = log.debug
@@ -480,50 +479,53 @@ class GalleryUrl(Base):
     gallery = relationship("Gallery", back_populates="urls")
 
 
-@event.listens_for(constants.db_session, 'after_flush_postexec')
-def assign_default_collection(session, f_ctx):
-    for g in session.query(Gallery).filter(Gallery.collection == None).all():
-        coll = session.query(Collection).filter(Collection._type == Collection.CollectionType.default).scalar()
-        if not coll:
-            log_e("Could not assign default collection. No such collection exists.")
-            return
-        g.collection = coll
+# Note: necessary because there is no Session object yet
+def initEvents():
+    "Initializes events"
+    @event.listens_for(constants.db_session, 'after_flush_postexec')
+    def assign_default_collection(session, f_ctx):
+        for g in session.query(Gallery).filter(Gallery.collection == None).all():
+            coll = session.query(Collection).filter(Collection._type == Collection.CollectionType.default).scalar()
+            if not coll:
+                log_e("Could not assign default collection. No such collection exists.")
+                return
+            g.collection = coll
 
-@event.listens_for(constants.db_session, 'before_commit')
-def delete_artist_orphans(session):
-    session.query(Artist).filter(~Artist.galleries.any()).delete(synchronize_session=False)
+    @event.listens_for(constants.db_session, 'before_commit')
+    def delete_artist_orphans(session):
+        session.query(Artist).filter(~Artist.galleries.any()).delete(synchronize_session=False)
 
-@event.listens_for(constants.db_session, 'before_commit')
-def delete_tag_orphans(session):
-    session.query(Tag).filter(~Tag.namespaces.any()).delete(synchronize_session=False)
+    @event.listens_for(constants.db_session, 'before_commit')
+    def delete_tag_orphans(session):
+        session.query(Tag).filter(~Tag.namespaces.any()).delete(synchronize_session=False)
 
-@event.listens_for(constants.db_session, 'before_commit')
-def delete_namespace_orphans(session):
-    session.query(Namespace).filter(~Namespace.tags.any()).delete(synchronize_session=False)
+    @event.listens_for(constants.db_session, 'before_commit')
+    def delete_namespace_orphans(session):
+        session.query(Namespace).filter(~Namespace.tags.any()).delete(synchronize_session=False)
 
-@event.listens_for(constants.db_session, 'before_commit')
-def delete_collection_orphans(session):
-    session.query(Collection).filter(and_(~Collection.galleries.any(), Collection._type != Collection.CollectionType.default)).delete(synchronize_session=False)
+    @event.listens_for(constants.db_session, 'before_commit')
+    def delete_collection_orphans(session):
+        session.query(Collection).filter(and_(~Collection.galleries.any(), Collection._type != Collection.CollectionType.default)).delete(synchronize_session=False)
 
-@event.listens_for(constants.db_session, 'before_commit')
-def delete_namespace_orphans(session):
-    session.query(Namespace).filter(~Namespace.tags.any()).delete(synchronize_session=False)
+    @event.listens_for(constants.db_session, 'before_commit')
+    def delete_namespace_orphans(session):
+        session.query(Namespace).filter(~Namespace.tags.any()).delete(synchronize_session=False)
 
-@event.listens_for(constants.db_session, 'before_commit')
-def delete_namespacetags_orphans(session):
-    tagids = [r.id for r in session.query(Tag.id).all()]
-    if tagids:
-        session.query(NamespaceTags).filter(~NamespaceTags.tag_id.in_(tagids)).delete(synchronize_session=False)
-    else:
-        session.query(NamespaceTags).delete(synchronize_session=False)
+    @event.listens_for(constants.db_session, 'before_commit')
+    def delete_namespacetags_orphans(session):
+        tagids = [r.id for r in session.query(Tag.id).all()]
+        if tagids:
+            session.query(NamespaceTags).filter(~NamespaceTags.tag_id.in_(tagids)).delete(synchronize_session=False)
+        else:
+            session.query(NamespaceTags).delete(synchronize_session=False)
 
-@event.listens_for(constants.db_session, 'before_commit')
-def delete_circle_orphans(session):
-    session.query(Circle).filter(~Circle.galleries.any()).delete(synchronize_session=False)
+    @event.listens_for(constants.db_session, 'before_commit')
+    def delete_circle_orphans(session):
+        session.query(Circle).filter(~Circle.galleries.any()).delete(synchronize_session=False)
 
-@event.listens_for(constants.db_session, 'before_commit')
-def delete_gallery_namespace_orphans(session):
-    session.query(GalleryNamespace).filter(~GalleryNamespace.galleries.any()).delete(synchronize_session=False)
+    @event.listens_for(constants.db_session, 'before_commit')
+    def delete_gallery_namespace_orphans(session):
+        session.query(GalleryNamespace).filter(~GalleryNamespace.galleries.any()).delete(synchronize_session=False)
 
 @compiles(RegexMatchExpression, 'sqlite')
 def sqlite_regex_match(element, compiler, **kw):
@@ -538,8 +540,7 @@ def sqlite_regex_match(element, compiler, **kw):
         would_be_sql_string = ' '.join((compiler.process(element.left),
                                         operator,
                                         compiler.process(element.right)))
-        raise exc.StatementError(
-            "unknown regular expression match operator: %s" % operator,
+        raise exc.StatementError("unknown regular expression match operator: %s" % operator,
             would_be_sql_string, None, e)
 
     # compile the expression as an invocation of the custom function
@@ -558,7 +559,7 @@ def sqlite_engine_connect(dbapi_connection, connection_record):
     for name, function in SQLITE_REGEX_FUNCTIONS.values():
         dbapi_connection.create_function(name, 2, function)
 
-def init_defaults(sess):
+def initDefaults(sess):
     ""
     coll = sess.query(Collection).filter(Collection._type == Collection.CollectionType.default).scalar()
     if not coll:
@@ -569,7 +570,7 @@ def init_defaults(sess):
        sess.add(coll)
        sess.commit()
 
-def check_db_version(sess):
+def checkDBVersion(sess):
     "Checks if DB version is allowed. Raises dialog if not"
     try:
         life = sess.query(Life).one_or_none()
@@ -592,14 +593,15 @@ def check_db_version(sess):
     life.times_opened += 1
     t = life.id
     sess.commit()
-    init_defaults(sess)
+    initDefaults(sess)
     return True
 
 def init():
     Session = scoped_session(sessionmaker())
+    constants.db_session = Session
+    initEvents()
     engine = create_engine(os.path.join("sqlite:///", constants.db_path), echo=constants.debug)
     Base.metadata.create_all(engine)
     Session.configure(bind=engine)
-    constants.db_session = Session
 
-    return check_db_version(Session())
+    return checkDBVersion(Session())

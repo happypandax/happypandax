@@ -1,4 +1,4 @@
-"Contains classes used to encapsulate message structures"
+"Contains classes/functions used to encapsulate message structures"
 
 import enum
 from lxml import etree
@@ -6,6 +6,19 @@ from lxml.builder import E
 
 from happypanda.common import constants, exceptions
 from happypanda.core import db
+
+def finalize(xml):
+    "Finalize XML message before sending"
+    return etree.tostring(E.hp(xml, api=constants.version_api), encoding='utf-8')
+
+def msg(cnt, type=str):
+    "Compose a quick finalized XML message"
+    m = CoreMessage.string
+    if type is int:
+        m = CoreMessage.int
+    elif type == 'timestamp': ## probably confusing?
+        m = CoreMessage.timestamp
+    return finalize(m(cnt))
 
 class CoreMessage:
     "Encapsulates return values from methods in the interface module"
@@ -18,12 +31,12 @@ class CoreMessage:
         self.type = msg_type
 
     def toXML(self):
-        "Convert to XML structure"
+        "Serialize to XML structure"
         raise NotImplementedError()
-        
 
     def toString(self):
-        return etree.tostring(E.hp(self.toXML(), api=constants.version_api), encoding='utf-8')
+        "Serialize this object to XML string"
+        return finalize(self.toXML())
 
     def fromXML(self, xml):
         raise NotImplementedError()
@@ -35,17 +48,20 @@ class CoreMessage:
         else:
             return txt
 
-    def string(self, c):
+    @staticmethod
+    def string(c):
         "<string>"
         assert isinstance(c, str)
         return E.string(c)
 
-    def int(self, c):
+    @staticmethod
+    def int(c):
         "<int>"
         assert isinstance(c, int)
         return E.int(c)
 
-    def timestamp(self, c):
+    @staticmethod
+    def timestamp(c):
         "<timestamp>"
         assert isinstance(c, float)
         return E.timestamp(c)
@@ -61,7 +77,7 @@ class Status(CoreMessage):
     def toXML(self):
         xml = E.status(
             E.error(
-                self.error
+                self.safe(self.error)
                 )
             )
         return xml
@@ -92,9 +108,11 @@ class Gallery(CoreMessage):
                 )
         return xml
 
+    @staticmethod
+    def fromXML(xml):
+        g = Gallery()
+        return g
 
-    def fromXML(self, xml):
-        return super().fromXML()
 
     def _unpackCollection(self, model_attrib, tag):
         "Helper method to unpack a SQLalchemy collection"

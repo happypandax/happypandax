@@ -1,8 +1,11 @@
-﻿from gevent import socket, pool, queue
+﻿from lxml import etree
+from lxml.builder import E
+
+from gevent import socket, pool, queue
 from gevent.server import StreamServer
 from gevent.wsgi import WSGIServer
 
-from happypanda.common import constants, exceptions, utils
+from happypanda.common import constants, exceptions, utils, message
 from happypanda.core import interface
 from happypanda.clients.web import main as hweb
 
@@ -28,7 +31,8 @@ class HPServer:
         # log client connected
         print("Client connected")
         self._clients.add(client)
-        client.sendall(b"Welcome")
+        client.sendall(message.msg("Welcome"))
+        client.sendall(constants.postfix)
         try:
             buffer = b''
             while True:
@@ -56,15 +60,17 @@ class HPServer:
             try:
                 self._web_server = WSGIServer((constants.host, constants.web_port), hweb.happyweb)
                 self._web_server.start()
+                # log
+                print("Web server successfully started")
             except socket.error as e:
                 # log error
-                utils.eprint("Error: Port might already be in use")
-                return
+                utils.eprint("Error: Failed to start web server (Port might already be in use)") #include e
+                
         try:
             self._server.serve_forever()
         except socket.error as e:
             # log error
-            utils.eprint("Error: Port might already be in use")
+            utils.eprint("Error: Failed to start server (Port might already be in use)") # include e
 
 if __name__ == '__main__':
     server = HPServer()
