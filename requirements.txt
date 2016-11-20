@@ -10,3 +10,4 @@ qtawesome>=0.3.3
 lxml>=3.6.4
 gevent==1.1.2
 Flask==0.11.1
+flask-socketio==2.7.2

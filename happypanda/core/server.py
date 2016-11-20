@@ -59,8 +59,7 @@ class HPServer:
         if web:
             # start webserver
             try:
-                self._web_server = WSGIServer((constants.host, constants.web_port), hweb.happyweb)
-                self._web_server.start()
+                hweb.socketio.run(hweb.happyweb, host=constants.host, port=constants.web_port, block=False)
                 # log
                 print("Web server successfully started")
             except socket.error as e:
@@ -72,6 +71,8 @@ class HPServer:
         except socket.error as e:
             # log error
             utils.eprint("Error: Failed to start server (Port might already be in use)") # include e
+        # log server shutduown
+        print("Server shutting down.")
 
 if __name__ == '__main__':
     server = HPServer()

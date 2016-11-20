@@ -1,0 +1,24 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <link type="text/css" rel="stylesheet" href="/static/style.css" />
+    <meta charset="utf-8" />
+    <title>Happypanda</title>
+</head>
+<body>
+    <nav>
+        <ul>
+            <li>Favorites</li>
+            <li>Library</li>
+            <li>Inbox</li>
+        </ul>
+    </nav>
+    {% block content %}{% endblock %}
+    <footer>
+        {% for n in g._versions %}
+        <span>{{ n }}: {{ g._versions[n] }}</span>
+        {% endfor %}
+    </footer>
+</body>
+</html>

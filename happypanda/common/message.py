@@ -12,9 +12,9 @@ def finalize(xml):
     xml_string = b''
     enc = 'utf-8'
     if isinstance(xml, (list, tuple)): # unpack
-        etree.tostring(E.hp(*xml, api=constants.version_api), encoding=enc)
+        xml_string = etree.tostring(E.hp(*xml, api=constants.version_api), encoding=enc)
     else:
-        etree.tostring(E.hp(xml, api=constants.version_api), encoding=enc)
+        xml_string = etree.tostring(E.hp(xml, api=constants.version_api), encoding=enc)
 
     return xml_string
 
@@ -39,7 +39,7 @@ def serverInfo():
     v = E.version
     xml_tuple = (
         v(constants.version, name="server"),
-        v(constants.version_db, name="database"),
+        v(str(constants.version_db[0]), name="database"),
         )
     return finalize(xml_tuple)
 

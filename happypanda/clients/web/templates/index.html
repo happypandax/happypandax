@@ -1,19 +1,4 @@
-﻿<!DOCTYPE html>
-
-<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
-<head>
-    <link type="text/css" rel="stylesheet" href="/static/style.css" />
-    <meta charset="utf-8" />
-    <title>Happypanda</title>
-</head>
-<body>
-    <nav>
-        <ul>
-            <li>Favorites</li>
-            <li>Library</li>
-            <li>Inbox</li>
-        </ul>
-    </nav>
+﻿{% extends "base.html" %} {% block content %}
     <div id="content">
         <ul id="galleries">
             <li class="gallery">
@@ -30,5 +15,4 @@
             </li>
         </ul>
     </div>
-</body>
-</html>
+{% endblock %}
