@@ -11,6 +11,19 @@ def eprint(*args, **kwargs):
     "Prints to stderr"
     print(*args, file=sys.stderr, **kwargs)
 
+def connectionParams(web=False):
+    "Retrieve host and port"
+    if web:
+        params = (constants.host, constants.web_port)
+        return params
+    else:
+        if constants.public_server:
+            # TODO: finish this
+            raise NotImplementedError
+        else:
+            params = (constants.host, constants.local_port)
+        return params
+
 ## SERVER ##
 class Client:
     """A common wrapper for communicating with server.

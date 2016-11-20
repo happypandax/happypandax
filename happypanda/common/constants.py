@@ -1,6 +1,7 @@
 ﻿import os
+from socket import gethostname
 
-debug = False
+debug = True # TODO: arg switch
 
 ## VERSIONING ##
 
@@ -27,8 +28,8 @@ db_session = None
 
 local_port = 5577
 web_port = local_port + 1
-same_network = True
-host = '' if same_network else "localhost"
+localhost = False
+host = "localhost" if localhost else gethostname()
 client_limit = None
 postfix = b'end'
 data_size = 1024

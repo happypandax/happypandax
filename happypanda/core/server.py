@@ -12,10 +12,7 @@ from happypanda.clients.web import main as hweb
 class HPServer:
     "Happypanda Server"
     def __init__(self):
-        if constants.public_server:
-            params = (socket.gethostname(), constants.public_port)
-        else:
-            params = (constants.host, constants.local_port)
+        params = utils.connectionParams()
         self._pool = pool.Pool(constants.client_limit)
         self._server = StreamServer(params, self._handle, spawn=self._pool)
         self._web_server = None
@@ -59,7 +56,7 @@ class HPServer:
         if web:
             # start webserver
             try:
-                hweb.socketio.run(hweb.happyweb, host=constants.host, port=constants.web_port, block=False)
+                hweb.socketio.run(hweb.happyweb, *utils.connectionParams(web=True), block=False)
                 # log
                 print("Web server successfully started")
             except socket.error as e:

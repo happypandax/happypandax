@@ -238,3 +238,5 @@ FakesAssemblies/
 *.db
 *.opendb
 *.db-journal
+/compilerconfig.json
+/compilerconfig.json.defaults
