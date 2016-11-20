@@ -26,6 +26,6 @@ def index():
 @socketio.on('connect')
 def test_connection():
     "Tests connection with server"
-    status = "Connected" if client.alive() else "Disconnected"
-    socketio.send(status)
+    status = client.alive()
+    socketio.emit("connection", {"status": status})
     

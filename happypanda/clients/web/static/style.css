@@ -16,11 +16,8 @@ nav, footer {
     padding: 5pt;
 }
 
-footer {
-    border-top: 1px solid #1b1b1b;
-}
-
 nav {
+    position: relative;
     margin-top: 50pt;
     border-bottom: 1px solid #1b1b1b;
 }
@@ -34,10 +31,30 @@ nav {
             margin: 0 5pt;
         }
 
+div#global.flash {
+    width: 100%;
+    padding: 3pt;
+}
+
+    div#global.flash div {
+        text-align: center;
+        background-color: rgba(0, 0, 0, 0.05);
+        border-radius: 1px;
+        border: 1px solid rgba(0, 0, 0, 0.2);
+        padding: 2pt;
+        margin: auto;
+        width: 300pt;
+        color: rgba(0, 0, 0, 0.7);
+    }
+
+        div#global.flash div.red {
+            color: #ec0000;
+            font-weight: bold;
+        }
+
 ul#galleries {
     margin: auto;
     list-style: none;
-    padding: 10pt;
 }
 
     ul#galleries li.gallery {
@@ -45,6 +62,27 @@ ul#galleries {
         width: 200px;
         height: 300px;
         border-radius: 3px;
-        background-color: #bdbdbd;
+        border: 1px solid rgba(0, 0, 0, 0.2);
+        background-color: rgba(0, 0, 0, 0.05);
         padding: 1px;
+        margin: 10px 6px;
     }
+
+footer {
+    position: relative;
+    border-top: 1px solid #1b1b1b;
+}
+
+    footer div {
+        position: absolute;
+    }
+
+        footer div.left {
+            text-align: left;
+            left: 0;
+        }
+
+        footer div.right {
+            text-align: right;
+            right: 0;
+        }

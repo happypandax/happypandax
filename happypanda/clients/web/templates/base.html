@@ -17,11 +17,29 @@
             <li>Inbox</li>
         </ul>
     </nav>
-    {% block content %}{% endblock %}
-    <footer>
-        {% for n in g._versions %}
-        <span>{{ n }}: {{ g._versions[n] }}</span>
+    <div id="global" class="flash">
+        {% with messages = get_flashed_messages(category_filter=["global"]) %}
+        {% if messages %}
+        {% for message in messages %}
+        <div>{{ message }}</div>
         {% endfor %}
+        {% endif %}
+        {% endwith %}
+    </div>
+    <div id="content">
+        {% block content %}{% endblock %}
+    </div>
+    <footer>
+        <div class="left">
+            {% for n in g._versions %}
+            <span>{{ n }}: {{ g._versions[n] }}</span>
+            {% endfor %}
+        </div>
+        <div class="right">
+            {% if g.debug %}
+            <span>debug mode</span>
+            {% endif %}
+        </div>
     </footer>
 </body>
 </html>

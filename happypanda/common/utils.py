@@ -19,6 +19,7 @@ def connectionParams(web=False):
     else:
         if constants.public_server:
             # TODO: finish this
+            # Note: upnpc
             raise NotImplementedError
         else:
             params = (constants.host, constants.local_port)
