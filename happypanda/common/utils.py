@@ -1,9 +1,8 @@
-from lxml import etree
-
 import sys
 import socket
 import time
 import random
+import json
 
 from happypanda.common import constants, exceptions
 
@@ -51,8 +50,10 @@ class Client:
                 self._sock.connect(self._server)
                 self._alive = True
                 # receive versions
-                for v in self._recv():
-                    self._versions[v.get("name")] = v.text
+                data = self._recv()
+                print('data:', data)
+                for x, y in tuple(zip(('server', 'database'), data['version'])):
+                    self._versions[x] = y
             except socket.error:
                 raise exceptions.ClientError(self.name, "Failed to establish server connection")
 
@@ -69,30 +70,30 @@ class Client:
                 buffer += data
             # log received
             try:
-                xml_data = etree.XML(buffer[:-len(constants.postfix)]) # slice 'end' off
-            except etree.XMLSyntaxError as e:
-                raise exceptions.XMLParseError(buffer, self.name, "Failed parsing xml data: {}".format(e))
-            return xml_data
+                json_data = json.loads(buffer[:-len(constants.postfix)].decode('utf-8')) # slice 'end' off
+            except json.JSONDecodeError as e:
+                raise exceptions.JSONParseError(buffer, self.name, "Failed parsing json data: {}".format(e))
+            return json_data
         except socket.error as e:
             # log disconnect
             self.alive = False
             raise exceptions.ServerError(self.name, "{}".format(e))
 
-    def communicate(self, xmlmsg):
+    def communicate(self, jsonmsg):
         """Send and receive data with server
 
         params:
-            xmlmsg -- etree._Element
+            jsonmsg -- dict
         returns:
-            etree._Element
+            json
         """
         # log send
         if self._alive:
-            if isinstance(xmlmsg, etree._Element):
-                self._sock.sendall(xmlmsg)
+            if isinstance(jsonmsg, dict):
+                self._sock.sendall(jsonmsg)
                 self._sock.sendall(constants.postfix)
             else:
-                raise exceptions.ClientError(self.name, "xmlmsg must be an etree._Element")
+                raise exceptions.ClientError(self.name, "jsonmsg must be a dict object")
             return self._recv()
         else:
             raise exceptions.ServerDisconnectError(self.name, "Server already disconnected")

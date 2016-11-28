@@ -170,10 +170,10 @@ class UnsupportedArchiveError(ArchiveError):
 
     ## ETC. ##
 
-class XMLParseError(ClientError, ServerError):
-    """XML parse error."""
+class JSONParseError(ClientError, ServerError):
+    """JSON parse error."""
 
-    def __init__(self, xml_data, name, msg):
+    def __init__(self, json_data, name, msg):
         """init func."""
         pass
-        # TODO: init both classs. log xml_data.
+        # TODO: init both classs. log json_data.

@@ -1,47 +1,31 @@
 "Contains classes/functions used to encapsulate message structures"
 
 import enum
-from lxml import etree
-from lxml.builder import E
+import json
 
 from happypanda.common import constants, exceptions
 from happypanda.core import db
 
-def finalize(xml):
-    "Finalize XML message before sending"
-    xml_string = b''
+def finalize(js):
+    "Finalize json message before sending"
+    json_string = b''
     enc = 'utf-8'
-    if isinstance(xml, (list, tuple)): # unpack
-        xml_string = etree.tostring(E.hp(*xml, api=constants.version_api), encoding=enc)
-    else:
-        xml_string = etree.tostring(E.hp(xml, api=constants.version_api), encoding=enc)
+    wrap = {'api':constants.version_api}
+    json_string = wrap['data'] = js
 
-    return xml_string
+    return bytes(json.dumps(json_string), enc)
 
-def msg(cnt, type=str):
-    """Compose a quick finalized XML message.
-
-    params:
-        cnt -- content
-        type -- type of content ( str(class), int(class), "timestamp")
-    returns:
-        bytes
-    """
-    m = CoreMessage.string
-    if type is int:
-        m = CoreMessage.int
-    elif type == 'timestamp': ## probably confusing?
-        m = CoreMessage.timestamp
-    return finalize(m(cnt))
+def msg(cnt):
+    """Compose a quick finalized json message."""
+    assert not isinstance(cnt, (dict, list, tuple))
+    return finalize({'msg':cnt})
 
 def serverInfo():
     "Serializes server, api and database versions"
-    v = E.version
-    xml_tuple = (
-        v(constants.version, name="server"),
-        v(str(constants.version_db[0]), name="database"),
-        )
-    return finalize(xml_tuple)
+    m = {
+        'version':[constants.version, str(constants.version_db[0])],
+        }
+    return finalize(m)
 
 class CoreMessage:
     "Encapsulates return values from methods in the interface module"
@@ -53,42 +37,16 @@ class CoreMessage:
     def __init__(self, msg_type):
         self.type = msg_type
 
-    def toXML(self):
-        "Serialize to XML structure"
+    def toJSON(self):
+        "Serialize to JSON structure"
         raise NotImplementedError()
 
-    def toString(self):
-        "Serialize this object to XML string"
-        return finalize(self.toXML())
+    def finalize(self):
+        "Serialize this object to bytes"
+        return finalize(self.toJSON())
 
-    def fromXML(self, xml):
+    def fromJSON(self, j):
         raise NotImplementedError()
-
-    def safe(self, txt):
-        "Transform to appropriate characters"
-        if txt is None:
-            return ''
-        else:
-            return txt
-
-    @staticmethod
-    def string(c):
-        "<string>"
-        assert isinstance(c, str)
-        return E.string(c)
-
-    @staticmethod
-    def int(c):
-        "<int>"
-        assert isinstance(c, int)
-        return E.int(c)
-
-    @staticmethod
-    def timestamp(c):
-        "<timestamp>"
-        assert isinstance(c, float)
-        return E.timestamp(c)
-
 
 class Status(CoreMessage):
     ""
@@ -97,51 +55,58 @@ class Status(CoreMessage):
         super().__init__(CoreMessage.MessageType.Status)
         self.error = error
 
-    def toXML(self):
-        xml = E.status(
-            E.error(
-                self.safe(self.error)
-                )
-            )
-        return xml
+    def toJSON(self):
+        return {'error':self.error}
 
-    def fromXML(self, xml):
-        return super().fromXML()
+    def fromJSON(self, j):
+        return super().fromJSON(j)
 
 class Gallery(CoreMessage):
     ""
 
     def __init__(self):
         super().__init__(CoreMessage.MessageType.Gallery)
-        self.db_gallery = None
+        self.db_gallery = []
 
-    def toXML(self):
+    def add(self, other):
+        ""
+        assert isinstance(other, (Gallery, db.Gallery))
+        if isinstance(other, Gallery):
+            self.db_gallery.extend(other.db_gallery)
+        else:
+            self.db_gallery.append(other)
+
+    def toJSON(self):
         if not self.db_gallery:
-            raise exceptions.CoreError("No gallery has been linked")
-        assert isinstance(self.db_gallery, db.Gallery)
-        xml = E.gallery(
-                E.id(self.int(self.safe(self.db_gallery.path))),
-                E.title(*self._unpackCollection(self.db_gallery.titles, "string")),
-                E.author(*self._unpackCollection(self.db_gallery.artists, "string")),
-                E.circle(*self._unpackCollection(self.db_gallery.circles, "string")),
-                E.language(*self._unpackAttrib(self.db_gallery.language)),
-                E.type(*self._unpackAttrib(self.db_gallery.type)),
-                E.path(self.safe(self.db_gallery.path)),
-                E.path_in_archive(self.safe(self.db_gallery.path_in_archive)),
-                )
-        return xml
+            raise exceptions.CoreError("This object has no galleries")
+        j = {'gallery':[self.unpackGallery(x) for x in self.db_gallery]}
+        return j
 
     @staticmethod
-    def fromXML(xml):
+    def fromJSON(self, j):
         g = Gallery()
         return g
 
+    def unpackGallery(self, db_gallery):
+        "Helper method to unpack a db.Gallery"
+        assert isinstance(db_gallery, db.Gallery)
+        g = {
+            'id':db_gallery.id,
+            'title':self._unpackCollection(self.db_gallery.titles),
+            'author':self._unpackCollection(self.db_gallery.artists),
+            'circle':self._unpackCollection(self.db_gallery.circles),
+            'language':self._unpackAttrib(self.db_gallery.language),
+            'type':self._unpackAttrib(self.db_gallery.type),
+            'path':db_gallery.path,
+            'archive_path':db_gallery.path_in_archive,
+            }
+        return g
 
-    def _unpackCollection(self, model_attrib, tag):
+    def _unpackCollection(self, model_attrib):
         "Helper method to unpack a SQLalchemy collection"
-        return self.safe('')
+        return
 
     def _unpackAttrib(self, model_attrib):
         "Helper method to unpack a foreign SQLalchemy attribute"
-        return self.safe('')
+        return
 

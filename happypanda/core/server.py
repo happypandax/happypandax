@@ -1,5 +1,4 @@
-﻿from lxml import etree
-from lxml.builder import E
+﻿import json
 
 from gevent import socket, pool, queue
 from gevent.server import StreamServer
@@ -18,9 +17,9 @@ class HPServer:
         self._web_server = None
         self._clients = set()
 
-    def parse(self, xml_data):
-        "Parse message in XML format"
-        print(xml_data)
+    def parse(self, json_data):
+        "Parse message in json format"
+        print(json_data)
         return message.msg("Received")
 
     def _handle(self, client, address):
