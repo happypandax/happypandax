@@ -2,7 +2,7 @@ import zipfile
 import rarfile
 import os
 
-from happypanda.common import exceptions
+from happypanda.common import exceptions, constants
 
 # TODO: C++
 class ArchiveFile():

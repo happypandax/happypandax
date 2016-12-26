@@ -7,6 +7,4 @@ happyweb = Flask(__name__, static_url_path='/static')
 socketio = SocketIO(happyweb)
 client = utils.Client("webclient")
 
-from happypanda.clients.web import views
-
-
+from happypanda.clients.web import views # noqa: E402,F401
