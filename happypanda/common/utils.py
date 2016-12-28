@@ -3,12 +3,32 @@ import socket
 import time
 import random
 import json
+import enum
+import os
 
 from happypanda.common import constants, exceptions
 
 def eprint(*args, **kwargs):
     "Prints to stderr"
     print(*args, file=sys.stderr, **kwargs)
+
+
+## PATH ##
+
+class PathType(enum.Enum):
+    Directoy = 1
+    Archive = 2
+    Invalid = 3
+
+    @staticmethod
+    def check(path):
+        if os.path.isdir(path):
+            return PathType.Directoy
+        head, ext = os.path.splitext(path.lower())
+        if ext in constants.supported_archives:
+            return PathType.Archive
+
+        return PathType.Invalid
 
 def connectionParams(web=False):
     "Retrieve host and port"

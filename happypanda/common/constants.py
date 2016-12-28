@@ -1,4 +1,4 @@
-﻿import os
+﻿import os, rarfile
 from socket import gethostname
 
 debug = True # TODO: arg switch
@@ -19,6 +19,11 @@ log_normal = os.path.join(dir_log, "activity.log")
 log_debug = os.path.join(dir_log, "debug.log")
 db_name = "happypanda.db"
 db_path = os.path.join(dir_data, db_name)
+
+supported_images = ('.jpg','.bmp','.png','.gif', '.jpeg')
+supported_archives = ('.zip', '.cbz', '.rar', '.cbr')
+
+rarfile.PATH_SEP = '/'
 
 ## DATABASE
 

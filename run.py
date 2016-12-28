@@ -9,4 +9,5 @@ chdir(path.abspath(path.dirname(__file__)))
 if __name__ == '__main__':
     from happypanda.core import interface, server
 
-    server.HPServer().run(web=True)
+    interface.interactive()
+    #server.HPServer().run(web=True)

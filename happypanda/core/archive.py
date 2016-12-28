@@ -90,7 +90,7 @@ class ArchiveFile():
         """
         if dir_name and not dir_name in self.namelist():
             log_e('Directory {} not found in archive'.format(dir_name))
-            raise app_constants.FileNotFoundInArchive
+            raise exceptions.FileInArchiveNotFoundError
         if not dir_name:
             if self.archive_type == self.ZIP:
                 con = [x for x in self.namelist() if x.count('/') == 0 or \

@@ -1,29 +1,25 @@
 from gevent import monkey
 monkey.patch_all()
-import code, sys
+import code
+import sys
+
+from happypanda.core import db, gallery
+from happypanda.common import constants
+
 
 ## CORE ##
-
 def interactive():
-    
-    # exception trick to pick up the current frame
-    try:
-        raise None
-    except:
-        frame = sys.exc_info()[2].tb_frame.f_back
+    ""
 
-    # evaluate commands in current namespace
-    namespace = frame.f_globals.copy()
-    namespace.update(frame.f_locals)
+    db.init()
 
-    code.interact("======== Start Happypanda Debugging ========", local=namespace)
+    code.interact("======== Start Happypanda Debugging ========", local=globals())
 
 ## DATABASE ##
 
 
 
 ## GALLERY ##
-
 def fetchGallery(offset=None, from_gallery_id=None):
     """
     Fetch galleries from the database.
