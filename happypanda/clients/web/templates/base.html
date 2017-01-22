@@ -1,0 +1,46 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <link type="text/css" rel="stylesheet" href="/static/style.css" />
+    <meta charset="utf-8" />
+    <title>Happypanda</title>
+    <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script src="/static/client.js"></script>
+</head>
+<body>
+    <nav>
+        <ul>
+            <li>Favorites</li>
+            <li>Library</li>
+            <li>Inbox</li>
+            <li class="right">Add gallery</li>
+        </ul>
+    </nav>
+    <div id="global" class="flash">
+        {% with messages = get_flashed_messages(category_filter=["global"]) %}
+        {% if messages %}
+        {% for message in messages %}
+        <div>{{ message }}</div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+    </div>
+    <div id="content">
+        {% block content %}{% endblock %}
+    </div>
+    <footer>
+        <div class="left">
+            {% for n in g._versions %}
+            <span>{{ n }}: {{ g._versions[n] }}</span>
+            {% endfor %}
+        </div>
+        <div class="right">
+            {% if g.debug %}
+            <span>debug mode</span>
+            {% endif %}
+        </div>
+    </footer>
+</body>
+</html>
