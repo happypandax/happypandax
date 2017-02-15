@@ -3,7 +3,7 @@ monkey.patch_all()
 import code
 import sys
 
-from happypanda.core import db, gallery
+from happypanda.server.core import db, gallery
 from happypanda.common import constants
 
 

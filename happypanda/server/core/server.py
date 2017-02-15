@@ -5,8 +5,8 @@ from gevent.server import StreamServer
 from gevent.wsgi import WSGIServer
 
 from happypanda.common import constants, exceptions, utils, message
-from happypanda.core import interface
-from happypanda.clients.web import main as hweb
+from happypanda.server.core import interface
+from happypanda.webclient import main as hweb
 
 class HPServer:
     "Happypanda Server"

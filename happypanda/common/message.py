@@ -4,7 +4,7 @@ import enum
 import json
 
 from happypanda.common import constants, exceptions
-from happypanda.core import db
+from happypanda.server.core import db
 
 def finalize(js):
     "Finalize json message before sending"
