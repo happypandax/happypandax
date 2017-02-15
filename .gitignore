@@ -6,8 +6,9 @@
 *.pyproj
 *Qt*
 *__pycache__*
-version/build
-version/dist
+build/
+dist/
+env/
 *.sln
 *Thumbs.db
 settings.json
@@ -200,40 +201,7 @@ UpgradeLog*.htm
 
 # Microsoft Fakes
 FakesAssemblies/
-/db
-/thumbnails
-/version/gui/static/gallery_def_ico.ico
-/version/gui/static/gallery_ext_ico.ico
 *.pyperf
-/temp
-/main.build
-/main.dist
-/version/db
-/test_g.zip
-/version/temp
-/version/modeltest.py
-/[Yamatogawa] Power Play!.zip
-/test.zip
-/test.py
-/setup.spec
-/roundcorner.png
-/nuitka.txt
-/info.txt
-/info.json
-/horopic2.jpg
-/happypanda-2015-11-10 23-51-59.hpdb
-/happypanda-2015-11-10 21-29-04.hpdb
-/happypanda-2015-11-09 21-08-42.hpdb
-/failg.zip
-/exHtmlRandomFileName123.html
-/deploy.bat
-/Attameaikko.01.zip
-/[Yamatogawa] Power Play!.zip
-/[Yamatogawa] Power Play!.zip
-*.zip
-/res/typicons
-/res/gallery_ext_ico.ico
-/res/sample.png
 *.hpdb
 *.db
 *.opendb
