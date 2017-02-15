@@ -1,0 +1,3 @@
+gevent==1.1.2
+Flask==0.11.1
+flask-socketio==2.7.2
