@@ -1,7 +1,7 @@
 ﻿"""views module."""
 from flask import (render_template, g)
 from flask_socketio import emit
-from happypanda.clients.web.main import happyweb, client, socketio
+from happypanda.webclient.main import happyweb, client, socketio
 from happypanda.common import constants, utils
 
 

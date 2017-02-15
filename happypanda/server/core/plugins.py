@@ -5,7 +5,6 @@ import threading
 import sys
 import traceback
 
-from PyQt5.QtCore import pyqtWrapperType
 from happypanda.common import exceptions
 
 log = logging.getLogger(__name__)
@@ -43,7 +42,7 @@ class Plugins:
 
 registered = Plugins()
 
-class HPluginMeta(pyqtWrapperType):
+class HPluginMeta:
 
     def __init__(cls, name, bases, dct):
         try:

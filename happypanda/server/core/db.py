@@ -7,7 +7,6 @@ from sqlalchemy.sql.operators import custom_op
 from sqlalchemy.orm import sessionmaker, relationship, validates, object_session, scoped_session
 from sqlalchemy import (create_engine, event, exc, and_, or_, Boolean, Column, Integer, ForeignKey,
                         Table, Date, DateTime, UniqueConstraint, Float, Enum)
-from dateutil import parser as dateparser
 
 import datetime
 import logging

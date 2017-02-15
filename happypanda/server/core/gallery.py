@@ -1,10 +1,9 @@
 "Contains classes/methods related to galleries"
 import os
-import scandir
 import re
 
 from happypanda.common import constants, utils
-from happypanda.core import db, archive
+from happypanda.server.core import db, archive
 
 
 class GalleryScan:
@@ -38,7 +37,7 @@ class GalleryScan:
         elif ptype == utils.PathType.Directoy:
             gallery_info = GalleryScan.nameParser(name)
 
-            dir_images = [x.path for x in scandir.scandir(path) if not x.is_dir() and x.name.endswith(constants.supported_images)]
+            dir_images = [x.path for x in os.scandir(path) if not x.is_dir() and x.name.endswith(constants.supported_images)]
             for n, x in enumerate(sorted(dir_images), 1):
                 p = db.Page()
                 p.name = os.path.abspath(x)
