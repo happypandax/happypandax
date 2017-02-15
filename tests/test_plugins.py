@@ -4,7 +4,7 @@ import itertools
 
 import pytest
 
-from happypanda.core.plugins import Plugins, HPluginMeta
+from happypanda.server.core.plugins import Plugins, HPluginMeta
 from happypanda.common import exceptions as hp_exceptions
 
 
