@@ -1,7 +1,7 @@
 """test happypanda.clients.web.views."""
 from unittest import mock
 
-from happypanda.clients.web.views import index
+from happypanda.webclient.views import index
 
 
 def test_index():

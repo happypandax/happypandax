@@ -570,7 +570,7 @@ def initDefaults(sess):
        sess.commit()
 
 def checkDBVersion(sess):
-    "Checks if DB version is allowed. Raises dialog if not"
+    "Checks if DB version is allowed. Raises dbexception if not"
     try:
         life = sess.query(Life).one_or_none()
     except exc.NoSuchTableError:

@@ -5,7 +5,7 @@ import itertools
 from gevent import socket
 import pytest
 
-from happypanda.core.server import HPServer
+from happypanda.server.core.server import HPServer
 
 
 @pytest.mark.parametrize('is_public_server', [True, False])

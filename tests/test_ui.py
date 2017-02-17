@@ -1,7 +1,7 @@
 """test interface module."""
 from unittest import mock
 
-from happypanda.core.interface import interactive
+from happypanda.server.core.interface import interactive
 
 
 @mock.patch('happypanda.core.interface.sys')

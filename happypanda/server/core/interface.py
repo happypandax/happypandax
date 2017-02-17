@@ -10,10 +10,7 @@ from happypanda.common import constants
 ## CORE ##
 def interactive():
     ""
-
-    db.init()
-
-    code.interact("======== Start Happypanda Debugging ========", local=globals())
+    code.interact(banner="======== Start Happypanda Interactive ========", local=globals())
 
 ## DATABASE ##
 

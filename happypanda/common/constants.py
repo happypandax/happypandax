@@ -1,5 +1,6 @@
 ﻿import os
 import rarfile
+import enum
 from socket import gethostname
 
 debug = True # TODO: arg switch
@@ -37,3 +38,4 @@ client_limit = None
 postfix = b'end'
 data_size = 1024
 public_server = False
+
