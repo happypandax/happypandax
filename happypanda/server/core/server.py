@@ -5,8 +5,46 @@ from gevent.server import StreamServer
 from gevent.wsgi import WSGIServer
 
 from happypanda.common import constants, exceptions, utils, message
-from happypanda.server.core import interface
+from happypanda.server.core import interface, db
 from happypanda.webclient import main as hweb
+
+class ClientHandler:
+    "Handles clients"
+    def __init__(self, client, address, api=constants.version_api):
+        self._client = client
+        self._address = address
+        self.api = api
+
+    @staticmethod
+    def sendall(client, msg):
+        """
+        Send data to client
+        Params:
+            client -- 
+            msg -- bytes
+        """
+        #assert isinstance(client, ...) 
+        assert isinstance(msg, bytes) 
+
+        client.sendall(msg)
+        client.sendall(constants.postfix)
+
+    def parse(self, data):
+        """
+        Parse data from client
+        Params:
+            data -- data from client
+        """
+        pass
+
+    def advance(self, buffer):
+        """
+        Advance the loop for this client
+        Params:
+            buffer -- data buffer to be parsed
+        """
+        pass
+
 
 class HPServer:
     "Happypanda Server"
@@ -17,8 +55,8 @@ class HPServer:
         self._web_server = None
         self._clients = set()
 
-    def parse(self, json_data):
-        "Parse message in json format"
+    def _parse_client(self, json_data, client, address):
+        "Parse first client message"
         print(json_data)
         return message.msg("Received")
 
@@ -26,17 +64,23 @@ class HPServer:
         "Client handle function"
         # log client connected
         print("Client connected")
+        handler = None
         self._clients.add(client)
         # send server info
-        client.sendall(message.serverInfo())
-        client.sendall(constants.postfix)
+        ClientHandler.sendall(client, message.serverInfo())
+
         try:
             buffer = b''
             while True:
                 if buffer.endswith(constants.postfix):
-                    d = self.parse(buffer)
-                    client.sendall(d)
-                    client.sendall(constants.postfix)
+                    if handler:
+                        handler.advance(buffer)
+                    else:
+                        handler = self._parse_client(buffer, client, address)
+                        if not handler:
+                            # inform client
+                            # log
+                            break
                     buffer = b''
                 r = client.recv(constants.data_size)
                 if not r:
@@ -50,7 +94,22 @@ class HPServer:
         finally:
             self._clients.remove(client)
 
-    def run(self, web=False):
+    def _start(self, blocking=True):
+        
+        # TODO: handle db errors
+
+        db.init()
+
+        try:
+            if blocking:
+                self._server.serve_forever()
+            else:
+                self._server.start()
+        except socket.error as e:
+            # log error
+            utils.eprint("Error: Failed to start server (Port might already be in use)") # include
+
+    def run(self, web=False, interactive=False):
         "Run the server forever, blocking"
         if web:
             # start webserver
@@ -61,12 +120,14 @@ class HPServer:
             except socket.error as e:
                 # log error
                 utils.eprint("Error: Failed to start web server (Port might already be in use)") #include e
-                
-        try:
-            self._server.serve_forever()
-        except socket.error as e:
-            # log error
-            utils.eprint("Error: Failed to start server (Port might already be in use)") # include e
+        
+
+        if interactive:
+            self._start(False)
+            interface.interactive()
+        else:
+            self._start()
+
         # log server shutduown
         print("Server shutting down.")
 

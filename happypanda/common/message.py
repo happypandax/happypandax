@@ -27,6 +27,7 @@ def serverInfo():
         }
     return finalize(m)
 
+
 class CoreMessage:
     "Encapsulates return values from methods in the interface module"
 
