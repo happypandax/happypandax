@@ -20,94 +20,99 @@ def msg(cnt):
     assert not isinstance(cnt, (dict, list, tuple))
     return finalize({'msg':cnt})
 
-def serverInfo():
+def server_info():
     "Serializes server, api and database versions"
     m = {
         'version':[constants.version, str(constants.version_db[0])],
         }
     return finalize(m)
 
-
 class CoreMessage:
     "Encapsulates return values from methods in the interface module"
 
-    class MessageType(enum.Enum):
-        Status = 1
-        Gallery = 2
+    def __init__(self, key):
+        self.key = key
 
-    def __init__(self, msg_type):
-        self.type = msg_type
-
-    def toJSON(self):
-        "Serialize to JSON structure"
+    def data(self):
         raise NotImplementedError()
+
+    def from_json(self, j):
+        raise NotImplementedError()
+
+    def to_json(self):
+        "Serialize to JSON structure"
+        return {self.key:self.data()}
 
     def finalize(self):
         "Serialize this object to bytes"
-        return finalize(self.toJSON())
+        return finalize(self.to_json())
 
-    def fromJSON(self, j):
-        raise NotImplementedError()
 
-class Status(CoreMessage):
-    ""
+class Message(CoreMessage):
+    "An arbitrary remark"
 
-    def __init__(self, error):
-        super().__init__(CoreMessage.MessageType.Status)
+    def __init__(self, msg):
+        super().__init__('msg')
+        self.msg = msg
+
+    def data(self):
+        return self.msg
+
+    def from_json(self, j):
+        return super().from_json(j)
+
+class Error(CoreMessage):
+    "An error object"
+
+    def __init__(self, error, msg):
+        super().__init__('error')
+        assert isinstance(msg, Message)
         self.error = error
+        self.msg = msg
 
-    def toJSON(self):
-        return {'error':self.error}
+    def data(self):
+        return {'code':self.error, self.msg.key:self.msg.data()}
 
-    def fromJSON(self, j):
-        return super().fromJSON(j)
+    def from_json(self, j):
+        return super().from_json(j)
 
 class Gallery(CoreMessage):
-    ""
+    "A gallery object"
 
-    def __init__(self):
-        super().__init__(CoreMessage.MessageType.Gallery)
-        self.db_gallery = []
-
-    def add(self, other):
-        ""
-        assert isinstance(other, (Gallery, db.Gallery))
-        if isinstance(other, Gallery):
-            self.db_gallery.extend(other.db_gallery)
-        else:
-            self.db_gallery.append(other)
-
-    def toJSON(self):
-        if not self.db_gallery:
-            raise exceptions.CoreError("This object has no galleries")
-        j = {'gallery':[self.unpackGallery(x) for x in self.db_gallery]}
-        return j
-
-    @staticmethod
-    def fromJSON(self, j):
-        g = Gallery()
-        return g
-
-    def unpackGallery(self, db_gallery):
-        "Helper method to unpack a db.Gallery"
+    def __init__(self, db_gallery):
+        super().__init__('gallery')
         assert isinstance(db_gallery, db.Gallery)
-        g = {
-            'id':db_gallery.id,
-            'title':self._unpackCollection(self.db_gallery.titles),
-            'author':self._unpackCollection(self.db_gallery.artists),
-            'circle':self._unpackCollection(self.db_gallery.circles),
-            'language':self._unpackAttrib(self.db_gallery.language),
-            'type':self._unpackAttrib(self.db_gallery.type),
-            'path':db_gallery.path,
-            'archive_path':db_gallery.path_in_archive,
-            }
-        return g
+        self.db_gallery = db_gallery
 
-    def _unpackCollection(self, model_attrib):
+    def data(self):
+        self._check_link()
+        return {
+            'id':self.db_gallery.id,
+            'title':self._unpack_collection(self.db_gallery.titles),
+            'author':self._unpack_collection(self.db_gallery.artists),
+            'circle':self._unpack_collection(self.db_gallery.circles),
+            'language':self._unpack_attrib(self.db_gallery.language),
+            'type':self._unpack_attrib(self.db_gallery.type),
+            'path':self.db_gallery.path,
+            'archive_path':self.db_gallery.path_in_archive,
+            }
+
+    def to_json(self):
+        self._check_link()
+        return super().to_json()
+
+    def from_json(self, j):
+        return super().from_json(j)
+
+    def _unpack_collection(self, model_attrib):
         "Helper method to unpack a SQLalchemy collection"
         return
 
-    def _unpackAttrib(self, model_attrib):
+    def _unpack_attrib(self, model_attrib):
         "Helper method to unpack a foreign SQLalchemy attribute"
         return
+
+    def _check_link(self):
+        if not self.db_gallery:
+            raise exceptions.CoreError("This object has no linked database gallery")
 

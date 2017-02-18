@@ -1,5 +1,5 @@
 from gevent import monkey
-monkey.patch_all()
+#monkey.patch_all()
 import code
 import sys
 
@@ -17,7 +17,7 @@ def interactive():
 
 
 ## GALLERY ##
-def fetchGallery(offset=None, from_gallery_id=None):
+def fetch_gallery(offset=None, from_gallery_id=None):
     """
     Fetch galleries from the database.
     Params:
@@ -28,7 +28,7 @@ def fetchGallery(offset=None, from_gallery_id=None):
     """
     pass
 
-def addGallery(gallery_boject=None, paths=None):
+def add_gallery(galleries=[], paths=[]):
     """
     Add galleries to the database.
     Params:
@@ -40,7 +40,7 @@ def addGallery(gallery_boject=None, paths=None):
     """
     pass
 
-def scanGallery(paths=[], add_after=False, ignore_exist=True):
+def scan_gallery(paths=[], add_after=False, ignore_exist=True):
     """
     Scan folders for galleries
     Params:

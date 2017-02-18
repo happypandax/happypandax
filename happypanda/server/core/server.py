@@ -49,15 +49,16 @@ class ClientHandler:
 class HPServer:
     "Happypanda Server"
     def __init__(self):
-        params = utils.connectionParams()
+        params = utils.connection_params()
         self._pool = pool.Pool(constants.client_limit)
         self._server = StreamServer(params, self._handle, spawn=self._pool)
         self._web_server = None
         self._clients = set()
 
-    def _parse_client(self, json_data, client, address):
+    def _parse_client(self, buffer, client, address):
         "Parse first client message"
-        print(json_data)
+        json_data = utils.convert_to_json(buffer)
+
         return message.msg("Received")
 
     def _handle(self, client, address):
@@ -67,7 +68,7 @@ class HPServer:
         handler = None
         self._clients.add(client)
         # send server info
-        ClientHandler.sendall(client, message.serverInfo())
+        ClientHandler.sendall(client, message.server_info())
 
         try:
             buffer = b''
@@ -93,6 +94,7 @@ class HPServer:
             utils.eprint("Client disconnected", e)
         finally:
             self._clients.remove(client)
+        print(client, " disconnected")
 
     def _start(self, blocking=True):
         
@@ -102,19 +104,21 @@ class HPServer:
 
         try:
             if blocking:
+                print("Starting server...")
                 self._server.serve_forever()
             else:
                 self._server.start()
+                print("Server successfully started")
         except socket.error as e:
             # log error
-            utils.eprint("Error: Failed to start server (Port might already be in use)") # include
+            utils.eprint("Error: Failed to start server (Port might already be in use)") # include e
 
     def run(self, web=False, interactive=False):
         "Run the server forever, blocking"
         if web:
             # start webserver
             try:
-                hweb.socketio.run(hweb.happyweb, *utils.connectionParams(web=True), block=False)
+                hweb.socketio.run(hweb.happyweb, *utils.connection_params(web=True), block=False)
                 # log
                 print("Web server successfully started")
             except socket.error as e:
@@ -124,7 +128,7 @@ class HPServer:
 
         if interactive:
             self._start(False)
-            interface.interactive()
+            #interface.interactive()  # doesnt work yet
         else:
             self._start()
 
