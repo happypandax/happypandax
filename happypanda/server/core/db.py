@@ -599,7 +599,7 @@ def init():
     Session = scoped_session(sessionmaker())
     constants.db_session = Session
     initEvents()
-    engine = create_engine(os.path.join("sqlite:///", constants.db_path), echo=constants.debug)
+    engine = create_engine(os.path.join("sqlite:///", constants.db_path))
     Base.metadata.create_all(engine)
     Session.configure(bind=engine)
 

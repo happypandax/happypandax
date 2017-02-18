@@ -1,84 +1,112 @@
-## This is Happypanda Server API specification
-### General
+# This is Happypanda Server API specification
+## General
 ----
-Message Protocol: `XML`
-> needs more details
+Message Protocol: `JSON`
+> TODO: needs more details
 
-Every message must have the `<hp>` as root element, and specify the API version with the `api` attribute:
-```xml
-<hp api='0'>
-</hp>
+> Pay attention to the value data types
+
+Every message must provide two root keys, namely, `api` and `data`. When `api` has been specified, everything goes inside `data`:
+```json
+{
+	'api': '1',
+	'data': {}
+}
 ```
 
-Functions are invoked with the `<function>` element with `fname` attribute to specify name of function. Additional attributes will be treated as function arguments:
-```xml
-<hp api='0'>
-    <function fname='getGallery' galleryid='0'>
-    </function>
-</hp>
+Functions are invoked with the `function` keyword. In it, a dict with `fname` key to specify function name is required.
+Additional function parameters are provided in this dict as key:value pairs:
+```json
+{
+	'api':string,
+	'data': {
+		'function': {
+			'fname': 'get_gallery',
+			'galleryid': 2
+		}
+	}
+}
 ```
 
-**Note:** *from here on `<hp>` will be omitted, but should still be considered part of the message*
+**Note:** *from here on only examples inside the `data` dict will be shown.
 
-###### Types & Objects
-**Base types**  
-`<string>`: a string  
-`<int>`: an integer  
-`<timestamp>`: a timestamp  
+## Objects
+>These are the objects Happypanda X will be using and expecting
 
-***Note:*** *defaults to `<string>` if no type is specified*
+### `msg` 
+> A string based message, useful for an arbitrary remark
+```json
+	'msg': "this is a remark"
+```
 
-**Objects**  
+### `error` 
+> An error
+```json
+	'error': {
+		'code': 321,
+		'msg': "An error occured!"
+	}
+```
+
+### gallery 
 > TODO
-`<status>`:
-```xml
-<status>
-    <error></error>
-</status>
+> A gallery object, or list
+```json
+		{
+			'title': "Gallery 1"
+		}
+
 ```
 
-> TODO
-`<gallery>`:
-```xml
-<gallery>
-    <title></title>
-</gallery>
-```
-
-###### Parameter Code
-`optional`: *this parameter is optional*  
-`OR` : *this parameter is only optional if other parameters are used*  
-`XOR` : *if this parameter is used no other parameters can be used*  
-`required`: *this parameter is required*  
+## API
 
 ### Version 0
 -----
-###### addGallery(gallery_objects=XOR, paths=XOR)
-*Add gallery or galleries from list of paths or gallery objects*  
-**Note**: *Paths to galleries must exist on server system*
-
-**Example:**  
-`gallery_objects`:
-```xml
-<function fname='addGallery' param='gallery_objects'>
-    <gallery>...</gallery>
-    <gallery>...</gallery>
-    <gallery>...</gallery>
-<function>
-
-```
-`paths`:
-```xml
-<function fname='addGallery' param='paths'>
-    <string>C:\path\to\gallery1</string>
-    <string>C:\path\to\gallery2</string>
-    <string>C:\path\to\gallery3</string>
-<function>
-
-```
+#### add_gallery(galleries=[], paths=[])
+*Add galleries from list of paths or gallery objects*  
+**Note**: *Paths to galleries must be local to the server*
 
 **Returns:**  
-`gallery_objects` -- `status`  
-`paths` -- `<gallery> objects`  
+```json
+	'function': {
+		'fname': "get_gallery",
+		'galleries': [] # a list of galleries
+		'paths': [] # a list of paths
+	}
+
+```
+
+**Example:**  
+with `galleries` parameter:
+```json
+{
+	'function': {
+		'fname': "get_gallery",
+		'galleries': [ 
+			{
+				'title': 'Gallery 1',
+				...
+			},
+
+			{
+				'title': 'Gallery 2',
+				...
+			}
+		]
+	}
+}
+```
+with `paths` parameter:
+```json
+	'function': {
+		'fname': "get_gallery",
+		'paths': [ 
+			"path/to/gallery1",
+			"path/to/gallery2",
+			"path/to/gallery3"
+		]
+	}
+
+```
 
 

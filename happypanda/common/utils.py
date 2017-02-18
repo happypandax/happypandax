@@ -30,7 +30,7 @@ class PathType(enum.Enum):
 
         return PathType.Invalid
 
-def connectionParams(web=False):
+def connection_params(web=False):
     "Retrieve host and port"
     if web:
         params = (constants.host, constants.web_port)
@@ -45,6 +45,15 @@ def connectionParams(web=False):
         return params
 
 ## SERVER ##
+
+def convert_to_json(buffer, name):
+    ""
+    try:
+        json_data = json.loads(buffer[:-len(constants.postfix)].decode('utf-8')) # slice 'end' off
+    except json.JSONDecodeError as e:
+        raise exceptions.JSONParseError(buffer, name, "Failed parsing json data: {}".format(e))
+    return json_data
+
 class Client:
     """A common wrapper for communicating with server.
 
@@ -89,11 +98,7 @@ class Client:
                     raise exceptions.ServerDisconnectError(self.name, "Server disconnected")
                 buffer += data
             # log received
-            try:
-                json_data = json.loads(buffer[:-len(constants.postfix)].decode('utf-8')) # slice 'end' off
-            except json.JSONDecodeError as e:
-                raise exceptions.JSONParseError(buffer, self.name, "Failed parsing json data: {}".format(e))
-            return json_data
+            return convert_to_json(buffer, self.name)
         except socket.error as e:
             # log disconnect
             self.alive = False
