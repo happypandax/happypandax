@@ -1,5 +1,7 @@
 ﻿import json
 
+from inspect import getmembers, isfunction
+
 from gevent import socket, pool, queue
 from gevent.server import StreamServer
 from gevent.wsgi import WSGIServer
@@ -10,10 +12,13 @@ from happypanda.webclient import main as hweb
 
 class ClientHandler:
     "Handles clients"
-    def __init__(self, client, address, api=constants.version_api):
+
+    api = [x for x in getmembers(interface, isfunction)] # lsit of tuples: (name, function)
+
+    def __init__(self, client, address):
         self._client = client
         self._address = address
-        self.api = api
+        self._stopped = False
 
     @staticmethod
     def sendall(client, msg):
@@ -45,6 +50,12 @@ class ClientHandler:
         """
         pass
 
+    def is_active(self):
+        """
+        Return bool indicating status of client
+        """
+        return not self._stopped
+
 
 class HPServer:
     "Happypanda Server"
@@ -53,20 +64,14 @@ class HPServer:
         self._pool = pool.Pool(constants.client_limit)
         self._server = StreamServer(params, self._handle, spawn=self._pool)
         self._web_server = None
-        self._clients = set()
-
-    def _parse_client(self, buffer, client, address):
-        "Parse first client message"
-        json_data = utils.convert_to_json(buffer)
-
-        return message.msg("Received")
+        self._clients = set() # a set of client handlers
 
     def _handle(self, client, address):
         "Client handle function"
         # log client connected
         print("Client connected")
-        handler = None
-        self._clients.add(client)
+        handler = ClientHandler(client, address)
+        self._clients.add(handler)
         # send server info
         ClientHandler.sendall(client, message.server_info())
 
@@ -74,14 +79,11 @@ class HPServer:
             buffer = b''
             while True:
                 if buffer.endswith(constants.postfix):
-                    if handler:
+                    if handler.is_active():
                         handler.advance(buffer)
                     else:
-                        handler = self._parse_client(buffer, client, address)
-                        if not handler:
-                            # inform client
-                            # log
-                            break
+                        # log client disconnected
+                        break
                     buffer = b''
                 r = client.recv(constants.data_size)
                 if not r:
@@ -93,11 +95,10 @@ class HPServer:
             # log error
             utils.eprint("Client disconnected", e)
         finally:
-            self._clients.remove(client)
+            self._clients.remove(handler)
         print(client, " disconnected")
 
     def _start(self, blocking=True):
-        
         # TODO: handle db errors
 
         db.init()

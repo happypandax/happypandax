@@ -10,7 +10,7 @@ def finalize(js):
     "Finalize json message before sending"
     json_string = b''
     enc = 'utf-8'
-    wrap = {'api':constants.version_api}
+    wrap = {'name':constants.version}
     json_string = wrap['data'] = js
 
     return bytes(json.dumps(json_string), enc)
