@@ -1,4 +1,4 @@
-# This is Happypanda Server API specification
+# This is Happypanda X Server API specification
 ## General
 ----
 Message Protocol: `JSON`
@@ -6,10 +6,10 @@ Message Protocol: `JSON`
 
 > Pay attention to the value data types
 
-Every message must provide two root keys, namely, `api` and `data`. When `api` has been specified, everything goes inside `data`:
+Every message must provide two root keys, namely, `name` and `data`. After `name' has been specified, everything goes inside `data`:
 ```json
 {
-	'api': '1',
+	'name': 'server',
 	'data': {}
 }
 ```
@@ -18,7 +18,7 @@ Functions are invoked with the `function` keyword. In it, a dict with `fname` ke
 Additional function parameters are provided in this dict as key:value pairs:
 ```json
 {
-	'api':string,
+	'name':string,
 	'data': {
 		'function': {
 			'fname': 'get_gallery',
