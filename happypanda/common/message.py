@@ -8,44 +8,66 @@ from happypanda.server.core import db
 
 def finalize(js):
     "Finalize json message before sending"
-    json_string = b''
     enc = 'utf-8'
-    wrap = {'name':constants.version}
-    json_string = wrap['data'] = js
+    wrap = {
+        'name':constants.server_name,
+        'version':[constants.version, str(constants.version_db[0])]}
+    json_data = wrap['data'] = js
 
-    return bytes(json.dumps(json_string), enc)
-
-def msg(cnt):
-    """Compose a quick finalized json message."""
-    assert not isinstance(cnt, (dict, list, tuple))
-    return finalize({'msg':cnt})
-
-def server_info():
-    "Serializes server, api and database versions"
-    m = {
-        'version':[constants.version, str(constants.version_db[0])],
-        }
-    return finalize(m)
+    return bytes(json.dumps(json_data), enc)
 
 class CoreMessage:
     "Encapsulates return values from methods in the interface module"
 
     def __init__(self, key):
         self.key = key
+        self._error = None
+
+    def set_error(self, e):
+        "Set an error message"
+        assert isinstance(e, Error)
+        self._error = e
 
     def data(self):
+        "Implement in subclass. Must return a dict if intended to be serializable."
         raise NotImplementedError()
 
     def from_json(self, j):
         raise NotImplementedError()
 
-    def to_json(self):
+    def serialize(self):
         "Serialize to JSON structure"
-        return {self.key:self.data()}
+        d = self.data()
+        assert isinstance(d, dict), "self.data() must return a dict!"
+        if self._error:
+            d[self._error.key] = self._error.data()
+        return {self.key: d}
 
     def finalize(self):
         "Serialize this object to bytes"
-        return finalize(self.to_json())
+        return finalize(self.serialize())
+
+class List(CoreMessage):
+    """
+    Encapsulates a list of objects of the same type
+    Note: You must use this in conjunction with other viable CoreMessage derivatives
+    """
+
+    def __init__(self, key, type_):
+        super().__init__(key)
+        self._type = type_
+        self.items = []
+
+    def append(self, item):
+        assert isinstance(item, self._type), "item must be a {}".format(self._type)
+        d = item.data() if isinstance(item, CoreMessage) else item
+        self.items.append(d)
+
+    def data(self):
+        return self.items
+
+    def from_json(self, j):
+        return super().from_json(j)
 
 
 class Message(CoreMessage):
@@ -99,7 +121,7 @@ class Gallery(CoreMessage):
 
     def to_json(self):
         self._check_link()
-        return super().to_json()
+        return super().serialize()
 
     def from_json(self, j):
         return super().from_json(j)
@@ -116,3 +138,24 @@ class Gallery(CoreMessage):
         if not self.db_gallery:
             raise exceptions.CoreError("This object has no linked database gallery")
 
+
+class Function(CoreMessage):
+    "A function message"
+
+    def __init__(self, fname, data = None):
+        super().__init__('function')
+        assert isinstance(fname, str)
+        self.name = fname
+        self._data = data
+
+    def set_data(self, d):
+        ""
+        assert isinstance(d, CoreMessage)
+        self._data = d
+
+    def data(self):
+        assert self._data, "No data set"
+        return {'fname':self.name, 'data':self._data.data()}
+
+    def from_json(self, j):
+        return super().from_json(j)

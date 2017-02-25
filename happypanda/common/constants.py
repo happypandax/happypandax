@@ -30,6 +30,7 @@ rarfile.PATH_SEP = '/'
 db_session = None
 
 ## SERVER
+server_name = 'server'
 local_port = 5577
 web_port = local_port + 1
 localhost = False
