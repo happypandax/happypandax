@@ -11,16 +11,16 @@ version_db = (0,)
 
 ## PATHS & FILENAMES ##
 dir_root = ''
-dir_data = "data"
-dir_cache = "cache"
-dir_log = "logs"
+dir_data = os.path.join(dir_root, "data")
+dir_cache = os.path.join(dir_root, "cache")
+dir_log = os.path.join(dir_root, "logs")
 dir_temp = 'temp' # TODO: create temp folder, use python temp facilities
-log_error = os.path.join(dir_root, dir_log, "error.log")
-log_normal = os.path.join(dir_root, dir_log, "activity.log")
-log_debug = os.path.join(dir_root, dir_log, "debug.log")
-log_debug = os.path.join(dir_root, dir_log, "debug.log")
+log_error = os.path.join(dir_log, "error.log")
+log_normal = os.path.join(dir_log, "activity.log")
+log_debug = os.path.join(dir_log, "debug.log")
+log_debug = os.path.join(dir_log, "debug.log")
 db_name = "happypanda.db"
-db_path = os.path.join(dir_root, dir_data, db_name)
+db_path = os.path.join(dir_data, db_name)
 
 supported_images = ('.jpg', '.bmp', '.png', '.gif', '.jpeg')
 supported_archives = ('.zip', '.cbz', '.rar', '.cbr')
