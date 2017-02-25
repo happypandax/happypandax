@@ -14,6 +14,7 @@ dir_root = ''
 dir_data = "data"
 dir_cache = "cache"
 dir_log = "logs"
+dir_temp = 'temp' # TODO: create temp folder, use python temp facilities
 log_error = os.path.join(dir_root, dir_log, "error.log")
 log_normal = os.path.join(dir_root, dir_log, "activity.log")
 log_debug = os.path.join(dir_root, dir_log, "debug.log")
