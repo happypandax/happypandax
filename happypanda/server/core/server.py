@@ -34,11 +34,18 @@ class ClientHandler:
         client.sendall(msg)
         client.sendall(constants.postfix)
 
+    def send(self, msg):
+        """
+        Wraps sendall
+        """
+        ClientHandler.sendall(self._client, msg)
+
     def parse(self, data):
         """
         Parse data from client
         Params:
             data -- data from client
+        Returns json dict
         """
         pass
 
@@ -48,7 +55,13 @@ class ClientHandler:
         Params:
             buffer -- data buffer to be parsed
         """
-        pass
+        try:
+            data = self.parse(buffer)
+            pass
+
+
+        except exceptions.JSONParseError as e:
+            pass
 
     def is_active(self):
         """
@@ -72,9 +85,6 @@ class HPServer:
         print("Client connected")
         handler = ClientHandler(client, address)
         self._clients.add(handler)
-        # send server info
-        ClientHandler.sendall(client, message.server_info())
-
         try:
             buffer = b''
             while True:
