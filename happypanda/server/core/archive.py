@@ -1,8 +1,17 @@
+"Contains classes and methods to manage archive files"
 import zipfile
 import rarfile
 import os
+import logging
 
 from happypanda.common import exceptions, constants
+
+log = logging.getLogger(__name__)
+log_i = log.info
+log_d = log.debug
+log_w = log.warning
+log_e = log.error
+log_c = log.critical
 
 # TODO: C++
 class ArchiveFile():
@@ -114,7 +123,7 @@ class ArchiveFile():
         Returns path to the extracted file
         """
         if not dir:
-            dir = os.path.join(app_constants.temp_dir, str(uuid.uuid4()))
+            dir = os.path.join(constants.dir_temp, str(uuid.uuid4())) # TODO: use temp facilities
             os.mkdir(dir)
 
         if not file_to_ext:
@@ -139,7 +148,7 @@ class ArchiveFile():
         If path is not specified, a temp dir will be created
         """
         if not path:
-            path = os.path.join(app_constants.temp_dir, str(uuid.uuid4()))
+            path = os.path.join(constants.dir_temp, str(uuid.uuid4())) # TODO: use temp facilities
             os.mkdir(path)
         if member:
             self.archive.extractall(path, member)

@@ -13,8 +13,9 @@ import logging
 import os
 import random
 import enum
+import re
 
-from happypanda.common import constants, exceptions
+from happypanda.common import constants, exceptions, utils
 
 log = logging.getLogger(__name__)
 log_i = log.info
@@ -105,25 +106,25 @@ def validate_int(value):
         try:
             value = int(value)
         except:
-            raise AssertionError("Column only accepts integer, not {}".format(_type(value)))
+            raise AssertionError("Column only accepts integer, not {}".format(type(value)))
     else:
         assert isinstance(value, int) or value is None, "Column only accepts integer, not {}".format(_type(value))
     return value
 
 def validate_string(value):
-    assert isinstance(value, str) or value is None, "Column only accepts string, not {}".format(_type(value))
+    assert isinstance(value, str) or value is None, "Column only accepts string, not {}".format(type(value))
     return value
 
 def validate_datetime(value):
-    assert isinstance(value, datetime.datetime) or value is None, "Column only accepts datetime, not {}".format(_type(value))
+    assert isinstance(value, datetime.datetime) or value is None, "Column only accepts datetime, not {}".format(type(value))
     return value
 
 def validate_date(value):
-    assert isinstance(value, datetime.date) or value is None, "Column only accepts date, not {}".format(_type(value))
+    assert isinstance(value, datetime.date) or value is None, "Column only accepts date, not {}".format(type(value))
     return value
 
 def validate_bool(value):
-    assert isinstance(value, bool) or value is None, "Column only accepts boolean, not {}".format(_type(value))
+    assert isinstance(value, bool) or value is None, "Column only accepts boolean, not {}".format(type(value))
     return value
 
 validators = {
@@ -324,7 +325,7 @@ class Collection(ProfileMixin, Base):
             helper = utils._ValidContainerHelper()
             if not ':' in key:
                 for g_attr in [cls.title, cls.info]:
-                    if app_constants.Search.Regex in args:
+                    if constants.Search.Regex in args:
                         helper.add(q.filter(g_attr.ilike(key)).all())
                     else:
                         helper.add(q.filter(g_attr.ilike("%{}%".format(key))).all())
