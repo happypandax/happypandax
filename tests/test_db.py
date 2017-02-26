@@ -1,4 +1,7 @@
-import unittest, os, sys, itertools
+import unittest
+import os
+import sys
+import itertools
 sys.path.insert(0, os.path.abspath('..'))
 from sqlalchemy.orm import sessionmaker
 from happypanda.common import constants
@@ -6,7 +9,6 @@ from happypanda.server.core.db import *
 Session = sessionmaker()
 constants.db_session = Session
 initEvents()
-
 
 
 def doublegen(it):
@@ -22,7 +24,7 @@ class GeneralTest(unittest.TestCase):
         Base.metadata.create_all(engine)
         constants.db_session = Session
         self.session = Session()
-        initDefaults(self.session)
+        check_db_version(self.session)
         self.gallery = Gallery()
         self.session.add(self.gallery)
         self.session.commit()
@@ -68,17 +70,17 @@ class GeneralTest(unittest.TestCase):
         self.session.commit()
 
     def test_history(self):
+        self.assertEqual(self.session.query(History).count(), 1) # life
+
         self.gallery.times_read += 1
-        self.assertEqual(self.session.query(History).count(), 1)
+        self.assertEqual(self.session.query(History).count(), 2)
         self.gallery.times_read += 1
         self.session.commit()
-        self.assertEqual(self.session.query(History).count(), 2)
+        self.assertEqual(self.session.query(History).count(), 3)
 
         self.gallery.delete()
 
-        self.assertEqual(self.session.query(History).count(), 2)
-
-        self.assertIsNone(self.session.query(History).all()[0].gallery)
+        self.assertEqual(self.session.query(History).count(), 3)
 
     @unittest.expectedFailure
     def test_typesfail(self):
@@ -98,6 +100,7 @@ class GeneralTest(unittest.TestCase):
     def test_url(self):
         self.gallery.urls.append(GalleryUrl(url="http://www.google.com"))
         self.session.commit()
+        self.assertEqual(len(self.gallery.urls), 1)
 
     def test_page(self):
         page = Page()
@@ -157,8 +160,8 @@ class GeneralTest(unittest.TestCase):
         self.assertEqual(self.gallery.tags.count(), 10)
 
     def test_many_to_many(self):
-        artists = [Artist(name="Artist"+str(x)) for x in range(10)]
-        circles = [Circle(name="Circle"+str(x)) for x in range(10)]
+        artists = [Artist(name="Artist" + str(x)) for x in range(10)]
+        circles = [Circle(name="Circle" + str(x)) for x in range(10)]
 
         self.gallery.artists.extend(artists)
         self.gallery.circles.extend(circles)
@@ -182,9 +185,9 @@ class CollectionRelationship(unittest.TestCase):
         Session.configure(bind=engine)
         Base.metadata.create_all(engine)
         self.session = Session()
-        initDefaults(self.session)
+        init_defaults(self.session)
 
-        self.collections = [Collection(title="col"+str(x)) for x in range(2)]
+        self.collections = [Collection(title="col" + str(x)) for x in range(2)]
         self.galleries = [Gallery() for x in range(10)]
         self.session.add_all(self.galleries)
         self.collections[0].galleries.extend(self.galleries[:5])
@@ -195,7 +198,7 @@ class CollectionRelationship(unittest.TestCase):
         self.assertEqual(self.session.query(Collection).count(), 3) # the default collection is also there
 
     def default(self):
-        initDefaults(self.session)
+        init_defaults(self.session)
         self.assertIsNotNone(self.session.query(Collection).filter(Collection.title == "No Collection").scalar())
 
         self.session.delete(self.collections[0])
@@ -247,9 +250,9 @@ class ListRelationship(unittest.TestCase):
         Base.metadata.create_all(engine)
 
         self.session = Session()
-        initDefaults(self.session)
+        init_defaults(self.session)
 
-        self.glists = [List(name="list"+str(x)) for x in range(2)]
+        self.glists = [List(name="list" + str(x)) for x in range(2)]
         self.galleries = [Gallery() for x in range(10)]
         self.session.add_all(self.galleries)
         for gl in self.glists:
@@ -296,7 +299,7 @@ class ArtistRelationship(unittest.TestCase):
         Base.metadata.create_all(engine)
 
         self.session = Session()
-        initDefaults(self.session)
+        init_defaults(self.session)
 
         self.artist = Artist()
         self.artist.name = "Artist1"
@@ -339,7 +342,7 @@ class CircleRelationship(unittest.TestCase):
         Base.metadata.create_all(engine)
 
         self.session = Session()
-        initDefaults(self.session)
+        init_defaults(self.session)
 
         self.artist = Circle()
         self.artist.name = "Artist1"
@@ -384,7 +387,7 @@ class HashRelationship(unittest.TestCase):
         Base.metadata.create_all(engine)
 
         self.session = Session()
-        initDefaults(self.session)
+        init_defaults(self.session)
 
         self.gallery = Gallery()
         self.session.add(self.gallery)
@@ -441,9 +444,9 @@ class GalleryNSRelationship(unittest.TestCase):
         Base.metadata.create_all(engine)
 
         self.session = Session()
-        initDefaults(self.session)
+        init_defaults(self.session)
 
-        self.galleryns = [GalleryNamespace(name="gns"+str(x)) for x in range(2)]
+        self.galleryns = [GalleryNamespace(name="gns" + str(x)) for x in range(2)]
         self.galleries = [Gallery() for x in range(10)]
         self.galleryns[0].galleries.extend(self.galleries[:5])
         self.galleryns[1].galleries.extend(self.galleries[5:])
@@ -498,7 +501,7 @@ class LanguageRelationship(unittest.TestCase):
         Base.metadata.create_all(engine)
 
         self.session = Session()
-        initDefaults(self.session)
+        init_defaults(self.session)
 
         self.lang = Language()
         self.lang.name = "Con1"
@@ -545,7 +548,7 @@ class TypeRelationship(unittest.TestCase):
         Base.metadata.create_all(engine)
 
         self.session = Session()
-        initDefaults(self.session)
+        init_defaults(self.session)
 
         self.type = GalleryType()
         self.type.name = "Con1"
@@ -592,11 +595,11 @@ class StatusRelationship(unittest.TestCase):
         Base.metadata.create_all(engine)
 
         self.session = Session()
-        initDefaults(self.session)
+        init_defaults(self.session)
 
         self.status = Status()
         self.status.name = "Stat1"
-        self.galleryns = [GalleryNamespace(name="gns"+str(x)) for x in range(2)]
+        self.galleryns = [GalleryNamespace(name="gns" + str(x)) for x in range(2)]
         self.galleries = [Gallery() for x in range(10)]
         self.galleryns[0].galleries.extend(self.galleries[:5])
         self.galleryns[1].galleries.extend(self.galleries[5:])
@@ -646,7 +649,7 @@ class UrlRelationship(unittest.TestCase):
         Base.metadata.create_all(engine)
 
         self.session = Session()
-        initDefaults(self.session)
+        init_defaults(self.session)
 
         self.gallery = Gallery()
         self.session.add(self.gallery)
@@ -687,10 +690,10 @@ class TagRelationship(unittest.TestCase):
         Base.metadata.create_all(engine)
 
         self.session = Session()
-        initDefaults(self.session)
+        init_defaults(self.session)
 
-        self.namespaces = [Namespace(name="ns"+str(x)) for x in range(20)]
-        self.tags = [Tag(name="tag"+str(x)) for x in range(10)]
+        self.namespaces = [Namespace(name="ns" + str(x)) for x in range(20)]
+        self.tags = [Tag(name="tag" + str(x)) for x in range(10)]
         self.galleries = [Gallery() for x in range(5)]
         self.session.add_all(self.galleries)
         self.nstags = []
@@ -755,12 +758,12 @@ class ProfileRelationship(unittest.TestCase):
         Base.metadata.create_all(engine)
 
         self.session = Session()
-        initDefaults(self.session)
+        init_defaults(self.session)
 
-        self.lists = [List(name="list"+str(x)) for x in range(5)]
-        self.gns = [GalleryNamespace(name="gns"+str(x)) for x in range(5)]
+        self.lists = [List(name="list" + str(x)) for x in range(5)]
+        self.gns = [GalleryNamespace(name="gns" + str(x)) for x in range(5)]
         self.galleries = [Gallery() for x in range(5)]
-        self.collections = [Collection(title="title"+str(x)) for x in range(5)]
+        self.collections = [Collection(title="title" + str(x)) for x in range(5)]
         self.pages = [Page(number=x) for x in range(5)]
 
         for n, x in enumerate(self.galleries):
@@ -778,7 +781,7 @@ class ProfileRelationship(unittest.TestCase):
         self.assertEqual(self.session.query(Page).count(), 5)
         self.assertEqual(self.session.query(List).count(), 5)
 
-        self.profiles = [Profile(path="p"+str(x), type=x) for x in range(5)]
+        self.profiles = [Profile(path="p" + str(x), type=x) for x in range(5)]
 
         profile_nmb = itertools.cycle(range(5))
 

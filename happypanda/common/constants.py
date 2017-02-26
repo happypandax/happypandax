@@ -18,9 +18,8 @@ dir_temp = 'temp' # TODO: create temp folder, use python temp facilities
 log_error = os.path.join(dir_log, "error.log")
 log_normal = os.path.join(dir_log, "activity.log")
 log_debug = os.path.join(dir_log, "debug.log")
-log_debug = os.path.join(dir_log, "debug.log")
 db_name = "happypanda.db"
-db_path = os.path.join(dir_data, db_name)
+db_path = os.path.join(dir_root, dir_data, db_name)
 
 supported_images = ('.jpg', '.bmp', '.png', '.gif', '.jpeg')
 supported_archives = ('.zip', '.cbz', '.rar', '.cbr')
@@ -29,6 +28,10 @@ rarfile.PATH_SEP = '/'
 
 ## DATABASE
 db_session = None
+
+class HistoryAction(enum.Enum):
+    read = 'read'
+    start = 'start'
 
 ## SERVER
 server_name = 'server'

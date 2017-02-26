@@ -98,33 +98,20 @@ class Error(CoreMessage):
     def from_json(self, j):
         return super().from_json(j)
 
-class Gallery(CoreMessage):
-    "A gallery object"
-
-    def __init__(self, db_gallery):
-        super().__init__('gallery')
-        assert isinstance(db_gallery, db.Gallery)
-        self.db_gallery = db_gallery
+class DatabaseMessage(CoreMessage):
+    "Database item mapper"
+    def __init__(self, key, db_item):
+        super().__init__(key)
+        assert isinstance(db_item, db.Base)
+        self.item = db_item
 
     def data(self):
         self._check_link()
-        return {
-            'id':self.db_gallery.id,
-            'title':self._unpack_collection(self.db_gallery.titles),
-            'author':self._unpack_collection(self.db_gallery.artists),
-            'circle':self._unpack_collection(self.db_gallery.circles),
-            'language':self._unpack_attrib(self.db_gallery.language),
-            'type':self._unpack_attrib(self.db_gallery.type),
-            'path':self.db_gallery.path,
-            'archive_path':self.db_gallery.path_in_archive,
-            }
+        gattribs = db.table_attribs(self.item)
+        return {x: self._unpack(gattribs[x]) for x in gattribs}
 
-    def to_json(self):
-        self._check_link()
-        return super().serialize()
-
-    def from_json(self, j):
-        return super().from_json(j)
+    def _unpack(self, attrib):
+        ""
 
     def _unpack_collection(self, model_attrib):
         "Helper method to unpack a SQLalchemy collection"
@@ -135,9 +122,18 @@ class Gallery(CoreMessage):
         return
 
     def _check_link(self):
-        if not self.db_gallery:
-            raise exceptions.CoreError("This object has no linked database gallery")
+        if not self.item:
+            raise exceptions.CoreError("This object has no linked database item")
 
+class Gallery(DatabaseMessage):
+    "A gallery object"
+
+    def __init__(self, db_gallery):
+        assert isinstance(db_gallery, db.Gallery)
+        super().__init__('gallery', db_gallery)
+
+    def from_json(self, j):
+        return super().from_json(j)
 
 class Function(CoreMessage):
     "A function message"

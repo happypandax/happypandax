@@ -4,7 +4,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.sql.expression import BinaryExpression, func, literal
 from sqlalchemy.sql.operators import custom_op
-from sqlalchemy.orm import sessionmaker, relationship, validates, object_session, scoped_session
+from sqlalchemy.orm import sessionmaker, relationship, validates, object_session, scoped_session, attributes
 from sqlalchemy import (create_engine, event, exc, and_, or_, Boolean, Column, Integer, ForeignKey,
                         Table, Date, DateTime, UniqueConstraint, Float, Enum)
 
@@ -177,12 +177,17 @@ class Profile(Base):
 class History(Base):
     __tablename__ = 'history'
 
-    gallery_id = Column(Integer, ForeignKey('gallery.id'))
-    date = Column(Date, nullable=False, default=datetime.date.today())
-    gallery = relationship("Gallery")
+    item_id = Column(Integer, nullable=False)
+    item_type = Column(String, nullable=False)
+    timestamp = Column(Date, nullable=False, default=datetime.datetime.now())
+    action = Column(Enum(constants.HistoryAction), nullable=False, default=constants.HistoryAction.read)
 
-    def __init__(self, gallery):
-        self.gallery = gallery
+    def __init__(self, item, action=constants.HistoryAction.read):
+        assert isinstance(item, Base)
+        self.item_id = item.id
+        self.item_type = item.__tablename__
+        self.timestamp = datetime.datetime.now()
+        self.action = action
 
 class Hash(NameMixin, Base):
     __tablename__ = 'hash'
@@ -378,7 +383,7 @@ class Gallery(ProfileMixin, Base):
     def _add_history(self, key, value):
         sess = object_session(self)
         if sess:
-            sess.add(History(self))
+            sess.add(History(self, constants.HistoryAction.read))
         else:
             log_w("Cannot add gallery history because no session exists for this object")
         return value
@@ -392,6 +397,8 @@ class Gallery(ProfileMixin, Base):
     @property
     def title(self):
         "Returns default title"
+        if not self.titles:
+            return
         if not hasattr(self, '_title') or not self._title:
             if len(self.titles) == 1:
                 self._title = self.titles[0]
@@ -402,7 +409,10 @@ class Gallery(ProfileMixin, Base):
 
     @title.setter
     def title(self, t):
-        if hasattr(self, '_title') and self._title:
+        if not hasattr(self, '_title'):
+            self.title
+
+        if self._title:
             self._title.name = t
 
     @property
@@ -414,10 +424,9 @@ class Gallery(ProfileMixin, Base):
                 self._file_type = 'folder'
         return self._file_type
 
-    def exists(self):
+    def exists(self, obj=False, strict=False):
         "Checks if gallery exists by path"
-        #TODO: may want to return the found gallery to inform user
-        e = False
+        e = None
         g = self.__class__
         if self.path:
             head, tail = os.path.split(self.path)
@@ -427,10 +436,12 @@ class Gallery(ProfileMixin, Base):
                 head, tail = os.path.split(self.path_in_archive)
                 p_a = tail if tail else head
                 e = sess.query(self.__class__.id).filter(and_(g.path.ilike("%{}%".format(p)),
-                                                          g.path_in_archive.ilike("%{}%".format(p_a)))).scalar() is not None
+                                                          g.path_in_archive.ilike("%{}%".format(p_a)))).scalar()
             else:
-                e = sess.query(self.__class__.id).filter(and_(g.path.ilike("%{}%".format(p)))).scalar() is not None
+                e = sess.query(self.__class__.id).filter(and_(g.path.ilike("%{}%".format(p)))).scalar()
             sess.close()
+            if not obj:
+                e = e is not None
         else:
             log_w("Could not query for existence because no path was set.")
         return e
@@ -449,7 +460,6 @@ class Page(ProfileMixin, Base):
     profiles = relationship("Profile", secondary=page_profiles, cascade="all")
 
     def __repr__(self):
-        return ''
         return "Page ID:{}\nPage:{}\nProfile:{}\nPageHash:{}".format(self.id, self.number, self.profile, self.hash)
 
     @property
@@ -559,8 +569,8 @@ def sqlite_engine_connect(dbapi_connection, connection_record):
     for name, function in SQLITE_REGEX_FUNCTIONS.values():
         dbapi_connection.create_function(name, 2, function)
 
-def initDefaults(sess):
-    ""
+def init_defaults(sess):
+    "Initializes default items"
     coll = sess.query(Collection).filter(Collection._type == Collection.CollectionType.default).scalar()
     if not coll:
        coll = Collection()
@@ -570,30 +580,33 @@ def initDefaults(sess):
        sess.add(coll)
        sess.commit()
 
-def checkDBVersion(sess):
-    "Checks if DB version is allowed. Raises dbexception if not"
+def check_db_version(sess):
+    """Checks if DB version is allowed.
+    Raises db exception if not"""
     try:
         life = sess.query(Life).one_or_none()
     except exc.NoSuchTableError:
-        raise exceptions.DatabaseInitError("Invalid Database")
+        raise exceptions.DatabaseInitError("Invalid database. NoSuchTableError.")
     if life:
         if life.version not in constants.version_db:
+            msg = 'Local database version: {}\nSupported database versions:{}'.format(life.version,
+                                                                         constants.version_db)
             log_c("Incompatible database version")
-            log_d('Local database version: {}\nProgram database version:{}'.format(life.version,
-                                                                         constants.version_db))
-            return False
+            log_d(msg)
+            raise exceptions.DatabaseVersionError(msg)
     else:
         life = Life()
         sess.add(life)
         life.version = constants.version_db[0]
         life.times_opened = 0
+        sess.commit()
         log_i("Succesfully initiated database")
         log_i("DB Version: {}".format(life.version))
 
     life.times_opened += 1
-    t = life.id
+    sess.add(History(life, constants.HistoryAction.start))
     sess.commit()
-    initDefaults(sess)
+    init_defaults(sess)
     return True
 
 def init():
@@ -604,4 +617,16 @@ def init():
     Base.metadata.create_all(engine)
     Session.configure(bind=engine)
 
-    return checkDBVersion(Session())
+    return check_db_version(Session())
+
+def table_attribs(model):
+    "Returns a dict of table column names and their SQLAlchemy objects"
+    assert isinstance(model, Base)
+    d = {}
+    for name in model.__dict__:
+        value = model.__dict__[name]
+        if isinstance(value, attributes.InstrumentedAttribute):
+            d[name] = value
+    return d
+
+
