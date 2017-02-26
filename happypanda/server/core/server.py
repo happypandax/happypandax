@@ -115,7 +115,7 @@ class HPServer:
 
         try:
             if blocking:
-                print("Starting server...")
+                print("Starting server... (blocking)")
                 self._server.serve_forever()
             else:
                 self._server.start()

@@ -117,14 +117,21 @@ class DatabaseError(CoreError):
 
     pass
 
-
 @error_code(301)
-class DatabaseInitError(CoreError):
+class DatabaseInitError(DatabaseError):
     """Database initialization error."""
 
     def __init__(self, msg):
         """init func."""
         super().__init__("An error occured in the database initialization process: " + msg)
+
+@error_code(302)
+class DatabaseVersionError(DatabaseError):
+    """Database version error."""
+
+    def __init__(self, msg):
+        """init func."""
+        super().__init__("Database version mismatch: " + msg)
 
     # ## SERVER -- CODE: 400+ ##
 
