@@ -103,15 +103,46 @@ class DatabaseMessage(CoreMessage):
     def __init__(self, key, db_item):
         super().__init__(key)
         assert isinstance(db_item, db.Base)
+        assert db.is_instanced(db_item), "must be instanced database object"
         self.item = db_item
 
-    def data(self):
+    def data(self, load_values=False):
+        """
+        Params:
+            load_values -- Queries database for unloaded values
+        """
         self._check_link()
-        gattribs = db.table_attribs(self.item)
-        return {x: self._unpack(gattribs[x]) for x in gattribs}
+        gattribs = db.table_attribs(self.item, not load_values)
+        return {x: self._unpack(x, gattribs[x]) for x in gattribs}
 
-    def _unpack(self, attrib):
-        ""
+    def _unpack(self, name, attrib):
+        "Helper method to delegate SQLalchemy objects to the right unpack helper method"
+        if attrib is None:
+            return
+
+        # beware lots of recursion
+        if db.is_instanced(attrib):
+            msg_obj = None
+            if isinstance(attrib, db.Gallery):
+                msg_obj = Gallery(attrib)
+            elif isinstance(attrib, db.Artist):
+                msg_obj = Artist(attrib)
+            else:
+                raise NotImplementedError("Message encapsulation for this database object does not exist ({})".format(type(attrib)))
+
+            return msg_obj.data() if msg_obj else None
+
+        elif db.is_list(attrib) or isinstance(attrib, list):
+            return [self._unpack(x) for x in attrib]
+
+        elif isinstance(attrib, (bool, int, str)):
+            return attrib
+
+        # TODO: sqlalchemy.orm.dynamic.AppenderQuery
+
+        else:
+            raise NotImplementedError("Unpacking method for this attribute does not exist ({})".format(type(attrib)))
+
 
     def _unpack_collection(self, model_attrib):
         "Helper method to unpack a SQLalchemy collection"
@@ -126,11 +157,21 @@ class DatabaseMessage(CoreMessage):
             raise exceptions.CoreError("This object has no linked database item")
 
 class Gallery(DatabaseMessage):
-    "A gallery object"
+    "Encapsulates database gallery object"
 
     def __init__(self, db_gallery):
         assert isinstance(db_gallery, db.Gallery)
         super().__init__('gallery', db_gallery)
+
+    def from_json(self, j):
+        return super().from_json(j)
+
+class Artist(DatabaseMessage):
+    "Encapsulates database artist object"
+
+    def __init__(self, db_gallery):
+        assert isinstance(db_item, db.Artist)
+        super().__init__('artist', db_item)
 
     def from_json(self, j):
         return super().from_json(j)
@@ -155,3 +196,4 @@ class Function(CoreMessage):
 
     def from_json(self, j):
         return super().from_json(j)
+

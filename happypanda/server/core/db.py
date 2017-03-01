@@ -1,10 +1,12 @@
 from sqlalchemy.engine import Engine
 from sqlalchemy import String as _String
+from sqlalchemy.inspection import inspect
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.sql.expression import BinaryExpression, func, literal
 from sqlalchemy.sql.operators import custom_op
-from sqlalchemy.orm import sessionmaker, relationship, validates, object_session, scoped_session, attributes
+from sqlalchemy.orm import (sessionmaker, relationship, validates, object_session, scoped_session,
+                            attributes, state, collections)
 from sqlalchemy import (create_engine, event, exc, and_, or_, Boolean, Column, Integer, ForeignKey,
                         Table, Date, DateTime, UniqueConstraint, Float, Enum)
 
@@ -619,14 +621,39 @@ def init():
 
     return check_db_version(Session())
 
-def table_attribs(model):
-    "Returns a dict of table column names and their SQLAlchemy objects"
+def table_attribs(model, id = False):
+    """Returns a dict of table column names and their SQLAlchemy value objects
+    Params:
+        id -- retrieve object id instead of the sqlalchemy object (to avoid a query etc.)
+    """
     assert isinstance(model, Base)
     d = {}
-    for name in model.__dict__:
-        value = model.__dict__[name]
-        if isinstance(value, attributes.InstrumentedAttribute):
-            d[name] = value
+
+    obj = inspect(model)
+    if isinstance(obj, state.InstanceState):
+        attr = list(obj.attrs)
+
+        exclude = [y.key for y in attr if y.key.endswith('_id')]
+        if id:
+            exclude = [x[:-3] for x in exclude] # -3 for _id
+
+        for x in attr:
+            if not x.key in exclude:
+                d[x.key] = x.value
+
+    else:
+        for name in model.__dict__:
+            value = model.__dict__[name]
+            if isinstance(value, attributes.InstrumentedAttribute):
+                d[name] = value
     return d
 
+def is_instanced(obj):
+    "Check if db object is an instanced object"
+    if isinstance(obj, Base):
+        return isinstance(inspect(obj), state.InstanceState)
+    return False
 
+def is_list(obj):
+    "Check if db object is a db list"
+    return isinstance(obj, collections.InstrumentedList)
