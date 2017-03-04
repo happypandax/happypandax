@@ -106,17 +106,18 @@ class DatabaseMessage(CoreMessage):
         assert db.is_instanced(db_item), "must be instanced database object"
         self.item = db_item
 
-    def data(self, load_values=False):
+    def data(self, load_values=False, load_collections=False):
         """
         Params:
             load_values -- Queries database for unloaded values
+            load_collections -- Queries database to fetch all items in a collection
         """
         self._check_link()
         gattribs = db.table_attribs(self.item, not load_values)
-        return {x: self._unpack(x, gattribs[x]) for x in gattribs}
+        return {x: self._unpack(gattribs[x], load_collections) for x in gattribs}
 
-    def _unpack(self, name, attrib):
-        "Helper method to delegate SQLalchemy objects to the right unpack helper method"
+    def _unpack(self, attrib, load_collections):
+        "Helper method to unpack SQLalchemy objects"
         if attrib is None:
             return
 
@@ -133,24 +134,17 @@ class DatabaseMessage(CoreMessage):
             return msg_obj.data() if msg_obj else None
 
         elif db.is_list(attrib) or isinstance(attrib, list):
-            return [self._unpack(x) for x in attrib]
+            return [self._unpack(x, load_collections) for x in attrib]
 
+        elif db.is_query(attrib):
+            if load_collections:
+                return [self._unpack(x, load_collections) for x in attrib.all()]
+            else:
+                return []
         elif isinstance(attrib, (bool, int, str)):
             return attrib
-
-        # TODO: sqlalchemy.orm.dynamic.AppenderQuery
-
         else:
             raise NotImplementedError("Unpacking method for this attribute does not exist ({})".format(type(attrib)))
-
-
-    def _unpack_collection(self, model_attrib):
-        "Helper method to unpack a SQLalchemy collection"
-        return
-
-    def _unpack_attrib(self, model_attrib):
-        "Helper method to unpack a foreign SQLalchemy attribute"
-        return
 
     def _check_link(self):
         if not self.item:

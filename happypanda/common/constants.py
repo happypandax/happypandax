@@ -19,7 +19,9 @@ log_error = os.path.join(dir_log, "error.log")
 log_normal = os.path.join(dir_log, "activity.log")
 log_debug = os.path.join(dir_log, "debug.log")
 db_name = "happypanda.db"
+db_name_debug = "happypanda_debug.db"
 db_path = os.path.join(dir_root, dir_data, db_name)
+db_path_debug = os.path.join(dir_root, dir_data, db_name_debug)
 
 supported_images = ('.jpg', '.bmp', '.png', '.gif', '.jpeg')
 supported_archives = ('.zip', '.cbz', '.rar', '.cbr')
