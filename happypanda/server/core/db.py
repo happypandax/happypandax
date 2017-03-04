@@ -6,7 +6,7 @@ from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.sql.expression import BinaryExpression, func, literal
 from sqlalchemy.sql.operators import custom_op
 from sqlalchemy.orm import (sessionmaker, relationship, validates, object_session, scoped_session,
-                            attributes, state, collections)
+                            attributes, state, collections, dynamic)
 from sqlalchemy import (create_engine, event, exc, and_, or_, Boolean, Column, Integer, ForeignKey,
                         Table, Date, DateTime, UniqueConstraint, Float, Enum)
 
@@ -180,14 +180,14 @@ class History(Base):
     __tablename__ = 'history'
 
     item_id = Column(Integer, nullable=False)
-    item_type = Column(String, nullable=False)
+    item_name = Column(String, nullable=False)
     timestamp = Column(Date, nullable=False, default=datetime.datetime.now())
     action = Column(Enum(constants.HistoryAction), nullable=False, default=constants.HistoryAction.read)
 
     def __init__(self, item, action=constants.HistoryAction.read):
         assert isinstance(item, Base)
         self.item_id = item.id
-        self.item_type = item.__tablename__
+        self.item_name = item.__tablename__
         self.timestamp = datetime.datetime.now()
         self.action = action
 
@@ -263,12 +263,12 @@ class List(ProfileMixin, NameMixin, Base):
     strict = Column(Boolean, nullable=False, default=False)
 
     galleries = relationship("Gallery", secondary=gallery_lists, back_populates='lists', lazy="dynamic")
-    profiles = relationship("Profile", secondary=list_profiles, cascade="all")
+    profiles = relationship("Profile", secondary=list_profiles, lazy='joined', cascade="all")
 
 class Status(NameMixin, Base):
     __tablename__ = 'status'
 
-    gnamespaces = relationship("GalleryNamespace", back_populates='status')
+    gnamespaces = relationship("GalleryNamespace", lazy='dynamic', back_populates='status')
 
 g_ns_profiles = profile_association("gallery_namespace")
 
@@ -277,7 +277,7 @@ class GalleryNamespace(ProfileMixin, NameMixin, Base):
     status_id = Column(Integer, ForeignKey('status.id'))
 
     galleries = relationship("Gallery", back_populates="parent", lazy="dynamic", cascade="all, delete-orphan")
-    profiles = relationship("Profile", secondary=g_ns_profiles, cascade="all")
+    profiles = relationship("Profile", secondary=g_ns_profiles, lazy='joined', cascade="all")
     status = relationship("Status", back_populates="gnamespaces", cascade="save-update, merge, refresh-expire")
 
     def __repr__(self):
@@ -286,12 +286,12 @@ class GalleryNamespace(ProfileMixin, NameMixin, Base):
 class Language(NameMixin, Base):
     __tablename__ = 'language'
 
-    galleries = relationship("Gallery", back_populates='language')
+    galleries = relationship("Gallery", lazy='dynamic', back_populates='language')
 
 class GalleryType(NameMixin, Base):
     __tablename__ = 'type'
 
-    galleries = relationship("Gallery", back_populates='type')
+    galleries = relationship("Gallery", lazy='dynamic', back_populates='type')
 
 gallery_tags = Table('gallery_tags', Base.metadata,
                         Column('namespace_tag_id', Integer, ForeignKey('namespace_tags.id')),
@@ -312,8 +312,8 @@ class Collection(ProfileMixin, Base):
     cover = Column(String, nullable=False, default='')
     _type = Column(Enum(CollectionType), nullable=False, default=CollectionType.user)
 
-    galleries = relationship("Gallery", back_populates="collection", cascade="save-update, merge, refresh-expire")
-    profiles = relationship("Profile", secondary=collection_profiles, cascade="all")
+    galleries = relationship("Gallery", back_populates="collection", lazy="dynamic", cascade="save-update, merge, refresh-expire")
+    profiles = relationship("Profile", secondary=collection_profiles, lazy='joined', cascade="all")
 
     @property
     def rating(self):
@@ -370,16 +370,16 @@ class Gallery(ProfileMixin, Base):
 
     parent = relationship("GalleryNamespace", back_populates="galleries", cascade="save-update, merge, refresh-expire")
     collection = relationship("Collection", back_populates="galleries", cascade="save-update, merge, refresh-expire")
-    urls = relationship("GalleryUrl", back_populates="gallery", cascade="all,delete-orphan")
+    urls = relationship("GalleryUrl", back_populates="gallery", lazy='joined', cascade="all,delete-orphan")
     language = relationship("Language", back_populates="galleries", cascade="save-update, merge, refresh-expire")
     type = relationship("GalleryType", back_populates="galleries", cascade="save-update, merge, refresh-expire")
-    circles = relationship("Circle", secondary=gallery_circles, back_populates='galleries', lazy="dynamic", cascade="save-update, merge, refresh-expire")
+    circles = relationship("Circle", secondary=gallery_circles, back_populates='galleries', lazy="joined", cascade="save-update, merge, refresh-expire")
     artists = relationship("Artist", secondary=gallery_artists, back_populates='galleries', lazy="joined", cascade="save-update, merge, refresh-expire")
     lists = relationship("List", secondary=gallery_lists, back_populates='galleries', lazy="dynamic")
-    pages = relationship("Page", back_populates="gallery", cascade="all,delete-orphan")
+    pages = relationship("Page", back_populates="gallery", lazy='dynamic', cascade="all,delete-orphan")
     titles = relationship("Title", back_populates="gallery", lazy='joined', cascade="all,delete-orphan")
     tags = relationship("NamespaceTags", secondary=gallery_tags, lazy="dynamic")
-    profiles = relationship("Profile", secondary=gallery_profiles, cascade="all")
+    profiles = relationship("Profile", secondary=gallery_profiles, lazy='joined', cascade="all")
 
     @validates("times_read")
     def _add_history(self, key, value):
@@ -459,7 +459,7 @@ class Page(ProfileMixin, Base):
 
     hash = relationship("Hash", cascade="save-update, merge, refresh-expire")
     gallery = relationship("Gallery", back_populates="pages")
-    profiles = relationship("Profile", secondary=page_profiles, cascade="all")
+    profiles = relationship("Profile", secondary=page_profiles, lazy='joined', cascade="all")
 
     def __repr__(self):
         return "Page ID:{}\nPage:{}\nProfile:{}\nPageHash:{}".format(self.id, self.number, self.profile, self.hash)
@@ -478,7 +478,7 @@ class Title(Base):
     gallery_id = Column(Integer, ForeignKey('gallery.id'), nullable=False)
 
     language = relationship("Language", cascade="save-update, merge, refresh-expire")
-    gallery = relationship("Gallery", lazy='joined', back_populates="titles")
+    gallery = relationship("Gallery", back_populates="titles")
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -611,11 +611,12 @@ def check_db_version(sess):
     init_defaults(sess)
     return True
 
-def init():
+def init(**kwargs):
+    db_path = constants.db_path_debug if constants.debug else constants.db_path
     Session = scoped_session(sessionmaker())
     constants.db_session = Session
     initEvents()
-    engine = create_engine(os.path.join("sqlite:///", constants.db_path))
+    engine = create_engine(os.path.join("sqlite:///", db_path))
     Base.metadata.create_all(engine)
     Session.configure(bind=engine)
 
@@ -624,7 +625,7 @@ def init():
 def table_attribs(model, id = False):
     """Returns a dict of table column names and their SQLAlchemy value objects
     Params:
-        id -- retrieve object id instead of the sqlalchemy object (to avoid a query etc.)
+        id -- retrieve id columns instead of the sqlalchemy object (to avoid a db query etc.)
     """
     assert isinstance(model, Base)
     d = {}
@@ -635,7 +636,7 @@ def table_attribs(model, id = False):
 
         exclude = [y.key for y in attr if y.key.endswith('_id')]
         if id:
-            exclude = [x[:-3] for x in exclude] # -3 for _id
+            exclude = [x[:-3] for x in exclude] # -3 for '_id'
 
         for x in attr:
             if not x.key in exclude:
@@ -657,3 +658,7 @@ def is_instanced(obj):
 def is_list(obj):
     "Check if db object is a db list"
     return isinstance(obj, collections.InstrumentedList)
+
+def is_query(obj):
+    "Check if db object is a dynamic query object (issued by lazy='dynamic')"
+    return isinstance(obj, dynamic.AppenderQuery)
