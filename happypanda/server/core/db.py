@@ -82,14 +82,14 @@ class NameMixin:
             if strict:
                 e = sess.query(self.__class__).filter_by(name=self.name).scalar()
             else:
-                e = sess.query(self.__class__).filter(self.__class__.name.ilike("{}".format(self.name))).scalar()
+                e = sess.query(self.__class__).filter(self.__class__.name.ilike("%{}%".format(self.name))).scalar()
             if not e:
                 e = self
         else:
             if strict:
                 e = sess.query(self.__class__.id).filter_by(name=self.name).scalar() is not None
             else:
-                e = sess.query(self.__class__.id).filter(self.__class__.name.ilike("{}".format(self.name))).scalar() is not None
+                e = sess.query(self.__class__.id).filter(self.__class__.name.ilike("%{}%".format(self.name))).scalar() is not None
         sess.close()
         return e
 
@@ -427,7 +427,10 @@ class Gallery(ProfileMixin, Base):
         return self._file_type
 
     def exists(self, obj=False, strict=False):
-        "Checks if gallery exists by path"
+        """Checks if gallery exists by path
+        Params:
+            obj -- queries for the full object and returns it 
+        """
         e = None
         g = self.__class__
         if self.path:
@@ -445,7 +448,7 @@ class Gallery(ProfileMixin, Base):
             if not obj:
                 e = e is not None
         else:
-            log_w("Could not query for existence because no path was set.")
+            log_w("Could not query for gallery existence because no path was set.")
         return e
 
 page_profiles = profile_association("page")
@@ -454,6 +457,7 @@ class Page(ProfileMixin, Base):
     __tablename__ = 'page'
     number = Column(Integer, nullable=False, default=0)
     name = Column(String, nullable=False, default='')
+    path = Column(String, nullable=False, default='')
     hash_id = Column(Integer, ForeignKey('hash.id'))
     gallery_id = Column(Integer, ForeignKey('gallery.id'), nullable=False)
 
@@ -467,13 +471,36 @@ class Page(ProfileMixin, Base):
     @property
     def file_type(self):
         ext = ''
-        if self.name:
-            _, ext = os.path.splitext(self.name)
+        if self.path:
+            _, ext = os.path.splitext(self.path)
         return ext.lower()
+
+    @validates("path")
+    def _add_name(self, key, value):
+        if value.endswith(constants.supported_images):
+            _, self.name = os.path.split(value)
+
+    def exists(self, obj=False):
+        """Checks if page exist by path
+        Params:
+            obj -- queries for the full object and returns it 
+        """
+        sess = constants.db_session()
+        e = None
+        p = self.__class__
+        if self.path:
+            sess = constants.db_session()
+            e = sess.query(p.id).filter(and_(p.path.ilike("%{}%".format(self.path)))).scalar()
+            sess.close()
+            if not obj:
+                e = e is not None
+        else:
+            log_w("Could not query for page existence because no path was set.")
+        return e
 
 class Title(Base):
     __tablename__ = 'title'
-    name = Column(String, nullable=False, default="")
+    name = Column(String, nullable=False, default="") # OBS: not unique
     language_id = Column(Integer, ForeignKey('language.id'))
     gallery_id = Column(Integer, ForeignKey('gallery.id'), nullable=False)
 
@@ -482,6 +509,7 @@ class Title(Base):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
 
 class GalleryUrl(Base):
     __tablename__ = 'gallery_url'
