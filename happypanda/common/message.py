@@ -3,6 +3,8 @@
 import enum
 import json
 
+from datetime import datetime
+
 from happypanda.common import constants, exceptions
 from happypanda.server.core import db
 
@@ -141,6 +143,10 @@ class DatabaseMessage(CoreMessage):
                 return [self._unpack(x, load_collections) for x in attrib.all()]
             else:
                 return []
+
+        elif isinstance(attrib, datetime):
+            return attrib.timestamp()
+
         elif isinstance(attrib, (bool, int, str)):
             return attrib
         else:
