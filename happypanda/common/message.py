@@ -39,7 +39,7 @@ class CoreMessage:
     def from_json(self, j):
         raise NotImplementedError()
 
-    def serialize(self):
+    def json_friendly(self):
         "Serialize to JSON structure"
         d = self.data()
         assert isinstance(d, dict), "self.data() must return a dict!"
@@ -47,9 +47,9 @@ class CoreMessage:
             d[self._error.key] = self._error.data()
         return {self.key: d}
 
-    def finalize(self):
+    def serialize(self):
         "Serialize this object to bytes"
-        return finalize(self.serialize())
+        return finalize(self.json_friendly())
 
 #class List(CoreMessage):
 #    """
@@ -124,7 +124,7 @@ class DatabaseMessage(CoreMessage):
         gattribs = db.table_attribs(self.item, not load_values)
         return {x: self._unpack(x, gattribs[x], load_collections) for x in gattribs}
 
-    def serialize(self, load_values=False, load_collections=False):
+    def json_friendly(self, load_values=False, load_collections=False):
         """Serialize to JSON structure
         Params:
             load_values -- Queries database for unloaded values
@@ -135,6 +135,14 @@ class DatabaseMessage(CoreMessage):
         if self._error:
             d[self._error.key] = self._error.data()
         return {self.key: d}
+
+    def serialize(self, load_values=False, load_collections=False):
+        """Serialize this object to bytes
+                Params:
+            load_values -- Queries database for unloaded values
+            load_collections -- Queries database to fetch all items in a collection
+        """
+        return finalize(self.json_friendly(load_values, load_collections))
 
     def _unpack(self, name, attrib, load_collections):
         "Helper method to unpack SQLalchemy objects"
