@@ -2,6 +2,8 @@
 
 import enum
 import json
+import sys
+import inspect
 
 from datetime import datetime
 
@@ -49,27 +51,27 @@ class CoreMessage:
         "Serialize this object to bytes"
         return finalize(self.serialize())
 
-class List(CoreMessage):
-    """
-    Encapsulates a list of objects of the same type
-    Note: You must use this in conjunction with other viable CoreMessage derivatives
-    """
+#class List(CoreMessage):
+#    """
+#    Encapsulates a list of objects of the same type
+#    Note: You must use this in conjunction with other viable CoreMessage derivatives
+#    """
 
-    def __init__(self, key, type_):
-        super().__init__(key)
-        self._type = type_
-        self.items = []
+#    def __init__(self, key, type_):
+#        super().__init__(key)
+#        self._type = type_
+#        self.items = []
 
-    def append(self, item):
-        assert isinstance(item, self._type), "item must be a {}".format(self._type)
-        d = item.data() if isinstance(item, CoreMessage) else item
-        self.items.append(d)
+#    def append(self, item):
+#        assert isinstance(item, self._type), "item must be a {}".format(self._type)
+#        d = item.data() if isinstance(item, CoreMessage) else item
+#        self.items.append(d)
 
-    def data(self):
-        return self.items
+#    def data(self):
+#        return self.items
 
-    def from_json(self, j):
-        return super().from_json(j)
+#    def from_json(self, j):
+#        return super().from_json(j)
 
 
 class Message(CoreMessage):
@@ -102,6 +104,10 @@ class Error(CoreMessage):
 
 class DatabaseMessage(CoreMessage):
     "Database item mapper"
+
+    _clsmembers = {x:y for x, y in inspect.getmembers(sys.modules[__name__], inspect.isclass)}
+    _db_clsmembers = inspect.getmembers(db, inspect.isclass)
+
     def __init__(self, key, db_item):
         super().__init__(key)
         assert isinstance(db_item, db.Base)
@@ -116,9 +122,21 @@ class DatabaseMessage(CoreMessage):
         """
         self._check_link()
         gattribs = db.table_attribs(self.item, not load_values)
-        return {x: self._unpack(gattribs[x], load_collections) for x in gattribs}
+        return {x: self._unpack(x, gattribs[x], load_collections) for x in gattribs}
 
-    def _unpack(self, attrib, load_collections):
+    def serialize(self, load_values=False, load_collections=False):
+        """Serialize to JSON structure
+        Params:
+            load_values -- Queries database for unloaded values
+            load_collections -- Queries database to fetch all items in a collection
+        """
+        d = self.data(load_values, load_collections)
+        assert isinstance(d, dict), "self.data() must return a dict!"
+        if self._error:
+            d[self._error.key] = self._error.data()
+        return {self.key: d}
+
+    def _unpack(self, name, attrib, load_collections):
         "Helper method to unpack SQLalchemy objects"
         if attrib is None:
             return
@@ -126,23 +144,35 @@ class DatabaseMessage(CoreMessage):
         # beware lots of recursion
         if db.is_instanced(attrib):
             msg_obj = None
-            if isinstance(attrib, db.Gallery):
-                msg_obj = Gallery(attrib)
-            elif isinstance(attrib, db.Artist):
-                msg_obj = Artist(attrib)
-            else:
-                raise NotImplementedError("Message encapsulation for this database object does not exist ({})".format(type(attrib)))
+            # TODO: get all classes in module, compare name, instance class
+            exclude = (db.NameMixin.__name__,)
+
+            for cls_name, cls_obj in self._db_clsmembers:
+                if not cls_name in exclude:
+                    if isinstance(attrib, cls_obj):
+                        if cls_name in self._clsmembers:
+                            msg_obj = self._clsmembers[cls_name](attrib)
+                            break
+            
+            if not msg_obj:
+                if isinstance(attrib, db.NameMixin):
+                    msg_obj = NameMixin(name, attrib)
+                else:
+                    raise NotImplementedError("Message encapsulation for this database object does not exist ({})".format(type(attrib)))
 
             return msg_obj.data() if msg_obj else None
 
         elif db.is_list(attrib) or isinstance(attrib, list):
-            return [self._unpack(x, load_collections) for x in attrib]
+            return [self._unpack(name, x, load_collections) for x in attrib]
 
         elif db.is_query(attrib):
             if load_collections:
-                return [self._unpack(x, load_collections) for x in attrib.all()]
+                return [self._unpack(name, x, load_collections) for x in attrib.all()]
             else:
                 return []
+
+        elif isinstance(attrib, enum.Enum):
+            return attrib.name
 
         elif isinstance(attrib, datetime):
             return attrib.timestamp()
@@ -169,9 +199,76 @@ class Gallery(DatabaseMessage):
 class Artist(DatabaseMessage):
     "Encapsulates database artist object"
 
-    def __init__(self, db_gallery):
+    def __init__(self, db_item):
         assert isinstance(db_item, db.Artist)
         super().__init__('artist', db_item)
+
+    def from_json(self, j):
+        return super().from_json(j)
+
+class Collection(DatabaseMessage):
+    "Encapsulates database collection object"
+
+    def __init__(self, db_item):
+        assert isinstance(db_item, db.Collection)
+        super().__init__('collection', db_item)
+
+class NameMixin(DatabaseMessage):
+    "Encapsulates database namemixin object"
+
+    def __init__(self, name, db_item):
+        assert isinstance(db_item, db.NameMixin)
+        super().__init__(name, db_item)
+
+    def from_json(self, j):
+        return super().from_json(j)
+
+class Profile(DatabaseMessage):
+    "Encapsulates database profile object"
+
+    def __init__(self, db_item):
+        assert isinstance(db_item, db.Profile)
+        super().__init__('profile', db_item)
+
+    def from_json(self, j):
+        return super().from_json(j)
+
+class Page(DatabaseMessage):
+    "Encapsulates database page object"
+
+    def __init__(self, db_item):
+        assert isinstance(db_item, db.Page)
+        super().__init__('page', db_item)
+
+    def from_json(self, j):
+        return super().from_json(j)
+
+class Title(DatabaseMessage):
+    "Encapsulates database title object"
+
+    def __init__(self, db_item):
+        assert isinstance(db_item, db.Title)
+        super().__init__('title', db_item)
+
+    def from_json(self, j):
+        return super().from_json(j)
+
+class GalleryUrl(DatabaseMessage):
+    "Encapsulates database galleryurl object"
+
+    def __init__(self, db_item):
+        assert isinstance(db_item, db.GalleryUrl)
+        super().__init__('galleryurl', db_item)
+
+    def from_json(self, j):
+        return super().from_json(j)
+
+class List(DatabaseMessage):
+    "Encapsulates database galleryurl object"
+
+    def __init__(self, db_item):
+        assert isinstance(db_item, db.GalleryUrl)
+        super().__init__('galleryurl', db_item)
 
     def from_json(self, j):
         return super().from_json(j)
