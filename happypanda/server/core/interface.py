@@ -1,10 +1,12 @@
+"""
+"""
 from gevent import monkey
-monkey.patch_all()
+monkey.patch_all() # necessary to make these functions play nice with gevent
 import code
 import sys
 
-from happypanda.server.core import db, gallery
-from happypanda.common import constants
+from happypanda.server.core import db
+from happypanda.common import constants, message
 
 
 ## CORE ##
@@ -24,7 +26,7 @@ def fetch_gallery(offset=None, from_gallery_id=None):
         offset -- where to start fetching from, an int
         from_gallery -- which gallery id(index) to start fetching from, an int
     Returns:
-        Gallery objects
+        list of gallery message objects
     """
     pass
 
@@ -36,7 +38,8 @@ def add_gallery(galleries=[], paths=[]):
         Returns: Status
 
         paths -- list of paths to the galleries
-        Returns: Gallery objects
+    Returns:
+        Gallery objects
     """
     pass
 
@@ -48,7 +51,7 @@ def scan_gallery(paths=[], add_after=False, ignore_exist=True):
         add_after -- add found galleries after scan
         ignore_exist -- ignore existing galleries
     Returns:
-        Paths to the galleries
+        list of paths to the galleries
     """
     pass
 

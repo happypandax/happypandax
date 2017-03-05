@@ -10,10 +10,12 @@ from happypanda.common import constants, exceptions, utils, message
 from happypanda.server.core import interface, db
 from happypanda.webclient import main as hweb
 
+_special_functions = ('interactive',) # functions we don't consider as part of the api
+
 class ClientHandler:
     "Handles clients"
 
-    api = [x for x in getmembers(interface, isfunction)] # lsit of tuples: (name, function)
+    api = {x[0] : x[1] for x in getmembers(interface, isfunction) if not x[0] in _special_functions} # {name : object}
 
     def __init__(self, client, address):
         self._client = client
@@ -28,7 +30,7 @@ class ClientHandler:
             client -- 
             msg -- bytes
         """
-        #assert isinstance(client, ...) 
+        #assert isinstance(client, ...)
         assert isinstance(msg, bytes) 
 
         client.sendall(msg)
@@ -45,9 +47,71 @@ class ClientHandler:
         Parse data from client
         Params:
             data -- data from client
-        Returns json dict
+        Returns:
+            list of (function, function_kwargs)
         """
-        pass
+        where = "Message parsing"
+        # TODO: log
+        try:
+            j_data = json.loads(data.decode())
+            # {"name":name, "data":data}
+            root_keys = ('name', 'data')
+            self._check_both(where, "JSON dict", root_keys, j_data)
+               
+            # 'data': [ list of function dicts ]
+            function_keys = ('name',)
+            msg_data = j_data['data'],
+            if isinstance(msg_data, list):
+                function_tuple = []
+                for f in msg_data:
+                    self._check_missing(where, "Function message", function_keys, f)
+
+                    function_name = f['name']
+                    # check function
+                    if not function_name in self.api:
+                        raise exceptions.InvalidMessage(where, "Function not found: '{}'".format(function_name))
+
+                    # check parameters
+                    func_args = tuple(arg for arg in f if not arg in function_keys)
+                    for arg in func_args:
+                        if not arg in self.api[function_name].__code__.co_varnames:
+                            raise exceptions.InvalidMessage(where,"Unexpected argument in function '{}': '{}'".format(function_name,
+                                arg))
+
+                    function_tuple.append((self.api[function_name], {x: f[x] for x in func_args}))
+
+                return function_tuple
+            else:
+                raise exceptions.InvalidMessage(where, "No list of function objects found in 'data'")
+
+        except json.JSONDecodeError as e:
+            raise exceptions.JSONParseError(data, constants.server_name, "{}".format(e.msg))
+
+    def _check_both(self, where, msg, keys, data):
+        "Invokes both missing and unknown key"
+        self._check_missing(where, msg, keys, data)
+        self._check_unknown(where, msg, keys, data)
+
+    def _check_unknown(self, where, msg, keys, data):
+        "Checks if there are unknown keys in provided data"
+        if len(data) != len(keys):
+            self._check_required_key(where, "{} contains unknown key '{}'".format(msg, "{}"), keys, data)
+
+    def _expect_iterable(self, where, data):
+        if not isinstance(data, (list, dict, tuple)):
+            raise exceptions.InvalidMessage(where, "A list/dict was expected, not: {}".format(data))
+
+    def _check_missing(self, where, msg, keys, data):
+        "Check if required keys are missing in provided data"
+        self._check_required_key(where, "{} missing '{}' key".format(msg, "{}"), data, keys)
+
+    def _check_required_key(self, where, msg, required_keys, data):
+        ""
+        for y in (required_keys, data):
+            self._expect_iterable(where, y)
+        for x in data:
+            if not x in required_keys:
+                raise exceptions.InvalidMessage(where, msg.format(x))
 
     def advance(self, buffer):
         """
@@ -56,18 +120,23 @@ class ClientHandler:
             buffer -- data buffer to be parsed
         """
         try:
-            data = self.parse(buffer)
-            pass
+            func, func_args = self.parse(buffer)
+            
 
-
-        except exceptions.JSONParseError as e:
-            pass
+        except exceptions.ServerError as e:
+            self.on_error(e)
 
     def is_active(self):
         """
         Return bool indicating status of client
         """
         return not self._stopped
+
+    def on_error(self, exception):
+        """
+        Creates and sends error message to client
+        """
+        pass
 
 
 class HPServer:

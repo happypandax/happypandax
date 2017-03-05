@@ -213,3 +213,10 @@ class JSONParseError(ClientError, ServerError):
         """init func."""
         pass
         # TODO: init both classs. log json_data.
+
+@error_code(901)
+class InvalidMessage(ServerError):
+    """Invalid message error."""
+
+    pass
+
