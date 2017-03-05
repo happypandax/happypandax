@@ -152,7 +152,7 @@ class DatabaseMessage(CoreMessage):
         # beware lots of recursion
         if db.is_instanced(attrib):
             msg_obj = None
-            # TODO: get all classes in module, compare name, instance class
+
             exclude = (db.NameMixin.__name__,)
 
             for cls_name, cls_obj in self._db_clsmembers:

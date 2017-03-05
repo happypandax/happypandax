@@ -125,7 +125,11 @@ class HPServer:
             utils.eprint("Error: Failed to start server (Port might already be in use)") # include e
 
     def run(self, web=False, interactive=False):
-        "Run the server forever, blocking"
+        """Run the server forever, blocking
+        Params:
+            web -- Start the web server
+            interactive -- Start in interactive mode
+        """
         if web:
             # start webserver
             try:
@@ -139,7 +143,7 @@ class HPServer:
 
         if interactive:
             self._start(False)
-            #interface.interactive()  # doesnt work yet
+            interface.interactive()
         else:
             self._start()
 
