@@ -174,6 +174,7 @@ class GalleryFS:
         self.gallery.path_in_archive = self.path_in_archive
         self.gallery.in_archive = True if self.gallery_type == utils.PathType.Archive else False
         t = db.Title(name=self.title)
+        # TODO: add language to title
         for x in self.gallery.titles:
             if x.name == t.name:
                 t = x
