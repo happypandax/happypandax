@@ -10,13 +10,13 @@ from datetime import datetime
 from happypanda.common import constants, exceptions
 from happypanda.server.core import db
 
-def finalize(js):
-    "Finalize json message before sending"
+def finalize(msg_dict):
+    "Finalize dict message before sending"
     enc = 'utf-8'
     wrap = {
         'name':constants.server_name,
-        'version':[constants.version, str(constants.version_db[0])]}
-    json_data = wrap['data'] = js
+        }
+    json_data = wrap['data'] = msg_dict
 
     return bytes(json.dumps(json_data), enc)
 

@@ -32,9 +32,9 @@
     </div>
     <footer>
         <div class="left">
-            {% for n in g._versions %}
-            <span>{{ n }}: {{ g._versions[n] }}</span>
-            {% endfor %}
+            <span>
+                server connection: {% if g.alive %}alive{% else %}dead{% endif %}
+            </span>
         </div>
         <div class="right">
             {% if g.debug %}

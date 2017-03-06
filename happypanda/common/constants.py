@@ -28,6 +28,12 @@ supported_archives = ('.zip', '.cbz', '.rar', '.cbr')
 
 rarfile.PATH_SEP = '/'
 
+## CORE
+class GalleryFilter(enum.Enum):
+    Library = 0
+    Favorite = 1
+    Inbox = 2
+
 ## DATABASE
 db_session = None
 
@@ -45,4 +51,5 @@ client_limit = None
 postfix = b'end'
 data_size = 1024
 public_server = False
+server_ready = True
 
