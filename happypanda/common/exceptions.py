@@ -26,13 +26,13 @@ class HappypandaError(RuntimeError):
     def __init__(self, msg):
         """init func."""
         super().__init__(msg)
-        f_msg = "[{}]{}: {}".format(self.code, self.__class__.__name__, msg)
+        self.msg = "[{}]{}: {}".format(self.code, self.__class__.__name__, msg)
 
     def log(self):
         "log exception"
         from happypanda.common.utils import eprint  # HACK: check if importing from __init__ works
-        log_e(f_msg)
-        eprint(f_msg)
+        log_e(self.msg)
+        eprint(self.msg)
 
 # ## CORE -- CODE: 100+ ##
 

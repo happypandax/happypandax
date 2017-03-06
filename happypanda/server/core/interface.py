@@ -19,16 +19,32 @@ def interactive():
 
 
 ## GALLERY ##
-def fetch_gallery(offset=None, from_gallery_id=None):
+def fetch_galleries(gallery_ids=[]):
     """
     Fetch galleries from the database.
     Params:
-        offset -- where to start fetching from, an int
-        from_gallery -- which gallery id(index) to start fetching from, an int
+        gallery_ids -- list of gallery id whose corresponding gallery is to be fetched
     Returns:
         list of gallery message objects
     """
-    pass
+    return message.Message("works")
+
+def gallery_view(page=0, gallery_limit=100, search_filter="", list_id=0, gallery_filter=constants.GalleryFilter):
+    """
+    Fetch galleries from the database.
+    Provides pagination.
+    Params:
+        page -- current page
+        gallery_limit -- amount of galleries per page
+        search_filter -- filter gallery by search terms
+        list_id -- current gallery list id
+        inbox -- only fetch galleries from inbox
+        gallery_filter -- ...
+    Returns:
+        list of gallery message objects
+    """
+
+    return message.Message("works")
 
 def add_gallery(galleries=[], paths=[]):
     """
@@ -41,7 +57,7 @@ def add_gallery(galleries=[], paths=[]):
     Returns:
         Gallery objects
     """
-    pass
+    return message.Message("works")
 
 def scan_gallery(paths=[], add_after=False, ignore_exist=True):
     """
@@ -53,6 +69,27 @@ def scan_gallery(paths=[], add_after=False, ignore_exist=True):
     Returns:
         list of paths to the galleries
     """
-    pass
+    return message.Message("works")
 
 
+## 
+def set_settings(set_dict={}):
+    """
+    Set settings
+    Params:
+        set_dict -- a dictionary containing key:value pairs :D
+    Returns:
+        Status
+    """
+    return message.Message("works")
+
+def get_settings(set_list=[]):
+    """
+    Set settings
+    Use setting key 'all' to fetch all setting key:values
+    Params:
+        set_list -- a list of setting keys
+    Returns:
+        dict of setting_key:value
+    """
+    return message.Message("works")

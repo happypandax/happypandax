@@ -60,7 +60,7 @@ class ClientHandler:
                
             # 'data': [ list of function dicts ]
             function_keys = ('name',)
-            msg_data = j_data['data'],
+            msg_data = j_data['data']
             if isinstance(msg_data, list):
                 function_tuple = []
                 for f in msg_data:
@@ -75,7 +75,8 @@ class ClientHandler:
                     func_args = tuple(arg for arg in f if not arg in function_keys)
                     for arg in func_args:
                         if not arg in self.api[function_name].__code__.co_varnames:
-                            raise exceptions.InvalidMessage(where,"Unexpected argument in function '{}': '{}'".format(function_name,
+                            raise exceptions.InvalidMessage(where,"Unexpected argument in function '{}': '{}'".format(
+                                function_name,
                                 arg))
 
                     function_tuple.append((self.api[function_name], {x: f[x] for x in func_args}))
@@ -120,10 +121,14 @@ class ClientHandler:
             buffer -- data buffer to be parsed
         """
         try:
-            func, func_args = self.parse(buffer)
-            
-
-        except exceptions.ServerError as e:
+            if constants.server_ready:
+                func, func_args = self.parse(buffer)
+                msg = func(**func_args)
+                assert isinstance(msg, message.CoreMessage)
+                self.send(msg.finalize())
+            else:
+                self.on_wait()
+        except exceptions.CoreError as e:
             self.on_error(e)
 
     def is_active(self):
@@ -136,8 +141,15 @@ class ClientHandler:
         """
         Creates and sends error message to client
         """
-        pass
+        assert isinstance(exception, exceptions.CoreError)
+        e = message.Error(exception.code, exception.msg)
+        self.send(e.serialize())
 
+    def on_wait(self):
+        """
+        Sends wait message to client
+        """
+        self.send(message.Message("wait"))
 
 class HPServer:
     "Happypanda Server"
@@ -184,11 +196,11 @@ class HPServer:
 
         try:
             if blocking:
-                print("Starting server... (blocking)")
+                print("Starting server... (Port: {}) (blocking)".format(constants.local_port))
                 self._server.serve_forever()
             else:
                 self._server.start()
-                print("Server successfully started")
+                print("Server successfully started (Port: {})".format(constants.local_port))
         except socket.error as e:
             # log error
             utils.eprint("Error: Failed to start server (Port might already be in use)") # include e
@@ -197,24 +209,25 @@ class HPServer:
         """Run the server forever, blocking
         Params:
             web -- Start the web server
-            interactive -- Start in interactive mode
+            interactive -- Start in interactive mode (Note: Does not work with web server)
         """
+        self._start(not (web or interactive))
+
         if web:
             # start webserver
             try:
-                hweb.socketio.run(hweb.happyweb, *utils.connection_params(web=True), block=False)
+                print("Web server successfully starting... (Port: {}) {}".format(constants.web_port, "(blocking)" if not interactive else ""))
+                # OBS: will trigger a harmless socket.error when debug=True (stuff still works)
+                hweb.socketio.run(hweb.happyweb, *utils.connection_params(web=True), block=not interactive, debug=constants.debug)
                 # log
-                print("Web server successfully started")
+                print("Web server successfully started (Port: {})".format(constants.web_port))
             except socket.error as e:
                 # log error
                 utils.eprint("Error: Failed to start web server (Port might already be in use)") #include e
         
 
         if interactive:
-            self._start(False)
             interface.interactive()
-        else:
-            self._start()
 
         # log server shutduown
         print("Server shutting down.")
