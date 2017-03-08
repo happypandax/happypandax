@@ -3,11 +3,37 @@
     padding: 0;
 }
 
+@font-face {
+    font-family: Roboto;
+    src: url(/static/font/Roboto/Roboto-Regular.woff);
+}
+
+@font-face {
+    font-family: Roboto-Bold;
+    src: url(/static/font/Roboto/Roboto-Bold.woff);
+}
+
+@font-face {
+    font-family: Roboto-Light;
+    src: url(/static/font/Roboto/Roboto-Light.woff);
+}
+
+@font-face {
+    font-family: Roboto-Medium;
+    src: url(/static/font/Roboto/Roboto-Medium.woff);
+}
+
+@font-face {
+    font-family: Roboto-Thin;
+    src: url(/static/font/Roboto/Roboto-Thin.woff);
+}
+
 body {
     width: 80%;
     margin: auto;
     background-color: rgba(0, 0, 0, 0.1);
     color: #1b1b1b;
+    font-family: Roboto;
 }
 
 
