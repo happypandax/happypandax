@@ -4,7 +4,6 @@ from inspect import getmembers, isfunction
 
 from gevent import socket, pool, queue
 from gevent.server import StreamServer
-from gevent.wsgi import WSGIServer
 
 from happypanda.common import constants, exceptions, utils, message
 from happypanda.server.core import interface, db
@@ -201,7 +200,7 @@ class HPServer:
             else:
                 self._server.start()
                 print("Server successfully started (Port: {})".format(constants.local_port))
-        except socket.error as e:
+        except (socket.error, OSError) as e:
             # log error
             utils.eprint("Error: Failed to start server (Port might already be in use)") # include e
 
@@ -221,7 +220,7 @@ class HPServer:
                 hweb.socketio.run(hweb.happyweb, *utils.connection_params(web=True), block=not interactive, debug=constants.debug)
                 # log
                 print("Web server successfully started (Port: {})".format(constants.web_port))
-            except socket.error as e:
+            except (socket.error, OSError) as e:
                 # log error
                 utils.eprint("Error: Failed to start web server (Port might already be in use)") #include e
         

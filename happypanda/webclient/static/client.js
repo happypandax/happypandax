@@ -1,13 +1,21 @@
 ﻿$(document).ready(function () {
-    function testConnection (msg) {
-        console.log("Connection to server is alive: " + msg.status);
-        if (!msg.status) {
+    function server_connection(status) {
+        var text = status ? "Connected" : "Disconnected";
+        console.log("Server connection: " + text);
+        var el = $("#serverstat")
+        if (status) {
+            el.text("server connection: connected")
+        } else {
             $("#global").append("<div class='red'>Disconnected from server</div>");
+            el.text("server connection: disconnected")
         }
     }
 
-    var socket = io.connect("http://" + document.domain + ":" + location.port);
+    var socket = io.connect({ transports: ["websocket"] }); // force websocket
+
+    // handlers
+
     socket.on("connection", function (msg) {
-        testConnection(msg)
+        server_connection(msg.status)
     });
 });
