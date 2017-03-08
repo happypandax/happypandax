@@ -1,6 +1,6 @@
 ﻿"""views module."""
 from flask import (render_template, g)
-from flask_socketio import emit
+from happy_socketio import emit
 from happypanda.webclient.main import happyweb, client, socketio
 from happypanda.common import constants, utils
 
@@ -23,10 +23,10 @@ def index():
     """index func."""
     return render_template('index.html')
 
-#@socketio.on('connect')
-#def test_connection():
-#    "Tests connection with server"
-#    status = client.alive()
-#    socketio.emit("connection", {"status": status})
+@socketio.on('connect')
+def test_connection():
+    "Tests connection with server"
+    status = client.alive()
+    socketio.emit("connection", {"status": status})
     
 

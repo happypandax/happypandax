@@ -38,7 +38,6 @@ def gallery_view(page=0, gallery_limit=100, search_filter="", list_id=0, gallery
         gallery_limit -- amount of galleries per page
         search_filter -- filter gallery by search terms
         list_id -- current gallery list id
-        inbox -- only fetch galleries from inbox
         gallery_filter -- ...
     Returns:
         list of gallery message objects

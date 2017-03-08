@@ -125,7 +125,7 @@ class ClientHandler:
                 func, func_args = self.parse(buffer)
                 msg = func(**func_args)
                 assert isinstance(msg, message.CoreMessage)
-                self.send(msg.finalize())
+                self.send(msg.serialize())
             else:
                 self.on_wait()
         except exceptions.CoreError as e:
@@ -149,7 +149,7 @@ class ClientHandler:
         """
         Sends wait message to client
         """
-        self.send(message.Message("wait"))
+        self.send(message.Message("wait").serialize())
 
 class HPServer:
     "Happypanda Server"

@@ -254,7 +254,7 @@ gallery_lists = Table('gallery_lists', Base.metadata,
 
 list_profiles = profile_association("list")
 
-class List(ProfileMixin, NameMixin, Base):
+class GalleryList(ProfileMixin, NameMixin, Base):
     __tablename__ = 'list'
     filter = Column(String, nullable=False, default='')
     enforce = Column(Boolean, nullable=False, default=False)
@@ -375,7 +375,7 @@ class Gallery(ProfileMixin, Base):
     type = relationship("GalleryType", back_populates="galleries", cascade="save-update, merge, refresh-expire")
     circles = relationship("Circle", secondary=gallery_circles, back_populates='galleries', lazy="joined", cascade="save-update, merge, refresh-expire")
     artists = relationship("Artist", secondary=gallery_artists, back_populates='galleries', lazy="joined", cascade="save-update, merge, refresh-expire")
-    lists = relationship("List", secondary=gallery_lists, back_populates='galleries', lazy="dynamic")
+    lists = relationship("GalleryList", secondary=gallery_lists, back_populates='galleries', lazy="dynamic")
     pages = relationship("Page", back_populates="gallery", lazy='dynamic', cascade="all,delete-orphan")
     titles = relationship("Title", back_populates="gallery", lazy='joined', cascade="all,delete-orphan")
     tags = relationship("NamespaceTags", secondary=gallery_tags, lazy="dynamic")
