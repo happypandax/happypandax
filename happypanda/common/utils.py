@@ -27,6 +27,10 @@ class PathType(enum.Enum):
 
         return PathType.Invalid
 
+def setup_dirs():
+    "Creates directories at the specified root path"
+    pass
+
 def connection_params(web=False):
     "Retrieve host and port"
     if web:

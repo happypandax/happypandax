@@ -69,3 +69,22 @@ class Client:
         self._alive = False
         self._sock.close()
 
+
+class FunctionInvoke(message.CoreMessage):
+    "A function invoker message"
+
+    def __init__(self, fname, **kwargs):
+        super().__init__('function')
+        assert isinstance(fname, str)
+        self.name = fname
+        self._kwargs = kwargs
+
+    def add_kwargs(self, **kwargs):
+        ""
+        self._kwargs.update(kwargs)
+
+    def data(self):
+        d = {'fname':self.name}
+        d.update(self._kwargs)
+        return d
+
