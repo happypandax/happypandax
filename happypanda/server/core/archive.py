@@ -54,7 +54,15 @@ class ArchiveFile():
             raise exceptions.CreateArchiveError(filepath, e)
 
     def namelist(self):
-        filelist = self.archive.namelist()
+        filelist= []
+        for x in self.archive.namelist():
+            try:
+                filelist.append(x[:(x.rindex('/')+1)])
+            except ValueError:
+                pass
+            filelist.append(x)
+        seen = set()
+        filelist = [x for x in filelist if x not in seen and not seen.add(x)]
         return filelist
 
     def is_dir(self, name):
