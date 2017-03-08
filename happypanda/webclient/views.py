@@ -24,9 +24,10 @@ def index():
     return render_template('index.html')
 
 @socketio.on('connect')
-def test_connection():
+def serv_connection():
     "Tests connection with server"
     status = client.alive()
     socketio.emit("connection", {"status": status})
+    
     
 
