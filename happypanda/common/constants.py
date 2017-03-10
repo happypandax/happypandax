@@ -1,7 +1,6 @@
 ﻿import os
 import rarfile
 import enum
-from socket import gethostname
 
 debug = True # TODO: arg switch
 
@@ -45,8 +44,8 @@ class HistoryAction(enum.Enum):
 server_name = 'server'
 local_port = 5577
 web_port = local_port + 1
-localhost = False
-host = "localhost" if localhost else gethostname()
+localhost = False # localhost only
+host = "localhost" if localhost else ""
 client_limit = None
 postfix = b'end'
 data_size = 1024

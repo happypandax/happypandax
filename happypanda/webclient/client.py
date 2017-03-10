@@ -11,7 +11,7 @@ class Client:
 
     def __init__(self, name):
         self.name = name
-        self._server = (constants.host, constants.local_port)
+        self._server = utils.connection_params()
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._alive = False
 
