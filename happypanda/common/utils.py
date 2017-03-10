@@ -4,7 +4,7 @@ import enum
 import os
 import socket
 
-from happypanda.common import constants, exceptions
+from happypanda.common import constants, exceptions, upnp
 
 def eprint(*args, **kwargs):
     "Prints to stderr"
@@ -35,16 +35,22 @@ def setup_dirs():
 def connection_params(web=False):
     "Retrieve host and port"
     host = constants.host
+
+    ## do a portfoward
+    #if constants.public_server:
+    #    try:
+    #        upnp.ask_to_open_port(constants.local_port, "Happypanda X Server", protos=('TCP',))
+    #        upnp.ask_to_open_port(constants.web_port, "Happypanda X Web Server", protos=('TCP',))
+    #    except upnp.UpnpError as e:
+    #        constants.public_server = False
+    #        # log
+    #        # inform user
+
     if web:
         params = (host, constants.web_port)
         return params
     else:
-        if constants.public_server:
-            # TODO: finish this
-            # Note: upnpc
-            raise NotImplementedError
-        else:
-            params = (host, constants.local_port)
+        params = (host, constants.local_port)
         return params
 
 ## SERVER ##
@@ -52,7 +58,9 @@ def connection_params(web=False):
 def convert_to_json(buffer, name):
     ""
     try:
-        json_data = json.loads(buffer[:-len(constants.postfix)].decode('utf-8')) # slice 'end' off
+        if buffer.endswith(constants.postfix):
+            buffer = buffer[:-len(constants.postfix)].decode('utf-8') # slice 'end' off
+        json_data = json.loads(buffer)
     except json.JSONDecodeError as e:
         raise exceptions.JSONParseError(buffer, name, "Failed parsing json data: {}".format(e))
     return json_data

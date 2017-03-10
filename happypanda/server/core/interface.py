@@ -72,7 +72,7 @@ def scan_gallery(paths=[], add_after=False, ignore_exist=True):
 
 
 ## 
-def set_settings(set_dict={}):
+def set_settings(namespace, set_dict={}):
     """
     Set settings
     Params:
@@ -82,7 +82,7 @@ def set_settings(set_dict={}):
     """
     return message.Message("works")
 
-def get_settings(set_list=[]):
+def get_settings(namespace, set_list=[]):
     """
     Set settings
     Use setting key 'all' to fetch all setting key:values

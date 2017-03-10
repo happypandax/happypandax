@@ -10,15 +10,15 @@ from datetime import datetime
 from happypanda.common import constants, exceptions
 from happypanda.server.core import db
 
-def finalize(msg_dict):
+def finalize(msg_dict, name=constants.server_name):
     "Finalize dict message before sending"
     enc = 'utf-8'
-    wrap = {
-        'name':constants.server_name,
+    msg = {
+        'name':name,
+        'data':msg_dict
         }
-    json_data = wrap['data'] = msg_dict
 
-    return bytes(json.dumps(json_data), enc)
+    return bytes(json.dumps(msg), enc)
 
 class CoreMessage:
     "Encapsulates return values from methods in the interface module"
@@ -33,7 +33,7 @@ class CoreMessage:
         self._error = e
 
     def data(self):
-        "Implement in subclass. Must return a dict if intended to be serializable."
+        "Implement in subclass. Must return a dict or list if intended to be serializable."
         raise NotImplementedError()
 
     def from_json(self, j):
@@ -42,36 +42,43 @@ class CoreMessage:
     def json_friendly(self):
         "Serialize to JSON structure"
         d = self.data()
-        assert isinstance(d, dict), "self.data() must return a dict!"
+        assert isinstance(d, (dict, list)), "self.json_friendly() must return a dict or list!"
         if self._error:
             d[self._error.key] = self._error.data()
         return {self.key: d}
 
-    def serialize(self):
+    def serialize(self, name=constants.server_name):
         "Serialize this object to bytes"
-        return finalize(self.json_friendly())
+        return finalize(self.json_friendly(), name)
 
-#class List(CoreMessage):
-#    """
-#    Encapsulates a list of objects of the same type
-#    Note: You must use this in conjunction with other viable CoreMessage derivatives
-#    """
+class List(CoreMessage):
+    """
+    Encapsulates a list of objects of the same type
+    """
 
-#    def __init__(self, key, type_):
-#        super().__init__(key)
-#        self._type = type_
-#        self.items = []
+    def __init__(self, key, type_):
+        super().__init__(key)
+        self._type = type_
+        self.items = []
 
-#    def append(self, item):
-#        assert isinstance(item, self._type), "item must be a {}".format(self._type)
-#        d = item.data() if isinstance(item, CoreMessage) else item
-#        self.items.append(d)
+    def append(self, item):
+        assert isinstance(item, self._type), "item must be a {}".format(self._type)
+        d = item.data() if isinstance(item, CoreMessage) else item
+        self.items.append(d)
 
-#    def data(self):
-#        return self.items
+    def data(self):
+        return self.items
 
-#    def from_json(self, j):
-#        return super().from_json(j)
+    def from_json(self, j):
+        return super().from_json(j)
+
+    def serialize(self, name=constants.server_name, include_key=False):
+        "Serialize this object to bytes"
+        if include_key:
+            f = self.json_friendly
+        else:
+            f = self.data
+        return finalize(f(), name)
 
 
 class Message(CoreMessage):
@@ -92,7 +99,9 @@ class Error(CoreMessage):
 
     def __init__(self, error, msg):
         super().__init__('error')
-        assert isinstance(msg, Message)
+        assert isinstance(msg, (Message, str))
+        if isinstance(msg, str):
+            msg = Message(msg)
         self.error = error
         self.msg = msg
 
@@ -288,11 +297,11 @@ class Function(CoreMessage):
         super().__init__('function')
         assert isinstance(fname, str)
         self.name = fname
-        self._data = data
+        self.set_data(data)
 
     def set_data(self, d):
         ""
-        assert isinstance(d, CoreMessage)
+        assert isinstance(d, (CoreMessage, None))
         self._data = d
 
     def data(self):
