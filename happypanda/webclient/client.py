@@ -2,6 +2,23 @@ import socket
 
 from happypanda.common import constants, exceptions, utils, message
 
+def call_on_server(client, func_name, **kwargs):
+    """Call function on server
+    Params:
+        client -- A Client instance
+        func_name -- name of function
+        **kwargs -- additional function arguments
+    Returns:
+        whatever message was returned by the function
+    """
+    assert isinstance(client, Client)
+    assert isinstance(func_name, str)
+
+    func_list = message.List("function", FunctionInvoke)
+    func_list.append(FunctionInvoke(func_name, **kwargs))
+    func_data = client.communicate(func_list)
+    return func_data
+
 class Client:
     """A common wrapper for communicating with server.
 
@@ -58,7 +75,7 @@ class Client:
 
         # log send
         if self._alive:
-            self._sock.sendall(msg.serialize())
+            self._sock.sendall(msg.serialize(self.name))
             self._sock.sendall(constants.postfix)
             return self._recv()
         else:

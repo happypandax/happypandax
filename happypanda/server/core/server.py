@@ -51,41 +51,37 @@ class ClientHandler:
         """
         where = "Message parsing"
         # TODO: log
-        try:
-            j_data = json.loads(data.decode())
-            # {"name":name, "data":data}
-            root_keys = ('name', 'data')
-            self._check_both(where, "JSON dict", root_keys, j_data)
+        j_data = utils.convert_to_json(data, where)
+        # {"name":name, "data":data}
+        root_keys = ('name', 'data')
+        self._check_both(where, "JSON dict", root_keys, j_data)
                
-            # 'data': [ list of function dicts ]
-            function_keys = ('name',)
-            msg_data = j_data['data']
-            if isinstance(msg_data, list):
-                function_tuple = []
-                for f in msg_data:
-                    self._check_missing(where, "Function message", function_keys, f)
+        # 'data': [ list of function dicts ]
+        function_keys = ('fname',)
+        msg_data = j_data['data']
+        if isinstance(msg_data, list):
+            function_tuples = []
+            for f in msg_data:
+                self._check_missing(where, "Function message", function_keys, f)
 
-                    function_name = f['name']
-                    # check function
-                    if not function_name in self.api:
-                        raise exceptions.InvalidMessage(where, "Function not found: '{}'".format(function_name))
+                function_name = f['fname']
+                # check function
+                if not function_name in self.api:
+                    raise exceptions.InvalidMessage(where, "Function not found: '{}'".format(function_name))
 
-                    # check parameters
-                    func_args = tuple(arg for arg in f if not arg in function_keys)
-                    for arg in func_args:
-                        if not arg in self.api[function_name].__code__.co_varnames:
-                            raise exceptions.InvalidMessage(where,"Unexpected argument in function '{}': '{}'".format(
-                                function_name,
-                                arg))
+                # check parameters
+                func_args = tuple(arg for arg in f if not arg in function_keys)
+                for arg in func_args:
+                    if not arg in self.api[function_name].__code__.co_varnames:
+                        raise exceptions.InvalidMessage(where,"Unexpected argument in function '{}': '{}'".format(
+                            function_name,
+                            arg))
 
-                    function_tuple.append((self.api[function_name], {x: f[x] for x in func_args}))
+                function_tuples.append((self.api[function_name], {x: f[x] for x in func_args}))
 
-                return function_tuple
-            else:
-                raise exceptions.InvalidMessage(where, "No list of function objects found in 'data'")
-
-        except json.JSONDecodeError as e:
-            raise exceptions.JSONParseError(data, constants.server_name, "{}".format(e.msg))
+            return function_tuples
+        else:
+            raise exceptions.InvalidMessage(where, "No list of function objects found in 'data'")
 
     def _check_both(self, where, msg, keys, data):
         "Invokes both missing and unknown key"
@@ -121,10 +117,13 @@ class ClientHandler:
         """
         try:
             if constants.server_ready:
-                func, func_args = self.parse(buffer)
-                msg = func(**func_args)
-                assert isinstance(msg, message.CoreMessage)
-                self.send(msg.serialize())
+                function_list = message.List("function", message.Function)
+                functions = self.parse(buffer)
+                for func, func_args in functions:
+                    msg = func(**func_args)
+                    assert isinstance(msg, message.CoreMessage)
+                    function_list.append(message.Function(func.__name__, msg))
+                self.send(function_list.serialize())
             else:
                 self.on_wait()
         except exceptions.CoreError as e:
