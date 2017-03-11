@@ -6,7 +6,7 @@
 Documentation
 ========================================
 
-This is a description
+This is project is under heavy development and is not ready for deployment
 
 Getting Happypanda X
 ----------------------------------------
