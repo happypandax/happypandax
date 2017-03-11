@@ -2,7 +2,7 @@ import os
 from shutil import move
 from subprocess import run
 
-run(["sphinx-build", "-b html", "docs/source", "docs/build"])
+run(["sphinx-build", "-b", "html", "docs/source", "docs/build"])
 
 if os.path.exists("docs/build"):
     b_dir = list(os.scandir("docs/build"))
