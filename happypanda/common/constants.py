@@ -29,8 +29,11 @@ rarfile.PATH_SEP = '/'
 
 ## CORE
 class GalleryFilter(enum.Enum):
+    #: Library
     Library = 0
+    #: Favourite
     Favorite = 1
+    #: Inbox
     Inbox = 2
 
 ## DATABASE

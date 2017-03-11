@@ -3,18 +3,26 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Happypanda X's documentation!
+Documentation
 ========================================
 
+This is a description
+
+Getting Happypanda X
+----------------------------------------
+
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+	:maxdepth: 2
 
+	install
+	usage
 
+For developers
+----------------------------------------
 
-Indices and tables
-==================
+.. toctree::
+	:maxdepth: 2
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+	env
+	client
+	api
