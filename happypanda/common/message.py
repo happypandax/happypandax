@@ -42,7 +42,7 @@ class CoreMessage:
     def json_friendly(self):
         "Serialize to JSON structure"
         d = self.data()
-        assert isinstance(d, (dict, list)), "self.json_friendly() must return a dict or list!"
+        assert isinstance(d, (dict, list)), "self.data() must return a dict or list!"
         if self._error:
             d[self._error.key] = self._error.data()
         return {self.key: d}
