@@ -1,0 +1,300 @@
+<!DOCTYPE html><html>
+<head>
+    <meta http-equiv="Content-Type"
+          content="text/html; charset=utf-8"/>
+    
+        <title>happypanda.server.core.interface &mdash; Happypanda X 0.0.1 documentation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href='http://fonts.googleapis.com/css?family=Crete+Round' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="../../../../_static/sphinx-bootstrap.css" type="text/css"/>
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css"/>
+    <!-- Le HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+        <script type="text/javascript">
+            var DOCUMENTATION_OPTIONS = {
+                URL_ROOT:'../../../../',
+                VERSION:'0.0.1',
+                COLLAPSE_INDEX:false,
+                FILE_SUFFIX:'.html',
+                HAS_SOURCE:  true
+            };
+        </script>
+            <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+            <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+            <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+            <script type="text/javascript" src="../../../../_static/bootstrap-dropdown.js"></script>
+            <link rel="index" title="Index"
+                  href="../../../../genindex.html"/>
+            <link rel="search" title="Search" href="../../../../search.html"/>
+        <link rel="top" title="Happypanda X 0.0.1 documentation" href="../../../../index.html"/>
+            <link rel="up" title="Module code" href="../../../index.html"/> 
+    <script type="text/javascript" src="https://apis.google.com/js/plusone.js"></script>
+    
+</head>
+<body>
+
+    <div class="navbar navbar-static-top">
+        <div class="navbar-inner">
+            <div class="container">
+
+    <div class="related">
+        <ul class="nav">
+                <li class=""><a class="brand" href="../../../../index.html">Happypanda X</a></li>
+                <li>
+                    <a href="../../../../genindex.html"
+                       title="General Index" accesskey="I">index</a>
+                </li>
+                <li>
+                    <a href="../../../../py-modindex.html"
+                       title="Python Module Index" >modules</a>
+                </li>
+                <li><a href="../../../index.html"
+                        accesskey="U">Module code</a>
+                </li> 
+        </ul>
+    </div>
+                <div class="pull-right">
+                    
+        <form class="navbar-search" action="../../../../search.html"
+              method="get">
+            <input type="text" name="q" placeholder="search"/>
+            <input type="hidden" name="check_keywords" value="yes"/>
+            <input type="hidden" name="area" value="default"/>
+        </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+<ul class="quick-links">
+    <li><strong>Quick links</strong></li>
+    <li>
+        <a href="https://github.com/pewpews/happypandax/">GitHub</a>
+    </li>
+    <li>
+        <a href="https://github.com/pewpews/happypandax/issues?state=open">Issues</a>
+    </li>
+    <li class="divider">&middot;</li>
+    <li>
+        <iframe class="github-btn"
+                src="http://ghbtns.com/github-btn.html?user=pewpews&repo=happypandax&type=watch&count=true"
+                allowtransparency="true" frameborder="0" scrolling="0"
+                width="110px" height="20px"></iframe>
+    </li>
+    <li>
+        <iframe class="github-btn"
+                src="http://ghbtns.com/github-btn.html?user=pewpews&repo=happypandax&type=fork&count=true"
+                allowtransparency="true" frameborder="0" scrolling="0"
+                width="94px" height="20px"></iframe>
+    </li>
+
+    <li class="divider">&middot;</li>
+    <li class="follow-btn">
+        <a href="https://twitter.com/pewspew"
+           class="twitter-follow-button" data-width="145px"
+           data-link-color="#0069D6" data-show-count="false">Follow
+            @pewspew</a>
+    </li>
+    <li class="tweet-btn">
+        <a href="https://twitter.com/share" class="twitter-share-button"
+           data-url="http://pewpew.moe" data-count="horizontal"
+           data-via="twbootstrap"
+           data-related="pewspew:Creator of Happypanda X">Tweet</a>
+    </li>
+    <li class="plusone-container">
+        <g:plusone size="medium"></g:plusone>
+    </li>
+</ul>  
+    <div class="container">
+        <div class="content row">
+                <div class="span9">
+                    
+  <h1>Source code for happypanda.server.core.interface</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">gevent</span> <span class="k">import</span> <span class="n">monkey</span>
+<span class="n">monkey</span><span class="o">.</span><span class="n">patch_all</span><span class="p">()</span> <span class="c1"># necessary to make these functions play nice with gevent</span>
+<span class="kn">import</span> <span class="nn">code</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="kn">from</span> <span class="nn">happypanda.server.core</span> <span class="k">import</span> <span class="n">db</span>
+<span class="kn">from</span> <span class="nn">happypanda.common</span> <span class="k">import</span> <span class="n">constants</span><span class="p">,</span> <span class="n">message</span>
+
+
+<span class="c1">## CORE ##</span>
+<div class="viewcode-block" id="interactive"><a class="viewcode-back" href="../../../../api.html#happypanda.server.core.interface.interactive">[docs]</a><span class="k">def</span> <span class="nf">interactive</span><span class="p">():</span>
+    <span class="s2">&quot;test&quot;</span>
+    <span class="n">code</span><span class="o">.</span><span class="n">interact</span><span class="p">(</span><span class="n">banner</span><span class="o">=</span><span class="s2">&quot;======== Start Happypanda Interactive ========&quot;</span><span class="p">,</span> <span class="n">local</span><span class="o">=</span><span class="nb">globals</span><span class="p">())</span></div>
+
+<span class="c1">## DATABASE ##</span>
+
+
+
+<span class="c1">## GALLERY ##</span>
+<div class="viewcode-block" id="fetch_galleries"><a class="viewcode-back" href="../../../../api.html#happypanda.server.core.interface.fetch_galleries">[docs]</a><span class="k">def</span> <span class="nf">fetch_galleries</span><span class="p">(</span><span class="n">gallery_ids</span><span class="o">=</span><span class="p">[]):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Fetch galleries from the database.</span>
+
+<span class="sd">    Params:</span>
+<span class="sd">        - gallery_ids -- list of gallery id whose corresponding gallery is to be fetched</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        list of gallery message objects</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Message</span><span class="p">(</span><span class="s2">&quot;works&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="gallery_view"><a class="viewcode-back" href="../../../../api.html#happypanda.server.core.interface.gallery_view">[docs]</a><span class="k">def</span> <span class="nf">gallery_view</span><span class="p">(</span><span class="n">page</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">gallery_limit</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">search_filter</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">list_id</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">gallery_filter</span><span class="o">=</span><span class="n">constants</span><span class="o">.</span><span class="n">GalleryFilter</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Fetch galleries from the database.</span>
+<span class="sd">    Provides pagination.</span>
+
+<span class="sd">    Params:</span>
+<span class="sd">        - page -- current page</span>
+<span class="sd">        - gallery_limit -- amount of galleries per page</span>
+<span class="sd">        - search_filter -- filter gallery by search terms</span>
+<span class="sd">        - list_id -- current gallery list id</span>
+<span class="sd">        - gallery_filter -- ...</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        list of gallery message objects</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Message</span><span class="p">(</span><span class="s2">&quot;works&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="add_gallery"><a class="viewcode-back" href="../../../../api.html#happypanda.server.core.interface.add_gallery">[docs]</a><span class="k">def</span> <span class="nf">add_gallery</span><span class="p">(</span><span class="n">galleries</span><span class="o">=</span><span class="p">[],</span> <span class="n">paths</span><span class="o">=</span><span class="p">[]):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Add galleries to the database.</span>
+
+<span class="sd">    Params:</span>
+<span class="sd">        - galleries -- list of gallery objects parsed from XML</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                Status</span>
+
+<span class="sd">        - paths -- list of paths to the galleries</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Gallery objects</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Message</span><span class="p">(</span><span class="s2">&quot;works&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="scan_gallery"><a class="viewcode-back" href="../../../../api.html#happypanda.server.core.interface.scan_gallery">[docs]</a><span class="k">def</span> <span class="nf">scan_gallery</span><span class="p">(</span><span class="n">paths</span><span class="o">=</span><span class="p">[],</span> <span class="n">add_after</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">ignore_exist</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Scan folders for galleries</span>
+
+<span class="sd">    Params:</span>
+<span class="sd">        - paths -- list of paths to folders to scan for galleries</span>
+<span class="sd">        - add_after -- add found galleries after scan</span>
+<span class="sd">        - ignore_exist -- ignore existing galleries</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        list of paths to the galleries</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Message</span><span class="p">(</span><span class="s2">&quot;works&quot;</span><span class="p">)</span></div>
+
+
+<span class="c1">## </span>
+<div class="viewcode-block" id="set_settings"><a class="viewcode-back" href="../../../../api.html#happypanda.server.core.interface.set_settings">[docs]</a><span class="k">def</span> <span class="nf">set_settings</span><span class="p">(</span><span class="n">namespace</span><span class="p">,</span> <span class="n">set_dict</span><span class="o">=</span><span class="p">{}):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Set settings</span>
+
+<span class="sd">    Params:</span>
+<span class="sd">        - set_dict -- a dictionary containing key:value pairs :D</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Status</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Message</span><span class="p">(</span><span class="s2">&quot;works&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="get_settings"><a class="viewcode-back" href="../../../../api.html#happypanda.server.core.interface.get_settings">[docs]</a><span class="k">def</span> <span class="nf">get_settings</span><span class="p">(</span><span class="n">namespace</span><span class="p">,</span> <span class="n">set_list</span><span class="o">=</span><span class="p">[]):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Set settings</span>
+<span class="sd">    Use setting key &#39;all&#39; to fetch all setting key:values</span>
+
+<span class="sd">    Params:</span>
+<span class="sd">        - set_list -- a list of setting keys</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict of setting_key:value</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Message</span><span class="p">(</span><span class="s2">&quot;works&quot;</span><span class="p">)</span></div>
+</pre></div>
+
+                    
+                        <div id="disqus_thread"></div>
+                        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+                    
+                </div>
+                <div class="span3">
+                    
+        <div class="sphinxsidebar">
+            <div class="sphinxsidebarwrapper">
+            </div>
+        </div>
+                </div>
+            
+        </div>
+    </div>
+    <div class="footer">
+        
+        <div class="container">
+                    &copy;
+                        Copyright 2017, Pewpew.
+                Created using <a
+                        href="http://sphinx.pocoo.org/">Sphinx</a> 1.5.2
+                    .
+                Theme <a href="https://github.com/scotch/sphinx-bootstrap">Sphinx-Bootstrap</a>
+                adapted from
+                <a href="http://twitter.github.com/bootstrap/">Twitter's
+                    Bootstrap</a> by <a href="http://www.scotchmedia.com">Scotch
+                Media</a>
+        </div>
+    </div>
+
+
+    <!-- disqus -->
+    <script type="text/javascript">
+        var disqus_title = 'happypanda.server.core.interface &mdash; Happypanda X 0.0.1 documentation';
+        var disqus_identifier ='code' + '.' + "pewpews" + window.location.pathname.replace('/', '.');
+    </script>
+
+    <script type="text/javascript">
+        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+        var disqus_shortname = "pewpews"; // required: replace example with your forum shortname
+
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+
+
+<script type="text/javascript">
+    $('.nav .active').on('click', function () {
+        e.preventDefault()
+        $(this).siblings().toggle()
+    });
+</script>
+
+<!-- plusone -->
+<script type="text/javascript">
+    (function () {
+        var po = document.createElement('script');
+        po.type = 'text/javascript';
+        po.async = true;
+        po.src = 'https://apis.google.com/js/plusone.js';
+        var s = document.getElementsByTagName('script')[0];
+        s.parentNode.insertBefore(po, s);
+    })();
+</script>
+
+<!-- twitter -->
+<script src="http://platform.twitter.com/widgets.js" type="text/javascript"></script>
+
+</body>
+</html>
