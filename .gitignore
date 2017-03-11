@@ -6,7 +6,6 @@
 *.pyproj
 *Qt*
 *__pycache__*
-build/
 dist/
 env/
 *.sln
