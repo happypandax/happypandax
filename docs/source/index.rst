@@ -25,3 +25,4 @@ For developers
 
 	env
 	client
+	api
