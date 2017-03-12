@@ -1,7 +1,7 @@
 from sqlalchemy.engine import Engine
 from sqlalchemy import String as _String
 from sqlalchemy.inspection import inspect
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.sql.expression import BinaryExpression, func, literal
 from sqlalchemy.sql.operators import custom_op
@@ -110,7 +110,7 @@ def validate_int(value):
         except:
             raise AssertionError("Column only accepts integer, not {}".format(type(value)))
     else:
-        assert isinstance(value, int) or value is None, "Column only accepts integer, not {}".format(_type(value))
+        assert isinstance(value, int) or value is None, "Column only accepts integer, not {}".format(type_(value))
     return value
 
 def validate_string(value):
@@ -157,6 +157,9 @@ def profile_association(table_name):
                         UniqueConstraint('profile_id', column))
     return assoc
 
+def init_taggable():
+    return Taggable()
+
 class Life(Base):
     __tablename__ = 'life'
 
@@ -179,12 +182,16 @@ class Profile(Base):
 class History(Base):
     __tablename__ = 'history'
 
+    class Action(enum.Enum):
+        read = 'read'
+        start = 'start'
+
     item_id = Column(Integer, nullable=False)
     item_name = Column(String, nullable=False)
     timestamp = Column(Date, nullable=False, default=datetime.datetime.now())
-    action = Column(Enum(constants.HistoryAction), nullable=False, default=constants.HistoryAction.read)
+    action = Column(Enum(Action), nullable=False, default=Action.read)
 
-    def __init__(self, item, action=constants.HistoryAction.read):
+    def __init__(self, item, action=Action.read):
         assert isinstance(item, Base)
         self.item_id = item.id
         self.item_name = item.__tablename__
@@ -226,11 +233,38 @@ class Namespace(NameMixin, Base):
 
     tags = relationship("Tag", secondary='namespace_tags', back_populates='namespaces', lazy="dynamic")
 
+taggable_tags = Table('taggable_tags', Base.metadata,
+                        Column('namespace_tag_id', Integer, ForeignKey('namespace_tags.id')),
+                        Column('taggable_id', Integer, ForeignKey('taggable.id')),
+                        UniqueConstraint('namespace_tag_id', 'taggable_id'))
+
+class Taggable(Base):
+    __tablename__ = 'taggable'
+
+    tags = relationship("NamespaceTags", secondary=taggable_tags, lazy="dynamic")
+
+class TaggableMixin:
+
+    @declared_attr
+    def taggable(cls):
+        return relationship("Taggable", single_parent=True, cascade="all, delete-orphan")
+
+    @declared_attr
+    def taggable_id(cls):
+        return Column(Integer, ForeignKey('taggable.id'), nullable=False)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.taggable = Taggable()
+
+    @property
+    def tags(self):
+        return self.taggable.tags
+
 gallery_artists = Table('gallery_artists', Base.metadata,
                         Column('artist_id', Integer, ForeignKey('artist.id')),
                         Column('gallery_id', Integer, ForeignKey('gallery.id')),
                         UniqueConstraint('artist_id', 'gallery_id'))
-
 
 class Artist(NameMixin, Base):
     __tablename__ = 'artist'
@@ -268,20 +302,20 @@ class GalleryList(ProfileMixin, NameMixin, Base):
 class Status(NameMixin, Base):
     __tablename__ = 'status'
 
-    gnamespaces = relationship("GalleryNamespace", lazy='dynamic', back_populates='status')
+    groupings = relationship("Grouping", lazy='dynamic', back_populates='status')
 
-g_ns_profiles = profile_association("gallery_namespace")
+grouping_profiles = profile_association("grouping")
 
-class GalleryNamespace(ProfileMixin, NameMixin, Base):
-    __tablename__ = 'gallery_namespace'
+class Grouping(ProfileMixin, NameMixin, Base):
+    __tablename__ = 'grouping'
     status_id = Column(Integer, ForeignKey('status.id'))
 
-    galleries = relationship("Gallery", back_populates="parent", lazy="dynamic", cascade="all, delete-orphan")
-    profiles = relationship("Profile", secondary=g_ns_profiles, lazy='joined', cascade="all")
-    status = relationship("Status", back_populates="gnamespaces", cascade="save-update, merge, refresh-expire")
+    galleries = relationship("Gallery", back_populates="grouping", lazy="dynamic", cascade="all, delete-orphan")
+    profiles = relationship("Profile", secondary=grouping_profiles, lazy='joined', cascade="all")
+    status = relationship("Status", back_populates="groupings", cascade="save-update, merge, refresh-expire")
 
     def __repr__(self):
-        return "ID:{} - G-Namespace:{}".format(self.id, self.name)
+        return "ID:{} - Grouping:{}".format(self.id, self.name)
 
 class Language(NameMixin, Base):
     __tablename__ = 'language'
@@ -293,26 +327,21 @@ class GalleryType(NameMixin, Base):
 
     galleries = relationship("Gallery", lazy='dynamic', back_populates='type')
 
-gallery_tags = Table('gallery_tags', Base.metadata,
-                        Column('namespace_tag_id', Integer, ForeignKey('namespace_tags.id')),
+gallery_collections = Table('gallery_collections', Base.metadata,
+                        Column('collection_id', Integer, ForeignKey('collection.id')),
                         Column('gallery_id', Integer, ForeignKey('gallery.id')),
-                        UniqueConstraint('namespace_tag_id', 'gallery_id'))
+                        UniqueConstraint('collection_id', 'gallery_id'))
 
 collection_profiles = profile_association("collection")
 
 class Collection(ProfileMixin, Base):
-
-    class CollectionType(enum.Enum):
-        default = 1
-        user = 2
-
     __tablename__ = 'collection'
+
     title = Column(String, nullable=False, default='')
     info = Column(String, nullable=False, default='')
-    cover = Column(String, nullable=False, default='')
-    _type = Column(Enum(CollectionType), nullable=False, default=CollectionType.user)
+    pub_date = Column(Date)
 
-    galleries = relationship("Gallery", back_populates="collection", lazy="dynamic", cascade="save-update, merge, refresh-expire")
+    galleries = relationship("Gallery", secondary=gallery_collections, back_populates="collections", lazy="dynamic", cascade="save-update, merge, refresh-expire")
     profiles = relationship("Profile", secondary=collection_profiles, lazy='joined', cascade="all")
 
     @property
@@ -320,35 +349,20 @@ class Collection(ProfileMixin, Base):
         "Calculates average rating from galleries"
         return 5
 
-    @classmethod
-    def search(cls, key, args=[], session=None):
-        "Check if gallery contains keyword"
-        if not session:
-            session = constants.db_session()
-        q = session.query(cls.id)
-        if key:
-            is_exclude = False if key[0] == '-' else True
-            key = key[1:] if not is_exclude else key
-            helper = utils._ValidContainerHelper()
-            if not ':' in key:
-                for g_attr in [cls.title, cls.info]:
-                    if constants.Search.Regex in args:
-                        helper.add(q.filter(g_attr.ilike(key)).all())
-                    else:
-                        helper.add(q.filter(g_attr.ilike("%{}%".format(key))).all())
-
-            return helper.done()
-        else:
-            ids = q.all()
-            return ids if ids else None
-
     def __repr__(self):
         return "ID:{} - Collection Title:{}\nCollection Cover:{}".format(self.id, self.title, self.cover)
 
 gallery_profiles = profile_association("gallery")
 
-class Gallery(ProfileMixin, Base):
+class Gallery(TaggableMixin, ProfileMixin, Base):
     __tablename__ = 'gallery'
+
+    class Catagory(enum.Enum):
+        #: Library
+        Library = 0
+        #: Inbox
+        Inbox = 1
+
     path = Column(String, nullable=False, default='')
     path_in_archive = Column(String, nullable=False, default='')
     info = Column(String, nullable=False, default='')
@@ -362,14 +376,13 @@ class Gallery(ProfileMixin, Base):
     in_archive = Column(Boolean, default=False)
     type_id = Column(Integer, ForeignKey('type.id'))
     language_id = Column(Integer, ForeignKey('language.id'))
-    collection_id = Column(Integer, ForeignKey('collection.id'))
-    parent_id = Column(Integer, ForeignKey('gallery_namespace.id'))
+    grouping_id = Column(Integer, ForeignKey('grouping.id'))
 
-    exed = Column(Boolean, default=False)
-    view = Column(Integer, nullable=False, default=1)
+    fetched = Column(Boolean, default=False)
+    catagory = Column(Enum(Catagory), nullable=False, default=Catagory.Library)
 
-    parent = relationship("GalleryNamespace", back_populates="galleries", cascade="save-update, merge, refresh-expire")
-    collection = relationship("Collection", back_populates="galleries", cascade="save-update, merge, refresh-expire")
+    grouping = relationship("Grouping", back_populates="galleries", cascade="save-update, merge, refresh-expire")
+    collections = relationship("Collection", secondary=gallery_collections, back_populates="galleries", cascade="save-update, merge, refresh-expire", lazy="dynamic")
     urls = relationship("GalleryUrl", back_populates="gallery", lazy='joined', cascade="all,delete-orphan")
     language = relationship("Language", back_populates="galleries", cascade="save-update, merge, refresh-expire")
     type = relationship("GalleryType", back_populates="galleries", cascade="save-update, merge, refresh-expire")
@@ -378,14 +391,13 @@ class Gallery(ProfileMixin, Base):
     lists = relationship("GalleryList", secondary=gallery_lists, back_populates='galleries', lazy="dynamic")
     pages = relationship("Page", back_populates="gallery", lazy='dynamic', cascade="all,delete-orphan")
     titles = relationship("Title", back_populates="gallery", lazy='joined', cascade="all,delete-orphan")
-    tags = relationship("NamespaceTags", secondary=gallery_tags, lazy="dynamic")
     profiles = relationship("Profile", secondary=gallery_profiles, lazy='joined', cascade="all")
 
     @validates("times_read")
     def _add_history(self, key, value):
         sess = object_session(self)
         if sess:
-            sess.add(History(self, constants.HistoryAction.read))
+            sess.add(History(self, History.Action.read))
         else:
             log_w("Cannot add gallery history because no session exists for this object")
         return value
@@ -399,23 +411,24 @@ class Gallery(ProfileMixin, Base):
     @property
     def title(self):
         "Returns default title"
-        if not self.titles:
-            return
-        if not hasattr(self, '_title') or not self._title:
-            if len(self.titles) == 1:
-                self._title = self.titles[0]
-            else:
-                # TODO: title in default language here
-                raise NotImplementedError
+        if not hasattr(self, '_title'):
+            self._set_default_title()
         return self._title
 
     @title.setter
     def title(self, t):
+        assert isinstance(t, str)
         if not hasattr(self, '_title'):
-            self.title
+            self._set_default_title()
 
         if self._title:
             self._title.name = t
+
+    def _set_default_title(self):
+        if len(self.titles) == 1:
+            self._title = self.titles[0]
+        else:
+            self._title = None
 
     @property
     def file_type(self):
@@ -453,7 +466,7 @@ class Gallery(ProfileMixin, Base):
 
 page_profiles = profile_association("page")
 
-class Page(ProfileMixin, Base):
+class Page(TaggableMixin, ProfileMixin, Base):
     __tablename__ = 'page'
     number = Column(Integer, nullable=False, default=0)
     name = Column(String, nullable=False, default='')
@@ -522,14 +535,6 @@ class GalleryUrl(Base):
 # Note: necessary because there is no Session object yet
 def initEvents():
     "Initializes events"
-    @event.listens_for(constants.db_session, 'after_flush_postexec')
-    def assign_default_collection(session, f_ctx):
-        for g in session.query(Gallery).filter(Gallery.collection == None).all():
-            coll = session.query(Collection).filter(Collection._type == Collection.CollectionType.default).scalar()
-            if not coll:
-                log_e("Could not assign default collection. No such collection exists.")
-                return
-            g.collection = coll
 
     @event.listens_for(constants.db_session, 'before_commit')
     def delete_artist_orphans(session):
@@ -542,10 +547,6 @@ def initEvents():
     @event.listens_for(constants.db_session, 'before_commit')
     def delete_namespace_orphans(session):
         session.query(Namespace).filter(~Namespace.tags.any()).delete(synchronize_session=False)
-
-    @event.listens_for(constants.db_session, 'before_commit')
-    def delete_collection_orphans(session):
-        session.query(Collection).filter(and_(~Collection.galleries.any(), Collection._type != Collection.CollectionType.default)).delete(synchronize_session=False)
 
     @event.listens_for(constants.db_session, 'before_commit')
     def delete_namespace_orphans(session):
@@ -564,8 +565,8 @@ def initEvents():
         session.query(Circle).filter(~Circle.galleries.any()).delete(synchronize_session=False)
 
     @event.listens_for(constants.db_session, 'before_commit')
-    def delete_gallery_namespace_orphans(session):
-        session.query(GalleryNamespace).filter(~GalleryNamespace.galleries.any()).delete(synchronize_session=False)
+    def delete_grouping_orphans(session):
+        session.query(Grouping).filter(~Grouping.galleries.any()).delete(synchronize_session=False)
 
 @compiles(RegexMatchExpression, 'sqlite')
 def sqlite_regex_match(element, compiler, **kw):
@@ -601,14 +602,7 @@ def sqlite_engine_connect(dbapi_connection, connection_record):
 
 def init_defaults(sess):
     "Initializes default items"
-    coll = sess.query(Collection).filter(Collection._type == Collection.CollectionType.default).scalar()
-    if not coll:
-       coll = Collection()
-       coll.title = "Default Collection"
-       coll.info = "Galleries not in any collections end up here"
-       coll._type = Collection.CollectionType.default
-       sess.add(coll)
-       sess.commit()
+    pass
 
 def check_db_version(sess):
     """Checks if DB version is allowed.
@@ -634,7 +628,7 @@ def check_db_version(sess):
         log_i("DB Version: {}".format(life.version))
 
     life.times_opened += 1
-    sess.add(History(life, constants.HistoryAction.start))
+    sess.add(History(life, History.Action.start))
     sess.commit()
     init_defaults(sess)
     return True

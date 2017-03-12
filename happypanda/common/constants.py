@@ -39,10 +39,6 @@ class GalleryFilter(enum.Enum):
 ## DATABASE
 db_session = None
 
-class HistoryAction(enum.Enum):
-    read = 'read'
-    start = 'start'
-
 ## SERVER
 server_name = 'server'
 local_port = 5577
