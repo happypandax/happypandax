@@ -54,8 +54,16 @@ div.admonition.note {
     background-color: #fffbe0;
 }
 
+div.admonition.hint {
+    background-color: #efffe0;
+}
+
 div.admonition.warning {
     background-color: #ffe0d7;
+}
+
+div.admonition.admonition-todo {
+    background-color: #e0f2ff;
 }
 
 div.admonition p {
