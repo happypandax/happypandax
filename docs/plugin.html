@@ -120,6 +120,78 @@
                     
   <div class="section" id="plugins">
 <h1>Plugins<a class="headerlink" href="#plugins" title="Permalink to this headline">¶</a></h1>
+<p>It is possible to extend Happypanda X Server with plugins.
+Understanding the plugin interface is relatively <strong>easy</strong> once you get the hang of it.</p>
+<p>It is assumed that you are already familiar with the HPX developer environment: <a class="reference internal" href="env.html#setting-up-an-environment"><span class="std std-ref">Setting up an environment</span></a></p>
+<div class="section" id="things-to-know">
+<h2>Things to know<a class="headerlink" href="#things-to-know" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Plugins are written in <code class="docutils literal"><span class="pre">Python</span> <span class="pre">3</span></code></li>
+<li>All plugins are placed in their own folder under the folder named <code class="docutils literal"><span class="pre">plugins</span></code></li>
+</ul>
+<div class="admonition-todo admonition" id="index-0">
+<p class="first admonition-title">Todo</p>
+<p class="last">specify python version</p>
+</div>
+</div>
+<div class="section" id="how-to-create-a-plugin">
+<h2>How to create a plugin<a class="headerlink" href="#how-to-create-a-plugin" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic simple">
+<li>Start by creating a folder for your plugin, call it whatever describes your plugin and place it under the <code class="docutils literal"><span class="pre">plugins</span></code> folder in Happypanda X Server.</li>
+<li>Create your main python file, which should end with the name <code class="docutils literal"><span class="pre">HPlugin.py</span></code> (case insensitive).</li>
+</ol>
+<div class="admonition hint">
+<p class="first admonition-title">Hint</p>
+<div class="last line-block">
+<div class="line">For example: <code class="docutils literal"><span class="pre">MyPluginHPlugin.py</span></code>.</div>
+<div class="line">Your plugin can consist of multiple files but only one will be loaded, that is, your main file which is the file suffixed with <code class="docutils literal"><span class="pre">HPlugin</span></code>.</div>
+</div>
+</div>
+<p>That was the easy part. Now to the code.
+The following are required by your main plugin file:</p>
+<ul class="simple">
+<li><dl class="first docutils">
+<dt>A main plugin class that defines the following class attributes:</dt>
+<dd><ul class="first last">
+<li><code class="docutils literal"><span class="pre">ID</span></code>: a unique UUID4 string, this is what others will use to interact with your plugin</li>
+<li><code class="docutils literal"><span class="pre">NAME</span></code>: name of your plugin</li>
+<li><code class="docutils literal"><span class="pre">AUTHOR</span></code>: Name of author</li>
+<li><code class="docutils literal"><span class="pre">DESCRPTION</span></code>: A short description of your plugin</li>
+<li><code class="docutils literal"><span class="pre">VERSION</span></code>: a tuple of 3 ints</li>
+<li><code class="docutils literal"><span class="pre">WEBSITE</span></code>: This one is optional. Maybe your website, email or any way to contact you.</li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+<div class="admonition-todo admonition" id="index-1">
+<p class="first admonition-title">Todo</p>
+<p class="last"><code class="docutils literal"><span class="pre">__init__</span></code> able to take args</p>
+</div>
+<p>Putting all of this together we get the following:</p>
+<p>My folder structure:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">plugins</span><span class="o">/</span><span class="n">MyPluginFolder</span>
+<span class="o">-</span> <span class="n">mainfilehplugin</span><span class="o">.</span><span class="n">py</span>
+</pre></div>
+</div>
+<p>In <code class="docutils literal"><span class="pre">mainfilehplugin.py</span></code>:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">MyPluginHPlugin</span><span class="p">:</span>
+        <span class="n">ID</span> <span class="o">=</span> <span class="s2">&quot;00000000-0000-0000-0000-000000000000&quot;</span>
+        <span class="n">NAME</span> <span class="o">=</span> <span class="s2">&quot;MyPlugin&quot;</span>
+        <span class="n">AUTHOR</span> <span class="o">=</span> <span class="s2">&quot;Pewpew&quot;</span>
+        <span class="n">DESCRIPTION</span> <span class="o">=</span> <span class="s2">&quot;MyPlugin makes you a happy panda!&quot;</span>
+        <span class="n">VERSION</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">WEBSITE</span> <span class="o">=</span> <span class="s2">&quot;https://github.com/Pewpews/happypandax&quot;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="interfacing-with-happypanda-x-server">
+<h2>Interfacing with Happypanda X Server<a class="headerlink" href="#interfacing-with-happypanda-x-server" title="Permalink to this headline">¶</a></h2>
+<div class="admonition-todo admonition" id="index-2">
+<p class="first admonition-title">Todo</p>
+<p class="last">explain how to interface with hpx server</p>
+</div>
+</div>
 </div>
 
 
@@ -132,6 +204,16 @@
                     
         <div class="sphinxsidebar">
             <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Plugins</a><ul>
+<li><a class="reference internal" href="#things-to-know">Things to know</a></li>
+<li><a class="reference internal" href="#how-to-create-a-plugin">How to create a plugin</a></li>
+<li><a class="reference internal" href="#interfacing-with-happypanda-x-server">Interfacing with Happypanda X Server</a></li>
+</ul>
+</li>
+</ul>
+
   <h4>Previous topic</h4>
   <p class="topless"><a href="client.html"
                         title="previous chapter">Creating a frontend in any language</a></p>
