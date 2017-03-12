@@ -25,7 +25,8 @@ For developers
 .. toctree::
 	:maxdepth: 2
 
+	api
 	env
 	client
-	api
+	plugin
 	todo

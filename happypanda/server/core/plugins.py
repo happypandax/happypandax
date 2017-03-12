@@ -94,8 +94,9 @@ class HPluginMeta:
     def connectPlugin(cls, pluginid):
         """
         Connect to other plugins
+
         Params:
-            pluginid -- PluginID of the plugin you want to connect to
+            - pluginid -- PluginID of the plugin you want to connect to
 
         Returns an object of the other plugin
         """
@@ -125,10 +126,11 @@ class HPluginMeta:
     def connectHook(cls, pluginid, hook_name, handler):
         """
         Connect to other plugins' hooks
+
         Params:
-            pluginid -- PluginID of the plugin that has the hook you want to connect to
-            hook_name -- Exact name of the hook you want to connect to
-            handler -- Your custom method that should be executed when the other plugin uses its hook.
+            - pluginid -- PluginID of the plugin that has the hook you want to connect to
+            - hook_name -- Exact name of the hook you want to connect to
+            - handler -- Your custom method that should be executed when the other plugin uses its hook.
         """
 
         assert isinstance(pluginid, str) and isinstance(hook_name, str) and callable(handler), ""
@@ -141,8 +143,9 @@ class HPluginMeta:
     def createHook(cls, hook_name):
         """
         Create mountpoint that other plugins can hook to and extend
+
         Params:
-            hook_name -- Name of the hook you want to create.
+            - hook_name -- Name of the hook you want to create.
         
         Hook should be invoked as such: self.hook_name(*args, **kwargs)
         Note: The values returned by the handlers are returned in a list
