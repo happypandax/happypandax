@@ -5,8 +5,10 @@
 
 Documentation
 ========================================
+.. warning::
 
-This is project is under heavy development and is not ready for deployment
+	This is project is under heavy development and is not ready for deployment.
+	If you want to speed up the development, please consider :ref:`Contributing`.
 
 Getting Happypanda X
 ----------------------------------------
@@ -26,3 +28,4 @@ For developers
 	env
 	client
 	api
+	todo
