@@ -6,6 +6,6 @@ chdir(path.abspath(path.dirname(__file__)))
 # TODO: accept arg to decide which modules to start
 
 if __name__ == '__main__':
-    from happypanda.server.core import interface, server
+    from happypanda import main
 
-    server.HPServer().run(web=True, interactive=False)
+    main.start()

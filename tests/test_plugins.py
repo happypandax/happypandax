@@ -66,10 +66,10 @@ class HPluginMetaTest(TestCase):
             hpm.NAME = m_cls_name
             if m_plugin_id == '' and m_cls_name == '':
                 with pytest.raises(hp_exceptions.PluginIDError):
-                    hpm.connectPlugin(m_plugin_id)
+                    hpm.connect_plugin(m_plugin_id)
             elif isinstance(m_plugin_id, mock.Mock) or m_plugin_id == '':
                 with pytest.raises(TypeError):
-                    hpm.connectPlugin(m_plugin_id)
+                    hpm.connect_plugin(m_plugin_id)
 
     def test_connect_hook_with_error(self):
         """test connect hook with error."""
@@ -82,11 +82,11 @@ class HPluginMetaTest(TestCase):
             hpm = HPluginMeta(m_name, m_bases, m_dct)
             if isinstance(m_plugin_id, mock.Mock) or isinstance(m_hook_name, mock.Mock):
                 with pytest.raises(AssertionError):
-                    hpm.connectHook(m_plugin_id, m_hook_name, m_handler)
+                    hpm.connect_hook(m_plugin_id, m_hook_name, m_handler)
 
             else:
                 with pytest.raises(KeyError):
-                    hpm.connectHook(m_plugin_id, m_hook_name, m_handler)
+                    hpm.connect_hook(m_plugin_id, m_hook_name, m_handler)
 
     def test_create_hook(self):
         """test create hook with error."""
@@ -99,10 +99,10 @@ class HPluginMetaTest(TestCase):
             hpm = HPluginMeta(m_name, m_bases, m_dct)
             if isinstance(m_hook_name, mock.Mock):
                 with pytest.raises(AssertionError):
-                    hpm.createHook(m_hook_name)
+                    hpm.create_hook(m_hook_name)
             else:
                 with pytest.raises(AttributeError):
-                    hpm.createHook(m_hook_name)
+                    hpm.create_hook(m_hook_name)
                 with pytest.raises(KeyError):
                     hpm.ID = m_id
-                    hpm.createHook(m_hook_name)
+                    hpm.create_hook(m_hook_name)

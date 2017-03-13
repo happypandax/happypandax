@@ -85,7 +85,7 @@ class Plugins:
         self.hooks[plugin.ID] = {}
         self._plugins[plugin.ID] = plug
 
-    def _connectHooks(self):
+    def _connect_hooks(self):
         # TODO: make thread-safe with aqcuire & lock
         for pluginid, otherpluginid, hook_name, handler in self._connections:
             log_i("\t{}\n\tcreating connection to\n\t{}:{}".format(pluginid, hook_name, otherpluginid))
@@ -105,7 +105,7 @@ class HPluginMeta(type):
 
     def __init__(cls, name, bases, dct):
         if not name.endswith("HPlugin"):
-            raise exceptions.PluginNameError(name, "Main plugin class should end with name HPlugin")
+            raise exceptions.PluginNameError(name, "Main plugin class should be named HPlugin")
 
         if not hasattr(cls, "ID"):
             raise exceptions.PluginAttributeError(name, "ID attribute is missing")
@@ -130,7 +130,7 @@ class HPluginMeta(type):
 
         if not isinstance(cls.NAME, str):
             raise exceptions.PluginAttributeError(name, "Plugin name should be a string")
-        if not isinstance(cls.VERSION, tuple):
+        if not isinstance(cls.VERSION, tuple) or not len(cls.VERSION) == 3:
             raise exceptions.PluginAttributeError(name, "Plugin version should be a tuple with 3 integers")
         if not isinstance(cls.AUTHOR, str):
             raise exceptions.PluginAttributeError(name, "Plugin author should be a string")
@@ -139,19 +139,44 @@ class HPluginMeta(type):
 
         super().__init__(name, bases, dct)
 
-        setattr(cls, "connectPlugin", cls.connectPlugin)
-        setattr(cls, "newHook", cls.createHook)
-        setattr(cls, "connectHook", cls.connectHook)
+        setattr(cls, "connect_plugin", cls.connect_plugin)
+        setattr(cls, "require_plugin", cls.require_plugin)
+        setattr(cls, "create_hook", cls.create_hook)
+        setattr(cls, "connect_hook", cls.connect_hook)
         #setattr(cls, "__getattr__", cls.__getattr__)
 
-    def connectPlugin(cls, pluginid):
+    def require(cls, version_start, version_end=None, name='server'):
+        """
+        Add a core part as dependency, meaning if dependent core part is not available, this plugin will not load
+
+        Params:
+            - version_start -- A tuple of 3 ints. Require this core part is equal to or above this version.
+            - version_end -- A tuple of 3 ints or None. Require this core part is below this version. 
+            -- name -- which core part, available names are ['server', 'db']
+        """
+        pass
+
+    def require_plugin(cls, pluginid, version_start, version_end=None):
+        """
+        Add a plugin as dependency, meaning if dependent plugin is not available, this plugin will not load
+
+        Params:
+            - pluginid -- PluginID of the plugin you want to depend on
+            - version_start -- A tuple of 3 ints. Require this plugin is equal to or above this version.
+            - version_end -- A tuple of 3 ints or None. Require that plugin is below this version. 
+        """
+        pass
+        # Note: load all pluginids and their versions first and then check for dependencies
+
+    def connect_plugin(cls, pluginid):
         """
         Connect to other plugins
 
         Params:
             - pluginid -- PluginID of the plugin you want to connect to
 
-        Returns an object of the other plugin
+        Returns:
+            An object of the other plugin if it exists
         """
         name = cls.NAME
 
@@ -176,7 +201,7 @@ class HPluginMeta(type):
 
         return OtherHPlugin(pluginid)
 
-    def connectHook(cls, pluginid, hook_name, handler):
+    def connect_hook(cls, pluginid, hook_name, handler):
         """
         Connect to other plugins' hooks
 
@@ -193,7 +218,7 @@ class HPluginMeta(type):
             raise exceptions.PluginHookError("No hook with name '{}' found on plugin with ID: {}".format(hook_name, pluginid))
         registered._connections.append((cls.ID, pluginid.replace('-', ''), hook_name, handler))
 
-    def createHook(cls, hook_name):
+    def create_hook(cls, hook_name):
         """
         Create mountpoint that other plugins can hook to and extend
 

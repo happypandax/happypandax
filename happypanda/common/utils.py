@@ -3,6 +3,7 @@ import json
 import enum
 import os
 import socket
+import argparse
 
 from happypanda.common import constants, exceptions, upnp
 
@@ -12,7 +13,6 @@ def eprint(*args, **kwargs):
 
 
 ## PATH ##
-
 class PathType(enum.Enum):
     Directoy = 1
     Archive = 2
@@ -28,9 +28,54 @@ class PathType(enum.Enum):
 
         return PathType.Invalid
 
+## Core ##
 def setup_dirs():
     "Creates directories at the specified root path"
     pass
+
+def get_argparser():
+    "Creates and returns a command-line arguments parser"
+    parser = argparse.ArgumentParser(prog="Happypanda X",
+        description="A manga/doujinshi manager with tagging support")
+
+    parser.add_argument('-w', '--web', action='store_true',
+                    help='Start the webserver')
+
+    parser.add_argument('-p', '--port', type=int,
+                    help='Specify which port to start the server on')
+
+    parser.add_argument('--web-port', type=int,
+                    help='Specify which port to start the web server on')
+
+    parser.add_argument('--localhost', action='store_true',
+                    help='Start servers on localhost')
+
+    parser.add_argument('-d', '--debug', action='store_true',
+                    help='Start in debug mode')
+
+    parser.add_argument('-i', '--interact', action='store_true',
+                    help='Start in interactive mode')
+
+    parser.add_argument('-v', '--version', action='version',
+                    version='Happypanda X v{}'.format(constants.version))
+
+    parser.add_argument('--safe', action='store_true',
+                    help='Start without plugins')
+
+    return parser
+
+def parse_options(args):
+    "Parses args from the command-line"
+    assert isinstance(args, argparse.Namespace)
+
+    constants.debug = args.debug
+    constants.localhost = args.localhost
+    if args.port:
+        constants.local_port = args.port
+    if args.web_port:
+        constants.web_port = args.web_port
+
+
 
 def connection_params(web=False):
     "Retrieve host and port"
@@ -39,8 +84,10 @@ def connection_params(web=False):
     ## do a portfoward
     #if constants.public_server:
     #    try:
-    #        upnp.ask_to_open_port(constants.local_port, "Happypanda X Server", protos=('TCP',))
-    #        upnp.ask_to_open_port(constants.web_port, "Happypanda X Web Server", protos=('TCP',))
+    #        upnp.ask_to_open_port(constants.local_port, "Happypanda X Server",
+    #        protos=('TCP',))
+    #        upnp.ask_to_open_port(constants.web_port, "Happypanda X Web
+    #        Server", protos=('TCP',))
     #    except upnp.UpnpError as e:
     #        constants.public_server = False
     #        # log
@@ -54,7 +101,6 @@ def connection_params(web=False):
         return params
 
 ## SERVER ##
-
 def convert_to_json(buffer, name):
     ""
     try:
