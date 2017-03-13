@@ -4,6 +4,8 @@ import enum
 import os
 import socket
 import argparse
+import pkgutil
+from inspect import ismodule
 
 from happypanda.common import constants, exceptions, upnp
 
@@ -100,6 +102,17 @@ def connection_params(web=False):
         params = (host, constants.local_port)
         return params
 
+def get_package_modules(pkg):
+    "Retrive list of modules in package"
+    assert ismodule(pkg) and hasattr(pkg, '__path__')
+    return [(x, y) for x, y, _ in pkgutil.walk_packages(pkg.__path__)]
+
+def get_module_members(mod):
+    "Retrive list of members in modules"
+    assert ismodule(mod)
+
+
+
 ## SERVER ##
 def convert_to_json(buffer, name):
     ""
@@ -110,3 +123,4 @@ def convert_to_json(buffer, name):
     except json.JSONDecodeError as e:
         raise exceptions.JSONParseError(buffer, name, "Failed parsing json data: {}".format(e))
     return json_data
+

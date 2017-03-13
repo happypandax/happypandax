@@ -1,24 +1,5 @@
-"""
-"""
-from gevent import monkey
-monkey.patch_all() # necessary to make these functions play nice with gevent
-import code
-import sys
-
-from happypanda.server.core import db
 from happypanda.common import constants, message
 
-
-## CORE ##
-def interactive():
-    "test"
-    code.interact(banner="======== Start Happypanda Interactive ========", local=globals())
-
-## DATABASE ##
-
-
-
-## GALLERY ##
 def fetch_galleries(gallery_ids=[]):
     """
     Fetch galleries from the database.
@@ -77,32 +58,5 @@ def scan_gallery(paths=[], add_after=False, ignore_exist=True):
 
     Returns:
         list of paths to the galleries
-    """
-    return message.Message("works")
-
-
-## 
-def set_settings(namespace, set_dict={}):
-    """
-    Set settings
-
-    Params:
-        - set_dict -- a dictionary containing key:value pairs :D
-
-    Returns:
-        Status
-    """
-    return message.Message("works")
-
-def get_settings(namespace, set_list=[]):
-    """
-    Set settings
-    Use setting key 'all' to fetch all setting key:values
-
-    Params:
-        - set_list -- a list of setting keys
-
-    Returns:
-        dict of setting_key:value
     """
     return message.Message("works")
