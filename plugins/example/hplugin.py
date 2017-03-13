@@ -6,7 +6,7 @@ class HPlugin:
     VERSION = (1, 0, 0)
     WEBSITE = "https://github.com/Pewpews/happypandax"
 
-    def __init__(self, *args, **kwargs):
-        print("args:",args)
-        print("kwargs:",kwargs)
+    #def __init__(self, *args, **kwargs):
+    #    print("args:",args)
+    #    print("kwargs:",kwargs)
 

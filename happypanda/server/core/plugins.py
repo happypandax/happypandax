@@ -26,6 +26,8 @@ def plugin_load(path, *args, **kwargs):
         - *args -- additional arguments for plugin
         - **kwargs -- additional keyword arguments for plugin
     """
+    args = ["test"]
+    kwargs = {"1":2}
     plugfile = None
     for f in os.scandir(path):
         if f.name.lower() == "hplugin.py":
@@ -76,8 +78,12 @@ class Plugins:
 
     def register(self, plugin, *args, **kwargs):
         assert isinstance(plugin, HPluginMeta)
+        try:
+            plug = plugin(*args, **kwargs)
+        except TypeError:
+            raise exceptions.PluginError(plugin.NAME, "A __init__ with the following signature must be defined: '__init__(*args, **kwargs)'")
         self.hooks[plugin.ID] = {}
-        self._plugins[plugin.ID] = plugin(*args, **kwargs)
+        self._plugins[plugin.ID] = plug
 
     def _connectHooks(self):
         # TODO: make thread-safe with aqcuire & lock
