@@ -4,6 +4,9 @@ import uuid
 import threading
 import sys
 import traceback
+import importlib
+from inspect import getmembers
+
 
 from happypanda.common import exceptions
 
@@ -13,6 +16,52 @@ log_d = log.debug
 log_w = log.warning
 log_e = log.error
 log_c = log.critical
+
+def plugin_load(path):
+    """
+    Attempts to load a plugin
+
+    Params:
+        - path -- path to plugin directory
+    """
+
+    plugfile = None
+    for f in os.scandir(path):
+        if f.name.lower() == "hplugin.py":
+            plugfile = f
+            break
+    if not plugfile:
+        raise exceptions.CoreError("Plugin loader", "No main entry file named 'HPlugin.py' found in '{}'".format(pdir.path))
+
+    plug = os.path.splitext(plugfile.name)[0]
+    sys.path.insert(0, os.path.realpath(path))
+    try:
+        mod = importlib.import_module(plug)
+        mod = importlib.reload(mod)
+        plugmembers = getmembers(mod)
+        plugclass = None
+        for name, m_object in plugmembers:
+            if name == "HPlugin":
+                plugclass = m_object
+                break
+        if not plugclass:
+            raise exceptions.CoreError("Plugin loader", "No main entry class named 'HPlugin' found in '{}'".format(path))
+        log_i("Loading {}".format(plugclass.__name__))
+        HPluginMeta(plugclass.__name__, plugclass.__bases__, dict(plugclass.__dict__))
+    finally:
+        sys.path.pop(0)
+
+def plugin_loader(path):
+    """
+    Scans provided paths for viable plugins and attempts to load them
+
+    Params:
+        - path -- path to directory of plugins
+
+    """
+    log_i('Loading plugins from path: {}'.format(path))
+    for pdir in os.scandir(path):
+        plugin_load(pdir.path)
 
 class Plugins:
     ""
@@ -42,52 +91,49 @@ class Plugins:
 
 registered = Plugins()
 
-class HPluginMeta:
+class HPluginMeta(type):
 
     def __init__(cls, name, bases, dct):
+
+        if not name.endswith("HPlugin"):
+            raise exceptions.PluginNameError(name, "Main plugin class should end with name HPlugin")
+
+        if not hasattr(cls, "ID"):
+            raise exceptions.PluginAttributeError(name, "ID attribute is missing")
+
+        cls.ID = cls.ID.replace('-', '')
+        if not hasattr(cls, "NAME"):
+            raise exceptions.PluginAttributeError(name, "NAME attribute is missing")
+        if not hasattr(cls, "VERSION"):
+            raise exceptions.PluginAttributeError(name, "VERSION attribute is missing")
+        if not hasattr(cls, "AUTHOR"):
+            raise exceptions.PluginAttributeError(name, "AUTHOR attribute is missing")
+        if not hasattr(cls, "DESCRIPTION"):
+            raise exceptions.PluginAttributeError(name, "DESCRIPTION attribute is missing")
+
         try:
-            if not name.endswith("HPlugin"):
-                raise exceptions.PluginNameError(name, "Main plugin class should end with name HPlugin")
+            val = uuid.UUID(cls.ID, version=4)
+            assert val.hex == cls.ID
+        except ValueError:
+            raise exceptions.PluginIDError(name, "Invalid plugin id. UUID4 is required.")
+        except AssertionError:
+            raise exceptions.PluginIDError(name, "Invalid plugin id. A valid UUID4 is required.")
 
-            if not hasattr(cls, "ID"):
-                raise exceptions.PluginAttributeError(name, "ID attribute is missing")
-
-            cls.ID = cls.ID.replace('-', '')
-            if not hasattr(cls, "NAME"):
-                raise exceptions.PluginAttributeError(name, "NAME attribute is missing")
-            if not hasattr(cls, "VERSION"):
-                raise exceptions.PluginAttributeError(name, "VERSION attribute is missing")
-            if not hasattr(cls, "AUTHOR"):
-                raise exceptions.PluginAttributeError(name, "AUTHOR attribute is missing")
-            if not hasattr(cls, "DESCRIPTION"):
-                raise exceptions.PluginAttributeError(name, "DESCRIPTION attribute is missing")
-
-            try:
-                val = uuid.UUID(cls.ID, version=4)
-                assert val.hex == cls.ID
-            except ValueError:
-                raise exceptions.PluginIDError(name, "Invalid plugin id. UUID4 is required.")
-            except AssertionError:
-                raise exceptions.PluginIDError(name, "Invalid plugin id. A valid UUID4 is required.")
-
-            if not isinstance(cls.NAME, str):
-                raise exceptions.PluginAttributeError(name, "Plugin name should be a string")
-            if not isinstance(cls.VERSION, tuple):
-                raise exceptions.PluginAttributeError(name, "Plugin version should be a tuple with 3 integers")
-            if not isinstance(cls.AUTHOR, str):
-                raise exceptions.PluginAttributeError(name, "Plugin author should be a string")
-            if not isinstance(cls.DESCRIPTION, str):
-                raise exceptions.PluginAttributeError(name, "Plugin description should be a string")
-
-        except exceptions.PluginError:
-            return
+        if not isinstance(cls.NAME, str):
+            raise exceptions.PluginAttributeError(name, "Plugin name should be a string")
+        if not isinstance(cls.VERSION, tuple):
+            raise exceptions.PluginAttributeError(name, "Plugin version should be a tuple with 3 integers")
+        if not isinstance(cls.AUTHOR, str):
+            raise exceptions.PluginAttributeError(name, "Plugin author should be a string")
+        if not isinstance(cls.DESCRIPTION, str):
+            raise exceptions.PluginAttributeError(name, "Plugin description should be a string")
 
         super().__init__(name, bases, dct)
 
         setattr(cls, "connectPlugin", cls.connectPlugin)
         setattr(cls, "newHook", cls.createHook)
         setattr(cls, "connectHook", cls.connectHook)
-        setattr(cls, "__getattr__", cls.__getattr__)
+        #setattr(cls, "__getattr__", cls.__getattr__)
 
         registered.register(cls)
 
