@@ -17,14 +17,15 @@ log_w = log.warning
 log_e = log.error
 log_c = log.critical
 
-def plugin_load(path):
+def plugin_load(path, *args, **kwargs):
     """
     Attempts to load a plugin
 
     Params:
         - path -- path to plugin directory
+        - *args -- additional arguments for plugin
+        - **kwargs -- additional keyword arguments for plugin
     """
-
     plugfile = None
     for f in os.scandir(path):
         if f.name.lower() == "hplugin.py":
@@ -47,21 +48,24 @@ def plugin_load(path):
         if not plugclass:
             raise exceptions.CoreError("Plugin loader", "No main entry class named 'HPlugin' found in '{}'".format(path))
         log_i("Loading {}".format(plugclass.__name__))
-        HPluginMeta(plugclass.__name__, plugclass.__bases__, dict(plugclass.__dict__))
+        cls = HPluginMeta(plugclass.__name__, plugclass.__bases__, dict(plugclass.__dict__))
+        registered.register(cls, *args, **kwargs)
     finally:
         sys.path.pop(0)
 
-def plugin_loader(path):
+def plugin_loader(path, *args, **kwargs):
     """
     Scans provided paths for viable plugins and attempts to load them
 
     Params:
         - path -- path to directory of plugins
+        - *args -- additional arguments for plugin
+        - **kwargs -- additional keyword arguments for plugin
 
     """
     log_i('Loading plugins from path: {}'.format(path))
     for pdir in os.scandir(path):
-        plugin_load(pdir.path)
+        plugin_load(pdir.path, *args, **kwargs)
 
 class Plugins:
     ""
@@ -70,10 +74,10 @@ class Plugins:
     hooks = {}
 
 
-    def register(self, plugin):
+    def register(self, plugin, *args, **kwargs):
         assert isinstance(plugin, HPluginMeta)
         self.hooks[plugin.ID] = {}
-        self._plugins[plugin.ID] = plugin()
+        self._plugins[plugin.ID] = plugin(*args, **kwargs)
 
     def _connectHooks(self):
         # TODO: make thread-safe with aqcuire & lock
@@ -94,7 +98,6 @@ registered = Plugins()
 class HPluginMeta(type):
 
     def __init__(cls, name, bases, dct):
-
         if not name.endswith("HPlugin"):
             raise exceptions.PluginNameError(name, "Main plugin class should end with name HPlugin")
 
@@ -134,8 +137,6 @@ class HPluginMeta(type):
         setattr(cls, "newHook", cls.createHook)
         setattr(cls, "connectHook", cls.connectHook)
         #setattr(cls, "__getattr__", cls.__getattr__)
-
-        registered.register(cls)
 
     def connectPlugin(cls, pluginid):
         """
