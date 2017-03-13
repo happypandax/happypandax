@@ -168,6 +168,17 @@ class HPluginMeta(type):
         pass
         # Note: load all pluginids and their versions first and then check for dependencies
 
+    def disable_plugin(cls, pluginid):
+        """
+        Disallow a plugin from loading. Also disables the plugin when hotplugged.
+
+        Params:
+            - pluginid -- PluginID of the plugin you want to disable
+        """
+        pass
+        # Note: same as above, make a preliminary round for metadata ans such, add all disabled plugins
+        #       in dict. Check if in disabled plugins before loading. 
+
     def connect_plugin(cls, pluginid):
         """
         Connect to other plugins
