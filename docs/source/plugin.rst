@@ -36,8 +36,7 @@ The following are required by your main plugin file:
 	- ``DESCRPTION``: A short description of your plugin
 	- ``VERSION``: a tuple of 3 ints
 	- ``WEBSITE``: This one is optional. Maybe your website, email or any way to contact you.
-- Additionaly, in your main plugin class, a ``__init__`` method with the following signature must be defined::
-	def __init__(*args, **kwargs):
+- Additionaly, in your main plugin class, a ``__init__`` method with the following signature must be defined: ``__init__(*args, **kwargs)``
 
 Putting all of this together we get the following:
 
@@ -55,6 +54,9 @@ In ``hplugin.py``::
 		DESCRIPTION = "MyPlugin makes you a happy panda!"
 		VERSION = (1, 0, 0)
 		WEBSITE = "https://github.com/Pewpews/happypandax"
+
+		def __init__(*args, **kwargs):
+			pass
 
 Interfacing with Happypanda X Server
 ----------------------------------------
