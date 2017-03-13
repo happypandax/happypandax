@@ -157,9 +157,6 @@ def profile_association(table_name):
                         UniqueConstraint('profile_id', column))
     return assoc
 
-def init_taggable():
-    return Taggable()
-
 class Life(Base):
     __tablename__ = 'life'
 

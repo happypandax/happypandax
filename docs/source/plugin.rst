@@ -10,7 +10,7 @@ Things to know
 ----------------------------------------
 
 - Plugins are written in ``Python 3``
-- All plugins are placed in their own folder under the folder named ``plugins``
+- All plugins are placed in their own folder in the folder named ``plugins``
 
 .. todo::
 	specify python version
@@ -20,17 +20,16 @@ How to create a plugin
 
 1. Start by creating a folder for your plugin, call it whatever describes your plugin and place it under the ``plugins`` folder in Happypanda X Server.
 
-2. Create your main python file, which should end with the name ``HPlugin.py`` (case insensitive).
+2. Create your main python file, which should be named ``HPlugin.py`` (case insensitive).
 
 .. hint::
-	| For example: ``MyPluginHPlugin.py``.
-	| Your plugin can consist of multiple files but only one will be loaded, that is, your main file which is the file suffixed with ``HPlugin``.
+	| Your plugin can consist of multiple files but only one will be loaded, that is, your main file which is named ``HPlugin.py``.
 
 
 That was the easy part. Now to the code.
 The following are required by your main plugin file:
 
-- A main plugin class that defines the following class attributes:
+- A main plugin class named ``HPlugin`` (case sensitive) that defines the following class attributes:
 	- ``ID``: a unique UUID4 string, this is what others will use to interact with your plugin
 	- ``NAME``: name of your plugin
 	- ``AUTHOR``: Name of author
@@ -47,11 +46,11 @@ Putting all of this together we get the following:
 My folder structure::
 
 	plugins/MyPluginFolder
-	- mainfilehplugin.py
+	- hplugin.py
 
-In ``mainfilehplugin.py``::
+In ``hplugin.py``::
 
-	class MyPluginHPlugin:
+	class HPlugin:
 		ID = "00000000-0000-0000-0000-000000000000"
 		NAME = "MyPlugin"
 		AUTHOR = "Pewpew"
