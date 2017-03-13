@@ -2,7 +2,7 @@
 import rarfile
 import enum
 
-debug = True # TODO: arg switch
+debug = False
 
 ## VERSIONING ##
 version = "0.0.1"
@@ -14,6 +14,7 @@ dir_data = os.path.join(dir_root, "data")
 dir_cache = os.path.join(dir_root, "cache")
 dir_log = os.path.join(dir_root, "logs")
 dir_temp = 'temp' # TODO: create temp folder, use python temp facilities
+dir_plugin = 'plugins'
 log_error = os.path.join(dir_log, "error.log")
 log_normal = os.path.join(dir_log, "activity.log")
 log_debug = os.path.join(dir_log, "debug.log")
@@ -35,6 +36,10 @@ class GalleryFilter(enum.Enum):
     Favorite = 1
     #: Inbox
     Inbox = 2
+
+class ExitCode(enum.Enum):
+    Exit = 0
+    Restart = 1
 
 ## DATABASE
 db_session = None
