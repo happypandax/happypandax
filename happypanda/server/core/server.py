@@ -6,7 +6,8 @@ from gevent import socket, pool, queue
 from gevent.server import StreamServer
 
 from happypanda.common import constants, exceptions, utils, message
-from happypanda.server.core import interface, db
+from happypanda.server import interface
+from happypanda.server.core import db
 from happypanda.webclient import main as hweb
 
 _special_functions = ('interactive',) # functions we don't consider as part of the api
