@@ -41,6 +41,8 @@ class ExitCode(enum.Enum):
     Exit = 0
     Restart = 1
 
+core_plugin = None
+
 ## DATABASE
 db_session = None
 

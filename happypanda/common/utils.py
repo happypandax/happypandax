@@ -5,6 +5,7 @@ import os
 import socket
 import argparse
 import pkgutil
+import pprint
 from inspect import ismodule
 
 from happypanda.common import constants, exceptions, upnp
@@ -71,6 +72,8 @@ def parse_options(args):
     assert isinstance(args, argparse.Namespace)
 
     constants.debug = args.debug
+    if constants.debug:
+        sys.displayhook == pprint.pprint
     constants.localhost = args.localhost
     if args.port:
         constants.local_port = args.port

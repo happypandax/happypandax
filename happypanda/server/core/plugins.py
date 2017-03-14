@@ -5,7 +5,7 @@ import threading
 import sys
 import traceback
 import importlib
-from inspect import getmembers
+import inspect
 
 
 from happypanda.common import exceptions
@@ -39,21 +39,25 @@ def plugin_load(path, *args, **kwargs):
     plug = os.path.splitext(plugfile.name)[0]
     sys.path.insert(0, os.path.realpath(path))
     try:
-        mod = importlib.import_module(plug)
-        mod = importlib.reload(mod)
-        plugmembers = getmembers(mod)
-        plugclass = None
-        for name, m_object in plugmembers:
-            if name == "HPlugin":
-                plugclass = m_object
-                break
-        if not plugclass:
-            raise exceptions.CoreError("Plugin loader", "No main entry class named 'HPlugin' found in '{}'".format(path))
-        log_i("Loading {}".format(plugclass.__name__))
-        cls = HPluginMeta(plugclass.__name__, plugclass.__bases__, dict(plugclass.__dict__))
-        registered.register(cls, *args, **kwargs)
+        _plugin_load(plug, path, *args, **kwargs)
     finally:
         sys.path.pop(0)
+
+def _plugin_load(module_name, path, *args, **kwargs):
+    "Imports plugin module and registers its main class"
+    mod = importlib.import_module(module_name)
+    mod = importlib.reload(mod)
+    plugmembers = inspect.getmembers(mod)
+    plugclass = None
+    for name, m_object in plugmembers:
+        if name == "HPlugin":
+            plugclass = m_object
+            break
+    if not plugclass:
+        raise exceptions.CoreError("Plugin loader", "No main entry class named 'HPlugin' found in '{}'".format(path))
+    log_i("Loading {}".format(plugclass.__name__))
+    cls = HPluginMeta(plugclass.__name__, plugclass.__bases__, dict(plugclass.__dict__))
+    return registered.register(cls, *args, **kwargs)
 
 def plugin_loader(path, *args, **kwargs):
     """
@@ -77,13 +81,26 @@ class Plugins:
 
 
     def register(self, plugin, *args, **kwargs):
+        """
+        Registers a plugin
+
+        Params:
+            - plugin -- main plugin class
+            - *args -- additional arguments for plugin
+            - **kwargs -- additional keyword arguments for plugin
+
+        Returns:
+            instanced main plugin class
+        """
         assert isinstance(plugin, HPluginMeta)
+        self.hooks[plugin.ID] = {} # important this is created before instantiation, plugin may use in init
         try:
             plug = plugin(*args, **kwargs)
         except TypeError:
+            self.hooks.pop(plugin.ID)
             raise exceptions.PluginError(plugin.NAME, "A __init__ with the following signature must be defined: '__init__(*args, **kwargs)'")
-        self.hooks[plugin.ID] = {}
         self._plugins[plugin.ID] = plug
+        return plug
 
     def _connect_hooks(self):
         # TODO: make thread-safe with aqcuire & lock
@@ -110,7 +127,6 @@ class HPluginMeta(type):
         if not hasattr(cls, "ID"):
             raise exceptions.PluginAttributeError(name, "ID attribute is missing")
 
-        cls.ID = cls.ID.replace('-', '')
         if not hasattr(cls, "NAME"):
             raise exceptions.PluginAttributeError(name, "NAME attribute is missing")
         if not hasattr(cls, "VERSION"):
@@ -121,8 +137,9 @@ class HPluginMeta(type):
             raise exceptions.PluginAttributeError(name, "DESCRIPTION attribute is missing")
 
         try:
-            val = uuid.UUID(cls.ID, version=4)
-            assert val.hex == cls.ID
+            uid = cls.ID.replace('-', '')
+            val = uuid.UUID(uid, version=4)
+            assert val.hex == uid
         except ValueError:
             raise exceptions.PluginIDError(name, "Invalid plugin id. UUID4 is required.")
         except AssertionError:
@@ -139,11 +156,13 @@ class HPluginMeta(type):
 
         super().__init__(name, bases, dct)
 
-        setattr(cls, "connect_plugin", cls.connect_plugin)
-        setattr(cls, "require_plugin", cls.require_plugin)
-        setattr(cls, "create_hook", cls.create_hook)
-        setattr(cls, "connect_hook", cls.connect_hook)
-        #setattr(cls, "__getattr__", cls.__getattr__)
+        # set attributes
+        attrs = inspect.getmembers(HPluginMeta)
+
+        setattr(cls, "__getattr__", cls.__getattr__)
+        for n, a in attrs:
+            if not n.startswith('_'):
+                setattr(cls, n, a)
 
     def require(cls, version_start, version_end=None, name='server'):
         """
@@ -170,14 +189,23 @@ class HPluginMeta(type):
 
     def disable_plugin(cls, pluginid):
         """
-        Disallow a plugin from loading. Also disables the plugin when hotplugged.
+        Shut's down and disallows a plugin from loading.
 
         Params:
             - pluginid -- PluginID of the plugin you want to disable
         """
-        pass
         # Note: same as above, make a preliminary round for metadata ans such, add all disabled plugins
-        #       in dict. Check if in disabled plugins before loading. 
+        #       in dict. Check if in disabled plugins before loading.
+
+    def disable_hook(cls, pluginid, hook_name):
+        """
+        Disables a plugin's hook.
+
+        Params:
+            - pluginid -- PluginID of the plugin you want to disable a hook from
+            - hook_name -- Exact name of the hook you want to disable
+        """
+        pass
 
     def connect_plugin(cls, pluginid):
         """
@@ -194,7 +222,7 @@ class HPluginMeta(type):
         class OtherHPlugin:
 
             def __init__(self, pluginid):
-                self._id = pluginid.replace('-', '')
+                self._id = pluginid
                 if not registered._plugins.get(self._id):
                     raise exceptions.PluginIDError(name, "No plugin found with ID: " + self._id)
     
@@ -227,17 +255,21 @@ class HPluginMeta(type):
             raise exceptions.PluginIDError("No plugin found with ID: {}".format(pluginid))
         if not registered.hooks[pluginid][hook_name]:
             raise exceptions.PluginHookError("No hook with name '{}' found on plugin with ID: {}".format(hook_name, pluginid))
-        registered._connections.append((cls.ID, pluginid.replace('-', ''), hook_name, handler))
+        registered._connections.append((cls.ID, pluginid, hook_name, handler))
 
     def create_hook(cls, hook_name):
         """
         Create mountpoint that other plugins can hook to and extend
+        After creation, the hook can be used like a regular method: self.hook_name(args, kwargs)
 
         Params:
             - hook_name -- Name of the hook you want to create.
-        
-        Hook should be invoked as such: self.hook_name(*args, **kwargs)
-        Note: The values returned by the handlers are returned in a list
+
+        Returns:
+            a callable hook object
+
+        .. Note::
+            The values returned by the handlers are returned in a list
         """
         assert isinstance(hook_name, str), ""
 
@@ -260,6 +292,16 @@ class HPluginMeta(type):
 
         h = Hook()
         registered.hooks[cls.ID][hook_name] = h
+        return
+
+    def __getattr__(cls, key):
+        try:
+            h = registered.hooks[cls.ID].get(key)
+            if not h:
+                h = super().__getattr__(key)
+            return h
+        except AttributeError:
+            raise exceptions.PluginMethodError(cls.NAME, "Plugin has no such attribute or hook '{}'".format(key))
 
 #def startConnectionLoop():
 #	def autoConnectHooks():
