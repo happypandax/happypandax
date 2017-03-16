@@ -57,7 +57,7 @@ def _plugin_load(module_name, path, *args, **kwargs):
         raise exceptions.CoreError("Plugin loader", "No main entry class named 'HPlugin' found in '{}'".format(path))
     log_i("Loading {}".format(plugclass.__name__))
     cls = HPluginMeta(plugclass.__name__, plugclass.__bases__, dict(plugclass.__dict__))
-    return registered.register(cls, *args, **kwargs)
+    registered.register(cls, *args, **kwargs)
 
 def plugin_loader(path, *args, **kwargs):
     """
@@ -88,19 +88,29 @@ class Plugins:
             - plugin -- main plugin class
             - *args -- additional arguments for plugin
             - **kwargs -- additional keyword arguments for plugin
-
-        Returns:
-            instanced main plugin class
         """
         assert isinstance(plugin, HPluginMeta)
-        self.hooks[plugin.ID] = {} # important this is created before instantiation, plugin may use in init
+        if plugin.ID in self._plugins:
+            raise exceptions.PluginError(plugin.NAME, "Plugin ID already exists")
+        self.hooks[plugin.ID] = {}
+        self._plugins[plugin.ID] = (plugin, args, kwargs)
         try:
             plug = plugin(*args, **kwargs)
         except TypeError:
             self.hooks.pop(plugin.ID)
             raise exceptions.PluginError(plugin.NAME, "A __init__ with the following signature must be defined: '__init__(*args, **kwargs)'")
-        self._plugins[plugin.ID] = plug
-        return plug
+
+    def start_plugins(self):
+        ""
+        for plugin, args, kwargs in self._plugins:
+            pass
+
+    def _solve(self, plugin):
+        pass
+
+    def remove_plugin(self, plugin):
+        ""
+        pass
 
     def _connect_hooks(self):
         # TODO: make thread-safe with aqcuire & lock
@@ -123,18 +133,11 @@ class HPluginMeta(type):
     def __init__(cls, name, bases, dct):
         if not name.endswith("HPlugin"):
             raise exceptions.PluginNameError(name, "Main plugin class should be named HPlugin")
+        plugin_requires = ("ID", "NAME", "VERSION", "AUTHOR", "DESCRIPTION")
 
-        if not hasattr(cls, "ID"):
-            raise exceptions.PluginAttributeError(name, "ID attribute is missing")
-
-        if not hasattr(cls, "NAME"):
-            raise exceptions.PluginAttributeError(name, "NAME attribute is missing")
-        if not hasattr(cls, "VERSION"):
-            raise exceptions.PluginAttributeError(name, "VERSION attribute is missing")
-        if not hasattr(cls, "AUTHOR"):
-            raise exceptions.PluginAttributeError(name, "AUTHOR attribute is missing")
-        if not hasattr(cls, "DESCRIPTION"):
-            raise exceptions.PluginAttributeError(name, "DESCRIPTION attribute is missing")
+        for pr in plugin_requires:
+            if not hasattr(cls, pr):
+                raise exceptions.PluginAttributeError(name, "{} attribute is missing".format(pr))
 
         try:
             uid = cls.ID.replace('-', '')
@@ -164,38 +167,38 @@ class HPluginMeta(type):
             if not n.startswith('_'):
                 setattr(cls, n, a)
 
-    def require(cls, version_start, version_end=None, name='server'):
-        """
-        Add a core part as dependency, meaning if dependent core part is not available, this plugin will not load
+    #def require(cls, version_start, version_end=None, name='server'):
+    #    """
+    #    Add a core part as dependency, meaning if dependent core part is not available, this plugin will not load
 
-        Params:
-            - version_start -- A tuple of 3 ints. Require this core part is equal to or above this version.
-            - version_end -- A tuple of 3 ints or None. Require this core part is below this version. 
-            -- name -- which core part, available names are ['server', 'db']
-        """
-        pass
+    #    Params:
+    #        - version_start -- A tuple of 3 ints. Require this core part is equal to or above this version.
+    #        - version_end -- A tuple of 3 ints or None. Require this core part is below this version. 
+    #        -- name -- which core part, available names are ['server', 'db']
+    #    """
+    #    pass
 
-    def require_plugin(cls, pluginid, version_start, version_end=None):
-        """
-        Add a plugin as dependency, meaning if dependent plugin is not available, this plugin will not load
+    #def require_plugin(cls, pluginid, version_start, version_end=None):
+    #    """
+    #    Add a plugin as dependency, meaning if dependent plugin is not available, this plugin will not load
 
-        Params:
-            - pluginid -- PluginID of the plugin you want to depend on
-            - version_start -- A tuple of 3 ints. Require this plugin is equal to or above this version.
-            - version_end -- A tuple of 3 ints or None. Require that plugin is below this version. 
-        """
-        pass
-        # Note: load all pluginids and their versions first and then check for dependencies
+    #    Params:
+    #        - pluginid -- PluginID of the plugin you want to depend on
+    #        - version_start -- A tuple of 3 ints. Require this plugin is equal to or above this version.
+    #        - version_end -- A tuple of 3 ints or None. Require that plugin is below this version. 
+    #    """
+    #    pass
+    #    # Note: load all pluginids and their versions first and then check for dependencies
 
-    def disable_plugin(cls, pluginid):
-        """
-        Shut's down and disallows a plugin from loading.
+    #def disable_plugin(cls, pluginid):
+    #    """
+    #    Shut's down and disallows a plugin from loading.
 
-        Params:
-            - pluginid -- PluginID of the plugin you want to disable
-        """
-        # Note: same as above, make a preliminary round for metadata ans such, add all disabled plugins
-        #       in dict. Check if in disabled plugins before loading.
+    #    Params:
+    #        - pluginid -- PluginID of the plugin you want to disable
+    #    """
+    #    # Note: same as above, make a preliminary round for metadata ans such, add all disabled plugins
+    #    #       in dict. Check if in disabled plugins before loading.
 
     def disable_hook(cls, pluginid, hook_name):
         """

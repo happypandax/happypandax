@@ -114,8 +114,6 @@ def get_module_members(mod):
     "Retrive list of members in modules"
     assert ismodule(mod)
 
-
-
 ## SERVER ##
 def convert_to_json(buffer, name):
     ""
