@@ -79,6 +79,9 @@ class Plugins:
     _plugins = {}
     hooks = {}
 
+    def __init__(self):
+        self._started = False
+
 
     def register(self, plugin, *args, **kwargs):
         """
@@ -92,20 +95,131 @@ class Plugins:
         assert isinstance(plugin, HPluginMeta)
         if plugin.ID in self._plugins:
             raise exceptions.PluginError(plugin.NAME, "Plugin ID already exists")
-        self.hooks[plugin.ID] = {}
         self._plugins[plugin.ID] = (plugin, args, kwargs)
-        try:
-            plug = plugin(*args, **kwargs)
-        except TypeError:
-            self.hooks.pop(plugin.ID)
-            raise exceptions.PluginError(plugin.NAME, "A __init__ with the following signature must be defined: '__init__(*args, **kwargs)'")
 
-    def start_plugins(self):
+    def init_plugins(self):
+        """
+        Instantiate plugins and solve all dependencies
+
+        Returns a dict with failed plugins: { plugin_id: exception }
+        """
+
+        failed = {} # plugins with errors
+        all_plugins = {} # { plugin_id : {other_plugin_id : ( ver_start, vers_end )} }
+
+        # list up all requirements
+        for pluginid, args, kwargs in self._plugins:
+            plugin_class = self._plugins[pluginid][0]
+            if not hasattr(plugin_class, 'REQUIRE'):
+                continue
+
+            # invalid list
+            if not isinstance(plugin_class.REQUIRE, (tuple, list)):
+                failed[pluginid] = exceptions.PluginAttributeError(plugin_class.NAME,
+                                                               "REQUIRE attribute must be a tuple/list")
+                continue
+
+            # empty list
+            if not plugin_class.REQUIRE:
+                continue
+
+            # wrong list
+            e = exceptions.PluginAttributeError(plugin_class.NAME,
+                                                               "REQUIRE should look like this: [ ( ID, (0,0,0), (0,0,0) ) ]")
+            if not all(isinstance(x, (tuple, list)) for x in plugin_class.REQUIRE):
+                failed[pluginid] = e
+                continue
+
+            for x in plugin_class.REQUIRE:
+                if not x:
+                    failed[pluginid] = e
+                    continue
+
+                if len(x) < 2:
+                    failed[pluginid] = e
+                    continue
+
+                if not isinstance(x[0], str):
+                    failed[pluginid] = e
+                    continue
+
+                if not isinstance(x[1], tuple):
+                    failed[pluginid] = e
+                    continue
+
+                version_end = (0, 0, 0)
+                try:
+                    if not isinstance(x[2], tuple):
+                        failed[pluginid] = e
+                        continue
+                    version_end = x[2]
+                except IndexError:
+                    pass
+
+                if not pluginid in all_plugins:
+                    all_plugins[pluginid] = {}
+                
+                all_plugins[pluginid][x[0]] = (x[1], version_end)
+
+        self._solve(failed, all_plugins)
+        
+        return failed
+
+                
+
+
+    def _solve(self, failed, all_plugins):
         ""
-        for plugin, args, kwargs in self._plugins:
-            pass
+        s_plugins = []
+        for pluginid in all_plugins:
+            plugin_class = self._plugins[pluginid][0]
+            fail = False
 
-    def _solve(self, plugin):
+            for otherpluginid in all_plugins[pluginid]:
+                # check if required plugin is present
+                if not otherpluginid in self._plugins:
+                    fail = True
+                    failed[pluginid] = exceptions.PluginError(plugin_class.NAME, "A required plugin is not present: {}".format(otherpluginid))
+
+                # check if required plugin failed to load
+                if otherpluginid in failed:
+                    fail = True
+                    failed[pluginid] = exceptions.PluginError(plugin_class.NAME, "A required plugin failed to load: {}".format(otherpluginid))
+
+                vers = all_plugins[pluginid][otherpluginid]
+                otherplugin_class = self._plugins[otherpluginid][0]
+                # compare versions
+                other_version = otherplugin_class.VERSION
+                if vers[0] <= other_version:
+                    fail = True
+                    failed[pluginid] = exceptions.PluginError(plugin_class.NAME,
+                                                              "A required plugin does not meet version requirement {} <= {}: {}".format(vers[0], other_version, otherpluginid))
+                
+                if not vers[1] == (0, 0, 0) and vers[1] > other_version:
+                    fail = True
+                    failed[pluginid] = exceptions.PluginError(plugin_class.NAME,
+                                                              "A required plugin does not meet version requirement {} > {}: {}".format(vers[1], other_version, otherpluginid))
+
+            if fail:
+                continue
+
+            # all requirements fullfilled
+            s_plugins.append(pluginid)
+
+    def _init_plugin(self, pluginid):
+        ""
+        if pluginid in self._plugins:
+            plugin, args, kwargs = self._plugins[pluginid]
+            self.hooks = [pluginid]
+            try:
+                plug = plugin(*args, **kwargs)
+            except TypeError:
+                self.hooks.pop(plugin.ID)
+                self._remove_plugin(pluginid)
+                raise exceptions.PluginError(plugin.NAME, "A __init__ with the following signature must be defined: '__init__(*args, **kwargs)'")
+
+    def _remove_plugin(self, pluginid):
+        "Remove plugin and its dependents"
         pass
 
     def remove_plugin(self, plugin):
