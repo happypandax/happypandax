@@ -6,6 +6,7 @@ import sys
 import traceback
 import importlib
 import inspect
+import enum
 
 
 from happypanda.common import exceptions
@@ -72,11 +73,95 @@ def plugin_loader(path, *args, **kwargs):
     log_i('Loading plugins from path: {}'.format(path))
     for pdir in os.scandir(path):
         plugin_load(pdir.path, *args, **kwargs)
+    registered.init_plugins()
+
+class PluginState(enum.Enum):
+    Disabled = 0 # puporsely disabled
+    Unloaded = 1 # unloaded because of dependencies, etc.
+    Init = 2 # was just registered
+    Enabled = 3 # plugin is loaded and in use
+
+class PluginNode:
+    ""
+    def __init__(self, plugin_class, *args, **kwargs):
+        self.state = PluginState.Init
+        self.plugin = plugin_class
+        self.args = args
+        self.kwargs = kwargs
+        self.depends = {} # {other_plugin_id : ( ver_start, vers_end )}
+        self.instanced = None
+        self.list_depends()
+
+    def list_depends(self):
+        ""
+        pluginid = self.plugin.ID
+        err = self._error_check(pluginid, self.plugin)
+        if err is None:
+            return
+        if isinstance(err, tuple):
+                raise err[1]
+
+        for x in self.plugin.REQUIRE:
+            version_end = (0, 0, 0)
+            try:
+                version_end = x[2]
+            except IndexError:
+                pass
+
+            self.depends[x[0]] = (x[1], version_end)
+
+    def _error_check(self, pluginid, plugin_class):
+        ""
+        if not hasattr(plugin_class, 'REQUIRE'):
+            return None
+
+        # invalid list
+        if not isinstance(plugin_class.REQUIRE, (tuple, list)):
+            e = exceptions.PluginAttributeError(plugin_class.NAME,
+                                                            "REQUIRE attribute must be a tuple/list")
+            return False, e
+
+        # empty list
+        if not plugin_class.REQUIRE:
+            return None
+
+        # wrong list
+        e = exceptions.PluginAttributeError(plugin_class.NAME,
+                                                            "REQUIRE should look like this: [ ( ID, (0,0,0), (0,0,0) ) ]")
+        if not all(isinstance(x, (tuple, list)) for x in plugin_class.REQUIRE):
+            return False, e
+
+        for x in plugin_class.REQUIRE:
+            if not x:
+                return False, e
+
+            if len(x) < 2:
+                return False, e
+
+            if not isinstance(x[0], str):
+                return False, e
+
+            if not isinstance(x[1], tuple):
+                return False, e
+
+            try:
+                if not isinstance(x[2], tuple):
+                    return False, e
+            except IndexError:
+                pass
+
+        return True
+
+    def __eq__(self, other):
+        return other == self.plugin.ID
+
+    def __hash__(self):
+        return hash(self.plugin.ID)
 
 class Plugins:
     ""
     _connections = set()
-    _plugins = {}
+    _nodes = {}
     hooks = {}
 
     def __init__(self):
@@ -93,138 +178,79 @@ class Plugins:
             - **kwargs -- additional keyword arguments for plugin
         """
         assert isinstance(plugin, HPluginMeta)
-        if plugin.ID in self._plugins:
+        if plugin.ID in self._nodes:
             raise exceptions.PluginError(plugin.NAME, "Plugin ID already exists")
-        self._plugins[plugin.ID] = (plugin, args, kwargs)
+        self._nodes[plugin.ID] = PluginNode(plugin, *args, **kwargs)
 
     def init_plugins(self):
         """
-        Instantiate plugins and solve all dependencies
+        Instantiate new plugins and (re)solve all dependencies
 
         Returns a dict with failed plugins: { plugin_id: exception }
         """
 
         failed = {} # plugins with errors
-        all_plugins = {} # { plugin_id : {other_plugin_id : ( ver_start, vers_end )} }
 
         # list up all requirements
-        for pluginid, args, kwargs in self._plugins:
-            plugin_class = self._plugins[pluginid][0]
-            if not hasattr(plugin_class, 'REQUIRE'):
+        for plug_id in self._nodes:
+            node = self._nodes[plug_id]
+            if node.state == PluginState.Disabled:
                 continue
 
-            # invalid list
-            if not isinstance(plugin_class.REQUIRE, (tuple, list)):
-                failed[pluginid] = exceptions.PluginAttributeError(plugin_class.NAME,
-                                                               "REQUIRE attribute must be a tuple/list")
+            result = self._solve(node, node.depends)
+            if isinstance(result, Exception):
+                failed[node.plugin.ID] = result
+                node.state = PluginState.Unloaded
                 continue
 
-            # empty list
-            if not plugin_class.REQUIRE:
-                continue
-
-            # wrong list
-            e = exceptions.PluginAttributeError(plugin_class.NAME,
-                                                               "REQUIRE should look like this: [ ( ID, (0,0,0), (0,0,0) ) ]")
-            if not all(isinstance(x, (tuple, list)) for x in plugin_class.REQUIRE):
-                failed[pluginid] = e
-                continue
-
-            for x in plugin_class.REQUIRE:
-                if not x:
-                    failed[pluginid] = e
-                    continue
-
-                if len(x) < 2:
-                    failed[pluginid] = e
-                    continue
-
-                if not isinstance(x[0], str):
-                    failed[pluginid] = e
-                    continue
-
-                if not isinstance(x[1], tuple):
-                    failed[pluginid] = e
-                    continue
-
-                version_end = (0, 0, 0)
-                try:
-                    if not isinstance(x[2], tuple):
-                        failed[pluginid] = e
-                        continue
-                    version_end = x[2]
-                except IndexError:
-                    pass
-
-                if not pluginid in all_plugins:
-                    all_plugins[pluginid] = {}
-                
-                all_plugins[pluginid][x[0]] = (x[1], version_end)
-
-        self._solve(failed, all_plugins)
+            if node.state == PluginState.Init:
+                self._init_plugin(node)
         
         return failed
-
                 
-
-
-    def _solve(self, failed, all_plugins):
+    def _solve(self, node, depends):
         ""
-        s_plugins = []
-        for pluginid in all_plugins:
-            plugin_class = self._plugins[pluginid][0]
-            fail = False
+        for otherpluginid in depends:
+            # check if required plugin is present
+            if not otherpluginid in self._nodes:
+                if self._nodes[otherpluginid].state == PluginState.Unloaded:
+                    return exceptions.PluginError(node.plugin.NAME, "A required plugin failed to load: {}".format(otherpluginid))
+                elif self._nodes[otherpluginid].state == PluginState.Disabled:
+                    return exceptions.PluginError(node.plugin.NAME, "A required plugin has been disabled: {}".format(otherpluginid))
+                else:
+                    return exceptions.PluginError(node.plugin.NAME, "A required plugin is not present: {}".format(otherpluginid))
 
-            for otherpluginid in all_plugins[pluginid]:
-                # check if required plugin is present
-                if not otherpluginid in self._plugins:
-                    fail = True
-                    failed[pluginid] = exceptions.PluginError(plugin_class.NAME, "A required plugin is not present: {}".format(otherpluginid))
-
-                # check if required plugin failed to load
-                if otherpluginid in failed:
-                    fail = True
-                    failed[pluginid] = exceptions.PluginError(plugin_class.NAME, "A required plugin failed to load: {}".format(otherpluginid))
-
-                vers = all_plugins[pluginid][otherpluginid]
-                otherplugin_class = self._plugins[otherpluginid][0]
-                # compare versions
-                other_version = otherplugin_class.VERSION
-                if vers[0] <= other_version:
-                    fail = True
-                    failed[pluginid] = exceptions.PluginError(plugin_class.NAME,
-                                                              "A required plugin does not meet version requirement {} <= {}: {}".format(vers[0], other_version, otherpluginid))
-                
-                if not vers[1] == (0, 0, 0) and vers[1] > other_version:
-                    fail = True
-                    failed[pluginid] = exceptions.PluginError(plugin_class.NAME,
-                                                              "A required plugin does not meet version requirement {} > {}: {}".format(vers[1], other_version, otherpluginid))
-
-            if fail:
-                continue
-
-            # all requirements fullfilled
-            s_plugins.append(pluginid)
+            vers = depends[otherpluginid]
+            other_node = self._nodes[otherpluginid]
+            # compare versions
+            other_version = other_node.plugin.VERSION
+            if not vers[0] <= other_version:
+                return exceptions.PluginError(node.plugin.NAME,
+                                                            "A required plugin does not meet version requirement {} <= {}: {}".format(vers[0], other_version, otherpluginid))
+            if not vers[1] == (0, 0, 0) and not vers[1] > other_version:
+                return exceptions.PluginError(node.plugin.NAME,
+                                                            "A required plugin does not meet version requirement {} > {}: {}".format(vers[1], other_version, otherpluginid))
+        return True
 
     def _init_plugin(self, pluginid):
         ""
-        if pluginid in self._plugins:
-            plugin, args, kwargs = self._plugins[pluginid]
-            self.hooks = [pluginid]
+        if pluginid in self._nodes:
+            node = self._nodes[pluginid]
+            self.hooks[pluginid] = {}
             try:
-                plug = plugin(*args, **kwargs)
+                node.instanced = node.plugin(*node.args, **node.kwargs)
             except TypeError:
-                self.hooks.pop(plugin.ID)
-                self._remove_plugin(pluginid)
+                self.disable_plugin(pluginid)
                 raise exceptions.PluginError(plugin.NAME, "A __init__ with the following signature must be defined: '__init__(*args, **kwargs)'")
+            except Exception as e:
+                raise exceptions.PluginError(plugin.NAME, "{}".format(e))
+            node.state = PluginState.Enabled
 
-    def _remove_plugin(self, pluginid):
+    def disable_plugin(self, pluginid):
         "Remove plugin and its dependents"
-        pass
-
-    def remove_plugin(self, plugin):
-        ""
-        pass
+        node = self._nodes[pluginid]
+        node.state = PluginState.Disabled
+        self.hooks.pop(node.plugin.ID)
 
     def _connect_hooks(self):
         # TODO: make thread-safe with aqcuire & lock
@@ -236,7 +262,7 @@ class Plugins:
 
     def __getattr__(self, key):
         try:
-            return self._plugins[key]
+            return self._nodes[key]
         except KeyError:
             raise exceptions.PluginIDError("No plugin found with ID: {}".format(key))
 
@@ -340,12 +366,12 @@ class HPluginMeta(type):
 
             def __init__(self, pluginid):
                 self._id = pluginid
-                if not registered._plugins.get(self._id):
+                if not registered._nodes.get(self._id):
                     raise exceptions.PluginIDError(name, "No plugin found with ID: " + self._id)
     
             def __getattr__(self, key):
                 try:
-                    plugin = registered._plugins[self._id]
+                    plugin = registered._nodes[self._id]
                 except KeyError:
                     raise exceptions.PluginIDError(name, "No plugin found with ID: " + self._id)
                     
@@ -368,7 +394,7 @@ class HPluginMeta(type):
         """
 
         assert isinstance(pluginid, str) and isinstance(hook_name, str) and callable(handler), ""
-        if not registered._plugins[pluginid]:
+        if not registered._nodes[pluginid]:
             raise exceptions.PluginIDError("No plugin found with ID: {}".format(pluginid))
         if not registered.hooks[pluginid][hook_name]:
             raise exceptions.PluginHookError("No hook with name '{}' found on plugin with ID: {}".format(hook_name, pluginid))
@@ -404,7 +430,7 @@ class HPluginMeta(type):
                     except Exception as e:
                         raise exceptions.PluginHandlerError(
                             "An exception occured in {}:{} by {}:{}\n\t{}".format(
-                                hook_name, self.owner, registered._plugins[plugid].NAME, plugid, traceback.format_exc()))
+                                hook_name, self.owner, registered._nodes[plugid].NAME, plugid, traceback.format_exc()))
                 return handler_returns
 
         h = Hook()
