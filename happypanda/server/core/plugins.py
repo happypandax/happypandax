@@ -89,6 +89,7 @@ class PluginNode:
         self.args = args
         self.kwargs = kwargs
         self.depends = {} # {other_plugin_id : ( ver_start, vers_end )}
+        self.hooks = {} # { hook_name : hook_method }
         self.instanced = None
         self.list_depends()
 
@@ -162,7 +163,6 @@ class Plugins:
     ""
     _connections = set()
     _nodes = {}
-    hooks = {}
 
     def __init__(self):
         self._started = False
@@ -236,21 +236,19 @@ class Plugins:
         ""
         if pluginid in self._nodes:
             node = self._nodes[pluginid]
-            self.hooks[pluginid] = {}
             try:
                 node.instanced = node.plugin(*node.args, **node.kwargs)
-            except TypeError:
+            except TypeError: # TODO: revise.. inspect method signature?
                 self.disable_plugin(pluginid)
-                raise exceptions.PluginError(plugin.NAME, "A __init__ with the following signature must be defined: '__init__(*args, **kwargs)'")
+                raise exceptions.PluginError(node.plugin.NAME, "A __init__ with the following signature must be defined: '__init__(self, *args, **kwargs)'")
             except Exception as e:
-                raise exceptions.PluginError(plugin.NAME, "{}".format(e))
+                raise exceptions.PluginError(node.plugin.NAME, "{}".format(e))
             node.state = PluginState.Enabled
 
     def disable_plugin(self, pluginid):
         "Remove plugin and its dependents"
         node = self._nodes[pluginid]
         node.state = PluginState.Disabled
-        self.hooks.pop(node.plugin.ID)
 
     def _connect_hooks(self):
         # TODO: make thread-safe with aqcuire & lock
@@ -307,29 +305,6 @@ class HPluginMeta(type):
             if not n.startswith('_'):
                 setattr(cls, n, a)
 
-    #def require(cls, version_start, version_end=None, name='server'):
-    #    """
-    #    Add a core part as dependency, meaning if dependent core part is not available, this plugin will not load
-
-    #    Params:
-    #        - version_start -- A tuple of 3 ints. Require this core part is equal to or above this version.
-    #        - version_end -- A tuple of 3 ints or None. Require this core part is below this version. 
-    #        -- name -- which core part, available names are ['server', 'db']
-    #    """
-    #    pass
-
-    #def require_plugin(cls, pluginid, version_start, version_end=None):
-    #    """
-    #    Add a plugin as dependency, meaning if dependent plugin is not available, this plugin will not load
-
-    #    Params:
-    #        - pluginid -- PluginID of the plugin you want to depend on
-    #        - version_start -- A tuple of 3 ints. Require this plugin is equal to or above this version.
-    #        - version_end -- A tuple of 3 ints or None. Require that plugin is below this version. 
-    #    """
-    #    pass
-    #    # Note: load all pluginids and their versions first and then check for dependencies
-
     #def disable_plugin(cls, pluginid):
     #    """
     #    Shut's down and disallows a plugin from loading.
@@ -337,8 +312,6 @@ class HPluginMeta(type):
     #    Params:
     #        - pluginid -- PluginID of the plugin you want to disable
     #    """
-    #    # Note: same as above, make a preliminary round for metadata ans such, add all disabled plugins
-    #    #       in dict. Check if in disabled plugins before loading.
 
     def disable_hook(cls, pluginid, hook_name):
         """
@@ -361,25 +334,23 @@ class HPluginMeta(type):
             An object of the other plugin if it exists
         """
         name = cls.NAME
-
         class OtherHPlugin:
 
             def __init__(self, pluginid):
-                self._id = pluginid
-                if not registered._nodes.get(self._id):
-                    raise exceptions.PluginIDError(name, "No plugin found with ID: " + self._id)
+                self.ID = pluginid
+                if not registered._nodes.get(self.ID):
+                    raise exceptions.PluginIDError(name, "No plugin found with ID: " + self.ID)
     
             def __getattr__(self, key):
                 try:
-                    plugin = registered._nodes[self._id]
+                    node = registered._nodes[self.ID]
                 except KeyError:
-                    raise exceptions.PluginIDError(name, "No plugin found with ID: " + self._id)
-                    
-                pluginmethod = registered.hooks[self.ID].get(key)
-                if pluginmethod:
-                    return pluginmethod 
-                else:
-                    raise exceptions.PluginMethodError(name, "Plugin {}:{} has no such method: {}".format(plugin.ID, plugin.NAME, key))
+                    raise exceptions.PluginIDError(name, "No plugin found with ID: " + self.ID)
+                
+                pluginmethod = node.hooks.get(key)
+                if not pluginmethod:
+                    raise exceptions.PluginMethodError(name, "Plugin {}:{} has no such method: {}".format(node.plugin.NAME, node.plugin.ID, key))
+                return pluginmethod
 
         return OtherHPlugin(pluginid)
 
@@ -394,10 +365,11 @@ class HPluginMeta(type):
         """
 
         assert isinstance(pluginid, str) and isinstance(hook_name, str) and callable(handler), ""
-        if not registered._nodes[pluginid]:
-            raise exceptions.PluginIDError("No plugin found with ID: {}".format(pluginid))
-        if not registered.hooks[pluginid][hook_name]:
-            raise exceptions.PluginHookError("No hook with name '{}' found on plugin with ID: {}".format(hook_name, pluginid))
+        node = registered._nodes.get(pluginid)
+        if not node:
+            raise exceptions.PluginIDError(cls.NAME, "No plugin found with ID: {}".format(pluginid))
+        if not node.hooks.get(hook_name):
+            raise exceptions.PluginHookError(cls.NAME, "No hook with name '{}' found on plugin with ID: {}".format(hook_name, pluginid))
         registered._connections.append((cls.ID, pluginid, hook_name, handler))
 
     def create_hook(cls, hook_name):
@@ -439,10 +411,13 @@ class HPluginMeta(type):
 
     def __getattr__(cls, key):
         try:
-            h = registered.hooks[cls.ID].get(key)
-            if not h:
-                h = super().__getattr__(key)
-            return h
+            node = registered._nodes.get(cls.ID)
+            if node:
+                h = node.hooks.get(key)
+                if h:
+                    return h
+
+            return super().__getattr__(key)
         except AttributeError:
             raise exceptions.PluginMethodError(cls.NAME, "Plugin has no such attribute or hook '{}'".format(key))
 
