@@ -5,7 +5,7 @@ import enum
 debug = False
 
 ## VERSIONING ##
-version = "0.0.1"
+version = (0, 0, 1)
 version_db = (0,)
 
 ## PATHS & FILENAMES ##

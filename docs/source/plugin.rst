@@ -18,7 +18,7 @@ Things to know
 How to create a plugin
 ----------------------------------------
 
-1. Start by creating a folder for your plugin, call it whatever describes your plugin and place it under the ``plugins`` folder in Happypanda X Server.
+1. Start by creating a folder for your plugin, call it whatever describes your plugin and place it in the ``plugins`` folder in Happypanda X Server.
 
 2. Create your main python file, which should be named ``HPlugin.py`` (case insensitive).
 
@@ -36,7 +36,8 @@ The following are required by your main plugin file:
 	- ``DESCRPTION``: A short description of your plugin
 	- ``VERSION``: a tuple of 3 ints
 	- ``WEBSITE``: This one is optional. Maybe your website, email or any way to contact you.
-- Additionaly, in your main plugin class, a ``__init__`` method with the following signature must be defined: ``__init__(*args, **kwargs)``
+
+- Additionally, in your main plugin class, a ``__init__`` method with the following signature must be defined: ``__init__(self, *args, **kwargs)``
 
 Putting all of this together we get the following:
 

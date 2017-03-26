@@ -83,7 +83,7 @@ class PluginNameError(PluginIDError):
 
 
 @error_code(203)
-class PluginMethodError(PluginError):
+class PluginMethodError(PluginError, AttributeError):
     """Plugin Method Error."""
 
     pass

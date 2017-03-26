@@ -81,7 +81,6 @@ def parse_options(args):
         constants.web_port = args.web_port
 
 
-
 def connection_params(web=False):
     "Retrieve host and port"
     host = constants.host

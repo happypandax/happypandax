@@ -14,6 +14,10 @@ def start():
     utils.parse_options(args)
 
     constants.core_plugin = plugins._plugin_load("happypanda.server.core.coreplugin", "core")
+
+    if not args.safe:
+        plugins.plugin_loader(constants.dir_plugin)
+
     print(plugins.registered.init_plugins())
     #server.HPServer().run(web=args.web, interactive=args.interact)
 
