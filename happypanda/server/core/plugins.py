@@ -45,7 +45,12 @@ def plugin_load(path, *args, **kwargs):
         sys.path.pop(0)
 
 def _plugin_load(module_name, path, *args, **kwargs):
-    "Imports plugin module and registers its main class"
+    """
+    Imports plugin module and registers its main class
+    
+    Returns:
+        PluginNode
+    """
     mod = importlib.import_module(module_name)
     mod = importlib.reload(mod)
     plugmembers = inspect.getmembers(mod)
@@ -58,7 +63,7 @@ def _plugin_load(module_name, path, *args, **kwargs):
         raise exceptions.CoreError("Plugin loader", "No main entry class named 'HPlugin' found in '{}'".format(path))
     log_i("Loading {}".format(plugclass.__name__))
     cls = HPluginMeta(plugclass.__name__, plugclass.__bases__, dict(plugclass.__dict__))
-    registered.register(cls, *args, **kwargs)
+    return registered.register(cls, *args, **kwargs)
 
 def plugin_loader(path, *args, **kwargs):
     """
@@ -73,7 +78,7 @@ def plugin_loader(path, *args, **kwargs):
     log_i('Loading plugins from path: {}'.format(path))
     for pdir in os.scandir(path):
         plugin_load(pdir.path, *args, **kwargs)
-    registered.init_plugins()
+    return registered.init_plugins()
 
 class PluginState(enum.Enum):
     Disabled = 0 # puporsely disabled
@@ -166,6 +171,7 @@ class Plugins:
 
     def __init__(self):
         self._started = False
+        self._dirty = False
 
 
     def register(self, plugin, *args, **kwargs):
@@ -176,11 +182,16 @@ class Plugins:
             - plugin -- main plugin class
             - *args -- additional arguments for plugin
             - **kwargs -- additional keyword arguments for plugin
+
+        Returns:
+            PluginNode
         """
         assert isinstance(plugin, HPluginMeta)
         if plugin.ID in self._nodes:
             raise exceptions.PluginError(plugin.NAME, "Plugin ID already exists")
-        self._nodes[plugin.ID] = PluginNode(plugin, *args, **kwargs)
+        node = PluginNode(plugin, *args, **kwargs)
+        self._nodes[plugin.ID] = node
+        return node
 
     def init_plugins(self):
         """
@@ -205,7 +216,9 @@ class Plugins:
 
             if node.state == PluginState.Init:
                 self._init_plugin(node)
-        
+
+        self._connect_hooks()
+                
         return failed
                 
     def _solve(self, node, depends):
@@ -250,13 +263,27 @@ class Plugins:
         node = self._nodes[pluginid]
         node.state = PluginState.Disabled
 
+    def add_connection(self, pluginid, otherpluginid, hook_name, handler):
+        ""
+        self._connections.add((pluginid, otherpluginid, hook_name, handler))
+        self._dirty = True
+
+    def _call_handler(self, handler, *args, **kwargs):
+        ""
+        if self._dirty:
+            self._connect_hooks()
+        return handler(*args, **kwargs)
+
     def _connect_hooks(self):
-        # TODO: make thread-safe with aqcuire & lock
-        for pluginid, otherpluginid, hook_name, handler in self._connections:
+        s = self._connections.copy()
+        while len(s):
+            pluginid, otherpluginid, hook_name, handler = s.pop()
             log_i("\t{}\n\tcreating connection to\n\t{}:{}".format(pluginid, hook_name, otherpluginid))
-            self.hooks[otherpluginid][hook_name].addHandler(pluginid, handler)
-        self._connections.clear()
-        return True
+            node = self._nodes[otherpluginid]
+            if not node.hooks.get(hook_name):
+                raise exceptions.PluginHookError("Plugin Connections", "No hook with name '{}' found on plugin with ID: {} requested by {}".format(hook_name, otherpluginid, pluginid)) # TODO: use names
+            node.hooks[hook_name].addHandler(pluginid, handler)
+        self._connections.difference_update(s)
 
     def __getattr__(self, key):
         try:
@@ -368,9 +395,7 @@ class HPluginMeta(type):
         node = registered._nodes.get(pluginid)
         if not node:
             raise exceptions.PluginIDError(cls.NAME, "No plugin found with ID: {}".format(pluginid))
-        if not node.hooks.get(hook_name):
-            raise exceptions.PluginHookError(cls.NAME, "No hook with name '{}' found on plugin with ID: {}".format(hook_name, pluginid))
-        registered._connections.append((cls.ID, pluginid, hook_name, handler))
+        registered.add_connection(cls.ID, pluginid, hook_name, handler)
 
     def create_hook(cls, hook_name):
         """
@@ -380,34 +405,34 @@ class HPluginMeta(type):
         Params:
             - hook_name -- Name of the hook you want to create.
 
-        Returns:
-            a callable hook object
-
         .. Note::
-            The values returned by the handlers are returned in a list
+            The values returned by the handlers are returned in a tuple
         """
         assert isinstance(hook_name, str), ""
 
         class Hook:
             owner = cls.ID
-            _handlers = set()
+            _handlers = {}
             def addHandler(self, pluginid, handler):
-                self._handlers.add((pluginid, handler))
+                assert isinstance(pluginid, str) and callable(handler)
+                if not pluginid in self._handlers:
+                    self._handlers[pluginid] = set()
+                self._handlers[pluginid].add(handler)
 
             def __call__(self, *args, **kwargs):
                 handler_returns = []
-                for plugid, handler in self._handlers:
-                    try:
-                        handler_returns.append(handler(*args, **kwargs))
-                    except Exception as e:
-                        raise exceptions.PluginHandlerError(
-                            "An exception occured in {}:{} by {}:{}\n\t{}".format(
-                                hook_name, self.owner, registered._nodes[plugid].NAME, plugid, traceback.format_exc()))
-                return handler_returns
+                for plugid in self._handlers:
+                    for handler in self._handlers[plugid]:
+                        try:
+                            handler_returns.append(registered._call_handler(handler, *args, **kwargs))
+                        except Exception as e:
+                            raise exceptions.PluginHandlerError(
+                                "An exception occured in {}:{} by {}:{}\n\t{}".format(
+                                    hook_name, self.owner, registered._nodes[plugid].NAME, plugid, traceback.format_exc()))
+                return tuple(handler_returns)
 
         h = Hook()
-        registered.hooks[cls.ID][hook_name] = h
-        return
+        registered._nodes[cls.ID].hooks[hook_name] = h
 
     def __getattr__(cls, key):
         try:
