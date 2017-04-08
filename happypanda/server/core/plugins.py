@@ -80,6 +80,19 @@ def plugin_loader(path, *args, **kwargs):
         plugin_load(pdir.path, *args, **kwargs)
     return registered.init_plugins()
 
+def get_hook_return_type(return_list, return_type, assert_with=None):
+    """
+    A helper function to get the first returned type from plugins
+
+    Returns:
+        object or none
+    """
+    
+    for x in return_list:
+        if isinstance(x, return_type):
+            if assert_with(x):
+                return x
+
 class PluginState(enum.Enum):
     Disabled = 0 # puporsely disabled
     Unloaded = 1 # unloaded because of dependencies, etc.
@@ -418,6 +431,12 @@ class HPluginMeta(type):
                 if not pluginid in self._handlers:
                     self._handlers[pluginid] = set()
                 self._handlers[pluginid].add(handler)
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args, **kwargs):
+                pass
 
             def __call__(self, *args, **kwargs):
                 handler_returns = []

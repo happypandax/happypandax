@@ -39,6 +39,9 @@ The following are required by your main plugin file:
 
 - Additionally, in your main plugin class, a ``__init__`` method with the following signature must be defined: ``__init__(self, *args, **kwargs)``
 
+.. todo::
+	explain ``REQUIRE``
+
 Putting all of this together we get the following:
 
 My folder structure::
@@ -56,7 +59,7 @@ In ``hplugin.py``::
 		VERSION = (1, 0, 0)
 		WEBSITE = "https://github.com/Pewpews/happypandax"
 
-		def __init__(*args, **kwargs):
+		def __init__(self, *args, **kwargs):
 			pass
 
 Interfacing with Happypanda X Server

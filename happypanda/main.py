@@ -17,9 +17,10 @@ def start():
 
     if not args.safe:
         plugins.plugin_loader(constants.dir_plugin)
+    else:
+        plugins.registered.init_plugins()
 
-    print(plugins.registered.init_plugins())
-    #server.HPServer().run(web=args.web, interactive=args.interact)
+    server.HPServer().run(web=args.web, interactive=args.interact)
 
 if __name__ == '__main__':
     start()
