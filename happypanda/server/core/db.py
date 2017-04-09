@@ -77,6 +77,8 @@ class NameMixin:
 
     def exists(self, obj=False, strict=False):
         "obj: queries for the full object and returns it"
+        if not constants.db_session:
+            return self
         sess = constants.db_session()
         if obj:
             if strict:
@@ -354,7 +356,7 @@ gallery_profiles = profile_association("gallery")
 class Gallery(TaggableMixin, ProfileMixin, Base):
     __tablename__ = 'gallery'
 
-    class Catagory(enum.Enum):
+    class Category(enum.Enum):
         #: Library
         Library = 0
         #: Inbox
@@ -376,7 +378,7 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
     grouping_id = Column(Integer, ForeignKey('grouping.id'))
 
     fetched = Column(Boolean, default=False)
-    catagory = Column(Enum(Catagory), nullable=False, default=Catagory.Library)
+    category = Column(Enum(Category), nullable=False, default=Category.Library)
 
     grouping = relationship("Grouping", back_populates="galleries", cascade="save-update, merge, refresh-expire")
     collections = relationship("Collection", secondary=gallery_collections, back_populates="galleries", cascade="save-update, merge, refresh-expire", lazy="dynamic")
@@ -441,7 +443,9 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
         Params:
             obj -- queries for the full object and returns it 
         """
-        e = None
+        e = self
+        if not constants.db_session:
+            return e
         g = self.__class__
         if self.path:
             head, tail = os.path.split(self.path)
@@ -495,8 +499,10 @@ class Page(TaggableMixin, ProfileMixin, Base):
         Params:
             obj -- queries for the full object and returns it 
         """
+        e = self
+        if not constants.db_session:
+            return e
         sess = constants.db_session()
-        e = None
         p = self.__class__
         if self.path:
             sess = constants.db_session()

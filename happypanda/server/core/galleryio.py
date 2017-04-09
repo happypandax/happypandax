@@ -38,7 +38,8 @@ class GalleryScan:
         if GalleryScan.evaluate_gallery(contents):
             gfs = GalleryFS(path, path_in_archive)
             gfs.load()
-            constants.core_plugin.instanced.on_gallery_from_path(gfs)
+            if constants.core_plugin:
+                constants.core_plugin.instanced.on_gallery_from_path(gfs)
             gallery = gfs.get_gallery()
 
         return gallery
@@ -83,26 +84,27 @@ class GalleryScan:
         Returns:
             dictonary: {'title':"", 'artist':"", 'language':"", 'convention':""}
         """
-        with constants.core_plugin.instanced.on_gallery_name_parse as hook:
-            r = hook(name)
-            def plugin_assertion(x):
-                try:
-                    if not isinstance(x['title'], str):
-                        raise ValueError
-                    if not isinstance(x['artist'], str):
-                        raise ValueError
-                    if not isinstance(x['language'], str):
-                        raise ValueError
-                    if not isinstance(x['convention'], str):
-                        raise ValueError
-                except KeyError:
-                    return False
-                except ValueError:
-                    return False
-                return True
-            dic = plugins.get_hook_return_type(r, dict, plugin_assertion)
-            if dic:
-                return dic
+        if constants.core_plugin:
+            with constants.core_plugin.instanced.on_gallery_name_parse as hook:
+                r = hook(name)
+                def plugin_assertion(x):
+                    try:
+                        if not isinstance(x['title'], str):
+                            raise ValueError
+                        if not isinstance(x['artist'], str):
+                            raise ValueError
+                        if not isinstance(x['language'], str):
+                            raise ValueError
+                        if not isinstance(x['convention'], str):
+                            raise ValueError
+                    except KeyError:
+                        return False
+                    except ValueError:
+                        return False
+                    return True
+                dic = plugins.get_hook_return_type(r, dict, plugin_assertion)
+                if dic:
+                    return dic
 
         name = " ".join(name.split()) # remove unecessary whitespace
         if '/' in name:
@@ -185,7 +187,7 @@ class GalleryFS:
         elif self.gallery_type == utils.PathType.Archive:
             self.pages = self._get_archive_pages()
         else:
-            assert False, "this shouldnt happen..."
+            assert False, "this shouldnt happen... ({})".format(self.path)
 
     def get_gallery(self):
         "Creates/Updates database gallery"

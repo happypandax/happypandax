@@ -1,5 +1,5 @@
-﻿import sys, os, datetime, sqlite3
-from happypanda.server.core import db
+﻿import sys, os, datetime, sqlite3, copy
+from happypanda.server.core import db, galleryio
 
 GALLERY_LISTS = []
 
@@ -696,61 +696,87 @@ if __name__ == '__main__':
     dst_namespace = {}
     dst_tag = {}
     dst_nstagmapping = {}
+    dst_collections = {}
 
     for numb, g in enumerate(src_galleries):
 
-        gallery = db.Gallery()
+        galleries = []
+        gallery_ns = None
 
-        lang = g.language.lower() if g.language else None
-        if lang and not lang in dst_languages:
-            db_lang = db.Language()
-            db_lang.name = g.language
-            dst_languages[lang] = db_lang
-        else:
-            db_lang = dst_languages['english']
+        for ch in g.chapters:
 
-        title = db.Title()
-        title.name = g.title
-        title.language = db_lang
-        gallery.titles.append(title)
+            path = g.path if ch.in_archive else ch.path
+            if not os.path.exists(path):
+                print("Skipping {} because path doesn't exists.".format(ch.title))
+                continue
+            path_in_archive = ch.path
 
-        gallery.path = g.path
-        gallery.path_in_archive = g.path_in_archive
-        gallery.in_archive = bool(g.is_archive)
+            gfs = galleryio.GalleryFS(path, path_in_archive)
+            try:
+                gfs.load()
+            except NotImplementedError:
+                pass
+            gallery = gfs.get_gallery()
+            for col in copy.copy(gallery.collections):
+                if col.name in dst_collections:
+                    gallery.collections.remove(col)
+                    gallery.collections.append(dst_collections[col.name])
+                else:
+                    dst_collections[col.name] = col
 
-        if g.artist:
-            artist = db.Artist()
-            artist.name = g.artist
-            artist = dst_artists.get(artist.name, artist)
-            gallery.artists.append(artist)
-            dst_artists[artist.name] = artist
-        gallery.info = g.info
-        gallery.fav = bool(g.fav)
-        gallery.rating = g.rating
-        if g.type:
-            gtype = db.GalleryType()
-            gtype.name = g.type
-            gtype = dst_gtype.get(gtype.name, gtype)
-            gallery.type = gtype
-            dst_gtype[gtype.name] = gtype
+            if gallery_ns:
+                gallery.grouping = gallery_ns
+            else:
+                gallery_ns = db.Grouping()
+                gallery_ns.galleries.append(gallery)
+                if g.status:
+                    gstatus = db.Status()
+                    gstatus.name
+                    gstatus = dst_status.get(gstatus.name, gstatus)
+                    gallery_ns.status = gstatus
+                    dst_status[gstatus.name] = gstatus
 
-        if g.link:
-            gurl = db.GalleryUrl()
-            gurl.url = g.link
-            gallery.urls.append(gurl)
+            gallery.number = ch.number
 
-        if g.status:
-            gstatus = db.Status()
-            gstatus.name
-            gstatus = dst_status.get(gstatus.name, gstatus)
-            gallery.status = gstatus
-            dst_status[gstatus.name] = gstatus
+            lang = g.language.lower() if g.language else None
+            if lang and not lang in dst_languages:
+                db_lang = db.Language()
+                db_lang.name = g.language
+                dst_languages[lang] = db_lang
+            else:
+                db_lang = dst_languages['english']
 
-        gallery.pub_date = g.pub_date
-        gallery.timestamp = g.date_added
-        gallery.last_read = g.last_read
-        gallery.times_read = g.times_read
-        gallery.catagory = gallery.Catagory.Library if not g.view else gallery.Catagory.Inbox
+            title = db.Title()
+            title.name = ch.title if ch.title else g.title
+            title.language = db_lang
+            gallery.titles.append(title)
+
+            if g.artist:
+                artist = db.Artist()
+                artist.name = g.artist
+                artist = dst_artists.get(artist.name, artist)
+                gallery.artists.append(artist)
+                dst_artists[artist.name] = artist
+            gallery.info = g.info
+            gallery.fav = bool(g.fav)
+            gallery.rating = g.rating
+            if g.type:
+                gtype = db.GalleryType()
+                gtype.name = g.type
+                gtype = dst_gtype.get(gtype.name, gtype)
+                gallery.type = gtype
+                dst_gtype[gtype.name] = gtype
+
+            if g.link:
+                gurl = db.GalleryUrl()
+                gurl.url = g.link
+                gallery.urls.append(gurl)
+
+            gallery.pub_date = g.pub_date
+            gallery.timestamp = g.date_added
+            gallery.last_read = g.last_read
+            gallery.times_read = g.times_read
+            gallery.catagory = gallery.Category.Library if not g.view else gallery.Category.Inbox
 
         # tags
 
@@ -768,13 +794,12 @@ if __name__ == '__main__':
                 nstag = db.NamespaceTags(n, t)
                 nstag = dst_nstagmapping.get(nstagname, nstag)
                 dst_nstagmapping[nstagname] = nstag
-                gallery.tags.append(nstag)
-
-        # chapters
+                for ch_g in galleries:
+                    ch_g.tags.append(nstag)
 
         # hashes
 
-        dst_galleries.append(gallery)
+        dst_galleries.extend(galleries)
 
         print_progress(numb, len(src_galleries), "Progress:", bar_length=50)
 
