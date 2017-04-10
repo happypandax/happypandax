@@ -168,6 +168,14 @@ class Life(Base):
     def __repr__(self):
         return "<Version: {}, times_opened:{}>".format(self.version, self.times_opened)
 
+class User(Base):
+    __tablename__ = 'user'
+
+    name = Column(String, nullable=False, default='')
+    address = Column(String, nullable=False, default='')
+    context_id = Column(Integer)
+    events = relationship("Event", lazy='dynamic', back_populates='user')
+
 class Profile(Base):
     __tablename__ = 'profile'
 
@@ -177,9 +185,8 @@ class Profile(Base):
     def __repr__(self):
         return "Profile ID:{} Type:{} Path:{}".format(self.id, self.type, self.path)
 
-
-class History(Base):
-    __tablename__ = 'history'
+class Event(Base):
+    __tablename__ = 'event'
 
     class Action(enum.Enum):
         read = 'read'
@@ -187,14 +194,17 @@ class History(Base):
 
     item_id = Column(Integer, nullable=False)
     item_name = Column(String, nullable=False)
-    timestamp = Column(DateTime, nullable=False, default=datetime.datetime())
+    timestamp = Column(DateTime, nullable=False, default=datetime.datetime.now())
     action = Column(Enum(Action), nullable=False, default=Action.read)
+    user_id = Column(Integer, ForeignKey('user.id'))
+    user = relationship("User", back_populates="events", cascade="save-update, merge, refresh-expire")
 
-    def __init__(self, item, action=Action.read):
+    def __init__(self, item, action=Action.read, user_id=None, timestamp=datetime.datetime.now()):
         assert isinstance(item, Base)
+        self.user_id = user_id
         self.item_id = item.id
         self.item_name = item.__tablename__
-        self.timestamp = datetime.datetime.now()
+        self.timestamp = timestamp
         self.action = action
 
 class Hash(NameMixin, Base):
@@ -392,14 +402,16 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
     titles = relationship("Title", back_populates="gallery", lazy='joined', cascade="all,delete-orphan")
     profiles = relationship("Profile", secondary=gallery_profiles, lazy='joined', cascade="all")
 
-    @validates("times_read")
-    def _add_history(self, key, value):
+    def read(self, user_id, datetime=datetime.datetime.now()):
+        "Creates a read event for user"
+        self.last_read = datetime
         sess = object_session(self)
         if sess:
-            sess.add(History(self, History.Action.read))
+            sess.add(Event(self, Event.Action.read, user_id, datetime))
         else:
-            log_w("Cannot add gallery history because no session exists for this object")
-        return value
+            log_w("Cannot add gallery read event because no session exists for this object")
+        self.times_read += 1
+        self.last_read = datetime
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -631,9 +643,9 @@ def check_db_version(sess):
         log_i("DB Version: {}".format(life.version))
 
     life.times_opened += 1
-    sess.add(History(life, History.Action.start))
-    sess.commit()
+    sess.add(Event(life, Event.Action.start))
     init_defaults(sess)
+    sess.commit()
     return True
 
 def init(**kwargs):

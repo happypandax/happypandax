@@ -1,6 +1,6 @@
 from happypanda.common import constants, message
 
-def set_settings(namespace, set_dict={}):
+def set_settings(namespace, set_dict={}, ctx=None):
     """
     Set settings
 
@@ -12,7 +12,7 @@ def set_settings(namespace, set_dict={}):
     """
     return message.Message("works")
 
-def get_settings(namespace, set_list=[]):
+def get_settings(namespace, set_list=[], ctx=None):
     """
     Set settings
     Use setting key 'all' to fetch all setting key:values
