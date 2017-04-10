@@ -70,17 +70,17 @@ class GeneralTest(unittest.TestCase):
         self.session.commit()
 
     def test_history(self):
-        self.assertEqual(self.session.query(History).count(), 1) # life
+        self.assertEqual(self.session.query(Event).count(), 1) # life
 
         self.gallery.times_read += 1
-        self.assertEqual(self.session.query(History).count(), 2)
+        self.assertEqual(self.session.query(Event).count(), 2)
         self.gallery.times_read += 1
         self.session.commit()
-        self.assertEqual(self.session.query(History).count(), 3)
+        self.assertEqual(self.session.query(Event).count(), 3)
 
         self.gallery.delete()
 
-        self.assertEqual(self.session.query(History).count(), 3)
+        self.assertEqual(self.session.query(Event).count(), 3)
 
     @unittest.expectedFailure
     def test_typesfail(self):

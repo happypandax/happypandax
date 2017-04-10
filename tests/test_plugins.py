@@ -48,8 +48,9 @@ class HPluginMetaTest(TestCase):
             else:
                 hpm = HPluginMeta(m_name, m_bases, m_dct)
                 # have attribute
-                assert hasattr(hpm, 'connectPlugin')
-                assert hasattr(hpm, 'connectHook')
+                assert hasattr(hpm, 'connect_plugin')
+                assert hasattr(hpm, 'connect_hook')
+                assert hasattr(hpm, 'create_hook')
                 # don't have attr
                 assert not hasattr(hpm, 'newHook')
                 assert not hasattr(hpm, '__getattr__')
