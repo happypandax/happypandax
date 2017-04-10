@@ -1,6 +1,6 @@
 from happypanda.common import constants, message
 
-def fetch_galleries(gallery_ids=[]):
+def fetch_galleries(ctx=None, gallery_ids=[]):
     """
     Fetch galleries from the database.
 
@@ -12,7 +12,7 @@ def fetch_galleries(gallery_ids=[]):
     """
     return message.Message("works")
 
-def gallery_view(page=0, gallery_limit=100, search_filter="", list_id=0, gallery_filter=constants.GalleryFilter):
+def gallery_view(ctx=None, page=0, gallery_limit=100, search_filter="", list_id=0, gallery_filter=constants.GalleryFilter.Library):
     """
     Fetch galleries from the database.
     Provides pagination.
@@ -30,7 +30,7 @@ def gallery_view(page=0, gallery_limit=100, search_filter="", list_id=0, gallery
 
     return message.Message("works")
 
-def add_gallery(galleries=[], paths=[]):
+def add_gallery(ctx=None, galleries=[], paths=[]):
     """
     Add galleries to the database.
 
@@ -47,7 +47,7 @@ def add_gallery(galleries=[], paths=[]):
     """
     return message.Message("works")
 
-def scan_gallery(paths=[], add_after=False, ignore_exist=True):
+def scan_gallery(ctx=None, paths=[], add_after=False, ignore_exist=True):
     """
     Scan folders for galleries
 

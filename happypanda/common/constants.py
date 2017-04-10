@@ -45,6 +45,7 @@ core_plugin = None
 
 ## DATABASE
 db_session = None
+default_user = None
 
 ## SERVER
 server_name = 'server'

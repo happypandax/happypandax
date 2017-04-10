@@ -810,7 +810,7 @@ if __name__ == '__main__':
 
         print_progress(numb, len(src_galleries), "Progress:", bar_length=50)
 
-    print("Adding languages...")
+    print("\nAdding languages...")
     s.add_all(dst_languages.values())
     print("Adding artists...")
     s.add_all(dst_artists.values())
