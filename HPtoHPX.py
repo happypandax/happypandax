@@ -697,6 +697,7 @@ if __name__ == '__main__':
     dst_tag = {}
     dst_nstagmapping = {}
     dst_collections = {}
+    dst_grouping = {}
 
     for numb, g in enumerate(src_galleries):
 
@@ -711,12 +712,15 @@ if __name__ == '__main__':
                 continue
             path_in_archive = ch.path
 
-            gfs = galleryio.GalleryFS(path, path_in_archive)
+            gfs = galleryio.GalleryFS(path, path_in_archive, db.Gallery())
+            gallery = gfs.get_gallery()
             try:
-                gfs.load()
+                if gfs.gallery_type == galleryio.utils.PathType.Directoy:
+                    [gfs.gallery.pages.append(db.Page(path=x[1], number=x[0])) for x in gfs._get_folder_pages()]
+                elif gfs.gallery_type == galleryio.utils.PathType.Archive:
+                    [gfs.gallery.pages.append(db.Page(path=x[1], number=x[0])) for x in gfs._get_archive_pages()]
             except NotImplementedError:
                 pass
-            gallery = gfs.get_gallery()
             for col in copy.copy(gallery.collections):
                 if col.name in dst_collections:
                     gallery.collections.remove(col)
@@ -728,6 +732,9 @@ if __name__ == '__main__':
                 gallery.grouping = gallery_ns
             else:
                 gallery_ns = db.Grouping()
+                gallery_ns.name = ch.title if ch.title else g.title
+                gallery_ns = dst_grouping.get(gallery_ns.name, gallery_ns)
+                dst_grouping[gallery_ns.name] = gallery_ns
                 gallery_ns.galleries.append(gallery)
                 if g.status:
                     gstatus = db.Status()
