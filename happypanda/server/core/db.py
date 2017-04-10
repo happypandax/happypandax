@@ -112,7 +112,7 @@ def validate_int(value):
         except:
             raise AssertionError("Column only accepts integer, not {}".format(type(value)))
     else:
-        assert isinstance(value, int) or value is None, "Column only accepts integer, not {}".format(type_(value))
+        assert isinstance(value, int) or value is None, "Column only accepts integer, not {}".format(type(value))
     return value
 
 def validate_string(value):
@@ -187,7 +187,7 @@ class History(Base):
 
     item_id = Column(Integer, nullable=False)
     item_name = Column(String, nullable=False)
-    timestamp = Column(Date, nullable=False, default=datetime.datetime.now())
+    timestamp = Column(DateTime, nullable=False, default=datetime.datetime())
     action = Column(Enum(Action), nullable=False, default=Action.read)
 
     def __init__(self, item, action=Action.read):
