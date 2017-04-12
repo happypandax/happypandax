@@ -12,7 +12,7 @@ def fetch_galleries(ctx=None, gallery_ids=[]):
     """
     return message.Message("works")
 
-def gallery_view(ctx=None, page=0, gallery_limit=100, search_filter="", list_id=0, gallery_filter=constants.GalleryFilter.Library):
+def gallery_view(ctx=None, page=0, gallery_limit=100, search_filter="", list_id=None, gallery_filter=constants.GalleryFilter.Library):
     """
     Fetch galleries from the database.
     Provides pagination.
@@ -28,7 +28,7 @@ def gallery_view(ctx=None, page=0, gallery_limit=100, search_filter="", list_id=
         list of gallery message objects
     """
 
-    return message.Message("works")
+    return message.Message(ctx.address)
 
 def add_gallery(ctx=None, galleries=[], paths=[]):
     """

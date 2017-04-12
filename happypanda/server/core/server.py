@@ -1,4 +1,5 @@
 ﻿import json
+import uuid
 
 from inspect import getmembers, isfunction
 
@@ -10,17 +11,37 @@ from happypanda.server import interface
 from happypanda.server.core import db
 from happypanda.webclient import main as hweb
 
-_special_functions = ('interactive',) # functions we don't consider as part of the api
+def list_api():
+    ""
+    _special_functions = ('interactive',) # functions we don't consider as part of the api
+    all_functions = []
+    mods = utils.get_package_modules(interface)
+    for m in mods:
+        all_functions.extend(getmembers(m, isfunction))
+    return {x[0] : x[1] for x in all_functions if not x[0] in _special_functions}
 
 class ClientHandler:
     "Handles clients"
 
-    api = {x[0] : x[1] for x in getmembers(interface, isfunction) if not x[0] in _special_functions} # {name : object}
+    api = list_api() # {name : object}
 
     def __init__(self, client, address):
         self._client = client
         self._address = address
         self._stopped = False
+        self.context = None
+        self.get_context()
+
+    def get_context(self):
+        "Creates or retrieves existing context object for this client"
+        s = constants.db_session()
+        self.context = s.query(db.User).filter(db.User.address == self._address[0]).one_or_none()
+        if not self.context:
+            self.context = db.User()
+            self.context.address = self._address[0]
+            self.context.context_id = uuid.uuid4().hex
+            s.add(self.context)
+            s.commit()
 
     @staticmethod
     def sendall(client, msg):
@@ -48,7 +69,7 @@ class ClientHandler:
         Params:
             data -- data from client
         Returns:
-            list of (function, function_kwargs)
+            list of (function, function_kwargs, context_neccesity)
         """
         where = "Message parsing"
         # TODO: log
@@ -72,13 +93,15 @@ class ClientHandler:
 
                 # check parameters
                 func_args = tuple(arg for arg in f if not arg in function_keys)
+                func_varnames = self.api[function_name].__code__.co_varnames
+                need_ctx = 'ctx' in func_varnames
                 for arg in func_args:
-                    if not arg in self.api[function_name].__code__.co_varnames:
+                    if not arg in func_varnames:
                         raise exceptions.InvalidMessage(where,"Unexpected argument in function '{}': '{}'".format(
                             function_name,
                             arg))
 
-                function_tuples.append((self.api[function_name], {x: f[x] for x in func_args}))
+                function_tuples.append((self.api[function_name], {x: f[x] for x in func_args}, need_ctx))
 
             return function_tuples
         else:
@@ -120,8 +143,12 @@ class ClientHandler:
             if constants.server_ready:
                 function_list = message.List("function", message.Function)
                 functions = self.parse(buffer)
-                for func, func_args in functions:
-                    msg = func(**func_args)
+                for func, func_args, ctx in functions:
+                    if ctx:
+                        func_args['ctx'] = self.context
+                        msg = func(**func_args)
+                    else:
+                        msg = func(**func_args)
                     assert isinstance(msg, message.CoreMessage)
                     function_list.append(message.Function(func.__name__, msg))
                 self.send(function_list.serialize())
