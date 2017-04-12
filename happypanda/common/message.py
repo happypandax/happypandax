@@ -114,8 +114,8 @@ class Error(CoreMessage):
 class DatabaseMessage(CoreMessage):
     "Database item mapper"
 
-    _clsmembers = {x:y for x, y in inspect.getmembers(sys.modules[__name__], inspect.isclass)}
-    _db_clsmembers = inspect.getmembers(db, inspect.isclass)
+    _clsmembers = {x:y for x, y in globals().copy().items() if isinstance(y, CoreMessage)}
+    _db_clsmembers = [x for x in inspect.getmembers(db, inspect.isclass) if issubclass(x[1], db.Base)]
 
     def __init__(self, key, db_item):
         super().__init__(key)
@@ -167,6 +167,8 @@ class DatabaseMessage(CoreMessage):
             for cls_name, cls_obj in self._db_clsmembers:
                 if not cls_name in exclude:
                     if isinstance(attrib, cls_obj):
+                        if cls_name == 'GalleryUrl':
+                            print(self._clsmembers)
                         if cls_name in self._clsmembers:
                             msg_obj = self._clsmembers[cls_name](attrib)
                             break
