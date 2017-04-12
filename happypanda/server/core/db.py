@@ -548,38 +548,43 @@ class GalleryUrl(Base):
 
 
 # Note: necessary because there is no Session object yet
-def initEvents():
+def initEvents(sess):
     "Initializes events"
 
-    @event.listens_for(constants.db_session, 'before_commit')
+    @event.listens_for(sess, 'before_commit')
     def delete_artist_orphans(session):
         session.query(Artist).filter(~Artist.galleries.any()).delete(synchronize_session=False)
 
-    @event.listens_for(constants.db_session, 'before_commit')
+    @event.listens_for(sess, 'before_commit')
     def delete_tag_orphans(session):
         session.query(Tag).filter(~Tag.namespaces.any()).delete(synchronize_session=False)
 
-    @event.listens_for(constants.db_session, 'before_commit')
+    @event.listens_for(sess, 'before_commit')
     def delete_namespace_orphans(session):
         session.query(Namespace).filter(~Namespace.tags.any()).delete(synchronize_session=False)
 
-    @event.listens_for(constants.db_session, 'before_commit')
+    @event.listens_for(sess, 'before_commit')
     def delete_namespace_orphans(session):
         session.query(Namespace).filter(~Namespace.tags.any()).delete(synchronize_session=False)
 
-    @event.listens_for(constants.db_session, 'before_commit')
+    @event.listens_for(sess, 'before_commit')
     def delete_namespacetags_orphans(session):
         tagids = [r.id for r in session.query(Tag.id).all()]
         if tagids:
-            session.query(NamespaceTags).filter(~NamespaceTags.tag_id.in_(tagids)).delete(synchronize_session=False)
+            try:
+                session.query(NamespaceTags.id).filter(~NamespaceTags.tag_id.in_(tagids)).delete(synchronize_session=False)
+            except exc.OperationalError:
+                for id, tagid in session.query(NamespaceTags.id, NamespaceTags.tag_id).all():
+                    if not tagid in tagids:
+                        session.delete(NamespaceTags.id == id)
         else:
             session.query(NamespaceTags).delete(synchronize_session=False)
 
-    @event.listens_for(constants.db_session, 'before_commit')
+    @event.listens_for(sess, 'before_commit')
     def delete_circle_orphans(session):
         session.query(Circle).filter(~Circle.galleries.any()).delete(synchronize_session=False)
 
-    @event.listens_for(constants.db_session, 'before_commit')
+    @event.listens_for(sess, 'before_commit')
     def delete_grouping_orphans(session):
         session.query(Grouping).filter(~Grouping.galleries.any()).delete(synchronize_session=False)
 
@@ -652,7 +657,7 @@ def init(**kwargs):
     db_path = constants.db_path_debug if constants.debug else constants.db_path
     Session = scoped_session(sessionmaker())
     constants.db_session = Session
-    initEvents()
+    initEvents(constants.db_session)
     engine = create_engine(os.path.join("sqlite:///", db_path))
     Base.metadata.create_all(engine)
     Session.configure(bind=engine)
@@ -699,3 +704,4 @@ def is_list(obj):
 def is_query(obj):
     "Check if db object is a dynamic query object (issued by lazy='dynamic')"
     return isinstance(obj, dynamic.AppenderQuery)
+
