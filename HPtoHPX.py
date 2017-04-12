@@ -686,6 +686,7 @@ if __name__ == '__main__':
 
     print("Converting to Happypanda X Gallery.. ")
 
+    gallery_mixmap = {}
     dst_galleries = []
     en_lang = db.Language()
     en_lang.name = "English"
@@ -756,6 +757,7 @@ if __name__ == '__main__':
             title = db.Title()
             title.name = ch.title if ch.title else g.title
             title.language = db_lang
+            gallery.titles.clear()
             gallery.titles.append(title)
 
             if g.artist:
@@ -785,6 +787,11 @@ if __name__ == '__main__':
             gallery.times_read = g.times_read
             gallery.catagory = gallery.Category.Library if not g.view else gallery.Category.Inbox
 
+            galleries.append(gallery)
+            if not g.id in gallery_mixmap:
+                gallery_mixmap[g.id] = []
+            gallery_mixmap[g.id].append(gallery)
+
         # tags
 
         for ns in g.tags:
@@ -810,7 +817,23 @@ if __name__ == '__main__':
 
         print_progress(numb, len(src_galleries), "Progress:", bar_length=50)
 
-    print("\nAdding languages...")
+    print("\nCreating gallery lists")
+    dst_lists = []
+    for l in GALLERY_LISTS:
+        glist = db.GalleryList()
+        glist.name = l.name
+        glist.filter = l.filter
+        glist.enforce = l.enforce
+        glist.regex = l.regex
+        glist.l_case = l.case
+        glist.strict = l.strict
+        for g in l.galleries():
+            if g.id in gallery_mixmap:
+                glist.galleries.extend(gallery_mixmap[g.id])
+
+        dst_lists.append(glist)
+
+    print("Adding languages...")
     s.add_all(dst_languages.values())
     print("Adding artists...")
     s.add_all(dst_artists.values())
@@ -825,6 +848,8 @@ if __name__ == '__main__':
     s.add_all(dst_nstagmapping.values())
     print("Adding galleries...")
     s.add_all(dst_galleries)
+    print("Adding gallery lists...")
+    s.add_all(dst_lists)
 
     s.commit()
     print("Done!")
