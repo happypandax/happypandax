@@ -682,6 +682,7 @@ if __name__ == '__main__':
     db.Base.metadata.create_all(engine)
     sess = db.sessionmaker()
     sess.configure(bind=engine)
+    db.initEvents(sess)
     s = sess()
 
     print("Converting to Happypanda X Gallery.. ")
