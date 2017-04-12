@@ -1,4 +1,5 @@
 from happypanda.common import constants, message
+from happypanda.server.core import db
 
 def fetch_galleries(ctx=None, gallery_ids=[]):
     """
@@ -28,7 +29,11 @@ def gallery_view(ctx=None, page=0, gallery_limit=100, search_filter="", list_id=
         list of gallery message objects
     """
 
-    return message.Message(ctx.address)
+    s = constants.db_session()
+    q = s.query(db.Gallery).limit(gallery_limit)
+    glist = message.List("gallery", message.Gallery)
+    [glist.append(message.Gallery(x)) for x in q.all()]
+    return glist
 
 def add_gallery(ctx=None, galleries=[], paths=[]):
     """

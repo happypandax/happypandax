@@ -348,7 +348,7 @@ class Collection(ProfileMixin, Base):
 
     title = Column(String, nullable=False, default='')
     info = Column(String, nullable=False, default='')
-    pub_date = Column(Date)
+    pub_date = Column(DateTime)
 
     galleries = relationship("Gallery", secondary=gallery_collections, back_populates="collections", lazy="dynamic", cascade="save-update, merge, refresh-expire")
     profiles = relationship("Profile", secondary=collection_profiles, lazy='joined', cascade="all")
@@ -378,7 +378,7 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
     fav = Column(Boolean, default=False)
     rating = Column(Integer, nullable=False, default=0)
     times_read = Column(Integer, nullable=False, default=0)
-    pub_date = Column(Date)
+    pub_date = Column(DateTime)
     timestamp = Column(DateTime, nullable=False, default=datetime.datetime.now())
     last_read = Column(DateTime)
     number = Column(Integer, nullable=False, default=0)

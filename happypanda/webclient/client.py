@@ -16,8 +16,27 @@ def call_on_server(client, func_name, **kwargs):
 
     func_list = message.List("function", FunctionInvoke)
     func_list.append(FunctionInvoke(func_name, **kwargs))
-    func_data = client.communicate(func_list)
-    return func_data
+    data = client.communicate(func_list)
+    error = None
+    func_data = None
+    if 'data' in data:
+        for f in data:
+            func_data[f['f_name']] = {'data': func_data['data']}
+            if 'error' in f:
+                func_data[f['f_name']]['error'] = f['error']
+    else:
+        pass # error out
+
+    if 'error' in data:
+        error = data['error']
+    return func_data, error
+
+def extract_data(json_data):
+    ""
+    pass
+
+def error_handler(error):
+    pass
 
 class Client:
     """A common wrapper for communicating with server.

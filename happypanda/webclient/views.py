@@ -2,7 +2,7 @@
 from flask import (render_template, g)
 from happy_socketio import emit
 from happypanda.webclient.main import happyweb, client, socketio
-from happypanda.webclient.client import call_on_server
+from happypanda.webclient.client import call_on_server, error_handler
 from happypanda.common import constants, utils
 
 
@@ -22,12 +22,17 @@ def before_request():
 @happyweb.route('/index')
 def index():
     """index func."""
-    print(call_on_server(client, "gallery_view", gallery_limit=50))
-    return render_template('index.html')
+    data, error = call_on_server(client, "gallery_view", gallery_limit=50)
+    if error:
+        error_handler(error)
+    return render_template('index.html', data)
 
 @happyweb.route('/gallery/page/<int:page>')
 def gallery_page(page=0):
-    pass
+    data, error = call_on_server(client, "gallery_view", gallery_limit=50, page=page)
+    if error:
+        error_handler(error)
+    return render_template('index.html', data)
 
 @happyweb.route('/artist/page/<int:page>')
 def artist_page(page=0):
