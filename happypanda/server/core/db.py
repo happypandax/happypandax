@@ -173,7 +173,7 @@ class User(Base):
 
     name = Column(String, nullable=False, default='')
     address = Column(String, nullable=False, default='', unique=True)
-    context_id = Column(Integer)
+    context_id = Column(String, nullable=False)
     events = relationship("Event", lazy='dynamic', back_populates='user')
 
 class Profile(Base):

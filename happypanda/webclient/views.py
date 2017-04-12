@@ -22,7 +22,7 @@ def before_request():
 @happyweb.route('/index')
 def index():
     """index func."""
-    print(call_on_server(client, "fetch_galleries"))
+    print(call_on_server(client, "gallery_view", gallery_limit=50))
     return render_template('index.html')
 
 @happyweb.route('/gallery/page/<int:page>')

@@ -107,11 +107,15 @@ def connection_params(web=False):
 def get_package_modules(pkg):
     "Retrive list of modules in package"
     assert ismodule(pkg) and hasattr(pkg, '__path__')
-    return [(x, y) for x, y, _ in pkgutil.walk_packages(pkg.__path__)]
+    mods = []
+    for importer, modname, ispkg in pkgutil.iter_modules(pkg.__path__, pkg.__name__+"."):
+        mods.append(importer.find_module(modname).load_module(modname))
+    return mods
 
 def get_module_members(mod):
     "Retrive list of members in modules"
     assert ismodule(mod)
+    raise NotImplementedError
 
 ## SERVER ##
 def convert_to_json(buffer, name):
