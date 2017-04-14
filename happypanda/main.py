@@ -1,4 +1,4 @@
-import os, sys
+import os, sys, locale
 
 if __package__ is None and not hasattr(sys, 'frozen'):
     # direct call of main.py
@@ -9,9 +9,11 @@ from happypanda.common import utils, constants
 from happypanda.server.core import server, plugins
 
 def start():
+    utils.setup_dirs()
     parser = utils.get_argparser()
     args = parser.parse_args()
     utils.parse_options(args)
+    utils.setup_logger(args)
 
     constants.core_plugin = plugins._plugin_load("happypanda.server.core.coreplugin", "core")
 

@@ -9,14 +9,9 @@ import inspect
 import enum
 
 
-from happypanda.common import exceptions
+from happypanda.common import exceptions, utils
 
-log = logging.getLogger(__name__)
-log_i = log.info
-log_d = log.debug
-log_w = log.warning
-log_e = log.error
-log_c = log.critical
+log = utils.Logger(__name__)
 
 def plugin_load(path, *args, **kwargs):
     """
@@ -61,7 +56,7 @@ def _plugin_load(module_name, path, *args, **kwargs):
             break
     if not plugclass:
         raise exceptions.CoreError("Plugin loader", "No main entry class named 'HPlugin' found in '{}'".format(path))
-    log_i("Loading {}".format(plugclass.__name__))
+    log.i("Loading", plugclass.__name__)
     cls = HPluginMeta(plugclass.__name__, plugclass.__bases__, dict(plugclass.__dict__))
     return registered.register(cls, *args, **kwargs)
 
@@ -75,7 +70,7 @@ def plugin_loader(path, *args, **kwargs):
         - **kwargs -- additional keyword arguments for plugin
 
     """
-    log_i('Loading plugins from path: {}'.format(path))
+    log.i('Loading plugins from path:', path)
     for pdir in os.scandir(path):
         plugin_load(pdir.path, *args, **kwargs)
     return registered.init_plugins()
@@ -291,7 +286,7 @@ class Plugins:
         s = self._connections.copy()
         while len(s):
             pluginid, otherpluginid, hook_name, handler = s.pop()
-            log_i("\t{}\n\tcreating connection to\n\t{}:{}".format(pluginid, hook_name, otherpluginid))
+            log.i("\t", pluginid, "\n\tcreating connection to\n\t", hook_name, ":", otherpluginid)
             node = self._nodes[otherpluginid]
             if not node.hooks.get(hook_name):
                 raise exceptions.PluginHookError("Plugin Connections", "No hook with name '{}' found on plugin with ID: {} requested by {}".format(hook_name, otherpluginid, pluginid)) # TODO: use names
