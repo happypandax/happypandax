@@ -114,7 +114,7 @@ class Error(CoreMessage):
 class DatabaseMessage(CoreMessage):
     "Database item mapper"
 
-    _clsmembers = {x:y for x, y in globals().copy().items() if isinstance(y, CoreMessage)}
+    _clsmembers = None # not all classes have been defined yet
     _db_clsmembers = [x for x in inspect.getmembers(db, inspect.isclass) if issubclass(x[1], db.Base)]
 
     def __init__(self, key, db_item):
@@ -122,6 +122,7 @@ class DatabaseMessage(CoreMessage):
         assert isinstance(db_item, db.Base)
         assert db.is_instanced(db_item), "must be instanced database object"
         self.item = db_item
+        DatabaseMessage._clsmembers = {x:globals()[x] for x in globals() if inspect.isclass(globals()[x])}
 
     def data(self, load_values=False, load_collections=False):
         """
@@ -167,8 +168,6 @@ class DatabaseMessage(CoreMessage):
             for cls_name, cls_obj in self._db_clsmembers:
                 if not cls_name in exclude:
                     if isinstance(attrib, cls_obj):
-                        if cls_name == 'GalleryUrl':
-                            print(self._clsmembers)
                         if cls_name in self._clsmembers:
                             msg_obj = self._clsmembers[cls_name](attrib)
                             break

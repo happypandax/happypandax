@@ -15,6 +15,9 @@
             <li>Favorites</li>
             <li>Library</li>
             <li>Inbox</li>
+            {% if g.debug %}
+            <li><a href="/apiview">API View</a></li>
+            {% endif %}
             <li class="right">Add gallery</li>
         </ul>
     </nav>

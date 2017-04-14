@@ -94,6 +94,64 @@ ul#galleries {
         margin: 10px 6px;
     }
 
+pre {outline: 1px solid #ccc; padding: 5px; margin: 5px; }
+.json-string { color: green; }
+.json-number { color: darkorange; }
+.json-boolean { color: blue; }
+.json-null { color: magenta; }
+.json-key { color: red; }
+
+#args {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#args button {
+    margin-bottom: 20px;
+    border: 1px solid #2E3535;
+    padding: 5pt 5pt;
+      border-radius: 2px;
+  box-sizing: border-box;
+}
+
+#args input {
+  margin: 0;
+  padding: 0;
+  -webkit-appearance: none;
+  background: #2E3535;
+  border: 1px solid #2E3535;
+  padding: 5pt 5pt;
+  color: #fff;
+  margin-bottom: 20px;
+  border-radius: 2px;
+  box-sizing: border-box;
+  transition: all 250ms;
+}
+
+#args input:hover {
+  border-color: #242929;
+  background: #2e3535;
+}
+
+#args input:active, #args input:focus {
+  border: 1px solid #242929;
+  background: #242929;
+  outline: 0;
+}
+
+#args ul {
+    list-style: none;
+}
+
+#args span {
+    margin-left: 5pt;
+    margin-right: 5pt;
+}
+
+#args ul li {
+
+}
+
 footer {
     position: relative;
     border-top: 1px solid #1b1b1b;

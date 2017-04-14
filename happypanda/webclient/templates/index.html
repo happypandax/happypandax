@@ -1,9 +1,11 @@
 ﻿{% extends "base.html" %} {% block content %}
     <div id="content">
         <ul id="galleries">
+            {% for g in galleries %}
             <li class="gallery">
-                <span>Title</span>
+                <span>{{ g['title'] }}</span>
             </li>
+            {% endfor %}
             <li class="gallery">
                 <span>Title</span>
             </li>

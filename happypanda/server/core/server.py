@@ -1,5 +1,7 @@
 ﻿import json
 import uuid
+import logging
+import sys
 
 from inspect import getmembers, isfunction
 
@@ -10,6 +12,8 @@ from happypanda.common import constants, exceptions, utils, message
 from happypanda.server import interface
 from happypanda.server.core import db
 from happypanda.webclient import main as hweb
+
+log = utils.Logger(__name__)
 
 def list_api():
     ""
@@ -53,7 +57,8 @@ class ClientHandler:
         """
         #assert isinstance(client, ...)
         assert isinstance(msg, bytes) 
-
+        
+        log.d("Sending", sys.getsizeof(msg), "bytes to", client)
         client.sendall(msg)
         client.sendall(constants.postfix)
 
@@ -72,8 +77,10 @@ class ClientHandler:
             list of (function, function_kwargs, context_neccesity)
         """
         where = "Message parsing"
-        # TODO: log
+        log.d("Parsing incoming data")
         j_data = utils.convert_to_json(data, where)
+
+        log.d("Check if required root keys are present")
         # {"name":name, "data":data}
         root_keys = ('name', 'data')
         self._check_both(where, "JSON dict", root_keys, j_data)
@@ -84,6 +91,7 @@ class ClientHandler:
         if isinstance(msg_data, list):
             function_tuples = []
             for f in msg_data:
+                log.d("Cheking parameters in:", f)
                 self._check_missing(where, "Function message", function_keys, f)
 
                 function_name = f['fname']
@@ -144,6 +152,7 @@ class ClientHandler:
                 function_list = message.List("function", message.Function)
                 functions = self.parse(buffer)
                 for func, func_args, ctx in functions:
+                    log.d("Calling function", func, "with args", func_args)
                     if ctx:
                         func_args['ctx'] = self.context
                         msg = func(**func_args)
@@ -189,19 +198,21 @@ class HPServer:
     def _handle(self, client, address):
         "Client handle function"
         # log client connected
-        print("Client connected")
+        log.d("Client connected", str(client), str(address))
         handler = ClientHandler(client, address)
         self._clients.add(handler)
         try:
             buffer = b''
             while True:
-                if buffer.endswith(constants.postfix):
+                data, eof = utils.end_of_message(buffer)
+                #log.d("EOF:", eof, "Data:", data)
+                if eof:
+                    buffer = data[1]
                     if handler.is_active():
-                        handler.advance(buffer)
+                        handler.advance(data[0])
                     else:
                         # log client disconnected
                         break
-                    buffer = b''
                 r = client.recv(constants.data_size)
                 if not r:
                     # log client disconnected
@@ -213,7 +224,7 @@ class HPServer:
             utils.eprint("Client disconnected", e)
         finally:
             self._clients.remove(handler)
-        print(client, " disconnected")
+        log.d("Client disconnected", str(client), str(address))
 
     def _start(self, blocking=True):
         # TODO: handle db errors
