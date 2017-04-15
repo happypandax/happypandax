@@ -25,16 +25,19 @@ def before_request():
 @happyweb.route('/index')
 def index():
     """index func."""
-    data, error = call_on_server(client, "gallery_view", gallery_limit=50)
+    data, error = call_on_server(client, "gallery_view", limit=100)
     if error:
         error_handler(error)
-    galleries = data.get('gallery_view', [])
+    galleries = []
+    if "gallery_view" in data:
+        galleries = data['gallery_view']['data']
+    log.d("Showing", len(galleries), "galleries", galleries)
     return render_template('index.html',
                            galleries=galleries)
 
 @happyweb.route('/gallery/page/<int:page>')
 def gallery_page(page=0):
-    data, error = call_on_server(client, "gallery_view", gallery_limit=50, page=page)
+    data, error = call_on_server(client, "gallery_view", gallery_limit=100, page=page)
     if error:
         error_handler(error)
     return render_template('index.html', data)

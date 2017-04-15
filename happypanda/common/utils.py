@@ -77,9 +77,10 @@ class PathType(enum.Enum):
 ## Core ##
 def setup_dirs():
     "Creates directories at the specified root path"
-    if constants.dir_log:
-        if not os.path.isdir(constants.dir_log):
-            os.mkdir(constants.dir_log)
+    for dir_x in (constants.dir_cache, constants.dir_data, constants.dir_log, constants.dir_plugin):
+        if dir_x:
+            if not os.path.isdir(dir_x):
+                os.mkdir(dir_x)
 
 def setup_logger(args):
     assert isinstance(args, argparse.Namespace)

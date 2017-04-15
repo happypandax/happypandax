@@ -37,6 +37,18 @@ class GalleryFilter(enum.Enum):
     #: Inbox
     Inbox = 2
 
+class ItemType(enum.Enum):
+    #: Gallery
+    Gallery = 0
+    #: Collection
+    Collection = 1
+    #: GalleryList
+    GalleryList = 2
+    #: Page
+    Page = 3
+    #: Grouping
+    Grouping = 4
+
 class ExitCode(enum.Enum):
     Exit = 0
     Restart = 1

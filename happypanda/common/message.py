@@ -51,6 +51,18 @@ class CoreMessage:
         "Serialize this object to bytes"
         return finalize(self.json_friendly(), name)
 
+class Identity(CoreMessage):
+    """
+    Encapsulates any type of object
+    """
+
+    def __init__(self, key, obj=None):
+        super().__init__(key)
+        self._obj = obj
+
+    def data(self):
+        return self._obj
+
 class List(CoreMessage):
     """
     Encapsulates a list of objects of the same type

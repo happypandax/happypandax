@@ -1,4 +1,4 @@
-import os, sys, locale
+import os, sys
 
 if __package__ is None and not hasattr(sys, 'frozen'):
     # direct call of main.py

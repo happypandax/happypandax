@@ -60,7 +60,7 @@
 
     socket.on("server_call", function (msg) {
 
-        $("pre#json").html(syntax_highlight(JSON.stringify(msg.data, null, 2)))
+        $("pre#json").html(syntax_highlight(JSON.stringify(msg.data, null, 4)))
     });
 
     $("#apicall").click(function () {
@@ -73,7 +73,6 @@
                 dict[key] = value;;
             }
         });
-        console.log(JSON.stringify(dict))
         socket.emit("server_call", dict);
 
     });
