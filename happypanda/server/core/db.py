@@ -180,10 +180,11 @@ class Profile(Base):
     __tablename__ = 'profile'
 
     path = Column(String, nullable=False, default='')
-    type = Column(Integer, nullable=False, default=0)
+    size = Column(String, nullable=False)
+    timestamp = Column(DateTime, nullable=False, default=datetime.datetime.now())
 
     def __repr__(self):
-        return "Profile ID:{} Type:{} Path:{}".format(self.id, self.type, self.path)
+        return "Profile ID:{} Size:{} Path:{}".format(self.id, self.size, self.path)
 
 class Event(Base):
     __tablename__ = 'event'

@@ -1,20 +1,20 @@
 ﻿{% extends "base.html" %} {% block content %}
-    <div id="content">
-        <ul id="galleries">
-            {% for g in galleries %}
-            <li class="gallery">
-                <span>{{ g['title'] }}</span>
-            </li>
-            {% endfor %}
-            <li class="gallery">
-                <span>Title</span>
-            </li>
-            <li class="gallery">
-                <span>Title</span>
-            </li>
-            <li class="gallery">
-                <span>Title</span>
-            </li>
-        </ul>
+<div id="content">
+    <div id="galleries">
+        {% for g in galleries %}
+        <div class="gallery">
+            <span class="title"> {{ g['titles'][0]['name'] }}</span>
+            <div class="artists">
+                {% for author in g['artists'] %}
+                <span class="artist">
+                    {{ author['name'] }}
+                </span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
     </div>
+</div>
+<script src="/static/minigrid.min.js"></script>
+<script src="/static/cardlayout.js"></script>
 {% endblock %}

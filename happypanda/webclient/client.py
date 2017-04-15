@@ -25,7 +25,7 @@ def call_on_server(client, func_name, **kwargs):
     func_data = {}
     if 'data' in data:
         for f in data['data']:
-            func_data[f['fname']] = {'data': data['data']}
+            func_data[f['fname']] = {'data': f['data']}
             if 'error' in f:
                 func_data[f['f_name']]['error'] = f['error']
     else:
@@ -75,7 +75,7 @@ class Client:
         try:
             buffered = None
             eof = False
-            while not eof: # loose
+            while not eof:
                 temp = self._sock.recv(constants.data_size)
                 if not temp:
                     self._alive = False
