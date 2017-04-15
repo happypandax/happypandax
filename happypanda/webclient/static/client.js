@@ -66,8 +66,14 @@
     $("#apicall").click(function () {
         var dict = { "fname": ($("#fname")).val() };
         $("div#args > ul > li").each(function (index, element) {
-            $(this).children().children;
+            var lichildren = $(this).children();
+            var key = lichildren.eq(0).find("input").val();
+            var value = lichildren.eq(1).find("input").val();
+            if (key && value) {
+                dict[key] = value;;
+            }
         });
+        console.log(JSON.stringify(dict))
         socket.emit("server_call", dict);
 
     });
