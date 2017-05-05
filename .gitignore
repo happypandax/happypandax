@@ -208,3 +208,4 @@ FakesAssemblies/
 /compilerconfig.json
 /compilerconfig.json.defaults
 /docs/make.bat
+/happypanda/webclient/static/__javascript__

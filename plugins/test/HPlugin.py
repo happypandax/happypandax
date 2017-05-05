@@ -12,4 +12,4 @@ class HPlugin:
 	def __init__(self, *args, **kwargs):
 		self.core_id = "9fb4ce2a-fe47-42ef-8c58-e039d999eb19"
 		self.core = self.connect_plugin(self.core_id)
-		self.core.hello()
+		#self.connect_hook(self.core_id, "test_hook", lambda a: print(a))
