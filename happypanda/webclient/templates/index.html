@@ -3,18 +3,20 @@
     <div id="galleries">
         {% for g in galleries %}
         <div class="gallery">
-            <span class="title"> {{ g['titles'][0]['name'] }}</span>
-            <div class="artists">
-                {% for author in g['artists'] %}
-                <span class="artist">
-                    {{ author['name'] }}
-                </span>
-                {% endfor %}
+            <img src="/static/default.jpg" />
+            <div class="meta">
+                <span class="title"> {{ g['titles'][0]['name'] }}</span>
+                <div class="artists">
+                    {% for author in g['artists'] %}
+                    <span class="artist">
+                        {{ author['name'] }}
+                    </span>
+                    {% endfor %}
+                </div>
             </div>
         </div>
         {% endfor %}
     </div>
 </div>
-<script src="/static/minigrid.min.js"></script>
-<script src="/static/cardlayout.js"></script>
+<script src="/static/lib/minigrid.min.js"></script>
 {% endblock %}

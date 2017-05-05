@@ -85,6 +85,7 @@ div#galleries {
 }
 
     div#galleries div.gallery {
+        position: relative;
         display: inline-block;
         width: 200px;
         min-height: 100px;
@@ -94,7 +95,42 @@ div#galleries {
         background-color: rgba(0, 0, 0, 0.05);
         padding: 1px;
         margin: 10px 6px;
+        overflow: hidden;
     }
+
+        div#galleries div.gallery img {
+            width: 100%;
+            height: auto;
+        }
+
+        div#galleries div.gallery .meta {
+            color: white;
+            position: absolute;
+            padding: 5pt 5pt;
+            padding-top: 8pt;
+            width: 100%;
+            bottom: 0;
+            background: rgba(237,237,237,0.17);
+            background: -moz-linear-gradient(top, rgba(237,237,237,0.17) 0%, rgba(0,0,0,0.17) 0%, rgba(0,0,0,0.76) 100%);
+            background: -webkit-gradient(left top, left bottom, color-stop(0%, rgba(237,237,237,0.17)), color-stop(0%, rgba(0,0,0,0.17)), color-stop(100%, rgba(0,0,0,0.76)));
+            background: -webkit-linear-gradient(top, rgba(237,237,237,0.17) 0%, rgba(0,0,0,0.17) 0%, rgba(0,0,0,0.76) 100%);
+            background: -o-linear-gradient(top, rgba(237,237,237,0.17) 0%, rgba(0,0,0,0.17) 0%, rgba(0,0,0,0.76) 100%);
+            background: -ms-linear-gradient(top, rgba(237,237,237,0.17) 0%, rgba(0,0,0,0.17) 0%, rgba(0,0,0,0.76) 100%);
+            background: linear-gradient(to bottom, rgba(237,237,237,0.17) 0%, rgba(0,0,0,0.17) 0%, rgba(0,0,0,0.76) 100%);
+            filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ededed', endColorstr='#000000', GradientType=0 );
+        }
+
+            div#galleries div.gallery .meta .artists {
+                margin: 4pt auto;
+                font-size: 9pt;
+            }
+
+                div#galleries div.gallery .meta .artists .artist {
+                    border: 1px dashed white;
+                    border-radius: 2px;
+                    padding: 2pt;
+                }
+
 
 pre {
     outline: 1px solid #ccc;
