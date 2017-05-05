@@ -1,4 +1,3 @@
-#from org.transcrypt.stubs.browser import __pragma__
 import utils
 
 __pragma__ ('alias', 'S', '$') # JQuery

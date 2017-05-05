@@ -4,6 +4,8 @@ import logging
 import sys
 
 from inspect import getmembers, isfunction
+from collections import deque
+from enum import Enum
 
 from gevent import socket, pool, queue
 from gevent.server import StreamServer
@@ -24,6 +26,32 @@ def list_api():
         all_functions.extend(getmembers(m, isfunction))
     return {x[0] : x[1] for x in all_functions if not x[0] in _special_functions}
 
+class Errors:
+    "Error system"
+
+    class Severity(Enum):
+        Low = 0
+        High = 1
+
+    def __init__(self):
+        self.errors = deque()
+
+    def add_error(self, exception, severity):
+        assert isinstance(exception, exceptions.CoreError)
+        assert isinstance(severity, Severity)
+
+        if severity == Severity.Low:
+            self.errors.appendleft(exception)
+        elif severity == Severity.High:
+            self.errors.append(exception)
+
+
+    def get_error(self):
+        if not self.errors:
+            return None
+        return self.errors.pop()
+
+
 class ClientHandler:
     "Handles clients"
 
@@ -34,7 +62,9 @@ class ClientHandler:
         self._address = address
         self._stopped = False
         self.context = None
+        self.errors = Errors()
         self.get_context()
+        self.context.errors = self.errors
 
     def get_context(self):
         "Creates or retrieves existing context object for this client"
