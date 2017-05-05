@@ -3,7 +3,7 @@
     <meta http-equiv="Content-Type"
           content="text/html; charset=utf-8"/>
     
-        <title>Plugins &mdash; Happypanda X 0.0.1 documentation</title>
+        <title>Plugins &mdash; Happypanda X (0, 0, 1) documentation</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href='https://fonts.googleapis.com/css?family=Crete+Round' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" href="_static/sphinx-bootstrap.css" type="text/css"/>
@@ -15,7 +15,7 @@
         <script type="text/javascript">
             var DOCUMENTATION_OPTIONS = {
                 URL_ROOT:'./',
-                VERSION:'0.0.1',
+                VERSION:'(0, 0, 1)',
                 COLLAPSE_INDEX:false,
                 FILE_SUFFIX:'.html',
                 HAS_SOURCE:  true
@@ -28,7 +28,7 @@
             <link rel="index" title="Index"
                   href="genindex.html"/>
             <link rel="search" title="Search" href="search.html"/>
-        <link rel="top" title="Happypanda X 0.0.1 documentation" href="index.html"/>
+        <link rel="top" title="Happypanda X (0, 0, 1) documentation" href="index.html"/>
             <link rel="next" title="TODO" href="todo.html"/>
             <link rel="prev" title="Creating a frontend in any language" href="client.html"/> 
     <script type="text/javascript" src="https://apis.google.com/js/plusone.js"></script>
@@ -137,7 +137,7 @@ Understanding the plugin interface is relatively <strong>easy</strong> once you 
 <div class="section" id="how-to-create-a-plugin">
 <h2>How to create a plugin<a class="headerlink" href="#how-to-create-a-plugin" title="Permalink to this headline">¶</a></h2>
 <ol class="arabic simple">
-<li>Start by creating a folder for your plugin, call it whatever describes your plugin and place it under the <code class="docutils literal"><span class="pre">plugins</span></code> folder in Happypanda X Server.</li>
+<li>Start by creating a folder for your plugin, call it whatever describes your plugin and place it in the <code class="docutils literal"><span class="pre">plugins</span></code> folder in Happypanda X Server.</li>
 <li>Create your main python file, which should be named <code class="docutils literal"><span class="pre">HPlugin.py</span></code> (case insensitive).</li>
 </ol>
 <div class="admonition hint">
@@ -162,8 +162,12 @@ The following are required by your main plugin file:</p>
 </dd>
 </dl>
 </li>
-<li>Additionaly, in your main plugin class, a <code class="docutils literal"><span class="pre">__init__</span></code> method with the following signature must be defined: <code class="docutils literal"><span class="pre">__init__(*args,</span> <span class="pre">**kwargs)</span></code></li>
+<li>Additionally, in your main plugin class, a <code class="docutils literal"><span class="pre">__init__</span></code> method with the following signature must be defined: <code class="docutils literal"><span class="pre">__init__(self,</span> <span class="pre">*args,</span> <span class="pre">**kwargs)</span></code></li>
 </ul>
+<div class="admonition-todo admonition" id="index-1">
+<p class="first admonition-title">Todo</p>
+<p class="last">explain <code class="docutils literal"><span class="pre">REQUIRE</span></code></p>
+</div>
 <p>Putting all of this together we get the following:</p>
 <p>My folder structure:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">plugins</span><span class="o">/</span><span class="n">MyPluginFolder</span>
@@ -179,14 +183,14 @@ The following are required by your main plugin file:</p>
         <span class="n">VERSION</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
         <span class="n">WEBSITE</span> <span class="o">=</span> <span class="s2">&quot;https://github.com/Pewpews/happypandax&quot;</span>
 
-        <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
                 <span class="k">pass</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="interfacing-with-happypanda-x-server">
 <h2>Interfacing with Happypanda X Server<a class="headerlink" href="#interfacing-with-happypanda-x-server" title="Permalink to this headline">¶</a></h2>
-<div class="admonition-todo admonition" id="index-1">
+<div class="admonition-todo admonition" id="index-2">
 <p class="first admonition-title">Todo</p>
 <p class="last">explain how to interface with hpx server</p>
 </div>
@@ -251,7 +255,7 @@ The following are required by your main plugin file:</p>
 
     <!-- disqus -->
     <script type="text/javascript">
-        var disqus_title = 'Plugins &mdash; Happypanda X 0.0.1 documentation';
+        var disqus_title = 'Plugins &mdash; Happypanda X (0, 0, 1) documentation';
         var disqus_identifier ='code' + '.' + "pewpews" + window.location.pathname.replace('/', '.');
     </script>
 

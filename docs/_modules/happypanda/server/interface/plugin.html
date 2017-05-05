@@ -3,34 +3,33 @@
     <meta http-equiv="Content-Type"
           content="text/html; charset=utf-8"/>
     
-        <title>Installing Happypanda X &mdash; Happypanda X (0, 0, 1) documentation</title>
+        <title>happypanda.server.interface.plugin &mdash; Happypanda X (0, 0, 1) documentation</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href='https://fonts.googleapis.com/css?family=Crete+Round' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" href="_static/sphinx-bootstrap.css" type="text/css"/>
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css"/>
+    <link rel="stylesheet" href="../../../../_static/sphinx-bootstrap.css" type="text/css"/>
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css"/>
     <!-- Le HTML5 shim, for IE6-8 support of HTML5 elements -->
     <!--[if lt IE 9]>
       <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
         <script type="text/javascript">
             var DOCUMENTATION_OPTIONS = {
-                URL_ROOT:'./',
+                URL_ROOT:'../../../../',
                 VERSION:'(0, 0, 1)',
                 COLLAPSE_INDEX:false,
                 FILE_SUFFIX:'.html',
                 HAS_SOURCE:  true
             };
         </script>
-            <script type="text/javascript" src="_static/jquery.js"></script>
-            <script type="text/javascript" src="_static/underscore.js"></script>
-            <script type="text/javascript" src="_static/doctools.js"></script>
-            <script type="text/javascript" src="_static/bootstrap-dropdown.js"></script>
+            <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+            <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+            <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+            <script type="text/javascript" src="../../../../_static/bootstrap-dropdown.js"></script>
             <link rel="index" title="Index"
-                  href="genindex.html"/>
-            <link rel="search" title="Search" href="search.html"/>
-        <link rel="top" title="Happypanda X (0, 0, 1) documentation" href="index.html"/>
-            <link rel="next" title="Using Happypanda X" href="usage.html"/>
-            <link rel="prev" title="Documentation" href="index.html"/> 
+                  href="../../../../genindex.html"/>
+            <link rel="search" title="Search" href="../../../../search.html"/>
+        <link rel="top" title="Happypanda X (0, 0, 1) documentation" href="../../../../index.html"/>
+            <link rel="up" title="Module code" href="../../../index.html"/> 
     <script type="text/javascript" src="https://apis.google.com/js/plusone.js"></script>
     
 </head>
@@ -42,28 +41,23 @@
 
     <div class="related">
         <ul class="nav">
-                <li class=""><a class="brand" href="index.html">Happypanda X</a></li>
+                <li class=""><a class="brand" href="../../../../index.html">Happypanda X</a></li>
                 <li>
-                    <a href="genindex.html"
+                    <a href="../../../../genindex.html"
                        title="General Index" accesskey="I">index</a>
                 </li>
                 <li>
-                    <a href="py-modindex.html"
+                    <a href="../../../../py-modindex.html"
                        title="Python Module Index" >modules</a>
                 </li>
-                <li>
-                    <a href="usage.html"
-                       title="Using Happypanda X" accesskey="N">next</a>
-                </li>
-                <li>
-                    <a href="index.html"
-                       title="Documentation" accesskey="P">previous</a>
+                <li><a href="../../../index.html"
+                        accesskey="U">Module code</a>
                 </li> 
         </ul>
     </div>
                 <div class="pull-right">
                     
-        <form class="navbar-search" action="search.html"
+        <form class="navbar-search" action="../../../../search.html"
               method="get">
             <input type="text" name="q" placeholder="search"/>
             <input type="hidden" name="check_keywords" value="yes"/>
@@ -118,10 +112,26 @@
         <div class="content row">
                 <div class="span9">
                     
-  <div class="section" id="installing-happypanda-x">
-<h1>Installing Happypanda X<a class="headerlink" href="#installing-happypanda-x" title="Permalink to this headline">¶</a></h1>
-</div>
+  <h1>Source code for happypanda.server.interface.plugin</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">happypanda.common</span> <span class="k">import</span> <span class="n">constants</span><span class="p">,</span> <span class="n">message</span>
 
+<div class="viewcode-block" id="get_plugin"><a class="viewcode-back" href="../../../../api.html#happypanda.server.interface.plugin.get_plugin">[docs]</a><span class="k">def</span> <span class="nf">get_plugin</span><span class="p">(</span><span class="n">plugin_id</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get plugin information</span>
+
+<span class="sd">    Params:</span>
+<span class="sd">        - plugin_id -- get information for a specific plugin </span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        ``</span>
+<span class="sd">        { plugin_id:</span>
+<span class="sd">            </span>
+<span class="sd">            }</span>
+<span class="sd">        ``</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Message</span><span class="p">(</span><span class="s2">&quot;works&quot;</span><span class="p">)</span></div>
+
+</pre></div>
 
                     
                         <div id="disqus_thread"></div>
@@ -132,19 +142,6 @@
                     
         <div class="sphinxsidebar">
             <div class="sphinxsidebarwrapper">
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="index.html"
-                        title="previous chapter">Documentation</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="usage.html"
-                        title="next chapter">Using Happypanda X</a></p>
-  <div role="note" aria-label="source link">
-    <h3>This Page</h3>
-    <ul class="this-page-menu">
-      <li><a href="_sources/install.rst.txt"
-            rel="nofollow">Show Source</a></li>
-    </ul>
-   </div>
             </div>
         </div>
                 </div>
@@ -170,7 +167,7 @@
 
     <!-- disqus -->
     <script type="text/javascript">
-        var disqus_title = 'Installing Happypanda X &mdash; Happypanda X (0, 0, 1) documentation';
+        var disqus_title = 'happypanda.server.interface.plugin &mdash; Happypanda X (0, 0, 1) documentation';
         var disqus_identifier ='code' + '.' + "pewpews" + window.location.pathname.replace('/', '.');
     </script>
 

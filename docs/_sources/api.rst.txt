@@ -13,9 +13,26 @@ Enums
 Functions
 ----------------------------------------
 
-.. automodule:: happypanda.server.core.interface
+Gallery
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: happypanda.server.interface.gallery
    :members:
-   :exclude-members: interactive
+
+Database
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: happypanda.server.interface.database
+   :members:
 
 Plugin
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: happypanda.server.interface.plugin
+   :members:
+
+Settings
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: happypanda.server.interface.settings
+   :members:

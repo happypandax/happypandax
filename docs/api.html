@@ -3,7 +3,7 @@
     <meta http-equiv="Content-Type"
           content="text/html; charset=utf-8"/>
     
-        <title>API Overview &mdash; Happypanda X 0.0.1 documentation</title>
+        <title>API Overview &mdash; Happypanda X (0, 0, 1) documentation</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href='https://fonts.googleapis.com/css?family=Crete+Round' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" href="_static/sphinx-bootstrap.css" type="text/css"/>
@@ -15,7 +15,7 @@
         <script type="text/javascript">
             var DOCUMENTATION_OPTIONS = {
                 URL_ROOT:'./',
-                VERSION:'0.0.1',
+                VERSION:'(0, 0, 1)',
                 COLLAPSE_INDEX:false,
                 FILE_SUFFIX:'.html',
                 HAS_SOURCE:  true
@@ -28,7 +28,7 @@
             <link rel="index" title="Index"
                   href="genindex.html"/>
             <link rel="search" title="Search" href="search.html"/>
-        <link rel="top" title="Happypanda X 0.0.1 documentation" href="index.html"/>
+        <link rel="top" title="Happypanda X (0, 0, 1) documentation" href="index.html"/>
             <link rel="next" title="Contributing" href="env.html"/>
             <link rel="prev" title="Using Happypanda X" href="usage.html"/> 
     <script type="text/javascript" src="https://apis.google.com/js/plusone.js"></script>
@@ -149,11 +149,13 @@
 </dd></dl>
 
 </div>
-<div class="section" id="module-happypanda.server.core.interface">
-<span id="functions"></span><h3>Functions<a class="headerlink" href="#module-happypanda.server.core.interface" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="module-happypanda.server.interface.gallery">
+<span id="gallery"></span><h4>Gallery<a class="headerlink" href="#module-happypanda.server.interface.gallery" title="Permalink to this headline">¶</a></h4>
 <dl class="function">
-<dt id="happypanda.server.core.interface.add_gallery">
-<code class="descname">add_gallery</code><span class="sig-paren">(</span><em>galleries=[]</em>, <em>paths=[]</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/server/core/interface.html#add_gallery"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.server.core.interface.add_gallery" title="Permalink to this definition">¶</a></dt>
+<dt id="happypanda.server.interface.gallery.add_gallery">
+<code class="descname">add_gallery</code><span class="sig-paren">(</span><em>ctx=None</em>, <em>galleries=[]</em>, <em>paths=[]</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/server/interface/gallery.html#add_gallery"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.server.interface.gallery.add_gallery" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add galleries to the database.</p>
 <dl class="docutils">
 <dt>Params:</dt>
@@ -177,30 +179,15 @@
 </dd></dl>
 
 <dl class="function">
-<dt id="happypanda.server.core.interface.fetch_galleries">
-<code class="descname">fetch_galleries</code><span class="sig-paren">(</span><em>gallery_ids=[]</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/server/core/interface.html#fetch_galleries"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.server.core.interface.fetch_galleries" title="Permalink to this definition">¶</a></dt>
-<dd><p>Fetch galleries from the database.</p>
-<dl class="docutils">
-<dt>Params:</dt>
-<dd><ul class="first last simple">
-<li>gallery_ids &#8211; list of gallery id whose corresponding gallery is to be fetched</li>
-</ul>
-</dd>
-<dt>Returns:</dt>
-<dd>list of gallery message objects</dd>
-</dl>
-</dd></dl>
-
-<dl class="function">
-<dt id="happypanda.server.core.interface.gallery_view">
-<code class="descname">gallery_view</code><span class="sig-paren">(</span><em>page=0</em>, <em>gallery_limit=100</em>, <em>search_filter=''</em>, <em>list_id=0</em>, <em>gallery_filter=&lt;enum 'GalleryFilter'&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/server/core/interface.html#gallery_view"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.server.core.interface.gallery_view" title="Permalink to this definition">¶</a></dt>
+<dt id="happypanda.server.interface.gallery.gallery_view">
+<code class="descname">gallery_view</code><span class="sig-paren">(</span><em>ctx=None</em>, <em>page=0</em>, <em>limit=100</em>, <em>search_filter=''</em>, <em>list_id=None</em>, <em>gallery_filter=&lt;GalleryFilter.Library: 0&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/server/interface/gallery.html#gallery_view"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.server.interface.gallery.gallery_view" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fetch galleries from the database.
 Provides pagination.</p>
 <dl class="docutils">
 <dt>Params:</dt>
 <dd><ul class="first last simple">
 <li>page &#8211; current page</li>
-<li>gallery_limit &#8211; amount of galleries per page</li>
+<li>limit &#8211; amount of galleries per page</li>
 <li>search_filter &#8211; filter gallery by search terms</li>
 <li>list_id &#8211; current gallery list id</li>
 <li>gallery_filter &#8211; ...</li>
@@ -212,24 +199,8 @@ Provides pagination.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="happypanda.server.core.interface.get_settings">
-<code class="descname">get_settings</code><span class="sig-paren">(</span><em>namespace</em>, <em>set_list=[]</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/server/core/interface.html#get_settings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.server.core.interface.get_settings" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set settings
-Use setting key &#8216;all&#8217; to fetch all setting key:values</p>
-<dl class="docutils">
-<dt>Params:</dt>
-<dd><ul class="first last simple">
-<li>set_list &#8211; a list of setting keys</li>
-</ul>
-</dd>
-<dt>Returns:</dt>
-<dd>dict of setting_key:value</dd>
-</dl>
-</dd></dl>
-
-<dl class="function">
-<dt id="happypanda.server.core.interface.scan_gallery">
-<code class="descname">scan_gallery</code><span class="sig-paren">(</span><em>paths=[]</em>, <em>add_after=False</em>, <em>ignore_exist=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/server/core/interface.html#scan_gallery"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.server.core.interface.scan_gallery" title="Permalink to this definition">¶</a></dt>
+<dt id="happypanda.server.interface.gallery.scan_gallery">
+<code class="descname">scan_gallery</code><span class="sig-paren">(</span><em>ctx=None</em>, <em>paths=[]</em>, <em>add_after=False</em>, <em>ignore_exist=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/server/interface/gallery.html#scan_gallery"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.server.interface.gallery.scan_gallery" title="Permalink to this definition">¶</a></dt>
 <dd><p>Scan folders for galleries</p>
 <dl class="docutils">
 <dt>Params:</dt>
@@ -244,9 +215,72 @@ Use setting key &#8216;all&#8217; to fetch all setting key:values</p>
 </dl>
 </dd></dl>
 
+</div>
+<div class="section" id="module-happypanda.server.interface.database">
+<span id="database"></span><h4>Database<a class="headerlink" href="#module-happypanda.server.interface.database" title="Permalink to this headline">¶</a></h4>
 <dl class="function">
-<dt id="happypanda.server.core.interface.set_settings">
-<code class="descname">set_settings</code><span class="sig-paren">(</span><em>namespace</em>, <em>set_dict={}</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/server/core/interface.html#set_settings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.server.core.interface.set_settings" title="Permalink to this definition">¶</a></dt>
+<dt id="happypanda.server.interface.database.get_profile">
+<code class="descname">get_profile</code><span class="sig-paren">(</span><em>ctx=None</em>, <em>item_type=&lt;ItemType.Gallery: 0&gt;</em>, <em>item_ids=[]</em>, <em>size=None</em>, <em>local=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/server/interface/database.html#get_profile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.server.interface.database.get_profile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get cover image</p>
+<dl class="docutils">
+<dt>Params:</dt>
+<dd><ul class="first last simple">
+<li>item_type &#8211; ...</li>
+<li>item_ids &#8211; list of item ids</li>
+<li>size &#8211; string specifying image size, e.g.: &#8216;200x200&#8217;. Leave none for default size.</li>
+<li>local &#8211; replace image content with local path to image file</li>
+</ul>
+</dd>
+<dt>Returns:</dt>
+<dd>list of paths to the galleries</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-happypanda.server.interface.plugin">
+<span id="plugin"></span><h4>Plugin<a class="headerlink" href="#module-happypanda.server.interface.plugin" title="Permalink to this headline">¶</a></h4>
+<dl class="function">
+<dt id="happypanda.server.interface.plugin.get_plugin">
+<code class="descname">get_plugin</code><span class="sig-paren">(</span><em>plugin_id=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/server/interface/plugin.html#get_plugin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.server.interface.plugin.get_plugin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get plugin information</p>
+<dl class="docutils">
+<dt>Params:</dt>
+<dd><ul class="first last simple">
+<li>plugin_id &#8211; get information for a specific plugin</li>
+</ul>
+</dd>
+<dt>Returns:</dt>
+<dd><p class="first">``
+{ plugin_id:</p>
+<blockquote>
+<div>}</div></blockquote>
+<p class="last"><a href="#id1"><span class="problematic" id="id2">``</span></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-happypanda.server.interface.settings">
+<span id="settings"></span><h4>Settings<a class="headerlink" href="#module-happypanda.server.interface.settings" title="Permalink to this headline">¶</a></h4>
+<dl class="function">
+<dt id="happypanda.server.interface.settings.get_settings">
+<code class="descname">get_settings</code><span class="sig-paren">(</span><em>namespace</em>, <em>set_list=[]</em>, <em>ctx=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/server/interface/settings.html#get_settings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.server.interface.settings.get_settings" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set settings
+Use setting key &#8216;all&#8217; to fetch all setting key:values</p>
+<dl class="docutils">
+<dt>Params:</dt>
+<dd><ul class="first last simple">
+<li>set_list &#8211; a list of setting keys</li>
+</ul>
+</dd>
+<dt>Returns:</dt>
+<dd>dict of setting_key:value</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="happypanda.server.interface.settings.set_settings">
+<code class="descname">set_settings</code><span class="sig-paren">(</span><em>namespace</em>, <em>set_dict={}</em>, <em>ctx=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/server/interface/settings.html#set_settings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.server.interface.settings.set_settings" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set settings</p>
 <dl class="docutils">
 <dt>Params:</dt>
@@ -261,8 +295,6 @@ Use setting key &#8216;all&#8217; to fetch all setting key:values</p>
 
 </div>
 </div>
-<div class="section" id="plugin">
-<h2>Plugin<a class="headerlink" href="#plugin" title="Permalink to this headline">¶</a></h2>
 </div>
 </div>
 
@@ -281,10 +313,15 @@ Use setting key &#8216;all&#8217; to fetch all setting key:values</p>
 <li><a class="reference internal" href="#">API Overview</a><ul>
 <li><a class="reference internal" href="#server">Server</a><ul>
 <li><a class="reference internal" href="#enums">Enums</a></li>
-<li><a class="reference internal" href="#module-happypanda.server.core.interface">Functions</a></li>
+<li><a class="reference internal" href="#functions">Functions</a><ul>
+<li><a class="reference internal" href="#module-happypanda.server.interface.gallery">Gallery</a></li>
+<li><a class="reference internal" href="#module-happypanda.server.interface.database">Database</a></li>
+<li><a class="reference internal" href="#module-happypanda.server.interface.plugin">Plugin</a></li>
+<li><a class="reference internal" href="#module-happypanda.server.interface.settings">Settings</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#plugin">Plugin</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -327,7 +364,7 @@ Use setting key &#8216;all&#8217; to fetch all setting key:values</p>
 
     <!-- disqus -->
     <script type="text/javascript">
-        var disqus_title = 'API Overview &mdash; Happypanda X 0.0.1 documentation';
+        var disqus_title = 'API Overview &mdash; Happypanda X (0, 0, 1) documentation';
         var disqus_identifier ='code' + '.' + "pewpews" + window.location.pathname.replace('/', '.');
     </script>
 

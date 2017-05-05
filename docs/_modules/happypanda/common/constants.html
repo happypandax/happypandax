@@ -3,7 +3,7 @@
     <meta http-equiv="Content-Type"
           content="text/html; charset=utf-8"/>
     
-        <title>happypanda.common.constants &mdash; Happypanda X 0.0.1 documentation</title>
+        <title>happypanda.common.constants &mdash; Happypanda X (0, 0, 1) documentation</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href='https://fonts.googleapis.com/css?family=Crete+Round' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" href="../../../_static/sphinx-bootstrap.css" type="text/css"/>
@@ -15,7 +15,7 @@
         <script type="text/javascript">
             var DOCUMENTATION_OPTIONS = {
                 URL_ROOT:'../../../',
-                VERSION:'0.0.1',
+                VERSION:'(0, 0, 1)',
                 COLLAPSE_INDEX:false,
                 FILE_SUFFIX:'.html',
                 HAS_SOURCE:  true
@@ -28,7 +28,7 @@
             <link rel="index" title="Index"
                   href="../../../genindex.html"/>
             <link rel="search" title="Search" href="../../../search.html"/>
-        <link rel="top" title="Happypanda X 0.0.1 documentation" href="../../../index.html"/>
+        <link rel="top" title="Happypanda X (0, 0, 1) documentation" href="../../../index.html"/>
             <link rel="up" title="Module code" href="../../index.html"/> 
     <script type="text/javascript" src="https://apis.google.com/js/plusone.js"></script>
     
@@ -117,10 +117,10 @@
 <span class="kn">import</span> <span class="nn">rarfile</span>
 <span class="kn">import</span> <span class="nn">enum</span>
 
-<span class="n">debug</span> <span class="o">=</span> <span class="kc">True</span> <span class="c1"># TODO: arg switch</span>
+<span class="n">debug</span> <span class="o">=</span> <span class="kc">False</span>
 
 <span class="c1">## VERSIONING ##</span>
-<span class="n">version</span> <span class="o">=</span> <span class="s2">&quot;0.0.1&quot;</span>
+<span class="n">version</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 <span class="n">version_db</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,)</span>
 
 <span class="c1">## PATHS &amp; FILENAMES ##</span>
@@ -129,6 +129,7 @@
 <span class="n">dir_cache</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dir_root</span><span class="p">,</span> <span class="s2">&quot;cache&quot;</span><span class="p">)</span>
 <span class="n">dir_log</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dir_root</span><span class="p">,</span> <span class="s2">&quot;logs&quot;</span><span class="p">)</span>
 <span class="n">dir_temp</span> <span class="o">=</span> <span class="s1">&#39;temp&#39;</span> <span class="c1"># TODO: create temp folder, use python temp facilities</span>
+<span class="n">dir_plugin</span> <span class="o">=</span> <span class="s1">&#39;plugins&#39;</span>
 <span class="n">log_error</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dir_log</span><span class="p">,</span> <span class="s2">&quot;error.log&quot;</span><span class="p">)</span>
 <span class="n">log_normal</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dir_log</span><span class="p">,</span> <span class="s2">&quot;activity.log&quot;</span><span class="p">)</span>
 <span class="n">log_debug</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dir_log</span><span class="p">,</span> <span class="s2">&quot;debug.log&quot;</span><span class="p">)</span>
@@ -151,8 +152,27 @@
     <span class="c1">#: Inbox</span>
     <span class="n">Inbox</span> <span class="o">=</span> <span class="mi">2</span></div>
 
+<span class="k">class</span> <span class="nc">ItemType</span><span class="p">(</span><span class="n">enum</span><span class="o">.</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="c1">#: Gallery</span>
+    <span class="n">Gallery</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="c1">#: Collection</span>
+    <span class="n">Collection</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="c1">#: GalleryList</span>
+    <span class="n">GalleryList</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="c1">#: Page</span>
+    <span class="n">Page</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="c1">#: Grouping</span>
+    <span class="n">Grouping</span> <span class="o">=</span> <span class="mi">4</span>
+
+<span class="k">class</span> <span class="nc">ExitCode</span><span class="p">(</span><span class="n">enum</span><span class="o">.</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="n">Exit</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">Restart</span> <span class="o">=</span> <span class="mi">1</span>
+
+<span class="n">core_plugin</span> <span class="o">=</span> <span class="kc">None</span>
+
 <span class="c1">## DATABASE</span>
 <span class="n">db_session</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">default_user</span> <span class="o">=</span> <span class="kc">None</span>
 
 <span class="c1">## SERVER</span>
 <span class="n">server_name</span> <span class="o">=</span> <span class="s1">&#39;server&#39;</span>
@@ -161,7 +181,7 @@
 <span class="n">localhost</span> <span class="o">=</span> <span class="kc">False</span> <span class="c1"># localhost only</span>
 <span class="n">host</span> <span class="o">=</span> <span class="s2">&quot;localhost&quot;</span> <span class="k">if</span> <span class="n">localhost</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
 <span class="n">client_limit</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="n">postfix</span> <span class="o">=</span> <span class="sa">b</span><span class="s1">&#39;end&#39;</span>
+<span class="n">postfix</span> <span class="o">=</span> <span class="sa">b</span><span class="s1">&#39;&lt;END&gt;&#39;</span>
 <span class="n">data_size</span> <span class="o">=</span> <span class="mi">1024</span>
 <span class="n">public_server</span> <span class="o">=</span> <span class="kc">False</span>
 <span class="n">server_ready</span> <span class="o">=</span> <span class="kc">True</span>
@@ -202,7 +222,7 @@
 
     <!-- disqus -->
     <script type="text/javascript">
-        var disqus_title = 'happypanda.common.constants &mdash; Happypanda X 0.0.1 documentation';
+        var disqus_title = 'happypanda.common.constants &mdash; Happypanda X (0, 0, 1) documentation';
         var disqus_identifier ='code' + '.' + "pewpews" + window.location.pathname.replace('/', '.');
     </script>
 
