@@ -306,11 +306,13 @@ class GalleryList(DatabaseMessage):
 class Function(CoreMessage):
     "A function message"
 
-    def __init__(self, fname, data = None):
+    def __init__(self, fname, data = None, error = None):
         super().__init__('function')
         assert isinstance(fname, str)
         self.name = fname
         self.set_data(data)
+        if error:
+            self.set_error(error)
 
     def set_data(self, d):
         ""
@@ -318,8 +320,8 @@ class Function(CoreMessage):
         self._data = d
 
     def data(self):
-        assert self._data, "No data set"
-        return {'fname':self.name, 'data':self._data.data()}
+        d = self._data.data() if self.data else ''
+        return {'fname':self.name, 'data':d}
 
     def from_json(self, j):
         return super().from_json(j)

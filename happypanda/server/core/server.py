@@ -4,7 +4,6 @@ import logging
 import sys
 
 from inspect import getmembers, isfunction
-from collections import deque
 from enum import Enum
 
 from gevent import socket, pool, queue
@@ -26,45 +25,18 @@ def list_api():
         all_functions.extend(getmembers(m, isfunction))
     return {x[0] : x[1] for x in all_functions if not x[0] in _special_functions}
 
-class Errors:
-    "Error system"
-
-    class Severity(Enum):
-        Low = 0
-        High = 1
-
-    def __init__(self):
-        self.errors = deque()
-
-    def add_error(self, exception, severity):
-        assert isinstance(exception, exceptions.CoreError)
-        assert isinstance(severity, Severity)
-
-        if severity == Severity.Low:
-            self.errors.appendleft(exception)
-        elif severity == Severity.High:
-            self.errors.append(exception)
-
-
-    def get_error(self):
-        if not self.errors:
-            return None
-        return self.errors.pop()
-
-
 class ClientHandler:
     "Handles clients"
 
     api = list_api() # {name : object}
 
     def __init__(self, client, address):
+        self.errors = []
         self._client = client
         self._address = address
         self._stopped = False
         self.context = None
-        self.errors = Errors()
         self.get_context()
-        self.context.errors = self.errors
 
     def get_context(self):
         "Creates or retrieves existing context object for this client"
@@ -108,38 +80,48 @@ class ClientHandler:
         """
         where = "Message parsing"
         log.d("Parsing incoming data")
-        j_data = utils.convert_to_json(data, where)
+        try:
+            j_data = utils.convert_to_json(data, where)
 
-        log.d("Check if required root keys are present")
-        # {"name":name, "data":data}
-        root_keys = ('name', 'data')
-        self._check_both(where, "JSON dict", root_keys, j_data)
-               
+            log.d("Check if required root keys are present")
+            # {"name":name, "data":data}
+            root_keys = ('name', 'data')
+            self._check_both(where, "JSON dict", root_keys, j_data)
+        except exceptions.ServerError as e:
+            raise
         # 'data': [ list of function dicts ]
         function_keys = ('fname',)
         msg_data = j_data['data']
         if isinstance(msg_data, list):
             function_tuples = []
             for f in msg_data:
-                log.d("Cheking parameters in:", f)
-                self._check_missing(where, "Function message", function_keys, f)
+                try:
+                    log.d("Cheking parameters in:", f)
+                    self._check_missing(where, "Function message", function_keys, f)
+                except exceptions.InvalidMessage as e:
+                    raise
 
                 function_name = f['fname']
-                # check function
-                if not function_name in self.api:
-                    raise exceptions.InvalidMessage(where, "Function not found: '{}'".format(function_name))
+                try:
+                    # check function
+                    if not function_name in self.api:
+                        e = exceptions.InvalidMessage(where, "Function not found: '{}'".format(function_name))
+                        self.errors.append((function_name, e))
 
-                # check parameters
-                func_args = tuple(arg for arg in f if not arg in function_keys)
-                func_varnames = self.api[function_name].__code__.co_varnames
-                need_ctx = 'ctx' in func_varnames
-                for arg in func_args:
-                    if not arg in func_varnames:
-                        raise exceptions.InvalidMessage(where,"Unexpected argument in function '{}': '{}'".format(
-                            function_name,
-                            arg))
+                    # check parameters
+                    func_args = tuple(arg for arg in f if not arg in function_keys)
+                    func_varnames = self.api[function_name].__code__.co_varnames
+                    need_ctx = 'ctx' in func_varnames
+                    for arg in func_args:
+                        if not arg in func_varnames:
+                            e = exceptions.InvalidMessage(where,"Unexpected argument in function '{}': '{}'".format(
+                                function_name,
+                                arg))
+                            self.errors.append((function_name, e))
 
-                function_tuples.append((self.api[function_name], {x: f[x] for x in func_args}, need_ctx))
+                    function_tuples.append((self.api[function_name], {x: f[x] for x in func_args}, need_ctx))
+                except exceptions.ServerError as e:
+                    self.errors.append((function_name, e))
 
             return function_tuples
         else:
@@ -183,13 +165,23 @@ class ClientHandler:
                 functions = self.parse(buffer)
                 for func, func_args, ctx in functions:
                     log.d("Calling function", func, "with args", func_args)
-                    if ctx:
-                        func_args['ctx'] = self.context
-                        msg = func(**func_args)
-                    else:
-                        msg = func(**func_args)
-                    assert isinstance(msg, message.CoreMessage)
-                    function_list.append(message.Function(func.__name__, msg))
+                    func_msg = message.Function(func.__name__)
+                    try:
+                        if ctx:
+                            func_args['ctx'] = self.context
+                            msg = func(**func_args)
+                        else:
+                            msg = func(**func_args)
+                        assert isinstance(msg, message.CoreMessage)
+                        func_msg.set_data(msg)
+                    except exceptions.CoreError as e:
+                        func_msg.set_error(message.Error(e.code, e.msg))
+                    function_list.append(func_msg)
+
+                # bad functions
+                for fname, e in self.errors:
+                    function_list.append(message.Function(fname, error=message.Error(e.code, e.msg)))
+
                 self.send(function_list.serialize())
             else:
                 self.on_wait()

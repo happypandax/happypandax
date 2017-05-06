@@ -12,20 +12,12 @@
             <li>Favorites</li>
             <li><a href="/index">Library</a></li>
             <li>Inbox</li>
-            {% if g.debug %}
             <li><a href="/apiview">API View</a></li>
-            {% endif %}
             <li class="right">Add gallery</li>
         </ul>
     </nav>
     <div id="global" class="flash">
-        {% with messages = get_flashed_messages(category_filter=["global"]) %}
-        {% if messages %}
-        {% for message in messages %}
-        <div>{{ message }}</div>
-        {% endfor %}
-        {% endif %}
-        {% endwith %}
+        <div>test</div>
     </div>
     <div id="content">
         {% block content %}{% endblock %}
@@ -45,6 +37,6 @@
 
     <script src="/static/lib/socket.io-1.7.2.js"></script>
     <script src="/static/lib/jquery-3.1.1.js"></script>
-    <script src="/static/__javascript__/client.js"></script>
+    <script src="/static/__javascript__/pages.js"></script>
 </body>
 </html>
