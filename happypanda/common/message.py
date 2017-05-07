@@ -316,7 +316,7 @@ class Function(CoreMessage):
 
     def set_data(self, d):
         ""
-        assert isinstance(d, (CoreMessage, None))
+        assert isinstance(d, CoreMessage) or d is None
         self._data = d
 
     def data(self):

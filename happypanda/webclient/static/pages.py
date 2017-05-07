@@ -9,17 +9,19 @@ class IndexPage(Base):
 class ApiPage(Base):
 
     def call(self):
-        d = { "fname": (S("#fname")).val() }
-
+        func_args = {}
         def each_d(index, element):
-            lichildren = S(this).children();
-            key = lichildren.eq(0).find("input").val();
-            value = lichildren.eq(1).find("input").val();
+            lichildren = S(this).children()
+            key = lichildren.eq(0).find("input").val()
+            value = lichildren.eq(1).find("input").val()
             if key and value:
-                d[key] = value
-
+                func_args[key] = value
         S("div#args > ul > li").each(each_d)
-        client.call(d, lambda msg: S("pre#json").html(utils.syntax_highlight(JSON.stringify(msg, None, 4))))
+        client.call_function(
+            S("#fname").val(),
+            lambda msg: S("pre#json-receive").html(utils.syntax_highlight(JSON.stringify(msg, None, 4))),
+            **func_args)
+        S("pre#json-send").html(utils.syntax_highlight(JSON.stringify(client._last_msg, None, 4)))
 
     def add_kwarg(self):
         S("div#args > ul").append("<li><span><input type='text', placeholder='keyword'></span><span><input type='text', placeholder='value'></span></li>")

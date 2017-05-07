@@ -7,8 +7,17 @@
         <span><button id="kwargsadd" onclick="pages.api.add_kwarg ()">Add keyword argument</button></span>
         <span><button id="apicall" onclick="pages.api.call ()">Call function</button></span>
     </div>
-    <pre id="json">
 
-    </pre>
+    <div>
+        <span>Message:</span>
+        <pre id="json-send">
+        </pre>
+    </div>
+
+    <div>
+        <span>Response:</span>
+        <pre id="json-receive">
+        </pre>
+    </div>
 </div>
 {% endblock %}

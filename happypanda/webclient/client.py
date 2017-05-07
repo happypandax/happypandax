@@ -1,8 +1,9 @@
 import socket
 import logging
 import sys
+import json
 
-from happypanda.common import constants, exceptions, utils, message
+from happypanda.common import constants, exceptions, utils
 
 log = utils.Logger(__name__)
 
@@ -64,9 +65,10 @@ class Client:
         returns:
             dict from server
         """
+        assert isinstance(msg, dict)
         log.d("Sending", sys.getsizeof(msg), "bytes to server")
         if self._alive:
-            self._sock.sendall(message.finalize(msg, self.name))
+            self._sock.sendall(bytes(json.dumps(msg), 'utf-8'))
             self._sock.sendall(constants.postfix)
             return self._recv()
         else:

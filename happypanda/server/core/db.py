@@ -19,12 +19,7 @@ import re
 
 from happypanda.common import constants, exceptions, utils
 
-log = logging.getLogger(__name__)
-log_i = log.info
-log_d = log.debug
-log_w = log.warning
-log_e = log.error
-log_c = log.critical
+log = utils.Logger(__name__)
 
 class String(_String):
     """Enchanced version of standard SQLAlchemy's :class:`String`.
@@ -410,7 +405,7 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
         if sess:
             sess.add(Event(self, Event.Action.read, user_id, datetime))
         else:
-            log_w("Cannot add gallery read event because no session exists for this object")
+            log.w("Cannot add gallery read event because no session exists for this object")
         self.times_read += 1
         self.last_read = datetime
 
@@ -475,7 +470,7 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
             if not obj:
                 e = e is not None
         else:
-            log_w("Could not query for gallery existence because no path was set.")
+            log.w("Could not query for gallery existence because no path was set.")
         return e
 
 page_profiles = profile_association("page")
@@ -524,7 +519,7 @@ class Page(TaggableMixin, ProfileMixin, Base):
             if not obj:
                 e = e is not None
         else:
-            log_w("Could not query for page existence because no path was set.")
+            log.w("Could not query for page existence because no path was set.")
         return e
 
 class Title(Base):
@@ -636,8 +631,8 @@ def check_db_version(sess):
         if life.version not in constants.version_db:
             msg = 'Local database version: {}\nSupported database versions:{}'.format(life.version,
                                                                          constants.version_db)
-            log_c("Incompatible database version")
-            log_d(msg)
+            log.c("Incompatible database version")
+            log.d(msg)
             raise exceptions.DatabaseVersionError(msg)
     else:
         life = Life()
@@ -645,8 +640,8 @@ def check_db_version(sess):
         life.version = constants.version_db[0]
         life.times_opened = 0
         sess.commit()
-        log_i("Succesfully initiated database")
-        log_i("DB Version: {}".format(life.version))
+        log.i("Succesfully initiated database")
+        log.i("DB Version: {}".format(life.version))
 
     life.times_opened += 1
     sess.add(Event(life, Event.Action.start))
