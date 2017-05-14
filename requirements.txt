@@ -5,6 +5,5 @@ rarfile==3.0
 appdirs==1.4.3
 karellen-geventws==1.0.2
 alembic==0.9.1
-transcrypt=3.6.25
+transcrypt==3.6.25
 https://github.com/Pewpews/happy-socketio/archive/master/2.8.5.zip
-https://github.com/Pewpews/happy-bittorrent/archive/master/1.0.0.zip
