@@ -11,7 +11,7 @@ import base64
 from inspect import ismodule
 from logging.handlers import RotatingFileHandler
 
-from happypanda.common import constants, exceptions, upnp
+from happypanda.common import constants, exceptions
 
 ## LOGGER ##
 

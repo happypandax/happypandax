@@ -63,3 +63,4 @@ data_size = 1024
 public_server = False
 server_ready = True
 
+## NETWORK
