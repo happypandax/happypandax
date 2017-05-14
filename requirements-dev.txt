@@ -5,3 +5,4 @@ mock==2.0.0
 pytest==3.0.3
 pytest-cov==2.4.0
 Sphinx==1.5.2
+sphinxcontrib-documentedlist==0.6
