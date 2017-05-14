@@ -24,7 +24,7 @@ async def check_daemon_absence():
         raise exceptions.CoreError("torrent daemon", 'A daemon on this port is already running')
 
 
-def run_daemon(_):
+def run_daemon():
     with closing(asyncio.get_event_loop()) as loop:
         loop.run_until_complete(check_daemon_absence())
 

@@ -3,6 +3,7 @@ import rarfile
 import enum
 
 debug = False
+dev = False
 
 ## VERSIONING ##
 version = (0, 0, 1)
@@ -21,9 +22,9 @@ log_error = os.path.join(dir_log, "error.log")
 log_normal = os.path.join(dir_log, "activity.log")
 log_debug = os.path.join(dir_log, "debug.log")
 db_name = "happypanda.db"
-db_name_debug = "happypanda_debug.db"
+db_name_dev = "happypanda_dev.db"
 db_path = os.path.join(dir_root, dir_data, db_name)
-db_path_debug = os.path.join(dir_root, dir_data, db_name_debug)
+db_path_dev = os.path.join(dir_root, dir_data, db_name_dev)
 
 supported_images = ('.jpg', '.bmp', '.png', '.gif', '.jpeg')
 supported_archives = ('.zip', '.cbz', '.rar', '.cbr')
@@ -43,10 +44,19 @@ default_user = None
 
 ## SERVER
 server_name = 'server'
-local_port = 5577
-web_port = local_port + 1
-localhost = False # localhost only
-host = "localhost" if localhost else ""
+
+port = 7007
+port_webserver = port + 1
+port_torrent = port_webserver + 1
+port_range = range(7007, 7018)
+
+host = "localhost"
+host_web = ""
+expose_server = False
+expose_webserver = False
+exposed_server = False
+exposed_webserver = False
+
 client_limit = None
 postfix = b'<END>'
 data_size = 1024

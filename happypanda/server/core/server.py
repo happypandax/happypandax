@@ -4,14 +4,13 @@ import logging
 import sys
 
 from inspect import getmembers, isfunction
-from enum import Enum
 
 from gevent import socket, pool, queue
 from gevent.server import StreamServer
 
 from happypanda.common import constants, exceptions, utils, message
 from happypanda.server import interface
-from happypanda.server.core import db
+from happypanda.server.core import db, torrent
 from happypanda.webclient import main as hweb
 
 log = utils.Logger(__name__)
@@ -219,7 +218,6 @@ class HPServer:
 
     def _handle(self, client, address):
         "Client handle function"
-        # log client connected
         log.d("Client connected", str(client), str(address))
         handler = ClientHandler(client, address)
         self._clients.add(handler)
@@ -242,8 +240,7 @@ class HPServer:
                 else:
                     buffer += r
         except socket.error as e:
-            # log error
-            utils.eprint("Client disconnected", e)
+            log.exception("Client disconnected with error", e)
         finally:
             self._clients.remove(handler)
         log.d("Client disconnected", str(client), str(address))
@@ -255,14 +252,13 @@ class HPServer:
 
         try:
             if blocking:
-                print("Starting server... (Port: {}) (blocking)".format(constants.local_port))
+                log.i("Starting server... ({}:{}) (blocking)".format(constants.host, constants.port), stdout=True)
                 self._server.serve_forever()
             else:
                 self._server.start()
-                print("Server successfully started (Port: {})".format(constants.local_port))
+                log.i("Server successfully started ({}:{})".format(constants.host, constants.port), stdout=True)
         except (socket.error, OSError) as e:
-            # log error
-            utils.eprint("Error: Failed to start server (Port might already be in use)") # include e
+            log.exception("Error: Failed to start server (Port might already be in use)") # include e
 
     def run(self, web=False, interactive=False):
         """Run the server forever, blocking
@@ -270,26 +266,28 @@ class HPServer:
             web -- Start the web server
             interactive -- Start in interactive mode (Note: Does not work with web server)
         """
+        
+        tdaemon = torrent.start()
+
         self._start(not (web or interactive))
 
         if web:
-            # start webserver
             try:
-                print("Web server successfully starting... (Port: {}) {}".format(constants.web_port, "(blocking)" if not interactive else ""))
+                log.i("Webserver successfully starting... ({}:{}) {}".format(constants.host_web, constants.port_webserver, "(blocking)" if not interactive else ""), stdout=True)
                 # OBS: will trigger a harmless socket.error when debug=True (stuff still works)
-                hweb.socketio.run(hweb.happyweb, *utils.connection_params(web=True), block=not interactive, debug=constants.debug)
+                hweb.socketio.run(hweb.happyweb, *utils.connection_params(web=True), block=not interactive, debug=constants.dev)
                 # log
-                print("Web server successfully started (Port: {})".format(constants.web_port))
+                log.i("Webserver successfully started ({}:{})".format(constants.host_web, constants.port_webserver), stdout=True)
             except (socket.error, OSError) as e:
-                # log error
-                utils.eprint("Error: Failed to start web server (Port might already be in use)") #include e
+                log.exception("Error: Failed to start webserver (Port might already be in use)") # include e in stderr?
         
 
         if interactive:
             interface.interactive()
 
-        # log server shutduown
-        print("Server shutting down.")
+        torrent.stop()
+        tdaemon.join()
+        log.i("Server shutting down.", stdout=True)
 
 if __name__ == '__main__':
     server = HPServer()

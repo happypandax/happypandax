@@ -650,7 +650,7 @@ def check_db_version(sess):
     return True
 
 def init(**kwargs):
-    db_path = constants.db_path_debug if constants.debug else constants.db_path
+    db_path = constants.db_path_dev if constants.debug else constants.db_path
     Session = scoped_session(sessionmaker())
     constants.db_session = Session
     initEvents(constants.db_session)

@@ -1,7 +1,8 @@
 from happypanda.common import constants, message
 from happypanda.server.core import db
+from happypanda.server.interface import enums
 
-def get_profile(ctx=None, item_type=constants.ItemType.Gallery, item_ids=[], size=None, local=False):
+def get_profile(ctx=None, item_type=enums.ItemType.Gallery, item_ids=[], size=None, local=False):
     """
     Get cover image
 

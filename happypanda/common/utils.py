@@ -7,6 +7,7 @@ import argparse
 import pkgutil
 import pprint
 import logging
+import base64
 from inspect import ismodule
 from logging.handlers import RotatingFileHandler
 
@@ -25,29 +26,29 @@ class Logger:
 
     def exception(self, *args):
         ""
-        self._log(self._logger.exception, *args)
+        self._log(self._logger.exception, *args, stderr=True)
 
-    def i(self, *args):
+    def i(self, *args, **kwargs):
         "INFO"
-        self._log(self._logger.info, *args)
+        self._log(self._logger.info, *args, **kwargs)
 
-    def d(self, *args):
+    def d(self, *args, **kwargs):
         "INFO"
-        self._log(self._logger.debug, *args)
+        self._log(self._logger.debug, *args, **kwargs)
 
-    def w(self, *args):
+    def w(self, *args, **kwargs):
         "INFO"
-        self._log(self._logger.warning, *args)
+        self._log(self._logger.warning, *args, stderr=True, **kwargs)
 
-    def e(self, *args):
+    def e(self, *args, **kwargs):
         "INFO"
-        self._log(self._logger.error, *args)
+        self._log(self._logger.error, *args, stderr=True, **kwargs)
 
-    def c(self, *args):
+    def c(self, *args, **kwargs):
         "INFO"
-        self._log(self._logger.critical, **args)
+        self._log(self._logger.critical, *args, stderr=True, **kwargs)
 
-    def _log(self, level, *args):
+    def _log(self, level, *args, stdout=False, stderr=False):
         s = ""
         for a in args:
             if not isinstance(a, str):
@@ -55,6 +56,12 @@ class Logger:
             s += a
             s += " "
         level(s)
+        
+        if not constants.dev: # prevent printing multiple times
+            if stdout:
+                print(s)
+            if stderr:
+                eprint(s)
 
 log = Logger(__name__)
 
@@ -123,17 +130,34 @@ def get_argparser():
     parser = argparse.ArgumentParser(prog="Happypanda X",
         description="A manga/doujinshi manager with tagging support")
 
+    subparsers = parser.add_subparsers(
+        description='Specify an action before "--help" to show parameters for it.'
+        )
+
     parser.add_argument('-w', '--web', action='store_true',
                     help='Start the webserver')
 
-    parser.add_argument('-p', '--port', type=int,
+
+    parser.add_argument('-p', '--port', type=int, default=constants.port,
                     help='Specify which port to start the server on')
 
-    parser.add_argument('--web-port', type=int,
+    parser.add_argument('--port-web', type=int, default=constants.port_webserver,
                     help='Specify which port to start the web server on')
 
-    parser.add_argument('--localhost', action='store_true',
-                    help='Start servers on localhost')
+    parser.add_argument('--port-torrent', type=int, default=constants.port_torrent,
+                    help='Specify which port to start the torrent client on')
+
+    parser.add_argument('--bind', type=str, default=constants.host,
+                    help='Specify which address the server should bind to')
+
+    parser.add_argument('--bind-web', type=str, default=constants.host_web,
+                    help='Specify which address the webserver should bind to')
+
+    parser.add_argument('--expose', action='store_true',
+                    help='Attempt to expose the server to the internet')
+
+    parser.add_argument('--expose-web', action='store_true',
+                    help='Attempt to expose the webserver to the internet')
 
     parser.add_argument('-d', '--debug', action='store_true',
                     help='Start in debug mode')
@@ -148,7 +172,7 @@ def get_argparser():
                     help='Start without plugins')
 
     parser.add_argument('-x', '--dev', action='store_true',
-                    help='start in development mode')
+                    help='Start in development mode')
 
     return parser
 
@@ -157,19 +181,23 @@ def parse_options(args):
     assert isinstance(args, argparse.Namespace)
 
     constants.debug = args.debug
-    if constants.debug:
+    constants.dev = args.dev
+    constants.host = args.bind
+    constants.host_web = args.bind_web
+    constants.expose_server = args.expose
+    constants.expose_webserver = args.expose_web
+
+    if constants.dev:
         sys.displayhook == pprint.pprint
-    constants.localhost = args.localhost
-    if args.port:
-        constants.local_port = args.port
-    if args.web_port:
-        constants.web_port = args.web_port
 
-def connection_params(web=False):
-    "Retrieve host and port"
-    host = constants.host
+    constants.port_webserver = args.port
+    constants.port_webserver = args.port_web
+    constants.port_torrent = args.port_torrent
 
-    ## do a portfoward
+    constants.server_name = "happypanda_" + generate_key()
+
+    ## attempt to do a portfoward
+
     #if constants.public_server:
     #    try:
     #        upnp.ask_to_open_port(constants.local_port, "Happypanda X Server",
@@ -180,13 +208,16 @@ def connection_params(web=False):
     #        constants.public_server = False
     #        # log
     #        # inform user
+    
 
+def connection_params(web=False):
+    "Retrieve host and port"
     if web:
-        params = (host, constants.web_port)
-        return params
+        params = (constants.host_web, constants.port_webserver)
     else:
-        params = (host, constants.local_port)
-        return params
+        params = (constants.host, constants.port)
+
+    return params
 
 def get_package_modules(pkg):
     "Retrive list of modules in package"
@@ -224,6 +255,8 @@ def end_of_message(bytes_):
         return tuple(bytes_.split(constants.postfix, maxsplit=1)), True
     return bytes_, False
 
+def generate_key(length=10):
+    return base64.urlsafe_b64encode(os.urandom(length)).rstrip(b'=').decode('ascii')
 
 class APIEnum(enum.Enum):
     "A conv. enum class allowing for str comparison"
