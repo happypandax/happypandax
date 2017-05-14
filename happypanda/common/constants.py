@@ -11,6 +11,7 @@ version_db = (0,)
 ## PATHS & FILENAMES ##
 dir_root = ''
 dir_data = os.path.join(dir_root, "data")
+dir_download = os.path.join(dir_root, "downloads")
 dir_settings = os.path.join(dir_root, "settings")
 dir_cache = os.path.join(dir_root, "cache")
 dir_log = os.path.join(dir_root, "logs")
