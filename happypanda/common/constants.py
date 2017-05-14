@@ -11,6 +11,7 @@ version_db = (0,)
 ## PATHS & FILENAMES ##
 dir_root = ''
 dir_data = os.path.join(dir_root, "data")
+dir_settings = os.path.join(dir_root, "settings")
 dir_cache = os.path.join(dir_root, "cache")
 dir_log = os.path.join(dir_root, "logs")
 dir_temp = 'temp' # TODO: create temp folder, use python temp facilities
@@ -29,26 +30,6 @@ supported_archives = ('.zip', '.cbz', '.rar', '.cbr')
 rarfile.PATH_SEP = '/'
 
 ## CORE
-class GalleryFilter(enum.Enum):
-    #: Library
-    Library = 0
-    #: Favourite
-    Favorite = 1
-    #: Inbox
-    Inbox = 2
-
-class ItemType(enum.Enum):
-    #: Gallery
-    Gallery = 0
-    #: Collection
-    Collection = 1
-    #: GalleryList
-    GalleryList = 2
-    #: Page
-    Page = 3
-    #: Grouping
-    Grouping = 4
-
 class ExitCode(enum.Enum):
     Exit = 0
     Restart = 1

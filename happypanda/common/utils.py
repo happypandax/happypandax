@@ -225,3 +225,13 @@ def end_of_message(bytes_):
     return bytes_, False
 
 
+class APIEnum(enum.Enum):
+    "A conv. enum class allowing for str comparison"
+
+    @classmethod
+    def get(cls, key, default=None):
+        try:
+            v = cls[key]
+        except KeyError:
+            v = default
+        return v

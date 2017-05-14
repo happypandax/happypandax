@@ -1,27 +1,52 @@
-from happypanda.common import constants, message
+from happypanda.common import constants, message, exceptions
 from happypanda.server.core import db
+from happypanda.server.interface import enums
 
-def gallery_view(ctx=None, page=0, limit=100, search_filter="", list_id=None, gallery_filter=constants.GalleryFilter.Library):
+def library_view(ctx=None,
+                 item_type=enums.ItemType.Gallery.name,
+                 page=0,
+                 limit=100,
+                 search_filter="",
+                 list_id=None,
+                 gallery_filter=enums.GalleryFilter.Library.name):
     """
-    Fetch galleries from the database.
+    Fetch items from the database.
     Provides pagination.
 
     Params:
+        - item_type -- type of items to show ...
         - page -- current page
-        - limit -- amount of galleries per page
-        - search_filter -- filter gallery by search terms
-        - list_id -- current gallery list id
+        - limit -- amount of items per page
+        - search_filter -- filter item by search terms
+        - list_id -- current item list id
         - gallery_filter -- ...
 
     Returns:
-        list of gallery message objects
+        list of item message objects
     """
 
+    gallery_filter = enums.GalleryFilter.get(gallery_filter)
+    item_type = enums.ItemType.get(item_type)
+
+    db_items = {
+        enums.ItemType.Gallery : db.Gallery,
+        enums.ItemType.Collection : db.Collection,
+        }
+
+    db_item = db_items.get(item_type)
+
+    if not db_item:
+        raise exceptions.APIError()
+
     s = constants.db_session()
-    q = s.query(db.Gallery).limit(limit)
-    glist = message.List("gallery", message.Gallery)
-    [glist.append(message.Gallery(x)) for x in q.all()]
-    return glist
+    items = message.List(db_item.__name__.lower(), db_t)
+
+    if item_type == enums.ItemType.Gallery:
+        items = message.List("gallery", message.Gallery)
+        q = s.query(db.Gallery).limit(limit)
+        [glist.append(message.Gallery(x)) for x in q.all()]
+
+    return items
 
 def add_gallery(ctx=None, galleries=[], paths=[]):
     """

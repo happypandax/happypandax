@@ -148,6 +148,19 @@ class ClientDisconnectError(ServerError):
 
     pass
 
+@error_code(403)
+class InvalidMessage(ServerError):
+    """Invalid message error."""
+
+    pass
+
+@error_code(404)
+class APIError(ServerError):
+    """API error."""
+
+    pass
+
+
     # ## CLIENT -- CODE: 500+ ##
 
 @error_code(500)
@@ -213,10 +226,4 @@ class JSONParseError(ClientError, ServerError):
         """init func."""
         pass
         # TODO: init both classs. log json_data.
-
-@error_code(901)
-class InvalidMessage(ServerError):
-    """Invalid message error."""
-
-    pass
 

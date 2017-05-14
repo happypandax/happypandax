@@ -2,6 +2,7 @@ __pragma__ ('alias', 'S', '$') # JQuery
 
 from client import client, Base
 import utils
+import components as cmp
 
 class IndexPage(Base):
     pass
@@ -27,3 +28,11 @@ class ApiPage(Base):
         S("div#args > ul").append("<li><span><input type='text', placeholder='keyword'></span><span><input type='text', placeholder='value'></span></li>")
 
 api = ApiPage()
+
+class LibraryPage(Base):
+
+    def show_galleries(self):
+        pass
+
+
+library = LibraryPage()
