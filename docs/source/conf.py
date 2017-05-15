@@ -35,7 +35,9 @@ extensions = ['sphinx.ext.autodoc',
     'sphinx.ext.todo',
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
-    'sphinx.ext.autosectionlabel']
+    'sphinx.ext.autosectionlabel',
+    'sphinxcontrib.documentedlist',
+    ]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

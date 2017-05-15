@@ -18,6 +18,7 @@ Getting Happypanda X
 
 	install
 	usage
+	settings
 
 For developers
 ----------------------------------------

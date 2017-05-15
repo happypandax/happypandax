@@ -36,7 +36,7 @@ class ClientHandler:
         self._address = address
         self._ip = self._address[0]
         self._port = self._address[1]
-        self._id = uuid.uuid4().hex
+        self._id = "{}#{}".format(self._ip, self._port)
         self._stopped = False
         self.context = None
 
@@ -46,8 +46,8 @@ class ClientHandler:
         self.context = s.query(db.User).filter(db.User.address == self._id).one_or_none()
         if not self.context:
             self.context = db.User()
-            self.context.address = (self._ip, self._port)
-            self.context.context_id = self._id
+            self.context.address = self._id
+            self.context.context_id = uuid.uuid4().hex
             s.add(self.context)
             s.commit()
 
@@ -87,15 +87,10 @@ class ClientHandler:
 
             log.d("Check if required root keys are present")
             # {"name":name, "data":data, 'id':id}
-            root_keys = ('name', 'data', 'id')
+            root_keys = ('name', 'data')
             self._check_both(where, "JSON dict", root_keys, j_data)
         except exceptions.ServerError as e:
             raise
-
-        # get context
-        if self._id != j_data['id']:
-            self._id = j_data['id']
-            self.get_context()
 
         if not self.context:
             self.get_context()
@@ -199,7 +194,7 @@ class ClientHandler:
                 for fname, e in self.errors:
                     function_list.append(message.Function(fname, error=message.Error(e.code, e.msg)))
 
-                self.send(function_list.serialize(self._id))
+                self.send(function_list.serialize())
             else:
                 self.on_wait()
         except exceptions.CoreError as e:
@@ -217,13 +212,13 @@ class ClientHandler:
         """
         assert isinstance(exception, exceptions.CoreError)
         e = message.Error(exception.code, exception.msg)
-        self.send(e.serialize(self._id))
+        self.send(e.serialize())
 
     def on_wait(self):
         """
         Sends wait message to client
         """
-        self.send(message.Message("wait").serialize(self._id))
+        self.send(message.Message("wait").serialize())
 
 class HPServer:
     "Happypanda Server"
@@ -243,17 +238,17 @@ class HPServer:
             buffer = b''
             while True:
                 data, eof = utils.end_of_message(buffer)
-                #log.d("EOF:", eof, "Data:", data)
+                log.d("Received", sys.getsizeof(buffer), "bytes from ", address)
                 if eof:
                     buffer = data[1]
                     if handler.is_active():
                         handler.advance(data[0])
                     else:
-                        # log client disconnected
+                        log.d("Client has disconnected", address)
                         break
                 r = client.recv(constants.data_size)
                 if not r:
-                    # log client disconnected
+                    log.d("Client has disconnected", address)
                     break
                 else:
                     buffer += r
@@ -284,8 +279,7 @@ class HPServer:
             web -- Start the web server
             interactive -- Start in interactive mode (Note: Does not work with web server)
         """
-        
-        tdaemon = torrent.start()
+        #tdaemon = torrent.start()
         try:
             self._start(not (web or interactive))
 
@@ -294,7 +288,6 @@ class HPServer:
                     log.i("Webserver successfully starting... ({}:{}) {}".format(constants.host_web, constants.port_webserver, "(blocking)" if not interactive else ""), stdout=True)
                     # OBS: will trigger a harmless socket.error when debug=True (stuff still works)
                     hweb.socketio.run(hweb.happyweb, *utils.connection_params(web=True), block=not interactive, debug=constants.dev)
-                    # log
                     log.i("Webserver successfully started ({}:{})".format(constants.host_web, constants.port_webserver), stdout=True)
                 except (socket.error, OSError) as e:
                     log.exception("Error: Failed to start webserver (Port might already be in use)") # include e in stderr?
@@ -304,8 +297,8 @@ class HPServer:
                 interface.interactive()
         except KeyboardInterrupt:
             pass
-        torrent.stop()
-        tdaemon.join()
+        #Storrent.stop()
+        #Stdaemon.join()
         log.i("Server(s) shutting down.", stdout=True)
 
 if __name__ == '__main__':

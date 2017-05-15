@@ -3,7 +3,7 @@
     <meta http-equiv="Content-Type"
           content="text/html; charset=utf-8"/>
     
-        <title>Contributing &mdash; Happypanda X (0, 0, 1) documentation</title>
+        <title>Happypanda X Settings &mdash; Happypanda X (0, 0, 1) documentation</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href='https://fonts.googleapis.com/css?family=Crete+Round' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" href="_static/sphinx-bootstrap.css" type="text/css"/>
@@ -29,8 +29,8 @@
                   href="genindex.html"/>
             <link rel="search" title="Search" href="search.html"/>
         <link rel="top" title="Happypanda X (0, 0, 1) documentation" href="index.html"/>
-            <link rel="next" title="Creating a frontend in any language" href="client.html"/>
-            <link rel="prev" title="API Overview" href="api.html"/> 
+            <link rel="next" title="API Overview" href="api.html"/>
+            <link rel="prev" title="Using Happypanda X" href="usage.html"/> 
     <script type="text/javascript" src="https://apis.google.com/js/plusone.js"></script>
     
 </head>
@@ -52,12 +52,12 @@
                        title="Python Module Index" >modules</a>
                 </li>
                 <li>
-                    <a href="client.html"
-                       title="Creating a frontend in any language" accesskey="N">next</a>
+                    <a href="api.html"
+                       title="API Overview" accesskey="N">next</a>
                 </li>
                 <li>
-                    <a href="api.html"
-                       title="API Overview" accesskey="P">previous</a>
+                    <a href="usage.html"
+                       title="Using Happypanda X" accesskey="P">previous</a>
                 </li> 
         </ul>
     </div>
@@ -118,68 +118,80 @@
         <div class="content row">
                 <div class="span9">
                     
-  <div class="section" id="contributing">
-<h1>Contributing<a class="headerlink" href="#contributing" title="Permalink to this headline">¶</a></h1>
-<p>There are numerous of ways to contribute to Happypanda X (referred to as HPX from now on).
-If you want to start contributing to the HPX core parts, you will need to set up the right
-environment and follow some simple guidelines.</p>
-<div class="section" id="prerequisites">
-<h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline">¶</a></h2>
-<ul class="simple">
-<li><code class="docutils literal"><span class="pre">Python</span> <span class="pre">3.5</span></code></li>
-<li><code class="docutils literal"><span class="pre">pip3</span></code></li>
-</ul>
-</div>
-<div class="section" id="setting-up-an-environment">
-<h2>Setting up an environment<a class="headerlink" href="#setting-up-an-environment" title="Permalink to this headline">¶</a></h2>
-<p>We need to set up a virtual environment for our python packages</p>
-<ul class="simple">
-<li>Install <code class="docutils literal"><span class="pre">virtualenv</span></code> from pypi (<code class="docutils literal"><span class="pre">pip3</span> <span class="pre">install</span> <span class="pre">virtualenv</span></code>)</li>
-<li>Clone the <a class="reference external" href="https://github.com/Pewpews/happypandax/tree/dev">HPX</a> repo if you didn&#8217;t already</li>
-</ul>
-<p>Create a virtual environment in the cloned HPX repo folder:</p>
-<ul class="simple">
-<li><code class="docutils literal"><span class="pre">cd</span></code> into cloned folder: <code class="docutils literal"><span class="pre">cd</span> <span class="pre">path/to/folder</span></code></li>
-<li><cite>virtualenv env</cite></li>
-</ul>
-<p>Activate the virtual environment and start installing the required dependencies</p>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<div class="last line-block">
-<div class="line">On windows: <code class="docutils literal"><span class="pre">env\Scripts\activate.bat</span></code></div>
-<div class="line">On posix: <code class="docutils literal"><span class="pre">.</span> <span class="pre">env/bin/activate</span></code></div>
-</div>
-</div>
-<ul>
-<li><p class="first">Install the dependencies: <code class="docutils literal"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-r</span> <span class="pre">requirements-dev.txt</span></code></p>
-</li>
-<li><dl class="first docutils">
-<dt>Build the js files:</dt>
-<dd><div class="first last line-block">
-<div class="line"><code class="docutils literal"><span class="pre">python</span> <span class="pre">build_js.py</span></code></div>
-</div>
-</dd>
-</dl>
-</li>
-<li><dl class="first docutils">
-<dt>Build the docs (optional):</dt>
-<dd><div class="first last line-block">
-<div class="line"><code class="docutils literal"><span class="pre">python</span> <span class="pre">build_docs.py</span></code></div>
-</div>
-</dd>
-</dl>
-</li>
-</ul>
-</div>
-<div class="section" id="hpx-structure">
-<h2>HPX Structure<a class="headerlink" href="#hpx-structure" title="Permalink to this headline">¶</a></h2>
-</div>
-<div class="section" id="code-style">
-<h2>Code Style<a class="headerlink" href="#code-style" title="Permalink to this headline">¶</a></h2>
-</div>
-<div class="section" id="testing">
-<h2>Testing<a class="headerlink" href="#testing" title="Permalink to this headline">¶</a></h2>
-</div>
+  <div class="section" id="happypanda-x-settings">
+<h1>Happypanda X Settings<a class="headerlink" href="#happypanda-x-settings" title="Permalink to this headline">¶</a></h1>
+<table border="1" class="docutils">
+<colgroup>
+<col width="33%" />
+<col width="33%" />
+<col width="33%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Option</th>
+<th class="head">Default</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td colspan="3">common</td>
+</tr>
+</tbody>
+<colgroup>
+<col width="33%" />
+<col width="33%" />
+<col width="33%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head" colspan="3">Core</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>debug</td>
+<td>False</td>
+<td>Run in debug mode</td>
+</tr>
+<tr class="row-odd"><td>server_name</td>
+<td>server</td>
+<td>Specifiy name of the server</td>
+</tr>
+<tr class="row-even"><td>port</td>
+<td>7007</td>
+<td>Specify which port to start the server on</td>
+</tr>
+<tr class="row-odd"><td>port webserver</td>
+<td>7008</td>
+<td>Specify which port to start the webserver on</td>
+</tr>
+<tr class="row-even"><td>port torrent</td>
+<td>7009</td>
+<td>Specify which port to start the torrent client on</td>
+</tr>
+<tr class="row-odd"><td>port range</td>
+<td>7007-7018</td>
+<td>Specify a range of ports to attempt</td>
+</tr>
+<tr class="row-even"><td>host</td>
+<td>localhost</td>
+<td>Specify which address the server should bind to</td>
+</tr>
+<tr class="row-odd"><td>host web</td>
+<td></td>
+<td>Specify which address the webserver should bind to</td>
+</tr>
+<tr class="row-even"><td>expose server</td>
+<td>False</td>
+<td>Attempt to expose the server through portforwading</td>
+</tr>
+<tr class="row-odd"><td>expose webserver</td>
+<td>False</td>
+<td>Attempt to expose the webserver through portforwading</td>
+</tr>
+<tr class="row-even"><td>client limit</td>
+<td>0</td>
+<td>Limit amount of clients to be connected</td>
+</tr>
+</tbody>
+</table>
 </div>
 
 
@@ -192,28 +204,16 @@ environment and follow some simple guidelines.</p>
                     
         <div class="sphinxsidebar">
             <div class="sphinxsidebarwrapper">
-  <h3><a href="index.html">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">Contributing</a><ul>
-<li><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
-<li><a class="reference internal" href="#setting-up-an-environment">Setting up an environment</a></li>
-<li><a class="reference internal" href="#hpx-structure">HPX Structure</a></li>
-<li><a class="reference internal" href="#code-style">Code Style</a></li>
-<li><a class="reference internal" href="#testing">Testing</a></li>
-</ul>
-</li>
-</ul>
-
   <h4>Previous topic</h4>
-  <p class="topless"><a href="api.html"
-                        title="previous chapter">API Overview</a></p>
+  <p class="topless"><a href="usage.html"
+                        title="previous chapter">Using Happypanda X</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="client.html"
-                        title="next chapter">Creating a frontend in any language</a></p>
+  <p class="topless"><a href="api.html"
+                        title="next chapter">API Overview</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="_sources/env.rst.txt"
+      <li><a href="_sources/settings.rst.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div>
@@ -242,7 +242,7 @@ environment and follow some simple guidelines.</p>
 
     <!-- disqus -->
     <script type="text/javascript">
-        var disqus_title = 'Contributing &mdash; Happypanda X (0, 0, 1) documentation';
+        var disqus_title = 'Happypanda X Settings &mdash; Happypanda X (0, 0, 1) documentation';
         var disqus_identifier ='code' + '.' + "pewpews" + window.location.pathname.replace('/', '.');
     </script>
 

@@ -25,37 +25,40 @@ async def check_daemon_absence():
 
 
 def run_daemon():
-    with closing(asyncio.get_event_loop()) as loop:
-        loop.run_until_complete(check_daemon_absence())
+    try:
+        with closing(asyncio.get_event_loop()) as loop:
+            loop.run_until_complete(check_daemon_absence())
 
-        control = ControlManager()
-        loop.run_until_complete(control.start())
+            control = ControlManager()
+            loop.run_until_complete(control.start())
 
-        try:
-            control.load_state()
-        except Exception as err:
-            log.exception('Failed to load program state:', err)
-        control.invoke_state_dumps()
+            try:
+                control.load_state()
+            except Exception as err:
+                log.exception('Failed to load program state:', err)
+            control.invoke_state_dumps()
 
-        stopping = False
+            stopping = False
 
-        def stop_daemon(server: ControlServer):
-            nonlocal stopping
-            if stopping:
-                return
-            stopping = True
+            def stop_daemon(server: ControlServer):
+                nonlocal stopping
+                if stopping:
+                    return
+                stopping = True
 
-            stop_task = asyncio.ensure_future(asyncio.wait([server.stop(), server.control.stop()]))
-            stop_task.add_done_callback(lambda fut: loop.stop())
+                stop_task = asyncio.ensure_future(asyncio.wait([server.stop(), server.control.stop()]))
+                stop_task.add_done_callback(lambda fut: loop.stop())
 
-        control_server = ControlServer(control, stop_daemon)
-        loop.run_until_complete(control_server.start())
+            control_server = ControlServer(control, stop_daemon)
+            loop.run_until_complete(control_server.start())
 
-        if os.name == 'posix':
-            for sig in (signal.SIGINT, signal.SIGTERM):
-                loop.add_signal_handler(sig, partial(stop_daemon, control_server))
+            if os.name == 'posix':
+                for sig in (signal.SIGINT, signal.SIGTERM):
+                    loop.add_signal_handler(sig, partial(stop_daemon, control_server))
 
-        loop.run_forever()
+            loop.run_forever()
+    except OSError as e:
+        log.exception("Error: Failed to start torrent daemon (Port might already be in use)")
 
 def show(filename):
     "Show torrent content (no daemon required)"

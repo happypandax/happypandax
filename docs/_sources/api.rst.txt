@@ -7,8 +7,6 @@ Server
 Enums
 ----------------------------------------
 
-.. autoclass:: happypanda.common.constants.GalleryFilter
-   :members:
 
 Functions
 ----------------------------------------

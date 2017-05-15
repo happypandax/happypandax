@@ -30,7 +30,7 @@
             <link rel="search" title="Search" href="search.html"/>
         <link rel="top" title="Happypanda X (0, 0, 1) documentation" href="index.html"/>
             <link rel="next" title="Contributing" href="env.html"/>
-            <link rel="prev" title="Using Happypanda X" href="usage.html"/> 
+            <link rel="prev" title="Happypanda X Settings" href="settings.html"/> 
     <script type="text/javascript" src="https://apis.google.com/js/plusone.js"></script>
     
 </head>
@@ -56,8 +56,8 @@
                        title="Contributing" accesskey="N">next</a>
                 </li>
                 <li>
-                    <a href="usage.html"
-                       title="Using Happypanda X" accesskey="P">previous</a>
+                    <a href="settings.html"
+                       title="Happypanda X Settings" accesskey="P">previous</a>
                 </li> 
         </ul>
     </div>
@@ -124,30 +124,6 @@
 <h2>Server<a class="headerlink" href="#server" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="enums">
 <h3>Enums<a class="headerlink" href="#enums" title="Permalink to this headline">¶</a></h3>
-<dl class="class">
-<dt id="happypanda.common.constants.GalleryFilter">
-<em class="property">class </em><code class="descname">GalleryFilter</code><a class="reference internal" href="_modules/happypanda/common/constants.html#GalleryFilter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.common.constants.GalleryFilter" title="Permalink to this definition">¶</a></dt>
-<dd><p>An enumeration.</p>
-<dl class="attribute">
-<dt id="happypanda.common.constants.GalleryFilter.Favorite">
-<code class="descname">Favorite</code><em class="property"> = 1</em><a class="headerlink" href="#happypanda.common.constants.GalleryFilter.Favorite" title="Permalink to this definition">¶</a></dt>
-<dd><p>Favourite</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="happypanda.common.constants.GalleryFilter.Inbox">
-<code class="descname">Inbox</code><em class="property"> = 2</em><a class="headerlink" href="#happypanda.common.constants.GalleryFilter.Inbox" title="Permalink to this definition">¶</a></dt>
-<dd><p>Inbox</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="happypanda.common.constants.GalleryFilter.Library">
-<code class="descname">Library</code><em class="property"> = 0</em><a class="headerlink" href="#happypanda.common.constants.GalleryFilter.Library" title="Permalink to this definition">¶</a></dt>
-<dd><p>Library</p>
-</dd></dl>
-
-</dd></dl>
-
 </div>
 <div class="section" id="functions">
 <h3>Functions<a class="headerlink" href="#functions" title="Permalink to this headline">¶</a></h3>
@@ -179,22 +155,23 @@
 </dd></dl>
 
 <dl class="function">
-<dt id="happypanda.server.interface.gallery.gallery_view">
-<code class="descname">gallery_view</code><span class="sig-paren">(</span><em>ctx=None</em>, <em>page=0</em>, <em>limit=100</em>, <em>search_filter=''</em>, <em>list_id=None</em>, <em>gallery_filter=&lt;GalleryFilter.Library: 0&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/server/interface/gallery.html#gallery_view"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.server.interface.gallery.gallery_view" title="Permalink to this definition">¶</a></dt>
-<dd><p>Fetch galleries from the database.
+<dt id="happypanda.server.interface.gallery.library_view">
+<code class="descname">library_view</code><span class="sig-paren">(</span><em>ctx=None</em>, <em>item_type='Gallery'</em>, <em>page=0</em>, <em>limit=100</em>, <em>search_filter=''</em>, <em>list_id=None</em>, <em>gallery_filter='Library'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/server/interface/gallery.html#library_view"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.server.interface.gallery.library_view" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetch items from the database.
 Provides pagination.</p>
 <dl class="docutils">
 <dt>Params:</dt>
 <dd><ul class="first last simple">
+<li>item_type &#8211; type of items to show ...</li>
 <li>page &#8211; current page</li>
-<li>limit &#8211; amount of galleries per page</li>
-<li>search_filter &#8211; filter gallery by search terms</li>
-<li>list_id &#8211; current gallery list id</li>
+<li>limit &#8211; amount of items per page</li>
+<li>search_filter &#8211; filter item by search terms</li>
+<li>list_id &#8211; current item list id</li>
 <li>gallery_filter &#8211; ...</li>
 </ul>
 </dd>
 <dt>Returns:</dt>
-<dd>list of gallery message objects</dd>
+<dd>list of item message objects</dd>
 </dl>
 </dd></dl>
 
@@ -264,7 +241,7 @@ Provides pagination.</p>
 <span id="settings"></span><h4>Settings<a class="headerlink" href="#module-happypanda.server.interface.settings" title="Permalink to this headline">¶</a></h4>
 <dl class="function">
 <dt id="happypanda.server.interface.settings.get_settings">
-<code class="descname">get_settings</code><span class="sig-paren">(</span><em>namespace</em>, <em>set_list=[]</em>, <em>ctx=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/server/interface/settings.html#get_settings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.server.interface.settings.get_settings" title="Permalink to this definition">¶</a></dt>
+<code class="descname">get_settings</code><span class="sig-paren">(</span><em>settings=[]</em>, <em>ctx=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/server/interface/settings.html#get_settings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.server.interface.settings.get_settings" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set settings
 Use setting key &#8216;all&#8217; to fetch all setting key:values</p>
 <dl class="docutils">
@@ -280,12 +257,12 @@ Use setting key &#8216;all&#8217; to fetch all setting key:values</p>
 
 <dl class="function">
 <dt id="happypanda.server.interface.settings.set_settings">
-<code class="descname">set_settings</code><span class="sig-paren">(</span><em>namespace</em>, <em>set_dict={}</em>, <em>ctx=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/server/interface/settings.html#set_settings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.server.interface.settings.set_settings" title="Permalink to this definition">¶</a></dt>
+<code class="descname">set_settings</code><span class="sig-paren">(</span><em>settings={}</em>, <em>ctx=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/server/interface/settings.html#set_settings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.server.interface.settings.set_settings" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set settings</p>
 <dl class="docutils">
 <dt>Params:</dt>
 <dd><ul class="first last simple">
-<li>set_dict &#8211; a dictionary containing key:value pairs :D</li>
+<li>settings &#8211; a dictionary containing key:value pairs</li>
 </ul>
 </dd>
 <dt>Returns:</dt>
@@ -327,8 +304,8 @@ Use setting key &#8216;all&#8217; to fetch all setting key:values</p>
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="usage.html"
-                        title="previous chapter">Using Happypanda X</a></p>
+  <p class="topless"><a href="settings.html"
+                        title="previous chapter">Happypanda X Settings</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="env.html"
                         title="next chapter">Contributing</a></p>
@@ -351,7 +328,7 @@ Use setting key &#8216;all&#8217; to fetch all setting key:values</p>
                     &copy;
                         Copyright 2017, Pewpew.
                 Created using <a
-                        href="http://sphinx.pocoo.org/">Sphinx</a> 1.5.2
+                        href="http://sphinx.pocoo.org/">Sphinx</a> 1.5.6
                     .
                 Theme <a href="https://github.com/scotch/sphinx-bootstrap">Sphinx-Bootstrap</a>
                 adapted from

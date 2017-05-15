@@ -51,7 +51,7 @@ class Client:
                 if eof:
                     buffered = data[0]
                     self._buffer = data[1]
-            log.d("Received", sys.getsizeof(buffered), "bytes from server")
+            log.d("Received", sys.getsizeof(buffered), "bytes from server", self._server)
             return utils.convert_to_json(buffered, self.name)
         except socket.error as e:
             # log disconnect
@@ -67,7 +67,7 @@ class Client:
             dict from server
         """
         assert isinstance(msg, dict)
-        log.d("Sending", sys.getsizeof(msg), "bytes to server")
+        log.d("Sending", sys.getsizeof(msg), "bytes to server", self._server)
         if self._alive:
             self._sock.sendall(bytes(json.dumps(msg), 'utf-8'))
             self._sock.sendall(constants.postfix)

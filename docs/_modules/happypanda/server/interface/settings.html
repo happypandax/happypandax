@@ -115,19 +115,21 @@
   <h1>Source code for happypanda.server.interface.settings</h1><div class="highlight"><pre>
 <span></span><span class="kn">from</span> <span class="nn">happypanda.common</span> <span class="k">import</span> <span class="n">constants</span><span class="p">,</span> <span class="n">message</span>
 
-<div class="viewcode-block" id="set_settings"><a class="viewcode-back" href="../../../../api.html#happypanda.server.interface.settings.set_settings">[docs]</a><span class="k">def</span> <span class="nf">set_settings</span><span class="p">(</span><span class="n">namespace</span><span class="p">,</span> <span class="n">set_dict</span><span class="o">=</span><span class="p">{},</span> <span class="n">ctx</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="set_settings"><a class="viewcode-back" href="../../../../api.html#happypanda.server.interface.settings.set_settings">[docs]</a><span class="k">def</span> <span class="nf">set_settings</span><span class="p">(</span><span class="n">settings</span><span class="o">=</span><span class="p">{},</span> <span class="n">ctx</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Set settings</span>
 
 <span class="sd">    Params:</span>
-<span class="sd">        - set_dict -- a dictionary containing key:value pairs :D</span>
+<span class="sd">        - settings -- a dictionary containing key:value pairs</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Status</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Message</span><span class="p">(</span><span class="s2">&quot;works&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="get_settings"><a class="viewcode-back" href="../../../../api.html#happypanda.server.interface.settings.get_settings">[docs]</a><span class="k">def</span> <span class="nf">get_settings</span><span class="p">(</span><span class="n">namespace</span><span class="p">,</span> <span class="n">set_list</span><span class="o">=</span><span class="p">[],</span> <span class="n">ctx</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+    <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Message</span><span class="p">(</span><span class="s2">&quot;ok&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="get_settings"><a class="viewcode-back" href="../../../../api.html#happypanda.server.interface.settings.get_settings">[docs]</a><span class="k">def</span> <span class="nf">get_settings</span><span class="p">(</span><span class="n">settings</span><span class="o">=</span><span class="p">[],</span> <span class="n">ctx</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Set settings</span>
 <span class="sd">    Use setting key &#39;all&#39; to fetch all setting key:values</span>
@@ -163,7 +165,7 @@
                     &copy;
                         Copyright 2017, Pewpew.
                 Created using <a
-                        href="http://sphinx.pocoo.org/">Sphinx</a> 1.5.2
+                        href="http://sphinx.pocoo.org/">Sphinx</a> 1.5.6
                     .
                 Theme <a href="https://github.com/scotch/sphinx-bootstrap">Sphinx-Bootstrap</a>
                 adapted from
