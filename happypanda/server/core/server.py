@@ -286,26 +286,27 @@ class HPServer:
         """
         
         tdaemon = torrent.start()
+        try:
+            self._start(not (web or interactive))
 
-        self._start(not (web or interactive))
-
-        if web:
-            try:
-                log.i("Webserver successfully starting... ({}:{}) {}".format(constants.host_web, constants.port_webserver, "(blocking)" if not interactive else ""), stdout=True)
-                # OBS: will trigger a harmless socket.error when debug=True (stuff still works)
-                hweb.socketio.run(hweb.happyweb, *utils.connection_params(web=True), block=not interactive, debug=constants.dev)
-                # log
-                log.i("Webserver successfully started ({}:{})".format(constants.host_web, constants.port_webserver), stdout=True)
-            except (socket.error, OSError) as e:
-                log.exception("Error: Failed to start webserver (Port might already be in use)") # include e in stderr?
+            if web:
+                try:
+                    log.i("Webserver successfully starting... ({}:{}) {}".format(constants.host_web, constants.port_webserver, "(blocking)" if not interactive else ""), stdout=True)
+                    # OBS: will trigger a harmless socket.error when debug=True (stuff still works)
+                    hweb.socketio.run(hweb.happyweb, *utils.connection_params(web=True), block=not interactive, debug=constants.dev)
+                    # log
+                    log.i("Webserver successfully started ({}:{})".format(constants.host_web, constants.port_webserver), stdout=True)
+                except (socket.error, OSError) as e:
+                    log.exception("Error: Failed to start webserver (Port might already be in use)") # include e in stderr?
         
 
-        if interactive:
-            interface.interactive()
-
+            if interactive:
+                interface.interactive()
+        except KeyboardInterrupt:
+            pass
         torrent.stop()
         tdaemon.join()
-        log.i("Server shutting down.", stdout=True)
+        log.i("Server(s) shutting down.", stdout=True)
 
 if __name__ == '__main__':
     server = HPServer()

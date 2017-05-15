@@ -2,7 +2,10 @@
 import rarfile
 import enum
 
-debug = False
+from happypanda.common import config as cfg
+
+rarfile.PATH_SEP = '/'
+
 dev = False
 
 ## VERSIONING ##
@@ -31,7 +34,10 @@ db_path_dev = os.path.join(dir_root, dir_data, db_name_dev)
 supported_images = ('.jpg', '.bmp', '.png', '.gif', '.jpeg')
 supported_archives = ('.zip', '.cbz', '.rar', '.cbr')
 
-rarfile.PATH_SEP = '/'
+core_ns = 'core'
+config = cfg.Config(dir_root, settings_file, settings_descr_file)
+
+debug = config.get(core_ns, 'debug', False, "Run in debug mode")
 
 ## CORE
 class ExitCode(enum.Enum):
@@ -45,32 +51,31 @@ class RuntimeMode(enum.Enum):
 running_mode = RuntimeMode.User
 
 core_plugin = None
-config = None
-config_client = None
 
 ## DATABASE
 db_session = None
 default_user = None
 
 ## SERVER
-server_name = 'server'
+server_name = config.get(core_ns, 'server_name', 'server', "Specifiy name of the server")
 
-port = 7007
-port_webserver = port + 1
-port_torrent = port_webserver + 1
-port_range = range(7007, 7018)
+port = config.get(core_ns, 'port', 7007, "Specify which port to start the server on")
+port_webserver = config.get(core_ns, 'port_webserver', port+1, "Specify which port to start the webserver on")
+port_torrent = config.get(core_ns, 'port_torrent', port_webserver+1, "Specify which port to start the torrent client on")
+port_range = range(*(int(x) for x in config.get(core_ns, 'port_range', '7007-7018', "Specify a range of ports to attempt").split('-')))
 
-host = "localhost"
-host_web = ""
-expose_server = False
-expose_webserver = False
+host = config.get(core_ns, 'host', 'localhost', "Specify which address the server should bind to")
+host_web = config.get(core_ns, 'host_web', '', "Specify which address the webserver should bind to")
+expose_server =  config.get(core_ns, 'expose_server', False, "Attempt to expose the server through portforwading")
+expose_webserver = config.get(core_ns, 'expose_webserver', False, "Attempt to expose the webserver through portforwading")
 exposed_server = False
 exposed_webserver = False
 
-client_limit = None
+client_limit = config.get(core_ns, 'client_limit', 0, "Limit amount of clients allowed to be connected")
 postfix = b'<END>'
 data_size = 1024
-public_server = False
 server_ready = True
 
 ## NETWORK
+
+config_doc = config.doc_render() # for doc

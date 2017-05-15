@@ -154,10 +154,10 @@ def get_argparser():
                     help='Specify which address the webserver should bind to')
 
     parser.add_argument('--expose', action='store_true',
-                    help='Attempt to expose the server to the internet')
+                    help='Attempt to expose the server through portforwading')
 
     parser.add_argument('--expose-web', action='store_true',
-                    help='Attempt to expose the webserver to the internet')
+                    help='Attempt to expose the webserver through portforwading')
 
     parser.add_argument('-d', '--debug', action='store_true',
                     help='Start in debug mode')

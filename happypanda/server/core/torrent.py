@@ -101,7 +101,7 @@ async def _set_state(filenames, state):
         for info in torrents:
             await client.execute(partial(state, info_hash=info.download_info.info_hash))
 
-async def set_state(filenames, state):
+def set_state(filenames, state):
     """
     Set state of torrents
     Params:
@@ -127,7 +127,7 @@ async def _status(future, verbose=True):
                                         formatters.format_status(state, verbose))
                   for state in torrent_states])
 
-async def status(verbose=True):
+def status(verbose=True):
     "Get torrent status"
     f = asyncio.Future()
     asyncio.ensure_future(_status(f, verbose))
@@ -143,7 +143,7 @@ async def _stop():
         with suppress(DaemonExit):
             await client.execute(_stop_server_handler)
 
-async def stop():
+def stop():
     "Stop the daemon"
     _run_in_event_loop(_stop)
 
