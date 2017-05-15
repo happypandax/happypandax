@@ -6,7 +6,7 @@ if __package__ is None and not hasattr(sys, 'frozen'):
     sys.path.insert(0, os.path.dirname(os.path.dirname(path)))
 
 from happypanda.common import utils, constants
-from happypanda.server.core import server, plugins
+from happypanda.server.core import server, plugins, config
 
 def start():
     utils.setup_dirs()
@@ -16,6 +16,7 @@ def start():
     utils.setup_logger(args)
 
     constants.core_plugin = plugins._plugin_load("happypanda.server.core.coreplugin", "core")
+    constants.config = config.config
 
     if not args.safe:
         plugins.plugin_loader(constants.dir_plugin)
@@ -23,6 +24,7 @@ def start():
         plugins.registered.init_plugins()
 
     server.HPServer().run(web=args.web, interactive=args.interact)
+    constants.config.save()
 
 if __name__ == '__main__':
     start()

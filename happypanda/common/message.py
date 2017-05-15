@@ -10,12 +10,13 @@ from datetime import datetime
 from happypanda.common import constants, exceptions
 from happypanda.server.core import db
 
-def finalize(msg_dict, name=constants.server_name):
+def finalize(msg_dict, client_id, name=constants.server_name):
     "Finalize dict message before sending"
     enc = 'utf-8'
     msg = {
         'name':name,
-        'data':msg_dict
+        'data':msg_dict,
+        'id':client_id
         }
 
     return bytes(json.dumps(msg), enc)
@@ -47,9 +48,9 @@ class CoreMessage:
             d[self._error.key] = self._error.data()
         return {self.key: d}
 
-    def serialize(self, name=constants.server_name):
+    def serialize(self, client_id, name=constants.server_name):
         "Serialize this object to bytes"
-        return finalize(self.json_friendly(), name)
+        return finalize(self.json_friendly(), client_id, name)
 
 class Identity(CoreMessage):
     """
@@ -84,13 +85,13 @@ class List(CoreMessage):
     def from_json(self, j):
         return super().from_json(j)
 
-    def serialize(self, name=constants.server_name, include_key=False):
+    def serialize(self, client_id, name=constants.server_name, include_key=False):
         "Serialize this object to bytes"
         if include_key:
             f = self.json_friendly
         else:
             f = self.data
-        return finalize(f(), name)
+        return finalize(f(), client_id, name)
 
 
 class Message(CoreMessage):
@@ -158,13 +159,13 @@ class DatabaseMessage(CoreMessage):
             d[self._error.key] = self._error.data()
         return {self.key: d}
 
-    def serialize(self, load_values=False, load_collections=False):
+    def serialize(self, client_id, load_values=False, load_collections=False, name=constants.server_name):
         """Serialize this object to bytes
                 Params:
             load_values -- Queries database for unloaded values
             load_collections -- Queries database to fetch all items in a collection
         """
-        return finalize(self.json_friendly(load_values, load_collections))
+        return finalize(self.json_friendly(load_values, load_collections), client_id, name)
 
     def _unpack(self, name, attrib, load_collections):
         "Helper method to unpack SQLalchemy objects"

@@ -1,18 +1,20 @@
 from happypanda.common import constants, message
 
-def set_settings(namespace, set_dict={}, ctx=None):
+def set_settings(settings={}, ctx=None):
     """
     Set settings
 
     Params:
-        - set_dict -- a dictionary containing key:value pairs :D
+        - settings -- a dictionary containing key:value pairs
 
     Returns:
         Status
     """
-    return message.Message("works")
 
-def get_settings(namespace, set_list=[], ctx=None):
+
+    return message.Message("ok")
+
+def get_settings(settings=[], ctx=None):
     """
     Set settings
     Use setting key 'all' to fetch all setting key:values

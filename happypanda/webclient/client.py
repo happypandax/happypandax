@@ -14,12 +14,13 @@ class Client:
         name -- name of client
     """
 
-    def __init__(self, name):
+    def __init__(self, name, client_id=None):
         self.name = name
         self._server = utils.connection_params()
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._alive = False
         self._buffer = b''
+        self._id = client_id
 
     def alive(self):
         "Check if connection with the server is still alive"

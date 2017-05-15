@@ -2,6 +2,7 @@
 import uuid
 import logging
 import sys
+import hashlib
 
 from inspect import getmembers, isfunction
 
@@ -33,18 +34,20 @@ class ClientHandler:
         self.errors = []
         self._client = client
         self._address = address
+        self._ip = self._address[0]
+        self._port = self._address[1]
+        self._id = uuid.uuid4().hex
         self._stopped = False
         self.context = None
-        self.get_context()
 
     def get_context(self):
         "Creates or retrieves existing context object for this client"
         s = constants.db_session()
-        self.context = s.query(db.User).filter(db.User.address == self._address[0]).one_or_none()
+        self.context = s.query(db.User).filter(db.User.address == self._id).one_or_none()
         if not self.context:
             self.context = db.User()
-            self.context.address = self._address[0]
-            self.context.context_id = uuid.uuid4().hex
+            self.context.address = (self._ip, self._port)
+            self.context.context_id = self._id
             s.add(self.context)
             s.commit()
 
@@ -83,11 +86,20 @@ class ClientHandler:
             j_data = utils.convert_to_json(data, where)
 
             log.d("Check if required root keys are present")
-            # {"name":name, "data":data}
-            root_keys = ('name', 'data')
+            # {"name":name, "data":data, 'id':id}
+            root_keys = ('name', 'data', 'id')
             self._check_both(where, "JSON dict", root_keys, j_data)
         except exceptions.ServerError as e:
             raise
+
+        # get context
+        if self._id != j_data['id']:
+            self._id = j_data['id']
+            self.get_context()
+
+        if not self.context:
+            self.get_context()
+
         # 'data': [ list of function dicts ]
         function_keys = ('fname',)
         msg_data = j_data['data']
@@ -152,6 +164,12 @@ class ClientHandler:
             if not x in required_keys:
                 raise exceptions.InvalidMessage(where, msg.format(x))
 
+    def handshake(self):
+        """
+        Sends a welcome message
+        """
+        self.send(message.Message(""))
+
     def advance(self, buffer):
         """
         Advance the loop for this client
@@ -181,7 +199,7 @@ class ClientHandler:
                 for fname, e in self.errors:
                     function_list.append(message.Function(fname, error=message.Error(e.code, e.msg)))
 
-                self.send(function_list.serialize())
+                self.send(function_list.serialize(self._id))
             else:
                 self.on_wait()
         except exceptions.CoreError as e:
@@ -199,13 +217,13 @@ class ClientHandler:
         """
         assert isinstance(exception, exceptions.CoreError)
         e = message.Error(exception.code, exception.msg)
-        self.send(e.serialize())
+        self.send(e.serialize(self._id))
 
     def on_wait(self):
         """
         Sends wait message to client
         """
-        self.send(message.Message("wait").serialize())
+        self.send(message.Message("wait").serialize(self._id))
 
 class HPServer:
     "Happypanda Server"
@@ -218,7 +236,7 @@ class HPServer:
 
     def _handle(self, client, address):
         "Client handle function"
-        log.d("Client connected", str(client), str(address))
+        log.d("Client connected", str(address))
         handler = ClientHandler(client, address)
         self._clients.add(handler)
         try:

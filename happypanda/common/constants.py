@@ -38,7 +38,15 @@ class ExitCode(enum.Enum):
     Exit = 0
     Restart = 1
 
+class RuntimeMode(enum.Enum):
+    Server = 0
+    User = 0
+
+running_mode = RuntimeMode.User
+
 core_plugin = None
+config = None
+config_client = None
 
 ## DATABASE
 db_session = None
