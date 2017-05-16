@@ -48,7 +48,7 @@ class Config:
         yield
         self._current_ns = None
 
-    def get(self, ns, key, default=None, description="", split=None):
+    def get(self, ns, key, default=None, description=""):
         ""
         ns = ns.capitalize()
         with self.namespace(ns):

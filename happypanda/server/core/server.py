@@ -194,6 +194,7 @@ class ClientHandler:
                 # bad functions
                 for fname, e in self.errors:
                     function_list.append(message.Function(fname, error=message.Error(e.code, e.msg)))
+                self.errors.clear()
 
                 self.send(function_list.serialize())
             else:

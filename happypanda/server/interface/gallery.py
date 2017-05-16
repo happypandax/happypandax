@@ -24,27 +24,24 @@ def library_view(ctx=None,
     Returns:
         list of item message objects
     """
-    return message.Message("works")
     gallery_filter = enums.GalleryFilter.get(gallery_filter)
     item_type = enums.ItemType.get(item_type)
 
     db_items = {
-        enums.ItemType.Gallery : db.Gallery,
-        enums.ItemType.Collection : db.Collection,
+        enums.ItemType.Gallery : (db.Gallery, message.Gallery),
+        enums.ItemType.Collection : (db.Collection, message.Collection),
         }
 
     db_item = db_items.get(item_type)
-
     if not db_item:
-        raise exceptions.APIError()
+        raise exceptions.APIError("Item type must be on of {}".format(db_items.keys()))
+    db_item, db_msg = db_item
 
     s = constants.db_session()
-    items = message.List(db_item.__name__.lower(), db_t)
+    items = message.List(db_item.__name__.lower(), db_msg)
 
-    if item_type == enums.ItemType.Gallery:
-        items = message.List("gallery", message.Gallery)
-        q = s.query(db.Gallery).limit(limit)
-        [glist.append(message.Gallery(x)) for x in q.all()]
+    q = s.query(db_item).limit(limit)
+    [items.append(db_msg(x)) for x in q.all()]
 
     return items
 

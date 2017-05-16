@@ -20,3 +20,5 @@ syntax_highlight = __pragma__('js', '{}',
         });
     }""")
 
+class HTMLBuilder:
+    pass
