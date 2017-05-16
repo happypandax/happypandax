@@ -224,7 +224,7 @@ class HPServer:
     "Happypanda Server"
     def __init__(self):
         params = utils.connection_params()
-        self._pool = pool.Pool(constants.client_limit)
+        self._pool = pool.Pool(constants.allowed_clients if constants.allowed_clients else None) # cannot be 0
         self._server = StreamServer(params, self._handle, spawn=self._pool)
         self._web_server = None
         self._clients = set() # a set of client handlers
@@ -279,7 +279,7 @@ class HPServer:
             web -- Start the web server
             interactive -- Start in interactive mode (Note: Does not work with web server)
         """
-        #tdaemon = torrent.start()
+        tdaemon = torrent.start()
         try:
             self._start(not (web or interactive))
 
@@ -297,8 +297,8 @@ class HPServer:
                 interface.interactive()
         except KeyboardInterrupt:
             pass
-        #Storrent.stop()
-        #Stdaemon.join()
+        torrent.stop()
+        tdaemon.join()
         log.i("Server(s) shutting down.", stdout=True)
 
 if __name__ == '__main__':

@@ -71,7 +71,7 @@ expose_webserver = config.get(core_ns, 'expose_webserver', False, "Attempt to ex
 exposed_server = False
 exposed_webserver = False
 
-client_limit = config.get(core_ns, 'client_limit', 0, "Limit amount of clients allowed to be connected")
+allowed_clients = config.get(core_ns, 'allowed_clients', 0, "Limit amount of clients allowed to be connected (0 means no limit)")
 postfix = b'<END>'
 data_size = 1024
 server_ready = True

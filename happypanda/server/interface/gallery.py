@@ -24,7 +24,7 @@ def library_view(ctx=None,
     Returns:
         list of item message objects
     """
-
+    return message.Message("works")
     gallery_filter = enums.GalleryFilter.get(gallery_filter)
     item_type = enums.ItemType.get(item_type)
 
