@@ -36,17 +36,16 @@ class ClientHandler:
         self._address = address
         self._ip = self._address[0]
         self._port = self._address[1]
-        self._id = "{}#{}".format(self._ip, self._port)
         self._stopped = False
         self.context = None
 
     def get_context(self):
         "Creates or retrieves existing context object for this client"
         s = constants.db_session()
-        self.context = s.query(db.User).filter(db.User.address == self._id).one_or_none()
+        self.context = s.query(db.User).filter(db.User.address == self._ip).one_or_none()
         if not self.context:
             self.context = db.User()
-            self.context.address = self._id
+            self.context.address = self._ip
             self.context.context_id = uuid.uuid4().hex
             s.add(self.context)
             s.commit()
@@ -113,6 +112,7 @@ class ClientHandler:
                     if not function_name in self.api:
                         e = exceptions.InvalidMessage(where, "Function not found: '{}'".format(function_name))
                         self.errors.append((function_name, e))
+                        continue
 
                     # check parameters
                     func_args = tuple(arg for arg in f if not arg in function_keys)
@@ -124,6 +124,7 @@ class ClientHandler:
                                 function_name,
                                 arg))
                             self.errors.append((function_name, e))
+                            continue
 
                     function_tuples.append((self.api[function_name], {x: f[x] for x in func_args}, need_ctx))
                 except exceptions.ServerError as e:
@@ -199,6 +200,13 @@ class ClientHandler:
                 self.on_wait()
         except exceptions.CoreError as e:
             self.on_error(e)
+
+        except:
+            if not constants.dev:
+                log.exception("An unknown critical error has occurred")
+                self.on_error(exceptions.HappypandaError("An unknown critical error has occurred")) # TODO: include traceback
+            else:
+                raise
 
     def is_active(self):
         """

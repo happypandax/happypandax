@@ -10,13 +10,12 @@ from datetime import datetime
 from happypanda.common import constants, exceptions
 from happypanda.server.core import db
 
-def finalize(msg_dict, client_id, name=constants.server_name):
+def finalize(msg_dict, name=constants.server_name):
     "Finalize dict message before sending"
     enc = 'utf-8'
     msg = {
         'name':name,
         'data':msg_dict,
-        'id':client_id
         }
 
     return bytes(json.dumps(msg), enc)
@@ -76,7 +75,7 @@ class List(CoreMessage):
 
     def append(self, item):
         assert isinstance(item, self._type), "item must be a {}".format(self._type)
-        d = item.data() if isinstance(item, CoreMessage) else item
+        d = item.json_friendly() if isinstance(item, CoreMessage) else item
         self.items.append(d)
 
     def data(self):
@@ -87,11 +86,10 @@ class List(CoreMessage):
 
     def serialize(self, name=constants.server_name, include_key=False):
         "Serialize this object to bytes"
-        if include_key:
-            f = self.json_friendly
-        else:
-            f = self.data
-        return finalize(f(), name)
+        d = self.json_friendly()
+        if not include_key:
+            d = d[self.key]
+        return finalize(d, name)
 
 
 class Message(CoreMessage):
@@ -321,7 +319,7 @@ class Function(CoreMessage):
         self._data = d
 
     def data(self):
-        d = self._data.data() if self.data else ''
+        d = self._data.json_friendly() if self._data else ''
         return {'fname':self.name, 'data':d}
 
     def from_json(self, j):
