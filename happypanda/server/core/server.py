@@ -3,6 +3,7 @@ import uuid
 import logging
 import sys
 import hashlib
+import code
 
 from inspect import getmembers, isfunction
 
@@ -17,8 +18,8 @@ from happypanda.webclient import main as hweb
 log = utils.Logger(__name__)
 
 def list_api():
-    ""
-    _special_functions = ('interactive',) # functions we don't consider as part of the api
+    "Returns {name : object}"
+    _special_functions = tuple() # functions we don't consider as part of the api
     all_functions = []
     mods = utils.get_package_modules(interface)
     for m in mods:
@@ -28,7 +29,7 @@ def list_api():
 class ClientHandler:
     "Handles clients"
 
-    api = list_api() # {name : object}
+    api = list_api()
 
     def __init__(self, client, address):
         self.errors = []
@@ -238,6 +239,13 @@ class HPServer:
         self._web_server = None
         self._clients = set() # a set of client handlers
 
+    def interactive(self):
+        "Start an interactive session"
+        api = locals().copy()
+        api.pop("self")
+        api.update(list_api())
+        code.interact(banner="======== Start Happypanda Interactive ========", local=api)
+
     def _handle(self, client, address):
         "Client handle function"
         log.d("Client connected", str(address))
@@ -303,9 +311,10 @@ class HPServer:
         
 
             if interactive:
-                interface.interactive()
+                self.interactive()
         except KeyboardInterrupt:
             pass
+        self._server.stop()
         torrent.stop()
         tdaemon.join()
         log.i("Server(s) shutting down.", stdout=True)

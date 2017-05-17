@@ -12,3 +12,4 @@ def get_error(code, id, ctx=None):
         an error message object
     """
     return message.Message("works")
+

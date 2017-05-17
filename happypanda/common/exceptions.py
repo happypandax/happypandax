@@ -154,6 +154,12 @@ class APIError(ServerError):
 
     pass
 
+@error_code(405)
+class APIRequirementError(ServerError):
+    """API requirement error."""
+
+    pass
+
 
     # ## CLIENT -- CODE: 500+ ##
 

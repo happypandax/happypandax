@@ -16,3 +16,6 @@ def get_profile(ctx=None, item_type=enums.ItemType.Gallery, item_ids=[], size=No
         list of paths to the galleries
     """
     return message.Message("works")
+
+def get_item(item_type=enums.ItemType.Gallery):
+    pass
