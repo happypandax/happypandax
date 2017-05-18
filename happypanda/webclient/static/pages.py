@@ -1,8 +1,8 @@
 __pragma__ ('alias', 'S', '$') # JQuery
 
 from client import client, Base
-import utils
 import components as cmp
+import utils
 
 class IndexPage(Base):
     pass
@@ -30,6 +30,10 @@ class ApiPage(Base):
 api = ApiPage()
 
 class LibraryPage(Base):
+
+    def __init__(self):
+        super().__init__()
+        utils.HTML("html", "txt")
 
     def show_galleries(self):
         pass

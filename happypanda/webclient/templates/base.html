@@ -2,40 +2,60 @@
 
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
 <head>
-    <link type="text/css" rel="stylesheet" href="/static/style.css" />
     <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
     <title>Happypanda</title>
+    <link type="text/css" rel="stylesheet" href="/static/css/bootstrap.min.css" />
+    <link type="text/css" rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
-    <nav>
-        <ul>
-            <li>Favorites</li>
-            <li><a href="/index">Library</a></li>
-            <li>Inbox</li>
-            <li><a href="/apiview">API View</a></li>
-            <li class="right">Add gallery</li>
-        </ul>
+    <nav class="navbar navbar-default">
+        <div class="container-fluid">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#nav-collapse" aria-expanded="false">
+                    <span class="sr-only">Toggle navigation</span>
+                </button>
+                <a class="navbar-brand" href="#">Happypanda X</a>
+            </div>
+
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="nav-collapse">
+                <ul class="nav navbar-nav">
+                    <li><a href="#">Favorites</a></li>
+                    <li class="active"><a href="#">Library<span class="sr-only">(current)</span></a></li>
+                    <li><a href="#">Inbox</a></li>
+                </ul>
+
+                <ul class="nav navbar-nav navbar-right">
+                    <li><a href="#">API</a></li>
+                </ul>
+            </div><!-- /.navbar-collapse -->
+        </div><!-- /.container-fluid -->
     </nav>
+
     <div id="global" class="flash">
     </div>
-    <div id="content">
+    <div id="content" class="container-fluid">
         {% block content %}{% endblock %}
     </div>
+
     <footer>
-        <div class="left">
+        <div class="pull-left">
             <span id="serverstat">
-                server connection: unknown
+                server connection: <span class="label label-default">unkown</span>
             </span>
         </div>
-        <div class="right">
-            {% if g.debug %}
-            <span>debug mode</span>
-            {% endif %}
+        <div class="pull-right">
+            <span class="label label-info">debug mode</span>
         </div>
     </footer>
 
     <script src="/static/lib/socket.io-1.7.2.js"></script>
     <script src="/static/lib/jquery-3.1.1.js"></script>
+    <script src="js/bootstrap.min.js"></script>
     <script src="/static/__javascript__/pages.js"></script>
 </body>
 </html>

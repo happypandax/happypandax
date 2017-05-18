@@ -3,59 +3,10 @@
     padding: 0;
 }
 
-@font-face {
-    font-family: Roboto;
-    src: url(/static/font/Roboto/Roboto-Regular.woff);
-}
-
-@font-face {
-    font-family: Roboto-Bold;
-    src: url(/static/font/Roboto/Roboto-Bold.woff);
-}
-
-@font-face {
-    font-family: Roboto-Light;
-    src: url(/static/font/Roboto/Roboto-Light.woff);
-}
-
-@font-face {
-    font-family: Roboto-Medium;
-    src: url(/static/font/Roboto/Roboto-Medium.woff);
-}
-
-@font-face {
-    font-family: Roboto-Thin;
-    src: url(/static/font/Roboto/Roboto-Thin.woff);
-}
-
-body {
-    width: 80%;
-    margin: auto;
-    background-color: rgba(0, 0, 0, 0.1);
-    color: #1b1b1b;
-    font-family: Roboto;
-}
-
-
 nav, footer {
     margin: auto;
     padding: 5pt;
 }
-
-nav {
-    position: relative;
-    margin-top: 50pt;
-    border-bottom: 1px solid #1b1b1b;
-}
-
-    nav ul {
-        list-style: none;
-    }
-
-        nav ul li {
-            display: inline-block;
-            margin: 0 5pt;
-        }
 
 div#global.flash {
     width: 100%;
@@ -81,7 +32,7 @@ div#global.flash {
 div#galleries {
     margin: auto;
     list-style: none;
-    width: 90%;
+    width: 95%;
 }
 
     div#galleries div.gallery {
@@ -90,10 +41,6 @@ div#galleries {
         width: 200px;
         min-height: 100px;
         max-height: 350px;
-        border-radius: 3px;
-        border: 1px solid rgba(0, 0, 0, 0.2);
-        background-color: rgba(0, 0, 0, 0.05);
-        padding: 1px;
         margin: 10px 6px;
         overflow: hidden;
     }
@@ -209,21 +156,3 @@ pre {
         margin: auto;
     }
 
-footer {
-    position: relative;
-    border-top: 1px solid #1b1b1b;
-}
-
-    footer div {
-        position: absolute;
-    }
-
-        footer div.left {
-            text-align: left;
-            left: 0;
-        }
-
-        footer div.right {
-            text-align: right;
-            right: 0;
-        }
