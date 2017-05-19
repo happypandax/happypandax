@@ -116,6 +116,7 @@ class ClientHandler:
                         continue
 
                     # check parameters
+                    func_failed = False
                     func_args = tuple(arg for arg in f if not arg in function_keys)
                     func_varnames = self.api[function_name].__code__.co_varnames
                     need_ctx = 'ctx' in func_varnames
@@ -125,7 +126,10 @@ class ClientHandler:
                                 function_name,
                                 arg))
                             self.errors.append((function_name, e))
-                            continue
+                            func_failed = True
+                            break
+                    if func_failed:
+                        continue
 
                     function_tuples.append((self.api[function_name], {x: f[x] for x in func_args}, need_ctx))
                 except exceptions.ServerError as e:

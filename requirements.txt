@@ -1,10 +1,12 @@
 gevent==1.1.2
 Flask==0.11.1
-SQLAlchemy==1.1.6
+SQLAlchemy==1.1.9
+sqlalchemy-utils==0.32.14
 rarfile==3.0
 appdirs==1.4.3
 karellen-geventws==1.0.2
 alembic==0.9.1
 transcrypt==3.6.25
 required==0.3.1
+arrow==0.10.0
 https://github.com/Pewpews/happy-socketio/archive/master/2.8.5.zip
