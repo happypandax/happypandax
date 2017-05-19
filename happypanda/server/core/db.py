@@ -8,9 +8,10 @@ from sqlalchemy.sql.operators import custom_op
 from sqlalchemy.orm import (sessionmaker, relationship, validates, object_session, scoped_session,
                             attributes, state, collections, dynamic)
 from sqlalchemy import (create_engine, event, exc, and_, or_, Boolean, Column, Integer, ForeignKey,
-                        Table, Date, DateTime, UniqueConstraint, Float, Enum)
+                        Table, UniqueConstraint, Float, Enum)
+from sqlalchemy_utils import ArrowType
 
-import datetime
+import arrow
 import logging
 import os
 import random
@@ -114,12 +115,8 @@ def validate_string(value):
     assert isinstance(value, str) or value is None, "Column only accepts string, not {}".format(type(value))
     return value
 
-def validate_datetime(value):
-    assert isinstance(value, datetime.datetime) or value is None, "Column only accepts datetime, not {}".format(type(value))
-    return value
-
-def validate_date(value):
-    assert isinstance(value, datetime.date) or value is None, "Column only accepts date, not {}".format(type(value))
+def validate_arrow(value):
+    assert isinstance(value, arrow.Arrow) or value is None, "Column only accepts arrow types, not {}".format(type(value))
     return value
 
 def validate_bool(value):
@@ -129,8 +126,7 @@ def validate_bool(value):
 validators = {
     Integer:validate_int,
     String:validate_string,
-    DateTime:validate_datetime,
-    Date:validate_date,
+    ArrowType:validate_arrow,
     Boolean:validate_bool,
 }
 
@@ -176,7 +172,7 @@ class Profile(Base):
 
     path = Column(String, nullable=False, default='')
     size = Column(String, nullable=False)
-    timestamp = Column(DateTime, nullable=False, default=datetime.datetime.now())
+    timestamp = Column(ArrowType, nullable=False, default=arrow.now)
 
     def __repr__(self):
         return "Profile ID:{} Size:{} Path:{}".format(self.id, self.size, self.path)
@@ -190,12 +186,12 @@ class Event(Base):
 
     item_id = Column(Integer, nullable=False)
     item_name = Column(String, nullable=False)
-    timestamp = Column(DateTime, nullable=False, default=datetime.datetime.now())
+    timestamp = Column(ArrowType, nullable=False, default=arrow.now)
     action = Column(Enum(Action), nullable=False, default=Action.read)
     user_id = Column(Integer, ForeignKey('user.id'))
     user = relationship("User", back_populates="events", cascade="save-update, merge, refresh-expire")
 
-    def __init__(self, item, action=Action.read, user_id=None, timestamp=datetime.datetime.now()):
+    def __init__(self, item, action=Action.read, user_id=None, timestamp=arrow.now()):
         assert isinstance(item, Base)
         self.user_id = user_id
         self.item_id = item.id
@@ -344,7 +340,7 @@ class Collection(ProfileMixin, Base):
 
     title = Column(String, nullable=False, default='')
     info = Column(String, nullable=False, default='')
-    pub_date = Column(DateTime)
+    pub_date = Column(ArrowType)
 
     galleries = relationship("Gallery", secondary=gallery_collections, back_populates="collections", lazy="dynamic", cascade="save-update, merge, refresh-expire")
     profiles = relationship("Profile", secondary=collection_profiles, lazy='joined', cascade="all")
@@ -374,9 +370,9 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
     fav = Column(Boolean, default=False)
     rating = Column(Integer, nullable=False, default=0)
     times_read = Column(Integer, nullable=False, default=0)
-    pub_date = Column(DateTime)
-    timestamp = Column(DateTime, nullable=False, default=datetime.datetime.now())
-    last_read = Column(DateTime)
+    pub_date = Column(ArrowType)
+    timestamp = Column(ArrowType, nullable=False, default=arrow.now)
+    last_read = Column(ArrowType)
     number = Column(Integer, nullable=False, default=0)
     in_archive = Column(Boolean, default=False)
     type_id = Column(Integer, ForeignKey('type.id'))
@@ -398,7 +394,7 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
     titles = relationship("Title", back_populates="gallery", lazy='joined', cascade="all,delete-orphan")
     profiles = relationship("Profile", secondary=gallery_profiles, lazy='joined', cascade="all")
 
-    def read(self, user_id, datetime=datetime.datetime.now()):
+    def read(self, user_id, datetime=arrow.now()):
         "Creates a read event for user"
         self.last_read = datetime
         sess = object_session(self)
