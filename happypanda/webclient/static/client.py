@@ -16,6 +16,17 @@ class Base:
         elif flash_type == 'critical':
             S("#global").append("<div class='red'>{}</div>".format(msg))
 
+    def get_label(self, label_type):
+        """
+        - default
+        - primary
+        - success
+        - info
+        - warning
+        - danger
+        """
+        return 'label-'+label_type
+
     def on_error(self, error, flash_type='critical'):
         if error:
             self.flash("{}: {}".format(error['code'], error['msg']), flash_type)
@@ -50,18 +61,25 @@ class Client(Base):
 
     def on_connect(self, msg):
         self._connection_status = msg['status']
-        con_text = "server connection: "
-        text = "connected" if self._connection_status else "disconnected"
-        con_text += text
-        el = S("#serverstat")
-        el.text(con_text)
+        st_txt = "unknown"
+        st_label = self.get_label("default")
         if self._connection_status:
+            st_txt = "connected"
+            st_label = self.get_label("success")
             if self._disconnected_once:
                 self.flash("Reconnected to server", 'normal')
         else:
+            st_txt = "disconnected"
+            st_label = self.get_label("danger")
             self._disconnected_once = True
             self.reconnect()
             self.flash("Disconnected from server", 'critical')
+
+        el = S("#server-status-tmpl").html()
+        Mustache.parse(el)
+        S("#server-status").html(Mustache.render(el,
+                                                 {"status": st_txt,
+                                                  "label": st_label}))
 
     __pragma__('kwargs')
     def call_function(self, func_name, callback, **kwargs):

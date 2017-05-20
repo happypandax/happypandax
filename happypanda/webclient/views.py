@@ -15,13 +15,13 @@ def before_first_request():
 
 @happyweb.route('/')
 @happyweb.route('/index')
-def index():
-    """index func."""
-    return render_template('index.html')
+@happyweb.route('/library')
+def library():
+    return render_template('library.html')
 
 @happyweb.route('/gallery/page/<int:page>')
 def gallery_page(page=0):
-    return render_template('index.html')
+    return render_template('library.html')
 
 @happyweb.route('/artist/page/<int:page>')
 def artist_page(page=0):
