@@ -8,7 +8,7 @@
 
     <title>Happypanda</title>
     <link type="text/css" rel="stylesheet" href="/static/css/bootstrap.min.css" />
-    <link type="text/css" rel="stylesheet" href="/static/style.css" />
+    <link type="text/css" rel="stylesheet" href="/static/css/style.css" />
 </head>
 <body>
     {% raw %}
@@ -47,7 +47,7 @@
     {% raw %}
     <footer>
         <div id="footer-left" class="pull-left">
-            <script id="server-status-tmpl" type="x-tmpl-mustache">
+            <script id="server-status-t" type="x-handlebars-template">
                 server connection: <span class="label {{ label }}">{{ status }}</span>
             </script>
             <span id="server-status">
@@ -61,8 +61,9 @@
 
     <script src="/static/lib/socket.io-1.7.2.js"></script>
     <script src="/static/lib/jquery-3.1.1.js"></script>
-    <script src="/static/lib/mustache-2.3.0.min.js"></script>
+    <script src="/static/lib/handlebars-4.0.8.min.js"></script>
     <script src="/static/lib/bootstrap-3.3.7.min.js"></script>
+    <script src="/static/lib/minigrid-3.1.1.min.js"></script>
     <script src="/static/__javascript__/pages.js"></script>
 </body>
 </html>

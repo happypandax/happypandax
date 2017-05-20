@@ -18,24 +18,64 @@ class ApiPage(Base):
             if key and value:
                 func_args[key] = value
         S("div#args > ul > li").each(each_d)
-        client.call_function(
-            S("#fname").val(),
-            lambda msg: S("pre#json-receive").html(utils.syntax_highlight(JSON.stringify(msg, None, 4))),
-            **func_args)
+        f_dict = {
+            'fname': S("#fname").val()
+            }
+        f_dict.update(func_args)
+        client.call(
+            [f_dict],
+            lambda msg: S("pre#json-receive").html(utils.syntax_highlight(JSON.stringify(msg, None, 4))))
         S("pre#json-send").html(utils.syntax_highlight(JSON.stringify(client._last_msg, None, 4)))
 
     def add_kwarg(self):
-        S("div#args > ul").append("<li><span><input type='text', placeholder='keyword'></span><span><input type='text', placeholder='value'></span></li>")
+        S("div#args > ul").append(
+            """
+            <li>
+            <div class='col-xs-6'>
+            <input type='text', placeholder='keyword' class='form-control'>
+            </div>
+            <div class='col-xs-6'>
+            <input type='text', placeholder='value' class='form-control'>
+            </div>
+            </li>
+            """)
 
 api = ApiPage()
 
 class LibraryPage(Base):
 
     def __init__(self):
-        super().__init__()
+        self.grid = None
 
-    def show_galleries(self):
-        pass
+    def show_items(self, data=None):
+        if data:
+            items = []
+            print(len(data))
+            for g in data:
+                items.append({
+                    'title': g['titles'][0]['name'],
+                    'artist': g['artists'][0]['name'],
+                    })
+
+            self.compile("items-t", "items", {'items':items})
+
+            self.grid = __new__(Minigrid({
+                'container': '.grid-items',
+                'item' : '.grid-item',
+                'gutter': 10
+                }))
+            self.grid.mount()
+        else:
+            client.call_func("library_view", self.show_items,
+                             limit=10
+                             )
 
 
 library = LibraryPage()
+
+def init():
+    S('div[onload]').trigger('onload')
+
+    window.addEventListener('resize', lambda: library.grid.mount() if library.grid else None)
+
+S(document).ready(init)

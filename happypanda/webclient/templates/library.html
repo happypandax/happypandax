@@ -1,51 +1,18 @@
 ﻿{% extends "base.html" %} {% block content %}
-<div id="content">
-    <div id="galleries" class="row">
-
-        <div class="gallery col-sm-6 col-md-4">
-            <img src="static/default.jpg">
-            <div class="meta">
-                <h5>Thumbnail label</h5>
-            </div>
+{% raw %}
+<script id="items-t" type="x-handlebars-template">
+    {{#each items}}
+    <div class="gallery-normal grid-item">
+        <img class="profile" src="static/img/default.jpg">
+        <div class="meta">
+            <h5 class="gtitle">{{ title }}</h5>
         </div>
-        <div class="gallery col-sm-6 col-md-4">
-            <img src="static/default.jpg">
-            <div class="meta">
-                <h5>Thumbnail label</h5>
-            </div>
-        </div>
-        <div class="gallery col-sm-6 col-md-4">
-            <img src="static/default.jpg">
-            <div class="meta">
-                <h5>Thumbnail label</h5>
-            </div>
-        </div>
-        <div class="gallery col-sm-6">
-            <img src="static/default.jpg">
-            <div class="meta">
-                <h5>Thumbnail label</h5>
-            </div>
-        </div>
-        <div class="gallery col-sm-6 col-md-4">
-            <img src="static/default.jpg">
-            <div class="meta">
-                <h5>Thumbnail label</h5>
-            </div>
-        </div>
-        <div class="gallery col-sm-6 col-md-4">
-            <img src="static/default.jpg">
-            <div class="meta">
-                <h5>Thumbnail label</h5>
-            </div>
-        </div>
-        <div class="gallery col-sm-6 col-md-4">
-            <img src="static/default.jpg">
-            <div class="meta">
-                <h5>Thumbnail label</h5>
-            </div>
-        </div>
-
     </div>
+    {{/each}}
+</script>
+
+<div id="items" class="grid-items" onload="pages.library.show_items ()">
+
 </div>
-<!--<script src="/static/lib/minigrid.min.js"></script>-->
+{% endraw %}
 {% endblock %}

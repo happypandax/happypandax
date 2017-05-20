@@ -1,0 +1,131 @@
+﻿* {
+    margin: 0;
+    padding: 0;
+}
+
+nav, footer {
+    margin: auto;
+    padding: 5pt;
+}
+
+div#global.flash {
+    width: 100%;
+    padding: 3pt;
+}
+
+    div#global.flash div {
+        text-align: center;
+        background-color: rgba(0, 0, 0, 0.05);
+        border-radius: 1px;
+        border: 1px solid rgba(0, 0, 0, 0.2);
+        padding: 2pt;
+        margin: auto;
+        width: 300pt;
+        color: rgba(0, 0, 0, 0.7);
+    }
+
+        div#global.flash div.red {
+            color: #ec0000;
+            font-weight: bold;
+        }
+
+div.gallery-normal {
+    position: relative;
+    width: 200px;
+    min-height: 100px;
+    max-height: 350px;
+    overflow: hidden;
+    border: 1px solid gray;
+    border-radius: 5px;
+    margin: 2px;
+}
+
+    div.gallery-normal img.profile {
+        width: 100%;
+        height: auto;
+    }
+
+    div.gallery-normal div.meta {
+        position: absolute;
+        padding: 5pt 5pt;
+        padding-top: 15pt;
+        width: 100%;
+        bottom: 0;
+        background: rgba(255,255,255,0);
+        background: -moz-linear-gradient(top, rgba(255,255,255,0) 0%, rgba(0,0,0,0.34) 42%, rgba(0,0,0,0.82) 100%);
+        background: -webkit-gradient(left top, left bottom, color-stop(0%, rgba(255,255,255,0)), color-stop(42%, rgba(0,0,0,0.34)), color-stop(100%, rgba(0,0,0,0.82)));
+        background: -webkit-linear-gradient(top, rgba(255,255,255,0) 0%, rgba(0,0,0,0.34) 42%, rgba(0,0,0,0.82) 100%);
+        background: -o-linear-gradient(top, rgba(255,255,255,0) 0%, rgba(0,0,0,0.34) 42%, rgba(0,0,0,0.82) 100%);
+        background: -ms-linear-gradient(top, rgba(255,255,255,0) 0%, rgba(0,0,0,0.34) 42%, rgba(0,0,0,0.82) 100%);
+        background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(0,0,0,0.34) 42%, rgba(0,0,0,0.82) 100%);
+        filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#000000', GradientType=0 );
+    }
+
+        div.gallery-normal div.meta .gtitle {
+            color: white;
+        }
+
+div#items {
+    margin: auto;
+    width: 95%;
+}
+
+/*div#items div.gallery .meta {
+        color: white;
+        position: absolute;
+        padding: 5pt 5pt;
+        padding-top: 8pt;
+        width: 100%;
+        bottom: 0;
+        background: rgba(237,237,237,0.17);
+        background: -moz-linear-gradient(top, rgba(237,237,237,0.17) 0%, rgba(0,0,0,0.17) 0%, rgba(0,0,0,0.76) 100%);
+        background: -webkit-gradient(left top, left bottom, color-stop(0%, rgba(237,237,237,0.17)), color-stop(0%, rgba(0,0,0,0.17)), color-stop(100%, rgba(0,0,0,0.76)));
+        background: -webkit-linear-gradient(top, rgba(237,237,237,0.17) 0%, rgba(0,0,0,0.17) 0%, rgba(0,0,0,0.76) 100%);
+        background: -o-linear-gradient(top, rgba(237,237,237,0.17) 0%, rgba(0,0,0,0.17) 0%, rgba(0,0,0,0.76) 100%);
+        background: -ms-linear-gradient(top, rgba(237,237,237,0.17) 0%, rgba(0,0,0,0.17) 0%, rgba(0,0,0,0.76) 100%);
+        background: linear-gradient(to bottom, rgba(237,237,237,0.17) 0%, rgba(0,0,0,0.17) 0%, rgba(0,0,0,0.76) 100%);
+        filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ededed', endColorstr='#000000', GradientType=0 );
+    }
+
+        div#items div.gallery .meta .artists {
+            margin: 4pt auto;
+            font-size: 9pt;
+        }*/
+
+.json-string {
+    color: green;
+}
+
+.json-number {
+    color: darkorange;
+}
+
+.json-boolean {
+    color: blue;
+}
+
+.json-null {
+    color: magenta;
+}
+
+.json-key {
+    color: red;
+}
+
+#args {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+    #args ul {
+        list-style: none;
+    }
+
+    #args span {
+        margin-left: 5pt;
+        margin-right: 5pt;
+    }
+
+    #args ul li {
+        margin: auto;
+    }

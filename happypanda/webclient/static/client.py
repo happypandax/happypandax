@@ -27,6 +27,20 @@ class Base:
         """
         return 'label-'+label_type
 
+    def compile(self, source_el, target_el, data):
+        """
+        Compile template element
+        """
+        
+        if not source_el.startswith(('.', '#')):
+            source_el= '#'+source_el
+        if not target_el.startswith(('.', '#')):
+            target_el= '#'+target_el
+
+        tmpl = Handlebars.compile(S(source_el).html())
+        S(target_el).html(tmpl(data))
+
+
     def on_error(self, error, flash_type='critical'):
         if error:
             self.flash("{}: {}".format(error['code'], error['msg']), flash_type)
@@ -54,10 +68,19 @@ class Client(Base):
 
     def on_response(self, msg):
         if self._response_cb:
-            data = msg['data']
-            if 'error' in data:
-                self.on_error(data['error'])
-            self._response_cb.pop(0)(msg)
+            if 'error' in msg:
+                self.on_error(msg['error'])
+            cb = self._response_cb.pop(0)
+            if isinstance(cb, tuple): # TODO: consider revising lol
+                func_name, cb = cb
+                for func in msg['data']:
+                    if 'error' in func:
+                        self.on_error(func['error'])
+                    if func['fname'] == func_name:
+                        cb(func['data'])
+                        break
+            else:
+                cb(msg)
 
     def on_connect(self, msg):
         self._connection_status = msg['status']
@@ -75,28 +98,25 @@ class Client(Base):
             self.reconnect()
             self.flash("Disconnected from server", 'critical')
 
-        el = S("#server-status-tmpl").html()
-        Mustache.parse(el)
-        S("#server-status").html(Mustache.render(el,
-                                                 {"status": st_txt,
-                                                  "label": st_label}))
-
+        self.compile("server-status-t", "server-status", {"status": st_txt,
+                                                           "label": st_label})
     __pragma__('kwargs')
-    def call_function(self, func_name, callback, **kwargs):
+    def call_func(self, func_name, callback, **kwargs):
         f_dict = {
             'fname': func_name
             }
+        print(kwargs)
         f_dict.update(kwargs)
-        self.call([f_dict], callback)
+        self.call([f_dict], (func_name, callback))
     __pragma__('nokwargs')
 
 
-    def call(self, msg, callback):
+    def call(self, data, callback):
         self._response_cb.append(callback)
 
         final_msg = {
             'name': self.name,
-            'data': msg
+            'data': data
             }
         self._last_msg = final_msg
         self.socket.emit("call", final_msg)
