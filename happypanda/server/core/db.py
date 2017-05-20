@@ -8,8 +8,9 @@ from sqlalchemy.sql.operators import custom_op
 from sqlalchemy.orm import (sessionmaker, relationship, validates, object_session, scoped_session,
                             attributes, state, collections, dynamic)
 from sqlalchemy import (create_engine, event, exc, and_, or_, Boolean, Column, Integer, ForeignKey,
-                        Table, UniqueConstraint, Float, Enum)
-from sqlalchemy_utils import ArrowType
+                        Table, UniqueConstraint, Float, Enum, Numeric)
+from sqlalchemy_utils import (ArrowType, generic_repr, aggregated, force_instant_defaults,
+                             force_auto_coercion)
 
 import arrow
 import logging
@@ -19,6 +20,9 @@ import enum
 import re
 
 from happypanda.common import constants, exceptions, utils
+
+force_instant_defaults()
+force_auto_coercion()
 
 log = utils.Logger(__name__)
 
@@ -199,6 +203,7 @@ class Event(Base):
         self.timestamp = timestamp
         self.action = action
 
+@generic_repr
 class Hash(NameMixin, Base):
     __tablename__ = 'hash'
 
@@ -224,6 +229,7 @@ class NamespaceTags(Base):
         self.namespace = ns
         self.tag = tag
 
+@generic_repr
 class Tag(NameMixin, Base):
     __tablename__ = 'tag'
 
@@ -267,6 +273,7 @@ gallery_artists = Table('gallery_artists', Base.metadata,
                         Column('gallery_id', Integer, ForeignKey('gallery.id')),
                         UniqueConstraint('artist_id', 'gallery_id'))
 
+@generic_repr
 class Artist(NameMixin, Base):
     __tablename__ = 'artist'
 
@@ -277,6 +284,7 @@ gallery_circles = Table('gallery_circles', Base.metadata,
                         Column('gallery_id', Integer, ForeignKey('gallery.id',)),
                         UniqueConstraint('circle_id', 'gallery_id'))
 
+@generic_repr
 class Circle(NameMixin, Base):
     __tablename__ = 'circle'
 
@@ -289,6 +297,7 @@ gallery_lists = Table('gallery_lists', Base.metadata,
 
 list_profiles = profile_association("list")
 
+@generic_repr
 class GalleryList(ProfileMixin, NameMixin, Base):
     __tablename__ = 'list'
     filter = Column(String, nullable=False, default='')
@@ -300,6 +309,7 @@ class GalleryList(ProfileMixin, NameMixin, Base):
     galleries = relationship("Gallery", secondary=gallery_lists, back_populates='lists', lazy="dynamic")
     profiles = relationship("Profile", secondary=list_profiles, lazy='joined', cascade="all")
 
+@generic_repr
 class Status(NameMixin, Base):
     __tablename__ = 'status'
 
@@ -307,6 +317,7 @@ class Status(NameMixin, Base):
 
 grouping_profiles = profile_association("grouping")
 
+@generic_repr
 class Grouping(ProfileMixin, NameMixin, Base):
     __tablename__ = 'grouping'
     status_id = Column(Integer, ForeignKey('status.id'))
@@ -315,18 +326,17 @@ class Grouping(ProfileMixin, NameMixin, Base):
     profiles = relationship("Profile", secondary=grouping_profiles, lazy='joined', cascade="all")
     status = relationship("Status", back_populates="groupings", cascade="save-update, merge, refresh-expire")
 
-    def __repr__(self):
-        return "ID:{} - Grouping:{}".format(self.id, self.name)
-
+@generic_repr
 class Language(NameMixin, Base):
     __tablename__ = 'language'
 
     galleries = relationship("Gallery", lazy='dynamic', back_populates='language')
 
-class GalleryType(NameMixin, Base):
-    __tablename__ = 'type'
+@generic_repr
+class Category(NameMixin, Base):
+    __tablename__ = 'category'
 
-    galleries = relationship("Gallery", lazy='dynamic', back_populates='type')
+    galleries = relationship("Gallery", lazy='dynamic', back_populates='category')
 
 gallery_collections = Table('gallery_collections', Base.metadata,
                         Column('collection_id', Integer, ForeignKey('collection.id')),
@@ -335,6 +345,7 @@ gallery_collections = Table('gallery_collections', Base.metadata,
 
 collection_profiles = profile_association("collection")
 
+@generic_repr
 class Collection(ProfileMixin, Base):
     __tablename__ = 'collection'
 
@@ -345,48 +356,35 @@ class Collection(ProfileMixin, Base):
     galleries = relationship("Gallery", secondary=gallery_collections, back_populates="collections", lazy="dynamic", cascade="save-update, merge, refresh-expire")
     profiles = relationship("Profile", secondary=collection_profiles, lazy='joined', cascade="all")
 
-    @property
-    def rating(self):
-        "Calculates average rating from galleries"
-        return 5
-
-    def __repr__(self):
-        return "ID:{} - Collection Title:{}\nCollection Cover:{}".format(self.id, self.title, self.cover)
-
 gallery_profiles = profile_association("gallery")
 
+@generic_repr
 class Gallery(TaggableMixin, ProfileMixin, Base):
     __tablename__ = 'gallery'
 
-    class Category(enum.Enum):
-        #: Library
-        Library = 0
-        #: Inbox
-        Inbox = 1
-
-    path = Column(String, nullable=False, default='')
-    path_in_archive = Column(String, nullable=False, default='')
-    info = Column(String, nullable=False, default='')
+    last_read = Column(ArrowType)
+    pub_date = Column(ArrowType)
+    inbox = Column(Boolean, default=False)
     fav = Column(Boolean, default=False)
+    info = Column(String, nullable=False, default='')
+    path = Column(String, nullable=False, default='')
+    fetched = Column(Boolean, default=False)
+    path_in_archive = Column(String, nullable=False, default='')
     rating = Column(Integer, nullable=False, default=0)
     times_read = Column(Integer, nullable=False, default=0)
-    pub_date = Column(ArrowType)
     timestamp = Column(ArrowType, nullable=False, default=arrow.now)
-    last_read = Column(ArrowType)
     number = Column(Integer, nullable=False, default=0)
     in_archive = Column(Boolean, default=False)
-    type_id = Column(Integer, ForeignKey('type.id'))
+    category_id = Column(Integer, ForeignKey('category.id'))
     language_id = Column(Integer, ForeignKey('language.id'))
     grouping_id = Column(Integer, ForeignKey('grouping.id'))
 
-    fetched = Column(Boolean, default=False)
-    category = Column(Enum(Category), nullable=False, default=Category.Library)
 
     grouping = relationship("Grouping", back_populates="galleries", cascade="save-update, merge, refresh-expire")
     collections = relationship("Collection", secondary=gallery_collections, back_populates="galleries", cascade="save-update, merge, refresh-expire", lazy="dynamic")
     urls = relationship("GalleryUrl", back_populates="gallery", lazy='joined', cascade="all,delete-orphan")
     language = relationship("Language", back_populates="galleries", cascade="save-update, merge, refresh-expire")
-    type = relationship("GalleryType", back_populates="galleries", cascade="save-update, merge, refresh-expire")
+    category = relationship("Category", back_populates="galleries", cascade="save-update, merge, refresh-expire")
     circles = relationship("Circle", secondary=gallery_circles, back_populates='galleries', lazy="joined", cascade="save-update, merge, refresh-expire")
     artists = relationship("Artist", secondary=gallery_artists, back_populates='galleries', lazy="joined", cascade="save-update, merge, refresh-expire")
     lists = relationship("GalleryList", secondary=gallery_lists, back_populates='galleries', lazy="dynamic")
@@ -404,12 +402,6 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
             log.w("Cannot add gallery read event because no session exists for this object")
         self.times_read += 1
         self.last_read = datetime
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.rating = 0
-        self.path = ''
-        self.in_archive = False
 
     @property
     def title(self):
@@ -471,6 +463,7 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
 
 page_profiles = profile_association("page")
 
+@generic_repr
 class Page(TaggableMixin, ProfileMixin, Base):
     __tablename__ = 'page'
     number = Column(Integer, nullable=False, default=0)
@@ -482,9 +475,6 @@ class Page(TaggableMixin, ProfileMixin, Base):
     hash = relationship("Hash", cascade="save-update, merge, refresh-expire")
     gallery = relationship("Gallery", back_populates="pages")
     profiles = relationship("Profile", secondary=page_profiles, lazy='joined', cascade="all")
-
-    def __repr__(self):
-        return "Page ID:{}\nPage:{}\nProfile:{}\nPageHash:{}".format(self.id, self.number, self.profile, self.hash)
 
     @property
     def file_type(self):
@@ -518,6 +508,7 @@ class Page(TaggableMixin, ProfileMixin, Base):
             log.w("Could not query for page existence because no path was set.")
         return e
 
+@generic_repr
 class Title(Base):
     __tablename__ = 'title'
     name = Column(String, nullable=False, default="") # OBS: not unique
@@ -531,6 +522,7 @@ class Title(Base):
         super().__init__(**kwargs)
 
 
+@generic_repr
 class GalleryUrl(Base):
     __tablename__ = 'gallery_url'
     url = Column(String, nullable=False, default='')
@@ -539,7 +531,7 @@ class GalleryUrl(Base):
     gallery = relationship("Gallery", back_populates="urls")
 
 
-# Note: necessary because there is no Session object yet
+# Note: necessary to put in function because there is no Session object yet
 def initEvents(sess):
     "Initializes events"
 
@@ -655,6 +647,16 @@ def init(**kwargs):
     Session.configure(bind=engine)
 
     return check_db_version(Session())
+
+def add_bulk(session, objects, amount=100):
+    """
+    Add objects in a bulk of x amount
+    """
+    left = objects[:amount]
+    while left:
+        session.add_all(left)
+        session.commit()
+        left = objects[:amount]
 
 def table_attribs(model, id = False):
     """Returns a dict of table column names and their SQLAlchemy value objects

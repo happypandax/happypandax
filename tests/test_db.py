@@ -550,36 +550,36 @@ class TypeRelationship(unittest.TestCase):
         self.session = Session()
         init_defaults(self.session)
 
-        self.type = GalleryType()
+        self.type = Category()
         self.type.name = "Con1"
         self.galleries = [Gallery() for x in range(10)]
         self.type.galleries.extend(self.galleries)
         self.session.add(self.type)
         self.session.commit()
-        self.assertEqual(self.session.query(GalleryType).count(), 1)
+        self.assertEqual(self.session.query(Category).count(), 1)
         self.assertEqual(self.type.id, self.galleries[0].type_id)
 
     def test_delete(self):
-        self.session.query(GalleryType).delete()
+        self.session.query(Category).delete()
         self.session.commit()
 
         self.assertIsNone(self.galleries[0].type)
         self.assertEqual(self.session.query(Gallery).count(), 10)
-        self.assertEqual(self.session.query(GalleryType).count(), 0)
+        self.assertEqual(self.session.query(Category).count(), 0)
 
     def test_delete2(self):
         self.session.delete(self.galleries[0])
         self.session.commit()
 
         self.assertEqual(self.session.query(Gallery).count(), 9)
-        self.assertEqual(self.session.query(GalleryType).count(), 1)
+        self.assertEqual(self.session.query(Category).count(), 1)
 
     def test_orphans(self):
         self.session.query(Gallery).delete()
         self.session.commit()
 
         self.assertEqual(self.session.query(Gallery).count(), 0)
-        self.assertEqual(self.session.query(GalleryType).count(), 1)
+        self.assertEqual(self.session.query(Category).count(), 1)
 
     def tearDown(self):
         self.session.close()

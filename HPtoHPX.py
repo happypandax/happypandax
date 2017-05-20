@@ -1,4 +1,4 @@
-﻿import sys, os, datetime, sqlite3, copy
+﻿import sys, os, sqlite3, copy, arrow
 from happypanda.server.core import db, galleryio
 
 GALLERY_LISTS = []
@@ -31,7 +31,7 @@ def gallery_map(row, gallery, chapters=True, tags=True, hashes=True):
     def convert_date(date_str):
         #2015-10-25 21:44:38
         if date_str and date_str != 'None':
-            return datetime.datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S")
+            return arrow.get(date_str, "YYYY-MM-DD HH:mm:ss")
 
     gallery.pub_date = convert_date(row['pub_date'])
     gallery.last_read = convert_date(row['last_read'])
@@ -420,7 +420,7 @@ class Gallery:
         self.status = ""
         self.tags = {}
         self.pub_date = None
-        self.date_added = datetime.datetime.now().replace(microsecond=0)
+        self.date_added = arrow.now()
         self.last_read = None
         self.times_read = 0
         self.valid = False
@@ -667,6 +667,8 @@ if __name__ == '__main__':
 
     src = sys.argv[1]
     dst = sys.argv[2]
+    print("Source:", src)
+    print("Destination:", dst)
 
     print("Connecting to Happypanda database..")
     conn_src = sqlite3.connect(src)
@@ -771,7 +773,7 @@ if __name__ == '__main__':
             gallery.fav = bool(g.fav)
             gallery.rating = g.rating
             if g.type:
-                gtype = db.GalleryType()
+                gtype = db.Category()
                 gtype.name = g.type
                 gtype = dst_gtype.get(gtype.name, gtype)
                 gallery.type = gtype
@@ -786,7 +788,6 @@ if __name__ == '__main__':
             gallery.timestamp = g.date_added
             gallery.last_read = g.last_read
             gallery.times_read = g.times_read
-            gallery.catagory = gallery.Category.Library if not g.view else gallery.Category.Inbox
 
             galleries.append(gallery)
             if not g.id in gallery_mixmap:
@@ -851,7 +852,7 @@ if __name__ == '__main__':
     s.add_all(dst_galleries)
     print("Adding gallery lists...")
     s.add_all(dst_lists)
-
+    print("Committing...")
     s.commit()
     print("Done!")
 
