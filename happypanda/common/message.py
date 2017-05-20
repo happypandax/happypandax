@@ -4,6 +4,7 @@ import enum
 import json
 import sys
 import inspect
+import arrow
 
 from datetime import datetime
 
@@ -39,13 +40,15 @@ class CoreMessage:
     def from_json(self, j):
         raise NotImplementedError()
 
-    def json_friendly(self):
+    def json_friendly(self, include_key=True):
         "Serialize to JSON structure"
         d = self.data()
         assert isinstance(d, (dict, list)), "self.data() must return a dict or list!"
         if self._error:
             d[self._error.key] = self._error.data()
-        return {self.key: d}
+        if include_key:
+            return {self.key: d}
+        else: return d
 
     def serialize(self, name=constants.server_name):
         "Serialize this object to bytes"
@@ -75,7 +78,7 @@ class List(CoreMessage):
 
     def append(self, item):
         assert isinstance(item, self._type), "item must be a {}".format(self._type)
-        d = item.json_friendly() if isinstance(item, CoreMessage) else item
+        d = item.json_friendly(include_key=False) if isinstance(item, CoreMessage) else item
         self.items.append(d)
 
     def data(self):
@@ -86,9 +89,7 @@ class List(CoreMessage):
 
     def serialize(self, name=constants.server_name, include_key=False):
         "Serialize this object to bytes"
-        d = self.json_friendly()
-        if not include_key:
-            d = d[self.key]
+        d = self.json_friendly(include_key)
         return finalize(d, name)
 
 
@@ -145,7 +146,7 @@ class DatabaseMessage(CoreMessage):
         gattribs = db.table_attribs(self.item, not load_values)
         return {x: self._unpack(x, gattribs[x], load_collections) for x in gattribs}
 
-    def json_friendly(self, load_values=False, load_collections=False):
+    def json_friendly(self, load_values=False, load_collections=False, include_key=True):
         """Serialize to JSON structure
         Params:
             load_values -- Queries database for unloaded values
@@ -155,7 +156,9 @@ class DatabaseMessage(CoreMessage):
         assert isinstance(d, dict), "self.data() must return a dict!"
         if self._error:
             d[self._error.key] = self._error.data()
-        return {self.key: d}
+        if include_key:
+            return {self.key: d}
+        else: return d
 
     def serialize(self, load_values=False, load_collections=False, name=constants.server_name):
         """Serialize this object to bytes
@@ -205,6 +208,9 @@ class DatabaseMessage(CoreMessage):
 
         elif isinstance(attrib, datetime):
             return attrib.timestamp()
+
+        elif isinstance(attrib, arrow.Arrow):
+            return attrib.timestamp
 
         elif isinstance(attrib, (bool, int, str)):
             return attrib
@@ -319,7 +325,7 @@ class Function(CoreMessage):
         self._data = d
 
     def data(self):
-        d = self._data.json_friendly() if self._data else ''
+        d = self._data.json_friendly(include_key=False) if self._data else ''
         return {'fname':self.name, 'data':d}
 
     def from_json(self, j):

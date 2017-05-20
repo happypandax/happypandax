@@ -33,7 +33,6 @@ class LibraryPage(Base):
 
     def __init__(self):
         super().__init__()
-        utils.HTML("html", "txt")
 
     def show_galleries(self):
         pass
