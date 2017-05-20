@@ -325,7 +325,7 @@ class Function(CoreMessage):
         self._data = d
 
     def data(self):
-        d = self._data.json_friendly(include_key=False) if self._data else ''
+        d = self._data.json_friendly(include_key=False) if self._data else None
         return {'fname':self.name, 'data':d}
 
     def from_json(self, j):

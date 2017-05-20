@@ -100,6 +100,7 @@ class Client(Base):
 
         self.compile("server-status-t", "server-status", {"status": st_txt,
                                                            "label": st_label})
+
     __pragma__('kwargs')
     def call_func(self, func_name, callback, **kwargs):
         f_dict = {

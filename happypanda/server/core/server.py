@@ -48,6 +48,7 @@ class ClientHandler:
             self.context = db.User()
             self.context.address = self._ip
             self.context.context_id = uuid.uuid4().hex
+            self.context.config = None
             s.add(self.context)
             s.commit()
 

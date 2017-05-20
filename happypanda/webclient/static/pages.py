@@ -16,6 +16,9 @@ class ApiPage(Base):
             key = lichildren.eq(0).find("input").val()
             value = lichildren.eq(1).find("input").val()
             if key and value:
+                value = value.strip()
+                if value.startswith('[') and value.endswith(']'):
+                    value = [x.strip() for x in value.replace('[', '').replace(']', '').split(',') if x]
                 func_args[key] = value
         S("div#args > ul > li").each(each_d)
         f_dict = {

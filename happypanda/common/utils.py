@@ -8,7 +8,7 @@ import pkgutil
 import pprint
 import logging
 import base64
-from inspect import ismodule
+from inspect import ismodule, currentframe, getframeinfo
 from logging.handlers import RotatingFileHandler
 
 from happypanda.common import constants, exceptions
@@ -257,6 +257,13 @@ def end_of_message(bytes_):
 
 def generate_key(length=10):
     return base64.urlsafe_b64encode(os.urandom(length)).rstrip(b'=').decode('ascii')
+
+def require_context(ctx):
+    assert ctx, "This function requires a context object"
+
+def this_function():
+    "Return name of current function"
+    return getframeinfo(currentframe()).function
 
 class APIEnum(enum.Enum):
     "A conv. enum class allowing for str comparison"

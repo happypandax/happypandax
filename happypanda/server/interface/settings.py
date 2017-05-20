@@ -1,4 +1,4 @@
-from happypanda.common import constants, message
+from happypanda.common import constants, message, utils, exceptions
 
 def set_settings(settings={}, ctx=None):
     """
@@ -17,13 +17,35 @@ def set_settings(settings={}, ctx=None):
 def get_settings(settings=[], ctx=None):
     """
     Set settings
-    Use setting key 'all' to fetch all setting key:values
+    Send empty list to get all key:values
 
     Params:
         - set_list -- a list of setting keys
 
     Returns:
-        dict of setting_key:value
+        dict of key.name:value
     """
-    return message.Message("works")
+    utils.require_context(ctx)
+
+    values = {}
+
+    if settings:
+        for set_key in settings:
+            try:
+                ns, key = [x.strip() for x in set_key.strip().split('.') if x]
+            except ValueError:
+                raise exceptions.APIError(utils.this_function(), "Invalid setting: '{}'".format(set_key))
+        
+            if constants.config.key_exists(ns, key):
+                values[set_key] = constants.config.get(ns, key)
+            elif ns.lower() == 'this' and ctx.config and ctx.config.key_exists(ns, key):
+                values[set_key] = ctx.config.get(ns, key)
+            else:
+                raise exceptions.APIError(utils.this_function(), "Setting doesn't exist: '{}'".format(set_key))
+    else:
+        pass
+    return message.Identity('settings', values)
+
+
+
 

@@ -35,10 +35,22 @@ class Config:
         with open(self._descr_f, 'wb') as f:
             pickle.dump(self._cfg_d, f, pickle.HIGHEST_PROTOCOL)
 
+    def __contains__(self, key):
+        return key.lower().capitalize() in self._cfg
+
+    def key_exists(self, ns, key):
+        ""
+        ns = ns.lower().capitalize()
+        key = key.lower()
+        if ns in self._cfg:
+            if key in self._cfg[ns]:
+                return True
+        return False
+
     @contextmanager
     def namespace(self, ns):
         assert isinstance(ns, str), "Namespace must be str"
-        ns = ns.capitalize()
+        ns = ns.lower().capitalize()
         if not ns in self._cfg:
             self._cfg[ns] = {}
         if not ns in self._cfg_d:
@@ -48,12 +60,14 @@ class Config:
         yield
         self._current_ns = None
 
-    def get(self, ns, key, default=None, description=""):
+    def get(self, ns, key, default=None, description="", create=True):
         ""
-        ns = ns.capitalize()
+        ns = ns.lower().capitalize()
+        key = key.lower()
         with self.namespace(ns):
             if not key in self._cfg[ns]:
-                self.define(key, default, description)
+                if create:
+                    self.define(key, default, description)
                 return default
 
             t = self._cfg_d[ns][key]['type']
@@ -62,13 +76,14 @@ class Config:
             else:
                 v = t(self._cfg[ns][key])
 
-            if not t is None and not v:
+            if not t is None and v is None:
                 return default
 
             return v
 
     def define(self, key, value, description=""):
         assert self._current_ns, "No namespace has been set"
+        key = key.lower()
         if description:
             self._cfg.set(self._current_ns, '# {}'.format(description))
         self._cfg.set(self._current_ns, key, str(value))

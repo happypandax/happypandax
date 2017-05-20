@@ -39,7 +39,7 @@ def api_view(page=0):
 def serv_connection():
     "Tests connection with server"
     status = client.alive()
-    socketio.emit("connection", {"status": status})
+    socketio.emit("connection", {"status": status, "debug":constants.debug})
 
 @socketio.on('call')
 def server_call(msg):
