@@ -38,12 +38,13 @@ def get_settings(settings=[], ctx=None):
         
             if constants.config.key_exists(ns, key):
                 values[set_key] = constants.config.get(ns, key)
-            elif ns.lower() == 'this' and ctx.config and ctx.config.key_exists(ns, key):
+            elif ns.lower() == 'self' and ctx.config and ctx.config.key_exists(ns, key):
                 values[set_key] = ctx.config.get(ns, key)
+                raise NotImplementedError
             else:
                 raise exceptions.APIError(utils.this_function(), "Setting doesn't exist: '{}'".format(set_key))
     else:
-        pass
+        raise NotImplementedError
     return message.Identity('settings', values)
 
 

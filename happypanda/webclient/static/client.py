@@ -1,20 +1,33 @@
 __pragma__ ('alias', 'S', '$') # JQuery
 
 class Base:
+
+    def __init__(self, url=""):
+        self.url = url
+
+    def main(self):
+        raise NotImplementedError
     
-    def flash(self, msg, flash_type='normal'):
+    def context_nav(self, *args):
         """
-        - normal
-        - warning
-        - critical
+        Insert a breadcumb element
+        Pass tuples of (name, url)
         """
 
-        if flash_type == 'normal':
-            S("#global").append("<div class='green'>{}</div>".format(msg))
-        elif flash_type == 'warning':
-            S("#global").append("<div class='orange'>{}</div>".format(msg))
-        elif flash_type == 'critical':
-            S("#global").append("<div class='red'>{}</div>".format(msg))
+        ctx_links = [{'name': x[0], 'url': x[1]} for x in args]
+
+        self.compile("#context-nav-t", "nav", after=True, context_links=ctx_links)
+
+    def flash(self, msg, flash_type='danger', strong=""):
+        """
+        - info
+        - sucess
+        - warning
+        - danger
+        """
+
+        lbl = 'alert-'+flash_type
+        self.compile("#global-flash-t", "#global-flash", append=True, alert=lbl, strong=strong, msg=msg) 
 
     def get_label(self, label_type):
         """
@@ -27,23 +40,29 @@ class Base:
         """
         return 'label-'+label_type
 
-    def compile(self, source_el, target_el, data):
+    __pragma__('kwargs')
+    def compile(self, source_el, target_el, after=None, before=None, append=None, prepend=None, **data):
         """
         Compile template element
+        Set after, before, append or prepend to True to specify where to insert html.
         """
         
-        if not source_el.startswith(('.', '#')):
-            source_el= '#'+source_el
-        if not target_el.startswith(('.', '#')):
-            target_el= '#'+target_el
-
         tmpl = Handlebars.compile(S(source_el).html())
-        S(target_el).html(tmpl(data))
+        if after:
+            S(target_el).after(tmpl(data))
+        elif before:
+            S(target_el).before(tmpl(data))
+        elif append:
+            S(target_el).append(tmpl(data))
+        elif prepend:
+            S(target_el).prepend(tmpl(data))
+        else:
+            S(target_el).html(tmpl(data))
+    __pragma__('nokwargs')
 
-
-    def on_error(self, error, flash_type='critical'):
+    def on_error(self, error, flash_type='danger'):
         if error:
-            self.flash("{}: {}".format(error['code'], error['msg']), flash_type)
+            self.flash(error['msg'], flash_type, error['code'])
 
 class Client(Base):
 
@@ -67,6 +86,7 @@ class Client(Base):
         con_interval = setInterval(rc, 5000)
 
     def on_response(self, msg):
+        "Calls the designated callback."
         if self._response_cb:
             if 'error' in msg:
                 self.on_error(msg['error'])
@@ -74,10 +94,12 @@ class Client(Base):
             if isinstance(cb, tuple): # TODO: consider revising lol
                 func_name, cb = cb
                 for func in msg['data']:
+                    err = None
                     if 'error' in func:
                         self.on_error(func['error'])
+                        err = func['error']
                     if func['fname'] == func_name:
-                        cb(func['data'])
+                        cb(func['data'], err)
                         break
             else:
                 cb(msg)
@@ -90,29 +112,29 @@ class Client(Base):
             st_txt = "connected"
             st_label = self.get_label("success")
             if self._disconnected_once:
-                self.flash("Reconnected to server", 'normal')
+                self.flash("Reconnected to server", 'success')
         else:
             st_txt = "disconnected"
             st_label = self.get_label("danger")
             self._disconnected_once = True
             self.reconnect()
-            self.flash("Disconnected from server", 'critical')
+            self.flash("Disconnected from server", 'warning')
 
-        self.compile("server-status-t", "server-status", {"status": st_txt,
+        self.compile("#server-status-t", "#server-status", **{"status": st_txt,
                                                            "label": st_label})
-
     __pragma__('kwargs')
     def call_func(self, func_name, callback, **kwargs):
+        "Call function on server. Calls callback with function data and error"
         f_dict = {
             'fname': func_name
             }
-        print(kwargs)
         f_dict.update(kwargs)
         self.call([f_dict], (func_name, callback))
     __pragma__('nokwargs')
 
 
     def call(self, data, callback):
+        "Send data to server. Calls callback with received data."
         self._response_cb.append(callback)
 
         final_msg = {

@@ -180,21 +180,23 @@ def parse_options(args):
     "Parses args from the command-line"
     assert isinstance(args, argparse.Namespace)
 
-    constants.debug = args.debug
-    constants.dev = args.dev
-    constants.host = args.bind
-    constants.host_web = args.bind_web
-    constants.expose_server = args.expose
-    constants.expose_webserver = args.expose_web
+    cfg = constants.config
+
+    with cfg.namespace(constants.core_ns):
+
+        constants.debug = cfg.update("debug", args.debug)
+        constants.dev = args.dev
+        constants.host = cfg.update("host", args.bind)
+        constants.host_web = cfg.update("host_web", args.bind_web)
+        constants.expose_server = cfg.update("expose_server", args.expose)
+        constants.expose_webserver = cfg.update("expose_webserver", args.expose_web)
+
+        constants.port = cfg.update("port", args.port)
+        constants.port_webserver = cfg.update("port_webserver", args.port_web)
+        constants.port_torrent = cfg.update("port_torrent", args.port_torrent)
 
     if constants.dev:
         sys.displayhook == pprint.pprint
-
-    constants.port_webserver = args.port
-    constants.port_webserver = args.port_web
-    constants.port_torrent = args.port_torrent
-
-    constants.server_name = "happypanda_" + generate_key()
 
     ## attempt to do a portfoward
 

@@ -5,29 +5,19 @@
 
 nav, footer {
     margin: auto;
+}
+
+nav {
+    margin-bottom: 0 !important;
+}
+
+footer {
     padding: 5pt;
 }
 
-div#global.flash {
-    width: 100%;
-    padding: 3pt;
+#footer-right, #footer-left {
+    padding-bottom: 10pt;
 }
-
-    div#global.flash div {
-        text-align: center;
-        background-color: rgba(0, 0, 0, 0.05);
-        border-radius: 1px;
-        border: 1px solid rgba(0, 0, 0, 0.2);
-        padding: 2pt;
-        margin: auto;
-        width: 300pt;
-        color: rgba(0, 0, 0, 0.7);
-    }
-
-        div#global.flash div.red {
-            color: #ec0000;
-            font-weight: bold;
-        }
 
 div.gallery-normal {
     position: relative;
@@ -113,19 +103,20 @@ div#items {
 }
 
 #args {
-    margin-left: auto;
-    margin-right: auto;
+    margin-bottom: 20pt;
 }
 
     #args ul {
         list-style: none;
     }
 
+    #args ul li div {
+        margin-bottom: 5pt;
+    }
+
     #args span {
         margin-left: 5pt;
         margin-right: 5pt;
+        margin-bottom: 10pt;
     }
 
-    #args ul li {
-        margin: auto;
-    }

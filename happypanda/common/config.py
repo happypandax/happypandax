@@ -47,6 +47,14 @@ class Config:
                 return True
         return False
 
+    def update(self, key, value):
+        "Update a setting. Returns value"
+        assert self._current_ns, "No namespace has been set"
+        if not key in self._cfg[self._current_ns]:
+            raise exceptions.CoreError("Config.update", "key '{}' doesn't exist in namespace '{}'".format(key, self._current_ns))
+        self.define(key, value)
+        return value
+
     @contextmanager
     def namespace(self, ns):
         assert isinstance(ns, str), "Namespace must be str"

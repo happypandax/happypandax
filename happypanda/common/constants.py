@@ -1,6 +1,7 @@
 ﻿import os
 import rarfile
 import enum
+import base64
 
 from happypanda.common import config as cfg
 
@@ -10,7 +11,8 @@ dev = False
 
 ## VERSIONING ##
 version = (0, 0, 1)
-version_db = (0,)
+version_db = (0, 0, 1)
+version_web = (0, 0, 1)
 
 ## PATHS & FILENAMES ##
 dir_root = ''
@@ -39,6 +41,8 @@ config = cfg.Config(dir_root, settings_file, settings_descr_file)
 
 debug = config.get(core_ns, 'debug', False, "Run in debug mode")
 
+preview = config.get(core_ns, 'preview', False, "Run in preview mode")
+
 ## CORE
 class ExitCode(enum.Enum):
     Exit = 0
@@ -57,7 +61,7 @@ db_session = None
 default_user = None
 
 ## SERVER
-server_name = config.get(core_ns, 'server_name', 'server', "Specifiy name of the server")
+server_name = config.get(core_ns, 'server_name', "happypanda_"+base64.urlsafe_b64encode(os.urandom(5)).rstrip(b'=').decode('ascii'), "Specifiy name of the server")
 
 port = config.get(core_ns, 'port', 7007, "Specify which port to start the server on")
 port_webserver = config.get(core_ns, 'port_webserver', port+1, "Specify which port to start the webserver on")

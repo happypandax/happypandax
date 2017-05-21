@@ -1,5 +1,5 @@
 ﻿{% extends "base.html" %} {% block content %}
-<div id="args">
+<div id="args" class="container">
     <span>
         <label for="fname">Function name:</label>
         <input type="text" id="fname" class="form-control">
@@ -9,13 +9,13 @@
     <span><a id="apicall" class="btn btn-success" onclick="pages.api.call ()">Call function</a></span>
 </div>
 
-<div>
+<div class="container">
     <span>Message:</span>
     <pre id="json-send" class="well">
         </pre>
 </div>
 
-<div>
+<div class="container">
     <span>Response:</span>
     <pre id="json-receive" class="well">
         </pre>
