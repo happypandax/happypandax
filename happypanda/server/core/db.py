@@ -26,6 +26,9 @@ force_auto_coercion()
 
 log = utils.Logger(__name__)
 
+and_op = and_
+or_op = or_
+
 class String(_String):
     """Enchanced version of standard SQLAlchemy's :class:`String`.
     Supports additional operators that can be used while constructing
@@ -175,6 +178,7 @@ class Profile(Base):
     __tablename__ = 'profile'
 
     path = Column(String, nullable=False, default='')
+    data = Column(String, nullable=False, default='')
     size = Column(String, nullable=False)
     timestamp = Column(ArrowType, nullable=False, default=arrow.now)
 
@@ -638,7 +642,7 @@ def check_db_version(sess):
     return True
 
 def init(**kwargs):
-    db_path = constants.db_path_dev if constants.debug else constants.db_path
+    db_path = constants.db_path_dev if constants.dev else constants.db_path
     Session = scoped_session(sessionmaker())
     constants.db_session = Session
     initEvents(constants.db_session)

@@ -19,3 +19,13 @@ class ItemType(utils.APIEnum):
     Page = 3
     #: Grouping
     Grouping = 4
+
+class ImageSize(utils.APIEnum):
+    #: Original
+    Original = 0
+    #: Big
+    Big = 400
+    #: Medium
+    Medium = 250
+    #: Small
+    Small = 100

@@ -1,5 +1,6 @@
 ﻿import sys, os, sqlite3, copy, arrow
 from happypanda.server.core import db, galleryio
+from happypanda.server.interface import enums
 
 GALLERY_LISTS = []
 
@@ -691,6 +692,7 @@ if __name__ == '__main__':
 
     gallery_mixmap = {}
     dst_galleries = []
+    dst_profiles = []
     en_lang = db.Language()
     en_lang.name = "English"
     dst_languages = {"english": en_lang}

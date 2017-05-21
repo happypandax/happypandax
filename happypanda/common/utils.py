@@ -82,6 +82,7 @@ class PathType(enum.Enum):
         return PathType.Invalid
 
 ## Core ##
+
 def setup_dirs():
     "Creates directories at the specified root path"
     for dir_x in (constants.dir_cache, constants.dir_data, constants.dir_log, constants.dir_plugin):
@@ -234,7 +235,27 @@ def get_module_members(mod):
     assert ismodule(mod)
     raise NotImplementedError
 
+def imagetobase64(fp):
+    "Convert image from filelike object to base64"
+    return base64.encodestring(fp.read())
+
+def imagefrombase64(data):
+    "Convert base64 data to image"
+    return base64.decodestring(data)
+
 ## SERVER ##
+
+class APIEnum(enum.Enum):
+    "A conv. enum class allowing for str comparison"
+
+    @classmethod
+    def get(cls, key, default=None):
+        try:
+            v = cls[key]
+        except KeyError:
+            v = default
+        return v
+
 def convert_to_json(buffer, name):
     ""
     try:
@@ -267,13 +288,3 @@ def this_function():
     "Return name of current function"
     return getframeinfo(currentframe()).function
 
-class APIEnum(enum.Enum):
-    "A conv. enum class allowing for str comparison"
-
-    @classmethod
-    def get(cls, key, default=None):
-        try:
-            v = cls[key]
-        except KeyError:
-            v = default
-        return v
