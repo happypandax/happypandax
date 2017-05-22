@@ -6,13 +6,23 @@ Twitter: [@pewspew](https://twitter.com/pewspew)
 ### This is project is under heavy development and is not ready for deployment. If you want to speed up the development, please consider contributing.
 
 # Building
-- Install `Python 3.5` and `pip`
-- Install `virtualenv` (`pip3 install virtualenv`)
-- Clone or download Happypanda X
+- install `Python 3.5` and `pip`
+- install `virtualenv` (`pip3 install virtualenv`)
+- clone or download Happypanda X
 - `cd` into downloaded/cloned folder: `cd happypandax`
-- setup virtual env: `virtualenv henv`
-- activate virtual env: (Unix: `. henv/bin/activate`) (Windows: `henv\Scripts\activate.bat`)
+- setup virtual env: `virtualenv env`
+- activate virtual env: (Unix: `. env/bin/activate`) (Windows: `env\Scripts\activate.bat`)
 - install dependencies: `pip install -r requirements-dev.txt`
+- build docs: `python build_docs.py`
+- see [doc](https://pewpews.github.io/happypandax/env.html)
+
+# Documentation
+
+An online version of the doc is [here](https://pewpews.github.io/happypandax)
+
+# Contributing
+
+Please refer to the [doc](https://pewpews.github.io/happypandax/#for-developers)
 
 # License
 

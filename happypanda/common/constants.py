@@ -56,6 +56,8 @@ running_mode = RuntimeMode.User
 
 core_plugin = None
 
+allowed_tasks = 10
+
 ## DATABASE
 db_session = None
 default_user = None
