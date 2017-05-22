@@ -2,23 +2,19 @@ Plugins
 ========================================
 
 It is possible to extend Happypanda X Server with plugins.
-Understanding the plugin interface is relatively **easy** once you get the hang of it.
 
-It is assumed that you are already familiar with the HPX developer environment: :ref:`Setting up an environment`
+It is assumed that you are already familiar with the HPX dev environment: :ref:`Setting up an environment`
 
 Things to know
 ----------------------------------------
 
-- Plugins are written in ``Python 3``
-- All plugins are placed in their own folder in the folder named ``plugins``
-
-.. todo::
-	specify python version
+- Plugins are written in ``Python 3.5``
+- All plugins are placed in their own folder and then placed under the folder named ``plugins`` at the root-level.
 
 How to create a plugin
 ----------------------------------------
 
-1. Start by creating a folder for your plugin, call it whatever describes your plugin and place it in the ``plugins`` folder in Happypanda X Server.
+1. Start by creating a folder for your plugin, call it whatever describes your plugin and place it in the ``plugins`` folder at the root-level.
 
 2. Create your main python file, which should be named ``HPlugin.py`` (case insensitive).
 

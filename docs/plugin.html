@@ -30,7 +30,7 @@
             <link rel="search" title="Search" href="search.html"/>
         <link rel="top" title="Happypanda X (0, 0, 1) documentation" href="index.html"/>
             <link rel="next" title="TODO" href="todo.html"/>
-            <link rel="prev" title="Creating a frontend in any language" href="client.html"/> 
+            <link rel="prev" title="Creating a frontend in your favorite language" href="client.html"/> 
     <script type="text/javascript" src="https://apis.google.com/js/plusone.js"></script>
     
 </head>
@@ -57,7 +57,7 @@
                 </li>
                 <li>
                     <a href="client.html"
-                       title="Creating a frontend in any language" accesskey="P">previous</a>
+                       title="Creating a frontend in your favorite language" accesskey="P">previous</a>
                 </li> 
         </ul>
     </div>
@@ -120,24 +120,19 @@
                     
   <div class="section" id="plugins">
 <h1>Plugins<a class="headerlink" href="#plugins" title="Permalink to this headline">¶</a></h1>
-<p>It is possible to extend Happypanda X Server with plugins.
-Understanding the plugin interface is relatively <strong>easy</strong> once you get the hang of it.</p>
-<p>It is assumed that you are already familiar with the HPX developer environment: <a class="reference internal" href="env.html#setting-up-an-environment"><span class="std std-ref">Setting up an environment</span></a></p>
+<p>It is possible to extend Happypanda X Server with plugins.</p>
+<p>It is assumed that you are already familiar with the HPX dev environment: <a class="reference internal" href="env.html#setting-up-an-environment"><span class="std std-ref">Setting up an environment</span></a></p>
 <div class="section" id="things-to-know">
 <h2>Things to know<a class="headerlink" href="#things-to-know" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li>Plugins are written in <code class="docutils literal"><span class="pre">Python</span> <span class="pre">3</span></code></li>
-<li>All plugins are placed in their own folder in the folder named <code class="docutils literal"><span class="pre">plugins</span></code></li>
+<li>Plugins are written in <code class="docutils literal"><span class="pre">Python</span> <span class="pre">3.5</span></code></li>
+<li>All plugins are placed in their own folder and then placed under the folder named <code class="docutils literal"><span class="pre">plugins</span></code> at the root-level.</li>
 </ul>
-<div class="admonition-todo admonition" id="index-0">
-<p class="first admonition-title">Todo</p>
-<p class="last">specify python version</p>
-</div>
 </div>
 <div class="section" id="how-to-create-a-plugin">
 <h2>How to create a plugin<a class="headerlink" href="#how-to-create-a-plugin" title="Permalink to this headline">¶</a></h2>
 <ol class="arabic simple">
-<li>Start by creating a folder for your plugin, call it whatever describes your plugin and place it in the <code class="docutils literal"><span class="pre">plugins</span></code> folder in Happypanda X Server.</li>
+<li>Start by creating a folder for your plugin, call it whatever describes your plugin and place it in the <code class="docutils literal"><span class="pre">plugins</span></code> folder at the root-level.</li>
 <li>Create your main python file, which should be named <code class="docutils literal"><span class="pre">HPlugin.py</span></code> (case insensitive).</li>
 </ol>
 <div class="admonition hint">
@@ -164,7 +159,7 @@ The following are required by your main plugin file:</p>
 </li>
 <li>Additionally, in your main plugin class, a <code class="docutils literal"><span class="pre">__init__</span></code> method with the following signature must be defined: <code class="docutils literal"><span class="pre">__init__(self,</span> <span class="pre">*args,</span> <span class="pre">**kwargs)</span></code></li>
 </ul>
-<div class="admonition-todo admonition" id="index-1">
+<div class="admonition-todo admonition" id="index-0">
 <p class="first admonition-title">Todo</p>
 <p class="last">explain <code class="docutils literal"><span class="pre">REQUIRE</span></code></p>
 </div>
@@ -190,7 +185,7 @@ The following are required by your main plugin file:</p>
 </div>
 <div class="section" id="interfacing-with-happypanda-x-server">
 <h2>Interfacing with Happypanda X Server<a class="headerlink" href="#interfacing-with-happypanda-x-server" title="Permalink to this headline">¶</a></h2>
-<div class="admonition-todo admonition" id="index-2">
+<div class="admonition-todo admonition" id="index-1">
 <p class="first admonition-title">Todo</p>
 <p class="last">explain how to interface with hpx server</p>
 </div>
@@ -219,7 +214,7 @@ The following are required by your main plugin file:</p>
 
   <h4>Previous topic</h4>
   <p class="topless"><a href="client.html"
-                        title="previous chapter">Creating a frontend in any language</a></p>
+                        title="previous chapter">Creating a frontend in your favorite language</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="todo.html"
                         title="next chapter">TODO</a></p>

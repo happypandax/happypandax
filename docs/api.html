@@ -155,23 +155,20 @@
 </dd></dl>
 
 <dl class="function">
-<dt id="happypanda.server.interface.gallery.library_view">
-<code class="descname">library_view</code><span class="sig-paren">(</span><em>ctx=None</em>, <em>item_type='Gallery'</em>, <em>page=0</em>, <em>limit=100</em>, <em>search_filter=''</em>, <em>list_id=None</em>, <em>gallery_filter='Library'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/server/interface/gallery.html#library_view"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.server.interface.gallery.library_view" title="Permalink to this definition">¶</a></dt>
-<dd><p>Fetch items from the database.
-Provides pagination.</p>
+<dt id="happypanda.server.interface.gallery.get_image">
+<code class="descname">get_image</code><span class="sig-paren">(</span><em>item_type='Gallery'</em>, <em>item_ids=[]</em>, <em>size='Medium'</em>, <em>local=False</em>, <em>ctx=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/server/interface/gallery.html#get_image"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.server.interface.gallery.get_image" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get cover image</p>
 <dl class="docutils">
 <dt>Params:</dt>
 <dd><ul class="first last simple">
-<li>item_type &#8211; type of items to show ...</li>
-<li>page &#8211; current page</li>
-<li>limit &#8211; amount of items per page</li>
-<li>search_filter &#8211; filter item by search terms</li>
-<li>list_id &#8211; current item list id</li>
-<li>gallery_filter &#8211; ...</li>
+<li>item_type &#8211; ...</li>
+<li>item_ids &#8211; list of item ids</li>
+<li>size &#8211; ...</li>
+<li>local &#8211; replace image content with local path to image file</li>
 </ul>
 </dd>
 <dt>Returns:</dt>
-<dd>list of item message objects</dd>
+<dd>a dict of id:content</dd>
 </dl>
 </dd></dl>
 
@@ -243,7 +240,7 @@ Provides pagination.</p>
 <dt id="happypanda.server.interface.settings.get_settings">
 <code class="descname">get_settings</code><span class="sig-paren">(</span><em>settings=[]</em>, <em>ctx=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/server/interface/settings.html#get_settings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.server.interface.settings.get_settings" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set settings
-Use setting key &#8216;all&#8217; to fetch all setting key:values</p>
+Send empty list to get all key:values</p>
 <dl class="docutils">
 <dt>Params:</dt>
 <dd><ul class="first last simple">
@@ -251,7 +248,7 @@ Use setting key &#8216;all&#8217; to fetch all setting key:values</p>
 </ul>
 </dd>
 <dt>Returns:</dt>
-<dd>dict of setting_key:value</dd>
+<dd>dict of key.name:value</dd>
 </dl>
 </dd></dl>
 

@@ -113,7 +113,7 @@
                 <div class="span9">
                     
   <h1>Source code for happypanda.server.interface.settings</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">happypanda.common</span> <span class="k">import</span> <span class="n">constants</span><span class="p">,</span> <span class="n">message</span>
+<span></span><span class="kn">from</span> <span class="nn">happypanda.common</span> <span class="k">import</span> <span class="n">constants</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">utils</span><span class="p">,</span> <span class="n">exceptions</span>
 
 <div class="viewcode-block" id="set_settings"><a class="viewcode-back" href="../../../../api.html#happypanda.server.interface.settings.set_settings">[docs]</a><span class="k">def</span> <span class="nf">set_settings</span><span class="p">(</span><span class="n">settings</span><span class="o">=</span><span class="p">{},</span> <span class="n">ctx</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -132,15 +132,38 @@
 <div class="viewcode-block" id="get_settings"><a class="viewcode-back" href="../../../../api.html#happypanda.server.interface.settings.get_settings">[docs]</a><span class="k">def</span> <span class="nf">get_settings</span><span class="p">(</span><span class="n">settings</span><span class="o">=</span><span class="p">[],</span> <span class="n">ctx</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Set settings</span>
-<span class="sd">    Use setting key &#39;all&#39; to fetch all setting key:values</span>
+<span class="sd">    Send empty list to get all key:values</span>
 
 <span class="sd">    Params:</span>
 <span class="sd">        - set_list -- a list of setting keys</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        dict of setting_key:value</span>
+<span class="sd">        dict of key.name:value</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Message</span><span class="p">(</span><span class="s2">&quot;works&quot;</span><span class="p">)</span></div>
+    <span class="n">utils</span><span class="o">.</span><span class="n">require_context</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
+
+    <span class="n">values</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">if</span> <span class="n">settings</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">set_key</span> <span class="ow">in</span> <span class="n">settings</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">ns</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">set_key</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">x</span><span class="p">]</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">APIError</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">this_function</span><span class="p">(),</span> <span class="s2">&quot;Invalid setting: &#39;</span><span class="si">{}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">set_key</span><span class="p">))</span>
+        
+            <span class="k">if</span> <span class="n">constants</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">key_exists</span><span class="p">(</span><span class="n">ns</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+                <span class="n">values</span><span class="p">[</span><span class="n">set_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ns</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">ns</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;self&#39;</span> <span class="ow">and</span> <span class="n">ctx</span><span class="o">.</span><span class="n">config</span> <span class="ow">and</span> <span class="n">ctx</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">key_exists</span><span class="p">(</span><span class="n">ns</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+                <span class="n">values</span><span class="p">[</span><span class="n">set_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ns</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">APIError</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">this_function</span><span class="p">(),</span> <span class="s2">&quot;Setting doesn&#39;t exist: &#39;</span><span class="si">{}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">set_key</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+    <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Identity</span><span class="p">(</span><span class="s1">&#39;settings&#39;</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span></div>
+
+
+
 
 </pre></div>
 
