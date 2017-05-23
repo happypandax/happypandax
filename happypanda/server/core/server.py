@@ -16,7 +16,6 @@ from gevent.server import StreamServer
 from happypanda.common import constants, exceptions, utils, message
 from happypanda.server import interface
 from happypanda.server.core import db, torrent
-from happypanda.webclient import main as hweb
 
 log = utils.Logger(__name__)
 
@@ -27,7 +26,7 @@ def list_api():
     mods = utils.get_package_modules(interface)
     for m in mods:
         all_functions.extend(getmembers(m, isfunction))
-    return {x[0] : x[1] for x in all_functions if not x[0] in _special_functions}
+    return {x[0] : x[1] for x in all_functions if not x[0] in _special_functions and not x[0].startswith('_')}
 
 class ClientHandler:
     "Handles clients"
@@ -294,30 +293,17 @@ class HPServer:
                 self._server.serve_forever()
             else:
                 self._server.start()
-                log.i("Server successfully started ({}:{})".format(constants.host, constants.port), stdout=True)
         except (socket.error, OSError) as e:
             log.exception("Error: Failed to start server (Port might already be in use)") # include e
 
-    def run(self, web=False, interactive=False):
+    def run(self, interactive=False):
         """Run the server forever, blocking
         Params:
-            web -- Start the web server
             interactive -- Start in interactive mode (Note: Does not work with web server)
         """
         tdaemon = torrent.start()
         try:
-            self._start(not (web or interactive))
-
-            if web:
-                try:
-                    log.i("Webserver successfully starting... ({}:{}) {}".format(constants.host_web, constants.port_webserver, "(blocking)" if not interactive else ""), stdout=True)
-                    # OBS: will trigger a harmless socket.error when debug=True (stuff still works)
-                    hweb.socketio.run(hweb.happyweb, *utils.connection_params(web=True), block=not interactive, debug=constants.dev)
-                    log.i("Webserver successfully started ({}:{})".format(constants.host_web, constants.port_webserver), stdout=True)
-                except (socket.error, OSError) as e:
-                    log.exception("Error: Failed to start webserver (Port might already be in use)") # include e in stderr?
-        
-
+            self._start(not interactive)
             if interactive:
                 self.interactive()
         except KeyboardInterrupt:
@@ -325,7 +311,7 @@ class HPServer:
         self._server.stop()
         torrent.stop()
         tdaemon.join()
-        log.i("Server(s) shutting down.", stdout=True)
+        log.i("Server shutting down.", stdout=True)
 
 if __name__ == '__main__':
     server = HPServer()

@@ -1,4 +1,5 @@
-import os, sys
+import os
+import sys
 
 if __package__ is None and not hasattr(sys, 'frozen'):
     # direct call of main.py
@@ -7,6 +8,7 @@ if __package__ is None and not hasattr(sys, 'frozen'):
 
 from happypanda.common import utils, constants
 from happypanda.server.core import server, plugins
+from happypanda.webclient import main as webserver
 
 log = utils.Logger(__name__)
 
@@ -19,14 +21,22 @@ def start():
 
     log.i("HPX START")
 
-    constants.core_plugin = plugins._plugin_load("happypanda.server.core.coreplugin", "core")
 
-    if not args.safe:
-        plugins.plugin_loader(constants.dir_plugin)
-    else:
-        plugins.registered.init_plugins()
+    if args.web and args.server:
+       webserver.run(False) # FIX: this is still blocking?
+    elif args.web:
+       webserver.run()
 
-    server.HPServer().run(web=args.web, interactive=args.interact)
+    if args.server:
+        constants.core_plugin = plugins._plugin_load("happypanda.server.core.coreplugin", "core")
+
+        if not args.safe:
+            plugins.plugin_loader(constants.dir_plugin)
+        else:
+            plugins.registered.init_plugins()
+
+        server.HPServer().run(interactive=args.interact)
+
     constants.config.save()
     log.i("HPX END")
 

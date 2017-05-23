@@ -131,13 +131,11 @@ def get_argparser():
     parser = argparse.ArgumentParser(prog="Happypanda X",
         description="A manga/doujinshi manager with tagging support")
 
-    subparsers = parser.add_subparsers(
-        description='Specify an action before "--help" to show parameters for it.'
-        )
+    parser.add_argument('-s', '--server', action='store_true',
+                    help='Start the server')
 
     parser.add_argument('-w', '--web', action='store_true',
                     help='Start the webserver')
-
 
     parser.add_argument('-p', '--port', type=int, default=constants.port,
                     help='Specify which port to start the server on')

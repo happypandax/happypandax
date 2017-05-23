@@ -56,6 +56,9 @@ def get_image(item_type=enums.ItemType.Gallery.name,
     return message.Identity("image", content)
 
 
+def _add_gallery(ctx=None, galleries=[], paths=[]):
+    pass
+
 def add_gallery(ctx=None, galleries=[], paths=[]):
     """
     Add galleries to the database.
@@ -72,6 +75,9 @@ def add_gallery(ctx=None, galleries=[], paths=[]):
         Gallery objects
     """
     return message.Message("works")
+
+def _scan_gallery(ctx=None, paths=[], add_after=False, ignore_exist=True):
+    pass
 
 def scan_gallery(ctx=None, paths=[], add_after=False, ignore_exist=True):
     """
