@@ -59,6 +59,9 @@
             <li class=""><a href="#side-tags" data-toggle="tab" aria-expanded="false">Tags</a></li>
         </ul>
         <div class="tab-content">
+
+        <!-- Lists -->
+
             <div class="tab-pane fade active in" id="side-lists">
                 <div class="list-group">
                     <a class="list-group-item">
@@ -76,23 +79,24 @@
                     </ul>
                 </div>
             </div>
+
+            <!-- Artists -->
+
             <div class="tab-pane fade" id="side-artists">
                 <div class="list-group">
-                    <a class="list-group-item">
-                        <span class="badge">14</span>
-                        Cras justo odio
-                    </a>
-                    <a data-toggle="collapse" data-target="#products" class="collapsed list-group-item">
-                        <span class="badge">14</span>
-                        <i class="fa fa-gift fa-lg"></i> UI Elements <span class="arrow"></span>
-                    </a>
-                    <ul class="list-group sub-menu collapse" id="products">
-                        <li class="list-group-item"><a href="#">CSS3 Animation</a></li>
-                        <li class="list-group-item"><a href="#">General</a></li>
-                        <li class="list-group-item"><a href="#">Buttons</a></li>
-                    </ul>
+                    <script id="side-artists-t" type="x-handlebars-template">
+                        {{#each side_artists}}
+                        <a class="list-group-item">
+                            <span class="badge">{{ count }}</span>
+                            {{ name }}
+                        </a>
+                        {{/each}}
+                    </script>
                 </div>
             </div>
+
+            <!-- Tags -->
+
             <div class="tab-pane fade" id="side-tags">
                 <div class="list-group">
                     <a class="list-group-item">

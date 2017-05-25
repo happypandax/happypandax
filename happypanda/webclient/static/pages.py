@@ -103,8 +103,11 @@ class LibraryPage(Base):
         super().__init__(url)
         self.name = name
         self.grid = None
-        self.reset_context()
+        self.artists = {} # id : artist obj
+        self.tags = {} # ns : tag
+        self.lists = {} # id : list obj
 
+        self.reset_context()
     def context_nav(self, *args):
         """
         Insert a breadcumb element
@@ -126,15 +129,38 @@ class LibraryPage(Base):
         self.show_items()
         self.context_nav(*self._context_link)
 
+    __pragma__('iconv')
+    __pragma__ ('kwargs')
+    def update_sidebar(self, lists=None, tags=None, artist_obj={}):
+        ""
+        
+        if artist_obj is not None:
+            artist_data = []
+            for a in artist_obj:
+                artist_data.append({'name':artist_obj[a]['name'], 'count':artist_obj[a]['count']})
+            print(artist_data)
+            self.compile("#side-artists-t", "#side-artists .list-group", append=True, side_artists=artist_data)
+    __pragma__ ('nokwargs')
+    __pragma__('noiconv')
+
     def show_items(self, data=None, error=None):
         if data and not error:
             items = []
             for g in data:
+                for a in g['artists']:
+                    a_id = a['id']
+                    if a_id in self.artists:
+                        self.artists[a_id]['count'] += 1
+                    else:
+                        self.artists[a_id] = a
+                        self.artists[a_id]['count'] = 1
+
                 items.append({
                     'title': g['titles'][0]['name'],
                     'artist': g['artists'][0]['name'],
                     })
 
+            self.update_sidebar(artist_obj=self.artists)
             self.compile("#items-t", "#items", **{'items':items})
 
             self.grid = __new__(Minigrid({
