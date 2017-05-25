@@ -248,6 +248,13 @@ class Collection(DatabaseMessage):
         assert isinstance(db_item, db.Collection)
         super().__init__('collection', db_item)
 
+class Grouping(DatabaseMessage):
+    "Encapsulates database grouping object"
+
+    def __init__(self, db_item):
+        assert isinstance(db_item, db.Grouping)
+        super().__init__('grouping', db_item)
+
 class NameMixin(DatabaseMessage):
     "Encapsulates database namemixin object"
 

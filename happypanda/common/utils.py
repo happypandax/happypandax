@@ -247,12 +247,14 @@ class APIEnum(enum.Enum):
     "A conv. enum class allowing for str comparison"
 
     @classmethod
-    def get(cls, key, default=None):
+    def get(cls, key):
         try:
             v = cls[key]
+            return v
         except KeyError:
-            v = default
-        return v
+            raise exceptions.ServerError(
+                this_function(),
+                "{}: enum doesn't exist '{}' (make sure capitalization is alright)".format(cls.__name__, key))
 
 def convert_to_json(buffer, name):
     ""

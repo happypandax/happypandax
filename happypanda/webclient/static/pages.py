@@ -138,7 +138,6 @@ class LibraryPage(Base):
             artist_data = []
             for a in artist_obj:
                 artist_data.append({'name':artist_obj[a]['name'], 'count':artist_obj[a]['count']})
-            print(artist_data)
             self.compile("#side-artists-t", "#side-artists .list-group", append=True, side_artists=artist_data)
     __pragma__ ('nokwargs')
     __pragma__('noiconv')
