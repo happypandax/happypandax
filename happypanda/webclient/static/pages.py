@@ -105,7 +105,7 @@ class LibraryPage(Base):
         self.grid = None
         self.artists = {} # id : artist obj
         self.tags = {} # ns : tag
-        self.lists = {} # id : list obj
+        self.glists = {} # id : list obj
 
         self.reset_context()
     def context_nav(self, *args):
@@ -127,6 +127,7 @@ class LibraryPage(Base):
 
     def main(self):
         self.show_items()
+        self.fetch_glists()
         self.context_nav(*self._context_link)
 
     __pragma__('iconv')
@@ -141,6 +142,20 @@ class LibraryPage(Base):
             self.compile("#side-artists-t", "#side-artists .list-group", append=True, side_artists=artist_data)
     __pragma__ ('nokwargs')
     __pragma__('noiconv')
+
+    def fetch_glists(self, data=None, error=None):
+        ""
+        if data and not error:
+            lists_data = []
+            for gl in data:
+                self.glists[gl['id']] = gl
+                lists_data.append({'name':gl['name']})
+
+            self.compile("#side-lists-t", "#side-lists .list-group", append=True, side_lists=lists_data)
+        elif error:
+            pass
+        else:
+            client.call_func("get_glists", self.fetch_glists)
 
     def show_items(self, data=None, error=None):
         if data and not error:
