@@ -1,18 +1,118 @@
 ﻿{% extends "base.html" %} {% block content %}
 {% raw %}
+<script id="context-nav-t" type="x-handlebars-template">
+    <ol class="breadcrumb">
+        {{#each context_links}}
+        <li><a href="{{url}}">{{name}}</a></li>
+        {{/each}}
+    </ol>
+</script>
 <script id="items-t" type="x-handlebars-template">
     {{#each items}}
     <div class="gallery-normal grid-item">
-        <img class="profile" src="static/img/default.jpg">
+        <img class="profile img-thumbnail" src="static/img/default.jpg">
         <div class="meta">
             <h5 class="gtitle">{{ title }}</h5>
         </div>
     </div>
     {{/each}}
 </script>
+<div id="item-content" class="row">
+    <div id="item-sidebar" class="col-md-2">
+        <div id="browse-settings" class="panel panel-default">
+            <!-- Default panel contents -->
+            <div class="panel-heading">Browse Settings</div>
 
-<div id="items" class="grid-items" onload="pages.library.main ()">
+            <!-- List group -->
+            <div class="list-group">
 
+                <a data-toggle="collapse" data-target="#view-settings" class="collapsed list-group-item">
+                    View: <span class="label label-default">Collections</span>
+                </a>
+                <ul class="list-group collapse" id="view-settings">
+                    <li class="list-group-item"><a href="#">Collections</a></li>
+                    <li class="list-group-item"><a href="#">Galleries</a></li>
+                </ul>
+
+                <a data-toggle="collapse" data-target="#sort-settings" class="collapsed list-group-item">
+                    Sort by: <span class="label label-default">Title</span>
+                </a>
+                <ul class="list-group collapse" id="sort-settings">
+                    <li class="list-group-item"><a href="#">Title</a></li>
+                    <li class="list-group-item"><a href="#">Artist</a></li>
+                </ul>
+
+                <a data-toggle="collapse" data-target="#order-settings" class="collapsed list-group-item">
+                    Order by: <span class="label label-default">Ascending</span>
+                </a>
+                <ul class="list-group collapse" id="order-settings">
+                    <li class="list-group-item"><a href="#">Ascending</a></li>
+                    <li class="list-group-item"><a href="#">Descending</a></li>
+                </ul>
+
+                <button class="btn btn-default btn-block" >Group</button>
+            </div>
+        </div>
+        <ul class="nav nav-tabs">
+            <li class="active"><a href="#side-lists" data-toggle="tab" aria-expanded="true">Lists</a></li>
+            <li class=""><a href="#side-artists" data-toggle="tab" aria-expanded="false">Artists</a></li>
+            <li class=""><a href="#side-tags" data-toggle="tab" aria-expanded="false">Tags</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane fade active in" id="side-lists">
+                <div class="list-group">
+                    <a class="list-group-item">
+                        <span class="badge">14</span>
+                        Cras justo odio
+                    </a>
+                    <a data-toggle="collapse" data-target="#products" class="collapsed list-group-item">
+                        <span class="badge">14</span>
+                        <i class="fa fa-gift fa-lg"></i> UI Elements <span class="arrow"></span>
+                    </a>
+                    <ul class="list-group sub-menu collapse" id="products">
+                        <li class="list-group-item"><a href="#">CSS3 Animation</a></li>
+                        <li class="list-group-item"><a href="#">General</a></li>
+                        <li class="list-group-item"><a href="#">Buttons</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="side-artists">
+                <div class="list-group">
+                    <a class="list-group-item">
+                        <span class="badge">14</span>
+                        Cras justo odio
+                    </a>
+                    <a data-toggle="collapse" data-target="#products" class="collapsed list-group-item">
+                        <span class="badge">14</span>
+                        <i class="fa fa-gift fa-lg"></i> UI Elements <span class="arrow"></span>
+                    </a>
+                    <ul class="list-group sub-menu collapse" id="products">
+                        <li class="list-group-item"><a href="#">CSS3 Animation</a></li>
+                        <li class="list-group-item"><a href="#">General</a></li>
+                        <li class="list-group-item"><a href="#">Buttons</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="side-tags">
+                <div class="list-group">
+                    <a class="list-group-item">
+                        <span class="badge">14</span>
+                        Cras justo odio
+                    </a>
+                    <a data-toggle="collapse" data-target="#products" class="collapsed list-group-item">
+                        <span class="badge">14</span>
+                        <i class="fa fa-gift fa-lg"></i> UI Elements <span class="arrow"></span>
+                    </a>
+                    <ul class="list-group sub-menu collapse" id="products">
+                        <li class="list-group-item"><a href="#">CSS3 Animation</a></li>
+                        <li class="list-group-item"><a href="#">General</a></li>
+                        <li class="list-group-item"><a href="#">Buttons</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="items" class="grid-items col-md-10 container" onload="pages.library.main ()"></div>
 </div>
 {% endraw %}
 {% endblock %}

@@ -8,16 +8,6 @@ class Base:
     def main(self):
         raise NotImplementedError
     
-    def context_nav(self, *args):
-        """
-        Insert a breadcumb element
-        Pass tuples of (name, url)
-        """
-
-        ctx_links = [{'name': x[0], 'url': x[1]} for x in args]
-
-        self.compile("#context-nav-t", "nav", after=True, context_links=ctx_links)
-
     def flash(self, msg, flash_type='danger', strong=""):
         """
         - info
@@ -68,7 +58,7 @@ class Client(Base):
 
     def __init__(self):
         self.socket = io.connect()
-        self.socket.on("connection", self.on_connect)
+        self.socket.on("serv_connect", self.on_connect)
         self.socket.on("response", self.on_response)
 
         self.name = "webclient"
@@ -78,11 +68,12 @@ class Client(Base):
         self._last_msg = None
 
     def reconnect(self):
+        con_interval = None
         def rc():
             if self._connection_status:
                 clearInterval(con_interval)
                 return
-            self.socket.connect()
+            self.socket.emit("reconnect", {})
         con_interval = setInterval(rc, 5000)
 
     def on_response(self, msg):
@@ -135,13 +126,14 @@ class Client(Base):
 
     def call(self, data, callback):
         "Send data to server. Calls callback with received data."
-        self._response_cb.append(callback)
+        if self._connection_status:
+            self._response_cb.append(callback)
 
-        final_msg = {
-            'name': self.name,
-            'data': data
-            }
-        self._last_msg = final_msg
-        self.socket.emit("call", final_msg)
+            final_msg = {
+                'name': self.name,
+                'data': data
+                }
+            self._last_msg = final_msg
+            self.socket.emit("call", final_msg)
 
 client = Client()

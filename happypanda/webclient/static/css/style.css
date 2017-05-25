@@ -25,9 +25,6 @@ div.gallery-normal {
     min-height: 100px;
     max-height: 350px;
     overflow: hidden;
-    border: 1px solid gray;
-    border-radius: 5px;
-    margin: 2px;
 }
 
     div.gallery-normal img.profile {
@@ -54,11 +51,6 @@ div.gallery-normal {
         div.gallery-normal div.meta .gtitle {
             color: white;
         }
-
-div#items {
-    margin: auto;
-    width: 95%;
-}
 
 /*div#items div.gallery .meta {
         color: white;

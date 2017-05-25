@@ -37,7 +37,6 @@ class Client:
 
     def _recv(self):
         "returns json"
-        # log receive
         try:
             buffered = None
             eof = False

@@ -15,7 +15,7 @@ class BasePage(Base):
         lbl = self.get_label('default')
         vs = [
             ('server', 'unknown'),
-            ('webserver', 'unknown'),
+            ('webclient', 'unknown'),
             ('database', 'unknown'),
             ('torrent client', 'unknown'),
             ]
@@ -24,7 +24,7 @@ class BasePage(Base):
             vs = []
             lbl = self.get_label('info')
             vs.append(('server', ".".join(str(x) for x in data['core'])))
-            vs.append(('webserver', ".".join(str(x) for x in data['web'])))
+            vs.append(('webclient', ".".join(str(x) for x in data['web'])))
             vs.append(('database', ".".join(str(x) for x in data['db'])))
             vs.append(('torrent client', ".".join(str(x) for x in data['torrent'])))
         elif error:
@@ -104,6 +104,17 @@ class LibraryPage(Base):
         self.name = name
         self.grid = None
         self.reset_context()
+
+    def context_nav(self, *args):
+        """
+        Insert a breadcumb element
+        Pass tuples of (name, url)
+        """
+
+        ctx_links = [{'name': x[0], 'url': x[1]} for x in args]
+
+        self.compile("#context-nav-t", "#content", before=True, context_links=ctx_links)
+
 
     def add_context(self, name, url):
         self._context_link.append((name, url))
