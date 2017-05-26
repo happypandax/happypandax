@@ -114,7 +114,36 @@
             </div>
         </div>
     </div>
+
+    <script id="item-pagination-t" type="x-handlebars-template">
+        <ul class="pagination">
+            {{#if back_disabled}}
+            <li class="disabled"><a href="#">&laquo;</a></li>
+            {{else}}
+            <li><a href="#" onclick="pages.library.update_pagination({{back_number}})">&laquo;</a></li>
+            {{/if}}
+
+            {{#each pages}}
+
+            {{#if active}}
+            <li class="active"><a href="#" onclick="pages.library.update_pagination({{number}})">{{ number }}</a></li>
+            {{else}}
+            <li><a href="#" onclick="pages.library.update_pagination({{number}})">{{ number }}</a></li>
+            {{/if}}
+
+            {{/each}}
+
+            {{#if next_disabled}}
+            <li class="disabled"><a href="#">&raquo;</a></li>
+            {{else}}
+            <li><a href="#" onclick="pages.library.update_pagination({{next_number}})">&raquo;</a></li>
+            {{/if}}
+        </ul>
+    </script>
+
+    <div class="item-pagination"></div>
     <div id="items" class="grid-items col-md-10 container" onload="pages.library.main ()"></div>
+    <div class="item-pagination"></div>
 </div>
 {% endraw %}
 {% endblock %}

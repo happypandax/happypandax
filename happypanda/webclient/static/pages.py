@@ -106,6 +106,9 @@ class LibraryPage(Base):
         self.artists = {} # id : artist obj
         self.tags = {} # ns : tag
         self.glists = {} # id : list obj
+        self.item_limit = 50
+        self._page_limit = 10
+        self._page_list = []
 
         self.reset_context()
     def context_nav(self, *args):
@@ -126,9 +129,9 @@ class LibraryPage(Base):
         self._context_link = [(self.name, self.url)]
 
     def main(self):
-        self.show_items()
         self.fetch_glists()
         self.context_nav(*self._context_link)
+        self.show_pagination()
 
     __pragma__('iconv')
     __pragma__ ('kwargs')
@@ -142,6 +145,62 @@ class LibraryPage(Base):
             self.compile("#side-artists-t", "#side-artists .list-group", append=True, side_artists=artist_data)
     __pragma__ ('nokwargs')
     __pragma__('noiconv')
+
+    def update_pagination(self, from_page=1):
+        ""
+
+        back_disabled = False
+        next_disabled = False
+
+        if from_page - 1 == 0:
+            back_disabled = True
+
+        if from_page == len(self._page_list):
+            next_disabled = True
+
+        half_limit = int(self._page_limit/2)
+        l_index = from_page-half_limit
+        r_index = from_page+half_limit + 1
+        if r_index > len(self._page_list):
+            r_index = len(self._page_list)
+            l_index = len(self._page_list) - (self._page_limit + 1)
+
+        if l_index < 0:
+            l_index = 0
+            r_index = self._page_limit
+        current_pages = self._page_list[l_index:r_index]
+
+        pages = []
+
+        for n in current_pages:
+            pages.append({'number':n, 'active':n == from_page})
+
+        self.show_items(page=from_page)
+
+        self.compile("#item-pagination-t", ".item-pagination",
+                     pages=pages,
+                     back_disabled=back_disabled,
+                     next_disabled=next_disabled,
+                     back_number=from_page-1,
+                     next_number=from_page+1)
+
+    def show_pagination(self, data=None, error=None):
+        ""
+        if data and not error:
+            pages = data['count']/self.item_limit
+            if pages < 1:
+                pages = 1
+            # check if number is whole
+            if pages % 1 == 0: # Note: will fail on very large numbers eg. 999999999999999999999
+                pages = int(pages) + 1
+            else:
+                pages = int(pages)
+            self._page_list = range(1, pages+1)
+            self.update_pagination()
+        elif error:
+            pass
+        else:
+            client.call_func("get_count", self.show_pagination, item_type='Gallery')
 
     def fetch_glists(self, data=None, error=None):
         ""
@@ -157,7 +216,9 @@ class LibraryPage(Base):
         else:
             client.call_func("get_glists", self.fetch_glists)
 
-    def show_items(self, data=None, error=None):
+    __pragma__('iconv')
+    __pragma__ ('kwargs')
+    def show_items(self, data=None, error=None, page=1):
         if data and not error:
             items = []
             for g in data:
@@ -186,8 +247,12 @@ class LibraryPage(Base):
         elif error:
             pass
         else:
-            client.call_func("library_view", self.show_items
+            client.call_func("library_view", self.show_items,
+                             limit=self.item_limit,
+                             page=page-1
                              )
+    __pragma__('noiconv')
+    __pragma__ ('nokwargs')
 
 
 library = LibraryPage()

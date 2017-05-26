@@ -71,3 +71,5 @@ def gallery_count(id=0, item_type=enums.ItemType.GalleryList.name):
     """
 
     return message.Identity("gcount", {'id': id, 'count':_gallery_count(id, item_type)})
+
+

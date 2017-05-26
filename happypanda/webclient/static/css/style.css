@@ -52,27 +52,14 @@ div.gallery-normal {
             color: white;
         }
 
-/*div#items div.gallery .meta {
-        color: white;
-        position: absolute;
-        padding: 5pt 5pt;
-        padding-top: 8pt;
-        width: 100%;
-        bottom: 0;
-        background: rgba(237,237,237,0.17);
-        background: -moz-linear-gradient(top, rgba(237,237,237,0.17) 0%, rgba(0,0,0,0.17) 0%, rgba(0,0,0,0.76) 100%);
-        background: -webkit-gradient(left top, left bottom, color-stop(0%, rgba(237,237,237,0.17)), color-stop(0%, rgba(0,0,0,0.17)), color-stop(100%, rgba(0,0,0,0.76)));
-        background: -webkit-linear-gradient(top, rgba(237,237,237,0.17) 0%, rgba(0,0,0,0.17) 0%, rgba(0,0,0,0.76) 100%);
-        background: -o-linear-gradient(top, rgba(237,237,237,0.17) 0%, rgba(0,0,0,0.17) 0%, rgba(0,0,0,0.76) 100%);
-        background: -ms-linear-gradient(top, rgba(237,237,237,0.17) 0%, rgba(0,0,0,0.17) 0%, rgba(0,0,0,0.76) 100%);
-        background: linear-gradient(to bottom, rgba(237,237,237,0.17) 0%, rgba(0,0,0,0.17) 0%, rgba(0,0,0,0.76) 100%);
-        filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ededed', endColorstr='#000000', GradientType=0 );
-    }
+.item-pagination {
+    text-align: center;
+}
 
-        div#items div.gallery .meta .artists {
-            margin: 4pt auto;
-            font-size: 9pt;
-        }*/
+.item-pagination .pagination {
+    margin-bottom: 0;
+    margin-top: 0;
+}
 
 .json-string {
     color: green;

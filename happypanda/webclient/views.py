@@ -26,18 +26,13 @@ def before_first_request():
 def library():
     return render_template('library.html')
 
-@happyweb.route('/gallery/page/<int:page>')
-def gallery_page(page=0):
+@happyweb.route('/gallery/<int:id>')
+def gallery_page(id=0):
     return render_template('library.html')
 
-@happyweb.route('/artist/page/<int:page>')
-def artist_page(page=0):
+@happyweb.route('/artist/<int:id>')
+def artist_page(id=0):
     pass
-
-@happyweb.route('/collection/page/<int:page>')
-def collection_page(page=0):
-    pass
-
 @happyweb.route('/apiview')
 def api_view(page=0):
     return render_template('api.html')

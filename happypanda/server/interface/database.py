@@ -84,3 +84,40 @@ def get_glists():
     [glists.append(message.GalleryList(x)) for x in _get_glists()]
     return glists
 
+def _get_tags(taggable_id=0):
+    pass
+
+
+def get_tags(taggable_id=0):
+    ""
+    pass
+
+def _get_count(item_type=enums.ItemType.Gallery.name):
+    ""
+       
+    item_type = enums.ItemType.get(item_type)
+
+    db_items = {
+        enums.ItemType.Gallery : db.Gallery,
+        enums.ItemType.Collection : db.Collection,
+        enums.ItemType.Grouping : db.Grouping,
+        }
+
+    db_item = db_items.get(item_type)
+
+    s = constants.db_session()
+    return s.query(db_item).count()
+
+def get_count(item_type=enums.ItemType.Gallery.name):
+   """
+   Get count of items in the database
+
+   Params:
+    - item_type -- type of db item (Gallery, Collection, Grouping)
+
+   Returns
+    {'count': int}
+   """
+
+   return message.Identity('count', {'count':_get_count(item_type)})
+
