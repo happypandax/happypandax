@@ -1,21 +1,18 @@
 ﻿from gevent import monkey
 monkey.patch_all()  # necessary to make these functions play nice with gevent
 
-import json
-import uuid
-import logging
-import sys
-import hashlib
-import code
+import uuid  # noqa: E402
+import sys  # noqa: E402
+import code  # noqa: E402
 
-from inspect import getmembers, isfunction
+from inspect import getmembers, isfunction  # noqa: E402
 
-from gevent import socket, pool, queue
-from gevent.server import StreamServer
+from gevent import socket, pool  # noqa: E402
+from gevent.server import StreamServer  # noqa: E402
 
-from happypanda.common import constants, exceptions, utils, message
-from happypanda.server import interface
-from happypanda.server.core import db, torrent
+from happypanda.common import constants, exceptions, utils, message  # noqa: E402
+from happypanda.server import interface  # noqa: E402
+from happypanda.server.core import db, torrent  # noqa: E402
 
 log = utils.Logger(__name__)
 

@@ -3,7 +3,7 @@ import os
 import re
 
 from happypanda.common import constants, utils
-from happypanda.server.core import db, archive, plugins
+from happypanda.server.core import db, plugins
 
 
 class GalleryScan:

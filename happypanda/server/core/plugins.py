@@ -1,7 +1,5 @@
-import logging
 import os
 import uuid
-import threading
 import sys
 import traceback
 import importlib
@@ -34,7 +32,7 @@ def plugin_load(path, *args, **kwargs):
         raise exceptions.CoreError(
             "Plugin loader",
             "No main entry file named 'HPlugin.py' found in '{}'".format(
-                pdir.path))
+                f.path))
 
     plug = os.path.splitext(plugfile.name)[0]
     sys.path.insert(0, os.path.realpath(path))
@@ -529,11 +527,3 @@ class HPluginMeta(type):
         except AttributeError:
             raise exceptions.PluginMethodError(
                 cls.NAME, "Plugin has no such attribute or hook '{}'".format(key))
-
-# def startConnectionLoop():
-#	def autoConnectHooks():
-#		run = True
-#		while run:
-#			run = registered._connectHooks()
-#	auto_t = threading.Thread(target=autoConnectHooks)
-#	auto_t.start()

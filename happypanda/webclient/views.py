@@ -1,8 +1,5 @@
 ﻿"""views module."""
-import pprint
-
-from flask import (render_template, g)
-from happy_socketio import emit
+from flask import (render_template,)
 from happypanda.webclient.main import happyweb, client, socketio
 from happypanda.common import constants, utils, exceptions
 

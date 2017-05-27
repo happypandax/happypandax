@@ -28,19 +28,15 @@ from sqlalchemy import (
     Table,
     UniqueConstraint,
     Float,
-    Enum,
-    Numeric)
+    Enum)
 from sqlalchemy_utils import (
     ArrowType,
     generic_repr,
-    aggregated,
     force_instant_defaults,
     force_auto_coercion)
 
 import arrow
-import logging
 import os
-import random
 import enum
 import re
 
@@ -790,12 +786,6 @@ def initEvents(sess):
     def delete_tag_orphans(session):
         session.query(Tag).filter(
             ~Tag.namespaces.any()).delete(
-            synchronize_session=False)
-
-    @event.listens_for(sess, 'before_commit')
-    def delete_namespace_orphans(session):
-        session.query(Namespace).filter(
-            ~Namespace.tags.any()).delete(
             synchronize_session=False)
 
     @event.listens_for(sess, 'before_commit')

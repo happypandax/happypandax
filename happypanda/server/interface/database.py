@@ -1,4 +1,4 @@
-from happypanda.common import constants, message, exceptions, utils
+from happypanda.common import constants, message, utils
 from happypanda.server.core import db
 from happypanda.server.interface import enums
 
@@ -34,7 +34,7 @@ def _get_image(item_type=enums.ItemType.Gallery.name,
                     db_item.id == i,
                     db.Profile.size == size.name
                 ))).one_or_none()
-        if not p:
+        if not p_path:
             raise NotImplementedError
         else:
             if local:
@@ -60,7 +60,7 @@ def get_image(item_type=enums.ItemType.Gallery.name,
     Returns:
         a dict of id:content
     """
-    return message.Identity("image", content)
+    return message.Identity("image", "")
 
 
 def _get_item(item_type=enums.ItemType.Gallery):

@@ -1,4 +1,4 @@
-from happypanda.common import constants, message
+from happypanda.common import message
 
 
 def get_plugin(plugin_id=None):

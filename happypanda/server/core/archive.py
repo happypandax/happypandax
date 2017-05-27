@@ -2,6 +2,7 @@
 import zipfile
 import rarfile
 import os
+import uuid
 import logging
 
 from happypanda.common import exceptions, constants

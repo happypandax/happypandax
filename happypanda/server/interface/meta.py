@@ -1,4 +1,4 @@
-from happypanda.common import constants, message, exceptions, utils
+from happypanda.common import constants, message
 
 
 def get_error(code, id, ctx=None):

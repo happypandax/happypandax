@@ -2,7 +2,6 @@ import asyncio
 import os
 import re
 import signal
-import sys
 import multiprocessing as mp
 
 from contextlib import closing, suppress

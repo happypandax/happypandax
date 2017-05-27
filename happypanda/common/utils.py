@@ -2,7 +2,6 @@ import sys
 import json
 import enum
 import os
-import socket
 import argparse
 import pkgutil
 import pprint
@@ -131,7 +130,7 @@ def setup_logger(args):
     for log_path, lvl in ((constants.log_normal, logging.INFO),
                           (constants.log_error, logging.ERROR)):
         try:
-            with open(log_path, 'x') as f:
+            with open(log_path, 'x') as f:  # noqa: F841
                 pass
         except FileExistsError:
             pass

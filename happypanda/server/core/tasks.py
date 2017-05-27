@@ -1,6 +1,6 @@
 from gevent import pool
 
-from happypanda.common import constants, exceptions, utils
+from happypanda.common import constants, utils
 
 log = utils.Logger(__name__)
 

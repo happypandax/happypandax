@@ -2,7 +2,6 @@
 
 import enum
 import json
-import sys
 import inspect
 import arrow
 
