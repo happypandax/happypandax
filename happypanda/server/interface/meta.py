@@ -1,17 +1,19 @@
 from happypanda.common import constants, message, exceptions, utils
 
+
 def get_error(code, id, ctx=None):
     """
     Get error
 
     Params:
         - code -- error code, refer to ...
-        - id -- 
+        - id --
 
     Returns:
         an error message object
     """
     return message.Message("works")
+
 
 def get_version():
     """
@@ -21,12 +23,13 @@ def get_version():
         a dict of component: list of major, minor, patch
     """
     vs = dict(
-        core = list(constants.version),
-        db = list(constants.version_db),
-        web = list(constants.version_web),
-        torrent = (0, 0, 0)
-        )
+        core=list(constants.version),
+        db=list(constants.version_db),
+        web=list(constants.version_web),
+        torrent=(0, 0, 0)
+    )
     return message.Identity("version", vs)
+
 
 def install_plugin(plugin_id, ctx=None):
     """
@@ -40,6 +43,7 @@ def install_plugin(plugin_id, ctx=None):
     """
     return message.Message("works")
 
+
 def uninstall_plugin(plugin_id, ctx=None):
     """
     Uninstall a plugin
@@ -51,6 +55,7 @@ def uninstall_plugin(plugin_id, ctx=None):
         an error message object
     """
     return message.Message("works")
+
 
 def list_plugins(ctx=None):
     """

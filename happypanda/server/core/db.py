@@ -5,12 +5,37 @@ from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.sql.expression import BinaryExpression, func, literal
 from sqlalchemy.sql.operators import custom_op
-from sqlalchemy.orm import (sessionmaker, relationship, validates, object_session, scoped_session,
-                            attributes, state, collections, dynamic)
-from sqlalchemy import (create_engine, event, exc, and_, or_, Boolean, Column, Integer, ForeignKey,
-                        Table, UniqueConstraint, Float, Enum, Numeric)
-from sqlalchemy_utils import (ArrowType, generic_repr, aggregated, force_instant_defaults,
-                             force_auto_coercion)
+from sqlalchemy.orm import (
+    sessionmaker,
+    relationship,
+    validates,
+    object_session,
+    scoped_session,
+    attributes,
+    state,
+    collections,
+    dynamic)
+from sqlalchemy import (
+    create_engine,
+    event,
+    exc,
+    and_,
+    or_,
+    Boolean,
+    Column,
+    Integer,
+    ForeignKey,
+    Table,
+    UniqueConstraint,
+    Float,
+    Enum,
+    Numeric)
+from sqlalchemy_utils import (
+    ArrowType,
+    generic_repr,
+    aggregated,
+    force_instant_defaults,
+    force_auto_coercion)
 
 import arrow
 import logging
@@ -29,6 +54,7 @@ log = utils.Logger(__name__)
 and_op = and_
 or_op = or_
 
+
 class String(_String):
     """Enchanced version of standard SQLAlchemy's :class:`String`.
     Supports additional operators that can be used while constructing
@@ -38,21 +64,27 @@ class String(_String):
         """Contains implementation of :class:`String` operators
         related to regular expressions.
         """
+
         def regexp(self, other):
-            return RegexMatchExpression(self.expr, literal(other), custom_op('~'))
+            return RegexMatchExpression(
+                self.expr, literal(other), custom_op('~'))
 
         def iregexp(self, other):
-            return RegexMatchExpression(self.expr, literal(other), custom_op('~*'))
+            return RegexMatchExpression(
+                self.expr, literal(other), custom_op('~*'))
 
         def not_regexp(self, other):
-            return RegexMatchExpression(self.expr, literal(other), custom_op('!~'))
+            return RegexMatchExpression(
+                self.expr, literal(other), custom_op('!~'))
 
         def not_iregexp(self, other):
-            return RegexMatchExpression(self.expr, literal(other), custom_op('!~*'))
+            return RegexMatchExpression(
+                self.expr, literal(other), custom_op('!~*'))
 
 
 class RegexMatchExpression(BinaryExpression):
     """Represents matching of a column againsts a regular expression."""
+
 
 SQLITE_REGEX_FUNCTIONS = {
     '~': ('REGEXP',
@@ -65,6 +97,7 @@ SQLITE_REGEX_FUNCTIONS = {
             lambda value, regex: not re.match(regex, value, re.IGNORECASE)),
 }
 
+
 class BaseID:
     id = Column(Integer, primary_key=True)
 
@@ -74,6 +107,7 @@ class BaseID:
             sess = constants.db_session()
         sess.delete(self)
         return sess
+
 
 class NameMixin:
     name = Column(String, nullable=False, default='', unique=True)
@@ -85,62 +119,94 @@ class NameMixin:
         sess = constants.db_session()
         if obj:
             if strict:
-                e = sess.query(self.__class__).filter_by(name=self.name).scalar()
+                e = sess.query(
+                    self.__class__).filter_by(
+                    name=self.name).scalar()
             else:
-                e = sess.query(self.__class__).filter(self.__class__.name.ilike("%{}%".format(self.name))).scalar()
+                e = sess.query(
+                    self.__class__).filter(
+                    self.__class__.name.ilike(
+                        "%{}%".format(
+                            self.name))).scalar()
             if not e:
                 e = self
         else:
             if strict:
-                e = sess.query(self.__class__.id).filter_by(name=self.name).scalar() is not None
+                e = sess.query(
+                    self.__class__.id).filter_by(
+                    name=self.name).scalar() is not None
             else:
-                e = sess.query(self.__class__.id).filter(self.__class__.name.ilike("%{}%".format(self.name))).scalar() is not None
+                e = sess.query(
+                    self.__class__.id).filter(
+                    self.__class__.name.ilike(
+                        "%{}%".format(
+                            self.name))).scalar() is not None
         sess.close()
         return e
 
     def __repr__(self):
-        return "<{}(ID: {}, Name: {})>".format(self.__class__.__name__, self.id, self.name)
+        return "<{}(ID: {}, Name: {})>".format(
+            self.__class__.__name__, self.id, self.name)
+
 
 class ProfileMixin:
 
     def get_profile(self, profile_type):
         return ''
 
+
 Base = declarative_base(cls=BaseID)
+
 
 def validate_int(value):
     if isinstance(value, str):
         try:
             value = int(value)
-        except:
-            raise AssertionError("Column only accepts integer, not {}".format(type(value)))
+        except BaseException:
+            raise AssertionError(
+                "Column only accepts integer, not {}".format(
+                    type(value)))
     else:
-        assert isinstance(value, int) or value is None, "Column only accepts integer, not {}".format(type(value))
+        assert isinstance(
+            value, int) or value is None, "Column only accepts integer, not {}".format(
+            type(value))
     return value
+
 
 def validate_string(value):
-    assert isinstance(value, str) or value is None, "Column only accepts string, not {}".format(type(value))
+    assert isinstance(
+        value, str) or value is None, "Column only accepts string, not {}".format(
+        type(value))
     return value
+
 
 def validate_arrow(value):
-    assert isinstance(value, arrow.Arrow) or value is None, "Column only accepts arrow types, not {}".format(type(value))
+    assert isinstance(
+        value, arrow.Arrow) or value is None, "Column only accepts arrow types, not {}".format(
+        type(value))
     return value
+
 
 def validate_bool(value):
-    assert isinstance(value, bool) or value is None, "Column only accepts boolean, not {}".format(type(value))
+    assert isinstance(
+        value, bool) or value is None, "Column only accepts boolean, not {}".format(
+        type(value))
     return value
 
+
 validators = {
-    Integer:validate_int,
-    String:validate_string,
-    ArrowType:validate_arrow,
-    Boolean:validate_bool,
+    Integer: validate_int,
+    String: validate_string,
+    ArrowType: validate_arrow,
+    Boolean: validate_bool,
 }
+
 
 @event.listens_for(Base, 'attribute_instrument')
 def configure_listener(class_, key, inst):
     if not hasattr(inst.property, 'columns'):
         return
+
     @event.listens_for(inst, "set", retval=True)
     def set_(instance, value, oldvalue, initiator):
         validator = validators.get(inst.property.columns[0].type.__class__)
@@ -149,13 +215,17 @@ def configure_listener(class_, key, inst):
         else:
             return value
 
+
 def profile_association(table_name):
     column = '{}_id'.format(table_name)
-    assoc = Table('{}_profiles'.format(table_name), Base.metadata,
-                        Column('profile_id', Integer, ForeignKey('profile.id')),
-                        Column(column, Integer, ForeignKey('{}.id'.format(table_name))),
-                        UniqueConstraint('profile_id', column))
+    assoc = Table(
+        '{}_profiles'.format(table_name), Base.metadata, Column(
+            'profile_id', Integer, ForeignKey('profile.id')), Column(
+            column, Integer, ForeignKey(
+                '{}.id'.format(table_name))), UniqueConstraint(
+                    'profile_id', column))
     return assoc
+
 
 class Life(Base):
     __tablename__ = 'life'
@@ -164,7 +234,9 @@ class Life(Base):
     times_opened = Column(Integer, nullable=False, default=0)
 
     def __repr__(self):
-        return "<Version: {}, times_opened:{}>".format(self.version, self.times_opened)
+        return "<Version: {}, times_opened:{}>".format(
+            self.version, self.times_opened)
+
 
 class User(Base):
     __tablename__ = 'user'
@@ -173,6 +245,7 @@ class User(Base):
     address = Column(String, nullable=False, default='', unique=True)
     context_id = Column(String, nullable=False)
     events = relationship("Event", lazy='dynamic', back_populates='user')
+
 
 class Profile(Base):
     __tablename__ = 'profile'
@@ -183,7 +256,9 @@ class Profile(Base):
     timestamp = Column(ArrowType, nullable=False, default=arrow.now)
 
     def __repr__(self):
-        return "Profile ID:{} Size:{} Path:{}".format(self.id, self.size, self.path)
+        return "Profile ID:{} Size:{} Path:{}".format(
+            self.id, self.size, self.path)
+
 
 class Event(Base):
     __tablename__ = 'event'
@@ -197,9 +272,17 @@ class Event(Base):
     timestamp = Column(ArrowType, nullable=False, default=arrow.now)
     action = Column(Enum(Action), nullable=False, default=Action.read)
     user_id = Column(Integer, ForeignKey('user.id'))
-    user = relationship("User", back_populates="events", cascade="save-update, merge, refresh-expire")
+    user = relationship(
+        "User",
+        back_populates="events",
+        cascade="save-update, merge, refresh-expire")
 
-    def __init__(self, item, action=Action.read, user_id=None, timestamp=arrow.now()):
+    def __init__(
+            self,
+            item,
+            action=Action.read,
+            user_id=None,
+            timestamp=arrow.now()):
         assert isinstance(item, Base)
         self.user_id = user_id
         self.item_id = item.id
@@ -207,9 +290,11 @@ class Event(Base):
         self.timestamp = timestamp
         self.action = action
 
+
 @generic_repr
 class Hash(NameMixin, Base):
     __tablename__ = 'hash'
+
 
 class NamespaceTags(Base):
     __tablename__ = 'namespace_tags'
@@ -219,11 +304,16 @@ class NamespaceTags(Base):
     __table_args__ = (UniqueConstraint('tag_id', 'namespace_id'),)
 
     tag = relationship("Tag", cascade="save-update, merge, refresh-expire")
-    namespace = relationship("Namespace", cascade="save-update, merge, refresh-expire")
+    namespace = relationship("Namespace",
+                             cascade="save-update, merge, refresh-expire")
 
     def mapping_exists(self):
         sess = constants.db_session()
-        e = sess.query(self.__class__).filter_by(and_(tag_id=self.tag_id, namespace_id=self.namespace_id)).scalar()
+        e = sess.query(
+            self.__class__).filter_by(
+            and_(
+                tag_id=self.tag_id,
+                namespace_id=self.namespace_id)).scalar()
         if not e:
             e = self
         sess.close()
@@ -233,32 +323,52 @@ class NamespaceTags(Base):
         self.namespace = ns
         self.tag = tag
 
+
 @generic_repr
 class Tag(NameMixin, Base):
     __tablename__ = 'tag'
 
-    namespaces = relationship("Namespace", secondary='namespace_tags', back_populates='tags', lazy="dynamic")
+    namespaces = relationship(
+        "Namespace",
+        secondary='namespace_tags',
+        back_populates='tags',
+        lazy="dynamic")
+
 
 class Namespace(NameMixin, Base):
     __tablename__ = 'namespace'
 
-    tags = relationship("Tag", secondary='namespace_tags', back_populates='namespaces', lazy="dynamic")
+    tags = relationship(
+        "Tag",
+        secondary='namespace_tags',
+        back_populates='namespaces',
+        lazy="dynamic")
 
-taggable_tags = Table('taggable_tags', Base.metadata,
-                        Column('namespace_tag_id', Integer, ForeignKey('namespace_tags.id')),
-                        Column('taggable_id', Integer, ForeignKey('taggable.id')),
-                        UniqueConstraint('namespace_tag_id', 'taggable_id'))
+
+taggable_tags = Table(
+    'taggable_tags', Base.metadata, Column(
+        'namespace_tag_id', Integer, ForeignKey('namespace_tags.id')), Column(
+            'taggable_id', Integer, ForeignKey('taggable.id')), UniqueConstraint(
+                'namespace_tag_id', 'taggable_id'))
+
 
 class Taggable(Base):
     __tablename__ = 'taggable'
 
-    tags = relationship("NamespaceTags", secondary=taggable_tags, lazy="dynamic")
+    tags = relationship(
+        "NamespaceTags",
+        secondary=taggable_tags,
+        lazy="dynamic")
+
 
 class TaggableMixin:
 
     @declared_attr
     def taggable(cls):
-        return relationship("Taggable", single_parent=True, cascade="all, delete-orphan")
+        return relationship(
+            "Taggable",
+            single_parent=True,
+            cascade="all, delete-orphan")
 
     @declared_attr
     def taggable_id(cls):
@@ -272,34 +382,52 @@ class TaggableMixin:
     def tags(self):
         return self.taggable.tags
 
-gallery_artists = Table('gallery_artists', Base.metadata,
-                        Column('artist_id', Integer, ForeignKey('artist.id')),
-                        Column('gallery_id', Integer, ForeignKey('gallery.id')),
-                        UniqueConstraint('artist_id', 'gallery_id'))
+
+gallery_artists = Table(
+    'gallery_artists', Base.metadata, Column(
+        'artist_id', Integer, ForeignKey('artist.id')), Column(
+            'gallery_id', Integer, ForeignKey('gallery.id')), UniqueConstraint(
+                'artist_id', 'gallery_id'))
+
 
 @generic_repr
 class Artist(NameMixin, Base):
     __tablename__ = 'artist'
 
-    galleries = relationship("Gallery", secondary=gallery_artists, back_populates='artists', lazy="dynamic")
+    galleries = relationship(
+        "Gallery",
+        secondary=gallery_artists,
+        back_populates='artists',
+        lazy="dynamic")
 
-gallery_circles = Table('gallery_circles', Base.metadata,
-                        Column('circle_id', Integer, ForeignKey('circle.id',)),
-                        Column('gallery_id', Integer, ForeignKey('gallery.id',)),
-                        UniqueConstraint('circle_id', 'gallery_id'))
+
+gallery_circles = Table(
+    'gallery_circles', Base.metadata, Column(
+        'circle_id', Integer, ForeignKey(
+            'circle.id',)), Column(
+                'gallery_id', Integer, ForeignKey(
+                    'gallery.id',)), UniqueConstraint(
+                        'circle_id', 'gallery_id'))
+
 
 @generic_repr
 class Circle(NameMixin, Base):
     __tablename__ = 'circle'
 
-    galleries = relationship("Gallery", secondary=gallery_circles, back_populates='circles', lazy="dynamic")
+    galleries = relationship(
+        "Gallery",
+        secondary=gallery_circles,
+        back_populates='circles',
+        lazy="dynamic")
+
 
 gallery_lists = Table('gallery_lists', Base.metadata,
-                        Column('list_id', Integer, ForeignKey('list.id')),
-                        Column('gallery_id', Integer, ForeignKey('gallery.id')),
-                        UniqueConstraint('list_id', 'gallery_id'))
+                      Column('list_id', Integer, ForeignKey('list.id')),
+                      Column('gallery_id', Integer, ForeignKey('gallery.id')),
+                      UniqueConstraint('list_id', 'gallery_id'))
 
 list_profiles = profile_association("list")
+
 
 @generic_repr
 class GalleryList(ProfileMixin, NameMixin, Base):
@@ -310,44 +438,80 @@ class GalleryList(ProfileMixin, NameMixin, Base):
     l_case = Column(Boolean, nullable=False, default=False)
     strict = Column(Boolean, nullable=False, default=False)
 
-    galleries = relationship("Gallery", secondary=gallery_lists, back_populates='lists', lazy="dynamic")
-    profiles = relationship("Profile", secondary=list_profiles, lazy='joined', cascade="all")
+    galleries = relationship(
+        "Gallery",
+        secondary=gallery_lists,
+        back_populates='lists',
+        lazy="dynamic")
+    profiles = relationship(
+        "Profile",
+        secondary=list_profiles,
+        lazy='joined',
+        cascade="all")
+
 
 @generic_repr
 class Status(NameMixin, Base):
     __tablename__ = 'status'
 
-    groupings = relationship("Grouping", lazy='dynamic', back_populates='status')
+    groupings = relationship(
+        "Grouping",
+        lazy='dynamic',
+        back_populates='status')
+
 
 grouping_profiles = profile_association("grouping")
+
 
 @generic_repr
 class Grouping(ProfileMixin, NameMixin, Base):
     __tablename__ = 'grouping'
     status_id = Column(Integer, ForeignKey('status.id'))
 
-    galleries = relationship("Gallery", back_populates="grouping", lazy="dynamic", cascade="all, delete-orphan")
-    profiles = relationship("Profile", secondary=grouping_profiles, lazy='joined', cascade="all")
-    status = relationship("Status", back_populates="groupings", cascade="save-update, merge, refresh-expire")
+    galleries = relationship(
+        "Gallery",
+        back_populates="grouping",
+        lazy="dynamic",
+        cascade="all, delete-orphan")
+    profiles = relationship(
+        "Profile",
+        secondary=grouping_profiles,
+        lazy='joined',
+        cascade="all")
+    status = relationship(
+        "Status",
+        back_populates="groupings",
+        cascade="save-update, merge, refresh-expire")
+
 
 @generic_repr
 class Language(NameMixin, Base):
     __tablename__ = 'language'
 
-    galleries = relationship("Gallery", lazy='dynamic', back_populates='language')
+    galleries = relationship(
+        "Gallery",
+        lazy='dynamic',
+        back_populates='language')
+
 
 @generic_repr
 class Category(NameMixin, Base):
     __tablename__ = 'category'
 
-    galleries = relationship("Gallery", lazy='dynamic', back_populates='category')
+    galleries = relationship(
+        "Gallery",
+        lazy='dynamic',
+        back_populates='category')
 
-gallery_collections = Table('gallery_collections', Base.metadata,
-                        Column('collection_id', Integer, ForeignKey('collection.id')),
-                        Column('gallery_id', Integer, ForeignKey('gallery.id')),
-                        UniqueConstraint('collection_id', 'gallery_id'))
+
+gallery_collections = Table(
+    'gallery_collections', Base.metadata, Column(
+        'collection_id', Integer, ForeignKey('collection.id')), Column(
+            'gallery_id', Integer, ForeignKey('gallery.id')), UniqueConstraint(
+                'collection_id', 'gallery_id'))
 
 collection_profiles = profile_association("collection")
+
 
 @generic_repr
 class Collection(ProfileMixin, Base):
@@ -357,10 +521,21 @@ class Collection(ProfileMixin, Base):
     info = Column(String, nullable=False, default='')
     pub_date = Column(ArrowType)
 
-    galleries = relationship("Gallery", secondary=gallery_collections, back_populates="collections", lazy="dynamic", cascade="save-update, merge, refresh-expire")
-    profiles = relationship("Profile", secondary=collection_profiles, lazy='joined', cascade="all")
+    galleries = relationship(
+        "Gallery",
+        secondary=gallery_collections,
+        back_populates="collections",
+        lazy="dynamic",
+        cascade="save-update, merge, refresh-expire")
+    profiles = relationship(
+        "Profile",
+        secondary=collection_profiles,
+        lazy='joined',
+        cascade="all")
+
 
 gallery_profiles = profile_association("gallery")
+
 
 @generic_repr
 class Gallery(TaggableMixin, ProfileMixin, Base):
@@ -383,18 +558,61 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
     language_id = Column(Integer, ForeignKey('language.id'))
     grouping_id = Column(Integer, ForeignKey('grouping.id'))
 
-
-    grouping = relationship("Grouping", back_populates="galleries", cascade="save-update, merge, refresh-expire")
-    collections = relationship("Collection", secondary=gallery_collections, back_populates="galleries", cascade="save-update, merge, refresh-expire", lazy="dynamic")
-    urls = relationship("GalleryUrl", back_populates="gallery", lazy='joined', cascade="all,delete-orphan")
-    language = relationship("Language", back_populates="galleries", cascade="save-update, merge, refresh-expire")
-    category = relationship("Category", back_populates="galleries", cascade="save-update, merge, refresh-expire")
-    circles = relationship("Circle", secondary=gallery_circles, back_populates='galleries', lazy="joined", cascade="save-update, merge, refresh-expire")
-    artists = relationship("Artist", secondary=gallery_artists, back_populates='galleries', lazy="joined", cascade="save-update, merge, refresh-expire")
-    lists = relationship("GalleryList", secondary=gallery_lists, back_populates='galleries', lazy="dynamic")
-    pages = relationship("Page", back_populates="gallery", lazy='dynamic', cascade="all,delete-orphan")
-    titles = relationship("Title", back_populates="gallery", lazy='joined', cascade="all,delete-orphan")
-    profiles = relationship("Profile", secondary=gallery_profiles, lazy='joined', cascade="all")
+    grouping = relationship(
+        "Grouping",
+        back_populates="galleries",
+        cascade="save-update, merge, refresh-expire")
+    collections = relationship(
+        "Collection",
+        secondary=gallery_collections,
+        back_populates="galleries",
+        cascade="save-update, merge, refresh-expire",
+        lazy="dynamic")
+    urls = relationship(
+        "GalleryUrl",
+        back_populates="gallery",
+        lazy='joined',
+        cascade="all,delete-orphan")
+    language = relationship(
+        "Language",
+        back_populates="galleries",
+        cascade="save-update, merge, refresh-expire")
+    category = relationship(
+        "Category",
+        back_populates="galleries",
+        cascade="save-update, merge, refresh-expire")
+    circles = relationship(
+        "Circle",
+        secondary=gallery_circles,
+        back_populates='galleries',
+        lazy="joined",
+        cascade="save-update, merge, refresh-expire")
+    artists = relationship(
+        "Artist",
+        secondary=gallery_artists,
+        back_populates='galleries',
+        lazy="joined",
+        cascade="save-update, merge, refresh-expire")
+    lists = relationship(
+        "GalleryList",
+        secondary=gallery_lists,
+        back_populates='galleries',
+        lazy="dynamic")
+    pages = relationship(
+        "Page",
+        back_populates="gallery",
+        lazy='dynamic',
+        cascade="all,delete-orphan")
+    titles = relationship(
+        "Title",
+        back_populates="gallery",
+        lazy='joined',
+        cascade="all,delete-orphan")
+    profiles = relationship(
+        "Profile",
+        secondary=gallery_profiles,
+        lazy='joined',
+        cascade="all")
 
     def read(self, user_id, datetime=arrow.now()):
         "Creates a read event for user"
@@ -403,7 +621,8 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
         if sess:
             sess.add(Event(self, Event.Action.read, user_id, datetime))
         else:
-            log.w("Cannot add gallery read event because no session exists for this object")
+            log.w(
+                "Cannot add gallery read event because no session exists for this object")
         self.times_read += 1
         self.last_read = datetime
 
@@ -441,7 +660,7 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
     def exists(self, obj=False, strict=False):
         """Checks if gallery exists by path
         Params:
-            obj -- queries for the full object and returns it 
+            obj -- queries for the full object and returns it
         """
         e = self
         if not constants.db_session:
@@ -454,10 +673,18 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
             if self.in_archive:
                 head, tail = os.path.split(self.path_in_archive)
                 p_a = tail if tail else head
-                e = sess.query(self.__class__.id).filter(and_(g.path.ilike("%{}%".format(p)),
-                                                          g.path_in_archive.ilike("%{}%".format(p_a)))).scalar()
+                e = sess.query(
+                    self.__class__.id).filter(
+                    and_(
+                        g.path.ilike(
+                            "%{}%".format(p)), g.path_in_archive.ilike(
+                            "%{}%".format(p_a)))).scalar()
             else:
-                e = sess.query(self.__class__.id).filter(and_(g.path.ilike("%{}%".format(p)))).scalar()
+                e = sess.query(
+                    self.__class__.id).filter(
+                    and_(
+                        g.path.ilike(
+                            "%{}%".format(p)))).scalar()
             sess.close()
             if not obj:
                 e = e is not None
@@ -465,7 +692,9 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
             log.w("Could not query for gallery existence because no path was set.")
         return e
 
+
 page_profiles = profile_association("page")
+
 
 @generic_repr
 class Page(TaggableMixin, ProfileMixin, Base):
@@ -478,7 +707,11 @@ class Page(TaggableMixin, ProfileMixin, Base):
 
     hash = relationship("Hash", cascade="save-update, merge, refresh-expire")
     gallery = relationship("Gallery", back_populates="pages")
-    profiles = relationship("Profile", secondary=page_profiles, lazy='joined', cascade="all")
+    profiles = relationship(
+        "Profile",
+        secondary=page_profiles,
+        lazy='joined',
+        cascade="all")
 
     @property
     def file_type(self):
@@ -495,7 +728,7 @@ class Page(TaggableMixin, ProfileMixin, Base):
     def exists(self, obj=False):
         """Checks if page exist by path
         Params:
-            obj -- queries for the full object and returns it 
+            obj -- queries for the full object and returns it
         """
         e = self
         if not constants.db_session:
@@ -504,7 +737,12 @@ class Page(TaggableMixin, ProfileMixin, Base):
         p = self.__class__
         if self.path:
             sess = constants.db_session()
-            e = sess.query(p.id).filter(and_(p.path.ilike("%{}%".format(self.path)))).scalar()
+            e = sess.query(
+                p.id).filter(
+                and_(
+                    p.path.ilike(
+                        "%{}%".format(
+                            self.path)))).scalar()
             sess.close()
             if not obj:
                 e = e is not None
@@ -512,14 +750,17 @@ class Page(TaggableMixin, ProfileMixin, Base):
             log.w("Could not query for page existence because no path was set.")
         return e
 
+
 @generic_repr
 class Title(Base):
     __tablename__ = 'title'
-    name = Column(String, nullable=False, default="") # OBS: not unique
+    name = Column(String, nullable=False, default="")  # OBS: not unique
     language_id = Column(Integer, ForeignKey('language.id'))
     gallery_id = Column(Integer, ForeignKey('gallery.id'), nullable=False)
 
-    language = relationship("Language", cascade="save-update, merge, refresh-expire")
+    language = relationship(
+        "Language",
+        cascade="save-update, merge, refresh-expire")
     gallery = relationship("Gallery", back_populates="titles")
 
     def __init__(self, **kwargs):
@@ -541,40 +782,57 @@ def initEvents(sess):
 
     @event.listens_for(sess, 'before_commit')
     def delete_artist_orphans(session):
-        session.query(Artist).filter(~Artist.galleries.any()).delete(synchronize_session=False)
+        session.query(Artist).filter(
+            ~Artist.galleries.any()).delete(
+            synchronize_session=False)
 
     @event.listens_for(sess, 'before_commit')
     def delete_tag_orphans(session):
-        session.query(Tag).filter(~Tag.namespaces.any()).delete(synchronize_session=False)
+        session.query(Tag).filter(
+            ~Tag.namespaces.any()).delete(
+            synchronize_session=False)
 
     @event.listens_for(sess, 'before_commit')
     def delete_namespace_orphans(session):
-        session.query(Namespace).filter(~Namespace.tags.any()).delete(synchronize_session=False)
+        session.query(Namespace).filter(
+            ~Namespace.tags.any()).delete(
+            synchronize_session=False)
 
     @event.listens_for(sess, 'before_commit')
     def delete_namespace_orphans(session):
-        session.query(Namespace).filter(~Namespace.tags.any()).delete(synchronize_session=False)
+        session.query(Namespace).filter(
+            ~Namespace.tags.any()).delete(
+            synchronize_session=False)
 
     @event.listens_for(sess, 'before_commit')
     def delete_namespacetags_orphans(session):
         tagids = [r.id for r in session.query(Tag.id).all()]
         if tagids:
             try:
-                session.query(NamespaceTags.id).filter(~NamespaceTags.tag_id.in_(tagids)).delete(synchronize_session=False)
+                session.query(
+                    NamespaceTags.id).filter(
+                    ~NamespaceTags.tag_id.in_(tagids)).delete(
+                    synchronize_session=False)
             except exc.OperationalError:
-                for id, tagid in session.query(NamespaceTags.id, NamespaceTags.tag_id).all():
-                    if not tagid in tagids:
+                for id, tagid in session.query(
+                        NamespaceTags.id, NamespaceTags.tag_id).all():
+                    if tagid not in tagids:
                         session.delete(NamespaceTags.id == id)
         else:
             session.query(NamespaceTags).delete(synchronize_session=False)
 
     @event.listens_for(sess, 'before_commit')
     def delete_circle_orphans(session):
-        session.query(Circle).filter(~Circle.galleries.any()).delete(synchronize_session=False)
+        session.query(Circle).filter(
+            ~Circle.galleries.any()).delete(
+            synchronize_session=False)
 
     @event.listens_for(sess, 'before_commit')
     def delete_grouping_orphans(session):
-        session.query(Grouping).filter(~Grouping.galleries.any()).delete(synchronize_session=False)
+        session.query(Grouping).filter(
+            ~Grouping.galleries.any()).delete(
+            synchronize_session=False)
+
 
 @compiles(RegexMatchExpression, 'sqlite')
 def sqlite_regex_match(element, compiler, **kw):
@@ -589,14 +847,15 @@ def sqlite_regex_match(element, compiler, **kw):
         would_be_sql_string = ' '.join((compiler.process(element.left),
                                         operator,
                                         compiler.process(element.right)))
-        raise exc.StatementError("unknown regular expression match operator: %s" % operator,
-            would_be_sql_string, None, e)
+        raise exc.StatementError(
+            "unknown regular expression match operator: %s" %
+            operator, would_be_sql_string, None, e)
 
     # compile the expression as an invocation of the custom function
     regex_func = getattr(func, func_name)
     regex_func_call = regex_func(element.left, element.right)
     return compiler.process(regex_func_call)
-    
+
 
 @event.listens_for(Engine, 'connect')
 def sqlite_engine_connect(dbapi_connection, connection_record):
@@ -608,9 +867,11 @@ def sqlite_engine_connect(dbapi_connection, connection_record):
     for name, function in SQLITE_REGEX_FUNCTIONS.values():
         dbapi_connection.create_function(name, 2, function)
 
+
 def init_defaults(sess):
     "Initializes default items"
     pass
+
 
 def check_db_version(sess):
     """Checks if DB version is allowed.
@@ -618,11 +879,12 @@ def check_db_version(sess):
     try:
         life = sess.query(Life).one_or_none()
     except exc.NoSuchTableError:
-        raise exceptions.DatabaseInitError("Invalid database. NoSuchTableError.")
+        raise exceptions.DatabaseInitError(
+            "Invalid database. NoSuchTableError.")
     if life:
         if life.version not in constants.version_db:
-            msg = 'Local database version: {}\nSupported database versions:{}'.format(life.version,
-                                                                         constants.version_db)
+            msg = 'Local database version: {}\nSupported database versions:{}'.format(
+                life.version, constants.version_db)
             log.c("Incompatible database version")
             log.d(msg)
             raise exceptions.DatabaseVersionError(msg)
@@ -641,6 +903,7 @@ def check_db_version(sess):
     sess.commit()
     return True
 
+
 def init(**kwargs):
     db_path = constants.db_path_dev if constants.dev else constants.db_path
     Session = scoped_session(sessionmaker())
@@ -652,6 +915,7 @@ def init(**kwargs):
 
     return check_db_version(Session())
 
+
 def add_bulk(session, objects, amount=100):
     """
     Add objects in a bulk of x amount
@@ -662,7 +926,8 @@ def add_bulk(session, objects, amount=100):
         session.commit()
         left = objects[:amount]
 
-def table_attribs(model, id = False):
+
+def table_attribs(model, id=False):
     """Returns a dict of table column names and their SQLAlchemy value objects
     Params:
         id -- retrieve id columns instead of the sqlalchemy object (to avoid a db query etc.)
@@ -676,10 +941,10 @@ def table_attribs(model, id = False):
 
         exclude = [y.key for y in attr if y.key.endswith('_id')]
         if id:
-            exclude = [x[:-3] for x in exclude] # -3 for '_id'
+            exclude = [x[:-3] for x in exclude]  # -3 for '_id'
 
         for x in attr:
-            if not x.key in exclude:
+            if x.key not in exclude:
                 d[x.key] = x.value
 
     else:
@@ -689,17 +954,19 @@ def table_attribs(model, id = False):
                 d[name] = value
     return d
 
+
 def is_instanced(obj):
     "Check if db object is an instanced object"
     if isinstance(obj, Base):
         return isinstance(inspect(obj), state.InstanceState)
     return False
 
+
 def is_list(obj):
     "Check if db object is a db list"
     return isinstance(obj, collections.InstrumentedList)
 
+
 def is_query(obj):
     "Check if db object is a dynamic query object (issued by lazy='dynamic')"
     return isinstance(obj, dynamic.AppenderQuery)
-

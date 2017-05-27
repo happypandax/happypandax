@@ -11,15 +11,17 @@ from datetime import datetime
 from happypanda.common import constants, exceptions
 from happypanda.server.core import db
 
+
 def finalize(msg_dict, name=constants.server_name):
     "Finalize dict message before sending"
     enc = 'utf-8'
     msg = {
-        'name':name,
-        'data':msg_dict,
-        }
+        'name': name,
+        'data': msg_dict,
+    }
 
     return bytes(json.dumps(msg), enc)
+
 
 class CoreMessage:
     "Encapsulates return values from methods in the interface module"
@@ -43,16 +45,19 @@ class CoreMessage:
     def json_friendly(self, include_key=True):
         "Serialize to JSON structure"
         d = self.data()
-        assert isinstance(d, (dict, list)), "self.data() must return a dict or list!"
+        assert isinstance(
+            d, (dict, list)), "self.data() must return a dict or list!"
         if self._error:
             d[self._error.key] = self._error.data()
         if include_key:
             return {self.key: d}
-        else: return d
+        else:
+            return d
 
     def serialize(self, name=constants.server_name):
         "Serialize this object to bytes"
         return finalize(self.json_friendly(), name)
+
 
 class Identity(CoreMessage):
     """
@@ -66,6 +71,7 @@ class Identity(CoreMessage):
     def data(self):
         return self._obj
 
+
 class List(CoreMessage):
     """
     Encapsulates a list of objects of the same type
@@ -77,8 +83,12 @@ class List(CoreMessage):
         self.items = []
 
     def append(self, item):
-        assert isinstance(item, self._type), "item must be a {}".format(self._type)
-        d = item.json_friendly(include_key=False) if isinstance(item, CoreMessage) else item
+        assert isinstance(
+            item, self._type), "item must be a {}".format(
+            self._type)
+        d = item.json_friendly(
+            include_key=False) if isinstance(
+            item, CoreMessage) else item
         self.items.append(d)
 
     def data(self):
@@ -106,6 +116,7 @@ class Message(CoreMessage):
     def from_json(self, j):
         return super().from_json(j)
 
+
 class Error(CoreMessage):
     "An error object"
 
@@ -118,23 +129,29 @@ class Error(CoreMessage):
         self.msg = msg
 
     def data(self):
-        return {'code':self.error, self.msg.key:self.msg.data()}
+        return {'code': self.error, self.msg.key: self.msg.data()}
 
     def from_json(self, j):
         return super().from_json(j)
 
+
 class DatabaseMessage(CoreMessage):
     "Database item mapper"
 
-    _clsmembers = None # not all classes have been defined yet
-    _db_clsmembers = [x for x in inspect.getmembers(db, inspect.isclass) if issubclass(x[1], db.Base)]
+    _clsmembers = None  # not all classes have been defined yet
+    _db_clsmembers = [
+        x for x in inspect.getmembers(
+            db, inspect.isclass) if issubclass(
+            x[1], db.Base)]
 
     def __init__(self, key, db_item):
         super().__init__(key)
         assert isinstance(db_item, db.Base)
         assert db.is_instanced(db_item), "must be instanced database object"
         self.item = db_item
-        DatabaseMessage._clsmembers = {x:globals()[x] for x in globals() if inspect.isclass(globals()[x])}
+        DatabaseMessage._clsmembers = {
+            x: globals()[x] for x in globals() if inspect.isclass(
+                globals()[x])}
 
     def data(self, load_values=False, load_collections=False):
         """
@@ -144,9 +161,17 @@ class DatabaseMessage(CoreMessage):
         """
         self._check_link()
         gattribs = db.table_attribs(self.item, not load_values)
-        return {x: self._unpack(x, gattribs[x], load_collections) for x in gattribs}
+        return {
+            x: self._unpack(
+                x,
+                gattribs[x],
+                load_collections) for x in gattribs}
 
-    def json_friendly(self, load_values=False, load_collections=False, include_key=True):
+    def json_friendly(
+            self,
+            load_values=False,
+            load_collections=False,
+            include_key=True):
         """Serialize to JSON structure
         Params:
             load_values -- Queries database for unloaded values
@@ -158,15 +183,24 @@ class DatabaseMessage(CoreMessage):
             d[self._error.key] = self._error.data()
         if include_key:
             return {self.key: d}
-        else: return d
+        else:
+            return d
 
-    def serialize(self, load_values=False, load_collections=False, name=constants.server_name):
+    def serialize(
+            self,
+            load_values=False,
+            load_collections=False,
+            name=constants.server_name):
         """Serialize this object to bytes
                 Params:
             load_values -- Queries database for unloaded values
             load_collections -- Queries database to fetch all items in a collection
         """
-        return finalize(self.json_friendly(load_values, load_collections), name)
+        return finalize(
+            self.json_friendly(
+                load_values,
+                load_collections),
+            name)
 
     def _unpack(self, name, attrib, load_collections):
         "Helper method to unpack SQLalchemy objects"
@@ -180,17 +214,19 @@ class DatabaseMessage(CoreMessage):
             exclude = (db.NameMixin.__name__,)
 
             for cls_name, cls_obj in self._db_clsmembers:
-                if not cls_name in exclude:
+                if cls_name not in exclude:
                     if isinstance(attrib, cls_obj):
                         if cls_name in self._clsmembers:
                             msg_obj = self._clsmembers[cls_name](attrib)
                             break
-            
+
             if not msg_obj:
                 if isinstance(attrib, db.NameMixin):
                     msg_obj = NameMixin(name, attrib)
                 else:
-                    raise NotImplementedError("Message encapsulation for this database object does not exist ({})".format(type(attrib)))
+                    raise NotImplementedError(
+                        "Message encapsulation for this database object does not exist ({})".format(
+                            type(attrib)))
 
             return msg_obj.data() if msg_obj else None
 
@@ -199,7 +235,8 @@ class DatabaseMessage(CoreMessage):
 
         elif db.is_query(attrib):
             if load_collections:
-                return [self._unpack(name, x, load_collections) for x in attrib.all()]
+                return [self._unpack(name, x, load_collections)
+                        for x in attrib.all()]
             else:
                 return []
 
@@ -215,11 +252,15 @@ class DatabaseMessage(CoreMessage):
         elif isinstance(attrib, (bool, int, str)):
             return attrib
         else:
-            raise NotImplementedError("Unpacking method for this attribute does not exist ({})".format(type(attrib)))
+            raise NotImplementedError(
+                "Unpacking method for this attribute does not exist ({})".format(
+                    type(attrib)))
 
     def _check_link(self):
         if not self.item:
-            raise exceptions.CoreError("This object has no linked database item")
+            raise exceptions.CoreError(
+                "This object has no linked database item")
+
 
 class Gallery(DatabaseMessage):
     "Encapsulates database gallery object"
@@ -231,6 +272,7 @@ class Gallery(DatabaseMessage):
     def from_json(self, j):
         return super().from_json(j)
 
+
 class Artist(DatabaseMessage):
     "Encapsulates database artist object"
 
@@ -241,6 +283,7 @@ class Artist(DatabaseMessage):
     def from_json(self, j):
         return super().from_json(j)
 
+
 class Collection(DatabaseMessage):
     "Encapsulates database collection object"
 
@@ -248,12 +291,14 @@ class Collection(DatabaseMessage):
         assert isinstance(db_item, db.Collection)
         super().__init__('collection', db_item)
 
+
 class Grouping(DatabaseMessage):
     "Encapsulates database grouping object"
 
     def __init__(self, db_item):
         assert isinstance(db_item, db.Grouping)
         super().__init__('grouping', db_item)
+
 
 class NameMixin(DatabaseMessage):
     "Encapsulates database namemixin object"
@@ -265,6 +310,7 @@ class NameMixin(DatabaseMessage):
     def from_json(self, j):
         return super().from_json(j)
 
+
 class Profile(DatabaseMessage):
     "Encapsulates database profile object"
 
@@ -274,6 +320,7 @@ class Profile(DatabaseMessage):
 
     def from_json(self, j):
         return super().from_json(j)
+
 
 class Page(DatabaseMessage):
     "Encapsulates database page object"
@@ -285,6 +332,7 @@ class Page(DatabaseMessage):
     def from_json(self, j):
         return super().from_json(j)
 
+
 class Title(DatabaseMessage):
     "Encapsulates database title object"
 
@@ -294,6 +342,7 @@ class Title(DatabaseMessage):
 
     def from_json(self, j):
         return super().from_json(j)
+
 
 class GalleryUrl(DatabaseMessage):
     "Encapsulates database galleryurl object"
@@ -305,6 +354,7 @@ class GalleryUrl(DatabaseMessage):
     def from_json(self, j):
         return super().from_json(j)
 
+
 class GalleryList(DatabaseMessage):
     "Encapsulates database gallerylist object"
 
@@ -315,10 +365,11 @@ class GalleryList(DatabaseMessage):
     def from_json(self, j):
         return super().from_json(j)
 
+
 class Function(CoreMessage):
     "A function message"
 
-    def __init__(self, fname, data = None, error = None):
+    def __init__(self, fname, data=None, error=None):
         super().__init__('function')
         assert isinstance(fname, str)
         self.name = fname
@@ -333,8 +384,7 @@ class Function(CoreMessage):
 
     def data(self):
         d = self._data.json_friendly(include_key=False) if self._data else None
-        return {'fname':self.name, 'data':d}
+        return {'fname': self.name, 'data': d}
 
     def from_json(self, j):
         return super().from_json(j)
-

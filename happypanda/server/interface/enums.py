@@ -1,5 +1,6 @@
 from happypanda.common import utils
 
+
 class GalleryFilter(utils.APIEnum):
     #: Library
     Library = 0
@@ -7,6 +8,7 @@ class GalleryFilter(utils.APIEnum):
     Favorite = 1
     #: Inbox
     Inbox = 2
+
 
 class ItemType(utils.APIEnum):
     #: Gallery
@@ -19,6 +21,7 @@ class ItemType(utils.APIEnum):
     Page = 3
     #: Grouping
     Grouping = 4
+
 
 class ImageSize(utils.APIEnum):
     #: Original

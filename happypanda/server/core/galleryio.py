@@ -5,6 +5,7 @@ import re
 from happypanda.common import constants, utils
 from happypanda.server.core import db, archive, plugins
 
+
 class GalleryScan:
     """
     Scan filesystem for galleries
@@ -13,6 +14,7 @@ class GalleryScan:
     Returns:
         Database Gallery objects
     """
+
     def __init__(self, list_of_paths):
         pass
 
@@ -34,7 +36,7 @@ class GalleryScan:
             pass
         elif ptype == utils.PathType.Directoy:
             contents = [x.path for x in os.scandir(path) if not x.is_dir()]
-            
+
         if GalleryScan.evaluate_gallery(contents):
             gfs = GalleryFS(path, path_in_archive)
             gfs.load()
@@ -54,7 +56,8 @@ class GalleryScan:
             bool
         """
         if os.path.exists(path):
-            if utils.PathType.check(path) in (utils.PathType.Archive, utils.PathType.Directoy):
+            if utils.PathType.check(path) in (
+                    utils.PathType.Archive, utils.PathType.Directoy):
                 return True
         return False
 
@@ -87,6 +90,7 @@ class GalleryScan:
         if constants.core_plugin:
             with constants.core_plugin.instanced.on_gallery_name_parse as hook:
                 r = hook(name)
+
                 def plugin_assertion(x):
                     try:
                         if not isinstance(x['title'], str):
@@ -106,7 +110,7 @@ class GalleryScan:
                 if dic:
                     return dic
 
-        name = " ".join(name.split()) # remove unecessary whitespace
+        name = " ".join(name.split())  # remove unecessary whitespace
         if '/' in name:
             try:
                 name = os.path.split(name)[1]
@@ -119,7 +123,7 @@ class GalleryScan:
             if name.endswith(x):
                 name = name[:-len(x)]
 
-        dic = {'title':"", 'artist':"", 'language':"", 'convention':""}
+        dic = {'title': "", 'artist': "", 'language': "", 'convention': ""}
         try:
             a = re.findall('((?<=\[) *[^\]]+( +\S+)* *(?=\]))', name)
             assert len(a) != 0
@@ -128,7 +132,7 @@ class GalleryScan:
 
             try:
                 assert a[1]
-                lang = [] # TODO: retrieve languages from DB
+                lang = []  # TODO: retrieve languages from DB
                 for x in a:
                     l = x[0].strip()
                     l = l.lower()
@@ -137,9 +141,9 @@ class GalleryScan:
                         dic['language'] = l
                         break
                 else:
-                    dic['language'] = 'English' # set default language
+                    dic['language'] = 'English'  # set default language
             except IndexError:
-                dic['language'] = 'English' # set default language
+                dic['language'] = 'English'  # set default language
 
             t = name
             for x in a:
@@ -153,6 +157,7 @@ class GalleryScan:
 
         return dic
 
+
 class GalleryFS:
     """
     Encapsulates an archive/folder on the filesystem
@@ -162,7 +167,7 @@ class GalleryFS:
         db_gallery -- Database Gallery object
     """
 
-    def __init__(self, path, path_in_archive='', db_gallery = None):
+    def __init__(self, path, path_in_archive='', db_gallery=None):
         self.gallery_type = utils.PathType.check(path)
         self.gallery = db_gallery
         self.path = path
@@ -172,7 +177,7 @@ class GalleryFS:
         self.artists = []
         self.language = ''
         self.convention = ''
-        self.pages = [] # tuples: (number, page_file)
+        self.pages = []  # tuples: (number, page_file)
 
     def load(self):
         "Extracts gallery data"
@@ -204,19 +209,24 @@ class GalleryFS:
                 t = x
                 break
         self.gallery.titles.append(t)
-        [self.gallery.artists.append(db.Artist(name=x).exists(True, True)) for x in self.artists]
+        [self.gallery.artists.append(
+            db.Artist(name=x).exists(True, True)) for x in self.artists]
         db_pages = self.gallery.pages.count()
         if db_pages != len(self.pages):
             if db_pages:
                 self.gallery.pages.delete()
-            [self.gallery.pages.append(db.Page(path=x[1], number=x[0])) for x in self.pages]
+            [self.gallery.pages.append(
+                db.Page(path=x[1], number=x[0])) for x in self.pages]
 
         return self.gallery
 
     def _get_folder_pages(self):
         ""
         pages = []
-        dir_images = [x.path for x in os.scandir(self.path) if not x.is_dir() and x.name.endswith(constants.supported_images)]
+        dir_images = [
+            x.path for x in os.scandir(
+                self.path) if not x.is_dir() and x.name.endswith(
+                constants.supported_images)]
         for n, x in enumerate(sorted(dir_images), 1):
             pages.append((n, os.path.abspath(x)))
         return pages

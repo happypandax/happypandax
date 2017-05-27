@@ -1,5 +1,6 @@
 from happypanda.common import constants
 
+
 class HPlugin:
 
     ID = "9fb4ce2a-fe47-42ef-8c58-e039d999eb19"
@@ -11,6 +12,6 @@ class HPlugin:
 
     def __init__(self, *args, **kwargs):
 
-        ## Gallery IO
-        self.create_hook("on_gallery_from_path") # GalleryFS
+        # Gallery IO
+        self.create_hook("on_gallery_from_path")  # GalleryFS
         self.create_hook("on_gallery_name_parse")

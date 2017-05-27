@@ -6,10 +6,12 @@ from contextlib import contextmanager
 
 from happypanda.common import exceptions
 
+
 class Config:
 
     def __init__(self, path, filename1, filename2):
-        self._cfg = configparser.ConfigParser(allow_no_value=True, default_section='common')
+        self._cfg = configparser.ConfigParser(
+            allow_no_value=True, default_section='common')
         self._cfg_d = {}
         self._current_ns = None
         self._path = path
@@ -50,8 +52,12 @@ class Config:
     def update(self, key, value):
         "Update a setting. Returns value"
         assert self._current_ns, "No namespace has been set"
-        if not key in self._cfg[self._current_ns]:
-            raise exceptions.CoreError("Config.update", "key '{}' doesn't exist in namespace '{}'".format(key, self._current_ns))
+        if key not in self._cfg[self._current_ns]:
+            raise exceptions.CoreError(
+                "Config.update",
+                "key '{}' doesn't exist in namespace '{}'".format(
+                    key,
+                    self._current_ns))
         self.define(key, value)
         return value
 
@@ -59,9 +65,9 @@ class Config:
     def namespace(self, ns):
         assert isinstance(ns, str), "Namespace must be str"
         ns = ns.lower().capitalize()
-        if not ns in self._cfg:
+        if ns not in self._cfg:
             self._cfg[ns] = {}
-        if not ns in self._cfg_d:
+        if ns not in self._cfg_d:
             self._cfg_d[ns] = {}
 
         self._current_ns = ns
@@ -73,7 +79,7 @@ class Config:
         ns = ns.lower().capitalize()
         key = key.lower()
         with self.namespace(ns):
-            if not key in self._cfg[ns]:
+            if key not in self._cfg[ns]:
                 if create:
                     self.define(key, default, description)
                 return default
@@ -84,7 +90,7 @@ class Config:
             else:
                 v = t(self._cfg[ns][key])
 
-            if not t is None and v is None:
+            if t is None and v is not None:
                 return default
 
             return v
@@ -95,12 +101,13 @@ class Config:
         if description:
             self._cfg.set(self._current_ns, '# {}'.format(description))
         self._cfg.set(self._current_ns, key, str(value))
-        self._cfg_d[self._current_ns][key] = {'type':type(value), 'descr':description}
+        self._cfg_d[self._current_ns][key] = {
+            'type': type(value), 'descr': description}
 
     def doc_render(self):
         """
         # [
-        #   [   
+        #   [
         #    [[val1, val2, val3], ...]],
         #    "header descr"
         #   ],
@@ -111,7 +118,7 @@ class Config:
             con = []
             for key in self._cfg[s]:
                 if key and not key.startswith('#'):
-                    con.append([key, self._cfg[s][key], self._cfg_d[s][key]['descr']])
+                    con.append([key, self._cfg[s][key],
+                                self._cfg_d[s][key]['descr']])
             sections.append([con, s])
         return sections
-

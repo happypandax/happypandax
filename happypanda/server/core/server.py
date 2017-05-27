@@ -1,5 +1,5 @@
 ﻿from gevent import monkey
-monkey.patch_all() # necessary to make these functions play nice with gevent
+monkey.patch_all()  # necessary to make these functions play nice with gevent
 
 import json
 import uuid
@@ -19,14 +19,17 @@ from happypanda.server.core import db, torrent
 
 log = utils.Logger(__name__)
 
+
 def list_api():
     "Returns {name : object}"
-    _special_functions = tuple() # functions we don't consider as part of the api
+    _special_functions = tuple()  # functions we don't consider as part of the api
     all_functions = []
     mods = utils.get_package_modules(interface)
     for m in mods:
         all_functions.extend(getmembers(m, isfunction))
-    return {x[0] : x[1] for x in all_functions if not x[0] in _special_functions and not x[0].startswith('_')}
+    return {x[0]: x[1] for x in all_functions if not x[0]
+            in _special_functions and not x[0].startswith('_')}
+
 
 class ClientHandler:
     "Handles clients"
@@ -45,7 +48,9 @@ class ClientHandler:
     def get_context(self):
         "Creates or retrieves existing context object for this client"
         s = constants.db_session()
-        self.context = s.query(db.User).filter(db.User.address == self._ip).one_or_none()
+        self.context = s.query(
+            db.User).filter(
+            db.User.address == self._ip).one_or_none()
         if not self.context:
             self.context = db.User()
             self.context.address = self._ip
@@ -59,12 +64,12 @@ class ClientHandler:
         """
         Send data to client
         Params:
-            client -- 
+            client --
             msg -- bytes
         """
         #assert isinstance(client, ...)
-        assert isinstance(msg, bytes) 
-        
+        assert isinstance(msg, bytes)
+
         log.d("Sending", sys.getsizeof(msg), "bytes to", client)
         client.sendall(msg)
         client.sendall(constants.postfix)
@@ -106,41 +111,47 @@ class ClientHandler:
             for f in msg_data:
                 try:
                     log.d("Cheking parameters in:", f)
-                    self._check_missing(where, "Function message", function_keys, f)
+                    self._check_missing(
+                        where, "Function message", function_keys, f)
                 except exceptions.InvalidMessage as e:
                     raise
 
                 function_name = f['fname']
                 try:
                     # check function
-                    if not function_name in self.api:
-                        e = exceptions.InvalidMessage(where, "Function not found: '{}'".format(function_name))
+                    if function_name not in self.api:
+                        e = exceptions.InvalidMessage(
+                            where, "Function not found: '{}'".format(function_name))
                         self.errors.append((function_name, e))
                         continue
 
                     # check parameters
                     func_failed = False
-                    func_args = tuple(arg for arg in f if not arg in function_keys)
+                    func_args = tuple(
+                        arg for arg in f if arg not in function_keys)
                     func_varnames = self.api[function_name].__code__.co_varnames
                     need_ctx = 'ctx' in func_varnames
                     for arg in func_args:
-                        if not arg in func_varnames:
-                            e = exceptions.InvalidMessage(where,"Unexpected argument in function '{}': '{}'".format(
-                                function_name,
-                                arg))
+                        if arg not in func_varnames:
+                            e = exceptions.InvalidMessage(
+                                where, "Unexpected argument in function '{}': '{}'".format(
+                                    function_name, arg))
                             self.errors.append((function_name, e))
                             func_failed = True
                             break
                     if func_failed:
                         continue
 
-                    function_tuples.append((self.api[function_name], {x: f[x] for x in func_args}, need_ctx))
+                    function_tuples.append(
+                        (self.api[function_name], {
+                            x: f[x] for x in func_args}, need_ctx))
                 except exceptions.ServerError as e:
                     self.errors.append((function_name, e))
 
             return function_tuples
         else:
-            raise exceptions.InvalidMessage(where, "No list of function objects found in 'data'")
+            raise exceptions.InvalidMessage(
+                where, "No list of function objects found in 'data'")
 
     def _check_both(self, where, msg, keys, data):
         "Invokes both missing and unknown key"
@@ -150,22 +161,27 @@ class ClientHandler:
     def _check_unknown(self, where, msg, keys, data):
         "Checks if there are unknown keys in provided data"
         if len(data) != len(keys):
-            self._check_required_key(where, "{} contains unknown key '{}'".format(msg, "{}"), keys, data)
+            self._check_required_key(
+                where, "{} contains unknown key '{}'".format(
+                    msg, "{}"), keys, data)
 
     def _expect_iterable(self, where, data):
         if not isinstance(data, (list, dict, tuple)):
-            raise exceptions.InvalidMessage(where, "A list/dict was expected, not: {}".format(data))
+            raise exceptions.InvalidMessage(
+                where, "A list/dict was expected, not: {}".format(data))
 
     def _check_missing(self, where, msg, keys, data):
         "Check if required keys are missing in provided data"
-        self._check_required_key(where, "{} missing '{}' key".format(msg, "{}"), data, keys)
+        self._check_required_key(
+            where, "{} missing '{}' key".format(
+                msg, "{}"), data, keys)
 
     def _check_required_key(self, where, msg, required_keys, data):
         ""
         for y in (required_keys, data):
             self._expect_iterable(where, y)
         for x in data:
-            if not x in required_keys:
+            if x not in required_keys:
                 raise exceptions.InvalidMessage(where, msg.format(x))
 
     def handshake(self):
@@ -201,7 +217,10 @@ class ClientHandler:
 
                 # bad functions
                 for fname, e in self.errors:
-                    function_list.append(message.Function(fname, error=message.Error(e.code, e.msg)))
+                    function_list.append(
+                        message.Function(
+                            fname, error=message.Error(
+                                e.code, e.msg)))
                 self.errors.clear()
 
                 self.send(function_list.serialize())
@@ -210,10 +229,11 @@ class ClientHandler:
         except exceptions.CoreError as e:
             self.on_error(e)
 
-        except:
+        except BaseException:
             if not constants.dev:
                 log.exception("An unknown critical error has occurred")
-                self.on_error(exceptions.HappypandaError("An unknown critical error has occurred")) # TODO: include traceback
+                self.on_error(exceptions.HappypandaError(
+                    "An unknown critical error has occurred"))  # TODO: include traceback
             else:
                 raise
 
@@ -237,21 +257,26 @@ class ClientHandler:
         """
         self.send(message.Message("wait").serialize())
 
+
 class HPServer:
     "Happypanda Server"
+
     def __init__(self):
         params = utils.connection_params()
-        self._pool = pool.Pool(constants.allowed_clients if constants.allowed_clients else None) # cannot be 0
+        self._pool = pool.Pool(
+            constants.allowed_clients if constants.allowed_clients else None)  # cannot be 0
         self._server = StreamServer(params, self._handle, spawn=self._pool)
         self._web_server = None
-        self._clients = set() # a set of client handlers
+        self._clients = set()  # a set of client handlers
 
     def interactive(self):
         "Start an interactive session"
         api = locals().copy()
         api.pop("self")
         api.update(list_api())
-        code.interact(banner="======== Start Happypanda Interactive ========", local=api)
+        code.interact(
+            banner="======== Start Happypanda Interactive ========",
+            local=api)
 
     def _handle(self, client, address):
         "Client handle function"
@@ -262,7 +287,11 @@ class HPServer:
             buffer = b''
             while True:
                 data, eof = utils.end_of_message(buffer)
-                log.d("Received", sys.getsizeof(buffer), "bytes from ", address)
+                log.d(
+                    "Received",
+                    sys.getsizeof(buffer),
+                    "bytes from ",
+                    address)
                 if eof:
                     buffer = data[1]
                     if handler.is_active():
@@ -289,12 +318,15 @@ class HPServer:
 
         try:
             if blocking:
-                log.i("Starting server... ({}:{}) (blocking)".format(constants.host, constants.port), stdout=True)
+                log.i("Starting server... ({}:{}) (blocking)".format(
+                    constants.host, constants.port), stdout=True)
                 self._server.serve_forever()
             else:
                 self._server.start()
         except (socket.error, OSError) as e:
-            log.exception("Error: Failed to start server (Port might already be in use)") # include e
+            # include e
+            log.exception(
+                "Error: Failed to start server (Port might already be in use)")
 
     def run(self, interactive=False):
         """Run the server forever, blocking
@@ -312,6 +344,7 @@ class HPServer:
         torrent.stop()
         tdaemon.join()
         log.i("Server shutting down.", stdout=True)
+
 
 if __name__ == '__main__':
     server = HPServer()

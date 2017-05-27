@@ -14,6 +14,8 @@ log_e = log.error
 log_c = log.critical
 
 # TODO: C++
+
+
 class ArchiveFile():
     """
     Work with archive files, raises exception if instance fails.
@@ -63,7 +65,7 @@ class ArchiveFile():
         """
         if not name:
             return False
-        if not name in self.namelist():
+        if name not in self.namelist():
             log_e('File {} not found in archive'.format(name))
             raise exceptions.FileInArchiveNotFoundError(name, self.filepath)
         if self.archive_type == self.ZIP:
@@ -79,41 +81,48 @@ class ArchiveFile():
         Returns a list of all directories found recursively. For directories not in toplevel
         a path in the archive to the diretory will be returned.
         """
-        
+
         if only_top_level:
             if self.archive_type == self.ZIP:
-                return [x for x in self.namelist() if x.endswith('/') and x.count('/') == 1]
+                return [x for x in self.namelist() if x.endswith('/')
+                        and x.count('/') == 1]
             elif self.archive_type == self.RAR:
-                potential_dirs = [x for x in self.namelist() if x.count('/') == 0]
-                return [x.filename for x in [self.archive.getinfo(y) for y in potential_dirs] if x.isdir()]
+                potential_dirs = [
+                    x for x in self.namelist() if x.count('/') == 0]
+                return [
+                    x.filename for x in [
+                        self.archive.getinfo(y) for y in potential_dirs] if x.isdir()]
         else:
             if self.archive_type == self.ZIP:
-                return [x for x in self.namelist() if x.endswith('/') and x.count('/') >= 1]
+                return [x for x in self.namelist() if x.endswith('/')
+                        and x.count('/') >= 1]
             elif self.archive_type == self.RAR:
-                return [x.filename for x in self.archive.infolist() if x.isdir()]
+                return [x.filename for x in self.archive.infolist()
+                        if x.isdir()]
 
     def dir_contents(self, dir_name):
         """
         Returns a list of contents in the directory
         An empty string will return the contents of the top folder
         """
-        if dir_name and not dir_name in self.namelist():
+        if dir_name and dir_name not in self.namelist():
             log_e('Directory {} not found in archive'.format(dir_name))
             raise exceptions.FileInArchiveNotFoundError
         if not dir_name:
             if self.archive_type == self.ZIP:
-                con = [x for x in self.namelist() if x.count('/') == 0 or \
-                    (x.count('/') == 1 and x.endswith('/'))]
+                con = [x for x in self.namelist() if x.count('/') == 0 or
+                       (x.count('/') == 1 and x.endswith('/'))]
             elif self.archive_type == self.RAR:
                 con = [x for x in self.namelist() if x.count('/') == 0]
             return con
         if self.archive_type == self.ZIP:
-            dir_con_start = [x for x in self.namelist() if x.startswith(dir_name)]
-            return [x for x in dir_con_start if x.count('/') == dir_name.count('/') or \
-                (x.count('/') == 1 + dir_name.count('/') and x.endswith('/'))]
+            dir_con_start = [
+                x for x in self.namelist() if x.startswith(dir_name)]
+            return [x for x in dir_con_start if x.count('/') == dir_name.count(
+                '/') or (x.count('/') == 1 + dir_name.count('/') and x.endswith('/'))]
         elif self.archive_type == self.RAR:
-            return [x for x in self.namelist() if x.startswith(dir_name) and \
-                x.count('/') == 1 + dir_name.count('/')]
+            return [x for x in self.namelist() if x.startswith(dir_name) and
+                    x.count('/') == 1 + dir_name.count('/')]
         return []
 
     def extract(self, file_to_ext, dir=None):
@@ -123,7 +132,9 @@ class ArchiveFile():
         Returns path to the extracted file
         """
         if not dir:
-            dir = os.path.join(constants.dir_temp, str(uuid.uuid4())) # TODO: use temp facilities
+            dir = os.path.join(
+                constants.dir_temp, str(
+                    uuid.uuid4()))  # TODO: use temp facilities
             os.mkdir(dir)
 
         if not file_to_ext:
@@ -148,7 +159,8 @@ class ArchiveFile():
         If path is not specified, a temp dir will be created
         """
         if not path:
-            path = os.path.join(constants.dir_temp, str(uuid.uuid4())) # TODO: use temp facilities
+            path = os.path.join(constants.dir_temp,
+                                str(uuid.uuid4()))  # TODO: use temp facilities
             os.mkdir(path)
         if member:
             self.archive.extractall(path, member)

@@ -4,6 +4,7 @@ from happypanda.common import constants, exceptions, utils
 
 log = utils.Logger(__name__)
 
+
 class TaskRunner:
     ""
 
@@ -29,5 +30,3 @@ class TaskRunner:
         ""
         if self.task_done(task_id):
             return self._tasks[task_id].value()
-
-

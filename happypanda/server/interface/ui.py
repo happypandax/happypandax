@@ -2,6 +2,7 @@ from happypanda.common import constants, message, exceptions, utils
 from happypanda.server.core import db
 from happypanda.server.interface import enums, database
 
+
 def library_view(item_type=enums.ItemType.Gallery.name,
                  page=0,
                  limit=100,
@@ -30,20 +31,22 @@ def library_view(item_type=enums.ItemType.Gallery.name,
     item_type = enums.ItemType.get(item_type)
 
     db_items = {
-        enums.ItemType.Gallery : (db.Gallery, message.Gallery),
-        enums.ItemType.Collection : (db.Collection, message.Collection),
-        }
+        enums.ItemType.Gallery: (db.Gallery, message.Gallery),
+        enums.ItemType.Collection: (db.Collection, message.Collection),
+        enums.ItemType.Grouping: (db.Grouping, message.Grouping),
+    }
 
     db_item = db_items.get(item_type)
     if not db_item:
-        raise exceptions.APIError("Item type must be on of {}".format(db_items.keys()))
+        raise exceptions.APIError(
+            "Item type must be on of {}".format(
+                db_items.keys()))
     db_item, db_msg = db_item
 
     s = constants.db_session()
     items = message.List(db_item.__name__.lower(), db_msg)
 
-    q = s.query(db_item).offset(page*limit).limit(limit)
+    q = s.query(db_item).offset(page * limit).limit(limit)
     [items.append(db_msg(x)) for x in q.all()]
 
     return items
-
