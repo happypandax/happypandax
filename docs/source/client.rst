@@ -1,4 +1,4 @@
-Creating a frontend in your favorite language
+Creating a frontend
 =============================================
 
 Talking to Happypanda X Server
