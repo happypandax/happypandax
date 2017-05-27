@@ -19,7 +19,7 @@ Twitter: [@pewspew](https://twitter.com/pewspew)
 
 An online version of the doc can be found [here](https://pewpews.github.io/happypandax)
 
-In case it's down, build the docs by running: `python build_docs` *(Note: this requires `pip3 install -r requirements-dev.txt`)*
+In case it's down, build the docs by running: `python build_docs.py` *(Note: this requires `pip3 install -r requirements-dev.txt`)*
 
 # Contributing
 
