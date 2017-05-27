@@ -145,13 +145,13 @@ def _get_local_ips():
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.connect(('8.8.8.8', 0))
         local_ips.append(s.getsockname()[0])
-    except:
+    except BaseException:
         pass
 
     # Get ip by '' hostname . Not supported on all platforms.
     try:
         local_ips += socket.gethostbyname_ex('')[2]
-    except:
+    except BaseException:
         pass
 
     # Delete duplicates
@@ -276,7 +276,8 @@ def _send_requests(messages, location, upnp_schema, control_path):
     raise UpnpError('Sending requests using UPnP failed.')
 
 
-def _orchestrate_soap_request(ip, port, msg_fn, desc=None, protos=("TCP", "UDP")):
+def _orchestrate_soap_request(
+        ip, port, msg_fn, desc=None, protos=("TCP", "UDP")):
     logging.debug("Trying using local ip: %s" % ip)
     idg_data = _collect_idg_data(ip)
 
@@ -318,7 +319,8 @@ def _communicate_with_igd(port=15441,
                 port, retries))
 
 
-def ask_to_open_port(port=15441, desc="UpnpPunch", retries=3, protos=("TCP", "UDP")):
+def ask_to_open_port(port=15441, desc="UpnpPunch",
+                     retries=3, protos=("TCP", "UDP")):
     logging.debug("Trying to open port %d." % port)
     _communicate_with_igd(port=port,
                           desc=desc,
@@ -327,7 +329,8 @@ def ask_to_open_port(port=15441, desc="UpnpPunch", retries=3, protos=("TCP", "UD
                           protos=protos)
 
 
-def ask_to_close_port(port=15441, desc="UpnpPunch", retries=3, protos=("TCP", "UDP")):
+def ask_to_close_port(port=15441, desc="UpnpPunch",
+                      retries=3, protos=("TCP", "UDP")):
     logging.debug("Trying to close port %d." % port)
     # retries=1 because multiple successes cause 500 response and failure
     _communicate_with_igd(port=port,
@@ -335,5 +338,3 @@ def ask_to_close_port(port=15441, desc="UpnpPunch", retries=3, protos=("TCP", "U
                           retries=1,
                           fn=_create_close_message,
                           protos=protos)
-
-
