@@ -12,6 +12,7 @@ from happypanda.webclient import main as webserver
 
 log = utils.Logger(__name__)
 
+
 def start():
     utils.setup_dirs()
     parser = utils.get_argparser()
@@ -21,14 +22,14 @@ def start():
 
     log.i("HPX START")
 
-
     if args.web and args.server:
-       webserver.run(False) # FIX: this is still blocking?
+        webserver.run(False)  # FIX: this is still blocking?
     elif args.web:
-       webserver.run()
+        webserver.run()
 
     if args.server:
-        constants.core_plugin = plugins._plugin_load("happypanda.server.core.coreplugin", "core")
+        constants.core_plugin = plugins._plugin_load(
+            "happypanda.server.core.coreplugin", "core")
 
         if not args.safe:
             plugins.plugin_loader(constants.dir_plugin)
@@ -39,6 +40,7 @@ def start():
 
     constants.config.save()
     log.i("HPX END")
+
 
 if __name__ == '__main__':
     start()
