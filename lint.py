@@ -18,4 +18,4 @@ if __name__ == '__main__':
                 run(["autopep8", "--in-place", "-a", f_path])
 
     print("Running flake8...\n")
-    run(["flake8", "--config", "setup.cfg", "happypanda"])
+    run(["flake8", "--config", "./setup.cfg", "happypanda"])
