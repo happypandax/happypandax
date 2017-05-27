@@ -1,4 +1,4 @@
-API Overview
+Developer API
 ========================================
 
 Server
@@ -6,10 +6,23 @@ Server
 
 Enums
 ----------------------------------------
-
+.. automodule:: happypanda.server.interface.enums
+   :members:
 
 Functions
 ----------------------------------------
+
+Meta
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: happypanda.server.interface.meta
+   :members:
+
+UI
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: happypanda.server.interface.ui
+   :members:
 
 Gallery
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -34,3 +47,6 @@ Settings
 
 .. automodule:: happypanda.server.interface.settings
    :members:
+
+Plugin
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

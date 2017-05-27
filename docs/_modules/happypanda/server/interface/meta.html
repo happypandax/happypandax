@@ -3,7 +3,7 @@
     <meta http-equiv="Content-Type"
           content="text/html; charset=utf-8"/>
     
-        <title>happypanda.server.interface.plugin &mdash; Happypanda X (0, 0, 1) documentation</title>
+        <title>happypanda.server.interface.meta &mdash; Happypanda X (0, 0, 1) documentation</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href='https://fonts.googleapis.com/css?family=Crete+Round' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" href="../../../../_static/sphinx-bootstrap.css" type="text/css"/>
@@ -112,23 +112,72 @@
         <div class="content row">
                 <div class="span9">
                     
-  <h1>Source code for happypanda.server.interface.plugin</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">happypanda.common</span> <span class="k">import</span> <span class="n">message</span>
+  <h1>Source code for happypanda.server.interface.meta</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">happypanda.common</span> <span class="k">import</span> <span class="n">constants</span><span class="p">,</span> <span class="n">message</span>
 
 
-<div class="viewcode-block" id="get_plugin"><a class="viewcode-back" href="../../../../api.html#happypanda.server.interface.plugin.get_plugin">[docs]</a><span class="k">def</span> <span class="nf">get_plugin</span><span class="p">(</span><span class="n">plugin_id</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="get_error"><a class="viewcode-back" href="../../../../api.html#happypanda.server.interface.meta.get_error">[docs]</a><span class="k">def</span> <span class="nf">get_error</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Get plugin information</span>
+<span class="sd">    Get error</span>
 
 <span class="sd">    Params:</span>
-<span class="sd">        - plugin_id -- get information for a specific plugin</span>
+<span class="sd">        - code -- error code, refer to ...</span>
+<span class="sd">        - id --</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        ``</span>
-<span class="sd">        { plugin_id:</span>
+<span class="sd">        an error message object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Message</span><span class="p">(</span><span class="s2">&quot;works&quot;</span><span class="p">)</span></div>
 
-<span class="sd">            }</span>
-<span class="sd">        ``</span>
+
+<div class="viewcode-block" id="get_version"><a class="viewcode-back" href="../../../../api.html#happypanda.server.interface.meta.get_version">[docs]</a><span class="k">def</span> <span class="nf">get_version</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get version of components: &#39;core&#39;, &#39;db&#39;, &#39;web&#39; and &#39;torrent&#39;</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        a dict of component: list of major, minor, patch</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">vs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+        <span class="n">core</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">constants</span><span class="o">.</span><span class="n">version</span><span class="p">),</span>
+        <span class="n">db</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">constants</span><span class="o">.</span><span class="n">version_db</span><span class="p">),</span>
+        <span class="n">web</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">constants</span><span class="o">.</span><span class="n">version_web</span><span class="p">),</span>
+        <span class="n">torrent</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Identity</span><span class="p">(</span><span class="s2">&quot;version&quot;</span><span class="p">,</span> <span class="n">vs</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="install_plugin"><a class="viewcode-back" href="../../../../api.html#happypanda.server.interface.meta.install_plugin">[docs]</a><span class="k">def</span> <span class="nf">install_plugin</span><span class="p">(</span><span class="n">plugin_id</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Install a plugin</span>
+
+<span class="sd">    Params:</span>
+<span class="sd">        - plugin_id -- UUID of plugin</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        an error message object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Message</span><span class="p">(</span><span class="s2">&quot;works&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="uninstall_plugin"><a class="viewcode-back" href="../../../../api.html#happypanda.server.interface.meta.uninstall_plugin">[docs]</a><span class="k">def</span> <span class="nf">uninstall_plugin</span><span class="p">(</span><span class="n">plugin_id</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Uninstall a plugin</span>
+
+<span class="sd">    Params:</span>
+<span class="sd">        - plugin_id -- UUID of plugin</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        an error message object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Message</span><span class="p">(</span><span class="s2">&quot;works&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="list_plugins"><a class="viewcode-back" href="../../../../api.html#happypanda.server.interface.meta.list_plugins">[docs]</a><span class="k">def</span> <span class="nf">list_plugins</span><span class="p">(</span><span class="n">ctx</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get a list of available plugin information</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        an error message object</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Message</span><span class="p">(</span><span class="s2">&quot;works&quot;</span><span class="p">)</span></div>
 </pre></div>
@@ -167,7 +216,7 @@
 
     <!-- disqus -->
     <script type="text/javascript">
-        var disqus_title = 'happypanda.server.interface.plugin &mdash; Happypanda X (0, 0, 1) documentation';
+        var disqus_title = 'happypanda.server.interface.meta &mdash; Happypanda X (0, 0, 1) documentation';
         var disqus_identifier ='code' + '.' + "pewpews" + window.location.pathname.replace('/', '.');
     </script>
 

@@ -3,34 +3,33 @@
     <meta http-equiv="Content-Type"
           content="text/html; charset=utf-8"/>
     
-        <title>Using Happypanda X &mdash; Happypanda X (0, 0, 1) documentation</title>
+        <title>happypanda.server.interface.enums &mdash; Happypanda X (0, 0, 1) documentation</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href='https://fonts.googleapis.com/css?family=Crete+Round' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" href="_static/sphinx-bootstrap.css" type="text/css"/>
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css"/>
+    <link rel="stylesheet" href="../../../../_static/sphinx-bootstrap.css" type="text/css"/>
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css"/>
     <!-- Le HTML5 shim, for IE6-8 support of HTML5 elements -->
     <!--[if lt IE 9]>
       <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
         <script type="text/javascript">
             var DOCUMENTATION_OPTIONS = {
-                URL_ROOT:'./',
+                URL_ROOT:'../../../../',
                 VERSION:'(0, 0, 1)',
                 COLLAPSE_INDEX:false,
                 FILE_SUFFIX:'.html',
                 HAS_SOURCE:  true
             };
         </script>
-            <script type="text/javascript" src="_static/jquery.js"></script>
-            <script type="text/javascript" src="_static/underscore.js"></script>
-            <script type="text/javascript" src="_static/doctools.js"></script>
-            <script type="text/javascript" src="_static/bootstrap-dropdown.js"></script>
+            <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+            <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+            <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+            <script type="text/javascript" src="../../../../_static/bootstrap-dropdown.js"></script>
             <link rel="index" title="Index"
-                  href="genindex.html"/>
-            <link rel="search" title="Search" href="search.html"/>
-        <link rel="top" title="Happypanda X (0, 0, 1) documentation" href="index.html"/>
-            <link rel="next" title="Happypanda X Settings" href="settings.html"/>
-            <link rel="prev" title="Installing" href="install.html"/> 
+                  href="../../../../genindex.html"/>
+            <link rel="search" title="Search" href="../../../../search.html"/>
+        <link rel="top" title="Happypanda X (0, 0, 1) documentation" href="../../../../index.html"/>
+            <link rel="up" title="Module code" href="../../../index.html"/> 
     <script type="text/javascript" src="https://apis.google.com/js/plusone.js"></script>
     
 </head>
@@ -42,28 +41,23 @@
 
     <div class="related">
         <ul class="nav">
-                <li class=""><a class="brand" href="index.html">Happypanda X</a></li>
+                <li class=""><a class="brand" href="../../../../index.html">Happypanda X</a></li>
                 <li>
-                    <a href="genindex.html"
+                    <a href="../../../../genindex.html"
                        title="General Index" accesskey="I">index</a>
                 </li>
                 <li>
-                    <a href="py-modindex.html"
+                    <a href="../../../../py-modindex.html"
                        title="Python Module Index" >modules</a>
                 </li>
-                <li>
-                    <a href="settings.html"
-                       title="Happypanda X Settings" accesskey="N">next</a>
-                </li>
-                <li>
-                    <a href="install.html"
-                       title="Installing" accesskey="P">previous</a>
+                <li><a href="../../../index.html"
+                        accesskey="U">Module code</a>
                 </li> 
         </ul>
     </div>
                 <div class="pull-right">
                     
-        <form class="navbar-search" action="search.html"
+        <form class="navbar-search" action="../../../../search.html"
               method="get">
             <input type="text" name="q" placeholder="search"/>
             <input type="hidden" name="check_keywords" value="yes"/>
@@ -118,60 +112,42 @@
         <div class="content row">
                 <div class="span9">
                     
-  <div class="section" id="using-happypanda-x">
-<h1>Using Happypanda X<a class="headerlink" href="#using-happypanda-x" title="Permalink to this headline">¶</a></h1>
-<p>Default HPX consists of the following components:</p>
-<ul>
-<li><dl class="first docutils">
-<dt>Happypanda X Server</dt>
-<dd><div class="first last admonition hint">
-<p class="first admonition-title">Hint</p>
-<p class="last">The backbone of everything. HPX won&#8217;t function without this running.</p>
-</div>
-</dd>
-</dl>
-</li>
-<li><dl class="first docutils">
-<dt>Happypanda X Web client</dt>
-<dd><div class="first last admonition hint">
-<p class="first admonition-title">Hint</p>
-<p class="last">The default frontend that comes with HPX. A web-based (JS) frontend for HPX.</p>
-</div>
-</dd>
-</dl>
-</li>
-</ul>
-<div class="section" id="starting-up">
-<h2>Starting up<a class="headerlink" href="#starting-up" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="from-source">
-<h3>From source<a class="headerlink" href="#from-source" title="Permalink to this headline">¶</a></h3>
-<p>See available command arguments: <code class="docutils literal"><span class="pre">python</span> <span class="pre">run.py</span> <span class="pre">--help</span></code></p>
-<p>Start the server: <code class="docutils literal"><span class="pre">python</span> <span class="pre">run.py</span> <span class="pre">-s</span></code></p>
-<p>Start the web client server: <code class="docutils literal"><span class="pre">python</span> <span class="pre">run.py</span> <span class="pre">-w</span></code></p>
-</div>
-<div class="section" id="from-executable">
-<h3>From executable<a class="headerlink" href="#from-executable" title="Permalink to this headline">¶</a></h3>
-</div>
-</div>
-<div class="section" id="using">
-<h2>Using<a class="headerlink" href="#using" title="Permalink to this headline">¶</a></h2>
-<p>If you started the web client server, you can start using HPX by opening up your browser and going to
-<code class="docutils literal"><span class="pre">localhost:7008</span></code> <em>(replace ``7008`` with whatever port you chose the web client server to listen on)</em></p>
-</div>
-</div>
-<div class="section" id="exposing-happypanda-x">
-<h1>Exposing Happypanda X<a class="headerlink" href="#exposing-happypanda-x" title="Permalink to this headline">¶</a></h1>
-<p>To allow HPX to be accessed from your phone or other devices, you&#8217;ll need to expose the server(s) to the internal or external (internet) network</p>
-<div class="section" id="internal-network">
-<h2>Internal network<a class="headerlink" href="#internal-network" title="Permalink to this headline">¶</a></h2>
-<p>Doing this will allow for you to access HPX from <em>any device connected to your home network</em></p>
-</div>
-<div class="section" id="external-network">
-<h2>External network<a class="headerlink" href="#external-network" title="Permalink to this headline">¶</a></h2>
-<p>Doing this will allow for you to access HPX from <em>any device connected to the internet</em></p>
-</div>
-</div>
+  <h1>Source code for happypanda.server.interface.enums</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">happypanda.common</span> <span class="k">import</span> <span class="n">utils</span>
 
+
+<div class="viewcode-block" id="GalleryFilter"><a class="viewcode-back" href="../../../../api.html#happypanda.server.interface.enums.GalleryFilter">[docs]</a><span class="k">class</span> <span class="nc">GalleryFilter</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">APIEnum</span><span class="p">):</span>
+    <span class="c1">#: Library</span>
+    <span class="n">Library</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="c1">#: Favourite</span>
+    <span class="n">Favorite</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="c1">#: Inbox</span>
+    <span class="n">Inbox</span> <span class="o">=</span> <span class="mi">2</span></div>
+
+
+<div class="viewcode-block" id="ItemType"><a class="viewcode-back" href="../../../../api.html#happypanda.server.interface.enums.ItemType">[docs]</a><span class="k">class</span> <span class="nc">ItemType</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">APIEnum</span><span class="p">):</span>
+    <span class="c1">#: Gallery</span>
+    <span class="n">Gallery</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="c1">#: Collection</span>
+    <span class="n">Collection</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="c1">#: GalleryList</span>
+    <span class="n">GalleryList</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="c1">#: Page</span>
+    <span class="n">Page</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="c1">#: Grouping</span>
+    <span class="n">Grouping</span> <span class="o">=</span> <span class="mi">4</span></div>
+
+
+<div class="viewcode-block" id="ImageSize"><a class="viewcode-back" href="../../../../api.html#happypanda.server.interface.enums.ImageSize">[docs]</a><span class="k">class</span> <span class="nc">ImageSize</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">APIEnum</span><span class="p">):</span>
+    <span class="c1">#: Original</span>
+    <span class="n">Original</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="c1">#: Big</span>
+    <span class="n">Big</span> <span class="o">=</span> <span class="mi">400</span>
+    <span class="c1">#: Medium</span>
+    <span class="n">Medium</span> <span class="o">=</span> <span class="mi">250</span>
+    <span class="c1">#: Small</span>
+    <span class="n">Small</span> <span class="o">=</span> <span class="mi">100</span></div>
+</pre></div>
 
                     
                         <div id="disqus_thread"></div>
@@ -182,37 +158,6 @@
                     
         <div class="sphinxsidebar">
             <div class="sphinxsidebarwrapper">
-  <h3><a href="index.html">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">Using Happypanda X</a><ul>
-<li><a class="reference internal" href="#starting-up">Starting up</a><ul>
-<li><a class="reference internal" href="#from-source">From source</a></li>
-<li><a class="reference internal" href="#from-executable">From executable</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#using">Using</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#exposing-happypanda-x">Exposing Happypanda X</a><ul>
-<li><a class="reference internal" href="#internal-network">Internal network</a></li>
-<li><a class="reference internal" href="#external-network">External network</a></li>
-</ul>
-</li>
-</ul>
-
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="install.html"
-                        title="previous chapter">Installing</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="settings.html"
-                        title="next chapter">Happypanda X Settings</a></p>
-  <div role="note" aria-label="source link">
-    <h3>This Page</h3>
-    <ul class="this-page-menu">
-      <li><a href="_sources/usage.rst.txt"
-            rel="nofollow">Show Source</a></li>
-    </ul>
-   </div>
             </div>
         </div>
                 </div>
@@ -238,7 +183,7 @@
 
     <!-- disqus -->
     <script type="text/javascript">
-        var disqus_title = 'Using Happypanda X &mdash; Happypanda X (0, 0, 1) documentation';
+        var disqus_title = 'happypanda.server.interface.enums &mdash; Happypanda X (0, 0, 1) documentation';
         var disqus_identifier ='code' + '.' + "pewpews" + window.location.pathname.replace('/', '.');
     </script>
 

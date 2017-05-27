@@ -3,7 +3,7 @@
     <meta http-equiv="Content-Type"
           content="text/html; charset=utf-8"/>
     
-        <title>happypanda.server.interface.gallery &mdash; Happypanda X (0, 0, 1) documentation</title>
+        <title>happypanda.server.interface.ui &mdash; Happypanda X (0, 0, 1) documentation</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href='https://fonts.googleapis.com/css?family=Crete+Round' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" href="../../../../_static/sphinx-bootstrap.css" type="text/css"/>
@@ -112,90 +112,59 @@
         <div class="content row">
                 <div class="span9">
                     
-  <h1>Source code for happypanda.server.interface.gallery</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">happypanda.common</span> <span class="k">import</span> <span class="n">constants</span><span class="p">,</span> <span class="n">message</span>
+  <h1>Source code for happypanda.server.interface.ui</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">happypanda.common</span> <span class="k">import</span> <span class="n">constants</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">exceptions</span><span class="p">,</span> <span class="n">utils</span>
 <span class="kn">from</span> <span class="nn">happypanda.server.core</span> <span class="k">import</span> <span class="n">db</span>
 <span class="kn">from</span> <span class="nn">happypanda.server.interface</span> <span class="k">import</span> <span class="n">enums</span>
 
 
-<span class="k">def</span> <span class="nf">_add_gallery</span><span class="p">(</span><span class="n">ctx</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">galleries</span><span class="o">=</span><span class="p">[],</span> <span class="n">paths</span><span class="o">=</span><span class="p">[]):</span>
-    <span class="k">pass</span>
-
-
-<div class="viewcode-block" id="add_gallery"><a class="viewcode-back" href="../../../../api.html#happypanda.server.interface.gallery.add_gallery">[docs]</a><span class="k">def</span> <span class="nf">add_gallery</span><span class="p">(</span><span class="n">ctx</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">galleries</span><span class="o">=</span><span class="p">[],</span> <span class="n">paths</span><span class="o">=</span><span class="p">[]):</span>
+<div class="viewcode-block" id="library_view"><a class="viewcode-back" href="../../../../api.html#happypanda.server.interface.ui.library_view">[docs]</a><span class="k">def</span> <span class="nf">library_view</span><span class="p">(</span><span class="n">item_type</span><span class="o">=</span><span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Gallery</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                 <span class="n">page</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                 <span class="n">limit</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+                 <span class="n">search_filter</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+                 <span class="n">list_id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">view_filter</span><span class="o">=</span><span class="n">enums</span><span class="o">.</span><span class="n">GalleryFilter</span><span class="o">.</span><span class="n">Library</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                 <span class="n">ctx</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Add galleries to the database.</span>
+<span class="sd">    Fetch items from the database.</span>
+<span class="sd">    Provides pagination.</span>
 
 <span class="sd">    Params:</span>
-<span class="sd">        - galleries -- list of gallery objects parsed from XML</span>
-
-<span class="sd">            Returns:</span>
-<span class="sd">                Status</span>
-
-<span class="sd">        - paths -- list of paths to the galleries</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        Gallery objects</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Message</span><span class="p">(</span><span class="s2">&quot;works&quot;</span><span class="p">)</span></div>
-
-
-<span class="k">def</span> <span class="nf">_scan_gallery</span><span class="p">(</span><span class="n">ctx</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">paths</span><span class="o">=</span><span class="p">[],</span> <span class="n">add_after</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">ignore_exist</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-    <span class="k">pass</span>
-
-
-<div class="viewcode-block" id="scan_gallery"><a class="viewcode-back" href="../../../../api.html#happypanda.server.interface.gallery.scan_gallery">[docs]</a><span class="k">def</span> <span class="nf">scan_gallery</span><span class="p">(</span><span class="n">ctx</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">paths</span><span class="o">=</span><span class="p">[],</span> <span class="n">add_after</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">ignore_exist</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Scan folders for galleries</span>
-
-<span class="sd">    Params:</span>
-<span class="sd">        - paths -- list of paths to folders to scan for galleries</span>
-<span class="sd">        - add_after -- add found galleries after scan</span>
-<span class="sd">        - ignore_exist -- ignore existing galleries</span>
+<span class="sd">        - item_type -- type of items to show ...</span>
+<span class="sd">        - page -- current page (zero-indexed)</span>
+<span class="sd">        - limit -- amount of items per page</span>
+<span class="sd">        - search_filter -- filter item by search terms</span>
+<span class="sd">        - list_id -- current item list id</span>
+<span class="sd">        - view_filter -- ...</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        list of paths to the galleries</span>
+<span class="sd">        list of item message objects</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Message</span><span class="p">(</span><span class="s2">&quot;works&quot;</span><span class="p">)</span></div>
+    <span class="n">utils</span><span class="o">.</span><span class="n">require_context</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
 
-
-<span class="k">def</span> <span class="nf">_gallery_count</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">item_type</span><span class="o">=</span><span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">GalleryList</span><span class="o">.</span><span class="n">name</span><span class="p">):</span>
-
+    <span class="n">view_filter</span> <span class="o">=</span> <span class="n">enums</span><span class="o">.</span><span class="n">GalleryFilter</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">view_filter</span><span class="p">)</span>
     <span class="n">item_type</span> <span class="o">=</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">item_type</span><span class="p">)</span>
 
     <span class="n">db_items</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">GalleryList</span><span class="p">:</span> <span class="n">db</span><span class="o">.</span><span class="n">GalleryList</span><span class="p">,</span>
-        <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Collection</span><span class="p">:</span> <span class="n">db</span><span class="o">.</span><span class="n">Collection</span><span class="p">,</span>
-        <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Grouping</span><span class="p">:</span> <span class="n">db</span><span class="o">.</span><span class="n">Grouping</span>
+        <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Gallery</span><span class="p">:</span> <span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">Gallery</span><span class="p">,</span> <span class="n">message</span><span class="o">.</span><span class="n">Gallery</span><span class="p">),</span>
+        <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Collection</span><span class="p">:</span> <span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">Collection</span><span class="p">,</span> <span class="n">message</span><span class="o">.</span><span class="n">Collection</span><span class="p">),</span>
+        <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Grouping</span><span class="p">:</span> <span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">Grouping</span><span class="p">,</span> <span class="n">message</span><span class="o">.</span><span class="n">Grouping</span><span class="p">),</span>
     <span class="p">}</span>
 
     <span class="n">db_item</span> <span class="o">=</span> <span class="n">db_items</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">item_type</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">db_item</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">APIError</span><span class="p">(</span>
+            <span class="s2">&quot;Item type must be on of </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">db_items</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+    <span class="n">db_item</span><span class="p">,</span> <span class="n">db_msg</span> <span class="o">=</span> <span class="n">db_item</span>
 
     <span class="n">s</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">db_session</span><span class="p">()</span>
-    <span class="k">return</span> <span class="n">s</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">db_item</span><span class="p">)</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-        <span class="n">db_item</span><span class="o">.</span><span class="n">galleries</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-        <span class="n">db_item</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="nb">id</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+    <span class="n">items</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">db_item</span><span class="o">.</span><span class="vm">__name__</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="n">db_msg</span><span class="p">)</span>
 
+    <span class="n">q</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">db_item</span><span class="p">)</span><span class="o">.</span><span class="n">offset</span><span class="p">(</span><span class="n">page</span> <span class="o">*</span> <span class="n">limit</span><span class="p">)</span><span class="o">.</span><span class="n">limit</span><span class="p">(</span><span class="n">limit</span><span class="p">)</span>
+    <span class="p">[</span><span class="n">items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">db_msg</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">q</span><span class="o">.</span><span class="n">all</span><span class="p">()]</span>
 
-<div class="viewcode-block" id="gallery_count"><a class="viewcode-back" href="../../../../api.html#happypanda.server.interface.gallery.gallery_count">[docs]</a><span class="k">def</span> <span class="nf">gallery_count</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">item_type</span><span class="o">=</span><span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">GalleryList</span><span class="o">.</span><span class="n">name</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Get gallery count</span>
-
-<span class="sd">    Params:</span>
-<span class="sd">        - id -- id of item</span>
-<span class="sd">        - item_type -- can be &#39;GalleryList&#39;, &#39;Collection&#39; or &#39;Grouping&#39;</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        {</span>
-<span class="sd">        &#39;id&#39;: id</span>
-<span class="sd">        &#39;count&#39;:int</span>
-<span class="sd">        }</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Identity</span><span class="p">(</span>
-        <span class="s2">&quot;gcount&quot;</span><span class="p">,</span> <span class="p">{</span>
-            <span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="nb">id</span><span class="p">,</span> <span class="s1">&#39;count&#39;</span><span class="p">:</span> <span class="n">_gallery_count</span><span class="p">(</span>
-                <span class="nb">id</span><span class="p">,</span> <span class="n">item_type</span><span class="p">)})</span></div>
+    <span class="k">return</span> <span class="n">items</span></div>
 </pre></div>
 
                     
@@ -232,7 +201,7 @@
 
     <!-- disqus -->
     <script type="text/javascript">
-        var disqus_title = 'happypanda.server.interface.gallery &mdash; Happypanda X (0, 0, 1) documentation';
+        var disqus_title = 'happypanda.server.interface.ui &mdash; Happypanda X (0, 0, 1) documentation';
         var disqus_identifier ='code' + '.' + "pewpews" + window.location.pathname.replace('/', '.');
     </script>
 
