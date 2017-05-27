@@ -6,7 +6,7 @@ There are numerous of ways to contribute to HPX.
 
 - You can create a plugin for HPX, see how to here.
 - You can create a frontend in your favorite language, see how to here.
-- You can help with misc. things like *answering issues on Github*, *fixing my spelling mistakes*, etc. 
+- You can help with misc. things like *helping answering issues on Github*, *fixing my spelling mistakes*, etc. 
 
 If you want to start contributing to the HPX core parts, you will need to set up the right
 environment and follow some simple guidelines. I appreciate any help.
@@ -83,6 +83,7 @@ A few things that you need to know when working on the web client are:
 
 - the frontend is actually written in *Python 3* and then **transpiled** to JavaScript.
 - you need to rebuild the actual js files with ``python build_js.py`` everytime you edit the ``.py`` files in the ``static/`` folder
+- make sure to read the `Transcrypt documentation <http://transcrypt.org/docs/html/index.html>`_ thoroughly (just do it. you'll regret not doing it, so just do it.)
 
 Code Style
 ----------------------------------------
