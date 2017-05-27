@@ -7,6 +7,7 @@ from happypanda.common import constants, exceptions, utils
 
 log = utils.Logger(__name__)
 
+
 class Client:
     """A common wrapper for communicating with server.
 
@@ -33,7 +34,8 @@ class Client:
                 self._sock.connect(self._server)
                 self._alive = True
             except socket.error:
-                raise exceptions.ClientError(self.name, "Failed to establish server connection")
+                raise exceptions.ClientError(
+                    self.name, "Failed to establish server connection")
 
     def _recv(self):
         "returns json"
@@ -44,13 +46,18 @@ class Client:
                 temp = self._sock.recv(constants.data_size)
                 if not temp:
                     self._alive = False
-                    raise exceptions.ServerDisconnectError(self.name, "Server disconnected")
+                    raise exceptions.ServerDisconnectError(
+                        self.name, "Server disconnected")
                 self._buffer += temp
                 data, eof = utils.end_of_message(self._buffer)
                 if eof:
                     buffered = data[0]
                     self._buffer = data[1]
-            log.d("Received", sys.getsizeof(buffered), "bytes from server", self._server)
+            log.d(
+                "Received",
+                sys.getsizeof(buffered),
+                "bytes from server",
+                self._server)
             return utils.convert_to_json(buffered, self.name)
         except socket.error as e:
             # log disconnect
@@ -72,7 +79,8 @@ class Client:
             self._sock.sendall(constants.postfix)
             return self._recv()
         else:
-            raise exceptions.ServerDisconnectError(self.name, "Server already disconnected")
+            raise exceptions.ServerDisconnectError(
+                self.name, "Server already disconnected")
 
     def close(self):
         "Close connection with server"

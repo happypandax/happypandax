@@ -8,8 +8,10 @@ from happypanda.common import constants, utils, exceptions
 
 log = utils.Logger(__name__)
 
+
 def send_status(status, debug=constants.debug):
-    socketio.emit("serv_connect", {"status": status, "debug":constants.debug})
+    socketio.emit("serv_connect", {"status": status, "debug": constants.debug})
+
 
 @happyweb.before_first_request
 def before_first_request():
@@ -20,22 +22,28 @@ def before_first_request():
         log.exception("Could not establish connection on first try")
     send_status(client.alive())
 
+
 @happyweb.route('/')
 @happyweb.route('/index')
 @happyweb.route('/library')
 def library():
     return render_template('library.html')
 
+
 @happyweb.route('/gallery/<int:id>')
 def gallery_page(id=0):
     return render_template('library.html')
 
+
 @happyweb.route('/artist/<int:id>')
 def artist_page(id=0):
     pass
+
+
 @happyweb.route('/apiview')
 def api_view(page=0):
     return render_template('api.html')
+
 
 @socketio.on('connect')
 def serv_connect():
@@ -43,6 +51,7 @@ def serv_connect():
     if not client.alive():
         socketio.emit("reconnect", {})
     send_status(client.alive())
+
 
 @socketio.on('reconnect')
 def serv_reconnect(msg):
@@ -56,6 +65,7 @@ def serv_reconnect(msg):
 
     if client.alive():
         send_status(client.alive())
+
 
 @socketio.on('call')
 def server_call(msg):
