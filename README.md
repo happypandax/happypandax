@@ -3,26 +3,27 @@ Twitter: [@pewspew](https://twitter.com/pewspew)
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/Pewpews/happypandax?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Build Status](https://travis-ci.org/Pewpews/happypandax.svg?branch=master)](https://travis-ci.org/Pewpews/happypandax)
 
-### This is project is under heavy development and is not ready for deployment. If you want to speed up the development, please consider contributing.
+### This is project is under heavy development and is not ready for deployment. If you want to speed up the development, please consider [contributing](https://pewpews.github.io/happypandax/env.html).
 
 # Building
-- install `Python 3.5` and `pip`
-- install `virtualenv` (`pip3 install virtualenv`)
-- clone or download Happypanda X
-- `cd` into downloaded/cloned folder: `cd happypandax`
-- setup virtual env: `virtualenv env`
-- activate virtual env: (Unix: `. env/bin/activate`) (Windows: `env\Scripts\activate.bat`)
-- install dependencies: `pip install -r requirements-dev.txt`
-- build docs: `python build_docs.py`
-- see [doc](https://pewpews.github.io/happypandax/env.html)
+
+1. install `Python 3.5` and `pip`
+2. install `virtualenv` (`pip3 install virtualenv`)
+3. clone or download Happypanda X
+4. setup virtual env in the cloned/downloaded folder by running: `virtualenv env`
+5. activate the virtual env by running: (Posix: `. env/bin/activate`) (Windows: `env\Scripts\activate.bat`)
+6. install the dependencies by running: `pip3 install -r requirements.txt`
+8. build the javascript files to use the webclient by running: `python build_js.py`
 
 # Documentation
 
-An online version of the doc is [here](https://pewpews.github.io/happypandax)
+An online version of the doc can be found [here](https://pewpews.github.io/happypandax)
+
+In case it's down, build the docs by running: `python build_docs` *(Note: this requires `pip3 install -r requirements-dev.txt`)*
 
 # Contributing
 
-Please refer to the [doc](https://pewpews.github.io/happypandax/#for-developers)
+Please refer to [doc](https://pewpews.github.io/happypandax/#for-developers)
 
 # License
 
