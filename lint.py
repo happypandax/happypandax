@@ -16,7 +16,7 @@ def main():
                 run(["autopep8", "--in-place", "-a", f_path])
 
     print("Running flake8...\n")
-    run(["flake8", "--config", "./setup.cfg", "happypanda"])
+    return run(["flake8", "--config", "./setup.cfg", "happypanda"]).returncode
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())
