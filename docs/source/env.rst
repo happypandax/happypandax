@@ -95,6 +95,24 @@ Run ``python lint.py`` when you are ready to make a PR on Github. You're good to
 .. Note::
 	Remember that code style fixes should always be in a separate commit!
 
+Additonally, you could create a git hook for the pre-push event that'll automatically run ``lint.py`` for you everytime you do a ``git push``.
+
+Create a file named ``pre-push`` at ``[HPX location]/.git/hooks`` with these contents::
+
+	#![HPX location]/env/scripts/python.exe
+	import os
+	import sys
+	from subprocess import run
+
+
+	if __name__ == '__main__':
+		os.chdir("[HPX location]")
+		sys.exit(run(["python", "lint.py"]).returncode)
+
+.. Warning::
+	| Remember to replace ``[HPX location]`` with where your HPX folder is located.
+	| Also, on posix, remember to make the file an exceutable with ``chmod +x <path-to-file>``
+
 Testing
 ----------------------------------------
 

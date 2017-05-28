@@ -2,9 +2,7 @@ import os
 import sys
 from subprocess import run
 
-
-if __name__ == '__main__':
-
+def main():
     if not os.path.isdir("happypanda"):
         print("This file needs to be run in the same directory as the 'happypanda/' directory")
         sys.exit()
@@ -19,3 +17,6 @@ if __name__ == '__main__':
 
     print("Running flake8...\n")
     run(["flake8", "--config", "./setup.cfg", "happypanda"])
+
+if __name__ == '__main__':
+    main()
