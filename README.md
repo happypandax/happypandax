@@ -7,7 +7,7 @@ Twitter: [@pewspew](https://twitter.com/pewspew)
 
 # Building
 
-1. install `Python 3.5` and `pip`
+1. install `Python 3.5` and `pip` *(Note: Python 3.5 is the only supported version)*
 2. install `virtualenv` (`pip3 install virtualenv`)
 3. clone or download Happypanda X
 4. setup virtual env in the cloned/downloaded folder by running: `virtualenv env`

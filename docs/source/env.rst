@@ -23,7 +23,10 @@ Setting up an environment
 
 We need to set up a virtual environment for our python packages
 
-1. Install `Python 3.5 <https://www.python.org/>`_ and pip
+1. Install `Python 3.5 <https://www.python.org/>`_
+.. Warning::
+	Python 3.5 is the only supported version
+
 2. Install ``virtualenv`` from pypi with ``pip3 install virtualenv``
 3. Clone the `HPX <https://github.com/Pewpews/happypandax/tree/dev>`_ repo if you didn't already
 
