@@ -14,8 +14,6 @@ version = (0, 0, 1)
 version_db = (0, 0, 1)
 version_web = (0, 0, 1)
 
-import abc
-
 ## PATHS & FILENAMES ##
 dir_root = ''
 dir_data = os.path.join(dir_root, "data")

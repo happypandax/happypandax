@@ -1,7 +1,7 @@
 from flask import Flask
 
 from happypanda.common import utils, constants
-from happypanda.webclient.client import Client
+from happypanda.common.client import Client
 from happy_socketio import SocketIO
 
 log = utils.Logger(__name__)

@@ -6,7 +6,6 @@ from happypanda.common import constants, exceptions, utils
 
 log = utils.Logger(__name__)
 
-
 class Client:
     """A common wrapper for communicating with server.
 
