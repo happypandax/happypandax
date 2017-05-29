@@ -13,6 +13,7 @@ Twitter: [@pewspew](https://twitter.com/pewspew)
 4. setup virtual env in the cloned/downloaded folder by running: `virtualenv env`
 5. activate the virtual env by running: (Posix: `. env/bin/activate`) (Windows: `env\Scripts\activate.bat`)
 6. install the dependencies by running: `pip3 install -r requirements.txt`
+	- Windows users: If you get `error: command '..\cl.exe' failed with exit status 2`, download `bitarray` from [here](http://www.lfd.uci.edu/%7Egohlke/pythonlibs/#bitarray)
 7. build the javascript files to use the webclient by running: `python build_js.py`
 
 # Documentation

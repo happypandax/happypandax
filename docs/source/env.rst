@@ -40,8 +40,10 @@ Activate the virtual environment and start installing the required dependencies
 	| To activate on windows run: ``env\Scripts\activate.bat``
 	| To activate on posix run: ``. env/bin/activate``
 
-
 5. Install the dependencies: ``pip3 install -r requirements-dev.txt``
+
+.. Warning::
+	Windows users: If you get ``error: command '..\cl.exe' failed with exit status 2``, download ``bitarray`` from `here <(http://www.lfd.uci.edu/%7Egohlke/pythonlibs/#bitarray)>`_
 
 To use the web client, you need to first build the javascript files:
 
