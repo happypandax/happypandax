@@ -8,7 +8,7 @@ from happypanda.common import constants
 from happypanda.server.core.db import *
 Session = sessionmaker()
 constants.db_session = Session
-initEvents()
+initEvents(Session)
 
 
 def doublegen(it):
@@ -17,9 +17,7 @@ def doublegen(it):
 
 class GeneralTest(unittest.TestCase):
     def setUp(self):
-        if os.path.exists("dbunittest.db"):
-            os.remove("dbunittest.db")
-        engine = create_engine("sqlite:///dbunittest.db")
+        engine = create_engine("sqlite://")
         Session.configure(bind=engine)
         Base.metadata.create_all(engine)
         constants.db_session = Session
@@ -174,14 +172,10 @@ class GeneralTest(unittest.TestCase):
 
     def tearDown(self):
         self.session.close()
-        if os.path.exists("dbunittest.db"):
-            os.remove("dbunittest.db")
 
 class CollectionRelationship(unittest.TestCase):
     def setUp(self):
-        if os.path.exists("dbcollectionunittest.db"):
-            os.remove("dbcollectionunittest.db")
-        engine = create_engine("sqlite:///dbcollectionunittest.db")
+        engine = create_engine("sqlite://")
         Session.configure(bind=engine)
         Base.metadata.create_all(engine)
         self.session = Session()
@@ -238,14 +232,10 @@ class CollectionRelationship(unittest.TestCase):
 
     def tearDown(self):
         self.session.close()
-        if os.path.exists("dbcollectionunittest.db"):
-            os.remove("dbcollectionunittest.db")
 
 class ListRelationship(unittest.TestCase):
     def setUp(self):
-        if os.path.exists("dblistunittest.db"):
-            os.remove("dblistunittest.db")
-        engine = create_engine("sqlite:///dblistunittest.db")
+        engine = create_engine("sqlite://")
         Session.configure(bind=engine)
         Base.metadata.create_all(engine)
 
@@ -287,14 +277,10 @@ class ListRelationship(unittest.TestCase):
 
     def tearDown(self):
         self.session.close()
-        if os.path.exists("dblistunittest.db"):
-            os.remove("dblistunittest.db")
 
 class ArtistRelationship(unittest.TestCase):
     def setUp(self):
-        if os.path.exists("dbartistunittest.db"):
-            os.remove("dbartistunittest.db")
-        engine = create_engine("sqlite:///dbartistunittest.db")
+        engine = create_engine("sqlite://")
         Session.configure(bind=engine)
         Base.metadata.create_all(engine)
 
@@ -330,14 +316,10 @@ class ArtistRelationship(unittest.TestCase):
 
     def tearDown(self):
         self.session.close()
-        if os.path.exists("dbartistunittest.db"):
-            os.remove("dbartistunittest.db")
 
 class CircleRelationship(unittest.TestCase):
     def setUp(self):
-        if os.path.exists("dbcircleunittest.db"):
-            os.remove("dbcircleunittest.db")
-        engine = create_engine("sqlite:///dbcircleunittest.db")
+        engine = create_engine("sqlite://")
         Session.configure(bind=engine)
         Base.metadata.create_all(engine)
 
@@ -374,15 +356,10 @@ class CircleRelationship(unittest.TestCase):
 
     def tearDown(self):
         self.session.close()
-        if os.path.exists("dbcircleunittest.db"):
-            os.remove("dbcircleunittest.db")
-
 
 class HashRelationship(unittest.TestCase):
     def setUp(self):
-        if os.path.exists("dbhashunittest.db"):
-            os.remove("dbhashunittest.db")
-        engine = create_engine("sqlite:///dbhashunittest.db")
+        engine = create_engine("sqlite://")
         Session.configure(bind=engine)
         Base.metadata.create_all(engine)
 
@@ -432,14 +409,10 @@ class HashRelationship(unittest.TestCase):
 
     def tearDown(self):
         self.session.close()
-        if os.path.exists("dbhashunittest.db"):
-            os.remove("dbhashunittest.db")
 
 class GroupingRelationship(unittest.TestCase):
     def setUp(self):
-        if os.path.exists("groupingunittest.db"):
-            os.remove("groupingunittest.db")
-        engine = create_engine("sqlite:///groupingunittest.db")
+        engine = create_engine("sqlite://")
         Session.configure(bind=engine)
         Base.metadata.create_all(engine)
 
@@ -489,14 +462,10 @@ class GroupingRelationship(unittest.TestCase):
 
     def tearDown(self):
         self.session.close()
-        if os.path.exists("dbgallerynsunittest.db"):
-            os.remove("dbgallerynsunittest.db")
 
 class LanguageRelationship(unittest.TestCase):
     def setUp(self):
-        if os.path.exists("dblangunittest.db"):
-            os.remove("dblangunittest.db")
-        engine = create_engine("sqlite:///dblangunittest.db")
+        engine = create_engine("sqlite://")
         Session.configure(bind=engine)
         Base.metadata.create_all(engine)
 
@@ -536,14 +505,10 @@ class LanguageRelationship(unittest.TestCase):
 
     def tearDown(self):
         self.session.close()
-        if os.path.exists("dblangunittest.db"):
-            os.remove("dblangunittest.db")
 
 class TypeRelationship(unittest.TestCase):
     def setUp(self):
-        if os.path.exists("dbtypeunittest.db"):
-            os.remove("dbtypeunittest.db")
-        engine = create_engine("sqlite:///dbtypeunittest.db")
+        engine = create_engine("sqlite://")
         Session.configure(bind=engine)
         Base.metadata.create_all(engine)
 
@@ -583,14 +548,10 @@ class TypeRelationship(unittest.TestCase):
 
     def tearDown(self):
         self.session.close()
-        if os.path.exists("dbtypeunittest.db"):
-            os.remove("dbtypeunittest.db")
 
 class StatusRelationship(unittest.TestCase):
     def setUp(self):
-        if os.path.exists("dbstatusunittest.db"):
-            os.remove("dbstatusunittest.db")
-        engine = create_engine("sqlite:///dbstatusunittest.db")
+        engine = create_engine("sqlite://")
         Session.configure(bind=engine)
         Base.metadata.create_all(engine)
 
@@ -637,14 +598,10 @@ class StatusRelationship(unittest.TestCase):
 
     def tearDown(self):
         self.session.close()
-        if os.path.exists("dbstatusunittest.db"):
-            os.remove("dbstatusunittest.db")
 
 class UrlRelationship(unittest.TestCase):
     def setUp(self):
-        if os.path.exists("dburlunittest.db"):
-            os.remove("dburlunittest.db")
-        engine = create_engine("sqlite:///dburlunittest.db")
+        engine = create_engine("sqlite://")
         Session.configure(bind=engine)
         Base.metadata.create_all(engine)
 
@@ -678,14 +635,10 @@ class UrlRelationship(unittest.TestCase):
 
     def tearDown(self):
         self.session.close()
-        if os.path.exists("dburlunittest.db"):
-            os.remove("dburlunittest.db")
 
 class TagRelationship(unittest.TestCase):
     def setUp(self):
-        if os.path.exists("dbtagunittest.db"):
-            os.remove("dbtagunittest.db")
-        engine = create_engine("sqlite:///dbtagunittest.db")
+        engine = create_engine("sqlite://")
         Session.configure(bind=engine)
         Base.metadata.create_all(engine)
 
@@ -745,15 +698,10 @@ class TagRelationship(unittest.TestCase):
 
     def tearDown(self):
         self.session.close()
-        if os.path.exists("dbtagunittest.db"):
-            os.remove("dbtagunittest.db")
-
 
 class ProfileRelationship(unittest.TestCase):
     def setUp(self):
-        if os.path.exists("dbprofileunittest.db"):
-            os.remove("dbprofileunittest.db")
-        engine = create_engine("sqlite:///dbprofileunittest.db")
+        engine = create_engine("sqlite://")
         Session.configure(bind=engine)
         Base.metadata.create_all(engine)
 
@@ -781,7 +729,7 @@ class ProfileRelationship(unittest.TestCase):
         self.assertEqual(self.session.query(Page).count(), 5)
         self.assertEqual(self.session.query(GalleryList).count(), 5)
 
-        self.profiles = [Profile(path="p" + str(x), type=x) for x in range(5)]
+        self.profiles = [Profile(path="p" + str(x)) for x in range(5)]
 
         profile_nmb = itertools.cycle(range(5))
 
@@ -829,6 +777,4 @@ class ProfileRelationship(unittest.TestCase):
 
     def tearDown(self):
         self.session.close()
-        if os.path.exists("dbprofileunittest.db"):
-            os.remove("dbprofileunittest.db")
 

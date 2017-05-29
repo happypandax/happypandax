@@ -11,10 +11,10 @@ from happypanda.server.core.server import HPServer
 @pytest.mark.parametrize('is_public_server', [True, False])
 def test_init(is_public_server):
     """test init of the object."""
-    with mock.patch('happypanda.core.server.socket') as m_socket, \
-            mock.patch('happypanda.core.server.StreamServer') as m_stream_server, \
-            mock.patch('happypanda.core.server.pool') as m_pool, \
-            mock.patch('happypanda.core.server.constants') as m_constants:
+    with mock.patch('happypanda.server.core.server.socket') as m_socket, \
+            mock.patch('happypanda.server.core.server.StreamServer') as m_stream_server, \
+            mock.patch('happypanda.server.core.server.pool') as m_pool, \
+            mock.patch('happypanda.server.core.server.constants') as m_constants:
         m_constants.public_server = is_public_server
         hps = HPServer()
         if is_public_server:
@@ -40,7 +40,7 @@ def test_init(is_public_server):
         assert hps._clients == set()
 
 
-@mock.patch('happypanda.core.server.print')
+@mock.patch('happypanda.server.core.print')
 def test_parse(m_print):
     """test parse method."""
     m_xml_data = mock.Mock()
@@ -56,12 +56,12 @@ def test_parse(m_print):
 )
 def test_run(is_web, serve_forever_func_raise_error, web_server_start_raise_error):
     """test run."""
-    with mock.patch('happypanda.core.server.hweb') as m_hweb, \
-            mock.patch('happypanda.core.server.constants') as m_constants:
+    with mock.patch('happypanda.server.core.server.hweb') as m_hweb, \
+            mock.patch('happypanda.server.core.server.constants') as m_constants:
         # prepare before run the func.
-        with mock.patch('happypanda.core.server.pool'), \
-                mock.patch('happypanda.core.server.print') as m_print, \
-                mock.patch('happypanda.core.server.WSGIServer') as m_wsgi_server:
+        with mock.patch('happypanda.server.core.server.pool'), \
+                mock.patch('happypanda.server.core.server.print') as m_print, \
+                mock.patch('happypanda.server.core.server.WSGIServer') as m_wsgi_server:
             m_server = mock.Mock()
             hps = HPServer()
             hps._server = m_server
@@ -100,10 +100,10 @@ def test_handle(recv_first_val):
     m_client = mock.Mock()
     m_address = mock.Mock()
     postfix = b'end'
-    with mock.patch('happypanda.core.server.HPServer.parse'), \
-            mock.patch('happypanda.core.server.pool'), \
-            mock.patch('happypanda.core.server.print') as m_print, \
-            mock.patch('happypanda.core.server.constants') as m_constants:
+    with mock.patch('happypanda.server.core.server.ClientHandler.parse'), \
+            mock.patch('happypanda.server.core.server.pool'), \
+            mock.patch('happypanda.server.core.server.print') as m_print, \
+            mock.patch('happypanda.server.core.server.constants') as m_constants:
         hps = HPServer()
         hps._clients = m_obj_clients
         if recv_first_val is None:
