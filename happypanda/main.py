@@ -38,7 +38,8 @@ def start():
 
         server.HPServer().run(interactive=args.interact)
 
-    constants.config.save()
+    if constants.server_started:
+        constants.config.save()
     log.i("HPX END")
 
 

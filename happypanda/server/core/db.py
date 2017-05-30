@@ -1,6 +1,7 @@
 from sqlalchemy.engine import Engine
 from sqlalchemy import String as _String
 from sqlalchemy.inspection import inspect
+from sqlalchemy.ext.mutable import Mutable
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.sql.expression import BinaryExpression, func, literal
@@ -28,7 +29,7 @@ from sqlalchemy import (
     Table,
     UniqueConstraint,
     Float,
-    Enum)
+    Enum, TypeDecorator)
 from sqlalchemy_utils import (
     ArrowType,
     generic_repr,
@@ -39,6 +40,7 @@ import arrow
 import os
 import enum
 import re
+import bcrypt
 
 from happypanda.common import constants, exceptions, utils
 
@@ -49,7 +51,6 @@ log = utils.Logger(__name__)
 
 and_op = and_
 or_op = or_
-
 
 class String(_String):
     """Enchanced version of standard SQLAlchemy's :class:`String`.
@@ -93,6 +94,96 @@ SQLITE_REGEX_FUNCTIONS = {
             lambda value, regex: not re.match(regex, value, re.IGNORECASE)),
 }
 
+
+class PasswordHash(Mutable):
+    def __init__(self, hash_, rounds=None):
+        assert len(hash_) == 60, 'bcrypt hash should be 60 chars.'
+        assert hash_.count('$'), 'bcrypt hash should have 3x "$".'
+        self.hash = str(hash_)
+        self.rounds = int(self.hash.split('$')[2])
+        self.desired_rounds = rounds or self.rounds
+
+    def __eq__(self, candidate):
+        """Hashes the candidate string and compares it to the stored hash.
+
+        If the current and desired number of rounds differ, the password is
+        re-hashed with the desired number of rounds and updated with the results.
+        This will also mark the object as having changed (and thus need updating).
+        """
+        if isinstance(candidate, basestring):
+            if isinstance(candidate, unicode):
+                candidate = candidate.encode('utf8')
+            if self.hash == bcrypt.hashpw(candidate, self.hash):
+                if self.rounds < self.desired_rounds:
+                    self._rehash(candidate)
+                return True
+        return False
+
+    def __repr__(self):
+        """Simple object representation."""
+        return '<{}>'.format(type(self).__name__)
+
+    @classmethod
+    def coerce(cls, key, value):
+        """Ensure that loaded values are PasswordHashes."""
+        if isinstance(value, PasswordHash):
+            return value
+        return super(PasswordHash, cls).coerce(key, value)
+
+    @classmethod
+    def new(cls, password, rounds):
+        """Returns a new PasswordHash object for the given password and rounds."""
+        if isinstance(password, unicode):
+            password = password.encode('utf8')
+        return cls(cls._new(password, rounds))
+
+    @staticmethod
+    def _new(password, rounds):
+        """Returns a new bcrypt hash for the given password and rounds."""
+        return bcrypt.hashpw(password, bcrypt.gensalt(rounds))
+
+    def _rehash(self, password):
+        """Recreates the internal hash and marks the object as changed."""
+        self.hash = self._new(password, self.desired_rounds)
+        self.rounds = self.desired_rounds
+        self.changed()
+
+class Password(TypeDecorator):
+    """Allows storing and retrieving password hashes using PasswordHash."""
+    impl = String
+
+    def __init__(self, rounds=12, **kwds):
+        self.rounds = rounds
+        super().__init__(**kwds)
+
+    def process_bind_param(self, value, dialect):
+        """Ensure the value is a PasswordHash and then return its hash."""
+        p = self._convert(value)
+        return p.hash if p else None
+
+    def process_result_value(self, value, dialect):
+        """Convert the hash to a PasswordHash, if it's non-NULL."""
+        if value is not None:
+            return PasswordHash(value, rounds=self.rounds)
+
+    def validator(self, password):
+        """Provides a validator/converter for @validates usage."""
+        return self._convert(password)
+
+    def _convert(self, value):
+        """Returns a PasswordHash from the given string.
+
+        PasswordHash instances or None values will return unchanged.
+        Strings will be hashed and the resulting PasswordHash returned.
+        Any other input will result in a TypeError.
+        """
+        if isinstance(value, PasswordHash):
+            return value
+        elif isinstance(value, str):
+            return PasswordHash.new(value, self.rounds)
+        elif value is not None:
+            raise TypeError(
+                'Cannot convert {} to a PasswordHash'.format(type(value)))
 
 class BaseID:
     id = Column(Integer, primary_key=True)
@@ -237,11 +328,31 @@ class Life(Base):
 class User(Base):
     __tablename__ = 'user'
 
+    class Role(enum.Enum):
+        admin = 'admin'
+        user = 'user'
+        guest = 'guest'
+        default = 'default'
+
     name = Column(String, nullable=False, default='')
-    address = Column(String, nullable=False, default='', unique=True)
-    context_id = Column(String, nullable=False)
+    role = Column(Enum(Role), nullable=False, default=Role.guest)
+    address = Column(String, nullable=False, default='')
+    context_id = Column(String, nullable=False, default='')
+    password = Column(Password)
+
     events = relationship("Event", lazy='dynamic', back_populates='user')
 
+    @validates('password')
+    def _validate_password(self, key, password):
+        return getattr(type(self), key).type.validator(password)
+
+    @property
+    def has_auth(self):
+        return self.role != self.Role.guest
+
+    @property
+    def is_admin(self):
+        return self.role == self.Role.admin
 
 class Profile(Base):
     __tablename__ = 'profile'
@@ -860,8 +971,36 @@ def sqlite_engine_connect(dbapi_connection, connection_record):
 
 def init_defaults(sess):
     "Initializes default items"
-    pass
 
+   # init default user
+    if not sess.query(User).filter(User.role==User.Role.default).one_or_none():
+        sess.add(User(name="default", role=User.Role.default))
+        sess.commit()
+
+def create_user(role, name=None, password=None):
+    """
+    Create user
+    role:
+        - default -- create a default user with no password if it doesnt exist
+        - admin -- create admin user
+        - user -- create regular user
+    """
+    assert isinstance(role, User.Role)
+
+    s = constants.db_session()
+
+    if role == User.Role.default:
+        if not s.query(User).filter(User.name=='default').one_or_none():
+            s.add(User(name='default', role=User.Role.default))
+            s.commit()
+
+    elif role == User.Role.user:
+        pass
+    elif role == User.Role.admin:
+        s.add(User(name=name,
+                 password=PasswordHash.new(password, 15),
+                 role=User.Role.admin))
+        s.commit()
 
 def check_db_version(sess):
     """Checks if DB version is allowed.

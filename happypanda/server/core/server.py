@@ -13,6 +13,7 @@ from gevent.server import StreamServer  # noqa: E402
 from happypanda.common import constants, exceptions, utils, message  # noqa: E402
 from happypanda.server import interface  # noqa: E402
 from happypanda.server.core import db, torrent  # noqa: E402
+from happypanda.server.interface import meta # noqa: E402
 
 log = utils.Logger(__name__)
 
@@ -40,21 +41,49 @@ class ClientHandler:
         self._ip = self._address[0]
         self._port = self._address[1]
         self._stopped = False
+        self._accepted = False
         self.context = None
+        self.handshake()
 
-    def get_context(self):
+    def get_context(self, user=None, password=None):
         "Creates or retrieves existing context object for this client"
         s = constants.db_session()
-        self.context = s.query(
-            db.User).filter(
-            db.User.address == self._ip).one_or_none()
-        if not self.context:
-            self.context = db.User()
-            self.context.address = self._ip
+        user_obj = None
+        if user or password:
+            log.d("Client provided credentials, authenticating...")
+            user_obj = s.query(db.User).filter(db.User.name == user).one_or_none()
+            if user_obj:
+                if not user_obj.password == password:
+                    raise exceptions.AuthError(utils.this_function(), "Wrong credentials") 
+            else:
+                raise exceptions.AuthError(utils.this_function(), "Wrong credentials")
+        else:
+            log.d("Client did not provide credentials")
+
+            if not constants.disable_default_user:
+                log.d("Authenticating with default user")
+                user_obj = s.query(db.User).filter(db.User.role == db.User.Role.default).one()
+            else:
+                if not constants.allow_guests:
+                    log.d("Guests are disallowed on this server")
+                    raise exceptions.AuthRequiredError(utils.this_function())
+                log.d("Authencticating as guest")
+                user_obj = s.query(db.User).filter(db.and_op(db.User.address == self._ip, db.User.role == db.User.Role.guest)).one_or_none()
+                if not user_obj:
+                    user_obj = db.User(role=db.User.Role.guest)
+                    s.add(user_obj)
+
+        self.context = user_obj
+
+        self.context.address = self._ip
+        if not self.context.context_id:
             self.context.context_id = uuid.uuid4().hex
-            self.context.config = None
-            s.add(self.context)
-            s.commit()
+
+        self.context.config = None
+
+        self._accepted = True
+
+        s.commit()
 
     @staticmethod
     def sendall(client, msg):
@@ -64,7 +93,6 @@ class ClientHandler:
             client --
             msg -- bytes
         """
-        #assert isinstance(client, ...)
         assert isinstance(msg, bytes)
 
         log.d("Sending", sys.getsizeof(msg), "bytes to", client)
@@ -97,8 +125,9 @@ class ClientHandler:
         except exceptions.ServerError as e:
             raise
 
-        if not self.context:
-            self.get_context()
+        if not self._accepted:
+            self.handshake(j_data)
+            return
 
         # 'data': [ list of function dicts ]
         function_keys = ('fname',)
@@ -181,11 +210,27 @@ class ClientHandler:
             if x not in required_keys:
                 raise exceptions.InvalidMessage(where, msg.format(x))
 
-    def handshake(self):
+    def handshake(self, data=None):
         """
         Sends a welcome message
         """
-        self.send(message.Message(""))
+        assert data is None or isinstance(data, dict)
+        if isinstance(data, dict):
+            log.d("Incoming handshake from client", self._address)
+            if not constants.allow_guests:
+                log.d("Guests are not allowed")
+                self._check_both(utils.this_function(), "JSON dict", ('user', 'password'), data)
+
+            self.get_context(data.pop('user', None), data.pop('password', None))
+        else:
+            log.d("Handshaking client:", self._address)
+            msg = dict(
+                version=meta.get_version().data(),
+                guest_allowed=constants.allow_guests,
+
+                )
+
+            self.send(message.finalize(msg))
 
     def advance(self, buffer):
         """
@@ -197,6 +242,8 @@ class ClientHandler:
             if constants.server_ready:
                 function_list = message.List("function", message.Function)
                 functions = self.parse(buffer)
+                if functions is None:
+                    return
                 for func, func_args, ctx in functions:
                     log.d("Calling function", func, "with args", func_args)
                     func_msg = message.Function(func.__name__)
@@ -224,6 +271,7 @@ class ClientHandler:
             else:
                 self.on_wait()
         except exceptions.CoreError as e:
+            log.d("Sending exception to client:", e)
             self.on_error(e)
 
         except BaseException:
@@ -314,6 +362,7 @@ class HPServer:
         db.init()
 
         try:
+            constants.server_started = True
             if blocking:
                 log.i("Starting server... ({}:{}) (blocking)".format(
                     constants.host, constants.port), stdout=True)

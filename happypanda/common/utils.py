@@ -319,6 +319,8 @@ def convert_to_json(buffer, name):
     except json.JSONDecodeError as e:
         raise exceptions.JSONParseError(
             buffer, name, "Failed parsing json data: {}".format(e))
+    if constants.dev:
+        log.d("data:\n", json_data)
     return json_data
 
 

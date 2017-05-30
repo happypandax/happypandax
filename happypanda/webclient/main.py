@@ -24,6 +24,7 @@ def run(blocking=True):
             stdout=True)
         # OBS: will trigger a harmless socket.error when debug=True (stuff
         # still works)
+        constants.web_server_started = True
         socketio.run(
             happyweb,
             *

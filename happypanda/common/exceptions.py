@@ -172,6 +172,19 @@ class APIRequirementError(ServerError):
 
     pass
 
+@error_code(406)
+class AuthError(ServerError):
+    """Auth Base Error."""
+
+    pass
+
+@error_code(407)
+class AuthRequiredError(AuthError):
+    """Auth Base Error."""
+
+    def __init__(self, where):
+        super().__init__(where, "Authentication required")
+
     # ## CLIENT -- CODE: 500+ ##
 
 
