@@ -52,6 +52,7 @@ log = utils.Logger(__name__)
 and_op = and_
 or_op = or_
 
+
 class String(_String):
     """Enchanced version of standard SQLAlchemy's :class:`String`.
     Supports additional operators that can be used while constructing
@@ -110,9 +111,7 @@ class PasswordHash(Mutable):
         re-hashed with the desired number of rounds and updated with the results.
         This will also mark the object as having changed (and thus need updating).
         """
-        if isinstance(candidate, basestring):
-            if isinstance(candidate, unicode):
-                candidate = candidate.encode('utf8')
+        if isinstance(candidate, str):
             if self.hash == bcrypt.hashpw(candidate, self.hash):
                 if self.rounds < self.desired_rounds:
                     self._rehash(candidate)
@@ -133,8 +132,6 @@ class PasswordHash(Mutable):
     @classmethod
     def new(cls, password, rounds):
         """Returns a new PasswordHash object for the given password and rounds."""
-        if isinstance(password, unicode):
-            password = password.encode('utf8')
         return cls(cls._new(password, rounds))
 
     @staticmethod
@@ -147,6 +144,7 @@ class PasswordHash(Mutable):
         self.hash = self._new(password, self.desired_rounds)
         self.rounds = self.desired_rounds
         self.changed()
+
 
 class Password(TypeDecorator):
     """Allows storing and retrieving password hashes using PasswordHash."""
@@ -184,6 +182,7 @@ class Password(TypeDecorator):
         elif value is not None:
             raise TypeError(
                 'Cannot convert {} to a PasswordHash'.format(type(value)))
+
 
 class BaseID:
     id = Column(Integer, primary_key=True)
@@ -353,6 +352,7 @@ class User(Base):
     @property
     def is_admin(self):
         return self.role == self.Role.admin
+
 
 class Profile(Base):
     __tablename__ = 'profile'
@@ -972,10 +972,12 @@ def sqlite_engine_connect(dbapi_connection, connection_record):
 def init_defaults(sess):
     "Initializes default items"
 
-   # init default user
-    if not sess.query(User).filter(User.role==User.Role.default).one_or_none():
+    # init default user
+    if not sess.query(User).filter(
+            User.role == User.Role.default).one_or_none():
         sess.add(User(name="default", role=User.Role.default))
         sess.commit()
+
 
 def create_user(role, name=None, password=None):
     """
@@ -990,7 +992,7 @@ def create_user(role, name=None, password=None):
     s = constants.db_session()
 
     if role == User.Role.default:
-        if not s.query(User).filter(User.name=='default').one_or_none():
+        if not s.query(User).filter(User.name == 'default').one_or_none():
             s.add(User(name='default', role=User.Role.default))
             s.commit()
 
@@ -998,9 +1000,10 @@ def create_user(role, name=None, password=None):
         pass
     elif role == User.Role.admin:
         s.add(User(name=name,
-                 password=PasswordHash.new(password, 15),
-                 role=User.Role.admin))
+                   password=PasswordHash.new(password, 15),
+                   role=User.Role.admin))
         s.commit()
+
 
 def check_db_version(sess):
     """Checks if DB version is allowed.

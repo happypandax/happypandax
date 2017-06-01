@@ -68,7 +68,11 @@ default_user = None
 
 # SERVER
 
-secret_key = config.get(core_ns, "secret_key", "", "A random generated key to be used for security. Keep it secret!")
+secret_key = config.get(
+    core_ns,
+    "secret_key",
+    "",
+    "A random generated key to be used for security. Keep it secret!")
 
 server_name = config.get(
     core_ns,
@@ -134,11 +138,23 @@ allowed_clients = config.get(
     0,
     "Limit amount of clients allowed to be connected (0 means no limit)")
 
-allow_guests = config.get(core_ns, "allow_guests", True, "Specify if guests are allowed on this server")
+allow_guests = config.get(
+    core_ns,
+    "allow_guests",
+    True,
+    "Specify if guests are allowed on this server")
 
-require_auth = config.get(core_ns, "require_auth", False, "Client must be authenticated to get write access")
+require_auth = config.get(
+    core_ns,
+    "require_auth",
+    False,
+    "Client must be authenticated to get write access")
 
-disable_default_user = config.get(core_ns, "disable_default_user", False, "Disable default user")
+disable_default_user = config.get(
+    core_ns,
+    "disable_default_user",
+    False,
+    "Disable default user")
 
 postfix = b'<END>'
 data_size = 1024

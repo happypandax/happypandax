@@ -6,6 +6,7 @@ from happypanda.common import constants, exceptions, utils, message
 
 log = utils.Logger(__name__)
 
+
 class Client:
     """A common wrapper for communicating with server.
 
@@ -61,7 +62,11 @@ class Client:
         """
         Send bytes to server
         """
-        log.d("Sending", sys.getsizeof(msg_bytes), "bytes to server", self._server)
+        log.d(
+            "Sending",
+            sys.getsizeof(msg_bytes),
+            "bytes to server",
+            self._server)
         if self._alive:
             self._sock.sendall(msg_bytes)
             self._sock.sendall(constants.postfix)

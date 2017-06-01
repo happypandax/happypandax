@@ -3,6 +3,7 @@ __pragma__('alias', 'S', '$')  # JQuery
 from client import client, Base
 import utils
 
+
 class BasePage(Base):
 
     def main(self):

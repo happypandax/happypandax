@@ -9,9 +9,11 @@ log = utils.Logger(__name__)
 def send_status(status, debug=constants.debug):
     socketio.emit("serv_connect", {"status": status, "debug": constants.debug})
 
+
 def send_response(msg):
     data = client.communicate(msg)
     socketio.emit('response', data)
+
 
 def reconnect():
     if not client.alive():
@@ -24,6 +26,7 @@ def reconnect():
         send_status(client.alive())
 
     return client.alive()
+
 
 @happyweb.before_first_request
 def before_first_request():

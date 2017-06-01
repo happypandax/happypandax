@@ -13,7 +13,7 @@ from gevent.server import StreamServer  # noqa: E402
 from happypanda.common import constants, exceptions, utils, message  # noqa: E402
 from happypanda.server import interface  # noqa: E402
 from happypanda.server.core import db, torrent  # noqa: E402
-from happypanda.server.interface import meta # noqa: E402
+from happypanda.server.interface import meta  # noqa: E402
 
 log = utils.Logger(__name__)
 
@@ -51,24 +51,34 @@ class ClientHandler:
         user_obj = None
         if user or password:
             log.d("Client provided credentials, authenticating...")
-            user_obj = s.query(db.User).filter(db.User.name == user).one_or_none()
+            user_obj = s.query(
+                db.User).filter(
+                db.User.name == user).one_or_none()
             if user_obj:
                 if not user_obj.password == password:
-                    raise exceptions.AuthError(utils.this_function(), "Wrong credentials") 
+                    raise exceptions.AuthError(
+                        utils.this_function(), "Wrong credentials")
             else:
-                raise exceptions.AuthError(utils.this_function(), "Wrong credentials")
+                raise exceptions.AuthError(
+                    utils.this_function(), "Wrong credentials")
         else:
             log.d("Client did not provide credentials")
 
             if not constants.disable_default_user:
                 log.d("Authenticating with default user")
-                user_obj = s.query(db.User).filter(db.User.role == db.User.Role.default).one()
+                user_obj = s.query(
+                    db.User).filter(
+                    db.User.role == db.User.Role.default).one()
             else:
                 if not constants.allow_guests:
                     log.d("Guests are disallowed on this server")
                     raise exceptions.AuthRequiredError(utils.this_function())
                 log.d("Authencticating as guest")
-                user_obj = s.query(db.User).filter(db.and_op(db.User.address == self._ip, db.User.role == db.User.Role.guest)).one_or_none()
+                user_obj = s.query(
+                    db.User).filter(
+                    db.and_op(
+                        db.User.address == self._ip,
+                        db.User.role == db.User.Role.guest)).one_or_none()
                 if not user_obj:
                     user_obj = db.User(role=db.User.Role.guest)
                     s.add(user_obj)
@@ -220,9 +230,13 @@ class ClientHandler:
             data = data.get("data")
             if not constants.allow_guests:
                 log.d("Guests are not allowed")
-                self._check_both(utils.this_function(), "JSON dict", ('user', 'password'), data)
+                self._check_both(
+                    utils.this_function(), "JSON dict", ('user', 'password'), data)
 
-            self.get_context(data.pop('user', None), data.pop('password', None))
+            self.get_context(
+                data.pop(
+                    'user', None), data.pop(
+                    'password', None))
             self.send(message.finalize("Authenticated"))
         else:
             log.d("Handshaking client:", self._address)
@@ -230,7 +244,7 @@ class ClientHandler:
                 version=meta.get_version().data(),
                 guest_allowed=constants.allow_guests,
 
-                )
+            )
 
             self.send(message.finalize(msg))
 
