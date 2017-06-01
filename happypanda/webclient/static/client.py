@@ -60,7 +60,6 @@ class Base:
         Compile template element
         Set after, before, append or prepend to True to specify where to insert html.
         """
-
         tmpl = Handlebars.compile(S(source_el).html())
         if after:
             S(target_el).after(tmpl(data)).fadeIn()

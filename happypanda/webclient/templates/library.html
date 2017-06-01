@@ -29,28 +29,29 @@
                 <a data-toggle="collapse" data-target="#view-settings" class="collapsed list-group-item">
                     View: <span id="current-view" class="label label-default"></span>
                 </a>
-                <ul class="list-group collapse" id="view-settings">
-                    <li class="list-group-item" onclick="pages.library.set_view('Collection')"><a href="#">Collection</a></li>
-                    <li class="list-group-item" onclick="pages.library.set_view('Gallery')"><a href="#">Gallery</a></li>
-                </ul>
+                <div class="list-group collapse" id="view-settings">
+                    <a data-toggle="collapse" data-target=".collapse.in" class="list-group-item sub" onclick="pages.library.set_view('Collection')">Collection</a>
+                    <a data-toggle="collapse" data-target=".collapse.in" class="list-group-item sub" onclick="pages.library.set_view('Gallery')">Gallery</a>
+                </div>
 
                 <a data-toggle="collapse" data-target="#sort-settings" class="collapsed list-group-item">
                     Sort by: <span class="label label-default">Title</span>
                 </a>
-                <ul class="list-group collapse" id="sort-settings">
-                    <li class="list-group-item"><a href="#">Title</a></li>
-                    <li class="list-group-item"><a href="#">Artist</a></li>
-                </ul>
+                <div class="list-group collapse" id="sort-settings">
+                    <a data-toggle="collapse" data-target=".collapse.in" class="list-group-item sub">Title</a>
+                    <a data-toggle="collapse" data-target=".collapse.in" class="list-group-item sub">Artist</a>
+                </div>
 
                 <a data-toggle="collapse" data-target="#order-settings" class="collapsed list-group-item">
                     Order by: <span class="label label-default">Ascending</span>
                 </a>
-                <ul class="list-group collapse" id="order-settings">
-                    <li class="list-group-item"><a href="#">Ascending</a></li>
-                    <li class="list-group-item"><a href="#">Descending</a></li>
-                </ul>
+                <div class="list-group collapse" id="order-settings">
+                    <a data-toggle="collapse" data-target=".collapse.in" class="list-group-item sub">Ascending</a>
+                    <a data-toggle="collapse" data-target=".collapse.in" class="list-group-item sub">Descending</a>
+                </div>
 
-                <button class="btn btn-default btn-block">Group</button>
+                <label for="gallery-group" class="input-label">Group</label>
+                <input type="checkbox" name="switch" checked id="gallery-group">
             </div>
         </div>
         <ul class="nav nav-tabs">
@@ -78,20 +79,17 @@
 
             <!-- Artists -->
 
-            <div class="tab-pane fade" id="side-artists">
+            <script id="side-artists-t" type="x-handlebars-template">
                 <div class="list-group">
-
-                    <script id="side-artists-t" type="x-handlebars-template">
-                        {{#each side_artists}}
-                        <a class="list-group-item">
-                            <span class="badge">{{ count }}</span>
-                            {{ name }}
-                        </a>
-                        {{/each}}
-                    </script>
-
+                    {{#each side_artists}}
+                    <a class="list-group-item">
+                        <span class="badge">{{ count }}</span>
+                        {{ name }}
+                    </a>
+                    {{/each}}
                 </div>
-            </div>
+            </script>
+            <div class="tab-pane fade" id="side-artists"></div>
 
             <!-- Tags -->
 

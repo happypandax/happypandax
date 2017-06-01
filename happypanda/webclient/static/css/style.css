@@ -99,3 +99,11 @@ div.gallery-normal {
         margin-bottom: 10pt;
     }
 
+.list-group .sub {
+    padding-left: 30px;
+}
+
+.input-label {
+    padding: 1em;
+    padding-bottom: 0.5em;
+}

@@ -3,7 +3,6 @@ __pragma__('alias', 'S', '$')  # JQuery
 from client import client, Base
 import utils
 
-
 class BasePage(Base):
 
     def main(self):
@@ -157,8 +156,12 @@ class LibraryPage(Base):
             before=True,
             context_links=ctx_links)
 
+    def update_context(self):
+        self.context_nav(*self._context_link)
+
     def add_context(self, name, url):
         self._context_link.append((name, url))
+        self.update_context()
 
     def reset_context(self):
         self._context_link = [(self.name, self.url)]
@@ -169,7 +172,7 @@ class LibraryPage(Base):
 
     def main(self):
         self.fetch_glists()
-        self.context_nav(*self._context_link)
+        self.update_context()
         self.show_pagination()
 
     __pragma__('iconv')
@@ -177,7 +180,6 @@ class LibraryPage(Base):
 
     def update_sidebar(self, lists=None, tags=None, artist_obj={}):
         ""
-
         if artist_obj is not None:
             artist_data = []
             for a in artist_obj:
@@ -185,8 +187,7 @@ class LibraryPage(Base):
                     {'name': artist_obj[a]['name'], 'count': artist_obj[a]['count']})
             self.compile(
                 "#side-artists-t",
-                "#side-artists .list-group",
-                append=True,
+                "#side-artists",
                 side_artists=artist_data)
     __pragma__('nokwargs')
     __pragma__('noiconv')
@@ -232,7 +233,7 @@ class LibraryPage(Base):
 
     def show_pagination(self, data=None, error=None):
         ""
-        if data and not error:
+        if data is not None and not error:
             pages = data['count'] / self.item_limit
             if pages < 1:
                 pages = 1
@@ -253,7 +254,7 @@ class LibraryPage(Base):
 
     def fetch_glists(self, data=None, error=None):
         ""
-        if data and not error:
+        if data is not None and not error:
             lists_data = []
             for gl in data:
                 self.glists[gl['id']] = gl
@@ -276,23 +277,27 @@ class LibraryPage(Base):
     def show_items(self, data=None, error=None, page=None):
         if not page:
             page = self.current_page
-        if data and not error:
+
+        if data is not None and not error:
             self.set_properties()
             self.artists.clear()
+            _view = self._properties['view']
             items = []
-            for g in data:
-                for a in g['artists']:
-                    a_id = a['id']
-                    if a_id in self.artists:
-                        self.artists[a_id]['count'] += 1
-                    else:
-                        self.artists[a_id] = a
-                        self.artists[a_id]['count'] = 1
 
-                items.append({
-                    'title': g['titles'][0]['name'],
-                    'artist': g['artists'][0]['name'],
-                })
+            if _view == 'Gallery':
+                for g in data:
+                    for a in g['artists']:
+                        a_id = a['id']
+                        if a_id in self.artists:
+                            self.artists[a_id]['count'] += 1
+                        else:
+                            self.artists[a_id] = a
+                            self.artists[a_id]['count'] = 1
+
+                    items.append({
+                        'title': g['titles'][0]['name'],
+                        'artist': g['artists'][0]['name'],
+                    })
 
             self.update_sidebar(artist_obj=self.artists)
             self.compile("#items-t", "#items", **{'items': items})
@@ -302,9 +307,9 @@ class LibraryPage(Base):
                     'item': '.grid-item',
                     'gutter': 10
                 }))
-                self.grid.mount()
             else:
                 self.show_nothing("#items")
+            self.grid.mount()
         elif error:
             pass
         else:
@@ -324,7 +329,6 @@ class LibraryPage(Base):
 
     def show_nothing(self, target_el):
         ""
-        print("showing nothing", target_el)
         self.compile("#nothing-t", target_el)
 
 
@@ -333,6 +337,8 @@ library = LibraryPage()
 
 def init():
     S('div[onload]').trigger('onload')
+    S.fn.bootstrapSwitch.defaults.size = 'mini'
+    S("[name='switch']").bootstrapSwitch()
 
     window.addEventListener(
         'resize',
