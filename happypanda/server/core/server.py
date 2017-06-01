@@ -80,7 +80,7 @@ class ClientHandler:
             self.context.context_id = uuid.uuid4().hex
 
         self.context.config = None
-
+        log.d("Client accepted")
         self._accepted = True
 
         s.commit()
@@ -217,11 +217,13 @@ class ClientHandler:
         assert data is None or isinstance(data, dict)
         if isinstance(data, dict):
             log.d("Incoming handshake from client", self._address)
+            data = data.get("data")
             if not constants.allow_guests:
                 log.d("Guests are not allowed")
                 self._check_both(utils.this_function(), "JSON dict", ('user', 'password'), data)
 
             self.get_context(data.pop('user', None), data.pop('password', None))
+            self.send(message.finalize("Authenticated"))
         else:
             log.d("Handshaking client:", self._address)
             msg = dict(

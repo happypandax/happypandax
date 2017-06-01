@@ -85,6 +85,7 @@ class Client(Base):
         self.socket = io.connect()
         self.socket.on("serv_connect", self.on_connect)
         self.socket.on("response", self.on_response)
+        self.socket.on("invalid", self.on_invalid)
 
         self.name = "webclient"
         self._disconnected_once = False
@@ -120,6 +121,11 @@ class Client(Base):
                         break
             else:
                 cb(msg)
+
+    def on_invalid(self, msg):
+        "Used when a msg didnt reach the server to keep the callback queue in sync"
+        if self._response_cb:
+            self._response_cb.pop(0)
 
     def on_connect(self, msg):
         self._connection_status = msg['status']

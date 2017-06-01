@@ -238,9 +238,9 @@ class LibraryPage(Base):
                 pages = 1
             # check if number is whole
             if pages % 1 == 0:  # Note: will fail on very large numbers eg. 999999999999999999999
-                pages = int(pages) + 1
-            else:
                 pages = int(pages)
+            else:
+                pages = int(pages) + 1
             self._page_list = range(1, pages + 1)
             self.update_pagination()
         elif error:

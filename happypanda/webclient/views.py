@@ -9,6 +9,21 @@ log = utils.Logger(__name__)
 def send_status(status, debug=constants.debug):
     socketio.emit("serv_connect", {"status": status, "debug": constants.debug})
 
+def send_response(msg):
+    data = client.communicate(msg)
+    socketio.emit('response', data)
+
+def reconnect():
+    if not client.alive():
+        try:
+            client.connect()
+        except exceptions.ClientError:
+            log.exception("Failed to reconnect")
+
+    if client.alive():
+        send_status(client.alive())
+
+    return client.alive()
 
 @happyweb.before_first_request
 def before_first_request():
@@ -53,22 +68,18 @@ def serv_connect():
 @socketio.on('reconnect')
 def serv_reconnect(msg):
     "reconnect connection with server"
-    print("attemption to recconect")
-    if not client.alive():
-        try:
-            client.connect()
-        except exceptions.ClientError:
-            log.exception("Failed to reconnect")
-
-    if client.alive():
-        send_status(client.alive())
+    reconnect()
 
 
 @socketio.on('call')
 def server_call(msg):
     try:
-        data = client.communicate(msg)
-        socketio.emit('response', data)
+        send_response(msg)
     except exceptions.ServerDisconnectError:
         log.exception("Server disconnected, attempting to reconnect..")
-        socketio.emit("reconnect", {})
+        if reconnect():
+            send_response(msg)
+        else:
+            socketio.emit("invalid", {})
+    except exceptions.AuthError:
+        socketio.emit("invalid", {})
