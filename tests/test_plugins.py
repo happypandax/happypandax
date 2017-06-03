@@ -4,7 +4,7 @@ import itertools
 
 import pytest
 
-from happypanda.server.core.plugins import Plugins, HPluginMeta
+from happypanda.server.core.plugins import PluginManager, HPluginMeta
 from happypanda.common import exceptions as hp_exceptions
 
 
@@ -13,12 +13,12 @@ class PluginsTest(TestCase):
 
     def test_init(self):
         """test init the class."""
-        plugins = Plugins()
+        plugins = PluginManager()
         assert vars(plugins) == {}
 
     def test_register_with_mock_input(self):
         """test register."""
-        plugins = Plugins()
+        plugins = PluginManager()
         mock_plugin = mock.Mock()
         with pytest.raises(AssertionError):
             plugins.register(mock_plugin)

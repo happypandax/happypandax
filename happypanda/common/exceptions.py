@@ -96,8 +96,8 @@ class PluginAttributeError(PluginError):
 
 
 @error_code(205)
-class PluginHookError(PluginError):
-    """Plugin Hook Error."""
+class PluginCommandError(PluginError):
+    """Plugin Command Error."""
 
     pass
 

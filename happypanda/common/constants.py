@@ -58,9 +58,14 @@ class RuntimeMode(enum.Enum):
 
 running_mode = RuntimeMode.User
 
-core_plugin = None
-
 allowed_tasks = 10
+
+# PLUGIN
+
+core_plugin = None
+plugin_manager = None
+available_commands = []
+available_events = []
 
 # DATABASE
 db_session = None

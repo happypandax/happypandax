@@ -5,9 +5,9 @@ import traceback
 import importlib
 import inspect
 import enum
+import abc
 
-
-from happypanda.common import exceptions, utils
+from happypanda.common import exceptions, utils, constants
 
 log = utils.Logger(__name__)
 
@@ -99,12 +99,67 @@ def get_hook_return_type(return_list, return_type, assert_with=None):
             if assert_with(x):
                 return x
 
+class HandlerValue:
+    ""
+    
+    def __init__(self, name, handlers, *args, **kwargs):
+        assert isinstance(handlers, (tuple, list))
+        self.name = name
+        self._handlers = handlers # (node, handler)
+        self.args = args
+        self.kwargs = kwargs
+        self._failed = {} # { node : exception }
+
+    def all(self):
+        "Calls all handlers, returns tuple"
+        failed = {}
+        r = []
+        for n, h in self._handlers:
+            try:
+                r.append(self._call_handler(n, h))
+            except exceptions.PluginError as e:
+                failed[n] = e
+        self._failed.update(failed)
+
+        # if all failed, raise error
+
+
+        return tuple(r)
+
+    def first(self):
+        "Calls first handler, raises error if there is no handler"
+        handler(*self.args, **self.kwargs)
+
+    def first_or_none(self):
+        "Calls first handler, return None if there is no handler"
+        handler(*self.args, **self.kwargs)
+
+    def last(self):
+        "Calls last handler, raises error if there is no handler"
+        handler(*self.args, **self.kwargs)
+
+    def last_or_none(self):
+        "Calls last handler, return None if there is no handler"
+        handler(*self.args, **self.kwargs)
+
+    def _raise_error(self):
+        raise exceptions.PluginCommandError(self.name, "No handler is connected to this command")
+
+    def _call_handler(self, node, handler):
+        try:
+            return handler(*self.args, **self.kwargs)
+        except Exception as e:
+            raise exceptions.PluginHandlerError(
+                    n,"On command '{}' an exception was raised by plugin '{}:{}'\n\t{}".format(self.name, n.plugin.NAME, n.plugin.ID, e))
+
+
 
 class PluginState(enum.Enum):
     Disabled = 0  # puporsely disabled
     Unloaded = 1  # unloaded because of dependencies, etc.
     Init = 2  # was just registered
     Enabled = 3  # plugin is loaded and in use
+    Failed = 4 # failed because of error
 
 
 class PluginNode:
@@ -116,11 +171,11 @@ class PluginNode:
         self.args = args
         self.kwargs = kwargs
         self.depends = {}  # {other_plugin_id : ( ver_start, vers_end )}
-        self.hooks = {}  # { hook_name : hook_method }
+        self.commands = {}  # { command : handler }
         self.instanced = None
-        self.list_depends()
+        self._list_depends()
 
-    def list_depends(self):
+    def _list_depends(self):
         ""
         pluginid = self.plugin.ID
         err = self._error_check(pluginid, self.plugin)
@@ -137,6 +192,7 @@ class PluginNode:
                 pass
 
             self.depends[x[0]] = (x[1], version_end)
+        return self.depends
 
     def _error_check(self, pluginid, plugin_class):
         ""
@@ -188,14 +244,14 @@ class PluginNode:
         return hash(self.plugin.ID)
 
 
-class Plugins:
+class PluginManager:
     ""
-    _connections = set()
     _nodes = {}
 
     def __init__(self):
         self._started = False
         self._dirty = False
+        self._commands = {} # { command : [ plugins ] }
 
     def register(self, plugin, *args, **kwargs):
         """
@@ -238,10 +294,8 @@ class Plugins:
                 node.state = PluginState.Unloaded
                 continue
 
-            if node.state == PluginState.Init:
-                self._init_plugin(node)
-
-        self._connect_hooks()
+            if node.state in (PluginState.Init, PluginState.Unloaded):
+                self._init_plugin(plug_id)
 
         return failed
 
@@ -286,25 +340,67 @@ class Plugins:
         if pluginid in self._nodes:
             node = self._nodes[pluginid]
             try:
+                self._ensure_valid_signature(node)
                 node.instanced = node.plugin(*node.args, **node.kwargs)
-            except TypeError:  # TODO: revise.. inspect method signature?
-                self.disable_plugin(pluginid)
-                raise exceptions.PluginError(
-                    node.plugin.NAME,
-                    "A __init__ with the following signature must be defined: '__init__(self, *args, **kwargs)'")
             except Exception as e:
-                raise exceptions.PluginError(node.plugin.NAME, "{}".format(e))
+                self.disable_plugin(pluginid)
+                if not isinstance(e, exceptions.PluginError):
+                    raise exceptions.PluginError(node.plugin.NAME, "{}".format(e))
             node.state = PluginState.Enabled
+
+    def _ensure_valid_signature(self, node):
+        ""
+        assert callable(node)
+        sig = inspect.signature(node)
+        pars = list(sig.parameters)
+        if not len(pars) == 2:
+            raise exceptions.PluginMethodError(node.plugin.NAME, "Unexpected __init__() signature")
+        var_pos = False
+        var_key = False
+        for a in pars:
+            if sig.parameters[a].kind == inspect.Parameter.VAR_POSITIONAL:
+                var_pos = True
+            elif sig.parameters[a].kind == inspect.Parameter.VAR_KEYWORD:
+                var_key = True
+
+        if not (var_pos and var_key):
+            raise exceptions.PluginMethodError(node.plugin.NAME, "A __init__ with the following signature must be defined: '__init__(self, *args, **kwargs)'")
+
 
     def disable_plugin(self, pluginid):
         "Remove plugin and its dependents"
         node = self._nodes[pluginid]
         node.state = PluginState.Disabled
 
-    def add_connection(self, pluginid, otherpluginid, hook_name, handler):
+    def on_command(self, command_name, *args, **kwargs):
+        """
+        Calls connected handlers returns HandlerValue
+        """
+        assert command_name in self._commands
+        h = []
+        for n in self._commands[command_name]:
+            h.append((n, n.commands[command_name]))
+        return HandlerValue(command_name, h, *args, **kwargs)
+
+
+    def attach_to_command(self, node, command_name, handler):
         ""
-        self._connections.add((pluginid, otherpluginid, hook_name, handler))
-        self._dirty = True
+        if not command_name in constants.available_commands:
+            raise exceptions.PluginCommandError("Command '{}' does not exist".format(command_name))
+        if not callable(handler):
+            raise exceptions.PluginCommandError("Handler should be callable for command '{}'".format(command_name))
+
+        # TODO: check signature
+
+        node.commands[command_name] = handler
+        if not command_name in self._commands:
+            self._commands[command_name] = []
+        self._commands[command_name].append(node)
+
+
+    def attach_to_plugin_command(self, pluginid, node, command_name):
+        ""
+        pass
 
     def _call_handler(self, handler, *args, **kwargs):
         ""
@@ -312,40 +408,18 @@ class Plugins:
             self._connect_hooks()
         return handler(*args, **kwargs)
 
-    def _connect_hooks(self):
-        s = self._connections.copy()
-        while len(s):
-            pluginid, otherpluginid, hook_name, handler = s.pop()
-            log.i(
-                "\t",
-                pluginid,
-                "\n\tcreating connection to\n\t",
-                hook_name,
-                ":",
-                otherpluginid)
-            node = self._nodes[otherpluginid]
-            if not node.hooks.get(hook_name):
-                raise exceptions.PluginHookError(
-                    "Plugin Connections",
-                    "No hook with name '{}' found on plugin with ID: {} requested by {}".format(
-                        hook_name,
-                        otherpluginid,
-                        pluginid))  # TODO: use names
-            node.hooks[hook_name].addHandler(pluginid, handler)
-        self._connections.difference_update(s)
-
-    def __getattr__(self, key):
-        try:
-            return self._nodes[key]
-        except KeyError:
-            raise exceptions.PluginIDError(
-                "No plugin found with ID: {}".format(key))
+    def _ensure_ready(self, node):
+        ""
+        assert isinstance(node, PluginNode)
+        if not node.state == PluginState.Enabled:
+            raise PluginError(node.plugin.NAME, "This plugin is not ready")
 
 
-registered = Plugins()
+constants.plugin_manager = registered = PluginManager()
 
 
 class HPluginMeta(type):
+
 
     def __init__(cls, name, bases, dct):
         if not name.endswith("HPlugin"):
@@ -392,128 +466,53 @@ class HPluginMeta(type):
             if not n.startswith('_'):
                 setattr(cls, n, a)
 
-    # def disable_plugin(cls, pluginid):
-    #    """
-    #    Shut's down and disallows a plugin from loading.
-
-    #    Params:
-    #        - pluginid -- PluginID of the plugin you want to disable
-    #    """
-
-    def disable_hook(cls, pluginid, hook_name):
+    def on_plugin_command(cls, pluginid, command_name, handler, **kwargs):
         """
-        Disables a plugin's hook.
+        Attach handler to a command provided by a plugin
 
         Params:
-            - pluginid -- PluginID of the plugin you want to disable a hook from
-            - hook_name -- Exact name of the hook you want to disable
+            - pluginid -- PluginID of the plugin that has the command you want to attach to
+            - command_name -- Name of the Class.command you want to connect to. Eg.: GalleryRename.rename
+            - handler -- Your custom method that should be executed when command is invoked
         """
-        pass
-
-    def connect_plugin(cls, pluginid):
-        """
-        Connect to other plugins
-
-        Params:
-            - pluginid -- PluginID of the plugin you want to connect to
-
-        Returns:
-            An object of the other plugin if it exists
-        """
-        name = cls.NAME
-
-        class OtherHPlugin:
-
-            def __init__(self, pluginid):
-                self.ID = pluginid
-                if not registered._nodes.get(self.ID):
-                    raise exceptions.PluginIDError(
-                        name, "No plugin found with ID: " + self.ID)
-
-            def __getattr__(self, key):
-                try:
-                    node = registered._nodes[self.ID]
-                except KeyError:
-                    raise exceptions.PluginIDError(
-                        name, "No plugin found with ID: " + self.ID)
-
-                pluginmethod = node.hooks.get(key)
-                if not pluginmethod:
-                    raise exceptions.PluginMethodError(
-                        name, "Plugin {}:{} has no such method: {}".format(
-                            node.plugin.NAME, node.plugin.ID, key))
-                return pluginmethod
-
-        return OtherHPlugin(pluginid)
-
-    def connect_hook(cls, pluginid, hook_name, handler):
-        """
-        Connect to other plugins' hooks
-
-        Params:
-            - pluginid -- PluginID of the plugin that has the hook you want to connect to
-            - hook_name -- Exact name of the hook you want to connect to
-            - handler -- Your custom method that should be executed when the other plugin uses its hook.
-        """
-
-        assert isinstance(
-            pluginid, str) and isinstance(
-            hook_name, str) and callable(handler), ""
+        assert isinstance(command_name, str) and callable(handler) and isinstance(pluginid, str), ""
         node = registered._nodes.get(pluginid)
         if not node:
             raise exceptions.PluginIDError(
                 cls.NAME, "No plugin found with ID: {}".format(pluginid))
-        registered.add_connection(cls.ID, pluginid, hook_name, handler)
+        registered._ensure_ready(node)
+        registered.attach_to_plugin_command(node, command_name)
 
-    def create_hook(cls, hook_name):
+    def on_command(cls, command_name, handler, **kwargs):
         """
-        Create mountpoint that other plugins can hook to and extend
-        After creation, the hook can be used like a regular method: self.hook_name(args, kwargs)
+        Attach handler to command
 
         Params:
-            - hook_name -- Name of the hook you want to create.
+            - command_name -- Name of the Class.command you want to connect to. Eg.: GalleryRename.rename
+            - handler -- Your custom method that should be executed when command is invoked
+        """
+
+        assert isinstance(
+            command_name, str) and callable(handler), ""
+        node = registered._nodes.get(pluginid)
+        if not node:
+            raise exceptions.PluginIDError(
+                cls.NAME, "No plugin found with ID: {}".format(pluginid))
+        registered._ensure_ready(node)
+        registered.attach_to_command(node, command_name)
+
+    def create_command(cls, command_name, return_type):
+        """
+        Create a command that other plugins can attach to and extend
+        After creation, the command can be used like a regular method: self.command_name(args, kwargs)
+
+        Params:
+            - command_name -- Name of the command you want to create.
 
         .. Note::
             The values returned by the handlers are returned in a tuple
         """
-        assert isinstance(hook_name, str), ""
-
-        class Hook:
-            owner = cls.ID
-            _handlers = {}
-
-            def addHandler(self, pluginid, handler):
-                assert isinstance(pluginid, str) and callable(handler)
-                if pluginid not in self._handlers:
-                    self._handlers[pluginid] = set()
-                self._handlers[pluginid].add(handler)
-
-            def __enter__(self):
-                return self
-
-            def __exit__(self, *args, **kwargs):
-                pass
-
-            def __call__(self, *args, **kwargs):
-                handler_returns = []
-                for plugid in self._handlers:
-                    for handler in self._handlers[plugid]:
-                        try:
-                            handler_returns.append(
-                                registered._call_handler(
-                                    handler, *args, **kwargs))
-                        except Exception as e:
-                            raise exceptions.PluginHandlerError(
-                                "An exception occured in {}:{} by {}:{}\n\t{}".format(
-                                    hook_name,
-                                    self.owner,
-                                    registered._nodes[plugid].NAME,
-                                    plugid,
-                                    traceback.format_exc()))
-                return tuple(handler_returns)
-
-        h = Hook()
-        registered._nodes[cls.ID].hooks[hook_name] = h
+        raise NotImplementedError
 
     def __getattr__(cls, key):
         try:
@@ -526,4 +525,4 @@ class HPluginMeta(type):
             return super().__getattr__(key)
         except AttributeError:
             raise exceptions.PluginMethodError(
-                cls.NAME, "Plugin has no such attribute or hook '{}'".format(key))
+                cls.NAME, "Plugin has no such attribute or command '{}'".format(key))
