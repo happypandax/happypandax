@@ -90,8 +90,8 @@ class _CommandPlugin:
 
     command_cls = None
 
-    def __init__(self):
-        self.name = ''
+    def __init__(self, name):
+        self.name = name
 
     def invoke_on_plugins(self, *args, **kwargs):
         "Invoke all plugins"
@@ -104,22 +104,20 @@ class CommandEvent(_CommandPlugin):
     "Base command event"
 
     def __init__(self, name):
-        super().__init__()
-        self.name = name
+        super().__init__(name)
 
     def emit(self, *args, **kwargs):
-        "emit event"
+        "emit this event with *args and **kwargs"
         self.invoke_on_plugins(*args, **kwargs)
 
 class CommandEntry(_CommandPlugin):
     "Base command entry"
 
     def __init__(self, name, return_type):
-        super().__init__()
-        self.name = name
+        super().__init__(name)
         self.return_type = return_type
 
     @contextmanager
     def call(self, *args, **kwargs):
         ""
-
+        yield self.invoke_on_plugins(*args, **kwargs)

@@ -721,8 +721,10 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
         lazy='joined',
         cascade="all")
 
-    def read(self, user_id, datetime=arrow.now()):
+    def read(self, user_id, datetime=None):
         "Creates a read event for user"
+        if not datetime:
+            datetime = arrow.now()
         self.last_read = datetime
         sess = object_session(self)
         if sess:
@@ -973,10 +975,13 @@ def init_defaults(sess):
     "Initializes default items"
 
     # init default user
-    if not sess.query(User).filter(
-            User.role == User.Role.default).one_or_none():
-        sess.add(User(name="default", role=User.Role.default))
+    duser = sess.query(User).filter(
+                User.role == User.Role.default).one_or_none()
+    if not duser:
+        duser = User(name="default", role=User.Role.default)
+        sess.add(duser)
         sess.commit()
+    constants.default_user = duser
 
 
 def create_user(role, name=None, password=None):

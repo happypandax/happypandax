@@ -1,6 +1,7 @@
 import unittest
 import os
 import sys
+import arrow
 import itertools
 sys.path.insert(0, os.path.abspath('..'))
 from sqlalchemy.orm import sessionmaker
@@ -15,14 +16,19 @@ def doublegen(it):
     while it:
         yield (it.pop(), it.pop())
 
+def create_db():
+    engine = create_engine("sqlite://")
+    Session.configure(bind=engine)
+    Base.metadata.create_all(engine)
+    constants.db_session = Session
+    session = Session()
+    check_db_version(session)
+    init_defaults(session)
+    return session
+
 class GeneralTest(unittest.TestCase):
     def setUp(self):
-        engine = create_engine("sqlite://")
-        Session.configure(bind=engine)
-        Base.metadata.create_all(engine)
-        constants.db_session = Session
-        self.session = Session()
-        check_db_version(self.session)
+        self.session = create_db()
         self.gallery = Gallery()
         self.session.add(self.gallery)
         self.session.commit()
@@ -62,17 +68,17 @@ class GeneralTest(unittest.TestCase):
         self.gallery.title = ""
         self.gallery.fav = True
         self.gallery.times_read = 2
-        self.gallery.pub_date = datetime.date.today()
-        self.gallery.timestamp = datetime.datetime.now()
-        self.gallery.last_read = datetime.datetime.now()
+        self.gallery.pub_date = arrow.now()
+        self.gallery.timestamp = arrow.now()
+        self.gallery.last_read = arrow.now()
         self.session.commit()
 
     def test_history(self):
         self.assertEqual(self.session.query(Event).count(), 1) # life
 
-        self.gallery.times_read += 1
+        self.gallery.read(constants.default_user.id)
         self.assertEqual(self.session.query(Event).count(), 2)
-        self.gallery.times_read += 1
+        self.gallery.read(constants.default_user.id)
         self.session.commit()
         self.assertEqual(self.session.query(Event).count(), 3)
 
@@ -175,11 +181,7 @@ class GeneralTest(unittest.TestCase):
 
 class CollectionRelationship(unittest.TestCase):
     def setUp(self):
-        engine = create_engine("sqlite://")
-        Session.configure(bind=engine)
-        Base.metadata.create_all(engine)
-        self.session = Session()
-        init_defaults(self.session)
+        self.session = create_db()
 
         self.collections = [Collection(title="col" + str(x)) for x in range(2)]
         self.galleries = [Gallery() for x in range(10)]
@@ -235,12 +237,7 @@ class CollectionRelationship(unittest.TestCase):
 
 class ListRelationship(unittest.TestCase):
     def setUp(self):
-        engine = create_engine("sqlite://")
-        Session.configure(bind=engine)
-        Base.metadata.create_all(engine)
-
-        self.session = Session()
-        init_defaults(self.session)
+        self.session = create_db()
 
         self.glists = [GalleryList(name="list" + str(x)) for x in range(2)]
         self.galleries = [Gallery() for x in range(10)]
@@ -280,12 +277,7 @@ class ListRelationship(unittest.TestCase):
 
 class ArtistRelationship(unittest.TestCase):
     def setUp(self):
-        engine = create_engine("sqlite://")
-        Session.configure(bind=engine)
-        Base.metadata.create_all(engine)
-
-        self.session = Session()
-        init_defaults(self.session)
+        self.session = create_db()
 
         self.artist = Artist()
         self.artist.name = "Artist1"
@@ -319,12 +311,7 @@ class ArtistRelationship(unittest.TestCase):
 
 class CircleRelationship(unittest.TestCase):
     def setUp(self):
-        engine = create_engine("sqlite://")
-        Session.configure(bind=engine)
-        Base.metadata.create_all(engine)
-
-        self.session = Session()
-        init_defaults(self.session)
+        self.session = create_db()
 
         self.artist = Circle()
         self.artist.name = "Artist1"
@@ -359,12 +346,7 @@ class CircleRelationship(unittest.TestCase):
 
 class HashRelationship(unittest.TestCase):
     def setUp(self):
-        engine = create_engine("sqlite://")
-        Session.configure(bind=engine)
-        Base.metadata.create_all(engine)
-
-        self.session = Session()
-        init_defaults(self.session)
+        self.session = create_db()
 
         self.gallery = Gallery()
         self.session.add(self.gallery)
@@ -412,12 +394,7 @@ class HashRelationship(unittest.TestCase):
 
 class GroupingRelationship(unittest.TestCase):
     def setUp(self):
-        engine = create_engine("sqlite://")
-        Session.configure(bind=engine)
-        Base.metadata.create_all(engine)
-
-        self.session = Session()
-        init_defaults(self.session)
+        self.session = create_db()
 
         self.galleryns = [Grouping(name="gns" + str(x)) for x in range(2)]
         self.galleries = [Gallery() for x in range(10)]
@@ -465,12 +442,7 @@ class GroupingRelationship(unittest.TestCase):
 
 class LanguageRelationship(unittest.TestCase):
     def setUp(self):
-        engine = create_engine("sqlite://")
-        Session.configure(bind=engine)
-        Base.metadata.create_all(engine)
-
-        self.session = Session()
-        init_defaults(self.session)
+        self.session = create_db()
 
         self.lang = Language()
         self.lang.name = "Con1"
@@ -506,29 +478,24 @@ class LanguageRelationship(unittest.TestCase):
     def tearDown(self):
         self.session.close()
 
-class TypeRelationship(unittest.TestCase):
+class CategoryRelationship(unittest.TestCase):
     def setUp(self):
-        engine = create_engine("sqlite://")
-        Session.configure(bind=engine)
-        Base.metadata.create_all(engine)
+        self.session = create_db()
 
-        self.session = Session()
-        init_defaults(self.session)
-
-        self.type = Category()
-        self.type.name = "Con1"
+        self.cat = Category()
+        self.cat.name = "Con1"
         self.galleries = [Gallery() for x in range(10)]
-        self.type.galleries.extend(self.galleries)
-        self.session.add(self.type)
+        self.cat.galleries.extend(self.galleries)
+        self.session.add(self.cat)
         self.session.commit()
         self.assertEqual(self.session.query(Category).count(), 1)
-        self.assertEqual(self.type.id, self.galleries[0].type_id)
+        self.assertEqual(self.cat.id, self.galleries[0].category_id)
 
     def test_delete(self):
         self.session.query(Category).delete()
         self.session.commit()
 
-        self.assertIsNone(self.galleries[0].type)
+        self.assertIsNone(self.galleries[0].category)
         self.assertEqual(self.session.query(Gallery).count(), 10)
         self.assertEqual(self.session.query(Category).count(), 0)
 
@@ -551,12 +518,7 @@ class TypeRelationship(unittest.TestCase):
 
 class StatusRelationship(unittest.TestCase):
     def setUp(self):
-        engine = create_engine("sqlite://")
-        Session.configure(bind=engine)
-        Base.metadata.create_all(engine)
-
-        self.session = Session()
-        init_defaults(self.session)
+        self.session = create_db()
 
         self.status = Status()
         self.status.name = "Stat1"
@@ -601,12 +563,7 @@ class StatusRelationship(unittest.TestCase):
 
 class UrlRelationship(unittest.TestCase):
     def setUp(self):
-        engine = create_engine("sqlite://")
-        Session.configure(bind=engine)
-        Base.metadata.create_all(engine)
-
-        self.session = Session()
-        init_defaults(self.session)
+        self.session = create_db()
 
         self.gallery = Gallery()
         self.session.add(self.gallery)
@@ -638,12 +595,7 @@ class UrlRelationship(unittest.TestCase):
 
 class TagRelationship(unittest.TestCase):
     def setUp(self):
-        engine = create_engine("sqlite://")
-        Session.configure(bind=engine)
-        Base.metadata.create_all(engine)
-
-        self.session = Session()
-        init_defaults(self.session)
+        self.session = create_db()
 
         self.namespaces = [Namespace(name="ns" + str(x)) for x in range(20)]
         self.tags = [Tag(name="tag" + str(x)) for x in range(10)]
@@ -701,12 +653,7 @@ class TagRelationship(unittest.TestCase):
 
 class ProfileRelationship(unittest.TestCase):
     def setUp(self):
-        engine = create_engine("sqlite://")
-        Session.configure(bind=engine)
-        Base.metadata.create_all(engine)
-
-        self.session = Session()
-        init_defaults(self.session)
+        self.session = create_db()
 
         self.lists = [GalleryList(name="list" + str(x)) for x in range(5)]
         self.gns = [Grouping(name="gns" + str(x)) for x in range(5)]
@@ -729,7 +676,7 @@ class ProfileRelationship(unittest.TestCase):
         self.assertEqual(self.session.query(Page).count(), 5)
         self.assertEqual(self.session.query(GalleryList).count(), 5)
 
-        self.profiles = [Profile(path="p" + str(x)) for x in range(5)]
+        self.profiles = [Profile(path="p" + str(x), data='test', size='200') for x in range(5)]
 
         profile_nmb = itertools.cycle(range(5))
 

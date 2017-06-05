@@ -42,23 +42,26 @@ def plugin_load(path, *args, **kwargs):
         sys.path.pop(0)
 
 
-def _plugin_load(module_name, path, *args, **kwargs):
+def _plugin_load(module_name_or_class, path, *args, **kwargs):
     """
     Imports plugin module and registers its main class
 
     Returns:
         PluginNode
     """
-    mod = importlib.import_module(module_name)
-    mod = importlib.reload(mod)
-    plugmembers = inspect.getmembers(mod)
     plugclass = None
-    for name, m_object in plugmembers:
-        if name == "HPlugin":
-            plugclass = m_object
-            break
-    if not plugclass:
-        raise exceptions.CoreError(
+    if isinstance(module_name_or_class, str):
+        mod = importlib.import_module(module_name)
+        mod = importlib.reload(mod)
+        plugmembers = inspect.getmembers(mod)
+        for name, m_object in plugmembers:
+            if name == "HPlugin":
+                plugclass = m_object
+                break
+    elif inspect.isclass(module_name_or_class):
+        plugclass = module_name_or_class
+    if plugclass is None:
+        raise exceptions.PluginError(
             "Plugin loader",
             "No main entry class named 'HPlugin' found in '{}'".format(path))
     log.i("Loading", plugclass.__name__)
@@ -371,6 +374,10 @@ class PluginManager:
         "Remove plugin and its dependents"
         node = self._nodes[pluginid]
         node.state = PluginState.Disabled
+        for cmd in node.commands:
+            if cmd in self._commands:
+                if node in self._commands[cmd]:
+                    self._commands[cmd].remove(node)
 
     def on_command(self, command_name, *args, **kwargs):
         """
@@ -400,19 +407,13 @@ class PluginManager:
 
     def attach_to_plugin_command(self, pluginid, node, command_name):
         ""
-        pass
-
-    def _call_handler(self, handler, *args, **kwargs):
-        ""
-        if self._dirty:
-            self._connect_hooks()
-        return handler(*args, **kwargs)
+        raise NotImplementedError
 
     def _ensure_ready(self, node):
         ""
         assert isinstance(node, PluginNode)
         if not node.state == PluginState.Enabled:
-            raise PluginError(node.plugin.NAME, "This plugin is not ready")
+            raise exceptions.PluginError(node.plugin.NAME, "This plugin is not ready")
 
 
 constants.plugin_manager = registered = PluginManager()
@@ -476,12 +477,12 @@ class HPluginMeta(type):
             - handler -- Your custom method that should be executed when command is invoked
         """
         assert isinstance(command_name, str) and callable(handler) and isinstance(pluginid, str), ""
-        node = registered._nodes.get(pluginid)
+        node = registered._nodes.get(cls.ID)
         if not node:
             raise exceptions.PluginIDError(
                 cls.NAME, "No plugin found with ID: {}".format(pluginid))
         registered._ensure_ready(node)
-        registered.attach_to_plugin_command(node, command_name)
+        registered.attach_to_plugin_command(pluginid, node, command_name)
 
     def on_command(cls, command_name, handler, **kwargs):
         """
@@ -494,10 +495,10 @@ class HPluginMeta(type):
 
         assert isinstance(
             command_name, str) and callable(handler), ""
-        node = registered._nodes.get(pluginid)
+        node = registered._nodes.get(cls.ID)
         if not node:
             raise exceptions.PluginIDError(
-                cls.NAME, "No plugin found with ID: {}".format(pluginid))
+                cls.NAME, "No plugin found with ID: {}".format(cls.ID))
         registered._ensure_ready(node)
         registered.attach_to_command(node, command_name)
 
