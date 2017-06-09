@@ -84,7 +84,6 @@ class PluginNameError(PluginIDError):
 @error_code(203)
 class PluginMethodError(PluginError, AttributeError):
     """Plugin Method Error."""
-
     pass
 
 
@@ -106,6 +105,11 @@ class PluginCommandError(PluginError):
 class PluginHandlerError(PluginError):
     """Plugin Handler Error."""
 
+    pass
+
+@error_code(207)
+class PluginSignatureError(PluginError):
+    """Plugin Signature Error."""
     pass
 
     # ## DATABASE -- CODE: 300+ ##
