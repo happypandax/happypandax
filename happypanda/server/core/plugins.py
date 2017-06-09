@@ -51,7 +51,7 @@ def _plugin_load(module_name_or_class, path, *args, **kwargs):
     """
     plugclass = None
     if isinstance(module_name_or_class, str):
-        mod = importlib.import_module(module_name)
+        mod = importlib.import_module(module_name_or_class)
         mod = importlib.reload(mod)
         plugmembers = inspect.getmembers(mod)
         for name, m_object in plugmembers:
@@ -249,9 +249,9 @@ class PluginNode:
 
 class PluginManager:
     ""
-    _nodes = {}
 
     def __init__(self):
+        self._nodes = {}
         self._started = False
         self._dirty = False
         self._commands = {} # { command : [ plugins ] }
@@ -349,15 +349,17 @@ class PluginManager:
                 self.disable_plugin(pluginid)
                 if not isinstance(e, exceptions.PluginError):
                     raise exceptions.PluginError(node.plugin.NAME, "{}".format(e))
+                raise
             node.state = PluginState.Enabled
+        else:
+            raise exceptions.CoreError(utils.this_function(), "Plugin node has not been registered with this manager")
 
     def _ensure_valid_signature(self, node):
         ""
-        assert callable(node)
-        sig = inspect.signature(node)
+        sig = inspect.signature(node.plugin.__init__)
         pars = list(sig.parameters)
-        if not len(pars) == 2:
-            raise exceptions.PluginMethodError(node.plugin.NAME, "Unexpected __init__() signature")
+        if not len(pars) == 3:
+            raise exceptions.PluginSignatureError(node.plugin.NAME, "Unexpected __init__() signature")
         var_pos = False
         var_key = False
         for a in pars:
@@ -367,7 +369,7 @@ class PluginManager:
                 var_key = True
 
         if not (var_pos and var_key):
-            raise exceptions.PluginMethodError(node.plugin.NAME, "A __init__ with the following signature must be defined: '__init__(self, *args, **kwargs)'")
+            raise exceptions.PluginSignatureError(node.plugin.NAME, "A __init__ with the following signature must be defined: '__init__(self, *args, **kwargs)'")
 
 
     def disable_plugin(self, pluginid):
@@ -415,6 +417,12 @@ class PluginManager:
         if not node.state == PluginState.Enabled:
             raise exceptions.PluginError(node.plugin.NAME, "This plugin is not ready")
 
+    def _ensure_before_init(self, node):
+        ""
+        assert isinstance(node, PluginNode)
+        if not node.state == PluginState.Init:
+            raise exceptions.PluginError(node.plugin.NAME, "This method should be called in __init__")
+
 
 constants.plugin_manager = registered = PluginManager()
 
@@ -423,9 +431,6 @@ class HPluginMeta(type):
 
 
     def __init__(cls, name, bases, dct):
-        if not name.endswith("HPlugin"):
-            raise exceptions.PluginNameError(
-                name, "Main plugin class should be named HPlugin")
         plugin_requires = ("ID", "NAME", "VERSION", "AUTHOR", "DESCRIPTION")
 
         for pr in plugin_requires:
@@ -462,7 +467,6 @@ class HPluginMeta(type):
         # set attributes
         attrs = inspect.getmembers(HPluginMeta)
 
-        setattr(cls, "__getattr__", cls.__getattr__)
         for n, a in attrs:
             if not n.startswith('_'):
                 setattr(cls, n, a)
@@ -481,8 +485,8 @@ class HPluginMeta(type):
         if not node:
             raise exceptions.PluginIDError(
                 cls.NAME, "No plugin found with ID: {}".format(pluginid))
-        registered._ensure_ready(node)
-        registered.attach_to_plugin_command(pluginid, node, command_name)
+        registered._ensure_before_init(node)
+        registered.attach_to_plugin_command(pluginid, node, command_name, handler)
 
     def on_command(cls, command_name, handler, **kwargs):
         """
@@ -499,8 +503,8 @@ class HPluginMeta(type):
         if not node:
             raise exceptions.PluginIDError(
                 cls.NAME, "No plugin found with ID: {}".format(cls.ID))
-        registered._ensure_ready(node)
-        registered.attach_to_command(node, command_name)
+        registered._ensure_before_init(node)
+        registered.attach_to_command(node, command_name, handler)
 
     def create_command(cls, command_name, return_type):
         """
@@ -514,16 +518,3 @@ class HPluginMeta(type):
             The values returned by the handlers are returned in a tuple
         """
         raise NotImplementedError
-
-    def __getattr__(cls, key):
-        try:
-            node = registered._nodes.get(cls.ID)
-            if node:
-                h = node.hooks.get(key)
-                if h:
-                    return h
-
-            return super().__getattr__(key)
-        except AttributeError:
-            raise exceptions.PluginMethodError(
-                cls.NAME, "Plugin has no such attribute or command '{}'".format(key))

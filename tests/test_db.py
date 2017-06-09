@@ -1,8 +1,12 @@
 import unittest
+import pytest
 import os
 import sys
 import arrow
 import itertools
+
+pytestmark = pytest.mark.dbtest
+
 sys.path.insert(0, os.path.abspath('..'))
 from sqlalchemy.orm import sessionmaker
 from happypanda.common import constants

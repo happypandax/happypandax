@@ -13,7 +13,7 @@ def get_available_commands():
     for c in subs:
         c._get_commands()
         for a in c._entries:
-            commands.append(c.__name__+'.'+a.name)
+            commands.append(c.__name__+'.'+c._entries[a].name)
     return commands
     
 class CommandRunner:
@@ -50,6 +50,8 @@ class Command:
     _metaclass__ = ABCMeta
 
     _runner = CommandRunner()
+    _events = {}
+    _entries = {}
 
     def __init__(self, **kwargs):
         self._get_commands()
@@ -80,6 +82,9 @@ class Command:
 
 class UndoCommand(Command):
     "Command capable of undoing itself"
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     def undo(self):
         pass

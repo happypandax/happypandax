@@ -7,6 +7,8 @@ import pytest
 
 from happypanda.server.core.server import HPServer
 
+pytestmark = pytest.mark.servertest
+
 
 @pytest.mark.parametrize('is_public_server', [True, False])
 def test_init(is_public_server):
