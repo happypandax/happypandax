@@ -1,10 +1,10 @@
 from contextlib import contextmanager
 from abc import ABCMeta, abstractmethod
 
-from happypanda.common import constants, utils
+from happypanda.common import constants, utils, hlogger
 from happypanda.server.core import plugins
 
-log = utils.Logger(__name__)
+log = hlogger.Logger(__name__)
 
 def get_available_commands():
     subs = utils.all_subclasses(Command)

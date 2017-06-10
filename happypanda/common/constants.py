@@ -64,8 +64,8 @@ allowed_tasks = 10
 
 core_plugin = None
 plugin_manager = None
-available_commands = []
-available_events = []
+available_commands = set()
+available_events = set()
 
 # DATABASE
 db_session = None

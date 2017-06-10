@@ -4,8 +4,9 @@ import pickle
 
 from contextlib import contextmanager
 
-from happypanda.common import exceptions
+from happypanda.common import exceptions, hlogger
 
+log = hlogger.Logger(__name__)
 
 class Config:
 
@@ -23,6 +24,7 @@ class Config:
         assert self._settings_f and self._descr_f
 
         if os.path.exists(self._settings_f) and os.path.exists(self._descr_f):
+            log.i("Loading existing config at", self._settings_f)
             self._cfg.read(self._settings_f)
 
             with open(self._descr_f, 'rb') as f:
@@ -30,6 +32,8 @@ class Config:
 
     def save(self):
         assert self._settings_f and self._descr_f
+
+        log.i("Saving config at", self._settings_f, "and", self._descr_f)
 
         with open(self._settings_f, 'w') as f:
             self._cfg.write(f)

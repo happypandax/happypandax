@@ -7,9 +7,9 @@ import inspect
 import enum
 import abc
 
-from happypanda.common import exceptions, utils, constants
+from happypanda.common import exceptions, utils, constants, hlogger
 
-log = utils.Logger(__name__)
+log = hlogger.Logger(__name__)
 
 
 def plugin_load(path, *args, **kwargs):
@@ -395,9 +395,9 @@ class PluginManager:
     def attach_to_command(self, node, command_name, handler):
         ""
         if not command_name in constants.available_commands:
-            raise exceptions.PluginCommandError("Command '{}' does not exist".format(command_name))
+            raise exceptions.PluginCommandError(node.plugin.NAME, "Command '{}' does not exist".format(command_name))
         if not callable(handler):
-            raise exceptions.PluginCommandError("Handler should be callable for command '{}'".format(command_name))
+            raise exceptions.PluginCommandError(node.plugin.NAME, "Handler should be callable for command '{}'".format(command_name))
 
         # TODO: check signature
 
@@ -480,6 +480,7 @@ class HPluginMeta(type):
             - command_name -- Name of the Class.command you want to connect to. Eg.: GalleryRename.rename
             - handler -- Your custom method that should be executed when command is invoked
         """
+        raise NotImplementedError
         assert isinstance(command_name, str) and callable(handler) and isinstance(pluginid, str), ""
         node = registered._nodes.get(cls.ID)
         if not node:

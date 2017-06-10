@@ -6,11 +6,11 @@ if __package__ is None and not hasattr(sys, 'frozen'):
     path = os.path.realpath(os.path.abspath(__file__))
     sys.path.insert(0, os.path.dirname(os.path.dirname(path)))
 
-from happypanda.common import utils, constants  # noqa: E402
+from happypanda.common import utils, constants, hlogger  # noqa: E402
 from happypanda.server.core import server, plugins, command  # noqa: E402
 from happypanda.webclient import main as webserver  # noqa: E402
 
-log = utils.Logger(__name__)
+log = hlogger.Logger(__name__)
 
 
 def start():

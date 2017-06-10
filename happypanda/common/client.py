@@ -2,9 +2,9 @@ import socket
 import sys
 import json
 
-from happypanda.common import constants, exceptions, utils, message
+from happypanda.common import constants, exceptions, utils, message, hlogger
 
-log = utils.Logger(__name__)
+log = hlogger.Logger(__name__)
 
 
 class Client:

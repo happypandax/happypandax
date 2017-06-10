@@ -9,9 +9,9 @@ from functools import partial
 
 from happy_bittorrent.control import ControlManager, ControlClient, ControlServer, DaemonExit, formatters
 from happy_bittorrent.models import TorrentInfo, TorrentState
-from happypanda.common import utils, exceptions, constants
+from happypanda.common import utils, exceptions, constants, hlogger
 
-log = utils.Logger(__name__)
+log = hlogger.Logger(__name__)
 
 
 async def check_daemon_absence():

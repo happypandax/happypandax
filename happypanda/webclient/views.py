@@ -1,9 +1,9 @@
 ﻿"""views module."""
 from flask import (render_template,)
 from happypanda.webclient.main import happyweb, client, socketio
-from happypanda.common import constants, utils, exceptions
+from happypanda.common import constants, utils, exceptions, hlogger
 
-log = utils.Logger(__name__)
+log = hlogger.Logger(__name__)
 
 
 def send_status(status, debug=constants.debug):

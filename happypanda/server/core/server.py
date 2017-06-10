@@ -10,12 +10,12 @@ from inspect import getmembers, isfunction  # noqa: E402
 from gevent import socket, pool  # noqa: E402
 from gevent.server import StreamServer  # noqa: E402
 
-from happypanda.common import constants, exceptions, utils, message  # noqa: E402
+from happypanda.common import constants, exceptions, utils, message, hlogger  # noqa: E402
 from happypanda.server import interface  # noqa: E402
 from happypanda.server.core import db, torrent  # noqa: E402
 from happypanda.server.interface import meta  # noqa: E402
 
-log = utils.Logger(__name__)
+log = hlogger.Logger(__name__)
 
 
 def list_api():

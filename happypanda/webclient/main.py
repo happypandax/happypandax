@@ -1,10 +1,10 @@
 from flask import Flask
 
-from happypanda.common import utils, constants
+from happypanda.common import utils, constants, hlogger
 from happypanda.common.client import Client
 from happy_socketio import SocketIO
 
-log = utils.Logger(__name__)
+log = hlogger.Logger(__name__)
 
 happyweb = Flask(__name__, static_url_path='/static')
 socketio = SocketIO(happyweb)

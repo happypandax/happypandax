@@ -88,7 +88,7 @@ def test_hplugin_validuuid_error(hplugin):
 def test_hplugin_on_command(m_method, hplugin_meta):
     "Test plugin class on_command method"
     cmd_name = "test_command"
-    constants.available_commands.append(cmd_name)
+    constants.available_commands.add(cmd_name)
     def phandler():
         pass
     def hinit(self, *args, **kwargs):
@@ -101,6 +101,37 @@ def test_hplugin_on_command(m_method, hplugin_meta):
     pmanager.init_plugins()
     m_method.assert_called_with(pnode, cmd_name, phandler)
 
+def test_hplugin_on_command_not_init_error(hplugin_meta):
+    "Test for error when plugin attaches handler to command outside __init__"
 
+def test_hplugin_on_command_handler_error(hplugin_meta):
+    "Test for error on invalid command handler"
+    cmd_name = "test_command"
+    constants.available_commands.add(cmd_name)
+    def hinit(self, *args, **kwargs):
+        self.on_command(cmd_name, None)
 
+    hplugin_meta.__init__ = hinit
 
+    pmanager = PluginManager()
+    pnode = pmanager.register(hplugin_meta)
+    with pytest.raises(hp_exceptions.PluginCommandError) as excinfo:
+        pmanager.init_plugins()
+    assert "Handler should be callable" in str(excinfo)
+
+def test_hplugin_on_command_name_error(hplugin_meta):
+    "Test for error on nonexistant command"
+    cmd_name = "test_command"
+    def phandler():
+        pass
+
+    def hinit(self, *args, **kwargs):
+        self.on_command("test", phandler)
+
+    hplugin_meta.__init__ = hinit
+
+    pmanager = PluginManager()
+    pnode = pmanager.register(hplugin_meta)
+    with pytest.raises(hp_exceptions.PluginCommandError) as excinfo:
+        pmanager.init_plugins()
+    assert "does not exist" in str(excinfo)

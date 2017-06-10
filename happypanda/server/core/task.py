@@ -1,8 +1,8 @@
 from gevent import pool
 
-from happypanda.common import constants, utils
+from happypanda.common import constants, utils, hlogger
 
-log = utils.Logger(__name__)
+log = hlogger.Logger(__name__)
 
 class TaskRunner:
     ""

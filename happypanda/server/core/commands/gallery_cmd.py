@@ -1,9 +1,9 @@
-from happypanda.common import utils
+from happypanda.common import utils, hlogger
 from happypanda.server.core.command import Command, UndoCommand, CommandEvent, CommandEntry
 from happypanda.server.core import db
 
 
-log = utils.Logger(__name__)
+log = hlogger.Logger(__name__)
 
 class GalleryRename(UndoCommand):
     """
@@ -19,7 +19,7 @@ class GalleryRename(UndoCommand):
         self.title = None
         self.old_title = None
 
-    def run(self, gallery: db.Gallery, title: db.Title, new_title: str) -> None:
+    def main(self, gallery: db.Gallery, title: db.Title, new_title: str) -> None:
 
         self.gallery = gallery
         self.title = title

@@ -42,12 +42,12 @@ import enum
 import re
 import bcrypt
 
-from happypanda.common import constants, exceptions, utils
+from happypanda.common import constants, exceptions, utils, hlogger
 
 force_instant_defaults()
 force_auto_coercion()
 
-log = utils.Logger(__name__)
+log = hlogger.Logger(__name__)
 
 and_op = and_
 or_op = or_
