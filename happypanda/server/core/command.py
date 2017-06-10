@@ -1,4 +1,3 @@
-from gevent import pool
 from contextlib import contextmanager
 from abc import ABCMeta, abstractmethod
 
@@ -9,41 +8,13 @@ log = utils.Logger(__name__)
 
 def get_available_commands():
     subs = utils.all_subclasses(Command)
-    commands = []
+    commands = set()
     for c in subs:
         c._get_commands()
         for a in c._entries:
-            commands.append(c.__name__+'.'+c._entries[a].name)
+            commands.add(c.__name__+'.'+c._entries[a].name)
     return commands
     
-class CommandRunner:
-    ""
-
-    def __init__(self, amount_of_tasks=constants.allowed_tasks):
-        self._pool = pool.Pool(amount_of_tasks)
-        self._commands = {}
-        self._command_id = 0
-
-    def run(self, command, *args, **kwargs):
-        "Run a command async, returns id"
-        assert isinstance(command, Command)
-
-        self._command_id += 1
-        task_id = self._command_id
-        self._commands[task_id] = self._pool.spawn(command.run, *args, **kwargs)
-        return task_id
-
-    def command_done(self, command_id):
-        ""
-        if command_id in self._commands:
-            return self._commands[command_id].ready()
-        return True
-
-    def get_value(self, command_id):
-        ""
-        if self.command_done(command_id):
-            return self._commands[command_id].value()
-
 class Command:
     "Base command"
 
@@ -70,15 +41,18 @@ class Command:
 
 
     @abstractmethod
-    def run(self, *args, **kwargs):
+    def main(self, *args, **kwargs):
         pass
 
-    def execute(self, *args, sync=True, **kwargs):
-        
+    def run(self, *args, sync=True, **kwargs):
+        """
+        Run the command with *args and **kwargs.
+        Returns command retunobject if sync is true else returns a TaskID
+        """
         if sync:
             pass
         else:
-            self._runner.run(self.run, *args, **kwargs)
+            self._runner.main(self.run, *args, **kwargs)
 
 class UndoCommand(Command):
     "Command capable of undoing itself"
