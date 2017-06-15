@@ -116,51 +116,81 @@ class HandlerValue:
     def __init__(self, name, handlers, *args, **kwargs):
         assert isinstance(handlers, (tuple, list))
         self.name = name
-        self._handlers = handlers # (node, handler)
+        self._handlers = handlers # [ (node, handler) ]
         self.args = args
         self.kwargs = kwargs
         self.failed = {} # { node : exception }
 
+        self.expected_type = None
+        self.default_handler = None
+
     def all(self):
         "Calls all handlers, returns tuple"
-        failed = {}
         r = []
         for n, h in self._handlers:
-            try:
-                r.append(self._call_handler(n, h))
-            except exceptions.PluginError as e:
-                failed[n] = e
-        self._failed.update(failed)
+            x = self._call_handler(n, h)
+            if not x is None:
+                r.append(x)
 
-        # if all failed, raise error
+        if not r and self.default_handler:
+            r.append(self.default_handler(*self.args, **self.kwargs))
 
         return tuple(r)
 
     def first(self):
         "Calls first handler, raises error if there is no handler"
-        handler(*self.args, **self.kwargs)
+        return self._call_node_idx(0, True)
 
     def first_or_none(self):
         "Calls first handler, return None if there is no handler"
-        handler(*self.args, **self.kwargs)
+        return self._call_node_idx(0, False)
 
     def last(self):
         "Calls last handler, raises error if there is no handler"
-        handler(*self.args, **self.kwargs)
+        return self._call_node_idx(-1, True)
 
     def last_or_none(self):
         "Calls last handler, return None if there is no handler"
-        handler(*self.args, **self.kwargs)
+        return self._call_node_idx(-1, False)
 
     def _raise_error(self):
         raise exceptions.CoreError(self.name, "No handler is connected to this command")
 
+    def _call_node_idx(self, idx, error=False):
+        if not self._handlers:
+            if self.default_handler:
+                return self.default_handler(*self.args, **self.kwargs)
+            if error:
+                self._raise_error()
+            else:
+                return None
+        return self._call_handler(*self._handlers[idx])
+
+
     def _call_handler(self, node, handler):
         try:
-            return handler(*self.args, **self.kwargs)
+            r = handler(*self.args, **self.kwargs)
+
+            if self.expected_type is not None:
+                if not isinstance(r, self.expected_type):
+                    raise exceptions.PluginHandlerError(
+                        "On command '{}' expected type '{}', but got '{}' by plugin handler '{}:{}'".format(
+                            self.name, str(type(self.expected_type)), str(type(r)), node.plugin.NAME, node.plugin.ID))
+
         except Exception as e:
-            raise exceptions.PluginHandlerError(
-                    n,"On command '{}' an exception was raised by plugin '{}:{}'\n\t{}".format(self.name, n.plugin.NAME, n.plugin.ID, e))
+
+            self.failed[node] = e
+
+            node.logger.exception()
+
+            try:
+                if not isinstance(e, exceptions.PluginError):
+                    raise exceptions.PluginHandlerError(
+                            n,"On command '{}' an unhandled exception was raised by plugin handler '{}:{}'\n\t{}".format(self.name, node.plugin.NAME, node.plugin.ID, e))
+                else:
+                    raise e
+            except exceptions.PluginError:
+                log.exception()
 
 
 
@@ -394,10 +424,10 @@ class PluginManager:
         """
         Returns HandlerValue
         """
-        assert command_name in self._commands
         h = []
-        for n in self._commands[command_name]:
-            h.append((n, n.commands[command_name]))
+        if command_name in self._commands:
+            for n in self._commands[command_name]:
+                h.append((n, n.commands[command_name]))
         return HandlerValue(command_name, h, *args, **kwargs)
 
 

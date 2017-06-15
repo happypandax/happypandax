@@ -80,11 +80,29 @@ class _CommandPlugin:
     def _check_types(self, *args, **kwargs):
         tr = []
         tr.append(len(args) == len(self._args_types))
-        tr.append(all(isinstance(x, y) for x, y in zip(self._args_types, args)))
+        tr.append(all(isinstance(y, x) for x, y in zip(self._args_types, args)))
         tr.append(all(x in self._kwargs_types for x in kwargs))
         tr.append(all(isinstance(args[x], self._kwargs_types[x]) for x in args if x in self._kwargs_types))
         if not all(tr):
-            raise exceptions.CoreError(utils.this_function(), "Wrong types were used for this command")
+            raise exceptions.CoreError(
+                utils.this_function(),
+                "Wrong types were used for this command, types used [{}], types expected [{}]".format(
+                    self._stringify_args(args, kwargs),
+                    self._stringify_args(self._args_types, self._kwargs_types, True)))
+
+    def _stringify_args(self, args, kwargs, is_type=False):
+        ""
+        s = '('
+        if is_type:
+            s += ", ".join(str(x) for x in args)
+            s += ", ".join(x + '=' + str(y) for x, y in kwargs.items())
+        else:
+            s += ", ".join(str(type(x)) for x in args)
+            s += ", ".join(x + '=' + str(type(y)) for x, y in kwargs.items())
+
+        s += ')'
+
+        return s
 
 
 class CommandEvent(_CommandPlugin):
@@ -103,33 +121,30 @@ class CommandEntry(_CommandPlugin):
     def __init__(self, name, return_type, *args, **kwargs):
         super().__init__(name, *args, **kwargs)
         self.return_type = return_type
-        self._handler_value = None
-        self._called = False
+        self.default_handler = None
 
-    def __getattr__(self, name):
-        # TODO: maybe find a less hacky way?
-        if hasattr(self._handler_value, name):
-            if not self._called:
-                raise exceptions.CoreError("Command has not yet been called")
-            use_default = False
+    def default(self, func):
+        "Set a default handler. Only one default handler is allowed"
+        if self.default_handler:
+            raise exceptions.CoreError(utils.this_function(), "Command '{}' has already been assigned a default handler".format(self.name))
+        self.default_handler = func
+        return func
 
-            func = getattr(self._handler_value, name)
-            try:
-                v = func()
-            except exceptions.PluginError as e:
-                use_default = True
-                if e.node:
-                    logger = e.node.logger
-                else:
-                    logger = log
+    def error_code(code):
+        assert isinstance(code, int), "Error code must be of type int"
+        assert code not in _error_codes, "Error code already used"
+        _error_codes.append(code)
 
-                logger.exception("An unhandled plugin exception has occured")
-        else:
-            raise AttributeError("HandlerValue has no attribute '{}'".format(name))
+        def wrap(cls):
+            cls.code = code
+            cls.name = cls.__name__
+            return cls
+        return wrap
 
     @contextmanager
     def call(self, *args, **kwargs):
         ""
-        self._called = True
-        self._handler_value = self.invoke_on_plugins(*args, **kwargs)
-        yield self
+        handler = self.invoke_on_plugins(*args, **kwargs)
+        handler.default_handler = self.default_handler
+        handler.expected_type = self.return_type
+        yield handler
