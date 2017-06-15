@@ -6,10 +6,30 @@ import importlib
 import inspect
 import enum
 import abc
+import logging
 
 from happypanda.common import exceptions, utils, constants, hlogger
 
 log = hlogger.Logger(__name__)
+
+def get_plugin_logger(plugin_name, plugin_dir):
+    "Create a logger for plugin"
+    file_name = os.path.join(plugin_dir, "plugin.log")
+    file_mode = "a"
+    file_enc = 'utf-8'
+
+    try:
+        with open(file_name, 'x', encoding=file_enc) as f:
+            pass
+    except FileExistsError:
+        pass
+
+    l = hlogger.Logger('HPX Plugin.'+plugin_name)
+    l._logger.propagate = False
+    l._logger.setLevel(logging.INFO)
+    fhandler = logging.FileHandler(file_name, file_mode, file_enc)
+    l._logger.addHandler(fhandler)
+    return l
 
 
 def plugin_load(path, *args, **kwargs):
@@ -42,7 +62,7 @@ def plugin_load(path, *args, **kwargs):
         sys.path.pop(0)
 
 
-def _plugin_load(module_name_or_class, path, *args, **kwargs):
+def _plugin_load(module_name_or_class, path, *args, _logger=None, **kwargs):
     """
     Imports plugin module and registers its main class
 
@@ -70,7 +90,9 @@ def _plugin_load(module_name_or_class, path, *args, **kwargs):
         plugclass.__bases__,
         dict(
             plugclass.__dict__))
-    return registered.register(cls, *args, **kwargs)
+    if not _logger:
+        _logger = get_plugin_logger(cls.NAME, path)
+    return registered.register(cls, _logger, *args, **kwargs)
 
 
 def plugin_loader(path, *args, **kwargs):
@@ -88,20 +110,6 @@ def plugin_loader(path, *args, **kwargs):
         plugin_load(pdir.path, *args, **kwargs)
     return registered.init_plugins()
 
-
-def get_hook_return_type(return_list, return_type, assert_with=None):
-    """
-    A helper function to get the first returned type from plugins
-
-    Returns:
-        object or none
-    """
-
-    for x in return_list:
-        if isinstance(x, return_type):
-            if assert_with(x):
-                return x
-
 class HandlerValue:
     ""
     
@@ -111,7 +119,7 @@ class HandlerValue:
         self._handlers = handlers # (node, handler)
         self.args = args
         self.kwargs = kwargs
-        self._failed = {} # { node : exception }
+        self.failed = {} # { node : exception }
 
     def all(self):
         "Calls all handlers, returns tuple"
@@ -125,7 +133,6 @@ class HandlerValue:
         self._failed.update(failed)
 
         # if all failed, raise error
-
 
         return tuple(r)
 
@@ -146,7 +153,7 @@ class HandlerValue:
         handler(*self.args, **self.kwargs)
 
     def _raise_error(self):
-        raise exceptions.PluginCommandError(self.name, "No handler is connected to this command")
+        raise exceptions.CoreError(self.name, "No handler is connected to this command")
 
     def _call_handler(self, node, handler):
         try:
@@ -168,7 +175,7 @@ class PluginState(enum.Enum):
 class PluginNode:
     ""
 
-    def __init__(self, plugin_class, *args, **kwargs):
+    def __init__(self, plugin_class, logger, *args, **kwargs):
         self.state = PluginState.Init
         self.plugin = plugin_class
         self.args = args
@@ -176,6 +183,7 @@ class PluginNode:
         self.depends = {}  # {other_plugin_id : ( ver_start, vers_end )}
         self.commands = {}  # { command : handler }
         self.instanced = None
+        self.logger = log if logger is None else logger
         self._list_depends()
 
     def _list_depends(self):
@@ -256,12 +264,13 @@ class PluginManager:
         self._dirty = False
         self._commands = {} # { command : [ plugins ] }
 
-    def register(self, plugin, *args, **kwargs):
+    def register(self, plugin, logger, *args, **kwargs):
         """
         Registers a plugin
 
         Params:
             - plugin -- main plugin class
+            - logger -- plugin logger
             - *args -- additional arguments for plugin
             - **kwargs -- additional keyword arguments for plugin
 
@@ -272,7 +281,7 @@ class PluginManager:
         if plugin.ID in self._nodes:
             raise exceptions.PluginError(
                 plugin.NAME, "Plugin ID already exists")
-        node = PluginNode(plugin, *args, **kwargs)
+        node = PluginNode(plugin, logger, *args, **kwargs)
         self._nodes[plugin.ID] = node
         return node
 
@@ -309,14 +318,14 @@ class PluginManager:
             if otherpluginid not in self._nodes:
                 if self._nodes[otherpluginid].state == PluginState.Unloaded:
                     return exceptions.PluginError(
-                        node.plugin.NAME, "A required plugin failed to load: {}".format(otherpluginid))
+                        node, "A required plugin failed to load: {}".format(otherpluginid))
                 elif self._nodes[otherpluginid].state == PluginState.Disabled:
                     return exceptions.PluginError(
-                        node.plugin.NAME,
+                        node,
                         "A required plugin has been disabled: {}".format(otherpluginid))
                 else:
                     return exceptions.PluginError(
-                        node.plugin.NAME, "A required plugin is not present: {}".format(otherpluginid))
+                        node, "A required plugin is not present: {}".format(otherpluginid))
 
             vers = depends[otherpluginid]
             other_node = self._nodes[otherpluginid]
@@ -324,14 +333,14 @@ class PluginManager:
             other_version = other_node.plugin.VERSION
             if not vers[0] <= other_version:
                 return exceptions.PluginError(
-                    node.plugin.NAME,
+                    node,
                     "A required plugin does not meet version requirement {} <= {}: {}".format(
                         vers[0],
                         other_version,
                         otherpluginid))
             if not vers[1] == (0, 0, 0) and not vers[1] > other_version:
                 return exceptions.PluginError(
-                    node.plugin.NAME,
+                    node,
                     "A required plugin does not meet version requirement {} > {}: {}".format(
                         vers[1],
                         other_version,
@@ -348,7 +357,7 @@ class PluginManager:
             except Exception as e:
                 self.disable_plugin(pluginid)
                 if not isinstance(e, exceptions.PluginError):
-                    raise exceptions.PluginError(node.plugin.NAME, "{}".format(e))
+                    raise exceptions.PluginError(node, "{}".format(e))
                 raise
             node.state = PluginState.Enabled
         else:
@@ -359,7 +368,7 @@ class PluginManager:
         sig = inspect.signature(node.plugin.__init__)
         pars = list(sig.parameters)
         if not len(pars) == 3:
-            raise exceptions.PluginSignatureError(node.plugin.NAME, "Unexpected __init__() signature")
+            raise exceptions.PluginSignatureError(node, "Unexpected __init__() signature")
         var_pos = False
         var_key = False
         for a in pars:
@@ -369,7 +378,7 @@ class PluginManager:
                 var_key = True
 
         if not (var_pos and var_key):
-            raise exceptions.PluginSignatureError(node.plugin.NAME, "A __init__ with the following signature must be defined: '__init__(self, *args, **kwargs)'")
+            raise exceptions.PluginSignatureError(node, "A __init__ with the following signature must be defined: '__init__(self, *args, **kwargs)'")
 
 
     def disable_plugin(self, pluginid):
@@ -381,9 +390,9 @@ class PluginManager:
                 if node in self._commands[cmd]:
                     self._commands[cmd].remove(node)
 
-    def on_command(self, command_name, *args, **kwargs):
+    def call_command(self, command_name, *args, **kwargs):
         """
-        Calls connected handlers returns HandlerValue
+        Returns HandlerValue
         """
         assert command_name in self._commands
         h = []
@@ -395,9 +404,9 @@ class PluginManager:
     def attach_to_command(self, node, command_name, handler):
         ""
         if not command_name in constants.available_commands:
-            raise exceptions.PluginCommandError(node.plugin.NAME, "Command '{}' does not exist".format(command_name))
+            raise exceptions.PluginCommandError(node, "Command '{}' does not exist".format(command_name))
         if not callable(handler):
-            raise exceptions.PluginCommandError(node.plugin.NAME, "Handler should be callable for command '{}'".format(command_name))
+            raise exceptions.PluginCommandError(node, "Handler should be callable for command '{}'".format(command_name))
 
         # TODO: check signature
 
@@ -407,28 +416,23 @@ class PluginManager:
         self._commands[command_name].append(node)
 
 
-    def attach_to_plugin_command(self, pluginid, node, command_name):
-        ""
-        raise NotImplementedError
-
     def _ensure_ready(self, node):
         ""
         assert isinstance(node, PluginNode)
         if not node.state == PluginState.Enabled:
-            raise exceptions.PluginError(node.plugin.NAME, "This plugin is not ready")
+            raise exceptions.PluginError(node, "This plugin is not ready")
 
     def _ensure_before_init(self, node):
         ""
         assert isinstance(node, PluginNode)
         if not node.state == PluginState.Init:
-            raise exceptions.PluginError(node.plugin.NAME, "This method should be called in __init__")
+            raise exceptions.PluginError(node, "This method should be called in __init__")
 
 
 constants.plugin_manager = registered = PluginManager()
 
 
 class HPluginMeta(type):
-
 
     def __init__(cls, name, bases, dct):
         plugin_requires = ("ID", "NAME", "VERSION", "AUTHOR", "DESCRIPTION")
@@ -471,23 +475,15 @@ class HPluginMeta(type):
             if not n.startswith('_'):
                 setattr(cls, n, a)
 
-    def on_plugin_command(cls, pluginid, command_name, handler, **kwargs):
+    def get_logger(cls):
         """
-        Attach handler to a command provided by a plugin
-
-        Params:
-            - pluginid -- PluginID of the plugin that has the command you want to attach to
-            - command_name -- Name of the Class.command you want to connect to. Eg.: GalleryRename.rename
-            - handler -- Your custom method that should be executed when command is invoked
+        Return a logger for plugin
         """
-        raise NotImplementedError
-        assert isinstance(command_name, str) and callable(handler) and isinstance(pluginid, str), ""
         node = registered._nodes.get(cls.ID)
         if not node:
             raise exceptions.PluginIDError(
-                cls.NAME, "No plugin found with ID: {}".format(pluginid))
-        registered._ensure_before_init(node)
-        registered.attach_to_plugin_command(pluginid, node, command_name, handler)
+                cls.NAME, "No plugin found with ID: {}".format(cls.ID))
+        return node.logger
 
     def on_command(cls, command_name, handler, **kwargs):
         """
@@ -497,15 +493,24 @@ class HPluginMeta(type):
             - command_name -- Name of the Class.command you want to connect to. Eg.: GalleryRename.rename
             - handler -- Your custom method that should be executed when command is invoked
         """
-
-        assert isinstance(
-            command_name, str) and callable(handler), ""
         node = registered._nodes.get(cls.ID)
         if not node:
             raise exceptions.PluginIDError(
                 cls.NAME, "No plugin found with ID: {}".format(cls.ID))
         registered._ensure_before_init(node)
         registered.attach_to_command(node, command_name, handler)
+
+    def run_command(cls, command_name, *args, **kwargs):
+        """
+        Run a command
+
+        Params:
+            - command_name -- Name of command you want to run
+            - *args and **kwargs sent to command
+
+        Returns command return object
+        """
+        raise NotImplementedError
 
     def create_command(cls, command_name, return_type):
         """

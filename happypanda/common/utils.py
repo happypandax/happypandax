@@ -17,7 +17,6 @@ log = hlogger.Logger(__name__)
 
 ## PATH ##
 
-
 class PathType(enum.Enum):
     Directoy = 1
     Archive = 2
@@ -34,7 +33,6 @@ class PathType(enum.Enum):
         return PathType.Invalid
 
 ## Core ##
-
 
 def setup_dirs():
     "Creates directories at the specified root path"

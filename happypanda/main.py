@@ -30,7 +30,7 @@ def start():
     if args.server:
         constants.available_commands = command.get_available_commands()
         constants.core_plugin = plugins._plugin_load(
-            "happypanda.server.core.coreplugin", "core")
+            "happypanda.server.core.coreplugin", "core", _logger=log)
 
         if not args.safe:
             plugins.plugin_loader(constants.dir_plugin)

@@ -10,26 +10,26 @@ class GalleryRename(UndoCommand):
     Rename a gallery
     """
 
-    renamed = CommandEvent("renamed")
-    rename = CommandEntry("rename", None)
+    renamed = CommandEvent("renamed", str)
+    rename = CommandEntry("rename", None, str, str)
 
     def __init__(self):
         super().__init__()
-        self.gallery = None
         self.title = None
         self.old_title = None
 
-    def main(self, gallery: db.Gallery, title: db.Title, new_title: str) -> None:
+    def main(self, title: db.Title, new_title: str) -> None:
 
-        self.gallery = gallery
         self.title = title
         self.old_title = title.name
 
-        with utils.session() as s:
-            title.name = new_title
-            s.add(title)
+        with self.rename.call(title.name, new_title) as plg:
+            title.name = plg.first()
 
-        self._renamed.emit(title.name)
+            with utils.session() as s:
+                s.add(title)
+
+        self.renamed.emit(title.name)
             
     def undo(self):
         self.title.name = self.old_title
@@ -37,5 +37,5 @@ class GalleryRename(UndoCommand):
         with utils.session() as s:
             s.add(self.title)
 
-        self._renamed.emit(self.old_title)
+        self.renamed.emit(self.old_title)
 
