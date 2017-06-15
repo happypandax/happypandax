@@ -1,8 +1,9 @@
 from gevent import pool
 
-from happypanda.common import constants, utils, hlogger
+from happypanda.common import constants, hlogger
 
 log = hlogger.Logger(__name__)
+
 
 class TaskRunner:
     ""
@@ -14,11 +15,11 @@ class TaskRunner:
 
     def run(self, command, *args, **kwargs):
         "Run a command async, returns id"
-        assert isinstance(command, Command)
 
         self._command_id += 1
         task_id = self._command_id
-        self._commands[task_id] = self._pool.spawn(command.run, *args, **kwargs)
+        self._commands[task_id] = self._pool.spawn(
+            command.run, *args, **kwargs)
         return task_id
 
     def command_done(self, command_id):

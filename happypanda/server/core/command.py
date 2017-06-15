@@ -1,10 +1,11 @@
 from contextlib import contextmanager
 from abc import ABCMeta, abstractmethod
 
-from happypanda.common import constants, utils, hlogger, exceptions
+from happypanda.common import utils, hlogger, exceptions
 from happypanda.server.core import plugins
 
 log = hlogger.Logger(__name__)
+
 
 def get_available_commands():
     subs = utils.all_subclasses(Command)
@@ -12,9 +13,10 @@ def get_available_commands():
     for c in subs:
         c._get_commands()
         for a in c._entries:
-            commands.add(c.__name__+'.'+c._entries[a].name)
+            commands.add(c.__name__ + '.' + c._entries[a].name)
     return commands
-    
+
+
 class Command:
     "Base command"
 
@@ -38,7 +40,6 @@ class Command:
                 a.command_cls = cls
                 cls._entries[a.name] = a
 
-
     @abstractmethod
     def main(self, *args, **kwargs):
         pass
@@ -50,6 +51,7 @@ class Command:
         log.d("Running command: ", self.__name__)
         self.main(*args, **kwargs)
 
+
 class UndoCommand(Command):
     "Command capable of undoing itself"
 
@@ -59,6 +61,7 @@ class UndoCommand(Command):
     @abstractmethod
     def undo(self):
         pass
+
 
 class _CommandPlugin:
     ""
@@ -74,15 +77,17 @@ class _CommandPlugin:
     def invoke_on_plugins(self, *args, **kwargs):
         "Invoke all plugins"
         self._check_types(*args, **kwargs)
-        return constants.plugin_manager.call_command(
-            self.command_cls.__name__+'.'+self.name, *args, **kwargs)
+        return plugins.registered.call_command(
+            self.command_cls.__name__ + '.' + self.name, *args, **kwargs)
 
     def _check_types(self, *args, **kwargs):
         tr = []
         tr.append(len(args) == len(self._args_types))
-        tr.append(all(isinstance(y, x) for x, y in zip(self._args_types, args)))
+        tr.append(all(isinstance(y, x)
+                      for x, y in zip(self._args_types, args)))
         tr.append(all(x in self._kwargs_types for x in kwargs))
-        tr.append(all(isinstance(args[x], self._kwargs_types[x]) for x in args if x in self._kwargs_types))
+        tr.append(all(isinstance(args[x], self._kwargs_types[x])
+                      for x in args if x in self._kwargs_types))
         if not all(tr):
             raise exceptions.CoreError(
                 utils.this_function(),
@@ -115,6 +120,7 @@ class CommandEvent(_CommandPlugin):
         "emit this event with *args and **kwargs"
         self.invoke_on_plugins(*args, **kwargs)
 
+
 class CommandEntry(_CommandPlugin):
     "Base command entry"
 
@@ -126,20 +132,12 @@ class CommandEntry(_CommandPlugin):
     def default(self, func):
         "Set a default handler. Only one default handler is allowed"
         if self.default_handler:
-            raise exceptions.CoreError(utils.this_function(), "Command '{}' has already been assigned a default handler".format(self.name))
+            raise exceptions.CoreError(
+                utils.this_function(),
+                "Command '{}' has already been assigned a default handler".format(
+                    self.name))
         self.default_handler = func
         return func
-
-    def error_code(code):
-        assert isinstance(code, int), "Error code must be of type int"
-        assert code not in _error_codes, "Error code already used"
-        _error_codes.append(code)
-
-        def wrap(cls):
-            cls.code = code
-            cls.name = cls.__name__
-            return cls
-        return wrap
 
     @contextmanager
     def call(self, *args, **kwargs):

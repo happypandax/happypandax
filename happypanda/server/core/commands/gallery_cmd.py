@@ -1,9 +1,10 @@
 from happypanda.common import utils, hlogger
-from happypanda.server.core.command import Command, UndoCommand, CommandEvent, CommandEntry
+from happypanda.server.core.command import UndoCommand, CommandEvent, CommandEntry
 from happypanda.server.core import db
 
 
 log = hlogger.Logger(__name__)
+
 
 class RenameGallery(UndoCommand):
     """
@@ -30,11 +31,11 @@ class RenameGallery(UndoCommand):
         with self.rename.call(title.name, new_title) as plg:
             title.name = plg.first()
 
-            #with utils.session() as s:
-            #    s.add(title)
+            with utils.session() as s:
+                s.add(title)
 
         self.renamed.emit(title.name)
-            
+
     def undo(self):
         self.title.name = self.old_title
 
@@ -57,4 +58,5 @@ class AddGallery(UndoCommand):
     def main(self, gallery: db.Gallery) -> None:
         pass
 
-
+    def undo(self):
+        return super().undo()

@@ -13,5 +13,5 @@ class HPlugin:
     def __init__(self, *args, **kwargs):
         pass
         # Gallery IO
-        #self.create_hook("on_gallery_from_path")  # GalleryFS
-        #self.create_hook("on_gallery_name_parse")
+        # self.create_hook("on_gallery_from_path")  # GalleryFS
+        # self.create_hook("on_gallery_name_parse")

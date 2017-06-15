@@ -1,7 +1,7 @@
 ﻿"""views module."""
 from flask import (render_template,)
 from happypanda.webclient.main import happyweb, client, socketio
-from happypanda.common import constants, utils, exceptions, hlogger
+from happypanda.common import constants, exceptions, hlogger
 
 log = hlogger.Logger(__name__)
 

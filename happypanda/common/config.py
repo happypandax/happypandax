@@ -8,6 +8,7 @@ from happypanda.common import exceptions, hlogger
 
 log = hlogger.Logger(__name__)
 
+
 class Config:
 
     def __init__(self, path, filename1, filename2):

@@ -42,7 +42,7 @@ import enum
 import re
 import bcrypt
 
-from happypanda.common import constants, exceptions, utils, hlogger
+from happypanda.common import constants, exceptions, hlogger
 
 force_instant_defaults()
 force_auto_coercion()
@@ -976,7 +976,7 @@ def init_defaults(sess):
 
     # init default user
     duser = sess.query(User).filter(
-                User.role == User.Role.default).one_or_none()
+        User.role == User.Role.default).one_or_none()
     if not duser:
         duser = User(name="default", role=User.Role.default)
         sess.add(duser)

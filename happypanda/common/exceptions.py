@@ -1,6 +1,4 @@
 """exceptions module."""
-import logging
-
 from happypanda.common import hlogger
 
 log = hlogger.Logger(__name__)
@@ -71,6 +69,7 @@ class PluginError(CoreError):
 
         super().__init__("Plugin: " + name, message)
 
+
 @error_code(201)
 class PluginIDError(PluginError):
     """Plugin ID Error."""
@@ -110,6 +109,7 @@ class PluginHandlerError(PluginError):
     """Plugin Handler Error."""
 
     pass
+
 
 @error_code(207)
 class PluginSignatureError(PluginError):

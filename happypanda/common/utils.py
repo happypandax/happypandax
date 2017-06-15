@@ -9,13 +9,14 @@ import logging
 import base64
 from inspect import ismodule, currentframe, getframeinfo
 from logging.handlers import RotatingFileHandler
-from contextlib import contextmanager, suppress
+from contextlib import contextmanager
 
 from happypanda.common import constants, exceptions, hlogger
 
 log = hlogger.Logger(__name__)
 
 ## PATH ##
+
 
 class PathType(enum.Enum):
     Directoy = 1
@@ -33,6 +34,7 @@ class PathType(enum.Enum):
         return PathType.Invalid
 
 ## Core ##
+
 
 def setup_dirs():
     "Creates directories at the specified root path"
@@ -234,9 +236,11 @@ def imagefrombase64(data):
     "Convert base64 data to image"
     return base64.decodestring(data)
 
+
 def all_subclasses(cls):
     return cls.__subclasses__() + [g for s in cls.__subclasses__()
                                    for g in all_subclasses(s)]
+
 
 @contextmanager
 def session(sess=constants.db_session):

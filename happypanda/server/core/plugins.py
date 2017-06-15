@@ -1,16 +1,15 @@
 import os
 import uuid
 import sys
-import traceback
 import importlib
 import inspect
 import enum
-import abc
 import logging
 
 from happypanda.common import exceptions, utils, constants, hlogger
 
 log = hlogger.Logger(__name__)
+
 
 def get_plugin_logger(plugin_name, plugin_dir):
     "Create a logger for plugin"
@@ -19,12 +18,12 @@ def get_plugin_logger(plugin_name, plugin_dir):
     file_enc = 'utf-8'
 
     try:
-        with open(file_name, 'x', encoding=file_enc) as f:
+        with open(file_name, 'x', encoding=file_enc) as f:  # noqa: F841
             pass
     except FileExistsError:
         pass
 
-    l = hlogger.Logger('HPX Plugin.'+plugin_name)
+    l = hlogger.Logger('HPX Plugin.' + plugin_name)
     l._logger.propagate = False
     l._logger.setLevel(logging.INFO)
     fhandler = logging.FileHandler(file_name, file_mode, file_enc)
@@ -110,16 +109,17 @@ def plugin_loader(path, *args, **kwargs):
         plugin_load(pdir.path, *args, **kwargs)
     return registered.init_plugins()
 
+
 class HandlerValue:
     ""
-    
+
     def __init__(self, name, handlers, *args, **kwargs):
         assert isinstance(handlers, (tuple, list))
         self.name = name
-        self._handlers = handlers # [ (node, handler) ]
+        self._handlers = handlers  # [ (node, handler) ]
         self.args = args
         self.kwargs = kwargs
-        self.failed = {} # { node : exception }
+        self.failed = {}  # { node : exception }
 
         self.expected_type = None
         self.default_handler = None
@@ -129,7 +129,7 @@ class HandlerValue:
         r = []
         for n, h in self._handlers:
             x = self._call_handler(n, h)
-            if not x is None:
+            if x is not None:
                 r.append(x)
 
         if not r and self.default_handler:
@@ -154,7 +154,8 @@ class HandlerValue:
         return self._call_node_idx(-1, False)
 
     def _raise_error(self):
-        raise exceptions.CoreError(self.name, "No handler is connected to this command")
+        raise exceptions.CoreError(
+            self.name, "No handler is connected to this command")
 
     def _call_node_idx(self, idx, error=False):
         if not self._handlers:
@@ -165,7 +166,6 @@ class HandlerValue:
             else:
                 return None
         return self._call_handler(*self._handlers[idx])
-
 
     def _call_handler(self, node, handler):
         try:
@@ -186,12 +186,11 @@ class HandlerValue:
             try:
                 if not isinstance(e, exceptions.PluginError):
                     raise exceptions.PluginHandlerError(
-                            n,"On command '{}' an unhandled exception was raised by plugin handler '{}:{}'\n\t{}".format(self.name, node.plugin.NAME, node.plugin.ID, e))
+                        node, "On command '{}' an unhandled exception was raised by plugin handler '{}:{}'\n\t{}".format(self.name, node.plugin.NAME, node.plugin.ID, e))
                 else:
                     raise e
             except exceptions.PluginError:
                 log.exception()
-
 
 
 class PluginState(enum.Enum):
@@ -199,7 +198,7 @@ class PluginState(enum.Enum):
     Unloaded = 1  # unloaded because of dependencies, etc.
     Init = 2  # was just registered
     Enabled = 3  # plugin is loaded and in use
-    Failed = 4 # failed because of error
+    Failed = 4  # failed because of error
 
 
 class PluginNode:
@@ -292,7 +291,7 @@ class PluginManager:
         self._nodes = {}
         self._started = False
         self._dirty = False
-        self._commands = {} # { command : [ plugins ] }
+        self._commands = {}  # { command : [ plugins ] }
 
     def register(self, plugin, logger, *args, **kwargs):
         """
@@ -391,14 +390,17 @@ class PluginManager:
                 raise
             node.state = PluginState.Enabled
         else:
-            raise exceptions.CoreError(utils.this_function(), "Plugin node has not been registered with this manager")
+            raise exceptions.CoreError(
+                utils.this_function(),
+                "Plugin node has not been registered with this manager")
 
     def _ensure_valid_signature(self, node):
         ""
         sig = inspect.signature(node.plugin.__init__)
         pars = list(sig.parameters)
         if not len(pars) == 3:
-            raise exceptions.PluginSignatureError(node, "Unexpected __init__() signature")
+            raise exceptions.PluginSignatureError(
+                node, "Unexpected __init__() signature")
         var_pos = False
         var_key = False
         for a in pars:
@@ -408,8 +410,9 @@ class PluginManager:
                 var_key = True
 
         if not (var_pos and var_key):
-            raise exceptions.PluginSignatureError(node, "A __init__ with the following signature must be defined: '__init__(self, *args, **kwargs)'")
-
+            raise exceptions.PluginSignatureError(
+                node,
+                "A __init__ with the following signature must be defined: '__init__(self, *args, **kwargs)'")
 
     def disable_plugin(self, pluginid):
         "Remove plugin and its dependents"
@@ -430,21 +433,21 @@ class PluginManager:
                 h.append((n, n.commands[command_name]))
         return HandlerValue(command_name, h, *args, **kwargs)
 
-
     def attach_to_command(self, node, command_name, handler):
         ""
-        if not command_name in constants.available_commands:
-            raise exceptions.PluginCommandError(node, "Command '{}' does not exist".format(command_name))
+        if command_name not in constants.available_commands:
+            raise exceptions.PluginCommandError(
+                node, "Command '{}' does not exist".format(command_name))
         if not callable(handler):
-            raise exceptions.PluginCommandError(node, "Handler should be callable for command '{}'".format(command_name))
+            raise exceptions.PluginCommandError(
+                node, "Handler should be callable for command '{}'".format(command_name))
 
         # TODO: check signature
 
         node.commands[command_name] = handler
-        if not command_name in self._commands:
+        if command_name not in self._commands:
             self._commands[command_name] = []
         self._commands[command_name].append(node)
-
 
     def _ensure_ready(self, node):
         ""
@@ -456,7 +459,8 @@ class PluginManager:
         ""
         assert isinstance(node, PluginNode)
         if not node.state == PluginState.Init:
-            raise exceptions.PluginError(node, "This method should be called in __init__")
+            raise exceptions.PluginError(
+                node, "This method should be called in __init__")
 
 
 constants.plugin_manager = registered = PluginManager()

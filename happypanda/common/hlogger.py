@@ -4,9 +4,11 @@ import sys
 
 from happypanda.common import constants
 
+
 def eprint(*args, **kwargs):
     "Prints to stderr"
     print(*args, file=sys.stderr, **kwargs)
+
 
 class Logger:
 

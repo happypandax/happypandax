@@ -3,7 +3,6 @@ import zipfile
 import rarfile
 import os
 import uuid
-import logging
 
 from happypanda.common import exceptions, constants, hlogger
 
@@ -62,7 +61,7 @@ class ArchiveFile():
         if not name:
             return False
         if name not in self.namelist():
-            log_e('File {} not found in archive'.format(name))
+            log.e('File {} not found in archive'.format(name))
             raise exceptions.FileInArchiveNotFoundError(name, self.filepath)
         if self.archive_type == self.ZIP:
             if name.endswith('/'):
@@ -102,7 +101,7 @@ class ArchiveFile():
         An empty string will return the contents of the top folder
         """
         if dir_name and dir_name not in self.namelist():
-            log_e('Directory {} not found in archive'.format(dir_name))
+            log.e('Directory {} not found in archive'.format(dir_name))
             raise exceptions.FileInArchiveNotFoundError
         if not dir_name:
             if self.archive_type == self.ZIP:
