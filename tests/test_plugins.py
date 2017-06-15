@@ -1,10 +1,11 @@
 """test plugins module."""
 from unittest import mock, TestCase
 import itertools
-
+import os
 import pytest
 
 from happypanda.server.core import plugins, command
+from happypanda.common import hlogger
 from happypanda.server.core.plugins import PluginManager, HPluginMeta
 from happypanda.common import exceptions as hp_exceptions
 from happypanda.common import constants
@@ -30,7 +31,8 @@ def hplugin_meta(hplugin):
                       hplugin.__bases__,
                       dict(hplugin.__dict__))
 
-def test_plugin_load(hplugin):
+@mock.patch('builtins.open', spec=open)
+def test_plugin_load(m_open, hplugin):
     "Test if a plugin can be loaded"
     hpm = plugins._plugin_load(hplugin, 'test')
 
@@ -44,7 +46,7 @@ def test_plugin_init_sig_error(init_func, exc_msg, hplugin_meta):
     "Test for errors if plugin class has wrong signature"
     pm = PluginManager()
     
-    pm.register(hplugin_meta)
+    pm.register(hplugin_meta, mock.Mock(spec=hlogger.Logger))
 
     hplugin_meta.__init__ = init_func
     with pytest.raises(hp_exceptions.PluginSignatureError) as excinfo:
@@ -55,7 +57,7 @@ def test_plugin_init_sig(hplugin_meta):
     "Test if plugin class has the expected signature"
     pm = PluginManager()
     
-    pm.register(hplugin_meta)
+    pm.register(hplugin_meta, mock.Mock(spec=hlogger.Logger))
 
     # good __init__
     hplugin_meta.__init__ = lambda self, *args, **kwargs:None
@@ -73,7 +75,7 @@ def test_hplugin_missing_attrib_error():
 
 def test_hplugin_methods(hplugin_meta):
     "Test if plugclass has the required methods"
-    assert hasattr(hplugin_meta, 'on_plugin_command')
+    assert hasattr(hplugin_meta, 'get_logger')
     assert hasattr(hplugin_meta, 'on_command')
     assert hasattr(hplugin_meta, 'create_command')
 
@@ -97,7 +99,7 @@ def test_hplugin_on_command(m_method, hplugin_meta):
     hplugin_meta.__init__ = hinit
 
     pmanager = PluginManager()
-    pnode = pmanager.register(hplugin_meta)
+    pnode = pmanager.register(hplugin_meta, mock.Mock(spec=hlogger.Logger))
     pmanager.init_plugins()
     m_method.assert_called_with(pnode, cmd_name, phandler)
 
@@ -114,7 +116,7 @@ def test_hplugin_on_command_handler_error(hplugin_meta):
     hplugin_meta.__init__ = hinit
 
     pmanager = PluginManager()
-    pnode = pmanager.register(hplugin_meta)
+    pnode = pmanager.register(hplugin_meta, mock.Mock(spec=hlogger.Logger))
     with pytest.raises(hp_exceptions.PluginCommandError) as excinfo:
         pmanager.init_plugins()
     assert "Handler should be callable" in str(excinfo)
@@ -131,7 +133,43 @@ def test_hplugin_on_command_name_error(hplugin_meta):
     hplugin_meta.__init__ = hinit
 
     pmanager = PluginManager()
-    pnode = pmanager.register(hplugin_meta)
+    pnode = pmanager.register(hplugin_meta, mock.Mock(spec=hlogger.Logger))
     with pytest.raises(hp_exceptions.PluginCommandError) as excinfo:
         pmanager.init_plugins()
     assert "does not exist" in str(excinfo)
+
+@mock.patch('builtins.open', spec=open)
+def test_hplugin_logger_creation(m_open, hplugin):
+    "Test plugin-specific logger is created"
+
+    plugins.registered = PluginManager()
+
+    p = os.path.join(os.getcwd(), "plugin")
+    p_log = "plugin.log"
+    enc = 'utf-8'
+
+    hplugin.NAME = "test"
+
+    node = plugins._plugin_load(hplugin, p)
+
+    m_open.assert_called_with(os.path.join(p, p_log), 'a', encoding=enc)
+
+    assert node.logger._logger.name == 'HPX Plugin.'+hplugin.NAME
+
+def test_hplugin_get_logger(hplugin_meta):
+    "Test get logger"
+
+    with mock.patch.object(hplugin_meta, 'get_logger') as mget_logger:
+        def hinit(self, *args, **kwargs):
+            self.logger = self.get_logger()
+
+        hplugin_meta.__init__ = hinit
+
+        m_log = mock.Mock(spec=hlogger.Logger)
+        pmanager = PluginManager()
+        pnode = pmanager.register(hplugin_meta, m_log)
+        pmanager.init_plugins()
+
+        assert mget_logger.assert_called_with()
+
+

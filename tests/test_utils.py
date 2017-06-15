@@ -3,8 +3,6 @@ import pytest
 
 from unittest import mock
 
-from happypanda.common.utils import eprint
-
 pytestmark = pytest.mark.utilstest
 
 
