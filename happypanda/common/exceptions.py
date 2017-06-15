@@ -59,10 +59,17 @@ class PluginError(CoreError):
         message -- explanation of error
     """
 
-    def __init__(self, name, message):
+    def __init__(self, name_or_node, message):
         """init func."""
-        super().__init__("Plugin: " + name, message)
 
+        self.node = None
+        if isinstance(name_or_node, str):
+            name = name_or_node
+        else:
+            name = name_or_node.plugin.NAME
+            self.node = name_or_node
+
+        super().__init__("Plugin: " + name, message)
 
 @error_code(201)
 class PluginIDError(PluginError):
