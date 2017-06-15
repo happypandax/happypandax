@@ -51,3 +51,9 @@ class Logger:
                 print(s)
             if stderr:
                 eprint(s)
+
+    def __getattr__(self, name):
+
+        if not hasattr(self._logger, name):
+            raise AttributeError
+        return getattr(self._logger, name)
