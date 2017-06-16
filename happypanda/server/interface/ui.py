@@ -8,7 +8,7 @@ def library_view(item_type=enums.ItemType.Gallery.name,
                  limit=100,
                  search_filter="",
                  list_id=None,
-                 view_filter=enums.GalleryFilter.Library.name,
+                 view_filter=enums.ViewType.Library.name,
                  ctx=None):
     """
     Fetch items from the database.
@@ -27,7 +27,7 @@ def library_view(item_type=enums.ItemType.Gallery.name,
     """
     utils.require_context(ctx)
 
-    view_filter = enums.GalleryFilter.get(view_filter)
+    view_filter = enums.ViewType.get(view_filter)
     item_type = enums.ItemType.get(item_type)
 
     db_items = {

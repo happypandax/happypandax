@@ -124,7 +124,7 @@ class HandlerValue:
         self.expected_type = None
         self.default_handler = None
 
-    def all(self):
+    def all(self, default=False):
         "Calls all handlers, returns tuple"
         r = []
         for n, h in self._handlers:
@@ -132,7 +132,7 @@ class HandlerValue:
             if x is not None:
                 r.append(x)
 
-        if not r and self.default_handler:
+        if (not r and self.default_handler) or (default and self.default_handler):
             r.append(self.default_handler(*self.args, **self.kwargs))
 
         return tuple(r)

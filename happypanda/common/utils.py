@@ -226,7 +226,6 @@ def get_module_members(mod):
     assert ismodule(mod)
     raise NotImplementedError
 
-
 def imagetobase64(fp):
     "Convert image from filelike object to base64"
     return base64.encodestring(fp.read())

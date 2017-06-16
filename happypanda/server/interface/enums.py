@@ -1,7 +1,7 @@
 from happypanda.common import utils
 
 
-class GalleryFilter(utils.APIEnum):
+class ViewType(utils.APIEnum):
     #: Library
     Library = 0
     #: Favourite

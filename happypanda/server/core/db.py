@@ -653,6 +653,7 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
     inbox = Column(Boolean, default=False)
     fav = Column(Boolean, default=False)
     info = Column(String, nullable=False, default='')
+    complete_path = Column(Boolean, default=True)
     path = Column(String, nullable=False, default='')
     fetched = Column(Boolean, default=False)
     path_in_archive = Column(String, nullable=False, default='')
@@ -801,9 +802,7 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
             log.w("Could not query for gallery existence because no path was set.")
         return e
 
-
 page_profiles = profile_association("page")
-
 
 @generic_repr
 class Page(TaggableMixin, ProfileMixin, Base):

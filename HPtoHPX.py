@@ -815,8 +815,6 @@ if __name__ == '__main__':
                 for ch_g in galleries:
                     ch_g.tags.append(nstag)
 
-        # hashes
-
         dst_galleries.extend(galleries)
 
         print_progress(numb, len(src_galleries), "Progress:", bar_length=50)
