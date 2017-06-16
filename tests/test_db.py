@@ -243,7 +243,7 @@ class ListRelationship(unittest.TestCase):
     def setUp(self):
         self.session = create_db()
 
-        self.glists = [GalleryList(name="list" + str(x)) for x in range(2)]
+        self.glists = [GalleryFilter(name="list" + str(x)) for x in range(2)]
         self.galleries = [Gallery() for x in range(10)]
         self.session.add_all(self.galleries)
         for gl in self.glists:
@@ -254,27 +254,27 @@ class ListRelationship(unittest.TestCase):
         self.session.delete(self.glists[0])
         self.session.commit()
         self.assertEqual(self.session.query(Gallery).count(), 10)
-        self.assertEqual(self.session.query(GalleryList).count(), 1)
+        self.assertEqual(self.session.query(GalleryFilter).count(), 1)
 
     def test_delete2(self):
         self.session.delete(self.galleries[0])
         self.session.commit()
         self.assertEqual(self.session.query(Gallery).count(), 9)
-        self.assertEqual(self.session.query(GalleryList).count(), 2)
+        self.assertEqual(self.session.query(GalleryFilter).count(), 2)
         self.assertEqual(self.glists[0].galleries.count(), 9)
 
     def test_no_orphans(self):
         self.session.query(Gallery).delete()
         self.session.commit()
         self.assertEqual(self.session.query(Gallery).count(), 0)
-        self.assertEqual(self.session.query(GalleryList).count(), 2)
+        self.assertEqual(self.session.query(GalleryFilter).count(), 2)
         self.assertEqual(self.glists[0].galleries.count(), 0)
 
     def test_no_orphans2(self):
-        self.session.query(GalleryList).delete()
+        self.session.query(GalleryFilter).delete()
         self.session.commit()
         self.assertEqual(self.session.query(Gallery).count(), 10)
-        self.assertEqual(self.session.query(GalleryList).count(), 0)
+        self.assertEqual(self.session.query(GalleryFilter).count(), 0)
 
     def tearDown(self):
         self.session.close()
@@ -659,7 +659,7 @@ class ProfileRelationship(unittest.TestCase):
     def setUp(self):
         self.session = create_db()
 
-        self.lists = [GalleryList(name="list" + str(x)) for x in range(5)]
+        self.lists = [GalleryFilter(name="list" + str(x)) for x in range(5)]
         self.gns = [Grouping(name="gns" + str(x)) for x in range(5)]
         self.galleries = [Gallery() for x in range(5)]
         self.collections = [Collection(title="title" + str(x)) for x in range(5)]
@@ -678,7 +678,7 @@ class ProfileRelationship(unittest.TestCase):
         self.assertEqual(self.session.query(Grouping).count(), 5)
         self.assertEqual(self.session.query(Collection).count(), 5)
         self.assertEqual(self.session.query(Page).count(), 5)
-        self.assertEqual(self.session.query(GalleryList).count(), 5)
+        self.assertEqual(self.session.query(GalleryFilter).count(), 5)
 
         self.profiles = [Profile(path="p" + str(x), data='test', size='200') for x in range(5)]
 
@@ -700,7 +700,7 @@ class ProfileRelationship(unittest.TestCase):
         self.assertEqual(self.session.query(Grouping).count(), 5)
         self.assertEqual(self.session.query(Collection).count(), 5)
         self.assertEqual(self.session.query(Page).count(), 5)
-        self.assertEqual(self.session.query(GalleryList).count(), 5)
+        self.assertEqual(self.session.query(GalleryFilter).count(), 5)
         self.assertEqual(self.session.query(Profile).count(), 4)
 
     def test_delete2(self):
@@ -710,7 +710,7 @@ class ProfileRelationship(unittest.TestCase):
         self.assertEqual(self.session.query(Grouping).count(), 5)
         self.assertEqual(self.session.query(Collection).count(), 5)
         self.assertEqual(self.session.query(Page).count(), 4)
-        self.assertEqual(self.session.query(GalleryList).count(), 5)
+        self.assertEqual(self.session.query(GalleryFilter).count(), 5)
         self.assertEqual(self.session.query(Profile).count(), 4)
 
     def test_no_orphans(self):
@@ -723,7 +723,7 @@ class ProfileRelationship(unittest.TestCase):
         self.assertEqual(self.session.query(Grouping).count(), 0)
         self.assertEqual(self.session.query(Collection).count(), 5)
         self.assertEqual(self.session.query(Page).count(), 0)
-        self.assertEqual(self.session.query(GalleryList).count(), 0)
+        self.assertEqual(self.session.query(GalleryFilter).count(), 0)
         self.assertEqual(self.session.query(Profile).count(), 0)
 
     def tearDown(self):

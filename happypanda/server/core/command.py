@@ -19,8 +19,8 @@ def get_available_commands():
 
 class Command:
     "Base command"
-
     _metaclass__ = ABCMeta
+
 
     _events = {}
     _entries = {}

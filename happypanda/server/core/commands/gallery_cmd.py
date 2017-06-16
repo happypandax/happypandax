@@ -1,5 +1,5 @@
 from happypanda.common import utils, hlogger
-from happypanda.server.core.command import UndoCommand, CommandEvent, CommandEntry
+from happypanda.server.core.command import Command, UndoCommand, CommandEvent, CommandEntry
 from happypanda.server.core import db
 
 
@@ -60,3 +60,9 @@ class AddGallery(UndoCommand):
 
     def undo(self):
         return super().undo()
+
+class FilterGallery(Command):
+    """
+    Retruns filtered galleries
+    """
+

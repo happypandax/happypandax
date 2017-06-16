@@ -824,7 +824,7 @@ if __name__ == '__main__':
     print("\nCreating gallery lists")
     dst_lists = []
     for l in GALLERY_LISTS:
-        glist = db.GalleryList()
+        glist = db.GalleryFilter()
         glist.name = l.name
         glist.filter = l.filter
         glist.enforce = l.enforce

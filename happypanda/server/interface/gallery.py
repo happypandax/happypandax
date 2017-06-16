@@ -44,12 +44,12 @@ def scan_gallery(ctx=None, paths=[], add_after=False, ignore_exist=True):
     return message.Message("works")
 
 
-def _gallery_count(id=0, item_type=enums.ItemType.GalleryList.name):
+def _gallery_count(id=0, item_type=enums.ItemType.GalleryFilter.name):
 
     item_type = enums.ItemType.get(item_type)
 
     db_items = {
-        enums.ItemType.GalleryList: db.GalleryList,
+        enums.ItemType.GalleryList: db.GalleryFilter,
         enums.ItemType.Collection: db.Collection,
         enums.ItemType.Grouping: db.Grouping
     }
@@ -62,7 +62,7 @@ def _gallery_count(id=0, item_type=enums.ItemType.GalleryList.name):
         db_item.id == id).count()
 
 
-def gallery_count(id=0, item_type=enums.ItemType.GalleryList.name):
+def gallery_count(id=0, item_type=enums.ItemType.GalleryFilter.name):
     """
     Get gallery count
 

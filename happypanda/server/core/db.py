@@ -528,17 +528,17 @@ class Circle(NameMixin, Base):
         lazy="dynamic")
 
 
-gallery_lists = Table('gallery_lists', Base.metadata,
-                      Column('list_id', Integer, ForeignKey('list.id')),
+gallery_filters = Table('gallery_filters', Base.metadata,
+                      Column('filter_id', Integer, ForeignKey('filter.id')),
                       Column('gallery_id', Integer, ForeignKey('gallery.id')),
-                      UniqueConstraint('list_id', 'gallery_id'))
+                      UniqueConstraint('filter_id', 'gallery_id'))
 
-list_profiles = profile_association("list")
+filter_profiles = profile_association("filter")
 
 
 @generic_repr
-class GalleryList(ProfileMixin, NameMixin, Base):
-    __tablename__ = 'list'
+class GalleryFilter(ProfileMixin, NameMixin, Base):
+    __tablename__ = 'filter'
     filter = Column(String, nullable=False, default='')
     enforce = Column(Boolean, nullable=False, default=False)
     regex = Column(Boolean, nullable=False, default=False)
@@ -547,12 +547,12 @@ class GalleryList(ProfileMixin, NameMixin, Base):
 
     galleries = relationship(
         "Gallery",
-        secondary=gallery_lists,
-        back_populates='lists',
+        secondary=gallery_filters,
+        back_populates='filters',
         lazy="dynamic")
     profiles = relationship(
         "Profile",
-        secondary=list_profiles,
+        secondary=filter_profiles,
         lazy='joined',
         cascade="all")
 
@@ -700,9 +700,9 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
         back_populates='galleries',
         lazy="joined",
         cascade="save-update, merge, refresh-expire")
-    lists = relationship(
-        "GalleryList",
-        secondary=gallery_lists,
+    filters = relationship(
+        "GalleryFilter",
+        secondary=gallery_filters,
         back_populates='galleries',
         lazy="dynamic")
     pages = relationship(

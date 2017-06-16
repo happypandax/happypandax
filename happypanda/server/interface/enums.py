@@ -15,8 +15,8 @@ class ItemType(utils.APIEnum):
     Gallery = 0
     #: Collection
     Collection = 1
-    #: GalleryList
-    GalleryList = 2
+    #: GalleryFilter
+    GalleryFilter = 2
     #: Page
     Page = 3
     #: Grouping

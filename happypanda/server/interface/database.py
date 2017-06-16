@@ -73,7 +73,7 @@ def get_item(item_type=enums.ItemType.Gallery):
 
 def _get_glists():
     s = constants.db_session()
-    return s.query(db.GalleryList).all()
+    return s.query(db.GalleryFilter).all()
 
 
 def get_glists():
@@ -84,8 +84,8 @@ def get_glists():
         a list of gallerylist objects
     """
 
-    glists = message.List("gallerylist", message.GalleryList)
-    [glists.append(message.GalleryList(x)) for x in _get_glists()]
+    glists = message.List("gallerylist", message.GalleryFilter)
+    [glists.append(message.GalleryFilter(x)) for x in _get_glists()]
     return glists
 
 
