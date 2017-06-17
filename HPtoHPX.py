@@ -2,8 +2,6 @@
 from happypanda.server.core import db, galleryio
 from happypanda.server.interface import enums
 
-GALLERY_LISTS = []
-
 def chapter_map(row, chapter):
     assert isinstance(chapter, Chapter)
     chapter.title = row['chapter_title']
@@ -714,7 +712,10 @@ if __name__ == '__main__':
 
             path = g.path if ch.in_archive else ch.path
             if not os.path.exists(path):
-                print("Skipping {} because path doesn't exists.".format(ch.title))
+                try:
+                    print("Skipping {} because path doesn't exists.".format(ch.title))
+                except UnicodeError:
+                    print("Skipping {} because path doesn't exists.".format(ch.title.encode(errors='ignore')))
                 continue
             path_in_archive = ch.path
 
