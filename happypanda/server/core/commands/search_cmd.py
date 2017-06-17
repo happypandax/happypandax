@@ -1,8 +1,9 @@
-from happypanda.common import utils, hlogger
+from happypanda.common import hlogger
 from happypanda.server.core.command import Command, CommandEvent, CommandEntry
 from happypanda.server.core import db
 
 log = hlogger.Logger(__name__)
+
 
 class ParseSearchFilter(Command):
     """
@@ -36,7 +37,7 @@ class ParseSearchFilter(Command):
             # if we meet brackets
             if x == '[':
                 bracket_level += 1
-                brackets_tags[piece] = set() # we want unique tags!
+                brackets_tags[piece] = set()  # we want unique tags!
                 current_bracket_ns = piece
             elif x == ']':
                 bracket_level -= 1
@@ -49,29 +50,31 @@ class ParseSearchFilter(Command):
                 else:
                     qoute_level += 1
 
-            # if we meet a whitespace, comma or end of term and are not in a double qoute
-            if (x == ' ' or x == ',' or n == len(term) - 1) and qoute_level == 0:
+            # if we meet a whitespace, comma or end of term and are not in a
+            # double qoute
+            if (x == ' ' or x == ',' or n == len(
+                    term) - 1) and qoute_level == 0:
                 # if end of term and x is allowed
-                if (n == len(term) - 1) and not x in blacklist and x != ' ':
+                if (n == len(term) - 1) and x not in blacklist and x != ' ':
                     piece += x
                 if piece:
-                    if bracket_level > 0 or end_of_bracket: # if we are inside a bracket we put piece in the set
+                    if bracket_level > 0 or end_of_bracket:  # if we are inside a bracket we put piece in the set
                         end_of_bracket = False
                         if piece.startswith(current_bracket_ns):
                             piece = piece[len(current_bracket_ns):]
                         if piece:
                             try:
                                 brackets_tags[current_bracket_ns].add(piece)
-                            except KeyError: # keyerror when there is a closing bracket without a starting bracket
+                            except KeyError:  # keyerror when there is a closing bracket without a starting bracket
                                 pass
                     else:
-                        pieces.append(piece) # else put it in the normal list
+                        pieces.append(piece)  # else put it in the normal list
                 piece = ''
                 continue
 
             # else append to the buffers
-            if not x in blacklist:
-                if qoute_level > 0: # we want to include everything if in double qoute
+            if x not in blacklist:
+                if qoute_level > 0:  # we want to include everything if in double qoute
                     piece += x
                 elif x != ' ':
                     piece += x
@@ -84,7 +87,7 @@ class ParseSearchFilter(Command):
                 if tag[0] == '-':
                     if ns_tag[0] != '-':
                         ns_tag = '-' + ns
-                    tag = tag[1:] # remove the '-'
+                    tag = tag[1:]  # remove the '-'
 
                 # put them together
                 ns_tag += tag
@@ -94,8 +97,8 @@ class ParseSearchFilter(Command):
 
         return tuple(pieces)
 
-    def main(self, search_filter:str) -> tuple:
-        
+    def main(self, search_filter: str) -> tuple:
+
         self.filter = search_filter
 
         pieces = set()
@@ -110,6 +113,7 @@ class ParseSearchFilter(Command):
 
         return self.pieces
 
+
 class PartialFilter(Command):
     """
     Perform a partial search on database model with a single term
@@ -121,6 +125,7 @@ class PartialFilter(Command):
 
     def __init__(self):
         super().__init__()
+
 
 class OperatorFilter(PartialFilter):
     """
@@ -135,6 +140,7 @@ class OperatorFilter(PartialFilter):
 
     def __init__(self):
         super().__init__()
+
 
 class ModelFilter(Command):
     """
@@ -160,13 +166,13 @@ class ModelFilter(Command):
 
     @separate.default
     def _separate(pecies):
-        
+
         include = []
         exclude = []
 
         for p in pecies:
             if p.startswith('-'):
-                exclude.append(p[1:]) # remove '-' at the start
+                exclude.append(p[1:])  # remove '-' at the start
             else:
                 include.append(p)
 
@@ -175,14 +181,14 @@ class ModelFilter(Command):
     @classmethod
     def _match(model_name, pieces):
         ""
-        model = getattr(db, model_name)
-        operatorfilter = OperatorFilter()
-        partialfilter = PartialFilter()
-        matched = set()
+        #model = getattr(db, model_name)
+        #operatorfilter = OperatorFilter()
+        #partialfilter = PartialFilter()
+        #matched = set()
 
-        for p in pieces:
-            for o in operators:
-                pass
+        # for p in pieces:
+        #    for o in operators:
+        #        pass
 
     @include.default
     def _include(model_name, pieces):
@@ -192,7 +198,7 @@ class ModelFilter(Command):
     def _exclude(model_name, pieces):
         ModelFilter._match(model_name, pieces)
 
-    def main(self, model: db.Base, search_filter:str) -> set:
+    def main(self, model: db.Base, search_filter: str) -> set:
         assert isinstance(model, db.Base)
 
         self._model = model
@@ -213,14 +219,14 @@ class ModelFilter(Command):
                     exclude.update(p[1])
 
         with self.include.call(model_name, include) as plg:
-            
+
             for i in plg.all():
                 self.included_ids.update(i)
 
         self.included.emit(model_name, self.included_ids)
 
         with self.exclude.call(model_name, exclude) as plg:
-            
+
             for i in plg.all():
                 self.excluded_ids.update(i)
 
@@ -232,6 +238,3 @@ class ModelFilter(Command):
         self.matched.emit(self._model.__name__, self.matched_ids)
 
         return self.matched_ids
-        
-
-

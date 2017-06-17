@@ -529,9 +529,12 @@ class Circle(NameMixin, Base):
 
 
 gallery_filters = Table('gallery_filters', Base.metadata,
-                      Column('filter_id', Integer, ForeignKey('filter.id')),
-                      Column('gallery_id', Integer, ForeignKey('gallery.id')),
-                      UniqueConstraint('filter_id', 'gallery_id'))
+                        Column('filter_id', Integer, ForeignKey('filter.id')),
+                        Column(
+                            'gallery_id',
+                            Integer,
+                            ForeignKey('gallery.id')),
+                        UniqueConstraint('filter_id', 'gallery_id'))
 
 filter_profiles = profile_association("filter")
 
@@ -803,6 +806,7 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
         return e
 
 page_profiles = profile_association("page")
+
 
 @generic_repr
 class Page(TaggableMixin, ProfileMixin, Base):

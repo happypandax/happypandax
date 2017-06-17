@@ -132,7 +132,8 @@ class HandlerValue:
             if x is not None:
                 r.append(x)
 
-        if (not r and self.default_handler) or (default and self.default_handler):
+        if (not r and self.default_handler) or (
+                default and self.default_handler):
             r.append(self.default_handler(*self.args, **self.kwargs))
 
         return tuple(r)

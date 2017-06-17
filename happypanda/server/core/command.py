@@ -21,7 +21,6 @@ class Command:
     "Base command"
     _metaclass__ = ABCMeta
 
-
     _events = {}
     _entries = {}
 
