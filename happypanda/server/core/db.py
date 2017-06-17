@@ -653,7 +653,7 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
     inbox = Column(Boolean, default=False)
     fav = Column(Boolean, default=False)
     info = Column(String, nullable=False, default='')
-    complete_path = Column(Boolean, default=True)
+    complete_pages = Column(Boolean, default=True)
     path = Column(String, nullable=False, default='')
     fetched = Column(Boolean, default=False)
     path_in_archive = Column(String, nullable=False, default='')
