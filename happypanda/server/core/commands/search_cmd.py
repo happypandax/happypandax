@@ -125,6 +125,11 @@ class PartialFilter(Command):
 
     def __init__(self):
         super().__init__()
+        self.model = None
+        self.term = ''
+
+    def main(self, model: db.Base, term:str) -> set:
+        pass
 
 
 class OperatorFilter(PartialFilter):
@@ -138,9 +143,25 @@ class OperatorFilter(PartialFilter):
     Returns None if term is not accepted else a set with ids of matched model items
     """
 
+    operators = CommandEntry("operators", tuple)
+    accept = CommandEntry("match", None)
+    match = CommandEntry("match", None)
+
     def __init__(self):
         super().__init__()
+        self._ops = set()
 
+    @operators.default
+    def _operators():
+        return ('>', '<')
+
+    def main(self, model: db.Base, term:str) -> set:
+        
+        with self.operators.call() as plg:
+            for o in plg.all(default=True):
+                for x in o:
+                    if isinstance(x, str):
+                        self._ops.add(x)
 
 class ModelFilter(Command):
     """
@@ -181,22 +202,27 @@ class ModelFilter(Command):
     @classmethod
     def _match(model_name, pieces):
         ""
-        #model = getattr(db, model_name)
-        #operatorfilter = OperatorFilter()
-        #partialfilter = PartialFilter()
-        #matched = set()
+        model = getattr(db, model_name)
+        operatorfilter = OperatorFilter()
+        partialfilter = PartialFilter()
+        matched = set()
 
-        # for p in pieces:
-        #    for o in operators:
-        #        pass
+        for p in pieces:
+
+            m = operatorfilter.main(model, p)
+            if m is None:
+                m = partialfilter.main(model, p)
+            matched.update(m)
+
+        return matched
 
     @include.default
     def _include(model_name, pieces):
-        ModelFilter._match(model_name, pieces)
+        return ModelFilter._match(model_name, pieces)
 
     @exclude.default
     def _exclude(model_name, pieces):
-        ModelFilter._match(model_name, pieces)
+        return ModelFilter._match(model_name, pieces)
 
     def main(self, model: db.Base, search_filter: str) -> set:
         assert isinstance(model, db.Base)

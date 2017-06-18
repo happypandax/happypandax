@@ -2,6 +2,8 @@
 from happypanda.server.core import db, galleryio
 from happypanda.server.interface import enums
 
+GALLERY_LISTS = []
+
 def chapter_map(row, chapter):
     assert isinstance(chapter, Chapter)
     chapter.title = row['chapter_title']
