@@ -1110,3 +1110,9 @@ def is_list(obj):
 def is_query(obj):
     "Check if db object is a dynamic query object (issued by lazy='dynamic')"
     return isinstance(obj, dynamic.AppenderQuery)
+
+def related_classes(obj):
+    "Returns a list of mapper classes that has a relationship with given mapper class"
+    assert isinstance(obj, Base)
+
+    return [x.mapper.class_ for x in inspect(obj).relationships]

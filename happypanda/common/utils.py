@@ -309,3 +309,7 @@ def require_context(ctx):
 def this_function():
     "Return name of current function"
     return getframeinfo(currentframe()).function
+
+def this_command(command_cls):
+    "Return name of command for exceptions"
+    return "Command:" + command_cls.__name__

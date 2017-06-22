@@ -1,6 +1,8 @@
-from happypanda.common import hlogger
+from happypanda.common import hlogger, exceptions, utils
 from happypanda.server.core.command import Command, CommandEvent, CommandEntry
+from happypanda.server.core.commands import database_cmd
 from happypanda.server.core import db
+
 
 log = hlogger.Logger(__name__)
 
@@ -20,7 +22,7 @@ class ParseSearchFilter(Command):
         self.filter = ''
         self.pieces = tuple()
 
-    @parse.default
+    @parse.default()
     def _get_terms(term):
 
         # some variables we will use
@@ -120,17 +122,83 @@ class PartialFilter(Command):
 
     Accepts any term
 
+    By default, the following models are supported:
+
+    - User
+    - NamespaceTags
+    - Tag
+    - Namespace
+    - Artist
+    - Circle
+    - Status
+    - Grouping
+    - Language
+    - Category
+    - Collection
+    - Gallery
+    - Title
+    - GalleryUrl
+
     Returns a set with ids of matched model items
     """
+
+    models = CommandEntry("models", tuple)
+
+    match_model = CommandEntry("match_model", set, db.Base, str)
+    matched = CommandEvent("matched", set)
 
     def __init__(self):
         super().__init__()
         self.model = None
         self.term = ''
+        self._supported_models = set()
+        self.matched_ids = set()
 
-    def main(self, model: db.Base, term:str) -> set:
-        pass
+    @models.default()
+    def _models():
+        return (
+            db.NamespaceTags,
+            db.Tag,
+            db.Namespace,
+            db.Artist,
+            db.Circle,
+            db.Status,
+            db.Grouping,
+            db.Language,
+            db.Category,
+            db.Collection,
+            db.Gallery,
+            db.Title,
+            db.GalleryUrl
+            )
 
+    @match_model.default(capture=True)
+    def _match_gallery(model, term, capture=db.Gallery):
+        return set()
+
+    @match_model.default(capture=True)
+    def _match_models(model, term, capture=_models()):
+        return set()
+
+    def main(self, model: db.Base, term: str) -> set:
+
+        self.model = model
+        self.term = term
+
+        with self.models.call() as plg:
+            for p in plg.all(default=True):
+                self._supported_models.update(p)
+
+        if not self.model in self._supported_models:
+            raise exceptions.CoreError(utils.this_command(self), "Model '{}' is not supported".format(model))
+
+        with self.match_model.call_capture(self.model, self.model, self.term) as plg:
+            for i in plg.all():
+                self.matched_ids.update(i)
+
+        self.matched.emit(self.matched_ids)
+
+        return self.matched_ids
 
 class OperatorFilter(PartialFilter):
     """
@@ -144,24 +212,28 @@ class OperatorFilter(PartialFilter):
     """
 
     operators = CommandEntry("operators", tuple)
-    accept = CommandEntry("match", None)
+    accept = CommandEntry("accept", None)
     match = CommandEntry("match", None)
 
     def __init__(self):
         super().__init__()
         self._ops = set()
 
-    @operators.default
+    @operators.default()
     def _operators():
         return ('>', '<')
 
-    def main(self, model: db.Base, term:str) -> set:
-        
+    def main(self, model: db.Base, term: str) -> set:
+        return None
+        self.model = model
+        self.term = term
+
         with self.operators.call() as plg:
             for o in plg.all(default=True):
                 for x in o:
                     if isinstance(x, str):
                         self._ops.add(x)
+
 
 class ModelFilter(Command):
     """
@@ -185,7 +257,7 @@ class ModelFilter(Command):
         self.excluded_ids = set()
         self.matched_ids = set()
 
-    @separate.default
+    @separate.default()
     def _separate(pecies):
 
         include = []
@@ -202,7 +274,7 @@ class ModelFilter(Command):
     @classmethod
     def _match(model_name, pieces):
         ""
-        model = getattr(db, model_name)
+        model = database_cmd.GetModel().run(model_name)
         operatorfilter = OperatorFilter()
         partialfilter = PartialFilter()
         matched = set()
@@ -216,11 +288,11 @@ class ModelFilter(Command):
 
         return matched
 
-    @include.default
+    @include.default()
     def _include(model_name, pieces):
         return ModelFilter._match(model_name, pieces)
 
-    @exclude.default
+    @exclude.default()
     def _exclude(model_name, pieces):
         return ModelFilter._match(model_name, pieces)
 

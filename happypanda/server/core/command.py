@@ -19,7 +19,7 @@ def get_available_commands():
 
 class Command:
     "Base command"
-    _metaclass__ = ABCMeta
+    __metaclass__ = ABCMeta
 
     _events = {}
     _entries = {}
@@ -47,8 +47,8 @@ class Command:
         """
         Run the command with *args and **kwargs.
         """
-        log.d("Running command: ", self.__name__)
-        self.main(*args, **kwargs)
+        log.d("Running command: ", self.__class__.__name__)
+        return self.main(*args, **kwargs)
 
 
 class UndoCommand(Command):
@@ -73,24 +73,30 @@ class _CommandPlugin:
         self._kwargs_types = kwargs
         self._description = description
 
+    def qualifiedname(self):
+        "Returns Class.command name"
+        return self.command_cls.__name__ + '.' + self.name
+
     def invoke_on_plugins(self, *args, **kwargs):
         "Invoke all plugins"
         self._check_types(*args, **kwargs)
         return plugins.registered.call_command(
-            self.command_cls.__name__ + '.' + self.name, *args, **kwargs)
+            self.qualifiedname(), *args, **kwargs)
 
     def _check_types(self, *args, **kwargs):
         tr = []
         tr.append(len(args) == len(self._args_types))
-        tr.append(all(isinstance(y, x)
+        tr.append(all(isinstance(y, x) or issubclass(y, x)
                       for x, y in zip(self._args_types, args)))
+
         tr.append(all(x in self._kwargs_types for x in kwargs))
-        tr.append(all(isinstance(args[x], self._kwargs_types[x])
-                      for x in args if x in self._kwargs_types))
+        tr.append(all(isinstance(kwargs[x], self._kwargs_types[x]) or issubclass(kwargs[x], self._kwargs_types[x])
+                      for x in kwargs if x in self._kwargs_types))
         if not all(tr):
             raise exceptions.CoreError(
                 utils.this_function(),
-                "Wrong types were used for this command, types used [{}], types expected [{}]".format(
+                "Wrong types were used for command '{}'. Types used {}, types expected {}".format(
+                    self.qualifiedname(),
                     self._stringify_args(args, kwargs),
                     self._stringify_args(self._args_types, self._kwargs_types, True)))
 
@@ -127,20 +133,40 @@ class CommandEntry(_CommandPlugin):
         super().__init__(name, *args, **kwargs)
         self.return_type = return_type
         self.default_handler = None
+        self.default_capture_handlers = []
 
-    def default(self, func):
+    def default(self, capture=False):
         "Set a default handler. Only one default handler is allowed"
-        if self.default_handler:
-            raise exceptions.CoreError(
-                utils.this_function(),
-                "Command '{}' has already been assigned a default handler".format(
-                    self.name))
-        self.default_handler = func
-        return func
+
+        def wrapper(func):
+            if capture:
+                self.default_capture_handlers.append(func)
+                return func
+
+            if self.default_handler:
+                raise exceptions.CoreError(
+                    utils.this_function(),
+                    "Command '{}' has already been assigned a default handler".format(
+                        self.name))
+            self.default_handler = func
+            return func
+        return wrapper
+
+    @contextmanager
+    def call_capture(self, token, *args, **kwargs):
+        "Calls associated handlers with a capture token"
+        handler = self.invoke_on_plugins(*args, **kwargs)
+        handler.default_handler = self.default_handler
+        handler.expected_type = self.return_type
+        handler.capture = True
+        handler.capture_token = token
+        for h in self.default_capture_handlers:
+            handler._add_capture_handler(h)
+        yield handler
 
     @contextmanager
     def call(self, *args, **kwargs):
-        ""
+        "Calls associated handlers"
         handler = self.invoke_on_plugins(*args, **kwargs)
         handler.default_handler = self.default_handler
         handler.expected_type = self.return_type

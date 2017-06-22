@@ -121,22 +121,36 @@ class HandlerValue:
         self.kwargs = kwargs
         self.failed = {}  # { node : exception }
 
+        self.default_capture_handlers = {}
+        self._capture_handlers = {}
+        self.capture = False
+        self.capture_token = '*'
+
         self.expected_type = None
         self.default_handler = None
 
+        for h in self._handlers:
+            self._add_capture_handler(h)
+
     def all(self, default=False):
         "Calls all handlers, returns tuple"
-        r = []
-        for n, h in self._handlers:
-            x = self._call_handler(n, h)
-            if x is not None:
-                r.append(x)
+        if self.capture:
+            r = self._call_capture(None, False, default)
+            if r is None:
+                return tuple()
+            return r
+        else:
+            r = []
+            for n, h in self._handlers:
+                x = self._call_handler(n, h)
+                if x is not None:
+                    r.append(x)
 
-        if (not r and self.default_handler) or (
-                default and self.default_handler):
-            r.append(self.default_handler(*self.args, **self.kwargs))
+            if (not r and self.default_handler) or (
+                    default and self.default_handler):
+                r.append(self.default_handler(*self.args, **self.kwargs))
 
-        return tuple(r)
+            return tuple(r)
 
     def first(self):
         "Calls first handler, raises error if there is no handler"
@@ -154,19 +168,85 @@ class HandlerValue:
         "Calls last handler, return None if there is no handler"
         return self._call_node_idx(-1, False)
 
+    def _add_capture_handler(self, handler, default=False):
+        assert callable(handler)
+
+        sig = inspect.signature(handler)
+
+        if 'capture' in sig.parameters:
+            cap = sig.parameters['capture'].default
+            
+            if not cap == inspect._empty:
+
+                if not isinstance(cap, (list, tuple)):
+                    cap = (cap,)
+
+                for c in cap:
+                    if not c in self._capture_handlers:
+                        self._capture_handlers[c] = []
+
+                    self._capture_handlers[c].append(handler)
+
     def _raise_error(self):
         raise exceptions.CoreError(
             self.name, "No handler is connected to this command")
 
-    def _call_node_idx(self, idx, error=False):
-        if not self._handlers:
-            if self.default_handler:
-                return self.default_handler(*self.args, **self.kwargs)
+    def _call_capture(self, idx, error, default):
+        if not self._capture_handlers and not self.default_capture_handlers:
             if error:
                 self._raise_error()
+            return None
+
+        token_exists = self.capture_token in self._capture_handlers
+        token_exists_d = self.capture_token in self.default_capture_handlers
+
+        if not token_exists and token_exists_d:
+            if error:
+                self._raise_error()
+            return None
+
+        token_handler_d = None
+        token_handler = None
+
+        if token_exists:
+            token_handler = self._capture_handlers[self.capture_token]
+
+        if token_exists_d:
+            token_handler = self.default_capture_handlers[self.capture_token]
+
+        if not token_handler and not token_handler_d:
+            if error:
+                self._raise_error()
+            return None
+
+        r = []
+
+        if token_handler:
+            if idx is not None:
+                return self._call_handler(*token_handler[idx])
             else:
+                (r.append(self._call_handler(y)) for y in token_handler)
+
+        if token_handler_d:
+            if idx is not None:
+                return token_handler_d[0](*self.args, **self.kwargs)
+            else:
+                if default or not token_handler:
+                    (r.append(y(*self.args, **self.kwargs)) for y in token_handler_d)
+
+        return (x for x in r if x is not None)
+
+    def _call_node_idx(self, idx, error=False):
+        if self.capture:
+            return self._call_capture(idx, error, False)
+        else:
+            if not self._handlers:
+                if self.default_handler:
+                    return self.default_handler(*self.args, **self.kwargs)
+                if error:
+                    self._raise_error()
                 return None
-        return self._call_handler(*self._handlers[idx])
+            return self._call_handler(*self._handlers[idx])
 
     def _call_handler(self, node, handler):
         try:
