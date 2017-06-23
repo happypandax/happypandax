@@ -12,7 +12,7 @@ Documentation
 	This is project is under heavy development and is not ready for deployment.
 	If you want to speed up the development, please consider :ref:`Contributing`.
 
-Getting Happypanda X
+Happypanda X user guide
 ----------------------------------------
 
 .. toctree::
@@ -28,10 +28,18 @@ For developers
 .. toctree::
 	:maxdepth: 2
 
-	api
 	env
 	client
 	plugin
 	todo
+
+Developer API
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. toctree::
+	:maxdepth: 2
+
+	api
+	api_plugin
 
 I'm available at `Gitter <https://gitter.im/Pewpews/happypandax>`_ for any help concerning HPX.

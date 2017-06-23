@@ -1,8 +1,5 @@
-Developer API
+Server API
 ========================================
-
-Server
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Enums
 ----------------------------------------
@@ -47,6 +44,3 @@ Settings
 
 .. automodule:: happypanda.server.interface.settings
    :members:
-
-Plugin
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

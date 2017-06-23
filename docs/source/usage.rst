@@ -39,14 +39,14 @@ If you started the web client server, you can start using HPX by opening up your
 Exposing Happypanda X
 ========================================
 
-To allow HPX to be accessed from your phone or other devices, you'll need to expose the server(s) to the internal or external (internet) network
+To allow HPX to be accessed from your phone or other devices, you'll need to expose the server(s) to the private or public (internet) networks
 
-Internal network
+Private network
 -------------------------------------
 
 Doing this will allow for you to access HPX from *any device connected to your home network*
 
-External network
+Public network
 -------------------------------------
 
 Doing this will allow for you to access HPX from *any device connected to the internet*
