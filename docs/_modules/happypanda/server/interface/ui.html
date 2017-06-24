@@ -123,7 +123,7 @@
                  <span class="n">limit</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
                  <span class="n">search_filter</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
                  <span class="n">list_id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                 <span class="n">view_filter</span><span class="o">=</span><span class="n">enums</span><span class="o">.</span><span class="n">GalleryFilter</span><span class="o">.</span><span class="n">Library</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                 <span class="n">view_filter</span><span class="o">=</span><span class="n">enums</span><span class="o">.</span><span class="n">ViewType</span><span class="o">.</span><span class="n">Library</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
                  <span class="n">ctx</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Fetch items from the database.</span>
@@ -142,7 +142,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">utils</span><span class="o">.</span><span class="n">require_context</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
 
-    <span class="n">view_filter</span> <span class="o">=</span> <span class="n">enums</span><span class="o">.</span><span class="n">GalleryFilter</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">view_filter</span><span class="p">)</span>
+    <span class="n">view_filter</span> <span class="o">=</span> <span class="n">enums</span><span class="o">.</span><span class="n">ViewType</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">view_filter</span><span class="p">)</span>
     <span class="n">item_type</span> <span class="o">=</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">item_type</span><span class="p">)</span>
 
     <span class="n">db_items</span> <span class="o">=</span> <span class="p">{</span>
@@ -188,7 +188,7 @@
                     &copy;
                         Copyright 2017, Pewpew.
                 Created using <a
-                        href="http://sphinx.pocoo.org/">Sphinx</a> 1.5.6
+                        href="http://sphinx.pocoo.org/">Sphinx</a> 1.5.2
                     .
                 Theme <a href="https://github.com/scotch/sphinx-bootstrap">Sphinx-Bootstrap</a>
                 adapted from

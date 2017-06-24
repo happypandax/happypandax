@@ -3,7 +3,7 @@
     <meta http-equiv="Content-Type"
           content="text/html; charset=utf-8"/>
     
-        <title>Developer API &mdash; Happypanda X (0, 0, 1) documentation</title>
+        <title>Server API &mdash; Happypanda X (0, 0, 1) documentation</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href='https://fonts.googleapis.com/css?family=Crete+Round' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" href="_static/sphinx-bootstrap.css" type="text/css"/>
@@ -29,8 +29,8 @@
                   href="genindex.html"/>
             <link rel="search" title="Search" href="search.html"/>
         <link rel="top" title="Happypanda X (0, 0, 1) documentation" href="index.html"/>
-            <link rel="next" title="Contributing" href="env.html"/>
-            <link rel="prev" title="Happypanda X Settings" href="settings.html"/> 
+            <link rel="next" title="Plugin API" href="api_plugin.html"/>
+            <link rel="prev" title="TODO" href="todo.html"/> 
     <script type="text/javascript" src="https://apis.google.com/js/plusone.js"></script>
     
 </head>
@@ -52,12 +52,12 @@
                        title="Python Module Index" >modules</a>
                 </li>
                 <li>
-                    <a href="env.html"
-                       title="Contributing" accesskey="N">next</a>
+                    <a href="api_plugin.html"
+                       title="Plugin API" accesskey="N">next</a>
                 </li>
                 <li>
-                    <a href="settings.html"
-                       title="Happypanda X Settings" accesskey="P">previous</a>
+                    <a href="todo.html"
+                       title="TODO" accesskey="P">previous</a>
                 </li> 
         </ul>
     </div>
@@ -118,36 +118,10 @@
         <div class="content row">
                 <div class="span9">
                     
-  <div class="section" id="developer-api">
-<h1>Developer API<a class="headerlink" href="#developer-api" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="server">
-<h2>Server<a class="headerlink" href="#server" title="Permalink to this headline">¶</a></h2>
+  <div class="section" id="server-api">
+<h1>Server API<a class="headerlink" href="#server-api" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="module-happypanda.server.interface.enums">
-<span id="enums"></span><h3>Enums<a class="headerlink" href="#module-happypanda.server.interface.enums" title="Permalink to this headline">¶</a></h3>
-<dl class="class">
-<dt id="happypanda.server.interface.enums.GalleryFilter">
-<em class="property">class </em><code class="descname">GalleryFilter</code><a class="reference internal" href="_modules/happypanda/server/interface/enums.html#GalleryFilter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.server.interface.enums.GalleryFilter" title="Permalink to this definition">¶</a></dt>
-<dd><p>An enumeration.</p>
-<dl class="attribute">
-<dt id="happypanda.server.interface.enums.GalleryFilter.Favorite">
-<code class="descname">Favorite</code><em class="property"> = 1</em><a class="headerlink" href="#happypanda.server.interface.enums.GalleryFilter.Favorite" title="Permalink to this definition">¶</a></dt>
-<dd><p>Favourite</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="happypanda.server.interface.enums.GalleryFilter.Inbox">
-<code class="descname">Inbox</code><em class="property"> = 2</em><a class="headerlink" href="#happypanda.server.interface.enums.GalleryFilter.Inbox" title="Permalink to this definition">¶</a></dt>
-<dd><p>Inbox</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="happypanda.server.interface.enums.GalleryFilter.Library">
-<code class="descname">Library</code><em class="property"> = 0</em><a class="headerlink" href="#happypanda.server.interface.enums.GalleryFilter.Library" title="Permalink to this definition">¶</a></dt>
-<dd><p>Library</p>
-</dd></dl>
-
-</dd></dl>
-
+<span id="enums"></span><h2>Enums<a class="headerlink" href="#module-happypanda.server.interface.enums" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="happypanda.server.interface.enums.ImageSize">
 <em class="property">class </em><code class="descname">ImageSize</code><a class="reference internal" href="_modules/happypanda/server/interface/enums.html#ImageSize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.server.interface.enums.ImageSize" title="Permalink to this definition">¶</a></dt>
@@ -195,9 +169,9 @@
 </dd></dl>
 
 <dl class="attribute">
-<dt id="happypanda.server.interface.enums.ItemType.GalleryList">
-<code class="descname">GalleryList</code><em class="property"> = 2</em><a class="headerlink" href="#happypanda.server.interface.enums.ItemType.GalleryList" title="Permalink to this definition">¶</a></dt>
-<dd><p>GalleryList</p>
+<dt id="happypanda.server.interface.enums.ItemType.GalleryFilter">
+<code class="descname">GalleryFilter</code><em class="property"> = 2</em><a class="headerlink" href="#happypanda.server.interface.enums.ItemType.GalleryFilter" title="Permalink to this definition">¶</a></dt>
+<dd><p>GalleryFilter</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -214,11 +188,35 @@
 
 </dd></dl>
 
+<dl class="class">
+<dt id="happypanda.server.interface.enums.ViewType">
+<em class="property">class </em><code class="descname">ViewType</code><a class="reference internal" href="_modules/happypanda/server/interface/enums.html#ViewType"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.server.interface.enums.ViewType" title="Permalink to this definition">¶</a></dt>
+<dd><p>An enumeration.</p>
+<dl class="attribute">
+<dt id="happypanda.server.interface.enums.ViewType.Favorite">
+<code class="descname">Favorite</code><em class="property"> = 1</em><a class="headerlink" href="#happypanda.server.interface.enums.ViewType.Favorite" title="Permalink to this definition">¶</a></dt>
+<dd><p>Favourite</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.server.interface.enums.ViewType.Inbox">
+<code class="descname">Inbox</code><em class="property"> = 2</em><a class="headerlink" href="#happypanda.server.interface.enums.ViewType.Inbox" title="Permalink to this definition">¶</a></dt>
+<dd><p>Inbox</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.server.interface.enums.ViewType.Library">
+<code class="descname">Library</code><em class="property"> = 0</em><a class="headerlink" href="#happypanda.server.interface.enums.ViewType.Library" title="Permalink to this definition">¶</a></dt>
+<dd><p>Library</p>
+</dd></dl>
+
+</dd></dl>
+
 </div>
 <div class="section" id="functions">
-<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this headline">¶</a></h3>
+<h2>Functions<a class="headerlink" href="#functions" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="module-happypanda.server.interface.meta">
-<span id="meta"></span><h4>Meta<a class="headerlink" href="#module-happypanda.server.interface.meta" title="Permalink to this headline">¶</a></h4>
+<span id="meta"></span><h3>Meta<a class="headerlink" href="#module-happypanda.server.interface.meta" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="happypanda.server.interface.meta.get_error">
 <code class="descname">get_error</code><span class="sig-paren">(</span><em>code</em>, <em>id</em>, <em>ctx=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/server/interface/meta.html#get_error"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.server.interface.meta.get_error" title="Permalink to this definition">¶</a></dt>
@@ -287,7 +285,7 @@
 
 </div>
 <div class="section" id="module-happypanda.server.interface.ui">
-<span id="ui"></span><h4>UI<a class="headerlink" href="#module-happypanda.server.interface.ui" title="Permalink to this headline">¶</a></h4>
+<span id="ui"></span><h3>UI<a class="headerlink" href="#module-happypanda.server.interface.ui" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="happypanda.server.interface.ui.library_view">
 <code class="descname">library_view</code><span class="sig-paren">(</span><em>item_type='Gallery'</em>, <em>page=0</em>, <em>limit=100</em>, <em>search_filter=''</em>, <em>list_id=None</em>, <em>view_filter='Library'</em>, <em>ctx=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/server/interface/ui.html#library_view"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.server.interface.ui.library_view" title="Permalink to this definition">¶</a></dt>
@@ -311,7 +309,7 @@ Provides pagination.</p>
 
 </div>
 <div class="section" id="module-happypanda.server.interface.gallery">
-<span id="gallery"></span><h4>Gallery<a class="headerlink" href="#module-happypanda.server.interface.gallery" title="Permalink to this headline">¶</a></h4>
+<span id="gallery"></span><h3>Gallery<a class="headerlink" href="#module-happypanda.server.interface.gallery" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="happypanda.server.interface.gallery.add_gallery">
 <code class="descname">add_gallery</code><span class="sig-paren">(</span><em>ctx=None</em>, <em>galleries=[]</em>, <em>paths=[]</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/server/interface/gallery.html#add_gallery"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.server.interface.gallery.add_gallery" title="Permalink to this definition">¶</a></dt>
@@ -339,7 +337,7 @@ Provides pagination.</p>
 
 <dl class="function">
 <dt id="happypanda.server.interface.gallery.gallery_count">
-<code class="descname">gallery_count</code><span class="sig-paren">(</span><em>id=0</em>, <em>item_type='GalleryList'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/server/interface/gallery.html#gallery_count"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.server.interface.gallery.gallery_count" title="Permalink to this definition">¶</a></dt>
+<code class="descname">gallery_count</code><span class="sig-paren">(</span><em>id=0</em>, <em>item_type='GalleryFilter'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/server/interface/gallery.html#gallery_count"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.server.interface.gallery.gallery_count" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get gallery count</p>
 <dl class="docutils">
 <dt>Params:</dt>
@@ -375,7 +373,7 @@ Provides pagination.</p>
 
 </div>
 <div class="section" id="module-happypanda.server.interface.database">
-<span id="database"></span><h4>Database<a class="headerlink" href="#module-happypanda.server.interface.database" title="Permalink to this headline">¶</a></h4>
+<span id="database"></span><h3>Database<a class="headerlink" href="#module-happypanda.server.interface.database" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="happypanda.server.interface.database.get_count">
 <code class="descname">get_count</code><span class="sig-paren">(</span><em>item_type='Gallery'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/server/interface/database.html#get_count"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.server.interface.database.get_count" title="Permalink to this definition">¶</a></dt>
@@ -421,7 +419,7 @@ Provides pagination.</p>
 
 </div>
 <div class="section" id="module-happypanda.server.interface.plugin">
-<span id="plugin"></span><h4>Plugin<a class="headerlink" href="#module-happypanda.server.interface.plugin" title="Permalink to this headline">¶</a></h4>
+<span id="plugin"></span><h3>Plugin<a class="headerlink" href="#module-happypanda.server.interface.plugin" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="happypanda.server.interface.plugin.get_plugin">
 <code class="descname">get_plugin</code><span class="sig-paren">(</span><em>plugin_id=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/server/interface/plugin.html#get_plugin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.server.interface.plugin.get_plugin" title="Permalink to this definition">¶</a></dt>
@@ -444,7 +442,7 @@ Provides pagination.</p>
 
 </div>
 <div class="section" id="module-happypanda.server.interface.settings">
-<span id="settings"></span><h4>Settings<a class="headerlink" href="#module-happypanda.server.interface.settings" title="Permalink to this headline">¶</a></h4>
+<span id="settings"></span><h3>Settings<a class="headerlink" href="#module-happypanda.server.interface.settings" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="happypanda.server.interface.settings.get_settings">
 <code class="descname">get_settings</code><span class="sig-paren">(</span><em>settings=[]</em>, <em>ctx=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/server/interface/settings.html#get_settings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.server.interface.settings.get_settings" title="Permalink to this definition">¶</a></dt>
@@ -479,10 +477,6 @@ Send empty list to get all key:values</p>
 </div>
 </div>
 </div>
-<div class="section" id="id3">
-<h2>Plugin<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
-</div>
-</div>
 
 
                     
@@ -496,8 +490,7 @@ Send empty list to get all key:values</p>
             <div class="sphinxsidebarwrapper">
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">Developer API</a><ul>
-<li><a class="reference internal" href="#server">Server</a><ul>
+<li><a class="reference internal" href="#">Server API</a><ul>
 <li><a class="reference internal" href="#module-happypanda.server.interface.enums">Enums</a></li>
 <li><a class="reference internal" href="#functions">Functions</a><ul>
 <li><a class="reference internal" href="#module-happypanda.server.interface.meta">Meta</a></li>
@@ -510,17 +503,14 @@ Send empty list to get all key:values</p>
 </li>
 </ul>
 </li>
-<li><a class="reference internal" href="#id3">Plugin</a></li>
-</ul>
-</li>
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="settings.html"
-                        title="previous chapter">Happypanda X Settings</a></p>
+  <p class="topless"><a href="todo.html"
+                        title="previous chapter">TODO</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="env.html"
-                        title="next chapter">Contributing</a></p>
+  <p class="topless"><a href="api_plugin.html"
+                        title="next chapter">Plugin API</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -540,7 +530,7 @@ Send empty list to get all key:values</p>
                     &copy;
                         Copyright 2017, Pewpew.
                 Created using <a
-                        href="http://sphinx.pocoo.org/">Sphinx</a> 1.5.6
+                        href="http://sphinx.pocoo.org/">Sphinx</a> 1.5.2
                     .
                 Theme <a href="https://github.com/scotch/sphinx-bootstrap">Sphinx-Bootstrap</a>
                 adapted from
@@ -553,7 +543,7 @@ Send empty list to get all key:values</p>
 
     <!-- disqus -->
     <script type="text/javascript">
-        var disqus_title = 'Developer API &mdash; Happypanda X (0, 0, 1) documentation';
+        var disqus_title = 'Server API &mdash; Happypanda X (0, 0, 1) documentation';
         var disqus_identifier ='code' + '.' + "pewpews" + window.location.pathname.replace('/', '.');
     </script>
 

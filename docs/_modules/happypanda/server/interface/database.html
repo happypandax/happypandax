@@ -188,7 +188,7 @@
 
 <span class="k">def</span> <span class="nf">_get_glists</span><span class="p">():</span>
     <span class="n">s</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">db_session</span><span class="p">()</span>
-    <span class="k">return</span> <span class="n">s</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">GalleryList</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">s</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">GalleryFilter</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
 
 
 <div class="viewcode-block" id="get_glists"><a class="viewcode-back" href="../../../../api.html#happypanda.server.interface.database.get_glists">[docs]</a><span class="k">def</span> <span class="nf">get_glists</span><span class="p">():</span>
@@ -199,8 +199,8 @@
 <span class="sd">        a list of gallerylist objects</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">glists</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="s2">&quot;gallerylist&quot;</span><span class="p">,</span> <span class="n">message</span><span class="o">.</span><span class="n">GalleryList</span><span class="p">)</span>
-    <span class="p">[</span><span class="n">glists</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">message</span><span class="o">.</span><span class="n">GalleryList</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">_get_glists</span><span class="p">()]</span>
+    <span class="n">glists</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="s2">&quot;gallerylist&quot;</span><span class="p">,</span> <span class="n">message</span><span class="o">.</span><span class="n">GalleryFilter</span><span class="p">)</span>
+    <span class="p">[</span><span class="n">glists</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">message</span><span class="o">.</span><span class="n">GalleryFilter</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">_get_glists</span><span class="p">()]</span>
     <span class="k">return</span> <span class="n">glists</span></div>
 
 
@@ -265,7 +265,7 @@
                     &copy;
                         Copyright 2017, Pewpew.
                 Created using <a
-                        href="http://sphinx.pocoo.org/">Sphinx</a> 1.5.6
+                        href="http://sphinx.pocoo.org/">Sphinx</a> 1.5.2
                     .
                 Theme <a href="https://github.com/scotch/sphinx-bootstrap">Sphinx-Bootstrap</a>
                 adapted from

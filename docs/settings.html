@@ -29,7 +29,7 @@
                   href="genindex.html"/>
             <link rel="search" title="Search" href="search.html"/>
         <link rel="top" title="Happypanda X (0, 0, 1) documentation" href="index.html"/>
-            <link rel="next" title="Developer API" href="api.html"/>
+            <link rel="next" title="Contributing" href="env.html"/>
             <link rel="prev" title="Using Happypanda X" href="usage.html"/> 
     <script type="text/javascript" src="https://apis.google.com/js/plusone.js"></script>
     
@@ -52,8 +52,8 @@
                        title="Python Module Index" >modules</a>
                 </li>
                 <li>
-                    <a href="api.html"
-                       title="Developer API" accesskey="N">next</a>
+                    <a href="env.html"
+                       title="Contributing" accesskey="N">next</a>
                 </li>
                 <li>
                     <a href="usage.html"
@@ -154,45 +154,84 @@
 <td>False</td>
 <td>Run in preview mode</td>
 </tr>
-<tr class="row-even"><td>server_name</td>
-<td>happypanda_qe5Shmw</td>
+<tr class="row-even"><td>secret_key</td>
+<td></td>
+<td>A random generated key to be used for security. Keep it secret!</td>
+</tr>
+<tr class="row-odd"><td>server_name</td>
+<td>happypanda_o3BKKqA</td>
 <td>Specifiy name of the server</td>
 </tr>
-<tr class="row-odd"><td>port</td>
+<tr class="row-even"><td>port</td>
 <td>7007</td>
 <td>Specify which port to start the server on</td>
 </tr>
-<tr class="row-even"><td>port_webserver</td>
+<tr class="row-odd"><td>port_webserver</td>
 <td>7008</td>
 <td>Specify which port to start the webserver on</td>
 </tr>
-<tr class="row-odd"><td>port_torrent</td>
+<tr class="row-even"><td>port_torrent</td>
 <td>7009</td>
 <td>Specify which port to start the torrent client on</td>
 </tr>
-<tr class="row-even"><td>port_range</td>
+<tr class="row-odd"><td>port_range</td>
 <td>7007-7018</td>
 <td>Specify a range of ports to attempt</td>
 </tr>
-<tr class="row-odd"><td>host</td>
+<tr class="row-even"><td>host</td>
 <td>localhost</td>
 <td>Specify which address the server should bind to</td>
 </tr>
-<tr class="row-even"><td>host_web</td>
+<tr class="row-odd"><td>host_web</td>
 <td></td>
 <td>Specify which address the webserver should bind to</td>
 </tr>
-<tr class="row-odd"><td>expose_server</td>
+<tr class="row-even"><td>expose_server</td>
 <td>False</td>
 <td>Attempt to expose the server through portforwading</td>
 </tr>
-<tr class="row-even"><td>expose_webserver</td>
+<tr class="row-odd"><td>expose_webserver</td>
 <td>False</td>
 <td>Attempt to expose the webserver through portforwading</td>
 </tr>
-<tr class="row-odd"><td>allowed_clients</td>
+<tr class="row-even"><td>allowed_clients</td>
 <td>0</td>
 <td>Limit amount of clients allowed to be connected (0 means no limit)</td>
+</tr>
+<tr class="row-odd"><td>allow_guests</td>
+<td>True</td>
+<td>Specify if guests are allowed on this server</td>
+</tr>
+<tr class="row-even"><td>require_auth</td>
+<td>False</td>
+<td>Client must be authenticated to get write access</td>
+</tr>
+<tr class="row-odd"><td>disable_default_user</td>
+<td>False</td>
+<td>Disable default user</td>
+</tr>
+</tbody>
+<colgroup>
+<col width="33%" />
+<col width="33%" />
+<col width="33%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-even"><th class="head" colspan="3">Search</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-odd"><td>regex</td>
+<td>False</td>
+<td>Allow regex in search filters</td>
+</tr>
+<tr class="row-even"><td>case_sensitive</td>
+<td>False</td>
+<td>Search filter is case sensitive</td>
+</tr>
+<tr class="row-odd"><td>match_whole_words</td>
+<td>False</td>
+<td>Match only whole words</td>
 </tr>
 </tbody>
 </table>
@@ -212,8 +251,8 @@
   <p class="topless"><a href="usage.html"
                         title="previous chapter">Using Happypanda X</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="api.html"
-                        title="next chapter">Developer API</a></p>
+  <p class="topless"><a href="env.html"
+                        title="next chapter">Contributing</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -233,7 +272,7 @@
                     &copy;
                         Copyright 2017, Pewpew.
                 Created using <a
-                        href="http://sphinx.pocoo.org/">Sphinx</a> 1.5.6
+                        href="http://sphinx.pocoo.org/">Sphinx</a> 1.5.2
                     .
                 Theme <a href="https://github.com/scotch/sphinx-bootstrap">Sphinx-Bootstrap</a>
                 adapted from

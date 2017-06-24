@@ -1,5 +1,5 @@
-Creating a frontend
+Creating frontends
 =============================================
 
-Talking to Happypanda X Server
+Talking to HPX server
 ----------------------------------------
