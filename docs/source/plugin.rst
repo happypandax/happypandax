@@ -3,15 +3,15 @@ Plugins
 
 It is possible to extend Happypanda X Server with plugins.
 
-It is assumed that you are already familiar with the HPX dev environment: :ref:`Setting up an environment` to begin working on HPX plugins.
+You should be already familiar with the HPX dev environment: :ref:`Setting up an environment` to begin working on HPX plugins.
 
 Before creating a plugin
 ----------------------------------------
 
 - Plugins are written in the same language as HPX server, namely ``Python 3.5``.
-- All plugins are contained in their own folder inside the folder ``plugins`` at the root-level.
+- Plugins are contained in their own folder inside the folder named ``plugins`` found at the root-level.
 
-Creating a plugin
+Developing a plugin
 ----------------------------------------
 
 1. Start by creating a folder for your plugin, call it whatever describes your plugin and place it in the ``plugins`` folder at the root-level.
@@ -22,8 +22,7 @@ Creating a plugin
 	| Your plugin can consist of multiple files but only one will be loaded, that is, your main file which is named ``HPlugin.py``.
 
 
-That was the easy part. Now to the code.
-The following are required by your main plugin file:
+The following is required by your main plugin file:
 
 - A main plugin class named ``HPlugin`` (case sensitive) that defines the following class attributes:
 	- ``ID``: a unique UUID4 string, this is what others will use to interact with your plugin
@@ -57,6 +56,9 @@ In ``hplugin.py``::
 
 		def __init__(self, *args, **kwargs):
 			pass
+
+.. todo::
+	consider creating a cookiecutter project template
 
 Interfacing with HPX
 ----------------------------------------
