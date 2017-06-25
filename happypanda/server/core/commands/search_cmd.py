@@ -1,4 +1,6 @@
-from happypanda.common import hlogger, exceptions, utils
+from collections import namedtuple
+
+from happypanda.common import hlogger, exceptions, utils, constants
 from happypanda.server.core.command import Command, CommandEvent, CommandEntry
 from happypanda.server.core.commands import database_cmd
 from happypanda.server.core import db
@@ -6,8 +8,66 @@ from happypanda.server.core import db
 
 log = hlogger.Logger(__name__)
 
+def get_search_options():
+    return { 
+            "case" : constants.search_option_case,
+            "regex" : constants.search_option_regex,
+            "whole" : constants.search_option_whole
+            }
 
-class ParseSearchFilter(Command):
+Term = namedtuple("Term", ["namespace", "tag", "operator"])
+
+class ParseTerm(Command):
+    """
+    Parse a single term
+
+    By default, the following operators are parsed for:
+    - '' = ''
+    - '<' = 'less'
+    - '>' = 'great'
+
+    Returns a namedtuple of strings: Term(namespace, tag, operator)
+    """
+
+    parse = CommandEntry("parse", tuple, str)
+    parsed = CommandEvent("parsed", Term)
+
+    def __init__(self):
+        super().__init__()
+        self.filter = ''
+        self.term = None
+
+    @parse.default()
+    def _parse_term(term):
+        s = term.split(':', 1)
+        ns = s[0] if len(s) == 2 else ''
+        tag = s[1] if len(s) == 2 else term
+        operator = ''
+
+        if tag.startswith('<'):
+            operator = 'less'
+        elif tag.startswith('>'):
+            operator = 'great'
+
+        return (ns, tag, operator)
+
+    def main(self, term: str) -> Term:
+
+        self.filter = term
+
+        with self.parse.call(self.filter) as plg:
+            t = plg.first()
+            if not len(t) == 3:
+                t = plg.default()
+            
+            self.term = Term(*t)
+
+        self.parsed.emit(self.term)
+
+        return self.term
+
+
+class ParseSearch(Command):
     """
     Parse a search filter
 
@@ -115,8 +175,7 @@ class ParseSearchFilter(Command):
 
         return self.pieces
 
-
-class PartialFilter(Command):
+class PartialModelFilter(Command):
     """
     Perform a partial search on database model with a single term
 
@@ -144,7 +203,7 @@ class PartialFilter(Command):
 
     models = CommandEntry("models", tuple)
 
-    match_model = CommandEntry("match_model", set, db.Base, str)
+    match_model = CommandEntry("match_model", set, db.Base, db.Base, str, dict)
     matched = CommandEvent("matched", set)
 
     def __init__(self):
@@ -172,12 +231,69 @@ class PartialFilter(Command):
             db.GalleryUrl
             )
 
-    @match_model.default(capture=True)
-    def _match_gallery(model, term, capture=db.Gallery):
-        return set()
+    @staticmethod
+    def _match_string_column(column, term, options):
+        
+        expr = None
+        tag = term.tag
+
+        if options.get("regex"):
+            if options.get("case"):
+                expr = column.regexp
+            else:
+                expr = column.iregexp
+        else:
+            if not options.get("whole"):
+                tag = '%' + tag + '%'
+
+            if options.get("case"):
+                expr = column.like
+            else:
+                expr = column.ilike
+
+        return expr(tag)
+
+    @staticmethod
+    def _match_integer_column(session, parent_model, column, term, options):
+        
+        return []
+
 
     @match_model.default(capture=True)
-    def _match_models(model, term, capture=_models()):
+    def _match_gallery(parent_model, child_model, term, options, capture=db.Gallery):
+        match_string = PartialModelFilter._match_string_column
+        match_int = PartialModelFilter._match_integer_column
+        term = ParseTerm().run(term)
+        ids = set()
+
+        s = constants.db_session()
+
+        if term.namespace:
+            lower_ns = term.namespace.lower()
+            if lower_ns == 'path':
+                ids.update(s.query(parent_model.id).filter(match_string(db.Gallery.path, term, options)).all())
+            elif lower_ns in ("rating", "stars"):
+                ids.update(s.query(parent_model.id).filter(match_int(db.Gallery.rating, term, options)).all())
+
+        return ids
+
+    @match_model.default(capture=True)
+    def _match_title(parent_model, child_model, term, options, capture=db.Title):
+        match_string = PartialModelFilter._match_string_column
+        term = ParseTerm().run(term)
+        ids = set()
+
+        if issubclass(parent_model, db.Gallery):
+            if term.namespace.lower() == 'title' or not term.namespace:
+                s = constants.db_session()
+                ids.update(s.query(parent_model.id).join(parent_model.titles).filter(match_string(db.Title.name, term, options)).all())
+        else:
+            raise NotImplementedError
+
+        return ids
+
+    @match_model.default(capture=True)
+    def _match_namemixin(parent_model, child_model, term, capture=[x for x in _models() if isinstance(x, db.NameMixin)]):
         return set()
 
     def main(self, model: db.Base, term: str) -> set:
@@ -192,48 +308,33 @@ class PartialFilter(Command):
         if not self.model in self._supported_models:
             raise exceptions.CoreError(utils.this_command(self), "Model '{}' is not supported".format(model))
 
-        with self.match_model.call_capture(self.model, self.model, self.term) as plg:
+        related_models = db.related_classes(model)
+
+        sess = constants.db_session()
+
+        model_count = sess.query(model).count()
+
+        with self.match_model.call_capture(self.model, self.model, self.model, self.term, get_search_options()) as plg:
             for i in plg.all():
                 self.matched_ids.update(i)
+                if len(self.matched_ids) == model_count:
+                    break
+
+        has_all = False
+        for m in related_models:
+            if m in self._supported_models:
+                with self.match_model.call_capture(m, self.model, m, self.term, get_search_options()) as plg:
+                    for i in plg.all():
+                        self.matched_ids.update(i)
+                        if len(self.matched_ids) == model_count:
+                            has_all = True
+                            break
+            if has_all:
+                break
 
         self.matched.emit(self.matched_ids)
 
         return self.matched_ids
-
-class OperatorFilter(PartialFilter):
-    """
-    Perform a partial search on database model with a single term
-
-    Accepts a term with a namespace and by default one of the following operators included:
-    - '>'
-    - '<'
-
-    Returns None if term is not accepted else a set with ids of matched model items
-    """
-
-    operators = CommandEntry("operators", tuple)
-    accept = CommandEntry("accept", None)
-    match = CommandEntry("match", None)
-
-    def __init__(self):
-        super().__init__()
-        self._ops = set()
-
-    @operators.default()
-    def _operators():
-        return ('>', '<')
-
-    def main(self, model: db.Base, term: str) -> set:
-        return None
-        self.model = model
-        self.term = term
-
-        with self.operators.call() as plg:
-            for o in plg.all(default=True):
-                for x in o:
-                    if isinstance(x, str):
-                        self._ops.add(x)
-
 
 class ModelFilter(Command):
     """
@@ -276,7 +377,7 @@ class ModelFilter(Command):
         ""
         model = database_cmd.GetModel().run(model_name)
         operatorfilter = OperatorFilter()
-        partialfilter = PartialFilter()
+        partialfilter = PartialModelFilter()
         matched = set()
 
         for p in pieces:
@@ -302,7 +403,7 @@ class ModelFilter(Command):
         self._model = model
         model_name = self._model.__name__
 
-        self.parsesearchfilter = ParseSearchFilter()
+        self.parsesearchfilter = ParseSearch()
 
         pieces = self.parsesearchfilter.run(search_filter)
 

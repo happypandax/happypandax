@@ -1,4 +1,4 @@
-from happypanda.common import utils, hlogger, exceptions
+from happypanda.common import utils, hlogger, exceptions, constants
 from happypanda.server.core.command import Command, CommandEvent, CommandEntry
 from happypanda.server.core import db
 
@@ -19,13 +19,13 @@ class GetModel(Command):
 
         return getattr(db, model_name)
 
-class Session(Command):
+class GetSession(Command):
     """
-    A database session
+    Returns a database session
     """
 
     def __init__(self):
         super().__init__()
 
-    def main(self, *args, **kwargs):
-        return super().main(*args, **kwargs)
+    def main(self):
+        return constants.db_session()

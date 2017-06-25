@@ -121,16 +121,27 @@ class HandlerValue:
         self.kwargs = kwargs
         self.failed = {}  # { node : exception }
 
-        self.default_capture_handlers = {}
-        self._capture_handlers = {}
+        self.default_capture_handlers = {} # { token : handler }
+        self._capture_handlers = {} # { token : (node, handler) }
         self.capture = False
         self.capture_token = '*'
 
         self.expected_type = None
         self.default_handler = None
 
-        for h in self._handlers:
-            self._add_capture_handler(h)
+        for n, h in self._handlers:
+            self._add_capture_handler(h, n)
+
+    def default(self):
+        "Calls the default handler"
+        if not self.default_handler:
+           raise self._raise_default_error()
+
+        return self.default_handler(*self.args, **self.kwargs)
+
+    def default_capture(self, token):
+        "Calls the default capture handler"
+        raise NotImplementedError
 
     def all(self, default=False):
         "Calls all handlers, returns tuple"
@@ -168,8 +179,13 @@ class HandlerValue:
         "Calls last handler, return None if there is no handler"
         return self._call_node_idx(-1, False)
 
-    def _add_capture_handler(self, handler, default=False):
+    def _add_capture_handler(self, handler, node=None):
         assert callable(handler)
+        assert node is None or isinstance(PluginNode)
+
+        capture_dict = self._capture_handlers
+        if not node:
+            capture_dict = self.default_capture_handlers
 
         sig = inspect.signature(handler)
 
@@ -182,14 +198,21 @@ class HandlerValue:
                     cap = (cap,)
 
                 for c in cap:
-                    if not c in self._capture_handlers:
-                        self._capture_handlers[c] = []
+                    if not c in capture_dict:
+                        capture_dict[c] = []
 
-                    self._capture_handlers[c].append(handler)
+                    if node:
+                        capture_dict[c].append((node, handler))
+                    else:
+                        capture_dict[c].append(handler)
 
     def _raise_error(self):
         raise exceptions.CoreError(
             self.name, "No handler is connected to this command")
+
+    def _raise_default_error(self):
+        raise exceptions.CoreError(
+            self.name, "No default handler is connected to this command")
 
     def _call_capture(self, idx, error, default):
         if not self._capture_handlers and not self.default_capture_handlers:
@@ -200,19 +223,20 @@ class HandlerValue:
         token_exists = self.capture_token in self._capture_handlers
         token_exists_d = self.capture_token in self.default_capture_handlers
 
-        if not token_exists and token_exists_d:
+        if not token_exists and not token_exists_d:
             if error:
                 self._raise_error()
             return None
 
-        token_handler_d = None
+
         token_handler = None
+        token_handler_d = None
 
         if token_exists:
             token_handler = self._capture_handlers[self.capture_token]
 
         if token_exists_d:
-            token_handler = self.default_capture_handlers[self.capture_token]
+            token_handler_d = self.default_capture_handlers[self.capture_token]
 
         if not token_handler and not token_handler_d:
             if error:
@@ -225,16 +249,16 @@ class HandlerValue:
             if idx is not None:
                 return self._call_handler(*token_handler[idx])
             else:
-                (r.append(self._call_handler(y)) for y in token_handler)
+                tuple(r.append(self._call_handler(*y)) for y in token_handler)
 
         if token_handler_d:
             if idx is not None:
                 return token_handler_d[0](*self.args, **self.kwargs)
             else:
                 if default or not token_handler:
-                    (r.append(y(*self.args, **self.kwargs)) for y in token_handler_d)
+                   tuple(r.append(y(*self.args, **self.kwargs)) for y in token_handler_d)
 
-        return (x for x in r if x is not None)
+        return tuple(x for x in r if x is not None)
 
     def _call_node_idx(self, idx, error=False):
         if self.capture:

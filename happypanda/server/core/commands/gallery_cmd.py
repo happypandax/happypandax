@@ -20,7 +20,7 @@ class RenameGallery(UndoCommand):
         self.title = None
         self.old_title = None
 
-    @rename.default
+    @rename.default()
     def _set_title(old_title, new_title):
         return new_title
 
@@ -79,7 +79,7 @@ class FilterGallery(Command):
         self._filter_id = None
         self._view_type = None
 
-    @set_search_filter.default
+    @set_search_filter.default()
     def _set_s_filter(s_filter):
         return s_filter
 

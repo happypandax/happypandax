@@ -1113,6 +1113,6 @@ def is_query(obj):
 
 def related_classes(obj):
     "Returns a list of mapper classes that has a relationship with given mapper class"
-    assert isinstance(obj, Base)
+    assert issubclass(obj, Base)
 
     return [x.mapper.class_ for x in inspect(obj).relationships]
