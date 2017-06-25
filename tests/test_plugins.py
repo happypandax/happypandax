@@ -1,5 +1,5 @@
 """test plugins module."""
-from unittest import mock, TestCase
+from unittest import mock
 import itertools
 import os
 import pytest
