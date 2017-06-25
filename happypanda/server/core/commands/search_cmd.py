@@ -262,7 +262,7 @@ class PartialModelFilter(Command):
 
     @match_model.default(capture=True)
     def _match_gallery(parent_model, child_model, term, options, capture=db.model_name(db.Gallery)):
-        get_model = database_cmd.GetModel()
+        get_model = database_cmd.GetModelClass()
         parent_model = get_model.run(parent_model)
         child_model = get_model.run(child_model)
 
@@ -284,7 +284,7 @@ class PartialModelFilter(Command):
 
     @match_model.default(capture=True)
     def _match_title(parent_model, child_model, term, options, capture=db.model_name(db.Title)):
-        get_model = database_cmd.GetModel()
+        get_model = database_cmd.GetModelClass()
         parent_model = get_model.run(parent_model)
         child_model = get_model.run(child_model)
 
@@ -303,7 +303,7 @@ class PartialModelFilter(Command):
 
     @match_model.default(capture=True)
     def _match_namemixin(parent_model, child_model, term, capture=[db.model_name(x) for x in _models() if isinstance(x, db.NameMixin)]):
-        get_model = database_cmd.GetModel()
+        get_model = database_cmd.GetModelClass()
         parent_model = get_model.run(parent_model)
         child_model = get_model.run(child_model)
 
@@ -389,7 +389,7 @@ class ModelFilter(Command):
     @staticmethod
     def _match(model_name, pieces):
         ""
-        model = database_cmd.GetModel().run(model_name)
+        model = database_cmd.GetModelClass().run(model_name)
         partialfilter = PartialModelFilter()
         matched = set()
 

@@ -4,7 +4,7 @@ from happypanda.server.core import db
 
 log = hlogger.Logger(__name__)
 
-class GetModel(Command):
+class GetModelClass(Command):
     """
     Returns a database model by name
     """
@@ -29,3 +29,4 @@ class GetSession(Command):
 
     def main(self):
         return constants.db_session()
+

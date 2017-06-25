@@ -62,37 +62,3 @@ class AddGallery(UndoCommand):
     def undo(self):
         return super().undo()
 
-
-class FilterGallery(Command):
-    """
-    Returns filtered galleries
-    """
-
-    set_search_filter = CommandEntry("set_search_filter", str, str)
-    search_filter = CommandEvent("search_filter", str)
-
-    parse_search_filter = CommandEntry("parse_search_filter",)
-
-    def __init__(self):
-        super().__init__()
-        self._search = ''
-        self._filter_id = None
-        self._view_type = None
-
-    @set_search_filter.default()
-    def _set_s_filter(s_filter):
-        return s_filter
-
-    def _parse_search(self, search_filter):
-        ""
-        #ops = []
-
-    def main(self, search_filter: str, gallery_filter_id: int=None,
-             view_type: enums.ViewType=None) -> None:
-
-        with self.set_search_filter(search_filter) as plg:
-            self._search = plg.first()
-
-        self.search_filter.emit(self._search)
-
-        self._parse_operators(search_filter)
