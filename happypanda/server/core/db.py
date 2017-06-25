@@ -1116,3 +1116,8 @@ def related_classes(obj):
     assert issubclass(obj, Base)
 
     return [x.mapper.class_ for x in inspect(obj).relationships]
+
+def model_name(model):
+    "Return name of model"
+    assert issubclass(model, Base)
+    return model.__name__

@@ -12,7 +12,8 @@ def get_search_options():
     return { 
             "case" : constants.search_option_case,
             "regex" : constants.search_option_regex,
-            "whole" : constants.search_option_whole
+            "whole" : constants.search_option_whole,
+            "all": constants.search_option_all
             }
 
 Term = namedtuple("Term", ["namespace", "tag", "operator"])
@@ -203,7 +204,7 @@ class PartialModelFilter(Command):
 
     models = CommandEntry("models", tuple)
 
-    match_model = CommandEntry("match_model", set, db.Base, db.Base, str, dict)
+    match_model = CommandEntry("match_model", set, str, str, str, dict)
     matched = CommandEvent("matched", set)
 
     def __init__(self):
@@ -260,7 +261,11 @@ class PartialModelFilter(Command):
 
 
     @match_model.default(capture=True)
-    def _match_gallery(parent_model, child_model, term, options, capture=db.Gallery):
+    def _match_gallery(parent_model, child_model, term, options, capture=db.model_name(db.Gallery)):
+        get_model = database_cmd.GetModel()
+        parent_model = get_model.run(parent_model)
+        child_model = get_model.run(child_model)
+
         match_string = PartialModelFilter._match_string_column
         match_int = PartialModelFilter._match_integer_column
         term = ParseTerm().run(term)
@@ -278,7 +283,11 @@ class PartialModelFilter(Command):
         return ids
 
     @match_model.default(capture=True)
-    def _match_title(parent_model, child_model, term, options, capture=db.Title):
+    def _match_title(parent_model, child_model, term, options, capture=db.model_name(db.Title)):
+        get_model = database_cmd.GetModel()
+        parent_model = get_model.run(parent_model)
+        child_model = get_model.run(child_model)
+
         match_string = PartialModelFilter._match_string_column
         term = ParseTerm().run(term)
         ids = set()
@@ -293,12 +302,17 @@ class PartialModelFilter(Command):
         return ids
 
     @match_model.default(capture=True)
-    def _match_namemixin(parent_model, child_model, term, capture=[x for x in _models() if isinstance(x, db.NameMixin)]):
+    def _match_namemixin(parent_model, child_model, term, capture=[db.model_name(x) for x in _models() if isinstance(x, db.NameMixin)]):
+        get_model = database_cmd.GetModel()
+        parent_model = get_model.run(parent_model)
+        child_model = get_model.run(child_model)
+
         return set()
 
     def main(self, model: db.Base, term: str) -> set:
 
         self.model = model
+        model_name = db.model_name(self.model)
         self.term = term
 
         with self.models.call() as plg:
@@ -314,7 +328,7 @@ class PartialModelFilter(Command):
 
         model_count = sess.query(model).count()
 
-        with self.match_model.call_capture(self.model, self.model, self.model, self.term, get_search_options()) as plg:
+        with self.match_model.call_capture(model_name, model_name, model_name, self.term, get_search_options()) as plg:
             for i in plg.all():
                 self.matched_ids.update(i)
                 if len(self.matched_ids) == model_count:
@@ -323,7 +337,7 @@ class PartialModelFilter(Command):
         has_all = False
         for m in related_models:
             if m in self._supported_models:
-                with self.match_model.call_capture(m, self.model, m, self.term, get_search_options()) as plg:
+                with self.match_model.call_capture(db.model_name(m), model_name, db.model_name(m), self.term, get_search_options()) as plg:
                     for i in plg.all():
                         self.matched_ids.update(i)
                         if len(self.matched_ids) == model_count:
@@ -343,8 +357,8 @@ class ModelFilter(Command):
     """
 
     separate = CommandEntry("separate", tuple, tuple)
-    include = CommandEntry("include", set, set)
-    exclude = CommandEntry("exclude", set, set)
+    include = CommandEntry("include", set, str, set)
+    exclude = CommandEntry("exclude", set, str, set)
 
     included = CommandEvent("included", str, set)
     excluded = CommandEvent("excluded", str, set)
@@ -372,19 +386,15 @@ class ModelFilter(Command):
 
         return tuple(include), tuple(exclude)
 
-    @classmethod
+    @staticmethod
     def _match(model_name, pieces):
         ""
         model = database_cmd.GetModel().run(model_name)
-        operatorfilter = OperatorFilter()
         partialfilter = PartialModelFilter()
         matched = set()
 
         for p in pieces:
-
-            m = operatorfilter.main(model, p)
-            if m is None:
-                m = partialfilter.main(model, p)
+            m = partialfilter.run(model, p)
             matched.update(m)
 
         return matched
@@ -398,14 +408,16 @@ class ModelFilter(Command):
         return ModelFilter._match(model_name, pieces)
 
     def main(self, model: db.Base, search_filter: str) -> set:
-        assert isinstance(model, db.Base)
+        assert issubclass(model, db.Base)
 
         self._model = model
-        model_name = self._model.__name__
+        model_name = db.model_name(self._model)
 
         self.parsesearchfilter = ParseSearch()
 
         pieces = self.parsesearchfilter.run(search_filter)
+
+        options = get_search_options()
 
         include = set()
         exclude = set()
@@ -420,7 +432,13 @@ class ModelFilter(Command):
         with self.include.call(model_name, include) as plg:
 
             for i in plg.all():
-                self.included_ids.update(i)
+                if options.get("all"):
+                    if self.included_ids:
+                        self.included_ids.intersection_update(i)
+                    else:
+                        self.included_ids.update(i)
+                else:
+                    self.included_ids.update(i)
 
         self.included.emit(model_name, self.included_ids)
 

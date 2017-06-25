@@ -7,6 +7,6 @@ chdir(path.abspath(path.dirname(__file__)))
 
 
 if __name__ == '__main__':
-    r = ["pytest"]
+    r = ["pytest", "v"]
     r.extend(argv[1:])
     exit(run(r).returncode)

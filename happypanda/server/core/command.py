@@ -1,5 +1,6 @@
 from contextlib import contextmanager
 from abc import ABCMeta, abstractmethod
+from inspect import isclass
 
 from happypanda.common import utils, hlogger, exceptions
 from happypanda.server.core import plugins
@@ -83,14 +84,19 @@ class _CommandPlugin:
         return plugins.registered.call_command(
             self.qualifiedname(), *args, **kwargs)
 
+    def _ensure_class(self, type1, type2):
+        if isclass(type1):
+            return issubclass(type1, type2)
+        return False
+
     def _check_types(self, *args, **kwargs):
         tr = []
         tr.append(len(args) == len(self._args_types))
-        tr.append(all(isinstance(y, x) or issubclass(y, x)
+        tr.append(all(isinstance(y, x) or self._ensure_class(y, x)
                       for x, y in zip(self._args_types, args)))
 
         tr.append(all(x in self._kwargs_types for x in kwargs))
-        tr.append(all(isinstance(kwargs[x], self._kwargs_types[x]) or issubclass(kwargs[x], self._kwargs_types[x])
+        tr.append(all(isinstance(kwargs[x], self._kwargs_types[x]) or self._ensure_class(kwargs[x], self._kwargs_types[x])
                       for x in kwargs if x in self._kwargs_types))
         if not all(tr):
             raise exceptions.CoreError(

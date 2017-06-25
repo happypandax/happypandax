@@ -3,7 +3,7 @@ from unittest import mock
 
 pytestmark = pytest.mark.searchcmdtest
 
-from happypanda.server.core import command
+from happypanda.server.core import command, db
 from happypanda.server.core.commands import search_cmd
 
 def test_search_parse():
@@ -36,4 +36,11 @@ def test_search_parse_event_parse(m_emit):
     s = "this is a term"
     t = p.main(s)
     m_emit.assert_called_with(t)
+
+def test_partial_model_filter():
+    "Test partial searching on db model"
+
+    p = search_cmd.PartialModelFilter()
+    model = db.Gallery
+
 

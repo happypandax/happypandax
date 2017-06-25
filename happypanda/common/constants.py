@@ -63,6 +63,7 @@ search_ns = 'search'
 search_option_regex = config.get(search_ns, "regex", False, "Allow regex in search filters")
 search_option_case = config.get(search_ns, "case_sensitive", False, "Search filter is case sensitive")
 search_option_whole = config.get(search_ns, "match_whole_words", False, "Match only whole words")
+search_option_all = config.get(search_ns, "match_all_terms", True, "Match only items that has all terms")
 
 # PLUGIN
 

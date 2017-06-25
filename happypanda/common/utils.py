@@ -312,4 +312,4 @@ def this_function():
 
 def this_command(command_cls):
     "Return name of command for exceptions"
-    return "Command:" + command_cls.__name__
+    return "Command:" + command_cls.__class__.__name__
