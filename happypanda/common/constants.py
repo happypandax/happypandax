@@ -43,6 +43,7 @@ preview = config.get(core_ns, 'preview', False, "Run in preview mode")
 
 # CORE
 
+
 class ExitCode(enum.Enum):
     Exit = 0
     Restart = 1
