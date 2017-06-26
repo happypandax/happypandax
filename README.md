@@ -2,7 +2,7 @@
 [![Build Status](https://travis-ci.org/Pewpews/happypandax.svg?branch=master)](https://travis-ci.org/Pewpews/happypandax)
 [![GitHub release](https://img.shields.io/github/release/happypandax/server.svg)]()
 [![Github All Releases](https://img.shields.io/github/downloads/happypandax/server/total.svg)]()
-[![Twitter Follow](https://img.shields.io/twitter/follow/pewspew.svg?style=social&label=Follow)]()
+[![Twitter Follow](https://img.shields.io/twitter/follow/pewspew.svg?style=social&label=Follow)](https://twitter.com/pewspew)
 
 > **This is project is under heavy development and not yet ready for deployment. If you want to speed up the development, please consider [contributing](https://pewpews.github.io/happypandax/env.html).**
 
