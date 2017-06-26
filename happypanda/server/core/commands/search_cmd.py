@@ -70,7 +70,7 @@ class ParseTerm(Command):
 
 class ParseSearch(Command):
     """
-    Parse a search filter
+    Parse a search query
 
     Dividies term into ns:tag pieces, returns a tuple of ns:tag pieces
     """
@@ -276,9 +276,9 @@ class PartialModelFilter(Command):
         if term.namespace:
             lower_ns = term.namespace.lower()
             if lower_ns == 'path':
-                ids.update(s.query(parent_model.id).filter(match_string(db.Gallery.path, term, options)).all())
+                ids.update(x[0] for x in s.query(parent_model.id).filter(match_string(db.Gallery.path, term, options)).all())
             elif lower_ns in ("rating", "stars"):
-                ids.update(s.query(parent_model.id).filter(match_int(db.Gallery.rating, term, options)).all())
+                ids.update(x[0] for x in s.query(parent_model.id).filter(match_int(db.Gallery.rating, term, options)).all())
 
         return ids
 
@@ -295,7 +295,7 @@ class PartialModelFilter(Command):
         if issubclass(parent_model, db.Gallery):
             if term.namespace.lower() == 'title' or not term.namespace:
                 s = constants.db_session()
-                ids.update(s.query(parent_model.id).join(parent_model.titles).filter(match_string(db.Title.name, term, options)).all())
+                ids.update(x[0] for x in s.query(parent_model.id).join(parent_model.titles).filter(match_string(db.Title.name, term, options)).all())
         else:
             raise NotImplementedError
 
@@ -359,10 +359,12 @@ class ModelFilter(Command):
     separate = CommandEntry("separate", tuple, tuple)
     include = CommandEntry("include", set, str, set)
     exclude = CommandEntry("exclude", set, str, set)
+    empty = CommandEntry("empty", set, str)
 
     included = CommandEvent("included", str, set)
     excluded = CommandEvent("excluded", str, set)
     matched = CommandEvent("matched", str, set)
+
 
     def __init__(self):
         super().__init__()
@@ -407,50 +409,64 @@ class ModelFilter(Command):
     def _exclude(model_name, pieces):
         return ModelFilter._match(model_name, pieces)
 
+    @empty.default()
+    def _empty(model_name):
+        model = database_cmd.GetModelClass().run(model_name)
+        s = constants.db_session()
+        return set(x[0] for x in s.query(model.id).all())
+
     def main(self, model: db.Base, search_filter: str) -> set:
         assert issubclass(model, db.Base)
 
         self._model = model
         model_name = db.model_name(self._model)
 
-        self.parsesearchfilter = ParseSearch()
+        if search_filter:
 
-        pieces = self.parsesearchfilter.run(search_filter)
+            self.parsesearchfilter = ParseSearch()
 
-        options = get_search_options()
+            pieces = self.parsesearchfilter.run(search_filter)
 
-        include = set()
-        exclude = set()
+            options = get_search_options()
 
-        with self.separate.call(pieces) as plg:
+            include = set()
+            exclude = set()
 
-            for p in plg.all():
-                if len(p) == 2:
-                    include.update(p[0])
-                    exclude.update(p[1])
+            with self.separate.call(pieces) as plg:
 
-        with self.include.call(model_name, include) as plg:
+                for p in plg.all():
+                    if len(p) == 2:
+                        include.update(p[0])
+                        exclude.update(p[1])
 
-            for i in plg.all():
-                if options.get("all"):
-                    if self.included_ids:
-                        self.included_ids.intersection_update(i)
+            with self.include.call(model_name, include) as plg:
+
+                for i in plg.all():
+                    if options.get("all"):
+                        if self.included_ids:
+                            self.included_ids.intersection_update(i)
+                        else:
+                            self.included_ids.update(i)
                     else:
                         self.included_ids.update(i)
-                else:
-                    self.included_ids.update(i)
 
-        self.included.emit(model_name, self.included_ids)
+            self.included.emit(model_name, self.included_ids)
 
-        with self.exclude.call(model_name, exclude) as plg:
+            with self.exclude.call(model_name, exclude) as plg:
 
-            for i in plg.all():
-                self.excluded_ids.update(i)
+                for i in plg.all():
+                    self.excluded_ids.update(i)
 
-        self.excluded.emit(self._model.__name__, self.excluded_ids)
+            self.excluded.emit(self._model.__name__, self.excluded_ids)
 
-        self.matched_ids = self.included_ids
-        self.matched_ids.difference_update(self.excluded_ids)
+            self.matched_ids = self.included_ids
+            self.matched_ids.difference_update(self.excluded_ids)
+
+        else:
+
+            with self.empty.call(model_name) as plg:
+                for i in plg.all():
+                    self.matched_ids.update(i)
 
         self.matched.emit(self._model.__name__, self.matched_ids)
 

@@ -29,7 +29,9 @@ from sqlalchemy import (
     Table,
     UniqueConstraint,
     Float,
-    Enum, TypeDecorator)
+    Enum,
+    TypeDecorator,
+    text)
 from sqlalchemy_utils import (
     ArrowType,
     generic_repr,
@@ -51,7 +53,7 @@ log = hlogger.Logger(__name__)
 
 and_op = and_
 or_op = or_
-
+sa_text = text
 
 class String(_String):
     """Enchanced version of standard SQLAlchemy's :class:`String`.

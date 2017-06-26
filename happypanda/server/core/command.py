@@ -48,7 +48,7 @@ class Command:
         """
         Run the command with *args and **kwargs.
         """
-        log.d("Running command: ", self.__class__.__name__)
+        log.d("Running command:", self.__class__.__name__)
         return self.main(*args, **kwargs)
 
 
