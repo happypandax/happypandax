@@ -7,8 +7,7 @@ if __package__ is None and not hasattr(sys, 'frozen'):
     sys.path.insert(0, os.path.dirname(os.path.dirname(path)))
 
 from happypanda.common import utils, constants, hlogger  # noqa: E402
-from happypanda.server.core import server, plugins, command  # noqa: E402
-from happypanda.webclient import main as webserver  # noqa: E402
+from happypanda.core import server, plugins, command  # noqa: E402
 
 log = hlogger.Logger(__name__)
 
@@ -22,15 +21,10 @@ def start():
 
     log.i("HPX START")
 
-    if args.web and args.server:
-        webserver.run(False)  # FIX: this is still blocking?
-    elif args.web:
-        webserver.run()
-
     if args.server:
         constants.available_commands = command.get_available_commands()
         constants.core_plugin = plugins._plugin_load(
-            "happypanda.server.core.coreplugin", "core", _logger=log)
+            "happypanda.core.coreplugin", "core", _logger=log)
 
         if not args.safe:
             plugins.plugin_loader(constants.dir_plugin)

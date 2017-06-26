@@ -1,9 +1,9 @@
 from collections import namedtuple
 
 from happypanda.common import hlogger, exceptions, utils, constants
-from happypanda.server.core.command import Command, CommandEvent, CommandEntry
-from happypanda.server.core.commands import database_cmd
-from happypanda.server.core import db
+from happypanda.core.command import Command, CommandEvent, CommandEntry
+from happypanda.core.commands import database_cmd
+from happypanda.core import db
 
 
 log = hlogger.Logger(__name__)

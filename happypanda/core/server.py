@@ -11,9 +11,9 @@ from gevent import socket, pool  # noqa: E402
 from gevent.server import StreamServer  # noqa: E402
 
 from happypanda.common import constants, exceptions, utils, message, hlogger  # noqa: E402
-from happypanda.server import interface  # noqa: E402
-from happypanda.server.core import db, torrent  # noqa: E402
-from happypanda.server.interface import meta  # noqa: E402
+from happypanda import interface  # noqa: E402
+from happypanda.core import db, torrent  # noqa: E402
+from happypanda.interface import meta  # noqa: E402
 
 log = hlogger.Logger(__name__)
 

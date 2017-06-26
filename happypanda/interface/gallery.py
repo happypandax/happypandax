@@ -1,6 +1,6 @@
 from happypanda.common import constants, message
-from happypanda.server.core import db
-from happypanda.server.interface import enums
+from happypanda.core import db
+from happypanda.interface import enums
 
 
 def _add_gallery(ctx=None, galleries=[], paths=[]):

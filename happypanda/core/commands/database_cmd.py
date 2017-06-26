@@ -1,6 +1,6 @@
 from happypanda.common import utils, hlogger, exceptions, constants
-from happypanda.server.core.command import Command, CommandEvent
-from happypanda.server.core import db
+from happypanda.core.command import Command, CommandEvent
+from happypanda.core import db
 
 log = hlogger.Logger(__name__)
 

@@ -8,7 +8,7 @@ import arrow
 from datetime import datetime
 
 from happypanda.common import constants, exceptions
-from happypanda.server.core import db
+from happypanda.core import db
 
 
 def finalize(msg_dict, name=constants.server_name):

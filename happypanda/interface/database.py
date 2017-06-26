@@ -1,6 +1,6 @@
 from happypanda.common import constants, message, utils
-from happypanda.server.core import db
-from happypanda.server.interface import enums
+from happypanda.core import db
+from happypanda.interface import enums
 
 
 def _get_image(item_type=enums.ItemType.Gallery.name,

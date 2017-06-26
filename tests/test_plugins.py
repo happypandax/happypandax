@@ -4,9 +4,9 @@ import itertools
 import os
 import pytest
 
-from happypanda.server.core import plugins, command
+from happypanda.core import plugins, command
 from happypanda.common import hlogger
-from happypanda.server.core.plugins import PluginManager, HPluginMeta
+from happypanda.core.plugins import PluginManager, HPluginMeta
 from happypanda.common import exceptions as hp_exceptions
 from happypanda.common import constants
 

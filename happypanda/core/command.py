@@ -3,7 +3,7 @@ from abc import ABCMeta, abstractmethod
 from inspect import isclass
 
 from happypanda.common import utils, hlogger, exceptions
-from happypanda.server.core import plugins
+from happypanda.core import plugins
 
 log = hlogger.Logger(__name__)
 

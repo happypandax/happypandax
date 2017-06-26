@@ -1,7 +1,7 @@
 from happypanda.common import message, exceptions, utils
-from happypanda.server.core import db
-from happypanda.server.interface import enums
-from happypanda.server.core.commands import database_cmd, search_cmd
+from happypanda.core import db
+from happypanda.interface import enums
+from happypanda.core.commands import database_cmd, search_cmd
 
 
 def library_view(item_type: enums.ItemType = enums.ItemType.Gallery.name,

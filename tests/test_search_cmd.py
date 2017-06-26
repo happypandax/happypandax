@@ -3,8 +3,8 @@ from unittest import mock
 
 pytestmark = pytest.mark.searchcmdtest
 
-from happypanda.server.core import command, db
-from happypanda.server.core.commands import search_cmd
+from happypanda.core import command, db
+from happypanda.core.commands import search_cmd
 
 def test_search_parse():
     "Test search filter parsing"

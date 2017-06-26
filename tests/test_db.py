@@ -10,7 +10,7 @@ pytestmark = pytest.mark.dbtest
 sys.path.insert(0, os.path.abspath('..'))
 from sqlalchemy.orm import sessionmaker
 from happypanda.common import constants
-from happypanda.server.core.db import *
+from happypanda.core.db import *
 Session = sessionmaker()
 constants.db_session = Session
 initEvents(Session)

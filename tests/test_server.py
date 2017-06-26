@@ -5,7 +5,7 @@ import itertools
 from gevent import socket
 import pytest
 
-from happypanda.server.core.server import HPServer
+from happypanda.core.server import HPServer
 
 pytestmark = pytest.mark.servertest
 
