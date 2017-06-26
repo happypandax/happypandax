@@ -12,13 +12,11 @@ dev = False
 ## VERSIONING ##
 version = (0, 0, 1)
 version_db = (0, 0, 1)
-version_web = (0, 0, 1)
 
 ## PATHS & FILENAMES ##
 dir_root = ''
 dir_data = os.path.join(dir_root, "data")
 dir_download = os.path.join(dir_root, "downloads")
-dir_settings = os.path.join(dir_root, "settings")
 dir_cache = os.path.join(dir_data, "cache")
 dir_log = os.path.join(dir_root, "logs")
 dir_temp = 'temp'  # TODO: create temp folder, use python temp facilities
@@ -44,7 +42,6 @@ debug = config.get(core_ns, 'debug', False, "Run in debug mode")
 preview = config.get(core_ns, 'preview', False, "Run in preview mode")
 
 # CORE
-
 
 class ExitCode(enum.Enum):
     Exit = 0
@@ -115,21 +112,15 @@ port = config.get(
     7007,
     "Specify which port to start the server on")
 
-port_webserver = config.get(
-    core_ns,
-    'port_webserver',
-    port + 1,
-    "Specify which port to start the webserver on")
-
 port_torrent = config.get(
     core_ns,
     'port_torrent',
-    port_webserver + 1,
+    port - 1,
     "Specify which port to start the torrent client on")
 
 port_range = range(*(int(x) for x in config.get(core_ns,
                                                 'port_range',
-                                                '7007-7018',
+                                                '7009-7018',
                                                 "Specify a range of ports to attempt").split('-')))
 
 host = config.get(
@@ -138,26 +129,13 @@ host = config.get(
     'localhost',
     "Specify which address the server should bind to")
 
-host_web = config.get(
-    core_ns,
-    'host_web',
-    '',
-    "Specify which address the webserver should bind to")
-
 expose_server = config.get(
     core_ns,
     'expose_server',
     False,
     "Attempt to expose the server through portforwading")
 
-expose_webserver = config.get(
-    core_ns,
-    'expose_webserver',
-    False,
-    "Attempt to expose the webserver through portforwading")
-
 exposed_server = False
-exposed_webserver = False
 
 allowed_clients = config.get(
     core_ns,
@@ -188,7 +166,6 @@ data_size = 1024
 server_ready = True
 
 server_started = False
-web_server_started = False
 
 # NETWORK
 

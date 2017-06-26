@@ -101,22 +101,10 @@ def get_argparser():
     "Creates and returns a command-line arguments parser"
     parser = argparse.ArgumentParser(
         prog="Happypanda X",
-        description="A manga/doujinshi manager with tagging support")
-
-    parser.add_argument('-s', '--server', action='store_true',
-                        help='Start the server')
-
-    parser.add_argument('-w', '--web', action='store_true',
-                        help='Start the webserver')
+        description="A manga/doujinshi manager with tagging support (https://github.com/happypandax/server)")
 
     parser.add_argument('-p', '--port', type=int, default=constants.port,
                         help='Specify which port to start the server on')
-
-    parser.add_argument(
-        '--port-web',
-        type=int,
-        default=constants.port_webserver,
-        help='Specify which port to start the web server on')
 
     parser.add_argument(
         '--port-torrent',
@@ -124,36 +112,25 @@ def get_argparser():
         default=constants.port_torrent,
         help='Specify which port to start the torrent client on')
 
-    parser.add_argument('--bind', type=str, default=constants.host,
+    parser.add_argument('--host', type=str, default=constants.host,
                         help='Specify which address the server should bind to')
-
-    parser.add_argument(
-        '--bind-web',
-        type=str,
-        default=constants.host_web,
-        help='Specify which address the webserver should bind to')
 
     parser.add_argument(
         '--expose',
         action='store_true',
         help='Attempt to expose the server through portforwading')
 
-    parser.add_argument(
-        '--expose-web',
-        action='store_true',
-        help='Attempt to expose the webserver through portforwading')
-
     parser.add_argument('--generate-config', action='store_true',
                         help='Generate a skeleton config file')
 
     parser.add_argument('-d', '--debug', action='store_true',
-                        help='Start in debug mode')
+                        help='Start in debug mode (collects more information)')
 
     parser.add_argument('-i', '--interact', action='store_true',
                         help='Start in interactive mode')
 
     parser.add_argument('-v', '--version', action='version',
-                        version='Happypanda X v{}'.format(constants.version))
+                        version='Happypanda X {}'.format(constants.version))
 
     parser.add_argument('--safe', action='store_true',
                         help='Start without plugins')
@@ -174,14 +151,10 @@ def parse_options(args):
 
         constants.debug = cfg.update("debug", args.debug)
         constants.dev = args.dev
-        constants.host = cfg.update("host", args.bind)
-        constants.host_web = cfg.update("host_web", args.bind_web)
+        constants.host = cfg.update("host", args.host)
         constants.expose_server = cfg.update("expose_server", args.expose)
-        constants.expose_webserver = cfg.update(
-            "expose_webserver", args.expose_web)
 
         constants.port = cfg.update("port", args.port)
-        constants.port_webserver = cfg.update("port_webserver", args.port_web)
         constants.port_torrent = cfg.update("port_torrent", args.port_torrent)
 
     if constants.dev:
@@ -201,13 +174,9 @@ def parse_options(args):
     #        # inform user
 
 
-def connection_params(web=False):
+def connection_params():
     "Retrieve host and port"
-    if web:
-        params = (constants.host_web, constants.port_webserver)
-    else:
-        params = (constants.host, constants.port)
-
+    params = (constants.host, constants.port)
     return params
 
 

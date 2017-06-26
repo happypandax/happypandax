@@ -25,7 +25,6 @@ def get_version():
     vs = dict(
         core=list(constants.version),
         db=list(constants.version_db),
-        web=list(constants.version_web),
         torrent=(0, 0, 0)
     )
     return message.Identity("version", vs)

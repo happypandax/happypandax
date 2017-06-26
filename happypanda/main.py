@@ -19,23 +19,21 @@ def start():
     utils.parse_options(args)
     utils.setup_logger(args)
 
-    log.i("HPX START")
+    log.i("HPX SERVER START")
 
-    if args.server:
-        constants.available_commands = command.get_available_commands()
-        constants.core_plugin = plugins._plugin_load(
-            "happypanda.core.coreplugin", "core", _logger=log)
+    constants.available_commands = command.get_available_commands()
+    constants.core_plugin = plugins._plugin_load(
+        "happypanda.core.coreplugin", "core", _logger=log)
 
-        if not args.safe:
-            plugins.plugin_loader(constants.dir_plugin)
-        else:
-            plugins.registered.init_plugins()
+    if not args.safe:
+        plugins.plugin_loader(constants.dir_plugin)
+    else:
+        plugins.registered.init_plugins()
 
-        server.HPServer().run(interactive=args.interact)
+    server.HPServer().run(interactive=args.interact)
 
-    if constants.server_started:
-        constants.config.save()
-    log.i("HPX END")
+    constants.config.save()
+    log.i("HPX SERVER END")
 
 
 if __name__ == '__main__':
