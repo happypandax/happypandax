@@ -3,7 +3,7 @@ Server API
 
 Enums
 ----------------------------------------
-.. automodule:: happypanda.server.interface.enums
+.. automodule:: happypanda.interface.enums
    :members:
 
 Functions
@@ -12,35 +12,35 @@ Functions
 Meta
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. automodule:: happypanda.server.interface.meta
+.. automodule:: happypanda.interface.meta
    :members:
 
 UI
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. automodule:: happypanda.server.interface.ui
+.. automodule:: happypanda.interface.ui
    :members:
 
 Gallery
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. automodule:: happypanda.server.interface.gallery
+.. automodule:: happypanda.interface.gallery
    :members:
 
 Database
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. automodule:: happypanda.server.interface.database
+.. automodule:: happypanda.interface.database
    :members:
 
 Plugin
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. automodule:: happypanda.server.interface.plugin
+.. automodule:: happypanda.interface.plugin
    :members:
 
 Settings
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. automodule:: happypanda.server.interface.settings
+.. automodule:: happypanda.interface.settings
    :members:
