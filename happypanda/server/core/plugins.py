@@ -121,8 +121,8 @@ class HandlerValue:
         self.kwargs = kwargs
         self.failed = {}  # { node : exception }
 
-        self.default_capture_handlers = {} # { token : handler }
-        self._capture_handlers = {} # { token : (node, handler) }
+        self.default_capture_handlers = {}  # { token : handler }
+        self._capture_handlers = {}  # { token : (node, handler) }
         self.capture = False
         self.capture_token = '*'
 
@@ -135,7 +135,7 @@ class HandlerValue:
     def default(self):
         "Calls the default handler"
         if not self.default_handler:
-           raise self._raise_default_error()
+            raise self._raise_default_error()
 
         return self.default_handler(*self.args, **self.kwargs)
 
@@ -191,14 +191,14 @@ class HandlerValue:
 
         if 'capture' in sig.parameters:
             cap = sig.parameters['capture'].default
-            
+
             if not cap == inspect._empty:
 
                 if not isinstance(cap, (list, tuple)):
                     cap = (cap,)
 
                 for c in cap:
-                    if not c in capture_dict:
+                    if c not in capture_dict:
                         capture_dict[c] = []
 
                     if node:
@@ -228,7 +228,6 @@ class HandlerValue:
                 self._raise_error()
             return None
 
-
         token_handler = None
         token_handler_d = None
 
@@ -256,7 +255,8 @@ class HandlerValue:
                 return token_handler_d[0](*self.args, **self.kwargs)
             else:
                 if default or not token_handler:
-                   tuple(r.append(y(*self.args, **self.kwargs)) for y in token_handler_d)
+                    tuple(r.append(y(*self.args, **self.kwargs))
+                          for y in token_handler_d)
 
         return tuple(x for x in r if x is not None)
 

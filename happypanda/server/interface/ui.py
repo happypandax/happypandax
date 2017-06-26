@@ -1,4 +1,4 @@
-from happypanda.common import constants, message, exceptions, utils
+from happypanda.common import message, exceptions, utils
 from happypanda.server.core import db
 from happypanda.server.interface import enums
 from happypanda.server.core.commands import database_cmd, search_cmd
@@ -50,6 +50,7 @@ def library_view(item_type: enums.ItemType = enums.ItemType.Gallery.name,
 
     model_ids = search_cmd.ModelFilter().run(db_model, search_query)
 
-    [items.append(db_msg(x)) for x in database_cmd.GetModelByID().run(db_model, model_ids, limit=limit, offset=page*limit)]
+    [items.append(db_msg(x)) for x in database_cmd.GetModelByID().run(
+        db_model, model_ids, limit=limit, offset=page * limit)]
 
     return items

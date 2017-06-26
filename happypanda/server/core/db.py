@@ -55,6 +55,7 @@ and_op = and_
 or_op = or_
 sa_text = text
 
+
 class String(_String):
     """Enchanced version of standard SQLAlchemy's :class:`String`.
     Supports additional operators that can be used while constructing
@@ -1113,11 +1114,13 @@ def is_query(obj):
     "Check if db object is a dynamic query object (issued by lazy='dynamic')"
     return isinstance(obj, dynamic.AppenderQuery)
 
+
 def related_classes(obj):
     "Returns a list of mapper classes that has a relationship with given mapper class"
     assert issubclass(obj, Base)
 
     return [x.mapper.class_ for x in inspect(obj).relationships]
+
 
 def model_name(model):
     "Return name of model"
