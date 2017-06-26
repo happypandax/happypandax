@@ -136,6 +136,7 @@ class LibraryPage(Base):
         self.current_page = 1
 
         self._properties = {
+            'search_query': '',
             'view': 'Gallery',
             'sort': 'Title',
             'order': 'Ascending'
@@ -317,7 +318,8 @@ class LibraryPage(Base):
             client.call_func("library_view", self.show_items,
                              item_type=self._properties['view'],
                              limit=self.item_limit,
-                             page=page - 1
+                             page=page - 1,
+                             search_query=self._properties['search_query']
                              )
     __pragma__('noiconv')
     __pragma__('notconv')
@@ -327,6 +329,11 @@ class LibraryPage(Base):
         ""
         self._properties['view'] = view
         self.show_pagination()
+
+    def update_search_query(self):
+        ""
+        self._properties['search_query'] = S("#search").val()
+        self.update_pagination()
 
     def show_nothing(self, target_el):
         ""

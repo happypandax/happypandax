@@ -1,14 +1,16 @@
 from happypanda.common import constants, message, exceptions, utils
 from happypanda.server.core import db
 from happypanda.server.interface import enums
+from happypanda.server.core.commands import database_cmd, search_cmd
 
 
-def library_view(item_type=enums.ItemType.Gallery.name,
-                 page=0,
-                 limit=100,
-                 search_filter="",
-                 list_id=None,
-                 view_filter=enums.ViewType.Library.name,
+def library_view(item_type: enums.ItemType = enums.ItemType.Gallery.name,
+                 page: int = 0,
+                 limit: int = 100,
+                 sort_by: str = "",
+                 search_query: str = "",
+                 filter_id: int = None,
+                 view_filter: enums.ViewType = enums.ViewType.Library.name,
                  ctx=None):
     """
     Fetch items from the database.
@@ -17,9 +19,10 @@ def library_view(item_type=enums.ItemType.Gallery.name,
     Params:
         - item_type -- type of items to show ...
         - page -- current page (zero-indexed)
+        - order_by -- name of column to order by ...
         - limit -- amount of items per page
-        - search_filter -- filter item by search terms
-        - list_id -- current item list id
+        - search_query -- filter item by search terms
+        - filter_id -- current filter list id
         - view_filter -- ...
 
     Returns:
@@ -36,17 +39,17 @@ def library_view(item_type=enums.ItemType.Gallery.name,
         enums.ItemType.Grouping: (db.Grouping, message.Grouping),
     }
 
-    db_item = db_items.get(item_type)
-    if not db_item:
+    db_model = db_items.get(item_type)
+    if not db_model:
         raise exceptions.APIError(
             "Item type must be on of {}".format(
                 db_items.keys()))
-    db_item, db_msg = db_item
+    db_model, db_msg = db_model
 
-    s = constants.db_session()
-    items = message.List(db_item.__name__.lower(), db_msg)
+    items = message.List(db_model.__name__.lower(), db_msg)
 
-    q = s.query(db_item).offset(page * limit).limit(limit)
-    [items.append(db_msg(x)) for x in q.all()]
+    model_ids = search_cmd.ModelFilter().run(db_model, search_query)
+
+    [items.append(db_msg(x)) for x in database_cmd.GetModelByID().run(db_model, model_ids, limit=limit, offset=page*limit)]
 
     return items

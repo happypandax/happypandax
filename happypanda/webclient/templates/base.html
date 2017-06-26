@@ -32,9 +32,9 @@
                     <li class="active"><a href="/inbox">Artists</a></li>
                     <li class="active"><a href="/inbox">Donwloads</a></li>
                 </ul>
-                <form class="navbar-form navbar-left col-md-4" role="search">
+                <form class="navbar-form navbar-left col-md-4" role="search" onsubmit="pages.library.update_search_query()">
                     <div class="form-group">
-                        <input type="text" class="form-control" placeholder="Search">
+                        <input id="search" type="text" class="form-control" placeholder="Search">
                     </div>
                     <button type="submit" class="btn btn-default">Submit</button>
                 </form>
