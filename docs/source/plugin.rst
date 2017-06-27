@@ -3,7 +3,7 @@ Plugins
 
 It is possible to extend Happypanda X Server with plugins.
 
-You should be already familiar with the HPX dev environment: :ref:`Setting up an environment` to begin working on HPX plugins.
+You should already be familiar with the HPX dev environment: :ref:`Setting up an environment` to begin working on HPX plugins.
 
 Before creating a plugin
 ----------------------------------------
