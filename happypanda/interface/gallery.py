@@ -17,7 +17,8 @@ def add_gallery(galleries: list = [], paths: list = [], ctx=None):
     return message.Message("works")
 
 
-def scan_gallery(paths: list = [], add_after: bool = False, ignore_exist: bool = True, ctx=None):
+def scan_gallery(paths: list = [], add_after: bool = False,
+                 ignore_exist: bool = True, ctx=None):
     """
     Scan folders for galleries
 
@@ -32,7 +33,8 @@ def scan_gallery(paths: list = [], add_after: bool = False, ignore_exist: bool =
     return message.Message("works")
 
 
-def _gallery_count(id: int = 0, item_type: enums.ItemType = enums.ItemType.GalleryFilter.name):
+def _gallery_count(
+        id: int = 0, item_type: enums.ItemType = enums.ItemType.GalleryFilter.name):
 
     item_type = enums.ItemType.get(item_type)
 
@@ -50,7 +52,8 @@ def _gallery_count(id: int = 0, item_type: enums.ItemType = enums.ItemType.Galle
         db_item.id == id).count()
 
 
-def gallery_count(id: int = 0, item_type: enums.ItemType = enums.ItemType.GalleryFilter.name):
+def gallery_count(
+        id: int = 0, item_type: enums.ItemType = enums.ItemType.GalleryFilter.name):
     """
     Get gallery count
 

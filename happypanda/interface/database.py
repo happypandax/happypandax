@@ -44,10 +44,10 @@ def _get_image(item_type: enums.ItemType = enums.ItemType.Gallery.name,
 
 
 def get_image(item_type: enums.ItemType = enums.ItemType.Gallery.name,
-               item_ids: list = [],
-               size: enums.ImageSize = enums.ImageSize.Medium.name,
-               local: bool = False,
-               ctx=None):
+              item_ids: list = [],
+              size: enums.ImageSize = enums.ImageSize.Medium.name,
+              local: bool = False,
+              ctx=None):
     """
     Get cover image
 
@@ -83,6 +83,7 @@ def get_glists():
     glists = message.List("gallerylist", message.GalleryFilter)
     [glists.append(message.GalleryFilter(x)) for x in _get_glists()]
     return glists
+
 
 def get_tags(taggable_id: int = 0):
     ""
