@@ -115,7 +115,7 @@ port = config.get(
 
 port_torrent = config.get(
     core_ns,
-    'port_torrent',
+    'torrent_port',
     port - 1,
     "Specify which port to start the torrent client on")
 

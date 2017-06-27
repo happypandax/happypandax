@@ -107,7 +107,7 @@ def get_argparser():
                         help='Specify which port to start the server on')
 
     parser.add_argument(
-        '--port-torrent',
+        '--torrent-port',
         type=int,
         default=constants.port_torrent,
         help='Specify which port to start the torrent client on')
@@ -155,7 +155,7 @@ def parse_options(args):
         constants.expose_server = cfg.update("expose_server", args.expose)
 
         constants.port = cfg.update("port", args.port)
-        constants.port_torrent = cfg.update("port_torrent", args.port_torrent)
+        constants.port_torrent = cfg.update("torrent_port", args.torrent_port)
 
     if constants.dev:
         sys.displayhook == pprint.pprint
