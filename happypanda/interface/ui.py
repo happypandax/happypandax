@@ -16,14 +16,14 @@ def library_view(item_type: enums.ItemType = enums.ItemType.Gallery.name,
     Fetch items from the database.
     Provides pagination.
 
-    Params:
-        - item_type -- type of items to show ...
-        - page -- current page (zero-indexed)
-        - order_by -- name of column to order by ...
-        - limit -- amount of items per page
-        - search_query -- filter item by search terms
-        - filter_id -- current filter list id
-        - view_filter -- ...
+    Args:
+        item_type: type of items to show ...
+        page: current page (zero-indexed)
+        order_by: name of column to order by ...
+        limit: amount of items per page
+        search_query: filter item by search terms
+        filter_id: current filter list id
+        view_filter: ...
 
     Returns:
         list of item message objects

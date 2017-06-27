@@ -1,12 +1,12 @@
 from happypanda.common import message
 
 
-def get_plugin(plugin_id=None):
+def get_plugin(plugin_id: str):
     """
     Get plugin information
 
-    Params:
-        - plugin_id -- get information for a specific plugin
+    Args:
+        plugin_id: get information for a specific plugin
 
     Returns:
         ``

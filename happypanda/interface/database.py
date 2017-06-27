@@ -3,10 +3,10 @@ from happypanda.core import db
 from happypanda.interface import enums
 
 
-def _get_image(item_type=enums.ItemType.Gallery.name,
-               item_ids=[],
-               size=enums.ImageSize.Medium.name,
-               local=False,
+def _get_image(item_type: enums.ItemType = enums.ItemType.Gallery.name,
+               item_ids: list = [],
+               size: enums.ImageSize = enums.ImageSize.Medium.name,
+               local: bool = False,
                ctx=None):
     utils.require_context(ctx)
 
@@ -43,19 +43,19 @@ def _get_image(item_type=enums.ItemType.Gallery.name,
                 content[i] = p_data
 
 
-def get_image(item_type=enums.ItemType.Gallery.name,
-              item_ids=[],
-              size=enums.ImageSize.Medium.name,
-              local=False,
-              ctx=None):
+def get_image(item_type: enums.ItemType = enums.ItemType.Gallery.name,
+               item_ids: list = [],
+               size: enums.ImageSize = enums.ImageSize.Medium.name,
+               local: bool = False,
+               ctx=None):
     """
     Get cover image
 
-    Params:
-        - item_type -- ...
-        - item_ids -- list of item ids
-        - size -- ...
-        - local -- replace image content with local path to image file
+    Args:
+        item_type: ...
+        item_ids: list of item ids
+        size: ...
+        local: replace image content with local path to image file
 
     Returns:
         a dict of id:content
@@ -63,11 +63,7 @@ def get_image(item_type=enums.ItemType.Gallery.name,
     return message.Identity("image", "")
 
 
-def _get_item(item_type=enums.ItemType.Gallery):
-    pass
-
-
-def get_item(item_type=enums.ItemType.Gallery):
+def get_item(item_type: enums.ItemType = enums.ItemType.Gallery):
     pass
 
 
@@ -88,17 +84,12 @@ def get_glists():
     [glists.append(message.GalleryFilter(x)) for x in _get_glists()]
     return glists
 
-
-def _get_tags(taggable_id=0):
-    pass
-
-
-def get_tags(taggable_id=0):
+def get_tags(taggable_id: int = 0):
     ""
     pass
 
 
-def _get_count(item_type=enums.ItemType.Gallery.name):
+def _get_count(item_type: enums.ItemType = enums.ItemType.Gallery.name):
     ""
 
     item_type = enums.ItemType.get(item_type)
@@ -115,15 +106,15 @@ def _get_count(item_type=enums.ItemType.Gallery.name):
     return s.query(db_item).count()
 
 
-def get_count(item_type=enums.ItemType.Gallery.name):
+def get_count(item_type: enums.ItemType = enums.ItemType.Gallery.name):
     """
     Get count of items in the database
 
-    Params:
-     - item_type -- type of db item (Gallery, Collection, Grouping)
+    Args:
+     item_type: type of db item (Gallery, Collection, Grouping)
 
-    Returns
-     {'count': int}
+    Returns:
+        {'count': int}
     """
 
     return message.Identity('count', {'count': _get_count(item_type)})

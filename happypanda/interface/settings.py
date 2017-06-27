@@ -1,12 +1,12 @@
 from happypanda.common import constants, message, utils, exceptions
 
 
-def set_settings(settings={}, ctx=None):
+def set_settings(settings: dict = {}, ctx=None):
     """
     Set settings
 
-    Params:
-        - settings -- a dictionary containing key:value pairs
+    Args:
+        :settings: a dictionary containing key:value pairs
 
     Returns:
         Status
@@ -15,13 +15,13 @@ def set_settings(settings={}, ctx=None):
     return message.Message("ok")
 
 
-def get_settings(settings=[], ctx=None):
+def get_settings(settings: list = [], ctx=None):
     """
     Set settings
     Send empty list to get all key:values
 
-    Params:
-        - set_list -- a list of setting keys
+    Args:
+        set_list: a list of setting keys
 
     Returns:
         dict of key.name:value

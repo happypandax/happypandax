@@ -3,21 +3,13 @@ from happypanda.core import db
 from happypanda.interface import enums
 
 
-def _add_gallery(ctx=None, galleries=[], paths=[]):
-    pass
-
-
-def add_gallery(ctx=None, galleries=[], paths=[]):
+def add_gallery(galleries: list = [], paths: list = [], ctx=None):
     """
     Add galleries to the database.
 
-    Params:
-        - galleries -- list of gallery objects parsed from XML
-
-            Returns:
-                Status
-
-        - paths -- list of paths to the galleries
+    Args:
+        galleries: list of gallery objects parsed from XML
+        paths: list of paths to the galleries
 
     Returns:
         Gallery objects
@@ -25,18 +17,14 @@ def add_gallery(ctx=None, galleries=[], paths=[]):
     return message.Message("works")
 
 
-def _scan_gallery(ctx=None, paths=[], add_after=False, ignore_exist=True):
-    pass
-
-
-def scan_gallery(ctx=None, paths=[], add_after=False, ignore_exist=True):
+def scan_gallery(paths: list = [], add_after: bool = False, ignore_exist: bool = True, ctx=None):
     """
     Scan folders for galleries
 
-    Params:
-        - paths -- list of paths to folders to scan for galleries
-        - add_after -- add found galleries after scan
-        - ignore_exist -- ignore existing galleries
+    Args:
+        paths: list of paths to folders to scan for galleries
+        add_after: add found galleries after scan
+        ignore_exist: ignore existing galleries
 
     Returns:
         list of paths to the galleries
@@ -44,7 +32,7 @@ def scan_gallery(ctx=None, paths=[], add_after=False, ignore_exist=True):
     return message.Message("works")
 
 
-def _gallery_count(id=0, item_type=enums.ItemType.GalleryFilter.name):
+def _gallery_count(id: int = 0, item_type: enums.ItemType = enums.ItemType.GalleryFilter.name):
 
     item_type = enums.ItemType.get(item_type)
 
@@ -62,13 +50,13 @@ def _gallery_count(id=0, item_type=enums.ItemType.GalleryFilter.name):
         db_item.id == id).count()
 
 
-def gallery_count(id=0, item_type=enums.ItemType.GalleryFilter.name):
+def gallery_count(id: int = 0, item_type: enums.ItemType = enums.ItemType.GalleryFilter.name):
     """
     Get gallery count
 
     Params:
-        - id -- id of item
-        - item_type -- can be 'GalleryList', 'Collection' or 'Grouping'
+        id: id of item
+        item_type: can be 'GalleryList', 'Collection' or 'Grouping'
 
     Returns:
         {

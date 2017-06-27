@@ -1,4 +1,3 @@
-========================================
 Contributing
 ========================================
 
@@ -121,7 +120,9 @@ Create a file named ``pre-push`` at ``[HPX location]/.git/hooks`` with these con
 Testing
 ----------------------------------------
 
-It is important that new additions or functionalities are tested against.
+`pytest <https://docs.pytest.org/en/latest/>`_ is used for running our tests.
+
+It is important that new additions and functionalities are tested against.
 
 Create or modify the tests in the the ``tests/`` folder.
 
