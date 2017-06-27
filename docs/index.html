@@ -3,7 +3,7 @@
     <meta http-equiv="Content-Type"
           content="text/html; charset=utf-8"/>
     
-        <title>Documentation &mdash; Happypanda X (0, 0, 1) documentation</title>
+        <title>Happypanda X user guide &mdash; Happypanda X (0, 0, 1) documentation</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href='https://fonts.googleapis.com/css?family=Crete+Round' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" href="_static/sphinx-bootstrap.css" type="text/css"/>
@@ -113,15 +113,13 @@
         <div class="content row">
                 <div class="span9">
                     
-  <div class="section" id="documentation">
-<h1>Documentation<a class="headerlink" href="#documentation" title="Permalink to this headline">¶</a></h1>
-<div class="admonition warning">
+  <div class="admonition warning">
 <p class="first admonition-title">Warning</p>
 <p class="last">This is project is under heavy development and is not ready for deployment.
 If you want to speed up the development, please consider <a class="reference internal" href="env.html#contributing"><span class="std std-ref">Contributing</span></a>.</p>
 </div>
 <div class="section" id="happypanda-x-user-guide">
-<h2>Happypanda X user guide<a class="headerlink" href="#happypanda-x-user-guide" title="Permalink to this headline">¶</a></h2>
+<h1>Happypanda X user guide<a class="headerlink" href="#happypanda-x-user-guide" title="Permalink to this headline">¶</a></h1>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installing</a><ul>
@@ -146,16 +144,17 @@ If you want to speed up the development, please consider <a class="reference int
 </div>
 </div>
 <div class="section" id="for-developers">
-<h2>For developers<a class="headerlink" href="#for-developers" title="Permalink to this headline">¶</a></h2>
+<h1>For developers<a class="headerlink" href="#for-developers" title="Permalink to this headline">¶</a></h1>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="env.html">Contributing</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="env.html#prerequisites">Prerequisites</a></li>
 <li class="toctree-l2"><a class="reference internal" href="env.html#setting-up-an-environment">Setting up an environment</a></li>
-<li class="toctree-l2"><a class="reference internal" href="env.html#internal-structure">Internal Structure</a></li>
-<li class="toctree-l2"><a class="reference internal" href="env.html#working-on-the-web-client">Working on the web client</a></li>
+<li class="toctree-l2"><a class="reference internal" href="env.html#running">Running</a></li>
 <li class="toctree-l2"><a class="reference internal" href="env.html#code-style">Code Style</a></li>
 <li class="toctree-l2"><a class="reference internal" href="env.html#testing">Testing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="env.html#server">Server</a></li>
+<li class="toctree-l2"><a class="reference internal" href="env.html#webclient">Webclient</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="client.html">Creating frontends</a><ul>
@@ -173,19 +172,22 @@ If you want to speed up the development, please consider <a class="reference int
 </ul>
 </div>
 <div class="section" id="developer-api">
-<h3>Developer API<a class="headerlink" href="#developer-api" title="Permalink to this headline">¶</a></h3>
+<h2>Developer API<a class="headerlink" href="#developer-api" title="Permalink to this headline">¶</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="api.html">Server API</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api.html#module-happypanda.server.interface.enums">Enums</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#module-happypanda.interface.enums">Enums</a></li>
 <li class="toctree-l2"><a class="reference internal" href="api.html#functions">Functions</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="api_plugin.html">Plugin API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api_plugin.html">Plugin API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api_plugin.html#methods">Methods</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_plugin.html#commands">Commands</a></li>
+</ul>
+</li>
 </ul>
 </div>
 <p>I&#8217;m available at <a class="reference external" href="https://gitter.im/Pewpews/happypandax">Gitter</a> for any help concerning HPX.</p>
-</div>
 </div>
 </div>
 
@@ -201,12 +203,9 @@ If you want to speed up the development, please consider <a class="reference int
             <div class="sphinxsidebarwrapper">
   <h3><a href="#">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">Documentation</a><ul>
-<li><a class="reference internal" href="#happypanda-x-user-guide">Happypanda X user guide</a></li>
+<li><a class="reference internal" href="#">Happypanda X user guide</a></li>
 <li><a class="reference internal" href="#for-developers">For developers</a><ul>
 <li><a class="reference internal" href="#developer-api">Developer API</a></li>
-</ul>
-</li>
 </ul>
 </li>
 </ul>
@@ -246,7 +245,7 @@ If you want to speed up the development, please consider <a class="reference int
 
     <!-- disqus -->
     <script type="text/javascript">
-        var disqus_title = 'Documentation &mdash; Happypanda X (0, 0, 1) documentation';
+        var disqus_title = 'Happypanda X user guide &mdash; Happypanda X (0, 0, 1) documentation';
         var disqus_identifier ='code' + '.' + "pewpews" + window.location.pathname.replace('/', '.');
     </script>
 
