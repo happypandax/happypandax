@@ -1,6 +1,3 @@
-import itertools
-import weakref
-import gevent
 import enum
 
 from contextlib import contextmanager
@@ -23,8 +20,10 @@ def get_available_commands():
     return commands
 
 class CommandState(enum.Enum):
+    in_queue = 0
     started = 1
     stopped = 2
+    failed = 3
 
 class Command:
     "Base command"
@@ -85,6 +84,12 @@ class AsyncCommand(Command):
         self._args = None
         self._kwargs = None
         self.state = CommandState.stopped
+        self.exception = None
+
+    @property
+    def service(self):
+        "Returns the service that manages this command"
+        return self._service
 
     def stop(self):
         "Stop running this command"
@@ -228,59 +233,3 @@ class CommandEntry(_CommandPlugin):
         handler.expected_type = self.return_type
         yield handler
 
-class Service:
-
-    services = []
-    generic = None
-    _id_counter = itertools.count(100)
-
-    def __init__(self, name):
-        self.name = name
-        self._commands = {} # cmd_id : command
-        self._greenlets = {} # cmd_id : greenlet
-        self._group = gevent.pool.Group()
-        self.services.append(weakref.ref(self))
-
-    def wait_all(self, timeout=None):
-        "Wait for all commands to finish running and then return True, else False"
-        return self._group.join(timeout)
-
-    def add_command(self, cmd):
-        "Add a command to this service and return a command id"
-        assert isinstance(cmd, AsyncCommand)
-        if not cmd in self._commands.values():
-            command_id = next(self._id_counter)
-            self._commands[command_id] = cmd
-            log.d("Service ({})".format(self.name), "added command:", cmd.__class__.__name__, "({})".format(command_id))
-        else:
-            for c_id in self._commands:
-                if self._commands[c_id] == cmd:
-                    return c_id
-
-    def start_command(self, cmd_id, *args, **kwargs):
-        """
-        Start running a specific command by its command id
-
-        Raises:
-            CommandAlreadyRunningError if specified command is already running
-        """
-        assert isinstance(cmd_id, int)
-
-        if not cmd_id in self._greenlets:
-            self._greenlets[cmd_id] = gevent.Greenlet(self._commands[cmd_id].main, *args, *kwargs)
-        if not self._greenlets[cmd_id].ready():
-            raise exceptions.CommandAlreadyRunningError(utils.this_command(), "Command id", cmd_id, "is already running")
-
-        self._group.start(self._greenlets[cmd_id])
-        self._commands[cmd_id].state = CommandState.started
-
-    def stop_command(self, cmd_id):
-        """
-        Stop running a specific command by its command id
-        """
-        assert isinstance(cmd_id, int)
-
-        if cmd_id in self._greenlets:
-            self._greenlets[cmd_id].kill()
-
-Service.generic = Service("generic")

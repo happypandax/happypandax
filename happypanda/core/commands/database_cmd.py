@@ -35,7 +35,7 @@ class GetSession(Command):
         return constants.db_session()
 
 
-class GetModelByID(Command):
+class GetModelItemByID(Command):
     """
     Fetch model items from the database by a set of ids
 
@@ -70,9 +70,10 @@ class GetModelByID(Command):
         if order_by:
             q = q.order_by(db.sa_text(order_by))
 
+        id_amount = len(ids) 
         # TODO: only SQLite has 999 variables limit
         _max_variables = 900
-        if len(ids) > _max_variables:
+        if id_amount > _max_variables:
             ids_list = list(ids)
             fetched_list = []
             queries = []
@@ -91,6 +92,8 @@ class GetModelByID(Command):
 
             self.fetched_items = tuple(fetched_list)
 
+        elif id_amount == 1:
+            self.fetched_items = (q.get(ids.pop()),)
         else:
             q = q.filter(model.id.in_(ids))
             self.fetched_items = tuple(self._query(q, limit, offset))

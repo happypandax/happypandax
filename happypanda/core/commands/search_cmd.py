@@ -344,7 +344,7 @@ class PartialModelFilter(Command):
                 self._supported_models.update(p)
 
         if self.model not in self._supported_models:
-            raise exceptions.CoreError(
+            raise exceptions.CommandError(
                 utils.this_command(self),
                 "Model '{}' is not supported".format(model))
 

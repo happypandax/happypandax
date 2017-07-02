@@ -25,10 +25,10 @@ class ItemType(utils.APIEnum):
 
 class ImageSize(utils.APIEnum):
     #: Original
-    Original = 0
+    Original = utils.ImageSize(0, 0)
     #: Big
-    Big = 400
+    Big = utils.ImageSize(200, 400)
     #: Medium
-    Medium = 250
+    Medium = utils.ImageSize(100, 250)
     #: Small
-    Small = 100
+    Small = utils.ImageSize(50, 100)

@@ -10,13 +10,13 @@ import base64
 from inspect import ismodule, currentframe, getframeinfo
 from logging.handlers import RotatingFileHandler
 from contextlib import contextmanager
+from collections import namedtuple
 
 from happypanda.common import constants, exceptions, hlogger
 
 log = hlogger.Logger(__name__)
 
 ## PATH ##
-
 
 class PathType(enum.Enum):
     Directoy = 1
@@ -34,6 +34,8 @@ class PathType(enum.Enum):
         return PathType.Invalid
 
 ## Core ##
+
+ImageSize = namedtuple("ImageSize", ['width', 'height'])
 
 
 def setup_dirs():

@@ -1,6 +1,6 @@
 from happypanda.common import utils, hlogger
 from happypanda.core.command import Command, CommandEvent, CommandEntry
-from happypanda.core.download import CommandItem, DownloadService
+from happypanda.core.services import DownloadItem, DownloadService
 
 log = hlogger.Logger(__name__)
 

@@ -18,6 +18,7 @@ dir_root = ''
 dir_data = os.path.join(dir_root, "data")
 dir_download = os.path.join(dir_root, "downloads")
 dir_cache = os.path.join(dir_data, "cache")
+dir_thumbs = os.path.join(dir_cache, "thumbnails")
 dir_log = os.path.join(dir_root, "logs")
 dir_temp = 'temp'  # TODO: create temp folder, use python temp facilities
 dir_plugin = 'plugins'
@@ -56,7 +57,11 @@ class RuntimeMode(enum.Enum):
 
 running_mode = RuntimeMode.User
 
-allowed_tasks = 10
+concurrent_image_tasks = config.get(
+    core_ns,
+    "concurrent_image_tasks",
+    10,
+    "Amount of image service tasks allowed to run at the same time")
 
 search_ns = 'search'
 search_option_regex = config.get(

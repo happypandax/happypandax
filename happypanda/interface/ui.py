@@ -50,7 +50,7 @@ def library_view(item_type: enums.ItemType = enums.ItemType.Gallery.name,
 
     model_ids = search_cmd.ModelFilter().run(db_model, search_query)
 
-    [items.append(db_msg(x)) for x in database_cmd.GetModelByID().run(
+    [items.append(db_msg(x)) for x in database_cmd.GetModelItemByID().run(
         db_model, model_ids, limit=limit, offset=page * limit)]
 
     return items

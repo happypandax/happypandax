@@ -556,6 +556,7 @@ class GalleryFilter(ProfileMixin, NameMixin, Base):
         secondary=gallery_filters,
         back_populates='filters',
         lazy="dynamic")
+
     profiles = relationship(
         "Profile",
         secondary=filter_profiles,
@@ -660,14 +661,11 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
     fav = Column(Boolean, default=False)
     info = Column(String, nullable=False, default='')
     complete_pages = Column(Boolean, default=True)
-    path = Column(String, nullable=False, default='')
     fetched = Column(Boolean, default=False)
-    path_in_archive = Column(String, nullable=False, default='')
     rating = Column(Integer, nullable=False, default=0)
     times_read = Column(Integer, nullable=False, default=0)
     timestamp = Column(ArrowType, nullable=False, default=arrow.now)
     number = Column(Integer, nullable=False, default=0)
-    in_archive = Column(Boolean, default=False)
     category_id = Column(Integer, ForeignKey('category.id'))
     language_id = Column(Integer, ForeignKey('language.id'))
     grouping_id = Column(Integer, ForeignKey('grouping.id'))
@@ -810,7 +808,6 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
 
 page_profiles = profile_association("page")
 
-
 @generic_repr
 class Page(TaggableMixin, ProfileMixin, Base):
     __tablename__ = 'page'
@@ -819,6 +816,7 @@ class Page(TaggableMixin, ProfileMixin, Base):
     path = Column(String, nullable=False, default='')
     hash_id = Column(Integer, ForeignKey('hash.id'))
     gallery_id = Column(Integer, ForeignKey('gallery.id'), nullable=False)
+    in_archive = Column(Boolean, default=False)
 
     hash = relationship("Hash", cascade="save-update, merge, refresh-expire")
     gallery = relationship("Gallery", back_populates="pages")
