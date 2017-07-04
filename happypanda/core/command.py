@@ -72,27 +72,37 @@ class UndoCommand(Command):
 class AsyncCommand(Command):
     "Async command"
     def __init__(self, service=None):
-        assert isinstance(service, Service)
-
         super().__init__()
 
         self._service = service
-        if not self._service:
-            self._service = Service.generic
-
-        self.command_id = self._service.add_command(self)
+        self.command_id = None
         self._args = None
         self._kwargs = None
         self.state = CommandState.stopped
         self.exception = None
+
+        if self._service:
+            service.add_command(self)
 
     @property
     def service(self):
         "Returns the service that manages this command"
         return self._service
 
+    @service.setter
+    def service(self, s):
+        # TODO: remove from other services
+
+        self._service = s
+
+    def _ensure_service(self):
+        if not self._service:
+            n = self.__class__.__name__
+            raise exceptions.CommandError(n, "Command '{}' has not been added to any service".format(n))
+
     def stop(self):
         "Stop running this command"
+        self._ensure_service()
         self._service.stop_command(self.command_id)
 
 
@@ -112,10 +122,11 @@ class AsyncCommand(Command):
         Returns:
             command id
         """
+        self._ensure_service()
         self._args = args
         self._kwargs = kwargs
         log.d("Running command:", self.__class__.__name__)
-        self._service.start_command(self.command_id)
+        self._service.start_command(self.command_id, *self._args, **self._kwargs)
         return self.command_id
 
 class _CommandPlugin:

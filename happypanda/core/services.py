@@ -22,11 +22,13 @@ class Service:
     services = []
     generic = None
     _id_counter = itertools.count(100)
+    _all_commands = {}
 
     def __init__(self, name, group=pool.Group()):
         self.name = name
         self._commands = {} # cmd_id : command
         self._greenlets = {} # cmd_id : greenlet
+        self._decorators = {} # cmd_id : callable
         self._group = group
         self.services.append(weakref.ref(self))
 
@@ -34,12 +36,18 @@ class Service:
         "Wait for all commands to finish running and then return True, else False"
         return self._group.join(timeout)
 
-    def add_command(self, cmd):
+    def add_command(self, cmd, decorater=None):
         "Add a command to this service and return a command id"
         assert isinstance(cmd, command.AsyncCommand)
+        assert callable(decorater) or decorater is None
         if not cmd in self._commands.values():
             command_id = next(self._id_counter)
+            cmd.command_id = command_id
+            cmd.service = self
             self._commands[command_id] = cmd
+            self._all_commands[command_id] = cmd
+            if decorater:
+                self._decorators[command_id] = decorater
             log.d("Service ({})".format(self.name), "added command:", cmd.__class__.__name__, "({})".format(command_id))
             return command_id
         else: # TODO: abit nonsensical? raise error instead maybe
@@ -47,7 +55,7 @@ class Service:
                 if self._commands[c_id] == cmd:
                     return c_id
 
-    def start_command(self, cmd_id, _callback=None, *args, **kwargs):
+    def start_command(self, cmd_id, *args, _callback=None, **kwargs):
         """
         Start running a specific command by its command id
         """
@@ -73,7 +81,7 @@ class Service:
             self._greenlets[cmd_id].kill()
 
     def _callback_wrapper(self, command_id, command_obj, callback, greenlet):
-        assert callable(callback)
+        assert callable(callback) or callback is None
 
         command_obj.state = command.CommandState.stopped
         if not greenlet.successful():
@@ -86,6 +94,9 @@ class Service:
         # Recall that a greenlet killed with the default GreenletExit
         # is considered to have finished successfully, and the GreenletExit 
         # exception will be its value.
+
+        if command_id in self._decorators:
+            greenlet.value = self._decorators[command_id](greenlet.value)
 
         if callback:
             callback(greenlet.value)

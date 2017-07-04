@@ -1,49 +1,15 @@
 from happypanda.common import constants, message, utils
-from happypanda.core import db
+from happypanda.core import db, services
 from happypanda.interface import enums
+from happypanda.core.commands import database_cmd
 
+import functools
 
-def _get_image(item_type: enums.ItemType = enums.ItemType.Gallery.name,
-               item_ids: list = [],
-               size: enums.ImageSize = enums.ImageSize.Medium.name,
-               local: bool = False,
-               ctx=None):
-    utils.require_context(ctx)
+def _get_cover(local, cover):
+    ""
+    pass
 
-    item_type = enums.ItemType.get(item_type)
-    size = enums.ImageSize.get(size)
-
-    db_items = {
-        enums.ItemType.Gallery: (db.Gallery, message.Gallery),
-        enums.ItemType.Collection: (db.Collection, message.Collection),
-        enums.ItemType.Grouping: (db.Grouping, message.DatabaseMessage),
-        enums.ItemType.Page: (db.Page, message.Page),
-    }
-
-    db_item = db_items.get(item_type)
-
-    content = {}
-
-    s = constants.db_session()
-
-    for i in item_ids:
-
-        p_data, p_path = s.query(db.Profile.data, db.Profile.path).filter(
-            db_item.profiles.any(
-                db.and_op(
-                    db_item.id == i,
-                    db.Profile.size == size.name
-                ))).one_or_none()
-        if not p_path:
-            raise NotImplementedError
-        else:
-            if local:
-                content[i] = p_path
-            else:
-                content[i] = p_data
-
-
-def get_image(item_type: enums.ItemType = enums.ItemType.Gallery.name,
+def get_cover(item_type: enums.ItemType = enums.ItemType.Gallery.name,
               item_ids: list = [],
               size: enums.ImageSize = enums.ImageSize.Medium.name,
               local: bool = False,
@@ -58,9 +24,32 @@ def get_image(item_type: enums.ItemType = enums.ItemType.Gallery.name,
         local: replace image content with local path to image file
 
     Returns:
-        a dict of id:content
+        a dict of item_id:async_command_id
     """
-    return message.Identity("image", "")
+    utils.require_context(ctx)
+
+    item_type = enums.ItemType.get(item_type)
+    size = enums.ImageSize.get(size)
+
+    db_items = {
+        enums.ItemType.Gallery: db.Gallery,
+        enums.ItemType.Collection: db.Collection,
+        enums.ItemType.Grouping: db.Grouping,
+        enums.ItemType.Page: db.Page,
+    }
+
+    db_item = db_items.get(item_type)
+
+    content = {}
+
+    command_dec = functools.partial(_get_cover, local)
+
+    for i in item_ids:
+        c = database_cmd.GetModelCover()
+        services.ImageService.generic.add_command(c, command_dec)
+        content[i] = c.start(db_item, i, size)
+
+    return message.Identity('cover', content)
 
 
 def get_item(item_type: enums.ItemType = enums.ItemType.Gallery):

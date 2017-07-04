@@ -1,4 +1,3 @@
-"Contains classes/methods related to galleries"
 import os
 import re
 
@@ -238,3 +237,4 @@ class GalleryFS:
 
 class GalleryMonitor:
     pass
+
