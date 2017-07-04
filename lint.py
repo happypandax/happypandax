@@ -6,14 +6,14 @@ from subprocess import run
 def main():
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--skip-format', action='store_true', help="Skip autoformat")
+    parser.add_argument('-f', '--format', action='store_true', help="Autoformat before running flake8")
     args = parser.parse_args()
 
     if not os.path.isdir("happypanda"):
         print("This file needs to be run in the same directory as the 'happypanda/' directory")
         sys.exit()
 
-    if not args.skip_format:
+    if args.format:
         for root, dirs, files in os.walk("happypanda"):
 
             for f in files:
