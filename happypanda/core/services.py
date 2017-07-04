@@ -3,7 +3,6 @@ import weakref
 import itertools
 import functools
 import enum
-import io
 import hashlib
 
 from gevent import pool
@@ -11,11 +10,11 @@ from collections import namedtuple
 from PIL import Image
 
 
-from happypanda.common import utils, hlogger, constants, exceptions
-from happypanda.core import plugins, command, db
-from happypanda.interface import enums
+from happypanda.common import utils, hlogger, constants
+from happypanda.core import command, db
 
 log = hlogger.Logger(__name__)
+
 
 class Service:
 
@@ -26,9 +25,9 @@ class Service:
 
     def __init__(self, name, group=pool.Group()):
         self.name = name
-        self._commands = {} # cmd_id : command
-        self._greenlets = {} # cmd_id : greenlet
-        self._decorators = {} # cmd_id : callable
+        self._commands = {}  # cmd_id : command
+        self._greenlets = {}  # cmd_id : greenlet
+        self._decorators = {}  # cmd_id : callable
         self._group = group
         self.services.append(weakref.ref(self))
 
@@ -40,7 +39,7 @@ class Service:
         "Add a command to this service and return a command id"
         assert isinstance(cmd, command.AsyncCommand)
         assert callable(decorater) or decorater is None
-        if not cmd in self._commands.values():
+        if cmd not in self._commands.values():
             command_id = next(self._id_counter)
             cmd.command_id = command_id
             cmd.service = self
@@ -48,9 +47,14 @@ class Service:
             self._all_commands[command_id] = cmd
             if decorater:
                 self._decorators[command_id] = decorater
-            log.d("Service ({})".format(self.name), "added command:", cmd.__class__.__name__, "({})".format(command_id))
+            log.d(
+                "Service ({})".format(
+                    self.name),
+                "added command:",
+                cmd.__class__.__name__,
+                "({})".format(command_id))
             return command_id
-        else: # TODO: abit nonsensical? raise error instead maybe
+        else:  # TODO: abit nonsensical? raise error instead maybe
             for c_id in self._commands:
                 if self._commands[c_id] == cmd:
                     return c_id
@@ -61,12 +65,18 @@ class Service:
         """
         assert isinstance(cmd_id, int)
 
-        if not cmd_id in self._greenlets:
-            self._greenlets[cmd_id] = gevent.Greenlet(self._commands[cmd_id].main, *args, **kwargs)
+        if cmd_id not in self._greenlets:
+            self._greenlets[cmd_id] = gevent.Greenlet(
+                self._commands[cmd_id].main, *args, **kwargs)
 
         green = self._greenlets[cmd_id]
 
-        green.link(functools.partial(self._callback_wrapper, cmd_id, self._commands[cmd_id], _callback))
+        green.link(
+            functools.partial(
+                self._callback_wrapper,
+                cmd_id,
+                self._commands[cmd_id],
+                _callback))
 
         self._group.start(green)
         self._commands[cmd_id].state = command.CommandState.started
@@ -92,7 +102,7 @@ class Service:
 
         # TODO: this:
         # Recall that a greenlet killed with the default GreenletExit
-        # is considered to have finished successfully, and the GreenletExit 
+        # is considered to have finished successfully, and the GreenletExit
         # exception will be its value.
 
         if command_id in self._decorators:
@@ -111,6 +121,7 @@ class DownloadState(enum.Enum):
     finished = 2
     cancelled = 4
 
+
 class DownloadItem(command.AsyncCommand):
 
     def __init__(self, service, url, session=None):
@@ -120,9 +131,7 @@ class DownloadItem(command.AsyncCommand):
         self.url = url
         self.file = ""
         self.name = ""
-        
-    def main(self):
-        return super().main(*args, **kwargs)
+
 
 class DownloadService(Service):
     "A download service"
@@ -132,12 +141,16 @@ class DownloadService(Service):
 
 DownloadService.generic = DownloadService("download")
 
-ImageProperties = namedtuple("ImageProperties", ['size', 'radius', 'output_dir', 'output_path'])
+ImageProperties = namedtuple(
+    "ImageProperties", [
+        'size', 'radius', 'output_dir', 'output_path'])
 ImageProperties.__new__.__defaults__ = (None,) * len(ImageProperties._fields)
+
 
 class ImageItem(command.AsyncCommand):
 
-    def __init__(self, service, filepath_or_bytes, properties, hash_check=None):
+    def __init__(self, service, filepath_or_bytes,
+                 properties, hash_check=None):
         assert isinstance(service, ImageService)
         assert isinstance(properties, ImageProperties)
         super().__init__(service)
@@ -145,10 +158,10 @@ class ImageItem(command.AsyncCommand):
         self._image = filepath_or_bytes
 
     def main(self):
-        
+
         if isinstance(self._image, str):
             im = Image.open(self._image)
-            im.thumbnail(200,400)
+            im.thumbnail(200, 400)
 
     @staticmethod
     def gen_hash(model, size, item_id=None):
@@ -164,6 +177,7 @@ class ImageItem(command.AsyncCommand):
 
         return hashlib.md5(hash_str.encode()).hexdigest()
 
+
 class ImageService(Service):
     "An image service"
 
@@ -172,4 +186,3 @@ class ImageService(Service):
 
 
 ImageService.generic = ImageService("image")
-

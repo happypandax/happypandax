@@ -808,6 +808,7 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
 
 page_profiles = profile_association("page")
 
+
 @generic_repr
 class Page(TaggableMixin, ProfileMixin, Base):
     __tablename__ = 'page'

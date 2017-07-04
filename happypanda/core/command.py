@@ -19,11 +19,13 @@ def get_available_commands():
             commands.add(c.__name__ + '.' + c._entries[a].name)
     return commands
 
+
 class CommandState(enum.Enum):
     in_queue = 0
     started = 1
     stopped = 2
     failed = 3
+
 
 class Command:
     "Base command"
@@ -69,8 +71,10 @@ class UndoCommand(Command):
     def undo(self):
         pass
 
+
 class AsyncCommand(Command):
     "Async command"
+
     def __init__(self, service=None):
         super().__init__()
 
@@ -98,18 +102,18 @@ class AsyncCommand(Command):
     def _ensure_service(self):
         if not self._service:
             n = self.__class__.__name__
-            raise exceptions.CommandError(n, "Command '{}' has not been added to any service".format(n))
+            raise exceptions.CommandError(
+                n, "Command '{}' has not been added to any service".format(n))
 
     def stop(self):
         "Stop running this command"
         self._ensure_service()
         self._service.stop_command(self.command_id)
 
-
     def start(self, *args, **kwargs):
         """
         Start running this command
-        
+
         Returns:
             command id
         """
@@ -126,8 +130,10 @@ class AsyncCommand(Command):
         self._args = args
         self._kwargs = kwargs
         log.d("Running command:", self.__class__.__name__)
-        self._service.start_command(self.command_id, *self._args, **self._kwargs)
+        self._service.start_command(
+            self.command_id, *self._args, **self._kwargs)
         return self.command_id
+
 
 class _CommandPlugin:
     ""
@@ -243,4 +249,3 @@ class CommandEntry(_CommandPlugin):
         handler.default_handler = self.default_handler
         handler.expected_type = self.return_type
         yield handler
-

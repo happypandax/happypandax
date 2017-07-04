@@ -5,9 +5,11 @@ from happypanda.core.commands import database_cmd
 
 import functools
 
+
 def _get_cover(local, cover):
     ""
     pass
+
 
 def get_cover(item_type: enums.ItemType = enums.ItemType.Gallery.name,
               item_ids: list = [],

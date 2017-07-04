@@ -18,6 +18,7 @@ log = hlogger.Logger(__name__)
 
 ## PATH ##
 
+
 class PathType(enum.Enum):
     Directoy = 1
     Archive = 2

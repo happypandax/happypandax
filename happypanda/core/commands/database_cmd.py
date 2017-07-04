@@ -4,9 +4,9 @@ from happypanda.core import db, services
 from happypanda.interface import enums
 
 import time
-from PIL import Image
 
 log = hlogger.Logger(__name__)
+
 
 class GetModelCover(AsyncCommand):
     """
@@ -41,7 +41,8 @@ class GetModelCover(AsyncCommand):
             db.GalleryFilter
         )
 
-    def main(self, model: db.Base, item_id: int, image_size: enums.ImageSize) -> db.Profile:
+    def main(self, model: db.Base, item_id: int,
+             image_size: enums.ImageSize) -> db.Profile:
         time.sleep(20)
         return None
         self.model = model
@@ -55,20 +56,26 @@ class GetModelCover(AsyncCommand):
                 utils.this_command(self),
                 "Model '{}' is not supported".format(model))
 
-        img_hash = services.ImageItem.gen_hash(model, image_size.value, item_id)
+        img_hash = services.ImageItem.gen_hash(
+            model, image_size.value, item_id)
 
         sess = constants.db_session()
-        self.cover = sess.query(db.Profile).filter(db.Profile.data == img_hash).one_or_none()
+        self.cover = sess.query(db.Profile).filter(
+            db.Profile.data == img_hash).one_or_none()
 
         if not self.cover:
             self.cover = db.Profile()
-            
+
             related_models = db.related_classes(model)
             if db.Page in related_models:
-                page = sess.query(db.Page.path).filter(db.Page.number == 1).one_or_none()
+                page = sess.query(
+                    db.Page.path).filter(
+                    db.Page.number == 1).one_or_none()
                 if page:
-                    im_props = services.ImageProperties(image_size, 0, constants.dir_thumbs)
-                    self.cover.path = services.ImageItem(self.service, page, im_props).main()
+                    im_props = services.ImageProperties(
+                        image_size, 0, constants.dir_thumbs)
+                    self.cover.path = services.ImageItem(
+                        self.service, page, im_props).main()
                 else:
                     return None
 
@@ -82,6 +89,7 @@ class GetModelCover(AsyncCommand):
             sess.commit()
 
         return self.cover
+
 
 class GetModelClass(Command):
     """
@@ -148,7 +156,7 @@ class GetModelItemByID(Command):
         if order_by:
             q = q.order_by(db.sa_text(order_by))
 
-        id_amount = len(ids) 
+        id_amount = len(ids)
         # TODO: only SQLite has 999 variables limit
         _max_variables = 900
         if id_amount > _max_variables:

@@ -45,12 +45,14 @@ class CoreError(HappypandaError):
         self.where = where
         self.msg = message
 
+
 @error_code(120)
 class CommandError(CoreError):
     """
     Base command error
     """
     pass
+
 
 @error_code(121)
 class CommandAlreadyRunningError(CoreError):
@@ -60,7 +62,7 @@ class CommandAlreadyRunningError(CoreError):
 
     pass
 
-        # ## PLUGINS -- CODE: 200+ ##
+    # ## PLUGINS -- CODE: 200+ ##
 
 
 @error_code(200)

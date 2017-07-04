@@ -237,4 +237,3 @@ class GalleryFS:
 
 class GalleryMonitor:
     pass
-
