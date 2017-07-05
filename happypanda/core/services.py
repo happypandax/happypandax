@@ -91,6 +91,13 @@ class Service:
         if cmd_id in self._greenlets:
             self._greenlets[cmd_id].kill()
 
+    def get_command_value(self, cmd_id):
+        """
+        """
+        assert isinstance(cmd_id, int)
+        if cmd_id in self._greenlets:
+            return self._greenlets[cmd_id].value
+
     @classmethod
     def get_command(cls, cmd_id):
         if cmd_id in cls._all_commands:

@@ -1,5 +1,6 @@
 from happypanda.common import constants, message, exceptions, utils
 from happypanda.core.services import Service
+from happypanda.core import command
 
 def get_error(code: int, id: int, ctx=None):
     """
@@ -68,7 +69,35 @@ def list_plugins(ctx=None):
 def _command_msg(ids):
     for x in ids:
         if not Service.get_command(x):
-            raise exceptions.APIError(utils.this_function(), "Command with ID '{}' does not exist".format(x))
+            raise exceptions.CommandError(utils.this_function(), "Command with ID '{}' does not exist".format(x))
+
+def get_command_value(command_ids: list):
+    """
+    Get the returned command value
+
+    Args:
+        command_ids: list of command ids
+
+    Returns:
+        { command_id : value }
+
+    """
+
+    _command_msg(command_ids)
+
+    values = {}
+
+    for i in command_ids:
+        cmd = Service.get_command(i)
+        if not cmd.state == command.CommandState.finished:
+            
+            if cmd.state == command.CommandState.failed:
+                raise exceptions.CommandError(utils.this_function(), "Command with ID '{}' has failed".format(i))
+            raise exceptions.CommandError(utils.this_function(), "Command with ID '{}' has not finished running".format(i))
+        
+        values[i] = cmd.value
+
+    return message.Identity('command_value', values)
 
 def get_command_state(command_ids: list):
     """

@@ -92,6 +92,11 @@ class AsyncCommand(Command):
             service.add_command(self)
 
     @property
+    def value(self):
+        self._ensure_service()
+        return self._service.get_command_value(self.command_id)
+
+    @property
     def service(self):
         "Returns the service that manages this command"
         return self._service
