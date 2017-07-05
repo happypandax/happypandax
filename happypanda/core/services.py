@@ -44,7 +44,7 @@ class Service:
             cmd.command_id = command_id
             cmd.service = self
             self._commands[command_id] = cmd
-            self._all_commands[command_id] = cmd
+            self._all_commands[command_id] = weakref.ref(cmd)
             if decorater:
                 self._decorators[command_id] = decorater
             log.d(
@@ -53,6 +53,7 @@ class Service:
                 "added command:",
                 cmd.__class__.__name__,
                 "({})".format(command_id))
+            cmd.state = command.CommandState.in_service
             return command_id
         else:  # TODO: abit nonsensical? raise error instead maybe
             for c_id in self._commands:
@@ -90,6 +91,12 @@ class Service:
         if cmd_id in self._greenlets:
             self._greenlets[cmd_id].kill()
 
+    @classmethod
+    def get_command(cls, cmd_id):
+        if cmd_id in cls._all_commands:
+            return cls._all_commands[cmd_id]()
+        return None
+
     def _callback_wrapper(self, command_id, command_obj, callback, greenlet):
         assert callable(callback) or callback is None
 
@@ -113,13 +120,6 @@ class Service:
 
 
 Service.generic = Service("generic")
-
-
-class DownloadState(enum.Enum):
-    in_queue = 0
-    downloading = 1
-    finished = 2
-    cancelled = 4
 
 
 class DownloadItem(command.AsyncCommand):
@@ -183,6 +183,5 @@ class ImageService(Service):
 
     def __init__(self, name):
         super().__init__(name, pool.Pool(constants.concurrent_image_tasks))
-
 
 ImageService.generic = ImageService("image")

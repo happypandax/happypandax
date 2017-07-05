@@ -361,7 +361,7 @@ class Profile(Base):
     __tablename__ = 'profile'
 
     path = Column(String, nullable=False, default='')
-    data = Column(String, nullable=False, default='')
+    data = Column(String, nullable=False, index=True)
     size = Column(String, nullable=False)
     timestamp = Column(ArrowType, nullable=False, default=arrow.now)
 

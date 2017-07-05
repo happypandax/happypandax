@@ -21,10 +21,13 @@ def get_available_commands():
 
 
 class CommandState(enum.Enum):
-    in_queue = 0
-    started = 1
-    stopped = 2
-    failed = 3
+    out_of_service = 0
+    in_service = 1
+    in_queue = 2
+    started = 3
+    finished = 4
+    stopped = 5
+    failed = 6
 
 
 class Command:
@@ -82,7 +85,7 @@ class AsyncCommand(Command):
         self.command_id = None
         self._args = None
         self._kwargs = None
-        self.state = CommandState.stopped
+        self.state = CommandState.out_of_service
         self.exception = None
 
         if self._service:
