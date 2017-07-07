@@ -4,14 +4,16 @@ import itertools
 import functools
 import enum
 import hashlib
+import os
 
 from gevent import pool
 from collections import namedtuple
 from PIL import Image
 
 
-from happypanda.common import utils, hlogger, constants
+from happypanda.common import utils, hlogger, constants, exceptions
 from happypanda.core import command, db
+from happypanda.interface import enums
 
 log = hlogger.Logger(__name__)
 
@@ -93,6 +95,7 @@ class Service:
 
     def get_command_value(self, cmd_id):
         """
+        Get returned value of command by its command id
         """
         assert isinstance(cmd_id, int)
         if cmd_id in self._greenlets:
@@ -150,25 +153,75 @@ DownloadService.generic = DownloadService("download")
 
 ImageProperties = namedtuple(
     "ImageProperties", [
-        'size', 'radius', 'output_dir', 'output_path'])
-ImageProperties.__new__.__defaults__ = (None,) * len(ImageProperties._fields)
+        'size', 'radius', 'output_dir', 'output_path', 'name'])
+ImageProperties.__new__.__defaults__ = (enums.ImageSize.Medium.value, 0, None, None, None)
 
 
 class ImageItem(command.AsyncCommand):
+    """
 
-    def __init__(self, service, filepath_or_bytes,
-                 properties, hash_check=None):
+    Returns:
+        a path to generated image
+    """
+
+    def __init__(self, service, filepath_or_bytes, properties):
         assert isinstance(service, ImageService)
         assert isinstance(properties, ImageProperties)
         super().__init__(service)
         self.properties = properties
         self._image = filepath_or_bytes
 
-    def main(self):
+    @property
+    def properties(self):
+        return self._properties
 
-        if isinstance(self._image, str):
-            im = Image.open(self._image)
-            im.thumbnail(200, 400)
+    @properties.setter
+    def properties(self, x):
+        self._check_properties(x)
+        self._properties = x
+
+    def _check_properties(self, props):
+        assert isinstance(props, ImageProperties)
+        if props.size:
+            assert isinstance(props.size, utils.ImageSize)
+
+        if props.radius:
+            assert isinstance(props.radius, int)
+
+        if props.output_dir:
+            assert isinstance(props.output_dir, str)
+
+        if props.output_path:
+            assert isinstance(props.output_path, str)
+
+        if props.name:
+            assert isinstance(props.name, str)
+
+    def main(self) -> str:
+        size = self.properties.size
+        im = Image.open(self._image)
+        f, ext = os.path.splitext(self._image)
+        image_path = ""
+
+        if self.properties.output_path:
+            image_path = self.properties.output_path
+            _f, _ext = os.path.splitext(image_path)
+            if not _ext:
+                image_path = os.path.join(_f, ext)
+
+        elif self.properties.output_dir:
+            o_dir = self.properties.output_dir
+            o_name = self.properties.name if self.properties.name else utils.random_name()
+            image_path = os.path.join(o_dir, o_name, ext)
+        else:
+            raise exceptions.CommandError(utils.this_command(self), "An output path or directory must be set for the generated image")
+
+        if size.width and size.height:
+            im.thumbnail(size.width, size.height)
+
+        im.save(image_path)
+
+        return image_path
 
     @staticmethod
     def gen_hash(model, size, item_id=None):

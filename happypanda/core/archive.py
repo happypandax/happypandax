@@ -8,9 +8,6 @@ from happypanda.common import exceptions, constants, hlogger
 
 log = hlogger.Logger(__name__)
 
-# TODO: C++
-
-
 class ArchiveFile():
     """
     Work with archive files, raises exception if instance fails.

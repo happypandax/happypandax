@@ -30,7 +30,7 @@ class CommandState(enum.Enum):
     failed = 6
 
 
-class Command:
+class CoreCommand:
     "Base command"
     __metaclass__ = ABCMeta
 
@@ -51,6 +51,8 @@ class Command:
             if isinstance(a, CommandEntry):
                 a.command_cls = cls
                 cls._entries[a.name] = a
+
+class Command(CoreCommand):
 
     @abstractmethod
     def main(self, *args, **kwargs):

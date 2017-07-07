@@ -7,6 +7,8 @@ import pkgutil
 import pprint
 import logging
 import base64
+import uuid
+
 from inspect import ismodule, currentframe, getframeinfo
 from logging.handlers import RotatingFileHandler
 from contextlib import contextmanager
@@ -15,26 +17,6 @@ from collections import namedtuple
 from happypanda.common import constants, exceptions, hlogger
 
 log = hlogger.Logger(__name__)
-
-## PATH ##
-
-
-class PathType(enum.Enum):
-    Directoy = 1
-    Archive = 2
-    Invalid = 3
-
-    @staticmethod
-    def check(path):
-        if os.path.isdir(path):
-            return PathType.Directoy
-        head, ext = os.path.splitext(path.lower())
-        if ext in constants.supported_archives:
-            return PathType.Archive
-
-        return PathType.Invalid
-
-## Core ##
 
 ImageSize = namedtuple("ImageSize", ['width', 'height'])
 
@@ -49,7 +31,6 @@ def setup_dirs():
         if dir_x:
             if not os.path.isdir(dir_x):
                 os.mkdir(dir_x)
-
 
 def setup_logger(args):
     assert isinstance(args, argparse.Namespace)
@@ -224,9 +205,6 @@ def session(sess=constants.db_session):
         s.rollback()
         raise
 
-## SERVER ##
-
-
 class APIEnum(enum.Enum):
     "A conv. enum class allowing for str comparison"
 
@@ -273,6 +251,9 @@ def generate_key(length=10):
     return base64.urlsafe_b64encode(
         os.urandom(length)).rstrip(b'=').decode('ascii')
 
+def random_name():
+    "Generate a random urlsafe name and return it"
+    return base64.urlsafe_b64encode(uuid.uuid4().bytes).decode('utf-8').replace('=','')
 
 def require_context(ctx):
     assert ctx, "This function requires a context object"
@@ -286,3 +267,4 @@ def this_function():
 def this_command(command_cls):
     "Return name of command for exceptions"
     return "Command:" + command_cls.__class__.__name__
+

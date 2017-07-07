@@ -1,5 +1,6 @@
 import os
 import re
+import pathlib
 
 from happypanda.common import constants, utils
 from happypanda.core import db, plugins
@@ -157,83 +158,4 @@ class GalleryScan:
         return dic
 
 
-class GalleryFS:
-    """
-    Encapsulates an archive/folder on the filesystem
-    Params:
-        path -- a valid path to a valid gallery archive/folder
-        path_in_archive -- path to gallery inside of archive
-        db_gallery -- Database Gallery object
-    """
 
-    def __init__(self, path, path_in_archive='', db_gallery=None):
-        self.gallery_type = utils.PathType.check(path)
-        self.gallery = db_gallery
-        self.path = path
-        self.path_in_archive = path_in_archive
-        self.name = ''
-        self.title = ''
-        self.artists = []
-        self.language = ''
-        self.convention = ''
-        self.pages = []  # tuples: (number, page_file)
-
-    def load(self):
-        "Extracts gallery data"
-        _, self.name = os.path.split(self.path)
-        info = GalleryScan.name_parser(self.path)
-        self.title = info['title']
-        self.artists.append(info['artist'])
-        self.language = info['language']
-        self.convention = info['convention']
-        if self.gallery_type == utils.PathType.Directoy:
-            self.pages = self._get_folder_pages()
-        elif self.gallery_type == utils.PathType.Archive:
-            self.pages = self._get_archive_pages()
-        else:
-            assert False, "this shouldnt happen... ({})".format(self.path)
-
-    def get_gallery(self):
-        "Creates/Updates database gallery"
-        if not self.gallery:
-            self.gallery = db.Gallery()
-
-        self.gallery.path = self.path
-        self.gallery.path_in_archive = self.path_in_archive
-        self.gallery.in_archive = True if self.gallery_type == utils.PathType.Archive else False
-        t = db.Title(name=self.title)
-        # TODO: add language to title
-        for x in self.gallery.titles:
-            if x.name == t.name:
-                t = x
-                break
-        self.gallery.titles.append(t)
-        [self.gallery.artists.append(
-            db.Artist(name=x).exists(True, True)) for x in self.artists]
-        db_pages = self.gallery.pages.count()
-        if db_pages != len(self.pages):
-            if db_pages:
-                self.gallery.pages.delete()
-            [self.gallery.pages.append(
-                db.Page(path=x[1], number=x[0])) for x in self.pages]
-
-        return self.gallery
-
-    def _get_folder_pages(self):
-        ""
-        pages = []
-        dir_images = [
-            x.path for x in os.scandir(
-                self.path) if not x.is_dir() and x.name.endswith(
-                constants.supported_images)]
-        for n, x in enumerate(sorted(dir_images), 1):
-            pages.append((n, os.path.abspath(x)))
-        return pages
-
-    def _get_archive_pages(self):
-        ""
-        raise NotImplementedError
-
-
-class GalleryMonitor:
-    pass

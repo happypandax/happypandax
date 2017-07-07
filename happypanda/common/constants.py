@@ -32,9 +32,6 @@ db_name_dev = "happypanda_dev.db"
 db_path = os.path.join(dir_root, dir_data, db_name)
 db_path_dev = os.path.join(dir_root, dir_data, db_name_dev)
 
-supported_images = ('.jpg', '.bmp', '.png', '.gif', '.jpeg')
-supported_archives = ('.zip', '.cbz', '.rar', '.cbr')
-
 core_ns = 'core'
 config = cfg.Config(dir_root, settings_file, settings_descr_file)
 

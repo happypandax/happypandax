@@ -43,8 +43,7 @@ class GetModelCover(AsyncCommand):
 
     def main(self, model: db.Base, item_id: int,
              image_size: enums.ImageSize) -> db.Profile:
-        time.sleep(20)
-        return None
+
         self.model = model
 
         with self.models.call() as plg:
