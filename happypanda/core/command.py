@@ -37,8 +37,10 @@ class CoreCommand:
     _events = {}
     _entries = {}
 
-    def __init__(self, **kwargs):
-        self._get_commands()
+    def __new__(cls, *args, **kwargs):
+        obj = super(CoreCommand, cls).__new__(cls)
+        obj._get_commands()
+        return obj
 
     @classmethod
     def _get_commands(cls):

@@ -8,6 +8,7 @@ import pprint
 import logging
 import base64
 import uuid
+import tempfile
 
 from inspect import ismodule, currentframe, getframeinfo
 from logging.handlers import RotatingFileHandler
@@ -20,6 +21,7 @@ log = hlogger.Logger(__name__)
 
 ImageSize = namedtuple("ImageSize", ['width', 'height'])
 
+temp_dirs = []
 
 def setup_dirs():
     "Creates directories at the specified root path"
@@ -268,3 +270,7 @@ def this_command(command_cls):
     "Return name of command for exceptions"
     return "Command:" + command_cls.__class__.__name__
 
+def create_temp_dir():
+    t = tempfile.TemporaryDirectory(dir=constants.dir_temp)
+    temp_dirs.append(t)
+    return t

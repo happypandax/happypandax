@@ -151,8 +151,7 @@ class ArchiveFile():
         If path is not specified, a temp dir will be created
         """
         if not path:
-            path = os.path.join(constants.dir_temp,
-                                str(uuid.uuid4()))  # TODO: use temp facilities
+            path = os.path.join(constants.dir_temp, str(uuid.uuid4()))  # TODO: use temp facilities
             os.mkdir(path)
         if member:
             self.archive.extractall(path, member)
