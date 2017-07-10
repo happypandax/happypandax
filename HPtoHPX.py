@@ -1,6 +1,7 @@
 ﻿import sys, os, sqlite3, copy, arrow
-from happypanda.server.core import db, galleryio
-from happypanda.server.interface import enums
+from happypanda.core import db
+from happypanda.core.commands import io_cmd
+from happypanda.interface import enums
 
 GALLERY_LISTS = []
 
@@ -721,13 +722,22 @@ if __name__ == '__main__':
                 continue
             path_in_archive = ch.path
 
-            gfs = galleryio.GalleryFS(path, path_in_archive, db.Gallery())
-            gallery = gfs.get_gallery()
+            gallery = db.Gallery()
             try:
-                if gfs.gallery_type == galleryio.utils.PathType.Directoy:
-                    [gfs.gallery.pages.append(db.Page(path=x[1], number=x[0])) for x in gfs._get_folder_pages()]
-                elif gfs.gallery_type == galleryio.utils.PathType.Archive:
-                    [gfs.gallery.pages.append(db.Page(path=x[1], number=x[0])) for x in gfs._get_archive_pages()]
+                pages = []
+                if g.is_archive:
+                    raise NotImplementedError
+                else:
+                    dir_images = [x.path for x in os.scandir(g.path) if not x.is_dir() and x.name.endswith(io_cmd.CoreFS.image_formats())]
+                    for n, x in enumerate(sorted(dir_images), 1):
+                        x = io_cmd.CoreFS(x)
+                        p = db.Page()
+                        p.name = x.name
+                        p.path = x.path
+                        pages.append(p)
+
+                for p in pages:
+                    gallery.pages.append(p)
             except NotImplementedError:
                 pass
             for col in copy.copy(gallery.collections):

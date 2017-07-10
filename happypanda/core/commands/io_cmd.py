@@ -1,12 +1,106 @@
 import pathlib
 import os
+from PIL import Image
 from zipfile import ZipFile
 from rarfile import RarFile
+from collections import namedtuple
 
 from happypanda.common import hlogger, exceptions, utils
-from happypanda.core.command import CoreCommand, CommandEntry
+from happypanda.core.command import CoreCommand, CommandEntry, AsyncCommand
+from happypanda.core.services import ImageService
+from happypanda.core import db
+from happypanda.interface import enums
+
 
 log = hlogger.Logger(__name__)
+
+ImageProperties = namedtuple(
+    "ImageProperties", [
+        'size', 'radius', 'output_dir', 'output_path', 'name'])
+ImageProperties.__new__.__defaults__ = (enums.ImageSize.Medium.value, 0, None, None, None)
+
+
+class ImageItem(AsyncCommand):
+    """
+
+    Returns:
+        a path to generated image
+    """
+
+    def __init__(self, service, filepath_or_bytes, properties):
+        assert isinstance(service, ImageService)
+        assert isinstance(properties, ImageProperties)
+        super().__init__(service)
+        self.properties = properties
+        self._image = filepath_or_bytes
+
+    @property
+    def properties(self):
+        return self._properties
+
+    @properties.setter
+    def properties(self, x):
+        self._check_properties(x)
+        self._properties = x
+
+    def _check_properties(self, props):
+        assert isinstance(props, ImageProperties)
+        if props.size:
+            assert isinstance(props.size, utils.ImageSize)
+
+        if props.radius:
+            assert isinstance(props.radius, int)
+
+        if props.output_dir:
+            assert isinstance(props.output_dir, str)
+
+        if props.output_path:
+            assert isinstance(props.output_path, str)
+
+        if props.name:
+            assert isinstance(props.name, str)
+
+    def main(self) -> str:
+        size = self.properties.size
+        if isinstance(self._image, str):
+            self._image = CoreFS(self._image).get()
+        im = Image.open(self._image)
+        f, ext = os.path.splitext(self._image)
+        image_path = ""
+
+        if self.properties.output_path:
+            image_path = self.properties.output_path
+            _f, _ext = os.path.splitext(image_path)
+            if not _ext:
+                image_path = os.path.join(_f, ext)
+
+        elif self.properties.output_dir:
+            o_dir = self.properties.output_dir
+            o_name = self.properties.name if self.properties.name else utils.random_name()
+            image_path = os.path.join(o_dir, o_name, ext)
+        else:
+            raise exceptions.CommandError(utils.this_command(self), "An output path or directory must be set for the generated image")
+
+        if size.width and size.height:
+            im.thumbnail(size.width, size.height)
+
+        im.save(image_path)
+
+        return image_path
+
+    @staticmethod
+    def gen_hash(model, size, item_id=None):
+        """
+        Generate a hash based on database model, image size and optionally item id
+        """
+        assert isinstance(model, db.Base)
+        assert isinstance(size, utils.ImageSize)
+
+        hash_str = model.__name__
+        hash_str += str(tuple(size))
+        hash_str += str(item_id) if item_id is not None else ''
+
+        return hashlib.md5(hash_str.encode()).hexdigest()
 
 class CoreFS(CoreCommand):
     """
@@ -36,7 +130,7 @@ class CoreFS(CoreCommand):
 
     def __init__(self, path = pathlib.Path()):
         assert isinstance(path, (pathlib.Path, str, CoreFS))
-        super().__init()
+        super().__init__()
         self._path = None
         self._filetype = None
         self._archive = None
@@ -58,7 +152,7 @@ class CoreFS(CoreCommand):
             formats = set()
             for p in plg.all(default=True):
                 formats.update(p)
-            return formats
+            return tuple(formats)
 
     @classmethod
     def image_formats(cls):
@@ -68,12 +162,30 @@ class CoreFS(CoreCommand):
             formats = set()
             for p in plg.all(default=True):
                 formats.update(p)
-            return formats
+            return tuple(formats)
+
+    @property
+    def name(self):
+        "Get name of file or directory"
+        return self._path.name
 
     @property
     def path(self):
         "Get path as string"
         return str(self._path)
+
+    @property
+    def archive_path(self):
+        "Get path to the archive as string"
+        if self.is_archive:
+            return self.path
+        elif self.inside_archive:
+            parts = list(self._path.parents)
+            while parts:
+                p = parts.pop()
+                if p.is_file() and p.suffix.lower() in self.archive_formats():
+                    return str(p)
+        return ""
 
     @property
     def is_file(self):
@@ -125,10 +237,15 @@ class CoreFS(CoreCommand):
         "Get the amount of files and folders inside this path. 0 is returned if path is a file"
         return self._path.suffix.lower()
 
-    @classmethod
-    def get(cls):
+    def get(self):
         "Get path as string. If path is inside an archive it will get extracted"
-        pass
+        
+        if self.inside_archive:
+            ap = self.archive_path
+            af = CoreFS(ap)
+            return str(af.extract(self.path[len(ap):]))
+        else:
+            return self.path
 
     def extract(self, filename=None, target=None):
         """
@@ -270,47 +387,41 @@ class Archive(CoreCommand):
 class GalleryFS(CoreCommand):
     """
     Encapsulates an gallery object on the filesystem
-    Params:
-        path -- a valid path to a valid gallery archive/folder
-        path_in_archive -- path to gallery inside of archive
-        db_gallery -- Database Gallery object
+    Args:
+        path: a valid path to a valid gallery archive/folder
+        db_gallery: Database Gallery object
     """
 
-    def __init__(self, ):
-        self._gallery_type = utils.PathType.check(path)
+    def __init__(self, path, db_gallery=None):
         self.gallery = db_gallery
-        self.path = path
-        self.path_in_archive = path_in_archive
+        self.path = CoreFS(path)
         self.name = ''
         self.title = ''
         self.artists = []
         self.language = ''
         self.convention = ''
-        self.pages = []  # tuples: (number, page_file)
+        self.pages = {} # number : CoreFS
 
-    def load(self):
-        "Extracts gallery data"
-        _, self.name = os.path.split(self.path)
-        info = GalleryScan.name_parser(self.path)
-        self.title = info['title']
-        self.artists.append(info['artist'])
-        self.language = info['language']
-        self.convention = info['convention']
-        if self.gallery_type == utils.PathType.Directoy:
-            self.pages = self._get_folder_pages()
-        elif self.gallery_type == utils.PathType.Archive:
-            self.pages = self._get_archive_pages()
-        else:
-            assert False, "this shouldnt happen... ({})".format(self.path)
+    #def load(self):
+    #    "Extracts gallery data"
+    #    _, self.name = os.path.split(self.path)
+    #    info = GalleryScan.name_parser(self.path)
+    #    self.title = info['title']
+    #    self.artists.append(info['artist'])
+    #    self.language = info['language']
+    #    self.convention = info['convention']
+    #    if self.gallery_type == utils.PathType.Directoy:
+    #        self.pages = self._get_folder_pages()
+    #    elif self.gallery_type == utils.PathType.Archive:
+    #        self.pages = self._get_archive_pages()
+    #    else:
+    #        assert False, "this shouldnt happen... ({})".format(self.path)
 
     def get_gallery(self):
         "Creates/Updates database gallery"
         if not self.gallery:
             self.gallery = db.Gallery()
 
-        self.gallery.path = self.path
-        self.gallery.path_in_archive = self.path_in_archive
-        self.gallery.in_archive = True if self.gallery_type == utils.PathType.Archive else False
         t = db.Title(name=self.title)
         # TODO: add language to title
         for x in self.gallery.titles:

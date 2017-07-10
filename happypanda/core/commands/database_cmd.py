@@ -1,5 +1,6 @@
 from happypanda.common import utils, hlogger, exceptions, constants
 from happypanda.core.command import Command, CommandEvent, AsyncCommand, CommandEntry
+from happypanda.core.commands import io_cmd
 from happypanda.core import db, services
 from happypanda.interface import enums
 
@@ -55,7 +56,7 @@ class GetModelCover(AsyncCommand):
                 utils.this_command(self),
                 "Model '{}' is not supported".format(model))
 
-        img_hash = services.ImageItem.gen_hash(
+        img_hash = io_cmd.ImageItem.gen_hash(
             model, image_size.value, item_id)
 
         sess = constants.db_session()
@@ -71,10 +72,10 @@ class GetModelCover(AsyncCommand):
                     db.Page.path).filter(
                     db.Page.number == 1).one_or_none()
                 if page:
-                    im_props = services.ImageProperties(
+                    im_props = io_cmd.ImageProperties(
                         image_size, 0, constants.dir_thumbs)
-                    self.cover.path = services.ImageItem(
-                        self.service, page, im_props).main()
+                    self.cover.path = io_cmd.ImageItem(
+                        self.service, page[0], im_props).main()
                 else:
                     return None
 

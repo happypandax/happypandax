@@ -834,11 +834,6 @@ class Page(TaggableMixin, ProfileMixin, Base):
             _, ext = os.path.splitext(self.path)
         return ext.lower()
 
-    @validates("path")
-    def _add_name(self, key, value):
-        if value.endswith(constants.supported_images):
-            _, self.name = os.path.split(value)
-
     def exists(self, obj=False):
         """Checks if page exist by path
         Params:
