@@ -1,5 +1,5 @@
-from happypanda.common import message, exceptions, utils
-from happypanda.core import db
+from happypanda.common import exceptions, utils
+from happypanda.core import db, message
 from happypanda.interface import enums
 from happypanda.core.commands import database_cmd, search_cmd
 

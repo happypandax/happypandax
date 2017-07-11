@@ -1,5 +1,5 @@
-from happypanda.common import constants, message, utils
-from happypanda.core import db, services
+from happypanda.common import constants, utils
+from happypanda.core import db, services, message
 from happypanda.interface import enums
 from happypanda.core.commands import database_cmd
 
@@ -7,8 +7,7 @@ import functools
 
 
 def _get_cover(local, cover):
-    ""
-    pass
+    return message.Profile(cover, local)
 
 
 def get_cover(item_type: enums.ItemType = enums.ItemType.Gallery.name,
@@ -27,6 +26,7 @@ def get_cover(item_type: enums.ItemType = enums.ItemType.Gallery.name,
 
     Returns:
         a dict of item_id:async_command_id
+
     """
     utils.require_context(ctx)
 

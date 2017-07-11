@@ -106,7 +106,7 @@ class Service:
     def _callback_wrapper(self, command_id, command_obj, callback, greenlet):
         assert callable(callback) or callback is None
 
-        command_obj.state = command.CommandState.stopped
+        command_obj.state = command.CommandState.finished
         if not greenlet.successful():
             log.w("Command", "{}({})".format(command_obj.__class__.__name__, command_id),
                   "raised an exception:\n\t", greenlet.exception)
@@ -117,6 +117,10 @@ class Service:
         # Recall that a greenlet killed with the default GreenletExit
         # is considered to have finished successfully, and the GreenletExit
         # exception will be its value.
+
+        if isinstance(greenlet.value, gevent.GreenletExit):
+            command_obj.state = command.CommandState.stopped
+            greenlet.value = None
 
         if command_id in self._decorators:
             greenlet.value = self._decorators[command_id](greenlet.value)

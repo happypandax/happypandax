@@ -1,9 +1,12 @@
 import pathlib
 import os
+import hashlib
+from io import BytesIO
 from PIL import Image
 from zipfile import ZipFile
 from rarfile import RarFile
 from collections import namedtuple
+from contextlib import contextmanager
 
 from happypanda.common import hlogger, exceptions, utils
 from happypanda.core.command import CoreCommand, CommandEntry, AsyncCommand
@@ -28,7 +31,7 @@ class ImageItem(AsyncCommand):
     """
 
     def __init__(self, service, filepath_or_bytes, properties):
-        assert isinstance(service, ImageService)
+        assert isinstance(service, ImageService) or service is None
         assert isinstance(properties, ImageProperties)
         super().__init__(service)
         self.properties = properties
@@ -60,11 +63,23 @@ class ImageItem(AsyncCommand):
         if props.name:
             assert isinstance(props.name, str)
 
+    def _convert(self, im, colormode = "RGB"):
+        if colormode == "RGB" or colormode == "RGBA":
+            if im.mode == 'RGBA':
+                return image
+            if im.mode == "LA":
+                return image.convert("RGBA")
+            return im.convert(colormode)
+
+        if colormode == "GRAY":
+            return im.convert("L")
+        return im.convert(colormode)
+
     def main(self) -> str:
         size = self.properties.size
         if isinstance(self._image, str):
             self._image = CoreFS(self._image).get()
-        im = Image.open(self._image)
+        im = self._convert(Image.open(self._image))
         f, ext = os.path.splitext(self._image)
         image_path = ""
 
@@ -77,12 +92,14 @@ class ImageItem(AsyncCommand):
         elif self.properties.output_dir:
             o_dir = self.properties.output_dir
             o_name = self.properties.name if self.properties.name else utils.random_name()
-            image_path = os.path.join(o_dir, o_name, ext)
+            if not o_name.endswith(ext):
+                o_name = o_name + ext
+            image_path = os.path.join(o_dir, o_name)
         else:
-            raise exceptions.CommandError(utils.this_command(self), "An output path or directory must be set for the generated image")
+            image_path = BytesIO()
 
         if size.width and size.height:
-            im.thumbnail(size.width, size.height)
+            im.thumbnail((size.width, size.height), Image.ANTIALIAS)
 
         im.save(image_path)
 
@@ -93,7 +110,7 @@ class ImageItem(AsyncCommand):
         """
         Generate a hash based on database model, image size and optionally item id
         """
-        assert isinstance(model, db.Base)
+        assert isinstance(model, db.Base) or issubclass(model, db.Base)
         assert isinstance(size, utils.ImageSize)
 
         hash_str = model.__name__
@@ -225,7 +242,10 @@ class CoreFS(CoreCommand):
     @property
     def exists(self):
         "Check if path exists"
-        return self._path.exists()
+        if self.inside_archive:
+            raise NotImplementedError
+        else:
+            return self._path.exists()
     
     @property
     def ext(self):
@@ -246,6 +266,12 @@ class CoreFS(CoreCommand):
             return str(af.extract(self.path[len(ap):]))
         else:
             return self.path
+
+    @contextmanager
+    def open(self, *args, **kwargs):
+        f = open(self.get(), *args, **kwargs)
+        yield f
+        f.close()
 
     def extract(self, filename=None, target=None):
         """
@@ -290,7 +316,9 @@ class CoreFS(CoreCommand):
         self._path = p
         if isinstance(p, str):
             self._path = pathlib.Path(p)
-        self._path = self._path.resolve()
+
+        if self._path.exists():
+            self._path = self._path.resolve()
 
         if self.is_archive:
             self._archive = Archive(self._path)

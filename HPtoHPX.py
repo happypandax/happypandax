@@ -734,6 +734,7 @@ if __name__ == '__main__':
                         p = db.Page()
                         p.name = x.name
                         p.path = x.path
+                        p.number = n
                         pages.append(p)
 
                 for p in pages:

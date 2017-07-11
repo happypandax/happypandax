@@ -1,6 +1,6 @@
-from happypanda.common import constants, message, exceptions, utils
+from happypanda.common import constants, exceptions, utils
 from happypanda.core.services import Service
-from happypanda.core import command
+from happypanda.core import command, message
 
 def get_error(code: int, id: int, ctx=None):
     """
@@ -89,13 +89,15 @@ def get_command_value(command_ids: list):
 
     for i in command_ids:
         cmd = Service.get_command(i)
-        if not cmd.state == command.CommandState.finished:
-            
+        if not cmd.state in (command.CommandState.finished, command.CommandState.stopped):
             if cmd.state == command.CommandState.failed:
                 raise exceptions.CommandError(utils.this_function(), "Command with ID '{}' has failed".format(i))
             raise exceptions.CommandError(utils.this_function(), "Command with ID '{}' has not finished running".format(i))
-        
-        values[i] = cmd.value
+
+        if isinstance(cmd.value, message.CoreMessage):
+            values[i] = cmd.value.json_friendly(include_key=False)
+        else:
+            values[i] = cmd.value
 
     return message.Identity('command_value', values)
 

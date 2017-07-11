@@ -7,8 +7,9 @@ import arrow
 
 from datetime import datetime
 
-from happypanda.common import constants, exceptions
+from happypanda.common import constants, exceptions, utils
 from happypanda.core import db
+from happypanda.core.commands import io_cmd
 
 
 def finalize(msg_dict, name=constants.server_name):
@@ -313,9 +314,28 @@ class NameMixin(DatabaseMessage):
 class Profile(DatabaseMessage):
     "Encapsulates database profile object"
 
-    def __init__(self, db_item):
+    def __init__(self, db_item, local=True):
         assert isinstance(db_item, db.Profile)
         super().__init__('profile', db_item)
+        self._local = local
+
+    def data(self, load_values = False, load_collections = False):
+
+        d = {}
+
+        d['id'] = self.item.id
+        if self._local:
+            d['data'] = self.item.path
+        else:
+            im = ""
+            path = io_cmd.CoreFS(self.item.path)
+            if path.exists:
+                with path.open("rb") as f:
+                    im = utils.imagetobase64(f.read())
+            d['data'] = im
+        d['size'] = self.item.size
+        d['timestamp'] = self.item.timestamp.timestamp if self.item.timestamp else None
+        return d
 
     def from_json(self, j):
         return super().from_json(j)

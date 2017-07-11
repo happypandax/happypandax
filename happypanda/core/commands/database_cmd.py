@@ -25,6 +25,9 @@ class GetModelCover(AsyncCommand):
     """
 
     models = CommandEntry("models", tuple)
+    generate = CommandEntry("generate", str, str, int, utils.ImageSize)
+
+    cover_event = CommandEvent('cover', object)
 
     def __init__(self, service=None):
         super().__init__(service)
@@ -41,6 +44,15 @@ class GetModelCover(AsyncCommand):
             db.Page,
             db.GalleryFilter
         )
+
+    @generate.default(capture=True)
+    def _generate(model, item_id, size, capture=db.model_name(db.Gallery)):
+        im_path = ""
+        page = GetSession().run().query(db.Page.path).filter(db.and_op(db.Page.gallery_id == item_id, db.Page.number == 1)).one_or_none()
+        if page:
+            im_props = io_cmd.ImageProperties(size, 0, constants.dir_thumbs)
+            im_path = io_cmd.ImageItem(None, page[0], im_props).main()
+        return im_path
 
     def main(self, model: db.Base, item_id: int,
              image_size: enums.ImageSize) -> db.Profile:
@@ -59,35 +71,33 @@ class GetModelCover(AsyncCommand):
         img_hash = io_cmd.ImageItem.gen_hash(
             model, image_size.value, item_id)
 
+        generate = True
         sess = constants.db_session()
         self.cover = sess.query(db.Profile).filter(
             db.Profile.data == img_hash).one_or_none()
 
-        if not self.cover:
+        if self.cover:
+            if io_cmd.CoreFS(self.cover.path).exists:
+                generate = False
+        else:
             self.cover = db.Profile()
 
-            related_models = db.related_classes(model)
-            if db.Page in related_models:
-                page = sess.query(
-                    db.Page.path).filter(
-                    db.Page.number == 1).one_or_none()
-                if page:
-                    im_props = io_cmd.ImageProperties(
-                        image_size, 0, constants.dir_thumbs)
-                    self.cover.path = io_cmd.ImageItem(
-                        self.service, page[0], im_props).main()
-                else:
-                    return None
-
-            else:
-                raise NotImplementedError
+        if generate:
+            model_name = db.model_name(model)
+            with self.generate.call_capture(model_name, model_name, item_id, image_size.value) as plg:
+                self.cover.path = plg.first()
 
             self.cover.data = img_hash
             self.cover.size = str(tuple(image_size.value))
 
-            item_id.profiles.append(self.cover)
+        if self.cover.path and generate:
+            i = GetModelItemByID().run(model, {item_id})[0]
+            i.profiles.append(self.cover)
             sess.commit()
+        elif not self.cover.path:
+            self.cover = None
 
+        self.cover_event.emit(self.cover)
         return self.cover
 
 

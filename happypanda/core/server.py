@@ -10,10 +10,10 @@ from inspect import getmembers, isfunction  # noqa: E402
 from gevent import socket, pool  # noqa: E402
 from gevent.server import StreamServer  # noqa: E402
 
-from happypanda.common import constants, exceptions, utils, message, hlogger  # noqa: E402
+from happypanda.common import constants, exceptions, utils, hlogger  # noqa: E402
 from happypanda import interface  # noqa: E402
-from happypanda.core import db, torrent  # noqa: E402
-from happypanda.interface import meta  # noqa: E402
+from happypanda.core import db, torrent, message  # noqa: E402
+from happypanda.interface import meta, enums  # noqa: E402
 
 log = hlogger.Logger(__name__)
 
@@ -134,6 +134,10 @@ class ClientHandler:
             self._check_both(where, "JSON dict", root_keys, j_data)
         except exceptions.ServerError as e:
             raise
+        
+        cmd = self._server_command(j_data)
+        if cmd:
+            return cmd
 
         if not self._accepted:
             self.handshake(j_data)
@@ -260,6 +264,11 @@ class ClientHandler:
                 functions = self.parse(buffer)
                 if functions is None:
                     return
+                if isinstance(functions, enums.ServerCommand):
+                    if functions == enums.ServerCommand.RequestAuth:
+                        self.handshake()
+                    return functions
+
                 for func, func_args, ctx in functions:
                     log.d("Calling function", func, "with args", func_args)
                     func_msg = message.Function(func.__name__)
@@ -318,6 +327,16 @@ class ClientHandler:
         """
         self.send(message.Message("wait").serialize())
 
+    def _server_command(self, data):
+        d = data['data']
+        if isinstance(d, str):
+
+            if d.lower() == enums.ServerCommand.RequestAuth.value:
+                return enums.ServerCommand.RequestAuth
+            elif d.lower() == enums.ServerCommand.ServerQuit.value: # TODO: check permission
+                return enums.ServerCommand.ServerQuit
+        return None
+
 
 class HPServer:
     "Happypanda Server"
@@ -356,7 +375,7 @@ class HPServer:
                 if eof:
                     buffer = data[1]
                     if handler.is_active():
-                        handler.advance(data[0])
+                        client_msg = handler.advance(data[0])
                     else:
                         log.d("Client has disconnected", address)
                         break

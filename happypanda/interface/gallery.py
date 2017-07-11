@@ -1,5 +1,5 @@
-from happypanda.common import constants, message
-from happypanda.core import db
+from happypanda.common import constants
+from happypanda.core import db, message
 from happypanda.interface import enums
 
 

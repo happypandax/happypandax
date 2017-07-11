@@ -26,13 +26,15 @@ temp_dirs = []
 def setup_dirs():
     "Creates directories at the specified root path"
     for dir_x in (
-            constants.dir_cache,
             constants.dir_data,
+            constants.dir_cache,
             constants.dir_log,
-            constants.dir_plugin):
+            constants.dir_plugin,
+            constants.dir_temp,
+            constants.dir_thumbs):
         if dir_x:
             if not os.path.isdir(dir_x):
-                os.mkdir(dir_x)
+                os.makedirs(dir_x)
 
 def setup_logger(args):
     assert isinstance(args, argparse.Namespace)
@@ -182,13 +184,13 @@ def get_module_members(mod):
     raise NotImplementedError
 
 
-def imagetobase64(fp):
-    "Convert image from filelike object to base64"
-    return base64.encodestring(fp.read())
+def imagetobase64(data):
+    "Convert image from bytes to base64 string"
+    return base64.encodestring(data).decode(encoding='utf-8')
 
 
 def imagefrombase64(data):
-    "Convert base64 data to image"
+    "Convert base64 string to image"
     return base64.decodestring(data)
 
 
