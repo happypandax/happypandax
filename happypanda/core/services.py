@@ -6,7 +6,7 @@ import enum
 import hashlib
 import os
 
-from gevent import pool
+from gevent import pool, queue
 
 from happypanda.common import utils, hlogger, constants, exceptions
 from happypanda.core import command, db
@@ -27,10 +27,12 @@ class Service:
         self._greenlets = {}  # cmd_id : greenlet
         self._decorators = {}  # cmd_id : callable
         self._group = group
+        self._queue = queue.Queue()
         self.services.append(weakref.ref(self))
 
     def wait_all(self, timeout=None):
         "Wait for all commands to finish running and then return True, else False"
+        log.d("Service is waiting for all tasks")
         return self._group.join(timeout)
 
     def add_command(self, cmd, decorater=None):
@@ -77,8 +79,7 @@ class Service:
                 self._commands[cmd_id],
                 _callback))
 
-        self._group.start(green)
-        self._commands[cmd_id].state = command.CommandState.started
+        self._start(cmd_id)
 
     def stop_command(self, cmd_id):
         """
@@ -106,17 +107,20 @@ class Service:
     def _callback_wrapper(self, command_id, command_obj, callback, greenlet):
         assert callable(callback) or callback is None
 
+        if not self._queue.empty():
+            try:
+                next_cmd_id = self._queue.get_nowait()
+                log.d("Starting command id", next_cmd_id, " next in queue in service '{}'".format(self.name))
+                self._start(next_cmd_id)
+            except queue.Empty:
+                pass
+
         command_obj.state = command.CommandState.finished
         if not greenlet.successful():
             log.w("Command", "{}({})".format(command_obj.__class__.__name__, command_id),
                   "raised an exception:\n\t", greenlet.exception)
             command_obj.state = command.CommandState.failed
             command_obj.exception = greenlet.exception
-
-        # TODO: this:
-        # Recall that a greenlet killed with the default GreenletExit
-        # is considered to have finished successfully, and the GreenletExit
-        # exception will be its value.
 
         if isinstance(greenlet.value, gevent.GreenletExit):
             command_obj.state = command.CommandState.stopped
@@ -125,8 +129,21 @@ class Service:
         if command_id in self._decorators:
             greenlet.value = self._decorators[command_id](greenlet.value)
 
+        log.d("Command id", command_id, "in service '{}'".format(self.name), "has finished running with state:", str(command_obj.state))
+
         if callback:
             callback(greenlet.value)
+
+
+    def _start(self, cmd_id):
+
+        if not self._group.full():
+            self._group.start(self._greenlets[cmd_id])
+            self._commands[cmd_id].state = command.CommandState.started
+        else:
+            self._queue.put(cmd_id)
+            self._commands[cmd_id].state = command.CommandState.in_queue
+            log.d("Enqueueing command id", cmd_id, "in service '{}'".format(self.name))
 
 
 Service.generic = Service("generic")
