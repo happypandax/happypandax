@@ -190,7 +190,7 @@ def imagetobase64(data):
 
 
 def imagefrombase64(data):
-    "Convert base64 string to image"
+    "Convert base64 string to bytes"
     return base64.decodestring(data)
 
 

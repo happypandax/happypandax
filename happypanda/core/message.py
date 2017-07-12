@@ -314,24 +314,29 @@ class NameMixin(DatabaseMessage):
 class Profile(DatabaseMessage):
     "Encapsulates database profile object"
 
-    def __init__(self, db_item, local=True):
+    def __init__(self, db_item, local=True, uri=False):
         assert isinstance(db_item, db.Profile)
         super().__init__('profile', db_item)
         self._local = local
+        self._uri = uri
 
     def data(self, load_values = False, load_collections = False):
-
+        db.ensure_in_session(self.item)
         d = {}
 
+        path = io_cmd.CoreFS(self.item.path)
         d['id'] = self.item.id
+        d['ext'] = path.ext
         if self._local:
-            d['data'] = self.item.path
+            d['data'] = path.get()
         else:
             im = ""
-            path = io_cmd.CoreFS(self.item.path)
             if path.exists:
                 with path.open("rb") as f:
                     im = utils.imagetobase64(f.read())
+            if self._uri:
+                im = im.replace('\n', '')
+                im = "data:image/{};base64,".format(path.ext[1:]) + im
             d['data'] = im
         d['size'] = self.item.size
         d['timestamp'] = self.item.timestamp.timestamp if self.item.timestamp else None
