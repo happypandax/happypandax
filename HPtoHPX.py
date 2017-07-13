@@ -715,6 +715,9 @@ if __name__ == '__main__':
     print("Source:", src)
     print("Destination:", dst)
 
+    if os.path.exists(dst):
+        print("Warning: destination file already exists, you might want to delete")
+
     print("Connecting to Happypanda database..")
     conn_src = sqlite3.connect(src)
     conn_src.row_factory = sqlite3.Row
