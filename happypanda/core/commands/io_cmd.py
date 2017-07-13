@@ -210,6 +210,7 @@ class CoreFS(CoreCommand):
     def archive_name(self):
         "Get the full filename inside the archive"
         if self.inside_archive:
+            self._init_archive()
             if isinstance(self._o_path, str):
                 parts = self._o_path.split(self._archive.path_separator)
             else:
@@ -229,6 +230,7 @@ class CoreFS(CoreCommand):
     def is_dir(self):
         "Check if path is pointed to a directory"
         if self.inside_archive:
+            self._init_archive()
             return self._archive.is_dir(self.archive_name)
         else:
             return self._path.is_dir()
@@ -261,6 +263,7 @@ class CoreFS(CoreCommand):
     @property
     def exists(self):
         "Check if path exists"
+        self._init_archive()
         if self.inside_archive:
             return self.archive_name in self._archive.namelist()
         else:
@@ -279,7 +282,7 @@ class CoreFS(CoreCommand):
 
     def get(self):
         "Get path as string. If path is inside an archive it will get extracted"
-        
+        self._init_archive()
         if self.inside_archive:
             if not self._extacted_file:
                 self._extacted_file = self.extract()
@@ -289,6 +292,7 @@ class CoreFS(CoreCommand):
 
     @contextmanager # TODO: Make usable without contextmanager too
     def open(self, *args, **kwargs):
+        self._init_archive()
         try:
             if self.inside_archive:
                 f = self._archive.open(self.archive_name, *args, **kwargs)
@@ -314,7 +318,7 @@ class CoreFS(CoreCommand):
         """
         assert isinstance(filename, (str, tuple)) or filename is None
         assert isinstance(target, str) or target is None
-
+        self._init_archive()
         if isinstance(filename, str):
             filename = (filename,)
 
@@ -354,8 +358,10 @@ class CoreFS(CoreCommand):
             if self._path.exists():
                 self._path = self._path.resolve()
 
-        if self.inside_archive or self.is_archive:
-            self._archive = Archive(self.archive_path)
+    def _init_archive(self):
+        if not self._archive:
+            if self.inside_archive or self.is_archive:
+                self._archive = Archive(self.archive_path)
 
 class Archive(CoreCommand):
     """
