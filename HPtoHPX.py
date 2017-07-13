@@ -1,15 +1,12 @@
 ﻿import sys, os, sqlite3, copy, arrow
 import argparse
-import gevent
-from gevent import queue, pool
+from multiprocessing import pool
 from happypanda.core import db
 from happypanda.core.commands import io_cmd
 from happypanda.interface import enums
 
 GALLERY_LISTS = []
-AMOUNT_OF_TASKS = 500
-page_queue_in = queue.Queue()
-page_queue_out = queue.Queue()
+AMOUNT_OF_TASKS = 3
 
 def chapter_map(row, chapter):
     assert isinstance(chapter, Chapter)
@@ -667,6 +664,38 @@ def print_progress(iteration, total, prefix='', suffix='', decimals=1, bar_lengt
         sys.stdout.write('\n')
     sys.stdout.flush()
 
+def page_generate(gallery, ch, path, g_path):
+    pages = []
+    try:
+        if ch.in_archive:
+            afs = io_cmd.CoreFS(path)
+            if ch.path:
+                afs._init_archive()
+                afs = io_cmd.CoreFS(afs._archive.path_separator.join((path, ch.path)), afs._archive)
+                        
+            n = 1
+            for c in sorted(afs.contents()):
+                if c.is_image:
+                    p = db.Page()
+                    p.name = c.name
+                    p.path = c.path
+                    p.number = n
+                    p.in_archive = True
+                    n += 1
+                    pages.append(p)
+        else:
+            dir_images = [x.path for x in os.scandir(g_path) if not x.is_dir() and x.name.endswith(io_cmd.CoreFS.image_formats())]
+            for n, x in enumerate(sorted(dir_images), 1):
+                x = io_cmd.CoreFS(x)
+                p = db.Page()
+                p.name = x.name
+                p.path = x.path
+                p.number = n
+                pages.append(p)
+    except NotImplementedError:
+        pass
+    return gallery, pages
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('source',  help="Path to old HP database")
@@ -712,6 +741,9 @@ if __name__ == '__main__':
     dst_collections = {}
     dst_grouping = {}
 
+    pages_pool = pool.Pool(processes=AMOUNT_OF_TASKS)
+
+    pages_results = []
     for numb, g in enumerate(src_galleries):
 
         galleries = []
@@ -729,38 +761,9 @@ if __name__ == '__main__':
             path_in_archive = ch.path
 
             gallery = db.Gallery()
-            pages = []
-            try:
-                if ch.in_archive:
-                    afs = io_cmd.CoreFS(path)
-                    if ch.path:
-                        afs._init_archive()
-                        afs = io_cmd.CoreFS(afs._archive.path_separator.join((path, ch.path)), afs._archive)
-                        
-                    n = 1
-                    for c in sorted(afs.contents()):
-                        if c.is_image:
-                            p = db.Page()
-                            p.name = c.name
-                            p.path = c.path
-                            p.number = n
-                            p.in_archive = True
-                            n += 1
-                            pages.append(p)
-                else:
-                    dir_images = [x.path for x in os.scandir(g.path) if not x.is_dir() and x.name.endswith(io_cmd.CoreFS.image_formats())]
-                    for n, x in enumerate(sorted(dir_images), 1):
-                        x = io_cmd.CoreFS(x)
-                        p = db.Page()
-                        p.name = x.name
-                        p.path = x.path
-                        p.number = n
-                        pages.append(p)
-            except NotImplementedError:
-                pass
+            
+            pages_results.append(pages_pool.apply_async(page_generate, (gallery, ch, path, g.path)))
 
-            for p in pages:
-                gallery.pages.append(p)
             for col in copy.copy(gallery.collections):
                 if col.name in dst_collections:
                     gallery.collections.remove(col)
@@ -854,7 +857,19 @@ if __name__ == '__main__':
         try:
             print_progress(numb, len(src_galleries), "Progress:", bar_length=50)
         except UnicodeEncodeError:
-            pass
+            print("\nStill in progress... please wait...")
+
+    print("\nResolving gallery pages...")
+
+    pages_count = len(pages_results)
+    for n, r in enumerate(pages_results):
+        gallery, pages = r.get()
+        for p in pages:
+            gallery.pages.append(p)
+        try:
+            print_progress(n, pages_count, "Progress:", bar_length=50)
+        except UnicodeEncodeError:
+            print("\nStill in progress... please wait...")
 
     print("\nCreating gallery lists")
     dst_lists = []

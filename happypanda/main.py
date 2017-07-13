@@ -8,6 +8,7 @@ if __package__ is None and not hasattr(sys, 'frozen'):
 
 from happypanda.common import utils, constants, hlogger  # noqa: E402
 from happypanda.core import server, plugins, command  # noqa: E402
+from happypanda.core.commands import io_cmd # noqa: E402
 
 log = hlogger.Logger(__name__)
 
@@ -21,6 +22,7 @@ def start():
 
     if args.generate_config:
         constants.config.save()
+        print("Generated configuration file at '{}'".format(io_cmd.CoreFS(constants.settings_file).path))
         return
 
     log.i("HPX SERVER START")
