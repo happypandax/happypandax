@@ -19,6 +19,10 @@ def start():
     utils.parse_options(args)
     utils.setup_logger(args)
 
+    if args.generate_config:
+        constants.config.save()
+        return
+
     log.i("HPX SERVER START")
 
     constants.available_commands = command.get_available_commands()

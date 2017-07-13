@@ -111,7 +111,7 @@ def get_argparser():
         help='Attempt to expose the server through portforwading')
 
     parser.add_argument('--generate-config', action='store_true',
-                        help='Generate a skeleton config file')
+                        help='Generate a skeleton config file and quit')
 
     parser.add_argument('-d', '--debug', action='store_true',
                         help='Start in debug mode (collects more information)')
