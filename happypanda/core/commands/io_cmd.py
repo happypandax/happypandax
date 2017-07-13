@@ -211,7 +211,7 @@ class CoreFS(CoreCommand):
         "Get the full filename inside the archive"
         if self.inside_archive:
             self._init_archive()
-            if isinstance(self._o_path, str):
+            if isinstance(self._o_path, str) and self._archive.path_separator in self._o_path:
                 parts = self._o_path.split(self._archive.path_separator)
             else:
                 parts = list(self._path.parts)
@@ -280,6 +280,18 @@ class CoreFS(CoreCommand):
         raise NotImplementedError
         return self._path.suffix.lower()
 
+    def contents(self):
+        "If this is an archive or folder, return a tuple of CoreFS objects else return None"
+        if self.is_archive:
+            self._init_archive()
+            root = self._archive.path_separator.join(self._path.parts)
+            return tuple(CoreFS(self._archive.path_separator.join((root, x))) for x in self._archive.namelist())
+        elif self.is_dir:
+            if self.inside_archive:
+                raise NotImplementedError
+            else:
+                return tuple(CoreFS(x) for x in self._path.iterdir())
+
     def get(self):
         "Get path as string. If path is inside an archive it will get extracted"
         self._init_archive()
@@ -304,6 +316,11 @@ class CoreFS(CoreCommand):
             raise
         yield f
         f.close()
+
+    def close(self):
+        ""
+        if self._archive:
+            self._archive.close()
 
     def extract(self, filename=None, target=None):
         """
@@ -362,6 +379,11 @@ class CoreFS(CoreCommand):
         if not self._archive:
             if self.inside_archive or self.is_archive:
                 self._archive = Archive(self.archive_path)
+
+    def __lt__(self, other):
+        if isinstance(other, CoreFS):
+            return self.path < other.path
+        return super().__lt__(other)
 
 class Archive(CoreCommand):
     """

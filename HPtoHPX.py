@@ -1,4 +1,5 @@
 ﻿import sys, os, sqlite3, copy, arrow
+import argparse
 from happypanda.core import db
 from happypanda.core.commands import io_cmd
 from happypanda.interface import enums
@@ -663,12 +664,13 @@ def print_progress(iteration, total, prefix='', suffix='', decimals=1, bar_lengt
 
 
 if __name__ == '__main__':
-    if len(sys.argv) < 3:
-        print("Provide source and destination")
-        sys.exit()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('source',  help="Path to old HP database")
+    parser.add_argument('destination',  help="Desired path new HPX database")
+    args = parser.parse_args()
 
-    src = sys.argv[1]
-    dst = sys.argv[2]
+    src = args.source
+    dst = args.destination
     print("Source:", src)
     print("Destination:", dst)
 
@@ -706,7 +708,7 @@ if __name__ == '__main__':
     dst_collections = {}
     dst_grouping = {}
 
-    for numb, g in enumerate(src_galleries):
+    for numb, g in enumerate(src_galleries[:10]):
 
         galleries = []
         gallery_ns = None
@@ -716,17 +718,31 @@ if __name__ == '__main__':
             path = g.path if ch.in_archive else ch.path
             if not os.path.exists(path):
                 try:
-                    print("Skipping {} because path doesn't exists.".format(ch.title))
+                    print("Skipping '{}' because path doesn't exists.".format(ch.title))
                 except UnicodeError:
-                    print("Skipping {} because path doesn't exists.".format(ch.title.encode(errors='ignore')))
+                    print("Skipping '{}' because path doesn't exists.".format(ch.title.encode(errors='ignore')))
                 continue
             path_in_archive = ch.path
 
             gallery = db.Gallery()
+            pages = []
             try:
-                pages = []
-                if g.is_archive:
-                    raise NotImplementedError
+                if ch.in_archive:
+                    afs = io_cmd.CoreFS(path)
+                    if ch.path:
+                        afs._init_archive()
+                        afs = io_cmd.CoreFS(afs._archive.path_separator.join((path, ch.path)), afs._archive)
+                        
+                    n = 1
+                    for c in sorted(afs.contents()):
+                        if c.is_image:
+                            p = db.Page()
+                            p.name = c.name
+                            p.path = c.path
+                            p.number = n
+                            p.in_archive = True
+                            n += 1
+                            pages.append(p)
                 else:
                     dir_images = [x.path for x in os.scandir(g.path) if not x.is_dir() and x.name.endswith(io_cmd.CoreFS.image_formats())]
                     for n, x in enumerate(sorted(dir_images), 1):
@@ -736,11 +752,11 @@ if __name__ == '__main__':
                         p.path = x.path
                         p.number = n
                         pages.append(p)
-
-                for p in pages:
-                    gallery.pages.append(p)
             except NotImplementedError:
                 pass
+
+            for p in pages:
+                gallery.pages.append(p)
             for col in copy.copy(gallery.collections):
                 if col.name in dst_collections:
                     gallery.collections.remove(col)
