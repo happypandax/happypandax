@@ -1,11 +1,15 @@
 ﻿import sys, os, sqlite3, copy, arrow
 import argparse
 import gevent
+from gevent import queue, pool
 from happypanda.core import db
 from happypanda.core.commands import io_cmd
 from happypanda.interface import enums
 
 GALLERY_LISTS = []
+AMOUNT_OF_TASKS = 500
+page_queue_in = queue.Queue()
+page_queue_out = queue.Queue()
 
 def chapter_map(row, chapter):
     assert isinstance(chapter, Chapter)
@@ -663,7 +667,6 @@ def print_progress(iteration, total, prefix='', suffix='', decimals=1, bar_lengt
         sys.stdout.write('\n')
     sys.stdout.flush()
 
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('source',  help="Path to old HP database")
@@ -848,7 +851,10 @@ if __name__ == '__main__':
 
         dst_galleries.extend(galleries)
 
-        print_progress(numb, len(src_galleries), "Progress:", bar_length=50)
+        try:
+            print_progress(numb, len(src_galleries), "Progress:", bar_length=50)
+        except UnicodeEncodeError:
+            pass
 
     print("\nCreating gallery lists")
     dst_lists = []
