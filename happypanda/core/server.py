@@ -134,7 +134,7 @@ class ClientHandler:
             self._check_both(where, "JSON dict", root_keys, j_data)
         except exceptions.ServerError as e:
             raise
-        
+
         cmd = self._server_command(j_data)
         if cmd:
             return cmd
@@ -333,7 +333,7 @@ class ClientHandler:
 
             if d.lower() == enums.ServerCommand.RequestAuth.value:
                 return enums.ServerCommand.RequestAuth
-            elif d.lower() == enums.ServerCommand.ServerQuit.value: # TODO: check permission
+            elif d.lower() == enums.ServerCommand.ServerQuit.value:  # TODO: check permission
                 return enums.ServerCommand.ServerQuit
         return None
 
@@ -375,7 +375,7 @@ class HPServer:
                 if eof:
                     buffer = data[1]
                     if handler.is_active():
-                        client_msg = handler.advance(data[0])
+                        client_msg = handler.advance(data[0]) # noqa: F841
                     else:
                         log.d("Client has disconnected", address)
                         break

@@ -1121,6 +1121,7 @@ def model_name(model):
     assert issubclass(model, Base)
     return model.__name__
 
+
 def ensure_in_session(item):
     if not object_session(item):
         try:

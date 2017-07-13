@@ -2,6 +2,7 @@ from happypanda.common import constants, exceptions, utils
 from happypanda.core.services import Service
 from happypanda.core import command, message
 
+
 def get_error(code: int, id: int, ctx=None):
     """
     Get error
@@ -66,10 +67,12 @@ def list_plugins(ctx=None):
     """
     return message.Message("works")
 
+
 def _command_msg(ids):
     for x in ids:
         if not Service.get_command(x):
             raise exceptions.CommandError(utils.this_function(), "Command with ID '{}' does not exist".format(x))
+
 
 def get_command_value(command_ids: list):
     """
@@ -89,10 +92,11 @@ def get_command_value(command_ids: list):
 
     for i in command_ids:
         cmd = Service.get_command(i)
-        if not cmd.state in (command.CommandState.finished, command.CommandState.stopped):
+        if cmd.state not in (command.CommandState.finished, command.CommandState.stopped):
             if cmd.state == command.CommandState.failed:
                 raise exceptions.CommandError(utils.this_function(), "Command with ID '{}' has failed".format(i))
-            raise exceptions.CommandError(utils.this_function(), "Command with ID '{}' has not finished running".format(i))
+            raise exceptions.CommandError(utils.this_function(),
+                                          "Command with ID '{}' has not finished running".format(i))
 
         if isinstance(cmd.value, message.CoreMessage):
             values[i] = cmd.value.json_friendly(include_key=False)
@@ -100,6 +104,7 @@ def get_command_value(command_ids: list):
             values[i] = cmd.value
 
     return message.Identity('command_value', values)
+
 
 def get_command_state(command_ids: list):
     """
@@ -122,6 +127,7 @@ def get_command_state(command_ids: list):
 
     return message.Identity('command_state', states)
 
+
 def get_command_progress(command_ids: list):
     """
     Get progress of command in percent
@@ -134,6 +140,7 @@ def get_command_progress(command_ids: list):
 
     """
     return message.Message("works")
+
 
 def stop_command(command_ids: list):
     """
@@ -157,6 +164,7 @@ def stop_command(command_ids: list):
 
     return message.Identity('command_state', states)
 
+
 def start_command(command_ids: list):
     """
     Start running a command
@@ -179,6 +187,7 @@ def start_command(command_ids: list):
 
     return message.Identity('command_state', states)
 
+
 def get_command_error(command_ids: list):
     """
     Get error raised during command runtime
@@ -191,6 +200,7 @@ def get_command_error(command_ids: list):
 
     """
     return message.Message("works")
+
 
 def undo_command(command_ids: list):
     """

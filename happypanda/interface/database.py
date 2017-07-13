@@ -45,7 +45,7 @@ def get_cover(item_type: enums.ItemType = enums.ItemType.Gallery.name,
 
     content = {}
 
-    command_dec = functools.partial(_get_cover, {'local':local, 'uri':uri})
+    command_dec = functools.partial(_get_cover, {'local': local, 'uri': uri})
 
     for i in item_ids:
         c = database_cmd.GetModelCover()
@@ -75,6 +75,7 @@ def get_glists():
     glists = message.List("gallerylist", message.GalleryFilter)
     [glists.append(message.GalleryFilter(x)) for x in _get_glists()]
     return glists
+
 
 def get_tags(taggable_id: int = 0):
     ""

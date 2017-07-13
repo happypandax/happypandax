@@ -1,6 +1,7 @@
 from happypanda.common import constants, utils, exceptions
 from happypanda.core import message
 
+
 def set_settings(settings: dict = {}, ctx=None):
     """
     Set settings

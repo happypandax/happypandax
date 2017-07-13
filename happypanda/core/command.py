@@ -68,6 +68,7 @@ class CoreCommand:
                 a.command_cls = cls
                 cls._entries[a.name] = a
 
+
 class Command(CoreCommand):
 
     @abstractmethod

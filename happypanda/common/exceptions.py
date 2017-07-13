@@ -281,6 +281,7 @@ class UnsupportedArchiveError(ArchiveError):
     def __init__(self, f):
         return super().__init__("Archive file '{}' is not supported".format(f))
 
+
 @error_code(605)
 class ExtractArchiveError(ArchiveError):
     "Archive extraction error"

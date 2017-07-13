@@ -23,6 +23,7 @@ ImageSize = namedtuple("ImageSize", ['width', 'height'])
 
 temp_dirs = []
 
+
 def setup_dirs():
     "Creates directories at the specified root path"
     for dir_x in (
@@ -35,6 +36,7 @@ def setup_dirs():
         if dir_x:
             if not os.path.isdir(dir_x):
                 os.makedirs(dir_x)
+
 
 def setup_logger(args):
     assert isinstance(args, argparse.Namespace)
@@ -209,6 +211,7 @@ def session(sess=constants.db_session):
         s.rollback()
         raise
 
+
 class APIEnum(enum.Enum):
     "A conv. enum class allowing for str comparison"
 
@@ -255,9 +258,11 @@ def generate_key(length=10):
     return base64.urlsafe_b64encode(
         os.urandom(length)).rstrip(b'=').decode('ascii')
 
+
 def random_name():
     "Generate a random urlsafe name and return it"
-    return base64.urlsafe_b64encode(uuid.uuid4().bytes).decode('utf-8').replace('=','')
+    return base64.urlsafe_b64encode(uuid.uuid4().bytes).decode('utf-8').replace('=', '')
+
 
 def require_context(ctx):
     assert ctx, "This function requires a context object"
@@ -271,6 +276,7 @@ def this_function():
 def this_command(command_cls):
     "Return name of command for exceptions"
     return "Command:" + command_cls.__class__.__name__
+
 
 def create_temp_dir():
     t = tempfile.TemporaryDirectory(dir=constants.dir_temp)

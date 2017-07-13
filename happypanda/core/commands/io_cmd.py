@@ -63,12 +63,12 @@ class ImageItem(AsyncCommand):
         if props.name:
             assert isinstance(props.name, str)
 
-    def _convert(self, im, colormode = "RGB"):
+    def _convert(self, im, colormode="RGB"):
         if colormode == "RGB" or colormode == "RGBA":
             if im.mode == 'RGBA':
-                return image
+                return im
             if im.mode == "LA":
-                return image.convert("RGBA")
+                return im.convert("RGBA")
             return im.convert(colormode)
 
         if colormode == "GRAY":
@@ -119,6 +119,7 @@ class ImageItem(AsyncCommand):
 
         return hashlib.md5(hash_str.encode()).hexdigest()
 
+
 class CoreFS(CoreCommand):
     """
     Encapsulates path on the filesystem
@@ -128,7 +129,7 @@ class CoreFS(CoreCommand):
 
     Default supported image types are:
         JPG/JPEG, BMP, PNG and GIF
-    
+
     """
 
     ZIP = '.zip'
@@ -145,7 +146,7 @@ class CoreFS(CoreCommand):
     _archive_formats = CommandEntry("archive_formats", tuple)
     _image_formats = CommandEntry("image_formats", tuple)
 
-    def __init__(self, path = pathlib.Path(), archive=None):
+    def __init__(self, path=pathlib.Path(), archive=None):
         assert isinstance(path, (pathlib.Path, str, CoreFS))
         super().__init__()
         self._path = None
@@ -268,7 +269,7 @@ class CoreFS(CoreCommand):
             return self.archive_name in self._archive.namelist()
         else:
             return self._path.exists()
-    
+
     @property
     def ext(self):
         "Get file extension. An empty string is returned if path is a directory"
@@ -302,7 +303,7 @@ class CoreFS(CoreCommand):
         else:
             return self.path
 
-    @contextmanager # TODO: Make usable without contextmanager too
+    @contextmanager  # TODO: Make usable without contextmanager too
     def open(self, *args, **kwargs):
         self._init_archive()
         try:
@@ -371,7 +372,7 @@ class CoreFS(CoreCommand):
         if isinstance(p, str):
             self._path = pathlib.Path(p)
 
-        if not self.inside_archive: # TODO: resolve only the parts not in archive
+        if not self.inside_archive:  # TODO: resolve only the parts not in archive
             if self._path.exists():
                 self._path = self._path.resolve()
 
@@ -384,6 +385,7 @@ class CoreFS(CoreCommand):
         if isinstance(other, CoreFS):
             return self.path < other.path
         return super().__lt__(other)
+
 
 class Archive(CoreCommand):
     """
@@ -419,7 +421,10 @@ class Archive(CoreCommand):
                 self._archive = plg.first_or_none()
 
             if not self._archive:
-                raise exceptions.CoreError(utils.this_function(), "No valid archive handler found for this archive type: '{}'".format(self._ext))
+                raise exceptions.CoreError(
+                    utils.this_function(),
+                    "No valid archive handler found for this archive type: '{}'".format(
+                        self._ext))
 
             with self._test_corrupt.call_capture(self._ext, self._archive) as plg:
                 r = plg.first_or_none()
@@ -464,10 +469,10 @@ class Archive(CoreCommand):
     def _is_dir_def(archive, filename, capture=_def_formats()):
         if not filename:
             return False
-        if filename not in Archive._namelist_def(archive) and filename+'/' not in Archive._namelist_def(archive):
+        if filename not in Archive._namelist_def(archive) and filename + '/' not in Archive._namelist_def(archive):
             raise exceptions.FileInArchiveNotFoundError(filename, archive.hpx_path)
         if isinstance(archive, ZipFile):
-            if filename.endswith('/') :
+            if filename.endswith('/'):
                 return True
         elif isinstance(archive, RarFile):
             info = archive.getinfo(filename)
@@ -551,6 +556,7 @@ class Archive(CoreCommand):
         with self._close.call_capture(self._ext, self._archive) as plg:
             plg.first()
 
+
 class GalleryFS(CoreCommand):
     """
     Encapsulates an gallery object on the filesystem
@@ -567,9 +573,9 @@ class GalleryFS(CoreCommand):
         self.artists = []
         self.language = ''
         self.convention = ''
-        self.pages = {} # number : CoreFS
+        self.pages = {}  # number : CoreFS
 
-    #def load(self):
+    # def load(self):
     #    "Extracts gallery data"
     #    _, self.name = os.path.split(self.path)
     #    info = GalleryScan.name_parser(self.path)
@@ -613,7 +619,7 @@ class GalleryFS(CoreCommand):
         dir_images = [
             x.path for x in os.scandir(
                 self.path) if not x.is_dir() and x.name.endswith(
-                constants.supported_images)]
+                CoreFS.image_formats())]
         for n, x in enumerate(sorted(dir_images), 1):
             pages.append((n, os.path.abspath(x)))
         return pages

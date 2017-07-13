@@ -320,7 +320,7 @@ class Profile(DatabaseMessage):
         self._local = local
         self._uri = uri
 
-    def data(self, load_values = False, load_collections = False):
+    def data(self, load_values=False, load_collections=False):
         db.ensure_in_session(self.item)
         d = {}
 

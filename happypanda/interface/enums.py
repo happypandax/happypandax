@@ -22,6 +22,7 @@ class ItemType(utils.APIEnum):
     #: Grouping
     Grouping = 4
 
+
 class ImageSize(utils.APIEnum):
     #: Original
     Original = utils.ImageSize(0, 0)
@@ -31,6 +32,7 @@ class ImageSize(utils.APIEnum):
     Medium = utils.ImageSize(100, 250)
     #: Small
     Small = utils.ImageSize(50, 100)
+
 
 class ServerCommand(utils.APIEnum):
     #: Shut down the server

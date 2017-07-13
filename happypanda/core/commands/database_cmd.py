@@ -1,10 +1,8 @@
 from happypanda.common import utils, hlogger, exceptions, constants
 from happypanda.core.command import Command, CommandEvent, AsyncCommand, CommandEntry
 from happypanda.core.commands import io_cmd
-from happypanda.core import db, services
+from happypanda.core import db
 from happypanda.interface import enums
-
-import time
 
 log = hlogger.Logger(__name__)
 
@@ -48,7 +46,11 @@ class GetModelCover(AsyncCommand):
     @generate.default(capture=True)
     def _generate(model, item_id, size, capture=db.model_name(db.Gallery)):
         im_path = ""
-        page = GetSession().run().query(db.Page.path).filter(db.and_op(db.Page.gallery_id == item_id, db.Page.number == 1)).one_or_none()
+        page = GetSession().run().query(
+            db.Page.path).filter(
+            db.and_op(
+                db.Page.gallery_id == item_id,
+                db.Page.number == 1)).one_or_none()
         if page:
             im_props = io_cmd.ImageProperties(size, 0, constants.dir_thumbs)
             im_path = io_cmd.ImageItem(None, page[0], im_props).main()

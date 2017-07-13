@@ -1,9 +1,8 @@
 import os
 import re
-import pathlib
 
 from happypanda.common import constants, utils
-from happypanda.core import db, plugins
+from happypanda.core import plugins
 
 
 class GalleryScan:
@@ -35,14 +34,14 @@ class GalleryScan:
         if ptype == utils.PathType.Archive:
             pass
         elif ptype == utils.PathType.Directoy:
-            contents = [x.path for x in os.scandir(path) if not x.is_dir()]
+            contents = [x.path for x in os.scandir(path) if not x.is_dir()] # noqa: F841
 
-        if GalleryScan.evaluate_gallery(contents):
-            gfs = GalleryFS(path, path_in_archive)
-            gfs.load()
-            if constants.core_plugin:
-                constants.core_plugin.instanced.on_gallery_from_path(gfs)
-            gallery = gfs.get_gallery()
+        #if GalleryScan.evaluate_gallery(contents):
+        #    gfs = GalleryFS(path, path_in_archive)
+        #    gfs.load()
+        #    if constants.core_plugin:
+        #        constants.core_plugin.instanced.on_gallery_from_path(gfs)
+        #    gallery = gfs.get_gallery()
 
         return gallery
 
@@ -156,6 +155,3 @@ class GalleryScan:
             dic['title'] = name
 
         return dic
-
-
-

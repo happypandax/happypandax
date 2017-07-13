@@ -2,14 +2,11 @@ import gevent
 import weakref
 import itertools
 import functools
-import enum
-import hashlib
-import os
 
 from gevent import pool, queue
 
-from happypanda.common import utils, hlogger, constants, exceptions
-from happypanda.core import command, db
+from happypanda.common import hlogger, constants
+from happypanda.core import command
 
 log = hlogger.Logger(__name__)
 
@@ -129,11 +126,13 @@ class Service:
         if command_id in self._decorators:
             greenlet.value = self._decorators[command_id](greenlet.value)
 
-        log.d("Command id", command_id, "in service '{}'".format(self.name), "has finished running with state:", str(command_obj.state))
+        log.d(
+            "Command id", command_id, "in service '{}'".format(
+                self.name), "has finished running with state:", str(
+                command_obj.state))
 
         if callback:
             callback(greenlet.value)
-
 
     def _start(self, cmd_id):
 
@@ -167,6 +166,7 @@ class DownloadService(Service):
         super().__init__(name)
 
 DownloadService.generic = DownloadService("download")
+
 
 class ImageService(Service):
     "An image service"
