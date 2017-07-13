@@ -748,6 +748,7 @@ if __name__ == '__main__':
     dst_nstagmapping = {}
     dst_collections = {}
     dst_grouping = {}
+    dst_pages = {}
 
     pages_pool = pool.Pool(AMOUNT_OF_TASKS, page_generate, (pages_in, pages_out))
     try:
@@ -771,7 +772,8 @@ if __name__ == '__main__':
                 gallery = db.Gallery()
                 
                 pages_count += 1
-                pages_in.put((gallery, ch, path, g.path))
+                dst_pages[pages_count] = gallery
+                pages_in.put((pages_count, ch, path, g.path))
 
                 for col in copy.copy(gallery.collections):
                     if col.name in dst_collections:
@@ -872,10 +874,9 @@ if __name__ == '__main__':
 
         current_p_count = 0
         while current_p_count < pages_count:
-            gallery, pages = pages_out.get()
+            g, pages = pages_out.get()
             current_p_count += 1
-            for p in pages:
-                gallery.pages.append(p)
+            dst_pages[g].pages.extend(pages)
             try:
                 print_progress(current_p_count, pages_count, "Progress:", bar_length=50)
             except UnicodeEncodeError:
