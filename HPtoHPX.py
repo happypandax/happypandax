@@ -1,5 +1,6 @@
 ﻿import sys, os, sqlite3, copy, arrow
 import argparse
+import gevent
 from happypanda.core import db
 from happypanda.core.commands import io_cmd
 from happypanda.interface import enums
@@ -708,7 +709,7 @@ if __name__ == '__main__':
     dst_collections = {}
     dst_grouping = {}
 
-    for numb, g in enumerate(src_galleries[:10]):
+    for numb, g in enumerate(src_galleries):
 
         galleries = []
         gallery_ns = None
