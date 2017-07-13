@@ -145,12 +145,14 @@ class CoreFS(CoreCommand):
     _archive_formats = CommandEntry("archive_formats", tuple)
     _image_formats = CommandEntry("image_formats", tuple)
 
-    def __init__(self, path = pathlib.Path()):
+    def __init__(self, path = pathlib.Path(), archive=None):
         assert isinstance(path, (pathlib.Path, str, CoreFS))
         super().__init__()
         self._path = None
+        self._o_path = path
         self._filetype = None
-        self._archive = None
+        self._archive = archive
+        self._extacted_file = None
         self._resolve_path(path)
 
     @_archive_formats.default()
@@ -205,6 +207,20 @@ class CoreFS(CoreCommand):
         return ""
 
     @property
+    def archive_name(self):
+        "Get the full filename inside the archive"
+        if self.inside_archive:
+            if isinstance(self._o_path, str):
+                parts = self._o_path.split(self._archive.path_separator)
+            else:
+                parts = list(self._path.parts)
+            while parts:
+                p = parts.pop(0)
+                if p.lower().endswith(self.archive_formats()):
+                    return self._archive.path_separator.join(parts)
+        return ""
+
+    @property
     def is_file(self):
         "Check if path is pointed to a file"
         return not self.is_dir
@@ -212,12 +228,15 @@ class CoreFS(CoreCommand):
     @property
     def is_dir(self):
         "Check if path is pointed to a directory"
-        return self._path.is_dir()
+        if self.inside_archive:
+            return self._archive.is_dir(self.archive_name)
+        else:
+            return self._path.is_dir()
 
     @property
     def is_archive(self):
         "Check if path is pointed to an archive file"
-        if self.is_file and self.ext in self.archive_formats():
+        if self.ext in self.archive_formats():
             return True
         return False
 
@@ -243,7 +262,7 @@ class CoreFS(CoreCommand):
     def exists(self):
         "Check if path exists"
         if self.inside_archive:
-            raise NotImplementedError
+            return self.archive_name in self._archive.namelist()
         else:
             return self._path.exists()
     
@@ -255,21 +274,30 @@ class CoreFS(CoreCommand):
     @property
     def count(self):
         "Get the amount of files and folders inside this path. 0 is returned if path is a file"
+        raise NotImplementedError
         return self._path.suffix.lower()
 
     def get(self):
         "Get path as string. If path is inside an archive it will get extracted"
         
         if self.inside_archive:
-            ap = self.archive_path
-            af = CoreFS(ap)
-            return str(af.extract(self.path[len(ap):]))
+            if not self._extacted_file:
+                self._extacted_file = self.extract()
+            return self._extacted_file.path
         else:
             return self.path
 
-    @contextmanager
+    @contextmanager # TODO: Make usable without contextmanager too
     def open(self, *args, **kwargs):
-        f = open(self.get(), *args, **kwargs)
+        try:
+            if self.inside_archive:
+                f = self._archive.open(self.archive_name, *args, **kwargs)
+            else:
+                f = open(self.get(), *args, **kwargs)
+        except PermissionError:
+            if self.is_dir:
+                raise exceptions.CoreError(utils.this_function(), "Tried to open a folder which is not possible")
+            raise
         yield f
         f.close()
 
@@ -304,24 +332,30 @@ class CoreFS(CoreCommand):
                 else:
                     return CoreFS(target)
             else:
-                self._archive.extract_all(target)
-                return CoreFS(target)
-
+                if self.inside_archive:
+                    return CoreFS(self._archive.extract(self.archive_name, target))
+                else:
+                    self._archive.extract_all(target)
+                    return CoreFS(target)
         return ""
 
     def _resolve_path(self, p):
         if isinstance(p, CoreFS):
             self._path = p._path
+            self._o_path = p._o_path
+            self._archive = p._archive
+            self._filetype = p._filetype
             return
         self._path = p
         if isinstance(p, str):
             self._path = pathlib.Path(p)
 
-        if self._path.exists():
-            self._path = self._path.resolve()
+        if not self.inside_archive: # TODO: resolve only the parts not in archive
+            if self._path.exists():
+                self._path = self._path.resolve()
 
-        if self.is_archive:
-            self._archive = Archive(self._path)
+        if self.inside_archive or self.is_archive:
+            self._archive = Archive(self.archive_path)
 
 class Archive(CoreCommand):
     """
@@ -332,15 +366,19 @@ class Archive(CoreCommand):
 
     """
     _init = CommandEntry('init', object, pathlib.Path)
+    _path_sep = CommandEntry('path_sep', str, object)
     _test_corrupt = CommandEntry('test_corrupt', bool, object)
-
+    _is_dir = CommandEntry('is_dir', bool, object, str)
     _extract = CommandEntry("extract", str, object, str, pathlib.Path)
-    _namelist = CommandEntry("namelist", tuple)
+    _namelist = CommandEntry("namelist", tuple, object)
+    _open = CommandEntry("open", object, object, str, tuple, dict)
+    _close = CommandEntry("close", None, object)
 
     def _def_formats():
-        return ('.zip', '.rar', '.cbz', '.cbr')
+        return (CoreFS.ZIP, CoreFS.RAR, CoreFS.CBZ, CoreFS.CBR)
 
     def __init__(self, fpath):
+        self._archive = None
         self._path = pathlib.Path(fpath)
         self._ext = self._path.suffix.lower()
         if not self._path.exists():
@@ -348,17 +386,30 @@ class Archive(CoreCommand):
         if not self._path.suffix.lower() in CoreFS.archive_formats():
             raise exceptions.UnsupportedArchiveError(str(self._path))
 
-        with self._init.call_capture(self._ext, self._path) as plg:
-            self._archive = plg.first_or_none()
+        try:
+            with self._init.call_capture(self._ext, self._path) as plg:
+                self._archive = plg.first_or_none()
 
-        if not self._archive:
-            raise exceptions.CoreError(utils.this_function(), "No valid archive class found for this archive type: '{}'".format(self._ext))
+            if not self._archive:
+                raise exceptions.CoreError(utils.this_function(), "No valid archive handler found for this archive type: '{}'".format(self._ext))
 
-        with self._test_corrupt.call_capture(self._ext, self._archive) as plg:
-            r = plg.first_or_none()
-            if r is not None:
-                if r:
-                    raise exceptions.BadArchiveError(str(self._path))
+            with self._test_corrupt.call_capture(self._ext, self._archive) as plg:
+                r = plg.first_or_none()
+                if r is not None:
+                    if r:
+                        raise exceptions.BadArchiveError(str(self._path))
+
+            with self._path_sep.call_capture(self._ext, self._archive) as plg:
+                p = plg.first_or_none()
+                self.path_separator = p if p else '/'
+        except:
+            if self._archive:
+                self.close()
+            raise
+
+    def __del__(self):
+        if hasattr(self, '_archive') and self._archive:
+            self.close()
 
     @_test_corrupt.default(capture=True)
     def _test_corrupt_def(archive, capture=_def_formats()):
@@ -370,16 +421,37 @@ class Archive(CoreCommand):
     @_init.default(capture=True)
     def _init_def(path, capture=_def_formats()):
         if path.suffix.lower() in ('.zip', '.cbz'):
-            return ZipFile(str(path))
+            o = ZipFile(str(path))
         elif path.suffix.lower() in ('.rar', '.cbr'):
-            return RarFile(str(path))
+            o = RarFile(str(path))
+        o.hpx_path = path
+        return o
+
+    @_namelist.default(capture=True)
+    def _namelist_def(archive, capture=_def_formats()):
+        filelist = archive.namelist()
+        return filelist
+
+    @_is_dir.default(capture=True)
+    def _is_dir_def(archive, filename, capture=_def_formats()):
+        if not filename:
+            return False
+        if filename not in Archive._namelist_def(archive) and filename+'/' not in Archive._namelist_def(archive):
+            raise exceptions.FileInArchiveNotFoundError(filename, archive.hpx_path)
+        if isinstance(archive, ZipFile):
+            if filename.endswith('/') :
+                return True
+        elif isinstance(archive, RarFile):
+            info = archive.getinfo(filename)
+            return info.isdir()
+        return False
 
     @_extract.default(capture=True)
     def _extract_def(archive, filename, target, capture=_def_formats()):
         temp_p = ""
         if isinstance(archive, ZipFile):
             membs = []
-            for name in archive.namelist():
+            for name in Archive._namelist_def(archive):
                 if name.startswith(filename) and name != filename:
                     membs.append(name)
             temp_p = archive.extract(filename, str(target))
@@ -389,6 +461,28 @@ class Archive(CoreCommand):
             temp_p = target.join(filename)
             archive.extract(filename, str(target))
         return temp_p
+
+    @_open.default(capture=True)
+    def _open_def(archive, filename, args, kwargs, capture=_def_formats()):
+        if filename not in Archive._namelist_def(archive):
+            raise exceptions.FileInArchiveNotFoundError(filename, archive.hpx_path)
+        return archive.open(filename, *args, **kwargs)
+
+    @_close.default(capture=True)
+    def _close_def(archive, capture=_def_formats()):
+        archive.close()
+
+    def namelist(self):
+        ""
+        with self._namelist.call_capture(self._ext, self._archive) as plg:
+            return plg.first()
+
+    def is_dir(self, filename):
+        """
+        Checks if the provided name in the archive is a directory or not
+        """
+        with self._is_dir.call_capture(self._ext, self._archive, filename) as plg:
+            return plg.first()
 
     def extract(self, filename, target):
         """
@@ -411,6 +505,23 @@ class Archive(CoreCommand):
         Extracts all files to given path, and returns path
         """
         pass
+
+    def open(self, filename, *args, **kwargs):
+        """
+        Open file in archive, returns a file-like object.
+        """
+        with self._open.call_capture(self._ext, self._archive, filename, args, kwargs) as plg:
+            r = plg.first()
+            if not hasattr(r, 'read') or not hasattr(r, 'write'):
+                raise exceptions.PluginHandlerError(plg.get_node(0), "Expected a file-like object from archive.open")
+            return r
+
+    def close(self):
+        """
+        Close archive, releases all open resources
+        """
+        with self._close.call_capture(self._ext, self._archive) as plg:
+            plg.first()
 
 class GalleryFS(CoreCommand):
     """

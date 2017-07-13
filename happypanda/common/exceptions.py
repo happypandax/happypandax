@@ -263,7 +263,7 @@ class BadArchiveError(ArchiveError):
     "Bad file found in archive"
 
     def __init__(self, filepath):
-        return super().__init__("Bad file found in archive:{}".format(filepath))
+        return super().__init__("Bad file found in archive: '{}'".format(filepath))
 
 
 @error_code(603)
@@ -271,7 +271,7 @@ class FileInArchiveNotFoundError(ArchiveError):
     "File not found in archive"
 
     def __init__(self, f, archive_f):
-        return super().__init__("File ({}) not found in archive:{}".format(f, archive_f))
+        return super().__init__("File '{}' not found in archive: '{}'".format(f, archive_f))
 
 
 @error_code(604)

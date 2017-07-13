@@ -163,6 +163,9 @@ class HandlerValue:
 
             return tuple(r)
 
+    def get_node(self, idx):
+        return self._handlers[idx][0]
+
     def first(self):
         "Calls first handler, raises error if there is no handler"
         return self._call_node_idx(0, True)
