@@ -1,12 +1,12 @@
 ﻿import sys, os, sqlite3, copy, arrow
 import argparse
+import rarfile
 from multiprocessing import pool, Queue
 from happypanda.core import db
 from happypanda.core.commands import io_cmd
 from happypanda.interface import enums
 
 GALLERY_LISTS = []
-AMOUNT_OF_TASKS = 3
 pages_in = Queue()
 pages_out = Queue()
 
@@ -644,6 +644,11 @@ class ChaptersContainer:
             return True
         return False
 
+def split(a, n):
+    n = min(n, len(a))
+    k, m = divmod(len(a), n)
+    return (a[i * k + min(i, m):(i + 1) * k + min(i + 1, m)] for i in range(n))
+
 def print_progress(iteration, total, prefix='', suffix='', decimals=1, bar_length=100):
     """
     Call in a loop to create terminal progress bar
@@ -666,10 +671,15 @@ def print_progress(iteration, total, prefix='', suffix='', decimals=1, bar_lengt
         sys.stdout.write('\n')
     sys.stdout.flush()
 
-def page_generate(in_queue, out_queue):
+import random
 
-    while True:
-        gallery, ch, path, g_path = in_queue.get()
+def page_generate(in_queue, out_queue):
+    items = in_queue.get()
+    stuff_to_send = []
+    items_len = len(items)
+    name = random.randint(1, 100)
+    for n_item, item in enumerate(items, 1):
+        gallery, ch, path, g_path = item
         pages = []
         try:
             if ch.in_archive:
@@ -682,33 +692,33 @@ def page_generate(in_queue, out_queue):
                     n = 1
                     for c in sorted(afs.contents()):
                         if c.is_image:
-                            p = db.Page()
-                            p.name = c.name
-                            p.path = c.path
-                            p.number = n
-                            p.in_archive = True
+                            pages.append((c.name, c.path, n, True))
                             n += 1
-                            pages.append(p)
                 finally:
                     afs.close()
             else:
                 dir_images = [x.path for x in os.scandir(g_path) if not x.is_dir() and x.name.endswith(io_cmd.CoreFS.image_formats())]
                 for n, x in enumerate(sorted(dir_images), 1):
                     x = io_cmd.CoreFS(x)
-                    p = db.Page()
-                    p.name = x.name
-                    p.path = x.path
-                    p.number = n
-                    pages.append(p)
+                    pages.append((x.name, x.path, n, False))
         except NotImplementedError:
             pass
-        out_queue.put((gallery, pages))
+
+        stuff_to_send.append((gallery, pages))
+        if len(stuff_to_send) > 10 or n_item == items_len:
+            out_queue.put(stuff_to_send.copy())
+            stuff_to_send.clear()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('source',  help="Path to old HP database")
     parser.add_argument('destination',  help="Desired path new HPX database")
+    parser.add_argument('-r', '--rar',  help="Path to unrar tool")
+    parser.add_argument('-p', '--process', type=int, default=3, help="Amount of processes allowed to spawn")
     args = parser.parse_args()
+
+    AMOUNT_OF_TASKS = 3
+    rarfile.UNRAR_TOOL = args.rar
 
     src = args.source
     dst = args.destination
@@ -754,6 +764,8 @@ if __name__ == '__main__':
     dst_pages = {}
 
     pages_pool = pool.Pool(AMOUNT_OF_TASKS, page_generate, (pages_in, pages_out))
+    pages_to_send = []
+    pages_to_send2 = []
     try:
         pages_count = 0
         for numb, g in enumerate(src_galleries):
@@ -770,13 +782,23 @@ if __name__ == '__main__':
                     except UnicodeError:
                         print("Skipping '{}' because path doesn't exists.".format(ch.title.encode(errors='ignore')))
                     continue
+                if path.endswith(('.rar', 'cbr')) and not args.rar:
+                    try:
+                        print("Skipping '{}' because path to unrar tool has not been supplied.".format(ch.title))
+                    except UnicodeError:
+                        print("Skipping '{}' because path to unrar tool has not been supplied.".format(ch.title.encode(errors='ignore')))
+                    continue
+
                 path_in_archive = ch.path
 
                 gallery = db.Gallery()
                 
                 pages_count += 1
                 dst_pages[pages_count] = gallery
-                pages_in.put((pages_count, ch, path, g.path))
+                if ch.in_archive:
+                    pages_to_send.append((pages_count, ch, path, g.path))
+                else:
+                    pages_to_send2.append((pages_count, ch, path, g.path))
 
                 for col in copy.copy(gallery.collections):
                     if col.name in dst_collections:
@@ -873,17 +895,33 @@ if __name__ == '__main__':
             except UnicodeEncodeError:
                 print("\nStill in progress... please wait...")
 
+        pages_to_send2 = list(split(pages_to_send2, AMOUNT_OF_TASKS))
+        for n, x in enumerate(split(pages_to_send, AMOUNT_OF_TASKS)):
+            try:
+                x.extend(pages_to_send2[n])
+            except IndexError:
+                pass
+            pages_in.put(x)
+
         print("\nResolving gallery pages...")
 
         current_p_count = 0
         while current_p_count < pages_count:
-            g, pages = pages_out.get()
-            current_p_count += 1
-            dst_pages[g].pages.extend(pages)
-            try:
-                print_progress(current_p_count, pages_count, "Progress:", bar_length=50)
-            except UnicodeEncodeError:
-                print("\nStill in progress... please wait...")
+            items = pages_out.get()
+            for item in items:
+                g, pages = item
+                current_p_count += 1
+                for pp in pages:
+                    p = db.Page()
+                    p.name = pp[0]
+                    p.path = pp[1]
+                    p.number = pp[2]
+                    p.in_archive = pp[3]
+                    dst_pages[g].pages.append(p)
+                try:
+                    print_progress(current_p_count, pages_count, "Progress:", bar_length=50)
+                except UnicodeEncodeError:
+                    print("\nStill in progress... please wait...")
     finally:
         pages_pool.terminate()
 
