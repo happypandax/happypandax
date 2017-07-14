@@ -646,6 +646,8 @@ class ChaptersContainer:
 
 def split(a, n):
     n = min(n, len(a))
+    if not n:
+        return [a]
     k, m = divmod(len(a), n)
     return (a[i * k + min(i, m):(i + 1) * k + min(i + 1, m)] for i in range(n))
 
@@ -715,6 +717,7 @@ if __name__ == '__main__':
     parser.add_argument('destination',  help="Desired path new HPX database")
     parser.add_argument('-r', '--rar',  help="Path to unrar tool")
     parser.add_argument('-p', '--process', type=int, default=3, help="Amount of processes allowed to spawn")
+    parser.add_argument('-a', '--skip-archive', action='store_true', help="Skip generating pages for galleries in archive files (it might take too long)")
     args = parser.parse_args()
 
     AMOUNT_OF_TASKS = 3
@@ -727,6 +730,9 @@ if __name__ == '__main__':
 
     if os.path.exists(dst):
         print("Warning: destination file already exists, you might want to delete")
+
+    if args.skip_archive:
+        print("Warning: pages for galleries in archives will not be generated")
 
     print("Connecting to Happypanda database..")
     conn_src = sqlite3.connect(src)
@@ -793,12 +799,15 @@ if __name__ == '__main__':
 
                 gallery = db.Gallery()
                 
-                pages_count += 1
-                dst_pages[pages_count] = gallery
                 if ch.in_archive:
-                    pages_to_send.append((pages_count, ch, path, g.path))
+                    if not args.skip_archive:
+                        dst_pages[pages_count] = gallery
+                        pages_to_send.append((pages_count, ch, path, g.path))
+                        pages_count += 1
                 else:
+                    dst_pages[pages_count] = gallery
                     pages_to_send2.append((pages_count, ch, path, g.path))
+                    pages_count += 1
 
                 for col in copy.copy(gallery.collections):
                     if col.name in dst_collections:
@@ -896,11 +905,23 @@ if __name__ == '__main__':
                 print("\nStill in progress... please wait...")
 
         pages_to_send2 = list(split(pages_to_send2, AMOUNT_OF_TASKS))
-        for n, x in enumerate(split(pages_to_send, AMOUNT_OF_TASKS)):
-            try:
-                x.extend(pages_to_send2[n])
-            except IndexError:
-                pass
+        pages_to_send = list(split(pages_to_send, AMOUNT_OF_TASKS))
+        if len(pages_to_send) < len(pages_to_send):
+            for n, x in enumerate(pages_to_send):
+                try:
+                    x.extend(pages_to_send2[n])
+                except IndexError:
+                    pass
+            pages_to_sendx = pages_to_send
+        else:
+            for n, x in enumerate(pages_to_send2):
+                try:
+                    x.extend(pages_to_send[n])
+                except IndexError:
+                    pass
+            pages_to_sendx = pages_to_send2
+
+        for n, x in enumerate(pages_to_sendx):
             pages_in.put(x)
 
         print("\nResolving gallery pages...")
