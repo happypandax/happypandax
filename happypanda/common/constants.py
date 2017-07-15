@@ -82,6 +82,12 @@ search_option_all = config.get(
     True,
     "Match only items that has all terms")
 
+search_option_related = config.get(
+    search_ns,
+    "related",
+    True,
+    "Also match on related items")
+
 # PLUGIN
 
 core_plugin = None
@@ -99,7 +105,7 @@ secret_key = config.get(
     core_ns,
     "secret_key",
     "",
-    "A random generated key to be used for security. Keep it secret!")
+    "A secret key to be used for security. Keep it secret!")
 
 server_name = config.get(
     core_ns,

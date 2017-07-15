@@ -158,6 +158,9 @@ class GetModelItemByID(Command):
 
         log.d("Fetching items from a set with", len(ids), "ids")
 
+        if not ids:
+            return tuple()
+
         s = constants.db_session()
 
         q = s.query(model)

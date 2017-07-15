@@ -27,11 +27,11 @@ class ImageSize(utils.APIEnum):
     #: Original
     Original = utils.ImageSize(0, 0)
     #: Big
-    Big = utils.ImageSize(200, 400)
+    Big = utils.ImageSize(300, 416)
     #: Medium
-    Medium = utils.ImageSize(100, 250)
+    Medium = utils.ImageSize(200, 276)
     #: Small
-    Small = utils.ImageSize(50, 100)
+    Small = utils.ImageSize(100, 136)
 
 
 class ServerCommand(utils.APIEnum):

@@ -7,7 +7,7 @@ import functools
 
 
 def _get_cover(kwargs, cover):
-    return message.Profile(cover, **kwargs)
+    return message.Profile(cover, **kwargs) if cover else None
 
 
 def get_cover(item_type: enums.ItemType = enums.ItemType.Gallery.name,

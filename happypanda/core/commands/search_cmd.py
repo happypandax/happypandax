@@ -14,7 +14,8 @@ def get_search_options():
         "case": constants.search_option_case,
         "regex": constants.search_option_regex,
         "whole": constants.search_option_whole,
-        "all": constants.search_option_all
+        "all": constants.search_option_all,
+        "related": constants.search_option_related
     }
 
 Term = namedtuple("Term", ["namespace", "tag", "operator"])
@@ -327,9 +328,25 @@ class PartialModelFilter(Command):
     @match_model.default(capture=True)
     def _match_namemixin(parent_model, child_model, term, capture=[
                          db.model_name(x) for x in _models() if isinstance(x, db.NameMixin)]):
+        raise NotImplementedError
         get_model = database_cmd.GetModelClass()
         parent_model = get_model.run(parent_model)
         child_model = get_model.run(child_model)
+
+        match_string = PartialModelFilter._match_string_column
+        term = ParseTerm().run(term)
+        ids = set()
+
+        s = constants.db_session()
+
+        ids.update(
+            x[0] for x in s.query(
+                parent_model.id).join(
+                parent_model.titles).filter(
+                match_string(
+                    db.Title.name,
+                    term,
+                    options)).all())
 
         return set()
 

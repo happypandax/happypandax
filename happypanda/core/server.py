@@ -278,7 +278,7 @@ class ClientHandler:
                             msg = func(**func_args)
                         else:
                             msg = func(**func_args)
-                        assert isinstance(msg, message.CoreMessage)
+                        assert isinstance(msg, message.CoreMessage) or None
                         func_msg.set_data(msg)
                     except exceptions.CoreError as e:
                         func_msg.set_error(message.Error(e.code, e.msg))

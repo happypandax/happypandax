@@ -177,6 +177,8 @@ class DatabaseMessage(CoreMessage):
             load_values -- Queries database for unloaded values
             load_collections -- Queries database to fetch all items in a collection
         """
+        if self.item:
+            db.ensure_in_session(self.item)
         d = self.data(load_values, load_collections)
         assert isinstance(d, dict), "self.data() must return a dict!"
         if self._error:
@@ -321,7 +323,6 @@ class Profile(DatabaseMessage):
         self._uri = uri
 
     def data(self, load_values=False, load_collections=False):
-        db.ensure_in_session(self.item)
         d = {}
 
         path = io_cmd.CoreFS(self.item.path)

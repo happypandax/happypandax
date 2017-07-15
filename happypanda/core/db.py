@@ -1069,7 +1069,7 @@ def table_attribs(model, id=False):
     Params:
         id -- retrieve id columns instead of the sqlalchemy object (to avoid a db query etc.)
     """
-    assert isinstance(model, Base)
+    assert isinstance(model, Base) or issubclass(model, Base)
     d = {}
 
     obj = inspect(model)
