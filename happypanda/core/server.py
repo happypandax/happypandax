@@ -375,7 +375,7 @@ class HPServer:
                 if eof:
                     buffer = data[1]
                     if handler.is_active():
-                        client_msg = handler.advance(data[0]) # noqa: F841
+                        client_msg = handler.advance(data[0])  # noqa: F841
                     else:
                         log.d("Client has disconnected", address)
                         break

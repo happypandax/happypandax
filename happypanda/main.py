@@ -8,7 +8,7 @@ if __package__ is None and not hasattr(sys, 'frozen'):
 
 from happypanda.common import utils, constants, hlogger  # noqa: E402
 from happypanda.core import server, plugins, command  # noqa: E402
-from happypanda.core.commands import io_cmd # noqa: E402
+from happypanda.core.commands import io_cmd  # noqa: E402
 
 log = hlogger.Logger(__name__)
 

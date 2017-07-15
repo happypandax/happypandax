@@ -326,8 +326,8 @@ class PartialModelFilter(Command):
         return ids
 
     @match_model.default(capture=True)
-    def _match_namemixin(parent_model, child_model, term, capture=[
-                         db.model_name(x) for x in _models() if isinstance(x, db.NameMixin)]):
+    def _match_namemixin(parent_model, child_model, term, options,
+                         capture=[db.model_name(x) for x in _models() if isinstance(x, db.NameMixin)]):
         raise NotImplementedError
         get_model = database_cmd.GetModelClass()
         parent_model = get_model.run(parent_model)

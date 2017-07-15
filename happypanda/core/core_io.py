@@ -34,9 +34,9 @@ class GalleryScan:
         if ptype == utils.PathType.Archive:
             pass
         elif ptype == utils.PathType.Directoy:
-            contents = [x.path for x in os.scandir(path) if not x.is_dir()] # noqa: F841
+            contents = [x.path for x in os.scandir(path) if not x.is_dir()]  # noqa: F841
 
-        #if GalleryScan.evaluate_gallery(contents):
+        # if GalleryScan.evaluate_gallery(contents):
         #    gfs = GalleryFS(path, path_in_archive)
         #    gfs.load()
         #    if constants.core_plugin:
