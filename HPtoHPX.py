@@ -1,14 +1,16 @@
 ﻿import sys, os, sqlite3, copy, arrow
 import argparse
 import rarfile
-from multiprocessing import pool, Queue
+from multiprocessing import Process, Queue, Pipe
+import threading
+import queue
 from happypanda.core import db
 from happypanda.core.commands import io_cmd
 from happypanda.interface import enums
 
 GALLERY_LISTS = []
 pages_in = Queue()
-pages_out = Queue()
+pages_out = queue.Queue()
 
 def chapter_map(row, chapter):
     assert isinstance(chapter, Chapter)
@@ -675,21 +677,24 @@ def print_progress(iteration, total, prefix='', suffix='', decimals=1, bar_lengt
 
 import random
 
-def page_generate(in_queue, out_queue):
-    items = in_queue.get()
+def page_generate(rar_p, in_queue, out_pipe):
+    rarfile.UNRAR_TOOL = rar_p
+    item_id, items = in_queue.get()
     stuff_to_send = []
     items_len = len(items)
     name = random.randint(1, 100)
     for n_item, item in enumerate(items, 1):
-        gallery, ch, path, g_path = item
+        gallery, ch_inarchive, ch_path, path, g_path = item
         pages = []
+        page_hash = None
         try:
-            if ch.in_archive:
+            if ch_inarchive:
+                page_hash = (g_path, ch_path)
                 afs = io_cmd.CoreFS(path)
                 try:
-                    if ch.path:
+                    if ch_path:
                         afs._init_archive()
-                        afs = io_cmd.CoreFS(afs._archive.path_separator.join((path, ch.path)), afs._archive)
+                        afs = io_cmd.CoreFS(afs._archive.path_separator.join((path, ch_path)), afs._archive)
                         
                     n = 1
                     for c in sorted(afs.contents()):
@@ -699,17 +704,29 @@ def page_generate(in_queue, out_queue):
                 finally:
                     afs.close()
             else:
+                page_hash = (ch_path,)
                 dir_images = [x.path for x in os.scandir(g_path) if not x.is_dir() and x.name.endswith(io_cmd.CoreFS.image_formats())]
                 for n, x in enumerate(sorted(dir_images), 1):
                     x = io_cmd.CoreFS(x)
                     pages.append((x.name, x.path, n, False))
         except NotImplementedError:
             pass
+        except rarfile.RarCannotExec:
+            print("RAR file not supported, skipping: {}".format(g_path))
+        except:
+            print("An unknown error occured, skipping: {}".format(g_path))
+            pass
 
-        stuff_to_send.append((gallery, pages))
-        if len(stuff_to_send) > 10 or n_item == items_len:
-            out_queue.put(stuff_to_send.copy())
+        stuff_to_send.append((page_hash, gallery, pages))
+        if len(stuff_to_send) > 5 or n_item == items_len:
+            out_pipe.send(stuff_to_send.copy())
             stuff_to_send.clear()
+    out_pipe.send(item_id)
+
+def process_pipes(out_queue, out_pipe):
+    while True:
+        out_queue.put(out_pipe.recv())
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -720,7 +737,7 @@ if __name__ == '__main__':
     parser.add_argument('-a', '--skip-archive', action='store_true', help="Skip generating pages for galleries in archive files (it might take too long)")
     args = parser.parse_args()
 
-    AMOUNT_OF_TASKS = 3
+    AMOUNT_OF_TASKS = args.process if args.process > 0 else 1
     rarfile.UNRAR_TOOL = args.rar
 
     src = args.source
@@ -769,11 +786,11 @@ if __name__ == '__main__':
     dst_grouping = {}
     dst_pages = {}
 
-    pages_pool = pool.Pool(AMOUNT_OF_TASKS, page_generate, (pages_in, pages_out))
     pages_to_send = []
     pages_to_send2 = []
     try:
         pages_count = 0
+        unique_paths = []
         for numb, g in enumerate(src_galleries):
 
             galleries = []
@@ -800,13 +817,24 @@ if __name__ == '__main__':
                 gallery = db.Gallery()
                 
                 if ch.in_archive:
+                    h = hash((g.path, ch.path))
+                    if h in unique_paths:
+                        continue
+                    unique_paths.append(h)
+
                     if not args.skip_archive:
                         dst_pages[pages_count] = gallery
-                        pages_to_send.append((pages_count, ch, path, g.path))
+                        pages_to_send.append((pages_count, ch.in_archive, ch.path, path, g.path))
                         pages_count += 1
+
                 else:
+                    h = hash((ch.path,))
+                    if h in unique_paths:
+                        continue
+                    unique_paths.append(h)
+
                     dst_pages[pages_count] = gallery
-                    pages_to_send2.append((pages_count, ch, path, g.path))
+                    pages_to_send2.append((pages_count, ch.in_archive, ch.path, path, g.path))
                     pages_count += 1
 
                 for col in copy.copy(gallery.collections):
@@ -904,6 +932,17 @@ if __name__ == '__main__':
             except UnicodeEncodeError:
                 print("\nStill in progress... please wait...")
 
+        if not pages_to_send:
+            AMOUNT_OF_TASKS = 1
+
+        page_pool = []
+        for x in range(AMOUNT_OF_TASKS):
+            pipe1, pipe2 = Pipe(False)
+            p = Process(target=page_generate, args=(args.rar, pages_in, pipe2), daemon=True)
+            p.start()
+            page_pool.append(p)
+            threading.Thread(target=process_pipes, args=(pages_out, pipe1), daemon=True).start()
+
         pages_to_send2 = list(split(pages_to_send2, AMOUNT_OF_TASKS))
         pages_to_send = list(split(pages_to_send, AMOUNT_OF_TASKS))
         if len(pages_to_send) < len(pages_to_send):
@@ -921,16 +960,42 @@ if __name__ == '__main__':
                     pass
             pages_to_sendx = pages_to_send2
 
+        pages_map = {}
+        pages_finish = {}
+        pages_finished = []
         for n, x in enumerate(pages_to_sendx):
-            pages_in.put(x)
+            pages_map[n] = x
+            pages_finish[n] = False
+            pages_in.put((n, x))
 
         print("\nResolving gallery pages...")
-
+        unique_pages = []
         current_p_count = 0
         while current_p_count < pages_count:
             items = pages_out.get()
+
+            # need to make sure process helps with remaining if it finishes its own
+            for dead_p in page_pool:
+                if not dead_p.is_alive():
+                    dead_p.terminate()
+                    if pages_finished:
+                        pages_id = pages_finished.pop()
+                        for p_id in pages_finish:
+                            if not pages_finish[p_id]:
+                                Process(target=page_generate, args=(args.rar, pages_in, pipe2), daemon=True).start()
+                                pages_in.put((p_id, list(reversed(pages_map[p_id]))))
+
+            if isinstance(items, int):
+                pages_finished.append(items)
+                pages_finish[items] = True
+                continue
+
             for item in items:
-                g, pages = item
+                p_hash, g, pages = item
+                p_hash = hash(p_hash)
+                if p_hash in unique_pages:
+                    continue
+                unique_pages.append(p_hash)
                 current_p_count += 1
                 for pp in pages:
                     p = db.Page()
@@ -944,7 +1009,7 @@ if __name__ == '__main__':
                 except UnicodeEncodeError:
                     print("\nStill in progress... please wait...")
     finally:
-        pages_pool.terminate()
+        pass
 
     print("\nCreating gallery lists")
     dst_lists = []
