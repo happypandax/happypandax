@@ -140,13 +140,24 @@
 
 <div class="viewcode-block" id="ImageSize"><a class="viewcode-back" href="../../../api.html#happypanda.interface.enums.ImageSize">[docs]</a><span class="k">class</span> <span class="nc">ImageSize</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">APIEnum</span><span class="p">):</span>
     <span class="c1">#: Original</span>
-    <span class="n">Original</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">Original</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">ImageSize</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
     <span class="c1">#: Big</span>
-    <span class="n">Big</span> <span class="o">=</span> <span class="mi">400</span>
+    <span class="n">Big</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">ImageSize</span><span class="p">(</span><span class="mi">300</span><span class="p">,</span> <span class="mi">416</span><span class="p">)</span>
     <span class="c1">#: Medium</span>
-    <span class="n">Medium</span> <span class="o">=</span> <span class="mi">250</span>
+    <span class="n">Medium</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">ImageSize</span><span class="p">(</span><span class="mi">200</span><span class="p">,</span> <span class="mi">276</span><span class="p">)</span>
     <span class="c1">#: Small</span>
-    <span class="n">Small</span> <span class="o">=</span> <span class="mi">100</span></div>
+    <span class="n">Small</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">ImageSize</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">136</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ServerCommand"><a class="viewcode-back" href="../../../api.html#happypanda.interface.enums.ServerCommand">[docs]</a><span class="k">class</span> <span class="nc">ServerCommand</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">APIEnum</span><span class="p">):</span>
+    <span class="c1">#: Shut down the server</span>
+    <span class="n">ServerQuit</span> <span class="o">=</span> <span class="s2">&quot;serverquit&quot;</span>
+
+    <span class="c1">#: Restart the server</span>
+    <span class="n">ServerRestart</span> <span class="o">=</span> <span class="s2">&quot;serverrestart&quot;</span>
+
+    <span class="c1">#: Request authentication</span>
+    <span class="n">RequestAuth</span> <span class="o">=</span> <span class="s2">&quot;requestauth&quot;</span></div>
 </pre></div>
 
                     

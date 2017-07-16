@@ -128,25 +128,25 @@
 <dd><p>An enumeration.</p>
 <dl class="attribute">
 <dt id="happypanda.interface.enums.ImageSize.Big">
-<code class="descname">Big</code><em class="property"> = 400</em><a class="headerlink" href="#happypanda.interface.enums.ImageSize.Big" title="Permalink to this definition">¶</a></dt>
+<code class="descname">Big</code><em class="property"> = ImageSize(width=300, height=416)</em><a class="headerlink" href="#happypanda.interface.enums.ImageSize.Big" title="Permalink to this definition">¶</a></dt>
 <dd><p>Big</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="happypanda.interface.enums.ImageSize.Medium">
-<code class="descname">Medium</code><em class="property"> = 250</em><a class="headerlink" href="#happypanda.interface.enums.ImageSize.Medium" title="Permalink to this definition">¶</a></dt>
+<code class="descname">Medium</code><em class="property"> = ImageSize(width=200, height=276)</em><a class="headerlink" href="#happypanda.interface.enums.ImageSize.Medium" title="Permalink to this definition">¶</a></dt>
 <dd><p>Medium</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="happypanda.interface.enums.ImageSize.Original">
-<code class="descname">Original</code><em class="property"> = 0</em><a class="headerlink" href="#happypanda.interface.enums.ImageSize.Original" title="Permalink to this definition">¶</a></dt>
+<code class="descname">Original</code><em class="property"> = ImageSize(width=0, height=0)</em><a class="headerlink" href="#happypanda.interface.enums.ImageSize.Original" title="Permalink to this definition">¶</a></dt>
 <dd><p>Original</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="happypanda.interface.enums.ImageSize.Small">
-<code class="descname">Small</code><em class="property"> = 100</em><a class="headerlink" href="#happypanda.interface.enums.ImageSize.Small" title="Permalink to this definition">¶</a></dt>
+<code class="descname">Small</code><em class="property"> = ImageSize(width=100, height=136)</em><a class="headerlink" href="#happypanda.interface.enums.ImageSize.Small" title="Permalink to this definition">¶</a></dt>
 <dd><p>Small</p>
 </dd></dl>
 
@@ -189,6 +189,30 @@
 </dd></dl>
 
 <dl class="class">
+<dt id="happypanda.interface.enums.ServerCommand">
+<em class="property">class </em><code class="descname">ServerCommand</code><a class="reference internal" href="_modules/happypanda/interface/enums.html#ServerCommand"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.enums.ServerCommand" title="Permalink to this definition">¶</a></dt>
+<dd><p>An enumeration.</p>
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ServerCommand.RequestAuth">
+<code class="descname">RequestAuth</code><em class="property"> = 'requestauth'</em><a class="headerlink" href="#happypanda.interface.enums.ServerCommand.RequestAuth" title="Permalink to this definition">¶</a></dt>
+<dd><p>Request authentication</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ServerCommand.ServerQuit">
+<code class="descname">ServerQuit</code><em class="property"> = 'serverquit'</em><a class="headerlink" href="#happypanda.interface.enums.ServerCommand.ServerQuit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Shut down the server</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ServerCommand.ServerRestart">
+<code class="descname">ServerRestart</code><em class="property"> = 'serverrestart'</em><a class="headerlink" href="#happypanda.interface.enums.ServerCommand.ServerRestart" title="Permalink to this definition">¶</a></dt>
+<dd><p>Restart the server</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
 <dt id="happypanda.interface.enums.ViewType">
 <em class="property">class </em><code class="descname">ViewType</code><a class="reference internal" href="_modules/happypanda/interface/enums.html#ViewType"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.enums.ViewType" title="Permalink to this definition">¶</a></dt>
 <dd><p>An enumeration.</p>
@@ -217,6 +241,78 @@
 <h2>Functions<a class="headerlink" href="#functions" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="module-happypanda.interface.meta">
 <span id="meta"></span><h3>Meta<a class="headerlink" href="#module-happypanda.interface.meta" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="happypanda.interface.meta.get_command_error">
+<code class="descname">get_command_error</code><span class="sig-paren">(</span><em>command_ids</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/meta.html#get_command_error"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.meta.get_command_error" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get error raised during command runtime</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>command_ids</strong> (<code class="xref py py-class docutils literal"><span class="pre">list</span></code>) &#8211; list of command ids</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">error }</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">{ command_id</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="happypanda.interface.meta.get_command_progress">
+<code class="descname">get_command_progress</code><span class="sig-paren">(</span><em>command_ids</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/meta.html#get_command_progress"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.meta.get_command_progress" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get progress of command in percent</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>command_ids</strong> (<code class="xref py py-class docutils literal"><span class="pre">list</span></code>) &#8211; list of command ids</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">progress }</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">{ command_id</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="happypanda.interface.meta.get_command_state">
+<code class="descname">get_command_state</code><span class="sig-paren">(</span><em>command_ids</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/meta.html#get_command_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.meta.get_command_state" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get state of command</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>command_ids</strong> (<code class="xref py py-class docutils literal"><span class="pre">list</span></code>) &#8211; list of command ids</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">state }</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">{ command_id</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="happypanda.interface.meta.get_command_value">
+<code class="descname">get_command_value</code><span class="sig-paren">(</span><em>command_ids</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/meta.html#get_command_value"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.meta.get_command_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the returned command value</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>command_ids</strong> (<code class="xref py py-class docutils literal"><span class="pre">list</span></code>) &#8211; list of command ids</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">value }</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">{ command_id</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 <dl class="function">
 <dt id="happypanda.interface.meta.get_error">
 <code class="descname">get_error</code><span class="sig-paren">(</span><em>code</em>, <em>id</em>, <em>ctx=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/meta.html#get_error"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.meta.get_error" title="Permalink to this definition">¶</a></dt>
@@ -262,7 +358,7 @@
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>plugin_id</strong> (<em>-</em>) &#8211; UUID of plugin</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>plugin_id</strong> (<code class="xref py py-class docutils literal"><span class="pre">str</span></code>) &#8211; UUID of plugin</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">an error message object</td>
 </tr>
@@ -285,6 +381,60 @@
 </dd></dl>
 
 <dl class="function">
+<dt id="happypanda.interface.meta.start_command">
+<code class="descname">start_command</code><span class="sig-paren">(</span><em>command_ids</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/meta.html#start_command"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.meta.start_command" title="Permalink to this definition">¶</a></dt>
+<dd><p>Start running a command</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>command_ids</strong> (<code class="xref py py-class docutils literal"><span class="pre">list</span></code>) &#8211; list of command ids</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">state }</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">{ command_id</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="happypanda.interface.meta.stop_command">
+<code class="descname">stop_command</code><span class="sig-paren">(</span><em>command_ids</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/meta.html#stop_command"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.meta.stop_command" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stop command from running</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>command_ids</strong> (<code class="xref py py-class docutils literal"><span class="pre">list</span></code>) &#8211; list of command ids</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">state }</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">{ command_id</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="happypanda.interface.meta.undo_command">
+<code class="descname">undo_command</code><span class="sig-paren">(</span><em>command_ids</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/meta.html#undo_command"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.meta.undo_command" title="Permalink to this definition">¶</a></dt>
+<dd><p>Undo a command</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>command_ids</strong> (<code class="xref py py-class docutils literal"><span class="pre">list</span></code>) &#8211; list of command ids</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">state }</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">{ command_id</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
 <dt id="happypanda.interface.meta.uninstall_plugin">
 <code class="descname">uninstall_plugin</code><span class="sig-paren">(</span><em>plugin_id</em>, <em>ctx=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/meta.html#uninstall_plugin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.meta.uninstall_plugin" title="Permalink to this definition">¶</a></dt>
 <dd><p>Uninstall a plugin</p>
@@ -292,7 +442,7 @@
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>plugin_id</strong> (<em>-</em>) &#8211; UUID of plugin</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>plugin_id</strong> (<code class="xref py py-class docutils literal"><span class="pre">str</span></code>) &#8211; UUID of plugin</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">an error message object</td>
 </tr>
@@ -315,7 +465,7 @@ Provides pagination.</p>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>item_type</strong> (<a class="reference internal" href="#happypanda.interface.enums.ItemType" title="happypanda.interface.enums.ItemType"><code class="xref py py-class docutils literal"><span class="pre">ItemType</span></code></a>) &#8211; type of items to show ...</li>
 <li><strong>page</strong> (<code class="xref py py-class docutils literal"><span class="pre">int</span></code>) &#8211; current page (zero-indexed)</li>
-<li><strong>order_by</strong> &#8211; name of column to order by ...</li>
+<li><strong>sort_by</strong> (<code class="xref py py-class docutils literal"><span class="pre">str</span></code>) &#8211; name of column to order by ...</li>
 <li><strong>limit</strong> (<code class="xref py py-class docutils literal"><span class="pre">int</span></code>) &#8211; amount of items per page</li>
 <li><strong>search_query</strong> (<code class="xref py py-class docutils literal"><span class="pre">str</span></code>) &#8211; filter item by search terms</li>
 <li><strong>filter_id</strong> (<code class="xref py py-data docutils literal"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal"><span class="pre">int</span></code>]) &#8211; current filter list id</li>
@@ -421,22 +571,8 @@ item_type: can be &#8216;GalleryList&#8217;, &#8216;Collection&#8217; or &#8216;
 </dd></dl>
 
 <dl class="function">
-<dt id="happypanda.interface.database.get_glists">
-<code class="descname">get_glists</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/database.html#get_glists"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.database.get_glists" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get a list of gallery lists</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">a list of gallerylist objects</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="happypanda.interface.database.get_image">
-<code class="descname">get_image</code><span class="sig-paren">(</span><em>item_type='Gallery'</em>, <em>item_ids=[]</em>, <em>size='Medium'</em>, <em>local=False</em>, <em>ctx=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/database.html#get_image"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.database.get_image" title="Permalink to this definition">¶</a></dt>
+<dt id="happypanda.interface.database.get_cover">
+<code class="descname">get_cover</code><span class="sig-paren">(</span><em>item_type='Gallery'</em>, <em>item_ids=[]</em>, <em>size='Medium'</em>, <em>local=False</em>, <em>uri=False</em>, <em>ctx=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/database.html#get_cover"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.database.get_cover" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get cover image</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -452,10 +588,46 @@ item_type: can be &#8216;GalleryList&#8217;, &#8216;Collection&#8217; or &#8216;
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">content</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">async_command_id</p>
 </td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">a dict of id</p>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">a dict of item_id</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="happypanda.interface.database.get_glists">
+<code class="descname">get_glists</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/database.html#get_glists"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.database.get_glists" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a list of gallery lists</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">a list of gallerylist objects</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="happypanda.interface.database.get_item">
+<code class="descname">get_item</code><span class="sig-paren">(</span><em>item_type='Gallery'</em>, <em>item_id=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/database.html#get_item"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.database.get_item" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get item</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>item_type</strong> (<a class="reference internal" href="#happypanda.interface.enums.ItemType" title="happypanda.interface.enums.ItemType"><code class="xref py py-class docutils literal"><span class="pre">ItemType</span></code></a>) &#8211; <p>...</p>
+</li>
+<li><strong>item_id</strong> (<code class="xref py py-class docutils literal"><span class="pre">int</span></code>) &#8211; id of item</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">item message object</p>
 </td>
 </tr>
 </tbody>

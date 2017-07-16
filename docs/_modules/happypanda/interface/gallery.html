@@ -113,8 +113,8 @@
                 <div class="span9">
                     
   <h1>Source code for happypanda.interface.gallery</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">happypanda.common</span> <span class="k">import</span> <span class="n">constants</span><span class="p">,</span> <span class="n">message</span>
-<span class="kn">from</span> <span class="nn">happypanda.core</span> <span class="k">import</span> <span class="n">db</span>
+<span></span><span class="kn">from</span> <span class="nn">happypanda.common</span> <span class="k">import</span> <span class="n">constants</span>
+<span class="kn">from</span> <span class="nn">happypanda.core</span> <span class="k">import</span> <span class="n">db</span><span class="p">,</span> <span class="n">message</span>
 <span class="kn">from</span> <span class="nn">happypanda.interface</span> <span class="k">import</span> <span class="n">enums</span>
 
 
@@ -132,7 +132,8 @@
     <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Message</span><span class="p">(</span><span class="s2">&quot;works&quot;</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="scan_gallery"><a class="viewcode-back" href="../../../api.html#happypanda.interface.gallery.scan_gallery">[docs]</a><span class="k">def</span> <span class="nf">scan_gallery</span><span class="p">(</span><span class="n">paths</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="p">[],</span> <span class="n">add_after</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">ignore_exist</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="scan_gallery"><a class="viewcode-back" href="../../../api.html#happypanda.interface.gallery.scan_gallery">[docs]</a><span class="k">def</span> <span class="nf">scan_gallery</span><span class="p">(</span><span class="n">paths</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="p">[],</span> <span class="n">add_after</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+                 <span class="n">ignore_exist</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Scan folders for galleries</span>
 
@@ -147,7 +148,8 @@
     <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Message</span><span class="p">(</span><span class="s2">&quot;works&quot;</span><span class="p">)</span></div>
 
 
-<span class="k">def</span> <span class="nf">_gallery_count</span><span class="p">(</span><span class="nb">id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">item_type</span><span class="p">:</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span> <span class="o">=</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">GalleryFilter</span><span class="o">.</span><span class="n">name</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">_gallery_count</span><span class="p">(</span>
+        <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">item_type</span><span class="p">:</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span> <span class="o">=</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">GalleryFilter</span><span class="o">.</span><span class="n">name</span><span class="p">):</span>
 
     <span class="n">item_type</span> <span class="o">=</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">item_type</span><span class="p">)</span>
 
@@ -165,7 +167,8 @@
         <span class="n">db_item</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="nb">id</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
 
 
-<div class="viewcode-block" id="gallery_count"><a class="viewcode-back" href="../../../api.html#happypanda.interface.gallery.gallery_count">[docs]</a><span class="k">def</span> <span class="nf">gallery_count</span><span class="p">(</span><span class="nb">id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">item_type</span><span class="p">:</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span> <span class="o">=</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">GalleryFilter</span><span class="o">.</span><span class="n">name</span><span class="p">):</span>
+<div class="viewcode-block" id="gallery_count"><a class="viewcode-back" href="../../../api.html#happypanda.interface.gallery.gallery_count">[docs]</a><span class="k">def</span> <span class="nf">gallery_count</span><span class="p">(</span>
+        <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">item_type</span><span class="p">:</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span> <span class="o">=</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">GalleryFilter</span><span class="o">.</span><span class="n">name</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Get gallery count</span>
 

@@ -113,8 +113,8 @@
                 <div class="span9">
                     
   <h1>Source code for happypanda.interface.ui</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">happypanda.common</span> <span class="k">import</span> <span class="n">message</span><span class="p">,</span> <span class="n">exceptions</span><span class="p">,</span> <span class="n">utils</span>
-<span class="kn">from</span> <span class="nn">happypanda.core</span> <span class="k">import</span> <span class="n">db</span>
+<span></span><span class="kn">from</span> <span class="nn">happypanda.common</span> <span class="k">import</span> <span class="n">exceptions</span><span class="p">,</span> <span class="n">utils</span>
+<span class="kn">from</span> <span class="nn">happypanda.core</span> <span class="k">import</span> <span class="n">db</span><span class="p">,</span> <span class="n">message</span>
 <span class="kn">from</span> <span class="nn">happypanda.interface</span> <span class="k">import</span> <span class="n">enums</span>
 <span class="kn">from</span> <span class="nn">happypanda.core.commands</span> <span class="k">import</span> <span class="n">database_cmd</span><span class="p">,</span> <span class="n">search_cmd</span>
 
@@ -134,7 +134,7 @@
 <span class="sd">    Args:</span>
 <span class="sd">        item_type: type of items to show ...</span>
 <span class="sd">        page: current page (zero-indexed)</span>
-<span class="sd">        order_by: name of column to order by ...</span>
+<span class="sd">        sort_by: name of column to order by ...</span>
 <span class="sd">        limit: amount of items per page</span>
 <span class="sd">        search_query: filter item by search terms</span>
 <span class="sd">        filter_id: current filter list id</span>
@@ -165,7 +165,7 @@
 
     <span class="n">model_ids</span> <span class="o">=</span> <span class="n">search_cmd</span><span class="o">.</span><span class="n">ModelFilter</span><span class="p">()</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">db_model</span><span class="p">,</span> <span class="n">search_query</span><span class="p">)</span>
 
-    <span class="p">[</span><span class="n">items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">db_msg</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">database_cmd</span><span class="o">.</span><span class="n">GetModelByID</span><span class="p">()</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+    <span class="p">[</span><span class="n">items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">db_msg</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">database_cmd</span><span class="o">.</span><span class="n">GetModelItemByID</span><span class="p">()</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
         <span class="n">db_model</span><span class="p">,</span> <span class="n">model_ids</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="n">limit</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="n">page</span> <span class="o">*</span> <span class="n">limit</span><span class="p">)]</span>
 
     <span class="k">return</span> <span class="n">items</span></div>
