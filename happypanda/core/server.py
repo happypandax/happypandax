@@ -247,7 +247,6 @@ class ClientHandler:
             msg = dict(
                 version=meta.get_version().data(),
                 guest_allowed=constants.allow_guests,
-
             )
 
             self.send(message.finalize(msg))

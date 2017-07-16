@@ -170,7 +170,7 @@ disable_default_user = config.get(
     False,
     "Disable default user")
 
-postfix = b'<END>'
+postfix = b'<EOF>'
 data_size = 1024
 server_ready = True
 

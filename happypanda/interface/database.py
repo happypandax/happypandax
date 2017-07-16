@@ -1,4 +1,4 @@
-from happypanda.common import constants, utils
+from happypanda.common import constants, utils, exceptions
 from happypanda.core import db, services, message
 from happypanda.interface import enums
 from happypanda.core.commands import database_cmd
@@ -55,9 +55,41 @@ def get_cover(item_type: enums.ItemType = enums.ItemType.Gallery.name,
     return message.Identity('cover', content)
 
 
-def get_item(item_type: enums.ItemType = enums.ItemType.Gallery):
-    pass
+def get_item(item_type: enums.ItemType = enums.ItemType.Gallery.name,
+             item_id: int = 0):
+    """
+    Get item
 
+    Args:
+        item_type: ...
+        item_id: id of item
+
+    Returns:
+        item message object
+    """
+
+    item_type = enums.ItemType.get(item_type)
+
+    db_items = {
+        enums.ItemType.Gallery: (db.Gallery, message.Gallery),
+        enums.ItemType.Collection: (db.Collection, message.Collection),
+        enums.ItemType.Grouping: (db.Grouping, message.Grouping),
+        enums.ItemType.Page: (db.Page, message.Page),
+    }
+
+    db_model = db_items.get(item_type)
+    if not db_model:
+        raise exceptions.APIError(
+            "Item type must be on of {}".format(
+                db_items.keys()))
+
+    db_model, db_msg = db_model
+
+    item = database_cmd.GetModelItemByID().run(db_model, {item_id})[0]
+    if not item:
+        raise exceptions.DatabaseItemNotFoundError(utils.this_function(), "'{}' with id '{}' was not found".format(item_type.name, item_id))
+
+    return db_msg(item)
 
 def _get_glists():
     s = constants.db_session()
