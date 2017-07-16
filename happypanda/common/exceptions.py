@@ -160,11 +160,11 @@ class DatabaseVersionError(DatabaseError):
         """init func."""
         super().__init__("Database version mismatch: " + msg)
 
+
 @error_code(303)
 class DatabaseItemNotFoundError(DatabaseError):
     """Database item not found error"""
     pass
-
 
     # ## SERVER -- CODE: 400+ ##
 

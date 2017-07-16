@@ -87,9 +87,14 @@ def get_item(item_type: enums.ItemType = enums.ItemType.Gallery.name,
 
     item = database_cmd.GetModelItemByID().run(db_model, {item_id})[0]
     if not item:
-        raise exceptions.DatabaseItemNotFoundError(utils.this_function(), "'{}' with id '{}' was not found".format(item_type.name, item_id))
+        raise exceptions.DatabaseItemNotFoundError(
+            utils.this_function(),
+            "'{}' with id '{}' was not found".format(
+                item_type.name,
+                item_id))
 
     return db_msg(item)
+
 
 def _get_glists():
     s = constants.db_session()
