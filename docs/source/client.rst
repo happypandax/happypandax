@@ -253,6 +253,7 @@ For example, if we want to shut down the server we use the ... command::
 Some server commands will be broadcasted to all connecting clients.
 
 For example, when the server recieves a shut down command, the exact command is propogated and broadcasted to all connecting clients::
+
     {
         "name": "servername",
         "data": "serverquit"
