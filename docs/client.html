@@ -188,13 +188,14 @@
 <p>(<strong>Please note that if you ran the server with the &#8211;dev switch, the server will not respond to messages if an unhandled exception was raised</strong>)</p>
 <p>The structure of the messages exchanged between the server and the client are consistent:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span>
-    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;myname&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;session&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
     <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="p">{},</span>
 <span class="p">}</span>
 </pre></div>
 </div>
 <p>In <code class="docutils literal"><span class="pre">name</span></code> is a string value. This value is just an arbitrarily chosen name for the sever/client.</p>
-<p>In <code class="docutils literal"><span class="pre">data</span></code> is the real message.</p>
+<p>In <code class="docutils literal"><span class="pre">data</span></code> is the real message. <code class="docutils literal"><span class="pre">session</span></code> will be explained in <a class="reference internal" href="#session"><span class="std std-ref">Session</span></a>.</p>
 <p><strong>Every message should look like this</strong>.</p>
 <p>For the sake of brevity, from now on only messages meant to be put in the <code class="docutils literal"><span class="pre">data</span></code> key will be shown.</p>
 <p>Generally, the server is very helpful and will tell you if your message is invalid and/or which keys you missed.</p>
@@ -226,12 +227,44 @@
 <span class="p">}</span>
 </pre></div>
 </div>
-<p>The server will respond with <code class="docutils literal"><span class="pre">&quot;Authenticated&quot;</span></code> for a successful handshake.</p>
+<p>The server will respond with <code class="docutils literal"><span class="pre">&quot;Authenticated&quot;</span></code> and assign a <code class="docutils literal"><span class="pre">session</span></code> for a successful handshake:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;session&quot;</span><span class="p">:</span> <span class="s2">&quot;long_random_string&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="s2">&quot;Authenticated&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+</div>
 <p>If otherwise, it responds with an error. See ... for possible errors.</p>
-<p>This handshake is only required <em>once</em> per connection.</p>
+<p>This handshake is only required <em>once</em> per initial connection.
+Additional connections can be established without doing a handshake with the use of the <code class="docutils literal"><span class="pre">session</span></code> value.
+See <a class="reference internal" href="#session"><span class="std std-ref">Session</span></a>.</p>
+<p>Additional connections</p>
 <div class="admonition-todo admonition" id="index-0">
 <p class="first admonition-title">Todo</p>
 <p class="last">authentication errors</p>
+</div>
+</div>
+<div class="section" id="session">
+<h3>Session<a class="headerlink" href="#session" title="Permalink to this headline">¶</a></h3>
+<p>After a successful handshake, a <em>session</em> is created:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;session&quot;</span><span class="p">:</span> <span class="s2">&quot;a_new_unique_session_string&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;server&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="s2">&quot;Authenticated&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The session is tied to the context of the client who did the handshake.</p>
+<p>The session is <em>not</em> tied to any particular connection, meaning multiple connections
+can use the same session.</p>
+<p>This allows for multiple connections to be made within the same app while sharing the same context.</p>
+<p>Think of it like a computer with only one user account has multiple people using it.</p>
+<p><strong>Sessions have a limited lifespan</strong>. Whenever you send a message using a session, you extend that particular session&#8217;s lifespan.</p>
+<p>Sessions expire when their lifespan runs out, requiring the client to do a <em>new</em> handshake.</p>
+<div class="admonition-todo admonition" id="index-1">
+<p class="first admonition-title">Todo</p>
+<p class="last">explain session expired error</p>
 </div>
 </div>
 <div class="section" id="calling-a-function">
@@ -280,7 +313,7 @@
 </div>
 <p>In case of errors raised by the function, the <em>function-data</em> gains an <code class="docutils literal"><span class="pre">error</span></code> key. See <a class="reference internal" href="#errors"><span class="std std-ref">Errors</span></a>.</p>
 <p>If you&#8217;re unsure on what data a function will return, see <a class="reference internal" href="#playing-with-the-api"><span class="std std-ref">Playing with the API</span></a></p>
-<div class="admonition-todo admonition" id="index-1">
+<div class="admonition-todo admonition" id="index-2">
 <p class="first admonition-title">Todo</p>
 <p class="last">reference message objects here</p>
 </div>
@@ -299,6 +332,7 @@
 <p>Server-level errors (errors not occuring in api-functions or unhandled exceptions) will add
 the <code class="docutils literal"><span class="pre">error</span></code> key at the root level of the payload:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;session&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
     <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
     <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="p">{},</span>
     <span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="p">{}</span>
@@ -319,6 +353,7 @@ the <code class="docutils literal"><span class="pre">error</span></code> key at 
 <p>The server implements the following commands ...</p>
 <p>Server commands are invoked like this (this is the whole payload):</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;session&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
     <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
     <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="n">server_command</span>
 <span class="p">}</span>
@@ -326,6 +361,7 @@ the <code class="docutils literal"><span class="pre">error</span></code> key at 
 </div>
 <p>For example, if we want to shut down the server we use the ... command:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;session&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
     <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;clientname&quot;</span><span class="p">,</span>
     <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="s2">&quot;serverquit&quot;</span>
 <span class="p">}</span>
@@ -334,12 +370,13 @@ the <code class="docutils literal"><span class="pre">error</span></code> key at 
 <p>Some server commands will be broadcasted to all connecting clients.</p>
 <p>For example, when the server recieves a shut down command, the exact command is propogated and broadcasted to all connecting clients:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;session&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
     <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;servername&quot;</span><span class="p">,</span>
     <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="s2">&quot;serverquit&quot;</span>
 <span class="p">}</span>
 </pre></div>
 </div>
-<div class="admonition-todo admonition" id="index-2">
+<div class="admonition-todo admonition" id="index-3">
 <p class="first admonition-title">Todo</p>
 <p class="last">server commands</p>
 </div>
@@ -369,6 +406,7 @@ the <code class="docutils literal"><span class="pre">error</span></code> key at 
 <li><a class="reference internal" href="#talking-to-hpx-server">Talking to HPX server</a><ul>
 <li><a class="reference internal" href="#exchanging-messages">Exchanging messages</a></li>
 <li><a class="reference internal" href="#authenticating">Authenticating</a></li>
+<li><a class="reference internal" href="#session">Session</a></li>
 <li><a class="reference internal" href="#calling-a-function">Calling a function</a></li>
 <li><a class="reference internal" href="#errors">Errors</a></li>
 <li><a class="reference internal" href="#server-commands">Server commands</a></li>

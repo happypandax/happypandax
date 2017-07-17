@@ -176,7 +176,7 @@ After a successful handshake, a *session* is created::
 
 The session is tied to the context of the client who did the handshake.
 
-The session is *not* tied to a particular connection, meaning multiple connections
+The session is *not* tied to any particular connection, meaning multiple connections
 can use the same session.
 
 This allows for multiple connections to be made within the same app while sharing the same context.
