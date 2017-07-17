@@ -94,13 +94,14 @@ For every message you send the server, a response is sent back, that is, unless 
 The structure of the messages exchanged between the server and the client are consistent::
 
     {
-        "name": "myname",
+        "session": "",
+        "name": "",
         "data": {},
     }
 
 In ``name`` is a string value. This value is just an arbitrarily chosen name for the sever/client.
 
-In ``data`` is the real message.
+In ``data`` is the real message. ``session`` will be explained in :ref:`Session`.
 
 **Every message should look like this**.
 
@@ -142,15 +143,53 @@ To authenticate as a **user** the client responds with::
         "password": ""
     }
 
-The server will respond with ``"Authenticated"`` for a successful handshake.
+The server will respond with ``"Authenticated"`` and assign a ``session`` for a successful handshake::
+
+    {
+        "session": "long_random_string",
+        "name": "",
+        "data": "Authenticated",
+    }
 
 If otherwise, it responds with an error. See ... for possible errors.
 
-This handshake is only required *once* per connection.
+This handshake is only required *once* per initial connection.
+Additional connections can be established without doing a handshake with the use of the ``session`` value.
+See :ref:`Session`.
+
+Additional connections 
 
 .. todo::
 
     authentication errors
+
+Session
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+After a successful handshake, a *session* is created::
+
+    {
+        "session": "a_new_unique_session_string",
+        "name": "server",
+        "data": "Authenticated",
+    }
+
+The session is tied to the context of the client who did the handshake.
+
+The session is *not* tied to a particular connection, meaning multiple connections
+can use the same session.
+
+This allows for multiple connections to be made within the same app while sharing the same context.
+
+Think of it like a computer with only one user account has multiple people using it.
+
+**Sessions have a limited lifespan**. Whenever you send a message using a session, you extend that particular session's lifespan.
+
+Sessions expire when their lifespan runs out, requiring the client to do a *new* handshake.
+
+.. todo::
+
+    explain session expired error
 
 Calling a function
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -225,6 +264,7 @@ Server-level errors (errors not occuring in api-functions or unhandled exception
 the ``error`` key at the root level of the payload::
 
     {
+        "session": "",
         "name": "",
         "data": {},
         "error": {}
@@ -246,6 +286,7 @@ The server implements the following commands ...
 Server commands are invoked like this (this is the whole payload)::
 
     {
+        "session": "",
         "name": "",
         "data": server_command
     }
@@ -253,6 +294,7 @@ Server commands are invoked like this (this is the whole payload)::
 For example, if we want to shut down the server we use the ... command::
 
     {
+        "session": "",
         "name": "clientname",
         "data": "serverquit"
     }
@@ -262,6 +304,7 @@ Some server commands will be broadcasted to all connecting clients.
 For example, when the server recieves a shut down command, the exact command is propogated and broadcasted to all connecting clients::
 
     {
+        "session": "",
         "name": "servername",
         "data": "serverquit"
     }

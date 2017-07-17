@@ -170,6 +170,12 @@ disable_default_user = config.get(
     False,
     "Disable default user")
 
+session_span = config.get(
+    core_ns,
+    "session_span",
+    60,
+    "Specify the amount of time (in minutes) a session can go unused before expiring")
+
 postfix = b'<EOF>'
 data_size = 1024
 server_ready = True

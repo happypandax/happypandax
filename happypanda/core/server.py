@@ -4,6 +4,7 @@ monkey.patch_all()  # necessary to make these functions play nice with gevent
 import uuid  # noqa: E402
 import sys  # noqa: E402
 import code  # noqa: E402
+import arrow  # noqa: E402
 
 from inspect import getmembers, isfunction  # noqa: E402
 
@@ -31,26 +32,29 @@ def list_api():
 class Session:
     "Connection longevity"
 
-    _sessions = set()
+    sessions = {}
 
     def __init__(self, id=None):
         self._id = id if id else uuid.uuid4().hex
-        self._expiration = None
+        self.sessions[self._id] = self
+        self.extend()
+
+    @property
+    def id(self):
+        return self._id
+
+    @property
+    def expired(self):
+        return arrow.utcnow() > self._expiration
 
     def extend(self):
         "Extend the life of this session"
-        pass
+        self._expiration = arrow.utcnow().replace(minutes=+constants.session_span)
 
     @classmethod
-    def check(cls, session):
-        "Check if session exists and is valid. Will raise error on expired session"
-        if isinstance(session, Session):
-            session = session._id
-
-        if session:
-            pass
-        return False
-
+    def get(cls, s_id):
+        "Return a session object if it exists"
+        return cls.sessions.get(s_id)
 
 class ClientHandler:
     "Handles clients"
@@ -156,10 +160,12 @@ class ClientHandler:
 
             log.d("Check if required root keys are present")
             # {"name":name, "data":data, 'session':id}
-            root_keys = ('name', 'data')
+            root_keys = ('name', 'data', 'session')
             self._check_both(where, "JSON dict", root_keys, j_data)
         except exceptions.ServerError as e:
             raise
+
+        self._check_session(j_data.get('session'))
 
         cmd = self._server_command(j_data)
         if cmd:
@@ -252,6 +258,20 @@ class ClientHandler:
 
     def _check_session(self, session_id):
         "Authenticate client with session"
+        log.d("Checking session id", session_id)
+        if session_id:
+            self.session = Session.get(session_id)
+            if self.session:
+                if self.session.expired:
+                    raise exceptions.SessionExpiredError(utils.this_function(), self.session.id)
+
+                if self.session.id in self.contexts:
+                    self._accepted = True
+                    self.context = self.contexts[self.session.id]
+                    self.session.extend()
+                    return
+
+        log.d("Authentication with session failed", session_id)
         self._accepted = False
 
     def handshake(self, data=None):
@@ -271,7 +291,9 @@ class ClientHandler:
                 data.pop(
                     'user', None), data.pop(
                     'password', None))
-            self.send(message.finalize("Authenticated"))
+            self.session = Session()
+            self.contexts[self.session.id] = self.context
+            self.send(message.finalize("Authenticated", session_id=self.session.id))
         else:
             log.d("Handshaking client:", self._address)
             msg = dict(
@@ -321,7 +343,7 @@ class ClientHandler:
                                 e.code, e.msg)))
                 self.errors.clear()
 
-                self.send(function_list.serialize())
+                self.send(function_list.serialize(session_id=self.session.id))
             else:
                 self.on_wait()
         except exceptions.CoreError as e:
@@ -348,13 +370,15 @@ class ClientHandler:
         """
         assert isinstance(exception, exceptions.CoreError)
         e = message.Error(exception.code, exception.msg)
-        self.send(e.serialize())
+        s_id = self.session.id if self.session else ""
+        self.send(message.finalize(None, error=e.json_friendly(False), session_id=s_id))
 
     def on_wait(self):
         """
         Sends wait message to client
         """
-        self.send(message.Message("wait").serialize())
+        s_id = self.session.id if self.session else ""
+        self.send(message.Message("wait").serialize(session_id=s_id))
 
     def _server_command(self, data):
         d = data['data']

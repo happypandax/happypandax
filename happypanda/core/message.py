@@ -12,13 +12,17 @@ from happypanda.core import db
 from happypanda.core.commands import io_cmd
 
 
-def finalize(msg_dict, name=constants.server_name):
+def finalize(msg_dict, session_id="", name=constants.server_name, error=None):
     "Finalize dict message before sending"
     enc = 'utf-8'
     msg = {
+        'session': session_id,
         'name': name,
         'data': msg_dict,
     }
+
+    if error:
+        msg['error'] = error
 
     return bytes(json.dumps(msg), enc)
 
@@ -54,9 +58,9 @@ class CoreMessage:
         else:
             return d
 
-    def serialize(self, name=constants.server_name):
+    def serialize(self, session_id="", name=constants.server_name):
         "Serialize this object to bytes"
-        return finalize(self.json_friendly(), name)
+        return finalize(self.json_friendly(), session_id, name)
 
 
 class Identity(CoreMessage):
@@ -97,10 +101,10 @@ class List(CoreMessage):
     def from_json(self, j):
         return super().from_json(j)
 
-    def serialize(self, name=constants.server_name, include_key=False):
+    def serialize(self, session_id="", name=constants.server_name, include_key=False):
         "Serialize this object to bytes"
         d = self.json_friendly(include_key)
-        return finalize(d, name)
+        return finalize(d, session_id, name)
 
 
 class Message(CoreMessage):
@@ -190,6 +194,7 @@ class DatabaseMessage(CoreMessage):
 
     def serialize(
             self,
+            session_id="",
             load_values=False,
             load_collections=False,
             name=constants.server_name):
@@ -202,6 +207,7 @@ class DatabaseMessage(CoreMessage):
             self.json_friendly(
                 load_values,
                 load_collections),
+            session_id,
             name)
 
     def _unpack(self, name, attrib, load_collections):
