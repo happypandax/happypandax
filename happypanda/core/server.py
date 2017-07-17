@@ -28,11 +28,36 @@ def list_api():
     return {x[0]: x[1] for x in all_functions if not x[0]
             in _special_functions and not x[0].startswith('_')}
 
+class Session:
+    "Connection longevity"
+
+    _sessions = set()
+
+    def __init__(self, id=None):
+        self._id = id if id else uuid.uuid4().hex
+        self._expiration = None
+
+    def extend(self):
+        "Extend the life of this session"
+        pass
+
+    @classmethod
+    def check(cls, session):
+        "Check if session exists and is valid. Will raise error on expired session"
+        if isinstance(session, Session):
+            session = session._id
+
+        if session:
+            pass
+        return False
+
 
 class ClientHandler:
     "Handles clients"
 
     api = list_api()
+
+    contexts = {} # session_id : context
 
     def __init__(self, client, address):
         self.errors = []
@@ -43,6 +68,7 @@ class ClientHandler:
         self._stopped = False
         self._accepted = False
         self.context = None
+        self.session = None
         self.handshake()
 
     def get_context(self, user=None, password=None):
@@ -129,7 +155,7 @@ class ClientHandler:
             j_data = utils.convert_to_json(data, where)
 
             log.d("Check if required root keys are present")
-            # {"name":name, "data":data, 'id':id}
+            # {"name":name, "data":data, 'session':id}
             root_keys = ('name', 'data')
             self._check_both(where, "JSON dict", root_keys, j_data)
         except exceptions.ServerError as e:
@@ -223,6 +249,10 @@ class ClientHandler:
         for x in data:
             if x not in required_keys:
                 raise exceptions.InvalidMessage(where, msg.format(x))
+
+    def _check_session(self, session_id):
+        "Authenticate client with session"
+        self._accepted = False
 
     def handshake(self, data=None):
         """
@@ -366,18 +396,16 @@ class HPServer:
             buffer = b''
             while True:
                 data, eof = utils.end_of_message(buffer)
-                log.d(
-                    "Received",
-                    sys.getsizeof(buffer),
-                    "bytes from ",
-                    address)
                 if eof:
                     buffer = data[1]
+                    log.d("Received", sys.getsizeof(buffer), "bytes from ", address)
                     if handler.is_active():
                         client_msg = handler.advance(data[0])  # noqa: F841
                     else:
                         log.d("Client has disconnected", address)
                         break
+                else:
+                    log.d("Received data, EOF not reached. Waiting for more data from ", address)
                 r = client.recv(constants.data_size)
                 if not r:
                     log.d("Client has disconnected", address)
