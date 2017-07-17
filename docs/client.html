@@ -175,9 +175,13 @@
 </div>
 <p>And that&#8217;s the end of it. You&#8217;ve successfully received a message from the server.</p>
 <p>Sending a message is even easier. Just make sure it&#8217;s valid <code class="docutils literal"><span class="pre">JSON</span></code>, converted to bytes encoded in <code class="docutils literal"><span class="pre">UTF-8</span></code> before you send.</p>
+<p><strong>Remember to suffix the message with the EOF tag so the server knows when your message is complete</strong>.</p>
 <p>In pseudocode:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">var</span> <span class="n">msg_to_send</span> <span class="o">=</span> <span class="nb">bytes</span><span class="p">(</span><span class="n">valid_json</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">);</span> <span class="c1"># make sure it&#39;s UTF-8 encoded</span>
+<span class="n">var</span> <span class="n">eof_tag</span> <span class="o">=</span> <span class="nb">bytes</span><span class="p">(</span><span class="s2">&quot;&lt;EOF&gt;&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">);</span>
+
 <span class="n">sock</span><span class="o">.</span><span class="n">send_everything</span><span class="p">(</span><span class="n">msg_to_send</span><span class="p">);</span>
+<span class="n">sock</span><span class="o">.</span><span class="n">send_everything</span><span class="p">(</span><span class="n">eof_tag</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>For every message you send the server, a response is sent back, that is, unless the server has crashed.</p>
@@ -224,6 +228,7 @@
 </div>
 <p>The server will respond with <code class="docutils literal"><span class="pre">&quot;Authenticated&quot;</span></code> for a successful handshake.</p>
 <p>If otherwise, it responds with an error. See ... for possible errors.</p>
+<p>This handshake is only required <em>once</em> per connection.</p>
 <div class="admonition-todo admonition" id="index-0">
 <p class="first admonition-title">Todo</p>
 <p class="last">authentication errors</p>

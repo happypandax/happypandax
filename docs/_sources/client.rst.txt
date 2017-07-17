@@ -76,11 +76,16 @@ In pseudocode::
 And that's the end of it. You've successfully received a message from the server.
 
 Sending a message is even easier. Just make sure it's valid ``JSON``, converted to bytes encoded in ``UTF-8`` before you send.
-    
+
+**Remember to suffix the message with the EOF tag so the server knows when your message is complete**.     
+
 In pseudocode::
 
     var msg_to_send = bytes(valid_json, encoding="utf-8"); # make sure it's UTF-8 encoded
+    var eof_tag = bytes("<EOF>", encoding="utf-8");
+
     sock.send_everything(msg_to_send);
+    sock.send_everything(eof_tag);
 
 For every message you send the server, a response is sent back, that is, unless the server has crashed.
 
@@ -140,6 +145,8 @@ To authenticate as a **user** the client responds with::
 The server will respond with ``"Authenticated"`` for a successful handshake.
 
 If otherwise, it responds with an error. See ... for possible errors.
+
+This handshake is only required *once* per connection.
 
 .. todo::
 
