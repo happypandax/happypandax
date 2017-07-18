@@ -180,9 +180,22 @@ The session is tied to the context of the client who did the handshake.
 The session is *not* tied to any particular connection, meaning multiple connections
 can use the same session.
 
-This allows for multiple connections to be made within the same app while sharing the same context.
+This allows for multiple connections to be made within the same app while sharing the same context::
+
+    socketA (connects) --> server
+    socketA <-- (asking for handshake) server
+    socketA (handshakes) --> server
+    socketA <-- (accepted, sessionid) server
+
+    socketB (connects) --> server
+    socketB <-- (asking for handshake) server
+    socketB (normal msg with session id) --> server
+    socketB <-- (normal response) server
 
 Think of it like a computer with only one user account has multiple people using it.
+
+As shown above, the server will *always* send a message when a client connects.
+This message should thus always be consumed by additional sockets before sending the intended message with a session.
 
 **Sessions have a limited lifespan**. Whenever you send a message using a session, you extend that particular session's lifespan.
 
