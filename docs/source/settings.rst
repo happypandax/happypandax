@@ -1,4 +1,4 @@
-Happypanda X Settings
+Settings
 ========================================
 
 

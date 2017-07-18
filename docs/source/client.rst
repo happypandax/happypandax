@@ -20,7 +20,8 @@ For exchanging data between the server and client ``JSON`` is used. Make sure yo
 
 Before wanting to talk to a HPX server, make sure you have one running. See :ref:`Starting up` or :ref:`Setting up an environment` on how to get one up and running.
 
-It is recommended that you run the server with the `--debug` and `--dev` commandline switches so that you can see what's going on while you're connected.
+It is recommended that you run the server with the ``--debug`` and ``--dev`` commandline switches so that you can see what's going on while you're connected.
+See :ref:`Command-Line Arguments`.
 
 Exchanging messages
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -22,7 +22,7 @@ Starting up
 From source
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-See available command arguments: ``python run.py --help``
+See available command arguments: ``python run.py --help`` or :ref:`Command-Line Arguments`
 
 Start the server: ``python run.py -s``
 
