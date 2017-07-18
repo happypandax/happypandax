@@ -869,6 +869,8 @@ if __name__ == '__main__':
                 else:
                     db_lang = dst_languages['english']
 
+                gallery.language = db_lang
+
                 title = db.Title()
                 title.name = ch.title if ch.title else g.title
                 title.language = db_lang
