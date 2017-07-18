@@ -885,7 +885,8 @@ if __name__ == '__main__':
                     dst_artists[artist.name] = artist
                 gallery.info = g.info
                 gallery.fav = bool(g.fav)
-                gallery.rating = g.rating
+                if g.rating is not None:
+                    gallery.rating = g.rating * 2
                 if g.type:
                     gtype = db.Category()
                     gtype.name = g.type
