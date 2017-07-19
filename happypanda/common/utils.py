@@ -1,6 +1,5 @@
 import sys
 import json
-import enum
 import os
 import argparse
 import pkgutil
@@ -210,37 +209,6 @@ def session(sess=constants.db_session):
     except:
         s.rollback()
         raise
-
-
-class APIEnum(enum.Enum):
-    "A conv. enum class"
-
-    @classmethod
-    def get(cls, key):
-        if key in cls:
-            return key
-
-        try:
-            return cls[key]
-        except KeyError:
-            pass
-
-        try:
-            return cls(key)
-        except ValueError:
-            pass
-
-        if isinstance(key, str):
-            low_key = key.lower()
-            for name, member in cls.__members__.items():
-                if name.lower() == low_key:
-                    return member
-
-        raise exceptions.EnumError(
-            this_function(),
-            "{}: enum member doesn't exist '{}'".format(
-                cls.__name__,
-                key))
 
 
 def convert_to_json(buffer, name):

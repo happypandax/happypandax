@@ -6,18 +6,18 @@ from happypanda.core.commands import database_cmd
 import functools
 
 
-def _get_cover(kwargs, cover):
+def _get_image(kwargs, cover):
     return message.Profile(cover, **kwargs) if cover else None
 
 
-def get_cover(item_type: enums.ItemType = enums.ItemType.Gallery,
-              item_ids: list = [],
-              size: enums.ImageSize = enums.ImageSize.Medium,
-              local: bool = False,
-              uri: bool = False,
+def get_image(item_type: enums.ItemType=enums.ItemType.Gallery,
+              item_ids: list=[],
+              size: enums.ImageSize=enums.ImageSize.Medium,
+              local: bool=False,
+              uri: bool=False,
               ctx=None):
     """
-    Get cover image for item
+    Get image for item
     Image content is base64 encoded. 
 
     Args:
@@ -41,18 +41,18 @@ def get_cover(item_type: enums.ItemType = enums.ItemType.Gallery,
 
     content = {}
 
-    command_dec = functools.partial(_get_cover, {'local': local, 'uri': uri})
+    command_dec = functools.partial(_get_image, {'local': local, 'uri': uri})
 
     for i in item_ids:
         c = database_cmd.GetModelCover()
         services.ImageService.generic.add_command(c, command_dec)
         content[i] = c.start(db_item, i, size)
 
-    return message.Identity('cover', content)
+    return message.Identity('image', content)
 
 
-def get_item(item_type: enums.ItemType = enums.ItemType.Gallery,
-             item_id: int = 0):
+def get_item(item_type: enums.ItemType=enums.ItemType.Gallery,
+             item_id: int=0):
     """
     Get item
 
@@ -70,59 +70,66 @@ def get_item(item_type: enums.ItemType = enums.ItemType.Gallery,
 
     item = database_cmd.GetModelItemByID().run(db_model, {item_id})[0]
     if not item:
-        raise exceptions.DatabaseItemNotFoundError(
-            utils.this_function(),
-            "'{}' with id '{}' was not found".format(
-                item_type.name,
+        raise exceptions.DatabaseItemNotFoundError(utils.this_function(),
+            "'{}' with id '{}' was not found".format(item_type.name,
                 item_id))
 
     return db_msg(item)
 
-def get_related_items(item_type: enums.ItemType = enums.ItemType.Gallery,
-                     related_type: enums.ItemType = enums.ItemType.Page,
-                     item_id: int = 0, limit: int = 100):
+def get_related_items(item_type: enums.ItemType=enums.ItemType.Gallery,
+                      item_id: int = 0,
+                      related_type: enums.ItemType=enums.ItemType.Page,
+                      limit: int = 100):
     """
     Get item related to given item
 
     Args:
-        item_type: ...
-        related_type: ...
-        related_id: id of the related item
+        item_type: parent item
+        item_id: id of the item
+        related_type: child item
         limit: limit the amount of items returned
 
     Returns:
-        a list of item message object
+        a list of related item message object
     """
     item_type = enums.ItemType.get(item_type)
     related_type = enums.ItemType.get(related_type)
 
-    db_msg, db_model = item_type._msg_and_model()
+    _, parent_model = item_type._msg_and_model()
+    child_msg, child_model = related_type._msg_and_model()
+
+    col = db.relationship_column(parent_model, child_model)
+    if not col:
+        raise exceptions.APIError(utils.this_function(), "{} has no relationship with {}".format(related_type, item_type))
 
     s = constants.db_session()
+    item_ids = s.query(child_model.id).join(col).filter(parent_model.id==item_id).limit(limit).all()
+    items = database_cmd.GetModelItemByID().run(child_model, {x[0] for x in item_ids})
 
-    item_ids = s.query(db_model.id).filter
-
+    item_list = message.List(db.model_name(child_model), child_msg)
+    [item_list.append(child_msg(x)) for x in items]
+    return item_list
 
 def get_gfilters():
     """
-    Get a list of gallery filter lists
+    Get a list of galleryfilter lists
 
     Returns:
         a list of galleryfilter objects
     """
 
-    glists = message.List("gallerylist", message.GalleryFilter)
+    glists = message.List("galleryfilters", message.GalleryFilter)
     s = constants.db_session()
     [glists.append(message.GalleryFilter(x)) for x in s.query(db.GalleryFilter).all()]
     return glists
 
 
-def get_tags(taggable_id: int = 0):
+def get_tags(taggable_id: int=0):
     ""
     pass
 
 
-def get_count(item_type: enums.ItemType = enums.ItemType.Gallery):
+def get_count(item_type: enums.ItemType=enums.ItemType.Gallery):
     """
     Get count of items in the database
 

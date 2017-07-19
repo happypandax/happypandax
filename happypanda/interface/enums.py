@@ -1,8 +1,42 @@
+import enum
+
 from happypanda.common import utils, exceptions
 from happypanda.core import message, db
 
+class _APIEnum(enum.Enum):
+    "A conv. enum class"
 
-class ViewType(utils.APIEnum):
+    @classmethod
+    def get(cls, key):
+
+        # for some ungodly reason this check wouldnt work when calling from the client
+        # so i ended comparing strings instead
+        if repr(type(key)) == repr(cls):
+            return key
+
+        try:
+            return cls[key]
+        except KeyError:
+            pass
+
+        try:
+            return cls(key)
+        except ValueError:
+            pass
+
+        if isinstance(key, str):
+            low_key = key.lower()
+            for name, member in cls.__members__.items():
+                if name.lower() == low_key:
+                    return member
+
+        raise exceptions.EnumError(
+            utils.this_function(),
+            "{}: enum member doesn't exist '{}'".format(
+                cls.__name__,
+                repr(key)))
+
+class ViewType(_APIEnum):
     #: Library
     Library = 1
     #: Favourite
@@ -11,7 +45,7 @@ class ViewType(utils.APIEnum):
     Inbox = 3
 
 
-class ItemType(utils.APIEnum):
+class ItemType(_APIEnum):
     #: Gallery
     Gallery = 1
     #: Collection
@@ -51,7 +85,7 @@ class ItemType(utils.APIEnum):
         return obj, db_model
 
 
-class ImageSize(utils.APIEnum):
+class ImageSize(_APIEnum):
     #: Original image size
     Original = 1
     #: Big image size
@@ -62,7 +96,7 @@ class ImageSize(utils.APIEnum):
     Small = 4
 
 
-class ServerCommand(utils.APIEnum):
+class ServerCommand(_APIEnum):
     #: Shut down the server
     ServerQuit = 1
 
