@@ -1,0 +1,274 @@
+
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Command-Line Arguments &#8212; Happypanda X (0, 0, 1) documentation</title>
+    
+    <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/style.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '(0, 0, 1)',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://platform.twitter.com/widgets.js"></script>
+    <script type="text/javascript" src="_static/script.js"></script>
+    <script type="text/javascript" src="_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Contributing" href="env.html" />
+    <link rel="prev" title="Settings" href="settings.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body role="document">
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="index.html">
+          Happypanda X</a>
+        <span class="navbar-text navbar-version pull-left"><b>(0, 0, 1)</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="index.html">Contents <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="install.html#building">Building</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Using Happypanda X</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html#exposing-happypanda-x">Exposing Happypanda X</a></li>
+<li class="toctree-l1"><a class="reference internal" href="settings.html">Settings</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Command-Line Arguments</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="env.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="client.html">Creating frontends</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plugin.html">Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="todo.html">TODO</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api.html">Server API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api_plugin.html">Plugin API</a></li>
+</ul>
+</ul>
+</li>
+              
+            
+            
+              
+                
+  <li>
+    <a href="settings.html" title="Previous Chapter: Settings"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; Settings</span>
+    </a>
+  </li>
+  <li>
+    <a href="env.html" title="Next Chapter: Contributing"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Contributing &raquo;</span>
+    </a>
+  </li>
+              
+            
+            
+            
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+
+<ul class="quick-links">
+    <li>
+        <strong>Quick links</strong>
+    </li>
+    <li class="quick-link">
+        <a class="github-button" href="https://github.com/pewpews" aria-label="Follow @pewpews on GitHub">Follow @pewpews</a>
+    </li>
+    <li class="quick-link">
+        <a class="github-button" href="https://github.com/pewpews/happypandax/issues" data-icon="octicon-issue-opened" data-show-count="true" aria-label="Issue pewpews/happypandax on GitHub">Issue</a>
+    </li>
+    <li class="divider">&middot;</li>
+    <li class="quick-link">
+        <a class="github-button" href="https://github.com/pewpews/happypandax" data-icon="octicon-star" data-show-count="true" aria-label="Star pewpews/happypandax on GitHub">Star</a>
+    </li>
+    <li class="quick-link">
+        <a class="github-button" href="https://github.com/pewpews/happypandax/fork" data-icon="octicon-repo-forked" data-show-count="true" aria-label="Fork pewpews/happypandax on GitHub">Fork</a>
+    </li>
+    <li class="divider">&middot;</li>
+    <li class="quick-link">
+        <a href="https://twitter.com/pewspew"
+           class="twitter-follow-button" data-width="145px"
+           data-link-color="#0069D6" data-show-count="false">
+            Follow
+            @pewspew
+        </a>
+    </li>
+    <li class="quick-link">
+        <a href="https://twitter.com/share" class="twitter-share-button"
+           data-url="" data-count="horizontal"
+           data-via="twbootstrap"
+           data-related="pewpews:Creator of Happypanda X">Tweet</a>
+    </li>
+</ul>
+<div class="container">
+    <div class="row">
+      <div class="col-md-3">
+        <div id="sidebar" class="bs-sidenav" role="complementary"><ul>
+<li><a class="reference internal" href="#">Command-Line Arguments</a></li>
+</ul>
+
+        </div>
+      </div>
+        <div class="col-md-9 content">
+            
+  <div class="section" id="command-line-arguments">
+<h1>Command-Line Arguments<a class="headerlink" href="#command-line-arguments" title="Permalink to this headline">¶</a></h1>
+<p>A manga/doujinshi manager with tagging support (<a class="reference external" href="https://github.com/happypandax/server">https://github.com/happypandax/server</a>)</p>
+<div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">usage: Command-Line Arguments [-h] [-p PORT] [--torrent-port TORRENT_PORT]</span>
+<span class="go">                                  [--host HOST] [--expose] [--generate-config]</span>
+<span class="go">                                  [-d] [-i] [-v] [--safe] [-x]</span>
+</pre></div>
+</div>
+<dl class="option">
+<dt id="cmdoption-command-line-arguments-h">
+<code class="descname">-h</code><code class="descclassname"></code><code class="descclassname">, </code><code class="descname">--help</code><code class="descclassname"></code><a class="headerlink" href="#cmdoption-command-line-arguments-h" title="Permalink to this definition">¶</a></dt>
+<dd><p>show this help message and exit</p>
+</dd></dl>
+
+<dl class="option">
+<dt id="cmdoption-command-line-arguments-p">
+<code class="descname">-p</code><code class="descclassname"> &lt;port&gt;</code><code class="descclassname">, </code><code class="descname">--port</code><code class="descclassname"> &lt;port&gt;</code><a class="headerlink" href="#cmdoption-command-line-arguments-p" title="Permalink to this definition">¶</a></dt>
+<dd><p>Specify which port to start the server on</p>
+</dd></dl>
+
+<dl class="option">
+<dt id="cmdoption-command-line-arguments-torrent-port">
+<code class="descname">--torrent-port</code><code class="descclassname"> &lt;torrent_port&gt;</code><a class="headerlink" href="#cmdoption-command-line-arguments-torrent-port" title="Permalink to this definition">¶</a></dt>
+<dd><p>Specify which port to start the torrent client on</p>
+</dd></dl>
+
+<dl class="option">
+<dt id="cmdoption-command-line-arguments-host">
+<code class="descname">--host</code><code class="descclassname"> &lt;host&gt;</code><a class="headerlink" href="#cmdoption-command-line-arguments-host" title="Permalink to this definition">¶</a></dt>
+<dd><p>Specify which address the server should bind to</p>
+</dd></dl>
+
+<dl class="option">
+<dt id="cmdoption-command-line-arguments-expose">
+<code class="descname">--expose</code><code class="descclassname"></code><a class="headerlink" href="#cmdoption-command-line-arguments-expose" title="Permalink to this definition">¶</a></dt>
+<dd><p>Attempt to expose the server through portforwading</p>
+</dd></dl>
+
+<dl class="option">
+<dt id="cmdoption-command-line-arguments-generate-config">
+<code class="descname">--generate-config</code><code class="descclassname"></code><a class="headerlink" href="#cmdoption-command-line-arguments-generate-config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a skeleton config file and quit</p>
+</dd></dl>
+
+<dl class="option">
+<dt id="cmdoption-command-line-arguments-d">
+<code class="descname">-d</code><code class="descclassname"></code><code class="descclassname">, </code><code class="descname">--debug</code><code class="descclassname"></code><a class="headerlink" href="#cmdoption-command-line-arguments-d" title="Permalink to this definition">¶</a></dt>
+<dd><p>Start in debug mode (collects more information)</p>
+</dd></dl>
+
+<dl class="option">
+<dt id="cmdoption-command-line-arguments-i">
+<code class="descname">-i</code><code class="descclassname"></code><code class="descclassname">, </code><code class="descname">--interact</code><code class="descclassname"></code><a class="headerlink" href="#cmdoption-command-line-arguments-i" title="Permalink to this definition">¶</a></dt>
+<dd><p>Start in interactive mode</p>
+</dd></dl>
+
+<dl class="option">
+<dt id="cmdoption-command-line-arguments-v">
+<code class="descname">-v</code><code class="descclassname"></code><code class="descclassname">, </code><code class="descname">--version</code><code class="descclassname"></code><a class="headerlink" href="#cmdoption-command-line-arguments-v" title="Permalink to this definition">¶</a></dt>
+<dd><p>show program&#8217;s version number and exit</p>
+</dd></dl>
+
+<dl class="option">
+<dt id="cmdoption-command-line-arguments-safe">
+<code class="descname">--safe</code><code class="descclassname"></code><a class="headerlink" href="#cmdoption-command-line-arguments-safe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Start without plugins</p>
+</dd></dl>
+
+<dl class="option">
+<dt id="cmdoption-command-line-arguments-x">
+<code class="descname">-x</code><code class="descclassname"></code><code class="descclassname">, </code><code class="descname">--dev</code><code class="descclassname"></code><a class="headerlink" href="#cmdoption-command-line-arguments-x" title="Permalink to this definition">¶</a></dt>
+<dd><p>Start in development mode</p>
+</dd></dl>
+
+</div>
+
+
+        </div>
+          
+    </div>
+</div>
+
+<script async defer src="https://buttons.github.io/buttons.js"></script>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+        <br/>
+        
+<div id="sourcelink">
+  <a href="_sources/switches.rst.txt"
+     rel="nofollow">Source</a>
+</div>
+      
+    </p>
+    <p>
+        &copy; Copyright Twiddly.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.2.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>
