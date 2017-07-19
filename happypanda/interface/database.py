@@ -95,9 +95,9 @@ def get_item(item_type: enums.ItemType = enums.ItemType.Gallery.name,
 
     return db_msg(item)
 
-def get_related_item(item_type: enums.ItemType = enums.ItemType.Page.name,
-                     related_type: enums.ItemType = enums.ItemType.Gallery.name,
-                     related_id: int = 0):
+def get_related_items(item_type: enums.ItemType = enums.ItemType.Gallery.name,
+                     related_type: enums.ItemType = enums.ItemType.Page.name,
+                     item_id: int = 0, limit: int = 100):
     """
     Get item related to given item
 
@@ -105,9 +105,10 @@ def get_related_item(item_type: enums.ItemType = enums.ItemType.Page.name,
         item_type: ...
         related_type: ...
         related_id: id of the related item
+        limit: limit the amount of items returned
 
     Returns:
-        item message object
+        a list of item message object
     """
     item_type = enums.ItemType.get(item_type)
     related_type = enums.ItemType.get(related_type)
@@ -120,6 +121,11 @@ def get_related_item(item_type: enums.ItemType = enums.ItemType.Page.name,
     }
 
     db_model = db_items.get(item_type)
+    db_model, db_msg = db_model
+    s = constants.db_session()
+
+    item_ids = s.query(db_model.id).filter
+
 
 def get_gfilters():
     """

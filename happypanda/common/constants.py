@@ -41,18 +41,16 @@ preview = config.get(core_ns, 'preview', False, "Run in preview mode")
 
 # CORE
 
-
 class ExitCode(enum.Enum):
     Exit = 0
     Restart = 1
 
 
-class RuntimeMode(enum.Enum):
-    Server = 0
-    User = 0
-
-
-running_mode = RuntimeMode.User
+image_sizes = {
+    "big": (300, 416),
+    "medium": (200, 276),
+    "small": (100, 136),
+    }
 
 concurrent_image_tasks = config.get(
     core_ns,
@@ -181,7 +179,5 @@ data_size = 1024
 server_ready = True
 
 server_started = False
-
-# NETWORK
 
 config_doc = config.doc_render()  # for doc

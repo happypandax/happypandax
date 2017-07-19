@@ -382,12 +382,15 @@ class ClientHandler:
 
     def _server_command(self, data):
         d = data['data']
-        if isinstance(d, str):
-
-            if d.lower() == enums.ServerCommand.RequestAuth.value:
-                return enums.ServerCommand.RequestAuth
-            elif d.lower() == enums.ServerCommand.ServerQuit.value:  # TODO: check permission
-                return enums.ServerCommand.ServerQuit
+        if isinstance(d, (str, int)):
+            try:
+                e = enums.ServerCommand.get(d)
+                if e in (enums.ServerCommand.ServerQuit, enums.ServerCommand.ServerRestart): 
+                    # TODO: check permission
+                    pass
+                return e
+            except exceptions.EnumError:
+                pass
         return None
 
 

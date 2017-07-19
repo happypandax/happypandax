@@ -213,19 +213,34 @@ def session(sess=constants.db_session):
 
 
 class APIEnum(enum.Enum):
-    "A conv. enum class allowing for str comparison"
+    "A conv. enum class"
 
     @classmethod
     def get(cls, key):
+        if key in cls:
+            return key
+
         try:
-            v = cls[key]
-            return v
+            return cls[key]
         except KeyError:
-            raise exceptions.ServerError(
-                this_function(),
-                "{}: enum doesn't exist '{}' (make sure capitalization is alright)".format(
-                    cls.__name__,
-                    key))
+            pass
+
+        try:
+            return cls(key)
+        except ValueError:
+            pass
+
+        if isinstance(key, str):
+            low_key = key.lower()
+            for name, member in cls.__members__.items():
+                if name.lower() == low_key:
+                    return member
+
+        raise exceptions.EnumError(
+            this_function(),
+            "{}: enum member doesn't exist '{}'".format(
+                cls.__name__,
+                key))
 
 
 def convert_to_json(buffer, name):

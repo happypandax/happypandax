@@ -3,43 +3,43 @@ from happypanda.common import utils
 
 class ViewType(utils.APIEnum):
     #: Library
-    Library = 0
+    Library = 1
     #: Favourite
-    Favorite = 1
+    Favorite = 2
     #: Inbox
-    Inbox = 2
+    Inbox = 3
 
 
 class ItemType(utils.APIEnum):
     #: Gallery
-    Gallery = 0
+    Gallery = 1
     #: Collection
-    Collection = 1
+    Collection = 2
     #: GalleryFilter
-    GalleryFilter = 2
+    GalleryFilter = 3
     #: Page
-    Page = 3
+    Page = 4
     #: Grouping
-    Grouping = 4
+    Grouping = 5
 
 
 class ImageSize(utils.APIEnum):
-    #: Original
-    Original = utils.ImageSize(0, 0)
-    #: Big
-    Big = utils.ImageSize(300, 416)
-    #: Medium
-    Medium = utils.ImageSize(200, 276)
-    #: Small
-    Small = utils.ImageSize(100, 136)
+    #: Original image size
+    Original = 1
+    #: Big image size
+    Big = 2
+    #: Medium image size
+    Medium = 3
+    #: Small image size
+    Small = 4
 
 
 class ServerCommand(utils.APIEnum):
     #: Shut down the server
-    ServerQuit = "serverquit"
+    ServerQuit = 1
 
     #: Restart the server
-    ServerRestart = "serverrestart"
+    ServerRestart = 2
 
     #: Request authentication
-    RequestAuth = "requestauth"
+    RequestAuth = 3

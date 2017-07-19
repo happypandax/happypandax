@@ -8,7 +8,7 @@ from rarfile import RarFile
 from collections import namedtuple
 from contextlib import contextmanager
 
-from happypanda.common import hlogger, exceptions, utils
+from happypanda.common import hlogger, exceptions, utils, constants
 from happypanda.core.command import CoreCommand, CommandEntry, AsyncCommand
 from happypanda.core.services import ImageService
 from happypanda.core import db
@@ -20,7 +20,7 @@ log = hlogger.Logger(__name__)
 ImageProperties = namedtuple(
     "ImageProperties", [
         'size', 'radius', 'output_dir', 'output_path', 'name'])
-ImageProperties.__new__.__defaults__ = (enums.ImageSize.Medium.value, 0, None, None, None)
+ImageProperties.__new__.__defaults__ = (utils.ImageSize(*constants.image_sizes['medium']), 0, None, None, None)
 
 
 class ImageItem(AsyncCommand):

@@ -61,6 +61,11 @@ class GetModelCover(AsyncCommand):
 
         self.model = model
 
+        if image_size == enums.ImageSize.Original:
+            image_size = utils.ImageSize(0, 0)
+        else:
+            image_size = utils.ImageSize(*constants.image_sizes[image_size.name.lower()])
+
         with self.models.call() as plg:
             for p in plg.all(default=True):
                 self._supported_models.update(p)
@@ -71,7 +76,7 @@ class GetModelCover(AsyncCommand):
                 "Model '{}' is not supported".format(model))
 
         img_hash = io_cmd.ImageItem.gen_hash(
-            model, image_size.value, item_id)
+            model, image_size, item_id)
 
         generate = True
         sess = constants.db_session()
@@ -86,11 +91,11 @@ class GetModelCover(AsyncCommand):
 
         if generate:
             model_name = db.model_name(model)
-            with self.generate.call_capture(model_name, model_name, item_id, image_size.value) as plg:
+            with self.generate.call_capture(model_name, model_name, item_id, image_size) as plg:
                 self.cover.path = plg.first()
 
             self.cover.data = img_hash
-            self.cover.size = str(tuple(image_size.value))
+            self.cover.size = str(tuple(image_size))
 
         if self.cover.path and generate:
             i = GetModelItemByID().run(model, {item_id})[0]
