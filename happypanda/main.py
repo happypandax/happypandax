@@ -11,11 +11,10 @@ from happypanda.core import server, plugins, command  # noqa: E402
 from happypanda.core.commands import io_cmd  # noqa: E402
 
 log = hlogger.Logger(__name__)
-
+parser = utils.get_argparser()
 
 def start():
     utils.setup_dirs()
-    parser = utils.get_argparser()
     args = parser.parse_args()
     utils.parse_options(args)
     utils.setup_logger(args)

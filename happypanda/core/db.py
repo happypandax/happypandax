@@ -15,7 +15,8 @@ from sqlalchemy.orm import (
     attributes,
     state,
     collections,
-    dynamic)
+    dynamic,
+    backref)
 from sqlalchemy import (
     create_engine,
     event,
@@ -36,7 +37,9 @@ from sqlalchemy_utils import (
     ArrowType,
     generic_repr,
     force_instant_defaults,
-    force_auto_coercion)
+    force_auto_coercion,
+    observes,
+    get_type)
 
 import arrow
 import os
@@ -243,6 +246,9 @@ class ProfileMixin:
     def get_profile(self, profile_type):
         return ''
 
+class UpdatedMixin:
+
+    last_updated = Column(ArrowType, nullable=False, default=arrow.now)
 
 Base = declarative_base(cls=BaseID)
 
@@ -321,6 +327,7 @@ class Life(Base):
 
     version = Column(Float, nullable=False, default=constants.version_db,)
     times_opened = Column(Integer, nullable=False, default=0)
+    timestamp = Column(ArrowType, nullable=False, default=arrow.now)
 
     def __repr__(self):
         return "<Version: {}, times_opened:{}>".format(
@@ -341,6 +348,7 @@ class User(Base):
     address = Column(String, nullable=False, default='')
     context_id = Column(String, nullable=False, default='')
     password = Column(Password)
+    timestamp = Column(ArrowType, nullable=False, default=arrow.now)
 
     events = relationship("Event", lazy='dynamic', back_populates='user')
 
@@ -471,7 +479,7 @@ class Taggable(Base):
         lazy="dynamic")
 
 
-class TaggableMixin:
+class TaggableMixin(UpdatedMixin):
 
     @declared_attr
     def taggable(cls):
@@ -499,9 +507,10 @@ gallery_artists = Table(
             'gallery_id', Integer, ForeignKey('gallery.id')), UniqueConstraint(
                 'artist_id', 'gallery_id'))
 
+artist_profiles = profile_association("artist")
 
 @generic_repr
-class Artist(NameMixin, Base):
+class Artist(ProfileMixin, Base):
     __tablename__ = 'artist'
 
     galleries = relationship(
@@ -510,6 +519,26 @@ class Artist(NameMixin, Base):
         back_populates='artists',
         lazy="dynamic")
 
+    names = relationship(
+        "ArtistName",
+        lazy='joined',
+        back_populates='artist',
+        cascade="all, delete-orphan")
+
+    profiles = relationship(
+        "Profile",
+        secondary=artist_profiles,
+        lazy='joined',
+        cascade="all")
+
+@generic_repr
+class ArtistName(NameMixin, Base):
+    __tablename__ = 'artistname'
+
+    artist_id = Column(Integer, ForeignKey('artist.id'))
+    language_id = Column(Integer, ForeignKey('language.id'))
+    language = relationship("Language", cascade="save-update, merge, refresh-expire")
+    artist = relationship("Artist", back_populates='names')
 
 gallery_circles = Table(
     'gallery_circles', Base.metadata, Column(
@@ -889,6 +918,11 @@ class GalleryUrl(Base):
 def initEvents(sess):
     "Initializes events"
 
+
+    @event.listens_for(UpdatedMixin, 'before_update', propagate=True)
+    def timestamp_before_update(mapper, connection, target):
+        target.last_updated = arrow.now()
+
     @event.listens_for(sess, 'before_commit')
     def delete_artist_orphans(session):
         session.query(Artist).filter(
@@ -1115,6 +1149,27 @@ def related_classes(obj):
 
     return [x.mapper.class_ for x in inspect(obj).relationships]
 
+def relationship_column(objA, objB):
+    "Return model attribute on objA that has a relationship with objB"
+    assert issubclass(objA, Base)
+    assert issubclass(objB, Base)
+
+    rel = related_classes(objA)
+
+    if not objB in rel:
+        return None
+
+    for c in table_attribs(objA).values():
+        if get_type(c) == objB:
+            return c
+
+def column_model(obj):
+    "Return model class for given model attribute/column"
+    return get_type(obj)
+
+def column_name(obj):
+    "Return name of model attribute for given model attribute"
+    raise NotImplementedError
 
 def model_name(model):
     "Return name of model"

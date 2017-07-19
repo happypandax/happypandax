@@ -118,8 +118,7 @@ class ParseSearch(Command):
 
             # if we meet a whitespace, comma or end of term and are not in a
             # double qoute
-            if (x == ' ' or x == ',' or n == len(
-                    term) - 1) and qoute_level == 0:
+            if (x == ' ' or x == ',' or n == len(term) - 1) and qoute_level == 0:
                 # if end of term and x is allowed
                 if (n == len(term) - 1) and x not in blacklist and x != ' ':
                     piece += x
@@ -220,8 +219,7 @@ class PartialModelFilter(Command):
 
     @models.default()
     def _models():
-        return (
-            db.NamespaceTags,
+        return (db.NamespaceTags,
             db.Tag,
             db.Namespace,
             db.Artist,
@@ -233,8 +231,7 @@ class PartialModelFilter(Command):
             db.Collection,
             db.Gallery,
             db.Title,
-            db.GalleryUrl
-        )
+            db.GalleryUrl)
 
     @staticmethod
     def _match_string_column(column, term, options):
@@ -280,19 +277,11 @@ class PartialModelFilter(Command):
         if term.namespace:
             lower_ns = term.namespace.lower()
             if lower_ns == 'path':
-                ids.update(
-                    x[0] for x in s.query(
-                        parent_model.id).filter(
-                        match_string(
-                            db.Gallery.path,
+                ids.update(x[0] for x in s.query(parent_model.id).filter(match_string(db.Gallery.path,
                             term,
                             options)).all())
             elif lower_ns in ("rating", "stars"):
-                ids.update(
-                    x[0] for x in s.query(
-                        parent_model.id).filter(
-                        match_int(
-                            db.Gallery.rating,
+                ids.update(x[0] for x in s.query(parent_model.id).filter(match_int(db.Gallery.rating,
                             term,
                             options)).all())
 
@@ -312,43 +301,33 @@ class PartialModelFilter(Command):
         if issubclass(parent_model, db.Gallery):
             if term.namespace.lower() == 'title' or not term.namespace:
                 s = constants.db_session()
-                ids.update(
-                    x[0] for x in s.query(
-                        parent_model.id).join(
-                        parent_model.titles).filter(
-                        match_string(
-                            db.Title.name,
+                ids.update(x[0] for x in s.query(parent_model.id).join(parent_model.titles).filter(match_string(child_model.name,
                             term,
                             options)).all())
         else:
-            raise NotImplementedError
+            raise NotImplementedError("Title on {} has not been implemented".format(parent_model))
 
         return ids
 
     @match_model.default(capture=True)
     def _match_namemixin(parent_model, child_model, term, options,
-                         capture=[db.model_name(x) for x in _models() if isinstance(x, db.NameMixin)]):
-        raise NotImplementedError
+                         capture=[db.model_name(x) for x in _models() if issubclass(x, db.NameMixin)]):
         get_model = database_cmd.GetModelClass()
         parent_model = get_model.run(parent_model)
         child_model = get_model.run(child_model)
-
         match_string = PartialModelFilter._match_string_column
         term = ParseTerm().run(term)
         ids = set()
 
         s = constants.db_session()
 
-        ids.update(
-            x[0] for x in s.query(
-                parent_model.id).join(
-                parent_model.titles).filter(
-                match_string(
-                    db.Title.name,
+        col = db.relationship_column(parent_model, child_model)
+
+        ids.update(x[0] for x in s.query(parent_model.id).join(col).filter(match_string(child_model.name,
                     term,
                     options)).all())
 
-        return set()
+        return ids
 
     def main(self, model: db.Base, term: str) -> set:
 
@@ -361,8 +340,7 @@ class PartialModelFilter(Command):
                 self._supported_models.update(p)
 
         if self.model not in self._supported_models:
-            raise exceptions.CommandError(
-                utils.this_command(self),
+            raise exceptions.CommandError(utils.this_command(self),
                 "Model '{}' is not supported".format(model))
 
         related_models = db.related_classes(model)

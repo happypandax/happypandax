@@ -801,16 +801,18 @@ if __name__ == '__main__':
                 path = g.path if ch.in_archive else ch.path
                 if not os.path.exists(path):
                     try:
-                        print("Skipping '{}' because path doesn't exists.".format(ch.title))
+                        print("\nSkipping '{}' because path doesn't exists.".format(ch.title))
                     except UnicodeError:
-                        print("Skipping '{}' because path doesn't exists.".format(ch.title.encode(errors='ignore')))
+                        print("\nSkipping '{}' because path doesn't exists.".format(ch.title.encode(errors='ignore')))
                     continue
-                if path.endswith(('.rar', 'cbr')) and not args.rar:
-                    try:
-                        print("Skipping '{}' because path to unrar tool has not been supplied.".format(ch.title))
-                    except UnicodeError:
-                        print("Skipping '{}' because path to unrar tool has not been supplied.".format(ch.title.encode(errors='ignore')))
-                    continue
+
+                if not args.skip_archive:
+                    if path.endswith(('.rar', 'cbr')) and not args.rar:
+                        try:
+                            print("\nSkipping '{}' because path to unrar tool has not been supplied.".format(ch.title))
+                        except UnicodeError:
+                            print("\nSkipping '{}' because path to unrar tool has not been supplied.".format(ch.title.encode(errors='ignore')))
+                        continue
 
                 path_in_archive = ch.path
 
@@ -879,10 +881,15 @@ if __name__ == '__main__':
 
                 if g.artist:
                     artist = db.Artist()
-                    artist.name = g.artist
-                    artist = dst_artists.get(artist.name, artist)
+                    artist_name = db.ArtistName()
+                    artist_name.name = g.artist
+                    artist_name.language = db_lang
+                    d_artist = dst_artists.get(artist_name.name)
+                    if not d_artist:
+                        d_artist = artist
+                        artist_name.artist = d_artist
                     gallery.artists.append(artist)
-                    dst_artists[artist.name] = artist
+                    dst_artists[artist_name.name] = artist
                 gallery.info = g.info
                 gallery.fav = bool(g.fav)
                 if g.rating is not None:

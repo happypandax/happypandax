@@ -95,45 +95,49 @@ def get_item(item_type: enums.ItemType = enums.ItemType.Gallery.name,
 
     return db_msg(item)
 
-
-def _get_glists():
-    s = constants.db_session()
-    return s.query(db.GalleryFilter).all()
-
-
-def get_glists():
+def get_related_item(item_type: enums.ItemType = enums.ItemType.Page.name,
+                     related_type: enums.ItemType = enums.ItemType.Gallery.name,
+                     related_id: int = 0):
     """
-    Get a list of gallery lists
+    Get item related to given item
+
+    Args:
+        item_type: ...
+        related_type: ...
+        related_id: id of the related item
 
     Returns:
-        a list of gallerylist objects
+        item message object
+    """
+    item_type = enums.ItemType.get(item_type)
+    related_type = enums.ItemType.get(related_type)
+
+    db_items = {
+        enums.ItemType.Gallery: (db.Gallery, message.Gallery),
+        enums.ItemType.Collection: (db.Collection, message.Collection),
+        enums.ItemType.Grouping: (db.Grouping, message.Grouping),
+        enums.ItemType.Page: (db.Page, message.Page),
+    }
+
+    db_model = db_items.get(item_type)
+
+def get_gfilters():
+    """
+    Get a list of gallery filter lists
+
+    Returns:
+        a list of galleryfilter objects
     """
 
     glists = message.List("gallerylist", message.GalleryFilter)
-    [glists.append(message.GalleryFilter(x)) for x in _get_glists()]
+    s = constants.db_session()
+    [glists.append(message.GalleryFilter(x)) for x in s.query(db.GalleryFilter).all()]
     return glists
 
 
 def get_tags(taggable_id: int = 0):
     ""
     pass
-
-
-def _get_count(item_type: enums.ItemType = enums.ItemType.Gallery.name):
-    ""
-
-    item_type = enums.ItemType.get(item_type)
-
-    db_items = {
-        enums.ItemType.Gallery: db.Gallery,
-        enums.ItemType.Collection: db.Collection,
-        enums.ItemType.Grouping: db.Grouping,
-    }
-
-    db_item = db_items.get(item_type)
-
-    s = constants.db_session()
-    return s.query(db_item).count()
 
 
 def get_count(item_type: enums.ItemType = enums.ItemType.Gallery.name):
@@ -147,4 +151,16 @@ def get_count(item_type: enums.ItemType = enums.ItemType.Gallery.name):
         {'count': int}
     """
 
-    return message.Identity('count', {'count': _get_count(item_type)})
+    item_type = enums.ItemType.get(item_type)
+
+    db_items = {
+        enums.ItemType.Gallery: db.Gallery,
+        enums.ItemType.Collection: db.Collection,
+        enums.ItemType.Grouping: db.Grouping,
+    }
+
+    db_item = db_items.get(item_type)
+
+    s = constants.db_session()
+
+    return message.Identity('count', {'count': s.query(db_item).count()})
