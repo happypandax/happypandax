@@ -36,15 +36,14 @@ def gallery_count(id: int=0, item_type: enums.ItemType=enums.ItemType.GalleryFil
     """
     Get gallery count
 
-    Params:
+    Args:
         id: id of item
         item_type: can be 'GalleryList', 'Collection' or 'Grouping'
 
     Returns:
-        {
-        'id': id
-        'count':int
-        }
+        ```
+        { 'id': id, 'count':int }
+        ```
     """
 
     item_type = enums.ItemType.get(item_type)

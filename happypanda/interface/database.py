@@ -17,17 +17,20 @@ def get_cover(item_type: enums.ItemType = enums.ItemType.Gallery,
               uri: bool = False,
               ctx=None):
     """
-    Get cover image
+    Get cover image for item
+    Image content is base64 encoded. 
 
     Args:
-        item_type: ...
+        item_type: type of item
         item_ids: list of item ids
         size: ...
         local: replace image content with local path to image file
+        uri: 
 
     Returns:
-        a dict of item_id:async_command_id
-
+        ```
+        { item_id : async_command_id }
+        ```
     """
     utils.require_context(ctx)
 
@@ -124,10 +127,12 @@ def get_count(item_type: enums.ItemType = enums.ItemType.Gallery):
     Get count of items in the database
 
     Args:
-     item_type: type of db item (Gallery, Collection, Grouping)
+        item_type: type of db item (Gallery, Collection, Grouping)
 
     Returns:
+        ```
         {'count': int}
+        ```
     """
 
     item_type = enums.ItemType.get(item_type)

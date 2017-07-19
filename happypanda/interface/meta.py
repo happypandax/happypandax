@@ -82,7 +82,9 @@ def get_command_value(command_ids: list):
         command_ids: list of command ids
 
     Returns:
-        ``{ command_id : value }``
+        ```
+        { command_id : value }
+        ```
 
     """
 
@@ -114,9 +116,9 @@ def get_command_state(command_ids: list):
         command_ids: list of command ids
 
     Returns:
-
-        ``{ command_id : state }``
-
+        ```
+        { command_id : state }
+        ```
     """
 
     _command_msg(command_ids)
@@ -137,9 +139,9 @@ def get_command_progress(command_ids: list):
         command_ids: list of command ids
 
     Returns:
-
-        ``{ command_id : progress }``
-
+        ```
+        { command_id : progress }
+        ```
     """
     return message.Message("works")
 
@@ -152,9 +154,9 @@ def stop_command(command_ids: list):
         command_ids: list of command ids
 
     Returns:
-
-        ``{ command_id : state }``
-
+        ```
+        { command_id : state }
+        ```
     """
     _command_msg(command_ids)
 
@@ -176,9 +178,9 @@ def start_command(command_ids: list):
         command_ids: list of command ids
 
     Returns:
-
-        ``{ command_id : state }``
-
+        ```
+        { command_id : state }
+        ```
     """
     _command_msg(command_ids)
 
@@ -200,9 +202,9 @@ def get_command_error(command_ids: list):
         command_ids: list of command ids
 
     Returns:
-
-        ``{ command_id : error }``
-
+        ```
+        { command_id : error }
+        ```
     """
     return message.Message("works")
 
@@ -211,15 +213,15 @@ def undo_command(command_ids: list):
     """
     Undo a command
 
-    .. Note:
-        Only select commands are undoable
-
     Args:
         command_ids: list of command ids
 
     Returns:
+        ```
+        { command_id : state }
+        ```
 
-        ``{ command_id : state }``
-
+    .. Note::
+        Only select commands are undoable
     """
     return message.Message("works")

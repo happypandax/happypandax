@@ -9,10 +9,8 @@ def get_plugin(plugin_id: str):
         plugin_id: get information for a specific plugin
 
     Returns:
-        ``
-        { plugin_id:
-
-            }
-        ``
+        ```
+        { plugin_id: }
+        ```
     """
     return message.Message("works")
