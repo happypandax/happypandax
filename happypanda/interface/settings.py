@@ -7,7 +7,7 @@ def set_settings(settings: dict = {}, ctx=None):
     Set settings
 
     Args:
-        :settings: a dictionary containing key:value pairs
+        settings: a dictionary containing key:value pairs
 
     Returns:
         Status
@@ -25,7 +25,9 @@ def get_settings(settings: list = [], ctx=None):
         set_list: a list of setting keys
 
     Returns:
-        dict of key.name:value
+        ```
+        { 'key.name': value }
+        ```
     """
     utils.require_context(ctx)
 

@@ -8,7 +8,7 @@ def add_gallery(galleries: list=[], paths: list=[], ctx=None):
     Add galleries to the database.
 
     Args:
-        galleries: list of gallery objects parsed from XML
+        galleries: list of gallery objects
         paths: list of paths to the galleries
 
     Returns:
