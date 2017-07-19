@@ -11,7 +11,6 @@ from happypanda.common import constants, exceptions, utils
 from happypanda.core import db
 from happypanda.core.commands import io_cmd
 
-
 def finalize(msg_dict, session_id="", name=constants.server_name, error=None):
     "Finalize dict message before sending"
     enc = 'utf-8'
@@ -25,7 +24,6 @@ def finalize(msg_dict, session_id="", name=constants.server_name, error=None):
         msg['error'] = error
 
     return bytes(json.dumps(msg), enc)
-
 
 class CoreMessage:
     "Encapsulates return values from methods in the interface module"
@@ -419,3 +417,4 @@ class Function(CoreMessage):
 
     def from_json(self, j):
         return super().from_json(j)
+

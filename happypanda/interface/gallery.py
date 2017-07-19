@@ -3,7 +3,7 @@ from happypanda.core import db, message
 from happypanda.interface import enums
 
 
-def add_gallery(galleries: list = [], paths: list = [], ctx=None):
+def add_gallery(galleries: list=[], paths: list=[], ctx=None):
     """
     Add galleries to the database.
 
@@ -17,8 +17,8 @@ def add_gallery(galleries: list = [], paths: list = [], ctx=None):
     return message.Message("works")
 
 
-def scan_gallery(paths: list = [], add_after: bool = False,
-                 ignore_exist: bool = True, ctx=None):
+def scan_gallery(paths: list=[], add_after: bool=False,
+                 ignore_exist: bool=True, ctx=None):
     """
     Scan folders for galleries
 
@@ -32,28 +32,7 @@ def scan_gallery(paths: list = [], add_after: bool = False,
     """
     return message.Message("works")
 
-
-def _gallery_count(
-        id: int = 0, item_type: enums.ItemType = enums.ItemType.GalleryFilter.name):
-
-    item_type = enums.ItemType.get(item_type)
-
-    db_items = {
-        enums.ItemType.GalleryList: db.GalleryFilter,
-        enums.ItemType.Collection: db.Collection,
-        enums.ItemType.Grouping: db.Grouping
-    }
-
-    db_item = db_items.get(item_type)
-
-    s = constants.db_session()
-    return s.query(db_item).join(
-        db_item.galleries).filter(
-        db_item.id == id).count()
-
-
-def gallery_count(
-        id: int = 0, item_type: enums.ItemType = enums.ItemType.GalleryFilter.name):
+def gallery_count(id: int=0, item_type: enums.ItemType=enums.ItemType.GalleryFilter):
     """
     Get gallery count
 
@@ -68,7 +47,11 @@ def gallery_count(
         }
     """
 
-    return message.Identity(
-        "gcount", {
-            'id': id, 'count': _gallery_count(
-                id, item_type)})
+    item_type = enums.ItemType.get(item_type)
+
+    _, db_item = item_type._msg_and_model((enums.ItemType.GalleryList, enums.ItemType.Collection, enums.ItemType.Grouping))
+
+    s = constants.db_session()
+
+    return message.Identity("gcount", {
+            'id': id, 'count': s.query(db_item).join(db_item.galleries).filter(db_item.id == id).count()})

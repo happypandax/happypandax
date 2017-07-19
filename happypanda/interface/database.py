@@ -10,9 +10,9 @@ def _get_cover(kwargs, cover):
     return message.Profile(cover, **kwargs) if cover else None
 
 
-def get_cover(item_type: enums.ItemType = enums.ItemType.Gallery.name,
+def get_cover(item_type: enums.ItemType = enums.ItemType.Gallery,
               item_ids: list = [],
-              size: enums.ImageSize = enums.ImageSize.Medium.name,
+              size: enums.ImageSize = enums.ImageSize.Medium,
               local: bool = False,
               uri: bool = False,
               ctx=None):
@@ -34,14 +34,7 @@ def get_cover(item_type: enums.ItemType = enums.ItemType.Gallery.name,
     item_type = enums.ItemType.get(item_type)
     size = enums.ImageSize.get(size)
 
-    db_items = {
-        enums.ItemType.Gallery: db.Gallery,
-        enums.ItemType.Collection: db.Collection,
-        enums.ItemType.Grouping: db.Grouping,
-        enums.ItemType.Page: db.Page,
-    }
-
-    db_item = db_items.get(item_type)
+    _, db_item = item_type._msg_and_model((enums.ItemType.Gallery, enums.ItemType.Collection, enums.ItemType.Grouping, enums.ItemType.Page))
 
     content = {}
 
@@ -55,7 +48,7 @@ def get_cover(item_type: enums.ItemType = enums.ItemType.Gallery.name,
     return message.Identity('cover', content)
 
 
-def get_item(item_type: enums.ItemType = enums.ItemType.Gallery.name,
+def get_item(item_type: enums.ItemType = enums.ItemType.Gallery,
              item_id: int = 0):
     """
     Get item
@@ -70,20 +63,7 @@ def get_item(item_type: enums.ItemType = enums.ItemType.Gallery.name,
 
     item_type = enums.ItemType.get(item_type)
 
-    db_items = {
-        enums.ItemType.Gallery: (db.Gallery, message.Gallery),
-        enums.ItemType.Collection: (db.Collection, message.Collection),
-        enums.ItemType.Grouping: (db.Grouping, message.Grouping),
-        enums.ItemType.Page: (db.Page, message.Page),
-    }
-
-    db_model = db_items.get(item_type)
-    if not db_model:
-        raise exceptions.APIError(
-            "Item type must be on of {}".format(
-                db_items.keys()))
-
-    db_model, db_msg = db_model
+    db_msg, db_model = item_type._msg_and_model()
 
     item = database_cmd.GetModelItemByID().run(db_model, {item_id})[0]
     if not item:
@@ -95,8 +75,8 @@ def get_item(item_type: enums.ItemType = enums.ItemType.Gallery.name,
 
     return db_msg(item)
 
-def get_related_items(item_type: enums.ItemType = enums.ItemType.Gallery.name,
-                     related_type: enums.ItemType = enums.ItemType.Page.name,
+def get_related_items(item_type: enums.ItemType = enums.ItemType.Gallery,
+                     related_type: enums.ItemType = enums.ItemType.Page,
                      item_id: int = 0, limit: int = 100):
     """
     Get item related to given item
@@ -113,15 +93,8 @@ def get_related_items(item_type: enums.ItemType = enums.ItemType.Gallery.name,
     item_type = enums.ItemType.get(item_type)
     related_type = enums.ItemType.get(related_type)
 
-    db_items = {
-        enums.ItemType.Gallery: (db.Gallery, message.Gallery),
-        enums.ItemType.Collection: (db.Collection, message.Collection),
-        enums.ItemType.Grouping: (db.Grouping, message.Grouping),
-        enums.ItemType.Page: (db.Page, message.Page),
-    }
+    db_msg, db_model = item_type._msg_and_model()
 
-    db_model = db_items.get(item_type)
-    db_model, db_msg = db_model
     s = constants.db_session()
 
     item_ids = s.query(db_model.id).filter
@@ -146,7 +119,7 @@ def get_tags(taggable_id: int = 0):
     pass
 
 
-def get_count(item_type: enums.ItemType = enums.ItemType.Gallery.name):
+def get_count(item_type: enums.ItemType = enums.ItemType.Gallery):
     """
     Get count of items in the database
 
@@ -159,14 +132,8 @@ def get_count(item_type: enums.ItemType = enums.ItemType.Gallery.name):
 
     item_type = enums.ItemType.get(item_type)
 
-    db_items = {
-        enums.ItemType.Gallery: db.Gallery,
-        enums.ItemType.Collection: db.Collection,
-        enums.ItemType.Grouping: db.Grouping,
-    }
-
-    db_item = db_items.get(item_type)
+    _, db_model = item_type._msg_and_model()
 
     s = constants.db_session()
 
-    return message.Identity('count', {'count': s.query(db_item).count()})
+    return message.Identity('count', {'count': s.query(db_model).count()})

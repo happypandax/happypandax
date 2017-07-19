@@ -4,13 +4,13 @@ from happypanda.interface import enums
 from happypanda.core.commands import database_cmd, search_cmd
 
 
-def library_view(item_type: enums.ItemType = enums.ItemType.Gallery.name,
+def library_view(item_type: enums.ItemType = enums.ItemType.Gallery,
                  page: int = 0,
                  limit: int = 100,
                  sort_by: str = "",
                  search_query: str = "",
                  filter_id: int = None,
-                 view_filter: enums.ViewType = enums.ViewType.Library.name,
+                 view_filter: enums.ViewType = enums.ViewType.Library,
                  ctx=None):
     """
     Fetch items from the database.
@@ -29,22 +29,10 @@ def library_view(item_type: enums.ItemType = enums.ItemType.Gallery.name,
         list of item message objects
     """
     utils.require_context(ctx)
-
     view_filter = enums.ViewType.get(view_filter)
     item_type = enums.ItemType.get(item_type)
 
-    db_items = {
-        enums.ItemType.Gallery: (db.Gallery, message.Gallery),
-        enums.ItemType.Collection: (db.Collection, message.Collection),
-        enums.ItemType.Grouping: (db.Grouping, message.Grouping),
-    }
-
-    db_model = db_items.get(item_type)
-    if not db_model:
-        raise exceptions.APIError(
-            "Item type must be on of {}".format(
-                db_items.keys()))
-    db_model, db_msg = db_model
+    db_msg, db_model = item_type._msg_and_model((enums.ItemType.Gallery, enums.ItemType.Collection, enums.ItemType.Grouping))
 
     items = message.List(db_model.__name__.lower(), db_msg)
 
