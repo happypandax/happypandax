@@ -228,7 +228,7 @@ class DatabaseMessage(CoreMessage):
 
             if not msg_obj:
                 if isinstance(attrib, db.NameMixin):
-                    msg_obj = NameMixin(name, attrib)
+                    msg_obj = NameMixin(attrib, name)
                 else:
                     raise NotImplementedError(
                         "Message encapsulation for this database object does not exist ({})".format(
@@ -309,8 +309,10 @@ class Grouping(DatabaseMessage):
 class NameMixin(DatabaseMessage):
     "Encapsulates database namemixin object"
 
-    def __init__(self, name, db_item):
+    def __init__(self, db_item, name=""):
         assert isinstance(db_item, db.NameMixin)
+        if not name:
+            name = db_item.__tablename__
         super().__init__(name, db_item)
 
     def from_json(self, j):

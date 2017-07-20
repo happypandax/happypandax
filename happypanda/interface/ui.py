@@ -17,7 +17,7 @@ def library_view(item_type: enums.ItemType = enums.ItemType.Gallery,
     Provides pagination.
 
     Args:
-        item_type: type of items to show ...
+        item_type: possible items are :py:attr:`.ItemType.Gallery`, :py:attr:`.ItemType.Collection`, :py:attr:`.ItemType.Grouping`
         page: current page (zero-indexed)
         sort_by: name of column to order by ...
         limit: amount of items per page

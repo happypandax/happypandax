@@ -32,13 +32,14 @@ def scan_gallery(paths: list=[], add_after: bool=False,
     """
     return message.Message("works")
 
-def gallery_count(id: int=0, item_type: enums.ItemType=enums.ItemType.GalleryFilter):
+def get_gallery_count(id: int=0, item_type: enums.ItemType=enums.ItemType.GalleryFilter):
     """
-    Get gallery count
+    Get count of galleries in item
 
     Args:
         id: id of item
-        item_type: can be 'GalleryList', 'Collection' or 'Grouping'
+        item_type: possible items are :py:attr:`.ItemType.GalleryFilter`, :py:attr:`.ItemType.Collection`,
+            :py:attr:`.ItemType.Grouping`
 
     Returns:
         ```

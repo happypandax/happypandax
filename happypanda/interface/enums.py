@@ -54,8 +54,23 @@ class ItemType(_APIEnum):
     GalleryFilter = 3
     #: Page
     Page = 4
-    #: Grouping
+    #: Gallery Namespace
     Grouping = 5
+    #: Gallery Title
+    Title = 6
+    #: Gallery Artist
+    Artist = 7
+    #: Category
+    Category = 8
+    #: Language
+    Language = 9
+    #: Status
+    Status = 10
+    #: Circle
+    Circle = 11
+    #: GalleryURL
+    GalleryUrl = 12
+
 
     def _msg_and_model(item_type, allowed=tuple(), error=True):
         """
@@ -68,20 +83,27 @@ class ItemType(_APIEnum):
         if allowed and item_type not in allowed:
             raise exceptions.APIError("ItemType must be on of {}".format(allowed))
 
-        obj = None
-        try:
-            obj = getattr(message, item_type.name)
-        except AttributeError:
-            if error:
-                raise exceptions.CoreError(utils.this_function(), "Equivalent Message object class for {} was not found".format(item_type))
-            obj = DatabaseMessage
-
         db_model = None
         try:
             db_model = getattr(db, item_type.name)
         except AttributeError:
             if error:
                 raise exceptions.CoreError(utils.this_function(), "Equivalent database object class for {} was not found".format(item_type))
+
+        obj = None
+        try:
+            obj = getattr(message, item_type.name)
+        except AttributeError:
+            try:
+                if db_model and issubclass(db_model, db.NameMixin):
+                    obj = getattr(message, db.NameMixin.__name__)
+            except AttributeError:
+                pass
+            if not obj:
+                if error:
+                    raise exceptions.CoreError(utils.this_function(), "Equivalent Message object class for {} was not found".format(item_type))
+                obj = message.DatabaseMessage
+
         return obj, db_model
 
 

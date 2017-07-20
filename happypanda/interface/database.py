@@ -21,7 +21,8 @@ def get_image(item_type: enums.ItemType=enums.ItemType.Gallery,
     Image content is base64 encoded. 
 
     Args:
-        item_type: type of item
+        item_type: possible items are :py:attr:`.ItemType.Gallery`, :py:attr:`.ItemType.Artist`,
+            :py:attr:`.ItemType.Collection`, :py:attr:`.ItemType.Grouping`, :py:attr:`.ItemType.Page`
         item_ids: list of item ids
         size: ...
         local: replace image content with local path to image file
@@ -57,7 +58,7 @@ def get_item(item_type: enums.ItemType=enums.ItemType.Gallery,
     Get item
 
     Args:
-        item_type: ...
+        item_type: type of item to get
         item_id: id of item
 
     Returns:
@@ -134,7 +135,7 @@ def get_count(item_type: enums.ItemType=enums.ItemType.Gallery):
     Get count of items in the database
 
     Args:
-        item_type: type of db item (Gallery, Collection, Grouping)
+        item_type: type of item
 
     Returns:
         ```
