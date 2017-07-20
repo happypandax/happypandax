@@ -15,8 +15,7 @@ from sqlalchemy.orm import (
     attributes,
     state,
     collections,
-    dynamic,
-    backref)
+    dynamic)
 from sqlalchemy import (
     create_engine,
     event,
@@ -38,7 +37,6 @@ from sqlalchemy_utils import (
     generic_repr,
     force_instant_defaults,
     force_auto_coercion,
-    observes,
     get_type,
     JSONType)
 
@@ -247,6 +245,7 @@ class ProfileMixin:
 
     def get_profile(self, profile_type):
         return ''
+
 
 class UpdatedMixin:
 
@@ -511,6 +510,7 @@ gallery_artists = Table(
 
 artist_profiles = profile_association("artist")
 
+
 @generic_repr
 class Artist(ProfileMixin, Base):
     __tablename__ = 'artist'
@@ -532,6 +532,7 @@ class Artist(ProfileMixin, Base):
         secondary=artist_profiles,
         lazy='joined',
         cascade="all")
+
 
 @generic_repr
 class ArtistName(NameMixin, Base):
@@ -920,7 +921,6 @@ class GalleryUrl(Base):
 def initEvents(sess):
     "Initializes events"
 
-
     @event.listens_for(UpdatedMixin, 'before_update', propagate=True)
     def timestamp_before_update(mapper, connection, target):
         target.last_updated = arrow.now()
@@ -1151,6 +1151,7 @@ def related_classes(obj):
 
     return [x.mapper.class_ for x in inspect(obj).relationships]
 
+
 def relationship_column(objA, objB):
     "Return model attribute on objA that has a relationship with objB"
     assert issubclass(objA, Base)
@@ -1158,20 +1159,23 @@ def relationship_column(objA, objB):
 
     rel = related_classes(objA)
 
-    if not objB in rel:
+    if objB not in rel:
         return None
 
     for c in table_attribs(objA).values():
         if get_type(c) == objB:
             return c
 
+
 def column_model(obj):
     "Return model class for given model attribute/column"
     return get_type(obj)
 
+
 def column_name(obj):
     "Return name of model attribute for given model attribute"
     raise NotImplementedError
+
 
 def model_name(model):
     "Return name of model"

@@ -11,6 +11,7 @@ from happypanda.common import constants, exceptions, utils
 from happypanda.core import db
 from happypanda.core.commands import io_cmd
 
+
 def finalize(msg_dict, session_id="", name=constants.server_name, error=None):
     "Finalize dict message before sending"
     enc = 'utf-8'
@@ -24,6 +25,7 @@ def finalize(msg_dict, session_id="", name=constants.server_name, error=None):
         msg['error'] = error
 
     return bytes(json.dumps(msg), enc)
+
 
 class CoreMessage:
     "Encapsulates return values from methods in the interface module"
@@ -305,12 +307,14 @@ class Grouping(DatabaseMessage):
         assert isinstance(db_item, db.Grouping)
         super().__init__('grouping', db_item)
 
+
 class Taggable(DatabaseMessage):
     "Encapsulates database taggable object"
 
     def __init__(self, db_item):
         assert isinstance(db_item, db.Taggable)
         super().__init__('taggable', db_item)
+
 
 class NameMixin(DatabaseMessage):
     "Encapsulates database namemixin object"
@@ -425,4 +429,3 @@ class Function(CoreMessage):
 
     def from_json(self, j):
         return super().from_json(j)
-

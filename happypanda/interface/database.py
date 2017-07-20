@@ -18,7 +18,7 @@ def get_image(item_type: enums.ItemType=enums.ItemType.Gallery,
               ctx=None):
     """
     Get image for item
-    Image content is base64 encoded. 
+    Image content is base64 encoded.
 
     Args:
         item_type: possible items are :py:attr:`.ItemType.Gallery`, :py:attr:`.ItemType.Artist`,
@@ -38,7 +38,8 @@ def get_image(item_type: enums.ItemType=enums.ItemType.Gallery,
     item_type = enums.ItemType.get(item_type)
     size = enums.ImageSize.get(size)
 
-    _, db_item = item_type._msg_and_model((enums.ItemType.Gallery, enums.ItemType.Collection, enums.ItemType.Grouping, enums.ItemType.Page))
+    _, db_item = item_type._msg_and_model(
+        (enums.ItemType.Gallery, enums.ItemType.Collection, enums.ItemType.Grouping, enums.ItemType.Page))
 
     content = {}
 
@@ -72,13 +73,14 @@ def get_item(item_type: enums.ItemType=enums.ItemType.Gallery,
     item = database_cmd.GetModelItemByID().run(db_model, {item_id})[0]
     if not item:
         raise exceptions.DatabaseItemNotFoundError(utils.this_function(),
-            "'{}' with id '{}' was not found".format(item_type.name,
-                item_id))
+                                                   "'{}' with id '{}' was not found".format(item_type.name,
+                                                                                            item_id))
 
     return db_msg(item)
 
+
 def get_items(item_type: enums.ItemType=enums.ItemType.Gallery,
-               limit: int=100):
+              limit: int=100):
     """
     Get a list of items
 
@@ -99,6 +101,7 @@ def get_items(item_type: enums.ItemType=enums.ItemType.Gallery,
     item_list = message.List(db.model_name(db_model), db_msg)
     [item_list.append(db_msg(i)) for i in items]
     return item_list
+
 
 def get_related_items(item_type: enums.ItemType=enums.ItemType.Gallery,
                       item_id: int = 0,
@@ -124,15 +127,20 @@ def get_related_items(item_type: enums.ItemType=enums.ItemType.Gallery,
 
     col = db.relationship_column(parent_model, child_model)
     if not col:
-        raise exceptions.APIError(utils.this_function(), "{} has no relationship with {}".format(related_type, item_type))
+        raise exceptions.APIError(
+            utils.this_function(),
+            "{} has no relationship with {}".format(
+                related_type,
+                item_type))
 
     s = constants.db_session()
-    item_ids = s.query(child_model.id).join(col).filter(parent_model.id==item_id).limit(limit).all()
+    item_ids = s.query(child_model.id).join(col).filter(parent_model.id == item_id).limit(limit).all()
     items = database_cmd.GetModelItemByID().run(child_model, {x[0] for x in item_ids})
 
     item_list = message.List(db.model_name(child_model), child_msg)
     [item_list.append(child_msg(x)) for x in items]
     return item_list
+
 
 def get_tags(taggable_id: int=0):
     ""
@@ -160,6 +168,7 @@ def get_count(item_type: enums.ItemType=enums.ItemType.Gallery):
 
     return message.Identity('count', {'count': s.query(db_model).count()})
 
+
 def get_related_count(item_type: enums.ItemType=enums.ItemType.Gallery,
                       item_id: int = 0,
                       related_type: enums.ItemType=enums.ItemType.Page):
@@ -184,8 +193,12 @@ def get_related_count(item_type: enums.ItemType=enums.ItemType.Gallery,
 
     col = db.relationship_column(parent_model, child_model)
     if not col:
-        raise exceptions.APIError(utils.this_function(), "{} has no relationship with {}".format(related_type, item_type))
+        raise exceptions.APIError(
+            utils.this_function(),
+            "{} has no relationship with {}".format(
+                related_type,
+                item_type))
 
     s = constants.db_session()
-    count = s.query(child_model.id).join(col).filter(parent_model.id==item_id).count()
+    count = s.query(child_model.id).join(col).filter(parent_model.id == item_id).count()
     return message.Identity('count', {'id': item_id, 'count': count})

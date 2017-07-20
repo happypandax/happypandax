@@ -3,6 +3,7 @@ import enum
 from happypanda.common import utils, exceptions
 from happypanda.core import message, db
 
+
 class _APIEnum(enum.Enum):
     "A conv. enum class"
 
@@ -35,6 +36,7 @@ class _APIEnum(enum.Enum):
             "{}: enum member doesn't exist '{}'".format(
                 cls.__name__,
                 repr(key)))
+
 
 class ViewType(_APIEnum):
     #: Library
@@ -71,11 +73,10 @@ class ItemType(_APIEnum):
     #: GalleryURL
     GalleryUrl = 12
 
-
     def _msg_and_model(item_type, allowed=tuple(), error=True):
         """
         Get the equivalent Message and Database object classes for ItemType member
-    
+
         Args:
             allowed: a tuple of ItemType members which are allowed, empty tuple for all members
             error: raise error if equivalent is not found, else return generic message object class
@@ -88,7 +89,8 @@ class ItemType(_APIEnum):
             db_model = getattr(db, item_type.name)
         except AttributeError:
             if error:
-                raise exceptions.CoreError(utils.this_function(), "Equivalent database object class for {} was not found".format(item_type))
+                raise exceptions.CoreError(utils.this_function(),
+                                           "Equivalent database object class for {} was not found".format(item_type))
 
         obj = None
         try:
@@ -101,7 +103,8 @@ class ItemType(_APIEnum):
                 pass
             if not obj:
                 if error:
-                    raise exceptions.CoreError(utils.this_function(), "Equivalent Message object class for {} was not found".format(item_type))
+                    raise exceptions.CoreError(utils.this_function(),
+                                               "Equivalent Message object class for {} was not found".format(item_type))
                 obj = message.DatabaseMessage
 
         return obj, db_model

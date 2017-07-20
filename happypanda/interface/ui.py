@@ -1,5 +1,5 @@
-from happypanda.common import exceptions, utils
-from happypanda.core import db, message
+from happypanda.common import utils
+from happypanda.core import message
 from happypanda.interface import enums
 from happypanda.core.commands import database_cmd, search_cmd
 
@@ -32,7 +32,8 @@ def library_view(item_type: enums.ItemType = enums.ItemType.Gallery,
     view_filter = enums.ViewType.get(view_filter)
     item_type = enums.ItemType.get(item_type)
 
-    db_msg, db_model = item_type._msg_and_model((enums.ItemType.Gallery, enums.ItemType.Collection, enums.ItemType.Grouping))
+    db_msg, db_model = item_type._msg_and_model(
+        (enums.ItemType.Gallery, enums.ItemType.Collection, enums.ItemType.Grouping))
 
     items = message.List(db_model.__name__.lower(), db_msg)
 
@@ -43,10 +44,11 @@ def library_view(item_type: enums.ItemType = enums.ItemType.Gallery,
 
     return items
 
+
 def get_view_count(item_type: enums.ItemType=enums.ItemType.Gallery,
-                    search_query: str = "",
-                    filter_id: int = None,
-                    view_filter: enums.ViewType = enums.ViewType.Library):
+                   search_query: str = "",
+                   filter_id: int = None,
+                   view_filter: enums.ViewType = enums.ViewType.Library):
     """
     Get count of items in view
 
@@ -65,7 +67,8 @@ def get_view_count(item_type: enums.ItemType=enums.ItemType.Gallery,
     view_filter = enums.ViewType.get(view_filter)
     item_type = enums.ItemType.get(item_type)
 
-    db_msg, db_model = item_type._msg_and_model((enums.ItemType.Gallery, enums.ItemType.Collection, enums.ItemType.Grouping))
+    db_msg, db_model = item_type._msg_and_model(
+        (enums.ItemType.Gallery, enums.ItemType.Collection, enums.ItemType.Grouping))
 
     model_ids = search_cmd.ModelFilter().run(db_model, search_query)
 

@@ -12,8 +12,6 @@ from happypanda.common import hlogger, exceptions, utils, constants
 from happypanda.core.command import CoreCommand, CommandEntry, AsyncCommand
 from happypanda.core.services import ImageService
 from happypanda.core import db
-from happypanda.interface import enums
-
 
 log = hlogger.Logger(__name__)
 

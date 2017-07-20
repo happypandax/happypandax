@@ -41,6 +41,7 @@ preview = config.get(core_ns, 'preview', False, "Run in preview mode")
 
 # CORE
 
+
 class ExitCode(enum.Enum):
     Exit = 0
     Restart = 1
@@ -50,7 +51,7 @@ image_sizes = {
     "big": (300, 416),
     "medium": (200, 276),
     "small": (100, 136),
-    }
+}
 
 concurrent_image_tasks = config.get(
     core_ns,

@@ -218,12 +218,14 @@ class AuthRequiredError(AuthError):
     def __init__(self, where):
         super().__init__(where, "Authentication required")
 
+
 @error_code(408)
 class SessionExpiredError(ServerError):
     """Session expired error."""
 
     def __init__(self, where, session_id):
         super().__init__(where, "Session '{}' has expired".format(session_id))
+
 
 @error_code(409)
 class EnumError(ServerError):

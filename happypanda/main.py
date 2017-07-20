@@ -13,6 +13,7 @@ from happypanda.core.commands import io_cmd  # noqa: E402
 log = hlogger.Logger(__name__)
 parser = utils.get_argparser()
 
+
 def start():
     utils.setup_dirs()
     args = parser.parse_args()

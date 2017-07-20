@@ -220,18 +220,18 @@ class PartialModelFilter(Command):
     @models.default()
     def _models():
         return (db.NamespaceTags,
-            db.Tag,
-            db.Namespace,
-            db.Artist,
-            db.Circle,
-            db.Status,
-            db.Grouping,
-            db.Language,
-            db.Category,
-            db.Collection,
-            db.Gallery,
-            db.Title,
-            db.GalleryUrl)
+                db.Tag,
+                db.Namespace,
+                db.Artist,
+                db.Circle,
+                db.Status,
+                db.Grouping,
+                db.Language,
+                db.Category,
+                db.Collection,
+                db.Gallery,
+                db.Title,
+                db.GalleryUrl)
 
     @staticmethod
     def _match_string_column(column, term, options):
@@ -278,12 +278,12 @@ class PartialModelFilter(Command):
             lower_ns = term.namespace.lower()
             if lower_ns == 'path':
                 ids.update(x[0] for x in s.query(parent_model.id).filter(match_string(db.Gallery.path,
-                            term,
-                            options)).all())
+                                                                                      term,
+                                                                                      options)).all())
             elif lower_ns in ("rating", "stars"):
                 ids.update(x[0] for x in s.query(parent_model.id).filter(match_int(db.Gallery.rating,
-                            term,
-                            options)).all())
+                                                                                   term,
+                                                                                   options)).all())
 
         return ids
 
@@ -302,8 +302,8 @@ class PartialModelFilter(Command):
             if term.namespace.lower() == 'title' or not term.namespace:
                 s = constants.db_session()
                 ids.update(x[0] for x in s.query(parent_model.id).join(parent_model.titles).filter(match_string(child_model.name,
-                            term,
-                            options)).all())
+                                                                                                                term,
+                                                                                                                options)).all())
         else:
             raise NotImplementedError("Title on {} has not been implemented".format(parent_model))
 
@@ -324,8 +324,8 @@ class PartialModelFilter(Command):
         col = db.relationship_column(parent_model, child_model)
 
         ids.update(x[0] for x in s.query(parent_model.id).join(col).filter(match_string(child_model.name,
-                    term,
-                    options)).all())
+                                                                                        term,
+                                                                                        options)).all())
 
         return ids
 
@@ -341,7 +341,7 @@ class PartialModelFilter(Command):
 
         if self.model not in self._supported_models:
             raise exceptions.CommandError(utils.this_command(self),
-                "Model '{}' is not supported".format(model))
+                                          "Model '{}' is not supported".format(model))
 
         related_models = db.related_classes(model)
 

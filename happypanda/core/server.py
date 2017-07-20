@@ -29,6 +29,7 @@ def list_api():
     return {x[0]: x[1] for x in all_functions if not x[0]
             in _special_functions and not x[0].startswith('_')}
 
+
 class Session:
     "Connection longevity"
 
@@ -56,12 +57,13 @@ class Session:
         "Return a session object if it exists"
         return cls.sessions.get(s_id)
 
+
 class ClientHandler:
     "Handles clients"
 
     api = list_api()
 
-    contexts = {} # session_id : context
+    contexts = {}  # session_id : context
 
     def __init__(self, client, address):
         self.errors = []
@@ -388,7 +390,7 @@ class ClientHandler:
         if isinstance(d, (str, int)):
             try:
                 e = enums.ServerCommand.get(d)
-                if e in (enums.ServerCommand.ServerQuit, enums.ServerCommand.ServerRestart): 
+                if e in (enums.ServerCommand.ServerQuit, enums.ServerCommand.ServerRestart):
                     # TODO: check permission
                     pass
                 return e
