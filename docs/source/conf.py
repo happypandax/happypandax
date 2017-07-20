@@ -91,7 +91,6 @@ todo_link_only = True
 
 add_module_names = False
 
-
 # -- Options for HTML output ----------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
