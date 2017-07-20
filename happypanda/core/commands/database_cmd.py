@@ -207,3 +207,43 @@ class GetModelItemByID(Command):
         self.fetched.emit(db.model_name(model), self.fetched_items)
 
         return self.fetched_items
+
+
+class GetModelItems(Command):
+    """
+    Fetch model items from the database
+
+    Returns a tuple of model items
+    """
+
+    fetched = CommandEvent("fetched", str, tuple)
+
+    def __init__(self):
+        super().__init__()
+
+        self.fetched_items = tuple()
+
+    def _query(self, q, limit, offset):
+        if offset:
+            q = q.offset(offset)
+
+        return q.limit(limit).all()
+
+    def main(self, model: db.Base, limit: int = 999,
+             filter: str = "", order_by: str = "", offset: int = 0) -> tuple:
+
+        s = constants.db_session()
+
+        q = s.query(model)
+
+        if filter:
+            q = q.filter(db.sa_text(filter))
+
+        if order_by:
+            q = q.order_by(db.sa_text(order_by))
+
+        self.fetched_items = tuple(self._query(q, limit, offset))
+
+        self.fetched.emit(db.model_name(model), self.fetched_items)
+
+        return self.fetched_items

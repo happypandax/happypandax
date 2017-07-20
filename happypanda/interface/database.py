@@ -77,6 +77,29 @@ def get_item(item_type: enums.ItemType=enums.ItemType.Gallery,
 
     return db_msg(item)
 
+def get_items(item_type: enums.ItemType=enums.ItemType.Gallery,
+               limit: int=100):
+    """
+    Get a list of items
+
+    Args:
+        item_type: type of item to get
+        limit: limit the amount of items returned
+
+    Returns:
+        list of item message objects
+    """
+
+    item_type = enums.ItemType.get(item_type)
+
+    db_msg, db_model = item_type._msg_and_model()
+
+    items = database_cmd.GetModelItems().run(db_model, limit=limit)
+
+    item_list = message.List(db.model_name(db_model), db_msg)
+    [item_list.append(db_msg(i)) for i in items]
+    return item_list
+
 def get_related_items(item_type: enums.ItemType=enums.ItemType.Gallery,
                       item_id: int = 0,
                       related_type: enums.ItemType=enums.ItemType.Page,
@@ -86,7 +109,7 @@ def get_related_items(item_type: enums.ItemType=enums.ItemType.Gallery,
 
     Args:
         item_type: parent item
-        item_id: id of the item
+        item_id: id of parent item
         related_type: child item
         limit: limit the amount of items returned
 
@@ -111,20 +134,6 @@ def get_related_items(item_type: enums.ItemType=enums.ItemType.Gallery,
     [item_list.append(child_msg(x)) for x in items]
     return item_list
 
-def get_gfilters():
-    """
-    Get a list of galleryfilter lists
-
-    Returns:
-        a list of galleryfilter objects
-    """
-
-    glists = message.List("galleryfilters", message.GalleryFilter)
-    s = constants.db_session()
-    [glists.append(message.GalleryFilter(x)) for x in s.query(db.GalleryFilter).all()]
-    return glists
-
-
 def get_tags(taggable_id: int=0):
     ""
     pass
@@ -139,7 +148,7 @@ def get_count(item_type: enums.ItemType=enums.ItemType.Gallery):
 
     Returns:
         ```
-        {'count': int}
+        { 'count': int }
         ```
     """
 
@@ -150,3 +159,33 @@ def get_count(item_type: enums.ItemType=enums.ItemType.Gallery):
     s = constants.db_session()
 
     return message.Identity('count', {'count': s.query(db_model).count()})
+
+def get_related_count(item_type: enums.ItemType=enums.ItemType.Gallery,
+                      item_id: int = 0,
+                      related_type: enums.ItemType=enums.ItemType.Page):
+    """
+    Get count of items related to given item
+
+    Args:
+        item_type: parent item
+        item_id: id of parent item
+        related_type: child item
+
+    Returns:
+        ```
+        { 'id': int, 'count': int }
+        ```
+    """
+    item_type = enums.ItemType.get(item_type)
+    related_type = enums.ItemType.get(related_type)
+
+    _, parent_model = item_type._msg_and_model()
+    child_msg, child_model = related_type._msg_and_model()
+
+    col = db.relationship_column(parent_model, child_model)
+    if not col:
+        raise exceptions.APIError(utils.this_function(), "{} has no relationship with {}".format(related_type, item_type))
+
+    s = constants.db_session()
+    count = s.query(child_model.id).join(col).filter(parent_model.id==item_id).count()
+    return message.Identity('count', {'id': item_id, 'count': count})

@@ -287,10 +287,13 @@ class ClientHandler:
                 self._check_both(
                     utils.this_function(), "JSON dict", ('user', 'password'), data)
 
-            self.get_context(
-                data.pop(
-                    'user', None), data.pop(
-                    'password', None))
+            u = p = None
+
+            if isinstance(data, dict):
+                u = data.pop('user', None)
+                p = data.pop('password', None)
+
+            self.get_context(u, p)
             self.session = Session()
             self.contexts[self.session.id] = self.context
             self.send(message.finalize("Authenticated", session_id=self.session.id))

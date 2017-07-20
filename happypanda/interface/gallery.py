@@ -32,26 +32,3 @@ def scan_gallery(paths: list=[], add_after: bool=False,
     """
     return message.Message("works")
 
-def get_gallery_count(id: int=0, item_type: enums.ItemType=enums.ItemType.GalleryFilter):
-    """
-    Get count of galleries in item
-
-    Args:
-        id: id of item
-        item_type: possible items are :py:attr:`.ItemType.GalleryFilter`, :py:attr:`.ItemType.Collection`,
-            :py:attr:`.ItemType.Grouping`
-
-    Returns:
-        ```
-        { 'id': id, 'count':int }
-        ```
-    """
-
-    item_type = enums.ItemType.get(item_type)
-
-    _, db_item = item_type._msg_and_model((enums.ItemType.GalleryList, enums.ItemType.Collection, enums.ItemType.Grouping))
-
-    s = constants.db_session()
-
-    return message.Identity("gcount", {
-            'id': id, 'count': s.query(db_item).join(db_item.galleries).filter(db_item.id == id).count()})
