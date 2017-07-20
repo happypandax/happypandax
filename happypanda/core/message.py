@@ -255,7 +255,7 @@ class DatabaseMessage(CoreMessage):
         elif isinstance(attrib, arrow.Arrow):
             return attrib.timestamp
 
-        elif isinstance(attrib, (bool, int, str)):
+        elif isinstance(attrib, (bool, int, str, dict)):
             return attrib
         else:
             raise NotImplementedError(
@@ -305,6 +305,12 @@ class Grouping(DatabaseMessage):
         assert isinstance(db_item, db.Grouping)
         super().__init__('grouping', db_item)
 
+class Taggable(DatabaseMessage):
+    "Encapsulates database taggable object"
+
+    def __init__(self, db_item):
+        assert isinstance(db_item, db.Taggable)
+        super().__init__('taggable', db_item)
 
 class NameMixin(DatabaseMessage):
     "Encapsulates database namemixin object"

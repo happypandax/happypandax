@@ -42,3 +42,31 @@ def library_view(item_type: enums.ItemType = enums.ItemType.Gallery,
         db_model, model_ids, limit=limit, offset=page * limit)]
 
     return items
+
+def get_view_count(item_type: enums.ItemType=enums.ItemType.Gallery,
+                    search_query: str = "",
+                    filter_id: int = None,
+                    view_filter: enums.ViewType = enums.ViewType.Library):
+    """
+    Get count of items in view
+
+    Args:
+        item_type: possible items are :py:attr:`.ItemType.Gallery`, :py:attr:`.ItemType.Collection`, :py:attr:`.ItemType.Grouping`
+        search_query: filter item by search terms
+        filter_id: current filter list id
+        view_filter: ...
+
+    Returns:
+        ```
+        { 'count': int }
+        ```
+    """
+
+    view_filter = enums.ViewType.get(view_filter)
+    item_type = enums.ItemType.get(item_type)
+
+    db_msg, db_model = item_type._msg_and_model((enums.ItemType.Gallery, enums.ItemType.Collection, enums.ItemType.Grouping))
+
+    model_ids = search_cmd.ModelFilter().run(db_model, search_query)
+
+    return message.Identity('count', {'count': len(model_ids)})

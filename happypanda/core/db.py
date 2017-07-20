@@ -39,7 +39,8 @@ from sqlalchemy_utils import (
     force_instant_defaults,
     force_auto_coercion,
     observes,
-    get_type)
+    get_type,
+    JSONType)
 
 import arrow
 import os
@@ -192,6 +193,7 @@ class Password(TypeDecorator):
 
 class BaseID:
     id = Column(Integer, primary_key=True)
+    properties = Column(JSONType, nullable=False, default={})
 
     def delete(self):
         sess = object_session(self)
@@ -732,7 +734,7 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
         "Artist",
         secondary=gallery_artists,
         back_populates='galleries',
-        lazy="joined",
+        lazy="dynamic",
         cascade="save-update, merge, refresh-expire")
     filters = relationship(
         "GalleryFilter",
