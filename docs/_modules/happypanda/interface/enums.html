@@ -82,6 +82,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../todo.html">TODO</a></li>
 </ul>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../exceptions.html">Exceptions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../api.html">Server API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../api_plugin.html">Plugin API</a></li>
 </ul>
@@ -156,11 +157,45 @@
         <div class="col-md-9 content">
             
   <h1>Source code for happypanda.interface.enums</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">happypanda.common</span> <span class="k">import</span> <span class="n">utils</span><span class="p">,</span> <span class="n">exceptions</span>
+<span></span><span class="kn">import</span> <span class="nn">enum</span>
+
+<span class="kn">from</span> <span class="nn">happypanda.common</span> <span class="k">import</span> <span class="n">utils</span><span class="p">,</span> <span class="n">exceptions</span>
 <span class="kn">from</span> <span class="nn">happypanda.core</span> <span class="k">import</span> <span class="n">message</span><span class="p">,</span> <span class="n">db</span>
 
+<span class="k">class</span> <span class="nc">_APIEnum</span><span class="p">(</span><span class="n">enum</span><span class="o">.</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="s2">&quot;A conv. enum class&quot;</span>
 
-<div class="viewcode-block" id="ViewType"><a class="viewcode-back" href="../../../api.html#happypanda.interface.enums.ViewType">[docs]</a><span class="k">class</span> <span class="nc">ViewType</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">APIEnum</span><span class="p">):</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+
+        <span class="c1"># for some ungodly reason this check wouldnt work when calling from the client</span>
+        <span class="c1"># so i ended comparing strings instead</span>
+        <span class="k">if</span> <span class="nb">repr</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">key</span><span class="p">))</span> <span class="o">==</span> <span class="nb">repr</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">key</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">low_key</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">member</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">__members__</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="n">low_key</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">member</span>
+
+        <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">EnumError</span><span class="p">(</span>
+            <span class="n">utils</span><span class="o">.</span><span class="n">this_function</span><span class="p">(),</span>
+            <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">: enum member doesn&#39;t exist &#39;</span><span class="si">{}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                <span class="nb">repr</span><span class="p">(</span><span class="n">key</span><span class="p">)))</span>
+
+<div class="viewcode-block" id="ViewType"><a class="viewcode-back" href="../../../api.html#happypanda.interface.enums.ViewType">[docs]</a><span class="k">class</span> <span class="nc">ViewType</span><span class="p">(</span><span class="n">_APIEnum</span><span class="p">):</span>
     <span class="c1">#: Library</span>
     <span class="n">Library</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="c1">#: Favourite</span>
@@ -169,7 +204,7 @@
     <span class="n">Inbox</span> <span class="o">=</span> <span class="mi">3</span></div>
 
 
-<div class="viewcode-block" id="ItemType"><a class="viewcode-back" href="../../../api.html#happypanda.interface.enums.ItemType">[docs]</a><span class="k">class</span> <span class="nc">ItemType</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">APIEnum</span><span class="p">):</span>
+<div class="viewcode-block" id="ItemType"><a class="viewcode-back" href="../../../api.html#happypanda.interface.enums.ItemType">[docs]</a><span class="k">class</span> <span class="nc">ItemType</span><span class="p">(</span><span class="n">_APIEnum</span><span class="p">):</span>
     <span class="c1">#: Gallery</span>
     <span class="n">Gallery</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="c1">#: Collection</span>
@@ -178,8 +213,23 @@
     <span class="n">GalleryFilter</span> <span class="o">=</span> <span class="mi">3</span>
     <span class="c1">#: Page</span>
     <span class="n">Page</span> <span class="o">=</span> <span class="mi">4</span>
-    <span class="c1">#: Grouping</span>
+    <span class="c1">#: Gallery Namespace</span>
     <span class="n">Grouping</span> <span class="o">=</span> <span class="mi">5</span>
+    <span class="c1">#: Gallery Title</span>
+    <span class="n">Title</span> <span class="o">=</span> <span class="mi">6</span>
+    <span class="c1">#: Gallery Artist</span>
+    <span class="n">Artist</span> <span class="o">=</span> <span class="mi">7</span>
+    <span class="c1">#: Category</span>
+    <span class="n">Category</span> <span class="o">=</span> <span class="mi">8</span>
+    <span class="c1">#: Language</span>
+    <span class="n">Language</span> <span class="o">=</span> <span class="mi">9</span>
+    <span class="c1">#: Status</span>
+    <span class="n">Status</span> <span class="o">=</span> <span class="mi">10</span>
+    <span class="c1">#: Circle</span>
+    <span class="n">Circle</span> <span class="o">=</span> <span class="mi">11</span>
+    <span class="c1">#: GalleryURL</span>
+    <span class="n">GalleryUrl</span> <span class="o">=</span> <span class="mi">12</span>
+
 
     <span class="k">def</span> <span class="nf">_msg_and_model</span><span class="p">(</span><span class="n">item_type</span><span class="p">,</span> <span class="n">allowed</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(),</span> <span class="n">error</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -192,24 +242,31 @@
         <span class="k">if</span> <span class="n">allowed</span> <span class="ow">and</span> <span class="n">item_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">allowed</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">APIError</span><span class="p">(</span><span class="s2">&quot;ItemType must be on of </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">allowed</span><span class="p">))</span>
 
-        <span class="n">obj</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">obj</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">item_type</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">error</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">CoreError</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">this_function</span><span class="p">(),</span> <span class="s2">&quot;Equivalent Message object class for </span><span class="si">{}</span><span class="s2"> was not found&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">item_type</span><span class="p">))</span>
-            <span class="n">obj</span> <span class="o">=</span> <span class="n">DatabaseMessage</span>
-
         <span class="n">db_model</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">db_model</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">db</span><span class="p">,</span> <span class="n">item_type</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">error</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">CoreError</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">this_function</span><span class="p">(),</span> <span class="s2">&quot;Equivalent database object class for </span><span class="si">{}</span><span class="s2"> was not found&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">item_type</span><span class="p">))</span>
+
+        <span class="n">obj</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">obj</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">item_type</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">db_model</span> <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">db_model</span><span class="p">,</span> <span class="n">db</span><span class="o">.</span><span class="n">NameMixin</span><span class="p">):</span>
+                    <span class="n">obj</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">db</span><span class="o">.</span><span class="n">NameMixin</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+                <span class="k">pass</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">obj</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">error</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">CoreError</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">this_function</span><span class="p">(),</span> <span class="s2">&quot;Equivalent Message object class for </span><span class="si">{}</span><span class="s2"> was not found&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">item_type</span><span class="p">))</span>
+                <span class="n">obj</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">DatabaseMessage</span>
+
         <span class="k">return</span> <span class="n">obj</span><span class="p">,</span> <span class="n">db_model</span></div>
 
 
-<div class="viewcode-block" id="ImageSize"><a class="viewcode-back" href="../../../api.html#happypanda.interface.enums.ImageSize">[docs]</a><span class="k">class</span> <span class="nc">ImageSize</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">APIEnum</span><span class="p">):</span>
+<div class="viewcode-block" id="ImageSize"><a class="viewcode-back" href="../../../api.html#happypanda.interface.enums.ImageSize">[docs]</a><span class="k">class</span> <span class="nc">ImageSize</span><span class="p">(</span><span class="n">_APIEnum</span><span class="p">):</span>
     <span class="c1">#: Original image size</span>
     <span class="n">Original</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="c1">#: Big image size</span>
@@ -220,7 +277,7 @@
     <span class="n">Small</span> <span class="o">=</span> <span class="mi">4</span></div>
 
 
-<div class="viewcode-block" id="ServerCommand"><a class="viewcode-back" href="../../../api.html#happypanda.interface.enums.ServerCommand">[docs]</a><span class="k">class</span> <span class="nc">ServerCommand</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">APIEnum</span><span class="p">):</span>
+<div class="viewcode-block" id="ServerCommand"><a class="viewcode-back" href="../../../api.html#happypanda.interface.enums.ServerCommand">[docs]</a><span class="k">class</span> <span class="nc">ServerCommand</span><span class="p">(</span><span class="n">_APIEnum</span><span class="p">):</span>
     <span class="c1">#: Shut down the server</span>
     <span class="n">ServerQuit</span> <span class="o">=</span> <span class="mi">1</span>
 

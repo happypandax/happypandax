@@ -82,6 +82,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../todo.html">TODO</a></li>
 </ul>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../exceptions.html">Exceptions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../api.html">Server API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../api_plugin.html">Plugin API</a></li>
 </ul>
@@ -166,7 +167,7 @@
 <span class="sd">    Add galleries to the database.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        galleries: list of gallery objects parsed from XML</span>
+<span class="sd">        galleries: list of gallery objects</span>
 <span class="sd">        paths: list of paths to the galleries</span>
 
 <span class="sd">    Returns:</span>
@@ -190,28 +191,6 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Message</span><span class="p">(</span><span class="s2">&quot;works&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="gallery_count"><a class="viewcode-back" href="../../../api.html#happypanda.interface.gallery.gallery_count">[docs]</a><span class="k">def</span> <span class="nf">gallery_count</span><span class="p">(</span><span class="nb">id</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">item_type</span><span class="p">:</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">=</span><span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">GalleryFilter</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Get gallery count</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        id: id of item</span>
-<span class="sd">        item_type: can be &#39;GalleryList&#39;, &#39;Collection&#39; or &#39;Grouping&#39;</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        ```</span>
-<span class="sd">        { &#39;id&#39;: id, &#39;count&#39;:int }</span>
-<span class="sd">        ```</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="n">item_type</span> <span class="o">=</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">item_type</span><span class="p">)</span>
-
-    <span class="n">_</span><span class="p">,</span> <span class="n">db_item</span> <span class="o">=</span> <span class="n">item_type</span><span class="o">.</span><span class="n">_msg_and_model</span><span class="p">((</span><span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">GalleryList</span><span class="p">,</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Collection</span><span class="p">,</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Grouping</span><span class="p">))</span>
-
-    <span class="n">s</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">db_session</span><span class="p">()</span>
-
-    <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Identity</span><span class="p">(</span><span class="s2">&quot;gcount&quot;</span><span class="p">,</span> <span class="p">{</span>
-            <span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="nb">id</span><span class="p">,</span> <span class="s1">&#39;count&#39;</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">db_item</span><span class="p">)</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">db_item</span><span class="o">.</span><span class="n">galleries</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">db_item</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="nb">id</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()})</span></div>
 </pre></div>
 
         </div>

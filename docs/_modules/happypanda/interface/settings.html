@@ -82,6 +82,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../todo.html">TODO</a></li>
 </ul>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../exceptions.html">Exceptions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../api.html">Server API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../api_plugin.html">Plugin API</a></li>
 </ul>
@@ -165,7 +166,7 @@
 <span class="sd">    Set settings</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        :settings: a dictionary containing key:value pairs</span>
+<span class="sd">        settings: a dictionary containing key:value pairs</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Status</span>
@@ -183,7 +184,9 @@
 <span class="sd">        set_list: a list of setting keys</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        dict of key.name:value</span>
+<span class="sd">        ```</span>
+<span class="sd">        { &#39;key.name&#39;: value }</span>
+<span class="sd">        ```</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">utils</span><span class="o">.</span><span class="n">require_context</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
 

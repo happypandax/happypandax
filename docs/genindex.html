@@ -83,6 +83,7 @@
 <li class="toctree-l1"><a class="reference internal" href="todo.html">TODO</a></li>
 </ul>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="exceptions.html">Exceptions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">Server API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api_plugin.html">Plugin API</a></li>
 </ul>
@@ -174,6 +175,7 @@
  | <a href="#P"><strong>P</strong></a>
  | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
+ | <a href="#T"><strong>T</strong></a>
  | <a href="#U"><strong>U</strong></a>
  | <a href="#V"><strong>V</strong></a>
  
@@ -269,6 +271,10 @@
       <li><a href="api.html#happypanda.interface.gallery.add_gallery">add_gallery() (in module happypanda.interface.gallery)</a>
 </li>
   </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#happypanda.interface.enums.ItemType.Artist">Artist (ItemType attribute)</a>
+</li>
+  </ul></td>
 </tr></table>
 
 <h2 id="B">B</h2>
@@ -282,6 +288,10 @@
 <h2 id="C">C</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#happypanda.interface.enums.ItemType.Category">Category (ItemType attribute)</a>
+</li>
+      <li><a href="api.html#happypanda.interface.enums.ItemType.Circle">Circle (ItemType attribute)</a>
+</li>
       <li><a href="api.html#happypanda.interface.enums.ItemType.Collection">Collection (ItemType attribute)</a>
 </li>
       <li>
@@ -327,9 +337,9 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api.html#happypanda.interface.enums.ItemType.Gallery">Gallery (ItemType attribute)</a>
 </li>
-      <li><a href="api.html#happypanda.interface.gallery.gallery_count">gallery_count() (in module happypanda.interface.gallery)</a>
-</li>
       <li><a href="api.html#happypanda.interface.enums.ItemType.GalleryFilter">GalleryFilter (ItemType attribute)</a>
+</li>
+      <li><a href="api.html#happypanda.interface.enums.ItemType.GalleryUrl">GalleryUrl (ItemType attribute)</a>
 </li>
       <li><a href="api.html#happypanda.interface.meta.get_command_error">get_command_error() (in module happypanda.interface.meta)</a>
 </li>
@@ -341,23 +351,27 @@
 </li>
       <li><a href="api.html#happypanda.interface.database.get_count">get_count() (in module happypanda.interface.database)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api.html#happypanda.interface.database.get_cover">get_cover() (in module happypanda.interface.database)</a>
-</li>
       <li><a href="api.html#happypanda.interface.meta.get_error">get_error() (in module happypanda.interface.meta)</a>
 </li>
-      <li><a href="api.html#happypanda.interface.database.get_gfilters">get_gfilters() (in module happypanda.interface.database)</a>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#happypanda.interface.database.get_image">get_image() (in module happypanda.interface.database)</a>
 </li>
       <li><a href="api.html#happypanda.interface.database.get_item">get_item() (in module happypanda.interface.database)</a>
 </li>
+      <li><a href="api.html#happypanda.interface.database.get_items">get_items() (in module happypanda.interface.database)</a>
+</li>
       <li><a href="api.html#happypanda.interface.plugin.get_plugin">get_plugin() (in module happypanda.interface.plugin)</a>
+</li>
+      <li><a href="api.html#happypanda.interface.database.get_related_count">get_related_count() (in module happypanda.interface.database)</a>
 </li>
       <li><a href="api.html#happypanda.interface.database.get_related_items">get_related_items() (in module happypanda.interface.database)</a>
 </li>
       <li><a href="api.html#happypanda.interface.settings.get_settings">get_settings() (in module happypanda.interface.settings)</a>
 </li>
       <li><a href="api.html#happypanda.interface.meta.get_version">get_version() (in module happypanda.interface.meta)</a>
+</li>
+      <li><a href="api.html#happypanda.interface.ui.get_view_count">get_view_count() (in module happypanda.interface.ui)</a>
 </li>
       <li><a href="api.html#happypanda.interface.enums.ItemType.Grouping">Grouping (ItemType attribute)</a>
 </li>
@@ -405,6 +419,8 @@
 <h2 id="L">L</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#happypanda.interface.enums.ItemType.Language">Language (ItemType attribute)</a>
+</li>
       <li><a href="api.html#happypanda.interface.enums.ViewType.Library">Library (ViewType attribute)</a>
 </li>
   </ul></td>
@@ -467,7 +483,17 @@
 </li>
       <li><a href="api.html#happypanda.interface.meta.start_command">start_command() (in module happypanda.interface.meta)</a>
 </li>
+      <li><a href="api.html#happypanda.interface.enums.ItemType.Status">Status (ItemType attribute)</a>
+</li>
       <li><a href="api.html#happypanda.interface.meta.stop_command">stop_command() (in module happypanda.interface.meta)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="T">T</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#happypanda.interface.enums.ItemType.Title">Title (ItemType attribute)</a>
 </li>
   </ul></td>
 </tr></table>

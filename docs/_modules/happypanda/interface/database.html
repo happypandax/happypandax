@@ -82,6 +82,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../todo.html">TODO</a></li>
 </ul>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../exceptions.html">Exceptions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../api.html">Server API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../api_plugin.html">Plugin API</a></li>
 </ul>
@@ -164,26 +165,27 @@
 <span class="kn">import</span> <span class="nn">functools</span>
 
 
-<span class="k">def</span> <span class="nf">_get_cover</span><span class="p">(</span><span class="n">kwargs</span><span class="p">,</span> <span class="n">cover</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">_get_image</span><span class="p">(</span><span class="n">kwargs</span><span class="p">,</span> <span class="n">cover</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Profile</span><span class="p">(</span><span class="n">cover</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="k">if</span> <span class="n">cover</span> <span class="k">else</span> <span class="kc">None</span>
 
 
-<div class="viewcode-block" id="get_cover"><a class="viewcode-back" href="../../../api.html#happypanda.interface.database.get_cover">[docs]</a><span class="k">def</span> <span class="nf">get_cover</span><span class="p">(</span><span class="n">item_type</span><span class="p">:</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span> <span class="o">=</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Gallery</span><span class="p">,</span>
-              <span class="n">item_ids</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="p">[],</span>
-              <span class="n">size</span><span class="p">:</span> <span class="n">enums</span><span class="o">.</span><span class="n">ImageSize</span> <span class="o">=</span> <span class="n">enums</span><span class="o">.</span><span class="n">ImageSize</span><span class="o">.</span><span class="n">Medium</span><span class="p">,</span>
-              <span class="n">local</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-              <span class="n">uri</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<div class="viewcode-block" id="get_image"><a class="viewcode-back" href="../../../api.html#happypanda.interface.database.get_image">[docs]</a><span class="k">def</span> <span class="nf">get_image</span><span class="p">(</span><span class="n">item_type</span><span class="p">:</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">=</span><span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Gallery</span><span class="p">,</span>
+              <span class="n">item_ids</span><span class="p">:</span> <span class="nb">list</span><span class="o">=</span><span class="p">[],</span>
+              <span class="n">size</span><span class="p">:</span> <span class="n">enums</span><span class="o">.</span><span class="n">ImageSize</span><span class="o">=</span><span class="n">enums</span><span class="o">.</span><span class="n">ImageSize</span><span class="o">.</span><span class="n">Medium</span><span class="p">,</span>
+              <span class="n">local</span><span class="p">:</span> <span class="nb">bool</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+              <span class="n">uri</span><span class="p">:</span> <span class="nb">bool</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
               <span class="n">ctx</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Get cover image for item</span>
+<span class="sd">    Get image for item</span>
 <span class="sd">    Image content is base64 encoded. </span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        item_type: type of item</span>
+<span class="sd">        item_type: possible items are :py:attr:`.ItemType.Gallery`, :py:attr:`.ItemType.Artist`,</span>
+<span class="sd">            :py:attr:`.ItemType.Collection`, :py:attr:`.ItemType.Grouping`, :py:attr:`.ItemType.Page`</span>
 <span class="sd">        item_ids: list of item ids</span>
-<span class="sd">        size: ...</span>
+<span class="sd">        size: size of image</span>
 <span class="sd">        local: replace image content with local path to image file</span>
-<span class="sd">        uri: </span>
+<span class="sd">        uri: turn raw base64 string into an URI</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        ```</span>
@@ -199,23 +201,23 @@
 
     <span class="n">content</span> <span class="o">=</span> <span class="p">{}</span>
 
-    <span class="n">command_dec</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">_get_cover</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;local&#39;</span><span class="p">:</span> <span class="n">local</span><span class="p">,</span> <span class="s1">&#39;uri&#39;</span><span class="p">:</span> <span class="n">uri</span><span class="p">})</span>
+    <span class="n">command_dec</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">_get_image</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;local&#39;</span><span class="p">:</span> <span class="n">local</span><span class="p">,</span> <span class="s1">&#39;uri&#39;</span><span class="p">:</span> <span class="n">uri</span><span class="p">})</span>
 
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">item_ids</span><span class="p">:</span>
         <span class="n">c</span> <span class="o">=</span> <span class="n">database_cmd</span><span class="o">.</span><span class="n">GetModelCover</span><span class="p">()</span>
         <span class="n">services</span><span class="o">.</span><span class="n">ImageService</span><span class="o">.</span><span class="n">generic</span><span class="o">.</span><span class="n">add_command</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">command_dec</span><span class="p">)</span>
         <span class="n">content</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">db_item</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Identity</span><span class="p">(</span><span class="s1">&#39;cover&#39;</span><span class="p">,</span> <span class="n">content</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Identity</span><span class="p">(</span><span class="s1">&#39;image&#39;</span><span class="p">,</span> <span class="n">content</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="get_item"><a class="viewcode-back" href="../../../api.html#happypanda.interface.database.get_item">[docs]</a><span class="k">def</span> <span class="nf">get_item</span><span class="p">(</span><span class="n">item_type</span><span class="p">:</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span> <span class="o">=</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Gallery</span><span class="p">,</span>
-             <span class="n">item_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
+<div class="viewcode-block" id="get_item"><a class="viewcode-back" href="../../../api.html#happypanda.interface.database.get_item">[docs]</a><span class="k">def</span> <span class="nf">get_item</span><span class="p">(</span><span class="n">item_type</span><span class="p">:</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">=</span><span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Gallery</span><span class="p">,</span>
+             <span class="n">item_id</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Get item</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        item_type: ...</span>
+<span class="sd">        item_type: type of item to get</span>
 <span class="sd">        item_id: id of item</span>
 
 <span class="sd">    Returns:</span>
@@ -228,68 +230,84 @@
 
     <span class="n">item</span> <span class="o">=</span> <span class="n">database_cmd</span><span class="o">.</span><span class="n">GetModelItemByID</span><span class="p">()</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">db_model</span><span class="p">,</span> <span class="p">{</span><span class="n">item_id</span><span class="p">})[</span><span class="mi">0</span><span class="p">]</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">item</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">DatabaseItemNotFoundError</span><span class="p">(</span>
-            <span class="n">utils</span><span class="o">.</span><span class="n">this_function</span><span class="p">(),</span>
-            <span class="s2">&quot;&#39;</span><span class="si">{}</span><span class="s2">&#39; with id &#39;</span><span class="si">{}</span><span class="s2">&#39; was not found&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                <span class="n">item_type</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+        <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">DatabaseItemNotFoundError</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">this_function</span><span class="p">(),</span>
+            <span class="s2">&quot;&#39;</span><span class="si">{}</span><span class="s2">&#39; with id &#39;</span><span class="si">{}</span><span class="s2">&#39; was not found&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">item_type</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
                 <span class="n">item_id</span><span class="p">))</span>
 
     <span class="k">return</span> <span class="n">db_msg</span><span class="p">(</span><span class="n">item</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="get_related_items"><a class="viewcode-back" href="../../../api.html#happypanda.interface.database.get_related_items">[docs]</a><span class="k">def</span> <span class="nf">get_related_items</span><span class="p">(</span><span class="n">item_type</span><span class="p">:</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span> <span class="o">=</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Gallery</span><span class="p">,</span>
-                     <span class="n">related_type</span><span class="p">:</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span> <span class="o">=</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Page</span><span class="p">,</span>
-                     <span class="n">item_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">):</span>
+<div class="viewcode-block" id="get_items"><a class="viewcode-back" href="../../../api.html#happypanda.interface.database.get_items">[docs]</a><span class="k">def</span> <span class="nf">get_items</span><span class="p">(</span><span class="n">item_type</span><span class="p">:</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">=</span><span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Gallery</span><span class="p">,</span>
+               <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get a list of items</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        item_type: type of item to get</span>
+<span class="sd">        limit: limit the amount of items returned</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        list of item message objects</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">item_type</span> <span class="o">=</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">item_type</span><span class="p">)</span>
+
+    <span class="n">db_msg</span><span class="p">,</span> <span class="n">db_model</span> <span class="o">=</span> <span class="n">item_type</span><span class="o">.</span><span class="n">_msg_and_model</span><span class="p">()</span>
+
+    <span class="n">items</span> <span class="o">=</span> <span class="n">database_cmd</span><span class="o">.</span><span class="n">GetModelItems</span><span class="p">()</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">db_model</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="n">limit</span><span class="p">)</span>
+
+    <span class="n">item_list</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">model_name</span><span class="p">(</span><span class="n">db_model</span><span class="p">),</span> <span class="n">db_msg</span><span class="p">)</span>
+    <span class="p">[</span><span class="n">item_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">db_msg</span><span class="p">(</span><span class="n">i</span><span class="p">))</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">items</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">item_list</span></div>
+
+<div class="viewcode-block" id="get_related_items"><a class="viewcode-back" href="../../../api.html#happypanda.interface.database.get_related_items">[docs]</a><span class="k">def</span> <span class="nf">get_related_items</span><span class="p">(</span><span class="n">item_type</span><span class="p">:</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">=</span><span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Gallery</span><span class="p">,</span>
+                      <span class="n">item_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+                      <span class="n">related_type</span><span class="p">:</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">=</span><span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Page</span><span class="p">,</span>
+                      <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Get item related to given item</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        item_type: ...</span>
-<span class="sd">        related_type: ...</span>
-<span class="sd">        related_id: id of the related item</span>
+<span class="sd">        item_type: parent item</span>
+<span class="sd">        item_id: id of parent item</span>
+<span class="sd">        related_type: child item</span>
 <span class="sd">        limit: limit the amount of items returned</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        a list of item message object</span>
+<span class="sd">        a list of related item message object</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">item_type</span> <span class="o">=</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">item_type</span><span class="p">)</span>
     <span class="n">related_type</span> <span class="o">=</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">related_type</span><span class="p">)</span>
 
-    <span class="n">db_msg</span><span class="p">,</span> <span class="n">db_model</span> <span class="o">=</span> <span class="n">item_type</span><span class="o">.</span><span class="n">_msg_and_model</span><span class="p">()</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">parent_model</span> <span class="o">=</span> <span class="n">item_type</span><span class="o">.</span><span class="n">_msg_and_model</span><span class="p">()</span>
+    <span class="n">child_msg</span><span class="p">,</span> <span class="n">child_model</span> <span class="o">=</span> <span class="n">related_type</span><span class="o">.</span><span class="n">_msg_and_model</span><span class="p">()</span>
+
+    <span class="n">col</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">relationship_column</span><span class="p">(</span><span class="n">parent_model</span><span class="p">,</span> <span class="n">child_model</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">col</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">APIError</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">this_function</span><span class="p">(),</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> has no relationship with </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">related_type</span><span class="p">,</span> <span class="n">item_type</span><span class="p">))</span>
 
     <span class="n">s</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">db_session</span><span class="p">()</span>
+    <span class="n">item_ids</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">child_model</span><span class="o">.</span><span class="n">id</span><span class="p">)</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">col</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">parent_model</span><span class="o">.</span><span class="n">id</span><span class="o">==</span><span class="n">item_id</span><span class="p">)</span><span class="o">.</span><span class="n">limit</span><span class="p">(</span><span class="n">limit</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+    <span class="n">items</span> <span class="o">=</span> <span class="n">database_cmd</span><span class="o">.</span><span class="n">GetModelItemByID</span><span class="p">()</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">child_model</span><span class="p">,</span> <span class="p">{</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">item_ids</span><span class="p">})</span>
 
-    <span class="n">item_ids</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">db_model</span><span class="o">.</span><span class="n">id</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span></div>
+    <span class="n">item_list</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">model_name</span><span class="p">(</span><span class="n">child_model</span><span class="p">),</span> <span class="n">child_msg</span><span class="p">)</span>
+    <span class="p">[</span><span class="n">item_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">child_msg</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">items</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">item_list</span></div>
 
-
-<div class="viewcode-block" id="get_gfilters"><a class="viewcode-back" href="../../../api.html#happypanda.interface.database.get_gfilters">[docs]</a><span class="k">def</span> <span class="nf">get_gfilters</span><span class="p">():</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Get a list of gallery filter lists</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        a list of galleryfilter objects</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="n">glists</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="s2">&quot;gallerylist&quot;</span><span class="p">,</span> <span class="n">message</span><span class="o">.</span><span class="n">GalleryFilter</span><span class="p">)</span>
-    <span class="n">s</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">db_session</span><span class="p">()</span>
-    <span class="p">[</span><span class="n">glists</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">message</span><span class="o">.</span><span class="n">GalleryFilter</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">s</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">GalleryFilter</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()]</span>
-    <span class="k">return</span> <span class="n">glists</span></div>
-
-
-<span class="k">def</span> <span class="nf">get_tags</span><span class="p">(</span><span class="n">taggable_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">get_tags</span><span class="p">(</span><span class="n">taggable_id</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
     <span class="s2">&quot;&quot;</span>
     <span class="k">pass</span>
 
 
-<div class="viewcode-block" id="get_count"><a class="viewcode-back" href="../../../api.html#happypanda.interface.database.get_count">[docs]</a><span class="k">def</span> <span class="nf">get_count</span><span class="p">(</span><span class="n">item_type</span><span class="p">:</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span> <span class="o">=</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Gallery</span><span class="p">):</span>
+<div class="viewcode-block" id="get_count"><a class="viewcode-back" href="../../../api.html#happypanda.interface.database.get_count">[docs]</a><span class="k">def</span> <span class="nf">get_count</span><span class="p">(</span><span class="n">item_type</span><span class="p">:</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">=</span><span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Gallery</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Get count of items in the database</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        item_type: type of db item (Gallery, Collection, Grouping)</span>
+<span class="sd">        item_type: type of item</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        ```</span>
-<span class="sd">        {&#39;count&#39;: int}</span>
+<span class="sd">        { &#39;count&#39;: int }</span>
 <span class="sd">        ```</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -300,6 +318,36 @@
     <span class="n">s</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">db_session</span><span class="p">()</span>
 
     <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Identity</span><span class="p">(</span><span class="s1">&#39;count&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;count&#39;</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">db_model</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()})</span></div>
+
+<div class="viewcode-block" id="get_related_count"><a class="viewcode-back" href="../../../api.html#happypanda.interface.database.get_related_count">[docs]</a><span class="k">def</span> <span class="nf">get_related_count</span><span class="p">(</span><span class="n">item_type</span><span class="p">:</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">=</span><span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Gallery</span><span class="p">,</span>
+                      <span class="n">item_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+                      <span class="n">related_type</span><span class="p">:</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">=</span><span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Page</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get count of items related to given item</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        item_type: parent item</span>
+<span class="sd">        item_id: id of parent item</span>
+<span class="sd">        related_type: child item</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        ```</span>
+<span class="sd">        { &#39;id&#39;: int, &#39;count&#39;: int }</span>
+<span class="sd">        ```</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">item_type</span> <span class="o">=</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">item_type</span><span class="p">)</span>
+    <span class="n">related_type</span> <span class="o">=</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">related_type</span><span class="p">)</span>
+
+    <span class="n">_</span><span class="p">,</span> <span class="n">parent_model</span> <span class="o">=</span> <span class="n">item_type</span><span class="o">.</span><span class="n">_msg_and_model</span><span class="p">()</span>
+    <span class="n">child_msg</span><span class="p">,</span> <span class="n">child_model</span> <span class="o">=</span> <span class="n">related_type</span><span class="o">.</span><span class="n">_msg_and_model</span><span class="p">()</span>
+
+    <span class="n">col</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">relationship_column</span><span class="p">(</span><span class="n">parent_model</span><span class="p">,</span> <span class="n">child_model</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">col</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">APIError</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">this_function</span><span class="p">(),</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> has no relationship with </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">related_type</span><span class="p">,</span> <span class="n">item_type</span><span class="p">))</span>
+
+    <span class="n">s</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">db_session</span><span class="p">()</span>
+    <span class="n">count</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">child_model</span><span class="o">.</span><span class="n">id</span><span class="p">)</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">col</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">parent_model</span><span class="o">.</span><span class="n">id</span><span class="o">==</span><span class="n">item_id</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Identity</span><span class="p">(</span><span class="s1">&#39;count&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="n">item_id</span><span class="p">,</span> <span class="s1">&#39;count&#39;</span><span class="p">:</span> <span class="n">count</span><span class="p">})</span></div>
 </pre></div>
 
         </div>
