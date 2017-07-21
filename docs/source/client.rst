@@ -131,13 +131,13 @@ The server will send you a message that looks like this::
 
 You can use this message to determine if the HPX server is supported or not.
 
-Notice the ``guest_allowed`` key. This key informs if it's possible to connect to the server *without* providing any credentials.
+Notice the ``guest_allowed`` key. This value of this key informs if it's possible to connect to the server *without* providing any credentials.
 
 The server expects a response from the client before any further processing is done.
 
 To authenticate as a **guest** the client responds with an empty object ``{}``.
 
-To authenticate as a **user** the client responds with::
+To authenticate as a **user** the client responds with (put in the ``data`` key)::
 
     {
         "user": "",
@@ -190,9 +190,9 @@ This allows for multiple connections to be made within the same app while sharin
     socketB (connects) --> server
     socketB <-- (asking for handshake) server
     socketB (normal msg with session id) --> server
-    socketB <-- (normal response) server
-
-Think of it like a computer with only one user account has multiple people using it.
+    socketB <-- (normal response) server**
+**
+Think of it as threads in a computer program.
 
 As shown above, the server will *always* send a message when a client connects.
 This message should thus always be consumed by additional sockets before sending the intended message with a session.
@@ -201,8 +201,8 @@ This message should thus always be consumed by additional sockets before sending
 
 Sessions expire when their lifespan runs out, requiring the client to do a *new* handshake.
 
-.. todo::
-
+.. todo::**
+**
     explain session expired error
 
 Calling a function

@@ -17,7 +17,7 @@ def get_image(item_type: enums.ItemType=enums.ItemType.Gallery,
               uri: bool=False,
               ctx=None):
     """
-    Get image for item
+    Get image for item.
     Image content is base64 encoded.
 
     Args:
