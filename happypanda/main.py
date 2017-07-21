@@ -6,8 +6,10 @@ if __package__ is None and not hasattr(sys, 'frozen'):
     path = os.path.realpath(os.path.abspath(__file__))
     sys.path.insert(0, os.path.dirname(os.path.dirname(path)))
 
+from multiprocessing import Process
+
 from happypanda.common import utils, constants, hlogger  # noqa: E402
-from happypanda.core import server, plugins, command  # noqa: E402
+from happypanda.core import server, plugins, command, views  # noqa: E402
 from happypanda.core.commands import io_cmd  # noqa: E402
 
 log = hlogger.Logger(__name__)
@@ -27,18 +29,26 @@ def start():
 
     log.i("HPX SERVER START")
 
-    constants.available_commands = command.get_available_commands()
-    constants.core_plugin = plugins._plugin_load(
-        "happypanda.core.coreplugin", "core", _logger=log)
+    if not args.only_web:
+        constants.available_commands = command.get_available_commands()
+        constants.core_plugin = plugins._plugin_load(
+            "happypanda.core.coreplugin", "core", _logger=log)
 
-    if not args.safe:
-        plugins.plugin_loader(constants.dir_plugin)
+        if not args.safe:
+            plugins.plugin_loader(constants.dir_plugin)
+        else:
+            plugins.registered.init_plugins()
+
+    log.i("Starting webserver... ({}:{})".format(constants.host_web, constants.port_web), stdout=True)
+    web_args = (constants.host_web, constants.port_web, constants.dev if args.only_web else False)
+    if args.only_web:
+        server.WebServer().run(*web_args)
     else:
-        plugins.registered.init_plugins()
+        Process(target=server.WebServer().run, args=web_args, daemon=True).start()
+        server.HPServer().run(interactive=args.interact)
 
-    server.HPServer().run(interactive=args.interact)
-
-    constants.config.save()
+    if not args.only_web:
+        constants.config.save()
     log.i("HPX SERVER END")
 
 

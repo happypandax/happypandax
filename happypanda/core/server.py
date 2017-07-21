@@ -5,14 +5,17 @@ import uuid  # noqa: E402
 import sys  # noqa: E402
 import code  # noqa: E402
 import arrow  # noqa: E402
+import os  # noqa: E402
 
 from inspect import getmembers, isfunction  # noqa: E402
 
 from gevent import socket, pool  # noqa: E402
 from gevent.server import StreamServer  # noqa: E402
+from flask import Flask # noqa: E402
+from flask_socketio import SocketIO # noqa: E402
 
-from happypanda.common import constants, exceptions, utils, hlogger  # noqa: E402
 from happypanda import interface  # noqa: E402
+from happypanda.common import constants, exceptions, utils, hlogger  # noqa: E402
 from happypanda.core import db, torrent, message  # noqa: E402
 from happypanda.interface import meta, enums  # noqa: E402
 
@@ -398,7 +401,6 @@ class ClientHandler:
                 pass
         return None
 
-
 class HPServer:
     "Happypanda Server"
 
@@ -458,7 +460,7 @@ class HPServer:
         try:
             constants.server_started = True
             if blocking:
-                log.i("Starting server... ({}:{}) (blocking)".format(
+                log.i("Starting server... ({}:{})".format(
                     constants.host, constants.port), stdout=True)
                 self._server.serve_forever()
             else:
@@ -469,7 +471,7 @@ class HPServer:
                 "Error: Failed to start server (Port might already be in use)")
 
     def run(self, interactive=False):
-        """Run the server forever, blocking
+        """Run the server
         Params:
             interactive -- Start in interactive mode (Note: Does not work with web server)
         """
@@ -486,6 +488,13 @@ class HPServer:
         log.i("Server shutting down.", stdout=True)
 
 
-if __name__ == '__main__':
-    server = HPServer()
-    server.run()
+class WebServer:
+    ""
+    happyweb = Flask(__name__, static_url_path='/static',
+                     template_folder=os.path.abspath(constants.dir_templates),
+                     static_folder=os.path.abspath(constants.dir_static))
+    socketio = SocketIO(happyweb)
+
+    def run(self, host, port, debug=False):
+        self.socketio.run(self.happyweb, host, port, debug=debug)
+

@@ -1,0 +1,195 @@
+﻿{% extends "base.html" %} {% block content %}
+{% raw %}
+
+<script id="gallery-t" type="x-handlebars-template">
+        <div id="gallery" , class="well well-lg clearfix">
+            <div id="top-misc">
+                {{#if inbox}}
+                <span class="pull-right label label-warning glyphicon glyphicon-inbox" aria-hidden="true" title="This gallery is in your inbox"> Inbox</span>
+                {{/if}}
+                {{#if fav}}
+                <span class="pull-right label label-warning glyphicon glyphicon-star" aria-hidden="true" title="This gallery is one of your favorites"> Favorite</span>
+                {{/if}}
+            </div>
+            <table>
+                
+                <tr>
+                    <td class="big-column td-top">
+                    <div id="profile" class="">
+                        <div class="load load-center">
+                            <div class="line bg-primary"></div>
+                            <div class="line bg-primary"></div>
+                            <div class="line bg-primary"></div>
+                        </div>
+                        <img class="profile-big img-thumbnail img-responsive" src="{{ thumb }}">
+                    </div>
+
+                    </td>
+                    <td>
+                        <div id="meta" class="">
+                            <table class="table">
+                                <tr>
+                                    <td colspan="2">
+                                        <h3>{{ title }}</h3>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td width="100px" class="attribute">
+                                        Artists:
+                                    </td>
+                                    <td>
+                                        {{#each artists}}
+                                        <a href="/artist/{{ id }}">
+                                            <span class="">{{ name }}</span>
+                                        </a>
+                                        {{/each}}
+
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td width="100px" class="attribute">
+                                        Circle:
+                                    </td>
+                                    <td>
+                                        Circle
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td width="100px" class="attribute">
+                                        Collections:
+                                    </td>
+                                    <td>
+                                        <span class="col-tag">Collection 1</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td width="100px" class="attribute">
+                                        Release Date:
+                                    </td>
+                                    <td>{{ published }}</td>
+                                </tr>
+                                <tr>
+                                    <td width="100px" class="attribute">
+                                        Language:
+                                    </td>
+                                    <td id="g-lang">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td width="100px" class="attribute">
+                                        Rating:
+                                    </td>
+                                    <td>
+                                        <span class="rating pull-left">
+                                            <i class="glyphicon glyphicon-heart"></i>
+                                            <i class="glyphicon glyphicon-heart"></i>
+                                            <i class="glyphicon glyphicon-heart"></i>
+                                            <i class="glyphicon glyphicon-heart"></i>
+                                            <i class="glyphicon glyphicon-heart"></i>
+                                            <i class="glyphicon glyphicon-heart"></i>
+                                            <i class="glyphicon glyphicon-heart"></i>
+                                            <i class="glyphicon glyphicon-heart"></i>
+                                            <i class="glyphicon glyphicon-heart"></i>
+                                            <i class="glyphicon glyphicon-heart"></i>
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td width="100px" class="attribute"> 
+                                        Tags:
+                                    </td>
+                                    <td>
+                                        <div id="tags" class="well">
+                                            <table class="table">
+                                                <tr>
+                                                    <td colspan="2">
+                                                        <span class="tag label label-default">Tag 1</span>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td width="50px">
+                                                        NS 1:
+                                                    </td>
+                                                    <td>
+                                                        <span class="tag label label-default">Tag 1</span>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td width="50px">
+                                                        NS 2:
+                                                    </td>
+                                                    <td>
+                                                        <span class="tag label label-default">Tag 1</span>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td width="50px">
+                                                        NS 3:
+                                                    </td>
+                                                    <td>
+                                                        <span class="tag label label-default">Tag 1</span>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </div>
+
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+
+
+            <div id="bottom-misc" class="clearfix pull-left">
+                <span class="pull-left attribute" aria-hidden="true">Created: <span class="label label-default">{{ added }} ({{ rel_added }})</span></span>
+                <span class="pull-left attribute" aria-hidden="true">Last read: <span class="label label-default">{{ read }} ({{ rel_read }})</span></span>
+                <span class="pull-left attribute" aria-hidden="true">Last updated: <span class="label label-default">{{ updated }} ({{ rel_updated }})</span></span>
+            </div>
+
+        </div>
+</script>
+
+<div onload="pages.init_page('gallery', pages.GalleryPage).main()">
+
+    <ul class="breadcrumb">
+        <li>
+            <a href="/library">Library</a>
+        </li>
+        <li class="active">Gallery</li>
+    </ul>
+
+    <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+        <div id="namespace" class="panel panel-default">
+            <div class="panel-heading" role="tab" id="namespace-head">
+                <h4 class="panel-title">
+                    <a role="button" data-toggle="collapse" data-parent="#accordion" href="#namespace-content" aria-expanded="false" aria-controls="namespace-content">
+                        Series <span class="badge">2</span>
+                    </a>
+                </h4>
+            </div>
+            <div id="namespace-content" class="panel-collapse collapse" role="tabpanel" aria-labelledby="namespace-head">
+                <div class="panel-body">
+                </div>
+            </div>
+        </div>
+        <div id="pages" class="panel panel-primary">
+            <div class="panel-heading" role="tab" id="pages-head">
+                <h4 class="panel-title">
+                    <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#pages-content" aria-expanded="true" aria-controls="pages-content">
+                        Pages <span class="badge">2</span>
+                    </a>
+                </h4>
+            </div>
+            <div id="pages-content" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="pages-head">
+                <div class="panel-body">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% endraw %}
+{% endblock %}
