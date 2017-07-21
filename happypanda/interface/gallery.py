@@ -1,5 +1,6 @@
 from happypanda.core import message
 
+
 def add_gallery(galleries: list=[], paths: list=[], ctx=None):
     """
     Add galleries to the database.

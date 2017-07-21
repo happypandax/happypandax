@@ -15,6 +15,7 @@ def get_plugin(plugin_id: str):
     """
     return message.Message("works")
 
+
 def install_plugin(plugin_id: str, ctx=None):
     """
     Install a plugin
