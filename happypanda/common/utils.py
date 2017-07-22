@@ -283,13 +283,15 @@ def create_temp_dir():
     temp_dirs.append(t)
     return t
 
+
 def get_qualified_name(host, port):
     "Returns host:port"
     assert isinstance(host, str)
     if not host or host == '0.0.0.0':
         host = get_local_ip()
     # TODO: public ip
-    return host.strip()+':'+str(port).strip()
+    return host.strip() + ':' + str(port).strip()
+
 
 def get_local_ip():
     if not constants.local_ip:

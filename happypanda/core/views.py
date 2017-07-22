@@ -1,6 +1,6 @@
 import os
 
-from flask import (render_template, abort, request, url_for, send_from_directory)
+from flask import (render_template, abort, request, send_from_directory)
 from werkzeug.utils import secure_filename
 
 from happypanda.core.server import WebServer
@@ -16,16 +16,18 @@ root_client = Client("root_webclient")
 
 all_clients = {}
 
+
 def _create_clients(id, session_id=""):
     all_clients[id] = {
-        "client" : Client("webclient", session_id, id),
-        "thumbclient" : Client("webclient-thumbnails", session_id, id),
-        "commandclient" : Client("webclient-commands", session_id, id)
-        }
+        "client": Client("webclient", session_id, id),
+        "thumbclient": Client("webclient-thumbnails", session_id, id),
+        "commandclient": Client("webclient-commands", session_id, id)
+    }
     return all_clients[id]
 
+
 def get_clients(id, session_id=""):
-    if not id in all_clients:
+    if id not in all_clients:
         _create_clients(id, session_id)
     clients = all_clients[id]
 
@@ -36,8 +38,10 @@ def get_clients(id, session_id=""):
                 c.connect()
     return clients
 
+
 def send_error(ex):
     socketio.emit("exception", {'error': str(ex.__class__.__name__) + ': ' + str(ex)})
+
 
 def call_server(msg, c):
     msg_id = msg['id']
@@ -53,10 +57,12 @@ def call_server(msg, c):
 
     return msg_id, data
 
+
 @socketio.on('connect')
 def on_connect():
     "client connected"
     get_clients(request.sid, root_client.session)
+
 
 @socketio.on('command')
 def on_command(msg):
@@ -106,17 +112,20 @@ def on_server_call(msg):
     msg_id, data = call_server(msg, c['client'])
     socketio.emit('server_call', {'id': msg_id, 'msg': data})
 
+
 @socketio.on('server_call', namespace='/thumb')
 def on_thumb_call(msg):
     c = get_clients(request.sid, root_client.session)
     msg_id, data = call_server(msg, c['thumbclient'])
     socketio.emit('server_call', {'id': msg_id, 'msg': data}, namespace='/thumb')
 
+
 @socketio.on('server_call', namespace='/command')
 def on_command_call(msg):
     c = get_clients(request.sid, root_client.session)
     msg_id, data = call_server(msg, c['commandclient'])
     socketio.emit('server_call', {'id': msg_id, 'msg': data}, namespace='/command')
+
 
 @happyweb.before_first_request
 def before_first_request():
@@ -126,6 +135,7 @@ def before_first_request():
     except exceptions.ServerError as e:
         log.exception("Could not establish connection on first try")
         send_error(e)
+
 
 @happyweb.route('/')
 @happyweb.route('/index')
@@ -164,9 +174,11 @@ def artist_page(id=0):
 def api_view(page=0):
     return render_template('api.html')
 
-@happyweb.route(constants.thumbs_view+'/<path:filename>')
+
+@happyweb.route(constants.thumbs_view + '/<path:filename>')
 def thumbs_view(filename):
     return send_from_directory(os.path.abspath(constants.dir_thumbs), secure_filename(filename))
+
 
 @happyweb.route('/server', methods=['POST'])
 def server_proxy():

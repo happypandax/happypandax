@@ -144,4 +144,3 @@ class Client:
         log.i("Closing connection to server")
         self._alive = False
         self._sock.close()
-

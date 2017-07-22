@@ -125,7 +125,7 @@ port = config.get(
 port_web = config.get(
     core_ns,
     'port_web',
-    port+1,
+    port + 1,
     "Specify which port to start the webserver on")
 
 port_torrent = config.get(

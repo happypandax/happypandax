@@ -11,8 +11,8 @@ from inspect import getmembers, isfunction  # noqa: E402
 
 from gevent import socket, pool  # noqa: E402
 from gevent.server import StreamServer  # noqa: E402
-from flask import Flask # noqa: E402
-from flask_socketio import SocketIO # noqa: E402
+from flask import Flask  # noqa: E402
+from flask_socketio import SocketIO  # noqa: E402
 
 from happypanda import interface  # noqa: E402
 from happypanda.common import constants, exceptions, utils, hlogger  # noqa: E402
@@ -401,6 +401,7 @@ class ClientHandler:
                 pass
         return None
 
+
 class HPServer:
     "Happypanda Server"
 
@@ -497,4 +498,3 @@ class WebServer:
 
     def run(self, host, port, debug=False):
         self.socketio.run(self.happyweb, host, port, debug=debug)
-

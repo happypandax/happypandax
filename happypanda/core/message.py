@@ -352,7 +352,7 @@ class Profile(DatabaseMessage):
                 host = utils.get_qualified_name(constants.host_web, constants.port_web)
                 furl = host + constants.thumbs_view + '/' + tail
                 if self._uri:
-                   furl = 'http://' + furl
+                    furl = 'http://' + furl
                 d['data'] = furl
             else:
                 d['data'] = ""

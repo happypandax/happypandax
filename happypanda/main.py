@@ -8,7 +8,9 @@ if __package__ is None and not hasattr(sys, 'frozen'):
     sys.path.insert(0, os.path.dirname(os.path.dirname(path)))
 
 from happypanda.common import utils, constants, hlogger  # noqa: E402
-from happypanda.core import server, plugins, command, views  # noqa: E402
+from happypanda.core import server, plugins, command  # noqa: E402
+# views need to be imported before starting the webserver in a different process
+from happypanda.core import views  # noqa: F401
 from happypanda.core.commands import io_cmd  # noqa: E402
 
 log = hlogger.Logger(__name__)
