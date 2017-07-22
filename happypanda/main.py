@@ -1,6 +1,6 @@
 import os
 import sys
-import gipc
+from multiprocessing import Process
 
 if __package__ is None and not hasattr(sys, 'frozen'):
     # direct call of main.py
@@ -45,7 +45,7 @@ def start():
     if args.only_web:
         server.WebServer().run(*web_args)
     else:
-        gipc.start_process(server.WebServer().run, args=web_args, daemon=True)
+        Process(target=server.WebServer().run, args=web_args, daemon=True).start()
         server.HPServer().run(interactive=args.interact)
 
     if not args.only_web:
