@@ -256,11 +256,11 @@ class Command(Base):
         self._values = {}
         self._value_callback = None
         self._getting_value = False
+        self._on_each = False
         self.commandclient = commandclient
 
         for i in self._command_ids:
             self._states[str(i)] = None
-            self._values[str(i)] = None
 
         if customclient:
             self.commandclient = customclient
@@ -281,12 +281,18 @@ class Command(Base):
 
     __pragma__('iconv')
 
-    def finished(self):
+    __pragma__('kwargs')
+    def finished(self, any_command=False):
         "Check if command has finished running"
         states = []
         for s in self._states:
             states.append(self._states[s] in ['finished', 'stopped', 'failed'])
-        return all(states)
+        if any_command:
+            t = any(states)
+        else:
+            t = all(states)
+        return t
+    __pragma__('nokwargs')
     __pragma__('noiconv')
 
     def poll_until_complete(self, interval=1000 * 5, timeout=1000 * 60 * 10, callback=None):
@@ -297,14 +303,16 @@ class Command(Base):
                 if not self.finished():
                     self._check_status()
                 else:
-                    self._fetch_value()
                     if callback:
                         callback()
+
+                self._fetch_value()
                 return self.finished()
 
             utils.poll_func(_poll, timeout, interval)
 
     __pragma__('iconv')
+    __pragma__('kwargs')
 
     def _fetch_value(self, data=None, error=None, cmd_ids=None):
         if data is not None and not error:
@@ -314,17 +322,32 @@ class Command(Base):
                 if str_i in data:
                     self._values[str_i] = data[str_i]
 
-            if self._value_callback:
+                    if self._on_each and self._value_callback:
+                        self._value_callback(i, data[str_i])
+
+            if not self._on_each and self._value_callback:
                 self._value_callback(self)
+
             self._getting_value = False
         elif error:
             pass
         else:
-            if not self._getting_value:
+            if self.finished(self._on_each) and not self._getting_value:
                 if not cmd_ids:
-                    cmd_ids = self._command_ids
+                    cmd_ids = []
+                    for i in self._command_ids:
+                        str_i = str(i)
+                        if not str_i in self._values and str_i in self._states:
+                            if self._states[str_i] == 'finished':
+                                cmd_ids.append(i)
+                            if self._on_each and self._value_callback:
+                                if self._states[str_i] in ['stopped', 'failed']:
+                                    self._value_callback(i, None)
+
+                print("fetching {}".format(cmd_ids))
                 self.commandclient.call_func("get_command_value", self._fetch_value, command_ids=cmd_ids)
                 self._getting_value = True
+    __pragma__('nokwargs')
     __pragma__('noiconv')
 
     __pragma__('iconv')
@@ -341,7 +364,7 @@ class Command(Base):
 
         ids = []
         for i in cmd_id:
-            if not self._values[i]:
+            if i not in self._values:
                 ids.append(int(i))
 
         if ids:
@@ -353,9 +376,14 @@ class Command(Base):
     __pragma__('noiconv')
     __pragma__('notconv')
 
-    def set_callback(self, callback):
+    __pragma__('kwargs')
+    def set_callback(self, callback, on_each_complete=False):
         """
         Set a callback for when the value has been obtained
         The callback is called with this command
+
+        on_each_complete: call callback with command_id and value on each complete state
         """
         self._value_callback = callback
+        self.on_each = on_each_complete
+    __pragma__('nokwargs')

@@ -115,6 +115,52 @@ class Thumbnail(Widget):
             self._fetch_thumb(size=size)
     __pragma__('notconv')
 
+    @staticmethod
+    def mass_fetch(thumbs, size_type):
+        ""
+        ids = []
+        
+        for t in thumbs:
+            assert isinstance(t, Thumbnail)
+            ids.append(t.id)
+
+    __pragma__('tconv')
+    __pragma__('kwargs')
+
+    @staticmethod
+    def _mass_get(data=None, error=None, ids=[], size='Big', item_type=None):
+        if data is not None and not error:
+            cmd_ids = []
+            for i in data:
+                cmd_ids.append(i)
+
+            if cmd_ids:
+                cmd = Command(cmd_ids)
+                cmd.set_callback(self._set_thumb_cmd)
+                cmd.poll_until_complete(500)
+        elif error:
+            pass
+        else:
+            if ids:
+                thumbclient.call_func("get_image", _mass_get, item_ids=ids,
+                                 size=size, url=True, uri=True, item_type=item_type)
+    __pragma__('notconv')
+    __pragma__('nokwargs')
+
+    @staticmethod
+    def _mass_set(cmd):
+        val = cmd.get_value()
+        im = None
+        if val:
+            im = val['data']
+
+        self._thumbs[self._thumbsize] = val
+
+        if not im:
+            im = "/static/img/no-image.png"
+
+        self._set_thumb(im)     
+
 
 class Gallery(Thumbnail):
 

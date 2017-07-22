@@ -350,9 +350,7 @@ class Profile(DatabaseMessage):
             # TODO: make sure path is in static else return actual path
             if tail:
                 host = utils.get_qualified_name(constants.host_web, constants.port_web)
-                furl = host + constants.thumbs_view + '/' + tail
-                if self._uri:
-                    furl = 'http://' + furl
+                furl = constants.thumbs_view + '/' + tail
                 d['data'] = furl
             else:
                 d['data'] = ""
