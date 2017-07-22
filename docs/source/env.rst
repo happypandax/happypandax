@@ -51,7 +51,7 @@ Running
 
 See available command arguments: ``python run.py --help``
 
-Start the server or webclient: ``python run.py``
+Start the server and webclient: ``python run.py``
 
 
 Code Style
@@ -93,12 +93,9 @@ Create or modify the tests in the the ``tests/`` folder.
 
 Run ``python run_tests.py`` to run the tests.
 
-Server
-**************************************
-
 
 Codebase
-=====================================
+**************************************
 
 ::
 
@@ -106,6 +103,8 @@ Codebase
         - docs/source <- everything documentation in here
         - bin/ <- contains executables, dlls, etc.
         - tests/ <- everything test-related in here
+        - static/ <- the python files transpiled to JavaScript among other things
+        - templates/ <- HTML files
         - happypanda/ <- the actual source code
             - common/ <- a package for common code
             - core/ <- the heart (or brain?) of it all
@@ -113,7 +112,7 @@ Codebase
 
 
 Webclient
-**************************************
+=====================================
 
 A few things that you need to know when working on the webclient are:
 
@@ -123,14 +122,3 @@ A few things that you need to know when working on the webclient are:
 
 The webclient is a generic Flask setup. Knowlegde of Flask is not required but beneficial.
 
-Codebase
-=====================================
-
-::
-
-    - root/
-        - tests/ <- everything test-related in here
-        - happypanda/ <- the actual source code
-            - common/ <- a package for common code
-            - static/ <- the python files transpiled to JavaScript among other things
-            - templates/ <- HTML files

@@ -3,19 +3,6 @@ Creating frontends
 
 HPX provides a RPC interface over TCP making it possible to create a client in any programming language.
 
-
-Terminology
-----------------------------------------
-
-- ``Server`` - ..
-- ``Client`` - ...
-- ``Handshake`` - ..
-- ``Context`` - ..
-- ``Message`` - ..
-
-Talking to HPX server
-----------------------------------------
-
 For exchanging data between the server and client ``JSON`` is used. Make sure you're familiar with ``JSON`` and its datatypes.
 
 Before wanting to talk to a HPX server, make sure you have one running. See :ref:`Starting up` or :ref:`Setting up an environment` on how to get one up and running.
@@ -295,7 +282,7 @@ Likewise, errors occuring in api-functions will add the ``error`` key in the *fu
 Server commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The server implements the following commands ...
+The server implements the following commands :class:`.ServerCommand`
 
 Server commands are invoked like this (this is the whole payload)::
 
@@ -325,12 +312,12 @@ For example, when the server recieves a shut down command, the exact command is 
 
 .. todo::
     
-    server commands
+    server commands broadcasting (shutting down gracefully)
 
 Playing with the API
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The default webclient has a place for watching and testing the exchanges between the server and the client.
 
-Run the webclient with the ``--debug`` switch and go to ``/api``.
+Start the webclient with the ``--debug`` switch and go to ``/api``.
 
