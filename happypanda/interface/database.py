@@ -13,7 +13,7 @@ def _get_image(kwargs, cover):
 def get_image(item_type: enums.ItemType=enums.ItemType.Gallery,
               item_ids: list=[],
               size: enums.ImageSize=enums.ImageSize.Medium,
-              local: bool=False,
+              url: bool=False,
               uri: bool=False,
               ctx=None):
     """
@@ -25,7 +25,7 @@ def get_image(item_type: enums.ItemType=enums.ItemType.Gallery,
             :py:attr:`.ItemType.Collection`, :py:attr:`.ItemType.Grouping`, :py:attr:`.ItemType.Page`
         item_ids: list of item ids
         size: size of image
-        local: replace image content with local path to image file
+        url: replace image content with url to image file
         uri: turn raw base64 string into an URI
 
     Returns:
@@ -43,7 +43,7 @@ def get_image(item_type: enums.ItemType=enums.ItemType.Gallery,
 
     content = {}
 
-    command_dec = functools.partial(_get_image, {'local': local, 'uri': uri})
+    command_dec = functools.partial(_get_image, {'url': url, 'uri': uri})
 
     for i in item_ids:
         c = database_cmd.GetModelCover()

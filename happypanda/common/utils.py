@@ -8,6 +8,7 @@ import logging
 import base64
 import uuid
 import tempfile
+import socket
 
 from inspect import ismodule, currentframe, getframeinfo
 from logging.handlers import RotatingFileHandler
@@ -281,3 +282,25 @@ def create_temp_dir():
     t = tempfile.TemporaryDirectory(dir=constants.dir_temp)
     temp_dirs.append(t)
     return t
+
+def get_qualified_name(host, port):
+    "Returns host:port"
+    assert isinstance(host, str)
+    if not host or host == '0.0.0.0':
+        host = get_local_ip()
+    # TODO: public ip
+    return host.strip()+':'+str(port).strip()
+
+def get_local_ip():
+    if not constants.local_ip:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            # doesn't even have to be reachable
+            s.connect(('10.255.255.255', 1))
+            IP = s.getsockname()[0]
+        except:
+            IP = '127.0.0.1'
+        finally:
+            s.close()
+        constants.local_ip = IP
+    return constants.local_ip

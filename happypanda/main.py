@@ -1,12 +1,11 @@
 import os
 import sys
+import gipc
 
 if __package__ is None and not hasattr(sys, 'frozen'):
     # direct call of main.py
     path = os.path.realpath(os.path.abspath(__file__))
     sys.path.insert(0, os.path.dirname(os.path.dirname(path)))
-
-from multiprocessing import Process
 
 from happypanda.common import utils, constants, hlogger  # noqa: E402
 from happypanda.core import server, plugins, command, views  # noqa: E402
@@ -44,7 +43,7 @@ def start():
     if args.only_web:
         server.WebServer().run(*web_args)
     else:
-        Process(target=server.WebServer().run, args=web_args, daemon=True).start()
+        gipc.start_process(server.WebServer().run, args=web_args, daemon=True)
         server.HPServer().run(interactive=args.interact)
 
     if not args.only_web:

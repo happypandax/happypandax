@@ -10,10 +10,8 @@ dist/
 env/
 *.sln
 *Thumbs.db
-settings.json
 build
 dist
-setup.py
 *.ini
 *.swp
 .DS_Store
@@ -207,7 +205,7 @@ FakesAssemblies/
 *.db-journal
 /compilerconfig.json
 /compilerconfig.json.defaults
-/docs/make.bat
-/happypanda/webclient/static/__javascript__
+/static/__javascript__
 /.tstate
 /.settings
+/static/thumbnails

@@ -60,18 +60,18 @@ class Thumbnail(Widget):
     def _fetch_thumb(self, data=None, error=None, size='Big'):
         if data is not None and not error:
             cmd_id = data[str(self.id)]
-            cmd = Command(cmd_id)
-            self._thumbs[self._thumbsize] = cmd
-            cmd.set_callback(self._set_thumb_cmd)
-            cmd.poll_until_complete(500)
+            if cmd_id:
+                cmd = Command(cmd_id)
+                self._thumbs[self._thumbsize] = cmd
+                cmd.set_callback(self._set_thumb_cmd)
+                cmd.poll_until_complete(500)
         elif error:
             pass
         else:
-            print("getting")
             if self.id is not None:
                 self._thumbsize = size
                 self.thumbclient.call_func("get_image", self._fetch_thumb, item_ids=[self.id],
-                                 size=size, local=False, uri=True, item_type=self.item_type)
+                                 size=size, url=True, uri=True, item_type=self.item_type)
     __pragma__('notconv')
     __pragma__('nokwargs')
 

@@ -15,7 +15,8 @@ class Client:
         name -- name of client
     """
 
-    def __init__(self, name, session_id=""):
+    def __init__(self, name, session_id="", client_id=""):
+        self.id = client_id
         self.name = name
         self._server = (constants.host, constants.port)
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

@@ -11,3 +11,4 @@ Flask==0.11.1
 karellen-geventws==1.0.2
 transcrypt==3.6.27
 flask-socketio==2.9.0
+gipc==0.6.0

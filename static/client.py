@@ -114,9 +114,9 @@ class Client(Base):
     polling = False
 
     __pragma__('kwargs')
-    def __init__(self, session="", namespace="", new=False):
+    def __init__(self, session="", namespace=""):
         self.socket_url = location.protocol+'//'+location.hostname+':'+location.port+namespace
-        self.socket = io(self.socket_url, {'forceNew':new, 'transports': ['websocket']})
+        self.socket = io(self.socket_url, {'transports': ['websocket']})
         self.socket.on("command", self.on_command)
         self.socket.on("server_call", self.on_server_call)
         self.socket.on("exception", self.on_error)
@@ -238,8 +238,8 @@ class Client(Base):
             self._msg_queue.append(final_msg)
 
 client = Client()
-thumbclient = Client(namespace="/thumb", new=True)
-commandclient = Client(namespace="/command", new=True)
+thumbclient = Client(namespace="/thumb")
+commandclient = Client(namespace="/command")
 
 class Command(Base):
 

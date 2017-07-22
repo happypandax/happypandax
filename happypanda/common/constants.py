@@ -18,12 +18,12 @@ dir_root = ''
 dir_data = os.path.join(dir_root, "data")
 dir_download = os.path.join(dir_root, "downloads")
 dir_cache = os.path.join(dir_data, "cache")
-dir_thumbs = os.path.join(dir_cache, "thumbnails")
 dir_log = os.path.join(dir_root, "logs")
 dir_temp = os.path.join(dir_cache, "temp")
 dir_plugin = os.path.join(dir_root, "plugins")
 dir_templates = os.path.join(dir_root, "templates")
 dir_static = os.path.join(dir_root, "static")
+dir_thumbs = os.path.join(dir_static, "thumbnails")
 settings_file = "settings.ini"
 settings_descr_file = ".settings"
 log_error = os.path.join(dir_log, "error.log")
@@ -39,7 +39,7 @@ config = cfg.Config(dir_root, settings_file, settings_descr_file)
 
 debug = config.get(core_ns, 'debug', False, "Run in debug mode")
 
-preview = config.get(core_ns, 'preview', False, "Run in preview mode")
+thumbs_view = "/thumb"
 
 # CORE
 
@@ -192,7 +192,8 @@ session_span = config.get(
 postfix = b'<EOF>'
 data_size = 1024
 server_ready = True
+local_ip = ""
+public_ip = ""
 
-server_started = False
 
 config_doc = config.doc_render()  # for doc

@@ -1,27 +1,43 @@
-from flask import (render_template, abort)
+import os
+
+from flask import (render_template, abort, request, url_for, send_from_directory)
+from werkzeug.utils import secure_filename
+
 from happypanda.core.server import WebServer
 from happypanda.core.client import Client
-from happypanda.common import exceptions, hlogger
+from happypanda.common import exceptions, hlogger, constants
 
 happyweb = WebServer.happyweb
 socketio = WebServer.socketio
 
 log = hlogger.Logger(__name__)
 
-client = Client("webclient")
-thumbclient = Client("webclient-thumbnails")
-commandclient = Client("webclient-commands")
+root_client = Client("root_webclient")
+
+all_clients = {}
+
+def _create_clients(id, session_id=""):
+    all_clients[id] = {
+        "client" : Client("webclient", session_id, id),
+        "thumbclient" : Client("webclient-thumbnails", session_id, id),
+        "commandclient" : Client("webclient-commands", session_id, id)
+        }
+    return all_clients[id]
+
+def get_clients(id, session_id=""):
+    if not id in all_clients:
+        _create_clients(id, session_id)
+    clients = all_clients[id]
+
+    if session_id:
+        for c in clients.values():
+            if not c.alive() or c.session != session_id:
+                c.session = session_id
+                c.connect()
+    return clients
 
 def send_error(ex):
     socketio.emit("exception", {'error': str(ex.__class__.__name__) + ': ' + str(ex)})
-
-def sync_clients():
-    for c in (thumbclient, commandclient):
-        if not client.session == c.session:
-            c.session = client.session
-
-        if not c.alive():
-            c.connect()
 
 def call_server(msg, c):
     msg_id = msg['id']
@@ -29,7 +45,7 @@ def call_server(msg, c):
     try:
         serv_data = msg['msg']
         if not serv_data['session']:
-            serv_data['session'] = client.session
+            serv_data['session'] = root_client.session
         data = c.communicate(serv_data)
     except exceptions.ServerError as e:
         log.exception()
@@ -40,8 +56,7 @@ def call_server(msg, c):
 @socketio.on('connect')
 def on_connect():
     "client connected"
-    pass
-
+    get_clients(request.sid, root_client.session)
 
 @socketio.on('command')
 def on_command(msg):
@@ -59,26 +74,26 @@ def on_command(msg):
     d['command'] = cmd
     try:
         if cmd == 1:
-            if not client.alive():
-                client.connect()
-            d['status'] = client.alive()
+            if not root_client.alive():
+                root_client.connect()
+            d['status'] = root_client.alive()
         elif cmd == 2:
-            if not client.alive():
+            if not root_client.alive():
                 try:
-                    client.connect()
+                    root_client.connect()
                 except exceptions.ClientError as e:
                     log.exception("Failed to reconnect")
                     send_error(e)
-                d['status'] = client.alive()
+                d['status'] = root_client.alive()
         elif cmd == 3:
-            if client.alive():
-                client.close()
-            d['status'] = client.alive()
+            if root_client.alive():
+                root_client.close()
+            d['status'] = root_client.alive()
         elif cmd == 4:
-            d['status'] = client.alive()
+            d['status'] = root_client.alive()
         elif cmd == 5:
-            client.request_auth()
-            d['status'] = client._accepted
+            root_client.request_auth()
+            d['status'] = root_client._accepted
     except exceptions.ServerError as e:
         log.exception()
         send_error(e)
@@ -87,26 +102,27 @@ def on_command(msg):
 
 @socketio.on('server_call')
 def on_server_call(msg):
-    msg_id, data = call_server(msg, client)
+    c = get_clients(request.sid, root_client.session)
+    msg_id, data = call_server(msg, c['client'])
     socketio.emit('server_call', {'id': msg_id, 'msg': data})
 
 @socketio.on('server_call', namespace='/thumb')
 def on_thumb_call(msg):
-    sync_clients()
-    msg_id, data = call_server(msg, thumbclient)
+    c = get_clients(request.sid, root_client.session)
+    msg_id, data = call_server(msg, c['thumbclient'])
     socketio.emit('server_call', {'id': msg_id, 'msg': data}, namespace='/thumb')
 
 @socketio.on('server_call', namespace='/command')
 def on_command_call(msg):
-    sync_clients()
-    msg_id, data = call_server(msg, commandclient)
+    c = get_clients(request.sid, root_client.session)
+    msg_id, data = call_server(msg, c['commandclient'])
     socketio.emit('server_call', {'id': msg_id, 'msg': data}, namespace='/command')
 
 @happyweb.before_first_request
 def before_first_request():
     """before first request func."""
     try:
-        client.connect()
+        root_client.connect()
     except exceptions.ServerError as e:
         log.exception("Could not establish connection on first try")
         send_error(e)
@@ -148,6 +164,13 @@ def artist_page(id=0):
 def api_view(page=0):
     return render_template('api.html')
 
-@happyweb.route('/thumb')
-def thumbs_view(page=0):
-    return render_template('api.html')
+@happyweb.route(constants.thumbs_view+'/<path:filename>')
+def thumbs_view(filename):
+    return send_from_directory(os.path.abspath(constants.dir_thumbs), secure_filename(filename))
+
+@happyweb.route('/server', methods=['POST'])
+def server_proxy():
+
+    if request.json:
+        pass
+    abort(404)
