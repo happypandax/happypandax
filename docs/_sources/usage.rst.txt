@@ -7,9 +7,9 @@ Default HPX consists of the following components:
 - Happypanda X Server
 	.. hint::
 
-		The backbone of everything. HPX won't function without this running.
+		The backbone of everything. HPX and its associated client's won't function without this running.
 
-- Happypanda X Web client
+- Happypanda X Webclient
 	.. hint::
 
 		The default frontend that comes with HPX. A web-based (JS) frontend for HPX.
@@ -24,9 +24,7 @@ From source
 
 See available command arguments: ``python run.py --help`` or :ref:`Command-Line Arguments`
 
-Start the server: ``python run.py -s``
-
-Start the web client server: ``python run.py -w``
+Start the server and webclient: ``python run.py``
 
 From executable
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -35,8 +33,8 @@ From executable
 Using
 -------------------------------------
 
-If you started the web client server, you can start using HPX by opening up your browser and going to 
-``localhost:7008`` *(replace ``7008`` with whatever port you chose the web client server to listen on)*
+If you started the web client server, you can start using HPX right away by opening up your browser and going to 
+``localhost:7008`` *(replace ``7008`` with whatever port you chose the webclient server to listen on)*
 
 Exposing Happypanda X
 ========================================

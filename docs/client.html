@@ -163,8 +163,6 @@
       <div class="col-md-3">
         <div id="sidebar" class="bs-sidenav" role="complementary"><ul>
 <li><a class="reference internal" href="#">Creating frontends</a><ul>
-<li><a class="reference internal" href="#terminology">Terminology</a></li>
-<li><a class="reference internal" href="#talking-to-hpx-server">Talking to HPX server</a><ul>
 <li><a class="reference internal" href="#exchanging-messages">Exchanging messages</a></li>
 <li><a class="reference internal" href="#authenticating">Authenticating</a></li>
 <li><a class="reference internal" href="#session">Session</a></li>
@@ -172,8 +170,6 @@
 <li><a class="reference internal" href="#errors">Errors</a></li>
 <li><a class="reference internal" href="#server-commands">Server commands</a></li>
 <li><a class="reference internal" href="#playing-with-the-api">Playing with the API</a></li>
-</ul>
-</li>
 </ul>
 </li>
 </ul>
@@ -185,24 +181,12 @@
   <div class="section" id="creating-frontends">
 <h1>Creating frontends<a class="headerlink" href="#creating-frontends" title="Permalink to this headline">¶</a></h1>
 <p>HPX provides a RPC interface over TCP making it possible to create a client in any programming language.</p>
-<div class="section" id="terminology">
-<h2>Terminology<a class="headerlink" href="#terminology" title="Permalink to this headline">¶</a></h2>
-<ul class="simple">
-<li><code class="docutils literal"><span class="pre">Server</span></code> - ..</li>
-<li><code class="docutils literal"><span class="pre">Client</span></code> - ...</li>
-<li><code class="docutils literal"><span class="pre">Handshake</span></code> - ..</li>
-<li><code class="docutils literal"><span class="pre">Context</span></code> - ..</li>
-<li><code class="docutils literal"><span class="pre">Message</span></code> - ..</li>
-</ul>
-</div>
-<div class="section" id="talking-to-hpx-server">
-<h2>Talking to HPX server<a class="headerlink" href="#talking-to-hpx-server" title="Permalink to this headline">¶</a></h2>
 <p>For exchanging data between the server and client <code class="docutils literal"><span class="pre">JSON</span></code> is used. Make sure you&#8217;re familiar with <code class="docutils literal"><span class="pre">JSON</span></code> and its datatypes.</p>
 <p>Before wanting to talk to a HPX server, make sure you have one running. See <a class="reference internal" href="usage.html#starting-up"><span class="std std-ref">Starting up</span></a> or <a class="reference internal" href="env.html#setting-up-an-environment"><span class="std std-ref">Setting up an environment</span></a> on how to get one up and running.</p>
 <p>It is recommended that you run the server with the <code class="docutils literal"><span class="pre">--debug</span></code> and <code class="docutils literal"><span class="pre">--dev</span></code> commandline switches so that you can see what&#8217;s going on while you&#8217;re connected.
 See <a class="reference internal" href="switches.html#command-line-arguments"><span class="std std-ref">Command-Line Arguments</span></a>.</p>
 <div class="section" id="exchanging-messages">
-<h3>Exchanging messages<a class="headerlink" href="#exchanging-messages" title="Permalink to this headline">¶</a></h3>
+<h2>Exchanging messages<a class="headerlink" href="#exchanging-messages" title="Permalink to this headline">¶</a></h2>
 <p>Needless to say, to start exchanging messages with the server, you need a basic understanding of TCP.</p>
 <p>To communicate with the server you need to instantiate a TCP socket.</p>
 <p>In your chosen programming language instantiate a TCP socket and connect it to the server.</p>
@@ -266,7 +250,7 @@ See <a class="reference internal" href="switches.html#command-line-arguments"><s
 <p>Generally, the server is very helpful and will tell you if your message is invalid and/or which keys you missed.</p>
 </div>
 <div class="section" id="authenticating">
-<h3>Authenticating<a class="headerlink" href="#authenticating" title="Permalink to this headline">¶</a></h3>
+<h2>Authenticating<a class="headerlink" href="#authenticating" title="Permalink to this headline">¶</a></h2>
 <p>Remember that the server always sent a message after you&#8217;ve successfully connected?</p>
 <p>This is part of the authentication process or a &#8220;handshake&#8221;.</p>
 <p>The server will send you a message that looks like this:</p>
@@ -282,10 +266,10 @@ See <a class="reference internal" href="switches.html#command-line-arguments"><s
 </pre></div>
 </div>
 <p>You can use this message to determine if the HPX server is supported or not.</p>
-<p>Notice the <code class="docutils literal"><span class="pre">guest_allowed</span></code> key. This key informs if it&#8217;s possible to connect to the server <em>without</em> providing any credentials.</p>
+<p>Notice the <code class="docutils literal"><span class="pre">guest_allowed</span></code> key. This value of this key informs if it&#8217;s possible to connect to the server <em>without</em> providing any credentials.</p>
 <p>The server expects a response from the client before any further processing is done.</p>
 <p>To authenticate as a <strong>guest</strong> the client responds with an empty object <code class="docutils literal"><span class="pre">{}</span></code>.</p>
-<p>To authenticate as a <strong>user</strong> the client responds with:</p>
+<p>To authenticate as a <strong>user</strong> the client responds with (put in the <code class="docutils literal"><span class="pre">data</span></code> key):</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span>
     <span class="s2">&quot;user&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
     <span class="s2">&quot;password&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span>
@@ -311,7 +295,7 @@ See <a class="reference internal" href="#session"><span class="std std-ref">Sess
 </div>
 </div>
 <div class="section" id="session">
-<h3>Session<a class="headerlink" href="#session" title="Permalink to this headline">¶</a></h3>
+<h2>Session<a class="headerlink" href="#session" title="Permalink to this headline">¶</a></h2>
 <p>After a successful handshake, a <em>session</em> is created:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span>
     <span class="s2">&quot;session&quot;</span><span class="p">:</span> <span class="s2">&quot;a_new_unique_session_string&quot;</span><span class="p">,</span>
@@ -332,21 +316,22 @@ can use the same session.</p>
 <span class="n">socketB</span> <span class="p">(</span><span class="n">connects</span><span class="p">)</span> <span class="o">--&gt;</span> <span class="n">server</span>
 <span class="n">socketB</span> <span class="o">&lt;--</span> <span class="p">(</span><span class="n">asking</span> <span class="k">for</span> <span class="n">handshake</span><span class="p">)</span> <span class="n">server</span>
 <span class="n">socketB</span> <span class="p">(</span><span class="n">normal</span> <span class="n">msg</span> <span class="k">with</span> <span class="n">session</span> <span class="nb">id</span><span class="p">)</span> <span class="o">--&gt;</span> <span class="n">server</span>
-<span class="n">socketB</span> <span class="o">&lt;--</span> <span class="p">(</span><span class="n">normal</span> <span class="n">response</span><span class="p">)</span> <span class="n">server</span>
+<span class="n">socketB</span> <span class="o">&lt;--</span> <span class="p">(</span><span class="n">normal</span> <span class="n">response</span><span class="p">)</span> <span class="n">server</span><span class="o">**</span>
 </pre></div>
 </div>
-<p>Think of it like a computer with only one user account has multiple people using it.</p>
+<p>**
+Think of it as threads in a computer program.</p>
 <p>As shown above, the server will <em>always</em> send a message when a client connects.
 This message should thus always be consumed by additional sockets before sending the intended message with a session.</p>
 <p><strong>Sessions have a limited lifespan</strong>. Whenever you send a message using a session, you extend that particular session&#8217;s lifespan.</p>
 <p>Sessions expire when their lifespan runs out, requiring the client to do a <em>new</em> handshake.</p>
-<div class="admonition-todo admonition" id="index-1">
-<p class="first admonition-title">Todo</p>
-<p class="last">explain session expired error</p>
-</div>
+<dl class="docutils">
+<dt><a href="#id1"><span class="problematic" id="id2">**</span></a></dt>
+<dd>explain session expired error</dd>
+</dl>
 </div>
 <div class="section" id="calling-a-function">
-<h3>Calling a function<a class="headerlink" href="#calling-a-function" title="Permalink to this headline">¶</a></h3>
+<h2>Calling a function<a class="headerlink" href="#calling-a-function" title="Permalink to this headline">¶</a></h2>
 <p>Now that you&#8217;ve perfomed a successful handshake, you can start using the API.</p>
 <p>A <em>function-call</em> object looks like this:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span>
@@ -391,13 +376,13 @@ This message should thus always be consumed by additional sockets before sending
 </div>
 <p>In case of errors raised by the function, the <em>function-data</em> gains an <code class="docutils literal"><span class="pre">error</span></code> key. See <a class="reference internal" href="#errors"><span class="std std-ref">Errors</span></a>.</p>
 <p>If you&#8217;re unsure on what data a function will return, see <a class="reference internal" href="#playing-with-the-api"><span class="std std-ref">Playing with the API</span></a></p>
-<div class="admonition-todo admonition" id="index-2">
+<div class="admonition-todo admonition" id="index-1">
 <p class="first admonition-title">Todo</p>
 <p class="last">reference message objects here</p>
 </div>
 </div>
 <div class="section" id="errors">
-<h3>Errors<a class="headerlink" href="#errors" title="Permalink to this headline">¶</a></h3>
+<h2>Errors<a class="headerlink" href="#errors" title="Permalink to this headline">¶</a></h2>
 <p>An <em>error</em> object looks like this:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span>
     <span class="s2">&quot;code&quot;</span><span class="p">:</span> <span class="n">integer</span><span class="p">,</span>
@@ -427,8 +412,8 @@ the <code class="docutils literal"><span class="pre">error</span></code> key at 
 </div>
 </div>
 <div class="section" id="server-commands">
-<h3>Server commands<a class="headerlink" href="#server-commands" title="Permalink to this headline">¶</a></h3>
-<p>The server implements the following commands ...</p>
+<h2>Server commands<a class="headerlink" href="#server-commands" title="Permalink to this headline">¶</a></h2>
+<p>The server implements the following commands <a class="reference internal" href="api.html#happypanda.interface.enums.ServerCommand" title="happypanda.interface.enums.ServerCommand"><code class="xref py py-class docutils literal"><span class="pre">ServerCommand</span></code></a></p>
 <p>Server commands are invoked like this (this is the whole payload):</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span>
     <span class="s2">&quot;session&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
@@ -454,16 +439,15 @@ the <code class="docutils literal"><span class="pre">error</span></code> key at 
 <span class="p">}</span>
 </pre></div>
 </div>
-<div class="admonition-todo admonition" id="index-3">
+<div class="admonition-todo admonition" id="index-2">
 <p class="first admonition-title">Todo</p>
 <p class="last">server commands</p>
 </div>
 </div>
 <div class="section" id="playing-with-the-api">
-<h3>Playing with the API<a class="headerlink" href="#playing-with-the-api" title="Permalink to this headline">¶</a></h3>
+<h2>Playing with the API<a class="headerlink" href="#playing-with-the-api" title="Permalink to this headline">¶</a></h2>
 <p>The default webclient has a place for watching and testing the exchanges between the server and the client.</p>
-<p>Run the webclient with the <code class="docutils literal"><span class="pre">--debug</span></code> switch and go to <code class="docutils literal"><span class="pre">/api</span></code>.</p>
-</div>
+<p>Start the webclient with the <code class="docutils literal"><span class="pre">--debug</span></code> switch and go to <code class="docutils literal"><span class="pre">/api</span></code>.</p>
 </div>
 </div>
 

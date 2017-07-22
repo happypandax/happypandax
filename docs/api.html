@@ -464,36 +464,6 @@ Enum member names may change sometime in the future. It is not likely to happen 
 </dd></dl>
 
 <dl class="function">
-<dt id="happypanda.interface.meta.install_plugin">
-<code class="descname">install_plugin</code><span class="sig-paren">(</span><em>plugin_id</em>, <em>ctx=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/meta.html#install_plugin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.meta.install_plugin" title="Permalink to this definition">¶</a></dt>
-<dd><p>Install a plugin</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>plugin_id</strong> (<code class="xref py py-class docutils literal"><span class="pre">str</span></code>) &#8211; UUID of plugin</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">an error message object</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="happypanda.interface.meta.list_plugins">
-<code class="descname">list_plugins</code><span class="sig-paren">(</span><em>ctx=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/meta.html#list_plugins"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.meta.list_plugins" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get a list of available plugin information</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>error message object</strong> (<em>an</em>) &#8211; </td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
 <dt id="happypanda.interface.meta.start_command">
 <code class="descname">start_command</code><span class="sig-paren">(</span><em>command_ids</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/meta.html#start_command"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.meta.start_command" title="Permalink to this definition">¶</a></dt>
 <dd><p>Start running a command</p>
@@ -549,22 +519,6 @@ Enum member names may change sometime in the future. It is not likely to happen 
 <p class="first admonition-title">Note</p>
 <p class="last">Only select commands are undoable</p>
 </div>
-</dd></dl>
-
-<dl class="function">
-<dt id="happypanda.interface.meta.uninstall_plugin">
-<code class="descname">uninstall_plugin</code><span class="sig-paren">(</span><em>plugin_id</em>, <em>ctx=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/meta.html#uninstall_plugin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.meta.uninstall_plugin" title="Permalink to this definition">¶</a></dt>
-<dd><p>Uninstall a plugin</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>plugin_id</strong> (<code class="xref py py-class docutils literal"><span class="pre">str</span></code>) &#8211; UUID of plugin</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">an error message object</td>
-</tr>
-</tbody>
-</table>
 </dd></dl>
 
 </div>
@@ -694,8 +648,8 @@ Provides pagination.</p>
 
 <dl class="function">
 <dt id="happypanda.interface.database.get_image">
-<code class="descname">get_image</code><span class="sig-paren">(</span><em>item_type=&lt;ItemType.Gallery: 1&gt;</em>, <em>item_ids=[]</em>, <em>size=&lt;ImageSize.Medium: 3&gt;</em>, <em>local=False</em>, <em>uri=False</em>, <em>ctx=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/database.html#get_image"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.database.get_image" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get image for item
+<code class="descname">get_image</code><span class="sig-paren">(</span><em>item_type=&lt;ItemType.Gallery: 1&gt;</em>, <em>item_ids=[]</em>, <em>size=&lt;ImageSize.Medium: 3&gt;</em>, <em>url=False</em>, <em>uri=False</em>, <em>ctx=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/database.html#get_image"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.database.get_image" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get image for item.
 Image content is base64 encoded.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -706,7 +660,7 @@ Image content is base64 encoded.</p>
 <a class="reference internal" href="#happypanda.interface.enums.ItemType.Collection" title="happypanda.interface.enums.ItemType.Collection"><code class="xref py py-attr docutils literal"><span class="pre">ItemType.Collection</span></code></a>, <a class="reference internal" href="#happypanda.interface.enums.ItemType.Grouping" title="happypanda.interface.enums.ItemType.Grouping"><code class="xref py py-attr docutils literal"><span class="pre">ItemType.Grouping</span></code></a>, <a class="reference internal" href="#happypanda.interface.enums.ItemType.Page" title="happypanda.interface.enums.ItemType.Page"><code class="xref py py-attr docutils literal"><span class="pre">ItemType.Page</span></code></a></li>
 <li><strong>item_ids</strong> (<code class="xref py py-class docutils literal"><span class="pre">list</span></code>) &#8211; list of item ids</li>
 <li><strong>size</strong> (<a class="reference internal" href="#happypanda.interface.enums.ImageSize" title="happypanda.interface.enums.ImageSize"><code class="xref py py-class docutils literal"><span class="pre">ImageSize</span></code></a>) &#8211; size of image</li>
-<li><strong>local</strong> (<code class="xref py py-class docutils literal"><span class="pre">bool</span></code>) &#8211; replace image content with local path to image file</li>
+<li><strong>url</strong> (<code class="xref py py-class docutils literal"><span class="pre">bool</span></code>) &#8211; replace image content with url to image file</li>
 <li><strong>uri</strong> (<code class="xref py py-class docutils literal"><span class="pre">bool</span></code>) &#8211; turn raw base64 string into an URI</li>
 </ul>
 </td>
@@ -827,6 +781,52 @@ Image content is base64 encoded.</p>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><code class="docutils literal"><span class="pre">`</span>
 <span class="pre">{</span> <span class="pre">plugin_id:</span> <span class="pre">}</span>
 <span class="pre">`</span></code></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="happypanda.interface.plugin.install_plugin">
+<code class="descname">install_plugin</code><span class="sig-paren">(</span><em>plugin_id</em>, <em>ctx=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/plugin.html#install_plugin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.plugin.install_plugin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Install a plugin</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>plugin_id</strong> (<code class="xref py py-class docutils literal"><span class="pre">str</span></code>) &#8211; UUID of plugin</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">an error message object</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="happypanda.interface.plugin.list_plugins">
+<code class="descname">list_plugins</code><span class="sig-paren">(</span><em>ctx=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/plugin.html#list_plugins"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.plugin.list_plugins" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a list of available plugin information</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>error message object</strong> (<em>an</em>) &#8211; </td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="happypanda.interface.plugin.uninstall_plugin">
+<code class="descname">uninstall_plugin</code><span class="sig-paren">(</span><em>plugin_id</em>, <em>ctx=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/plugin.html#uninstall_plugin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.plugin.uninstall_plugin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Uninstall a plugin</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>plugin_id</strong> (<code class="xref py py-class docutils literal"><span class="pre">str</span></code>) &#8211; UUID of plugin</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">an error message object</td>
 </tr>
 </tbody>
 </table>

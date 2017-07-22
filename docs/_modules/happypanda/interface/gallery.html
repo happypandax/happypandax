@@ -157,9 +157,7 @@
         <div class="col-md-9 content">
             
   <h1>Source code for happypanda.interface.gallery</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">happypanda.common</span> <span class="k">import</span> <span class="n">constants</span>
-<span class="kn">from</span> <span class="nn">happypanda.core</span> <span class="k">import</span> <span class="n">db</span><span class="p">,</span> <span class="n">message</span>
-<span class="kn">from</span> <span class="nn">happypanda.interface</span> <span class="k">import</span> <span class="n">enums</span>
+<span></span><span class="kn">from</span> <span class="nn">happypanda.core</span> <span class="k">import</span> <span class="n">message</span>
 
 
 <div class="viewcode-block" id="add_gallery"><a class="viewcode-back" href="../../../api.html#happypanda.interface.gallery.add_gallery">[docs]</a><span class="k">def</span> <span class="nf">add_gallery</span><span class="p">(</span><span class="n">galleries</span><span class="p">:</span> <span class="nb">list</span><span class="o">=</span><span class="p">[],</span> <span class="n">paths</span><span class="p">:</span> <span class="nb">list</span><span class="o">=</span><span class="p">[],</span> <span class="n">ctx</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -190,7 +188,6 @@
 <span class="sd">        list of paths to the galleries</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Message</span><span class="p">(</span><span class="s2">&quot;works&quot;</span><span class="p">)</span></div>
-
 </pre></div>
 
         </div>

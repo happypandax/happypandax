@@ -173,8 +173,10 @@
 <h1>Command-Line Arguments<a class="headerlink" href="#command-line-arguments" title="Permalink to this headline">¶</a></h1>
 <p>A manga/doujinshi manager with tagging support (<a class="reference external" href="https://github.com/happypandax/server">https://github.com/happypandax/server</a>)</p>
 <div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">usage: Command-Line Arguments [-h] [-p PORT] [--torrent-port TORRENT_PORT]</span>
-<span class="go">                                  [--host HOST] [--expose] [--generate-config]</span>
-<span class="go">                                  [-d] [-i] [-v] [--safe] [-x]</span>
+<span class="go">                                  [--web-port WEB_PORT] [--host HOST]</span>
+<span class="go">                                  [--web-host WEB_HOST] [--expose]</span>
+<span class="go">                                  [--generate-config] [-d] [-i] [-v] [--safe] [-x]</span>
+<span class="go">                                  [--only-web]</span>
 </pre></div>
 </div>
 <dl class="option">
@@ -196,9 +198,21 @@
 </dd></dl>
 
 <dl class="option">
+<dt id="cmdoption-command-line-arguments-web-port">
+<code class="descname">--web-port</code><code class="descclassname"> &lt;web_port&gt;</code><a class="headerlink" href="#cmdoption-command-line-arguments-web-port" title="Permalink to this definition">¶</a></dt>
+<dd><p>Specify which port to start the webserver on</p>
+</dd></dl>
+
+<dl class="option">
 <dt id="cmdoption-command-line-arguments-host">
 <code class="descname">--host</code><code class="descclassname"> &lt;host&gt;</code><a class="headerlink" href="#cmdoption-command-line-arguments-host" title="Permalink to this definition">¶</a></dt>
 <dd><p>Specify which address the server should bind to</p>
+</dd></dl>
+
+<dl class="option">
+<dt id="cmdoption-command-line-arguments-web-host">
+<code class="descname">--web-host</code><code class="descclassname"> &lt;web_host&gt;</code><a class="headerlink" href="#cmdoption-command-line-arguments-web-host" title="Permalink to this definition">¶</a></dt>
+<dd><p>Specify which address the webserver should bind to</p>
 </dd></dl>
 
 <dl class="option">
@@ -241,6 +255,12 @@
 <dt id="cmdoption-command-line-arguments-x">
 <code class="descname">-x</code><code class="descclassname"></code><code class="descclassname">, </code><code class="descname">--dev</code><code class="descclassname"></code><a class="headerlink" href="#cmdoption-command-line-arguments-x" title="Permalink to this definition">¶</a></dt>
 <dd><p>Start in development mode</p>
+</dd></dl>
+
+<dl class="option">
+<dt id="cmdoption-command-line-arguments-only-web">
+<code class="descname">--only-web</code><code class="descclassname"></code><a class="headerlink" href="#cmdoption-command-line-arguments-only-web" title="Permalink to this definition">¶</a></dt>
+<dd><p>Start only the webserver (useful for debugging)</p>
 </dd></dl>
 
 </div>

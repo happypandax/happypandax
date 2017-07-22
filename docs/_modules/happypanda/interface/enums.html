@@ -162,6 +162,7 @@
 <span class="kn">from</span> <span class="nn">happypanda.common</span> <span class="k">import</span> <span class="n">utils</span><span class="p">,</span> <span class="n">exceptions</span>
 <span class="kn">from</span> <span class="nn">happypanda.core</span> <span class="k">import</span> <span class="n">message</span><span class="p">,</span> <span class="n">db</span>
 
+
 <span class="k">class</span> <span class="nc">_APIEnum</span><span class="p">(</span><span class="n">enum</span><span class="o">.</span><span class="n">Enum</span><span class="p">):</span>
     <span class="s2">&quot;A conv. enum class&quot;</span>
 
@@ -194,6 +195,7 @@
             <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">: enum member doesn&#39;t exist &#39;</span><span class="si">{}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
                 <span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
                 <span class="nb">repr</span><span class="p">(</span><span class="n">key</span><span class="p">)))</span>
+
 
 <div class="viewcode-block" id="ViewType"><a class="viewcode-back" href="../../../api.html#happypanda.interface.enums.ViewType">[docs]</a><span class="k">class</span> <span class="nc">ViewType</span><span class="p">(</span><span class="n">_APIEnum</span><span class="p">):</span>
     <span class="c1">#: Library</span>
@@ -230,24 +232,24 @@
     <span class="c1">#: GalleryURL</span>
     <span class="n">GalleryUrl</span> <span class="o">=</span> <span class="mi">12</span>
 
-
     <span class="k">def</span> <span class="nf">_msg_and_model</span><span class="p">(</span><span class="n">item_type</span><span class="p">,</span> <span class="n">allowed</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(),</span> <span class="n">error</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get the equivalent Message and Database object classes for ItemType member</span>
-<span class="sd">    </span>
+
 <span class="sd">        Args:</span>
 <span class="sd">            allowed: a tuple of ItemType members which are allowed, empty tuple for all members</span>
 <span class="sd">            error: raise error if equivalent is not found, else return generic message object class</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">allowed</span> <span class="ow">and</span> <span class="n">item_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">allowed</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">APIError</span><span class="p">(</span><span class="s2">&quot;ItemType must be on of </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">allowed</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">allowed</span> <span class="ow">and</span> <span class="nb">repr</span><span class="p">(</span><span class="n">item_type</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">allowed</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">APIError</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">this_function</span><span class="p">(),</span> <span class="s2">&quot;ItemType must be on of </span><span class="si">{}</span><span class="s2"> not &#39;</span><span class="si">{}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">allowed</span><span class="p">,</span> <span class="nb">repr</span><span class="p">(</span><span class="n">item_type</span><span class="p">)))</span>
 
         <span class="n">db_model</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">db_model</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">db</span><span class="p">,</span> <span class="n">item_type</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">error</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">CoreError</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">this_function</span><span class="p">(),</span> <span class="s2">&quot;Equivalent database object class for </span><span class="si">{}</span><span class="s2"> was not found&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">item_type</span><span class="p">))</span>
+                <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">CoreError</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">this_function</span><span class="p">(),</span>
+                                           <span class="s2">&quot;Equivalent database object class for </span><span class="si">{}</span><span class="s2"> was not found&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">item_type</span><span class="p">))</span>
 
         <span class="n">obj</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">try</span><span class="p">:</span>
@@ -260,7 +262,8 @@
                 <span class="k">pass</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">obj</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">error</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">CoreError</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">this_function</span><span class="p">(),</span> <span class="s2">&quot;Equivalent Message object class for </span><span class="si">{}</span><span class="s2"> was not found&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">item_type</span><span class="p">))</span>
+                    <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">CoreError</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">this_function</span><span class="p">(),</span>
+                                               <span class="s2">&quot;Equivalent Message object class for </span><span class="si">{}</span><span class="s2"> was not found&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">item_type</span><span class="p">))</span>
                 <span class="n">obj</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">DatabaseMessage</span>
 
         <span class="k">return</span> <span class="n">obj</span><span class="p">,</span> <span class="n">db_model</span></div>
