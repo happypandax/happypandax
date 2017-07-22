@@ -349,7 +349,6 @@ class Profile(DatabaseMessage):
             _, tail = os.path.split(path.get())
             # TODO: make sure path is in static else return actual path
             if tail:
-                host = utils.get_qualified_name(constants.host_web, constants.port_web)
                 furl = constants.thumbs_view + '/' + tail
                 d['data'] = furl
             else:
