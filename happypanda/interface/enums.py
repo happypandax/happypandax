@@ -81,11 +81,8 @@ class ItemType(_APIEnum):
             allowed: a tuple of ItemType members which are allowed, empty tuple for all members
             error: raise error if equivalent is not found, else return generic message object class
         """
-
-        allowed = tuple(repr(x) for x in allowed)
-
-        if allowed and repr(item_type) not in allowed:
-            raise exceptions.APIError(utils.this_function(), "ItemType must be on of {}".format(allowed))
+        if allowed and repr(item_type) not in (repr(x) for x in allowed):
+            raise exceptions.APIError(utils.this_function(), "ItemType must be on of {} not '{}'".format(allowed, repr(item_type)))
 
         db_model = None
         try:

@@ -1,0 +1,38 @@
+﻿{% macro gallery_medium() -%}
+{% raw %}
+<script id="gallery-medium-t" type="x-handlebars-template">
+    <div id="g-medium-{{ id }}" class="gallery-medium gallery">
+        <a href="/gallery/{{ id }}" class="glink"></a>
+        <div class="load load-center">
+            <div class="line bg-primary"></div>
+            <div class="line bg-primary"></div>
+            <div class="line bg-primary"></div>
+        </div>
+        <div class="gcontent header clearfix">
+            <span class="item glyphicon glyphicon-option-horizontal pull-right" aria-hidden="true"></span>
+        </div>
+        <img class="profile-medium img-thumbnail img-responsive" src="{{ thumb }}">
+        <div class="gcontent footer">
+            <h5 class="gtitle">{{ title }}</h5>
+        </div>
+    </div>
+</script>
+{% endraw %}
+{%- endmacro %}
+
+{% macro page_medium() -%}
+{% raw %}
+<script id="page-medium-t" type="x-handlebars-template">
+    <div id="p-medium-{{ id }}" class="page-medium col-md-2">
+    <a href="#"></a>
+        <div class="load">
+            <div class="line bg-primary"></div>
+            <div class="line bg-primary"></div>
+            <div class="line bg-primary"></div>
+        </div>
+        <img class="profile-medium img-thumbnail" src="{{ thumb }}">
+        <span class="badge">2</span>
+    </div>
+</script>
+{% endraw %}
+{%- endmacro %}

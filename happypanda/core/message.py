@@ -4,6 +4,7 @@ import enum
 import json
 import inspect
 import arrow
+import os
 
 from datetime import datetime
 
@@ -332,10 +333,10 @@ class NameMixin(DatabaseMessage):
 class Profile(DatabaseMessage):
     "Encapsulates database profile object"
 
-    def __init__(self, db_item, local=True, uri=False):
+    def __init__(self, db_item, url=True, uri=False):
         assert isinstance(db_item, db.Profile)
         super().__init__('profile', db_item)
-        self._local = local
+        self._local_url = url
         self._uri = uri
 
     def data(self, load_values=False, load_collections=False):
@@ -344,8 +345,17 @@ class Profile(DatabaseMessage):
         path = io_cmd.CoreFS(self.item.path)
         d['id'] = self.item.id
         d['ext'] = path.ext
-        if self._local:
-            d['data'] = path.get()
+        if self._local_url:
+            _, tail = os.path.split(path.get())
+            # TODO: make sure path is in static else return actual path
+            if tail:
+                host = utils.get_qualified_name(constants.host_web, constants.port_web)
+                furl = host + constants.thumbs_view + '/' + tail
+                if self._uri:
+                   furl = 'http://' + furl
+                d['data'] = furl
+            else:
+                d['data'] = ""
         else:
             im = ""
             if path.exists:

@@ -8,6 +8,7 @@ import logging
 import base64
 import uuid
 import tempfile
+import socket
 
 from inspect import ismodule, currentframe, getframeinfo
 from logging.handlers import RotatingFileHandler
@@ -31,7 +32,9 @@ def setup_dirs():
             constants.dir_log,
             constants.dir_plugin,
             constants.dir_temp,
-            constants.dir_thumbs):
+            constants.dir_thumbs,
+            constants.dir_templates,
+            constants.dir_static):
         if dir_x:
             if not os.path.isdir(dir_x):
                 os.makedirs(dir_x)
@@ -101,8 +104,17 @@ def get_argparser():
         default=constants.port_torrent,
         help='Specify which port to start the torrent client on')
 
+    parser.add_argument(
+        '--web-port',
+        type=int,
+        default=constants.port_web,
+        help='Specify which port to start the webserver on')
+
     parser.add_argument('--host', type=str, default=constants.host,
                         help='Specify which address the server should bind to')
+
+    parser.add_argument('--web-host', type=str, default=constants.host_web,
+                        help='Specify which address the webserver should bind to')
 
     parser.add_argument(
         '--expose',
@@ -127,6 +139,9 @@ def get_argparser():
     parser.add_argument('-x', '--dev', action='store_true',
                         help='Start in development mode')
 
+    parser.add_argument('--only-web', action='store_true',
+                        help='Start only the webserver (useful for debugging)')
+
     return parser
 
 
@@ -141,9 +156,11 @@ def parse_options(args):
         constants.debug = cfg.update("debug", args.debug)
         constants.dev = args.dev
         constants.host = cfg.update("host", args.host)
+        constants.host_web = cfg.update("host_web", args.web_host)
         constants.expose_server = cfg.update("expose_server", args.expose)
 
         constants.port = cfg.update("port", args.port)
+        constants.port_web = cfg.update("port_web", args.web_port)
         constants.port_torrent = cfg.update("torrent_port", args.torrent_port)
 
     if constants.dev:
@@ -265,3 +282,25 @@ def create_temp_dir():
     t = tempfile.TemporaryDirectory(dir=constants.dir_temp)
     temp_dirs.append(t)
     return t
+
+def get_qualified_name(host, port):
+    "Returns host:port"
+    assert isinstance(host, str)
+    if not host or host == '0.0.0.0':
+        host = get_local_ip()
+    # TODO: public ip
+    return host.strip()+':'+str(port).strip()
+
+def get_local_ip():
+    if not constants.local_ip:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            # doesn't even have to be reachable
+            s.connect(('10.255.255.255', 1))
+            IP = s.getsockname()[0]
+        except:
+            IP = '127.0.0.1'
+        finally:
+            s.close()
+        constants.local_ip = IP
+    return constants.local_ip
