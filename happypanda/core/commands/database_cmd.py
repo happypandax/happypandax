@@ -161,8 +161,7 @@ class GetModelItemByID(Command):
     def main(self, model: db.Base, ids: set, limit: int = 999,
              filter: str = "", order_by: str = "", offset: int = 0) -> tuple:
 
-        log.d("Fetching items from a set with", len(ids), "ids")
-
+        log.d("Fetching items from a set with", len(ids), "ids", "offset:", offset, "limit:", limit)
         if not ids:
             return tuple()
 
@@ -205,7 +204,7 @@ class GetModelItemByID(Command):
             self.fetched_items = tuple(self._query(q, limit, offset))
 
         self.fetched.emit(db.model_name(model), self.fetched_items)
-
+        log.d("Returning", len(self.fetched_items), "fetched items")
         return self.fetched_items
 
 

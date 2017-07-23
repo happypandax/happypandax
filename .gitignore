@@ -209,3 +209,4 @@ FakesAssemblies/
 /.tstate
 /.settings
 /static/thumbnails
+*.dot
