@@ -36,7 +36,7 @@ Developer API
 .. toctree::
     :maxdepth: 2
 
-    exceptions
+    api_general
     api
     api_plugin
 

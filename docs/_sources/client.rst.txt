@@ -312,7 +312,7 @@ For example, when the server recieves a shut down command, the exact command is 
 
 .. todo::
     
-    server commands
+    server commands broadcasting (shutting down gracefully)
 
 Playing with the API
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

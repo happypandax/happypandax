@@ -59,7 +59,7 @@ Code Style
 
 We should all *try* to follow the official style guide `PEP 8 <https://www.python.org/dev/peps/pep-0008/>`_.
 
-Run ``python lint.py`` when you are ready to make a PR on Github. You're good to go as long as this script returns no errors.
+Run ``python lint.py`` (supply the ``-f`` switch to autoformat) when you are ready to make a PR on Github. You're good to go as long as this script returns no errors.
 
 .. Note::
     Remember that code style fixes should always be in a separate commit!
