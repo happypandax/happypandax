@@ -73,6 +73,12 @@ class Grid:
     def layout(self):
         self._grid.packery()
 
+    def append(self, items):
+        self._grid.packery("appended", items)
+
+    def add(self, items):
+        self._grid.packery("addItems", items)
+
 
 class URLManipulator:
 

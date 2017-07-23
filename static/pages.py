@@ -81,7 +81,6 @@ class ApiPage(Base):
             </li>
             """)
 
-
 class LibraryPage(Base):
 
     def __init__(self, name="Library", url="/library"):
@@ -91,7 +90,7 @@ class LibraryPage(Base):
         self.artists = {}  # id : item obj
         self.tags = {}  # ns : tag
         self.gfilters = {}  # id : item obj
-        self.item_limit = 100
+        self.item_limit = 50
         self._page_limit = 10
         self._page_list = []
         self.current_page = 1
@@ -260,6 +259,7 @@ class LibraryPage(Base):
                 if not self._properties['iscroll']:
                     self.items.clear()
                     S("#items").empty()
+                    self.grid.reload()
                 for g in data:
                     g_obj = widget.Gallery('medium', g)
                     self.items[g['id']] = g_obj
@@ -277,13 +277,12 @@ class LibraryPage(Base):
             self.update_sidebar(artist_obj=self.artists)
             if items:
                 for i in items:
-                    i.compile("#items", append=True)
-                    i.fetch_thumb()
+                    self.grid.append(i.compile("#items", append=True))
+                widget.MassThumbnail(items, 'gallery').mass_fetch('medium', lambda: setTimeout(self.grid.layout,1000))
 
             if not items:
+                self.grid.reload()
                 self.show_nothing("#items")
-
-            self.grid.reload()
             self.grid.layout()
 
         elif error:

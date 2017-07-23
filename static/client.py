@@ -257,6 +257,7 @@ class Command(Base):
         self._value_callback = None
         self._getting_value = False
         self._on_each = False
+        self._complete_callback = None
         self.commandclient = commandclient
 
         for i in self._command_ids:
@@ -295,21 +296,27 @@ class Command(Base):
     __pragma__('nokwargs')
     __pragma__('noiconv')
 
+    __pragma__('kwargs')
     def poll_until_complete(self, interval=1000 * 5, timeout=1000 * 60 * 10, callback=None):
         "Keep polling for command state until it has finished running"
+        self._complete_callback = callback
         if not self.finished():
 
             def _poll():
                 if not self.finished():
                     self._check_status()
                 else:
-                    if callback:
-                        callback()
+                    if self._complete_callback:
+                        self._complete_callback()
 
                 self._fetch_value()
                 return self.finished()
 
             utils.poll_func(_poll, timeout, interval)
+        else:
+            if self._complete_callback:
+                self._complete_callback()
+    __pragma__('nokwargs')
 
     __pragma__('iconv')
     __pragma__('kwargs')
@@ -323,7 +330,7 @@ class Command(Base):
                     self._values[str_i] = data[str_i]
 
                     if self._on_each and self._value_callback:
-                        self._value_callback(i, data[str_i])
+                        self._value_callback(i, self._values[str_i])
 
             if not self._on_each and self._value_callback:
                 self._value_callback(self)
@@ -344,7 +351,6 @@ class Command(Base):
                                 if self._states[str_i] in ['stopped', 'failed']:
                                     self._value_callback(i, None)
 
-                print("fetching {}".format(cmd_ids))
                 self.commandclient.call_func("get_command_value", self._fetch_value, command_ids=cmd_ids)
                 self._getting_value = True
     __pragma__('nokwargs')
@@ -385,5 +391,9 @@ class Command(Base):
         on_each_complete: call callback with command_id and value on each complete state
         """
         self._value_callback = callback
-        self.on_each = on_each_complete
+        self._on_each = on_each_complete
     __pragma__('nokwargs')
+
+    def done(self):
+        "all values has been fetched"
+        return len(self._values.keys()) == len(self._states.keys())

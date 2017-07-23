@@ -10,6 +10,9 @@ class Widget(Base):
         self._source_el = source_el
         self.node = None
 
+    def data(self):
+        raise NotImplementedError
+
     __pragma__('kwargs')
 
     def compile(
@@ -18,16 +21,16 @@ class Widget(Base):
             after=None,
             before=None,
             append=None,
-            prepend=None,
-            **data):
+            prepend=None):
         """
         Compile widget into target element
         Set after, before, append or prepend to True to specify where to insert html.
         """
         self.node = super().compile(self._source_el, target_el,
-                                    after=after, before=before,
-                                    append=append, prepend=prepend,
-                                    **data)
+                               after=after, before=before,
+                               append=append, prepend=prepend,
+                               **self.data())
+        return self.node
 
     __pragma__('nokwargs')
 
@@ -115,52 +118,80 @@ class Thumbnail(Widget):
             self._fetch_thumb(size=size)
     __pragma__('notconv')
 
-    @staticmethod
-    def mass_fetch(thumbs, size_type):
+class MassThumbnail:
+
+    def __init__(self, thumbs, item_type):
+        self.thumbs = thumbs
+        self.item_type = item_type
+        self._cmd_map = {}
+        self._thumb_map = {}
+        self._thumbsize = None
+        self._callback = None
+        self.cmd = None
+
+    __pragma__('kwargs')
+    def mass_fetch(self, size_type, callback=None):
         ""
+        self._callback = callback
+        self._thumb_map.clear()
         ids = []
-        
-        for t in thumbs:
+        for t in self.thumbs:
             assert isinstance(t, Thumbnail)
             ids.append(t.id)
+            self._thumb_map[t.id] = t
+
+        s = {
+            'big': 'Big',
+            'medium': 'Medium',
+            'small': 'Small'
+        }
+
+        size = s[size_type]
+
+        self._mass_get(ids=ids, size=size)
+    __pragma__('nokwargs')
 
     __pragma__('tconv')
+    __pragma__ ('jsiter')
     __pragma__('kwargs')
-
-    @staticmethod
-    def _mass_get(data=None, error=None, ids=[], size='Big', item_type=None):
+    def _mass_get(self, data=None, error=None, ids=[], size='Big'):
         if data is not None and not error:
+            self._cmd_map.clear()
             cmd_ids = []
             for i in data:
-                cmd_ids.append(i)
+                cmd_id = data[i]
+                cmd_ids.append(cmd_id)
+                self._cmd_map[cmd_id] = int(i)
 
             if cmd_ids:
-                cmd = Command(cmd_ids)
-                cmd.set_callback(self._set_thumb_cmd)
-                cmd.poll_until_complete(500)
+                self.cmd = Command(cmd_ids)
+                self.cmd.set_callback(self._mass_set, True)
+                self.cmd.poll_until_complete(500)
         elif error:
             pass
         else:
             if ids:
-                thumbclient.call_func("get_image", _mass_get, item_ids=ids,
-                                 size=size, url=True, uri=True, item_type=item_type)
-    __pragma__('notconv')
+                self._thumbsize = size
+                thumbclient.call_func("get_image", self._mass_get, item_ids=ids,
+                                 size=size, url=True, uri=True, item_type=self.item_type)
     __pragma__('nokwargs')
+    __pragma__ ('nojsiter')
+    __pragma__('notconv')
 
-    @staticmethod
-    def _mass_set(cmd):
-        val = cmd.get_value()
+    def _mass_set(self, cmd, value):
         im = None
-        if val:
-            im = val['data']
+        if value:
+            im = value['data']
 
-        self._thumbs[self._thumbsize] = val
-
+        tid = self._cmd_map[cmd]
+        thumb = self._thumb_map[tid]
+        thumb._thumbs[self._thumbsize] = im
         if not im:
             im = "/static/img/no-image.png"
+        thumb._set_thumb(im)
 
-        self._set_thumb(im)     
-
+        if self.cmd and self._callback and self.cmd.done():
+            self._callback()
 
 class Gallery(Thumbnail):
 
@@ -168,10 +199,10 @@ class Gallery(Thumbnail):
 
     def __init__(self, gtype='medium', gallery_obj={}):
         self.obj = gallery_obj
-        id = None
+        self.id = 0
         if 'id' in self.obj:
-            id = self.obj['id']
-        super().__init__("#gallery-" + gtype + "-t", gtype, 'Gallery', id)
+            self.id = self.obj['id']
+        super().__init__("#gallery-" + gtype + "-t", gtype, 'Gallery', self.id)
         self._gtype = gtype
     __pragma__('nokwargs')
 
@@ -194,7 +225,7 @@ class Gallery(Thumbnail):
 
         return a
 
-    def get(self):
+    def data(self):
         g = {}
         g['id'] = self.obj['id']
 
@@ -203,22 +234,3 @@ class Gallery(Thumbnail):
             g['thumb'] = "static/img/default.png"
         return g
 
-    __pragma__('kwargs')
-
-    def compile(
-            self,
-            target_el,
-            after=None,
-            before=None,
-            append=None,
-            prepend=None):
-        """
-        Compile widget into target element
-        Set after, before, append or prepend to True to specify where to insert html.
-        """
-        return super().compile(target_el,
-                               after=after, before=before,
-                               append=append, prepend=prepend,
-                               **self.get())
-
-    __pragma__('nokwargs')
