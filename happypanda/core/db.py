@@ -752,7 +752,7 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
     inbox = Column(Boolean, default=False)
     fav = Column(Boolean, default=False)
     info = Column(String, nullable=False, default='')
-    complete_pages = Column(Boolean, default=True)
+    single_source = Column(Boolean, default=True)
     fetched = Column(Boolean, default=False)
     rating = Column(Integer, nullable=False, default=0)
     times_read = Column(Integer, nullable=False, default=0)

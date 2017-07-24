@@ -333,6 +333,37 @@ class NameMixin(DatabaseMessage):
     def from_json(self, j):
         return super().from_json(j)
 
+class NamespaceTags(DatabaseMessage):
+    "Encapsulates database namespacetag object"
+
+    def __init__(self, db_item):
+        assert isinstance(db_item, db.NamespaceTags)
+        super().__init__('nstag', db_item)
+
+    def data(self, load_values=False, load_collections=False):
+        self._before_data()
+        d[self.item.namespace.name] = Tag(self.item.tag, self).json_friendly(include_key=False)
+        return d
+
+class Tag(DatabaseMessage):
+    "Encapsulates database tag object"
+
+    def __init__(self, db_item, nstag=None):
+        assert isinstance(db_item, db.Tag)
+        super().__init__('tag', db_item)
+        self.nstag = nstag
+
+    def data(self, load_values=False, load_collections=False):
+        self._before_data()
+        d = {}
+        aliases = []
+        d['name'] = self.item.name
+        if self.nstag:
+            for a in self.nstag.aliases:
+                aliases.appned(a.tag.name)
+        d['aliases'] = aliases
+        return d
+
 
 class Profile(DatabaseMessage):
     "Encapsulates database profile object"

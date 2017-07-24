@@ -39,7 +39,8 @@ def get_image(item_type: enums.ItemType=enums.ItemType.Gallery,
     size = enums.ImageSize.get(size)
 
     _, db_item = item_type._msg_and_model(
-        (enums.ItemType.Gallery, enums.ItemType.Collection, enums.ItemType.Grouping, enums.ItemType.Page))
+        (enums.ItemType.Gallery, enums.ItemType.Collection, enums.ItemType.Grouping, enums.ItemType.Page,
+         enums.ItemType.Artist))
 
     content = {}
 
@@ -140,11 +141,6 @@ def get_related_items(item_type: enums.ItemType=enums.ItemType.Gallery,
     item_list = message.List(db.model_name(child_model), child_msg)
     [item_list.append(child_msg(x)) for x in items]
     return item_list
-
-
-def get_tags(taggable_id: int=0):
-    ""
-    pass
 
 
 def get_count(item_type: enums.ItemType=enums.ItemType.Gallery):

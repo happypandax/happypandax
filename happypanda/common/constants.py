@@ -99,6 +99,7 @@ available_events = set()
 # DATABASE
 db_session = None
 default_user = None
+special_namespace = "__namespace__"
 
 # SERVER
 
