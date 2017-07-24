@@ -149,7 +149,7 @@ class DatabaseInitError(DatabaseError):
 
     def __init__(self, msg):
         """init func."""
-        super().__init__("An error occured in the database initialization process: " + msg)
+        super().__init__("database initiation", "An error occured in the database initialization process: " + msg)
 
 
 @error_code(302)
@@ -158,7 +158,7 @@ class DatabaseVersionError(DatabaseError):
 
     def __init__(self, msg):
         """init func."""
-        super().__init__("Database version mismatch: " + msg)
+        super().__init__("database initiation", "Database version mismatch: " + msg)
 
 
 @error_code(303)

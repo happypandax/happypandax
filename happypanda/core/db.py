@@ -15,7 +15,9 @@ from sqlalchemy.orm import (
     attributes,
     state,
     collections,
-    dynamic)
+    dynamic,
+    backref,
+    query)
 from sqlalchemy import (
     create_engine,
     event,
@@ -40,13 +42,17 @@ from sqlalchemy_utils import (
     get_type,
     JSONType)
 
+from collections import UserList
+
 import arrow
 import os
 import enum
 import re
 import bcrypt
+import functools
+import warnings
 
-from happypanda.common import constants, exceptions, hlogger
+from happypanda.common import constants, exceptions, hlogger, utils
 
 force_instant_defaults()
 force_auto_coercion()
@@ -426,6 +432,58 @@ class NamespaceTags(Base):
     namespace = relationship("Namespace",
                              cascade="save-update, merge, refresh-expire")
 
+    parent_id   = Column(Integer, ForeignKey("namespace_tags.id"), nullable=True)
+    parent      = relationship("NamespaceTags",
+                    primaryjoin=('namespace_tags.c.id==namespace_tags.c.parent_id'),
+                    remote_side='NamespaceTags.id',
+                    backref=backref("children" ))
+
+    alias_for_id   = Column(Integer, ForeignKey("namespace_tags.id"), nullable=True) # has one-child policy
+    alias_for      = relationship("NamespaceTags",
+                    primaryjoin=('namespace_tags.c.id==namespace_tags.c.alias_for_id'),
+                    remote_side='NamespaceTags.id',
+                    backref=backref("aliases" ))
+
+    def __init__(self, ns, tag):
+        self.namespace = ns
+        self.tag = tag
+
+    @validates('children')
+    def validate_child(self, key, child):
+        # can't add to myself
+        if child == self:
+            raise exceptions.DatabaseError(utils.this_function(), "Cannot make NamespaceTag itself's child")
+        return child
+
+    @validates('aliases')
+    def validate_aliases(self, key, alias):
+        # can't add to myself
+        if alias == self:
+            raise exceptions.DatabaseError(utils.this_function(), "Cannot make NamespaceTag itself's alias")
+        return alias
+
+    @validates('alias_for')
+    def validate_alias_for(self, key, alias):
+        if alias is None:
+            warnings.warn("NamespaceTag.alias_for has been reset, remember to flush or commit session to avoid possible circulay dependency error")
+        # point to the original nstag
+        if alias and alias.alias_for:
+            return alias.alias_for
+        return alias
+
+    @validates('parent')
+    def validate_parent(self, key, alias):
+        # point to the original nstag
+        if alias and alias.alias_for:
+            alias = alias.alias_for
+
+        # if self an alias, make original parent
+        if self.alias_for:
+            self.alias_for.parent = alias
+            alias = None
+
+        return alias
+
     def mapping_exists(self):
         sess = constants.db_session()
         e = sess.query(
@@ -437,11 +495,6 @@ class NamespaceTags(Base):
             e = self
         sess.close()
         return e
-
-    def __init__(self, ns, tag):
-        self.namespace = ns
-        self.tag = tag
-
 
 @generic_repr
 class Tag(NameMixin, Base):
@@ -470,6 +523,13 @@ taggable_tags = Table(
             'taggable_id', Integer, ForeignKey('taggable.id')), UniqueConstraint(
                 'namespace_tag_id', 'taggable_id'))
 
+def no_alias_append(super_append, self, obj):
+    print(obj)
+    if isinstance(obj, NamespaceTags):
+        # makes sure no aliases are added
+        if obj.alias_for:
+            obj = obj.alias_for
+    super_append(obj)
 
 class Taggable(Base):
     __tablename__ = 'taggable'
@@ -478,7 +538,6 @@ class Taggable(Base):
         "NamespaceTags",
         secondary=taggable_tags,
         lazy="dynamic")
-
 
 class TaggableMixin(UpdatedMixin):
 
@@ -673,6 +732,7 @@ class Collection(ProfileMixin, Base):
         back_populates="collections",
         lazy="dynamic",
         cascade="save-update, merge, refresh-expire")
+
     profiles = relationship(
         "Profile",
         secondary=collection_profiles,
@@ -803,40 +863,40 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
                 self._file_type = 'folder'
         return self._file_type
 
-    def exists(self, obj=False, strict=False):
-        """Checks if gallery exists by path
-        Params:
-            obj -- queries for the full object and returns it
-        """
-        e = self
-        if not constants.db_session:
-            return e
-        g = self.__class__
-        if self.path:
-            head, tail = os.path.split(self.path)
-            p, ext = os.path.splitext(tail if tail else head)
-            sess = constants.db_session()
-            if self.in_archive:
-                head, tail = os.path.split(self.path_in_archive)
-                p_a = tail if tail else head
-                e = sess.query(
-                    self.__class__.id).filter(
-                    and_(
-                        g.path.ilike(
-                            "%{}%".format(p)), g.path_in_archive.ilike(
-                            "%{}%".format(p_a)))).scalar()
-            else:
-                e = sess.query(
-                    self.__class__.id).filter(
-                    and_(
-                        g.path.ilike(
-                            "%{}%".format(p)))).scalar()
-            sess.close()
-            if not obj:
-                e = e is not None
-        else:
-            log.w("Could not query for gallery existence because no path was set.")
-        return e
+    #def exists(self, obj=False, strict=False):
+    #    """Checks if gallery exists by path
+    #    Params:
+    #        obj -- queries for the full object and returns it
+    #    """
+    #    e = self
+    #    if not constants.db_session:
+    #        return e
+    #    g = self.__class__
+    #    if self.path:
+    #        head, tail = os.path.split(self.path)
+    #        p, ext = os.path.splitext(tail if tail else head)
+    #        sess = constants.db_session()
+    #        if self.in_archive:
+    #            head, tail = os.path.split(self.path_in_archive)
+    #            p_a = tail if tail else head
+    #            e = sess.query(
+    #                self.__class__.id).filter(
+    #                and_(
+    #                    g.path.ilike(
+    #                        "%{}%".format(p)), g.path_in_archive.ilike(
+    #                        "%{}%".format(p_a)))).scalar()
+    #        else:
+    #            e = sess.query(
+    #                self.__class__.id).filter(
+    #                and_(
+    #                    g.path.ilike(
+    #                        "%{}%".format(p)))).scalar()
+    #        sess.close()
+    #        if not obj:
+    #            e = e is not None
+    #    else:
+    #        log.w("Could not query for gallery existence because no path was set.")
+    #    return e
 
 page_profiles = profile_association("page")
 
@@ -920,6 +980,30 @@ class GalleryUrl(Base):
 # Note: necessary to put in function because there is no Session object yet
 def initEvents(sess):
     "Initializes events"
+
+    @event.listens_for(Taggable.tags, 'append', retval=True)
+    def taggable_new_tag(target, value, initiator):
+        "when a tag is added, add its forefathers too"
+
+        # only add the original nstag
+        if value and value.alias_for:
+            target.tags.remove(value)
+            value = value.alias_for
+            if not value in target.tags:
+                target.tags.append(value)
+
+        if value and value.parent:
+            if not value.parent in target.tags:
+                target.tags.append(value.parent)
+
+        return value
+
+    @event.listens_for(Taggable.tags, 'remove')
+    def taggable_remove_tag(target, value, initiator):
+        "when a tag is removed, remove its children too"
+        if value and len(value.children):
+            for c in value.children:
+                target.tags.remove(c)
 
     @event.listens_for(UpdatedMixin, 'before_update', propagate=True)
     def timestamp_before_update(mapper, connection, target):

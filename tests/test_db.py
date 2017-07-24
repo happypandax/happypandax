@@ -37,18 +37,13 @@ class GeneralTest(unittest.TestCase):
         self.session.add(self.gallery)
         self.session.commit()
 
+    @unittest.expectedFailure
     def test_exists(self):
-        self.gallery.artists.append(Artist(name="lol"))
+        self.gallery.artists.append(Artist())
         self.session.commit()
         self.assertEqual(self.session.query(Artist).count(), 1)
 
-        artist = Artist(name="lol")
-        self.assertTrue(artist.exists())
-        artist.name = "lol2"
-        self.assertFalse(artist.exists())
-
         p = "hello/here.zip"
-        p_a = "gallery"
         self.gallery.path = p
         self.session.commit()
         g = Gallery()
@@ -57,15 +52,9 @@ class GeneralTest(unittest.TestCase):
         g.path = "nope"
         self.assertFalse(g.exists())
             
-        self.gallery.path_in_archive = p_a
         self.session.commit()
         g.path = p
-        g.path_in_archive = p_a
-        g.in_archive = True
         self.assertTrue(g.exists())
-        g.path_in_archive = "nope"
-        self.assertFalse(g.exists())
-
 
 
     def test_types(self):
@@ -168,7 +157,7 @@ class GeneralTest(unittest.TestCase):
         self.assertEqual(self.gallery.tags.count(), 10)
 
     def test_many_to_many(self):
-        artists = [Artist(name="Artist" + str(x)) for x in range(10)]
+        artists = [Artist() for x in range(10)]
         circles = [Circle(name="Circle" + str(x)) for x in range(10)]
 
         self.gallery.artists.extend(artists)
@@ -176,7 +165,7 @@ class GeneralTest(unittest.TestCase):
 
         self.session.commit()
 
-        self.assertGreater(len(self.gallery.artists), 0)
+        self.assertGreater(self.gallery.artists.count(), 0)
         self.assertGreater(len(self.gallery.circles), 0)
         self.assertTrue(artists[0].galleries[0].id == self.gallery.id)
 
@@ -620,6 +609,113 @@ class TagRelationship(unittest.TestCase):
         self.assertEqual(self.session.query(Tag).count(), 10)
         self.assertEqual(self.session.query(Namespace).count(), 20)
         self.assertEqual(self.session.query(NamespaceTags).count(), 20)
+
+        self.nstag1, self.nstag2, self.nstag3, self.nstag4, *_ = self.nstags
+
+    def test_tag_parent(self):
+        for x in self.nstags:
+            for y in self.galleries:
+                y.tags.remove(x)
+        self.gal1, self.gal2, *_ = self.galleries
+        self.test_tag_aliases()
+        self.nstag2.parent = self.nstag1
+        self.session.commit()
+        self.assertEqual(self.nstag2.parent, self.nstag1)
+        self.assertEqual(self.nstag1.children[0], self.nstag2)
+
+        with self.assertRaises(exceptions.DatabaseError) as e:
+            self.nstag2.parent = self.nstag3
+            self.assertTrue("Cannot make NamespaceTag itself's child" in e.msg)
+
+        self.assertEqual(len(self.nstag2.aliases), 2)
+        self.nstag3.alias_for = None
+        self.session.flush()
+        self.nstag2.parent = self.nstag3
+        self.session.commit()
+        self.assertEqual(len(self.nstag2.aliases), 1)
+        self.assertEqual(self.nstag2.parent, self.nstag3)
+        self.assertEqual(self.nstag3.children[0], self.nstag2)
+        self.assertEqual(len(self.nstag1.children), 0)
+
+        # test when alias is given a parent
+
+        self.assertEqual(self.nstag1.parent, None)
+        self.nstag4.alias_for = self.nstag1
+        self.nstag4.parent = self.nstag2
+        self.session.commit()
+        self.assertEqual(len(self.nstag2.aliases), 0)
+        self.assertEqual(len(self.nstag2.children), 1)
+        self.assertEqual(self.nstag2.children[0], self.nstag1)
+        self.assertEqual(self.nstag4.parent, None)
+
+    def test_tag_aliases(self):
+        self.nstag3.alias_for = self.nstag2
+        self.session.commit()
+        self.assertEqual(self.nstag3.alias_for, self.nstag2)
+        self.assertEqual(self.nstag2.aliases[0], self.nstag3)
+        self.nstag4.alias_for = self.nstag3
+        self.session.commit()
+        self.assertEqual(self.nstag4.alias_for, self.nstag2)
+        self.assertEqual(self.nstag2.aliases[1], self.nstag4)
+
+    def test_original_tag_galleries(self):
+        for x in self.nstags:
+            for y in self.galleries:
+                y.tags.remove(x)
+        self.gal1, self.gal2, *_ = self.galleries
+
+        self.test_tag_aliases()
+        self.gal1.tags.append(self.nstag3)
+        self.gal1.tags.append(self.nstag4)
+
+        self.session.commit()
+        self.assertEqual(self.gal1.tags.count(), 1)
+        self.assertEqual(self.gal1.tags[0], self.nstag2)
+        self.assertTrue(self.nstag3 not in self.gal1.tags)
+        self.assertTrue(self.nstag4 not in self.gal1.tags)
+
+    def test_append_tag_galleries(self):
+        for x in self.nstags:
+            for y in self.galleries:
+                y.tags.remove(x)
+        self.gal1, self.gal2, *_ = self.galleries
+        
+        self.test_tag_aliases()
+
+        self.nstag4.parent = self.nstag1
+
+        self.gal1.tags.append(self.nstag3)
+        self.gal1.tags.append(self.nstag4)
+
+        self.session.commit()
+        self.assertEqual(self.gal1.tags.count(), 2)
+        self.assertTrue(self.nstag1 in self.gal1.tags)
+        self.assertTrue(self.nstag2 in self.gal1.tags)
+
+        # test delete child
+
+        self.gal1.tags.remove(self.nstag2)
+        self.session.commit()
+        self.assertEqual(self.gal1.tags.count(), 1)
+        self.assertTrue(self.nstag1 in self.gal1.tags)
+        self.assertTrue(self.nstag2 not in self.gal1.tags)
+
+        # readd
+
+        self.gal1.tags.append(self.nstag4)
+        self.session.commit()
+        self.assertEqual(self.gal1.tags.count(), 2)
+        self.assertTrue(self.nstag1 in self.gal1.tags)
+        self.assertTrue(self.nstag2 in self.gal1.tags)
+
+        # test delete parent
+
+        self.gal1.tags.remove(self.nstag1)
+        self.session.commit()
+        self.assertEqual(self.gal1.tags.count(), 0)
+        self.assertTrue(self.nstag1 not in self.gal1.tags)
+        self.assertTrue(self.nstag2 not in self.gal1.tags)
+
 
     def test_delete(self):
         self.session.delete(self.tags[0])

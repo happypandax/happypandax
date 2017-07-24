@@ -1,6 +1,6 @@
 import unittest
 
-from happypanda.common.client import Client
+from happypanda.core.client import Client
 
 def start_server():
     pass
