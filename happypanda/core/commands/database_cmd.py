@@ -179,24 +179,9 @@ class GetModelItemByID(Command):
         # TODO: only SQLite has 999 variables limit
         _max_variables = 900
         if id_amount > _max_variables:
-            ids_list = list(ids)
-            fetched_list = []
-            queries = []
-
-            while len(ids_list):
-                queries.append(
-                    q.filter(model.id.in_(ids_list[:_max_variables])))
-                ids_list = ids_list[_max_variables:]
-
-            for x in queries:
-                limit = limit - len(fetched_list)
-                if limit <= 0:
-                    break
-
-                fetched_list.extend(self._query(x, limit, offset))
-
+            fetched_list = [x for x in q.all() if x.id in ids]
+            fetched_list = fetched_list[offset:][:limit]
             self.fetched_items = tuple(fetched_list)
-
         elif id_amount == 1:
             self.fetched_items = (q.get(ids.pop()),)
         else:

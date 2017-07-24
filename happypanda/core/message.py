@@ -158,13 +158,17 @@ class DatabaseMessage(CoreMessage):
             x: globals()[x] for x in globals() if inspect.isclass(
                 globals()[x])}
 
+    def _before_data(self):
+        self._check_link()
+        db.ensure_in_session(self.item)
+
     def data(self, load_values=False, load_collections=False):
         """
         Params:
             load_values -- Queries database for unloaded values
             load_collections -- Queries database to fetch all items in a collection
         """
-        self._check_link()
+        self._before_data()
         gattribs = db.table_attribs(self.item, not load_values)
         return {
             x: self._unpack(
@@ -340,8 +344,8 @@ class Profile(DatabaseMessage):
         self._uri = uri
 
     def data(self, load_values=False, load_collections=False):
+        self._before_data()
         d = {}
-
         path = io_cmd.CoreFS(self.item.path)
         d['id'] = self.item.id
         d['ext'] = path.ext
