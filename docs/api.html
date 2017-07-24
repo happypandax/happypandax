@@ -168,6 +168,7 @@
 <li><a class="reference internal" href="#module-happypanda.interface.meta">Meta</a></li>
 <li><a class="reference internal" href="#module-happypanda.interface.ui">UI</a></li>
 <li><a class="reference internal" href="#module-happypanda.interface.gallery">Gallery</a></li>
+<li><a class="reference internal" href="#module-happypanda.interface.tag">Tags</a></li>
 <li><a class="reference internal" href="#module-happypanda.interface.database">Database</a></li>
 <li><a class="reference internal" href="#module-happypanda.interface.plugin">Plugin</a></li>
 <li><a class="reference internal" href="#module-happypanda.interface.settings">Settings</a></li>
@@ -619,6 +620,36 @@ Provides pagination.</p>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">list of paths to the galleries</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-happypanda.interface.tag">
+<span id="tags"></span><h3>Tags<a class="headerlink" href="#module-happypanda.interface.tag" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="happypanda.interface.tag.get_tags">
+<code class="descname">get_tags</code><span class="sig-paren">(</span><em>item_type=&lt;ItemType.Gallery: 1&gt;</em>, <em>item_id=0</em>, <em>raw=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/tag.html#get_tags"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.tag.get_tags" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get tags for item</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>item_type</strong> (<a class="reference internal" href="#happypanda.interface.enums.ItemType" title="happypanda.interface.enums.ItemType"><code class="xref py py-class docutils literal"><span class="pre">ItemType</span></code></a>) &#8211; possible items are <a class="reference internal" href="#happypanda.interface.enums.ItemType.Gallery" title="happypanda.interface.enums.ItemType.Gallery"><code class="xref py py-attr docutils literal"><span class="pre">ItemType.Gallery</span></code></a>, <a class="reference internal" href="#happypanda.interface.enums.ItemType.Page" title="happypanda.interface.enums.ItemType.Page"><code class="xref py py-attr docutils literal"><span class="pre">ItemType.Page</span></code></a>,
+<a class="reference internal" href="#happypanda.interface.enums.ItemType.Grouping" title="happypanda.interface.enums.ItemType.Grouping"><code class="xref py py-attr docutils literal"><span class="pre">ItemType.Grouping</span></code></a>, <a class="reference internal" href="#happypanda.interface.enums.ItemType.Collection" title="happypanda.interface.enums.ItemType.Collection"><code class="xref py py-attr docutils literal"><span class="pre">ItemType.Collection</span></code></a></li>
+<li><strong>item_id</strong> (<code class="xref py py-class docutils literal"><span class="pre">int</span></code>) &#8211; id of item to fetch tags for</li>
+<li><strong>raw</strong> (<code class="xref py py-class docutils literal"><span class="pre">bool</span></code>) &#8211; if true, tags from descendant ItemType&#8217;s will not be included
+(this only makes sense when ItemType is <a class="reference internal" href="#happypanda.interface.enums.ItemType.Gallery" title="happypanda.interface.enums.ItemType.Gallery"><code class="xref py py-attr docutils literal"><span class="pre">ItemType.Gallery</span></code></a>)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><p><code class="docutils literal"><span class="pre">`</span>
+<span class="pre">{</span> <span class="pre">namespace</span> <span class="pre">:</span> <span class="pre">list</span> <span class="pre">of</span> <span class="pre">tag</span> <span class="pre">message</span> <span class="pre">objects</span> <span class="pre">}</span>
+<span class="pre">`</span></code></p>
+</p>
 </td>
 </tr>
 </tbody>

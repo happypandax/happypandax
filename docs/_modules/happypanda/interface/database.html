@@ -198,7 +198,8 @@
     <span class="n">size</span> <span class="o">=</span> <span class="n">enums</span><span class="o">.</span><span class="n">ImageSize</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">size</span><span class="p">)</span>
 
     <span class="n">_</span><span class="p">,</span> <span class="n">db_item</span> <span class="o">=</span> <span class="n">item_type</span><span class="o">.</span><span class="n">_msg_and_model</span><span class="p">(</span>
-        <span class="p">(</span><span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Gallery</span><span class="p">,</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Collection</span><span class="p">,</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Grouping</span><span class="p">,</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Page</span><span class="p">))</span>
+        <span class="p">(</span><span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Gallery</span><span class="p">,</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Collection</span><span class="p">,</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Grouping</span><span class="p">,</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Page</span><span class="p">,</span>
+         <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Artist</span><span class="p">))</span>
 
     <span class="n">content</span> <span class="o">=</span> <span class="p">{}</span>
 
@@ -299,11 +300,6 @@
     <span class="n">item_list</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">model_name</span><span class="p">(</span><span class="n">child_model</span><span class="p">),</span> <span class="n">child_msg</span><span class="p">)</span>
     <span class="p">[</span><span class="n">item_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">child_msg</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">items</span><span class="p">]</span>
     <span class="k">return</span> <span class="n">item_list</span></div>
-
-
-<span class="k">def</span> <span class="nf">get_tags</span><span class="p">(</span><span class="n">taggable_id</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
-    <span class="s2">&quot;&quot;</span>
-    <span class="k">pass</span>
 
 
 <div class="viewcode-block" id="get_count"><a class="viewcode-back" href="../../../api.html#happypanda.interface.database.get_count">[docs]</a><span class="k">def</span> <span class="nf">get_count</span><span class="p">(</span><span class="n">item_type</span><span class="p">:</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">=</span><span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Gallery</span><span class="p">):</span>

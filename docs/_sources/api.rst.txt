@@ -37,6 +37,12 @@ Gallery
 .. automodule:: happypanda.interface.gallery
    :members:
 
+Tags
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. automodule:: happypanda.interface.tag
+   :members:
+
 Database
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
