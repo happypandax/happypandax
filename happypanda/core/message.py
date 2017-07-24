@@ -333,6 +333,7 @@ class NameMixin(DatabaseMessage):
     def from_json(self, j):
         return super().from_json(j)
 
+
 class NamespaceTags(DatabaseMessage):
     "Encapsulates database namespacetag object"
 
@@ -342,8 +343,10 @@ class NamespaceTags(DatabaseMessage):
 
     def data(self, load_values=False, load_collections=False):
         self._before_data()
+        d = {}
         d[self.item.namespace.name] = Tag(self.item.tag, self).json_friendly(include_key=False)
         return d
+
 
 class Tag(DatabaseMessage):
     "Encapsulates database tag object"

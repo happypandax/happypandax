@@ -16,8 +16,7 @@ from sqlalchemy.orm import (
     state,
     collections,
     dynamic,
-    backref,
-    query)
+    backref)
 from sqlalchemy import (
     create_engine,
     event,
@@ -42,14 +41,11 @@ from sqlalchemy_utils import (
     get_type,
     JSONType)
 
-from collections import UserList
-
 import arrow
 import os
 import enum
 import re
 import bcrypt
-import functools
 import warnings
 
 from happypanda.common import constants, exceptions, hlogger, utils
@@ -432,17 +428,17 @@ class NamespaceTags(Base):
     namespace = relationship("Namespace",
                              cascade="save-update, merge, refresh-expire")
 
-    parent_id   = Column(Integer, ForeignKey("namespace_tags.id"), nullable=True)
-    parent      = relationship("NamespaceTags",
-                    primaryjoin=('namespace_tags.c.id==namespace_tags.c.parent_id'),
-                    remote_side='NamespaceTags.id',
-                    backref=backref("children" ))
+    parent_id = Column(Integer, ForeignKey("namespace_tags.id"), nullable=True)
+    parent = relationship("NamespaceTags",
+                          primaryjoin=('namespace_tags.c.id==namespace_tags.c.parent_id'),
+                          remote_side='NamespaceTags.id',
+                          backref=backref("children"))
 
-    alias_for_id   = Column(Integer, ForeignKey("namespace_tags.id"), nullable=True) # has one-child policy
-    alias_for      = relationship("NamespaceTags",
-                    primaryjoin=('namespace_tags.c.id==namespace_tags.c.alias_for_id'),
-                    remote_side='NamespaceTags.id',
-                    backref=backref("aliases" ))
+    alias_for_id = Column(Integer, ForeignKey("namespace_tags.id"), nullable=True)  # has one-child policy
+    alias_for = relationship("NamespaceTags",
+                             primaryjoin=('namespace_tags.c.id==namespace_tags.c.alias_for_id'),
+                             remote_side='NamespaceTags.id',
+                             backref=backref("aliases"))
 
     def __init__(self, ns, tag):
         self.namespace = ns
@@ -465,7 +461,8 @@ class NamespaceTags(Base):
     @validates('alias_for')
     def validate_alias_for(self, key, alias):
         if alias is None:
-            warnings.warn("NamespaceTag.alias_for has been reset, remember to flush or commit session to avoid possible circulay dependency error")
+            warnings.warn(
+                "NamespaceTag.alias_for has been reset, remember to flush or commit session to avoid possible circulay dependency error")
         # point to the original nstag
         if alias and alias.alias_for:
             return alias.alias_for
@@ -496,6 +493,7 @@ class NamespaceTags(Base):
         sess.close()
         return e
 
+
 @generic_repr
 class Tag(NameMixin, Base):
     __tablename__ = 'tag'
@@ -523,6 +521,7 @@ taggable_tags = Table(
             'taggable_id', Integer, ForeignKey('taggable.id')), UniqueConstraint(
                 'namespace_tag_id', 'taggable_id'))
 
+
 def no_alias_append(super_append, self, obj):
     print(obj)
     if isinstance(obj, NamespaceTags):
@@ -531,6 +530,7 @@ def no_alias_append(super_append, self, obj):
             obj = obj.alias_for
     super_append(obj)
 
+
 class Taggable(Base):
     __tablename__ = 'taggable'
 
@@ -538,6 +538,7 @@ class Taggable(Base):
         "NamespaceTags",
         secondary=taggable_tags,
         lazy="dynamic")
+
 
 class TaggableMixin(UpdatedMixin):
 
@@ -863,7 +864,7 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
                 self._file_type = 'folder'
         return self._file_type
 
-    #def exists(self, obj=False, strict=False):
+    # def exists(self, obj=False, strict=False):
     #    """Checks if gallery exists by path
     #    Params:
     #        obj -- queries for the full object and returns it
@@ -989,11 +990,11 @@ def initEvents(sess):
         if value and value.alias_for:
             target.tags.remove(value)
             value = value.alias_for
-            if not value in target.tags:
+            if value not in target.tags:
                 target.tags.append(value)
 
         if value and value.parent:
-            if not value.parent in target.tags:
+            if value.parent not in target.tags:
                 target.tags.append(value.parent)
 
         return value

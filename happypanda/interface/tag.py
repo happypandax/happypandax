@@ -1,7 +1,7 @@
-from happypanda.common import constants, utils, exceptions
-from happypanda.core import db, services, message
+from happypanda.core import db, message
 from happypanda.interface import enums
 from happypanda.core.commands import database_cmd
+
 
 def get_tags(item_type: enums.ItemType = enums.ItemType.Gallery,
              item_id: int = 0,
@@ -21,7 +21,7 @@ def get_tags(item_type: enums.ItemType = enums.ItemType.Gallery,
         { namespace : list of tag message objects }
         ```
     """
-    
+
     item_type = enums.ItemType.get(item_type)
 
     _, db_item = item_type._msg_and_model(
@@ -44,24 +44,20 @@ def get_tags(item_type: enums.ItemType = enums.ItemType.Gallery,
                 if not raw:
                     g_objs.append(g)
 
-        related_col = db.relationship_column(db.Gallery, db_item)
-        related = db.related_classes(db_item)
-        
         for g_obj in g_objs:
-            for p in g_obj.pages.all(): # TODO: we only need tags
+            for p in g_obj.pages.all():  # TODO: we only need tags
                 nstags.extend(p.tags.all())
 
     msg = {}
     _msg = {}
     for nstag in nstags:
         ns = nstag.namespace.name
-        if not ns in msg:
+        if ns not in msg:
             msg[ns] = []
             _msg[ns] = []
 
-        if not nstag.tag.name in _msg[ns]:
+        if nstag.tag.name not in _msg[ns]:
             msg[ns].append(message.Tag(nstag.tag, nstag).json_friendly(include_key=False))
             _msg[ns].append(nstag.tag.name)
 
     return message.Identity('tags', msg)
-
