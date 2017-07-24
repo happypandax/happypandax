@@ -7,6 +7,7 @@ import queue
 from happypanda.core import db
 from happypanda.core.commands import io_cmd
 from happypanda.interface import enums
+from happypanda.common import constants
 
 GALLERY_LISTS = []
 pages_in = Queue()
@@ -920,7 +921,7 @@ if __name__ == '__main__':
 
             for ns in g.tags:
                 n = db.Namespace()
-                n.name = ns
+                n.name = constants.special_namespace if ns == 'default' else ns
                 n = dst_namespace.get(ns, n)
                 dst_namespace[ns] = n
                 for tag in g.tags[ns]:
