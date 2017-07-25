@@ -570,6 +570,13 @@ gallery_artists = Table(
 
 artist_profiles = profile_association("artist")
 
+artist_circles = Table(
+    'artist_circles', Base.metadata, Column(
+        'circle_id', Integer, ForeignKey(
+            'circle.id',)), Column(
+                'artist_id', Integer, ForeignKey(
+                    'artist.id',)), UniqueConstraint(
+                        'circle_id', 'artist_id'))
 
 @generic_repr
 class Artist(ProfileMixin, Base):
@@ -590,8 +597,15 @@ class Artist(ProfileMixin, Base):
     profiles = relationship(
         "Profile",
         secondary=artist_profiles,
-        lazy='joined',
+        lazy='dynamic',
         cascade="all")
+
+    circles = relationship(
+        "Circle",
+        secondary=artist_circles,
+        back_populates='artists',
+        lazy="joined",
+        cascade="save-update, merge, refresh-expire")
 
 
 @generic_repr
@@ -603,25 +617,31 @@ class ArtistName(NameMixin, Base):
     language = relationship("Language", cascade="save-update, merge, refresh-expire")
     artist = relationship("Artist", back_populates='names')
 
-gallery_circles = Table(
-    'gallery_circles', Base.metadata, Column(
-        'circle_id', Integer, ForeignKey(
-            'circle.id',)), Column(
-                'gallery_id', Integer, ForeignKey(
-                    'gallery.id',)), UniqueConstraint(
-                        'circle_id', 'gallery_id'))
-
-
 @generic_repr
 class Circle(NameMixin, Base):
     __tablename__ = 'circle'
 
+    artists = relationship(
+        "Artist",
+        secondary=artist_circles,
+        back_populates='circles',
+        lazy="joined")
+
+gallery_parodies = Table(
+    'gallery_parodies', Base.metadata, Column(
+        'parody_id', Integer, ForeignKey('parody.id')), Column(
+            'gallery_id', Integer, ForeignKey('gallery.id')), UniqueConstraint(
+                'parody_id', 'gallery_id'))
+
+@generic_repr
+class Parody(Base):
+    __tablename__ = 'parody'
+
     galleries = relationship(
         "Gallery",
-        secondary=gallery_circles,
-        back_populates='circles',
+        secondary=gallery_parodies,
+        back_populates='parodies',
         lazy="dynamic")
-
 
 gallery_filters = Table('gallery_filters', Base.metadata,
                         Column('filter_id', Integer, ForeignKey('filter.id')),
@@ -652,7 +672,7 @@ class GalleryFilter(ProfileMixin, NameMixin, Base):
     profiles = relationship(
         "Profile",
         secondary=filter_profiles,
-        lazy='joined',
+        lazy='dynamic',
         cascade="all")
 
 
@@ -682,7 +702,7 @@ class Grouping(ProfileMixin, NameMixin, Base):
     profiles = relationship(
         "Profile",
         secondary=grouping_profiles,
-        lazy='joined',
+        lazy='dynamic',
         cascade="all")
     status = relationship(
         "Status",
@@ -737,7 +757,7 @@ class Collection(ProfileMixin, Base):
     profiles = relationship(
         "Profile",
         secondary=collection_profiles,
-        lazy='joined',
+        lazy='dynamic',
         cascade="all")
 
 
@@ -786,12 +806,6 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
         "Category",
         back_populates="galleries",
         cascade="save-update, merge, refresh-expire")
-    circles = relationship(
-        "Circle",
-        secondary=gallery_circles,
-        back_populates='galleries',
-        lazy="joined",
-        cascade="save-update, merge, refresh-expire")
     artists = relationship(
         "Artist",
         secondary=gallery_artists,
@@ -813,10 +827,16 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
         back_populates="gallery",
         lazy='joined',
         cascade="all,delete-orphan")
+    parodies = relationship(
+        "Parody",
+        secondary=gallery_parodies,
+        back_populates='galleries',
+        lazy="joined",
+        cascade="save-update, merge, refresh-expire")
     profiles = relationship(
         "Profile",
         secondary=gallery_profiles,
-        lazy='joined',
+        lazy='dynamic',
         cascade="all")
 
     def read(self, user_id, datetime=None):
@@ -917,7 +937,7 @@ class Page(TaggableMixin, ProfileMixin, Base):
     profiles = relationship(
         "Profile",
         secondary=page_profiles,
-        lazy='joined',
+        lazy='dynamic',
         cascade="all")
 
     @property
@@ -1048,7 +1068,7 @@ def initEvents(sess):
     @event.listens_for(sess, 'before_commit')
     def delete_circle_orphans(session):
         session.query(Circle).filter(
-            ~Circle.galleries.any()).delete(
+            ~Circle.artists.any()).delete(
             synchronize_session=False)
 
     @event.listens_for(sess, 'before_commit')
