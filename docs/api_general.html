@@ -163,7 +163,26 @@
       <div class="col-md-3">
         <div id="sidebar" class="bs-sidenav" role="complementary"><ul>
 <li><a class="reference internal" href="#">General</a><ul>
-<li><a class="reference internal" href="#database">Database</a></li>
+<li><a class="reference internal" href="#database">Database</a><ul>
+<li><a class="reference internal" href="#hierarchy">Hierarchy</a></li>
+<li><a class="reference internal" href="#recommended-usage">Recommended Usage</a><ul>
+<li><a class="reference internal" href="#collection">Collection</a></li>
+<li><a class="reference internal" href="#grouping">Grouping</a></li>
+<li><a class="reference internal" href="#galleryfilter">GalleryFilter</a></li>
+<li><a class="reference internal" href="#gallery">Gallery</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#special-notes">Special Notes</a><ul>
+<li><a class="reference internal" href="#id1">Gallery</a></li>
+<li><a class="reference internal" href="#tags">Tags</a><ul>
+<li><a class="reference internal" href="#alias">Alias</a></li>
+<li><a class="reference internal" href="#parent">Parent</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
 <li><a class="reference internal" href="#exceptions">Exceptions</a></li>
 </ul>
 </li>
@@ -177,7 +196,70 @@
 <h1>General<a class="headerlink" href="#general" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="database">
 <h2>Database<a class="headerlink" href="#database" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="hierarchy">
+<h3>Hierarchy<a class="headerlink" href="#hierarchy" title="Permalink to this headline">¶</a></h3>
+<p><strong>Collection</strong> -&gt; <strong>Grouping</strong> -&gt; <strong>Gallery</strong> -&gt; <strong>Page</strong></p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last"><strong>Grouping</strong> is actually not a direct descendant of <strong>Collection</strong> as can be seen below,
+but it is sometimes helpful to think of it as such.</p>
+</div>
+</div>
+<div class="section" id="recommended-usage">
+<h3>Recommended Usage<a class="headerlink" href="#recommended-usage" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="collection">
+<h4>Collection<a class="headerlink" href="#collection" title="Permalink to this headline">¶</a></h4>
+<p>Conventions (e.g. <code class="docutils literal"><span class="pre">C90</span></code>), magazines (e.g. <code class="docutils literal"><span class="pre">Girls</span> <span class="pre">forM</span></code>),
+tankōbon&#8217;s or a compilation of related/personal galleries</p>
+</div>
+<div class="section" id="grouping">
+<h4>Grouping<a class="headerlink" href="#grouping" title="Permalink to this headline">¶</a></h4>
+<p>Think of this as a namespace for related galleries. It is ideal for grouping
+multi-series galleries, so you use this as the series name. Since tankōbon&#8217;s also sometimes feature
+a complete series, you can use this for that too. It is not recommended to put tankōbon in both
+<strong>Collection</strong> and here. Choose one and stick to it to avoid confusion.
+<strong>Gallery</strong>&#8216;s <code class="docutils literal"><span class="pre">number</span></code> field is used in the context of a <strong>Grouping</strong>.</p>
+</div>
+<div class="section" id="galleryfilter">
+<h4>GalleryFilter<a class="headerlink" href="#galleryfilter" title="Permalink to this headline">¶</a></h4>
+<p>Think of this as those <em>smart-playlists</em> in music applications. It&#8217;s a compilation of galleries put
+together by the user either manually or through automatic search filtering. If you used the old
+Happypanda then you&#8217;ve should already be familiar with this. In old HP they were called gallery lists.
+Recommended usage is &#8220;anything&#8221;. It could range from your favorite fetishes to a shortcut for a
+search filter you&#8217;re tired of always typing in.</p>
+</div>
+<div class="section" id="gallery">
+<h4>Gallery<a class="headerlink" href="#gallery" title="Permalink to this headline">¶</a></h4>
+<p>A single chapter, then you group these chapters in a <strong>Grouping</strong>.</p>
+</div>
+</div>
+<div class="section" id="special-notes">
+<h3>Special Notes<a class="headerlink" href="#special-notes" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id1">
+<h4>Gallery<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h4>
+<ul class="simple">
+<li>A <strong>Gallery</strong> can have multiple <strong>Title</strong>, <strong>Artist</strong> and <strong>Parody</strong></li>
+<li>A <strong>Gallery</strong> can be in multiple <strong>Collection</strong> and <strong>GalleryFilter</strong></li>
+<li>A <strong>Gallery</strong> can only be in <strong>one</strong> <strong>Grouping</strong></li>
+</ul>
+</div>
+<div class="section" id="tags">
+<h4>Tags<a class="headerlink" href="#tags" title="Permalink to this headline">¶</a></h4>
+<p><strong>Gallery</strong> and <strong>Page</strong> are the only taggable items.
+<strong>Collection</strong> and <strong>Grouping</strong> are <em>not</em> taggable, but they can display tags for all the containing <strong>Gallery</strong>.</p>
+<div class="section" id="alias">
+<h5>Alias<a class="headerlink" href="#alias" title="Permalink to this headline">¶</a></h5>
+<blockquote>
+<div>...</div></blockquote>
+</div>
+<div class="section" id="parent">
+<h5>Parent<a class="headerlink" href="#parent" title="Permalink to this headline">¶</a></h5>
+<blockquote>
+<div>...</div></blockquote>
 <img alt="_images/schema.png" src="_images/schema.png" />
+</div>
+</div>
+</div>
 </div>
 <div class="section" id="exceptions">
 <h2>Exceptions<a class="headerlink" href="#exceptions" title="Permalink to this headline">¶</a></h2>
