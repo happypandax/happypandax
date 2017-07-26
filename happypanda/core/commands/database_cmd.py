@@ -108,7 +108,7 @@ class GetModelImage(AsyncCommand):
 
         if self.cover.path and generate:
             i = GetModelItemByID().run(model, {item_id})[0]
-            if not self.cover in i.profiles:
+            if self.cover not in i.profiles:
                 i.profiles.append(self.cover)
             sess.commit()
         elif not self.cover.path:

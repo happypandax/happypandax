@@ -102,11 +102,11 @@ class ImageItem(AsyncCommand):
             if size.width and size.height:
                 if ext.lower().endswith(".gif"):
                     new_frame = Image.new('RGBA', im.size)
-                    new_frame.paste(im, (0,0), im.convert('RGBA'))
+                    new_frame.paste(im, (0, 0), im.convert('RGBA'))
                     im.close()
                     im = new_frame
                 im.thumbnail((size.width, size.height), Image.ANTIALIAS)
-            
+
             else:
                 if not self.properties.save_original:
                     image_path = self._image

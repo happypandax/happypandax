@@ -242,24 +242,28 @@ class NameMixin:
         return "<{}(ID: {}, Name: {})>".format(
             self.__class__.__name__, self.id, self.name)
 
+
 class AliasMixin:
 
     @declared_attr
     def alias_for_id(cls):
         return Column(Integer, ForeignKey("{}.id".format(cls.__tablename__)), nullable=True)  # has one-child policy
-    
+
     @declared_attr
     def alias_for(cls):
         return relationship(cls.__name__,
-                             primaryjoin=('{}.c.id=={}.c.alias_for_id'.format(cls.__tablename__, cls.__tablename__)),
-                             remote_side='{}.id'.format(cls.__name__),
-                             backref=backref("aliases"))
+                            primaryjoin=('{}.c.id=={}.c.alias_for_id'.format(cls.__tablename__, cls.__tablename__)),
+                            remote_side='{}.id'.format(cls.__name__),
+                            backref=backref("aliases"))
 
     @validates('aliases')
     def validate_aliases(self, key, alias):
         # can't add to myself
         if alias == self:
-            raise exceptions.DatabaseError(utils.this_function(), "Cannot make {} itself's alias".format(self.__class__.__name__))
+            raise exceptions.DatabaseError(
+                utils.this_function(),
+                "Cannot make {} itself's alias".format(
+                    self.__class__.__name__))
         return alias
 
     @validates('alias_for')
@@ -271,6 +275,7 @@ class AliasMixin:
         if alias and alias.alias_for:
             return alias.alias_for
         return alias
+
 
 class ProfileMixin:
 
@@ -584,6 +589,7 @@ artist_circles = Table(
                     'artist.id',)), UniqueConstraint(
                         'circle_id', 'artist_id'))
 
+
 @generic_repr
 class Artist(ProfileMixin, Base):
     __tablename__ = 'artist'
@@ -624,6 +630,7 @@ class ArtistName(NameMixin, AliasMixin, Base):
     language = relationship("Language", cascade="save-update, merge, refresh-expire")
     artist = relationship("Artist", back_populates='names', cascade="save-update, merge, refresh-expire")
 
+
 @generic_repr
 class Circle(NameMixin, Base):
     __tablename__ = 'circle'
@@ -640,6 +647,7 @@ gallery_parodies = Table(
             'gallery_id', Integer, ForeignKey('gallery.id')), UniqueConstraint(
                 'parody_id', 'gallery_id'))
 
+
 @generic_repr
 class Parody(Base):
     __tablename__ = 'parody'
@@ -655,6 +663,7 @@ class Parody(Base):
         secondary=gallery_parodies,
         back_populates='parodies',
         lazy="dynamic")
+
 
 @generic_repr
 class ParodyName(NameMixin, AliasMixin, Base):
@@ -1068,7 +1077,7 @@ def initEvents(sess):
             synchronize_session=False)
 
     @event.listens_for(sess, 'before_commit')
-    def delete_artist_orphans(session):
+    def delete_parody_orphans(session):
         session.query(Parody).filter(
             ~Parody.galleries.any()).delete(
             synchronize_session=False)

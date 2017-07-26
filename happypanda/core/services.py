@@ -5,7 +5,7 @@ import functools
 
 from gevent import pool, queue
 
-from happypanda.common import hlogger, constants, utils
+from happypanda.common import hlogger, constants
 from happypanda.core import command
 
 log = hlogger.Logger(__name__)

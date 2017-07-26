@@ -155,5 +155,3 @@ class GalleryScan:
             dic['title'] = name
 
         return dic
-
-
