@@ -17,8 +17,8 @@ log = hlogger.Logger(__name__)
 
 ImageProperties = namedtuple(
     "ImageProperties", [
-        'size', 'radius', 'output_dir', 'output_path', 'name'])
-ImageProperties.__new__.__defaults__ = (utils.ImageSize(*constants.image_sizes['medium']), 0, None, None, None)
+        'size', 'radius', 'output_dir', 'output_path', 'name', 'save_original'])
+ImageProperties.__new__.__defaults__ = (utils.ImageSize(*constants.image_sizes['medium']), 0, None, None, None, False)
 
 
 class ImageItem(AsyncCommand):
@@ -77,6 +77,7 @@ class ImageItem(AsyncCommand):
         size = self.properties.size
         if isinstance(self._image, str):
             self._image = CoreFS(self._image).get()
+        im = None
         try:
             im = self._convert(Image.open(self._image))
             f, ext = os.path.splitext(self._image)
@@ -97,6 +98,7 @@ class ImageItem(AsyncCommand):
             else:
                 image_path = BytesIO()
 
+            save_image = True
             if size.width and size.height:
                 if ext.lower().endswith(".gif"):
                     new_frame = Image.new('RGBA', im.size)
@@ -104,11 +106,18 @@ class ImageItem(AsyncCommand):
                     im.close()
                     im = new_frame
                 im.thumbnail((size.width, size.height), Image.ANTIALIAS)
+            
+            else:
+                if not self.properties.save_original:
+                    image_path = self._image
+                    save_image = False
 
-            im.save(image_path)
+            if save_image:
+                im.save(image_path)
             return image_path
         finally:
-            im.close()
+            if im:
+                im.close()
 
     @staticmethod
     def gen_hash(model, size, item_id=None):

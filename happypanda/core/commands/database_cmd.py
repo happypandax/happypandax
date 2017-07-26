@@ -7,9 +7,9 @@ from happypanda.interface import enums
 log = hlogger.Logger(__name__)
 
 
-class GetModelCover(AsyncCommand):
+class GetModelImage(AsyncCommand):
     """
-    Fetch a database model item's cover
+    Fetch a database model item's image
 
     By default, the following models are supported
 
@@ -44,16 +44,25 @@ class GetModelCover(AsyncCommand):
         )
 
     @generate.default(capture=True)
-    def _generate(model, item_id, size, capture=db.model_name(db.Gallery)):
+    def _generate(model, item_id, size, capture=[db.model_name(x) for x in (db.Page, db.Gallery)]):
         im_path = ""
-        page = GetSession().run().query(
-            db.Page.path).filter(
-            db.and_op(
-                db.Page.gallery_id == item_id,
-                db.Page.number == 1)).one_or_none()
+        model = GetModelClass().run(model)
+
+        if model == db.Gallery:
+            page = GetSession().run().query(
+                db.Page.path).filter(
+                db.and_op(
+                    db.Page.gallery_id == item_id,
+                    db.Page.number == 1)).one_or_none()
+        else:
+            page = GetSession().run().query(db.Page.path).filter(db.Page.id == item_id).one_or_none()
+
         if page:
+            im_path = page[0]
+
+        if im_path:
             im_props = io_cmd.ImageProperties(size, 0, constants.dir_thumbs)
-            im_path = io_cmd.ImageItem(None, page[0], im_props).main()
+            im_path = io_cmd.ImageItem(None, im_path, im_props).main()
         return im_path
 
     def main(self, model: db.Base, item_id: int,
