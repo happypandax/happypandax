@@ -75,5 +75,12 @@ Parent
 
 .. image:: _static/schema.png
 
+Asynchronous Commands
+----------------------------------------
+
+.. autoclass:: happypanda.core.command.CommandState
+   :members:
+
 Exceptions
 ----------------------------------------
+
