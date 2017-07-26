@@ -9,6 +9,7 @@ import base64
 import uuid
 import tempfile
 import socket
+import traceback
 
 from inspect import ismodule, currentframe, getframeinfo
 from logging.handlers import RotatingFileHandler
@@ -22,7 +23,6 @@ log = hlogger.Logger(__name__)
 ImageSize = namedtuple("ImageSize", ['width', 'height'])
 
 temp_dirs = []
-
 
 def setup_dirs():
     "Creates directories at the specified root path"
@@ -306,3 +306,7 @@ def get_local_ip():
             s.close()
         constants.local_ip = IP
     return constants.local_ip
+
+def exception_traceback(self, ex):
+    return [ line.rstrip('\n') for line in
+                traceback.format_exception(ex.__class__, ex, ex.__traceback__)]

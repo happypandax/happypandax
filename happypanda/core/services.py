@@ -5,7 +5,7 @@ import functools
 
 from gevent import pool, queue
 
-from happypanda.common import hlogger, constants
+from happypanda.common import hlogger, constants, utils
 from happypanda.core import command
 
 log = hlogger.Logger(__name__)
@@ -113,9 +113,10 @@ class Service:
                 pass
 
         command_obj.state = command.CommandState.finished
-        if not greenlet.successful():
-            log.w("Command", "{}({})".format(command_obj.__class__.__name__, command_id),
-                  "raised an exception:\n\t", greenlet.exception)
+        try:
+            greenlet.get()
+        except:
+            log.exception("Command", "{}({})".format(command_obj.__class__.__name__, command_id), "raised an exception")
             command_obj.state = command.CommandState.failed
             command_obj.exception = greenlet.exception
 

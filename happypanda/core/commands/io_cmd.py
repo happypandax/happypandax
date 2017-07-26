@@ -77,31 +77,38 @@ class ImageItem(AsyncCommand):
         size = self.properties.size
         if isinstance(self._image, str):
             self._image = CoreFS(self._image).get()
-        im = self._convert(Image.open(self._image))
-        f, ext = os.path.splitext(self._image)
-        image_path = ""
+        try:
+            im = self._convert(Image.open(self._image))
+            f, ext = os.path.splitext(self._image)
+            image_path = ""
 
-        if self.properties.output_path:
-            image_path = self.properties.output_path
-            _f, _ext = os.path.splitext(image_path)
-            if not _ext:
-                image_path = os.path.join(_f, ext)
+            if self.properties.output_path:
+                image_path = self.properties.output_path
+                _f, _ext = os.path.splitext(image_path)
+                if not _ext:
+                    image_path = os.path.join(_f, ext)
 
-        elif self.properties.output_dir:
-            o_dir = self.properties.output_dir
-            o_name = self.properties.name if self.properties.name else utils.random_name()
-            if not o_name.endswith(ext):
-                o_name = o_name + ext
-            image_path = os.path.join(o_dir, o_name)
-        else:
-            image_path = BytesIO()
+            elif self.properties.output_dir:
+                o_dir = self.properties.output_dir
+                o_name = self.properties.name if self.properties.name else utils.random_name()
+                if not o_name.endswith(ext):
+                    o_name = o_name + ext
+                image_path = os.path.join(o_dir, o_name)
+            else:
+                image_path = BytesIO()
 
-        if size.width and size.height:
-            im.thumbnail((size.width, size.height), Image.ANTIALIAS)
+            if size.width and size.height:
+                if ext.lower().endswith(".gif"):
+                    new_frame = Image.new('RGBA', im.size)
+                    new_frame.paste(im, (0,0), im.convert('RGBA'))
+                    im.close()
+                    im = new_frame
+                im.thumbnail((size.width, size.height), Image.ANTIALIAS)
 
-        im.save(image_path)
-
-        return image_path
+            im.save(image_path)
+            return image_path
+        finally:
+            im.close()
 
     @staticmethod
     def gen_hash(model, size, item_id=None):

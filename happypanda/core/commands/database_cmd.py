@@ -99,7 +99,8 @@ class GetModelCover(AsyncCommand):
 
         if self.cover.path and generate:
             i = GetModelItemByID().run(model, {item_id})[0]
-            i.profiles.append(self.cover)
+            if not self.cover in i.profiles:
+                i.profiles.append(self.cover)
             sess.commit()
         elif not self.cover.path:
             self.cover = None
