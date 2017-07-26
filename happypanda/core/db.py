@@ -242,6 +242,35 @@ class NameMixin:
         return "<{}(ID: {}, Name: {})>".format(
             self.__class__.__name__, self.id, self.name)
 
+class AliasMixin:
+
+    @declared_attr
+    def alias_for_id(cls):
+        return Column(Integer, ForeignKey("{}.id".format(cls.__tablename__)), nullable=True)  # has one-child policy
+    
+    @declared_attr
+    def alias_for(cls):
+        return relationship(cls.__name__,
+                             primaryjoin=('{}.c.id=={}.c.alias_for_id'.format(cls.__tablename__, cls.__tablename__)),
+                             remote_side='{}.id'.format(cls.__name__),
+                             backref=backref("aliases"))
+
+    @validates('aliases')
+    def validate_aliases(self, key, alias):
+        # can't add to myself
+        if alias == self:
+            raise exceptions.DatabaseError(utils.this_function(), "Cannot make {} itself's alias".format(self.__class__.__name__))
+        return alias
+
+    @validates('alias_for')
+    def validate_alias_for(self, key, alias):
+        if alias is None:
+            warnings.warn(
+                "{}.alias_for has been reset, remember to flush or commit session to avoid possible circulay dependency error".format(self.__class__.__name__))
+        # point to the original nstag
+        if alias and alias.alias_for:
+            return alias.alias_for
+        return alias
 
 class ProfileMixin:
 
@@ -417,7 +446,7 @@ class Hash(NameMixin, Base):
     __tablename__ = 'hash'
 
 
-class NamespaceTags(Base):
+class NamespaceTags(AliasMixin, Base):
     __tablename__ = 'namespace_tags'
 
     tag_id = Column(Integer, ForeignKey('tag.id'))
@@ -434,12 +463,6 @@ class NamespaceTags(Base):
                           remote_side='NamespaceTags.id',
                           backref=backref("children"))
 
-    alias_for_id = Column(Integer, ForeignKey("namespace_tags.id"), nullable=True)  # has one-child policy
-    alias_for = relationship("NamespaceTags",
-                             primaryjoin=('namespace_tags.c.id==namespace_tags.c.alias_for_id'),
-                             remote_side='NamespaceTags.id',
-                             backref=backref("aliases"))
-
     def __init__(self, ns, tag):
         self.namespace = ns
         self.tag = tag
@@ -450,23 +473,6 @@ class NamespaceTags(Base):
         if child == self:
             raise exceptions.DatabaseError(utils.this_function(), "Cannot make NamespaceTag itself's child")
         return child
-
-    @validates('aliases')
-    def validate_aliases(self, key, alias):
-        # can't add to myself
-        if alias == self:
-            raise exceptions.DatabaseError(utils.this_function(), "Cannot make NamespaceTag itself's alias")
-        return alias
-
-    @validates('alias_for')
-    def validate_alias_for(self, key, alias):
-        if alias is None:
-            warnings.warn(
-                "NamespaceTag.alias_for has been reset, remember to flush or commit session to avoid possible circulay dependency error")
-        # point to the original nstag
-        if alias and alias.alias_for:
-            return alias.alias_for
-        return alias
 
     @validates('parent')
     def validate_parent(self, key, alias):
@@ -586,7 +592,8 @@ class Artist(ProfileMixin, Base):
         "Gallery",
         secondary=gallery_artists,
         back_populates='artists',
-        lazy="dynamic")
+        lazy="dynamic",
+        cascade="save-update, merge, refresh-expire")
 
     names = relationship(
         "ArtistName",
@@ -609,13 +616,13 @@ class Artist(ProfileMixin, Base):
 
 
 @generic_repr
-class ArtistName(NameMixin, Base):
+class ArtistName(NameMixin, AliasMixin, Base):
     __tablename__ = 'artistname'
 
     artist_id = Column(Integer, ForeignKey('artist.id'))
     language_id = Column(Integer, ForeignKey('language.id'))
     language = relationship("Language", cascade="save-update, merge, refresh-expire")
-    artist = relationship("Artist", back_populates='names')
+    artist = relationship("Artist", back_populates='names', cascade="save-update, merge, refresh-expire")
 
 @generic_repr
 class Circle(NameMixin, Base):
@@ -637,11 +644,26 @@ gallery_parodies = Table(
 class Parody(Base):
     __tablename__ = 'parody'
 
+    names = relationship(
+        "ParodyName",
+        lazy='joined',
+        back_populates='parody',
+        cascade="all, delete-orphan")
+
     galleries = relationship(
         "Gallery",
         secondary=gallery_parodies,
         back_populates='parodies',
         lazy="dynamic")
+
+@generic_repr
+class ParodyName(NameMixin, AliasMixin, Base):
+    __tablename__ = 'parodyname'
+
+    parody_id = Column(Integer, ForeignKey('parody.id'))
+    language_id = Column(Integer, ForeignKey('language.id'))
+    language = relationship("Language", cascade="save-update, merge, refresh-expire")
+    parody = relationship("Parody", back_populates='names')
 
 gallery_filters = Table('gallery_filters', Base.metadata,
                         Column('filter_id', Integer, ForeignKey('filter.id')),
@@ -1002,6 +1024,15 @@ class GalleryUrl(Base):
 def initEvents(sess):
     "Initializes events"
 
+    @event.listens_for(sess, 'before_commit')
+    def aliasmixin_delete(session):
+        "when root is deleted, delete all its aliases"
+
+        found = [obj for obj in session.deleted if isinstance(obj, AliasMixin) and obj.aliases]
+        for a in found:
+            for x in a.aliases:
+                x.delete()
+
     @event.listens_for(Taggable.tags, 'append', retval=True)
     def taggable_new_tag(target, value, initiator):
         "when a tag is added, add its forefathers too"
@@ -1034,6 +1065,12 @@ def initEvents(sess):
     def delete_artist_orphans(session):
         session.query(Artist).filter(
             ~Artist.galleries.any()).delete(
+            synchronize_session=False)
+
+    @event.listens_for(sess, 'before_commit')
+    def delete_artist_orphans(session):
+        session.query(Parody).filter(
+            ~Parody.galleries.any()).delete(
             synchronize_session=False)
 
     @event.listens_for(sess, 'before_commit')

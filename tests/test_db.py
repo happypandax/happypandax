@@ -158,15 +158,12 @@ class GeneralTest(unittest.TestCase):
 
     def test_many_to_many(self):
         artists = [Artist() for x in range(10)]
-        circles = [Circle(name="Circle" + str(x)) for x in range(10)]
 
         self.gallery.artists.extend(artists)
-        self.gallery.circles.extend(circles)
 
         self.session.commit()
 
         self.assertGreater(self.gallery.artists.count(), 0)
-        self.assertGreater(len(self.gallery.circles), 0)
         self.assertTrue(artists[0].galleries[0].id == self.gallery.id)
 
     def tearDown(self):
@@ -273,7 +270,6 @@ class ArtistRelationship(unittest.TestCase):
         self.session = create_db()
 
         self.artist = Artist()
-        self.artist.name = "Artist1"
         self.galleries = [Gallery() for x in range(10)]
         self.session.add_all(self.galleries)
         self.artist.galleries.extend(self.galleries)
@@ -302,36 +298,153 @@ class ArtistRelationship(unittest.TestCase):
     def tearDown(self):
         self.session.close()
 
-class CircleRelationship(unittest.TestCase):
+class ArtistNameRelationship(unittest.TestCase):
     def setUp(self):
         self.session = create_db()
 
-        self.artist = Circle()
-        self.artist.name = "Artist1"
-        self.galleries = [Gallery() for x in range(10)]
-        self.session.add_all(self.galleries)
-        self.artist.galleries.extend(self.galleries)
+        self.gallery = Gallery()
+        self.artist = Artist()
+        self.gallery.artists.append(self.artist)
+        self.names = [ArtistName(name='name'+str(x)) for x in range(10)]
+        root = self.names[0]
+        for n in self.names[1:]:
+            n.alias_for = root
+        self.session.add(self.gallery)
+        self.artist.names.append(root)
         self.session.commit()
 
-        self.assertEqual(self.artist.id, self.galleries[0].circles[0].id)
-
+        self.assertEqual(len(self.artist.names), 1)
+        self.assertEqual(len(root.aliases), 9)
 
     def test_delete(self):
+        self.session.delete(self.names[1])
+        self.session.commit()
+        self.assertEqual(self.session.query(Artist).count(), 1)
+        self.assertEqual(self.session.query(ArtistName).count(), 9)
+        self.assertEqual(self.artist.names[0], self.names[0])
+
+    def test_delete2(self):
+        self.session.delete(self.names[0])
+        self.session.commit()
+        self.assertEqual(self.session.query(Artist).count(), 1)
+        self.assertEqual(self.session.query(ArtistName).count(), 0)
+
+    def test_no_orphans(self):
         self.session.delete(self.artist)
         self.session.commit()
+        self.assertEqual(self.session.query(Artist).count(), 0)
+        self.assertEqual(self.session.query(ArtistName).count(), 0)
+
+    def tearDown(self):
+        self.session.close()
+
+class ParodyRelationship(unittest.TestCase):
+    def setUp(self):
+        self.session = create_db()
+
+        self.parody = Parody()
+        self.galleries = [Gallery() for x in range(10)]
+        self.session.add_all(self.galleries)
+        self.parody.galleries.extend(self.galleries)
+        self.session.commit()
+
+        self.assertEqual(self.parody.id, self.galleries[0].parodies[0].id)
+
+    def test_delete(self):
+        self.session.delete(self.parody)
+        self.session.commit()
         self.assertEqual(self.session.query(Gallery).count(), 10)
-        self.assertEqual(self.session.query(Circle).count(), 0)
+        self.assertEqual(self.session.query(Parody).count(), 0)
 
     def test_delete2(self):
         self.session.delete(self.galleries[0])
         self.session.commit()
         self.assertEqual(self.session.query(Gallery).count(), 9)
-        self.assertEqual(self.session.query(Circle).count(), 1)
+        self.assertEqual(self.session.query(Parody).count(), 1)
 
     def test_no_orphans(self):
         self.session.query(Gallery).delete()
         self.session.commit()
         self.assertEqual(self.session.query(Gallery).count(), 0)
+        self.assertEqual(self.session.query(Parody).count(), 0)
+
+    def tearDown(self):
+        self.session.close()
+
+class ParodyNameRelationship(unittest.TestCase):
+    def setUp(self):
+        self.session = create_db()
+
+        self.gallery = Gallery()
+        self.parody = Parody()
+        self.gallery.parodies.append(self.parody)
+        self.names = [ParodyName(name='name'+str(x)) for x in range(10)]
+        root = self.names[0]
+        for n in self.names[1:]:
+            n.alias_for = root
+        self.session.add(self.gallery)
+        self.parody.names.append(root)
+        self.session.commit()
+
+        self.assertEqual(len(self.parody.names), 1)
+        self.assertEqual(len(root.aliases), 9)
+
+    def test_delete(self):
+        self.session.delete(self.names[1])
+        self.session.commit()
+        self.assertEqual(self.session.query(Parody).count(), 1)
+        self.assertEqual(self.session.query(ParodyName).count(), 9)
+        self.assertEqual(self.parody.names[0], self.names[0])
+
+    def test_delete2(self):
+        self.session.delete(self.names[0])
+        self.session.commit()
+        self.assertEqual(self.session.query(Parody).count(), 1)
+        self.assertEqual(self.session.query(ParodyName).count(), 0)
+
+    def test_no_orphans(self):
+        self.session.delete(self.parody)
+        self.session.commit()
+        self.assertEqual(self.session.query(Parody).count(), 0)
+        self.assertEqual(self.session.query(ParodyName).count(), 0)
+
+    def tearDown(self):
+        self.session.close()
+
+class CircleRelationship(unittest.TestCase):
+    def setUp(self):
+        self.session = create_db()
+
+        self.gallery = Gallery()
+        self.circle = Circle()
+        self.circle.name = "Circle1"
+        self.artists = [Artist() for x in range(10)]
+        self.session.add_all(self.artists)
+        self.circle.artists.extend(self.artists)
+        self.gallery.artists.extend(self.artists)
+        self.session.commit()
+        print("test1")
+
+        self.assertEqual(self.circle.id, self.artists[0].circles[0].id)
+        print("test2")
+
+
+    def test_delete(self):
+        self.session.delete(self.circle)
+        self.session.commit()
+        self.assertEqual(self.session.query(Artist).count(), 10)
+        self.assertEqual(self.session.query(Circle).count(), 0)
+
+    def test_delete2(self):
+        self.session.delete(self.artists[0])
+        self.session.commit()
+        self.assertEqual(self.session.query(Artist).count(), 9)
+        self.assertEqual(self.session.query(Circle).count(), 1)
+
+    def test_no_orphans(self):
+        self.session.query(Artist).delete()
+        self.session.commit()
+        self.assertEqual(self.session.query(Artist).count(), 0)
         self.assertEqual(self.session.query(Circle).count(), 0)
 
     def tearDown(self):
