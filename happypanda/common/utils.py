@@ -262,7 +262,10 @@ def generate_key(length=10):
 
 def random_name():
     "Generate a random urlsafe name and return it"
-    return base64.urlsafe_b64encode(uuid.uuid4().bytes).decode('utf-8').replace('=', '')
+    r = base64.urlsafe_b64encode(uuid.uuid4().bytes).decode('utf-8').replace('=', '')
+    if r[0] == '_':
+        r = r[1:]
+    return r
 
 
 def require_context(ctx):

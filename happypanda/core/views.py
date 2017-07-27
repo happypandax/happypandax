@@ -177,7 +177,16 @@ def api_view(page=0):
 
 @happyweb.route(constants.thumbs_view + '/<path:filename>')
 def thumbs_view(filename):
-    return send_from_directory(os.path.abspath(constants.dir_thumbs), secure_filename(filename))
+    s_filename = secure_filename(filename)
+    d = os.path.abspath(constants.dir_thumbs)
+    f = s_filename
+    if s_filename.endswith(constants.link_ext):
+        p = os.path.join(constants.dir_thumbs, s_filename)
+        if os.path.exists(p):
+            with open(p, 'r', encoding='utf-8') as fp:
+                img_p = fp.read()
+            d, f = os.path.split(img_p)
+    return send_from_directory(d, f)
 
 
 @happyweb.route('/server', methods=['POST'])

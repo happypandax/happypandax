@@ -17,8 +17,8 @@ log = hlogger.Logger(__name__)
 
 ImageProperties = namedtuple(
     "ImageProperties", [
-        'size', 'radius', 'output_dir', 'output_path', 'name', 'save_original'])
-ImageProperties.__new__.__defaults__ = (utils.ImageSize(*constants.image_sizes['medium']), 0, None, None, None, False)
+        'size', 'radius', 'output_dir', 'output_path', 'name', 'create_symlink'])
+ImageProperties.__new__.__defaults__ = (utils.ImageSize(*constants.image_sizes['medium']), 0, None, None, None, True)
 
 
 class ImageItem(AsyncCommand):
@@ -87,7 +87,7 @@ class ImageItem(AsyncCommand):
                 image_path = self.properties.output_path
                 _f, _ext = os.path.splitext(image_path)
                 if not _ext:
-                    image_path = os.path.join(_f, ext)
+                    image_path = _f + ext
 
             elif self.properties.output_dir:
                 o_dir = self.properties.output_dir
@@ -108,8 +108,10 @@ class ImageItem(AsyncCommand):
                 im.thumbnail((size.width, size.height), Image.ANTIALIAS)
 
             else:
-                if not self.properties.save_original:
-                    image_path = self._image
+                if self.properties.create_symlink and isinstance(image_path, str):
+                    image_path = image_path + constants.link_ext
+                    with open(image_path, 'w', encoding='utf-8') as f:
+                        f.write(self._image)
                     save_image = False
 
             if save_image:
