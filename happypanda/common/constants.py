@@ -40,6 +40,7 @@ config = cfg.Config(dir_root, settings_file, settings_descr_file)
 debug = config.get(core_ns, 'debug', False, "Run in debug mode")
 
 thumbs_view = "/thumb"
+link_ext = '.link'
 
 # CORE
 
