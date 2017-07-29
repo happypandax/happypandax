@@ -1,10 +1,11 @@
 import enum
+import gevent
 
 from contextlib import contextmanager
 from abc import ABCMeta, abstractmethod
 from inspect import isclass
 
-from happypanda.common import utils, hlogger, exceptions
+from happypanda.common import utils, hlogger, exceptions, constants
 from happypanda.core import plugins
 
 log = hlogger.Logger(__name__)
@@ -56,6 +57,23 @@ class CoreCommand:
         obj._get_commands()
         return obj
 
+
+    def __init__(self, priority = constants.Priority.Normal):
+        self._priority = priority
+        self._main = self.main
+        self.main = self._main_wrap
+
+    def _main(self):
+        pass
+
+    def _main_wrap(self, *args, **kwargs):
+        gevent.idle(self._priority.value)
+        return self._main(*args, **kwargs)
+
+    @abstractmethod
+    def main(self, *args, **kwargs):
+        pass
+
     @classmethod
     def _get_commands(cls):
         ""
@@ -71,9 +89,8 @@ class CoreCommand:
 
 class Command(CoreCommand):
 
-    @abstractmethod
-    def main(self, *args, **kwargs):
-        pass
+    def __init__(self, priority = constants.Priority.Normal):
+        super().__init__(priority)
 
     def run(self, *args, **kwargs):
         """
@@ -97,8 +114,8 @@ class UndoCommand(Command):
 class AsyncCommand(Command):
     "Async command"
 
-    def __init__(self, service=None):
-        super().__init__()
+    def __init__(self, service=None, priority = constants.Priority.Normal):
+        super().__init__(priority)
 
         self._service = service
         self.command_id = None

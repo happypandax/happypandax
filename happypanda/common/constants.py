@@ -49,6 +49,11 @@ class ExitCode(enum.Enum):
     Exit = 0
     Restart = 1
 
+class Priority(enum.Enum):
+    High = 10
+    Normal = 5
+    Low = 0
+
 
 image_sizes = {
     "big": (300, 416),

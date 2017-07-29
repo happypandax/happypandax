@@ -1,3 +1,5 @@
+import gevent
+
 from happypanda.common import utils, hlogger, exceptions, constants
 from happypanda.core.command import Command, CommandEvent, AsyncCommand, CommandEntry
 from happypanda.core.commands import io_cmd
@@ -99,6 +101,7 @@ class GetModelImage(AsyncCommand):
             self.cover = db.Profile()
 
         if generate:
+            gevent.idle(constants.Priority.Low.value)
             model_name = db.model_name(model)
             with self.generate.call_capture(model_name, model_name, item_id, image_size) as plg:
                 self.cover.path = plg.first()

@@ -296,6 +296,15 @@ class Artist(DatabaseMessage):
     def from_json(self, j):
         return super().from_json(j)
 
+class Parody(DatabaseMessage):
+    "Encapsulates database parody object"
+
+    def __init__(self, db_item):
+        assert isinstance(db_item, db.Parody)
+        super().__init__('parody', db_item)
+
+    def from_json(self, j):
+        return super().from_json(j)
 
 class Collection(DatabaseMessage):
     "Encapsulates database collection object"
@@ -382,7 +391,10 @@ class Profile(DatabaseMessage):
         d = {}
         path = io_cmd.CoreFS(self.item.path)
         d['id'] = self.item.id
-        d['ext'] = path.ext
+        if path.ext == constants.link_ext:
+            d['ext'] = io_cmd.CoreFS(self.item.path[:-len(path.ext)]).ext
+        else:
+            d['ext'] = path.ext
         if self._local_url:
             _, tail = os.path.split(path.get())
             # TODO: make sure path is in static else return actual path

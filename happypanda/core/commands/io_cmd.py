@@ -7,6 +7,7 @@ from zipfile import ZipFile
 from rarfile import RarFile
 from collections import namedtuple
 from contextlib import contextmanager
+from gevent import fileobject
 
 from happypanda.common import hlogger, exceptions, utils, constants
 from happypanda.core.command import CoreCommand, CommandEntry, AsyncCommand
@@ -31,7 +32,7 @@ class ImageItem(AsyncCommand):
     def __init__(self, service, filepath_or_bytes, properties):
         assert isinstance(service, ImageService) or service is None
         assert isinstance(properties, ImageProperties)
-        super().__init__(service)
+        super().__init__(service, priority=constants.Priority.Low)
         self.properties = properties
         self._image = filepath_or_bytes
 
@@ -79,7 +80,7 @@ class ImageItem(AsyncCommand):
             self._image = CoreFS(self._image).get()
         im = None
         try:
-            im = self._convert(Image.open(self._image))
+            im = self._convert(fileobject.FileObject(Image.open(self._image)))
             f, ext = os.path.splitext(self._image)
             image_path = ""
 
@@ -327,6 +328,7 @@ class CoreFS(CoreCommand):
                 f = self._archive.open(self.archive_name, *args, **kwargs)
             else:
                 f = open(self.get(), *args, **kwargs)
+            f = fileobject.FileObject(f)
         except PermissionError:
             if self.is_dir:
                 raise exceptions.CoreError(utils.this_function(), "Tried to open a folder which is not possible")

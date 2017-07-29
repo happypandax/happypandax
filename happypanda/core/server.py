@@ -6,6 +6,7 @@ import sys  # noqa: E402
 import code  # noqa: E402
 import arrow  # noqa: E402
 import os  # noqa: E402
+import gevent  # noqa: E402
 
 from inspect import getmembers, isfunction  # noqa: E402
 
@@ -430,6 +431,7 @@ class HPServer:
         try:
             buffer = b''
             while True:
+                gevent.idle(constants.Priority.High.value)
                 data, eof = utils.end_of_message(buffer)
                 if eof:
                     buffer = data[1]
