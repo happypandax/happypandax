@@ -431,7 +431,6 @@ class HPServer:
         try:
             buffer = b''
             while True:
-                gevent.idle(constants.Priority.High.value)
                 data, eof = utils.end_of_message(buffer)
                 if eof:
                     buffer = data[1]
@@ -443,6 +442,7 @@ class HPServer:
                         break
                 else:
                     log.d("Received data, EOF not reached. Waiting for more data from ", address)
+                gevent.idle(constants.Priority.High.value)
                 r = client.recv(constants.data_size)
                 if not r:
                     log.d("Client has disconnected", address)

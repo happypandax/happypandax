@@ -40,6 +40,7 @@ from sqlalchemy_utils import (
     force_auto_coercion,
     get_type,
     JSONType)
+from contextlib import contextmanager
 
 import arrow
 import os
@@ -47,6 +48,8 @@ import enum
 import re
 import bcrypt
 import warnings
+import functools
+import gevent
 
 from happypanda.common import constants, exceptions, hlogger, utils
 
@@ -1228,16 +1231,30 @@ def check_db_version(sess):
     return True
 
 
+def _get_session(sess):
+    gevent.idle(constants.Priority.Normal.value)
+    return sess()
+
+
 def init(**kwargs):
     db_path = constants.db_path_dev if constants.dev else constants.db_path
     Session = scoped_session(sessionmaker())
-    constants.db_session = Session
-    initEvents(constants.db_session)
+    constants.db_session = functools.partial(_get_session, Session)
+    initEvents(Session)
     engine = create_engine(os.path.join("sqlite:///", db_path))
     Base.metadata.create_all(engine)
     Session.configure(bind=engine)
 
     return check_db_version(Session())
+
+
+@contextmanager
+def get_session():
+    try:
+        s = constants.db_session()
+        yield s
+    finally:
+        s.remove()
 
 
 def add_bulk(session, objects, amount=100):

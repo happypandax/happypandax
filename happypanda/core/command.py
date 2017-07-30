@@ -57,8 +57,7 @@ class CoreCommand:
         obj._get_commands()
         return obj
 
-
-    def __init__(self, priority = constants.Priority.Normal):
+    def __init__(self, priority=constants.Priority.Normal):
         self._priority = priority
         self._main = self.main
         self.main = self._main_wrap
@@ -89,7 +88,7 @@ class CoreCommand:
 
 class Command(CoreCommand):
 
-    def __init__(self, priority = constants.Priority.Normal):
+    def __init__(self, priority=constants.Priority.Normal):
         super().__init__(priority)
 
     def run(self, *args, **kwargs):
@@ -114,7 +113,7 @@ class UndoCommand(Command):
 class AsyncCommand(Command):
     "Async command"
 
-    def __init__(self, service=None, priority = constants.Priority.Normal):
+    def __init__(self, service=None, priority=constants.Priority.Normal):
         super().__init__(priority)
 
         self._service = service

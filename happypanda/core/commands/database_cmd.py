@@ -118,6 +118,7 @@ class GetModelImage(AsyncCommand):
             self.cover = None
 
         self.cover_event.emit(self.cover)
+        gevent.idle(self._priority.value)
         return self.cover
 
 
@@ -179,7 +180,6 @@ class GetModelItemByID(Command):
             return tuple()
 
         s = constants.db_session()
-
         q = s.query(model)
 
         if filter:
@@ -242,5 +242,4 @@ class GetModelItems(Command):
         self.fetched_items = tuple(self._query(q, limit, offset))
 
         self.fetched.emit(db.model_name(model), self.fetched_items)
-
         return self.fetched_items

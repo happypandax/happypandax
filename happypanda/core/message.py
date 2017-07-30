@@ -296,6 +296,7 @@ class Artist(DatabaseMessage):
     def from_json(self, j):
         return super().from_json(j)
 
+
 class Parody(DatabaseMessage):
     "Encapsulates database parody object"
 
@@ -305,6 +306,7 @@ class Parody(DatabaseMessage):
 
     def from_json(self, j):
         return super().from_json(j)
+
 
 class Collection(DatabaseMessage):
     "Encapsulates database collection object"
