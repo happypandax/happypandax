@@ -1,4 +1,5 @@
-﻿import sys, os, sqlite3, copy, arrow
+#!/usr/bin/python3
+import sys, os, sqlite3, copy, arrow
 import argparse
 import rarfile
 from multiprocessing import Process, Queue, Pipe
