@@ -28,10 +28,10 @@ def start():
     if not args.only_web:
         db.init()
         command.init_commands()
+        hlogger.Logger.init_listener(args)
         monkey.patch_all(thread=False)
 
-    utils.setup_logger(args)
-
+    hlogger.Logger.setup_logger(args)
 
     if args.generate_config:
         constants.config.save()
@@ -57,11 +57,16 @@ def start():
     if args.only_web:
         server.WebServer().run(*web_args)
     else:
-        Process(target=server.WebServer().run, args=web_args, daemon=True).start()
+        Process(target=server.WebServer().run,
+                args=web_args,
+                kwargs={'logging_queue':hlogger.Logger._queue,
+                        'logging_args':args},
+                daemon=True).start()
         server.HPServer().run(interactive=args.interact)
 
     if not args.only_web:
         constants.config.save()
+        hlogger.Logger.shutdown_listener()
     log.i("HPX SERVER END")
 
 if __name__ == '__main__':

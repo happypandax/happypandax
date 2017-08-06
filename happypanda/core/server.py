@@ -489,5 +489,7 @@ class WebServer:
                      static_folder=os.path.abspath(constants.dir_static))
     socketio = SocketIO(happyweb)
 
-    def run(self, host, port, debug=False):
+    def run(self, host, port, debug=False, logging_queue=None, logging_args=None):
+        if logging_queue:
+            hlogger.Logger.setup_logger(logging_args, logging_queue)
         self.socketio.run(self.happyweb, host, port, debug=debug)

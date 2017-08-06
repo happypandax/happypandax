@@ -13,7 +13,6 @@ import traceback
 import gevent
 
 from inspect import ismodule, currentframe, getframeinfo
-from logging.handlers import RotatingFileHandler
 from contextlib import contextmanager
 from collections import namedtuple
 
@@ -40,56 +39,6 @@ def setup_dirs():
         if dir_x:
             if not os.path.isdir(dir_x):
                 os.makedirs(dir_x)
-
-
-def setup_logger(args):
-    assert isinstance(args, argparse.Namespace)
-    log_handlers = []
-    log_level = logging.INFO
-    if args.dev:
-        log_handlers.append(logging.StreamHandler())
-    else:
-        logging.raiseExceptions = False  # Don't raise exception if in production mode
-
-    if args.debug:
-        print(
-            "{} created at {}".format(
-                constants.log_debug,
-                os.path.join(
-                    os.getcwd(),
-                    constants.dir_log)))
-        try:
-            with open(constants.log_debug, 'x') as f:
-                pass
-        except FileExistsError:
-            pass
-
-        lg = logging.FileHandler(constants.log_debug, 'w', 'utf-8')
-        lg.setLevel(logging.DEBUG)
-        log_handlers.append(lg)
-        log_level = logging.DEBUG
-
-    for log_path, lvl in ((constants.log_normal, logging.INFO),
-                          (constants.log_error, logging.ERROR)):
-        try:
-            with open(log_path, 'x') as f:  # noqa: F841
-                pass
-        except FileExistsError:
-            pass
-        lg = RotatingFileHandler(
-            log_path,
-            maxBytes=100000 * 10,
-            encoding='utf-8',
-            backupCount=1)
-        lg.setLevel(lvl)
-        log_handlers.append(lg)
-
-    logging.basicConfig(
-        level=log_level,
-        format='%(asctime)-8s %(levelname)-10s %(name)-10s %(message)s',
-        datefmt='%d-%m %H:%M',
-        handlers=tuple(log_handlers))
-
 
 def get_argparser():
     "Creates and returns a command-line arguments parser"
