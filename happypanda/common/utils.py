@@ -10,6 +10,7 @@ import uuid
 import tempfile
 import socket
 import traceback
+import gevent
 
 from inspect import ismodule, currentframe, getframeinfo
 from logging.handlers import RotatingFileHandler
@@ -315,3 +316,8 @@ def get_local_ip():
 def exception_traceback(self, ex):
     return [line.rstrip('\n') for line in
             traceback.format_exception(ex.__class__, ex, ex.__traceback__)]
+
+
+def switch(priority=constants.Priority.Normal):
+    assert isinstance(priority, constants.Priority)
+    gevent.idle(priority.value)

@@ -1,7 +1,4 @@
-﻿from gevent import monkey
-monkey.patch_all()  # necessary to make these functions play nice with gevent
-
-import uuid  # noqa: E402
+﻿import uuid  # noqa: E402
 import sys  # noqa: E402
 import code  # noqa: E402
 import arrow  # noqa: E402
@@ -140,7 +137,7 @@ class ClientHandler:
             msg -- bytes
         """
         assert isinstance(msg, bytes)
-
+        utils.switch(constants.Priority.High)
         log.d("Sending", sys.getsizeof(msg), "bytes to", client)
         client.sendall(msg)
         client.sendall(constants.postfix)
@@ -335,9 +332,7 @@ class ClientHandler:
                     try:
                         if ctx:
                             func_args['ctx'] = self.context
-                            msg = func(**func_args)
-                        else:
-                            msg = func(**func_args)
+                        msg = func(**func_args)
                         assert isinstance(msg, message.CoreMessage) or None
                         func_msg.set_data(msg)
                     except exceptions.CoreError as e:
@@ -442,7 +437,7 @@ class HPServer:
                         break
                 else:
                     log.d("Received data, EOF not reached. Waiting for more data from ", address)
-                gevent.idle(constants.Priority.High.value)
+                utils.switch(constants.Priority.High)
                 r = client.recv(constants.data_size)
                 if not r:
                     log.d("Client has disconnected", address)
@@ -456,10 +451,6 @@ class HPServer:
         log.d("Client disconnected", str(client), str(address))
 
     def _start(self, blocking=True):
-        # TODO: handle db errors
-
-        db.init()
-
         try:
             constants.server_started = True
             if blocking:
@@ -478,7 +469,7 @@ class HPServer:
         Params:
             interactive -- Start in interactive mode (Note: Does not work with web server)
         """
-        tdaemon = torrent.start()
+        #tdaemon = torrent.start()
         try:
             self._start(not interactive)
             if interactive:
@@ -486,8 +477,8 @@ class HPServer:
         except KeyboardInterrupt:
             pass
         self._server.stop()
-        torrent.stop()
-        tdaemon.join()
+        #torrent.stop()
+        #tdaemon.join()
         log.i("Server shutting down.", stdout=True)
 
 

@@ -1,6 +1,7 @@
 import pathlib
 import os
 import hashlib
+
 from io import BytesIO
 from PIL import Image
 from zipfile import ZipFile
@@ -75,14 +76,16 @@ class ImageItem(AsyncCommand):
         return im.convert(colormode)
 
     def main(self) -> str:
+        return self.run_native(self._generate).get()
+    def _generate(self):
         size = self.properties.size
         if isinstance(self._image, str):
             self._image = CoreFS(self._image).get()
         im = None
+        image_path = ""
         try:
-            im = self._convert(fileobject.FileObject(Image.open(self._image)))
+            im = self._convert(Image.open(self._image))
             f, ext = os.path.splitext(self._image)
-            image_path = ""
 
             if self.properties.output_path:
                 image_path = self.properties.output_path
@@ -117,10 +120,10 @@ class ImageItem(AsyncCommand):
 
             if save_image:
                 im.save(image_path)
-            return image_path
         finally:
             if im:
                 im.close()
+        return image_path
 
     @staticmethod
     def gen_hash(model, size, item_id=None):

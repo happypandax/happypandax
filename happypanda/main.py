@@ -1,27 +1,37 @@
 import os
 import sys
-from multiprocessing import Process
 
 if __package__ is None and not hasattr(sys, 'frozen'):
     # direct call of main.py
     path = os.path.realpath(os.path.abspath(__file__))
     sys.path.insert(0, os.path.dirname(os.path.dirname(path)))
 
+from gevent import monkey
+
+from multiprocessing import Process # noqa: E402
+
 from happypanda.common import utils, constants, hlogger  # noqa: E402
-from happypanda.core import server, plugins, command  # noqa: E402
 # views need to be imported before starting the webserver in a different process
 from happypanda.core import views  # noqa: F401
+from happypanda.core import server, plugins, command, services, db  # noqa: E402
 from happypanda.core.commands import io_cmd  # noqa: E402
 
 log = hlogger.Logger(__name__)
-parser = utils.get_argparser()
-
 
 def start():
+
+    parser = utils.get_argparser()
     utils.setup_dirs()
     args = parser.parse_args()
     utils.parse_options(args)
+
+    if not args.only_web:
+        db.init()
+        command.init_commands()
+        monkey.patch_all(thread=False)
+
     utils.setup_logger(args)
+
 
     if args.generate_config:
         constants.config.save()
@@ -34,6 +44,8 @@ def start():
         constants.available_commands = command.get_available_commands()
         constants.core_plugin = plugins._plugin_load(
             "happypanda.core.coreplugin", "core", _logger=log)
+
+        services.init_generic_services()
 
         if not args.safe:
             plugins.plugin_loader(constants.dir_plugin)
@@ -51,7 +63,6 @@ def start():
     if not args.only_web:
         constants.config.save()
     log.i("HPX SERVER END")
-
 
 if __name__ == '__main__':
     start()

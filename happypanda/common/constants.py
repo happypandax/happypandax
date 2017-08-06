@@ -55,6 +55,8 @@ class Priority(enum.Enum):
     Normal = 5
     Low = 0
 
+maximum_native_workers = 10
+
 image_sizes = {
     "big": (300, 416),
     "medium": (200, 276),
@@ -103,7 +105,9 @@ available_commands = set()
 available_events = set()
 
 # DATABASE
+db_engine = None
 db_session = None
+_db_scoped_sesion = None
 default_user = None
 special_namespace = "__namespace__"
 

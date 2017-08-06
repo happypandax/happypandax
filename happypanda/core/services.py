@@ -10,7 +10,6 @@ from happypanda.core import command
 
 log = hlogger.Logger(__name__)
 
-
 class Service:
 
     services = []
@@ -34,6 +33,7 @@ class Service:
 
     def add_command(self, cmd, decorater=None):
         "Add a command to this service and return a command id"
+        gevent.idle(constants.Priority.Normal.value)
         assert isinstance(cmd, command.AsyncCommand)
         assert callable(decorater) or decorater is None
         if cmd not in self._commands.values():
@@ -62,7 +62,7 @@ class Service:
         Start running a specific command by its command id
         """
         assert isinstance(cmd_id, int)
-
+        gevent.idle(constants.Priority.Normal.value)
         if cmd_id not in self._greenlets:
             self._greenlets[cmd_id] = gevent.Greenlet(
                 self._commands[cmd_id].main, *args, **kwargs)
@@ -83,7 +83,7 @@ class Service:
         Stop running a specific command by its command id
         """
         assert isinstance(cmd_id, int)
-
+        gevent.idle(constants.Priority.Normal.value)
         if cmd_id in self._greenlets:
             self._greenlets[cmd_id].kill()
 
@@ -92,6 +92,7 @@ class Service:
         Get returned value of command by its command id
         """
         assert isinstance(cmd_id, int)
+        gevent.idle(constants.Priority.Normal.value)
         if cmd_id in self._greenlets:
             return self._greenlets[cmd_id].value
 
@@ -136,7 +137,7 @@ class Service:
             callback(greenlet.value)
 
     def _start(self, cmd_id):
-
+        gevent.idle(constants.Priority.Low.value)
         if not self._group.full():
             self._group.start(self._greenlets[cmd_id])
             self._commands[cmd_id].state = command.CommandState.started
@@ -144,9 +145,6 @@ class Service:
             self._queue.put(cmd_id)
             self._commands[cmd_id].state = command.CommandState.in_queue
             log.d("Enqueueing command id", cmd_id, "in service '{}'".format(self.name))
-
-
-Service.generic = Service("generic")
 
 
 class DownloadItem(command.AsyncCommand):
@@ -166,13 +164,13 @@ class DownloadService(Service):
     def __init__(self, name):
         super().__init__(name)
 
-DownloadService.generic = DownloadService("download")
-
-
 class ImageService(Service):
     "An image service"
 
     def __init__(self, name):
         super().__init__(name, pool.Pool(constants.concurrent_image_tasks))
 
-ImageService.generic = ImageService("image")
+def init_generic_services():
+    Service.generic = Service("generic")
+    DownloadService.generic = DownloadService("download")
+    ImageService.generic = ImageService("image")

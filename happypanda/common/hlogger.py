@@ -1,6 +1,7 @@
 import logging
 import pprint
 import sys
+import gevent
 
 from happypanda.common import constants
 
@@ -13,6 +14,7 @@ def eprint(*args, **kwargs):
 class Logger:
 
     def __init__(self, name):
+        self.name = name
         self._logger = logging.getLogger(name)
 
     def exception(self, *args):
@@ -59,3 +61,4 @@ class Logger:
         if not hasattr(self._logger, name):
             raise AttributeError
         return getattr(self._logger, name)
+

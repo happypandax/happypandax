@@ -1,15 +1,19 @@
 import enum
 import gevent
+import functools
+import sys
 
 from contextlib import contextmanager
 from abc import ABCMeta, abstractmethod
 from inspect import isclass
+from gevent import monkey, queue
+from concurrent import futures
+
 
 from happypanda.common import utils, hlogger, exceptions, constants
-from happypanda.core import plugins
+from happypanda.core import plugins, db
 
 log = hlogger.Logger(__name__)
-
 
 def get_available_commands():
     subs = utils.all_subclasses(Command)
@@ -19,7 +23,6 @@ def get_available_commands():
         for a in c._entries:
             commands.add(c.__name__ + '.' + c._entries[a].name)
     return commands
-
 
 class CommandState(enum.Enum):
 
@@ -44,6 +47,48 @@ class CommandState(enum.Enum):
     #: command has finished with an error
     failed = 6
 
+class CommandFuture:
+
+    class NoValue: pass
+
+    def __init__(self, cmd, f):
+        self._cmd = cmd
+        self._future = f
+        self._value = self.NoValue
+
+    def get(self, block=True, timeout=None):
+        if not self._value == self.NoValue:
+            return self._value
+        if block:
+            while True:
+                try:
+                    self._value = self._future.result(0)
+                    break
+                except futures.TimeoutError:
+                    utils.switch(constants.Priority.Low)
+        else:
+            self._value = self._future.get(0) # TODO: return custom timeout exception
+        return self._value
+
+    def kill(self):
+        pass
+
+def _daemon_greenlet():
+    while True:
+        utils.switch(constants.Priority.Low)
+
+def _native_runner(f): 
+                   
+    def wrapper(*args, **kwargs):
+        d = gevent.spawn(_daemon_greenlet) # this is to allow gevent switching to occur
+        if args or kwargs:
+            g = gevent.spawn(f, *args, **kwargs)
+        else:
+            g = gevent.spawn(f)
+        r = g.get()
+        d.kill()
+        return r
+    return wrapper
 
 class CoreCommand:
     "Base command"
@@ -51,6 +96,7 @@ class CoreCommand:
 
     _events = {}
     _entries = {}
+    _native_pool = None
 
     def __new__(cls, *args, **kwargs):
         obj = super(CoreCommand, cls).__new__(cls)
@@ -62,11 +108,14 @@ class CoreCommand:
         self._main = self.main
         self.main = self._main_wrap
 
+    def run_native(self, f, *args, **kwargs):
+        return CommandFuture(self, self._native_pool.submit(_native_runner(f), *args, **kwargs))
+
     def _main(self):
         pass
 
     def _main_wrap(self, *args, **kwargs):
-        gevent.idle(self._priority.value)
+        utils.switch(self._priority)
         return self._main(*args, **kwargs)
 
     @abstractmethod
@@ -292,3 +341,6 @@ class CommandEntry(_CommandPlugin):
         handler.default_handler = self.default_handler
         handler.expected_type = self.return_type
         yield handler
+
+def init_commands():
+    CoreCommand._native_pool = futures.ThreadPoolExecutor(constants.maximum_native_workers)

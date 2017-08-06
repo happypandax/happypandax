@@ -1,3 +1,12 @@
+import arrow
+import os
+import enum
+import re
+import bcrypt
+import warnings
+import functools
+import gevent
+
 from sqlalchemy.engine import Engine
 from sqlalchemy import String as _String
 from sqlalchemy.inspection import inspect
@@ -39,17 +48,9 @@ from sqlalchemy_utils import (
     force_instant_defaults,
     force_auto_coercion,
     get_type,
-    JSONType)
+    JSONType,
+    functions as sautil_funcs)
 from contextlib import contextmanager
-
-import arrow
-import os
-import enum
-import re
-import bcrypt
-import warnings
-import functools
-import gevent
 
 from happypanda.common import constants, exceptions, hlogger, utils
 
@@ -1160,6 +1161,10 @@ def sqlite_engine_connect(dbapi_connection, connection_record):
     for name, function in SQLITE_REGEX_FUNCTIONS.values():
         dbapi_connection.create_function(name, 2, function)
 
+    cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA journal_mode=WAL")
+    cursor.execute("PRAGMA synchronous=NORMAL")
+    cursor.close()
 
 def init_defaults(sess):
     "Initializes default items"
@@ -1232,29 +1237,22 @@ def check_db_version(sess):
 
 
 def _get_session(sess):
-    gevent.idle(constants.Priority.Normal.value)
+    utils.switch(constants.Priority.Normal)
     return sess()
-
 
 def init(**kwargs):
     db_path = constants.db_path_dev if constants.dev else constants.db_path
-    Session = scoped_session(sessionmaker())
+    Session = scoped_session(sessionmaker(), scopefunc=gevent.getcurrent)
+    constants._db_scoped_sesion = Session
     constants.db_session = functools.partial(_get_session, Session)
     initEvents(Session)
-    engine = create_engine(os.path.join("sqlite:///", db_path))
-    Base.metadata.create_all(engine)
-    Session.configure(bind=engine)
+    constants.db_engine = create_engine(os.path.join("sqlite:///", db_path),
+                                        connect_args={'timeout': 60}) # SQLITE specific arg (avoding db is locked errors)
+    Base.metadata.create_all(constants.db_engine)
+
+    Session.configure(bind=constants.db_engine)
 
     return check_db_version(Session())
-
-
-@contextmanager
-def get_session():
-    try:
-        s = constants.db_session()
-        yield s
-    finally:
-        s.remove()
 
 
 def add_bulk(session, objects, amount=100):

@@ -1,5 +1,3 @@
-import gevent
-
 from happypanda.common import utils, hlogger, exceptions, constants
 from happypanda.core.command import Command, CommandEvent, AsyncCommand, CommandEntry
 from happypanda.core.commands import io_cmd
@@ -30,7 +28,7 @@ class GetModelImage(AsyncCommand):
     cover_event = CommandEvent('cover', object)
 
     def __init__(self, service=None):
-        super().__init__(service)
+        super().__init__(service, priority=constants.Priority.Low)
         self.model = None
         self.cover = None
         self._supported_models = set()
@@ -89,6 +87,7 @@ class GetModelImage(AsyncCommand):
         img_hash = io_cmd.ImageItem.gen_hash(
             model, image_size, item_id)
 
+        new = False
         generate = True
         sess = constants.db_session()
         self.cover = sess.query(db.Profile).filter(
@@ -99,10 +98,19 @@ class GetModelImage(AsyncCommand):
                 generate = False
         else:
             self.cover = db.Profile()
+            new = True
+
+        self.cover = self.run_native(self._generate_and_add, img_hash, generate, new, model, item_id, image_size).get()
+        self.cover_event.emit(self.cover)
+        return self.cover
+
+    def _generate_and_add(self, img_hash, generate, new, model, item_id, image_size):
+
+        sess = constants.db_session()
+
+        model_name = db.model_name(model)
 
         if generate:
-            gevent.idle(constants.Priority.Low.value)
-            model_name = db.model_name(model)
             with self.generate.call_capture(model_name, model_name, item_id, image_size) as plg:
                 self.cover.path = plg.first()
 
@@ -110,15 +118,13 @@ class GetModelImage(AsyncCommand):
             self.cover.size = str(tuple(image_size))
 
         if self.cover.path and generate:
-            i = GetModelItemByID().run(model, {item_id})[0]
-            if self.cover not in i.profiles:
+            if new:
+                s = constants.db_session()
+                i = s.query(model).get(item_id)
                 i.profiles.append(self.cover)
             sess.commit()
         elif not self.cover.path:
             self.cover = None
-
-        self.cover_event.emit(self.cover)
-        gevent.idle(self._priority.value)
         return self.cover
 
 
@@ -173,14 +179,17 @@ class GetModelItemByID(Command):
         return q.limit(limit).all()
 
     def main(self, model: db.Base, ids: set, limit: int = 999,
-             filter: str = "", order_by: str = "", offset: int = 0) -> tuple:
+             filter: str = "", order_by: str = "", offset: int = 0, columns=tuple()) -> tuple:
 
         log.d("Fetching items from a set with", len(ids), "ids", "offset:", offset, "limit:", limit)
         if not ids:
             return tuple()
 
         s = constants.db_session()
-        q = s.query(model)
+        if columns:
+            q = s.query(*columns)
+        else:
+            q = s.query(model)
 
         if filter:
             q = q.filter(db.sa_text(filter))
