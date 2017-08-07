@@ -87,7 +87,7 @@ class GetModelImage(AsyncCommand):
         img_hash = io_cmd.ImageItem.gen_hash(
             model, image_size, item_id)
 
-        new = False
+        cover_path = ""
         generate = True
         sess = constants.db_session()
         self.cover = sess.query(db.Profile).filter(
@@ -96,19 +96,26 @@ class GetModelImage(AsyncCommand):
         if self.cover:
             if io_cmd.CoreFS(self.cover.path).exists:
                 generate = False
-        else:
-            self.cover = db.Profile()
-            new = True
-
-        self.cover = self.run_native(self._generate_and_add, img_hash, generate, new, model, item_id, image_size).get()
+            else:
+                cover_path = self.cover.path
+        if generate:
+            self.cover = self.run_native(self._generate_and_add, img_hash, generate, cover_path, model, item_id, image_size).get()
         self.cover_event.emit(self.cover)
         return self.cover
 
-    def _generate_and_add(self, img_hash, generate, new, model, item_id, image_size):
+    def _generate_and_add(self, img_hash, generate, cover_path, model, item_id, image_size):
 
         sess = constants.db_session()
 
         model_name = db.model_name(model)
+
+        new = False
+        if cover_path:
+            self.cover = sess.query(db.Profile).filter(
+                db.Profile.data == img_hash).one_or_none()
+        else:
+            self.cover = db.Profile()
+            new = True
 
         if generate:
             with self.generate.call_capture(model_name, model_name, item_id, image_size) as plg:

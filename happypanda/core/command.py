@@ -9,7 +9,6 @@ from inspect import isclass
 from gevent import monkey, queue
 from concurrent import futures
 
-
 from happypanda.common import utils, hlogger, exceptions, constants
 from happypanda.core import plugins, db
 
@@ -78,13 +77,15 @@ def _daemon_greenlet():
         utils.switch(constants.Priority.Low)
 
 def _native_runner(f): 
+
+    def cleanup_wrapper(*args, **kwargs):
+        r = f(*args, **kwargs)
+        constants._db_scoped_sesion.remove()
+        return r
                    
     def wrapper(*args, **kwargs):
         d = gevent.spawn(_daemon_greenlet) # this is to allow gevent switching to occur
-        if args or kwargs:
-            g = gevent.spawn(f, *args, **kwargs)
-        else:
-            g = gevent.spawn(f)
+        g = gevent.spawn(cleanup_wrapper, *args, **kwargs)
         r = g.get()
         d.kill()
         return r
@@ -109,6 +110,7 @@ class CoreCommand:
         self.main = self._main_wrap
 
     def run_native(self, f, *args, **kwargs):
+        # TODO: avoid deadlocks by only running if not in native thread already
         return CommandFuture(self, self._native_pool.submit(_native_runner(f), *args, **kwargs))
 
     def _main(self):

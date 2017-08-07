@@ -35,7 +35,7 @@ def start():
 
     if args.generate_config:
         constants.config.save()
-        print("Generated configuration file at '{}'".format(io_cmd.CoreFS(constants.settings_file).path))
+        log.i("Generated configuration file at '{}'".format(io_cmd.CoreFS(constants.settings_file).path), stdout=True)
         return
 
     log.i("HPX SERVER START")

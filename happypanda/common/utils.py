@@ -33,9 +33,11 @@ def setup_dirs():
             constants.dir_log,
             constants.dir_plugin,
             constants.dir_temp,
+            constants.dir_static,
             constants.dir_thumbs,
             constants.dir_templates,
-            constants.dir_static):
+            constants.dir_translations
+            ):
         if dir_x:
             if not os.path.isdir(dir_x):
                 os.makedirs(dir_x)
@@ -212,9 +214,7 @@ def generate_key(length=10):
 
 def random_name():
     "Generate a random urlsafe name and return it"
-    r = base64.urlsafe_b64encode(uuid.uuid4().bytes).decode('utf-8').replace('=', '')
-    if r[0] == '_':
-        r = r[1:]
+    r = base64.urlsafe_b64encode(uuid.uuid4().bytes).decode('utf-8').replace('=', '').replace('_', '-')
     return r
 
 

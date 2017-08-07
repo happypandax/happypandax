@@ -24,6 +24,7 @@ dir_plugin = os.path.join(dir_root, "plugins")
 dir_templates = os.path.join(dir_root, "templates")
 dir_static = os.path.join(dir_root, "static")
 dir_thumbs = os.path.join(dir_static, "thumbnails")
+dir_translations = os.path.join(dir_static, "translations")
 settings_file = "settings.ini"
 settings_descr_file = ".settings"
 log_error = os.path.join(dir_log, "error.log")
