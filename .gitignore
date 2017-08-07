@@ -210,3 +210,6 @@ FakesAssemblies/
 /.settings
 /static/thumbnails
 *.dot
+*.db-wal
+*.db-shm
+/static/css/style.css
