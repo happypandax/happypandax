@@ -1,13 +1,31 @@
 from happypanda.common import constants, utils, exceptions
 from happypanda.core import message
 
+def _get_cfg(keyname, ctx):
+    
+    try:
+        ns, key = [x.strip() for x in keyname.strip().split('.') if x]
+    except ValueError:
+        raise exceptions.APIError(
+            utils.this_function(),
+            "Invalid setting keyname: '{}'".format(keyname))
+
+    cfg = constants.config
+
+    if ns.lower() == 'this':
+        pass
+
+    if not cfg.key_exists(ns, key):
+        raise exceptions.SettingsError(utils.this_function(), "Setting doesn't exist: '{}'".format(keyname))
+
+    return ns, key, cfg
 
 def set_settings(settings: dict = {}, ctx=None):
     """
     Set settings
 
     Args:
-        settings: a dictionary containing key:value pairs
+        settings: a dict containing ``key.name``:``value``
 
     Returns:
         Status
@@ -16,13 +34,12 @@ def set_settings(settings: dict = {}, ctx=None):
     return message.Message("ok")
 
 
-def get_settings(settings: list = [], ctx=None):
+def get_settings(settings: dict = {}, ctx=None):
     """
-    Set settings
-    Send empty list to get all key:values
+    Get settings
 
     Args:
-        set_list: a list of setting keys
+        settings: a dict containing ``key.name``:``default value``, send an empty dict to retrieve all settings
 
     Returns:
         ```
@@ -35,22 +52,9 @@ def get_settings(settings: list = [], ctx=None):
 
     if settings:
         for set_key in settings:
-            try:
-                ns, key = [x.strip() for x in set_key.strip().split('.') if x]
-            except ValueError:
-                raise exceptions.APIError(
-                    utils.this_function(),
-                    "Invalid setting: '{}'".format(set_key))
+            ns, key, cfg = _get_cfg(set_key, ctx)
 
-            if constants.config.key_exists(ns, key):
-                values[set_key] = constants.config.get(ns, key)
-            elif ns.lower() == 'self' and ctx.config and ctx.config.key_exists(ns, key):
-                values[set_key] = ctx.config.get(ns, key)
-                raise NotImplementedError
-            else:
-                raise exceptions.APIError(
-                    utils.this_function(),
-                    "Setting doesn't exist: '{}'".format(set_key))
+            values[set_key] = cfg.get(ns, key, settings[set_key])
     else:
         raise NotImplementedError
     return message.Identity('settings', values)
