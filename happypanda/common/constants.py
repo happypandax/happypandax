@@ -92,11 +92,11 @@ search_option_all = config.get(
     True,
     "Match only items that has all terms")
 
-search_option_related = config.get(
+search_option_desc = config.get(
     search_ns,
-    "related",
+    "descendants",
     True,
-    "Also match on related items")
+    "Also match on descandants")
 
 # PLUGIN
 

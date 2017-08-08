@@ -1009,7 +1009,7 @@ class Page(TaggableMixin, ProfileMixin, Base):
 
 
 @generic_repr
-class Title(Base):
+class Title(AliasMixin, Base):
     __tablename__ = 'title'
     name = Column(String, nullable=False, default="")  # OBS: not unique
     language_id = Column(Integer, ForeignKey('language.id'))
