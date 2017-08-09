@@ -22,7 +22,7 @@ footer {
 }
 
 .item-medium {
-    width: 200px;
+    max-width: 200px;
     position: relative;
     min-height: 100px;
     max-height: 350px;
@@ -294,24 +294,8 @@ footer {
     clear: both;
 }
 
-#gallery {
-    #top-misc, #bottom-misc {
-        width: 100%;
-    }
-
-    #top-misc .label {
-        margin: 5px;
-    }
-
-    #bottom-misc {
-        .label {
-            margin: 5px;
-        }
-
-        > span {
-            margin-bottom: 5px;
-        }
-    }
+.profile-big, .profile-medium, .profile-small {
+    margin: auto;
 }
 
 .profile-big {
@@ -327,6 +311,21 @@ footer {
 }
 
 #gallery {
+
+    #top-misc {
+        margin-bottom: 10px;
+    }
+
+    #bottom-misc {
+        .label {
+            margin: 5px;
+        }
+
+        > span {
+            margin-bottom: 5px;
+        }
+    }
+
     #profile {
         position: relative;
     }
@@ -338,18 +337,22 @@ footer {
     .attribute {
         color: rgba(0, 0, 0, 0.5);
         font-weight: bold;
-        padding: 7px;
+        padding: 10px 7px;
         max-width: 120px;
     }
 
     .titles {
         border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+
+        h3 {
+            margin-top: 0;
+        }
     }
 
     #pages {
         .card {
             display: inline-block;
-            margin: 1em;
+            margin: 5px;
         }
 
         .card-content {
@@ -389,4 +392,8 @@ footer {
 
 .td-top {
     vertical-align: top;
+}
+
+.carousel-control {
+    width: 10%;
 }

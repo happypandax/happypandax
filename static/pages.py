@@ -1,6 +1,6 @@
 __pragma__('alias', 'S', '$')  # JQuery
 
-from client import client, Base, ServerMsg
+from client import client, Base, ServerMsg, ItemType
 import utils
 import widget
 
@@ -277,8 +277,9 @@ class LibraryPage(Base):
             self.update_sidebar(artist_obj=self.artists)
             if items:
                 for i in items:
+                    i.on('fetched', lambda: setTimeout(self.grid.layout,1000))
                     self.grid.append(i.compile("#items", append=True))
-                widget.MassThumbnail(items, 'gallery').mass_fetch('medium', lambda: setTimeout(self.grid.layout,1000))
+                #widget.MassThumbnail(items, 'gallery').mass_fetch('medium', lambda: setTimeout(self.grid.layout,1000))
 
             if not items:
                 self.grid.reload()
@@ -331,6 +332,7 @@ class GalleryPage(Base):
     def __init__(self):
         super().__init__()
         self.obj = None
+        self.pages = {}
         self.g_id = self.url.path().split('/')[2]
 
     def main(self):
@@ -356,11 +358,65 @@ class GalleryPage(Base):
                          rel_added=moment.unix(data['timestamp']).fromNow(),
                          rel_updated=moment.unix(data['last_updated']).fromNow(),
                          rel_read=moment.unix(data['last_read']).fromNow())
+            self.fetch_page_count()
+            self.show_pages()
+            self.show_grouping()
             widget.Thumbnail("#profile", "big", "Gallery", self.obj['id']).fetch_thumb()
         elif error:
             pass
         else:
-            client.call_func("get_item", self.show_gallery, item_type='Gallery', item_id=int(self.g_id))
+            client.call_func("get_item", self.show_gallery, item_type=ItemType.get("gallery"), item_id=int(self.g_id))
+    
+    __pragma__('iconv')
+    def show_pages(self, data=None, error=None):
+        if data is not None and not error:
+            items = []
+            for obj in data:
+                p_obj = widget.Page('medium', obj)
+                self.pages[obj['number']] = p_obj
+                items.append(p_obj)
+                p_obj.compile("#pages", append=True)
+
+            if items:
+                pass#widget.MassThumbnail(items, 'page').mass_fetch('medium')
+            else:
+                pass
+                #self.grid.reload()
+                #self.show_nothing("#items")
+
+        elif error:
+            pass
+        else:
+            client.call_func("get_related_items", self.show_pages, item_type=ItemType.get("gallery"),
+                            item_id=int(self.g_id), related_type=ItemType.get("page"))
+    __pragma__('noiconv')
+
+    def fetch_page_count(self, data=None, error=None):
+        if data is not None and not error:
+            S("#page-count").text(str(data['count']))
+        elif error:
+            pass
+        else:
+            client.call_func("get_related_count", self.fetch_page_count, item_type=ItemType.get("gallery"),
+                            item_id=int(self.g_id), related_type=ItemType.get("page"))
+
+    def show_grouping(self, data=None, error=None):
+        if data is not None and not error:
+            pass
+
+        elif error:
+            pass
+        else:
+            S('#grouping').carousel({'interval':False})
+
+    def fetch_(self, data=None, error=None):
+        if data is not None and not error:
+            pass
+
+        elif error:
+            pass
+        else:
+            S('#grouping').carousel({'interval':False})
 
 _pages = {}
 

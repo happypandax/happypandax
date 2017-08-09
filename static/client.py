@@ -4,6 +4,20 @@ import utils
 
 debug = True
 
+ItemType = {
+    'artist': 7,
+    'category': 8,
+    'circle': 11,
+    'collection': 2,
+    'gallery': 1,
+    'galleryfilter': 3,
+    'galleryurl': 12,
+    'grouping': 5,
+    'language':9,
+    'page':4,
+    'status':10,
+    'title': 6
+    }
 
 class Base:
 
@@ -323,7 +337,6 @@ class Command(Base):
 
     def _fetch_value(self, data=None, error=None, cmd_ids=None):
         if data is not None and not error:
-
             for i in self._command_ids:
                 str_i = str(i)
                 if str_i in data:

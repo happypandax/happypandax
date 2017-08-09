@@ -1,6 +1,6 @@
 __pragma__('alias', 'S', '$')  # JQuery
 
-from client import client, thumbclient, Base, Command
+from client import (client, thumbclient, Base, Command, ItemType)
 
 
 class Widget(Base):
@@ -9,6 +9,27 @@ class Widget(Base):
         super().__init__()
         self._source_el = source_el
         self.node = None
+        self._events = {}
+
+    def register(self, event_name):
+        "register event, best used in __init__"
+        self._events[event_name] = []
+
+    def on(self, event_name, callback):
+        "much like jquery events"
+        assert callable(callback)
+        if event_name in self._events:
+            self._events[event_name].append(callback)
+
+    __pragma__('kwargs')
+    def call(self, event_name, *args, **kwargs):
+        "call event with args and kwargs"
+        if event_name in self._events:
+            for c in self._events[event_name]:
+                c(*args, **kwargs)
+        else:
+            self.log("No such event '{}' by {}".format(event_name, self))
+    __pragma__('nokwargs')
 
     def data(self):
         raise NotImplementedError
@@ -56,6 +77,9 @@ class Thumbnail(Widget):
             'Small': None
         }
         self._thumbsize = None
+        self._fetched_event = 'fetched'
+        self.register(self._fetched_event)
+        self._fetched = False
 
     __pragma__('tconv')
     __pragma__('kwargs')
@@ -96,13 +120,15 @@ class Thumbnail(Widget):
 
     def _set_thumb(self, im):
         if self.get_node() and im:
+            self._fetched = True
             self.node.find('img').attr('src', im)
             self.node.find('.load').fadeOut(300)
+            self.call(self._fetched_event)
 
     __pragma__('tconv')
 
     def fetch_thumb(self):
-        if not self.size_type:
+        if not self.size_type or self._fetched:
             return
 
         s = {
@@ -117,6 +143,28 @@ class Thumbnail(Widget):
         else:
             self._fetch_thumb(size=size)
     __pragma__('notconv')
+
+    __pragma__('kwargs')
+
+    def compile(
+            self,
+            target_el,
+            after=None,
+            before=None,
+            append=None,
+            prepend=None):
+        """
+        Compile widget into target element
+        Set after, before, append or prepend to True to specify where to insert html.
+        """
+        self.node = super().compile(target_el,
+                               after=after, before=before,
+                               append=append, prepend=prepend,
+                               **self.data())
+        S(self.node).one('inview', self.fetch_thumb)
+        return self.node
+
+    __pragma__('nokwargs')
 
 class MassThumbnail:
 
@@ -202,8 +250,9 @@ class Gallery(Thumbnail):
         self.id = 0
         if 'id' in self.obj:
             self.id = self.obj['id']
-        super().__init__("#gallery-" + gtype + "-t", gtype, 'Gallery', self.id)
+        super().__init__("#gallery-" + gtype + "-t", gtype, ItemType.get('gallery'), self.id)
         self._gtype = gtype
+        self.artists = []
     __pragma__('nokwargs')
 
     __pragma__('tconv')
@@ -225,12 +274,83 @@ class Gallery(Thumbnail):
 
         return a
 
+    __pragma__('tconv')
+    def _fetch_artists(self, data=None, error=None):
+        if data is not None and not error:
+            self.artists = data
+
+            if self.node and self.artists:
+                anames = data[0]['names']
+                if anames:
+                    anode = self.node.find('.gartist')
+                    anode.text(anames[0]['name'])
+
+        elif error:
+            pass
+        else:
+            client.call_func("get_related_items", self._fetch_artists, item_id=self.id,
+                                  item_type=self.item_type, related_type=ItemType.get('artist'))
+    __pragma__('notconv')
+
+
+    __pragma__('tconv')
+
     def data(self):
         g = {}
         g['id'] = self.obj['id']
 
         if self._gtype == 'medium':
             g['title'] = self.title()
-            g['thumb'] = "static/img/default.png"
+            g['thumb'] = "/static/img/default.png"
+
+        if not self.artists:
+            self._fetch_artists()
+
         return g
 
+    __pragma__('notconv')
+
+
+class Page(Thumbnail):
+
+    __pragma__('kwargs')
+
+    def __init__(self, stype='medium', obj={}):
+        self.obj = obj
+        self.id = 0
+        if 'id' in self.obj:
+            self.id = self.obj['id']
+        super().__init__("#page-" + stype + "-t", stype, ItemType.get('page'), self.id)
+        self._stype = stype
+    __pragma__('nokwargs')
+
+    __pragma__('tconv')
+    def number(self):
+        n = 0
+        if self.obj:
+            n = self.obj['number']
+        return n
+    __pragma__('notconv')
+
+    __pragma__('tconv')
+    def name(self):
+        n = ""
+        if self.obj:
+            n = self.obj['name']
+        return n
+    __pragma__('notconv')
+
+    __pragma__('tconv')
+
+    def data(self):
+        o = {}
+        o['id'] = self.id
+
+        if self._stype == 'medium':
+            o['name'] = self.name()
+            o['number'] = str(self.number())
+            o['thumb'] = "/static/img/default.png"
+
+        return o
+
+    __pragma__('notconv')

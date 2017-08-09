@@ -4,17 +4,9 @@
 {{ item_t.gallery_medium() }}
 
 {% raw %}
-<script id="context-nav-t" type="x-handlebars-template">
-    <ol class="breadcrumb">
-        {{#each context_links}}
-        <li><a href="{{url}}">{{name}}</a></li>
-        {{/each}}
-    </ol>
-</script>
-
 <div id="item-content" class="row" onload="pages.init_page('library', pages.LibraryPage).main()">
 
-<div id="item-sidebar" class="col-md-2">
+<div id="item-sidebar" class="col-md-2 col-sm-4">
     <div id="browse-settings" class="panel panel-default">
         <!-- Default panel contents -->
         <div class="panel-heading">Browse Settings</div>
@@ -66,7 +58,7 @@
     </div>
     <ul class="nav nav-tabs">
         <li class="active">
-            <a href="#side-lists" data-toggle="tab" aria-expanded="true">Lists</a>
+            <a href="#side-lists" data-toggle="tab" aria-expanded="true">Filters</a>
         </li>
         <li class="">
             <a href="#side-artists" data-toggle="tab" aria-expanded="false">Artists</a>
@@ -134,7 +126,7 @@
         </div>
     </div>
 </div>
-<div id="item-main" class="col-md-10">
+<div id="item-main" class="col-md-10 col-sm-8">
 
     <script id="nothing-t" type="x-handlebars-template">
         <div class="nothing">
