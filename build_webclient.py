@@ -23,4 +23,4 @@ print("complete")
 # Transcrypt is required to be in the same directory as the js files
 os.chdir(js_dir)
 
-run(["transcrypt", "-b", "-m", "-e", "6", "-n", ".\pages.py"])
+run(["transcrypt", "-b", "-a", "-m", "-da", "-de", "-dm", "-p", ".none", "-e", "6", "-n", ".\main.py"])

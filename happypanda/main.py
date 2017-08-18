@@ -12,7 +12,7 @@ from multiprocessing import Process # noqa: E402
 
 from happypanda.common import utils, constants, hlogger  # noqa: E402
 # views need to be imported before starting the webserver in a different process
-from happypanda.core import views  # noqa: F401
+from happypanda.core.web import views  # noqa: F401
 from happypanda.core import server, plugins, command, services, db  # noqa: E402
 from happypanda.core.commands import io_cmd  # noqa: E402
 
