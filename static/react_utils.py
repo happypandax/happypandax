@@ -1,6 +1,9 @@
 React = require("react")
 ReactDOM = require("react-dom")
 createReactClass = require('create-react-class')
+Router = require("react-router-dom").BrowserRouter
+Link = require("react-router-dom").Link
+Route = require("react-router-dom").Route
 
 __pragma__("kwargs")
 def e(elm_type, *args, **props):

@@ -136,44 +136,6 @@ def before_first_request():
         log.exception("Could not establish connection on first try")
         send_error(e)
 
-@happyweb.route('/')
-@happyweb.route('/index')
-@happyweb.route('/library')
-def library():
-    return render_template('base.html')
-
-
-@happyweb.route('/inbox')
-def inbox(id=0):
-    return render_template('base.html')
-
-
-@happyweb.route('/fav')
-def fav(id=0):
-    return render_template('base.html')
-
-
-@happyweb.route('/<item>/<int:id>')
-def item_page(item='gallery', id=0):
-
-    html_f = {'gallery': 'gallery.html', 'collection': 'collection.html'}
-
-    h = html_f.get(item.lower())
-    if not h:
-        abort(404)
-    return render_template(h)
-
-
-@happyweb.route('/artist/<int:id>')
-def artist_page(id=0):
-    pass
-
-
-@happyweb.route('/api')
-def api_view(page=0):
-    return render_template('api.html')
-
-
 @happyweb.route(constants.thumbs_view + '/<path:filename>')
 def thumbs_view(filename):
     s_filename = secure_filename(filename)
@@ -194,3 +156,10 @@ def server_proxy():
     if request.json:
         pass
     abort(404)
+
+##### Let other routes take precedence
+
+@happyweb.route('/', defaults={'path': ''})
+@happyweb.route('/<path:path>')
+def app_base(path):
+    return render_template('base.html')
