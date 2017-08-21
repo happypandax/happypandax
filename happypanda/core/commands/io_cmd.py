@@ -77,6 +77,7 @@ class ImageItem(AsyncCommand):
 
     def main(self) -> str:
         return self.run_native(self._generate).get()
+
     def _generate(self):
         size = self.properties.size
         if isinstance(self._image, str):

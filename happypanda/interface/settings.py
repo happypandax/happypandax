@@ -1,8 +1,9 @@
 from happypanda.common import constants, utils, exceptions
 from happypanda.core import message
 
+
 def _get_cfg(keyname, ctx):
-    
+
     try:
         ns, key = [x.strip() for x in keyname.strip().split('.') if x]
     except ValueError:
@@ -19,6 +20,7 @@ def _get_cfg(keyname, ctx):
         raise exceptions.SettingsError(utils.this_function(), "Setting doesn't exist: '{}'".format(keyname))
 
     return ns, key, cfg
+
 
 def set_settings(settings: dict = {}, ctx=None):
     """

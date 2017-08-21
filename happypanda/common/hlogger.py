@@ -16,6 +16,7 @@ def eprint(*args, **kwargs):
     "Prints to stderr"
     print(*args, file=sys.stderr, **kwargs)
 
+
 class QueueHandler(logging.Handler):
     """
     This is a logging handler which sends events to a multiprocessing queue.
@@ -24,18 +25,20 @@ class QueueHandler(logging.Handler):
     def __init__(self, queue):
         super().__init__()
         self.queue = queue
-        
+
     def emit(self, record):
         try:
             ei = record.exc_info
             if ei:
-                dummy = self.format(record)
+                self.format(record)
+                #dummy = self.format(record)
                 record.exc_info = None
             self.queue.put_nowait(record)
         except (KeyboardInterrupt, SystemExit):
             raise
         except:
             self.handleError(record)
+
 
 class Logger:
 

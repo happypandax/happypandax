@@ -3,7 +3,6 @@ import sys  # noqa: E402
 import code  # noqa: E402
 import arrow  # noqa: E402
 import os  # noqa: E402
-import gevent  # noqa: E402
 
 from inspect import getmembers, isfunction  # noqa: E402
 
@@ -14,7 +13,7 @@ from flask_socketio import SocketIO  # noqa: E402
 
 from happypanda import interface  # noqa: E402
 from happypanda.common import constants, exceptions, utils, hlogger  # noqa: E402
-from happypanda.core import db, torrent, message  # noqa: E402
+from happypanda.core import db, torrent, message  # noqa: E402, F401
 from happypanda.interface import meta, enums  # noqa: E402
 
 log = hlogger.Logger(__name__)
@@ -477,8 +476,8 @@ class HPServer:
         except KeyboardInterrupt:
             pass
         self._server.stop()
-        #torrent.stop()
-        #tdaemon.join()
+        # torrent.stop()
+        # tdaemon.join()
         log.i("Server shutting down.", stdout=True)
 
 

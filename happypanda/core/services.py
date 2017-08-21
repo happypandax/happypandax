@@ -10,6 +10,7 @@ from happypanda.core import command
 
 log = hlogger.Logger(__name__)
 
+
 class Service:
 
     services = []
@@ -164,11 +165,13 @@ class DownloadService(Service):
     def __init__(self, name):
         super().__init__(name)
 
+
 class ImageService(Service):
     "An image service"
 
     def __init__(self, name):
         super().__init__(name, pool.Pool(constants.concurrent_image_tasks))
+
 
 def init_generic_services():
     Service.generic = Service("generic")

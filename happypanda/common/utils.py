@@ -4,7 +4,6 @@ import os
 import argparse
 import pkgutil
 import pprint
-import logging
 import base64
 import uuid
 import tempfile
@@ -37,10 +36,11 @@ def setup_dirs():
             constants.dir_thumbs,
             constants.dir_templates,
             constants.dir_translations
-            ):
+    ):
         if dir_x:
             if not os.path.isdir(dir_x):
                 os.makedirs(dir_x)
+
 
 def get_argparser():
     "Creates and returns a command-line arguments parser"

@@ -99,7 +99,8 @@ class GetModelImage(AsyncCommand):
             else:
                 cover_path = self.cover.path
         if generate:
-            self.cover = self.run_native(self._generate_and_add, img_hash, generate, cover_path, model, item_id, image_size).get()
+            self.cover = self.run_native(self._generate_and_add, img_hash, generate,
+                                         cover_path, model, item_id, image_size).get()
         self.cover_event.emit(self.cover)
         return self.cover
 

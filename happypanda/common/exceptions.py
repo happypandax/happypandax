@@ -45,12 +45,14 @@ class CoreError(HappypandaError):
         self.where = where
         self.msg = message
 
+
 @error_code(110)
 class SettingsError(CoreError):
     """
     Base settings error
     """
     pass
+
 
 @error_code(120)
 class CommandError(CoreError):

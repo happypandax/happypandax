@@ -310,7 +310,7 @@ class PartialModelFilter(Command):
 
     @match_model.default(capture=True)
     def _match_tags(parent_model, child_model, term, options,
-                     capture=db.model_name(db.Taggable)):
+                    capture=db.model_name(db.Taggable)):
         get_model = database_cmd.GetModelClass()
         parent_model = get_model.run(parent_model)
         child_model = get_model.run(child_model)
@@ -327,8 +327,8 @@ class PartialModelFilter(Command):
         if term.namespace:
             col_ns = db.relationship_column(db.NamespaceTags, db.Namespace)
             items = q.join(col_on_parent).join(col_on_child).join(col_ns).join(col_tag).filter(db.and_op(
-                        match_string(db.Namespace.name, term.namespace, options, whole=True),
-                        match_string(db.Tag.name, term.tag, options))).all()
+                match_string(db.Namespace.name, term.namespace, options, whole=True),
+                match_string(db.Tag.name, term.tag, options))).all()
         else:
             items = q.join(col_on_parent).join(col_on_child).join(col_tag).filter(
                 match_string(db.Tag.name, term.tag, options)).all()
@@ -338,7 +338,7 @@ class PartialModelFilter(Command):
 
     @match_model.default(capture=True)
     def _match_artist(parent_model, child_model, term, options,
-                     capture=db.model_name(db.Artist)):
+                      capture=db.model_name(db.Artist)):
         get_model = database_cmd.GetModelClass()
         parent_model = get_model.run(parent_model)
         child_model = get_model.run(child_model)
@@ -371,8 +371,8 @@ class PartialModelFilter(Command):
             col_on_parent = db.relationship_column(parent_model, child_model)
             s = constants.db_session()
             ids.update(x[0] for x in s.query(parent_model.id).join(col_on_parent).filter(match_string(child_model.name,
-                                                                                            term.tag,
-                                                                                            options)).all())
+                                                                                                      term.tag,
+                                                                                                      options)).all())
         return ids
 
     def main(self, model: db.Base, term: str) -> set:

@@ -1,18 +1,16 @@
 import enum
 import gevent
-import functools
-import sys
 
 from contextlib import contextmanager
 from abc import ABCMeta, abstractmethod
 from inspect import isclass
-from gevent import monkey, queue
 from concurrent import futures
 
 from happypanda.common import utils, hlogger, exceptions, constants
-from happypanda.core import plugins, db
+from happypanda.core import plugins
 
 log = hlogger.Logger(__name__)
+
 
 def get_available_commands():
     subs = utils.all_subclasses(Command)
@@ -22,6 +20,7 @@ def get_available_commands():
         for a in c._entries:
             commands.add(c.__name__ + '.' + c._entries[a].name)
     return commands
+
 
 class CommandState(enum.Enum):
 
@@ -46,9 +45,11 @@ class CommandState(enum.Enum):
     #: command has finished with an error
     failed = 6
 
+
 class CommandFuture:
 
-    class NoValue: pass
+    class NoValue:
+        pass
 
     def __init__(self, cmd, f):
         self._cmd = cmd
@@ -66,30 +67,33 @@ class CommandFuture:
                 except futures.TimeoutError:
                     utils.switch(constants.Priority.Low)
         else:
-            self._value = self._future.get(0) # TODO: return custom timeout exception
+            self._value = self._future.get(0)  # TODO: return custom timeout exception
         return self._value
 
     def kill(self):
         pass
 
+
 def _daemon_greenlet():
     while True:
         utils.switch(constants.Priority.Low)
 
-def _native_runner(f): 
+
+def _native_runner(f):
 
     def cleanup_wrapper(*args, **kwargs):
         r = f(*args, **kwargs)
         constants._db_scoped_sesion.remove()
         return r
-                   
+
     def wrapper(*args, **kwargs):
-        d = gevent.spawn(_daemon_greenlet) # this is to allow gevent switching to occur
+        d = gevent.spawn(_daemon_greenlet)  # this is to allow gevent switching to occur
         g = gevent.spawn(cleanup_wrapper, *args, **kwargs)
         r = g.get()
         d.kill()
         return r
     return wrapper
+
 
 class CoreCommand:
     "Base command"
@@ -343,6 +347,7 @@ class CommandEntry(_CommandPlugin):
         handler.default_handler = self.default_handler
         handler.expected_type = self.return_type
         yield handler
+
 
 def init_commands():
     CoreCommand._native_pool = futures.ThreadPoolExecutor(constants.maximum_native_workers)

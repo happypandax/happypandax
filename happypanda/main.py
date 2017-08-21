@@ -6,9 +6,9 @@ if __package__ is None and not hasattr(sys, 'frozen'):
     path = os.path.realpath(os.path.abspath(__file__))
     sys.path.insert(0, os.path.dirname(os.path.dirname(path)))
 
-from gevent import monkey
+from gevent import monkey # noqa: E402
 
-from multiprocessing import Process # noqa: E402
+from multiprocessing import Process  # noqa: E402
 
 from happypanda.common import utils, constants, hlogger  # noqa: E402
 # views need to be imported before starting the webserver in a different process
@@ -17,6 +17,7 @@ from happypanda.core import server, plugins, command, services, db  # noqa: E402
 from happypanda.core.commands import io_cmd  # noqa: E402
 
 log = hlogger.Logger(__name__)
+
 
 def start():
 
@@ -59,8 +60,8 @@ def start():
     else:
         Process(target=server.WebServer().run,
                 args=web_args,
-                kwargs={'logging_queue':hlogger.Logger._queue,
-                        'logging_args':args},
+                kwargs={'logging_queue': hlogger.Logger._queue,
+                        'logging_args': args},
                 daemon=True).start()
         server.HPServer().run(interactive=args.interact)
 

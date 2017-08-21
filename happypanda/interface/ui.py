@@ -44,6 +44,7 @@ def library_view(item_type: enums.ItemType = enums.ItemType.Gallery,
 
     return items
 
+
 def get_view_count(item_type: enums.ItemType=enums.ItemType.Gallery,
                    search_query: str = "",
                    filter_id: int = None,
@@ -72,6 +73,7 @@ def get_view_count(item_type: enums.ItemType=enums.ItemType.Gallery,
     model_ids = search_cmd.ModelFilter().run(db_model, search_query)
 
     return message.Identity('count', {'count': len(model_ids)})
+
 
 def translate():
     """

@@ -48,9 +48,7 @@ from sqlalchemy_utils import (
     force_instant_defaults,
     force_auto_coercion,
     get_type,
-    JSONType,
-    functions as sautil_funcs)
-from contextlib import contextmanager
+    JSONType)
 
 from happypanda.common import constants, exceptions, hlogger, utils
 
@@ -1166,6 +1164,7 @@ def sqlite_engine_connect(dbapi_connection, connection_record):
     cursor.execute("PRAGMA synchronous=NORMAL")
     cursor.close()
 
+
 def init_defaults(sess):
     "Initializes default items"
 
@@ -1240,6 +1239,7 @@ def _get_session(sess):
     utils.switch(constants.Priority.Normal)
     return sess()
 
+
 def init(**kwargs):
     db_path = constants.db_path_dev if constants.dev else constants.db_path
     Session = scoped_session(sessionmaker(), scopefunc=gevent.getcurrent)
@@ -1247,7 +1247,7 @@ def init(**kwargs):
     constants.db_session = functools.partial(_get_session, Session)
     initEvents(Session)
     constants.db_engine = create_engine(os.path.join("sqlite:///", db_path),
-                                        connect_args={'timeout': 60}) # SQLITE specific arg (avoding db is locked errors)
+                                        connect_args={'timeout': 60})  # SQLITE specific arg (avoding db is locked errors)
     Base.metadata.create_all(constants.db_engine)
 
     Session.configure(bind=constants.db_engine)
