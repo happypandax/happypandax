@@ -7,7 +7,6 @@ from react_utils import (h,
                          createReactClass,
                          Router)
 from ui import ui
-import nav_ui
 
 App = createReactClass({
     'displayName': 'App',
@@ -24,9 +23,7 @@ App = createReactClass({
                             e(ui.Sidebar.Pushable,
                             e(nav_ui.SideBarNav, toggled=this.state["sidebar_toggled"]),
                             e(ui.Sidebar.Pusher,
-                              e(ui.Segment,
-
-                                basic=True)
+                              e(ui.Segment, basic=True)
                             ),
                             as_=ui.Segment,
                             attached="bottom"

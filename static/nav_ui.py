@@ -40,6 +40,7 @@ def sidebar_nav_render():
 
     items = []
     #items.append(MenuItem("HPX", icon="sidebar", position="left", header=True, handler=nav_toggle_handler))
+    items.append(MenuItem("Dashboard", icon="id card outline", url="/dashboard"))
     items.append(MenuItem("Favorites", icon="heart", url="/fav"))
     items.append(MenuItem("Library", icon="grid layout", url="/library"))
     items.append(MenuItem("Inbox", icon="inbox", url="/inbox"))
@@ -83,8 +84,9 @@ def sidebar_nav_render():
 
         item_children = (e(ui.Icon, js_name=menu_icon, className="left", size=icon_size), menu_name,)
 
+        as_link = {}
         if x.url:
-            item_children = (e(Link, *item_children, to=x.url),)
+            as_link = {"as":Link, "to":x.url}
 
         container.append(e(ui.Menu.Item,
                             *item_children,
@@ -92,7 +94,7 @@ def sidebar_nav_render():
                             header=x.header,
                             onClick=x.handler,
                             index=n,
-                            as_=None))
+                            **as_link))
 
     return e(ui.Sidebar,
                         h("div",

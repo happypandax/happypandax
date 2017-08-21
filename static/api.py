@@ -24,9 +24,7 @@ App = createReactClass({
                             e(ui.Sidebar.Pushable,
                             e(nav_ui.SideBarNav, toggled=this.state["sidebar_toggled"]),
                             e(ui.Sidebar.Pusher,
-                              e(ui.Segment,
-
-                                basic=True)
+                              e(ui.Segment, basic=True)
                             ),
                             as_=ui.Segment,
                             attached="bottom"
