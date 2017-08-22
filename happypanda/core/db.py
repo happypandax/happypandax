@@ -49,6 +49,7 @@ from sqlalchemy_utils import (
     force_auto_coercion,
     get_type,
     JSONType)
+from collections import namedtuple
 
 from happypanda.common import constants, exceptions, hlogger, utils
 
@@ -350,7 +351,10 @@ def configure_listener(class_, key, inst):
             return value
 
 
-def profile_association(table_name):
+def profile_association(cls):
+    if not issubclass(cls, Base):
+        raise ValueError("Must be subbclass of Base")
+    table_name = cls.__tablename__
     column = '{}_id'.format(table_name)
     assoc = Table(
         '{}_profiles'.format(table_name), Base.metadata, Column(
@@ -358,6 +362,31 @@ def profile_association(table_name):
             column, Integer, ForeignKey(
                 '{}.id'.format(table_name))), UniqueConstraint(
                     'profile_id', column))
+
+    cls.profiles = relationship(
+        "Profile",
+        secondary=assoc,
+        lazy='dynamic',
+        cascade="all")
+    return assoc
+
+def metatag_association(cls):
+    if not issubclass(cls, Base):
+        raise ValueError("Must be subbclass of Base")
+    table_name = cls.__tablename__
+    column = '{}_id'.format(table_name)
+    assoc = Table(
+        '{}_metatags'.format(table_name), Base.metadata, Column(
+            'metatag_id', Integer, ForeignKey('metatag.id')), Column(
+            column, Integer, ForeignKey(
+                '{}.id'.format(table_name))), UniqueConstraint(
+                    'metatag_id', column))
+
+    cls.metatags = relationship(
+        "MetaTag",
+        secondary=assoc,
+        lazy='joined',
+        cascade="all")
     return assoc
 
 
@@ -372,6 +401,21 @@ class Life(Base):
         return "<Version: {}, times_opened:{}>".format(
             self.version, self.times_opened)
 
+class MetaTag(NameMixin, Base):
+    __tablename__ = 'metatag'
+
+    names = utils.AttributeList("favorite", "inbox")
+    tags = {}
+
+class MetaTagMixin:
+
+    @declared_attr
+    def metatag(cls):
+        return relationship("MetaTag")
+
+    @declared_attr
+    def metatag_id(cls):
+        return Column(Integer, ForeignKey('metatag.id'))
 
 class User(Base):
     __tablename__ = 'user'
@@ -403,6 +447,7 @@ class User(Base):
     def is_admin(self):
         return self.role == self.Role.admin
 
+metatag_association(User)
 
 class Profile(Base):
     __tablename__ = 'profile'
@@ -506,6 +551,7 @@ class NamespaceTags(AliasMixin, Base):
         sess.close()
         return e
 
+metatag_association(NamespaceTags)
 
 @generic_repr
 class Tag(NameMixin, Base):
@@ -581,8 +627,6 @@ gallery_artists = Table(
             'gallery_id', Integer, ForeignKey('gallery.id')), UniqueConstraint(
                 'artist_id', 'gallery_id'))
 
-artist_profiles = profile_association("artist")
-
 artist_circles = Table(
     'artist_circles', Base.metadata, Column(
         'circle_id', Integer, ForeignKey(
@@ -609,18 +653,15 @@ class Artist(ProfileMixin, Base):
         back_populates='artist',
         cascade="all, delete-orphan")
 
-    profiles = relationship(
-        "Profile",
-        secondary=artist_profiles,
-        lazy='dynamic',
-        cascade="all")
-
     circles = relationship(
         "Circle",
         secondary=artist_circles,
         back_populates='artists',
         lazy="joined",
         cascade="save-update, merge, refresh-expire")
+
+metatag_association(Artist)
+profile_association(Artist)
 
 
 @generic_repr
@@ -684,9 +725,6 @@ gallery_filters = Table('gallery_filters', Base.metadata,
                             ForeignKey('gallery.id')),
                         UniqueConstraint('filter_id', 'gallery_id'))
 
-filter_profiles = profile_association("filter")
-
-
 @generic_repr
 class GalleryFilter(ProfileMixin, NameMixin, Base):
     __tablename__ = 'filter'
@@ -702,12 +740,7 @@ class GalleryFilter(ProfileMixin, NameMixin, Base):
         back_populates='filters',
         lazy="dynamic")
 
-    profiles = relationship(
-        "Profile",
-        secondary=filter_profiles,
-        lazy='dynamic',
-        cascade="all")
-
+profile_association(GalleryFilter)
 
 @generic_repr
 class Status(NameMixin, Base):
@@ -717,9 +750,6 @@ class Status(NameMixin, Base):
         "Grouping",
         lazy='dynamic',
         back_populates='status')
-
-
-grouping_profiles = profile_association("grouping")
 
 
 @generic_repr
@@ -732,16 +762,12 @@ class Grouping(ProfileMixin, NameMixin, Base):
         back_populates="grouping",
         lazy="dynamic",
         cascade="all, delete-orphan")
-    profiles = relationship(
-        "Profile",
-        secondary=grouping_profiles,
-        lazy='dynamic',
-        cascade="all")
     status = relationship(
         "Status",
         back_populates="groupings",
         cascade="save-update, merge, refresh-expire")
 
+profile_association(Grouping)
 
 @generic_repr
 class Language(NameMixin, Base):
@@ -769,8 +795,6 @@ gallery_collections = Table(
             'gallery_id', Integer, ForeignKey('gallery.id')), UniqueConstraint(
                 'collection_id', 'gallery_id'))
 
-collection_profiles = profile_association("collection")
-
 
 @generic_repr
 class Collection(ProfileMixin, Base):
@@ -787,15 +811,8 @@ class Collection(ProfileMixin, Base):
         lazy="dynamic",
         cascade="save-update, merge, refresh-expire")
 
-    profiles = relationship(
-        "Profile",
-        secondary=collection_profiles,
-        lazy='dynamic',
-        cascade="all")
-
-
-gallery_profiles = profile_association("gallery")
-
+profile_association(Collection)
+metatag_association(Collection)
 
 @generic_repr
 class Gallery(TaggableMixin, ProfileMixin, Base):
@@ -803,8 +820,6 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
 
     last_read = Column(ArrowType)
     pub_date = Column(ArrowType)
-    inbox = Column(Boolean, default=False)
-    fav = Column(Boolean, default=False)
     info = Column(String, nullable=False, default='')
     single_source = Column(Boolean, default=True)
     fetched = Column(Boolean, default=False)
@@ -866,11 +881,6 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
         back_populates='galleries',
         lazy="joined",
         cascade="save-update, merge, refresh-expire")
-    profiles = relationship(
-        "Profile",
-        secondary=gallery_profiles,
-        lazy='dynamic',
-        cascade="all")
 
     def read(self, user_id, datetime=None):
         "Creates a read event for user"
@@ -952,8 +962,8 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
     #        log.w("Could not query for gallery existence because no path was set.")
     #    return e
 
-page_profiles = profile_association("page")
-
+metatag_association(Gallery)
+profile_association(Gallery)
 
 @generic_repr
 class Page(TaggableMixin, ProfileMixin, Base):
@@ -967,11 +977,6 @@ class Page(TaggableMixin, ProfileMixin, Base):
 
     hash = relationship("Hash", cascade="save-update, merge, refresh-expire")
     gallery = relationship("Gallery", back_populates="pages")
-    profiles = relationship(
-        "Profile",
-        secondary=page_profiles,
-        lazy='dynamic',
-        cascade="all")
 
     @property
     def file_type(self):
@@ -1005,6 +1010,8 @@ class Page(TaggableMixin, ProfileMixin, Base):
             log.w("Could not query for page existence because no path was set.")
         return e
 
+metatag_association(Page)
+profile_association(Page)
 
 @generic_repr
 class Title(AliasMixin, Base):
@@ -1176,6 +1183,15 @@ def init_defaults(sess):
         sess.add(duser)
         sess.commit()
     constants.default_user = duser
+
+    # init default metatags
+    for t in MetaTag.names:
+        t_d = sess.query(MetaTag).filter(MetaTag.name == t).one_or_none()
+        if not t_d:
+            t_d = MetaTag(name=t)
+            sess.add(t_d)
+            sess.commit()
+        MetaTag.tags[t] = t_d
 
 
 def create_user(role, name=None, password=None):

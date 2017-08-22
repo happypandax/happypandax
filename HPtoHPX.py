@@ -768,6 +768,7 @@ if __name__ == '__main__':
     sess.configure(bind=engine)
     db.initEvents(sess)
     s = sess()
+    db.init_defaults(s)
 
     print("Converting to Happypanda X Gallery.. ")
 
@@ -892,7 +893,10 @@ if __name__ == '__main__':
                     gallery.artists.append(artist)
                     dst_artists[artist_name.name] = artist
                 gallery.info = g.info
-                gallery.fav = bool(g.fav)
+                if g.fav:
+                    gallery.metatags.append(db.MetaTag.tags[db.MetaTag.names.favorite])
+                if g.view == 2:
+                    gallery.metatags.append(db.MetaTag.tags[db.MetaTag.names.inbox])
                 if g.rating is not None:
                     gallery.rating = g.rating * 2
                 if g.type:

@@ -13,7 +13,7 @@ import gevent
 
 from inspect import ismodule, currentframe, getframeinfo
 from contextlib import contextmanager
-from collections import namedtuple
+from collections import namedtuple, UserList
 
 from happypanda.common import constants, exceptions, hlogger
 
@@ -270,3 +270,20 @@ def exception_traceback(self, ex):
 def switch(priority=constants.Priority.Normal):
     assert isinstance(priority, constants.Priority)
     gevent.idle(priority.value)
+
+class AttributeList(UserList):
+    """
+    l = AttributeList("one", "two")
+    l.one == "one"
+    l.two == "two"
+
+    """
+    def __init__(self, *names):
+        self._names = {str(x):x for x in names}
+        super().__init__(names)
+
+    def __getattr__(self, key):
+        if key in self._names:
+            return self._names[key]
+        raise AttributeError("AttributeError: no attribute named '{}'".format(key))
+
