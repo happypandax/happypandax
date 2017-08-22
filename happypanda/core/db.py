@@ -407,15 +407,10 @@ class MetaTag(NameMixin, Base):
     names = utils.AttributeList("favorite", "inbox")
     tags = {}
 
-class MetaTagMixin:
-
-    @declared_attr
-    def metatag(cls):
-        return relationship("MetaTag")
-
-    @declared_attr
-    def metatag_id(cls):
-        return Column(Integer, ForeignKey('metatag.id'))
+    @classmethod
+    def all_names(cls):
+        sess = constants.db_session()
+        return tuple(x[0] for x in sess.query(cls.name).all())
 
 class User(Base):
     __tablename__ = 'user'

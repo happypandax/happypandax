@@ -220,6 +220,17 @@ class DatabaseMessage(CoreMessage):
         if attrib is None:
             return
 
+        if name == "metatags":
+            m_tags = {x:False for x in db.MetaTag.all_names()}
+            names = []
+            if db.is_query(attrib):
+                names = tuple(x.name for x in attrib.all())
+            elif db.is_list(attrib) or isinstance(attrib, list):
+                names = tuple(x.name for x in attrib)
+            for n in names:
+                m_tags[n] = True
+            return m_tags
+
         # beware lots of recursion
         if db.is_instanced(attrib):
             msg_obj = None
