@@ -215,21 +215,24 @@ class DatabaseMessage(CoreMessage):
             session_id,
             name)
 
+    def _unpack_metatags(self, attrib):
+        m_tags = {x:False for x in db.MetaTag.all_names()}
+        names = []
+        if db.is_query(attrib):
+            names = tuple(x.name for x in attrib.all())
+        elif db.is_list(attrib) or isinstance(attrib, list):
+            names = tuple(x.name for x in attrib)
+        for n in names:
+            m_tags[n] = True
+        return m_tags
+
     def _unpack(self, name, attrib, load_collections):
         "Helper method to unpack SQLalchemy objects"
         if attrib is None:
             return
 
         if name == "metatags":
-            m_tags = {x:False for x in db.MetaTag.all_names()}
-            names = []
-            if db.is_query(attrib):
-                names = tuple(x.name for x in attrib.all())
-            elif db.is_list(attrib) or isinstance(attrib, list):
-                names = tuple(x.name for x in attrib)
-            for n in names:
-                m_tags[n] = True
-            return m_tags
+            return self._unpack_metatags(attrib)
 
         # beware lots of recursion
         if db.is_instanced(attrib):
@@ -367,6 +370,7 @@ class NamespaceTags(DatabaseMessage):
         self._before_data()
         d = {}
         d[self.item.namespace.name] = Tag(self.item.tag, self).json_friendly(include_key=False)
+        d[db.MetaTag.__tablename__] = self._unpack_metatags(self.item.metatags)
         return d
 
 

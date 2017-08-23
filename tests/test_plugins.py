@@ -3,6 +3,7 @@ from unittest import mock
 import itertools
 import os
 import pytest
+import uuid
 
 from happypanda.core import plugins, command
 from happypanda.common import hlogger
@@ -18,6 +19,7 @@ constants.available_commands = command.get_available_commands()
 def hplugin():
     hplugin_attr = dict(
         ID = "0890c892-cfa4-4e06-8962-460d395a7c5d",
+        SHORTNAME = "hplugin",
         NAME = "Test",
         AUTHOR = "Pewpew",
         DESCRIPTION = "A test plugin",
@@ -72,6 +74,27 @@ def test_hplugin_missing_attrib_error():
             hpm = plugins._plugin_load(hplugin, 'test')
         assert "attribute is missing" in str(excinfo.value)
         setattr(hplugin, a, v)
+
+def test_hplugin_empty_attrib_error(hplugin):
+    "Test for errors if plugin class has empty required attributes"
+    for a, v in (("ID", ""), ("NAME", ""), ("VERSION", ()), ("AUTHOR", ""), ("DESCRIPTION", "")):
+        old = getattr(hplugin, a)
+        setattr(hplugin, a, v)
+        with pytest.raises(hp_exceptions.PluginAttributeError) as excinfo:
+            hpm = plugins._plugin_load(hplugin, 'test')
+        assert "attribute cannot be empty" in str(excinfo.value)
+        setattr(hplugin, a, old)
+
+def test_hplugin_shortnme_attrib_error(hplugin):
+    "Test for errors if plugin class has empty required attributes"
+    for a in ("okname", "verylongnameexceeeeeeeding", "is spaces allowed?"):
+        setattr(hplugin, "SHORTNAME", a)
+        if len(a) > constants.plugin_shortname_length:
+            with pytest.raises(hp_exceptions.PluginAttributeError) as excinfo:
+                hpm = plugins._plugin_load(hplugin, 'test', _logger=mock.Mock(spec=hlogger.Logger), _manager=PluginManager())
+            assert "shortname cannot exceed" in str(excinfo.value)
+        else:
+            hpm = plugins._plugin_load(hplugin, 'test', _logger=mock.Mock(spec=hlogger.Logger), _manager=PluginManager())
 
 def test_hplugin_methods(hplugin_meta):
     "Test if plugclass has the required methods"
@@ -170,6 +193,20 @@ def test_hplugin_get_logger(hplugin_meta):
         pnode = pmanager.register(hplugin_meta, m_log)
         pmanager.init_plugins()
 
-        assert mget_logger.assert_called_with()
+        mget_logger.assert_called_with()
 
+#@pytest.mark.parametrize("id_count, node_func",
+#                          [
+#                              (2, lambda i, h: (h.))
+#                              ])
+#def test_plugin_dependency(id_count, node_func, hplugin):
 
+#    node_ids = [uuid.uuid4() for x in range(id_count)]
+#    nodes = node_func(node_ids, hplugin)
+
+#    pm = PluginManager()
+#    for x in nodes:
+#        hpm = plugins._plugin_load(x, 'test', _logger=mock.Mock(spec=hlogger.Logger), _manager=pm)
+
+#    node_order, f = pm._solve(pm._nodes)
+#    assert [n.plugin.ID for n in node_order] == [x.ID for x in nodes]

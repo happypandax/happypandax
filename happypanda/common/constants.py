@@ -104,8 +104,9 @@ core_plugin = None
 plugin_manager = None
 available_commands = set()
 available_events = set()
+plugin_shortname_length = 10
 
-# DATABASE
+# DATABASE½
 db_engine = None
 db_session = None
 _db_scoped_sesion = None
