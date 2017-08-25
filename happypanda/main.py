@@ -43,8 +43,6 @@ def start():
 
     if not args.only_web:
         constants.available_commands = command.get_available_commands()
-        constants.core_plugin = plugins._plugin_load(
-            "happypanda.core.coreplugin", "core", _logger=log)
 
         services.init_generic_services()
 

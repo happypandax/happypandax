@@ -95,7 +95,7 @@ class GeneralTest(unittest.TestCase):
             self.gallery.rating = ""
 
     def test_url(self):
-        self.gallery.urls.append(GalleryUrl(url="http://www.google.com"))
+        self.gallery.urls.append(Url(name="http://www.google.com"))
         self.session.commit()
         self.assertEqual(len(self.gallery.urls), 1)
 
@@ -305,7 +305,7 @@ class ArtistNameRelationship(unittest.TestCase):
         self.gallery = Gallery()
         self.artist = Artist()
         self.gallery.artists.append(self.artist)
-        self.names = [ArtistName(name='name'+str(x)) for x in range(10)]
+        self.names = [AliasName(name='name'+str(x)) for x in range(10)]
         root = self.names[0]
         for n in self.names[1:]:
             n.alias_for = root
@@ -315,25 +315,26 @@ class ArtistNameRelationship(unittest.TestCase):
 
         self.assertEqual(len(self.artist.names), 1)
         self.assertEqual(len(root.aliases), 9)
+        self.assertEqual(self.session.query(AliasName).count(), 10)
 
     def test_delete(self):
         self.session.delete(self.names[1])
         self.session.commit()
         self.assertEqual(self.session.query(Artist).count(), 1)
-        self.assertEqual(self.session.query(ArtistName).count(), 9)
+        self.assertEqual(self.session.query(AliasName).count(), 9)
         self.assertEqual(self.artist.names[0], self.names[0])
 
     def test_delete2(self):
         self.session.delete(self.names[0])
         self.session.commit()
         self.assertEqual(self.session.query(Artist).count(), 1)
-        self.assertEqual(self.session.query(ArtistName).count(), 0)
+        self.assertEqual(self.session.query(AliasName).count(), 0)
 
     def test_no_orphans(self):
         self.session.delete(self.artist)
         self.session.commit()
         self.assertEqual(self.session.query(Artist).count(), 0)
-        self.assertEqual(self.session.query(ArtistName).count(), 0)
+        self.assertEqual(self.session.query(AliasName).count(), 0)
 
     def tearDown(self):
         self.session.close()
@@ -378,7 +379,7 @@ class ParodyNameRelationship(unittest.TestCase):
         self.gallery = Gallery()
         self.parody = Parody()
         self.gallery.parodies.append(self.parody)
-        self.names = [ParodyName(name='name'+str(x)) for x in range(10)]
+        self.names = [AliasName(name='name'+str(x)) for x in range(10)]
         root = self.names[0]
         for n in self.names[1:]:
             n.alias_for = root
@@ -388,25 +389,26 @@ class ParodyNameRelationship(unittest.TestCase):
 
         self.assertEqual(len(self.parody.names), 1)
         self.assertEqual(len(root.aliases), 9)
+        self.assertEqual(self.session.query(AliasName).count(), 10)
 
     def test_delete(self):
         self.session.delete(self.names[1])
         self.session.commit()
         self.assertEqual(self.session.query(Parody).count(), 1)
-        self.assertEqual(self.session.query(ParodyName).count(), 9)
+        self.assertEqual(self.session.query(AliasName).count(), 9)
         self.assertEqual(self.parody.names[0], self.names[0])
 
     def test_delete2(self):
         self.session.delete(self.names[0])
         self.session.commit()
         self.assertEqual(self.session.query(Parody).count(), 1)
-        self.assertEqual(self.session.query(ParodyName).count(), 0)
+        self.assertEqual(self.session.query(AliasName).count(), 0)
 
     def test_no_orphans(self):
         self.session.delete(self.parody)
         self.session.commit()
         self.assertEqual(self.session.query(Parody).count(), 0)
-        self.assertEqual(self.session.query(ParodyName).count(), 0)
+        self.assertEqual(self.session.query(AliasName).count(), 0)
 
     def tearDown(self):
         self.session.close()
@@ -675,25 +677,24 @@ class UrlRelationship(unittest.TestCase):
         self.session.add(self.gallery)
         self.session.commit()
 
-        self.urls = [GalleryUrl(url="http://google.com") for x in range(10)]
+        self.urls = [Url(name="http://google.com") for x in range(10)]
         self.gallery.urls.extend(self.urls)
         self.session.commit()
 
-        self.assertEqual(self.gallery.id, self.urls[0].gallery_id)
-        self.assertEqual(self.session.query(GalleryUrl).count(), 10)
+        self.assertEqual(self.session.query(Url).count(), 10)
 
     def test_delete(self):
         self.session.delete(self.urls[0])
         self.session.commit()
 
-        self.assertEqual(self.session.query(GalleryUrl).count(), 9)
+        self.assertEqual(self.session.query(Url).count(), 9)
         self.assertEqual(self.session.query(Gallery).count(), 1)
 
     def test_no_orphans(self):
         self.session.delete(self.gallery)
         self.session.commit()
 
-        self.assertEqual(self.session.query(GalleryUrl).count(), 0)
+        self.assertEqual(self.session.query(Url).count(), 0)
         self.assertEqual(self.session.query(Gallery).count(), 0)
 
     def tearDown(self):
@@ -770,6 +771,10 @@ class TagRelationship(unittest.TestCase):
         self.session.commit()
         self.assertEqual(self.nstag4.alias_for, self.nstag2)
         self.assertEqual(self.nstag2.aliases[1], self.nstag4)
+
+        self.assertFalse(self.nstag1.tag.aliases)
+        self.assertIsNone(self.nstag2.tag.alias_for)
+
 
     def test_original_tag_galleries(self):
         for x in self.nstags:
@@ -868,7 +873,6 @@ class ProfileRelationship(unittest.TestCase):
     def setUp(self):
         self.session = create_db()
 
-        self.lists = [GalleryFilter(name="list" + str(x)) for x in range(5)]
         self.gns = [Grouping(name="gns" + str(x)) for x in range(5)]
         self.galleries = [Gallery() for x in range(5)]
         self.collections = [Collection(title="title" + str(x)) for x in range(5)]
@@ -880,20 +884,18 @@ class ProfileRelationship(unittest.TestCase):
             self.gns[n].galleries.append(x)
 
         self.session.add_all(self.galleries)
-        self.session.add_all(self.lists)
         self.session.commit()
 
         self.assertEqual(self.session.query(Gallery).count(), 5)
         self.assertEqual(self.session.query(Grouping).count(), 5)
         self.assertEqual(self.session.query(Collection).count(), 5)
         self.assertEqual(self.session.query(Page).count(), 5)
-        self.assertEqual(self.session.query(GalleryFilter).count(), 5)
 
         self.profiles = [Profile(path="p" + str(x), data='test', size='200') for x in range(5)]
 
         profile_nmb = itertools.cycle(range(5))
 
-        for x in (self.lists, self.gns, self.galleries, self.collections, self.pages):
+        for x in (self.gns, self.galleries, self.collections, self.pages):
             for y in x:
                 y.profiles.append(self.profiles[next(profile_nmb)])
 
@@ -909,7 +911,6 @@ class ProfileRelationship(unittest.TestCase):
         self.assertEqual(self.session.query(Grouping).count(), 5)
         self.assertEqual(self.session.query(Collection).count(), 5)
         self.assertEqual(self.session.query(Page).count(), 5)
-        self.assertEqual(self.session.query(GalleryFilter).count(), 5)
         self.assertEqual(self.session.query(Profile).count(), 4)
 
     def test_delete2(self):
@@ -919,11 +920,10 @@ class ProfileRelationship(unittest.TestCase):
         self.assertEqual(self.session.query(Grouping).count(), 5)
         self.assertEqual(self.session.query(Collection).count(), 5)
         self.assertEqual(self.session.query(Page).count(), 4)
-        self.assertEqual(self.session.query(GalleryFilter).count(), 5)
         self.assertEqual(self.session.query(Profile).count(), 4)
 
     def test_no_orphans(self):
-        for x in (self.lists, self.gns):
+        for x in (self.gns,):
             for y in x:
                 self.session.delete(y)
         self.session.commit()
@@ -932,7 +932,6 @@ class ProfileRelationship(unittest.TestCase):
         self.assertEqual(self.session.query(Grouping).count(), 0)
         self.assertEqual(self.session.query(Collection).count(), 5)
         self.assertEqual(self.session.query(Page).count(), 0)
-        self.assertEqual(self.session.query(GalleryFilter).count(), 0)
         self.assertEqual(self.session.query(Profile).count(), 0)
 
     def tearDown(self):

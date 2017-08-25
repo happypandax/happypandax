@@ -229,7 +229,7 @@ class PartialModelFilter(Command):
                 db.Collection,
                 db.Gallery,
                 db.Title,
-                db.GalleryUrl)
+                db.Url)
 
     @staticmethod
     def _match_string_column(column, value, options, **kwargs):

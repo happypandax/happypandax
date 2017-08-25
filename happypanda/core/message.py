@@ -458,18 +458,6 @@ class Title(DatabaseMessage):
     def from_json(self, j):
         return super().from_json(j)
 
-
-class GalleryUrl(DatabaseMessage):
-    "Encapsulates database galleryurl object"
-
-    def __init__(self, db_item):
-        assert isinstance(db_item, db.GalleryUrl)
-        super().__init__('galleryurl', db_item)
-
-    def from_json(self, j):
-        return super().from_json(j)
-
-
 class GalleryFilter(DatabaseMessage):
     "Encapsulates database galleryfilter object"
 

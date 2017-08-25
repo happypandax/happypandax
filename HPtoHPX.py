@@ -907,8 +907,8 @@ if __name__ == '__main__':
                     dst_gtype[gtype.name] = gtype
 
                 if g.link:
-                    gurl = db.GalleryUrl()
-                    gurl.url = g.link
+                    gurl = db.Url()
+                    gurl.name = g.link
                     gallery.urls.append(gurl)
 
                 gallery.pub_date = g.pub_date
