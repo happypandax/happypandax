@@ -212,4 +212,3 @@ FakesAssemblies/
 *.dot
 *.db-wal
 *.db-shm
-/static/css/style.css
