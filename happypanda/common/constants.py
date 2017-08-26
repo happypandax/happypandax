@@ -24,7 +24,7 @@ dir_plugin = os.path.join(dir_root, "plugins")
 dir_templates = os.path.join(dir_root, "templates")
 dir_static = os.path.join(dir_root, "static")
 dir_thumbs = os.path.join(dir_static, "thumbnails")
-dir_translations = os.path.join(dir_static, "translations")
+dir_translations = os.path.join(dir_root, "translations")
 settings_file = "settings.ini"
 settings_descr_file = ".settings"
 log_error = os.path.join(dir_log, "error.log")
@@ -97,6 +97,16 @@ search_option_desc = config.get(
     "descendants",
     True,
     "Also match on descandants")
+
+# CLIENT
+
+client_ns = "client"
+
+translation_locale = config.get(
+    client_ns,
+    "translation_locale",
+    "en_us",
+    "The default translation locale when none is specified. See folder /translations for available locales")
 
 # PLUGIN
 

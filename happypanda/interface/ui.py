@@ -1,7 +1,16 @@
-from happypanda.common import utils
+import i18n
+
+from happypanda.common import utils, constants
 from happypanda.core import message
 from happypanda.interface import enums
 from happypanda.core.commands import database_cmd, search_cmd
+
+
+i18n.load_path.append(constants.dir_translations)
+i18n.set("file_format", "yaml")
+i18n.set("locale", constants.translation_locale)
+i18n.set("fallback", constants.translation_locale)
+i18n.set("filename_format", "{locale}.{namespace}.{format}")
 
 
 def library_view(item_type: enums.ItemType = enums.ItemType.Gallery,
@@ -75,7 +84,19 @@ def get_view_count(item_type: enums.ItemType=enums.ItemType.Gallery,
     return message.Identity('count', {'count': len(model_ids)})
 
 
-def translate():
+def translate(t_id: str, locale=None, default=None):
     """
+    Get a translation by translation id
+
+    Args:
+        t_id: translation id
+        locale: locale to get translations from (will override default locale)
+        default: default text when no translation was found
     """
-    pass
+    kwargs = {}
+    if locale:
+        kwargs["locale"] = locale
+    if default:
+        kwargs["default"] = default
+    trs = i18n.t(t_id, **kwargs)
+    return message.Identity("translation", trs)

@@ -76,6 +76,14 @@ class Identity(CoreMessage):
     def data(self):
         return self._obj
 
+    def json_friendly(self, include_key=True):
+        "Serialize to JSON structure"
+        d = self.data()
+        if include_key:
+            return {self.key: d}
+        else:
+            return d
+
 
 class List(CoreMessage):
     """
