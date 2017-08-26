@@ -1,6 +1,10 @@
-__pragma__('alias', 'S', '$')  # JQuery
-
+from react_utils import (e,
+                        render,
+                        React,
+                        createReactClass)
 import utils
+
+io = require('socket.io-client')
 
 debug = True
 
@@ -22,23 +26,10 @@ ItemType = {
 class Base:
 
     def __init__(self, url=""):
-        self.url = utils.URLManipulator(url)
         self._flashes = []
 
     def main(self):
-
-        if self.url:
-
-            self.log("setting active menu item")
-
-            def each_d(index):
-
-                aurl = S(this).find('a').attr("href")
-                if aurl == self.url.path():
-                    S(this).addClass("active")
-                    S(this).find('a').append('<span class="sr-only">(current)</span>')
-
-            S("#nav-collapse li").each(each_d)
+        pass
 
     def log(self, msg):
         if debug:
@@ -51,76 +42,37 @@ class Base:
         - warning
         - danger
         """
-
-        lbl = 'alert-' + flash_type
-        obj = self.compile(
-            "#global-flash-t",
-            "#global-flash",
-            prepend=True,
-            alert=lbl,
-            strong=strong,
-            msg=msg)
-        obj.delay(8000).fadeOut(500)
-
-    def get_label(self, label_type):
-        """
-        - default
-        - primary
-        - success
-        - info
-        - warning
-        - danger
-        """
-        return 'label-' + label_type
-
-    __pragma__('kwargs')
-
-    def compile(
-            self,
-            source_el,
-            target_el,
-            after=None,
-            before=None,
-            append=None,
-            prepend=None,
-            **data):
-        """
-        Compile template element
-        Set after, before, append or prepend to True to specify where to insert html.
-
-        Returns inserted element
-        """
-        src = S(source_el).html()
-        if not src:
-            console.error("{} could not be found, compilation aborted".format(source_el))
-            return
-        tmpl = Handlebars.compile(src)
-        if after:
-            return S(tmpl(data)).insertAfter(target_el)
-        elif before:
-            return S(tmpl(data)).insertBefore(target_el)
-        elif append:
-            return S(tmpl(data)).appendTo(target_el)
-        elif prepend:
-            return S(tmpl(data)).prependTo(target_el)
-        else:
-            return S(target_el).html(tmpl(data))
-    __pragma__('nokwargs')
-
-    def flash_error(self, error, flash_type='danger'):
-        if error:
-            self.flash(error['msg'], flash_type, error['code'])
+        pass
+        #lbl = 'alert-' + flash_type
+        #obj = self.compile(
+        #    "#global-flash-t",
+        #    "#global-flash",
+        #    prepend=True,
+        #    alert=lbl,
+        #    strong=strong,
+        #    msg=msg)
+        #obj.delay(8000).fadeOut(500)
 
 
 class ServerMsg:
     msg_id = 0
 
-    def __init__(self, data, callback=None, func_name=None):
+    __pragma__('kwargs')
+    def __init__(self, data, callback=None, func_name=None, contextobj=None):
         ServerMsg.msg_id += 1
         self.id = self.msg_id
         self.data = data
         self.callback = callback
         self.func_name = func_name
+        self.contextobj = contextobj
+    __pragma__('nokwargs')
+
+    def call_callback(self, data, err):
+        if self.contextobj:
+            self.callback(self.contextobj, data, err)
+        else:
+            self.callback(data, err)
+
 
 
 class Client(Base):
@@ -171,23 +123,20 @@ class Client(Base):
         self.socket.emit("command", {'command': cmd})
 
     def on_command(self, msg):
-
-        self._connection_status = msg['status']
-        st_txt = "unknown"
-        st_label = self.get_label("default")
-        if self._connection_status:
-            if self._disconnected_once:
-                self._disconnected_once = False
-                self.flash("Connection to server has been established", 'success')
-            st_txt = "connected"
-            st_label = self.get_label("success")
-        else:
-            self._disconnected_once = True
-            st_txt = "disconnected"
-            st_label = self.get_label("danger")
-
-        self.compile("#server-status-t", "#server-status", **
-                     {"status": st_txt, "label": st_label})
+        pass
+        #self._connection_status = msg['status']
+        #st_txt = "unknown"
+        #st_label = self.get_label("default")
+        #if self._connection_status:
+        #    if self._disconnected_once:
+        #        self._disconnected_once = False
+        #        self.flash("Connection to server has been established", 'success')
+        #    st_txt = "connected"
+        #    st_label = self.get_label("success")
+        #else:
+        #    self._disconnected_once = True
+        #    st_txt = "disconnected"
+        #    st_label = self.get_label("danger")
 
     def on_error(self, msg):
         self.flash(msg['error'], 'danger')
@@ -202,7 +151,7 @@ class Client(Base):
             serv_data = msg['msg']
             self.session = serv_data['session']
             if 'error' in serv_data:
-                self.flash_error(serv_data['error'])
+                #self.flash_error(serv_data['error'])
                 if serv_data['error']['code'] == 408:
                     self.send_command(self.commands['handshake'])
             if serv_msg.func_name and serv_data:
@@ -210,26 +159,26 @@ class Client(Base):
                     err = None
                     if 'error' in func:
                         err = func['error']
-                        self.flash_error(err)
+                        #self.flash_error(err)
                     if func['fname'] == serv_msg.func_name:
                         if serv_msg.callback:
-                            serv_msg.callback(func['data'], err)
+                            serv_msg.call_callback(func['data'], err)
                         break
             else:
                 if serv_msg.callback:
-                    serv_msg.callback(serv_data)
+                    serv_msg.call_callback(serv_data, None)
     __pragma__('noiconv')
     __pragma__('notconv')
 
     __pragma__('kwargs')
 
-    def call_func(self, func_name, callback, **kwargs):
+    def call_func(self, func_name, callback, ctx=None, **kwargs):
         "Call function on server. Calls callback with function data and error"
         f_dict = {
             'fname': func_name
         }
         f_dict.update(kwargs)
-        self.call(ServerMsg([f_dict], callback, func_name))
+        self.call(ServerMsg([f_dict], callback, func_name, ctx))
     __pragma__('nokwargs')
 
     def call(self, servermsg):
@@ -410,3 +359,4 @@ class Command(Base):
     def done(self):
         "all values has been fetched"
         return len(self._values.keys()) == len(self._states.keys())
+

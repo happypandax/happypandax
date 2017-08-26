@@ -7,10 +7,11 @@ from react_utils import (h,e,
                         Link)
 
 from ui import ui
+from i18n import tr
 
 class MenuItem:
     __pragma__("kwargs")
-    def __init__(self, name, icon="", position="", header=False, handler=None, url=None):
+    def __init__(self, name, t_id=None, icon="", position="", header=False, handler=None, url=None):
         self.name = name
         self.icon = icon
         self.position = position
@@ -18,6 +19,7 @@ class MenuItem:
         self.children = []
         self.handler = handler
         self.url = url
+        self.t_id = t_id
     __pragma__("nokwargs")
 
     __pragma__("tconv")
@@ -40,12 +42,12 @@ def sidebar_nav_render():
 
     items = []
     #items.append(MenuItem("HPX", icon="sidebar", position="left", header=True, handler=nav_toggle_handler))
-    items.append(MenuItem("Dashboard", icon="home", url="/dashboard"))
-    items.append(MenuItem("Favorites", icon="heart", url="/fav"))
-    items.append(MenuItem("Library", icon="grid layout", url="/library"))
-    items.append(MenuItem("Inbox", icon="inbox", url="/inbox"))
-    items.append(MenuItem("Downloads", icon="tasks", url="/downloads"))
-    pref_item = MenuItem("Preferences", icon="settings", position="right")
+    items.append(MenuItem("Dashboard", "ui.mi-dashboard", icon="home", url="/dashboard"))
+    items.append(MenuItem("Favorites", "ui.mi-favorites", icon="heart", url="/fav"))
+    items.append(MenuItem("Library", "ui.mi-library", icon="grid layout", url="/library"))
+    items.append(MenuItem("Inbox", "ui.mi-inbox", icon="inbox", url="/inbox"))
+    items.append(MenuItem("Downloads", "ui.mi-downloads", icon="tasks", url="/downloads"))
+    pref_item = MenuItem("Preferences", "ui.mi-preferences", icon="settings", position="right")
     items.append(pref_item)
     pref_item.children.append(MenuItem("General"))
     pref_item.children.append(MenuItem("Logins"))
@@ -56,7 +58,7 @@ def sidebar_nav_render():
     pref_item.children.append(MenuItem("Client"))
     pref_item.children.append(MenuItem("Server"))
 
-    about_item = MenuItem("About", icon="info", position="right")
+    about_item = MenuItem("About", "ui.mi-about", icon="info", position="right")
     items.append(about_item)
     about_item.children.append(MenuItem("Plugins"))
     about_item.children.append(MenuItem("Statistics"))
@@ -82,7 +84,7 @@ def sidebar_nav_render():
         else:
             container = elements
 
-        item_children = (e(ui.Icon, js_name=menu_icon, className="left", size=icon_size), menu_name,)
+        item_children = (e(ui.Icon, js_name=menu_icon, className="left", size=icon_size), tr(this, x.t_id, menu_name) if not icon else "",)
 
         as_link = {}
         if x.url:

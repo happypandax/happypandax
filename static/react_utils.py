@@ -21,3 +21,4 @@ def render(react_element, destination_id, callback=lambda: None):
     container = document.getElementById(destination_id)
     ReactDOM.render(react_element, container, callback)
 
+

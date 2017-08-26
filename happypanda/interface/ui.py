@@ -1,6 +1,6 @@
 import i18n
 
-from happypanda.common import utils, constants
+from happypanda.common import utils, constants, exceptions
 from happypanda.core import message
 from happypanda.interface import enums
 from happypanda.core.commands import database_cmd, search_cmd
@@ -11,6 +11,7 @@ i18n.set("file_format", "yaml")
 i18n.set("locale", constants.translation_locale)
 i18n.set("fallback", constants.translation_locale)
 i18n.set("filename_format", "{locale}.{namespace}.{format}")
+i18n.set("error_on_missing_translation", True)
 
 
 def library_view(item_type: enums.ItemType = enums.ItemType.Gallery,
@@ -84,19 +85,25 @@ def get_view_count(item_type: enums.ItemType=enums.ItemType.Gallery,
     return message.Identity('count', {'count': len(model_ids)})
 
 
-def translate(t_id: str, locale=None, default=None):
+def translate(t_id: str, locale: str = None, default:str = None):
     """
-    Get a translation by translation id
+    Get a translation by translation id. Raises error if no translation was found.
 
     Args:
         t_id: translation id
         locale: locale to get translations from (will override default locale)
         default: default text when no translation was found
+
+    Returns:
+        string
     """
     kwargs = {}
     if locale:
-        kwargs["locale"] = locale
+        kwargs["locale"] = locale.lower()
     if default:
         kwargs["default"] = default
-    trs = i18n.t(t_id, **kwargs)
+    try:
+        trs = i18n.t(t_id, **kwargs)
+    except KeyError as e:
+        raise exceptions.APIError(utils.this_function(), "Translation id '{}' not found".format(t_id))
     return message.Identity("translation", trs)
