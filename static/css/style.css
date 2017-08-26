@@ -1,0 +1,36 @@
+﻿body, #root, #root > div { display: flex }
+
+#root, #root > div {
+    flex-grow: 1;
+    flex-direction: column;
+}
+
+.ui.vertical.menu .item > i.icon.left {
+    float: none;
+    margin: 0em 0.35714286em 0em 0em;
+}
+
+.flex-container {
+    display: flex;
+    justify-content: space-between;
+    height: 100%;
+    flex-direction: column;
+}
+
+.top-aligned {
+    margin: 0px;
+    margin-bottom: auto;
+}
+
+.middle-aligned {
+    margin: 0px;
+    margin-top: auto;
+    margin-bottom: auto;
+}
+
+.bottom-aligned {
+    margin: 0px;
+    margin-top: auto;
+}
+
+i.large.icon, i.large.icons { font-size: 1.1em; }
