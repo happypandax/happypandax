@@ -40,7 +40,7 @@ def sidebar_nav_render():
 
     items = []
     #items.append(MenuItem("HPX", icon="sidebar", position="left", header=True, handler=nav_toggle_handler))
-    items.append(MenuItem("Dashboard", icon="id card outline", url="/dashboard"))
+    items.append(MenuItem("Dashboard", icon="home", url="/dashboard"))
     items.append(MenuItem("Favorites", icon="heart", url="/fav"))
     items.append(MenuItem("Library", icon="grid layout", url="/library"))
     items.append(MenuItem("Inbox", icon="inbox", url="/inbox"))
@@ -133,7 +133,7 @@ def menu_nav_render():
     for n, x in enumerate(items, 1):
         menu_name = x.name
         menu_icon = x.icon
-        icon_size = "big"
+        icon_size = "large"
 
         if x.position == "right":
             container = elements_right
