@@ -1,6 +1,6 @@
 from client import client
 
-current_locale = "da_dk"
+current_locale = "en_us"
 
 _translations_d = {}
 

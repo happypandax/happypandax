@@ -65,6 +65,7 @@ class ServerMsg:
         self.callback = callback
         self.func_name = func_name
         self.contextobj = contextobj
+        self._msg = {}
     __pragma__('nokwargs')
 
     def call_callback(self, data, err):
@@ -149,6 +150,9 @@ class Client(Base):
         if self._response_cb:
             serv_msg = self._response_cb.pop(msg['id'])
             serv_data = msg['msg']
+            if not serv_data:
+                self.log("serv_data is null for message: {}".format(serv_msg._msg))
+                self.log(msg)
             self.session = serv_data['session']
             if 'error' in serv_data:
                 #self.flash_error(serv_data['error'])
@@ -178,7 +182,7 @@ class Client(Base):
             'fname': func_name
         }
         f_dict.update(kwargs)
-        self.call(ServerMsg([f_dict], callback, func_name, ctx))
+        return self.call(ServerMsg([f_dict], callback, func_name, ctx))
     __pragma__('nokwargs')
 
     def call(self, servermsg):
@@ -199,6 +203,8 @@ class Client(Base):
             self.socket.emit("server_call", final_msg)
         else:
             self._msg_queue.append(final_msg)
+        servermsg._msg = final_msg
+        return servermsg
 
 client = Client()
 thumbclient = Client(namespace="/thumb")

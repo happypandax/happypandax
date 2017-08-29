@@ -111,12 +111,13 @@ def sidebar_nav_render():
                             className="bottom-aligned"),
                         className="flex-container"),
                         as_=ui.Menu,
-                        animation="slide along",
+                        animation="push",
                         width=nav_width,
                         vertical=True,
                         visible=True,
                         icon=icon,
                         defaultActiveIndex=3,
+                        className="sidebar-nav"
                         )
 
 SideBarNav = createReactClass({

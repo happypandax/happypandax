@@ -3,6 +3,20 @@
 #root, #root > div {
     flex-grow: 1;
     flex-direction: column;
+    overflow: hidden;
+}
+
+.main-content { display: flex; }
+
+.sidebar-container {
+    width: 100%;
+    margin: 0 !important;
+    overflow: auto;
+}
+
+.sidebar-nav {
+    position: relative !important;
+    box-shadow: none !important;
 }
 
 .ui.vertical.menu .item > i.icon.left {
@@ -34,3 +48,14 @@
 }
 
 i.large.icon, i.large.icons { font-size: 1.1em; }
+
+
+.json-string { color: green; }
+
+.json-number { color: darkorange; }
+
+.json-boolean { color: blue; }
+
+.json-null { color: magenta; }
+
+.json-key { color: red; }
