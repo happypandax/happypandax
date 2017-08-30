@@ -359,6 +359,7 @@ class ClientHandler:
                 self.on_error(exceptions.HappypandaError(
                     "An unknown critical error has occurred"))  # TODO: include traceback
             else:
+                log.exception("An unknown critical error has occurred")
                 raise
 
     def is_active(self):

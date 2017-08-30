@@ -883,7 +883,7 @@ if __name__ == '__main__':
 
                 if g.artist:
                     artist = db.Artist()
-                    artist_name = db.ArtistName()
+                    artist_name = db.AliasName()
                     artist_name.name = g.artist
                     artist_name.language = db_lang
                     d_artist = dst_artists.get(artist_name.name)

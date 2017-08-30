@@ -109,7 +109,7 @@ def translate(t_id: str, locale: str = None, default:str = None):
         raise exceptions.APIError(utils.this_function(), "Translation id '{}' not found".format(t_id))
     except i18n.loaders.loader.I18nFileLoadError as e:
         if default is None:
-            log.exception("Failed to load translation file")
+            log.exception("Failed to load translation file '{}' with key '{}'".format(locale if locale else constants.translation_locale, t_id))
             raise exceptions.APIError(utils.this_function(), "Failed to load translation file: {}".format(e.args))
         trs = default
     return message.Identity("translation", trs)

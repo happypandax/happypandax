@@ -195,10 +195,10 @@ You can now start HPX by running:
 You only need to install once. After installing, you can update HPX after pulling the new changes from the git repo by running:
     $ python3 bootstrap.py build
 
-To automatically pull the changes and build for you, run:
+To automatically pull the changes and build for you, just run:
     $ python3 bootstrap.py update
 
-Finally, each action has additional optional arguments. Make sure to check them out by supplying "--help" after the action:
+Finally, each action may have additional optional arguments. Make sure to check them out by supplying "--help" after the action:
     $ python3 bootstrap.py build --help
     
 For example, to build the webclient or docs, run:

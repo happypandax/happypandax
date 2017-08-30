@@ -68,6 +68,7 @@ def get_command_value(command_ids: list):
             values[i] = cmd.value.json_friendly(include_key=False)
         else:
             values[i] = cmd.value
+        cmd._log_stats()
 
     return message.Identity('command_value', values)
 

@@ -19,8 +19,9 @@ from happypanda.core.commands import io_cmd  # noqa: E402
 log = hlogger.Logger(__name__)
 
 
-def start(argv=sys.argv):
-
+def start(argv=None):
+    if argv is None:
+        argv = sys.argv[1:]
     parser = utils.get_argparser()
     utils.setup_dirs()
     args = parser.parse_args(argv)

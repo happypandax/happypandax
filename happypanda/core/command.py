@@ -1,5 +1,6 @@
 import enum
 import gevent
+import arrow
 
 from contextlib import contextmanager
 from abc import ABCMeta, abstractmethod
@@ -109,6 +110,10 @@ class CoreCommand:
         return obj
 
     def __init__(self, priority=constants.Priority.Normal):
+        self._created_time = arrow.now()
+        self.command_id = None
+        self._started_time = None
+        self._finished_time = None
         self._priority = priority
         self._main = self.main
         self.main = self._main_wrap
@@ -122,7 +127,17 @@ class CoreCommand:
 
     def _main_wrap(self, *args, **kwargs):
         utils.switch(self._priority)
-        return self._main(*args, **kwargs)
+        self._started_time = arrow.now()
+        r = self._main(*args, **kwargs)
+        self._finished_time = arrow.now()
+        return r
+
+    def _log_stats(self):
+        create_delta = self._finished_time-self._created_time
+        run_delta = self._finished_time-self._started_time
+        log.d("Command - '{}' -".format(self.__class__.__name__), "ID({})".format(self.command_id) if self.command_id else '',
+              "running stats:\n", "\tCreation delta: {}\n".format(create_delta),
+              "\tRunning delta: {}".format(run_delta))
 
     @abstractmethod
     def main(self, *args, **kwargs):
@@ -172,7 +187,6 @@ class AsyncCommand(Command):
         super().__init__(priority)
 
         self._service = service
-        self.command_id = None
         self._args = None
         self._kwargs = None
         self.state = CommandState.out_of_service

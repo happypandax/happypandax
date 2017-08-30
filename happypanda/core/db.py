@@ -367,7 +367,7 @@ def profile_association(cls, bref="items"):
         "Profile",
         secondary=assoc,
         lazy='dynamic',
-        backref=bref,
+        backref=backref(bref, lazy="dynamic"),
         cascade="all")
     return assoc
 
@@ -406,7 +406,7 @@ def aliasname_association(cls, bref="items"):
         "AliasName",
         secondary=assoc,
         lazy='joined',
-        backref=bref,
+        backref=backref(bref, lazy="dynamic"),
         cascade="all")
     return assoc
 
@@ -426,7 +426,7 @@ def url_association(cls, bref="items"):
         "Url",
         secondary=assoc,
         lazy='joined',
-        backref=bref,
+        backref=backref(bref, lazy="dynamic"),
         cascade="all")
     return assoc
 

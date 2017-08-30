@@ -8,10 +8,11 @@ import os
 
 from datetime import datetime
 
-from happypanda.common import constants, exceptions, utils
+from happypanda.common import constants, exceptions, utils, hlogger
 from happypanda.core import db
 from happypanda.core.commands import io_cmd
 
+log = hlogger.Logger(__name__)
 
 def finalize(msg_dict, session_id="", name=constants.server_name, error=None):
     "Finalize dict message before sending"
@@ -242,6 +243,7 @@ class DatabaseMessage(CoreMessage):
         if name == "metatags":
             return self._unpack_metatags(attrib)
 
+        log.d("name:", name, "attribt:", attrib)
         # beware lots of recursion
         if db.is_instanced(attrib):
             msg_obj = None
@@ -462,6 +464,16 @@ class Title(DatabaseMessage):
     def __init__(self, db_item):
         assert isinstance(db_item, db.Title)
         super().__init__('title', db_item)
+
+    def from_json(self, j):
+        return super().from_json(j)
+
+class Url(DatabaseMessage):
+    "Encapsulates database url object"
+
+    def __init__(self, db_item):
+        assert isinstance(db_item, db.Url)
+        super().__init__('url', db_item)
 
     def from_json(self, j):
         return super().from_json(j)
