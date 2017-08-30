@@ -1,10 +1,11 @@
 import i18n
 
-from happypanda.common import utils, constants, exceptions
+from happypanda.common import utils, constants, exceptions, hlogger
 from happypanda.core import message
 from happypanda.interface import enums
 from happypanda.core.commands import database_cmd, search_cmd
 
+log = hlogger.Logger(__name__)
 
 i18n.load_path.append(constants.dir_translations)
 i18n.set("file_format", "yaml")
@@ -106,4 +107,9 @@ def translate(t_id: str, locale: str = None, default:str = None):
         trs = i18n.t(t_id, **kwargs)
     except KeyError as e:
         raise exceptions.APIError(utils.this_function(), "Translation id '{}' not found".format(t_id))
+    except i18n.loaders.loader.I18nFileLoadError as e:
+        if default is None:
+            log.exception("Failed to load translation file")
+            raise exceptions.APIError(utils.this_function(), "Failed to load translation file: {}".format(e.args))
+        trs = default
     return message.Identity("translation", trs)

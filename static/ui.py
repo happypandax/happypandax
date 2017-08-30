@@ -6,3 +6,5 @@ from react_utils import (h,e,
                         createReactClass)
 
 ui = require("semantic-ui-react")
+
+Slider = require('react-slick')

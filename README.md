@@ -8,16 +8,10 @@
 
 # Building
 
-1. install `Python 3.5` and `pip3`
+1. install `Python 3.5` and `pip3` (and `git` if you haven't already)
     > **Note**: Python 3.5 is currently the only supported version
-2. install `virtualenv` by running: `pip3 install virtualenv`
-3. clone or download this repository
-4. setup a virtualenv in the cloned/downloaded folder by running: `virtualenv env`
-5. activate the virtualenv by running: (on windows: `env\Scripts\activate.bat`) (on posix: `. env/bin/activate`)
-6. install the dependencies by running: `pip3 install -r requirements.txt`
+2. run: `python3 bootstrap.py`
     > **Windows users**: If you get `error: command '..\cl.exe' failed with exit status 2`, download `bitarray` from [here](http://www.lfd.uci.edu/%7Egohlke/pythonlibs/#bitarray)
-7. run the server: `python3 run.py -h`
-8. to build and use the default frontend, run: `python3 build_webclient.py`
 
 # Documentation
 

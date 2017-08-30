@@ -17,7 +17,7 @@ def add_translation_component(ctx, data, err):
 def tr(that, t_id, default_txt):
     if t_id:
         t_txt = _translations_d.get(current_locale, {}).get(t_id)
-        if not t_txt:
+        if t_txt is None:
             fargs = {"t_id":t_id, "locale":current_locale}
             if that:
                 client.call_func("translate", add_translation_component, {'cmp':that, 't_id':t_id}, **fargs)

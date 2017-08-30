@@ -12,6 +12,7 @@
     "react-dom": "^15.6.1",
     "react-notification-system": "^0.2.15",
     "react-router-dom": "^4.1.2",
+    "react-slick": "^0.15.0",
     "semantic-ui-react": "^0.71.4",
     "socket.io": "^2.0.3"
   },

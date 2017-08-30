@@ -43,7 +43,7 @@ def sidebar_nav_render():
     items = []
     #items.append(MenuItem("HPX", icon="sidebar", position="left", header=True, handler=nav_toggle_handler))
     items.append(MenuItem("Dashboard", "ui.mi-dashboard", icon="home", url="/dashboard"))
-    items.append(MenuItem("Favorites", "ui.mi-favorites", icon="heart", url="/fav"))
+    items.append(MenuItem("Favorites", "ui.mi-favorites", icon="heart", url="/favorite"))
     items.append(MenuItem("Library", "ui.mi-library", icon="grid layout", url="/library"))
     items.append(MenuItem("Inbox", "ui.mi-inbox", icon="inbox", url="/inbox"))
     items.append(MenuItem("Downloads", "ui.mi-downloads", icon="tasks", url="/downloads"))

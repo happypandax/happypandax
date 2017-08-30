@@ -11,6 +11,8 @@ from react_utils import (h,
 from ui import ui
 import nav_ui
 import api
+import dashboard
+import library
 
 def on_mount():
     this.notif = this.refs.notif
@@ -38,15 +40,19 @@ App = createReactClass({
     'set_menu_contents': lambda c: (this.setState({'menu_nav_contents':c})),
 
     'api_page': lambda: e(api.Page, menu=this.set_menu_contents, notif=this.notif),
+    'dashboard_page': lambda: e(dashboard.Page, menu=this.set_menu_contents, notif=this.notif),
+    'library_page': lambda: e(library.Page, menu=this.set_menu_contents, notif=this.notif),
 
     'render': lambda: e(Router,
                         h("div",
-                            e(Notif, ref="notif"),
+                            #e(Notif, ref="notif"),
                             e(nav_ui.MenuNav, toggler=this.toggle_sidebar, contents=this.state["menu_nav_contents"]),
                             e(ui.Sidebar.Pushable,
                             e(nav_ui.SideBarNav, toggled=this.state["sidebar_toggled"]),
                             e(ui.Segment,
                             e(Route, path="/api", component=this.api_page),
+                            e(Route, path="/dashboard", component=this.dashboard_page),
+                            e(Route, path="/library", component=this.library_page),
                             className="sidebar-container",
                             basic=True),
                             as_=ui.Segment,

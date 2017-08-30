@@ -1,36 +1,33 @@
 __pragma__('alias', 'as_', 'as')
 from react_utils import (h,
                          e,
-                         render,
                          React,
-                         ReactDOM,
-                         createReactClass,
-                         Router)
-from ui import ui
+                         createReactClass)
+from ui import ui, Slider
+from client import client, ServerMsg
+from i18n import tr
+import utils
 
-App = createReactClass({
-    'displayName': 'App',
+Page = createReactClass({
+    'displayName': 'LibraryPage',
 
-    'getInitialState': lambda: {
-        "sidebar_toggled":True,
-        "menu_nav_contents":None},
+    'getInitialState': lambda: {},
 
-    'toggle_sidebar': lambda: (this.setState({'sidebar_toggled':not this.state['sidebar_toggled']})),
-
-    'render': lambda: e(Router,
-                        h("div",
-                            e(nav_ui.MenuNav, toggler=this.toggle_sidebar, contents=this.state["menu_nav_contents"]),
-                            e(ui.Sidebar.Pushable,
-                            e(nav_ui.SideBarNav, toggled=this.state["sidebar_toggled"]),
-                            e(ui.Sidebar.Pusher,
-                              e(ui.Segment, basic=True)
-                            ),
-                            as_=ui.Segment,
-                            attached="bottom"
-                            ),
-                            className="bodyheight"
+    'render': lambda: e(ui.Grid.Column,
+                        e(ui.Container,
+                          e(ui.Accordion,
+                            e(ui.Accordion.Title,
+                              e(ui.Icon, js_name="dropdown"),
+                              e(ui.Label,
+                                tr(this, "", "View Settings"),
+                               as_="a", basic=True)
+                              ),
+                            e(ui.Accordion.Content,
+                              e(ui.Segment)
+                              )
                             )
+                          ),
+                        
                         )
 })
 
-render(e(App), 'root')
