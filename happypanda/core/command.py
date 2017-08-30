@@ -132,12 +132,16 @@ class CoreCommand:
         self._finished_time = arrow.now()
         return r
 
-    def _log_stats(self):
+    def _log_stats(self, d=None):
         create_delta = self._finished_time-self._created_time
         run_delta = self._finished_time-self._started_time
-        log.d("Command - '{}' -".format(self.__class__.__name__), "ID({})".format(self.command_id) if self.command_id else '',
-              "running stats:\n", "\tCreation delta: {}\n".format(create_delta),
-              "\tRunning delta: {}".format(run_delta))
+        log_delta = (d-self._finished_time) if d else None
+        log.i("Command - '{}' -".format(self.__class__.__name__), "ID({})".format(self.command_id) if self.command_id else '',
+              "running time:\n",
+              "\t\tCreation delta: {} (time between creation and finish)\n".format(create_delta),
+              "\t\tRunning delta: {} (time between start and finish)\n".format(run_delta),
+              "\t\tLog delta: {} (time between finish and this log)\n".format(log_delta),
+              )
 
     @abstractmethod
     def main(self, *args, **kwargs):

@@ -243,7 +243,7 @@ class DatabaseMessage(CoreMessage):
         if name == "metatags":
             return self._unpack_metatags(attrib)
 
-        log.d("name:", name, "attribt:", attrib)
+        #log.d("name:", name, "attrib:", attrib)
         # beware lots of recursion
         if db.is_instanced(attrib):
             msg_obj = None
