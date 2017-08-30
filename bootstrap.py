@@ -171,6 +171,15 @@ def update(args):
     run([cmd, "pull"])
     build(args)
 
+def start(args):
+    _activate_venv()
+    try:
+        from happypanda import main
+    except ImportError:
+        _update_pip(args)
+        from happypanda import main
+
+    return main.start(sys.argv[2:])
 
 welcome_msg = """
 Welcome to HPX development helper script.
@@ -180,11 +189,8 @@ If this is your first time running this script, or if you haven't installed HPX 
 HPX requires Python 3.5 and optionally npm to build the webclient and git to fetch new changes.
 Make sure those are installed before running the command above.
 
-You can now start HPX. First activate the virtualenv by running:
-    - on windows: $ env\Scripts\activate.bat
-    - on posix: $ . env/bin/activate)
-Then start HPX by running:
-    $ python3 run.py
+You can now start HPX by running:
+    $ python3 bootstrap.py run
 
 You only need to install once. After installing, you can update HPX after pulling the new changes from the git repo by running:
     $ python3 bootstrap.py build
@@ -223,13 +229,18 @@ def main():
     subparser.set_defaults(func=install)
 
     subparser = subparsers.add_parser('update', help='Fetch the latest changes from the GitHub repo')
-    subparser.add_argument('--run', action='store_true', help="Run HPX after installing")
     subparser.set_defaults(func=update)
+
+    subparser = subparsers.add_parser('run', help='Start HPX, additional args will be passed to HPX')
+    subparser.set_defaults(func=start)
 
     subparser = subparsers.add_parser('help', help='Help')
     subparser.set_defaults(func=lambda a: parser.print_help())
 
-    args = parser.parse_args()
+    if 'run' in sys.argv:
+        args, unknown = parser.parse_known_args()
+    else:
+        args = parser.parse_args()
     return args.func(args)
 
 if __name__ == '__main__':

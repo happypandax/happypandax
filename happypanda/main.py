@@ -19,11 +19,11 @@ from happypanda.core.commands import io_cmd  # noqa: E402
 log = hlogger.Logger(__name__)
 
 
-def start():
+def start(argv=sys.argv):
 
     parser = utils.get_argparser()
     utils.setup_dirs()
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     utils.parse_options(args)
 
     if not args.only_web:
