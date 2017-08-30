@@ -14,6 +14,7 @@ from happypanda.core.commands import io_cmd
 
 log = hlogger.Logger(__name__)
 
+
 def finalize(msg_dict, session_id="", name=constants.server_name, error=None):
     "Finalize dict message before sending"
     enc = 'utf-8'
@@ -225,7 +226,7 @@ class DatabaseMessage(CoreMessage):
             name)
 
     def _unpack_metatags(self, attrib):
-        m_tags = {x:False for x in db.MetaTag.all_names()}
+        m_tags = {x: False for x in db.MetaTag.all_names()}
         names = []
         if db.is_query(attrib):
             names = tuple(x.name for x in attrib.all())
@@ -468,6 +469,7 @@ class Title(DatabaseMessage):
     def from_json(self, j):
         return super().from_json(j)
 
+
 class Url(DatabaseMessage):
     "Encapsulates database url object"
 
@@ -477,6 +479,7 @@ class Url(DatabaseMessage):
 
     def from_json(self, j):
         return super().from_json(j)
+
 
 class GalleryFilter(DatabaseMessage):
     "Encapsulates database galleryfilter object"

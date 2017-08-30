@@ -10,8 +10,6 @@ import tempfile
 import socket
 import traceback
 import gevent
-import i18n
-import yaml
 
 from inspect import ismodule, currentframe, getframeinfo
 from contextlib import contextmanager
@@ -273,6 +271,7 @@ def switch(priority=constants.Priority.Normal):
     assert isinstance(priority, constants.Priority)
     gevent.idle(priority.value)
 
+
 class AttributeList(UserList):
     """
     l = AttributeList("one", "two")
@@ -280,12 +279,12 @@ class AttributeList(UserList):
     l.two == "two"
 
     """
+
     def __init__(self, *names):
-        self._names = {str(x):x for x in names}
+        self._names = {str(x): x for x in names}
         super().__init__(names)
 
     def __getattr__(self, key):
         if key in self._names:
             return self._names[key]
         raise AttributeError("AttributeError: no attribute named '{}'".format(key))
-

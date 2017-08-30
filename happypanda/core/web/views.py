@@ -136,6 +136,7 @@ def before_first_request():
         log.exception("Could not establish connection on first try")
         send_error(e)
 
+
 @happyweb.route(constants.thumbs_view + '/<path:filename>')
 def thumbs_view(filename):
     s_filename = secure_filename(filename)
@@ -157,7 +158,8 @@ def server_proxy():
         pass
     abort(404)
 
-##### Let other routes take precedence
+# Let other routes take precedence
+
 
 @happyweb.route('/', defaults={'path': ''})
 @happyweb.route('/<path:path>')

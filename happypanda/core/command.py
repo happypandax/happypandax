@@ -133,9 +133,9 @@ class CoreCommand:
         return r
 
     def _log_stats(self, d=None):
-        create_delta = self._finished_time-self._created_time
-        run_delta = self._finished_time-self._started_time
-        log_delta = (d-self._finished_time) if d else None
+        create_delta = self._finished_time - self._created_time
+        run_delta = self._finished_time - self._started_time
+        log_delta = (d - self._finished_time) if d else None
         log.i("Command - '{}' -".format(self.__class__.__name__), "ID({})".format(self.command_id) if self.command_id else '',
               "running time:\n",
               "\t\tCreation delta: {} (time between creation and finish)\n".format(create_delta),

@@ -49,7 +49,6 @@ from sqlalchemy_utils import (
     force_auto_coercion,
     get_type,
     JSONType)
-from collections import namedtuple
 
 from happypanda.common import constants, exceptions, hlogger, utils
 
@@ -371,6 +370,7 @@ def profile_association(cls, bref="items"):
         cascade="all")
     return assoc
 
+
 def metatag_association(cls):
     if not issubclass(cls, Base):
         raise ValueError("Must be subbclass of Base")
@@ -389,6 +389,7 @@ def metatag_association(cls):
         lazy='joined',
         cascade="all")
     return assoc
+
 
 def aliasname_association(cls, bref="items"):
     if not issubclass(cls, Base):
@@ -410,6 +411,7 @@ def aliasname_association(cls, bref="items"):
         cascade="all")
     return assoc
 
+
 def url_association(cls, bref="items"):
     if not issubclass(cls, Base):
         raise ValueError("Must be subbclass of Base")
@@ -430,6 +432,7 @@ def url_association(cls, bref="items"):
         cascade="all")
     return assoc
 
+
 class Life(Base):
     __tablename__ = 'life'
 
@@ -441,6 +444,7 @@ class Life(Base):
         return "<Version: {}, times_opened:{}>".format(
             self.version, self.times_opened)
 
+
 class MetaTag(NameMixin, Base):
     __tablename__ = 'metatag'
 
@@ -451,6 +455,7 @@ class MetaTag(NameMixin, Base):
     def all_names(cls):
         sess = constants.db_session()
         return tuple(x[0] for x in sess.query(cls.name).all())
+
 
 class User(Base):
     __tablename__ = 'user'
@@ -483,6 +488,7 @@ class User(Base):
         return self.role == self.Role.admin
 
 metatag_association(User)
+
 
 class Profile(Base):
     __tablename__ = 'profile'
@@ -602,6 +608,7 @@ class NamespaceTags(AliasMixin, Base):
 
 metatag_association(NamespaceTags)
 
+
 @generic_repr
 class Tag(NameMixin, AliasMixin, Base):
     __tablename__ = 'tag'
@@ -614,6 +621,7 @@ class Tag(NameMixin, AliasMixin, Base):
         secondary='namespace_tags',
         back_populates='tags',
         lazy="dynamic")
+
 
 class Namespace(NameMixin, AliasMixin, Base):
     __tablename__ = 'namespace'
@@ -633,7 +641,6 @@ taggable_tags = Table(
         'namespace_tag_id', Integer, ForeignKey('namespace_tags.id')), Column(
             'taggable_id', Integer, ForeignKey('taggable.id')), UniqueConstraint(
                 'namespace_tag_id', 'taggable_id'))
-
 
 
 class Taggable(Base):
@@ -696,7 +703,6 @@ class Artist(ProfileMixin, Base):
 
     info = Column(String, nullable=False, default='')
 
-
     galleries = relationship(
         "Gallery",
         secondary=gallery_artists,
@@ -715,6 +721,7 @@ metatag_association(Artist)
 profile_association(Artist, "artists")
 aliasname_association(Artist, "artists")
 url_association(Artist, "artists")
+
 
 @generic_repr
 class Circle(NameMixin, Base):
@@ -753,6 +760,7 @@ gallery_filters = Table('gallery_filters', Base.metadata,
                             ForeignKey('gallery.id')),
                         UniqueConstraint('filter_id', 'gallery_id'))
 
+
 @generic_repr
 class GalleryFilter(NameMixin, Base):
     __tablename__ = 'filter'
@@ -767,6 +775,7 @@ class GalleryFilter(NameMixin, Base):
         secondary=gallery_filters,
         back_populates='filters',
         lazy="dynamic")
+
 
 @generic_repr
 class Status(NameMixin, Base):
@@ -794,6 +803,7 @@ class Grouping(ProfileMixin, NameMixin, Base):
         cascade="save-update, merge, refresh-expire")
 
 profile_association(Grouping, "groupings")
+
 
 @generic_repr
 class Language(NameMixin, Base):
@@ -837,8 +847,9 @@ class Collection(ProfileMixin, Base):
         lazy="dynamic",
         cascade="save-update, merge, refresh-expire")
 
-profile_association(Collection,  "collections")
+profile_association(Collection, "collections")
 metatag_association(Collection)
+
 
 @generic_repr
 class Gallery(TaggableMixin, ProfileMixin, Base):
@@ -987,6 +998,7 @@ metatag_association(Gallery)
 profile_association(Gallery, "galleries")
 url_association(Gallery, "galleries")
 
+
 @generic_repr
 class Page(TaggableMixin, ProfileMixin, Base):
     __tablename__ = 'page'
@@ -1035,6 +1047,7 @@ class Page(TaggableMixin, ProfileMixin, Base):
 metatag_association(Page)
 profile_association(Page, "pages")
 
+
 @generic_repr
 class Title(AliasMixin, Base):
     __tablename__ = 'title'
@@ -1054,9 +1067,11 @@ class Title(AliasMixin, Base):
 @generic_repr
 class Url(Base):
     __tablename__ = 'url'
-    name = Column(String, nullable=False, default='') # OBS: not unique
+    name = Column(String, nullable=False, default='')  # OBS: not unique
 
 # Note: necessary to put in function because there is no Session object yet
+
+
 def initEvents(sess):
     "Initializes events"
 

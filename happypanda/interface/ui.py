@@ -86,7 +86,7 @@ def get_view_count(item_type: enums.ItemType=enums.ItemType.Gallery,
     return message.Identity('count', {'count': len(model_ids)})
 
 
-def translate(t_id: str, locale: str = None, default:str = None):
+def translate(t_id: str, locale: str = None, default: str = None):
     """
     Get a translation by translation id. Raises error if no translation was found.
 
@@ -109,7 +109,8 @@ def translate(t_id: str, locale: str = None, default:str = None):
         raise exceptions.APIError(utils.this_function(), "Translation id '{}' not found".format(t_id))
     except i18n.loaders.loader.I18nFileLoadError as e:
         if default is None:
-            log.exception("Failed to load translation file '{}' with key '{}'".format(locale if locale else constants.translation_locale, t_id))
+            log.exception("Failed to load translation file '{}' with key '{}'".format(
+                locale if locale else constants.translation_locale, t_id))
             raise exceptions.APIError(utils.this_function(), "Failed to load translation file: {}".format(e.args))
         trs = default
     return message.Identity("translation", trs)
