@@ -6,7 +6,7 @@ from subprocess import run
 from importlib import reload
 
 dev_options = dict(
-    build_db = True,
+    build_db = False,
     )
 
 def question(question, default="yes"):
@@ -177,9 +177,8 @@ def start(args):
         from happypanda import main
     except ImportError:
         _update_pip(args)
-        from happypanda import main
-
-    return main.start(sys.argv[2:])
+    env_p = r".\env\Scripts\python" if sys.platform.startswith("win") else "env/bin/python"
+    return run([env_p, "run.py", *sys.argv[2:]], shell=True).returncode
 
 welcome_msg = """
 Welcome to HPX development helper script.
