@@ -1,7 +1,4 @@
 """exceptions module."""
-from happypanda.common import hlogger
-
-log = hlogger.Logger(__name__)
 
 _error_codes = []
 
