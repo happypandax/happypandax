@@ -1,4 +1,6 @@
-﻿body, #root, #root > div { display: flex }
+﻿@import "s-alert.css";
+
+body, #root, #root > div { display: flex }
 
 #root, #root > div {
     flex-grow: 1;
@@ -47,7 +49,11 @@
     margin-top: auto;
 }
 
-i.large.icon, i.large.icons { font-size: 1.1em; }
+/*i.large.icon, i.large.icons {
+    font-size: 1.1em;
+}*/
+
+i.medium-size { font-size: 1.1em !important; }
 
 
 .json-string { color: green; }
@@ -59,3 +65,80 @@ i.large.icon, i.large.icons { font-size: 1.1em; }
 .json-null { color: magenta; }
 
 .json-key { color: red; }
+
+.right {
+    float: right;
+}
+
+.left {
+    float: left;
+}
+
+.text-ellipsis {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    text-align: center;
+}
+
+.card-content {
+    position: relative;
+}
+
+.card-header {
+    font-size: 1rem !important;
+}
+
+.card-item {
+    position:absolute !important;
+    margin: 0.25rem !important;
+}
+
+.card-item.right {
+    right: 0;
+}
+
+    .card-item.bottom {
+        bottom: 0;
+    }
+
+.card-item.left {
+    left: 0;
+}
+
+.card-item.top {
+        top: 0;
+    }
+
+.fullwidth {
+    width: 100%;
+}
+
+.slide-next {
+    top: 50%;
+    position: absolute;
+    transform: translate(0,-50%);
+    z-index: 3;
+}
+
+    .slide-next.right {
+        right: 0;
+    }
+
+    .slide-next.left {
+        left: 0;
+    }
+
+    .slick-dots {
+        bottom: 0 !important;
+    }
+
+    .slick-list {
+        padding: 5px !important;
+    }
+
+
+.no-padding-segment {
+    padding: 0 !important;
+    padding-bottom: 0.5rem !important;
+}

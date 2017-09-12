@@ -6,8 +6,15 @@ from subprocess import run
 from importlib import reload
 
 dev_options = dict(
-    build_db = False,
+    build_db = True,
+    prev_build = None,
+    env_activated = False
     )
+
+changes = """
+- added 'avg_rating' to Grouping
+"""
+
 
 def question(question, default="yes"):
     """Ask a yes/no question via raw_input() and return their answer.
@@ -64,22 +71,23 @@ def is_installed(cmd):
 
 def build(args):
     _activate_venv()
-    _update_pip(args)
 
-    if args.client:
+    if getattr(args, 'client', False):
         try:
             import build_webclient
         except ImportError:
             print("Please supply the '--dev' argument if you want to build the webclient")
+            sys.exit()
 
         print("Building webclient")
         build_webclient.main()
 
-    if args.docs:
+    if getattr(args, 'docs', False):
         try:
-            import build_webclient
+            import build_docs
         except ImportError:
             print("Please supply the '--dev' argument if you want to build the docs")
+            sys.exit()
 
         print("Building docs")
         build_docs.main()
@@ -88,17 +96,19 @@ def build(args):
         print("\n# IMPORTANT # A database rebuild is required for this build, please use the accompanying script 'HPtoHPX.py' to rebuild your database if you've just updated")
 
 def _activate_venv():
-    if not os.path.exists('env'):
-        print("Looks like you haven't installed HPX yet. Please run '$ python bootstrap.py install' to install")
+    if not dev_options['env_activated']:
+        if not os.path.exists('env'):
+            print("Looks like you haven't installed HPX yet. Please run '$ python bootstrap.py install' to install")
 
-    scripts = os.path.join("env", "Scripts")
-    if not os.path.exists(scripts):
-        scripts = os.path.join("env", "bin")
+        scripts = os.path.join("env", "Scripts")
+        if not os.path.exists(scripts):
+            scripts = os.path.join("env", "bin")
 
-    print("Activating virtualenv")
-    activator = os.path.join(scripts, "activate_this.py")
-    with open(activator) as f:
-        exec(f.read(), {'__file__': activator})
+        print("Activating virtualenv")
+        activator = os.path.join(scripts, "activate_this.py")
+        with open(activator) as f:
+            exec(f.read(), {'__file__': activator})
+        dev_options['env_activated'] = True
 
 def _check_python():
     _cmd = "python3"
@@ -122,6 +132,12 @@ def _check_pip():
         sys.exit()
 
 def _update_pip(args):
+    if not args.dev:
+        try:
+            from happypanda import main
+            return
+        except ImportError:
+            pass
     print("Installing required packages...")
     r = "requirements.txt" if not args.dev else "requirements-dev.txt"
     run(["pip3", "install", "-r", r, "--upgrade"])
@@ -167,9 +183,81 @@ def update(args):
         b = "dev" if args.dev else "master"
         run([cmd, "checkout", b, "-f"])
 
+    _activate_venv()
+    from happypanda.common import constants
+    dev_options['prev_build'] = constants.build
     print("Pulling changes...")
     run([cmd, "pull"])
+    constants = reload(constants)
     build(args)
+    version(args)
+
+def version(args):
+    _activate_venv()
+    from happypanda.common import constants
+    print("\n-----------------------------------------------\n")
+    if dev_options['prev_build']:
+        print("Build: {} -> {}".format(dev_options['prev_build'], constants.build))
+    else:
+        print("Build: {}".format(constants.build))
+
+    print("\n------------------- Changes -------------------")
+    print(changes)
+    if dev_options['build_db']:
+        print("\n# IMPORTANT # A database rebuild is required for this build, please use the accompanying script 'HPtoHPX.py' to rebuild your database if you've just updated")
+
+def is_sane_database(Base, session):
+    """Check whether the current database matches the models declared in model base.
+    Currently we check that all tables exist with all columns. What is not checked
+    * Column types are not verified
+    * Relationships are not verified at all (TODO)
+    :param Base: Declarative Base for SQLAlchemy models to check
+    :param session: SQLAlchemy session bound to an engine
+    :return: True if all declared models have corresponding tables and columns.
+    """
+
+    engine = session.get_bind()
+    iengine = inspect(engine)
+
+    errors = False
+
+    tables = iengine.get_table_names()
+
+    # Go through all SQLAlchemy models
+    for name, klass in Base._decl_class_registry.items():
+
+        if isinstance(klass, _ModuleMarker):
+            # Not a model
+            continue
+
+        table = klass.__tablename__
+        if table in tables:
+            # Check all columns are found
+            # Looks like [{'default': "nextval('sanity_check_test_id_seq'::regclass)", 'autoincrement': True, 'nullable': False, 'type': INTEGER(), 'name': 'id'}]
+
+            columns = [c["name"] for c in iengine.get_columns(table)]
+            mapper = inspect(klass)
+
+            for column_prop in mapper.attrs:
+                if isinstance(column_prop, RelationshipProperty):
+                    # TODO: Add sanity checks for relations
+                    pass
+                else:
+                    for column in column_prop.columns:
+                        # Assume normal flat column
+                        if not column.key in columns:
+                            logger.error("Model %s declares column %s which does not exist in database %s", klass, column.key, engine)
+                            errors = True
+        else:
+            logger.error("Model %s declares table %s which does not exist in database %s", klass, table, engine)
+            errors = True
+
+    return not errors
+
+def _check_db(args):
+    from sqlalchemy import inspect
+    from sqlalchemy.ext.declarative.clsregistry import _ModuleMarker
+    from sqlalchemy.orm import RelationshipProperty
 
 def start(args):
     _activate_venv()
@@ -188,7 +276,7 @@ If this is your first time running this script, or if you haven't installed HPX 
 HPX requires Python 3.5 and optionally npm to build the webclient and git to fetch new changes.
 Make sure those are installed before running the command above.
 
-You can now start HPX by running:
+You can now start HPX by running (additional arguments will be forwarded):
     $ python3 bootstrap.py run
 
 You only need to install once. After installing, you can update HPX after pulling the new changes from the git repo by running:
@@ -229,6 +317,9 @@ def main():
 
     subparser = subparsers.add_parser('update', help='Fetch the latest changes from the GitHub repo')
     subparser.set_defaults(func=update)
+
+    subparser = subparsers.add_parser('version', help='Display build number and latest changes')
+    subparser.set_defaults(func=version)
 
     subparser = subparsers.add_parser('run', help='Start HPX, additional args will be passed to HPX')
     subparser.set_defaults(func=start)

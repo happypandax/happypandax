@@ -1,27 +1,47 @@
-from react_utils import (e,
-                        render,
-                        React,
-                        createReactClass)
+from state import state
 import utils
 
 io = require('socket.io-client')
 
 debug = True
 
-ItemType = {
-    'artist': 7,
-    'category': 8,
-    'circle': 11,
-    'collection': 2,
-    'gallery': 1,
-    'galleryfilter': 3,
-    'galleryurl': 12,
-    'grouping': 5,
-    'language':9,
-    'page':4,
-    'status':10,
-    'title': 6
-    }
+class ItemType:
+    #: Gallery
+    Gallery = 1
+    #: Collection
+    Collection = 2
+    #: GalleryFilter
+    GalleryFilter = 3
+    #: Page
+    Page = 4
+    #: Gallery Namespace
+    Grouping = 5
+    #: Gallery Title
+    Title = 6
+    #: Gallery Artist
+    Artist = 7
+    #: Category
+    Category = 8
+    #: Language
+    Language = 9
+    #: Status
+    Status = 10
+    #: Circle
+    Circle = 11
+    #: GalleryURL
+    GalleryUrl = 12
+    #: Gallery Parody
+    Parody = 13
+
+class ImageSize:
+    #: Original image size
+    Original = 1
+    #: Big image size
+    Big = 2
+    #: Medium image size
+    Medium = 3
+    #: Small image size
+    Small = 4
 
 class Base:
 
@@ -34,25 +54,6 @@ class Base:
     def log(self, msg):
         if debug:
             print(msg)
-
-    def flash(self, msg, flash_type='danger', strong=""):
-        """
-        - info
-        - sucess
-        - warning
-        - danger
-        """
-        pass
-        #lbl = 'alert-' + flash_type
-        #obj = self.compile(
-        #    "#global-flash-t",
-        #    "#global-flash",
-        #    prepend=True,
-        #    alert=lbl,
-        #    strong=strong,
-        #    msg=msg)
-        #obj.delay(8000).fadeOut(500)
-
 
 class ServerMsg:
     msg_id = 0
@@ -115,7 +116,7 @@ class Client(Base):
     def connection(self):
         self.send_command(self.commands['status'])
         if not self._connection_status:
-            self.flash("Trying to establish server connection...", 'info')
+            state.app.notif("Trying to establish server connection...", "Server")
             self.send_command(self.commands['connect'])
         return False
 
@@ -124,23 +125,19 @@ class Client(Base):
         self.socket.emit("command", {'command': cmd})
 
     def on_command(self, msg):
-        pass
-        #self._connection_status = msg['status']
-        #st_txt = "unknown"
-        #st_label = self.get_label("default")
-        #if self._connection_status:
-        #    if self._disconnected_once:
-        #        self._disconnected_once = False
-        #        self.flash("Connection to server has been established", 'success')
-        #    st_txt = "connected"
-        #    st_label = self.get_label("success")
-        #else:
-        #    self._disconnected_once = True
-        #    st_txt = "disconnected"
-        #    st_label = self.get_label("danger")
+        self._connection_status = msg['status']
+        st_txt = "unknown"
+        if self._connection_status:
+            if self._disconnected_once:
+                self._disconnected_once = False
+                state.app.notif("Connection to server has been established", "Server", 'success')
+            st_txt = "connected"
+        else:
+            self._disconnected_once = True
+            st_txt = "disconnected"
 
     def on_error(self, msg):
-        self.flash(msg['error'], 'danger')
+        state.app.notif(msg['error'], "Server", "error")
 
     __pragma__('tconv')
     __pragma__('iconv')
@@ -155,7 +152,7 @@ class Client(Base):
                 self.log(msg)
             self.session = serv_data['session']
             if 'error' in serv_data:
-                #self.flash_error(serv_data['error'])
+                self.flash_error(serv_data['error'])
                 if serv_data['error']['code'] == 408:
                     self.send_command(self.commands['handshake'])
             if serv_msg.func_name and serv_data:
@@ -163,7 +160,7 @@ class Client(Base):
                     err = None
                     if 'error' in func:
                         err = func['error']
-                        #self.flash_error(err)
+                        self.flash_error(err)
                     if func['fname'] == serv_msg.func_name:
                         if serv_msg.callback:
                             serv_msg.call_callback(func['data'], err)
@@ -205,6 +202,10 @@ class Client(Base):
             self._msg_queue.append(final_msg)
         servermsg._msg = final_msg
         return servermsg
+
+    def flash_error(self, err):
+        if err:
+            state.app.notif(err['msg'], "Server({})".format(err['code']), "error")
 
 client = Client()
 thumbclient = Client(namespace="/thumb")

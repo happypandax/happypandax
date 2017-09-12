@@ -41,14 +41,16 @@ from sqlalchemy import (
     Float,
     Enum,
     TypeDecorator,
-    text)
+    text,
+    Numeric)
 from sqlalchemy_utils import (
     ArrowType,
     generic_repr,
     force_instant_defaults,
     force_auto_coercion,
     get_type,
-    JSONType)
+    JSONType,
+    aggregated)
 
 from happypanda.common import constants, exceptions, hlogger, utils
 
@@ -802,6 +804,10 @@ class Grouping(ProfileMixin, NameMixin, Base):
         back_populates="groupings",
         cascade="save-update, merge, refresh-expire")
 
+    @aggregated('galleries', Column(Numeric))
+    def avg_rating(self):
+        return func.avg(Gallery.rating)
+
 profile_association(Grouping, "groupings")
 
 
@@ -1315,12 +1321,16 @@ def _get_session(sess):
 
 
 def init(**kwargs):
-    db_path = constants.db_path_dev if constants.dev else constants.db_path
+    db_path = kwargs.get("path")
+    if not db_path:
+        db_path = constants.db_path_dev if constants.dev else constants.db_path
     Session = scoped_session(sessionmaker(), scopefunc=gevent.getcurrent)
     constants._db_scoped_sesion = Session
     constants.db_session = functools.partial(_get_session, Session)
     initEvents(Session)
-    constants.db_engine = create_engine(os.path.join("sqlite:///", db_path),
+    constants.db_engine = kwargs.get("engine")
+    if not constants.db_engine:
+        constants.db_engine = create_engine(os.path.join("sqlite:///", db_path),
                                         connect_args={'timeout': 60})  # SQLITE specific arg (avoding db is locked errors)
     Base.metadata.create_all(constants.db_engine)
 

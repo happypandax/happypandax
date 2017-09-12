@@ -68,7 +68,7 @@ def handle_submit(ev):
 
     serv_data.update(this.state['kwargs'])
     msg = client.call(ServerMsg([serv_data], serv_rsponse, contextobj=this))
-    this.props.to_server(utils.syntax_highlight(JSON.stringify(msg._msg, None, 4)))
+    this.props.to_server(utils.syntax_highlight(JSON.stringify(msg._msg['msg'], None, 4)))
 
 __pragma__("jsiter")
 def set_kwargs(i, v):
@@ -124,6 +124,8 @@ Page = createReactClass({
     'getInitialState': lambda: {
         "to_server":"",
         "from_server":"",},
+
+    'componentWillMount': lambda: this.props.menu(None),
 
     'set_msg_to': lambda msg: this.setState({'to_server':msg}),
     'set_msg_from': lambda msg: this.setState({'from_server':msg}),

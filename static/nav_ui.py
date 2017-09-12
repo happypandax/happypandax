@@ -84,7 +84,7 @@ def sidebar_nav_render():
         else:
             container = elements
 
-        item_children = (e(ui.Icon, js_name=menu_icon, className="left", size=icon_size), tr(this, x.t_id, menu_name) if not icon else "",)
+        item_children = (e(ui.Icon, js_name=menu_icon, className="left medium-size", size=icon_size), tr(this, x.t_id, menu_name) if not icon else "",)
 
         as_link = {}
         if x.url:
@@ -117,7 +117,8 @@ def sidebar_nav_render():
                         visible=True,
                         icon=icon,
                         defaultActiveIndex=3,
-                        className="sidebar-nav"
+                        className="sidebar-nav",
+                        size="small"
                         )
 
 SideBarNav = createReactClass({
@@ -150,22 +151,26 @@ def menu_nav_render():
             children.append(e(ui.Dropdown.Item, c.name))
 
         container.append(e(ui.Menu.Item,
-                            e(ui.Icon, js_name=menu_icon, size=icon_size),
+                            e(ui.Icon, js_name=menu_icon, size=icon_size, className="medium-size"),
                             menu_name,
                             js_name=menu_name,
                             header=x.header,
                             onClick=x.handler,
                             index=n)
                          )
+    menu_contents = this.props.contents
+    if not isinstance(menu_contents, list):
+        menu_contents = [menu_contents]
     return e(ui.Menu,
                         *elements_left,
                         *elements,
+                        *menu_contents,
                         *elements_right,
-                        #width=nav_width,
-                        #icon=icon,
-                        defaultActiveIndex=3,
                         secondary=True,
-                        attached="top",)
+                        attached="top",
+                        fluid=True,
+                        size="small",
+                        stackable=True)
 
 MenuNav = createReactClass({
     'displayName': 'MenuNav',

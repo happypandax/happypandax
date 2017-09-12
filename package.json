@@ -10,16 +10,17 @@
   "dependencies": {
     "react": "^15.6.1",
     "react-dom": "^15.6.1",
-    "react-notification-system": "^0.2.15",
+    "react-lazyload": "^2.2.7",
     "react-router-dom": "^4.1.2",
+    "react-s-alert": "^1.3.0",
     "react-slick": "^0.15.0",
     "semantic-ui-react": "^0.71.4",
     "socket.io": "^2.0.3"
   },
   "devDependencies": {
-    "babel-polyfill": "^6.26.0",
     "babel-core": "^6.26.0",
     "babel-loader": "^7.1.1",
+    "babel-polyfill": "^6.26.0",
     "babel-preset-es2015": "^6.24.1",
     "babel-preset-react": "^6.24.1",
     "webpack": "^3.5.5"

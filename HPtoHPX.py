@@ -889,7 +889,7 @@ if __name__ == '__main__':
                     d_artist = dst_artists.get(artist_name.name)
                     if not d_artist:
                         d_artist = artist
-                        artist_name.artist = d_artist
+                        d_artist.names.append(artist_name)
                     gallery.artists.append(artist)
                     dst_artists[artist_name.name] = artist
                 gallery.info = g.info
@@ -1055,10 +1055,10 @@ if __name__ == '__main__':
     print("Adding gallery tags...")
     s.add_all(dst_tag.values())
     s.add_all(dst_nstagmapping.values())
-    print("Adding galleries...")
-    s.add_all(dst_galleries)
-    print("Adding gallery lists...")
-    s.add_all(dst_lists)
+    #print("Adding galleries...")
+    #s.add_all(dst_galleries)
+    #print("Adding gallery lists...")
+    #s.add_all(dst_lists)
     print("Committing...")
     s.commit()
     print("Done!")

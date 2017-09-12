@@ -19,7 +19,7 @@ from happypanda.core.commands import io_cmd  # noqa: E402
 log = hlogger.Logger(__name__)
 
 
-def start(argv=None):
+def start(argv=None, db_kwargs={}):
     if argv is None:
         argv = sys.argv[1:]
     parser = utils.get_argparser()
@@ -28,7 +28,7 @@ def start(argv=None):
     utils.parse_options(args)
 
     if not args.only_web:
-        db.init()
+        db.init(**db_kwargs)
         command.init_commands()
         hlogger.Logger.init_listener(args)
         monkey.patch_all(thread=False)
