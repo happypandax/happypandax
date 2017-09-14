@@ -14,6 +14,8 @@ import nav_ui
 import api
 import dashboard
 import library
+import favorites
+import inbox
 
 __pragma__("kwargs")
 def notif(msg, header="", level="info", icon=None, **kwargs):
@@ -61,6 +63,8 @@ def app_render():
                 e(Route, path="/api", component=this.api_page),
                 e(Route, path="/dashboard", component=this.dashboard_page),
                 e(Route, path="/library", component=this.library_page),
+                e(Route, path="/favorite", component=this.favorites_page),
+                e(Route, path="/inbox", component=this.inbox_page),
                 className="sidebar-container",
                 basic=True),
                 as_=ui.Segment,
@@ -94,6 +98,8 @@ App = createReactClass({
     'api_page': lambda: e(api.Page, menu=this.set_menu_contents),
     'dashboard_page': lambda: e(dashboard.Page, menu=this.set_menu_contents),
     'library_page': lambda: e(library.Page, menu=this.set_menu_contents),
+    'favorites_page': lambda: e(favorites.Page, menu=this.set_menu_contents),
+    'inbox_page': lambda: e(inbox.Page, menu=this.set_menu_contents),
 
     'render': app_render,
 })

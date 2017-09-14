@@ -764,8 +764,9 @@ if __name__ == '__main__':
     print("Creating new Happypanda X database")
     engine = db.create_engine(os.path.join("sqlite:///", dst))
     db.Base.metadata.create_all(engine)
-    sess = db.sessionmaker()
+    sess = db.scoped_session(db.sessionmaker())
     sess.configure(bind=engine)
+    constants.db_session = sess
     db.initEvents(sess)
     s = sess()
     db.init_defaults(s)
@@ -924,13 +925,11 @@ if __name__ == '__main__':
             # tags
 
             for ns in g.tags:
-                n = db.Namespace()
-                n.name = constants.special_namespace if ns == 'default' else ns
+                n = db.Namespace(name=constants.special_namespace if ns == 'default' else ns)
                 n = dst_namespace.get(ns, n)
                 dst_namespace[ns] = n
                 for tag in g.tags[ns]:
-                    t = db.Tag()
-                    t.name = tag
+                    t = db.Tag(name=tag)
                     t = dst_tag.get(tag, t)
                     dst_tag[t.name] = t
                     nstagname = ns + tag
@@ -1055,10 +1054,10 @@ if __name__ == '__main__':
     print("Adding gallery tags...")
     s.add_all(dst_tag.values())
     s.add_all(dst_nstagmapping.values())
-    #print("Adding galleries...")
-    #s.add_all(dst_galleries)
-    #print("Adding gallery lists...")
-    #s.add_all(dst_lists)
+    print("Adding galleries...")
+    s.add_all(dst_galleries)
+    print("Adding gallery lists...")
+    s.add_all(dst_lists)
     print("Committing...")
     s.commit()
     print("Done!")

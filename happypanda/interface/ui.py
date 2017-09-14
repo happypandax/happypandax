@@ -1,7 +1,7 @@
 import i18n
 
 from happypanda.common import utils, constants, exceptions, hlogger
-from happypanda.core import message
+from happypanda.core import message, db
 from happypanda.interface import enums
 from happypanda.core.commands import database_cmd, search_cmd
 
@@ -50,8 +50,22 @@ def library_view(item_type: enums.ItemType = enums.ItemType.Gallery,
 
     model_ids = search_cmd.ModelFilter().run(db_model, search_query)
 
+    filter_op = ""
+    join_exp = ""
+    metatag_name = None
+    if view_filter == enums.ViewType.Favorite:
+        metatag_name = db.MetaTag.names.favorite
+    elif view_filter == enums.ViewType.Inbox:
+        metatag_name = db.MetaTag.names.inbox
+
+    if metatag_name:
+        if item_type == enums.ItemType.Gallery:
+            filter_op = db.MetaTag.name == metatag_name
+            join_exp = db.Gallery.metatags
+
+
     [items.append(db_msg(x)) for x in database_cmd.GetModelItemByID().run(
-        db_model, model_ids, limit=limit, offset=page * limit)]
+        db_model, model_ids, limit=limit, offset=page * limit, filter=filter_op, join=join_exp)]
 
     return items
 

@@ -187,7 +187,7 @@ class GetModelItemByID(Command):
         return q.limit(limit).all()
 
     def main(self, model: db.Base, ids: set, limit: int = 999,
-             filter: str = "", order_by: str = "", offset: int = 0, columns=tuple()) -> tuple:
+             filter: str = "", order_by: str = "", offset: int = 0, columns: tuple = tuple(), join: str = "") -> tuple:
 
         log.d("Fetching items from a set with", len(ids), "ids", "offset:", offset, "limit:", limit)
         if not ids:
@@ -199,8 +199,20 @@ class GetModelItemByID(Command):
         else:
             q = s.query(model)
 
+        if join:
+            if not isinstance(join, (list, tuple)):
+                join = [join]
+
+            for j in join:
+                if isinstance(j, str):
+                    q = q.join(db.sa_text(j))
+                else:
+                    q = q.join(j)
         if filter:
-            q = q.filter(db.sa_text(filter))
+            if isinstance(filter, str):
+                q = q.filter(db.sa_text(filter))
+            else:
+                q = q.filter(filter)
 
         if order_by:
             q = q.order_by(db.sa_text(order_by))
@@ -244,14 +256,27 @@ class GetModelItems(Command):
         return q.limit(limit).all()
 
     def main(self, model: db.Base, limit: int = 999,
-             filter: str = "", order_by: str = "", offset: int = 0) -> tuple:
+             filter: str = "", order_by: str = "", offset: int = 0, join: str = "") -> tuple:
 
         s = constants.db_session()
 
         q = s.query(model)
 
+        if join:
+            if not isinstance(join, (list, tuple)):
+                join = [join]
+
+            for j in join:
+                if isinstance(j, str):
+                    q = q.join(db.sa_text(j))
+                else:
+                    q = q.join(j)
+
         if filter:
-            q = q.filter(db.sa_text(filter))
+            if isinstance(filter, str):
+                q = q.filter(db.sa_text(filter))
+            else:
+                q = q.filter(filter)
 
         if order_by:
             q = q.order_by(db.sa_text(order_by))

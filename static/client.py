@@ -43,6 +43,14 @@ class ImageSize:
     #: Small image size
     Small = 4
 
+class ViewType:
+    #: Library
+    Library = 1
+    #: Favourite
+    Favorite = 2
+    #: Inbox
+    Inbox = 3
+
 class Base:
 
     def __init__(self, url=""):

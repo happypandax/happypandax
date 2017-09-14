@@ -6,13 +6,13 @@ from subprocess import run
 from importlib import reload
 
 dev_options = dict(
-    build_db = True,
+    build_db = False,
     prev_build = None,
     env_activated = False
     )
 
 changes = """
-- added 'avg_rating' to Grouping
+- nothing significant server-side
 """
 
 

@@ -87,8 +87,10 @@ def gallery_get_artists(data=None, error=None):
 def gallery_render():
     fav = 0
     title = ""
+    rating = 0
     item_id = this.state.id
     if this.state.data:
+        rating = this.state.data.rating
         title = this.state.data.titles[0].js_name
         if this.state.data.metatags.favorite:
             fav = 1
@@ -106,7 +108,7 @@ def gallery_render():
                     h("div",
                     e(LazyLoad, e(Thumbnail, item_id=item_id, item_type=this.state.item_type, size_type=ImageSize.Medium), once=True, height='100%'),
                     e(ui.Rating, icon="heart", size="massive", className="card-item top left", defaultRating=fav),
-                    e(ui.Label, e(ui.Icon, js_name="star"), 10, className="card-item bottom left", circular=True, size="large", color="yellow"),
+                    e(ui.Label, e(ui.Icon, js_name="star"), rating, className="card-item bottom left", circular=True, size="large", color="yellow"),
                     e(ui.Icon, js_name="ellipsis vertical", bordered=True, className="card-item bottom right", link=True, inverted=True),
                     className="card-content",
                     ),
@@ -173,8 +175,7 @@ def grouping_render():
     return e(ui.Segment, e(ui.Card,
                     h("div",
                     e(LazyLoad, e(Thumbnail, item_id=item_id, item_type=this.state.item_type, size_type=ImageSize.Medium), once=True, height='100%'),
-                    e(ui.Rating, icon="heart", size="massive", className="card-item top left", defaultRating=fav),
-                    e(ui.Label, e(ui.Icon, js_name="star"), 10, className="card-item bottom left", circular=True, size="large", color="yellow"),
+                    #e(ui.Label, e(ui.Icon, js_name="star half empty"), avg_rating, className="card-item bottom left", circular=True, size="large", color="orange"),
                     e(ui.Icon, js_name="ellipsis vertical", bordered=True, className="card-item bottom right", link=True, inverted=True),
                     e(ui.Label, e(ui.Icon, js_name="block layout"), len(this.state.galleries), className="card-item top right",),
                     className="card-content",
@@ -244,11 +245,13 @@ def get_items(data=None, error=None):
         state.app.notif("Failed to fetch item type: {}".format(this.props.item_type), level="error")
     else:
         item = this.props.item_type
+        func_kw = { 'item_type':item,
+                    'page':this.state.page,
+                    'limit':this.state.limit }
+        if this.props.view_filter:
+            func_kw['view_filter'] = this.props.view_filter
         if item:
-            client.call_func("library_view", this.get_items,
-                                item_type=item,
-                                page=this.state.page,
-                                limit=this.state.limit)
+            client.call_func("library_view", this.get_items, **func_kw)
 
 def item_view_on_mount():
     el = {

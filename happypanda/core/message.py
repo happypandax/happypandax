@@ -287,7 +287,7 @@ class DatabaseMessage(CoreMessage):
         elif isinstance(attrib, arrow.Arrow):
             return attrib.timestamp
 
-        elif isinstance(attrib, (bool, int, str, dict)):
+        elif isinstance(attrib, (bool, int, float, str, dict)):
             return attrib
         else:
             raise NotImplementedError(

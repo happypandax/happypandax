@@ -3,16 +3,16 @@ from react_utils import (h,
                          e,
                          React,
                          createReactClass)
-from ui import ui, Slider
-from client import client, ServerMsg
+from ui import ui
 from i18n import tr
 from state import state
-import utils
+from client import ViewType
 import items
 
-def library_render():
+def page_render():
     return e(items.ItemView,
-                        item_type=this.state.item_type)
+                        item_type=this.state.item_type,
+                        view_filter=ViewType.Library)
 
 Page = createReactClass({
     'displayName': 'LibraryPage',
@@ -34,6 +34,6 @@ Page = createReactClass({
 
     'getInitialState': lambda: {'item_type':items.ItemType.Grouping},
 
-    'render': library_render
+    'render': page_render
 })
 

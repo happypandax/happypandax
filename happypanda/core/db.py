@@ -25,7 +25,8 @@ from sqlalchemy.orm import (
     state,
     collections,
     dynamic,
-    backref)
+    backref,
+    column_property)
 from sqlalchemy import (
     create_engine,
     event,
@@ -42,15 +43,15 @@ from sqlalchemy import (
     Enum,
     TypeDecorator,
     text,
-    Numeric)
+    Numeric, 
+    select)
 from sqlalchemy_utils import (
     ArrowType,
     generic_repr,
     force_instant_defaults,
     force_auto_coercion,
     get_type,
-    JSONType,
-    aggregated)
+    JSONType)
 
 from happypanda.common import constants, exceptions, hlogger, utils
 
@@ -62,7 +63,6 @@ log = hlogger.Logger(__name__)
 and_op = and_
 or_op = or_
 sa_text = text
-
 
 class String(_String):
     """Enchanced version of standard SQLAlchemy's :class:`String`.
@@ -194,6 +194,44 @@ class Password(TypeDecorator):
             raise TypeError(
                 'Cannot convert {} to a PasswordHash'.format(type(value)))
 
+def _unique(session, cls, hashfunc, queryfunc, constructor, arg, kw):
+    cache = getattr(session, '_unique_cache', None)
+    if cache is None:
+        session._unique_cache = cache = {}
+
+    key = (cls, hashfunc(*arg, **kw))
+    if key in cache:
+        return cache[key]
+    else:
+        with session.no_autoflush:
+            q = session.query(cls)
+            q = queryfunc(q, *arg, **kw)
+            obj = q.first()
+            if not obj:
+                obj = constructor(*arg, **kw)
+                session.add(obj)
+        cache[key] = obj
+        return obj
+
+class UniqueMixin:
+    @classmethod
+    def unique_hash(cls, *arg, **kw):
+        raise NotImplementedError()
+
+    @classmethod
+    def unique_filter(cls, query, *arg, **kw):
+        raise NotImplementedError()
+
+    @classmethod
+    def as_unique(cls, *arg, **kw):
+        return _unique(
+                    constants.db_session(),
+                    cls,
+                    cls.unique_hash,
+                    cls.unique_filter,
+                    cls,
+                    arg, kw
+               )
 
 class BaseID:
     id = Column(Integer, primary_key=True)
@@ -206,9 +244,16 @@ class BaseID:
         sess.delete(self)
         return sess
 
-
-class NameMixin:
+class NameMixin(UniqueMixin):
     name = Column(String, nullable=False, default='', unique=True)
+
+    @classmethod
+    def unique_hash(cls, name):
+        return name
+
+    @classmethod
+    def unique_filter(cls, query, name):
+        return query.filter(cls.name == name)
 
     def exists(self, obj=False, strict=False):
         "obj: queries for the full object and returns it"
@@ -804,10 +849,6 @@ class Grouping(ProfileMixin, NameMixin, Base):
         back_populates="groupings",
         cascade="save-update, merge, refresh-expire")
 
-    @aggregated('galleries', Column(Numeric))
-    def avg_rating(self):
-        return func.avg(Gallery.rating)
-
 profile_association(Grouping, "groupings")
 
 
@@ -1004,7 +1045,6 @@ metatag_association(Gallery)
 profile_association(Gallery, "galleries")
 url_association(Gallery, "galleries")
 
-
 @generic_repr
 class Page(TaggableMixin, ProfileMixin, Base):
     __tablename__ = 'page'
@@ -1052,7 +1092,6 @@ class Page(TaggableMixin, ProfileMixin, Base):
 
 metatag_association(Page)
 profile_association(Page, "pages")
-
 
 @generic_repr
 class Title(AliasMixin, Base):
@@ -1440,3 +1479,4 @@ def ensure_in_session(item):
             return item
         except exc.InvalidRequestError:
             return constants.db_session().merge(item)
+
