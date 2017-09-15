@@ -50,8 +50,8 @@ def library_view(item_type: enums.ItemType = enums.ItemType.Gallery,
 
     model_ids = search_cmd.ModelFilter().run(db_model, search_query)
 
-    filter_op = ""
-    join_exp = ""
+    filter_op = None
+    join_exp = None
     metatag_name = None
     if view_filter == enums.ViewType.Favorite:
         metatag_name = db.MetaTag.names.favorite

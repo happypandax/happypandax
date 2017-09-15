@@ -186,8 +186,15 @@ class GetModelItemByID(Command):
 
         return q.limit(limit).all()
 
+    def _get_sql(self, expr):
+        if isinstance(expr, str):
+            return db.sa_text(expr)
+        else:
+            return expr
+
+
     def main(self, model: db.Base, ids: set, limit: int = 999,
-             filter: str = "", order_by: str = "", offset: int = 0, columns: tuple = tuple(), join: str = "") -> tuple:
+             filter: str = None, order_by: str = None, offset: int = 0, columns: tuple = tuple(), join: str = None) -> tuple:
 
         log.d("Fetching items from a set with", len(ids), "ids", "offset:", offset, "limit:", limit)
         if not ids:
@@ -199,23 +206,17 @@ class GetModelItemByID(Command):
         else:
             q = s.query(model)
 
-        if join:
+        if join is not None:
             if not isinstance(join, (list, tuple)):
                 join = [join]
-
             for j in join:
-                if isinstance(j, str):
-                    q = q.join(db.sa_text(j))
-                else:
-                    q = q.join(j)
-        if filter:
-            if isinstance(filter, str):
-                q = q.filter(db.sa_text(filter))
-            else:
-                q = q.filter(filter)
+                q = q.join(self._get_sql(j))
+        if filter is not None:
+            print(filter)
+            q = q.filter(self._get_sql(filter))
 
-        if order_by:
-            q = q.order_by(db.sa_text(order_by))
+        if order_by is not None:
+            q = q.order_by(self._get_sql(order_by))
 
         id_amount = len(ids)
         # TODO: only SQLite has 999 variables limit

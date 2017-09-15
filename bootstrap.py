@@ -12,7 +12,7 @@ dev_options = dict(
     )
 
 changes = """
-- nothing significant server-side
+- artists are now included in gallery object message
 """
 
 

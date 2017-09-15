@@ -86,7 +86,7 @@ search_option_whole = config.get(
     search_ns,
     "match_whole_words",
     False,
-    "Match only whole words")
+    "Match terms exact")
 search_option_all = config.get(
     search_ns,
     "match_all_terms",

@@ -17,20 +17,7 @@ def page_render():
 Page = createReactClass({
     'displayName': 'FavoritesPage',
 
-    'componentWillMount': lambda: this.props.menu([
-                    e(ui.Menu.Menu,
-                    e(ui.Menu.Item,
-                     e(items.Search, size="small", fluid=True, className="fullwidth"), className="fullwidth"),
-                    position="left",
-                    className="fullwidth"),
-                    e(ui.Popup,
-                      e(ui.Grid, centered=True),
-                      trigger=e(ui.Menu.Item, e(ui.Icon, js_name="options"), "View Options",),
-                      hoverable=True,
-                      on="click",
-                      flowing=True,
-                      ),
-                    ]),
+    'componentWillMount': lambda: this.props.menu(items.item_view_menu()),
 
     'getInitialState': lambda: {'item_type':items.ItemType.Gallery},
 

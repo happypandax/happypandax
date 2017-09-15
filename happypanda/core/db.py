@@ -937,7 +937,7 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
         "Artist",
         secondary=gallery_artists,
         back_populates='galleries',
-        lazy="dynamic",
+        lazy="joined",
         cascade="save-update, merge, refresh-expire")
     filters = relationship(
         "GalleryFilter",

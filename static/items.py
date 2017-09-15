@@ -69,25 +69,25 @@ Thumbnail = createReactClass({
 def gallery_on_mount():
     if this.state.data:
         this.setState({'id':this.state.data.id})
-        this.get_artists()
 
 
-def gallery_get_artists(data=None, error=None):
-    if data is not None and not error:
-        if data:
-            this.setState({"artists":data})
-    elif error:
-        state.app.notif("Failed to artists for item type ({}): {}".format(this.state.id, this.state.item_type), level="error")
-    else:
-        client.call_func("get_related_items", this.get_artists,
-                            item_type=this.state.item_type,
-                            item_id=this.state.data.id,
-                            related_type=ItemType.Artist)
+#def gallery_get_artists(data=None, error=None):
+#    if data is not None and not error:
+#        if data:
+#            this.setState({"artists":data})
+#    elif error:
+#        state.app.notif("Failed to artists for item type ({}): {}".format(this.state.id, this.state.item_type), level="error")
+#    else:
+#        client.call_func("get_related_items", this.get_artists,
+#                            item_type=this.state.item_type,
+#                            item_id=this.state.data.id,
+#                            related_type=ItemType.Artist)
 
 def gallery_render():
     fav = 0
     title = ""
     rating = 0
+    artists = []
     item_id = this.state.id
     if this.state.data:
         rating = this.state.data.rating
@@ -97,12 +97,11 @@ def gallery_render():
         if not item_id:
             item_id = this.state.data.id
 
+        for a in this.state.data.artists:
+            if len(a.names) > 0:
+                artists.append(a.names[0].js_name)
 
-    artists = []
-    for a in this.state.artists:
-        if len(a.names) > 0:
-            artists.append(a.names[0].js_name)
-    artist_el = [h("span", x) for x in artists]
+
 
     return e(ui.Card,
                     h("div",
@@ -115,9 +114,9 @@ def gallery_render():
                     e(ui.Popup,
                         trigger=e(ui.Card.Content,
                                     e(ui.Card.Header, title, className="text-ellipsis card-header"),
-                                    e(ui.Card.Meta, *artist_el, className="text-ellipsis"),),
+                                    e(ui.Card.Meta, *[h("span", x) for x in artists], className="text-ellipsis"),),
                         header=title,
-                        content=h("div", *artist_el),
+                        content=h("div", *[h("span", x) for x in artists]),
                         hideOnScroll=True,
                         position="bottom center"
                                 ),
@@ -128,10 +127,7 @@ Gallery = createReactClass({
 
     'getInitialState': lambda: {'id':None,
                                 'data':None,
-                                'artists':[],
                                 'item_type':ItemType.Gallery},
-
-    'get_artists': gallery_get_artists,
 
     'componentWillMount': lambda: this.setState({'data':this.props.data, 'id':0}),
 
@@ -209,6 +205,25 @@ Grouping = createReactClass({
 })
 
 
+SearchOptions = createReactClass({
+    'displayName': 'SearchOptions',
+
+    'getInitialState': lambda: {'case':False,
+                                'regex':False,
+                                'whole':False,
+                                'all':False,
+                                'desc':False,},
+
+    'render': lambda: e(ui.List,
+                        e(ui.List.Item, e(ui.Checkbox, toggle=True, label="Case sensitive", defaultChecked=this.state.case)),
+                        e(ui.List.Item, e(ui.Checkbox, toggle=True, label="Regex", defaultChecked=this.state.regex)),
+                        e(ui.List.Item, e(ui.Checkbox, toggle=True, label="Match exact", defaultChecked=this.state.whole)),
+                        e(ui.List.Item, e(ui.Checkbox, toggle=True, label="Match all", defaultChecked=this.state.all)),
+                        e(ui.List.Item, e(ui.Checkbox, toggle=True, label="Children", defaultChecked=this.state.desc)),
+                        )
+})
+
+
 def search_render():
     fluid = this.props.fluid
     options = [
@@ -219,7 +234,7 @@ def search_render():
                         size=this.props.size,
                         input=e(ui.Input, fluid=this.props.fluid, placeholder="Search title, artist, namespace & tags",
                                 label=e(ui.Popup,
-                                  e(ui.Grid, centered=True),
+                                  e(SearchOptions),
                                   trigger=e(ui.Label, e(ui.Icon, js_name="options"), "Search Options",),
                                   hoverable=True,
                                   on="click",
@@ -301,19 +316,36 @@ ItemView = createReactClass({
     'render': item_view_render
 })
 
+ViewOptions = createReactClass({
+    'displayName': 'ViewOptions',
 
-Page = createReactClass({
-    'displayName': 'DasboardPage',
+    'getInitialState': lambda: {'page':0,
+                                'limit':50,
+                                'infinitescroll':False,
+                                'items':[],
+                                "element":None,
+                                "loading":True},
 
-    'getInitialState': lambda: {},
+    'get_items': get_items,
 
-    'render': lambda: e(ui.Grid.Column,
-                        e(ui.Header, tr(this, "", "Newest Additions"), as_="h4", dividing=True),
-                        e(ui.Header, tr(this, "", "Artist Spotlight"), as_="h4", dividing=True),
-                        e(ui.Header, tr(this, "", "Previously Read"), as_="h4", dividing=True),
-                        e(ui.Header, tr(this, "", "Based On Today's Tags"), as_="h4", dividing=True),
-                        e(ui.Header, tr(this, "", "Random"), as_="h4",  dividing=True),
-                        e(ui.Header, tr(this, "", "Needs Tagging"), as_="h4", dividing=True),
-                        e(ui.Header, tr(this, "", "Recently Rated High"), as_="h4", dividing=True),)
+    'componentWillMount': item_view_on_mount,
+    'componentDidMount': lambda: this.get_items(),
+
+
+    'render': item_view_render
 })
 
+def item_view_menu():
+    return [e(ui.Menu.Menu,
+                e(ui.Menu.Item,
+                    e(Search, size="small", fluid=True, className="fullwidth"), className="fullwidth"),
+                position="left",
+                className="fullwidth"),
+            e(ui.Popup,
+                e(ui.Grid, centered=True),
+                trigger=e(ui.Menu.Item, e(ui.Icon, js_name="options"), "View Options",),
+                hoverable=True,
+                on="click",
+                flowing=True,
+                ),
+            ]
