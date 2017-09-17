@@ -14,6 +14,34 @@ i18n.set("fallback", constants.translation_locale)
 i18n.set("filename_format", "{locale}.{namespace}.{format}")
 i18n.set("error_on_missing_translation", True)
 
+def _view_helper(item_type: enums.ItemType=enums.ItemType.Gallery,
+                   search_query: str = "",
+                   filter_id: int = None,
+                   view_filter: enums.ViewType = enums.ViewType.Library):
+
+    view_filter = enums.ViewType.get(view_filter)
+    item_type = enums.ItemType.get(item_type)
+
+    db_msg, db_model = item_type._msg_and_model(
+        (enums.ItemType.Gallery, enums.ItemType.Collection, enums.ItemType.Grouping))
+
+
+    model_ids = search_cmd.ModelFilter().run(db_model, search_query)
+
+    filter_op = None
+    join_exp = None
+    metatag_name = None
+    if view_filter == enums.ViewType.Favorite:
+        metatag_name = db.MetaTag.names.favorite
+    elif view_filter == enums.ViewType.Inbox:
+        metatag_name = db.MetaTag.names.inbox
+
+    if metatag_name:
+        if item_type == enums.ItemType.Gallery:
+            filter_op = db.MetaTag.name == metatag_name
+            join_exp = db.Gallery.metatags
+
+    return view_filter, item_type, db_msg, db_model, model_ids, filter_op, join_exp, metatag_name
 
 def library_view(item_type: enums.ItemType = enums.ItemType.Gallery,
                  page: int = 0,
@@ -34,35 +62,15 @@ def library_view(item_type: enums.ItemType = enums.ItemType.Gallery,
         limit: amount of items per page
         search_query: filter item by search terms
         filter_id: current filter list id
-        view_filter: ...
+        view_filter: type of view
 
     Returns:
         list of item message objects
     """
     utils.require_context(ctx)
-    view_filter = enums.ViewType.get(view_filter)
-    item_type = enums.ItemType.get(item_type)
-
-    db_msg, db_model = item_type._msg_and_model(
-        (enums.ItemType.Gallery, enums.ItemType.Collection, enums.ItemType.Grouping))
+    view_filter, item_type, db_msg, db_model, model_ids, filter_op, join_exp, metatag_name = _view_helper(item_type, search_query, filter_id, view_filter)
 
     items = message.List(db_model.__name__.lower(), db_msg)
-
-    model_ids = search_cmd.ModelFilter().run(db_model, search_query)
-
-    filter_op = None
-    join_exp = None
-    metatag_name = None
-    if view_filter == enums.ViewType.Favorite:
-        metatag_name = db.MetaTag.names.favorite
-    elif view_filter == enums.ViewType.Inbox:
-        metatag_name = db.MetaTag.names.inbox
-
-    if metatag_name:
-        if item_type == enums.ItemType.Gallery:
-            filter_op = db.MetaTag.name == metatag_name
-            join_exp = db.Gallery.metatags
-
 
     [items.append(db_msg(x)) for x in database_cmd.GetModelItemByID().run(
         db_model, model_ids, limit=limit, offset=page * limit, filter=filter_op, join=join_exp)]
@@ -81,23 +89,16 @@ def get_view_count(item_type: enums.ItemType=enums.ItemType.Gallery,
         item_type: possible items are :py:attr:`.ItemType.Gallery`, :py:attr:`.ItemType.Collection`, :py:attr:`.ItemType.Grouping`
         search_query: filter item by search terms
         filter_id: current filter list id
-        view_filter: ...
+        view_filter: type of view
 
     Returns:
         ```
         { 'count': int }
         ```
     """
+    view_filter, item_type, db_msg, db_model, model_ids, filter_op, join_exp, metatag_name = _view_helper(item_type, search_query, filter_id, view_filter)
 
-    view_filter = enums.ViewType.get(view_filter)
-    item_type = enums.ItemType.get(item_type)
-
-    db_msg, db_model = item_type._msg_and_model(
-        (enums.ItemType.Gallery, enums.ItemType.Collection, enums.ItemType.Grouping))
-
-    model_ids = search_cmd.ModelFilter().run(db_model, search_query)
-
-    return message.Identity('count', {'count': len(model_ids)})
+    return message.Identity('count', {'count':database_cmd.GetModelItemByID().run(db_model, model_ids, filter=filter_op, join=join_exp, count=True)})
 
 
 def translate(t_id: str, locale: str = None, default: str = None):

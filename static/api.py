@@ -140,9 +140,9 @@ Page = createReactClass({
                         e(ui.Divider),
                         e(ui.Accordion,
                           e(ui.Accordion.Title, e(ui.Icon, js_name="dropdown"), tr(this, "", "Message")),
-                          e(ui.Accordion.Content, e(ui.Message, formatted_json(this.state['to_server']), as_="pre")),
+                          e(ui.Accordion.Content, e(ui.Message, formatted_json(this.state['to_server']), as_="pre", className="overflow-auto")),
                           e(ui.Accordion.Title, e(ui.Icon, js_name="dropdown"), tr(this, "", "Response")),
-                          e(ui.Accordion.Content, e(ui.Message, formatted_json(this.state['from_server']), as_="pre")),
+                          e(ui.Accordion.Content, e(ui.Message, formatted_json(this.state['from_server']), as_="pre", className="overflow-auto")),
                           exclusive=False,
                           defaultActiveIndex=[0, 1]
                           )

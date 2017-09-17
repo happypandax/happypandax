@@ -13,6 +13,7 @@ dev_options = dict(
 
 changes = """
 - artists are now included in gallery object message
+- implemented view filter
 """
 
 

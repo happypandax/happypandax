@@ -4,21 +4,26 @@ from react_utils import (h,
                          React,
                          createReactClass,
                          LazyLoad)
-from ui import ui, Slider, Error
+from ui import ui, Slider, Error, Pagination
 from client import (client, ServerMsg, ItemType, ImageSize, thumbclient, Command)
 from i18n import tr
 import utils
 from state import state
 
-def thumbnail_on_mount():
-    if this.state.item_id and this.state.size_type and this.state.item_type:
+def thumbnail_on_update(p_props, p_state):
+    if any((
+        p_props.item_type != this.props.item_type,
+        p_props.item_id != this.props.item_id,
+        p_props.size_type != this.props.size_type,
+        )):
         this.get_thumb()
+
 
 __pragma__('tconv')
 
 def thumbnail_get_thumb(data=None, error=None):
     if data is not None and not error:
-        cmd_id = data[str(this.state.item_id)]
+        cmd_id = data[str(this.props.item_id)]
         if cmd_id:
             cmd = Command(cmd_id)
             cmd.set_callback(this.set_thumb)
@@ -26,10 +31,11 @@ def thumbnail_get_thumb(data=None, error=None):
     elif error:
         pass
     else:
-        if this.state.item_id:
+        if this.props.item_id and this.props.size_type and this.props.item_type:
             thumbclient.call_func("get_image", this.get_thumb,
-                                  item_ids=[this.state.item_id],
-                                  size=this.state.size_type, url=True, uri=True, item_type=this.state.item_type)
+                                  item_ids=[this.props.item_id],
+                                  size=this.props.size_type, url=True, uri=True, item_type=this.props.item_type)
+            this.setState({'loading':True})
 __pragma__('notconv')
 
 def thumbnail_set_thumb(cmd):
@@ -51,25 +57,23 @@ def thumbnail_render():
 Thumbnail = createReactClass({
     'displayName': 'Thumbnail',
 
-    'getInitialState': lambda: {'item_id':this.props.item_id,
-                                'size_type':this.props.size_type,
-                                'item_type':this.props.item_type,
-                                'img':None,
+    'getInitialState': lambda: {'img':None,
                                 'loading':True},
 
     'get_thumb': thumbnail_get_thumb,
 
     'set_thumb': thumbnail_set_thumb,
 
-    'componentDidMount': thumbnail_on_mount,
+    'componentDidMount': lambda: this.get_thumb(),
+    'componentDidUpdate': thumbnail_on_update,
 
     'render': thumbnail_render
 })
 
-def gallery_on_mount():
-    if this.state.data:
-        this.setState({'id':this.state.data.id})
 
+def gallery_on_update(p_props, p_state):
+    if p_props.data != this.props.data:
+        this.setState({'data':this.props.data, 'id': this.props.data.id if this.props.data else None})
 
 #def gallery_get_artists(data=None, error=None):
 #    if data is not None and not error:
@@ -105,7 +109,7 @@ def gallery_render():
 
     return e(ui.Card,
                     h("div",
-                    e(LazyLoad, e(Thumbnail, item_id=item_id, item_type=this.state.item_type, size_type=ImageSize.Medium), once=True, height='100%'),
+                    e(Thumbnail, item_id=item_id, item_type=this.state.item_type, size_type=ImageSize.Medium),
                     e(ui.Rating, icon="heart", size="massive", className="card-item top left", defaultRating=fav),
                     e(ui.Label, e(ui.Icon, js_name="star"), rating, className="card-item bottom left", circular=True, size="large", color="yellow"),
                     e(ui.Icon, js_name="ellipsis vertical", bordered=True, className="card-item bottom right", link=True, inverted=True),
@@ -126,12 +130,11 @@ Gallery = createReactClass({
     'displayName': 'Gallery',
 
     'getInitialState': lambda: {'id':None,
-                                'data':None,
+                                'data':this.props.data,
                                 'item_type':ItemType.Gallery},
 
-    'componentWillMount': lambda: this.setState({'data':this.props.data, 'id':0}),
-
-    'componentDidMount': gallery_on_mount,
+    'componentWillMount': lambda: this.setState({'id':this.props.data.id if this.props.data else this.state.data.id if this.state.data else None}),
+    'componentDidUpdate': gallery_on_update,
 
     'render': gallery_render
 })
@@ -170,7 +173,7 @@ def grouping_render():
 
     return e(ui.Segment, e(ui.Card,
                     h("div",
-                    e(LazyLoad, e(Thumbnail, item_id=item_id, item_type=this.state.item_type, size_type=ImageSize.Medium), once=True, height='100%'),
+                    e(Thumbnail, item_id=item_id, item_type=this.state.item_type, size_type=ImageSize.Medium),
                     #e(ui.Label, e(ui.Icon, js_name="star half empty"), avg_rating, className="card-item bottom left", circular=True, size="large", color="orange"),
                     e(ui.Icon, js_name="ellipsis vertical", bordered=True, className="card-item bottom right", link=True, inverted=True),
                     e(ui.Label, e(ui.Icon, js_name="block layout"), len(this.state.galleries), className="card-item top right",),
@@ -226,28 +229,38 @@ SearchOptions = createReactClass({
 
 def search_render():
     fluid = this.props.fluid
-    options = [
-        {'key':'gallery', 'text':'Gallery', 'value':ItemType.Gallery},
-        {'key':'collection', 'text':'Collection', 'value':ItemType.Collection},
-        ]
+
     return e(ui.Search,
                         size=this.props.size,
                         input=e(ui.Input, fluid=this.props.fluid, placeholder="Search title, artist, namespace & tags",
                                 label=e(ui.Popup,
                                   e(SearchOptions),
-                                  trigger=e(ui.Label, e(ui.Icon, js_name="options"), "Search Options",),
+                                  trigger=e(ui.Label, e(ui.Icon, js_name="options"), "Search Options", as_="a"),
                                   hoverable=True,
                                   on="click",
                                   hideOnScroll=True,)),
                         fluid=True,
                         icon=e(ui.Icon, js_name="search", link=True),
-                        className=this.props.className)
+                        className=this.props.className,
+                        onSearchChange=this.on_search_change,
+                        )
+
+def on_search_change(e, d):
+    this.search_data = [e, d]
+    clearTimeout(this.search_timer_id)
+    this.search_timer_id = setTimeout(this.search_timer, 400)
 
 Search = createReactClass({
     'displayName': 'Search',
 
     'getInitialState': lambda: {'query':'',
                                 },
+
+    'search_data':[],
+    'search_timer_id':0,
+    'search_timer': lambda: this.props.on_search(*this.search_data) if this.props.on_search else None,
+
+    'on_search_change': on_search_change,
 
     'render': search_render
 })
@@ -261,14 +274,34 @@ def get_items(data=None, error=None):
     else:
         item = this.props.item_type
         func_kw = { 'item_type':item,
-                    'page':this.state.page,
-                    'limit':this.state.limit }
+                    'page':this.state.page }
         if this.props.view_filter:
             func_kw['view_filter'] = this.props.view_filter
+        if this.props.search_query:
+            func_kw['search_query'] = this.props.search_query
+        if this.props.limit:
+            func_kw['limit'] = this.props.limit
         if item:
             client.call_func("library_view", this.get_items, **func_kw)
+            this.setState({'loading':True})
 
-def item_view_on_mount():
+def get_items_count(data=None, error=None):
+    if data is not None and not error:
+        this.setState({"item_count":data['count']})
+    elif error:
+        pass
+    else:
+        item = this.props.item_type
+        func_kw = { 'item_type':item }
+        if this.props.view_filter:
+            func_kw['view_filter'] = this.props.view_filter
+        if this.props.search_query:
+            func_kw['search_query'] = this.props.search_query
+        if item:
+            client.call_func("get_view_count", this.get_items_count, **func_kw)
+
+
+def get_element():
     el = {
         ItemType.Gallery:Gallery,
         ItemType.Collection:Collection,
@@ -279,6 +312,18 @@ def item_view_on_mount():
 
     this.setState({'element':el})
 
+def item_view_on_update(p_props, p_state):
+    if p_props.item_type != this.props.item_type:
+        this.get_element()
+
+    if any((
+        p_props.item_type != this.props.item_type,
+        p_props.search_query != this.props.search_query,
+        p_props.limit != this.props.limit,
+        )):
+        this.get_items_count()
+        this.get_items()
+
 def item_view_render():
     items = this.state['items']
     el = this.state.element
@@ -286,10 +331,22 @@ def item_view_render():
     if not el:
         return e(Error, content="An error occured")
 
+    limit = this.props.limit
+    if not this.props.limit:
+        limit = 100
+
+    paginations = e(Pagination,
+                     pages=this.state.item_count/limit,
+                     current_page=this.state.page,
+                     on_change=lambda n: print(n),
+                     query=True)
+
     return e(ui.Segment,
              e(ui.Grid,
+               e(ui.Grid.Row, paginations, centered=True),
                 *[e(ui.Grid.Column, c, computer=4, tablet=4, mobile=6, largeScreen=3, widescreen=2) for c in
-                  [e(LazyLoad, e(el, data=x), once=True, height='100%') for x in items]],
+                  [e(el, data=x) for x in items]],
+                e(ui.Grid.Row, paginations, centered=True),
                 padded=True,
                 relaxed=True,
                 stackable=True),
@@ -300,18 +357,21 @@ def item_view_render():
 ItemView = createReactClass({
     'displayName': 'ItemView',
 
-    'getInitialState': lambda: {'page':0,
-                                'limit':50,
+    'getInitialState': lambda: {'page':1,
                                 'infinitescroll':False,
                                 'items':[],
                                 "element":None,
-                                "loading":True},
+                                "loading":True,
+                                "item_count":1,
+                                },
 
+    'get_items_count': get_items_count,
     'get_items': get_items,
+    'get_element': get_element,
 
-    'componentWillMount': item_view_on_mount,
-    'componentDidMount': lambda: this.get_items(),
-
+    'componentWillMount': lambda: this.get_element(),
+    'componentDidMount': lambda: all((this.get_items(), this.get_items_count())),
+    'componentDidUpdate': item_view_on_update, 
 
     'render': item_view_render
 })
@@ -326,19 +386,30 @@ ViewOptions = createReactClass({
                                 "element":None,
                                 "loading":True},
 
-    'get_items': get_items,
 
-    'componentWillMount': item_view_on_mount,
-    'componentDidMount': lambda: this.get_items(),
-
-
-    'render': item_view_render
+    'render': lambda: h("div")
 })
 
-def item_view_menu():
-    return [e(ui.Menu.Menu,
+def ItemDropdown(props):
+    item_options = [
+        {'text':"Collection", 'value':ItemType.Collection},
+        {'text':"Gallery", 'value':ItemType.Gallery},
+        ]
+    return e(ui.Dropdown, placeholder="Item Type", selection=True, options=item_options, item=True,
+             defaultValue=ItemType.Gallery if props.value == ItemType.Grouping else props.value, onChange=props.on_change)
+
+def SortDropdown(props):
+    item_options = [
+        ]
+    return e(ui.Dropdown, placeholder="Sort by", selection=True, item=True, options=item_options, defaultValue=props.value, onChange=props.on_change)
+
+__pragma__("kwargs")
+def item_view_menu(on_item_change=None, default_item=None, on_search=None):
+    return [e(ui.Menu.Item, e(ItemDropdown, on_change=on_item_change, value=default_item), fitted=True),
+            e(ui.Menu.Item, e(ui.Icon, js_name="sort"), e(SortDropdown, on_change=None, value=None), fitted=True),
+            e(ui.Menu.Menu,
                 e(ui.Menu.Item,
-                    e(Search, size="small", fluid=True, className="fullwidth"), className="fullwidth"),
+                    e(Search, size="small", fluid=True, className="fullwidth", on_search=on_search), className="fullwidth",),
                 position="left",
                 className="fullwidth"),
             e(ui.Popup,
@@ -349,3 +420,4 @@ def item_view_menu():
                 flowing=True,
                 ),
             ]
+__pragma__("nokwargs")

@@ -354,7 +354,7 @@ class PartialModelFilter(Command):
             ids.update(x[0] for x in s.query(parent_model.id).
                        join(col_on_parent).
                        join(child_model.names).
-                       filter(match_string(db.ArtistName.name, term.tag, options)).all())
+                       filter(match_string(db.AliasName.name, term.tag, options)).all())
         return ids
 
     @match_model.default(capture=True)

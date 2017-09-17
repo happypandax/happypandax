@@ -142,3 +142,7 @@ i.medium-size { font-size: 1.1em !important; }
     padding: 0 !important;
     padding-bottom: 0.5rem !important;
 }
+
+.overflow-auto {
+    overflow: auto !important;
+}

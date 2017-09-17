@@ -1,4 +1,4 @@
-__pragma__('alias', 'S', '$')  # JQuery
+query_string = require("query-string")
 
 syntax_highlight = __pragma__('js', '{}',
                               """

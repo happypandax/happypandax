@@ -165,7 +165,6 @@ class GetSession(Command):
     def main(self) -> db.scoped_session:
         return constants.db_session()
 
-
 class GetModelItemByID(Command):
     """
     Fetch model items from the database by a set of ids
@@ -174,6 +173,8 @@ class GetModelItemByID(Command):
     """
 
     fetched = CommandEvent("fetched", str, tuple)
+
+    count = CommandEvent("count", str, int)
 
     def __init__(self):
         super().__init__()
@@ -194,14 +195,18 @@ class GetModelItemByID(Command):
 
 
     def main(self, model: db.Base, ids: set, limit: int = 999,
-             filter: str = None, order_by: str = None, offset: int = 0, columns: tuple = tuple(), join: str = None) -> tuple:
+             filter: str = None, order_by: str = None,
+             offset: int = 0, columns: tuple = tuple(),
+             join: str = None, count: bool = False) -> tuple:
 
         log.d("Fetching items from a set with", len(ids), "ids", "offset:", offset, "limit:", limit)
         if not ids:
             return tuple()
 
         s = constants.db_session()
-        if columns:
+        if count:
+            q = s.query(model.id)
+        elif columns:
             q = s.query(*columns)
         else:
             q = s.query(model)
@@ -222,17 +227,27 @@ class GetModelItemByID(Command):
         # TODO: only SQLite has 999 variables limit
         _max_variables = 900
         if id_amount > _max_variables:
-            fetched_list = [x for x in q.all() if x.id in ids]
+            if count:
+                fetched_list = [x for x in q.all() if x[0] in ids]
+            else:
+                fetched_list = [x for x in q.all() if x.id in ids]
+
             fetched_list = fetched_list[offset:][:limit]
-            self.fetched_items = tuple(fetched_list)
+            self.fetched_items = tuple(fetched_list) if not count else len(fetched_list)
         elif id_amount == 1:
-            self.fetched_items = (q.get(ids.pop()),)
+            self.fetched_items = (q.get(ids.pop()),) if not count else q.count()
         else:
             q = q.filter(model.id.in_(ids))
-            self.fetched_items = tuple(self._query(q, limit, offset))
+            self.fetched_items = tuple(self._query(q, limit, offset)) if not count else q.count()
 
-        self.fetched.emit(db.model_name(model), self.fetched_items)
-        log.d("Returning", len(self.fetched_items), "fetched items")
+        if count:
+            self.fetched_items = q.count()
+            self.count.emit(db.model_name(model), self.fetched_items)
+            log.d("Returning items count ", self.fetched_items)
+        else:
+            self.fetched.emit(db.model_name(model), self.fetched_items)
+            self.count.emit(db.model_name(model), len(self.fetched_items))
+            log.d("Returning", len(self.fetched_items), "fetched items")
         return self.fetched_items
 
 
