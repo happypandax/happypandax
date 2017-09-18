@@ -3,7 +3,7 @@ from react_utils import (h,
                          e,
                          React,
                          createReactClass,
-                         LazyLoad)
+                         withRouter)
 from ui import ui, Slider, Error, Pagination
 from client import (client, ServerMsg, ItemType, ImageSize, thumbclient, Command)
 from i18n import tr
@@ -35,7 +35,7 @@ def thumbnail_get_thumb(data=None, error=None):
             thumbclient.call_func("get_image", this.get_thumb,
                                   item_ids=[this.props.item_id],
                                   size=this.props.size_type, url=True, uri=True, item_type=this.props.item_type)
-            this.setState({'loading':True})
+            this.setState({'loading':True, 'img':"static/img/default.png"})
 __pragma__('notconv')
 
 def thumbnail_set_thumb(cmd):
@@ -57,7 +57,7 @@ def thumbnail_render():
 Thumbnail = createReactClass({
     'displayName': 'Thumbnail',
 
-    'getInitialState': lambda: {'img':None,
+    'getInitialState': lambda: {'img':"static/img/default.png",
                                 'loading':True},
 
     'get_thumb': thumbnail_get_thumb,
@@ -250,6 +250,14 @@ def on_search_change(e, d):
     clearTimeout(this.search_timer_id)
     this.search_timer_id = setTimeout(this.search_timer, 400)
 
+def on_search_timer():
+    __pragma__("tconv")
+    if this.props.query and this.search_data and this.props.history:
+        utils.go_to(this.props.history, query={'search':this.search_data[1].value})
+    __pragma__("notconv")
+    if this.props.on_search:
+        this.props.on_search(*this.search_data)
+
 Search = createReactClass({
     'displayName': 'Search',
 
@@ -258,7 +266,7 @@ Search = createReactClass({
 
     'search_data':[],
     'search_timer_id':0,
-    'search_timer': lambda: this.props.on_search(*this.search_data) if this.props.on_search else None,
+    'search_timer': on_search_timer,
 
     'on_search_change': on_search_change,
 
@@ -274,13 +282,12 @@ def get_items(data=None, error=None):
     else:
         item = this.props.item_type
         func_kw = { 'item_type':item,
-                    'page':this.state.page }
+                    'page':int(this.state.page),
+                    'limit':this.props.limit or this.state.default_limit}
         if this.props.view_filter:
             func_kw['view_filter'] = this.props.view_filter
-        if this.props.search_query:
-            func_kw['search_query'] = this.props.search_query
-        if this.props.limit:
-            func_kw['limit'] = this.props.limit
+        if this.state.search_query:
+            func_kw['search_query'] = this.state.search_query
         if item:
             client.call_func("library_view", this.get_items, **func_kw)
             this.setState({'loading':True})
@@ -295,8 +302,8 @@ def get_items_count(data=None, error=None):
         func_kw = { 'item_type':item }
         if this.props.view_filter:
             func_kw['view_filter'] = this.props.view_filter
-        if this.props.search_query:
-            func_kw['search_query'] = this.props.search_query
+        if this.state.search_query:
+            func_kw['search_query'] = this.state.search_query
         if item:
             client.call_func("get_view_count", this.get_items_count, **func_kw)
 
@@ -316,30 +323,42 @@ def item_view_on_update(p_props, p_state):
     if p_props.item_type != this.props.item_type:
         this.get_element()
 
+
+    if p_props.search_query != this.props.search_query:
+        this.setState({'search_query':this.props.search_query})
+
     if any((
         p_props.item_type != this.props.item_type,
         p_props.search_query != this.props.search_query,
+        p_state.search_query != this.state.search_query,
         p_props.limit != this.props.limit,
         )):
+        this.setState({'page':1})
         this.get_items_count()
+
+    if any((
+        p_props.item_type != this.props.item_type,
+        p_props.search_query != this.props.search_query,
+        p_state.search_query != this.state.search_query,
+        p_props.limit != this.props.limit,
+        p_state.page != this.state.page,
+        )):
         this.get_items()
 
 def item_view_render():
     items = this.state['items']
     el = this.state.element
-
+    limit = this.props.limit or this.state.default_limit
     if not el:
         return e(Error, content="An error occured")
 
-    limit = this.props.limit
-    if not this.props.limit:
-        limit = 100
 
     paginations = e(Pagination,
                      pages=this.state.item_count/limit,
                      current_page=this.state.page,
-                     on_change=lambda n: print(n),
-                     query=True)
+                     on_change=this.set_page,
+                     query=True,
+                     scroll_top=True)
 
     return e(ui.Segment,
              e(ui.Grid,
@@ -357,8 +376,10 @@ def item_view_render():
 ItemView = createReactClass({
     'displayName': 'ItemView',
 
-    'getInitialState': lambda: {'page':1,
+    'getInitialState': lambda: {'page': int(utils.get_query("page", 1)) or 1,
+                                'search_query': utils.get_query("search", "") or this.props.search_query,
                                 'infinitescroll':False,
+                                'default_limit': 30,
                                 'items':[],
                                 "element":None,
                                 "loading":True,
@@ -368,6 +389,8 @@ ItemView = createReactClass({
     'get_items_count': get_items_count,
     'get_items': get_items,
     'get_element': get_element,
+    
+    'set_page': lambda p: this.setState({'page':p}),
 
     'componentWillMount': lambda: this.get_element(),
     'componentDidMount': lambda: all((this.get_items(), this.get_items_count())),
@@ -409,7 +432,7 @@ def item_view_menu(on_item_change=None, default_item=None, on_search=None):
             e(ui.Menu.Item, e(ui.Icon, js_name="sort"), e(SortDropdown, on_change=None, value=None), fitted=True),
             e(ui.Menu.Menu,
                 e(ui.Menu.Item,
-                    e(Search, size="small", fluid=True, className="fullwidth", on_search=on_search), className="fullwidth",),
+                    e(withRouter(Search), size="small", fluid=True, className="fullwidth", on_search=on_search, query=True), className="fullwidth",),
                 position="left",
                 className="fullwidth"),
             e(ui.Popup,

@@ -51,6 +51,8 @@ def app_will_mount():
     state['app'] = this
     this.notif = notif
 
+def get_container_ref(ctx):
+    state['container_ref'] = ctx
 
 def app_render():
     #state.app = this
@@ -59,14 +61,17 @@ def app_render():
                 e(nav_ui.MenuNav, toggler=this.toggle_sidebar, contents=this.state["menu_nav_contents"]),
                 e(ui.Sidebar.Pushable,
                 e(nav_ui.SideBarNav, toggled=this.state["sidebar_toggled"]),
-                e(ui.Segment,
-                e(Route, path="/api", component=this.api_page),
-                e(Route, path="/dashboard", component=this.dashboard_page),
-                e(Route, path="/library", component=this.library_page),
-                e(Route, path="/favorite", component=this.favorites_page),
-                e(Route, path="/inbox", component=this.inbox_page),
-                className="sidebar-container",
-                basic=True),
+                h("div",
+                    e(ui.Segment,
+                    e(Route, path="/api", component=this.api_page),
+                    e(Route, path="/dashboard", component=this.dashboard_page),
+                    e(Route, path="/library", component=this.library_page),
+                    e(Route, path="/favorite", component=this.favorites_page),
+                    e(Route, path="/inbox", component=this.inbox_page),
+                    basic=True),
+                    ref=this.get_context_ref,
+                    className="sidebar-container",
+                  ),
                 as_=ui.Segment,
                 attached="bottom",
                 className="main-content"
@@ -94,6 +99,7 @@ App = createReactClass({
     'toggle_sidebar': lambda: (this.setState({'sidebar_toggled':not this.state['sidebar_toggled']})),
 
     'set_menu_contents': lambda c: (this.setState({'menu_nav_contents':c})),
+    'get_context_ref': get_container_ref,
 
     'api_page': lambda: e(api.Page, menu=this.set_menu_contents),
     'dashboard_page': lambda: e(dashboard.Page, menu=this.set_menu_contents),

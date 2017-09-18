@@ -16,6 +16,10 @@ body, #root, #root > div { display: flex }
     overflow: auto;
 }
 
+.sidebar-container > .segment {
+    padding: 0 !important;
+}
+
 .sidebar-nav {
     position: relative !important;
     box-shadow: none !important;

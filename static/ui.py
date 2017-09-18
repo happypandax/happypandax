@@ -4,7 +4,10 @@ from react_utils import (h,e,
                         React,
                         ReactDOM,
                         createReactClass,
-                        QueryLink)
+                        QueryLink,
+                        ScrollToTop)
+
+from state import state
 
 ui = require("semantic-ui-react")
 
@@ -58,6 +61,10 @@ def pagination_change(new_page):
     this.setState({'current_page': new_page})
     if this.props.on_change:
         this.props.on_change(new_page)
+    if this.props.scroll_top:
+        el = this.props.context or state.container_ref
+        if el:
+            el.scrollTop = 0
 
 def pagination_render():
     limit = this.props.limit
@@ -132,9 +139,15 @@ def pagination_render():
         items.extend(make_items(page_list[-ellipsis_pos:]))
 
     if nav_back:
-        items.insert(0, e(ui.Menu.Item, icon="angle left", onClick=go_prev))
+        if this.props.query:
+            items.insert(0, e(ui.Menu.Item, icon="angle left", onClick=go_prev, as_=QueryLink, query={'page':current_page-1}))
+        else:
+            items.insert(0, e(ui.Menu.Item, icon="angle left", onClick=go_prev))
     if nav_next:
-        items.append(e(ui.Menu.Item, icon="angle right", onClick=go_next))
+        if this.props.query:
+            items.append(e(ui.Menu.Item, icon="angle right", onClick=go_next, as_=QueryLink, query={'page':current_page+1}))
+        else:
+            items.append(e(ui.Menu.Item, icon="angle right", onClick=go_next))
 
     return e(ui.Menu,
              *items,
@@ -147,8 +160,8 @@ Pagination = createReactClass({
 
     'change_page': pagination_change,
     'go_page': lambda e, d: this.change_page(int(d.js_name)),
-    'go_prev': lambda e, d: this.change_page(this.props.current_page or this.state.current_page - 1),
-    'go_next': lambda e, d: this.change_page(this.props.current_page or this.state.current_page + 1),
+    'go_prev': lambda e, d: this.change_page((this.props.current_page or this.state.current_page) - 1),
+    'go_next': lambda e, d: this.change_page((this.props.current_page or this.state.current_page) + 1),
 
     'render': pagination_render
 })
