@@ -13,7 +13,8 @@ dev_options = dict(
 
 changes = """
 - artists are now included in gallery object message
-- implemented view filter
+- implemented view filter in library_view and get_view_count api functions
+- improved library_view and get_view_count api functions to now allow querying for related items
 """
 
 

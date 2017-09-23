@@ -8,6 +8,7 @@
     "test": "tests"
   },
   "dependencies": {
+    "moment": "^2.18.1",
     "query-string": "^5.0.0",
     "react": "^15.6.1",
     "react-dom": "^15.6.1",

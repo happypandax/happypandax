@@ -194,13 +194,16 @@ class GetModelItemByID(Command):
             return expr
 
 
-    def main(self, model: db.Base, ids: set, limit: int = 999,
+    def main(self, model: db.Base, ids: set = None, limit: int = 999,
              filter: str = None, order_by: str = None,
              offset: int = 0, columns: tuple = tuple(),
              join: str = None, count: bool = False) -> tuple:
+        if ids is None:
+            log.d("Fetching items", "offset:", offset, "limit:", limit)
+        else:
+            log.d("Fetching items from a set with", len(ids), "ids", "offset:", offset, "limit:", limit)
 
-        log.d("Fetching items from a set with", len(ids), "ids", "offset:", offset, "limit:", limit)
-        if not ids:
+        if ids is not None and not ids:
             return tuple()
 
         s = constants.db_session()
@@ -217,28 +220,30 @@ class GetModelItemByID(Command):
             for j in join:
                 q = q.join(self._get_sql(j))
         if filter is not None:
-            print(filter)
             q = q.filter(self._get_sql(filter))
 
         if order_by is not None:
             q = q.order_by(self._get_sql(order_by))
 
-        id_amount = len(ids)
-        # TODO: only SQLite has 999 variables limit
-        _max_variables = 900
-        if id_amount > _max_variables:
-            if count:
-                fetched_list = [x for x in q.all() if x[0] in ids]
-            else:
-                fetched_list = [x for x in q.all() if x.id in ids]
+        if ids:
+            id_amount = len(ids)
+            # TODO: only SQLite has 999 variables limit
+            _max_variables = 900
+            if id_amount > _max_variables:
+                if count:
+                    fetched_list = [x for x in q.all() if x[0] in ids]
+                else:
+                    fetched_list = [x for x in q.all() if x.id in ids]
 
-            fetched_list = fetched_list[offset:][:limit]
-            self.fetched_items = tuple(fetched_list) if not count else len(fetched_list)
-        elif id_amount == 1:
-            self.fetched_items = (q.get(ids.pop()),) if not count else q.count()
+                fetched_list = fetched_list[offset:][:limit]
+                self.fetched_items = tuple(fetched_list) if not count else len(fetched_list)
+            elif id_amount == 1:
+                self.fetched_items = (q.get(ids.pop()),) if not count else q.count()
+            else:
+                q = q.filter(model.id.in_(ids))
+                self.fetched_items = tuple(self._query(q, limit, offset)) if not count else q.count()
         else:
-            q = q.filter(model.id.in_(ids))
-            self.fetched_items = tuple(self._query(q, limit, offset)) if not count else q.count()
+           self.fetched_items = tuple(self._query(q, limit, offset)) if not count else q.count()
 
         if count:
             self.fetched_items = q.count()

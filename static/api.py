@@ -18,6 +18,10 @@ def get_type(s):
         return s[1:-1]
     elif s.lower() in ('none', 'null'):
         return None
+    elif s.lower() == "true":
+        return True
+    elif s.lower() == "false":
+        return False
     else:
         try:
             return int(s)

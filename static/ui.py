@@ -8,6 +8,7 @@ from react_utils import (h,e,
                         ScrollToTop)
 
 from state import state
+import math
 
 ui = require("semantic-ui-react")
 
@@ -24,9 +25,13 @@ def SliderNav(props):
              onClick=props.onClick)
 
 def Slider(props):
+    children = props.children or []
+    if not isinstance(children, list):
+        children = [children]
+    items = [e(ui.Segment, x, basic=True, size=props.size) for x in children]
     return e(ui.Segment,
             e(slick,
-                *[e(ui.Segment, x, basic=True) for x in props.children],
+                *items,
                 dots=True,
                 dotsClass="circle slick-dots",
                 draggable=True,
@@ -37,9 +42,22 @@ def Slider(props):
                 slidesToShow=4,
                 slidesToScroll=2,
                 nextArrow=e(SliderNav, direction="right"),
-                prevArrow=e(SliderNav, direction="left"),),
+                prevArrow=e(SliderNav, direction="left"),
+                responsive = [ 
+                    { 'breakpoint': 425, 'settings': { 'slidesToShow': 1 } },
+                    { 'breakpoint': 610, 'settings': { 'slidesToShow': 2 } },
+                    { 'breakpoint': 768, 'settings': { 'slidesToShow': 3 } },
+                    { 'breakpoint': 1024, 'settings': { 'slidesToShow': 4 } },
+                    { 'breakpoint': 1280, 'settings': { 'slidesToShow': 5 } },
+                    { 'breakpoint': 1440, 'settings': { 'slidesToShow': 6 } },
+                    { 'breakpoint': 2560, 'settings': { 'slidesToShow': 7 } },
+                    { 'breakpoint': 100000, 'settings': 'unslick' } ]
+                ),
                 basic=True,
-                loading=props.loading)
+                loading=props.loading,
+                secondary=props.secondary,
+                tertiary=props.tertiary,
+                )
 
 def Notif(props):
     return  h("div",
@@ -77,11 +95,7 @@ def pagination_render():
     if not current_page:
         current_page = 1
 
-    # check if number is whole
-    if pages % 1 == 0:  # Note: will fail on very large numbers eg. 999999999999999999999
-        pages = int(pages)
-    else:
-        pages = int(pages) + 1
+    pages = math.floor(pages)
 
     page_list = range(1, pages + 1)
     ellipsis_pos = 2

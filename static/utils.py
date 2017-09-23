@@ -1,4 +1,5 @@
 query_string = require("query-string")
+moment = require("moment")
 
 syntax_highlight = __pragma__('js', '{}',
                               """
@@ -91,6 +92,8 @@ def go_to(history_obj, url="", query={}, state=None, push=True, keep_query=True,
     if push:
         history_obj.push(url, state)
     else:
-        history_obj.replace(url, state)
+        history_obj.js_replace(url, state)
 __pragma__("notconv")
 __pragma__("nokwargs")
+
+moment.locale(get_locale())

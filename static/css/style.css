@@ -150,3 +150,10 @@ i.medium-size { font-size: 1.1em !important; }
 .overflow-auto {
     overflow: auto !important;
 }
+
+@media screen and (min-width: 1000px){
+    .card.medium-size {
+        max-width: 200px !important;
+    }
+}
+

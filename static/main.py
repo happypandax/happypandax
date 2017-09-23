@@ -16,6 +16,7 @@ import dashboard
 import library
 import favorites
 import inbox
+import itempage
 
 __pragma__("kwargs")
 def notif(msg, header="", level="info", icon=None, **kwargs):
@@ -68,6 +69,8 @@ def app_render():
                     e(Route, path="/library", component=this.library_page),
                     e(Route, path="/favorite", component=this.favorites_page),
                     e(Route, path="/inbox", component=this.inbox_page),
+                    e(Route, path="/item/gallery", component=this.gallery_page),
+                    e(Route, path="/item/collection", component=this.collection_page),
                     basic=True),
                     ref=this.get_context_ref,
                     className="sidebar-container",
@@ -105,7 +108,9 @@ App = createReactClass({
     'dashboard_page': lambda: e(dashboard.Page, menu=this.set_menu_contents),
     'library_page': lambda: e(library.Page, menu=this.set_menu_contents),
     'favorites_page': lambda: e(favorites.Page, menu=this.set_menu_contents),
-    'inbox_page': lambda: e(inbox.Page, menu=this.set_menu_contents),
+    'inbox_page': lambda: e(Item.Page, menu=this.set_menu_contents),
+    'gallery_page': lambda: e(itempage.GalleryPage, menu=this.set_menu_contents),
+    'collection_page': lambda: e(itempage.GalleryPage, menu=this.set_menu_contents),
 
     'render': app_render,
 })

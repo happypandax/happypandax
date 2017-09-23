@@ -17,16 +17,40 @@ i18n.set("error_on_missing_translation", True)
 def _view_helper(item_type: enums.ItemType=enums.ItemType.Gallery,
                    search_query: str = "",
                    filter_id: int = None,
-                   view_filter: enums.ViewType = enums.ViewType.Library):
+                   view_filter: enums.ViewType = enums.ViewType.Library,
+                   item_id: enums.ItemType = None,
+                   related_type: enums.ItemType = None,
+                   ):
 
     view_filter = enums.ViewType.get(view_filter)
+    if related_type:
+        related_type = enums.ItemType.get(related_type)
     item_type = enums.ItemType.get(item_type)
+
+    parent_model = None
 
     db_msg, db_model = item_type._msg_and_model(
         (enums.ItemType.Gallery, enums.ItemType.Collection, enums.ItemType.Grouping))
 
+    if related_type:
+        parent_model = db_model
+        db_msg, db_model = related_type._msg_and_model(
+            (enums.ItemType.Gallery, enums.ItemType.Page))
 
-    model_ids = search_cmd.ModelFilter().run(db_model, search_query)
+        col = db.relationship_column(parent_model, db_model)
+        if not col:
+            raise exceptions.APIError(
+                utils.this_function(),
+                "{} has no relationship with {}".format(
+                    related_type,
+                    item_type))
+
+        if item_id is None:
+            raise exceptions.APIError(utils.this_function(), "Missing id of parent item")
+
+    model_ids = None
+    if not db_model == db.Page:
+        model_ids = search_cmd.ModelFilter().run(db_model, search_query)
 
     filter_op = None
     join_exp = None
@@ -41,9 +65,16 @@ def _view_helper(item_type: enums.ItemType=enums.ItemType.Gallery,
             filter_op = db.MetaTag.name == metatag_name
             join_exp = db.Gallery.metatags
 
+    if related_type:
+        related_filter = parent_model.id == item_id
+        filter_op = db.and_op(filter_op, related_filter) if filter_op is not None else related_filter
+        join_exp = [join_exp, parent_model] if join_exp is not None else parent_model
+
     return view_filter, item_type, db_msg, db_model, model_ids, filter_op, join_exp, metatag_name
 
 def library_view(item_type: enums.ItemType = enums.ItemType.Gallery,
+                 item_id: enums.ItemType = None,
+                 related_type: enums.ItemType = None,
                  page: int = 0,
                  limit: int = 100,
                  sort_by: str = "",
@@ -63,12 +94,14 @@ def library_view(item_type: enums.ItemType = enums.ItemType.Gallery,
         search_query: filter item by search terms
         filter_id: current filter list id
         view_filter: type of view
+        related_type: child item
+        item_id: id of parent item
 
     Returns:
         list of item message objects
     """
     utils.require_context(ctx)
-    view_filter, item_type, db_msg, db_model, model_ids, filter_op, join_exp, metatag_name = _view_helper(item_type, search_query, filter_id, view_filter)
+    view_filter, item_type, db_msg, db_model, model_ids, filter_op, join_exp, metatag_name = _view_helper(item_type, search_query, filter_id, view_filter, item_id, related_type)
 
     items = message.List(db_model.__name__.lower(), db_msg)
 
@@ -79,6 +112,8 @@ def library_view(item_type: enums.ItemType = enums.ItemType.Gallery,
 
 
 def get_view_count(item_type: enums.ItemType=enums.ItemType.Gallery,
+                   item_id: enums.ItemType = None,
+                    related_type: enums.ItemType = None,
                    search_query: str = "",
                    filter_id: int = None,
                    view_filter: enums.ViewType = enums.ViewType.Library):
@@ -90,13 +125,15 @@ def get_view_count(item_type: enums.ItemType=enums.ItemType.Gallery,
         search_query: filter item by search terms
         filter_id: current filter list id
         view_filter: type of view
+        related_type: child item
+        item_id: id of parent item
 
     Returns:
         ```
         { 'count': int }
         ```
     """
-    view_filter, item_type, db_msg, db_model, model_ids, filter_op, join_exp, metatag_name = _view_helper(item_type, search_query, filter_id, view_filter)
+    view_filter, item_type, db_msg, db_model, model_ids, filter_op, join_exp, metatag_name = _view_helper(item_type, search_query, filter_id, view_filter, item_id, related_type)
 
     return message.Identity('count', {'count':database_cmd.GetModelItemByID().run(db_model, model_ids, filter=filter_op, join=join_exp, count=True)})
 
