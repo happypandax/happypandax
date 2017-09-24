@@ -181,7 +181,7 @@ def page_render():
     title = ""
     item_id = this.state.id
     if this.state.data:
-        title = "Page " + str(this.state.data.number)
+        title = str(this.state.data.number)
         if this.state.data.metatags.favorite:
             fav = 1
         if not item_id:
@@ -195,7 +195,7 @@ def page_render():
                     e(ui.Icon, js_name="ellipsis vertical", bordered=True, className="card-item bottom right", link=True, inverted=True),
                     className="card-content",
                     ),
-                    e(ui.Card.Content, e(ui.Card.Header, title, className="text-ellipsis card-header")),
+                    e(ui.Card.Content, e(ui.Card.Header, e(ui.Label, title, circular=True), className="text-ellipsis card-header")),
                     className=add_cls,
                     link=True)
 
@@ -363,7 +363,13 @@ def ItemViewBase(props):
     if not els:
         els = []
 
+    add_el = []
+
+    if props.label:
+        add_el.append(e(ui.Label, props.label, e(ui.Label.Detail, props.item_count), attached="top"))
+
     return e(ui.Segment,
+             *add_el,
              e(ui.Grid,
                e(ui.Grid.Row, paginations, centered=True),
                 *[e(ui.Grid.Column, c, computer=4, tablet=4, mobile=8, largeScreen=lscreen, widescreen=wscreen) for c in els],
@@ -480,6 +486,7 @@ def item_view_render():
              limit=limit,
              page=this.state.page,
              set_page=this.set_page,
+             label=this.props.label,
              )
 
 ItemView = createReactClass({

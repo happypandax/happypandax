@@ -137,7 +137,8 @@ Page = createReactClass({
     'render': lambda: e(ui.Container, e(ui.Grid.Column,
                         e(ui.Message,
                           e(ui.Message.Header, tr(this, "ui.h-server-comm", "Server Communication")),
-                          h("p", tr(this, "ui.t-server-comm-tutorial", "..."))
+                          h(ui.Message.Content, tr(this, "ui.t-server-comm-tutorial", "..."), as_="pre"),
+                          info=True,
                           ),
                         e(ui.Divider),
                         e(ApiForm, to_server=this.set_msg_to, from_server=this.set_msg_from),

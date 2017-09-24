@@ -6,6 +6,7 @@ ReactDOM = require("react-dom")
 createReactClass = require('create-react-class')
 Router = require("react-router-dom").BrowserRouter
 Link = require("react-router-dom").Link
+NavLink = require("react-router-dom").NavLink
 Route = require("react-router-dom").Route
 withRouter = require("react-router").withRouter
 

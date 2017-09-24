@@ -4,14 +4,14 @@ from react_utils import (h,e,
                         React,
                         ReactDOM,
                         createReactClass,
-                        Link)
+                        NavLink)
 
 from ui import ui
 from i18n import tr
 
 class MenuItem:
     __pragma__("kwargs")
-    def __init__(self, name, t_id=None, icon="", position="", header=False, handler=None, url=None):
+    def __init__(self, name, t_id=None, icon="", position="", header=False, handler=None, url=None, modal=None):
         self.name = name
         self.icon = icon
         self.position = position
@@ -20,6 +20,7 @@ class MenuItem:
         self.handler = handler
         self.url = url
         self.t_id = t_id
+        self.modal = modal
     __pragma__("nokwargs")
 
     __pragma__("tconv")
@@ -41,13 +42,14 @@ def sidebar_nav_render():
         print(props)
 
     items = []
-    #items.append(MenuItem("HPX", icon="sidebar", position="left", header=True, handler=nav_toggle_handler))
     items.append(MenuItem("Dashboard", "ui.mi-dashboard", icon="home", url="/dashboard"))
     items.append(MenuItem("Favorites", "ui.mi-favorites", icon="heart", url="/favorite"))
     items.append(MenuItem("Library", "ui.mi-library", icon="grid layout", url="/library"))
     items.append(MenuItem("Inbox", "ui.mi-inbox", icon="inbox", url="/inbox"))
     items.append(MenuItem("Downloads", "ui.mi-downloads", icon="tasks", url="/downloads"))
-    pref_item = MenuItem("Preferences", "ui.mi-preferences", icon="settings", position="right")
+    pref_item = MenuItem("Preferences", "ui.mi-preferences",
+                         modal=[e(ui.Modal.Header, tr(this, "ui.mi-preferences", "Preferences"))],
+                         icon="settings", position="right")
     items.append(pref_item)
     pref_item.children.append(MenuItem("General"))
     pref_item.children.append(MenuItem("Logins"))
@@ -58,7 +60,9 @@ def sidebar_nav_render():
     pref_item.children.append(MenuItem("Client"))
     pref_item.children.append(MenuItem("Server"))
 
-    about_item = MenuItem("About", "ui.mi-about", icon="info", position="right")
+    about_item = MenuItem("About", "ui.mi-about",
+                        modal=[e(ui.Modal.Header, tr(this, "ui.mi-about", "About"))],
+                        icon="info", position="right")
     items.append(about_item)
     about_item.children.append(MenuItem("Plugins"))
     about_item.children.append(MenuItem("Statistics"))
@@ -88,15 +92,21 @@ def sidebar_nav_render():
 
         as_link = {}
         if x.url:
-            as_link = {"as":Link, "to":x.url}
+            as_link = {"as":NavLink, "to":x.url, "activeClassName":"active"}
 
-        container.append(e(ui.Menu.Item,
+        menu_el = e(ui.Menu.Item,
                             *item_children,
                             js_name=menu_name,
                             header=x.header,
                             onClick=x.handler,
                             index=n,
-                            **as_link))
+                            **as_link)
+        if x.modal:
+            menu_el = e(ui.Modal, *x.modal,
+                        trigger=menu_el,
+                        )
+
+        container.append(menu_el)
 
     return e(ui.Sidebar,
                         h("div",

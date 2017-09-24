@@ -729,7 +729,7 @@ def process_pipes(out_queue, out_pipe):
         out_queue.put(out_pipe.recv())
 
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('source',  help="Path to old HP database")
     parser.add_argument('destination',  help="Desired path new HPX database")
@@ -1062,4 +1062,5 @@ if __name__ == '__main__':
     s.commit()
     print("Done!")
 
-
+if __name__ == '__main__':
+    main()

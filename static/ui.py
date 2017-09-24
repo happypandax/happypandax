@@ -25,11 +25,14 @@ def SliderNav(props):
              onClick=props.onClick)
 
 def Slider(props):
-    children = props.children or []
-    if not isinstance(children, list):
-        children = [children]
+    children = React.Children.toArray(props.children)
     items = [e(ui.Segment, x, basic=True, size=props.size) for x in children]
+    add_el = []
+    if props.label:
+        add_el.append(e(ui.Label, props.label, e(ui.Label.Detail, len(items)), attached="top"))
+
     return e(ui.Segment,
+             *add_el,
             e(slick,
                 *items,
                 dots=True,

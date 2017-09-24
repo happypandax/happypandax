@@ -38,6 +38,9 @@ def get_item(data=None, error=None):
 def get_grouping(data=None, error=None):
     if data is not None and not error:
         this.setState({"group_data":data, "loading_group":False})
+        if data.status_id:
+            client.call_func("get_item", this.get_status, item_type=ItemType.Status, item_id=data.status_id)
+
     elif error:
         state.app.notif("Failed to fetch grouping ({})".format(this.state.id), level="error")
 
@@ -53,6 +56,12 @@ def get_lang(data=None, error=None):
     elif error:
         state.app.notif("Failed to fetch language ({})".format(this.state.id), level="error")
 
+def get_status(data=None, error=None):
+    if data is not None and not error:
+        this.setState({"status_data":data})
+    elif error:
+        state.app.notif("Failed to fetch status ({})".format(this.state.id), level="error")
+
 def gallerypage_render():
 
     fav = 0
@@ -61,6 +70,7 @@ def gallerypage_render():
     artists = []
     item_id = this.state.id
     info = ""
+    inbox = False
     read_count = 0
     date_pub = ""
     date_upd = ""
@@ -83,6 +93,7 @@ def gallerypage_render():
         title = this.state.data.titles[0].js_name
         if this.state.data.metatags.favorite:
             fav = 1
+        inbox = this.state.data.metatags.inbox
         if not item_id:
             item_id = this.state.data.id
 
@@ -96,6 +107,8 @@ def gallerypage_render():
     series_data = []
     if this.state.group_data:
         series_data = this.state.group_data
+
+    status = this.state.status_data.js_name if this.state.status_data.js_name else "Unknown"
 
     rows = []
 
@@ -113,7 +126,7 @@ def gallerypage_render():
                   e(ui.Table.Cell, this.state.lang_data.js_name)))
     rows.append(e(ui.Table.Row, 
                   e(ui.Table.Cell, e(ui.Header, "Status:", as_="h5"), collapsing=True),
-                  e(ui.Table.Cell, e(ui.Label, "Completed", color="green"))))
+                  e(ui.Table.Cell, e(ui.Label, status, color={"completed":"green", "ongoing":"orange"}.get(status.lower(), "grey")))))
     rows.append(e(ui.Table.Row, 
                   e(ui.Table.Cell, e(ui.Header, "Times read:", as_="h5"), collapsing=True),
                   e(ui.Table.Cell, e(ui.Label, read_count, circular=True))))
@@ -137,7 +150,7 @@ def gallerypage_render():
         ns_tags = sorted([x.js_name for x in ns_tags])
         tag_rows.append(
             e(ui.Table.Row,
-                e(ui.Table.Cell, ns), 
+                e(ui.Table.Cell, ns, collapsing=True), 
                 e(ui.Table.Cell,
                   e(ui.Label.Group,
                     *[e(ui.Label, x, tag=False) for x in ns_tags],
@@ -159,22 +172,42 @@ def gallerypage_render():
                   e(ui.Table.Cell, e(ui.Header, "URL(s):", as_="h5"), collapsing=True),
                   e(ui.Table.Cell, e(ui.List, *[e(ui.List.Item, h("span", h("a", x, href=x, target="_blank"), e(ui.List.Icon, js_name="external share"))) for x in urls]))))
 
+    indicators = []
+    if inbox:
+        indicators.append(e(ui.Icon, js_name="inbox", size="large", title="This gallery is in your inbox"))
+
+
     return e(ui.Grid,
                e(ui.Grid.Row,e(ui.Grid.Column, e(ui.Breadcrumb, icon="right arrow",))),
                e(ui.Grid.Row, 
                  e(ui.Grid.Column,
-                   e(ui.Grid, e(items.Thumbnail,
-                                size_type=ImageSize.Big, 
-                                item_type=this.state.item_type, 
+                   e(ui.Grid, e(ui.Grid.Row, e(items.Thumbnail,
+                                size_type=ImageSize.Big,
+                                item_type=this.state.item_type,
                                 item_id=item_id, 
                                 size="medium",
                                 shape="rounded",
-                                bordered=True,),
+                                bordered=True,),),
+                     e(ui.Grid.Row,
+                       e(ui.Grid.Column,
+                         e(ui.Button.Group,
+                           e(ui.Button, "Read", primary=True),
+                           e(ui.Button.Or, text="or"),
+                           e(ui.Button, "Save for later"),
+                           ),
+                         textAlign="center"
+                         ),
+                       centered=True,
+                       ),
                     container=True, centered=True, verticalAlign="top"),
                    tablet=4, mobile=16, computer=5,  widescreen=5, largeScreen=5),
                  e(ui.Grid.Column,
                    e(ui.Grid,
-                       e(ui.Grid.Row, e(ui.Grid, e(ui.Grid.Column, e(ui.Rating, icon="heart", size="massive", defaultRating=fav), floated="right") )),
+                       e(ui.Grid.Row,
+                           e(ui.Grid.Column, e(ui.Rating, icon="heart", size="massive", defaultRating=fav), floated="right",),
+                           e(ui.Grid.Column, *indicators, floated="right", textAlign="right"),
+                         columns=2,
+                         ),
                        e(ui.Grid.Row,
                          e(ui.Grid,
                                 e(ui.Grid.Row, e(ui.Grid.Column, e(ui.Header, title, as_="h3"), textAlign="center")),
@@ -187,7 +220,8 @@ def gallerypage_render():
                                       basic="very"
                                       ))),
                                stackable=True,
-                               padded=True,
+                               padded=False,
+                               relaxed=True,
                             ),
                         ),
                      divided="vertically",
@@ -205,18 +239,16 @@ def gallerypage_render():
                  columns=3
                  ),
                e(ui.Grid.Row, e(ui.Grid.Column,
-                                e(ui.Segment,
-                                  e(ui.Label, this.state.group_data.js_name, attached="top", as_="h4"),
                                   e(Slider, *[e(items.Gallery, data=x) for x in series_data],
-                                                  loading=this.state.loading_group),
-                                  secondary=True,
-                                  basic=True
-                                  ),
+                                                  loading=this.state.loading_group,
+                                                  secondary=True,
+                                                  label="Series"),
                                )),
                e(ui.Grid.Row, e(ui.Grid.Column, e(items.ItemView,
                                                   item_id=item_id,
                                                   item_type=ItemType.Gallery,
                                                   related_type=ItemType.Page,
+                                                  label="Pages",
                                                   container=True, secondary=True))),
                stackable=True,
                container=True
@@ -229,6 +261,7 @@ GalleryPage = createReactClass({
                                 'data':this.props.data,
                                 'tag_data':this.props.tag_data or {},
                                 'lang_data':this.props.lang_data or {},
+                                'status_data':this.props.status_data or {},
                                 'group_data':this.props.group_data or [],
                                 'item_type':ItemType.Gallery,
                                 'loading':True,
@@ -239,6 +272,7 @@ GalleryPage = createReactClass({
     'get_grouping': get_grouping,
     'get_tags': get_tags,
     'get_lang': get_lang,
+    'get_status': get_status,
 
     'componentWillMount': lambda: all((this.props.menu(None), 
                                        (this.get_item() if not this.state.data else None),

@@ -66,6 +66,7 @@ def app_render():
                     e(ui.Segment,
                     e(Route, path="/api", component=this.api_page),
                     e(Route, path="/dashboard", component=this.dashboard_page),
+                    e(Route, path="/", exact=True, component=this.library_page),
                     e(Route, path="/library", component=this.library_page),
                     e(Route, path="/favorite", component=this.favorites_page),
                     e(Route, path="/inbox", component=this.inbox_page),
@@ -108,7 +109,7 @@ App = createReactClass({
     'dashboard_page': lambda: e(dashboard.Page, menu=this.set_menu_contents),
     'library_page': lambda: e(library.Page, menu=this.set_menu_contents),
     'favorites_page': lambda: e(favorites.Page, menu=this.set_menu_contents),
-    'inbox_page': lambda: e(Item.Page, menu=this.set_menu_contents),
+    'inbox_page': lambda: e(inbox.Page, menu=this.set_menu_contents),
     'gallery_page': lambda: e(itempage.GalleryPage, menu=this.set_menu_contents),
     'collection_page': lambda: e(itempage.GalleryPage, menu=this.set_menu_contents),
 
