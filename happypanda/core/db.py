@@ -25,8 +25,7 @@ from sqlalchemy.orm import (
     state,
     collections,
     dynamic,
-    backref,
-    column_property)
+    backref)
 from sqlalchemy import (
     create_engine,
     event,
@@ -42,9 +41,7 @@ from sqlalchemy import (
     Float,
     Enum,
     TypeDecorator,
-    text,
-    Numeric, 
-    select)
+    text)
 from sqlalchemy_utils import (
     ArrowType,
     generic_repr,
@@ -63,6 +60,7 @@ log = hlogger.Logger(__name__)
 and_op = and_
 or_op = or_
 sa_text = text
+
 
 class String(_String):
     """Enchanced version of standard SQLAlchemy's :class:`String`.
@@ -194,6 +192,7 @@ class Password(TypeDecorator):
             raise TypeError(
                 'Cannot convert {} to a PasswordHash'.format(type(value)))
 
+
 def _unique(session, cls, hashfunc, queryfunc, constructor, arg, kw):
     cache = getattr(session, '_unique_cache', None)
     if cache is None:
@@ -213,6 +212,7 @@ def _unique(session, cls, hashfunc, queryfunc, constructor, arg, kw):
         cache[key] = obj
         return obj
 
+
 class UniqueMixin:
     @classmethod
     def unique_hash(cls, *arg, **kw):
@@ -225,13 +225,14 @@ class UniqueMixin:
     @classmethod
     def as_unique(cls, *arg, **kw):
         return _unique(
-                    constants.db_session(),
-                    cls,
-                    cls.unique_hash,
-                    cls.unique_filter,
-                    cls,
-                    arg, kw
-               )
+            constants.db_session(),
+            cls,
+            cls.unique_hash,
+            cls.unique_filter,
+            cls,
+            arg, kw
+        )
+
 
 class BaseID:
     id = Column(Integer, primary_key=True)
@@ -243,6 +244,7 @@ class BaseID:
             sess = constants.db_session()
         sess.delete(self)
         return sess
+
 
 class NameMixin(UniqueMixin):
     name = Column(String, nullable=False, default='', unique=True)
@@ -1045,6 +1047,7 @@ metatag_association(Gallery)
 profile_association(Gallery, "galleries")
 url_association(Gallery, "galleries")
 
+
 @generic_repr
 class Page(TaggableMixin, ProfileMixin, Base):
     __tablename__ = 'page'
@@ -1092,6 +1095,7 @@ class Page(TaggableMixin, ProfileMixin, Base):
 
 metatag_association(Page)
 profile_association(Page, "pages")
+
 
 @generic_repr
 class Title(AliasMixin, Base):
@@ -1370,7 +1374,7 @@ def init(**kwargs):
     constants.db_engine = kwargs.get("engine")
     if not constants.db_engine:
         constants.db_engine = create_engine(os.path.join("sqlite:///", db_path),
-                                        connect_args={'timeout': 60})  # SQLITE specific arg (avoding db is locked errors)
+                                            connect_args={'timeout': 60})  # SQLITE specific arg (avoding db is locked errors)
     Base.metadata.create_all(constants.db_engine)
 
     Session.configure(bind=constants.db_engine)
@@ -1479,4 +1483,3 @@ def ensure_in_session(item):
             return item
         except exc.InvalidRequestError:
             return constants.db_session().merge(item)
-

@@ -165,6 +165,7 @@ class GetSession(Command):
     def main(self) -> db.scoped_session:
         return constants.db_session()
 
+
 class GetModelItemByID(Command):
     """
     Fetch model items from the database by a set of ids
@@ -192,7 +193,6 @@ class GetModelItemByID(Command):
             return db.sa_text(expr)
         else:
             return expr
-
 
     def main(self, model: db.Base, ids: set = None, limit: int = 999,
              filter: str = None, order_by: str = None,
@@ -243,7 +243,7 @@ class GetModelItemByID(Command):
                 q = q.filter(model.id.in_(ids))
                 self.fetched_items = tuple(self._query(q, limit, offset)) if not count else q.count()
         else:
-           self.fetched_items = tuple(self._query(q, limit, offset)) if not count else q.count()
+            self.fetched_items = tuple(self._query(q, limit, offset)) if not count else q.count()
 
         if count:
             self.fetched_items = q.count()

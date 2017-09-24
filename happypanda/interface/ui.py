@@ -14,13 +14,14 @@ i18n.set("fallback", constants.translation_locale)
 i18n.set("filename_format", "{locale}.{namespace}.{format}")
 i18n.set("error_on_missing_translation", True)
 
+
 def _view_helper(item_type: enums.ItemType=enums.ItemType.Gallery,
-                   search_query: str = "",
-                   filter_id: int = None,
-                   view_filter: enums.ViewType = enums.ViewType.Library,
-                   item_id: enums.ItemType = None,
-                   related_type: enums.ItemType = None,
-                   ):
+                 search_query: str = "",
+                 filter_id: int = None,
+                 view_filter: enums.ViewType = enums.ViewType.Library,
+                 item_id: enums.ItemType = None,
+                 related_type: enums.ItemType = None,
+                 ):
 
     view_filter = enums.ViewType.get(view_filter)
     if related_type:
@@ -72,6 +73,7 @@ def _view_helper(item_type: enums.ItemType=enums.ItemType.Gallery,
 
     return view_filter, item_type, db_msg, db_model, model_ids, filter_op, join_exp, metatag_name
 
+
 def library_view(item_type: enums.ItemType = enums.ItemType.Gallery,
                  item_id: enums.ItemType = None,
                  related_type: enums.ItemType = None,
@@ -101,7 +103,8 @@ def library_view(item_type: enums.ItemType = enums.ItemType.Gallery,
         list of item message objects
     """
     utils.require_context(ctx)
-    view_filter, item_type, db_msg, db_model, model_ids, filter_op, join_exp, metatag_name = _view_helper(item_type, search_query, filter_id, view_filter, item_id, related_type)
+    view_filter, item_type, db_msg, db_model, model_ids, filter_op, join_exp, metatag_name = _view_helper(
+        item_type, search_query, filter_id, view_filter, item_id, related_type)
 
     items = message.List(db_model.__name__.lower(), db_msg)
 
@@ -113,7 +116,7 @@ def library_view(item_type: enums.ItemType = enums.ItemType.Gallery,
 
 def get_view_count(item_type: enums.ItemType=enums.ItemType.Gallery,
                    item_id: enums.ItemType = None,
-                    related_type: enums.ItemType = None,
+                   related_type: enums.ItemType = None,
                    search_query: str = "",
                    filter_id: int = None,
                    view_filter: enums.ViewType = enums.ViewType.Library):
@@ -133,9 +136,11 @@ def get_view_count(item_type: enums.ItemType=enums.ItemType.Gallery,
         { 'count': int }
         ```
     """
-    view_filter, item_type, db_msg, db_model, model_ids, filter_op, join_exp, metatag_name = _view_helper(item_type, search_query, filter_id, view_filter, item_id, related_type)
+    view_filter, item_type, db_msg, db_model, model_ids, filter_op, join_exp, metatag_name = _view_helper(
+        item_type, search_query, filter_id, view_filter, item_id, related_type)
 
-    return message.Identity('count', {'count':database_cmd.GetModelItemByID().run(db_model, model_ids, filter=filter_op, join=join_exp, count=True)})
+    return message.Identity('count', {'count': database_cmd.GetModelItemByID().run(
+        db_model, model_ids, filter=filter_op, join=join_exp, count=True)})
 
 
 def translate(t_id: str, locale: str = None, default: str = None):
