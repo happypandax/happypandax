@@ -1,7 +1,7 @@
 Creating frontends
 =============================================
 
-HPX provides a RPC interface over TCP making it possible to create a client in any programming language.
+HPX exposes an RPC interface over TCP making it possible to create a client in any programming language.
 
 For exchanging data between the server and client ``JSON`` is used. Make sure you're familiar with ``JSON`` and its datatypes.
 
@@ -102,7 +102,7 @@ Authenticating
 
 Remember that the server always sent a message after you've successfully connected?
 
-This is part of the authentication process or a "handshake".
+This is part of the authentication process or a so-called "handshake".
 
 The server will send you a message that looks like this::
 
@@ -118,20 +118,20 @@ The server will send you a message that looks like this::
 
 You can use this message to determine if the HPX server is supported or not.
 
-Notice the ``guest_allowed`` key. This value of this key informs if it's possible to connect to the server *without* providing any credentials.
+Notice the ``guest_allowed`` key. The value of this key informs if it's possible to connect to the server *without* providing any credentials.
 
-The server expects a response from the client before any further processing is done.
+The server expects a response from the client that completes the handshake before any further processing is done.
 
 To authenticate as a **guest** the client responds with an empty object ``{}``.
 
-To authenticate as a **user** the client responds with (put in the ``data`` key)::
+To authenticate as a **user** the client responds with::
 
     {
         "user": "",
         "password": ""
     }
 
-The server will respond with ``"Authenticated"`` and assign a ``session`` for a successful handshake::
+The server will respond with ``"Authenticated"`` and assign a ``session`` for a successful handshake (this is the whole message)::
 
     {
         "session": "long_random_string",
@@ -142,7 +142,7 @@ The server will respond with ``"Authenticated"`` and assign a ``session`` for a 
 If otherwise, it responds with an error. See ... for possible errors.
 
 This handshake is only required *once* per initial connection.
-Additional connections can be established without doing a handshake with the use of the ``session`` value.
+Additional connections can be established without doing a handshake with the use of the newly-assigned ``session`` value.
 See :ref:`Session`.
 
 Additional connections 
@@ -164,21 +164,21 @@ After a successful handshake, a *session* is created::
 
 The session is tied to the context of the client who did the handshake.
 
-The session is *not* tied to any particular connection, meaning multiple connections
+The session is *not* tied to any particular connection, meaning multiple independent connections
 can use the same session.
 
-This allows for multiple connections to be made within the same app while sharing the same context::
+This allows for multiple independent connections to be made within the same app while sharing the same context::
 
     socketA (connects) --> server
     socketA <-- (asking for handshake) server
     socketA (handshakes) --> server
-    socketA <-- (accepted, sessionid) server
+    socketA <-- (accepted, have a sessionid) server
 
     socketB (connects) --> server
     socketB <-- (asking for handshake) server
     socketB (normal msg with session id) --> server
-    socketB <-- (normal response) server**
-**
+    socketB <-- (normal response) server
+
 Think of it as threads in a computer program.
 
 As shown above, the server will *always* send a message when a client connects.
@@ -186,18 +186,17 @@ This message should thus always be consumed by additional sockets before sending
 
 **Sessions have a limited lifespan**. Whenever you send a message using a session, you extend that particular session's lifespan.
 
-Sessions expire when their lifespan runs out, requiring the client to do a *new* handshake.
+Sessions expire when their lifespan runs out (shocking, isn't it?), requiring the client to do a *new* handshake.
 
-.. todo::**
-**
+.. todo::
     explain session expired error
 
 Calling a function
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Now that you've perfomed a successful handshake, you can start using the API.
+Now that you've perfomed a successful handshake, you can start using the :ref:`Server API`.
 
-A *function-call* object looks like this::
+A *function-call* object in its simplest looks like this::
 
     {
         "fname": ""
@@ -205,7 +204,7 @@ A *function-call* object looks like this::
 
 The ``fname`` value is the name of the function you want to call. This particular object has no function arguments.
 
-To add additional function arguments you just define the argument in the *function-call* object like this::
+To add additional function arguments you just define the arguments in the *function-call* object like this::
 
     {
         "fname": "func1",
@@ -261,7 +260,7 @@ An *error* object looks like this::
 
 Errors occuring will be put in an ``error`` key.
 
-Server-level errors (errors not occuring in api-functions or unhandled exceptions) will add
+Server-level errors (unhandled exceptions or errors not occuring in api-functions) will add
 the ``error`` key at the root level of the payload::
 
     {
@@ -292,7 +291,7 @@ Server commands are invoked like this (this is the whole payload)::
         "data": server_command
     }
 
-For example, if we want to shut down the server we use the ... command::
+For example, if we want to shut down the server we use the :attr:`.ServerCommand.ServerQuit` command::
 
     {
         "session": "",
@@ -300,9 +299,9 @@ For example, if we want to shut down the server we use the ... command::
         "data": "serverquit"
     }
 
-Some server commands will be broadcasted to all connecting clients.
+Some server commands will be broadcasted to all connected clients.
 
-For example, when the server recieves a shut down command, the exact command is propogated and broadcasted to all connecting clients::
+For example, when the server recieves a shut down command, the exact command will be propogated and broadcasted to all connected clients::
 
     {
         "session": "",

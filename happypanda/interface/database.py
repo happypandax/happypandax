@@ -47,7 +47,7 @@ def get_image(item_type: enums.ItemType=enums.ItemType.Gallery,
     command_dec = functools.partial(_get_image, {'url': url, 'uri': uri})
 
     for i in item_ids:
-        c = database_cmd.GetModelCover()
+        c = database_cmd.GetModelImage()
         services.ImageService.generic.add_command(c, command_dec)
         content[i] = c.start(db_item, i, size)
 

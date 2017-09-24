@@ -7,9 +7,9 @@ from happypanda.interface import enums
 log = hlogger.Logger(__name__)
 
 
-class GetModelCover(AsyncCommand):
+class GetModelImage(AsyncCommand):
     """
-    Fetch a database model item's cover
+    Fetch a database model item's image
 
     By default, the following models are supported
 
@@ -28,7 +28,7 @@ class GetModelCover(AsyncCommand):
     cover_event = CommandEvent('cover', object)
 
     def __init__(self, service=None):
-        super().__init__(service)
+        super().__init__(service, priority=constants.Priority.Low)
         self.model = None
         self.cover = None
         self._supported_models = set()
@@ -44,16 +44,25 @@ class GetModelCover(AsyncCommand):
         )
 
     @generate.default(capture=True)
-    def _generate(model, item_id, size, capture=db.model_name(db.Gallery)):
+    def _generate(model, item_id, size, capture=[db.model_name(x) for x in (db.Page, db.Gallery)]):
         im_path = ""
-        page = GetSession().run().query(
-            db.Page.path).filter(
-            db.and_op(
-                db.Page.gallery_id == item_id,
-                db.Page.number == 1)).one_or_none()
+        model = GetModelClass().run(model)
+
+        if model == db.Gallery:
+            page = GetSession().run().query(
+                db.Page.path).filter(
+                db.and_op(
+                    db.Page.gallery_id == item_id,
+                    db.Page.number == 1)).one_or_none()
+        else:
+            page = GetSession().run().query(db.Page.path).filter(db.Page.id == item_id).one_or_none()
+
         if page:
+            im_path = page[0]
+
+        if im_path:
             im_props = io_cmd.ImageProperties(size, 0, constants.dir_thumbs)
-            im_path = io_cmd.ImageItem(None, page[0], im_props).main()
+            im_path = io_cmd.ImageItem(None, im_path, im_props).main()
         return im_path
 
     def main(self, model: db.Base, item_id: int,
@@ -78,6 +87,7 @@ class GetModelCover(AsyncCommand):
         img_hash = io_cmd.ImageItem.gen_hash(
             model, image_size, item_id)
 
+        cover_path = ""
         generate = True
         sess = constants.db_session()
         self.cover = sess.query(db.Profile).filter(
@@ -86,11 +96,29 @@ class GetModelCover(AsyncCommand):
         if self.cover:
             if io_cmd.CoreFS(self.cover.path).exists:
                 generate = False
+            else:
+                cover_path = self.cover.path
+        if generate:
+            self.cover = self.run_native(self._generate_and_add, img_hash, generate,
+                                         cover_path, model, item_id, image_size).get()
+        self.cover_event.emit(self.cover)
+        return self.cover
+
+    def _generate_and_add(self, img_hash, generate, cover_path, model, item_id, image_size):
+
+        sess = constants.db_session()
+
+        model_name = db.model_name(model)
+
+        new = False
+        if cover_path:
+            self.cover = sess.query(db.Profile).filter(
+                db.Profile.data == img_hash).one_or_none()
         else:
             self.cover = db.Profile()
+            new = True
 
         if generate:
-            model_name = db.model_name(model)
             with self.generate.call_capture(model_name, model_name, item_id, image_size) as plg:
                 self.cover.path = plg.first()
 
@@ -98,13 +126,13 @@ class GetModelCover(AsyncCommand):
             self.cover.size = str(tuple(image_size))
 
         if self.cover.path and generate:
-            i = GetModelItemByID().run(model, {item_id})[0]
-            i.profiles.append(self.cover)
+            if new:
+                s = constants.db_session()
+                i = s.query(model).get(item_id)
+                i.profiles.append(self.cover)
             sess.commit()
         elif not self.cover.path:
             self.cover = None
-
-        self.cover_event.emit(self.cover)
         return self.cover
 
 
@@ -147,6 +175,8 @@ class GetModelItemByID(Command):
 
     fetched = CommandEvent("fetched", str, tuple)
 
+    count = CommandEvent("count", str, int)
+
     def __init__(self):
         super().__init__()
 
@@ -158,38 +188,71 @@ class GetModelItemByID(Command):
 
         return q.limit(limit).all()
 
-    def main(self, model: db.Base, ids: set, limit: int = 999,
-             filter: str = "", order_by: str = "", offset: int = 0) -> tuple:
+    def _get_sql(self, expr):
+        if isinstance(expr, str):
+            return db.sa_text(expr)
+        else:
+            return expr
 
-        log.d("Fetching items from a set with", len(ids), "ids", "offset:", offset, "limit:", limit)
-        if not ids:
+    def main(self, model: db.Base, ids: set = None, limit: int = 999,
+             filter: str = None, order_by: str = None,
+             offset: int = 0, columns: tuple = tuple(),
+             join: str = None, count: bool = False) -> tuple:
+        if ids is None:
+            log.d("Fetching items", "offset:", offset, "limit:", limit)
+        else:
+            log.d("Fetching items from a set with", len(ids), "ids", "offset:", offset, "limit:", limit)
+
+        if ids is not None and not ids:
             return tuple()
 
         s = constants.db_session()
-
-        q = s.query(model)
-
-        if filter:
-            q = q.filter(db.sa_text(filter))
-
-        if order_by:
-            q = q.order_by(db.sa_text(order_by))
-
-        id_amount = len(ids)
-        # TODO: only SQLite has 999 variables limit
-        _max_variables = 900
-        if id_amount > _max_variables:
-            fetched_list = [x for x in q.all() if x.id in ids]
-            fetched_list = fetched_list[offset:][:limit]
-            self.fetched_items = tuple(fetched_list)
-        elif id_amount == 1:
-            self.fetched_items = (q.get(ids.pop()),)
+        if count:
+            q = s.query(model.id)
+        elif columns:
+            q = s.query(*columns)
         else:
-            q = q.filter(model.id.in_(ids))
-            self.fetched_items = tuple(self._query(q, limit, offset))
+            q = s.query(model)
 
-        self.fetched.emit(db.model_name(model), self.fetched_items)
-        log.d("Returning", len(self.fetched_items), "fetched items")
+        if join is not None:
+            if not isinstance(join, (list, tuple)):
+                join = [join]
+            for j in join:
+                q = q.join(self._get_sql(j))
+        if filter is not None:
+            q = q.filter(self._get_sql(filter))
+
+        if order_by is not None:
+            q = q.order_by(self._get_sql(order_by))
+
+        if ids:
+            id_amount = len(ids)
+            # TODO: only SQLite has 999 variables limit
+            _max_variables = 900
+            if id_amount > _max_variables:
+                if count:
+                    fetched_list = [x for x in q.all() if x[0] in ids]
+                else:
+                    fetched_list = [x for x in q.all() if x.id in ids]
+
+                fetched_list = fetched_list[offset:][:limit]
+                self.fetched_items = tuple(fetched_list) if not count else len(fetched_list)
+            elif id_amount == 1:
+                self.fetched_items = (q.get(ids.pop()),) if not count else q.count()
+            else:
+                q = q.filter(model.id.in_(ids))
+                self.fetched_items = tuple(self._query(q, limit, offset)) if not count else q.count()
+        else:
+            self.fetched_items = tuple(self._query(q, limit, offset)) if not count else q.count()
+
+        if count:
+            self.fetched_items = q.count()
+            self.count.emit(db.model_name(model), self.fetched_items)
+            log.d("Returning items count ", self.fetched_items)
+        else:
+            self.fetched.emit(db.model_name(model), self.fetched_items)
+            self.count.emit(db.model_name(model), len(self.fetched_items))
+            log.d("Returning", len(self.fetched_items), "fetched items")
         return self.fetched_items
 
 
@@ -214,14 +277,27 @@ class GetModelItems(Command):
         return q.limit(limit).all()
 
     def main(self, model: db.Base, limit: int = 999,
-             filter: str = "", order_by: str = "", offset: int = 0) -> tuple:
+             filter: str = "", order_by: str = "", offset: int = 0, join: str = "") -> tuple:
 
         s = constants.db_session()
 
         q = s.query(model)
 
+        if join:
+            if not isinstance(join, (list, tuple)):
+                join = [join]
+
+            for j in join:
+                if isinstance(j, str):
+                    q = q.join(db.sa_text(j))
+                else:
+                    q = q.join(j)
+
         if filter:
-            q = q.filter(db.sa_text(filter))
+            if isinstance(filter, str):
+                q = q.filter(db.sa_text(filter))
+            else:
+                q = q.filter(filter)
 
         if order_by:
             q = q.order_by(db.sa_text(order_by))
@@ -229,5 +305,4 @@ class GetModelItems(Command):
         self.fetched_items = tuple(self._query(q, limit, offset))
 
         self.fetched.emit(db.model_name(model), self.fetched_items)
-
         return self.fetched_items

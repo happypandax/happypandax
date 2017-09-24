@@ -1,3 +1,12 @@
+import arrow
+import os
+import enum
+import re
+import bcrypt
+import warnings
+import functools
+import gevent
+
 from sqlalchemy.engine import Engine
 from sqlalchemy import String as _String
 from sqlalchemy.inspection import inspect
@@ -40,13 +49,6 @@ from sqlalchemy_utils import (
     force_auto_coercion,
     get_type,
     JSONType)
-
-import arrow
-import os
-import enum
-import re
-import bcrypt
-import warnings
 
 from happypanda.common import constants, exceptions, hlogger, utils
 
@@ -191,6 +193,47 @@ class Password(TypeDecorator):
                 'Cannot convert {} to a PasswordHash'.format(type(value)))
 
 
+def _unique(session, cls, hashfunc, queryfunc, constructor, arg, kw):
+    cache = getattr(session, '_unique_cache', None)
+    if cache is None:
+        session._unique_cache = cache = {}
+
+    key = (cls, hashfunc(*arg, **kw))
+    if key in cache:
+        return cache[key]
+    else:
+        with session.no_autoflush:
+            q = session.query(cls)
+            q = queryfunc(q, *arg, **kw)
+            obj = q.first()
+            if not obj:
+                obj = constructor(*arg, **kw)
+                session.add(obj)
+        cache[key] = obj
+        return obj
+
+
+class UniqueMixin:
+    @classmethod
+    def unique_hash(cls, *arg, **kw):
+        raise NotImplementedError()
+
+    @classmethod
+    def unique_filter(cls, query, *arg, **kw):
+        raise NotImplementedError()
+
+    @classmethod
+    def as_unique(cls, *arg, **kw):
+        return _unique(
+            constants.db_session(),
+            cls,
+            cls.unique_hash,
+            cls.unique_filter,
+            cls,
+            arg, kw
+        )
+
+
 class BaseID:
     id = Column(Integer, primary_key=True)
     properties = Column(JSONType, nullable=False, default={})
@@ -203,8 +246,16 @@ class BaseID:
         return sess
 
 
-class NameMixin:
+class NameMixin(UniqueMixin):
     name = Column(String, nullable=False, default='', unique=True)
+
+    @classmethod
+    def unique_hash(cls, name):
+        return name
+
+    @classmethod
+    def unique_filter(cls, query, name):
+        return query.filter(cls.name == name)
 
     def exists(self, obj=False, strict=False):
         "obj: queries for the full object and returns it"
@@ -241,6 +292,40 @@ class NameMixin:
     def __repr__(self):
         return "<{}(ID: {}, Name: {})>".format(
             self.__class__.__name__, self.id, self.name)
+
+
+class AliasMixin:
+
+    @declared_attr
+    def alias_for_id(cls):
+        return Column(Integer, ForeignKey("{}.id".format(cls.__tablename__)), nullable=True)  # has one-child policy
+
+    @declared_attr
+    def alias_for(cls):
+        return relationship(cls.__name__,
+                            primaryjoin=('{}.c.id=={}.c.alias_for_id'.format(cls.__tablename__, cls.__tablename__)),
+                            remote_side='{}.id'.format(cls.__name__),
+                            backref=backref("aliases"))
+
+    @validates('aliases')
+    def validate_aliases(self, key, alias):
+        # can't add to myself
+        if alias == self:
+            raise exceptions.DatabaseError(
+                utils.this_function(),
+                "Cannot make {} itself's alias".format(
+                    self.__class__.__name__))
+        return alias
+
+    @validates('alias_for')
+    def validate_alias_for(self, key, alias):
+        if alias is None:
+            warnings.warn(
+                "{}.alias_for has been reset, remember to flush or commit session to avoid possible circulay dependency error".format(self.__class__.__name__))
+        # point to the original nstag
+        if alias and alias.alias_for:
+            return alias.alias_for
+        return alias
 
 
 class ProfileMixin:
@@ -314,7 +399,10 @@ def configure_listener(class_, key, inst):
             return value
 
 
-def profile_association(table_name):
+def profile_association(cls, bref="items"):
+    if not issubclass(cls, Base):
+        raise ValueError("Must be subbclass of Base")
+    table_name = cls.__tablename__
     column = '{}_id'.format(table_name)
     assoc = Table(
         '{}_profiles'.format(table_name), Base.metadata, Column(
@@ -322,6 +410,75 @@ def profile_association(table_name):
             column, Integer, ForeignKey(
                 '{}.id'.format(table_name))), UniqueConstraint(
                     'profile_id', column))
+
+    cls.profiles = relationship(
+        "Profile",
+        secondary=assoc,
+        lazy='dynamic',
+        backref=backref(bref, lazy="dynamic"),
+        cascade="all")
+    return assoc
+
+
+def metatag_association(cls):
+    if not issubclass(cls, Base):
+        raise ValueError("Must be subbclass of Base")
+    table_name = cls.__tablename__
+    column = '{}_id'.format(table_name)
+    assoc = Table(
+        '{}_metatags'.format(table_name), Base.metadata, Column(
+            'metatag_id', Integer, ForeignKey('metatag.id')), Column(
+            column, Integer, ForeignKey(
+                '{}.id'.format(table_name))), UniqueConstraint(
+                    'metatag_id', column))
+
+    cls.metatags = relationship(
+        "MetaTag",
+        secondary=assoc,
+        lazy='joined',
+        cascade="all")
+    return assoc
+
+
+def aliasname_association(cls, bref="items"):
+    if not issubclass(cls, Base):
+        raise ValueError("Must be subbclass of Base")
+    table_name = cls.__tablename__
+    column = '{}_id'.format(table_name)
+    assoc = Table(
+        '{}_aliasname'.format(table_name), Base.metadata, Column(
+            'aliasname_id', Integer, ForeignKey('aliasname.id')), Column(
+            column, Integer, ForeignKey(
+                '{}.id'.format(table_name))), UniqueConstraint(
+                    'aliasname_id', column))
+
+    cls.names = relationship(
+        "AliasName",
+        secondary=assoc,
+        lazy='joined',
+        backref=backref(bref, lazy="dynamic"),
+        cascade="all")
+    return assoc
+
+
+def url_association(cls, bref="items"):
+    if not issubclass(cls, Base):
+        raise ValueError("Must be subbclass of Base")
+    table_name = cls.__tablename__
+    column = '{}_id'.format(table_name)
+    assoc = Table(
+        '{}_url'.format(table_name), Base.metadata, Column(
+            'url_id', Integer, ForeignKey('url.id')), Column(
+            column, Integer, ForeignKey(
+                '{}.id'.format(table_name))), UniqueConstraint(
+                    'url_id', column))
+
+    cls.urls = relationship(
+        "Url",
+        secondary=assoc,
+        lazy='joined',
+        backref=backref(bref, lazy="dynamic"),
+        cascade="all")
     return assoc
 
 
@@ -335,6 +492,18 @@ class Life(Base):
     def __repr__(self):
         return "<Version: {}, times_opened:{}>".format(
             self.version, self.times_opened)
+
+
+class MetaTag(NameMixin, Base):
+    __tablename__ = 'metatag'
+
+    names = utils.AttributeList("favorite", "inbox")
+    tags = {}
+
+    @classmethod
+    def all_names(cls):
+        sess = constants.db_session()
+        return tuple(x[0] for x in sess.query(cls.name).all())
 
 
 class User(Base):
@@ -366,6 +535,8 @@ class User(Base):
     @property
     def is_admin(self):
         return self.role == self.Role.admin
+
+metatag_association(User)
 
 
 class Profile(Base):
@@ -417,7 +588,7 @@ class Hash(NameMixin, Base):
     __tablename__ = 'hash'
 
 
-class NamespaceTags(Base):
+class NamespaceTags(AliasMixin, Base):
     __tablename__ = 'namespace_tags'
 
     tag_id = Column(Integer, ForeignKey('tag.id'))
@@ -434,12 +605,6 @@ class NamespaceTags(Base):
                           remote_side='NamespaceTags.id',
                           backref=backref("children"))
 
-    alias_for_id = Column(Integer, ForeignKey("namespace_tags.id"), nullable=True)  # has one-child policy
-    alias_for = relationship("NamespaceTags",
-                             primaryjoin=('namespace_tags.c.id==namespace_tags.c.alias_for_id'),
-                             remote_side='NamespaceTags.id',
-                             backref=backref("aliases"))
-
     def __init__(self, ns, tag):
         self.namespace = ns
         self.tag = tag
@@ -450,23 +615,6 @@ class NamespaceTags(Base):
         if child == self:
             raise exceptions.DatabaseError(utils.this_function(), "Cannot make NamespaceTag itself's child")
         return child
-
-    @validates('aliases')
-    def validate_aliases(self, key, alias):
-        # can't add to myself
-        if alias == self:
-            raise exceptions.DatabaseError(utils.this_function(), "Cannot make NamespaceTag itself's alias")
-        return alias
-
-    @validates('alias_for')
-    def validate_alias_for(self, key, alias):
-        if alias is None:
-            warnings.warn(
-                "NamespaceTag.alias_for has been reset, remember to flush or commit session to avoid possible circulay dependency error")
-        # point to the original nstag
-        if alias and alias.alias_for:
-            return alias.alias_for
-        return alias
 
     @validates('parent')
     def validate_parent(self, key, alias):
@@ -481,6 +629,20 @@ class NamespaceTags(Base):
 
         return alias
 
+    @validates('tag')
+    def validate_tag(self, key, alias):
+        # point to the original
+        if alias and alias.alias_for:
+            alias = alias.alias_for
+        return alias
+
+    @validates('namespace')
+    def validate_namespace(self, key, alias):
+        # point to the original
+        if alias and alias.alias_for:
+            alias = alias.alias_for
+        return alias
+
     def mapping_exists(self):
         sess = constants.db_session()
         e = sess.query(
@@ -493,10 +655,15 @@ class NamespaceTags(Base):
         sess.close()
         return e
 
+metatag_association(NamespaceTags)
+
 
 @generic_repr
-class Tag(NameMixin, Base):
+class Tag(NameMixin, AliasMixin, Base):
     __tablename__ = 'tag'
+
+    language_id = Column(Integer, ForeignKey('language.id'))
+    language = relationship("Language", cascade="all")
 
     namespaces = relationship(
         "Namespace",
@@ -505,8 +672,11 @@ class Tag(NameMixin, Base):
         lazy="dynamic")
 
 
-class Namespace(NameMixin, Base):
+class Namespace(NameMixin, AliasMixin, Base):
     __tablename__ = 'namespace'
+
+    language_id = Column(Integer, ForeignKey('language.id'))
+    language = relationship("Language", cascade="all")
 
     tags = relationship(
         "Tag",
@@ -520,15 +690,6 @@ taggable_tags = Table(
         'namespace_tag_id', Integer, ForeignKey('namespace_tags.id')), Column(
             'taggable_id', Integer, ForeignKey('taggable.id')), UniqueConstraint(
                 'namespace_tag_id', 'taggable_id'))
-
-
-def no_alias_append(super_append, self, obj):
-    print(obj)
-    if isinstance(obj, NamespaceTags):
-        # makes sure no aliases are added
-        if obj.alias_for:
-            obj = obj.alias_for
-    super_append(obj)
 
 
 class Taggable(Base):
@@ -562,66 +723,83 @@ class TaggableMixin(UpdatedMixin):
         return self.taggable.tags
 
 
+@generic_repr
+class AliasName(NameMixin, AliasMixin, Base):
+    __tablename__ = 'aliasname'
+
+    language_id = Column(Integer, ForeignKey('language.id'))
+    language = relationship("Language", cascade="all")
+
+
 gallery_artists = Table(
     'gallery_artists', Base.metadata, Column(
         'artist_id', Integer, ForeignKey('artist.id')), Column(
             'gallery_id', Integer, ForeignKey('gallery.id')), UniqueConstraint(
                 'artist_id', 'gallery_id'))
 
-artist_profiles = profile_association("artist")
+artist_circles = Table(
+    'artist_circles', Base.metadata, Column(
+        'circle_id', Integer, ForeignKey(
+            'circle.id',)), Column(
+                'artist_id', Integer, ForeignKey(
+                    'artist.id',)), UniqueConstraint(
+                        'circle_id', 'artist_id'))
 
 
 @generic_repr
 class Artist(ProfileMixin, Base):
     __tablename__ = 'artist'
 
+    info = Column(String, nullable=False, default='')
+
     galleries = relationship(
         "Gallery",
         secondary=gallery_artists,
         back_populates='artists',
-        lazy="dynamic")
+        lazy="dynamic",
+        cascade="save-update, merge, refresh-expire")
 
-    names = relationship(
-        "ArtistName",
-        lazy='joined',
-        back_populates='artist',
-        cascade="all, delete-orphan")
+    circles = relationship(
+        "Circle",
+        secondary=artist_circles,
+        back_populates='artists',
+        lazy="joined",
+        cascade="save-update, merge, refresh-expire")
 
-    profiles = relationship(
-        "Profile",
-        secondary=artist_profiles,
-        lazy='joined',
-        cascade="all")
-
-
-@generic_repr
-class ArtistName(NameMixin, Base):
-    __tablename__ = 'artistname'
-
-    artist_id = Column(Integer, ForeignKey('artist.id'))
-    language_id = Column(Integer, ForeignKey('language.id'))
-    language = relationship("Language", cascade="save-update, merge, refresh-expire")
-    artist = relationship("Artist", back_populates='names')
-
-gallery_circles = Table(
-    'gallery_circles', Base.metadata, Column(
-        'circle_id', Integer, ForeignKey(
-            'circle.id',)), Column(
-                'gallery_id', Integer, ForeignKey(
-                    'gallery.id',)), UniqueConstraint(
-                        'circle_id', 'gallery_id'))
+metatag_association(Artist)
+profile_association(Artist, "artists")
+aliasname_association(Artist, "artists")
+url_association(Artist, "artists")
 
 
 @generic_repr
 class Circle(NameMixin, Base):
     __tablename__ = 'circle'
 
+    artists = relationship(
+        "Artist",
+        secondary=artist_circles,
+        back_populates='circles',
+        lazy="joined")
+
+gallery_parodies = Table(
+    'gallery_parodies', Base.metadata, Column(
+        'parody_id', Integer, ForeignKey('parody.id')), Column(
+            'gallery_id', Integer, ForeignKey('gallery.id')), UniqueConstraint(
+                'parody_id', 'gallery_id'))
+
+
+@generic_repr
+class Parody(Base):
+    __tablename__ = 'parody'
+
     galleries = relationship(
         "Gallery",
-        secondary=gallery_circles,
-        back_populates='circles',
+        secondary=gallery_parodies,
+        back_populates='parodies',
         lazy="dynamic")
 
+aliasname_association(Parody, "parodies")
 
 gallery_filters = Table('gallery_filters', Base.metadata,
                         Column('filter_id', Integer, ForeignKey('filter.id')),
@@ -631,11 +809,9 @@ gallery_filters = Table('gallery_filters', Base.metadata,
                             ForeignKey('gallery.id')),
                         UniqueConstraint('filter_id', 'gallery_id'))
 
-filter_profiles = profile_association("filter")
-
 
 @generic_repr
-class GalleryFilter(ProfileMixin, NameMixin, Base):
+class GalleryFilter(NameMixin, Base):
     __tablename__ = 'filter'
     filter = Column(String, nullable=False, default='')
     enforce = Column(Boolean, nullable=False, default=False)
@@ -649,12 +825,6 @@ class GalleryFilter(ProfileMixin, NameMixin, Base):
         back_populates='filters',
         lazy="dynamic")
 
-    profiles = relationship(
-        "Profile",
-        secondary=filter_profiles,
-        lazy='joined',
-        cascade="all")
-
 
 @generic_repr
 class Status(NameMixin, Base):
@@ -664,9 +834,6 @@ class Status(NameMixin, Base):
         "Grouping",
         lazy='dynamic',
         back_populates='status')
-
-
-grouping_profiles = profile_association("grouping")
 
 
 @generic_repr
@@ -679,15 +846,12 @@ class Grouping(ProfileMixin, NameMixin, Base):
         back_populates="grouping",
         lazy="dynamic",
         cascade="all, delete-orphan")
-    profiles = relationship(
-        "Profile",
-        secondary=grouping_profiles,
-        lazy='joined',
-        cascade="all")
     status = relationship(
         "Status",
         back_populates="groupings",
         cascade="save-update, merge, refresh-expire")
+
+profile_association(Grouping, "groupings")
 
 
 @generic_repr
@@ -716,8 +880,6 @@ gallery_collections = Table(
             'gallery_id', Integer, ForeignKey('gallery.id')), UniqueConstraint(
                 'collection_id', 'gallery_id'))
 
-collection_profiles = profile_association("collection")
-
 
 @generic_repr
 class Collection(ProfileMixin, Base):
@@ -734,14 +896,8 @@ class Collection(ProfileMixin, Base):
         lazy="dynamic",
         cascade="save-update, merge, refresh-expire")
 
-    profiles = relationship(
-        "Profile",
-        secondary=collection_profiles,
-        lazy='joined',
-        cascade="all")
-
-
-gallery_profiles = profile_association("gallery")
+profile_association(Collection, "collections")
+metatag_association(Collection)
 
 
 @generic_repr
@@ -750,8 +906,6 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
 
     last_read = Column(ArrowType)
     pub_date = Column(ArrowType)
-    inbox = Column(Boolean, default=False)
-    fav = Column(Boolean, default=False)
     info = Column(String, nullable=False, default='')
     single_source = Column(Boolean, default=True)
     fetched = Column(Boolean, default=False)
@@ -773,11 +927,6 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
         back_populates="galleries",
         cascade="save-update, merge, refresh-expire",
         lazy="dynamic")
-    urls = relationship(
-        "GalleryUrl",
-        back_populates="gallery",
-        lazy='joined',
-        cascade="all,delete-orphan")
     language = relationship(
         "Language",
         back_populates="galleries",
@@ -786,17 +935,11 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
         "Category",
         back_populates="galleries",
         cascade="save-update, merge, refresh-expire")
-    circles = relationship(
-        "Circle",
-        secondary=gallery_circles,
-        back_populates='galleries',
-        lazy="joined",
-        cascade="save-update, merge, refresh-expire")
     artists = relationship(
         "Artist",
         secondary=gallery_artists,
         back_populates='galleries',
-        lazy="dynamic",
+        lazy="joined",
         cascade="save-update, merge, refresh-expire")
     filters = relationship(
         "GalleryFilter",
@@ -813,11 +956,12 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
         back_populates="gallery",
         lazy='joined',
         cascade="all,delete-orphan")
-    profiles = relationship(
-        "Profile",
-        secondary=gallery_profiles,
-        lazy='joined',
-        cascade="all")
+    parodies = relationship(
+        "Parody",
+        secondary=gallery_parodies,
+        back_populates='galleries',
+        lazy="joined",
+        cascade="save-update, merge, refresh-expire")
 
     def read(self, user_id, datetime=None):
         "Creates a read event for user"
@@ -899,7 +1043,9 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
     #        log.w("Could not query for gallery existence because no path was set.")
     #    return e
 
-page_profiles = profile_association("page")
+metatag_association(Gallery)
+profile_association(Gallery, "galleries")
+url_association(Gallery, "galleries")
 
 
 @generic_repr
@@ -914,11 +1060,6 @@ class Page(TaggableMixin, ProfileMixin, Base):
 
     hash = relationship("Hash", cascade="save-update, merge, refresh-expire")
     gallery = relationship("Gallery", back_populates="pages")
-    profiles = relationship(
-        "Profile",
-        secondary=page_profiles,
-        lazy='joined',
-        cascade="all")
 
     @property
     def file_type(self):
@@ -952,9 +1093,12 @@ class Page(TaggableMixin, ProfileMixin, Base):
             log.w("Could not query for page existence because no path was set.")
         return e
 
+metatag_association(Page)
+profile_association(Page, "pages")
+
 
 @generic_repr
-class Title(Base):
+class Title(AliasMixin, Base):
     __tablename__ = 'title'
     name = Column(String, nullable=False, default="")  # OBS: not unique
     language_id = Column(Integer, ForeignKey('language.id'))
@@ -970,17 +1114,24 @@ class Title(Base):
 
 
 @generic_repr
-class GalleryUrl(Base):
-    __tablename__ = 'gallery_url'
-    url = Column(String, nullable=False, default='')
-    gallery_id = Column(Integer, ForeignKey('gallery.id'))
-
-    gallery = relationship("Gallery", back_populates="urls")
-
+class Url(Base):
+    __tablename__ = 'url'
+    name = Column(String, nullable=False, default='')  # OBS: not unique
 
 # Note: necessary to put in function because there is no Session object yet
+
+
 def initEvents(sess):
     "Initializes events"
+
+    @event.listens_for(sess, 'before_commit')
+    def aliasmixin_delete(session):
+        "when root is deleted, delete all its aliases"
+
+        found = [obj for obj in session.deleted if isinstance(obj, AliasMixin) and obj.aliases]
+        for a in found:
+            for x in a.aliases:
+                x.delete()
 
     @event.listens_for(Taggable.tags, 'append', retval=True)
     def taggable_new_tag(target, value, initiator):
@@ -1017,6 +1168,12 @@ def initEvents(sess):
             synchronize_session=False)
 
     @event.listens_for(sess, 'before_commit')
+    def delete_parody_orphans(session):
+        session.query(Parody).filter(
+            ~Parody.galleries.any()).delete(
+            synchronize_session=False)
+
+    @event.listens_for(sess, 'before_commit')
     def delete_tag_orphans(session):
         session.query(Tag).filter(
             ~Tag.namespaces.any()).delete(
@@ -1026,6 +1183,31 @@ def initEvents(sess):
     def delete_namespace_orphans(session):
         session.query(Namespace).filter(
             ~Namespace.tags.any()).delete(
+            synchronize_session=False)
+
+    @event.listens_for(sess, 'before_commit')
+    def delete_aliasname_orphans(session):
+        session.query(AliasName).filter(
+            and_op(not AliasName.alias_for, ~AliasName.artists.any(), ~AliasName.parodies.any())).delete(
+            synchronize_session=False)
+
+    @event.listens_for(sess, 'before_commit')
+    def delete_profiles_orphans(session):
+        session.query(Profile).filter(
+            and_op(
+                ~Profile.artists.any(),
+                ~Profile.collections.any(),
+                ~Profile.groupings.any(),
+                ~Profile.pages.any(),
+                ~Profile.galleries.any())).delete(
+            synchronize_session=False)
+
+    @event.listens_for(sess, 'before_commit')
+    def delete_url_orphans(session):
+        session.query(Url).filter(
+            and_op(
+                ~Url.artists.any(),
+                ~Url.galleries.any())).delete(
             synchronize_session=False)
 
     @event.listens_for(sess, 'before_commit')
@@ -1048,7 +1230,7 @@ def initEvents(sess):
     @event.listens_for(sess, 'before_commit')
     def delete_circle_orphans(session):
         session.query(Circle).filter(
-            ~Circle.galleries.any()).delete(
+            ~Circle.artists.any()).delete(
             synchronize_session=False)
 
     @event.listens_for(sess, 'before_commit')
@@ -1091,6 +1273,11 @@ def sqlite_engine_connect(dbapi_connection, connection_record):
     for name, function in SQLITE_REGEX_FUNCTIONS.values():
         dbapi_connection.create_function(name, 2, function)
 
+    cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA journal_mode=WAL")
+    cursor.execute("PRAGMA synchronous=NORMAL")
+    cursor.close()
+
 
 def init_defaults(sess):
     "Initializes default items"
@@ -1103,6 +1290,15 @@ def init_defaults(sess):
         sess.add(duser)
         sess.commit()
     constants.default_user = duser
+
+    # init default metatags
+    for t in MetaTag.names:
+        t_d = sess.query(MetaTag).filter(MetaTag.name == t).one_or_none()
+        if not t_d:
+            t_d = MetaTag(name=t)
+            sess.add(t_d)
+            sess.commit()
+        MetaTag.tags[t] = t_d
 
 
 def create_user(role, name=None, password=None):
@@ -1162,14 +1358,26 @@ def check_db_version(sess):
     return True
 
 
+def _get_session(sess):
+    utils.switch(constants.Priority.Normal)
+    return sess()
+
+
 def init(**kwargs):
-    db_path = constants.db_path_dev if constants.dev else constants.db_path
-    Session = scoped_session(sessionmaker())
-    constants.db_session = Session
-    initEvents(constants.db_session)
-    engine = create_engine(os.path.join("sqlite:///", db_path))
-    Base.metadata.create_all(engine)
-    Session.configure(bind=engine)
+    db_path = kwargs.get("path")
+    if not db_path:
+        db_path = constants.db_path_dev if constants.dev else constants.db_path
+    Session = scoped_session(sessionmaker(), scopefunc=gevent.getcurrent)
+    constants._db_scoped_sesion = Session
+    constants.db_session = functools.partial(_get_session, Session)
+    initEvents(Session)
+    constants.db_engine = kwargs.get("engine")
+    if not constants.db_engine:
+        constants.db_engine = create_engine(os.path.join("sqlite:///", db_path),
+                                            connect_args={'timeout': 60})  # SQLITE specific arg (avoding db is locked errors)
+    Base.metadata.create_all(constants.db_engine)
+
+    Session.configure(bind=constants.db_engine)
 
     return check_db_version(Session())
 

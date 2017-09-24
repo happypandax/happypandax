@@ -1,12 +1,14 @@
 import pathlib
 import os
 import hashlib
+
 from io import BytesIO
 from PIL import Image
 from zipfile import ZipFile
 from rarfile import RarFile
 from collections import namedtuple
 from contextlib import contextmanager
+from gevent import fileobject
 
 from happypanda.common import hlogger, exceptions, utils, constants
 from happypanda.core.command import CoreCommand, CommandEntry, AsyncCommand
@@ -17,8 +19,8 @@ log = hlogger.Logger(__name__)
 
 ImageProperties = namedtuple(
     "ImageProperties", [
-        'size', 'radius', 'output_dir', 'output_path', 'name'])
-ImageProperties.__new__.__defaults__ = (utils.ImageSize(*constants.image_sizes['medium']), 0, None, None, None)
+        'size', 'radius', 'output_dir', 'output_path', 'name', 'create_symlink'])
+ImageProperties.__new__.__defaults__ = (utils.ImageSize(*constants.image_sizes['medium']), 0, None, None, None, True)
 
 
 class ImageItem(AsyncCommand):
@@ -31,7 +33,7 @@ class ImageItem(AsyncCommand):
     def __init__(self, service, filepath_or_bytes, properties):
         assert isinstance(service, ImageService) or service is None
         assert isinstance(properties, ImageProperties)
-        super().__init__(service)
+        super().__init__(service, priority=constants.Priority.Low)
         self.properties = properties
         self._image = filepath_or_bytes
 
@@ -74,33 +76,54 @@ class ImageItem(AsyncCommand):
         return im.convert(colormode)
 
     def main(self) -> str:
+        return self.run_native(self._generate).get()
+
+    def _generate(self):
         size = self.properties.size
         if isinstance(self._image, str):
             self._image = CoreFS(self._image).get()
-        im = self._convert(Image.open(self._image))
-        f, ext = os.path.splitext(self._image)
+        im = None
         image_path = ""
+        try:
+            im = self._convert(Image.open(self._image))
+            f, ext = os.path.splitext(self._image)
 
-        if self.properties.output_path:
-            image_path = self.properties.output_path
-            _f, _ext = os.path.splitext(image_path)
-            if not _ext:
-                image_path = os.path.join(_f, ext)
+            if self.properties.output_path:
+                image_path = self.properties.output_path
+                _f, _ext = os.path.splitext(image_path)
+                if not _ext:
+                    image_path = _f + ext
 
-        elif self.properties.output_dir:
-            o_dir = self.properties.output_dir
-            o_name = self.properties.name if self.properties.name else utils.random_name()
-            if not o_name.endswith(ext):
-                o_name = o_name + ext
-            image_path = os.path.join(o_dir, o_name)
-        else:
-            image_path = BytesIO()
+            elif self.properties.output_dir:
+                o_dir = self.properties.output_dir
+                o_name = self.properties.name if self.properties.name else utils.random_name()
+                if not o_name.endswith(ext):
+                    o_name = o_name + ext
+                image_path = os.path.join(o_dir, o_name)
+            else:
+                image_path = BytesIO()
 
-        if size.width and size.height:
-            im.thumbnail((size.width, size.height), Image.ANTIALIAS)
+            save_image = True
+            if size.width and size.height:
+                if ext.lower().endswith(".gif"):
+                    new_frame = Image.new('RGBA', im.size)
+                    new_frame.paste(im, (0, 0), im.convert('RGBA'))
+                    im.close()
+                    im = new_frame
+                im.thumbnail((size.width, size.height), Image.ANTIALIAS)
 
-        im.save(image_path)
+            else:
+                if self.properties.create_symlink and isinstance(image_path, str):
+                    image_path = image_path + constants.link_ext
+                    with open(image_path, 'w', encoding='utf-8') as f:
+                        f.write(self._image)
+                    save_image = False
 
+            if save_image:
+                im.save(image_path)
+        finally:
+            if im:
+                im.close()
         return image_path
 
     @staticmethod
@@ -309,6 +332,7 @@ class CoreFS(CoreCommand):
                 f = self._archive.open(self.archive_name, *args, **kwargs)
             else:
                 f = open(self.get(), *args, **kwargs)
+            f = fileobject.FileObject(f)
         except PermissionError:
             if self.is_dir:
                 raise exceptions.CoreError(utils.this_function(), "Tried to open a folder which is not possible")

@@ -1,10 +1,13 @@
 import enum
+import gevent
+import arrow
 
 from contextlib import contextmanager
 from abc import ABCMeta, abstractmethod
 from inspect import isclass
+from concurrent import futures
 
-from happypanda.common import utils, hlogger, exceptions
+from happypanda.common import utils, hlogger, exceptions, constants
 from happypanda.core import plugins
 
 log = hlogger.Logger(__name__)
@@ -44,17 +47,105 @@ class CommandState(enum.Enum):
     failed = 6
 
 
+class CommandFuture:
+
+    class NoValue:
+        pass
+
+    def __init__(self, cmd, f):
+        self._cmd = cmd
+        self._future = f
+        self._value = self.NoValue
+
+    def get(self, block=True, timeout=None):
+        if not self._value == self.NoValue:
+            return self._value
+        if block:
+            while True:
+                try:
+                    self._value = self._future.result(0)
+                    break
+                except futures.TimeoutError:
+                    utils.switch(constants.Priority.Low)
+        else:
+            self._value = self._future.get(0)  # TODO: return custom timeout exception
+        return self._value
+
+    def kill(self):
+        pass
+
+
+def _daemon_greenlet():
+    while True:
+        utils.switch(constants.Priority.Low)
+
+
+def _native_runner(f):
+
+    def cleanup_wrapper(*args, **kwargs):
+        r = f(*args, **kwargs)
+        constants._db_scoped_sesion.remove()
+        return r
+
+    def wrapper(*args, **kwargs):
+        d = gevent.spawn(_daemon_greenlet)  # this is to allow gevent switching to occur
+        g = gevent.spawn(cleanup_wrapper, *args, **kwargs)
+        r = g.get()
+        d.kill()
+        return r
+    return wrapper
+
+
 class CoreCommand:
     "Base command"
     __metaclass__ = ABCMeta
 
     _events = {}
     _entries = {}
+    _native_pool = None
 
     def __new__(cls, *args, **kwargs):
         obj = super(CoreCommand, cls).__new__(cls)
         obj._get_commands()
         return obj
+
+    def __init__(self, priority=constants.Priority.Normal):
+        self._created_time = arrow.now()
+        self.command_id = None
+        self._started_time = None
+        self._finished_time = None
+        self._priority = priority
+        self._main = self.main
+        self.main = self._main_wrap
+
+    def run_native(self, f, *args, **kwargs):
+        # TODO: avoid deadlocks by only running if not in native thread already
+        return CommandFuture(self, self._native_pool.submit(_native_runner(f), *args, **kwargs))
+
+    def _main(self):
+        pass
+
+    def _main_wrap(self, *args, **kwargs):
+        utils.switch(self._priority)
+        self._started_time = arrow.now()
+        r = self._main(*args, **kwargs)
+        self._finished_time = arrow.now()
+        return r
+
+    def _log_stats(self, d=None):
+        create_delta = self._finished_time - self._created_time
+        run_delta = self._finished_time - self._started_time
+        log_delta = (d - self._finished_time) if d else None
+        log.i("Command - '{}' -".format(self.__class__.__name__), "ID({})".format(self.command_id) if self.command_id else '',
+              "running time:\n",
+              "\t\tCreation delta: {} (time between creation and finish)\n".format(create_delta),
+              "\t\tRunning delta: {} (time between start and finish)\n".format(run_delta),
+              "\t\tLog delta: {} (time between finish and this log)\n".format(log_delta),
+              )
+
+    @abstractmethod
+    def main(self, *args, **kwargs):
+        pass
 
     @classmethod
     def _get_commands(cls):
@@ -71,9 +162,8 @@ class CoreCommand:
 
 class Command(CoreCommand):
 
-    @abstractmethod
-    def main(self, *args, **kwargs):
-        pass
+    def __init__(self, priority=constants.Priority.Normal):
+        super().__init__(priority)
 
     def run(self, *args, **kwargs):
         """
@@ -97,11 +187,10 @@ class UndoCommand(Command):
 class AsyncCommand(Command):
     "Async command"
 
-    def __init__(self, service=None):
-        super().__init__()
+    def __init__(self, service=None, priority=constants.Priority.Normal):
+        super().__init__(priority)
 
         self._service = service
-        self.command_id = None
         self._args = None
         self._kwargs = None
         self.state = CommandState.out_of_service
@@ -276,3 +365,7 @@ class CommandEntry(_CommandPlugin):
         handler.default_handler = self.default_handler
         handler.expected_type = self.return_type
         yield handler
+
+
+def init_commands():
+    CoreCommand._native_pool = futures.ThreadPoolExecutor(constants.maximum_native_workers)

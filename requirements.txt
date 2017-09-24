@@ -1,6 +1,6 @@
 bcrypt==3.1.3
-gevent==1.1.2
-SQLAlchemy==1.1.9
+gevent==1.2.2
+SQLAlchemy==1.1.13
 sqlalchemy-utils==0.32.14
 rarfile==3.0
 appdirs==1.4.3
@@ -11,3 +11,6 @@ Flask==0.11.1
 karellen-geventws==1.0.2
 transcrypt==3.6.27
 flask-socketio==2.9.0
+libsass==0.13.2
+pyyaml==3.12
+https://github.com/happypandax/i18n/archive/master.zip

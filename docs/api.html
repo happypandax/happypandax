@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Server API &#8212; Happypanda X (0, 0, 1) documentation</title>
+    <title>Server API &#8212; Happypanda X 0.0.1#100 documentation</title>
     
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '(0, 0, 1)',
+        VERSION:     '0.0.1#100',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -54,7 +54,7 @@
         </button>
         <a class="navbar-brand" href="index.html">
           Happypanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>(0, 0, 1)</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.1#100</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -286,6 +286,12 @@ Enum member names may change sometime in the future. It is not likely to happen 
 <dt id="happypanda.interface.enums.ItemType.Page">
 <code class="descname">Page</code><em class="property"> = 4</em><a class="headerlink" href="#happypanda.interface.enums.ItemType.Page" title="Permalink to this definition">¶</a></dt>
 <dd><p>Page</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ItemType.Parody">
+<code class="descname">Parody</code><em class="property"> = 13</em><a class="headerlink" href="#happypanda.interface.enums.ItemType.Parody" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gallery Parody</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -527,7 +533,7 @@ Enum member names may change sometime in the future. It is not likely to happen 
 <span id="ui"></span><h3>UI<a class="headerlink" href="#module-happypanda.interface.ui" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="happypanda.interface.ui.get_view_count">
-<code class="descname">get_view_count</code><span class="sig-paren">(</span><em>item_type=&lt;ItemType.Gallery: 1&gt;</em>, <em>search_query=''</em>, <em>filter_id=None</em>, <em>view_filter=&lt;ViewType.Library: 1&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/ui.html#get_view_count"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.ui.get_view_count" title="Permalink to this definition">¶</a></dt>
+<code class="descname">get_view_count</code><span class="sig-paren">(</span><em>item_type=&lt;ItemType.Gallery: 1&gt;</em>, <em>item_id=None</em>, <em>related_type=None</em>, <em>search_query=''</em>, <em>filter_id=None</em>, <em>view_filter=&lt;ViewType.Library: 1&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/ui.html#get_view_count"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.ui.get_view_count" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get count of items in view</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -537,8 +543,9 @@ Enum member names may change sometime in the future. It is not likely to happen 
 <li><strong>item_type</strong> (<a class="reference internal" href="#happypanda.interface.enums.ItemType" title="happypanda.interface.enums.ItemType"><code class="xref py py-class docutils literal"><span class="pre">ItemType</span></code></a>) &#8211; possible items are <a class="reference internal" href="#happypanda.interface.enums.ItemType.Gallery" title="happypanda.interface.enums.ItemType.Gallery"><code class="xref py py-attr docutils literal"><span class="pre">ItemType.Gallery</span></code></a>, <a class="reference internal" href="#happypanda.interface.enums.ItemType.Collection" title="happypanda.interface.enums.ItemType.Collection"><code class="xref py py-attr docutils literal"><span class="pre">ItemType.Collection</span></code></a>, <a class="reference internal" href="#happypanda.interface.enums.ItemType.Grouping" title="happypanda.interface.enums.ItemType.Grouping"><code class="xref py py-attr docutils literal"><span class="pre">ItemType.Grouping</span></code></a></li>
 <li><strong>search_query</strong> (<code class="xref py py-class docutils literal"><span class="pre">str</span></code>) &#8211; filter item by search terms</li>
 <li><strong>filter_id</strong> (<code class="xref py py-data docutils literal"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal"><span class="pre">int</span></code>]) &#8211; current filter list id</li>
-<li><strong>view_filter</strong> (<a class="reference internal" href="#happypanda.interface.enums.ViewType" title="happypanda.interface.enums.ViewType"><code class="xref py py-class docutils literal"><span class="pre">ViewType</span></code></a>) &#8211; <p>...</p>
-</li>
+<li><strong>view_filter</strong> (<a class="reference internal" href="#happypanda.interface.enums.ViewType" title="happypanda.interface.enums.ViewType"><code class="xref py py-class docutils literal"><span class="pre">ViewType</span></code></a>) &#8211; type of view</li>
+<li><strong>related_type</strong> (<code class="xref py py-data docutils literal"><span class="pre">Optional</span></code>[<a class="reference internal" href="#happypanda.interface.enums.ItemType" title="happypanda.interface.enums.ItemType"><code class="xref py py-class docutils literal"><span class="pre">ItemType</span></code></a>]) &#8211; child item</li>
+<li><strong>item_id</strong> (<code class="xref py py-data docutils literal"><span class="pre">Optional</span></code>[<a class="reference internal" href="#happypanda.interface.enums.ItemType" title="happypanda.interface.enums.ItemType"><code class="xref py py-class docutils literal"><span class="pre">ItemType</span></code></a>]) &#8211; id of parent item</li>
 </ul>
 </td>
 </tr>
@@ -554,7 +561,7 @@ Enum member names may change sometime in the future. It is not likely to happen 
 
 <dl class="function">
 <dt id="happypanda.interface.ui.library_view">
-<code class="descname">library_view</code><span class="sig-paren">(</span><em>item_type=&lt;ItemType.Gallery: 1&gt;</em>, <em>page=0</em>, <em>limit=100</em>, <em>sort_by=''</em>, <em>search_query=''</em>, <em>filter_id=None</em>, <em>view_filter=&lt;ViewType.Library: 1&gt;</em>, <em>ctx=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/ui.html#library_view"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.ui.library_view" title="Permalink to this definition">¶</a></dt>
+<code class="descname">library_view</code><span class="sig-paren">(</span><em>item_type=&lt;ItemType.Gallery: 1&gt;</em>, <em>item_id=None</em>, <em>related_type=None</em>, <em>page=0</em>, <em>limit=100</em>, <em>sort_by=''</em>, <em>search_query=''</em>, <em>filter_id=None</em>, <em>view_filter=&lt;ViewType.Library: 1&gt;</em>, <em>ctx=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/ui.html#library_view"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.ui.library_view" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fetch items from the database.
 Provides pagination.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -568,12 +575,35 @@ Provides pagination.</p>
 <li><strong>limit</strong> (<code class="xref py py-class docutils literal"><span class="pre">int</span></code>) &#8211; amount of items per page</li>
 <li><strong>search_query</strong> (<code class="xref py py-class docutils literal"><span class="pre">str</span></code>) &#8211; filter item by search terms</li>
 <li><strong>filter_id</strong> (<code class="xref py py-data docutils literal"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal"><span class="pre">int</span></code>]) &#8211; current filter list id</li>
-<li><strong>view_filter</strong> (<a class="reference internal" href="#happypanda.interface.enums.ViewType" title="happypanda.interface.enums.ViewType"><code class="xref py py-class docutils literal"><span class="pre">ViewType</span></code></a>) &#8211; <p>...</p>
-</li>
+<li><strong>view_filter</strong> (<a class="reference internal" href="#happypanda.interface.enums.ViewType" title="happypanda.interface.enums.ViewType"><code class="xref py py-class docutils literal"><span class="pre">ViewType</span></code></a>) &#8211; type of view</li>
+<li><strong>related_type</strong> (<code class="xref py py-data docutils literal"><span class="pre">Optional</span></code>[<a class="reference internal" href="#happypanda.interface.enums.ItemType" title="happypanda.interface.enums.ItemType"><code class="xref py py-class docutils literal"><span class="pre">ItemType</span></code></a>]) &#8211; child item</li>
+<li><strong>item_id</strong> (<code class="xref py py-data docutils literal"><span class="pre">Optional</span></code>[<a class="reference internal" href="#happypanda.interface.enums.ItemType" title="happypanda.interface.enums.ItemType"><code class="xref py py-class docutils literal"><span class="pre">ItemType</span></code></a>]) &#8211; id of parent item</li>
 </ul>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">list of item message objects</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="happypanda.interface.ui.translate">
+<code class="descname">translate</code><span class="sig-paren">(</span><em>t_id</em>, <em>locale=None</em>, <em>default=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/ui.html#translate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.ui.translate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a translation by translation id. Raises error if no translation was found.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>t_id</strong> (<code class="xref py py-class docutils literal"><span class="pre">str</span></code>) &#8211; translation id</li>
+<li><strong>locale</strong> (<code class="xref py py-data docutils literal"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal"><span class="pre">str</span></code>]) &#8211; locale to get translations from (will override default locale)</li>
+<li><strong>default</strong> (<code class="xref py py-data docutils literal"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal"><span class="pre">str</span></code>]) &#8211; default text when no translation was found</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">string</p>
 </td>
 </tr>
 </tbody>
@@ -868,14 +898,13 @@ Image content is base64 encoded.</p>
 <span id="settings"></span><h3>Settings<a class="headerlink" href="#module-happypanda.interface.settings" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="happypanda.interface.settings.get_settings">
-<code class="descname">get_settings</code><span class="sig-paren">(</span><em>settings=[]</em>, <em>ctx=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/settings.html#get_settings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.settings.get_settings" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set settings
-Send empty list to get all key:values</p>
+<code class="descname">get_settings</code><span class="sig-paren">(</span><em>settings={}</em>, <em>ctx=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/settings.html#get_settings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.settings.get_settings" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get settings</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>set_list</strong> &#8211; a list of setting keys</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>settings</strong> (<code class="xref py py-class docutils literal"><span class="pre">dict</span></code>) &#8211; a dict containing <code class="docutils literal"><span class="pre">key.name</span></code>:<code class="docutils literal"><span class="pre">default</span> <span class="pre">value</span></code>, send an empty dict to retrieve all settings</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><code class="docutils literal"><span class="pre">`</span>
 <span class="pre">{</span> <span class="pre">'key.name':</span> <span class="pre">value</span> <span class="pre">}</span>
@@ -893,7 +922,7 @@ Send empty list to get all key:values</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>settings</strong> (<code class="xref py py-class docutils literal"><span class="pre">dict</span></code>) &#8211; a dictionary containing key:value pairs</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>settings</strong> (<code class="xref py py-class docutils literal"><span class="pre">dict</span></code>) &#8211; a dict containing <code class="docutils literal"><span class="pre">key.name</span></code>:<code class="docutils literal"><span class="pre">value</span></code></td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Status</td>
 </tr>

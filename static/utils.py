@@ -1,4 +1,5 @@
-__pragma__('alias', 'S', '$')  # JQuery
+query_string = require("query-string")
+moment = require("moment")
 
 syntax_highlight = __pragma__('js', '{}',
                               """
@@ -53,47 +54,46 @@ def html_escape(text):
 def get_locale():
     return window.navigator.userLanguage or window.navigator.language
 
+def query_to_string(obj):
+    return query_string.stringify(obj)
 
-class Grid:
-    __pragma__('kwargs')
+__pragma__("kwargs")
+def query_to_obj(query=None, location_obj=None):
+    if not query:
+        l = location_obj or location
+        query = l.search
+    return query_string.parse(query)
+__pragma__("nokwargs")
 
-    def __init__(self, container_el, child_el, **kwargs):
-        self._grid = S(container_el)
-        self._options = {
-            'itemSelector': child_el,
-        }
-        self._options.update(kwargs)
-        self._grid.packery(self._options)
-    __pragma__('nokwargs')
+__pragma__("kwargs")
+__pragma__("iconv")
+def get_query(key, default=None, query=None, location_obj=None):
+    q = {}
+    q.update(query_to_obj(query, location_obj=location_obj))
+    if key in q:
+        return q[key]
+    return default
+__pragma__("noiconv")
+__pragma__("nokwargs")
 
-    def reload(self):
-        "Reload all items in node"
-        self._grid.packery('reloadItems')
+__pragma__("kwargs")
+__pragma__("tconv")
+def go_to(history_obj, url="", query={}, state=None, push=True, keep_query=True, location_obj=None):
+    if not url:
+        l = location_obj or location
+        url = l.pathname
+    q = {}
+    if keep_query:
+        q.update(query_to_obj())
+    q.update(query)
 
-    def layout(self):
-        self._grid.packery()
+    if q:
+        url += "?" + query_to_string(q, location_obj=location_obj)
+    if push:
+        history_obj.push(url, state)
+    else:
+        history_obj.js_replace(url, state)
+__pragma__("notconv")
+__pragma__("nokwargs")
 
-    def append(self, items):
-        self._grid.packery("appended", items)
-
-    def add(self, items):
-        self._grid.packery("addItems", items)
-
-
-class URLManipulator:
-
-    __pragma__('kwargs')
-
-    def __init__(self, url=None):
-        if url:
-            self.uri = URI(url)
-        else:
-            self.uri = URI()
-    __pragma__('nokwargs')
-
-    def path(self):
-        return self.uri.pathname()
-
-    def go(self, url):
-        "Add state to History"
-        history.pushState(null, null, url)
+moment.locale(get_locale())

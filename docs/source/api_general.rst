@@ -44,7 +44,7 @@ search filter you're tired of always typing in.
 Gallery
 ***************************************
 
-A single chapter, then you group these chapters in a **Grouping**.
+A single chapter, then you group these chapters under a **Grouping** to form a complete series.
 
 Special Notes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -61,7 +61,7 @@ Tags
 ***************************************
 
 **Gallery** and **Page** are the only taggable items.
-**Collection** and **Grouping** are *not* taggable, but they can display, and are searchable through tags of their containing **Gallery**.
+**Collection** and **Grouping** are *not* taggable, but they can display, and are searchable through tags of their children **Gallery**.
 
 Alias
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -74,7 +74,17 @@ Parent
  ...
 
 
+.. note::
+    *You can right-click on the image and choose "Show image" to view it in its full dimensions*
+
 .. image:: _static/schema.png
+
+Asynchronous Commands
+----------------------------------------
+
+.. autoclass:: happypanda.core.command.CommandState
+   :members:
 
 Exceptions
 ----------------------------------------
+

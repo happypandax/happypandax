@@ -729,7 +729,7 @@ def process_pipes(out_queue, out_pipe):
         out_queue.put(out_pipe.recv())
 
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('source',  help="Path to old HP database")
     parser.add_argument('destination',  help="Desired path new HPX database")
@@ -764,10 +764,12 @@ if __name__ == '__main__':
     print("Creating new Happypanda X database")
     engine = db.create_engine(os.path.join("sqlite:///", dst))
     db.Base.metadata.create_all(engine)
-    sess = db.sessionmaker()
+    sess = db.scoped_session(db.sessionmaker())
     sess.configure(bind=engine)
+    constants.db_session = sess
     db.initEvents(sess)
     s = sess()
+    db.init_defaults(s)
 
     print("Converting to Happypanda X Gallery.. ")
 
@@ -882,17 +884,20 @@ if __name__ == '__main__':
 
                 if g.artist:
                     artist = db.Artist()
-                    artist_name = db.ArtistName()
+                    artist_name = db.AliasName()
                     artist_name.name = g.artist
                     artist_name.language = db_lang
                     d_artist = dst_artists.get(artist_name.name)
                     if not d_artist:
                         d_artist = artist
-                        artist_name.artist = d_artist
+                        d_artist.names.append(artist_name)
                     gallery.artists.append(artist)
                     dst_artists[artist_name.name] = artist
                 gallery.info = g.info
-                gallery.fav = bool(g.fav)
+                if g.fav:
+                    gallery.metatags.append(db.MetaTag.tags[db.MetaTag.names.favorite])
+                if g.view == 2:
+                    gallery.metatags.append(db.MetaTag.tags[db.MetaTag.names.inbox])
                 if g.rating is not None:
                     gallery.rating = g.rating * 2
                 if g.type:
@@ -903,8 +908,8 @@ if __name__ == '__main__':
                     dst_gtype[gtype.name] = gtype
 
                 if g.link:
-                    gurl = db.GalleryUrl()
-                    gurl.url = g.link
+                    gurl = db.Url()
+                    gurl.name = g.link
                     gallery.urls.append(gurl)
 
                 gallery.pub_date = g.pub_date
@@ -920,13 +925,11 @@ if __name__ == '__main__':
             # tags
 
             for ns in g.tags:
-                n = db.Namespace()
-                n.name = constants.special_namespace if ns == 'default' else ns
+                n = db.Namespace(name=constants.special_namespace if ns == 'default' else ns)
                 n = dst_namespace.get(ns, n)
                 dst_namespace[ns] = n
                 for tag in g.tags[ns]:
-                    t = db.Tag()
-                    t.name = tag
+                    t = db.Tag(name=tag)
                     t = dst_tag.get(tag, t)
                     dst_tag[t.name] = t
                     nstagname = ns + tag
@@ -1059,4 +1062,5 @@ if __name__ == '__main__':
     s.commit()
     print("Done!")
 
-
+if __name__ == '__main__':
+    main()

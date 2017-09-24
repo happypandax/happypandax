@@ -72,6 +72,8 @@ class ItemType(_APIEnum):
     Circle = 11
     #: GalleryURL
     GalleryUrl = 12
+    #: Gallery Parody
+    Parody = 13
 
     def _msg_and_model(item_type, allowed=tuple(), error=True):
         """

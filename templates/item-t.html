@@ -1,38 +1,52 @@
-﻿{% macro gallery_medium() -%}
-{% raw %}
+﻿{% macro gallery_medium(style="") -%}
 <script id="gallery-medium-t" type="x-handlebars-template">
-    <div id="g-medium-{{ id }}" class="gallery-medium gallery">
-        <a href="/gallery/{{ id }}" class="glink"></a>
+    <div class="{{style}}">
+{% raw %}
+    <div id="g-medium-{{ id }}" class="item-medium card gallery">
+        <a href="/gallery/{{ id }}" class="card-link"></a>
         <div class="load load-center">
             <div class="line bg-primary"></div>
             <div class="line bg-primary"></div>
             <div class="line bg-primary"></div>
         </div>
-        <div class="gcontent header clearfix">
-            <span class="item glyphicon glyphicon-option-horizontal pull-right" aria-hidden="true"></span>
+        <div class="card-content header clearfix">
+            <span class="item glyphicon glyphicon-heart pull-left" aria-hidden="true"></span>
+            <span class="item glyphicon glyphicon-option-vertical pull-right" aria-hidden="true"></span>
         </div>
-        <img class="profile-medium img-thumbnail img-responsive" src="{{ thumb }}">
-        <div class="gcontent footer">
-            <h5 class="gtitle">{{ title }}</h5>
+        <img class="profile-medium img-rounded img-responsive" src="{{ thumb }}">
+        <div class="card-content footer">
+            <h5 class="card-text">{{ title }}</h5>
+            <h6 class="card-text gartist"> {{ artist }}</h6>
         </div>
     </div>
+    </div>
+
 </script>
 {% endraw %}
 {%- endmacro %}
 
-{% macro page_medium() -%}
-{% raw %}
+{% macro page_medium(style="") -%}
 <script id="page-medium-t" type="x-handlebars-template">
-    <div id="p-medium-{{ id }}" class="page-medium col-md-2">
-    <a href="#"></a>
-        <div class="load">
+    <div class="{{style}}">
+{% raw %}
+    <div id="p-medium-{{ id }}" class="item-medium card">
+        <a href="#" class="card-link"></a>
+        <div class="load load-center">
             <div class="line bg-primary"></div>
             <div class="line bg-primary"></div>
             <div class="line bg-primary"></div>
         </div>
-        <img class="profile-medium img-thumbnail" src="{{ thumb }}">
-        <span class="badge">2</span>
+        <div class="card-content header clearfix">
+            <span class="item glyphicon glyphicon-heart pull-left" aria-hidden="true"></span>
+            <span class="item glyphicon glyphicon-option-vertical pull-right" aria-hidden="true"></span>
+        </div>
+        <img class="profile-medium img-rounded img-responsive" src="{{ thumb }}">
+        <div class="card-content footer">
+            <span class="badge"> {{ number }} </span>
+        </div>
     </div>
+    </div>
+
 </script>
 {% endraw %}
 {%- endmacro %}

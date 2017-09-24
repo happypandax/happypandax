@@ -11,6 +11,23 @@ from happypanda.common import exceptions, utils, constants, hlogger
 log = hlogger.Logger(__name__)
 
 
+def format_plugin(node_or_cls):
+    ""
+    txt = ""
+    if isinstance(node_or_cls, PluginNode):
+        node_or_cls = node_or_cls.plugin
+
+    if isinstance(node_or_cls, str):
+        txt = node_or_cls
+    else:
+        if hasattr(node_or_cls, "NAME"):
+            txt = "{}:{}".format(node_or_cls.SHORTNAME, node_or_cls.ID)
+        else:
+            txt = "{}".format(node_or_cls.ID)
+
+    return txt
+
+
 def get_plugin_logger(plugin_name, plugin_dir):
     "Create a logger for plugin"
     file_name = os.path.join(plugin_dir, "plugin.log")
@@ -61,7 +78,7 @@ def plugin_load(path, *args, **kwargs):
         sys.path.pop(0)
 
 
-def _plugin_load(module_name_or_class, path, *args, _logger=None, **kwargs):
+def _plugin_load(module_name_or_class, path, *args, _logger=None, _manager=None, **kwargs):
     """
     Imports plugin module and registers its main class
 
@@ -91,7 +108,9 @@ def _plugin_load(module_name_or_class, path, *args, _logger=None, **kwargs):
             plugclass.__dict__))
     if not _logger:
         _logger = get_plugin_logger(cls.NAME, path)
-    return registered.register(cls, _logger, *args, **kwargs)
+    if not _manager:
+        _manager = registered
+    return _manager.register(cls, _logger, *args, **kwargs)
 
 
 def plugin_loader(path, *args, **kwargs):
@@ -321,69 +340,24 @@ class PluginNode:
         self.commands = {}  # { command : handler }
         self.instanced = None
         self.logger = log if logger is None else logger
+        self.load_order = None
         self._list_depends()
 
     def _list_depends(self):
         ""
-        pluginid = self.plugin.ID
-        err = self._error_check(pluginid, self.plugin)
-        if err is None:
-            return
-        if isinstance(err, tuple):
-            raise err[1]
+        if self.plugin.REQUIRE:
+            for x in self.plugin.REQUIRE:
+                version_end = (0, 0, 0)
+                try:
+                    version_end = x[2]
+                except IndexError:
+                    pass
 
-        for x in self.plugin.REQUIRE:
-            version_end = (0, 0, 0)
-            try:
-                version_end = x[2]
-            except IndexError:
-                pass
+                self.depends[x[0]] = (x[1], version_end)
+            return self.depends
 
-            self.depends[x[0]] = (x[1], version_end)
-        return self.depends
-
-    def _error_check(self, pluginid, plugin_class):
-        ""
-        if not hasattr(plugin_class, 'REQUIRE'):
-            return None
-
-        # invalid list
-        if not isinstance(plugin_class.REQUIRE, (tuple, list)):
-            e = exceptions.PluginAttributeError(
-                plugin_class.NAME, "REQUIRE attribute must be a tuple/list")
-            return False, e
-
-        # empty list
-        if not plugin_class.REQUIRE:
-            return None
-
-        # wrong list
-        e = exceptions.PluginAttributeError(
-            plugin_class.NAME,
-            "REQUIRE should look like this: [ ( ID, (0,0,0), (0,0,0) ) ]")
-        if not all(isinstance(x, (tuple, list)) for x in plugin_class.REQUIRE):
-            return False, e
-
-        for x in plugin_class.REQUIRE:
-            if not x:
-                return False, e
-
-            if len(x) < 2:
-                return False, e
-
-            if not isinstance(x[0], str):
-                return False, e
-
-            if not isinstance(x[1], tuple):
-                return False, e
-
-            try:
-                if not isinstance(x[2], tuple):
-                    return False, e
-            except IndexError:
-                pass
-
-        return True
+    def formatted(self):
+        return format_plugin(self)
 
     def __eq__(self, other):
         return other == self.plugin.ID
@@ -429,60 +403,124 @@ class PluginManager:
         Returns a dict with failed plugins: { plugin_id: exception }
         """
 
-        failed = {}  # plugins with errors
+        nodes = []
 
-        # list up all requirements
         for plug_id in self._nodes:
             node = self._nodes[plug_id]
-            if node.state == PluginState.Disabled:
+            if node.state in (PluginState.Disabled, PluginState.Failed):
                 continue
 
-            result = self._solve(node, node.depends)
-            if isinstance(result, Exception):
-                failed[node.plugin.ID] = result
-                node.state = PluginState.Unloaded
-                continue
+            nodes.append(node)
 
-            if node.state in (PluginState.Init, PluginState.Unloaded):
-                self._init_plugin(plug_id)
+            #result = self._solve(node, node.depends)
+            # if isinstance(result, Exception):
+            #    failed[node.plugin.ID] = result
+            #    node.state = PluginState.Unloaded
+            #    continue
+
+            # if node.state in (PluginState.Init, PluginState.Unloaded):
+            #    self._init_plugin(plug_id)
+
+        solved_nodes, failed = self._solve(nodes)
+
+        for node in solved_nodes:
+            if not node.state == PluginState.Enabled:
+                self._init_plugin(node.plugin.ID)
 
         return failed
 
-    def _solve(self, node, depends):
-        ""
-        for otherpluginid in depends:
-            # check if required plugin is present
-            if otherpluginid not in self._nodes:
-                if self._nodes[otherpluginid].state == PluginState.Unloaded:
-                    return exceptions.PluginError(
-                        node, "A required plugin failed to load: {}".format(otherpluginid))
-                elif self._nodes[otherpluginid].state == PluginState.Disabled:
-                    return exceptions.PluginError(
-                        node,
-                        "A required plugin has been disabled: {}".format(otherpluginid))
-                else:
-                    return exceptions.PluginError(
-                        node, "A required plugin is not present: {}".format(otherpluginid))
+    def _solve(self, nodes):
+        """
+        Returns a tuple of:
+            - An ordered list of node, in the order they should be initiated in
+            - Nodes that failed the dependency resolving {node:exception}
+        """
+        failed = {}
 
-            vers = depends[otherpluginid]
-            other_node = self._nodes[otherpluginid]
-            # compare versions
-            other_version = other_node.plugin.VERSION
-            if not vers[0] <= other_version:
-                return exceptions.PluginError(
-                    node,
-                    "A required plugin does not meet version requirement {} <= {}: {}".format(
-                        vers[0],
-                        other_version,
-                        otherpluginid))
-            if not vers[1] == (0, 0, 0) and not vers[1] > other_version:
-                return exceptions.PluginError(
-                    node,
-                    "A required plugin does not meet version requirement {} > {}: {}".format(
-                        vers[1],
-                        other_version,
-                        otherpluginid))
-        return True
+        universal = []
+        inverse = []
+        provides = {}
+
+        # solve hard requirements
+        for node in nodes:
+            for otherpluginid in node.depends:
+                formatted = format_plugin(otherpluginid)
+                # check if required plugin is present
+                e = None
+                if otherpluginid in self._nodes:
+                    if self._nodes[otherpluginid].state == PluginState.Unloaded:
+                        e = exceptions.PluginError(
+                            node, "A required plugin failed to load: {}".format(formatted))
+                    elif self._nodes[otherpluginid].state == PluginState.Disabled:
+                        e = exceptions.PluginError(
+                            node,
+                            "A required plugin has been disabled: {}".format(formatted))
+                else:
+                    e = exceptions.PluginError(
+                        node, "A required plugin is not present: {}".format(formatted))
+
+                if not e:
+                    vers = node.depends[otherpluginid]
+                    other_node = self._nodes[otherpluginid]
+                    # compare versions
+                    other_version = other_node.plugin.VERSION
+                    if not vers[0] <= other_version:
+                        e = exceptions.PluginError(
+                            node,
+                            "A required plugin does not meet version requirement {} <= {}: {}".format(
+                                vers[0],
+                                other_version,
+                                formatted))
+                    if not vers[1] == (0, 0, 0) and not vers[1] > other_version:
+                        e = exceptions.PluginError(
+                            node,
+                            "A required plugin does not meet version requirement {} > {}: {}".format(
+                                vers[1],
+                                other_version,
+                                formatted))
+                if e:
+                    failed[node] = e
+                    break
+            else:
+                provides[node.plugin.ID] = node
+                provides[node.plugin.SHORTNAME] = node
+
+                if node.load_order == "first":
+                    universal.append(node)
+                elif node.load_order == "last":
+                    inverse.append(node)
+
+        # build initial graph
+
+        dependencies = {}
+
+        for node in nodes:
+
+            reqs = set(node.depends.keys())
+            dependencies[node] = set(provides[x] for x in reqs)
+
+            if universal and node not in universal:
+                dependencies[node].update(universal)
+
+            if inverse and node in inverse:
+                dependencies[node].update(set(nodes).difference(inverse))
+
+        # solver
+        dependencies = robust_topological_sort(dependencies)
+
+        node_order = []
+        for node in dependencies:
+            # circular reference
+            if len(node) > 1:
+                for n in node:
+                    failed[n] = exceptions.PluginError("Circular dependency found: {}".format(node))
+                continue
+
+            node_order.append(node[0])
+
+        node_order.reverse()
+
+        return node_order, failed
 
     def _init_plugin(self, pluginid):
         ""
@@ -523,13 +561,18 @@ class PluginManager:
                 "A __init__ with the following signature must be defined: '__init__(self, *args, **kwargs)'")
 
     def disable_plugin(self, pluginid):
-        "Remove plugin and its dependents"
+        "Disable plugin and its dependents"
         node = self._nodes[pluginid]
         node.state = PluginState.Disabled
         for cmd in node.commands:
             if cmd in self._commands:
                 if node in self._commands[cmd]:
                     self._commands[cmd].remove(node)
+
+    def remove_plugin(self, plugid):
+        "Remove plugin and its dependents"
+        self.disable_plugin(plugid)
+        self._nodes.pop(plugid)
 
     def call_command(self, command_name, *args, **kwargs):
         """
@@ -577,12 +620,17 @@ constants.plugin_manager = registered = PluginManager()
 class HPluginMeta(type):
 
     def __init__(cls, name, bases, dct):
-        plugin_requires = ("ID", "NAME", "VERSION", "AUTHOR", "DESCRIPTION")
+        plugin_requires = ("ID", "NAME", "SHORTNAME", "VERSION", "AUTHOR", "DESCRIPTION")
 
         for pr in plugin_requires:
             if not hasattr(cls, pr):
                 raise exceptions.PluginAttributeError(
                     name, "{} attribute is missing".format(pr))
+
+        for pr in plugin_requires:
+            if not getattr(cls, pr):
+                raise exceptions.PluginAttributeError(
+                    name, "{} attribute cannot be empty".format(pr))
 
         try:
             uid = cls.ID.replace('-', '')
@@ -598,6 +646,12 @@ class HPluginMeta(type):
         if not isinstance(cls.NAME, str):
             raise exceptions.PluginAttributeError(
                 name, "Plugin name should be a string")
+        if not isinstance(cls.SHORTNAME, str):
+            raise exceptions.PluginAttributeError(
+                name, "Plugin shortname should be a string")
+        if len(cls.SHORTNAME) > 10:
+            raise exceptions.PluginAttributeError(
+                name, "Plugin shortname cannot exceed {} characters".format(constants.plugin_shortname_length))
         if not isinstance(cls.VERSION, tuple) or not len(cls.VERSION) == 3:
             raise exceptions.PluginAttributeError(
                 name, "Plugin version should be a tuple with 3 integers")
@@ -607,6 +661,58 @@ class HPluginMeta(type):
         if not isinstance(cls.DESCRIPTION, str):
             raise exceptions.PluginAttributeError(
                 name, "Plugin description should be a string")
+
+        if hasattr(cls, "WEBSITE"):
+            if not isinstance(cls.WEBSITE, str):
+                raise exceptions.PluginAttributeError(
+                    name, "Plugin website should be a string")
+
+        if hasattr(cls, "REQUIRE"):
+            e = None
+
+            if cls.REQUIRE:
+                # invalid list
+                if not isinstance(cls.REQUIRE, (tuple, list)):
+                    e = exceptions.PluginAttributeError(
+                        cls.NAME, "REQUIRE attribute must be a tuple/list")
+
+                if not e:
+                    # wrong list
+                    e_x = exceptions.PluginAttributeError(
+                        cls.NAME,
+                        "REQUIRE should look like this: [ ( ID, (0,0,0), (0,0,0) ) ]")
+                    if not all(isinstance(x, (tuple, list)) for x in cls.REQUIRE):
+                        e = e_x
+
+                    if not e:
+                        e = e_x
+                        for x in cls.REQUIRE:
+                            if not x:
+                                break
+
+                            if len(x) < 2:
+                                break
+
+                            if not isinstance(x[0], str):
+                                break
+
+                            if not isinstance(x[1], tuple):
+                                break
+
+                            try:
+                                if not isinstance(x[2], tuple):
+                                    break
+                            except IndexError:
+                                pass
+                        else:
+                            e = None
+            if e:
+                raise e
+        else:
+            cls.REQUIRE = None
+
+        if hasattr(cls, "OPTIONS"):
+            pass
 
         super().__init__(name, bases, dct)
 
@@ -666,3 +772,106 @@ class HPluginMeta(type):
             The values returned by the handlers are returned in a tuple
         """
         raise NotImplementedError
+
+
+def strongly_connected_components(graph):
+    """
+    Tarjan's Algorithm (named for its discoverer, Robert Tarjan) is a graph theory algorithm
+    for finding the strongly connected components of a graph.
+
+    Based on: http://en.wikipedia.org/wiki/Tarjan%27s_strongly_connected_components_algorithm
+    """
+
+    index_counter = [0]
+    stack = []
+    lowlinks = {}
+    index = {}
+    result = []
+
+    def strongconnect(node):
+        # set the depth index for this node to the smallest unused index
+        index[node] = index_counter[0]
+        lowlinks[node] = index_counter[0]
+        index_counter[0] += 1
+        stack.append(node)
+
+        # Consider successors of `node`
+        try:
+            successors = graph[node]
+        except:
+            successors = []
+        for successor in successors:
+            if successor not in lowlinks:
+                # Successor has not yet been visited; recurse on it
+                strongconnect(successor)
+                lowlinks[node] = min(lowlinks[node], lowlinks[successor])
+            elif successor in stack:
+                # the successor is in the stack and hence in the current strongly connected component (SCC)
+                lowlinks[node] = min(lowlinks[node], index[successor])
+
+        # If `node` is a root node, pop the stack and generate an SCC
+        if lowlinks[node] == index[node]:
+            connected_component = []
+
+            while True:
+                successor = stack.pop()
+                connected_component.append(successor)
+                if successor == node:
+                    break
+            component = tuple(connected_component)
+            # storing the result
+            result.append(component)
+
+    for node in graph:
+        if node not in lowlinks:
+            strongconnect(node)
+
+    return result
+
+
+def topological_sort(graph):
+    count = {}
+    for node in graph:
+        count[node] = 0
+    for node in graph:
+        for successor in graph[node]:
+            count[successor] += 1
+
+    ready = [node for node in graph if count[node] == 0]
+
+    result = []
+    while ready:
+        node = ready.pop(-1)
+        result.append(node)
+
+        for successor in graph[node]:
+            count[successor] -= 1
+            if count[successor] == 0:
+                ready.append(successor)
+
+    return result
+
+
+def robust_topological_sort(graph):
+    """ First identify strongly connected components,
+        then perform a topological sort on these components. """
+
+    components = strongly_connected_components(graph)
+
+    node_component = {}
+    for component in components:
+        for node in component:
+            node_component[node] = component
+
+    component_graph = {}
+    for component in components:
+        component_graph[component] = []
+
+    for node in graph:
+        node_c = node_component[node]
+        for successor in graph[node]:
+            successor_c = node_component[successor]
+            if node_c != successor_c:
+                component_graph[node_c].append(successor_c)
+
+    return topological_sort(component_graph)

@@ -8,9 +8,11 @@ import os
 
 from datetime import datetime
 
-from happypanda.common import constants, exceptions, utils
+from happypanda.common import constants, exceptions, utils, hlogger
 from happypanda.core import db
 from happypanda.core.commands import io_cmd
+
+log = hlogger.Logger(__name__)
 
 
 def finalize(msg_dict, session_id="", name=constants.server_name, error=None):
@@ -75,6 +77,14 @@ class Identity(CoreMessage):
 
     def data(self):
         return self._obj
+
+    def json_friendly(self, include_key=True):
+        "Serialize to JSON structure"
+        d = self.data()
+        if include_key:
+            return {self.key: d}
+        else:
+            return d
 
 
 class List(CoreMessage):
@@ -215,11 +225,26 @@ class DatabaseMessage(CoreMessage):
             session_id,
             name)
 
+    def _unpack_metatags(self, attrib):
+        m_tags = {x: False for x in db.MetaTag.all_names()}
+        names = []
+        if db.is_query(attrib):
+            names = tuple(x.name for x in attrib.all())
+        elif db.is_list(attrib) or isinstance(attrib, list):
+            names = tuple(x.name for x in attrib)
+        for n in names:
+            m_tags[n] = True
+        return m_tags
+
     def _unpack(self, name, attrib, load_collections):
         "Helper method to unpack SQLalchemy objects"
         if attrib is None:
             return
 
+        if name == "metatags":
+            return self._unpack_metatags(attrib)
+
+        #log.d("name:", name, "attrib:", attrib)
         # beware lots of recursion
         if db.is_instanced(attrib):
             msg_obj = None
@@ -262,7 +287,7 @@ class DatabaseMessage(CoreMessage):
         elif isinstance(attrib, arrow.Arrow):
             return attrib.timestamp
 
-        elif isinstance(attrib, (bool, int, str, dict)):
+        elif isinstance(attrib, (bool, int, float, str, dict)):
             return attrib
         else:
             raise NotImplementedError(
@@ -292,6 +317,17 @@ class Artist(DatabaseMessage):
     def __init__(self, db_item):
         assert isinstance(db_item, db.Artist)
         super().__init__('artist', db_item)
+
+    def from_json(self, j):
+        return super().from_json(j)
+
+
+class Parody(DatabaseMessage):
+    "Encapsulates database parody object"
+
+    def __init__(self, db_item):
+        assert isinstance(db_item, db.Parody)
+        super().__init__('parody', db_item)
 
     def from_json(self, j):
         return super().from_json(j)
@@ -345,6 +381,7 @@ class NamespaceTags(DatabaseMessage):
         self._before_data()
         d = {}
         d[self.item.namespace.name] = Tag(self.item.tag, self).json_friendly(include_key=False)
+        d[db.MetaTag.__tablename__] = self._unpack_metatags(self.item.metatags)
         return d
 
 
@@ -382,7 +419,10 @@ class Profile(DatabaseMessage):
         d = {}
         path = io_cmd.CoreFS(self.item.path)
         d['id'] = self.item.id
-        d['ext'] = path.ext
+        if path.ext == constants.link_ext:
+            d['ext'] = io_cmd.CoreFS(self.item.path[:-len(path.ext)]).ext
+        else:
+            d['ext'] = path.ext
         if self._local_url:
             _, tail = os.path.split(path.get())
             # TODO: make sure path is in static else return actual path
@@ -430,12 +470,12 @@ class Title(DatabaseMessage):
         return super().from_json(j)
 
 
-class GalleryUrl(DatabaseMessage):
-    "Encapsulates database galleryurl object"
+class Url(DatabaseMessage):
+    "Encapsulates database url object"
 
     def __init__(self, db_item):
-        assert isinstance(db_item, db.GalleryUrl)
-        super().__init__('galleryurl', db_item)
+        assert isinstance(db_item, db.Url)
+        super().__init__('url', db_item)
 
     def from_json(self, j):
         return super().from_json(j)

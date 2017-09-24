@@ -15,7 +15,7 @@ def get_search_options():
         "regex": constants.search_option_regex,
         "whole": constants.search_option_whole,
         "all": constants.search_option_all,
-        "related": constants.search_option_related
+        "desc": constants.search_option_desc
     }
 
 Term = namedtuple("Term", ["namespace", "tag", "operator"])
@@ -219,9 +219,7 @@ class PartialModelFilter(Command):
 
     @models.default()
     def _models():
-        return (db.NamespaceTags,
-                db.Tag,
-                db.Namespace,
+        return (db.Taggable,
                 db.Artist,
                 db.Circle,
                 db.Status,
@@ -231,13 +229,14 @@ class PartialModelFilter(Command):
                 db.Collection,
                 db.Gallery,
                 db.Title,
-                db.GalleryUrl)
+                db.Url)
 
     @staticmethod
-    def _match_string_column(column, term, options):
+    def _match_string_column(column, value, options, **kwargs):
+
+        options.update(kwargs)
 
         expr = None
-        tag = term.tag
 
         if options.get("regex"):
             if options.get("case"):
@@ -246,17 +245,19 @@ class PartialModelFilter(Command):
                 expr = column.iregexp
         else:
             if not options.get("whole"):
-                tag = '%' + tag + '%'
+                value = '%' + value + '%'
 
             if options.get("case"):
                 expr = column.like
             else:
                 expr = column.ilike
 
-        return expr(tag)
+        return expr(value)
 
     @staticmethod
-    def _match_integer_column(session, parent_model, column, term, options):
+    def _match_integer_column(session, parent_model, column, term, options, **kwargs):
+
+        options.update(kwargs)
 
         return []
 
@@ -278,11 +279,11 @@ class PartialModelFilter(Command):
             lower_ns = term.namespace.lower()
             if lower_ns == 'path':
                 ids.update(x[0] for x in s.query(parent_model.id).filter(match_string(db.Gallery.path,
-                                                                                      term,
+                                                                                      term.tag,
                                                                                       options)).all())
             elif lower_ns in ("rating", "stars"):
                 ids.update(x[0] for x in s.query(parent_model.id).filter(match_int(db.Gallery.rating,
-                                                                                   term,
+                                                                                   term.tag,
                                                                                    options)).all())
 
         return ids
@@ -298,15 +299,62 @@ class PartialModelFilter(Command):
         term = ParseTerm().run(term)
         ids = set()
 
-        if issubclass(parent_model, db.Gallery):
-            if term.namespace.lower() == 'title' or not term.namespace:
-                s = constants.db_session()
-                ids.update(x[0] for x in s.query(parent_model.id).join(parent_model.titles).filter(match_string(child_model.name,
-                                                                                                                term,
-                                                                                                                options)).all())
-        else:
-            raise NotImplementedError("Title on {} has not been implemented".format(parent_model))
+        if term.namespace.lower() == 'title' or not term.namespace:
 
+            col_on_parent = db.relationship_column(parent_model, child_model)
+            s = constants.db_session()
+            ids.update(x[0] for x in s.query(parent_model.id).
+                       join(col_on_parent).
+                       filter(match_string(child_model.name, term.tag, options)).all())
+        return ids
+
+    @match_model.default(capture=True)
+    def _match_tags(parent_model, child_model, term, options,
+                    capture=db.model_name(db.Taggable)):
+        get_model = database_cmd.GetModelClass()
+        parent_model = get_model.run(parent_model)
+        child_model = get_model.run(child_model)
+
+        match_string = PartialModelFilter._match_string_column
+        term = ParseTerm().run(term)
+        ids = set()
+
+        col_on_parent = db.relationship_column(parent_model, child_model)
+        col_on_child = db.relationship_column(child_model, db.NamespaceTags)
+        col_tag = db.relationship_column(db.NamespaceTags, db.Tag)
+        s = constants.db_session()
+        q = s.query(parent_model.id)
+        if term.namespace:
+            col_ns = db.relationship_column(db.NamespaceTags, db.Namespace)
+            items = q.join(col_on_parent).join(col_on_child).join(col_ns).join(col_tag).filter(db.and_op(
+                match_string(db.Namespace.name, term.namespace, options, whole=True),
+                match_string(db.Tag.name, term.tag, options))).all()
+        else:
+            items = q.join(col_on_parent).join(col_on_child).join(col_tag).filter(
+                match_string(db.Tag.name, term.tag, options)).all()
+
+        ids.update(x[0] for x in items)
+        return ids
+
+    @match_model.default(capture=True)
+    def _match_artist(parent_model, child_model, term, options,
+                      capture=db.model_name(db.Artist)):
+        get_model = database_cmd.GetModelClass()
+        parent_model = get_model.run(parent_model)
+        child_model = get_model.run(child_model)
+
+        match_string = PartialModelFilter._match_string_column
+        term = ParseTerm().run(term)
+        ids = set()
+
+        if term.namespace.lower() == 'artist' or not term.namespace:
+            print()
+            col_on_parent = db.relationship_column(parent_model, child_model)
+            s = constants.db_session()
+            ids.update(x[0] for x in s.query(parent_model.id).
+                       join(col_on_parent).
+                       join(child_model.names).
+                       filter(match_string(db.AliasName.name, term.tag, options)).all())
         return ids
 
     @match_model.default(capture=True)
@@ -319,14 +367,12 @@ class PartialModelFilter(Command):
         term = ParseTerm().run(term)
         ids = set()
 
-        s = constants.db_session()
-
-        col = db.relationship_column(parent_model, child_model)
-
-        ids.update(x[0] for x in s.query(parent_model.id).join(col).filter(match_string(child_model.name,
-                                                                                        term,
-                                                                                        options)).all())
-
+        if term.namespace.lower() == child_model.__name__.lower() or not term.namespace:
+            col_on_parent = db.relationship_column(parent_model, child_model)
+            s = constants.db_session()
+            ids.update(x[0] for x in s.query(parent_model.id).join(col_on_parent).filter(match_string(child_model.name,
+                                                                                                      term.tag,
+                                                                                                      options)).all())
         return ids
 
     def main(self, model: db.Base, term: str) -> set:

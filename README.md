@@ -6,17 +6,17 @@
 
 > **This is project is under heavy development and not yet ready for deployment. If you want to speed up the development, please consider [contributing](https://happypandax.github.io/server/env.html).**
 
+<p align="center">
+<img src="https://user-images.githubusercontent.com/11841002/30784339-b811c010-a153-11e7-91f2-8dcfbbeafef4.png" width="350">
+</p>
+
 # Building
 
-1. install `Python 3.5` and `pip3`
-    > **Note**: Python 3.5 is the only supported version
-2. install `virtualenv` by running: `pip3 install virtualenv`
-3. clone or download this repository
-4. setup a virtualenv in the cloned/downloaded folder by running: `virtualenv env`
-5. activate the virtualenv by running: (on windows: `env\Scripts\activate.bat`) (on posix: `. env/bin/activate`)
-6. install the dependencies by running: `pip3 install -r requirements.txt`
+1. install `Python 3.5` and `pip3` (and `git` if you haven't already)
+    > **Note**: Python 3.5 is currently the only supported version
+2. run: `python3 bootstrap.py`
     > **Windows users**: If you get `error: command '..\cl.exe' failed with exit status 2`, download `bitarray` from [here](http://www.lfd.uci.edu/%7Egohlke/pythonlibs/#bitarray)
-7. run the server: `python run.py -h`
+    > **Install like this**: `.\env\Scripts\pip3.exe install bitarray.whl`
 
 # Documentation
 

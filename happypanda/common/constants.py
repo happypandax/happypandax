@@ -10,6 +10,7 @@ rarfile.PATH_SEP = '/'
 dev = False
 
 ## VERSIONING ##
+build = 100
 version = (0, 0, 1)
 version_db = (0, 0, 1)
 
@@ -24,6 +25,7 @@ dir_plugin = os.path.join(dir_root, "plugins")
 dir_templates = os.path.join(dir_root, "templates")
 dir_static = os.path.join(dir_root, "static")
 dir_thumbs = os.path.join(dir_static, "thumbnails")
+dir_translations = os.path.join(dir_root, "translations")
 settings_file = "settings.ini"
 settings_descr_file = ".settings"
 log_error = os.path.join(dir_log, "error.log")
@@ -40,6 +42,7 @@ config = cfg.Config(dir_root, settings_file, settings_descr_file)
 debug = config.get(core_ns, 'debug', False, "Run in debug mode")
 
 thumbs_view = "/thumb"
+link_ext = '.link'
 
 # CORE
 
@@ -48,6 +51,13 @@ class ExitCode(enum.Enum):
     Exit = 0
     Restart = 1
 
+
+class Priority(enum.Enum):
+    High = 10
+    Normal = 5
+    Low = 0
+
+maximum_native_workers = 10
 
 image_sizes = {
     "big": (300, 416),
@@ -76,18 +86,28 @@ search_option_whole = config.get(
     search_ns,
     "match_whole_words",
     False,
-    "Match only whole words")
+    "Match terms exact")
 search_option_all = config.get(
     search_ns,
     "match_all_terms",
     True,
     "Match only items that has all terms")
 
-search_option_related = config.get(
+search_option_desc = config.get(
     search_ns,
-    "related",
+    "descendants",
     True,
-    "Also match on related items")
+    "Also match on descandants")
+
+# CLIENT
+
+client_ns = "client"
+
+translation_locale = config.get(
+    client_ns,
+    "translation_locale",
+    "en_us",
+    "The default translation locale when none is specified. See folder /translations for available locales")
 
 # PLUGIN
 
@@ -95,9 +115,12 @@ core_plugin = None
 plugin_manager = None
 available_commands = set()
 available_events = set()
+plugin_shortname_length = 10
 
-# DATABASE
+# DATABASE½
+db_engine = None
 db_session = None
+_db_scoped_sesion = None
 default_user = None
 special_namespace = "__namespace__"
 
