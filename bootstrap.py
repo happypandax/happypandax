@@ -225,7 +225,7 @@ def convert(args):
             argv.remove(i)
         except ValueError:
             pass
-    return run([env_p, "HPtoHPX.py", *argv], shell=True).returncode
+    return run([env_p, "HPtoHPX.py", *argv]).returncode
 
 
 def is_sane_database(Base, session):
@@ -288,7 +288,7 @@ def start(args):
     except ImportError:
         _update_pip(args)
     env_p = r".\env\Scripts\python" if sys.platform.startswith("win") else "./env/bin/python"
-    return run([env_p, "run.py", *sys.argv[2:]], shell=True).returncode
+    return run([env_p, "run.py", *sys.argv[2:]]).returncode
 
 welcome_msg = """
 Welcome to HPX development helper script.
