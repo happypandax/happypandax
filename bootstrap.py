@@ -208,6 +208,26 @@ def version(args):
     if dev_options['build_db']:
         print("\n# IMPORTANT # A database rebuild is required for this build, please use the accompanying script 'HPtoHPX.py' to rebuild your database if you've just updated")
 
+def convert(args):
+    _activate_venv()
+    print("Convert HP database to HPX database")
+    try:
+        from HPtoHPX import main
+    except ImportError:
+        _update_pip(args)
+    env_p = r".\env\Scripts\python" if sys.platform.startswith("win") else "env/bin/python"
+    argv = []
+    argv.append(args.db_path)
+    argv.append(os.path.join("data", "happypanda_dev.db" if args.dev else "happypanda.db"))
+    argv.extend(sys.argv[3:])
+    for i in ("-d", "--dev"):
+        try:
+            argv.remove(i)
+        except ValueError:
+            pass
+    return run([env_p, "HPtoHPX.py", *argv], shell=True).returncode
+
+
 def is_sane_database(Base, session):
     """Check whether the current database matches the models declared in model base.
     Currently we check that all tables exist with all columns. What is not checked
@@ -278,13 +298,16 @@ If this is your first time running this script, or if you haven't installed HPX 
 HPX requires Python 3.5 and optionally npm to build the webclient and git to fetch new changes.
 Make sure those are installed before running the command above.
 
+As of now HPX does not implement any write features, and so you need a HP database to use HPX:
+    $ python3 bootstrap.py convert <path-to-old-HP-db>
+
 You can now start HPX by running (additional arguments will be forwarded):
     $ python3 bootstrap.py run
 
 You only need to install once. After installing, you can update HPX after pulling the new changes from the git repo by running:
     $ python3 bootstrap.py build
 
-To automatically pull the changes and build for you, just run:
+Or, to automatically pull the changes and build for you, just run (make sure you have git installed):
     $ python3 bootstrap.py update
 
 Finally, each action may have additional optional arguments. Make sure to check them out by supplying "--help" after the action:
@@ -320,6 +343,11 @@ def main():
     subparser = subparsers.add_parser('update', help='Fetch the latest changes from the GitHub repo')
     subparser.set_defaults(func=update)
 
+    subparser = subparsers.add_parser('convert', help='Convert HP database to HPX database, additional args will be passed to `HPtoHPX.py`')
+    subparser.add_argument('db_path', help="Path to old HP database file")
+    subparser.add_argument('-d', '--dev', action='store_true', help="Convert to ´happypanda_dev.db´ instead")
+    subparser.set_defaults(func=convert)
+
     subparser = subparsers.add_parser('version', help='Display build number and latest changes')
     subparser.set_defaults(func=version)
 
@@ -329,7 +357,7 @@ def main():
     subparser = subparsers.add_parser('help', help='Help')
     subparser.set_defaults(func=lambda a: parser.print_help())
 
-    if 'run' in sys.argv:
+    if 'run' in sys.argv or 'convert' in sys.argv:
         args, unknown = parser.parse_known_args()
     else:
         args = parser.parse_args()
