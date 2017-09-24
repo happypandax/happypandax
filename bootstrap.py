@@ -133,8 +133,8 @@ def _check_pip():
         print("Seems like pip is not installed. Please install pip to continue")
         sys.exit()
 
-def _update_pip(args):
-    if not args.dev:
+def _update_pip(args, skip=True):
+    if not args.dev and skip:
         try:
             from happypanda import main
             return
@@ -178,7 +178,7 @@ def install(args):
 def update(args):
     if args.packages:
         _activate_venv()
-        _update_pip(args)
+        _update_pip(args, False)
     else:
         cmd = is_installed("git")
         if not os.path.exists(".git"):
