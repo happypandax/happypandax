@@ -142,7 +142,8 @@ def _update_pip(args):
             pass
     print("Installing required packages...")
     r = "requirements.txt" if not args.dev else "requirements-dev.txt"
-    run(["pip3", "install", "-r", r, "--upgrade"])
+    env_p = r".\env\Scripts\pip3" if sys.platform.startswith("win") else "./env/bin/pip3"
+    run([env_p, "install", "-r", r])
 
 def install(args):
     print("Installing HPX...")
@@ -175,24 +176,28 @@ def install(args):
         build(args)
 
 def update(args):
-    cmd = is_installed("git")
-    if not os.path.exists(".git"):
-        if not question("Looks like we're not connected to the main repo. Do you want me to set it up for you?"):
-            sys.exit()
-        print("Setting up git repo...")
-        run([cmd, "init", "."])
-        run([cmd, "remote", "add", "-f", "origin", "https://github.com/happypandax/server.git"])
-        b = "dev" if args.dev else "master"
-        run([cmd, "checkout", b, "-f"])
+    if args.packages:
+        _activate_venv()
+        _update_pip(args)
+    else:
+        cmd = is_installed("git")
+        if not os.path.exists(".git"):
+            if not question("Looks like we're not connected to the main repo. Do you want me to set it up for you?"):
+                sys.exit()
+            print("Setting up git repo...")
+            run([cmd, "init", "."])
+            run([cmd, "remote", "add", "-f", "origin", "https://github.com/happypandax/server.git"])
+            b = "dev" if args.dev else "master"
+            run([cmd, "checkout", b, "-f"])
 
-    _activate_venv()
-    from happypanda.common import constants
-    dev_options['prev_build'] = constants.build
-    print("Pulling changes...")
-    run([cmd, "pull"])
-    constants = reload(constants)
-    build(args)
-    version(args)
+        _activate_venv()
+        from happypanda.common import constants
+        dev_options['prev_build'] = constants.build
+        print("Pulling changes...")
+        run([cmd, "pull"])
+        constants = reload(constants)
+        build(args)
+        version(args)
 
 def version(args):
     _activate_venv()
@@ -342,6 +347,8 @@ def main():
 
     subparser = subparsers.add_parser('update', help='Fetch the latest changes from the GitHub repo')
     subparser.set_defaults(func=update)
+    subparser.add_argument('-p', '--packages', action='store_true', help="Update pip packages")
+    subparser.add_argument('-d', '--dev', action='store_true', help="Update pip packages from `requirements-dev.txt`")
 
     subparser = subparsers.add_parser('convert', help='Convert HP database to HPX database, additional args will be passed to `HPtoHPX.py`')
     subparser.add_argument('db_path', help="Path to old HP database file")
