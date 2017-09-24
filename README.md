@@ -6,12 +6,17 @@
 
 > **This is project is under heavy development and not yet ready for deployment. If you want to speed up the development, please consider [contributing](https://happypandax.github.io/server/env.html).**
 
+<p align="center">
+<img src="https://user-images.githubusercontent.com/11841002/30784339-b811c010-a153-11e7-91f2-8dcfbbeafef4.png" width="350">
+</p>
+
 # Building
 
 1. install `Python 3.5` and `pip3` (and `git` if you haven't already)
     > **Note**: Python 3.5 is currently the only supported version
 2. run: `python3 bootstrap.py`
     > **Windows users**: If you get `error: command '..\cl.exe' failed with exit status 2`, download `bitarray` from [here](http://www.lfd.uci.edu/%7Egohlke/pythonlibs/#bitarray)
+    > **Install like this**: `.\env\Scripts\pip3.exe install bitarray.whl`
 
 # Documentation
 

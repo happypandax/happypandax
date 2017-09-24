@@ -17,12 +17,12 @@ from happypanda.core import server, plugins, command, services, db  # noqa: E402
 from happypanda.core.commands import io_cmd  # noqa: E402
 
 log = hlogger.Logger(__name__)
+parser = utils.get_argparser() # required to be at module lvl for sphinx.autoprogram ext
 
 
 def start(argv=None, db_kwargs={}):
     if argv is None:
         argv = sys.argv[1:]
-    parser = utils.get_argparser()
     utils.setup_dirs()
     args = parser.parse_args(argv)
     utils.parse_options(args)
