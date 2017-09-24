@@ -13,4 +13,5 @@ transcrypt==3.6.27
 flask-socketio==2.9.0
 libsass==0.13.2
 pyyaml==3.12
+pillow==4.1.1
 https://github.com/happypandax/i18n/archive/master.zip
