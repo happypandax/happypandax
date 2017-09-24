@@ -18,7 +18,8 @@ class Client:
     def __init__(self, name, session_id="", client_id=""):
         self.id = client_id
         self.name = name
-        self._server = (constants.host, constants.port)
+        # HACK: properly fix this
+        self._server = ("localhost" if constants.host == "0.0.0.0" else constants.host, constants.port)
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._alive = False
         self._buffer = b''
