@@ -11,7 +11,7 @@ Hierarchy
 
 .. note::
 
-    **Grouping** is actually not a direct descendant of **Collection** as can be seen below,
+    **Grouping** is not actually a direct descendant of **Collection** as can be seen below,
     but it is sometimes helpful to think of it as such.
 
 Recommended Usage
@@ -36,8 +36,8 @@ GalleryFilter
 ***************************************
 
 Think of this as those *smart-playlists* in music applications. It's a compilation of galleries put
-together by the user either manually or through automatic search filtering. If you used the old
-Happypanda then you should already be familiar with this. In old HP they were called gallery lists.
+together by the user either manually or through automatic search filtering. If you've used the old
+Happypanda then you've should already be familiar with this. In old HP they were called gallery lists.
 Recommended usage is "anything". It could range from your favorite fetishes to a shortcut for a
 search filter you're tired of always typing in.
 
@@ -54,13 +54,14 @@ Gallery
 
 - A **Gallery** can have multiple **Title**, **Artist** and **Parody**
 - A **Gallery** can be in multiple **Collection** and **GalleryFilter**
-- A **Gallery** can only be in *one* **Grouping**
+- A **Gallery** can only be in **one** **Grouping**
+- A **Gallery** will *always* be in a **Grouping**
 
 Tags
 ***************************************
 
 **Gallery** and **Page** are the only taggable items.
-**Collection** and **Grouping** are *not* taggable, but they can display tags for all the containing **Gallery**.
+**Collection** and **Grouping** are *not* taggable, but they can display, and are searchable through tags of their children **Gallery**.
 
 Alias
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
