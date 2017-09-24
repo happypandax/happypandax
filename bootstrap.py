@@ -215,7 +215,7 @@ def convert(args):
         from HPtoHPX import main
     except ImportError:
         _update_pip(args)
-    env_p = r".\env\Scripts\python" if sys.platform.startswith("win") else "env/bin/python"
+    env_p = r".\env\Scripts\python" if sys.platform.startswith("win") else "./env/bin/python"
     argv = []
     argv.append(args.db_path)
     argv.append(os.path.join("data", "happypanda_dev.db" if args.dev else "happypanda.db"))
@@ -287,7 +287,7 @@ def start(args):
         from happypanda import main
     except ImportError:
         _update_pip(args)
-    env_p = r".\env\Scripts\python" if sys.platform.startswith("win") else "env/bin/python"
+    env_p = r".\env\Scripts\python" if sys.platform.startswith("win") else "./env/bin/python"
     return run([env_p, "run.py", *sys.argv[2:]], shell=True).returncode
 
 welcome_msg = """
