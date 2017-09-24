@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>General &#8212; Happypanda X (0, 0, 1) documentation</title>
+    <title>General &#8212; Happypanda X 0.0.1#100 documentation</title>
     
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '(0, 0, 1)',
+        VERSION:     '0.0.1#100',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -54,7 +54,7 @@
         </button>
         <a class="navbar-brand" href="index.html">
           Happypanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>(0, 0, 1)</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.1#100</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -183,6 +183,7 @@
 </li>
 </ul>
 </li>
+<li><a class="reference internal" href="#asynchronous-commands">Asynchronous Commands</a></li>
 <li><a class="reference internal" href="#exceptions">Exceptions</a></li>
 </ul>
 </li>
@@ -224,13 +225,13 @@ a complete series, you can use this for that too. It is not recommended to put t
 <h4>GalleryFilter<a class="headerlink" href="#galleryfilter" title="Permalink to this headline">¶</a></h4>
 <p>Think of this as those <em>smart-playlists</em> in music applications. It&#8217;s a compilation of galleries put
 together by the user either manually or through automatic search filtering. If you used the old
-Happypanda then you&#8217;ve should already be familiar with this. In old HP they were called gallery lists.
+Happypanda then you should already be familiar with this. In old HP they were called gallery lists.
 Recommended usage is &#8220;anything&#8221;. It could range from your favorite fetishes to a shortcut for a
 search filter you&#8217;re tired of always typing in.</p>
 </div>
 <div class="section" id="gallery">
 <h4>Gallery<a class="headerlink" href="#gallery" title="Permalink to this headline">¶</a></h4>
-<p>A single chapter, then you group these chapters in a <strong>Grouping</strong>.</p>
+<p>A single chapter, then you group these chapters under a <strong>Grouping</strong> to form a complete series.</p>
 </div>
 </div>
 <div class="section" id="special-notes">
@@ -240,7 +241,7 @@ search filter you&#8217;re tired of always typing in.</p>
 <ul class="simple">
 <li>A <strong>Gallery</strong> can have multiple <strong>Title</strong>, <strong>Artist</strong> and <strong>Parody</strong></li>
 <li>A <strong>Gallery</strong> can be in multiple <strong>Collection</strong> and <strong>GalleryFilter</strong></li>
-<li>A <strong>Gallery</strong> can only be in <strong>one</strong> <strong>Grouping</strong></li>
+<li>A <strong>Gallery</strong> can only be in <em>one</em> <strong>Grouping</strong></li>
 </ul>
 </div>
 <div class="section" id="tags">
@@ -256,10 +257,65 @@ search filter you&#8217;re tired of always typing in.</p>
 <h5>Parent<a class="headerlink" href="#parent" title="Permalink to this headline">¶</a></h5>
 <blockquote>
 <div>...</div></blockquote>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last"><em>You can right-click on the image and choose &#8220;Show image&#8221; to view it in its full dimensions</em></p>
+</div>
 <img alt="_images/schema.png" src="_images/schema.png" />
 </div>
 </div>
 </div>
+</div>
+<div class="section" id="asynchronous-commands">
+<h2>Asynchronous Commands<a class="headerlink" href="#asynchronous-commands" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="happypanda.core.command.CommandState">
+<em class="property">class </em><code class="descname">CommandState</code><a class="reference internal" href="_modules/happypanda/core/command.html#CommandState"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.core.command.CommandState" title="Permalink to this definition">¶</a></dt>
+<dd><p>An enumeration.</p>
+<dl class="attribute">
+<dt id="happypanda.core.command.CommandState.failed">
+<code class="descname">failed</code><em class="property"> = 6</em><a class="headerlink" href="#happypanda.core.command.CommandState.failed" title="Permalink to this definition">¶</a></dt>
+<dd><p>command has finished with an error</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.core.command.CommandState.finished">
+<code class="descname">finished</code><em class="property"> = 4</em><a class="headerlink" href="#happypanda.core.command.CommandState.finished" title="Permalink to this definition">¶</a></dt>
+<dd><p>command has finished succesfully</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.core.command.CommandState.in_queue">
+<code class="descname">in_queue</code><em class="property"> = 2</em><a class="headerlink" href="#happypanda.core.command.CommandState.in_queue" title="Permalink to this definition">¶</a></dt>
+<dd><p>command has been scheduled to start</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.core.command.CommandState.in_service">
+<code class="descname">in_service</code><em class="property"> = 1</em><a class="headerlink" href="#happypanda.core.command.CommandState.in_service" title="Permalink to this definition">¶</a></dt>
+<dd><p>command has been put in a service (but not started or stopped yet)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.core.command.CommandState.out_of_service">
+<code class="descname">out_of_service</code><em class="property"> = 0</em><a class="headerlink" href="#happypanda.core.command.CommandState.out_of_service" title="Permalink to this definition">¶</a></dt>
+<dd><p>command has not been put in any service yet</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.core.command.CommandState.started">
+<code class="descname">started</code><em class="property"> = 3</em><a class="headerlink" href="#happypanda.core.command.CommandState.started" title="Permalink to this definition">¶</a></dt>
+<dd><p>command has been started</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.core.command.CommandState.stopped">
+<code class="descname">stopped</code><em class="property"> = 5</em><a class="headerlink" href="#happypanda.core.command.CommandState.stopped" title="Permalink to this definition">¶</a></dt>
+<dd><p>command has been forcefully stopped without finishing</p>
+</dd></dl>
+
+</dd></dl>
+
 </div>
 <div class="section" id="exceptions">
 <h2>Exceptions<a class="headerlink" href="#exceptions" title="Permalink to this headline">¶</a></h2>

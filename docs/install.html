@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Installing &#8212; Happypanda X (0, 0, 1) documentation</title>
+    <title>Installing &#8212; Happypanda X 0.0.1#100 documentation</title>
     
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '(0, 0, 1)',
+        VERSION:     '0.0.1#100',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -54,7 +54,7 @@
         </button>
         <a class="navbar-brand" href="index.html">
           Happypanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>(0, 0, 1)</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.1#100</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -193,20 +193,20 @@
 <div class="section" id="building">
 <h1>Building<a class="headerlink" href="#building" title="Permalink to this headline">¶</a></h1>
 <ol class="arabic simple">
-<li>install <code class="docutils literal"><span class="pre">Python</span> <span class="pre">3.5</span></code> and <code class="docutils literal"><span class="pre">pip</span></code></li>
-<li>install <code class="docutils literal"><span class="pre">virtualenv</span></code> (<code class="docutils literal"><span class="pre">pip3</span> <span class="pre">install</span> <span class="pre">virtualenv</span></code>)</li>
-<li>clone or download Happypanda X</li>
-<li>setup a <code class="docutils literal"><span class="pre">virtualenv</span></code> in the cloned/downloaded folder by running: <code class="docutils literal"><span class="pre">virtualenv</span> <span class="pre">env</span></code></li>
-<li>activate the virtual env by running: (Posix: <code class="docutils literal"><span class="pre">.</span> <span class="pre">env/bin/activate</span></code>) (Windows: <code class="docutils literal"><span class="pre">env\Scripts\activate.bat</span></code>)</li>
-<li>install the dependencies by running: <code class="docutils literal"><span class="pre">pip3</span> <span class="pre">install</span> <span class="pre">-r</span> <span class="pre">requirements.txt</span></code></li>
+<li>install <code class="docutils literal"><span class="pre">Python</span> <span class="pre">3.5</span></code> and <code class="docutils literal"><span class="pre">pip</span></code> (and <code class="docutils literal"><span class="pre">git</span></code> if you haven&#8217;t already)</li>
+</ol>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Python 3.5 is currently the only supported version</p>
+</div>
+<ol class="arabic simple" start="2">
+<li>run: <code class="docutils literal"><span class="pre">python3</span> <span class="pre">bootstrap.py</span></code></li>
 </ol>
 <div class="admonition warning">
 <p class="first admonition-title">Warning</p>
-<p class="last">Windows users: If you get <code class="docutils literal"><span class="pre">error:</span> <span class="pre">command</span> <span class="pre">'..\cl.exe'</span> <span class="pre">failed</span> <span class="pre">with</span> <span class="pre">exit</span> <span class="pre">status</span> <span class="pre">2</span></code>, download <code class="docutils literal"><span class="pre">bitarray</span></code> from <a class="reference external" href="http://www.lfd.uci.edu/%7Egohlke/pythonlibs/#bitarray">here</a></p>
+<p>Windows users: If you get <code class="docutils literal"><span class="pre">error:</span> <span class="pre">command</span> <span class="pre">'..\cl.exe'</span> <span class="pre">failed</span> <span class="pre">with</span> <span class="pre">exit</span> <span class="pre">status</span> <span class="pre">2</span></code>, download <code class="docutils literal"><span class="pre">bitarray</span></code> from <a class="reference external" href="http://www.lfd.uci.edu/%7Egohlke/pythonlibs/#bitarray">here</a></p>
+<p class="last">Install like this: <code class="docutils literal"><span class="pre">.\env\Scripts\pip3.exe</span> <span class="pre">install</span> <span class="pre">bitarray.whl</span></code></p>
 </div>
-<ol class="arabic simple" start="7">
-<li>build the javascript files to use the webclient by running: <code class="docutils literal"><span class="pre">python3</span> <span class="pre">build_js.py</span></code></li>
-</ol>
 </div>
 
 

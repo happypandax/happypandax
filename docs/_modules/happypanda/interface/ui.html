@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>happypanda.interface.ui &#8212; Happypanda X (0, 0, 1) documentation</title>
+    <title>happypanda.interface.ui &#8212; Happypanda X 0.0.1#100 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '(0, 0, 1)',
+        VERSION:     '0.0.1#100',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -52,7 +52,7 @@
         </button>
         <a class="navbar-brand" href="../../../index.html">
           Happypanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>(0, 0, 1)</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.1#100</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -157,13 +157,85 @@
         <div class="col-md-9 content">
             
   <h1>Source code for happypanda.interface.ui</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">happypanda.common</span> <span class="k">import</span> <span class="n">utils</span>
-<span class="kn">from</span> <span class="nn">happypanda.core</span> <span class="k">import</span> <span class="n">message</span>
+<span></span><span class="kn">import</span> <span class="nn">i18n</span>
+
+<span class="kn">from</span> <span class="nn">happypanda.common</span> <span class="k">import</span> <span class="n">utils</span><span class="p">,</span> <span class="n">constants</span><span class="p">,</span> <span class="n">exceptions</span><span class="p">,</span> <span class="n">hlogger</span>
+<span class="kn">from</span> <span class="nn">happypanda.core</span> <span class="k">import</span> <span class="n">message</span><span class="p">,</span> <span class="n">db</span>
 <span class="kn">from</span> <span class="nn">happypanda.interface</span> <span class="k">import</span> <span class="n">enums</span>
 <span class="kn">from</span> <span class="nn">happypanda.core.commands</span> <span class="k">import</span> <span class="n">database_cmd</span><span class="p">,</span> <span class="n">search_cmd</span>
 
+<span class="n">log</span> <span class="o">=</span> <span class="n">hlogger</span><span class="o">.</span><span class="n">Logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">i18n</span><span class="o">.</span><span class="n">load_path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">constants</span><span class="o">.</span><span class="n">dir_translations</span><span class="p">)</span>
+<span class="n">i18n</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;file_format&quot;</span><span class="p">,</span> <span class="s2">&quot;yaml&quot;</span><span class="p">)</span>
+<span class="n">i18n</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;locale&quot;</span><span class="p">,</span> <span class="n">constants</span><span class="o">.</span><span class="n">translation_locale</span><span class="p">)</span>
+<span class="n">i18n</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;fallback&quot;</span><span class="p">,</span> <span class="n">constants</span><span class="o">.</span><span class="n">translation_locale</span><span class="p">)</span>
+<span class="n">i18n</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;filename_format&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{locale}</span><span class="s2">.</span><span class="si">{namespace}</span><span class="s2">.</span><span class="si">{format}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">i18n</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;error_on_missing_translation&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_view_helper</span><span class="p">(</span><span class="n">item_type</span><span class="p">:</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">=</span><span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Gallery</span><span class="p">,</span>
+                 <span class="n">search_query</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+                 <span class="n">filter_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">view_filter</span><span class="p">:</span> <span class="n">enums</span><span class="o">.</span><span class="n">ViewType</span> <span class="o">=</span> <span class="n">enums</span><span class="o">.</span><span class="n">ViewType</span><span class="o">.</span><span class="n">Library</span><span class="p">,</span>
+                 <span class="n">item_id</span><span class="p">:</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">related_type</span><span class="p">:</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="p">):</span>
+
+    <span class="n">view_filter</span> <span class="o">=</span> <span class="n">enums</span><span class="o">.</span><span class="n">ViewType</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">view_filter</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">related_type</span><span class="p">:</span>
+        <span class="n">related_type</span> <span class="o">=</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">related_type</span><span class="p">)</span>
+    <span class="n">item_type</span> <span class="o">=</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">item_type</span><span class="p">)</span>
+
+    <span class="n">parent_model</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">db_msg</span><span class="p">,</span> <span class="n">db_model</span> <span class="o">=</span> <span class="n">item_type</span><span class="o">.</span><span class="n">_msg_and_model</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Gallery</span><span class="p">,</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Collection</span><span class="p">,</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Grouping</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">related_type</span><span class="p">:</span>
+        <span class="n">parent_model</span> <span class="o">=</span> <span class="n">db_model</span>
+        <span class="n">db_msg</span><span class="p">,</span> <span class="n">db_model</span> <span class="o">=</span> <span class="n">related_type</span><span class="o">.</span><span class="n">_msg_and_model</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Gallery</span><span class="p">,</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Page</span><span class="p">))</span>
+
+        <span class="n">col</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">relationship_column</span><span class="p">(</span><span class="n">parent_model</span><span class="p">,</span> <span class="n">db_model</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">col</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">APIError</span><span class="p">(</span>
+                <span class="n">utils</span><span class="o">.</span><span class="n">this_function</span><span class="p">(),</span>
+                <span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> has no relationship with </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">related_type</span><span class="p">,</span>
+                    <span class="n">item_type</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">item_id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">APIError</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">this_function</span><span class="p">(),</span> <span class="s2">&quot;Missing id of parent item&quot;</span><span class="p">)</span>
+
+    <span class="n">model_ids</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">db_model</span> <span class="o">==</span> <span class="n">db</span><span class="o">.</span><span class="n">Page</span><span class="p">:</span>
+        <span class="n">model_ids</span> <span class="o">=</span> <span class="n">search_cmd</span><span class="o">.</span><span class="n">ModelFilter</span><span class="p">()</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">db_model</span><span class="p">,</span> <span class="n">search_query</span><span class="p">)</span>
+
+    <span class="n">filter_op</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">join_exp</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">metatag_name</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">view_filter</span> <span class="o">==</span> <span class="n">enums</span><span class="o">.</span><span class="n">ViewType</span><span class="o">.</span><span class="n">Favorite</span><span class="p">:</span>
+        <span class="n">metatag_name</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">MetaTag</span><span class="o">.</span><span class="n">names</span><span class="o">.</span><span class="n">favorite</span>
+    <span class="k">elif</span> <span class="n">view_filter</span> <span class="o">==</span> <span class="n">enums</span><span class="o">.</span><span class="n">ViewType</span><span class="o">.</span><span class="n">Inbox</span><span class="p">:</span>
+        <span class="n">metatag_name</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">MetaTag</span><span class="o">.</span><span class="n">names</span><span class="o">.</span><span class="n">inbox</span>
+
+    <span class="k">if</span> <span class="n">metatag_name</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">item_type</span> <span class="o">==</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Gallery</span><span class="p">:</span>
+            <span class="n">filter_op</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">MetaTag</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">metatag_name</span>
+            <span class="n">join_exp</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">Gallery</span><span class="o">.</span><span class="n">metatags</span>
+
+    <span class="k">if</span> <span class="n">related_type</span><span class="p">:</span>
+        <span class="n">related_filter</span> <span class="o">=</span> <span class="n">parent_model</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">item_id</span>
+        <span class="n">filter_op</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">and_op</span><span class="p">(</span><span class="n">filter_op</span><span class="p">,</span> <span class="n">related_filter</span><span class="p">)</span> <span class="k">if</span> <span class="n">filter_op</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">related_filter</span>
+        <span class="n">join_exp</span> <span class="o">=</span> <span class="p">[</span><span class="n">join_exp</span><span class="p">,</span> <span class="n">parent_model</span><span class="p">]</span> <span class="k">if</span> <span class="n">join_exp</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">parent_model</span>
+
+    <span class="k">return</span> <span class="n">view_filter</span><span class="p">,</span> <span class="n">item_type</span><span class="p">,</span> <span class="n">db_msg</span><span class="p">,</span> <span class="n">db_model</span><span class="p">,</span> <span class="n">model_ids</span><span class="p">,</span> <span class="n">filter_op</span><span class="p">,</span> <span class="n">join_exp</span><span class="p">,</span> <span class="n">metatag_name</span>
+
 
 <div class="viewcode-block" id="library_view"><a class="viewcode-back" href="../../../api.html#happypanda.interface.ui.library_view">[docs]</a><span class="k">def</span> <span class="nf">library_view</span><span class="p">(</span><span class="n">item_type</span><span class="p">:</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span> <span class="o">=</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Gallery</span><span class="p">,</span>
+                 <span class="n">item_id</span><span class="p">:</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">related_type</span><span class="p">:</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
                  <span class="n">page</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
                  <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
                  <span class="n">sort_by</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
@@ -182,29 +254,28 @@
 <span class="sd">        limit: amount of items per page</span>
 <span class="sd">        search_query: filter item by search terms</span>
 <span class="sd">        filter_id: current filter list id</span>
-<span class="sd">        view_filter: ...</span>
+<span class="sd">        view_filter: type of view</span>
+<span class="sd">        related_type: child item</span>
+<span class="sd">        item_id: id of parent item</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        list of item message objects</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">utils</span><span class="o">.</span><span class="n">require_context</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
-    <span class="n">view_filter</span> <span class="o">=</span> <span class="n">enums</span><span class="o">.</span><span class="n">ViewType</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">view_filter</span><span class="p">)</span>
-    <span class="n">item_type</span> <span class="o">=</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">item_type</span><span class="p">)</span>
-
-    <span class="n">db_msg</span><span class="p">,</span> <span class="n">db_model</span> <span class="o">=</span> <span class="n">item_type</span><span class="o">.</span><span class="n">_msg_and_model</span><span class="p">(</span>
-        <span class="p">(</span><span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Gallery</span><span class="p">,</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Collection</span><span class="p">,</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Grouping</span><span class="p">))</span>
+    <span class="n">view_filter</span><span class="p">,</span> <span class="n">item_type</span><span class="p">,</span> <span class="n">db_msg</span><span class="p">,</span> <span class="n">db_model</span><span class="p">,</span> <span class="n">model_ids</span><span class="p">,</span> <span class="n">filter_op</span><span class="p">,</span> <span class="n">join_exp</span><span class="p">,</span> <span class="n">metatag_name</span> <span class="o">=</span> <span class="n">_view_helper</span><span class="p">(</span>
+        <span class="n">item_type</span><span class="p">,</span> <span class="n">search_query</span><span class="p">,</span> <span class="n">filter_id</span><span class="p">,</span> <span class="n">view_filter</span><span class="p">,</span> <span class="n">item_id</span><span class="p">,</span> <span class="n">related_type</span><span class="p">)</span>
 
     <span class="n">items</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">db_model</span><span class="o">.</span><span class="vm">__name__</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="n">db_msg</span><span class="p">)</span>
 
-    <span class="n">model_ids</span> <span class="o">=</span> <span class="n">search_cmd</span><span class="o">.</span><span class="n">ModelFilter</span><span class="p">()</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">db_model</span><span class="p">,</span> <span class="n">search_query</span><span class="p">)</span>
-
     <span class="p">[</span><span class="n">items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">db_msg</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">database_cmd</span><span class="o">.</span><span class="n">GetModelItemByID</span><span class="p">()</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
-        <span class="n">db_model</span><span class="p">,</span> <span class="n">model_ids</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="n">limit</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="n">page</span> <span class="o">*</span> <span class="n">limit</span><span class="p">)]</span>
+        <span class="n">db_model</span><span class="p">,</span> <span class="n">model_ids</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="n">limit</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="n">page</span> <span class="o">*</span> <span class="n">limit</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="n">filter_op</span><span class="p">,</span> <span class="n">join</span><span class="o">=</span><span class="n">join_exp</span><span class="p">)]</span>
 
     <span class="k">return</span> <span class="n">items</span></div>
 
 
 <div class="viewcode-block" id="get_view_count"><a class="viewcode-back" href="../../../api.html#happypanda.interface.ui.get_view_count">[docs]</a><span class="k">def</span> <span class="nf">get_view_count</span><span class="p">(</span><span class="n">item_type</span><span class="p">:</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">=</span><span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Gallery</span><span class="p">,</span>
+                   <span class="n">item_id</span><span class="p">:</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                   <span class="n">related_type</span><span class="p">:</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
                    <span class="n">search_query</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
                    <span class="n">filter_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
                    <span class="n">view_filter</span><span class="p">:</span> <span class="n">enums</span><span class="o">.</span><span class="n">ViewType</span> <span class="o">=</span> <span class="n">enums</span><span class="o">.</span><span class="n">ViewType</span><span class="o">.</span><span class="n">Library</span><span class="p">):</span>
@@ -215,23 +286,50 @@
 <span class="sd">        item_type: possible items are :py:attr:`.ItemType.Gallery`, :py:attr:`.ItemType.Collection`, :py:attr:`.ItemType.Grouping`</span>
 <span class="sd">        search_query: filter item by search terms</span>
 <span class="sd">        filter_id: current filter list id</span>
-<span class="sd">        view_filter: ...</span>
+<span class="sd">        view_filter: type of view</span>
+<span class="sd">        related_type: child item</span>
+<span class="sd">        item_id: id of parent item</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        ```</span>
 <span class="sd">        { &#39;count&#39;: int }</span>
 <span class="sd">        ```</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">view_filter</span><span class="p">,</span> <span class="n">item_type</span><span class="p">,</span> <span class="n">db_msg</span><span class="p">,</span> <span class="n">db_model</span><span class="p">,</span> <span class="n">model_ids</span><span class="p">,</span> <span class="n">filter_op</span><span class="p">,</span> <span class="n">join_exp</span><span class="p">,</span> <span class="n">metatag_name</span> <span class="o">=</span> <span class="n">_view_helper</span><span class="p">(</span>
+        <span class="n">item_type</span><span class="p">,</span> <span class="n">search_query</span><span class="p">,</span> <span class="n">filter_id</span><span class="p">,</span> <span class="n">view_filter</span><span class="p">,</span> <span class="n">item_id</span><span class="p">,</span> <span class="n">related_type</span><span class="p">)</span>
 
-    <span class="n">view_filter</span> <span class="o">=</span> <span class="n">enums</span><span class="o">.</span><span class="n">ViewType</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">view_filter</span><span class="p">)</span>
-    <span class="n">item_type</span> <span class="o">=</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">item_type</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Identity</span><span class="p">(</span><span class="s1">&#39;count&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;count&#39;</span><span class="p">:</span> <span class="n">database_cmd</span><span class="o">.</span><span class="n">GetModelItemByID</span><span class="p">()</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+        <span class="n">db_model</span><span class="p">,</span> <span class="n">model_ids</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="n">filter_op</span><span class="p">,</span> <span class="n">join</span><span class="o">=</span><span class="n">join_exp</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="kc">True</span><span class="p">)})</span></div>
 
-    <span class="n">db_msg</span><span class="p">,</span> <span class="n">db_model</span> <span class="o">=</span> <span class="n">item_type</span><span class="o">.</span><span class="n">_msg_and_model</span><span class="p">(</span>
-        <span class="p">(</span><span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Gallery</span><span class="p">,</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Collection</span><span class="p">,</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Grouping</span><span class="p">))</span>
 
-    <span class="n">model_ids</span> <span class="o">=</span> <span class="n">search_cmd</span><span class="o">.</span><span class="n">ModelFilter</span><span class="p">()</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">db_model</span><span class="p">,</span> <span class="n">search_query</span><span class="p">)</span>
+<div class="viewcode-block" id="translate"><a class="viewcode-back" href="../../../api.html#happypanda.interface.ui.translate">[docs]</a><span class="k">def</span> <span class="nf">translate</span><span class="p">(</span><span class="n">t_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">locale</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">default</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get a translation by translation id. Raises error if no translation was found.</span>
 
-    <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Identity</span><span class="p">(</span><span class="s1">&#39;count&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;count&#39;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">model_ids</span><span class="p">)})</span></div>
+<span class="sd">    Args:</span>
+<span class="sd">        t_id: translation id</span>
+<span class="sd">        locale: locale to get translations from (will override default locale)</span>
+<span class="sd">        default: default text when no translation was found</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        string</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="n">locale</span><span class="p">:</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;locale&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">locale</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">default</span><span class="p">:</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">default</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">trs</span> <span class="o">=</span> <span class="n">i18n</span><span class="o">.</span><span class="n">t</span><span class="p">(</span><span class="n">t_id</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">KeyError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">APIError</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">this_function</span><span class="p">(),</span> <span class="s2">&quot;Translation id &#39;</span><span class="si">{}</span><span class="s2">&#39; not found&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">t_id</span><span class="p">))</span>
+    <span class="k">except</span> <span class="n">i18n</span><span class="o">.</span><span class="n">loaders</span><span class="o">.</span><span class="n">loader</span><span class="o">.</span><span class="n">I18nFileLoadError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">default</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Failed to load translation file &#39;</span><span class="si">{}</span><span class="s2">&#39; with key &#39;</span><span class="si">{}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">locale</span> <span class="k">if</span> <span class="n">locale</span> <span class="k">else</span> <span class="n">constants</span><span class="o">.</span><span class="n">translation_locale</span><span class="p">,</span> <span class="n">t_id</span><span class="p">))</span>
+            <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">APIError</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">this_function</span><span class="p">(),</span> <span class="s2">&quot;Failed to load translation file: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">args</span><span class="p">))</span>
+        <span class="n">trs</span> <span class="o">=</span> <span class="n">default</span>
+    <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Identity</span><span class="p">(</span><span class="s2">&quot;translation&quot;</span><span class="p">,</span> <span class="n">trs</span><span class="p">)</span></div>
 </pre></div>
 
         </div>

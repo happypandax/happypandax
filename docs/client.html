@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Creating frontends &#8212; Happypanda X (0, 0, 1) documentation</title>
+    <title>Creating frontends &#8212; Happypanda X 0.0.1#100 documentation</title>
     
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '(0, 0, 1)',
+        VERSION:     '0.0.1#100',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -54,7 +54,7 @@
         </button>
         <a class="navbar-brand" href="index.html">
           Happypanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>(0, 0, 1)</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.1#100</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -180,7 +180,7 @@
             
   <div class="section" id="creating-frontends">
 <h1>Creating frontends<a class="headerlink" href="#creating-frontends" title="Permalink to this headline">¶</a></h1>
-<p>HPX provides a RPC interface over TCP making it possible to create a client in any programming language.</p>
+<p>HPX exposes an RPC interface over TCP making it possible to create a client in any programming language.</p>
 <p>For exchanging data between the server and client <code class="docutils literal"><span class="pre">JSON</span></code> is used. Make sure you&#8217;re familiar with <code class="docutils literal"><span class="pre">JSON</span></code> and its datatypes.</p>
 <p>Before wanting to talk to a HPX server, make sure you have one running. See <a class="reference internal" href="usage.html#starting-up"><span class="std std-ref">Starting up</span></a> or <a class="reference internal" href="env.html#setting-up-an-environment"><span class="std std-ref">Setting up an environment</span></a> on how to get one up and running.</p>
 <p>It is recommended that you run the server with the <code class="docutils literal"><span class="pre">--debug</span></code> and <code class="docutils literal"><span class="pre">--dev</span></code> commandline switches so that you can see what&#8217;s going on while you&#8217;re connected.
@@ -252,7 +252,7 @@ See <a class="reference internal" href="switches.html#command-line-arguments"><s
 <div class="section" id="authenticating">
 <h2>Authenticating<a class="headerlink" href="#authenticating" title="Permalink to this headline">¶</a></h2>
 <p>Remember that the server always sent a message after you&#8217;ve successfully connected?</p>
-<p>This is part of the authentication process or a &#8220;handshake&#8221;.</p>
+<p>This is part of the authentication process or a so-called &#8220;handshake&#8221;.</p>
 <p>The server will send you a message that looks like this:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span>
     <span class="s2">&quot;version&quot;</span><span class="p">:</span>
@@ -266,17 +266,17 @@ See <a class="reference internal" href="switches.html#command-line-arguments"><s
 </pre></div>
 </div>
 <p>You can use this message to determine if the HPX server is supported or not.</p>
-<p>Notice the <code class="docutils literal"><span class="pre">guest_allowed</span></code> key. This value of this key informs if it&#8217;s possible to connect to the server <em>without</em> providing any credentials.</p>
-<p>The server expects a response from the client before any further processing is done.</p>
+<p>Notice the <code class="docutils literal"><span class="pre">guest_allowed</span></code> key. The value of this key informs if it&#8217;s possible to connect to the server <em>without</em> providing any credentials.</p>
+<p>The server expects a response from the client that completes the handshake before any further processing is done.</p>
 <p>To authenticate as a <strong>guest</strong> the client responds with an empty object <code class="docutils literal"><span class="pre">{}</span></code>.</p>
-<p>To authenticate as a <strong>user</strong> the client responds with (put in the <code class="docutils literal"><span class="pre">data</span></code> key):</p>
+<p>To authenticate as a <strong>user</strong> the client responds with:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span>
     <span class="s2">&quot;user&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
     <span class="s2">&quot;password&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span>
 <span class="p">}</span>
 </pre></div>
 </div>
-<p>The server will respond with <code class="docutils literal"><span class="pre">&quot;Authenticated&quot;</span></code> and assign a <code class="docutils literal"><span class="pre">session</span></code> for a successful handshake:</p>
+<p>The server will respond with <code class="docutils literal"><span class="pre">&quot;Authenticated&quot;</span></code> and assign a <code class="docutils literal"><span class="pre">session</span></code> for a successful handshake (this is the whole message):</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span>
     <span class="s2">&quot;session&quot;</span><span class="p">:</span> <span class="s2">&quot;long_random_string&quot;</span><span class="p">,</span>
     <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
@@ -286,7 +286,7 @@ See <a class="reference internal" href="switches.html#command-line-arguments"><s
 </div>
 <p>If otherwise, it responds with an error. See ... for possible errors.</p>
 <p>This handshake is only required <em>once</em> per initial connection.
-Additional connections can be established without doing a handshake with the use of the <code class="docutils literal"><span class="pre">session</span></code> value.
+Additional connections can be established without doing a handshake with the use of the newly-assigned <code class="docutils literal"><span class="pre">session</span></code> value.
 See <a class="reference internal" href="#session"><span class="std std-ref">Session</span></a>.</p>
 <p>Additional connections</p>
 <div class="admonition-todo admonition" id="index-0">
@@ -305,42 +305,41 @@ See <a class="reference internal" href="#session"><span class="std std-ref">Sess
 </pre></div>
 </div>
 <p>The session is tied to the context of the client who did the handshake.</p>
-<p>The session is <em>not</em> tied to any particular connection, meaning multiple connections
+<p>The session is <em>not</em> tied to any particular connection, meaning multiple independent connections
 can use the same session.</p>
-<p>This allows for multiple connections to be made within the same app while sharing the same context:</p>
+<p>This allows for multiple independent connections to be made within the same app while sharing the same context:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">socketA</span> <span class="p">(</span><span class="n">connects</span><span class="p">)</span> <span class="o">--&gt;</span> <span class="n">server</span>
 <span class="n">socketA</span> <span class="o">&lt;--</span> <span class="p">(</span><span class="n">asking</span> <span class="k">for</span> <span class="n">handshake</span><span class="p">)</span> <span class="n">server</span>
 <span class="n">socketA</span> <span class="p">(</span><span class="n">handshakes</span><span class="p">)</span> <span class="o">--&gt;</span> <span class="n">server</span>
-<span class="n">socketA</span> <span class="o">&lt;--</span> <span class="p">(</span><span class="n">accepted</span><span class="p">,</span> <span class="n">sessionid</span><span class="p">)</span> <span class="n">server</span>
+<span class="n">socketA</span> <span class="o">&lt;--</span> <span class="p">(</span><span class="n">accepted</span><span class="p">,</span> <span class="n">have</span> <span class="n">a</span> <span class="n">sessionid</span><span class="p">)</span> <span class="n">server</span>
 
 <span class="n">socketB</span> <span class="p">(</span><span class="n">connects</span><span class="p">)</span> <span class="o">--&gt;</span> <span class="n">server</span>
 <span class="n">socketB</span> <span class="o">&lt;--</span> <span class="p">(</span><span class="n">asking</span> <span class="k">for</span> <span class="n">handshake</span><span class="p">)</span> <span class="n">server</span>
 <span class="n">socketB</span> <span class="p">(</span><span class="n">normal</span> <span class="n">msg</span> <span class="k">with</span> <span class="n">session</span> <span class="nb">id</span><span class="p">)</span> <span class="o">--&gt;</span> <span class="n">server</span>
-<span class="n">socketB</span> <span class="o">&lt;--</span> <span class="p">(</span><span class="n">normal</span> <span class="n">response</span><span class="p">)</span> <span class="n">server</span><span class="o">**</span>
+<span class="n">socketB</span> <span class="o">&lt;--</span> <span class="p">(</span><span class="n">normal</span> <span class="n">response</span><span class="p">)</span> <span class="n">server</span>
 </pre></div>
 </div>
-<p>**
-Think of it as threads in a computer program.</p>
+<p>Think of it as threads in a computer program.</p>
 <p>As shown above, the server will <em>always</em> send a message when a client connects.
 This message should thus always be consumed by additional sockets before sending the intended message with a session.</p>
 <p><strong>Sessions have a limited lifespan</strong>. Whenever you send a message using a session, you extend that particular session&#8217;s lifespan.</p>
-<p>Sessions expire when their lifespan runs out, requiring the client to do a <em>new</em> handshake.</p>
-<dl class="docutils">
-<dt><a href="#id1"><span class="problematic" id="id2">**</span></a></dt>
-<dd>explain session expired error</dd>
-</dl>
+<p>Sessions expire when their lifespan runs out (shocking, isn&#8217;t it?), requiring the client to do a <em>new</em> handshake.</p>
+<div class="admonition-todo admonition" id="index-1">
+<p class="first admonition-title">Todo</p>
+<p class="last">explain session expired error</p>
+</div>
 </div>
 <div class="section" id="calling-a-function">
 <h2>Calling a function<a class="headerlink" href="#calling-a-function" title="Permalink to this headline">¶</a></h2>
-<p>Now that you&#8217;ve perfomed a successful handshake, you can start using the API.</p>
-<p>A <em>function-call</em> object looks like this:</p>
+<p>Now that you&#8217;ve perfomed a successful handshake, you can start using the <a class="reference internal" href="api.html#server-api"><span class="std std-ref">Server API</span></a>.</p>
+<p>A <em>function-call</em> object in its simplest looks like this:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span>
     <span class="s2">&quot;fname&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span>
 <span class="p">}</span>
 </pre></div>
 </div>
 <p>The <code class="docutils literal"><span class="pre">fname</span></code> value is the name of the function you want to call. This particular object has no function arguments.</p>
-<p>To add additional function arguments you just define the argument in the <em>function-call</em> object like this:</p>
+<p>To add additional function arguments you just define the arguments in the <em>function-call</em> object like this:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span>
     <span class="s2">&quot;fname&quot;</span><span class="p">:</span> <span class="s2">&quot;func1&quot;</span><span class="p">,</span>
     <span class="s2">&quot;arg1&quot;</span><span class="p">:</span> <span class="n">value1</span><span class="p">,</span>
@@ -376,7 +375,7 @@ This message should thus always be consumed by additional sockets before sending
 </div>
 <p>In case of errors raised by the function, the <em>function-data</em> gains an <code class="docutils literal"><span class="pre">error</span></code> key. See <a class="reference internal" href="#errors"><span class="std std-ref">Errors</span></a>.</p>
 <p>If you&#8217;re unsure on what data a function will return, see <a class="reference internal" href="#playing-with-the-api"><span class="std std-ref">Playing with the API</span></a></p>
-<div class="admonition-todo admonition" id="index-1">
+<div class="admonition-todo admonition" id="index-2">
 <p class="first admonition-title">Todo</p>
 <p class="last">reference message objects here</p>
 </div>
@@ -392,7 +391,7 @@ This message should thus always be consumed by additional sockets before sending
 </div>
 <p><code class="docutils literal"><span class="pre">code</span></code> is the error code. See ... for available errors and error codes.</p>
 <p>Errors occuring will be put in an <code class="docutils literal"><span class="pre">error</span></code> key.</p>
-<p>Server-level errors (errors not occuring in api-functions or unhandled exceptions) will add
+<p>Server-level errors (unhandled exceptions or errors not occuring in api-functions) will add
 the <code class="docutils literal"><span class="pre">error</span></code> key at the root level of the payload:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span>
     <span class="s2">&quot;session&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
@@ -422,7 +421,7 @@ the <code class="docutils literal"><span class="pre">error</span></code> key at 
 <span class="p">}</span>
 </pre></div>
 </div>
-<p>For example, if we want to shut down the server we use the ... command:</p>
+<p>For example, if we want to shut down the server we use the <a class="reference internal" href="api.html#happypanda.interface.enums.ServerCommand.ServerQuit" title="happypanda.interface.enums.ServerCommand.ServerQuit"><code class="xref py py-attr docutils literal"><span class="pre">ServerCommand.ServerQuit</span></code></a> command:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span>
     <span class="s2">&quot;session&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
     <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;clientname&quot;</span><span class="p">,</span>
@@ -430,8 +429,8 @@ the <code class="docutils literal"><span class="pre">error</span></code> key at 
 <span class="p">}</span>
 </pre></div>
 </div>
-<p>Some server commands will be broadcasted to all connecting clients.</p>
-<p>For example, when the server recieves a shut down command, the exact command is propogated and broadcasted to all connecting clients:</p>
+<p>Some server commands will be broadcasted to all connected clients.</p>
+<p>For example, when the server recieves a shut down command, the exact command will be propogated and broadcasted to all connected clients:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span>
     <span class="s2">&quot;session&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
     <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;servername&quot;</span><span class="p">,</span>
@@ -439,7 +438,7 @@ the <code class="docutils literal"><span class="pre">error</span></code> key at 
 <span class="p">}</span>
 </pre></div>
 </div>
-<div class="admonition-todo admonition" id="index-2">
+<div class="admonition-todo admonition" id="index-3">
 <p class="first admonition-title">Todo</p>
 <p class="last">server commands broadcasting (shutting down gracefully)</p>
 </div>

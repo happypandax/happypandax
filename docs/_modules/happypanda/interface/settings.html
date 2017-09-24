@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>happypanda.interface.settings &#8212; Happypanda X (0, 0, 1) documentation</title>
+    <title>happypanda.interface.settings &#8212; Happypanda X 0.0.1#100 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '(0, 0, 1)',
+        VERSION:     '0.0.1#100',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -52,7 +52,7 @@
         </button>
         <a class="navbar-brand" href="../../../index.html">
           Happypanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>(0, 0, 1)</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.1#100</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -161,12 +161,32 @@
 <span class="kn">from</span> <span class="nn">happypanda.core</span> <span class="k">import</span> <span class="n">message</span>
 
 
+<span class="k">def</span> <span class="nf">_get_cfg</span><span class="p">(</span><span class="n">keyname</span><span class="p">,</span> <span class="n">ctx</span><span class="p">):</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">ns</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">keyname</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">x</span><span class="p">]</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">APIError</span><span class="p">(</span>
+            <span class="n">utils</span><span class="o">.</span><span class="n">this_function</span><span class="p">(),</span>
+            <span class="s2">&quot;Invalid setting keyname: &#39;</span><span class="si">{}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">keyname</span><span class="p">))</span>
+
+    <span class="n">cfg</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">config</span>
+
+    <span class="k">if</span> <span class="n">ns</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;this&#39;</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">cfg</span><span class="o">.</span><span class="n">key_exists</span><span class="p">(</span><span class="n">ns</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">SettingsError</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">this_function</span><span class="p">(),</span> <span class="s2">&quot;Setting doesn&#39;t exist: &#39;</span><span class="si">{}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">keyname</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">ns</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">cfg</span>
+
+
 <div class="viewcode-block" id="set_settings"><a class="viewcode-back" href="../../../api.html#happypanda.interface.settings.set_settings">[docs]</a><span class="k">def</span> <span class="nf">set_settings</span><span class="p">(</span><span class="n">settings</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{},</span> <span class="n">ctx</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Set settings</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        settings: a dictionary containing key:value pairs</span>
+<span class="sd">        settings: a dict containing ``key.name``:``value``</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Status</span>
@@ -175,13 +195,12 @@
     <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Message</span><span class="p">(</span><span class="s2">&quot;ok&quot;</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="get_settings"><a class="viewcode-back" href="../../../api.html#happypanda.interface.settings.get_settings">[docs]</a><span class="k">def</span> <span class="nf">get_settings</span><span class="p">(</span><span class="n">settings</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="p">[],</span> <span class="n">ctx</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="get_settings"><a class="viewcode-back" href="../../../api.html#happypanda.interface.settings.get_settings">[docs]</a><span class="k">def</span> <span class="nf">get_settings</span><span class="p">(</span><span class="n">settings</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{},</span> <span class="n">ctx</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Set settings</span>
-<span class="sd">    Send empty list to get all key:values</span>
+<span class="sd">    Get settings</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        set_list: a list of setting keys</span>
+<span class="sd">        settings: a dict containing ``key.name``:``default value``, send an empty dict to retrieve all settings</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        ```</span>
@@ -194,22 +213,9 @@
 
     <span class="k">if</span> <span class="n">settings</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">set_key</span> <span class="ow">in</span> <span class="n">settings</span><span class="p">:</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="n">ns</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">set_key</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">x</span><span class="p">]</span>
-            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">APIError</span><span class="p">(</span>
-                    <span class="n">utils</span><span class="o">.</span><span class="n">this_function</span><span class="p">(),</span>
-                    <span class="s2">&quot;Invalid setting: &#39;</span><span class="si">{}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">set_key</span><span class="p">))</span>
+            <span class="n">ns</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">cfg</span> <span class="o">=</span> <span class="n">_get_cfg</span><span class="p">(</span><span class="n">set_key</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
 
-            <span class="k">if</span> <span class="n">constants</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">key_exists</span><span class="p">(</span><span class="n">ns</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
-                <span class="n">values</span><span class="p">[</span><span class="n">set_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ns</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="n">ns</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;self&#39;</span> <span class="ow">and</span> <span class="n">ctx</span><span class="o">.</span><span class="n">config</span> <span class="ow">and</span> <span class="n">ctx</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">key_exists</span><span class="p">(</span><span class="n">ns</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
-                <span class="n">values</span><span class="p">[</span><span class="n">set_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ns</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
-                <span class="k">raise</span> <span class="ne">NotImplementedError</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">APIError</span><span class="p">(</span>
-                    <span class="n">utils</span><span class="o">.</span><span class="n">this_function</span><span class="p">(),</span>
-                    <span class="s2">&quot;Setting doesn&#39;t exist: &#39;</span><span class="si">{}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">set_key</span><span class="p">))</span>
+            <span class="n">values</span><span class="p">[</span><span class="n">set_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ns</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">settings</span><span class="p">[</span><span class="n">set_key</span><span class="p">])</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
     <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Identity</span><span class="p">(</span><span class="s1">&#39;settings&#39;</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span></div>
