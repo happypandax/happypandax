@@ -187,7 +187,7 @@ def update(args):
             print("Setting up git repo...")
             run([cmd, "init", "."])
             run([cmd, "remote", "add", "-f", "origin", "https://github.com/happypandax/server.git"])
-            b = "dev" if args.dev else "master"
+            b = "dev"
             run([cmd, "checkout", b, "-f"])
 
         _activate_venv()
