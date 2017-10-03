@@ -35,8 +35,9 @@ def start(argv=None, db_kwargs={}):
         monkey.patch_all(thread=False)
 
     hlogger.Logger.setup_logger(args, main=True)
+    log.i("HPX SERVER START")
 
-    if args.generate_config:
+    if args.gen_config:
         config.config.save_default()
         log.i("Generated example configuration file at {}".format(io_cmd.CoreFS(constants.config_example_path).path), stdout=True)
         return
@@ -44,7 +45,6 @@ def start(argv=None, db_kwargs={}):
     i18n.set("locale", config.translation_locale.value)
     i18n.set("fallback", config.translation_locale.value)
 
-    log.i("HPX SERVER START")
 
     if not args.only_web:
         constants.available_commands = command.get_available_commands()

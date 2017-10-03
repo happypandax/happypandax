@@ -13,6 +13,7 @@ version_db = (0, 0, 1)
 
 ## PATHS & FILENAMES ##
 dir_root = ''
+dir_static = os.path.join(dir_root, "static")
 dir_data = os.path.join(dir_root, "data")
 dir_download = os.path.join(dir_root, "downloads")
 dir_cache = os.path.join(dir_data, "cache")
@@ -20,7 +21,6 @@ dir_log = os.path.join(dir_root, "logs")
 dir_temp = os.path.join(dir_cache, "temp")
 dir_plugin = os.path.join(dir_root, "plugins")
 dir_templates = os.path.join(dir_root, "templates")
-dir_static = os.path.join(dir_root, "static")
 dir_thumbs = os.path.join(dir_static, "thumbnails")
 dir_translations = os.path.join(dir_root, "translations")
 config_path = os.path.join(dir_root, "config.yaml")

@@ -48,33 +48,26 @@ def get_argparser():
         prog="Happypanda X",
         description="A manga/doujinshi manager with tagging support (https://github.com/happypandax/server)")
 
-    parser.add_argument('-p', '--port', type=int, default=config.port.default,
-                        help='Specify which port to start the server on')
+    parser.add_argument('-p', '--port', type=int,
+                        help='Specify which port to start the server on (default: {})'.format(config.port.default))
 
     parser.add_argument(
         '--torrent-port',
         type=int,
-        default=config.port_torrent.default,
-        help='Specify which port to start the torrent client on')
+        help='Specify which port to start the torrent client on (default: {})'.format(config.port_torrent.default))
 
     parser.add_argument(
         '--web-port',
         type=int,
-        default=config.port_web.default,
-        help='Specify which port to start the webserver on')
+        help='Specify which port to start the webserver on (default: {})'.format(config.port_web.default))
 
-    parser.add_argument('--host', type=str, default=config.host.default,
-                        help='Specify which address the server should bind to')
+    parser.add_argument('--host', type=str,
+                        help='Specify which address the server should bind to (default: {})'.format(config.host.default))
 
-    parser.add_argument('--web-host', type=str, default=config.host_web.default,
-                        help='Specify which address the webserver should bind to')
+    parser.add_argument('--web-host', type=str,
+                        help='Specify which address the webserver should bind to (defualt: {})'.format(config.host_web.default))
 
-    parser.add_argument(
-        '--expose',
-        action='store_true',
-        help='Attempt to expose the server through portforwading')
-
-    parser.add_argument('--generate-config', action='store_true',
+    parser.add_argument('--gen-config', action='store_true',
                         help='Generate a skeleton example config file and quit')
 
     parser.add_argument('-d', '--debug', action='store_true',
@@ -84,7 +77,7 @@ def get_argparser():
                         help='Start in interactive mode')
 
     parser.add_argument('-v', '--version', action='version',
-                        version='Happypanda X {}'.format(constants.version))
+                        version='HappyPanda X {}#{}'.format(constants.version, constants.build))
 
     parser.add_argument('--safe', action='store_true',
                         help='Start without plugins')
@@ -106,20 +99,28 @@ def parse_options(args):
 
     cfg = config.config
 
-    cmd_args = {
-        config.core_ns : {
-            config.debug.name : args.debug,
-            config.host.name : args.host,
-            config.host_web.name : args.web_host,
-            config.expose_server.name : args.expose,
-            config.port.name : args.port,
-            config.port_web.name : args.web_port,
-            config.port_torrent.name : args.torrent_port
-            }
-        }
+    cmd_args = {}
+    
+    if args.debug is not None:
+        cmd_args.setdefault(config.debug.namespace, {})[config.debug.name] = args.debug
 
+    if args.host is not None:
+        cmd_args.setdefault(config.host.namespace, {})[config.host.name] = args.host
 
-    cfg.apply_commandline_args(cmd_args)
+    if args.port is not None:
+        cmd_args.setdefault(config.port.namespace, {})[config.port.name] = args.port
+
+    if args.web_host is not None:
+        cmd_args.setdefault(config.host_web.namespace, {})[config.host_web.name] = args.web_host
+
+    if args.web_port is not None:
+        cmd_args.setdefault(config.port_web.namespace, {})[config.port_web.name] = args.web_port
+
+    if args.torrent_port is not None:
+        cmd_args.setdefault(config.port_torrent.namespace, {})[config.port_torrent.name] = args.torrent_port
+
+    if cmd_args:
+        cfg.apply_commandline_args(cmd_args)
 
 
     if constants.dev:

@@ -16,7 +16,7 @@ class ConfigNode:
         self._cfg = cfg
         self.namespace = ns
         self.name = name
-        self.default = self._value = value
+        self.default = value
         self.description = description
         self.type_ = type_
         self._created = False
@@ -25,21 +25,14 @@ class ConfigNode:
 
     @property
     def value(self):
-        self._create()
-        return self._value
+        return self._cfg.get(self.namespace, self.name, default=self.default, create=False, type_=self.type_)
 
     @value.setter
     def value(self, new_value):
-        self._create()
-        self._value = new_value
-
-    def _create(self):
-        if not self._created:
-            self._cfg.get(self.namespace, self.name, default=self._value, create=False, description=self.description, type_=self.type_)
-            self._created = True
+        with self._cfg.namespace(self.namespace):
+            self._cfg.update(self.name, new_value)
 
     def __bool__(self):
-        self._create()
         return bool(self.value)
 
 class Config:
@@ -53,7 +46,6 @@ class Config:
         self._default_config = OrderedDict()
         self._loaded = False
         self._cmd_args_applied = False
-        self._tmp_context = False
 
     def create(self, ns, key, default=None, description="", type_=None):
         return ConfigNode(self, ns, key, default, description, type_)
@@ -78,14 +70,23 @@ class Config:
                 yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
                 data.items())
         OrderedDumper.add_representer(OrderedDict, _dict_representer)
-        return yaml.dump(data, stream, OrderedDumper, **kwds)
+        return yaml.dump(data,
+                         stream,
+                         OrderedDumper, 
+                         default_flow_style=False,
+                         indent=4,
+                         **kwds)
 
     def load(self):
         for f in self._files:
             if os.path.exists(f):
                 log.i("Loading existing configuration from", os.path.abspath(f))
-                with open(f, 'r', encoding='utf-8') as rf:
-                    f_dict = self._ordered_load(rf)
+                try:
+                    with open(f, 'r', encoding='utf-8') as rf:
+                        f_dict = self._ordered_load(rf)
+                except yaml.YAMLError:
+                    log.exception("Error in configuration file", f)
+                    continue
                 if not isinstance(f_dict, dict):
                     log.w("Invalid or empty configuration file, expected mapping")
                     f_dict = OrderedDict()
@@ -120,8 +121,7 @@ class Config:
             cmd_cfg = config_dict.get(ns.lower(), {})
             if not isinstance(cmd_cfg, dict):
                 raise ValueError("Expected a dict")
-            idx = 1 if self._tmp_context else 0
-            self._cfg[ns].maps.insert(idx, cmd_cfg)
+            self._cfg[ns].maps.insert(0, cmd_cfg)
         self._cmd_args_applied = True
 
     def __contains__(self, key):
@@ -131,8 +131,6 @@ class Config:
     def _get_user_config_idx(self):
         idx = 0
         if self._cmd_args_applied:
-            idx += 1
-        if self._tmp_context:
             idx += 1
         return idx
 
@@ -226,16 +224,18 @@ concurrent_image_tasks = config.create(
     core_ns,
     "concurrent_image_tasks",
     10,
-    "Amount of image service tasks allowed to run at the same time")
+    "Amount of image service tasks allowed to run at the same time (higher count does not necessarily mean faster generation)")
+
+server_ns = 'server'
 
 secret_key = config.create(
-    core_ns,
+    server_ns,
     "secret_key",
     "",
     "A secret key to be used for security. Keep it secret!")
 
 server_name = config.create(
-    core_ns,
+    server_ns,
     'server_name',
     "happypanda_" +
     base64.urlsafe_b64encode(
@@ -243,72 +243,72 @@ server_name = config.create(
     "Specifiy name of the server")
 
 port = config.create(
-    core_ns,
+    server_ns,
     'port',
     7007,
     "Specify which port to start the server on")
 
 port_web = config.create(
-    core_ns,
+    server_ns,
     'port_web',
     7008,
     "Specify which port to start the webserver on")
 
 port_torrent = config.create(
-    core_ns,
+    server_ns,
     'torrent_port',
     7006,
     "Specify which port to start the torrent client on")
 
-port_range = config.create(core_ns,
+port_range = config.create(server_ns,
     'port_range',
     {'from':7009, 'to':7018},
     "Specify a range of ports to attempt")
 
 host = config.create(
-    core_ns,
+    server_ns,
     'host',
     'localhost',
     "Specify which address the server should bind to")
 
 host_web = config.create(
-    core_ns,
+    server_ns,
     'host_web',
     '',
     "Specify which address the webserver should bind to")
 
 expose_server = config.create(
-    core_ns,
+    server_ns,
     'expose_server',
     False,
     "Attempt to expose the server through portforwading")
 
 allowed_clients = config.create(
-    core_ns,
+    server_ns,
     'allowed_clients',
     0,
     "Limit amount of clients allowed to be connected (0 means no limit)")
 
 allow_guests = config.create(
-    core_ns,
+    server_ns,
     "allow_guests",
     True,
     "Specify if guests are allowed on this server")
 
 require_auth = config.create(
-    core_ns,
+    server_ns,
     "require_auth",
     False,
     "Client must be authenticated to get write access")
 
 disable_default_user = config.create(
-    core_ns,
+    server_ns,
     "disable_default_user",
     False,
     "Disable default user")
 
 session_span = config.create(
-    core_ns,
+    server_ns,
     "session_span",
     60,
     "Specify the amount of time (in minutes) a session can go unused before expiring")
