@@ -187,8 +187,8 @@ def update(args):
             print("Setting up git repo...")
             run([cmd, "init", "."])
             run([cmd, "remote", "add", "-f", "origin", "https://github.com/happypandax/server.git"])
-            b = "dev"
-            run([cmd, "checkout", b, "-f"])
+        b = "dev"
+        run([cmd, "checkout", b, "-f"])
 
         _activate_venv()
         from happypanda.common import constants
@@ -223,6 +223,9 @@ def convert(args):
     env_p = r".\env\Scripts\python" if sys.platform.startswith("win") else "./env/bin/python"
     argv = []
     argv.append(args.db_path)
+    data_folder = "data"
+    if not os.path.isdir(data_folder):
+        os.makedirs(data_folder)
     argv.append(os.path.join("data", "happypanda_dev.db" if args.dev else "happypanda.db"))
     argv.extend(sys.argv[3:])
     for i in ("-d", "--dev"):

@@ -1,6 +1,6 @@
 from collections import namedtuple
 
-from happypanda.common import hlogger, exceptions, utils, constants
+from happypanda.common import hlogger, exceptions, utils, constants, config
 from happypanda.core.command import Command, CommandEvent, CommandEntry
 from happypanda.core.commands import database_cmd
 from happypanda.core import db
@@ -11,11 +11,11 @@ log = hlogger.Logger(__name__)
 
 def get_search_options():
     return {
-        "case": constants.search_option_case,
-        "regex": constants.search_option_regex,
-        "whole": constants.search_option_whole,
-        "all": constants.search_option_all,
-        "desc": constants.search_option_desc
+        "case": config.search_option_case.value,
+        "regex": config.search_option_regex.value,
+        "whole": config.search_option_whole.value,
+        "all": config.search_option_all.value,
+        "desc": config.search_option_desc.value
     }
 
 Term = namedtuple("Term", ["namespace", "tag", "operator"])

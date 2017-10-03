@@ -1,4 +1,4 @@
-from happypanda.common import constants, utils, exceptions
+from happypanda.common import constants, utils, exceptions, config
 from happypanda.core import message
 
 
@@ -11,7 +11,7 @@ def _get_cfg(keyname, ctx):
             utils.this_function(),
             "Invalid setting keyname: '{}'".format(keyname))
 
-    cfg = constants.config
+    cfg = config.config
 
     if ns.lower() == 'this':
         pass

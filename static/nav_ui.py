@@ -46,6 +46,8 @@ def sidebar_nav_render():
     items.append(MenuItem("Favorites", "ui.mi-favorites", icon="heart", url="/favorite"))
     items.append(MenuItem("Library", "ui.mi-library", icon="grid layout", url="/library"))
     items.append(MenuItem("Inbox", "ui.mi-inbox", icon="inbox", url="/inbox"))
+    items.append(MenuItem("Management", "ui.mi-management", icon="inbox", url="/inbox"))
+    #Note: Artists, Tags, Etc. Able to favorite artists and tags
     items.append(MenuItem("Downloads", "ui.mi-downloads", icon="tasks", url="/downloads"))
     pref_item = MenuItem("Preferences", "ui.mi-preferences",
                          modal=[e(ui.Modal.Header, tr(this, "ui.mi-preferences", "Preferences"))],

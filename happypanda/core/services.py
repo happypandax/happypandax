@@ -5,7 +5,7 @@ import functools
 
 from gevent import pool, queue
 
-from happypanda.common import hlogger, constants
+from happypanda.common import hlogger, constants, config
 from happypanda.core import command
 
 log = hlogger.Logger(__name__)
@@ -121,6 +121,8 @@ class Service:
             log.exception("Command", "{}({})".format(command_obj.__class__.__name__, command_id), "raised an exception")
             command_obj.state = command.CommandState.failed
             command_obj.exception = greenlet.exception
+            if constants.dev:
+                raise # doesnt work
 
         if isinstance(greenlet.value, gevent.GreenletExit):
             command_obj.state = command.CommandState.stopped
@@ -170,7 +172,7 @@ class ImageService(Service):
     "An image service"
 
     def __init__(self, name):
-        super().__init__(name, pool.Pool(constants.concurrent_image_tasks))
+        super().__init__(name, pool.Pool(config.concurrent_image_tasks.value))
 
 
 def init_generic_services():

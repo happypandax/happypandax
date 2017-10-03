@@ -16,6 +16,7 @@ def test_init(is_public_server):
     with mock.patch('happypanda.server.core.server.socket') as m_socket, \
             mock.patch('happypanda.server.core.server.StreamServer') as m_stream_server, \
             mock.patch('happypanda.server.core.server.pool') as m_pool, \
+            mock.patch('happypanda.server.core.server.config') as m_config, \
             mock.patch('happypanda.server.core.server.constants') as m_constants:
         m_constants.public_server = is_public_server
         hps = HPServer()
@@ -33,7 +34,7 @@ def test_init(is_public_server):
             )
         else:
             m_stream_server.assert_called_with(
-                (m_constants.host, m_constants.local_port),
+                (m_config.host.value, m_constants.local_port.value),
                 hps._handle,
                 spawn=m_pool.Pool.return_value
             )
@@ -59,6 +60,7 @@ def test_parse(m_print):
 def test_run(is_web, serve_forever_func_raise_error, web_server_start_raise_error):
     """test run."""
     with mock.patch('happypanda.server.core.server.hweb') as m_hweb, \
+            mock.patch('happypanda.server.core.server.config') as m_config,\
             mock.patch('happypanda.server.core.server.constants') as m_constants:
         # prepare before run the func.
         with mock.patch('happypanda.server.core.server.pool'), \
@@ -80,12 +82,12 @@ def test_run(is_web, serve_forever_func_raise_error, web_server_start_raise_erro
             else:
                 if serve_forever_func_raise_error and web_server_start_raise_error:
                     m_wsgi_server.assert_has_calls([
-                        mock.call((m_constants.host, m_constants.web_port), m_hweb.happyweb),
+                        mock.call((m_config.host.value, m_constants.web_port.value), m_hweb.happyweb),
                         mock.call().start()
                     ])
                 else:
                     m_wsgi_server.assert_called_with(
-                        (m_constants.host, m_constants.web_port),
+                        (m_config.host.value, m_constants.web_port.value),
                         m_hweb.happyweb
                     )
                 m_wsgi_server.return_value.start.assert_called_once_with()

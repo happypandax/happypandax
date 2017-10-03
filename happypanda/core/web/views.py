@@ -12,7 +12,7 @@ socketio = WebServer.socketio
 
 log = hlogger.Logger(__name__)
 
-root_client = Client("root_webclient")
+root_client = None
 
 all_clients = {}
 
@@ -61,6 +61,9 @@ def call_server(msg, c):
 @socketio.on('connect')
 def on_connect():
     "client connected"
+    global root_client
+    if not root_client:
+        root_client = Client("root_webclient")
     get_clients(request.sid, root_client.session)
 
 
@@ -130,6 +133,9 @@ def on_command_call(msg):
 @happyweb.before_first_request
 def before_first_request():
     """before first request func."""
+    global root_client
+    if not root_client:
+        root_client = Client("root_webclient")
     try:
         root_client.connect()
     except exceptions.ServerError as e:

@@ -1,6 +1,6 @@
 import arrow
 
-from happypanda.common import constants, exceptions, utils
+from happypanda.common import constants, exceptions, utils, config
 from happypanda.core.services import Service
 from happypanda.core import command, message
 
@@ -70,7 +70,7 @@ def get_command_value(command_ids: list):
             values[i] = cmd.value.json_friendly(include_key=False)
         else:
             values[i] = cmd.value
-        if constants.debug:
+        if config.debug.value:
             cmd._log_stats(arrow.now())
 
     return message.Identity('command_value', values)

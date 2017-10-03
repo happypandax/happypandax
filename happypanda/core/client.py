@@ -2,7 +2,7 @@ import socket
 import sys
 import json
 
-from happypanda.common import constants, exceptions, utils, hlogger
+from happypanda.common import constants, exceptions, utils, hlogger, config
 from happypanda.core import message
 
 log = hlogger.Logger(__name__)
@@ -19,7 +19,7 @@ class Client:
         self.id = client_id
         self.name = name
         # HACK: properly fix this
-        self._server = ("localhost" if constants.host == "0.0.0.0" else constants.host, constants.port)
+        self._server = ("localhost" if config.host.value == "0.0.0.0" else config.host.value, config.port.value)
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._alive = False
         self._buffer = b''
@@ -64,7 +64,7 @@ class Client:
             self._last_user = user
             self._last_pass = password
             try:
-                log.i("Client connecting to server at: ({}:{})".format(constants.host, constants.port))
+                log.i("Client connecting to server at: ({}:{})".format(config.host.value, config.port.value))
                 self._sock.connect(self._server)
                 self._alive = True
                 if not self.session:

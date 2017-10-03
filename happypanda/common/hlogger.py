@@ -94,7 +94,7 @@ class Logger:
         return getattr(self._logger, name)
 
     @classmethod
-    def setup_logger(cls, args, logging_queue=None):
+    def setup_logger(cls, args, logging_queue=None, main=False):
         assert isinstance(args, argparse.Namespace)
         if logging_queue:
             cls._queue = logging_queue
@@ -110,12 +110,6 @@ class Logger:
                 log_handlers.append(logging.StreamHandler())
 
             if args.debug:
-                print(
-                    "{} created at {}".format(
-                        constants.log_debug,
-                        os.path.join(
-                            os.getcwd(),
-                            constants.dir_log)))
                 try:
                     with open(constants.log_debug, 'x') as f:
                         pass
@@ -146,6 +140,9 @@ class Logger:
             format='%(asctime)-8s %(levelname)-10s %(name)-10s %(message)s',
             datefmt='%d-%m %H:%M',
             handlers=tuple(log_handlers))
+
+        if main:
+            Logger(__name__).i(os.path.split(constants.log_debug)[1], "created at", os.path.abspath(constants.log_debug), stdout=True)
 
     @staticmethod
     def _listener(args, queue):

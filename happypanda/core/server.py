@@ -12,7 +12,7 @@ from flask import Flask  # noqa: E402
 from flask_socketio import SocketIO  # noqa: E402
 
 from happypanda import interface  # noqa: E402
-from happypanda.common import constants, exceptions, utils, hlogger  # noqa: E402
+from happypanda.common import constants, exceptions, utils, hlogger, config  # noqa: E402
 from happypanda.core import db, torrent, message  # noqa: E402, F401
 from happypanda.interface import meta, enums  # noqa: E402
 
@@ -50,7 +50,7 @@ class Session:
 
     def extend(self):
         "Extend the life of this session"
-        self._expiration = arrow.utcnow().replace(minutes=+constants.session_span)
+        self._expiration = arrow.utcnow().replace(minutes=+config.session_span.value)
 
     @classmethod
     def get(cls, s_id):
@@ -96,13 +96,13 @@ class ClientHandler:
         else:
             log.d("Client did not provide credentials")
 
-            if not constants.disable_default_user:
+            if not config.disable_default_user.value:
                 log.d("Authenticating with default user")
                 user_obj = s.query(
                     db.User).filter(
                     db.User.role == db.User.Role.default).one()
             else:
-                if not constants.allow_guests:
+                if not config.allow_guests.value:
                     log.d("Guests are disallowed on this server")
                     raise exceptions.AuthRequiredError(utils.this_function())
                 log.d("Authencticating as guest")
@@ -284,7 +284,7 @@ class ClientHandler:
         if isinstance(data, dict):
             log.d("Incoming handshake from client", self._address)
             data = data.get("data")
-            if not constants.allow_guests:
+            if not config.allow_guests.value:
                 log.d("Guests are not allowed")
                 self._check_both(
                     utils.this_function(), "JSON dict", ('user', 'password'), data)
@@ -303,7 +303,7 @@ class ClientHandler:
             log.d("Handshaking client:", self._address)
             msg = dict(
                 version=meta.get_version().data(),
-                guest_allowed=constants.allow_guests,
+                guest_allowed=config.allow_guests.value,
             )
 
             self.send(message.finalize(msg))
@@ -353,7 +353,7 @@ class ClientHandler:
             log.d("Sending exception to client:", e)
             self.on_error(e)
 
-        except BaseException:
+        except Exception:
             if not constants.dev:
                 log.exception("An unknown critical error has occurred")
                 self.on_error(exceptions.HappypandaError(
@@ -404,7 +404,7 @@ class HPServer:
     def __init__(self):
         params = utils.connection_params()
         self._pool = pool.Pool(
-            constants.allowed_clients if constants.allowed_clients else None)  # cannot be 0
+            config.allowed_clients.value if config.allowed_clients.value else None)  # cannot be 0
         self._server = StreamServer(params, self._handle, spawn=self._pool)
         self._web_server = None
         self._clients = set()  # a set of client handlers
@@ -455,7 +455,7 @@ class HPServer:
             constants.server_started = True
             if blocking:
                 log.i("Starting server... ({}:{})".format(
-                    constants.host, constants.port), stdout=True)
+                    config.host.value, config.port.value), stdout=True)
                 self._server.serve_forever()
             else:
                 self._server.start()

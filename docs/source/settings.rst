@@ -3,7 +3,7 @@ Settings
 
 
 .. documentedlist::
-    :listobject: happypanda.common.constants.config_doc
+    :listobject: happypanda.common.config.config_doc
     :header: Option Default Description
     :spantolast:
     :descend:

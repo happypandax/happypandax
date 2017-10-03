@@ -96,9 +96,8 @@ def _native_runner(f):
     return wrapper
 
 
-class CoreCommand:
+class CoreCommand():
     "Base command"
-    __metaclass__ = ABCMeta
 
     _events = {}
     _entries = {}
@@ -115,22 +114,10 @@ class CoreCommand:
         self._started_time = None
         self._finished_time = None
         self._priority = priority
-        self._main = self.main
-        self.main = self._main_wrap
 
     def run_native(self, f, *args, **kwargs):
         # TODO: avoid deadlocks by only running if not in native thread already
         return CommandFuture(self, self._native_pool.submit(_native_runner(f), *args, **kwargs))
-
-    def _main(self):
-        pass
-
-    def _main_wrap(self, *args, **kwargs):
-        utils.switch(self._priority)
-        self._started_time = arrow.now()
-        r = self._main(*args, **kwargs)
-        self._finished_time = arrow.now()
-        return r
 
     def _log_stats(self, d=None):
         create_delta = self._finished_time - self._created_time
@@ -142,10 +129,6 @@ class CoreCommand:
               "\t\tRunning delta: {} (time between start and finish)\n".format(run_delta),
               "\t\tLog delta: {} (time between finish and this log)\n".format(log_delta),
               )
-
-    @abstractmethod
-    def main(self, *args, **kwargs):
-        pass
 
     @classmethod
     def _get_commands(cls):
@@ -160,10 +143,12 @@ class CoreCommand:
                 cls._entries[a.name] = a
 
 
-class Command(CoreCommand):
+class Command(CoreCommand, metaclass=ABCMeta):
 
     def __init__(self, priority=constants.Priority.Normal):
         super().__init__(priority)
+        self._main = self.main
+        self.main = self._main_wrap
 
     def run(self, *args, **kwargs):
         """
@@ -172,6 +157,19 @@ class Command(CoreCommand):
         log.d("Running command:", self.__class__.__name__)
         return self.main(*args, **kwargs)
 
+    def _main(self):
+        pass
+
+    def _main_wrap(self, *args, **kwargs):
+        utils.switch(self._priority)
+        self._started_time = arrow.now()
+        r = self._main(*args, **kwargs)
+        self._finished_time = arrow.now()
+        return r
+
+    @abstractmethod
+    def main(self, *args, **kwargs):
+        pass
 
 class UndoCommand(Command):
     "Command capable of undoing itself"

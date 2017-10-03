@@ -15,7 +15,7 @@ from inspect import ismodule, currentframe, getframeinfo
 from contextlib import contextmanager
 from collections import namedtuple, UserList
 
-from happypanda.common import constants, exceptions, hlogger
+from happypanda.common import constants, exceptions, hlogger, config
 
 log = hlogger.Logger(__name__)
 
@@ -48,25 +48,25 @@ def get_argparser():
         prog="Happypanda X",
         description="A manga/doujinshi manager with tagging support (https://github.com/happypandax/server)")
 
-    parser.add_argument('-p', '--port', type=int, default=constants.port,
+    parser.add_argument('-p', '--port', type=int, default=config.port.default,
                         help='Specify which port to start the server on')
 
     parser.add_argument(
         '--torrent-port',
         type=int,
-        default=constants.port_torrent,
+        default=config.port_torrent.default,
         help='Specify which port to start the torrent client on')
 
     parser.add_argument(
         '--web-port',
         type=int,
-        default=constants.port_web,
+        default=config.port_web.default,
         help='Specify which port to start the webserver on')
 
-    parser.add_argument('--host', type=str, default=constants.host,
+    parser.add_argument('--host', type=str, default=config.host.default,
                         help='Specify which address the server should bind to')
 
-    parser.add_argument('--web-host', type=str, default=constants.host_web,
+    parser.add_argument('--web-host', type=str, default=config.host_web.default,
                         help='Specify which address the webserver should bind to')
 
     parser.add_argument(
@@ -75,7 +75,7 @@ def get_argparser():
         help='Attempt to expose the server through portforwading')
 
     parser.add_argument('--generate-config', action='store_true',
-                        help='Generate a skeleton config file and quit')
+                        help='Generate a skeleton example config file and quit')
 
     parser.add_argument('-d', '--debug', action='store_true',
                         help='Start in debug mode (collects more information)')
@@ -102,19 +102,25 @@ def parse_options(args):
     "Parses args from the command-line"
     assert isinstance(args, argparse.Namespace)
 
-    cfg = constants.config
+    constants.dev = args.dev
 
-    with cfg.namespace(constants.core_ns):
+    cfg = config.config
 
-        constants.debug = cfg.update("debug", args.debug)
-        constants.dev = args.dev
-        constants.host = cfg.update("host", args.host)
-        constants.host_web = cfg.update("host_web", args.web_host)
-        constants.expose_server = cfg.update("expose_server", args.expose)
+    cmd_args = {
+        config.core_ns : {
+            config.debug.name : args.debug,
+            config.host.name : args.host,
+            config.host_web.name : args.web_host,
+            config.expose_server.name : args.expose,
+            config.port.name : args.port,
+            config.port_web.name : args.web_port,
+            config.port_torrent.name : args.torrent_port
+            }
+        }
 
-        constants.port = cfg.update("port", args.port)
-        constants.port_web = cfg.update("port_web", args.web_port)
-        constants.port_torrent = cfg.update("torrent_port", args.torrent_port)
+
+    cfg.apply_commandline_args(cmd_args)
+
 
     if constants.dev:
         sys.displayhook == pprint.pprint
@@ -135,7 +141,7 @@ def parse_options(args):
 
 def connection_params():
     "Retrieve host and port"
-    params = (constants.host, constants.port)
+    params = (config.host.value, config.port.value)
     return params
 
 
