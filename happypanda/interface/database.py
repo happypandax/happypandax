@@ -14,8 +14,7 @@ def get_image(item_type: enums.ItemType=enums.ItemType.Gallery,
               item_ids: list=[],
               size: enums.ImageSize=enums.ImageSize.Medium,
               url: bool=False,
-              uri: bool=False,
-              ctx=None):
+              uri: bool=False):
     """
     Get image for item.
     Image content is base64 encoded.
@@ -33,7 +32,6 @@ def get_image(item_type: enums.ItemType=enums.ItemType.Gallery,
         { item_id : async_command_id }
         ```
     """
-    utils.require_context(ctx)
 
     item_type = enums.ItemType.get(item_type)
     size = enums.ImageSize.get(size)

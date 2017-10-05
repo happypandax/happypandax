@@ -80,8 +80,7 @@ def library_view(item_type: enums.ItemType = enums.ItemType.Gallery,
                  sort_by: str = "",
                  search_query: str = "",
                  filter_id: int = None,
-                 view_filter: enums.ViewType = enums.ViewType.Library,
-                 ctx=None):
+                 view_filter: enums.ViewType = enums.ViewType.Library):
     """
     Fetch items from the database.
     Provides pagination.
@@ -100,7 +99,6 @@ def library_view(item_type: enums.ItemType = enums.ItemType.Gallery,
     Returns:
         list of item message objects
     """
-    utils.require_context(ctx)
     view_filter, item_type, db_msg, db_model, model_ids, filter_op, join_exp, metatag_name = _view_helper(
         item_type, search_query, filter_id, view_filter, item_id, related_type)
 

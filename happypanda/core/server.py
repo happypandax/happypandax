@@ -3,6 +3,8 @@ import sys  # noqa: E402
 import code  # noqa: E402
 import arrow  # noqa: E402
 import os  # noqa: E402
+import gevent
+import weakref
 
 from inspect import getmembers, isfunction  # noqa: E402
 
@@ -18,7 +20,6 @@ from happypanda.interface import meta, enums  # noqa: E402
 
 log = hlogger.Logger(__name__)
 
-
 def list_api():
     "Returns {name : object}"
     _special_functions = tuple()  # functions we don't consider as part of the api
@@ -28,7 +29,6 @@ def list_api():
         all_functions.extend(getmembers(m, isfunction))
     return {x[0]: x[1] for x in all_functions if not x[0]
             in _special_functions and not x[0].startswith('_')}
-
 
 class Session:
     "Connection longevity"
@@ -73,7 +73,7 @@ class ClientHandler:
         self._port = self._address[1]
         self._stopped = False
         self._accepted = False
-        self.context = None
+        self.context = utils.get_context(None).setdefault("ctx", {})
         self.session = None
         self.handshake()
 
@@ -115,13 +115,13 @@ class ClientHandler:
                     user_obj = db.User(role=db.User.Role.guest)
                     s.add(user_obj)
 
-        self.context = user_obj
+        self.context['user'] = user_obj
 
-        self.context.address = self._ip
-        if not self.context.context_id:
-            self.context.context_id = uuid.uuid4().hex
+        self.context['adresss'] = self._ip
+        if not self.context['user'].context_id:
+            self.context['user'].context_id = uuid.uuid4().hex
 
-        self.context.config = None
+        self.context['config'] = {}
         log.d("Client accepted")
         self._accepted = True
 
@@ -153,7 +153,7 @@ class ClientHandler:
         Params:
             data -- data from client
         Returns:
-            list of (function, function_kwargs, context_neccesity)
+            list of (function, function_kwargs)
         """
         where = "Message parsing"
         log.d("Parsing incoming data")
@@ -204,7 +204,6 @@ class ClientHandler:
                     func_args = tuple(
                         arg for arg in f if arg not in function_keys)
                     func_varnames = self.api[function_name].__code__.co_varnames
-                    need_ctx = 'ctx' in func_varnames
                     for arg in func_args:
                         if arg not in func_varnames:
                             e = exceptions.InvalidMessage(
@@ -217,8 +216,7 @@ class ClientHandler:
                         continue
 
                     function_tuples.append(
-                        (self.api[function_name], {
-                            x: f[x] for x in func_args}, need_ctx))
+                        (self.api[function_name], {x: f[x] for x in func_args}))
                 except exceptions.ServerError as e:
                     self.errors.append((function_name, e))
 
@@ -270,20 +268,21 @@ class ClientHandler:
                 if self.session.id in self.contexts:
                     self._accepted = True
                     self.context = self.contexts[self.session.id]
+                    utils.get_context(None)['ctx'] = self.context
                     self.session.extend()
                     return
 
         log.d("Authentication with session failed", session_id)
         self._accepted = False
 
-    def handshake(self, data=None):
+    def handshake(self, payload=None):
         """
         Sends a welcome message
         """
-        assert data is None or isinstance(data, dict)
-        if isinstance(data, dict):
+        assert payload is None or isinstance(payload, dict)
+        if isinstance(payload, dict):
             log.d("Incoming handshake from client", self._address)
-            data = data.get("data")
+            data = payload.get("data")
             if not config.allow_guests.value:
                 log.d("Guests are not allowed")
                 self._check_both(
@@ -296,6 +295,7 @@ class ClientHandler:
                 p = data.pop('password', None)
 
             self.get_context(u, p)
+            self.context['name'] = payload['name']
             self.session = Session()
             self.contexts[self.session.id] = self.context
             self.send(message.finalize("Authenticated", session_id=self.session.id))
@@ -325,12 +325,10 @@ class ClientHandler:
                         self.handshake()
                     return functions
 
-                for func, func_args, ctx in functions:
+                for func, func_args in functions:
                     log.d("Calling function", func, "with args", func_args)
                     func_msg = message.Function(func.__name__)
                     try:
-                        if ctx:
-                            func_args['ctx'] = self.context
                         msg = func(**func_args)
                         assert isinstance(msg, message.CoreMessage) or None
                         func_msg.set_data(msg)
@@ -397,6 +395,28 @@ class ClientHandler:
                 pass
         return None
 
+class Greenlet(gevent.Greenlet):
+    '''
+    A subclass of gevent.Greenlet which adds additional members:
+     - locals: a dict of variables that are local to the "spawn tree" of
+       greenlets
+     - spawner: a weak-reference back to the spawner of the
+       greenlet
+     - stacks: a record of the stack at which the greenlet was
+       spawned, and ancestors
+    '''
+    def __init__(self, f, *a, **kw):
+        super(Greenlet, self).__init__(f, *a, **kw)
+        spawner = self.spawn_parent = weakref.proxy(gevent.getcurrent())
+        if not hasattr(spawner, 'locals'):
+            spawner.locals = {}
+        self.locals = spawner.locals
+        stack = []
+        cur = sys._getframe()
+        while cur:
+            stack.extend((cur.f_code, cur.f_lineno))
+            cur = cur.f_back
+        self.stacks = (tuple(stack),) + getattr(spawner, 'stacks', ())[:10]
 
 class HPServer:
     "Happypanda Server"
@@ -404,7 +424,8 @@ class HPServer:
     def __init__(self):
         params = utils.connection_params()
         self._pool = pool.Pool(
-            config.allowed_clients.value if config.allowed_clients.value else None)  # cannot be 0
+            config.allowed_clients.value if config.allowed_clients.value else None,
+            Greenlet)  # cannot be 0
         self._server = StreamServer(params, self._handle, spawn=self._pool)
         self._web_server = None
         self._clients = set()  # a set of client handlers

@@ -2,7 +2,9 @@ import os
 import pickle
 import base64
 import yaml
+import gevent
 
+from enum import Enum
 from contextlib import contextmanager
 from collections import ChainMap, OrderedDict
 
@@ -10,10 +12,17 @@ from happypanda.common import exceptions, hlogger, constants
 
 log = hlogger.Logger(__name__)
 
+class ConfigIsolation(Enum):
+    server = 1
+    client = 2
+
 class ConfigNode:
 
-    def __init__(self, cfg, ns, name, value, description="", type_=None):
+    default_namespaces = set()
+
+    def __init__(self, cfg, ns, name, value, description="", type_=None, isolation=ConfigIsolation.server):
         self._cfg = cfg
+        self.isolation = isolation
         self.namespace = ns
         self.name = name
         self.default = value
@@ -22,15 +31,27 @@ class ConfigNode:
         self._created = False
         with self._cfg.namespace(ns):
             self._cfg.define(name, value, description)
+        self.default_namespaces.add(ns.lower())
+
+    def _get_ctx_config(self):
+        return getattr(gevent.getcurrent(), 'locals', {}).get("ctx", {}).get("config", {})
+
+    def get(self, *args, **kwargs):
+        return self._cfg.get(*args, **kwargs)
 
     @property
     def value(self):
-        return self._cfg.get(self.namespace, self.name, default=self.default, create=False, type_=self.type_)
+        with self._cfg.tmp_config(self.namespace, self._get_ctx_config().get(self._cfg._get_namespace(self.namespace))):
+            return self._cfg.get(self.namespace, self.name, default=self.default, create=False, type_=self.type_)
 
     @value.setter
     def value(self, new_value):
-        with self._cfg.namespace(self.namespace):
-            self._cfg.update(self.name, new_value)
+        if self.isolation == ConfigIsolation.client:
+            with self._cfg.tmp_config(self.namespace, self._get_ctx_config().get(self._cfg._get_namespace(self.namespace))):
+                self._cfg.update(self.name, new_value)
+        else:
+            with self._cfg.namespace(self.namespace):
+                self._cfg.update(self.name, new_value)
 
     def __bool__(self):
         return bool(self.value)
@@ -40,6 +61,7 @@ class Config:
     def __init__(self, *filepaths):
         self._cfg = OrderedDict()
         self._current_ns = None
+        self._prev_ns = None
         self._files = filepaths
         self._files_map = {}
         self._comments = {}
@@ -160,15 +182,47 @@ class Config:
         return value
 
     @contextmanager
+    def tmp_config(self, ns, cfg):
+        if not cfg:
+            yield
+            return
+        if ns is not None:
+            ns = self._get_namespace(ns)
+            with self.namespace(ns):
+                tmp = self._current_ns not in self._cfg
+                self._cfg[self._current_ns] = self._cfg[self._current_ns].new_child(cfg)
+                yield
+                self._cfg[self._current_ns] = self._cfg[self._current_ns].parents
+                if tmp:
+                    self._cfg.pop(self._current_ns)
+        else:
+            tmp_ns = []
+            for ns in cfg:
+                curr_ns = self._get_namespace(ns)
+                if curr_ns not in self._cfg:
+                    tmp_ns.append(curr_ns)
+                with self.namespace(curr_ns):
+                    self._cfg[self._current_ns] = self._cfg[self._current_ns].new_child(cfg)
+            yield
+            for ns in cfg:
+                with self.namespace(ns):
+                    self._cfg[self._current_ns] = self._cfg[self._current_ns].parents
+            for n in tmp_ns:
+                self._cfg.pop(n)
+
+
+
+    @contextmanager
     def namespace(self, ns):
         assert isinstance(ns, str), "Namespace must be str"
         ns = self._get_namespace(ns)
         self._cfg.setdefault(ns, ChainMap())
+        self._prev_ns = self._current_ns
         self._current_ns = ns
         yield
-        self._current_ns = None
+        self._current_ns = self._prev_ns
 
-    def get(self, ns, key, default=None, description="", create=True, type_=None):
+    def get(self, ns, key, default=None, description="", create=False, type_=None):
         ""
         if not self._loaded:
             self.load()
@@ -187,6 +241,15 @@ class Config:
             if type_ and not isinstance(v, type_):
                 return default
             return v
+
+    def get_all(self):
+        "Returns a dict with all available settings with their current value"
+        s = {}
+        for ns in self._cfg:
+            s[ns.lower()] = {}
+            for m in reversed(self._cfg[ns].maps):
+                s[ns.lower()].update(m)
+        return s
 
     def define(self, key, value, description=""):
         assert self._current_ns, "No namespace has been set"

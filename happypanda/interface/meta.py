@@ -5,7 +5,7 @@ from happypanda.core.services import Service
 from happypanda.core import command, message
 
 
-def get_error(code: int, id: int, ctx=None):
+def get_error(code: int, id: int):
     """
     Get error
 

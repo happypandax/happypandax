@@ -16,7 +16,7 @@ def get_plugin(plugin_id: str):
     return message.Message("works")
 
 
-def install_plugin(plugin_id: str, ctx=None):
+def install_plugin(plugin_id: str):
     """
     Install a plugin
 
@@ -29,7 +29,7 @@ def install_plugin(plugin_id: str, ctx=None):
     return message.Message("works")
 
 
-def uninstall_plugin(plugin_id: str, ctx=None):
+def uninstall_plugin(plugin_id: str):
     """
     Uninstall a plugin
 
@@ -42,7 +42,7 @@ def uninstall_plugin(plugin_id: str, ctx=None):
     return message.Message("works")
 
 
-def list_plugins(ctx=None):
+def list_plugins():
     """
     Get a list of available plugin information
 

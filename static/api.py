@@ -14,7 +14,24 @@ def set_key(e):
     this.props.on_change(this.props.idx, (e.target.value, this.state['value']))
 
 def get_type(s):
-    if s[0] in ("'", '"') and s[len(s) - 1] in ("'", '"'):
+    s = s.strip()
+    if s.startswith("{") and s.endswith("}"):
+        s = s[1:-1]
+        d = {}
+        kv = []
+        sp = s.split(':')
+        for v in sp:
+            if len(kv) == 2:
+                d[kv[0]] = kv[1]
+                kv.clear()
+            kv.append(get_type(v))
+
+        if len(kv) == 2:
+            d[kv[0]] = kv[1]
+        return d
+
+    # starwith and endswith doesn't work with tuple, transcrypt fault
+    elif s[0] in ("'", '"') and s[len(s) - 1] in ("'", '"'):
         return s[1:-1]
     elif s.lower() in ('none', 'null'):
         return None

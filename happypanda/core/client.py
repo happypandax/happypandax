@@ -19,7 +19,10 @@ class Client:
         self.id = client_id
         self.name = name
         # HACK: properly fix this
-        self._server = ("localhost" if config.host.value == "0.0.0.0" else config.host.value, config.port.value)
+        host = config.host.value
+        if isinstance(host, str):
+            host = "localhost" if host.lower() == "0.0.0.0" else host
+        self._server = (host, config.port.value)
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._alive = False
         self._buffer = b''
@@ -27,6 +30,7 @@ class Client:
         self.version = None
         self._guest_allowed = False
         self._accepted = False
+        self._tries = self._tries_count = 5
 
         self._last_user = ""
         self._last_pass = ""
@@ -44,6 +48,7 @@ class Client:
         if serv_data == "Authenticated":
             self.session = data.get('session')
             self._accepted = True
+            self._tries = self._tries_count
         elif serv_data:
             self._guest_allowed = serv_data.get('guest_allowed')
             self.version = serv_data.get('version')
@@ -56,15 +61,19 @@ class Client:
 
     def request_auth(self):
         self._handshake(self.communicate({'session': "", 'name': self.name,
-                                          'data': 'requestauth'}), self._last_user, self._last_pass)
+                                          'data': 'requestauth'}, True), self._last_user, self._last_pass)
 
     def connect(self, user=None, password=None):
         "Connect to the server"
+        if not self._tries:
+            raise exceptions.ServerDisconnectError(
+                    self.name, "Failed to establish server connection after {} tries".format(self._tries_count))
+        self._tries -= 1 # TODO: increasing timer
         if not self._alive:
             self._last_user = user
             self._last_pass = password
             try:
-                log.i("Client connecting to server at: ({}:{})".format(config.host.value, config.port.value))
+                log.i("Client connecting to server at: {}".format(self._server))
                 self._sock.connect(self._server)
                 self._alive = True
                 if not self.session:
@@ -127,7 +136,7 @@ class Client:
             self.alive = False
             raise exceptions.ServerError(self.name, "{}".format(e))
 
-    def communicate(self, msg):
+    def communicate(self, msg, auth=False):
         """Send and receive data with server
 
         params:
@@ -135,7 +144,7 @@ class Client:
         returns:
             dict from server
         """
-        if not self._accepted:
+        if not self._accepted and not auth:
             raise exceptions.AuthError(utils.this_function(), "")
         self._send(bytes(json.dumps(msg), 'utf-8'))
         return self._recv()

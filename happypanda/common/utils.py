@@ -224,11 +224,6 @@ def random_name():
     r = base64.urlsafe_b64encode(uuid.uuid4().bytes).decode('utf-8').replace('=', '').replace('_', '-')
     return r
 
-
-def require_context(ctx):
-    assert ctx, "This function requires a context object"
-
-
 def this_function():
     "Return name of current function"
     return getframeinfo(currentframe()).function
@@ -278,6 +273,12 @@ def switch(priority=constants.Priority.Normal):
     assert isinstance(priority, constants.Priority)
     gevent.idle(priority.value)
 
+def get_context(key="ctx"):
+    "Get a dict local to the spawn tree of current greenlet"
+    l =  getattr(gevent.getcurrent(), 'locals', None)
+    if key is not None:
+        return l[key]
+    return l
 
 class AttributeList(UserList):
     """

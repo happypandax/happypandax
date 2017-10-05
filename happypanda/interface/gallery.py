@@ -1,7 +1,7 @@
 from happypanda.core import message
 
 
-def add_gallery(galleries: list=[], paths: list=[], ctx=None):
+def add_gallery(galleries: list=[], paths: list=[]):
     """
     Add galleries to the database.
 
@@ -16,7 +16,7 @@ def add_gallery(galleries: list=[], paths: list=[], ctx=None):
 
 
 def scan_gallery(paths: list=[], add_after: bool=False,
-                 ignore_exist: bool=True, ctx=None):
+                 ignore_exist: bool=True):
     """
     Scan folders for galleries
 
