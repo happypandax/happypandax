@@ -6,7 +6,7 @@ import os  # noqa: E402
 import gevent
 import weakref
 
-from inspect import getmembers, isfunction  # noqa: E402
+from inspect import getmembers, isfunction, signature, Parameter  # noqa: E402
 
 from gevent import socket, pool  # noqa: E402
 from gevent.server import StreamServer  # noqa: E402
@@ -203,7 +203,7 @@ class ClientHandler:
                     func_failed = False
                     func_args = tuple(
                         arg for arg in f if arg not in function_keys)
-                    func_varnames = self.api[function_name].__code__.co_varnames
+                    func_varnames = signature(self.api[function_name]).parameters
                     for arg in func_args:
                         if arg not in func_varnames:
                             e = exceptions.InvalidMessage(
@@ -212,6 +212,15 @@ class ClientHandler:
                             self.errors.append((function_name, e))
                             func_failed = True
                             break
+
+                    for arg, def_val in func_varnames.items():
+                        if def_val.default is Parameter.empty and arg not in func_args:
+                            e = exceptions.InvalidMessage(
+                                where, "Missing a required argument in function '{}': '{}'".format(
+                                    function_name, arg))
+                            self.errors.append((function_name, e))
+                            func_failed = True
+
                     if func_failed:
                         continue
 

@@ -53,7 +53,7 @@ class CoreMessage:
         "Serialize to JSON structure"
         d = self.data()
         assert isinstance(
-            d, (dict, list)), "self.data() must return a dict or list!"
+            d, (dict, list)) or isinstance(self, Message), "self.data() must return a dict or list!"
         if self._error:
             d[self._error.key] = self._error.data()
         if include_key:

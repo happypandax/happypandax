@@ -20,6 +20,8 @@ class ConfigNode:
 
     default_namespaces = set()
 
+    _cfg_nodes = {}
+
     def __init__(self, cfg, ns, name, value, description="", type_=None, isolation=ConfigIsolation.server):
         self._cfg = cfg
         self.isolation = isolation
@@ -32,6 +34,11 @@ class ConfigNode:
         with self._cfg.namespace(ns):
             self._cfg.define(name, value, description)
         self.default_namespaces.add(ns.lower())
+        self._cfg_nodes.setdefault(ns.lower(), {})[name.lower()] = self
+
+    @classmethod
+    def get_isolation_level(cls, ns, key):
+        return cls._cfg_nodes[ns.lower()][key.lower()].isolation
 
     def _get_ctx_config(self):
         return getattr(gevent.getcurrent(), 'locals', {}).get("ctx", {}).get("config", {})
@@ -41,13 +48,13 @@ class ConfigNode:
 
     @property
     def value(self):
-        with self._cfg.tmp_config(self.namespace, self._get_ctx_config().get(self._cfg._get_namespace(self.namespace))):
+        with self._cfg.tmp_config(self.namespace, self._get_ctx_config().get(self._cfg.format_namespace(self.namespace))):
             return self._cfg.get(self.namespace, self.name, default=self.default, create=False, type_=self.type_)
 
     @value.setter
     def value(self, new_value):
         if self.isolation == ConfigIsolation.client:
-            with self._cfg.tmp_config(self.namespace, self._get_ctx_config().get(self._cfg._get_namespace(self.namespace))):
+            with self._cfg.tmp_config(self.namespace, self._get_ctx_config().get(self._cfg.format_namespace(self.namespace))):
                 self._cfg.update(self.name, new_value)
         else:
             with self._cfg.namespace(self.namespace):
@@ -58,11 +65,12 @@ class ConfigNode:
 
 class Config:
 
-    def __init__(self, *filepaths):
+    def __init__(self, *filepaths, user_filepath=""):
         self._cfg = OrderedDict()
         self._current_ns = None
         self._prev_ns = None
         self._files = filepaths
+        self._user_file = user_filepath
         self._files_map = {}
         self._comments = {}
         self._default_config = OrderedDict()
@@ -100,7 +108,9 @@ class Config:
                          **kwds)
 
     def load(self):
-        for f in self._files:
+        paths = list(self._files)
+        paths.append(self._user_file)
+        for f in paths:
             if os.path.exists(f):
                 log.i("Loading existing configuration from", os.path.abspath(f))
                 try:
@@ -115,7 +125,7 @@ class Config:
                 self._files_map[f] = f_dict
                 for ns in f_dict:
                     ns_dict = f_dict[ns]
-                    ns = self._get_namespace(ns)
+                    ns = self.format_namespace(ns)
                     if not isinstance(ns_dict, dict):
                         log.w("Skipping invalid section", ns, "expected mapping")
                         continue
@@ -128,11 +138,13 @@ class Config:
 
     def save(self):
 
-        for f in self._files_map:
-            log.i("Saving config", f)
+        if self._user_file:
+            log.i("Saving config", self._user_file)
 
-            with open(f, 'w', encoding='utf-8') as wf:
-                self._ordered_dump(self._files_map[f], wf)
+            f_dict = self._files_map.get(self._user_file)
+            if f_dict is not None:
+                with open(self._user_file, 'w', encoding='utf-8') as wf:
+                    self._ordered_dump(f_dict, wf)
 
     def save_default(self):
         with open(constants.config_example_path, 'w', encoding='utf-8') as wf:
@@ -156,29 +168,36 @@ class Config:
             idx += 1
         return idx
 
-    def _get_namespace(self, ns):
-        return ns.lower().capitalize()
+    def format_namespace(self, ns):
+        return ns.lower()
 
     def key_exists(self, ns, key):
         ""
-        ns = self._get_namespace(ns)
+        ns = self.format_namespace(ns)
         key = key.lower()
         if ns in self._cfg and key in self._cfg[ns]:
             return True
         return False
 
-    def update(self, key, value, user=True):
+    def update(self, key, value, user=True, create=False):
         "Update a setting. Returns value"
         assert self._current_ns, "No namespace has been set"
-        if key not in self._cfg[self._current_ns]:
-            raise exceptions.CoreError(
-                "Config.update",
-                "key '{}' doesn't exist in namespace '{}'".format(
-                    key,
-                    self._current_ns))
-        
-        cfg = self._cfg[self._current_ns].maps[self._get_user_config_idx() if user else 0]
-        cfg[key] = value
+        if not create:
+            if key not in self._cfg[self._current_ns]:
+                raise exceptions.CoreError(
+                    "Config.update",
+                    "key '{}' doesn't exist in namespace '{}'".format(
+                        key,
+                        self._current_ns))
+        if user:
+            user_cfg = self._files_map.get(self._user_file)
+            if user_cfg is not None:
+                u_cfg = user_cfg.setdefault(self._current_ns, {})
+                u_cfg[key] = value
+                if u_cfg not in self._cfg[self._current_ns].maps:
+                    self._cfg[self._current_ns].maps.insert(self._get_user_config_idx(), u_cfg)
+        else:
+            self._cfg[self._current_ns][key] = value
         return value
 
     @contextmanager
@@ -187,7 +206,7 @@ class Config:
             yield
             return
         if ns is not None:
-            ns = self._get_namespace(ns)
+            ns = self.format_namespace(ns)
             with self.namespace(ns):
                 tmp = self._current_ns not in self._cfg
                 self._cfg[self._current_ns] = self._cfg[self._current_ns].new_child(cfg)
@@ -198,7 +217,7 @@ class Config:
         else:
             tmp_ns = []
             for ns in cfg:
-                curr_ns = self._get_namespace(ns)
+                curr_ns = self.format_namespace(ns)
                 if curr_ns not in self._cfg:
                     tmp_ns.append(curr_ns)
                 with self.namespace(curr_ns):
@@ -215,7 +234,7 @@ class Config:
     @contextmanager
     def namespace(self, ns):
         assert isinstance(ns, str), "Namespace must be str"
-        ns = self._get_namespace(ns)
+        ns = self.format_namespace(ns)
         self._cfg.setdefault(ns, ChainMap())
         self._prev_ns = self._current_ns
         self._current_ns = ns
@@ -277,7 +296,7 @@ class Config:
             sections.append([con, s])
         return sections
 
-config = Config(constants.config_path)
+config = Config(user_filepath=constants.config_path)
 
 core_ns = 'core'
 

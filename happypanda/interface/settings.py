@@ -36,7 +36,7 @@ def _get_cfg(keyname, can_raise=True):
     return ns, key
 
 
-def set_config(cfg: dict = {}):
+def set_config(cfg: dict):
     """
     Set/update configuration
 
@@ -46,16 +46,17 @@ def set_config(cfg: dict = {}):
     Returns:
         Status
     """
-
+    client_cfg = utils.get_context()['config']
     for set_key in cfg:
         ns, key = _get_cfg(set_key, False)
+        default_ns = ns.lower() in config.ConfigNode.default_namespaces
+        if default_ns:
+            if config.ConfigNode.get_isolation_level(ns, key) == config.ConfigIsolation.client:
+                client_cfg.setdefault(config.config.format_namespace(ns), {})[key.lower()] = cfg[set_key]
+                continue
 
-        #if self.isolation == ConfigIsolation.client:
-        #    with self._cfg.tmp_config(self.namespace, self._get_ctx_config().get(self._cfg._get_namespace(self.namespace))):
-        #        self._cfg.update(self.name, new_value)
-        #else:
-        #    with self._cfg.namespace(self.namespace):
-        #        self._cfg.update(self.name, new_value)
+        with config.config.namespace(ns):
+            config.config.update(key, cfg[set_key], create=not default_ns)
 
     return message.Message("updated")
 
@@ -77,7 +78,7 @@ def get_config(cfg: dict = {}):
 
     if cfg:
         for set_key in cfg:
-            ns, key = _get_cfg(set_key)
+            ns, key = _get_cfg(set_key, cfg[set_key] is None)
 
             with config.config.tmp_config(ns, utils.get_context()['config']):
                 values[set_key] = config.config.get(ns, key, cfg[set_key])
@@ -90,3 +91,13 @@ def get_config(cfg: dict = {}):
                 elif ns == utils.get_context()['name'].lower():
                     values["this"] = s[ns]
     return message.Identity('config', values)
+
+def save_config():
+    """
+    Save config to disk
+
+    Returns:
+        Status
+    """
+    config.config.save()
+    return message.Message("saved")
