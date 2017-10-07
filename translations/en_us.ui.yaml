@@ -15,7 +15,20 @@ mi-library: Library
 mi-inbox: Inbox
 mi-downloads: Downloads
 mi-preferences: Preferences
+mi-pref-general: General
+mi-pref-logins: Logins
+mi-pref-metadata: Metadata
+mi-pref-download: Download
+mi-pref-monitoring: Monitoring
+mi-pref-ignore: Ignore
+mi-pref-client: Client
+mi-pref-server: Server
 mi-about: About
+mi-about-plugins: Plugins
+mi-about-stats: Statistics
+mi-about-help: Help
+mi-about-bug: Report bug
+mi-about-info: Info
 
 # API Page
 h-server-comm: Server Communication

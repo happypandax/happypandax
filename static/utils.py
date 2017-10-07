@@ -50,6 +50,8 @@ def html_escape(text):
     """Produce entities within text."""
     return "".join(html_escape_table.get(c, c) for c in text)
 
+def defined(v):
+    return v != js_undefined
 
 def get_locale():
     return window.navigator.userLanguage or window.navigator.language
@@ -97,3 +99,4 @@ __pragma__("notconv")
 __pragma__("nokwargs")
 
 moment.locale(get_locale())
+

@@ -5,13 +5,166 @@ from react_utils import (h,e,
                         ReactDOM,
                         createReactClass,
                         NavLink)
-
+from client import client
+from state import state
 from ui import ui
 from i18n import tr
+from utils import defined
+
+def pref_server(props):
+    cfg = props.cfg
+    u_cfg = props.u_cfg
+    items = []
+    if defined(cfg.server):
+        if defined(cfg.server.server_name):
+            items.append(e(ui.Form.Group,
+                           e(ui.Form.Input,
+                            width=10,
+                            label=tr(props.tab, "", "Server Name"),
+                            placeholder=tr(props.tab, "", "Mom's basement"),
+                            defaultValue=cfg.server.server_name,
+                            onChange=lambda e: props.upd("server.server_name", e.target.value)
+                           ))
+                         )
+        items.append(e(ui.Message, tr(props.tab, "",
+                    "Changes below this message requires a server restart."), info=True))
+
+        if defined(cfg.server.host) and defined(cfg.server.port):
+            items.append(e(ui.Form.Group,
+                           e(ui.Form.Input,
+                             width=10,
+                            label=tr(props.tab, "", "Host"),
+                            placeholder="localhost",
+                            defaultValue=cfg.server.host,
+                            onChange=lambda e: props.upd("server.host", e.target.value)
+                           ),
+                           e(ui.Form.Input,
+                             width=4,
+                            label=tr(props.tab, "", "Port"),
+                            placeholder="7007",
+                            defaultValue=cfg.server.port,
+                            onChange=lambda e: props.upd("server.port", int(e.target.value))
+                           ),
+                           )
+                         )
+
+    return e(ui.Segment,
+            e(ui.Form,
+             *items
+             ),
+            basic=True,
+            )
+
+def pref_client(props):
+    cfg = props.cfg
+    u_cfg = props.u_cfg
+    items = []
+    if defined(cfg.server):
+        items.append(e(ui.Message, tr(props.tab, "",
+                    "Changes below this message requires a server restart."), info=True))
+
+        if defined(cfg.server.host_web) and defined(cfg.server.port_web):
+            items.append(e(ui.Form.Group,
+                           e(ui.Form.Input,
+                             width=10,
+                            label=tr(props.tab, "", "Host"),
+                            placeholder="",
+                            defaultValue=cfg.server.host_web,
+                            onChange=lambda e: props.upd("server.host_web", e.target.value)
+                           ),
+                           e(ui.Form.Input,
+                             width=4,
+                            label=tr(props.tab, "", "Port"),
+                            placeholder="7007",
+                            defaultValue=cfg.server.port_web,
+                            onChange=lambda e: props.upd("server.port_web", int(e.target.value))
+                           ),
+                           )
+                         )
+
+    return e(ui.Segment,
+            e(ui.Form,
+             *items
+             ),
+            basic=True,
+            )
+
+def preftab_get_config(data=None, error=None):
+    if data is not None and not error:
+        this.setState({"config":data})
+    elif error:
+        state.app.notif("Failed to retrieve configuration", level="warning")
+    else:
+        client.call_func("get_config", this.get_config)
+
+__pragma__("kwargs")
+def preftab_set_config(data=None, error=None, cfg={}):
+    if data is not None and not error:
+        pass
+    elif error:
+        state.app.notif("Failed to update setting", level="warning")
+    else:
+        client.call_func("set_config", preftab_set_config, cfg=cfg)
+__pragma__("nokwargs")
+
+def preftab_update_config(key, value):
+    this.state.u_config[key] = value
+
+def preftab_render():
+    t_refresh = this.trigger_refresh
+    upd_config = this.update_config
+    set_config = this.set_config
+    config = this.state.config
+    u_cfg = this.state.u_config
+    tab = this
+    el = lambda x: e(x, u_cfg=u_cfg, tab=tab, cfg=config, refresh=t_refresh, upd=upd_config, set=set_config)
+
+    return e(ui.Tab,
+            panes=[
+                {'menuItem': tr(this, "ui.mi-pref-general", "General"),},
+                {'menuItem': tr(this, "ui.mi-pref-logins", "Logins"),},
+                {'menuItem': tr(this, "ui.mi-pref-metadata", "Metadata"),},
+                {'menuItem': tr(this, "ui.mi-pref-download", "Download"),},
+                {'menuItem': tr(this, "ui.mi-pref-monitoring", "Monitoring"),},
+                {'menuItem': tr(this, "ui.mi-pref-ignore", "Ignore"),},
+                {'menuItem': tr(this, "ui.mi-pref-client", "Client"),
+                    'render': lambda: el(pref_client)},
+                {'menuItem': tr(this, "ui.mi-pref-server", "Server"),
+                    'render': lambda: el(pref_server)},
+                ],
+            menu=e(ui.Menu, secondary=True, pointing=True))
+
+
+PrefTab = createReactClass({
+    'displayName': 'PrefTab',
+
+    'getInitialState': lambda: {'config': {}, 'refresh':False, 'u_config':{}},
+
+    'get_config': preftab_get_config,
+
+    'set_config': lambda k, v: preftab_set_config(cfg={k:v}),
+
+    'update_config': preftab_update_config,
+
+    'trigger_refresh': lambda: this.setState({'refresh':True}),
+
+    'componentDidMount': lambda: this.get_config(),
+
+    'componentWillUnmount': lambda: all((preftab_set_config(cfg=this.state.u_config),
+                                         client.call_func("save_config"),
+                                         location.reload(False) if this.state.refresh else None)),
+
+    'render': preftab_render
+})
+
 
 class MenuItem:
     __pragma__("kwargs")
-    def __init__(self, name, t_id=None, icon="", position="", header=False, handler=None, url=None, modal=None):
+    def __init__(self, name, t_id=None,
+                 icon="", position="",
+                 header=False, handler=None,
+                 url=None, modal=None,
+                 on_modal_open=None, on_modal_close=None):
         self.name = name
         self.icon = icon
         self.position = position
@@ -21,6 +174,8 @@ class MenuItem:
         self.url = url
         self.t_id = t_id
         self.modal = modal
+        self.on_modal_open = on_modal_open
+        self.on_modal_close = on_modal_close
     __pragma__("nokwargs")
 
     __pragma__("tconv")
@@ -46,32 +201,36 @@ def sidebar_nav_render():
     items.append(MenuItem("Favorites", "ui.mi-favorites", icon="heart", url="/favorite"))
     items.append(MenuItem("Library", "ui.mi-library", icon="grid layout", url="/library"))
     items.append(MenuItem("Inbox", "ui.mi-inbox", icon="inbox", url="/inbox"))
-    items.append(MenuItem("Management", "ui.mi-management", icon="inbox", url="/inbox"))
+    items.append(MenuItem("Management", "ui.mi-management", icon="cubes", url="/management"))
     #Note: Artists, Tags, Etc. Able to favorite artists and tags
     items.append(MenuItem("Downloads", "ui.mi-downloads", icon="tasks", url="/downloads"))
     pref_item = MenuItem("Preferences", "ui.mi-preferences",
-                         modal=[e(ui.Modal.Header, tr(this, "ui.mi-preferences", "Preferences"))],
+                         modal=[
+                             e(ui.Modal.Content,
+                                e(ui.Header, icon="settings", content=tr(this, "ui.mi-preferences", "Preferences")),
+                                e(PrefTab),
+                                ),
+                             ],
                          icon="settings", position="right")
     items.append(pref_item)
-    pref_item.children.append(MenuItem("General"))
-    pref_item.children.append(MenuItem("Logins"))
-    pref_item.children.append(MenuItem("Metadata"))
-    pref_item.children.append(MenuItem("Download"))
-    pref_item.children.append(MenuItem("Monitoring"))
-    pref_item.children.append(MenuItem("Ignoring"))
-    pref_item.children.append(MenuItem("Client"))
-    pref_item.children.append(MenuItem("Server"))
 
     about_item = MenuItem("About", "ui.mi-about",
-                        modal=[e(ui.Modal.Header, tr(this, "ui.mi-about", "About"))],
+                        modal=[
+                             e(ui.Modal.Content,
+                                e(ui.Header, icon="info", content=tr(this, "ui.mi-about", "About")),
+                                e(ui.Tab,
+                                panes=[
+                                    {'menuItem': tr(this, "ui.mi-about-info", "Info"),},
+                                    {'menuItem': tr(this, "ui.mi-about-plugins", "Plugins"),},
+                                    {'menuItem': tr(this, "ui.mi-about-stats", "Statistics"),},
+                                    {'menuItem': tr(this, "ui.mi-about-bug", "Report bug"),},
+                                    ],
+                                menu=e(ui.Menu, secondary=True, pointing=True)))
+                             ],
                         icon="info", position="right")
     items.append(about_item)
-    about_item.children.append(MenuItem("Plugins"))
-    about_item.children.append(MenuItem("Statistics"))
-    about_item.children.append(MenuItem("Help"))
-    about_item.children.append(MenuItem("Check for updates"))
-    about_item.children.append(MenuItem("Report bug"))
-    about_item.children.append(MenuItem("Visit homepage"))
+    #about_item.children.append(MenuItem("Check for updates"))
+    #about_item.children.append(MenuItem("Visit homepage"))
 
     elements = []
     elements_left = []
@@ -106,6 +265,10 @@ def sidebar_nav_render():
         if x.modal:
             menu_el = e(ui.Modal, *x.modal,
                         trigger=menu_el,
+                        dimmer="blurring",
+                        closeIcon=True,
+                        onClose=x.on_modal_close,
+                        onOpen=x.on_modal_open,
                         )
 
         container.append(menu_el)

@@ -181,7 +181,7 @@ class Client(Base):
 
     __pragma__('kwargs')
 
-    def call_func(self, func_name, callback, ctx=None, **kwargs):
+    def call_func(self, func_name, callback=None, ctx=None, **kwargs):
         "Call function on server. Calls callback with function data and error"
         f_dict = {
             'fname': func_name

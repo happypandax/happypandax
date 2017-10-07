@@ -557,15 +557,22 @@ def SortDropdown(props):
         ]
     return e(ui.Dropdown, placeholder="Sort by", selection=True, item=True, options=item_options, defaultValue=props.value, onChange=props.on_change)
 
+def FilterDropdown(props):
+    item_options = [
+        ]
+    return e(ui.Dropdown, placeholder="Filter", selection=True, item=True, options=item_options, defaultValue=props.value, onChange=props.on_change)
+
+
 __pragma__("kwargs")
 def item_view_menu(on_item_change=None, default_item=None, on_search=None):
     return [e(ui.Menu.Item, e(withRouter(ItemDropdown), on_change=on_item_change, value=default_item, query=True), fitted=True),
-            e(ui.Menu.Item, e(ui.Icon, js_name="sort"), e(SortDropdown, on_change=None, value=None), fitted=True),
             e(ui.Menu.Menu,
                 e(ui.Menu.Item,
                     e(withRouter(Search), size="small", fluid=True, className="fullwidth", on_search=on_search, query=True), className="fullwidth",),
                 position="left",
                 className="fullwidth"),
+            e(ui.Menu.Item, e(ui.Icon, js_name="sort"), e(SortDropdown, on_change=None, value=None), fitted=True),
+            e(ui.Menu.Item, e(ui.Icon, js_name="filter"), e(FilterDropdown, on_change=None, value=None), fitted=True),
             e(ui.Popup,
                 e(ui.Grid, centered=True),
                 trigger=e(ui.Menu.Item, e(ui.Icon, js_name="options"), "View Options",),
