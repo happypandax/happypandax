@@ -1,2 +1,7 @@
 # This id is required
 locale: English (United States)
+
+# Database
+db-status-ongoing: Ongoing
+db-status-completed: Completed
+db_status-unknown: Unknown

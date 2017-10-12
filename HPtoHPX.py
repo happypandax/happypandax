@@ -849,7 +849,7 @@ def main():
                     else:
                         dst_collections[col.name] = col
 
-                if gallery_ns:
+                if gallery_ns is not None:
                     gallery.grouping = gallery_ns
                 else:
                     gallery_ns = db.Grouping()
@@ -857,9 +857,9 @@ def main():
                     gallery_ns = dst_grouping.get(gallery_ns.name, gallery_ns)
                     dst_grouping[gallery_ns.name] = gallery_ns
                     gallery_ns.galleries.append(gallery)
-                    if g.status:
+                    if g.status and g.status.lower() != "unknown":
                         gstatus = db.Status()
-                        gstatus.name
+                        gstatus.name = g.status
                         gstatus = dst_status.get(gstatus.name, gstatus)
                         gallery_ns.status = gstatus
                         dst_status[gstatus.name] = gstatus
@@ -883,14 +883,14 @@ def main():
                 gallery.titles.append(title)
 
                 if g.artist:
-                    artist = db.Artist()
+                    artist = None
                     artist_name = db.AliasName()
-                    artist_name.name = g.artist
+                    artist_name.name = g.artist.strip()
                     artist_name.language = db_lang
-                    d_artist = dst_artists.get(artist_name.name)
-                    if not d_artist:
-                        d_artist = artist
-                        d_artist.names.append(artist_name)
+                    artist = dst_artists.get(artist_name.name)
+                    if not artist:
+                        artist = db.Artist()
+                        artist.names.append(artist_name)
                     gallery.artists.append(artist)
                     dst_artists[artist_name.name] = artist
                 gallery.info = g.info

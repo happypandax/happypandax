@@ -18,6 +18,10 @@ def get_item(data=None, error=None):
                                  item_type=ItemType.Grouping,
                                  related_type=this.state.item_type,
                                  item_id=data.grouping_id)
+            client.call_func("get_related_items", this.get_status,
+                                 item_type=ItemType.Grouping,
+                                 related_type=ItemType.Status,
+                                 item_id=data.grouping_id)
         if data.language_id:
             client.call_func("get_item", this.get_lang,
                                  item_type=ItemType.Language,
@@ -38,9 +42,6 @@ def get_item(data=None, error=None):
 def get_grouping(data=None, error=None):
     if data is not None and not error:
         this.setState({"group_data":data, "loading_group":False})
-        if data.status_id:
-            client.call_func("get_item", this.get_status, item_type=ItemType.Status, item_id=data.status_id)
-
     elif error:
         state.app.notif("Failed to fetch grouping ({})".format(this.state.id), level="error")
 
@@ -56,11 +57,14 @@ def get_lang(data=None, error=None):
     elif error:
         state.app.notif("Failed to fetch language ({})".format(this.state.id), level="error")
 
+__pragma__("tconv")
 def get_status(data=None, error=None):
     if data is not None and not error:
-        this.setState({"status_data":data})
+        if data:
+            this.setState({"status_data":data[0]})
     elif error:
         state.app.notif("Failed to fetch status ({})".format(this.state.id), level="error")
+__pragma__("notconv")
 
 def gallerypage_render():
 
@@ -126,7 +130,7 @@ def gallerypage_render():
                   e(ui.Table.Cell, this.state.lang_data.js_name)))
     rows.append(e(ui.Table.Row, 
                   e(ui.Table.Cell, e(ui.Header, "Status:", as_="h5"), collapsing=True),
-                  e(ui.Table.Cell, e(ui.Label, status, color={"completed":"green", "ongoing":"orange"}.get(status.lower(), "grey")))))
+                  e(ui.Table.Cell, e(ui.Label, tr(this, "general.db-status-{}".format(status.lower()), status), color={"completed":"green", "ongoing":"orange", "unknown":"grey"}.get(status.lower(), "blue")))))
     rows.append(e(ui.Table.Row, 
                   e(ui.Table.Cell, e(ui.Header, "Times read:", as_="h5"), collapsing=True),
                   e(ui.Table.Cell, e(ui.Label, read_count, circular=True))))

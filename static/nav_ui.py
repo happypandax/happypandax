@@ -265,7 +265,7 @@ def sidebar_nav_render():
         if x.modal:
             menu_el = e(ui.Modal, *x.modal,
                         trigger=menu_el,
-                        dimmer="blurring",
+                        dimmer="inverted",
                         closeIcon=True,
                         onClose=x.on_modal_close,
                         onOpen=x.on_modal_open,
