@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>happypanda.core.command &#8212; Happypanda X 0.0.1#100 documentation</title>
+    <title>happypanda.core.command &#8212; Happypanda X 0.0.1#102 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.0.1#100',
+        VERSION:     '0.0.1#102',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -52,7 +52,7 @@
         </button>
         <a class="navbar-brand" href="../../../index.html">
           Happypanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.1#100</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.1#102</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -255,9 +255,8 @@
     <span class="k">return</span> <span class="n">wrapper</span>
 
 
-<span class="k">class</span> <span class="nc">CoreCommand</span><span class="p">:</span>
+<span class="k">class</span> <span class="nc">CoreCommand</span><span class="p">():</span>
     <span class="s2">&quot;Base command&quot;</span>
-    <span class="n">__metaclass__</span> <span class="o">=</span> <span class="n">ABCMeta</span>
 
     <span class="n">_events</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="n">_entries</span> <span class="o">=</span> <span class="p">{}</span>
@@ -274,22 +273,10 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_started_time</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_finished_time</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_priority</span> <span class="o">=</span> <span class="n">priority</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_main</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">main</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">main</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_main_wrap</span>
 
     <span class="k">def</span> <span class="nf">run_native</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="c1"># TODO: avoid deadlocks by only running if not in native thread already</span>
         <span class="k">return</span> <span class="n">CommandFuture</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_native_pool</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">_native_runner</span><span class="p">(</span><span class="n">f</span><span class="p">),</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
-
-    <span class="k">def</span> <span class="nf">_main</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">pass</span>
-
-    <span class="k">def</span> <span class="nf">_main_wrap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="n">utils</span><span class="o">.</span><span class="n">switch</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_priority</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_started_time</span> <span class="o">=</span> <span class="n">arrow</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
-        <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_main</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_finished_time</span> <span class="o">=</span> <span class="n">arrow</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">r</span>
 
     <span class="k">def</span> <span class="nf">_log_stats</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="n">create_delta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_finished_time</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_created_time</span>
@@ -301,10 +288,6 @@
               <span class="s2">&quot;</span><span class="se">\t\t</span><span class="s2">Running delta: </span><span class="si">{}</span><span class="s2"> (time between start and finish)</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">run_delta</span><span class="p">),</span>
               <span class="s2">&quot;</span><span class="se">\t\t</span><span class="s2">Log delta: </span><span class="si">{}</span><span class="s2"> (time between finish and this log)</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">log_delta</span><span class="p">),</span>
               <span class="p">)</span>
-
-    <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="k">pass</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">_get_commands</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
@@ -319,10 +302,12 @@
                 <span class="bp">cls</span><span class="o">.</span><span class="n">_entries</span><span class="p">[</span><span class="n">a</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">a</span>
 
 
-<span class="k">class</span> <span class="nc">Command</span><span class="p">(</span><span class="n">CoreCommand</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">Command</span><span class="p">(</span><span class="n">CoreCommand</span><span class="p">,</span> <span class="n">metaclass</span><span class="o">=</span><span class="n">ABCMeta</span><span class="p">):</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="n">constants</span><span class="o">.</span><span class="n">Priority</span><span class="o">.</span><span class="n">Normal</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">priority</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_main</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">main</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">main</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_main_wrap</span>
 
     <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -331,6 +316,19 @@
         <span class="n">log</span><span class="o">.</span><span class="n">d</span><span class="p">(</span><span class="s2">&quot;Running command:&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">main</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
+    <span class="k">def</span> <span class="nf">_main</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">_main_wrap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">utils</span><span class="o">.</span><span class="n">switch</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_priority</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_started_time</span> <span class="o">=</span> <span class="n">arrow</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_main</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_finished_time</span> <span class="o">=</span> <span class="n">arrow</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">r</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">pass</span>
 
 <span class="k">class</span> <span class="nc">UndoCommand</span><span class="p">(</span><span class="n">Command</span><span class="p">):</span>
     <span class="s2">&quot;Command capable of undoing itself&quot;</span>

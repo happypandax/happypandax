@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Command-Line Arguments &#8212; Happypanda X 0.0.1#100 documentation</title>
+    <title>Command-Line Arguments &#8212; Happypanda X 0.0.1#102 documentation</title>
     
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.0.1#100',
+        VERSION:     '0.0.1#102',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -54,7 +54,7 @@
         </button>
         <a class="navbar-brand" href="index.html">
           Happypanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.1#100</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.1#102</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -174,9 +174,8 @@
 <p>A manga/doujinshi manager with tagging support (<a class="reference external" href="https://github.com/happypandax/server">https://github.com/happypandax/server</a>)</p>
 <div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">usage: Command-Line Arguments [-h] [-p PORT] [--torrent-port TORRENT_PORT]</span>
 <span class="go">                                  [--web-port WEB_PORT] [--host HOST]</span>
-<span class="go">                                  [--web-host WEB_HOST] [--expose]</span>
-<span class="go">                                  [--generate-config] [-d] [-i] [-v] [--safe] [-x]</span>
-<span class="go">                                  [--only-web]</span>
+<span class="go">                                  [--web-host WEB_HOST] [--gen-config] [-d] [-i]</span>
+<span class="go">                                  [-v] [--safe] [-x] [--only-web]</span>
 </pre></div>
 </div>
 <dl class="option">
@@ -188,43 +187,37 @@
 <dl class="option">
 <dt id="cmdoption-command-line-arguments-p">
 <code class="descname">-p</code><code class="descclassname"> &lt;port&gt;</code><code class="descclassname">, </code><code class="descname">--port</code><code class="descclassname"> &lt;port&gt;</code><a class="headerlink" href="#cmdoption-command-line-arguments-p" title="Permalink to this definition">¶</a></dt>
-<dd><p>Specify which port to start the server on</p>
+<dd><p>Specify which port to start the server on (default: 7007)</p>
 </dd></dl>
 
 <dl class="option">
 <dt id="cmdoption-command-line-arguments-torrent-port">
 <code class="descname">--torrent-port</code><code class="descclassname"> &lt;torrent_port&gt;</code><a class="headerlink" href="#cmdoption-command-line-arguments-torrent-port" title="Permalink to this definition">¶</a></dt>
-<dd><p>Specify which port to start the torrent client on</p>
+<dd><p>Specify which port to start the torrent client on (default: 7006)</p>
 </dd></dl>
 
 <dl class="option">
 <dt id="cmdoption-command-line-arguments-web-port">
 <code class="descname">--web-port</code><code class="descclassname"> &lt;web_port&gt;</code><a class="headerlink" href="#cmdoption-command-line-arguments-web-port" title="Permalink to this definition">¶</a></dt>
-<dd><p>Specify which port to start the webserver on</p>
+<dd><p>Specify which port to start the webserver on (default: 7008)</p>
 </dd></dl>
 
 <dl class="option">
 <dt id="cmdoption-command-line-arguments-host">
 <code class="descname">--host</code><code class="descclassname"> &lt;host&gt;</code><a class="headerlink" href="#cmdoption-command-line-arguments-host" title="Permalink to this definition">¶</a></dt>
-<dd><p>Specify which address the server should bind to</p>
+<dd><p>Specify which address the server should bind to (default: localhost)</p>
 </dd></dl>
 
 <dl class="option">
 <dt id="cmdoption-command-line-arguments-web-host">
 <code class="descname">--web-host</code><code class="descclassname"> &lt;web_host&gt;</code><a class="headerlink" href="#cmdoption-command-line-arguments-web-host" title="Permalink to this definition">¶</a></dt>
-<dd><p>Specify which address the webserver should bind to</p>
+<dd><p>Specify which address the webserver should bind to (defualt: )</p>
 </dd></dl>
 
 <dl class="option">
-<dt id="cmdoption-command-line-arguments-expose">
-<code class="descname">--expose</code><code class="descclassname"></code><a class="headerlink" href="#cmdoption-command-line-arguments-expose" title="Permalink to this definition">¶</a></dt>
-<dd><p>Attempt to expose the server through portforwading</p>
-</dd></dl>
-
-<dl class="option">
-<dt id="cmdoption-command-line-arguments-generate-config">
-<code class="descname">--generate-config</code><code class="descclassname"></code><a class="headerlink" href="#cmdoption-command-line-arguments-generate-config" title="Permalink to this definition">¶</a></dt>
-<dd><p>Generate a skeleton config file and quit</p>
+<dt id="cmdoption-command-line-arguments-gen-config">
+<code class="descname">--gen-config</code><code class="descclassname"></code><a class="headerlink" href="#cmdoption-command-line-arguments-gen-config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a skeleton example config file and quit</p>
 </dd></dl>
 
 <dl class="option">

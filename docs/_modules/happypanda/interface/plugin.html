@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>happypanda.interface.plugin &#8212; Happypanda X 0.0.1#100 documentation</title>
+    <title>happypanda.interface.plugin &#8212; Happypanda X 0.0.1#102 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.0.1#100',
+        VERSION:     '0.0.1#102',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -52,7 +52,7 @@
         </button>
         <a class="navbar-brand" href="../../../index.html">
           Happypanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.1#100</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.1#102</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -157,7 +157,13 @@
         <div class="col-md-9 content">
             
   <h1>Source code for happypanda.interface.plugin</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">happypanda.core</span> <span class="k">import</span> <span class="n">message</span>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Plugin</span>
+<span class="sd">~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">happypanda.core</span> <span class="k">import</span> <span class="n">message</span>
 
 
 <div class="viewcode-block" id="get_plugin"><a class="viewcode-back" href="../../../api.html#happypanda.interface.plugin.get_plugin">[docs]</a><span class="k">def</span> <span class="nf">get_plugin</span><span class="p">(</span><span class="n">plugin_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
@@ -175,7 +181,7 @@
     <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Message</span><span class="p">(</span><span class="s2">&quot;works&quot;</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="install_plugin"><a class="viewcode-back" href="../../../api.html#happypanda.interface.plugin.install_plugin">[docs]</a><span class="k">def</span> <span class="nf">install_plugin</span><span class="p">(</span><span class="n">plugin_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="install_plugin"><a class="viewcode-back" href="../../../api.html#happypanda.interface.plugin.install_plugin">[docs]</a><span class="k">def</span> <span class="nf">install_plugin</span><span class="p">(</span><span class="n">plugin_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Install a plugin</span>
 
@@ -188,7 +194,7 @@
     <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Message</span><span class="p">(</span><span class="s2">&quot;works&quot;</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="uninstall_plugin"><a class="viewcode-back" href="../../../api.html#happypanda.interface.plugin.uninstall_plugin">[docs]</a><span class="k">def</span> <span class="nf">uninstall_plugin</span><span class="p">(</span><span class="n">plugin_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">ctx</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="uninstall_plugin"><a class="viewcode-back" href="../../../api.html#happypanda.interface.plugin.uninstall_plugin">[docs]</a><span class="k">def</span> <span class="nf">uninstall_plugin</span><span class="p">(</span><span class="n">plugin_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uninstall a plugin</span>
 
@@ -201,7 +207,7 @@
     <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Message</span><span class="p">(</span><span class="s2">&quot;works&quot;</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="list_plugins"><a class="viewcode-back" href="../../../api.html#happypanda.interface.plugin.list_plugins">[docs]</a><span class="k">def</span> <span class="nf">list_plugins</span><span class="p">(</span><span class="n">ctx</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="list_plugins"><a class="viewcode-back" href="../../../api.html#happypanda.interface.plugin.list_plugins">[docs]</a><span class="k">def</span> <span class="nf">list_plugins</span><span class="p">():</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Get a list of available plugin information</span>
 

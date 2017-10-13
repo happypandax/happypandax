@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Settings &#8212; Happypanda X 0.0.1#100 documentation</title>
+    <title>Settings &#8212; Happypanda X 0.0.1#102 documentation</title>
     
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.0.1#100',
+        VERSION:     '0.0.1#102',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -54,7 +54,7 @@
         </button>
         <a class="navbar-brand" href="index.html">
           Happypanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.1#100</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.1#102</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -184,7 +184,24 @@
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td colspan="3">common</td>
+</tbody>
+<colgroup>
+<col width="33%" />
+<col width="33%" />
+<col width="33%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-even"><th class="head" colspan="3">core</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-odd"><td>debug</td>
+<td>False</td>
+<td>Run in debug mode</td>
+</tr>
+<tr class="row-even"><td>concurrent_image_tasks</td>
+<td>10</td>
+<td>Amount of image service tasks allowed to run at the same time (higher count does not necessarily mean faster generation)</td>
 </tr>
 </tbody>
 <colgroup>
@@ -193,24 +210,16 @@
 <col width="33%" />
 </colgroup>
 <thead valign="bottom">
-<tr class="row-odd"><th class="head" colspan="3">Core</th>
+<tr class="row-odd"><th class="head" colspan="3">server</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td>debug</td>
-<td>False</td>
-<td>Run in debug mode</td>
-</tr>
-<tr class="row-odd"><td>concurrent_image_tasks</td>
-<td>10</td>
-<td>Amount of image service tasks allowed to run at the same time</td>
-</tr>
 <tr class="row-even"><td>secret_key</td>
 <td></td>
 <td>A secret key to be used for security. Keep it secret!</td>
 </tr>
 <tr class="row-odd"><td>server_name</td>
-<td>happypanda_r6ro-NI</td>
+<td>happypanda_8ZaeaFk</td>
 <td>Specifiy name of the server</td>
 </tr>
 <tr class="row-even"><td>port</td>
@@ -226,7 +235,7 @@
 <td>Specify which port to start the torrent client on</td>
 </tr>
 <tr class="row-odd"><td>port_range</td>
-<td>7009-7018</td>
+<td>{&#8216;from&#8217;: 7009, &#8216;to&#8217;: 7018}</td>
 <td>Specify a range of ports to attempt</td>
 </tr>
 <tr class="row-even"><td>host</td>
@@ -268,7 +277,7 @@
 <col width="33%" />
 </colgroup>
 <thead valign="bottom">
-<tr class="row-even"><th class="head" colspan="3">Search</th>
+<tr class="row-even"><th class="head" colspan="3">search</th>
 </tr>
 </thead>
 <tbody valign="top">
@@ -299,7 +308,7 @@
 <col width="33%" />
 </colgroup>
 <thead valign="bottom">
-<tr class="row-even"><th class="head" colspan="3">Client</th>
+<tr class="row-even"><th class="head" colspan="3">client</th>
 </tr>
 </thead>
 <tbody valign="top">

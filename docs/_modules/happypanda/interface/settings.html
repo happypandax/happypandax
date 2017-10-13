@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>happypanda.interface.settings &#8212; Happypanda X 0.0.1#100 documentation</title>
+    <title>happypanda.interface.settings &#8212; Happypanda X 0.0.1#102 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.0.1#100',
+        VERSION:     '0.0.1#102',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -52,7 +52,7 @@
         </button>
         <a class="navbar-brand" href="../../../index.html">
           Happypanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.1#100</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.1#102</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -157,68 +157,118 @@
         <div class="col-md-9 content">
             
   <h1>Source code for happypanda.interface.settings</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">happypanda.common</span> <span class="k">import</span> <span class="n">constants</span><span class="p">,</span> <span class="n">utils</span><span class="p">,</span> <span class="n">exceptions</span>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Configuration</span>
+<span class="sd">~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~</span>
+
+<span class="sd">Most configuration keys can be stored and retrieved by ``namespace.key``</span>
+
+<span class="sd">See :ref:`Settings` for all server defined configuration keys and their default values.</span>
+
+<span class="sd">There exists the special namespace ``this`` to retrieve and store configuration only visible to the</span>
+<span class="sd">client in question. The server will resolve the namespace ``this`` to the :ref:`session &lt;Session&gt;` owner&#39;s name</span>
+<span class="sd">(the client that created the session).</span>
+<span class="sd">These configuration keys will appear in the server&#39;s ``config.yaml`` file upon save.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">happypanda.common</span> <span class="k">import</span> <span class="n">constants</span><span class="p">,</span> <span class="n">utils</span><span class="p">,</span> <span class="n">exceptions</span><span class="p">,</span> <span class="n">config</span>
 <span class="kn">from</span> <span class="nn">happypanda.core</span> <span class="k">import</span> <span class="n">message</span>
 
 
-<span class="k">def</span> <span class="nf">_get_cfg</span><span class="p">(</span><span class="n">keyname</span><span class="p">,</span> <span class="n">ctx</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">_get_cfg</span><span class="p">(</span><span class="n">keyname</span><span class="p">,</span> <span class="n">can_raise</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
 
     <span class="k">try</span><span class="p">:</span>
         <span class="n">ns</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">keyname</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">x</span><span class="p">]</span>
     <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">APIError</span><span class="p">(</span>
             <span class="n">utils</span><span class="o">.</span><span class="n">this_function</span><span class="p">(),</span>
-            <span class="s2">&quot;Invalid setting keyname: &#39;</span><span class="si">{}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">keyname</span><span class="p">))</span>
+            <span class="s2">&quot;Invalid setting &#39;</span><span class="si">{}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">keyname</span><span class="p">))</span>
 
-    <span class="n">cfg</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">config</span>
-
+    <span class="n">cfg</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">config</span>
+    <span class="n">ctx</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">get_context</span><span class="p">()</span>
+    <span class="n">client_space</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="k">if</span> <span class="n">ns</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;this&#39;</span><span class="p">:</span>
-        <span class="k">pass</span>
+        <span class="n">client_space</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">ns</span> <span class="o">=</span> <span class="n">ctx</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">ns</span><span class="o">.</span><span class="n">lower</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">ConfigNode</span><span class="o">.</span><span class="n">default_namespaces</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">APIError</span><span class="p">(</span>
+                <span class="n">utils</span><span class="o">.</span><span class="n">this_function</span><span class="p">(),</span>
+                <span class="s2">&quot;Client name &#39;</span><span class="si">{}</span><span class="s2">&#39; coincides with default namespace &#39;</span><span class="si">{}</span><span class="s2">&#39;. Please use a different client name&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ns</span><span class="p">,</span> <span class="n">ns</span><span class="o">.</span><span class="n">lower</span><span class="p">()))</span>
 
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">cfg</span><span class="o">.</span><span class="n">key_exists</span><span class="p">(</span><span class="n">ns</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">SettingsError</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">this_function</span><span class="p">(),</span> <span class="s2">&quot;Setting doesn&#39;t exist: &#39;</span><span class="si">{}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">keyname</span><span class="p">))</span>
+    <span class="k">with</span> <span class="n">cfg</span><span class="o">.</span><span class="n">tmp_config</span><span class="p">(</span><span class="n">ns</span><span class="p">,</span> <span class="n">ctx</span><span class="p">[</span><span class="s1">&#39;config&#39;</span><span class="p">]):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">cfg</span><span class="o">.</span><span class="n">key_exists</span><span class="p">(</span><span class="n">ns</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">client_space</span> <span class="ow">or</span> <span class="p">(</span><span class="n">client_space</span> <span class="ow">and</span> <span class="n">can_raise</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">SettingsError</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">this_function</span><span class="p">(),</span> <span class="s2">&quot;Setting with key &#39;</span><span class="si">{}</span><span class="s2">&#39; does not exist&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">keyname</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">ns</span><span class="p">,</span> <span class="n">key</span>
 
-    <span class="k">return</span> <span class="n">ns</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">cfg</span>
 
-
-<div class="viewcode-block" id="set_settings"><a class="viewcode-back" href="../../../api.html#happypanda.interface.settings.set_settings">[docs]</a><span class="k">def</span> <span class="nf">set_settings</span><span class="p">(</span><span class="n">settings</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{},</span> <span class="n">ctx</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="set_config"><a class="viewcode-back" href="../../../api.html#happypanda.interface.settings.set_config">[docs]</a><span class="k">def</span> <span class="nf">set_config</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Set settings</span>
+<span class="sd">    Set/update configuration</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        settings: a dict containing ``key.name``:``value``</span>
+<span class="sd">        cfg: a dict containing ``namespace.key``:``value``</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Status</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">client_cfg</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">get_context</span><span class="p">()[</span><span class="s1">&#39;config&#39;</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">set_key</span> <span class="ow">in</span> <span class="n">cfg</span><span class="p">:</span>
+        <span class="n">ns</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">_get_cfg</span><span class="p">(</span><span class="n">set_key</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="n">default_ns</span> <span class="o">=</span> <span class="n">ns</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">ConfigNode</span><span class="o">.</span><span class="n">default_namespaces</span>
+        <span class="k">if</span> <span class="n">default_ns</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">ConfigNode</span><span class="o">.</span><span class="n">get_isolation_level</span><span class="p">(</span><span class="n">ns</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span> <span class="o">==</span> <span class="n">config</span><span class="o">.</span><span class="n">ConfigIsolation</span><span class="o">.</span><span class="n">client</span><span class="p">:</span>
+                <span class="n">client_cfg</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">format_namespace</span><span class="p">(</span><span class="n">ns</span><span class="p">),</span> <span class="p">{})[</span><span class="n">key</span><span class="o">.</span><span class="n">lower</span><span class="p">()]</span> <span class="o">=</span> <span class="n">cfg</span><span class="p">[</span><span class="n">set_key</span><span class="p">]</span>
+                <span class="k">continue</span>
 
-    <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Message</span><span class="p">(</span><span class="s2">&quot;ok&quot;</span><span class="p">)</span></div>
+        <span class="k">with</span> <span class="n">config</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">namespace</span><span class="p">(</span><span class="n">ns</span><span class="p">):</span>
+            <span class="n">config</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">cfg</span><span class="p">[</span><span class="n">set_key</span><span class="p">],</span> <span class="n">create</span><span class="o">=</span><span class="ow">not</span> <span class="n">default_ns</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Message</span><span class="p">(</span><span class="s2">&quot;updated&quot;</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="get_settings"><a class="viewcode-back" href="../../../api.html#happypanda.interface.settings.get_settings">[docs]</a><span class="k">def</span> <span class="nf">get_settings</span><span class="p">(</span><span class="n">settings</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{},</span> <span class="n">ctx</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="get_config"><a class="viewcode-back" href="../../../api.html#happypanda.interface.settings.get_config">[docs]</a><span class="k">def</span> <span class="nf">get_config</span><span class="p">(</span><span class="n">cfg</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Get settings</span>
+<span class="sd">    Get configuration</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        settings: a dict containing ``key.name``:``default value``, send an empty dict to retrieve all settings</span>
+<span class="sd">        cfg: a dict containing ``namespace.key``:``default value`` or an empty dict to retrieve all settings</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        ```</span>
-<span class="sd">        { &#39;key.name&#39;: value }</span>
+<span class="sd">        { &#39;namespace.key&#39;: value }</span>
 <span class="sd">        ```</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">utils</span><span class="o">.</span><span class="n">require_context</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
 
     <span class="n">values</span> <span class="o">=</span> <span class="p">{}</span>
 
-    <span class="k">if</span> <span class="n">settings</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">set_key</span> <span class="ow">in</span> <span class="n">settings</span><span class="p">:</span>
-            <span class="n">ns</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">cfg</span> <span class="o">=</span> <span class="n">_get_cfg</span><span class="p">(</span><span class="n">set_key</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">cfg</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">set_key</span> <span class="ow">in</span> <span class="n">cfg</span><span class="p">:</span>
+            <span class="n">ns</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">_get_cfg</span><span class="p">(</span><span class="n">set_key</span><span class="p">,</span> <span class="n">cfg</span><span class="p">[</span><span class="n">set_key</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span>
 
-            <span class="n">values</span><span class="p">[</span><span class="n">set_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ns</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">settings</span><span class="p">[</span><span class="n">set_key</span><span class="p">])</span>
+            <span class="k">with</span> <span class="n">config</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">tmp_config</span><span class="p">(</span><span class="n">ns</span><span class="p">,</span> <span class="n">utils</span><span class="o">.</span><span class="n">get_context</span><span class="p">()[</span><span class="s1">&#39;config&#39;</span><span class="p">]):</span>
+                <span class="n">values</span><span class="p">[</span><span class="n">set_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ns</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">cfg</span><span class="p">[</span><span class="n">set_key</span><span class="p">])</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
-    <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Identity</span><span class="p">(</span><span class="s1">&#39;settings&#39;</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span></div>
+        <span class="k">with</span> <span class="n">config</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">tmp_config</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">utils</span><span class="o">.</span><span class="n">get_context</span><span class="p">()[</span><span class="s1">&#39;config&#39;</span><span class="p">]):</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_all</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">ns</span> <span class="ow">in</span> <span class="n">s</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">ns</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">ConfigNode</span><span class="o">.</span><span class="n">default_namespaces</span><span class="p">:</span>
+                    <span class="n">values</span><span class="p">[</span><span class="n">ns</span><span class="p">]</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">ns</span><span class="p">]</span>
+                <span class="k">elif</span> <span class="n">ns</span> <span class="o">==</span> <span class="n">utils</span><span class="o">.</span><span class="n">get_context</span><span class="p">()[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+                    <span class="n">values</span><span class="p">[</span><span class="s2">&quot;this&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">ns</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Identity</span><span class="p">(</span><span class="s1">&#39;config&#39;</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="save_config"><a class="viewcode-back" href="../../../api.html#happypanda.interface.settings.save_config">[docs]</a><span class="k">def</span> <span class="nf">save_config</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Save config to disk</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Status</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">config</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Message</span><span class="p">(</span><span class="s2">&quot;saved&quot;</span><span class="p">)</span></div>
 </pre></div>
 
         </div>

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Server API &#8212; Happypanda X 0.0.1#100 documentation</title>
+    <title>Server API &#8212; Happypanda X 0.0.1#102 documentation</title>
     
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.0.1#100',
+        VERSION:     '0.0.1#102',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -54,7 +54,7 @@
         </button>
         <a class="navbar-brand" href="index.html">
           Happypanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.1#100</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.1#102</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -164,14 +164,13 @@
         <div id="sidebar" class="bs-sidenav" role="complementary"><ul>
 <li><a class="reference internal" href="#">Server API</a><ul>
 <li><a class="reference internal" href="#enums">Enums</a></li>
-<li><a class="reference internal" href="#functions">Functions</a><ul>
-<li><a class="reference internal" href="#module-happypanda.interface.meta">Meta</a></li>
-<li><a class="reference internal" href="#module-happypanda.interface.ui">UI</a></li>
-<li><a class="reference internal" href="#module-happypanda.interface.gallery">Gallery</a></li>
-<li><a class="reference internal" href="#module-happypanda.interface.tag">Tags</a></li>
-<li><a class="reference internal" href="#module-happypanda.interface.database">Database</a></li>
-<li><a class="reference internal" href="#module-happypanda.interface.plugin">Plugin</a></li>
-<li><a class="reference internal" href="#module-happypanda.interface.settings">Settings</a></li>
+<li><a class="reference internal" href="#module-happypanda.interface.meta">Functions</a><ul>
+<li><a class="reference internal" href="#ui">UI</a></li>
+<li><a class="reference internal" href="#gallery">Gallery</a></li>
+<li><a class="reference internal" href="#tags">Tags</a></li>
+<li><a class="reference internal" href="#database">Database</a></li>
+<li><a class="reference internal" href="#plugin">Plugin</a></li>
+<li><a class="reference internal" href="#configuration">Configuration</a></li>
 </ul>
 </li>
 </ul>
@@ -182,8 +181,8 @@
       </div>
         <div class="col-md-9 content">
             
-  <div class="section" id="server-api">
-<h1>Server API<a class="headerlink" href="#server-api" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-happypanda.interface.enums">
+<span id="server-api"></span><h1>Server API<a class="headerlink" href="#module-happypanda.interface.enums" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="enums">
 <h2>Enums<a class="headerlink" href="#enums" title="Permalink to this headline">¶</a></h2>
 <p>Enums can be used by their member names and values interchangeably.
@@ -194,7 +193,7 @@ Enum member names are case insensitive:</p>
 </div>
 <p>It is recommended that enum members are used by their <em>values</em> and not names.
 Enum member names may change sometime in the future. It is not likely to happen but no promises.</p>
-<span class="target" id="module-happypanda.interface.enums"></span><dl class="class">
+<dl class="class">
 <dt id="happypanda.interface.enums.ImageSize">
 <em class="property">class </em><code class="descname">ImageSize</code><a class="reference internal" href="_modules/happypanda/interface/enums.html#ImageSize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.enums.ImageSize" title="Permalink to this definition">¶</a></dt>
 <dd><p>An enumeration.</p>
@@ -357,10 +356,8 @@ Enum member names may change sometime in the future. It is not likely to happen 
 </dd></dl>
 
 </div>
-<div class="section" id="functions">
-<h2>Functions<a class="headerlink" href="#functions" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="module-happypanda.interface.meta">
-<span id="meta"></span><h3>Meta<a class="headerlink" href="#module-happypanda.interface.meta" title="Permalink to this headline">¶</a></h3>
+<span id="functions"></span><h2>Functions<a class="headerlink" href="#module-happypanda.interface.meta" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="happypanda.interface.meta.get_command_error">
 <code class="descname">get_command_error</code><span class="sig-paren">(</span><em>command_ids</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/meta.html#get_command_error"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.meta.get_command_error" title="Permalink to this definition">¶</a></dt>
@@ -435,7 +432,7 @@ Enum member names may change sometime in the future. It is not likely to happen 
 
 <dl class="function">
 <dt id="happypanda.interface.meta.get_error">
-<code class="descname">get_error</code><span class="sig-paren">(</span><em>code</em>, <em>id</em>, <em>ctx=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/meta.html#get_error"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.meta.get_error" title="Permalink to this definition">¶</a></dt>
+<code class="descname">get_error</code><span class="sig-paren">(</span><em>code</em>, <em>id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/meta.html#get_error"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.meta.get_error" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get error</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -528,9 +525,8 @@ Enum member names may change sometime in the future. It is not likely to happen 
 </div>
 </dd></dl>
 
-</div>
-<div class="section" id="module-happypanda.interface.ui">
-<span id="ui"></span><h3>UI<a class="headerlink" href="#module-happypanda.interface.ui" title="Permalink to this headline">¶</a></h3>
+<span class="target" id="module-happypanda.interface.ui"></span><div class="section" id="ui">
+<h3>UI<a class="headerlink" href="#ui" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="happypanda.interface.ui.get_view_count">
 <code class="descname">get_view_count</code><span class="sig-paren">(</span><em>item_type=&lt;ItemType.Gallery: 1&gt;</em>, <em>item_id=None</em>, <em>related_type=None</em>, <em>search_query=''</em>, <em>filter_id=None</em>, <em>view_filter=&lt;ViewType.Library: 1&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/ui.html#get_view_count"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.ui.get_view_count" title="Permalink to this definition">¶</a></dt>
@@ -561,7 +557,7 @@ Enum member names may change sometime in the future. It is not likely to happen 
 
 <dl class="function">
 <dt id="happypanda.interface.ui.library_view">
-<code class="descname">library_view</code><span class="sig-paren">(</span><em>item_type=&lt;ItemType.Gallery: 1&gt;</em>, <em>item_id=None</em>, <em>related_type=None</em>, <em>page=0</em>, <em>limit=100</em>, <em>sort_by=''</em>, <em>search_query=''</em>, <em>filter_id=None</em>, <em>view_filter=&lt;ViewType.Library: 1&gt;</em>, <em>ctx=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/ui.html#library_view"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.ui.library_view" title="Permalink to this definition">¶</a></dt>
+<code class="descname">library_view</code><span class="sig-paren">(</span><em>item_type=&lt;ItemType.Gallery: 1&gt;</em>, <em>item_id=None</em>, <em>related_type=None</em>, <em>page=0</em>, <em>limit=100</em>, <em>sort_by=''</em>, <em>search_query=''</em>, <em>filter_id=None</em>, <em>view_filter=&lt;ViewType.Library: 1&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/ui.html#library_view"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.ui.library_view" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fetch items from the database.
 Provides pagination.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -611,11 +607,11 @@ Provides pagination.</p>
 </dd></dl>
 
 </div>
-<div class="section" id="module-happypanda.interface.gallery">
-<span id="gallery"></span><h3>Gallery<a class="headerlink" href="#module-happypanda.interface.gallery" title="Permalink to this headline">¶</a></h3>
+<span class="target" id="module-happypanda.interface.gallery"></span><div class="section" id="gallery">
+<h3>Gallery<a class="headerlink" href="#gallery" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="happypanda.interface.gallery.add_gallery">
-<code class="descname">add_gallery</code><span class="sig-paren">(</span><em>galleries=[]</em>, <em>paths=[]</em>, <em>ctx=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/gallery.html#add_gallery"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.gallery.add_gallery" title="Permalink to this definition">¶</a></dt>
+<code class="descname">add_gallery</code><span class="sig-paren">(</span><em>galleries=[]</em>, <em>paths=[]</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/gallery.html#add_gallery"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.gallery.add_gallery" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add galleries to the database.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -636,7 +632,7 @@ Provides pagination.</p>
 
 <dl class="function">
 <dt id="happypanda.interface.gallery.scan_gallery">
-<code class="descname">scan_gallery</code><span class="sig-paren">(</span><em>paths=[]</em>, <em>add_after=False</em>, <em>ignore_exist=True</em>, <em>ctx=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/gallery.html#scan_gallery"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.gallery.scan_gallery" title="Permalink to this definition">¶</a></dt>
+<code class="descname">scan_gallery</code><span class="sig-paren">(</span><em>paths=[]</em>, <em>add_after=False</em>, <em>ignore_exist=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/gallery.html#scan_gallery"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.gallery.scan_gallery" title="Permalink to this definition">¶</a></dt>
 <dd><p>Scan folders for galleries</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -657,8 +653,8 @@ Provides pagination.</p>
 </dd></dl>
 
 </div>
-<div class="section" id="module-happypanda.interface.tag">
-<span id="tags"></span><h3>Tags<a class="headerlink" href="#module-happypanda.interface.tag" title="Permalink to this headline">¶</a></h3>
+<span class="target" id="module-happypanda.interface.tag"></span><div class="section" id="tags">
+<h3>Tags<a class="headerlink" href="#tags" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="happypanda.interface.tag.get_tags">
 <code class="descname">get_tags</code><span class="sig-paren">(</span><em>item_type=&lt;ItemType.Gallery: 1&gt;</em>, <em>item_id=0</em>, <em>raw=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/tag.html#get_tags"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.tag.get_tags" title="Permalink to this definition">¶</a></dt>
@@ -687,8 +683,8 @@ Provides pagination.</p>
 </dd></dl>
 
 </div>
-<div class="section" id="module-happypanda.interface.database">
-<span id="database"></span><h3>Database<a class="headerlink" href="#module-happypanda.interface.database" title="Permalink to this headline">¶</a></h3>
+<span class="target" id="module-happypanda.interface.database"></span><div class="section" id="database">
+<h3>Database<a class="headerlink" href="#database" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="happypanda.interface.database.get_count">
 <code class="descname">get_count</code><span class="sig-paren">(</span><em>item_type=&lt;ItemType.Gallery: 1&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/database.html#get_count"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.database.get_count" title="Permalink to this definition">¶</a></dt>
@@ -709,7 +705,7 @@ Provides pagination.</p>
 
 <dl class="function">
 <dt id="happypanda.interface.database.get_image">
-<code class="descname">get_image</code><span class="sig-paren">(</span><em>item_type=&lt;ItemType.Gallery: 1&gt;</em>, <em>item_ids=[]</em>, <em>size=&lt;ImageSize.Medium: 3&gt;</em>, <em>url=False</em>, <em>uri=False</em>, <em>ctx=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/database.html#get_image"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.database.get_image" title="Permalink to this definition">¶</a></dt>
+<code class="descname">get_image</code><span class="sig-paren">(</span><em>item_type=&lt;ItemType.Gallery: 1&gt;</em>, <em>item_ids=[]</em>, <em>size=&lt;ImageSize.Medium: 3&gt;</em>, <em>url=False</em>, <em>uri=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/database.html#get_image"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.database.get_image" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get image for item.
 Image content is base64 encoded.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -827,8 +823,8 @@ Image content is base64 encoded.</p>
 </dd></dl>
 
 </div>
-<div class="section" id="module-happypanda.interface.plugin">
-<span id="plugin"></span><h3>Plugin<a class="headerlink" href="#module-happypanda.interface.plugin" title="Permalink to this headline">¶</a></h3>
+<span class="target" id="module-happypanda.interface.plugin"></span><div class="section" id="plugin">
+<h3>Plugin<a class="headerlink" href="#plugin" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="happypanda.interface.plugin.get_plugin">
 <code class="descname">get_plugin</code><span class="sig-paren">(</span><em>plugin_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/plugin.html#get_plugin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.plugin.get_plugin" title="Permalink to this definition">¶</a></dt>
@@ -849,7 +845,7 @@ Image content is base64 encoded.</p>
 
 <dl class="function">
 <dt id="happypanda.interface.plugin.install_plugin">
-<code class="descname">install_plugin</code><span class="sig-paren">(</span><em>plugin_id</em>, <em>ctx=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/plugin.html#install_plugin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.plugin.install_plugin" title="Permalink to this definition">¶</a></dt>
+<code class="descname">install_plugin</code><span class="sig-paren">(</span><em>plugin_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/plugin.html#install_plugin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.plugin.install_plugin" title="Permalink to this definition">¶</a></dt>
 <dd><p>Install a plugin</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -865,7 +861,7 @@ Image content is base64 encoded.</p>
 
 <dl class="function">
 <dt id="happypanda.interface.plugin.list_plugins">
-<code class="descname">list_plugins</code><span class="sig-paren">(</span><em>ctx=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/plugin.html#list_plugins"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.plugin.list_plugins" title="Permalink to this definition">¶</a></dt>
+<code class="descname">list_plugins</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/plugin.html#list_plugins"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.plugin.list_plugins" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get a list of available plugin information</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -879,7 +875,7 @@ Image content is base64 encoded.</p>
 
 <dl class="function">
 <dt id="happypanda.interface.plugin.uninstall_plugin">
-<code class="descname">uninstall_plugin</code><span class="sig-paren">(</span><em>plugin_id</em>, <em>ctx=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/plugin.html#uninstall_plugin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.plugin.uninstall_plugin" title="Permalink to this definition">¶</a></dt>
+<code class="descname">uninstall_plugin</code><span class="sig-paren">(</span><em>plugin_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/plugin.html#uninstall_plugin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.plugin.uninstall_plugin" title="Permalink to this definition">¶</a></dt>
 <dd><p>Uninstall a plugin</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -894,20 +890,26 @@ Image content is base64 encoded.</p>
 </dd></dl>
 
 </div>
-<div class="section" id="module-happypanda.interface.settings">
-<span id="settings"></span><h3>Settings<a class="headerlink" href="#module-happypanda.interface.settings" title="Permalink to this headline">¶</a></h3>
+<span class="target" id="module-happypanda.interface.settings"></span><div class="section" id="configuration">
+<h3>Configuration<a class="headerlink" href="#configuration" title="Permalink to this headline">¶</a></h3>
+<p>Most configuration keys can be stored and retrieved by <code class="docutils literal"><span class="pre">namespace.key</span></code></p>
+<p>See <a class="reference internal" href="settings.html#settings"><span class="std std-ref">Settings</span></a> for all server defined configuration keys and their default values.</p>
+<p>There exists the special namespace <code class="docutils literal"><span class="pre">this</span></code> to retrieve and store configuration only visible to the
+client in question. The server will resolve the namespace <code class="docutils literal"><span class="pre">this</span></code> to the <a class="reference internal" href="client.html#session"><span class="std std-ref">session</span></a> owner&#8217;s name
+(the client that created the session).
+These configuration keys will appear in the server&#8217;s <code class="docutils literal"><span class="pre">config.yaml</span></code> file upon save.</p>
 <dl class="function">
-<dt id="happypanda.interface.settings.get_settings">
-<code class="descname">get_settings</code><span class="sig-paren">(</span><em>settings={}</em>, <em>ctx=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/settings.html#get_settings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.settings.get_settings" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get settings</p>
+<dt id="happypanda.interface.settings.get_config">
+<code class="descname">get_config</code><span class="sig-paren">(</span><em>cfg={}</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/settings.html#get_config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.settings.get_config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get configuration</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>settings</strong> (<code class="xref py py-class docutils literal"><span class="pre">dict</span></code>) &#8211; a dict containing <code class="docutils literal"><span class="pre">key.name</span></code>:<code class="docutils literal"><span class="pre">default</span> <span class="pre">value</span></code>, send an empty dict to retrieve all settings</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>cfg</strong> (<code class="xref py py-class docutils literal"><span class="pre">dict</span></code>) &#8211; a dict containing <code class="docutils literal"><span class="pre">namespace.key</span></code>:<code class="docutils literal"><span class="pre">default</span> <span class="pre">value</span></code> or an empty dict to retrieve all settings</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><code class="docutils literal"><span class="pre">`</span>
-<span class="pre">{</span> <span class="pre">'key.name':</span> <span class="pre">value</span> <span class="pre">}</span>
+<span class="pre">{</span> <span class="pre">'namespace.key':</span> <span class="pre">value</span> <span class="pre">}</span>
 <span class="pre">`</span></code></td>
 </tr>
 </tbody>
@@ -915,14 +917,28 @@ Image content is base64 encoded.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="happypanda.interface.settings.set_settings">
-<code class="descname">set_settings</code><span class="sig-paren">(</span><em>settings={}</em>, <em>ctx=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/settings.html#set_settings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.settings.set_settings" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set settings</p>
+<dt id="happypanda.interface.settings.save_config">
+<code class="descname">save_config</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/settings.html#save_config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.settings.save_config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save config to disk</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>settings</strong> (<code class="xref py py-class docutils literal"><span class="pre">dict</span></code>) &#8211; a dict containing <code class="docutils literal"><span class="pre">key.name</span></code>:<code class="docutils literal"><span class="pre">value</span></code></td>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">Status</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="happypanda.interface.settings.set_config">
+<code class="descname">set_config</code><span class="sig-paren">(</span><em>cfg</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/settings.html#set_config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.settings.set_config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set/update configuration</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>cfg</strong> (<code class="xref py py-class docutils literal"><span class="pre">dict</span></code>) &#8211; a dict containing <code class="docutils literal"><span class="pre">namespace.key</span></code>:<code class="docutils literal"><span class="pre">value</span></code></td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Status</td>
 </tr>

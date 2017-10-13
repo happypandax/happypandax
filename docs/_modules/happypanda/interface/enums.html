@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>happypanda.interface.enums &#8212; Happypanda X 0.0.1#100 documentation</title>
+    <title>happypanda.interface.enums &#8212; Happypanda X 0.0.1#102 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.0.1#100',
+        VERSION:     '0.0.1#102',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -52,7 +52,7 @@
         </button>
         <a class="navbar-brand" href="../../../index.html">
           Happypanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.1#100</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.1#102</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -157,7 +157,22 @@
         <div class="col-md-9 content">
             
   <h1>Source code for happypanda.interface.enums</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">enum</span>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Enums</span>
+<span class="sd">----------------------------------------</span>
+
+<span class="sd">Enums can be used by their member names and values interchangeably.</span>
+<span class="sd">Enum member names are case insensitive::</span>
+
+<span class="sd">    ItemType.Gallery == 1 # true</span>
+<span class="sd">    ItemType.Gallery == ItemType.gaLLeRy # true</span>
+
+<span class="sd">It is recommended that enum members are used by their *values* and not names.</span>
+<span class="sd">Enum member names may change sometime in the future. It is not likely to happen but no promises.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">enum</span>
 
 <span class="kn">from</span> <span class="nn">happypanda.common</span> <span class="k">import</span> <span class="n">utils</span><span class="p">,</span> <span class="n">exceptions</span>
 <span class="kn">from</span> <span class="nn">happypanda.core</span> <span class="k">import</span> <span class="n">message</span><span class="p">,</span> <span class="n">db</span>
