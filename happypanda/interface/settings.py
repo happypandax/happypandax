@@ -1,8 +1,16 @@
 """
-About config...
+Configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. todo::
-    explain ``this`` namespace
+Most configuration keys can be stored and retrieved by ``namespace.key``
+
+See :ref:`Settings` for all server defined configuration keys and their default values.
+
+There exists the special namespace ``this`` to retrieve and store configuration only visible to the
+client in question. The server will resolve the namespace ``this`` to the :ref:`session <Session>` owner's name
+(the client that created the session).
+These configuration keys will appear in the server's ``config.yaml`` file upon save.
+
 """
 
 from happypanda.common import constants, utils, exceptions, config
@@ -66,12 +74,13 @@ def get_config(cfg: dict = {}):
     Get configuration
 
     Args:
-        cfg: a dict containing ``namespace.key``:``default value``, send an empty dict to retrieve all settings
+        cfg: a dict containing ``namespace.key``:``default value`` or an empty dict to retrieve all settings
 
     Returns:
         ```
-        { 'key.name': value }
+        { 'namespace.key': value }
         ```
+
     """
 
     values = {}

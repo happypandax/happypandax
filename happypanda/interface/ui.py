@@ -1,3 +1,9 @@
+"""
+UI
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+"""
+
 import i18n
 
 from happypanda.common import utils, constants, exceptions, hlogger, config

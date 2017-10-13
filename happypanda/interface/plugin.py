@@ -1,3 +1,9 @@
+"""
+Plugin
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+"""
+
 from happypanda.core import message
 
 

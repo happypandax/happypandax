@@ -1,3 +1,9 @@
+"""
+Gallery
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+"""
+
 from happypanda.core import message
 
 

@@ -113,6 +113,12 @@ def get_command_progress(command_ids: list):
     """
     return message.Message("works")
 
+"""
+Meta
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+"""
+
 
 def stop_command(command_ids: list):
     """

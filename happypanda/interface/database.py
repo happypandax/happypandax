@@ -1,3 +1,9 @@
+"""
+Database
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+"""
+
 from happypanda.common import constants, utils, exceptions
 from happypanda.core import db, services, message
 from happypanda.interface import enums

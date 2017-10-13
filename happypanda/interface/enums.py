@@ -1,3 +1,18 @@
+"""
+Enums
+----------------------------------------
+
+Enums can be used by their member names and values interchangeably.
+Enum member names are case insensitive::
+
+    ItemType.Gallery == 1 # true
+    ItemType.Gallery == ItemType.gaLLeRy # true
+
+It is recommended that enum members are used by their *values* and not names.
+Enum member names may change sometime in the future. It is not likely to happen but no promises.
+
+"""
+
 import enum
 
 from happypanda.common import utils, exceptions

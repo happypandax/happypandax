@@ -1,3 +1,9 @@
+"""
+Tags
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+"""
+
 from happypanda.core import db, message
 from happypanda.interface import enums
 from happypanda.core.commands import database_cmd
