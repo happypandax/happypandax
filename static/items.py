@@ -302,7 +302,8 @@ SearchOptions = createReactClass({
 def search_render():
     fluid = this.props.fluid
 
-    return e(ui.Search,
+    return e(ui.Form,   
+                e(ui.Search,
                         size=this.props.size,
                         input=e(ui.Input, fluid=this.props.fluid, placeholder="Search title, artist, namespace & tags",
                                 label=e(ui.Popup,
@@ -312,24 +313,33 @@ def search_render():
                                   on="click",
                                   hideOnScroll=True,)),
                         fluid=True,
-                        icon=e(ui.Icon, js_name="search", link=True),
-                        className=this.props.className,
+                        icon=e(ui.Icon, js_name="search", link=True, onClick=this.on_search),
                         onSearchChange=this.on_search_change,
                         defaultValue = utils.get_query("search", "")
-                        )
+                        ),
+                className=this.props.className,
+                onSubmit=this.on_search
+                )
 
 def on_search_change(e, d):
-    this.search_data = [e, d]
-    clearTimeout(this.search_timer_id)
-    this.search_timer_id = setTimeout(this.search_timer, 400)
+    this.search_data = d.value
+    if this.props.on_key:
+        clearTimeout(this.search_timer_id)
+        this.search_timer_id = setTimeout(this.search_timer, 400)
+
+def on_search(e, d):
+    if e is not None:
+        d = this.search_data
+    if this.props.query and this.props.history:
+        utils.go_to(this.props.history, query={'search':d})
+    if this.props.on_search:
+        this.props.on_search(d)
 
 def on_search_timer():
     __pragma__("tconv")
-    if this.props.query and this.search_data and this.props.history:
-        utils.go_to(this.props.history, query={'search':this.search_data[1].value})
+    if this.search_data:
+        this.on_search(None, this.search_data)
     __pragma__("notconv")
-    if this.props.on_search:
-        this.props.on_search(*this.search_data)
 
 Search = createReactClass({
     'displayName': 'Search',
@@ -342,6 +352,8 @@ Search = createReactClass({
     'search_timer': on_search_timer,
 
     'on_search_change': on_search_change,
+
+    'on_search': on_search,
 
     'render': search_render
 })
@@ -594,7 +606,7 @@ ItemViewPage = createReactClass({
 
     'on_item_change': lambda e, d: this.setState({'item_type':d.value}),
 
-    'on_search': lambda e, d: this.setState({'search_query':d.value}),
+    'on_search': lambda v: this.setState({'search_query':v}),
 
     'update_menu': lambda: state.app.set_menu_contents(
         item_view_menu(
