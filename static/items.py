@@ -75,8 +75,10 @@ def thumbnail_render():
                spaced=this.props.spaced,
                ui=this.props.ui,
                verticalAlign=this.props.verticalAlign,
-               width=this.props.width
-               ))
+               width=this.props.width,
+               href=this.props.href,
+               ),
+             )
 
 Thumbnail = createReactClass({
     'displayName': 'Thumbnail',
@@ -189,9 +191,24 @@ def page_render():
 
     add_cls = this.props.className or ""
 
+    link = True
+    if not this.props.link == js_undefined:
+        link = this.props.link
+
+    thumb = e(Thumbnail,
+              item_id=item_id,
+              item_type=this.state.item_type, 
+              size_type=ImageSize.Medium,
+              size=this.props.size,
+              )
+    if link:
+        thumb = e(Link, thumb, to={'pathname':'/item/page',
+                                    'search':utils.query_to_string({'id':item_id})})
+
+
     return e(ui.Card,
                     h("div",
-                    e(Thumbnail, item_id=item_id, item_type=this.state.item_type, size_type=ImageSize.Medium),
+                    thumb,
                     e(ui.Icon, js_name="ellipsis vertical", bordered=True, className="card-item bottom right", link=True, inverted=True),
                     className="card-content",
                     ),
@@ -200,7 +217,7 @@ def page_render():
                     link=True)
 
 Page = createReactClass({
-    'displayName': 'Gallery',
+    'displayName': 'Page',
 
     'getInitialState': lambda: {'id':None,
                                 'data':this.props.data,

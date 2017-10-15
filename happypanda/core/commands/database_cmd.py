@@ -219,11 +219,12 @@ class GetModelItemByID(Command):
                 join = [join]
             for j in join:
                 q = q.join(self._get_sql(j))
-        if filter is not None:
-            q = q.filter(self._get_sql(filter))
 
         if order_by is not None:
             q = q.order_by(self._get_sql(order_by))
+
+        if filter is not None:
+            q = q.filter(self._get_sql(filter))
 
         if ids:
             id_amount = len(ids)

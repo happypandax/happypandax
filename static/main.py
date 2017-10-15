@@ -7,6 +7,7 @@ from react_utils import (h,
                          createReactClass,
                          Router,
                          Route,
+                         withRouter
                          )
 from ui import ui, Alert, Notif
 from state import state
@@ -16,7 +17,9 @@ import dashboard
 import library
 import favorites
 import inbox
-import itempage
+import gallerypage
+import pagepage
+import collectionpage
 
 __pragma__("kwargs")
 def notif(msg, header="", level="info", icon=None, **kwargs):
@@ -72,6 +75,7 @@ def app_render():
                     e(Route, path="/inbox", component=this.inbox_page),
                     e(Route, path="/item/gallery", component=this.gallery_page),
                     e(Route, path="/item/collection", component=this.collection_page),
+                    e(Route, path="/item/page", component=this.page_page),
                     basic=True),
                     ref=this.get_context_ref,
                     className="sidebar-container",
@@ -105,13 +109,14 @@ App = createReactClass({
     'set_menu_contents': lambda c: (this.setState({'menu_nav_contents':c})),
     'get_context_ref': get_container_ref,
 
-    'api_page': lambda: e(api.Page, menu=this.set_menu_contents),
-    'dashboard_page': lambda: e(dashboard.Page, menu=this.set_menu_contents),
-    'library_page': lambda: e(library.Page, menu=this.set_menu_contents),
-    'favorites_page': lambda: e(favorites.Page, menu=this.set_menu_contents),
-    'inbox_page': lambda: e(inbox.Page, menu=this.set_menu_contents),
-    'gallery_page': lambda: e(itempage.GalleryPage, menu=this.set_menu_contents),
-    'collection_page': lambda: e(itempage.GalleryPage, menu=this.set_menu_contents),
+    'api_page': lambda p: e(api.Page, menu=this.set_menu_contents, **p),
+    'dashboard_page': lambda p: e(dashboard.Page, menu=this.set_menu_contents, **p),
+    'library_page': lambda p: e(library.Page, menu=this.set_menu_contents, **p),
+    'favorites_page': lambda p: e(favorites.Page, menu=this.set_menu_contents, **p),
+    'inbox_page': lambda p: e(inbox.Page, menu=this.set_menu_contents, **p),
+    'page_page': lambda p: e(pagepage.Page, menu=this.set_menu_contents, **p),
+    'gallery_page': lambda p: e(gallerypage.Page, menu=this.set_menu_contents, **p),
+    'collection_page': lambda p: e(collectionpage.Page, menu=this.set_menu_contents, **p),
 
     'render': app_render,
 })

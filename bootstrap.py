@@ -15,6 +15,7 @@ changes = """
 - implemented get_config api function
 - implemented set_config api function
 - added save_config api function
+- added get_page api function
 - api playground at /api can now parse objects
 """
 
