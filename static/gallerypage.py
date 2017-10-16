@@ -2,7 +2,8 @@ __pragma__('alias', 'as_', 'as')
 from react_utils import (h,
                          e,
                          React,
-                         createReactClass)
+                         createReactClass,
+                         Link)
 from ui import ui, Slider
 from i18n import tr
 from state import state
@@ -83,6 +84,7 @@ def page_render():
     urls = []
     parodies = []
     if this.state.data:
+        item_id = this.state.data.id
         parodies = this.state.data.parodies
         date_pub = utils.moment.unix(this.state.data.pub_date).format("LL")
         date_upd = utils.moment.unix(this.state.data.last_updated).format("LLL")
@@ -195,7 +197,7 @@ def page_render():
                      e(ui.Grid.Row,
                        e(ui.Grid.Column,
                          e(ui.Button.Group,
-                           e(ui.Button, "Read", primary=True, onClick=this.on_read),
+                           e(ui.Button, "Read", primary=True, as_=Link, to=utils.build_url("/item/page", {'gid':item_id}, keep_query=False)),
                            e(ui.Button.Or, text="or"),
                            e(ui.Button, "Save for later"),
                            ),

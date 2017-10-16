@@ -36,7 +36,8 @@ def thumbnail_get_thumb(data=None, error=None):
             thumbclient.call_func("get_image", this.get_thumb,
                                   item_ids=[this.props.item_id],
                                   size=this.props.size_type, url=True, uri=True, item_type=this.props.item_type)
-            this.setState({'loading':True, 'img':"/static/img/default.png"})
+            this.setState({'loading':True,
+                           'img':this.state.default})
 __pragma__('notconv')
 
 def thumbnail_set_thumb(cmd):
@@ -49,7 +50,7 @@ def thumbnail_set_thumb(cmd):
     this.setState({'img':im, 'loading':False})
 
 def thumbnail_render():
-    img_url = "static/img/default.png"
+    img_url = this.state.default
     if this.state.img:
         img_url = this.state.img
     fluid = True
@@ -58,6 +59,8 @@ def thumbnail_render():
 
     if this.props.size:
         fluid = False # can't be defined together
+
+    ex = this.props.kwargs if utils.defined(this.props.kwargs) else {}
 
     return h("div",e(ui.Loader, active=this.state.loading, inverted=True),
              e(ui.Image, src=img_url,
@@ -70,21 +73,24 @@ def thumbnail_render():
                dimmer=this.props.dimmer,
                height=this.props.height,
                as_=this.props.as_,
+               href=this.props.href,
                hidden=this.props.hidden,
                shape=this.props.shape,
                spaced=this.props.spaced,
                ui=this.props.ui,
                verticalAlign=this.props.verticalAlign,
                width=this.props.width,
-               href=this.props.href,
+               **ex
                ),
              )
 
 Thumbnail = createReactClass({
     'displayName': 'Thumbnail',
 
-    'getInitialState': lambda: {'img':"/static/img/default.png",
-                                'loading':True},
+    'getInitialState': lambda: {'img':"",
+                                'loading':True,
+                                'default': this.props.default if utils.defined(this.props.default) else "/static/img/default.png",
+                                },
 
     'get_thumb': thumbnail_get_thumb,
 

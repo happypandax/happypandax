@@ -2,7 +2,8 @@ __pragma__('alias', 'as_', 'as')
 from react_utils import (h,
                          e,
                          React,
-                         createReactClass)
+                         createReactClass,
+                         Link)
 from ui import ui, Slider
 from i18n import tr
 from state import state
@@ -13,10 +14,10 @@ import utils
 def PageNav(props):
     els = []
     if props.number > 1:
-        els.append(e(ui.Grid.Column, e(ui.Button, icon="arrow left"), onClick=props.prev_page))
+        els.append(e(ui.Grid.Column, e(ui.Button, icon="arrow left"), as_=Link, to=props.p_url))
     els.append(e(ui.Grid.Column, e(ui.Label, str(props.number)+"/"+str(props.count) if props.count else props.number)))
     if props.number < props.count:
-        els.append(e(ui.Grid.Column, e(ui.Button, icon="arrow right"), onClick=props.next_page))
+        els.append(e(ui.Grid.Column, e(ui.Button, icon="arrow right"), as_=Link, to=props.n_url))
 
     return e(ui.Grid.Row,
              e(ui.Grid,
@@ -37,17 +38,16 @@ def get_item(data=None, error=None, go=None):
         state.app.notif("Failed to fetch item ({})".format(this.state.id), level="error")
     else:
         item = this.state.item_type
-        item_id = this.state.id
-        if this.state.data:
-            item_id = this.state.data.id
+        item_id = utils.get_query("id")
+        gid = utils.get_query("gid")
         go = go.lower() if go else go
 
         if item:
-            if go in ("next", "prev") or this.state.gid:
+            if go in ("next", "prev") or gid:
                 if item_id:
                     client.call_func("get_page", this.get_item, page_id=item_id, prev=go=="prev")
                 else:
-                    client.call_func("get_page", this.get_item, gallery_id=this.state.gid)
+                    client.call_func("get_page", this.get_item, gallery_id=gid)
             elif item_id:
                 client.call_func("get_item", this.get_item, item_type=item, item_id=item_id)
             this.setState({'loading':True})
@@ -71,9 +71,9 @@ def on_key(ev):
     if ev.key=="Escape":
         this.back_to_gallery()
     elif ev.key=="ArrowRight":
-        this.next_page()
+        this.next_page(ev)
     elif ev.key=="ArrowLeft":
-        this.prev_page()
+        this.prev_page(ev)
 
 def page_render():
     img_url = this.state.img
@@ -86,9 +86,14 @@ def page_render():
     if not img_url:
         img_url = "static/img/default.png"
 
+    n_url = utils.build_url(query={'id':p_id, 'go':"next"})
+    p_url = utils.build_url(query={'id':p_id, 'go':"prev"})
+
     return e(ui.Grid,
-             e(PageNav, prev_page=this.prev_page, next_page=this.next_page, number=number, count=this.state.pages),
+             e(PageNav, number=number, count=this.state.pages,
+               n_url=n_url, p_url=p_url),
              e(ui.Grid.Row, e(ui.Grid.Column,
+                              e(Link,
                               e(items.Thumbnail,
                                 item_id=p_id,
                                 item_type=this.state.item_type,
@@ -96,10 +101,15 @@ def page_render():
                                 centered=True,
                                 fluid=False,
                                 bordered=True,
-                                onClick=this.next_page
+                                default="",
+                                ),
+                              to=n_url,
                                 )),
-               centered=True),
-             e(PageNav, prev_page=this.prev_page, next_page=this.next_page, number=number, count=this.state.pages),
+               centered=True,
+               textAlign="center",
+               ),
+             e(PageNav, number=number, count=this.state.pages,
+               n_url=n_url, p_url=p_url),
              e(ui.Grid.Row, e(ui.Grid.Column, e(ui.Segment, as_=ui.Container))),
              padded=True,
              )
@@ -119,10 +129,11 @@ Page = createReactClass({
     'get_item': get_item,
     'get_pages': get_pages,
     'on_key': on_key,
-    'prev_page': lambda: all((utils.go_to(this.props.history, query={'id':this.state.data.id, 'go':"prev"}), this.get_item(go=utils.get_query("go")))),
-    'next_page': lambda: all((utils.go_to(this.props.history, query={'id':this.state.data.id, 'go':"next"}), this.get_item(go=utils.get_query("go")))),
+    'prev_page': lambda e: all((e.preventDefault(), utils.go_to(this.props.history, query={'id':this.state.data.id, 'go':"prev"}))),
+    'next_page': lambda e: all((e.preventDefault(), utils.go_to(this.props.history, query={'id':this.state.data.id, 'go':"next"}))),
     'back_to_gallery': lambda: utils.go_to(this.props.history, "/item/gallery", query={'id':this.state.data.gallery_id}, keep_query=False),
 
+    'componentWillReceiveProps': lambda n_props: this.get_item(go=utils.get_query("go")) if n_props.location != this.props.location else None ,
     'componentDidMount': lambda: window.addEventListener("keydown", this.on_key, False),
     'componentWillUnmount': lambda: window.removeEventListener("keydown", this.on_key, False),
 

@@ -98,5 +98,22 @@ def go_to(history_obj, url="", query={}, state=None, push=True, keep_query=True,
 __pragma__("notconv")
 __pragma__("nokwargs")
 
+__pragma__("kwargs")
+__pragma__("tconv")
+def build_url(url="", query={}, keep_query=True, location_obj=None):
+    if not url:
+        l = location_obj or location
+        url = l.pathname
+    q = {}
+    if keep_query:
+        q.update(query_to_obj())
+    q.update(query)
+
+    if q:
+        url += "?" + query_to_string(q, location_obj=location_obj)
+    return url
+__pragma__("notconv")
+__pragma__("nokwargs")
+
 moment.locale(get_locale())
 
