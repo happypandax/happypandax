@@ -75,6 +75,15 @@ def on_key(ev):
     elif ev.key=="ArrowLeft":
         this.prev_page(ev)
 
+def receive_props(n_props):
+    if n_props.location != this.props.location:
+        this.get_item(go=utils.get_query("go"))
+        scroll_top = this.props.scroll_top if utils.defined(this.props.scroll_top) else True
+        if scroll_top:
+            el = this.props.context or state.container_ref
+            if el:
+                el.scrollTop = 0
+
 def page_render():
     img_url = this.state.img
     number = 0
@@ -101,7 +110,7 @@ def page_render():
                                 centered=True,
                                 fluid=False,
                                 bordered=True,
-                                default="",
+                                placeholder="",
                                 ),
                               to=n_url,
                                 )),
@@ -129,11 +138,11 @@ Page = createReactClass({
     'get_item': get_item,
     'get_pages': get_pages,
     'on_key': on_key,
-    'prev_page': lambda e: all((e.preventDefault(), utils.go_to(this.props.history, query={'id':this.state.data.id, 'go':"prev"}))),
-    'next_page': lambda e: all((e.preventDefault(), utils.go_to(this.props.history, query={'id':this.state.data.id, 'go':"next"}))),
+    'prev_page': lambda e: all((utils.go_to(this.props.history, query={'id':this.state.data.id, 'go':"prev"}),)),
+    'next_page': lambda e: all((utils.go_to(this.props.history, query={'id':this.state.data.id, 'go':"next"}),)),
     'back_to_gallery': lambda: utils.go_to(this.props.history, "/item/gallery", query={'id':this.state.data.gallery_id}, keep_query=False),
 
-    'componentWillReceiveProps': lambda n_props: this.get_item(go=utils.get_query("go")) if n_props.location != this.props.location else None ,
+    'componentWillReceiveProps': receive_props,
     'componentDidMount': lambda: window.addEventListener("keydown", this.on_key, False),
     'componentWillUnmount': lambda: window.removeEventListener("keydown", this.on_key, False),
 

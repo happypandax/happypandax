@@ -36,8 +36,10 @@ def thumbnail_get_thumb(data=None, error=None):
             thumbclient.call_func("get_image", this.get_thumb,
                                   item_ids=[this.props.item_id],
                                   size=this.props.size_type, url=True, uri=True, item_type=this.props.item_type)
-            this.setState({'loading':True,
-                           'img':this.state.default})
+            s = {'loading':True}
+            if this.state.placeholder:
+                s['img'] = this.state.placeholder
+            this.setState(s)
 __pragma__('notconv')
 
 def thumbnail_set_thumb(cmd):
@@ -50,7 +52,7 @@ def thumbnail_set_thumb(cmd):
     this.setState({'img':im, 'loading':False})
 
 def thumbnail_render():
-    img_url = this.state.default
+    img_url = this.state.placeholder
     if this.state.img:
         img_url = this.state.img
     fluid = True
@@ -62,7 +64,7 @@ def thumbnail_render():
 
     ex = this.props.kwargs if utils.defined(this.props.kwargs) else {}
 
-    return h("div",e(ui.Loader, active=this.state.loading, inverted=True),
+    return h("div", e(ui.Dimmer, e(ui.Loader), active=this.state.loading, inverted=True),
              e(ui.Image, src=img_url,
                fluid=fluid,
                size=this.props.size,
@@ -89,7 +91,7 @@ Thumbnail = createReactClass({
 
     'getInitialState': lambda: {'img':"",
                                 'loading':True,
-                                'default': this.props.default if utils.defined(this.props.default) else "/static/img/default.png",
+                                'placeholder': this.props.placeholder if utils.defined(this.props.placeholder) else "/static/img/default.png",
                                 },
 
     'get_thumb': thumbnail_get_thumb,
