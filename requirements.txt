@@ -9,7 +9,7 @@ arrow==0.10.0
 https://github.com/Pewpews/happy-bittorrent/archive/master/1.0.0.zip
 Flask==0.11.1
 karellen-geventws==1.0.2
-transcrypt==3.6.27
+transcrypt==3.6.50
 flask-socketio==2.9.0
 libsass==0.13.2
 pyyaml==3.12
