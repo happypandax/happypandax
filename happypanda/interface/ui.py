@@ -69,6 +69,9 @@ def _view_helper(item_type: enums.ItemType=enums.ItemType.Gallery,
         if item_type == enums.ItemType.Gallery:
             filter_op = db.MetaTag.name == metatag_name
             join_exp = db.Gallery.metatags
+    else:
+        if item_type == enums.ItemType.Gallery:
+            filter_op = ~db.Gallery.metatags.any(db.MetaTag.name == db.MetaTag.names.inbox)
 
     if related_type:
         related_filter = parent_model.id == item_id

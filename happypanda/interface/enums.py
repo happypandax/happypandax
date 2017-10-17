@@ -62,6 +62,7 @@ class ViewType(_APIEnum):
     Inbox = 3
 
 
+
 class ItemType(_APIEnum):
     #: Gallery
     Gallery = 1

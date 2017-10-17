@@ -514,7 +514,7 @@ def item_view_render():
         return e(Error, content="An error occured")
 
     return e(ItemViewBase,
-             *[e(el, data=x, className="medium-size") for x in items],
+             [e(el, data=x, className="medium-size", key=n) for n, x in enumerate(items)],
              loading=this.state.loading,
              secondary=this.props.secondary,
              tertiary=this.props.tertiary,

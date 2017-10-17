@@ -13,7 +13,13 @@ import utils
 
 def get_item(data=None, error=None):
     if data is not None and not error:
-        this.setState({"data":data, "loading":False, 'loading_group':True})
+        this.setState({"data":data, 
+                       "loading":False,
+                       "rating": data.rating,
+                       'loading_group':True,
+                       })
+        if data.metatags.favorite:
+            this.setState({"fav":1})
         if data.grouping_id:
             client.call_func("get_related_items", this.get_grouping,
                                  item_type=ItemType.Grouping,
@@ -69,9 +75,9 @@ __pragma__("notconv")
 
 def page_render():
 
-    fav = 0
+    fav = this.state.fav
     title = ""
-    rating = 0
+    rating = this.state.rating
     artists = []
     item_id = this.state.id
     info = ""
@@ -94,11 +100,8 @@ def page_render():
         date_upd += " (" + utils.moment.unix(this.state.data.last_updated).fromNow() + ")"
         date_read += " (" + utils.moment.unix(this.state.data.last_read).fromNow() + ")"
         read_count = this.state.data.times_read
-        rating = this.state.data.rating
         info = this.state.data.info
         title = this.state.data.titles[0].js_name
-        if this.state.data.metatags.favorite:
-            fav = 1
         inbox = this.state.data.metatags.inbox
         if not item_id:
             item_id = this.state.data.id
@@ -138,7 +141,7 @@ def page_render():
                   e(ui.Table.Cell, e(ui.Label, read_count, circular=True))))
     rows.append(e(ui.Table.Row, 
                   e(ui.Table.Cell, e(ui.Header, "Rating:", as_="h5"), collapsing=True),
-                  e(ui.Table.Cell, e(ui.Rating, icon="star", defaultRating=rating, maxRating=10, size="huge", clearable=True))))
+                  e(ui.Table.Cell, e(ui.Rating, icon="star", rating=rating, maxRating=10, size="huge", clearable=True))))
     tag_rows = []
     if this.state.tag_data.__namespace__: # somehow transcrypt ignores this in the loop below
         ns_tags = this.state.tag_data.__namespace__
@@ -210,7 +213,7 @@ def page_render():
                  e(ui.Grid.Column,
                    e(ui.Grid,
                        e(ui.Grid.Row,
-                           e(ui.Grid.Column, e(ui.Rating, icon="heart", size="massive", defaultRating=fav), floated="right",),
+                           e(ui.Grid.Column, e(ui.Rating, icon="heart", size="massive", rating=fav), floated="right",),
                            e(ui.Grid.Column, *indicators, floated="right", textAlign="right"),
                          columns=2,
                          ),
@@ -265,6 +268,8 @@ Page = createReactClass({
 
     'getInitialState': lambda: {'id': int(utils.get_query("id", 0)),
                                 'data':this.props.data,
+                                'rating': 0,
+                                'fav': 0,
                                 'tag_data':this.props.tag_data or {},
                                 'lang_data':this.props.lang_data or {},
                                 'status_data':this.props.status_data or {},

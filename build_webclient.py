@@ -24,7 +24,7 @@ def main():
 	# Transcrypt is required to be in the same directory as the js files
 	os.chdir(js_dir)
 
-	run(["transcrypt", "-b", "-a", "-m", "-da", "-de", "-dm", "-p", ".none", "-e", "6", "-n", ".\main.py"])
+	run(["transcrypt", "-b", "-a", "-m", "-dt", "-da", "-de", "-dm", "-p", ".none", "-e", "6", "-n", ".\main.py"])
 
 if __name__ == '__main__':
 	main()
