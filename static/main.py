@@ -59,14 +59,11 @@ def get_container_ref(ctx):
     state['container_ref'] = ctx
 
 def app_render():
-    #state.app = this
     return e(Router,
-            h("div",
-                e(nav_ui.MenuNav, toggler=this.toggle_sidebar, contents=this.state["menu_nav_contents"]),
-                e(ui.Sidebar.Pushable,
-                e(nav_ui.SideBarNav, toggled=this.state["sidebar_toggled"]),
-                h("div",
-                    e(ui.Segment,
+            e(ui.Sidebar.Pushable,
+                e(ui.Dimmer.Dimmable,
+                    e(nav_ui.MenuNav, toggler=this.toggle_sidebar, contents=this.state["menu_nav_contents"]),
+                    e(ui.Dimmer, active=this.state.sidebar_toggled, onClickOutside=this.toggle_sidebar,),
                     e(Route, path="/api", component=this.api_page),
                     e(Route, path="/dashboard", component=this.dashboard_page),
                     e(Route, path="/", exact=True, component=this.library_page),
@@ -76,17 +73,13 @@ def app_render():
                     e(Route, path="/item/gallery", component=this.gallery_page),
                     e(Route, path="/item/collection", component=this.collection_page),
                     e(Route, path="/item/page", component=this.page_page),
-                    basic=True),
                     ref=this.get_context_ref,
-                    className="sidebar-container",
+                    dimmed=this.state.sidebar_toggled,
                   ),
-                as_=ui.Segment,
-                attached="bottom",
-                className="main-content"
-                ),
+                e(nav_ui.SideBarNav, toggler=this.toggle_sidebar, toggled=this.state["sidebar_toggled"]),
                 e(Alert, contentTemplate=Notif, stack={'limit':6, 'spacing':20}, position="top-right", effect="slide", offset=50),
-                className="bodyheight"
-                )
+                className="main-content",
+                ),
             )
 
 App = createReactClass({
@@ -94,7 +87,7 @@ App = createReactClass({
 
 
     'getInitialState': lambda: {
-        "sidebar_toggled":True,
+        "sidebar_toggled":False,
         "menu_nav_contents":None,
         },
 

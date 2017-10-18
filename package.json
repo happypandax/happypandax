@@ -8,7 +8,7 @@
     "test": "tests"
   },
   "dependencies": {
-    "moment": "^2.18.1",
+    "moment": "^2.19.1",
     "query-string": "^5.0.0",
     "react": "^15.6.2",
     "react-dom": "^15.6.2",
@@ -16,6 +16,7 @@
     "react-router-dom": "^4.1.2",
     "react-s-alert": "^1.3.0",
     "react-slick": "^0.15.0",
+    "semantic-ui": "^2.2.13",
     "semantic-ui-react": "^0.74.2",
     "socket.io": "^2.0.3"
   },

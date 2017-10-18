@@ -168,7 +168,9 @@ def pagination_render():
 
     return e(ui.Menu,
              *items,
-             pagination=True)
+             pagination=True,
+             borderless=True,
+             size=this.props.size,)
 
 Pagination = createReactClass({
     'displayName': 'Pagination',

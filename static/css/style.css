@@ -5,24 +5,16 @@ body, #root, #root > div { display: flex }
 #root, #root > div {
     flex-grow: 1;
     flex-direction: column;
-    overflow: hidden;
 }
 
 .main-content { display: flex; }
 
-.sidebar-container {
-    width: 100%;
-    margin: 0 !important;
-    overflow: auto;
+.main-content > .dimmable {
+    z-index: 1;
 }
 
-.sidebar-container > .segment {
-    padding: 0 !important;
-}
-
-.sidebar-nav {
-    position: relative !important;
-    box-shadow: none !important;
+.main-content > .sidebar.menu {
+    z-index: 99999;
 }
 
 .ui.vertical.menu .item > i.icon.left {

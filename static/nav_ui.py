@@ -184,7 +184,7 @@ class MenuItem:
     __pragma__("notconv")
 
 def sidebar_nav_render():
-    if this.props['toggled']:
+    if False:
         nav_width = "very thin"
     else:
         nav_width = "thin"
@@ -197,13 +197,15 @@ def sidebar_nav_render():
         print(props)
 
     items = []
-    items.append(MenuItem("Dashboard", "ui.mi-dashboard", icon="home", url="/dashboard"))
-    items.append(MenuItem("Favorites", "ui.mi-favorites", icon="heart", url="/favorite"))
-    items.append(MenuItem("Library", "ui.mi-library", icon="grid layout", url="/library"))
-    items.append(MenuItem("Inbox", "ui.mi-inbox", icon="inbox", url="/inbox"))
-    items.append(MenuItem("Management", "ui.mi-management", icon="cubes", url="/management"))
+    items.append(MenuItem("HPX", header=True, icon="sidebar", position="left", handler=this.props["toggler"]))
+
+    items.append(MenuItem("Dashboard", "ui.mi-dashboard", icon="home", url="/dashboard", handler=this.props["toggler"]))
+    items.append(MenuItem("Favorites", "ui.mi-favorites", icon="heart", url="/favorite", handler=this.props["toggler"]))
+    items.append(MenuItem("Library", "ui.mi-library", icon="grid layout", url="/library", handler=this.props["toggler"]))
+    items.append(MenuItem("Inbox", "ui.mi-inbox", icon="inbox", url="/inbox", handler=this.props["toggler"]))
+    items.append(MenuItem("Management", "ui.mi-management", icon="cubes", url="/management", handler=this.props["toggler"]))
     #Note: Artists, Tags, Etc. Able to favorite artists and tags
-    items.append(MenuItem("Downloads", "ui.mi-downloads", icon="tasks", url="/downloads"))
+    items.append(MenuItem("Downloads", "ui.mi-downloads", icon="tasks", url="/downloads", handler=this.props["toggler"]))
     pref_item = MenuItem("Preferences", "ui.mi-preferences",
                          modal=[
                              e(ui.Modal.Content,
@@ -211,7 +213,7 @@ def sidebar_nav_render():
                                 e(PrefTab),
                                 ),
                              ],
-                         icon="settings", position="right")
+                         icon="settings", position="right", handler=this.props["toggler"])
     items.append(pref_item)
 
     about_item = MenuItem("About", "ui.mi-about",
@@ -227,7 +229,7 @@ def sidebar_nav_render():
                                     ],
                                 menu=e(ui.Menu, secondary=True, pointing=True)))
                              ],
-                        icon="info", position="right")
+                        icon="info", position="right", handler=this.props["toggler"])
     items.append(about_item)
     #about_item.children.append(MenuItem("Check for updates"))
     #about_item.children.append(MenuItem("Visit homepage"))
@@ -289,10 +291,9 @@ def sidebar_nav_render():
                         animation="push",
                         width=nav_width,
                         vertical=True,
-                        visible=True,
+                        visible=this.props.toggled,
                         icon=icon,
                         defaultActiveIndex=3,
-                        className="sidebar-nav",
                         size="small"
                         )
 

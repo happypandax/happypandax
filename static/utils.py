@@ -1,5 +1,5 @@
 query_string = require("query-string")
-moment = require("moment")['default']
+moment = require("moment")
 
 syntax_highlight = __pragma__('js', '{}',
                               """

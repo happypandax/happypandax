@@ -14,18 +14,17 @@ import utils
 def PageNav(props):
     els = []
     if props.number > 1:
-        els.append(e(ui.Grid.Column, e(ui.Button, icon="arrow left"), as_=Link, to=props.p_url))
-    els.append(e(ui.Grid.Column, e(ui.Label, str(props.number)+"/"+str(props.count) if props.count else props.number)))
+        els.append(e(ui.Button, icon="arrow left", as_=Link, to=props.p_url))
+    els.append(e(ui.Button, str(props.number)+"/"+str(props.count) if props.count else props.number))
     if props.number < props.count:
-        els.append(e(ui.Grid.Column, e(ui.Button, icon="arrow right"), as_=Link, to=props.n_url))
+        els.append(e(ui.Button, icon="arrow right", as_=Link, to=props.n_url))
 
     return e(ui.Grid.Row,
-             e(ui.Grid,
-               *els,
-             container=True,
+             e(ui.Grid.Column,
+             *els,
              textAlign="center",
-             verticalAlign="middle"
-               )
+               ),
+             columns=1
              )
 
 __pragma__("kwargs")

@@ -145,7 +145,7 @@ def gallery_render():
     return e(ui.Card,
                     h("div",
                     thumb,
-                    e(ui.Rating, icon="heart", size="massive", className="card-item top left", defaultRating=fav),
+                    e(ui.Rating, icon="heart", size="massive", className="card-item top left", rating=fav),
                     e(ui.Popup,
                         e(ui.Rating, icon="star", defaultRating=rating, maxRating=10, clearable=True),
                         trigger=e(ui.Label, e(ui.Icon, js_name="star"), rating, className="card-item bottom left", circular=True, size="large", color="yellow", as_="a"),
@@ -174,7 +174,8 @@ Gallery = createReactClass({
 
     'getInitialState': lambda: {'id':None,
                                 'data':this.props.data,
-                                'item_type':ItemType.Gallery},
+                                'item_type':ItemType.Gallery,
+                                },
 
     'componentWillMount': lambda: this.setState({'id':this.props.data.id if this.props.data else this.state.data.id if this.state.data else None}),
     'componentDidUpdate': gallery_on_update,
@@ -384,12 +385,28 @@ Search = createReactClass({
 })
 
 def ItemViewBase(props):
-    paginations = e(Pagination,
-                     pages=props.item_count/props.limit,
-                     current_page=props.page,
-                     on_change=props.set_page,
-                     query=True,
-                     scroll_top=True)
+    pagination = e(ui.Grid.Row,
+                   e(ui.Responsive,
+                       e(Pagination,
+                         limit=3,
+                         pages=props.item_count/props.limit,
+                         current_page=props.page,
+                         on_change=props.set_page,
+                         query=True,
+                         scroll_top=True),
+                       maxWidth=578,
+                     ),
+                   e(ui.Responsive,
+                       e(Pagination,
+                         pages=props.item_count/props.limit,
+                         current_page=props.page,
+                         on_change=props.set_page,
+                         query=True,
+                         scroll_top=True),
+                       minWidth=579,
+                     ),
+                   centered=True,
+                   )
 
     lscreen = 3
     wscreen = 2
@@ -408,11 +425,11 @@ def ItemViewBase(props):
     return e(ui.Segment,
              *add_el,
              e(ui.Grid,
-               e(ui.Grid.Row, paginations, centered=True),
-                *[e(ui.Grid.Column, c, computer=4, tablet=4, mobile=8, largeScreen=lscreen, widescreen=wscreen) for c in els],
-                e(ui.Grid.Row, paginations, centered=True),
-                padded=True,
-                stackable=True),
+               pagination,
+                e(ui.Grid.Row, *[e(ui.Grid.Column, c, computer=4, tablet=4, mobile=5, largeScreen=lscreen, widescreen=wscreen) for c in els],
+                  centered=True),
+               pagination,
+                padded=True,),
              basic=True,
              loading=props.loading,
              secondary=props.secondary,
