@@ -79,7 +79,7 @@ def receive_props(n_props):
         this.get_item(go=utils.get_query("go"))
         scroll_top = this.props.scroll_top if utils.defined(this.props.scroll_top) else True
         if scroll_top:
-            el = this.props.context or state.container_ref
+            el = this.props.context or this.state.context or state.container_ref
             if el:
                 el.scrollTop = 0
 
@@ -134,6 +134,7 @@ Page = createReactClass({
                                 'tag_data':this.props.tag_data or {},
                                 'item_type':ItemType.Page,
                                 'loading':True,
+                                'context': None
                                 },
 
     'get_item': get_item,

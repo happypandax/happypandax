@@ -60,6 +60,7 @@ def get_container_ref(ctx):
 
 def app_render():
     return e(Router,
+            e(ui.Ref,
             e(ui.Sidebar.Pushable,
                 e(ui.Dimmer.Dimmable,
                     e(nav_ui.MenuNav, toggler=this.toggle_sidebar, contents=this.state["menu_nav_contents"]),
@@ -73,13 +74,14 @@ def app_render():
                     e(Route, path="/item/gallery", component=this.gallery_page),
                     e(Route, path="/item/collection", component=this.collection_page),
                     e(Route, path="/item/page", component=this.page_page),
-                    ref=this.get_context_ref,
                     dimmed=this.state.sidebar_toggled,
                   ),
                 e(nav_ui.SideBarNav, toggler=this.toggle_sidebar, toggled=this.state["sidebar_toggled"]),
                 e(Alert, contentTemplate=Notif, stack={'limit':6, 'spacing':20}, position="top-right", effect="slide", offset=50),
                 className="main-content",
                 ),
+            innerRef=this.get_context_ref,
+            )
             )
 
 App = createReactClass({
