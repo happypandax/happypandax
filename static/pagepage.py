@@ -112,7 +112,9 @@ def page_render():
                                 placeholder="",
                                 ),
                               to=n_url,
-                                )),
+                                ),
+                              className="no-padding-segment"
+                              ),
                centered=True,
                textAlign="center",
                ),
