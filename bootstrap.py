@@ -6,7 +6,7 @@ from subprocess import run
 from importlib import reload
 
 dev_options = dict(
-    build_db = False,
+    build_db = True,
     prev_build = None,
     env_activated = False
     )
