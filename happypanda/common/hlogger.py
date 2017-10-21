@@ -142,7 +142,10 @@ class Logger:
             handlers=tuple(log_handlers))
 
         if main:
-            Logger(__name__).i(os.path.split(constants.log_debug)[1], "created at", os.path.abspath(constants.log_debug), stdout=True)
+            Logger(__name__).i(
+                os.path.split(
+                    constants.log_debug)[1], "created at", os.path.abspath(
+                    constants.log_debug), stdout=True)
 
     @staticmethod
     def _listener(args, queue):

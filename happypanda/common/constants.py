@@ -83,4 +83,3 @@ data_size = 1024
 server_ready = True
 local_ip = ""
 public_ip = ""
-

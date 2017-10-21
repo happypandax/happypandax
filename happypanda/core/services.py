@@ -122,7 +122,7 @@ class Service:
             command_obj.state = command.CommandState.failed
             command_obj.exception = greenlet.exception
             if constants.dev:
-                raise # doesnt work
+                raise  # doesnt work
 
         if isinstance(greenlet.value, gevent.GreenletExit):
             command_obj.state = command.CommandState.stopped

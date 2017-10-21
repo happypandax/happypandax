@@ -144,7 +144,7 @@ def get_view_count(item_type: enums.ItemType=enums.ItemType.Gallery,
     Returns:
         .. code-block:: guess
 
-            { 
+            {
                 'count' : int
             }
     """

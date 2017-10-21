@@ -4,10 +4,8 @@ Plugin
 
 """
 
-from happypanda.core import message
 
-
-#def get_plugin(plugin_id: str):
+# def get_plugin(plugin_id: str):
 #    """
 #    Get plugin information
 
@@ -18,13 +16,13 @@ from happypanda.core import message
 #        .. code-block:: guess
 
 #            {
-#                plugin_id : 
+#                plugin_id :
 #            }
 #    """
 #    return message.Message("works")
 
 
-#def install_plugin(plugin_id: str):
+# def install_plugin(plugin_id: str):
 #    """
 #    Install a plugin
 
@@ -37,7 +35,7 @@ from happypanda.core import message
 #    return message.Message("works")
 
 
-#def uninstall_plugin(plugin_id: str):
+# def uninstall_plugin(plugin_id: str):
 #    """
 #    Uninstall a plugin
 
@@ -50,7 +48,7 @@ from happypanda.core import message
 #    return message.Message("works")
 
 
-#def list_plugins():
+# def list_plugins():
 #    """
 #    Get a list of available plugin information
 

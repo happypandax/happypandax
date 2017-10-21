@@ -36,7 +36,7 @@ def get_image(item_type: enums.ItemType=enums.ItemType.Gallery,
     Returns:
         .. code-block:: guess
 
-            { 
+            {
                 item_id : async_command_id
             }
     """
@@ -169,7 +169,7 @@ def get_count(item_type: enums.ItemType=enums.ItemType.Gallery):
     Returns:
         .. code-block:: guess
 
-            { 
+            {
                 'count' : int
             }
     """
@@ -197,7 +197,7 @@ def get_related_count(item_type: enums.ItemType=enums.ItemType.Gallery,
     Returns:
         .. code-block:: guess
 
-            { 
+            {
                 'id' : int
                 'count' : int
             }

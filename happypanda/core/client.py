@@ -67,8 +67,8 @@ class Client:
         "Connect to the server"
         if not self._tries:
             raise exceptions.ServerDisconnectError(
-                    self.name, "Failed to establish server connection after {} tries".format(self._tries_count))
-        self._tries -= 1 # TODO: increasing timer
+                self.name, "Failed to establish server connection after {} tries".format(self._tries_count))
+        self._tries -= 1  # TODO: increasing timer
         if not self._alive:
             self._last_user = user
             self._last_pass = password

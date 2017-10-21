@@ -13,7 +13,7 @@ These configuration keys will appear in the server's ``config.yaml`` file upon s
 
 """
 
-from happypanda.common import constants, utils, exceptions, config
+from happypanda.common import utils, exceptions, config
 from happypanda.core import message
 
 
@@ -40,7 +40,8 @@ def _get_cfg(keyname, can_raise=True):
     with cfg.tmp_config(ns, ctx['config']):
         if not cfg.key_exists(ns, key):
             if not client_space or (client_space and can_raise):
-                raise exceptions.SettingsError(utils.this_function(), "Setting with key '{}' does not exist".format(keyname))
+                raise exceptions.SettingsError(utils.this_function(),
+                                               "Setting with key '{}' does not exist".format(keyname))
     return ns, key
 
 
@@ -79,7 +80,7 @@ def get_config(cfg: dict = {}):
     Returns:
         .. code-block:: guess
 
-            { 
+            {
                 'namespace.key': value
             }
 
@@ -102,6 +103,7 @@ def get_config(cfg: dict = {}):
                 elif ns == utils.get_context()['name'].lower():
                     values["this"] = s[ns]
     return message.Identity('config', values)
+
 
 def save_config():
     """

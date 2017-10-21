@@ -100,7 +100,7 @@ def parse_options(args):
     cfg = config.config
 
     cmd_args = {}
-    
+
     if args.debug is not None:
         cmd_args.setdefault(config.debug.namespace, {})[config.debug.name] = args.debug
 
@@ -121,7 +121,6 @@ def parse_options(args):
 
     if cmd_args:
         cfg.apply_commandline_args(cmd_args)
-
 
     if constants.dev:
         sys.displayhook == pprint.pprint
@@ -224,6 +223,7 @@ def random_name():
     r = base64.urlsafe_b64encode(uuid.uuid4().bytes).decode('utf-8').replace('=', '').replace('_', '-')
     return r
 
+
 def this_function():
     "Return name of current function"
     return getframeinfo(currentframe()).function
@@ -273,12 +273,14 @@ def switch(priority=constants.Priority.Normal):
     assert isinstance(priority, constants.Priority)
     gevent.idle(priority.value)
 
+
 def get_context(key="ctx"):
     "Get a dict local to the spawn tree of current greenlet"
-    l =  getattr(gevent.getcurrent(), 'locals', None)
+    l = getattr(gevent.getcurrent(), 'locals', None)
     if key is not None:
         return l[key]
     return l
+
 
 class AttributeList(UserList):
     """

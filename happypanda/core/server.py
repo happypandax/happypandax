@@ -20,6 +20,7 @@ from happypanda.interface import meta, enums  # noqa: E402
 
 log = hlogger.Logger(__name__)
 
+
 def list_api():
     "Returns {name : object}"
     _special_functions = tuple()  # functions we don't consider as part of the api
@@ -29,6 +30,7 @@ def list_api():
         all_functions.extend(getmembers(m, isfunction))
     return {x[0]: x[1] for x in all_functions if not x[0]
             in _special_functions and not x[0].startswith('_')}
+
 
 class Session:
     "Connection longevity"
@@ -404,6 +406,7 @@ class ClientHandler:
                 pass
         return None
 
+
 class Greenlet(gevent.Greenlet):
     '''
     A subclass of gevent.Greenlet which adds additional members:
@@ -414,6 +417,7 @@ class Greenlet(gevent.Greenlet):
      - stacks: a record of the stack at which the greenlet was
        spawned, and ancestors
     '''
+
     def __init__(self, f, *a, **kw):
         super(Greenlet, self).__init__(f, *a, **kw)
         spawner = self.spawn_parent = weakref.proxy(gevent.getcurrent())
@@ -426,6 +430,7 @@ class Greenlet(gevent.Greenlet):
             stack.extend((cur.f_code, cur.f_lineno))
             cur = cur.f_back
         self.stacks = (tuple(stack),) + getattr(spawner, 'stacks', ())[:10]
+
 
 class HPServer:
     "Happypanda Server"

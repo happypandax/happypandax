@@ -315,6 +315,7 @@ class ArchiveExtractError(ArchiveError):
     "Archive extraction error"
     pass
 
+
 @error_code(606)
 class ArchiveExistError(ArchiveError):
     "Archive does not exist error"

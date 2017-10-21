@@ -11,7 +11,7 @@ from happypanda.core import message, db
 from happypanda.interface import enums
 
 
-#def add_gallery(galleries: list=[], paths: list=[]):
+# def add_gallery(galleries: list=[], paths: list=[]):
 #    """
 #    Add galleries to the database.
 
@@ -25,7 +25,7 @@ from happypanda.interface import enums
 #    return message.Message("works")
 
 
-#def scan_gallery(paths: list=[], add_after: bool=False,
+# def scan_gallery(paths: list=[], add_after: bool=False,
 #                 ignore_exist: bool=True):
 #    """
 #    Scan folders for galleries
@@ -54,7 +54,7 @@ def source_exists(item_type: enums.ItemType=enums.ItemType.Gallery,
     Returns:
         .. code-block:: guess
 
-            { 
+            {
                 'exists' : bool
                 'missing' : [
                     {'id': int, 'item_type': item_type},
@@ -87,13 +87,13 @@ def source_exists(item_type: enums.ItemType=enums.ItemType.Gallery,
     elif item_type == enums.ItemType.Gallery:
         s = constants.db_session()
         if item and not check_all:
-            p = s.query(db.Page.path).filter(db.Gallery.id==item_id).first()
+            p = s.query(db.Page.path).filter(db.Gallery.id == item_id).first()
             if p:
                 paths[item_id] = (os.path.split(p[0])[0], item_type.value)
             else:
                 not_empty = True
         else:
-            ps = s.query(db.Page.id, db.Page.path).filter(db.Page.gallery_id==item_id).all()
+            ps = s.query(db.Page.id, db.Page.path).filter(db.Page.gallery_id == item_id).all()
             for p in ps:
                 paths[p[0]] = (p[1], enums.ItemType.Page.value)
             not_empty = bool(ps)
@@ -106,11 +106,9 @@ def source_exists(item_type: enums.ItemType=enums.ItemType.Gallery,
         except exceptions.ArchiveExistError:
             e = False
         if not e:
-            missing.append({'id':t_id, 'item_type':t_type})
+            missing.append({'id': t_id, 'item_type': t_type})
 
-    return message.Identity("exists", {'exists':not missing and not_empty, 'missing':missing})
-
-
+    return message.Identity("exists", {'exists': not missing and not_empty, 'missing': missing})
 
 
 def get_page(page_id: int=None, gallery_id: int=None, number: int=None, prev: bool=False):
@@ -128,8 +126,8 @@ def get_page(page_id: int=None, gallery_id: int=None, number: int=None, prev: bo
     """
     if not (gallery_id or page_id):
         raise exceptions.APIError(
-                utils.this_function(),
-                "Either a gallery id or page id is required")
+            utils.this_function(),
+            "Either a gallery id or page id is required")
 
     if number is None:
         number = 0
@@ -146,11 +144,11 @@ def get_page(page_id: int=None, gallery_id: int=None, number: int=None, prev: bo
 
     if not item:
         f = db.Page.number < number if prev else db.Page.number > number
-        f = db.and_op(f, db.Page.gallery_id==gallery_id)
+        f = db.and_op(f, db.Page.gallery_id == gallery_id)
         item = database_cmd.GetModelItemByID().run(db.Page,
-                                                    order_by=db.Page.number.desc() if prev else db.Page.number,
-                                                    filter=f,
-                                                    limit=1)
+                                                   order_by=db.Page.number.desc() if prev else db.Page.number,
+                                                   filter=f,
+                                                   limit=1)
         if item:
             item = item[0]
 

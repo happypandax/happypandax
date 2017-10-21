@@ -171,6 +171,7 @@ class Command(CoreCommand, metaclass=ABCMeta):
     def main(self, *args, **kwargs):
         pass
 
+
 class UndoCommand(Command):
     "Command capable of undoing itself"
 

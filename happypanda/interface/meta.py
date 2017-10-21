@@ -10,7 +10,7 @@ from happypanda.core.services import Service
 from happypanda.core import command, message
 
 
-#def get_error(code: int, id: int):
+# def get_error(code: int, id: int):
 #    """
 #    Get error
 
@@ -31,7 +31,7 @@ def get_version():
     Returns:
         .. code-block:: guess
 
-            { 
+            {
                 'core' : [int, int, int],
                 'db' : [int, int, int],
                 'torrent' : [int, int, int],
@@ -61,7 +61,7 @@ def get_command_value(command_ids: list):
     Returns:
         .. code-block:: guess
 
-            { 
+            {
                 command_id : value
             }
     """
@@ -98,7 +98,7 @@ def get_command_state(command_ids: list):
     Returns:
         .. code-block:: guess
 
-            { 
+            {
                 command_id : state
             }
     """
@@ -113,7 +113,7 @@ def get_command_state(command_ids: list):
     return message.Identity('command_state', states)
 
 
-#def get_command_progress(command_ids: list):
+# def get_command_progress(command_ids: list):
 #    """
 #    Get progress of command in percent
 
@@ -123,7 +123,7 @@ def get_command_state(command_ids: list):
 #    Returns:
 #        .. code-block:: guess
 
-#            { 
+#            {
 #                command_id : progress
 #            }
 #    """
@@ -140,7 +140,7 @@ def stop_command(command_ids: list):
     Returns:
         .. code-block:: guess
 
-            { 
+            {
                 command_id : state
             }
     """
@@ -166,7 +166,7 @@ def start_command(command_ids: list):
     Returns:
         .. code-block:: guess
 
-            { 
+            {
                 command_id : state
             }
     """
@@ -182,7 +182,7 @@ def start_command(command_ids: list):
     return message.Identity('command_state', states)
 
 
-#def get_command_error(command_ids: list):
+# def get_command_error(command_ids: list):
 #    """
 #    Get error raised during command runtime
 
@@ -192,14 +192,14 @@ def start_command(command_ids: list):
 #    Returns:
 #        .. code-block:: guess
 
-#            { 
+#            {
 #                command_id : error
 #            }
 #    """
 #    return message.Message("works")
 
 
-#def undo_command(command_ids: list):
+# def undo_command(command_ids: list):
 #    """
 #    Undo a command
 
@@ -209,7 +209,7 @@ def start_command(command_ids: list):
 #    Returns:
 #        .. code-block:: guess
 
-#            { 
+#            {
 #                command_id : state
 #            }
 

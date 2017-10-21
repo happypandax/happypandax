@@ -25,7 +25,7 @@ def get_tags(item_type: enums.ItemType = enums.ItemType.Gallery,
     Returns:
         .. code-block:: guess
 
-            { 
+            {
                 namespace : [ tag message object, ...],
                 ...
             }

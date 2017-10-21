@@ -1,5 +1,4 @@
 import os
-import pickle
 import base64
 import yaml
 import gevent
@@ -12,9 +11,11 @@ from happypanda.common import exceptions, hlogger, constants
 
 log = hlogger.Logger(__name__)
 
+
 class ConfigIsolation(Enum):
     server = 1
     client = 2
+
 
 class ConfigNode:
 
@@ -63,6 +64,7 @@ class ConfigNode:
     def __bool__(self):
         return bool(self.value)
 
+
 class Config:
 
     def __init__(self, *filepaths, user_filepath=""):
@@ -80,10 +82,10 @@ class Config:
     def create(self, ns, key, default=None, description="", type_=None):
         return ConfigNode(self, ns, key, default, description, type_)
 
-    
     def _ordered_load(self, stream, Loader=yaml.SafeLoader, object_pairs_hook=OrderedDict):
         class OrderedLoader(Loader):
             pass
+
         def construct_mapping(loader, node):
             loader.flatten_mapping(node)
             return object_pairs_hook(loader.construct_pairs(node))
@@ -95,6 +97,7 @@ class Config:
     def _ordered_dump(self, data, stream=None, Dumper=yaml.SafeDumper, **kwds):
         class OrderedDumper(Dumper):
             pass
+
         def _dict_representer(dumper, data):
             return dumper.represent_mapping(
                 yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
@@ -102,7 +105,7 @@ class Config:
         OrderedDumper.add_representer(OrderedDict, _dict_representer)
         return yaml.dump(data,
                          stream,
-                         OrderedDumper, 
+                         OrderedDumper,
                          default_flow_style=False,
                          indent=4,
                          **kwds)
@@ -148,7 +151,7 @@ class Config:
 
     def save_default(self):
         with open(constants.config_example_path, 'w', encoding='utf-8') as wf:
-                self._ordered_dump(self._default_config, wf)
+            self._ordered_dump(self._default_config, wf)
 
     def apply_commandline_args(self, config_dict):
         for ns in self._cfg:
@@ -228,8 +231,6 @@ class Config:
                     self._cfg[self._current_ns] = self._cfg[self._current_ns].parents
             for n in tmp_ns:
                 self._cfg.pop(n)
-
-
 
     @contextmanager
     def namespace(self, ns):
@@ -343,9 +344,9 @@ port_torrent = config.create(
     "Specify which port to start the torrent client on")
 
 port_range = config.create(server_ns,
-    'port_range',
-    {'from':7009, 'to':7018},
-    "Specify a range of ports to attempt")
+                           'port_range',
+                           {'from': 7009, 'to': 7018},
+                           "Specify a range of ports to attempt")
 
 host = config.create(
     server_ns,
