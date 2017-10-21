@@ -17,6 +17,8 @@ changes = """
 - added save_config api function
 - added get_page api function
 - api playground at /api can now parse objects
+- implemented source_exists api function
+- removed unimplemented api functions from docs
 """
 
 

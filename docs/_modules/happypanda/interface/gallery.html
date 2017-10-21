@@ -162,38 +162,158 @@
 <span class="sd">~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~</span>
 
 <span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">os</span>
 
-<span class="kn">from</span> <span class="nn">happypanda.core</span> <span class="k">import</span> <span class="n">message</span>
+<span class="kn">from</span> <span class="nn">happypanda.common</span> <span class="k">import</span> <span class="n">exceptions</span><span class="p">,</span> <span class="n">utils</span><span class="p">,</span> <span class="n">constants</span>
+<span class="kn">from</span> <span class="nn">happypanda.core.commands</span> <span class="k">import</span> <span class="n">database_cmd</span><span class="p">,</span> <span class="n">io_cmd</span>
+<span class="kn">from</span> <span class="nn">happypanda.core</span> <span class="k">import</span> <span class="n">message</span><span class="p">,</span> <span class="n">db</span>
+<span class="kn">from</span> <span class="nn">happypanda.interface</span> <span class="k">import</span> <span class="n">enums</span>
 
 
-<div class="viewcode-block" id="add_gallery"><a class="viewcode-back" href="../../../api.html#happypanda.interface.gallery.add_gallery">[docs]</a><span class="k">def</span> <span class="nf">add_gallery</span><span class="p">(</span><span class="n">galleries</span><span class="p">:</span> <span class="nb">list</span><span class="o">=</span><span class="p">[],</span> <span class="n">paths</span><span class="p">:</span> <span class="nb">list</span><span class="o">=</span><span class="p">[]):</span>
+<span class="c1">#def add_gallery(galleries: list=[], paths: list=[]):</span>
+<span class="c1">#    &quot;&quot;&quot;</span>
+<span class="c1">#    Add galleries to the database.</span>
+
+<span class="c1">#    Args:</span>
+<span class="c1">#        galleries: list of gallery objects</span>
+<span class="c1">#        paths: list of paths to the galleries</span>
+
+<span class="c1">#    Returns:</span>
+<span class="c1">#        Gallery objects</span>
+<span class="c1">#    &quot;&quot;&quot;</span>
+<span class="c1">#    return message.Message(&quot;works&quot;)</span>
+
+
+<span class="c1">#def scan_gallery(paths: list=[], add_after: bool=False,</span>
+<span class="c1">#                 ignore_exist: bool=True):</span>
+<span class="c1">#    &quot;&quot;&quot;</span>
+<span class="c1">#    Scan folders for galleries</span>
+
+<span class="c1">#    Args:</span>
+<span class="c1">#        paths: list of paths to folders to scan for galleries</span>
+<span class="c1">#        add_after: add found galleries after scan</span>
+<span class="c1">#        ignore_exist: ignore existing galleries</span>
+
+<span class="c1">#    Returns:</span>
+<span class="c1">#        list of paths to the galleries</span>
+<span class="c1">#    &quot;&quot;&quot;</span>
+<span class="c1">#    return message.Message(&quot;works&quot;)</span>
+
+<div class="viewcode-block" id="source_exists"><a class="viewcode-back" href="../../../api.html#happypanda.interface.gallery.source_exists">[docs]</a><span class="k">def</span> <span class="nf">source_exists</span><span class="p">(</span><span class="n">item_type</span><span class="p">:</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">=</span><span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Gallery</span><span class="p">,</span>
+                  <span class="n">item_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+                  <span class="n">check_all</span><span class="p">:</span> <span class="nb">bool</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Add galleries to the database.</span>
+<span class="sd">    Check if gallery/page source exists on disk</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        galleries: list of gallery objects</span>
-<span class="sd">        paths: list of paths to the galleries</span>
+<span class="sd">        item_type: possible items are :py:attr:`.ItemType.Gallery`, :py:attr:`.ItemType.Page`</span>
+<span class="sd">        item_id: id of item</span>
+<span class="sd">        check_all: goes through all pages and checks them, default behaviour is to only check parent files/folders. Only relevant for :py:attr:`.ItemType.Gallery`</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        Gallery objects</span>
+<span class="sd">        .. code-block:: guess</span>
+
+<span class="sd">            { </span>
+<span class="sd">                &#39;exists&#39; : bool</span>
+<span class="sd">                &#39;missing&#39; : [</span>
+<span class="sd">                    {&#39;id&#39;: int, &#39;item_type&#39;: item_type},</span>
+<span class="sd">                    ...</span>
+<span class="sd">                    ]</span>
+<span class="sd">            }</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Message</span><span class="p">(</span><span class="s2">&quot;works&quot;</span><span class="p">)</span></div>
+
+    <span class="n">item_type</span> <span class="o">=</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">item_type</span><span class="p">)</span>
+
+    <span class="n">_</span><span class="p">,</span> <span class="n">db_model</span> <span class="o">=</span> <span class="n">item_type</span><span class="o">.</span><span class="n">_msg_and_model</span><span class="p">((</span><span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Gallery</span><span class="p">,</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Page</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">item_type</span> <span class="o">==</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Page</span><span class="p">:</span>
+        <span class="n">item</span> <span class="o">=</span> <span class="n">database_cmd</span><span class="o">.</span><span class="n">GetModelItemByID</span><span class="p">()</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">db_model</span><span class="p">,</span> <span class="p">{</span><span class="n">item_id</span><span class="p">},</span> <span class="n">columns</span><span class="o">=</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">Page</span><span class="o">.</span><span class="n">path</span><span class="p">,))</span>
+    <span class="k">elif</span> <span class="n">item_type</span> <span class="o">==</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Gallery</span><span class="p">:</span>
+        <span class="n">item</span> <span class="o">=</span> <span class="n">database_cmd</span><span class="o">.</span><span class="n">GetModelItemByID</span><span class="p">()</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">db_model</span><span class="p">,</span> <span class="p">{</span><span class="n">item_id</span><span class="p">},</span> <span class="n">columns</span><span class="o">=</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">Gallery</span><span class="o">.</span><span class="n">single_source</span><span class="p">,))</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">item</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">DatabaseItemNotFoundError</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">this_function</span><span class="p">(),</span>
+                                                   <span class="s2">&quot;&#39;</span><span class="si">{}</span><span class="s2">&#39; with id &#39;</span><span class="si">{}</span><span class="s2">&#39; was not found&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">item_type</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                                                                                            <span class="n">item_id</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">item</span> <span class="o">=</span> <span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="n">paths</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">not_empty</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">if</span> <span class="n">item_type</span> <span class="o">==</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Page</span><span class="p">:</span>
+        <span class="n">paths</span><span class="p">[</span><span class="n">item_id</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">item_type</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">item_type</span> <span class="o">==</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Gallery</span><span class="p">:</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">db_session</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">item</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">check_all</span><span class="p">:</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">Page</span><span class="o">.</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">Gallery</span><span class="o">.</span><span class="n">id</span><span class="o">==</span><span class="n">item_id</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">p</span><span class="p">:</span>
+                <span class="n">paths</span><span class="p">[</span><span class="n">item_id</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">])[</span><span class="mi">0</span><span class="p">],</span> <span class="n">item_type</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">not_empty</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ps</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">Page</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">db</span><span class="o">.</span><span class="n">Page</span><span class="o">.</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">Page</span><span class="o">.</span><span class="n">gallery_id</span><span class="o">==</span><span class="n">item_id</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">ps</span><span class="p">:</span>
+                <span class="n">paths</span><span class="p">[</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Page</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+            <span class="n">not_empty</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">ps</span><span class="p">)</span>
+
+    <span class="n">missing</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">t_id</span> <span class="ow">in</span> <span class="n">paths</span><span class="p">:</span>
+        <span class="n">src</span><span class="p">,</span> <span class="n">t_type</span> <span class="o">=</span> <span class="n">paths</span><span class="p">[</span><span class="n">t_id</span><span class="p">]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">e</span> <span class="o">=</span> <span class="n">io_cmd</span><span class="o">.</span><span class="n">CoreFS</span><span class="p">(</span><span class="n">src</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span>
+        <span class="k">except</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">ArchiveExistError</span><span class="p">:</span>
+            <span class="n">e</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">missing</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s1">&#39;id&#39;</span><span class="p">:</span><span class="n">t_id</span><span class="p">,</span> <span class="s1">&#39;item_type&#39;</span><span class="p">:</span><span class="n">t_type</span><span class="p">})</span>
+
+    <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Identity</span><span class="p">(</span><span class="s2">&quot;exists&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;exists&#39;</span><span class="p">:</span><span class="ow">not</span> <span class="n">missing</span> <span class="ow">and</span> <span class="n">not_empty</span><span class="p">,</span> <span class="s1">&#39;missing&#39;</span><span class="p">:</span><span class="n">missing</span><span class="p">})</span></div>
 
 
-<div class="viewcode-block" id="scan_gallery"><a class="viewcode-back" href="../../../api.html#happypanda.interface.gallery.scan_gallery">[docs]</a><span class="k">def</span> <span class="nf">scan_gallery</span><span class="p">(</span><span class="n">paths</span><span class="p">:</span> <span class="nb">list</span><span class="o">=</span><span class="p">[],</span> <span class="n">add_after</span><span class="p">:</span> <span class="nb">bool</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                 <span class="n">ignore_exist</span><span class="p">:</span> <span class="nb">bool</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+
+
+<div class="viewcode-block" id="get_page"><a class="viewcode-back" href="../../../api.html#happypanda.interface.gallery.get_page">[docs]</a><span class="k">def</span> <span class="nf">get_page</span><span class="p">(</span><span class="n">page_id</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">gallery_id</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">number</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">prev</span><span class="p">:</span> <span class="nb">bool</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Scan folders for galleries</span>
+<span class="sd">    Get next/prev page by either gallery or page id</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        paths: list of paths to folders to scan for galleries</span>
-<span class="sd">        add_after: add found galleries after scan</span>
-<span class="sd">        ignore_exist: ignore existing galleries</span>
+<span class="sd">        page_id: id of page</span>
+<span class="sd">        gallery_id: id of gallery</span>
+<span class="sd">        number: retrieve specific page number</span>
+<span class="sd">        prev: by default next page is retrieved, to retrieve prev page set this to true</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        list of paths to the galleries</span>
+<span class="sd">        Page object</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Message</span><span class="p">(</span><span class="s2">&quot;works&quot;</span><span class="p">)</span></div>
+    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">gallery_id</span> <span class="ow">or</span> <span class="n">page_id</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">APIError</span><span class="p">(</span>
+                <span class="n">utils</span><span class="o">.</span><span class="n">this_function</span><span class="p">(),</span>
+                <span class="s2">&quot;Either a gallery id or page id is required&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">number</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">number</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="n">item</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="n">page_id</span><span class="p">:</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">database_cmd</span><span class="o">.</span><span class="n">GetModelItemByID</span><span class="p">()</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">Page</span><span class="p">,</span> <span class="p">{</span><span class="n">page_id</span><span class="p">})[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">number</span> <span class="ow">and</span> <span class="n">p</span> <span class="ow">and</span> <span class="n">number</span> <span class="o">==</span> <span class="n">p</span><span class="o">.</span><span class="n">number</span><span class="p">:</span>
+            <span class="n">item</span> <span class="o">=</span> <span class="n">p</span>
+        <span class="k">elif</span> <span class="n">p</span><span class="p">:</span>
+            <span class="n">number</span> <span class="o">=</span> <span class="n">number</span> <span class="ow">or</span> <span class="n">p</span><span class="o">.</span><span class="n">number</span>
+            <span class="n">gallery_id</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">gallery_id</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">item</span><span class="p">:</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">Page</span><span class="o">.</span><span class="n">number</span> <span class="o">&lt;</span> <span class="n">number</span> <span class="k">if</span> <span class="n">prev</span> <span class="k">else</span> <span class="n">db</span><span class="o">.</span><span class="n">Page</span><span class="o">.</span><span class="n">number</span> <span class="o">&gt;</span> <span class="n">number</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">and_op</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">db</span><span class="o">.</span><span class="n">Page</span><span class="o">.</span><span class="n">gallery_id</span><span class="o">==</span><span class="n">gallery_id</span><span class="p">)</span>
+        <span class="n">item</span> <span class="o">=</span> <span class="n">database_cmd</span><span class="o">.</span><span class="n">GetModelItemByID</span><span class="p">()</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">Page</span><span class="p">,</span>
+                                                    <span class="n">order_by</span><span class="o">=</span><span class="n">db</span><span class="o">.</span><span class="n">Page</span><span class="o">.</span><span class="n">number</span><span class="o">.</span><span class="n">desc</span><span class="p">()</span> <span class="k">if</span> <span class="n">prev</span> <span class="k">else</span> <span class="n">db</span><span class="o">.</span><span class="n">Page</span><span class="o">.</span><span class="n">number</span><span class="p">,</span>
+                                                    <span class="nb">filter</span><span class="o">=</span><span class="n">f</span><span class="p">,</span>
+                                                    <span class="n">limit</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">item</span><span class="p">:</span>
+            <span class="n">item</span> <span class="o">=</span> <span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Page</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="k">if</span> <span class="n">item</span> <span class="k">else</span> <span class="kc">None</span></div>
 </pre></div>
 
         </div>
