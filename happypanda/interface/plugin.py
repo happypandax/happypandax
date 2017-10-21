@@ -7,52 +7,54 @@ Plugin
 from happypanda.core import message
 
 
-def get_plugin(plugin_id: str):
-    """
-    Get plugin information
+#def get_plugin(plugin_id: str):
+#    """
+#    Get plugin information
 
-    Args:
-        plugin_id: get information for a specific plugin
+#    Args:
+#        plugin_id: get information for a specific plugin
 
-    Returns:
-        ```
-        { plugin_id: }
-        ```
-    """
-    return message.Message("works")
+#    Returns:
+#        .. code-block:: guess
 
-
-def install_plugin(plugin_id: str):
-    """
-    Install a plugin
-
-    Args:
-        plugin_id: UUID of plugin
-
-    Returns:
-        an error message object
-    """
-    return message.Message("works")
+#            {
+#                plugin_id : 
+#            }
+#    """
+#    return message.Message("works")
 
 
-def uninstall_plugin(plugin_id: str):
-    """
-    Uninstall a plugin
+#def install_plugin(plugin_id: str):
+#    """
+#    Install a plugin
 
-    Args:
-        plugin_id: UUID of plugin
+#    Args:
+#        plugin_id: UUID of plugin
 
-    Returns:
-        an error message object
-    """
-    return message.Message("works")
+#    Returns:
+#        an error message object
+#    """
+#    return message.Message("works")
 
 
-def list_plugins():
-    """
-    Get a list of available plugin information
+#def uninstall_plugin(plugin_id: str):
+#    """
+#    Uninstall a plugin
 
-    Args:
-        an error message object
-    """
-    return message.Message("works")
+#    Args:
+#        plugin_id: UUID of plugin
+
+#    Returns:
+#        an error message object
+#    """
+#    return message.Message("works")
+
+
+#def list_plugins():
+#    """
+#    Get a list of available plugin information
+
+#    Args:
+#        an error message object
+#    """
+#    return message.Message("works")

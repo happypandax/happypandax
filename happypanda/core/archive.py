@@ -40,13 +40,13 @@ class ArchiveFile():
                 # test for corruption
                 if b_f:
                     # log bad file
-                    raise exceptions.BadArchiveError(filepath)
+                    raise exceptions.ArchiveCorruptError(filepath)
             else:
                 # log unsupprtoed
-                raise exceptions.UnsupportedArchiveError(filepath)
+                raise exceptions.ArchiveUnsupportedError(filepath)
         except (zipfile.error, rarfile.Error) as e:
             # log error
-            raise exceptions.CreateArchiveError(filepath, e)
+            raise exceptions.ArchiveCreateError(filepath, e)
 
     def namelist(self):
         filelist = self.archive.namelist()
@@ -60,7 +60,7 @@ class ArchiveFile():
             return False
         if name not in self.namelist():
             log.e('File {} not found in archive'.format(name))
-            raise exceptions.FileInArchiveNotFoundError(name, self.filepath)
+            raise exceptions.ArchiveFileNotFoundError(name, self.filepath)
         if self.archive_type == self.ZIP:
             if name.endswith('/'):
                 return True
@@ -100,7 +100,7 @@ class ArchiveFile():
         """
         if dir_name and dir_name not in self.namelist():
             log.e('Directory {} not found in archive'.format(dir_name))
-            raise exceptions.FileInArchiveNotFoundError
+            raise exceptions.ArchiveFileNotFoundError
         if not dir_name:
             if self.archive_type == self.ZIP:
                 con = [x for x in self.namelist() if x.count('/') == 0 or

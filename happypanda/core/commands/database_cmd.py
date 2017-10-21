@@ -238,7 +238,7 @@ class GetModelItemByID(Command):
 
                 fetched_list = fetched_list[offset:][:limit]
                 self.fetched_items = tuple(fetched_list) if not count else len(fetched_list)
-            elif id_amount == 1:
+            elif id_amount == 1 and not columns:
                 self.fetched_items = (q.get(ids.pop()),) if not count else q.count()
             else:
                 q = q.filter(model.id.in_(ids))

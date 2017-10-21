@@ -23,7 +23,7 @@ def _view_helper(item_type: enums.ItemType=enums.ItemType.Gallery,
                  search_query: str = "",
                  filter_id: int = None,
                  view_filter: enums.ViewType = enums.ViewType.Library,
-                 item_id: enums.ItemType = None,
+                 item_id: int = None,
                  related_type: enums.ItemType = None,
                  ):
 
@@ -82,7 +82,7 @@ def _view_helper(item_type: enums.ItemType=enums.ItemType.Gallery,
 
 
 def library_view(item_type: enums.ItemType = enums.ItemType.Gallery,
-                 item_id: enums.ItemType = None,
+                 item_id: int = None,
                  related_type: enums.ItemType = None,
                  page: int = 0,
                  limit: int = 100,
@@ -106,7 +106,12 @@ def library_view(item_type: enums.ItemType = enums.ItemType.Gallery,
         item_id: id of parent item
 
     Returns:
-        list of item message objects
+        .. code-block:: guess
+
+            [
+                item message object,
+                ...
+            ]
     """
     view_filter, item_type, db_msg, db_model, model_ids, filter_op, join_exp, metatag_name = _view_helper(
         item_type, search_query, filter_id, view_filter, item_id, related_type)
@@ -120,7 +125,7 @@ def library_view(item_type: enums.ItemType = enums.ItemType.Gallery,
 
 
 def get_view_count(item_type: enums.ItemType=enums.ItemType.Gallery,
-                   item_id: enums.ItemType = None,
+                   item_id: int = None,
                    related_type: enums.ItemType = None,
                    search_query: str = "",
                    filter_id: int = None,
@@ -137,9 +142,11 @@ def get_view_count(item_type: enums.ItemType=enums.ItemType.Gallery,
         item_id: id of parent item
 
     Returns:
-        ```
-        { 'count': int }
-        ```
+        .. code-block:: guess
+
+            { 
+                'count' : int
+            }
     """
     view_filter, item_type, db_msg, db_model, model_ids, filter_op, join_exp, metatag_name = _view_helper(
         item_type, search_query, filter_id, view_filter, item_id, related_type)

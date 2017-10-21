@@ -34,9 +34,11 @@ def get_image(item_type: enums.ItemType=enums.ItemType.Gallery,
         uri: turn raw base64 string into an URI
 
     Returns:
-        ```
-        { item_id : async_command_id }
-        ```
+        .. code-block:: guess
+
+            { 
+                item_id : async_command_id
+            }
     """
 
     item_type = enums.ItemType.get(item_type)
@@ -94,7 +96,12 @@ def get_items(item_type: enums.ItemType=enums.ItemType.Gallery,
         limit: limit the amount of items returned
 
     Returns:
-        list of item message objects
+        .. code-block:: guess
+
+            [
+                item message object,
+                ...
+            ]
     """
 
     item_type = enums.ItemType.get(item_type)
@@ -122,7 +129,12 @@ def get_related_items(item_type: enums.ItemType=enums.ItemType.Gallery,
         limit: limit the amount of items returned
 
     Returns:
-        a list of related item message object
+        .. code-block:: guess
+
+            [
+                related item message object,
+                ...
+            ]
     """
     item_type = enums.ItemType.get(item_type)
     related_type = enums.ItemType.get(related_type)
@@ -155,9 +167,11 @@ def get_count(item_type: enums.ItemType=enums.ItemType.Gallery):
         item_type: type of item
 
     Returns:
-        ```
-        { 'count': int }
-        ```
+        .. code-block:: guess
+
+            { 
+                'count' : int
+            }
     """
 
     item_type = enums.ItemType.get(item_type)
@@ -181,9 +195,12 @@ def get_related_count(item_type: enums.ItemType=enums.ItemType.Gallery,
         related_type: child item
 
     Returns:
-        ```
-        { 'id': int, 'count': int }
-        ```
+        .. code-block:: guess
+
+            { 
+                'id' : int
+                'count' : int
+            }
     """
     item_type = enums.ItemType.get(item_type)
     related_type = enums.ItemType.get(related_type)

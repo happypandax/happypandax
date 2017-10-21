@@ -271,13 +271,13 @@ class ServerDisconnectError(ClientError):
 
 @error_code(600)
 class ArchiveError(HappypandaError):
-    """Base archive exception, all acrhive exceptions will derive from this
+    """Base archive exception, all archive exceptions will derive from this
     """
     pass
 
 
 @error_code(601)
-class CreateArchiveError(ArchiveError):
+class ArchiveCreateError(ArchiveError):
     "Could not create archive object"
 
     def __init__(self, filepath, error):
@@ -287,7 +287,7 @@ class CreateArchiveError(ArchiveError):
 
 
 @error_code(602)
-class BadArchiveError(ArchiveError):
+class ArchiveCorruptError(ArchiveError):
     "Bad file found in archive"
 
     def __init__(self, filepath):
@@ -295,7 +295,7 @@ class BadArchiveError(ArchiveError):
 
 
 @error_code(603)
-class FileInArchiveNotFoundError(ArchiveError):
+class ArchiveFileNotFoundError(ArchiveError):
     "File not found in archive"
 
     def __init__(self, f, archive_f):
@@ -303,7 +303,7 @@ class FileInArchiveNotFoundError(ArchiveError):
 
 
 @error_code(604)
-class UnsupportedArchiveError(ArchiveError):
+class ArchiveUnsupportedError(ArchiveError):
     "Unsupported archive"
 
     def __init__(self, f):
@@ -311,9 +311,16 @@ class UnsupportedArchiveError(ArchiveError):
 
 
 @error_code(605)
-class ExtractArchiveError(ArchiveError):
+class ArchiveExtractError(ArchiveError):
     "Archive extraction error"
     pass
+
+@error_code(606)
+class ArchiveExistError(ArchiveError):
+    "Archive does not exist error"
+
+    def __init__(self, f):
+        return super().__init__("Archive file does not exist. File '{}' not found".format(f))
 
     ## ETC.  -- CODE:900+ ##
 

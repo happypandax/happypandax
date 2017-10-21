@@ -430,13 +430,14 @@ class Archive(CoreCommand):
         return (CoreFS.ZIP, CoreFS.RAR, CoreFS.CBZ, CoreFS.CBR)
 
     def __init__(self, fpath):
+        self._opened = False
         self._archive = None
         self._path = pathlib.Path(fpath)
         self._ext = self._path.suffix.lower()
         if not self._path.exists():
-            raise exceptions.ArchiveError("Archive file does not exist. File '{}' not found.".format(str(self._path)))
+            raise exceptions.ArchiveExistError(str(self._path))
         if not self._path.suffix.lower() in CoreFS.archive_formats():
-            raise exceptions.UnsupportedArchiveError(str(self._path))
+            raise exceptions.ArchiveUnsupportedError(str(self._path))
 
         try:
             with self._init.call_capture(self._ext, self._path) as plg:
@@ -452,7 +453,7 @@ class Archive(CoreCommand):
                 r = plg.first_or_none()
                 if r is not None:
                     if r:
-                        raise exceptions.BadArchiveError(str(self._path))
+                        raise exceptions.ArchiveCorruptError(str(self._path))
 
             with self._path_sep.call_capture(self._ext, self._archive) as plg:
                 p = plg.first_or_none()
@@ -492,7 +493,7 @@ class Archive(CoreCommand):
         if not filename:
             return False
         if filename not in Archive._namelist_def(archive) and filename + '/' not in Archive._namelist_def(archive):
-            raise exceptions.FileInArchiveNotFoundError(filename, archive.hpx_path)
+            raise exceptions.ArchiveFileNotFoundError(filename, archive.hpx_path)
         if isinstance(archive, ZipFile):
             if filename.endswith('/'):
                 return True
@@ -520,7 +521,7 @@ class Archive(CoreCommand):
     @_open.default(capture=True)
     def _open_def(archive, filename, args, kwargs, capture=_def_formats()):
         if filename not in Archive._namelist_def(archive):
-            raise exceptions.FileInArchiveNotFoundError(filename, archive.hpx_path)
+            raise exceptions.ArchiveFileNotFoundError(filename, archive.hpx_path)
         return archive.open(filename, *args, **kwargs)
 
     @_close.default(capture=True)
@@ -548,7 +549,7 @@ class Archive(CoreCommand):
         p = pathlib.Path(target)
 
         if not p.exists():
-            raise exceptions.ExtractArchiveError("Target path does not exist: '{}'".format(str(p)))
+            raise exceptions.ArchiveExtractError("Target path does not exist: '{}'".format(str(p)))
 
         with self._extract.call_capture(self._ext, self._archive, filename, p) as plg:
             extract_path = plg.first()

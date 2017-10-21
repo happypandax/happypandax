@@ -77,9 +77,11 @@ def get_config(cfg: dict = {}):
         cfg: a dict containing ``namespace.key``:``default value`` or an empty dict to retrieve all settings
 
     Returns:
-        ```
-        { 'namespace.key': value }
-        ```
+        .. code-block:: guess
+
+            { 
+                'namespace.key': value
+            }
 
     """
 

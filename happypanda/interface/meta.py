@@ -1,3 +1,8 @@
+"""
+Meta
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+"""
 import arrow
 
 from happypanda.common import constants, exceptions, utils, config
@@ -5,18 +10,18 @@ from happypanda.core.services import Service
 from happypanda.core import command, message
 
 
-def get_error(code: int, id: int):
-    """
-    Get error
+#def get_error(code: int, id: int):
+#    """
+#    Get error
 
-    Args:
-        code: error code, refer to ...
-        id:
+#    Args:
+#        code: error code, refer to ...
+#        id:
 
-    Returns:
-        an error message object
-    """
-    return message.Message("works")
+#    Returns:
+#        an error message object
+#    """
+#    return message.Message("works")
 
 
 def get_version():
@@ -24,7 +29,13 @@ def get_version():
     Get version of components: 'core', 'db' and 'torrent'
 
     Returns:
-        a dict of component: list of major, minor, patch
+        .. code-block:: guess
+
+            { 
+                'core' : [int, int, int],
+                'db' : [int, int, int],
+                'torrent' : [int, int, int],
+            }
     """
     vs = dict(
         core=list(constants.version),
@@ -48,10 +59,11 @@ def get_command_value(command_ids: list):
         command_ids: list of command ids
 
     Returns:
-        ```
-        { command_id : value }
-        ```
+        .. code-block:: guess
 
+            { 
+                command_id : value
+            }
     """
 
     _command_msg(command_ids)
@@ -84,9 +96,11 @@ def get_command_state(command_ids: list):
         command_ids: list of command ids
 
     Returns:
-        ```
-        { command_id : state }
-        ```
+        .. code-block:: guess
+
+            { 
+                command_id : state
+            }
     """
 
     _command_msg(command_ids)
@@ -99,25 +113,21 @@ def get_command_state(command_ids: list):
     return message.Identity('command_state', states)
 
 
-def get_command_progress(command_ids: list):
-    """
-    Get progress of command in percent
+#def get_command_progress(command_ids: list):
+#    """
+#    Get progress of command in percent
 
-    Args:
-        command_ids: list of command ids
+#    Args:
+#        command_ids: list of command ids
 
-    Returns:
-        ```
-        { command_id : progress }
-        ```
-    """
-    return message.Message("works")
+#    Returns:
+#        .. code-block:: guess
 
-"""
-Meta
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-"""
+#            { 
+#                command_id : progress
+#            }
+#    """
+#    return message.Message("works")
 
 
 def stop_command(command_ids: list):
@@ -128,9 +138,11 @@ def stop_command(command_ids: list):
         command_ids: list of command ids
 
     Returns:
-        ```
-        { command_id : state }
-        ```
+        .. code-block:: guess
+
+            { 
+                command_id : state
+            }
     """
     _command_msg(command_ids)
 
@@ -152,9 +164,11 @@ def start_command(command_ids: list):
         command_ids: list of command ids
 
     Returns:
-        ```
-        { command_id : state }
-        ```
+        .. code-block:: guess
+
+            { 
+                command_id : state
+            }
     """
     _command_msg(command_ids)
 
@@ -168,34 +182,38 @@ def start_command(command_ids: list):
     return message.Identity('command_state', states)
 
 
-def get_command_error(command_ids: list):
-    """
-    Get error raised during command runtime
+#def get_command_error(command_ids: list):
+#    """
+#    Get error raised during command runtime
 
-    Args:
-        command_ids: list of command ids
+#    Args:
+#        command_ids: list of command ids
 
-    Returns:
-        ```
-        { command_id : error }
-        ```
-    """
-    return message.Message("works")
+#    Returns:
+#        .. code-block:: guess
+
+#            { 
+#                command_id : error
+#            }
+#    """
+#    return message.Message("works")
 
 
-def undo_command(command_ids: list):
-    """
-    Undo a command
+#def undo_command(command_ids: list):
+#    """
+#    Undo a command
 
-    Args:
-        command_ids: list of command ids
+#    Args:
+#        command_ids: list of command ids
 
-    Returns:
-        ```
-        { command_id : state }
-        ```
+#    Returns:
+#        .. code-block:: guess
 
-    .. Note::
-        Only select commands are undoable
-    """
-    return message.Message("works")
+#            { 
+#                command_id : state
+#            }
+
+#    .. Note::
+#        Only select commands are undoable
+#    """
+#    return message.Message("works")
