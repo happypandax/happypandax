@@ -12,6 +12,7 @@ dev_options = dict(
     )
 
 changes = """
+- refactor configuration
 - implemented get_config api function
 - implemented set_config api function
 - added save_config api function
