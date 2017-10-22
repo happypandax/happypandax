@@ -454,7 +454,7 @@ def get_items(data=None, error=None):
         func_kw = { 'item_type':item,
                     'page': max(int(this.state.page)-1, 0),
                     'limit':this.props.limit or this.state.default_limit}
-        if this.props.view_filter:
+        if utils.defined(this.props.view_filter):
             func_kw['view_filter'] = this.props.view_filter
         if this.state.search_query:
             func_kw['search_query'] = this.state.search_query

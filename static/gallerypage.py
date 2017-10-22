@@ -263,6 +263,7 @@ def page_render():
                                                   item_id=item_id,
                                                   item_type=ItemType.Gallery,
                                                   related_type=ItemType.Page,
+                                                  view_filter=None,
                                                   label="Pages",
                                                   container=True, secondary=True))),
                stackable=True,

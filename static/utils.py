@@ -37,6 +37,22 @@ poll_func = __pragma__('js', '{}',
     })();
     }""")
 
+poll_func_stagger = __pragma__('js', '{}',
+                       """
+    function poll_func(fn, timeout, interval) {
+    var startTime = (new Date()).getTime();
+    interval = interval || 1000;
+    var canPoll = true;
+
+    (function p() {
+        canPoll = ((new Date).getTime() - startTime ) <= timeout;
+        interval = fn()
+        if (interval && canPoll)  { // ensures the function exucutes
+            setTimeout(p, interval);
+        }
+    })();
+    }""")
+
 html_escape_table = {
     "&": "&amp;",
     '"': "&quot;",
@@ -50,8 +66,11 @@ def html_escape(text):
     """Produce entities within text."""
     return "".join(html_escape_table.get(c, c) for c in text)
 
-def defined(v):
-    return v != js_undefined
+defined = __pragma__('js', '{}',
+                       """
+    function defined(v) {
+        return !(v === undefined);
+    }""")
 
 def get_locale():
     return window.navigator.userLanguage or window.navigator.language

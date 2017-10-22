@@ -1,6 +1,7 @@
 state = {
     'app':None,
     'container_ref':None, # main conatiner
-    'commands': set()
+    'commands': set(),
+    'debug': False
     }
 

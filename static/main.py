@@ -44,7 +44,7 @@ def notif(msg, header="", level="info", icon=None, **kwargs):
         _a = Alert.success
     elif level == "error":
         _a = Alert.error
-        _timeout = 8000
+        _timeout = _timeout * 2
     else:
         _a = Alert.info
 

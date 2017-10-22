@@ -162,8 +162,8 @@ Page = createReactClass({
                         e(ui.Divider),
                         e(ui.Accordion,
                           panels=[
-                              {'key':0, 'title':tr(this, "", "Message"), 'content':e(ui.Message, formatted_json(this.state['to_server']), as_="pre", className="overflow-auto")},
-                              {'key':1, 'title':tr(this, "", "Response"), 'content':e(ui.Message, formatted_json(this.state['from_server']), as_="pre", className="overflow-auto")},
+                              {'key':0, 'title':tr(this, "", "Message"), 'content':e(ui.Message, formatted_json(this.state['to_server']), className="overflow-auto")},
+                              {'key':1, 'title':tr(this, "", "Response"), 'content':e(ui.Message, formatted_json(this.state['from_server']), className="overflow-auto")},
                               ],
                           exclusive=False,
                           defaultActiveIndex=[0, 1]

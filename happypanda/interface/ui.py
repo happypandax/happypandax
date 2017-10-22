@@ -26,9 +26,9 @@ def _view_helper(item_type: enums.ItemType=enums.ItemType.Gallery,
                  item_id: int = None,
                  related_type: enums.ItemType = None,
                  ):
-
-    view_filter = enums.ViewType.get(view_filter)
-    if related_type:
+    if view_filter is not None:
+        view_filter = enums.ViewType.get(view_filter)
+    if related_type is not None:
         related_type = enums.ItemType.get(related_type)
     item_type = enums.ItemType.get(item_type)
 
@@ -66,18 +66,19 @@ def _view_helper(item_type: enums.ItemType=enums.ItemType.Gallery,
         metatag_name = db.MetaTag.names.inbox
 
     if metatag_name:
-        if item_type == enums.ItemType.Gallery:
+        if hasattr(db_model, "metatags"):
             filter_op = db.MetaTag.name == metatag_name
-            join_exp = db.Gallery.metatags
-    else:
-        if item_type == enums.ItemType.Gallery:
-            filter_op = ~db.Gallery.metatags.any(db.MetaTag.name == db.MetaTag.names.inbox)
+            join_exp = db_model.metatags
+    elif view_filter == enums.ViewType.Library:
+        if hasattr(db_model, "metatags"):
+            filter_op = ~db_model.metatags.any(db.MetaTag.name == db.MetaTag.names.inbox)
 
     if related_type:
         related_filter = parent_model.id == item_id
         filter_op = db.and_op(filter_op, related_filter) if filter_op is not None else related_filter
-        join_exp = [join_exp, parent_model] if join_exp is not None else parent_model
+        join_exp = [col, join_exp] if join_exp is not None else col
 
+    print("########################", db_model)
     return view_filter, item_type, db_msg, db_model, model_ids, filter_op, join_exp, metatag_name
 
 
@@ -101,7 +102,7 @@ def library_view(item_type: enums.ItemType = enums.ItemType.Gallery,
         limit: amount of items per page
         search_query: filter item by search terms
         filter_id: current filter list id
-        view_filter: type of view
+        view_filter: type of view, set ``None`` to not apply any filter
         related_type: child item
         item_id: id of parent item
 
@@ -137,7 +138,7 @@ def get_view_count(item_type: enums.ItemType=enums.ItemType.Gallery,
         item_type: possible items are :py:attr:`.ItemType.Gallery`, :py:attr:`.ItemType.Collection`, :py:attr:`.ItemType.Grouping`
         search_query: filter item by search terms
         filter_id: current filter list id
-        view_filter: type of view
+        view_filter: type of view, set ``None`` to not apply any filter
         related_type: child item
         item_id: id of parent item
 

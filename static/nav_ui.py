@@ -197,7 +197,7 @@ def sidebar_nav_render():
         print(props)
 
     items = []
-    items.append(MenuItem("HPX", header=True, icon="sidebar", position="left", handler=this.props["toggler"]))
+    items.append(MenuItem("", icon="sidebar", position="left", handler=this.props["toggler"]))
 
     items.append(MenuItem("Dashboard", "ui.mi-dashboard", icon="home", url="/dashboard", handler=this.props["toggler"]))
     items.append(MenuItem("Favorites", "ui.mi-favorites", icon="heart", url="/favorite", handler=this.props["toggler"]))
@@ -251,7 +251,7 @@ def sidebar_nav_render():
         else:
             container = elements
 
-        item_children = (e(ui.Icon, js_name=menu_icon, className="left medium-size", size=icon_size), tr(this, x.t_id, menu_name) if not icon else "",)
+        item_children = (e(ui.Icon, js_name=menu_icon, className="left", size=icon_size), tr(this, x.t_id, menu_name) if not icon else "",)
 
         as_link = {}
         if x.url:
@@ -263,6 +263,7 @@ def sidebar_nav_render():
                             header=x.header,
                             onClick=x.handler,
                             index=n,
+                            icon=not menu_name,
                             **as_link)
         if x.modal:
             menu_el = e(ui.Modal, *x.modal,
@@ -305,7 +306,7 @@ SideBarNav = createReactClass({
 
 def menu_nav_render():
     items = []
-    items.append(MenuItem("HPX", icon="sidebar", position="left", header=True, handler=this.props["toggler"]))
+    items.append(MenuItem("", icon="sidebar", position="left", header=True, handler=this.props["toggler"]))
 
     elements = []
     elements_left = []
@@ -327,12 +328,14 @@ def menu_nav_render():
             children.append(e(ui.Dropdown.Item, c.name))
 
         container.append(e(ui.Menu.Item,
-                            e(ui.Icon, js_name=menu_icon, size=icon_size, className="medium-size"),
+                            e(ui.Icon, js_name=menu_icon, size=icon_size),
                             menu_name,
                             js_name=menu_name,
                             header=x.header,
                             onClick=x.handler,
-                            index=n)
+                            index=n,
+                            icon=not menu_name,
+                            )
                          )
     menu_contents = this.props.contents
     if not isinstance(menu_contents, list):

@@ -3,8 +3,6 @@ import utils
 
 io = require('socket.io-client')
 
-debug = True
-
 class ItemType:
     #: Gallery
     Gallery = 1
@@ -60,7 +58,7 @@ class Base:
         pass
 
     def log(self, msg):
-        if debug:
+        if state.debug:
             print(msg)
 
 class ServerMsg:
@@ -97,6 +95,7 @@ class Client(Base):
         self.socket.on("server_call", self.on_server_call)
         self.socket.on("exception", self.on_error)
 
+
         self.commands = {
             'connect': 1,
             'reconnect': 2,
@@ -108,25 +107,67 @@ class Client(Base):
         self.namespace = namespace
         self.session = session
         self.name = "webclient"
+        self._reconnecting = False
         self._connection_status = True
         self._disconnected_once = False
         self._response_cb = {}
+        self._first_connect = True
         self._last_msg = None
-        self._msg_queue = []
         self._cmd_status = {}
         self._cmd_status_c = 0
+        self._retries = None
+        self._poll_interval = 5
+        self._poll_timeout = 1000*60*120
+        self._last_retry = __new__(Date()).getTime()
 
         if not self.polling:
-            utils.poll_func(self.connection, 3000000, 15000)
+            self.socket.on("connect", self.on_connect)
+            self.socket.on("disconnect", self.on_disconnect)
+            utils.poll_func(self.connection, self._poll_timeout, self._poll_interval*1000)
             Client.polling = True
     __pragma__('nokwargs')
 
+    def on_connect(self):
+        self.call_func("get_config", self._set_debug, cfg={'core.debug':False})
+        self.reconnect()
+
+    def on_disconnect(self):
+        self._connection_status = False
+        self._disconnected_once = True
+        state.app.notif("Disconnected from the server", "Server", "error")
+        for x in state.commands:
+            x.stop()
+
     def connection(self):
         self.send_command(self.commands['status'])
-        if not self._connection_status:
-            state.app.notif("Trying to establish server connection...", "Server")
-            self.send_command(self.commands['connect'])
+        if not self._connection_status and not self._reconnecting:
+            self.log("Starting reconnection")
+            utils.poll_func_stagger(self._reconnect, self._poll_timeout, self._poll_interval*1000)
+            self._reconnecting = True
         return False
+
+    __pragma__("tconv")
+    def _reconnect(self):
+        self.log("Reconnecting")
+        last_interval = 100
+        if self._retries is None:
+            self._retries = list(range(10, last_interval+10, 10)) # secs
+        i = self._retries.pop(0) if self._retries else last_interval
+        if self._connection_status:
+            i = 0
+        else:
+            self.reconnect(i)
+        return i * 1000
+    __pragma__("notconv")
+
+
+    __pragma__("kwargs")
+    def reconnect(self, interval = None):
+        state.app.notif("Trying to establish server connection{}".format(
+            ", trying again in {} seconds".format(interval) if interval else ""
+            ), "Server")
+        self.send_command(self.commands['connect'])
+    __pragma__("nokwargs")
 
     def send_command(self, cmd):
         assert cmd in self.commands.values(), "Not a valid command"
@@ -136,10 +177,13 @@ class Client(Base):
         self._connection_status = msg['status']
         st_txt = "unknown"
         if self._connection_status:
-            if self._disconnected_once:
+            if self._disconnected_once or self._first_connect:
                 self._disconnected_once = False
+                self._first_connect = False
                 state.app.notif("Connection to server has been established", "Server", 'success')
             st_txt = "connected"
+            self._reconnecting = False
+            self._retries = None
         else:
             self._disconnected_once = True
             st_txt = "disconnected"
@@ -163,6 +207,9 @@ class Client(Base):
                 self.flash_error(serv_data['error'])
                 if serv_data['error']['code'] == 408:
                     self.send_command(self.commands['handshake'])
+            if serv_data['data'] == "Authenticated" and self._last_msg:
+                    self.socket.emit("server_call", self._last_msg)
+                    return
             if serv_msg.func_name and serv_data:
                 for func in serv_data.data:
                     err = None
@@ -206,14 +253,15 @@ class Client(Base):
         self._last_msg = final_msg
         if self._connection_status:
             self.socket.emit("server_call", final_msg)
-        else:
-            self._msg_queue.append(final_msg)
         servermsg._msg = final_msg
         return servermsg
 
     def flash_error(self, err):
         if err:
             state.app.notif(err['msg'], "Server({})".format(err['code']), "error")
+
+    def _set_debug(self, data):
+        state.debug = data['core.debug']
 
 client = Client()
 thumbclient = Client(namespace="/thumb")
