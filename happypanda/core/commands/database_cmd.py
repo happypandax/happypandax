@@ -1,3 +1,5 @@
+from sqlalchemy.orm.exc import MultipleResultsFound
+
 from happypanda.common import utils, hlogger, exceptions, constants
 from happypanda.core.command import Command, CommandEvent, AsyncCommand, CommandEntry
 from happypanda.core.commands import io_cmd
@@ -90,6 +92,7 @@ class GetModelImage(AsyncCommand):
         cover_path = ""
         generate = True
         sess = constants.db_session()
+
         self.cover = sess.query(db.Profile).filter(
             db.Profile.data == img_hash).one_or_none()
 

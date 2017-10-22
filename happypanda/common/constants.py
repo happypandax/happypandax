@@ -7,7 +7,7 @@ rarfile.PATH_SEP = '/'
 dev = False
 
 ## VERSIONING ##
-build = 102
+build = 103
 version = (0, 0, 1)
 version_db = (0, 0, 1)
 
@@ -49,7 +49,7 @@ class Priority(enum.Enum):
     Normal = 5
     Low = 0
 
-maximum_native_workers = 10
+maximum_native_workers = 15
 
 image_sizes = {
     "big": (300, 416),
@@ -70,7 +70,7 @@ plugin_shortname_length = 10
 # DATABASE½
 db_engine = None
 db_session = None
-_db_scoped_sesion = None
+_db_scoped_session = None
 default_user = None
 special_namespace = "__namespace__"
 

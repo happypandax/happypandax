@@ -6,12 +6,12 @@ from contextlib import contextmanager
 from abc import ABCMeta, abstractmethod
 from inspect import isclass
 from concurrent import futures
+from gevent.threadpool import ThreadPool
 
 from happypanda.common import utils, hlogger, exceptions, constants
 from happypanda.core import plugins
 
 log = hlogger.Logger(__name__)
-
 
 def get_available_commands():
     subs = utils.all_subclasses(Command)
@@ -60,39 +60,31 @@ class CommandFuture:
     def get(self, block=True, timeout=None):
         if not self._value == self.NoValue:
             return self._value
-        if block:
-            while True:
-                try:
-                    self._value = self._future.result(0)
-                    break
-                except futures.TimeoutError:
-                    utils.switch(constants.Priority.Low)
-        else:
-            self._value = self._future.get(0)  # TODO: return custom timeout exception
+        self._value =  self._future.get(block, timeout)
         return self._value
 
     def kill(self):
-        pass
+        self._future.kill()
+
 
 
 def _daemon_greenlet():
     while True:
         utils.switch(constants.Priority.Low)
 
-
 def _native_runner(f):
 
     def cleanup_wrapper(*args, **kwargs):
         r = f(*args, **kwargs)
-        constants._db_scoped_sesion.remove()
+        constants._db_scoped_session.remove()
         return r
 
     def wrapper(*args, **kwargs):
-        d = gevent.spawn(_daemon_greenlet)  # this is to allow gevent switching to occur
-        g = gevent.spawn(cleanup_wrapper, *args, **kwargs)
-        r = g.get()
-        d.kill()
-        return r
+        #d = gevent.spawn(_daemon_greenlet)  # this is to allow gevent switching to occur
+        #g = gevent.spawn(cleanup_wrapper, *args, **kwargs)
+        #r = g.get()
+        #d.kill()
+        return cleanup_wrapper(*args, **kwargs)
     return wrapper
 
 
@@ -114,10 +106,16 @@ class CoreCommand():
         self._started_time = None
         self._finished_time = None
         self._priority = priority
+        self._futures = []
 
     def run_native(self, f, *args, **kwargs):
-        # TODO: avoid deadlocks by only running if not in native thread already
-        return CommandFuture(self, self._native_pool.submit(_native_runner(f), *args, **kwargs))
+        f = CommandFuture(self, self._native_pool.apply_async(_native_runner(f), args, kwargs))
+        self._futures.append(f)
+        return f
+
+    def kill(self):
+        [f.kill() for f in self._futures]
+
 
     def _log_stats(self, d=None):
         create_delta = self._finished_time - self._created_time
@@ -367,4 +365,4 @@ class CommandEntry(_CommandPlugin):
 
 
 def init_commands():
-    CoreCommand._native_pool = futures.ThreadPoolExecutor(constants.maximum_native_workers)
+    CoreCommand._native_pool =  ThreadPool(constants.maximum_native_workers)

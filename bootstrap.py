@@ -12,6 +12,7 @@ dev_options = dict(
     )
 
 changes = """
+- improve async execution
 - refactor configuration
 - implemented get_config api function
 - implemented set_config api function

@@ -1368,7 +1368,7 @@ def init(**kwargs):
     if not db_path:
         db_path = constants.db_path_dev if constants.dev else constants.db_path
     Session = scoped_session(sessionmaker(), scopefunc=gevent.getcurrent)
-    constants._db_scoped_sesion = Session
+    constants._db_scoped_session = Session
     constants.db_session = functools.partial(_get_session, Session)
     initEvents(Session)
     constants.db_engine = kwargs.get("engine")

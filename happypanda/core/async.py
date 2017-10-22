@@ -16,12 +16,15 @@ class Greenlet(gevent.Greenlet):
 
     def __init__(self, f, *a, **kw):
         super(Greenlet, self).__init__(f, *a, **kw)
-        spawner = self.spawn_parent = weakref.proxy(gevent.getcurrent())
+        self._hp_inherit(weakref.proxy(gevent.getcurrent()), sys._getframe())
+
+    def _hp_inherit(self, parent, frame):
+        spawner = self.spawn_parent = parent
         if not hasattr(spawner, 'locals'):
             spawner.locals = {}
         self.locals = spawner.locals
         stack = []
-        cur = sys._getframe()
+        cur = frame
         while cur:
             stack.extend((cur.f_code, cur.f_lineno))
             cur = cur.f_back
