@@ -1,5 +1,10 @@
 ﻿@import "s-alert.css";
 
+* {
+    min-height: 0;
+    min-width: 0;
+}
+
 body, #root, #root > div { display: flex }
 
 #root, #root > div {
@@ -127,12 +132,16 @@ i.medium-size { font-size: 1.1em !important; }
 
     .slick-dots {
         bottom: 0 !important;
+        position: relative !important;
     }
 
     .slick-list {
         padding: 5px !important;
     }
 
+.slide-segment {
+    margin: 0 !important;
+}
 
 .no-padding-segment {
     padding: 0 !important;

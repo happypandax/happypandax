@@ -9,6 +9,7 @@ from react_utils import (h,e,
 
 from state import state
 import math
+import utils
 
 ui = require("semantic-ui-react")
 
@@ -24,43 +25,48 @@ def SliderNav(props):
              className="slide-next {}".format(props.direction),
              onClick=props.onClick)
 
+__pragma__("tconv")
 def Slider(props):
-    children = React.Children.toArray(props.children)
-    items = [e(ui.Segment, x, basic=True, size=props.size) for x in children]
+    children = props.data or React.Children.toArray(props.children)
+    items = [e(ui.Segment, x, basic=True, size=props.size, className="slide-segment") for x in children]
     add_el = []
     if props.label:
         add_el.append(e(ui.Label, props.label, e(ui.Label.Detail, len(items)), attached="top"))
+    base_size = props.sildesToShow if props.sildesToShow else 5
+
+    if items:
+        add_el.append(e(slick,
+                    *items,
+                    dots=True,
+                    dotsClass="circle slick-dots",
+                    draggable=True,
+                    infinite= False if not utils.defined(props.infinite) else props.infinite,
+                    centerMode=False,
+                    accessibility=True,
+                    lazyLoad=False,
+                    adaptiveHeight=True,
+                    slidesToShow=base_size,
+                    slidesToScroll=base_size-1,
+                    nextArrow=e(SliderNav, direction="right"),
+                    prevArrow=e(SliderNav, direction="left"),
+                    responsive = [
+                        { 'breakpoint': 425, 'settings': { 'slidesToShow': base_size-3, 'slidesToScroll': base_size-3 } },
+                        { 'breakpoint': 610, 'settings': { 'slidesToShow': base_size-2, 'slidesToScroll': base_size-2 } },
+                        { 'breakpoint': 768, 'settings': { 'slidesToShow': base_size-1, 'slidesToScroll': base_size-1 } },
+                        { 'breakpoint': 1024, 'settings': { 'slidesToShow': base_size } },
+                        { 'breakpoint': 1280, 'settings': { 'slidesToShow': base_size+1 } },
+                        { 'breakpoint': 1440, 'settings': { 'slidesToShow': base_size+2 } },
+                        { 'breakpoint': 1860, 'settings': { 'slidesToShow': base_size+3 } },
+                        { 'breakpoint': 100000, 'settings': 'unslick' } ]))
 
     return e(ui.Segment,
              *add_el,
-            e(slick,
-                *items,
-                dots=True,
-                dotsClass="circle slick-dots",
-                draggable=True,
-                infinite=False,
-                centerMode=False,
-                accessibility=True,
-                lazyLoad=True,
-                slidesToShow=4,
-                slidesToScroll=2,
-                nextArrow=e(SliderNav, direction="right"),
-                prevArrow=e(SliderNav, direction="left"),
-                responsive = [ 
-                    { 'breakpoint': 425, 'settings': { 'slidesToShow': 1 } },
-                    { 'breakpoint': 610, 'settings': { 'slidesToShow': 2 } },
-                    { 'breakpoint': 768, 'settings': { 'slidesToShow': 3 } },
-                    { 'breakpoint': 1024, 'settings': { 'slidesToShow': 4 } },
-                    { 'breakpoint': 1280, 'settings': { 'slidesToShow': 5 } },
-                    { 'breakpoint': 1440, 'settings': { 'slidesToShow': 6 } },
-                    { 'breakpoint': 2560, 'settings': { 'slidesToShow': 7 } },
-                    { 'breakpoint': 100000, 'settings': 'unslick' } ]
-                ),
                 basic=True,
                 loading=props.loading,
                 secondary=props.secondary,
                 tertiary=props.tertiary,
                 )
+__pragma__("notconv")
 
 def Notif(props):
     return  h("div",

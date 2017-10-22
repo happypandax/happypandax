@@ -347,7 +347,7 @@ def menu_nav_render():
                         *elements_right,
                         secondary=True,
                         attached="top",
-                        fluid=True,
+                        #fluid=True,
                         size="small",
                         stackable=True)
 
