@@ -1,5 +1,3 @@
-from sqlalchemy.orm.exc import MultipleResultsFound
-
 from happypanda.common import utils, hlogger, exceptions, constants
 from happypanda.core.command import Command, CommandEvent, AsyncCommand, CommandEntry
 from happypanda.core.commands import io_cmd
