@@ -234,6 +234,7 @@ class Command(Base):
         self._values = {}
         self._value_callback = None
         self._getting_value = False
+        self._stopped = False
         self._on_each = False
         self._complete_callback = None
         self.commandclient = commandclient
@@ -259,10 +260,26 @@ class Command(Base):
     __pragma__('noiconv')
 
     __pragma__('iconv')
+    def stop(self, data=None, error=None):
+        "Stop command"
+        if data is not None and not error:
+            states = []
+            for i in self._command_ids:
+                str_i = str(i)
+                self._states[str_i] = data[str_i]
+        elif error:
+            pass
+        else:
+            self._stopped = True
+            self.commandclient.call_func("stop_command", self.stop, command_ids=self._command_ids)
+    __pragma__('noiconv')
 
+    __pragma__('iconv')
     __pragma__('kwargs')
     def finished(self, any_command=False):
         "Check if command has finished running"
+        if self._stopped:
+            return True
         states = []
         for s in self._states:
             states.append(self._states[s] in ['finished', 'stopped', 'failed'])
@@ -288,8 +305,12 @@ class Command(Base):
                         self._complete_callback()
 
                 self._fetch_value()
-                return self.finished()
+                f = self.finished()
+                if f:
+                    state.commands.remove(self)
+                return f
 
+            state.commands.add(self)
             utils.poll_func(_poll, timeout, interval)
         else:
             if self._complete_callback:
@@ -316,7 +337,7 @@ class Command(Base):
         elif error:
             pass
         else:
-            if self.finished(self._on_each) and not self._getting_value:
+            if self.finished(self._on_each) and not self._getting_value and not self._stopped:
                 if not cmd_ids:
                     cmd_ids = []
                     for i in self._command_ids:

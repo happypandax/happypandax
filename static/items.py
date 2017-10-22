@@ -27,11 +27,15 @@ def thumbnail_get_thumb(data=None, error=None):
         cmd_id = data[str(this.props.item_id)]
         if cmd_id:
             cmd = Command(cmd_id)
+            this.setState({'active_cmd': cmd})
             cmd.set_callback(this.set_thumb)
             cmd.poll_until_complete(500)
     elif error:
         pass
     else:
+        if this.state.active_cmd:
+            this.state.active_cmd.stop()
+            this.setState({'active_cmd': None})
         if this.props.item_id and this.props.size_type and this.props.item_type:
             thumbclient.call_func("get_image", this.get_thumb,
                                   item_ids=[this.props.item_id],
@@ -49,7 +53,7 @@ def thumbnail_set_thumb(cmd):
         im = val['data']
     if not im:
         im = "/static/img/no-image.png"
-    this.setState({'img':im, 'loading':False})
+    this.setState({'img':im, 'loading':False, 'active_cmd':None})
 
 def thumbnail_render():
     img_url = this.state.placeholder
@@ -92,6 +96,7 @@ Thumbnail = createReactClass({
     'getInitialState': lambda: {'img':"",
                                 'loading':True,
                                 'placeholder': this.props.placeholder if utils.defined(this.props.placeholder) else "/static/img/default.png",
+                                'active_cmd': None,
                                 },
 
     'get_thumb': thumbnail_get_thumb,
@@ -99,6 +104,7 @@ Thumbnail = createReactClass({
     'set_thumb': thumbnail_set_thumb,
 
     'componentDidMount': lambda: this.get_thumb(),
+    'componentWillUnmount': lambda: this.state.active_cmd.stop if this.state.active_cmd else None,
     'componentDidUpdate': thumbnail_on_update,
 
     'render': thumbnail_render

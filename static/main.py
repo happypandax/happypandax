@@ -21,6 +21,19 @@ import gallerypage
 import pagepage
 import collectionpage
 
+def on_update(props):
+    if props.location.pathname != this.props.location.pathname:
+        for x in state.commands:
+            x.stop()
+
+PathChange = createReactClass({
+                'displayName': 'PathChange',
+
+                'componentWillReceiveProps': on_update,
+
+                'render': lambda: None
+            })
+
 __pragma__("kwargs")
 def notif(msg, header="", level="info", icon=None, **kwargs):
     _a = None
@@ -62,6 +75,7 @@ def app_render():
     return e(Router,
             e(ui.Ref,
             e(ui.Sidebar.Pushable,
+                e(Route, component=PathChange),
                 e(ui.Dimmer.Dimmable,
                     e(nav_ui.MenuNav, toggler=this.toggle_sidebar, contents=this.state["menu_nav_contents"]),
                     e(ui.Dimmer, active=this.state.sidebar_toggled, onClickOutside=this.toggle_sidebar,),

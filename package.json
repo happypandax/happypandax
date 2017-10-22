@@ -18,9 +18,7 @@
     "react-slick": "^0.15.0",
     "semantic-ui": "^2.2.13",
     "semantic-ui-react": "^0.75.1",
-    "socket.io": "^2.0.3"
-  },
-  "devDependencies": {
+    "socket.io": "^2.0.3",
     "babel-core": "^6.26.0",
     "babel-loader": "^7.1.1",
     "babel-polyfill": "^6.26.0",
