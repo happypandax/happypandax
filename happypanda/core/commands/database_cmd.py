@@ -121,7 +121,10 @@ class GetModelImage(AsyncCommand):
 
         if generate:
             with self.generate.call_capture(model_name, model_name, item_id, image_size) as plg:
-                self.cover.path = plg.first()
+                p = plg.first()
+                if not p:
+                    p = ""
+                self.cover.path = p
 
             self.cover.data = img_hash
             self.cover.size = str(tuple(image_size))

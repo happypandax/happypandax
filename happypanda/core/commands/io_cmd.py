@@ -81,7 +81,10 @@ class ImageItem(AsyncCommand):
     def _generate(self):
         size = self.properties.size
         if isinstance(self._image, str):
-            self._image = CoreFS(self._image).get()
+            fs = CoreFS(self._image)
+            if not fs.exists:
+                return ""
+            self._image = fs.get()
         im = None
         image_path = ""
         try:

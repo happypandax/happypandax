@@ -6,21 +6,14 @@ from subprocess import run
 from importlib import reload
 
 dev_options = dict(
-    build_db = True,
+    build_db = 103,
     prev_build = None,
     env_activated = False
     )
 
 changes = """
-- improve async execution
-- refactor configuration
-- implemented get_config api function
-- implemented set_config api function
-- added save_config api function
-- added get_page api function
-- api playground at /api can now parse objects
-- implemented source_exists api function
-- removed unimplemented api functions from docs
+- fix not checking for file existence on thumb generation
+- misc fixes
 """
 
 
@@ -100,8 +93,7 @@ def build(args):
         print("Building docs")
         build_docs.main()
 
-    if dev_options['build_db']:
-        print("\n# IMPORTANT # A database rebuild is required for this build, please use the accompanying script 'HPtoHPX.py' to rebuild your database if you've just updated")
+    print("\nLast build requiring db rebuild: {}\n Please use the accompanying script 'HPtoHPX.py' to rebuild your database if you've surpassed this build".format(dev_options['build_db']))
 
 def _activate_venv():
     if not dev_options['env_activated']:
@@ -216,8 +208,8 @@ def version(args):
 
     print("\n------------------- Changes -------------------")
     print(changes)
-    if dev_options['build_db']:
-        print("\n# IMPORTANT # A database rebuild is required for this build, please use the accompanying script 'HPtoHPX.py' to rebuild your database if you've just updated")
+    print("\nLast build requiring db rebuild: {}\n Please use the accompanying script 'HPtoHPX.py' to rebuild your database if you've surpassed this build".format(dev_options['build_db']))
+
 
 def convert(args):
     _activate_venv()

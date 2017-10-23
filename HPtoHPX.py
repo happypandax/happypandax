@@ -743,14 +743,20 @@ def main():
 
     src = args.source
     dst = args.destination
-    print("Source:", src)
-    print("Destination:", dst)
+    print("Source: ", src)
+    print("Destination: ", dst)
 
     if os.path.exists(dst):
         print("Warning: destination file already exists, you might want to delete")
 
     if args.skip_archive:
         print("Warning: pages for galleries in archives will not be generated")
+
+    if args.rar:
+        print("RARtool path: ", args.rar)
+
+    if args.process:
+        print("Process count: ", args.rar)
 
     print("Connecting to Happypanda database..")
     conn_src = sqlite3.connect(src)

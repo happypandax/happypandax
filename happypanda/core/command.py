@@ -1,5 +1,6 @@
 import enum
 import arrow
+import gevent
 
 from contextlib import contextmanager
 from abc import ABCMeta, abstractmethod
@@ -59,7 +60,11 @@ class CommandFuture:
     def get(self, block=True, timeout=None):
         if not self._value == self.NoValue:
             return self._value
-        self._value = self._future.get(block, timeout)
+        if block:
+            gevent.wait([self._future], timeout)
+            self._value = self._future.get()
+        else:
+            self._value = self._future.get(block, timeout)
         return self._value
 
     def kill(self):
