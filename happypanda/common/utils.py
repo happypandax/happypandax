@@ -10,6 +10,7 @@ import tempfile
 import socket
 import traceback
 import gevent
+import platform
 
 from inspect import ismodule, currentframe, getframeinfo
 from contextlib import contextmanager
@@ -280,6 +281,14 @@ def get_context(key="ctx"):
     if key is not None:
         return l[key]
     return l
+
+def os_info():
+    return pprint.pformat(dict(
+        ARCH=platform.machine(),
+        VERSION=platform.version(),
+        PLATFORM=platform.platform(),
+        PYTHON=platform.python_version()
+        ))
 
 
 class AttributeList(UserList):

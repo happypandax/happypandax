@@ -483,7 +483,7 @@ class HPServer:
             log.exception("Client disconnected with error", e)
         finally:
             self._clients.remove(handler)
-        log.d("Client disconnected", str(client), str(address))
+        log.d("Client disconnected", str(address))
 
     def _start(self, blocking=True):
         try:

@@ -93,7 +93,7 @@ def build(args):
         print("Building docs")
         build_docs.main()
 
-    print("\nLast build requiring db rebuild: {}\n Please use the accompanying script 'HPtoHPX.py' to rebuild your database if you've surpassed this build".format(dev_options['build_db']))
+    print("\nLast build requiring a db rebuild: {}\nPlease use the accompanying script 'HPtoHPX.py' to rebuild your database once if you've surpassed this build".format(dev_options['build_db']))
 
 def _activate_venv():
     if not dev_options['env_activated']:
@@ -206,9 +206,10 @@ def version(args):
     else:
         print("Build: {}".format(constants.build))
 
+    import bootstrap
     print("\n------------------- Changes -------------------")
-    print(changes)
-    print("\nLast build requiring db rebuild: {}\n Please use the accompanying script 'HPtoHPX.py' to rebuild your database if you've surpassed this build".format(dev_options['build_db']))
+    print(bootstrap.changes)
+    print("\nLast build requiring a db rebuild: {}\nPlease use the accompanying script 'HPtoHPX.py' to rebuild your database once if you've surpassed this build".format(dev_options['build_db']))
 
 
 def convert(args):

@@ -36,7 +36,7 @@ def start(argv=None, db_kwargs={}):
 
     hlogger.Logger.setup_logger(args, main=True)
     log.i("HPX SERVER START")
-
+    log.i("\n{}".format(utils.os_info()))
     if args.gen_config:
         config.config.save_default()
         log.i("Generated example configuration file at {}".format(

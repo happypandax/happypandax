@@ -28,11 +28,12 @@ def PageNav(props):
              )
 
 __pragma__("kwargs")
-def get_item(data=None, error=None, go=None):
-    if data is not None and not error:
-        this.setState({"data":data, "loading":False})
-        if this.state.pages is None:
-            this.get_pages(gid=data.gallery_id)
+def get_item(ctx=None, data=None, error=None, go=None):
+    if ctx is not None and not error:
+        if data is not None:
+            this.setState({"data":data, "loading":False})
+            if this.state.pages is None:
+                this.get_pages(gid=data.gallery_id)
     elif error:
         state.app.notif("Failed to fetch item ({})".format(this.state.id), level="error")
     else:
@@ -44,11 +45,11 @@ def get_item(data=None, error=None, go=None):
         if item:
             if go in ("next", "prev") or gid:
                 if item_id:
-                    client.call_func("get_page", this.get_item, page_id=item_id, prev=go=="prev")
+                    client.call_func("get_page", this.get_item, page_id=item_id, prev=go=="prev", ctx=True)
                 else:
-                    client.call_func("get_page", this.get_item, gallery_id=gid)
+                    client.call_func("get_page", this.get_item, gallery_id=gid, ctx=True)
             elif item_id:
-                client.call_func("get_item", this.get_item, item_type=item, item_id=item_id)
+                client.call_func("get_item", this.get_item, item_type=item, item_id=item_id, ctx=True)
             this.setState({'loading':True})
 __pragma__("nokwargs")
           
