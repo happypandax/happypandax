@@ -1,7 +1,9 @@
+from sqlalchemy.orm.exc import MultipleResultsFound
+
 from happypanda.common import utils, hlogger, exceptions, constants
 from happypanda.core.command import Command, CommandEvent, AsyncCommand, CommandEntry
 from happypanda.core.commands import io_cmd
-from happypanda.core import db
+from happypanda.core import db, async
 from happypanda.interface import enums
 
 log = hlogger.Logger(__name__)
@@ -87,57 +89,76 @@ class GetModelImage(AsyncCommand):
         img_hash = io_cmd.ImageItem.gen_hash(
             model, image_size, item_id)
 
-        cover_path = ""
+        new = True
         generate = True
         sess = constants.db_session()
 
-        self.cover = sess.query(db.Profile).filter(
-            db.Profile.data == img_hash).one_or_none()
+        profile_size = str(tuple(image_size))
 
+        self.cover = sess.query(db.Profile).filter(db.and_op(db.Profile.data == img_hash, db.Profile.size == profile_size)).first()
+
+        old_img_hash = None
         if self.cover:
             if io_cmd.CoreFS(self.cover.path).exists:
                 generate = False
             else:
-                cover_path = self.cover.path
+                old_img_hash = self.cover.data
+            new = False
+
         if generate:
-            self.cover = self.run_native(self._generate_and_add, img_hash, generate,
-                                         cover_path, model, item_id, image_size).get()
+            self.cover = self.run_native(self._generate_and_add, img_hash, old_img_hash, generate,
+                                         new, model, item_id, image_size, profile_size).get()
         self.cover_event.emit(self.cover)
         return self.cover
 
-    def _generate_and_add(self, img_hash, generate, cover_path, model, item_id, image_size):
+    @async.defer
+    def _update_db(self, new, stale_cover, item_id, model, old_hash):
+        s = constants.db_session()
+        cover = s.query(db.Profile).filter(
+            db.and_op(db.Profile.data == old_hash, db.Profile.size == stale_cover.size)).one_or_none()
+        # TODO: handle MultipleResultsError
+
+        if cover:
+            # sometimes an identical img has already been generated and exists so we delete it
+            fs = io_cmd.CoreFS(cover.path)
+            if (cover.path != stale_cover.path) and fs.exists:
+                fs.delete()
+        else:
+            cover = db.Profile()
+
+
+        cover.data = stale_cover.data
+        cover.path = stale_cover.path
+        cover.size = stale_cover.size
+
+        if new:
+            i = s.query(model).get(item_id)
+            i.profiles.append(cover)
+        s.commit()
+
+
+    def _generate_and_add(self, img_hash, old_img_hash, generate, new, model, item_id, image_size, profile_size):
 
         sess = constants.db_session()
 
         model_name = db.model_name(model)
 
-        new = False
-        if cover_path:
-            self.cover = sess.query(db.Profile).filter(
-                db.Profile.data == img_hash).one_or_none()
-        else:
-            self.cover = db.Profile()
-            new = True
-
+        cover = db.Profile()
         if generate:
             with self.generate.call_capture(model_name, model_name, item_id, image_size) as plg:
                 p = plg.first()
                 if not p:
                     p = ""
-                self.cover.path = p
+                cover.path = p
 
-            self.cover.data = img_hash
-            self.cover.size = str(tuple(image_size))
+            cover.data = img_hash
+            cover.size = profile_size
 
-        if self.cover.path and generate:
-            if new:
-                s = constants.db_session()
-                i = s.query(model).get(item_id)
-                i.profiles.append(self.cover)
-            sess.commit()
-        elif not self.cover.path:
-            self.cover = None
-        return self.cover
+        if cover.path and generate:
+            self._update_db(new, cover, item_id, model, old_img_hash)
+        elif not cover.path:
+            cover = None
+        return cover
 
 
 class GetModelClass(Command):

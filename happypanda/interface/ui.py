@@ -78,7 +78,6 @@ def _view_helper(item_type: enums.ItemType=enums.ItemType.Gallery,
         filter_op = db.and_op(filter_op, related_filter) if filter_op is not None else related_filter
         join_exp = [col, join_exp] if join_exp is not None else col
 
-    print("########################", db_model)
     return view_filter, item_type, db_msg, db_model, model_ids, filter_op, join_exp, metatag_name
 
 

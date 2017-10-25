@@ -1,6 +1,7 @@
 import pathlib
 import os
 import hashlib
+import shutil
 
 from io import BytesIO
 from PIL import Image
@@ -326,6 +327,22 @@ class CoreFS(CoreCommand):
             return self._extacted_file.path
         else:
             return self.path
+
+    def delete(self, ignore_errors=True):
+        "Delete path"
+        if self.is_archive or self.inside_archive:
+            raise NotImplementedError
+        try:
+            if self._path.is_dir():
+                shutil.rmtree(self._path)
+            else:
+                self._path.unlink()
+        except:
+            if ignore_errors:
+                log.exception("Error raised while trying to delete:", self._path)
+            else:
+                raise
+
 
     @contextmanager  # TODO: Make usable without contextmanager too
     def open(self, *args, **kwargs):

@@ -60,6 +60,11 @@ def set_config(cfg: dict):
         ns, key = _get_cfg(set_key, False)
         default_ns = ns.lower() in config.ConfigNode.default_namespaces
         if default_ns:
+            t = config.ConfigNode.get_type(ns, key)
+            if not isinstance(cfg[set_key], t):
+                raise exceptions.APIError(
+                        utils.this_function(),
+                        "Setting '{}' expected '{}' but got '{}'".format(set_key, t, type(cfg[set_key])))
             if config.ConfigNode.get_isolation_level(ns, key) == config.ConfigIsolation.client:
                 client_cfg.setdefault(config.config.format_namespace(ns), {})[key.lower()] = cfg[set_key]
                 continue

@@ -6,6 +6,7 @@ import bcrypt
 import warnings
 import functools
 import gevent
+import threading
 
 from sqlalchemy.engine import Engine
 from sqlalchemy import String as _String
@@ -1290,7 +1291,6 @@ def init_defaults(sess):
         sess.add(duser)
         sess.commit()
     constants.default_user = duser
-
     # init default metatags
     for t in MetaTag.names:
         t_d = sess.query(MetaTag).filter(MetaTag.name == t).one_or_none()
@@ -1334,7 +1334,7 @@ def check_db_version(sess):
         life = sess.query(Life).one_or_none()
     except exc.NoSuchTableError:
         raise exceptions.DatabaseInitError(
-            "Invalid database. NoSuchTableError.")
+            "Invalid database. No Life table.")
     if life:
         if life.version not in constants.version_db:
             msg = 'Local database version: {}\nSupported database versions:{}'.format(
@@ -1362,12 +1362,18 @@ def _get_session(sess):
     utils.switch(constants.Priority.Normal)
     return sess()
 
+def _get_current():
+    if not utils.in_cpubound_thread() and constants.server_started:
+        return gevent.getcurrent()
+    else:
+        return threading.local()
+
 
 def init(**kwargs):
     db_path = kwargs.get("path")
     if not db_path:
         db_path = constants.db_path_dev if constants.dev else constants.db_path
-    Session = scoped_session(sessionmaker(), scopefunc=gevent.getcurrent)
+    Session = scoped_session(sessionmaker(), scopefunc=_get_current)
     constants._db_scoped_session = Session
     constants.db_session = functools.partial(_get_session, Session)
     initEvents(Session)

@@ -30,7 +30,7 @@ class ConfigNode:
         self.name = name
         self.default = value
         self.description = description
-        self.type_ = type_
+        self.type_ = type(value) if type_ is None else type_
         self._created = False
         with self._cfg.namespace(ns):
             self._cfg.define(name, value, description)
@@ -40,6 +40,10 @@ class ConfigNode:
     @classmethod
     def get_isolation_level(cls, ns, key):
         return cls._cfg_nodes[ns.lower()][key.lower()].isolation
+
+    @classmethod
+    def get_type(cls, ns, key):
+        return cls._cfg_nodes[ns.lower()][key.lower()].type_
 
     def _get_ctx_config(self):
         return getattr(gevent.getcurrent(), 'locals', {}).get("ctx", {}).get("config", {})
@@ -258,7 +262,8 @@ class Config:
                     raise
                 return default
 
-            if type_ and not isinstance(v, type_):
+            if type_ is not None and not isinstance(v, type_):
+                log.w("Setting '{}.{}' expected '{}' but got '{}', using default value".format(ns, key, type_, type(v)), stdout=True)
                 return default
             return v
 

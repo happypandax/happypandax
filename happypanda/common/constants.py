@@ -7,7 +7,7 @@ rarfile.PATH_SEP = '/'
 dev = False
 
 ## VERSIONING ##
-build = 104
+build = 105
 version = (0, 0, 1)
 version_db = (0, 0, 1)
 
@@ -81,5 +81,7 @@ exposed_server = False
 postfix = b'<EOF>'
 data_size = 1024
 server_ready = True
+server_started = False
 local_ip = ""
 public_ip = ""
+

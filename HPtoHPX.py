@@ -756,7 +756,7 @@ def main():
         print("RARtool path: ", args.rar)
 
     if args.process:
-        print("Process count: ", args.rar)
+        print("Process count: ", args.process)
 
     print("Connecting to Happypanda database..")
     conn_src = sqlite3.connect(src)

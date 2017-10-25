@@ -11,42 +11,12 @@ log = hlogger.Logger(__name__)
 
 class ArchiveFile():
     """
-    Work with archive files, raises exception if instance fails.
-    namelist -> returns a list with all files in archive
-    extract <- Extracts one specific file to given path
-    open -> open the given file in archive, returns bytes
-    close -> close archive
+    7zip commandline tool wrapper
     """
-    ZIP = '.zip'
-    RAR = '.rar'
-
-    SUPPORTED_FORMATS = (ZIP, RAR)
 
     def __init__(self, filepath):
         assert isinstance(filepath, str), "Filepath must be string"
-        self.archive_type = 0
-        self.filepath = filepath = filepath.lower()
-        try:
-            if filepath.lower().endswith(self.SUPPORTED_FORMATS):
-                if filepath.endswith(self.ZIP):
-                    self.archive = zipfile.ZipFile(os.path.normcase(filepath))
-                    b_f = self.archive.testzip()
-                    self.archive_type = self.ZIP
-                elif filepath.endswith(self.RAR):
-                    self.archive = rarfile.RarFile(os.path.normcase(filepath))
-                    b_f = self.archive.testrar()
-                    self.archive_type = self.RAR
-
-                # test for corruption
-                if b_f:
-                    # log bad file
-                    raise exceptions.ArchiveCorruptError(filepath)
-            else:
-                # log unsupprtoed
-                raise exceptions.ArchiveUnsupportedError(filepath)
-        except (zipfile.error, rarfile.Error) as e:
-            # log error
-            raise exceptions.ArchiveCreateError(filepath, e)
+        self.filepath = filepath
 
     def namelist(self):
         filelist = self.archive.namelist()

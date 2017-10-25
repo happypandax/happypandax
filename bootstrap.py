@@ -12,8 +12,8 @@ dev_options = dict(
     )
 
 changes = """
-- fix not checking for file existence on thumb generation
-- misc fixes
+- made thumb generation lightning fast
+- typecheck config values
 """
 
 
@@ -154,7 +154,8 @@ def install(args):
         print("Installing virtualenv")
         import pip
         pip.main(["install", "virtualenv"])
-        import virtualenv
+        print("Please run bootstrap.py install again")
+        sys.exit()
 
     if not os.path.exists("env"):
         print("Setting up virtualenv")

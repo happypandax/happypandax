@@ -36,6 +36,8 @@ def start(argv=None, db_kwargs={}):
 
     hlogger.Logger.setup_logger(args, main=True)
     log.i("HPX SERVER START")
+    if constants.dev:
+        log.i("DEVELOPER MODE ENABLED", stdout=True)
     log.i("\n{}".format(utils.os_info()))
     if args.gen_config:
         config.config.save_default()

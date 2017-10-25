@@ -15,7 +15,7 @@ from flask_socketio import SocketIO  # noqa: E402
 
 from happypanda import interface  # noqa: E402
 from happypanda.common import constants, exceptions, utils, hlogger, config  # noqa: E402
-from happypanda.core import db, torrent, message  # noqa: E402, F401
+from happypanda.core import db, torrent, message, async  # noqa: E402, F401
 from happypanda.interface import meta, enums  # noqa: E402
 
 log = hlogger.Logger(__name__)
@@ -406,32 +406,6 @@ class ClientHandler:
                 pass
         return None
 
-
-class Greenlet(gevent.Greenlet):
-    '''
-    A subclass of gevent.Greenlet which adds additional members:
-     - locals: a dict of variables that are local to the "spawn tree" of
-       greenlets
-     - spawner: a weak-reference back to the spawner of the
-       greenlet
-     - stacks: a record of the stack at which the greenlet was
-       spawned, and ancestors
-    '''
-
-    def __init__(self, f, *a, **kw):
-        super(Greenlet, self).__init__(f, *a, **kw)
-        spawner = self.spawn_parent = weakref.proxy(gevent.getcurrent())
-        if not hasattr(spawner, 'locals'):
-            spawner.locals = {}
-        self.locals = spawner.locals
-        stack = []
-        cur = sys._getframe()
-        while cur:
-            stack.extend((cur.f_code, cur.f_lineno))
-            cur = cur.f_back
-        self.stacks = (tuple(stack),) + getattr(spawner, 'stacks', ())[:10]
-
-
 class HPServer:
     "Happypanda Server"
 
@@ -439,7 +413,7 @@ class HPServer:
         params = utils.connection_params()
         self._pool = pool.Pool(
             config.allowed_clients.value if config.allowed_clients.value else None,
-            Greenlet)  # cannot be 0
+            async.Greenlet)  # cannot be 0
         self._server = StreamServer(params, self._handle, spawn=self._pool)
         self._web_server = None
         self._clients = set()  # a set of client handlers

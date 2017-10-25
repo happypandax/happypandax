@@ -11,6 +11,7 @@ import socket
 import traceback
 import gevent
 import platform
+import threading
 
 from inspect import ismodule, currentframe, getframeinfo
 from contextlib import contextmanager
@@ -272,8 +273,11 @@ def exception_traceback(self, ex):
 
 def switch(priority=constants.Priority.Normal):
     assert isinstance(priority, constants.Priority)
-    gevent.idle(priority.value)
+    if not in_cpubound_thread() and constants.server_started:
+        gevent.idle(priority.value)
 
+def in_cpubound_thread():
+    return getattr(threading.local(), 'in_cpubound_thread', False)
 
 def get_context(key="ctx"):
     "Get a dict local to the spawn tree of current greenlet"

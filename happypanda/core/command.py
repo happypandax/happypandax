@@ -1,6 +1,8 @@
 import enum
 import arrow
 import gevent
+import weakref
+import sys
 
 from contextlib import contextmanager
 from abc import ABCMeta, abstractmethod
@@ -8,7 +10,7 @@ from inspect import isclass
 from gevent.threadpool import ThreadPool
 
 from happypanda.common import utils, hlogger, exceptions, constants
-from happypanda.core import plugins
+from happypanda.core import plugins, async
 
 log = hlogger.Logger(__name__)
 
@@ -47,30 +49,6 @@ class CommandState(enum.Enum):
     failed = 6
 
 
-class CommandFuture:
-
-    class NoValue:
-        pass
-
-    def __init__(self, cmd, f):
-        self._cmd = cmd
-        self._future = f
-        self._value = self.NoValue
-
-    def get(self, block=True, timeout=None):
-        if not self._value == self.NoValue:
-            return self._value
-        if block:
-            gevent.wait([self._future], timeout)
-            self._value = self._future.get()
-        else:
-            self._value = self._future.get(block, timeout)
-        return self._value
-
-    def kill(self):
-        self._future.kill()
-
-
 def _daemon_greenlet():
     while True:
         utils.switch(constants.Priority.Low)
@@ -83,11 +61,16 @@ def _native_runner(f):
         constants._db_scoped_session.remove()
         return r
 
+    parent = weakref.proxy(gevent.getcurrent())
+    frame = sys._getframe()
+
     def wrapper(*args, **kwargs):
-        # d = gevent.spawn(_daemon_greenlet)  # this is to allow gevent switching to occur
-        #g = gevent.spawn(cleanup_wrapper, *args, **kwargs)
-        #r = g.get()
-        # d.kill()
+        if utils.get_context(None) is None:
+            g = gevent.getcurrent()
+            try:
+                g._hp_inherit(parent, frame)
+            except AttributeError:
+                async.Greenlet._hp_inherit(g, parent, frame)
         return cleanup_wrapper(*args, **kwargs)
     return wrapper
 
@@ -113,7 +96,7 @@ class CoreCommand():
         self._futures = []
 
     def run_native(self, f, *args, **kwargs):
-        f = CommandFuture(self, self._native_pool.apply_async(_native_runner(f), args, kwargs))
+        f = async.AsyncFuture(self, self._native_pool.apply_async(_native_runner(f), args, kwargs))
         self._futures.append(f)
         return f
 
@@ -369,3 +352,4 @@ class CommandEntry(_CommandPlugin):
 
 def init_commands():
     CoreCommand._native_pool = ThreadPool(constants.maximum_native_workers)
+    async._defer_pool = ThreadPool(5)

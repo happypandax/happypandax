@@ -143,7 +143,7 @@ Page = createReactClass({
     'on_key': on_key,
     'prev_page': lambda e: all((utils.go_to(this.props.history, query={'id':this.state.data.id, 'go':"prev"}),)),
     'next_page': lambda e: all((utils.go_to(this.props.history, query={'id':this.state.data.id, 'go':"next"}),)),
-    'back_to_gallery': lambda: utils.go_to(this.props.history, "/item/gallery", query={'id':this.state.data.gallery_id}, keep_query=False),
+    'back_to_gallery': lambda: utils.go_to(this.props.history, "/item/gallery", query={'id':utils.get_query("gid") or this.state.data.gallery_id}, keep_query=False),
 
     'componentWillReceiveProps': receive_props,
     'componentDidMount': lambda: window.addEventListener("keydown", this.on_key, False),
