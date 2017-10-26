@@ -1362,6 +1362,7 @@ def _get_session(sess):
     utils.switch(constants.Priority.Normal)
     return sess()
 
+
 def _get_current():
     if not utils.in_cpubound_thread() and constants.server_started:
         return gevent.getcurrent()

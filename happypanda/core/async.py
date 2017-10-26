@@ -3,11 +3,11 @@ import gevent
 import weakref
 import collections
 import threading
-import functools
 
-from happypanda.common import hlogger, utils, constants
+from happypanda.common import hlogger, utils
 
 log = hlogger.Logger(__name__)
+
 
 class Greenlet(gevent.Greenlet):
     '''
@@ -36,6 +36,7 @@ class Greenlet(gevent.Greenlet):
             stack.extend((cur.f_code, cur.f_lineno))
             cur = cur.f_back
         self.stacks = (tuple(stack),) + getattr(spawner, 'stacks', ())[:10]
+
 
 class CPUThread():
     """
@@ -82,10 +83,10 @@ class CPUThread():
                 # FIFO for now, but we should experiment with others
                 jobid, func, args, kwargs = self.in_q.popleft()
                 try:
-                    ret = self.results[jobid] = func(*args, **kwargs)
+                    self.results[jobid] = func(*args, **kwargs)
                 except Exception as e:
                     log.exception("Exception raised in cpubound_thread:")
-                    ret = self.results[jobid] = self._Caught(e)
+                    self.results[jobid] = self._Caught(e)
                 self.out_q.append(jobid)
                 self.out_async.send()
         except:
@@ -130,6 +131,7 @@ class CPUThread():
         # TODO: something better, but this is darn useful for debugging
         log.exception()
 
+
 class AsyncFuture:
 
     class NoValue:
@@ -154,6 +156,7 @@ class AsyncFuture:
         if self._future:
             self._future.kill()
 
+
 def defer(f=None, predicate=None):
     """
     Schedule a function to run in a cpu_bound thread, returns a AsyncFuture
@@ -170,10 +173,10 @@ def defer(f=None, predicate=None):
             return CPUThread._thread.apply(f, args, kwargs)
 
         def wrapper(*args, **kwargs):
-            ctx = threading.local()
             a = AsyncFuture(None, None)
+            # TODO: unit test this
             if (predicate is not None and not predicate) or utils.in_cpubound_thread():
-                v = f(*a, **kw)
+                v = f(*args, **kwargs)
                 a._value = v
             else:
                 g = Greenlet(f_wrap, f, *args, **kwargs)

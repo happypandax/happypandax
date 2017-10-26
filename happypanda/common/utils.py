@@ -276,8 +276,10 @@ def switch(priority=constants.Priority.Normal):
     if not in_cpubound_thread() and constants.server_started:
         gevent.idle(priority.value)
 
+
 def in_cpubound_thread():
     return getattr(threading.local(), 'in_cpubound_thread', False)
+
 
 def get_context(key="ctx"):
     "Get a dict local to the spawn tree of current greenlet"
@@ -286,13 +288,14 @@ def get_context(key="ctx"):
         return l[key]
     return l
 
+
 def os_info():
     return pprint.pformat(dict(
         ARCH=platform.machine(),
         VERSION=platform.version(),
         PLATFORM=platform.platform(),
         PYTHON=platform.python_version()
-        ))
+    ))
 
 
 class AttributeList(UserList):

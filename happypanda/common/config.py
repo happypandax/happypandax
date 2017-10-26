@@ -263,7 +263,9 @@ class Config:
                 return default
 
             if type_ is not None and not isinstance(v, type_):
-                log.w("Setting '{}.{}' expected '{}' but got '{}', using default value".format(ns, key, type_, type(v)), stdout=True)
+                log.w(
+                    "Setting '{}.{}' expected '{}' but got '{}', using default value".format(
+                        ns, key, type_, type(v)), stdout=True)
                 return default
             return v
 

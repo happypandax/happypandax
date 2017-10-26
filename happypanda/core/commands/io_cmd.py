@@ -343,7 +343,6 @@ class CoreFS(CoreCommand):
             else:
                 raise
 
-
     @contextmanager  # TODO: Make usable without contextmanager too
     def open(self, *args, **kwargs):
         self._init_archive()

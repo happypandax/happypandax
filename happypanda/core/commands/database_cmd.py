@@ -1,5 +1,3 @@
-from sqlalchemy.orm.exc import MultipleResultsFound
-
 from happypanda.common import utils, hlogger, exceptions, constants
 from happypanda.core.command import Command, CommandEvent, AsyncCommand, CommandEntry
 from happypanda.core.commands import io_cmd
@@ -95,7 +93,11 @@ class GetModelImage(AsyncCommand):
 
         profile_size = str(tuple(image_size))
 
-        self.cover = sess.query(db.Profile).filter(db.and_op(db.Profile.data == img_hash, db.Profile.size == profile_size)).first()
+        self.cover = sess.query(
+            db.Profile).filter(
+            db.and_op(
+                db.Profile.data == img_hash,
+                db.Profile.size == profile_size)).first()
 
         old_img_hash = None
         if self.cover:
@@ -126,7 +128,6 @@ class GetModelImage(AsyncCommand):
         else:
             cover = db.Profile()
 
-
         cover.data = stale_cover.data
         cover.path = stale_cover.path
         cover.size = stale_cover.size
@@ -136,10 +137,7 @@ class GetModelImage(AsyncCommand):
             i.profiles.append(cover)
         s.commit()
 
-
     def _generate_and_add(self, img_hash, old_img_hash, generate, new, model, item_id, image_size, profile_size):
-
-        sess = constants.db_session()
 
         model_name = db.model_name(model)
 

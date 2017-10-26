@@ -63,8 +63,8 @@ def set_config(cfg: dict):
             t = config.ConfigNode.get_type(ns, key)
             if not isinstance(cfg[set_key], t):
                 raise exceptions.APIError(
-                        utils.this_function(),
-                        "Setting '{}' expected '{}' but got '{}'".format(set_key, t, type(cfg[set_key])))
+                    utils.this_function(),
+                    "Setting '{}' expected '{}' but got '{}'".format(set_key, t, type(cfg[set_key])))
             if config.ConfigNode.get_isolation_level(ns, key) == config.ConfigIsolation.client:
                 client_cfg.setdefault(config.config.format_namespace(ns), {})[key.lower()] = cfg[set_key]
                 continue

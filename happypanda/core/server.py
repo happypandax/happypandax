@@ -1,22 +1,20 @@
-﻿import uuid  # noqa: E402
-import sys  # noqa: E402
-import code  # noqa: E402
-import arrow  # noqa: E402
-import os  # noqa: E402
-import gevent
-import weakref
+﻿import uuid
+import sys
+import code
+import arrow
+import os
 
-from inspect import getmembers, isfunction, signature, Parameter  # noqa: E402
+from inspect import getmembers, isfunction, signature, Parameter
 
-from gevent import socket, pool  # noqa: E402
-from gevent.server import StreamServer  # noqa: E402
-from flask import Flask  # noqa: E402
-from flask_socketio import SocketIO  # noqa: E402
+from gevent import socket, pool
+from gevent.server import StreamServer
+from flask import Flask
+from flask_socketio import SocketIO
 
-from happypanda import interface  # noqa: E402
-from happypanda.common import constants, exceptions, utils, hlogger, config  # noqa: E402
-from happypanda.core import db, torrent, message, async  # noqa: E402, F401
-from happypanda.interface import meta, enums  # noqa: E402
+from happypanda import interface
+from happypanda.common import constants, exceptions, utils, hlogger, config
+from happypanda.core import db, torrent, message, async # noqa: F401
+from happypanda.interface import meta, enums
 
 log = hlogger.Logger(__name__)
 
@@ -405,6 +403,7 @@ class ClientHandler:
             except exceptions.EnumError:
                 pass
         return None
+
 
 class HPServer:
     "Happypanda Server"

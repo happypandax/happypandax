@@ -1,6 +1,4 @@
 "Contains classes and methods to manage archive files"
-import zipfile
-import rarfile
 import os
 import uuid
 
