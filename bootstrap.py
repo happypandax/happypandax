@@ -154,7 +154,7 @@ def install(args):
         print("Installing virtualenv")
         import pip
         pip.main(["install", "virtualenv"])
-        print("Please run bootstrap.py install again")
+        print("Please re-run bootstrap.py install")
         sys.exit()
 
     if not os.path.exists("env"):

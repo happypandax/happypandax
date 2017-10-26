@@ -352,4 +352,3 @@ class CommandEntry(_CommandPlugin):
 
 def init_commands():
     CoreCommand._native_pool = ThreadPool(constants.maximum_native_workers)
-    async._defer_pool = ThreadPool(5)

@@ -60,6 +60,8 @@ class ViewType(_APIEnum):
     Favorite = 2
     #: Inbox
     Inbox = 3
+    #: Trash
+    Trash = 4
 
 
 class ItemType(_APIEnum):

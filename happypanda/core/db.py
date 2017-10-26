@@ -498,7 +498,7 @@ class Life(Base):
 class MetaTag(NameMixin, Base):
     __tablename__ = 'metatag'
 
-    names = utils.AttributeList("favorite", "inbox")
+    names = utils.AttributeList("favorite", "inbox", "trash")
     tags = {}
 
     @classmethod
@@ -1334,7 +1334,7 @@ def check_db_version(sess):
         life = sess.query(Life).one_or_none()
     except exc.NoSuchTableError:
         raise exceptions.DatabaseInitError(
-            "Invalid database. No Life table.")
+            "Invalid database. Death DB.")
     if life:
         if life.version not in constants.version_db:
             msg = 'Local database version: {}\nSupported database versions:{}'.format(

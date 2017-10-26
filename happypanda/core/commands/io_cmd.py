@@ -328,7 +328,7 @@ class CoreFS(CoreCommand):
         else:
             return self.path
 
-    def delete(self, ignore_errors=True):
+    def delete(self, ignore_errors=False):
         "Delete path"
         if self.is_archive or self.inside_archive:
             raise NotImplementedError

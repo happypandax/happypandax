@@ -637,7 +637,7 @@ def item_view_menu(on_item_change=None, default_item=None, on_search=None):
             e(ui.Menu.Item, e(ui.Icon, js_name="filter"), e(FilterDropdown, on_change=None, value=None), fitted=True),
             e(ui.Popup,
                 e(ui.Grid, centered=True),
-                trigger=e(ui.Menu.Item, e(ui.Icon, js_name="options"), "View Options",),
+                trigger=e(ui.Menu.Item, e(ui.Icon, js_name="options", size="large"), icon=True),
                 hoverable=True,
                 on="click",
                 flowing=True,

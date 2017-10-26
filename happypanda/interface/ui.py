@@ -64,6 +64,8 @@ def _view_helper(item_type: enums.ItemType=enums.ItemType.Gallery,
         metatag_name = db.MetaTag.names.favorite
     elif view_filter == enums.ViewType.Inbox:
         metatag_name = db.MetaTag.names.inbox
+    elif view_filter == enums.ViewType.Inbox:
+        metatag_name = db.MetaTag.names.trash
 
     if metatag_name:
         if hasattr(db_model, "metatags"):

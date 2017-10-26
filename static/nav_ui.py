@@ -231,6 +231,7 @@ def sidebar_nav_render():
                              ],
                         icon="info", position="right", handler=this.props["toggler"])
     items.append(about_item)
+    items.append(MenuItem("Trash", "ui.mi-trash", position="right", icon="trash", url="/trash", handler=this.props["toggler"]))
     #about_item.children.append(MenuItem("Check for updates"))
     #about_item.children.append(MenuItem("Visit homepage"))
 

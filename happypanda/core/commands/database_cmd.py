@@ -124,7 +124,7 @@ class GetModelImage(AsyncCommand):
             # sometimes an identical img has already been generated and exists so we delete it
             fs = io_cmd.CoreFS(cover.path)
             if (cover.path != stale_cover.path) and fs.exists:
-                fs.delete()
+                fs.delete(True)
         else:
             cover = db.Profile()
 
