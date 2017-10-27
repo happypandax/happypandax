@@ -7,7 +7,7 @@ rarfile.PATH_SEP = '/'
 dev = False
 
 ## VERSIONING ##
-build = 105
+build = 106
 version = (0, 0, 1)
 version_db = (0, 0, 1)
 

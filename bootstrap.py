@@ -12,8 +12,8 @@ dev_options = dict(
     )
 
 changes = """
-- made thumb generation lightning fast
-- typecheck config values
+- added sqlite_database_timeout setting
+- added new viewfilter: Trash
 """
 
 
