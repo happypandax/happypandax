@@ -316,6 +316,13 @@ concurrent_image_tasks = config.create(
     10,
     "Amount of image service tasks allowed to run at the same time (higher count does not necessarily mean faster generation)")
 
+
+sqlite_database_timeout = config.create(
+    core_ns,
+    "sqlite_database_timeout",
+    60*5,
+    "Amount of time to wait for the database to be writeable in seconds")
+
 server_ns = 'server'
 
 secret_key = config.create(

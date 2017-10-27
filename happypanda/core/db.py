@@ -51,7 +51,7 @@ from sqlalchemy_utils import (
     get_type,
     JSONType)
 
-from happypanda.common import constants, exceptions, hlogger, utils
+from happypanda.common import constants, exceptions, hlogger, utils, config
 
 force_instant_defaults()
 force_auto_coercion()
@@ -1381,7 +1381,7 @@ def init(**kwargs):
     constants.db_engine = kwargs.get("engine")
     if not constants.db_engine:
         constants.db_engine = create_engine(os.path.join("sqlite:///", db_path),
-                                            connect_args={'timeout': 60 * 5})  # SQLITE specific arg (avoding db is locked errors)
+                                            connect_args={'timeout': config.sqlite_database_timeout })  # SQLITE specific arg (avoding db is locked errors)
     Base.metadata.create_all(constants.db_engine)
 
     Session.configure(bind=constants.db_engine)
