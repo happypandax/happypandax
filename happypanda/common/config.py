@@ -320,7 +320,7 @@ concurrent_image_tasks = config.create(
 sqlite_database_timeout = config.create(
     core_ns,
     "sqlite_database_timeout",
-    60*5,
+    60 * 5,
     "Amount of time to wait for the database to be writeable in seconds")
 
 server_ns = 'server'

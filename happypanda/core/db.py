@@ -1381,7 +1381,7 @@ def init(**kwargs):
     constants.db_engine = kwargs.get("engine")
     if not constants.db_engine:
         constants.db_engine = create_engine(os.path.join("sqlite:///", db_path),
-                                            connect_args={'timeout': config.sqlite_database_timeout })  # SQLITE specific arg (avoding db is locked errors)
+                                            connect_args={'timeout': config.sqlite_database_timeout.value})  # SQLITE specific arg (avoding db is locked errors)
     Base.metadata.create_all(constants.db_engine)
 
     Session.configure(bind=constants.db_engine)

@@ -13,7 +13,7 @@ from flask_socketio import SocketIO
 
 from happypanda import interface
 from happypanda.common import constants, exceptions, utils, hlogger, config
-from happypanda.core import db, torrent, message, async # noqa: F401
+from happypanda.core import db, torrent, message, async  # noqa: F401
 from happypanda.interface import meta, enums
 
 log = hlogger.Logger(__name__)
