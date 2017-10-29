@@ -321,7 +321,7 @@ sqlite_database_timeout = config.create(
     core_ns,
     "sqlite_database_timeout",
     60 * 5,
-    "Amount of time to wait for the database to be writeable in seconds")
+    "Amount of seconds to wait for the database to be writeable")
 
 server_ns = 'server'
 

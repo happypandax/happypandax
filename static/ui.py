@@ -57,7 +57,8 @@ def Slider(props):
                         { 'breakpoint': 1280, 'settings': { 'slidesToShow': base_size+1 } },
                         { 'breakpoint': 1440, 'settings': { 'slidesToShow': base_size+2 } },
                         { 'breakpoint': 1860, 'settings': { 'slidesToShow': base_size+3 } },
-                        { 'breakpoint': 100000, 'settings': 'unslick' } ]))
+                       # { 'breakpoint': 100000, 'settings': 'unslick' },
+                       ]))
 
     return e(ui.Segment,
              *add_el,
