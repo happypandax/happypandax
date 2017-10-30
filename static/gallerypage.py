@@ -185,7 +185,6 @@ def page_render():
     if inbox:
         indicators.append(e(ui.Icon, js_name="inbox", size="large", title="This gallery is in your inbox"))
 
-
     return e(ui.Grid,
                e(ui.Grid.Row,e(ui.Grid.Column, e(ui.Breadcrumb, icon="right arrow",))),
                e(ui.Grid.Row, 

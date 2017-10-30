@@ -57,7 +57,7 @@ def Slider(props):
                         { 'breakpoint': 1280, 'settings': { 'slidesToShow': base_size+1 } },
                         { 'breakpoint': 1440, 'settings': { 'slidesToShow': base_size+2 } },
                         { 'breakpoint': 1860, 'settings': { 'slidesToShow': base_size+3 } },
-                       # { 'breakpoint': 100000, 'settings': 'unslick' },
+                        { 'breakpoint': 100000, 'settings': { 'slidesToShow': base_size+3 } },
                        ]))
 
     return e(ui.Segment,
@@ -108,7 +108,7 @@ def pagination_render():
     pages = math.floor(pages)
 
     page_list = range(1, pages + 1)
-    ellipsis_pos = 2
+    ellipsis_pos = 2 if limit > 2 else 1
     nav_back = True
     nav_next = True
     first_ellipses = False
@@ -132,7 +132,7 @@ def pagination_render():
     go_page = this.go_page
 
     half_limit = int(limit / 2)
-    l_index = current_page - half_limit
+    l_index = current_page - (half_limit if half_limit else 1)
     r_index = current_page + half_limit + 1
     if r_index > len(page_list):
         r_index = len(page_list)

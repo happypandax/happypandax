@@ -337,10 +337,12 @@ def search_render():
     return e(ui.Form,   
                 e(ui.Search,
                         size=this.props.size,
-                        input=e(ui.Input, fluid=this.props.fluid, placeholder="Search title, artist, namespace & tags",
+                        input=e(ui.Input,
+                                fluid=this.props.fluid,
+                                placeholder="Search title, artist, namespace & tags",
                                 label=e(ui.Popup,
                                   e(SearchOptions),
-                                  trigger=e(ui.Label, e(ui.Icon, js_name="options"), "Search Options", as_="a"),
+                                  trigger=e(ui.Label, icon="options", as_="a"),
                                   hoverable=True,
                                   on="click",
                                   hideOnScroll=True,)),
@@ -394,7 +396,7 @@ def ItemViewBase(props):
     pagination = e(ui.Grid.Row,
                    e(ui.Responsive,
                        e(Pagination,
-                         limit=2,
+                         limit=1,
                          pages=props.item_count/props.limit,
                          current_page=props.page,
                          on_change=props.set_page,
@@ -458,6 +460,8 @@ def get_items(data=None, error=None):
             func_kw['view_filter'] = this.props.view_filter
         if this.state.search_query:
             func_kw['search_query'] = this.state.search_query
+        if this.props.filter_id:
+            func_kw['filter_id'] = this.props.filter_id
         if this.props.related_type:
             func_kw['related_type'] = this.props.related_type
         if this.props.item_id:
@@ -476,6 +480,8 @@ def get_items_count(data=None, error=None):
         func_kw = { 'item_type':item }
         if this.props.view_filter:
             func_kw['view_filter'] = this.props.view_filter
+        if this.props.filter_id:
+            func_kw['filter_id'] = this.props.filter_id
         if this.state.search_query:
             func_kw['search_query'] = this.state.search_query
         if this.props.related_type:
@@ -511,6 +517,7 @@ def item_view_on_update(p_props, p_state):
         p_props.item_type != this.props.item_type,
         p_props.related_type != this.props.related_type,
         p_props.item_id != this.props.item_id,
+        p_props.filter_id != this.props.filter_id,
         p_props.view_filter != this.props.view_filter,
         p_props.search_query != this.props.search_query,
         p_state.search_query != this.state.search_query,
@@ -523,6 +530,7 @@ def item_view_on_update(p_props, p_state):
         p_props.item_type != this.props.item_type,
         p_props.related_type != this.props.related_type,
         p_props.item_id != this.props.item_id,
+        p_props.filter_id != this.props.filter_id,
         p_props.view_filter != this.props.view_filter,
         p_props.search_query != this.props.search_query,
         p_state.search_query != this.state.search_query,
@@ -619,14 +627,62 @@ def SortDropdown(props):
         ]
     return e(ui.Dropdown, placeholder="Sort by", selection=True, item=True, options=item_options, defaultValue=props.value, onChange=props.on_change)
 
-def FilterDropdown(props):
-    item_options = [
-        ]
-    return e(ui.Dropdown, placeholder="Filter", selection=True, item=True, options=item_options, defaultValue=props.value, onChange=props.on_change)
+def filterdropdown_get(data=None, error=None):
+    if data is not None and not error:
+        items = {}
+        for d in data:
+            items[d['id']] = d
+        this.setState({"db_items":items, "loading":False})
+    elif error:
+        pass
+    else:
+        client.call_func("get_items", this.get_items, item_type=ItemType.GalleryFilter, limit=999)
+        this.setState({"loading":True})
 
+
+def filterdropdown_change(e, d):
+    if this.props.query:
+        utils.go_to(this.props.history, query={'filter_id':d.value}, push=False)
+    if this.props.on_change:
+        this.props.on_change(e, d)
+
+def filterdropdown_render():
+    item_options = [{'value':0, "description":"No Filter", "icon":"delete"}]
+    text = js_undefined
+    __pragma__("iconv")
+    if this.state.db_items:
+        for d in this.state.db_items:
+            if d == this.props.value:
+                text = this.state.db_items[d]['name']
+            item_options.append({'text':this.state.db_items[d]['name'], 'value':d, 'icon':"filter"})
+    __pragma__("noiconv")
+    return e(ui.Dropdown,
+             placeholder="Filter",
+             selection=True, item=True,
+             options=item_options,
+             text = text if text else js_undefined,
+             search=True,
+             allowAdditions=True,
+             value=this.props.value if this.props.value else js_undefined,
+             defaultValue=this.props.defaultValue,
+             onChange=this.item_change,
+             loading=this.state.loading,
+             )
+
+FilterDropdown = createReactClass({
+    'displayName': 'FilterDropdown',
+
+    'getInitialState': lambda: {'db_items': None, 'loading':False },
+
+    'item_change': filterdropdown_change,
+    'get_items': filterdropdown_get,
+    'componentDidMount': lambda: this.get_items(),
+
+    'render': filterdropdown_render
+})
 
 __pragma__("kwargs")
-def item_view_menu(on_item_change=None, default_item=None, on_search=None):
+def item_view_menu(on_item_change=None, on_filter_change=None, default_item=None, on_search=None, default_filter=None):
     return [e(ui.Menu.Item, e(withRouter(ItemDropdown), on_change=on_item_change, value=default_item, query=True), fitted=True),
             e(ui.Menu.Menu,
                 e(ui.Menu.Item,
@@ -634,7 +690,7 @@ def item_view_menu(on_item_change=None, default_item=None, on_search=None):
                 position="left",
                 className="fullwidth"),
             e(ui.Menu.Item, e(ui.Icon, js_name="sort"), e(SortDropdown, on_change=None, value=None), fitted=True),
-            e(ui.Menu.Item, e(ui.Icon, js_name="filter"), e(FilterDropdown, on_change=None, value=None), fitted=True),
+            e(ui.Menu.Item, e(ui.Icon, js_name="filter"), e(withRouter(FilterDropdown), on_change=on_filter_change, value=default_filter, query=True), fitted=True),
             e(ui.Popup,
                 e(ui.Grid, centered=True),
                 trigger=e(ui.Menu.Item, e(ui.Icon, js_name="options", size="large"), icon=True),
@@ -645,31 +701,44 @@ def item_view_menu(on_item_change=None, default_item=None, on_search=None):
             ]
 __pragma__("nokwargs")
 
+def itemviewpage_update(p_p, p_s):
+    if any((
+        p_p.view_type != this.props.view_type,
+        p_s.filter_id != this.state.filter_id,
+        )):
+        this.update_menu()
+
 def itemviewpage_render():
     return e(ItemView,
                         item_type=this.state.item_type,
                         view_filter=this.props.view_type,
-                        search_query=this.state.search_query)
+                        search_query=this.state.search_query,
+                        filter_id=this.state.filter_id,)
 
 ItemViewPage = createReactClass({
     'displayName': 'ItemViewPage',
 
     'on_item_change': lambda e, d: this.setState({'item_type':d.value}),
 
+    'on_filter_change': lambda e, d: this.setState({'filter_id':d.value}),
+
     'on_search': lambda v: this.setState({'search_query':v}),
 
     'update_menu': lambda: state.app.set_menu_contents(
         item_view_menu(
             on_item_change=this.on_item_change,
+            on_filter_change=this.on_filter_change,
             default_item=this.state.item_type,
+            default_filter=this.state.filter_id,
             on_search=this.on_search,
             )),
 
     'componentWillMount': lambda: this.update_menu(),
 
-    'componentDidUpdate': lambda p_p, p_s: this.update_menu() if p_p.view_type != this.props.view_type else None,
+    'componentDidUpdate': itemviewpage_update,
 
     'getInitialState': lambda: {'item_type': int(utils.get_query("item_type", ItemType.Gallery)),
+                                'filter_id': int(utils.get_query("filter_id", 0)),
                                 'search_query':""},
 
     'render': itemviewpage_render

@@ -12,7 +12,7 @@ dev_options = dict(
     )
 
 changes = """
-- important fixes; 
+- implement filter_id
 """
 
 

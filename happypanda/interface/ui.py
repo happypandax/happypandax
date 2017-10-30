@@ -32,6 +32,8 @@ def _view_helper(item_type: enums.ItemType=enums.ItemType.Gallery,
         related_type = enums.ItemType.get(related_type)
     item_type = enums.ItemType.get(item_type)
 
+    filter_op = []
+    join_exp = []
     parent_model = None
 
     db_msg, db_model = item_type._msg_and_model(
@@ -53,12 +55,24 @@ def _view_helper(item_type: enums.ItemType=enums.ItemType.Gallery,
         if item_id is None:
             raise exceptions.APIError(utils.this_function(), "Missing id of parent item")
 
+    if filter_id:
+        if db_model != db.Gallery:
+            g_col = db.relationship_column(db_model, db.Gallery)
+            if not g_col:
+                raise exceptions.APIError(
+                    utils.this_function(),
+                    "Cannot use {} because {} has no relationship with {}".format(
+                        enums.ItemType.GalleryFilter,
+                        related_type if related_type else item_type,
+                        enums.ItemType.Gallery))
+            join_exp.append(g_col)
+        join_exp.append(db.relationship_column(db.Gallery, db.GalleryFilter))
+        filter_op.append(db.GalleryFilter.id == filter_id)
+
     model_ids = None
     if not db_model == db.Page:
         model_ids = search_cmd.ModelFilter().run(db_model, search_query)
 
-    filter_op = None
-    join_exp = None
     metatag_name = None
     if view_filter == enums.ViewType.Favorite:
         metatag_name = db.MetaTag.names.favorite
@@ -69,16 +83,20 @@ def _view_helper(item_type: enums.ItemType=enums.ItemType.Gallery,
 
     if metatag_name:
         if hasattr(db_model, "metatags"):
-            filter_op = db.MetaTag.name == metatag_name
-            join_exp = db_model.metatags
+            filter_op.append(db.MetaTag.name == metatag_name)
+            join_exp.append(db_model.metatags)
     elif view_filter == enums.ViewType.Library:
         if hasattr(db_model, "metatags"):
-            filter_op = ~db_model.metatags.any(db.MetaTag.name == db.MetaTag.names.inbox)
+            filter_op.append(~db_model.metatags.any(db.MetaTag.name == db.MetaTag.names.inbox))
 
     if related_type:
-        related_filter = parent_model.id == item_id
-        filter_op = db.and_op(filter_op, related_filter) if filter_op is not None else related_filter
-        join_exp = [col, join_exp] if join_exp is not None else col
+        filter_op.append(parent_model.id == item_id)
+        join_exp.append(col)
+
+    if len(filter_op) > 1:
+        filter_op = db.and_op(*filter_op)
+    elif filter_op:
+        filter_op = filter_op[0]
 
     return view_filter, item_type, db_msg, db_model, model_ids, filter_op, join_exp, metatag_name
 
