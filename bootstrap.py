@@ -12,8 +12,7 @@ dev_options = dict(
     )
 
 changes = """
-- added sqlite_database_timeout setting
-- added new viewfilter: Trash
+- important fixes; 
 """
 
 
