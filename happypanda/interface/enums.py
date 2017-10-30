@@ -62,6 +62,8 @@ class ViewType(_APIEnum):
     Inbox = 3
     #: Trash
     Trash = 4
+    #: Read Later
+    ReadLater = 5
 
 
 class ItemType(_APIEnum):

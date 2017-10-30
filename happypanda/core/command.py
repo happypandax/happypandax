@@ -49,11 +49,6 @@ class CommandState(enum.Enum):
     failed = 6
 
 
-def _daemon_greenlet():
-    while True:
-        utils.switch(constants.Priority.Low)
-
-
 def _native_runner(f):
 
     def cleanup_wrapper(*args, **kwargs):

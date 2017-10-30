@@ -4,7 +4,7 @@ import weakref
 import collections
 import threading
 
-from happypanda.common import hlogger, utils
+from happypanda.common import hlogger, utils, constants
 
 log = hlogger.Logger(__name__)
 
@@ -87,6 +87,7 @@ class CPUThread():
                 except Exception as e:
                     log.exception("Exception raised in cpubound_thread:")
                     self.results[jobid] = self._Caught(e)
+                constants._db_scoped_session.remove()
                 self.out_q.append(jobid)
                 self.out_async.send()
         except:
