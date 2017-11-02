@@ -82,6 +82,7 @@ def page_render():
     item_id = this.state.id
     info = ""
     inbox = False
+    trash = False
     read_count = 0
     date_pub = ""
     date_upd = ""
@@ -103,6 +104,7 @@ def page_render():
         info = this.state.data.info
         title = this.state.data.titles[0].js_name
         inbox = this.state.data.metatags.inbox
+        trash = this.state.data.metatags.trash
         if not item_id:
             item_id = this.state.data.id
 
@@ -170,8 +172,10 @@ def page_render():
                   e(ui.Table.Cell, e(ui.Header, "Tags:", as_="h5"), collapsing=True),
                   e(ui.Table.Cell,
                     e(ui.Table,
-                      e(ui.Table.Body,
+                      e(ui.Transition.Group,
                         *tag_rows,
+                        as_=ui.Table.Body,
+                        duration=1000,
                         ),
                       celled=True,
                       basic="very",
@@ -182,8 +186,12 @@ def page_render():
                   e(ui.Table.Cell, e(ui.List, *[e(ui.List.Item, h("span", h("a", x, href=x, target="_blank"), e(ui.List.Icon, js_name="external share"))) for x in urls]))))
 
     indicators = []
+
     if inbox:
-        indicators.append(e(ui.Icon, js_name="inbox", size="large", title="This gallery is in your inbox"))
+        indicators.append(e(ui.Icon, js_name="inbox", size="big", title="This gallery is in your inbox"))
+
+    if trash:
+        indicators.append(e(ui.Icon, js_name="trash", size="big", title="This gallery is set to be deleted"))
 
     return e(ui.Grid,
                e(ui.Grid.Row,e(ui.Grid.Column, e(ui.Breadcrumb, icon="right arrow",))),
@@ -209,6 +217,13 @@ def page_render():
                            e(ui.Button.Or, text="or"),
                            e(ui.Button, "Save for later"),
                            ),
+                         textAlign="center",
+                         ),
+                        centered=True,
+                       ),
+                     e(ui.Grid.Row,
+                       e(ui.Grid.Column,
+                           e(ui.Button, e(ui.Icon, js_name="trash"), "Send to Trash", color="red"),
                          textAlign="center",
                          ),
                         centered=True,
@@ -243,7 +258,7 @@ def page_render():
                    ),
                  columns=2,
                  as_=ui.Segment,
-                 loading=this.state.loading,
+                 #loading=this.state.loading,
                  basic=True,
                  ),
                e(ui.Grid.Row,
@@ -267,7 +282,7 @@ def page_render():
                                                   label="Pages",
                                                   container=True, secondary=True))),
                stackable=True,
-               container=True
+               container=True,
              )
 
 Page = createReactClass({
@@ -293,7 +308,7 @@ Page = createReactClass({
     'get_lang': get_lang,
     'get_status': get_status,
 
-    'componentWillMount': lambda: all((this.props.menu(None), 
+    'componentWillMount': lambda: all((this.props.menu([e(ui.Menu.Menu, e(ui.Menu.Item, e(ui.Icon, js_name="edit"), "Edit" ), position="right")]), 
                                        (this.get_item() if not this.state.data else None),
                                        )),
 

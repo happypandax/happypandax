@@ -13,6 +13,12 @@ dev_options = dict(
 
 changes = """
 - implement filter_id
+- fixed object parsing at /api
+- added 'search_options' parameter to library_view and get_view_count api functions
+- added 'count' and 'placeholder' parameters to translate api function
+- updated some libraries
+- move transcrypt library to dev
+- fixed more connection issues
 """
 
 

@@ -1,6 +1,7 @@
 import socket
 import sys
 import json
+import errno
 
 from happypanda.common import constants, exceptions, utils, hlogger, config
 from happypanda.core import message
@@ -69,17 +70,29 @@ class Client:
             self._last_pass = password
             try:
                 log.i("Client connecting to server at: {}".format(self._server))
-                self._sock.connect(self._server)
+                try:
+                    self._sock.connect(self._server)
+                except socket.error as e:
+                    if e.errno == errno.EISCONN and self.session: # already connected
+                        self._alive = True
+                        return
+                    else:
+                        raise
                 self._alive = True
+
                 if not self.session:
                     self._handshake(self._recv(), user, password)
                 else:
                     self._accepted = True
                     self._recv()
-            except socket.error:
+            except socket.error as e:
                 self.session = ""
-                raise exceptions.ClientError(
-                    self.name, "Failed to establish server connection")
+                raise exceptions.ServerDisconnectError(
+                    self.name, "{}".format(e))
+
+    def _disconnect(self):
+        self._alive = False
+        self.session = ""
 
     def _send(self, msg_bytes):
         """
@@ -87,6 +100,7 @@ class Client:
         """
         if not self._alive:
             raise exceptions.ClientError(self.name, "Client is not connected to server")
+
         log.d(
             "Sending",
             sys.getsizeof(msg_bytes),
@@ -94,9 +108,10 @@ class Client:
             self._server)
         try:
             self._sock.sendall(msg_bytes)
-        except ConnectionError:
-            self.session = ""
-        self._sock.sendall(constants.postfix)
+            self._sock.sendall(constants.postfix)
+        except socket.error as e:
+            self._disconnect()
+            raise exceptions.ClientError(self.name, "{}".format(e))
 
     def _recv(self):
         "returns json"
@@ -106,8 +121,7 @@ class Client:
             while not eof:
                 temp = self._sock.recv(constants.data_size)
                 if not temp:
-                    self._alive = False
-                    self.session = ""
+                    self._disconnect()
                     raise exceptions.ServerDisconnectError(
                         self.name, "Server disconnected")
                 self._buffer += temp
@@ -123,7 +137,7 @@ class Client:
             return utils.convert_to_json(buffered, self.name)
         except socket.error as e:
             # log disconnect
-            self.alive = False
+            self._alive = False
             self.session = ""
             raise exceptions.ServerError(self.name, "{}".format(e))
 
@@ -135,13 +149,13 @@ class Client:
         returns:
             dict from server
         """
-        if self.alive and not self._accepted and not auth:
-            raise exceptions.AuthError(utils.this_function(), "Client is connected but not authenticated")
+        if self._alive and not self._accepted and not auth:
+            raise exceptions.AuthRequiredError(utils.this_function(), "Client is connected but not authenticated")
         self._send(bytes(json.dumps(msg), 'utf-8'))
         return self._recv()
 
     def close(self):
         "Close connection with server"
         log.i("Closing connection to server")
-        self._alive = False
+        self._disconnect()
         self._sock.close()

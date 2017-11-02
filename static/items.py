@@ -170,6 +170,7 @@ def gallery_render():
                         header=title,
                         content=h("div", *[h("span", x) for x in artists]),
                         hideOnScroll=True,
+                        hoverable=False,
                         position="bottom center"
                                 ),
                     className=add_cls,
@@ -311,29 +312,39 @@ Grouping = createReactClass({
     'render': grouping_render
 })
 
-
 SearchOptions = createReactClass({
     'displayName': 'SearchOptions',
 
-    'getInitialState': lambda: {'case':False,
-                                'regex':False,
-                                'whole':False,
-                                'all':False,
-                                'desc':False,},
-
     'render': lambda: e(ui.List,
-                        e(ui.List.Item, e(ui.Checkbox, toggle=True, label="Case sensitive", defaultChecked=this.state.case)),
-                        e(ui.List.Item, e(ui.Checkbox, toggle=True, label="Regex", defaultChecked=this.state.regex)),
-                        e(ui.List.Item, e(ui.Checkbox, toggle=True, label="Match exact", defaultChecked=this.state.whole)),
-                        e(ui.List.Item, e(ui.Checkbox, toggle=True, label="Match all", defaultChecked=this.state.all)),
-                        e(ui.List.Item, e(ui.Checkbox, toggle=True, label="Children", defaultChecked=this.state.desc)),
+                        e(ui.List.Item, e(ui.Checkbox, onChange=this.props.on_change, toggle=True, js_name="case", label="Case sensitive", checked=this.props.case_)),
+                        e(ui.List.Item, e(ui.Checkbox, onChange=this.props.on_change, toggle=True, js_name="regex", label="Regex", checked=this.props.regex)),
+                        e(ui.List.Item, e(ui.Checkbox, onChange=this.props.on_change, toggle=True, js_name="whole", label="Match exact", checked=this.props.whole)),
+                        e(ui.List.Item, e(ui.Checkbox, onChange=this.props.on_change, toggle=True, js_name="all", label="Match all", checked=this.props.all)),
+                        e(ui.List.Item, e(ui.Checkbox, onChange=this.props.on_change, toggle=True, js_name="desc", label="Children", checked=this.props.desc)),
                         )
 })
 
+def search_get_config(data=None, error=None):
+    if data is not None and not error:
+        options = {"case":data['search.case_sensitive'],
+                       "all":data['search.match_all_terms'],
+                       "regex":data['search.regex'],
+                       "whole":data['search.match_whole_words'],
+                       "desc":data['search.descendants'],
+                       }
+        this.setState(options)
+    elif error:
+        state.app.notif("Failed to retrieve search configuration", level="warning")
+    else:
+        client.call_func("get_config", this.get_config, cfg={'search.case_sensitive':False,
+                                                             'search.match_all_terms':False,
+                                                             'search.regex':False,
+                                                             'search.descendants':False,
+                                                             'search.match_whole_words':False,
+                                                             })
 
 def search_render():
     fluid = this.props.fluid
-
     return e(ui.Form,   
                 e(ui.Search,
                         size=this.props.size,
@@ -341,7 +352,16 @@ def search_render():
                                 fluid=this.props.fluid,
                                 placeholder="Search title, artist, namespace & tags",
                                 label=e(ui.Popup,
-                                  e(SearchOptions),
+                                  e(SearchOptions,
+                                    history=this.props.history, 
+                                    query=this.props.query, 
+                                    on_change=this.on_search_options,
+                                    case_=this.state['case'],
+                                    regex=this.state.regex,
+                                    whole=this.state.whole,
+                                    all=this.state.all,
+                                    desc=this.state.all,
+                                    ),
                                   trigger=e(ui.Label, icon="options", as_="a"),
                                   hoverable=True,
                                   on="click",
@@ -349,7 +369,7 @@ def search_render():
                         fluid=True,
                         icon=e(ui.Icon, js_name="search", link=True, onClick=this.on_search),
                         onSearchChange=this.on_search_change,
-                        defaultValue = utils.get_query("search", "")
+                        defaultValue = utils.get_query("search", "") if this.props.query else ''
                         ),
                 className=this.props.className,
                 onSubmit=this.on_search
@@ -367,7 +387,19 @@ def on_search(e, d):
     if this.props.query and this.props.history:
         utils.go_to(this.props.history, query={'search':d})
     if this.props.on_search:
-        this.props.on_search(d)
+        o = {
+            'regex':'regex',
+            'case':'case_sensitive',
+            'whole':'match_whole_words',
+            'all':'match_all_terms',
+            'desc':'descendants',
+             }
+        __pragma__("iconv")
+        options = {}
+        for k in o:
+            options[o[k]] = this.state[k]
+        __pragma__("noiconv")
+        this.props.on_search(d, options)
 
 def on_search_timer():
     __pragma__("tconv")
@@ -375,24 +407,42 @@ def on_search_timer():
         this.on_search(None, this.search_data)
     __pragma__("notconv")
 
+def search_option_change(e, d):
+    this.setState({d.js_name: d.checked})
+    if this.props.query:
+        utils.go_to(this.props.history, query={d.js_name:'1' if d.checked else '0'})
+
+
 Search = createReactClass({
     'displayName': 'Search',
 
     'getInitialState': lambda: {'query':'',
+                                'case':bool(int(utils.get_query("case", 0))),
+                                'regex':bool(int(utils.get_query("regex", 0))),
+                                'whole':bool(int(utils.get_query("whole", 0))),
+                                'all':bool(int(utils.get_query("all", 0))),
+                                'desc':bool(int(utils.get_query("desc", 0))),
                                 },
 
     'search_data':[],
     'search_timer_id':0,
     'search_timer': on_search_timer,
 
+    'get_config': search_get_config,
+
+    'componentWillMount': lambda: this.get_config(),
+
     'on_search_change': on_search_change,
+
+    'on_search_options': search_option_change,
 
     'on_search': on_search,
 
     'render': search_render
 })
 
-def ItemViewBase(props):
+def itemviewbase_render():
+    props = this.props
     pagination = e(ui.Grid.Row,
                    e(ui.Responsive,
                        e(Pagination,
@@ -431,14 +481,32 @@ def ItemViewBase(props):
     if props.label:
         add_el.append(e(ui.Label, props.label, e(ui.Label.Detail, props.item_count), attached="top"))
 
+    count_el = []
+
+    if (not utils.defined(props.show_count)) or props.show_count:
+        count_el.append(e(ui.Grid.Column,
+                         e(ui.Header,
+                           e(ui.Header.Subheader, tr(this,
+                                                     "ui.t-showing-count",
+                                                     "Showing {}".format(props.item_count),
+                                                     placeholder={'from':(props.page-1)*props.limit or 1, 'to':(props.page-1)*props.limit+props.limit, 'all':props.item_count}
+                                                     ),
+                             as_="h6"),
+                           ),
+                         textAlign="center", width=16))
+
     return e(ui.Segment,
              *add_el,
              e(ui.Grid,
+               *count_el,
                pagination,
                 *[e(ui.Grid.Column, c, computer=4, tablet=3, mobile=6, largeScreen=lscreen, widescreen=wscreen) for c in els],
                 pagination,
+                *count_el,
                 padded="vertically",
                 centered=True,
+                as_=ui.Transition.Group,
+                duration=2000,
                 ),
              basic=True,
              loading=props.loading,
@@ -446,6 +514,13 @@ def ItemViewBase(props):
              tertiary=props.tertiary,
              )
 
+ItemViewBase = createReactClass({
+    'displayName': 'ItemViewBase',
+
+    'render': itemviewbase_render
+})
+
+__pragma__("tconv")
 def get_items(data=None, error=None):
     if data is not None and not error:
         this.setState({"items":data, 'loading':False})
@@ -460,6 +535,8 @@ def get_items(data=None, error=None):
             func_kw['view_filter'] = this.props.view_filter
         if this.state.search_query:
             func_kw['search_query'] = this.state.search_query
+        if this.props.search_options:
+            func_kw['search_options'] = this.props.search_options
         if this.props.filter_id:
             func_kw['filter_id'] = this.props.filter_id
         if this.props.related_type:
@@ -469,7 +546,9 @@ def get_items(data=None, error=None):
         if item:
             client.call_func("library_view", this.get_items, **func_kw)
             this.setState({'loading':True})
+__pragma__("notconv")
 
+__pragma__("tconv")
 def get_items_count(data=None, error=None):
     if data is not None and not error:
         this.setState({"item_count":data['count']})
@@ -484,6 +563,8 @@ def get_items_count(data=None, error=None):
             func_kw['filter_id'] = this.props.filter_id
         if this.state.search_query:
             func_kw['search_query'] = this.state.search_query
+        if this.props.search_options:
+            func_kw['search_options'] = this.props.search_options
         if this.props.related_type:
             func_kw['related_type'] = this.props.related_type
         if this.props.item_id:
@@ -491,6 +572,7 @@ def get_items_count(data=None, error=None):
 
         if item:
             client.call_func("get_view_count", this.get_items_count, **func_kw)
+__pragma__("notconv")
 
 
 def get_element():
@@ -520,6 +602,7 @@ def item_view_on_update(p_props, p_state):
         p_props.filter_id != this.props.filter_id,
         p_props.view_filter != this.props.view_filter,
         p_props.search_query != this.props.search_query,
+        p_props.search_options != this.props.search_options,
         p_state.search_query != this.state.search_query,
         p_props.limit != this.props.limit,
         )):
@@ -532,6 +615,7 @@ def item_view_on_update(p_props, p_state):
         p_props.item_id != this.props.item_id,
         p_props.filter_id != this.props.filter_id,
         p_props.view_filter != this.props.view_filter,
+        p_props.search_options != this.props.search_options,
         p_props.search_query != this.props.search_query,
         p_state.search_query != this.state.search_query,
         p_props.limit != this.props.limit,
@@ -713,7 +797,9 @@ def itemviewpage_render():
                         item_type=this.state.item_type,
                         view_filter=this.props.view_type,
                         search_query=this.state.search_query,
-                        filter_id=this.state.filter_id,)
+                        filter_id=this.state.filter_id,
+                        search_options=this.state.search_options
+                        )
 
 ItemViewPage = createReactClass({
     'displayName': 'ItemViewPage',
@@ -722,7 +808,7 @@ ItemViewPage = createReactClass({
 
     'on_filter_change': lambda e, d: this.setState({'filter_id':d.value}),
 
-    'on_search': lambda v: this.setState({'search_query':v}),
+    'on_search': lambda s, o: this.setState({'search_query':s, 'search_options':o}),
 
     'update_menu': lambda: state.app.set_menu_contents(
         item_view_menu(
@@ -739,7 +825,9 @@ ItemViewPage = createReactClass({
 
     'getInitialState': lambda: {'item_type': int(utils.get_query("item_type", ItemType.Gallery)),
                                 'filter_id': int(utils.get_query("filter_id", 0)),
-                                'search_query':""},
+                                'search_query':"",
+                                'search_options':{},
+                                },
 
     'render': itemviewpage_render
 })

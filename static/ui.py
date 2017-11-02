@@ -177,7 +177,10 @@ def pagination_render():
              *items,
              pagination=True,
              borderless=True,
-             size=this.props.size,)
+             size=this.props.size,
+            as_=ui.Transition.Group,
+            duration=1000,
+             )
 
 Pagination = createReactClass({
     'displayName': 'Pagination',

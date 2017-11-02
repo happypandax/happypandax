@@ -15,23 +15,8 @@ def set_key(e):
 
 def get_type(s):
     s = s.strip()
-    if s.startswith("{") and s.endswith("}"):
-        s = s[1:-1]
-        d = {}
-        kv = []
-        sp = s.split(':')
-        for v in sp:
-            if len(kv) == 2:
-                d[kv[0]] = kv[1]
-                kv.clear()
-            kv.append(get_type(v))
-
-        if len(kv) == 2:
-            d[kv[0]] = kv[1]
-        return d
-
     # starwith and endswith doesn't work with tuple, transcrypt fault
-    elif s[0] in ("'", '"') and s[len(s) - 1] in ("'", '"'):
+    if s[0] in ("'", '"') and s[len(s) - 1] in ("'", '"'):
         return s[1:-1]
     elif s.lower() in ('none', 'null'):
         return None
@@ -53,6 +38,15 @@ def set_value(e):
             get_type(x.strip()) for x in value.replace(
                 '[', '').replace(
                 ']', '').split(',') if x]
+    elif value.startswith("{") and value.endswith("}"):
+        value = value[1:-1]
+        d = {}
+        for kw in value.split(","):
+            sp = kw.split(':')
+            if len(sp) == 2:
+                k, v = sp
+                d[get_type(k)] = get_type(v)
+        value = d
 
     if isinstance(value, str):
         value = get_type(value)

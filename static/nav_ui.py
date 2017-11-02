@@ -199,7 +199,7 @@ def sidebar_nav_render():
     items = []
     items.append(MenuItem("", icon="sidebar", position="left", handler=this.props["toggler"]))
 
-    items.append(MenuItem("Dashboard", "ui.mi-dashboard", icon="home", url="/dashboard", handler=this.props["toggler"]))
+    #items.append(MenuItem("Dashboard", "ui.mi-dashboard", icon="home", url="/dashboard", handler=this.props["toggler"]))
     items.append(MenuItem("Favorites", "ui.mi-favorites", icon="heart", url="/favorite", handler=this.props["toggler"]))
     items.append(MenuItem("Library", "ui.mi-library", icon="grid layout", url="/library", handler=this.props["toggler"]))
     items.append(MenuItem("Inbox", "ui.mi-inbox", icon="inbox", url="/inbox", handler=this.props["toggler"]))

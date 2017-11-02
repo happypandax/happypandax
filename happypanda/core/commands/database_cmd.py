@@ -227,7 +227,9 @@ class GetModelItemByID(Command):
             log.d("Fetching items from a set with", len(ids), "ids", "offset:", offset, "limit:", limit)
 
         if ids is not None and not ids:
-            return tuple()
+            return 0 if count else tuple()
+
+        criteria = False
 
         s = constants.db_session()
         if count:
@@ -238,15 +240,18 @@ class GetModelItemByID(Command):
             q = s.query(model)
 
         if join is not None:
+            criteria = True
             if not isinstance(join, (list, tuple)):
                 join = [join]
             for j in join:
                 q = q.join(self._get_sql(j))
 
         if order_by is not None:
+            criteria = True
             q = q.order_by(self._get_sql(order_by))
 
         if filter is not None:
+            criteria = True
             q = q.filter(self._get_sql(filter))
 
         if ids:
@@ -261,7 +266,7 @@ class GetModelItemByID(Command):
 
                 fetched_list = fetched_list[offset:][:limit]
                 self.fetched_items = tuple(fetched_list) if not count else len(fetched_list)
-            elif id_amount == 1 and not columns:
+            elif id_amount == 1 and (not columns and not criteria):
                 self.fetched_items = (q.get(ids.pop()),) if not count else q.count()
             else:
                 q = q.filter(model.id.in_(ids))

@@ -41,3 +41,6 @@ t-server-comm-tutorial: |-
     	{3:"val1", "key1":1} -> object
 
     Note: if all fails, defaults to string
+
+# Misc
+t-showing-count: Showing %{from}-%{to} of %{all}

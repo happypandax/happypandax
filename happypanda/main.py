@@ -1,11 +1,12 @@
 import os
 import sys
-import i18n
 
 if __package__ is None and not hasattr(sys, 'frozen'):
     # direct call of main.py
     path = os.path.realpath(os.path.abspath(__file__))
     sys.path.insert(0, os.path.dirname(os.path.dirname(path)))
+
+import i18n # noqa: E402
 
 from gevent import monkey  # noqa: E402
 

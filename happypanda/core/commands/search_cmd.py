@@ -1,4 +1,4 @@
-from collections import namedtuple
+from collections import namedtuple, ChainMap
 
 from happypanda.common import hlogger, exceptions, utils, constants, config
 from happypanda.core.command import Command, CommandEvent, CommandEntry
@@ -8,15 +8,31 @@ from happypanda.core import db
 
 log = hlogger.Logger(__name__)
 
-
-def get_search_options():
+def _get_search_options():
     return {
-        "case": config.search_option_case.value,
-        "regex": config.search_option_regex.value,
-        "whole": config.search_option_whole.value,
-        "all": config.search_option_all.value,
-        "desc": config.search_option_desc.value
-    }
+            config.search_option_all: 'all',
+            config.search_option_case: 'case',
+            config.search_option_desc: 'desc',
+            config.search_option_regex: 'regex',
+            config.search_option_whole: 'whole',
+           }
+
+
+def get_search_options(options={}):
+    d_val = {}
+    u_val = {}
+    opt = _get_search_options()
+    if isinstance(options, ChainMap):
+        options = options.maps[0]
+    for o in opt:
+        d_val[opt[o]] = o.value
+        if o.name in options:
+            u_val[opt[o]] = options[o.name]
+        elif opt[o] in options:
+            u_val[opt[o]] = options[opt[o]]
+
+
+    return ChainMap(u_val, d_val)
 
 Term = namedtuple("Term", ["namespace", "tag", "operator"])
 
@@ -207,7 +223,7 @@ class PartialModelFilter(Command):
 
     models = CommandEntry("models", tuple)
 
-    match_model = CommandEntry("match_model", set, str, str, str, dict)
+    match_model = CommandEntry("match_model", set, str, str, str, ChainMap)
     matched = CommandEvent("matched", set)
 
     def __init__(self):
@@ -246,7 +262,6 @@ class PartialModelFilter(Command):
         else:
             if not options.get("whole"):
                 value = '%' + value + '%'
-
             if options.get("case"):
                 expr = column.like
             else:
@@ -375,12 +390,11 @@ class PartialModelFilter(Command):
                                                                                                       options)).all())
         return ids
 
-    def main(self, model: db.Base, term: str) -> set:
+    def main(self, model: db.Base, term: str, match_options: dict = {}) -> set:
 
         self.model = model
         model_name = db.model_name(self.model)
         self.term = term
-
         with self.models.call() as plg:
             for p in plg.all(default=True):
                 self._supported_models.update(p)
@@ -389,13 +403,16 @@ class PartialModelFilter(Command):
             raise exceptions.CommandError(utils.this_command(self),
                                           "Model '{}' is not supported".format(model))
 
+        options = get_search_options(match_options)
+        log.d("Match options", options)
+
         related_models = db.related_classes(model)
 
         sess = constants.db_session()
 
         model_count = sess.query(model).count()
 
-        with self.match_model.call_capture(model_name, model_name, model_name, self.term, get_search_options()) as plg:
+        with self.match_model.call_capture(model_name, model_name, model_name, self.term, options) as plg:
             for i in plg.all():
                 self.matched_ids.update(i)
                 if len(self.matched_ids) == model_count:
@@ -404,7 +421,7 @@ class PartialModelFilter(Command):
         has_all = False
         for m in related_models:
             if m in self._supported_models:
-                with self.match_model.call_capture(db.model_name(m), model_name, db.model_name(m), self.term, get_search_options()) as plg:
+                with self.match_model.call_capture(db.model_name(m), model_name, db.model_name(m), self.term, options) as plg:
                     for i in plg.all():
                         self.matched_ids.update(i)
                         if len(self.matched_ids) == model_count:
@@ -425,8 +442,8 @@ class ModelFilter(Command):
     """
 
     separate = CommandEntry("separate", tuple, tuple)
-    include = CommandEntry("include", set, str, set)
-    exclude = CommandEntry("exclude", set, str, set)
+    include = CommandEntry("include", set, str, set, ChainMap)
+    exclude = CommandEntry("exclude", set, str, set, ChainMap)
     empty = CommandEntry("empty", set, str)
 
     included = CommandEvent("included", str, set)
@@ -456,25 +473,25 @@ class ModelFilter(Command):
         return tuple(include), tuple(exclude)
 
     @staticmethod
-    def _match(model_name, pieces):
+    def _match(model_name, pieces, options):
         ""
         model = database_cmd.GetModelClass().run(model_name)
         partialfilter = PartialModelFilter()
         matched = set()
 
         for p in pieces:
-            m = partialfilter.run(model, p)
+            m = partialfilter.run(model, p, options)
             matched.update(m)
 
         return matched
 
     @include.default()
-    def _include(model_name, pieces):
-        return ModelFilter._match(model_name, pieces)
+    def _include(model_name, pieces, options):
+        return ModelFilter._match(model_name, pieces, options)
 
     @exclude.default()
-    def _exclude(model_name, pieces):
-        return ModelFilter._match(model_name, pieces)
+    def _exclude(model_name, pieces, options):
+        return ModelFilter._match(model_name, pieces, options)
 
     @empty.default()
     def _empty(model_name):
@@ -482,7 +499,7 @@ class ModelFilter(Command):
         s = constants.db_session()
         return set(x[0] for x in s.query(model.id).all())
 
-    def main(self, model: db.Base, search_filter: str) -> set:
+    def main(self, model: db.Base, search_filter: str, match_options: dict = {}) -> set:
         assert issubclass(model, db.Base)
 
         self._model = model
@@ -494,7 +511,7 @@ class ModelFilter(Command):
 
             pieces = self.parsesearchfilter.run(search_filter)
 
-            options = get_search_options()
+            options = get_search_options(match_options)
 
             include = set()
             exclude = set()
@@ -506,7 +523,7 @@ class ModelFilter(Command):
                         include.update(p[0])
                         exclude.update(p[1])
 
-            with self.include.call(model_name, include) as plg:
+            with self.include.call(model_name, include, options) as plg:
 
                 for i in plg.all():
                     if options.get("all"):
@@ -519,7 +536,7 @@ class ModelFilter(Command):
 
             self.included.emit(model_name, self.included_ids)
 
-            with self.exclude.call(model_name, exclude) as plg:
+            with self.exclude.call(model_name, exclude, options) as plg:
 
                 for i in plg.all():
                     self.excluded_ids.update(i)

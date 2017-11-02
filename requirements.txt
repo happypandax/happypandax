@@ -7,11 +7,10 @@ appdirs==1.4.3
 alembic==0.9.1
 arrow==0.10.0
 https://github.com/Pewpews/happy-bittorrent/archive/master/1.0.0.zip
-Flask==0.11.1
+Flask==0.12.2
 karellen-geventws==1.0.2
-transcrypt==3.6.50
-flask-socketio==2.9.0
+flask-socketio==2.9.2
 libsass==0.13.2
 pyyaml==3.12
-pillow==4.1.1
+pillow==4.3.0
 https://github.com/happypandax/i18n/archive/master.zip

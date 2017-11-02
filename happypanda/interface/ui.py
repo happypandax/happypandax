@@ -25,12 +25,19 @@ def _view_helper(item_type: enums.ItemType=enums.ItemType.Gallery,
                  view_filter: enums.ViewType = enums.ViewType.Library,
                  item_id: int = None,
                  related_type: enums.ItemType = None,
+                 search_options: dict = {},
                  ):
     if view_filter is not None:
         view_filter = enums.ViewType.get(view_filter)
     if related_type is not None:
         related_type = enums.ItemType.get(related_type)
     item_type = enums.ItemType.get(item_type)
+
+    if search_options:
+        search_option_names = [x.name for x in search_cmd._get_search_options()]
+        for n in search_options:
+            if not n in search_option_names:
+                raise exceptions.APIError(utils.this_function(), "Invalid search option name '{}'".format(n))
 
     filter_op = []
     join_exp = []
@@ -71,7 +78,7 @@ def _view_helper(item_type: enums.ItemType=enums.ItemType.Gallery,
 
     model_ids = None
     if not db_model == db.Page:
-        model_ids = search_cmd.ModelFilter().run(db_model, search_query)
+        model_ids = search_cmd.ModelFilter().run(db_model, search_query, search_options)
 
     metatag_name = None
     if view_filter == enums.ViewType.Favorite:
@@ -88,6 +95,7 @@ def _view_helper(item_type: enums.ItemType=enums.ItemType.Gallery,
     elif view_filter == enums.ViewType.Library:
         if hasattr(db_model, "metatags"):
             filter_op.append(~db_model.metatags.any(db.MetaTag.name == db.MetaTag.names.inbox))
+            filter_op.append(~db_model.metatags.any(db.MetaTag.name == db.MetaTag.names.trash))
 
     if related_type:
         filter_op.append(parent_model.id == item_id)
@@ -108,6 +116,7 @@ def library_view(item_type: enums.ItemType = enums.ItemType.Gallery,
                  limit: int = 100,
                  sort_by: str = "",
                  search_query: str = "",
+                 search_options: dict = {},
                  filter_id: int = None,
                  view_filter: enums.ViewType = enums.ViewType.Library):
     """
@@ -120,6 +129,7 @@ def library_view(item_type: enums.ItemType = enums.ItemType.Gallery,
         sort_by: name of column to order by ...
         limit: amount of items per page
         search_query: filter item by search terms
+        search_options: options to apply when filtering, see :ref:`Settings` for available search options
         filter_id: current filter list id
         view_filter: type of view, set ``None`` to not apply any filter
         related_type: child item
@@ -134,7 +144,7 @@ def library_view(item_type: enums.ItemType = enums.ItemType.Gallery,
             ]
     """
     view_filter, item_type, db_msg, db_model, model_ids, filter_op, join_exp, metatag_name = _view_helper(
-        item_type, search_query, filter_id, view_filter, item_id, related_type)
+        item_type, search_query, filter_id, view_filter, item_id, related_type, search_options)
 
     items = message.List(db_model.__name__.lower(), db_msg)
 
@@ -148,6 +158,7 @@ def get_view_count(item_type: enums.ItemType=enums.ItemType.Gallery,
                    item_id: int = None,
                    related_type: enums.ItemType = None,
                    search_query: str = "",
+                   search_options: dict = {},
                    filter_id: int = None,
                    view_filter: enums.ViewType = enums.ViewType.Library):
     """
@@ -156,6 +167,7 @@ def get_view_count(item_type: enums.ItemType=enums.ItemType.Gallery,
     Args:
         item_type: possible items are :py:attr:`.ItemType.Gallery`, :py:attr:`.ItemType.Collection`, :py:attr:`.ItemType.Grouping`
         search_query: filter item by search terms
+        search_options: options to apply when filtering, see :ref:`Settings` for available search options
         filter_id: current filter list id
         view_filter: type of view, set ``None`` to not apply any filter
         related_type: child item
@@ -169,13 +181,13 @@ def get_view_count(item_type: enums.ItemType=enums.ItemType.Gallery,
             }
     """
     view_filter, item_type, db_msg, db_model, model_ids, filter_op, join_exp, metatag_name = _view_helper(
-        item_type, search_query, filter_id, view_filter, item_id, related_type)
+        item_type, search_query, filter_id, view_filter, item_id, related_type, search_options)
 
     return message.Identity('count', {'count': database_cmd.GetModelItemByID().run(
         db_model, model_ids, filter=filter_op, join=join_exp, count=True)})
 
 
-def translate(t_id: str, locale: str = None, default: str = None):
+def translate(t_id: str, locale: str = None, default: str = None, placeholder:str = {}, count:int = None):
     """
     Get a translation by translation id. Raises error if no translation was found.
 
@@ -183,15 +195,23 @@ def translate(t_id: str, locale: str = None, default: str = None):
         t_id: translation id
         locale: locale to get translations from (will override default locale)
         default: default text when no translation was found
+        placeholder: ?
+        count: pluralization
 
     Returns:
         string
     """
     kwargs = {}
+
+    if placeholder:
+        kwargs.update(placeholder),
+    if count is not None:
+        kwargs["count"] = count
     if locale:
         kwargs["locale"] = locale.lower()
     if default:
         kwargs["default"] = default
+
     try:
         trs = i18n.t(t_id, **kwargs)
     except KeyError as e:
