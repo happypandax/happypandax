@@ -202,6 +202,8 @@ def translate(t_id: str, locale: str = None, default: str = None, placeholder:st
         string
     """
     kwargs = {}
+    trs = default
+
 
     if placeholder:
         kwargs.update(placeholder),
@@ -212,14 +214,16 @@ def translate(t_id: str, locale: str = None, default: str = None, placeholder:st
     if default:
         kwargs["default"] = default
 
-    try:
-        trs = i18n.t(t_id, **kwargs)
-    except KeyError as e:
-        raise exceptions.APIError(utils.this_function(), "Translation id '{}' not found".format(t_id))
-    except i18n.loaders.loader.I18nFileLoadError as e:
-        if default is None:
-            log.exception("Failed to load translation file '{}' with key '{}'".format(
-                locale if locale else config.translation_locale.value, t_id))
-            raise exceptions.APIError(utils.this_function(), "Failed to load translation file: {}".format(e.args))
-        trs = default
+    if not t_id and default is None:
+        raise exceptions.APIError(utils.this_function(), "Invalid translation id: {}".format(t_id))
+    elif t_id:
+        try:
+            trs = i18n.t(t_id, **kwargs)
+        except KeyError as e:
+            raise exceptions.APIError(utils.this_function(), "Translation id '{}' not found".format(t_id))
+        except i18n.loaders.loader.I18nFileLoadError as e:
+            if default is None:
+                log.exception("Failed to load translation file '{}' with key '{}'".format(
+                    locale if locale else config.translation_locale.value, t_id))
+                raise exceptions.APIError(utils.this_function(), "Failed to load translation file: {}".format(e.args))
     return message.Identity("translation", trs)

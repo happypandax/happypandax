@@ -87,7 +87,6 @@ class GetModelImage(AsyncCommand):
         img_hash = io_cmd.ImageItem.gen_hash(
             model, image_size, item_id)
 
-        new = True
         generate = True
         sess = constants.db_session()
 
@@ -105,39 +104,43 @@ class GetModelImage(AsyncCommand):
                 generate = False
             else:
                 old_img_hash = self.cover.data
-            new = False
 
         if generate:
             self.cover = self.run_native(self._generate_and_add, img_hash, old_img_hash, generate,
-                                         new, model, item_id, image_size, profile_size).get()
+                                         model, item_id, image_size, profile_size).get()
         self.cover_event.emit(self.cover)
         return self.cover
 
     @async.defer
-    def _update_db(self, new, stale_cover, item_id, model, old_hash):
+    def _update_db(self, stale_cover, item_id, model, old_hash):
         s = constants.db_session()
-        cover = s.query(db.Profile).filter(
-            db.and_op(db.Profile.data == old_hash, db.Profile.size == stale_cover.size)).one_or_none()
-        # TODO: handle MultipleResultsError
+        with s.no_autoflush:
+            cover = s.query(db.Profile).filter(
+                db.and_op(db.Profile.data == old_hash, db.Profile.size == stale_cover.size)).one_or_none()
+            # TODO: handle MultipleResultsError
 
-        if cover:
-            # sometimes an identical img has already been generated and exists so we delete it
-            fs = io_cmd.CoreFS(cover.path)
-            if (cover.path != stale_cover.path) and fs.exists:
-                fs.delete(True)
-        else:
-            cover = db.Profile()
+            new = False
 
-        cover.data = stale_cover.data
-        cover.path = stale_cover.path
-        cover.size = stale_cover.size
+            if cover:
+                # sometimes an identical img has already been generated and exists so we shouldnt do anything
+                fs = io_cmd.CoreFS(cover.path)
+                if (cover.path != stale_cover.path) and fs.exists:
+                    fs.delete()
+            else:
+                cover = db.Profile()
+                new = True
 
-        if new:
-            i = s.query(model).get(item_id)
-            i.profiles.append(cover)
-        s.commit()
+            cover.data = stale_cover.data
+            cover.path = stale_cover.path
+            cover.size = stale_cover.size
 
-    def _generate_and_add(self, img_hash, old_img_hash, generate, new, model, item_id, image_size, profile_size):
+            if new or not s.query(db.Profile).join(db.relationship_column(model, db.Profile)).filter(
+                db.and_op(db.Profile.id==cover.id, model.id==item_id)).scalar():
+                i = s.query(model).get(item_id)
+                i.profiles.append(cover)
+            s.commit()
+
+    def _generate_and_add(self, img_hash, old_img_hash, generate, model, item_id, image_size, profile_size):
 
         model_name = db.model_name(model)
 
@@ -153,7 +156,7 @@ class GetModelImage(AsyncCommand):
             cover.size = profile_size
 
         if cover.path and generate:
-            self._update_db(new, cover, item_id, model, old_img_hash)
+            self._update_db(cover, item_id, model, old_img_hash)
         elif not cover.path:
             cover = None
         return cover

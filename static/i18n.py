@@ -1,4 +1,6 @@
-from client import client
+import utils
+
+from client import client, log
 
 current_locale = "en_us"
 
@@ -13,7 +15,6 @@ def add_translation(ctx, data, err):
 def add_translation_component(ctx, data, err):
     add_translation(ctx, data, err)
     if not err:
-        print(data)
         ctx['cmp'].forceUpdate()
 
 __pragma__("kwargs")
@@ -22,18 +23,10 @@ __pragma__("iconv")
 
 def tr(that, t_id, default_txt, placeholder=None, count=None):
     t_txt = _translations_d.get(current_locale, {}).get(t_id)
-
-    if t_txt:
-        if placeholder and t_txt['extra'][1]:
-            v1 = (t_txt['extra'][1].keys() == placeholder.keys() and \
-                    t_txt['extra'][1].values() == placeholder.values())
-        else:
-            v1 = t_txt['extra'][1] == placeholder
-
-        v2 = t_txt['extra'][1] == count
-            
-        if not v1 or not v2:
-            t_txt = None
+    #if not t_id:
+    #    log("Translation id is None", placeholder, count)
+    #if t_txt and not (utils.isEqual(placeholder, t_txt['extra'][0]) and utils.isEqual(count, t_txt['extra'][1])):
+    #    t_txt = None
 
     if t_txt is None:
         fargs = {"t_id":t_id, "locale":current_locale, "default":default_txt, "count":count}

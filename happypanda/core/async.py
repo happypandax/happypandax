@@ -3,6 +3,7 @@ import gevent
 import weakref
 import collections
 import threading
+import arrow
 
 from happypanda.common import hlogger, utils, constants
 
@@ -82,12 +83,19 @@ class CPUThread():
                 # arbitrary non-preemptive service discipline can go here
                 # FIFO for now, but we should experiment with others
                 jobid, func, args, kwargs = self.in_q.popleft()
+                start_time = arrow.now()
                 try:
                     self.results[jobid] = func(*args, **kwargs)
                 except Exception as e:
                     log.exception("Exception raised in cpubound_thread:")
                     self.results[jobid] = self._Caught(e)
                 constants._db_scoped_session.remove()
+                finished_time = arrow.now()
+                run_delta = finished_time - start_time
+                log.d("Function - '{}'\n".format(func.__name__),
+                        "\tRunning time: {}\n".format(run_delta),
+                        "\tJobs left:", len(self.in_q),
+                        )
                 self.out_q.append(jobid)
                 self.out_async.send()
         except:

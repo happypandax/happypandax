@@ -223,8 +223,8 @@ class AuthError(ServerError):
 class AuthRequiredError(AuthError):
     """Auth Base Error."""
 
-    def __init__(self, where):
-        super().__init__(where, "Authentication required")
+    def __init__(self, where, msg):
+        super().__init__(where, msg)
 
 
 @error_code(408)

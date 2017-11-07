@@ -86,12 +86,13 @@ class Client:
                     self._accepted = True
                     self._recv()
             except socket.error as e:
-                self.session = ""
+                self._disconnect()
                 raise exceptions.ServerDisconnectError(
                     self.name, "{}".format(e))
 
     def _disconnect(self):
         self._alive = False
+        self._accepted = False
         self.session = ""
 
     def _send(self, msg_bytes):
@@ -136,9 +137,7 @@ class Client:
                 self._server)
             return utils.convert_to_json(buffered, self.name)
         except socket.error as e:
-            # log disconnect
-            self._alive = False
-            self.session = ""
+            self._disconnect()
             raise exceptions.ServerError(self.name, "{}".format(e))
 
     def communicate(self, msg, auth=False):

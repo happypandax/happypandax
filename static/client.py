@@ -49,6 +49,11 @@ class ViewType:
     #: Inbox
     Inbox = 3
 
+def log(msg):
+    if state.debug:
+        print(msg)
+
+
 class Base:
 
     def __init__(self, url=""):
@@ -58,8 +63,7 @@ class Base:
         pass
 
     def log(self, msg):
-        if state.debug:
-            print(msg)
+        log(msg)
 
 class ServerMsg:
     msg_id = 0
@@ -128,8 +132,8 @@ class Client(Base):
     __pragma__('nokwargs')
 
     def on_connect(self):
-        self.call_func("get_config", self._set_debug, cfg={'core.debug':False})
         self.reconnect()
+        self.call_func("get_config", self._set_debug, cfg={'core.debug':False})
 
     def on_disconnect(self):
         self._connection_status = False

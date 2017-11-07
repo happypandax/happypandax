@@ -22,6 +22,14 @@ def _create_clients(id, session_id=""):
     }
     return all_clients[id]
 
+def _connect_clients(clients):
+    clients["client"].connect()
+    for c in clients:
+        clients[c].connect()
+        clients[c]._alive = clients["client"]._alive
+        clients[c].session = clients["client"].session
+        clients[c]._accepted = clients["client"]._accepted
+
 
 def get_clients(id, session_id=""):
     if id not in all_clients:
@@ -38,6 +46,7 @@ def send_error(ex):
 
 
 def call_server(msg, c):
+    log.e("request sid", request.sid)
     root_client = get_clients(request.sid)['client']
     msg_id = msg['id']
     data = None
@@ -59,7 +68,11 @@ def call_server(msg, c):
 #@socketio.on('connect')
 #def on_connect():
 #    "client connected"
-#    get_clients(request.sid, root_client.session)
+#    try:
+#        _connect_clients(get_clients(request.sid))
+#    except exceptions.ClientError as e:
+#        log.exception("Failed to connect")
+#        send_error(e)
 
 
 @socketio.on('command')
@@ -80,12 +93,12 @@ def on_command(msg):
     try:
         if cmd == 1:
             if not clients['client'].alive():
-                clients['client'].connect()
+                _connect_clients(clients)
             d['status'] = clients['client'].alive()
         elif cmd == 2:
             if not clients['client'].alive():
                 try:
-                    clients['client'].connect()
+                    _connect_clients(clients)
                 except exceptions.ClientError as e:
                     log.exception("Failed to reconnect")
                     send_error(e)
