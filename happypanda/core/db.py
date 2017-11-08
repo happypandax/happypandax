@@ -68,6 +68,10 @@ class String(_String):
     Supports additional operators that can be used while constructing
     filter expressions.
     """
+
+    #def __init__(self, length = None, collation = None, convert_unicode = False, unicode_error = None, _warn_on_bytestring = False, *args, **kwargs):
+    #    return super().__init__(length, 'utf-8', convert_unicode, unicode_error, _warn_on_bytestring, *args, **kwargs)
+
     class comparator_factory(_String.comparator_factory):
         """Contains implementation of :class:`String` operators
         related to regular expressions.
@@ -236,6 +240,8 @@ class UniqueMixin:
 
 
 class BaseID:
+    __table_args__ = {'mysql_collate': 'utf8mb4_unicode_ci'}
+
     id = Column(Integer, primary_key=True)
     properties = Column(JSONType, nullable=False, default={})
 
@@ -1275,6 +1281,7 @@ def sqlite_engine_connect(dbapi_connection, connection_record):
         dbapi_connection.create_function(name, 2, function)
 
     cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA case_sensitive_like = 1;")
     cursor.execute("PRAGMA journal_mode=WAL")
     cursor.execute("PRAGMA synchronous=NORMAL")
     cursor.close()

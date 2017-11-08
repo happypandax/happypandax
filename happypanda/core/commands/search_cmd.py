@@ -523,15 +523,18 @@ class ModelFilter(Command):
                         include.update(p[0])
                         exclude.update(p[1])
 
-            with self.include.call(model_name, include, options) as plg:
+            if options.get("all"):
+                for n, p in enumerate(include):
+                    with self.include.call(model_name, {p}, options) as plg:
+                        for i in plg.all():
+                            if n != 0:
+                                self.included_ids.intersection_update(i)
+                            else:
+                                self.included_ids.update(i)
+            else:
+                with self.include.call(model_name, include, options) as plg:
 
-                for i in plg.all():
-                    if options.get("all"):
-                        if self.included_ids:
-                            self.included_ids.intersection_update(i)
-                        else:
-                            self.included_ids.update(i)
-                    else:
+                    for n, i in enumerate(plg.all()):
                         self.included_ids.update(i)
 
             self.included.emit(model_name, self.included_ids)

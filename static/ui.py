@@ -105,7 +105,7 @@ def pagination_render():
     if not current_page:
         current_page = 1
 
-    pages = math.floor(pages)
+    pages = math.ceil(pages)
 
     page_list = range(1, pages + 1)
     ellipsis_pos = 2 if limit > 2 else 1

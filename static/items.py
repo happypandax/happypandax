@@ -507,7 +507,7 @@ def itemviewbase_render():
                 padded="vertically",
                 centered=True,
                 as_=ui.Transition.Group,
-                duration=2000,
+                duration=1500,
                 ),
              basic=True,
              loading=props.loading,
@@ -602,12 +602,14 @@ def item_view_on_update(p_props, p_state):
         p_props.item_id != this.props.item_id,
         p_props.filter_id != this.props.filter_id,
         p_props.view_filter != this.props.view_filter,
-        p_props.search_query != this.props.search_query,
         p_props.search_options != this.props.search_options,
+        p_props.search_query != this.props.search_query,
         p_state.search_query != this.state.search_query,
         p_props.limit != this.props.limit,
         )):
         this.setState({'page':1})
+        if this.props.query or not utils.defined(this.props.query):
+            utils.go_to(query={"page":1}, push=False)
         this.get_items_count()
 
     if any((

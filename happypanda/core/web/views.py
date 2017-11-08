@@ -46,7 +46,6 @@ def send_error(ex):
 
 
 def call_server(msg, c):
-    log.e("request sid", request.sid)
     root_client = get_clients(request.sid)['client']
     msg_id = msg['id']
     data = None

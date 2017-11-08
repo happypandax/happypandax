@@ -88,9 +88,6 @@ class Logger:
                 eprint(s)
 
     def __getattr__(self, name):
-
-        if not hasattr(self._logger, name):
-            raise AttributeError
         return getattr(self._logger, name)
 
     @classmethod
@@ -142,6 +139,10 @@ class Logger:
             handlers=tuple(log_handlers))
 
         if main:
+            if args.dev:
+                Logger("sqlalchemy.pool").setLevel(logging.DEBUG)
+                Logger("sqlalchemy.engine").setLevel(logging.INFO)
+                Logger("sqlalchemy.orm").setLevel(logging.INFO)
             Logger(__name__).i(
                 os.path.split(
                     constants.log_debug)[1], "created at", os.path.abspath(
