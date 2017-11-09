@@ -1,3 +1,4 @@
+# flake8: noqa
 import os
 import sys
 import argparse
@@ -6,10 +7,10 @@ from subprocess import run
 from importlib import reload
 
 dev_options = dict(
-    build_db = 103,
-    prev_build = None,
-    env_activated = False
-    )
+    build_db=103,
+    prev_build=None,
+    env_activated=False
+)
 
 changes = """
 - implement filter_id
@@ -66,6 +67,7 @@ def is_tool(name):
             return False
     return True
 
+
 def is_installed(cmd):
     _cmd = cmd
     if not is_tool(cmd):
@@ -76,6 +78,7 @@ def is_installed(cmd):
             print("Cannot continue. Please make sure '{}' is available, or setup HPX manually".format(_cmd))
             sys.exit()
     return _cmd
+
 
 def build(args):
     _activate_venv()
@@ -100,7 +103,10 @@ def build(args):
         print("Building docs")
         build_docs.main()
 
-    print("\nLast build requiring a db rebuild: {}\nPlease use the accompanying script 'HPtoHPX.py' to rebuild your database once if you've surpassed this build".format(dev_options['build_db']))
+    print(
+        "\nLast build requiring a db rebuild: {}\nPlease use the accompanying script 'HPtoHPX.py' to rebuild your database once if you've surpassed this build".format(
+            dev_options['build_db']))
+
 
 def _activate_venv():
     if not dev_options['env_activated']:
@@ -117,6 +123,7 @@ def _activate_venv():
             exec(f.read(), {'__file__': activator})
         dev_options['env_activated'] = True
 
+
 def _check_python():
     _cmd = "python3"
     install_cmd_stuff = True
@@ -130,6 +137,7 @@ def _check_python():
             sys.exit()
     return _cmd
 
+
 def _check_pip():
     print("Checking for pip")
     try:
@@ -137,6 +145,7 @@ def _check_pip():
     except ImportError:
         print("Seems like pip is not installed. Please install pip to continue")
         sys.exit()
+
 
 def _update_pip(args, skip=True):
     if not args.dev and skip:
@@ -149,6 +158,7 @@ def _update_pip(args, skip=True):
     r = "requirements.txt" if not args.dev else "requirements-dev.txt"
     env_p = r".\env\Scripts\pip3" if sys.platform.startswith("win") else "./env/bin/pip3"
     run([env_p, "install", "-r", r])
+
 
 def install(args):
     print("Installing HPX...")
@@ -181,6 +191,7 @@ def install(args):
     if args.run:
         build(args)
 
+
 def update(args):
     if args.packages:
         _activate_venv()
@@ -205,6 +216,7 @@ def update(args):
         build(args)
         version(args)
 
+
 def version(args):
     _activate_venv()
     from happypanda.common import constants
@@ -217,7 +229,9 @@ def version(args):
     import bootstrap
     print("\n------------------- Changes -------------------")
     print(bootstrap.changes)
-    print("\nLast build requiring a db rebuild: {}\nPlease use the accompanying script 'HPtoHPX.py' to rebuild your database once if you've surpassed this build".format(dev_options['build_db']))
+    print(
+        "\nLast build requiring a db rebuild: {}\nPlease use the accompanying script 'HPtoHPX.py' to rebuild your database once if you've surpassed this build".format(
+            dev_options['build_db']))
 
 
 def convert(args):
@@ -270,7 +284,9 @@ def is_sane_database(Base, session):
         table = klass.__tablename__
         if table in tables:
             # Check all columns are found
-            # Looks like [{'default': "nextval('sanity_check_test_id_seq'::regclass)", 'autoincrement': True, 'nullable': False, 'type': INTEGER(), 'name': 'id'}]
+            # Looks like [{'default': "nextval('sanity_check_test_id_seq'::regclass)",
+            # 'autoincrement': True, 'nullable': False, 'type': INTEGER(), 'name':
+            # 'id'}]
 
             columns = [c["name"] for c in iengine.get_columns(table)]
             mapper = inspect(klass)
@@ -283,7 +299,11 @@ def is_sane_database(Base, session):
                     for column in column_prop.columns:
                         # Assume normal flat column
                         if not column.key in columns:
-                            logger.error("Model %s declares column %s which does not exist in database %s", klass, column.key, engine)
+                            logger.error(
+                                "Model %s declares column %s which does not exist in database %s",
+                                klass,
+                                column.key,
+                                engine)
                             errors = True
         else:
             logger.error("Model %s declares table %s which does not exist in database %s", klass, table, engine)
@@ -291,10 +311,12 @@ def is_sane_database(Base, session):
 
     return not errors
 
+
 def _check_db(args):
     from sqlalchemy import inspect
     from sqlalchemy.ext.declarative.clsregistry import _ModuleMarker
     from sqlalchemy.orm import RelationshipProperty
+
 
 def start(args):
     _activate_venv()
@@ -304,6 +326,7 @@ def start(args):
         _update_pip(args)
     env_p = r".\env\Scripts\python" if sys.platform.startswith("win") else "./env/bin/python"
     return run([env_p, "run.py", *sys.argv[2:]]).returncode
+
 
 def lint(args):
     _activate_venv()
@@ -332,7 +355,7 @@ Or, to automatically pull the changes and build for you, just run (make sure you
 
 Finally, each action may have additional optional arguments. Make sure to check them out by supplying "--help" after the action:
     $ python3 bootstrap.py build --help
-    
+
 For example, to build the webclient or docs, run:
     $ python3 bootstrap.py build --client --docs
 
@@ -349,7 +372,7 @@ def main():
     parser.add_argument('-d', '--dev', action='store_true', help="Enable dev mode")
     parser.set_defaults(func=lambda args: print(welcome_msg))
     subparsers = parser.add_subparsers(description='Specify an action before "--help" to show parameters for it.',
-        metavar='ACTION', dest='action')
+                                       metavar='ACTION', dest='action')
 
     subparser = subparsers.add_parser('build', help='Build HPX')
     subparser.add_argument('--docs', action='store_true', help="Build docs")
@@ -368,7 +391,8 @@ def main():
     subparser.add_argument('-p', '--packages', action='store_true', help="Update pip packages")
     subparser.add_argument('-d', '--dev', action='store_true', help="Update pip packages from `requirements-dev.txt`")
 
-    subparser = subparsers.add_parser('convert', help='Convert HP database to HPX database, additional args will be passed to `HPtoHPX.py`')
+    subparser = subparsers.add_parser(
+        'convert', help='Convert HP database to HPX database, additional args will be passed to `HPtoHPX.py`')
     subparser.add_argument('db_path', help="Path to old HP database file")
     subparser.add_argument('-d', '--dev', action='store_true', help="Convert to ´happypanda_dev.db´ instead")
     subparser.set_defaults(func=convert)
@@ -382,7 +406,7 @@ def main():
     subparser = subparsers.add_parser('help', help='Help')
     subparser.set_defaults(func=lambda a: parser.print_help())
 
-    if 'run' in sys.argv or 'convert' in sys.argv:
+    if any([x in sys.argv for x in ("run", "convert", "lint")]):
         args, unknown = parser.parse_known_args()
     else:
         args = parser.parse_args()

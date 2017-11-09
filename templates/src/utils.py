@@ -39,7 +39,7 @@ poll_func = __pragma__('js', '{}',
     }""")
 
 poll_func_stagger = __pragma__('js', '{}',
-                       """
+                               """
     function poll_func(fn, timeout, interval) {
     var startTime = (new Date()).getTime();
     interval = interval || 1000;
@@ -68,18 +68,22 @@ def html_escape(text):
     return "".join(html_escape_table.get(c, c) for c in text)
 
 defined = __pragma__('js', '{}',
-                       """
+                     """
     function defined(v) {
         return !(v === undefined);
     }""")
 
+
 def get_locale():
     return window.navigator.userLanguage or window.navigator.language
+
 
 def query_to_string(obj):
     return query_string.stringify(obj)
 
 __pragma__("kwargs")
+
+
 def query_to_obj(query=None, location_obj=None):
     if not query:
         l = location_obj or location
@@ -89,6 +93,8 @@ __pragma__("nokwargs")
 
 __pragma__("kwargs")
 __pragma__("iconv")
+
+
 def get_query(key, default=None, query=None, location_obj=None):
     q = {}
     q.update(query_to_obj(query, location_obj=location_obj))
@@ -100,6 +106,8 @@ __pragma__("nokwargs")
 
 __pragma__("kwargs")
 __pragma__("tconv")
+
+
 def go_to(history_obj, url="", query={}, state=None, push=True, keep_query=True, location_obj=None):
     if not url:
         l = location_obj or location
@@ -120,6 +128,8 @@ __pragma__("nokwargs")
 
 __pragma__("kwargs")
 __pragma__("tconv")
+
+
 def build_url(url="", query={}, keep_query=True, location_obj=None):
     if not url:
         l = location_obj or location
@@ -136,4 +146,3 @@ __pragma__("notconv")
 __pragma__("nokwargs")
 
 moment.locale(get_locale())
-

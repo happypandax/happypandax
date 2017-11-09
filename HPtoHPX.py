@@ -1,4 +1,9 @@
-﻿import sys, os, sqlite3, copy, arrow
+﻿# flake8: noqa
+import sys
+import os
+import sqlite3
+import copy
+import arrow
 import argparse
 import rarfile
 from multiprocessing import Process, Queue, Pipe
@@ -6,12 +11,12 @@ import threading
 import queue
 from happypanda.core import db
 from happypanda.core.commands import io_cmd
-from happypanda.interface import enums
 from happypanda.common import constants
 
 GALLERY_LISTS = []
 pages_in = Queue()
 pages_out = queue.Queue()
+
 
 def chapter_map(row, chapter):
     assert isinstance(chapter, Chapter)
@@ -20,6 +25,7 @@ def chapter_map(row, chapter):
     chapter.in_archive = row['in_archive']
     chapter.pages = row['pages']
     return chapter
+
 
 def gallery_map(row, gallery, chapters=True, tags=True, hashes=True):
     gallery.title = row['title']
@@ -39,7 +45,7 @@ def gallery_map(row, gallery, chapters=True, tags=True, hashes=True):
     gallery.fav = row['fav']
 
     def convert_date(date_str):
-        #2015-10-25 21:44:38
+        # 2015-10-25 21:44:38
         if date_str and date_str != 'None':
             return arrow.get(date_str, "YYYY-MM-DD HH:mm:ss")
 
@@ -60,18 +66,19 @@ def gallery_map(row, gallery, chapters=True, tags=True, hashes=True):
 
     if tags:
         gallery.tags = TagDB.get_gallery_tags(gallery.id)
-    
+
     if hashes:
         gallery.hashes = HashDB.get_gallery_hashes(gallery.id)
 
     gallery.set_defaults()
     return gallery
 
+
 class DBBase:
     "The base DB class. _DB_CONN should be set at runtime on startup"
     _DB_CONN = None
     _AUTO_COMMIT = True
-    _STATE = {'active':False}
+    _STATE = {'active': False}
 
     def __init__(self, **kwargs):
         pass
@@ -104,11 +111,11 @@ class DBBase:
                 with self._DB_CONN:
                     return self._DB_CONN.execute(*args)
             except sqlite3.InterfaceError:
-                    return self._DB_CONN.execute(*args)
+                return self._DB_CONN.execute(*args)
 
         else:
             return self._DB_CONN.execute(*args)
-    
+
     def commit(self):
         self._DB_CONN.commit()
 
@@ -119,6 +126,7 @@ class DBBase:
     @classmethod
     def close(cls):
         cls._DB_CONN.close()
+
 
 class GalleryDB(DBBase):
     """
@@ -137,6 +145,7 @@ class GalleryDB(DBBase):
         clear_thumb -> Deletes a thumbnail
         clear_thumb_dir -> Dletes everything in the thumbnail directory
     """
+
     def __init__(self):
         raise Exception("GalleryDB should not be instantiated")
 
@@ -175,6 +184,7 @@ class GalleryDB(DBBase):
         cursor = cls.execute(cls, "SELECT count(*) AS 'size' FROM series")
         return cursor.fetchone()['size']
 
+
 class ChapterDB(DBBase):
     """
     Provides the following database methods:
@@ -192,7 +202,6 @@ class ChapterDB(DBBase):
     def __init__(self):
         raise Exception("ChapterDB should not be instantiated")
 
-
     @classmethod
     def get_chapters_for_gallery(cls, series_id):
         """
@@ -208,6 +217,7 @@ class ChapterDB(DBBase):
             chapter_map(row, chap)
         return chapters
 
+
 class HashDB(DBBase):
     """
     Contains the following methods:
@@ -222,7 +232,7 @@ class HashDB(DBBase):
     def get_gallery_hashes(cls, gallery_id):
         "Returns all hashes with the given gallery id in a list"
         cursor = cls.execute(cls, 'SELECT hash FROM hashes WHERE series_id=?',
-                (gallery_id,))
+                             (gallery_id,))
         hashes = []
         try:
             for row in cursor.fetchall():
@@ -260,20 +270,20 @@ class TagDB(DBBase):
         if not isinstance(series_id, int):
             return {}
         cursor = cls.execute(cls, 'SELECT tags_mappings_id FROM series_tags_map WHERE series_id=?',
-                (series_id,))
+                             (series_id,))
         tags = {}
         result = cursor.fetchall()
-        for tag_map_row in result: # iterate all tag_mappings_ids
+        for tag_map_row in result:  # iterate all tag_mappings_ids
             try:
                 if not tag_map_row:
                     continue
                 # get tag and namespace
                 c = cls.execute(cls, 'SELECT namespace_id, tag_id FROM tags_mappings WHERE tags_mappings_id=?',
-                  (tag_map_row['tags_mappings_id'],))
-                for row in c.fetchall(): # iterate all rows
+                                (tag_map_row['tags_mappings_id'],))
+                for row in c.fetchall():  # iterate all rows
                     # get namespace
                     c = cls.execute(cls, 'SELECT namespace FROM namespaces WHERE namespace_id=?',
-                        (row['namespace_id'],))
+                                    (row['namespace_id'],))
                     try:
                         namespace = c.fetchone()['namespace']
                     except TypeError:
@@ -287,7 +297,7 @@ class TagDB(DBBase):
                         continue
 
                     # add them to dict
-                    if not namespace in tags:
+                    if namespace not in tags:
                         tags[namespace] = [tag]
                     else:
                         # namespace already exists in dict
@@ -296,10 +306,10 @@ class TagDB(DBBase):
                 continue
         return tags
 
+
 class ListDB(DBBase):
     """
     """
-
 
     @classmethod
     def init_lists(cls):
@@ -335,6 +345,7 @@ class ListDB(DBBase):
             if l._id in list_rows:
                 l.add_gallery(gallery, False, _check_filter=False)
 
+
 class GalleryList:
     """
     Provides access to lists..
@@ -349,7 +360,7 @@ class GalleryList:
     REGULAR, COLLECTION = range(2)
 
     def __init__(self, name, list_of_galleries=[], filter=None, id=None, _db=True):
-        self._id = id # shouldnt ever be touched
+        self._id = id  # shouldnt ever be touched
         self.name = name
         self.profile = ''
         self.type = self.REGULAR
@@ -382,6 +393,7 @@ class GalleryList:
         "returns a list with all galleries in list"
         return list(self._galleries)
 
+
 class Gallery:
     """
     Base class for a gallery.
@@ -413,7 +425,7 @@ class Gallery:
 
     def __init__(self):
 
-        self.id = None # Will be defaulted.
+        self.id = None  # Will be defaulted.
         self.title = ""
         self.profile = ""
         self._path = ""
@@ -456,7 +468,7 @@ class Gallery:
         self._path = n_p
         _, ext = os.path.splitext(n_p)
         if ext:
-            self.file_type = ext[1:].lower() # remove dot
+            self.file_type = ext[1:].lower()  # remove dot
 
     def set_defaults(self):
         pass
@@ -471,7 +483,6 @@ class Gallery:
         chp_cont.set_parent(self)
         self._chapters = chp_cont
 
-
     def __contains__(self, key):
         assert isinstance(key, Chapter), "Can only check for chapters in gallery"
         return self.chapters.__contains__(key)
@@ -485,6 +496,7 @@ class Gallery:
             s += "{:>20}: {:>15}\n".format(x, str(self.__dict__[x]))
         return s
 
+
 class Chapter:
     """
     Base class for a chapter
@@ -497,6 +509,7 @@ class Chapter:
     pages -> chapter pages
     in_archive -> 1 if the chapter path is in an archive else 0
     """
+
     def __init__(self, parent, gallery, number=0, path='', pages=0, in_archive=0, title=''):
         self.parent = parent
         self.gallery = gallery
@@ -533,6 +546,7 @@ class Chapter:
         except KeyError:
             return None
 
+
 class ChaptersContainer:
     """
     A container for chapters.
@@ -541,6 +555,7 @@ class ChaptersContainer:
     Iterable returns a ordered list of chapters
     Sets to gallery.chapters
     """
+
     def __init__(self, gallery=None):
         self.parent = None
         self._data = {}
@@ -558,17 +573,16 @@ class ChaptersContainer:
     def add_chapter(self, chp, overwrite=True, db=False):
         "Add a chapter of Chapter class to this container"
         assert isinstance(chp, Chapter), "Chapter must be an instantiated Chapter class"
-        
+
         if not overwrite:
             try:
-                _ = self._data[chp.number]
+                _ = self._data[chp.number]  # noqa: F841
                 raise Exception
             except KeyError:
                 pass
         chp.gallery = self.parent
         chp.parent = self
         self[chp.number] = chp
-        
 
         if db:
             # TODO: implement this
@@ -620,7 +634,7 @@ class ChaptersContainer:
     def __setitem__(self, key, value):
         assert isinstance(key, int), "Key must be a chapter number"
         assert isinstance(value, Chapter), "Value must be an instantiated Chapter class"
-        
+
         if value.gallery != self.parent:
             raise app_constants.ChapterWrongParentGallery
         self._data[key] = value
@@ -647,12 +661,14 @@ class ChaptersContainer:
             return True
         return False
 
+
 def split(a, n):
     n = min(n, len(a))
     if not n:
         return [a]
     k, m = divmod(len(a), n)
     return (a[i * k + min(i, m):(i + 1) * k + min(i + 1, m)] for i in range(n))
+
 
 def print_progress(iteration, total, prefix='', suffix='', decimals=1, bar_length=100):
     """
@@ -678,6 +694,7 @@ def print_progress(iteration, total, prefix='', suffix='', decimals=1, bar_lengt
 
 import random
 
+
 def page_generate(rar_p, in_queue, out_pipe):
     rarfile.UNRAR_TOOL = rar_p
     item_id, items = in_queue.get()
@@ -696,7 +713,7 @@ def page_generate(rar_p, in_queue, out_pipe):
                     if ch_path:
                         afs._init_archive()
                         afs = io_cmd.CoreFS(afs._archive.path_separator.join((path, ch_path)), afs._archive)
-                        
+
                     n = 1
                     for c in sorted(afs.contents()):
                         if c.is_image:
@@ -706,7 +723,9 @@ def page_generate(rar_p, in_queue, out_pipe):
                     afs.close()
             else:
                 page_hash = (ch_path,)
-                dir_images = [x.path for x in os.scandir(g_path) if not x.is_dir() and x.name.endswith(io_cmd.CoreFS.image_formats())]
+                dir_images = [
+                    x.path for x in os.scandir(g_path) if not x.is_dir() and x.name.endswith(
+                        io_cmd.CoreFS.image_formats())]
                 for n, x in enumerate(sorted(dir_images), 1):
                     x = io_cmd.CoreFS(x)
                     pages.append((x.name, x.path, n, False))
@@ -724,6 +743,7 @@ def page_generate(rar_p, in_queue, out_pipe):
             stuff_to_send.clear()
     out_pipe.send(item_id)
 
+
 def process_pipes(out_queue, out_pipe):
     while True:
         out_queue.put(out_pipe.recv())
@@ -731,11 +751,15 @@ def process_pipes(out_queue, out_pipe):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('source',  help="Path to old HP database")
-    parser.add_argument('destination',  help="Desired path new HPX database")
-    parser.add_argument('-r', '--rar',  help="Path to unrar tool")
+    parser.add_argument('source', help="Path to old HP database")
+    parser.add_argument('destination', help="Desired path new HPX database")
+    parser.add_argument('-r', '--rar', help="Path to unrar tool")
     parser.add_argument('-p', '--process', type=int, default=3, help="Amount of processes allowed to spawn")
-    parser.add_argument('-a', '--skip-archive', action='store_true', help="Skip generating pages for galleries in archive files (it might take too long)")
+    parser.add_argument(
+        '-a',
+        '--skip-archive',
+        action='store_true',
+        help="Skip generating pages for galleries in archive files (it might take too long)")
     args = parser.parse_args()
 
     AMOUNT_OF_TASKS = args.process if args.process > 0 else 1
@@ -820,13 +844,16 @@ def main():
                         try:
                             print("\nSkipping '{}' because path to unrar tool has not been supplied.".format(ch.title))
                         except UnicodeError:
-                            print("\nSkipping '{}' because path to unrar tool has not been supplied.".format(ch.title.encode(errors='ignore')))
+                            print(
+                                "\nSkipping '{}' because path to unrar tool has not been supplied.".format(
+                                    ch.title.encode(
+                                        errors='ignore')))
                         continue
 
                 path_in_archive = ch.path
 
                 gallery = db.Gallery()
-                
+
                 if ch.in_archive:
                     h = hash((g.path, ch.path))
                     if h in unique_paths:

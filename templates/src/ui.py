@@ -1,11 +1,11 @@
 __pragma__('alias', 'as_', 'as')
-from src.react_utils import (h,e,
-                        render,
-                        React,
-                        ReactDOM,
-                        createReactClass,
-                        QueryLink,
-                        ScrollToTop)
+from src.react_utils import (h, e,
+                             render,
+                             React,
+                             ReactDOM,
+                             createReactClass,
+                             QueryLink,
+                             ScrollToTop)
 
 from src.state import state
 from src import utils
@@ -15,6 +15,7 @@ ui = require("semantic-ui-react")
 
 slick = require('react-slick')['default']
 Alert = require('react-s-alert')['default']
+
 
 def SliderNav(props):
     return e(ui.Icon,
@@ -26,6 +27,8 @@ def SliderNav(props):
              onClick=props.onClick)
 
 __pragma__("tconv")
+
+
 def Slider(props):
     children = props.data or React.Children.toArray(props.children)
     items = [e(ui.Segment, x, basic=True, size=props.size, className="slide-segment") for x in children]
@@ -36,54 +39,57 @@ def Slider(props):
 
     if items:
         add_el.append(e(slick,
-                    *items,
-                    dots=True,
-                    dotsClass="circle slick-dots",
-                    draggable=True,
-                    infinite= False if not utils.defined(props.infinite) else props.infinite,
-                    centerMode=False,
-                    accessibility=True,
-                    lazyLoad=False,
-                    adaptiveHeight=True,
-                    slidesToShow=base_size,
-                    slidesToScroll=base_size-1,
-                    nextArrow=e(SliderNav, direction="right"),
-                    prevArrow=e(SliderNav, direction="left"),
-                    responsive = [
-                        { 'breakpoint': 425, 'settings': { 'slidesToShow': base_size-3, 'slidesToScroll': base_size-3 } },
-                        { 'breakpoint': 610, 'settings': { 'slidesToShow': base_size-2, 'slidesToScroll': base_size-2 } },
-                        { 'breakpoint': 768, 'settings': { 'slidesToShow': base_size-1, 'slidesToScroll': base_size-1 } },
-                        { 'breakpoint': 1024, 'settings': { 'slidesToShow': base_size } },
-                        { 'breakpoint': 1280, 'settings': { 'slidesToShow': base_size+1 } },
-                        { 'breakpoint': 1440, 'settings': { 'slidesToShow': base_size+2 } },
-                        { 'breakpoint': 1860, 'settings': { 'slidesToShow': base_size+3 } },
-                        { 'breakpoint': 100000, 'settings': { 'slidesToShow': base_size+3 } },
-                       ]))
+                        *items,
+                        dots=True,
+                        dotsClass="circle slick-dots",
+                        draggable=True,
+                        infinite=False if not utils.defined(props.infinite) else props.infinite,
+                        centerMode=False,
+                        accessibility=True,
+                        lazyLoad=False,
+                        adaptiveHeight=True,
+                        slidesToShow=base_size,
+                        slidesToScroll=base_size - 1,
+                        nextArrow=e(SliderNav, direction="right"),
+                        prevArrow=e(SliderNav, direction="left"),
+                        responsive=[
+                            {'breakpoint': 425, 'settings': {'slidesToShow': base_size - 3, 'slidesToScroll': base_size - 3}},
+                            {'breakpoint': 610, 'settings': {'slidesToShow': base_size - 2, 'slidesToScroll': base_size - 2}},
+                            {'breakpoint': 768, 'settings': {'slidesToShow': base_size - 1, 'slidesToScroll': base_size - 1}},
+                            {'breakpoint': 1024, 'settings': {'slidesToShow': base_size}},
+                            {'breakpoint': 1280, 'settings': {'slidesToShow': base_size + 1}},
+                            {'breakpoint': 1440, 'settings': {'slidesToShow': base_size + 2}},
+                            {'breakpoint': 1860, 'settings': {'slidesToShow': base_size + 3}},
+                            {'breakpoint': 100000, 'settings': {'slidesToShow': base_size + 3}},
+                        ]))
 
     return e(ui.Segment,
              *add_el,
-                basic=True,
-                loading=props.loading,
-                secondary=props.secondary,
-                tertiary=props.tertiary,
-                )
+             basic=True,
+             loading=props.loading,
+             secondary=props.secondary,
+             tertiary=props.tertiary,
+             )
 __pragma__("notconv")
 
+
 def Notif(props):
-    return  h("div",
-              h("div",
-                e(ui.Message,
-                  header=props.customFields.header,
-                  content=props.customFields.content,
-                  onDismiss=props.handleClose,
-                  **props.customFields.mskwargs,),
-                className="s-alert-box-inner",),
-              className=props.classNames, 
-              id=props.id,
-              style=props.styles,)
+    return h("div",
+             h("div",
+               e(ui.Message,
+                 header=props.customFields.header,
+                 content=props.customFields.content,
+                 onDismiss=props.handleClose,
+                 **props.customFields.mskwargs,),
+               className="s-alert-box-inner",),
+             className=props.classNames,
+             id=props.id,
+             style=props.styles,)
+
 
 def Error(props):
-    return e(ui.Message, header=props.header,  content=props.content, error=True)
+    return e(ui.Message, header=props.header, content=props.content, error=True)
+
 
 def pagination_change(new_page):
     this.setState({'current_page': new_page})
@@ -93,6 +99,7 @@ def pagination_change(new_page):
         el = this.props.context or state.container_ref
         if el:
             el.scrollTop = 0
+
 
 def pagination_render():
     limit = this.props.limit
@@ -126,7 +133,6 @@ def pagination_render():
     if (pages - current_page) > limit and pages > ellipsis_pos:
         second_ellipses = True
 
-
     go_next = this.go_next
     go_prev = this.go_prev
     go_page = this.go_page
@@ -144,13 +150,13 @@ def pagination_render():
     current_pages = page_list[l_index:r_index]
 
     if this.props.query:
-        make_items = lambda i: [e(ui.Menu.Item, js_name=str(x), active=current_page==x, onClick=go_page,
-                                  as_=QueryLink, query={'page':x}) for x in i]
+        def make_items(i): return [e(ui.Menu.Item, js_name=str(x), active=current_page == x, onClick=go_page,
+                                     as_=QueryLink, query={'page': x}) for x in i]
     else:
-        make_items = lambda i: [e(ui.Menu.Item, js_name=str(x), active=current_page==x, onClick=go_page) for x in i]
+        def make_items(i): return [e(ui.Menu.Item, js_name=str(
+            x), active=current_page == x, onClick=go_page) for x in i]
 
     items = make_items(current_pages)
-
 
     if first_ellipses:
         ellip_items = make_items(page_list[:ellipsis_pos])
@@ -164,12 +170,14 @@ def pagination_render():
 
     if nav_back:
         if this.props.query:
-            items.insert(0, e(ui.Menu.Item, icon="angle left", onClick=go_prev, as_=QueryLink, query={'page':current_page-1}))
+            items.insert(0, e(ui.Menu.Item, icon="angle left", onClick=go_prev,
+                              as_=QueryLink, query={'page': current_page - 1}))
         else:
             items.insert(0, e(ui.Menu.Item, icon="angle left", onClick=go_prev))
     if nav_next:
         if this.props.query:
-            items.append(e(ui.Menu.Item, icon="angle right", onClick=go_next, as_=QueryLink, query={'page':current_page+1}))
+            items.append(e(ui.Menu.Item, icon="angle right", onClick=go_next,
+                           as_=QueryLink, query={'page': current_page + 1}))
         else:
             items.append(e(ui.Menu.Item, icon="angle right", onClick=go_next))
 
@@ -178,8 +186,8 @@ def pagination_render():
              pagination=True,
              borderless=True,
              size=this.props.size,
-            as_=ui.Transition.Group,
-            duration=1000,
+             as_=ui.Transition.Group,
+             duration=1000,
              )
 
 Pagination = createReactClass({

@@ -14,6 +14,7 @@ log = hlogger.Logger(__name__)
 
 all_clients = {}
 
+
 def _create_clients(id, session_id=""):
     all_clients[id] = {
         "client": Client("webclient", session_id, id),
@@ -21,6 +22,7 @@ def _create_clients(id, session_id=""):
         "commandclient": Client("webclient-commands", session_id, id)
     }
     return all_clients[id]
+
 
 def _connect_clients(clients):
     clients["client"].connect()
@@ -65,7 +67,7 @@ def call_server(msg, c):
 
 
 #@socketio.on('connect')
-#def on_connect():
+# def on_connect():
 #    "client connected"
 #    try:
 #        _connect_clients(get_clients(request.sid))
@@ -139,7 +141,7 @@ def on_command_call(msg):
 
 
 #@happyweb.before_first_request
-#def before_first_request():
+# def before_first_request():
 #    """before first request func."""
 #    global root_client
 #    if not root_client:

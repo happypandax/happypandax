@@ -73,7 +73,7 @@ class Client:
                 try:
                     self._sock.connect(self._server)
                 except socket.error as e:
-                    if e.errno == errno.EISCONN and self.session: # already connected
+                    if e.errno == errno.EISCONN and self.session:  # already connected
                         self._alive = True
                         return
                     else:

@@ -36,7 +36,7 @@ def _view_helper(item_type: enums.ItemType=enums.ItemType.Gallery,
     if search_options:
         search_option_names = [x.name for x in search_cmd._get_search_options()]
         for n in search_options:
-            if not n in search_option_names:
+            if n not in search_option_names:
                 raise exceptions.APIError(utils.this_function(), "Invalid search option name '{}'".format(n))
 
     filter_op = []
@@ -187,7 +187,7 @@ def get_view_count(item_type: enums.ItemType=enums.ItemType.Gallery,
         db_model, model_ids, filter=filter_op, join=join_exp, count=True)})
 
 
-def translate(t_id: str, locale: str = None, default: str = None, placeholder:str = {}, count:int = None):
+def translate(t_id: str, locale: str = None, default: str = None, placeholder: str = {}, count: int = None):
     """
     Get a translation by translation id. Raises error if no translation was found.
 
@@ -203,7 +203,6 @@ def translate(t_id: str, locale: str = None, default: str = None, placeholder:st
     """
     kwargs = {}
     trs = default
-
 
     if placeholder:
         kwargs.update(placeholder),

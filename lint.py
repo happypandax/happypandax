@@ -3,6 +3,12 @@ import sys
 import argparse
 from subprocess import run
 
+
+def aformat(f_path):
+    print("Auto formatting", f_path)
+    run(["autopep8", "--in-place", "-a", "--max-line-length=120", f_path])
+
+
 def main():
 
     parser = argparse.ArgumentParser()
@@ -14,13 +20,18 @@ def main():
         sys.exit()
 
     if args.format:
-        for root, dirs, files in os.walk("happypanda"):
+        for p in ("happypanda", "templates"):
+            for root, dirs, files in os.walk(p):
 
-            for f in files:
-                if f.endswith('.py'):
-                    f_path = os.path.join(root, f)
-                    print("Auto formatting", f_path)
-                    run(["autopep8", "--in-place", "-a", "--max-line-length=120", f_path])
+                for f in files:
+                    if f.endswith('.py'):
+                        f_path = os.path.join(root, f)
+                        aformat(f_path)
+
+        for d in (".", "migrate"):
+            for p in os.scandir(d):
+                if p.name.endswith(".py"):
+                    aformat(p.path)
 
     print("Running flake8...\n")
     return run(["flake8", "--config", "./setup.cfg", "."]).returncode

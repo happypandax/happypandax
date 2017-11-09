@@ -11,12 +11,16 @@ Route = require("react-router-dom").Route
 withRouter = require("react-router").withRouter
 
 __pragma__("kwargs")
+
+
 def e(elm_type, *args, **props):
     props.pop("constructor")
     return React.createElement(elm_type, props, *args)
 __pragma__("nokwargs")
 
 __pragma__("kwargs")
+
+
 def h(elm_type, *args, **props):
     return e(elm_type, *args, **props)
 __pragma__("nokwargs")
@@ -27,6 +31,8 @@ def render(react_element, destination_id, callback=lambda: None):
     ReactDOM.render(react_element, container, callback)
 
 __pragma__("jsiter")
+
+
 def QueryLink(props):
     to_obj = {'pathname': location.pathname}
 
@@ -44,16 +50,17 @@ def QueryLink(props):
 
     to_obj['search'] = utils.query_to_string(query)
 
-    return e(Link, *props.children, to={'pathname':to_obj.pathname, 'search':to_obj.search, 'hash':to_obj.hash, 'state':to_obj.state}, js_replace=props.js_replace,
+    return e(Link, *props.children, to={'pathname': to_obj.pathname, 'search': to_obj.search, 'hash': to_obj.hash, 'state': to_obj.state}, js_replace=props.js_replace,
              className=props.className, onClick=props.onClick)
 __pragma__("nojsiter")
+
 
 def scrolltotop_update(p_props):
     if this.props.location != p_props.location:
         if state.container_ref:
             state.container_ref.scrollTop = 0
         else:
-            window.scrollTo(0,0)
+            window.scrollTo(0, 0)
 
 ScrollToTop = withRouter(createReactClass({
     'displayName': 'ScrollToTop',

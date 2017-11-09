@@ -69,7 +69,7 @@ class String(_String):
     filter expressions.
     """
 
-    #def __init__(self, length = None, collation = None, convert_unicode = False, unicode_error = None, _warn_on_bytestring = False, *args, **kwargs):
+    # def __init__(self, length = None, collation = None, convert_unicode = False, unicode_error = None, _warn_on_bytestring = False, *args, **kwargs):
     #    return super().__init__(length, 'utf-8', convert_unicode, unicode_error, _warn_on_bytestring, *args, **kwargs)
 
     class comparator_factory(_String.comparator_factory):

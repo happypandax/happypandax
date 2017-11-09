@@ -8,14 +8,15 @@ from happypanda.core import db
 
 log = hlogger.Logger(__name__)
 
+
 def _get_search_options():
     return {
-            config.search_option_all: 'all',
-            config.search_option_case: 'case',
-            config.search_option_desc: 'desc',
-            config.search_option_regex: 'regex',
-            config.search_option_whole: 'whole',
-           }
+        config.search_option_all: 'all',
+        config.search_option_case: 'case',
+        config.search_option_desc: 'desc',
+        config.search_option_regex: 'regex',
+        config.search_option_whole: 'whole',
+    }
 
 
 def get_search_options(options={}):
@@ -30,7 +31,6 @@ def get_search_options(options={}):
             u_val[opt[o]] = options[o.name]
         elif opt[o] in options:
             u_val[opt[o]] = options[opt[o]]
-
 
     return ChainMap(u_val, d_val)
 

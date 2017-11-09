@@ -93,9 +93,9 @@ class CPUThread():
                 finished_time = arrow.now()
                 run_delta = finished_time - start_time
                 log.d("Function - '{}'\n".format(func.__name__),
-                        "\tRunning time: {}\n".format(run_delta),
-                        "\tJobs left:", len(self.in_q),
-                        )
+                      "\tRunning time: {}\n".format(run_delta),
+                      "\tJobs left:", len(self.in_q),
+                      )
                 self.out_q.append(jobid)
                 self.out_async.send()
         except:

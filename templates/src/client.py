@@ -3,6 +3,7 @@ from src import utils
 
 io = require('socket.io-client')
 
+
 class ItemType:
     #: Gallery
     Gallery = 1
@@ -31,6 +32,7 @@ class ItemType:
     #: Gallery Parody
     Parody = 13
 
+
 class ImageSize:
     #: Original image size
     Original = 1
@@ -41,6 +43,7 @@ class ImageSize:
     #: Small image size
     Small = 4
 
+
 class ViewType:
     #: Library
     Library = 1
@@ -48,6 +51,7 @@ class ViewType:
     Favorite = 2
     #: Inbox
     Inbox = 3
+
 
 def log(msg):
     if state.debug:
@@ -65,10 +69,12 @@ class Base:
     def log(self, msg):
         log(msg)
 
+
 class ServerMsg:
     msg_id = 0
 
     __pragma__('kwargs')
+
     def __init__(self, data, callback=None, func_name=None, contextobj=None):
         ServerMsg.msg_id += 1
         self.id = self.msg_id
@@ -86,19 +92,18 @@ class ServerMsg:
             self.callback(data, err)
 
 
-
 class Client(Base):
 
     polling = False
 
     __pragma__('kwargs')
+
     def __init__(self, session="", namespace=""):
-        self.socket_url = location.protocol+'//'+location.hostname+':'+location.port+namespace
+        self.socket_url = location.protocol + '//' + location.hostname + ':' + location.port + namespace
         self.socket = io(self.socket_url, {'transports': ['websocket']})
         self.socket.on("command", self.on_command)
         self.socket.on("server_call", self.on_server_call)
         self.socket.on("exception", self.on_error)
-
 
         self.commands = {
             'connect': 1,
@@ -121,19 +126,19 @@ class Client(Base):
         self._cmd_status_c = 0
         self._retries = None
         self._poll_interval = 5
-        self._poll_timeout = 1000*60*120
+        self._poll_timeout = 1000 * 60 * 120
         self._last_retry = __new__(Date()).getTime()
 
         if not self.polling:
             self.socket.on("connect", self.on_connect)
             self.socket.on("disconnect", self.on_disconnect)
-            utils.poll_func(self.connection, self._poll_timeout, self._poll_interval*1000)
+            utils.poll_func(self.connection, self._poll_timeout, self._poll_interval * 1000)
             Client.polling = True
     __pragma__('nokwargs')
 
     def on_connect(self):
         self.reconnect()
-        self.call_func("get_config", self._set_debug, cfg={'core.debug':False})
+        self.call_func("get_config", self._set_debug, cfg={'core.debug': False})
 
     def on_disconnect(self):
         self._connection_status = False
@@ -147,16 +152,17 @@ class Client(Base):
         self.send_command(self.commands['status'])
         if not self._connection_status and not self._reconnecting:
             self.log("Starting reconnection")
-            utils.poll_func_stagger(self._reconnect, self._poll_timeout, self._poll_interval*1000)
+            utils.poll_func_stagger(self._reconnect, self._poll_timeout, self._poll_interval * 1000)
             self._reconnecting = True
         return False
 
     __pragma__("tconv")
+
     def _reconnect(self):
         self.log("Reconnecting")
         last_interval = 100
         if self._retries is None:
-            self._retries = list(range(10, last_interval+10, 10)) # secs
+            self._retries = list(range(10, last_interval + 10, 10))  # secs
         i = self._retries.pop(0) if self._retries else last_interval
         if self._connection_status:
             i = 0
@@ -165,13 +171,13 @@ class Client(Base):
         return i * 1000
     __pragma__("notconv")
 
-
     __pragma__("kwargs")
-    def reconnect(self, interval = None):
+
+    def reconnect(self, interval=None):
         if state.app:
             state.app.notif("Trying to establish server connection{}".format(
                 ", trying again in {} seconds".format(interval) if interval else ""
-                ), "Server")
+            ), "Server")
         self.send_command(self.commands['connect'])
     __pragma__("nokwargs")
 
@@ -215,8 +221,8 @@ class Client(Base):
                 if serv_data['error']['code'] == 408:
                     self.send_command(self.commands['handshake'])
             if serv_data['data'] == "Authenticated" and self._last_msg:
-                    self.socket.emit("server_call", self._last_msg)
-                    return
+                self.socket.emit("server_call", self._last_msg)
+                return
             if serv_msg.func_name and serv_data:
                 for func in serv_data.data:
                     err = None
@@ -274,6 +280,7 @@ client = Client()
 thumbclient = Client(namespace="/thumb")
 commandclient = Client(namespace="/command")
 
+
 class Command(Base):
 
     def __init__(self, command_ids, customclient=None):
@@ -315,6 +322,7 @@ class Command(Base):
     __pragma__('noiconv')
 
     __pragma__('iconv')
+
     def stop(self, data=None, error=None):
         "Stop command"
         if data is not None and not error:
@@ -331,6 +339,7 @@ class Command(Base):
 
     __pragma__('iconv')
     __pragma__('kwargs')
+
     def finished(self, any_command=False):
         "Check if command has finished running"
         if self._stopped:
@@ -347,6 +356,7 @@ class Command(Base):
     __pragma__('noiconv')
 
     __pragma__('kwargs')
+
     def poll_until_complete(self, interval=1000 * 5, timeout=1000 * 60 * 10, callback=None):
         "Keep polling for command state until it has finished running"
         self._complete_callback = callback
@@ -436,6 +446,7 @@ class Command(Base):
     __pragma__('notconv')
 
     __pragma__('kwargs')
+
     def set_callback(self, callback, on_each_complete=False):
         """
         Set a callback for when the value has been obtained
@@ -450,4 +461,3 @@ class Command(Base):
     def done(self):
         "all values has been fetched"
         return len(self._values.keys()) == len(self._states.keys())
-

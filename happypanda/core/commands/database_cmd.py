@@ -135,7 +135,7 @@ class GetModelImage(AsyncCommand):
             cover.size = stale_cover.size
 
             if new or not s.query(db.Profile).join(db.relationship_column(model, db.Profile)).filter(
-                db.and_op(db.Profile.id==cover.id, model.id==item_id)).scalar():
+                    db.and_op(db.Profile.id == cover.id, model.id == item_id)).scalar():
                 i = s.query(model).get(item_id)
                 i.profiles.append(cover)
             s.commit()
