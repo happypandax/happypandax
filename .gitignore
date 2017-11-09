@@ -205,12 +205,11 @@ FakesAssemblies/
 *.db-journal
 /compilerconfig.json
 /compilerconfig.json.defaults
-/static/__javascript__
 /.tstate
-/.settings
 /static/thumbnails
 *.dot
 *.db-wal
 *.db-shm
 /config.yaml
 /logs
+/static/lib/__javascript__

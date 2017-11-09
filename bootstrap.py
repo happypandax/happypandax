@@ -19,6 +19,8 @@ changes = """
 - updated some libraries
 - move transcrypt library to dev
 - fixed more connection issues
+- fixed match_all not working
+- fixed case sensitive search;
 """
 
 

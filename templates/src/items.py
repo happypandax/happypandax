@@ -608,8 +608,6 @@ def item_view_on_update(p_props, p_state):
         p_props.limit != this.props.limit,
         )):
         this.setState({'page':1})
-        if this.props.query or not utils.defined(this.props.query):
-            utils.go_to(query={"page":1}, push=False)
         this.get_items_count()
 
     if any((
