@@ -1,5 +1,5 @@
-from state import state
-import utils
+from src.state import state
+from src import utils
 
 io = require('socket.io-client')
 

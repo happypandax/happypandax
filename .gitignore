@@ -212,4 +212,4 @@ FakesAssemblies/
 *.db-shm
 /config.yaml
 /logs
-/static/lib/__javascript__
+__javascript__

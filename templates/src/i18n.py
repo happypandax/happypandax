@@ -1,6 +1,6 @@
-import utils
+from src import utils
 
-from client import client, log
+from src.client import client, log
 
 current_locale = "en_us"
 

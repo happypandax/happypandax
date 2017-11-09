@@ -1,5 +1,5 @@
-import utils
-from state import state
+from src.state import state
+from src import utils
 
 React = require("react")
 ReactDOM = require("react-dom")

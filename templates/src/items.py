@@ -1,15 +1,15 @@
 __pragma__('alias', 'as_', 'as')
-from react_utils import (h,
+from src.react_utils import (h,
                          e,
                          React,
                          createReactClass,
                          withRouter,
                          Link)
-from ui import ui, Slider, Error, Pagination
-from client import (client, ServerMsg, ItemType, ImageSize, thumbclient, Command)
-from i18n import tr
-import utils
-from state import state
+from src.ui import ui, Slider, Error, Pagination
+from src.client import (client, ServerMsg, ItemType, ImageSize, thumbclient, Command)
+from src.i18n import tr
+from src.state import state
+from src import utils
 
 def thumbnail_on_update(p_props, p_state):
     if any((

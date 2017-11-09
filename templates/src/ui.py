@@ -1,5 +1,5 @@
 __pragma__('alias', 'as_', 'as')
-from react_utils import (h,e,
+from src.react_utils import (h,e,
                         render,
                         React,
                         ReactDOM,
@@ -7,9 +7,9 @@ from react_utils import (h,e,
                         QueryLink,
                         ScrollToTop)
 
-from state import state
+from src.state import state
+from src import utils
 import math
-import utils
 
 ui = require("semantic-ui-react")
 

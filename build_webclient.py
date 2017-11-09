@@ -4,9 +4,9 @@ import shutil
 from subprocess import run
 
 def main():
-    js_dir = "templates/src"
+    js_dir = "templates"
     js_out = "static/lib"
-    js_files = os.path.join(js_dir, "__javascript__")
+    js_files = "__javascript__"
 
     sass_file_input = "static/scss/_style.scss"
     sass_dir_input = "static/scss"
@@ -30,11 +30,20 @@ def main():
     run(["transcrypt", "-b", "-a", "-m", "-dt", "--dassert", "-de", "-dm", "-p", ".none", "-e", "6", "-n", ".\main.py"])
     os.chdir(o_cwd)
 
-    if os.path.exists(js_files):
+    root_js_files = os.path.join(js_dir, js_files)
+    if os.path.exists(root_js_files):
         if os.path.exists(js_out):
             shutil.rmtree(js_out)
         os.makedirs(js_out)
-        shutil.move(js_files, js_out)
+        shutil.move(root_js_files, js_out)
+
+    for src_dir, dirs, files in os.walk(js_dir):
+        if js_files in dirs:
+            out_dir = os.path.join(js_out, src_dir)
+            if os.path.exists(out_dir):
+                shutil.rmtree(out_dir)
+            shutil.move(os.path.join(src_dir, js_files), os.path.join(out_dir, js_files))
+
 
 if __name__ == '__main__':
     main()
