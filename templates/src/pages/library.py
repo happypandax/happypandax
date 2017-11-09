@@ -7,10 +7,10 @@ from src.ui import ui
 from src.i18n import tr
 from src.state import state
 from src.client import ViewType
-from src import items
+from src import item
 
 def page_render():
-    return e(items.ItemViewPage, view_type=ViewType.Library)
+    return e(item.ItemViewPage, view_type=ViewType.Library)
 
 Page = createReactClass({
     'displayName': 'LibraryPage',

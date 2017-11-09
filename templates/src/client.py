@@ -138,7 +138,8 @@ class Client(Base):
     def on_disconnect(self):
         self._connection_status = False
         self._disconnected_once = True
-        state.app.notif("Disconnected from the server", "Server", "error")
+        if state.app:
+            state.app.notif("Disconnected from the server", "Server", "error")
         for x in state.commands:
             x.stop()
 
@@ -167,9 +168,10 @@ class Client(Base):
 
     __pragma__("kwargs")
     def reconnect(self, interval = None):
-        state.app.notif("Trying to establish server connection{}".format(
-            ", trying again in {} seconds".format(interval) if interval else ""
-            ), "Server")
+        if state.app:
+            state.app.notif("Trying to establish server connection{}".format(
+                ", trying again in {} seconds".format(interval) if interval else ""
+                ), "Server")
         self.send_command(self.commands['connect'])
     __pragma__("nokwargs")
 
@@ -184,7 +186,8 @@ class Client(Base):
             if self._disconnected_once or self._first_connect:
                 self._disconnected_once = False
                 self._first_connect = False
-                state.app.notif("Connection to server has been established", "Server", 'success')
+                if state.app:
+                    state.app.notif("Connection to server has been established", "Server", 'success')
             st_txt = "connected"
             self._reconnecting = False
             self._retries = None

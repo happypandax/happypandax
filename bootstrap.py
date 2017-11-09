@@ -305,6 +305,11 @@ def start(args):
     env_p = r".\env\Scripts\python" if sys.platform.startswith("win") else "./env/bin/python"
     return run([env_p, "run.py", *sys.argv[2:]]).returncode
 
+def lint(args):
+    _activate_venv()
+    env_p = r".\env\Scripts\python" if sys.platform.startswith("win") else "./env/bin/python"
+    return run([env_p, "lint.py", *sys.argv[2:]]).returncode
+
 welcome_msg = """
 Welcome to HPX development helper script.
 
@@ -354,6 +359,9 @@ def main():
     subparser = subparsers.add_parser('install', help='Install HPX')
     subparser.add_argument('--run', action='store_true', help="Run HPX after installing")
     subparser.set_defaults(func=install)
+
+    subparser = subparsers.add_parser('lint', help='Linting, args are forwarded')
+    subparser.set_defaults(func=lint)
 
     subparser = subparsers.add_parser('update', help='Fetch the latest changes from the GitHub repo')
     subparser.set_defaults(func=update)

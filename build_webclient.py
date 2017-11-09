@@ -27,23 +27,8 @@ def main():
     # Transcrypt is required to be in the same directory as the js files
     o_cwd = os.getcwd()
     os.chdir(js_dir)
-    run(["transcrypt", "-b", "-a", "-m", "-dt", "--dassert", "-de", "-dm", "-p", ".none", "-e", "6", "-n", ".\main.py"])
+    run(["transcrypt", "-b", "-n", "-a", "-m", "-dt", "--dassert", "-de", "-dm", "-p", ".none", "-e", "6", ".\main.py"])
     os.chdir(o_cwd)
-
-    root_js_files = os.path.join(js_dir, js_files)
-    if os.path.exists(root_js_files):
-        if os.path.exists(js_out):
-            shutil.rmtree(js_out)
-        os.makedirs(js_out)
-        shutil.move(root_js_files, js_out)
-
-    for src_dir, dirs, files in os.walk(js_dir):
-        if js_files in dirs:
-            out_dir = os.path.join(js_out, src_dir)
-            if os.path.exists(out_dir):
-                shutil.rmtree(out_dir)
-            shutil.move(os.path.join(src_dir, js_files), os.path.join(out_dir, js_files))
-
 
 if __name__ == '__main__':
     main()

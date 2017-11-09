@@ -2,23 +2,16 @@ __pragma__('alias', 'as_', 'as')
 from src.react_utils import (h,
                          e,
                          React,
-                         createReactClass,
-                         Link)
+                         createReactClass)
 from src.ui import ui, Slider
 from src.i18n import tr
 from src.state import state
 from src.client import ItemType, ViewType, ImageSize, client
-from src import items, utils
+from src import item, utils
 
 def get_item(data=None, error=None):
     if data is not None and not error:
-        this.setState({"data":data, 
-                       "loading":False,
-                       "rating": data.rating,
-                       'loading_group':True,
-                       })
-        if data.metatags.favorite:
-            this.setState({"fav":1})
+        this.setState({"data":data, "loading":False, 'loading_group':True})
         if data.grouping_id:
             client.call_func("get_related_items", this.get_grouping,
                                  item_type=ItemType.Grouping,
@@ -72,16 +65,15 @@ def get_status(data=None, error=None):
         state.app.notif("Failed to fetch status ({})".format(this.state.id), level="error")
 __pragma__("notconv")
 
-def page_render():
+def gallerypage_render():
 
-    fav = this.state.fav
+    fav = 0
     title = ""
-    rating = this.state.rating
+    rating = 0
     artists = []
     item_id = this.state.id
     info = ""
     inbox = False
-    trash = False
     read_count = 0
     date_pub = ""
     date_upd = ""
@@ -90,7 +82,6 @@ def page_render():
     urls = []
     parodies = []
     if this.state.data:
-        item_id = this.state.data.id
         parodies = this.state.data.parodies
         date_pub = utils.moment.unix(this.state.data.pub_date).format("LL")
         date_upd = utils.moment.unix(this.state.data.last_updated).format("LLL")
@@ -100,10 +91,12 @@ def page_render():
         date_upd += " (" + utils.moment.unix(this.state.data.last_updated).fromNow() + ")"
         date_read += " (" + utils.moment.unix(this.state.data.last_read).fromNow() + ")"
         read_count = this.state.data.times_read
+        rating = this.state.data.rating
         info = this.state.data.info
         title = this.state.data.titles[0].js_name
+        if this.state.data.metatags.favorite:
+            fav = 1
         inbox = this.state.data.metatags.inbox
-        trash = this.state.data.metatags.trash
         if not item_id:
             item_id = this.state.data.id
 
@@ -142,7 +135,7 @@ def page_render():
                   e(ui.Table.Cell, e(ui.Label, read_count, circular=True))))
     rows.append(e(ui.Table.Row, 
                   e(ui.Table.Cell, e(ui.Header, "Rating:", as_="h5"), collapsing=True),
-                  e(ui.Table.Cell, e(ui.Rating, icon="star", rating=rating, maxRating=10, size="huge", clearable=True))))
+                  e(ui.Table.Cell, e(ui.Rating, icon="star", defaultRating=rating, maxRating=10, size="huge", clearable=True))))
     tag_rows = []
     if this.state.tag_data.__namespace__: # somehow transcrypt ignores this in the loop below
         ns_tags = this.state.tag_data.__namespace__
@@ -171,10 +164,8 @@ def page_render():
                   e(ui.Table.Cell, e(ui.Header, "Tags:", as_="h5"), collapsing=True),
                   e(ui.Table.Cell,
                     e(ui.Table,
-                      e(ui.Transition.Group,
+                      e(ui.Table.Body,
                         *tag_rows,
-                        as_=ui.Table.Body,
-                        duration=1000,
                         ),
                       celled=True,
                       basic="very",
@@ -185,54 +176,38 @@ def page_render():
                   e(ui.Table.Cell, e(ui.List, *[e(ui.List.Item, h("span", h("a", x, href=x, target="_blank"), e(ui.List.Icon, js_name="external share"))) for x in urls]))))
 
     indicators = []
-
     if inbox:
-        indicators.append(e(ui.Icon, js_name="inbox", size="big", title="This gallery is in your inbox"))
+        indicators.append(e(ui.Icon, js_name="inbox", size="large", title="This gallery is in your inbox"))
 
-    if trash:
-        indicators.append(e(ui.Icon, js_name="trash", size="big", title="This gallery is set to be deleted"))
 
     return e(ui.Grid,
                e(ui.Grid.Row,e(ui.Grid.Column, e(ui.Breadcrumb, icon="right arrow",))),
                e(ui.Grid.Row, 
                  e(ui.Grid.Column,
-                   e(ui.Grid, e(ui.Grid.Row,
-                                e(ui.Grid.Column,
-                                   e(items.Thumbnail,
-                                    size_type=ImageSize.Big,
-                                    item_type=this.state.item_type,
-                                    item_id=item_id, 
-                                    size="medium",
-                                    shape="rounded",
-                                    bordered=True,),
-                                    tablet=10, mobile=6,
-                                   ),
-                                centered=True,
-                                ),
+                   e(ui.Grid, e(ui.Grid.Row, e(item.Thumbnail,
+                                size_type=ImageSize.Big,
+                                item_type=this.state.item_type,
+                                item_id=item_id, 
+                                size="medium",
+                                shape="rounded",
+                                bordered=True,),),
                      e(ui.Grid.Row,
                        e(ui.Grid.Column,
                          e(ui.Button.Group,
-                           e(ui.Button, "Read", primary=True, as_=Link, to=utils.build_url("/item/page", {'gid':item_id}, keep_query=False)),
+                           e(ui.Button, "Read", primary=True),
                            e(ui.Button.Or, text="or"),
                            e(ui.Button, "Save for later"),
                            ),
-                         textAlign="center",
+                         textAlign="center"
                          ),
-                        centered=True,
+                       centered=True,
                        ),
-                     e(ui.Grid.Row,
-                       e(ui.Grid.Column,
-                           e(ui.Button, e(ui.Icon, js_name="trash"), "Send to Trash", color="red"),
-                         textAlign="center",
-                         ),
-                        centered=True,
-                       ),
-                    centered=True, verticalAlign="top"),
-                   ),
+                    container=True, centered=True, verticalAlign="top"),
+                   tablet=4, mobile=16, computer=5,  widescreen=5, largeScreen=5),
                  e(ui.Grid.Column,
                    e(ui.Grid,
                        e(ui.Grid.Row,
-                           e(ui.Grid.Column, e(ui.Rating, icon="heart", size="massive", rating=fav), floated="right",),
+                           e(ui.Grid.Column, e(ui.Rating, icon="heart", size="massive", defaultRating=fav), floated="right",),
                            e(ui.Grid.Column, *indicators, floated="right", textAlign="right"),
                          columns=2,
                          ),
@@ -254,10 +229,10 @@ def page_render():
                         ),
                      divided="vertically",
                      ),
-                   ),
+                   tablet=12, mobile=16, computer=11,  widescreen=11, largeScreen=11),
                  columns=2,
                  as_=ui.Segment,
-                 #loading=this.state.loading,
+                 loading=this.state.loading,
                  basic=True,
                  ),
                e(ui.Grid.Row,
@@ -267,30 +242,26 @@ def page_render():
                  columns=3
                  ),
                e(ui.Grid.Row, e(ui.Grid.Column,
-                                  e(Slider, *[e(items.Gallery, data=x) for x in series_data],
+                                  e(Slider, *[e(item.Gallery, data=x) for x in series_data],
                                                   loading=this.state.loading_group,
                                                   secondary=True,
-                                                  sildesToShow=4,
                                                   label="Series"),
                                )),
-               e(ui.Grid.Row, e(ui.Grid.Column, e(items.ItemView,
+               e(ui.Grid.Row, e(ui.Grid.Column, e(item.ItemView,
                                                   item_id=item_id,
                                                   item_type=ItemType.Gallery,
                                                   related_type=ItemType.Page,
-                                                  view_filter=None,
                                                   label="Pages",
                                                   container=True, secondary=True))),
                stackable=True,
-               container=True,
+               container=True
              )
 
-Page = createReactClass({
-    'displayName': 'Page',
+GalleryPage = createReactClass({
+    'displayName': 'GalleryPage',
 
     'getInitialState': lambda: {'id': int(utils.get_query("id", 0)),
                                 'data':this.props.data,
-                                'rating': 0,
-                                'fav': 0,
                                 'tag_data':this.props.tag_data or {},
                                 'lang_data':this.props.lang_data or {},
                                 'status_data':this.props.status_data or {},
@@ -300,17 +271,16 @@ Page = createReactClass({
                                 'loading_group':True,
                                 },
 
-    'on_read': lambda: utils.go_to(this.props.history, "/item/page", {'gid':this.state.data.id}, keep_query=False),
     'get_item': get_item,
     'get_grouping': get_grouping,
     'get_tags': get_tags,
     'get_lang': get_lang,
     'get_status': get_status,
 
-    'componentWillMount': lambda: all((this.props.menu([e(ui.Menu.Menu, e(ui.Menu.Item, e(ui.Icon, js_name="edit"), "Edit" ), position="right")]), 
+    'componentWillMount': lambda: all((this.props.menu(None), 
                                        (this.get_item() if not this.state.data else None),
                                        )),
 
-    'render': page_render
+    'render': gallerypage_render
 })
 

@@ -8,7 +8,7 @@ from src.ui import ui, Slider
 from src.i18n import tr
 from src.state import state
 from src.client import ItemType, ViewType, ImageSize, client
-from src import items, utils
+from src import item, utils
 
 def PageNav(props):
     els = []
@@ -102,7 +102,7 @@ def page_render():
                n_url=n_url, p_url=p_url),
              e(ui.Grid.Row, e(ui.Grid.Column,
                               e(Link,
-                              e(items.Thumbnail,
+                              e(item.Thumbnail,
                                 item_id=p_id,
                                 item_type=this.state.item_type,
                                 size_type=ImageSize.Original,

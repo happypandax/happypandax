@@ -2,7 +2,7 @@
   "name": "happypandax",
   "version": "0.0.1",
   "description": "The official HPX frontend",
-  "main": "static/lib/__javascript__/main.js",
+  "main": "templates/__javascript__/main.js",
   "directories": {
     "doc": "docs",
     "test": "tests"

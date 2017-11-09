@@ -1,4 +1,5 @@
 __pragma__('alias', 'as_', 'as')
+from src.state import state
 from src.react_utils import (h,
                          e,
                          render,
@@ -10,9 +11,8 @@ from src.react_utils import (h,
                          withRouter
                          )
 from src.ui import ui, Alert, Notif
-from src.state import state
-from src.items import nav_ui
-from src.pages import api, dashboard, library, favorites, inbox, gallerypage, pagepage, collectionpage
+from src.nav import nav_ui
+from src.pages import (api, collection, gallery, dashboard, favorites, inbox, library)
 
 def on_update(props):
     if props.location.pathname != this.props.location.pathname:
@@ -116,9 +116,9 @@ App = createReactClass({
     'library_page': lambda p: e(library.Page, menu=this.set_menu_contents, **p),
     'favorites_page': lambda p: e(favorites.Page, menu=this.set_menu_contents, **p),
     'inbox_page': lambda p: e(inbox.Page, menu=this.set_menu_contents, **p),
-    'page_page': lambda p: e(pagepage.Page, menu=this.set_menu_contents, **p),
-    'gallery_page': lambda p: e(gallerypage.Page, menu=this.set_menu_contents, **p),
-    'collection_page': lambda p: e(collectionpage.Page, menu=this.set_menu_contents, **p),
+    'page_page': lambda p: e(page.Page, menu=this.set_menu_contents, **p),
+    'gallery_page': lambda p: e(gallery.Page, menu=this.set_menu_contents, **p),
+    'collection_page': lambda p: e(collection.Page, menu=this.set_menu_contents, **p),
 
     'render': app_render,
 })
