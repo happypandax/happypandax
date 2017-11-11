@@ -8,8 +8,10 @@ import functools
 import gevent
 import threading
 
+from contextlib import contextmanager
 from sqlalchemy.engine import Engine
 from sqlalchemy import String as _String
+from sqlalchemy import exc as sa_exc
 from sqlalchemy.inspection import inspect
 from sqlalchemy.ext.mutable import Mutable
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
@@ -693,8 +695,10 @@ class Namespace(NameMixin, AliasMixin, Base):
 
 
 taggable_tags = Table(
-    'taggable_tags', Base.metadata, Column(
-        'namespace_tag_id', Integer, ForeignKey('namespace_tags.id')), Column(
+    'taggable_tags', Base.metadata,
+    Column(
+        'namespace_tag_id', Integer, ForeignKey('namespace_tags.id')),
+    Column(
             'taggable_id', Integer, ForeignKey('taggable.id')), UniqueConstraint(
                 'namespace_tag_id', 'taggable_id'))
 
@@ -1127,18 +1131,18 @@ class Url(Base):
 
 # Note: necessary to put in function because there is no Session object yet
 
-
 def initEvents(sess):
     "Initializes events"
 
     @event.listens_for(sess, 'before_commit')
-    def aliasmixin_delete(session):
+    def aliasmixin_delete(s):
         "when root is deleted, delete all its aliases"
 
-        found = [obj for obj in session.deleted if isinstance(obj, AliasMixin) and obj.aliases]
-        for a in found:
-            for x in a.aliases:
-                x.delete()
+        with safe_session(s) as session:
+            found = [obj for obj in session.deleted if isinstance(obj, AliasMixin) and obj.aliases]
+            for a in found:
+                for x in a.aliases:
+                    x.delete()
 
     @event.listens_for(Taggable.tags, 'append', retval=True)
     def taggable_new_tag(target, value, initiator):
@@ -1169,82 +1173,92 @@ def initEvents(sess):
         target.last_updated = arrow.now()
 
     @event.listens_for(sess, 'before_commit')
-    def delete_artist_orphans(session):
-        session.query(Artist).filter(
-            ~Artist.galleries.any()).delete(
-            synchronize_session=False)
+    def delete_artist_orphans(s):
+        with safe_session(s) as session:
+            session.query(Artist).filter(
+                ~Artist.galleries.any()).delete(
+                synchronize_session=False)
 
     @event.listens_for(sess, 'before_commit')
-    def delete_parody_orphans(session):
-        session.query(Parody).filter(
-            ~Parody.galleries.any()).delete(
-            synchronize_session=False)
+    def delete_parody_orphans(s):
+        with safe_session(s) as session:
+            session.query(Parody).filter(
+                ~Parody.galleries.any()).delete(
+                synchronize_session=False)
 
     @event.listens_for(sess, 'before_commit')
-    def delete_tag_orphans(session):
-        session.query(Tag).filter(
-            ~Tag.namespaces.any()).delete(
-            synchronize_session=False)
+    def delete_tag_orphans(s):
+        with safe_session(s) as session:
+            session.query(Tag).filter(
+                ~Tag.namespaces.any()).delete(
+                synchronize_session=False)
 
     @event.listens_for(sess, 'before_commit')
-    def delete_namespace_orphans(session):
-        session.query(Namespace).filter(
-            ~Namespace.tags.any()).delete(
-            synchronize_session=False)
+    def delete_namespace_orphans(s):
+        with safe_session(s) as session:
+            session.query(Namespace).filter(
+                ~Namespace.tags.any()).delete(
+                synchronize_session=False)
 
     @event.listens_for(sess, 'before_commit')
-    def delete_aliasname_orphans(session):
-        session.query(AliasName).filter(
-            and_op(not AliasName.alias_for, ~AliasName.artists.any(), ~AliasName.parodies.any())).delete(
-            synchronize_session=False)
+    def delete_aliasname_orphans(s):
+        with safe_session(s) as session:
+            session.query(AliasName).filter(
+                and_op(not AliasName.alias_for, ~AliasName.artists.any(), ~AliasName.parodies.any())).delete(
+                synchronize_session=False)
 
     @event.listens_for(sess, 'before_commit')
-    def delete_profiles_orphans(session):
-        session.query(Profile).filter(
-            and_op(
-                ~Profile.artists.any(),
-                ~Profile.collections.any(),
-                ~Profile.groupings.any(),
-                ~Profile.pages.any(),
-                ~Profile.galleries.any())).delete(
-            synchronize_session=False)
+    def delete_profiles_orphans(s):
+        with safe_session(s) as session:
+            session.query(Profile).filter(
+                and_op(
+                    ~Profile.artists.any(),
+                    ~Profile.collections.any(),
+                    ~Profile.groupings.any(),
+                    ~Profile.pages.any(),
+                    ~Profile.galleries.any())).delete(
+                synchronize_session=False)
 
     @event.listens_for(sess, 'before_commit')
-    def delete_url_orphans(session):
-        session.query(Url).filter(
-            and_op(
-                ~Url.artists.any(),
-                ~Url.galleries.any())).delete(
-            synchronize_session=False)
+    def delete_url_orphans(s):
+        with safe_session(s) as session:
+            session.query(Url).filter(
+                and_op(
+                    ~Url.artists.any(),
+                    ~Url.galleries.any())).delete(
+                synchronize_session=False)
 
     @event.listens_for(sess, 'before_commit')
-    def delete_namespacetags_orphans(session):
-        tagids = [r.id for r in session.query(Tag.id).all()]
-        if tagids:
-            try:
-                session.query(
-                    NamespaceTags.id).filter(
-                    ~NamespaceTags.tag_id.in_(tagids)).delete(
-                    synchronize_session=False)
-            except exc.OperationalError:
-                for id, tagid in session.query(
-                        NamespaceTags.id, NamespaceTags.tag_id).all():
-                    if tagid not in tagids:
-                        session.delete(NamespaceTags.id == id)
-        else:
-            session.query(NamespaceTags).delete(synchronize_session=False)
+    def delete_namespacetags_orphans(s):
+        with safe_session(s) as session:
+            tagids = [r.id for r in session.query(Tag.id).all()]
+            if tagids:
+                try:
+                    session.query(
+                        NamespaceTags.id).filter(
+                        ~NamespaceTags.tag_id.in_(tagids)).delete(
+                        synchronize_session=False)
+                except exc.OperationalError:
+                    for id, tagid in session.query(
+                            NamespaceTags.id, NamespaceTags.tag_id).all():
+                        if tagid not in tagids:
+                            session.delete(NamespaceTags.id == id)
+            else:
+                session.query(NamespaceTags).delete(synchronize_session=False)
 
     @event.listens_for(sess, 'before_commit')
-    def delete_circle_orphans(session):
-        session.query(Circle).filter(
-            ~Circle.artists.any()).delete(
-            synchronize_session=False)
+    def delete_circle_orphans(s):
+        with safe_session(s) as session:
+            session.query(Circle).filter(
+                ~Circle.artists.any()).delete(
+                synchronize_session=False)
 
     @event.listens_for(sess, 'before_commit')
-    def delete_grouping_orphans(session):
-        session.query(Grouping).filter(
-            ~Grouping.galleries.any()).delete(
-            synchronize_session=False)
+    def delete_grouping_orphans(s):
+        with safe_session(s) as session:
+            session.query(Grouping).filter(
+                ~Grouping.galleries.any()).delete(
+                synchronize_session=False)
 
 
 @compiles(RegexMatchExpression, 'sqlite')
@@ -1497,3 +1511,16 @@ def ensure_in_session(item):
             return item
         except exc.InvalidRequestError:
             return constants.db_session().merge(item)
+
+@contextmanager
+def safe_session(sess=None):
+    if not sess:
+        sess = constants._db_scoped_session.session_factory()
+    with sess.no_autoflush:
+        try:
+            yield sess
+        except sa_exc.OperationalError as e:
+            log.exception("Exception raised in non-scoped db session")
+            if not "database is locked" in str(e):
+                raise
+

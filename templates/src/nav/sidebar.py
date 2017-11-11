@@ -166,7 +166,7 @@ PrefTab = createReactClass({
 })
 
 def sidebar_nav_render():
-    if False:
+    if True:
         nav_width = "very thin"
     else:
         nav_width = "thin"
@@ -298,13 +298,15 @@ def sidebar_nav_render():
                  className="bottom-aligned"),
                className="flex-container"),
              as_=ui.Menu,
-             animation="push",
+             animation="overlay",
              width=nav_width,
              vertical=True,
              visible=this.props.toggled,
              icon=icon,
              defaultActiveIndex=3,
-             size="small"
+             size="small",
+             className="window-height",
+             inverted=True,
              )
 
 SideBar = createReactClass({

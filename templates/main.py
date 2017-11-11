@@ -71,15 +71,16 @@ def app_will_mount():
 def get_container_ref(ctx):
     state['container_ref'] = ctx
 
-
 def app_render():
     return e(Router,
              e(ui.Ref,
                e(ui.Sidebar.Pushable,
+                 e(sidebar.SideBar, toggler=this.toggle_sidebar, toggled=this.state["sidebar_toggled"]),
                  e(Route, component=PathChange),
-                 e(ui.Dimmer.Dimmable,
+                 e(Alert, contentTemplate=Notif, stack={'limit': 6, 'spacing': 20},
+                   position="top-right", effect="slide", offset=50),
+                 e(ui.Sidebar.Pusher,
                    e(menu.Menu, toggler=this.toggle_sidebar, contents=this.state["menu_nav_contents"]),
-                   e(ui.Dimmer, simple=this.state.sidebar_toggled, onClickOutside=this.toggle_sidebar,),
                    e(Route, path="/api", component=this.api_page),
                    e(Route, path="/dashboard", component=this.dashboard_page),
                    e(Route, path="/", exact=True, component=this.library_page),
@@ -91,10 +92,7 @@ def app_render():
                    e(Route, path="/item/page", component=this.page_page),
                    dimmed=this.state.sidebar_toggled,
                    ),
-                 e(sidebar.SideBar, toggler=this.toggle_sidebar, toggled=this.state["sidebar_toggled"]),
-                 e(Alert, contentTemplate=Notif, stack={'limit': 6, 'spacing': 20},
-                   position="top-right", effect="slide", offset=50),
-                 className="main-content",
+                className="main-content",
                  ),
                innerRef=this.get_context_ref,
                )

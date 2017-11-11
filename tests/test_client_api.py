@@ -1,5 +1,6 @@
 import pytest
 import threading
+import unittest
 
 from happypanda.core.client import Client
 from happypanda.core import db

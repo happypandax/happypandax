@@ -11,9 +11,6 @@ sys.path.insert(0, os.path.abspath('..'))
 from sqlalchemy.orm import sessionmaker
 from happypanda.common import constants
 from happypanda.core.db import *
-Session = sessionmaker()
-constants.db_session = Session
-initEvents(Session)
 
 
 def doublegen(it):
@@ -22,13 +19,8 @@ def doublegen(it):
 
 def create_db():
     engine = create_engine("sqlite://")
-    Session.configure(bind=engine)
-    Base.metadata.create_all(engine)
-    constants.db_session = Session
-    session = Session()
-    check_db_version(session)
-    init_defaults(session)
-    return session
+    init(engine=engine)
+    return constants._db_scoped_session.session_factory()
 
 class GeneralTest(unittest.TestCase):
     def setUp(self):
@@ -163,7 +155,7 @@ class GeneralTest(unittest.TestCase):
 
         self.session.commit()
 
-        self.assertGreater(self.gallery.artists.count(), 0)
+        self.assertGreater(len(self.gallery.artists), 0)
         self.assertTrue(artists[0].galleries[0].id == self.gallery.id)
 
     def tearDown(self):
@@ -826,7 +818,7 @@ class TagRelationship(unittest.TestCase):
         self.assertTrue(self.nstag1 in self.gal1.tags)
         self.assertTrue(self.nstag2 in self.gal1.tags)
 
-        # test delete parent
+        ## test delete parent
 
         self.gal1.tags.remove(self.nstag1)
         self.session.commit()

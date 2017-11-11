@@ -5,21 +5,12 @@
     min-width: 0;
 }
 
-body, #root, #root > div { display: flex }
-
-#root, #root > div {
-    flex-grow: 1;
-    flex-direction: column;
+.window-height {
+    max-height: 100vh !important;
 }
 
-.main-content { display: flex; }
-
-.main-content > .dimmable {
-    z-index: 1;
-}
-
-.main-content > .sidebar.menu {
-    z-index: 99999;
+.main-content {
+    min-height: 100vh !important;
 }
 
 .ui.vertical.menu .item > i.icon.left {
