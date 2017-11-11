@@ -9,7 +9,7 @@ from src.i18n import tr
 from src.state import state
 from src.client import ItemType, ViewType, ImageSize, client
 from src.single import galleryitem, thumbitem
-from src.views import itemview
+from src.views import itemview, tagview
 from src import utils
 
 
@@ -35,10 +35,6 @@ def get_item(data=None, error=None):
             client.call_func("get_item", this.get_lang,
                              item_type=ItemType.Language,
                              item_id=data.language_id)
-        if data.id:
-            client.call_func("get_tags", this.get_tags,
-                             item_type=this.state.item_type,
-                             item_id=data.id)
     elif error:
         state.app.notif("Failed to fetch item ({})".format(this.state.id), level="error")
     else:
@@ -54,14 +50,6 @@ def get_grouping(data=None, error=None):
         this.setState({"group_data": data, "loading_group": False})
     elif error:
         state.app.notif("Failed to fetch grouping ({})".format(this.state.id), level="error")
-
-
-def get_tags(data=None, error=None):
-    if data is not None and not error:
-        this.setState({"tag_data": data})
-    elif error:
-        state.app.notif("Failed to fetch tags ({})".format(this.state.id), level="error")
-
 
 def get_lang(data=None, error=None):
     if data is not None and not error:
@@ -152,43 +140,11 @@ def page_render():
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, "Rating:", as_="h5"), collapsing=True),
                   e(ui.Table.Cell, e(ui.Rating, icon="star", rating=rating, maxRating=10, size="huge", clearable=True))))
-    tag_rows = []
-    if this.state.tag_data.__namespace__:  # somehow transcrypt ignores this in the loop below
-        ns_tags = this.state.tag_data.__namespace__
-        ns_tags = sorted([x.js_name for x in ns_tags])
-        tag_rows.append(
-            e(ui.Table.Row,
-                e(ui.Table.Cell,
-                  e(ui.Label.Group,
-                    *[e(ui.Label, x, tag=False) for x in ns_tags],
-                    ),
-                  colSpan="2",
-                  )))
-    for ns in sorted(dict(this.state.tag_data).keys()):
-        ns_tags = this.state.tag_data[ns]
-        ns_tags = sorted([x.js_name for x in ns_tags])
-        tag_rows.append(
-            e(ui.Table.Row,
-                e(ui.Table.Cell, ns, collapsing=True),
-                e(ui.Table.Cell,
-                  e(ui.Label.Group,
-                    *[e(ui.Label, x, tag=False) for x in ns_tags],
-                    ),
-                  )))
 
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, "Tags:", as_="h5"), collapsing=True),
-                  e(ui.Table.Cell,
-                    e(ui.Table,
-                      e(ui.Transition.Group,
-                        *tag_rows,
-                        as_=ui.Table.Body,
-                        duration=1000,
-                        ),
-                      celled=True,
-                      basic="very",
-                      compact=True,
-                      ))))
+                  e(ui.Table.Cell, e(tagview.TagView, item_id=item_id, item_type=this.state.item_type))))
+
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, "URL(s):", as_="h5"), collapsing=True),
                   e(ui.Table.Cell, e(ui.List, *[e(ui.List.Item, h("span", h("a", x, href=x, target="_blank"), e(ui.List.Icon, js_name="external share"))) for x in urls]))))
@@ -302,7 +258,6 @@ Page = createReactClass({
                                 'data': this.props.data,
                                 'rating': 0,
                                 'fav': 0,
-                                'tag_data': this.props.tag_data or {},
                                 'lang_data': this.props.lang_data or {},
                                 'status_data': this.props.status_data or {},
                                 'group_data': this.props.group_data or [],
@@ -314,7 +269,6 @@ Page = createReactClass({
     'on_read': lambda: utils.go_to(this.props.history, "/item/page", {'gid': this.state.data.id}, keep_query=False),
     'get_item': get_item,
     'get_grouping': get_grouping,
-    'get_tags': get_tags,
     'get_lang': get_lang,
     'get_status': get_status,
 

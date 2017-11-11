@@ -29,6 +29,23 @@ SearchOptions = createReactClass({
                         )
 })
 
+SearchOptions = createReactClass({
+    'displayName': 'SearchOptions',
+
+    'render': lambda: e(ui.List,
+                        e(ui.List.Item, e(ui.Checkbox, onChange=this.props.on_change, toggle=True,
+                                          js_name="case", label="Case sensitive", checked=this.props.case_)),
+                        e(ui.List.Item, e(ui.Checkbox, onChange=this.props.on_change,
+                                          toggle=True, js_name="regex", label="Regex", checked=this.props.regex)),
+                        e(ui.List.Item, e(ui.Checkbox, onChange=this.props.on_change, toggle=True,
+                                          js_name="whole", label="Match exact", checked=this.props.whole)),
+                        e(ui.List.Item, e(ui.Checkbox, onChange=this.props.on_change,
+                                          toggle=True, js_name="all", label="Match all", checked=this.props.all)),
+                        e(ui.List.Item, e(ui.Checkbox, onChange=this.props.on_change, toggle=True,
+                                          js_name="desc", label="Children", checked=this.props.desc)),
+                        )
+})
+
 
 def search_get_config(data=None, error=None):
     if data is not None and not error:
