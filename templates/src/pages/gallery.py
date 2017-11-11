@@ -8,7 +8,9 @@ from src.ui import ui, Slider
 from src.i18n import tr
 from src.state import state
 from src.client import ItemType, ViewType, ImageSize, client
-from src import item, utils
+from src.single import galleryitem, thumbitem
+from src.views import itemview
+from src import utils
 
 
 def get_item(data=None, error=None):
@@ -191,6 +193,7 @@ def page_render():
                   e(ui.Table.Cell, e(ui.Header, "URL(s):", as_="h5"), collapsing=True),
                   e(ui.Table.Cell, e(ui.List, *[e(ui.List.Item, h("span", h("a", x, href=x, target="_blank"), e(ui.List.Icon, js_name="external share"))) for x in urls]))))
 
+
     indicators = []
 
     if inbox:
@@ -205,7 +208,7 @@ def page_render():
                  e(ui.Grid.Column,
                    e(ui.Grid, e(ui.Grid.Row,
                                 e(ui.Grid.Column,
-                                  e(item.Thumbnail,
+                                  e(thumbitem.Thumbnail,
                                     size_type=ImageSize.Big,
                                     item_type=this.state.item_type,
                                     item_id=item_id,
@@ -275,13 +278,13 @@ def page_render():
                  columns=3
                ),
              e(ui.Grid.Row, e(ui.Grid.Column,
-                              e(Slider, *[e(item.Gallery, data=x) for x in series_data],
+                              e(Slider, *[e(galleryitem.Gallery, data=x) for x in series_data],
                                 loading=this.state.loading_group,
                                 secondary=True,
                                 sildesToShow=4,
                                 label="Series"),
                               )),
-             e(ui.Grid.Row, e(ui.Grid.Column, e(item.ItemView,
+             e(ui.Grid.Row, e(ui.Grid.Column, e(itemview.ItemView,
                                                 item_id=item_id,
                                                 item_type=ItemType.Gallery,
                                                 related_type=ItemType.Page,
@@ -293,7 +296,7 @@ def page_render():
              )
 
 Page = createReactClass({
-    'displayName': 'Page',
+    'displayName': 'GalleryPage',
 
     'getInitialState': lambda: {'id': int(utils.get_query("id", 0)),
                                 'data': this.props.data,

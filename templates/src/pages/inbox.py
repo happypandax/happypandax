@@ -7,11 +7,11 @@ from src.ui import ui
 from src.i18n import tr
 from src.state import state
 from src.client import ViewType
-from src import item
+from src import pages
 
 
 def page_render():
-    return e(item.ItemViewPage, view_type=ViewType.Inbox)
+    return e(pages.ItemViewPage, view_type=ViewType.Inbox)
 
 Page = createReactClass({
     'displayName': 'InboxPage',

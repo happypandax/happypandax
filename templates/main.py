@@ -11,8 +11,10 @@ from src.react_utils import (h,
                              withRouter
                              )
 from src.ui import ui, Alert, Notif
-from src.nav import nav_ui
-from src.pages import (api, collection, gallery, dashboard, favorites, inbox, library)
+from src.nav import (sidebar, menu)
+from src.pages import (api, collection, gallery,
+                       dashboard, favorites, inbox,
+                       library, page)
 
 
 def on_update(props):
@@ -76,7 +78,7 @@ def app_render():
                e(ui.Sidebar.Pushable,
                  e(Route, component=PathChange),
                  e(ui.Dimmer.Dimmable,
-                   e(nav_ui.MenuNav, toggler=this.toggle_sidebar, contents=this.state["menu_nav_contents"]),
+                   e(menu.Menu, toggler=this.toggle_sidebar, contents=this.state["menu_nav_contents"]),
                    e(ui.Dimmer, simple=this.state.sidebar_toggled, onClickOutside=this.toggle_sidebar,),
                    e(Route, path="/api", component=this.api_page),
                    e(Route, path="/dashboard", component=this.dashboard_page),
@@ -89,7 +91,7 @@ def app_render():
                    e(Route, path="/item/page", component=this.page_page),
                    dimmed=this.state.sidebar_toggled,
                    ),
-                 e(nav_ui.SideBarNav, toggler=this.toggle_sidebar, toggled=this.state["sidebar_toggled"]),
+                 e(sidebar.SideBar, toggler=this.toggle_sidebar, toggled=this.state["sidebar_toggled"]),
                  e(Alert, contentTemplate=Notif, stack={'limit': 6, 'spacing': 20},
                    position="top-right", effect="slide", offset=50),
                  className="main-content",
