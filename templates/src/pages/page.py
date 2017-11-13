@@ -10,6 +10,7 @@ from src.state import state
 from src.client import (ItemType, ViewType, ImageSize, client,
                         thumbclient, Command)
 from src.single import thumbitem
+from src.views import tagview
 from src import utils
 
 
@@ -152,9 +153,15 @@ def receive_props(n_props):
 def page_render():
     number = 0
     p_id = this.state.id
+    name = ""
+    hash_id = ""
+    path = ""
     if this.state.data:
         p_id = this.state.data.id
         number = this.state.data.number
+        name = this.state.data.name
+        hash_id = this.state.data.hash
+        path = this.state.data.path
 
     img = None
     __pragma__("iconv")
@@ -164,6 +171,19 @@ def page_render():
 
     n_url = utils.build_url(query={'id': p_id, 'go': "next"})
     p_url = utils.build_url(query={'id': p_id, 'go': "prev"})
+
+    rows = []
+
+    rows.append(e(ui.Table.Row,
+                  e(ui.Table.Cell, e(ui.Header, "Tags:", as_="h5"), collapsing=True),
+                  e(ui.Table.Cell, e(tagview.TagView, item_id=p_id, item_type=this.state.item_type))))
+    rows.append(e(ui.Table.Row,
+                  e(ui.Table.Cell, e(ui.Header, "Path:", as_="h5"), collapsing=True),
+                  e(ui.Table.Cell, e(ui.Label, path))))
+    rows.append(e(ui.Table.Row,
+                  e(ui.Table.Cell, e(ui.Header, "Hash:", as_="h5"), collapsing=True),
+                  e(ui.Table.Cell, e(ui.Label, hash_id))))
+
     return e(ui.Grid,
              e(PageNav, number=number, count=this.state.pages,
                n_url=n_url, p_url=p_url),
@@ -193,10 +213,20 @@ def page_render():
                ),
              e(PageNav, number=number, count=this.state.pages,
                n_url=n_url, p_url=p_url),
-             e(ui.Grid.Row, e(ui.Grid.Column, e(ui.Segment, as_=ui.Container))),
-             padded=True,
+             e(ui.Grid.Row,
+               e(ui.Grid.Column,
+                 e(ui.Segment,
+                   e(ui.Table,
+                     e(ui.Table.Body,
+                       *rows
+                       ),
+                    basic="very",
+                    ),
+                   as_=ui.Container,
+                   ))),
+            padded=True,
             inverted=True,
-             )
+            )
 
 Page = createReactClass({
     'displayName': 'Page',

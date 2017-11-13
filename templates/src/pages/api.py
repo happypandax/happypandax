@@ -153,7 +153,7 @@ Page = createReactClass({
     'set_msg_to': lambda msg: this.setState({'to_server': msg}),
     'set_msg_from': lambda msg: this.setState({'from_server': msg}),
 
-    'render': lambda: e(ui.Container, e(ui.Grid.Column,
+    'render': lambda: e(ui.Segment, e(ui.Grid.Column,
                                         e(ui.Message,
                                           e(ui.Message.Header, tr(this, "ui.h-server-comm", "Server Communication")),
                                             h(ui.Message.Content, tr(this, "ui.t-server-comm-tutorial", "..."), as_="pre"),
@@ -162,15 +162,16 @@ Page = createReactClass({
                                         e(ui.Divider),
                                         e(ApiForm, to_server=this.set_msg_to, from_server=this.set_msg_from),
                                         e(ui.Divider),
-                                        e(ui.Accordion,
-                                            panels=[
-                                                {'key': 0, 'title': tr(this, "", "Message"), 'content': e(
-                                                    ui.Message, formatted_json(this.state['to_server']), className="overflow-auto")},
-                                                {'key': 1, 'title': tr(this, "", "Response"), 'content': e(
-                                                    ui.Message, formatted_json(this.state['from_server']), className="overflow-auto")},
-                                            ],
-                                            exclusive=False,
-                                            defaultActiveIndex=[0, 1]
-                                          )
-                                        ))
+                                        e(ui.Segment,
+                                          e(ui.Label, tr(this, "", "Message"), attached="top"),
+                                          formatted_json(this.state['to_server']),
+                                          basic=True),
+                                        e(ui.Segment,
+                                          e(ui.Label, tr(this, "", "Response"), attached="top"),
+                                          formatted_json(this.state['from_server']),
+                                          basic=True),
+                                        ),
+                        as_=ui.Container,
+                        basic=True,
+                        )
 })

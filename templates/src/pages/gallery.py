@@ -156,7 +156,7 @@ def page_render():
         indicators.append(e(ui.Icon, js_name="inbox", size="big", title="This gallery is in your inbox"))
 
     if trash:
-        indicators.append(e(ui.Icon, js_name="trash", size="big", title="This gallery is set to be deleted"))
+        indicators.append(e(ui.Icon, js_name="trash", color="red", size="big", title="This gallery is set to be deleted"))
 
     return e(ui.Grid,
              e(ui.Grid.Row, e(ui.Grid.Column, e(ui.Breadcrumb, icon="right arrow",))),

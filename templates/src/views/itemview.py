@@ -57,11 +57,11 @@ def itemviewbase_render():
         count_el.append(e(ui.Grid.Column,
                           e(ui.Header,
                             e(ui.Header.Subheader,
-                              # tr(this,
-                              #   "ui.t-showing-count",
-                              #   "Showing {}".format(props.item_count),
-                              #   placeholder={'from':(props.page-1)*props.limit or 1, 'to':(props.page-1)*props.limit+props.limit, 'all':props.item_count}
-                              #   ),
+                               tr(this,
+                                 "ui.t-showing-count",
+                                 "Showing {}".format(props.item_count),
+                                 placeholder={'from':(props.page-1)*props.limit+1, 'to':(props.page-1)*props.limit+len(els), 'all':props.item_count}
+                                 ),
                               as_="h6"),
                             ),
                           textAlign="center", width=16))

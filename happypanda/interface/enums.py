@@ -155,3 +155,7 @@ class ServerCommand(_APIEnum):
 
     #: Request authentication
     RequestAuth = 3
+
+
+class ItemSort(_APIEnum):
+    pass
