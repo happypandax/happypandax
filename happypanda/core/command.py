@@ -10,7 +10,7 @@ from inspect import isclass
 from gevent.threadpool import ThreadPool
 
 from happypanda.common import utils, hlogger, exceptions, constants
-from happypanda.core import plugins, async
+from happypanda.core import plugins, async, db
 
 log = hlogger.Logger(__name__)
 
@@ -52,8 +52,8 @@ class CommandState(enum.Enum):
 def _native_runner(f):
 
     def cleanup_wrapper(*args, **kwargs):
-        r = f(*args, **kwargs)
-        constants._db_scoped_session.remove()
+        with db.cleanup_session():
+            r = f(*args, **kwargs)
         return r
 
     parent = weakref.proxy(gevent.getcurrent())

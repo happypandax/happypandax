@@ -6,6 +6,7 @@ import threading
 import arrow
 
 from happypanda.common import hlogger, utils, constants
+from happypanda.core import db
 
 log = hlogger.Logger(__name__)
 
@@ -37,7 +38,6 @@ class Greenlet(gevent.Greenlet):
             stack.extend((cur.f_code, cur.f_lineno))
             cur = cur.f_back
         self.stacks = (tuple(stack),) + getattr(spawner, 'stacks', ())[:10]
-
 
 class CPUThread():
     """
@@ -85,11 +85,11 @@ class CPUThread():
                 jobid, func, args, kwargs = self.in_q.popleft()
                 start_time = arrow.now()
                 try:
-                    self.results[jobid] = func(*args, **kwargs)
+                    with db.cleanup_session():
+                        self.results[jobid] = func(*args, **kwargs)
                 except Exception as e:
                     log.exception("Exception raised in cpubound_thread:")
                     self.results[jobid] = self._Caught(e)
-                constants._db_scoped_session.remove()
                 finished_time = arrow.now()
                 run_delta = finished_time - start_time
                 log.d("Function - '{}'\n".format(func.__name__),

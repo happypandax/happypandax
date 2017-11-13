@@ -114,31 +114,30 @@ class GetModelImage(AsyncCommand):
     @async.defer
     def _update_db(self, stale_cover, item_id, model, old_hash):
         s = constants.db_session()
-        with s.no_autoflush:
-            cover = s.query(db.Profile).filter(
-                db.and_op(db.Profile.data == old_hash, db.Profile.size == stale_cover.size)).one_or_none()
-            # TODO: handle MultipleResultsError
+        cover = s.query(db.Profile).filter(
+            db.and_op(db.Profile.data == old_hash, db.Profile.size == stale_cover.size)).one_or_none()
+        # TODO: handle MultipleResultsError
 
-            new = False
+        new = False
 
-            if cover:
-                # sometimes an identical img has already been generated and exists so we shouldnt do anything
-                fs = io_cmd.CoreFS(cover.path)
-                if (cover.path != stale_cover.path) and fs.exists:
-                    fs.delete()
-            else:
-                cover = db.Profile()
-                new = True
+        if cover:
+            # sometimes an identical img has already been generated and exists so we shouldnt do anything
+            fs = io_cmd.CoreFS(cover.path)
+            if (cover.path != stale_cover.path) and fs.exists:
+                fs.delete()
+        else:
+            cover = db.Profile()
+            new = True
 
-            cover.data = stale_cover.data
-            cover.path = stale_cover.path
-            cover.size = stale_cover.size
+        cover.data = stale_cover.data
+        cover.path = stale_cover.path
+        cover.size = stale_cover.size
 
-            if new or not s.query(db.Profile).join(db.relationship_column(model, db.Profile)).filter(
-                    db.and_op(db.Profile.id == cover.id, model.id == item_id)).scalar():
-                i = s.query(model).get(item_id)
-                i.profiles.append(cover)
-            s.commit()
+        if new or not s.query(db.Profile).join(db.relationship_column(model, db.Profile)).filter(
+                db.and_op(db.Profile.id == cover.id, model.id == item_id)).scalar():
+            i = s.query(model).get(item_id)
+            i.profiles.append(cover)
+        s.commit()
 
     def _generate_and_add(self, img_hash, old_img_hash, generate, model, item_id, image_size, profile_size):
 

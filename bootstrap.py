@@ -22,6 +22,8 @@ changes = """
 - fixed more connection issues
 - fixed match_all not working
 - fixed case sensitive search;
+- server is now noticably faster
+- fixed the occasional db lock errors for good.. i think
 """
 
 

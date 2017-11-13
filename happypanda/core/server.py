@@ -323,51 +323,52 @@ class ClientHandler:
         Params:
             buffer -- data buffer to be parsed
         """
-        try:
-            if constants.server_ready:
-                function_list = message.List("function", message.Function)
-                functions = self.parse(buffer)
-                if functions is None:
-                    return
-                if isinstance(functions, enums.ServerCommand):
-                    if functions == enums.ServerCommand.RequestAuth:
-                        self.handshake()
-                    return functions
+        with db.cleanup_session():
+            try:
+                if constants.server_ready:
+                    function_list = message.List("function", message.Function)
+                    functions = self.parse(buffer)
+                    if functions is None:
+                        return
+                    if isinstance(functions, enums.ServerCommand):
+                        if functions == enums.ServerCommand.RequestAuth:
+                            self.handshake()
+                        return functions
 
-                for func, func_args in functions:
-                    log.d("Calling function", func, "with args", func_args)
-                    func_msg = message.Function(func.__name__)
-                    try:
-                        msg = func(**func_args)
-                        assert isinstance(msg, message.CoreMessage) or msg is None
-                        func_msg.set_data(msg)
-                    except exceptions.CoreError as e:
-                        func_msg.set_error(message.Error(e.code, e.msg))
-                    function_list.append(func_msg)
+                    for func, func_args in functions:
+                        log.d("Calling function", func, "with args", func_args)
+                        func_msg = message.Function(func.__name__)
+                        try:
+                            msg = func(**func_args)
+                            assert isinstance(msg, message.CoreMessage) or msg is None
+                            func_msg.set_data(msg)
+                        except exceptions.CoreError as e:
+                            func_msg.set_error(message.Error(e.code, e.msg))
+                        function_list.append(func_msg)
 
-                # bad functions
-                for fname, e in self.errors:
-                    function_list.append(
-                        message.Function(
-                            fname, error=message.Error(
-                                e.code, e.msg)))
-                self.errors.clear()
+                    # bad functions
+                    for fname, e in self.errors:
+                        function_list.append(
+                            message.Function(
+                                fname, error=message.Error(
+                                    e.code, e.msg)))
+                    self.errors.clear()
 
-                self.send(function_list.serialize(session_id=self.session.id))
-            else:
-                self.on_wait()
-        except exceptions.CoreError as e:
-            log.d("Sending exception to client:", e)
-            self.on_error(e)
+                    self.send(function_list.serialize(session_id=self.session.id))
+                else:
+                    self.on_wait()
+            except exceptions.CoreError as e:
+                log.d("Sending exception to client:", e)
+                self.on_error(e)
 
-        except Exception:
-            if not constants.dev:
-                log.exception("An unknown critical error has occurred")
-                self.on_error(exceptions.HappypandaError(
-                    "An unknown critical error has occurred"))  # TODO: include traceback
-            else:
-                log.exception("An unknown critical error has occurred")
-                raise
+            except Exception:
+                if not constants.dev:
+                    log.exception("An unknown critical error has occurred")
+                    self.on_error(exceptions.HappypandaError(
+                        "An unknown critical error has occurred"))  # TODO: include traceback
+                else:
+                    log.exception("An unknown critical error has occurred")
+                    raise
 
     def is_active(self):
         """

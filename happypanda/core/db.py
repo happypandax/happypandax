@@ -1135,6 +1135,7 @@ class Url(Base):
 
 def initEvents(sess):
     "Initializes events"
+    return
 
     @event.listens_for(sess, 'after_flush')
     def aliasmixin_delete(s, ctx):
@@ -1379,6 +1380,7 @@ def init(**kwargs):
     constants.db_session = functools.partial(_get_session, Session)
     initEvents(Session)
     constants.db_engine = kwargs.get("engine")
+    from sqlalchemy.pool import NullPool
     if not constants.db_engine:
         constants.db_engine = create_engine(os.path.join("sqlite:///", db_path),
                                             connect_args={'timeout': config.sqlite_database_timeout.value})  # SQLITE specific arg (avoding db is locked errors)
@@ -1503,3 +1505,8 @@ def safe_session(sess=None):
             if not "database is locked" in str(e):
                 raise
 
+
+@contextmanager
+def cleanup_session():
+    yield
+    constants._db_scoped_session.remove()
