@@ -58,9 +58,9 @@ __pragma__("nojsiter")
 def scrolltotop_update(p_props):
     if this.props.location != p_props.location:
         if state.container_ref:
-            state.container_ref.scrollTop = 0
+            utils.scroll_to_element(state.container_ref)
         else:
-            window.scrollTo(0, 0)
+            utils.scroll_to_element(window)
 
 ScrollToTop = withRouter(createReactClass({
     'displayName': 'ScrollToTop',

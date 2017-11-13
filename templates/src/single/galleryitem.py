@@ -11,6 +11,9 @@ from src.single import thumbitem
 from src import utils
 from src.views import tagview
 
+def on_tags(data):
+    this.setState({'tags':data})
+
 def gallery_on_update(p_props, p_state):
     if p_props.data != this.props.data:
         this.setState({'data': this.props.data, 'id': this.props.data.id if this.props.data else None})
@@ -74,7 +77,8 @@ def gallery_render():
                   e(ui.Table.Cell, e(ui.Label, read_count, circular=True))))
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, "Tags:", as_="h5"), collapsing=True),
-                  e(ui.Table.Cell, e(tagview.TagView, item_id=item_id, item_type=this.state.item_type))))
+                  e(ui.Table.Cell, e(tagview.TagView, item_id=item_id, item_type=this.state.item_type,
+                                     data=this.state.tags, on_tags=this.on_tags))))
 
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, "URL(s):", as_="h5"), collapsing=True),
@@ -115,8 +119,7 @@ def gallery_render():
                             ),
                hideOnScroll=True,
                hoverable=True,
-               position="right center",
-               flowing=True,
+               position="bottom center",
                wide="very",
                on="click"
                ),
@@ -129,7 +132,9 @@ Gallery = createReactClass({
     'getInitialState': lambda: {'id': None,
                                 'data': this.props.data,
                                 'item_type': ItemType.Gallery,
+                                'tags': this.props.tags,
                                 },
+    'on_tags': on_tags,
 
     'componentWillMount': lambda: this.setState({'id': this.props.data.id if this.props.data else this.state.data.id if this.state.data else None}),
     'componentDidUpdate': gallery_on_update,

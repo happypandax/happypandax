@@ -22,6 +22,7 @@ changes = """
 - fixed more connection issues
 - fixed match_all not working
 - fixed case sensitive search;
+- cleanup and reorganize webclient code
 - server is now noticably faster
 - fixed the occasional db lock errors for good.. i think
 """

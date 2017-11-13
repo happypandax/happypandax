@@ -1,4 +1,5 @@
 __pragma__('alias', 'as_', 'as')
+require('smoothscroll-polyfill').polyfill();
 from src.state import state
 from src.react_utils import (h,
                              e,
@@ -73,29 +74,29 @@ def get_container_ref(ctx):
 
 def app_render():
     return e(Router,
-             e(ui.Ref,
                e(ui.Sidebar.Pushable,
                  e(sidebar.SideBar, toggler=this.toggle_sidebar, toggled=this.state["sidebar_toggled"]),
                  e(Route, component=PathChange),
                  e(Alert, contentTemplate=Notif, stack={'limit': 6, 'spacing': 20},
                    position="top-right", effect="slide", offset=50),
-                 e(ui.Sidebar.Pusher,
-                   e(menu.Menu, toggler=this.toggle_sidebar, contents=this.state["menu_nav_contents"]),
-                   e(Route, path="/api", component=this.api_page),
-                   e(Route, path="/dashboard", component=this.dashboard_page),
-                   e(Route, path="/", exact=True, component=this.library_page),
-                   e(Route, path="/library", component=this.library_page),
-                   e(Route, path="/favorite", component=this.favorites_page),
-                   e(Route, path="/inbox", component=this.inbox_page),
-                   e(Route, path="/item/gallery", component=this.gallery_page),
-                   e(Route, path="/item/collection", component=this.collection_page),
-                   e(Route, path="/item/page", component=this.page_page),
-                   dimmed=this.state.sidebar_toggled,
-                   ),
+                e(ui.Ref,
+                    e(ui.Sidebar.Pusher,
+                    e(menu.Menu, toggler=this.toggle_sidebar, contents=this.state["menu_nav_contents"]),
+                    e(Route, path="/api", component=this.api_page),
+                    e(Route, path="/dashboard", component=this.dashboard_page),
+                    e(Route, path="/", exact=True, component=this.library_page),
+                    e(Route, path="/library", component=this.library_page),
+                    e(Route, path="/favorite", component=this.favorites_page),
+                    e(Route, path="/inbox", component=this.inbox_page),
+                    e(Route, path="/item/gallery", component=this.gallery_page),
+                    e(Route, path="/item/collection", component=this.collection_page),
+                    e(Route, path="/item/page", component=this.page_page),
+                    dimmed=this.state.sidebar_toggled,
+                    ),
+                    innerRef=this.get_context_ref,
+                    ),
                 className="main-content",
                  ),
-               innerRef=this.get_context_ref,
-               )
              )
 
 App = createReactClass({

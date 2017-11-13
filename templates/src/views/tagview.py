@@ -12,6 +12,8 @@ from src import utils
 def get_tags(data=None, error=None):
     if data is not None and not error:
         this.setState({"data": data})
+        if this.props.on_tags:
+            this.props.on_tags(data)
     elif error:
         state.app.notif("Failed to fetch tags ({})".format(this.props.id), level="error")
     else:
@@ -57,11 +59,11 @@ def tag_render():
 TagView = createReactClass({
     'displayName': 'TagView',
 
-    'getInitialState': lambda: {'data': {}},
+    'getInitialState': lambda: {'data': this.props.data or {}},
 
     'get_tags': get_tags,
 
-    'componentDidMount': lambda: this.get_tags(),
+    'componentDidMount': lambda: this.get_tags() if not utils.defined(this.props.data) else None,
 
     'render': tag_render
 })

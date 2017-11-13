@@ -1,4 +1,5 @@
 __pragma__('alias', 'as_', 'as')
+PinchView = require("react-pinch-zoom-pan")
 import src
 from src.react_utils import (h,
                              e,
@@ -9,13 +10,18 @@ from src.client import (thumbclient, Command)
 from src.state import state
 from src import utils
 
+
 def thumbnail_on_update(p_props, p_state):
     if any((
         p_props.item_type != this.props.item_type,
         p_props.item_id != this.props.item_id,
         p_props.size_type != this.props.size_type,
     )):
-        this.get_thumb()
+        if not (p_props.img != this.props.img) or not this.props.img:
+            this.get_thumb()
+
+    if p_props.img != this.props.img:
+        this.setState({'img':this.props.img})
 
 
 __pragma__('tconv')
@@ -69,8 +75,7 @@ def thumbnail_render():
 
     ex = this.props.kwargs if utils.defined(this.props.kwargs) else {}
 
-    return h("div", e(ui.Dimmer, e(ui.Loader), active=this.state.loading, inverted=True),
-             e(ui.Image, src=img_url,
+    el = e(ui.Image, src=img_url,
                fluid=fluid,
                size=this.props.size,
                disabled=this.props.disabled,
@@ -88,14 +93,19 @@ def thumbnail_render():
                verticalAlign=this.props.verticalAlign,
                width=this.props.width,
                **ex
-               ),
+               )
+    return e(ui.Segment, e(ui.Dimmer, e(ui.Loader), active=this.state.loading, inverted=True),
+             el,
+             basic=True,
+             className="no-padding-segment",
+             inverted=this.props.inverted,
              )
 
 Thumbnail = createReactClass({
     'displayName': 'Thumbnail',
 
-    'getInitialState': lambda: {'img': "",
-                                'loading': True,
+    'getInitialState': lambda: {'img': this.props.img or "",
+                                'loading': false if this.props.img else True,
                                 'placeholder': this.props.placeholder if utils.defined(this.props.placeholder) else "/static/img/default.png",
                                 'active_cmd': None,
                                 },
@@ -104,7 +114,7 @@ Thumbnail = createReactClass({
 
     'set_thumb': thumbnail_set_thumb,
 
-    'componentDidMount': lambda: this.get_thumb(),
+    'componentDidMount': lambda: this.get_thumb() if not this.props.img else None,
     'componentWillUnmount': lambda: this.state.active_cmd.stop if this.state.active_cmd else None,
     'componentDidUpdate': thumbnail_on_update,
 

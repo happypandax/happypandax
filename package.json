@@ -24,6 +24,7 @@
     "react-slick": "^0.15.0",
     "semantic-ui": "^2.2.13",
     "semantic-ui-react": "^0.76.0",
+    "smoothscroll-polyfill": "^0.4.0",
     "socket.io": "^2.0.3",
     "webpack": "^3.5.5"
   },

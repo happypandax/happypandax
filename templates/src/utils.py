@@ -145,4 +145,8 @@ def build_url(url="", query={}, keep_query=True, location_obj=None):
 __pragma__("notconv")
 __pragma__("nokwargs")
 
+def scroll_to_element(el):
+    if el:
+        el.scrollIntoView({'behavior':'smooth'})
+
 moment.locale(get_locale())

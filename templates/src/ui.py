@@ -97,8 +97,7 @@ def pagination_change(new_page):
         this.props.on_change(new_page)
     if this.props.scroll_top:
         el = this.props.context or state.container_ref
-        if el:
-            el.scrollTop = 0
+        utils.scroll_to_element(el)
 
 
 def pagination_render():
