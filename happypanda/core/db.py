@@ -41,6 +41,7 @@ from sqlalchemy import (
     ForeignKey,
     Table,
     UniqueConstraint,
+    PrimaryKeyConstraint,
     Float,
     Enum,
     TypeDecorator,
@@ -614,7 +615,8 @@ class NamespaceTags(AliasMixin, Base):
                           remote_side='NamespaceTags.id',
                           backref=backref("children"))
 
-    def __init__(self, ns, tag):
+    def __init__(self, ns=None, tag=None, **kwargs):
+        super().__init__(**kwargs)
         self.namespace = ns
         self.tag = tag
 
@@ -676,7 +678,7 @@ class Tag(NameMixin, AliasMixin, Base):
 
     namespaces = relationship(
         "Namespace",
-        secondary='namespace_tags',
+        secondary="namespace_tags",
         back_populates='tags',
         lazy="dynamic")
 
@@ -689,7 +691,7 @@ class Namespace(NameMixin, AliasMixin, Base):
 
     tags = relationship(
         "Tag",
-        secondary='namespace_tags',
+        secondary="namespace_tags",
         back_populates='namespaces',
         lazy="dynamic")
 
@@ -796,7 +798,7 @@ class Circle(NameMixin, Base):
 gallery_parodies = Table(
     'gallery_parodies', Base.metadata, Column(
         'parody_id', Integer, ForeignKey('parody.id')), Column(
-            'gallery_id', Integer, ForeignKey('gallery.id')), UniqueConstraint(
+            'gallery_id', Integer, ForeignKey('gallery.id')), PrimaryKeyConstraint(
                 'parody_id', 'gallery_id'))
 
 
@@ -1134,8 +1136,8 @@ class Url(Base):
 def initEvents(sess):
     "Initializes events"
 
-    @event.listens_for(sess, 'before_commit')
-    def aliasmixin_delete(s):
+    @event.listens_for(sess, 'after_flush')
+    def aliasmixin_delete(s, ctx):
         "when root is deleted, delete all its aliases"
 
         with safe_session(s) as session:
@@ -1165,100 +1167,77 @@ def initEvents(sess):
     def taggable_remove_tag(target, value, initiator):
         "when a tag is removed, remove its children too"
         if value and len(value.children):
-            for c in value.children:
-                target.tags.remove(c)
+            if initiator.op:
+                initiator.op = None
+                for c in value.children:
+                    target.tags.remove(c)
 
     @event.listens_for(UpdatedMixin, 'before_update', propagate=True)
     def timestamp_before_update(mapper, connection, target):
         target.last_updated = arrow.now()
 
-    @event.listens_for(sess, 'before_commit')
-    def delete_artist_orphans(s):
-        with safe_session(s) as session:
-            session.query(Artist).filter(
-                ~Artist.galleries.any()).delete(
-                synchronize_session=False)
+    def many_to_many_deletion(cls, attr=None, custom_filter=None, found_attrs=lambda: []):
 
-    @event.listens_for(sess, 'before_commit')
-    def delete_parody_orphans(s):
-        with safe_session(s) as session:
-            session.query(Parody).filter(
-                ~Parody.galleries.any()).delete(
-                synchronize_session=False)
+        def mtom(s, ctx):
+            orphans_found = True
 
-    @event.listens_for(sess, 'before_commit')
-    def delete_tag_orphans(s):
-        with safe_session(s) as session:
-            session.query(Tag).filter(
-                ~Tag.namespaces.any()).delete(
-                synchronize_session=False)
+            #f_attrs = found_attrs()
 
-    @event.listens_for(sess, 'before_commit')
-    def delete_namespace_orphans(s):
-        with safe_session(s) as session:
-            session.query(Namespace).filter(
-                ~Namespace.tags.any()).delete(
-                synchronize_session=False)
+            #if attr:
+            #    f_attrs.append(attr())
 
-    @event.listens_for(sess, 'before_commit')
-    def delete_aliasname_orphans(s):
-        with safe_session(s) as session:
-            session.query(AliasName).filter(
-                and_op(not AliasName.alias_for, ~AliasName.artists.any(), ~AliasName.parodies.any())).delete(
-                synchronize_session=False)
+            #if f_attrs: 
+            #    try:
+            #        orphans_found = (
+            #            any(isinstance(obj, cls) and
+            #                any(attributes.get_history(obj, x.key).deleted for x in f_attrs)
+            #                for obj in s.dirty) or
+            #            any(isinstance(obj, cls) for obj in s.deleted)
+            #            )
+            #    except KeyError:
+            #        pass
 
-    @event.listens_for(sess, 'before_commit')
-    def delete_profiles_orphans(s):
-        with safe_session(s) as session:
-            session.query(Profile).filter(
-                and_op(
-                    ~Profile.artists.any(),
-                    ~Profile.collections.any(),
-                    ~Profile.groupings.any(),
-                    ~Profile.pages.any(),
-                    ~Profile.galleries.any())).delete(
-                synchronize_session=False)
+            if orphans_found:
+                if custom_filter:
+                    cfilter = custom_filter()
+                else:
+                    cfilter = ~(attr()).any()
+                with safe_session(s) as session:
+                    session.query(cls).filter(cfilter).delete(synchronize_session=False)
 
-    @event.listens_for(sess, 'before_commit')
-    def delete_url_orphans(s):
-        with safe_session(s) as session:
-            session.query(Url).filter(
-                and_op(
-                    ~Url.artists.any(),
-                    ~Url.galleries.any())).delete(
-                synchronize_session=False)
+        event.listen(sess, 'after_flush', mtom)
 
-    @event.listens_for(sess, 'before_commit')
-    def delete_namespacetags_orphans(s):
-        with safe_session(s) as session:
-            tagids = [r.id for r in session.query(Tag.id).all()]
-            if tagids:
-                try:
-                    session.query(
-                        NamespaceTags.id).filter(
-                        ~NamespaceTags.tag_id.in_(tagids)).delete(
-                        synchronize_session=False)
-                except exc.OperationalError:
-                    for id, tagid in session.query(
-                            NamespaceTags.id, NamespaceTags.tag_id).all():
-                        if tagid not in tagids:
-                            session.delete(NamespaceTags.id == id)
-            else:
-                session.query(NamespaceTags).delete(synchronize_session=False)
-
-    @event.listens_for(sess, 'before_commit')
-    def delete_circle_orphans(s):
-        with safe_session(s) as session:
-            session.query(Circle).filter(
-                ~Circle.artists.any()).delete(
-                synchronize_session=False)
-
-    @event.listens_for(sess, 'before_commit')
-    def delete_grouping_orphans(s):
-        with safe_session(s) as session:
-            session.query(Grouping).filter(
-                ~Grouping.galleries.any()).delete(
-                synchronize_session=False)
+    many_to_many_deletion(Artist, lambda: Artist.galleries)
+    many_to_many_deletion(Parody, lambda: Parody.galleries)
+    many_to_many_deletion(Grouping, lambda: Grouping.galleries)
+    many_to_many_deletion(Tag, lambda: Tag.namespaces)
+    many_to_many_deletion(Namespace, lambda: Namespace.tags)
+    many_to_many_deletion(Circle, lambda: Circle.artists)
+    many_to_many_deletion(AliasName, custom_filter=lambda:and_op(
+        not AliasName.alias_for, 
+        ~AliasName.artists.any(), 
+        ~AliasName.parodies.any()),
+                          found_attrs=lambda: [AliasName.artists, AliasName.parodies])
+    #TODO: clean up
+    many_to_many_deletion(Profile, custom_filter=lambda:and_op(
+                                                ~Profile.artists.any(),
+                                                ~Profile.collections.any(),
+                                                ~Profile.groupings.any(),
+                                                ~Profile.pages.any(),
+                                                ~Profile.galleries.any()),
+                          found_attrs=lambda: [Profile.artists,
+                                               Profile.collections,
+                                               Profile.groupings,
+                                               Profile.pages,
+                                               Profile.galleries])
+    many_to_many_deletion(Url, custom_filter=lambda:and_op(
+                                                ~Url.artists.any(),
+                                                ~Url.galleries.any()),
+                          found_attrs=lambda: [Url.artists, Url.galleries])
+    many_to_many_deletion(NamespaceTags, custom_filter=lambda:or_op(
+                                                NamespaceTags.tag == None,
+                                                NamespaceTags.namespace == None),
+                          found_attrs=lambda: [NamespaceTags.tag, NamespaceTags.namespace])
 
 
 @compiles(RegexMatchExpression, 'sqlite')

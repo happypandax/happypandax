@@ -89,7 +89,7 @@ class CPUThread():
                 except Exception as e:
                     log.exception("Exception raised in cpubound_thread:")
                     self.results[jobid] = self._Caught(e)
-                #constants._db_scoped_session.remove()
+                constants._db_scoped_session.remove()
                 finished_time = arrow.now()
                 run_delta = finished_time - start_time
                 log.d("Function - '{}'\n".format(func.__name__),
