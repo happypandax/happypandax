@@ -153,3 +153,20 @@ def get_page(page_id: int=None, gallery_id: int=None, number: int=None, prev: bo
             item = item[0]
 
     return message.Page(item) if item else None
+
+#def save_for_later():
+#    pass
+
+def open_gallery(item_id: int=0, item_type: enums.ItemType = enums.ItemType.Gallery, viewer_args: str=None):
+    """
+    Open a gallery or page in an external viewer
+
+    Args:
+        item_id: id of item
+        item_type: possible items are :py:attr:`.ItemType.Gallery`, :py:attr:`.ItemType.Page`
+        viewer_args: commandline arguments to supply the viewer, overriding the default viewer arguments in settings
+
+    Returns:
+        Status
+    """
+    pass

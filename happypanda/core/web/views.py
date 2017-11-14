@@ -18,8 +18,8 @@ all_clients = {}
 def _create_clients(id, session_id=""):
     all_clients[id] = {
         "client": Client("webclient", session_id, id),
-        "thumbclient": Client("webclient-thumbnails", session_id, id),
-        "commandclient": Client("webclient-commands", session_id, id)
+        "thumbclient": Client("webclient", session_id, id),
+        "commandclient": Client("webclient", session_id, id)
     }
     return all_clients[id]
 

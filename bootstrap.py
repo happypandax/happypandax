@@ -25,6 +25,8 @@ changes = """
 - cleanup and reorganize webclient code
 - server is now noticably faster
 - fixed the occasional db lock errors for good.. i think
+- moved `sqlite_database_timeout` setting to the new `db` namespace
+- added new api function: 'open_gallery'
 """
 
 

@@ -12,6 +12,13 @@ from src.single import galleryitem, thumbitem
 from src.views import itemview, tagview
 from src import utils
 
+def get_config(data=None, error=None):
+    if data is not None and not error:
+        this.setState({"external_viewer": data['this.use_external_image_viewer']})
+    elif error:
+        state.app.notif("Failed to fetch config: {}".format(error), level="error")
+    else:
+        client.call_func("get_config", this.get_config, cfg={'this.use_external_image_viewer':this.state.external_viewer})
 
 def get_item(data=None, error=None):
     if data is not None and not error:
@@ -68,7 +75,13 @@ def get_status(data=None, error=None):
         state.app.notif("Failed to fetch status ({})".format(this.state.id), level="error")
 __pragma__("notconv")
 
+def toggle_external_viewer(e, d):
+    v = not d.active
+    this.setState({'external_viewer': v})
+    client.call_func("set_config", None, cfg={'this.use_external_image_viewer':v})
+    client.call_func("save_config", None)
 
+__pragma__("tconv")
 def page_render():
 
     fav = this.state.fav
@@ -86,6 +99,7 @@ def page_render():
     date_added = ""
     urls = []
     parodies = []
+    circles = []
     if this.state.data:
         item_id = this.state.data.id
         parodies = this.state.data.parodies
@@ -124,6 +138,10 @@ def page_render():
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, "Artist(s):", as_="h5"), collapsing=True),
                   e(ui.Table.Cell, *(e("span", x) for x in artists))))
+    if circles:
+        rows.append(e(ui.Table.Row,
+                      e(ui.Table.Cell, e(ui.Header, "Circle(s):", as_="h5"), collapsing=True),
+                      e(ui.Table.Cell, *(e("span", x.js_name) for x in circles))))
     if parodies:
         rows.append(e(ui.Table.Row,
                       e(ui.Table.Cell, e(ui.Header, "Parody:", as_="h5"), collapsing=True),
@@ -162,7 +180,7 @@ def page_render():
     external_view = []
     if utils.is_same_machine():
         external_view.append(e(ui.Button, icon="external", toggle=True, active=this.state.external_viewer,
-                               title="Open in external viewer"))
+                               title="Open in external viewer", onClick=this.toggle_external_viewer))
     buttons.append(
             e(ui.Grid.Row,
             e(ui.Grid.Column,
@@ -292,6 +310,8 @@ def page_render():
              stackable=True,
              container=True,
              )
+__pragma__("notconv")
+
 
 Page = createReactClass({
     'displayName': 'GalleryPage',
@@ -316,9 +336,13 @@ Page = createReactClass({
     'get_grouping': get_grouping,
     'get_lang': get_lang,
     'get_status': get_status,
+    'get_config': get_config,
+
+    'toggle_external_viewer': toggle_external_viewer,
 
     'componentWillMount': lambda: all((this.props.menu([e(ui.Menu.Menu, e(ui.Menu.Item, e(ui.Icon, js_name="edit"), "Edit"), position="right")]),
                                        (this.get_item() if not this.state.data else None),
+                                       this.get_config(),
                                        )),
 
     'render': page_render

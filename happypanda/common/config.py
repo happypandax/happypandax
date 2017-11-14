@@ -316,9 +316,22 @@ concurrent_image_tasks = config.create(
     10,
     "Amount of image service tasks allowed to run at the same time (higher count does not necessarily mean faster generation)")
 
+external_image_viewer = config.create(
+    core_ns,
+    "external_image_viewer",
+    "",
+    "Path to external image viewer executable")
+
+external_image_viewer_args = config.create(
+    core_ns,
+    "external_image_viewer_args",
+    "",
+    "Command arguments to supply the image viewer executable")
+
+db_ns = 'db'
 
 sqlite_database_timeout = config.create(
-    core_ns,
+    db_ns,
     "sqlite_database_timeout",
     30,
     "Amount of seconds to wait for the database to be writeable")
