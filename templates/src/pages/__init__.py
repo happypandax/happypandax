@@ -12,7 +12,12 @@ from src.views import itemview
 from src import utils, item
 
 __pragma__("kwargs")
-def item_view_menu(on_item_change=None, on_filter_change=None, default_item=None, on_search=None, default_filter=None):
+def item_view_menu(on_item_change=None,
+                   on_filter_change=None,
+                   default_item=None,
+                   on_search=None,
+                   default_filter=None,
+                   on_toggle_config=None):
     return [e(ui.Menu.Item, e(withRouter(item.ItemDropdown), on_change=on_item_change, value=default_item, query=True), fitted=True),
             e(ui.Menu.Menu,
                 e(ui.Menu.Item,
@@ -22,13 +27,7 @@ def item_view_menu(on_item_change=None, on_filter_change=None, default_item=None
             e(ui.Menu.Item, e(ui.Icon, js_name="sort"), e(item.SortDropdown, on_change=None, value=None), fitted=True),
             e(ui.Menu.Item, e(ui.Icon, js_name="filter"), e(withRouter(item.FilterDropdown),
                                                             on_change=on_filter_change, value=default_filter, query=True), fitted=True),
-            e(ui.Popup,
-                e(ui.Grid, centered=True),
-                trigger=e(ui.Menu.Item, e(ui.Icon, js_name="options", size="large"), icon=True),
-                hoverable=True,
-                on="click",
-                flowing=True,
-              ),
+            e(ui.Menu.Item, e(ui.Icon, js_name="options", size="large"), icon=True, onClick=on_toggle_config),
             ]
 __pragma__("nokwargs")
 
@@ -47,11 +46,14 @@ def itemviewpage_render():
              view_filter=this.props.view_type,
              search_query=this.state.search_query,
              filter_id=this.state.filter_id,
-             search_options=this.state.search_options
+             search_options=this.state.search_options,
+             visible_config=this.state.visible_config,
              )
 
 ItemViewPage = createReactClass({
     'displayName': 'ItemViewPage',
+
+    'toggle_config': lambda a: this.setState({'visible_config':not this.state.visible_config}),
 
     'on_item_change': lambda e, d: this.setState({'item_type': d.value}),
 
@@ -66,6 +68,7 @@ ItemViewPage = createReactClass({
             default_item=this.state.item_type,
             default_filter=this.state.filter_id,
             on_search=this.on_search,
+            on_toggle_config=this.toggle_config,
         )),
 
     'componentWillMount': lambda: this.update_menu(),
@@ -76,6 +79,7 @@ ItemViewPage = createReactClass({
                                 'filter_id': int(utils.get_query("filter_id", 0)),
                                 'search_query': "",
                                 'search_options': {},
+                                'visible_config': False,
                                 },
 
     'render': itemviewpage_render

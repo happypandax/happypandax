@@ -71,7 +71,6 @@ def tr(that, t_id, default_txt, placeholder=None, count=None):
             client.call_func("translate", add_translation, ctx, **fargs)
     elif t_txt:
         default_txt = t_txt["text"]
-    log("{}:{}".format(t_id, default_txt))
     return default_txt
 
 __pragma__("noiconv")

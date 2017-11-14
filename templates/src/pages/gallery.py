@@ -158,6 +158,66 @@ def page_render():
     if trash:
         indicators.append(e(ui.Icon, js_name="trash", color="red", size="big", title="This gallery is set to be deleted"))
 
+    buttons = []
+    external_view = []
+    if utils.is_same_machine():
+        external_view.append(e(ui.Button, icon="external", toggle=True, active=this.state.external_viewer,
+                               title="Open in external viewer"))
+    buttons.append(
+            e(ui.Grid.Row,
+            e(ui.Grid.Column,
+                e(ui.Button.Group,
+                e(ui.Button, "Save for later"),
+                e(ui.Button.Or, text="or"),
+                e(ui.Button, "Read", primary=True, as_=Link, to=utils.build_url(
+                    "/item/page", {'gid': item_id}, keep_query=False)),
+                *external_view,
+                ),
+                textAlign="center",
+                ),
+            centered=True,
+            ))
+
+    if inbox:
+        buttons.append(
+            e(ui.Grid.Row,
+            e(ui.Grid.Column,
+                e(ui.Button,
+                    e(ui.Icon, js_name="grid layout"), "Send to Library", color="green"),
+                textAlign="center",
+                ),
+            centered=True,
+            ))
+    buttons.append(
+            e(ui.Grid.Row,
+            e(ui.Grid.Column,
+                e(ui.Button,
+                  e(ui.Icon, js_name="trash" if not trash else "reply"),
+                  "Send to Trash" if not trash else "Restore",
+                  color="red" if not trash else "grey"),
+                textAlign="center",
+                ),
+            centered=True,
+            ))
+
+    if trash:
+        buttons.append(
+            e(ui.Grid.Row,
+            e(ui.Grid.Column,
+                e(ui.Button.Group,
+                e(ui.Button,
+                    e(ui.Icon, js_name="close"), "Delete", color="red"),
+                e(ui.Button, icon="remove circle outline", toggle=True, active=this.state.delete_files,
+                  title="Delete files"),
+                e(ui.Button, icon="recycle", toggle=True, active=this.state.send_to_recycle,
+                  title="Send files to Recycle Bin")
+                ),
+                textAlign="center",
+                ),
+            centered=True,
+            ))
+
+
     return e(ui.Grid,
              e(ui.Grid.Row, e(ui.Grid.Column, e(ui.Breadcrumb, icon="right arrow",))),
              e(ui.Grid.Row,
@@ -175,25 +235,7 @@ def page_render():
                                   ),
                                 centered=True,
                                 ),
-                     e(ui.Grid.Row,
-                       e(ui.Grid.Column,
-                         e(ui.Button.Group,
-                           e(ui.Button, "Read", primary=True, as_=Link, to=utils.build_url(
-                               "/item/page", {'gid': item_id}, keep_query=False)),
-                           e(ui.Button.Or, text="or"),
-                           e(ui.Button, "Save for later"),
-                           ),
-                         textAlign="center",
-                         ),
-                       centered=True,
-                       ),
-                     e(ui.Grid.Row,
-                       e(ui.Grid.Column,
-                           e(ui.Button, e(ui.Icon, js_name="trash"), "Send to Trash", color="red"),
-                         textAlign="center",
-                         ),
-                       centered=True,
-                       ),
+                     *buttons,
                      centered=True, verticalAlign="top"),
                    ),
                  e(ui.Grid.Column,
@@ -264,6 +306,9 @@ Page = createReactClass({
                                 'item_type': ItemType.Gallery,
                                 'loading': True,
                                 'loading_group': True,
+                                'external_viewer': False,
+                                'send_to_recycle': True,
+                                'delete_files': False,
                                 },
 
     'on_read': lambda: utils.go_to(this.props.history, "/item/page", {'gid': this.state.data.id}, keep_query=False),

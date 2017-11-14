@@ -149,4 +149,7 @@ def scroll_to_element(el):
     if el:
         el.scrollIntoView({'behavior':'smooth'})
 
+def is_same_machine():
+   return document.getElementById('root').dataset.machine == "True"
+
 moment.locale(get_locale())

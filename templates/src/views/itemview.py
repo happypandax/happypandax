@@ -47,9 +47,25 @@ def itemviewbase_render():
         els = []
 
     add_el = []
+    add_grid_el = []
 
     if props.label:
-        add_el.append(e(ui.Label, props.label, e(ui.Label.Detail, props.item_count), attached="top"))
+        add_el.append(e(ui.Label,
+                        props.label,
+                        e(ui.Label.Detail, props.item_count),
+                        e(ui.Button, compact=True, basic=True,
+                          icon="options", floated="right",
+                          size="mini", onClick=this.toggle_config),
+                        attached="top"))
+
+    add_grid_el.append(e(ui.Transition,
+                    e(ui.Segment,
+                    as_=ui.Container,),
+                    visible=this.props.visible_config if utils.defined(this.props.visible_config) else this.state.visible_config,
+                    animation="scale",
+                    duration=300,
+                    #unmountOnHide=True,
+                    ))
 
     count_el = []
 
@@ -69,6 +85,7 @@ def itemviewbase_render():
     return e(ui.Segment,
              *add_el,
              e(ui.Grid,
+               *add_grid_el,
                *count_el,
                pagination,
                *[e(ui.Grid.Column, c, computer=4, tablet=3, mobile=6, largeScreen=lscreen, widescreen=wscreen) for c in els],
@@ -87,6 +104,10 @@ def itemviewbase_render():
 
 ItemViewBase = createReactClass({
     'displayName': 'ItemViewBase',
+
+    'getInitialState': lambda: {'visible_config': False},
+
+    'toggle_config': lambda a: this.setState({'visible_config':not this.state.visible_config}),
 
     'render': itemviewbase_render
 })
@@ -215,6 +236,7 @@ def item_view_render():
              page=this.state.page,
              set_page=this.set_page,
              label=this.props.label,
+             visible_config=this.props.visible_config,
              )
 
 ItemView = createReactClass({
