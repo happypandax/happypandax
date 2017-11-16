@@ -47,7 +47,6 @@ def itemviewbase_render():
         els = []
 
     add_el = []
-    add_grid_el = []
 
     if props.label:
         add_el.append(e(ui.Label,
@@ -57,15 +56,6 @@ def itemviewbase_render():
                           icon="options", floated="right",
                           size="mini", onClick=this.toggle_config),
                         attached="top"))
-
-    add_grid_el.append(e(ui.Transition,
-                    e(ui.Segment,
-                    as_=ui.Container,),
-                    visible=this.props.visible_config if utils.defined(this.props.visible_config) else this.state.visible_config,
-                    animation="scale",
-                    duration=300,
-                    #unmountOnHide=True,
-                    ))
 
     count_el = []
 
@@ -85,7 +75,6 @@ def itemviewbase_render():
     return e(ui.Segment,
              *add_el,
              e(ui.Grid,
-               *add_grid_el,
                *count_el,
                pagination,
                *[e(ui.Grid.Column, c, computer=4, tablet=3, mobile=6, largeScreen=lscreen, widescreen=wscreen) for c in els],
@@ -224,6 +213,15 @@ def item_view_render():
     limit = this.props.limit or this.state.default_limit
     if not el:
         return e(Error, content="An error occured")
+
+    #add_grid_el.append(e(ui.Transition,
+    #            e(ui.Segment,
+    #            as_=ui.Container,),
+    #            visible=this.props.visible_config if utils.defined(this.props.visible_config) else this.state.visible_config,
+    #            animation="scale",
+    #            duration=300,
+    #            #unmountOnHide=True,
+    #            ))
 
     return e(ItemViewBase,
              [e(el, data=x, className="medium-size", key=n) for n, x in enumerate(items)],

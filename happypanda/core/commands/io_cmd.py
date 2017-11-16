@@ -2,6 +2,7 @@ import pathlib
 import os
 import hashlib
 import shutil
+import send2trash
 
 from io import BytesIO
 from PIL import Image
@@ -328,15 +329,18 @@ class CoreFS(CoreCommand):
         else:
             return self.path
 
-    def delete(self, ignore_errors=False):
+    def delete(self, ignore_errors=False, send_to_trash=False):
         "Delete path"
         if self.is_archive or self.inside_archive:
             raise NotImplementedError
         try:
-            if self._path.is_dir():
-                shutil.rmtree(self._path)
+            if send_to_trash:
+                send2trash.send2trash(self.path)
             else:
-                self._path.unlink()
+                if self._path.is_dir():
+                    shutil.rmtree(self._path)
+                else:
+                    self._path.unlink()
         except:
             if ignore_errors:
                 log.exception("Error raised while trying to delete:", self._path)
@@ -607,15 +611,23 @@ class GalleryFS(CoreCommand):
         db_gallery: Database Gallery object
     """
 
-    def __init__(self, path, db_gallery=None):
-        self.gallery = db_gallery
-        self.path = CoreFS(path)
+
+    def __init__(self, path_or_dbobject):
+        assert isinstance(path_or_dbobject, (str, CoreFS, db.Gallery, pathlib.Path))
+
+        self.gallery = None
+        self.path = None
         self.name = ''
         self.title = ''
         self.artists = []
         self.language = ''
         self.convention = ''
         self.pages = {}  # number : CoreFS
+
+        if isinstance(path_or_dbobject, db.Gallery):
+            self.gallery = path_or_dbobject
+        else:
+            self.path = CoreFS(path_or_dbobject)
 
     # def load(self):
     #    "Extracts gallery data"
@@ -631,6 +643,7 @@ class GalleryFS(CoreCommand):
     #        self.pages = self._get_archive_pages()
     #    else:
     #        assert False, "this shouldnt happen... ({})".format(self.path)
+
 
     def get_gallery(self):
         "Creates/Updates database gallery"

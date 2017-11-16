@@ -6,7 +6,7 @@ Gallery
 import os
 
 from happypanda.common import exceptions, utils, constants
-from happypanda.core.commands import database_cmd, io_cmd
+from happypanda.core.commands import database_cmd, io_cmd, gallery_cmd
 from happypanda.core import message, db
 from happypanda.interface import enums
 

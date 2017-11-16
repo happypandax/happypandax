@@ -328,6 +328,18 @@ external_image_viewer_args = config.create(
     "",
     "Command arguments to supply the image viewer executable")
 
+send_to_trash = config.create(
+    core_ns,
+    "send_to_trash",
+    True,
+    "Send deleted galleries to recycle bin")
+
+send_path_to_first_file = config.create(
+    core_ns,
+    "send_path_to_first_file",
+    True,
+    "Send path to first file when opening a gallery in external viewer")
+
 db_ns = 'db'
 
 sqlite_database_timeout = config.create(

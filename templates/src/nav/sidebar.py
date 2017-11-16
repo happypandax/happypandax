@@ -20,13 +20,13 @@ def pref_general(props):
         
         if defined(cfg.core.external_image_viewer):
 
-            if is_same_machine():
+            if not is_same_machine():
                 items.append(e(ui.Message, tr(props.tab, "",
                                             "Disabled because this client is connecting from a different device"), color="yellow"))
 
             items.append(e(ui.Form.Group,
                            e(ui.Form.Input,
-                             #width=10,
+                             width=16,
                              label=tr(props.tab, "", "External Image Viewer"),
                              placeholder=tr(props.tab, "", "path/to/executable"),
                              defaultValue=cfg.core.external_image_viewer,
@@ -39,7 +39,7 @@ def pref_general(props):
 
             items.append(e(ui.Form.Group,
                            e(ui.Form.Input,
-                             width=10,
+                             width=8,
                              label=tr(props.tab, "", "External Image Viewer Arguments"),
                              placeholder=tr(props.tab, "", "example: -a -X --force"),
                              defaultValue=cfg.core.external_image_viewer_args,
@@ -73,7 +73,7 @@ def pref_server(props):
                              ))
                          )
         items.append(e(ui.Message, tr(props.tab, "",
-                                      "Changes below this message requires a server restart."), info=True))
+                                      "Changes below this message require a server restart."), info=True))
 
         if defined(cfg.server.host) and defined(cfg.server.port):
             items.append(e(ui.Form.Group,
@@ -108,7 +108,7 @@ def pref_client(props):
     items = []
     if defined(cfg.server):
         items.append(e(ui.Message, tr(props.tab, "",
-                                      "Changes below this message requires a server restart."), info=True))
+                                      "Changes below this message require a server restart."), info=True))
 
         if defined(cfg.server.host_web) and defined(cfg.server.port_web):
             items.append(e(ui.Form.Group,
@@ -212,7 +212,7 @@ PrefTab = createReactClass({
 })
 
 def sidebar_nav_render():
-    if True:
+    if this.props.mobile:
         nav_width = "very thin"
     else:
         nav_width = "thin"
@@ -331,8 +331,7 @@ def sidebar_nav_render():
 
         container.append(menu_el)
 
-    return e(ui.Sidebar,
-             h("div",
+    cnt_el = h("div",
                h("div",
                  *elements_left,
                  className="top-aligned"),
@@ -342,18 +341,23 @@ def sidebar_nav_render():
                h("div",
                  *elements_right,
                  className="bottom-aligned"),
-               className="flex-container"),
-             as_=ui.Menu,
-             animation="overlay",
-             width=nav_width,
-             vertical=True,
-             visible=this.props.toggled,
-             icon=icon,
-             defaultActiveIndex=3,
-             size="small",
-             className="window-height",
-             inverted=True,
-             )
+               className="flex-container")
+
+    el_args = {  'as':ui.Menu,
+                 'animation':"overlay",
+                 'width':nav_width,
+                 'vertical':True,
+                 'visible':this.props.toggled,
+                 'icon':icon,
+                 'defaultActiveIndex':3,
+                 'size':"small",
+                 'className':"window-height",
+                 'inverted':True}
+
+    if this.props.mobile:
+        el_args['direction'] = "right"
+
+    return e(ui.Sidebar, cnt_el, **el_args)
 
 SideBar = createReactClass({
     'displayName': 'SideBar',

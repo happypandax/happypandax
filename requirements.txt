@@ -14,3 +14,4 @@ libsass==0.13.2
 pyyaml==3.12
 pillow==4.3.0
 https://github.com/happypandax/i18n/archive/master.zip
+send2trash==1.4.1

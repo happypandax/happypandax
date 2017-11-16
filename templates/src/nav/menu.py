@@ -48,19 +48,26 @@ def menu_nav_render():
     menu_contents = this.props.contents
     if not isinstance(menu_contents, list):
         menu_contents = [menu_contents]
-    return e(ui.Menu,
-             *elements_left,
-             *elements,
-             *menu_contents,
-             *elements_right,
-             secondary=True,
-             attached="top",
-             # fluid=True,
-             size="small",
-             stackable=True)
+
+    el_args = {'stackable':True, 'size':"small"}
+
+    el = e(ui.Menu,
+                *elements_left,
+                *elements,
+                *menu_contents,
+                *elements_right,
+                secondary=True,
+                borderless=True,
+                **el_args)
+
+    return el
 
 Menu = createReactClass({
     'displayName': 'Menu',
 
-    'render': menu_nav_render
+    'getInitialState': lambda: {'fixed': False},
+
+    'render': menu_nav_render,
+
+    'toggle_fixed': lambda: this.setState({'fixed': not this.state.fixed})
 })

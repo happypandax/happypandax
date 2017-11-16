@@ -73,15 +73,31 @@ def get_container_ref(ctx):
     state['container_ref'] = ctx
 
 def app_render():
+    sidebar_args = {
+        'toggler':this.toggle_sidebar,
+        'toggled':this.state["sidebar_toggled"]
+        }
+
+    menu_args = {
+        'toggler':this.toggle_sidebar,
+        'contents':this.state["menu_nav_contents"]
+        }
+
     return e(Router,
-               e(ui.Sidebar.Pushable,
-                 e(sidebar.SideBar, toggler=this.toggle_sidebar, toggled=this.state["sidebar_toggled"]),
+               h("div",
+                 e(ui.Responsive,
+                   e(sidebar.SideBar, **sidebar_args), minWidth=767),
+                 e(ui.Responsive,
+                   e(sidebar.SideBar, mobile=True, **sidebar_args), maxWidth=768),
                  e(Route, component=PathChange),
                  e(Alert, contentTemplate=Notif, stack={'limit': 6, 'spacing': 20},
                    position="top-right", effect="slide", offset=50),
                 e(ui.Ref,
                     e(ui.Sidebar.Pusher,
-                    e(menu.Menu, toggler=this.toggle_sidebar, contents=this.state["menu_nav_contents"]),
+                    e(ui.Responsive,
+                        e(menu.Menu, **menu_args), minWidth=767),
+                    e(ui.Responsive,
+                        e(menu.Menu, mobile=True, **menu_args), maxWidth=768),
                     e(Route, path="/api", component=this.api_page),
                     e(Route, path="/dashboard", component=this.dashboard_page),
                     e(Route, path="/", exact=True, component=this.library_page),
@@ -91,7 +107,9 @@ def app_render():
                     e(Route, path="/item/gallery", component=this.gallery_page),
                     e(Route, path="/item/collection", component=this.collection_page),
                     e(Route, path="/item/page", component=this.page_page),
+                    e(ui.Dimmer, simple=True, onClickOutside=this.toggle_sidebar),
                     dimmed=this.state.sidebar_toggled,
+                    as_=ui.Dimmer.Dimmable
                     ),
                     innerRef=this.get_context_ref,
                     ),
