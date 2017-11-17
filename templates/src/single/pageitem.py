@@ -11,10 +11,13 @@ from src.single import thumbitem
 from src import utils
 
 __pragma__("tconv")
+
+
 def open_external():
     if this.state.data:
         client.call_func("open_gallery", None, item_id=this.state.data.id, item_type=this.state.item_type)
 __pragma__("notconv")
+
 
 def page_on_update(p_props, p_state):
     if p_props.data != this.props.data:
@@ -46,7 +49,7 @@ def page_render():
               item_type=this.state.item_type,
               size_type=ImageSize.Medium,
               size=this.props.size,
-              kwargs = thumb_kwargs,
+              kwargs=thumb_kwargs,
               )
     if link:
         if not this.props.external_viewer:

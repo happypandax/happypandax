@@ -32,6 +32,8 @@ def PageNav(props):
 
 __pragma__("iconv")
 __pragma__("tconv")
+
+
 def set_thumbs(cmd):
     if this.cmd_data and this.state.other:
         values = cmd.get_value()
@@ -39,7 +41,7 @@ def set_thumbs(cmd):
         for pnumb in d:
             p = d[pnumb]['data']
             d[pnumb]['img'] = values[this.cmd_data[p.id]]['data']
-        this.setState({'other':d})
+        this.setState({'other': d})
 
 __pragma__("notconv")
 __pragma__("noiconv")
@@ -47,6 +49,8 @@ __pragma__("noiconv")
 __pragma__("kwargs")
 __pragma__("iconv")
 __pragma__("tconv")
+
+
 def get_thumbs(data=None, error=None, other=None):
     if data is not None and not error:
         this.cmd_data = data
@@ -66,18 +70,21 @@ __pragma__("notconv")
 __pragma__("noiconv")
 __pragma__("kwargs")
 
+
 def get_other(data=None, error=None):
     if data is not None and not error:
         pages = {}
         for p in data:
             pages[p.number] = {}
             pages[p.number]['data'] = p
-        this.setState({'other':pages})
+        this.setState({'other': pages})
         this.get_thumbs(other=data)
 
 __pragma__("kwargs")
 __pragma__("tconv")
 __pragma__("iconv")
+
+
 def get_item(ctx=None, data=None, error=None, go=None):
     if ctx is not None and not error:
         if data is not None:
@@ -187,27 +194,27 @@ def page_render():
     return e(ui.Grid,
              e(PageNav, number=number, count=this.state.pages,
                n_url=n_url, p_url=p_url),
-             e(ui.Grid.Row, 
+             e(ui.Grid.Row,
                e(ui.Ref,
-                    e(ui.Grid.Column,
-                              e(Link,
-                                e(thumbitem.Thumbnail,
-                                  img=img,
-                                  item_id=p_id,
-                                  item_type=this.state.item_type,
-                                  size_type=ImageSize.Original,
-                                  centered=True,
-                                  fluid=False,
-                                  bordered=True,
-                                  placeholder="",
-                                  inverted=True,
-                                  ),
-                                to=n_url,
-                                ),
-                              className="no-padding-segment"
-                              ),
-                    innerRef=this.set_context,
-                    ),
+                 e(ui.Grid.Column,
+                   e(Link,
+                     e(thumbitem.Thumbnail,
+                       img=img,
+                       item_id=p_id,
+                       item_type=this.state.item_type,
+                       size_type=ImageSize.Original,
+                       centered=True,
+                       fluid=False,
+                       bordered=True,
+                       placeholder="",
+                       inverted=True,
+                       ),
+                     to=n_url,
+                     ),
+                   className="no-padding-segment"
+                   ),
+                 innerRef=this.set_context,
+                 ),
                centered=True,
                textAlign="center",
                ),
@@ -220,13 +227,13 @@ def page_render():
                      e(ui.Table.Body,
                        *rows
                        ),
-                    basic="very",
-                    ),
+                     basic="very",
+                     ),
                    as_=ui.Container,
                    ))),
-            padded=True,
-            inverted=True,
-            )
+             padded=True,
+             inverted=True,
+             )
 
 Page = createReactClass({
     'displayName': 'Page',

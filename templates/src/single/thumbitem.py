@@ -21,7 +21,7 @@ def thumbnail_on_update(p_props, p_state):
             this.get_thumb()
 
     if p_props.img != this.props.img:
-        this.setState({'img':this.props.img})
+        this.setState({'img': this.props.img})
 
 
 __pragma__('tconv')
@@ -76,24 +76,24 @@ def thumbnail_render():
     ex = this.props.kwargs if utils.defined(this.props.kwargs) else {}
 
     el = e(ui.Image, src=img_url,
-               fluid=fluid,
-               size=this.props.size,
-               disabled=this.props.disabled,
-               centered=this.props.centered,
-               bordered=this.props.bordered,
-               avatar=this.props.avatar,
-               dimmer=this.props.dimmer,
-               height=this.props.height,
-               as_=this.props.as_,
-               href=this.props.href,
-               hidden=this.props.hidden,
-               shape=this.props.shape,
-               spaced=this.props.spaced,
-               ui=this.props.ui,
-               verticalAlign=this.props.verticalAlign,
-               width=this.props.width,
-               **ex
-               )
+           fluid=fluid,
+           size=this.props.size,
+           disabled=this.props.disabled,
+           centered=this.props.centered,
+           bordered=this.props.bordered,
+           avatar=this.props.avatar,
+           dimmer=this.props.dimmer,
+           height=this.props.height,
+           as_=this.props.as_,
+           href=this.props.href,
+           hidden=this.props.hidden,
+           shape=this.props.shape,
+           spaced=this.props.spaced,
+           ui=this.props.ui,
+           verticalAlign=this.props.verticalAlign,
+           width=this.props.width,
+           **ex
+           )
     return e(ui.Segment, e(ui.Dimmer, e(ui.Loader), active=this.state.loading, inverted=True),
              el,
              basic=True,

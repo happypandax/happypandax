@@ -5,7 +5,7 @@ import collections
 import threading
 import arrow
 
-from happypanda.common import hlogger, utils, constants
+from happypanda.common import hlogger, utils
 from happypanda.core import db
 
 log = hlogger.Logger(__name__)

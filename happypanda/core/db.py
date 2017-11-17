@@ -701,8 +701,8 @@ taggable_tags = Table(
     Column(
         'namespace_tag_id', Integer, ForeignKey('namespace_tags.id')),
     Column(
-            'taggable_id', Integer, ForeignKey('taggable.id')), UniqueConstraint(
-                'namespace_tag_id', 'taggable_id'))
+        'taggable_id', Integer, ForeignKey('taggable.id')), UniqueConstraint(
+        'namespace_tag_id', 'taggable_id'))
 
 
 class Taggable(Base):
@@ -1133,6 +1133,7 @@ class Url(Base):
 
 # Note: necessary to put in function because there is no Session object yet
 
+
 def initEvents(sess):
     "Initializes events"
     return
@@ -1184,10 +1185,10 @@ def initEvents(sess):
 
             #f_attrs = found_attrs()
 
-            #if attr:
+            # if attr:
             #    f_attrs.append(attr())
 
-            #if f_attrs: 
+            # if f_attrs:
             #    try:
             #        orphans_found = (
             #            any(isinstance(obj, cls) and
@@ -1214,31 +1215,31 @@ def initEvents(sess):
     many_to_many_deletion(Tag, lambda: Tag.namespaces)
     many_to_many_deletion(Namespace, lambda: Namespace.tags)
     many_to_many_deletion(Circle, lambda: Circle.artists)
-    many_to_many_deletion(AliasName, custom_filter=lambda:and_op(
-        not AliasName.alias_for, 
-        ~AliasName.artists.any(), 
+    many_to_many_deletion(AliasName, custom_filter=lambda: and_op(
+        not AliasName.alias_for,
+        ~AliasName.artists.any(),
         ~AliasName.parodies.any()),
-                          found_attrs=lambda: [AliasName.artists, AliasName.parodies])
-    #TODO: clean up
-    many_to_many_deletion(Profile, custom_filter=lambda:and_op(
-                                                ~Profile.artists.any(),
-                                                ~Profile.collections.any(),
-                                                ~Profile.groupings.any(),
-                                                ~Profile.pages.any(),
-                                                ~Profile.galleries.any()),
-                          found_attrs=lambda: [Profile.artists,
-                                               Profile.collections,
-                                               Profile.groupings,
-                                               Profile.pages,
-                                               Profile.galleries])
-    many_to_many_deletion(Url, custom_filter=lambda:and_op(
-                                                ~Url.artists.any(),
-                                                ~Url.galleries.any()),
-                          found_attrs=lambda: [Url.artists, Url.galleries])
-    many_to_many_deletion(NamespaceTags, custom_filter=lambda:or_op(
-                                                NamespaceTags.tag == None,
-                                                NamespaceTags.namespace == None),
-                          found_attrs=lambda: [NamespaceTags.tag, NamespaceTags.namespace])
+        found_attrs=lambda: [AliasName.artists, AliasName.parodies])
+    # TODO: clean up
+    many_to_many_deletion(Profile, custom_filter=lambda: and_op(
+        ~Profile.artists.any(),
+        ~Profile.collections.any(),
+        ~Profile.groupings.any(),
+        ~Profile.pages.any(),
+        ~Profile.galleries.any()),
+        found_attrs=lambda: [Profile.artists,
+                             Profile.collections,
+                             Profile.groupings,
+                             Profile.pages,
+                             Profile.galleries])
+    many_to_many_deletion(Url, custom_filter=lambda: and_op(
+        ~Url.artists.any(),
+        ~Url.galleries.any()),
+        found_attrs=lambda: [Url.artists, Url.galleries])
+    many_to_many_deletion(NamespaceTags, custom_filter=lambda: or_op(
+        NamespaceTags.tag is None,
+        NamespaceTags.namespace is None),
+        found_attrs=lambda: [NamespaceTags.tag, NamespaceTags.namespace])
 
 
 @compiles(RegexMatchExpression, 'sqlite')
@@ -1380,7 +1381,6 @@ def init(**kwargs):
     constants.db_session = functools.partial(_get_session, Session)
     initEvents(Session)
     constants.db_engine = kwargs.get("engine")
-    from sqlalchemy.pool import NullPool
     if not constants.db_engine:
         constants.db_engine = create_engine(os.path.join("sqlite:///", db_path),
                                             connect_args={'timeout': config.sqlite_database_timeout.value})  # SQLITE specific arg (avoding db is locked errors)
@@ -1493,6 +1493,7 @@ def ensure_in_session(item):
         except exc.InvalidRequestError:
             return constants.db_session().merge(item)
 
+
 @contextmanager
 def safe_session(sess=None):
     if not sess:
@@ -1502,7 +1503,7 @@ def safe_session(sess=None):
             yield sess
         except sa_exc.OperationalError as e:
             log.exception("Exception raised in non-scoped db session")
-            if not "database is locked" in str(e):
+            if "database is locked" not in str(e):
                 raise
 
 

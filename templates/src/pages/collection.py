@@ -8,5 +8,3 @@ from src.i18n import tr
 from src.state import state
 from src.client import ItemType, ViewType, ImageSize, client
 from src import item, utils
-
-

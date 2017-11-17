@@ -11,6 +11,7 @@ from src.state import state
 from src.single import (galleryitem, pageitem, groupingitem, collectionitem)
 from src import utils
 
+
 def itemviewbase_render():
     props = this.props
     pagination = e(ui.Grid.Row,
@@ -63,12 +64,23 @@ def itemviewbase_render():
         count_el.append(e(ui.Grid.Column,
                           e(ui.Header,
                             e(ui.Header.Subheader,
-                               tr(this,
-                                 "ui.t-showing-count",
-                                 "Showing {}".format(props.item_count),
-                                 placeholder={'from':(props.page-1)*props.limit+1, 'to':(props.page-1)*props.limit+len(els), 'all':props.item_count}
+                              tr(this,
+                                  "ui.t-showing-count",
+                                  "Showing {}".format(props.item_count),
+                                 placeholder={
+                                      'from': (
+                                          props.page -
+                                          1) *
+                                      props.limit +
+                                      1,
+                                      'to': (
+                                          props.page -
+                                          1) *
+                                      props.limit +
+                                      len(els),
+                                      'all': props.item_count}
                                  ),
-                              as_="h6"),
+                                as_="h6"),
                             ),
                           textAlign="center", width=16))
 
@@ -96,7 +108,7 @@ ItemViewBase = createReactClass({
 
     'getInitialState': lambda: {'visible_config': False},
 
-    'toggle_config': lambda a: this.setState({'visible_config':not this.state.visible_config}),
+    'toggle_config': lambda a: this.setState({'visible_config': not this.state.visible_config}),
 
     'render': itemviewbase_render
 })
@@ -214,7 +226,7 @@ def item_view_render():
     if not el:
         return e(Error, content="An error occured")
 
-    #add_grid_el.append(e(ui.Transition,
+    # add_grid_el.append(e(ui.Transition,
     #            e(ui.Segment,
     #            as_=ui.Container,),
     #            visible=this.props.visible_config if utils.defined(this.props.visible_config) else this.state.visible_config,

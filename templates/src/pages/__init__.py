@@ -12,6 +12,8 @@ from src.views import itemview
 from src import utils, item
 
 __pragma__("kwargs")
+
+
 def item_view_menu(on_item_change=None,
                    on_filter_change=None,
                    default_item=None,
@@ -53,7 +55,7 @@ def itemviewpage_render():
 ItemViewPage = createReactClass({
     'displayName': 'ItemViewPage',
 
-    'toggle_config': lambda a: this.setState({'visible_config':not this.state.visible_config}),
+    'toggle_config': lambda a: this.setState({'visible_config': not this.state.visible_config}),
 
     'on_item_change': lambda e, d: this.setState({'item_type': d.value}),
 

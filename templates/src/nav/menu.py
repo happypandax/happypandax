@@ -12,6 +12,7 @@ from src.i18n import tr
 from src.utils import defined
 from src.nav import MenuItem
 
+
 def menu_nav_render():
     items = []
     items.append(MenuItem("", icon="sidebar", position="left", header=True, handler=this.props["toggler"]))
@@ -49,16 +50,16 @@ def menu_nav_render():
     if not isinstance(menu_contents, list):
         menu_contents = [menu_contents]
 
-    el_args = {'stackable':True, 'size':"small"}
+    el_args = {'stackable': True, 'size': "small"}
 
     el = e(ui.Menu,
-                *elements_left,
-                *elements,
-                *menu_contents,
-                *elements_right,
-                secondary=True,
-                borderless=True,
-                **el_args)
+           *elements_left,
+           *elements,
+           *menu_contents,
+           *elements_right,
+           secondary=True,
+           borderless=True,
+           **el_args)
 
     return el
 

@@ -611,7 +611,6 @@ class GalleryFS(CoreCommand):
         db_gallery: Database Gallery object
     """
 
-
     def __init__(self, path_or_dbobject):
         assert isinstance(path_or_dbobject, (str, CoreFS, db.Gallery, pathlib.Path))
 
@@ -643,7 +642,6 @@ class GalleryFS(CoreCommand):
     #        self.pages = self._get_archive_pages()
     #    else:
     #        assert False, "this shouldnt happen... ({})".format(self.path)
-
 
     def get_gallery(self):
         "Creates/Updates database gallery"

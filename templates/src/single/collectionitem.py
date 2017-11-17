@@ -9,6 +9,7 @@ from src.client import (ItemType, ImageSize)
 from src.state import state
 from src.single import thumbitem
 
+
 def grouping_render():
     title = ""
     fav = 0
@@ -26,7 +27,8 @@ def grouping_render():
 
     return e(ui.Segment, e(ui.Card,
                            h("div",
-                             e(thumbitem.Thumbnail, item_id=item_id, item_type=this.state.item_type, size_type=ImageSize.Medium),
+                             e(thumbitem.Thumbnail, item_id=item_id,
+                               item_type=this.state.item_type, size_type=ImageSize.Medium),
                                #e(ui.Label, e(ui.Icon, js_name="star half empty"), avg_rating, className="card-item bottom left", circular=True, size="large", color="orange"),
                                e(ui.Icon, js_name="ellipsis vertical", bordered=True,
                                  className="card-item bottom right", link=True, inverted=True),

@@ -1,4 +1,3 @@
-import pathlib
 import os
 import sys
 import subprocess
@@ -67,6 +66,7 @@ class AddGallery(UndoCommand):
     def undo(self):
         return super().undo()
 
+
 class OpenGallery(Command):
     """
     Open a gallery in an external viewer
@@ -113,8 +113,8 @@ class OpenGallery(Command):
         child = ""
         if gallery.single_source:
             if gallery.pages.count():
-                #TODO: when number 1 doesnt exist?
-                first_page = gallery.pages.filter(db.Page.number==number).first()
+                # TODO: when number 1 doesnt exist?
+                first_page = gallery.pages.filter(db.Page.number == number).first()
                 if first_page:
                     if first_page.in_archive:
                         p = io_cmd.CoreFS(first_page.path)

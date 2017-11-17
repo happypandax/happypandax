@@ -9,6 +9,7 @@ from src.client import client
 from src.state import state
 from src import utils
 
+
 def get_tags(data=None, error=None):
     if data is not None and not error:
         this.setState({"data": data})
@@ -25,6 +26,7 @@ def get_tags(data=None, error=None):
                 args['raw'] = this.props.raw
 
             client.call_func("get_tags", this.get_tags, **args)
+
 
 def tag_render():
 
@@ -54,7 +56,7 @@ def tag_render():
 
     return e(ui.Table,
              e(ui.Transition.Group, *tag_rows, as_=ui.Table.Body, duration=1000),
-            basic="very", celled=True, compact=True)
+             basic="very", celled=True, compact=True)
 
 TagView = createReactClass({
     'displayName': 'TagView',

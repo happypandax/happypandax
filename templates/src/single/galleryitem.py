@@ -11,8 +11,10 @@ from src.single import thumbitem
 from src import utils
 from src.views import tagview
 
+
 def on_tags(data):
-    this.setState({'tags':data})
+    this.setState({'tags': data})
+
 
 def gallery_on_update(p_props, p_state):
     if p_props.data != this.props.data:
@@ -63,11 +65,11 @@ def gallery_render():
     rows = []
 
     rows.append(e(ui.Table.Row,
-                      e(ui.Table.Cell, e(ui.Header, title, as_="h3"), colSpan="2", textAlign="center",
-                        verticalAlign="middle")))
+                  e(ui.Table.Cell, e(ui.Header, title, as_="h3"), colSpan="2", textAlign="center",
+                    verticalAlign="middle")))
 
     rows.append(e(ui.Table.Row,
-                      e(ui.Table.Cell, e(ui.Header, info, as_="h5"), colSpan="2")))
+                  e(ui.Table.Cell, e(ui.Header, info, as_="h5"), colSpan="2")))
 
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, "Artist(s):", as_="h5"), collapsing=True),
@@ -112,11 +114,11 @@ def gallery_render():
                          e(ui.Card.Meta, *[h("span", x) for x in artists], className="text-ellipsis"),
                          ),
                content=e(ui.Table,
-                            e(ui.Table.Body,
-                            *rows
-                            ),
-                            basic="very"
-                            ),
+                         e(ui.Table.Body,
+                           *rows
+                           ),
+                         basic="very"
+                         ),
                hideOnScroll=True,
                hoverable=True,
                position="bottom center",

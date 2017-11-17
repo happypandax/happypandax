@@ -12,36 +12,37 @@ from src.i18n import tr
 from src.utils import defined, is_same_machine
 from src.nav import MenuItem
 
+
 def pref_general(props):
     cfg = props.cfg
     u_cfg = props.u_cfg
     items = []
     if defined(cfg.gallery):
-        
+
         if defined(cfg.gallery.external_image_viewer):
 
             if not is_same_machine():
                 items.append(e(ui.Message, tr(props.tab, "",
-                                            "Disabled because this client is connecting from a different device"), color="yellow"))
+                                              "Disabled because this client is connecting from a different device"), color="yellow"))
 
             items.append(e(ui.Form.Input,
-                             width=16,
-                             label=tr(props.tab, "", "External Image Viewer"),
-                             placeholder=tr(props.tab, "", "path/to/executable"),
-                             defaultValue=cfg.gallery.external_image_viewer,
-                             onChange=lambda e: props.upd("gallery.external_image_viewer", e.target.value),
-                             disabled=not is_same_machine(),
-                             )
+                           width=16,
+                           label=tr(props.tab, "", "External Image Viewer"),
+                           placeholder=tr(props.tab, "", "path/to/executable"),
+                           defaultValue=cfg.gallery.external_image_viewer,
+                           onChange=lambda e: props.upd("gallery.external_image_viewer", e.target.value),
+                           disabled=not is_same_machine(),
+                           )
                          )
         if defined(cfg.gallery.external_image_viewer_args):
             items.append(e(ui.Form.Input,
-                             width=8,
-                             label=tr(props.tab, "", "External Image Viewer Arguments"),
-                             placeholder=tr(props.tab, "", "example: -a -X --force"),
-                             defaultValue=cfg.gallery.external_image_viewer_args,
-                             onChange=lambda e: props.upd("gallery.external_image_viewer_args", e.target.value),
-                             disabled=not is_same_machine(),
-                             )
+                           width=8,
+                           label=tr(props.tab, "", "External Image Viewer Arguments"),
+                           placeholder=tr(props.tab, "", "example: -a -X --force"),
+                           defaultValue=cfg.gallery.external_image_viewer_args,
+                           onChange=lambda e: props.upd("gallery.external_image_viewer_args", e.target.value),
+                           disabled=not is_same_machine(),
+                           )
                          )
 
         if defined(cfg.gallery.send_path_to_first_file):
@@ -63,6 +64,7 @@ def pref_general(props):
                ),
              basic=True,
              )
+
 
 def pref_server(props):
     cfg = props.cfg
@@ -218,6 +220,7 @@ PrefTab = createReactClass({
     'render': preftab_render
 })
 
+
 def sidebar_nav_render():
     if this.props.mobile:
         nav_width = "very thin"
@@ -350,16 +353,16 @@ def sidebar_nav_render():
                  className="bottom-aligned"),
                className="flex-container")
 
-    el_args = {  'as':ui.Menu,
-                 'animation':"overlay",
-                 'width':nav_width,
-                 'vertical':True,
-                 'visible':this.props.toggled,
-                 'icon':icon,
-                 'defaultActiveIndex':3,
-                 'size':"small",
-                 'className':"window-height",
-                 'inverted':True}
+    el_args = {'as': ui.Menu,
+               'animation': "overlay",
+               'width': nav_width,
+               'vertical': True,
+               'visible': this.props.toggled,
+               'icon': icon,
+               'defaultActiveIndex': 3,
+               'size': "small",
+               'className': "window-height",
+               'inverted': True}
 
     if this.props.mobile:
         el_args['direction'] = "right"

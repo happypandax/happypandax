@@ -156,8 +156,9 @@ def get_page(page_id: int=None, gallery_id: int=None, number: int=None, prev: bo
 
     return message.Page(item) if item else None
 
-#def save_for_later():
+# def save_for_later():
 #    pass
+
 
 def open_gallery(item_id: int=0, item_type: enums.ItemType = enums.ItemType.Gallery, viewer_args: str=None):
     """
@@ -172,7 +173,6 @@ def open_gallery(item_id: int=0, item_type: enums.ItemType = enums.ItemType.Gall
         bool indicating if item was successfully opened
     """
     item_type = enums.ItemType.get(item_type)
-    number = 1
 
     _, db_model = item_type._msg_and_model((enums.ItemType.Gallery, enums.ItemType.Page))
     kwargs = {}
@@ -181,7 +181,11 @@ def open_gallery(item_id: int=0, item_type: enums.ItemType = enums.ItemType.Gall
     else:
         p = database_cmd.GetModelItemByID().run(db_model, {item_id})
     if not p:
-        raise exceptions.DatabaseItemNotFoundError(utils.this_function(), "{} with item id '{}' not found".format(item_type, item_id))
+        raise exceptions.DatabaseItemNotFoundError(
+            utils.this_function(),
+            "{} with item id '{}' not found".format(
+                item_type,
+                item_id))
     p = p[0]
     if item_type == enums.ItemType.Page:
         kwargs['gallery_id'] = p[0]
@@ -195,4 +199,3 @@ def open_gallery(item_id: int=0, item_type: enums.ItemType = enums.ItemType.Gall
     opened = gallery_cmd.OpenGallery().run(**kwargs)
 
     return message.Identity("status", opened)
-

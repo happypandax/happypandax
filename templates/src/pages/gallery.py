@@ -12,13 +12,17 @@ from src.single import galleryitem, thumbitem
 from src.views import itemview, tagview
 from src import utils
 
+
 def get_config(data=None, error=None):
     if data is not None and not error:
         this.setState({"external_viewer": data['this.use_external_image_viewer']})
     elif error:
         state.app.notif("Failed to fetch config: {}".format(error), level="error")
     else:
-        client.call_func("get_config", this.get_config, cfg={'this.use_external_image_viewer':this.state.external_viewer})
+        client.call_func(
+            "get_config", this.get_config, cfg={
+                'this.use_external_image_viewer': this.state.external_viewer})
+
 
 def get_item(data=None, error=None):
     if data is not None and not error:
@@ -58,6 +62,7 @@ def get_grouping(data=None, error=None):
     elif error:
         state.app.notif("Failed to fetch grouping ({})".format(this.state.id), level="error")
 
+
 def get_lang(data=None, error=None):
     if data is not None and not error:
         this.setState({"lang_data": data})
@@ -75,19 +80,24 @@ def get_status(data=None, error=None):
         state.app.notif("Failed to fetch status ({})".format(this.state.id), level="error")
 __pragma__("notconv")
 
+
 def toggle_external_viewer(e, d):
     v = not d.active
     this.setState({'external_viewer': v})
-    client.call_func("set_config", None, cfg={'this.use_external_image_viewer':v})
+    client.call_func("set_config", None, cfg={'this.use_external_image_viewer': v})
     client.call_func("save_config", None)
 
 __pragma__("tconv")
+
+
 def open_external():
     if this.state.data:
         client.call_func("open_gallery", None, item_id=this.state.data.id, item_type=this.state.item_type)
 __pragma__("notconv")
 
 __pragma__("tconv")
+
+
 def page_render():
 
     fav = this.state.fav
@@ -173,14 +183,14 @@ def page_render():
                   e(ui.Table.Cell, e(ui.Header, "URL(s):", as_="h5"), collapsing=True),
                   e(ui.Table.Cell, e(ui.List, *[e(ui.List.Item, h("span", h("a", x, href=x, target="_blank"), e(ui.List.Icon, js_name="external share"))) for x in urls]))))
 
-
     indicators = []
 
     if inbox:
         indicators.append(e(ui.Icon, js_name="inbox", size="big", title="This gallery is in your inbox"))
 
     if trash:
-        indicators.append(e(ui.Icon, js_name="trash", color="red", size="big", title="This gallery is set to be deleted"))
+        indicators.append(e(ui.Icon, js_name="trash", color="red", size="big",
+                            title="This gallery is set to be deleted"))
 
     buttons = []
     external_view = []
@@ -189,64 +199,63 @@ def page_render():
                                title="Open in external viewer", onClick=this.toggle_external_viewer))
 
     if this.state.external_viewer:
-        read_btn = {'onClick':this.open_external}
+        read_btn = {'onClick': this.open_external}
     else:
-        read_btn = { 'as':Link, 'to':utils.build_url(
-                        "/item/page", {'gid': item_id}, keep_query=False)}
+        read_btn = {'as': Link, 'to': utils.build_url(
+            "/item/page", {'gid': item_id}, keep_query=False)}
 
     buttons.append(
-            e(ui.Grid.Row,
-            e(ui.Grid.Column,
-                e(ui.Button.Group,
-                e(ui.Button, "Save for later"),
-                e(ui.Button.Or, text="or"),
-                e(ui.Button, "Read", primary=True, **read_btn),
-                *external_view,
-                ),
-                textAlign="center",
-                ),
-            centered=True,
-            ))
+        e(ui.Grid.Row,
+          e(ui.Grid.Column,
+            e(ui.Button.Group,
+              e(ui.Button, "Save for later"),
+              e(ui.Button.Or, text="or"),
+              e(ui.Button, "Read", primary=True, **read_btn),
+              *external_view,
+              ),
+            textAlign="center",
+            ),
+          centered=True,
+          ))
 
     if inbox:
         buttons.append(
             e(ui.Grid.Row,
-            e(ui.Grid.Column,
+              e(ui.Grid.Column,
                 e(ui.Button,
                     e(ui.Icon, js_name="grid layout"), "Send to Library", color="green"),
                 textAlign="center",
                 ),
-            centered=True,
-            ))
+              centered=True,
+              ))
     buttons.append(
-            e(ui.Grid.Row,
-            e(ui.Grid.Column,
-                e(ui.Button,
-                  e(ui.Icon, js_name="trash" if not trash else "reply"),
-                  "Send to Trash" if not trash else "Restore",
-                  color="red" if not trash else "grey"),
-                textAlign="center",
-                ),
-            centered=True,
-            ))
+        e(ui.Grid.Row,
+          e(ui.Grid.Column,
+            e(ui.Button,
+              e(ui.Icon, js_name="trash" if not trash else "reply"),
+              "Send to Trash" if not trash else "Restore",
+              color="red" if not trash else "grey"),
+            textAlign="center",
+            ),
+          centered=True,
+          ))
 
     if trash:
         buttons.append(
             e(ui.Grid.Row,
-            e(ui.Grid.Column,
+              e(ui.Grid.Column,
                 e(ui.Button.Group,
-                e(ui.Button,
+                  e(ui.Button,
                     e(ui.Icon, js_name="close"), "Delete", color="red"),
-                e(ui.Button, icon="remove circle outline", toggle=True, active=this.state.delete_files,
-                  title="Delete files"),
-                e(ui.Button, icon="recycle", toggle=True, active=this.state.send_to_recycle,
-                  title="Send files to Recycle Bin")
-                ),
+                  e(ui.Button, icon="remove circle outline", toggle=True, active=this.state.delete_files,
+                    title="Delete files"),
+                  e(ui.Button, icon="recycle", toggle=True, active=this.state.send_to_recycle,
+                    title="Send files to Recycle Bin")
+                  ),
                 textAlign="center",
                 ),
-            centered=True,
-            ))
-
+              centered=True,
+              ))
 
     return e(ui.Grid,
              e(ui.Grid.Row, e(ui.Grid.Column, e(ui.Breadcrumb, icon="right arrow",))),
