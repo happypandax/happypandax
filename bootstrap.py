@@ -28,6 +28,7 @@ changes = """
 - moved `sqlite_database_timeout` setting to the new `db` namespace
 - added new api function: 'open_gallery'
 - fixed client context not working as intended
+- made conversion script faster when resolving pages in archives
 """
 
 
