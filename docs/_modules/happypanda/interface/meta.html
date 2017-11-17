@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>happypanda.interface.meta &#8212; Happypanda X 0.0.1#102 documentation</title>
+    <title>happypanda.interface.meta &#8212; Happypanda X 0.0.1#108 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.0.1#102',
+        VERSION:     '0.0.1#108',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -52,7 +52,7 @@
         </button>
         <a class="navbar-brand" href="../../../index.html">
           Happypanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.1#102</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.1#108</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -169,7 +169,7 @@
 <span class="kn">from</span> <span class="nn">happypanda.core</span> <span class="k">import</span> <span class="n">command</span><span class="p">,</span> <span class="n">message</span>
 
 
-<span class="c1">#def get_error(code: int, id: int):</span>
+<span class="c1"># def get_error(code: int, id: int):</span>
 <span class="c1">#    &quot;&quot;&quot;</span>
 <span class="c1">#    Get error</span>
 
@@ -190,7 +190,7 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        .. code-block:: guess</span>
 
-<span class="sd">            { </span>
+<span class="sd">            {</span>
 <span class="sd">                &#39;core&#39; : [int, int, int],</span>
 <span class="sd">                &#39;db&#39; : [int, int, int],</span>
 <span class="sd">                &#39;torrent&#39; : [int, int, int],</span>
@@ -220,7 +220,7 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        .. code-block:: guess</span>
 
-<span class="sd">            { </span>
+<span class="sd">            {</span>
 <span class="sd">                command_id : value</span>
 <span class="sd">            }</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -257,7 +257,7 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        .. code-block:: guess</span>
 
-<span class="sd">            { </span>
+<span class="sd">            {</span>
 <span class="sd">                command_id : state</span>
 <span class="sd">            }</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -272,7 +272,7 @@
     <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Identity</span><span class="p">(</span><span class="s1">&#39;command_state&#39;</span><span class="p">,</span> <span class="n">states</span><span class="p">)</span></div>
 
 
-<span class="c1">#def get_command_progress(command_ids: list):</span>
+<span class="c1"># def get_command_progress(command_ids: list):</span>
 <span class="c1">#    &quot;&quot;&quot;</span>
 <span class="c1">#    Get progress of command in percent</span>
 
@@ -282,7 +282,7 @@
 <span class="c1">#    Returns:</span>
 <span class="c1">#        .. code-block:: guess</span>
 
-<span class="c1">#            { </span>
+<span class="c1">#            {</span>
 <span class="c1">#                command_id : progress</span>
 <span class="c1">#            }</span>
 <span class="c1">#    &quot;&quot;&quot;</span>
@@ -299,7 +299,7 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        .. code-block:: guess</span>
 
-<span class="sd">            { </span>
+<span class="sd">            {</span>
 <span class="sd">                command_id : state</span>
 <span class="sd">            }</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -325,7 +325,7 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        .. code-block:: guess</span>
 
-<span class="sd">            { </span>
+<span class="sd">            {</span>
 <span class="sd">                command_id : state</span>
 <span class="sd">            }</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -341,7 +341,7 @@
     <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Identity</span><span class="p">(</span><span class="s1">&#39;command_state&#39;</span><span class="p">,</span> <span class="n">states</span><span class="p">)</span></div>
 
 
-<span class="c1">#def get_command_error(command_ids: list):</span>
+<span class="c1"># def get_command_error(command_ids: list):</span>
 <span class="c1">#    &quot;&quot;&quot;</span>
 <span class="c1">#    Get error raised during command runtime</span>
 
@@ -351,14 +351,14 @@
 <span class="c1">#    Returns:</span>
 <span class="c1">#        .. code-block:: guess</span>
 
-<span class="c1">#            { </span>
+<span class="c1">#            {</span>
 <span class="c1">#                command_id : error</span>
 <span class="c1">#            }</span>
 <span class="c1">#    &quot;&quot;&quot;</span>
 <span class="c1">#    return message.Message(&quot;works&quot;)</span>
 
 
-<span class="c1">#def undo_command(command_ids: list):</span>
+<span class="c1"># def undo_command(command_ids: list):</span>
 <span class="c1">#    &quot;&quot;&quot;</span>
 <span class="c1">#    Undo a command</span>
 
@@ -368,7 +368,7 @@
 <span class="c1">#    Returns:</span>
 <span class="c1">#        .. code-block:: guess</span>
 
-<span class="c1">#            { </span>
+<span class="c1">#            {</span>
 <span class="c1">#                command_id : state</span>
 <span class="c1">#            }</span>
 

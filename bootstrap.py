@@ -111,7 +111,7 @@ def build(args):
         build_docs.main()
 
     print(
-        "\nLast build requiring a db rebuild: {}\nPlease use the accompanying script 'HPtoHPX.py' to rebuild your database once if you've surpassed this build".format(
+        "\nLast build requiring a db rebuild: {}\nPlease use the accompanying script 'HPtoHPX.py' to rebuild your database just once if you've surpassed this build".format(
             dev_options['build_db']))
 
 
@@ -237,7 +237,7 @@ def version(args):
     print("\n------------------- Changes -------------------")
     print(bootstrap.changes)
     print(
-        "\nLast build requiring a db rebuild: {}\nPlease use the accompanying script 'HPtoHPX.py' to rebuild your database once if you've surpassed this build".format(
+        "\nLast build requiring a db rebuild: {}\nPlease use the accompanying script 'HPtoHPX.py' to rebuild your database just once if you've surpassed this build".format(
             dev_options['build_db']))
 
 

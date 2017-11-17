@@ -130,7 +130,7 @@ def library_view(item_type: enums.ItemType = enums.ItemType.Gallery,
         limit: amount of items per page
         search_query: filter item by search terms
         search_options: options to apply when filtering, see :ref:`Settings` for available search options
-        filter_id: current filter list id
+        filter_id: current :py:attr:`.ItemType.GalleryFilter` item id
         view_filter: type of view, set ``None`` to not apply any filter
         related_type: child item
         item_id: id of parent item
@@ -168,7 +168,7 @@ def get_view_count(item_type: enums.ItemType=enums.ItemType.Gallery,
         item_type: possible items are :py:attr:`.ItemType.Gallery`, :py:attr:`.ItemType.Collection`, :py:attr:`.ItemType.Grouping`
         search_query: filter item by search terms
         search_options: options to apply when filtering, see :ref:`Settings` for available search options
-        filter_id: current filter list id
+        filter_id: current :py:attr:`.ItemType.GalleryFilter` item id
         view_filter: type of view, set ``None`` to not apply any filter
         related_type: child item
         item_id: id of parent item
@@ -189,7 +189,8 @@ def get_view_count(item_type: enums.ItemType=enums.ItemType.Gallery,
 
 def translate(t_id: str, locale: str = None, default: str = None, placeholder: str = {}, count: int = None):
     """
-    Get a translation by translation id. Raises error if no translation was found.
+    Get a translation by translation id.
+    Raises error if a default value was not provided and no translation was found.
 
     Args:
         t_id: translation id

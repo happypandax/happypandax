@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Server API &#8212; Happypanda X 0.0.1#102 documentation</title>
+    <title>Server API &#8212; Happypanda X 0.0.1#108 documentation</title>
     
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.0.1#102',
+        VERSION:     '0.0.1#108',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -54,7 +54,7 @@
         </button>
         <a class="navbar-brand" href="index.html">
           Happypanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.1#102</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.1#108</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -225,6 +225,12 @@ Enum member names may change sometime in the future. It is not likely to happen 
 </dd></dl>
 
 <dl class="class">
+<dt id="happypanda.interface.enums.ItemSort">
+<em class="property">class </em><code class="descname">ItemSort</code><a class="reference internal" href="_modules/happypanda/interface/enums.html#ItemSort"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.enums.ItemSort" title="Permalink to this definition">¶</a></dt>
+<dd><p>An enumeration.</p>
+</dd></dl>
+
+<dl class="class">
 <dt id="happypanda.interface.enums.ItemType">
 <em class="property">class </em><code class="descname">ItemType</code><a class="reference internal" href="_modules/happypanda/interface/enums.html#ItemType"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.enums.ItemType" title="Permalink to this definition">¶</a></dt>
 <dd><p>An enumeration.</p>
@@ -354,6 +360,18 @@ Enum member names may change sometime in the future. It is not likely to happen 
 <dd><p>Library</p>
 </dd></dl>
 
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ViewType.ReadLater">
+<code class="descname">ReadLater</code><em class="property"> = 5</em><a class="headerlink" href="#happypanda.interface.enums.ViewType.ReadLater" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read Later</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ViewType.Trash">
+<code class="descname">Trash</code><em class="property"> = 4</em><a class="headerlink" href="#happypanda.interface.enums.ViewType.Trash" title="Permalink to this definition">¶</a></dt>
+<dd><p>Trash</p>
+</dd></dl>
+
 </dd></dl>
 
 </div>
@@ -471,7 +489,7 @@ Enum member names may change sometime in the future. It is not likely to happen 
 <h3>UI<a class="headerlink" href="#ui" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="happypanda.interface.ui.get_view_count">
-<code class="descname">get_view_count</code><span class="sig-paren">(</span><em>item_type=&lt;ItemType.Gallery: 1&gt;</em>, <em>item_id=None</em>, <em>related_type=None</em>, <em>search_query=''</em>, <em>filter_id=None</em>, <em>view_filter=&lt;ViewType.Library: 1&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/ui.html#get_view_count"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.ui.get_view_count" title="Permalink to this definition">¶</a></dt>
+<code class="descname">get_view_count</code><span class="sig-paren">(</span><em>item_type=&lt;ItemType.Gallery: 1&gt;</em>, <em>item_id=None</em>, <em>related_type=None</em>, <em>search_query=''</em>, <em>search_options={}</em>, <em>filter_id=None</em>, <em>view_filter=&lt;ViewType.Library: 1&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/ui.html#get_view_count"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.ui.get_view_count" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get count of items in view</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -480,8 +498,9 @@ Enum member names may change sometime in the future. It is not likely to happen 
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>item_type</strong> (<a class="reference internal" href="#happypanda.interface.enums.ItemType" title="happypanda.interface.enums.ItemType"><code class="xref py py-class docutils literal"><span class="pre">ItemType</span></code></a>) &#8211; possible items are <a class="reference internal" href="#happypanda.interface.enums.ItemType.Gallery" title="happypanda.interface.enums.ItemType.Gallery"><code class="xref py py-attr docutils literal"><span class="pre">ItemType.Gallery</span></code></a>, <a class="reference internal" href="#happypanda.interface.enums.ItemType.Collection" title="happypanda.interface.enums.ItemType.Collection"><code class="xref py py-attr docutils literal"><span class="pre">ItemType.Collection</span></code></a>, <a class="reference internal" href="#happypanda.interface.enums.ItemType.Grouping" title="happypanda.interface.enums.ItemType.Grouping"><code class="xref py py-attr docutils literal"><span class="pre">ItemType.Grouping</span></code></a></li>
 <li><strong>search_query</strong> (<code class="xref py py-class docutils literal"><span class="pre">str</span></code>) &#8211; filter item by search terms</li>
-<li><strong>filter_id</strong> (<code class="xref py py-data docutils literal"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal"><span class="pre">int</span></code>]) &#8211; current filter list id</li>
-<li><strong>view_filter</strong> (<a class="reference internal" href="#happypanda.interface.enums.ViewType" title="happypanda.interface.enums.ViewType"><code class="xref py py-class docutils literal"><span class="pre">ViewType</span></code></a>) &#8211; type of view</li>
+<li><strong>search_options</strong> (<code class="xref py py-class docutils literal"><span class="pre">dict</span></code>) &#8211; options to apply when filtering, see <a class="reference internal" href="settings.html#settings"><span class="std std-ref">Settings</span></a> for available search options</li>
+<li><strong>filter_id</strong> (<code class="xref py py-data docutils literal"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal"><span class="pre">int</span></code>]) &#8211; current <a class="reference internal" href="#happypanda.interface.enums.ItemType.GalleryFilter" title="happypanda.interface.enums.ItemType.GalleryFilter"><code class="xref py py-attr docutils literal"><span class="pre">ItemType.GalleryFilter</span></code></a> item id</li>
+<li><strong>view_filter</strong> (<a class="reference internal" href="#happypanda.interface.enums.ViewType" title="happypanda.interface.enums.ViewType"><code class="xref py py-class docutils literal"><span class="pre">ViewType</span></code></a>) &#8211; type of view, set <code class="docutils literal"><span class="pre">None</span></code> to not apply any filter</li>
 <li><strong>related_type</strong> (<code class="xref py py-data docutils literal"><span class="pre">Optional</span></code>[<a class="reference internal" href="#happypanda.interface.enums.ItemType" title="happypanda.interface.enums.ItemType"><code class="xref py py-class docutils literal"><span class="pre">ItemType</span></code></a>]) &#8211; child item</li>
 <li><strong>item_id</strong> (<code class="xref py py-data docutils literal"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal"><span class="pre">int</span></code>]) &#8211; id of parent item</li>
 </ul>
@@ -501,7 +520,7 @@ Enum member names may change sometime in the future. It is not likely to happen 
 
 <dl class="function">
 <dt id="happypanda.interface.ui.library_view">
-<code class="descname">library_view</code><span class="sig-paren">(</span><em>item_type=&lt;ItemType.Gallery: 1&gt;</em>, <em>item_id=None</em>, <em>related_type=None</em>, <em>page=0</em>, <em>limit=100</em>, <em>sort_by=''</em>, <em>search_query=''</em>, <em>filter_id=None</em>, <em>view_filter=&lt;ViewType.Library: 1&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/ui.html#library_view"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.ui.library_view" title="Permalink to this definition">¶</a></dt>
+<code class="descname">library_view</code><span class="sig-paren">(</span><em>item_type=&lt;ItemType.Gallery: 1&gt;</em>, <em>item_id=None</em>, <em>related_type=None</em>, <em>page=0</em>, <em>limit=100</em>, <em>sort_by=''</em>, <em>search_query=''</em>, <em>search_options={}</em>, <em>filter_id=None</em>, <em>view_filter=&lt;ViewType.Library: 1&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/ui.html#library_view"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.ui.library_view" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fetch items from the database.
 Provides pagination.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -514,8 +533,9 @@ Provides pagination.</p>
 <li><strong>sort_by</strong> (<code class="xref py py-class docutils literal"><span class="pre">str</span></code>) &#8211; name of column to order by ...</li>
 <li><strong>limit</strong> (<code class="xref py py-class docutils literal"><span class="pre">int</span></code>) &#8211; amount of items per page</li>
 <li><strong>search_query</strong> (<code class="xref py py-class docutils literal"><span class="pre">str</span></code>) &#8211; filter item by search terms</li>
-<li><strong>filter_id</strong> (<code class="xref py py-data docutils literal"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal"><span class="pre">int</span></code>]) &#8211; current filter list id</li>
-<li><strong>view_filter</strong> (<a class="reference internal" href="#happypanda.interface.enums.ViewType" title="happypanda.interface.enums.ViewType"><code class="xref py py-class docutils literal"><span class="pre">ViewType</span></code></a>) &#8211; type of view</li>
+<li><strong>search_options</strong> (<code class="xref py py-class docutils literal"><span class="pre">dict</span></code>) &#8211; options to apply when filtering, see <a class="reference internal" href="settings.html#settings"><span class="std std-ref">Settings</span></a> for available search options</li>
+<li><strong>filter_id</strong> (<code class="xref py py-data docutils literal"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal"><span class="pre">int</span></code>]) &#8211; current <a class="reference internal" href="#happypanda.interface.enums.ItemType.GalleryFilter" title="happypanda.interface.enums.ItemType.GalleryFilter"><code class="xref py py-attr docutils literal"><span class="pre">ItemType.GalleryFilter</span></code></a> item id</li>
+<li><strong>view_filter</strong> (<a class="reference internal" href="#happypanda.interface.enums.ViewType" title="happypanda.interface.enums.ViewType"><code class="xref py py-class docutils literal"><span class="pre">ViewType</span></code></a>) &#8211; type of view, set <code class="docutils literal"><span class="pre">None</span></code> to not apply any filter</li>
 <li><strong>related_type</strong> (<code class="xref py py-data docutils literal"><span class="pre">Optional</span></code>[<a class="reference internal" href="#happypanda.interface.enums.ItemType" title="happypanda.interface.enums.ItemType"><code class="xref py py-class docutils literal"><span class="pre">ItemType</span></code></a>]) &#8211; child item</li>
 <li><strong>item_id</strong> (<code class="xref py py-data docutils literal"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal"><span class="pre">int</span></code>]) &#8211; id of parent item</li>
 </ul>
@@ -536,8 +556,9 @@ Provides pagination.</p>
 
 <dl class="function">
 <dt id="happypanda.interface.ui.translate">
-<code class="descname">translate</code><span class="sig-paren">(</span><em>t_id</em>, <em>locale=None</em>, <em>default=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/ui.html#translate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.ui.translate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get a translation by translation id. Raises error if no translation was found.</p>
+<code class="descname">translate</code><span class="sig-paren">(</span><em>t_id</em>, <em>locale=None</em>, <em>default=None</em>, <em>placeholder={}</em>, <em>count=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/ui.html#translate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.ui.translate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a translation by translation id.
+Raises error if a default value was not provided and no translation was found.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -546,6 +567,9 @@ Provides pagination.</p>
 <li><strong>t_id</strong> (<code class="xref py py-class docutils literal"><span class="pre">str</span></code>) &#8211; translation id</li>
 <li><strong>locale</strong> (<code class="xref py py-data docutils literal"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal"><span class="pre">str</span></code>]) &#8211; locale to get translations from (will override default locale)</li>
 <li><strong>default</strong> (<code class="xref py py-data docutils literal"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal"><span class="pre">str</span></code>]) &#8211; default text when no translation was found</li>
+<li><strong>placeholder</strong> (<code class="xref py py-class docutils literal"><span class="pre">str</span></code>) &#8211; <p>?</p>
+</li>
+<li><strong>count</strong> (<code class="xref py py-data docutils literal"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal"><span class="pre">int</span></code>]) &#8211; pluralization</li>
 </ul>
 </td>
 </tr>
@@ -576,6 +600,28 @@ Provides pagination.</p>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Page object</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="happypanda.interface.gallery.open_gallery">
+<code class="descname">open_gallery</code><span class="sig-paren">(</span><em>item_id=0</em>, <em>item_type=&lt;ItemType.Gallery: 1&gt;</em>, <em>viewer_args=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/gallery.html#open_gallery"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.gallery.open_gallery" title="Permalink to this definition">¶</a></dt>
+<dd><p>Open a gallery or page in an external viewer</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>item_id</strong> (<code class="xref py py-class docutils literal"><span class="pre">int</span></code>) &#8211; id of item</li>
+<li><strong>item_type</strong> (<a class="reference internal" href="#happypanda.interface.enums.ItemType" title="happypanda.interface.enums.ItemType"><code class="xref py py-class docutils literal"><span class="pre">ItemType</span></code></a>) &#8211; possible items are <a class="reference internal" href="#happypanda.interface.enums.ItemType.Gallery" title="happypanda.interface.enums.ItemType.Gallery"><code class="xref py py-attr docutils literal"><span class="pre">ItemType.Gallery</span></code></a>, <a class="reference internal" href="#happypanda.interface.enums.ItemType.Page" title="happypanda.interface.enums.ItemType.Page"><code class="xref py py-attr docutils literal"><span class="pre">ItemType.Page</span></code></a></li>
+<li><strong>viewer_args</strong> (<code class="xref py py-data docutils literal"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal"><span class="pre">str</span></code>]) &#8211; commandline arguments to supply the viewer, overriding the default viewer arguments specified in settings</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">bool indicating if item was successfully opened</p>
 </td>
 </tr>
 </tbody>

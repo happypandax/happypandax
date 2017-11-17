@@ -166,10 +166,10 @@ def open_gallery(item_id: int=0, item_type: enums.ItemType = enums.ItemType.Gall
     Args:
         item_id: id of item
         item_type: possible items are :py:attr:`.ItemType.Gallery`, :py:attr:`.ItemType.Page`
-        viewer_args: commandline arguments to supply the viewer, overriding the default viewer arguments in settings
+        viewer_args: commandline arguments to supply the viewer, overriding the default viewer arguments specified in settings
 
     Returns:
-        bool indicating if item was opened or not
+        bool indicating if item was successfully opened
     """
     item_type = enums.ItemType.get(item_type)
     number = 1
