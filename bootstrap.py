@@ -27,6 +27,7 @@ changes = """
 - fixed the occasional db lock errors for good.. i think
 - moved `sqlite_database_timeout` setting to the new `db` namespace
 - added new api function: 'open_gallery'
+- fixed client context not working as intended
 """
 
 

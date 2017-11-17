@@ -5,10 +5,12 @@ Gallery
 """
 import os
 
-from happypanda.common import exceptions, utils, constants
+from happypanda.common import exceptions, utils, constants, hlogger
 from happypanda.core.commands import database_cmd, io_cmd, gallery_cmd
 from happypanda.core import message, db
 from happypanda.interface import enums
+
+log = hlogger.Logger(__name__)
 
 
 # def add_gallery(galleries: list=[], paths: list=[]):
@@ -167,6 +169,30 @@ def open_gallery(item_id: int=0, item_type: enums.ItemType = enums.ItemType.Gall
         viewer_args: commandline arguments to supply the viewer, overriding the default viewer arguments in settings
 
     Returns:
-        Status
+        bool indicating if item was opened or not
     """
-    pass
+    item_type = enums.ItemType.get(item_type)
+    number = 1
+
+    _, db_model = item_type._msg_and_model((enums.ItemType.Gallery, enums.ItemType.Page))
+    kwargs = {}
+    if item_type == enums.ItemType.Page:
+        p = database_cmd.GetModelItemByID().run(db_model, {item_id}, columns=(db_model.gallery_id, db_model.number))
+    else:
+        p = database_cmd.GetModelItemByID().run(db_model, {item_id})
+    if not p:
+        raise exceptions.DatabaseItemNotFoundError(utils.this_function(), "{} with item id '{}' not found".format(item_type, item_id))
+    p = p[0]
+    if item_type == enums.ItemType.Page:
+        kwargs['gallery_id'] = p[0]
+        kwargs['number'] = p[1]
+    else:
+        kwargs["gallery"] = p
+
+    if viewer_args:
+        kwargs['args'] = tuple(x.strip() for x in viewer_args.split())
+
+    opened = gallery_cmd.OpenGallery().run(**kwargs)
+
+    return message.Identity("status", opened)
+

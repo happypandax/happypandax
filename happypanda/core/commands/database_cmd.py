@@ -228,7 +228,8 @@ class GetModelItemByID(Command):
         else:
             log.d("Fetching items from a set with", len(ids), "ids", "offset:", offset, "limit:", limit)
 
-        if ids is not None and not ids:
+        if (ids is not None and not ids) or\
+           (ids and len(ids)==1 and all(x==0 for x in ids)):
             return 0 if count else tuple()
 
         criteria = False

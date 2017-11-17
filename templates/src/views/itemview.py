@@ -223,8 +223,10 @@ def item_view_render():
     #            #unmountOnHide=True,
     #            ))
 
+    ext_viewer = this.props.external_viewer
+
     return e(ItemViewBase,
-             [e(el, data=x, className="medium-size", key=n) for n, x in enumerate(items)],
+             [e(el, data=x, className="medium-size", key=n, external_viewer=ext_viewer) for n, x in enumerate(items)],
              loading=this.state.loading,
              secondary=this.props.secondary,
              tertiary=this.props.tertiary,

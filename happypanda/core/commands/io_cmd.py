@@ -472,12 +472,6 @@ class Archive(CoreCommand):
                     "No valid archive handler found for this archive type: '{}'".format(
                         self._ext))
 
-            with self._test_corrupt.call_capture(self._ext, self._archive) as plg:
-                r = plg.first_or_none()
-                if r is not None:
-                    if r:
-                        raise exceptions.ArchiveCorruptError(str(self._path))
-
             with self._path_sep.call_capture(self._ext, self._archive) as plg:
                 p = plg.first_or_none()
                 self.path_separator = p if p else '/'
@@ -550,6 +544,12 @@ class Archive(CoreCommand):
     @_close.default(capture=True)
     def _close_def(archive, capture=_def_formats()):
         archive.close()
+
+    def test(self):
+        with self._test_corrupt.call_capture(self._ext, self._archive) as plg:
+            r = plg.first_or_none()
+            if r is not None and r:
+                raise exceptions.ArchiveCorruptError(str(self._path))
 
     def namelist(self):
         ""

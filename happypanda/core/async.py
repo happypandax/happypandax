@@ -28,16 +28,20 @@ class Greenlet(gevent.Greenlet):
 
     @staticmethod
     def _hp_inherit(self, parent, frame):
-        spawner = self.spawn_parent = parent
-        if not hasattr(spawner, 'locals'):
-            spawner.locals = {}
-        self.locals = spawner.locals
+        self.spawn_parent = parent
+        self.locals = {}
         stack = []
         cur = frame
         while cur:
             stack.extend((cur.f_code, cur.f_lineno))
             cur = cur.f_back
-        self.stacks = (tuple(stack),) + getattr(spawner, 'stacks', ())[:10]
+        self.stacks = (tuple(stack),) + getattr(parent, 'stacks', ())[:10]
+
+    @staticmethod
+    def _reset_locals(greenlet):
+        if hasattr(greenlet, 'locals'):
+            greenlet.locals = {}
+
 
 class CPUThread():
     """

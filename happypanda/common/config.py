@@ -84,6 +84,8 @@ class Config:
         self._cmd_args_applied = False
 
     def create(self, ns, key, default=None, description="", type_=None):
+        if ns is None:
+            ns = self._current_ns
         return ConfigNode(self, ns, key, default, description, type_)
 
     def _ordered_load(self, stream, Loader=yaml.SafeLoader, object_pairs_hook=OrderedDict):
@@ -308,168 +310,182 @@ config = Config(user_filepath=constants.config_path)
 
 core_ns = 'core'
 
-debug = config.create(core_ns, 'debug', False, "Run in debug mode")
+with config.namespace(core_ns):
 
-concurrent_image_tasks = config.create(
-    core_ns,
-    "concurrent_image_tasks",
-    10,
-    "Amount of image service tasks allowed to run at the same time (higher count does not necessarily mean faster generation)")
+    debug = config.create(core_ns, 'debug', False, "Run in debug mode")
 
-external_image_viewer = config.create(
-    core_ns,
-    "external_image_viewer",
-    "",
-    "Path to external image viewer executable")
+    concurrent_image_tasks = config.create(
+        core_ns,
+        "concurrent_image_tasks",
+        10,
+        "Amount of image service tasks allowed to run at the same time (higher count does not necessarily mean faster generation)")
 
-external_image_viewer_args = config.create(
-    core_ns,
-    "external_image_viewer_args",
-    "",
-    "Command arguments to supply the image viewer executable")
+gallery_ns = 'gallery'
 
-send_to_trash = config.create(
-    core_ns,
-    "send_to_trash",
-    True,
-    "Send deleted galleries to recycle bin")
+with config.namespace(gallery_ns):
 
-send_path_to_first_file = config.create(
-    core_ns,
-    "send_path_to_first_file",
-    True,
-    "Send path to first file when opening a gallery in external viewer")
+    external_image_viewer = config.create(
+        gallery_ns,
+        "external_image_viewer",
+        "",
+        "Path to external image viewer executable")
+
+    external_image_viewer_args = config.create(
+        gallery_ns,
+        "external_image_viewer_args",
+        "",
+        "Command arguments to supply the image viewer executable")
+
+    send_to_trash = config.create(
+        gallery_ns,
+        "send_to_trash",
+        True,
+        "Send deleted galleries to recycle bin")
+
+    send_path_to_first_file = config.create(
+        gallery_ns,
+        "send_path_to_first_file",
+        False,
+        "Send path to first file when opening a gallery in external viewer")
 
 db_ns = 'db'
 
-sqlite_database_timeout = config.create(
-    db_ns,
-    "sqlite_database_timeout",
-    30,
-    "Amount of seconds to wait for the database to be writeable")
+with config.namespace(db_ns):
+
+    sqlite_database_timeout = config.create(
+        db_ns,
+        "sqlite_database_timeout",
+        30,
+        "Amount of seconds to wait for the database to be writeable")
 
 server_ns = 'server'
 
-secret_key = config.create(
-    server_ns,
-    "secret_key",
-    "",
-    "A secret key to be used for security. Keep it secret!")
+with config.namespace(server_ns):
 
-server_name = config.create(
-    server_ns,
-    'server_name',
-    "happypanda_" +
-    base64.urlsafe_b64encode(
-        os.urandom(5)).rstrip(b'=').decode('ascii'),
-    "Specifiy name of the server")
+    secret_key = config.create(
+        server_ns,
+        "secret_key",
+        "",
+        "A secret key to be used for security. Keep it secret!")
 
-port = config.create(
-    server_ns,
-    'port',
-    7007,
-    "Specify which port to start the server on")
+    server_name = config.create(
+        server_ns,
+        'server_name',
+        "happypanda_" +
+        base64.urlsafe_b64encode(
+            os.urandom(5)).rstrip(b'=').decode('ascii'),
+        "Specifiy name of the server")
 
-port_web = config.create(
-    server_ns,
-    'port_web',
-    7008,
-    "Specify which port to start the webserver on")
+    port = config.create(
+        server_ns,
+        'port',
+        7007,
+        "Specify which port to start the server on")
 
-port_torrent = config.create(
-    server_ns,
-    'torrent_port',
-    7006,
-    "Specify which port to start the torrent client on")
+    port_web = config.create(
+        server_ns,
+        'port_web',
+        7008,
+        "Specify which port to start the webserver on")
 
-port_range = config.create(server_ns,
-                           'port_range',
-                           {'from': 7009, 'to': 7018},
-                           "Specify a range of ports to attempt")
+    port_torrent = config.create(
+        server_ns,
+        'torrent_port',
+        7006,
+        "Specify which port to start the torrent client on")
 
-host = config.create(
-    server_ns,
-    'host',
-    'localhost',
-    "Specify which address the server should bind to")
+    port_range = config.create(server_ns,
+                               'port_range',
+                               {'from': 7009, 'to': 7018},
+                               "Specify a range of ports to attempt")
 
-host_web = config.create(
-    server_ns,
-    'host_web',
-    '',
-    "Specify which address the webserver should bind to")
+    host = config.create(
+        server_ns,
+        'host',
+        'localhost',
+        "Specify which address the server should bind to")
 
-expose_server = config.create(
-    server_ns,
-    'expose_server',
-    False,
-    "Attempt to expose the server through portforwading")
+    host_web = config.create(
+        server_ns,
+        'host_web',
+        '',
+        "Specify which address the webserver should bind to")
 
-allowed_clients = config.create(
-    server_ns,
-    'allowed_clients',
-    0,
-    "Limit amount of clients allowed to be connected (0 means no limit)")
+    expose_server = config.create(
+        server_ns,
+        'expose_server',
+        False,
+        "Attempt to expose the server through portforwading")
 
-allow_guests = config.create(
-    server_ns,
-    "allow_guests",
-    True,
-    "Specify if guests are allowed on this server")
+    allowed_clients = config.create(
+        server_ns,
+        'allowed_clients',
+        0,
+        "Limit amount of clients allowed to be connected (0 means no limit)")
 
-require_auth = config.create(
-    server_ns,
-    "require_auth",
-    False,
-    "Client must be authenticated to get write access")
+    allow_guests = config.create(
+        server_ns,
+        "allow_guests",
+        True,
+        "Specify if guests are allowed on this server")
 
-disable_default_user = config.create(
-    server_ns,
-    "disable_default_user",
-    False,
-    "Disable default user")
+    require_auth = config.create(
+        server_ns,
+        "require_auth",
+        False,
+        "Client must be authenticated to get write access")
 
-session_span = config.create(
-    server_ns,
-    "session_span",
-    60,
-    "Specify the amount of time (in minutes) a session can go unused before expiring")
+    disable_default_user = config.create(
+        server_ns,
+        "disable_default_user",
+        False,
+        "Disable default user")
+
+    session_span = config.create(
+        server_ns,
+        "session_span",
+        0,
+        "Specify the amount of time (in minutes) a session can go unused before expiring or 0 for never")
 
 search_ns = 'search'
 
-search_option_regex = config.create(
-    search_ns,
-    "regex",
-    False,
-    "Allow regex in search filters")
-search_option_case = config.create(
-    search_ns,
-    "case_sensitive",
-    False,
-    "Search filter is case sensitive")
-search_option_whole = config.create(
-    search_ns,
-    "match_whole_words",
-    False,
-    "Match terms exact")
-search_option_all = config.create(
-    search_ns,
-    "match_all_terms",
-    True,
-    "Match only items that has all terms")
+with config.namespace(search_ns):
 
-search_option_desc = config.create(
-    search_ns,
-    "descendants",
-    True,
-    "Also match on descandants")
+    search_option_regex = config.create(
+        search_ns,
+        "regex",
+        False,
+        "Allow regex in search filters")
+    search_option_case = config.create(
+        search_ns,
+        "case_sensitive",
+        False,
+        "Search filter is case sensitive")
+    search_option_whole = config.create(
+        search_ns,
+        "match_whole_words",
+        False,
+        "Match terms exact")
+    search_option_all = config.create(
+        search_ns,
+        "match_all_terms",
+        True,
+        "Match only items that has all terms")
+
+    search_option_desc = config.create(
+        search_ns,
+        "descendants",
+        True,
+        "Also match on descandants")
 
 client_ns = "client"
 
-translation_locale = config.create(
-    client_ns,
-    "translation_locale",
-    "en_us",
-    "The default translation locale when none is specified. See folder /translations for available locales")
+with config.namespace(client_ns):
+
+    translation_locale = config.create(
+        client_ns,
+        "translation_locale",
+        "en_us",
+        "The default translation locale when none is specified. See folder /translations for available locales")
 
 config_doc = config.doc_render()  # for doc

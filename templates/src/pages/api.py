@@ -139,7 +139,7 @@ ApiForm = createReactClass({
 
 
 def formatted_json(msg):
-    return h('pre', dangerouslySetInnerHTML={'__html': msg})
+    return h('pre', dangerouslySetInnerHTML={'__html': msg}, className="overflow-auto")
 
 Page = createReactClass({
     'displayName': 'ApiPage',

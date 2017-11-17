@@ -5,10 +5,16 @@ from src.react_utils import (h,
                              createReactClass,
                              Link)
 from src.ui import ui
-from src.client import (ItemType, ImageSize)
+from src.client import (ItemType, ImageSize, client)
 from src.state import state
 from src.single import thumbitem
 from src import utils
+
+__pragma__("tconv")
+def open_external():
+    if this.state.data:
+        client.call_func("open_gallery", None, item_id=this.state.data.id, item_type=this.state.item_type)
+__pragma__("notconv")
 
 def page_on_update(p_props, p_state):
     if p_props.data != this.props.data:
@@ -32,15 +38,20 @@ def page_render():
     if not this.props.link == js_undefined:
         link = this.props.link
 
+    thumb_kwargs = {}
+    if this.props.external_viewer:
+        thumb_kwargs['onClick'] = this.open_external
     thumb = e(thumbitem.Thumbnail,
               item_id=item_id,
               item_type=this.state.item_type,
               size_type=ImageSize.Medium,
               size=this.props.size,
+              kwargs = thumb_kwargs,
               )
     if link:
-        thumb = e(Link, thumb, to={'pathname': '/item/page',
-                                   'search': utils.query_to_string({'id': item_id})})
+        if not this.props.external_viewer:
+            thumb = e(Link, thumb, to={'pathname': '/item/page',
+                                       'search': utils.query_to_string({'id': item_id})})
 
     return e(ui.Card,
              h("div",
@@ -59,6 +70,8 @@ Page = createReactClass({
     'getInitialState': lambda: {'id': None,
                                 'data': this.props.data,
                                 'item_type': ItemType.Page},
+
+    'open_external': open_external,
 
     'componentWillMount': lambda: this.setState({'id': this.props.data.id if this.props.data else this.state.data.id if this.state.data else None}),
     'componentDidUpdate': page_on_update,

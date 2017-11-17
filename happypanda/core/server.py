@@ -3,6 +3,7 @@ import sys
 import code
 import arrow
 import os
+import gevent
 
 from inspect import getmembers, isfunction, signature, Parameter
 
@@ -38,6 +39,7 @@ class Session:
     def __init__(self, id=None):
         self._id = id if id else uuid.uuid4().hex
         self.sessions[self._id] = self
+        self._never_expire = not bool(config.session_span.value)
         self.extend()
 
     @property
@@ -46,11 +48,14 @@ class Session:
 
     @property
     def expired(self):
+        if self._never_expire:
+            return False
         return arrow.utcnow() > self._expiration
 
     def extend(self):
         "Extend the life of this session"
-        self._expiration = arrow.utcnow().replace(minutes=+config.session_span.value)
+        if not self._never_expire:
+            self._expiration = arrow.utcnow().replace(minutes=+config.session_span.value)
 
     @classmethod
     def get(cls, s_id):
@@ -117,7 +122,7 @@ class ClientHandler:
 
         self.context['user'] = user_obj
 
-        self.context['adresss'] = self._ip
+        self.context['adresss'] = self._address
         if not self.context['user'].context_id:
             self.context['user'].context_id = uuid.uuid4().hex
 
@@ -429,6 +434,7 @@ class HPServer:
 
     def _handle(self, client, address):
         "Client handle function"
+        async.Greenlet._reset_locals(gevent.getcurrent())
         log.d("Client connected", str(address))
         handler = ClientHandler(client, address)
         self._clients.add(handler)

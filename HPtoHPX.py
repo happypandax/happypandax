@@ -983,12 +983,15 @@ def main():
             AMOUNT_OF_TASKS = 1
 
         page_pool = []
+        thread_pool = []
         for x in range(AMOUNT_OF_TASKS):
             pipe1, pipe2 = Pipe(False)
             p = Process(target=page_generate, args=(args.rar, pages_in, pipe2), daemon=True)
             p.start()
             page_pool.append(p)
-            threading.Thread(target=process_pipes, args=(pages_out, pipe1), daemon=True).start()
+            t = threading.Thread(target=process_pipes, args=(pages_out, pipe1), daemon=True)
+            t.start()
+            thread_pool.append(t)
 
         pages_to_send2 = list(split(pages_to_send2, AMOUNT_OF_TASKS))
         pages_to_send = list(split(pages_to_send, AMOUNT_OF_TASKS))

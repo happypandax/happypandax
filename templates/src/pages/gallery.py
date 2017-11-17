@@ -82,6 +82,12 @@ def toggle_external_viewer(e, d):
     client.call_func("save_config", None)
 
 __pragma__("tconv")
+def open_external():
+    if this.state.data:
+        client.call_func("open_gallery", None, item_id=this.state.data.id, item_type=this.state.item_type)
+__pragma__("notconv")
+
+__pragma__("tconv")
 def page_render():
 
     fav = this.state.fav
@@ -181,14 +187,20 @@ def page_render():
     if utils.is_same_machine():
         external_view.append(e(ui.Button, icon="external", toggle=True, active=this.state.external_viewer,
                                title="Open in external viewer", onClick=this.toggle_external_viewer))
+
+    if this.state.external_viewer:
+        read_btn = {'onClick':this.open_external}
+    else:
+        read_btn = { 'as':Link, 'to':utils.build_url(
+                        "/item/page", {'gid': item_id}, keep_query=False)}
+
     buttons.append(
             e(ui.Grid.Row,
             e(ui.Grid.Column,
                 e(ui.Button.Group,
                 e(ui.Button, "Save for later"),
                 e(ui.Button.Or, text="or"),
-                e(ui.Button, "Read", primary=True, as_=Link, to=utils.build_url(
-                    "/item/page", {'gid': item_id}, keep_query=False)),
+                e(ui.Button, "Read", primary=True, **read_btn),
                 *external_view,
                 ),
                 textAlign="center",
@@ -306,6 +318,7 @@ def page_render():
                                                 related_type=ItemType.Page,
                                                 view_filter=None,
                                                 label="Pages",
+                                                external_viewer=this.state.external_viewer,
                                                 container=True, secondary=True))),
              stackable=True,
              container=True,
@@ -337,6 +350,7 @@ Page = createReactClass({
     'get_lang': get_lang,
     'get_status': get_status,
     'get_config': get_config,
+    'open_external': open_external,
 
     'toggle_external_viewer': toggle_external_viewer,
 

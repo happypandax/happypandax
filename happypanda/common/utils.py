@@ -284,7 +284,7 @@ def in_cpubound_thread():
 def get_context(key="ctx"):
     "Get a dict local to the spawn tree of current greenlet"
     l = getattr(gevent.getcurrent(), 'locals', None)
-    if key is not None:
+    if key is not None and l:
         return l[key]
     return l
 

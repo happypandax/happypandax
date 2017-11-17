@@ -16,34 +16,41 @@ def pref_general(props):
     cfg = props.cfg
     u_cfg = props.u_cfg
     items = []
-    if defined(cfg.core):
+    if defined(cfg.gallery):
         
-        if defined(cfg.core.external_image_viewer):
+        if defined(cfg.gallery.external_image_viewer):
 
             if not is_same_machine():
                 items.append(e(ui.Message, tr(props.tab, "",
                                             "Disabled because this client is connecting from a different device"), color="yellow"))
 
-            items.append(e(ui.Form.Group,
-                           e(ui.Form.Input,
+            items.append(e(ui.Form.Input,
                              width=16,
                              label=tr(props.tab, "", "External Image Viewer"),
                              placeholder=tr(props.tab, "", "path/to/executable"),
-                             defaultValue=cfg.core.external_image_viewer,
-                             onChange=lambda e: props.upd("core.external_image_viewer", e.target.value),
+                             defaultValue=cfg.gallery.external_image_viewer,
+                             onChange=lambda e: props.upd("gallery.external_image_viewer", e.target.value),
                              disabled=not is_same_machine(),
-                             ))
+                             )
                          )
-
-        if defined(cfg.core.external_image_viewer_args):
-
-            items.append(e(ui.Form.Group,
-                           e(ui.Form.Input,
+        if defined(cfg.gallery.external_image_viewer_args):
+            items.append(e(ui.Form.Input,
                              width=8,
                              label=tr(props.tab, "", "External Image Viewer Arguments"),
                              placeholder=tr(props.tab, "", "example: -a -X --force"),
-                             defaultValue=cfg.core.external_image_viewer_args,
-                             onChange=lambda e: props.upd("core.external_image_viewer_args", e.target.value),
+                             defaultValue=cfg.gallery.external_image_viewer_args,
+                             onChange=lambda e: props.upd("gallery.external_image_viewer_args", e.target.value),
+                             disabled=not is_same_machine(),
+                             )
+                         )
+
+        if defined(cfg.gallery.send_path_to_first_file):
+            items.append(e(ui.Form.Field,
+                           e(ui.Checkbox,
+                             toggle=True,
+                             label=tr(props.tab, "", "Send path to first file in folder/acrhive"),
+                             defaultChecked=cfg.gallery.send_path_to_first_file,
+                             onChange=lambda e, d: props.upd("gallery.send_path_to_first_file", d.checked),
                              disabled=not is_same_machine(),
                              ))
                          )
