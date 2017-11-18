@@ -7,7 +7,7 @@
 > **This is project is under heavy development and not yet ready for deployment. If you want to speed up the development, please consider [contributing](https://happypandax.github.io/server/env.html).**
 
 <p align="center">
-<img src="https://user-images.githubusercontent.com/11841002/30784339-b811c010-a153-11e7-91f2-8dcfbbeafef4.png" width="350">
+<img src="https://user-images.githubusercontent.com/11841002/32983531-4ac3fc6c-cc96-11e7-8ba4-c12d9ee0b8a8.png" width="650">
 </p>
 
 # Building
