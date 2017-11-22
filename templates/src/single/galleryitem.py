@@ -7,7 +7,7 @@ from src.react_utils import (h,
 from src.ui import ui
 from src.client import (ItemType, ImageSize)
 from src.state import state
-from src.single import thumbitem
+from src.single import thumbitem, artistitem
 from src import utils
 from src.views import tagview
 
@@ -27,13 +27,17 @@ def gallery_render():
     rating = 0
     urls = []
     artists = []
+    artist_names = []
     item_id = this.state.id
     info = ""
+    inbox = False
+
     if this.state.data:
         read_count = this.state.data.times_read
         rating = this.state.data.rating
         title = this.state.data.titles[0].js_name
         info = this.state.data.info
+        inbox = this.state.data.metatags.inbox
 
         if this.state.data.metatags.favorite:
             fav = 1
@@ -42,7 +46,8 @@ def gallery_render():
 
         for a in this.state.data.artists:
             if len(a.names) > 0:
-                artists.append(a.names[0].js_name)
+                artist_names.append(a.names[0].js_name)
+        artists = this.state.data.artists
 
         for u in this.state.data.urls:
             urls.append(u.js_name)
@@ -73,7 +78,7 @@ def gallery_render():
 
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, "Artist(s):", as_="h5"), collapsing=True),
-                  e(ui.Table.Cell, *(e("span", x) for x in artists))))
+                  e(ui.Table.Cell, *(e(artistitem.ArtistLabel, data=x) for x in artists))))
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, "Times read:", as_="h5"), collapsing=True),
                   e(ui.Table.Cell, e(ui.Label, read_count, circular=True))))
@@ -85,6 +90,15 @@ def gallery_render():
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, "URL(s):", as_="h5"), collapsing=True),
                   e(ui.Table.Cell, e(ui.List, *[e(ui.List.Item, h("span", h("a", x, href=x, target="_blank"), e(ui.List.Icon, js_name="external share"))) for x in urls]))))
+
+
+    menu_options = []
+    menu_options.append({'key':'read', 'text':"Read", 'as':Link, 'to':utils.build_url("/item/page", {'gid': item_id}, keep_query=False)})
+    menu_options.append({'key':'later', 'text':"Save for later", 'icon':"history"})
+    if inbox:
+        menu_options.append({'key':'library', 'text':"Send to Library", 'icon':"grid layout"})
+    menu_options.append({'key':'trash', 'text':"Send to Trash", 'icon':"trash"})
+
 
     return e(ui.Card,
              h("div",
@@ -102,16 +116,21 @@ def gallery_render():
                    hoverable=True,
                    on="click",
                    hideOnScroll=True,
-                   position="left center"
+                   position="left center",
                  ),
-                 e(ui.Icon, js_name="ellipsis vertical", bordered=True,
-                   className="card-item bottom right", link=True, inverted=True),
+               e(ui.Dropdown,
+                 options=menu_options,
+                   className="card-item bottom right",
+                   icon=e(ui.Icon, js_name="ellipsis vertical", bordered=True, link=True, inverted=True),
+                   trigger=h("span"),
+                   pointing=True
+                 ),
                className="card-content",
                ),
              e(ui.Popup,
                trigger=e(ui.Card.Content,
                          e(ui.Card.Header, title, className="text-ellipsis card-header"),
-                         e(ui.Card.Meta, *[h("span", x) for x in artists], className="text-ellipsis"),
+                         e(ui.Card.Meta, *[h("span", x) for x in artist_names], className="text-ellipsis"),
                          ),
                content=e(ui.Table,
                          e(ui.Table.Body,

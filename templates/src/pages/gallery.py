@@ -8,7 +8,7 @@ from src.ui import ui, Slider
 from src.i18n import tr
 from src.state import state
 from src.client import ItemType, ViewType, ImageSize, client
-from src.single import galleryitem, thumbitem
+from src.single import galleryitem, thumbitem, artistitem
 from src.views import itemview, tagview
 from src import utils
 
@@ -134,9 +134,7 @@ def page_render():
         if not item_id:
             item_id = this.state.data.id
 
-        for a in this.state.data.artists:
-            if len(a.names) > 0:
-                artists.append(a.names[0].js_name)
+        artists = this.state.data.artists
 
         for u in this.state.data.urls:
             urls.append(u.js_name)
@@ -153,7 +151,7 @@ def page_render():
                   e(ui.Table.Cell, e(ui.Header, info, as_="h5"), colSpan="2")))
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, "Artist(s):", as_="h5"), collapsing=True),
-                  e(ui.Table.Cell, *(e("span", x) for x in artists))))
+                  e(ui.Table.Cell, *(e(artistitem.ArtistLabel, data=x) for x in artists))))
     if circles:
         rows.append(e(ui.Table.Row,
                       e(ui.Table.Cell, e(ui.Header, "Circle(s):", as_="h5"), collapsing=True),
@@ -208,7 +206,7 @@ def page_render():
         e(ui.Grid.Row,
           e(ui.Grid.Column,
             e(ui.Button.Group,
-              e(ui.Button, "Save for later"),
+              e(ui.Button, e(ui.Icon, js_name="history"), "Save for later"),
               e(ui.Button.Or, text="or"),
               e(ui.Button, "Read", primary=True, **read_btn),
               *external_view,
