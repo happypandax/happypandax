@@ -26,7 +26,9 @@ def sidebar_nav_render():
         print(props)
 
     items = []
-    items.append(MenuItem("", icon="sidebar", position="left", handler=this.props["toggler"]))
+    items.append(MenuItem("", position="left", handler=this.props["toggler"],
+                          content=e(ui.Image, src="/static/img/hpx_logo.svg", size="mini",
+                                    inline=True)))
 
     #items.append(MenuItem("Dashboard", "ui.mi-dashboard", icon="home", url="/dashboard", handler=this.props["toggler"]))
     items.append(MenuItem("Favorites", "ui.mi-favorites", icon="heart", url="/favorite", handler=this.props["toggler"]))
@@ -89,8 +91,14 @@ def sidebar_nav_render():
         else:
             container = elements
 
-        item_children = (e(ui.Icon, js_name=menu_icon, className="left", size=icon_size),
-                         tr(this, x.t_id, menu_name) if not icon else "",)
+        content = tr(this, x.t_id, menu_name) if x.content is None else x.content
+
+        item_children = []
+        
+        if menu_icon:
+           item_children.append(e(ui.Icon, js_name=menu_icon, className="left", size=icon_size))
+           
+        item_children.append(content if not icon else "")
 
         as_link = {}
         if x.url:

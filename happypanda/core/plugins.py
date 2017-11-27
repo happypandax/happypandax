@@ -182,6 +182,9 @@ class HandlerValue:
 
             return tuple(r)
 
+    def get_handlers(self):
+        return tuple(x[1] for x in self._handlers)
+
     def get_node(self, idx):
         return self._handlers[idx][0]
 

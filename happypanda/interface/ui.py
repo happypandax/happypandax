@@ -114,7 +114,8 @@ def library_view(item_type: enums.ItemType = enums.ItemType.Gallery,
                  related_type: enums.ItemType = None,
                  page: int = 0,
                  limit: int = 100,
-                 sort_by: str = "",
+                 sort_by: enums.ItemSort = None,
+                 sort_desc: bool=False,
                  search_query: str = "",
                  search_options: dict = {},
                  filter_id: int = None,
@@ -126,7 +127,8 @@ def library_view(item_type: enums.ItemType = enums.ItemType.Gallery,
     Args:
         item_type: possible items are :py:attr:`.ItemType.Gallery`, :py:attr:`.ItemType.Collection`, :py:attr:`.ItemType.Grouping`
         page: current page (zero-indexed)
-        sort_by: name of column to order by ...
+        sort_by: either a :py:class:`.ItemSort` or a sort index
+        sort_desc: order descending (default is ascending)
         limit: amount of items per page
         search_query: filter item by search terms
         search_options: options to apply when filtering, see :ref:`Settings` for available search options
@@ -148,8 +150,29 @@ def library_view(item_type: enums.ItemType = enums.ItemType.Gallery,
 
     items = message.List(db_model.__name__.lower(), db_msg)
 
-    [items.append(db_msg(x)) for x in database_cmd.GetModelItemByID().run(
-        db_model, model_ids, limit=limit, offset=page * limit, filter=filter_op, join=join_exp)]
+    ordering = None
+
+    if sort_by is not None:
+        try:
+            sort_by = enums.ItemSort.get(sort_by)
+            ordering = database_cmd.GetDatabaseSort().run(db_model, sort_by.value)
+        except exceptions.EnumError:
+            if isinstance(sort_by, int):
+                ordering = database_cmd.GetDatabaseSort().run(db_model, sort_by)
+
+            if ordering is None:
+                raise exceptions.EnumError(
+                    utils.this_function(),
+                    "{}: enum member or sort index doesn't exist '{}'".format(
+                        enums.ItemSort.__name__,
+                        repr(sort_by)))
+
+    if ordering is not None and sort_desc:
+        ordering = db.desc_expr(ordering)
+
+    [items.append(db_msg(x)) for x in database_cmd.GetModelItems().run(
+        db_model, model_ids, limit=limit, offset=page * limit,
+        filter=filter_op, join=join_exp, order_by=ordering)]
 
     return items
 
@@ -183,7 +206,7 @@ def get_view_count(item_type: enums.ItemType=enums.ItemType.Gallery,
     view_filter, item_type, db_msg, db_model, model_ids, filter_op, join_exp, metatag_name = _view_helper(
         item_type, search_query, filter_id, view_filter, item_id, related_type, search_options)
 
-    return message.Identity('count', {'count': database_cmd.GetModelItemByID().run(
+    return message.Identity('count', {'count': database_cmd.GetModelItems().run(
         db_model, model_ids, filter=filter_op, join=join_exp, count=True)})
 
 
@@ -227,3 +250,47 @@ def translate(t_id: str, locale: str = None, default: str = None, placeholder: s
                     locale if locale else config.translation_locale.value, t_id))
                 raise exceptions.APIError(utils.this_function(), "Failed to load translation file: {}".format(e.args))
     return message.Identity("translation", trs)
+
+def get_sort_indexes(item_type: enums.ItemType=None, translate: bool=True, locale: str=None):
+    """
+    Get a list of sort item indexes and names
+    
+    Args:
+        item_type: return applicable indexes for a specific item type
+        translate: translate the sort expression name
+        locale: locale to get translations from (will override default locale)
+
+    Returns:
+        .. code-block:: guess
+
+            [
+                {
+                    'index' : int,
+                    'name': str,
+                    'item_type': int value of :py:class:`.ItemType`
+                },
+                ...
+            ]
+    """
+    db_sort = database_cmd.GetDatabaseSort()
+    if item_type:
+        item_type = enums.ItemType.get(item_type)
+        items = [item_type]
+    else:
+        items = list(enums.ItemType)
+
+    sort_indexes = message.List("indexes", dict)
+    for i in items:
+        _, db_model = i._msg_and_model()
+        for idx, name in db_sort.run(db_model, name=True).items():
+            if translate:
+                try:
+                    name = i18n.t("general.sort-idx-{}".format(idx), default=name)
+                except:
+                    pass
+            sort_indexes.append({
+                'index':int(idx),
+                'name':name,
+                'item_type':i.value
+                })
+    return sort_indexes

@@ -48,7 +48,7 @@ Plugin
 #    return message.Message("works")
 
 
-# def list_plugins():
+# def list_plugins(plugin_type=None):
 #    """
 #    Get a list of available plugin information
 

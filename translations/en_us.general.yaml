@@ -2,6 +2,13 @@
 locale: English (United States)
 
 # Database
+db-item-gallery: Gallery
+db-item-collection: Collection
+
 db-status-ongoing: Ongoing
 db-status-completed: Completed
 db_status-unknown: Unknown
+
+# Sort
+sort-idx-1: Random
+sort-idx-2: Title

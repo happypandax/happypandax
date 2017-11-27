@@ -5,9 +5,11 @@ class MenuItem:
                  icon="", position="",
                  header=False, handler=None,
                  url=None, modal=None,
-                 on_modal_open=None, on_modal_close=None):
+                 on_modal_open=None, on_modal_close=None,
+                 content=None):
         self.name = name
         self.icon = icon
+        self.content = content
         self.position = position
         self.header = header
         self.children = []

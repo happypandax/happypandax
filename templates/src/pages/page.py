@@ -163,12 +163,15 @@ def page_render():
     name = ""
     hash_id = ""
     path = ""
+    fav = 0
     if this.state.data:
         p_id = this.state.data.id
         number = this.state.data.number
         name = this.state.data.name
         hash_id = this.state.data.hash
         path = this.state.data.path
+        if this.state.data.metatags.favorite:
+            fav = 1
 
     img = None
     __pragma__("iconv")
@@ -181,6 +184,9 @@ def page_render():
 
     rows = []
 
+    rows.append(e(ui.Table.Row,
+                  e(ui.Table.Cell, e(ui.Rating, icon="heart", size="massive", rating=fav),
+                    colSpan="2", collapsing=True)))
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, "Tags:", as_="h5"), collapsing=True),
                   e(ui.Table.Cell, e(tagview.TagView, item_id=p_id, item_type=this.state.item_type))))

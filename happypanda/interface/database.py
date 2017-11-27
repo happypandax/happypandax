@@ -77,7 +77,7 @@ def get_item(item_type: enums.ItemType=enums.ItemType.Gallery,
 
     db_msg, db_model = item_type._msg_and_model()
 
-    item = database_cmd.GetModelItemByID().run(db_model, {item_id})[0]
+    item = database_cmd.GetModelItems().run(db_model, {item_id})[0]
     if not item:
         raise exceptions.DatabaseItemNotFoundError(utils.this_function(),
                                                    "'{}' with id '{}' was not found".format(item_type.name,
@@ -152,7 +152,7 @@ def get_related_items(item_type: enums.ItemType=enums.ItemType.Gallery,
 
     s = constants.db_session()
     item_ids = s.query(child_model.id).join(col).filter(parent_model.id == item_id).limit(limit).all()
-    items = database_cmd.GetModelItemByID().run(child_model, {x[0] for x in item_ids})
+    items = database_cmd.GetModelItems().run(child_model, {x[0] for x in item_ids})
 
     item_list = message.List(db.model_name(child_model), child_msg)
     [item_list.append(child_msg(x)) for x in items]
@@ -219,3 +219,26 @@ def get_related_count(item_type: enums.ItemType=enums.ItemType.Gallery,
     s = constants.db_session()
     count = s.query(child_model.id).join(col).filter(parent_model.id == item_id).count()
     return message.Identity('count', {'id': item_id, 'count': count})
+
+def get_random_items(item_type: enums.ItemType=enums.ItemType.Gallery,
+                    limit: int = 1,
+                    item_id: int = None,
+                    search_query: str = "",
+                    filter_id: int = None,
+                    view_filter: enums.ViewType = enums.ViewType.Library,
+                    related_type: enums.ItemType = None,
+                    search_options: dict = {}
+                    ):
+    """
+    Get a random item
+
+    Args:
+        item_type: type of item
+        limit: amount of items
+        search_query: filter item by search terms
+        search_options: options to apply when filtering, see :ref:`Settings` for available search options
+        filter_id: current :py:attr:`.ItemType.GalleryFilter` item id
+        view_filter: type of view, set ``None`` to not apply any filter
+        related_type: child item
+        item_id: id of parent item
+    """

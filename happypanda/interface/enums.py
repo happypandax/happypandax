@@ -25,26 +25,26 @@ class _APIEnum(enum.Enum):
     @classmethod
     def get(cls, key):
 
-        # for some ungodly reason this check wouldnt work when calling from the client
-        # so i ended comparing strings instead
+        # for some ungodly unknown reason this check wouldnt work when calling from the client
+        # so i ended up comparing strings instead
         if repr(type(key)) == repr(cls):
             return key
+        if key is not None:
+            try:
+                return cls[key]
+            except KeyError:
+                pass
 
-        try:
-            return cls[key]
-        except KeyError:
-            pass
+            try:
+                return cls(key)
+            except ValueError:
+                pass
 
-        try:
-            return cls(key)
-        except ValueError:
-            pass
-
-        if isinstance(key, str):
-            low_key = key.lower()
-            for name, member in cls.__members__.items():
-                if name.lower() == low_key:
-                    return member
+            if isinstance(key, str):
+                low_key = key.lower()
+                for name, member in cls.__members__.items():
+                    if name.lower() == low_key:
+                        return member
 
         raise exceptions.EnumError(
             utils.this_function(),
@@ -89,8 +89,8 @@ class ItemType(_APIEnum):
     Status = 10
     #: Circle
     Circle = 11
-    #: GalleryURL
-    GalleryUrl = 12
+    #: URL
+    Url = 12
     #: Gallery Parody
     Parody = 13
 
@@ -158,4 +158,8 @@ class ServerCommand(_APIEnum):
 
 
 class ItemSort(_APIEnum):
-    pass
+    #: Gallery Random
+    GalleryRandom = 1
+    #: Gallery Title
+    GalleryTitle = 2
+

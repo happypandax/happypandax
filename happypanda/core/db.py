@@ -33,6 +33,7 @@ from sqlalchemy import (
     create_engine,
     event,
     exc,
+    desc,
     and_,
     or_,
     Boolean,
@@ -64,6 +65,7 @@ log = hlogger.Logger(__name__)
 and_op = and_
 or_op = or_
 sa_text = text
+desc_expr = desc
 
 
 class String(_String):

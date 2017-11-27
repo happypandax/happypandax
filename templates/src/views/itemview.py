@@ -11,6 +11,46 @@ from src.state import state
 from src.single import (galleryitem, pageitem, groupingitem, collectionitem)
 from src import utils
 
+def ItemViewConfig(props):
+    item_count_options = [
+        {'key':10, 'text':'10', 'value':10},
+        {'key':20, 'text':'20', 'value':20},
+        {'key':30, 'text':'30', 'value':30},
+        {'key':40, 'text':'40', 'value':40},
+        {'key':50, 'text':'50', 'value':50},
+        {'key':75, 'text':'75', 'value':75},
+        {'key':100, 'text':'100', 'value':100},
+        {'key':125, 'text':'125', 'value':125},
+        {'key':150, 'text':'150', 'value':150},
+        {'key':200, 'text':'200', 'value':200},
+        ]
+
+    ext_viewer_el = []
+    if utils.is_same_machine():
+        ext_viewer_el.append(e(ui.Form.Field, control=ui.Checkbox, label="Open in external viewer", toggle=True))
+
+    return e(ui.Transition,
+            e(ui.Container,
+              e(ui.Form,
+                e(ui.Form.Group,
+                    e(ui.Form.Field, control=ui.Checkbox, label="Infinite Scroll", toggle=True),
+                    *ext_viewer_el,
+                  ),
+                e(ui.Form.Group,
+                    e(ui.Form.Select, options=item_count_options, label="Item Count", inline=True),
+                  ),
+                e(ui.Form.Field, "Close", control=ui.Button),
+                onSubmit=props.onSubmit,
+                ),
+              as_=ui.Segment,
+            size="tiny",
+            compact=True,
+            ),
+            visible=props.visible,
+            animation="scale",
+            duration=200,
+            unmountOnHide=True, #props.unmountOnHide,
+            )
 
 def itemviewbase_render():
     props = this.props
@@ -21,6 +61,7 @@ def itemviewbase_render():
                          pages=props.item_count / props.limit,
                          current_page=props.page,
                          on_change=props.set_page,
+                         context=this.props.context,
                          query=True,
                          scroll_top=True,
                          size="tiny"),
@@ -29,6 +70,7 @@ def itemviewbase_render():
                    e(ui.Responsive,
                        e(Pagination,
                          pages=props.item_count / props.limit,
+                         context=this.props.context,
                          current_page=props.page,
                          on_change=props.set_page,
                          query=True,
@@ -55,8 +97,11 @@ def itemviewbase_render():
                         e(ui.Label.Detail, props.item_count),
                         e(ui.Button, compact=True, basic=True,
                           icon="options", floated="right",
-                          size="mini", onClick=this.toggle_config),
+                          size="mini", onClick=props.toggle_config),
                         attached="top"))
+
+    if props.config_el:
+        add_el.append(props.config_el)
 
     count_el = []
 
@@ -106,10 +151,6 @@ def itemviewbase_render():
 ItemViewBase = createReactClass({
     'displayName': 'ItemViewBase',
 
-    'getInitialState': lambda: {'visible_config': False},
-
-    'toggle_config': lambda a: this.setState({'visible_config': not this.state.visible_config}),
-
     'render': itemviewbase_render
 })
 
@@ -128,6 +169,10 @@ def get_items(data=None, error=None):
             func_kw['view_filter'] = this.props.view_filter
         if this.state.search_query:
             func_kw['search_query'] = this.state.search_query
+        if this.props.sort_by:
+            func_kw['sort_by'] = this.props.sort_by
+        if this.props.sort_desc:
+            func_kw['sort_desc'] = this.props.sort_desc
         if this.props.search_options:
             func_kw['search_options'] = this.props.search_options
         if this.props.filter_id:
@@ -215,8 +260,16 @@ def item_view_on_update(p_props, p_state):
         p_state.search_query != this.state.search_query,
         p_props.limit != this.props.limit,
         p_state.page != this.state.page,
+        p_props.sort_by != this.props.sort_by,
+        p_props.sort_desc != this.props.sort_desc,
     )):
         this.get_items()
+
+    if any((
+        p_props.sort_by != this.props.sort_by,
+        p_props.sort_desc != this.props.sort_desc,
+    )):
+        this.setState({'page': 1})
 
 
 def item_view_render():
@@ -225,15 +278,6 @@ def item_view_render():
     limit = this.props.limit or this.state.default_limit
     if not el:
         return e(Error, content="An error occured")
-
-    # add_grid_el.append(e(ui.Transition,
-    #            e(ui.Segment,
-    #            as_=ui.Container,),
-    #            visible=this.props.visible_config if utils.defined(this.props.visible_config) else this.state.visible_config,
-    #            animation="scale",
-    #            duration=300,
-    #            #unmountOnHide=True,
-    #            ))
 
     ext_viewer = this.props.external_viewer
 
@@ -248,7 +292,8 @@ def item_view_render():
              page=this.state.page,
              set_page=this.set_page,
              label=this.props.label,
-             visible_config=this.props.visible_config,
+             config_el=this.props.config_el,
+             toggle_config=this.props.toggle_config,
              )
 
 ItemView = createReactClass({

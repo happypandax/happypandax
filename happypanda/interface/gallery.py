@@ -71,9 +71,9 @@ def source_exists(item_type: enums.ItemType=enums.ItemType.Gallery,
     _, db_model = item_type._msg_and_model((enums.ItemType.Gallery, enums.ItemType.Page))
 
     if item_type == enums.ItemType.Page:
-        item = database_cmd.GetModelItemByID().run(db_model, {item_id}, columns=(db.Page.path,))
+        item = database_cmd.GetModelItems().run(db_model, {item_id}, columns=(db.Page.path,))
     elif item_type == enums.ItemType.Gallery:
-        item = database_cmd.GetModelItemByID().run(db_model, {item_id}, columns=(db.Gallery.single_source,))
+        item = database_cmd.GetModelItems().run(db_model, {item_id}, columns=(db.Gallery.single_source,))
 
     if not item:
         raise exceptions.DatabaseItemNotFoundError(utils.this_function(),
@@ -137,7 +137,7 @@ def get_page(page_id: int=None, gallery_id: int=None, number: int=None, prev: bo
     item = None
 
     if page_id:
-        p = database_cmd.GetModelItemByID().run(db.Page, {page_id})[0]
+        p = database_cmd.GetModelItems().run(db.Page, {page_id})[0]
         if number and p and number == p.number:
             item = p
         elif p:
@@ -147,7 +147,7 @@ def get_page(page_id: int=None, gallery_id: int=None, number: int=None, prev: bo
     if not item:
         f = db.Page.number < number if prev else db.Page.number > number
         f = db.and_op(f, db.Page.gallery_id == gallery_id)
-        item = database_cmd.GetModelItemByID().run(db.Page,
+        item = database_cmd.GetModelItems().run(db.Page,
                                                    order_by=db.Page.number.desc() if prev else db.Page.number,
                                                    filter=f,
                                                    limit=1)
@@ -177,9 +177,9 @@ def open_gallery(item_id: int=0, item_type: enums.ItemType = enums.ItemType.Gall
     _, db_model = item_type._msg_and_model((enums.ItemType.Gallery, enums.ItemType.Page))
     kwargs = {}
     if item_type == enums.ItemType.Page:
-        p = database_cmd.GetModelItemByID().run(db_model, {item_id}, columns=(db_model.gallery_id, db_model.number))
+        p = database_cmd.GetModelItems().run(db_model, {item_id}, columns=(db_model.gallery_id, db_model.number))
     else:
-        p = database_cmd.GetModelItemByID().run(db_model, {item_id})
+        p = database_cmd.GetModelItems().run(db_model, {item_id})
     if not p:
         raise exceptions.DatabaseItemNotFoundError(
             utils.this_function(),

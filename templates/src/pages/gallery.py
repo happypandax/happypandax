@@ -255,6 +255,11 @@ def page_render():
               centered=True,
               ))
 
+    pages_cfg = e(itemview.ItemViewConfig,
+                  onSubmit=this.toggle_pages_config,
+                  visible=this.state.visible_page_cfg
+                  )
+
     return e(ui.Grid,
              e(ui.Grid.Row, e(ui.Grid.Column, e(ui.Breadcrumb, icon="right arrow",))),
              e(ui.Grid.Row,
@@ -325,6 +330,8 @@ def page_render():
                                                 related_type=ItemType.Page,
                                                 view_filter=None,
                                                 label="Pages",
+                                                config_el=pages_cfg,
+                                                toggle_config=this.toggle_pages_config,
                                                 external_viewer=this.state.external_viewer,
                                                 container=True, secondary=True))),
              stackable=True,
@@ -349,6 +356,7 @@ Page = createReactClass({
                                 'external_viewer': False,
                                 'send_to_recycle': True,
                                 'delete_files': False,
+                                'visible_page_cfg': False,
                                 },
 
     'on_read': lambda: utils.go_to(this.props.history, "/item/page", {'gid': this.state.data.id}, keep_query=False),
@@ -359,6 +367,7 @@ Page = createReactClass({
     'get_config': get_config,
     'open_external': open_external,
 
+    'toggle_pages_config': lambda a: this.setState({'visible_page_cfg': not this.state.visible_page_cfg}),
     'toggle_external_viewer': toggle_external_viewer,
 
     'componentWillMount': lambda: all((this.props.menu([e(ui.Menu.Menu, e(ui.Menu.Item, e(ui.Icon, js_name="edit"), "Edit"), position="right")]),

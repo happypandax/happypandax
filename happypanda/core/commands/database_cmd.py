@@ -1,3 +1,5 @@
+from sqlalchemy.sql.expression import func
+
 from happypanda.common import utils, hlogger, exceptions, constants
 from happypanda.core.command import Command, CommandEvent, AsyncCommand, CommandEntry
 from happypanda.core.commands import io_cmd
@@ -191,9 +193,53 @@ class GetSession(Command):
         return constants.db_session()
 
 
-class GetModelItemByID(Command):
+
+class GetDatabaseSort(Command):
     """
-    Fetch model items from the database by a set of ids
+    Returns a database sort expression or name for given sort index
+    """
+
+    names = CommandEntry("names", dict, str)
+
+    expressions = CommandEntry("expressions", dict, str)
+
+    def __init__(self):
+        super().__init__()
+        self.model = None
+
+    @names.default(capture=True)
+    def _gallery_names(model_name, capture=db.model_name(db.Gallery)):
+        ISort = enums.ItemSort
+        return {
+            ISort.GalleryRandom.value:"Random",
+            ISort.GalleryTitle.value:"Title"
+            }
+
+    @expressions.default(capture=True)
+    def _gallery_expr(model_name, capture=db.model_name(db.Gallery)):
+        model = GetModelClass().run(model_name)
+        return {
+            1:func.random(),
+            }
+
+    def main(self, model: db.Base, sort_index: int=None, name: bool=False) -> object:
+        self.model = model
+        model_name = db.model_name(self.model)
+        items = {}
+        if name:
+            with self.names.call_capture(model_name, model_name) as plg:
+                for x in plg.all(default=True):
+                    items.update(x)
+        else:
+            with self.expressions.call_capture(model_name, model_name) as plg:
+                for x in plg.all(default=True):
+                    items.update(x)
+        return items.get(sort_index) if sort_index else items
+
+
+class GetModelItems(Command):
+    """
+    Fetch model items from the database
 
     Returns a tuple of model items
     """
@@ -287,54 +333,3 @@ class GetModelItemByID(Command):
             log.d("Returning", len(self.fetched_items), "fetched items")
         return self.fetched_items
 
-
-class GetModelItems(Command):
-    """
-    Fetch model items from the database
-
-    Returns a tuple of model items
-    """
-
-    fetched = CommandEvent("fetched", str, tuple)
-
-    def __init__(self):
-        super().__init__()
-
-        self.fetched_items = tuple()
-
-    def _query(self, q, limit, offset):
-        if offset:
-            q = q.offset(offset)
-
-        return q.limit(limit).all()
-
-    def main(self, model: db.Base, limit: int = 999,
-             filter: str = "", order_by: str = "", offset: int = 0, join: str = "") -> tuple:
-
-        s = constants.db_session()
-
-        q = s.query(model)
-
-        if join:
-            if not isinstance(join, (list, tuple)):
-                join = [join]
-
-            for j in join:
-                if isinstance(j, str):
-                    q = q.join(db.sa_text(j))
-                else:
-                    q = q.join(j)
-
-        if filter:
-            if isinstance(filter, str):
-                q = q.filter(db.sa_text(filter))
-            else:
-                q = q.filter(filter)
-
-        if order_by:
-            q = q.order_by(db.sa_text(order_by))
-
-        self.fetched_items = tuple(self._query(q, limit, offset))
-
-        self.fetched.emit(db.model_name(model), self.fetched_items)
-        return self.fetched_items

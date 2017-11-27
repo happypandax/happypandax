@@ -15,7 +15,9 @@ from src.nav import MenuItem
 
 def menu_nav_render():
     items = []
-    items.append(MenuItem("", icon="sidebar", position="left", header=True, handler=this.props["toggler"]))
+    items.append(MenuItem("", position="left", header=True, handler=this.props["toggler"],
+                          content=e(ui.Image, src="/static/img/hpx_logo.svg", size="mini",
+                                    inline=True)))
 
     elements = []
     elements_left = []
@@ -35,11 +37,16 @@ def menu_nav_render():
         children = []
         for c in x.children:
             children.append(e(ui.Dropdown.Item, c.name))
+        content = menu_name if x.content is None else x.content
+
+        icon_el = []
+        if menu_icon:
+            icon_el.append(e(ui.Icon, js_name=menu_icon, size=icon_size))
 
         container.append(e(ui.Menu.Item,
-                           e(ui.Icon, js_name=menu_icon, size=icon_size),
-                           menu_name,
-                           js_name=menu_name,
+                           *icon_el,
+                           content,
+                           js_name=menu_name if x.content is None else None,
                            header=x.header,
                            onClick=x.handler,
                            index=n,

@@ -211,12 +211,52 @@ ItemDropdown = createReactClass({
     'render': itemdropdown_render
 })
 
+def sortdropdown_get(data=None, error=None):
+    if data is not None and not error:
+        this.setState({"sort_items": data, "loading": False})
+    elif error:
+        pass
+    else:
+        client.call_func("get_sort_indexes", this.get_items)
+        this.setState({"loading": True})
 
-def SortDropdown(props):
-    item_options = [
-    ]
-    return e(ui.Dropdown, placeholder="Sort by", selection=True, item=True,
-             options=item_options, defaultValue=props.value, onChange=props.on_change)
+
+def sortdropdown_change(e, d):
+    if this.props.query:
+        utils.go_to(this.props.history, query={'sort_idx': d.value}, push=False)
+    if this.props.on_change:
+        this.props.on_change(e, d)
+
+
+def sortdropdown_render():
+    item_options = []
+    if this.state.sort_items:
+        for i in this.state.sort_items:
+            item_options.append({
+                'value':i['index'],
+                'text':i['name'],
+                })
+    return e(ui.Dropdown,
+             placeholder="Sort by",
+             selection=True, item=True,
+             options=item_options,
+             value=this.props.value if this.props.value else js_undefined,
+             defaultValue=this.props.defaultValue,
+             onChange=this.item_change,
+             loading=this.state.loading
+             )
+
+SortDropdown = createReactClass({
+    'displayName': 'SortDropdown',
+
+    'getInitialState': lambda: {'sort_items': None, 'loading': False},
+
+    'item_change': sortdropdown_change,
+    'get_items': sortdropdown_get,
+    'componentDidMount': lambda: this.get_items(),
+
+    'render': sortdropdown_render
+})
 
 
 def filterdropdown_get(data=None, error=None):

@@ -23,6 +23,7 @@ parser = utils.get_argparser()  # required to be at module lvl for sphinx.autopr
 
 
 def start(argv=None, db_kwargs={}):
+    #assert sys.version_info >= (3, 5), "Python 3.5 is required"
     if argv is None:
         argv = sys.argv[1:]
     utils.setup_dirs()

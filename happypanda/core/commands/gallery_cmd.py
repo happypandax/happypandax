@@ -131,7 +131,7 @@ class OpenGallery(Command):
     def main(self, gallery_id: int=None, gallery: db.Gallery=None, number: int=None, args=tuple()) -> bool:
         assert isinstance(gallery, db.Gallery) or isinstance(gallery_id, int)
         if gallery_id:
-            gallery = database_cmd.GetModelItemByID().run(db.Gallery, {gallery_id})
+            gallery = database_cmd.GetModelItems().run(db.Gallery, {gallery_id})
             if gallery:
                 gallery = gallery[0]
         self.gallery = gallery
