@@ -232,10 +232,11 @@ def sortdropdown_render():
     item_options = []
     if this.state.sort_items:
         for i in this.state.sort_items:
-            item_options.append({
-                'value':i['index'],
-                'text':i['name'],
-                })
+            if i['item_type'] == this.props.item_type:
+                item_options.append({
+                    'value':i['index'],
+                    'text':i['name'],
+                    })
     return e(ui.Dropdown,
              placeholder="Sort by",
              selection=True, item=True,
@@ -280,24 +281,20 @@ def filterdropdown_change(e, d):
 
 
 def filterdropdown_render():
-    item_options = [{'value': 0, "description": "No Filter", "icon": "delete"}]
-    text = js_undefined
+    item_options = []
     __pragma__("iconv")
     if this.state.db_items:
         for d in this.state.db_items:
-            if d == this.props.value:
-                text = this.state.db_items[d]['name']
             item_options.append({'text': this.state.db_items[d]['name'], 'value': d, 'icon': "filter"})
     __pragma__("noiconv")
     return e(ui.Dropdown,
              placeholder="Filter",
              selection=True, item=True,
              options=item_options,
-             text=text if text else js_undefined,
              search=True,
              allowAdditions=True,
              value=this.props.value if this.props.value else js_undefined,
-             defaultValue=this.props.defaultValue,
+             defaultValue=this.props.defaultValue if this.props.defaultValue else js_undefined,
              onChange=this.item_change,
              loading=this.state.loading,
              )

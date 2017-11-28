@@ -12,3 +12,11 @@ db_status-unknown: Unknown
 # Sort
 sort-idx-1: Random
 sort-idx-2: Title
+sort-idx-3: Artist
+sort-idx-4: Date Added
+sort-idx-5: Date Published
+sort-idx-6: Last Read
+sort-idx-7: Last Updated
+sort-idx-8: Rating
+sort-idx-9: Read Count
+

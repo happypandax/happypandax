@@ -1,10 +1,13 @@
+from collections import namedtuple
 from sqlalchemy.sql.expression import func
+from sqlalchemy_utils.functions import make_order_by_deterministic
 
 from happypanda.common import utils, hlogger, exceptions, constants
 from happypanda.core.command import Command, CommandEvent, AsyncCommand, CommandEntry
 from happypanda.core.commands import io_cmd
 from happypanda.core import db, async
 from happypanda.interface import enums
+from happypanda.interface.enums import ItemSort
 
 log = hlogger.Logger(__name__)
 
@@ -196,12 +199,17 @@ class GetSession(Command):
 
 class GetDatabaseSort(Command):
     """
-    Returns a database sort expression or name for given sort index
+    Returns a name or, a namedtuple(expr, joins) of a data sort expression and additional
+    tables to join, for a given sort index
     """
 
     names = CommandEntry("names", dict, str)
 
     expressions = CommandEntry("expressions", dict, str)
+
+    joins = CommandEntry("joins", tuple, str)
+
+    SortTuple = namedtuple("SortTuple", ["expr", "joins"])
 
     def __init__(self):
         super().__init__()
@@ -209,17 +217,38 @@ class GetDatabaseSort(Command):
 
     @names.default(capture=True)
     def _gallery_names(model_name, capture=db.model_name(db.Gallery)):
-        ISort = enums.ItemSort
         return {
-            ISort.GalleryRandom.value:"Random",
-            ISort.GalleryTitle.value:"Title"
+            ItemSort.GalleryRandom.value:"Random",
+            ItemSort.GalleryTitle.value:"Title",
+            ItemSort.GalleryArtist.value:"Artist",
+            ItemSort.GalleryDate.value:"Date Added",
+            ItemSort.GalleryPublished.value:"Date Published",
+            ItemSort.GalleryRead.value:"Last Read",
+            ItemSort.GalleryUpdated.value:"Last Updated",
+            ItemSort.GalleryRating.value:"Rating",
+            ItemSort.GalleryReadCount.value:"Read Count",
             }
 
     @expressions.default(capture=True)
     def _gallery_expr(model_name, capture=db.model_name(db.Gallery)):
         model = GetModelClass().run(model_name)
         return {
-            1:func.random(),
+            ItemSort.GalleryRandom.value:func.random(),
+            ItemSort.GalleryTitle.value:db.Title.name,
+            #ItemSort.GalleryArtist.value:"Artist",
+            ItemSort.GalleryDate.value:db.Gallery.timestamp,
+            ItemSort.GalleryPublished.value:db.Gallery.pub_date,
+            ItemSort.GalleryRead.value:db.Gallery.last_read,
+            ItemSort.GalleryUpdated.value:db.Gallery.last_updated,
+            ItemSort.GalleryRating.value:db.Gallery.rating,
+            ItemSort.GalleryReadCount.value:db.Gallery.times_read,
+            }
+
+    @joins.default(capture=True)
+    def _gallery_joins(model_name, capture=db.model_name(db.Gallery)):
+        model = GetModelClass().run(model_name)
+        return {
+            ItemSort.GalleryTitle.value:(db.Title,),
             }
 
     def main(self, model: db.Base, sort_index: int=None, name: bool=False) -> object:
@@ -231,9 +260,24 @@ class GetDatabaseSort(Command):
                 for x in plg.all(default=True):
                     items.update(x)
         else:
+            expr = {}
             with self.expressions.call_capture(model_name, model_name) as plg:
                 for x in plg.all(default=True):
-                    items.update(x)
+                    expr.update(x)
+
+            joins = {}
+            with self.joins.call_capture(model_name, model_name) as plg:
+                for x in plg.all(default=True):
+                    joins.update(x)
+
+            for k, v in expr.items():
+                if k in joins:
+                    t = joins[k]
+                    if isinstance(t, tuple):
+                        items[k] = self.SortTuple(v, t)
+                        continue
+                items[k] = self.SortTuple(v, tuple())
+
         return items.get(sort_index) if sort_index else items
 
 
@@ -290,14 +334,15 @@ class GetModelItems(Command):
 
         if join is not None:
             criteria = True
-            if not isinstance(join, (list, tuple)):
+            if not isinstance(join, (list, tuple, set)):
                 join = [join]
             for j in join:
                 q = q.join(self._get_sql(j))
 
         if order_by is not None:
             criteria = True
-            q = q.order_by(self._get_sql(order_by))
+            q = make_order_by_deterministic(q.order_by(self._get_sql(order_by)))
+
 
         if filter is not None:
             criteria = True

@@ -158,8 +158,33 @@ class ServerCommand(_APIEnum):
 
 
 class ItemSort(_APIEnum):
+    
     #: Gallery Random
     GalleryRandom = 1
     #: Gallery Title
     GalleryTitle = 2
+    #: Gallery Artist Name
+    GalleryArtist = 3
+    #: Gallery Date Added
+    GalleryDate = 4
+    #: Gallery Date Published
+    GalleryPublished = 5
+    #: Gallery Last Read
+    GalleryRead = 6
+    #: Gallery Last Updated
+    GalleryUpdated = 7
+    #: Gallery Rating
+    GalleryRating = 8
+    #: Gallery Read Count
+    GalleryReadCount = 9
+
+
+
+
+
+
+
+
+
+
 

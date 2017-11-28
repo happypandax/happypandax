@@ -11,7 +11,7 @@ from src import pages
 
 
 def page_render():
-    return e(pages.ItemViewPage, view_type=ViewType.Library)
+    return e(pages.ItemViewPage, view_type=ViewType.Library, history=this.props.history)
 
 Page = createReactClass({
     'displayName': 'LibraryPage',

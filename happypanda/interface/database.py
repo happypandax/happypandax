@@ -220,25 +220,25 @@ def get_related_count(item_type: enums.ItemType=enums.ItemType.Gallery,
     count = s.query(child_model.id).join(col).filter(parent_model.id == item_id).count()
     return message.Identity('count', {'id': item_id, 'count': count})
 
-def get_random_items(item_type: enums.ItemType=enums.ItemType.Gallery,
-                    limit: int = 1,
-                    item_id: int = None,
-                    search_query: str = "",
-                    filter_id: int = None,
-                    view_filter: enums.ViewType = enums.ViewType.Library,
-                    related_type: enums.ItemType = None,
-                    search_options: dict = {}
-                    ):
-    """
-    Get a random item
+#def get_random_items(item_type: enums.ItemType=enums.ItemType.Gallery,
+#                    limit: int = 1,
+#                    item_id: int = None,
+#                    search_query: str = "",
+#                    filter_id: int = None,
+#                    view_filter: enums.ViewType = enums.ViewType.Library,
+#                    related_type: enums.ItemType = None,
+#                    search_options: dict = {}
+#                    ):
+#    """
+#    Get a random item
 
-    Args:
-        item_type: type of item
-        limit: amount of items
-        search_query: filter item by search terms
-        search_options: options to apply when filtering, see :ref:`Settings` for available search options
-        filter_id: current :py:attr:`.ItemType.GalleryFilter` item id
-        view_filter: type of view, set ``None`` to not apply any filter
-        related_type: child item
-        item_id: id of parent item
-    """
+#    Args:
+#        item_type: type of item
+#        limit: amount of items
+#        search_query: filter item by search terms
+#        search_options: options to apply when filtering, see :ref:`Settings` for available search options
+#        filter_id: current :py:attr:`.ItemType.GalleryFilter` item id
+#        view_filter: type of view, set ``None`` to not apply any filter
+#        related_type: child item
+#        item_id: id of parent item
+#    """

@@ -167,8 +167,12 @@ def library_view(item_type: enums.ItemType = enums.ItemType.Gallery,
                         enums.ItemSort.__name__,
                         repr(sort_by)))
 
-    if ordering is not None and sort_desc:
-        ordering = db.desc_expr(ordering)
+    if ordering is not None:
+        join_exp.extend(ordering.joins)
+        join_exp = set(join_exp)
+        ordering = ordering.expr
+        if sort_desc:
+            ordering = db.desc_expr(ordering)
 
     [items.append(db_msg(x)) for x in database_cmd.GetModelItems().run(
         db_model, model_ids, limit=limit, offset=page * limit,

@@ -109,23 +109,29 @@ def page_render():
     inbox = False
     trash = False
     read_count = 0
-    date_pub = ""
-    date_upd = ""
-    date_read = ""
-    date_added = ""
+    date_pub = "Unknown"
+    date_upd = "Unknown"
+    date_read = "Unknown"
+    date_added = "Unknown"
     urls = []
     parodies = []
     circles = []
     if this.state.data:
         item_id = this.state.data.id
         parodies = this.state.data.parodies
-        date_pub = utils.moment.unix(this.state.data.pub_date).format("LL")
-        date_upd = utils.moment.unix(this.state.data.last_updated).format("LLL")
-        date_read = utils.moment.unix(this.state.data.last_read).format("LLL")
-        date_added = utils.moment.unix(this.state.data.timestamp).format("LLL")
-        date_added += " (" + utils.moment.unix(this.state.data.timestamp).fromNow() + ")"
-        date_upd += " (" + utils.moment.unix(this.state.data.last_updated).fromNow() + ")"
-        date_read += " (" + utils.moment.unix(this.state.data.last_read).fromNow() + ")"
+
+        if this.state.data.pub_date:
+            date_pub = utils.moment.unix(this.state.data.pub_date).format("LL")
+            date_pub += " (" + utils.moment.unix(this.state.data.pub_date).fromNow() + ")"
+        if this.state.data.last_updated:
+            date_upd = utils.moment.unix(this.state.data.last_updated).format("LLL")
+            date_upd += " (" + utils.moment.unix(this.state.data.last_updated).fromNow() + ")"
+        if this.state.data.last_read:
+            date_read = utils.moment.unix(this.state.data.last_read).format("LLL")
+            date_read += " (" + utils.moment.unix(this.state.data.last_read).fromNow() + ")"
+        if this.state.data.timestamp:
+            date_added = utils.moment.unix(this.state.data.timestamp).format("LLL")
+            date_added += " (" + utils.moment.unix(this.state.data.timestamp).fromNow() + ")"
         read_count = this.state.data.times_read
         info = this.state.data.info
         title = this.state.data.titles[0].js_name
@@ -166,6 +172,9 @@ def page_render():
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, "Status:", as_="h5"), collapsing=True),
                   e(ui.Table.Cell, e(ui.Label, tr(this, "general.db-status-{}".format(status.lower()), status), color={"completed": "green", "ongoing": "orange", "unknown": "grey"}.get(status.lower(), "blue")))))
+    rows.append(e(ui.Table.Row,
+                  e(ui.Table.Cell, e(ui.Header, "Published:", as_="h5"), collapsing=True),
+                  e(ui.Table.Cell, e(ui.Label, date_pub))))
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, "Times read:", as_="h5"), collapsing=True),
                   e(ui.Table.Cell, e(ui.Label, read_count, circular=True))))

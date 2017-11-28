@@ -201,3 +201,20 @@ Pagination = createReactClass({
 
     'render': pagination_render
 })
+
+
+ToggleIcon = createReactClass({
+    'displayName': 'ToggleIcon',
+
+    'getInitialState': lambda: {'toggled': this.props.toggled},
+
+    'toggle': lambda: all((this.setState({'toggled':not this.state.toggled}),
+                          this.props.on_toggle(not this.state.toggled) if this.props.on_toggle else None)),
+
+    'render': lambda: e(ui.Icon,
+                        this.props.children,
+                        js_name=this.props.icons[int(this.state.toggled) if this.props.icons else ""],
+                        onClick=this.toggle,
+                        link=True,
+                        )
+})
