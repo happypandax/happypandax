@@ -6,6 +6,8 @@ UI
 
 import i18n
 
+from collections import OrderedDict
+
 from happypanda.common import utils, constants, exceptions, hlogger, config
 from happypanda.core import message, db
 from happypanda.interface import enums
@@ -169,7 +171,8 @@ def library_view(item_type: enums.ItemType = enums.ItemType.Gallery,
 
     if ordering is not None:
         join_exp.extend(ordering.joins)
-        join_exp = set(join_exp)
+        # need unique but ordered results, cannot use set so we make use with this
+        join_exp = tuple(OrderedDict([(x, None) for x in join_exp]).keys())
         ordering = ordering.expr
         if sort_desc:
             ordering = db.desc_expr(ordering)

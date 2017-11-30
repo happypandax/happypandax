@@ -54,18 +54,33 @@ poll_func_stagger = __pragma__('js', '{}',
     })();
     }""")
 
-html_escape_table = {
-    "&": "&amp;",
-    '"': "&quot;",
-    "'": "&apos;",
-    ">": "&gt;",
-    "<": "&lt;",
+storage_available = __pragma__('js', '{}',
+                               """
+function storageAvailable(type) {
+    try {
+        var storage = window[type],
+            x = '__storage_test__';
+        storage.setItem(x, x);
+        storage.removeItem(x);
+        return true;
+    }
+    catch(e) {
+        return e instanceof DOMException && (
+            // everything except Firefox
+            e.code === 22 ||
+            // Firefox
+            e.code === 1014 ||
+            // test name field too, because code might not be present
+            // everything except Firefox
+            e.name === 'QuotaExceededError' ||
+            // Firefox
+            e.name === 'NS_ERROR_DOM_QUOTA_REACHED') &&
+            // acknowledge QuotaExceededError only if there's something already stored
+            storage.length !== 0;
+    }
 }
+                               """)
 
-
-def html_escape(text):
-    """Produce entities within text."""
-    return "".join(html_escape_table.get(c, c) for c in text)
 
 defined = __pragma__('js', '{}',
                      """
@@ -155,3 +170,45 @@ def is_same_machine():
     return document.getElementById('root').dataset.machine == "True"
 
 moment.locale(get_locale())
+
+class Storage:
+
+    def __init__(self):
+        self.dummy = {}
+        self.enabled = storage_available("localStorage")
+        self.lstorage = localStorage
+
+    __pragma__("kwargs")
+    def get(self, key, default=None, override=False):
+        if override and default is not None:
+            return default
+        if self.enabled:
+            r = self.lstorage.getItem(key)
+            if r is None and default is not None:
+                r = default
+            elif r:
+                r = JSON.parse(r) # can't handle empty strings
+        else:
+            r = self.dummy.get(key, default)
+        return r
+    __pragma__("nokwargs")
+
+    def set(self, key, value):
+        if self.enabled:
+            self.lstorage.setItem(key, JSON.stringify(value))
+        else:
+            self.dummy[key] = value
+
+    def clear(self):
+        if self.enabled:
+            self.lstorage.js_clear()
+        else:
+            self.dummy.clear()
+
+    def remove(self, key):
+        if self.enabled:
+            self.lstorage.removeItem(key)
+        else:
+            self.dummy.pop(key, True)
+
+storage = Storage()

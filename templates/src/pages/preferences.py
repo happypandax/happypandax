@@ -47,7 +47,7 @@ def pref_general(props):
             items.append(e(ui.Form.Field,
                            e(ui.Checkbox,
                              toggle=True,
-                             label=tr(props.tab, "", "Send path to first file in folder/acrhive"),
+                             label=tr(props.tab, "", "Send path to first file in folder/archive"),
                              defaultChecked=cfg.gallery.send_path_to_first_file,
                              onChange=lambda e, d: props.upd("gallery.send_path_to_first_file", d.checked),
                              disabled=not is_same_machine(),

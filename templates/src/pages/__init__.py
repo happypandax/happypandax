@@ -40,7 +40,7 @@ def item_view_menu(history,
                 ),
               e(item.SortDropdown,
                 history=history,
-                on_change=on_sort_change, defaultValue=default_sort,
+                on_change=on_sort_change, value=default_sort,
                 item_type=default_item,
                 query=True), fitted=True),
             e(ui.Menu.Item,
@@ -64,6 +64,7 @@ def itemviewpage_update(p_p, p_s):
         p_p.view_type != this.props.view_type,
         p_s.item_type != this.state.item_type,
         p_s.filter_id != this.state.filter_id,
+        p_s.sort_idx != this.state.sort_idx,
     )):
         this.update_menu()
 
@@ -87,13 +88,17 @@ ItemViewPage = createReactClass({
 
     'toggle_config': lambda a: this.setState({'visible_config': not this.state.visible_config}),
 
-    'on_item_change': lambda e, d: this.setState({'item_type': d.value}),
+    'on_item_change': lambda e, d: all((this.setState({'item_type': d.value}),
+                                        utils.storage.set("item_type", d.value))),
 
-    'on_sort_change': lambda e, d: this.setState({'sort_idx': d.value}),
+    'on_sort_change': lambda e, d: all((this.setState({'sort_idx': d.value}),
+                                        utils.storage.set("sort_idx_{}".format(this.state.item_type), d.value))),
 
-    'toggle_sort_desc': lambda d: this.setState({'sort_desc': not this.state.sort_desc}),
+    'toggle_sort_desc': lambda d: all((this.setState({'sort_desc': not this.state.sort_desc}),
+                                       utils.storage.set("sort_desc", not this.state.sort_desc))),
 
-    'on_filter_change': lambda e, d: this.setState({'filter_id': d.value}),
+    'on_filter_change': lambda e, d: all((this.setState({'filter_id': d.value}),
+                                          utils.storage.set("filter_id", d.value))),
 
     'on_search': lambda s, o: this.setState({'search_query': s, 'search_options': o}),
 
@@ -116,10 +121,10 @@ ItemViewPage = createReactClass({
 
     'componentDidUpdate': itemviewpage_update,
 
-    'getInitialState': lambda: {'item_type': int(utils.get_query("item_type", ItemType.Gallery)),
-                                'filter_id': int(utils.get_query("filter_id", 0)),
-                                'sort_idx': int(utils.get_query("sort_idx", 0)),
-                                'sort_desc': bool(utils.get_query("sort_desc", 0)),
+    'getInitialState': lambda: {'item_type': utils.storage.get("item_type", int(utils.get_query("item_type", ItemType.Gallery))),
+                                'filter_id': utils.storage.get("filter_id", int(utils.get_query("filter_id", 0))),
+                                'sort_idx': utils.storage.get("sort_idx_{}".format(ItemType.Gallery), int(utils.get_query("sort_idx", 0))),
+                                'sort_desc': utils.storage.get("sort_desc", bool(utils.get_query("sort_desc", 0))),
                                 'search_query': "",
                                 'search_options': {},
                                 'visible_config': False,

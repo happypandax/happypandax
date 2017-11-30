@@ -235,7 +235,7 @@ class GetDatabaseSort(Command):
         return {
             ItemSort.GalleryRandom.value:func.random(),
             ItemSort.GalleryTitle.value:db.Title.name,
-            #ItemSort.GalleryArtist.value:"Artist",
+            ItemSort.GalleryArtist.value:db.AliasName.name,
             ItemSort.GalleryDate.value:db.Gallery.timestamp,
             ItemSort.GalleryPublished.value:db.Gallery.pub_date,
             ItemSort.GalleryRead.value:db.Gallery.last_read,
@@ -248,7 +248,8 @@ class GetDatabaseSort(Command):
     def _gallery_joins(model_name, capture=db.model_name(db.Gallery)):
         model = GetModelClass().run(model_name)
         return {
-            ItemSort.GalleryTitle.value:(db.Title,),
+            ItemSort.GalleryTitle.value:(db.Gallery.titles,),
+            ItemSort.GalleryArtist.value:(db.Gallery.artists, db.Artist.names,),
             }
 
     def main(self, model: db.Base, sort_index: int=None, name: bool=False) -> object:
@@ -309,6 +310,9 @@ class GetModelItems(Command):
         else:
             return expr
 
+    def _get_count(self, q):
+        return q.count()
+
     def main(self, model: db.Base, ids: set = None, limit: int = 999,
              filter: str = None, order_by: str = None,
              offset: int = 0, columns: tuple = tuple(),
@@ -334,7 +338,7 @@ class GetModelItems(Command):
 
         if join is not None:
             criteria = True
-            if not isinstance(join, (list, tuple, set)):
+            if not isinstance(join, (list, tuple)):
                 join = [join]
             for j in join:
                 q = q.join(self._get_sql(j))
@@ -357,19 +361,18 @@ class GetModelItems(Command):
                     fetched_list = [x for x in q.all() if x[0] in ids]
                 else:
                     fetched_list = [x for x in q.all() if x.id in ids]
+                    fetched_list = fetched_list[offset:][:limit]
 
-                fetched_list = fetched_list[offset:][:limit]
                 self.fetched_items = tuple(fetched_list) if not count else len(fetched_list)
             elif id_amount == 1 and (not columns and not criteria):
-                self.fetched_items = (q.get(ids.pop()),) if not count else q.count()
+                self.fetched_items = (q.get(ids.pop()),) if not count else self._get_count(q)
             else:
                 q = q.filter(model.id.in_(ids))
-                self.fetched_items = tuple(self._query(q, limit, offset)) if not count else q.count()
+                self.fetched_items = tuple(self._query(q, limit, offset)) if not count else self._get_count(q)
         else:
-            self.fetched_items = tuple(self._query(q, limit, offset)) if not count else q.count()
+            self.fetched_items = tuple(self._query(q, limit, offset)) if not count else self._get_count(q)
 
         if count:
-            self.fetched_items = q.count()
             self.count.emit(db.model_name(model), self.fetched_items)
             log.d("Returning items count ", self.fetched_items)
         else:

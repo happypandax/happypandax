@@ -432,7 +432,7 @@ def profile_association(cls, bref="items"):
     return assoc
 
 
-def metatag_association(cls):
+def metatag_association(cls, bref="items"):
     if not issubclass(cls, Base):
         raise ValueError("Must be subbclass of Base")
     table_name = cls.__tablename__
@@ -448,6 +448,7 @@ def metatag_association(cls):
         "MetaTag",
         secondary=assoc,
         lazy='joined',
+        backref=backref(bref, lazy="dynamic"),
         cascade="all")
     return assoc
 
@@ -548,7 +549,7 @@ class User(Base):
     def is_admin(self):
         return self.role == self.Role.admin
 
-metatag_association(User)
+metatag_association(User, "users")
 
 
 class Profile(Base):
@@ -668,7 +669,7 @@ class NamespaceTags(AliasMixin, Base):
         sess.close()
         return e
 
-metatag_association(NamespaceTags)
+metatag_association(NamespaceTags, "namespacetags")
 
 
 @generic_repr
@@ -781,7 +782,7 @@ class Artist(ProfileMixin, Base):
         lazy="joined",
         cascade="save-update, merge, refresh-expire")
 
-metatag_association(Artist)
+metatag_association(Artist, "artists")
 profile_association(Artist, "artists")
 aliasname_association(Artist, "artists")
 url_association(Artist, "artists")
@@ -912,7 +913,7 @@ class Collection(ProfileMixin, Base):
         cascade="save-update, merge, refresh-expire")
 
 profile_association(Collection, "collections")
-metatag_association(Collection)
+metatag_association(Collection, "collections")
 
 
 @generic_repr
@@ -1058,7 +1059,7 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
     #        log.w("Could not query for gallery existence because no path was set.")
     #    return e
 
-metatag_association(Gallery)
+metatag_association(Gallery, "galleries")
 profile_association(Gallery, "galleries")
 url_association(Gallery, "galleries")
 
@@ -1108,7 +1109,7 @@ class Page(TaggableMixin, ProfileMixin, Base):
             log.w("Could not query for page existence because no path was set.")
         return e
 
-metatag_association(Page)
+metatag_association(Page, "pages")
 profile_association(Page, "pages")
 
 

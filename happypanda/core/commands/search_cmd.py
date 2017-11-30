@@ -363,7 +363,6 @@ class PartialModelFilter(Command):
         ids = set()
 
         if term.namespace.lower() == 'artist' or not term.namespace:
-            print()
             col_on_parent = db.relationship_column(parent_model, child_model)
             s = constants.db_session()
             ids.update(x[0] for x in s.query(parent_model.id).
