@@ -179,10 +179,8 @@ class Storage:
         self.lstorage = localStorage
 
     __pragma__("kwargs")
-    def get(self, key, default=None, override=False):
-        if override and default is not None:
-            return default
-        if self.enabled:
+    def get(self, key, default=None, local=False):
+        if self.enabled and not local:
             r = self.lstorage.getItem(key)
             if r is None and default is not None:
                 r = default
@@ -191,24 +189,24 @@ class Storage:
         else:
             r = self.dummy.get(key, default)
         return r
-    __pragma__("nokwargs")
 
-    def set(self, key, value):
-        if self.enabled:
+    def set(self, key, value, local=False):
+        if self.enabled and not local:
             self.lstorage.setItem(key, JSON.stringify(value))
         else:
             self.dummy[key] = value
 
-    def clear(self):
-        if self.enabled:
+    def clear(self, local=False):
+        if self.enabled and not local:
             self.lstorage.js_clear()
         else:
             self.dummy.clear()
 
-    def remove(self, key):
-        if self.enabled:
+    def remove(self, key, local=False):
+        if self.enabled and not local:
             self.lstorage.removeItem(key)
         else:
             self.dummy.pop(key, True)
+    __pragma__("nokwargs")
 
 storage = Storage()

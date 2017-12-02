@@ -14,10 +14,11 @@ from src.nav import MenuItem
 
 
 def menu_nav_render():
+    icon_size = "large"
+
     items = []
     items.append(MenuItem("", position="left", header=True, handler=this.props["toggler"],
-                          content=e(ui.Image, src="/static/img/hpx_logo.svg", size="mini",
-                                    inline=True)))
+                          content=e(ui.Icon, className="hpx-standard huge")))
 
     elements = []
     elements_left = []
@@ -25,7 +26,6 @@ def menu_nav_render():
     for n, x in enumerate(items, 1):
         menu_name = x.name
         menu_icon = x.icon
-        icon_size = "large"
 
         if x.position == "right":
             container = elements_right

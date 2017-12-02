@@ -83,7 +83,7 @@ def search_render():
                open=this.state.suggest if not this.state.suggest else js_undefined,
                icon=e(ui.Icon, js_name="search", link=True, onClick=this.on_search),
                onSearchChange=this.on_search_change,
-               defaultValue=utils.get_query("search", "") if this.props.query else ''
+               defaultValue=this.state.query
                ),
              className=this.props.className,
              onSubmit=this.on_search
@@ -132,7 +132,7 @@ def search_option_change(e, d):
 Search = createReactClass({
     'displayName': 'Search',
 
-    'getInitialState': lambda: {'query': '',
+    'getInitialState': lambda: {'query': utils.get_query("search", this.props.search_query) if this.props.query else this.props.search_query,
                                 'case': utils.storage.get("search_case",bool(int(utils.get_query("case", 0)))),
                                 'regex': utils.storage.get("search_regex",bool(int(utils.get_query("regex", 0)))),
                                 'whole': utils.storage.get("search_whole",bool(int(utils.get_query("whole", 0)))),

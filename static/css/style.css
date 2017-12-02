@@ -147,3 +147,37 @@ i.medium-size { font-size: 1.1em !important; }
         max-width: 200px !important;
     }
 }
+
+@font-face {
+    font-family: 'happypandax';
+    src: url('../font/happypandax.eot');
+    src: url('../font/happypandax.eot?#iefix') format('embedded-opentype'), url('../font/happypandax.woff') format('woff'), url('../font/happypandax.ttf') format('truetype'), url('../font/happypandax.svg#happypandax') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
+[class*='hpx-']:before {
+    display: inline-block;
+    font-family: 'happypandax';
+    font-style: normal;
+    font-weight: normal;
+    line-height: 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale
+}
+
+.hpx-standard:before {
+    content: '\0041';
+}
+
+.hpx-alternative:before {
+    content: '\0042';
+}
+
+.hpx-other:before {
+    content: '\0043';
+}
+
+i.huge.icon, i.huge.icons {
+    font-size: 3em;
+}

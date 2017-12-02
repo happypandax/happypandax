@@ -22,13 +22,16 @@ def item_view_menu(history,
                    on_sort_desc=None,
                    default_sort_desc=None,
                    on_search=None,
+                   default_search=None,
                    on_filter_change=None,
                    default_filter=None,
                    on_toggle_config=None):
     return [e(ui.Menu.Item, e(item.ItemDropdown, history=history, on_change=on_item_change, value=default_item, query=True), fitted=True),
             e(ui.Menu.Menu,
                 e(ui.Menu.Item,
-                    e(withRouter(item.Search), size="small", fluid=True, className="fullwidth", on_search=on_search, query=True), className="fullwidth",),
+                    e(withRouter(item.Search), size="small", fluid=True,
+                      className="fullwidth", on_search=on_search,
+                      query=True, search_query=default_search), className="fullwidth",),
                 position="left",
                 className="fullwidth"),
             e(ui.Menu.Item,
@@ -100,7 +103,9 @@ ItemViewPage = createReactClass({
     'on_filter_change': lambda e, d: all((this.setState({'filter_id': d.value}),
                                           utils.storage.set("filter_id", d.value))),
 
-    'on_search': lambda s, o: this.setState({'search_query': s, 'search_options': o}),
+    'on_search': lambda s, o: all((this.setState({'search_query': s, 'search_options': o}),
+                                   utils.storage.set("search_query", s, True),
+                                   utils.storage.set("search_options", o, True))),
 
     'update_menu': lambda: state.app.set_menu_contents(
         item_view_menu(
@@ -112,6 +117,7 @@ ItemViewPage = createReactClass({
             default_item=this.state.item_type,
             default_sort=this.state.sort_idx,
             default_sort_desc=this.state.sort_desc,
+            default_search=this.state.search_query,
             default_filter=this.state.filter_id,
             on_search=this.on_search,
             on_toggle_config=this.toggle_config,
@@ -125,8 +131,8 @@ ItemViewPage = createReactClass({
                                 'filter_id': utils.storage.get("filter_id", int(utils.get_query("filter_id", 0))),
                                 'sort_idx': utils.storage.get("sort_idx_{}".format(ItemType.Gallery), int(utils.get_query("sort_idx", 0))),
                                 'sort_desc': utils.storage.get("sort_desc", bool(utils.get_query("sort_desc", 0))),
-                                'search_query': "",
-                                'search_options': {},
+                                'search_query': utils.storage.get("search_query", "", True),
+                                'search_options': utils.storage.get("search_options", {}, True),
                                 'visible_config': False,
                                 },
 

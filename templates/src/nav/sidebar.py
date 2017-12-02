@@ -27,8 +27,7 @@ def sidebar_nav_render():
 
     items = []
     items.append(MenuItem("", position="left", handler=this.props["toggler"],
-                          content=e(ui.Image, src="/static/img/hpx_logo.svg", size="mini",
-                                    inline=True)))
+                          content=e(ui.Icon, className="hpx-alternative huge left")))
 
     #items.append(MenuItem("Dashboard", "ui.mi-dashboard", icon="home", url="/dashboard", handler=this.props["toggler"]))
     items.append(MenuItem("Favorites", "ui.mi-favorites", icon="heart", url="/favorite", handler=this.props["toggler"]))
