@@ -327,10 +327,9 @@ class ArchiveExistError(ArchiveError):
 
 
 @error_code(900)
-class JSONParseError(ClientError, ServerError):
+class JSONParseError(ServerError):
     """JSON parse error."""
 
     def __init__(self, json_data, name, msg):
-        """init func."""
-        pass
-        # TODO: init both classs. log json_data.
+        super().__init__("Client ''".format(name), msg)
+        # TODO: log data?

@@ -11,7 +11,18 @@ from src.state import state
 from src.single import (galleryitem, pageitem, groupingitem, collectionitem)
 from src import utils
 
-def ItemViewConfig(props):
+def itemviewcfg_onsubmit(e, d):
+    if this.props.on_cfg:
+        this.props.on_cfg(this.cfg)
+
+def itemviewconfig_render():
+    props = this.props
+    cfg = props.cfg or {}
+    cfg_suffix = props.prefix or ""
+    infinite_scroll_cfg = "infinite_scroll"
+    item_count_cfg = "item_count"
+    external_viewer_cfg = "external_viewer"
+
     item_count_options = [
         {'key':10, 'text':'10', 'value':10},
         {'key':20, 'text':'20', 'value':20},
@@ -27,20 +38,24 @@ def ItemViewConfig(props):
 
     ext_viewer_el = []
     if utils.is_same_machine():
-        ext_viewer_el.append(e(ui.Form.Field, control=ui.Checkbox, label="Open in external viewer", toggle=True))
+        ext_viewer_el.append(e(ui.Form.Field, control=ui.Checkbox, label="Open in external viewer", toggle=True,
+                               defaultChecked=cfg.get(external_viewer_cfg, utils.storage.get(external_viewer_cfg+cfg_suffix, False))))
+
 
     return e(ui.Transition,
             e(ui.Container,
               e(ui.Form,
                 e(ui.Form.Group,
-                    e(ui.Form.Field, control=ui.Checkbox, label="Infinite Scroll", toggle=True),
+                    e(ui.Form.Field, control=ui.Checkbox, label="Infinite Scroll", toggle=True,
+                      defaultChecked=cfg.get(infinite_scroll_cfg, utils.storage.get(infinite_scroll_cfg+cfg_suffix, False))),
                     *ext_viewer_el,
                   ),
                 e(ui.Form.Group,
-                    e(ui.Form.Select, options=item_count_options, label="Item Count", inline=True),
+                    e(ui.Form.Select, options=item_count_options, label="Item Count", inline=True,
+                      defaultValue=cfg.get(item_count_cfg, utils.storage.get(item_count_cfg+cfg_suffix, 30))),
                   ),
                 e(ui.Form.Field, "Close", control=ui.Button),
-                onSubmit=props.onSubmit,
+                onSubmit=this.on_submit,
                 ),
               as_=ui.Segment,
             size="tiny",
@@ -51,6 +66,16 @@ def ItemViewConfig(props):
             duration=200,
             unmountOnHide=True, #props.unmountOnHide,
             )
+
+ItemViewConfig = createReactClass({
+    'displayName': 'ItemViewConfig',
+
+    'cfg': {},
+
+    'on_submit': itemviewcfg_onsubmit,
+
+    'render': itemviewconfig_render
+})
 
 def itemviewbase_render():
     props = this.props

@@ -200,7 +200,7 @@ def convert_to_json(buffer, name):
         json_data = json.loads(buffer)
     except json.JSONDecodeError as e:
         raise exceptions.JSONParseError(
-            buffer, name, "Failed parsing json data: {}".format(e))
+            buffer, name, "Failed parsing JSON data: {}".format(e))
     if constants.dev:
         log.d("data:\n", json_data)
     return json_data

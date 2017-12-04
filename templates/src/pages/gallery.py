@@ -19,6 +19,7 @@ def get_config(data=None, error=None):
     elif error:
         state.app.notif("Failed to fetch config: {}".format(error), level="error")
     else:
+        return
         client.call_func(
             "get_config", this.get_config, cfg={
                 'this.use_external_image_viewer': this.state.external_viewer})
@@ -84,8 +85,7 @@ __pragma__("notconv")
 def toggle_external_viewer(e, d):
     v = not d.active
     this.setState({'external_viewer': v})
-    client.call_func("set_config", None, cfg={'this.use_external_image_viewer': v})
-    client.call_func("save_config", None)
+    utils.storage.set('external_viewer', v)
 
 __pragma__("tconv")
 
@@ -362,7 +362,7 @@ Page = createReactClass({
                                 'item_type': ItemType.Gallery,
                                 'loading': True,
                                 'loading_group': True,
-                                'external_viewer': False,
+                                'external_viewer': utils.storage.get("external_viewer", False),
                                 'send_to_recycle': True,
                                 'delete_files': False,
                                 'visible_page_cfg': False,

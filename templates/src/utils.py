@@ -192,6 +192,8 @@ class Storage:
 
     def set(self, key, value, local=False):
         if self.enabled and not local:
+            if value == None: # convert undefined to null
+                value = None
             self.lstorage.setItem(key, JSON.stringify(value))
         else:
             self.dummy[key] = value
@@ -210,3 +212,10 @@ class Storage:
     __pragma__("nokwargs")
 
 storage = Storage()
+
+__pragma__("kwargs")
+def either(a, b=None):
+    if a is None:
+        return b
+    return a
+__pragma__("nokwargs")

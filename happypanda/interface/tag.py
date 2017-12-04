@@ -70,3 +70,24 @@ def get_tags(item_type: enums.ItemType = enums.ItemType.Gallery,
             _msg[ns].append(nstag.tag.name)
 
     return message.Identity('tags', msg)
+
+
+def get_common_tags(item_type: enums.ItemType = enums.ItemType.Collection,
+             item_id: int = 0,
+             limit: int = 10):
+    """
+    Get the most common tags for item
+
+    Args:
+        item_type: possible items are :attr:`.ItemType.Artist`, :attr:`.ItemType.Grouping`, :attr:`.ItemType.Collection`
+        item_id: id of item to fetch tags for
+        limit: limit amount of tags returned
+
+    Returns:
+        .. code-block:: guess
+
+            {
+                namespace : [ tag message object, ...],
+                ...
+            }
+    """
