@@ -16,6 +16,7 @@ changes = """
 - added hpx logo
 - rename 'GalleryUrl' item type to 'Url'
 - implemented item sorting
+- new api function: get_common_tags
 """
 
 

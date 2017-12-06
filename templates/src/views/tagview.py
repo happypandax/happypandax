@@ -8,6 +8,7 @@ from src.ui import ui
 from src.client import client
 from src.state import state
 from src import utils
+from src.single import tagitem
 
 
 def get_tags(data=None, error=None):
@@ -38,7 +39,7 @@ def tag_render():
             e(ui.Table.Row,
                 e(ui.Table.Cell,
                   e(ui.Label.Group,
-                    *[e(ui.Label, x, tag=False) for x in ns_tags],
+                    *[e(tagitem.TagLabel, tag=x, show_ns=False) for x in ns_tags],
                     ),
                   colSpan="2",
                   )))
@@ -50,7 +51,7 @@ def tag_render():
                 e(ui.Table.Cell, ns, collapsing=True),
                 e(ui.Table.Cell,
                   e(ui.Label.Group,
-                    *[e(ui.Label, x, tag=False) for x in ns_tags],
+                    *[e(tagitem.TagLabel, namespace=ns, tag=x, show_ns=False) for x in ns_tags],
                     ),
                   )))
 

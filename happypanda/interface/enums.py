@@ -177,6 +177,8 @@ class ItemSort(_APIEnum):
     GalleryRating = 8
     #: Gallery Read Count
     GalleryReadCount = 9
+    #: Gallery Page Count
+    GalleryPageCount = 10
 
 
 

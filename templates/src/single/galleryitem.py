@@ -123,6 +123,7 @@ def gallery_render():
                    className="card-item bottom right",
                    icon=e(ui.Icon, js_name="ellipsis vertical", bordered=True, link=True, inverted=True),
                    trigger=h("span"),
+                   pointing=True,
                  ),
                className="card-content",
                ),

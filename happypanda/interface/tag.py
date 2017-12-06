@@ -8,7 +8,20 @@ from happypanda.core import db, message
 from happypanda.interface import enums
 from happypanda.core.commands import database_cmd
 
+def _contruct_tags_msg(nstags):
+    msg = {}
+    _msg = {}
+    for nstag in nstags:
+        ns = nstag.namespace.name
+        if ns not in msg:
+            msg[ns] = []
+            _msg[ns] = []
 
+        if nstag.tag.name not in _msg[ns]:
+            msg[ns].append(message.Tag(nstag.tag, nstag).json_friendly(include_key=False))
+            _msg[ns].append(nstag.tag.name)
+
+    return msg
 def get_tags(item_type: enums.ItemType = enums.ItemType.Gallery,
              item_id: int = 0,
              raw: bool = False):
@@ -57,17 +70,7 @@ def get_tags(item_type: enums.ItemType = enums.ItemType.Gallery,
             for p in g_obj.pages.all():  # TODO: we only need tags
                 nstags.extend(p.tags.all())
 
-    msg = {}
-    _msg = {}
-    for nstag in nstags:
-        ns = nstag.namespace.name
-        if ns not in msg:
-            msg[ns] = []
-            _msg[ns] = []
-
-        if nstag.tag.name not in _msg[ns]:
-            msg[ns].append(message.Tag(nstag.tag, nstag).json_friendly(include_key=False))
-            _msg[ns].append(nstag.tag.name)
+    msg = _contruct_tags_msg(nstags)
 
     return message.Identity('tags', msg)
 
@@ -91,3 +94,12 @@ def get_common_tags(item_type: enums.ItemType = enums.ItemType.Collection,
                 ...
             }
     """
+    item_type = enums.ItemType.get(item_type)
+
+    _, db_item = item_type._msg_and_model(
+        (enums.ItemType.Artist, enums.ItemType.Collection, enums.ItemType.Grouping))
+
+    nstags = database_cmd.MostCommonTags().run(db_item, item_id, limit)
+    msg = _contruct_tags_msg(nstags)
+
+    return message.Identity('tags', msg)

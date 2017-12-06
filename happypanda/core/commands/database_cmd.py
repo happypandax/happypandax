@@ -205,11 +205,13 @@ class GetDatabaseSort(Command):
 
     names = CommandEntry("names", dict, str)
 
-    expressions = CommandEntry("expressions", dict, str)
+    orderby = CommandEntry("orderby", dict, str)
+
+    groupby = CommandEntry("groupby", dict, str)
 
     joins = CommandEntry("joins", tuple, str)
 
-    SortTuple = namedtuple("SortTuple", ["expr", "joins"])
+    SortTuple = namedtuple("SortTuple", ["orderby", "joins", "groupby"])
 
     def __init__(self):
         super().__init__()
@@ -227,10 +229,11 @@ class GetDatabaseSort(Command):
             ItemSort.GalleryUpdated.value:"Last Updated",
             ItemSort.GalleryRating.value:"Rating",
             ItemSort.GalleryReadCount.value:"Read Count",
+            ItemSort.GalleryPageCount.value:"Page Count",
             }
 
-    @expressions.default(capture=True)
-    def _gallery_expr(model_name, capture=db.model_name(db.Gallery)):
+    @orderby.default(capture=True)
+    def _gallery_orderby(model_name, capture=db.model_name(db.Gallery)):
         model = GetModelClass().run(model_name)
         return {
             ItemSort.GalleryRandom.value:func.random(),
@@ -242,6 +245,14 @@ class GetDatabaseSort(Command):
             ItemSort.GalleryUpdated.value:db.Gallery.last_updated,
             ItemSort.GalleryRating.value:db.Gallery.rating,
             ItemSort.GalleryReadCount.value:db.Gallery.times_read,
+            ItemSort.GalleryPageCount.value:db.func.count(db.Page.id),
+            }
+
+    @groupby.default(capture=True)
+    def _gallery_groupby(model_name, capture=db.model_name(db.Gallery)):
+        model = GetModelClass().run(model_name)
+        return {
+            ItemSort.GalleryPageCount.value:db.Gallery.id,
             }
 
     @joins.default(capture=True)
@@ -250,6 +261,7 @@ class GetDatabaseSort(Command):
         return {
             ItemSort.GalleryTitle.value:(db.Gallery.titles,),
             ItemSort.GalleryArtist.value:(db.Gallery.artists, db.Artist.names,),
+            ItemSort.GalleryPageCount.value:(db.Gallery.pages,),
             }
 
     def main(self, model: db.Base, sort_index: int=None, name: bool=False) -> object:
@@ -261,23 +273,32 @@ class GetDatabaseSort(Command):
                 for x in plg.all(default=True):
                     items.update(x)
         else:
-            expr = {}
-            with self.expressions.call_capture(model_name, model_name) as plg:
+            orders = {}
+            with self.orderby.call_capture(model_name, model_name) as plg:
                 for x in plg.all(default=True):
-                    expr.update(x)
+                    orders.update(x)
+
+            groups = {}
+            with self.groupby.call_capture(model_name, model_name) as plg:
+                for x in plg.all(default=True):
+                    groups.update(x)
 
             joins = {}
             with self.joins.call_capture(model_name, model_name) as plg:
                 for x in plg.all(default=True):
                     joins.update(x)
 
-            for k, v in expr.items():
+            for k, v in orders.items():
+                a = v
+                b = tuple()
+                c = None
                 if k in joins:
                     t = joins[k]
                     if isinstance(t, tuple):
-                        items[k] = self.SortTuple(v, t)
-                        continue
-                items[k] = self.SortTuple(v, tuple())
+                        b = t
+                if k in groups:
+                    c = groups[k]
+                items[k] = self.SortTuple(a, b, c)
 
         return items.get(sort_index) if sort_index else items
 
@@ -314,7 +335,7 @@ class GetModelItems(Command):
         return q.count()
 
     def main(self, model: db.Base, ids: set = None, limit: int = 999,
-             filter: str = None, order_by: str = None,
+             filter: str = None, order_by: str = None, group_by: str=None,
              offset: int = 0, columns: tuple = tuple(),
              join: str = None, count: bool = False) -> tuple:
         if ids is None:
@@ -342,6 +363,10 @@ class GetModelItems(Command):
                 join = [join]
             for j in join:
                 q = q.join(self._get_sql(j))
+
+        if group_by is not None:
+            criteria = True
+            q = q.group_by(self._get_sql(group_by))
 
         if order_by is not None:
             criteria = True
@@ -381,3 +406,22 @@ class GetModelItems(Command):
             log.d("Returning", len(self.fetched_items), "fetched items")
         return self.fetched_items
 
+class MostCommonTags(Command):
+    """
+    Get the most common tags for item
+    """
+
+    def main(self, model: db.Base, item_id: int, limit: int=20) -> tuple:
+        assert issubclass(model, (db.Artist, db.Grouping, db.Collection))
+
+        s = constants.db_session()
+        r = s.query(db.NamespaceTags).join(
+                    db.Taggable.tags).filter(
+                    db.Taggable.id.in_(
+                        s.query(
+                            db.Gallery.taggable_id).join(
+                                model.galleries).filter(
+                                    model.id==item_id))
+                    ).group_by(db.NamespaceTags).order_by(
+                       db.desc_expr(db.func.count(db.NamespaceTags.id))).limit(limit).all()
+        return tuple(r)

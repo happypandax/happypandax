@@ -153,6 +153,8 @@ def library_view(item_type: enums.ItemType = enums.ItemType.Gallery,
     items = message.List(db_model.__name__.lower(), db_msg)
 
     ordering = None
+    order_exp = None
+    group_exp = None
 
     if sort_by is not None:
         try:
@@ -173,13 +175,14 @@ def library_view(item_type: enums.ItemType = enums.ItemType.Gallery,
         join_exp.extend(ordering.joins)
         # need unique but ordered results, cannot use set so we make use with this
         join_exp = tuple(OrderedDict([(x, None) for x in join_exp]).keys())
-        ordering = ordering.expr
+        group_exp = ordering.groupby
+        order_exp = ordering.orderby
         if sort_desc:
-            ordering = db.desc_expr(ordering)
+            order_exp = db.desc_expr(order_exp)
 
     [items.append(db_msg(x)) for x in database_cmd.GetModelItems().run(
         db_model, model_ids, limit=limit, offset=page * limit,
-        filter=filter_op, join=join_exp, order_by=ordering)]
+        filter=filter_op, join=join_exp, order_by=order_exp, group_by=group_exp)]
 
     return items
 
