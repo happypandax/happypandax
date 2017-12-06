@@ -41,10 +41,10 @@ def sidebar_nav_render():
     items.append(MenuItem("Inbox", "ui.mi-inbox", icon="inbox", url="/inbox", handler=this.props["toggler"]))
     items.append(
         MenuItem(
-            "Management",
-            "ui.mi-management",
+            "directory",
+            "ui.mi-directory",
             icon="cubes",
-            url="/management",
+            url="/directory",
             handler=this.props["toggler"]))
     # Note: Artists, Tags, Etc. Able to favorite artists and tags
     items.append(

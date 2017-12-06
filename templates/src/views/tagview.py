@@ -17,7 +17,7 @@ def get_tags(data=None, error=None):
         if this.props.on_tags:
             this.props.on_tags(data)
     elif error:
-        state.app.notif("Failed to fetch tags ({})".format(this.props.id), level="error")
+        state.app.notif("Failed to fetch tags ({})".format(this.props.item_id), level="error")
     else:
         if this.props.item_id and this.props.item_type:
             args = {}
@@ -28,6 +28,17 @@ def get_tags(data=None, error=None):
 
             client.call_func("get_tags", this.get_tags, **args)
 
+
+def tag_on_update(p_props, p_state):
+    if any((
+        p_props.item_id != this.props.item_id,
+        p_props.item_type != this.props.item_type,
+        p_props.raw != this.props.raw,
+    )):
+        this.get_tags()
+
+    if p_props.data != this.props.data:
+        this.setState({'data':this.props.data})
 
 def tag_render():
 
@@ -67,6 +78,7 @@ TagView = createReactClass({
     'get_tags': get_tags,
 
     'componentDidMount': lambda: this.get_tags() if not utils.defined(this.props.data) else None,
+    'componentDidUpdate': tag_on_update,
 
     'render': tag_render
 })

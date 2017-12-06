@@ -169,6 +169,9 @@ def scroll_to_element(el):
 def is_same_machine():
     return document.getElementById('root').dataset.machine == "True"
 
+def get_version():
+    return document.getElementById('root').dataset.version
+
 moment.locale(get_locale())
 
 class Storage:

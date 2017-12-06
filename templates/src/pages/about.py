@@ -10,7 +10,7 @@ from src.client import client
 from src.state import state
 from src.ui import ui
 from src.i18n import tr
-from src.utils import defined, is_same_machine
+from src.utils import defined, is_same_machine, get_version
 
 def about_info(props):
     top_items = []
@@ -29,17 +29,17 @@ def about_info(props):
     second_rows = []
     second_rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, tr(props.that, "", "Client version"), as_="h5"), collapsing=True),
-                  e(ui.Table.Cell, e(ui.Label, basic=True))))
+                  e(ui.Table.Cell, e(ui.Label, get_version(), basic=True))))
     second_rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, tr(props.that, "", "Server version"), as_="h5"), collapsing=True),
-                  e(ui.Table.Cell, e(ui.Label, basic=True))))
+                  e(ui.Table.Cell, e(ui.Label, ".".join(props.version.core) if defined(props.version.core) else "", basic=True))))
     second_rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, tr(props.that, "", "Database version"), as_="h5"), collapsing=True),
-                  e(ui.Table.Cell, e(ui.Label, basic=True))))
+                  e(ui.Table.Cell, e(ui.Label, ".".join(props.version.db) if defined(props.version.db) else "", basic=True))))
     second_rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, tr(props.that, "", "Torrent Client version"), as_="h5"), collapsing=True),
-                  e(ui.Table.Cell, e(ui.Label, basic=True))))
 
+                  e(ui.Table.Cell, e(ui.Label, ".".join(props.version.torrent) if defined(props.version.torrent) else "", basic=True))))
     return e(ui.Grid,
              e(ui.Grid.Row, *top_items ),
              e(ui.Grid.Row,
@@ -107,12 +107,21 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
              container=True,
              )
 
-def abouttab_render():
 
+def abouttab_get_version(data=None, error=None):
+    if data is not None and not error:
+        this.setState({"version": data})
+    elif error:
+        state.app.notif("Failed to retrieve version info", level="warning")
+    else:
+        client.call_func("get_version", this.get_version)
+
+def abouttab_render():
+    version = this.state.version
     return e(ui.Tab,
              panes=[
                  {'menuItem': { 'key':'info', 'icon':'info circle', 'content': tr(this, "ui.mi-about-info", "Info")},
-                  'render': lambda: e(about_info, that=this)},
+                  'render': lambda: e(about_info, that=this, version=version)},
                 {'menuItem': { 'key':'plugins', 'icon':'cubes', 'content': tr(this, "ui.mi-about-plugins", "Plugins")}, },
                 {'menuItem': { 'key':'statistics', 'icon':'bar chart', 'content': tr(this, "ui.mi-about-stats", "Statistics")}, },
                 {'menuItem': { 'key': 'bug', 'icon':'bug', 'content': tr(this, "ui.mi-about-bug", "Report bug") }, },
@@ -126,9 +135,13 @@ def abouttab_render():
 AboutTab = createReactClass({
     'displayName': 'AboutTab',
 
-    'getInitialState': lambda: {'config': {}, 'refresh': False, 'u_config': {}},
+    'getInitialState': lambda: {
+        'version': {},
+        },
 
-    #'componentDidMount': lambda: this.get_config(),
+    'get_version': abouttab_get_version,
+
+    'componentDidMount': lambda: this.get_version(),
 
     'render': abouttab_render
 })

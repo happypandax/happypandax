@@ -15,9 +15,10 @@ def get_tags(data=None, error=None):
     elif error:
         state.app.notif("Failed to fetch tags ({})".format(this.props.id), level="error")
     else:
-        id = this.state.id
-        if this.state.data:
-            id = this.state.data.id
+        id = this.props.id or this.state.id
+        data = this.props.data or this.state.data
+        if data:
+            id = data.id
         client.call_func("get_common_tags", this.get_tags,
                          item_type=this.state.item_type,
                          item_id=id, limit=10)
@@ -26,11 +27,12 @@ __pragma__("tconv")
 def artistlbl_render():
     name = ""
     fav = 0
-    nstags = this.state.tags or {}
-    if this.state.data:
-        if this.state.data.names:
-            name = this.state.data.names[0].js_name
-        if this.state.data.metatags.favorite:
+    nstags = this.props.tags or this.state.tags or {}
+    data = this.props.data or this.state.data
+    if data:
+        if data.names:
+            name = data.names[0].js_name
+        if data.metatags.favorite:
             fav = 1
 
     tag_lbl = []
@@ -41,7 +43,7 @@ def artistlbl_render():
             tag_lbl.append(e(tagitem.TagLabel, tag=t))
 
     for ns in sorted(dict(nstags).keys()):
-        tags = sorted([x.js_name for x in nstags[ns]])
+        tags = [x.js_name for x in nstags[ns]]
         for t in tags:
             tag_lbl.append(e(tagitem.TagLabel, namespace=ns, tag=t, show_ns=True))
 

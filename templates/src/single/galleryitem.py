@@ -93,11 +93,12 @@ def gallery_render():
 
 
     menu_options = []
-    menu_options.append({'key':'read', 'text':"Read", 'as':Link, 'to':utils.build_url("/item/page", {'gid': item_id}, keep_query=False)})
-    menu_options.append({'key':'later', 'text':"Save for later", 'icon':"history"})
+    menu_options.append({'selected':False, 'key':'read', 'text':"Read", 'as':Link, 'to':utils.build_url("/item/page", {'gid': item_id}, keep_query=False)})
+    menu_options.append({'selected':False, 'key':'later', 'text':"Save for later", 'icon':"history"})
+    menu_options.append({'selected':False, 'key':'add_filter', 'text':"Add to filter", 'icon':"filter"})
     if inbox:
-        menu_options.append({'key':'library', 'text':"Send to Library", 'icon':"grid layout"})
-    menu_options.append({'key':'trash', 'text':"Send to Trash", 'icon':"trash"})
+        menu_options.append({'selected':False, 'key':'library', 'text':"Send to Library", 'icon':"grid layout"})
+    menu_options.append({'selected':False, 'key':'trash', 'text':"Send to Trash", 'icon':"trash"})
 
 
     return e(ui.Card,
@@ -124,6 +125,7 @@ def gallery_render():
                    icon=e(ui.Icon, js_name="ellipsis vertical", bordered=True, link=True, inverted=True),
                    trigger=h("span"),
                    pointing=True,
+                   selectOnBlur=False,
                  ),
                className="card-content",
                ),

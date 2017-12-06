@@ -241,7 +241,8 @@ def sortdropdown_render():
              value=this.props.value if this.props.value else js_undefined,
              defaultValue=this.props.defaultValue if this.props.defaultValue else js_undefined,
              onChange=this.item_change,
-             loading=this.state.loading
+             loading=this.state.loading,
+             selectOnBlur=False,
              )
 
 SortDropdown = createReactClass({
@@ -294,6 +295,7 @@ def filterdropdown_render():
              defaultValue=this.props.defaultValue if this.props.defaultValue else js_undefined,
              onChange=this.item_change,
              loading=this.state.loading,
+             selectOnBlur=False,
              )
 
 FilterDropdown = createReactClass({

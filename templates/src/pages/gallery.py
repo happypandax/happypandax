@@ -95,6 +95,15 @@ def open_external():
         client.call_func("open_gallery", None, item_id=this.state.data.id, item_type=this.state.item_type)
 __pragma__("notconv")
 
+def gallery_on_update(p_props, p_state):
+    if p_props.location.search != this.props.location.search:
+        this.setState({'id': int(utils.get_query("id", 0))})
+
+    if any((
+        p_state.id != this.state.id,
+    )):
+        this.get_item()
+
 __pragma__("tconv")
 
 
@@ -383,6 +392,7 @@ Page = createReactClass({
                                        (this.get_item() if not this.state.data else None),
                                        this.get_config(),
                                        )),
+    'componentDidUpdate': gallery_on_update,
 
     'render': page_render
 })

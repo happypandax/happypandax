@@ -10,6 +10,7 @@ dev = False
 build = 109
 version = (0, 0, 1)
 version_db = (0, 0, 1)
+version_web = (0, 0, 1)
 
 ## PATHS & FILENAMES ##
 dir_root = ''

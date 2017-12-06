@@ -180,4 +180,6 @@ def server_proxy():
 @happyweb.route('/', defaults={'path': ''})
 @happyweb.route('/<path:path>')
 def app_base(path):
-    return render_template('base.html', same_machine=request.remote_addr == "127.0.0.1")
+    return render_template('base.html',
+                           same_machine=request.remote_addr == "127.0.0.1",
+                           version=".".join(str(x) for x in constants.version_web))

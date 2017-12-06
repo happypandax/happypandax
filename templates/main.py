@@ -15,7 +15,7 @@ from src.ui import ui, Alert, Notif
 from src.nav import (sidebar, menu)
 from src.pages import (api, collection, gallery,
                        dashboard, favorites, inbox,
-                       library, page)
+                       library, page, directory)
 
 
 def on_update(props):
@@ -105,6 +105,7 @@ def app_render():
                      e(Route, path="/library", component=this.library_page),
                      e(Route, path="/favorite", component=this.favorites_page),
                      e(Route, path="/inbox", component=this.inbox_page),
+                     e(Route, path="/directory", component=this.directory_page),
                      e(Route, path="/item/gallery", component=this.gallery_page),
                      e(Route, path="/item/collection", component=this.collection_page),
                      e(Route, path="/item/page", component=this.page_page),
@@ -146,6 +147,7 @@ App = createReactClass({
     'page_page': lambda p: e(page.Page, menu=this.set_menu_contents, **p),
     'gallery_page': lambda p: e(gallery.Page, menu=this.set_menu_contents, **p),
     'collection_page': lambda p: e(collection.Page, menu=this.set_menu_contents, **p),
+    'directory_page': lambda p: e(directory.Page, menu=this.set_menu_contents, **p),
 
     'render': app_render,
 })

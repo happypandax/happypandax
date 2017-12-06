@@ -7,14 +7,14 @@ from src.ui import ui
 
 __pragma__("tconv")
 def taglbl_render():
-    ns = this.state.namespace or ""
-    tag = this.state.tag or ""
+    ns = this.props.namespace or this.state.namespace or ""
+    tag = this.props.tag or this.state.tag or ""
     fav = 0
 
     if ns == "__namespace__":
         ns = ""
 
-    show_ns = this.props.show_ns and ns
+    show_ns = this.props.show_ns or this.props.show_ns and ns
 
 
     lbl_args = []
