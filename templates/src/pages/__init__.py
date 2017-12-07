@@ -73,8 +73,6 @@ def itemviewpage_update(p_p, p_s):
 
 
 def itemviewpage_render():
-    cfg_el = e(itemview.ItemViewConfig, onSubmit=this.toggle_config, visible=this.state.visible_config)
-
     return e(itemview.ItemView,
              item_type=this.state.item_type,
              view_filter=this.props.view_type,
@@ -83,7 +81,9 @@ def itemviewpage_render():
              search_options=this.state.search_options,
              sort_by=this.state.sort_idx,
              sort_desc=this.state.sort_desc,
-             config_el=cfg_el,
+             toggle_config=this.toggle_config,
+             visible_config=this.state.visible_config,
+             config_suffix="main"
              )
 
 ItemViewPage = createReactClass({

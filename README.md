@@ -27,7 +27,7 @@ In case it's ever down, build the docs by running: `python build_docs.py`
 
 # Contributing
 
-Please refer to [doc](https://pewpews.github.io/happypandax/#for-developers)
+Please refer to [doc](https://happypandax.github.io/server/env.html)
 
 # License
 

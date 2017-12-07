@@ -90,11 +90,6 @@ def toggle_external_viewer(e, d):
 __pragma__("tconv")
 
 
-def open_external():
-    if this.state.data:
-        client.call_func("open_gallery", None, item_id=this.state.data.id, item_type=this.state.item_type)
-__pragma__("notconv")
-
 def gallery_on_update(p_props, p_state):
     if p_props.location.search != this.props.location.search:
         this.setState({'id': int(utils.get_query("id", 0))})
@@ -273,11 +268,6 @@ def page_render():
               centered=True,
               ))
 
-    pages_cfg = e(itemview.ItemViewConfig,
-                  onSubmit=this.toggle_pages_config,
-                  visible=this.state.visible_page_cfg
-                  )
-
     return e(ui.Grid,
              e(ui.Grid.Row, e(ui.Grid.Column, e(ui.Breadcrumb, icon="right arrow",))),
              e(ui.Grid.Row,
@@ -348,9 +338,9 @@ def page_render():
                                                 related_type=ItemType.Page,
                                                 view_filter=None,
                                                 label="Pages",
-                                                config_el=pages_cfg,
+                                                config_suffix="gallerypage",
                                                 toggle_config=this.toggle_pages_config,
-                                                external_viewer=this.state.external_viewer,
+                                                visible_config=this.state.visible_page_cfg,
                                                 container=True, secondary=True))),
              stackable=True,
              container=True,
@@ -360,6 +350,8 @@ __pragma__("notconv")
 
 Page = createReactClass({
     'displayName': 'GalleryPage',
+
+    'cfg_suffix': "gallerypage",
 
     'getInitialState': lambda: {'id': int(utils.get_query("id", 0)),
                                 'data': this.props.data,
@@ -383,7 +375,7 @@ Page = createReactClass({
     'get_lang': get_lang,
     'get_status': get_status,
     'get_config': get_config,
-    'open_external': open_external,
+    'open_external': galleryitem.open_external,
 
     'toggle_pages_config': lambda a: this.setState({'visible_page_cfg': not this.state.visible_page_cfg}),
     'toggle_external_viewer': toggle_external_viewer,

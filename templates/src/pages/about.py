@@ -21,10 +21,10 @@ def about_info(props):
 
     first_rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, tr(props.that, "", "Developer"), as_="h5"), collapsing=True),
-                  e(ui.Table.Cell, h("a", "Twiddly", href="https://github.com/Pewpews"))))
+                  e(ui.Table.Cell, h("a", "Twiddly", href="https://github.com/Pewpews", target="_blank"))))
     first_rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, tr(props.that, "", "Twitter"), as_="h5"), collapsing=True),
-                  e(ui.Table.Cell, h("a", "@pewspew", href="https://twitter.com/pewspew"))))
+                  e(ui.Table.Cell, h("a", "@pewspew", href="https://twitter.com/pewspew", target="_blank"))))
 
     second_rows = []
     second_rows.append(e(ui.Table.Row,
@@ -67,7 +67,7 @@ def about_info(props):
              e(ui.Grid.Row,
                e(ui.Grid.Column,
                  e(ui.Button, e(ui.Icon, js_name="refresh"), tr(props.that, "", "Check for updates")),
-                 e(ui.Button, e(ui.Icon, js_name="home"), tr(props.that, "", "Visit homepage"),
+                 e(ui.Button, e(ui.Icon, js_name="github"), tr(props.that, "", "Github Repo"),
                    as_="a", href="https://github.com/happypandax", target="_blank"),
                  #e(ui.Button, e(ui.Icon, js_name="heart"), tr(props.that, "", "Support on patreon"),
                  #  as_="a", href="https://github.com/happypandax", target="_blank"),

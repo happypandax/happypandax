@@ -5,7 +5,7 @@ from src.react_utils import (h,
                              createReactClass,
                              Link)
 from src.ui import ui
-from src.client import (ItemType, ImageSize)
+from src.client import (ItemType, ImageSize, client)
 from src.state import state
 from src.single import thumbitem, artistitem
 from src import utils
@@ -20,6 +20,13 @@ def gallery_on_update(p_props, p_state):
     if p_props.data != this.props.data:
         this.setState({'data': this.props.data, 'id': this.props.data.id if this.props.data else None})
 
+__pragma__("tconv")
+
+
+def open_external():
+    if this.state.data:
+        client.call_func("open_gallery", None, item_id=this.state.data.id, item_type=this.state.item_type)
+__pragma__("notconv")
 
 def gallery_render():
     fav = 0
@@ -93,7 +100,10 @@ def gallery_render():
 
 
     menu_options = []
-    menu_options.append({'selected':False, 'key':'read', 'text':"Read", 'as':Link, 'to':utils.build_url("/item/page", {'gid': item_id}, keep_query=False)})
+    if this.props.external_viewer:
+        menu_options.append({'selected':False, 'key':'read', 'text':"Read", 'onClick':this.open_external})
+    else:
+        menu_options.append({'selected':False, 'key':'read', 'text':"Read", 'as':Link, 'to':utils.build_url("/item/page", {'gid': item_id}, keep_query=False)})
     menu_options.append({'selected':False, 'key':'later', 'text':"Save for later", 'icon':"history"})
     menu_options.append({'selected':False, 'key':'add_filter', 'text':"Add to filter", 'icon':"filter"})
     if inbox:
@@ -159,6 +169,7 @@ Gallery = createReactClass({
                                 'tags': this.props.tags,
                                 },
     'on_tags': on_tags,
+    'open_external': open_external,
 
     'componentWillMount': lambda: this.setState({'id': this.props.data.id if this.props.data else this.state.data.id if this.state.data else None}),
     'componentDidUpdate': gallery_on_update,
