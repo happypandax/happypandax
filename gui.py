@@ -2,6 +2,8 @@ import sys
 import os
 import qtawesome as qta
 import functools
+import psutil
+import signal
 
 from PyQt5.QtWidgets import (QApplication,
                              QMainWindow,
@@ -15,14 +17,39 @@ from PyQt5.QtWidgets import (QApplication,
                              QScrollArea,
                              QPushButton,
                              QLabel,
+                             QMessageBox,
+                             QSystemTrayIcon,
+                             QMenu,
                              QCheckBox)
 from PyQt5.QtGui import QIcon, QDesktopServices, QPalette
 from PyQt5.QtCore import Qt, QUrl
 from i18n import t
+from subprocess import Popen, CREATE_NEW_CONSOLE
+from threading import Thread
 
 from happypanda.common import constants, utils, config
+from happypanda import main
 
 app = None
+
+def kill_proc_tree(pid, sig=signal.SIGTERM, include_parent=True,
+                   timeout=None, on_terminate=None):
+    """Kill a process tree (including grandchildren) with signal
+    "sig" and return a (gone, still_alive) tuple.
+    "on_terminate", if specified, is a callabck function which is
+    called as soon as a child terminates.
+    """
+    if pid == os.getpid():
+        raise RuntimeError("I refuse to kill myself")
+    parent = psutil.Process(pid)
+    children = parent.children(recursive=True)
+    if include_parent:
+        children.append(parent)
+    for p in children:
+        p.send_signal(sig)
+    gone, alive = psutil.wait_procs(children, timeout=timeout,
+                                    callback=on_terminate)
+    return (gone, alive)
 
 class SettingsTabs(QTabWidget):
     def __init__(self, *args, **kwargs):
@@ -108,12 +135,17 @@ class Window(QMainWindow):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.tray = QSystemTrayIcon(self)
+        self.closing = False
         self.server_started = False
         self.client_started = False
-        self.start_ico = qta.icon("fa.play", color="#41f46b")
+        self.start_ico = QIcon(os.path.join(constants.dir_static, "favicon.ico")) #qta.icon("fa.play", color="#41f46b")
         self.stop_ico = qta.icon("fa.stop", color="#f45f42")
-
+        self.server_process = None
+        self.webclient_process = None
         self.create_ui()
+        if config.gui_autostart_server.value:
+            self.toggle_server()
 
     def create_ui(self):
         w = QWidget(self)
@@ -127,19 +159,19 @@ class Window(QMainWindow):
         self.server_btn.clicked.connect(self.toggle_server)
         self.server_btn.setShortcut(Qt.CTRL|Qt.Key_S)
 
-        self.webclient_btn = QPushButton(self.start_ico, t("", default="Start webclient"))
-        self.webclient_btn.clicked.connect(self.toggle_client)
-        self.webclient_btn.setShortcut(Qt.CTRL|Qt.Key_W)
+        #self.webclient_btn = QPushButton(self.start_ico, t("", default="Start webclient"))
+        #self.webclient_btn.clicked.connect(self.toggle_client)
+        #self.webclient_btn.setShortcut(Qt.CTRL|Qt.Key_W)
 
         open_config_btn = QPushButton(qta.icon("fa.cogs"), t("", default="Open configuration"))
         open_config_btn.clicked.connect(self.open_cfg)
         open_config_btn.setShortcut(Qt.CTRL|Qt.Key_C)
 
-        for b in (self.server_btn, self.webclient_btn, open_config_btn):
+        for b in (self.server_btn, open_config_btn):
             b.setFixedHeight(40)
         button_layout = QHBoxLayout(buttons)
         button_layout.addWidget(self.server_btn)
-        button_layout.addWidget(self.webclient_btn)
+        #button_layout.addWidget(self.webclient_btn)
         button_layout.addWidget(open_config_btn)
 
         main_layout = QVBoxLayout(w)
@@ -147,26 +179,87 @@ class Window(QMainWindow):
         main_layout.addWidget(buttons)
         self.setCentralWidget(w)
 
+        self.tray.setIcon(QIcon(os.path.join(constants.dir_static, "favicon.ico")))
+        self.tray.activated.connect(self.tray_activated)
+        tray_menu = QMenu()
+        tray_menu.addAction(t("", default="Show"), lambda: self.show())
+        tray_menu.addSeparator()
+        tray_menu.addAction(t("", default="Quit"), lambda: self.real_close())
+        self.tray.setContextMenu(tray_menu)
+
+    def real_close(self):
+        self.closing = True
+        self.close()
+
+    def tray_activated(self, reason):
+        if reason != QSystemTrayIcon.Context:
+            self.show()
+
     def open_cfg(self):
-        QDesktopServices.openUrl(QUrl(constants.config_path, QUrl.TolerantMode))
+        if os.path.exists(constants.config_path):
+            QDesktopServices.openUrl(QUrl(constants.config_path, QUrl.TolerantMode))
 
     def toggle_server(self):
         self.server_started = not self.server_started
         if self.server_started:
             self.server_btn.setText(t("", default="Stop server"))
             self.server_btn.setIcon(self.stop_ico)
+            if not self.server_process:
+               self.server_process = self.start_server()
         else:
             self.server_btn.setText(t("", default="Start server"))
             self.server_btn.setIcon(self.start_ico)
+            if self.server_process:
+                self.stop_process(self.server_process)
+                self.server_process = None
 
     def toggle_client(self):
         self.client_started = not self.client_started
         if self.client_started:
             self.webclient_btn.setText(t("", default="Stop webclient"))
             self.webclient_btn.setIcon(self.stop_ico)
+
         else:
             self.webclient_btn.setText(t("", default="Start webclient"))
             self.webclient_btn.setIcon(self.start_ico)
+
+    def stop_process(self, p):
+        if p:
+            try:
+                kill_proc_tree(p.pid)
+                p.kill()
+            except psutil.NoSuchProcess:
+                pass
+
+    def watch_process(self, cb, p):
+        p.wait()
+        cb()
+
+    def start_server(self):
+        p = Popen([sys.executable, os.path.abspath(main.__file__)], creationflags=CREATE_NEW_CONSOLE)
+        Thread(target=self.watch_process, args=(self.toggle_server, p)).start()
+        return p
+
+    def closeEvent(self, ev):
+        if config.gui_minimize_on_close and not self.closing:
+            self.tray.show()
+            self.hide()
+            ev.ignore()
+            return
+        self.closing = False
+        if any((self.server_started, self.client_started)):
+            if not self.isVisible():
+                self.show()
+            if QMessageBox.warning(self,
+                                   self.windowTitle(),
+                                   t("", default="Server or client is still running\nAre you sure you want to quit?"),
+                                   QMessageBox.Yes | QMessageBox.No, QMessageBox.No)\
+               == QMessageBox.No:
+                ev.ignore()
+                return
+        [self.stop_process(x) for x in (self.server_process, self.webclient_process)]
+        super().closeEvent(ev)
+
 
 if __name__ == "__main__":
     utils.setup_i18n()
@@ -182,6 +275,9 @@ if __name__ == "__main__":
 
     window = Window()
     window.resize(600, 600)
-    window.show()
+    if config.gui_start_minimized.value:
+        window.tray.show()
+    else:
+        window.show()
 
     sys.exit(app.exec())

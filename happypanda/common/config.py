@@ -492,4 +492,34 @@ with config.namespace(client_ns):
         "en_us",
         "The default translation locale when none is specified. See folder /translations for available locales")
 
+gui_ns = "gui"
+
+with config.namespace(gui_ns):
+
+    gui_start_at_boot = config.create(
+        None,
+        "start_at_boot",
+        False,
+        "Start the HPX GUI at boot")
+
+    gui_autostart_server = config.create(
+        None,
+        "autostart_server",
+        False,
+        "Start the server automatically on HPX GUI startup")
+
+    gui_start_minimized = config.create(
+        None,
+        "start_minimized",
+        False,
+        "Start the HPX GUI in a minimized to tray state")
+
+    gui_minimize_on_close = config.create(
+        None,
+        "minimize_on_close",
+        False,
+        "Minimize the program to tray on close button")
+
+
+
 config_doc = config.doc_render()  # for doc
