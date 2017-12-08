@@ -51,6 +51,10 @@ class ConfigNode:
     def get(self, *args, **kwargs):
         return self._cfg.get(*args, **kwargs)
 
+    @classmethod
+    def get_all(cls):
+        return cls._cfg_nodes
+
     @property
     def value(self):
         with self._cfg.tmp_config(self.namespace, self._get_ctx_config().get(self._cfg.format_namespace(self.namespace))):

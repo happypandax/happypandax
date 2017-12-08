@@ -15,12 +15,6 @@ from happypanda.core.commands import database_cmd, search_cmd
 
 log = hlogger.Logger(__name__)
 
-i18n.load_path.append(constants.dir_translations)
-i18n.set("file_format", "yaml")
-i18n.set("filename_format", "{locale}.{namespace}.{format}")
-i18n.set("error_on_missing_translation", True)
-
-
 def _view_helper(item_type: enums.ItemType=enums.ItemType.Gallery,
                  search_query: str = "",
                  filter_id: int = None,

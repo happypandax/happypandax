@@ -6,8 +6,6 @@ if __package__ is None and not hasattr(sys, 'frozen'):
     path = os.path.realpath(os.path.abspath(__file__))
     sys.path.insert(0, os.path.dirname(os.path.dirname(path)))
 
-import i18n  # noqa: E402
-
 from gevent import monkey  # noqa: E402
 
 from multiprocessing import Process  # noqa: E402
@@ -47,8 +45,7 @@ def start(argv=None, db_kwargs={}):
             io_cmd.CoreFS(constants.config_example_path).path), stdout=True)
         return
 
-    i18n.set("locale", config.translation_locale.value)
-    i18n.set("fallback", config.translation_locale.value)
+    utils.setup_i18n()
 
     if not args.only_web:
         constants.available_commands = command.get_available_commands()

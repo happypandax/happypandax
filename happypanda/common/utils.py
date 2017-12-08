@@ -12,6 +12,7 @@ import traceback
 import gevent
 import platform
 import threading
+import i18n
 
 from inspect import ismodule, currentframe, getframeinfo
 from contextlib import contextmanager
@@ -25,6 +26,14 @@ ImageSize = namedtuple("ImageSize", ['width', 'height'])
 
 temp_dirs = []
 
+i18n.load_path.append(constants.dir_translations)
+i18n.set("file_format", "yaml")
+i18n.set("filename_format", "{locale}.{namespace}.{format}")
+i18n.set("error_on_missing_translation", True)
+
+def setup_i18n():
+    i18n.set("locale", config.translation_locale.value)
+    i18n.set("fallback", config.translation_locale.value)
 
 def setup_dirs():
     "Creates directories at the specified root path"
