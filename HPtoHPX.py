@@ -6,6 +6,7 @@ import copy
 import arrow
 import argparse
 import rarfile
+import time
 from multiprocessing import Process, Queue, Pipe
 import threading
 import queue
@@ -1094,9 +1095,14 @@ def main():
     s.add_all(dst_galleries)
     print("Adding gallery lists...")
     s.add_all(dst_lists)
-    print("Committing...")
+    print("Committing... (might take a while)")
     s.commit()
     print("Done!")
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except Exception as e:
+        print(e)
+        time.sleep(5)
+        sys.exit(1)
