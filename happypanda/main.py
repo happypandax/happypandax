@@ -74,5 +74,6 @@ def start(argv=None, db_kwargs={}):
         hlogger.Logger.shutdown_listener()
     log.i("HPX SERVER END")
 
+
 if __name__ == '__main__':
     start()

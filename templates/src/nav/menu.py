@@ -70,6 +70,7 @@ def menu_nav_render():
 
     return el
 
+
 Menu = createReactClass({
     'displayName': 'Menu',
 

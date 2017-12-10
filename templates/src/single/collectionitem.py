@@ -49,6 +49,7 @@ def grouping_render():
              className="no-padding-segment",
              )
 
+
 Collection = createReactClass({
     'displayName': 'Collection',
 

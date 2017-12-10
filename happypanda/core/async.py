@@ -102,7 +102,7 @@ class CPUThread():
                       )
                 self.out_q.append(jobid)
                 self.out_async.send()
-        except:
+        except BaseException:
             self._error()
             # this may always halt the server process
 
@@ -128,7 +128,7 @@ class CPUThread():
                     self.out_q_has_data.wait()
                     continue
                 self.out_q.popleft().set()
-        except:
+        except BaseException:
             self._error()
 
     class _Caught(object):

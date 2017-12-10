@@ -13,6 +13,7 @@ from src import pages
 def page_render():
     return e(pages.ItemViewPage, view_type=ViewType.Favorite, history=this.props.history)
 
+
 Page = createReactClass({
     'displayName': 'FavoritesPage',
 

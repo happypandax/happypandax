@@ -12,6 +12,7 @@ from src.ui import ui
 from src.i18n import tr
 from src.utils import defined, is_same_machine, get_version
 
+
 def about_info(props):
     top_items = []
     if is_same_machine():
@@ -20,28 +21,28 @@ def about_info(props):
     first_rows = []
 
     first_rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, tr(props.that, "", "Developer"), as_="h5"), collapsing=True),
-                  e(ui.Table.Cell, h("a", "Twiddly", href="https://github.com/Pewpews", target="_blank"))))
+                        e(ui.Table.Cell, e(ui.Header, tr(props.that, "", "Developer"), as_="h5"), collapsing=True),
+                        e(ui.Table.Cell, h("a", "Twiddly", href="https://github.com/Pewpews", target="_blank"))))
     first_rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, tr(props.that, "", "Twitter"), as_="h5"), collapsing=True),
-                  e(ui.Table.Cell, h("a", "@pewspew", href="https://twitter.com/pewspew", target="_blank"))))
+                        e(ui.Table.Cell, e(ui.Header, tr(props.that, "", "Twitter"), as_="h5"), collapsing=True),
+                        e(ui.Table.Cell, h("a", "@pewspew", href="https://twitter.com/pewspew", target="_blank"))))
 
     second_rows = []
     second_rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, tr(props.that, "", "Client version"), as_="h5"), collapsing=True),
-                  e(ui.Table.Cell, e(ui.Label, get_version(), basic=True))))
+                         e(ui.Table.Cell, e(ui.Header, tr(props.that, "", "Client version"), as_="h5"), collapsing=True),
+                         e(ui.Table.Cell, e(ui.Label, get_version(), basic=True))))
     second_rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, tr(props.that, "", "Server version"), as_="h5"), collapsing=True),
-                  e(ui.Table.Cell, e(ui.Label, ".".join(props.version.core) if defined(props.version.core) else "", basic=True))))
+                         e(ui.Table.Cell, e(ui.Header, tr(props.that, "", "Server version"), as_="h5"), collapsing=True),
+                         e(ui.Table.Cell, e(ui.Label, ".".join(props.version.core) if defined(props.version.core) else "", basic=True))))
     second_rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, tr(props.that, "", "Database version"), as_="h5"), collapsing=True),
-                  e(ui.Table.Cell, e(ui.Label, ".".join(props.version.db) if defined(props.version.db) else "", basic=True))))
+                         e(ui.Table.Cell, e(ui.Header, tr(props.that, "", "Database version"), as_="h5"), collapsing=True),
+                         e(ui.Table.Cell, e(ui.Label, ".".join(props.version.db) if defined(props.version.db) else "", basic=True))))
     second_rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, tr(props.that, "", "Torrent Client version"), as_="h5"), collapsing=True),
+                         e(ui.Table.Cell, e(ui.Header, tr(props.that, "", "Torrent Client version"), as_="h5"), collapsing=True),
 
-                  e(ui.Table.Cell, e(ui.Label, ".".join(props.version.torrent) if defined(props.version.torrent) else "", basic=True))))
+                         e(ui.Table.Cell, e(ui.Label, ".".join(props.version.torrent) if defined(props.version.torrent) else "", basic=True))))
     return e(ui.Grid,
-             e(ui.Grid.Row, *top_items ),
+             e(ui.Grid.Row, *top_items),
              e(ui.Grid.Row,
                e(ui.Grid.Column,
                  e(ui.Table,
@@ -50,7 +51,7 @@ def about_info(props):
                        ),
                      basic="very",
                      size="small"
-                     )
+                   )
                  )
                ),
              e(ui.Grid.Row,
@@ -61,7 +62,7 @@ def about_info(props):
                        ),
                      basic="very",
                      size="small"
-                     )
+                   )
                  )
                ),
              e(ui.Grid.Row,
@@ -69,7 +70,7 @@ def about_info(props):
                  e(ui.Button, e(ui.Icon, js_name="refresh"), tr(props.that, "", "Check for updates")),
                  e(ui.Button, e(ui.Icon, js_name="github"), tr(props.that, "", "Github Repo"),
                    as_="a", href="https://github.com/happypandax", target="_blank"),
-                 #e(ui.Button, e(ui.Icon, js_name="heart"), tr(props.that, "", "Support on patreon"),
+                 # e(ui.Button, e(ui.Icon, js_name="heart"), tr(props.that, "", "Support on patreon"),
                  #  as_="a", href="https://github.com/happypandax", target="_blank"),
                  ),
 
@@ -80,13 +81,14 @@ def about_info(props):
              columns="equal"
              )
 
+
 def about_license(props):
 
     return e(ui.Grid,
              e(ui.Grid.Row,),
              e(ui.Grid.Row,
                h("pre",
-             """
+                 """
 HappyPanda X is a cross platform manga/doujinshi manager with namespace & tag support;
 Copyright (C) 2017 Twiddly
 
@@ -116,18 +118,21 @@ def abouttab_get_version(data=None, error=None):
     else:
         client.call_func("get_version", this.get_version)
 
+
 def abouttab_render():
     version = this.state.version
     return e(ui.Tab,
              panes=[
-                 {'menuItem': { 'key':'info', 'icon':'info circle', 'content': tr(this, "ui.mi-about-info", "Info")},
+                 {'menuItem': {'key': 'info', 'icon': 'info circle', 'content': tr(this, "ui.mi-about-info", "Info")},
                   'render': lambda: e(about_info, that=this, version=version)},
-                {'menuItem': { 'key':'plugins', 'icon':'cubes', 'content': tr(this, "ui.mi-about-plugins", "Plugins")}, },
-                {'menuItem': { 'key':'statistics', 'icon':'bar chart', 'content': tr(this, "ui.mi-about-stats", "Statistics")}, },
-                {'menuItem': { 'key': 'bug', 'icon':'bug', 'content': tr(this, "ui.mi-about-bug", "Report bug") }, },
-                {'menuItem': { 'key':'trash', 'icon':'trash', 'content': tr(this, "ui.mi-about-trash", "Trash") }, },
-                {'menuItem': { 'key':'license', 'icon':'copyright', 'content': tr(this, "", "License") },
-                  'render': lambda: e(about_license, that=this)},
+                 {'menuItem': {'key': 'plugins', 'icon': 'cubes',
+                               'content': tr(this, "ui.mi-about-plugins", "Plugins")}, },
+                 {'menuItem': {'key': 'statistics', 'icon': 'bar chart',
+                               'content': tr(this, "ui.mi-about-stats", "Statistics")}, },
+                 {'menuItem': {'key': 'bug', 'icon': 'bug', 'content': tr(this, "ui.mi-about-bug", "Report bug")}, },
+                 {'menuItem': {'key': 'trash', 'icon': 'trash', 'content': tr(this, "ui.mi-about-trash", "Trash")}, },
+                 {'menuItem': {'key': 'license', 'icon': 'copyright', 'content': tr(this, "", "License")},
+                     'render': lambda: e(about_license, that=this)},
              ],
              menu=e(ui.Menu, secondary=True, pointing=True, stackable=True))
 
@@ -137,7 +142,7 @@ AboutTab = createReactClass({
 
     'getInitialState': lambda: {
         'version': {},
-        },
+    },
 
     'get_version': abouttab_get_version,
 

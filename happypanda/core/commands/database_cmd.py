@@ -196,7 +196,6 @@ class GetSession(Command):
         return constants.db_session()
 
 
-
 class GetDatabaseSort(Command):
     """
     Returns a name or, a namedtuple(expr, joins) of a data sort expression and additional
@@ -220,49 +219,46 @@ class GetDatabaseSort(Command):
     @names.default(capture=True)
     def _gallery_names(model_name, capture=db.model_name(db.Gallery)):
         return {
-            ItemSort.GalleryRandom.value:"Random",
-            ItemSort.GalleryTitle.value:"Title",
-            ItemSort.GalleryArtist.value:"Artist",
-            ItemSort.GalleryDate.value:"Date Added",
-            ItemSort.GalleryPublished.value:"Date Published",
-            ItemSort.GalleryRead.value:"Last Read",
-            ItemSort.GalleryUpdated.value:"Last Updated",
-            ItemSort.GalleryRating.value:"Rating",
-            ItemSort.GalleryReadCount.value:"Read Count",
-            ItemSort.GalleryPageCount.value:"Page Count",
-            }
+            ItemSort.GalleryRandom.value: "Random",
+            ItemSort.GalleryTitle.value: "Title",
+            ItemSort.GalleryArtist.value: "Artist",
+            ItemSort.GalleryDate.value: "Date Added",
+            ItemSort.GalleryPublished.value: "Date Published",
+            ItemSort.GalleryRead.value: "Last Read",
+            ItemSort.GalleryUpdated.value: "Last Updated",
+            ItemSort.GalleryRating.value: "Rating",
+            ItemSort.GalleryReadCount.value: "Read Count",
+            ItemSort.GalleryPageCount.value: "Page Count",
+        }
 
     @orderby.default(capture=True)
     def _gallery_orderby(model_name, capture=db.model_name(db.Gallery)):
-        model = GetModelClass().run(model_name)
         return {
-            ItemSort.GalleryRandom.value:func.random(),
-            ItemSort.GalleryTitle.value:db.Title.name,
-            ItemSort.GalleryArtist.value:db.AliasName.name,
-            ItemSort.GalleryDate.value:db.Gallery.timestamp,
-            ItemSort.GalleryPublished.value:db.Gallery.pub_date,
-            ItemSort.GalleryRead.value:db.Gallery.last_read,
-            ItemSort.GalleryUpdated.value:db.Gallery.last_updated,
-            ItemSort.GalleryRating.value:db.Gallery.rating,
-            ItemSort.GalleryReadCount.value:db.Gallery.times_read,
-            ItemSort.GalleryPageCount.value:db.func.count(db.Page.id),
-            }
+            ItemSort.GalleryRandom.value: func.random(),
+            ItemSort.GalleryTitle.value: db.Title.name,
+            ItemSort.GalleryArtist.value: db.AliasName.name,
+            ItemSort.GalleryDate.value: db.Gallery.timestamp,
+            ItemSort.GalleryPublished.value: db.Gallery.pub_date,
+            ItemSort.GalleryRead.value: db.Gallery.last_read,
+            ItemSort.GalleryUpdated.value: db.Gallery.last_updated,
+            ItemSort.GalleryRating.value: db.Gallery.rating,
+            ItemSort.GalleryReadCount.value: db.Gallery.times_read,
+            ItemSort.GalleryPageCount.value: db.func.count(db.Page.id),
+        }
 
     @groupby.default(capture=True)
     def _gallery_groupby(model_name, capture=db.model_name(db.Gallery)):
-        model = GetModelClass().run(model_name)
         return {
-            ItemSort.GalleryPageCount.value:db.Gallery.id,
-            }
+            ItemSort.GalleryPageCount.value: db.Gallery.id,
+        }
 
     @joins.default(capture=True)
     def _gallery_joins(model_name, capture=db.model_name(db.Gallery)):
-        model = GetModelClass().run(model_name)
         return {
-            ItemSort.GalleryTitle.value:(db.Gallery.titles,),
-            ItemSort.GalleryArtist.value:(db.Gallery.artists, db.Artist.names,),
-            ItemSort.GalleryPageCount.value:(db.Gallery.pages,),
-            }
+            ItemSort.GalleryTitle.value: (db.Gallery.titles,),
+            ItemSort.GalleryArtist.value: (db.Gallery.artists, db.Artist.names,),
+            ItemSort.GalleryPageCount.value: (db.Gallery.pages,),
+        }
 
     def main(self, model: db.Base, sort_index: int=None, name: bool=False) -> object:
         self.model = model
@@ -372,7 +368,6 @@ class GetModelItems(Command):
             criteria = True
             q = make_order_by_deterministic(q.order_by(self._get_sql(order_by)))
 
-
         if filter is not None:
             criteria = True
             q = q.filter(self._get_sql(filter))
@@ -406,6 +401,7 @@ class GetModelItems(Command):
             log.d("Returning", len(self.fetched_items), "fetched items")
         return self.fetched_items
 
+
 class MostCommonTags(Command):
     """
     Get the most common tags for item
@@ -416,12 +412,12 @@ class MostCommonTags(Command):
 
         s = constants.db_session()
         r = s.query(db.NamespaceTags).join(
-                    db.Taggable.tags).filter(
-                    db.Taggable.id.in_(
-                        s.query(
-                            db.Gallery.taggable_id).join(
-                                model.galleries).filter(
-                                    model.id==item_id))
-                    ).group_by(db.NamespaceTags).order_by(
-                       db.desc_expr(db.func.count(db.NamespaceTags.id))).limit(limit).all()
+            db.Taggable.tags).filter(
+            db.Taggable.id.in_(
+                s.query(
+                    db.Gallery.taggable_id).join(
+                    model.galleries).filter(
+                    model.id == item_id))
+        ).group_by(db.NamespaceTags).order_by(
+            db.desc_expr(db.func.count(db.NamespaceTags.id))).limit(limit).all()
         return tuple(r)

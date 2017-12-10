@@ -20,13 +20,17 @@ def gallery_on_update(p_props, p_state):
     if p_props.data != this.props.data:
         this.setState({'data': this.props.data, 'id': this.props.data.id if this.props.data else None})
 
+
 __pragma__("tconv")
 
 
 def open_external():
     if this.state.data:
         client.call_func("open_gallery", None, item_id=this.state.data.id, item_type=this.state.item_type)
+
+
 __pragma__("notconv")
+
 
 def gallery_render():
     fav = 0
@@ -98,18 +102,17 @@ def gallery_render():
                   e(ui.Table.Cell, e(ui.Header, "URL(s):", as_="h5"), collapsing=True),
                   e(ui.Table.Cell, e(ui.List, *[e(ui.List.Item, h("span", h("a", x, href=x, target="_blank"), e(ui.List.Icon, js_name="external share"))) for x in urls]))))
 
-
     menu_options = []
     if this.props.external_viewer:
-        menu_options.append({'selected':False, 'key':'read', 'text':"Read", 'onClick':this.open_external})
+        menu_options.append({'selected': False, 'key': 'read', 'text': "Read", 'onClick': this.open_external})
     else:
-        menu_options.append({'selected':False, 'key':'read', 'text':"Read", 'as':Link, 'to':utils.build_url("/item/page", {'gid': item_id}, keep_query=False)})
-    menu_options.append({'selected':False, 'key':'later', 'text':"Save for later", 'icon':"history"})
-    menu_options.append({'selected':False, 'key':'add_filter', 'text':"Add to filter", 'icon':"filter"})
+        menu_options.append({'selected': False, 'key': 'read', 'text': "Read", 'as': Link,
+                             'to': utils.build_url("/item/page", {'gid': item_id}, keep_query=False)})
+    menu_options.append({'selected': False, 'key': 'later', 'text': "Save for later", 'icon': "history"})
+    menu_options.append({'selected': False, 'key': 'add_filter', 'text': "Add to filter", 'icon': "filter"})
     if inbox:
-        menu_options.append({'selected':False, 'key':'library', 'text':"Send to Library", 'icon':"grid layout"})
-    menu_options.append({'selected':False, 'key':'trash', 'text':"Send to Trash", 'icon':"trash"})
-
+        menu_options.append({'selected': False, 'key': 'library', 'text': "Send to Library", 'icon': "grid layout"})
+    menu_options.append({'selected': False, 'key': 'trash', 'text': "Send to Trash", 'icon': "trash"})
 
     return e(ui.Card,
              h("div",
@@ -159,6 +162,7 @@ def gallery_render():
                ),
              className=add_cls,
              link=True)
+
 
 Gallery = createReactClass({
     'displayName': 'Gallery',

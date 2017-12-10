@@ -21,6 +21,7 @@ def add_translation_component(ctx, data, err):
     if not err:
         ctx['cmp'].forceUpdate()
 
+
 __pragma__("kwargs")
 __pragma__("tconv")
 __pragma__("iconv")
@@ -72,6 +73,7 @@ def tr(that, t_id, default_txt, placeholder=None, count=None):
     elif t_txt:
         default_txt = t_txt["text"]
     return default_txt
+
 
 __pragma__("noiconv")
 __pragma__("notconv")

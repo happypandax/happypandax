@@ -93,10 +93,10 @@ def sidebar_nav_render():
         content = tr(this, x.t_id, menu_name) if x.content is None else x.content
 
         item_children = []
-        
+
         if menu_icon:
-           item_children.append(e(ui.Icon, js_name=menu_icon, className="left", size=icon_size))
-           
+            item_children.append(e(ui.Icon, js_name=menu_icon, className="left", size=icon_size))
+
         item_children.append(content if not icon else "")
 
         as_link = {}
@@ -149,6 +149,7 @@ def sidebar_nav_render():
         el_args['direction'] = "right"
 
     return e(ui.Sidebar, cnt_el, **el_args)
+
 
 SideBar = createReactClass({
     'displayName': 'SideBar',

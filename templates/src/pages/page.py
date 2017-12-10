@@ -30,6 +30,7 @@ def PageNav(props):
              columns=1
              )
 
+
 __pragma__("iconv")
 __pragma__("tconv")
 
@@ -42,6 +43,7 @@ def set_thumbs(cmd):
             p = d[pnumb]['data']
             d[pnumb]['img'] = values[this.cmd_data[p.id]]['data']
         this.setState({'other': d})
+
 
 __pragma__("notconv")
 __pragma__("noiconv")
@@ -66,6 +68,8 @@ def get_thumbs(data=None, error=None, other=None):
                                   item_ids=item_ids,
                                   size=ImageSize.Original, url=True, uri=True,
                                   item_type=this.state.item_type)
+
+
 __pragma__("notconv")
 __pragma__("noiconv")
 __pragma__("kwargs")
@@ -79,6 +83,7 @@ def get_other(data=None, error=None):
             pages[p.number]['data'] = p
         this.setState({'other': pages})
         this.get_thumbs(other=data)
+
 
 __pragma__("kwargs")
 __pragma__("tconv")
@@ -118,6 +123,8 @@ def get_item(ctx=None, data=None, error=None, go=None):
             elif item_id:
                 client.call_func("get_item", this.get_item, item_type=item, item_id=item_id, ctx=True)
             this.setState({'loading': True})
+
+
 __pragma__("noiconv")
 __pragma__("notconv")
 __pragma__("nokwargs")
@@ -136,6 +143,8 @@ def get_pages(data=None, error=None, gid=None):
         if item and item_id:
             client.call_func("get_related_count", this.get_pages, item_type=item, item_id=item_id,
                              related_type=this.state.item_type)
+
+
 __pragma__("nokwargs")
 
 
@@ -240,6 +249,7 @@ def page_render():
              padded=True,
              inverted=True,
              )
+
 
 Page = createReactClass({
     'displayName': 'Page',

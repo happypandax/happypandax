@@ -34,6 +34,7 @@ def get_search_options(options={}):
 
     return ChainMap(u_val, d_val)
 
+
 Term = namedtuple("Term", ["namespace", "tag", "operator"])
 
 

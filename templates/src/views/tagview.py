@@ -38,7 +38,8 @@ def tag_on_update(p_props, p_state):
         this.get_tags()
 
     if p_props.data != this.props.data:
-        this.setState({'data':this.props.data})
+        this.setState({'data': this.props.data})
+
 
 def tag_render():
 
@@ -69,6 +70,7 @@ def tag_render():
     return e(ui.Table,
              e(ui.Transition.Group, *tag_rows, as_=ui.Table.Body, duration=1000),
              basic="very", celled=True, compact=True)
+
 
 TagView = createReactClass({
     'displayName': 'TagView',

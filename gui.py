@@ -35,6 +35,7 @@ import HPtoHPX
 
 app = None
 
+
 def kill_proc_tree(pid, sig=signal.SIGTERM, include_parent=True,
                    timeout=None, on_terminate=None):
     """Kill a process tree (including grandchildren) with signal
@@ -54,11 +55,13 @@ def kill_proc_tree(pid, sig=signal.SIGTERM, include_parent=True,
                                     callback=on_terminate)
     return (gone, alive)
 
+
 class PathLineEdit(QLineEdit):
     """
     A lineedit which open a filedialog on right/left click
     Set dir to false if you want files.
     """
+
     def __init__(self, parent=None, dir=True, filters=""):
         super().__init__(parent)
         self.folder = dir
@@ -69,10 +72,10 @@ class PathLineEdit(QLineEdit):
     def openExplorer(self):
         if self.folder:
             path = QFileDialog.getExistingDirectory(self,
-                                           'Choose folder', QDir.homePath())
+                                                    'Choose folder', QDir.homePath())
         else:
             path = QFileDialog.getOpenFileName(self,
-                                      'Choose file', QDir.homePath(), filter=self.filters)
+                                               'Choose file', QDir.homePath(), filter=self.filters)
             path = path[0]
         if len(path) != 0:
             self.setText(path)
@@ -83,6 +86,7 @@ class PathLineEdit(QLineEdit):
             if event.button() == Qt.LeftButton:
                 self.openExplorer()
         super().mousePressEvent(event)
+
 
 class ConvertHP(QDialog):
     def __init__(self, parent, **kwargs):
@@ -101,34 +105,34 @@ class ConvertHP(QDialog):
         self.setMinimumWidth(500)
 
     def create_ui(self):
-        l = QFormLayout(self)
+        lf = QFormLayout(self)
 
         source_edit = PathLineEdit(self, False, "happypanda.db")
         source_edit.textChanged.connect(self.on_source)
-        l.addRow(t("", default="Old HP database file")+':', source_edit)
+        lf.addRow(t("", default="Old HP database file") + ':', source_edit)
 
         rar_edit = PathLineEdit(self, False)
         rar_edit.setPlaceholderText(t("", default="Optional"))
         rar_edit.textChanged.connect(self.on_rar)
-        l.addRow(t("", default="RAR tool path")+':', rar_edit)
+        lf.addRow(t("", default="RAR tool path") + ':', rar_edit)
 
         archive_box = QCheckBox(self)
         archive_box.stateChanged.connect(self.on_archive)
-        l.addRow(t("", default="Skip archives")+':', archive_box)
+        lf.addRow(t("", default="Skip archives") + ':', archive_box)
 
         dev_box = QCheckBox(self)
         dev_box.stateChanged.connect(self.on_dev)
-        l.addRow(t("", default="Dev Mode")+':', dev_box)
+        lf.addRow(t("", default="Dev Mode") + ':', dev_box)
 
-        l.addRow(t("", default="Command")+':', self._args_label)
+        lf.addRow(t("", default="Command") + ':', self._args_label)
         convert_btn = QPushButton(t("", default="Convert"))
         convert_btn.clicked.connect(self.convert)
-        l.addRow(convert_btn)
+        lf.addRow(convert_btn)
 
     def on_source(self, v):
         self._source = v
         self.update_label()
-    
+
     def on_rar(self, v):
         self._rar = v
         self.update_label()
@@ -165,6 +169,7 @@ class ConvertHP(QDialog):
             p = Popen([sys.executable, os.path.abspath(HPtoHPX.__file__), *self.args], creationflags=CREATE_NEW_CONSOLE)
             Thread(target=self._parent.watch_process, args=(None, p)).start()
             self.close()
+
 
 class SettingsTabs(QTabWidget):
     def __init__(self, *args, **kwargs):
@@ -229,10 +234,10 @@ class SettingsTabs(QTabWidget):
         try:
             v = type_(v)
             d = node.value.copy()
-            d.update({k:v})
+            d.update({k: v})
             node.value = d
             widget.setStyleSheet("background: rgba(137, 244, 66, 0.2);")
-        except:
+        except BaseException:
             widget.setStyleSheet("background: rgba(244, 92, 65, 0.2);")
         config.config.save()
 
@@ -242,7 +247,7 @@ class SettingsTabs(QTabWidget):
             node.value = v
             config.config.save()
             widget.setStyleSheet("background: rgba(137, 244, 66, 0.2);")
-        except:
+        except BaseException:
             widget.setStyleSheet("background: rgba(244, 92, 65, 0.2);")
 
 
@@ -254,7 +259,8 @@ class Window(QMainWindow):
         self.closing = False
         self.server_started = False
         self.client_started = False
-        self.start_ico = QIcon(os.path.join(constants.dir_static, "favicon.ico")) #qta.icon("fa.play", color="#41f46b")
+        self.start_ico = QIcon(os.path.join(constants.dir_static, "favicon.ico")
+                               )  # qta.icon("fa.play", color="#41f46b")
         self.stop_ico = qta.icon("fa.stop", color="#f45f42")
         self.server_process = None
         self.webclient_process = None
@@ -272,15 +278,15 @@ class Window(QMainWindow):
         buttons = QGroupBox(w)
         self.server_btn = QPushButton(self.start_ico, t("", default="Start server"))
         self.server_btn.clicked.connect(self.toggle_server)
-        self.server_btn.setShortcut(Qt.CTRL|Qt.Key_S)
+        self.server_btn.setShortcut(Qt.CTRL | Qt.Key_S)
 
         #self.webclient_btn = QPushButton(self.start_ico, t("", default="Start webclient"))
-        #self.webclient_btn.clicked.connect(self.toggle_client)
-        #self.webclient_btn.setShortcut(Qt.CTRL|Qt.Key_W)
+        # self.webclient_btn.clicked.connect(self.toggle_client)
+        # self.webclient_btn.setShortcut(Qt.CTRL|Qt.Key_W)
 
         open_config_btn = QPushButton(qta.icon("fa.cogs"), t("", default="Open configuration"))
         open_config_btn.clicked.connect(self.open_cfg)
-        open_config_btn.setShortcut(Qt.CTRL|Qt.Key_C)
+        open_config_btn.setShortcut(Qt.CTRL | Qt.Key_C)
 
         convert_btn = QPushButton(qta.icon("fa.refresh"), t("", default="HP to HPX"))
         convert_btn.clicked.connect(self.convert_hp)
@@ -289,20 +295,24 @@ class Window(QMainWindow):
             b.setFixedHeight(40)
         button_layout = QHBoxLayout(buttons)
         button_layout.addWidget(self.server_btn)
-        #button_layout.addWidget(self.webclient_btn)
+        # button_layout.addWidget(self.webclient_btn)
         button_layout.addWidget(open_config_btn)
         button_layout.addWidget(convert_btn)
 
         infos = QGroupBox(t("", default="Info"))
         info_layout = QHBoxLayout(infos)
         version_layout = QFormLayout()
-        version_layout.addRow(t("", default="Server version") + ':', QLabel(".".join(str(x) for x in constants.version)))
-        version_layout.addRow(t("", default="Webclient version") + ':', QLabel(".".join(str(x) for x in constants.version_web)))
-        version_layout.addRow(t("", default="Database version") + ':', QLabel(".".join(str(x) for x in constants.version_db)))
+        version_layout.addRow(t("", default="Server version") +
+                              ':', QLabel(".".join(str(x) for x in constants.version)))
+        version_layout.addRow(t("", default="Webclient version") +
+                              ':', QLabel(".".join(str(x) for x in constants.version_web)))
+        version_layout.addRow(t("", default="Database version") +
+                              ':', QLabel(".".join(str(x) for x in constants.version_db)))
 
         connect_layout = QFormLayout()
-        connect_layout.addRow(t("", default="Server") + '@', QLabel(config.host.value+':'+str(config.port.value)))
-        connect_layout.addRow(t("", default="Webclient") + '@', QLabel(config.host_web.value+':'+str(config.port_web.value)))
+        connect_layout.addRow(t("", default="Server") + '@', QLabel(config.host.value + ':' + str(config.port.value)))
+        connect_layout.addRow(t("", default="Webclient") + '@',
+                              QLabel(config.host_web.value + ':' + str(config.port_web.value)))
         info_layout.addLayout(connect_layout)
         info_layout.addLayout(version_layout)
 
@@ -343,7 +353,7 @@ class Window(QMainWindow):
             self.server_btn.setText(t("", default="Stop server"))
             self.server_btn.setIcon(self.stop_ico)
             if not self.server_process:
-               self.server_process = self.start_server()
+                self.server_process = self.start_server()
         else:
             self.server_btn.setText(t("", default="Start server"))
             self.server_btn.setIcon(self.start_ico)

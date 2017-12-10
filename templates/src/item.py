@@ -33,6 +33,7 @@ SearchOptions = createReactClass({
                         )
 })
 
+
 def search_get_config(data=None, error=None):
     if data is not None and not error:
         options = {"case": utils.storage.get("search_case", data['search.case_sensitive']),
@@ -133,13 +134,13 @@ Search = createReactClass({
     'displayName': 'Search',
 
     'getInitialState': lambda: {'query': utils.get_query("search", this.props.search_query) if this.props.query else this.props.search_query,
-                                'case': utils.storage.get("search_case",bool(int(utils.get_query("case", 0)))),
-                                'regex': utils.storage.get("search_regex",bool(int(utils.get_query("regex", 0)))),
-                                'whole': utils.storage.get("search_whole",bool(int(utils.get_query("whole", 0)))),
-                                'all': utils.storage.get("search_all",bool(int(utils.get_query("all", 0)))),
-                                'desc': utils.storage.get("search_desc",bool(int(utils.get_query("desc", 0)))),
+                                'case': utils.storage.get("search_case", bool(int(utils.get_query("case", 0)))),
+                                'regex': utils.storage.get("search_regex", bool(int(utils.get_query("regex", 0)))),
+                                'whole': utils.storage.get("search_whole", bool(int(utils.get_query("whole", 0)))),
+                                'all': utils.storage.get("search_all", bool(int(utils.get_query("all", 0)))),
+                                'desc': utils.storage.get("search_desc", bool(int(utils.get_query("desc", 0)))),
                                 'suggest': utils.storage.get("search_suggest", bool(int(utils.get_query("suggest", 1)))),
-                                'on_key': utils.storage.get("search_on_key",bool(int(utils.get_query("on_key", 0)))),
+                                'on_key': utils.storage.get("search_on_key", bool(int(utils.get_query("on_key", 0)))),
                                 },
 
     'search_data': "",
@@ -193,6 +194,7 @@ def itemdropdown_render():
     return e(ui.Dropdown, placeholder="Item Type", selection=True, options=item_options, item=True,
              defaultValue=ItemType.Gallery if props.value == ItemType.Grouping else props.value, onChange=this.item_change)
 
+
 ItemDropdown = createReactClass({
     'displayName': 'ItemDropdown',
 
@@ -200,6 +202,7 @@ ItemDropdown = createReactClass({
 
     'render': itemdropdown_render
 })
+
 
 def sortdropdown_get(data=None, error=None):
     if data is not None and not error:
@@ -229,10 +232,10 @@ def sortdropdown_render():
             i = this.state.sort_items[x]
             if i['item_type'] == this.props.item_type:
                 item_options.append({
-                    'value':i['index'],
-                    'text':i['name'],
-                    'icon':'sort'
-                    })
+                    'value': i['index'],
+                    'text': i['name'],
+                    'icon': 'sort'
+                })
     __pragma__("noiconv")
     return e(ui.Dropdown,
              placeholder="Sort by",
@@ -244,6 +247,7 @@ def sortdropdown_render():
              loading=this.state.loading,
              selectOnBlur=False,
              )
+
 
 SortDropdown = createReactClass({
     'displayName': 'SortDropdown',
@@ -297,6 +301,7 @@ def filterdropdown_render():
              loading=this.state.loading,
              selectOnBlur=False,
              )
+
 
 FilterDropdown = createReactClass({
     'displayName': 'FilterDropdown',

@@ -341,7 +341,7 @@ class CoreFS(CoreCommand):
                     shutil.rmtree(self._path)
                 else:
                     self._path.unlink()
-        except:
+        except BaseException:
             if ignore_errors:
                 log.exception("Error raised while trying to delete:", self._path)
             else:
@@ -475,7 +475,7 @@ class Archive(CoreCommand):
             with self._path_sep.call_capture(self._ext, self._archive) as plg:
                 p = plg.first_or_none()
                 self.path_separator = p if p else '/'
-        except:
+        except BaseException:
             if self._archive:
                 self.close()
             raise

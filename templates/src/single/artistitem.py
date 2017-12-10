@@ -9,6 +9,7 @@ from src.i18n import tr
 from src.client import ItemType, client
 from src.single import tagitem
 
+
 def get_tags(data=None, error=None):
     if data is not None and not error:
         this.setState({"tags": data})
@@ -23,7 +24,10 @@ def get_tags(data=None, error=None):
                          item_type=this.state.item_type,
                          item_id=id, limit=10)
 
+
 __pragma__("tconv")
+
+
 def artistlbl_render():
     name = ""
     fav = 0
@@ -47,8 +51,7 @@ def artistlbl_render():
         for t in tags:
             tag_lbl.append(e(tagitem.TagLabel, namespace=ns, tag=t, show_ns=True))
 
-
-    lbl_args = {'content':name}
+    lbl_args = {'content': name}
     if fav:
         lbl_args['icon'] = "star"
     return e(ui.Popup,
@@ -56,36 +59,38 @@ def artistlbl_render():
                e(ui.Grid.Row, e(ui.Grid.Column, e(ui.Rating, icon="heart", size="huge", rating=fav))),
                e(ui.Grid.Row, e(ui.Grid.Column,
                                 e(ui.Segment,
-                                 e(ui.Label, tr(this, "", "Most common tags"), attached="top"),
-                                 e(ui.Label.Group,
-                                   *tag_lbl
-                                   ),
-                                 basic=True,
-                                 ),
+                                  e(ui.Label, tr(this, "", "Most common tags"), attached="top"),
+                                  e(ui.Label.Group,
+                                    *tag_lbl
+                                    ),
+                                  basic=True,
+                                  ),
                                 width=16), columns=1),
                ),
-                trigger=e(ui.Label,
-                    basic=True,
-                    as_="a",
-                    **lbl_args,
-                    ),
-                hoverable=True,
-                wide="very",
-                on="click",
-                hideOnScroll=True,
-                position="top center"
-                )
+             trigger=e(ui.Label,
+                       basic=True,
+                       as_="a",
+                       **lbl_args,
+                       ),
+             hoverable=True,
+             wide="very",
+             on="click",
+             hideOnScroll=True,
+             position="top center"
+             )
+
+
 __pragma__("notconv")
 
 ArtistLabel = createReactClass({
     'displayName': 'ArtistLabel',
 
     'getInitialState': lambda: {
-        'id':this.props.id,
-        'data': this.props.data, 
+        'id': this.props.id,
+        'data': this.props.data,
         'tags': this.props.tags,
         'item_type': ItemType.Artist,
-        },
+    },
 
     'get_tags': get_tags,
 

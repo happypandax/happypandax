@@ -15,11 +15,10 @@ Page = createReactClass({
     'componentWillMount': lambda: this.props.menu([
         e(ui.Menu.Item, js_name=tr(this, "", "Artists")),
         e(ui.Menu.Item, js_name=tr(this, "", "Tags")),
-        ]),
+    ]),
 
     'getInitialState': lambda: {},
 
     'render': lambda: e(ui.Segment,
                         )
 })
-

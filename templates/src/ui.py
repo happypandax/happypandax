@@ -26,6 +26,7 @@ def SliderNav(props):
              className="slide-next {}".format(props.direction),
              onClick=props.onClick)
 
+
 __pragma__("tconv")
 
 
@@ -70,6 +71,8 @@ def Slider(props):
              secondary=props.secondary,
              tertiary=props.tertiary,
              )
+
+
 __pragma__("notconv")
 
 
@@ -189,6 +192,7 @@ def pagination_render():
              duration=1000,
              )
 
+
 Pagination = createReactClass({
     'displayName': 'Pagination',
 
@@ -208,8 +212,8 @@ ToggleIcon = createReactClass({
 
     'getInitialState': lambda: {'toggled': this.props.toggled},
 
-    'toggle': lambda: all((this.setState({'toggled':not this.state.toggled}),
-                          this.props.on_toggle(not this.state.toggled) if this.props.on_toggle else None)),
+    'toggle': lambda: all((this.setState({'toggled': not this.state.toggled}),
+                           this.props.on_toggle(not this.state.toggled) if this.props.on_toggle else None)),
 
     'render': lambda: e(ui.Icon,
                         this.props.children,

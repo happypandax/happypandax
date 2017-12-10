@@ -158,7 +158,7 @@ class ServerCommand(_APIEnum):
 
 
 class ItemSort(_APIEnum):
-    
+
     #: Gallery Random
     GalleryRandom = 1
     #: Gallery Title
@@ -179,14 +179,3 @@ class ItemSort(_APIEnum):
     GalleryReadCount = 9
     #: Gallery Page Count
     GalleryPageCount = 10
-
-
-
-
-
-
-
-
-
-
-

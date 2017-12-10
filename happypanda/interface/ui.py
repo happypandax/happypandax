@@ -8,12 +8,13 @@ import i18n
 
 from collections import OrderedDict
 
-from happypanda.common import utils, constants, exceptions, hlogger, config
+from happypanda.common import utils, exceptions, hlogger, config
 from happypanda.core import message, db
 from happypanda.interface import enums
 from happypanda.core.commands import database_cmd, search_cmd
 
 log = hlogger.Logger(__name__)
+
 
 def _view_helper(item_type: enums.ItemType=enums.ItemType.Gallery,
                  search_query: str = "",
@@ -142,7 +143,7 @@ def library_view(item_type: enums.ItemType = enums.ItemType.Gallery,
             ]
 
     .. seealso::
-    
+
         :func:`.get_sort_indexes`
     """
     view_filter, item_type, db_msg, db_model, model_ids, filter_op, join_exp, metatag_name = _view_helper(
@@ -259,10 +260,11 @@ def translate(t_id: str, locale: str = None, default: str = None, placeholder: s
                 raise exceptions.APIError(utils.this_function(), "Failed to load translation file: {}".format(e.args))
     return message.Identity("translation", trs)
 
+
 def get_sort_indexes(item_type: enums.ItemType=None, translate: bool=True, locale: str=None):
     """
     Get a list of available sort item indexes and names
-    
+
     Args:
         item_type: return applicable indexes for a specific item type
         translate: translate the sort expression name
@@ -294,11 +296,11 @@ def get_sort_indexes(item_type: enums.ItemType=None, translate: bool=True, local
             if translate:
                 try:
                     name = i18n.t("general.sort-idx-{}".format(idx), default=name)
-                except:
+                except BaseException:
                     pass
             sort_indexes.append({
-                'index':int(idx),
-                'name':name,
-                'item_type':i.value
-                })
+                'index': int(idx),
+                'name': name,
+                'item_type': i.value
+            })
     return sort_indexes

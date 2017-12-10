@@ -96,6 +96,7 @@ def get_locale():
 def query_to_string(obj):
     return query_string.stringify(obj)
 
+
 __pragma__("kwargs")
 
 
@@ -104,6 +105,8 @@ def query_to_obj(query=None, location_obj=None):
         l = location_obj or location
         query = l.search
     return query_string.parse(query)
+
+
 __pragma__("nokwargs")
 
 __pragma__("kwargs")
@@ -116,6 +119,8 @@ def get_query(key, default=None, query=None, location_obj=None):
     if key in q:
         return q[key]
     return default
+
+
 __pragma__("noiconv")
 __pragma__("nokwargs")
 
@@ -138,6 +143,8 @@ def go_to(history_obj, url="", query={}, state=None, push=True, keep_query=True,
         history_obj.push(url, state)
     else:
         history_obj.js_replace(url, state)
+
+
 __pragma__("notconv")
 __pragma__("nokwargs")
 
@@ -157,6 +164,8 @@ def build_url(url="", query={}, keep_query=True, location_obj=None):
     if q:
         url += "?" + query_to_string(q, location_obj=location_obj)
     return url
+
+
 __pragma__("notconv")
 __pragma__("nokwargs")
 
@@ -169,10 +178,13 @@ def scroll_to_element(el):
 def is_same_machine():
     return document.getElementById('root').dataset.machine == "True"
 
+
 def get_version():
     return document.getElementById('root').dataset.version
 
+
 moment.locale(get_locale())
+
 
 class Storage:
 
@@ -182,20 +194,21 @@ class Storage:
         self.lstorage = localStorage
 
     __pragma__("kwargs")
+
     def get(self, key, default=None, local=False):
         if self.enabled and not local:
             r = self.lstorage.getItem(key)
             if r is None and default is not None:
                 r = default
             elif r:
-                r = JSON.parse(r) # can't handle empty strings
+                r = JSON.parse(r)  # can't handle empty strings
         else:
             r = self.dummy.get(key, default)
         return r
 
     def set(self, key, value, local=False):
         if self.enabled and not local:
-            if value == None: # convert undefined to null
+            if value is None:  # convert undefined to null
                 value = None
             self.lstorage.setItem(key, JSON.stringify(value))
         else:
@@ -214,11 +227,16 @@ class Storage:
             self.dummy.pop(key, True)
     __pragma__("nokwargs")
 
+
 storage = Storage()
 
 __pragma__("kwargs")
+
+
 def either(a, b=None):
     if a is None:
         return b
     return a
+
+
 __pragma__("nokwargs")

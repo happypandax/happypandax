@@ -36,5 +36,6 @@ def main():
     print("Running flake8...\n")
     return run(["flake8", "--config", "./setup.cfg", "."]).returncode
 
+
 if __name__ == '__main__':
     sys.exit(main())

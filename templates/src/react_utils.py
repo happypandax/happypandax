@@ -16,6 +16,8 @@ __pragma__("kwargs")
 def e(elm_type, *args, **props):
     props.pop("constructor")
     return React.createElement(elm_type, props, *args)
+
+
 __pragma__("nokwargs")
 
 __pragma__("kwargs")
@@ -23,12 +25,15 @@ __pragma__("kwargs")
 
 def h(elm_type, *args, **props):
     return e(elm_type, *args, **props)
+
+
 __pragma__("nokwargs")
 
 
 def render(react_element, destination_id, callback=lambda: None):
     container = document.getElementById(destination_id)
     ReactDOM.render(react_element, container, callback)
+
 
 __pragma__("jsiter")
 
@@ -52,6 +57,8 @@ def QueryLink(props):
 
     return e(Link, *props.children, to={'pathname': to_obj.pathname, 'search': to_obj.search, 'hash': to_obj.hash, 'state': to_obj.state}, js_replace=props.js_replace,
              className=props.className, onClick=props.onClick)
+
+
 __pragma__("nojsiter")
 
 
@@ -61,6 +68,7 @@ def scrolltotop_update(p_props):
             utils.scroll_to_element(state.container_ref)
         else:
             utils.scroll_to_element(window)
+
 
 ScrollToTop = withRouter(createReactClass({
     'displayName': 'ScrollToTop',

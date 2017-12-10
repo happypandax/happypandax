@@ -4,10 +4,10 @@ from subprocess import run
 
 
 def main():
-    run(["sphinx-build", "-b", "html", "docs/source", "docs/build"])
-
     root_src_dir = "docs/build"
     root_dst_dir = "docs/"
+
+    run(["sphinx-build", "-b", "html", "docs/source", root_src_dir])
 
     for src_dir, dirs, files in os.walk(root_src_dir):
         dst_dir = src_dir.replace(root_src_dir, root_dst_dir, 1)
@@ -21,6 +21,7 @@ def main():
             shutil.move(src_file, dst_dir)
 
     shutil.rmtree(root_src_dir)
+
 
 if __name__ == '__main__':
     main()

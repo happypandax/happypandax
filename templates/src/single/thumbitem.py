@@ -49,6 +49,8 @@ def thumbnail_get_thumb(data=None, error=None):
             if this.state.placeholder:
                 s['img'] = this.state.placeholder
             this.setState(s)
+
+
 __pragma__('notconv')
 
 
@@ -100,6 +102,7 @@ def thumbnail_render():
              className="no-padding-segment",
              inverted=this.props.inverted,
              )
+
 
 Thumbnail = createReactClass({
     'displayName': 'Thumbnail',

@@ -8,6 +8,7 @@ from happypanda.core import db, message
 from happypanda.interface import enums
 from happypanda.core.commands import database_cmd
 
+
 def _contruct_tags_msg(nstags):
     msg = {}
     _msg = {}
@@ -22,6 +23,8 @@ def _contruct_tags_msg(nstags):
             _msg[ns].append(nstag.tag.name)
 
     return msg
+
+
 def get_tags(item_type: enums.ItemType = enums.ItemType.Gallery,
              item_id: int = 0,
              raw: bool = False):
@@ -76,8 +79,8 @@ def get_tags(item_type: enums.ItemType = enums.ItemType.Gallery,
 
 
 def get_common_tags(item_type: enums.ItemType = enums.ItemType.Collection,
-             item_id: int = 0,
-             limit: int = 10):
+                    item_id: int = 0,
+                    limit: int = 10):
     """
     Get the most common tags for item
 

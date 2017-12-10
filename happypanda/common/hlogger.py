@@ -36,7 +36,7 @@ class QueueHandler(logging.Handler):
             self.queue.put_nowait(record)
         except (KeyboardInterrupt, SystemExit):
             raise
-        except:
+        except BaseException:
             self.handleError(record)
 
 
@@ -159,7 +159,7 @@ class Logger:
                 Logger(record.name).handle(record)
             except (KeyboardInterrupt, SystemExit):
                 raise
-            except:
+            except BaseException:
                 traceback.print_exc(file=sys.stderr)
         queue.put(None)
 

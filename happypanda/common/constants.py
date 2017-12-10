@@ -50,6 +50,7 @@ class Priority(enum.Enum):
     Normal = 5
     Low = 0
 
+
 maximum_native_workers = 15
 
 image_sizes = {

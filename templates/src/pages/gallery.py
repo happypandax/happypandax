@@ -70,6 +70,7 @@ def get_lang(data=None, error=None):
     elif error:
         state.app.notif("Failed to fetch language ({})".format(this.state.id), level="error")
 
+
 __pragma__("tconv")
 
 
@@ -79,6 +80,8 @@ def get_status(data=None, error=None):
             this.setState({"status_data": data[0]})
     elif error:
         state.app.notif("Failed to fetch status ({})".format(this.state.id), level="error")
+
+
 __pragma__("notconv")
 
 
@@ -86,6 +89,7 @@ def toggle_external_viewer(e, d):
     v = not d.active
     this.setState({'external_viewer': v})
     utils.storage.set('external_viewer', v)
+
 
 __pragma__("tconv")
 
@@ -98,6 +102,7 @@ def gallery_on_update(p_props, p_state):
         p_state.id != this.state.id,
     )):
         this.get_item()
+
 
 __pragma__("tconv")
 
@@ -345,6 +350,8 @@ def page_render():
              stackable=True,
              container=True,
              )
+
+
 __pragma__("notconv")
 
 

@@ -16,6 +16,8 @@ __pragma__("tconv")
 def open_external():
     if this.state.data:
         client.call_func("open_gallery", None, item_id=this.state.data.id, item_type=this.state.item_type)
+
+
 __pragma__("notconv")
 
 
@@ -66,6 +68,7 @@ def page_render():
              e(ui.Card.Content, e(ui.Card.Header, e(ui.Label, title, circular=True), className="text-ellipsis card-header")),
              className=add_cls,
              link=True)
+
 
 Page = createReactClass({
     'displayName': 'Page',

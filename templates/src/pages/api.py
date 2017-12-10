@@ -55,6 +55,7 @@ def set_value(e):
     this.setState({'value': value})
     this.props.on_change(this.props.idx, (this.state['key'], value))
 
+
 ApiKwarg = createReactClass({
     'displayName': 'ApiKwarg',
 
@@ -90,6 +91,7 @@ def handle_submit(ev):
     msg = client.call(ServerMsg([serv_data], serv_rsponse, contextobj=this))
     this.props.to_server(utils.syntax_highlight(JSON.stringify(msg._msg['msg'], None, 4)))
 
+
 __pragma__("jsiter")
 
 
@@ -102,6 +104,8 @@ def set_kwargs(i, v):
             k[kv[0]] = kv[1]
 
     this.setState({'kwargs': k})
+
+
 __pragma__("nojsiter")
 
 
@@ -140,6 +144,7 @@ ApiForm = createReactClass({
 
 def formatted_json(msg):
     return h('pre', dangerouslySetInnerHTML={'__html': msg}, className="overflow-auto")
+
 
 Page = createReactClass({
     'displayName': 'ApiPage',

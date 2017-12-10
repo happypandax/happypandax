@@ -276,6 +276,7 @@ class Client(Base):
     def _set_debug(self, data):
         state.debug = data['core.debug']
 
+
 client = Client()
 thumbclient = Client(namespace="/thumb")
 commandclient = Client(namespace="/command")

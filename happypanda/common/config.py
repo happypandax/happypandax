@@ -310,6 +310,7 @@ class Config:
             sections.append([con, s])
         return sections
 
+
 config = Config(user_filepath=constants.config_path)
 
 core_ns = 'core'
@@ -519,7 +520,6 @@ with config.namespace(gui_ns):
         "minimize_on_close",
         False,
         "Minimize the program to tray on close button")
-
 
 
 config_doc = config.doc_render()  # for doc

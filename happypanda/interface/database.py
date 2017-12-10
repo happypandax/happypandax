@@ -220,7 +220,7 @@ def get_related_count(item_type: enums.ItemType=enums.ItemType.Gallery,
     count = s.query(child_model.id).join(col).filter(parent_model.id == item_id).count()
     return message.Identity('count', {'id': item_id, 'count': count})
 
-#def get_random_items(item_type: enums.ItemType=enums.ItemType.Gallery,
+# def get_random_items(item_type: enums.ItemType=enums.ItemType.Gallery,
 #                    limit: int = 1,
 #                    item_id: int = None,
 #                    search_query: str = "",

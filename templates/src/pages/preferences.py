@@ -11,6 +11,7 @@ from src.ui import ui
 from src.i18n import tr
 from src.utils import defined, is_same_machine
 
+
 def pref_general(props):
     cfg = props.cfg
     u_cfg = props.u_cfg
@@ -152,6 +153,7 @@ def preftab_get_config(data=None, error=None):
     else:
         client.call_func("get_config", this.get_config)
 
+
 __pragma__("kwargs")
 
 
@@ -162,6 +164,8 @@ def preftab_set_config(data=None, error=None, cfg={}):
         state.app.notif("Failed to update setting", level="warning")
     else:
         client.call_func("set_config", preftab_set_config, cfg=cfg)
+
+
 __pragma__("nokwargs")
 
 

@@ -16,6 +16,7 @@ def exclude(attr):
     if 'user' == attr.lower():
         return True
 
+
 attrs = [getattr(db, attr) for attr in dir(db) if not exclude(attr)]
 
 desc = sadisplay.describe(

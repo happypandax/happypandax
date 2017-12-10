@@ -23,6 +23,7 @@ def on_update(props):
         for x in state.commands:
             x.stop()
 
+
 PathChange = createReactClass({
     'displayName': 'PathChange',
 
@@ -59,6 +60,8 @@ def notif(msg, header="", level="info", icon=None, **kwargs):
 
     aid = _a("", kw)
     return aid
+
+
 __pragma__("nokwargs")
 
 state['notif'] = notif
@@ -118,6 +121,7 @@ def app_render():
                  className="main-content",
                ),
              )
+
 
 App = createReactClass({
     'displayName': 'App',

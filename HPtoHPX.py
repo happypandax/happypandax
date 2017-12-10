@@ -693,6 +693,7 @@ def print_progress(iteration, total, prefix='', suffix='', decimals=1, bar_lengt
         sys.stdout.write('\n')
     sys.stdout.flush()
 
+
 import random
 
 
@@ -734,7 +735,7 @@ def page_generate(rar_p, in_queue, out_pipe):
             pass
         except rarfile.RarCannotExec:
             print("RAR file not supported, skipping: {}".format(g_path))
-        except:
+        except BaseException:
             print("An unknown error occured, skipping: {}".format(g_path))
             pass
 
@@ -1098,6 +1099,7 @@ def main():
     print("Committing... (might take a while)")
     s.commit()
     print("Done!")
+
 
 if __name__ == '__main__':
     try:

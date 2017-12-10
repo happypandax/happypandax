@@ -118,7 +118,7 @@ class Service:
         command_obj.state = command.CommandState.finished
         try:
             greenlet.get()
-        except:
+        except BaseException:
             log.exception("Command", "{}({})".format(command_obj.__class__.__name__, command_id), "raised an exception")
             command_obj.state = command.CommandState.failed
             command_obj.exception = greenlet.exception

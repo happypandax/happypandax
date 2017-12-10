@@ -801,7 +801,7 @@ def strongly_connected_components(graph):
         # Consider successors of `node`
         try:
             successors = graph[node]
-        except:
+        except BaseException:
             successors = []
         for successor in successors:
             if successor not in lowlinks:

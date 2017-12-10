@@ -15,7 +15,7 @@ __pragma__("kwargs")
 
 
 def item_view_menu(history,
-                    on_item_change=None,
+                   on_item_change=None,
                    default_item=None,
                    on_sort_change=None,
                    default_sort=None,
@@ -59,6 +59,8 @@ def item_view_menu(history,
                 query=True), fitted=True),
             e(ui.Menu.Item, e(ui.Icon, js_name="options", size="large"), icon=True, onClick=on_toggle_config),
             ]
+
+
 __pragma__("nokwargs")
 
 
@@ -85,6 +87,7 @@ def itemviewpage_render():
              visible_config=this.state.visible_config,
              config_suffix="main"
              )
+
 
 ItemViewPage = createReactClass({
     'displayName': 'ItemViewPage',

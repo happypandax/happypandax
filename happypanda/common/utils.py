@@ -31,9 +31,11 @@ i18n.set("file_format", "yaml")
 i18n.set("filename_format", "{locale}.{namespace}.{format}")
 i18n.set("error_on_missing_translation", True)
 
+
 def setup_i18n():
     i18n.set("locale", config.translation_locale.value)
     i18n.set("fallback", config.translation_locale.value)
+
 
 def setup_dirs():
     "Creates directories at the specified root path"
@@ -193,7 +195,7 @@ def session(sess=constants.db_session):
     try:
         yield s
         s.commit()
-    except:
+    except BaseException:
         s.rollback()
         raise
 
@@ -267,7 +269,7 @@ def get_local_ip():
             # doesn't even have to be reachable
             s.connect(('10.255.255.255', 1))
             IP = s.getsockname()[0]
-        except:
+        except BaseException:
             IP = '127.0.0.1'
         finally:
             s.close()

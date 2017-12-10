@@ -328,6 +328,7 @@ def lint(args):
     env_p = r".\env\Scripts\python" if sys.platform.startswith("win") else "./env/bin/python"
     return run([env_p, "lint.py", *sys.argv[2:]]).returncode
 
+
 welcome_msg = """
 Welcome to HPX development helper script.
 
@@ -406,6 +407,7 @@ def main():
     else:
         args = parser.parse_args()
     return args.func(args)
+
 
 if __name__ == '__main__':
     sys.exit(main())

@@ -350,6 +350,7 @@ class UpdatedMixin:
 
     last_updated = Column(ArrowType, nullable=False, default=arrow.now)
 
+
 Base = declarative_base(cls=BaseID)
 
 
@@ -549,6 +550,7 @@ class User(Base):
     def is_admin(self):
         return self.role == self.Role.admin
 
+
 metatag_association(User, "users")
 
 
@@ -669,6 +671,7 @@ class NamespaceTags(AliasMixin, Base):
         sess.close()
         return e
 
+
 metatag_association(NamespaceTags, "namespacetags")
 
 
@@ -782,6 +785,7 @@ class Artist(ProfileMixin, Base):
         lazy="joined",
         cascade="save-update, merge, refresh-expire")
 
+
 metatag_association(Artist, "artists")
 profile_association(Artist, "artists")
 aliasname_association(Artist, "artists")
@@ -797,6 +801,7 @@ class Circle(NameMixin, Base):
         secondary=artist_circles,
         back_populates='circles',
         lazy="joined")
+
 
 gallery_parodies = Table(
     'gallery_parodies', Base.metadata, Column(
@@ -814,6 +819,7 @@ class Parody(Base):
         secondary=gallery_parodies,
         back_populates='parodies',
         lazy="dynamic")
+
 
 aliasname_association(Parody, "parodies")
 
@@ -867,6 +873,7 @@ class Grouping(ProfileMixin, NameMixin, Base):
         back_populates="groupings",
         cascade="save-update, merge, refresh-expire")
 
+
 profile_association(Grouping, "groupings")
 
 
@@ -911,6 +918,7 @@ class Collection(ProfileMixin, Base):
         back_populates="collections",
         lazy="dynamic",
         cascade="save-update, merge, refresh-expire")
+
 
 profile_association(Collection, "collections")
 metatag_association(Collection, "collections")
@@ -1059,6 +1067,7 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
     #        log.w("Could not query for gallery existence because no path was set.")
     #    return e
 
+
 metatag_association(Gallery, "galleries")
 profile_association(Gallery, "galleries")
 url_association(Gallery, "galleries")
@@ -1108,6 +1117,7 @@ class Page(TaggableMixin, ProfileMixin, Base):
         else:
             log.w("Could not query for page existence because no path was set.")
         return e
+
 
 metatag_association(Page, "pages")
 profile_association(Page, "pages")

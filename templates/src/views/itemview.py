@@ -11,6 +11,7 @@ from src.state import state
 from src.single import (galleryitem, pageitem, groupingitem, collectionitem)
 from src import utils
 
+
 def ItemViewConfig(props):
     cfg_suffix = props.suffix or ""
     infinite_scroll_cfg = "infinite_scroll"
@@ -19,66 +20,72 @@ def ItemViewConfig(props):
     group_gallery_cfg = "group_gallery"
 
     item_count_options = [
-        {'key':10, 'text':'10', 'value':10},
-        {'key':20, 'text':'20', 'value':20},
-        {'key':30, 'text':'30', 'value':30},
-        {'key':40, 'text':'40', 'value':40},
-        {'key':50, 'text':'50', 'value':50},
-        {'key':75, 'text':'75', 'value':75},
-        {'key':100, 'text':'100', 'value':100},
-        {'key':125, 'text':'125', 'value':125},
-        {'key':150, 'text':'150', 'value':150},
-        {'key':200, 'text':'200', 'value':200},
-        {'key':250, 'text':'250', 'value':250},
-        {'key':300, 'text':'300', 'value':300},
-        {'key':400, 'text':'400', 'value':400},
-        {'key':500, 'text':'500', 'value':500},
-        ]
+        {'key': 10, 'text': '10', 'value': 10},
+        {'key': 20, 'text': '20', 'value': 20},
+        {'key': 30, 'text': '30', 'value': 30},
+        {'key': 40, 'text': '40', 'value': 40},
+        {'key': 50, 'text': '50', 'value': 50},
+        {'key': 75, 'text': '75', 'value': 75},
+        {'key': 100, 'text': '100', 'value': 100},
+        {'key': 125, 'text': '125', 'value': 125},
+        {'key': 150, 'text': '150', 'value': 150},
+        {'key': 200, 'text': '200', 'value': 200},
+        {'key': 250, 'text': '250', 'value': 250},
+        {'key': 300, 'text': '300', 'value': 300},
+        {'key': 400, 'text': '400', 'value': 400},
+        {'key': 500, 'text': '500', 'value': 500},
+    ]
 
     ext_viewer_el = []
     if utils.is_same_machine():
         ext_viewer_el.append(e(ui.Form.Field,
                                control=ui.Checkbox,
                                label="Open in external viewer", toggle=True,
-                               defaultChecked=utils.storage.get(external_viewer_cfg+cfg_suffix, False),
+                               defaultChecked=utils.storage.get(external_viewer_cfg + cfg_suffix, False),
                                onChange=lambda e, d: all((props.on_external_viewer(e, d),
-                                                          utils.storage.set(external_viewer_cfg+cfg_suffix, d.checked))),
+                                                          utils.storage.set(external_viewer_cfg + cfg_suffix, d.checked))),
                                ))
 
     grp_gallery_el = []
     if props.item_type in (ItemType.Gallery, ItemType.Grouping):
         grp_gallery_el.append(
-                            e(ui.Form.Field,
-                               control=ui.Checkbox,
-                               label="Group galleries", toggle=True,
-                               defaultChecked=utils.storage.get(group_gallery_cfg+cfg_suffix, False),
-                               onChange=lambda e, d: all((props.on_group_gallery(e, d),
-                                                          utils.storage.set(group_gallery_cfg+cfg_suffix, d.checked))),
-                               ))
-
+            e(ui.Form.Field,
+              control=ui.Checkbox,
+              label="Group galleries", toggle=True,
+              defaultChecked=utils.storage.get(group_gallery_cfg + cfg_suffix, False),
+              onChange=lambda e, d: all((props.on_group_gallery(e, d),
+                                         utils.storage.set(group_gallery_cfg + cfg_suffix, d.checked))),
+              ))
 
     return e(ui.Sidebar,
-              e(ui.Form,
-                *grp_gallery_el,
-                e(ui.Form.Field, control=ui.Checkbox, label="Infinite Scroll", toggle=True,
-                    defaultChecked=utils.storage.get(infinite_scroll_cfg+cfg_suffix, False),
-                    onChange=lambda e, d: all((props.on_infinite_scroll(e, d), utils.storage.set(infinite_scroll_cfg+cfg_suffix, d.checked))),
-                    ),
-                *ext_viewer_el,
-                e(ui.Form.Select, options=item_count_options, label="Item Count", inline=True,
-                    defaultValue=utils.storage.get(item_count_cfg+cfg_suffix, props.default_item_count or 30),
-                    onChange=lambda e, d: all((props.on_item_count(e, d), utils.storage.set(item_count_cfg+cfg_suffix, d.value))),
-                    ),
-                e(ui.Form.Field, "Close", control=ui.Button),
-                onSubmit=props.on_close,
-                ),
-            as_=ui.Segment,
-            size="small",
-            basic=True,
-            visible=props.visible,
-            direction="right",
-            animation="push",
-            )
+             e(ui.Form,
+               *grp_gallery_el,
+               e(ui.Form.Field, control=ui.Checkbox, label="Infinite Scroll", toggle=True,
+                 defaultChecked=utils.storage.get(infinite_scroll_cfg + cfg_suffix, False),
+                 onChange=lambda e, d: all(
+                     (props.on_infinite_scroll(
+                         e, d), utils.storage.set(
+                         infinite_scroll_cfg + cfg_suffix, d.checked))),
+                 ),
+                 *ext_viewer_el,
+                 e(ui.Form.Select, options=item_count_options, label="Item Count", inline=True,
+                   defaultValue=utils.storage.get(item_count_cfg + cfg_suffix, props.default_item_count or 30),
+                   onChange=lambda e, d: all(
+                       (props.on_item_count(
+                           e, d), utils.storage.set(
+                           item_count_cfg + cfg_suffix, d.value))),
+                   ),
+                 e(ui.Form.Field, "Close", control=ui.Button),
+                 onSubmit=props.on_close,
+               ),
+             as_=ui.Segment,
+             size="small",
+             basic=True,
+             visible=props.visible,
+             direction="right",
+             animation="push",
+             )
+
 
 def itemviewbase_render():
     props = this.props
@@ -160,32 +167,34 @@ def itemviewbase_render():
                           textAlign="center", width=16))
 
     return e(ui.Segment,
-            *add_el,
-            e(ui.Sidebar.Pushable,
-                *cfg_el,
-                e(ui.Sidebar.Pusher,
-                    e(ui.Grid,
-                    *count_el,
-                    pagination,
-                    *[e(ui.Grid.Column, c, computer=4, tablet=3, mobile=6, largeScreen=lscreen, widescreen=wscreen) for c in els],
-                    pagination,
-                    *count_el,
-                    padded="vertically",
-                    centered=True,
-                    as_=ui.Transition.Group,
-                    duration=1500,
-                    ),
-                as_=ui.Segment,
-                basic=True,
-                ),
-             basic=True,
-             loading=props.loading,
-             as_=ui.Segment,
-             ),
+             *add_el,
+             e(ui.Sidebar.Pushable,
+               *cfg_el,
+               e(ui.Sidebar.Pusher,
+                 e(ui.Grid,
+                   *count_el,
+                   pagination,
+                   *[e(ui.Grid.Column, c, computer=4, tablet=3, mobile=6,
+                       largeScreen=lscreen, widescreen=wscreen) for c in els],
+                   pagination,
+                   *count_el,
+                   padded="vertically",
+                   centered=True,
+                   as_=ui.Transition.Group,
+                   duration=1500,
+                   ),
+                 as_=ui.Segment,
+                 basic=True,
+                 ),
+               basic=True,
+               loading=props.loading,
+               as_=ui.Segment,
+               ),
              basic=True,
              secondary=props.secondary,
              tertiary=props.tertiary,
              )
+
 
 ItemViewBase = createReactClass({
     'displayName': 'ItemViewBase',
@@ -223,6 +232,8 @@ def get_items(data=None, error=None):
         if item:
             client.call_func("library_view", this.get_items, **func_kw)
             this.setState({'loading': True})
+
+
 __pragma__("notconv")
 
 __pragma__("tconv")
@@ -251,6 +262,8 @@ def get_items_count(data=None, error=None):
 
         if item:
             client.call_func("get_view_count", this.get_items_count, **func_kw)
+
+
 __pragma__("notconv")
 
 
@@ -321,16 +334,17 @@ def item_view_render():
         return e(Error, content="An error occured. No valid element available.")
     ext_viewer = this.props.external_viewer if utils.defined(this.props.external_viewer) else this.state.external_viewer
     cfg_el = this.props.config_el or e(ItemViewConfig,
-                                item_type=this.props.related_type or this.props.item_type,
-                                on_close=this.props.toggle_config or this.toggle_config,
-                                visible=this.props.visible_config if utils.defined(this.props.visible_config) else this.state.visible_config,
-                                default_item_count=this.state.limit,
-                                on_infinite_scroll=lambda: None,
-                                suffix=this.props.config_suffix,
-                                on_item_count=this.on_item_count,
-                                on_external_viewer=this.on_external_viewer,
-                                on_group_gallery=this.on_group_gallery,
-                               )
+                                       item_type=this.props.related_type or this.props.item_type,
+                                       on_close=this.props.toggle_config or this.toggle_config,
+                                       visible=this.props.visible_config if utils.defined(
+                                           this.props.visible_config) else this.state.visible_config,
+                                       default_item_count=this.state.limit,
+                                       on_infinite_scroll=lambda: None,
+                                       suffix=this.props.config_suffix,
+                                       on_item_count=this.on_item_count,
+                                       on_external_viewer=this.on_external_viewer,
+                                       on_group_gallery=this.on_group_gallery,
+                                       )
 
     return e(ItemViewBase,
              [e(el, data=x, className="medium-size", key=n, external_viewer=ext_viewer) for n, x in enumerate(items)],
@@ -347,6 +361,7 @@ def item_view_render():
              toggle_config=this.props.toggle_config,
              )
 
+
 ItemView = createReactClass({
     'displayName': 'ItemView',
 
@@ -355,15 +370,15 @@ ItemView = createReactClass({
     'getInitialState': lambda: {'page': int(utils.get_query("page", 1)) or 1,
                                 'search_query': utils.get_query("search", "") or this.props.search_query,
                                 'infinitescroll': False,
-                                'limit': utils.storage.get("item_count"+this.config_suffix(),
+                                'limit': utils.storage.get("item_count" + this.config_suffix(),
                                                            this.props.default_limit or (10 if this.props.related_type == ItemType.Page else 30)),
                                 'items': [],
                                 "element": None,
                                 "loading": True,
                                 'item_count': 1,
                                 'visible_config': False,
-                                'external_viewer': utils.storage.get("external_viewer"+this.config_suffix(), False),
-                                'group_gallery': utils.storage.get("group_gallery"+this.config_suffix(), False),
+                                'external_viewer': utils.storage.get("external_viewer" + this.config_suffix(), False),
+                                'group_gallery': utils.storage.get("group_gallery" + this.config_suffix(), False),
                                 },
 
     'get_items_count': get_items_count,
