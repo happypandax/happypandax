@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>happypanda.interface.enums &#8212; Happypanda X 0.0.1#108 documentation</title>
+    <title>happypanda.interface.enums &#8212; Happypanda X 0.0.1#109 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.0.1#108',
+        VERSION:     '0.0.1#109',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="../../../_static/script.js"></script>
     <script type="text/javascript" src="../../../_static/js/jquery-1.11.0.min.js"></script>
     <script type="text/javascript" src="../../../_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="../../../_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../../../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="../../../_static/bootstrap-sphinx.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
@@ -52,7 +52,7 @@
         </button>
         <a class="navbar-brand" href="../../../index.html">
           Happypanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.1#108</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.1#109</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -184,26 +184,26 @@
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
 
-        <span class="c1"># for some ungodly reason this check wouldnt work when calling from the client</span>
-        <span class="c1"># so i ended comparing strings instead</span>
+        <span class="c1"># for some ungodly unknown reason this check wouldnt work when calling from the client</span>
+        <span class="c1"># so i ended up comparing strings instead</span>
         <span class="k">if</span> <span class="nb">repr</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">key</span><span class="p">))</span> <span class="o">==</span> <span class="nb">repr</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">key</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">cls</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+            <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                <span class="k">pass</span>
 
-        <span class="k">try</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">cls</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
-        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
-            <span class="k">pass</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                <span class="k">pass</span>
 
-        <span class="k">try</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
-            <span class="k">pass</span>
-
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="n">low_key</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">member</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">__members__</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="n">low_key</span><span class="p">:</span>
-                    <span class="k">return</span> <span class="n">member</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="n">low_key</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">member</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">__members__</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="n">low_key</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="n">member</span>
 
         <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">EnumError</span><span class="p">(</span>
             <span class="n">utils</span><span class="o">.</span><span class="n">this_function</span><span class="p">(),</span>
@@ -248,8 +248,8 @@
     <span class="n">Status</span> <span class="o">=</span> <span class="mi">10</span>
     <span class="c1">#: Circle</span>
     <span class="n">Circle</span> <span class="o">=</span> <span class="mi">11</span>
-    <span class="c1">#: GalleryURL</span>
-    <span class="n">GalleryUrl</span> <span class="o">=</span> <span class="mi">12</span>
+    <span class="c1">#: URL</span>
+    <span class="n">Url</span> <span class="o">=</span> <span class="mi">12</span>
     <span class="c1">#: Gallery Parody</span>
     <span class="n">Parody</span> <span class="o">=</span> <span class="mi">13</span>
 
@@ -317,7 +317,38 @@
 
 
 <div class="viewcode-block" id="ItemSort"><a class="viewcode-back" href="../../../api.html#happypanda.interface.enums.ItemSort">[docs]</a><span class="k">class</span> <span class="nc">ItemSort</span><span class="p">(</span><span class="n">_APIEnum</span><span class="p">):</span>
-    <span class="k">pass</span></div>
+    
+    <span class="c1">#: Gallery Random</span>
+    <span class="n">GalleryRandom</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="c1">#: Gallery Title</span>
+    <span class="n">GalleryTitle</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="c1">#: Gallery Artist Name</span>
+    <span class="n">GalleryArtist</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="c1">#: Gallery Date Added</span>
+    <span class="n">GalleryDate</span> <span class="o">=</span> <span class="mi">4</span>
+    <span class="c1">#: Gallery Date Published</span>
+    <span class="n">GalleryPublished</span> <span class="o">=</span> <span class="mi">5</span>
+    <span class="c1">#: Gallery Last Read</span>
+    <span class="n">GalleryRead</span> <span class="o">=</span> <span class="mi">6</span>
+    <span class="c1">#: Gallery Last Updated</span>
+    <span class="n">GalleryUpdated</span> <span class="o">=</span> <span class="mi">7</span>
+    <span class="c1">#: Gallery Rating</span>
+    <span class="n">GalleryRating</span> <span class="o">=</span> <span class="mi">8</span>
+    <span class="c1">#: Gallery Read Count</span>
+    <span class="n">GalleryReadCount</span> <span class="o">=</span> <span class="mi">9</span>
+    <span class="c1">#: Gallery Page Count</span>
+    <span class="n">GalleryPageCount</span> <span class="o">=</span> <span class="mi">10</span></div>
+
+
+
+
+
+
+
+
+
+
+
 </pre></div>
 
         </div>

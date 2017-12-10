@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>happypanda.interface.tag &#8212; Happypanda X 0.0.1#108 documentation</title>
+    <title>happypanda.interface.tag &#8212; Happypanda X 0.0.1#109 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.0.1#108',
+        VERSION:     '0.0.1#109',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="../../../_static/script.js"></script>
     <script type="text/javascript" src="../../../_static/js/jquery-1.11.0.min.js"></script>
     <script type="text/javascript" src="../../../_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="../../../_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../../../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="../../../_static/bootstrap-sphinx.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
@@ -52,7 +52,7 @@
         </button>
         <a class="navbar-brand" href="../../../index.html">
           Happypanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.1#108</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.1#109</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -167,7 +167,20 @@
 <span class="kn">from</span> <span class="nn">happypanda.interface</span> <span class="k">import</span> <span class="n">enums</span>
 <span class="kn">from</span> <span class="nn">happypanda.core.commands</span> <span class="k">import</span> <span class="n">database_cmd</span>
 
+<span class="k">def</span> <span class="nf">_contruct_tags_msg</span><span class="p">(</span><span class="n">nstags</span><span class="p">):</span>
+    <span class="n">msg</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">_msg</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">nstag</span> <span class="ow">in</span> <span class="n">nstags</span><span class="p">:</span>
+        <span class="n">ns</span> <span class="o">=</span> <span class="n">nstag</span><span class="o">.</span><span class="n">namespace</span><span class="o">.</span><span class="n">name</span>
+        <span class="k">if</span> <span class="n">ns</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">msg</span><span class="p">:</span>
+            <span class="n">msg</span><span class="p">[</span><span class="n">ns</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">_msg</span><span class="p">[</span><span class="n">ns</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
+        <span class="k">if</span> <span class="n">nstag</span><span class="o">.</span><span class="n">tag</span><span class="o">.</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_msg</span><span class="p">[</span><span class="n">ns</span><span class="p">]:</span>
+            <span class="n">msg</span><span class="p">[</span><span class="n">ns</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">message</span><span class="o">.</span><span class="n">Tag</span><span class="p">(</span><span class="n">nstag</span><span class="o">.</span><span class="n">tag</span><span class="p">,</span> <span class="n">nstag</span><span class="p">)</span><span class="o">.</span><span class="n">json_friendly</span><span class="p">(</span><span class="n">include_key</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+            <span class="n">_msg</span><span class="p">[</span><span class="n">ns</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nstag</span><span class="o">.</span><span class="n">tag</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">msg</span>
 <div class="viewcode-block" id="get_tags"><a class="viewcode-back" href="../../../api.html#happypanda.interface.tag.get_tags">[docs]</a><span class="k">def</span> <span class="nf">get_tags</span><span class="p">(</span><span class="n">item_type</span><span class="p">:</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span> <span class="o">=</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Gallery</span><span class="p">,</span>
              <span class="n">item_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
              <span class="n">raw</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
@@ -195,7 +208,7 @@
     <span class="n">_</span><span class="p">,</span> <span class="n">db_item</span> <span class="o">=</span> <span class="n">item_type</span><span class="o">.</span><span class="n">_msg_and_model</span><span class="p">(</span>
         <span class="p">(</span><span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Gallery</span><span class="p">,</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Collection</span><span class="p">,</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Grouping</span><span class="p">,</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Page</span><span class="p">))</span>
 
-    <span class="n">db_obj</span> <span class="o">=</span> <span class="n">database_cmd</span><span class="o">.</span><span class="n">GetModelItemByID</span><span class="p">()</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">db_item</span><span class="p">,</span> <span class="p">{</span><span class="n">item_id</span><span class="p">})</span>
+    <span class="n">db_obj</span> <span class="o">=</span> <span class="n">database_cmd</span><span class="o">.</span><span class="n">GetModelItems</span><span class="p">()</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">db_item</span><span class="p">,</span> <span class="p">{</span><span class="n">item_id</span><span class="p">})</span>
     <span class="k">if</span> <span class="n">db_obj</span><span class="p">:</span>
         <span class="n">db_obj</span> <span class="o">=</span> <span class="n">db_obj</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
@@ -216,17 +229,37 @@
             <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">g_obj</span><span class="o">.</span><span class="n">pages</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>  <span class="c1"># TODO: we only need tags</span>
                 <span class="n">nstags</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">tags</span><span class="o">.</span><span class="n">all</span><span class="p">())</span>
 
-    <span class="n">msg</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="n">_msg</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="k">for</span> <span class="n">nstag</span> <span class="ow">in</span> <span class="n">nstags</span><span class="p">:</span>
-        <span class="n">ns</span> <span class="o">=</span> <span class="n">nstag</span><span class="o">.</span><span class="n">namespace</span><span class="o">.</span><span class="n">name</span>
-        <span class="k">if</span> <span class="n">ns</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">msg</span><span class="p">:</span>
-            <span class="n">msg</span><span class="p">[</span><span class="n">ns</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="n">_msg</span><span class="p">[</span><span class="n">ns</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">msg</span> <span class="o">=</span> <span class="n">_contruct_tags_msg</span><span class="p">(</span><span class="n">nstags</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">nstag</span><span class="o">.</span><span class="n">tag</span><span class="o">.</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_msg</span><span class="p">[</span><span class="n">ns</span><span class="p">]:</span>
-            <span class="n">msg</span><span class="p">[</span><span class="n">ns</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">message</span><span class="o">.</span><span class="n">Tag</span><span class="p">(</span><span class="n">nstag</span><span class="o">.</span><span class="n">tag</span><span class="p">,</span> <span class="n">nstag</span><span class="p">)</span><span class="o">.</span><span class="n">json_friendly</span><span class="p">(</span><span class="n">include_key</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
-            <span class="n">_msg</span><span class="p">[</span><span class="n">ns</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nstag</span><span class="o">.</span><span class="n">tag</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Identity</span><span class="p">(</span><span class="s1">&#39;tags&#39;</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_common_tags"><a class="viewcode-back" href="../../../api.html#happypanda.interface.tag.get_common_tags">[docs]</a><span class="k">def</span> <span class="nf">get_common_tags</span><span class="p">(</span><span class="n">item_type</span><span class="p">:</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span> <span class="o">=</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Collection</span><span class="p">,</span>
+             <span class="n">item_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+             <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get the most common tags for item</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        item_type: possible items are :attr:`.ItemType.Artist`, :attr:`.ItemType.Grouping`, :attr:`.ItemType.Collection`</span>
+<span class="sd">        item_id: id of item to fetch tags for</span>
+<span class="sd">        limit: limit amount of tags returned</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        .. code-block:: guess</span>
+
+<span class="sd">            {</span>
+<span class="sd">                namespace : [ tag message object, ...],</span>
+<span class="sd">                ...</span>
+<span class="sd">            }</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">item_type</span> <span class="o">=</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">item_type</span><span class="p">)</span>
+
+    <span class="n">_</span><span class="p">,</span> <span class="n">db_item</span> <span class="o">=</span> <span class="n">item_type</span><span class="o">.</span><span class="n">_msg_and_model</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Artist</span><span class="p">,</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Collection</span><span class="p">,</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Grouping</span><span class="p">))</span>
+
+    <span class="n">nstags</span> <span class="o">=</span> <span class="n">database_cmd</span><span class="o">.</span><span class="n">MostCommonTags</span><span class="p">()</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">db_item</span><span class="p">,</span> <span class="n">item_id</span><span class="p">,</span> <span class="n">limit</span><span class="p">)</span>
+    <span class="n">msg</span> <span class="o">=</span> <span class="n">_contruct_tags_msg</span><span class="p">(</span><span class="n">nstags</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Identity</span><span class="p">(</span><span class="s1">&#39;tags&#39;</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span></div>
 </pre></div>
