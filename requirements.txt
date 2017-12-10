@@ -17,3 +17,4 @@ https://github.com/happypandax/i18n/archive/master.zip
 send2trash==1.4.2
 PyQt5==5.9.2
 QtAwesome==0.4.4
+psutil==5.4.2
