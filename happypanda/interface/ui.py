@@ -140,6 +140,10 @@ def library_view(item_type: enums.ItemType = enums.ItemType.Gallery,
                 item message object,
                 ...
             ]
+
+    .. seealso::
+    
+        :func:`.get_sort_indexes`
     """
     view_filter, item_type, db_msg, db_model, model_ids, filter_op, join_exp, metatag_name = _view_helper(
         item_type, search_query, filter_id, view_filter, item_id, related_type, search_options)
@@ -257,7 +261,7 @@ def translate(t_id: str, locale: str = None, default: str = None, placeholder: s
 
 def get_sort_indexes(item_type: enums.ItemType=None, translate: bool=True, locale: str=None):
     """
-    Get a list of sort item indexes and names
+    Get a list of available sort item indexes and names
     
     Args:
         item_type: return applicable indexes for a specific item type
