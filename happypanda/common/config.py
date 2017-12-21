@@ -23,7 +23,7 @@ class ConfigNode:
 
     _cfg_nodes = {}
 
-    def __init__(self, cfg, ns, name, value, description="", type_=None, isolation=ConfigIsolation.server):
+    def __init__(self, cfg, ns, name, value, description="", type_=None, isolation=ConfigIsolation.server, hidden=False):
         self._cfg = cfg
         self.isolation = isolation
         self.namespace = ns
@@ -31,9 +31,11 @@ class ConfigNode:
         self.default = value
         self.description = description
         self.type_ = type(value) if type_ is None else type_
+        self.hidden = hidden
         self._created = False
-        with self._cfg.namespace(ns):
-            self._cfg.define(name, value, description)
+        if hidden:
+            with self._cfg.namespace(ns):
+                self._cfg.define(name, value, description)
         self.default_namespaces.add(ns.lower())
         self._cfg_nodes.setdefault(ns.lower(), {})[name.lower()] = self
 
@@ -49,7 +51,14 @@ class ConfigNode:
         return getattr(gevent.getcurrent(), 'locals', {}).get("ctx", {}).get("config", {})
 
     def get(self, *args, **kwargs):
-        return self._cfg.get(*args, **kwargs)
+        if self.hidden:
+            try:
+                v = self._cfg.get(*args, **kwargs)
+            except KeyError:
+                v = self.default
+        else:
+            v = self._cfg.get(*args, **kwargs)
+        return v
 
     @classmethod
     def get_all(cls):
@@ -58,16 +67,16 @@ class ConfigNode:
     @property
     def value(self):
         with self._cfg.tmp_config(self.namespace, self._get_ctx_config().get(self._cfg.format_namespace(self.namespace))):
-            return self._cfg.get(self.namespace, self.name, default=self.default, create=False, type_=self.type_)
+            return self.get(self.namespace, self.name, default=self.default, create=False, type_=self.type_)
 
     @value.setter
     def value(self, new_value):
         if self.isolation == ConfigIsolation.client:
             with self._cfg.tmp_config(self.namespace, self._get_ctx_config().get(self._cfg.format_namespace(self.namespace))):
-                self._cfg.update(self.name, new_value)
+                self._cfg.update(self.name, new_value, create=self.hidden)
         else:
             with self._cfg.namespace(self.namespace):
-                self._cfg.update(self.name, new_value)
+                self._cfg.update(self.name, new_value, create=self.hidden)
 
     def __bool__(self):
         return bool(self.value)
@@ -87,10 +96,10 @@ class Config:
         self._loaded = False
         self._cmd_args_applied = False
 
-    def create(self, ns, key, default=None, description="", type_=None):
+    def create(self, ns, key, default=None, description="", type_=None, **kwargs):
         if ns is None:
             ns = self._current_ns
-        return ConfigNode(self, ns, key, default, description, type_)
+        return ConfigNode(self, ns, key, default, description, type_, **kwargs)
 
     def _ordered_load(self, stream, Loader=yaml.SafeLoader, object_pairs_hook=OrderedDict):
         class OrderedLoader(Loader):
@@ -317,7 +326,7 @@ core_ns = 'core'
 
 with config.namespace(core_ns):
 
-    debug = config.create(core_ns, 'debug', False, "Run in debug mode")
+    debug = config.create(core_ns, 'debug', False, "Run in debug mode", hidden=True)
 
     report_critical_errors = config.create(
         core_ns,
@@ -336,6 +345,30 @@ with config.namespace(core_ns):
         "concurrent_network_tasks",
         50,
         "Amount of network service tasks allowed to run at the same time (higher count does not necessarily mean faster network speed)")
+
+    check_new_releases = config.create(
+        core_ns,
+        "check_new_releases",
+        True,
+        "Regularly check for new releases")
+
+    check_release_interval = config.create(
+        core_ns,
+        "check_release_interval",
+        30,
+        "Interval in minutes between checking for a new release, set 0 to only check once every startup")
+
+    allow_beta_releases = config.create(
+        core_ns,
+        "allow_beta_releases",
+        True,
+        "Allow downloading beta releases")
+
+    allow_alpha_releases = config.create(
+        core_ns,
+        "allow_beta_releases",
+        False,
+        "Allow downloading alpha releases")
 
 
 gallery_ns = 'gallery'
@@ -547,7 +580,9 @@ with config.namespace(gui_ns):
         "Open the webclient in your default browser on server start")
 
 network_ns = "network"
+
 with config.namespace(network_ns):
+
     request_timeout = config.create(
         None,
         "request_timeout",
@@ -560,5 +595,20 @@ with config.namespace(network_ns):
         {'http':'', 'https':''},
         "Specify network proxies. Proxy URLs must include the scheme. To use HTTP Basic Auth with your proxy, use the http://user:password@host/ syntax")
 
+advanced_ns = "advanced"
+
+with config.namespace(advanced_ns):
+
+    rollbar_access_token = config.create(
+        advanced_ns,
+        "rollbar_access_token",
+        "3c1a82d8dd054c098d2c49f30615624a",
+        "Rollbar access token", hidden=True)
+
+    github_repo = config.create(
+        advanced_ns,
+        "github_repo",
+        {'repo':'sever', 'owner':'happypandax'},
+        "Github repo and owner", hidden=True)
 
 config_doc = config.doc_render()  # for doc

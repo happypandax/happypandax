@@ -2,7 +2,7 @@ import attr
 import requests
 import cachecontrol
 
-from happypanda.common import hlogger, exceptions, utils, constants, exceptions
+from happypanda.common import (hlogger, exceptions, utils, constants, exceptions, config)
 from happypanda.core.command import CoreCommand, CommandEntry, AsyncCommand
 from happypanda.core.services import NetworkService
 from happypanda.interface import enums
@@ -55,6 +55,11 @@ class Response(CoreCommand):
         "Underlying response object"
         return self._rsp
 
+    @property
+    def json(self):
+        return self._rsp.json()
+
+
 
 class _AsyncRequest(AsyncCommand):
     """
@@ -89,6 +94,7 @@ class _AsyncRequest(AsyncCommand):
             'options':self.session.options,
             }.get(verb.value)
         kwargs = {}
+        kwargs['timeout'] = props.timeout or config.request_timeout.value
         if props.headers is not None:
             kwargs['headers'] = props.headers
         if props.files is not None:
@@ -129,12 +135,15 @@ class SimpleRequest(_AsyncRequest):
         self.url = url
         self.properties = properties
 
+    def main(self):
+        return self.request(self.url, self.properties)
+
 class SimpleGETRequest(SimpleRequest):
     """
     A convenience wrapper around SimpleRequest for GET requests 
     """
 
-    def __init__(self, url, properties, **kwargs):
+    def __init__(self, url, properties = RequestProperties(), **kwargs):
         properties.method = Method.GET
         return super().__init__(url, properties, **kwargs)
 
@@ -143,7 +152,7 @@ class SimplePOSTRequest(SimpleRequest):
     A convenience wrapper around SimpleRequest for POST requests 
     """
 
-    def __init__(self, url, properties, **kwargs):
+    def __init__(self, url, properties = RequestProperties(), **kwargs):
         properties.method = Method.POST
         return super().__init__(url, properties, **kwargs)
 
@@ -165,7 +174,7 @@ class MultiGETRequest(MultiRequest):
     A convenience wrapper around MultiRequest for GET requests 
     """
 
-    def __init__(self, url, properties, **kwargs):
+    def __init__(self, url, properties = RequestProperties(), **kwargs):
         properties.method = Method.GET
         return super().__init__(url, properties, **kwargs)
 
@@ -174,6 +183,6 @@ class MultiPOSTRequest(MultiRequest):
     A convenience wrapper around MultiRequest for POST requests 
     """
 
-    def __init__(self, url, properties, **kwargs):
+    def __init__(self, url, properties = RequestProperties(), **kwargs):
         properties.method = Method.POST
         return super().__init__(url, properties, **kwargs)

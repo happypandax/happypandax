@@ -7,7 +7,7 @@ rarfile.PATH_SEP = '/'
 dev = False
 
 ## VERSIONING ##
-build = 1010
+build = 110
 version = (0, 0, 1)
 version_db = (0, 0, 1)
 version_web = (0, 0, 1)
@@ -40,7 +40,7 @@ link_ext = '.link'
 
 # CORE
 
-rollbar_access_token = "3c1a82d8dd054c098d2c49f30615624a"
+# should probably move this to config
 update_public_key = {
     'main': '',
     'backup': ''

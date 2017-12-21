@@ -315,7 +315,7 @@ def os_info():
 
 def setup_online_reporter():
     if config.report_critical_errors.value:
-        rollbar.init(constants.rollbar_access_token,
+        rollbar.init(config.rollbar_access_token.value,
                     'HPX {}, web({}), db({}), build({})'.format(
                         constants.version,
                         constants.version_web,
