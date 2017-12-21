@@ -47,6 +47,17 @@ def get_item(data=None, error=None):
             client.call_func("get_item", this.get_lang,
                              item_type=ItemType.Language,
                              item_id=data.language_id)
+
+        if data.id:
+            client.call_func("get_related_count", this.get_filter_count,
+                    related_type=ItemType.GalleryFilter,
+                    item_type=this.state.item_type,
+                    item_id=data.id)
+            client.call_func("get_related_count", this.get_collection_count,
+                    related_type=ItemType.Collection,
+                    item_type=this.state.item_type,
+                    item_id=data.id)
+
     elif error:
         state.app.notif("Failed to fetch item ({})".format(this.state.id), level="error")
     else:
@@ -69,6 +80,19 @@ def get_lang(data=None, error=None):
         this.setState({"lang_data": data})
     elif error:
         state.app.notif("Failed to fetch language ({})".format(this.state.id), level="error")
+
+
+def get_filter_count(data=None, error=None):
+    if data is not None and not error:
+        this.setState({"filter_count": data['count']})
+    elif error:
+        state.app.notif("Failed to fetch filter count ({})".format(this.state.id), level="error")
+
+def get_collection_count(data=None, error=None):
+    if data is not None and not error:
+        this.setState({"collection_count": data['count']})
+    elif error:
+        state.app.notif("Failed to fetch collection count ({})".format(this.state.id), level="error")
 
 
 __pragma__("tconv")
@@ -232,7 +256,8 @@ def page_render():
             textAlign="center",
             ),
           centered=True,
-          ))
+          ),
+        )
 
     if inbox:
         buttons.append(
@@ -243,7 +268,34 @@ def page_render():
                 textAlign="center",
                 ),
               centered=True,
-              ))
+              ),
+            )
+
+    #if this.state.collection_count:
+    #    buttons.append(
+    #        e(ui.Grid.Row,
+    #            e(ui.Grid.Column,
+    #            e(ui.Button,
+    #                tr(this, "", "Appears in {} collections".format(this.state.collection_count), count=this.state.collection_count),
+    #                color="pink"),
+    #            textAlign="center",
+    #            ),
+    #            centered=True,
+    #            ),
+    #        )
+
+    #if this.state.filter_count:
+    #    buttons.append(
+    #        e(ui.Grid.Row,
+    #          e(ui.Grid.Column,
+    #            e(ui.Button,
+    #               tr(this, "", "Appears in {} filters".format(this.state.filter_count), count=this.state.filter_count),
+    #               color="teal"),
+    #            textAlign="center",
+    #            ),
+    #          centered=True,
+    #          ))
+
     buttons.append(
         e(ui.Grid.Row,
           e(ui.Grid.Column,
@@ -253,8 +305,9 @@ def page_render():
               color="red" if not trash else "grey"),
             textAlign="center",
             ),
-          centered=True,
-          ))
+          divided=True,
+          ),
+        )
 
     if trash:
         buttons.append(
@@ -272,6 +325,8 @@ def page_render():
                 ),
               centered=True,
               ))
+
+    filters_and_collections = []
 
     return e(ui.Grid,
              e(ui.Grid.Row, e(ui.Grid.Column, e(ui.Breadcrumb, icon="right arrow",))),
@@ -374,6 +429,8 @@ Page = createReactClass({
                                 'send_to_recycle': True,
                                 'delete_files': False,
                                 'visible_page_cfg': False,
+                                'collection_count': this.props.collection_count or 0,
+                                'filter_count': this.props.filter_count or 0,
                                 },
 
     'on_read': lambda: utils.go_to(this.props.history, "/item/page", {'gid': this.state.data.id}, keep_query=False),
@@ -381,6 +438,8 @@ Page = createReactClass({
     'get_grouping': get_grouping,
     'get_lang': get_lang,
     'get_status': get_status,
+    'get_filter_count': get_filter_count,
+    'get_collection_count': get_collection_count,
     'get_config': get_config,
     'open_external': galleryitem.open_external,
 

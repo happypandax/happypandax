@@ -7,7 +7,7 @@ rarfile.PATH_SEP = '/'
 dev = False
 
 ## VERSIONING ##
-build = 109
+build = 1010
 version = (0, 0, 1)
 version_db = (0, 0, 1)
 version_web = (0, 0, 1)
@@ -33,12 +33,18 @@ db_name = "happypanda.db"
 db_name_dev = "happypanda_dev.db"
 db_path = os.path.join(dir_root, dir_data, db_name)
 db_path_dev = os.path.join(dir_root, dir_data, db_name_dev)
+internal_db_path = os.path.join(dir_data, "internals")
 
 thumbs_view = "/thumb"
 link_ext = '.link'
 
 # CORE
 
+rollbar_access_token = "3c1a82d8dd054c098d2c49f30615624a"
+update_public_key = {
+    'main': '',
+    'backup': ''
+    }
 
 class ExitCode(enum.Enum):
     Exit = 0
@@ -50,6 +56,8 @@ class Priority(enum.Enum):
     Normal = 5
     Low = 0
 
+
+is_frozen = False
 
 maximum_native_workers = 15
 
@@ -69,7 +77,7 @@ available_commands = set()
 available_events = set()
 plugin_shortname_length = 10
 
-# DATABASE½
+# DATABASE
 db_engine = None
 db_session = None
 _db_scoped_session = None

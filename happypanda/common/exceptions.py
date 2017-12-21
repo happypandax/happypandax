@@ -323,6 +323,20 @@ class ArchiveExistError(ArchiveError):
     def __init__(self, f):
         return super().__init__("Archive file does not exist. File '{}' not found".format(f))
 
+    ## NETWORK -- CODE: 700+ ##
+
+@error_code(700)
+class NetworkError(CoreError):
+    """
+    Base network exception, all network exceptions will derive from this
+    """
+    
+    def __init__(self, message, properties=None):
+        if properties:
+            pass
+        # TODO: urls and stuff
+        return super().__init__("network", message)
+
     ## ETC.  -- CODE:900+ ##
 
 

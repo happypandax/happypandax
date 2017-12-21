@@ -42,6 +42,9 @@ def gallery_render():
     item_id = this.state.id
     info = ""
     inbox = False
+    date_pub = "Unknown"
+    date_read = "Unknown"
+    date_added = "Unknown"
 
     if this.state.data:
         read_count = this.state.data.times_read
@@ -62,6 +65,16 @@ def gallery_render():
 
         for u in this.state.data.urls:
             urls.append(u.js_name)
+
+        if this.state.data.pub_date:
+            date_pub = utils.moment.unix(this.state.data.pub_date).format("LL")
+            date_pub += " (" + utils.moment.unix(this.state.data.pub_date).fromNow() + ")"
+        if this.state.data.last_read:
+            date_read = utils.moment.unix(this.state.data.last_read).format("LLL")
+            date_read += " (" + utils.moment.unix(this.state.data.last_read).fromNow() + ")"
+        if this.state.data.timestamp:
+            date_added = utils.moment.unix(this.state.data.timestamp).format("LLL")
+            date_added += " (" + utils.moment.unix(this.state.data.timestamp).fromNow() + ")"
 
     add_cls = this.props.className or ""
     link = True
@@ -91,6 +104,9 @@ def gallery_render():
                   e(ui.Table.Cell, e(ui.Header, "Artist(s):", as_="h5"), collapsing=True),
                   e(ui.Table.Cell, *(e(artistitem.ArtistLabel, data=x) for x in artists))))
     rows.append(e(ui.Table.Row,
+                  e(ui.Table.Cell, e(ui.Header, "Published:", as_="h5"), collapsing=True),
+                  e(ui.Table.Cell, e(ui.Label, date_pub))))
+    rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, "Times read:", as_="h5"), collapsing=True),
                   e(ui.Table.Cell, e(ui.Label, read_count, circular=True))))
     rows.append(e(ui.Table.Row,
@@ -101,6 +117,15 @@ def gallery_render():
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, "URL(s):", as_="h5"), collapsing=True),
                   e(ui.Table.Cell, e(ui.List, *[e(ui.List.Item, h("span", h("a", x, href=x, target="_blank"), e(ui.List.Icon, js_name="external share"))) for x in urls]))))
+
+    rows.append(e(ui.Table.Row,
+                  e(ui.Table.Cell, e(ui.Header, "Date added:", as_="h5"), collapsing=True),
+                  e(ui.Table.Cell, e(ui.Label, date_added))))
+
+    rows.append(e(ui.Table.Row,
+                  e(ui.Table.Cell, e(ui.Header, "Last read:", as_="h5"), collapsing=True),
+                  e(ui.Table.Cell, e(ui.Label, date_read))))
+
 
     menu_options = []
     if this.props.external_viewer:

@@ -4,6 +4,7 @@ import code
 import arrow
 import os
 import gevent
+import gzip
 
 from inspect import getmembers, isfunction, signature, Parameter
 
@@ -506,5 +507,6 @@ class WebServer:
 
     def run(self, host, port, debug=False, logging_queue=None, logging_args=None):
         if logging_queue:
+            utils.setup_online_reporter()
             hlogger.Logger.setup_logger(logging_args, logging_queue)
         self.socketio.run(self.happyweb, host, port, debug=debug)

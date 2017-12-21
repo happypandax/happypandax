@@ -9,7 +9,7 @@ arrow==0.10.0
 https://github.com/Pewpews/happy-bittorrent/archive/master/1.0.0.zip
 Flask==0.12.2
 karellen-geventws==1.0.2
-flask-socketio==2.9.2
+flask-socketio==2.9.3
 libsass==0.13.2
 pyyaml==3.12
 pillow==4.3.0
@@ -18,3 +18,9 @@ send2trash==1.4.2
 PyQt5==5.9.2
 QtAwesome==0.4.4
 psutil==5.4.2
+rollbar==0.13.17
+pynacl==1.2.1
+CacheControl==0.12.3
+attrs==17.3.0
+requests==2.18.4
+certifi>=2017.11.5

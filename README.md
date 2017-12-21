@@ -6,8 +6,10 @@
 
 > **This is project is under heavy development and not yet ready for deployment. If you want to speed up the development, please consider [contributing](https://happypandax.github.io/server/env.html).**
 
+#### [Docs](https://happypandax.github.io/server/) - [Contribute](https://happypandax.github.io/server/env.html) - [Download](https://github.com/happypandax/server/releases) - [Plugins](https://github.com/happypandax/plugins)
+
 <p align="center">
-<img src="https://user-images.githubusercontent.com/11841002/32983531-4ac3fc6c-cc96-11e7-8ba4-c12d9ee0b8a8.png" width="650">
+<img src="https://user-images.githubusercontent.com/11841002/32983531-4ac3fc6c-cc96-11e7-8ba4-c12d9ee0b8a8.png" width="400">
 </p>
 
 # Building
@@ -18,21 +20,10 @@
     > **Windows users**: If you get `error: command '..\cl.exe' failed with exit status 2`, download `bitarray` from [here](http://www.lfd.uci.edu/%7Egohlke/pythonlibs/#bitarray)
     > **Install like this**: `.\env\Scripts\pip3.exe install bitarray.whl`
 
-# Documentation
-
-An online version of the doc can be found [here](https://happypandax.github.io/server/)
-
-In case it's ever down, build the docs by running: `python build_docs.py`
->**Note**: this requires `pip3 install -r requirements-dev.txt`)
-
-# Contributing
-
-Please refer to [doc](https://happypandax.github.io/server/env.html)
-
 # License
 
 ```
-    Happypanda X is a cross platform manga/doujinshi manager with namespace & tag support;
+    HappyPanda X is a cross platform manga/doujinshi manager with namespace & tag support;
     Copyright (C) 2017  Twiddly
 
     This program is free software: you can redistribute it and/or modify

@@ -4,6 +4,7 @@ import sys
 import argparse
 import traceback
 import os
+import rollbar
 
 from multiprocessing import Process, Queue, TimeoutError
 from logging.handlers import RotatingFileHandler
@@ -42,6 +43,7 @@ class QueueHandler(logging.Handler):
 
 class Logger:
 
+    report_online = False
     _queue = None
 
     def __init__(self, name):
@@ -72,16 +74,27 @@ class Logger:
         "INFO"
         self._log(self._logger.critical, *args, stderr=True, **kwargs)
 
-    def _log(self, level, *args, stdout=False, stderr=False):
+    def _log_format(self, *args):
         s = ""
         for a in args:
             if not isinstance(a, str):
                 a = pprint.pformat(a)
             s += a
             s += " "
+        return s
+
+    def _log(self, level, *args, stdout=False, stderr=False):
+        s = self._log_format(*args)
         level(s)
 
-        if not constants.dev:  # prevent printing multiple times
+        if not constants.dev:
+            if level in (self._logger.exception, self._logger.critical) and self.report_online:
+                if level == self._logger.exception:
+                    rollbar.report_exc_info()
+                else:
+                    rollbar.report_message(s, "critical")
+
+            # prevent printing multiple times
             if stdout:
                 print(s)
             if stderr:
@@ -93,6 +106,7 @@ class Logger:
     @classmethod
     def setup_logger(cls, args, logging_queue=None, main=False):
         assert isinstance(args, argparse.Namespace)
+
         if logging_queue:
             cls._queue = logging_queue
         log_level = logging.DEBUG if args.debug else logging.INFO

@@ -4,6 +4,7 @@ import qtawesome as qta
 import functools
 import psutil
 import signal
+import webbrowser
 
 from PyQt5.QtWidgets import (QApplication,
                              QMainWindow,
@@ -27,7 +28,7 @@ from PyQt5.QtGui import QIcon, QDesktopServices, QPalette, QMouseEvent
 from PyQt5.QtCore import Qt, QUrl, QDir
 from i18n import t
 from subprocess import Popen, CREATE_NEW_CONSOLE
-from threading import Thread
+from threading import Thread, Timer
 
 from happypanda.common import constants, utils, config
 from happypanda import main
@@ -284,6 +285,10 @@ class Window(QMainWindow):
         # self.webclient_btn.clicked.connect(self.toggle_client)
         # self.webclient_btn.setShortcut(Qt.CTRL|Qt.Key_W)
 
+        open_client_btn = QPushButton(qta.icon("fa.external-link"), t("", default="Open Webclient"))
+        open_client_btn.clicked.connect(self.open_client)
+        open_client_btn.setShortcut(Qt.CTRL | Qt.Key_O)
+
         open_config_btn = QPushButton(qta.icon("fa.cogs"), t("", default="Open configuration"))
         open_config_btn.clicked.connect(self.open_cfg)
         open_config_btn.setShortcut(Qt.CTRL | Qt.Key_C)
@@ -291,10 +296,11 @@ class Window(QMainWindow):
         convert_btn = QPushButton(qta.icon("fa.refresh"), t("", default="HP to HPX"))
         convert_btn.clicked.connect(self.convert_hp)
 
-        for b in (self.server_btn, open_config_btn, convert_btn):
+        for b in (self.server_btn, open_config_btn, convert_btn, open_client_btn):
             b.setFixedHeight(40)
         button_layout = QHBoxLayout(buttons)
         button_layout.addWidget(self.server_btn)
+        button_layout.addWidget(open_client_btn)
         # button_layout.addWidget(self.webclient_btn)
         button_layout.addWidget(open_config_btn)
         button_layout.addWidget(convert_btn)
@@ -354,6 +360,8 @@ class Window(QMainWindow):
             self.server_btn.setIcon(self.stop_ico)
             if not self.server_process:
                 self.server_process = self.start_server()
+            if config.gui_open_webclient_on_server_start.value:
+                Timer(3, self.open_client).start()
         else:
             self.server_btn.setText(t("", default="Start server"))
             self.server_btn.setIcon(self.start_ico)
@@ -370,6 +378,10 @@ class Window(QMainWindow):
         else:
             self.webclient_btn.setText(t("", default="Start webclient"))
             self.webclient_btn.setIcon(self.start_ico)
+
+    def open_client(self):
+        u = utils.get_qualified_name(config.host_web.value, config.port_web.value)
+        webbrowser.open('http://'+u)
 
     def stop_process(self, p):
         if p:
@@ -411,6 +423,7 @@ class Window(QMainWindow):
 
 
 if __name__ == "__main__":
+    utils.check_frozen()
     utils.setup_i18n()
     QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
     app = QApplication(sys.argv)

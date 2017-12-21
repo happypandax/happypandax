@@ -13,6 +13,8 @@ import gevent
 import platform
 import threading
 import i18n
+import shelve
+import rollbar
 
 from inspect import ismodule, currentframe, getframeinfo
 from contextlib import contextmanager
@@ -34,8 +36,11 @@ i18n.set("error_on_missing_translation", True)
 
 def setup_i18n():
     i18n.set("locale", config.translation_locale.value)
-    i18n.set("fallback", config.translation_locale.value)
+    i18n.set("fallback", "en_us")
 
+def check_frozen():
+    constants.is_frozen = getattr(sys, 'frozen', False)
+    return constants.is_frozen
 
 def setup_dirs():
     "Creates directories at the specified root path"
@@ -58,7 +63,7 @@ def setup_dirs():
 def get_argparser():
     "Creates and returns a command-line arguments parser"
     parser = argparse.ArgumentParser(
-        prog="Happypanda X",
+        prog="HappyPanda X",
         description="A manga/doujinshi manager with tagging support (https://github.com/happypandax/server)")
 
     parser.add_argument('-p', '--port', type=int,
@@ -308,6 +313,23 @@ def os_info():
         PYTHON=platform.python_version()
     ))
 
+def setup_online_reporter():
+    if config.report_critical_errors.value:
+        rollbar.init(constants.rollbar_access_token,
+                    'HPX {}, web({}), db({}), build({})'.format(
+                        constants.version,
+                        constants.version_web,
+                        constants.version_db,
+                        constants.build))
+        hlogger.Logger.report_online = True
+
+@contextmanager
+def intertnal_db():
+    db = shelve.open(constants.internal_db_path)
+    try:
+        yield db
+    finally:
+        db.close()
 
 class AttributeList(UserList):
     """

@@ -28,7 +28,7 @@ class ItemType:
     #: Circle
     Circle = 11
     #: GalleryURL
-    GalleryUrl = 12
+    Url = 12
     #: Gallery Parody
     Parody = 13
 

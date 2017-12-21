@@ -40,11 +40,12 @@ def notif(msg, header="", level="info", icon=None, **kwargs):
     _timeout = 5000
     if level == "warning":
         _a = Alert.warning
+        _timeout = _timeout * 2
     elif level == "success":
         _a = Alert.success
     elif level == "error":
         _a = Alert.error
-        _timeout = _timeout * 2
+        _timeout = _timeout * 4
     else:
         _a = Alert.info
 

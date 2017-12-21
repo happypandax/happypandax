@@ -319,11 +319,24 @@ with config.namespace(core_ns):
 
     debug = config.create(core_ns, 'debug', False, "Run in debug mode")
 
+    report_critical_errors = config.create(
+        core_ns,
+        'report_critical_errors',
+        True,
+        "Send occurring critical errors to me (creator) so I can fix them faster")
+
     concurrent_image_tasks = config.create(
         core_ns,
         "concurrent_image_tasks",
         10,
         "Amount of image service tasks allowed to run at the same time (higher count does not necessarily mean faster generation)")
+
+    concurrent_network_tasks = config.create(
+        core_ns,
+        "concurrent_network_tasks",
+        50,
+        "Amount of network service tasks allowed to run at the same time (higher count does not necessarily mean faster network speed)")
+
 
 gallery_ns = 'gallery'
 
@@ -452,6 +465,12 @@ with config.namespace(server_ns):
         0,
         "Specify the amount of time (in minutes) a session can go unused before expiring or 0 for never")
 
+    encrypt = config.create(
+        server_ns,
+        'encrypt',
+        False,
+        "Specify if messages should be encrypted before sending. A secret key has to be set for messages to be encrypted")
+
 search_ns = 'search'
 
 with config.namespace(search_ns):
@@ -520,6 +539,26 @@ with config.namespace(gui_ns):
         "minimize_on_close",
         False,
         "Minimize the program to tray on close button")
+
+    gui_open_webclient_on_server_start = config.create(
+        None,
+        "open_webclient_on_server_start",
+        False,
+        "Open the webclient in your default browser on server start")
+
+network_ns = "network"
+with config.namespace(network_ns):
+    request_timeout = config.create(
+        None,
+        "request_timeout",
+        30,
+        "Upper limit of a request timeout in seconds")
+
+    proxy = config.create(
+        None,
+        "proxy",
+        {'http':'', 'https':''},
+        "Specify network proxies. Proxy URLs must include the scheme. To use HTTP Basic Auth with your proxy, use the http://user:password@host/ syntax")
 
 
 config_doc = config.doc_render()  # for doc

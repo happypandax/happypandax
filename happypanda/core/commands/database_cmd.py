@@ -67,7 +67,7 @@ class GetModelImage(AsyncCommand):
 
         if im_path:
             im_props = io_cmd.ImageProperties(size, 0, constants.dir_thumbs)
-            im_path = io_cmd.ImageItem(None, im_path, im_props).main()
+            im_path = io_cmd.ImageItem(im_path, im_props).main()
         return im_path
 
     def main(self, model: db.Base, item_id: int,

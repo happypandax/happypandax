@@ -3,12 +3,12 @@ import os
 import hashlib
 import shutil
 import send2trash
+import attr
 
 from io import BytesIO
 from PIL import Image
 from zipfile import ZipFile
 from rarfile import RarFile
-from collections import namedtuple
 from contextlib import contextmanager
 from gevent import fileobject
 
@@ -19,10 +19,14 @@ from happypanda.core import db
 
 log = hlogger.Logger(__name__)
 
-ImageProperties = namedtuple(
-    "ImageProperties", [
-        'size', 'radius', 'output_dir', 'output_path', 'name', 'create_symlink'])
-ImageProperties.__new__.__defaults__ = (utils.ImageSize(*constants.image_sizes['medium']), 0, None, None, None, True)
+@attr.s
+class ImageProperties:
+    size = attr.ib(default=utils.ImageSize(*constants.image_sizes['medium']))
+    radius = attr.ib(default=0)
+    output_dir = attr.ib(default=None)
+    output_path = attr.ib(default=None)
+    name = attr.ib(default=None)
+    create_symlink = attr.ib(default=True)
 
 
 class ImageItem(AsyncCommand):
@@ -32,9 +36,11 @@ class ImageItem(AsyncCommand):
         a path to generated image
     """
 
-    def __init__(self, service, filepath_or_bytes, properties):
+    def __init__(self, filepath_or_bytes, properties, service=None):
         assert isinstance(service, ImageService) or service is None
         assert isinstance(properties, ImageProperties)
+        if service is None:
+            service = ImageService.generic
         super().__init__(service, priority=constants.Priority.Low)
         self.properties = properties
         self._image = filepath_or_bytes

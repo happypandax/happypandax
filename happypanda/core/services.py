@@ -149,23 +149,17 @@ class Service:
             self._commands[cmd_id].state = command.CommandState.in_queue
             log.d("Enqueueing command id", cmd_id, "in service '{}'".format(self.name))
 
+class NetworkService(Service):
+    "A network service"
 
-class DownloadItem(command.AsyncCommand):
+    def __init__(self, name, pool=None):
+        super().__init__(name, pool or pool.Pool(config.concurrent_network_tasks*2))
 
-    def __init__(self, service, url, session=None):
-        assert isinstance(service, DownloadService)
-        super().__init__(service)
-        self.session = session
-        self.url = url
-        self.file = ""
-        self.name = ""
-
-
-class DownloadService(Service):
+class DownloadService(NetworkService):
     "A download service"
 
     def __init__(self, name):
-        super().__init__(name)
+        super().__init__(name, pool.Pool(config.concurrent_network_tasks))
 
 
 class ImageService(Service):
@@ -177,5 +171,6 @@ class ImageService(Service):
 
 def init_generic_services():
     Service.generic = Service("generic")
+    NetworkService.generic = NetworkService("network")
     DownloadService.generic = DownloadService("download")
     ImageService.generic = ImageService("image")

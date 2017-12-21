@@ -31,9 +31,9 @@ def ItemViewConfig(props):
         {'key': 150, 'text': '150', 'value': 150},
         {'key': 200, 'text': '200', 'value': 200},
         {'key': 250, 'text': '250', 'value': 250},
-        {'key': 300, 'text': '300', 'value': 300},
-        {'key': 400, 'text': '400', 'value': 400},
-        {'key': 500, 'text': '500', 'value': 500},
+        #{'key': 300, 'text': '300', 'value': 300},
+        #{'key': 400, 'text': '400', 'value': 400},
+        #{'key': 500, 'text': '500', 'value': 500},
     ]
 
     ext_viewer_el = []
