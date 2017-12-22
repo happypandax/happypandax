@@ -25245,7 +25245,7 @@ Floated Menu / Item
   position: relative;
   min-height: 1em;
   margin: 1em 0em;
-  background: #F8F8F9;
+  background: #3d5871;
   padding: 1em 1.5em;
   line-height: 1.33;
   color: #fff;
@@ -25254,8 +25254,8 @@ Floated Menu / Item
   transition: opacity 0.1s ease, color 0.1s ease, background 0.1s ease, box-shadow 0.1s ease;
   transition: opacity 0.1s ease, color 0.1s ease, background 0.1s ease, box-shadow 0.1s ease, -webkit-box-shadow 0.1s ease;
   border-radius: 0;
-  -webkit-box-shadow: 0px 0px 0px 1px rgba(34, 36, 38, 0.22) inset, 0px 0px 0px 0px rgba(0, 0, 0, 0);
-  box-shadow: 0px 0px 0px 1px rgba(34, 36, 38, 0.22) inset, 0px 0px 0px 0px rgba(0, 0, 0, 0);
+  -webkit-box-shadow: none;
+  box-shadow: none;
 }
 
 .ui.message:first-child {
@@ -25282,7 +25282,7 @@ Floated Menu / Item
 /* Default font size */
 
 .ui.message .header:not(.ui) {
-  font-size: 1.13333333em;
+  font-size: 1.14285714em;
 }
 
 /* Paragraph */
@@ -25759,15 +25759,15 @@ Floated Menu / Item
 ---------------*/
 
 .ui.mini.message {
-  font-size: 0.8em;
+  font-size: 0.78571429em;
 }
 
 .ui.tiny.message {
-  font-size: 0.86666667em;
+  font-size: 0.85714286em;
 }
 
 .ui.small.message {
-  font-size: 0.93333333em;
+  font-size: 0.92857143em;
 }
 
 .ui.message {
@@ -25775,19 +25775,23 @@ Floated Menu / Item
 }
 
 .ui.large.message {
-  font-size: 1.13333333em;
+  font-size: 1.14285714em;
 }
 
 .ui.big.message {
-  font-size: 1.26666667em;
+  font-size: 1.28571429em;
 }
 
 .ui.huge.message {
-  font-size: 1.4em;
+  font-size: 1.42857143em;
 }
 
 .ui.massive.message {
-  font-size: 1.73333333em;
+  font-size: 1.71428571em;
+}
+
+.ui.message {
+  border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 /*******************************

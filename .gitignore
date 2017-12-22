@@ -216,6 +216,6 @@ __javascript__
 semantic/*
 !semantic/src/theme.config
 !semantic/src/themes/happypanda
-!semantic/src/themes/happypanda
+!semantic/src/themes/superhero
 !semantic/src/site/globals
 
