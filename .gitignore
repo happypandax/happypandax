@@ -213,3 +213,9 @@ FakesAssemblies/
 /config.yaml
 /logs
 __javascript__
+semantic/*
+!semantic/src/theme.config
+!semantic/src/themes/happypanda
+!semantic/src/themes/happypanda
+!semantic/src/site/globals
+

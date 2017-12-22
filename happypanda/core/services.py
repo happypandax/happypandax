@@ -152,14 +152,14 @@ class Service:
 class NetworkService(Service):
     "A network service"
 
-    def __init__(self, name, pool=None):
-        super().__init__(name, pool or pool.Pool(config.concurrent_network_tasks*2))
+    def __init__(self, name, pool_=None):
+        super().__init__(name, pool_ or pool.Pool(config.concurrent_network_tasks.value*2))
 
 class DownloadService(NetworkService):
     "A download service"
 
     def __init__(self, name):
-        super().__init__(name, pool.Pool(config.concurrent_network_tasks))
+        super().__init__(name, pool.Pool(config.concurrent_network_tasks.value))
 
 
 class ImageService(Service):
