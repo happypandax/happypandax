@@ -1,0 +1,20 @@
+/*******************************
+     User Global Variables
+*******************************/
+@importGoogleFonts: False;
+
+@primaryColor   : @blue;
+@secondaryColor : @grey;
+@red            : #f03434;
+@orange         : #F89406;
+@yellow         : #F7CA18;
+@olive          : #00e640;
+@green          : #2ECC71;
+@teal           : #36D7B7;
+@blue           : #22A7F0;
+@violet         : #D2527F;
+@purple         : #BF55EC;
+@pink           : #DB0A5B;
+@brown          : #96281B;
+@grey           : #BDC3C7;
+@black          : #212121;

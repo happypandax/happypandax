@@ -55,7 +55,9 @@ def QueryLink(props):
 
     to_obj['search'] = utils.query_to_string(query)
 
-    return e(Link, *props.children, to={'pathname': to_obj.pathname, 'search': to_obj.search, 'hash': to_obj.hash, 'state': to_obj.state}, js_replace=props.js_replace,
+    c = props.children if utils.defined(props.children) else []
+
+    return e(Link, *c, to={'pathname': to_obj.pathname, 'search': to_obj.search, 'hash': to_obj.hash, 'state': to_obj.state}, js_replace=props.js_replace,
              className=props.className, onClick=props.onClick)
 
 

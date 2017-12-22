@@ -10,6 +10,7 @@ from src.state import state
 from src.single import thumbitem, artistitem
 from src import utils
 from src.views import tagview
+from src.i18n import tr
 
 
 def on_tags(data):
@@ -24,7 +25,8 @@ def gallery_on_update(p_props, p_state):
 __pragma__("tconv")
 
 
-def open_external():
+def open_external(e, d):
+    e.preventDefault()
     if this.state.data:
         client.call_func("open_gallery", None, item_id=this.state.data.id, item_type=this.state.item_type)
 
@@ -81,11 +83,29 @@ def gallery_render():
     if not this.props.link == js_undefined:
         link = this.props.link
 
+    read_button_args = {}
+    if this.props.external_viewer:
+        read_button_args['onClick'] = this.open_external
+    else:
+        read_button_args['as'] = Link
+        read_button_args['to'] = utils.build_url("/item/page", {'gid': item_id}, keep_query=False)
+
     thumb = e(thumbitem.Thumbnail,
               item_id=item_id,
               item_type=this.state.item_type,
               size_type=ImageSize.Medium,
               size=this.props.size,
+             dimmer=e(ui.Dimmer,
+                      active=this.state.dimmer,
+                      content=e(ui.Responsive,
+                                e(ui.List,
+                                    e(ui.List.Item, e(ui.Button, tr(this,"", "Read"), primary=True, size="tiny", **read_button_args)),
+                                    e(ui.List.Item, e(ui.Button, e(ui.Icon, js_name="history"), tr(this,"", "Save for later"), size="tiny") if not inbox else\
+                                        e(ui.Button, e(ui.Icon, js_name="grid layout"), tr(this,"", "Send to library"), color="green", size="tiny")),
+                                ),
+                                minWidth=1000,
+                                ),
+                      inverted=True),
               )
     if link:
         thumb = e(Link, thumb, to={'pathname': '/item/gallery',
@@ -128,44 +148,50 @@ def gallery_render():
 
 
     menu_options = []
-    if this.props.external_viewer:
-        menu_options.append({'selected': False, 'key': 'read', 'text': "Read", 'onClick': this.open_external})
-    else:
-        menu_options.append({'selected': False, 'key': 'read', 'text': "Read", 'as': Link,
-                             'to': utils.build_url("/item/page", {'gid': item_id}, keep_query=False)})
-    menu_options.append({'selected': False, 'key': 'later', 'text': "Save for later", 'icon': "history"})
-    menu_options.append({'selected': False, 'key': 'add_filter', 'text': "Add to filter", 'icon': "filter"})
+    menu_options.append(e(ui.List.Item, content="Read", **read_button_args))
+    menu_options.append(e(ui.List.Item, content="Save for later", icon="history"))
+    menu_options.append(e(ui.List.Item, content="Add to filter", icon="filter"))
     if inbox:
-        menu_options.append({'selected': False, 'key': 'library', 'text': "Send to Library", 'icon': "grid layout"})
-    menu_options.append({'selected': False, 'key': 'trash', 'text': "Send to Trash", 'icon': "trash"})
+        menu_options.append(e(ui.List.Item, content="Send to Library", icon="grid layout"))
+    menu_options.append(e(ui.List.Item, content="Send to Trash", icon="trash"))
 
     return e(ui.Card,
-             h("div",
-               thumb,
-               e(ui.Rating, icon="heart", size="massive", className="card-item top left", rating=fav),
-               e(ui.Popup,
-                 e(ui.Rating, icon="star", defaultRating=rating, maxRating=10, clearable=True),
-                 trigger=e(
-                     ui.Label,
-                     rating,
-                     className="card-item bottom left",
-                     size="large",
-                     color="yellow",
-                     as_="a"),
-                   hoverable=True,
-                   on="click",
-                   hideOnScroll=True,
-                   position="left center",
-                 ),
-               e(ui.Dropdown,
-                 options=menu_options,
-                   className="card-item bottom right",
-                   icon=e(ui.Icon, js_name="ellipsis vertical", bordered=True, link=True, inverted=True),
-                   trigger=h("span"),
-                   pointing=True,
-                   selectOnBlur=False,
-                 ),
-               className="card-content",
+             e(ui.Dimmer.Dimmable,
+                 h("div",
+                   thumb,
+                   e(ui.Rating, icon="heart", size="massive", className="card-item top left above-dimmer", rating=fav),
+                   e(ui.Popup,
+                     e(ui.Rating, icon="star", defaultRating=rating, maxRating=10, clearable=True, className=""),
+                     trigger=e(
+                         ui.Label,
+                         rating,
+                         className="card-item bottom left above-dimmer",
+                         size="large",
+                         color="yellow",
+                         as_="a"),
+                       hoverable=True,
+                       on="click",
+                       hideOnScroll=True,
+                       position="left center",
+                     ),
+                   e(ui.Popup,
+                        e(ui.List, *menu_options, selection=True, relaxed=True),
+                       trigger=e(ui.Icon,
+                                 js_name="ellipsis vertical",
+                                 bordered=True,
+                                 link=True,
+                                className="card-item bottom right above-dimmer",
+                                 inverted=True),
+                       hoverable=True,
+                       on="click",
+                       hideOnScroll=True,
+                       position="right center",
+                     ),
+                   className="card-content",
+                   ),
+                 dimmed=this.state.dimmer,
+                 onMouseEnter=this.dimmer_show,
+                 onMouseLeave=this.dimmer_hide,
                ),
              e(ui.Popup,
                trigger=e(ui.Card.Content,
@@ -196,9 +222,13 @@ Gallery = createReactClass({
                                 'data': this.props.data,
                                 'item_type': ItemType.Gallery,
                                 'tags': this.props.tags,
+                                'dimmer': False, 
                                 },
     'on_tags': on_tags,
     'open_external': open_external,
+
+    'dimmer_show': lambda: this.setState({'dimmer': True}),
+    'dimmer_hide': lambda: this.setState({'dimmer': False}),
 
     'componentWillMount': lambda: this.setState({'id': this.props.data.id if this.props.data else this.state.data.id if this.state.data else None}),
     'componentDidUpdate': gallery_on_update,

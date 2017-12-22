@@ -113,6 +113,7 @@ def pagination_render():
     current_page = this.props.current_page or this.state.current_page
     if not current_page:
         current_page = 1
+    current_page = int(current_page)
 
     pages = math.ceil(pages)
 
@@ -160,14 +161,35 @@ def pagination_render():
 
     items = make_items(current_pages)
 
+    query_args = {}
+    if this.props.query:
+       query_args = {'as': QueryLink,'query':{'page':this.state.go_to_page}}
+    go_el = e(ui.Popup,
+                e(ui.Form,
+                  e(ui.Form.Field,
+                e(ui.Input,
+                  onChange=this.go_to_change,
+                  size="mini",
+                  js_type="number",
+                  placeholder=current_page,
+                  action=e(ui.Button, compact=True, icon="share", onClick=this.go_to_page,
+                         **query_args),
+                  min=0, max=pages),
+                ),
+                    ),
+                on="click",
+                hoverable=True,
+                position="top center",
+                trigger=e(ui.Menu.Item, "..."))
+
     if first_ellipses:
         ellip_items = make_items(page_list[:ellipsis_pos])
-        ellip_items.append(e(ui.Menu.Item, "...", disabled=True))
+        ellip_items.append(go_el)
         ellip_items.extend(items)
         items = ellip_items
 
     if second_ellipses:
-        items.append(e(ui.Menu.Item, "...", disabled=True))
+        items.append(go_el)
         items.extend(make_items(page_list[-ellipsis_pos:]))
 
     if nav_back:
@@ -196,9 +218,14 @@ def pagination_render():
 Pagination = createReactClass({
     'displayName': 'Pagination',
 
-    'getInitialState': lambda: {'current_page': this.props.default_page if this.props.default_page else 1},
+    'getInitialState': lambda: {
+        'current_page': this.props.default_page if this.props.default_page else 1,
+        'go_to_page': 1,
+        },
 
     'change_page': pagination_change,
+    'go_to_change': lambda e, d: this.setState({'go_to_page': d.value}),
+    'go_to_page': lambda e, d: this.change_page(this.state.go_to_page),
     'go_page': lambda e, d: this.change_page(int(d.js_name)),
     'go_prev': lambda e, d: this.change_page((this.props.current_page or this.state.current_page) - 1),
     'go_next': lambda e, d: this.change_page((this.props.current_page or this.state.current_page) + 1),

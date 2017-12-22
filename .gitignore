@@ -214,8 +214,14 @@ FakesAssemblies/
 /logs
 __javascript__
 semantic/*
+!semantic/src/
+semantic/src/*
 !semantic/src/theme.config
-!semantic/src/themes/happypanda
-!semantic/src/themes/superhero
-!semantic/src/site/globals
+!semantic/src/themes/
+semantic/src/themes/*
+!semantic/src/themes/happypanda/
+!semantic/src/themes/superhero/
+!semantic/src/site/
+semantic/src/site/*
+!semantic/src/site/globals/
 
