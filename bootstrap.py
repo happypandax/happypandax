@@ -79,9 +79,8 @@ def is_installed(cmd):
     return _cmd
 
 
-def build(args):
+def build(args, unknown=None):
     _activate_venv()
-
     if getattr(args, 'client', False):
         try:
             import build_webclient
@@ -90,7 +89,7 @@ def build(args):
             sys.exit()
 
         print("Building webclient")
-        build_webclient.main()
+        build_webclient.main(unknown)
 
     if getattr(args, 'docs', False):
         try:
@@ -233,7 +232,7 @@ def version(args):
             dev_options['build_db']))
 
 
-def convert(args):
+def convert(args, unknown=None):
     _activate_venv()
     print("Convert HP database to HPX database")
     try:
@@ -317,7 +316,7 @@ def _check_db(args):
     from sqlalchemy.orm import RelationshipProperty
 
 
-def start(args):
+def start(args, unknown=None):
     _activate_venv()
     try:
         from happypanda import main
@@ -327,7 +326,7 @@ def start(args):
     return run([env_p, "run.py", *sys.argv[2:]]).returncode
 
 
-def lint(args):
+def lint(args, unknown=None):
     _activate_venv()
     env_p = r".\env\Scripts\python" if sys.platform.startswith("win") else "./env/bin/python"
     return run([env_p, "lint.py", *sys.argv[2:]]).returncode
@@ -336,15 +335,18 @@ def lint(args):
 welcome_msg = """
 Welcome to HPX development helper script.
 
+HPX requires Python 3.5. Make sure that Python version is installed and in use.
 If this is your first time running this script, or if you haven't installed HPX yet, run:
     $ python3 bootstrap.py install
-HPX requires Python 3.5 and optionally npm to build the webclient and git to fetch new changes.
-Make sure those are installed before running the command above.
+Other optional downloads are:
+    - Git: If you want to automagically fetch new changes.
+    - NodeJS: If you want to work on the webclient.
 
-As of now HPX does not implement any write features, and so you need a HP database to use HPX:
+As of this build HPX does not implement any write features, and so you need a HP database to use HPX.
+Convert it using the following command:
     $ python3 bootstrap.py convert <path-to-old-HP-db>
 
-You can now start HPX by running (additional arguments will be forwarded):
+You can now start HPX by running the following command (additional arguments will be forwarded):
     $ python3 bootstrap.py run
 
 You only need to install once. After installing, you can update HPX after pulling the new changes from the git repo by running:
@@ -362,7 +364,27 @@ For example, to build the webclient or docs, run:
 To see all actions, run:
     $ python3 bootstrap.py help
 
+---- Webclient ----
+
+You need NodeJS installed to work on the webclient.
+Start by installing the dependencies:
+    $ npm install
+
+Work on the webclient (files are located at './emplates/' and './semantic/src/').
+To build the python files run:
+    $ python3 bootstrap.py build --client
+and then bundle everything together by running:
+    $ npm build-dev
+
+Lastly, compile the CSS files by running:
+    $ cd ./semantic
+    $ gulp build-css build-assets
+
+I should probably do something about this needlessly complicated and tedious process...
+
 Happy coding!
+
+Scroll up if you can't read everything!
 """
 
 
@@ -406,11 +428,12 @@ def main():
     subparser = subparsers.add_parser('help', help='Help')
     subparser.set_defaults(func=lambda a: parser.print_help())
 
-    if any([x in sys.argv for x in ("run", "convert", "lint")]):
-        args, unknown = parser.parse_known_args()
+    if any([x in sys.argv for x in ("run", "convert", "lint", "build")]):
+        a = args, unknown = parser.parse_known_args()
     else:
-        args = parser.parse_args()
-    return args.func(args)
+        a = args = parser.parse_args()
+        a = (a,)
+    return args.func(*a)
 
 
 if __name__ == '__main__':

@@ -102,11 +102,14 @@ def get_config(cfg: dict = {}):
     else:
         with config.config.tmp_config(None, utils.get_context()['config']):
             s = config.config.get_all()
+            all_nodes = config.ConfigNode.get_all()
             for ns in s:
-                if ns in config.ConfigNode.default_namespaces:
-                    values[ns] = s[ns]
-                elif ns == utils.get_context()['name'].lower():
+                if ns == utils.get_context()['name'].lower():
                     values["this"] = s[ns]
+            for ns, nodes in all_nodes.items():
+                for n, node in nodes.items():
+                    if not node.hidden:
+                        values.setdefault(ns, {})[n] = node.value
     return message.Identity('config', values)
 
 

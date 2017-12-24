@@ -33,7 +33,7 @@ class ConfigNode:
         self.type_ = type(value) if type_ is None else type_
         self.hidden = hidden
         self._created = False
-        if hidden:
+        if not hidden:
             with self._cfg.namespace(ns):
                 self._cfg.define(name, value, description)
         self.default_namespaces.add(ns.lower())
@@ -133,6 +133,7 @@ class Config:
         paths = list(self._files)
         paths.append(self._user_file)
         for f in paths:
+            file_dict = OrderedDict()
             if os.path.exists(f):
                 log.i("Loading existing configuration from", os.path.abspath(f))
                 try:
@@ -141,10 +142,13 @@ class Config:
                 except yaml.YAMLError:
                     log.exception("Error in configuration file", f)
                     continue
-                if not isinstance(f_dict, dict):
-                    log.w("Invalid or empty configuration file, expected mapping")
+
+                if not f_dict:
+                    log.w("Empty configuration file")
                     f_dict = OrderedDict()
-                self._files_map[f] = f_dict
+                elif not isinstance(f_dict, dict):
+                    log.w("Invalid configuration file, expected mapping")
+                    f_dict = OrderedDict()
                 for ns in f_dict:
                     ns_dict = f_dict[ns]
                     ns = self.format_namespace(ns)
@@ -153,13 +157,12 @@ class Config:
                         continue
                     with self.namespace(ns):
                         self._cfg[ns].maps.insert(self._get_user_config_idx(), ns_dict)
-            else:
-                log.w("Configuration file does not exist", f)
+                file_dict = f_dict
+            self._files_map[f] = file_dict
         self._loaded = True
         return self
 
     def save(self):
-
         if self._user_file:
             log.i("Saving config", self._user_file)
 
@@ -326,7 +329,13 @@ core_ns = 'core'
 
 with config.namespace(core_ns):
 
-    debug = config.create(core_ns, 'debug', False, "Run in debug mode", hidden=True)
+    debug = config.create(core_ns, 'debug', False, "Run in debug mode")
+
+    secret_key = config.create(
+        core_ns,
+        "secret_key",
+        "",
+        "A secret key to be used for security. Keep it secret!", hidden=True)
 
     report_critical_errors = config.create(
         core_ns,
@@ -412,12 +421,6 @@ with config.namespace(db_ns):
 server_ns = 'server'
 
 with config.namespace(server_ns):
-
-    secret_key = config.create(
-        server_ns,
-        "secret_key",
-        "",
-        "A secret key to be used for security. Keep it secret!")
 
     server_name = config.create(
         server_ns,
@@ -549,11 +552,11 @@ gui_ns = "gui"
 
 with config.namespace(gui_ns):
 
-    gui_start_at_boot = config.create(
-        None,
-        "start_at_boot",
-        False,
-        "Start the HPX GUI at boot")
+    #gui_happypanda_executable_name = config.create(
+    #    None,
+    #    "happypanda_executable_name",
+    #    "happypandax",
+    #    "For the GUI to work correctly it needs to be able to find the happypandax executable. This is the name of that executable WITHOUT any extension")
 
     gui_autostart_server = config.create(
         None,

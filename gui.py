@@ -1,11 +1,46 @@
 import sys
 import os
-import qtawesome as qta
+import multiprocessing as mp
 import functools
-import psutil
 import signal
 import webbrowser
+import subprocess
 
+from threading import Thread, Timer
+from multiprocessing import Process, queues
+from contextlib import contextmanager
+
+## This is required to be here or else multiprocessing won't work when running in a frozen state!
+## I had a hell of a time debugging this :(
+
+class RedirectProcess(Process):
+
+    def __init__(self, streamqueue, **kwargs):
+        super().__init__(**kwargs)
+        self.streamqueue = streamqueue
+
+    def run(self):
+        sys.stdout = self.streamqueue
+        sys.stderr = self.streamqueue
+        if self._target:
+            self._target(*self._args, **self._kwargs)
+
+class StreamQueue(queues.Queue):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs, ctx=mp.get_context())
+
+    def write(self, msg):
+        self.put(msg)
+
+    def flush(self):
+        pass
+
+if __name__ == "__main__":
+    mp.freeze_support()
+
+import psutil # noqa: E402
+import qtawesome as qta # noqa: E402
 from PyQt5.QtWidgets import (QApplication,
                              QMainWindow,
                              QWidget,
@@ -23,19 +58,19 @@ from PyQt5.QtWidgets import (QApplication,
                              QSystemTrayIcon,
                              QMenu,
                              QFileDialog,
-                             QCheckBox)
-from PyQt5.QtGui import QIcon, QDesktopServices, QPalette, QMouseEvent
-from PyQt5.QtCore import Qt, QUrl, QDir
-from i18n import t
-from subprocess import Popen, CREATE_NEW_CONSOLE
-from threading import Thread, Timer
+                             QPlainTextEdit,
+                             QCheckBox) # noqa: E402
+from PyQt5.QtGui import QIcon, QDesktopServices, QPalette, QMouseEvent # noqa: E402
+from PyQt5.QtCore import Qt, QUrl, QDir, pyqtSignal # noqa: E402
+from i18n import t # noqa: E402
 
-from happypanda.common import constants, utils, config
-from happypanda import main
-import HPtoHPX
+from happypanda.common import constants, utils, config # noqa: E402
+from happypanda import main # noqa: E402
+import HPtoHPX # noqa: E402
 
 app = None
 
+SQueue = None
 
 def kill_proc_tree(pid, sig=signal.SIGTERM, include_parent=True,
                    timeout=None, on_terminate=None):
@@ -55,6 +90,35 @@ def kill_proc_tree(pid, sig=signal.SIGTERM, include_parent=True,
     gone, alive = psutil.wait_procs(children, timeout=timeout,
                                     callback=on_terminate)
     return (gone, alive)
+
+class TextViewer(QPlainTextEdit):
+    """
+    A read-only embedded console
+    """
+
+    write = pyqtSignal(str)
+
+    def __init__(self, streamqueue, parent=None):
+        super().__init__(parent)
+        self.stream = streamqueue
+        self.setMaximumBlockCount(999)
+        self.setReadOnly(True)
+        self.write.connect(self.w)
+        if self.stream:
+            t = Thread(target=self.poll_stream)
+            t.daemon = True
+            t.start()
+
+
+    def w(self, s):
+        s = s.strip()
+        if s:
+            self.appendPlainText('>: '+s if s != '\n' else s)
+
+    def poll_stream(self):
+        while True:
+            self.write.emit(self.stream.get())
+
 
 
 class PathLineEdit(QLineEdit):
@@ -167,7 +231,10 @@ class ConvertHP(QDialog):
 
     def convert(self):
         if self.args:
-            p = Popen([sys.executable, os.path.abspath(HPtoHPX.__file__), *self.args], creationflags=CREATE_NEW_CONSOLE)
+            self._parent.activate_output.emit()
+            p = RedirectProcess(SQueue, target=HPtoHPX.main, args=(self.args,))
+            p.start()
+            self._parent.processes.append(p)
             Thread(target=self._parent.watch_process, args=(None, p)).start()
             self.close()
 
@@ -183,15 +250,16 @@ class SettingsTabs(QTabWidget):
             w = QWidget()
             wlayout = QFormLayout(w)
             for k, n in sorted(cfg[ns].items()):
-                help_w = QPushButton(qta.icon("fa.question-circle"), "")
-                help_w.setFlat(True)
-                help_w.setToolTip(n.description)
-                help_w.setToolTipDuration(9999999999)
-                q = QWidget()
-                q_l = QHBoxLayout(q)
-                q_l.addWidget(help_w)
-                q_l.addWidget(QLabel(k))
-                wlayout.addRow(q, self.get_setting_input(k, n))
+                if not n.hidden:
+                    help_w = QPushButton(qta.icon("fa.question-circle"), "")
+                    help_w.setFlat(True)
+                    help_w.setToolTip(n.description)
+                    help_w.setToolTipDuration(9999999999)
+                    q = QWidget()
+                    q_l = QHBoxLayout(q)
+                    q_l.addWidget(help_w)
+                    q_l.addWidget(QLabel(k))
+                    wlayout.addRow(q, self.get_setting_input(k, n))
             sarea = QScrollArea(self)
             sarea.setWidget(w)
             sarea.setWidgetResizable(True)
@@ -251,28 +319,40 @@ class SettingsTabs(QTabWidget):
         except BaseException:
             widget.setStyleSheet("background: rgba(244, 92, 65, 0.2);")
 
-
 class Window(QMainWindow):
+
+    activate_output = pyqtSignal()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.processes = []
         self.tray = QSystemTrayIcon(self)
         self.closing = False
         self.server_started = False
         self.client_started = False
+        self.output_tab_idx = 0
+        self.force_kill = False
         self.start_ico = QIcon(os.path.join(constants.dir_static, "favicon.ico")
                                )  # qta.icon("fa.play", color="#41f46b")
         self.stop_ico = qta.icon("fa.stop", color="#f45f42")
         self.server_process = None
         self.webclient_process = None
         self.create_ui()
+
+        self.activate_output.connect(lambda: self.main_tab.setCurrentIndex(self.output_tab_idx))
+
         if config.gui_autostart_server.value:
             self.toggle_server()
 
     def create_ui(self):
         w = QWidget(self)
-        settings_group = QGroupBox(t("", default="Configuration"), w)
-        settings_group_l = QVBoxLayout(settings_group)
+        self.main_tab = QTabWidget(self)
+        self.viewer = TextViewer(SQueue, self.main_tab)
+        settings_widget = QWidget(self.main_tab)
+        self.output_tab_idx = self.main_tab.addTab(self.viewer, t("", default="Output"))
+        self.main_tab.addTab(settings_widget, t("", default="Configuration"))
+
+        settings_group_l = QVBoxLayout(settings_widget)
         settings = SettingsTabs()
         settings_group_l.addWidget(settings)
 
@@ -323,7 +403,7 @@ class Window(QMainWindow):
         info_layout.addLayout(version_layout)
 
         main_layout = QVBoxLayout(w)
-        main_layout.addWidget(settings_group)
+        main_layout.addWidget(self.main_tab)
         main_layout.addWidget(infos)
         main_layout.addWidget(buttons)
         self.setCentralWidget(w)
@@ -345,8 +425,10 @@ class Window(QMainWindow):
             self.show()
 
     def open_cfg(self):
-        if os.path.exists(constants.config_path):
-            QDesktopServices.openUrl(QUrl(constants.config_path, QUrl.TolerantMode))
+        if not os.path.exists(constants.config_path):
+            with open(constants.config_path, 'x'):
+                pass
+        QDesktopServices.openUrl(QUrl(constants.config_path, QUrl.TolerantMode))
 
     def convert_hp(self):
         c = ConvertHP(self)
@@ -358,11 +440,12 @@ class Window(QMainWindow):
         if self.server_started:
             self.server_btn.setText(t("", default="Stop server"))
             self.server_btn.setIcon(self.stop_ico)
-            if not self.server_process:
-                self.server_process = self.start_server()
+            self.server_process = self.start_server()
+            self.activate_output.emit()
             if config.gui_open_webclient_on_server_start.value:
                 Timer(3, self.open_client).start()
         else:
+            self.force_kill = True
             self.server_btn.setText(t("", default="Start server"))
             self.server_btn.setIcon(self.start_ico)
             if self.server_process:
@@ -387,17 +470,20 @@ class Window(QMainWindow):
         if p:
             try:
                 kill_proc_tree(p.pid)
-                p.kill()
+                #p.kill()
             except psutil.NoSuchProcess:
                 pass
 
     def watch_process(self, cb, p):
-        p.wait()
-        if cb:
+        p.join()
+        if cb and not self.force_kill:
             cb()
+        else:
+            self.force_kill = False
 
     def start_server(self):
-        p = Popen([sys.executable, os.path.abspath(main.__file__)], creationflags=CREATE_NEW_CONSOLE)
+        p = RedirectProcess(SQueue, target=main.start)
+        p.start()
         Thread(target=self.watch_process, args=(self.toggle_server, p)).start()
         return p
 
@@ -418,13 +504,17 @@ class Window(QMainWindow):
                == QMessageBox.No:
                 ev.ignore()
                 return
-        [self.stop_process(x) for x in (self.server_process, self.webclient_process)]
+        [self.stop_process(x) for x in self.processes + [self.server_process, self.webclient_process]]
         super().closeEvent(ev)
 
 
 if __name__ == "__main__":
+
+    SQueue = StreamQueue()
+
     utils.check_frozen()
     utils.setup_i18n()
+
     QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
     app = QApplication(sys.argv)
     app.setWindowIcon(QIcon(os.path.join(constants.dir_static, "favicon.ico")))
@@ -434,12 +524,13 @@ if __name__ == "__main__":
     app.setOrganizationDomain("Twiddly")
     app.setOrganizationName("Twiddly")
     app.setDesktopFileName("HappyPanda X")
-
     window = Window()
     window.resize(600, 650)
+    sys.stdout = SQueue
+    sys.stderr = SQueue
     if config.gui_start_minimized.value:
         window.tray.show()
     else:
         window.show()
-
-    sys.exit(app.exec())
+    e = app.exec()
+    sys.exit(e)

@@ -14,6 +14,7 @@ from flask import Flask
 from flask_socketio import SocketIO
 
 from happypanda import interface
+from happypanda.core.web import views
 from happypanda.common import constants, exceptions, utils, hlogger, config
 from happypanda.core import db, torrent, message, async  # noqa: F401
 from happypanda.interface import meta, enums
@@ -28,8 +29,10 @@ def list_api():
     mods = utils.get_package_modules(interface)
     for m in mods:
         all_functions.extend(getmembers(m, isfunction))
-    return {x[0]: x[1] for x in all_functions if not x[0]
-            in _special_functions and not x[0].startswith('_')}
+    funcs =  {x[0]: x[1] for x in all_functions if not x[0]
+                in _special_functions and not x[0].startswith('_')}
+    log.d("Loaded Interface functions:\n\t", list(funcs))
+    return funcs
 
 
 class Session:
@@ -67,11 +70,14 @@ class Session:
 class ClientHandler:
     "Handles clients"
 
-    api = list_api()
+    api = None
 
     contexts = {}  # session_id : context
 
     def __init__(self, client, address):
+        if not ClientHandler.api:
+            ClientHandler.api = list_api()
+            self.api = ClientHandler.api
         self.errors = []
         self._client = client
         self._address = address
@@ -507,6 +513,7 @@ class WebServer:
 
     def run(self, host, port, debug=False, logging_queue=None, logging_args=None):
         if logging_queue:
-            utils.setup_online_reporter()
             hlogger.Logger.setup_logger(logging_args, logging_queue)
+            utils.setup_online_reporter()
+        views.init_views(self.happyweb, self.socketio)
         self.socketio.run(self.happyweb, host, port, debug=debug)

@@ -59,19 +59,19 @@ class Logger:
         self._log(self._logger.info, *args, **kwargs)
 
     def d(self, *args, **kwargs):
-        "INFO"
+        "DEBUG"
         self._log(self._logger.debug, *args, **kwargs)
 
     def w(self, *args, **kwargs):
-        "INFO"
+        "WARNING"
         self._log(self._logger.warning, *args, stderr=True, **kwargs)
 
     def e(self, *args, **kwargs):
-        "INFO"
+        "ERROR"
         self._log(self._logger.error, *args, stderr=True, **kwargs)
 
     def c(self, *args, **kwargs):
-        "INFO"
+        "CRITICAL"
         self._log(self._logger.critical, *args, stderr=True, **kwargs)
 
     def _log_format(self, *args):
@@ -86,7 +86,6 @@ class Logger:
     def _log(self, level, *args, stdout=False, stderr=False):
         s = self._log_format(*args)
         level(s)
-
         if not constants.dev:
             if level in (self._logger.exception, self._logger.critical) and self.report_online:
                 if level == self._logger.exception:
@@ -104,7 +103,7 @@ class Logger:
         return getattr(self._logger, name)
 
     @classmethod
-    def setup_logger(cls, args, logging_queue=None, main=False):
+    def setup_logger(cls, args, logging_queue=None, main=False, debug=False):
         assert isinstance(args, argparse.Namespace)
 
         if logging_queue:
@@ -115,7 +114,10 @@ class Logger:
             logging.raiseExceptions = False  # Don't raise exception if in production mode
 
         if cls._queue:
-            log_handlers.append(QueueHandler(cls._queue))
+            lg = QueueHandler(cls._queue)
+            if args.debug:
+                lg.setLevel(logging.DEBUG)
+            log_handlers.append(lg)
         else:
             if args.dev:
                 log_handlers.append(logging.StreamHandler())
@@ -157,10 +159,11 @@ class Logger:
                 Logger("sqlalchemy.pool").setLevel(logging.DEBUG)
                 Logger("sqlalchemy.engine").setLevel(logging.INFO)
                 Logger("sqlalchemy.orm").setLevel(logging.INFO)
-            Logger(__name__).i(
-                os.path.split(
-                    constants.log_debug)[1], "created at", os.path.abspath(
-                    constants.log_debug), stdout=True)
+            if debug:
+                Logger(__name__).i(
+                    os.path.split(
+                        constants.log_debug)[1], "created at", os.path.abspath(
+                        constants.log_debug), stdout=True)
 
     @staticmethod
     def _listener(args, queue):

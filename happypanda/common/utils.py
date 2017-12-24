@@ -15,6 +15,7 @@ import threading
 import i18n
 import shelve
 import rollbar
+import importlib
 
 from inspect import ismodule, currentframe, getframeinfo
 from contextlib import contextmanager
@@ -115,6 +116,7 @@ def parse_options(args):
 
     constants.dev = args.dev
 
+
     cfg = config.config
 
     cmd_args = {}
@@ -163,14 +165,26 @@ def connection_params():
     return params
 
 
-def get_package_modules(pkg):
+def get_package_modules(pkg, load=True):
     "Retrive list of modules in package"
     assert ismodule(pkg) and hasattr(pkg, '__path__')
     mods = []
-    for importer, modname, ispkg in pkgutil.iter_modules(
-            pkg.__path__, pkg.__name__ + "."):
-        mods.append(importer.find_module(modname).load_module(modname))
-    return mods
+    prefix = pkg.__name__ + "."
+    mods = [m[1] for m in pkgutil.iter_modules(pkg.__path__, prefix)]
+
+    # special handling for PyInstaller
+    importers = map(pkgutil.get_importer, pkg.__path__)
+    toc = set()
+    for i in importers:
+        #log.d("importer:", i)
+        if hasattr(i, 'toc'):
+            #log.d("toc:", i.toc)
+            toc |= i.toc
+    for elm in toc:
+        if elm.startswith(prefix):
+            mods.append(elm)
+
+    return [importlib.import_module(x) for x in mods] if load else mods
 
 
 def get_module_members(mod):
@@ -261,7 +275,9 @@ def create_temp_dir():
 def get_qualified_name(host, port):
     "Returns host:port"
     assert isinstance(host, str)
-    if not host or host == '0.0.0.0':
+    if not host:
+        host = 'localhost'
+    elif host == '0.0.0.0':
         host = get_local_ip()
     # TODO: public ip
     return host.strip() + ':' + str(port).strip()
@@ -314,6 +330,12 @@ def os_info():
     ))
 
 def setup_online_reporter():
+    """
+
+    WARNING:
+        execute AFTER setting up a logger!
+        the rollbar lib somehow messes it up!
+    """
     if config.report_critical_errors.value:
         rollbar.init(config.rollbar_access_token.value,
                     'HPX {}, web({}), db({}), build({})'.format(

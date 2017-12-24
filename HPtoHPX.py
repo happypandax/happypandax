@@ -7,9 +7,10 @@ import arrow
 import argparse
 import rarfile
 import time
-from multiprocessing import Process, Queue, Pipe
+import multiprocessing
 import threading
 import queue
+from multiprocessing import Process, Queue, Pipe
 from happypanda.core import db
 from happypanda.core.commands import io_cmd
 from happypanda.common import constants
@@ -748,363 +749,366 @@ def page_generate(rar_p, in_queue, out_pipe):
 
 def process_pipes(out_queue, out_pipe):
     while True:
-        out_queue.put(out_pipe.recv())
+        try:
+            out_queue.put(out_pipe.recv())
+        except EOFError:
+            break
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('source', help="Path to old HP database")
-    parser.add_argument('destination', help="Desired path new HPX database")
-    parser.add_argument('-r', '--rar', help="Path to unrar tool")
-    parser.add_argument('-p', '--process', type=int, default=3, help="Amount of processes allowed to spawn")
-    parser.add_argument(
-        '-a',
-        '--skip-archive',
-        action='store_true',
-        help="Skip generating pages for galleries in archive files (it might take too long)")
-    args = parser.parse_args()
-
-    AMOUNT_OF_TASKS = args.process if args.process > 0 else 1
-    rarfile.UNRAR_TOOL = args.rar
-
-    src = args.source
-    dst = args.destination
-    print("Source: ", src)
-    print("Destination: ", dst)
-
-    if os.path.exists(dst):
-        print("Warning: destination file already exists, you might want to delete")
-
-    if args.skip_archive:
-        print("Warning: pages for galleries in archives will not be generated")
-
-    if args.rar:
-        print("RARtool path: ", args.rar)
-
-    if args.process:
-        print("Process count: ", args.process)
-
-    print("Connecting to Happypanda database..")
-    conn_src = sqlite3.connect(src)
-    conn_src.row_factory = sqlite3.Row
-    DBBase._DB_CONN = conn_src
-    ListDB.init_lists()
-    print("Fetching gallery lists..")
-    src_galleries = GalleryDB.get_all_gallery()
-    print("Fetching all galleries, chapters, tags and hashes..")
-    print("Fetched galleries count:", len(src_galleries))
-    print("Creating new Happypanda X database")
-    engine = db.create_engine(os.path.join("sqlite:///", dst))
-    db.Base.metadata.create_all(engine)
-    sess = db.scoped_session(db.sessionmaker())
-    sess.configure(bind=engine)
-    constants.db_session = sess
-    db.initEvents(sess)
-    s = sess()
-    db.init_defaults(s)
-
-    print("Converting to Happypanda X Gallery.. ")
-
-    gallery_mixmap = {}
-    dst_galleries = []
-    dst_profiles = []
-    en_lang = db.Language()
-    en_lang.name = "English"
-    dst_languages = {"english": en_lang}
-    dst_artists = {}
-    dst_gtype = {}
-    dst_status = {}
-    dst_namespace = {}
-    dst_tag = {}
-    dst_nstagmapping = {}
-    dst_collections = {}
-    dst_grouping = {}
-    dst_pages = {}
-
-    pages_to_send = []
-    pages_to_send2 = []
+def main(args=sys.argv):
     try:
-        pages_count = 0
-        unique_paths = []
-        for numb, g in enumerate(src_galleries):
+        parser = argparse.ArgumentParser()
+        parser.add_argument('source', help="Path to old HP database")
+        parser.add_argument('destination', help="Desired path to new HPX database")
+        parser.add_argument('-r', '--rar', help="Path to unrar tool")
+        parser.add_argument('-p', '--process', type=int, default=3, help="Amount of processes allowed to spawn")
+        parser.add_argument(
+            '-a',
+            '--skip-archive',
+            action='store_true',
+            help="Skip generating pages for galleries in archive files (it might take too long)")
+        args = parser.parse_args(args)
 
-            galleries = []
-            gallery_ns = None
+        AMOUNT_OF_TASKS = args.process if args.process > 0 else 1
+        rarfile.UNRAR_TOOL = args.rar
 
-            for ch in g.chapters:
+        src = args.source
+        dst = args.destination
+        print("Source: ", src)
+        print("Destination: ", dst)
 
-                path = g.path if ch.in_archive else ch.path
-                if not os.path.exists(path):
-                    try:
-                        print("\nSkipping '{}' because path doesn't exists.".format(ch.title))
-                    except UnicodeError:
-                        print("\nSkipping '{}' because path doesn't exists.".format(ch.title.encode(errors='ignore')))
-                    continue
+        if os.path.exists(dst):
+            print("Warning: destination file already exists, you might want to delete")
 
-                if not args.skip_archive:
-                    if path.endswith(('.rar', 'cbr')) and not args.rar:
+        if args.skip_archive:
+            print("Warning: pages for galleries in archives will not be generated")
+
+        if args.rar:
+            print("RARtool path: ", args.rar)
+
+        if args.process:
+            print("Process count: ", args.process)
+
+        print("Connecting to Happypanda database..")
+        conn_src = sqlite3.connect(src)
+        conn_src.row_factory = sqlite3.Row
+        DBBase._DB_CONN = conn_src
+        ListDB.init_lists()
+        print("Fetching gallery lists..")
+        src_galleries = GalleryDB.get_all_gallery()
+        print("Fetching all galleries, chapters, tags and hashes..")
+        print("Fetched galleries count:", len(src_galleries))
+        print("Creating new Happypanda X database")
+        engine = db.create_engine(os.path.join("sqlite:///", dst))
+        db.Base.metadata.create_all(engine)
+        sess = db.scoped_session(db.sessionmaker())
+        sess.configure(bind=engine)
+        constants.db_session = sess
+        db.initEvents(sess)
+        s = sess()
+        db.init_defaults(s)
+
+        print("Converting to Happypanda X Gallery.. ")
+
+        gallery_mixmap = {}
+        dst_galleries = []
+        dst_profiles = []
+        en_lang = db.Language()
+        en_lang.name = "English"
+        dst_languages = {"english": en_lang}
+        dst_artists = {}
+        dst_gtype = {}
+        dst_status = {}
+        dst_namespace = {}
+        dst_tag = {}
+        dst_nstagmapping = {}
+        dst_collections = {}
+        dst_grouping = {}
+        dst_pages = {}
+
+        pages_to_send = []
+        pages_to_send2 = []
+        try:
+            pages_count = 0
+            unique_paths = []
+            for numb, g in enumerate(src_galleries):
+
+                galleries = []
+                gallery_ns = None
+
+                for ch in g.chapters:
+
+                    path = g.path if ch.in_archive else ch.path
+                    if not os.path.exists(path):
                         try:
-                            print("\nSkipping '{}' because path to unrar tool has not been supplied.".format(ch.title))
+                            print("\nSkipping '{}' because path doesn't exists.".format(ch.title))
                         except UnicodeError:
-                            print(
-                                "\nSkipping '{}' because path to unrar tool has not been supplied.".format(
-                                    ch.title.encode(
-                                        errors='ignore')))
+                            print("\nSkipping '{}' because path doesn't exists.".format(ch.title.encode(errors='ignore')))
                         continue
-
-                path_in_archive = ch.path
-
-                gallery = db.Gallery()
-
-                if ch.in_archive:
-                    h = hash((g.path, ch.path))
-                    if h in unique_paths:
-                        continue
-                    unique_paths.append(h)
 
                     if not args.skip_archive:
+                        if path.endswith(('.rar', 'cbr')) and not args.rar:
+                            try:
+                                print("\nSkipping '{}' because path to unrar tool has not been supplied.".format(ch.title))
+                            except UnicodeError:
+                                print(
+                                    "\nSkipping '{}' because path to unrar tool has not been supplied.".format(
+                                        ch.title.encode(
+                                            errors='ignore')))
+                            continue
+
+                    path_in_archive = ch.path
+
+                    gallery = db.Gallery()
+
+                    if ch.in_archive:
+                        h = hash((g.path, ch.path))
+                        if h in unique_paths:
+                            continue
+                        unique_paths.append(h)
+
+                        if not args.skip_archive:
+                            dst_pages[pages_count] = gallery
+                            pages_to_send.append((pages_count, ch.in_archive, ch.path, path, g.path))
+                            pages_count += 1
+
+                    else:
+                        h = hash((ch.path,))
+                        if h in unique_paths:
+                            continue
+                        unique_paths.append(h)
+
                         dst_pages[pages_count] = gallery
-                        pages_to_send.append((pages_count, ch.in_archive, ch.path, path, g.path))
+                        pages_to_send2.append((pages_count, ch.in_archive, ch.path, path, g.path))
                         pages_count += 1
 
-                else:
-                    h = hash((ch.path,))
-                    if h in unique_paths:
-                        continue
-                    unique_paths.append(h)
+                    for col in copy.copy(gallery.collections):
+                        if col.name in dst_collections:
+                            gallery.collections.remove(col)
+                            gallery.collections.append(dst_collections[col.name])
+                        else:
+                            dst_collections[col.name] = col
 
-                    dst_pages[pages_count] = gallery
-                    pages_to_send2.append((pages_count, ch.in_archive, ch.path, path, g.path))
-                    pages_count += 1
-
-                for col in copy.copy(gallery.collections):
-                    if col.name in dst_collections:
-                        gallery.collections.remove(col)
-                        gallery.collections.append(dst_collections[col.name])
+                    if gallery_ns is not None:
+                        gallery.grouping = gallery_ns
                     else:
-                        dst_collections[col.name] = col
+                        gallery_ns = db.Grouping()
+                        gallery_ns.name = ch.title if ch.title else g.title
+                        gallery_ns = dst_grouping.get(gallery_ns.name, gallery_ns)
+                        dst_grouping[gallery_ns.name] = gallery_ns
+                        gallery_ns.galleries.append(gallery)
+                        if g.status and g.status.lower() != "unknown":
+                            gstatus = db.Status()
+                            gstatus.name = g.status
+                            gstatus = dst_status.get(gstatus.name, gstatus)
+                            gallery_ns.status = gstatus
+                            dst_status[gstatus.name] = gstatus
 
-                if gallery_ns is not None:
-                    gallery.grouping = gallery_ns
-                else:
-                    gallery_ns = db.Grouping()
-                    gallery_ns.name = ch.title if ch.title else g.title
-                    gallery_ns = dst_grouping.get(gallery_ns.name, gallery_ns)
-                    dst_grouping[gallery_ns.name] = gallery_ns
-                    gallery_ns.galleries.append(gallery)
-                    if g.status and g.status.lower() != "unknown":
-                        gstatus = db.Status()
-                        gstatus.name = g.status
-                        gstatus = dst_status.get(gstatus.name, gstatus)
-                        gallery_ns.status = gstatus
-                        dst_status[gstatus.name] = gstatus
+                    gallery.number = ch.number
 
-                gallery.number = ch.number
+                    lang = g.language.lower() if g.language else None
+                    if lang and not lang in dst_languages:
+                        db_lang = db.Language()
+                        db_lang.name = g.language
+                        dst_languages[lang] = db_lang
+                    else:
+                        db_lang = dst_languages['english']
 
-                lang = g.language.lower() if g.language else None
-                if lang and not lang in dst_languages:
-                    db_lang = db.Language()
-                    db_lang.name = g.language
-                    dst_languages[lang] = db_lang
-                else:
-                    db_lang = dst_languages['english']
+                    gallery.language = db_lang
 
-                gallery.language = db_lang
+                    title = db.Title()
+                    title.name = ch.title if ch.title else g.title
+                    title.language = db_lang
+                    gallery.titles.clear()
+                    gallery.titles.append(title)
 
-                title = db.Title()
-                title.name = ch.title if ch.title else g.title
-                title.language = db_lang
-                gallery.titles.clear()
-                gallery.titles.append(title)
+                    if g.artist:
+                        artist = None
+                        artist_name = db.AliasName()
+                        artist_name.name = g.artist.strip()
+                        artist_name.language = db_lang
+                        artist = dst_artists.get(artist_name.name)
+                        if not artist:
+                            artist = db.Artist()
+                            artist.names.append(artist_name)
+                        gallery.artists.append(artist)
+                        dst_artists[artist_name.name] = artist
+                    gallery.info = g.info
+                    if g.fav:
+                        gallery.metatags.append(db.MetaTag.tags[db.MetaTag.names.favorite])
+                    if g.view == 2:
+                        gallery.metatags.append(db.MetaTag.tags[db.MetaTag.names.inbox])
+                    if g.rating is not None:
+                        gallery.rating = g.rating * 2
+                    if g.type:
+                        gtype = db.Category()
+                        gtype.name = g.type
+                        gtype = dst_gtype.get(gtype.name, gtype)
+                        gallery.type = gtype
+                        dst_gtype[gtype.name] = gtype
 
-                if g.artist:
-                    artist = None
-                    artist_name = db.AliasName()
-                    artist_name.name = g.artist.strip()
-                    artist_name.language = db_lang
-                    artist = dst_artists.get(artist_name.name)
-                    if not artist:
-                        artist = db.Artist()
-                        artist.names.append(artist_name)
-                    gallery.artists.append(artist)
-                    dst_artists[artist_name.name] = artist
-                gallery.info = g.info
-                if g.fav:
-                    gallery.metatags.append(db.MetaTag.tags[db.MetaTag.names.favorite])
-                if g.view == 2:
-                    gallery.metatags.append(db.MetaTag.tags[db.MetaTag.names.inbox])
-                if g.rating is not None:
-                    gallery.rating = g.rating * 2
-                if g.type:
-                    gtype = db.Category()
-                    gtype.name = g.type
-                    gtype = dst_gtype.get(gtype.name, gtype)
-                    gallery.type = gtype
-                    dst_gtype[gtype.name] = gtype
+                    if g.link:
+                        gurl = db.Url()
+                        gurl.name = g.link
+                        gallery.urls.append(gurl)
 
-                if g.link:
-                    gurl = db.Url()
-                    gurl.name = g.link
-                    gallery.urls.append(gurl)
+                    gallery.pub_date = g.pub_date
+                    gallery.timestamp = g.date_added
+                    gallery.last_read = g.last_read
+                    gallery.times_read = g.times_read
 
-                gallery.pub_date = g.pub_date
-                gallery.timestamp = g.date_added
-                gallery.last_read = g.last_read
-                gallery.times_read = g.times_read
+                    galleries.append(gallery)
+                    if not g.id in gallery_mixmap:
+                        gallery_mixmap[g.id] = []
+                    gallery_mixmap[g.id].append(gallery)
 
-                galleries.append(gallery)
-                if not g.id in gallery_mixmap:
-                    gallery_mixmap[g.id] = []
-                gallery_mixmap[g.id].append(gallery)
+                # tags
 
-            # tags
+                for ns in g.tags:
+                    n = db.Namespace(name=constants.special_namespace if ns == 'default' else ns)
+                    n = dst_namespace.get(ns, n)
+                    dst_namespace[ns] = n
+                    for tag in g.tags[ns]:
+                        t = db.Tag(name=tag)
+                        t = dst_tag.get(tag, t)
+                        dst_tag[t.name] = t
+                        nstagname = ns + tag
+                        nstag = db.NamespaceTags(n, t)
+                        nstag = dst_nstagmapping.get(nstagname, nstag)
+                        dst_nstagmapping[nstagname] = nstag
+                        for ch_g in galleries:
+                            ch_g.tags.append(nstag)
 
-            for ns in g.tags:
-                n = db.Namespace(name=constants.special_namespace if ns == 'default' else ns)
-                n = dst_namespace.get(ns, n)
-                dst_namespace[ns] = n
-                for tag in g.tags[ns]:
-                    t = db.Tag(name=tag)
-                    t = dst_tag.get(tag, t)
-                    dst_tag[t.name] = t
-                    nstagname = ns + tag
-                    nstag = db.NamespaceTags(n, t)
-                    nstag = dst_nstagmapping.get(nstagname, nstag)
-                    dst_nstagmapping[nstagname] = nstag
-                    for ch_g in galleries:
-                        ch_g.tags.append(nstag)
+                dst_galleries.extend(galleries)
 
-            dst_galleries.extend(galleries)
-
-            try:
-                print_progress(numb, len(src_galleries), "Progress:", bar_length=50)
-            except UnicodeEncodeError:
-                print("\nStill in progress... please wait...")
-
-        if not pages_to_send:
-            AMOUNT_OF_TASKS = 1
-
-        page_pool = []
-        thread_pool = []
-        for x in range(AMOUNT_OF_TASKS):
-            pipe1, pipe2 = Pipe(False)
-            p = Process(target=page_generate, args=(args.rar, pages_in, pipe2), daemon=True)
-            p.start()
-            page_pool.append(p)
-            t = threading.Thread(target=process_pipes, args=(pages_out, pipe1), daemon=True)
-            t.start()
-            thread_pool.append(t)
-
-        pages_to_send2 = list(split(pages_to_send2, AMOUNT_OF_TASKS))
-        pages_to_send = list(split(pages_to_send, AMOUNT_OF_TASKS))
-        if len(pages_to_send) < len(pages_to_send):
-            for n, x in enumerate(pages_to_send):
                 try:
-                    x.extend(pages_to_send2[n])
-                except IndexError:
-                    pass
-            pages_to_sendx = pages_to_send
-        else:
-            for n, x in enumerate(pages_to_send2):
-                try:
-                    x.extend(pages_to_send[n])
-                except IndexError:
-                    pass
-            pages_to_sendx = pages_to_send2
-
-        pages_map = {}
-        pages_finish = {}
-        pages_finished = []
-        for n, x in enumerate(pages_to_sendx):
-            pages_map[n] = x
-            pages_finish[n] = False
-            pages_in.put((n, x))
-
-        print("\nResolving gallery pages...")
-        unique_pages = []
-        current_p_count = 0
-        while current_p_count < pages_count:
-            items = pages_out.get()
-
-            # need to make sure process helps with remaining if it finishes its own
-            for dead_p in page_pool:
-                if not dead_p.is_alive():
-                    dead_p.terminate()
-                    if pages_finished:
-                        pages_id = pages_finished.pop()
-                        for p_id in pages_finish:
-                            if not pages_finish[p_id]:
-                                Process(target=page_generate, args=(args.rar, pages_in, pipe2), daemon=True).start()
-                                pages_in.put((p_id, list(reversed(pages_map[p_id]))))
-
-            if isinstance(items, int):
-                pages_finished.append(items)
-                pages_finish[items] = True
-                continue
-
-            for item in items:
-                p_hash, g, pages = item
-                p_hash = hash(p_hash)
-                if p_hash in unique_pages:
-                    continue
-                unique_pages.append(p_hash)
-                current_p_count += 1
-                for pp in pages:
-                    p = db.Page()
-                    p.name = pp[0]
-                    p.path = pp[1]
-                    p.number = pp[2]
-                    p.in_archive = pp[3]
-                    dst_pages[g].pages.append(p)
-                try:
-                    print_progress(current_p_count, pages_count, "Progress:", bar_length=50)
+                    print_progress(numb, len(src_galleries), "Progress:", bar_length=50)
                 except UnicodeEncodeError:
                     print("\nStill in progress... please wait...")
-    finally:
-        pass
 
-    print("\nCreating gallery lists")
-    dst_lists = []
-    for l in GALLERY_LISTS:
-        glist = db.GalleryFilter()
-        glist.name = l.name
-        glist.filter = l.filter
-        glist.enforce = l.enforce
-        glist.regex = l.regex
-        glist.l_case = l.case
-        glist.strict = l.strict
-        for g in l.galleries():
-            if g.id in gallery_mixmap:
-                glist.galleries.extend(gallery_mixmap[g.id])
+            if not pages_to_send:
+                AMOUNT_OF_TASKS = 1
 
-        dst_lists.append(glist)
+            page_pool = []
+            thread_pool = []
+            for x in range(AMOUNT_OF_TASKS):
+                pipe1, pipe2 = Pipe(False)
+                p = Process(target=page_generate, args=(args.rar, pages_in, pipe2), daemon=True)
+                p.start()
+                page_pool.append(p)
+                t = threading.Thread(target=process_pipes, args=(pages_out, pipe1), daemon=True)
+                t.start()
+                thread_pool.append(t)
 
-    print("Adding languages...")
-    s.add_all(dst_languages.values())
-    print("Adding artists...")
-    s.add_all(dst_artists.values())
-    print("Adding gallery types...")
-    s.add_all(dst_gtype.values())
-    print("Adding gallery status...")
-    s.add_all(dst_status.values())
-    print("Adding gallery namespaces...")
-    s.add_all(dst_namespace.values())
-    print("Adding gallery tags...")
-    s.add_all(dst_tag.values())
-    s.add_all(dst_nstagmapping.values())
-    print("Adding galleries...")
-    s.add_all(dst_galleries)
-    print("Adding gallery lists...")
-    s.add_all(dst_lists)
-    print("Committing... (might take a while)")
-    s.commit()
-    print("Done!")
+            pages_to_send2 = list(split(pages_to_send2, AMOUNT_OF_TASKS))
+            pages_to_send = list(split(pages_to_send, AMOUNT_OF_TASKS))
+            if len(pages_to_send) < len(pages_to_send):
+                for n, x in enumerate(pages_to_send):
+                    try:
+                        x.extend(pages_to_send2[n])
+                    except IndexError:
+                        pass
+                pages_to_sendx = pages_to_send
+            else:
+                for n, x in enumerate(pages_to_send2):
+                    try:
+                        x.extend(pages_to_send[n])
+                    except IndexError:
+                        pass
+                pages_to_sendx = pages_to_send2
+
+            pages_map = {}
+            pages_finish = {}
+            pages_finished = []
+            for n, x in enumerate(pages_to_sendx):
+                pages_map[n] = x
+                pages_finish[n] = False
+                pages_in.put((n, x))
+
+            print("\nResolving gallery pages...")
+            unique_pages = []
+            current_p_count = 0
+            while current_p_count < pages_count:
+                items = pages_out.get()
+
+                # need to make sure process helps with remaining if it finishes its own
+                for dead_p in page_pool:
+                    if not dead_p.is_alive():
+                        dead_p.terminate()
+                        if pages_finished:
+                            pages_id = pages_finished.pop()
+                            for p_id in pages_finish:
+                                if not pages_finish[p_id]:
+                                    Process(target=page_generate, args=(args.rar, pages_in, pipe2), daemon=True).start()
+                                    pages_in.put((p_id, list(reversed(pages_map[p_id]))))
+
+                if isinstance(items, int):
+                    pages_finished.append(items)
+                    pages_finish[items] = True
+                    continue
+
+                for item in items:
+                    p_hash, g, pages = item
+                    p_hash = hash(p_hash)
+                    if p_hash in unique_pages:
+                        continue
+                    unique_pages.append(p_hash)
+                    current_p_count += 1
+                    for pp in pages:
+                        p = db.Page()
+                        p.name = pp[0]
+                        p.path = pp[1]
+                        p.number = pp[2]
+                        p.in_archive = pp[3]
+                        dst_pages[g].pages.append(p)
+                    try:
+                        print_progress(current_p_count, pages_count, "Progress:", bar_length=50)
+                    except UnicodeEncodeError:
+                        print("\nStill in progress... please wait...")
+        finally:
+            pass
+
+        print("\nCreating gallery lists")
+        dst_lists = []
+        for l in GALLERY_LISTS:
+            glist = db.GalleryFilter()
+            glist.name = l.name
+            glist.filter = l.filter
+            glist.enforce = l.enforce
+            glist.regex = l.regex
+            glist.l_case = l.case
+            glist.strict = l.strict
+            for g in l.galleries():
+                if g.id in gallery_mixmap:
+                    glist.galleries.extend(gallery_mixmap[g.id])
+
+            dst_lists.append(glist)
+
+        print("Adding languages...")
+        s.add_all(dst_languages.values())
+        print("Adding artists...")
+        s.add_all(dst_artists.values())
+        print("Adding gallery types...")
+        s.add_all(dst_gtype.values())
+        print("Adding gallery status...")
+        s.add_all(dst_status.values())
+        print("Adding gallery namespaces...")
+        s.add_all(dst_namespace.values())
+        print("Adding gallery tags...")
+        s.add_all(dst_tag.values())
+        s.add_all(dst_nstagmapping.values())
+        print("Adding galleries...")
+        s.add_all(dst_galleries)
+        print("Adding gallery lists...")
+        s.add_all(dst_lists)
+        print("Committing... (might take a while)")
+        s.commit()
+        print("Done!")
+    except Exception as e:
+        print(e)
+        raise
 
 
 if __name__ == '__main__':
-    try:
-        main()
-    except Exception as e:
-        print(e)
-        time.sleep(5)
-        sys.exit(1)
+    multiprocessing.freeze_support()
+    main()

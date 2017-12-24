@@ -7,14 +7,13 @@ if __package__ is None and not hasattr(sys, 'frozen'):
     sys.path.insert(0, os.path.dirname(os.path.dirname(path)))
 
 import rollbar # noqa: E402
+import multiprocessing  # noqa: E402
 
 from gevent import monkey  # noqa: E402
 
 from multiprocessing import Process  # noqa: E402
 
 from happypanda.common import utils, constants, hlogger, config  # noqa: E402
-# views need to be imported before starting the webserver in a different process
-from happypanda.core.web import views  # noqa: F401
 from happypanda.core import server, plugins, command, services, db  # noqa: E402
 from happypanda.core.commands import io_cmd  # noqa: E402
 
@@ -25,7 +24,6 @@ parser = utils.get_argparser()  # required to be at module lvl for sphinx.autopr
 def start(argv=None, db_kwargs={}):
     #assert sys.version_info >= (3, 5), "Python 3.5 is required"
     try:
-        utils.setup_online_reporter()
         utils.check_frozen()
         if argv is None:
             argv = sys.argv[1:]
@@ -39,7 +37,8 @@ def start(argv=None, db_kwargs={}):
             hlogger.Logger.init_listener(args)
             monkey.patch_all(thread=False)
         hlogger.Logger.report_online = config.report_critical_errors.value
-        hlogger.Logger.setup_logger(args, main=True)
+        hlogger.Logger.setup_logger(args, main=True, debug=config.debug.value)
+        utils.setup_online_reporter()
         log.i("HPX SERVER START")
         if constants.dev:
             log.i("DEVELOPER MODE ENABLED", stdout=True)
@@ -78,11 +77,13 @@ def start(argv=None, db_kwargs={}):
             config.config.save()
             hlogger.Logger.shutdown_listener()
         log.i("HPX SERVER END")
-    except:
+    except Exception as e:
+        print(e)
         if config.report_critical_errors.value and not constants.dev:
             rollbar.report_exc_info()
         raise
 
 
 if __name__ == '__main__':
+    multiprocessing.freeze_support()
     start()
