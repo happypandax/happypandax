@@ -1,8 +1,10 @@
 # flake8: noqa
 import os
 import sys
+import shutil
 import argparse
 import subprocess
+import tarfile
 from subprocess import run
 from importlib import reload
 
@@ -11,6 +13,8 @@ dev_options = dict(
     prev_build=None,
     env_activated=False
 )
+
+env_python = r".\env\Scripts\python" if sys.platform.startswith("win") else "./env/bin/python"
 
 changes = """
 - added hpx logo
@@ -239,7 +243,6 @@ def convert(args, unknown=None):
         from HPtoHPX import main
     except ImportError:
         _update_pip(args)
-    env_p = r".\env\Scripts\python" if sys.platform.startswith("win") else "./env/bin/python"
     argv = []
     argv.append(args.db_path)
     data_folder = "data"
@@ -252,7 +255,7 @@ def convert(args, unknown=None):
             argv.remove(i)
         except ValueError:
             pass
-    return run([env_p, "HPtoHPX.py", *argv]).returncode
+    return run([env_python, "HPtoHPX.py", *argv]).returncode
 
 
 def is_sane_database(Base, session):
@@ -322,14 +325,66 @@ def start(args, unknown=None):
         from happypanda import main
     except ImportError:
         _update_pip(args)
-    env_p = r".\env\Scripts\python" if sys.platform.startswith("win") else "./env/bin/python"
-    return run([env_p, "run.py", *sys.argv[2:]]).returncode
+    return run([env_python, "run.py", *sys.argv[2:]]).returncode
 
 
 def lint(args, unknown=None):
     _activate_venv()
-    env_p = r".\env\Scripts\python" if sys.platform.startswith("win") else "./env/bin/python"
-    return run([env_p, "lint.py", *sys.argv[2:]]).returncode
+    return run([env_python, "lint.py", *sys.argv[2:]]).returncode
+
+def _compress_dir(dir_path, output_name):
+    from happypanda.common import config
+    if not config.sevenzip_path.value:
+        print("Please set the path to the 7z executable in your configuration (advanced -> 7z_path)")
+        sys.exit()
+
+    return run([config.sevenzip_path.value, "a", output_name, os.path.join(dir_path, "*")])
+
+def deploy(args, unknown=None):
+    _activate_venv()
+    try:
+        from PyInstaller.__main__ import run as prun
+    except ImportError:
+        if not hasattr(args, "dev"):
+            print("Please supply the '--dev' argument if you want to deploy")
+            sys.exit()
+        else:
+            _update_pip(args)
+
+    from happypanda.common import constants
+
+    if sys.platform.startswith('darwin'):
+        os_name = "osx"
+    elif os.name == 'nt':
+        os_name = "win"
+    elif os.name == 'posix':
+        os_name = "linux"
+
+    output_path = "dist/happypandax"
+    dir_path = "./dist/happypandax"
+    installer_filename = ".installed"
+    installer_file = os.path.join("deploy", installer_filename)
+    if not prun(["happypandax.spec"]):
+        for p in ("", "installer"):
+            output_path_a = output_path+".".join(str(x) for x in constants.version)
+            output_path_a = output_path_a+"."+os_name
+            if p:
+                output_path_a = output_path_a+"."+p
+
+            output_path_a = output_path_a+'.7z'
+
+            installer_file_out = os.path.join(dir_path, installer_filename)
+            if p == "installer":
+                if not os.path.exists(installer_filename):
+                    shutil.copyfile(installer_file, installer_file_out)
+            else:
+                if os.path.exists(installer_file_out):
+                    os.remove(installer_file_out)
+
+            if os.path.exists(output_path_a):
+                os.remove(output_path_a)
+            _compress_dir(dir_path, output_path_a)
+
 
 
 welcome_msg = """
@@ -407,6 +462,9 @@ def main():
 
     subparser = subparsers.add_parser('lint', help='Linting, args are forwarded')
     subparser.set_defaults(func=lint)
+
+    subparser = subparsers.add_parser('deploy', help='Deploy on current platform')
+    subparser.set_defaults(func=deploy)
 
     subparser = subparsers.add_parser('update', help='Fetch the latest changes from the GitHub repo')
     subparser.set_defaults(func=update)

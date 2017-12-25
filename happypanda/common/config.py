@@ -572,14 +572,20 @@ with config.namespace(gui_ns):
 
     gui_minimize_on_close = config.create(
         None,
-        "minimize_on_close",
+        "send_to_tray_on_close",
         False,
-        "Minimize the program to tray on close button")
+        "Put the application in the notification tray on close button")
+
+    gui_minimize_on_minimize = config.create(
+        None,
+        "send_to_tray_on_minimize",
+        False,
+        "Put the application in the notification tray on minimize button")
 
     gui_open_webclient_on_server_start = config.create(
         None,
         "open_webclient_on_server_start",
-        False,
+        True,
         "Open the webclient in your default browser on server start")
 
 network_ns = "network"
@@ -613,5 +619,11 @@ with config.namespace(advanced_ns):
         "github_repo",
         {'repo':'sever', 'owner':'happypandax'},
         "Github repo and owner", hidden=True)
+
+    sevenzip_path = config.create(
+        advanced_ns,
+        "7z_path",
+        "",
+        "Path to the 7z executable", hidden=True)
 
 config_doc = config.doc_render()  # for doc

@@ -1,10 +1,13 @@
 ﻿import os
 import rarfile
 import enum
+import appdirs
 
 rarfile.PATH_SEP = '/'
 
+preview = True
 dev = False
+is_installed = os.path.exists(".installed")
 
 ## VERSIONING ##
 build = 110
@@ -13,7 +16,7 @@ version_db = (0, 0, 1)
 version_web = (0, 0, 1)
 
 ## PATHS & FILENAMES ##
-dir_root = ''
+dir_root = ""
 dir_static = os.path.join(dir_root, "static")
 dir_data = os.path.join(dir_root, "data")
 dir_download = os.path.join(dir_root, "downloads")
@@ -94,3 +97,4 @@ server_ready = True
 server_started = False
 local_ip = ""
 public_ip = ""
+

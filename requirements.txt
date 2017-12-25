@@ -3,7 +3,6 @@ gevent==1.2.2
 SQLAlchemy==1.1.15
 sqlalchemy-utils==0.32.21
 rarfile==3.0
-appdirs==1.4.3
 alembic==0.9.6
 arrow==0.10.0
 https://github.com/Pewpews/happy-bittorrent/archive/master/1.0.0.zip
