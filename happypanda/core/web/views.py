@@ -1,10 +1,11 @@
 import os
+import socket
 
 from flask import (render_template, abort, request, send_from_directory)
 from werkzeug.utils import secure_filename
 
 from happypanda.core.client import Client
-from happypanda.common import exceptions, hlogger, constants
+from happypanda.common import exceptions, hlogger, constants, utils
 
 happyweb = None
 socketio = None
@@ -73,6 +74,17 @@ def call_server(msg, c):
 #    except exceptions.ClientError as e:
 #        log.exception("Failed to connect")
 #        send_error(e)
+
+def is_same_machine():
+    # TODO: this will fail if connected to external server
+    addr = request.headers.get('X-Forwarded-For', request.remote_addr)
+    addr = addr.split("%")[0]
+    if addr in ("::1", "127.0.0.1",
+                utils.get_local_ip(),
+                socket.gethostbyaddr(socket.gethostname())[2][0]):
+        return True
+    return False
+
 
 def init_views(flask_app, socketio_app):
     global happyweb
@@ -186,5 +198,5 @@ def init_views(flask_app, socketio_app):
     @happyweb.route('/<path:path>')
     def app_base(path):
         return render_template('base.html',
-                               same_machine=request.remote_addr == "127.0.0.1",
+                               same_machine=is_same_machine(),
                                version=".".join(str(x) for x in constants.version_web))

@@ -20,10 +20,8 @@ class Client:
         self.id = client_id
         self.name = name
         # HACK: properly fix this
-        host = config.host.value
-        if isinstance(host, str):
-            host = "localhost" if host.lower() == "0.0.0.0" else host
-        self._server = (host, config.port.value)
+        self._server = utils.get_qualified_name(config.host.value, config.port.value).split(':')
+        self._server = (self._server[0], int(self._server[1]))
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._alive = False
         self._buffer = b''

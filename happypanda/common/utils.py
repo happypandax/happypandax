@@ -161,7 +161,7 @@ def parse_options(args):
 
 def connection_params():
     "Retrieve host and port"
-    params = (config.host.value, config.port.value)
+    params = (config.host.value if config.host.value else "localhost", config.port.value)
     return params
 
 
