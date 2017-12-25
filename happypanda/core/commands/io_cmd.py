@@ -4,6 +4,7 @@ import hashlib
 import shutil
 import send2trash
 import attr
+import sys
 
 from io import BytesIO
 from PIL import Image
@@ -368,6 +369,16 @@ class CoreFS(CoreCommand):
             raise
         yield f
         f.close()
+
+    @staticmethod
+    def open_with_default(path):
+        "Open path with the default application"
+        if sys.platform.startswith('darwin'):
+            subprocess.call(('open', path))
+        elif os.name == 'nt':
+            os.startfile(path)
+        elif os.name == 'posix':
+            subprocess.call(('xdg-open', path))
 
     def close(self):
         ""

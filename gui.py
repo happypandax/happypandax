@@ -65,6 +65,7 @@ from PyQt5.QtCore import Qt, QUrl, QDir, pyqtSignal # noqa: E402
 from i18n import t # noqa: E402
 
 from happypanda.common import constants, utils, config # noqa: E402
+from happypanda.core.commands import io_cmd # noqa: E402
 from happypanda import main # noqa: E402
 import HPtoHPX # noqa: E402
 
@@ -426,9 +427,9 @@ class Window(QMainWindow):
 
     def open_cfg(self):
         if not os.path.exists(constants.config_path):
-            with open(constants.config_path, 'x'):
+            with open(constants.config_path, 'x') as f:
                 pass
-        QDesktopServices.openUrl(QUrl(constants.config_path, QUrl.TolerantMode))
+        io_cmd.CoreFS.open_with_default(constants.config_path)
 
     def convert_hp(self):
         c = ConvertHP(self)

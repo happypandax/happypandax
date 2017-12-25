@@ -97,12 +97,7 @@ class OpenGallery(Command):
             subprocess.Popen((ex_path, path, *args))
             opened = True
         else:
-            if sys.platform.startswith('darwin'):
-                subprocess.call(('open', path))
-            elif os.name == 'nt':
-                os.startfile(path)
-            elif os.name == 'posix':
-                subprocess.call(('xdg-open', path))
+            io_cmd.CoreFS.open_with_default(path)
             opened = True
 
         return opened
