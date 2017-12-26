@@ -17,6 +17,7 @@ import shelve
 import rollbar
 import importlib
 import random
+import atexit
 
 from inspect import ismodule, currentframe, getframeinfo
 from contextlib import contextmanager
@@ -35,14 +36,9 @@ i18n.set("file_format", "yaml")
 i18n.set("filename_format", "{locale}.{namespace}.{format}")
 i18n.set("error_on_missing_translation", True)
 
-
 def setup_i18n():
     i18n.set("locale", config.translation_locale.value)
     i18n.set("fallback", "en_us")
-
-def check_frozen():
-    constants.is_frozen = getattr(sys, 'frozen', False)
-    return constants.is_frozen
 
 def setup_dirs():
     "Creates directories at the specified root path"
@@ -363,6 +359,11 @@ def restart_process():
     else:
         os.execv(sys.executable, ["python"] + sys.argv)
     
+def launch_updater():
+    upd_name = constants.updater_name
+    if constants.is_win:
+        upd_name += '.exe'
+    atexit.register(os.execl, upd_name, upd_name)
 
 class AttributeList(UserList):
     """

@@ -1,9 +1,11 @@
 import attr
 import requests
 import cachecontrol
+import os
 
 from happypanda.common import (hlogger, exceptions, utils, constants, exceptions, config)
 from happypanda.core.command import CoreCommand, CommandEntry, Command
+from happypanda.core.commands import io_cmd
 from happypanda.core.services import NetworkService
 from happypanda.interface import enums
 
@@ -47,7 +49,7 @@ class Response(CoreCommand):
 
     def __init__(self, _response_obj, _props):
         super().__init__()
-
+        self.properties = _props
         self._rsp = _response_obj
 
     @property
@@ -59,7 +61,34 @@ class Response(CoreCommand):
     def json(self):
         return self._rsp.json()
 
+    @property
+    def text(self):
+        return self._rsp.text
 
+    def save(self, filepath, decode_unicode=False, extension=False):
+        """
+        Save the content to a file. Also accepts CoreFS.
+
+        Args:
+            extension: append file extension from url to filepath
+
+        Returns str path to file
+        """
+        assert isinstance(filepath, (str, io_cmd.CoreFS))
+        if isinstance(str):
+            filepath = io_cmd.CoreFS(filepath)
+
+        if extension:
+            filepath = io_cmd.CoreFS(filepath.path+os.path.splitext(self._rsp.url)[1], filepath._archive)
+
+        with filepath.open(mode="wb") as f:
+            if self.properties.stream:
+                for data in self._rsp.iter_content(chunk_size=1024, decode_unicode=decode_unicode):
+                    f.write(data)
+                    f.flush()
+            else:
+                raise NotImplementedError
+        return filepath.path
 
 class _Request(Command):
     """

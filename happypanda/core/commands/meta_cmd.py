@@ -16,17 +16,31 @@ class CheckUpdate(Command):
     def main(self, silent=True) -> dict:
         return updater.check_release(silent=silent)
 
-class CheckUpdate(Command):
+class UpdateApplication(Command):
     """
-    Check for new release and update
+    Check for new release and update the application
     """
+
+    update = CommandEvent("update", bool, bool)
 
     def __init__(self, priority = constants.Priority.Low):
         super().__init__(priority)
 
-    def main(self, silent=True) -> dict:
-        return updater.check_release(silent=silent)
-    
+    def main(self, download_url=None, restart=True, silent=True) -> bool:
+        st = False
+        if download_url:
+            rel = download_url
+        else:
+            rel = updater.check_release(silent=silent)
+            if rel:
+                rel = rel['url']
+        if rel:
+            new_rel = updater.get_release(rel, silent=silent)
+            if new_rel:
+                st = updater.register_release(new_rel['path'], silent, restart=restart)
+        self.update.emit(st, restart)
+        return st
+
 class RestartApplication(Command):
     """
     Restart the appplication

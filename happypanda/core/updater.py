@@ -1,52 +1,60 @@
-import nacl
 import sys
+import hashlib
+import os
+import zipfile
+import shelve
 
 from contextlib import suppress
 from functools import reduce
 
 from happypanda.common import constants, utils, config, exceptions, hlogger
-from happypanda.core.commands.networkcmd import SimpleGETRequest
+from happypanda.core.commands.networkcmd import SimpleGETRequest, RequestProperties
+from happypanda.core.commands.io_cmd import CoreFS
 
 log = hlogger.Logger(__name__)
 
-class Release:
-
-    def __init__(self):
-        self._signed = None
-
-    def sign(self, from_input=False):
-        if from_input:
-            k = input("Signing key:")
-        else:
-            raise NotImplemented
-
-        sign_key = nacl.signing.SigningKey(k, encoder=nacl.encoding.HexEncoder)
-        #self._signed = sign_key.sign(msg)
-
-
-def verify_release(msg):
-    "Verify a new release"
-    for k in (constants.update_public_key['main'],
-              constants.update_public_key['backup']):
-        if k:
-            try:
-                vf_key = nacl.signing.VerifyKey(k, encoder=nacl.encoding.HexEncoder)
-                vf_key.verify(msg)
-                return True
-            except nacl.exceptions.BadSignatureError:
-                pass
+def verify_release(checksum, silent=True):
+    """
+    Verify a new release by checking against a key provider
+    
+    Args:
+        silent: suppress any network error
+    """
+    log.d("Checking release checksum", checksum)
+    repo_name = config.checksum_provider_repo.value['repo']
+    repo_owner = config.checksum_provider_repo.value['owner']
+    repo_file = config.checksum_provider_repo.value['file']
+    checksum_rel_key = "release_checksums"
+    with utils.intertnal_db() as db:
+        rels_checks = db.get(checksum_rel_key, '')
+    if checksum in rels_checks:
+        return True
+    try:
+        r = SimpleGETRequest("https://api.github.com/repos/{}/{}/contents/{}".format(repo_owner, repo_name, repo_file)).run()
+        data = r.json
+        if data:
+            r = SimpleGETRequest(data['download_url']).run()
+            if r.text:
+                with utils.intertnal_db() as db:
+                    db[checksum_rel_key] = r.text
+                return checksum in r.text
+    except exceptions.NetworkError:
+        if not silent:
+            raise
+        log.exception("Supressed error when verifying release checksum")
     return False
 
-def generate_key():
-    "Generate a key pair"
-    sign_key = nacl.signing.SigningKey.generate()
-    return dict(private=sign_key.encode(encoder=nacl.encoding.HexEncoder),
-                public=sign_key.verify_key.encode(encoder=nacl.encoding.HexEncoder))
 
+def sha256_checksum(path, block_size=64*1024):
+    sha256 = hashlib.sha256()
+    with open(path, 'rb') as f:
+        for block in iter(lambda: f.read(block_size), b''):
+            sha256.update(block)
+    return sha256.hexdigest()
 
 extract_version = lambda v: tuple([int(x) for x in (reduce((lambda a,b: a+b),filter(str.isdigit,i)) for i in v.split("."))][:3])
 
-def check_release(archive=True, silent=True):
+def check_release(silent=True):
     """
     Check for new release
 
@@ -54,11 +62,9 @@ def check_release(archive=True, silent=True):
         silent: suppress any network error
 
     Returns:
-        None or {'url':'', 'changes':'', 'tag':''} for new release
+        None or {'url':'', 'changes':'', 'tag':'', 'version':(0, 0, 0)} for new release
     """
     if config.check_new_releases.value:
-        with utils.intertnal_db() as db:
-            past_rels = db.get('past_releases', {})
         repo_name = config.github_repo.value['repo']
         repo_owner = config.github_repo.value['owner']
         try:
@@ -69,6 +75,7 @@ def check_release(archive=True, silent=True):
                 db['release_tags'] = tags
 
             new_rel = None
+            new_version = tuple()
             # go down in releases until a suitable new release or we match local release
             while tags:
                 t = tags.pop(0)
@@ -81,6 +88,7 @@ def check_release(archive=True, silent=True):
                     break
                 else:
                     new_rel = t
+                    new_version = v
             download_url = None
             changes = ""
             if new_rel:
@@ -98,13 +106,120 @@ def check_release(archive=True, silent=True):
                         if txt in a['name'].lower():
                             download_url = a['browser_download_url']
                             break
-            latest_rel = dict(url=download_url,tag=new_rel, changes=changes)
-            with utils.intertnal_db() as db:
-                db['latest_release'] = latest_rel
 
-            return latest_rel if download_url else None
+            latest_rel = None
+            if download_url:
+                latest_rel = dict(url=download_url,tag=new_rel, changes=changes, version=new_version)
+                with utils.intertnal_db() as db:
+                    db['latest_release'] = latest_rel
+
+            return latest_rel
         except exceptions.NetworkError:
             if not silent:
                 raise
             log.exception("Supressed error when checking for new release")
 
+def get_release(download_url=None, archive=True, silent=True):
+    """
+    Download a new release from provided url
+
+    Args:
+        download_url: url to the new release, will query for the latest release if not provided
+        archive: cache the downloaded file
+        silent: suppress any network error
+
+    Returns:
+        None or {'path': path to downloaded file, 'hash': ''}
+
+    """
+    if download_url:
+        log.d("Getting release", download_url, stdout=True)
+
+    down_rels_key = "downloaded_releases"
+
+    if not download_url:
+        with utils.intertnal_db() as db:
+            l_rel = db.get('latest_release', {})
+            download_url = l_rel.get('url', False)
+            if not download_url or (l_rel.get('version', tuple()) < constants.version):
+                log.d("No new release found in internal db")
+                return None
+
+    with utils.intertnal_db() as db:
+        down_rels = db.get(down_rels_key, {})
+
+    d_file = None
+    try:
+        if not download_url in down_rels or not os.path.exists(down_rels[download_url]['path']):
+            d_file = {}
+            if os.path.exists(download_url): # TODO: if is filepath but not existing, raise appropriate error
+                log.d("Getting release from existing file")
+                d_file['path'] = download_url
+            else:
+                log.d("Getting release from web")
+                r = SimpleGETRequest(download_url, RequestProperties(stream=True)).run()
+                d_file['path'] = r.save(os.path.join(constants.dir_cache if archive else constants.dir_temp, utils.random_name()), extension=True)
+            d_file['hash'] = sha256_checksum(d_file['path'])
+            log.d("Computed file checksum", d_file['hash'])
+            if not constants.dev and not verify_release(d_file['hash'], silent):
+                log.w("File checksum mismatch from download url", download_url)
+                return None
+            down_rels[download_url] = d_file
+            if archive:
+                log.d("Archiving release file")
+                with utils.intertnal_db() as db:
+                    db[down_rels_key] = down_rels
+        else:
+            d_file = down_rels[download_url]
+            log.d("Release file found in archive")
+    except exceptions.NetworkError:
+        if not silent:
+            raise
+        log.exception("Supressed error when getting new release")
+
+    return d_file
+
+def register_release(filepath, silent=True, restart=True):
+    """
+    Register the new release for installation
+
+    Args:
+        filepath: also accepts CoreFS
+        silent: suppress any error
+
+    Returns:
+        bool indicating whether the registration succeded or not
+    """
+
+    if not isinstance(filepath, CoreFS):
+        filepath = CoreFS(filepath)
+    log.d("Registering new release", filepath.path)
+    try:
+        up = CoreFS(constants.dir_update)
+        if up.exists:
+            log.d("Nuking update folder")
+            up.delete(ignore_errors=True)
+        os.makedirs(up.path)
+        log.d("Extracting new release")
+        p = filepath.extract(target=up.path)
+        log.d("Saving update info")
+        with shelve.open(constants.internal_db_path) as db:
+            db[constants.updater_key] = {'from': p.path,
+                                         'to':os.path.abspath(constants.app_path),
+                                         #'to':os.path.abspath(constants.dir_cache),
+                                         'restart':restart,
+                                         'app':sys.argv[0],
+                                         'args':sys.argv[1:],
+                                         'state': constants.UpdateState.Registered.value}
+        up_name = constants.updater_name
+        if constants.is_win:
+            up_name += '.exe'
+        updater_path = os.path.join(p.path, up_name)
+        if os.path.exists(updater_path):
+            log.d("Getting new updater file")
+            os.replace(updater_path, os.path.join(constants.app_path, up_name))
+    except PermissionError:
+        log.exception("Failed to register new release")
+        return False
+    log.d("Finished registering release")
+    return True

@@ -7,13 +7,18 @@ rarfile.PATH_SEP = '/'
 
 preview = True
 dev = False
-is_installed = os.path.exists(".installed")
+is_installed = os.path.exists(".installed") # user installed with installer
+is_frozen = getattr(sys, 'frozen', False)
 
 is_osx = sys.platform.startswith('darwin')
 is_win = os.name == 'nt'
 is_linux = os.name == 'posix'
 
-from_gui = False
+from_gui = False # running from gui
+
+## UPDATER ##
+updater_name = "happyupd" # windows will make it require escalted priv. if named anything 'updater'
+updater_key = "updater"
 
 ## VERSIONING ##
 build = 110
@@ -22,11 +27,13 @@ version_db = (0, 0, 1)
 version_web = (0, 0, 1)
 
 ## PATHS & FILENAMES ##
+app_path = getattr(sys, '_MEIPASS', '.') if is_frozen else '.'
 dir_root = ""
 dir_static = os.path.join(dir_root, "static")
 dir_data = os.path.join(dir_root, "data")
 dir_download = os.path.join(dir_root, "downloads")
 dir_cache = os.path.join(dir_data, "cache")
+dir_update = os.path.join(dir_cache, "happyupdate")
 dir_log = os.path.join(dir_root, "logs")
 dir_temp = os.path.join(dir_cache, "temp")
 dir_plugin = os.path.join(dir_root, "plugins")
@@ -49,26 +56,23 @@ link_ext = '.link'
 
 # CORE
 
-web_proc = None
-
-# should probably move this to config
-update_public_key = {
-    'main': '',
-    'backup': ''
-    }
+web_proc = None # webserver process
 
 class ExitCode(enum.Enum):
     Exit = 0
     Restart = 10
+    Update = 20
 
+class UpdateState(enum.Enum):
+    Registered = 0
+    Failed = 1
+    Success = 2
 
 class Priority(enum.Enum):
     High = 10
     Normal = 5
     Low = 0
 
-
-is_frozen = False
 
 maximum_native_workers = 15
 

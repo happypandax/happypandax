@@ -25,7 +25,6 @@ def start(argv=None, db_kwargs={}):
     #assert sys.version_info >= (3, 5), "Python 3.5 is required"
     e_code = None
     try:
-        utils.check_frozen()
         if argv is None:
             argv = sys.argv[1:]
         utils.setup_dirs()
@@ -76,6 +75,7 @@ def start(argv=None, db_kwargs={}):
             hp_server = server.HPServer()
             meta_cmd.ShutdownApplication.shutdown.subscribe(hp_server.shutdown)
             meta_cmd.RestartApplication.restart.subscribe(hp_server.restart)
+            meta_cmd.UpdateApplication.update.subscribe(hp_server.update)
             e_code = hp_server.run(interactive=args.interact)
 
 
@@ -88,8 +88,11 @@ def start(argv=None, db_kwargs={}):
             config.config.save()
             hlogger.Logger.shutdown_listener()
 
+        # the gui will handle the restart
         if e_code == constants.ExitCode.Restart and not constants.from_gui:
             utils.restart_process()
+        elif e_code == constants.ExitCode.Update and not constants.from_gui:
+            utils.launch_updater()
 
     except Exception as e:
         print(e) # intentional

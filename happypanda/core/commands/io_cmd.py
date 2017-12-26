@@ -356,6 +356,7 @@ class CoreFS(CoreCommand):
 
     @contextmanager  # TODO: Make usable without contextmanager too
     def open(self, *args, **kwargs):
+        ""
         self._init_archive()
         try:
             if self.inside_archive:
@@ -462,6 +463,7 @@ class Archive(CoreCommand):
     _test_corrupt = CommandEntry('test_corrupt', bool, object)
     _is_dir = CommandEntry('is_dir', bool, object, str)
     _extract = CommandEntry("extract", str, object, str, pathlib.Path)
+    _extract_all = CommandEntry("extract_all", str, object, pathlib.Path)
     _namelist = CommandEntry("namelist", tuple, object)
     _open = CommandEntry("open", object, object, str, tuple, dict)
     _close = CommandEntry("close", None, object)
@@ -552,6 +554,13 @@ class Archive(CoreCommand):
             archive.extract(filename, str(target))
         return temp_p
 
+    @_extract_all.default(capture=True)
+    def _extract_all_def(archive, target, capture=_def_formats()):
+        target_p = str(target)
+        if isinstance(archive, (ZipFile, RarFile)):
+            archive.extractall(target_p)
+        return target_p
+
     @_open.default(capture=True)
     def _open_def(archive, filename, args, kwargs, capture=_def_formats()):
         if filename not in Archive._namelist_def(archive):
@@ -600,7 +609,15 @@ class Archive(CoreCommand):
         """
         Extracts all files to given path, and returns path
         """
-        pass
+        p = pathlib.Path(target)
+
+        if not p.exists():
+            raise exceptions.ArchiveExtractError("Target path does not exist: '{}'".format(str(p)))
+
+        with self._extract_all.call_capture(self._ext, self._archive, p) as plg:
+            extract_path = plg.first()
+
+        return pathlib.Path(extract_path)
 
     def open(self, filename, *args, **kwargs):
         """

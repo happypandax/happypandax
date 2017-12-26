@@ -18,6 +18,7 @@ from happypanda.core.web import views
 from happypanda.common import constants, exceptions, utils, hlogger, config
 from happypanda.core import db, torrent, message, async  # noqa: F401
 from happypanda.interface import meta, enums
+from happypanda.core.commands import meta_cmd
 
 log = hlogger.Logger(__name__)
 
@@ -343,8 +344,6 @@ class ClientHandler:
                     if functions is None:
                         return
                     if isinstance(functions, enums.ServerCommand):
-                        if functions == enums.ServerCommand.RequestAuth:
-                            self.handshake()
                         return functions
 
                     for func, func_args in functions:
@@ -392,7 +391,7 @@ class ClientHandler:
         """
         Creates and sends error message to client
         """
-        assert isinstance(exception, exceptions.CoreError)
+        assert isinstance(exception, exceptions.HappypandaError)
         e = message.Error(exception.code, exception.msg)
         s_id = self.session.id if self.session else ""
         self.send(message.finalize(None, error=e.json_friendly(False), session_id=s_id))
@@ -453,7 +452,13 @@ class HPServer:
                     buffer = data[1]
                     log.d("Received", sys.getsizeof(buffer), "bytes from ", address)
                     if handler.is_active():
-                        client_msg = handler.advance(data[0])  # noqa: F841
+                        client_msg = handler.advance(data[0])
+                        if client_msg == enums.ServerCommand.RequestAuth:
+                            handler.handshake()
+                        elif client_msg == enums.ServerCommand.ServerQuit:
+                            meta_cmd.ShutdownApplication().run()
+                        elif client_msg == enums.ServerCommand.ServerRestart:
+                            meta_cmd.RestartApplication().run()
                     else:
                         log.d("Client has disconnected", address)
                         break
@@ -513,13 +518,22 @@ class HPServer:
 
     def restart(self):
         self.broadcast(enums.ServerCommand.ServerRestart.value)
-        self._exitcode = constants.ExitCode.Restart
+        if not self._exitcode:
+            self._exitcode = constants.ExitCode.Restart
         self._cleanup()
 
     def shutdown(self):
         self.broadcast(enums.ServerCommand.ServerQuit.value)
-        self._exitcode = constants.ExitCode.Exit
+        if not self._exitcode:
+            self._exitcode = constants.ExitCode.Exit
         self._cleanup()
+
+    def update(self, status=True, restart=True):
+        if status:
+            self._exitcode = constants.ExitCode.Update
+            if restart:
+                self.broadcast(enums.ServerCommand.ServerRestart.value)
+                self._cleanup()
 
     def _cleanup(self):
         "note: this function never exits"

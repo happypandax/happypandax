@@ -644,6 +644,12 @@ with config.namespace(advanced_ns):
         {'repo':'happypanda', 'owner':'pewpews'},
         "Github repo and owner", hidden=True)
 
+    checksum_provider_repo = config.create(
+        advanced_ns,
+        "checksum_provider_repo",
+        {'repo':'server', 'owner':'happypandax', 'file':'.travis.yml'},
+        "Github repo and owner and file", hidden=True)
+
     sevenzip_path = config.create(
         advanced_ns,
         "7z_path",

@@ -18,7 +18,6 @@ PyQt5==5.9.2
 QtAwesome==0.4.4
 psutil==5.4.2
 rollbar==0.13.17
-pynacl==1.2.1
 CacheControl==0.12.3
 attrs==17.3.0
 requests==2.18.4

@@ -4,7 +4,11 @@ import sys
 import argparse
 import traceback
 import os
-import rollbar
+
+try:
+    import rollbar # updater doesn't need this
+except ImportError:
+    pass
 
 from multiprocessing import Process, Queue, TimeoutError
 from logging.handlers import RotatingFileHandler
@@ -103,26 +107,29 @@ class Logger:
         return getattr(self._logger, name)
 
     @classmethod
-    def setup_logger(cls, args, logging_queue=None, main=False, debug=False):
-        assert isinstance(args, argparse.Namespace)
+    def setup_logger(cls, args=None, logging_queue=None, main=False, debug=False):
+        assert isinstance(args, argparse.Namespace) or args is None
+
+        argsdev = getattr(args, 'dev', False)
+        argsdebug = getattr(args, 'debug', False)
 
         if logging_queue:
             cls._queue = logging_queue
-        log_level = logging.DEBUG if args.debug else logging.INFO
+        log_level = logging.DEBUG if argsdebug else logging.INFO
         log_handlers = []
-        if not args.dev:
+        if not argsdev:
             logging.raiseExceptions = False  # Don't raise exception if in production mode
 
         if cls._queue:
             lg = QueueHandler(cls._queue)
-            if args.debug:
+            if argsdebug:
                 lg.setLevel(logging.DEBUG)
             log_handlers.append(lg)
         else:
-            if args.dev:
+            if argsdev:
                 log_handlers.append(logging.StreamHandler())
 
-            if args.debug:
+            if argsdebug:
                 try:
                     with open(constants.log_debug, 'x') as f:
                         pass
@@ -155,7 +162,7 @@ class Logger:
             handlers=tuple(log_handlers))
 
         if main:
-            if args.dev:
+            if argsdev:
                 Logger("sqlalchemy.pool").setLevel(logging.DEBUG)
                 Logger("sqlalchemy.engine").setLevel(logging.INFO)
                 Logger("sqlalchemy.orm").setLevel(logging.INFO)

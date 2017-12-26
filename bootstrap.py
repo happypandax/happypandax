@@ -4,7 +4,6 @@ import sys
 import shutil
 import argparse
 import subprocess
-import tarfile
 from subprocess import run
 from importlib import reload
 
@@ -332,13 +331,18 @@ def lint(args, unknown=None):
     _activate_venv()
     return run([env_python, "lint.py", *sys.argv[2:]]).returncode
 
-def _compress_dir(dir_path, output_name):
+def _compress_dir(dir_path, output_name, fmt="zip"):
     from happypanda.common import config
-    if not config.sevenzip_path.value:
-        print("Please set the path to the 7z executable in your configuration (advanced -> 7z_path)")
-        sys.exit()
+    if fmt == "7z":
+        if not config.sevenzip_path.value:
+            print("Please set the path to the 7z executable in your configuration (advanced -> 7z_path)")
+            sys.exit()
 
-    return run([config.sevenzip_path.value, "a", output_name, os.path.join(dir_path, "*")])
+        return run([config.sevenzip_path.value, "a", output_name, os.path.join(dir_path, "*")])
+
+    else:
+        p = shutil.make_archive(dir_path, fmt, dir_path)
+        os.replace(p, output_name)
 
 def deploy(args, unknown=None):
     _activate_venv()
@@ -361,10 +365,26 @@ def deploy(args, unknown=None):
         os_name = "linux"
 
     output_path = "dist/happypandax"
+    updater_path = "dist"
     dir_path = "./dist/happypandax"
     installer_filename = ".installed"
     installer_file = os.path.join("deploy", installer_filename)
-    if not prun(["happypandax.spec"]):
+    if not prun(["happypandax.spec"]) and not prun(['updater.py',
+                                                    '--onefile',
+                                                    '--name',
+                                                    constants.updater_name,
+                                                    '--icon',
+                                                    os.path.join(constants.dir_static,
+                                                                 'favicon.ico'),
+                                                    '--specpath',
+                                                    'build'
+                                                    ]):
+        upd_name = constants.updater_name
+        if constants.is_win:
+            upd_name += '.exe'
+
+        os.replace(os.path.join(updater_path, upd_name), os.path.join(output_path, upd_name))
+
         for p in ("", "installer"):
             if constants.preview:
                 output_path_a = output_path+".PREVIEW."
@@ -373,7 +393,11 @@ def deploy(args, unknown=None):
             if p:
                 output_path_a = output_path_a+"."+p
 
-            output_path_a = output_path_a+'.7z'
+            fmt = 'zip'
+            if p == 'installer':
+                fmt = '7z'
+
+            output_path_a = output_path_a+'.'+fmt
 
             installer_file_out = os.path.join(dir_path, installer_filename)
             if p == "installer":
@@ -385,8 +409,8 @@ def deploy(args, unknown=None):
 
             if os.path.exists(output_path_a):
                 os.remove(output_path_a)
-            _compress_dir(dir_path, output_path_a)
-
+            _compress_dir(dir_path, output_path_a, fmt)
+    print("Done")
 
 
 welcome_msg = """

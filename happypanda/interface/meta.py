@@ -45,13 +45,21 @@ def check_update():
         r = upd
     return message.Identity('update', r)
 
-def shutdown():
-    meta_cmd.ShutdownApplication().run()
-    return message.Identity('s', None)
+def update_application(download_url: str = None, restart: bool = True):
+    """
+    Update the application with a new release.
+    If download_url is not provided, a check for a new release will occur
 
-def restart():
-    meta_cmd.RestartApplication().run()
-    return message.Identity('s', None)
+    Args:
+        download_url: a url to the release file, can be path to file on the system
+        restart: restart the application after installing the new update
+
+    Returns:
+        bool indicating whether the install was successful or not
+    """
+
+    upd = meta_cmd.UpdateApplication().run(download_url, restart)
+    return message.Identity('update', upd)
 
 def get_version():
     """

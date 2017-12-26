@@ -458,7 +458,10 @@ class Window(QMainWindow):
 
     def toggle_server(self, ecode=None):
         self.server_started = not self.server_started
-        if ecode and ecode == constants.ExitCode.Restart.value:
+        if ecode and ecode in (constants.ExitCode.Restart.value,
+                               constants.ExitCode.Exit.value,
+                               constants.ExitCode.Update.value,
+                               ):
             global exitcode
             exitcode = ecode
             self.force_close()
@@ -541,13 +544,11 @@ class Window(QMainWindow):
         [self.stop_process(x) for x in self.processes + [self.server_process, self.webclient_process]]
         super().closeEvent(ev)
 
-
 if __name__ == "__main__":
 
     SQueue = StreamQueue()
     SQueueExit = StreamQueue()
 
-    utils.check_frozen()
     utils.setup_i18n()
 
     QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
@@ -571,4 +572,6 @@ if __name__ == "__main__":
     e = app.exec()
     if exitcode == constants.ExitCode.Restart.value:
         utils.restart_process()
+    elif exitcode == constants.ExitCode.Update.value:
+        utils.launch_updater()
     sys.exit(e)
