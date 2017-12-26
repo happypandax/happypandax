@@ -9,21 +9,29 @@ import subprocess
 from threading import Thread, Timer
 from multiprocessing import Process, queues
 from contextlib import contextmanager
+from happypanda.common import constants
 
 ## This is required to be here or else multiprocessing won't work when running in a frozen state!
 ## I had a hell of a time debugging this :(
 
 class RedirectProcess(Process):
 
-    def __init__(self, streamqueue, **kwargs):
+    def __init__(self, streamqueue, exitqueue=None, initializer=None, **kwargs):
         super().__init__(**kwargs)
+        assert initializer is None or callable(initializer)
         self.streamqueue = streamqueue
+        self.exitqueue = exitqueue
+        self.initializer = initializer
 
     def run(self):
         sys.stdout = self.streamqueue
         sys.stderr = self.streamqueue
-        if self._target:
-            self._target(*self._args, **self._kwargs)
+        if self.initializer:
+            self.initializer()
+        if self._target: # HACK: don't access private variables!
+            e = self._target(*self._args, **self._kwargs)
+            if self.exitqueue is not None:
+                self.exitqueue.put(e)
 
 class StreamQueue(queues.Queue):
 
@@ -35,6 +43,9 @@ class StreamQueue(queues.Queue):
 
     def flush(self):
         pass
+
+def from_gui():
+    constants.from_gui = True
 
 if __name__ == "__main__":
     mp.freeze_support()
@@ -61,7 +72,7 @@ from PyQt5.QtWidgets import (QApplication,
                              QPlainTextEdit,
                              QCheckBox) # noqa: E402
 from PyQt5.QtGui import QIcon, QDesktopServices, QPalette, QMouseEvent # noqa: E402
-from PyQt5.QtCore import Qt, QUrl, QDir, pyqtSignal # noqa: E402
+from PyQt5.QtCore import Qt, QUrl, QDir, pyqtSignal, QEvent # noqa: E402
 from i18n import t # noqa: E402
 
 from happypanda.common import constants, utils, config # noqa: E402
@@ -70,8 +81,10 @@ from happypanda import main # noqa: E402
 import HPtoHPX # noqa: E402
 
 app = None
+exitcode = None
 
 SQueue = None
+SQueueExit = None
 
 def kill_proc_tree(pid, sig=signal.SIGTERM, include_parent=True,
                    timeout=None, on_terminate=None):
@@ -329,6 +342,7 @@ class Window(QMainWindow):
         self.processes = []
         self.tray = QSystemTrayIcon(self)
         self.closing = False
+        self.forcing = False
         self.server_started = False
         self.client_started = False
         self.output_tab_idx = 0
@@ -356,6 +370,7 @@ class Window(QMainWindow):
         settings_group_l = QVBoxLayout(settings_widget)
         settings = SettingsTabs()
         settings_group_l.addWidget(settings)
+        settings_group_l.addWidget(QLabel("<i>{}</i>".format(t("", default="Hover the question mark icon to see setting description tooltip"))))
 
         buttons = QGroupBox(w)
         self.server_btn = QPushButton(self.start_ico, t("", default="Start server"))
@@ -412,7 +427,7 @@ class Window(QMainWindow):
         self.tray.setIcon(QIcon(os.path.join(constants.dir_static, "favicon.ico")))
         self.tray.activated.connect(self.tray_activated)
         tray_menu = QMenu()
-        tray_menu.addAction(t("", default="Show"), lambda: self.show())
+        tray_menu.addAction(t("", default="Show"), lambda: all(( self.showNormal(), self.activateWindow())))
         tray_menu.addSeparator()
         tray_menu.addAction(t("", default="Quit"), lambda: self.real_close())
         self.tray.setContextMenu(tray_menu)
@@ -421,9 +436,14 @@ class Window(QMainWindow):
         self.closing = True
         self.close()
 
+    def force_close(self):
+        self.forcing = True
+        self.real_close()
+
     def tray_activated(self, reason):
         if reason != QSystemTrayIcon.Context:
-            self.show()
+            self.showNormal()
+            self.activateWindow()
 
     def open_cfg(self):
         if not os.path.exists(constants.config_path):
@@ -436,8 +456,12 @@ class Window(QMainWindow):
         c.setWindowTitle(self.windowTitle())
         c.exec()
 
-    def toggle_server(self):
+    def toggle_server(self, ecode=None):
         self.server_started = not self.server_started
+        if ecode and ecode == constants.ExitCode.Restart.value:
+            global exitcode
+            exitcode = ecode
+            self.force_close()
         if self.server_started:
             self.server_btn.setText(t("", default="Stop server"))
             self.server_btn.setIcon(self.stop_ico)
@@ -453,7 +477,7 @@ class Window(QMainWindow):
                 self.stop_process(self.server_process)
                 self.server_process = None
 
-    def toggle_client(self):
+    def toggle_client(self, exitcode=None):
         self.client_started = not self.client_started
         if self.client_started:
             self.webclient_btn.setText(t("", default="Stop webclient"))
@@ -478,24 +502,33 @@ class Window(QMainWindow):
     def watch_process(self, cb, p):
         p.join()
         if cb and not self.force_kill:
-            cb()
+            cb(SQueueExit.get_nowait() if not p.exitcode else p.exitcode)
         else:
             self.force_kill = False
 
     def start_server(self):
-        p = RedirectProcess(SQueue, target=main.start)
+        p = RedirectProcess(SQueue, SQueueExit, from_gui, target=main.start)
         p.start()
         Thread(target=self.watch_process, args=(self.toggle_server, p)).start()
         return p
 
+    def changeEvent(self, ev):
+        if ev.type() == QEvent.WindowStateChange:
+            if self.windowState() == Qt.WindowMinimized:
+                self.to_tray()
+        return super().changeEvent(ev)
+
+    def to_tray(self):
+        self.tray.show()
+        self.hide()
+
     def closeEvent(self, ev):
         if config.gui_minimize_on_close and not self.closing:
-            self.tray.show()
-            self.hide()
+            self.to_tray()
             ev.ignore()
             return
         self.closing = False
-        if any((self.server_started, self.client_started)):
+        if not self.forcing and any((self.server_started, self.client_started)):
             if not self.isVisible():
                 self.show()
             if QMessageBox.warning(self,
@@ -512,6 +545,7 @@ class Window(QMainWindow):
 if __name__ == "__main__":
 
     SQueue = StreamQueue()
+    SQueueExit = StreamQueue()
 
     utils.check_frozen()
     utils.setup_i18n()
@@ -533,5 +567,8 @@ if __name__ == "__main__":
         window.tray.show()
     else:
         window.show()
+        window.activateWindow()
     e = app.exec()
+    if exitcode == constants.ExitCode.Restart.value:
+        utils.restart_process()
     sys.exit(e)

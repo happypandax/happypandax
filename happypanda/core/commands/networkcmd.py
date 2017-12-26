@@ -3,7 +3,7 @@ import requests
 import cachecontrol
 
 from happypanda.common import (hlogger, exceptions, utils, constants, exceptions, config)
-from happypanda.core.command import CoreCommand, CommandEntry, AsyncCommand
+from happypanda.core.command import CoreCommand, CommandEntry, Command
 from happypanda.core.services import NetworkService
 from happypanda.interface import enums
 
@@ -28,7 +28,7 @@ class RequestProperties:
     method = attr.ib(default=None)
     output = attr.ib(default="")
     name = attr.ib(default="") # for logging
-    session = attr.ib(default=None)
+    session = attr.ib(default=True)
     timeout = attr.ib(default=None)
     proxy = attr.ib(default=None)
     headers = attr.ib(default=None)
@@ -61,17 +61,17 @@ class Response(CoreCommand):
 
 
 
-class _AsyncRequest(AsyncCommand):
+class _Request(Command):
     """
     """
     default_session = None
     
-    def __init__(self, session=True, service = None, priority = constants.Priority.Normal):
-        super().__init__(service, priority)
-        if not _AsyncRequest.default_session:
+    def __init__(self, session=True, priority = constants.Priority.Low):
+        super().__init__(priority)
+        if not _Request.default_session:
             with utils.intertnal_db() as db:
-                _AsyncRequest.default_session = db.get("network_session", cachecontrol.CacheControl(requests.Session()))
-            self.default_session = _AsyncRequest.default_session
+                _Request.default_session = db.get("network_session", cachecontrol.CacheControl(requests.Session()))
+            self.default_session = _Request.default_session
 
         if session in (True, None):
             self.session = self.default_session
@@ -111,8 +111,7 @@ class _AsyncRequest(AsyncCommand):
             kwargs['json'] = props.json
         if props.stream and verb == Method.GET:
             kwargs['stream'] = props.stream
-
-        r = Response(method(url, **kwargs), properties)
+        r = Response(method(url, **kwargs), props)
         return r
 
     def cleanup_session(self):
@@ -121,17 +120,14 @@ class _AsyncRequest(AsyncCommand):
 
 
 
-class SimpleRequest(_AsyncRequest):
+class SimpleRequest(_Request):
     """
     """
 
-    def __init__(self, url, properties, service=None, priority = constants.Priority.Low):
-        assert isinstance(service, NetworkService) or service is None
+    def __init__(self, url, properties):
         assert isinstance(properties, RequestProperties)
         assert isinstance(url, str)
-        if service is None:
-            service = NetworkService.generic
-        super().__init__(properties.session, service, priority)
+        super().__init__(properties.session)
         self.url = url
         self.properties = properties
 
@@ -156,17 +152,14 @@ class SimplePOSTRequest(SimpleRequest):
         properties.method = Method.POST
         return super().__init__(url, properties, **kwargs)
 
-class MultiRequest(_AsyncRequest):
+class MultiRequest(_Request):
     """
     """
 
-    def __init__(self, urls, properties, service=None, priority = constants.Priority.Low):
-        assert isinstance(service, NetworkService) or service is None
+    def __init__(self, urls, properties):
         assert isinstance(properties, RequestProperties)
         assert isinstance(urls, (tuple, list, set, dict))
-        if service is None:
-            service = NetworkService.generic
-        super().__init__(properties.session, service, priority)
+        super().__init__(properties.session)
         self.properties = properties
 
 class MultiGETRequest(MultiRequest):

@@ -5,7 +5,7 @@ from contextlib import suppress
 from functools import reduce
 
 from happypanda.common import constants, utils, config, exceptions, hlogger
-from happypanda.core.commands.networkcmd import SimplePOSTRequest
+from happypanda.core.commands.networkcmd import SimpleGETRequest
 
 log = hlogger.Logger(__name__)
 
@@ -44,7 +44,7 @@ def generate_key():
                 public=sign_key.verify_key.encode(encoder=nacl.encoding.HexEncoder))
 
 
-extract_version = lambda v: tuple([x for x in (reduce((lambda a,b: a+b),filter(str.isdigit,i)) for i in v.split("."))][:3])
+extract_version = lambda v: tuple([int(x) for x in (reduce((lambda a,b: a+b),filter(str.isdigit,i)) for i in v.split("."))][:3])
 
 def check_release(archive=True, silent=True):
     """
@@ -58,7 +58,7 @@ def check_release(archive=True, silent=True):
     """
     if config.check_new_releases.value:
         with utils.intertnal_db() as db:
-            past_rels = db['past_releases']
+            past_rels = db.get('past_releases', {})
         repo_name = config.github_repo.value['repo']
         repo_owner = config.github_repo.value['owner']
         try:
@@ -77,7 +77,7 @@ def check_release(archive=True, silent=True):
                 elif 'beta' in t and not config.allow_beta_releases.value:
                     continue
                 v = extract_version(t)
-                if v <= constants.version:
+                if len(v) < 2 or v <= constants.version:
                     break
                 else:
                     new_rel = t
@@ -88,11 +88,11 @@ def check_release(archive=True, silent=True):
                 data = r.json
                 if data:
                     changes = data['body']
-                    if sys.platform.startswith('darwin'):
+                    if constants.is_osx:
                         txt = "osx"
-                    elif os.name == 'nt':
+                    elif constants.is_win:
                         txt = "win"
-                    elif os.name == 'posix':
+                    elif constants.is_linux:
                         txt = "linux"
                     for a in data['assets']:
                         if txt in a['name'].lower():

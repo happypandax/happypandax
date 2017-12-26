@@ -2,6 +2,7 @@ import os
 import base64
 import yaml
 import gevent
+import random
 
 from enum import Enum
 from contextlib import contextmanager
@@ -322,6 +323,31 @@ class Config:
             sections.append([con, s])
         return sections
 
+def get_best_girls():
+    best_girls = (
+        'ram',
+        'rias',
+        'hinata',
+        'sena',
+        'orihime',
+        'saeko',
+        'emilia',
+        'yumiko',
+        'momo',
+        'shinobu',
+        'mayoi',
+        'testarossa',
+        'yami',
+        'mikan',
+        'eri',
+        'yakumo',
+        'kouko',
+        'krista',
+        'naoka',
+        )
+    return "_".join(best_girls[random.randrange(0, len(best_girls))] for x in range(3))
+
+
 
 config = Config(user_filepath=constants.config_path)
 
@@ -425,9 +451,7 @@ with config.namespace(server_ns):
     server_name = config.create(
         server_ns,
         'server_name',
-        "happypanda_" +
-        base64.urlsafe_b64encode(
-            os.urandom(5)).rstrip(b'=').decode('ascii'),
+        get_best_girls(),
         "Specifiy name of the server")
 
     port = config.create(
@@ -566,7 +590,7 @@ with config.namespace(gui_ns):
 
     gui_start_minimized = config.create(
         None,
-        "start_minimized",
+        "start_minimized_to_tray",
         False,
         "Start the HPX GUI in a minimized to tray state")
 
@@ -617,7 +641,7 @@ with config.namespace(advanced_ns):
     github_repo = config.create(
         advanced_ns,
         "github_repo",
-        {'repo':'sever', 'owner':'happypandax'},
+        {'repo':'happypanda', 'owner':'pewpews'},
         "Github repo and owner", hidden=True)
 
     sevenzip_path = config.create(

@@ -8,6 +8,7 @@ import arrow
 from happypanda.common import constants, exceptions, utils, config
 from happypanda.core.services import Service
 from happypanda.core import command, message
+from happypanda.core.commands import meta_cmd
 
 
 # def get_error(code: int, id: int):
@@ -23,6 +24,34 @@ from happypanda.core import command, message
 #    """
 #    return message.Message("works")
 
+def check_update():
+    """
+    Check for new release
+
+    Returns:
+        an empty dict or
+        .. code-block:: guess
+
+            {
+                'url' : str,
+                'changes' : str,
+                'tag' : str
+            }
+    """
+
+    r = {}
+    upd = meta_cmd.CheckUpdate().run()
+    if upd:
+        r = upd
+    return message.Identity('update', r)
+
+def shutdown():
+    meta_cmd.ShutdownApplication().run()
+    return message.Identity('s', None)
+
+def restart():
+    meta_cmd.RestartApplication().run()
+    return message.Identity('s', None)
 
 def get_version():
     """

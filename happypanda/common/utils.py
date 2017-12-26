@@ -16,6 +16,7 @@ import i18n
 import shelve
 import rollbar
 import importlib
+import random
 
 from inspect import ismodule, currentframe, getframeinfo
 from contextlib import contextmanager
@@ -353,6 +354,16 @@ def intertnal_db():
     finally:
         db.close()
 
+def restart_process():
+    """
+    Restart process. This function will never return.
+    """
+    if constants.is_frozen:
+        os.execv(sys.executable, ["python"] + sys.argv[1:]) # looks like this [path, *real_args]
+    else:
+        os.execv(sys.executable, ["python"] + sys.argv)
+    
+
 class AttributeList(UserList):
     """
     l = AttributeList("one", "two")
@@ -369,3 +380,4 @@ class AttributeList(UserList):
         if key in self._names:
             return self._names[key]
         raise AttributeError("AttributeError: no attribute named '{}'".format(key))
+

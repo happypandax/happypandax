@@ -70,7 +70,7 @@ def _native_runner(f):
     return wrapper
 
 
-class CoreCommand():
+class CoreCommand:
     "Base command"
 
     _events = {}
@@ -292,10 +292,22 @@ class CommandEvent(_CommandPlugin):
 
     def __init__(self, name, *args, **kwargs):
         super().__init__(name, *args, **kwargs)
+        self._handlers = set()
 
     def emit(self, *args, **kwargs):
         "emit this event with *args and **kwargs"
         self.invoke_on_plugins(*args, **kwargs)
+        for h in self._handlers:
+            h(*args, **kwargs)
+
+    def subscribe(self, handler):
+        "subscribe to event with callable"
+        assert callable(handler)
+        self._handlers.add(handler)
+
+    def remove(self, handler):
+        "remove previously added handler"
+        self._handlers.remove(handler)
 
 
 class CommandEntry(_CommandPlugin):

@@ -427,8 +427,8 @@ class HPServer:
             config.allowed_clients.value if config.allowed_clients.value else None,
             async.Greenlet)  # cannot be 0
         self._server = StreamServer(params, self._handle, spawn=self._pool)
-        self._web_server = None
         self._clients = set()  # a set of client handlers
+        self._exitcode = None
 
     def interactive(self):
         "Start an interactive session"
@@ -466,6 +466,8 @@ class HPServer:
                     break
                 else:
                     buffer += r
+        except ConnectionResetError:
+            pass
         except socket.error as e:
             log.exception("Client disconnected with error", e)
         finally:
@@ -496,12 +498,34 @@ class HPServer:
             self._start(not interactive)
             if interactive:
                 self.interactive()
-        except KeyboardInterrupt:
+        except (KeyboardInterrupt, SystemExit):
             pass
         self._server.stop()
         # torrent.stop()
         # tdaemon.join()
         log.i("Server shutting down.", stdout=True)
+        return self._exitcode
+
+    def broadcast(self, msg):
+        ""
+        for c in self._clients:
+            c.send(message.finalize(msg, session_id=c.session.id if c.session else ""))
+
+    def restart(self):
+        self.broadcast(enums.ServerCommand.ServerRestart.value)
+        self._exitcode = constants.ExitCode.Restart
+        self._cleanup()
+
+    def shutdown(self):
+        self.broadcast(enums.ServerCommand.ServerQuit.value)
+        self._exitcode = constants.ExitCode.Exit
+        self._cleanup()
+
+    def _cleanup(self):
+        "note: this function never exits"
+        if constants.web_proc:
+            constants.web_proc.terminate()
+        self._server.stop(10)
 
 
 class WebServer:

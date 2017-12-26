@@ -15,7 +15,7 @@ from multiprocessing import Process  # noqa: E402
 
 from happypanda.common import utils, constants, hlogger, config  # noqa: E402
 from happypanda.core import server, plugins, command, services, db  # noqa: E402
-from happypanda.core.commands import io_cmd  # noqa: E402
+from happypanda.core.commands import io_cmd, meta_cmd  # noqa: E402
 
 log = hlogger.Logger(__name__)
 parser = utils.get_argparser()  # required to be at module lvl for sphinx.autoprogram ext
@@ -23,6 +23,7 @@ parser = utils.get_argparser()  # required to be at module lvl for sphinx.autopr
 
 def start(argv=None, db_kwargs={}):
     #assert sys.version_info >= (3, 5), "Python 3.5 is required"
+    e_code = None
     try:
         utils.check_frozen()
         if argv is None:
@@ -66,23 +67,36 @@ def start(argv=None, db_kwargs={}):
         if args.only_web:
             server.WebServer().run(*web_args)
         else:
-            Process(target=server.WebServer().run,
-                    args=web_args,
-                    kwargs={'logging_queue': hlogger.Logger._queue,
-                            'logging_args': args},
-                    daemon=True).start()
-            server.HPServer().run(interactive=args.interact)
+            constants.web_proc = Process(target=server.WebServer().run,
+                                    args=web_args,
+                                    kwargs={'logging_queue': hlogger.Logger._queue,
+                                            'logging_args': args},
+                                    daemon=True)
+            constants.web_proc.start()
+            hp_server = server.HPServer()
+            meta_cmd.ShutdownApplication.shutdown.subscribe(hp_server.shutdown)
+            meta_cmd.RestartApplication.restart.subscribe(hp_server.restart)
+            e_code = hp_server.run(interactive=args.interact)
 
+
+        log.i("HPX SERVER END")
+        if e_code == constants.ExitCode.Exit:
+            log.i("Shutting down...", stdout=True)
+        elif e_code == constants.ExitCode.Restart:
+            log.i("Restarting...", stdout=True)
         if not args.only_web:
             config.config.save()
             hlogger.Logger.shutdown_listener()
-        log.i("HPX SERVER END")
+
+        if e_code == constants.ExitCode.Restart and not constants.from_gui:
+            utils.restart_process()
+
     except Exception as e:
-        print(e)
+        print(e) # intentional
         if config.report_critical_errors.value and not constants.dev:
             rollbar.report_exc_info()
         raise
-
+    return e_code.value if e_code else 0
 
 if __name__ == '__main__':
     multiprocessing.freeze_support()

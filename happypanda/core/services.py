@@ -4,11 +4,75 @@ import functools
 import itertools
 
 from gevent import pool, queue
+from apscheduler.schedulers.gevent import GeventScheduler
 
 from happypanda.common import hlogger, constants, config
 from happypanda.core import command, async
 
 log = hlogger.Logger(__name__)
+
+class SchedulerJob:
+    ""
+
+    def __init__(self, _job, _scheduler):
+        self._job = _job
+        self._scheduler = _scheduler
+
+
+class Scheduler:
+    generic = None
+
+    def __init__(self, name):
+        self._scheduler = None
+        self._jobstores = {}
+        self._executors = {}
+        self._job_defaults = {}
+
+    def init(self):
+        "Initialize the scheduler"
+
+        self._scheduler = GeventScheduler()
+        return self
+
+    def start(self):
+        "Start the scheduler"
+        if self._scheduler:
+            self._scheduler.start()
+        return self
+
+    def add_command(self, cmd):
+        "Add a command to this scheduler and return a command id"
+        assert isinstance(cmd, command.CoreCommand)
+
+    def remove_command(self, cmd):
+        "Remove a command from this scheduler"
+        raise NotImplementedError
+        assert isinstance(cmd, command.CoreCommand)
+
+    def pause_command(self, cmd):
+        "Pause a command in this scheduler"
+        raise NotImplementedError
+        assert isinstance(cmd, command.CoreCommand)
+
+    def resume_command(self, cmd):
+        "Resume a command in this scheduler"
+        raise NotImplementedError
+        assert isinstance(cmd, command.CoreCommand)
+
+    def shutdown(self, wait=False):
+        "Shutdown scheduler"
+        if self._scheduler:
+            self._scheduler.shutdown(wait=wait)
+
+    def pause(self):
+        "Pause scheduler"
+        raise NotImplementedError
+        pass
+
+    def resume(self):
+        "Resume scheduler"
+        raise NotImplementedError
+
 
 
 class Service:

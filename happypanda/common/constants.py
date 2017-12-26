@@ -1,13 +1,19 @@
 ﻿import os
+import sys
 import rarfile
 import enum
-import appdirs
 
 rarfile.PATH_SEP = '/'
 
 preview = True
 dev = False
 is_installed = os.path.exists(".installed")
+
+is_osx = sys.platform.startswith('darwin')
+is_win = os.name == 'nt'
+is_linux = os.name == 'posix'
+
+from_gui = False
 
 ## VERSIONING ##
 build = 110
@@ -43,6 +49,8 @@ link_ext = '.link'
 
 # CORE
 
+web_proc = None
+
 # should probably move this to config
 update_public_key = {
     'main': '',
@@ -51,7 +59,7 @@ update_public_key = {
 
 class ExitCode(enum.Enum):
     Exit = 0
-    Restart = 1
+    Restart = 10
 
 
 class Priority(enum.Enum):

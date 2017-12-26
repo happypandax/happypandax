@@ -72,9 +72,9 @@ def make(py_file, exe_name, analysis_kwargs={}, pyz_args=None, exe_kwargs={}):
 
 
 coll = COLLECT(
-            *make("run.py", app_name),
+            #*make("run.py", app_name),
             *make("gui.py", app_name+'_gui', exe_kwargs={'console':False}),
-            *make("HPtoHPX.py", "HPtoHPX"),
+            #*make("HPtoHPX.py", "HPtoHPX"),
              strip=False,
              upx=True,
              name=app_name)

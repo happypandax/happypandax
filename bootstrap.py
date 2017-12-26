@@ -366,6 +366,8 @@ def deploy(args, unknown=None):
     installer_file = os.path.join("deploy", installer_filename)
     if not prun(["happypandax.spec"]):
         for p in ("", "installer"):
+            if constants.preview:
+                output_path_a = output_path+".PREVIEW."
             output_path_a = output_path+".".join(str(x) for x in constants.version)
             output_path_a = output_path_a+"."+os_name
             if p:
