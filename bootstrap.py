@@ -17,13 +17,14 @@ env_python = r".\env\Scripts\python" if sys.platform.startswith("win") else "./e
 
 changes = """
 - added hpx logo
-- rename 'GalleryUrl' item type to 'Url'
-- implemented item sorting
-- new api function: get_common_tags
-- new api function: get_sort_indexes
-- the 'sort_by' and 'sort_desc' parameters in `library_view` api function are now usable
-- made a gui for easier use
-- updated docs
+- implemented auto updater
+- added 'get_notification' api function (not yet ready)
+- added 'reply_notification' api function (not yet ready)
+- added 'check_update' api function
+- added 'update_application' api function
+- update docs
+- added bootstrap.py deploy
+- fixed lots of issues
 """
 
 
