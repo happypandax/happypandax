@@ -353,11 +353,12 @@ def deploy(args, unknown=None):
     try:
         from PyInstaller.__main__ import run as prun
     except ImportError:
-        if not hasattr(args, "dev"):
+        if not args.dev:
             print("Please supply the '--dev' argument if you want to deploy")
             sys.exit()
         else:
             _update_pip(args)
+        from PyInstaller.__main__ import run as prun
 
     from happypanda.common import constants
 
