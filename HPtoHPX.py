@@ -755,7 +755,7 @@ def process_pipes(out_queue, out_pipe):
             break
 
 
-def main(args=sys.argv):
+def main(args=sys.argv[1:]):
     try:
         parser = argparse.ArgumentParser()
         parser.add_argument('source', help="Path to old HP database")
@@ -1005,7 +1005,8 @@ def main(args=sys.argv):
 
             pages_to_send2 = list(split(pages_to_send2, AMOUNT_OF_TASKS))
             pages_to_send = list(split(pages_to_send, AMOUNT_OF_TASKS))
-            if len(pages_to_send) < len(pages_to_send):
+
+            if len(pages_to_send2) < len(pages_to_send):
                 for n, x in enumerate(pages_to_send):
                     try:
                         x.extend(pages_to_send2[n])
@@ -1019,6 +1020,7 @@ def main(args=sys.argv):
                     except IndexError:
                         pass
                 pages_to_sendx = pages_to_send2
+
 
             pages_map = {}
             pages_finish = {}
@@ -1068,6 +1070,8 @@ def main(args=sys.argv):
                         print_progress(current_p_count, pages_count, "Progress:", bar_length=50)
                     except UnicodeEncodeError:
                         print("\nStill in progress... please wait...")
+            for p in page_pool:
+                p.terminate()
         finally:
             pass
 

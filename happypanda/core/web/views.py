@@ -172,7 +172,6 @@ def init_views(flask_app, socketio_app):
 
     @socketio.on('server_call', namespace='/notification')
     def on_push_call(msg):
-        print(msg)
         clients = get_clients(msg.get("session_id", "default"))
         locks = get_locks(msg.get("session_id", "default"))
         socketio_app.start_background_task(
