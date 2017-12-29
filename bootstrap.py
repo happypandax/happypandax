@@ -399,7 +399,7 @@ def deploy(args, unknown=None):
                 output_path_a = output_path_a + "." + p
 
             fmt = 'zip'
-            if p == 'installer':
+            if p == 'installer' and constants.is_win:
                 fmt = '7z'
 
             output_path_a = output_path_a + '.' + fmt
