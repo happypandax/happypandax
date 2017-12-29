@@ -53,7 +53,7 @@ def sha256_checksum(path, block_size=64 * 1024):
     return sha256.hexdigest()
 
 
-def extract_version(v): return tuple( # noqa: E704
+def extract_version(v): return tuple(  # noqa: E704
     [int(x) for x in (reduce((lambda a, b: a + b), filter(str.isdigit, i)) for i in v.split("."))][:3])  # noqa: E704
 
 
