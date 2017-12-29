@@ -24,6 +24,7 @@ changes = """
 - added 'update_application' api function
 - update docs
 - added bootstrap.py deploy
+- updated some libraries
 - fixed lots of issues
 """
 

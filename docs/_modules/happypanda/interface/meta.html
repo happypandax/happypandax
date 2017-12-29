@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>happypanda.interface.meta &#8212; Happypanda X 0.0.1#109 documentation</title>
+    <title>happypanda.interface.meta &#8212; Happypanda X 0.0.1#110 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.0.1#109',
+        VERSION:     '0.0.1#110',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -52,7 +52,7 @@
         </button>
         <a class="navbar-brand" href="../../../index.html">
           Happypanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.1#109</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.1#110</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -164,9 +164,12 @@
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">import</span> <span class="nn">arrow</span>
 
-<span class="kn">from</span> <span class="nn">happypanda.common</span> <span class="k">import</span> <span class="n">constants</span><span class="p">,</span> <span class="n">exceptions</span><span class="p">,</span> <span class="n">utils</span><span class="p">,</span> <span class="n">config</span>
-<span class="kn">from</span> <span class="nn">happypanda.core.services</span> <span class="k">import</span> <span class="n">Service</span>
+<span class="kn">from</span> <span class="nn">happypanda.common</span> <span class="k">import</span> <span class="n">constants</span><span class="p">,</span> <span class="n">exceptions</span><span class="p">,</span> <span class="n">utils</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">hlogger</span>
+<span class="kn">from</span> <span class="nn">happypanda.core.services</span> <span class="k">import</span> <span class="n">AsyncService</span>
 <span class="kn">from</span> <span class="nn">happypanda.core</span> <span class="k">import</span> <span class="n">command</span><span class="p">,</span> <span class="n">message</span>
+<span class="kn">from</span> <span class="nn">happypanda.core.commands</span> <span class="k">import</span> <span class="n">meta_cmd</span>
+
+<span class="n">log</span> <span class="o">=</span> <span class="n">hlogger</span><span class="o">.</span><span class="n">Logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
 <span class="c1"># def get_error(code: int, id: int):</span>
@@ -182,6 +185,65 @@
 <span class="c1">#    &quot;&quot;&quot;</span>
 <span class="c1">#    return message.Message(&quot;works&quot;)</span>
 
+<div class="viewcode-block" id="get_notification"><a class="viewcode-back" href="../../../api.html#happypanda.interface.meta.get_notification">[docs]</a><span class="k">def</span> <span class="nf">get_notification</span><span class="p">(</span><span class="n">scope</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">msg_id</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Not ready yet...</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">msg</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">constants</span><span class="o">.</span><span class="n">notification</span><span class="p">:</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">notification</span><span class="o">.</span><span class="n">_fetch</span><span class="p">(</span><span class="n">scope</span><span class="o">=</span><span class="n">scope</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">msg</span> <span class="k">if</span> <span class="n">msg</span> <span class="k">else</span> <span class="n">message</span><span class="o">.</span><span class="n">Identity</span><span class="p">(</span><span class="s2">&quot;notification&quot;</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="reply_notification"><a class="viewcode-back" href="../../../api.html#happypanda.interface.meta.reply_notification">[docs]</a><span class="k">def</span> <span class="nf">reply_notification</span><span class="p">(</span><span class="n">msg_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">action_values</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Not ready yet...</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="n">constants</span><span class="o">.</span><span class="n">notification</span><span class="p">:</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">notification</span><span class="o">.</span><span class="n">reply</span><span class="p">(</span><span class="n">msg_id</span><span class="p">,</span> <span class="n">action_values</span><span class="p">)</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Identity</span><span class="p">(</span><span class="s2">&quot;status&quot;</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="check_update"><a class="viewcode-back" href="../../../api.html#happypanda.interface.meta.check_update">[docs]</a><span class="k">def</span> <span class="nf">check_update</span><span class="p">(</span><span class="n">push</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Check for new release</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        push: whether to push out notifications if an update is found</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        an empty dict or</span>
+<span class="sd">        .. code-block:: guess</span>
+
+<span class="sd">            {</span>
+<span class="sd">                &#39;url&#39; : str,</span>
+<span class="sd">                &#39;changes&#39; : str,</span>
+<span class="sd">                &#39;tag&#39; : str</span>
+<span class="sd">            }</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">r</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">upd</span> <span class="o">=</span> <span class="n">meta_cmd</span><span class="o">.</span><span class="n">CheckUpdate</span><span class="p">()</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">push</span><span class="o">=</span><span class="n">push</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">upd</span><span class="p">:</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">upd</span>
+    <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Identity</span><span class="p">(</span><span class="s1">&#39;update&#39;</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="update_application"><a class="viewcode-back" href="../../../api.html#happypanda.interface.meta.update_application">[docs]</a><span class="k">def</span> <span class="nf">update_application</span><span class="p">(</span><span class="n">download_url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">restart</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Update the application with a new release.</span>
+<span class="sd">    If download_url is not provided, a check for a new release will occur</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        download_url: a url to the release file, can be path to file on the system</span>
+<span class="sd">        restart: restart the application after installing the new update</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        bool indicating whether the install was successful or not</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">upd</span> <span class="o">=</span> <span class="n">meta_cmd</span><span class="o">.</span><span class="n">UpdateApplication</span><span class="p">()</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">download_url</span><span class="p">,</span> <span class="n">restart</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Identity</span><span class="p">(</span><span class="s1">&#39;update&#39;</span><span class="p">,</span> <span class="n">upd</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="get_version"><a class="viewcode-back" href="../../../api.html#happypanda.interface.meta.get_version">[docs]</a><span class="k">def</span> <span class="nf">get_version</span><span class="p">():</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -206,7 +268,8 @@
 
 <span class="k">def</span> <span class="nf">_command_msg</span><span class="p">(</span><span class="n">ids</span><span class="p">):</span>
     <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">:</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">Service</span><span class="o">.</span><span class="n">get_command</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">AsyncService</span><span class="o">.</span><span class="n">get_command</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">c</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">CommandError</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">this_function</span><span class="p">(),</span> <span class="s2">&quot;Command with ID &#39;</span><span class="si">{}</span><span class="s2">&#39; does not exist&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
 
 
@@ -230,7 +293,7 @@
     <span class="n">values</span> <span class="o">=</span> <span class="p">{}</span>
 
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">command_ids</span><span class="p">:</span>
-        <span class="n">cmd</span> <span class="o">=</span> <span class="n">Service</span><span class="o">.</span><span class="n">get_command</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+        <span class="n">cmd</span> <span class="o">=</span> <span class="n">AsyncService</span><span class="o">.</span><span class="n">get_command</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">cmd</span><span class="o">.</span><span class="n">state</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="n">command</span><span class="o">.</span><span class="n">CommandState</span><span class="o">.</span><span class="n">finished</span><span class="p">,</span> <span class="n">command</span><span class="o">.</span><span class="n">CommandState</span><span class="o">.</span><span class="n">stopped</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">cmd</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="n">command</span><span class="o">.</span><span class="n">CommandState</span><span class="o">.</span><span class="n">failed</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">CommandError</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">this_function</span><span class="p">(),</span> <span class="s2">&quot;Command with ID &#39;</span><span class="si">{}</span><span class="s2">&#39; has failed&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
@@ -267,7 +330,7 @@
     <span class="n">states</span> <span class="o">=</span> <span class="p">{}</span>
 
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">command_ids</span><span class="p">:</span>
-        <span class="n">states</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">Service</span><span class="o">.</span><span class="n">get_command</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">name</span>
+        <span class="n">states</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">AsyncService</span><span class="o">.</span><span class="n">get_command</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">name</span>
 
     <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Identity</span><span class="p">(</span><span class="s1">&#39;command_state&#39;</span><span class="p">,</span> <span class="n">states</span><span class="p">)</span></div>
 
@@ -308,7 +371,7 @@
     <span class="n">states</span> <span class="o">=</span> <span class="p">{}</span>
 
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">command_ids</span><span class="p">:</span>
-        <span class="n">cmd</span> <span class="o">=</span> <span class="n">Service</span><span class="o">.</span><span class="n">get_command</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+        <span class="n">cmd</span> <span class="o">=</span> <span class="n">AsyncService</span><span class="o">.</span><span class="n">get_command</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
         <span class="n">cmd</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
         <span class="n">states</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">cmd</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">name</span>
 
@@ -334,7 +397,7 @@
     <span class="n">states</span> <span class="o">=</span> <span class="p">{}</span>
 
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">command_ids</span><span class="p">:</span>
-        <span class="n">cmd</span> <span class="o">=</span> <span class="n">Service</span><span class="o">.</span><span class="n">get_command</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+        <span class="n">cmd</span> <span class="o">=</span> <span class="n">AsyncService</span><span class="o">.</span><span class="n">get_command</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
         <span class="n">cmd</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
         <span class="n">states</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">cmd</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">name</span>
 

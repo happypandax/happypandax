@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>happypanda.interface.settings &#8212; Happypanda X 0.0.1#109 documentation</title>
+    <title>happypanda.interface.settings &#8212; Happypanda X 0.0.1#110 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.0.1#109',
+        VERSION:     '0.0.1#110',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -52,7 +52,7 @@
         </button>
         <a class="navbar-brand" href="../../../index.html">
           Happypanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.1#109</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.1#110</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -261,11 +261,14 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="k">with</span> <span class="n">config</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">tmp_config</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">utils</span><span class="o">.</span><span class="n">get_context</span><span class="p">()[</span><span class="s1">&#39;config&#39;</span><span class="p">]):</span>
             <span class="n">s</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_all</span><span class="p">()</span>
+            <span class="n">all_nodes</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">ConfigNode</span><span class="o">.</span><span class="n">get_all</span><span class="p">()</span>
             <span class="k">for</span> <span class="n">ns</span> <span class="ow">in</span> <span class="n">s</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">ns</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">ConfigNode</span><span class="o">.</span><span class="n">default_namespaces</span><span class="p">:</span>
-                    <span class="n">values</span><span class="p">[</span><span class="n">ns</span><span class="p">]</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">ns</span><span class="p">]</span>
-                <span class="k">elif</span> <span class="n">ns</span> <span class="o">==</span> <span class="n">utils</span><span class="o">.</span><span class="n">get_context</span><span class="p">()[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">ns</span> <span class="o">==</span> <span class="n">utils</span><span class="o">.</span><span class="n">get_context</span><span class="p">()[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
                     <span class="n">values</span><span class="p">[</span><span class="s2">&quot;this&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">ns</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">ns</span><span class="p">,</span> <span class="n">nodes</span> <span class="ow">in</span> <span class="n">all_nodes</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">nodes</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">node</span><span class="o">.</span><span class="n">hidden</span><span class="p">:</span>
+                        <span class="n">values</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">ns</span><span class="p">,</span> <span class="p">{})[</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">value</span>
     <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Identity</span><span class="p">(</span><span class="s1">&#39;config&#39;</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span></div>
 
 

@@ -4,7 +4,7 @@
 [![Github All Releases](https://img.shields.io/github/downloads/happypandax/server/total.svg)]()
 [![Twitter Follow](https://img.shields.io/twitter/follow/pewspew.svg?style=social&label=Follow)](https://twitter.com/pewspew)
 
-> **This is project is under heavy development and not yet ready for deployment. If you want to speed up the development, please consider [contributing](https://happypandax.github.io/server/env.html).**
+> **This is project is under heavy development. If you want to speed up the development, please consider [contributing](https://happypandax.github.io/server/env.html).**
 
 #### [Docs](https://happypandax.github.io/server/) - [Contribute](https://happypandax.github.io/server/env.html) - [Download](https://github.com/happypandax/server/releases) - [Plugins](https://github.com/happypandax/plugins)
 

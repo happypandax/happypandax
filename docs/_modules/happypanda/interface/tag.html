@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>happypanda.interface.tag &#8212; Happypanda X 0.0.1#109 documentation</title>
+    <title>happypanda.interface.tag &#8212; Happypanda X 0.0.1#110 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.0.1#109',
+        VERSION:     '0.0.1#110',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -52,7 +52,7 @@
         </button>
         <a class="navbar-brand" href="../../../index.html">
           Happypanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.1#109</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.1#110</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -167,6 +167,7 @@
 <span class="kn">from</span> <span class="nn">happypanda.interface</span> <span class="k">import</span> <span class="n">enums</span>
 <span class="kn">from</span> <span class="nn">happypanda.core.commands</span> <span class="k">import</span> <span class="n">database_cmd</span>
 
+
 <span class="k">def</span> <span class="nf">_contruct_tags_msg</span><span class="p">(</span><span class="n">nstags</span><span class="p">):</span>
     <span class="n">msg</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="n">_msg</span> <span class="o">=</span> <span class="p">{}</span>
@@ -181,6 +182,8 @@
             <span class="n">_msg</span><span class="p">[</span><span class="n">ns</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nstag</span><span class="o">.</span><span class="n">tag</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">msg</span>
+
+
 <div class="viewcode-block" id="get_tags"><a class="viewcode-back" href="../../../api.html#happypanda.interface.tag.get_tags">[docs]</a><span class="k">def</span> <span class="nf">get_tags</span><span class="p">(</span><span class="n">item_type</span><span class="p">:</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span> <span class="o">=</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Gallery</span><span class="p">,</span>
              <span class="n">item_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
              <span class="n">raw</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
@@ -235,8 +238,8 @@
 
 
 <div class="viewcode-block" id="get_common_tags"><a class="viewcode-back" href="../../../api.html#happypanda.interface.tag.get_common_tags">[docs]</a><span class="k">def</span> <span class="nf">get_common_tags</span><span class="p">(</span><span class="n">item_type</span><span class="p">:</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span> <span class="o">=</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Collection</span><span class="p">,</span>
-             <span class="n">item_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-             <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">):</span>
+                    <span class="n">item_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+                    <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Get the most common tags for item</span>
 

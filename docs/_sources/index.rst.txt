@@ -5,7 +5,7 @@
 
 .. warning::
 
-    This is project is under heavy development and is not ready for deployment.
+    This is project is under heavy development.
     If you want to speed up the development, please consider :ref:`Contributing`.
 
 Happypanda X user guide

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>happypanda.interface.gallery &#8212; Happypanda X 0.0.1#109 documentation</title>
+    <title>happypanda.interface.gallery &#8212; Happypanda X 0.0.1#110 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.0.1#109',
+        VERSION:     '0.0.1#110',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -52,7 +52,7 @@
         </button>
         <a class="navbar-brand" href="../../../index.html">
           Happypanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.1#109</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.1#110</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -307,9 +307,9 @@
         <span class="n">f</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">Page</span><span class="o">.</span><span class="n">number</span> <span class="o">&lt;</span> <span class="n">number</span> <span class="k">if</span> <span class="n">prev</span> <span class="k">else</span> <span class="n">db</span><span class="o">.</span><span class="n">Page</span><span class="o">.</span><span class="n">number</span> <span class="o">&gt;</span> <span class="n">number</span>
         <span class="n">f</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">and_op</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">db</span><span class="o">.</span><span class="n">Page</span><span class="o">.</span><span class="n">gallery_id</span> <span class="o">==</span> <span class="n">gallery_id</span><span class="p">)</span>
         <span class="n">item</span> <span class="o">=</span> <span class="n">database_cmd</span><span class="o">.</span><span class="n">GetModelItems</span><span class="p">()</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">Page</span><span class="p">,</span>
-                                                   <span class="n">order_by</span><span class="o">=</span><span class="n">db</span><span class="o">.</span><span class="n">Page</span><span class="o">.</span><span class="n">number</span><span class="o">.</span><span class="n">desc</span><span class="p">()</span> <span class="k">if</span> <span class="n">prev</span> <span class="k">else</span> <span class="n">db</span><span class="o">.</span><span class="n">Page</span><span class="o">.</span><span class="n">number</span><span class="p">,</span>
-                                                   <span class="nb">filter</span><span class="o">=</span><span class="n">f</span><span class="p">,</span>
-                                                   <span class="n">limit</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                                                <span class="n">order_by</span><span class="o">=</span><span class="n">db</span><span class="o">.</span><span class="n">Page</span><span class="o">.</span><span class="n">number</span><span class="o">.</span><span class="n">desc</span><span class="p">()</span> <span class="k">if</span> <span class="n">prev</span> <span class="k">else</span> <span class="n">db</span><span class="o">.</span><span class="n">Page</span><span class="o">.</span><span class="n">number</span><span class="p">,</span>
+                                                <span class="nb">filter</span><span class="o">=</span><span class="n">f</span><span class="p">,</span>
+                                                <span class="n">limit</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">item</span><span class="p">:</span>
             <span class="n">item</span> <span class="o">=</span> <span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 

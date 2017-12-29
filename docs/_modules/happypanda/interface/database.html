@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>happypanda.interface.database &#8212; Happypanda X 0.0.1#109 documentation</title>
+    <title>happypanda.interface.database &#8212; Happypanda X 0.0.1#110 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.0.1#109',
+        VERSION:     '0.0.1#110',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -52,7 +52,7 @@
         </button>
         <a class="navbar-brand" href="../../../index.html">
           Happypanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.1#109</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.1#110</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -379,7 +379,7 @@
     <span class="n">count</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">child_model</span><span class="o">.</span><span class="n">id</span><span class="p">)</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">col</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">parent_model</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">item_id</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Identity</span><span class="p">(</span><span class="s1">&#39;count&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="n">item_id</span><span class="p">,</span> <span class="s1">&#39;count&#39;</span><span class="p">:</span> <span class="n">count</span><span class="p">})</span></div>
 
-<span class="c1">#def get_random_items(item_type: enums.ItemType=enums.ItemType.Gallery,</span>
+<span class="c1"># def get_random_items(item_type: enums.ItemType=enums.ItemType.Gallery,</span>
 <span class="c1">#                    limit: int = 1,</span>
 <span class="c1">#                    item_id: int = None,</span>
 <span class="c1">#                    search_query: str = &quot;&quot;,</span>

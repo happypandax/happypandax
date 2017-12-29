@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Server API &#8212; Happypanda X 0.0.1#109 documentation</title>
+    <title>Server API &#8212; Happypanda X 0.0.1#110 documentation</title>
     
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.0.1#109',
+        VERSION:     '0.0.1#110',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -54,7 +54,7 @@
         </button>
         <a class="navbar-brand" href="index.html">
           Happypanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.1#109</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.1#110</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -440,6 +440,32 @@ Enum member names may change sometime in the future. It is not likely to happen 
 <div class="section" id="meta">
 <h3>Meta<a class="headerlink" href="#meta" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
+<dt id="happypanda.interface.meta.check_update">
+<code class="descname">check_update</code><span class="sig-paren">(</span><em>push=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/meta.html#check_update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.meta.check_update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check for new release</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>push</strong> (<code class="xref py py-class docutils literal"><span class="pre">bool</span></code>) &#8211; whether to push out notifications if an update is found</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">an empty dict or
+.. code-block:: guess<blockquote>
+<div><dl class="docutils">
+<dt>{</dt>
+<dd>&#8216;url&#8217; : str,
+&#8216;changes&#8217; : str,
+&#8216;tag&#8217; : str</dd>
+</dl>
+<p>}</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
 <dt id="happypanda.interface.meta.get_command_state">
 <code class="descname">get_command_state</code><span class="sig-paren">(</span><em>command_ids</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/meta.html#get_command_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.meta.get_command_state" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get state of command</p>
@@ -482,6 +508,12 @@ Enum member names may change sometime in the future. It is not likely to happen 
 </dd></dl>
 
 <dl class="function">
+<dt id="happypanda.interface.meta.get_notification">
+<code class="descname">get_notification</code><span class="sig-paren">(</span><em>scope=None</em>, <em>msg_id=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/meta.html#get_notification"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.meta.get_notification" title="Permalink to this definition">¶</a></dt>
+<dd><p>Not ready yet...</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="happypanda.interface.meta.get_version">
 <code class="descname">get_version</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/meta.html#get_version"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.meta.get_version" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get version of components: &#8216;core&#8217;, &#8216;db&#8217; and &#8216;torrent&#8217;</p>
@@ -500,6 +532,12 @@ Enum member names may change sometime in the future. It is not likely to happen 
 </tr>
 </tbody>
 </table>
+</dd></dl>
+
+<dl class="function">
+<dt id="happypanda.interface.meta.reply_notification">
+<code class="descname">reply_notification</code><span class="sig-paren">(</span><em>msg_id</em>, <em>action_values</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/meta.html#reply_notification"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.meta.reply_notification" title="Permalink to this definition">¶</a></dt>
+<dd><p>Not ready yet...</p>
 </dd></dl>
 
 <dl class="function">
@@ -538,6 +576,28 @@ Enum member names may change sometime in the future. It is not likely to happen 
 }
 </pre></div>
 </div>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="happypanda.interface.meta.update_application">
+<code class="descname">update_application</code><span class="sig-paren">(</span><em>download_url=None</em>, <em>restart=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/meta.html#update_application"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.meta.update_application" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update the application with a new release.
+If download_url is not provided, a check for a new release will occur</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>download_url</strong> (<code class="xref py py-data docutils literal"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal"><span class="pre">str</span></code>]) &#8211; a url to the release file, can be path to file on the system</li>
+<li><strong>restart</strong> (<code class="xref py py-class docutils literal"><span class="pre">bool</span></code>) &#8211; restart the application after installing the new update</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">bool indicating whether the install was successful or not</p>
 </td>
 </tr>
 </tbody>
