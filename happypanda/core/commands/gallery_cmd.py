@@ -1,5 +1,4 @@
 import os
-import sys
 import subprocess
 
 from happypanda.common import utils, hlogger, config

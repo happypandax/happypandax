@@ -64,9 +64,9 @@ def get_thumbs(data=None, error=None, other=None):
         if other:
             item_ids = [x.id for x in other]
             client.call_func("get_image", this.get_thumbs,
-                                  item_ids=item_ids,
-                                  size=ImageSize.Original, url=True, uri=True,
-                                  item_type=this.state.item_type)
+                             item_ids=item_ids,
+                             size=ImageSize.Original, url=True, uri=True,
+                             item_type=this.state.item_type)
 
 
 __pragma__("notconv")

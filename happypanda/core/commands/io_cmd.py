@@ -4,7 +4,7 @@ import hashlib
 import shutil
 import send2trash
 import attr
-import sys
+import subprocess
 
 from io import BytesIO
 from PIL import Image
@@ -19,6 +19,7 @@ from happypanda.core.services import ImageService
 from happypanda.core import db
 
 log = hlogger.Logger(__name__)
+
 
 @attr.s
 class ImageProperties:
@@ -374,11 +375,11 @@ class CoreFS(CoreCommand):
     @staticmethod
     def open_with_default(path):
         "Open path with the default application"
-        if sys.platform.startswith('darwin'):
+        if constants.is_osx:
             subprocess.call(('open', path))
-        elif os.name == 'nt':
+        elif constants.is_win:
             os.startfile(path)
-        elif os.name == 'posix':
+        elif constants.is_linux:
             subprocess.call(('xdg-open', path))
 
     def close(self):

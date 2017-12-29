@@ -163,24 +163,24 @@ def pagination_render():
 
     query_args = {}
     if this.props.query:
-       query_args = {'as': QueryLink,'query':{'page':this.state.go_to_page}}
+        query_args = {'as': QueryLink, 'query': {'page': this.state.go_to_page}}
     go_el = e(ui.Popup,
-                e(ui.Form,
+              e(ui.Form,
                   e(ui.Form.Field,
-                e(ui.Input,
-                  onChange=this.go_to_change,
-                  size="mini",
-                  js_type="number",
-                  placeholder=current_page,
-                  action=e(ui.Button, compact=True, icon="share", onClick=this.go_to_page,
-                         **query_args),
-                  min=0, max=pages),
-                ),
+                    e(ui.Input,
+                      onChange=this.go_to_change,
+                      size="mini",
+                      js_type="number",
+                      placeholder=current_page,
+                      action=e(ui.Button, compact=True, icon="share", onClick=this.go_to_page,
+                               **query_args),
+                      min=0, max=pages),
                     ),
-                on="click",
-                hoverable=True,
-                position="top center",
-                trigger=e(ui.Menu.Item, "..."))
+                ),
+              on="click",
+              hoverable=True,
+              position="top center",
+              trigger=e(ui.Menu.Item, "..."))
 
     if first_ellipses:
         ellip_items = make_items(page_list[:ellipsis_pos])
@@ -221,7 +221,7 @@ Pagination = createReactClass({
     'getInitialState': lambda: {
         'current_page': this.props.default_page if this.props.default_page else 1,
         'go_to_page': 1,
-        },
+    },
 
     'change_page': pagination_change,
     'go_to_change': lambda e, d: this.setState({'go_to_page': d.value}),

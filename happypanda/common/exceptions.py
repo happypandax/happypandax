@@ -325,12 +325,13 @@ class ArchiveExistError(ArchiveError):
 
     ## NETWORK -- CODE: 700+ ##
 
+
 @error_code(700)
 class NetworkError(CoreError):
     """
     Base network exception, all network exceptions will derive from this
     """
-    
+
     def __init__(self, message, properties=None):
         if properties:
             pass

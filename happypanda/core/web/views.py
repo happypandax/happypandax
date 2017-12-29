@@ -25,6 +25,7 @@ def _create_clients(id, session_id=""):
     }
     return all_clients[id]
 
+
 def _create_locks(id):
     all_locks[id] = {
         "client": BoundedSemaphore(),
@@ -52,8 +53,9 @@ def get_clients(id, session_id=""):
         clients[c].session = clients['client'].session
     return clients
 
+
 def get_locks(id):
-    if not id in all_locks:
+    if id not in all_locks:
         _create_locks(id)
     return all_locks[id]
 
@@ -98,6 +100,7 @@ def is_same_machine():
         return True
     return False
 
+
 def on_command_handle(client_id, clients, msg):
     d = {'status': None}
     cmd = msg.get('command')
@@ -129,9 +132,11 @@ def on_command_handle(client_id, clients, msg):
         send_error(e, room=client_id)
     socketio.emit("command", d, room=client_id)
 
+
 def on_server_call_handle(client_id, client, lock, msg, **kwargs):
     msg_id, data = call_server(msg, client, lock)
     socketio.emit('server_call', {'id': msg_id, 'msg': data}, room=client_id, **kwargs)
+
 
 def init_views(flask_app, socketio_app):
     global happyweb
@@ -154,8 +159,6 @@ def init_views(flask_app, socketio_app):
         clients = get_clients(msg.get("session_id", "default"))
         socketio_app.start_background_task(on_command_handle, request.sid, clients, msg)
 
-
-
     @socketio.on('server_call')
     def on_server_call(msg):
         clients = get_clients(msg.get("session_id", "default"))
@@ -166,7 +169,6 @@ def init_views(flask_app, socketio_app):
             clients['client'],
             locks['client'],
             msg)
-
 
     @socketio.on('server_call', namespace='/notification')
     def on_push_call(msg):
@@ -180,7 +182,6 @@ def init_views(flask_app, socketio_app):
             locks['notification'],
             msg, namespace='/notification')
 
-
     @socketio.on('server_call', namespace='/command')
     def on_command_call(msg):
         clients = get_clients(msg.get("session_id", "default"))
@@ -191,7 +192,6 @@ def init_views(flask_app, socketio_app):
             clients['command'],
             locks['command'],
             msg, namespace='/command')
-
 
     @happyweb.route(constants.thumbs_view + '/<path:filename>')
     def thumbs_view(filename):
@@ -206,7 +206,6 @@ def init_views(flask_app, socketio_app):
                 d, f = os.path.split(img_p)
         return send_from_directory(d, f)
 
-
     @happyweb.route('/server', methods=['POST'])
     def server_proxy():
 
@@ -215,7 +214,6 @@ def init_views(flask_app, socketio_app):
         abort(404)
 
     # Let other routes take precedence
-
 
     @happyweb.route('/', defaults={'path': ''})
     @happyweb.route('/<path:path>')

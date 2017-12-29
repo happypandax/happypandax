@@ -50,13 +50,13 @@ def get_item(data=None, error=None):
 
         if data.id:
             client.call_func("get_related_count", this.get_filter_count,
-                    related_type=ItemType.GalleryFilter,
-                    item_type=this.state.item_type,
-                    item_id=data.id)
+                             related_type=ItemType.GalleryFilter,
+                             item_type=this.state.item_type,
+                             item_id=data.id)
             client.call_func("get_related_count", this.get_collection_count,
-                    related_type=ItemType.Collection,
-                    item_type=this.state.item_type,
-                    item_id=data.id)
+                             related_type=ItemType.Collection,
+                             item_type=this.state.item_type,
+                             item_id=data.id)
 
     elif error:
         state.app.notif("Failed to fetch item ({})".format(this.state.id), level="error")
@@ -87,6 +87,7 @@ def get_filter_count(data=None, error=None):
         this.setState({"filter_count": data['count']})
     elif error:
         state.app.notif("Failed to fetch filter count ({})".format(this.state.id), level="error")
+
 
 def get_collection_count(data=None, error=None):
     if data is not None and not error:
@@ -257,7 +258,7 @@ def page_render():
             ),
           centered=True,
           ),
-        )
+    )
 
     if inbox:
         buttons.append(
@@ -269,9 +270,9 @@ def page_render():
                 ),
               centered=True,
               ),
-            )
+        )
 
-    #if this.state.collection_count:
+    # if this.state.collection_count:
     #    buttons.append(
     #        e(ui.Grid.Row,
     #            e(ui.Grid.Column,
@@ -284,7 +285,7 @@ def page_render():
     #            ),
     #        )
 
-    #if this.state.filter_count:
+    # if this.state.filter_count:
     #    buttons.append(
     #        e(ui.Grid.Row,
     #          e(ui.Grid.Column,
@@ -307,7 +308,7 @@ def page_render():
             ),
           divided=True,
           ),
-        )
+    )
 
     if trash:
         buttons.append(

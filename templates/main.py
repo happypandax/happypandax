@@ -52,6 +52,7 @@ Once again, thank you guys who donated to me through Ko-Fi.
 I hope you'll like HPX.
 """
 
+
 def on_update(props):
     if props.location.pathname != this.props.location.pathname:
         for x in state.commands:
@@ -67,6 +68,7 @@ PathChange = createReactClass({
 })
 
 __pragma__("kwargs")
+
 
 def notif(msg, header="", level="info", icon=None, **kwargs):
     _a = None
@@ -101,19 +103,24 @@ __pragma__("nokwargs")
 state['notif'] = notif
 
 __pragma__("tconv")
+
+
 def server_notifications(data=js_undefined, error=None):
     if data is not js_undefined and not error:
         if data:
-            this.setState({'server_push_msg':data, 'server_push': True})
+            this.setState({'server_push_msg': data, 'server_push': True})
     elif error:
         this.notif("Failed to retrieve server notification", level="warning")
     else:
         if state['active']:
             pushclient.call_func("get_notification", this.server_notifications)
 
+
 __pragma__("notconv")
 
 __pragma__("kwargs")
+
+
 def server_notifications_reply(data=None, error=None, msg_id=0, values={}):
     if data is not None and not error:
         pass
@@ -122,15 +129,18 @@ def server_notifications_reply(data=None, error=None, msg_id=0, values={}):
     else:
         pushclient.call_func("reply_notification",
                              server_notifications_reply,
-                             msg_id = msg_id,
-                             action_values = values
+                             msg_id=msg_id,
+                             action_values=values
                              )
+
+
 __pragma__("nokwargs")
 
 
 def app_will_mount():
     state['app'] = this
     this.notif = notif
+
 
 def app_did_mount():
     utils.interval_func(this.server_notifications, 5000)
@@ -163,25 +173,25 @@ def app_render():
                     e(ui.Button, a['text'],
                       value=a_id,
                       onClick=lambda ev, da: all((
-                          server_notifications_reply(msg_id=push_id, values={da.value:da.value}),
+                          server_notifications_reply(msg_id=push_id, values={da.value: da.value}),
                           server_push_close()))))
 
         server_push_actions_el.append(e(ui.Modal.Actions, *server_push_actions))
 
     modal_els = []
     modal_els.append(e(ui.Modal,
-                        e(ui.Modal.Header, dict(this.state.server_push_msg).get("title", '') ),
-                        e(ui.Modal.Content, dict(this.state.server_push_msg).get("body", '') ),
-                        *server_push_actions_el,
-                        onClose=this.server_push_close,
-                        open=this.state.server_push, dimmer="inverted", closeIcon=True)
+                       e(ui.Modal.Header, dict(this.state.server_push_msg).get("title", '')),
+                       e(ui.Modal.Content, dict(this.state.server_push_msg).get("body", '')),
+                       *server_push_actions_el,
+                       onClose=this.server_push_close,
+                       open=this.state.server_push, dimmer="inverted", closeIcon=True)
                      )
 
     modal_els.append(e(ui.Modal,
-                        e(ui.Modal.Header, "Welcome to HappyPanda X Preview!" ),
-                        e(ui.Modal.Content, preview_txt, style={"white-space":"pre-wrap"} ),
-                        e(ui.Modal.Actions, e(ui.Button, e(ui.Icon, js_name="heart"), "Show your support on patreon!",
-                                              href="https://www.patreon.com/twiddly", target="_blank", color="orange")),
+                       e(ui.Modal.Header, "Welcome to HappyPanda X Preview!"),
+                       e(ui.Modal.Content, preview_txt, style={"white-space": "pre-wrap"}),
+                       e(ui.Modal.Actions, e(ui.Button, e(ui.Icon, js_name="heart"), "Show your support on patreon!",
+                                             href="https://www.patreon.com/twiddly", target="_blank", color="orange")),
                        closeIcon=True,
                        open=utils.storage.get("preview_msg", this.state.preview_msg),
                        onClose=this.close_preview_msg)
@@ -243,11 +253,11 @@ App = createReactClass({
 
     'add_notif': lambda o: add_notif,
 
-    'close_preview_msg': lambda: all((this.setState({'preview_msg':False}),
-                                            utils.storage.set("preview_msg", False))),
+    'close_preview_msg': lambda: all((this.setState({'preview_msg': False}),
+                                      utils.storage.set("preview_msg", False))),
 
     'server_notifications': server_notifications,
-    'server_push_close': lambda: this.setState({'server_push':False}),
+    'server_push_close': lambda: this.setState({'server_push': False}),
 
     'toggle_sidebar': lambda: (this.setState({'sidebar_toggled': not this.state['sidebar_toggled']})),
 
@@ -268,11 +278,14 @@ App = createReactClass({
 })
 
 vkeys = utils.visibility_keys()
+
+
 def visibility_change():
     if document[vkeys['hidden']]:
         state['active'] = False
     else:
         state['active'] = True
+
 
 # todo: check support
 document.addEventListener(vkeys['visibilitychange'], visibility_change, False)

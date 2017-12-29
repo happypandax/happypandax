@@ -4,7 +4,6 @@ import code
 import arrow
 import os
 import gevent
-import gzip
 import weakref
 
 from inspect import getmembers, isfunction, signature, Parameter
@@ -13,7 +12,6 @@ from gevent import socket, pool
 from gevent.server import StreamServer
 from flask import Flask
 from flask_socketio import SocketIO
-from contextlib import contextmanager
 
 from happypanda import interface
 from happypanda.core.web import views
@@ -32,8 +30,8 @@ def list_api():
     mods = utils.get_package_modules(interface)
     for m in mods:
         all_functions.extend(getmembers(m, isfunction))
-    funcs =  {x[0]: x[1] for x in all_functions if not x[0]
-                in _special_functions and not x[0].startswith('_')}
+    funcs = {x[0]: x[1] for x in all_functions if not x[0]
+             in _special_functions and not x[0].startswith('_')}
     log.d("Loaded Interface functions:\n\t", list(funcs))
     return funcs
 
@@ -69,20 +67,21 @@ class Session:
         "Return a session object if it exists"
         return cls.sessions.get(s_id)
 
+
 class ClientNotifications:
     _notifs = weakref.WeakValueDictionary()
     _actions = {}
 
     def __init__(self):
         pass
-        
+
     def _context(self, ctx=None):
         if ctx is None:
             ctx = utils.get_context()
         if ctx is not None:
             notif_ctx = ctx.setdefault("notif", {})
-            msg = notif_ctx.setdefault("msg", [])
-            rsp = notif_ctx.setdefault("rsp", [])
+            notif_ctx.setdefault("msg", [])
+            notif_ctx.setdefault("rsp", [])
             return notif_ctx
 
     def push(self, msg, scope=None):
@@ -156,8 +155,10 @@ class ClientNotifications:
     def __next__(self):
         return self._fetch()
 
+
 class ClientContext(dict):
     pass
+
 
 class ClientHandler:
     "Handles clients"

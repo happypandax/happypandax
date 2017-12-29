@@ -66,6 +66,7 @@ class CoreMessage:
         "Serialize this object to bytes"
         return finalize(self.json_friendly(), session_id, name)
 
+
 class Notification(CoreMessage):
     """
     """
@@ -81,17 +82,17 @@ class Notification(CoreMessage):
 
     def add_action(self, actionid, text, actiontype):
         self.actions.append({
-            'id':actionid,
-            'text':text,
-            'type':actiontype})
+            'id': actionid,
+            'text': text,
+            'type': actiontype})
 
     def data(self):
         d = {
-            'id':self.id,
-            'title':self.title,
-            'body':self.msg,
-            'expired':self.expired,
-            }
+            'id': self.id,
+            'title': self.title,
+            'body': self.msg,
+            'expired': self.expired,
+        }
 
         if self.actions:
             d['actions'] = self.actions

@@ -6,7 +6,7 @@ import traceback
 import os
 
 try:
-    import rollbar # updater doesn't need this
+    import rollbar  # updater doesn't need this
 except ImportError:
     pass
 

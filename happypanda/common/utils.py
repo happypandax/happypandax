@@ -16,7 +16,6 @@ import i18n
 import shelve
 import rollbar
 import importlib
-import random
 import atexit
 
 from inspect import ismodule, currentframe, getframeinfo
@@ -36,9 +35,11 @@ i18n.set("file_format", "yaml")
 i18n.set("filename_format", "{locale}.{namespace}.{format}")
 i18n.set("error_on_missing_translation", True)
 
+
 def setup_i18n():
     i18n.set("locale", config.translation_locale.value)
     i18n.set("fallback", "en_us")
+
 
 def setup_dirs():
     "Creates directories at the specified root path"
@@ -112,7 +113,6 @@ def parse_options(args):
     assert isinstance(args, argparse.Namespace)
 
     constants.dev = args.dev
-
 
     cfg = config.config
 
@@ -326,6 +326,7 @@ def os_info():
         PYTHON=platform.python_version()
     ))
 
+
 def setup_online_reporter():
     """
 
@@ -335,12 +336,13 @@ def setup_online_reporter():
     """
     if config.report_critical_errors.value:
         rollbar.init(config.rollbar_access_token.value,
-                    'HPX {}, web({}), db({}), build({})'.format(
-                        constants.version,
-                        constants.version_web,
-                        constants.version_db,
-                        constants.build))
+                     'HPX {}, web({}), db({}), build({})'.format(
+                         constants.version,
+                         constants.version_web,
+                         constants.version_db,
+                         constants.build))
         hlogger.Logger.report_online = True
+
 
 @contextmanager
 def intertnal_db():
@@ -350,20 +352,23 @@ def intertnal_db():
     finally:
         db.close()
 
+
 def restart_process():
     """
     Restart process. This function will never return.
     """
     if constants.is_frozen:
-        os.execv(sys.executable, ["python"] + sys.argv[1:]) # looks like this [path, *real_args]
+        os.execv(sys.executable, ["python"] + sys.argv[1:])  # looks like this [path, *real_args]
     else:
         os.execv(sys.executable, ["python"] + sys.argv)
-    
+
+
 def launch_updater():
     upd_name = constants.updater_name
     if constants.is_win:
         upd_name += '.exe'
     atexit.register(os.execl, upd_name, upd_name)
+
 
 class AttributeList(UserList):
     """
@@ -381,4 +386,3 @@ class AttributeList(UserList):
         if key in self._names:
             return self._names[key]
         raise AttributeError("AttributeError: no attribute named '{}'".format(key))
-

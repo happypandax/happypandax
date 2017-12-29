@@ -3,13 +3,13 @@ import requests
 import cachecontrol
 import os
 
-from happypanda.common import (hlogger, exceptions, utils, constants, exceptions, config)
-from happypanda.core.command import CoreCommand, CommandEntry, Command
+from happypanda.common import (hlogger, exceptions, utils, constants, config)
+from happypanda.core.command import CoreCommand, Command
 from happypanda.core.commands import io_cmd
-from happypanda.core.services import NetworkService
 from happypanda.interface import enums
 
 log = hlogger.Logger(__name__)
+
 
 class Method(enums._APIEnum):
     GET = "get"
@@ -19,17 +19,18 @@ class Method(enums._APIEnum):
     HEAD = "head"
     OPTIONS = "options"
 
+
 @attr.s
 class RequestProperties:
     """
 
     Args:
-        session: True for default session, False for no session, or custom session 
+        session: True for default session, False for no session, or custom session
     """
 
     method = attr.ib(default=None)
     output = attr.ib(default="")
-    name = attr.ib(default="") # for logging
+    name = attr.ib(default="")  # for logging
     session = attr.ib(default=True)
     timeout = attr.ib(default=None)
     proxy = attr.ib(default=None)
@@ -42,6 +43,7 @@ class RequestProperties:
     cookies = attr.ib(default=None)
     stream = attr.ib(default=False)
     stream_callback = attr.ib(default=None)
+
 
 class Response(CoreCommand):
     """
@@ -79,7 +81,7 @@ class Response(CoreCommand):
             filepath = io_cmd.CoreFS(filepath)
 
         if extension:
-            filepath = io_cmd.CoreFS(filepath.path+os.path.splitext(self._rsp.url)[1], filepath._archive)
+            filepath = io_cmd.CoreFS(filepath.path + os.path.splitext(self._rsp.url)[1], filepath._archive)
 
         with filepath.open(mode="wb") as f:
             if self.properties.stream:
@@ -90,12 +92,13 @@ class Response(CoreCommand):
                 raise NotImplementedError
         return filepath.path
 
+
 class _Request(Command):
     """
     """
     default_session = None
-    
-    def __init__(self, session=True, priority = constants.Priority.Low):
+
+    def __init__(self, session=True, priority=constants.Priority.Low):
         super().__init__(priority)
         if not _Request.default_session:
             with utils.intertnal_db() as db:
@@ -113,15 +116,15 @@ class _Request(Command):
         assert isinstance(props, RequestProperties)
         if not props.method:
             raise exceptions.NetworkError("No valid HTTP method", props)
-        verb = Method.get(props.method) # TODO: wrap exceptions raised by APIEnum
+        verb = Method.get(props.method)  # TODO: wrap exceptions raised by APIEnum
         method = {
-            'get':self.session.get,
-            'post':self.session.post,
-            'delete':self.session.delete,
-            'put':self.session.put,
-            'head':self.session.head,
-            'options':self.session.options,
-            }.get(verb.value)
+            'get': self.session.get,
+            'post': self.session.post,
+            'delete': self.session.delete,
+            'put': self.session.put,
+            'head': self.session.head,
+            'options': self.session.options,
+        }.get(verb.value)
         kwargs = {}
         kwargs['timeout'] = props.timeout or config.request_timeout.value
         if props.headers is not None:
@@ -148,7 +151,6 @@ class _Request(Command):
             db['network_session'] = self.default_session
 
 
-
 class SimpleRequest(_Request):
     """
     """
@@ -163,23 +165,26 @@ class SimpleRequest(_Request):
     def main(self):
         return self.request(self.url, self.properties)
 
+
 class SimpleGETRequest(SimpleRequest):
     """
-    A convenience wrapper around SimpleRequest for GET requests 
+    A convenience wrapper around SimpleRequest for GET requests
     """
 
-    def __init__(self, url, properties = RequestProperties(), **kwargs):
+    def __init__(self, url, properties=RequestProperties(), **kwargs):
         properties.method = Method.GET
         return super().__init__(url, properties, **kwargs)
 
+
 class SimplePOSTRequest(SimpleRequest):
     """
-    A convenience wrapper around SimpleRequest for POST requests 
+    A convenience wrapper around SimpleRequest for POST requests
     """
 
-    def __init__(self, url, properties = RequestProperties(), **kwargs):
+    def __init__(self, url, properties=RequestProperties(), **kwargs):
         properties.method = Method.POST
         return super().__init__(url, properties, **kwargs)
+
 
 class MultiRequest(_Request):
     """
@@ -191,20 +196,22 @@ class MultiRequest(_Request):
         super().__init__(properties.session)
         self.properties = properties
 
+
 class MultiGETRequest(MultiRequest):
     """
-    A convenience wrapper around MultiRequest for GET requests 
+    A convenience wrapper around MultiRequest for GET requests
     """
 
-    def __init__(self, url, properties = RequestProperties(), **kwargs):
+    def __init__(self, url, properties=RequestProperties(), **kwargs):
         properties.method = Method.GET
         return super().__init__(url, properties, **kwargs)
 
+
 class MultiPOSTRequest(MultiRequest):
     """
-    A convenience wrapper around MultiRequest for POST requests 
+    A convenience wrapper around MultiRequest for POST requests
     """
 
-    def __init__(self, url, properties = RequestProperties(), **kwargs):
+    def __init__(self, url, properties=RequestProperties(), **kwargs):
         properties.method = Method.POST
         return super().__init__(url, properties, **kwargs)

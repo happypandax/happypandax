@@ -5,5 +5,5 @@ state = {
     'commands': set(),
     'debug': True,
     'new_update': False,
-    'active': True # current page is active
+    'active': True  # current page is active
 }

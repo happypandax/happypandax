@@ -7,17 +7,17 @@ rarfile.PATH_SEP = '/'
 
 preview = True
 dev = False
-is_installed = os.path.exists(".installed") # user installed with installer
+is_installed = os.path.exists(".installed")  # user installed with installer
 is_frozen = getattr(sys, 'frozen', False)
 
 is_osx = sys.platform.startswith('darwin')
 is_win = os.name == 'nt'
 is_linux = os.name == 'posix'
 
-from_gui = False # running from gui
+from_gui = False  # running from gui
 
 ## UPDATER ##
-updater_name = "happyupd" # windows will make it require escalted priv. if named anything 'updater'
+updater_name = "happyupd"  # windows will make it require escalted priv. if named anything 'updater'
 updater_key = "updater"
 
 ## VERSIONING ##
@@ -56,18 +56,21 @@ link_ext = '.link'
 
 # CORE
 
-web_proc = None # webserver process
-notification = None # ClientNotifications
+web_proc = None  # webserver process
+notification = None  # ClientNotifications
+
 
 class ExitCode(enum.Enum):
     Exit = 0
     Restart = 10
     Update = 20
 
+
 class UpdateState(enum.Enum):
     Registered = 0
     Failed = 1
     Success = 2
+
 
 class Priority(enum.Enum):
     High = 10
@@ -108,4 +111,3 @@ server_ready = True
 server_started = False
 local_ip = ""
 public_ip = ""
-

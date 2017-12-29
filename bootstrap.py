@@ -333,6 +333,7 @@ def lint(args, unknown=None):
     _activate_venv()
     return run([env_python, "lint.py", *sys.argv[2:]]).returncode
 
+
 def _compress_dir(dir_path, output_name, fmt="zip"):
     from happypanda.common import config
     if fmt == "7z":
@@ -345,6 +346,7 @@ def _compress_dir(dir_path, output_name, fmt="zip"):
     else:
         p = shutil.make_archive(dir_path, fmt, dir_path)
         os.replace(p, output_name)
+
 
 def deploy(args, unknown=None):
     _activate_venv()
@@ -389,17 +391,17 @@ def deploy(args, unknown=None):
 
         for p in ("", "installer"):
             if constants.preview:
-                output_path_a = output_path+".PREVIEW."
-            output_path_a = output_path+".".join(str(x) for x in constants.version)
-            output_path_a = output_path_a+"."+os_name
+                output_path_a = output_path + ".PREVIEW."
+            output_path_a = output_path + ".".join(str(x) for x in constants.version)
+            output_path_a = output_path_a + "." + os_name
             if p:
-                output_path_a = output_path_a+"."+p
+                output_path_a = output_path_a + "." + p
 
             fmt = 'zip'
             if p == 'installer':
                 fmt = '7z'
 
-            output_path_a = output_path_a+'.'+fmt
+            output_path_a = output_path_a + '.' + fmt
 
             installer_file_out = os.path.join(dir_path, installer_filename)
             if p == "installer":

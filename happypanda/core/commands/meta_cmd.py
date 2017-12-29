@@ -1,16 +1,16 @@
-from happypanda.common import (hlogger, exceptions, utils, constants, exceptions, config)
-from happypanda.core.command import Command, CommandEvent, AsyncCommand
-from happypanda.interface import enums
+from happypanda.common import (hlogger, constants, config)
+from happypanda.core.command import Command, CommandEvent
 from happypanda.core import updater, message
 
 log = hlogger.Logger(__name__)
+
 
 class CheckUpdate(Command):
     """
     Check for new release
     """
 
-    def __init__(self, priority = constants.Priority.Low):
+    def __init__(self, priority=constants.Priority.Low):
         super().__init__(priority)
 
     def main(self, silent=True, force=False, push=False) -> dict:
@@ -27,6 +27,7 @@ class CheckUpdate(Command):
                     UpdateApplication().run(restart=True, silent=silent)
             return u
 
+
 class UpdateApplication(Command):
     """
     Check for new release and update the application
@@ -34,7 +35,7 @@ class UpdateApplication(Command):
 
     update = CommandEvent("update", bool, bool)
 
-    def __init__(self, priority = constants.Priority.Low):
+    def __init__(self, priority=constants.Priority.Low):
         super().__init__(priority)
 
     def main(self, download_url=None, restart=True, silent=True) -> bool:
@@ -52,6 +53,7 @@ class UpdateApplication(Command):
         self.update.emit(st, restart)
         return st
 
+
 class RestartApplication(Command):
     """
     Restart the appplication
@@ -59,11 +61,12 @@ class RestartApplication(Command):
 
     restart = CommandEvent("restart")
 
-    def __init__(self, priority = constants.Priority.Normal):
+    def __init__(self, priority=constants.Priority.Normal):
         super().__init__(priority)
 
     def main(self):
         self.restart.emit()
+
 
 class ShutdownApplication(Command):
     """
@@ -72,7 +75,7 @@ class ShutdownApplication(Command):
 
     shutdown = CommandEvent("shutdown")
 
-    def __init__(self, priority = constants.Priority.Normal):
+    def __init__(self, priority=constants.Priority.Normal):
         super().__init__(priority)
 
     def main(self):

@@ -95,17 +95,18 @@ def gallery_render():
               item_type=this.state.item_type,
               size_type=ImageSize.Medium,
               size=this.props.size,
-             dimmer=e(ui.Dimmer,
-                      active=this.state.dimmer,
-                      content=e(ui.Responsive,
-                                e(ui.List,
-                                    e(ui.List.Item, e(ui.Button, tr(this,"", "Read"), primary=True, size="tiny", **read_button_args)),
-                                    e(ui.List.Item, e(ui.Button, e(ui.Icon, js_name="history"), tr(this,"", "Save for later"), size="tiny") if not inbox else\
-                                        e(ui.Button, e(ui.Icon, js_name="grid layout"), tr(this,"", "Send to library"), color="green", size="tiny")),
-                                ),
-                                minWidth=1000,
-                                ),
-                      inverted=True),
+              dimmer=e(ui.Dimmer,
+                       active=this.state.dimmer,
+                       content=e(ui.Responsive,
+                                 e(ui.List,
+                                   e(ui.List.Item, e(ui.Button, tr(this, "", "Read"),
+                                                     primary=True, size="tiny", **read_button_args)),
+                                   e(ui.List.Item, e(ui.Button, e(ui.Icon, js_name="history"), tr(this, "", "Save for later"), size="tiny") if not inbox else
+                                     e(ui.Button, e(ui.Icon, js_name="grid layout"), tr(this, "", "Send to library"), color="green", size="tiny")),
+                                   ),
+                                 minWidth=1000,
+                                 ),
+                       inverted=True),
               )
     if link:
         thumb = e(Link, thumb, to={'pathname': '/item/gallery',
@@ -146,7 +147,6 @@ def gallery_render():
                   e(ui.Table.Cell, e(ui.Header, "Last read:", as_="h5"), collapsing=True),
                   e(ui.Table.Cell, e(ui.Label, date_read))))
 
-
     menu_options = []
     menu_options.append(e(ui.List.Item, content="Read", **read_button_args))
     menu_options.append(e(ui.List.Item, content="Save for later", icon="history"))
@@ -175,12 +175,12 @@ def gallery_render():
                        position="left center",
                      ),
                    e(ui.Popup,
-                        e(ui.List, *menu_options, selection=True, relaxed=True),
+                     e(ui.List, *menu_options, selection=True, relaxed=True),
                        trigger=e(ui.Icon,
                                  js_name="ellipsis vertical",
                                  bordered=True,
                                  link=True,
-                                className="card-item bottom right above-dimmer",
+                                 className="card-item bottom right above-dimmer",
                                  inverted=True),
                        hoverable=True,
                        on="click",
@@ -222,7 +222,7 @@ Gallery = createReactClass({
                                 'data': this.props.data,
                                 'item_type': ItemType.Gallery,
                                 'tags': this.props.tags,
-                                'dimmer': False, 
+                                'dimmer': False,
                                 },
     'on_tags': on_tags,
     'open_external': open_external,

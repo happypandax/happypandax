@@ -2,7 +2,6 @@ import gevent
 import weakref
 import functools
 import itertools
-import attr
 
 from gevent import pool, queue
 from apscheduler.schedulers.gevent import GeventScheduler
@@ -11,6 +10,7 @@ from happypanda.common import hlogger, constants, config
 from happypanda.core import command, async
 
 log = hlogger.Logger(__name__)
+
 
 class Service:
 
@@ -44,7 +44,7 @@ class Service:
         return None
 
 #@attr.s
-#class Trigger:
+# class Trigger:
 #    ""
 #    _start = attr.ib(None)
 #    _every = attr.ib(None)
@@ -152,6 +152,7 @@ class Service:
 #    def sunday(self):
 #        self._sunday = True
 #        return self
+
 
 class Scheduler(Service):
     """
@@ -355,11 +356,13 @@ class AsyncService(Service):
             self._commands[cmd_id].state = command.CommandState.in_queue
             log.d("Enqueueing command id", cmd_id, "in service '{}'".format(self.name))
 
+
 class NetworkService(AsyncService):
     "A network service"
 
     def __init__(self, name, pool_=None):
-        super().__init__(name, pool_ or pool.Pool(config.concurrent_network_tasks.value*2))
+        super().__init__(name, pool_ or pool.Pool(config.concurrent_network_tasks.value * 2))
+
 
 class DownloadService(AsyncService):
     "A download service"

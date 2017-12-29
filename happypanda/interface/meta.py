@@ -36,15 +36,17 @@ def get_notification(scope=None, msg_id: int=None):
 
     return msg if msg else message.Identity("notification", msg)
 
+
 def reply_notification(msg_id: int, action_values: dict):
     """
     Not ready yet...
     """
     s = False
     if constants.notification:
-        msg = constants.notification.reply(msg_id, action_values)
+        constants.notification.reply(msg_id, action_values)
         s = True
     return message.Identity("status", s)
+
 
 def check_update(push: bool = False):
     """
@@ -70,6 +72,7 @@ def check_update(push: bool = False):
         r = upd
     return message.Identity('update', r)
 
+
 def update_application(download_url: str = None, restart: bool = True):
     """
     Update the application with a new release.
@@ -85,6 +88,7 @@ def update_application(download_url: str = None, restart: bool = True):
 
     upd = meta_cmd.UpdateApplication().run(download_url, restart)
     return message.Identity('update', upd)
+
 
 def get_version():
     """

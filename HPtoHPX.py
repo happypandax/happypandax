@@ -843,7 +843,10 @@ def main(args=sys.argv):
                         try:
                             print("\nSkipping '{}' because path doesn't exists.".format(ch.title))
                         except UnicodeError:
-                            print("\nSkipping '{}' because path doesn't exists.".format(ch.title.encode(errors='ignore')))
+                            print(
+                                "\nSkipping '{}' because path doesn't exists.".format(
+                                    ch.title.encode(
+                                        errors='ignore')))
                         continue
 
                     if not args.skip_archive:

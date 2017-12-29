@@ -1,5 +1,4 @@
 import os
-import base64
 import yaml
 import gevent
 import random
@@ -24,7 +23,8 @@ class ConfigNode:
 
     _cfg_nodes = {}
 
-    def __init__(self, cfg, ns, name, value, description="", type_=None, isolation=ConfigIsolation.server, hidden=False):
+    def __init__(self, cfg, ns, name, value, description="", type_=None,
+                 isolation=ConfigIsolation.server, hidden=False):
         self._cfg = cfg
         self.isolation = isolation
         self.namespace = ns
@@ -323,6 +323,7 @@ class Config:
             sections.append([con, s])
         return sections
 
+
 def get_best_girls():
     best_girls = (
         'ram',
@@ -344,9 +345,8 @@ def get_best_girls():
         'kouko',
         'krista',
         'naoka',
-        )
+    )
     return "_".join(best_girls[random.randrange(0, len(best_girls))] for x in range(3))
-
 
 
 config = Config(user_filepath=constants.config_path)
@@ -576,7 +576,7 @@ gui_ns = "gui"
 
 with config.namespace(gui_ns):
 
-    #gui_happypanda_executable_name = config.create(
+    # gui_happypanda_executable_name = config.create(
     #    None,
     #    "happypanda_executable_name",
     #    "happypandax",
@@ -625,7 +625,7 @@ with config.namespace(network_ns):
     proxy = config.create(
         None,
         "proxy",
-        {'http':'', 'https':''},
+        {'http': '', 'https': ''},
         "Specify network proxies. Proxy URLs must include the scheme. To use HTTP Basic Auth with your proxy, use the http://user:password@host/ syntax")
 
 advanced_ns = "advanced"
@@ -641,13 +641,13 @@ with config.namespace(advanced_ns):
     github_repo = config.create(
         advanced_ns,
         "github_repo",
-        {'repo':'server', 'owner':'happypandax'},
+        {'repo': 'server', 'owner': 'happypandax'},
         "Github repo and owner", hidden=True)
 
     checksum_provider_repo = config.create(
         advanced_ns,
         "checksum_provider_repo",
-        {'repo':'updates', 'owner':'happypandax', 'file':'checksums.txt'},
+        {'repo': 'updates', 'owner': 'happypandax', 'file': 'checksums.txt'},
         "Github repo and owner and file", hidden=True)
 
     sevenzip_path = config.create(

@@ -8,6 +8,7 @@ from happypanda.common import constants, hlogger
 
 log = hlogger.Logger("HappyUpdater")
 
+
 def move_replace(root_src_dir, root_dst_dir):
     for src_dir, dirs, files in os.walk(root_src_dir):
         dst_dir = src_dir.replace(root_src_dir, root_dst_dir, 1)
@@ -19,6 +20,7 @@ def move_replace(root_src_dir, root_dst_dir):
             if os.path.exists(dst_file):
                 os.remove(dst_file)
             shutil.move(src_file, dst_dir)
+
 
 if __name__ == '__main__':
     log.setup_logger()
@@ -43,7 +45,7 @@ if __name__ == '__main__':
         move_replace(update_info['from'], update_info['to'])
         log.i("Removing leftovers..")
         shutil.rmtree(update_info['from'])
-    except:
+    except BaseException:
         log.exception("Failed to install new release")
         state = constants.UpdateState.Failed
 

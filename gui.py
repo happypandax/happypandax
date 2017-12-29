@@ -4,15 +4,14 @@ import multiprocessing as mp
 import functools
 import signal
 import webbrowser
-import subprocess
 
 from threading import Thread, Timer
 from multiprocessing import Process, queues
-from contextlib import contextmanager
 from happypanda.common import constants
 
-## This is required to be here or else multiprocessing won't work when running in a frozen state!
-## I had a hell of a time debugging this :(
+# This is required to be here or else multiprocessing won't work when running in a frozen state!
+# I had a hell of a time debugging this :(
+
 
 class RedirectProcess(Process):
 
@@ -28,10 +27,11 @@ class RedirectProcess(Process):
         sys.stderr = self.streamqueue
         if self.initializer:
             self.initializer()
-        if self._target: # HACK: don't access private variables!
+        if self._target:  # HACK: don't access private variables!
             e = self._target(*self._args, **self._kwargs)
             if self.exitqueue is not None:
                 self.exitqueue.put(e)
+
 
 class StreamQueue(queues.Queue):
 
@@ -44,14 +44,16 @@ class StreamQueue(queues.Queue):
     def flush(self):
         pass
 
+
 def from_gui():
     constants.from_gui = True
+
 
 if __name__ == "__main__":
     mp.freeze_support()
 
-import psutil # noqa: E402
-import qtawesome as qta # noqa: E402
+import psutil  # noqa: E402
+import qtawesome as qta  # noqa: E402
 from PyQt5.QtWidgets import (QApplication,
                              QMainWindow,
                              QWidget,
@@ -70,21 +72,22 @@ from PyQt5.QtWidgets import (QApplication,
                              QMenu,
                              QFileDialog,
                              QPlainTextEdit,
-                             QCheckBox) # noqa: E402
-from PyQt5.QtGui import QIcon, QDesktopServices, QPalette, QMouseEvent # noqa: E402
-from PyQt5.QtCore import Qt, QUrl, QDir, pyqtSignal, QEvent # noqa: E402
-from i18n import t # noqa: E402
+                             QCheckBox)  # noqa: E402
+from PyQt5.QtGui import QIcon, QPalette, QMouseEvent  # noqa: E402
+from PyQt5.QtCore import Qt, QDir, pyqtSignal, QEvent  # noqa: E402
+from i18n import t  # noqa: E402
 
-from happypanda.common import constants, utils, config # noqa: E402
-from happypanda.core.commands import io_cmd # noqa: E402
-from happypanda import main # noqa: E402
-import HPtoHPX # noqa: E402
+from happypanda.common import utils, config  # noqa: E402
+from happypanda.core.commands import io_cmd  # noqa: E402
+from happypanda import main  # noqa: E402
+import HPtoHPX  # noqa: E402
 
 app = None
 exitcode = None
 
 SQueue = None
 SQueueExit = None
+
 
 def kill_proc_tree(pid, sig=signal.SIGTERM, include_parent=True,
                    timeout=None, on_terminate=None):
@@ -105,6 +108,7 @@ def kill_proc_tree(pid, sig=signal.SIGTERM, include_parent=True,
                                     callback=on_terminate)
     return (gone, alive)
 
+
 class TextViewer(QPlainTextEdit):
     """
     A read-only embedded console
@@ -123,16 +127,14 @@ class TextViewer(QPlainTextEdit):
             t.daemon = True
             t.start()
 
-
     def w(self, s):
         s = s.strip()
         if s:
-            self.appendPlainText('>: '+s if s != '\n' else s)
+            self.appendPlainText('>: ' + s if s != '\n' else s)
 
     def poll_stream(self):
         while True:
             self.write.emit(self.stream.get())
-
 
 
 class PathLineEdit(QLineEdit):
@@ -333,6 +335,7 @@ class SettingsTabs(QTabWidget):
         except BaseException:
             widget.setStyleSheet("background: rgba(244, 92, 65, 0.2);")
 
+
 class Window(QMainWindow):
 
     activate_output = pyqtSignal()
@@ -370,7 +373,8 @@ class Window(QMainWindow):
         settings_group_l = QVBoxLayout(settings_widget)
         settings = SettingsTabs()
         settings_group_l.addWidget(settings)
-        settings_group_l.addWidget(QLabel("<i>{}</i>".format(t("", default="Hover the question mark icon to see setting description tooltip"))))
+        settings_group_l.addWidget(
+            QLabel("<i>{}</i>".format(t("", default="Hover the question mark icon to see setting description tooltip"))))
 
         buttons = QGroupBox(w)
         self.server_btn = QPushButton(self.start_ico, t("", default="Start server"))
@@ -427,7 +431,7 @@ class Window(QMainWindow):
         self.tray.setIcon(QIcon(os.path.join(constants.dir_static, "favicon.ico")))
         self.tray.activated.connect(self.tray_activated)
         tray_menu = QMenu()
-        tray_menu.addAction(t("", default="Show"), lambda: all(( self.showNormal(), self.activateWindow())))
+        tray_menu.addAction(t("", default="Show"), lambda: all((self.showNormal(), self.activateWindow())))
         tray_menu.addSeparator()
         tray_menu.addAction(t("", default="Quit"), lambda: self.real_close())
         self.tray.setContextMenu(tray_menu)
@@ -447,7 +451,7 @@ class Window(QMainWindow):
 
     def open_cfg(self):
         if not os.path.exists(constants.config_path):
-            with open(constants.config_path, 'x') as f:
+            with open(constants.config_path, 'x'):
                 pass
         io_cmd.CoreFS.open_with_default(constants.config_path)
 
@@ -492,13 +496,13 @@ class Window(QMainWindow):
 
     def open_client(self):
         u = utils.get_qualified_name(config.host_web.value, config.port_web.value)
-        webbrowser.open('http://'+u)
+        webbrowser.open('http://' + u)
 
     def stop_process(self, p):
         if p:
             try:
                 kill_proc_tree(p.pid)
-                #p.kill()
+                # p.kill()
             except psutil.NoSuchProcess:
                 pass
 
@@ -543,6 +547,7 @@ class Window(QMainWindow):
                 return
         [self.stop_process(x) for x in self.processes + [self.server_process, self.webclient_process]]
         super().closeEvent(ev)
+
 
 if __name__ == "__main__":
 

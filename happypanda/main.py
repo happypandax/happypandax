@@ -6,7 +6,7 @@ if __package__ is None and not hasattr(sys, 'frozen'):
     path = os.path.realpath(os.path.abspath(__file__))
     sys.path.insert(0, os.path.dirname(os.path.dirname(path)))
 
-import rollbar # noqa: E402
+import rollbar  # noqa: E402
 import multiprocessing  # noqa: E402
 
 from gevent import monkey  # noqa: E402
@@ -66,7 +66,7 @@ def start(argv=None, db_kwargs={}):
 
         upd_int = config.check_release_interval.value or config.check_release_interval.default
         upd_id = services.Scheduler.generic.add_command(meta_cmd.CheckUpdate(),
-                                                    IntervalTrigger(minutes=upd_int))
+                                                        IntervalTrigger(minutes=upd_int))
         services.Scheduler.generic.start_command(upd_id, push=True)
         # starting stuff
         services.Scheduler.generic.start()
@@ -76,17 +76,16 @@ def start(argv=None, db_kwargs={}):
             server.WebServer().run(*web_args)
         else:
             constants.web_proc = Process(target=server.WebServer().run,
-                                    args=web_args,
-                                    kwargs={'logging_queue': hlogger.Logger._queue,
-                                            'logging_args': args},
-                                    daemon=True)
+                                         args=web_args,
+                                         kwargs={'logging_queue': hlogger.Logger._queue,
+                                                 'logging_args': args},
+                                         daemon=True)
             constants.web_proc.start()
             hp_server = server.HPServer()
             meta_cmd.ShutdownApplication.shutdown.subscribe(hp_server.shutdown)
             meta_cmd.RestartApplication.restart.subscribe(hp_server.restart)
             meta_cmd.UpdateApplication.update.subscribe(hp_server.update)
             e_code = hp_server.run(interactive=args.interact)
-
 
         log.i("HPX SERVER END")
         if e_code == constants.ExitCode.Exit:
@@ -104,11 +103,12 @@ def start(argv=None, db_kwargs={}):
             utils.launch_updater()
 
     except Exception as e:
-        print(e) # intentional
+        print(e)  # intentional
         if config.report_critical_errors.value and not constants.dev:
             rollbar.report_exc_info()
         raise
     return e_code.value if e_code else 0
+
 
 if __name__ == '__main__':
     multiprocessing.freeze_support()

@@ -14,6 +14,8 @@ from src.utils import defined, is_same_machine, get_version
 
 
 __pragma__("tconv")
+
+
 def about_info(props):
     top_items = []
     if is_same_machine():
@@ -92,6 +94,8 @@ def about_info(props):
              stackable=True,
              columns="equal"
              )
+
+
 __pragma__("notconv")
 
 
@@ -131,19 +135,25 @@ def abouttab_get_version(data=None, error=None):
     else:
         client.call_func("get_version", this.get_version)
 
+
 __pragma__("tconv")
+
+
 def abouttab_check_update(data=None, error=None):
     if data is not None and not error:
         if data:
             state.new_update = True
-        this.setState({"update_msg": data, 'update_checking':False})
+        this.setState({"update_msg": data, 'update_checking': False})
     elif error:
         state.app.notif("Failed to check for updates", level="warning")
         this.setState({"update_checking": False})
     else:
         this.setState({"update_checking": True})
         client.call_func("check_update", this.check_update, push=True)
+
+
 __pragma__("notconv")
+
 
 def abouttab_render():
     version = this.state.version

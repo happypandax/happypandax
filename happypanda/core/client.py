@@ -2,7 +2,6 @@ import socket
 import sys
 import json
 import errno
-import select
 
 from happypanda.common import constants, exceptions, utils, hlogger, config
 from happypanda.core import message

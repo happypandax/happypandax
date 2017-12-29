@@ -36,7 +36,7 @@ random_string = __pragma__('js', '{}',
     }""")
 
 interval_func = __pragma__('js', '{}',
-                       """
+                           """
     function interval_func(fn, interval) {
     function f() {
 
@@ -106,11 +106,11 @@ function storageAvailable(type) {
                                """)
 
 visibility_keys = __pragma__('js', '{}',
-                               """
+                             """
     function visibility_keys() {
     var hidden, visibilityChange;
 
-    if (typeof document.hidden !== "undefined") { // Opera 12.10 and Firefox 18 and later support 
+    if (typeof document.hidden !== "undefined") { // Opera 12.10 and Firefox 18 and later support
       hidden = "hidden";
       visibilityChange = "visibilitychange";
     } else if (typeof document.msHidden !== "undefined") {
@@ -124,7 +124,6 @@ visibility_keys = __pragma__('js', '{}',
     return {'hidden':hidden, 'visibilitychange':visibilityChange};
     }
                                """)
-
 
 
 defined = __pragma__('js', '{}',
@@ -234,6 +233,7 @@ moment.locale(get_locale())
 class Storage:
 
     __pragma__("kwargs")
+
     def __init__(self, storage_type="localStorage"):
         self.dummy = {}
         self.enabled = storage_available(storage_type)
@@ -241,7 +241,6 @@ class Storage:
             self.lstorage = localStorage
         else:
             self.lstorage = sessionStorage
-
 
     def get(self, key, default=None, local=False):
         if self.enabled and not local:
@@ -251,7 +250,7 @@ class Storage:
             elif r:
                 r = JSON.parse(r)  # can't handle empty strings
             else:
-                r = None # raise KeyError?
+                r = None  # raise KeyError?
         else:
             r = self.dummy.get(key, default)
         return r

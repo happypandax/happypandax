@@ -187,7 +187,7 @@ class Client(Base):
 
     def send_command(self, cmd):
         assert cmd in self.commands.values(), "Not a valid command"
-        self.socket.emit("command", {'command': cmd, 'session_id':self.session_id})
+        self.socket.emit("command", {'command': cmd, 'session_id': self.session_id})
 
     def on_command(self, msg):
         self._connection_status = msg['status']
@@ -259,7 +259,7 @@ class Client(Base):
         assert isinstance(servermsg, ServerMsg)
         self._response_cb[servermsg.id] = servermsg
         final_msg = {
-            'session_id':self.session_id,
+            'session_id': self.session_id,
             'id': servermsg.id,
             'msg': {
                 'session': self.session,

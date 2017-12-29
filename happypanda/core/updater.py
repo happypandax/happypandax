@@ -1,10 +1,8 @@
 import sys
 import hashlib
 import os
-import zipfile
 import shelve
 
-from contextlib import suppress
 from functools import reduce
 
 from happypanda.common import constants, utils, config, exceptions, hlogger
@@ -13,10 +11,11 @@ from happypanda.core.commands.io_cmd import CoreFS
 
 log = hlogger.Logger(__name__)
 
+
 def verify_release(checksum, silent=True):
     """
     Verify a new release by checking against a key provider
-    
+
     Args:
         silent: suppress any network error
     """
@@ -30,7 +29,8 @@ def verify_release(checksum, silent=True):
     if checksum in rels_checks:
         return True
     try:
-        r = SimpleGETRequest("https://api.github.com/repos/{}/{}/contents/{}".format(repo_owner, repo_name, repo_file)).run()
+        r = SimpleGETRequest(
+            "https://api.github.com/repos/{}/{}/contents/{}".format(repo_owner, repo_name, repo_file)).run()
         data = r.json
         if data:
             r = SimpleGETRequest(data['download_url']).run()
@@ -45,14 +45,17 @@ def verify_release(checksum, silent=True):
     return False
 
 
-def sha256_checksum(path, block_size=64*1024):
+def sha256_checksum(path, block_size=64 * 1024):
     sha256 = hashlib.sha256()
     with open(path, 'rb') as f:
         for block in iter(lambda: f.read(block_size), b''):
             sha256.update(block)
     return sha256.hexdigest()
 
-extract_version = lambda v: tuple([int(x) for x in (reduce((lambda a,b: a+b),filter(str.isdigit,i)) for i in v.split("."))][:3])
+
+def extract_version(v): return tuple( # noqa: E704
+    [int(x) for x in (reduce((lambda a, b: a + b), filter(str.isdigit, i)) for i in v.split("."))][:3])  # noqa: E704
+
 
 def check_release(silent=True):
     """
@@ -93,7 +96,8 @@ def check_release(silent=True):
             download_url = None
             changes = ""
             if new_rel:
-                r = SimpleGETRequest("https://api.github.com/repos/{}/{}/releases/tags/{}".format(repo_owner, repo_name, new_rel)).run()
+                r = SimpleGETRequest(
+                    "https://api.github.com/repos/{}/{}/releases/tags/{}".format(repo_owner, repo_name, new_rel)).run()
                 data = r.json
                 ignore_words = ['installer']
                 if data:
@@ -111,7 +115,7 @@ def check_release(silent=True):
 
             latest_rel = None
             if download_url:
-                latest_rel = dict(url=download_url,tag=new_rel, changes=changes, version=new_version)
+                latest_rel = dict(url=download_url, tag=new_rel, changes=changes, version=new_version)
                 with utils.intertnal_db() as db:
                     db['latest_release'] = latest_rel
 
@@ -120,6 +124,7 @@ def check_release(silent=True):
             if not silent:
                 raise
             log.exception("Supressed error when checking for new release")
+
 
 def get_release(download_url=None, archive=True, silent=True):
     """
@@ -152,15 +157,19 @@ def get_release(download_url=None, archive=True, silent=True):
 
     d_file = None
     try:
-        if not download_url in down_rels or not os.path.exists(down_rels[download_url]['path']):
+        if download_url not in down_rels or not os.path.exists(down_rels[download_url]['path']):
             d_file = {}
-            if os.path.exists(download_url): # TODO: if is filepath but not existing, raise appropriate error
+            if os.path.exists(download_url):  # TODO: if is filepath but not existing, raise appropriate error
                 log.d("Getting release from existing file")
                 d_file['path'] = download_url
             else:
                 log.d("Getting release from web")
                 r = SimpleGETRequest(download_url, RequestProperties(stream=True)).run()
-                d_file['path'] = r.save(os.path.join(constants.dir_cache if archive else constants.dir_temp, utils.random_name()), extension=True)
+                d_file['path'] = r.save(
+                    os.path.join(
+                        constants.dir_cache if archive else constants.dir_temp,
+                        utils.random_name()),
+                    extension=True)
             d_file['hash'] = sha256_checksum(d_file['path'])
             log.d("Computed file checksum", d_file['hash'])
             if not constants.dev and not verify_release(d_file['hash'], silent):
@@ -180,6 +189,7 @@ def get_release(download_url=None, archive=True, silent=True):
         log.exception("Supressed error when getting new release")
 
     return d_file
+
 
 def register_release(filepath, silent=True, restart=True):
     """
@@ -207,11 +217,11 @@ def register_release(filepath, silent=True, restart=True):
         log.d("Saving update info")
         with shelve.open(constants.internal_db_path) as db:
             db[constants.updater_key] = {'from': p.path,
-                                         'to':os.path.abspath(constants.app_path),
+                                         'to': os.path.abspath(constants.app_path),
                                          #'to':os.path.abspath(constants.dir_cache),
-                                         'restart':restart,
-                                         'app':sys.argv[0],
-                                         'args':sys.argv[1:],
+                                         'restart': restart,
+                                         'app': sys.argv[0],
+                                         'args': sys.argv[1:],
                                          'state': constants.UpdateState.Registered.value}
         up_name = constants.updater_name
         if constants.is_win:

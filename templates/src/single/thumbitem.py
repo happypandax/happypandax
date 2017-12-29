@@ -43,8 +43,8 @@ def thumbnail_get_thumb(data=None, error=None):
             this.setState({'active_cmd': None})
         if this.props.item_id and this.props.size_type and this.props.item_type:
             client.call_func("get_image", this.get_thumb,
-                                  item_ids=[this.props.item_id],
-                                  size=this.props.size_type, url=True, uri=True, item_type=this.props.item_type)
+                             item_ids=[this.props.item_id],
+                             size=this.props.size_type, url=True, uri=True, item_type=this.props.item_type)
             s = {'loading': True}
             if this.state.placeholder:
                 s['img'] = this.state.placeholder
