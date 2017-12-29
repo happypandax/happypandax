@@ -451,11 +451,11 @@ You need NodeJS installed to work on the webclient.
 Start by installing the dependencies:
     $ npm install
 
-Work on the webclient (files are located at './emplates/' and './semantic/src/').
+Work on the webclient (files are located at './templates/' and './semantic/src/').
 To build the python files run:
     $ python3 bootstrap.py build --client
 and then bundle everything together by running:
-    $ npm build-dev
+    $ npm run build-dev
 
 Lastly, compile the CSS files by running:
     $ cd ./semantic

@@ -29,7 +29,7 @@ class Greenlet(gevent.Greenlet):
     @staticmethod
     def _hp_inherit(self, parent, frame):
         self.spawn_parent = parent
-        self.locals = {}
+        self.locals = getattr(self.spawn_parent, "locals", {})
         stack = []
         cur = frame
         while cur:

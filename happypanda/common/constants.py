@@ -57,6 +57,7 @@ link_ext = '.link'
 # CORE
 
 web_proc = None # webserver process
+notification = None # ClientNotifications
 
 class ExitCode(enum.Enum):
     Exit = 0
@@ -82,8 +83,6 @@ image_sizes = {
     "small": (100, 136),
 }
 
-# CLIENT
-
 # PLUGIN
 
 core_plugin = None
@@ -104,7 +103,7 @@ special_namespace = "__namespace__"
 exposed_server = False
 
 postfix = b'<EOF>'
-data_size = 1024
+data_size = 4096
 server_ready = True
 server_started = False
 local_ip = ""

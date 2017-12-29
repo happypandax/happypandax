@@ -641,13 +641,13 @@ with config.namespace(advanced_ns):
     github_repo = config.create(
         advanced_ns,
         "github_repo",
-        {'repo':'happypanda', 'owner':'pewpews'},
+        {'repo':'server', 'owner':'happypandax'},
         "Github repo and owner", hidden=True)
 
     checksum_provider_repo = config.create(
         advanced_ns,
         "checksum_provider_repo",
-        {'repo':'server', 'owner':'happypandax', 'file':'.travis.yml'},
+        {'repo':'updates', 'owner':'happypandax', 'file':'checksums.txt'},
         "Github repo and owner and file", hidden=True)
 
     sevenzip_path = config.create(

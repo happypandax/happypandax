@@ -6,7 +6,7 @@ from src.react_utils import (h,
                              createReactClass,
                              )
 from src.ui import ui
-from src.client import (thumbclient, Command)
+from src.client import Command, client
 from src.state import state
 from src import utils
 
@@ -42,7 +42,7 @@ def thumbnail_get_thumb(data=None, error=None):
             this.state.active_cmd.stop()
             this.setState({'active_cmd': None})
         if this.props.item_id and this.props.size_type and this.props.item_type:
-            thumbclient.call_func("get_image", this.get_thumb,
+            client.call_func("get_image", this.get_thumb,
                                   item_ids=[this.props.item_id],
                                   size=this.props.size_type, url=True, uri=True, item_type=this.props.item_type)
             s = {'loading': True}

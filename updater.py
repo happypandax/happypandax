@@ -6,7 +6,7 @@ import atexit
 
 from happypanda.common import constants, hlogger
 
-log = hlogger.Logger(__name__)
+log = hlogger.Logger("HappyUpdater")
 
 def move_replace(root_src_dir, root_dst_dir):
     for src_dir, dirs, files in os.walk(root_src_dir):

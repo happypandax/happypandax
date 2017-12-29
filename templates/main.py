@@ -16,7 +16,41 @@ from src.nav import (sidebar, menu)
 from src.pages import (api, collection, gallery,
                        dashboard, favorites, inbox,
                        library, page, directory)
+from src.client import pushclient
+from src import utils
 
+preview_txt = """Hi there!
+
+This is a [preview] of what HPX is capable of.
+Though, it is not a complete preview because I plan to keep adding more features over time.
+This [preview] is intended for users migrating from good old Happypanda.
+Why is that?
+Well, because you won't be able to use HPX without a database from Happypanda.
+HPX [preview] also means that it's not possible to write anything to the HPX database yet.
+There is no "Add gallery..." function yet. I have not implemented it.
+To use HPX you need to convert your database from Happypanda to a HPX database.
+You can do that with the GUI (named 'happypandax_gui'), click the button named "HP to HPX".
+
+I'd advise against deleting your Happypanda database. You will likely need to convert again in the future.
+So, if you wish to add new galleries, a proposed way is:
+Add galleries in Happypanda -> Convert database -> New galleries are in HPX
+
+HPX has an auto update feature. When a new release comes out just click [Update] on the pop-up notification and it'll update and restart for you automatically!
+(Provided you're not running from source).
+HPX should gradually become much better than Happypanda. Now you can fa- I mean indulge your stuff from anywhere once you have it set up!
+
+I have poured many hours into HPX and will likely continue to do so in the forseeable future!
+I want to thank everyone who have contributed to HPX and HP in some way or another.
+I want to especially thank you guys who went ahead and donated to me.
+I did not actually expect anyone to do that so I am very happy, and most importantly, it motivated me a ton!
+And so... because of that, I went ahead and made a Patreon. The Patreon will be for HPX and my art.
+If you think that Happypanda has served you well and want to see HPX become better faster, please consider supporting me on there.
+It'll motivate me a ton! :)
+
+Once again, thank you guys who donated to me through Ko-Fi.
+
+I hope you'll like HPX.
+"""
 
 def on_update(props):
     if props.location.pathname != this.props.location.pathname:
@@ -33,7 +67,6 @@ PathChange = createReactClass({
 })
 
 __pragma__("kwargs")
-
 
 def notif(msg, header="", level="info", icon=None, **kwargs):
     _a = None
@@ -67,10 +100,40 @@ __pragma__("nokwargs")
 
 state['notif'] = notif
 
+__pragma__("tconv")
+def server_notifications(data=js_undefined, error=None):
+    if data is not js_undefined and not error:
+        if data:
+            this.setState({'server_push_msg':data, 'server_push': True})
+    elif error:
+        this.notif("Failed to retrieve server notification", level="warning")
+    else:
+        if state['active']:
+            pushclient.call_func("get_notification", this.server_notifications)
+
+__pragma__("notconv")
+
+__pragma__("kwargs")
+def server_notifications_reply(data=None, error=None, msg_id=0, values={}):
+    if data is not None and not error:
+        pass
+    elif error:
+        state.app.notif("Failed to reply to server notification", level="warning")
+    else:
+        pushclient.call_func("reply_notification",
+                             server_notifications_reply,
+                             msg_id = msg_id,
+                             action_values = values
+                             )
+__pragma__("nokwargs")
+
 
 def app_will_mount():
     state['app'] = this
     this.notif = notif
+
+def app_did_mount():
+    utils.interval_func(this.server_notifications, 5000)
 
 
 def get_container_ref(ctx):
@@ -87,6 +150,42 @@ def app_render():
         'toggler': this.toggle_sidebar,
         'contents': this.state["menu_nav_contents"]
     }
+
+    server_push_close = this.server_push_close
+    server_push_actions_el = []
+    if dict(this.state.server_push_msg).get("actions", False):
+        server_push_actions = []
+        push_id = this.state.server_push_msg['id']
+        for a in this.state.server_push_msg['actions']:
+            a_id = a['id']
+            if a['type'] == 'button':
+                server_push_actions.append(
+                    e(ui.Button, a['text'],
+                      value=a_id,
+                      onClick=lambda ev, da: all((
+                          server_notifications_reply(msg_id=push_id, values={da.value:da.value}),
+                          server_push_close()))))
+
+        server_push_actions_el.append(e(ui.Modal.Actions, *server_push_actions))
+
+    modal_els = []
+    modal_els.append(e(ui.Modal,
+                        e(ui.Modal.Header, dict(this.state.server_push_msg).get("title", '') ),
+                        e(ui.Modal.Content, dict(this.state.server_push_msg).get("body", '') ),
+                        *server_push_actions_el,
+                        onClose=this.server_push_close,
+                        open=this.state.server_push, dimmer="inverted", closeIcon=True)
+                     )
+
+    modal_els.append(e(ui.Modal,
+                        e(ui.Modal.Header, "Welcome to HappyPanda X Preview!" ),
+                        e(ui.Modal.Content, preview_txt, style={"white-space":"pre-wrap"} ),
+                        e(ui.Modal.Actions, e(ui.Button, e(ui.Icon, js_name="heart"), "Show your support on patreon!",
+                                              href="https://www.patreon.com/twiddly", target="_blank", color="orange")),
+                       closeIcon=True,
+                       open=utils.storage.get("preview_msg", this.state.preview_msg),
+                       onClose=this.close_preview_msg)
+                     )
 
     return e(Router,
              h("div",
@@ -114,6 +213,7 @@ def app_render():
                      e(Route, path="/item/collection", component=this.collection_page),
                      e(Route, path="/item/page", component=this.page_page),
                      e(ui.Dimmer, simple=True, onClickOutside=this.toggle_sidebar),
+                     *modal_els,
                      dimmed=this.state.sidebar_toggled,
                      as_=ui.Dimmer.Dimmable
                      ),
@@ -131,13 +231,23 @@ App = createReactClass({
     'getInitialState': lambda: {
         "sidebar_toggled": False,
         "menu_nav_contents": None,
+        'server_push': False,
+        'server_push_msg': {},
+        'preview_msg': True,
     },
 
     'componentWillMount': app_will_mount,
+    'componentDidMount': app_did_mount,
 
     "notif": None,
 
     'add_notif': lambda o: add_notif,
+
+    'close_preview_msg': lambda: all((this.setState({'preview_msg':False}),
+                                            utils.storage.set("preview_msg", False))),
+
+    'server_notifications': server_notifications,
+    'server_push_close': lambda: this.setState({'server_push':False}),
 
     'toggle_sidebar': lambda: (this.setState({'sidebar_toggled': not this.state['sidebar_toggled']})),
 
@@ -156,5 +266,15 @@ App = createReactClass({
 
     'render': app_render,
 })
+
+vkeys = utils.visibility_keys()
+def visibility_change():
+    if document[vkeys['hidden']]:
+        state['active'] = False
+    else:
+        state['active'] = True
+
+# todo: check support
+document.addEventListener(vkeys['visibilitychange'], visibility_change, False)
 
 render(e(App), 'root')

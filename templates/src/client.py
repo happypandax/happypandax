@@ -99,6 +99,10 @@ class Client(Base):
     __pragma__('kwargs')
 
     def __init__(self, session="", namespace=""):
+        self.session_id = utils.storage.get("session_id")
+        if not self.session_id:
+            self.session_id = utils.random_string(10)
+            utils.storage.set("session_id", self.session_id)
         self.socket_url = location.protocol + '//' + location.hostname + ':' + location.port + namespace
         self.socket = io(self.socket_url, {'transports': ['websocket']})
         self.socket.on("command", self.on_command)
@@ -183,7 +187,7 @@ class Client(Base):
 
     def send_command(self, cmd):
         assert cmd in self.commands.values(), "Not a valid command"
-        self.socket.emit("command", {'command': cmd})
+        self.socket.emit("command", {'command': cmd, 'session_id':self.session_id})
 
     def on_command(self, msg):
         self._connection_status = msg['status']
@@ -255,6 +259,7 @@ class Client(Base):
         assert isinstance(servermsg, ServerMsg)
         self._response_cb[servermsg.id] = servermsg
         final_msg = {
+            'session_id':self.session_id,
             'id': servermsg.id,
             'msg': {
                 'session': self.session,
@@ -278,7 +283,7 @@ class Client(Base):
 
 
 client = Client()
-thumbclient = Client(namespace="/thumb")
+pushclient = Client(namespace="/notification")
 commandclient = Client(namespace="/command")
 
 

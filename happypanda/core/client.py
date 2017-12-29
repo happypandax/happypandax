@@ -2,6 +2,7 @@ import socket
 import sys
 import json
 import errno
+import select
 
 from happypanda.common import constants, exceptions, utils, hlogger, config
 from happypanda.core import message
@@ -32,6 +33,8 @@ class Client:
 
         self._last_user = ""
         self._last_pass = ""
+
+        self.timeout = 10
 
     def alive(self):
         "Check if connection with the server is still alive"

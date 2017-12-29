@@ -5,6 +5,7 @@ import json
 import inspect
 import arrow
 import os
+import itertools
 
 from datetime import datetime
 
@@ -64,6 +65,38 @@ class CoreMessage:
     def serialize(self, session_id="", name=None):
         "Serialize this object to bytes"
         return finalize(self.json_friendly(), session_id, name)
+
+class Notification(CoreMessage):
+    """
+    """
+    _id_counter = itertools.count(1)
+
+    def __init__(self, msg, title="", *actions):
+        super().__init__("notification")
+        self.id = next(self._id_counter)
+        self.title = title
+        self.msg = msg
+        self.actions = list(actions)
+        self.expired = False
+
+    def add_action(self, actionid, text, actiontype):
+        self.actions.append({
+            'id':actionid,
+            'text':text,
+            'type':actiontype})
+
+    def data(self):
+        d = {
+            'id':self.id,
+            'title':self.title,
+            'body':self.msg,
+            'expired':self.expired,
+            }
+
+        if self.actions:
+            d['actions'] = self.actions
+
+        return d
 
 
 class Identity(CoreMessage):

@@ -7,7 +7,7 @@ from src.react_utils import (h,
                              withRouter,
                              Link)
 from src.ui import ui, Slider, Error, Pagination
-from src.client import (client, ServerMsg, ItemType, ImageSize, thumbclient, Command)
+from src.client import (client, ServerMsg, ItemType, ImageSize, Command)
 from src.i18n import tr
 from src.state import state
 from src import utils

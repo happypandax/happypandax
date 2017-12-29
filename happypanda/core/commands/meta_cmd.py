@@ -1,7 +1,7 @@
 from happypanda.common import (hlogger, exceptions, utils, constants, exceptions, config)
 from happypanda.core.command import Command, CommandEvent, AsyncCommand
 from happypanda.interface import enums
-from happypanda.core import updater
+from happypanda.core import updater, message
 
 log = hlogger.Logger(__name__)
 
@@ -13,8 +13,19 @@ class CheckUpdate(Command):
     def __init__(self, priority = constants.Priority.Low):
         super().__init__(priority)
 
-    def main(self, silent=True) -> dict:
-        return updater.check_release(silent=silent)
+    def main(self, silent=True, force=False, push=False) -> dict:
+        if force or config.check_release_interval.value:
+            u = updater.check_release(silent=silent)
+            if u and push:
+                msg = message.Notification(
+                    "Changelog coming soon! For now, please visit the github repo to see the new changes",
+                    "HappyPanda X {} is available!".format(u['tag']))
+                msg.add_action(1, "Update & Restart", "button")
+                msg.add_action(2, "Skip", "button")
+                client_answer = self.push(msg).get(msg.id, timeout=20)
+                if client_answer and 1 in client_answer:
+                    UpdateApplication().run(restart=True, silent=silent)
+            return u
 
 class UpdateApplication(Command):
     """

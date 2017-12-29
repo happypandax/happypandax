@@ -7,8 +7,7 @@ from src.react_utils import (h,
 from src.ui import ui, Slider
 from src.i18n import tr
 from src.state import state
-from src.client import (ItemType, ViewType, ImageSize, client,
-                        thumbclient, Command)
+from src.client import (ItemType, ViewType, ImageSize, client, Command)
 from src.single import thumbitem
 from src.views import tagview
 from src import utils
@@ -64,7 +63,7 @@ def get_thumbs(data=None, error=None, other=None):
     else:
         if other:
             item_ids = [x.id for x in other]
-            thumbclient.call_func("get_image", this.get_thumbs,
+            client.call_func("get_image", this.get_thumbs,
                                   item_ids=item_ids,
                                   size=ImageSize.Original, url=True, uri=True,
                                   item_type=this.state.item_type)

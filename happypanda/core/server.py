@@ -5,6 +5,7 @@ import arrow
 import os
 import gevent
 import gzip
+import weakref
 
 from inspect import getmembers, isfunction, signature, Parameter
 
@@ -12,6 +13,7 @@ from gevent import socket, pool
 from gevent.server import StreamServer
 from flask import Flask
 from flask_socketio import SocketIO
+from contextlib import contextmanager
 
 from happypanda import interface
 from happypanda.core.web import views
@@ -67,13 +69,102 @@ class Session:
         "Return a session object if it exists"
         return cls.sessions.get(s_id)
 
+class ClientNotifications:
+    _notifs = weakref.WeakValueDictionary()
+    _actions = {}
+
+    def __init__(self):
+        pass
+        
+    def _context(self, ctx=None):
+        if ctx is None:
+            ctx = utils.get_context()
+        if ctx is not None:
+            notif_ctx = ctx.setdefault("notif", {})
+            msg = notif_ctx.setdefault("msg", [])
+            rsp = notif_ctx.setdefault("rsp", [])
+            return notif_ctx
+
+    def push(self, msg, scope=None):
+        """
+        """
+        assert isinstance(msg, message.Notification)
+        ctx = self._context()
+        self._notifs[msg.id] = msg
+        cl = scope is None
+        gl = scope is None
+
+        if cl and ctx:
+            ctx['msg'].append(msg)
+
+        if gl:
+            log.d("Pushing notification on global scope")
+            for wgl_ctx in ClientHandler.contexts.valuerefs():
+                gl_ctx = wgl_ctx()
+                if gl_ctx:
+                    log.d("Pushing notification to context", gl_ctx['name'])
+                    g_ctx = self._context(gl_ctx)
+                    if cl and g_ctx == ctx:
+                        continue
+                    g_ctx['msg'].append(msg)
+        return self
+
+    def reply(self, msg_id, action_values):
+        """
+        """
+        v = {}
+        for i, k in action_values.items():
+            v[int(i)] = k
+        self._actions[msg_id] = v
+
+    def get(self, msg_id, timeout=30):
+        """
+        """
+        try:
+            a = gevent.with_timeout(timeout, self._wait_action, msg_id)
+        except gevent.Timeout:
+            msg = self._notifs.get(msg_id, False)
+            if msg:
+                msg.expired = True
+            a = None
+        return a
+
+    def _wait_action(self, msg_id):
+        while True:
+            try:
+                return self._actions.pop(msg_id)
+            except KeyError:
+                pass
+            utils.switch()
+
+    def _fetch(self, scope=None):
+        ""
+        try:
+            ctx = self._context()
+            if not ctx:
+                log.d("Popping notification but no context found")
+            else:
+                log.d("Popping notification in context:", utils.get_context()['name'])
+            r = ctx['msg'].pop() if ctx else None
+        except IndexError:
+            r = None
+        return r
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        return self._fetch()
+
+class ClientContext(dict):
+    pass
 
 class ClientHandler:
     "Handles clients"
 
     api = None
 
-    contexts = {}  # session_id : context
+    contexts = weakref.WeakValueDictionary()  # session_id : context
 
     def __init__(self, client, address):
         if not ClientHandler.api:
@@ -86,8 +177,8 @@ class ClientHandler:
         self._port = self._address[1]
         self._stopped = False
         self._accepted = False
-        self.context = utils.get_context(None).setdefault("ctx", {})
         self.session = None
+        self.context = utils.get_context(None).setdefault("ctx", ClientContext())
         self.handshake()
 
     def get_context(self, user=None, password=None):
@@ -440,7 +531,6 @@ class HPServer:
 
     def _handle(self, client, address):
         "Client handle function"
-        async.Greenlet._reset_locals(gevent.getcurrent())
         log.d("Client connected", str(address))
         handler = ClientHandler(client, address)
         self._clients.add(handler)
@@ -547,11 +637,13 @@ class WebServer:
     happyweb = Flask(__name__, static_url_path='/static',
                      template_folder=os.path.abspath(constants.dir_templates),
                      static_folder=os.path.abspath(constants.dir_static))
-    socketio = SocketIO(happyweb)
+    socketio = SocketIO(happyweb, async_mode="gevent")
 
     def run(self, host, port, debug=False, logging_queue=None, logging_args=None):
         if logging_queue:
             hlogger.Logger.setup_logger(logging_args, logging_queue)
             utils.setup_online_reporter()
+        if __name__ != '__main__':
+            gevent.monkey.patch_all(thread=False)
         views.init_views(self.happyweb, self.socketio)
         self.socketio.run(self.happyweb, host, port, debug=debug)

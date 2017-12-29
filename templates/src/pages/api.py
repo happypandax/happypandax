@@ -161,7 +161,7 @@ Page = createReactClass({
     'render': lambda: e(ui.Segment, e(ui.Grid.Column,
                                       e(ui.Message,
                                           e(ui.Message.Header, tr(this, "ui.h-server-comm", "Server Communication")),
-                                        h(ui.Message.Content, tr(this, "ui.t-server-comm-tutorial", "..."), as_="pre"),
+                                        h(ui.Message.Content, tr(this, "ui.t-server-comm-tutorial", "..."), style={"white-space":"pre-wrap"} ),
                                         info=True,
                                         ),
                                       e(ui.Divider),

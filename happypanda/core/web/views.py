@@ -3,6 +3,7 @@ import socket
 
 from flask import (render_template, abort, request, send_from_directory)
 from werkzeug.utils import secure_filename
+from gevent.lock import BoundedSemaphore
 
 from happypanda.core.client import Client
 from happypanda.common import exceptions, hlogger, constants, utils
@@ -13,15 +14,24 @@ socketio = None
 log = hlogger.Logger(__name__)
 
 all_clients = {}
+all_locks = {}
 
 
 def _create_clients(id, session_id=""):
     all_clients[id] = {
         "client": Client("webclient", session_id, id),
-        "thumbclient": Client("webclient", session_id, id),
-        "commandclient": Client("webclient", session_id, id)
+        "notification": Client("notification", session_id, id),
+        "command": Client("command", session_id, id)
     }
     return all_clients[id]
+
+def _create_locks(id):
+    all_locks[id] = {
+        "client": BoundedSemaphore(),
+        "notification": BoundedSemaphore(),
+        "command": BoundedSemaphore()
+    }
+    return all_locks[id]
 
 
 def _connect_clients(clients):
@@ -42,38 +52,41 @@ def get_clients(id, session_id=""):
         clients[c].session = clients['client'].session
     return clients
 
+def get_locks(id):
+    if not id in all_locks:
+        _create_locks(id)
+    return all_locks[id]
 
-def send_error(ex):
-    socketio.emit("exception", {'error': str(ex.__class__.__name__) + ': ' + str(ex)})
+
+def send_error(ex, **kwargs):
+    socketio.emit("exception",
+                  {'error': str(ex.__class__.__name__) + ': ' + str(ex)},
+                  **kwargs
+                  )
 
 
-def call_server(msg, c):
-    root_client = get_clients(request.sid)['client']
+def call_server(msg, client, lock):
     msg_id = msg['id']
     data = None
-    if c.alive():
-        try:
-            serv_data = msg['msg']
-            if not serv_data['session']:
-                serv_data['session'] = root_client.session
-            data = c.communicate(serv_data)
-        except exceptions.ServerError as e:
-            log.exception()
-            send_error(e)
-    else:
-        log.d("Cannot send because server is not connected:\n\t {}".format(msg))
+    try:
+        lock.acquire()
+        root_client = get_clients(msg.get("session_id", "default"))['client']
+        if client.alive():
+            try:
+                serv_data = msg['msg']
+                if not serv_data['session']:
+                    serv_data['session'] = root_client.session
+                data = client.communicate(serv_data)
+            except exceptions.ServerError as e:
+                log.exception()
+                send_error(e)
+        else:
+            log.d("Cannot send because server is not connected:\n\t {}".format(msg))
+    finally:
+        lock.release()
 
     return msg_id, data
 
-
-#@socketio.on('connect')
-# def on_connect():
-#    "client connected"
-#    try:
-#        _connect_clients(get_clients(request.sid))
-#    except exceptions.ClientError as e:
-#        log.exception("Failed to connect")
-#        send_error(e)
 
 def is_same_machine():
     # TODO: this will fail if connected to external server
@@ -85,6 +98,40 @@ def is_same_machine():
         return True
     return False
 
+def on_command_handle(client_id, clients, msg):
+    d = {'status': None}
+    cmd = msg.get('command')
+    d['command'] = cmd
+    try:
+        if cmd == 1:
+            if not clients['client'].alive():
+                _connect_clients(clients)
+            d['status'] = clients['client'].alive()
+        elif cmd == 2:
+            if not clients['client'].alive():
+                try:
+                    _connect_clients(clients)
+                except exceptions.ClientError as e:
+                    log.exception("Failed to reconnect")
+                    send_error(e, room=client_id)
+                d['status'] = clients['client'].alive()
+        elif cmd == 3:
+            if clients['client'].alive():
+                clients['client'].close()
+            d['status'] = clients['client'].alive()
+        elif cmd == 4:
+            d['status'] = clients['client'].alive()
+        elif cmd == 5:
+            clients['client'].request_auth()
+            d['status'] = clients['client']._accepted
+    except exceptions.ServerError as e:
+        log.exception()
+        send_error(e, room=client_id)
+    socketio.emit("command", d, room=client_id)
+
+def on_server_call_handle(client_id, client, lock, msg, **kwargs):
+    msg_id, data = call_server(msg, client, lock)
+    socketio.emit('server_call', {'id': msg_id, 'msg': data}, room=client_id, **kwargs)
 
 def init_views(flask_app, socketio_app):
     global happyweb
@@ -104,70 +151,46 @@ def init_views(flask_app, socketio_app):
         Returns:
             {'status' : bool or None}
         """
-        d = {'status': None}
-        cmd = msg.get('command')
-        d['command'] = cmd
-        clients = get_clients(request.sid)
-        try:
-            if cmd == 1:
-                if not clients['client'].alive():
-                    _connect_clients(clients)
-                d['status'] = clients['client'].alive()
-            elif cmd == 2:
-                if not clients['client'].alive():
-                    try:
-                        _connect_clients(clients)
-                    except exceptions.ClientError as e:
-                        log.exception("Failed to reconnect")
-                        send_error(e)
-                    d['status'] = clients['client'].alive()
-            elif cmd == 3:
-                if clients['client'].alive():
-                    clients['client'].close()
-                d['status'] = clients['client'].alive()
-            elif cmd == 4:
-                d['status'] = clients['client'].alive()
-            elif cmd == 5:
-                clients['client'].request_auth()
-                d['status'] = clients['client']._accepted
-        except exceptions.ServerError as e:
-            log.exception()
-            send_error(e)
-        socketio.emit("command", d)
+        clients = get_clients(msg.get("session_id", "default"))
+        socketio_app.start_background_task(on_command_handle, request.sid, clients, msg)
+
 
 
     @socketio.on('server_call')
     def on_server_call(msg):
-        c = get_clients(request.sid)
-        msg_id, data = call_server(msg, c['client'])
-        socketio.emit('server_call', {'id': msg_id, 'msg': data})
+        clients = get_clients(msg.get("session_id", "default"))
+        locks = get_locks(msg.get("session_id", "default"))
+        socketio_app.start_background_task(
+            on_server_call_handle,
+            request.sid,
+            clients['client'],
+            locks['client'],
+            msg)
 
 
-    @socketio.on('server_call', namespace='/thumb')
-    def on_thumb_call(msg):
-        c = get_clients(request.sid)
-        msg_id, data = call_server(msg, c['thumbclient'])
-        socketio.emit('server_call', {'id': msg_id, 'msg': data}, namespace='/thumb')
+    @socketio.on('server_call', namespace='/notification')
+    def on_push_call(msg):
+        print(msg)
+        clients = get_clients(msg.get("session_id", "default"))
+        locks = get_locks(msg.get("session_id", "default"))
+        socketio_app.start_background_task(
+            on_server_call_handle,
+            request.sid,
+            clients['notification'],
+            locks['notification'],
+            msg, namespace='/notification')
 
 
     @socketio.on('server_call', namespace='/command')
     def on_command_call(msg):
-        c = get_clients(request.sid)
-        msg_id, data = call_server(msg, c['commandclient'])
-        socketio.emit('server_call', {'id': msg_id, 'msg': data}, namespace='/command')
-
-
-    #@happyweb.before_first_request
-    # def before_first_request():
-    #    """before first request func."""
-    #    global root_client
-    #    if not root_client:
-    #        root_client = Client("webclient")
-    #    try:
-    #        root_client.connect()
-    #    except exceptions.ServerDisconnectError as e:
-    #        log.exception("Could not establish connection on first try")
-    #        send_error(e)
+        clients = get_clients(msg.get("session_id", "default"))
+        locks = get_locks(msg.get("session_id", "default"))
+        socketio_app.start_background_task(
+            on_server_call_handle,
+            request.sid,
+            clients['command'],
+            locks['command'],
+            msg, namespace='/command')
 
 
     @happyweb.route(constants.thumbs_view + '/<path:filename>')

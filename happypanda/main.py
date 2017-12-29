@@ -12,6 +12,7 @@ import multiprocessing  # noqa: E402
 from gevent import monkey  # noqa: E402
 
 from multiprocessing import Process  # noqa: E402
+from apscheduler.triggers.interval import IntervalTrigger  # noqa: E402
 
 from happypanda.common import utils, constants, hlogger, config  # noqa: E402
 from happypanda.core import server, plugins, command, services, db  # noqa: E402
@@ -61,6 +62,14 @@ def start(argv=None, db_kwargs={}):
             else:
                 plugins.registered.init_plugins()
 
+        constants.notification = server.ClientNotifications()
+
+        upd_int = config.check_release_interval.value or config.check_release_interval.default
+        upd_id = services.Scheduler.generic.add_command(meta_cmd.CheckUpdate(),
+                                                    IntervalTrigger(minutes=upd_int))
+        services.Scheduler.generic.start_command(upd_id, push=True)
+        # starting stuff
+        services.Scheduler.generic.start()
         log.i("Starting webserver... ({}:{})".format(config.host_web.value, config.port_web.value), stdout=True)
         web_args = (config.host_web.value, config.port_web.value, constants.dev if args.only_web else False)
         if args.only_web:

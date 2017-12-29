@@ -90,10 +90,22 @@ class CoreCommand:
         self._priority = priority
         self._futures = []
 
+    def _run(self, *args, **kwargs):
+        """
+        Run the command with *args and **kwargs.
+        """
+        log.d("Running command:", self.__class__.__name__)
+        return self.main(*args, **kwargs)
+
     def run_native(self, f, *args, **kwargs):
         f = async.AsyncFuture(self, self._native_pool.apply_async(_native_runner(f), args, kwargs))
         self._futures.append(f)
         return f
+
+    def push(self, msg, scope=None):
+        if constants.notification:
+            return constants.notification.push(msg, scope=scope)
+        # TODO: raise error perhaps?
 
     def kill(self):
         [f.kill() for f in self._futures]
@@ -133,8 +145,7 @@ class Command(CoreCommand, metaclass=ABCMeta):
         """
         Run the command with *args and **kwargs.
         """
-        log.d("Running command:", self.__class__.__name__)
-        return self.main(*args, **kwargs)
+        return self._run(*args, **kwargs)
 
     def _main(self):
         pass
@@ -223,7 +234,6 @@ class AsyncCommand(Command):
         self._ensure_service()
         self._args = args
         self._kwargs = kwargs
-        log.d("Running command:", self.__class__.__name__)
         self._service.start_command(
             self.command_id, *self._args, **self._kwargs)
         return self.command_id

@@ -65,6 +65,7 @@ def check_release(silent=True):
         None or {'url':'', 'changes':'', 'tag':'', 'version':(0, 0, 0)} for new release
     """
     if config.check_new_releases.value:
+        log.d("Checking for new release with interval set to", config.check_release_interval.value, "minutes")
         repo_name = config.github_repo.value['repo']
         repo_owner = config.github_repo.value['owner']
         try:
@@ -94,6 +95,7 @@ def check_release(silent=True):
             if new_rel:
                 r = SimpleGETRequest("https://api.github.com/repos/{}/{}/releases/tags/{}".format(repo_owner, repo_name, new_rel)).run()
                 data = r.json
+                ignore_words = ['installer']
                 if data:
                     changes = data['body']
                     if constants.is_osx:
@@ -103,7 +105,7 @@ def check_release(silent=True):
                     elif constants.is_linux:
                         txt = "linux"
                     for a in data['assets']:
-                        if txt in a['name'].lower():
+                        if txt in a['name'].lower() and all([x not in a['name'].lower() for x in ignore_words]):
                             download_url = a['browser_download_url']
                             break
 

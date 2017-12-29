@@ -5,10 +5,12 @@ Meta
 """
 import arrow
 
-from happypanda.common import constants, exceptions, utils, config
-from happypanda.core.services import Service
+from happypanda.common import constants, exceptions, utils, config, hlogger
+from happypanda.core.services import AsyncService
 from happypanda.core import command, message
 from happypanda.core.commands import meta_cmd
+
+log = hlogger.Logger(__name__)
 
 
 # def get_error(code: int, id: int):
@@ -24,9 +26,32 @@ from happypanda.core.commands import meta_cmd
 #    """
 #    return message.Message("works")
 
-def check_update():
+def get_notification(scope=None, msg_id: int=None):
+    """
+    Not ready yet...
+    """
+    msg = None
+    if constants.notification:
+        msg = constants.notification._fetch(scope=scope)
+
+    return msg if msg else message.Identity("notification", msg)
+
+def reply_notification(msg_id: int, action_values: dict):
+    """
+    Not ready yet...
+    """
+    s = False
+    if constants.notification:
+        msg = constants.notification.reply(msg_id, action_values)
+        s = True
+    return message.Identity("status", s)
+
+def check_update(push: bool = False):
     """
     Check for new release
+
+    Args:
+        push: whether to push out notifications if an update is found
 
     Returns:
         an empty dict or
@@ -40,7 +65,7 @@ def check_update():
     """
 
     r = {}
-    upd = meta_cmd.CheckUpdate().run()
+    upd = meta_cmd.CheckUpdate().run(force=True, push=push)
     if upd:
         r = upd
     return message.Identity('update', r)
@@ -84,7 +109,8 @@ def get_version():
 
 def _command_msg(ids):
     for x in ids:
-        if not Service.get_command(x):
+        c = AsyncService.get_command(x)
+        if not c:
             raise exceptions.CommandError(utils.this_function(), "Command with ID '{}' does not exist".format(x))
 
 
@@ -108,7 +134,7 @@ def get_command_value(command_ids: list):
     values = {}
 
     for i in command_ids:
-        cmd = Service.get_command(i)
+        cmd = AsyncService.get_command(i)
         if cmd.state not in (command.CommandState.finished, command.CommandState.stopped):
             if cmd.state == command.CommandState.failed:
                 raise exceptions.CommandError(utils.this_function(), "Command with ID '{}' has failed".format(i))
@@ -145,7 +171,7 @@ def get_command_state(command_ids: list):
     states = {}
 
     for i in command_ids:
-        states[i] = Service.get_command(i).state.name
+        states[i] = AsyncService.get_command(i).state.name
 
     return message.Identity('command_state', states)
 
@@ -186,7 +212,7 @@ def stop_command(command_ids: list):
     states = {}
 
     for i in command_ids:
-        cmd = Service.get_command(i)
+        cmd = AsyncService.get_command(i)
         cmd.stop()
         states[i] = cmd.state.name
 
@@ -212,7 +238,7 @@ def start_command(command_ids: list):
     states = {}
 
     for i in command_ids:
-        cmd = Service.get_command(i)
+        cmd = AsyncService.get_command(i)
         cmd.start()
         states[i] = cmd.state.name
 

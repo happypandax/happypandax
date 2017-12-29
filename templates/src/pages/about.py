@@ -13,6 +13,7 @@ from src.i18n import tr
 from src.utils import defined, is_same_machine, get_version
 
 
+__pragma__("tconv")
 def about_info(props):
     top_items = []
     if is_same_machine():
@@ -41,6 +42,17 @@ def about_info(props):
                          e(ui.Table.Cell, e(ui.Header, tr(props.that, "", "Torrent Client version"), as_="h5"), collapsing=True),
 
                          e(ui.Table.Cell, e(ui.Label, ".".join(props.version.torrent) if defined(props.version.torrent) else "", basic=True))))
+
+    if props.update_checking:
+        upd_button = e(ui.Button, e(ui.Icon, js_name="refresh", loading=True), tr(props.that, "", "Checking for new update"),
+                       onClick=lambda: props.check_update(), color="orange")
+    elif props.update_msg or state.new_update:
+        upd_button = e(ui.Button, e(ui.Icon, js_name="checkmark"), tr(props.that, "", "A new update is available!"),
+                       onClick=lambda: props.check_update(), color="green")
+    else:
+        upd_button = e(ui.Button, e(ui.Icon, js_name="refresh"), tr(props.that, "", "Check for updates"),
+                       onClick=lambda: props.check_update())
+
     return e(ui.Grid,
              e(ui.Grid.Row, *top_items),
              e(ui.Grid.Row,
@@ -67,11 +79,11 @@ def about_info(props):
                ),
              e(ui.Grid.Row,
                e(ui.Grid.Column,
-                 e(ui.Button, e(ui.Icon, js_name="refresh"), tr(props.that, "", "Check for updates")),
+                 upd_button,
                  e(ui.Button, e(ui.Icon, js_name="github"), tr(props.that, "", "Github Repo"),
                    as_="a", href="https://github.com/happypandax", target="_blank"),
-                 # e(ui.Button, e(ui.Icon, js_name="heart"), tr(props.that, "", "Support on patreon"),
-                 #  as_="a", href="https://github.com/happypandax", target="_blank"),
+                 e(ui.Button, e(ui.Icon, js_name="heart"), tr(props.that, "", "Support on patreon"),
+                   as_="a", href="https://www.patreon.com/twiddly", target="_blank", color="orange"),
                  ),
 
                ),
@@ -80,6 +92,7 @@ def about_info(props):
              stackable=True,
              columns="equal"
              )
+__pragma__("notconv")
 
 
 def about_license(props):
@@ -118,13 +131,33 @@ def abouttab_get_version(data=None, error=None):
     else:
         client.call_func("get_version", this.get_version)
 
+__pragma__("tconv")
+def abouttab_check_update(data=None, error=None):
+    if data is not None and not error:
+        if data:
+            state.new_update = True
+        this.setState({"update_msg": data, 'update_checking':False})
+    elif error:
+        state.app.notif("Failed to check for updates", level="warning")
+        this.setState({"update_checking": False})
+    else:
+        this.setState({"update_checking": True})
+        client.call_func("check_update", this.check_update, push=True)
+__pragma__("notconv")
 
 def abouttab_render():
     version = this.state.version
+    update_msg = this.state.update_msg
+    check_update = this.check_update
+    update_checking = this.state.update_checking
     return e(ui.Tab,
              panes=[
                  {'menuItem': {'key': 'info', 'icon': 'info circle', 'content': tr(this, "ui.mi-about-info", "Info")},
-                  'render': lambda: e(about_info, that=this, version=version)},
+                  'render': lambda: e(about_info, that=this,
+                                      version=version,
+                                      update_msg=update_msg,
+                                      update_checking=update_checking,
+                                      check_update=check_update)},
                  {'menuItem': {'key': 'plugins', 'icon': 'cubes',
                                'content': tr(this, "ui.mi-about-plugins", "Plugins")}, },
                  {'menuItem': {'key': 'statistics', 'icon': 'bar chart',
@@ -142,9 +175,13 @@ AboutTab = createReactClass({
 
     'getInitialState': lambda: {
         'version': {},
+        'update_msg': {},
+        'update_checking': False,
     },
 
     'get_version': abouttab_get_version,
+
+    'check_update': abouttab_check_update,
 
     'componentDidMount': lambda: this.get_version(),
 
