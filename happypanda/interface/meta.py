@@ -89,6 +89,25 @@ def update_application(download_url: str = None, restart: bool = True):
     upd = meta_cmd.UpdateApplication().run(download_url, restart)
     return message.Identity('update', upd)
 
+def restart_application():
+    """
+    Restart the application
+
+    Returns:
+        This function will not return
+    """
+    rapp = meta_cmd.RestartApplication().run()
+    return message.Identity('status', True)
+
+def shutdown_application():
+    """
+    Shutdown the application
+
+    Returns:
+        This function will not return
+    """
+    rapp = meta_cmd.ShutdownApplication().run()
+    return message.Identity('status', True)
 
 def get_version():
     """

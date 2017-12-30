@@ -47,13 +47,13 @@ def about_info(props):
 
     if props.update_checking:
         upd_button = e(ui.Button, e(ui.Icon, js_name="refresh", loading=True), tr(props.that, "", "Checking for new update"),
-                       onClick=lambda: props.check_update(), color="orange")
+                       onClick=lambda: props.check_update(), color="orange", size="small")
     elif props.update_msg or state.new_update:
         upd_button = e(ui.Button, e(ui.Icon, js_name="checkmark"), tr(props.that, "", "A new update is available!"),
-                       onClick=lambda: props.check_update(), color="green")
+                       onClick=lambda: props.check_update(), color="green", size="small")
     else:
         upd_button = e(ui.Button, e(ui.Icon, js_name="refresh"), tr(props.that, "", "Check for updates"),
-                       onClick=lambda: props.check_update())
+                       onClick=lambda: props.check_update(), size="small")
 
     return e(ui.Grid,
              e(ui.Grid.Row, *top_items),
@@ -83,11 +83,19 @@ def about_info(props):
                e(ui.Grid.Column,
                  upd_button,
                  e(ui.Button, e(ui.Icon, js_name="github"), tr(props.that, "", "Github Repo"),
-                   as_="a", href="https://github.com/happypandax", target="_blank"),
+                   as_="a", href="https://github.com/happypandax", target="_blank", size="small"),
                  e(ui.Button, e(ui.Icon, js_name="heart"), tr(props.that, "", "Support on patreon"),
-                   as_="a", href="https://www.patreon.com/twiddly", target="_blank", color="orange"),
+                   as_="a", href="https://www.patreon.com/twiddly", target="_blank", color="orange", size="small"),
                  ),
-
+               ),
+             e(ui.Grid.Row,
+               e(ui.Grid.Column,
+                 e(ui.Button, e(ui.Icon, js_name="repeat"), tr(props.that, "", "Restart"),
+                   color="blue", size="small", onClick=lambda:props.restart()),
+                 e(ui.Button, e(ui.Icon, js_name="shutdown"), tr(props.that, "", "Shutdown"),
+                   color="red", size="small", onClick=lambda:props.shutdown()),
+                ),
+               textAlign="right"
                ),
              divided="vertically",
              container=True,
@@ -135,6 +143,22 @@ def abouttab_get_version(data=None, error=None):
     else:
         client.call_func("get_version", this.get_version)
 
+def abouttab_restart(data=None, error=None):
+    if data is not None and not error:
+        pass
+    elif error:
+        state.app.notif("Failed to restart", level="warning")
+    else:
+        client.call_func("restart_application", this.restart)
+
+def abouttab_shutdown(data=None, error=None):
+    if data is not None and not error:
+        pass
+    elif error:
+        state.app.notif("Failed to shutdown", level="warning")
+    else:
+        client.call_func("shutdown_application", this.shutdown)
+
 
 __pragma__("tconv")
 
@@ -160,6 +184,8 @@ def abouttab_render():
     update_msg = this.state.update_msg
     check_update = this.check_update
     update_checking = this.state.update_checking
+    restart = this.restart
+    shutdown = this.shutdown
     return e(ui.Tab,
              panes=[
                  {'menuItem': {'key': 'info', 'icon': 'info circle', 'content': tr(this, "ui.mi-about-info", "Info")},
@@ -167,7 +193,9 @@ def abouttab_render():
                                       version=version,
                                       update_msg=update_msg,
                                       update_checking=update_checking,
-                                      check_update=check_update)},
+                                      check_update=check_update,
+                                      restart=restart,
+                                      shutdown=shutdown)},
                  {'menuItem': {'key': 'plugins', 'icon': 'cubes',
                                'content': tr(this, "ui.mi-about-plugins", "Plugins")}, },
                  {'menuItem': {'key': 'statistics', 'icon': 'bar chart',
@@ -190,6 +218,9 @@ AboutTab = createReactClass({
     },
 
     'get_version': abouttab_get_version,
+
+    'restart': abouttab_restart,
+    'shutdown': abouttab_shutdown,
 
     'check_update': abouttab_check_update,
 
