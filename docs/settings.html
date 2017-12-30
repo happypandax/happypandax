@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Settings &#8212; Happypanda X 0.0.1#110 documentation</title>
+    <title>Settings &#8212; Happypanda X 0.0.2#111 documentation</title>
     
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.0.1#110',
+        VERSION:     '0.0.2#111',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -54,7 +54,7 @@
         </button>
         <a class="navbar-brand" href="index.html">
           Happypanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.1#110</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.2#111</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -216,12 +216,16 @@
 <td>Regularly check for new releases</td>
 </tr>
 <tr class="row-even"><td>check_release_interval</td>
-<td>30</td>
+<td>20</td>
 <td>Interval in minutes between checking for a new release, set 0 to only check once every startup</td>
 </tr>
 <tr class="row-odd"><td>allow_beta_releases</td>
 <td>False</td>
 <td>Allow downloading alpha releases</td>
+</tr>
+<tr class="row-even"><td>unrar_tool_path</td>
+<td>bin\win32\unrar.exe</td>
+<td>Path to unrar tool. On Windows the default path is &#8216;bin/win32/unrar.exe&#8217;. On Unix the default path is &#8216;unrar&#8217;</td>
 </tr>
 </tbody>
 <colgroup>
@@ -230,23 +234,23 @@
 <col width="33%" />
 </colgroup>
 <thead valign="bottom">
-<tr class="row-even"><th class="head" colspan="3">gallery</th>
+<tr class="row-odd"><th class="head" colspan="3">gallery</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-odd"><td>external_image_viewer</td>
+<tr class="row-even"><td>external_image_viewer</td>
 <td></td>
 <td>Path to external image viewer executable</td>
 </tr>
-<tr class="row-even"><td>external_image_viewer_args</td>
+<tr class="row-odd"><td>external_image_viewer_args</td>
 <td></td>
 <td>Command arguments to supply the image viewer executable</td>
 </tr>
-<tr class="row-odd"><td>send_to_trash</td>
+<tr class="row-even"><td>send_to_trash</td>
 <td>True</td>
 <td>Send deleted galleries to recycle bin</td>
 </tr>
-<tr class="row-even"><td>send_path_to_first_file</td>
+<tr class="row-odd"><td>send_path_to_first_file</td>
 <td>False</td>
 <td>Send path to first file when opening a gallery in external viewer</td>
 </tr>
@@ -257,11 +261,11 @@
 <col width="33%" />
 </colgroup>
 <thead valign="bottom">
-<tr class="row-odd"><th class="head" colspan="3">db</th>
+<tr class="row-even"><th class="head" colspan="3">db</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td>sqlite_database_timeout</td>
+<tr class="row-odd"><td>sqlite_database_timeout</td>
 <td>30</td>
 <td>Amount of seconds to wait for the database to be writeable</td>
 </tr>
@@ -272,63 +276,63 @@
 <col width="33%" />
 </colgroup>
 <thead valign="bottom">
-<tr class="row-odd"><th class="head" colspan="3">server</th>
+<tr class="row-even"><th class="head" colspan="3">server</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td>server_name</td>
-<td>orihime_saeko_testarossa</td>
+<tr class="row-odd"><td>server_name</td>
+<td>eri_kouko_mayoi</td>
 <td>Specifiy name of the server</td>
 </tr>
-<tr class="row-odd"><td>port</td>
+<tr class="row-even"><td>port</td>
 <td>7007</td>
 <td>Specify which port to start the server on</td>
 </tr>
-<tr class="row-even"><td>port_web</td>
+<tr class="row-odd"><td>port_web</td>
 <td>7008</td>
 <td>Specify which port to start the webserver on</td>
 </tr>
-<tr class="row-odd"><td>torrent_port</td>
+<tr class="row-even"><td>torrent_port</td>
 <td>7006</td>
 <td>Specify which port to start the torrent client on</td>
 </tr>
-<tr class="row-even"><td>port_range</td>
-<td>{&#8216;to&#8217;: 7018, &#8216;from&#8217;: 7009}</td>
+<tr class="row-odd"><td>port_range</td>
+<td>{&#8216;from&#8217;: 7009, &#8216;to&#8217;: 7018}</td>
 <td>Specify a range of ports to attempt</td>
 </tr>
-<tr class="row-odd"><td>host</td>
+<tr class="row-even"><td>host</td>
 <td>localhost</td>
 <td>Specify which address the server should bind to</td>
 </tr>
-<tr class="row-even"><td>host_web</td>
+<tr class="row-odd"><td>host_web</td>
 <td></td>
 <td>Specify which address the webserver should bind to</td>
 </tr>
-<tr class="row-odd"><td>expose_server</td>
+<tr class="row-even"><td>expose_server</td>
 <td>False</td>
 <td>Attempt to expose the server through portforwading</td>
 </tr>
-<tr class="row-even"><td>allowed_clients</td>
+<tr class="row-odd"><td>allowed_clients</td>
 <td>0</td>
 <td>Limit amount of clients allowed to be connected (0 means no limit)</td>
 </tr>
-<tr class="row-odd"><td>allow_guests</td>
+<tr class="row-even"><td>allow_guests</td>
 <td>True</td>
 <td>Specify if guests are allowed on this server</td>
 </tr>
-<tr class="row-even"><td>require_auth</td>
+<tr class="row-odd"><td>require_auth</td>
 <td>False</td>
 <td>Client must be authenticated to get write access</td>
 </tr>
-<tr class="row-odd"><td>disable_default_user</td>
+<tr class="row-even"><td>disable_default_user</td>
 <td>False</td>
 <td>Disable default user</td>
 </tr>
-<tr class="row-even"><td>session_span</td>
+<tr class="row-odd"><td>session_span</td>
 <td>0</td>
 <td>Specify the amount of time (in minutes) a session can go unused before expiring or 0 for never</td>
 </tr>
-<tr class="row-odd"><td>encrypt</td>
+<tr class="row-even"><td>encrypt</td>
 <td>False</td>
 <td>Specify if messages should be encrypted before sending. A secret key has to be set for messages to be encrypted</td>
 </tr>
@@ -339,27 +343,27 @@
 <col width="33%" />
 </colgroup>
 <thead valign="bottom">
-<tr class="row-even"><th class="head" colspan="3">search</th>
+<tr class="row-odd"><th class="head" colspan="3">search</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-odd"><td>regex</td>
+<tr class="row-even"><td>regex</td>
 <td>False</td>
 <td>Allow regex in search filters</td>
 </tr>
-<tr class="row-even"><td>case_sensitive</td>
+<tr class="row-odd"><td>case_sensitive</td>
 <td>False</td>
 <td>Search filter is case sensitive</td>
 </tr>
-<tr class="row-odd"><td>match_whole_words</td>
+<tr class="row-even"><td>match_whole_words</td>
 <td>False</td>
 <td>Match terms exact</td>
 </tr>
-<tr class="row-even"><td>match_all_terms</td>
+<tr class="row-odd"><td>match_all_terms</td>
 <td>True</td>
 <td>Match only items that has all terms</td>
 </tr>
-<tr class="row-odd"><td>descendants</td>
+<tr class="row-even"><td>descendants</td>
 <td>True</td>
 <td>Also match on descandants</td>
 </tr>
@@ -370,11 +374,11 @@
 <col width="33%" />
 </colgroup>
 <thead valign="bottom">
-<tr class="row-even"><th class="head" colspan="3">client</th>
+<tr class="row-odd"><th class="head" colspan="3">client</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-odd"><td>translation_locale</td>
+<tr class="row-even"><td>translation_locale</td>
 <td>en_us</td>
 <td>The default translation locale when none is specified. See folder /translations for available locales</td>
 </tr>
@@ -385,27 +389,27 @@
 <col width="33%" />
 </colgroup>
 <thead valign="bottom">
-<tr class="row-even"><th class="head" colspan="3">gui</th>
+<tr class="row-odd"><th class="head" colspan="3">gui</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-odd"><td>autostart_server</td>
+<tr class="row-even"><td>autostart_server</td>
 <td>False</td>
 <td>Start the server automatically on HPX GUI startup</td>
 </tr>
-<tr class="row-even"><td>start_minimized_to_tray</td>
+<tr class="row-odd"><td>start_minimized_to_tray</td>
 <td>False</td>
 <td>Start the HPX GUI in a minimized to tray state</td>
 </tr>
-<tr class="row-odd"><td>send_to_tray_on_close</td>
+<tr class="row-even"><td>send_to_tray_on_close</td>
 <td>False</td>
 <td>Put the application in the notification tray on close button</td>
 </tr>
-<tr class="row-even"><td>send_to_tray_on_minimize</td>
+<tr class="row-odd"><td>send_to_tray_on_minimize</td>
 <td>False</td>
 <td>Put the application in the notification tray on minimize button</td>
 </tr>
-<tr class="row-odd"><td>open_webclient_on_server_start</td>
+<tr class="row-even"><td>open_webclient_on_server_start</td>
 <td>True</td>
 <td>Open the webclient in your default browser on server start</td>
 </tr>
@@ -416,15 +420,15 @@
 <col width="33%" />
 </colgroup>
 <thead valign="bottom">
-<tr class="row-even"><th class="head" colspan="3">network</th>
+<tr class="row-odd"><th class="head" colspan="3">network</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-odd"><td>request_timeout</td>
+<tr class="row-even"><td>request_timeout</td>
 <td>30</td>
 <td>Upper limit of a request timeout in seconds</td>
 </tr>
-<tr class="row-even"><td>proxy</td>
+<tr class="row-odd"><td>proxy</td>
 <td>{&#8216;http&#8217;: &#8216;&#8217;, &#8216;https&#8217;: &#8216;&#8217;}</td>
 <td>Specify network proxies. Proxy URLs must include the scheme. To use HTTP Basic Auth with your proxy, use the http://user:password&#64;host/ syntax</td>
 </tr>
