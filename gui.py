@@ -196,6 +196,7 @@ class ConvertHP(QDialog):
         rar_edit.setPlaceholderText(t("", default="Optional"))
         rar_edit.textChanged.connect(self.on_rar)
         lf.addRow(t("", default="RAR tool path") + ':', rar_edit)
+        rar_edit.setText(config.unrar_tool_path.value)
 
         archive_box = QCheckBox(self)
         archive_box.stateChanged.connect(self.on_archive)
@@ -238,7 +239,8 @@ class ConvertHP(QDialog):
         else:
             self.args .append(os.path.join("data", "happypanda.db"))
         if self._rar:
-            self.args .append("--rar {}".format(os.path.normpath(self._rar)))
+            self.args .append("--rar")
+            self.args .append(os.path.normpath(self._rar))
         if self._archive:
             self.args .append("--skip-archive")
 

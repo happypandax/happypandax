@@ -5,6 +5,7 @@ import shutil
 import send2trash
 import attr
 import subprocess
+import rarfile
 
 from io import BytesIO
 from PIL import Image
@@ -13,13 +14,12 @@ from rarfile import RarFile
 from contextlib import contextmanager
 from gevent import fileobject
 
-from happypanda.common import hlogger, exceptions, utils, constants
+from happypanda.common import hlogger, exceptions, utils, constants, config
 from happypanda.core.command import CoreCommand, CommandEntry, AsyncCommand
 from happypanda.core.services import ImageService
 from happypanda.core import db
 
 log = hlogger.Logger(__name__)
-
 
 @attr.s
 class ImageProperties:
@@ -526,6 +526,9 @@ class Archive(CoreCommand):
         if path.suffix.lower() in ('.zip', '.cbz'):
             o = ZipFile(str(path))
         elif path.suffix.lower() in ('.rar', '.cbr'):
+            unrar_path = config.unrar_tool_path.value
+            if unrar_path:
+                rarfile.UNRAR_TOOL = unrar_path
             o = RarFile(str(path))
         o.hpx_path = path
         return o

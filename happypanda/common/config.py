@@ -405,6 +405,12 @@ with config.namespace(core_ns):
         False,
         "Allow downloading alpha releases")
 
+    unrar_tool_path = config.create(
+        core_ns,
+        "unrar_tool_path",
+        os.path.join(constants.dir_bin, "unrar.exe") if constants.is_win else "unrar",
+        "Path to unrar tool. On Windows the default path is 'bin/win32/unrar.exe'. On Unix the default path is 'unrar'")
+
 
 gallery_ns = 'gallery'
 

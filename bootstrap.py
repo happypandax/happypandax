@@ -16,16 +16,14 @@ dev_options = dict(
 env_python = r".\env\Scripts\python" if sys.platform.startswith("win") else "./env/bin/python"
 
 changes = """
-- added hpx logo
-- implemented auto updater
-- added 'get_notification' api function (not yet ready)
-- added 'reply_notification' api function (not yet ready)
-- added 'check_update' api function
-- added 'update_application' api function
+- implement option to skip expired push messages
+- added 'restart_application' api function
+- added 'shutdown_application' api function
+- fixed bug in conversion script causing it to hang
+- add core.unrar_tool_path setting
+- set default path to unrar tool
+- misc fixes
 - update docs
-- added bootstrap.py deploy
-- updated some libraries
-- fixed lots of issues
 """
 
 
@@ -336,6 +334,7 @@ def lint(args, unknown=None):
 
 def _compress_dir(dir_path, output_name, fmt="zip"):
     from happypanda.common import config
+    print("Compressing {} archive...".format(fmt))
     if fmt == "7z":
         if not config.sevenzip_path.value:
             print("Please set the path to the 7z executable in your configuration (advanced -> 7z_path)")
@@ -361,6 +360,7 @@ def deploy(args, unknown=None):
         from PyInstaller.__main__ import run as prun
 
     from happypanda.common import constants
+    from happypanda.core import updater
 
     if sys.platform.startswith('darwin'):
         os_name = "osx"
@@ -415,6 +415,8 @@ def deploy(args, unknown=None):
             if os.path.exists(output_path_a):
                 os.remove(output_path_a)
             _compress_dir(dir_path, output_path_a, fmt)
+            if p != "installer":
+                print("{}\n\tSHA256 Checksum: {}".format(output_path_a, updater.sha256_checksum(output_path_a)))
     print("Done")
 
 

@@ -21,15 +21,16 @@ updater_name = "happyupd"  # windows will make it require escalted priv. if name
 updater_key = "updater"
 
 ## VERSIONING ##
-build = 110
-version = (0, 0, 1)
+build = 111
+version = (0, 0, 2)
 version_db = (0, 0, 1)
-version_web = (0, 0, 1)
+version_web = (0, 0, 2)
 
 ## PATHS & FILENAMES ##
 app_path = getattr(sys, '_MEIPASS', '.') if is_frozen else '.'
 dir_root = ""
 dir_static = os.path.join(dir_root, "static")
+dir_bin = os.path.join(dir_root, "bin", "win32" if is_win else "osx" if is_osx else "linux" if is_linux else "")
 dir_data = os.path.join(dir_root, "data")
 dir_download = os.path.join(dir_root, "downloads")
 dir_cache = os.path.join(dir_data, "cache")

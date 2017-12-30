@@ -247,6 +247,8 @@ class Storage:
             r = self.lstorage.getItem(key)
             if r is None and default is not None:
                 r = default
+            elif r == "undefined":
+                r = None
             elif r:
                 r = JSON.parse(r)  # can't handle empty strings
             else:
@@ -257,7 +259,7 @@ class Storage:
 
     def set(self, key, value, local=False):
         if self.enabled and not local:
-            if value is None:  # convert undefined to null
+            if value == js_undefined:  # convert undefined to null
                 value = None
             self.lstorage.setItem(key, JSON.stringify(value))
         else:

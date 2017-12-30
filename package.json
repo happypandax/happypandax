@@ -1,6 +1,6 @@
 {
   "name": "happypandax",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "The official HPX frontend",
   "main": "templates/__javascript__/main.js",
   "directories": {
