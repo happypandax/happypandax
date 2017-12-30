@@ -390,7 +390,7 @@ with config.namespace(core_ns):
     check_release_interval = config.create(
         core_ns,
         "check_release_interval",
-        30,
+        20,
         "Interval in minutes between checking for a new release, set 0 to only check once every startup")
 
     allow_beta_releases = config.create(

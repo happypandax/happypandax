@@ -336,11 +336,12 @@ def setup_online_reporter():
     """
     if config.report_critical_errors.value:
         rollbar.init(config.rollbar_access_token.value,
-                     'HPX {}, web({}), db({}), build({})'.format(
+                     'HPX {} web({}) db({}) build({}) platform({})'.format(
                          constants.version,
                          constants.version_web,
                          constants.version_db,
-                         constants.build))
+                         constants.build,
+                         platform.platform()))
         hlogger.Logger.report_online = True
 
 

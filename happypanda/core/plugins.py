@@ -233,11 +233,13 @@ class HandlerValue:
 
     def _raise_error(self):
         raise exceptions.CoreError(
-            self.name, "No handler is connected to this command")
+            self.name,
+            "No handler is connected to this command: {} (capture token: {})".format(self.name, self.capture_token))
 
     def _raise_default_error(self):
         raise exceptions.CoreError(
-            self.name, "No default handler is connected to this command")
+            self.name,
+            "No default handler is connected to this command: {} (capture token: {})".format(self.name, self.capture_token))
 
     def _call_capture(self, idx, error, default):
         if not self._capture_handlers and not self.default_capture_handlers:
