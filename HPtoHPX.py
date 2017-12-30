@@ -1021,7 +1021,6 @@ def main(args=sys.argv[1:]):
                         pass
                 pages_to_sendx = pages_to_send2
 
-
             pages_map = {}
             pages_finish = {}
             pages_finished = []

@@ -21,6 +21,7 @@ from happypanda.core import db
 
 log = hlogger.Logger(__name__)
 
+
 @attr.s
 class ImageProperties:
     size = attr.ib(default=utils.ImageSize(*constants.image_sizes['medium']))

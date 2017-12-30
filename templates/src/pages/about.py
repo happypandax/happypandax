@@ -91,10 +91,10 @@ def about_info(props):
              e(ui.Grid.Row,
                e(ui.Grid.Column,
                  e(ui.Button, e(ui.Icon, js_name="repeat"), tr(props.that, "", "Restart"),
-                   color="blue", size="small", onClick=lambda:props.restart()),
+                   color="blue", size="small", onClick=lambda: props.restart()),
                  e(ui.Button, e(ui.Icon, js_name="shutdown"), tr(props.that, "", "Shutdown"),
-                   color="red", size="small", onClick=lambda:props.shutdown()),
-                ),
+                   color="red", size="small", onClick=lambda: props.shutdown()),
+                 ),
                textAlign="right"
                ),
              divided="vertically",
@@ -143,6 +143,7 @@ def abouttab_get_version(data=None, error=None):
     else:
         client.call_func("get_version", this.get_version)
 
+
 def abouttab_restart(data=None, error=None):
     if data is not None and not error:
         pass
@@ -150,6 +151,7 @@ def abouttab_restart(data=None, error=None):
         state.app.notif("Failed to restart", level="warning")
     else:
         client.call_func("restart_application", this.restart)
+
 
 def abouttab_shutdown(data=None, error=None):
     if data is not None and not error:
