@@ -136,8 +136,7 @@ class ClientNotifications:
                 pass
             utils.switch()
 
-    def _fetch(self, scope=None):
-        ""
+    def _pop(self, scope):
         try:
             ctx = self._context()
             if not ctx:
@@ -148,6 +147,14 @@ class ClientNotifications:
         except IndexError:
             r = None
         return r
+
+    def _fetch(self, scope=None, expired=True):
+        ""
+        while True:
+            p = self._pop(scope)
+            if p and p.expired and not expired:
+                continue
+            return p
 
     def __iter__(self):
         return self

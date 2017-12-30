@@ -26,13 +26,13 @@ log = hlogger.Logger(__name__)
 #    """
 #    return message.Message("works")
 
-def get_notification(scope=None, msg_id: int=None):
+def get_notification(scope=None, msg_id: int=None, expired: bool = False):
     """
     Not ready yet...
     """
     msg = None
     if constants.notification:
-        msg = constants.notification._fetch(scope=scope)
+        msg = constants.notification._fetch(scope=scope, expired=expired)
 
     return msg if msg else message.Identity("notification", msg)
 
@@ -61,8 +61,8 @@ def check_update(push: bool = False):
 
             {
                 'url' : str,
-                'changes' : str,
                 'tag' : str
+                'changes' : str,
             }
     """
 

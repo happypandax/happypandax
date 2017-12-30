@@ -89,17 +89,22 @@ class ImageItem(AsyncCommand):
         return self.run_native(self._generate).get()
 
     def _generate(self):
+        log.d("Generating image thumbnail", self._image,
+              self.properties)
         size = self.properties.size
         if isinstance(self._image, str):
             fs = CoreFS(self._image)
             if not fs.exists:
+                log.d("Image file does not exists")
                 return ""
             self._image = fs.get()
         im = None
         image_path = ""
         try:
-            im = self._convert(Image.open(self._image))
             f, ext = os.path.splitext(self._image)
+            im = Image.open(self._image)
+            if not any(x in ext.lower() for x in ('jpeg', 'jpg')):
+                im = self._convert(im)
 
             if self.properties.output_path:
                 image_path = self.properties.output_path
@@ -137,6 +142,7 @@ class ImageItem(AsyncCommand):
         finally:
             if im:
                 im.close()
+        log.d("Generated image path:", image_path)
         return image_path
 
     @staticmethod
@@ -280,12 +286,15 @@ class CoreFS(CoreCommand):
     @property
     def inside_archive(self):
         "Check if path is pointed to an object inside an archive"
+        log.d("Checking if path is inside archive", self._path)
         parts = list(self._path.parents)
 
         while parts:
             p = parts.pop()
             if p.is_file() and p.suffix.lower() in self.archive_formats():
+                log.d("Path is inside an archive", self._path)
                 return True
+        log.d("Path is not inside an archive", self._path)
         return False
 
     @property
@@ -300,6 +309,7 @@ class CoreFS(CoreCommand):
         "Check if path exists"
         self._init_archive()
         if self.inside_archive:
+            log.d("Checking for archive path", self.archive_name, "in archive", self.path)
             return self.archive_name in self._archive.namelist()
         else:
             return self._path.exists()

@@ -145,6 +145,7 @@ class Client(Base):
         self.call_func("get_config", self._set_debug, cfg={'core.debug': False})
 
     def on_disconnect(self):
+        state['connected'] = False
         self._connection_status = False
         self._disconnected_once = True
         if state.app:
@@ -191,6 +192,7 @@ class Client(Base):
 
     def on_command(self, msg):
         self._connection_status = msg['status']
+        state['connected'] = self._connection_status
         st_txt = "unknown"
         if self._connection_status:
             if self._disconnected_once or self._first_connect:
@@ -219,6 +221,7 @@ class Client(Base):
             if not serv_data:
                 self.log("serv_data is null for message: {}".format(serv_msg._msg))
                 self.log(msg)
+                return
             self.session = serv_data['session']
             if 'error' in serv_data:
                 self.flash_error(serv_data['error'])
