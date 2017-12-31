@@ -49,10 +49,11 @@ class Response(CoreCommand):
     """
     """
 
-    def __init__(self, _response_obj, _props):
+    def __init__(self, _url, _response_obj, _props):
         super().__init__()
         self.properties = _props
         self._rsp = _response_obj
+        self._url = _url
 
     @property
     def response(self):
@@ -77,12 +78,14 @@ class Response(CoreCommand):
         Returns str path to file
         """
         assert isinstance(filepath, (str, io_cmd.CoreFS))
-        if isinstance(str):
+        log.i("Saving content to file", self._rsp.url)
+        if isinstance(filepath, str):
             filepath = io_cmd.CoreFS(filepath)
 
         if extension:
-            filepath = io_cmd.CoreFS(filepath.path + os.path.splitext(self._rsp.url)[1], filepath._archive)
+            filepath = io_cmd.CoreFS(filepath.path + os.path.splitext(self._url)[1], filepath._archive)
 
+        log.d("Saving to filepath", filepath)
         with filepath.open(mode="wb") as f:
             if self.properties.stream:
                 for data in self._rsp.iter_content(chunk_size=1024, decode_unicode=decode_unicode):
@@ -143,7 +146,7 @@ class _Request(Command):
             kwargs['json'] = props.json
         if props.stream and verb == Method.GET:
             kwargs['stream'] = props.stream
-        r = Response(method(url, **kwargs), props)
+        r = Response(url, method(url, **kwargs), props)
         return r
 
     def cleanup_session(self):

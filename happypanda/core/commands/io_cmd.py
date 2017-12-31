@@ -308,8 +308,8 @@ class CoreFS(CoreCommand):
     @property
     def exists(self):
         "Check if path exists"
-        self._init_archive()
         if self.inside_archive:
+            self._init_archive()
             log.d("Checking for archive path", self.archive_name, "in archive", self.path)
             return self.archive_name in self._archive.namelist()
         else:
@@ -340,8 +340,8 @@ class CoreFS(CoreCommand):
 
     def get(self):
         "Get path as string. If path is inside an archive it will get extracted"
-        self._init_archive()
         if self.inside_archive:
+            self._init_archive()
             if not self._extacted_file:
                 self._extacted_file = self.extract()
             return self._extacted_file.path
@@ -369,9 +369,9 @@ class CoreFS(CoreCommand):
     @contextmanager  # TODO: Make usable without contextmanager too
     def open(self, *args, **kwargs):
         ""
-        self._init_archive()
         try:
             if self.inside_archive:
+                self._init_archive()
                 f = self._archive.open(self.archive_name, *args, **kwargs)
             else:
                 f = open(self.get(), *args, **kwargs)

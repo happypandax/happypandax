@@ -100,7 +100,7 @@ def check_release(silent=True):
                     "https://api.github.com/repos/{}/{}/releases/tags/{}".format(repo_owner, repo_name, new_rel)).run()
                 data = r.json
                 ignore_words = ['installer']
-                if data:
+                if data and 'body' in data and 'assets' in data:
                     changes = data['body']
                     if constants.is_osx:
                         txt = "osx"
@@ -140,7 +140,7 @@ def get_release(download_url=None, archive=True, silent=True):
 
     """
     if download_url:
-        log.d("Getting release", download_url, stdout=True)
+        log.i("Getting release", download_url, stdout=True)
 
     down_rels_key = "downloaded_releases"
 
@@ -160,10 +160,10 @@ def get_release(download_url=None, archive=True, silent=True):
         if download_url not in down_rels or not os.path.exists(down_rels[download_url]['path']):
             d_file = {}
             if os.path.exists(download_url):  # TODO: if is filepath but not existing, raise appropriate error
-                log.d("Getting release from existing file")
+                log.i("Getting release from existing file", stdout=True)
                 d_file['path'] = download_url
             else:
-                log.d("Getting release from web")
+                log.i("Getting release from web", stdout=True)
                 r = SimpleGETRequest(download_url, RequestProperties(stream=True)).run()
                 d_file['path'] = r.save(
                     os.path.join(
@@ -171,7 +171,7 @@ def get_release(download_url=None, archive=True, silent=True):
                         utils.random_name()),
                     extension=True)
             d_file['hash'] = sha256_checksum(d_file['path'])
-            log.d("Computed file checksum", d_file['hash'])
+            log.i("Computed file checksum", d_file['hash'])
             if not constants.dev and not verify_release(d_file['hash'], silent):
                 log.w("File checksum mismatch from download url", download_url)
                 return None
@@ -182,7 +182,7 @@ def get_release(download_url=None, archive=True, silent=True):
                     db[down_rels_key] = down_rels
         else:
             d_file = down_rels[download_url]
-            log.d("Release file found in archive")
+            log.i("Release file found in archive", stdout=True)
     except exceptions.NetworkError:
         if not silent:
             raise
