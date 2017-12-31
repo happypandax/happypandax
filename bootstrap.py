@@ -23,8 +23,14 @@ changes = """
 - fixed bug in conversion script causing it to hang
 - add core.unrar_tool_path setting
 - set default path to unrar tool
-- misc fixes
+- added 'get_notification' api function (not yet ready)
+- added 'reply_notification' api function (not yet ready)
+- added 'check_update' api function
+- added 'update_application' api function
 - update docs
+- added bootstrap.py deploy
+- updated some libraries
+- fixed lots of issues
 """
 
 

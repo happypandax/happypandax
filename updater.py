@@ -61,5 +61,5 @@ if __name__ == '__main__':
         with shelve.open(constants.internal_db_path) as db:
             update_info['state'] = state.value
         log.i('Finished with state:', state)
-    except:
+    except BaseException:
         log.exception("Updater failed")
