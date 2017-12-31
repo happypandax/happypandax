@@ -93,7 +93,7 @@ class DBBase:
             cls._AUTO_COMMIT = False
             cls.execute(cls, "BEGIN TRANSACTION")
             cls._STATE['active'] = True
-        #print("STARTED DB OPTIMIZE")
+        #print("STARTED DB OPTIMIZATION")
 
     @classmethod
     def end(cls):
@@ -105,7 +105,7 @@ class DBBase:
                 pass
             cls._AUTO_COMMIT = True
             cls._STATE['active'] = False
-        #print("ENDED DB OPTIMIZE")
+        #print("ENDED DB OPTIMIZATION")
 
     def execute(self, *args):
         "Same as cursor.execute"
