@@ -60,6 +60,7 @@ if __name__ == '__main__':
 
         with shelve.open(constants.internal_db_path) as db:
             update_info['state'] = state.value
+            db[constants.updater_key] = update_info
         log.i('Finished with state:', state)
     except BaseException:
         log.exception("Updater failed")

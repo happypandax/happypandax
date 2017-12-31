@@ -565,7 +565,7 @@ class Archive(CoreCommand):
             for m in membs:
                 archive.extract(m, str(target))
         elif isinstance(archive, RarFile):
-            temp_p = target.join(filename)
+            temp_p = str(target.joinpath(filename))
             archive.extract(filename, str(target))
         return temp_p
 

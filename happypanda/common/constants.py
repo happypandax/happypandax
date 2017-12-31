@@ -21,10 +21,13 @@ updater_name = "happyupd"  # windows will make it require escalted priv. if name
 updater_key = "updater"
 
 ## VERSIONING ##
-build = 112
+build = 113
 version = (0, 0, 2)
 version_db = (0, 0, 1)
 version_web = (0, 0, 2)
+version_str = ".".join(str(x) for x in version)
+version_db_str = ".".join(str(x) for x in version_db)
+version_web_str = ".".join(str(x) for x in version_web)
 
 ## PATHS & FILENAMES ##
 app_path = getattr(sys, '_MEIPASS', '.') if is_frozen else '.'
