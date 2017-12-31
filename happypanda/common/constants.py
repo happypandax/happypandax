@@ -22,7 +22,7 @@ updater_key = "updater"
 
 ## VERSIONING ##
 build = 112
-version = (0, 0, 0)
+version = (0, 0, 2)
 version_db = (0, 0, 1)
 version_web = (0, 0, 2)
 

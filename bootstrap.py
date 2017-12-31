@@ -16,6 +16,7 @@ dev_options = dict(
 env_python = r".\env\Scripts\python" if sys.platform.startswith("win") else "./env/bin/python"
 
 changes = """
+- fixed auto-updating process
 - implement option to skip expired push messages
 - added 'restart_application' api function
 - added 'shutdown_application' api function
