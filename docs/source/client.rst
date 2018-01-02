@@ -34,52 +34,58 @@ In pseudocode::
 
 **Now, the most important thing you need to understand is that the data you received just now might just be a part of the full message**.
 
-That is why you keep receving data until you meet the EOF sequence. For HPX this EOF is ``<EOF>`` (in byte-form).
+The message is delimited so you keep receving data until you meet the EOF sequence. For HPX this EOF is ``<EOF>`` (in byte-form).
 
-Oh, by the way, data is a sequence of bytes encoded in ``UTF-8``.
+HPX requires that all data, not including the EOF sequence, to be gzipped.
 
 A very crude example on how to receive a message from HPX in pseudocode:
 
 ::
 
-    var msg = none;
-    var buffer = bytes("");
+    var msg = none
+    var buffer = bytes("")
 
     while true:
-        buffer += sock.receive(); # might want to set a timeout so it doesn't wait forever
+        buffer += sock.receive() # might want to set a timeout so it doesn't wait forever
         
         # loop through buffer and check for EOF tag
         if bytes("<EOF>") in buffer:
-            msg = buffer;
-            break; # break loop
-
-
+            msg = buffer
+            break # break loop
+    # remove the EOF sequence from the data
+    buffer = buffer.remove("<EOF>")
+    # decompress the data
+    var data = gzip.decompress(buffer)
 
 Now that we got a message from the server, we convert it into valid ``JSON``.
+The decompressed data is `UTF-8` encoded.
 
 In pseudocode::
 
-    var json_data = json.convert(msg);
+    var json_data = json.convert(data, encoding="utf-8");
 
 And that's the end of it. You've successfully received a message from the server.
 
-Sending a message is even easier. Just make sure it's valid ``JSON``, converted to bytes encoded in ``UTF-8`` before you send.
+Sending a message is even easier. Just make sure it's valid ``JSON``, converted to bytes encoded in ``UTF-8`` and then gzip compressed before you send.
 
 **Remember to suffix the message with the EOF tag so the server knows when your message is complete**.     
 
 In pseudocode::
 
-    var msg_to_send = bytes(valid_json, encoding="utf-8"); # make sure it's UTF-8 encoded
-    var eof_tag = bytes("<EOF>", encoding="utf-8");
+    var msg_to_send = bytes(valid_json, encoding="utf-8") # make sure it's UTF-8 encoded
+    var eof_tag = bytes("<EOF>", encoding="utf-8")
 
-    sock.send_everything(msg_to_send);
-    sock.send_everything(eof_tag);
+    # compress the msg before sending
+    msg_to_send = gzip.compress(msg_to_send)
 
-For every message you send the server, a response is sent back, that is, unless the server has crashed.
+    sock.send_everything(msg_to_send)
+    sock.send_everything(eof_tag) # remember not to compress the EOF sequence!
+
+For every message you send the server, a response is sent back, that is, unless the server has crashed or something.
 
 (**Please note that if you ran the server with the --dev switch, the server will not respond to messages if an unhandled exception was raised**)
 
-The structure of the messages exchanged between the server and the client are consistent::
+The structure of the messages exchanged between the server and the client is consistent::
 
     {
         "session": "",
@@ -87,7 +93,7 @@ The structure of the messages exchanged between the server and the client are co
         "data": {},
     }
 
-In ``name`` is a string value. This value is just an arbitrarily chosen name for the sever/client.
+In ``name`` is a string value. This value is just an arbitrarily chosen name for the sever/client. It has some use, see :ref:`Configuration` when you're done reading this.
 
 In ``data`` is the real message. ``session`` will be explained in :ref:`Session`.
 
@@ -95,7 +101,7 @@ In ``data`` is the real message. ``session`` will be explained in :ref:`Session`
 
 For the sake of brevity, from now on only messages meant to be put in the ``data`` key will be shown.
 
-Generally, the server is very helpful and will tell you if your message is invalid and/or which keys you missed.
+Generally, the server is very helpful and will tell you if your message is invalid and/or if you've misused or missed some keys.
 
 Authenticating
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -167,7 +173,7 @@ The session is tied to the context of the client who did the handshake.
 The session is *not* tied to any particular connection, meaning multiple independent connections
 can use the same session.
 
-This allows for multiple independent connections to be made within the same app while sharing the same context::
+This allows for multiple independent connections to be made within the same or different app while sharing the same context::
 
     socketA (connects) --> server
     socketA <-- (asking for handshake) server
@@ -182,11 +188,13 @@ This allows for multiple independent connections to be made within the same app 
 Think of it as threads in a computer program.
 
 As shown above, the server will *always* send a message when a client connects.
-This message should thus always be consumed by additional sockets before sending the intended message with a session.
+This message should thus always be consumed when connecting with additional sockets before sending the intended message with a session.
 
 **Sessions have a limited lifespan**. Whenever you send a message using a session, you extend that particular session's lifespan.
 
-Sessions expire when their lifespan runs out (shocking, isn't it?), requiring the client to do a *new* handshake.
+Sessions expire when their lifespan runs out (shocking, isn't it? :) ), requiring the client to do a *new* handshake.
+
+The extent of a single session's lifespan is set by the server (in the server settings).
 
 .. todo::
     explain session expired error
@@ -281,7 +289,7 @@ Likewise, errors occuring in api-functions will add the ``error`` key in the *fu
 Server commands
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The server implements the following commands :class:`.ServerCommand`
+The server implements server commands to control the server remotely: :class:`.ServerCommand`
 
 Server commands are invoked like this (this is the whole payload)::
 

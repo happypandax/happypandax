@@ -234,7 +234,7 @@ def convert_to_json(buffer, name):
 
 
 def end_of_message(bytes_):
-    "Checks if EOF has been reached. Returns bool splitted data."
+    "Checks if EOF has been reached. Returns splitted data and bool."
     assert isinstance(bytes_, bytes)
 
     if constants.postfix in bytes_:

@@ -5,6 +5,8 @@ import arrow
 import os
 import gevent
 import weakref
+import gzip
+import zlib
 
 from inspect import getmembers, isfunction, signature, Parameter
 
@@ -249,6 +251,7 @@ class ClientHandler:
         """
         assert isinstance(msg, bytes)
         utils.switch(constants.Priority.High)
+        msg = gzip.compress(msg, 5)
         log.d("Sending", sys.getsizeof(msg), "bytes to", client)
         client.sendall(msg)
         client.sendall(constants.postfix)
@@ -438,6 +441,11 @@ class ClientHandler:
         with db.cleanup_session():
             try:
                 if constants.server_ready:
+                    try:
+                        buffer = gzip.decompress(buffer)
+                    except (zlib.error, OSError) as e:
+                        raise exceptions.ParsingError(utils.this_function(), str(e))
+
                     function_list = message.List("function", message.Function)
                     functions = self.parse(buffer)
                     if functions is None:

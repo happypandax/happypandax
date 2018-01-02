@@ -216,7 +216,8 @@ class APIRequirementError(ServerError):
 class AuthError(ServerError):
     """Auth Base Error."""
 
-    pass
+    def __init__(self, where, msg):
+        super().__init__(where, "An error occurred during authorization:\n{}".format(msg))
 
 
 @error_code(407)
@@ -238,6 +239,11 @@ class SessionExpiredError(ServerError):
 @error_code(409)
 class EnumError(ServerError):
     """Enum error."""
+    pass
+
+@error_code(410)
+class ParsingError(ServerError):
+    ""
     pass
 
     # ## CLIENT -- CODE: 500+ ##

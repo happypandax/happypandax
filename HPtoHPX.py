@@ -14,7 +14,7 @@ import queue
 from multiprocessing import Process, Queue, Pipe
 from happypanda.core import db
 from happypanda.core.commands import io_cmd
-from happypanda.common import constants
+from happypanda.common import constants, config
 
 GALLERY_LISTS = []
 pages_in = Queue()
@@ -761,7 +761,7 @@ def main(args=sys.argv[1:]):
         parser = argparse.ArgumentParser()
         parser.add_argument('source', help="Path to old HP database")
         parser.add_argument('destination', help="Desired path to new HPX database")
-        parser.add_argument('-r', '--rar', help="Path to unrar tool")
+        parser.add_argument('-r', '--rar', help="Path to unrar tool", default=config.unrar_tool_path.value)
         parser.add_argument('-p', '--process', type=int, default=3, help="Amount of processes allowed to spawn")
         parser.add_argument(
             '-a',

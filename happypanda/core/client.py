@@ -2,6 +2,7 @@ import socket
 import sys
 import json
 import errno
+import gzip
 
 from happypanda.common import constants, exceptions, utils, hlogger, config
 from happypanda.core import message
@@ -44,7 +45,7 @@ class Client:
         if not ignore_err:
             serv_error = data.get('error')
             if serv_error:
-                raise exceptions.AuthError(utils.this_function(), serv_error)
+                raise exceptions.AuthError(utils.this_function(), "{}: {}".format(serv_error['code'], serv_error['msg']))
         serv_data = data.get('data')
         if serv_data == "Authenticated":
             self.session = data.get('session')
@@ -108,7 +109,7 @@ class Client:
             "bytes to server",
             self._server)
         try:
-            self._sock.sendall(msg_bytes)
+            self._sock.sendall(gzip.compress(msg_bytes, 5))
             self._sock.sendall(constants.postfix)
         except socket.error as e:
             self._disconnect()
@@ -135,6 +136,7 @@ class Client:
                 sys.getsizeof(buffered),
                 "bytes from server",
                 self._server)
+            buffered = gzip.decompress(buffered)
             return utils.convert_to_json(buffered, self.name)
         except socket.error as e:
             self._disconnect()
