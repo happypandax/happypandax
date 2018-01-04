@@ -2434,6 +2434,26 @@ h6 {
 .above-dimmer {
   z-index: 10 !important;
 }
+
+.reader-fitwidth-stretch {
+  width: 100%;
+  height: auto;
+}
+
+.reader-fitheight-stretch {
+  height: 100vh !important;
+  width: auto !important;
+}
+
+.reader-fitwidth {
+  max-width: 100% !important;
+  height: auto !important;
+}
+
+.reader-fitheight {
+  max-height: 100vh !important;
+  width: auto !important;
+}
 /*!
  * # Semantic UI 2.2.13 - Button
  * http://github.com/semantic-org/semantic-ui/

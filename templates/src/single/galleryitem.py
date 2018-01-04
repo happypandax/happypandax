@@ -150,9 +150,11 @@ def gallery_render():
     menu_options = []
     menu_options.append(e(ui.List.Item, content="Read", **read_button_args))
     menu_options.append(e(ui.List.Item, content="Save for later", icon="history"))
-    menu_options.append(e(ui.List.Item, content="Add to filter", icon="filter"))
     if inbox:
         menu_options.append(e(ui.List.Item, content="Send to Library", icon="grid layout"))
+    menu_options.append(e(ui.List.Item, content="Add to filter", icon="filter"))
+    menu_options.append(e(ui.List.Item, content="Add to series", icon="add square"))
+    menu_options.append(e(ui.List.Item, content="Add to collection", icon="plus square outline"))
     menu_options.append(e(ui.List.Item, content="Send to Trash", icon="trash"))
 
     return e(ui.Card,

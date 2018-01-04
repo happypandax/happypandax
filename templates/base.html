@@ -2,7 +2,7 @@
 
 <html lang="en">
 <head>
-    <meta charset="utf-8"/>
+    <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
@@ -19,8 +19,11 @@
     <meta name="msapplication-config" content="/static/browserconfig.xml">
     <meta name="theme-color" content="#ffffff">
 
-
-    <link rel="stylesheet" href="/static/css/semantic.css"/>
+    {%if dev%}
+    <link rel="stylesheet" href="/static/css/semantic.css" />
+    {%else%}
+    <link rel="stylesheet" href="/static/css/semantic.min.css" />
+    {% endif %}
 </head>
 <body>
 <div id="root" data-machine="{{same_machine}}" data-version="{{version}}">

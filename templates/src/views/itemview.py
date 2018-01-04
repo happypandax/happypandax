@@ -398,3 +398,38 @@ ItemView = createReactClass({
 
     'render': item_view_render
 })
+
+#SimpleItemView = createReactClass({
+#    'displayName': 'SimpleItemView',
+
+#    'getInitialState': lambda: {'page': int(utils.get_query("page", 1)) or 1,
+#                                'search_query': utils.get_query("search", "") or this.props.search_query,
+#                                'infinitescroll': False,
+#                                'limit': utils.storage.get("item_count" + this.config_suffix(),
+#                                                           this.props.default_limit or (10 if this.props.related_type == ItemType.Page else 30)),
+#                                'items': [],
+#                                "element": None,
+#                                "loading": True,
+#                                'item_count': 1,
+#                                'visible_config': False,
+#                                'external_viewer': utils.storage.get("external_viewer" + this.config_suffix(), False),
+#                                'group_gallery': utils.storage.get("group_gallery" + this.config_suffix(), False),
+#                                },
+
+#    'get_items_count': get_items_count,
+#    'get_items': get_items,
+#    'get_element': get_element,
+
+#    'set_page': lambda p: this.setState({'page': p}),
+
+#    'on_item_count': lambda e, d: this.setState({'limit': d.value}),
+#    'on_external_viewer': lambda e, d: this.setState({'external_viewer': d.checked}),
+#    'on_group_gallery': lambda e, d: this.setState({'group_gallery': d.checked}),
+#    'toggle_config': lambda a: this.setState({'visible_config': not this.state.visible_config}),
+
+#    'componentWillMount': lambda: this.get_element(),
+#    'componentDidMount': lambda: all((this.get_items(), this.get_items_count())),
+#    'componentDidUpdate': item_view_on_update,
+
+#    'render': item_view_render
+#})

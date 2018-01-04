@@ -94,6 +94,8 @@ def thumbnail_render():
            ui=this.props.ui,
            verticalAlign=this.props.verticalAlign,
            width=this.props.width,
+           style=this.props.style,
+           className=this.props.className,
            **ex
            )
     return e(ui.Segment, e(ui.Dimmer, e(ui.Loader), active=this.state.loading, inverted=True),

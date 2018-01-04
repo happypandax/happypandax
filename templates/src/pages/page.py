@@ -151,9 +151,15 @@ def on_key(ev):
     if ev.key == "Escape":
         this.back_to_gallery()
     elif ev.key == "ArrowRight":
-        this.next_page(ev)
+        if this.state.cfg_direction == ReaderDirection.left_to_right:
+            this.next_page(ev)
+        elif this.state.cfg_direction == ReaderDirection.right_to_left:
+            this.prev_page(ev)
     elif ev.key == "ArrowLeft":
-        this.prev_page(ev)
+        if this.state.cfg_direction == ReaderDirection.left_to_right:
+            this.prev_page(ev)
+        elif this.state.cfg_direction == ReaderDirection.right_to_left:
+            this.next_page(ev)
 
 
 def receive_props(n_props):
@@ -164,6 +170,14 @@ def receive_props(n_props):
             el = this.props.context or this.state.context or state.container_ref
             utils.scroll_to_element(el)
 
+class ReaderDirection:
+    left_to_right = 1
+    right_to_left = 2
+
+class ReaderScaling:
+    default = 1
+    fit_width = 2
+    fit_height = 3
 
 def page_render():
     number = 0
@@ -205,48 +219,108 @@ def page_render():
                   e(ui.Table.Cell, e(ui.Header, "Hash:", as_="h5"), collapsing=True),
                   e(ui.Table.Cell, e(ui.Label, hash_id))))
 
-    return e(ui.Grid,
-             e(PageNav, number=number, count=this.state.pages,
-               n_url=n_url, p_url=p_url),
-             e(ui.Grid.Row,
-               e(ui.Ref,
-                 e(ui.Grid.Column,
-                   e(Link,
-                     e(thumbitem.Thumbnail,
-                       img=img,
-                       item_id=p_id,
-                       item_type=this.state.item_type,
-                       size_type=ImageSize.Original,
-                       centered=True,
-                       fluid=False,
-                       bordered=True,
-                       placeholder="",
-                       inverted=True,
-                       ),
-                     to=n_url,
-                     ),
-                   className="no-padding-segment"
-                   ),
-                 innerRef=this.set_context,
-                 ),
-               centered=True,
-               textAlign="center",
+    #### config
+
+    cfg_direction = [
+        {'key': 1, 'text':tr(this, "", 'Left to Right'), 'value': ReaderDirection.left_to_right},
+        {'key': 2, 'text':tr(this, "", 'Right to Left'), 'value': ReaderDirection.right_to_left},
+        ]
+
+    cfg_scaling = [
+        {'key': 1, 'text':tr(this, "", 'Default'), 'value': ReaderScaling.default},
+        {'key': 2, 'text':tr(this, "", 'Fit Width'), 'value': ReaderScaling.fit_width},
+        {'key': 3, 'text':tr(this, "", 'Fit Height'), 'value': ReaderScaling.fit_height},
+        ]
+
+    thumb_style = {}
+    thumb_class = ''
+    if this.state.cfg_stretch:
+        if this.state.cfg_scaling == ReaderScaling.fit_width:
+            thumb_class = 'reader-fitwidth-stretch'
+        elif this.state.cfg_scaling == ReaderScaling.fit_height:
+            thumb_class = 'reader-fitheight-stretch'
+    else:
+        if this.state.cfg_scaling == ReaderScaling.fit_width:
+            thumb_class = 'reader-fitwidth'
+        elif this.state.cfg_scaling == ReaderScaling.fit_height:
+            thumb_class = 'reader-fitheight'
+
+    return e(ui.Sidebar.Pushable,
+             e(ui.Sidebar, # wait for infinite scroll, then a page list can be implemented here
+                as_=ui.Segment,
+                 size="small",
+                 basic=True,
+                 visible=this.state.pages_visible and not this.state.config_visible,
+                 direction="left",
+                 animation="slide along",
+                 loading=this.state.pages_loading,
                ),
-             e(PageNav, number=number, count=this.state.pages,
-               n_url=n_url, p_url=p_url),
-             e(ui.Grid.Row,
-               e(ui.Grid.Column,
-                 e(ui.Segment,
-                   e(ui.Table,
-                     e(ui.Table.Body,
-                       *rows
+             e(ui.Sidebar,
+               e(ui.Form,
+                 e(ui.Form.Select, options=cfg_direction, label=tr(this, "", "Reading Direction"),
+                   defaultValue=this.state.cfg_direction, onChange=this.set_cfg_direction),
+                 e(ui.Form.Select, options=cfg_scaling, label=tr(this, "", "Scaling"),
+                   defaultValue=this.state.cfg_scaling, onChange=this.set_cfg_scaling),
+                 e(ui.Form.Field, control=ui.Checkbox, label=tr(this, "", "Stretch small pages"), toggle=True,
+                   defaultChecked=this.state.cfg_strecth, onChange=this.set_cfg_stretch),
+                 e(ui.Form.Field, control=ui.Checkbox, label=tr(this, "", "Invert background color"), toggle=True,
+                   defaultChecked=this.state.cfg_invert, onChange=this.set_cfg_invert),
+                 e(ui.Form.Field, "Close", control=ui.Button),
+                 onSubmit=this.toggle_config,
+                ),
+                as_=ui.Segment,
+                 size="small",
+                 basic=True,
+                 visible=this.state.config_visible and not this.state.pages_visible,
+                 direction="right",
+                 animation="slide along",
+               ),
+             e(ui.Sidebar.Pusher,
+                 e(PageNav, number=number, count=this.state.pages,
+                   n_url=n_url, p_url=p_url),
+                 e(ui.Grid.Row,
+                   e(ui.Ref,
+                     e(ui.Grid.Column,
+                       e(Link,
+                         e(thumbitem.Thumbnail,
+                           img=img,
+                           item_id=p_id,
+                           item_type=this.state.item_type,
+                           size_type=ImageSize.Original,
+                           centered=True,
+                           fluid=False,
+                           bordered=True,
+                           placeholder="",
+                           inverted=this.state.cfg_invert,
+                           style=thumb_style,
+                           className=thumb_class
+                           ),
+                         to=n_url,
+                         ),
+                       className="no-padding-segment"
                        ),
-                     basic="very",
+                     innerRef=this.set_context,
                      ),
-                   as_=ui.Container,
-                   ))),
-             padded=True,
-             inverted=True,
+                   centered=True,
+                   textAlign="center",
+                   ),
+                 e(PageNav, number=number, count=this.state.pages,
+                   n_url=n_url, p_url=p_url),
+                 e(ui.Grid.Row,
+                   e(ui.Grid.Column,
+                     e(ui.Segment,
+                       e(ui.Table,
+                         e(ui.Table.Body,
+                           *rows
+                           ),
+                         basic="very",
+                         ),
+                       as_=ui.Container,
+                       ))),
+                 padded=True,
+                 inverted=this.state.cfg_invert,
+                 as_=ui.Grid,
+                 )
              )
 
 
@@ -261,7 +335,13 @@ Page = createReactClass({
                                 'tag_data': this.props.tag_data or {},
                                 'item_type': ItemType.Page,
                                 'loading': True,
-                                'context': None
+                                'context': None,
+                                'config_visible': False,
+                                'pages_visible': False,
+                                'cfg_direction': utils.storage.get("reader_direction", ReaderDirection.left_to_right),
+                                'cfg_scaling': utils.storage.get("reader_scaling", ReaderScaling.default),
+                                'cfg_stretch': utils.storage.get("reader_stretch", False),
+                                'cfg_invert': utils.storage.get("reader_invert", True),
                                 },
 
     'cmd_data': None,
@@ -275,14 +355,23 @@ Page = createReactClass({
     'next_page': lambda e: all((utils.go_to(this.props.history, query={'id': this.state.data.id, 'go': "next"}),)),
     'back_to_gallery': lambda: utils.go_to(this.props.history, "/item/gallery", query={'id': utils.get_query("gid") or this.state.data.gallery_id}, keep_query=False),
 
+    'set_cfg_direction': lambda e, d: all((this.setState({'cfg_direction':d.value}), utils.storage.set("reader_direction", d.value))),
+    'set_cfg_scaling': lambda e, d: all((this.setState({'cfg_scaling':d.value}), utils.storage.set("reader_scaling", d.value))),
+    'set_cfg_stretch': lambda e, d: all((this.setState({'cfg_stretch':d.checked}), utils.storage.set("reader_stretch", d.checked))),
+    'set_cfg_invert': lambda e, d: all((this.setState({'cfg_invert':d.checked}), utils.storage.set("reader_invert", d.checked))),
+
+    'toggle_config': lambda: this.setState({'config_visible':not this.state.config_visible, 'pages_visible':False}),
+    'toggle_pages': lambda: this.setState({'pages_visible':not this.state.pages_visible, 'config_visible':False}),
     'set_context': lambda c: this.setState({'context': c}),
     'componentWillReceiveProps': receive_props,
     'componentDidMount': lambda: window.addEventListener("keydown", this.on_key, False),
     'componentWillUnmount': lambda: window.removeEventListener("keydown", this.on_key, False),
 
     'componentWillMount': lambda: all((this.props.menu([
-        e(ui.Menu.Menu, e(ui.Menu.Item, icon="arrow up", onClick=this.back_to_gallery)),
-    ]),
+        #e(ui.Menu.Item, e(ui.Icon, js_name="sidebar", size="large"), icon=True, onClick=this.toggle_pages, position="left"),
+        e(ui.Menu.Menu, e(ui.Menu.Item, e(ui.Icon, js_name="arrow up", size="large"), icon=True, onClick=this.back_to_gallery)),
+        e(ui.Menu.Item, e(ui.Icon, js_name="options", size="large"), icon=True, onClick=this.toggle_config, position="right"),
+        ]),
         (this.get_item(go=utils.get_query("go")) if not this.state.data else None),
     )),
 

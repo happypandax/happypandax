@@ -218,5 +218,6 @@ def init_views(flask_app, socketio_app):
     @happyweb.route('/<path:path>')
     def app_base(path):
         return render_template('base.html',
+                               dev=constants.dev,
                                same_machine=is_same_machine(),
                                version=".".join(str(x) for x in constants.version_web))
