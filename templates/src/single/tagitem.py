@@ -30,6 +30,7 @@ def taglbl_render():
              trigger=e(ui.Label,
                        *lbl_args,
                        as_="a",
+                       size=this.props.size,
                        ),
              hoverable=True,
              on="click",

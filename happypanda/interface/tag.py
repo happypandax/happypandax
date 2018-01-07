@@ -12,18 +12,39 @@ from happypanda.core.commands import database_cmd
 def _contruct_tags_msg(nstags):
     msg = {}
     _msg = {}
-    for nstag in nstags:
-        ns = nstag.namespace.name
-        if ns not in msg:
-            msg[ns] = []
-            _msg[ns] = []
+    if nstags:
+        for nstag in nstags:
+            ns = nstag.namespace.name
+            if ns not in msg:
+                msg[ns] = []
+                _msg[ns] = []
 
-        if nstag.tag.name not in _msg[ns]:
-            msg[ns].append(message.Tag(nstag.tag, nstag).json_friendly(include_key=False))
-            _msg[ns].append(nstag.tag.name)
+            if nstag.tag.name not in _msg[ns]:
+                msg[ns].append(message.Tag(nstag.tag, nstag).json_friendly(include_key=False))
+                _msg[ns].append(nstag.tag.name)
 
     return msg
 
+def get_all_tags(limit: int=100):
+    """
+    Get all tags from the db
+
+    Args:
+        limit: limit the amount of items returned
+
+    Returns:
+        .. code-block:: guess
+
+            {
+                namespace : [ tag message object, ...],
+                ...
+            }
+    """
+    db_obj = database_cmd.GetModelItems().run(db.NamespaceTags, limit=limit)
+
+    msg = _contruct_tags_msg(db_obj)
+
+    return message.Identity('tags', msg)
 
 def get_tags(item_type: enums.ItemType = enums.ItemType.Gallery,
              item_id: int = 0,

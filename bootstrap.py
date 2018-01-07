@@ -16,21 +16,11 @@ dev_options = dict(
 env_python = r".\env\Scripts\python" if sys.platform.startswith("win") else "./env/bin/python"
 
 changes = """
-- fixed auto-updating process
-- implement option to skip expired push messages
-- added 'restart_application' api function
-- added 'shutdown_application' api function
-- fixed bug in conversion script causing it to hang
-- add core.unrar_tool_path setting
-- set default path to unrar tool
-- added 'get_notification' api function (not yet ready)
-- added 'reply_notification' api function (not yet ready)
-- added 'check_update' api function
-- added 'update_application' api function
-- update docs
-- added bootstrap.py deploy
-- updated some libraries
-- fixed lots of issues
+- fix error in extracting rarfiles
+- add compression step in server-client message exchange
+- updated docs to reflect compression step
+- added some options to in-built webclient reader
+- added get_all_tags api function
 """
 
 
@@ -381,7 +371,7 @@ def deploy(args, unknown=None):
     dir_path = "./dist/happypandax"
     installer_filename = ".installed"
     installer_file = os.path.join("deploy", installer_filename)
-    if not prun(["happypandax.spec"]) and not prun(['updater.py',
+    if not prun(["happypandax.spec", "--noconfirm"]) and not prun(['updater.py',
                                                     '--onefile',
                                                     '--name',
                                                     constants.updater_name,

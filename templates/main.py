@@ -6,9 +6,11 @@ from src.react_utils import (h,
                              render,
                              React,
                              ReactDOM,
+                             Switch,
                              createReactClass,
                              Router,
                              Route,
+                             Redirect,
                              withRouter
                              )
 from src.ui import ui, Alert, Notif
@@ -149,6 +151,10 @@ def app_did_mount():
 def get_container_ref(ctx):
     state['container_ref'] = ctx
 
+__pragma__("kwargs")
+def app_menu_contents(el, **kwargs):
+    this.setState({'menu_nav_contents': el, 'menu_nav_args':kwargs})
+__pragma__("nokwargs")
 
 def app_render():
     sidebar_args = {
@@ -158,7 +164,8 @@ def app_render():
 
     menu_args = {
         'toggler': this.toggle_sidebar,
-        'contents': this.state["menu_nav_contents"]
+        'contents': this.state["menu_nav_contents"],
+        'menu_args': this.state["menu_nav_args"]
     }
 
     server_push_close = this.server_push_close
@@ -212,16 +219,18 @@ def app_render():
                        e(menu.Menu, **menu_args), minWidth=767),
                      e(ui.Responsive,
                        e(menu.Menu, mobile=True, **menu_args), maxWidth=768),
-                     e(Route, path="/api", component=this.api_page),
-                     e(Route, path="/dashboard", component=this.dashboard_page),
-                     e(Route, path="/", exact=True, component=this.library_page),
-                     e(Route, path="/library", component=this.library_page),
-                     e(Route, path="/favorite", component=this.favorites_page),
-                     e(Route, path="/inbox", component=this.inbox_page),
-                     e(Route, path="/directory", component=this.directory_page),
-                     e(Route, path="/item/gallery", component=this.gallery_page),
-                     e(Route, path="/item/collection", component=this.collection_page),
-                     e(Route, path="/item/page", component=this.page_page),
+                     e(Switch,
+                         e(Route, path="/api", component=this.api_page),
+                         e(Route, path="/dashboard", component=this.dashboard_page),
+                         e(Route, path="/library", component=this.library_page),
+                         e(Route, path="/favorite", component=this.favorites_page),
+                         e(Route, path="/inbox", component=this.inbox_page),
+                         e(Route, path="/directory", component=this.directory_page),
+                         e(Route, path="/item/gallery", component=this.gallery_page),
+                         e(Route, path="/item/collection", component=this.collection_page),
+                         e(Route, path="/item/page", component=this.page_page),
+                         e(Redirect, js_from="/", exact=True, to={'pathname':"/library"}),
+                       ),
                      e(ui.Dimmer, simple=True, onClickOutside=this.toggle_sidebar),
                      *modal_els,
                      dimmed=this.state.sidebar_toggled,
@@ -241,6 +250,7 @@ App = createReactClass({
     'getInitialState': lambda: {
         "sidebar_toggled": False,
         "menu_nav_contents": None,
+        "menu_nav_args": {},
         'server_push': False,
         'server_push_msg': {},
         'preview_msg': True,
@@ -261,7 +271,7 @@ App = createReactClass({
 
     'toggle_sidebar': lambda: (this.setState({'sidebar_toggled': not this.state['sidebar_toggled']})),
 
-    'set_menu_contents': lambda c: (this.setState({'menu_nav_contents': c})),
+    'set_menu_contents': app_menu_contents,
     'get_context_ref': get_container_ref,
 
     'api_page': lambda p: e(api.Page, menu=this.set_menu_contents, **p),

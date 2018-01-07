@@ -57,7 +57,10 @@ def menu_nav_render():
     if not isinstance(menu_contents, list):
         menu_contents = [menu_contents]
 
-    el_args = {'stackable': True, 'size': "small"}
+    if defined(this.props.menu_args):
+        menu_args = this.props.menu_args
+    else:
+        menu_args = {}
 
     el = e(ui.Menu,
            *elements_left,
@@ -66,7 +69,10 @@ def menu_nav_render():
            *elements_right,
            secondary=True,
            borderless=True,
-           **el_args)
+           stackable=True,
+           size="small",
+           **menu_args
+           )
 
     return el
 

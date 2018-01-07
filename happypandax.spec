@@ -32,6 +32,10 @@ interface_files = exec_statement("""
     from happypanda import interface
     print(" ".join(utils.get_package_modules(interface, False)))""").split()
 
+version_str = exec_statement("""
+    from happypanda.common import constants
+    print(constants.version_str)""")
+
 def make(py_file, exe_name, analysis_kwargs={}, pyz_args=None, exe_kwargs={}):
 
   a_kwargs = dict(binaries=[],
@@ -68,13 +72,30 @@ def make(py_file, exe_name, analysis_kwargs={}, pyz_args=None, exe_kwargs={}):
 
   exe = EXE(pyz, a.scripts, name=exe_name, **e_kwargs)
 
+  if sys.platform == 'darwin':
+    app = BUNDLE(exe,
+             name=exe_name+'.app',
+             icon=icon_path,
+             bundle_identifier=None,
+             info_plist={
+                'CFBundleGetInfoString': "A cross-platform ...",
+                'NSHighResolutionCapable': 'True',
+                'CFBundleVersion': version_str,
+                'NSHumanReadableCopyright': u"Copyright © 2018, Twiddly, All Rights Reserved"
+                },
+             )
+
   return exe, a.binaries, a.zipfiles, a.datas
 
+col = [
+        *make("run.py", app_name),
+        *make("gui.py", app_name+'_gui', exe_kwargs={'console':False}),
+        *make("HPtoHPX.py", "HPtoHPX"),
+        ]
 
-coll = COLLECT(
-            *make("run.py", app_name),
-            *make("gui.py", app_name+'_gui', exe_kwargs={'console':False}),
-            *make("HPtoHPX.py", "HPtoHPX"),
-             strip=False,
-             upx=True,
-             name=app_name)
+if not sys.platform == 'darwin':
+  coll = COLLECT(
+              *col,
+               strip=False,
+               upx=True,
+               name=app_name)
