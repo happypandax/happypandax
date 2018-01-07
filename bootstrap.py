@@ -372,15 +372,15 @@ def deploy(args, unknown=None):
     installer_filename = ".installed"
     installer_file = os.path.join("deploy", installer_filename)
     if not prun(["happypandax.spec", "--noconfirm"]) and not prun(['updater.py',
-                                                    '--onefile',
-                                                    '--name',
-                                                    constants.updater_name,
-                                                    '--icon',
-                                                    os.path.join(constants.dir_static,
-                                                                 'favicon.ico'),
-                                                    '--specpath',
-                                                    'build'
-                                                    ]):
+                                                                   '--onefile',
+                                                                   '--name',
+                                                                   constants.updater_name,
+                                                                   '--icon',
+                                                                   os.path.join(constants.dir_static,
+                                                                                'favicon.ico'),
+                                                                   '--specpath',
+                                                                   'build'
+                                                                   ]):
         upd_name = constants.updater_name
         if constants.is_win:
             upd_name += '.exe'

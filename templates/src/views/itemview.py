@@ -399,7 +399,7 @@ ItemView = createReactClass({
     'render': item_view_render
 })
 
-#SimpleItemView = createReactClass({
+# SimpleItemView = createReactClass({
 #    'displayName': 'SimpleItemView',
 
 #    'getInitialState': lambda: {'page': int(utils.get_query("page", 1)) or 1,

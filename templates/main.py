@@ -151,10 +151,16 @@ def app_did_mount():
 def get_container_ref(ctx):
     state['container_ref'] = ctx
 
+
 __pragma__("kwargs")
+
+
 def app_menu_contents(el, **kwargs):
-    this.setState({'menu_nav_contents': el, 'menu_nav_args':kwargs})
+    this.setState({'menu_nav_contents': el, 'menu_nav_args': kwargs})
+
+
 __pragma__("nokwargs")
+
 
 def app_render():
     sidebar_args = {
@@ -229,7 +235,7 @@ def app_render():
                          e(Route, path="/item/gallery", component=this.gallery_page),
                          e(Route, path="/item/collection", component=this.collection_page),
                          e(Route, path="/item/page", component=this.page_page),
-                         e(Redirect, js_from="/", exact=True, to={'pathname':"/library"}),
+                         e(Redirect, js_from="/", exact=True, to={'pathname': "/library"}),
                        ),
                      e(ui.Dimmer, simple=True, onClickOutside=this.toggle_sidebar),
                      *modal_els,

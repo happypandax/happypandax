@@ -1,7 +1,7 @@
 import os
 import subprocess
 
-from happypanda.common import utils, hlogger, config, constants
+from happypanda.common import utils, hlogger, config
 from happypanda.core.command import (UndoCommand, CommandEvent,
                                      CommandEntry, Command)
 from happypanda.core.commands import database_cmd, io_cmd

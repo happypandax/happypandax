@@ -170,14 +170,17 @@ def receive_props(n_props):
             el = this.props.context or this.state.context or state.container_ref
             utils.scroll_to_element(el)
 
+
 class ReaderDirection:
     left_to_right = 1
     right_to_left = 2
+
 
 class ReaderScaling:
     default = 1
     fit_width = 2
     fit_height = 3
+
 
 def page_render():
     number = 0
@@ -219,18 +222,18 @@ def page_render():
                   e(ui.Table.Cell, e(ui.Header, "Hash:", as_="h5"), collapsing=True),
                   e(ui.Table.Cell, e(ui.Label, hash_id))))
 
-    #### config
+    # config
 
     cfg_direction = [
-        {'key': 1, 'text':tr(this, "", 'Left to Right'), 'value': ReaderDirection.left_to_right},
-        {'key': 2, 'text':tr(this, "", 'Right to Left'), 'value': ReaderDirection.right_to_left},
-        ]
+        {'key': 1, 'text': tr(this, "", 'Left to Right'), 'value': ReaderDirection.left_to_right},
+        {'key': 2, 'text': tr(this, "", 'Right to Left'), 'value': ReaderDirection.right_to_left},
+    ]
 
     cfg_scaling = [
-        {'key': 1, 'text':tr(this, "", 'Default'), 'value': ReaderScaling.default},
-        {'key': 2, 'text':tr(this, "", 'Fit Width'), 'value': ReaderScaling.fit_width},
-        {'key': 3, 'text':tr(this, "", 'Fit Height'), 'value': ReaderScaling.fit_height},
-        ]
+        {'key': 1, 'text': tr(this, "", 'Default'), 'value': ReaderScaling.default},
+        {'key': 2, 'text': tr(this, "", 'Fit Width'), 'value': ReaderScaling.fit_width},
+        {'key': 3, 'text': tr(this, "", 'Fit Height'), 'value': ReaderScaling.fit_height},
+    ]
 
     thumb_style = {}
     thumb_class = ''
@@ -246,8 +249,8 @@ def page_render():
             thumb_class = 'reader-fitheight'
 
     return e(ui.Sidebar.Pushable,
-             e(ui.Sidebar, # wait for infinite scroll, then a page list can be implemented here
-                as_=ui.Segment,
+             e(ui.Sidebar,  # wait for infinite scroll, then a page list can be implemented here
+               as_=ui.Segment,
                  size="small",
                  basic=True,
                  visible=this.state.pages_visible and not this.state.config_visible,
@@ -267,8 +270,8 @@ def page_render():
                    defaultChecked=this.state.cfg_invert, onChange=this.set_cfg_invert),
                  e(ui.Form.Field, "Close", control=ui.Button),
                  onSubmit=this.toggle_config,
-                ),
-                as_=ui.Segment,
+                 ),
+               as_=ui.Segment,
                  size="small",
                  basic=True,
                  visible=this.state.config_visible and not this.state.pages_visible,
@@ -320,7 +323,7 @@ def page_render():
                  padded=True,
                  inverted=this.state.cfg_invert,
                  as_=ui.Grid,
-                 )
+               )
              )
 
 
@@ -355,13 +358,13 @@ Page = createReactClass({
     'next_page': lambda e: all((utils.go_to(this.props.history, query={'id': this.state.data.id, 'go': "next"}),)),
     'back_to_gallery': lambda: utils.go_to(this.props.history, "/item/gallery", query={'id': utils.get_query("gid") or this.state.data.gallery_id}, keep_query=False),
 
-    'set_cfg_direction': lambda e, d: all((this.setState({'cfg_direction':d.value}), utils.storage.set("reader_direction", d.value))),
-    'set_cfg_scaling': lambda e, d: all((this.setState({'cfg_scaling':d.value}), utils.storage.set("reader_scaling", d.value))),
-    'set_cfg_stretch': lambda e, d: all((this.setState({'cfg_stretch':d.checked}), utils.storage.set("reader_stretch", d.checked))),
-    'set_cfg_invert': lambda e, d: all((this.setState({'cfg_invert':d.checked}), utils.storage.set("reader_invert", d.checked))),
+    'set_cfg_direction': lambda e, d: all((this.setState({'cfg_direction': d.value}), utils.storage.set("reader_direction", d.value))),
+    'set_cfg_scaling': lambda e, d: all((this.setState({'cfg_scaling': d.value}), utils.storage.set("reader_scaling", d.value))),
+    'set_cfg_stretch': lambda e, d: all((this.setState({'cfg_stretch': d.checked}), utils.storage.set("reader_stretch", d.checked))),
+    'set_cfg_invert': lambda e, d: all((this.setState({'cfg_invert': d.checked}), utils.storage.set("reader_invert", d.checked))),
 
-    'toggle_config': lambda: this.setState({'config_visible':not this.state.config_visible, 'pages_visible':False}),
-    'toggle_pages': lambda: this.setState({'pages_visible':not this.state.pages_visible, 'config_visible':False}),
+    'toggle_config': lambda: this.setState({'config_visible': not this.state.config_visible, 'pages_visible': False}),
+    'toggle_pages': lambda: this.setState({'pages_visible': not this.state.pages_visible, 'config_visible': False}),
     'set_context': lambda c: this.setState({'context': c}),
     'componentWillReceiveProps': receive_props,
     'componentDidMount': lambda: window.addEventListener("keydown", this.on_key, False),
@@ -370,8 +373,9 @@ Page = createReactClass({
     'componentWillMount': lambda: all((this.props.menu([
         #e(ui.Menu.Item, e(ui.Icon, js_name="sidebar", size="large"), icon=True, onClick=this.toggle_pages, position="left"),
         e(ui.Menu.Menu, e(ui.Menu.Item, e(ui.Icon, js_name="arrow up", size="large"), icon=True, onClick=this.back_to_gallery)),
-        e(ui.Menu.Item, e(ui.Icon, js_name="options", size="large"), icon=True, onClick=this.toggle_config, position="right"),
-        ]),
+        e(ui.Menu.Item, e(ui.Icon, js_name="options", size="large"),
+          icon=True, onClick=this.toggle_config, position="right"),
+    ]),
         (this.get_item(go=utils.get_query("go")) if not this.state.data else None),
     )),
 

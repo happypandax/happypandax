@@ -45,7 +45,9 @@ class Client:
         if not ignore_err:
             serv_error = data.get('error')
             if serv_error:
-                raise exceptions.AuthError(utils.this_function(), "{}: {}".format(serv_error['code'], serv_error['msg']))
+                raise exceptions.AuthError(
+                    utils.this_function(), "{}: {}".format(
+                        serv_error['code'], serv_error['msg']))
         serv_data = data.get('data')
         if serv_data == "Authenticated":
             self.session = data.get('session')

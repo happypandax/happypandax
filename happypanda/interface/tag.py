@@ -25,6 +25,7 @@ def _contruct_tags_msg(nstags):
 
     return msg
 
+
 def get_all_tags(limit: int=100):
     """
     Get all tags from the db
@@ -45,6 +46,7 @@ def get_all_tags(limit: int=100):
     msg = _contruct_tags_msg(db_obj)
 
     return message.Identity('tags', msg)
+
 
 def get_tags(item_type: enums.ItemType = enums.ItemType.Gallery,
              item_id: int = 0,

@@ -241,6 +241,7 @@ class EnumError(ServerError):
     """Enum error."""
     pass
 
+
 @error_code(410)
 class ParsingError(ServerError):
     ""
