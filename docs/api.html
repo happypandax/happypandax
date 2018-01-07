@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Server API &#8212; Happypanda X 0.0.2#111 documentation</title>
+    <title>Server API &#8212; Happypanda X 0.0.2#113 documentation</title>
     
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.0.2#111',
+        VERSION:     '0.0.2#113',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -54,7 +54,7 @@
         </button>
         <a class="navbar-brand" href="index.html">
           Happypanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.2#111</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.2#113</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -847,6 +847,28 @@ Raises error if a default value was not provided and no translation was found.</
 </div>
 <span class="target" id="module-happypanda.interface.tag"></span><div class="section" id="tags">
 <h3>Tags<a class="headerlink" href="#tags" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="happypanda.interface.tag.get_all_tags">
+<code class="descname">get_all_tags</code><span class="sig-paren">(</span><em>limit=100</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/tag.html#get_all_tags"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.tag.get_all_tags" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get all tags from the db</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>limit</strong> (<code class="xref py py-class docutils literal"><span class="pre">int</span></code>) &#8211; limit the amount of items returned</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><div class="highlight-guess"><div class="highlight"><pre><span></span>{
+    namespace : [ tag message object, ...],
+    ...
+}
+</pre></div>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 <dl class="function">
 <dt id="happypanda.interface.tag.get_common_tags">
 <code class="descname">get_common_tags</code><span class="sig-paren">(</span><em>item_type=&lt;ItemType.Collection: 2&gt;</em>, <em>item_id=0</em>, <em>limit=10</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/tag.html#get_common_tags"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.tag.get_common_tags" title="Permalink to this definition">¶</a></dt>

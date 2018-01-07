@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Creating frontends &#8212; Happypanda X 0.0.2#111 documentation</title>
+    <title>Creating frontends &#8212; Happypanda X 0.0.2#113 documentation</title>
     
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.0.2#111',
+        VERSION:     '0.0.2#113',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -54,7 +54,7 @@
         </button>
         <a class="navbar-brand" href="index.html">
           Happypanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.2#111</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.2#113</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -202,40 +202,48 @@ See <a class="reference internal" href="switches.html#command-line-arguments"><s
 </pre></div>
 </div>
 <p><strong>Now, the most important thing you need to understand is that the data you received just now might just be a part of the full message</strong>.</p>
-<p>That is why you keep receving data until you meet the EOF sequence. For HPX this EOF is <code class="docutils literal"><span class="pre">&lt;EOF&gt;</span></code> (in byte-form).</p>
-<p>Oh, by the way, data is a sequence of bytes encoded in <code class="docutils literal"><span class="pre">UTF-8</span></code>.</p>
+<p>The message is delimited so you keep receving data until you meet the EOF sequence. For HPX this EOF is <code class="docutils literal"><span class="pre">&lt;EOF&gt;</span></code> (in byte-form).</p>
+<p>HPX requires that all data, not including the EOF sequence, to be gzipped.</p>
 <p>A very crude example on how to receive a message from HPX in pseudocode:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">var</span> <span class="n">msg</span> <span class="o">=</span> <span class="n">none</span><span class="p">;</span>
-<span class="n">var</span> <span class="n">buffer</span> <span class="o">=</span> <span class="nb">bytes</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">);</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">var</span> <span class="n">msg</span> <span class="o">=</span> <span class="n">none</span>
+<span class="n">var</span> <span class="n">buffer</span> <span class="o">=</span> <span class="nb">bytes</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
 
 <span class="k">while</span> <span class="n">true</span><span class="p">:</span>
-    <span class="n">buffer</span> <span class="o">+=</span> <span class="n">sock</span><span class="o">.</span><span class="n">receive</span><span class="p">();</span> <span class="c1"># might want to set a timeout so it doesn&#39;t wait forever</span>
+    <span class="n">buffer</span> <span class="o">+=</span> <span class="n">sock</span><span class="o">.</span><span class="n">receive</span><span class="p">()</span> <span class="c1"># might want to set a timeout so it doesn&#39;t wait forever</span>
 
     <span class="c1"># loop through buffer and check for EOF tag</span>
     <span class="k">if</span> <span class="nb">bytes</span><span class="p">(</span><span class="s2">&quot;&lt;EOF&gt;&quot;</span><span class="p">)</span> <span class="ow">in</span> <span class="n">buffer</span><span class="p">:</span>
-        <span class="n">msg</span> <span class="o">=</span> <span class="n">buffer</span><span class="p">;</span>
-        <span class="k">break</span><span class="p">;</span> <span class="c1"># break loop</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="n">buffer</span>
+        <span class="k">break</span> <span class="c1"># break loop</span>
+<span class="c1"># remove the EOF sequence from the data</span>
+<span class="n">buffer</span> <span class="o">=</span> <span class="n">buffer</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s2">&quot;&lt;EOF&gt;&quot;</span><span class="p">)</span>
+<span class="c1"># decompress the data</span>
+<span class="n">var</span> <span class="n">data</span> <span class="o">=</span> <span class="n">gzip</span><span class="o">.</span><span class="n">decompress</span><span class="p">(</span><span class="n">buffer</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Now that we got a message from the server, we convert it into valid <code class="docutils literal"><span class="pre">JSON</span></code>.</p>
+<p>Now that we got a message from the server, we convert it into valid <code class="docutils literal"><span class="pre">JSON</span></code>.
+The decompressed data is <cite>UTF-8</cite> encoded.</p>
 <p>In pseudocode:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">var</span> <span class="n">json_data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="n">msg</span><span class="p">);</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">var</span> <span class="n">json_data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>And that&#8217;s the end of it. You&#8217;ve successfully received a message from the server.</p>
-<p>Sending a message is even easier. Just make sure it&#8217;s valid <code class="docutils literal"><span class="pre">JSON</span></code>, converted to bytes encoded in <code class="docutils literal"><span class="pre">UTF-8</span></code> before you send.</p>
+<p>Sending a message is even easier. Just make sure it&#8217;s valid <code class="docutils literal"><span class="pre">JSON</span></code>, converted to bytes encoded in <code class="docutils literal"><span class="pre">UTF-8</span></code> and then gzip compressed before you send.</p>
 <p><strong>Remember to suffix the message with the EOF tag so the server knows when your message is complete</strong>.</p>
 <p>In pseudocode:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">var</span> <span class="n">msg_to_send</span> <span class="o">=</span> <span class="nb">bytes</span><span class="p">(</span><span class="n">valid_json</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">);</span> <span class="c1"># make sure it&#39;s UTF-8 encoded</span>
-<span class="n">var</span> <span class="n">eof_tag</span> <span class="o">=</span> <span class="nb">bytes</span><span class="p">(</span><span class="s2">&quot;&lt;EOF&gt;&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">);</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">var</span> <span class="n">msg_to_send</span> <span class="o">=</span> <span class="nb">bytes</span><span class="p">(</span><span class="n">valid_json</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="c1"># make sure it&#39;s UTF-8 encoded</span>
+<span class="n">var</span> <span class="n">eof_tag</span> <span class="o">=</span> <span class="nb">bytes</span><span class="p">(</span><span class="s2">&quot;&lt;EOF&gt;&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
 
-<span class="n">sock</span><span class="o">.</span><span class="n">send_everything</span><span class="p">(</span><span class="n">msg_to_send</span><span class="p">);</span>
-<span class="n">sock</span><span class="o">.</span><span class="n">send_everything</span><span class="p">(</span><span class="n">eof_tag</span><span class="p">);</span>
+<span class="c1"># compress the msg before sending</span>
+<span class="n">msg_to_send</span> <span class="o">=</span> <span class="n">gzip</span><span class="o">.</span><span class="n">compress</span><span class="p">(</span><span class="n">msg_to_send</span><span class="p">)</span>
+
+<span class="n">sock</span><span class="o">.</span><span class="n">send_everything</span><span class="p">(</span><span class="n">msg_to_send</span><span class="p">)</span>
+<span class="n">sock</span><span class="o">.</span><span class="n">send_everything</span><span class="p">(</span><span class="n">eof_tag</span><span class="p">)</span> <span class="c1"># remember not to compress the EOF sequence!</span>
 </pre></div>
 </div>
-<p>For every message you send the server, a response is sent back, that is, unless the server has crashed.</p>
+<p>For every message you send the server, a response is sent back, that is, unless the server has crashed or something.</p>
 <p>(<strong>Please note that if you ran the server with the &#8211;dev switch, the server will not respond to messages if an unhandled exception was raised</strong>)</p>
-<p>The structure of the messages exchanged between the server and the client are consistent:</p>
+<p>The structure of the messages exchanged between the server and the client is consistent:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span>
     <span class="s2">&quot;session&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
     <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
@@ -243,11 +251,11 @@ See <a class="reference internal" href="switches.html#command-line-arguments"><s
 <span class="p">}</span>
 </pre></div>
 </div>
-<p>In <code class="docutils literal"><span class="pre">name</span></code> is a string value. This value is just an arbitrarily chosen name for the sever/client.</p>
+<p>In <code class="docutils literal"><span class="pre">name</span></code> is a string value. This value is just an arbitrarily chosen name for the sever/client. It has some use, see <a class="reference internal" href="api.html#configuration"><span class="std std-ref">Configuration</span></a> when you&#8217;re done reading this.</p>
 <p>In <code class="docutils literal"><span class="pre">data</span></code> is the real message. <code class="docutils literal"><span class="pre">session</span></code> will be explained in <a class="reference internal" href="#session"><span class="std std-ref">Session</span></a>.</p>
 <p><strong>Every message should look like this</strong>.</p>
 <p>For the sake of brevity, from now on only messages meant to be put in the <code class="docutils literal"><span class="pre">data</span></code> key will be shown.</p>
-<p>Generally, the server is very helpful and will tell you if your message is invalid and/or which keys you missed.</p>
+<p>Generally, the server is very helpful and will tell you if your message is invalid and/or if you&#8217;ve misused or missed some keys.</p>
 </div>
 <div class="section" id="authenticating">
 <h2>Authenticating<a class="headerlink" href="#authenticating" title="Permalink to this headline">¶</a></h2>
@@ -307,7 +315,7 @@ See <a class="reference internal" href="#session"><span class="std std-ref">Sess
 <p>The session is tied to the context of the client who did the handshake.</p>
 <p>The session is <em>not</em> tied to any particular connection, meaning multiple independent connections
 can use the same session.</p>
-<p>This allows for multiple independent connections to be made within the same app while sharing the same context:</p>
+<p>This allows for multiple independent connections to be made within the same or different app while sharing the same context:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">socketA</span> <span class="p">(</span><span class="n">connects</span><span class="p">)</span> <span class="o">--&gt;</span> <span class="n">server</span>
 <span class="n">socketA</span> <span class="o">&lt;--</span> <span class="p">(</span><span class="n">asking</span> <span class="k">for</span> <span class="n">handshake</span><span class="p">)</span> <span class="n">server</span>
 <span class="n">socketA</span> <span class="p">(</span><span class="n">handshakes</span><span class="p">)</span> <span class="o">--&gt;</span> <span class="n">server</span>
@@ -321,9 +329,10 @@ can use the same session.</p>
 </div>
 <p>Think of it as threads in a computer program.</p>
 <p>As shown above, the server will <em>always</em> send a message when a client connects.
-This message should thus always be consumed by additional sockets before sending the intended message with a session.</p>
+This message should thus always be consumed when connecting with additional sockets before sending the intended message with a session.</p>
 <p><strong>Sessions have a limited lifespan</strong>. Whenever you send a message using a session, you extend that particular session&#8217;s lifespan.</p>
-<p>Sessions expire when their lifespan runs out (shocking, isn&#8217;t it?), requiring the client to do a <em>new</em> handshake.</p>
+<p>Sessions expire when their lifespan runs out (shocking, isn&#8217;t it? :) ), requiring the client to do a <em>new</em> handshake.</p>
+<p>The extent of a single session&#8217;s lifespan is set by the server (in the server settings).</p>
 <div class="admonition-todo admonition" id="index-1">
 <p class="first admonition-title">Todo</p>
 <p class="last">explain session expired error</p>
@@ -412,7 +421,7 @@ the <code class="docutils literal"><span class="pre">error</span></code> key at 
 </div>
 <div class="section" id="server-commands">
 <h2>Server commands<a class="headerlink" href="#server-commands" title="Permalink to this headline">¶</a></h2>
-<p>The server implements the following commands <a class="reference internal" href="api.html#happypanda.interface.enums.ServerCommand" title="happypanda.interface.enums.ServerCommand"><code class="xref py py-class docutils literal"><span class="pre">ServerCommand</span></code></a></p>
+<p>The server implements server commands to control the server remotely: <a class="reference internal" href="api.html#happypanda.interface.enums.ServerCommand" title="happypanda.interface.enums.ServerCommand"><code class="xref py py-class docutils literal"><span class="pre">ServerCommand</span></code></a></p>
 <p>Server commands are invoked like this (this is the whole payload):</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span>
     <span class="s2">&quot;session&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
