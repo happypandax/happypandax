@@ -109,7 +109,7 @@ class Logger:
     @classmethod
     def setup_logger(cls, args=None, logging_queue=None, main=False, debug=False):
         assert isinstance(args, argparse.Namespace) or args is None
-
+        print("CALLING")
         argsdev = getattr(args, 'dev', False)
         argsdebug = getattr(args, 'debug', False)
 
@@ -144,6 +144,7 @@ class Logger:
                                   (constants.log_error, logging.ERROR)):
                 try:
                     with open(log_path, 'x') as f:  # noqa: F841
+                        print("creating", log_path)
                         pass
                 except FileExistsError:
                     pass
@@ -191,8 +192,9 @@ class Logger:
     def init_listener(cls, args):
         assert isinstance(args, argparse.Namespace)
         "Start a listener in a child process, returns queue"
-        cls._queue = Queue()
-        Process(target=Logger._listener, args=(args, cls._queue,), daemon=True).start()
+        q = Queue()
+        Process(target=Logger._listener, args=(args, q,), daemon=True).start()
+        cls._queue = q
         return cls._queue
 
     @classmethod

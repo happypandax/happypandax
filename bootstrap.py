@@ -4,6 +4,7 @@ import sys
 import shutil
 import argparse
 import subprocess
+import zipfile
 from subprocess import run
 from importlib import reload
 
@@ -328,7 +329,6 @@ def lint(args, unknown=None):
     _activate_venv()
     return run([env_python, "lint.py", *sys.argv[2:]]).returncode
 
-
 def _compress_dir(dir_path, output_name, fmt="zip"):
     from happypanda.common import config
     print("Compressing {} archive...".format(fmt))
@@ -338,11 +338,17 @@ def _compress_dir(dir_path, output_name, fmt="zip"):
             sys.exit()
 
         return run([config.sevenzip_path.value, "a", output_name, os.path.join(dir_path, "*")])
-
     else:
         p = shutil.make_archive(dir_path, fmt, dir_path)
         os.replace(p, output_name)
 
+def _osx_installer(app_path, volume_name, output_name):
+    print("Creating OS X installer...")
+    setting_file = os.path.join(".", "deploy", "osx", "dmgbuild_settings.py")
+    return run(["dmgbuild", "-s", setting_file, '-D',
+                "app={}".format(os.path.abspath(app_path)),
+                '"{}"'.format(volume_name),
+                os.path.abspath(output_name)])
 
 def deploy(args, unknown=None):
     _activate_venv()
@@ -366,9 +372,11 @@ def deploy(args, unknown=None):
     elif os.name == 'posix':
         os_name = "linux"
 
-    output_path = "dist/happypandax"
+    output_path = os.path.join(".", "dist", "happypandax")
     updater_path = "dist"
-    dir_path = "./dist/happypandax"
+    dir_path = os.path.join(".", "dist", "happypandax")
+    if constants.is_osx:
+        dir_path = os.path.join(dir_path, constants.osx_bundle_name, "Contents", "MacOS")
     installer_filename = ".installed"
     installer_file = os.path.join("deploy", installer_filename)
     if not prun(["happypandax.spec", "--noconfirm"]) and not prun(['updater.py',
@@ -385,7 +393,11 @@ def deploy(args, unknown=None):
         if constants.is_win:
             upd_name += '.exe'
 
-        os.replace(os.path.join(updater_path, upd_name), os.path.join(output_path, upd_name))
+        if constants.is_osx:
+            bundle_path_old = os.path.join("dist", constants.osx_bundle_name)
+            bundle_path = os.path.join(output_path, constants.osx_bundle_name)
+            os.replace(bundle_path_old, bundle_path)
+        os.replace(os.path.join(updater_path, upd_name), os.path.join(dir_path, upd_name))
 
         for p in ("", "installer"):
             if constants.preview:
@@ -395,23 +407,29 @@ def deploy(args, unknown=None):
             if p:
                 output_path_a = output_path_a + "." + p
 
-            fmt = 'zip'
-            if p == 'installer' and constants.is_win:
-                fmt = '7z'
-
-            output_path_a = output_path_a + '.' + fmt
-
             installer_file_out = os.path.join(dir_path, installer_filename)
             if p == "installer":
-                if not os.path.exists(installer_filename):
+                if not os.path.exists(installer_file_out):
                     shutil.copyfile(installer_file, installer_file_out)
             else:
                 if os.path.exists(installer_file_out):
                     os.remove(installer_file_out)
 
+            fmt = 'zip' if constants.is_win else 'gztar'
+            if p == 'installer' and constants.is_win:
+                fmt = '7z'
+            elif p == 'installer' and constants.is_osx:
+                fmt = 'dmg'
+
+            output_path_a = output_path_a + '.' + ((fmt[2:]+'.'+fmt[:2]) if 'tar' in fmt else fmt)
             if os.path.exists(output_path_a):
                 os.remove(output_path_a)
-            _compress_dir(dir_path, output_path_a, fmt)
+
+            if p == 'installer' and constants.is_osx:
+                _osx_installer(bundle_path, os.path.splitext(constants.osx_bundle_name)[0],
+                               output_path_a)
+            else:
+                _compress_dir(output_path, output_path_a, fmt)
             if p != "installer":
                 print("{}\n\tSHA256 Checksum: {}".format(output_path_a, updater.sha256_checksum(output_path_a)))
     print("Done")

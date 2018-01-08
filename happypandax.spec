@@ -8,7 +8,7 @@ sys.modules['FixTk'] = None
 
 working_dir = os.getcwd()
 app_name = "happypandax"
-icon_path = "static/favicon.ico"
+icon_path = "deploy/osx/app.icns" if sys.platform.startswith('darwin') else "static/favicon.ico"
 version_path = "deploy/win/version.txt"
 
 block_cipher = None
@@ -24,7 +24,7 @@ added_files = [
     ('static', 'static'),
   ]
 
-if sys.platform.startswith('win'):
+if os.name == 'nt':
   added_files += [('deploy/win/vc_redist.x86.exe', '.')]
 
 interface_files = exec_statement("""
@@ -35,6 +35,10 @@ interface_files = exec_statement("""
 version_str = exec_statement("""
     from happypanda.common import constants
     print(constants.version_str)""")
+
+osx_bundle_name = exec_statement("""
+    from happypanda.common import constants
+    print(constants.osx_bundle_name)""")
 
 def make(py_file, exe_name, analysis_kwargs={}, pyz_args=None, exe_kwargs={}):
 
@@ -72,30 +76,33 @@ def make(py_file, exe_name, analysis_kwargs={}, pyz_args=None, exe_kwargs={}):
 
   exe = EXE(pyz, a.scripts, name=exe_name, **e_kwargs)
 
-  if sys.platform == 'darwin':
-    app = BUNDLE(exe,
-             name=exe_name+'.app',
-             icon=icon_path,
-             bundle_identifier=None,
-             info_plist={
-                'CFBundleGetInfoString': "A cross-platform ...",
-                'NSHighResolutionCapable': 'True',
-                'CFBundleVersion': version_str,
-                'NSHumanReadableCopyright': u"Copyright © 2018, Twiddly, All Rights Reserved"
-                },
-             )
-
   return exe, a.binaries, a.zipfiles, a.datas
+
+app_gui_name = app_name+'_gui'
 
 col = [
         *make("run.py", app_name),
-        *make("gui.py", app_name+'_gui', exe_kwargs={'console':False}),
+        *make("gui.py", app_gui_name, exe_kwargs={'console':False}),
         *make("HPtoHPX.py", "HPtoHPX"),
         ]
 
-if not sys.platform == 'darwin':
-  coll = COLLECT(
-              *col,
-               strip=False,
-               upx=True,
-               name=app_name)
+if sys.platform.startswith('darwin'):
+  app = BUNDLE(*col,
+           name=osx_bundle_name,
+           icon=icon_path,
+           bundle_identifier=None,
+           info_plist={
+              'CFBundleExecutable': 'MacOS/'+app_gui_name,
+              'CFBundleGetInfoString': "A manga/doujinshi manager with tagging support (https://github.com/happypandax/server)",
+              'NSHighResolutionCapable': 'True',
+              'CFBundleVersion': version_str,
+              'NSHumanReadableCopyright': u"Copyright © 2018, Twiddly, All Rights Reserved"
+              },
+           )
+  col = []
+
+coll = COLLECT(
+            *col,
+             strip=False,
+             upx=True,
+             name=app_name)

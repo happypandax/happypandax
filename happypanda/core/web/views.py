@@ -94,9 +94,17 @@ def is_same_machine():
     # TODO: this will fail if connected to external server
     addr = request.headers.get('X-Forwarded-For', request.remote_addr)
     addr = addr.split("%")[0]
-    if addr in ("::1", "127.0.0.1",
-                utils.get_local_ip(),
-                socket.gethostbyaddr(socket.gethostname())[2][0]):
+    local_adresses = [
+        "::1", "127.0.0.1",
+        utils.get_local_ip()
+        ]
+
+    # IPV6
+    # TODO: find a workaround for OSX
+    if not constants.is_osx:
+        local_adresses.append(socket.gethostbyaddr(socket.gethostbyname())[2][0])
+
+    if addr in local_adresses:
         return True
     return False
 
