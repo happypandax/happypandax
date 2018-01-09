@@ -11,6 +11,7 @@ from io import BytesIO
 from PIL import Image
 from zipfile import ZipFile
 from rarfile import RarFile
+from tarfile import TarFile
 from contextlib import contextmanager
 from gevent import fileobject
 
@@ -166,7 +167,7 @@ class CoreFS(CoreCommand):
     Encapsulates path on the filesystem
 
     Default supported archive types are:
-        ZIP, RAR, CBR and CBZ
+        ZIP, RAR, CBR, CBZ, TAR.GZ, TAR.BZ2 and TAR.XZ
 
     Default supported image types are:
         JPG/JPEG, BMP, PNG and GIF
@@ -177,6 +178,9 @@ class CoreFS(CoreCommand):
     RAR = '.rar'
     CBR = '.cbr'
     CBZ = '.cbz'
+    TARGZ = '.tar.gz'
+    TARBZ2 = '.tar.bz2'
+    TARXZ = '.tar.xz'
 
     JPG = '.jpg'
     JPEG = '.jpeg'
@@ -199,7 +203,8 @@ class CoreFS(CoreCommand):
 
     @_archive_formats.default()
     def _archive_formats_def():
-        return (CoreFS.ZIP, CoreFS.RAR, CoreFS.CBR, CoreFS.CBZ)
+        return (CoreFS.ZIP, CoreFS.RAR, CoreFS.CBR, CoreFS.CBZ, CoreFS.TARGZ,
+                CoreFS.TARBZ2, CoreFS.TARXZ)
 
     @_image_formats.default()
     def _image_formats_def():
@@ -481,7 +486,8 @@ class Archive(CoreCommand):
     _close = CommandEntry("close", None, object)
 
     def _def_formats():
-        return (CoreFS.ZIP, CoreFS.RAR, CoreFS.CBZ, CoreFS.CBR)
+        return (CoreFS.ZIP, CoreFS.RAR, CoreFS.CBZ, CoreFS.CBR, CoreFS.TARBZ2,
+                CoreFS.TARGZ, CoreFS.TARXZ)
 
     def __init__(self, fpath):
         self._opened = False
@@ -521,6 +527,8 @@ class Archive(CoreCommand):
             return bool(archive.testzip())
         elif isinstance(archive, RarFile):
             return bool(archive.testrar())
+        elif isinstance(archive, TarFile):
+            return False
 
     @_init.default(capture=True)
     def _init_def(path, capture=_def_formats()):
@@ -531,12 +539,17 @@ class Archive(CoreCommand):
             if unrar_path:
                 rarfile.UNRAR_TOOL = unrar_path
             o = RarFile(str(path))
+        elif "".join(x.lower() for x in path.suffixes) in (CoreFS.TARBZ2, CoreFS.TARGZ, CoreFS.TARXZ):
+            o = TarFile(str(path))
         o.hpx_path = path
         return o
 
     @_namelist.default(capture=True)
     def _namelist_def(archive, capture=_def_formats()):
-        filelist = archive.namelist()
+        if isinstance(archive, TarFile):
+            filelist = archive.getnames()
+        else:
+            filelist = archive.namelist()
         return filelist
 
     @_is_dir.default(capture=True)
@@ -551,11 +564,17 @@ class Archive(CoreCommand):
         elif isinstance(archive, RarFile):
             info = archive.getinfo(filename)
             return info.isdir()
+        elif isinstance(archive, TarFile):
+            try:
+                info = archive.getmember(filename)
+                return info.isdir()
+            except KeyError:
+                raise exceptions.ArchiveFileNotFoundError(filename, archive.hpx_path)
         return False
 
     @_extract.default(capture=True)
     def _extract_def(archive, filename, target, capture=_def_formats()):
-        temp_p = ""
+        temp_p = str(target)
         if isinstance(archive, ZipFile):
             membs = []
             for name in Archive._namelist_def(archive):
@@ -567,12 +586,18 @@ class Archive(CoreCommand):
         elif isinstance(archive, RarFile):
             temp_p = str(target.joinpath(filename))
             archive.extract(filename, str(target))
+        elif isinstance(archive, TarFile):
+            try:
+                info = archive.getmember(filename)
+                archive.extractall(target, [info])
+            except KeyError:
+                raise exceptions.ArchiveFileNotFoundError(filename, archive.hpx_path)
         return temp_p
 
     @_extract_all.default(capture=True)
     def _extract_all_def(archive, target, capture=_def_formats()):
         target_p = str(target)
-        if isinstance(archive, (ZipFile, RarFile)):
+        if isinstance(archive, (ZipFile, RarFile, TarFile)):
             archive.extractall(target_p)
         return target_p
 

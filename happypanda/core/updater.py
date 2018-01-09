@@ -209,7 +209,7 @@ def register_release(filepath, silent=True, restart=True):
     try:
         up = CoreFS(constants.dir_update)
         if up.exists:
-            log.d("Nuking update folder")
+            log.d("Nuking existing update folder")
             up.delete(ignore_errors=True)
         os.makedirs(up.path)
         log.d("Extracting new release")
