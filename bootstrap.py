@@ -365,11 +365,11 @@ def deploy(args, unknown=None):
     from happypanda.common import constants
     from happypanda.core import updater
 
-    if sys.platform.startswith('darwin'):
+    if constants.is_osx:
         os_name = "osx"
-    elif os.name == 'nt':
+    elif constants.is_win:
         os_name = "win"
-    elif os.name == 'posix':
+    elif constants.is_linux:
         os_name = "linux"
 
     output_path = os.path.join(".", "dist", "happypandax")

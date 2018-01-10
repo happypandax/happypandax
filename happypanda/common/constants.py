@@ -12,7 +12,8 @@ is_frozen = getattr(sys, 'frozen', False)
 
 is_osx = sys.platform.startswith('darwin')
 is_win = os.name == 'nt'
-is_linux = os.name == 'posix'
+is_linux = sys.platform.startswith("linux") or sys.platform.startswith("linux2")
+is_posix = os.name == 'posix'
 
 from_gui = False  # running from gui
 
