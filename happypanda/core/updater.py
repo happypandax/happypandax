@@ -2,6 +2,7 @@ import sys
 import hashlib
 import os
 import shelve
+import pathlib
 
 from functools import reduce
 
@@ -219,9 +220,18 @@ def register_release(filepath, silent=True, restart=True):
         log.d("Extracting new release")
         p = filepath.extract(target=up.path)
         log.d("Saving update info")
+        extracted_content = p.path
+        app_path = os.path.abspath(constants.app_path)
+        if constants.is_osx: # we're in Contents/MacOS, need to go two dir up
+            app_path = pathlib.Path(app_path)
+            app_path = os.path.join(*list(app_path.parts)[:-2])
+
+            # also, we only extract contents in the bundle (not the bundle itself)
+            extracted_content = os.path.join(extracted_content, constants.osx_bundle_name)
+        
         with shelve.open(constants.internal_db_path) as db:
-            db[constants.updater_key] = {'from': p.path,
-                                         'to': os.path.abspath(constants.app_path),
+            db[constants.updater_key] = {'from': extracted_content,
+                                         'to': app_path,
                                          'restart': restart,
                                          'app': sys.argv[0],
                                          'args': sys.argv[1:],

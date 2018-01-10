@@ -330,6 +330,14 @@ class ArchiveExistError(ArchiveError):
     def __init__(self, f):
         return super().__init__("Archive file does not exist. File '{}' not found".format(f))
 
+@error_code(607)
+class NotAnArchiveError(ArchiveError):
+    "Not an archive"
+
+    def __init__(self, f):
+        return super().__init__("Path is not an archive: {}".format(f))
+
+
     ## NETWORK -- CODE: 700+ ##
 
 

@@ -323,7 +323,16 @@ class CoreFS(CoreCommand):
     @property
     def ext(self):
         "Get file extension. An empty string is returned if path is a directory"
-        return self._path.suffix.lower()
+        suffixes = self._path.suffixes
+        while suffixes:
+            s = "".join(suffixes)
+            if s.lower() in self.archive_formats():
+                break
+            suffixes.pop(0)
+        else:
+            s = self._path.suffix
+
+        return s.lower()
 
     @property
     def count(self):
@@ -380,7 +389,7 @@ class CoreFS(CoreCommand):
                 f = self._archive.open(self.archive_name, *args, **kwargs)
             else:
                 f = open(self.get(), *args, **kwargs)
-            f = fileobject.FileObject(f)
+            f = fileobject.FileObjectThread(f, mode=f.mode)
         except PermissionError:
             if self.is_dir:
                 raise exceptions.CoreError(utils.this_function(), "Tried to open a folder which is not possible")
@@ -439,7 +448,7 @@ class CoreFS(CoreCommand):
                 else:
                     self._archive.extract_all(target)
                     return CoreFS(target)
-        return ""
+        raise exceptions.NotAnArchiveError(self.path)
 
     def _resolve_path(self, p):
         if isinstance(p, CoreFS):
@@ -465,6 +474,12 @@ class CoreFS(CoreCommand):
         if isinstance(other, CoreFS):
             return self.path < other.path
         return super().__lt__(other)
+
+    def __str__(self):
+        return "CoreFS({})".format(self.path)
+
+    def __repr__(self):
+        return "CoreFS({})".format(self.path)
 
 
 class Archive(CoreCommand):
@@ -493,10 +508,11 @@ class Archive(CoreCommand):
         self._opened = False
         self._archive = None
         self._path = pathlib.Path(fpath)
-        self._ext = self._path.suffix.lower()
+        self._pathfs = CoreFS(fpath)
+        self._ext = self._pathfs.ext
         if not self._path.exists():
             raise exceptions.ArchiveExistError(str(self._path))
-        if not self._path.suffix.lower() in CoreFS.archive_formats():
+        if not self._pathfs.ext in CoreFS.archive_formats():
             raise exceptions.ArchiveUnsupportedError(str(self._path))
 
         try:
@@ -539,8 +555,8 @@ class Archive(CoreCommand):
             if unrar_path:
                 rarfile.UNRAR_TOOL = unrar_path
             o = RarFile(str(path))
-        elif "".join(x.lower() for x in path.suffixes) in (CoreFS.TARBZ2, CoreFS.TARGZ, CoreFS.TARXZ):
-            o = TarFile(str(path))
+        elif CoreFS(path).ext in (CoreFS.TARBZ2, CoreFS.TARGZ, CoreFS.TARXZ):
+            o = TarFile.open(str(path))
         o.hpx_path = path
         return o
 

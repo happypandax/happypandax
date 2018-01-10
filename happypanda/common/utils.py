@@ -370,6 +370,13 @@ def launch_updater():
         upd_name += '.exe'
     atexit.register(os.execl, upd_name, upd_name)
 
+@contextmanager
+def temp_cwd(p):
+    o = os.getcwd()
+    os.chdir(p)
+    yield
+    os.chdir(o)
+
 
 class AttributeList(UserList):
     """

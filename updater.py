@@ -4,7 +4,7 @@ import sys
 import shutil
 import atexit
 
-from happypanda.common import constants, hlogger
+from happypanda.common import constants, hlogger, utils
 
 log = hlogger.Logger("HappyUpdater")
 

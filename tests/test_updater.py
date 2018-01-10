@@ -4,6 +4,7 @@ import json
 import sys
 import os
 import shutil
+import shelve
 
 from unittest import mock
 
@@ -50,8 +51,8 @@ github_repo_tags = [
 
 asset_files = ("happyupd.txt", "installedfromtest.txt")
 if constants.is_osx:
-    asset_files = ("HappyPanda X.app/MacOS/happyupd.txt", "HappyPanda X.app/MacOS/installedfromtest.txt",
-                   "HappyPanda X.app/Resources/hello.txt")
+    asset_files = ("happyupd.txt", "installedfromtest.txt",
+                   "../Resources/hello.txt")
 asset_url_win = "tests/data/happypandax0.0.2.win.zip"
 asset_url_linux = "path/to/linux/file"
 asset_url_osx = "tests/data/happypandax0.0.2.osx.tar.gz"
@@ -166,7 +167,7 @@ def define_github_responses(rsp):
     rsp.add(rsp.GET, 'https://api.github.com/repos/happypandax/server/releases/tags/v0.0.2',
                   json=github_repo_v0_0_2, status=200)
 
-    rsp.add(rsp.GET, 'http://randomurl.com',
+    rsp.add(rsp.GET, 'http://randomurl.abc',
                   body=asset_data, status=200)
 
     rsp.add(rsp.GET, 'https://api.github.com/repos/happypandax/updates/contents/checksums.txt',
@@ -182,10 +183,12 @@ def tmp_update_folder(tmpdir_factory):
 
 @pytest.fixture(scope='session')
 def app_path():
-    p = os.path.join("tests", "data", "tmp_upd_app_path")
-    os.mkdir(p)
+    root_p = p = os.path.join("tests", "data", "tmp_upd_app_path")
+    if constants.is_osx:
+        p = os.path.join(p, "Contents", "MacOS")
+    os.makedirs(p)
     yield p
-    shutil.rmtree(p)
+    shutil.rmtree(root_p)
 
 @pytest.mark.incremental
 class TestUpdating:
@@ -203,12 +206,14 @@ class TestUpdating:
 
     def test_get_release(self, mresponses, tmpdir):
         define_github_responses(mresponses)
-        p = str(tmpdir.mkdir("updater_get"))
+        p = tmpdir.mkdir("updater_get")
+        db_p = p.join("internals")
+        p = str(p)
         with mock.patch("happypanda.common.constants.version", (2, 0, 0)),\
             mock.patch("happypanda.common.constants.dir_cache", p),\
-            mock.patch("happypanda.common.constants.internal_db_path", p),\
+            mock.patch("happypanda.common.constants.internal_db_path", str(db_p)),\
             mock.patch("happypanda.common.constants.dir_temp", p):
-            r = updater.get_release("http://randomurl.com", silent=False)
+            r = updater.get_release("http://randomurl.abc", silent=False)
             assert r is not None
             assert isinstance(r, dict) and 'path' in r and 'hash' in r
             old_r = r
@@ -220,14 +225,16 @@ class TestUpdating:
 
     def test_register_release(self, tmp_update_folder, app_path):
         p = str(tmp_update_folder.mkdir("updater_register"))
-        with mock.patch("happypanda.common.constants.internal_db_path", str(tmp_update_folder)),\
+        db_p = tmp_update_folder.join("internals")
+        with mock.patch("happypanda.common.constants.internal_db_path", str(db_p)),\
             mock.patch("happypanda.common.constants.app_path", app_path),\
             mock.patch("happypanda.common.utils.create_temp_dir") as utils_temp,\
             mock.patch("happypanda.core.commands.io_cmd.CoreFS.delete"),\
             mock.patch("happypanda.common.constants.dir_update", p):
             utils_temp.return_value = str(tmp_update_folder.mkdir("updater_release"))
             assert updater.register_release(asset_url_platform, silent=False, restart=False)
-            with utils.intertnal_db() as db:
+            assert constants.internal_db_path == str(db_p)
+            with shelve.open(constants.internal_db_path) as db:
                 d = db[constants.updater_key]
                 assert compare_json_dicts(d, {'from': utils_temp.return_value,
                                                  'to': os.path.abspath(constants.app_path),
@@ -237,11 +244,13 @@ class TestUpdating:
                                                  'state': constants.UpdateState.Registered.value})
 
     def test_updater(self, tmp_update_folder, app_path):
-        with mock.patch("happypanda.common.constants.internal_db_path", str(tmp_update_folder)),\
+        db_p = tmp_update_folder.join("internals")
+        with mock.patch("happypanda.common.constants.internal_db_path", str(db_p)),\
             mock.patch("happypanda.common.constants.app_path", app_path),\
-            mock.patch("updater.constants.internal_db_path", str(tmp_update_folder)):
+            mock.patch("updater.constants.internal_db_path", str(db_p)):
+            assert constants.internal_db_path == str(db_p)
             happyupd.main()
-            with utils.intertnal_db() as db:
+            with shelve.open(constants.internal_db_path) as db:
                 d = db[constants.updater_key]
                 assert d['state'] == constants.UpdateState.Success.value
             assert all(os.path.exists(os.path.join(constants.app_path, x)) for x in asset_files)
@@ -249,9 +258,9 @@ class TestUpdating:
     def test_updater_overwrite(self, tmp_update_folder, app_path):
 
         all(os.path.exists(os.path.join(constants.app_path, x)) for x in asset_files)
-
+        db_p = tmp_update_folder.join("internals")
         p = str(tmp_update_folder.mkdir("updater_register2"))
-        with mock.patch("happypanda.common.constants.internal_db_path", str(tmp_update_folder)),\
+        with mock.patch("happypanda.common.constants.internal_db_path", str(db_p)),\
             mock.patch("happypanda.common.constants.app_path", app_path),\
             mock.patch("happypanda.common.utils.create_temp_dir") as utils_temp,\
             mock.patch("happypanda.core.commands.io_cmd.CoreFS.delete"),\
@@ -259,11 +268,12 @@ class TestUpdating:
             utils_temp.return_value = str(tmp_update_folder.mkdir("updater_release2"))
             assert updater.register_release(asset_url_platform, silent=False, restart=False)
 
-        with mock.patch("happypanda.common.constants.internal_db_path", str(tmp_update_folder)),\
+        with mock.patch("happypanda.common.constants.internal_db_path", str(tmp_update_folder.join("internals"))),\
             mock.patch("happypanda.common.constants.app_path", app_path),\
-            mock.patch("updater.constants.internal_db_path", str(tmp_update_folder)):
+            mock.patch("updater.constants.internal_db_path", str(db_p)):
+            assert constants.internal_db_path == str(db_p)
             happyupd.main()
-            with utils.intertnal_db() as db:
+            with shelve.open(constants.internal_db_path) as db:
                 d = db[constants.updater_key]
                 assert d['state'] == constants.UpdateState.Success.value
             assert all(os.path.exists(os.path.join(constants.app_path, x)) for x in asset_files)
