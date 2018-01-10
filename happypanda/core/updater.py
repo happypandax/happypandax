@@ -37,6 +37,7 @@ def verify_release(checksum, silent=True):
             if r.text:
                 with utils.intertnal_db() as db:
                     db[checksum_rel_key] = r.text
+                log.d("Matching checksum", checksum)
                 return checksum in r.text
     except exceptions.NetworkError:
         if not silent:
@@ -80,19 +81,22 @@ def check_release(silent=True):
 
             new_rel = None
             new_version = tuple()
+            log.d("Found tags:", tags)
             # go down in releases until a suitable new release or we match local release
             while tags:
                 t = tags.pop(0)
+                log.d("Checking tag:", t)
                 if 'alpha' in t and not config.allow_alpha_releases.value:
                     continue
                 elif 'beta' in t and not config.allow_beta_releases.value:
                     continue
                 v = extract_version(t)
                 if len(v) < 2 or v <= constants.version:
-                    break
+                    continue
                 else:
                     new_rel = t
                     new_version = v
+                    break
             download_url = None
             changes = ""
             if new_rel:
@@ -211,14 +215,13 @@ def register_release(filepath, silent=True, restart=True):
         if up.exists:
             log.d("Nuking existing update folder")
             up.delete(ignore_errors=True)
-        os.makedirs(up.path)
+        os.makedirs(up.path, exist_ok=True) # exists_ok: needed by pytest
         log.d("Extracting new release")
         p = filepath.extract(target=up.path)
         log.d("Saving update info")
         with shelve.open(constants.internal_db_path) as db:
             db[constants.updater_key] = {'from': p.path,
                                          'to': os.path.abspath(constants.app_path),
-                                         #'to':os.path.abspath(constants.dir_cache),
                                          'restart': restart,
                                          'app': sys.argv[0],
                                          'args': sys.argv[1:],

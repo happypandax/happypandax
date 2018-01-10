@@ -21,8 +21,7 @@ def move_replace(root_src_dir, root_dst_dir):
                 os.remove(dst_file)
             shutil.move(src_file, dst_dir)
 
-
-if __name__ == '__main__':
+def main():
     log.setup_logger()
     try:
         with shelve.open(constants.internal_db_path) as db:
@@ -64,3 +63,6 @@ if __name__ == '__main__':
         log.i('Finished with state:', state)
     except BaseException:
         log.exception("Updater failed")
+
+if __name__ == '__main__':
+    main()
