@@ -1,4 +1,4 @@
-﻿from sys import exit, argv
+﻿from sys import exit, argv, executable
 from os import chdir, path
 from subprocess import run
 
@@ -7,6 +7,6 @@ from subprocess import run
 chdir(path.abspath(path.dirname(__file__)))
 
 if __name__ == '__main__':
-    r = ["python", "-m", "pytest", "-v"]
+    r = [executable, "-m", "pytest", "-v"]
     r.extend(argv[1:])
     exit(run(r).returncode)
