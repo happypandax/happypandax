@@ -54,7 +54,7 @@ if constants.is_osx:
     asset_files = ("happyupd.txt", "installedfromtest.txt",
                    "../Resources/hello.txt")
 asset_url_win = "tests/data/happypandax0.0.2.win.zip"
-asset_url_linux = "path/to/linux/file"
+asset_url_linux = "tests/data/happypandax0.0.2.linux.tar.gz"
 asset_url_osx = "tests/data/happypandax0.0.2.osx.tar.gz"
 if constants.is_win:
     asset_url_platform = asset_url_win
