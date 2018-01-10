@@ -49,9 +49,12 @@ github_repo_tags = [
 ]
 
 asset_files = ("happyupd.txt", "installedfromtest.txt")
+if constants.is_osx:
+    asset_files = ("HappyPanda X.app/MacOS/happyupd.txt", "HappyPanda X.app/MacOS/installedfromtest.txt",
+                   "HappyPanda X.app/Resources/hello.txt")
 asset_url_win = "tests/data/happypandax0.0.2.win.zip"
 asset_url_linux = "path/to/linux/file"
-asset_url_osx = "path/to/osx/file"
+asset_url_osx = "ptests/data/happypandax0.0.2.osx.tar.gz"
 if constants.is_win:
     asset_url_platform = asset_url_win
 elif constants.is_linux:
