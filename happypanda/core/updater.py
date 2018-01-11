@@ -3,6 +3,7 @@ import hashlib
 import os
 import shelve
 import pathlib
+import arrow
 
 from functools import reduce
 
@@ -59,6 +60,8 @@ def extract_version(v): return tuple(  # noqa: E704
     [int(x) for x in (reduce((lambda a, b: a + b), filter(str.isdigit, i)) for i in v.split("."))][:3])  # noqa: E704
 
 
+next_check = None
+
 def check_release(silent=True):
     """
     Check for new release
@@ -69,7 +72,12 @@ def check_release(silent=True):
     Returns:
         None or {'url':'', 'changes':'', 'tag':'', 'version':(0, 0, 0)} for new release
     """
+    global next_check
+
     if config.check_new_releases.value:
+        if next_check and next_check > arrow.now():
+            return None
+        next_check = arrow.now().replace(minutes=+max(config.check_release_interval.value, 5))
         log.d("Checking for new release with interval set to", config.check_release_interval.value, "minutes")
         repo_name = config.github_repo.value['repo']
         repo_owner = config.github_repo.value['owner']

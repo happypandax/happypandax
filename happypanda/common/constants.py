@@ -85,6 +85,9 @@ class Priority(enum.Enum):
     Normal = 5
     Low = 0
 
+class PushID(enum.Enum):
+    Update = 1
+    User = 200
 
 maximum_native_workers = 15
 

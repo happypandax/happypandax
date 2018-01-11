@@ -164,15 +164,18 @@ class Client(Base):
     __pragma__("tconv")
 
     def _reconnect(self):
-        self.log("Reconnecting")
-        last_interval = 100
-        if self._retries is None:
-            self._retries = list(range(10, last_interval + 10, 10))  # secs
-        i = self._retries.pop(0) if self._retries else last_interval
-        if self._connection_status:
-            i = 0
+        if state['active']:
+            self.log("Reconnecting")
+            last_interval = 100
+            if self._retries is None:
+                self._retries = list(range(10, last_interval + 10, 10))  # secs
+            i = self._retries.pop(0) if self._retries else last_interval
+            if self._connection_status:
+                i = 0
+            else:
+                self.reconnect(i)
         else:
-            self.reconnect(i)
+            i = 5
         return i * 1000
     __pragma__("notconv")
 
@@ -193,19 +196,19 @@ class Client(Base):
     def on_command(self, msg):
         self._connection_status = msg['status']
         state['connected'] = self._connection_status
-        st_txt = "unknown"
         if self._connection_status:
+            if not utils.session_storage.get("startup_update", False):
+                utils.session_storage.set("startup_update", True)
+                self.call_func("check_update", push=True)
             if self._disconnected_once or self._first_connect:
                 self._disconnected_once = False
                 self._first_connect = False
                 if state.app:
                     state.app.notif("Connection to server has been established", "Server", 'success')
-            st_txt = "connected"
             self._reconnecting = False
             self._retries = None
         else:
             self._disconnected_once = True
-            st_txt = "disconnected"
 
     def on_error(self, msg):
         state.app.notif(msg['error'], "Server", "error")

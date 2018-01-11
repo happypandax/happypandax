@@ -70,7 +70,7 @@ class CoreMessage:
 class Notification(CoreMessage):
     """
     """
-    _id_counter = itertools.count(1)
+    _id_counter = itertools.count(constants.PushID.User.value)
 
     def __init__(self, msg, title="", *actions):
         super().__init__("notification")

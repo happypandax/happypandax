@@ -20,9 +20,10 @@ class CheckUpdate(Command):
                 msg = message.Notification(
                     "Changelog coming soon! For now, please visit the github repo to see the new changes",
                     "HappyPanda X {} is available!".format(u['tag']))
+                msg.id = constants.PushID.Update.value
                 msg.add_action(1, "Update & Restart", "button")
                 msg.add_action(2, "Skip", "button")
-                client_answer = self.push(msg).get(msg.id, timeout=20)
+                client_answer = self.push(msg).get(msg.id, timeout=30)
                 if client_answer and 1 in client_answer:
                     UpdateApplication().run(restart=True, silent=silent)
             return u
