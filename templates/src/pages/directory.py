@@ -16,7 +16,15 @@ from src.single import tagitem
 def artistpage_render():
     return e(ui.Container,
              e(ui.Segment.Group,
-               e(ui.Segment),
+               e(ui.Segment,
+                e(ui.Button, compact=True, basic=True,
+                          icon="options", floated="right",
+                          ),
+                 e(ui.Divider, hidden=True, section=True),
+                 e(ui.Search, placeholder=tr(this, "", "Search artists"), fluid=True,
+                   js_input={'fluid': True}),
+                 clearing=True,
+                 ),
                e(ui.Segment, secondary=True, basic=True)
                ))
 
@@ -54,7 +62,7 @@ def tagspage_render():
 
     for ns in sorted(dict(nstags).keys()):
         tags = [x.js_name for x in nstags[ns]]
-        for t in tags:
+        for t in sorted(tags):
             tag_lbl.append(e(tagitem.TagLabel, namespace=ns, tag=t, show_ns=True))
 
     return e(ui.Container,
@@ -63,18 +71,18 @@ def tagspage_render():
                  e(ui.Button, compact=True, basic=True,
                           icon="options", floated="right",
                           ),
-                 e(ui.Statistic.Group,
-                   e(ui.Statistic,
-                     e(ui.Statistic.Value, 0),
-                     e(ui.Statistic.Label, tr(this, "", "Total Tags"))
-                     ),
-                   e(ui.Statistic,
-                     e(ui.Statistic.Value, 0),
-                     e(ui.Statistic.Label, tr(this, "", "Galleries without tags"))
-                     ),
-                   size="mini",
-                   ),
-                 e(ui.Divider, hidden=True),
+                 #e(ui.Statistic.Group,
+                 #  e(ui.Statistic,
+                 #    e(ui.Statistic.Value, 0),
+                 #    e(ui.Statistic.Label, tr(this, "", "Total Tags"))
+                 #    ),
+                 #  e(ui.Statistic,
+                 #    e(ui.Statistic.Value, 0),
+                 #    e(ui.Statistic.Label, tr(this, "", "Galleries without tags"))
+                 #    ),
+                 #  size="mini",
+                 #  ),
+                 e(ui.Divider, hidden=True, section=True),
                  e(ui.Search, placeholder=tr(this, "", "Search tags"), fluid=True,
                    js_input={'fluid': True}),
                  clearing=True
@@ -94,7 +102,7 @@ TagsPage = createReactClass({
 
     'get_tags': get_db_tags,
 
-    'componentDidMount': lambda: this.get_tags(),
+    #'componentDidMount': lambda: this.get_tags(),
 
     'render': tagspage_render
 })
