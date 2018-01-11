@@ -1,8 +1,8 @@
 @roboto-font-path: '../fonts';
 
-.roboto-font(@folder, @variant, @type, @weight, @style) {
+.roboto-font(@variant, @type, @weight, @style) {
 
-    @font-full-path: '@{roboto-font-path}/@{folder}/@{variant}';
+    @font-full-path: '@{roboto-font-path}/@{variant}';
 
     @font-face {
         font-family: '@{variant}';
@@ -24,8 +24,8 @@
     }
 }
 
-.roboto-font('roboto', 'Roboto', 'Bold', 700, normal);
-.roboto-font('roboto', 'Roboto', 'Light', 300, normal);
-.roboto-font('roboto', 'Roboto', 'Medium', 500, normal);
-.roboto-font('roboto', 'Roboto', 'Regular', 400, normal);
-.roboto-font('roboto', 'Roboto', 'Thin', 100, normal);
+.roboto-font('Roboto', 'Bold', 700, normal);
+.roboto-font('Roboto', 'Light', 300, normal);
+.roboto-font('Roboto', 'Medium', 500, normal);
+.roboto-font('Roboto', 'Regular', 400, normal);
+.roboto-font('Roboto', 'Thin', 100, normal);
