@@ -11,10 +11,12 @@ if __package__ is None and not hasattr(sys, 'frozen'):
 if sys.platform.startswith('darwin') and hasattr(sys, 'frozen'):
     os.chdir(os.path.abspath(os.path.dirname(sys.executable)))
 
-import rollbar  # noqa: E402
-import multiprocessing  # noqa: E402
 
 from gevent import monkey  # noqa: E402
+monkey.patch_ssl() # need to patch before importing requests, see https://github.com/requests/requests/issues/3752
+
+import multiprocessing  # noqa: E402
+import rollbar  # noqa: E402
 
 from multiprocessing import Process  # noqa: E402
 from apscheduler.triggers.interval import IntervalTrigger  # noqa: E402
