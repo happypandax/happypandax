@@ -60,6 +60,9 @@ def tagspage_render():
     return e(ui.Container,
              e(ui.Segment.Group,
                e(ui.Segment,
+                 e(ui.Button, compact=True, basic=True,
+                          icon="options", floated="right",
+                          ),
                  e(ui.Statistic.Group,
                    e(ui.Statistic,
                      e(ui.Statistic.Value, 0),
@@ -73,7 +76,8 @@ def tagspage_render():
                    ),
                  e(ui.Divider, hidden=True),
                  e(ui.Search, placeholder=tr(this, "", "Search tags"), fluid=True,
-                   js_input={'fluid': True})
+                   js_input={'fluid': True}),
+                 clearing=True
                  ),
                e(ui.Segment, e(ui.Label.Group, *tag_lbl, size="large"), secondary=True, basic=True,
                  loading=this.state.data_loading)

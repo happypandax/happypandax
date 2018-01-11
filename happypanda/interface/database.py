@@ -7,7 +7,7 @@ Database
 from happypanda.common import constants, utils, exceptions
 from happypanda.core import db, services, message
 from happypanda.interface import enums
-from happypanda.core.commands import database_cmd
+from happypanda.core.commands import database_cmd, search_cmd
 
 import functools
 
@@ -87,13 +87,16 @@ def get_item(item_type: enums.ItemType=enums.ItemType.Gallery,
 
 
 def get_items(item_type: enums.ItemType=enums.ItemType.Gallery,
-              limit: int=100):
+              limit: int=100,
+              offset: int=None,
+              ):
     """
     Get a list of items
 
     Args:
         item_type: type of item to get
         limit: limit the amount of items returned
+        offset: offset the results by n items
 
     Returns:
         .. code-block:: guess
@@ -108,7 +111,7 @@ def get_items(item_type: enums.ItemType=enums.ItemType.Gallery,
 
     db_msg, db_model = item_type._msg_and_model()
 
-    items = database_cmd.GetModelItems().run(db_model, limit=limit)
+    items = database_cmd.GetModelItems().run(db_model, limit=limit, offset=offset)
 
     item_list = message.List(db.model_name(db_model), db_msg)
     [item_list.append(db_msg(i)) for i in items]
@@ -118,7 +121,9 @@ def get_items(item_type: enums.ItemType=enums.ItemType.Gallery,
 def get_related_items(item_type: enums.ItemType=enums.ItemType.Gallery,
                       item_id: int = 0,
                       related_type: enums.ItemType=enums.ItemType.Page,
-                      limit: int = 100):
+                      limit: int = 100,
+                      offset: int=None,
+                      ):
     """
     Get item related to given item
 
@@ -127,6 +132,7 @@ def get_related_items(item_type: enums.ItemType=enums.ItemType.Gallery,
         item_id: id of parent item
         related_type: child item
         limit: limit the amount of items returned
+        offset: offset the results by n items
 
     Returns:
         .. code-block:: guess
@@ -151,7 +157,10 @@ def get_related_items(item_type: enums.ItemType=enums.ItemType.Gallery,
                 item_type))
 
     s = constants.db_session()
-    item_ids = s.query(child_model.id).join(col).filter(parent_model.id == item_id).limit(limit).all()
+    q = s.query(child_model.id).join(col).filter(parent_model.id == item_id)
+    if offset:
+        q = q.offset(offset)
+    item_ids = q.limit(limit).all()
     items = database_cmd.GetModelItems().run(child_model, {x[0] for x in item_ids})
 
     item_list = message.List(db.model_name(child_model), child_msg)
@@ -219,6 +228,55 @@ def get_related_count(item_type: enums.ItemType=enums.ItemType.Gallery,
     s = constants.db_session()
     count = s.query(child_model.id).join(col).filter(parent_model.id == item_id).count()
     return message.Identity('count', {'id': item_id, 'count': count})
+
+def search_item(item_type: enums.ItemType=enums.ItemType.Gallery,
+                search_query: str = "",
+                search_options: dict = {},
+                full_search: bool=True,
+                limit: int=100,
+                offset: int=None,
+                ):
+    """
+    Search for item
+
+    Args:
+        item_type: all of :py:attr:`.ItemType` except :py:attr:`.ItemType.Page` and :py:attr:`.ItemType.GalleryFilter`
+        search_query: filter item by search terms
+        search_options: options to apply when filtering, see :ref:`Settings` for available search options
+        limit: amount of items
+        offset: offset the results by n items
+
+    Returns:
+        .. code-block:: guess
+
+            [
+                item message object,
+                ...
+            ]
+    """
+    item_type = enums.ItemType.get(item_type)
+
+    if search_options:
+        search_option_names = [x.name for x in search_cmd._get_search_options()]
+        for n in search_options:
+            if n not in search_option_names:
+                raise exceptions.APIError(utils.this_function(), "Invalid search option name '{}'".format(n))
+
+    if item_type in (enums.ItemType.Page, enums.ItemType.GalleryFilter):
+        raise exceptions.APIError(utils.this_function(),
+                                  "Unsupported itemtype {}".format(item_type))
+    db_msg, db_model = item_type._msg_and_model()
+
+    model_ids = set()
+    if full_search:
+        model_ids = search_cmd.ModelFilter().run(db_model, search_query, search_options)
+
+    items = message.List("items", db_msg)
+
+    [items.append(db_msg(x)) for x in database_cmd.GetModelItems().run(db_model, model_ids, limit=limit, offset=offset)]
+
+    return items
+
 
 # def get_random_items(item_type: enums.ItemType=enums.ItemType.Gallery,
 #                    limit: int = 1,

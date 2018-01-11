@@ -217,7 +217,7 @@ class PartialModelFilter(Command):
     - Collection
     - Gallery
     - Title
-    - GalleryUrl
+    - Url
 
     Returns a set with ids of matched model items
     """
@@ -289,16 +289,19 @@ class PartialModelFilter(Command):
         term = ParseTerm().run(term)
         ids = set()
 
+        col_on_parent = db.relationship_column(parent_model, child_model)
         s = constants.db_session()
-
+        q = s.query(parent_model.id)
+        if col_on_parent:
+            q = q.join(col_on_parent)
         if term.namespace:
             lower_ns = term.namespace.lower()
             if lower_ns == 'path':
-                ids.update(x[0] for x in s.query(parent_model.id).filter(match_string(db.Gallery.path,
+                ids.update(x[0] for x in q.filter(match_string(db.Gallery.path,
                                                                                       term.tag,
                                                                                       options)).all())
             elif lower_ns in ("rating", "stars"):
-                ids.update(x[0] for x in s.query(parent_model.id).filter(match_int(db.Gallery.rating,
+                ids.update(x[0] for x in q.filter(match_int(db.Gallery.rating,
                                                                                    term.tag,
                                                                                    options)).all())
 
@@ -318,10 +321,12 @@ class PartialModelFilter(Command):
         if term.namespace.lower() == 'title' or not term.namespace:
 
             col_on_parent = db.relationship_column(parent_model, child_model)
+
             s = constants.db_session()
-            ids.update(x[0] for x in s.query(parent_model.id).
-                       join(col_on_parent).
-                       filter(match_string(child_model.name, term.tag, options)).all())
+            q = s.query(parent_model.id)
+            if col_on_parent:
+                q = q.join(col_on_parent)
+            ids.update(x[0] for x in q.filter(match_string(child_model.name, term.tag, options)).all())
         return ids
 
     @match_model.default(capture=True)
@@ -340,13 +345,17 @@ class PartialModelFilter(Command):
         col_tag = db.relationship_column(db.NamespaceTags, db.Tag)
         s = constants.db_session()
         q = s.query(parent_model.id)
+        if col_on_parent:
+            q = q.join(col_on_parent)
+        if col_on_child:
+            q = q.join(col_on_child)
         if term.namespace:
             col_ns = db.relationship_column(db.NamespaceTags, db.Namespace)
-            items = q.join(col_on_parent).join(col_on_child).join(col_ns).join(col_tag).filter(db.and_op(
+            items = q.join(col_ns).join(col_tag).filter(db.and_op(
                 match_string(db.Namespace.name, term.namespace, options, whole=True),
                 match_string(db.Tag.name, term.tag, options))).all()
         else:
-            items = q.join(col_on_parent).join(col_on_child).join(col_tag).filter(
+            items = q.join(col_tag).filter(
                 match_string(db.Tag.name, term.tag, options)).all()
 
         ids.update(x[0] for x in items)
@@ -365,11 +374,12 @@ class PartialModelFilter(Command):
 
         if term.namespace.lower() == 'artist' or not term.namespace:
             col_on_parent = db.relationship_column(parent_model, child_model)
+
             s = constants.db_session()
-            ids.update(x[0] for x in s.query(parent_model.id).
-                       join(col_on_parent).
-                       join(child_model.names).
-                       filter(match_string(db.AliasName.name, term.tag, options)).all())
+            q = s.query(parent_model.id)
+            if col_on_parent:
+                q = q.join(col_on_parent)
+            ids.update(x[0] for x in q.join(child_model.names).filter(match_string(db.AliasName.name, term.tag, options)).all())
         return ids
 
     @match_model.default(capture=True)
@@ -385,7 +395,10 @@ class PartialModelFilter(Command):
         if term.namespace.lower() == child_model.__name__.lower() or not term.namespace:
             col_on_parent = db.relationship_column(parent_model, child_model)
             s = constants.db_session()
-            ids.update(x[0] for x in s.query(parent_model.id).join(col_on_parent).filter(match_string(child_model.name,
+            q = s.query(parent_model.id)
+            if col_on_parent:
+                q = q.join(col_on_parent)
+            ids.update(x[0] for x in q.filter(match_string(child_model.name,
                                                                                                       term.tag,
                                                                                                       options)).all())
         return ids

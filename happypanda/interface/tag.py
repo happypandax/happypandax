@@ -26,12 +26,13 @@ def _contruct_tags_msg(nstags):
     return msg
 
 
-def get_all_tags(limit: int=100):
+def get_all_tags(limit: int=100, offset: int=None):
     """
     Get all tags from the db
 
     Args:
         limit: limit the amount of items returned
+        offset: offset the results by n items
 
     Returns:
         .. code-block:: guess
@@ -41,11 +42,31 @@ def get_all_tags(limit: int=100):
                 ...
             }
     """
-    db_obj = database_cmd.GetModelItems().run(db.NamespaceTags, limit=limit)
+    db_obj = database_cmd.GetModelItems().run(db.NamespaceTags, limit=limit, offset=offset)
 
     msg = _contruct_tags_msg(db_obj)
 
     return message.Identity('tags', msg)
+
+#def search_tags(term: str="", only_namespace: bool=False, only_tag: bool=False, limit: int=100):
+#    """
+#    Search for tags
+
+#    Args:
+#        term: search string
+#        only_namespace: only search for matching namespace
+#        only_tag: only search for matching tag
+#        limit: limit the amount of items returned
+
+#    Returns:
+#        .. code-block:: guess
+
+#            {
+#                namespace : [ tag message object, ...],
+#                ...
+#            }
+#    """
+#    pass
 
 
 def get_tags(item_type: enums.ItemType = enums.ItemType.Gallery,
