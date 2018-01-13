@@ -229,6 +229,7 @@ def get_related_count(item_type: enums.ItemType=enums.ItemType.Gallery,
     count = s.query(child_model.id).join(col).filter(parent_model.id == item_id).count()
     return message.Identity('count', {'id': item_id, 'count': count})
 
+
 def search_item(item_type: enums.ItemType=enums.ItemType.Gallery,
                 search_query: str = "",
                 search_options: dict = {},

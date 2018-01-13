@@ -351,7 +351,7 @@ def intertnal_db():
     log.d("Opening internal db")
     try:
         db = shelve.Shelf(dumbdb.open(constants.internal_db_path))
-    except:
+    except BaseException:
         log.e("Failed to open internal db")
         raise
     try:
@@ -375,6 +375,7 @@ def launch_updater():
     if constants.is_win:
         upd_name += '.exe'
     atexit.register(os.execl, upd_name, upd_name)
+
 
 @contextmanager
 def temp_cwd(p):

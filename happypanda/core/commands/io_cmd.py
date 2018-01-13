@@ -512,7 +512,7 @@ class Archive(CoreCommand):
         self._ext = self._pathfs.ext
         if not self._path.exists():
             raise exceptions.ArchiveExistError(str(self._path))
-        if not self._pathfs.ext in CoreFS.archive_formats():
+        if self._pathfs.ext not in CoreFS.archive_formats():
             raise exceptions.ArchiveUnsupportedError(str(self._path))
 
         try:

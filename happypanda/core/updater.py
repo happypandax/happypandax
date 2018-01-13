@@ -61,6 +61,7 @@ def extract_version(v): return tuple(  # noqa: E704
 
 next_check = None
 
+
 def check_release(silent=True):
     """
     Check for new release
@@ -224,19 +225,19 @@ def register_release(filepath, silent=True, restart=True):
         if up.exists:
             log.d("Nuking existing update folder")
             up.delete(ignore_errors=True)
-        os.makedirs(up.path, exist_ok=True) # exists_ok: needed by pytest
+        os.makedirs(up.path, exist_ok=True)  # exists_ok: needed by pytest
         log.d("Extracting new release")
         p = filepath.extract(target=up.path)
         log.d("Saving update info")
         extracted_content = p.path
         app_path = os.path.abspath(constants.app_path)
-        if constants.is_osx: # we're in Contents/MacOS, need to go two dir up
+        if constants.is_osx:  # we're in Contents/MacOS, need to go two dir up
             app_path = pathlib.Path(app_path)
             app_path = os.path.join(*list(app_path.parts)[:-2])
 
             # also, we only extract contents in the bundle (not the bundle itself)
             extracted_content = os.path.join(extracted_content, constants.osx_bundle_name)
-        
+
         with utils.intertnal_db() as db:
             db[constants.updater_key] = {'from': extracted_content,
                                          'to': app_path,

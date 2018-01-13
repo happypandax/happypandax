@@ -18,7 +18,7 @@ is_posix = os.name == 'posix'
 from_gui = False  # running from gui
 
 # OSX
-osx_bundle_name = "HappyPanda X.app" # used by boostratp deploy, updater and specfile
+osx_bundle_name = "HappyPanda X.app"  # used by boostratp deploy, updater and specfile
 
 ## UPDATER ##
 updater_name = "happyupd"  # windows will make it require escalted priv. if named anything 'updater'
@@ -85,9 +85,11 @@ class Priority(enum.Enum):
     Normal = 5
     Low = 0
 
+
 class PushID(enum.Enum):
     Update = 1
     User = 200
+
 
 maximum_native_workers = 15
 

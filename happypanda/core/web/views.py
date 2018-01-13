@@ -97,7 +97,7 @@ def is_same_machine():
     local_adresses = [
         "::1", "127.0.0.1",
         utils.get_local_ip()
-        ]
+    ]
 
     # IPV6
     # TODO: find a workaround for OSX and linux

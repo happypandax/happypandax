@@ -298,12 +298,12 @@ class PartialModelFilter(Command):
             lower_ns = term.namespace.lower()
             if lower_ns == 'path':
                 ids.update(x[0] for x in q.filter(match_string(db.Gallery.path,
-                                                                                      term.tag,
-                                                                                      options)).all())
+                                                               term.tag,
+                                                               options)).all())
             elif lower_ns in ("rating", "stars"):
                 ids.update(x[0] for x in q.filter(match_int(db.Gallery.rating,
-                                                                                   term.tag,
-                                                                                   options)).all())
+                                                            term.tag,
+                                                            options)).all())
 
         return ids
 
@@ -379,7 +379,13 @@ class PartialModelFilter(Command):
             q = s.query(parent_model.id)
             if col_on_parent:
                 q = q.join(col_on_parent)
-            ids.update(x[0] for x in q.join(child_model.names).filter(match_string(db.AliasName.name, term.tag, options)).all())
+            ids.update(
+                x[0] for x in q.join(
+                    child_model.names).filter(
+                    match_string(
+                        db.AliasName.name,
+                        term.tag,
+                        options)).all())
         return ids
 
     @match_model.default(capture=True)
@@ -399,8 +405,8 @@ class PartialModelFilter(Command):
             if col_on_parent:
                 q = q.join(col_on_parent)
             ids.update(x[0] for x in q.filter(match_string(child_model.name,
-                                                                                                      term.tag,
-                                                                                                      options)).all())
+                                                           term.tag,
+                                                           options)).all())
         return ids
 
     def main(self, model: db.Base, term: str, match_options: dict = {}) -> set:

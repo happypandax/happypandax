@@ -22,6 +22,7 @@ changes = """
 - added search_item api function
 - added 'offset' parameter to various api functions
 - updated docs
+- addeded support for TAR.GZ, TAR.BZ2 and TAR.XZ files
 
 From previous build:
 
@@ -337,6 +338,7 @@ def lint(args, unknown=None):
     _activate_venv()
     return run([env_python, "lint.py", *sys.argv[2:]]).returncode
 
+
 def _compress_dir(dir_path, output_name, fmt="zip"):
     from happypanda.common import config
     print("Compressing {} archive...".format(fmt))
@@ -350,6 +352,7 @@ def _compress_dir(dir_path, output_name, fmt="zip"):
         p = shutil.make_archive(dir_path, fmt, dir_path)
         os.replace(p, output_name)
 
+
 def _osx_installer(app_path, volume_name, output_name):
     print("Creating OS X installer...")
     setting_file = os.path.join(".", "deploy", "osx", "dmgbuild_settings.py")
@@ -357,6 +360,7 @@ def _osx_installer(app_path, volume_name, output_name):
                 "app={}".format(os.path.abspath(app_path)),
                 '"{}"'.format(volume_name),
                 os.path.abspath(output_name)])
+
 
 def deploy(args, unknown=None):
     _activate_venv()
@@ -429,7 +433,7 @@ def deploy(args, unknown=None):
             elif p == 'installer' and constants.is_osx:
                 fmt = 'dmg'
 
-            output_path_a = output_path_a + '.' + ((fmt[2:]+'.'+fmt[:2]) if 'tar' in fmt else fmt)
+            output_path_a = output_path_a + '.' + ((fmt[2:] + '.' + fmt[:2]) if 'tar' in fmt else fmt)
             if os.path.exists(output_path_a):
                 os.remove(output_path_a)
 

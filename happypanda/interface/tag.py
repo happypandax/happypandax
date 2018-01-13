@@ -48,7 +48,7 @@ def get_all_tags(limit: int=100, offset: int=None):
 
     return message.Identity('tags', msg)
 
-#def search_tags(term: str="", only_namespace: bool=False, only_tag: bool=False, limit: int=100):
+# def search_tags(term: str="", only_namespace: bool=False, only_tag: bool=False, limit: int=100):
 #    """
 #    Search for tags
 

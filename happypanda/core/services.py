@@ -162,7 +162,7 @@ class Scheduler(Service):
     def __init__(self, name):
         super().__init__(name)
         self._scheduler = GeventScheduler({
-            'apscheduler.timezone': 'UTC', # TODO: locatime or user configurable
+            'apscheduler.timezone': 'UTC',  # TODO: locatime or user configurable
         })
         self._jobstores = {}
         self._executors = {}

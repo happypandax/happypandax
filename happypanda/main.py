@@ -14,7 +14,8 @@ if sys.platform.startswith('darwin') and hasattr(sys, 'frozen'):
 from gevent import monkey  # noqa: E402
 
 if __name__ == '__main__':
-    monkey.patch_all(thread=False) # need to patch before importing requests, see https://github.com/requests/requests/issues/3752
+    # need to patch before importing requests, see https://github.com/requests/requests/issues/3752
+    monkey.patch_all(thread=False)
 
 import multiprocessing  # noqa: E402
 import rollbar  # noqa: E402
