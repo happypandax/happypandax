@@ -15,9 +15,13 @@ if __name__ != '__main__':
     from gevent import monkey  # noqa: E402
     monkey.patch_all(thread=False) # need to patch before importing requests, see https://github.com/requests/requests/issues/3752
 
-# need to make a request or else it won't work in other processes 
-import requests # noqa: E402
-requests.get("https://google.com")
+if constants.is_posix:
+    # need to make a request or else it won't work in other processes 
+    import requests # noqa: E402
+    try:
+        requests.get("https://google.com", timeout=0.1)
+    except requests.Timeout:
+        pass
 
 # This is required to be here or else multiprocessing won't work when running in a frozen state!
 # I had a hell of a time debugging this :(

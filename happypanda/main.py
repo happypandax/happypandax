@@ -31,7 +31,7 @@ parser = utils.get_argparser()  # required to be at module lvl for sphinx.autopr
 
 
 def start(argv=None, db_kwargs={}):
-    #assert sys.version_info >= (3, 5), "Python 3.5 is required"
+    assert sys.version_info >= (3, 5), "Python 3.5 and up is required"
     e_code = None
     try:
         if argv is None:
