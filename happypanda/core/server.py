@@ -479,13 +479,16 @@ class ClientHandler:
                 log.d("Sending exception to client:", e)
                 self.on_error(e)
 
-            except Exception:
+            except Exception as e:
                 if not constants.dev:
-                    log.exception("An unknown critical error has occurred")
-                    self.on_error(exceptions.HappypandaError(
-                        "An unknown critical error has occurred"))  # TODO: include traceback
+                    log.exception("An unhandled critical error has occurred")
+                    if isinstance(e, PermissionError):
+                        self.on_error(exceptions.HappypandaError(str(e)))
+                    else:
+                        self.on_error(exceptions.HappypandaError(
+                            "An unhandled critical error has occurred"))
                 else:
-                    log.exception("An unknown critical error has occurred")
+                    log.exception("An unhandled critical error has occurred")
                     raise
 
     def is_active(self):

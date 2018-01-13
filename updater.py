@@ -1,5 +1,4 @@
-﻿import shelve
-import os
+﻿import os
 import sys
 import shutil
 import atexit
@@ -24,7 +23,7 @@ def move_replace(root_src_dir, root_dst_dir):
 def main():
     log.setup_logger()
     try:
-        with shelve.open(constants.internal_db_path) as db:
+        with utils.intertnal_db() as db:
             update_info = db.get(constants.updater_key, {})
         if not update_info:
             log.e("No update info registered")
@@ -57,7 +56,7 @@ def main():
             else:
                 log.e('No launch application provided')
 
-        with shelve.open(constants.internal_db_path) as db:
+        with utils.intertnal_db() as db:
             update_info['state'] = state.value
             db[constants.updater_key] = update_info
         log.i('Finished with state:', state)

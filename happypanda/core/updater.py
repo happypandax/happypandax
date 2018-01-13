@@ -1,7 +1,6 @@
 import sys
 import hashlib
 import os
-import shelve
 import pathlib
 import arrow
 
@@ -238,7 +237,7 @@ def register_release(filepath, silent=True, restart=True):
             # also, we only extract contents in the bundle (not the bundle itself)
             extracted_content = os.path.join(extracted_content, constants.osx_bundle_name)
         
-        with shelve.open(constants.internal_db_path) as db:
+        with utils.intertnal_db() as db:
             db[constants.updater_key] = {'from': extracted_content,
                                          'to': app_path,
                                          'restart': restart,

@@ -1,17 +1,26 @@
 import sys
 import os
+
 import multiprocessing as mp
 import functools
 import signal
 import webbrowser
 
+from importlib import reload
 from threading import Thread, Timer
 from multiprocessing import Process, queues
 from happypanda.common import constants
 
+if __name__ != '__main__':
+    from gevent import monkey  # noqa: E402
+    monkey.patch_all(thread=False) # need to patch before importing requests, see https://github.com/requests/requests/issues/3752
+
+# need to make a request or else it won't work in other processes 
+import requests # noqa: E402
+requests.get("https://google.com")
+
 # This is required to be here or else multiprocessing won't work when running in a frozen state!
 # I had a hell of a time debugging this :(
-
 
 class RedirectProcess(Process):
 
@@ -25,6 +34,7 @@ class RedirectProcess(Process):
     def run(self):
         sys.stdout = self.streamqueue
         sys.stderr = self.streamqueue
+
         if self.initializer:
             self.initializer()
         if self._target:  # HACK: don't access private variables!
@@ -39,6 +49,8 @@ class StreamQueue(queues.Queue):
         super().__init__(*args, **kwargs, ctx=mp.get_context())
 
     def write(self, msg):
+        if not isinstance(msg, str):
+            msg = str(msg)
         self.put(msg)
 
     def flush(self):

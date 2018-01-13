@@ -18,6 +18,7 @@ import rollbar
 import importlib
 import atexit
 
+from dbm import dumb as dumbdb
 from inspect import ismodule, currentframe, getframeinfo
 from contextlib import contextmanager
 from collections import namedtuple, UserList
@@ -347,7 +348,12 @@ def setup_online_reporter():
 
 @contextmanager
 def intertnal_db():
-    db = shelve.open(constants.internal_db_path)
+    log.d("Opening internal db")
+    try:
+        db = shelve.Shelf(dumbdb.open(constants.internal_db_path))
+    except:
+        log.e("Failed to open internal db")
+        raise
     try:
         yield db
     finally:

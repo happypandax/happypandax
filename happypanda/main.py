@@ -11,9 +11,10 @@ if __package__ is None and not hasattr(sys, 'frozen'):
 if sys.platform.startswith('darwin') and hasattr(sys, 'frozen'):
     os.chdir(os.path.abspath(os.path.dirname(sys.executable)))
 
-
 from gevent import monkey  # noqa: E402
-monkey.patch_ssl() # need to patch before importing requests, see https://github.com/requests/requests/issues/3752
+
+if __name__ == '__main__':
+    monkey.patch_all(thread=False) # need to patch before importing requests, see https://github.com/requests/requests/issues/3752
 
 import multiprocessing  # noqa: E402
 import rollbar  # noqa: E402
@@ -43,7 +44,8 @@ def start(argv=None, db_kwargs={}):
             db.init(**db_kwargs)
             command.init_commands()
             hlogger.Logger.init_listener(args)
-            monkey.patch_all(thread=False)
+            if not constants.from_gui:
+                monkey.patch_all(thread=False)
         hlogger.Logger.report_online = config.report_critical_errors.value
         hlogger.Logger.setup_logger(args, main=True, debug=config.debug.value)
         utils.setup_online_reporter()

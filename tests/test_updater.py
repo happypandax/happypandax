@@ -4,7 +4,6 @@ import json
 import sys
 import os
 import shutil
-import shelve
 
 from unittest import mock
 
@@ -234,7 +233,7 @@ class TestUpdating:
             utils_temp.return_value = str(tmp_update_folder.mkdir("updater_release"))
             assert updater.register_release(asset_url_platform, silent=False, restart=False)
             assert constants.internal_db_path == str(db_p)
-            with shelve.open(constants.internal_db_path) as db:
+            with utils.intertnal_db() as db:
                 d = db[constants.updater_key]
                 assert compare_json_dicts(d, {'from': utils_temp.return_value,
                                                  'to': os.path.abspath(constants.app_path),
@@ -250,7 +249,7 @@ class TestUpdating:
             mock.patch("updater.constants.internal_db_path", str(db_p)):
             assert constants.internal_db_path == str(db_p)
             happyupd.main()
-            with shelve.open(constants.internal_db_path) as db:
+            with utils.intertnal_db() as db:
                 d = db[constants.updater_key]
                 assert d['state'] == constants.UpdateState.Success.value
             assert all(os.path.exists(os.path.join(constants.app_path, x)) for x in asset_files)
@@ -273,7 +272,7 @@ class TestUpdating:
             mock.patch("updater.constants.internal_db_path", str(db_p)):
             assert constants.internal_db_path == str(db_p)
             happyupd.main()
-            with shelve.open(constants.internal_db_path) as db:
+            with utils.intertnal_db() as db:
                 d = db[constants.updater_key]
                 assert d['state'] == constants.UpdateState.Success.value
             assert all(os.path.exists(os.path.join(constants.app_path, x)) for x in asset_files)
