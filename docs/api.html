@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Server API &#8212; Happypanda X 0.0.2#113 documentation</title>
+    <title>Server API &#8212; Happypanda X 0.0.2#114 documentation</title>
     
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.0.2#113',
+        VERSION:     '0.0.2#114',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -54,7 +54,7 @@
         </button>
         <a class="navbar-brand" href="index.html">
           Happypanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.2#113</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.2#114</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -449,16 +449,13 @@ Enum member names may change sometime in the future. It is not likely to happen 
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>push</strong> (<code class="xref py py-class docutils literal"><span class="pre">bool</span></code>) &#8211; whether to push out notifications if an update is found</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">an empty dict or
-.. code-block:: guess<blockquote>
-<div><dl class="docutils">
-<dt>{</dt>
-<dd>&#8216;url&#8217; : str,
-&#8216;tag&#8217; : str
-&#8216;changes&#8217; : str,</dd>
-</dl>
-<p>}</p>
-</div></blockquote>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">an empty dict or<div class="highlight-guess"><div class="highlight"><pre><span></span>{
+    &#39;url&#39; : str,
+    &#39;tag&#39; : str
+    &#39;changes&#39; : str,
+}
+</pre></div>
+</div>
 </td>
 </tr>
 </tbody>
@@ -849,20 +846,25 @@ Raises error if a default value was not provided and no translation was found.</
 <h3>Tags<a class="headerlink" href="#tags" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="happypanda.interface.tag.get_all_tags">
-<code class="descname">get_all_tags</code><span class="sig-paren">(</span><em>limit=100</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/tag.html#get_all_tags"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.tag.get_all_tags" title="Permalink to this definition">¶</a></dt>
+<code class="descname">get_all_tags</code><span class="sig-paren">(</span><em>limit=100</em>, <em>offset=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/tag.html#get_all_tags"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.tag.get_all_tags" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get all tags from the db</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>limit</strong> (<code class="xref py py-class docutils literal"><span class="pre">int</span></code>) &#8211; limit the amount of items returned</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>limit</strong> (<code class="xref py py-class docutils literal"><span class="pre">int</span></code>) &#8211; limit the amount of items returned</li>
+<li><strong>offset</strong> (<code class="xref py py-data docutils literal"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal"><span class="pre">int</span></code>]) &#8211; offset the results by n items</li>
+</ul>
+</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><div class="highlight-guess"><div class="highlight"><pre><span></span>{
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><div class="highlight-guess"><div class="highlight"><pre><span></span>{
     namespace : [ tag message object, ...],
     ...
 }
 </pre></div>
 </div>
+</p>
 </td>
 </tr>
 </tbody>
@@ -1005,7 +1007,7 @@ Image content is base64 encoded.</p>
 
 <dl class="function">
 <dt id="happypanda.interface.database.get_items">
-<code class="descname">get_items</code><span class="sig-paren">(</span><em>item_type=&lt;ItemType.Gallery: 1&gt;</em>, <em>limit=100</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/database.html#get_items"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.database.get_items" title="Permalink to this definition">¶</a></dt>
+<code class="descname">get_items</code><span class="sig-paren">(</span><em>item_type=&lt;ItemType.Gallery: 1&gt;</em>, <em>limit=100</em>, <em>offset=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/database.html#get_items"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.database.get_items" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get a list of items</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -1014,6 +1016,7 @@ Image content is base64 encoded.</p>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>item_type</strong> (<a class="reference internal" href="#happypanda.interface.enums.ItemType" title="happypanda.interface.enums.ItemType"><code class="xref py py-class docutils literal"><span class="pre">ItemType</span></code></a>) &#8211; type of item to get</li>
 <li><strong>limit</strong> (<code class="xref py py-class docutils literal"><span class="pre">int</span></code>) &#8211; limit the amount of items returned</li>
+<li><strong>offset</strong> (<code class="xref py py-data docutils literal"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal"><span class="pre">int</span></code>]) &#8211; offset the results by n items</li>
 </ul>
 </td>
 </tr>
@@ -1060,7 +1063,7 @@ Image content is base64 encoded.</p>
 
 <dl class="function">
 <dt id="happypanda.interface.database.get_related_items">
-<code class="descname">get_related_items</code><span class="sig-paren">(</span><em>item_type=&lt;ItemType.Gallery: 1&gt;</em>, <em>item_id=0</em>, <em>related_type=&lt;ItemType.Page: 4&gt;</em>, <em>limit=100</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/database.html#get_related_items"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.database.get_related_items" title="Permalink to this definition">¶</a></dt>
+<code class="descname">get_related_items</code><span class="sig-paren">(</span><em>item_type=&lt;ItemType.Gallery: 1&gt;</em>, <em>item_id=0</em>, <em>related_type=&lt;ItemType.Page: 4&gt;</em>, <em>limit=100</em>, <em>offset=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/database.html#get_related_items"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.database.get_related_items" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get item related to given item</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -1071,11 +1074,42 @@ Image content is base64 encoded.</p>
 <li><strong>item_id</strong> (<code class="xref py py-class docutils literal"><span class="pre">int</span></code>) &#8211; id of parent item</li>
 <li><strong>related_type</strong> (<a class="reference internal" href="#happypanda.interface.enums.ItemType" title="happypanda.interface.enums.ItemType"><code class="xref py py-class docutils literal"><span class="pre">ItemType</span></code></a>) &#8211; child item</li>
 <li><strong>limit</strong> (<code class="xref py py-class docutils literal"><span class="pre">int</span></code>) &#8211; limit the amount of items returned</li>
+<li><strong>offset</strong> (<code class="xref py py-data docutils literal"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal"><span class="pre">int</span></code>]) &#8211; offset the results by n items</li>
 </ul>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><div class="highlight-guess"><div class="highlight"><pre><span></span>[
     related item message object,
+    ...
+]
+</pre></div>
+</div>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="happypanda.interface.database.search_item">
+<code class="descname">search_item</code><span class="sig-paren">(</span><em>item_type=&lt;ItemType.Gallery: 1&gt;</em>, <em>search_query=''</em>, <em>search_options={}</em>, <em>full_search=True</em>, <em>limit=100</em>, <em>offset=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/database.html#search_item"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.database.search_item" title="Permalink to this definition">¶</a></dt>
+<dd><p>Search for item</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>item_type</strong> (<a class="reference internal" href="#happypanda.interface.enums.ItemType" title="happypanda.interface.enums.ItemType"><code class="xref py py-class docutils literal"><span class="pre">ItemType</span></code></a>) &#8211; all of <code class="xref py py-attr docutils literal"><span class="pre">ItemType</span></code> except <a class="reference internal" href="#happypanda.interface.enums.ItemType.Page" title="happypanda.interface.enums.ItemType.Page"><code class="xref py py-attr docutils literal"><span class="pre">ItemType.Page</span></code></a> and <a class="reference internal" href="#happypanda.interface.enums.ItemType.GalleryFilter" title="happypanda.interface.enums.ItemType.GalleryFilter"><code class="xref py py-attr docutils literal"><span class="pre">ItemType.GalleryFilter</span></code></a></li>
+<li><strong>search_query</strong> (<code class="xref py py-class docutils literal"><span class="pre">str</span></code>) &#8211; filter item by search terms</li>
+<li><strong>search_options</strong> (<code class="xref py py-class docutils literal"><span class="pre">dict</span></code>) &#8211; options to apply when filtering, see <a class="reference internal" href="settings.html#settings"><span class="std std-ref">Settings</span></a> for available search options</li>
+<li><strong>limit</strong> (<code class="xref py py-class docutils literal"><span class="pre">int</span></code>) &#8211; amount of items</li>
+<li><strong>offset</strong> (<code class="xref py py-data docutils literal"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal"><span class="pre">int</span></code>]) &#8211; offset the results by n items</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><div class="highlight-guess"><div class="highlight"><pre><span></span>[
+    item message object,
     ...
 ]
 </pre></div>

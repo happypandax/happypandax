@@ -57,6 +57,7 @@ def check_update(push: bool = False):
 
     Returns:
         an empty dict or
+
         .. code-block:: guess
 
             {
