@@ -26,9 +26,9 @@ updater_key = "updater"
 
 ## VERSIONING ##
 build = 114
-version = (0, 0, 2)
+version = (0, 0, 3)
 version_db = (0, 0, 1)
-version_web = (0, 0, 2)
+version_web = (0, 0, 3)
 version_str = ".".join(str(x) for x in version)
 version_db_str = ".".join(str(x) for x in version_db)
 version_web_str = ".".join(str(x) for x in version_web)
