@@ -25,7 +25,7 @@ updater_name = "happyupd"  # windows will make it require escalted priv. if name
 updater_key = "updater"
 
 ## VERSIONING ##
-build = 113
+build = 114
 version = (0, 0, 2)
 version_db = (0, 0, 1)
 version_web = (0, 0, 2)
