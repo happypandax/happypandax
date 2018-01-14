@@ -17,14 +17,16 @@ dev_options = dict(
 env_python = r".\env\Scripts\python" if sys.platform.startswith("win") else "./env/bin/python"
 
 changes = """
+- Misc. bugfixes
+
+From previous builds:
+
 - require python 3.5 and up
 - make HPX usable on posix
 - added search_item api function
 - added 'offset' parameter to various api functions
 - updated docs
 - addeded support for TAR.GZ, TAR.BZ2 and TAR.XZ files
-
-From previous build:
 
 - fix error in extracting rarfiles
 - add compression step in server-client message exchange

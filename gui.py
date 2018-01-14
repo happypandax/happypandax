@@ -92,6 +92,7 @@ import HPtoHPX  # noqa: E402
 
 if constants.is_posix:
     # need to make a request or else it won't work in other processes
+    # related to https://github.com/requests/requests/issues/3752
     import requests  # noqa: E402
     try:
         requests.get("https://google.com", timeout=0.1)
