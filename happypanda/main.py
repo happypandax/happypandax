@@ -15,7 +15,7 @@ from gevent import monkey  # noqa: E402
 
 if __name__ == '__main__':
     # need to patch before importing requests, see https://github.com/requests/requests/issues/3752
-    monkey.patch_all(thread=False)
+    monkey.patch_ssl()
 
 import multiprocessing  # noqa: E402
 import rollbar  # noqa: E402
@@ -45,8 +45,7 @@ def start(argv=None, db_kwargs={}):
             db.init(**db_kwargs)
             command.init_commands()
             hlogger.Logger.init_listener(args)
-            if not constants.from_gui:
-                monkey.patch_all(thread=False)
+            monkey.patch_all(thread=False, ssl=False)
         hlogger.Logger.report_online = config.report_critical_errors.value
         hlogger.Logger.setup_logger(args, main=True, debug=config.debug.value)
         utils.setup_online_reporter()

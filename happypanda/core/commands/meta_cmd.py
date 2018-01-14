@@ -25,7 +25,7 @@ class CheckUpdate(Command):
                 msg.add_action(2, "Skip", "button")
                 client_answer = self.push(msg).get(msg.id, timeout=30)
                 if client_answer and 1 in client_answer:
-                    UpdateApplication().run(restart=True, silent=silent)
+                    UpdateApplication().run(u['url'], restart=True, silent=silent)
             return u
 
 

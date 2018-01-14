@@ -10,22 +10,13 @@ from threading import Thread, Timer
 from multiprocessing import Process, queues
 from happypanda.common import constants
 
-if __name__ != '__main__':
-    from gevent import monkey  # noqa: E402
-    # need to patch before importing requests, see https://github.com/requests/requests/issues/3752
-    monkey.patch_all(thread=False)
-
-if constants.is_posix:
-    # need to make a request or else it won't work in other processes
-    import requests  # noqa: E402
-    try:
-        requests.get("https://google.com", timeout=0.1)
-    except requests.Timeout:
-        pass
+#if __name__ != '__main__':
+#    from gevent import monkey  # noqa: E402
+#    # need to patch before importing requests, see https://github.com/requests/requests/issues/3752
+#    monkey.patch_all(thread=False)
 
 # This is required to be here or else multiprocessing won't work when running in a frozen state!
 # I had a hell of a time debugging this :(
-
 
 class RedirectProcess(Process):
 
@@ -98,6 +89,14 @@ from happypanda.common import utils, config  # noqa: E402
 from happypanda.core.commands import io_cmd  # noqa: E402
 from happypanda import main  # noqa: E402
 import HPtoHPX  # noqa: E402
+
+if constants.is_posix:
+    # need to make a request or else it won't work in other processes
+    import requests  # noqa: E402
+    try:
+        requests.get("https://google.com", timeout=0.1)
+    except (requests.ConnectionError, requests.Timeout):
+        pass
 
 app = None
 exitcode = None
