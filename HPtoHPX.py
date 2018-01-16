@@ -780,6 +780,10 @@ def main(args=sys.argv[1:]):
 
         if os.path.exists(dst):
             print("Warning: destination file already exists, you might want to delete")
+        else:
+            head, _ = os.path.split(dst)
+            if head:
+                os.makedirs(head, exist_ok=True)
 
         if args.skip_archive:
             print("Warning: pages for galleries in archives will not be generated")
