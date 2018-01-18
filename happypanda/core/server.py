@@ -7,6 +7,7 @@ import gevent
 import weakref
 import gzip
 import zlib
+import errno
 
 from inspect import getmembers, isfunction, signature, Parameter
 
@@ -597,10 +598,13 @@ class HPServer:
                 self._server.serve_forever()
             else:
                 self._server.start()
-        except (socket.error, OSError) as e:
-            # include e
-            log.exception(
-                "Error: Failed to start server (Port might already be in use)")
+
+        except OSError as e:
+            if e.errno == errno.EADDRINUSE:
+                log.w("Failed to start server because the address is already in use. Ensure that no other application or HPX isntances are using the address")
+            else:
+                log.exception(
+                    "Failed to start server because of: {}".format(e.args[1]))
 
     def run(self, interactive=False):
         """Run the server

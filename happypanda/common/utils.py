@@ -384,6 +384,12 @@ def temp_cwd(p):
     yield
     os.chdir(o)
 
+def error_check_socket(host=None, port=None):
+    if port is not None:
+        try:
+            int(port)
+        except ValueError:
+            raise
 
 class AttributeList(UserList):
     """

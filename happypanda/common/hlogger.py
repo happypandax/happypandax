@@ -97,7 +97,7 @@ class Logger:
                 else:
                     rollbar.report_message(s, "critical")
 
-            # prevent printing multiple times
+        # prevent printing multiple times
             if stdout:
                 print(s)
             if stderr:

@@ -75,7 +75,7 @@ class Client:
                 log.i("Client connecting to server at: {}".format(self._server))
                 try:
                     self._sock.connect(self._server)
-                except socket.error as e:
+                except (OSError, ConnectionError) as e:
                     if e.errno == errno.EISCONN and self.session:  # already connected
                         self._alive = True
                         return
@@ -88,7 +88,7 @@ class Client:
                 else:
                     self._accepted = True
                     self._recv()
-            except socket.error as e:
+            except (OSError, ConnectionError) as e:
                 self._disconnect()
                 raise exceptions.ServerDisconnectError(
                     self.name, "{}".format(e))
