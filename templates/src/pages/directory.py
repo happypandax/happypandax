@@ -1,6 +1,7 @@
 __pragma__('alias', 'as_', 'as')
 __pragma__('alias', 'js_input', 'input')
 from src.react_utils import (e,
+                             h,
                              Route,
                              Redirect,
                              NavLink,
@@ -11,6 +12,7 @@ from src.client import client, ItemType
 from src.i18n import tr
 from src.state import state
 from src.single import tagitem
+from src import utils
 
 
 def artistpage_render():
@@ -41,13 +43,31 @@ ArtistsPage = createReactClass({
 def get_db_tags(data=None, error=None):
     if data is not None and not error:
         this.setState({"data": data, 'data_loading': False})
+        this.get_tags_count()
     elif error:
         state.app.notif("Failed to fetch tags", level="error")
         this.setState({'data_loading': False})
     else:
-        client.call_func("get_all_tags", this.get_tags, limit=25)
+        client.call_func("search_tags", this.get_tags,
+                         search_query=this.state.search_query,
+                         offset=this.state.limit*(this.state.page-1),
+                         limit=this.state.limit)
         this.setState({'data_loading': True})
 
+def get_tags_count(data=None, error=None):
+    if data is not None and not error:
+        this.setState({"tags_count": data['count']})
+    elif error:
+        state.app.notif("Failed to fetch tags count", level="error")
+    else:
+        client.call_func("get_tags_count", this.get_tags_count)
+
+
+def tagspage_update(p_p, p_s):
+    if any((
+        p_s.search_query != this.state.search_query,
+    )):
+        this.get_tags()
 
 def tagspage_render():
 
@@ -58,12 +78,17 @@ def tagspage_render():
     if nstags.__namespace__:  # somehow transcrypt ignores this in the loop below
         tags = sorted([x.js_name for x in nstags.__namespace__])
         for t in tags:
-            tag_lbl.append(e(tagitem.TagLabel, tag=t))
+            tag_lbl.append(e(ui.Card,
+                             e(ui.Card.Content,e(ui.Card.Description, t)),
+                           centered=True, link=True, className="default-card"))
 
     for ns in sorted(dict(nstags).keys()):
         tags = [x.js_name for x in nstags[ns]]
         for t in sorted(tags):
-            tag_lbl.append(e(tagitem.TagLabel, namespace=ns, tag=t, show_ns=True))
+            tag_lbl.append(e(ui.Card,
+                             e(ui.Card.Content,
+                               e(ui.Card.Description, h("span", ns+':', className="sub-text"), t)),
+                           centered=True, link=True, className="default-card"))
 
     return e(ui.Container,
              e(ui.Segment.Group,
@@ -71,23 +96,27 @@ def tagspage_render():
                  e(ui.Button, compact=True, basic=True,
                    icon="options", floated="right",
                    ),
-                 # e(ui.Statistic.Group,
-                 #  e(ui.Statistic,
-                 #    e(ui.Statistic.Value, 0),
-                 #    e(ui.Statistic.Label, tr(this, "", "Total Tags"))
-                 #    ),
-                 #  e(ui.Statistic,
-                 #    e(ui.Statistic.Value, 0),
-                 #    e(ui.Statistic.Label, tr(this, "", "Galleries without tags"))
-                 #    ),
-                 #  size="mini",
-                 #  ),
+                  e(ui.Statistic.Group,
+                   e(ui.Statistic,
+                     e(ui.Statistic.Value, this.state.tags_count),
+                     e(ui.Statistic.Label, tr(this, "", "Total Tags"))
+                     ),
+                   #e(ui.Statistic,
+                   #  e(ui.Statistic.Value, 0),
+                   #  e(ui.Statistic.Label, tr(this, "", "Galleries without tags"))
+                   #  ),
+                   size="mini",
+                   ),
                  e(ui.Divider, hidden=True, section=True),
                  e(ui.Search, placeholder=tr(this, "", "Search tags"), fluid=True,
-                   js_input={'fluid': True}),
+                   js_input={'fluid': True},
+                   showNoResults=False,
+                   defaultValue=this.state.search_query,
+                   onSearchChange=this.update_search),
                  clearing=True
                  ),
-               e(ui.Segment, e(ui.Label.Group, *tag_lbl, size="large"), secondary=True, basic=True,
+               e(ui.Segment, e(ui.Card.Group, *tag_lbl, itemsPerRow=4, doubling=True, stackable=True),
+                 secondary=True, basic=True,
                  loading=this.state.data_loading)
                ))
 
@@ -96,13 +125,23 @@ TagsPage = createReactClass({
     'displayName': 'TagsPage',
 
     'getInitialState': lambda: {
+        'search_query': utils.get_query("search", "") or this.props.search_query,
         'data': {},
+        'limit': 50,
+        'page': 1,
+        'tags_count': 0,
         'data_loading': False,
     },
 
     'get_tags': get_db_tags,
+    'get_tags_count': get_tags_count,
 
-    #'componentDidMount': lambda: this.get_tags(),
+    'update_search': lambda e, d: all((this.setState({'search_query':d.value}),
+                                       utils.go_to(this.props.history, query={'search':d.value}, push=False))),
+
+    'componentDidMount': lambda: all((this.get_tags(), this.get_tags_count())),
+
+    'componentDidUpdate': tagspage_update,
 
     'render': tagspage_render
 })
@@ -111,10 +150,20 @@ Page = createReactClass({
     'displayName': 'DirectoryPage',
 
     'componentWillMount': lambda: this.props.menu([
-        e(ui.Menu.Item, js_name=tr(this, "", "Artists"), as_=NavLink,
-          to="/directory/artists", activeClassName="active"),
         e(ui.Menu.Item, js_name=tr(this, "", "Tags"), as_=NavLink,
           to="/directory/tags", activeClassName="active"),
+        e(ui.Menu.Item, js_name=tr(this, "", "Artists"), as_=NavLink,
+          to="/directory/artists", activeClassName="active"),
+        e(ui.Menu.Item, js_name=tr(this, "", "Circles"), as_=NavLink,
+          to="/directory/circles", activeClassName="active"),
+        e(ui.Menu.Item, js_name=tr(this, "", "Languages"), as_=NavLink,
+          to="/directory/languages", activeClassName="active"),
+        e(ui.Menu.Item, js_name=tr(this, "", "Categories"), as_=NavLink,
+          to="/directory/categories", activeClassName="active"),
+        e(ui.Menu.Item, js_name=tr(this, "", "Parodies"), as_=NavLink,
+          to="/directory/parodies", activeClassName="active"),
+        e(ui.Menu.Item, js_name=tr(this, "", "Status"), as_=NavLink,
+          to="/directory/status", activeClassName="active"),
     ], pointing=True),
 
     'getInitialState': lambda: {},

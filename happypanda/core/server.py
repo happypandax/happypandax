@@ -603,8 +603,7 @@ class HPServer:
             if e.errno == errno.EADDRINUSE:
                 log.w("Failed to start server because the address is already in use. Ensure that no other application or HPX isntances are using the address")
             else:
-                log.exception(
-                    "Failed to start server because of: {}".format(e.args[1]))
+                log.w("Failed to start server because of: {}".format(e.args[1]))
 
     def run(self, interactive=False):
         """Run the server

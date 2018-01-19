@@ -4,9 +4,10 @@ Tags
 
 """
 
+from happypanda.common import exceptions, utils, constants
 from happypanda.core import db, message
 from happypanda.interface import enums
-from happypanda.core.commands import database_cmd
+from happypanda.core.commands import database_cmd, search_cmd
 
 
 def _contruct_tags_msg(nstags):
@@ -48,26 +49,62 @@ def get_all_tags(limit: int=100, offset: int=None):
 
     return message.Identity('tags', msg)
 
-# def search_tags(term: str="", only_namespace: bool=False, only_tag: bool=False, limit: int=100):
-#    """
-#    Search for tags
+def search_tags(search_query: str="",
+                search_options: dict = {},
+                only_namespace: bool=False,
+                only_tag: bool=False,
+                limit: int=100,
+                offset: int=None,
+                ):
+    """
+    Search for tags
 
-#    Args:
-#        term: search string
-#        only_namespace: only search for matching namespace
-#        only_tag: only search for matching tag
-#        limit: limit the amount of items returned
+    Args:
+        search_query: search string
+        search_options: options to apply when filtering, see :ref:`Settings` for available search options
+        only_namespace: only search for matching namespace <not implemented yet>
+        only_tag: only search for matching tag <not implemented yet>
+        limit: limit the amount of items returned
+        offset: offset the results by n items
 
-#    Returns:
-#        .. code-block:: guess
+    Returns:
+        .. code-block:: guess
 
-#            {
-#                namespace : [ tag message object, ...],
-#                ...
-#            }
-#    """
-#    pass
+            {
+                namespace : [ tag message object, ...],
+                ...
+            }
+    """
+    if search_options:
+        search_option_names = [x.name for x in search_cmd._get_search_options()]
+        for n in search_options:
+            if n not in search_option_names:
+                raise exceptions.APIError(utils.this_function(), "Invalid search option name '{}'".format(n))
 
+    db_model = db.NamespaceTags
+    model_ids = search_cmd.ModelFilter().run(db_model, search_query, search_options)
+
+    items = database_cmd.GetModelItems().run(db_model, model_ids, limit=limit, offset=offset)
+
+    msg = _contruct_tags_msg(items)
+
+    return message.Identity('tags', msg)
+
+def get_tags_count():
+    """
+    Get count of namespacetags in the database
+
+    Returns:
+        .. code-block:: guess
+
+            {
+                'count' : int
+            }
+    """
+
+    s = constants.db_session()
+
+    return message.Identity('count', {'count': s.query(db.NamespaceTags).count()})
 
 def get_tags(item_type: enums.ItemType = enums.ItemType.Gallery,
              item_id: int = 0,

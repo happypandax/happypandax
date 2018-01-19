@@ -186,6 +186,11 @@ h6 {
     font-size: 1.0rem;
 }
 
+.sub-text {
+    font-size: 1rem !important;
+    color: rgba(0,0,0,.4) !important;
+}
+
 .above-dimmer{
     z-index: 10 !important;
 }
@@ -208,4 +213,23 @@ h6 {
 .reader-fitheight {
     max-height: 100vh !important;
     width: auto !important;
+}
+
+/*--------------
+      Card
+---------------*/
+
+.ui.cards > .default-card,
+.ui.default-card {
+    border: 1px solid rgba(34,36,38,.1) !important;
+    background: @white !important;
+}
+
+/*--------------
+     Card Content
+---------------*/
+
+.ui.cards > .default-card > .content,
+.ui.default-card > .content {
+  padding: 1em 1em !important;
 }

@@ -246,6 +246,9 @@ class PartialModelFilter(Command):
                 db.Collection,
                 db.Gallery,
                 db.Title,
+                db.Namespace,
+                db.Tag,
+                db.NamespaceTags,
                 db.Url)
 
     @staticmethod
@@ -331,7 +334,7 @@ class PartialModelFilter(Command):
 
     @match_model.default(capture=True)
     def _match_tags(parent_model, child_model, term, options,
-                    capture=db.model_name(db.Taggable)):
+                    capture=[db.model_name(x) for x in (db.Taggable, db.NamespaceTags)]):
         get_model = database_cmd.GetModelClass()
         parent_model = get_model.run(parent_model)
         child_model = get_model.run(child_model)
@@ -345,9 +348,9 @@ class PartialModelFilter(Command):
         col_tag = db.relationship_column(db.NamespaceTags, db.Tag)
         s = constants.db_session()
         q = s.query(parent_model.id)
-        if col_on_parent:
+        if col_on_parent and parent_model != child_model:
             q = q.join(col_on_parent)
-        if col_on_child:
+        if col_on_child and parent_model != child_model:
             q = q.join(col_on_child)
         if term.namespace:
             col_ns = db.relationship_column(db.NamespaceTags, db.Namespace)
