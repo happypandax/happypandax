@@ -179,3 +179,6 @@ class ItemSort(_APIEnum):
     GalleryReadCount = 9
     #: Gallery Page Count
     GalleryPageCount = 10
+
+    #: Artist Name
+    ArtistName = 20

@@ -260,6 +260,24 @@ class GetDatabaseSort(Command):
             ItemSort.GalleryPageCount.value: (db.Gallery.pages,),
         }
 
+    @names.default(capture=True)
+    def _aliasname_names(model_name, capture=db.model_name(db.Artist)):
+        return {
+            ItemSort.ArtistName.value: "Name",
+        }
+
+    @orderby.default(capture=True)
+    def _aliasname_orderby(model_name, capture=db.model_name(db.Artist)):
+        return {
+            ItemSort.ArtistName.value: db.AliasName.name,
+        }
+
+    @joins.default(capture=True)
+    def _aliasname_joins(model_name, capture=db.model_name(db.Artist)):
+        return {
+            ItemSort.ArtistName.value: (db.Artist.names,),
+        }
+
     def main(self, model: db.Base, sort_index: int=None, name: bool=False) -> object:
         self.model = model
         model_name = db.model_name(self.model)

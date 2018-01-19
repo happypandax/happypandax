@@ -661,10 +661,12 @@ class WebServer:
                      static_folder=os.path.abspath(constants.dir_static))
     socketio = SocketIO(happyweb, async_mode="gevent")
 
-    def run(self, host, port, debug=False, logging_queue=None, logging_args=None):
+    def run(self, host, port, debug=False, logging_queue=None, cmd_args=None):
         if logging_queue:
-            hlogger.Logger.setup_logger(logging_args, logging_queue)
+            hlogger.Logger.setup_logger(cmd_args, logging_queue)
             utils.setup_online_reporter()
+        if cmd_args is not None:
+            utils.parse_options(cmd_args)
         if __name__ != '__main__':
             gevent.monkey.patch_all(thread=False)
         views.init_views(self.happyweb, self.socketio)

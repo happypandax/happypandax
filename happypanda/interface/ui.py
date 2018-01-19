@@ -10,7 +10,7 @@ from collections import OrderedDict
 
 from happypanda.common import utils, exceptions, hlogger, config
 from happypanda.core import message, db
-from happypanda.interface import enums
+from happypanda.interface import enums, helpers
 from happypanda.core.commands import database_cmd, search_cmd
 
 log = hlogger.Logger(__name__)
@@ -151,33 +151,12 @@ def library_view(item_type: enums.ItemType = enums.ItemType.Gallery,
 
     items = message.List(db_model.__name__.lower(), db_msg)
 
-    ordering = None
-    order_exp = None
-    group_exp = None
+    order_exp, group_exp, sort_joins = helpers._sort_helper(sort_by, sort_desc, db_model)
 
-    if sort_by is not None:
-        try:
-            sort_by = enums.ItemSort.get(sort_by)
-            ordering = database_cmd.GetDatabaseSort().run(db_model, sort_by.value)
-        except exceptions.EnumError:
-            if isinstance(sort_by, int):
-                ordering = database_cmd.GetDatabaseSort().run(db_model, sort_by)
-
-            if ordering is None:
-                raise exceptions.EnumError(
-                    utils.this_function(),
-                    "{}: enum member or sort index doesn't exist '{}'".format(
-                        enums.ItemSort.__name__,
-                        repr(sort_by)))
-
-    if ordering is not None:
-        join_exp.extend(ordering.joins)
+    if sort_joins:
+        join_exp.extend(sort_joins)
         # need unique but ordered results, cannot use set so we make use with this
         join_exp = tuple(OrderedDict([(x, None) for x in join_exp]).keys())
-        group_exp = ordering.groupby
-        order_exp = ordering.orderby
-        if sort_desc:
-            order_exp = db.desc_expr(order_exp)
 
     [items.append(db_msg(x)) for x in database_cmd.GetModelItems().run(
         db_model, model_ids, limit=limit, offset=page * limit,

@@ -68,7 +68,7 @@ def ItemViewConfig(props):
                          infinite_scroll_cfg + cfg_suffix, d.checked))),
                  ),
                  *ext_viewer_el,
-                 e(ui.Form.Select, options=item_count_options, label="Item Count", inline=True,
+                 e(ui.Form.Select, options=item_count_options, label="Items per page", inline=True,
                    defaultValue=utils.storage.get(item_count_cfg + cfg_suffix, props.default_item_count or 30),
                    onChange=lambda e, d: all(
                        (props.on_item_count(

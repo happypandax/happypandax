@@ -6,7 +6,7 @@ Database
 
 from happypanda.common import constants, utils, exceptions
 from happypanda.core import db, services, message
-from happypanda.interface import enums
+from happypanda.interface import enums, helpers
 from happypanda.core.commands import database_cmd, search_cmd
 
 import functools
@@ -233,6 +233,8 @@ def get_related_count(item_type: enums.ItemType=enums.ItemType.Gallery,
 def search_item(item_type: enums.ItemType=enums.ItemType.Gallery,
                 search_query: str = "",
                 search_options: dict = {},
+                sort_by: enums.ItemSort = None,
+                sort_desc: bool=False,
                 full_search: bool=True,
                 limit: int=100,
                 offset: int=None,
@@ -244,6 +246,8 @@ def search_item(item_type: enums.ItemType=enums.ItemType.Gallery,
         item_type: all of :py:attr:`.ItemType` except :py:attr:`.ItemType.Page` and :py:attr:`.ItemType.GalleryFilter`
         search_query: filter item by search terms
         search_options: options to apply when filtering, see :ref:`Settings` for available search options
+        sort_by: either a :py:class:`.ItemSort` or a sort index
+        sort_desc: order descending (default is ascending)
         limit: amount of items
         offset: offset the results by n items
 
@@ -274,7 +278,11 @@ def search_item(item_type: enums.ItemType=enums.ItemType.Gallery,
 
     items = message.List("items", db_msg)
 
-    [items.append(db_msg(x)) for x in database_cmd.GetModelItems().run(db_model, model_ids, limit=limit, offset=offset)]
+    order_exp, group_exp, join_exp = helpers._sort_helper(sort_by, sort_desc, db_model)
+
+
+    [items.append(db_msg(x)) for x in database_cmd.GetModelItems().run(db_model, model_ids, limit=limit, offset=offset,
+                                                                       join=join_exp, order_by=order_exp, group_by=group_exp)]
 
     return items
 

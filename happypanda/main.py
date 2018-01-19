@@ -87,7 +87,7 @@ def start(argv=None, db_kwargs={}):
             constants.web_proc = Process(target=server.WebServer().run,
                                          args=web_args,
                                          kwargs={'logging_queue': hlogger.Logger._queue,
-                                                 'logging_args': args},
+                                                 'cmd_args': args},
                                          daemon=True)
             constants.web_proc.start()
             hp_server = server.HPServer()

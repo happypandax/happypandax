@@ -6,7 +6,7 @@ Tags
 
 from happypanda.common import exceptions, utils, constants
 from happypanda.core import db, message
-from happypanda.interface import enums
+from happypanda.interface import enums, helpers
 from happypanda.core.commands import database_cmd, search_cmd
 
 
@@ -53,6 +53,8 @@ def search_tags(search_query: str="",
                 search_options: dict = {},
                 only_namespace: bool=False,
                 only_tag: bool=False,
+                sort_by: enums.ItemSort = None,
+                sort_desc: bool=False,
                 limit: int=100,
                 offset: int=None,
                 ):
@@ -64,6 +66,8 @@ def search_tags(search_query: str="",
         search_options: options to apply when filtering, see :ref:`Settings` for available search options
         only_namespace: only search for matching namespace <not implemented yet>
         only_tag: only search for matching tag <not implemented yet>
+        sort_by: either a :py:class:`.ItemSort` or a sort index
+        sort_desc: order descending (default is ascending)
         limit: limit the amount of items returned
         offset: offset the results by n items
 
@@ -84,7 +88,11 @@ def search_tags(search_query: str="",
     db_model = db.NamespaceTags
     model_ids = search_cmd.ModelFilter().run(db_model, search_query, search_options)
 
-    items = database_cmd.GetModelItems().run(db_model, model_ids, limit=limit, offset=offset)
+    order_exp, group_exp, join_exp = helpers._sort_helper(sort_by, sort_desc, db_model)
+
+
+    items = database_cmd.GetModelItems().run(db_model, model_ids, limit=limit, offset=offset,
+                                             join=join_exp, order_by=order_exp, group_by=group_exp)
 
     msg = _contruct_tags_msg(items)
 

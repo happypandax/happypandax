@@ -143,20 +143,6 @@ def parse_options(args):
     if constants.dev:
         sys.displayhook == pprint.pprint
 
-    # attempt to do a portfoward
-
-    # if constants.public_server:
-    #    try:
-    #        upnp.ask_to_open_port(constants.local_port, "Happypanda X Server",
-    #        protos=('TCP',))
-    #        upnp.ask_to_open_port(constants.web_port, "Happypanda X Web
-    #        Server", protos=('TCP',))
-    #    except upnp.UpnpError as e:
-    #        constants.public_server = False
-    #        # log
-    #        # inform user
-
-
 def connection_params():
     "Retrieve host and port"
     params = (config.host.value if config.host.value else "localhost", config.port.value)
@@ -164,7 +150,7 @@ def connection_params():
 
 
 def get_package_modules(pkg, load=True):
-    "Retrive list of modules in package"
+    "Retrieve list of modules in package"
     assert ismodule(pkg) and hasattr(pkg, '__path__')
     mods = []
     prefix = pkg.__name__ + "."

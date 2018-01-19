@@ -177,12 +177,13 @@ class Config:
             self._ordered_dump(self._default_config, wf)
 
     def apply_commandline_args(self, config_dict):
-        for ns in self._cfg:
-            cmd_cfg = config_dict.get(ns.lower(), {})
-            if not isinstance(cmd_cfg, dict):
-                raise ValueError("Expected a dict")
-            self._cfg[ns].maps.insert(0, cmd_cfg)
-        self._cmd_args_applied = True
+        if not self._cmd_args_applied:
+            for ns in self._cfg:
+                cmd_cfg = config_dict.get(ns.lower(), {})
+                if not isinstance(cmd_cfg, dict):
+                    raise ValueError("Expected a dict")
+                self._cfg[ns].maps.insert(0, cmd_cfg)
+            self._cmd_args_applied = True
 
     def __contains__(self, key):
         assert self._current_ns, "No namespace has been set"
