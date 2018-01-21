@@ -98,6 +98,7 @@ class Logger:
                     rollbar.report_message(s, "critical")
 
         # prevent printing multiple times
+        if not (constants.dev and not constants.is_frozen):
             if stdout:
                 print(s)
             if stderr:

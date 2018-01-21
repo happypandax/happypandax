@@ -2,6 +2,7 @@
 import sys
 import shutil
 import atexit
+import subprocess
 
 from happypanda.common import constants, hlogger, utils
 
@@ -24,6 +25,12 @@ def move_replace(root_src_dir, root_dst_dir):
             if os.path.exists(dst_file):
                 os.remove(dst_file)
             shutil.move(src_file, dst_dir)
+
+def launch_app(*args, **kwargs):
+    try:
+        os.execv(*args, **kwargs)
+    except BaseException:
+        log.exception("Failed to launch application")
 
 
 def main():
@@ -58,7 +65,7 @@ def main():
             if app:
                 args = update_info.get('args', [])
                 log.i('Launching application', app, "with args", args)
-                atexit.register(os.execl, app, app, *args)
+                atexit.register(launch_app, app, [subprocess.list2cmdline([app, *args])])
             else:
                 log.e('No launch application provided')
 
