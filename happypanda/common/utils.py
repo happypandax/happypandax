@@ -143,6 +143,7 @@ def parse_options(args):
     if constants.dev:
         sys.displayhook == pprint.pprint
 
+
 def connection_params():
     "Retrieve host and port"
     params = (config.host.value if config.host.value else "localhost", config.port.value)
@@ -370,12 +371,14 @@ def temp_cwd(p):
     yield
     os.chdir(o)
 
+
 def error_check_socket(host=None, port=None):
     if port is not None:
         try:
             int(port)
         except ValueError:
             raise
+
 
 class AttributeList(UserList):
     """

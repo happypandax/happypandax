@@ -9,6 +9,7 @@ from src.i18n import tr
 from src.client import ItemType
 from src.propsviews import artistpropsview
 
+
 def artistlbl_render():
     name = ""
     fav = 0
@@ -55,4 +56,3 @@ ArtistLabel = createReactClass({
 
     'render': artistlbl_render
 })
-

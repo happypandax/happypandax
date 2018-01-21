@@ -280,7 +280,6 @@ def search_item(item_type: enums.ItemType=enums.ItemType.Gallery,
 
     order_exp, group_exp, join_exp = helpers._sort_helper(sort_by, sort_desc, db_model)
 
-
     [items.append(db_msg(x)) for x in database_cmd.GetModelItems().run(db_model, model_ids, limit=limit, offset=offset,
                                                                        join=join_exp, order_by=order_exp, group_by=group_exp)]
 

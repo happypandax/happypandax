@@ -12,6 +12,7 @@ from src import utils
 from src.views import tagview
 from src.i18n import tr
 
+
 def gallery_on_update(p_props, p_state):
     if p_props.data != this.props.data:
         this.setState({'data': this.props.data, 'id': this.props.data.id if this.props.data else None})
@@ -97,12 +98,12 @@ def galleryprops_render():
                   e(ui.Table.Cell, e(ui.List, *[e(ui.List.Item, h("span", h("a", x, href=x, target="_blank"), e(ui.List.Icon, js_name="external share"))) for x in urls]))))
 
     return e(ui.Table,
-                e(ui.Table.Body,
-                *rows
-                ),
-                basic="very",
-                size="small"
-                )
+             e(ui.Table.Body,
+               *rows
+               ),
+             basic="very",
+             size="small"
+             )
 
 
 GalleryProps = createReactClass({
@@ -118,4 +119,3 @@ GalleryProps = createReactClass({
 
     'render': galleryprops_render
 })
-

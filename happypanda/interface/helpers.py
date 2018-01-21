@@ -1,11 +1,10 @@
-from collections import OrderedDict
-
-from happypanda.common import utils, exceptions, hlogger, config
+from happypanda.common import utils, exceptions, hlogger
 from happypanda.core import db
 from happypanda.interface import enums
 from happypanda.core.commands import database_cmd
 
 log = hlogger.Logger(__name__)
+
 
 def _sort_helper(sort_by, sort_desc, db_model):
 

@@ -52,6 +52,7 @@ class ViewType:
     #: Inbox
     Inbox = 3
 
+
 class ItemSort:
 
     #: Gallery Random
@@ -82,6 +83,7 @@ class ItemSort:
     NamespaceTagNamespace = 30
     #: Tag
     NamespaceTagTag = 31
+
 
 def log(msg):
     if state.debug:

@@ -49,6 +49,7 @@ def get_all_tags(limit: int=100, offset: int=None):
 
     return message.Identity('tags', msg)
 
+
 def search_tags(search_query: str="",
                 search_options: dict = {},
                 only_namespace: bool=False,
@@ -90,13 +91,13 @@ def search_tags(search_query: str="",
 
     order_exp, group_exp, join_exp = helpers._sort_helper(sort_by, sort_desc, db_model)
 
-
     items = database_cmd.GetModelItems().run(db_model, model_ids, limit=limit, offset=offset,
                                              join=join_exp, order_by=order_exp, group_by=group_exp)
 
     msg = _contruct_tags_msg(items)
 
     return message.Identity('tags', msg)
+
 
 def get_tags_count():
     """
@@ -113,6 +114,7 @@ def get_tags_count():
     s = constants.db_session()
 
     return message.Identity('count', {'count': s.query(db.NamespaceTags).count()})
+
 
 def get_tags(item_type: enums.ItemType = enums.ItemType.Gallery,
              item_id: int = 0,

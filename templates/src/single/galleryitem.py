@@ -13,6 +13,7 @@ from src.views import tagview
 from src.propsviews import gallerypropsview
 from src.i18n import tr
 
+
 def on_tags(data):
     this.setState({'tags': data})
 

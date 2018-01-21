@@ -9,6 +9,7 @@ from src.propsviews import tagpropsview
 
 __pragma__("tconv")
 
+
 def taglbl_render():
     ns = this.props.namespace or this.state.namespace or ""
     tag = this.props.tag or this.state.tag or ""
@@ -28,25 +29,24 @@ def taglbl_render():
         lbl_args.append(e(ui.Label.Detail, tag))
     else:
         lbl_args.append(tag)
-    
 
-    #if fav:
+    # if fav:
     #    lbl_args['icon'] = "star"
     #e(ui.Rating, icon="heart", size="massive", rating=fav)
 
     el = e(ui.Popup,
            e(tagpropsview.TagProps, tag=tag, namespace=ns, data=this.state.data, id=this.state.id),
-            trigger=e(ui.Label,
-                    *lbl_args,
-                    as_="a",
-                    size=this.props.size,
-                    ),
-            hoverable=True,
-            on="click",
-            hideOnScroll=True,
-            position="top center",
-            wide="very",
-            )
+           trigger=e(ui.Label,
+                     *lbl_args,
+                     as_="a",
+                     size=this.props.size,
+                     ),
+           hoverable=True,
+           on="click",
+           hideOnScroll=True,
+           position="top center",
+           wide="very",
+           )
     return el
 
 

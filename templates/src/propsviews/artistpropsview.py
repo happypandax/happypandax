@@ -10,6 +10,7 @@ from src.i18n import tr
 from src.client import ItemType, client
 from src.single import tagitem
 
+
 def get_tags(data=None, error=None):
     if data is not None and not error:
         this.setState({"tags": data})
@@ -23,6 +24,7 @@ def get_tags(data=None, error=None):
         client.call_func("get_common_tags", this.get_tags,
                          item_type=this.state.item_type,
                          item_id=id, limit=10)
+
 
 def get_gallery_count(data=None, error=None):
     if data is not None and not error:
@@ -81,19 +83,19 @@ def artistprops_render():
                     verticalAlign="middle")))
 
     rows.append(e(ui.Table.Row,
-                        e(ui.Table.Cell, e(ui.Header, tr(this, "", "Circle")+":", size="small"), collapsing=True),
-                        e(ui.Table.Cell, "")))
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "", "Circle") + ":", size="small"), collapsing=True),
+                  e(ui.Table.Cell, "")))
 
     rows.append(e(ui.Table.Row,
-                              e(ui.Table.Cell, e(ui.Header, tr(this, "", "Galleries")+":", size="small"), collapsing=True),
-                              e(ui.Table.Cell, this.state.gallery_count)))
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "", "Galleries") + ":", size="small"), collapsing=True),
+                  e(ui.Table.Cell, this.state.gallery_count)))
     rows.append(e(ui.Table.Row,
-                              e(ui.Table.Cell, e(ui.Header, tr(this, "", "URL(s)")+":", size="small"), collapsing=True),
-                              e(ui.Table.Cell, *[e(ui.List.Item, h("span", h("a", x, href=x, target="_blank"), e(ui.List.Icon, js_name="external share"))) for x in urls])))
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "", "URL(s)") + ":", size="small"), collapsing=True),
+                  e(ui.Table.Cell, *[e(ui.List.Item, h("span", h("a", x, href=x, target="_blank"), e(ui.List.Icon, js_name="external share"))) for x in urls])))
 
     slider_el = []
-    
-    #slider_el.append(e(ui.Grid.Row, e(ui.Grid.Column,
+
+    # slider_el.append(e(ui.Grid.Row, e(ui.Grid.Column,
     #                          e(Slider, *[e(galleryitem.Gallery, data=x) for x in series_data],
     #                            loading=this.state.loading_group,
     #                            secondary=True,
@@ -101,42 +103,43 @@ def artistprops_render():
     #                            label="Series"),
     #                          )))
 
-    url_search_query = {'search':'artist:"{}"'.format(name)}
+    url_search_query = {'search': 'artist:"{}"'.format(name)}
 
     return e(ui.Grid,
-               e(ui.Grid.Row,
+             e(ui.Grid.Row,
                  e(ui.Grid.Column, e(ui.Rating, icon="heart", size="huge", rating=fav), width=1),
                  e(ui.Grid.Column,
                    e(ui.Label.Group,
                      e(ui.Label, tr(this, "", "Show galleries"), basic=True,
                        as_=Link, to=utils.build_url("/library", query=url_search_query, keep_query=False)),
                      e(ui.Label, tr(this, "", "Show favorite galleries"), basic=True,
-                      as_=Link, to=utils.build_url("/favorite", query=url_search_query, keep_query=False)),
+                       as_=Link, to=utils.build_url("/favorite", query=url_search_query, keep_query=False)),
                      e(ui.Label, tr(this, "", "Show galleries in inbox"), basic=True,
-                      as_=Link, to=utils.build_url("/inbox", query=url_search_query, keep_query=False)),
+                       as_=Link, to=utils.build_url("/inbox", query=url_search_query, keep_query=False)),
                      ), width=15, textAlign="right"),
-                 ),
-               e(ui.Grid.Row,
+               ),
+             e(ui.Grid.Row,
                  e(ui.Grid.Column,
                    e(ui.Table,
-                    e(ui.Table.Body,
-                    *rows
-                    ),
-                    basic="very",
-                    size="small",
-                    compact="very",
-                    ),)),
-               e(ui.Grid.Row, e(ui.Grid.Column,
-                                e(ui.Segment,
+                     e(ui.Table.Body,
+                       *rows
+                       ),
+                     basic="very",
+                     size="small",
+                     compact="very",
+                     ),)),
+             e(ui.Grid.Row, e(ui.Grid.Column,
+                              e(ui.Segment,
                                   e(ui.Label, tr(this, "", "Most common tags"), attached="top"),
                                   e(ui.Label.Group,
                                     *tag_lbl
                                     ),
                                   basic=True,
-                                  ),
-                                width=16), columns=1),
-               *slider_el,
-               )
+                                ),
+                              width=16), columns=1),
+             *slider_el,
+             )
+
 
 ArtistProps = createReactClass({
     'displayName': 'ArtistProps',
@@ -158,5 +161,3 @@ ArtistProps = createReactClass({
 
     'render': artistprops_render
 })
-
-

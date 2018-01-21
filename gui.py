@@ -10,13 +10,14 @@ from threading import Thread, Timer
 from multiprocessing import Process, queues
 from happypanda.common import constants
 
-#if __name__ != '__main__':
+# if __name__ != '__main__':
 #    from gevent import monkey  # noqa: E402
 #    # need to patch before importing requests, see https://github.com/requests/requests/issues/3752
 #    monkey.patch_all(thread=False)
 
 # This is required to be here or else multiprocessing won't work when running in a frozen state!
 # I had a hell of a time debugging this :(
+
 
 class RedirectProcess(Process):
 
