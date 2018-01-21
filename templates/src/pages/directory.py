@@ -7,11 +7,12 @@ from src.react_utils import (e,
                              NavLink,
                              Switch,
                              createReactClass)
-from src.ui import ui
+from src.ui import ui, Pagination, ToggleIcon
 from src.client import client, ItemType, ItemSort
 from src.i18n import tr
 from src.state import state
 from src.single import tagitem
+from src.propsviews import artistpropsview, tagpropsview
 from src import utils
 
 
@@ -39,19 +40,59 @@ def SimpleLayout(props):
                     onSearchChange=props.search_change)
             )
 
+    pages_el = []
+    if props.pages:
+        if props.item_count > props.limit:
+            pages_el.append(
+                e(ui.Grid.Row,
+                    e(ui.Responsive,
+                        e(Pagination,
+                            limit=1,
+                            pages=props.item_count / props.limit,
+                            current_page=props.page,
+                            on_change=props.set_page,
+                            query=True,
+                            scroll_top=True,
+                            size="tiny"),
+                        maxWidth=578,
+                    ),
+                    e(ui.Responsive,
+                        e(Pagination,
+                            pages=props.item_count / props.limit,
+                            current_page=props.page,
+                            on_change=props.set_page,
+                            query=True,
+                            scroll_top=True),
+                        minWidth=579,
+                        ),
+                    centered=True
+                    ),
+                )
+
     return e(ui.Container,
             e(ui.Segment.Group,
             e(ui.Segment,
                 e(ui.Button, compact=True, basic=True,
                 icon="options", floated="right",
                 ),
-                e(ui.Button, e(ui.Icon, js_name="plus"), "New", compact=True, basic=True, floated="right",
+                e(ui.Button, e(ui.Icon, js_name="plus"), "New", compact=True, disabled=True, basic=True, floated="right",
                 ),
                 *stats_el,
                 *search_el,
                 clearing=True
                 ),
-            e(ui.Segment, props.children,
+            e(ui.Segment,
+              e(ui.Grid,
+                *pages_el,
+                e(ui.Grid.Row,
+                  e(ui.Grid.Column,
+                    props.children,
+                    width=16,
+                    )
+                    ),
+                *pages_el,
+                padded="horizontally",
+                ), 
                 secondary=True, basic=True,
                 loading=props.loading)
                ))
@@ -197,6 +238,11 @@ def parodiespage_render():
                animation="scale",
                duration=500,),
              loading=this.state.data_loading,
+             pages=True,
+             item_count=this.state.count,
+             limit=this.state.limit,
+             page=this.state.page,
+             set_page=this.set_page,
              search=True,
              search_query=this.state.search_query,
              search_change=this.update_search,
@@ -223,13 +269,15 @@ ParodiesPage = createReactClass({
 
     'get_items': get_db_parodies,
     'get_items_count': get_parodies_count,
+    'set_page': lambda p: all((this.setState({'page':p}), )),
 
     'update_search': lambda e, d: all((this.setState({'search_query':d.value}),
                                        utils.go_to(this.props.history, query={'search':d.value}, push=False))),
 
     'componentDidMount': lambda: all((this.get_items(), this.get_items_count())),
 
-    'componentDidUpdate': lambda p_p, p_s: this.get_items() if any((p_s.search_query != this.state.search_query,)) else None,
+    'componentDidUpdate': lambda p_p, p_s: this.get_items() if any((p_s.search_query != this.state.search_query,
+                                                                    p_s.page != this.state.page)) else None,
 
     'render': parodiespage_render
 })
@@ -362,17 +410,29 @@ def artistpage_render():
         if artist.names:
             aname = artist.names[0]['name']
         items.append(
-            e(ui.Card,
-                e(ui.Card.Content,e(ui.Card.Description, aname)),
-            centered=True, link=True, className="default-card")
+            e(ui.Modal,
+              e(ui.Modal.Content,
+                e(artistpropsview.ArtistProps, data=artist),
+                ),
+                trigger=e(ui.Card,e(ui.Card.Content,e(ui.Card.Description, aname)),
+                        centered=True, link=True, className="default-card"),
+                dimmer=False,
+                size="small",
+                closeOnDocumentClick=True,
+                closeIcon=True,
+              )
             )
-
     return e(SimpleLayout,
              e(ui.Card.Group, *items, itemsPerRow=2, doubling=True, stackable=True,
                as_=ui.Transition.Group,
                animation="scale",
                duration=500,),
              loading=this.state.data_loading,
+             pages=True,
+             item_count=this.state.count,
+             limit=this.state.limit,
+             page=this.state.page,
+             set_page=this.set_page,
              search=True,
              search_query=this.state.search_query,
              search_change=this.update_search,
@@ -392,20 +452,22 @@ ArtistsPage = createReactClass({
         'search_query': utils.get_query("search", "") or this.props.search_query,
         'data': [],
         'limit': 50,
-        'page': 1,
+        'page': utils.get_query("page", 1),
         'count': 0,
         'data_loading': False,
         },
 
     'get_items': get_db_artists,
     'get_items_count': get_artists_count,
+    'set_page': lambda p: all((this.setState({'page':p}), )),
 
-    'update_search': lambda e, d: all((this.setState({'search_query':d.value}),
+    'update_search': lambda e, d: all((this.setState({'search_query':d.value, 'page': 1}),
                                        utils.go_to(this.props.history, query={'search':d.value}, push=False))),
 
     'componentDidMount': lambda: all((this.get_items(), this.get_items_count())),
 
-    'componentDidUpdate': lambda p_p, p_s: this.get_items() if any((p_s.search_query != this.state.search_query,)) else None,
+    'componentDidUpdate': lambda p_p, p_s: this.get_items() if any((p_s.search_query != this.state.search_query,
+                                                                    p_s.page != this.state.page)) else None,
 
     'render': artistpage_render
 })
@@ -449,17 +511,37 @@ def tagspage_render():
     if nstags.__namespace__:  # somehow transcrypt ignores this in the loop below
         tags = sorted([x.js_name for x in nstags.__namespace__])
         for t in tags:
-            tag_lbl.append(e(ui.Card,
-                             e(ui.Card.Content,e(ui.Card.Description, t)),
-                           centered=True, link=True, className="default-card"))
+            tag_lbl.append(
+                e(ui.Modal,
+                  e(ui.Modal.Content,
+                    e(tagpropsview.TagProps, tag=t, namespace=""),
+                    ),
+                    trigger=e(ui.Card,
+                                 e(ui.Card.Content,e(ui.Card.Description, t)),
+                               centered=True, link=True, className="default-card"),
+                    dimmer=False,
+                    size="small",
+                    closeOnDocumentClick=True,
+                    closeIcon=True,
+                    ))
 
     for ns in sorted(dict(nstags).keys()):
         tags = [x.js_name for x in nstags[ns]]
         for t in sorted(tags):
-            tag_lbl.append(e(ui.Card,
+            tag_lbl.append(
+                e(ui.Modal,
+                  e(ui.Modal.Content,
+                    e(tagpropsview.TagProps, tag=t, namespace=ns),
+                    ),
+                    trigger=e(ui.Card,
                              e(ui.Card.Content,
                                e(ui.Card.Description, h("span", ns+':', className="sub-text"), t)),
-                           centered=True, link=True, className="default-card"))
+                                centered=True, link=True, className="default-card"),
+                    dimmer=False,
+                    size="small",
+                    closeOnDocumentClick=True,
+                    closeIcon=True,
+                    ))
 
     return e(SimpleLayout,
              e(ui.Card.Group, *tag_lbl, itemsPerRow=4, doubling=True, stackable=True,

@@ -23,10 +23,10 @@ Setting up an environment
 
 We need to set up a virtual environment for our python packages
 
-1. Install `Python 3.5 <https://www.python.org/>`_
+1. Install `Python 3.5+ <https://www.python.org/>`_
 
-.. Warning::
-    Python 3.5 is the only supported version
+.. Note::
+    Python 3.5 is the version that HPX is ensured to work on. It might also work on 3.6 and up but no guarantees.
 
 2. Install ``virtualenv`` from pypi with ``pip3 install virtualenv``
 3. Clone the `HPX <https://github.com/happypandax/server/tree/dev>`_ repo if you didn't already

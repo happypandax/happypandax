@@ -6,32 +6,12 @@ from src.react_utils import (h,
                              createReactClass)
 from src.ui import ui
 from src.i18n import tr
-from src.client import ItemType, client
-from src.single import tagitem
-
-
-def get_tags(data=None, error=None):
-    if data is not None and not error:
-        this.setState({"tags": data})
-    elif error:
-        state.app.notif("Failed to fetch tags ({})".format(this.props.id), level="error")
-    else:
-        id = this.props.id or this.state.id
-        data = this.props.data or this.state.data
-        if data:
-            id = data.id
-        client.call_func("get_common_tags", this.get_tags,
-                         item_type=this.state.item_type,
-                         item_id=id, limit=10)
-
-
-__pragma__("tconv")
-
+from src.client import ItemType
+from src.propsviews import artistpropsview
 
 def artistlbl_render():
     name = ""
     fav = 0
-    nstags = this.props.tags or this.state.tags or {}
     data = this.props.data or this.state.data
     if data:
         if data.names:
@@ -39,34 +19,11 @@ def artistlbl_render():
         if data.metatags.favorite:
             fav = 1
 
-    tag_lbl = []
-
-    if nstags.__namespace__:  # somehow transcrypt ignores this in the loop below
-        tags = sorted([x.js_name for x in nstags.__namespace__])
-        for t in tags:
-            tag_lbl.append(e(tagitem.TagLabel, tag=t))
-
-    for ns in sorted(dict(nstags).keys()):
-        tags = [x.js_name for x in nstags[ns]]
-        for t in tags:
-            tag_lbl.append(e(tagitem.TagLabel, namespace=ns, tag=t, show_ns=True))
-
     lbl_args = {'content': name}
     if fav:
         lbl_args['icon'] = "star"
     return e(ui.Popup,
-             e(ui.Grid,
-               e(ui.Grid.Row, e(ui.Grid.Column, e(ui.Rating, icon="heart", size="huge", rating=fav))),
-               e(ui.Grid.Row, e(ui.Grid.Column,
-                                e(ui.Segment,
-                                  e(ui.Label, tr(this, "", "Most common tags"), attached="top"),
-                                  e(ui.Label.Group,
-                                    *tag_lbl
-                                    ),
-                                  basic=True,
-                                  ),
-                                width=16), columns=1),
-               ),
+             e(artistpropsview.ArtistProps, data=data, tags=this.props.tags or this.state.tags),
              trigger=e(ui.Label,
                        basic=True,
                        as_="a",
@@ -92,9 +49,10 @@ ArtistLabel = createReactClass({
         'item_type': ItemType.Artist,
     },
 
-    'get_tags': get_tags,
+    'get_tags': artistpropsview.get_tags,
 
     'componentDidMount': lambda: this.get_tags() if not utils.defined(this.props.tags) else None,
 
     'render': artistlbl_render
 })
+

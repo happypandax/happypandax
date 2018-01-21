@@ -231,7 +231,9 @@ def translate(t_id: str, locale: str = None, default: str = None, placeholder: s
         try:
             trs = i18n.t(t_id, **kwargs)
         except KeyError as e:
-            raise exceptions.APIError(utils.this_function(), "Translation id '{}' not found".format(t_id))
+            if default is None:
+                raise exceptions.APIError(utils.this_function(), "Translation id '{}' not found".format(t_id))
+
         except i18n.loaders.loader.I18nFileLoadError as e:
             if default is None:
                 log.exception("Failed to load translation file '{}' with key '{}'".format(

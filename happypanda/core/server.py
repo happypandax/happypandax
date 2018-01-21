@@ -601,7 +601,7 @@ class HPServer:
 
         except OSError as e:
             if e.errno == errno.EADDRINUSE:
-                log.w("Failed to start server because the address is already in use. Ensure that no other application or HPX isntances are using the address")
+                log.w("Failed to start server because the address is already in use. Ensure that no other application or HPX isntances are using the same address")
             else:
                 log.w("Failed to start server because of: {}".format(e.args[1]))
 

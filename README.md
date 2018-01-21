@@ -14,8 +14,8 @@
 
 # Building
 
-1. install `Python 3.5` and `pip3` (and `git` if you haven't already)
-    > **Note**: Python 3.5 is currently the only supported version
+1. install `Python 3.5+` and `pip3` (and `git` if you haven't already)
+    > **Note**: Python 3.5 is the version that HPX is ensured to work on. It might also work on 3.6 and up but no guarantees.
 2. run: `python3 bootstrap.py`
     > **Windows users**: If you get `error: command '..\cl.exe' failed with exit status 2`, download `bitarray` from [here](http://www.lfd.uci.edu/%7Egohlke/pythonlibs/#bitarray)
     > **Install like this**: `.\env\Scripts\pip3.exe install bitarray.whl`
@@ -24,7 +24,7 @@
 
 ```
     HappyPanda X is a cross platform manga/doujinshi manager with namespace & tag support;
-    Copyright (C) 2017  Twiddly
+    Copyright (C) 2018  Twiddly
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

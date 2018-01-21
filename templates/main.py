@@ -150,6 +150,7 @@ def app_did_mount():
 
 def get_container_ref(ctx):
     state['container_ref'] = ctx
+    this.setState({'container_ref': ctx})
 
 
 __pragma__("kwargs")
@@ -254,6 +255,7 @@ App = createReactClass({
 
 
     'getInitialState': lambda: {
+        "container_ref": None,
         "sidebar_toggled": False,
         "menu_nav_contents": None,
         "menu_nav_args": {},

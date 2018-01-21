@@ -7,11 +7,11 @@ from src.react_utils import (h,
 from src.ui import ui
 from src.client import (ItemType, ImageSize, client)
 from src.state import state
-from src.single import thumbitem, artistitem
+from src.single import thumbitem
 from src import utils
 from src.views import tagview
+from src.propsviews import gallerypropsview
 from src.i18n import tr
-
 
 def on_tags(data):
     this.setState({'tags': data})
@@ -42,17 +42,13 @@ def gallery_render():
     artists = []
     artist_names = []
     item_id = this.state.id
-    info = ""
     inbox = False
-    date_pub = "Unknown"
-    date_read = "Unknown"
-    date_added = "Unknown"
+    data = this.props.data or this.state.data
 
     if this.state.data:
         read_count = this.state.data.times_read
         rating = this.state.data.rating
         title = this.state.data.titles[0].js_name
-        info = this.state.data.info
         inbox = this.state.data.metatags.inbox
 
         if this.state.data.metatags.favorite:
@@ -67,16 +63,6 @@ def gallery_render():
 
         for u in this.state.data.urls:
             urls.append(u.js_name)
-
-        if this.state.data.pub_date:
-            date_pub = utils.moment.unix(this.state.data.pub_date).format("LL")
-            date_pub += " (" + utils.moment.unix(this.state.data.pub_date).fromNow() + ")"
-        if this.state.data.last_read:
-            date_read = utils.moment.unix(this.state.data.last_read).format("LLL")
-            date_read += " (" + utils.moment.unix(this.state.data.last_read).fromNow() + ")"
-        if this.state.data.timestamp:
-            date_added = utils.moment.unix(this.state.data.timestamp).format("LLL")
-            date_added += " (" + utils.moment.unix(this.state.data.timestamp).fromNow() + ")"
 
     add_cls = this.props.className or ""
     link = True
@@ -111,41 +97,6 @@ def gallery_render():
     if link:
         thumb = e(Link, thumb, to={'pathname': '/item/gallery',
                                    'search': utils.query_to_string({'id': item_id})})
-
-    rows = []
-
-    rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, title, as_="h3"), colSpan="2", textAlign="center",
-                    verticalAlign="middle")))
-
-    rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, info, as_="h5"), colSpan="2")))
-
-    rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, "Artist(s):", as_="h5"), collapsing=True),
-                  e(ui.Table.Cell, *(e(artistitem.ArtistLabel, data=x) for x in artists))))
-    rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, "Published:", as_="h5"), collapsing=True),
-                  e(ui.Table.Cell, e(ui.Label, date_pub))))
-    rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, "Times read:", as_="h5"), collapsing=True),
-                  e(ui.Table.Cell, e(ui.Label, read_count, circular=True))))
-    rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, "Tags:", as_="h5"), collapsing=True),
-                  e(ui.Table.Cell, e(tagview.TagView, item_id=item_id, item_type=this.state.item_type,
-                                     data=this.state.tags, on_tags=this.on_tags))))
-
-    rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, "URL(s):", as_="h5"), collapsing=True),
-                  e(ui.Table.Cell, e(ui.List, *[e(ui.List.Item, h("span", h("a", x, href=x, target="_blank"), e(ui.List.Icon, js_name="external share"))) for x in urls]))))
-
-    rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, "Date added:", as_="h5"), collapsing=True),
-                  e(ui.Table.Cell, e(ui.Label, date_added))))
-
-    rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, "Last read:", as_="h5"), collapsing=True),
-                  e(ui.Table.Cell, e(ui.Label, date_read))))
 
     menu_options = []
     menu_options.append(e(ui.List.Item, content="Read", **read_button_args))
@@ -200,13 +151,7 @@ def gallery_render():
                          e(ui.Card.Header, title, className="text-ellipsis card-header"),
                          e(ui.Card.Meta, *[h("span", x) for x in artist_names], className="text-ellipsis"),
                          ),
-               content=e(ui.Table,
-                         e(ui.Table.Body,
-                           *rows
-                           ),
-                         basic="very",
-                         size="small"
-                         ),
+               content=e(gallerypropsview.GalleryProps, data=data, tags=this.state.tags, on_tags=this.on_tags),
                hideOnScroll=True,
                hoverable=True,
                position="bottom center",
@@ -226,8 +171,9 @@ Gallery = createReactClass({
                                 'tags': this.props.tags,
                                 'dimmer': False,
                                 },
-    'on_tags': on_tags,
     'open_external': open_external,
+
+    'on_tags': on_tags,
 
     'dimmer_show': lambda: this.setState({'dimmer': True}),
     'dimmer_hide': lambda: this.setState({'dimmer': False}),
