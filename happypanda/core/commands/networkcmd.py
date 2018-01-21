@@ -83,7 +83,7 @@ class Response(CoreCommand):
             filepath = io_cmd.CoreFS(filepath)
 
         if extension:
-            filepath = io_cmd.CoreFS(filepath.path + os.path.splitext(self._url)[1], filepath._archive)
+            filepath = io_cmd.CoreFS(filepath.path + io_cmd.CoreFS(os.path.split(self._url)[1]).ext, filepath._archive)
 
         log.d("Saving to filepath", filepath)
         with filepath.open(mode="wb") as f:
