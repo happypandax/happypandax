@@ -668,6 +668,6 @@ class WebServer:
         if cmd_args is not None:
             utils.parse_options(cmd_args)
         if __name__ != '__main__':
-            gevent.monkey.patch_all(thread=False)
+            gevent.monkey.patch_all(thread=False, ssl=False)
         views.init_views(self.happyweb, self.socketio)
         self.socketio.run(self.happyweb, host, port, debug=debug)
