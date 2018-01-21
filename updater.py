@@ -5,6 +5,11 @@ import atexit
 
 from happypanda.common import constants, hlogger, utils
 
+# OS X: fix the working directory when running a mac app
+# OS X: files are in [app]/Contents/MacOS/
+if sys.platform.startswith('darwin') and hasattr(sys, 'frozen'):
+    os.chdir(os.path.abspath(os.path.dirname(sys.executable)))
+
 log = hlogger.Logger("HappyUpdater")
 
 

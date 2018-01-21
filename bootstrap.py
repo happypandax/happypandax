@@ -23,6 +23,7 @@ changes = """
 - handle 'address in use' error properly
 - webclient enhancement
 - misc. bugfixes
+- updated various libs, most notably SQLAlchemy==1.2.1 and Pillow==5.0.0
 - update docs
 
 From previous builds:

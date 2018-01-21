@@ -1,6 +1,6 @@
 -r requirements.txt
 
-transcrypt==3.6.61
+Transcrypt==3.6.82
 flake8==3.5.0
 mock==2.0.0
 pytest==3.3.2
