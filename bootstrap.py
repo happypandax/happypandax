@@ -17,7 +17,13 @@ dev_options = dict(
 env_python = r".\env\Scripts\python" if sys.platform.startswith("win") else "./env/bin/python"
 
 changes = """
-- Misc. bugfixes
+- added 'sort_by' and 'sort_desc' parameters to search_tags and search_item api functions
+- added new default sortindexes ArtistName, NamespaceTagNamespace and NamespaceTagTag
+- implement ordering by multiple columns
+- handle 'address in use' error properly
+- webclient enhancement
+- misc. bugfixes
+- update docs
 
 From previous builds:
 

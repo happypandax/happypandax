@@ -46,9 +46,8 @@ def start(argv=None, db_kwargs={}):
             command.init_commands()
             hlogger.Logger.init_listener(args)
             monkey.patch_all(thread=False, ssl=False)
-        hlogger.Logger.report_online = config.report_critical_errors.value
-        hlogger.Logger.setup_logger(args, main=True, debug=config.debug.value)
         utils.setup_online_reporter()
+        hlogger.Logger.setup_logger(args, main=True, debug=config.debug.value)
         log.i("HPX SERVER START")
         if constants.dev:
             log.i("DEVELOPER MODE ENABLED", stdout=True)
@@ -113,7 +112,7 @@ def start(argv=None, db_kwargs={}):
 
     except Exception as e:
         print(e)  # intentional
-        if config.report_critical_errors.value and not constants.dev:
+        if config.report_critical_errors.value and not constants.dev and constants.is_frozen:
             rollbar.report_exc_info()
         raise
     return e_code.value if e_code else 0

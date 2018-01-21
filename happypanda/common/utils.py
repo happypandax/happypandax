@@ -321,7 +321,7 @@ def setup_online_reporter():
         execute AFTER setting up a logger!
         the rollbar lib somehow messes it up!
     """
-    if config.report_critical_errors.value:
+    if config.report_critical_errors.value and constants.is_frozen:
         rollbar.init(config.rollbar_access_token.value,
                      'HPX {} web({}) db({}) build({}) platform({})'.format(
                          constants.version,
