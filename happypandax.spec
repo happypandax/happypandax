@@ -44,7 +44,7 @@ def make(py_file, exe_name, analysis_kwargs={}, pyz_args=None, exe_kwargs={}):
 
   a_kwargs = dict(binaries=[],
                datas=added_files,
-               hiddenimports=['engineio.async_gevent']+interface_files,
+               hiddenimports=['engineio.async_gevent', 'sqlalchemy.ext.baked']+interface_files,
                hookspath=[],
                runtime_hooks=[],
                excludes=['FixTk', 'tcl', 'tk', '_tkinter', 'tkinter', 'Tkinter'],
