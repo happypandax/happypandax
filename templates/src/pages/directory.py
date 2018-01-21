@@ -483,6 +483,7 @@ def get_db_tags(data=None, error=None):
     else:
         client.call_func("search_tags", this.get_tags,
                          search_query=this.state.search_query,
+                         sort_by=ItemSort.NamespaceTagTag,
                          offset=this.state.limit*(this.state.page-1),
                          limit=this.state.limit)
         this.setState({'data_loading': True})
@@ -499,6 +500,7 @@ def get_tags_count(data=None, error=None):
 def tagspage_update(p_p, p_s):
     if any((
         p_s.search_query != this.state.search_query,
+        p_s.page != this.state.page
     )):
         this.get_tags()
 
@@ -549,6 +551,11 @@ def tagspage_render():
                animation="scale",
                duration=500,),
              loading=this.state.data_loading,
+             pages=True,
+             item_count=this.state.count,
+             limit=this.state.limit,
+             page=this.state.page,
+             set_page=this.set_page,
              search=True,
              search_query=this.state.search_query,
              search_change=this.update_search,
@@ -566,15 +573,16 @@ TagsPage = createReactClass({
         'search_query': utils.get_query("search", "") or this.props.search_query,
         'data': {},
         'limit': 50,
-        'page': 1,
+        'page': utils.get_query("page", 1),
         'count': 0,
         'data_loading': False,
     },
 
     'get_tags': get_db_tags,
     'get_tags_count': get_tags_count,
+    'set_page': lambda p: all((this.setState({'page':p}), )),
 
-    'update_search': lambda e, d: all((this.setState({'search_query':d.value}),
+    'update_search': lambda e, d: all((this.setState({'search_query':d.value, 'page': 1}),
                                        utils.go_to(this.props.history, query={'search':d.value}, push=False))),
 
     'componentDidMount': lambda: all((this.get_tags(), this.get_tags_count())),

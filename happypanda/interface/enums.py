@@ -182,3 +182,8 @@ class ItemSort(_APIEnum):
 
     #: Artist Name
     ArtistName = 20
+
+    #: Namespace
+    NamespaceTagNamespace = 30
+    #: Tag
+    NamespaceTagTag = 31

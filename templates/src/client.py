@@ -78,6 +78,11 @@ class ItemSort:
     #: Artist Name
     ArtistName = 20
 
+    #: Namespace
+    NamespaceTagNamespace = 30
+    #: Tag
+    NamespaceTagTag = 31
+
 def log(msg):
     if state.debug:
         print(msg)

@@ -6,6 +6,7 @@ import send2trash
 import attr
 import subprocess
 import rarfile
+import imghdr
 
 from io import BytesIO
 from PIL import Image
@@ -48,6 +49,7 @@ class ImageItem(AsyncCommand):
         super().__init__(service, priority=constants.Priority.Low)
         self.properties = properties
         self._image = filepath_or_bytes
+        self._retrying = False
 
     @property
     def properties(self):
@@ -103,10 +105,15 @@ class ImageItem(AsyncCommand):
         im = None
         image_path = ""
         try:
-            f, ext = os.path.splitext(self._image)
+            if isinstance(self._image, str):
+                _, ext = os.path.splitext(self._image)
+                if self._retrying:
+                    ext = '.' + imghdr.what(self._image)
+            else:
+                ext = '.' + imghdr.what("", self._image)
+
             im = Image.open(self._image)
-            if not any(x in ext.lower() for x in ('jpeg', 'jpg')):
-                im = self._convert(im)
+            im = self._convert(im)
 
             if self.properties.output_path:
                 image_path = self.properties.output_path
@@ -141,6 +148,15 @@ class ImageItem(AsyncCommand):
 
             if save_image:
                 im.save(image_path)
+        except OSError as e:
+            if not self._retrying:
+                log.w("Failed generating image:", e.args[1], "retrying...")
+                self._retrying = True
+                if im:
+                    im.close()
+                    im = None
+                return self._generate()
+            log.w("Failed generating image:", e.args[1])
         finally:
             if im:
                 im.close()

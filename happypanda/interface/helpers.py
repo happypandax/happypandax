@@ -10,8 +10,8 @@ log = hlogger.Logger(__name__)
 def _sort_helper(sort_by, sort_desc, db_model):
 
     ordering = None
-    order_exp = None
-    group_exp = None
+    order_exp = tuple()
+    group_exp = tuple()
     join_exp = tuple()
 
     if sort_by is not None:
@@ -30,10 +30,17 @@ def _sort_helper(sort_by, sort_desc, db_model):
                         repr(sort_by)))
 
     if ordering is not None:
-        join_exp = tuple(ordering.joins)
+        join_exp = ordering.joins
         group_exp = ordering.groupby
         order_exp = ordering.orderby
+
+        if not isinstance(order_exp, (list, tuple)):
+            order_exp = (order_exp,)
+        if not isinstance(join_exp, (list, tuple)):
+            join_exp = (join_exp,)
+        if not isinstance(group_exp, (list, tuple)):
+            group_exp = (group_exp,)
         if sort_desc:
-            order_exp = db.desc_expr(order_exp)
+            order_exp = tuple(db.desc_expr(x) for x in order_exp)
 
     return order_exp, group_exp, join_exp

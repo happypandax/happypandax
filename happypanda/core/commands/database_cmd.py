@@ -208,7 +208,7 @@ class GetDatabaseSort(Command):
 
     groupby = CommandEntry("groupby", dict, str)
 
-    joins = CommandEntry("joins", tuple, str)
+    joins = CommandEntry("joins", dict, str)
 
     SortTuple = namedtuple("SortTuple", ["orderby", "joins", "groupby"])
 
@@ -231,25 +231,28 @@ class GetDatabaseSort(Command):
             ItemSort.GalleryPageCount.value: "Page Count",
         }
 
+    ##############################
+    # Gallery
+
     @orderby.default(capture=True)
     def _gallery_orderby(model_name, capture=db.model_name(db.Gallery)):
         return {
-            ItemSort.GalleryRandom.value: func.random(),
-            ItemSort.GalleryTitle.value: db.Title.name,
-            ItemSort.GalleryArtist.value: db.AliasName.name,
-            ItemSort.GalleryDate.value: db.Gallery.timestamp,
-            ItemSort.GalleryPublished.value: db.Gallery.pub_date,
-            ItemSort.GalleryRead.value: db.Gallery.last_read,
-            ItemSort.GalleryUpdated.value: db.Gallery.last_updated,
-            ItemSort.GalleryRating.value: db.Gallery.rating,
-            ItemSort.GalleryReadCount.value: db.Gallery.times_read,
-            ItemSort.GalleryPageCount.value: db.func.count(db.Page.id),
+            ItemSort.GalleryRandom.value: (func.random(),),
+            ItemSort.GalleryTitle.value: (db.Title.name,),
+            ItemSort.GalleryArtist.value: (db.AliasName.name,),
+            ItemSort.GalleryDate.value: (db.Gallery.timestamp,),
+            ItemSort.GalleryPublished.value: (db.Gallery.pub_date,),
+            ItemSort.GalleryRead.value: (db.Gallery.last_read,),
+            ItemSort.GalleryUpdated.value: (db.Gallery.last_updated,),
+            ItemSort.GalleryRating.value: (db.Gallery.rating,),
+            ItemSort.GalleryReadCount.value: (db.Gallery.times_read,),
+            ItemSort.GalleryPageCount.value: (db.func.count(db.Page.id),),
         }
 
     @groupby.default(capture=True)
     def _gallery_groupby(model_name, capture=db.model_name(db.Gallery)):
         return {
-            ItemSort.GalleryPageCount.value: db.Gallery.id,
+            ItemSort.GalleryPageCount.value: (db.Gallery.id,),
         }
 
     @joins.default(capture=True)
@@ -260,6 +263,9 @@ class GetDatabaseSort(Command):
             ItemSort.GalleryPageCount.value: (db.Gallery.pages,),
         }
 
+    ##############################
+    # AliasName
+
     @names.default(capture=True)
     def _aliasname_names(model_name, capture=db.model_name(db.Artist)):
         return {
@@ -269,13 +275,37 @@ class GetDatabaseSort(Command):
     @orderby.default(capture=True)
     def _aliasname_orderby(model_name, capture=db.model_name(db.Artist)):
         return {
-            ItemSort.ArtistName.value: db.AliasName.name,
+            ItemSort.ArtistName.value: (db.AliasName.name,),
         }
 
     @joins.default(capture=True)
     def _aliasname_joins(model_name, capture=db.model_name(db.Artist)):
         return {
             ItemSort.ArtistName.value: (db.Artist.names,),
+        }
+
+    ##############################
+    # NamespaceTags
+
+    @names.default(capture=True)
+    def _namespacetags_names(model_name, capture=db.model_name(db.NamespaceTags)):
+        return {
+            ItemSort.NamespaceTagNamespace.value: "Namespace",
+            ItemSort.NamespaceTagTag.value: "Tag",
+        }
+
+    @orderby.default(capture=True)
+    def _namespacetags_orderby(model_name, capture=db.model_name(db.NamespaceTags)):
+        return {
+            ItemSort.NamespaceTagNamespace.value: (db.Namespace.name, db.Tag.name),
+            ItemSort.NamespaceTagTag.value: (db.Tag.name, db.Namespace.name),
+        }
+
+    @joins.default(capture=True)
+    def _namespacetags_joins(model_name, capture=db.model_name(db.NamespaceTags)):
+        return {
+            ItemSort.NamespaceTagNamespace.value: (db.NamespaceTags.namespace, db.NamespaceTags.tag),
+            ItemSort.NamespaceTagTag.value: (db.NamespaceTags.tag, db.NamespaceTags.namespace),
         }
 
     def main(self, model: db.Base, sort_index: int=None, name: bool=False) -> object:
@@ -385,11 +415,15 @@ class GetModelItems(Command):
 
         if group_by is not None:
             criteria = True
-            q = q.group_by(self._get_sql(group_by))
+            if not isinstance(group_by, (list, tuple)):
+                group_by = [group_by]
+            q = q.group_by(*(self._get_sql(g) for g in group_by))
 
         if order_by is not None:
             criteria = True
-            q = make_order_by_deterministic(q.order_by(self._get_sql(order_by)))
+            if not isinstance(order_by, (list, tuple)):
+                order_by = [order_by]
+            q = make_order_by_deterministic(q.order_by(*(self._get_sql(o) for o in order_by)))
 
         if filter is not None:
             criteria = True
