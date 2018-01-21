@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>happypanda.interface.ui &#8212; Happypanda X 0.0.2#114 documentation</title>
+    <title>happypanda.interface.ui &#8212; Happypanda X 0.0.5#116 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.0.2#114',
+        VERSION:     '0.0.5#116',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -52,7 +52,7 @@
         </button>
         <a class="navbar-brand" href="../../../index.html">
           Happypanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.2#114</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.5#116</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -169,7 +169,7 @@
 
 <span class="kn">from</span> <span class="nn">happypanda.common</span> <span class="k">import</span> <span class="n">utils</span><span class="p">,</span> <span class="n">exceptions</span><span class="p">,</span> <span class="n">hlogger</span><span class="p">,</span> <span class="n">config</span>
 <span class="kn">from</span> <span class="nn">happypanda.core</span> <span class="k">import</span> <span class="n">message</span><span class="p">,</span> <span class="n">db</span>
-<span class="kn">from</span> <span class="nn">happypanda.interface</span> <span class="k">import</span> <span class="n">enums</span>
+<span class="kn">from</span> <span class="nn">happypanda.interface</span> <span class="k">import</span> <span class="n">enums</span><span class="p">,</span> <span class="n">helpers</span>
 <span class="kn">from</span> <span class="nn">happypanda.core.commands</span> <span class="k">import</span> <span class="n">database_cmd</span><span class="p">,</span> <span class="n">search_cmd</span>
 
 <span class="n">log</span> <span class="o">=</span> <span class="n">hlogger</span><span class="o">.</span><span class="n">Logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
@@ -310,33 +310,12 @@
 
     <span class="n">items</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">db_model</span><span class="o">.</span><span class="vm">__name__</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="n">db_msg</span><span class="p">)</span>
 
-    <span class="n">ordering</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">order_exp</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">group_exp</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">order_exp</span><span class="p">,</span> <span class="n">group_exp</span><span class="p">,</span> <span class="n">sort_joins</span> <span class="o">=</span> <span class="n">helpers</span><span class="o">.</span><span class="n">_sort_helper</span><span class="p">(</span><span class="n">sort_by</span><span class="p">,</span> <span class="n">sort_desc</span><span class="p">,</span> <span class="n">db_model</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">sort_by</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">sort_by</span> <span class="o">=</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemSort</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">sort_by</span><span class="p">)</span>
-            <span class="n">ordering</span> <span class="o">=</span> <span class="n">database_cmd</span><span class="o">.</span><span class="n">GetDatabaseSort</span><span class="p">()</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">db_model</span><span class="p">,</span> <span class="n">sort_by</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
-        <span class="k">except</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">EnumError</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sort_by</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
-                <span class="n">ordering</span> <span class="o">=</span> <span class="n">database_cmd</span><span class="o">.</span><span class="n">GetDatabaseSort</span><span class="p">()</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">db_model</span><span class="p">,</span> <span class="n">sort_by</span><span class="p">)</span>
-
-            <span class="k">if</span> <span class="n">ordering</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">EnumError</span><span class="p">(</span>
-                    <span class="n">utils</span><span class="o">.</span><span class="n">this_function</span><span class="p">(),</span>
-                    <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">: enum member or sort index doesn&#39;t exist &#39;</span><span class="si">{}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                        <span class="n">enums</span><span class="o">.</span><span class="n">ItemSort</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
-                        <span class="nb">repr</span><span class="p">(</span><span class="n">sort_by</span><span class="p">)))</span>
-
-    <span class="k">if</span> <span class="n">ordering</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">join_exp</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">ordering</span><span class="o">.</span><span class="n">joins</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">sort_joins</span><span class="p">:</span>
+        <span class="n">join_exp</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">sort_joins</span><span class="p">)</span>
         <span class="c1"># need unique but ordered results, cannot use set so we make use with this</span>
         <span class="n">join_exp</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">OrderedDict</span><span class="p">([(</span><span class="n">x</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">join_exp</span><span class="p">])</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
-        <span class="n">group_exp</span> <span class="o">=</span> <span class="n">ordering</span><span class="o">.</span><span class="n">groupby</span>
-        <span class="n">order_exp</span> <span class="o">=</span> <span class="n">ordering</span><span class="o">.</span><span class="n">orderby</span>
-        <span class="k">if</span> <span class="n">sort_desc</span><span class="p">:</span>
-            <span class="n">order_exp</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">desc_expr</span><span class="p">(</span><span class="n">order_exp</span><span class="p">)</span>
 
     <span class="p">[</span><span class="n">items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">db_msg</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">database_cmd</span><span class="o">.</span><span class="n">GetModelItems</span><span class="p">()</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
         <span class="n">db_model</span><span class="p">,</span> <span class="n">model_ids</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="n">limit</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="n">page</span> <span class="o">*</span> <span class="n">limit</span><span class="p">,</span>
@@ -411,7 +390,9 @@
         <span class="k">try</span><span class="p">:</span>
             <span class="n">trs</span> <span class="o">=</span> <span class="n">i18n</span><span class="o">.</span><span class="n">t</span><span class="p">(</span><span class="n">t_id</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">KeyError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">APIError</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">this_function</span><span class="p">(),</span> <span class="s2">&quot;Translation id &#39;</span><span class="si">{}</span><span class="s2">&#39; not found&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">t_id</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">default</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">APIError</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">this_function</span><span class="p">(),</span> <span class="s2">&quot;Translation id &#39;</span><span class="si">{}</span><span class="s2">&#39; not found&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">t_id</span><span class="p">))</span>
+
         <span class="k">except</span> <span class="n">i18n</span><span class="o">.</span><span class="n">loaders</span><span class="o">.</span><span class="n">loader</span><span class="o">.</span><span class="n">I18nFileLoadError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">default</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Failed to load translation file &#39;</span><span class="si">{}</span><span class="s2">&#39; with key &#39;</span><span class="si">{}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>

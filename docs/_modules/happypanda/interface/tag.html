@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>happypanda.interface.tag &#8212; Happypanda X 0.0.2#114 documentation</title>
+    <title>happypanda.interface.tag &#8212; Happypanda X 0.0.5#116 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.0.2#114',
+        VERSION:     '0.0.5#116',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -52,7 +52,7 @@
         </button>
         <a class="navbar-brand" href="../../../index.html">
           Happypanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.2#114</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.5#116</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -163,9 +163,10 @@
 
 <span class="sd">&quot;&quot;&quot;</span>
 
+<span class="kn">from</span> <span class="nn">happypanda.common</span> <span class="k">import</span> <span class="n">exceptions</span><span class="p">,</span> <span class="n">utils</span><span class="p">,</span> <span class="n">constants</span>
 <span class="kn">from</span> <span class="nn">happypanda.core</span> <span class="k">import</span> <span class="n">db</span><span class="p">,</span> <span class="n">message</span>
-<span class="kn">from</span> <span class="nn">happypanda.interface</span> <span class="k">import</span> <span class="n">enums</span>
-<span class="kn">from</span> <span class="nn">happypanda.core.commands</span> <span class="k">import</span> <span class="n">database_cmd</span>
+<span class="kn">from</span> <span class="nn">happypanda.interface</span> <span class="k">import</span> <span class="n">enums</span><span class="p">,</span> <span class="n">helpers</span>
+<span class="kn">from</span> <span class="nn">happypanda.core.commands</span> <span class="k">import</span> <span class="n">database_cmd</span><span class="p">,</span> <span class="n">search_cmd</span>
 
 
 <span class="k">def</span> <span class="nf">_contruct_tags_msg</span><span class="p">(</span><span class="n">nstags</span><span class="p">):</span>
@@ -207,26 +208,70 @@
 
     <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Identity</span><span class="p">(</span><span class="s1">&#39;tags&#39;</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span></div>
 
-<span class="c1">#def search_tags(term: str=&quot;&quot;, only_namespace: bool=False, only_tag: bool=False, limit: int=100):</span>
-<span class="c1">#    &quot;&quot;&quot;</span>
-<span class="c1">#    Search for tags</span>
+<div class="viewcode-block" id="search_tags"><a class="viewcode-back" href="../../../api.html#happypanda.interface.tag.search_tags">[docs]</a><span class="k">def</span> <span class="nf">search_tags</span><span class="p">(</span><span class="n">search_query</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+                <span class="n">search_options</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{},</span>
+                <span class="n">only_namespace</span><span class="p">:</span> <span class="nb">bool</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">only_tag</span><span class="p">:</span> <span class="nb">bool</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">sort_by</span><span class="p">:</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemSort</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">sort_desc</span><span class="p">:</span> <span class="nb">bool</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+                <span class="n">offset</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Search for tags</span>
 
-<span class="c1">#    Args:</span>
-<span class="c1">#        term: search string</span>
-<span class="c1">#        only_namespace: only search for matching namespace</span>
-<span class="c1">#        only_tag: only search for matching tag</span>
-<span class="c1">#        limit: limit the amount of items returned</span>
+<span class="sd">    Args:</span>
+<span class="sd">        search_query: search string</span>
+<span class="sd">        search_options: options to apply when filtering, see :ref:`Settings` for available search options</span>
+<span class="sd">        only_namespace: only search for matching namespace &lt;not implemented yet&gt;</span>
+<span class="sd">        only_tag: only search for matching tag &lt;not implemented yet&gt;</span>
+<span class="sd">        sort_by: either a :py:class:`.ItemSort` or a sort index</span>
+<span class="sd">        sort_desc: order descending (default is ascending)</span>
+<span class="sd">        limit: limit the amount of items returned</span>
+<span class="sd">        offset: offset the results by n items</span>
 
-<span class="c1">#    Returns:</span>
-<span class="c1">#        .. code-block:: guess</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        .. code-block:: guess</span>
 
-<span class="c1">#            {</span>
-<span class="c1">#                namespace : [ tag message object, ...],</span>
-<span class="c1">#                ...</span>
-<span class="c1">#            }</span>
-<span class="c1">#    &quot;&quot;&quot;</span>
-<span class="c1">#    pass</span>
+<span class="sd">            {</span>
+<span class="sd">                namespace : [ tag message object, ...],</span>
+<span class="sd">                ...</span>
+<span class="sd">            }</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">search_options</span><span class="p">:</span>
+        <span class="n">search_option_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">search_cmd</span><span class="o">.</span><span class="n">_get_search_options</span><span class="p">()]</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">search_options</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">n</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">search_option_names</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">exceptions</span><span class="o">.</span><span class="n">APIError</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">this_function</span><span class="p">(),</span> <span class="s2">&quot;Invalid search option name &#39;</span><span class="si">{}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
 
+    <span class="n">db_model</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">NamespaceTags</span>
+    <span class="n">model_ids</span> <span class="o">=</span> <span class="n">search_cmd</span><span class="o">.</span><span class="n">ModelFilter</span><span class="p">()</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">db_model</span><span class="p">,</span> <span class="n">search_query</span><span class="p">,</span> <span class="n">search_options</span><span class="p">)</span>
+
+    <span class="n">order_exp</span><span class="p">,</span> <span class="n">group_exp</span><span class="p">,</span> <span class="n">join_exp</span> <span class="o">=</span> <span class="n">helpers</span><span class="o">.</span><span class="n">_sort_helper</span><span class="p">(</span><span class="n">sort_by</span><span class="p">,</span> <span class="n">sort_desc</span><span class="p">,</span> <span class="n">db_model</span><span class="p">)</span>
+
+
+    <span class="n">items</span> <span class="o">=</span> <span class="n">database_cmd</span><span class="o">.</span><span class="n">GetModelItems</span><span class="p">()</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">db_model</span><span class="p">,</span> <span class="n">model_ids</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="n">limit</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="n">offset</span><span class="p">,</span>
+                                             <span class="n">join</span><span class="o">=</span><span class="n">join_exp</span><span class="p">,</span> <span class="n">order_by</span><span class="o">=</span><span class="n">order_exp</span><span class="p">,</span> <span class="n">group_by</span><span class="o">=</span><span class="n">group_exp</span><span class="p">)</span>
+
+    <span class="n">msg</span> <span class="o">=</span> <span class="n">_contruct_tags_msg</span><span class="p">(</span><span class="n">items</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Identity</span><span class="p">(</span><span class="s1">&#39;tags&#39;</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="get_tags_count"><a class="viewcode-back" href="../../../api.html#happypanda.interface.tag.get_tags_count">[docs]</a><span class="k">def</span> <span class="nf">get_tags_count</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get count of namespacetags in the database</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        .. code-block:: guess</span>
+
+<span class="sd">            {</span>
+<span class="sd">                &#39;count&#39; : int</span>
+<span class="sd">            }</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">s</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">db_session</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Identity</span><span class="p">(</span><span class="s1">&#39;count&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;count&#39;</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">NamespaceTags</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()})</span></div>
 
 <div class="viewcode-block" id="get_tags"><a class="viewcode-back" href="../../../api.html#happypanda.interface.tag.get_tags">[docs]</a><span class="k">def</span> <span class="nf">get_tags</span><span class="p">(</span><span class="n">item_type</span><span class="p">:</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span> <span class="o">=</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Gallery</span><span class="p">,</span>
              <span class="n">item_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
