@@ -95,6 +95,7 @@ def start(argv=None, db_kwargs={}):
             meta_cmd.UpdateApplication.update.subscribe(hp_server.update)
             e_code = hp_server.run(interactive=args.interact)
 
+        io_cmd.CoreFS(constants.dir_temp).delete(ignore_errors=True)
         log.i("HPX SERVER END")
         if e_code == constants.ExitCode.Exit:
             log.i("Shutting down...", stdout=True)

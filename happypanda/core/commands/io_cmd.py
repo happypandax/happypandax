@@ -77,9 +77,9 @@ class ImageItem(AsyncCommand):
         if props.name:
             assert isinstance(props.name, str)
 
-    def _convert(self, im, colormode="RGB"):
+    def _convert(self, im, colormode="RGB", img_ext=None):
         if colormode == "RGB" or colormode == "RGBA":
-            if im.mode == 'RGBA':
+            if im.mode == 'RGBA' and img_ext not in ('.jepg', '.jpg'):
                 return im
             if im.mode == "LA":
                 return im.convert("RGBA")
@@ -113,7 +113,7 @@ class ImageItem(AsyncCommand):
                 ext = '.' + imghdr.what("", self._image)
 
             im = Image.open(self._image)
-            im = self._convert(im)
+            im = self._convert(im, img_ext=ext)
 
             if self.properties.output_path:
                 image_path = self.properties.output_path
