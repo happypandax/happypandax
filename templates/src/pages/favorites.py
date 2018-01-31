@@ -11,7 +11,10 @@ from src import pages
 
 
 def page_render():
-    return e(pages.ItemViewPage, view_type=ViewType.Favorite, history=this.props.history)
+    return e(pages.ItemViewPage, view_type=ViewType.Favorite,
+             history=this.props.history,
+             location=this.props.location,
+             )
 
 
 Page = createReactClass({

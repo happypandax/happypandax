@@ -2478,6 +2478,10 @@ h6 {
 .ui.default-card > .content {
   padding: 1em 1em !important;
 }
+
+.foreground-sticky > div {
+  z-index: 99999;
+}
 /*!
  * # Semantic UI 2.2.13 - Button
  * http://github.com/semantic-org/semantic-ui/

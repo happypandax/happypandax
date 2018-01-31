@@ -233,3 +233,7 @@ h6 {
 .ui.default-card > .content {
   padding: 1em 1em !important;
 }
+
+.foreground-sticky > div {
+    z-index: 99999;
+}

@@ -1,4 +1,5 @@
 __pragma__('alias', 'as_', 'as')
+import math
 import src
 from src.react_utils import (h,
                              e,
@@ -92,23 +93,27 @@ def itemviewbase_render():
     pagination = e(ui.Grid.Row,
                    e(ui.Responsive,
                        e(Pagination,
+                         history=this.props.history,
+                         location=this.props.location,
                          limit=1,
                          pages=props.item_count / props.limit,
                          current_page=props.page,
                          on_change=props.set_page,
-                         context=this.props.context,
-                         query=True,
+                         context=this.props.context or this.state.context_node,
+                         query=this.props.query,
                          scroll_top=True,
                          size="tiny"),
                        maxWidth=578,
                      ),
                    e(ui.Responsive,
                        e(Pagination,
+                         history=this.props.history,
+                         location=this.props.location,
                          pages=props.item_count / props.limit,
-                         context=this.props.context,
+                         context=this.props.context or this.state.context_node,
                          current_page=props.page,
                          on_change=props.set_page,
-                         query=True,
+                         query=this.props.query,
                          scroll_top=True),
                        minWidth=579,
                      ),
@@ -166,38 +171,57 @@ def itemviewbase_render():
                             ),
                           textAlign="center", width=16))
 
-    return e(ui.Segment,
-             *add_el,
-             e(ui.Sidebar.Pushable,
+    infinite_el = []
+    if this.props.infinite_scroll:
+        infinite_el.append(e(ui.Grid.Row,
+                            e(ui.Visibility,
+                              e(ui.Loader, active=props.loading_more if utils.defined(props.loading_more) else (props.infinite_scroll and props.loading)),
+                            onTopVisible=this.props.on_load_more,
+                            once=False,
+                            ),))
+
+    el = e(ui.Sidebar.Pushable,
                *cfg_el,
                e(ui.Sidebar.Pusher,
                  e(ui.Grid,
-                   *count_el,
-                   pagination,
-                   *[e(ui.Grid.Column, c, computer=4, tablet=3, mobile=6,
-                       largeScreen=lscreen, widescreen=wscreen) for c in els],
-                   pagination,
-                   *count_el,
+                       *count_el,
+                       pagination,
+                       *[e(ui.Grid.Column, c, verticalAlign="middle",
+                           computer=4, tablet=3, mobile=6,
+                           largeScreen=lscreen, widescreen=wscreen) for c in els],
+                       *infinite_el,
+                       pagination,
+                       *count_el,
                    padded="vertically",
                    centered=True,
+                   verticalAlign="middle",
                    as_=ui.Transition.Group,
                    duration=1500,
                    ),
                  as_=ui.Segment,
                  basic=True,
+                loading=props.loading if utils.defined(props.loading_more) else (props.loading and not props.infinite_scroll),
+                className="no-padding-segment"
                  ),
-               basic=True,
-               loading=props.loading,
-               as_=ui.Segment,
-               ),
-             basic=True,
-             secondary=props.secondary,
-             tertiary=props.tertiary,
-             )
+               )
 
+    if props.secondary or props.tertiary or len(add_el):
+        el = e(ui.Segment,
+                 *add_el,
+                 el,
+                 basic=True,
+                 secondary=props.secondary,
+                 tertiary=props.tertiary,
+                 )
+
+    return e(ui.Ref, el, innerRef=this.get_context_node,)
 
 ItemViewBase = createReactClass({
     'displayName': 'ItemViewBase',
+
+    'getInitialState': lambda: {'context_node': None},
+
+    'get_context_node': lambda n: this.setState({'context_node':n}),
 
     'render': itemviewbase_render
 })
@@ -205,7 +229,14 @@ ItemViewBase = createReactClass({
 
 def get_items(data=None, error=None):
     if data is not None and not error:
-        this.setState({"items": data, 'loading': False})
+        new_data = []
+        if this.state.infinite_scroll and \
+            this.state.prev_page and this.state.prev_page < this.state.page:
+            new_data.extend(this.state['items'])
+        new_data.extend(data)
+        this.setState({"items": new_data,
+                       'loading': False,
+                       'loading_more':False})
     elif error:
         state.app.notif("Failed to fetch item type: {}".format(this.props.item_type), level="error")
     else:
@@ -231,8 +262,8 @@ def get_items(data=None, error=None):
             func_kw['item_id'] = this.props.item_id
         if item:
             client.call_func("library_view", this.get_items, **func_kw)
-            this.setState({'loading': True})
-
+            if not this.state.prev_page:
+                this.setState({'loading': True})
 
 __pragma__("notconv")
 
@@ -279,6 +310,15 @@ def get_element():
 
     this.setState({'element': el})
 
+def get_more():
+    pages = math.ceil(this.state.item_count / this.state.limit)
+    if this.state.infinite_scroll and this.state.page < pages:
+        next_page = int(this.state.page)+1
+        this.setState({'page':next_page,
+                       'prev_page':this.state.page,
+                       'loading_more':True})
+        if this.props.history:
+            utils.go_to(this.props.history, query={'page':next_page})
 
 def item_view_on_update(p_props, p_state):
     if p_props.item_type != this.props.item_type:
@@ -339,7 +379,7 @@ def item_view_render():
                                        visible=this.props.visible_config if utils.defined(
                                            this.props.visible_config) else this.state.visible_config,
                                        default_item_count=this.state.limit,
-                                       on_infinite_scroll=lambda: None,
+                                       on_infinite_scroll=this.on_infinite_scroll,
                                        suffix=this.props.config_suffix,
                                        on_item_count=this.on_item_count,
                                        on_external_viewer=this.on_external_viewer,
@@ -347,19 +387,26 @@ def item_view_render():
                                        )
 
     return e(ItemViewBase,
-             [e(el, data=x, className="medium-size", key=n, external_viewer=ext_viewer) for n, x in enumerate(items)],
-             loading=this.state.loading,
-             secondary=this.props.secondary,
-             tertiary=this.props.tertiary,
-             container=this.props.container,
-             item_count=this.state.item_count,
-             limit=limit,
-             page=this.state.page,
-             set_page=this.set_page,
-             label=this.props.label,
-             config_el=cfg_el,
-             toggle_config=this.props.toggle_config,
-             )
+                [e(el, data=x, centered=True, className="medium-size", key=n, external_viewer=ext_viewer) for n, x in enumerate(items)],
+                loading=this.state.loading,
+                secondary=this.props.secondary,
+                tertiary=this.props.tertiary,
+                container=this.props.container,
+                item_count=this.state.item_count,
+                limit=limit,
+                page=this.state.page,
+                set_page=this.set_page,
+                label=this.props.label,
+                config_el=cfg_el,
+                toggle_config=this.props.toggle_config,
+                infinite_scroll=this.state.infinite_scroll,
+                on_load_more=this.get_more,
+                loading_more=this.state.loading_more,
+                query=True,
+                history=this.props.history,
+                location=this.props.location,
+                context=this.props.context,
+                 )
 
 
 ItemView = createReactClass({
@@ -367,14 +414,16 @@ ItemView = createReactClass({
 
     'config_suffix': lambda: this.props.config_suffix or "",
 
-    'getInitialState': lambda: {'page': int(utils.get_query("page", 1)) or 1,
+    'getInitialState': lambda: {'page': 1,
+                                'prev_page':0,
                                 'search_query': utils.get_query("search", "") or this.props.search_query,
-                                'infinitescroll': False,
+                                'infinite_scroll': utils.storage.get("infinite_scroll" + this.config_suffix(), False),
                                 'limit': utils.storage.get("item_count" + this.config_suffix(),
                                                            this.props.default_limit or (10 if this.props.related_type == ItemType.Page else 30)),
                                 'items': [],
                                 "element": None,
                                 "loading": True,
+                                "loading_more":False,
                                 'item_count': 1,
                                 'visible_config': False,
                                 'external_viewer': utils.storage.get("external_viewer" + this.config_suffix(), False),
@@ -384,9 +433,11 @@ ItemView = createReactClass({
     'get_items_count': get_items_count,
     'get_items': get_items,
     'get_element': get_element,
+    'get_more': get_more,
 
-    'set_page': lambda p: this.setState({'page': p}),
+    'set_page': lambda p: this.setState({'page': p, 'prev_page':None}),
 
+    'on_infinite_scroll': lambda e, d: this.setState({'infinite_scroll': d.checked}),
     'on_item_count': lambda e, d: this.setState({'limit': d.value}),
     'on_external_viewer': lambda e, d: this.setState({'external_viewer': d.checked}),
     'on_group_gallery': lambda e, d: this.setState({'group_gallery': d.checked}),

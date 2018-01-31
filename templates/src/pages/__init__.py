@@ -76,6 +76,8 @@ def itemviewpage_update(p_p, p_s):
 
 def itemviewpage_render():
     return e(itemview.ItemView,
+             history=this.props.history,
+             location=this.props.location,
              item_type=this.state.item_type,
              view_filter=this.props.view_type,
              search_query=this.state.search_query,

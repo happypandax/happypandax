@@ -50,6 +50,7 @@ def page_render():
               item_id=item_id,
               item_type=this.state.item_type,
               size_type=ImageSize.Medium,
+              centered=True,
               size=this.props.size,
               kwargs=thumb_kwargs,
               )
@@ -67,6 +68,7 @@ def page_render():
                ),
              e(ui.Card.Content, e(ui.Card.Header, e(ui.Label, title, circular=True), className="text-ellipsis card-header")),
              className=add_cls,
+             centered=this.props.centered,
              link=True)
 
 

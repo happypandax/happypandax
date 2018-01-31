@@ -79,6 +79,7 @@ def gallery_render():
 
     thumb = e(thumbitem.Thumbnail,
               item_id=item_id,
+              centered=True,
               item_type=this.state.item_type,
               size_type=ImageSize.Medium,
               size=this.props.size,
@@ -159,6 +160,7 @@ def gallery_render():
                wide="very",
                on="click"
                ),
+             centered=this.props.centered,
              className=add_cls,
              link=True)
 

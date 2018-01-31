@@ -13,7 +13,7 @@ from src.react_utils import (h,
                              Redirect,
                              withRouter
                              )
-from src.ui import ui, Alert, Notif
+from src.ui import ui, Alert, Notif, ConnectStatus
 from src.nav import (sidebar, menu)
 from src.pages import (api, collection, gallery,
                        dashboard, favorites, inbox,
@@ -214,6 +214,7 @@ def app_render():
     return e(Router,
              h("div",
                  e(ui.Responsive,
+                   #e(ConnectStatus, context=this.state.root_ref),
                    e(sidebar.SideBar, **sidebar_args), minWidth=767),
                  e(ui.Responsive,
                    e(sidebar.SideBar, mobile=True, **sidebar_args), maxWidth=768),
@@ -222,10 +223,14 @@ def app_render():
                    position="top-right", effect="slide", offset=50),
                  e(ui.Ref,
                    e(ui.Sidebar.Pusher,
+                     e(ui.Visibility,
                      e(ui.Responsive,
                        e(menu.Menu, **menu_args), minWidth=767),
                      e(ui.Responsive,
                        e(menu.Menu, mobile=True, **menu_args), maxWidth=768),
+                        onBottomPassed=this.toggle_scroll_up,
+                        once=False,
+                        ),
                      e(Switch,
                          e(Route, path="/api", component=this.api_page),
                          e(Route, path="/dashboard", component=this.dashboard_page),
@@ -238,14 +243,21 @@ def app_render():
                          e(Route, path="/item/page", component=this.page_page),
                          e(Redirect, js_from="/", exact=True, to={'pathname': "/library"}),
                        ),
+                     #e(ui.Sticky,
+                     #  e(ui.Button, icon="chevron up", size="large", floated="right"),
+                     #   bottomOffset=55,
+                     #   context=this.state.container_ref,
+                     #   className="foreground-sticky"),
                      e(ui.Dimmer, simple=True, onClickOutside=this.toggle_sidebar),
                      *modal_els,
+
                      dimmed=this.state.sidebar_toggled,
                      as_=ui.Dimmer.Dimmable
                      ),
                    innerRef=this.get_context_ref,
                    ),
                  className="main-content",
+                 ref=this.get_root_ref,
                ),
              )
 
@@ -255,6 +267,7 @@ App = createReactClass({
 
 
     'getInitialState': lambda: {
+        "root_ref": None,
         "container_ref": None,
         "sidebar_toggled": False,
         "menu_nav_contents": None,
@@ -262,10 +275,13 @@ App = createReactClass({
         'server_push': False,
         'server_push_msg': {},
         'preview_msg': True,
+        'scroll_up': False,
     },
 
     'componentWillMount': app_will_mount,
     'componentDidMount': app_did_mount,
+
+    'toggle_scroll_up': lambda: this.setState({'scroll_up': not this.state.scroll_up}),
 
     "notif": None,
 
@@ -281,6 +297,7 @@ App = createReactClass({
 
     'set_menu_contents': app_menu_contents,
     'get_context_ref': get_container_ref,
+    'get_root_ref': lambda c: this.setState({'root_ref': c}),
 
     'api_page': lambda p: e(api.Page, menu=this.set_menu_contents, **p),
     'dashboard_page': lambda p: e(dashboard.Page, menu=this.set_menu_contents, **p),

@@ -112,6 +112,8 @@ def start(argv=None, db_kwargs={}):
             utils.launch_updater()
 
     except Exception as e:
+        if constants.web_proc:
+            constants.web_proc.terminate()
         print(e)  # intentional
         if config.report_critical_errors.value and not constants.dev and constants.is_frozen:
             rollbar.report_exc_info()
