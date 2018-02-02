@@ -402,7 +402,7 @@ with config.namespace(core_ns):
 
     allow_alpha_releases = config.create(
         core_ns,
-        "allow_beta_releases",
+        "allow_alpha_releases",
         False,
         "Allow downloading alpha releases")
 

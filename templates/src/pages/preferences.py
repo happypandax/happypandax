@@ -11,6 +11,7 @@ from src.ui import ui
 from src.i18n import tr
 from src.utils import defined, is_same_machine
 
+disabled_machine_msg = lambda props: e(ui.Message, tr(props.tab, "", "Disabled because this client is connecting from a different device"), color="yellow")
 
 def pref_general(props):
     cfg = props.cfg
@@ -19,30 +20,30 @@ def pref_general(props):
     if defined(cfg.gallery):
 
         if defined(cfg.gallery.external_image_viewer):
+            items.append(e(ui.Header, tr(props.tab, "", "External Viewer"), size="small", dividing=True))
 
             if not is_same_machine():
-                items.append(e(ui.Message, tr(props.tab, "",
-                                              "Disabled because this client is connecting from a different device"), color="yellow"))
+                ext_viewer.append(disabled_machine_msg(props))
 
-            items.append(e(ui.Form.Input,
-                           width=16,
+
+            items.append(e(ui.Form.Group,
+                           e(ui.Form.Input,
+                           width=10,
                            label=tr(props.tab, "", "External Image Viewer"),
                            placeholder=tr(props.tab, "", "path/to/executable"),
                            defaultValue=cfg.gallery.external_image_viewer,
                            onChange=lambda e: props.upd("gallery.external_image_viewer", e.target.value),
                            disabled=not is_same_machine(),
-                           )
-                         )
-        if defined(cfg.gallery.external_image_viewer_args):
-            items.append(e(ui.Form.Input,
-                           width=8,
+                           ),
+                           e(ui.Form.Input,
+                           width=6,
                            label=tr(props.tab, "", "External Image Viewer Arguments"),
                            placeholder=tr(props.tab, "", "example: -a -X --force"),
                            defaultValue=cfg.gallery.external_image_viewer_args,
                            onChange=lambda e: props.upd("gallery.external_image_viewer_args", e.target.value),
                            disabled=not is_same_machine(),
                            )
-                         )
+                           ))
 
         if defined(cfg.gallery.send_path_to_first_file):
             items.append(e(ui.Form.Field,
@@ -55,7 +56,104 @@ def pref_general(props):
                              ))
                          )
 
-        items.append(e(ui.Divider, section=True))
+    if defined(cfg.search):
+        items.append(e(ui.Header, tr(props.tab, "", "Search"), size="small", dividing=True))
+
+        if defined(cfg.search.regex):
+            items.append(e(ui.Form.Field,
+                           e(ui.Checkbox,
+                             toggle=True,
+                             label=tr(props.tab, "", "Allow regex in search filters"),
+                             defaultChecked=cfg.search.regex,
+                             onChange=lambda e, d: props.upd("search.regex", d.checked),
+                             ))
+                         )
+
+        if defined(cfg.search.case_sensitive):
+            items.append(e(ui.Form.Field,
+                           e(ui.Checkbox,
+                             toggle=True,
+                             label=tr(props.tab, "", "Search filter is case sensitive"),
+                             defaultChecked=cfg.search.case_sensitive,
+                             onChange=lambda e, d: props.upd("search.case_sensitive", d.checked),
+                             ))
+                         )
+
+
+        if defined(cfg.search.match_whole_words):
+            items.append(e(ui.Form.Field,
+                           e(ui.Checkbox,
+                             toggle=True,
+                             label=tr(props.tab, "", "Match terms exact"),
+                             defaultChecked=cfg.search.match_whole_words,
+                             onChange=lambda e, d: props.upd("search.match_whole_words", d.checked),
+                             ))
+                         )
+
+        if defined(cfg.search.match_all_terms):
+            items.append(e(ui.Form.Field,
+                           e(ui.Checkbox,
+                             toggle=True,
+                             label=tr(props.tab, "", "Match only items that has all terms"),
+                             defaultChecked=cfg.search.match_all_terms,
+                             onChange=lambda e, d: props.upd("search.match_all_terms", d.checked),
+                             ))
+                         )
+
+        if defined(cfg.search.descendants):
+            items.append(e(ui.Form.Field,
+                           e(ui.Checkbox,
+                             toggle=True,
+                             label=tr(props.tab, "", "Also match on children"),
+                             defaultChecked=cfg.search.descendants,
+                             onChange=lambda e, d: props.upd("search.descendants", d.checked),
+                             ))
+                         )
+
+
+    if defined(cfg.core):
+
+        if defined(cfg.core.check_new_releases):
+            items.append(e(ui.Header, tr(props.tab, "", "Updates"), size="small", dividing=True))
+            items.append(e(ui.Form.Field,
+                           e(ui.Checkbox,
+                             toggle=True,
+                             label=tr(props.tab, "", "Regularly check for new releases"),
+                             defaultChecked=cfg.core.check_new_releases,
+                             onChange=lambda e, d: props.upd("core.check_new_releases", d.checked),
+                             ))
+                         )
+
+        if defined(cfg.core.check_release_interval):
+            items.append(e(ui.Form.Field,
+                           h("label", tr(props.tab, "", "Interval in minutes between checking for a new release, set 0 to only check once every startup")),
+                           e(ui.Input,
+                             width=4,
+                             js_type="number",
+                             defaultValue=cfg.core.check_release_interval,
+                             onChange=lambda e, d: props.upd("core.check_release_interval", int(e.target.value)),
+                             ))
+                         )
+
+        if defined(cfg.core.allow_beta_releases):
+            items.append(e(ui.Form.Field,
+                           e(ui.Checkbox,
+                             toggle=True,
+                             label=tr(props.tab, "", "Allow downloading beta releases"),
+                             defaultChecked=cfg.core.allow_beta_releases,
+                             onChange=lambda e, d: props.upd("core.allow_beta_releases", d.checked),
+                             ))
+                         )
+
+        if defined(cfg.core.allow_alpha_releases):
+            items.append(e(ui.Form.Field,
+                           e(ui.Checkbox,
+                             toggle=True,
+                             label=tr(props.tab, "", "Allow downloading alpha releases"),
+                             defaultChecked=cfg.core.allow_alpha_releases,
+                             onChange=lambda e, d: props.upd("core.allow_alpha_releases", d.checked),
+                             ))
+                         )
 
     return e(ui.Segment,
              e(ui.Form,
@@ -64,12 +162,16 @@ def pref_general(props):
              basic=True,
              )
 
-
 def pref_server(props):
     cfg = props.cfg
     u_cfg = props.u_cfg
     items = []
     if defined(cfg.server):
+        items.append(e(ui.Message, tr(props.tab, "",
+                                      "These changes require a server restart."), info=True))
+
+        items.append(e(ui.Header, tr(props.tab, "", "Server"), size="small", dividing=True))
+
         if defined(cfg.server.server_name):
             items.append(e(ui.Form.Group,
                            e(ui.Form.Input,
@@ -80,24 +182,43 @@ def pref_server(props):
                              onChange=lambda e: props.upd("server.server_name", e.target.value)
                              ))
                          )
-        items.append(e(ui.Message, tr(props.tab, "",
-                                      "Changes below this message require a server restart."), info=True))
 
         if defined(cfg.server.host) and defined(cfg.server.port):
             items.append(e(ui.Form.Group,
                            e(ui.Form.Input,
                              width=10,
-                             label=tr(props.tab, "", "Host"),
+                             label=tr(props.tab, "", "Server Host"),
                              placeholder="localhost",
                              defaultValue=cfg.server.host,
                              onChange=lambda e: props.upd("server.host", e.target.value)
                              ),
                            e(ui.Form.Input,
                              width=4,
-                             label=tr(props.tab, "", "Port"),
+                             label=tr(props.tab, "", "Server Port"),
                              placeholder="7007",
                              defaultValue=cfg.server.port,
                              onChange=lambda e: props.upd("server.port", int(e.target.value))
+                             ),
+                           )
+                         )
+
+        items.append(e(ui.Header, tr(props.tab, "", "Web Client"), size="small", dividing=True))
+
+        if defined(cfg.server.host_web) and defined(cfg.server.port_web):
+            items.append(e(ui.Form.Group,
+                           e(ui.Form.Input,
+                             width=10,
+                             label=tr(props.tab, "", "Web Client Host"),
+                             placeholder="",
+                             defaultValue=cfg.server.host_web,
+                             onChange=lambda e: props.upd("server.host_web", e.target.value)
+                             ),
+                           e(ui.Form.Input,
+                             width=4,
+                             label=tr(props.tab, "", "Web Client Port"),
+                             placeholder="7007",
+                             defaultValue=cfg.server.port_web,
+                             onChange=lambda e: props.upd("server.port_web", int(e.target.value))
                              ),
                            )
                          )
@@ -109,32 +230,40 @@ def pref_server(props):
              basic=True,
              )
 
-
-def pref_client(props):
+def pref_advanced(props):
     cfg = props.cfg
     u_cfg = props.u_cfg
     items = []
-    if defined(cfg.server):
-        items.append(e(ui.Message, tr(props.tab, "",
-                                      "Changes below this message require a server restart."), info=True))
+    if defined(cfg.core):
+        if defined(cfg.core.debug):
+            items.append(e(ui.Form.Field,
+                           e(ui.Checkbox,
+                             toggle=True,
+                             label=tr(props.tab, "", "Run in debug mode"),
+                             defaultChecked=cfg.core.debug,
+                             onChange=lambda e, d: props.upd("core.debug", d.checked),
+                             ))
+                         )
 
-        if defined(cfg.server.host_web) and defined(cfg.server.port_web):
+        if defined(cfg.core.report_critical_errors):
+            items.append(e(ui.Form.Field,
+                           e(ui.Checkbox,
+                             toggle=True,
+                             label=tr(props.tab, "", "Send occurring critical errors to me (creator) so I can fix them faster (contains no sensitive information)"),
+                             defaultChecked=cfg.core.report_critical_errors,
+                             onChange=lambda e, d: props.upd("core.report_critical_errors", d.checked),
+                             ))
+                         )
+
+        if defined(cfg.core.unrar_tool_path):
             items.append(e(ui.Form.Group,
                            e(ui.Form.Input,
-                             width=10,
-                             label=tr(props.tab, "", "Host"),
-                             placeholder="",
-                             defaultValue=cfg.server.host_web,
-                             onChange=lambda e: props.upd("server.host_web", e.target.value)
-                             ),
-                           e(ui.Form.Input,
-                             width=4,
-                             label=tr(props.tab, "", "Port"),
-                             placeholder="7007",
-                             defaultValue=cfg.server.port_web,
-                             onChange=lambda e: props.upd("server.port_web", int(e.target.value))
-                             ),
-                           )
+                             width=16,
+                             label=tr(props.tab, "", "Path to unrar tool"),
+                             placeholder=tr(props.tab, "", "unrar"),
+                             defaultValue=cfg.core.unrar_tool_path,
+                             onChange=lambda e: props.upd("core.unrar_tool_path", e.target.value)
+                             ))
                          )
 
     return e(ui.Segment,
@@ -192,10 +321,10 @@ def preftab_render():
                  {'menuItem': tr(this, "ui.mi-pref-download", "Download"), },
                  {'menuItem': tr(this, "ui.mi-pref-monitoring", "Monitoring"), },
                  {'menuItem': tr(this, "ui.mi-pref-ignore", "Ignore"), },
-                 {'menuItem': tr(this, "ui.mi-pref-client", "Client"),
-                  'render': lambda: el(pref_client)},
                  {'menuItem': tr(this, "ui.mi-pref-server", "Server"),
                   'render': lambda: el(pref_server)},
+                 {'menuItem': tr(this, "ui.mi-pref-advanced", "Advanced"),
+                  'render': lambda: el(pref_advanced)},
              ],
              menu=e(ui.Menu, secondary=True, pointing=True, stackable=True))
 
