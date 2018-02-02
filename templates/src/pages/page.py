@@ -9,7 +9,7 @@ from src.i18n import tr
 from src.state import state
 from src.client import (ItemType, ViewType, ImageSize, client, Command)
 from src.single import thumbitem
-from src.views import tagview
+from src.views import tagview, itemview
 from src import utils
 
 
@@ -84,12 +84,11 @@ def get_other(data=None, error=None):
         this.get_thumbs(other=data)
 
 
-__pragma__("kwargs")
 __pragma__("tconv")
 __pragma__("iconv")
 
 
-def get_item(ctx=None, data=None, error=None, go=None):
+def get_item(ctx=None, data=None, error=None):
     if ctx is not None and not error:
         if data is not None:
             this.setState({"data": data, "loading": False})
@@ -103,30 +102,19 @@ def get_item(ctx=None, data=None, error=None, go=None):
         state.app.notif("Failed to fetch item ({})".format(this.state.id), level="error")
     else:
         item = this.state.item_type
-        item_id = utils.get_query("id")
         gid = utils.get_query("gid")
-        go = go.lower() if go else go
+        number = utils.get_query("number", 1)
 
-        if this.state.data and this.state.other and go:
-            next_numb = this.state.data.number
-            next_numb = next_numb - 1 if go == "prev" else next_numb + 1
-            if next_numb in this.state.other:
-                this.setState({'data': this.state.other[next_numb]['data']})
+        if this.state.other:
+            if number in this.state.other:
+                this.setState({'data': this.state.other[number]['data']})
                 return
-        if item:
-            if go in ("next", "prev") or gid:
-                if item_id:
-                    client.call_func("get_page", this.get_item, page_id=item_id, prev=go == "prev", ctx=True)
-                else:
-                    client.call_func("get_page", this.get_item, gallery_id=gid, ctx=True)
-            elif item_id:
-                client.call_func("get_item", this.get_item, item_type=item, item_id=item_id, ctx=True)
+        if item and gid:
+            client.call_func("get_page", this.get_item, gallery_id=gid, number=number, ctx=True)
             this.setState({'loading': True})
-
 
 __pragma__("noiconv")
 __pragma__("notconv")
-__pragma__("nokwargs")
 
 __pragma__("kwargs")
 
@@ -148,23 +136,28 @@ __pragma__("nokwargs")
 
 
 def on_key(ev):
+
+    go_prev = lambda: utils.go_to(this.props.history, query={'gid': this.state.data.gallery_id, "number":this.state.data.number-1})
+    go_next = lambda: utils.go_to(this.props.history, query={'gid': this.state.data.gallery_id, "number":this.state.data.number+1})
+    go_last = lambda: utils.go_to(this.props.history, query={'gid': this.state.data.gallery_id, "number":this.state.data.number-1})
+
     if ev.key == "Escape":
         this.back_to_gallery()
     elif ev.key == "ArrowRight":
         if this.state.cfg_direction == ReaderDirection.left_to_right:
-            this.next_page(ev)
+            go_next()
         elif this.state.cfg_direction == ReaderDirection.right_to_left:
-            this.prev_page(ev)
+            go_prev()
     elif ev.key == "ArrowLeft":
         if this.state.cfg_direction == ReaderDirection.left_to_right:
-            this.prev_page(ev)
+            go_prev()
         elif this.state.cfg_direction == ReaderDirection.right_to_left:
-            this.next_page(ev)
+            go_next()
 
 
 def receive_props(n_props):
     if n_props.location != this.props.location:
-        this.get_item(go=utils.get_query("go"))
+        this.get_item()
         scroll_top = this.props.scroll_top if utils.defined(this.props.scroll_top) else True
         if scroll_top:
             el = this.props.context or this.state.context or state.container_ref
@@ -181,7 +174,7 @@ class ReaderScaling:
     fit_width = 2
     fit_height = 3
 
-
+__pragma__("tconv")
 def page_render():
     number = 0
     p_id = this.state.id
@@ -189,7 +182,9 @@ def page_render():
     hash_id = ""
     path = ""
     fav = 0
+    gid = this.state.gid
     if this.state.data:
+        gid = this.state.data.gallery_id
         p_id = this.state.data.id
         number = this.state.data.number
         name = this.state.data.name
@@ -204,8 +199,8 @@ def page_render():
         img = this.state.other[number].img
     __pragma__("noiconv")
 
-    n_url = utils.build_url(query={'id': p_id, 'go': "next"})
-    p_url = utils.build_url(query={'id': p_id, 'go': "prev"})
+    n_url = utils.build_url(query={'gid': gid, "number":int(number)+1})
+    p_url = utils.build_url(query={'gid': gid, "number":int(number)-1})
 
     rows = []
 
@@ -332,9 +327,9 @@ Page = createReactClass({
 
     'getInitialState': lambda: {'id': int(utils.get_query("id", 0)),
                                 'gid': int(utils.get_query("gid", 0)),
-                                'other': {},
+                                'other': [],
                                 'pages': None,
-                                'data': this.props.data,
+                                'data': this.props.data or {},
                                 'tag_data': this.props.tag_data or {},
                                 'item_type': ItemType.Page,
                                 'loading': True,
@@ -354,8 +349,6 @@ Page = createReactClass({
     'get_other': get_other,
     'get_pages': get_pages,
     'on_key': on_key,
-    'prev_page': lambda e: all((utils.go_to(this.props.history, query={'id': this.state.data.id, 'go': "prev"}),)),
-    'next_page': lambda e: all((utils.go_to(this.props.history, query={'id': this.state.data.id, 'go': "next"}),)),
     'back_to_gallery': lambda: utils.go_to(this.props.history, "/item/gallery", query={'id': utils.get_query("gid") or this.state.data.gallery_id}, keep_query=False),
 
     'set_cfg_direction': lambda e, d: all((this.setState({'cfg_direction': d.value}), utils.storage.set("reader_direction", d.value))),
@@ -371,13 +364,14 @@ Page = createReactClass({
     'componentWillUnmount': lambda: window.removeEventListener("keydown", this.on_key, False),
 
     'componentWillMount': lambda: all((this.props.menu([
-        #e(ui.Menu.Item, e(ui.Icon, js_name="sidebar", size="large"), icon=True, onClick=this.toggle_pages, position="left"),
+        e(ui.Menu.Item, e(ui.Icon, js_name="sidebar", size="large"), icon=True, onClick=this.toggle_pages, position="left"),
         e(ui.Menu.Menu, e(ui.Menu.Item, e(ui.Icon, js_name="arrow up", size="large"), icon=True, onClick=this.back_to_gallery)),
         e(ui.Menu.Item, e(ui.Icon, js_name="options", size="large"),
           icon=True, onClick=this.toggle_config, position="right"),
     ]),
-        (this.get_item(go=utils.get_query("go")) if not this.state.data else None),
+        (this.get_item() if not this.state.data else None),
     )),
 
     'render': page_render
 })
+__pragma__("notconv")

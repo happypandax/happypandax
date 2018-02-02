@@ -145,7 +145,7 @@ def get_page(page_id: int=None, gallery_id: int=None, number: int=None, prev: bo
             gallery_id = p.gallery_id
 
     if not item:
-        f = db.Page.number < number if prev else db.Page.number > number
+        f = db.Page.number < number if prev else db.Page.number == number
         f = db.and_op(f, db.Page.gallery_id == gallery_id)
         item = database_cmd.GetModelItems().run(db.Page,
                                                 order_by=db.Page.number.desc() if prev else db.Page.number,
