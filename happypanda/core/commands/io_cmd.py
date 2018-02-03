@@ -567,9 +567,6 @@ class Archive(CoreCommand):
         if path.suffix.lower() in ('.zip', '.cbz'):
             o = ZipFile(str(path))
         elif path.suffix.lower() in ('.rar', '.cbr'):
-            unrar_path = config.unrar_tool_path.value
-            if unrar_path:
-                rarfile.UNRAR_TOOL = unrar_path
             o = RarFile(str(path))
         elif CoreFS(path).ext in (CoreFS.TARBZ2, CoreFS.TARGZ, CoreFS.TARXZ):
             o = TarFile.open(str(path))
@@ -649,6 +646,11 @@ class Archive(CoreCommand):
             if r is not None and r:
                 raise exceptions.ArchiveCorruptError(str(self._path))
 
+    def _normalize_filename(self, f):
+        f = f.replace('/', self.path_separator)
+        f = f.replace('\\', self.path_separator)
+        return f
+
     def namelist(self):
         ""
         with self._namelist.call_capture(self._ext, self._archive) as plg:
@@ -658,6 +660,7 @@ class Archive(CoreCommand):
         """
         Checks if the provided name in the archive is a directory or not
         """
+        filename = self._normalize_filename(filename)
         with self._is_dir.call_capture(self._ext, self._archive, filename) as plg:
             return plg.first()
 
@@ -666,7 +669,7 @@ class Archive(CoreCommand):
         Extracts file from archive to target path
         Returns path to the extracted file
         """
-
+        filename = self._normalize_filename(filename)
         p = pathlib.Path(target)
 
         if not p.exists():
@@ -695,6 +698,7 @@ class Archive(CoreCommand):
         """
         Open file in archive, returns a file-like object.
         """
+        filename = self._normalize_filename(filename)
         with self._open.call_capture(self._ext, self._archive, filename, args, kwargs) as plg:
             r = plg.first()
             if not hasattr(r, 'read') or not hasattr(r, 'write'):

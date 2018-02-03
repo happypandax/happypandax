@@ -103,14 +103,18 @@ def get_item(ctx=None, data=None, error=None):
     else:
         item = this.state.item_type
         gid = utils.get_query("gid")
+        pid = utils.get_query("id")
         number = utils.get_query("number", 1)
 
         if this.state.other:
             if number in this.state.other:
                 this.setState({'data': this.state.other[number]['data']})
                 return
-        if item and gid:
+        if gid:
             client.call_func("get_page", this.get_item, gallery_id=gid, number=number, ctx=True)
+            this.setState({'loading': True})
+        elif pid:
+            client.call_func("get_page", this.get_item, page_id=pid, number=number, ctx=True)
             this.setState({'loading': True})
 
 __pragma__("noiconv")

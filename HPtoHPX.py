@@ -698,6 +698,19 @@ def print_progress(iteration, total, prefix='', suffix='', decimals=1, bar_lengt
 
 import random
 
+def parse_args(args=sys.argv[1:]):
+    parser = argparse.ArgumentParser()
+    parser.add_argument('source', help="Path to old HP database")
+    parser.add_argument('destination', help="Desired path to new HPX database")
+    parser.add_argument('-r', '--rar', help="Path to unrar tool", default=config.unrar_tool_path.value)
+    parser.add_argument('-p', '--process', type=int, default=3, help="Amount of processes allowed to spawn")
+    parser.add_argument(
+        '-a',
+        '--skip-archive',
+        action='store_true',
+        help="Skip generating pages for galleries in archive files (it might take too long)")
+    args = parser.parse_args(args)
+    return args
 
 def page_generate(rar_p, in_queue, out_pipe):
     rarfile.UNRAR_TOOL = rar_p
@@ -716,10 +729,11 @@ def page_generate(rar_p, in_queue, out_pipe):
                 try:
                     if ch_path:
                         afs._init_archive()
-                        afs = io_cmd.CoreFS(afs._archive.path_separator.join((path, ch_path)), afs._archive)
-
+                        contents = [io_cmd.CoreFS(os.path.join(path, x)) for x in afs._archive.namelist() if x.startswith(ch_path)]
+                    else:
+                        contents = afs.contents()
                     n = 1
-                    for c in sorted(afs.contents()):
+                    for c in sorted(contents):
                         if c.is_image:
                             pages.append((c.name, c.path, n, True))
                             n += 1
@@ -737,9 +751,8 @@ def page_generate(rar_p, in_queue, out_pipe):
             pass
         except rarfile.RarCannotExec:
             print("RAR file not supported, skipping: {}".format(g_path))
-        except BaseException:
-            print("An unknown error occured, skipping: {}".format(g_path))
-            pass
+        except BaseException as e:
+            print("An unknown error occured, skipping: {}\n\t{}".format(g_path, e))
 
         stuff_to_send.append((page_hash, gallery, pages))
         if len(stuff_to_send) > 5 or n_item == items_len:
@@ -758,17 +771,7 @@ def process_pipes(out_queue, out_pipe):
 
 def main(args=sys.argv[1:]):
     try:
-        parser = argparse.ArgumentParser()
-        parser.add_argument('source', help="Path to old HP database")
-        parser.add_argument('destination', help="Desired path to new HPX database")
-        parser.add_argument('-r', '--rar', help="Path to unrar tool", default=config.unrar_tool_path.value)
-        parser.add_argument('-p', '--process', type=int, default=3, help="Amount of processes allowed to spawn")
-        parser.add_argument(
-            '-a',
-            '--skip-archive',
-            action='store_true',
-            help="Skip generating pages for galleries in archive files (it might take too long)")
-        args = parser.parse_args(args)
+        args = parse_args(args)
 
         AMOUNT_OF_TASKS = args.process if args.process > 0 else 1
         rarfile.UNRAR_TOOL = args.rar
@@ -854,8 +857,11 @@ def main(args=sys.argv[1:]):
                                         errors='ignore')))
                         continue
 
+                    if not path.endswith(('.rar', '.cbr')):
+                        continue
+
                     if not args.skip_archive:
-                        if path.endswith(('.rar', 'cbr')) and not args.rar:
+                        if path.endswith(('.rar', '.cbr')) and not args.rar:
                             try:
                                 print("\nSkipping '{}' because path to unrar tool has not been supplied.".format(ch.title))
                             except UnicodeError:

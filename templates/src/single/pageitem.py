@@ -30,8 +30,10 @@ def page_render():
     fav = 0
     title = ""
     item_id = this.state.id
+    number = 0
     if this.state.data:
         title = str(this.state.data.number)
+        number = this.state.data.number
         if this.state.data.metatags.favorite:
             fav = 1
         if not item_id:
@@ -57,7 +59,7 @@ def page_render():
     if link:
         if not this.props.external_viewer:
             thumb = e(Link, thumb, to={'pathname': '/item/page',
-                                       'search': utils.query_to_string({'id': item_id})})
+                                       'search': utils.query_to_string({'id': item_id, 'number':number})})
 
     return e(ui.Card,
              h("div",
