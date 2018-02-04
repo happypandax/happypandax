@@ -59,6 +59,7 @@ def on_update(props):
     if props.location.pathname != this.props.location.pathname:
         for x in state.commands:
             x.stop()
+        # HACK: blocks scroll restoration
         # TODO: scroll restoration
         window.scrollTo(0,0)
 

@@ -17,6 +17,7 @@ import shelve
 import rollbar
 import importlib
 import atexit
+import winreg
 
 from dbm import dumb as dumbdb
 from inspect import ismodule, currentframe, getframeinfo
@@ -379,6 +380,56 @@ def error_check_socket(host=None, port=None):
         except ValueError:
             raise
 
+def win32_set_reg(path, name, value):
+    if not constants.is_win:
+        raise OSError("Only supported on Windows")
+    try:
+        winreg.CreateKey(winreg.HKEY_CURRENT_USER, path)
+        registry_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, path, 0, 
+                                       winreg.KEY_WRITE)
+        winreg.SetValueEx(registry_key, name, 0, winreg.REG_SZ, value)
+        winreg.CloseKey(registry_key)
+        return True
+    except OSError:
+        return False
+
+def win32_get_reg(path, name):
+    if not constants.is_win:
+        raise OSError("Only supported on Windows")
+    try:
+        registry_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, path, 0,
+                                       winreg.KEY_READ)
+        value, regtype = winreg.QueryValueEx(registry_key, name)
+        winreg.CloseKey(registry_key)
+        return value
+    except OSError:
+        return None
+
+def win32_del_reg(path, name):
+    if not constants.is_win:
+        raise OSError("Only supported on Windows")
+    try:
+        registry_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, path, 0,
+                                       winreg.KEY_WRITE)
+        winreg.DeleteValue(registry_key, name)
+        winreg.CloseKey(registry_key)
+        return True
+    except OSError as e:
+        return False
+
+def add_to_startup(name, executable):
+    if constants.is_win:
+        return win32_set_reg(r"Software\Microsoft\Windows\CurrentVersion\Run",
+                      name, '"{}"'.format(executable))
+    else:
+        raise NotImplementedError
+
+def remove_from_startup(name):
+    if constants.is_win:
+        return win32_del_reg(r"Software\Microsoft\Windows\CurrentVersion\Run",
+                      name)
+    else:
+        raise NotImplementedError
 
 class AttributeList(UserList):
     """

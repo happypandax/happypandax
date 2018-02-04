@@ -2,6 +2,7 @@ import os
 import yaml
 import gevent
 import random
+import rarfile
 
 from enum import Enum
 from contextlib import contextmanager
@@ -39,6 +40,11 @@ class ConfigNode:
                 self._cfg.define(name, value, description)
         self.default_namespaces.add(ns.lower())
         self._cfg_nodes.setdefault(ns.lower(), {})[name.lower()] = self
+        self._triggers = []
+
+    def add_trigger(self, handler):
+        assert callable(handler)
+        self._triggers.append(handler)
 
     @classmethod
     def get_isolation_level(cls, ns, key):
@@ -78,6 +84,9 @@ class ConfigNode:
         else:
             with self._cfg.namespace(self.namespace):
                 self._cfg.update(self.name, new_value, create=self.hidden)
+
+        for h in self._triggers:
+            h(self, new_value)
 
     def __bool__(self):
         return bool(self.value)
@@ -583,11 +592,11 @@ gui_ns = "gui"
 
 with config.namespace(gui_ns):
 
-    # gui_happypanda_executable_name = config.create(
-    #    None,
-    #    "happypanda_executable_name",
-    #    "happypandax",
-    #    "For the GUI to work correctly it needs to be able to find the happypandax executable. This is the name of that executable WITHOUT any extension")
+    gui_start_on_boot = config.create(
+        None,
+        "start_on_boot",
+        False,
+        "Start HPX GUI automatically on boot")
 
     gui_autostart_server = config.create(
         None,
@@ -664,3 +673,10 @@ with config.namespace(advanced_ns):
         "Path to the 7z executable", hidden=True)
 
 config_doc = config.doc_render()  # for doc
+
+rarfile.UNRAR_TOOL = unrar_tool_path.value
+
+def set_unrartool(node, value):
+    rarfile.UNRAR_TOOL = value
+
+unrar_tool_path.add_trigger(set_unrartool)

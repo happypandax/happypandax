@@ -436,9 +436,16 @@ class Window(QMainWindow):
                               ':', QLabel(".".join(str(x) for x in constants.version_db)))
 
         connect_layout = QFormLayout()
-        connect_layout.addRow(t("", default="Server") + '@', QLabel(config.host.value + ':' + str(config.port.value)))
-        connect_layout.addRow(t("", default="Webclient") + '@',
-                              QLabel(config.host_web.value + ':' + str(config.port_web.value)))
+        server_addr_lbl = QLabel(config.host.value + ':' + str(config.port.value))
+        config.host.add_trigger(lambda n, v: server_addr_lbl.setText(v + ':' + str(config.port.value)))
+        config.port.add_trigger(lambda n, v: server_addr_lbl.setText(config.host.value + ':' + str(v)))
+        config.host_web.add_trigger(lambda n, v: client_addr_lbl.setText(v + ':' + str(config.port.value)))
+        config.port_web.add_trigger(lambda n, v: client_addr_lbl.setText(config.host.value + ':' + str(v)))
+
+        client_addr_lbl = QLabel(config.host_web.value + ':' + str(config.port_web.value))
+
+        connect_layout.addRow(t("", default="Server") + '@', server_addr_lbl)
+        connect_layout.addRow(t("", default="Webclient") + '@', client_addr_lbl)
         info_layout.addLayout(connect_layout)
         info_layout.addLayout(version_layout)
 
@@ -568,13 +575,36 @@ class Window(QMainWindow):
         [self.stop_process(x) for x in self.processes + [self.server_process, self.webclient_process]]
         super().closeEvent(ev)
 
+def toggle_start_on_boot(node, value):
+    if constants.is_frozen or constants.dev:
+        app_path = os.path.abspath(constants.app_path)
+        gui_name = "happypandax_gui"
+        if constants.is_osx:  # we're in Contents/MacOS, need to go two dir up
+            app_path = pathlib.Path(app_path)
+            app_path = os.path.join(*list(app_path.parts)[:-3])
+            app_path = os.path.join(app_path, constants.osx_bundle_name)
+        elif constants.is_win:
+            app_path = os.path.join(app_path, gui_name+'.exe')
+        elif constants.is_linux:
+            app_path = os.path.join(app_path, gui_name)
+
+        name = "HappyPanda X GUI"
+        if value:
+            utils.add_to_startup(name, app_path)
+        else:
+            utils.remove_from_startup(name)
+
 
 if __name__ == "__main__":
 
     SQueue = StreamQueue()
     SQueueExit = StreamQueue()
 
+    utils.parse_options(utils.get_argparser().parse_args())
+
     utils.setup_i18n()
+    toggle_start_on_boot(None, config.gui_start_on_boot.value)
+    config.gui_start_on_boot.add_trigger(toggle_start_on_boot)
 
     QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
     app = QApplication(sys.argv)
