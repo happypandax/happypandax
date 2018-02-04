@@ -93,7 +93,10 @@ def Notif(props):
 def Error(props):
     return e(ui.Message, header=props.header, content=props.content, error=True)
 
+
 __pragma__("kwargs")
+
+
 def pagination_change(new_page, no_scroll=False):
     this.setState({'current_page': new_page})
     if this.props.on_change:
@@ -101,15 +104,19 @@ def pagination_change(new_page, no_scroll=False):
     if this.props.scroll_top and this.props.query and not no_scroll:
         el = this.props.context or state.container_ref
         utils.scroll_to_element(el)
+
+
 __pragma__("nokwargs")
+
 
 def pagination_receive_props(n_props):
     n_page = int(utils.get_query("page", this.state.current_page))
     if this.props.query and\
-        n_props.location != this.props.location and\
-        n_page != this.state.current_page and \
-        n_page != this.props.current_page:
+            n_props.location != this.props.location and\
+            n_page != this.state.current_page and \
+            n_page != this.props.current_page:
         this.change_page(n_page)
+
 
 def pagination_render():
     limit = this.props.limit
@@ -230,8 +237,8 @@ Pagination = createReactClass({
     'displayName': 'Pagination',
 
     'getInitialState': lambda: {
-        'current_page': this.props.default_page if this.props.default_page else \
-            (utils.get_query("page", 1) if this.props.history and this.props.query else 1),
+        'current_page': this.props.default_page if this.props.default_page else
+        (utils.get_query("page", 1) if this.props.history and this.props.query else 1),
         'go_to_page': 1,
     },
 
@@ -268,17 +275,18 @@ ToggleIcon = createReactClass({
 
 def connectstatus_render():
     return e(ui.Sticky,
-                      e(ui.Icon, js_name="circle notched",
-                        loading=True, size="big", color="grey",
-                        circular=True, style={'float':"right", 'marginRight': "35px"}),
-                    offset=55,
-                    context=this.props.context,
-                    className="foreground-sticky")
+             e(ui.Icon, js_name="circle notched",
+               loading=True, size="big", color="grey",
+               circular=True, style={'float': "right", 'marginRight': "35px"}),
+             offset=55,
+             context=this.props.context,
+             className="foreground-sticky")
+
 
 ConnectStatus = createReactClass({
     'displayName': 'ConnectStatus',
 
-    'getInitialState': lambda: {'connected':False},
+    'getInitialState': lambda: {'connected': False},
 
     'toggle': lambda: all((this.setState({'toggled': not this.state.toggled}),
                            this.props.on_toggle(not this.state.toggled) if this.props.on_toggle else None)),

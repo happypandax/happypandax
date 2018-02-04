@@ -698,6 +698,7 @@ def print_progress(iteration, total, prefix='', suffix='', decimals=1, bar_lengt
 
 import random
 
+
 def parse_args(args=sys.argv[1:]):
     parser = argparse.ArgumentParser()
     parser.add_argument('source', help="Path to old HP database")
@@ -711,6 +712,7 @@ def parse_args(args=sys.argv[1:]):
         help="Skip generating pages for galleries in archive files (it might take too long)")
     args = parser.parse_args(args)
     return args
+
 
 def page_generate(rar_p, in_queue, out_pipe):
     rarfile.UNRAR_TOOL = rar_p
@@ -729,7 +731,8 @@ def page_generate(rar_p, in_queue, out_pipe):
                 try:
                     if ch_path:
                         afs._init_archive()
-                        contents = [io_cmd.CoreFS(os.path.join(path, x)) for x in afs._archive.namelist() if x.startswith(ch_path)]
+                        contents = [io_cmd.CoreFS(os.path.join(path, x))
+                                    for x in afs._archive.namelist() if x.startswith(ch_path)]
                     else:
                         contents = afs.contents()
                     n = 1

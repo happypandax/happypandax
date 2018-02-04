@@ -80,7 +80,7 @@ def call_server(serv_data, root_client, client, lock):
                 log.exception()
                 send_error(e)
         else:
-            log.d("Cannot send because server is not connected:\n\t {}".format(msg))
+            log.d("Cannot send because server is not connected:\n\t {}".format(serv_data))
     finally:
         lock.release()
 

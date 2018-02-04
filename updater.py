@@ -26,6 +26,7 @@ def move_replace(root_src_dir, root_dst_dir):
                 os.remove(dst_file)
             shutil.move(src_file, dst_dir)
 
+
 def launch_app(*args, **kwargs):
     try:
         os.execv(*args, **kwargs)

@@ -6,14 +6,15 @@ Requires Scrapy (pip install scrapy)
 
 import scrapy
 
-all_tags = {} # lang : { tag: description}
+all_tags = {}  # lang : { tag: description}
+
 
 class TagScraper(scrapy.Spider):
     name = "Tags"
 
     start_urls = [
         "https://ehwiki.org/wiki/Category:Tag",
-        ]
+    ]
 
     def parse(self, response):
         for group in response.css("div.mw-category-group"):
@@ -43,7 +44,6 @@ class TagScraper(scrapy.Spider):
             tag_name, language = tag_name.split('/')
         all_tags.setdefault(language, {})[tag_name.lower()] = description
         yield
-
 
     def closed(self, reason):
         for lang, tags in all_tags.items():

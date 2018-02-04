@@ -94,34 +94,34 @@ def itemviewbase_render():
 
     if props.show_pagination or not utils.defined(props.show_pagination):
         pagination.append(e(ui.Grid.Row,
-                       e(ui.Responsive,
-                           e(Pagination,
-                             history=this.props.history,
-                             location=this.props.location,
-                             limit=1,
-                             pages=props.item_count / props.limit,
-                             current_page=props.page,
-                             on_change=props.set_page,
-                             context=this.props.context or this.state.context_node,
-                             query=this.props.query,
-                             scroll_top=True,
-                             size="tiny"),
-                           maxWidth=578,
-                         ),
-                       e(ui.Responsive,
-                           e(Pagination,
-                             history=this.props.history,
-                             location=this.props.location,
-                             pages=props.item_count / props.limit,
-                             context=this.props.context or this.state.context_node,
-                             current_page=props.page,
-                             on_change=props.set_page,
-                             query=this.props.query,
-                             scroll_top=True),
-                           minWidth=579,
-                         ),
-                       centered=True,
-                       ))
+                            e(ui.Responsive,
+                              e(Pagination,
+                                history=this.props.history,
+                                location=this.props.location,
+                                limit=1,
+                                pages=props.item_count / props.limit,
+                                current_page=props.page,
+                                on_change=props.set_page,
+                                context=this.props.context or this.state.context_node,
+                                query=this.props.query,
+                                scroll_top=True,
+                                size="tiny"),
+                                maxWidth=578,
+                              ),
+                            e(ui.Responsive,
+                                e(Pagination,
+                                  history=this.props.history,
+                                  location=this.props.location,
+                                  pages=props.item_count / props.limit,
+                                  context=this.props.context or this.state.context_node,
+                                  current_page=props.page,
+                                  on_change=props.set_page,
+                                  query=this.props.query,
+                                  scroll_top=True),
+                                minWidth=579,
+                              ),
+                            centered=True,
+                            ))
 
     lscreen = 3
     wscreen = 2
@@ -177,54 +177,58 @@ def itemviewbase_render():
     infinite_el = []
     if this.props.infinite_scroll:
         infinite_el.append(e(ui.Grid.Row,
-                            e(ui.Visibility,
-                              e(ui.Loader, active=props.loading_more if utils.defined(props.loading_more) else (props.infinite_scroll and props.loading)),
-                            onTopVisible=this.props.on_load_more,
-                            once=False,
-                            ),))
+                             e(ui.Visibility,
+                               e(ui.Loader, active=props.loading_more if utils.defined(
+                                   props.loading_more) else (props.infinite_scroll and props.loading)),
+                               onTopVisible=this.props.on_load_more,
+                               once=False,
+                               ),))
 
     el = e(ui.Sidebar.Pushable,
-               *cfg_el,
-               e(ui.Sidebar.Pusher,
-                 e(ui.Grid,
-                       *count_el,
-                       *pagination,
-                       *[e(ui.Grid.Column, c, verticalAlign="middle",
-                           computer=4, tablet=3, mobile=6,
-                           largeScreen=lscreen, widescreen=wscreen) for c in els],
-                       *infinite_el,
-                       *pagination,
-                       *count_el,
-                   padded="vertically",
-                   centered=True,
-                   verticalAlign="middle",
-                   as_=ui.Transition.Group,
-                   duration=1500,
-                   ),
-                 as_=ui.Segment,
-                 basic=True,
-                loading=props.loading if utils.defined(props.loading_more) else (props.loading and not props.infinite_scroll),
-                className="no-padding-segment"
-                 ),
-               )
+           *cfg_el,
+           e(ui.Sidebar.Pusher,
+             e(ui.Grid,
+               *count_el,
+               *pagination,
+               *[e(ui.Grid.Column, c, verticalAlign="middle",
+                   computer=4, tablet=3, mobile=6,
+                   largeScreen=lscreen, widescreen=wscreen) for c in els],
+               *infinite_el,
+               *pagination,
+               *count_el,
+               padded="vertically",
+               centered=True,
+               verticalAlign="middle",
+               as_=ui.Transition.Group,
+               duration=1500,
+               ),
+             as_=ui.Segment,
+             basic=True,
+             loading=props.loading if utils.defined(
+                 props.loading_more) else (
+                 props.loading and not props.infinite_scroll),
+               className="no-padding-segment"
+             ),
+           )
 
     if props.secondary or props.tertiary or len(add_el):
         el = e(ui.Segment,
-                 *add_el,
-                 el,
-                 basic=True,
-                 secondary=props.secondary,
-                 tertiary=props.tertiary,
-                 )
+               *add_el,
+               el,
+               basic=True,
+               secondary=props.secondary,
+               tertiary=props.tertiary,
+               )
 
     return e(ui.Ref, el, innerRef=this.get_context_node,)
+
 
 ItemViewBase = createReactClass({
     'displayName': 'ItemViewBase',
 
     'getInitialState': lambda: {'context_node': None},
 
-    'get_context_node': lambda n: this.setState({'context_node':n}),
+    'get_context_node': lambda n: this.setState({'context_node': n}),
 
     'render': itemviewbase_render
 })
@@ -234,12 +238,12 @@ def get_items(data=None, error=None):
     if data is not None and not error:
         new_data = []
         if this.state.infinite_scroll and \
-            this.state.prev_page and this.state.prev_page < this.state.page:
+                this.state.prev_page and this.state.prev_page < this.state.page:
             new_data.extend(this.state['items'])
         new_data.extend(data)
         this.setState({"items": new_data,
                        'loading': False,
-                       'loading_more':False})
+                       'loading_more': False})
     elif error:
         state.app.notif("Failed to fetch item type: {}".format(this.props.item_type), level="error")
     else:
@@ -267,6 +271,7 @@ def get_items(data=None, error=None):
             client.call_func("library_view", this.get_items, **func_kw)
             if not this.state.prev_page:
                 this.setState({'loading': True})
+
 
 __pragma__("notconv")
 
@@ -313,15 +318,17 @@ def get_element():
 
     this.setState({'element': el})
 
+
 def get_more():
     pages = math.ceil(this.state.item_count / this.state.limit)
     if this.state.infinite_scroll and this.state.page < pages:
-        next_page = int(this.state.page)+1
-        this.setState({'page':next_page,
-                       'prev_page':this.state.page,
-                       'loading_more':True})
+        next_page = int(this.state.page) + 1
+        this.setState({'page': next_page,
+                       'prev_page': this.state.page,
+                       'loading_more': True})
         if this.props.history:
-            utils.go_to(this.props.history, query={'page':next_page}, push=False)
+            utils.go_to(this.props.history, query={'page': next_page}, push=False)
+
 
 def item_view_on_update(p_props, p_state):
     if p_props.item_type != this.props.item_type:
@@ -390,28 +397,29 @@ def item_view_render():
                                        )
 
     return e(ItemViewBase,
-                [e(el, data=x, centered=True, className="medium-size", key=n, external_viewer=ext_viewer) for n, x in enumerate(items)],
-                loading=this.state.loading,
-                secondary=this.props.secondary,
-                tertiary=this.props.tertiary,
-                container=this.props.container,
-                item_count=this.state.item_count,
-                limit=limit,
-                page=this.state.page,
-                set_page=this.set_page,
-                label=this.props.label,
-                config_el=cfg_el,
-                toggle_config=this.props.toggle_config,
-                infinite_scroll=this.state.infinite_scroll,
-                on_load_more=this.get_more,
-                loading_more=this.state.loading_more,
-                query=True,
-                history=this.props.history,
-                location=this.props.location,
-                context=this.props.context,
-                show_count=this.props.show_count,
-                show_pagination=this.props.show_pagination,
-                 )
+             [e(el, data=x, centered=True, className="medium-size", key=n, external_viewer=ext_viewer)
+              for n, x in enumerate(items)],
+             loading=this.state.loading,
+             secondary=this.props.secondary,
+             tertiary=this.props.tertiary,
+             container=this.props.container,
+             item_count=this.state.item_count,
+             limit=limit,
+             page=this.state.page,
+             set_page=this.set_page,
+             label=this.props.label,
+             config_el=cfg_el,
+             toggle_config=this.props.toggle_config,
+             infinite_scroll=this.state.infinite_scroll,
+             on_load_more=this.get_more,
+             loading_more=this.state.loading_more,
+             query=True,
+             history=this.props.history,
+             location=this.props.location,
+             context=this.props.context,
+             show_count=this.props.show_count,
+             show_pagination=this.props.show_pagination,
+             )
 
 
 ItemView = createReactClass({
@@ -420,7 +428,7 @@ ItemView = createReactClass({
     'config_suffix': lambda: this.props.config_suffix or "",
 
     'getInitialState': lambda: {'page': 1,
-                                'prev_page':0,
+                                'prev_page': 0,
                                 'search_query': utils.get_query("search", "") or this.props.search_query,
                                 'infinite_scroll': utils.storage.get("infinite_scroll" + this.config_suffix(), this.props.infinite_scroll),
                                 'limit': utils.storage.get("item_count" + this.config_suffix(),
@@ -428,7 +436,7 @@ ItemView = createReactClass({
                                 'items': [],
                                 "element": None,
                                 "loading": True,
-                                "loading_more":False,
+                                "loading_more": False,
                                 'item_count': 1,
                                 'visible_config': False,
                                 'external_viewer': utils.storage.get("external_viewer" + this.config_suffix(), False),
@@ -440,7 +448,7 @@ ItemView = createReactClass({
     'get_element': get_element,
     'get_more': get_more,
 
-    'set_page': lambda p: this.setState({'page': p, 'prev_page':None}),
+    'set_page': lambda p: this.setState({'page': p, 'prev_page': None}),
 
     'on_infinite_scroll': lambda e, d: this.setState({'infinite_scroll': d.checked}),
     'on_item_count': lambda e, d: this.setState({'limit': d.value}),
@@ -454,4 +462,3 @@ ItemView = createReactClass({
 
     'render': item_view_render
 })
-

@@ -19,7 +19,8 @@ def get_config(data=None, error=None):
     elif error:
         state.app.notif("Failed to fetch config: {}".format(error), level="error")
     else:
-       pass
+        pass
+
 
 def get_item(data=None, error=None):
     if data is not None and not error:

@@ -59,7 +59,7 @@ def page_render():
     if link:
         if not this.props.external_viewer:
             thumb = e(Link, thumb, to={'pathname': '/item/page',
-                                       'search': utils.query_to_string({'id': item_id, 'number':number})})
+                                       'search': utils.query_to_string({'id': item_id, 'number': number})})
 
     return e(ui.Card,
              h("div",

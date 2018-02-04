@@ -5,7 +5,6 @@ import shutil
 import send2trash
 import attr
 import subprocess
-import rarfile
 import imghdr
 
 from io import BytesIO
@@ -16,7 +15,7 @@ from tarfile import TarFile
 from contextlib import contextmanager
 from gevent import fileobject
 
-from happypanda.common import hlogger, exceptions, utils, constants, config
+from happypanda.common import hlogger, exceptions, utils, constants
 from happypanda.core.command import CoreCommand, CommandEntry, AsyncCommand
 from happypanda.core.services import ImageService
 from happypanda.core import db

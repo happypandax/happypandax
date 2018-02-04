@@ -676,7 +676,9 @@ config_doc = config.doc_render()  # for doc
 
 rarfile.UNRAR_TOOL = unrar_tool_path.value
 
+
 def set_unrartool(node, value):
     rarfile.UNRAR_TOOL = value
+
 
 unrar_tool_path.add_trigger(set_unrartool)

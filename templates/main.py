@@ -61,7 +61,7 @@ def on_update(props):
             x.stop()
         # HACK: blocks scroll restoration
         # TODO: scroll restoration
-        window.scrollTo(0,0)
+        window.scrollTo(0, 0)
 
 
 PathChange = createReactClass({
@@ -227,13 +227,13 @@ def app_render():
                  e(ui.Ref,
                    e(ui.Sidebar.Pusher,
                      e(ui.Visibility,
-                     e(ui.Responsive,
-                       e(menu.Menu, **menu_args), minWidth=767),
-                     e(ui.Responsive,
-                       e(menu.Menu, mobile=True, **menu_args), maxWidth=768),
-                        onBottomPassed=this.toggle_scroll_up,
-                        once=False,
-                        ),
+                       e(ui.Responsive,
+                         e(menu.Menu, **menu_args), minWidth=767),
+                       e(ui.Responsive,
+                         e(menu.Menu, mobile=True, **menu_args), maxWidth=768),
+                       onBottomPassed=this.toggle_scroll_up,
+                       once=False,
+                       ),
                      e(Switch,
                          e(Route, path="/api", component=this.api_page),
                          e(Route, path="/dashboard", component=this.dashboard_page),
@@ -246,7 +246,7 @@ def app_render():
                          e(Route, path="/item/page", component=this.page_page),
                          e(Redirect, js_from="/", exact=True, to={'pathname': "/library"}),
                        ),
-                     #e(ui.Sticky,
+                     # e(ui.Sticky,
                      #  e(ui.Button, icon="chevron up", size="large", floated="right"),
                      #   bottomOffset=55,
                      #   context=this.state.container_ref,

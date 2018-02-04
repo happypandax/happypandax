@@ -17,6 +17,16 @@ dev_options = dict(
 env_python = r".\env\Scripts\python" if sys.platform.startswith("win") else "./env/bin/python"
 
 changes = """
+- delete temp folder on shutdown
+- implemented infinite scrolling in webclient
+- added e-hentai tag definitions
+- added more options in the preferences page
+- added setting gui.start_on_boot and added implementation for windows
+- fixed issue in conversion script regarding archives with subfolders
+- fixed connection issues in webclient
+
+From previous builds:
+
 - added 'sort_by' and 'sort_desc' parameters to search_tags and search_item api functions
 - added new default sortindexes ArtistName, NamespaceTagNamespace and NamespaceTagTag
 - implement ordering by multiple columns
@@ -25,21 +35,6 @@ changes = """
 - misc. bugfixes
 - updated various libs, most notably SQLAlchemy==1.2.1 and Pillow==5.0.0
 - update docs
-
-From previous builds:
-
-- require python 3.5 and up
-- make HPX usable on posix
-- added search_item api function
-- added 'offset' parameter to various api functions
-- updated docs
-- addeded support for TAR.GZ, TAR.BZ2 and TAR.XZ files
-
-- fix error in extracting rarfiles
-- add compression step in server-client message exchange
-- updated docs to reflect compression step
-- added some options to in-built webclient reader
-- added get_all_tags api function
 """
 
 

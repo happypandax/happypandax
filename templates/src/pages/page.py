@@ -117,6 +117,7 @@ def get_item(ctx=None, data=None, error=None):
             client.call_func("get_page", this.get_item, page_id=pid, number=number, ctx=True)
             this.setState({'loading': True})
 
+
 __pragma__("noiconv")
 __pragma__("notconv")
 
@@ -141,9 +142,23 @@ __pragma__("nokwargs")
 
 def on_key(ev):
 
-    go_prev = lambda: utils.go_to(this.props.history, query={'gid': this.state.data.gallery_id, "number":this.state.data.number-1})
-    go_next = lambda: utils.go_to(this.props.history, query={'gid': this.state.data.gallery_id, "number":this.state.data.number+1})
-    go_last = lambda: utils.go_to(this.props.history, query={'gid': this.state.data.gallery_id, "number":this.state.data.number-1})
+    def go_prev(): return utils.go_to(
+        this.props.history,
+        query={
+            'gid': this.state.data.gallery_id,
+            "number": this.state.data.number - 1})
+
+    def go_next(): return utils.go_to(
+        this.props.history,
+        query={
+            'gid': this.state.data.gallery_id,
+            "number": this.state.data.number + 1})
+
+    def go_last(): return utils.go_to(
+        this.props.history,
+        query={
+            'gid': this.state.data.gallery_id,
+            "number": this.state.data.number - 1})
 
     if ev.key == "Escape":
         this.back_to_gallery()
@@ -178,7 +193,10 @@ class ReaderScaling:
     fit_width = 2
     fit_height = 3
 
+
 __pragma__("tconv")
+
+
 def page_render():
     number = 0
     p_id = this.state.id
@@ -203,8 +221,8 @@ def page_render():
         img = this.state.other[number].img
     __pragma__("noiconv")
 
-    n_url = utils.build_url(query={'gid': gid, "number":int(number)+1})
-    p_url = utils.build_url(query={'gid': gid, "number":int(number)-1})
+    n_url = utils.build_url(query={'gid': gid, "number": int(number) + 1})
+    p_url = utils.build_url(query={'gid': gid, "number": int(number) - 1})
 
     rows = []
 
@@ -368,7 +386,8 @@ Page = createReactClass({
     'componentWillUnmount': lambda: window.removeEventListener("keydown", this.on_key, False),
 
     'componentWillMount': lambda: all((this.props.menu([
-        e(ui.Menu.Item, e(ui.Icon, js_name="sidebar", size="large"), icon=True, onClick=this.toggle_pages, position="left"),
+        e(ui.Menu.Item, e(ui.Icon, js_name="sidebar", size="large"),
+          icon=True, onClick=this.toggle_pages, position="left"),
         e(ui.Menu.Menu, e(ui.Menu.Item, e(ui.Icon, js_name="arrow up", size="large"), icon=True, onClick=this.back_to_gallery)),
         e(ui.Menu.Item, e(ui.Icon, js_name="options", size="large"),
           icon=True, onClick=this.toggle_config, position="right"),

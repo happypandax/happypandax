@@ -11,7 +11,10 @@ from src.ui import ui
 from src.i18n import tr
 from src.utils import defined, is_same_machine
 
-disabled_machine_msg = lambda props: e(ui.Message, tr(props.tab, "", "Disabled because this client is connecting from a different device"), color="yellow")
+
+def disabled_machine_msg(props): return e(ui.Message, tr(
+    props.tab, "", "Disabled because this client is connecting from a different device"), color="yellow")
+
 
 def pref_general(props):
     cfg = props.cfg
@@ -25,24 +28,23 @@ def pref_general(props):
             if not is_same_machine():
                 ext_viewer.append(disabled_machine_msg(props))
 
-
             items.append(e(ui.Form.Group,
                            e(ui.Form.Input,
-                           width=10,
-                           label=tr(props.tab, "", "External Image Viewer"),
-                           placeholder=tr(props.tab, "", "path/to/executable"),
-                           defaultValue=cfg.gallery.external_image_viewer,
-                           onChange=lambda e: props.upd("gallery.external_image_viewer", e.target.value),
-                           disabled=not is_same_machine(),
-                           ),
+                             width=10,
+                             label=tr(props.tab, "", "External Image Viewer"),
+                             placeholder=tr(props.tab, "", "path/to/executable"),
+                             defaultValue=cfg.gallery.external_image_viewer,
+                             onChange=lambda e: props.upd("gallery.external_image_viewer", e.target.value),
+                             disabled=not is_same_machine(),
+                             ),
                            e(ui.Form.Input,
-                           width=6,
-                           label=tr(props.tab, "", "External Image Viewer Arguments"),
-                           placeholder=tr(props.tab, "", "example: -a -X --force"),
-                           defaultValue=cfg.gallery.external_image_viewer_args,
-                           onChange=lambda e: props.upd("gallery.external_image_viewer_args", e.target.value),
-                           disabled=not is_same_machine(),
-                           )
+                             width=6,
+                             label=tr(props.tab, "", "External Image Viewer Arguments"),
+                             placeholder=tr(props.tab, "", "example: -a -X --force"),
+                             defaultValue=cfg.gallery.external_image_viewer_args,
+                             onChange=lambda e: props.upd("gallery.external_image_viewer_args", e.target.value),
+                             disabled=not is_same_machine(),
+                             )
                            ))
 
         if defined(cfg.gallery.send_path_to_first_file):
@@ -79,7 +81,6 @@ def pref_general(props):
                              ))
                          )
 
-
         if defined(cfg.search.match_whole_words):
             items.append(e(ui.Form.Field,
                            e(ui.Checkbox,
@@ -110,7 +111,6 @@ def pref_general(props):
                              ))
                          )
 
-
     if defined(cfg.core):
 
         if defined(cfg.core.check_new_releases):
@@ -126,7 +126,8 @@ def pref_general(props):
 
         if defined(cfg.core.check_release_interval):
             items.append(e(ui.Form.Field,
-                           h("label", tr(props.tab, "", "Interval in minutes between checking for a new release, set 0 to only check once every startup")),
+                           h("label", tr(
+                               props.tab, "", "Interval in minutes between checking for a new release, set 0 to only check once every startup")),
                            e(ui.Input,
                              width=4,
                              js_type="number",
@@ -161,6 +162,7 @@ def pref_general(props):
                ),
              basic=True,
              )
+
 
 def pref_server(props):
     cfg = props.cfg
@@ -230,6 +232,7 @@ def pref_server(props):
              basic=True,
              )
 
+
 def pref_advanced(props):
     cfg = props.cfg
     u_cfg = props.u_cfg
@@ -249,8 +252,11 @@ def pref_advanced(props):
             items.append(e(ui.Form.Field,
                            e(ui.Checkbox,
                              toggle=True,
-                             label=tr(props.tab, "", "Send occurring critical errors to me (creator) so I can fix them faster (contains no sensitive information)"),
-                             defaultChecked=cfg.core.report_critical_errors,
+                             label=tr(
+                                 props.tab,
+                                 "",
+                                 "Send occurring critical errors to me (creator) so I can fix them faster (contains no sensitive information)"),
+                               defaultChecked=cfg.core.report_critical_errors,
                              onChange=lambda e, d: props.upd("core.report_critical_errors", d.checked),
                              ))
                          )

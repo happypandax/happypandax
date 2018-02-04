@@ -5,6 +5,7 @@ import multiprocessing as mp
 import functools
 import signal
 import webbrowser
+import pathlib
 
 from threading import Thread, Timer
 from multiprocessing import Process, queues
@@ -575,6 +576,7 @@ class Window(QMainWindow):
         [self.stop_process(x) for x in self.processes + [self.server_process, self.webclient_process]]
         super().closeEvent(ev)
 
+
 def toggle_start_on_boot(node, value):
     if constants.is_frozen or constants.dev:
         app_path = os.path.abspath(constants.app_path)
@@ -584,7 +586,7 @@ def toggle_start_on_boot(node, value):
             app_path = os.path.join(*list(app_path.parts)[:-3])
             app_path = os.path.join(app_path, constants.osx_bundle_name)
         elif constants.is_win:
-            app_path = os.path.join(app_path, gui_name+'.exe')
+            app_path = os.path.join(app_path, gui_name + '.exe')
         elif constants.is_linux:
             app_path = os.path.join(app_path, gui_name)
 

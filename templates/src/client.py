@@ -3,6 +3,7 @@ from src import utils
 
 io = require('socket.io-client')
 
+
 class ItemType:
     #: Gallery
     Gallery = 1

@@ -28,7 +28,7 @@ def main():
                         f_path = os.path.join(root, f)
                         aformat(f_path)
 
-        for d in (".", "migrate"):
+        for d in (".", "migrate", "scripts"):
             for p in os.scandir(d):
                 if p.name.endswith(".py"):
                     aformat(p.path)
