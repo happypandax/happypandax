@@ -117,7 +117,7 @@ class ServerMsg:
     __pragma__('nokwargs')
 
     def call_callback(self, data, err):
-        if self.contextobj:
+        if self.contextobj is not None:
             self.callback(self.contextobj, data, err)
         else:
             self.callback(data, err)
@@ -139,6 +139,8 @@ class Client(Base):
         self.socket.on("command", self.on_command)
         self.socket.on("server_call", self.on_server_call)
         self.socket.on("exception", self.on_error)
+        self.socket.on("connect", self.on_connect)
+        self.socket.on("disconnect", self.on_disconnect)
 
         self.commands = {
             'connect': 1,
@@ -154,8 +156,11 @@ class Client(Base):
         self._reconnecting = False
         self._connection_status = True
         self._disconnected_once = False
+        self._initial_socket_connection = False
+        self._socket_connection = False
         self._response_cb = {}
         self._first_connect = True
+        self._msg_queue = []
         self._last_msg = None
         self._cmd_status = {}
         self._cmd_status_c = 0
@@ -164,23 +169,31 @@ class Client(Base):
         self._poll_timeout = 1000 * 60 * 120
         self._last_retry = __new__(Date()).getTime()
 
-        if not self.polling:
-            self.socket.on("connect", self.on_connect)
-            self.socket.on("disconnect", self.on_disconnect)
+        self.polling = False
+        if not Client.polling:
             utils.poll_func(self.connection, self._poll_timeout, self._poll_interval * 1000)
+            self.polling = True
             Client.polling = True
     __pragma__('nokwargs')
 
     def on_connect(self):
-        self.reconnect()
-        self.call_func("get_config", self._set_debug, cfg={'core.debug': False})
+        self._socket_connection = True
+        self._initial_socket_connection = True
+        if self.polling:
+            self.reconnect()
+            self.call_func("get_config", self._set_debug, cfg={'core.debug': False})
+        if len(self._msg_queue):
+            while len(self._msg_queue):
+                self.socket.emit("server_call", self._msg_queue.pop(0))
 
     def on_disconnect(self):
         state['connected'] = False
+        self._socket_connection = False
         self._connection_status = False
         self._disconnected_once = True
-        if state.app:
-            state.app.notif("Disconnected from the server", "Server", "error")
+        if self.polling:
+            if state.app:
+                state.app.notif("Disconnected from the server", "Server", "error")
         for x in state.commands:
             x.stop()
 
@@ -261,8 +274,9 @@ class Client(Base):
                 self.flash_error(serv_data['error'])
                 if serv_data['error']['code'] == 408:
                     self.send_command(self.commands['handshake'])
-            if serv_data['data'] == "Authenticated" and self._last_msg:
-                self.socket.emit("server_call", self._last_msg)
+            if serv_data['data'] == "Authenticated":
+                serv_msg = self._response_cb[serv_msg.id] = serv_msg
+                self.socket.emit("server_call", serv_msg._msg)
                 return
             if serv_msg.func_name and serv_data:
                 for func in serv_data.data:
@@ -306,8 +320,11 @@ class Client(Base):
         }
 
         self._last_msg = final_msg
-        if self._connection_status:
+        if self._connection_status and self._socket_connection:
             self.socket.emit("server_call", final_msg)
+        else:
+            if not self._initial_socket_connection:
+                self._msg_queue.append(final_msg)
         servermsg._msg = final_msg
         return servermsg
 

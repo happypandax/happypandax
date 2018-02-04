@@ -19,11 +19,7 @@ def get_config(data=None, error=None):
     elif error:
         state.app.notif("Failed to fetch config: {}".format(error), level="error")
     else:
-        return
-        client.call_func(
-            "get_config", this.get_config, cfg={
-                'this.use_external_image_viewer': this.state.external_viewer})
-
+       pass
 
 def get_item(data=None, error=None):
     if data is not None and not error:

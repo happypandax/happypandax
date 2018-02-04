@@ -59,6 +59,8 @@ def on_update(props):
     if props.location.pathname != this.props.location.pathname:
         for x in state.commands:
             x.stop()
+        # TODO: scroll restoration
+        window.scrollTo(0,0)
 
 
 PathChange = createReactClass({

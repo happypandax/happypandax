@@ -67,15 +67,12 @@ def send_error(ex, **kwargs):
                   )
 
 
-def call_server(msg, client, lock):
-    msg_id = msg['id']
+def call_server(serv_data, root_client, client, lock):
     data = None
     try:
         lock.acquire()
-        root_client = get_clients(msg.get("session_id", "default"))['client']
         if client.alive():
             try:
-                serv_data = msg['msg']
                 if not serv_data['session']:
                     serv_data['session'] = root_client.session
                 data = client.communicate(serv_data)
@@ -87,7 +84,7 @@ def call_server(msg, client, lock):
     finally:
         lock.release()
 
-    return msg_id, data
+    return data
 
 
 def is_same_machine():
@@ -142,8 +139,9 @@ def on_command_handle(client_id, clients, msg):
 
 
 def on_server_call_handle(client_id, client, lock, msg, **kwargs):
-    msg_id, data = call_server(msg, client, lock)
-    socketio.emit('server_call', {'id': msg_id, 'msg': data}, room=client_id, **kwargs)
+    root_client = get_clients(msg.get("session_id", "default"))['client']
+    msg['msg'] = call_server(msg['msg'], root_client, client, lock)
+    socketio.emit('server_call', msg, room=client_id, **kwargs)
 
 
 def init_views(flask_app, socketio_app):
