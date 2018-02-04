@@ -24,14 +24,15 @@ added_files = [
     ('static', 'static'),
   ]
 
-if os.name == 'nt':
-  added_files += [('deploy/win/vc_redist.x86.exe', '.')]
-
 interface_files = exec_statement("""
     from happypanda.common import utils
     from happypanda import interface
     print(" ".join(utils.get_package_modules(interface, False)))""").split()
 
+if os.name == 'nt':
+  added_files += [('deploy/win/vc_redist.x86.exe', '.')]
+  interface_files.append("winreg")
+  
 version_str = exec_statement("""
     from happypanda.common import constants
     print(constants.version_str)""")

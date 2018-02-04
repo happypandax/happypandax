@@ -17,7 +17,6 @@ import shelve
 import rollbar
 import importlib
 import atexit
-import winreg
 
 from dbm import dumb as dumbdb
 from inspect import ismodule, currentframe, getframeinfo
@@ -25,6 +24,10 @@ from contextlib import contextmanager
 from collections import namedtuple, UserList
 
 from happypanda.common import constants, exceptions, hlogger, config
+try:
+    import winreg
+except ImportError: # only available on windows
+    pass
 
 log = hlogger.Logger(__name__)
 
