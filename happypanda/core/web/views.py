@@ -106,11 +106,12 @@ def is_same_machine():
     return False
 
 
-def on_command_handle(client_id, clients, msg):
+def on_command_handle(client_id, clients, msg, lock):
     d = {'status': None}
     cmd = msg.get('command')
     d['command'] = cmd
     try:
+        lock.acquire()
         if cmd == 1:
             if not clients['client'].alive():
                 _connect_clients(clients)
@@ -135,6 +136,8 @@ def on_command_handle(client_id, clients, msg):
     except exceptions.ServerError as e:
         log.exception()
         send_error(e, room=client_id)
+    finally:
+        lock.release()
     socketio.emit("command", d, room=client_id)
 
 
@@ -163,7 +166,8 @@ def init_views(flask_app, socketio_app):
             {'status' : bool or None}
         """
         clients = get_clients(msg.get("session_id", "default"))
-        socketio_app.start_background_task(on_command_handle, request.sid, clients, msg)
+        locks = get_locks(msg.get("session_id", "default"))
+        socketio_app.start_background_task(on_command_handle, request.sid, clients, msg, locks['client'])
 
     @socketio.on('server_call')
     def on_server_call(msg):
