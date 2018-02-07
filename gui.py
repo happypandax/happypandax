@@ -197,6 +197,7 @@ class ConvertHP(QDialog):
         self._rar = ""
         self._process = 0
         self._archive = False
+        self._delete = True
         self._dev = False
         self._args_label = QLabel()
         self._args_label.setWordWrap(True)
@@ -220,6 +221,11 @@ class ConvertHP(QDialog):
         archive_box = QCheckBox(self)
         archive_box.stateChanged.connect(self.on_archive)
         lf.addRow(t("", default="Skip archives") + ':', archive_box)
+
+        delete_db = QCheckBox(self)
+        delete_db.setChecked(self._delete)
+        delete_db.stateChanged.connect(self.on_delete)
+        lf.addRow(t("", default="Delete target database if it already exists") + ':', delete_db)
 
         dev_box = QCheckBox(self)
         dev_box.stateChanged.connect(self.on_dev)
@@ -246,6 +252,10 @@ class ConvertHP(QDialog):
         self._archive = v
         self.update_label()
 
+    def on_delete(self, v):
+        self._delete = v
+        self.update_label()
+
     def on_dev(self, v):
         self._dev = v
         self.update_label()
@@ -262,6 +272,8 @@ class ConvertHP(QDialog):
             self.args .append(os.path.normpath(self._rar))
         if self._archive:
             self.args .append("--skip-archive")
+        if self._delete:
+            self.args .append("--delete-target")
 
         self._args_label.setText(" ".join(self.args))
         self.adjustSize()

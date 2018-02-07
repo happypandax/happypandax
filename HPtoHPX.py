@@ -710,6 +710,11 @@ def parse_args(args=sys.argv[1:]):
         '--skip-archive',
         action='store_true',
         help="Skip generating pages for galleries in archive files (it might take too long)")
+    parser.add_argument(
+        '-d',
+        '--delete-target',
+        action='store_true',
+        help="Delete target database if it already exists")
     args = parser.parse_args(args)
     return args
 
@@ -785,7 +790,10 @@ def main(args=sys.argv[1:]):
         print("Destination: ", dst)
 
         if os.path.exists(dst):
-            print("Warning: destination file already exists, you might want to delete")
+            if args.delete_target:
+                os.unlink(dst)
+            else:
+                print("Warning: destination file already exists, you might want to delete")
         else:
             head, _ = os.path.split(dst)
             if head:
