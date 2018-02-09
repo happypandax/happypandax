@@ -397,13 +397,19 @@ with config.namespace(core_ns):
         core_ns,
         "check_new_releases",
         True,
-        "Regularly check for new releases")
+        "Regularly check for updates")
+
+    auto_install_release = config.create(
+        core_ns,
+        "auto_install_release",
+        True,
+        "Automatically download, install and restart when a new update is found")
 
     check_release_interval = config.create(
         core_ns,
         "check_release_interval",
         20,
-        "Interval in minutes between checking for a new release, set 0 to only check once every startup")
+        "Interval in minutes between checking for a new update, set 0 to only check once every startup")
 
     allow_beta_releases = config.create(
         core_ns,

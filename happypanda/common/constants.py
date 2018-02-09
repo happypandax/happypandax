@@ -83,8 +83,9 @@ class ExitCode(enum.Enum):
 
 class UpdateState(enum.Enum):
     Registered = 0
-    Failed = 1
-    Success = 2
+    Installing = 1
+    Failed = 2
+    Success = 3
 
 
 class Priority(enum.Enum):
