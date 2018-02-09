@@ -17,7 +17,6 @@ from happypanda.core.commands import io_cmd
 from happypanda.common import constants, config
 
 GALLERY_LISTS = []
-pages_in = Queue()
 pages_out = queue.Queue()
 
 
@@ -719,39 +718,40 @@ def parse_args(args=sys.argv[1:]):
     return args
 
 
-def page_generate(rar_p, in_queue, out_pipe):
-    rarfile.UNRAR_TOOL = rar_p
-    item_id, items = in_queue.get()
-    stuff_to_send = []
-    items_len = len(items)
-    name = random.randint(1, 100)
-    for n_item, item in enumerate(items, 1):
+def _page_gen(items):
+    while items:
+        item = items.pop()
         gallery, ch_inarchive, ch_path, path, g_path = item
         pages = []
         page_hash = None
+        img_formats = io_cmd.CoreFS.image_formats()
         try:
             if ch_inarchive:
                 page_hash = (g_path, ch_path)
-                afs = io_cmd.CoreFS(path)
+                afs = None
                 try:
+                    contents = []
                     if ch_path:
-                        afs._init_archive()
-                        contents = [io_cmd.CoreFS(os.path.join(path, x))
-                                    for x in afs._archive.namelist() if x.startswith(ch_path)]
+                        afs = io_cmd.Archive(path)
+                        contents = [os.path.join(path, x)
+                                    for x in afs.namelist() if x.startswith(ch_path)]
                     else:
-                        contents = afs.contents()
+                        afs = io_cmd.CoreFS(path)
+                        contents = afs.contents(corefs=False)
                     n = 1
                     for c in sorted(contents):
-                        if c.is_image:
-                            pages.append((c.name, c.path, n, True))
+                        if c.endswith(img_formats):
+                            if constants.is_win:
+                                c = c.replace('/', '\\')
+                            pages.append((os.path.split(c)[1], c, n, True))
                             n += 1
                 finally:
-                    afs.close()
+                   if afs: afs.close()
             else:
                 page_hash = (ch_path,)
                 dir_images = [
                     x.path for x in os.scandir(g_path) if not x.is_dir() and x.name.endswith(
-                        io_cmd.CoreFS.image_formats())]
+                        img_formats)]
                 for n, x in enumerate(sorted(dir_images), 1):
                     x = io_cmd.CoreFS(x)
                     pages.append((x.name, x.path, n, False))
@@ -762,7 +762,15 @@ def page_generate(rar_p, in_queue, out_pipe):
         except BaseException as e:
             print("An unknown error occured, skipping: {}\n\t{}".format(g_path, e))
 
-        stuff_to_send.append((page_hash, gallery, pages))
+        yield (page_hash, gallery, pages)
+
+def page_generate(rar_p, args, out_pipe):
+    rarfile.UNRAR_TOOL = rar_p
+    item_id, items = args
+    stuff_to_send = []
+    items_len = len(items)
+    for n_item, x in enumerate(_page_gen(items), 1):
+        stuff_to_send.append(x)
         if len(stuff_to_send) > 5 or n_item == items_len:
             out_pipe.send(stuff_to_send.copy())
             stuff_to_send.clear()
@@ -791,6 +799,7 @@ def main(args=sys.argv[1:]):
 
         if os.path.exists(dst):
             if args.delete_target:
+                print("Deleting existing target database")
                 os.unlink(dst)
             else:
                 print("Warning: destination file already exists, you might want to delete")
@@ -866,9 +875,6 @@ def main(args=sys.argv[1:]):
                                 "\nSkipping '{}' because path doesn't exists.".format(
                                     ch.title.encode(
                                         errors='ignore')))
-                        continue
-
-                    if not path.endswith(('.rar', '.cbr')):
                         continue
 
                     if not args.skip_archive:
@@ -1016,9 +1022,9 @@ def main(args=sys.argv[1:]):
 
             page_pool = []
             thread_pool = []
-            for x in range(AMOUNT_OF_TASKS):
+            def create_process(items):
                 pipe1, pipe2 = Pipe(False)
-                p = Process(target=page_generate, args=(args.rar, pages_in, pipe2), daemon=True)
+                p = Process(target=page_generate, args=(args.rar, items, pipe2), daemon=True)
                 p.start()
                 page_pool.append(p)
                 t = threading.Thread(target=process_pipes, args=(pages_out, pipe1), daemon=True)
@@ -1049,7 +1055,7 @@ def main(args=sys.argv[1:]):
             for n, x in enumerate(pages_to_sendx):
                 pages_map[n] = x
                 pages_finish[n] = False
-                pages_in.put((n, x))
+                create_process((n, x))
 
             print("\nResolving gallery pages...")
             unique_pages = []
@@ -1065,8 +1071,7 @@ def main(args=sys.argv[1:]):
                             pages_id = pages_finished.pop()
                             for p_id in pages_finish:
                                 if not pages_finish[p_id]:
-                                    Process(target=page_generate, args=(args.rar, pages_in, pipe2), daemon=True).start()
-                                    pages_in.put((p_id, list(reversed(pages_map[p_id]))))
+                                    create_process((p_id, list(reversed(pages_map[p_id]))))
 
                 if isinstance(items, int):
                     pages_finished.append(items)

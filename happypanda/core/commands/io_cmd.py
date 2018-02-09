@@ -95,6 +95,7 @@ class ImageItem(AsyncCommand):
         log.d("Generating image thumbnail", self._image,
               self.properties)
         size = self.properties.size
+        fs = None
         if isinstance(self._image, str):
             fs = CoreFS(self._image)
             if not fs.exists:
@@ -140,9 +141,12 @@ class ImageItem(AsyncCommand):
 
             else:
                 if self.properties.create_symlink and isinstance(image_path, str):
-                    image_path = image_path + constants.link_ext
-                    with open(image_path, 'w', encoding='utf-8') as f:
-                        f.write(self._image)
+                    if fs and fs.inside_archive:
+                        pathlib.Path(self._image).rename(image_path)
+                    else:
+                        image_path = image_path + constants.link_ext
+                        with open(image_path, 'w', encoding='utf-8') as f:
+                            f.write(self._image)
                     save_image = False
 
             if save_image:
@@ -355,24 +359,27 @@ class CoreFS(CoreCommand):
         raise NotImplementedError
         return self._path.suffix.lower()
 
-    def contents(self):
+    def contents(self, corefs=True):
         "If this is an archive or folder, return a tuple of CoreFS objects else return None"
         if self.is_archive:
             self._init_archive()
             root = self._archive.path_separator.join(self._path.parts)
-            return tuple(CoreFS(self._archive.path_separator.join((root, x))) for x in self._archive.namelist())
+            l = tuple(self._archive.path_separator.join((root, x)) for x in self._archive.namelist())
         elif self.is_dir:
             if self.inside_archive:
                 raise NotImplementedError
             else:
-                return tuple(CoreFS(x) for x in self._path.iterdir())
+                l = tuple(x for x in self._path.iterdir())
+        if corefs:
+            l = tuple(CoreFS(x) for x in l)
+        return l
 
-    def get(self):
+    def get(self, target=None):
         "Get path as string. If path is inside an archive it will get extracted"
         if self.inside_archive:
             self._init_archive()
             if not self._extacted_file:
-                self._extacted_file = self.extract()
+                self._extacted_file = self.extract(target=target)
             return self._extacted_file.path
         else:
             return self.path
