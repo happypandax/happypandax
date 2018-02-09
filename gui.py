@@ -592,14 +592,12 @@ class Window(QMainWindow):
 def toggle_start_on_boot(node, value):
     if constants.is_frozen or constants.dev:
         app_path = os.path.abspath(constants.app_path)
-        gui_name = "happypandax_gui"
+        gui_name = constants.executable_gui_name
         if constants.is_osx:  # we're in Contents/MacOS, need to go two dir up
             app_path = pathlib.Path(app_path)
             app_path = os.path.join(*list(app_path.parts)[:-3])
             app_path = os.path.join(app_path, constants.osx_bundle_name)
-        elif constants.is_win:
-            app_path = os.path.join(app_path, gui_name + '.exe')
-        elif constants.is_linux:
+        else:
             app_path = os.path.join(app_path, gui_name)
 
         name = "HappyPanda X GUI"

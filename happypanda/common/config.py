@@ -355,6 +355,8 @@ def get_best_girls():
         'kouko',
         'krista',
         'naoka',
+        'lacus',
+        'albedo',
     )
     return "_".join(best_girls[random.randrange(0, len(best_girls))] for x in range(3))
 

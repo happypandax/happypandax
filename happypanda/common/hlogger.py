@@ -92,17 +92,25 @@ class Logger:
         level(s)
         if not constants.dev:
             if level in (self._logger.exception, self._logger.critical) and self.report_online:
-                if level == self._logger.exception:
-                    rollbar.report_exc_info()
-                else:
-                    rollbar.report_message(s, "critical")
+                if constants.is_frozen:
+                    if level == self._logger.exception:
+                        rollbar.report_exc_info()
+                    else:
+                        rollbar.report_message(s, "critical")
 
         # prevent printing multiple times
         if not (constants.dev and not constants.is_frozen):
-            if stdout:
-                print(s)
-            if stderr:
-                eprint(s)
+            def p(x):    
+                if stdout:
+                    print(x)
+                if stderr:
+                    eprint(x)
+            try:
+                p(s)
+            except OSError: # raw write() returned invalid length 64 (should have been between 0 and 32)
+                # fixed in python 3.6+
+                s = s.encode("utf-8", errors="ignore").decode("ascii")
+                p(s)
 
     def __getattr__(self, name):
         return getattr(self._logger, name)

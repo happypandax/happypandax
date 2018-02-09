@@ -7,7 +7,6 @@ from PyInstaller.utils.hooks import exec_statement
 sys.modules['FixTk'] = None
 
 working_dir = os.getcwd()
-app_name = "happypandax"
 icon_path = "deploy/osx/app.icns" if sys.platform.startswith('darwin') else "static/favicon.ico"
 version_path = "deploy/win/version.txt"
 
@@ -16,6 +15,18 @@ block_cipher = None
 thumb_path = "static/thumbnails"
 if os.path.exists(thumb_path):
   shutil.rmtree(thumb_path)
+
+app_name = exec_statement("""
+    from happypanda.common import constants
+    print(constants.executable_name)""")
+
+app_gui_name = exec_statement("""
+    from happypanda.common import constants
+    print(constants.executable_gui_name)""")
+
+osx_bundle_name = exec_statement("""
+    from happypanda.common import constants
+    print(constants.osx_bundle_name)""")
 
 added_files = [
     ('bin', 'bin'),
@@ -32,14 +43,12 @@ interface_files = exec_statement("""
 if os.name == 'nt':
   added_files += [('deploy/win/vc_redist.x86.exe', '.')]
   interface_files.append("winreg")
+  app_name = app_name[:-4]
+  app_gui_name = app_gui_name[:-4]
   
 version_str = exec_statement("""
     from happypanda.common import constants
     print(constants.version_str)""")
-
-osx_bundle_name = exec_statement("""
-    from happypanda.common import constants
-    print(constants.osx_bundle_name)""")
 
 def make(py_file, exe_name, analysis_kwargs={}, pyz_args=None, exe_kwargs={}):
 
@@ -78,8 +87,6 @@ def make(py_file, exe_name, analysis_kwargs={}, pyz_args=None, exe_kwargs={}):
   exe = EXE(pyz, a.scripts, name=exe_name, **e_kwargs)
 
   return exe, a.binaries, a.zipfiles, a.datas
-
-app_gui_name = app_name+'_gui'
 
 col = [
         *make("run.py", app_name),

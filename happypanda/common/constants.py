@@ -17,6 +17,13 @@ is_posix = os.name == 'posix'
 
 from_gui = False  # running from gui
 
+executable_name = "happypandax"
+if is_win:
+    executable_name += ".exe"
+executable_gui_name = "happypandax_gui"
+if is_win:
+    executable_gui_name += ".exe"
+
 # OSX
 osx_bundle_name = "HappyPanda X.app"  # used by boostratp deploy, updater and specfile
 

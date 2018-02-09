@@ -147,7 +147,7 @@ class ImageItem(AsyncCommand):
 
             if save_image:
                 im.save(image_path)
-        except OSError as e:
+        except (OSError, KeyError) as e:
             if not self._retrying:
                 log.w("Failed generating image:", e.args[1], "retrying...")
                 self._retrying = True
@@ -386,7 +386,7 @@ class CoreFS(CoreCommand):
                 send2trash.send2trash(self.path)
             else:
                 if self._path.is_dir():
-                    shutil.rmtree(self._path)
+                    shutil.rmtree(str(self._path))
                 else:
                     self._path.unlink()
         except BaseException:
@@ -475,10 +475,6 @@ class CoreFS(CoreCommand):
         self._path = p
         if isinstance(p, str):
             self._path = pathlib.Path(p)
-
-        if not self.inside_archive:  # TODO: resolve only the parts not in archive
-            if self._path.exists():
-                self._path = self._path.resolve()
 
     def _init_archive(self):
         if not self._archive:
