@@ -93,7 +93,7 @@ def notif(msg, header="", level="info", icon=None, **kwargs):
         "customFields": {
             "content": msg,
             "header": header,
-            "mskwargs": {level: True, 
+            "mskwargs": {level: True,
                          "icon": icon,
                          "style": {"whiteSpace": "pre-wrap"}
                          }
@@ -121,7 +121,7 @@ def server_notifications(data=js_undefined, error=None):
             else:
                 tmout = 20000
                 ic = "info"
-                if data['id'] in [1,]:
+                if data['id'] in [1, ]:
                     tmout = tmout * 2
                     ic = "angle double up"
                 this.notif(data['body'], data['title'], icon=ic, timeout=tmout)

@@ -69,10 +69,13 @@ def thumbnail_did_mount():
     this.is_mounted = True
     if not this.props.img:
         this.get_thumb()
+
+
 def thumbnail_will_unmount():
     this.is_mounted = False
     if this.state.active_cmd:
         this.state.active_cmd.stop()
+
 
 def thumbnail_render():
     img_url = this.state.placeholder

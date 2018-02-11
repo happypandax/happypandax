@@ -25,9 +25,11 @@ def page_on_update(p_props, p_state):
     if p_props.data != this.props.data:
         this.setState({'data': this.props.data, 'id': this.props.data.id if this.props.data else None})
 
+
 def page_on_click(e):
     if this.props.onClick:
         this.props.onClick(e, this.state.data)
+
 
 def page_render():
     fav = 0

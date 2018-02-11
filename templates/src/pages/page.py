@@ -44,10 +44,13 @@ def set_thumbs(cmd):
                 p = d[pnumb]['data']
                 d[pnumb]['img'] = values[this.cmd_data[p.id]]['data']
         this.setState({'pages': d})
+
+
 __pragma__("nojsiter")
 
 
 __pragma__("kwargs")
+
 
 def get_thumbs(data=None, error=None, other=None):
     if data is not None and not error:
@@ -66,8 +69,6 @@ def get_thumbs(data=None, error=None, other=None):
                              item_type=this.state.item_type)
 
 
-
-
 def get_pages(data=None, error=None, gid=None):
     if data is not None and not error:
         pages = this.state.pages
@@ -80,11 +81,12 @@ def get_pages(data=None, error=None, gid=None):
         if this.state.data:
             gid = this.state.data.gallery_id
         page = this.state.page_list_page
-        this.setState({'page_list_loading': True, "page_list_page":page+1})
+        this.setState({'page_list_loading': True, "page_list_page": page + 1})
         limit = 50
         client.call_func("get_related_items",
-                    this.get_pages, item_type=ItemType.Gallery,
-                    item_id=gid, limit=limit, offset=page*limit)
+                         this.get_pages, item_type=ItemType.Gallery,
+                         item_id=gid, limit=limit, offset=page * limit)
+
 
 __pragma__("nokwargs")
 
@@ -98,7 +100,7 @@ def get_item(ctx=None, data=None, error=None):
                 this.get_pages(gid=data.gallery_id)
         else:
             if not utils.get_query("retry"):
-                utils.go_to(this.props.history, query={"number": 1, "retry":True}, push=False)
+                utils.go_to(this.props.history, query={"number": 1, "retry": True}, push=False)
     elif error:
         state.app.notif("Failed to fetch item ({})".format(this.state.id), level="error")
     else:
@@ -141,6 +143,7 @@ def get_page_count(data=None, error=None, gid=None):
             client.call_func("get_related_count", this.get_page_count, item_type=item, item_id=item_id,
                              related_type=this.state.item_type)
 
+
 __pragma__("nokwargs")
 
 
@@ -149,13 +152,14 @@ def on_key(ev):
     gallery_id = this.state.data.gallery_id
     number = this.state.data.number
     page_count = this.state.page_count
+
     def go_prev(): return utils.go_to(
         history,
         query={
             'gid': gallery_id,
             "number": number - 1})
 
-    def go_next(): 
+    def go_next():
         if int(number) < int(page_count):
             return utils.go_to(
                 history,
@@ -185,13 +189,14 @@ def on_key(ev):
 
 def on_update(p_props, p_state):
     if p_state.data != this.state.data:
-        query={
+        query = {
             'gid': this.state.data.gallery_id,
             "number": this.state.data.number}
         this.setState({'config_visible': False})
         if not this.state.cfg_pagelist_open:
             this.setState({'pages_visible': False})
         utils.go_to(this.props.history, query=query, push=False)
+
 
 def receive_props(n_props):
     if n_props.location != this.props.location:
@@ -248,21 +253,20 @@ def page_render():
     p_url = utils.build_url(query={'gid': gid, "number": int(number) - 1})
 
     thumb = e(thumbitem.Thumbnail,
-                img=img,
-                item_id=p_id,
-                item_type=this.state.item_type,
-                size_type=ImageSize.Original,
-                centered=True,
-                fluid=False,
-                bordered=True,
-                placeholder="",
-                inverted=this.state.cfg_invert,
-                style=thumb_style,
-                className=thumb_class
-                )
+              img=img,
+              item_id=p_id,
+              item_type=this.state.item_type,
+              size_type=ImageSize.Original,
+              centered=True,
+              fluid=False,
+              bordered=True,
+              placeholder="",
+              inverted=this.state.cfg_invert,
+              style=thumb_style,
+              className=thumb_class
+              )
     if n_url:
         thumb = e(Link, thumb, to=n_url)
-
 
     rows = []
 
@@ -308,30 +312,30 @@ def page_render():
     set_page = this.set_page
     return e(ui.Sidebar.Pushable,
              e(ui.Ref,
-             e(ui.Sidebar,
-               e(itemview.SimpleView,
-                e(ui.Card.Group,
-                  *[e(pageitem.Page,
-                      data=all_pages[x]['data'],
-                      centered=True,
-                      link=False,
-                      onClick=set_page,
-                      ) for x in all_pages],
-                  itemsPerRow=2,
-                  ),
-                on_load_more=this.on_pagelist_load_more,
-                loading=this.state.page_list_loading,
-                context=this.state.page_list_ref,
-                 ),
-                as_=ui.Segment,
+               e(ui.Sidebar,
+                 e(itemview.SimpleView,
+                   e(ui.Card.Group,
+                     *[e(pageitem.Page,
+                         data=all_pages[x]['data'],
+                         centered=True,
+                         link=False,
+                         onClick=set_page,
+                         ) for x in all_pages],
+                     itemsPerRow=2,
+                     ),
+                   on_load_more=this.on_pagelist_load_more,
+                   loading=this.state.page_list_loading,
+                   context=this.state.page_list_ref,
+                   ),
+                 as_=ui.Segment,
                  size="small",
                  visible=this.state.pages_visible,
                  direction="left",
                  animation="overlay",
                  loading=this.state.pages_loading,
+                 ),
+               innerRef=this.set_pagelist_ref,
                ),
-                innerRef=this.set_pagelist_ref,
-             ),
              e(ui.Sidebar,
                e(ui.Form,
                  e(ui.Form.Select, options=cfg_direction, label=tr(this, "", "Reading Direction"),
@@ -393,7 +397,7 @@ Page = createReactClass({
     'getInitialState': lambda: {'id': int(utils.get_query("id", 0)),
                                 'gid': int(utils.get_query("gid", 0)),
                                 'pages': {},
-                                'page_list_ref':None,
+                                'page_list_ref': None,
                                 'page_list_page': 0,
                                 'page_list_loading': False,
                                 'page_count': 0,

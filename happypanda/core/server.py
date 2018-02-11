@@ -659,7 +659,7 @@ class WebServer:
     happyweb = Flask(__name__, static_url_path='/static',
                      template_folder=os.path.abspath(constants.dir_templates),
                      static_folder=os.path.abspath(constants.dir_static))
-    happyweb.config['PROPAGATE_EXCEPTIONS'] = True # enable only on debug?
+    happyweb.config['PROPAGATE_EXCEPTIONS'] = True  # enable only on debug?
     socketio = SocketIO(happyweb, async_mode="gevent")
 
     def run(self, host, port, debug=False, logging_queue=None, cmd_args=None):

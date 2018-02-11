@@ -72,8 +72,8 @@ class UpdateApplication(Command):
                     else:
                         m = "The update will be installed on the next startup"
                     msg = message.Notification(
-                            m,
-                            "A new update is pending to be installed")
+                        m,
+                        "A new update is pending to be installed")
                     msg.id = constants.PushID.Update.value
                     self.push(msg)
         self.update.emit(st, restart)

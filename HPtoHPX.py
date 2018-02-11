@@ -746,7 +746,8 @@ def _page_gen(items):
                             pages.append((os.path.split(c)[1], c, n, True))
                             n += 1
                 finally:
-                   if afs: afs.close()
+                    if afs:
+                        afs.close()
             else:
                 page_hash = (ch_path,)
                 dir_images = [
@@ -763,6 +764,7 @@ def _page_gen(items):
             print("An unknown error occured, skipping: {}\n\t{}".format(g_path, e))
 
         yield (page_hash, gallery, pages)
+
 
 def page_generate(rar_p, args, out_pipe):
     rarfile.UNRAR_TOOL = rar_p
@@ -1022,6 +1024,7 @@ def main(args=sys.argv[1:]):
 
             page_pool = []
             thread_pool = []
+
             def create_process(items):
                 pipe1, pipe2 = Pipe(False)
                 p = Process(target=page_generate, args=(args.rar, items, pipe2), daemon=True)

@@ -100,14 +100,14 @@ class Logger:
 
         # prevent printing multiple times
         if not (constants.dev and not constants.is_frozen):
-            def p(x):    
+            def p(x):
                 if stdout:
                     print(x)
                 if stderr:
                     eprint(x)
             try:
                 p(s)
-            except OSError: # raw write() returned invalid length 64 (should have been between 0 and 32)
+            except OSError:  # raw write() returned invalid length 64 (should have been between 0 and 32)
                 # fixed in python 3.6+
                 s = s.encode("utf-8", errors="ignore").decode("ascii")
                 p(s)

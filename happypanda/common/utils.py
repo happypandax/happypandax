@@ -28,7 +28,7 @@ from collections import namedtuple, UserList
 from happypanda.common import constants, exceptions, hlogger, config
 try:
     import winreg
-except ImportError: # only available on windows
+except ImportError:  # only available on windows
     pass
 
 log = hlogger.Logger(__name__)
@@ -114,7 +114,6 @@ def get_argparser():
 
     parser.add_argument('--momo', nargs=argparse.REMAINDER,
                         help='Reserved (Momo best girl)')
-
 
     return parser
 
@@ -447,12 +446,14 @@ def remove_from_startup(name):
         return win32_del_reg(r"Software\Microsoft\Windows\CurrentVersion\Run",
                              name)
 
+
 def is_elevated():
     if constants.is_win:
         try:
             return ctypes.windll.shell32.isUserAnAdmin()
-        except:
+        except BaseException:
             return False
+
 
 def run_with_privileges(func, *args):
     if is_elevated():
@@ -465,7 +466,7 @@ def run_with_privileges(func, *args):
         if not constants.is_frozen:
             params = ['run.py']
         params += ['--momo'] + list(args)
-                  
+
         if constants.is_win:
             print(prog)
             ctypes.windll.shell32.ShellExecuteW(None, "runas", prog, subprocess.list2cmdline(params), None, 1)

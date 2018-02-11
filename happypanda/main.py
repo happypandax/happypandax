@@ -30,6 +30,8 @@ from happypanda.core.commands import io_cmd, meta_cmd  # noqa: E402
 
 log = hlogger.Logger(__name__)
 parser = utils.get_argparser()  # required to be at module lvl for sphinx.autoprogram ext
+
+
 def check_update():
     with utils.intertnal_db() as db:
         update_info = db.get(constants.updater_key, {})
@@ -47,6 +49,7 @@ def check_update():
             if not update_info['state'] == constants.UpdateState.Installing.value:
                 state = update_info['state']
     return state
+
 
 def start(argv=None, db_kwargs={}):
     assert sys.version_info >= (3, 5), "Python 3.5 and up is required"
@@ -71,7 +74,8 @@ def start(argv=None, db_kwargs={}):
         log.i("\n{}".format(utils.os_info()))
         if args.gen_config:
             config.config.save_default()
-            log.i("Generated example configuration file at {}".format(io_cmd.CoreFS(constants.config_example_path).path), stdout=True)
+            log.i("Generated example configuration file at {}".format(
+                io_cmd.CoreFS(constants.config_example_path).path), stdout=True)
             return
 
         update_state = check_update()

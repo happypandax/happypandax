@@ -229,9 +229,9 @@ def init_views(flask_app, socketio_app):
     def app_base(path):
         try:
             return render_template('base.html',
-                               dev=constants.dev,
-                               same_machine=is_same_machine(),
-                               version=".".join(str(x) for x in constants.version_web))
-        except:
+                                   dev=constants.dev,
+                                   same_machine=is_same_machine(),
+                                   version=".".join(str(x) for x in constants.version_web))
+        except BaseException:
             log.exception("Unknown exception occurred in views")
             # todo: redirect to error page?
