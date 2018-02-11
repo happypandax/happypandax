@@ -17,6 +17,15 @@ dev_options = dict(
 env_python = r".\env\Scripts\python" if sys.platform.startswith("win") else "./env/bin/python"
 
 changes = """
+- implemented page list in webclient
+- fix high memory consumption in conversion script
+- auto install updates
+- fix symlinks being resolved
+- add option to delete target db in conversion script
+- fixed misc issues
+
+From previous builds:
+
 - delete temp folder on shutdown
 - implemented infinite scrolling in webclient
 - added e-hentai tag definitions
@@ -25,16 +34,6 @@ changes = """
 - fixed issue in conversion script regarding archives with subfolders
 - fixed connection issues in webclient
 
-From previous builds:
-
-- added 'sort_by' and 'sort_desc' parameters to search_tags and search_item api functions
-- added new default sortindexes ArtistName, NamespaceTagNamespace and NamespaceTagTag
-- implement ordering by multiple columns
-- handle 'address in use' error properly
-- webclient enhancement
-- misc. bugfixes
-- updated various libs, most notably SQLAlchemy==1.2.1 and Pillow==5.0.0
-- update docs
 """
 
 
