@@ -93,7 +93,10 @@ def notif(msg, header="", level="info", icon=None, **kwargs):
         "customFields": {
             "content": msg,
             "header": header,
-            "mskwargs": {level: True, "icon": icon}
+            "mskwargs": {level: True, 
+                         "icon": icon,
+                         "style": {"whiteSpace": "pre-wrap"}
+                         }
         },
         "timeout": _timeout
     })
@@ -113,7 +116,15 @@ __pragma__("tconv")
 def server_notifications(data=js_undefined, error=None):
     if data is not js_undefined and not error:
         if data:
-            this.setState({'server_push_msg': data, 'server_push': True})
+            if data.actions:
+                this.setState({'server_push_msg': data, 'server_push': True})
+            else:
+                tmout = 20000
+                ic = "info"
+                if data['id'] in [1,]:
+                    tmout = tmout * 2
+                    ic = "angle double up"
+                this.notif(data['body'], data['title'], icon=ic, timeout=tmout)
     elif error:
         this.notif("Failed to retrieve server notification", level="warning")
     else:

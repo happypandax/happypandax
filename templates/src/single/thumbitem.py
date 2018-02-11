@@ -61,8 +61,18 @@ def thumbnail_set_thumb(cmd):
         im = val['data']
     if not im:
         im = "/static/img/no-image.png"
-    this.setState({'img': im, 'loading': False, 'active_cmd': None})
+    if this.is_mounted:
+        this.setState({'img': im, 'loading': False, 'active_cmd': None})
 
+
+def thumbnail_did_mount():
+    this.is_mounted = True
+    if not this.props.img:
+        this.get_thumb()
+def thumbnail_will_unmount():
+    this.is_mounted = False
+    if this.state.active_cmd:
+        this.state.active_cmd.stop()
 
 def thumbnail_render():
     img_url = this.state.placeholder
@@ -109,8 +119,10 @@ def thumbnail_render():
 Thumbnail = createReactClass({
     'displayName': 'Thumbnail',
 
+    'is_mounted': False,
+
     'getInitialState': lambda: {'img': this.props.img or "",
-                                'loading': false if this.props.img else True,
+                                'loading': False if this.props.img else True,
                                 'placeholder': this.props.placeholder if utils.defined(this.props.placeholder) else "/static/img/default.png",
                                 'active_cmd': None,
                                 },
@@ -119,8 +131,8 @@ Thumbnail = createReactClass({
 
     'set_thumb': thumbnail_set_thumb,
 
-    'componentDidMount': lambda: this.get_thumb() if not this.props.img else None,
-    'componentWillUnmount': lambda: this.state.active_cmd.stop if this.state.active_cmd else None,
+    'componentDidMount': thumbnail_did_mount,
+    'componentWillUnmount': thumbnail_will_unmount,
     'componentDidUpdate': thumbnail_on_update,
 
     'render': thumbnail_render

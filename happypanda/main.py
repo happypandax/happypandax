@@ -8,8 +8,10 @@ if __package__ is None and not hasattr(sys, 'frozen'):
 
 # OS X: fix the working directory when running a mac app
 # OS X: files are in [app]/Contents/MacOS/
-if sys.platform.startswith('darwin') and hasattr(sys, 'frozen'):
+# WIN: fix working directoy when added to start at boot
+if hasattr(sys, 'frozen'):
     os.chdir(os.path.abspath(os.path.dirname(sys.executable)))
+
 
 from gevent import monkey  # noqa: E402
 if __name__ == '__main__':

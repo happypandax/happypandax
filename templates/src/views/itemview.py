@@ -462,3 +462,29 @@ ItemView = createReactClass({
 
     'render': item_view_render
 })
+
+
+def simpleview_render():
+    return e("div",
+            this.props.children,
+             e(ui.Visibility,
+               e(ui.Segment,
+                e(ui.Loader, active=this.props.loading),
+                basic=True,
+                 ),
+                onTopVisible=this.props.on_load_more,
+                once=False,
+                context=this.props.context or this.state.ref,
+                ),
+             ref=this.get_ref
+             )
+
+SimpleView = createReactClass({
+    'displayName': 'SimpleCardView',
+
+    'getInitialState': lambda: {'ref': None},
+
+    'get_ref': lambda r: this.setState({'ref': r}),
+
+    'render': simpleview_render
+})

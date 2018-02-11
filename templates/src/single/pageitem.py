@@ -25,6 +25,9 @@ def page_on_update(p_props, p_state):
     if p_props.data != this.props.data:
         this.setState({'data': this.props.data, 'id': this.props.data.id if this.props.data else None})
 
+def page_on_click(e):
+    if this.props.onClick:
+        this.props.onClick(e, this.state.data)
 
 def page_render():
     fav = 0
@@ -46,6 +49,8 @@ def page_render():
         link = this.props.link
 
     thumb_kwargs = {}
+    if this.props.onClick:
+        thumb_kwargs['onClick'] = this.on_click
     if this.props.external_viewer:
         thumb_kwargs['onClick'] = this.open_external
     thumb = e(thumbitem.Thumbnail,
@@ -82,6 +87,7 @@ Page = createReactClass({
                                 'item_type': ItemType.Page},
 
     'open_external': open_external,
+    'on_click': page_on_click,
 
     'componentWillMount': lambda: this.setState({'id': this.props.data.id if this.props.data else this.state.data.id if this.state.data else None}),
     'componentDidUpdate': page_on_update,
