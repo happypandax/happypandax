@@ -98,8 +98,11 @@ def is_same_machine():
 
     # IPV6
     # TODO: find a workaround for OSX and linux
-    if constants.is_win:
-        local_adresses.append(socket.gethostbyaddr(socket.gethostname())[2][0])
+    try:
+        if constants.is_win:
+            local_adresses.append(socket.gethostbyaddr(socket.gethostname())[2][0])
+    except:
+        log.exception("Failed to retrieve IPV6 address")
 
     if addr in local_adresses:
         return True
