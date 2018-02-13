@@ -1,6 +1,6 @@
 bcrypt==3.1.3
 gevent==1.2.2
-SQLAlchemy==1.2.1
+SQLAlchemy==1.2.2
 sqlalchemy-utils==0.32.21
 rarfile==3.0
 alembic==0.9.6
