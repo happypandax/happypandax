@@ -107,6 +107,8 @@ image_sizes = {
     "small": (100, 136),
 }
 
+translations = None # dict of available translation files
+
 # PLUGIN
 
 core_plugin = None

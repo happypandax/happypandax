@@ -252,6 +252,19 @@ def page_render():
         n_url = utils.build_url(query={'gid': gid, "number": int(number) + 1})
     p_url = utils.build_url(query={'gid': gid, "number": int(number) - 1})
 
+    thumb_style = {}
+    thumb_class = ''
+    if this.state.cfg_stretch:
+        if this.state.cfg_scaling == ReaderScaling.fit_width:
+            thumb_class = 'reader-fitwidth-stretch'
+        elif this.state.cfg_scaling == ReaderScaling.fit_height:
+            thumb_class = 'reader-fitheight-stretch'
+    else:
+        if this.state.cfg_scaling == ReaderScaling.fit_width:
+            thumb_class = 'reader-fitwidth'
+        elif this.state.cfg_scaling == ReaderScaling.fit_height:
+            thumb_class = 'reader-fitheight'
+
     thumb = e(thumbitem.Thumbnail,
               img=img,
               item_id=p_id,
@@ -295,19 +308,6 @@ def page_render():
         {'key': 2, 'text': tr(this, "", 'Fit Width'), 'value': ReaderScaling.fit_width},
         {'key': 3, 'text': tr(this, "", 'Fit Height'), 'value': ReaderScaling.fit_height},
     ]
-
-    thumb_style = {}
-    thumb_class = ''
-    if this.state.cfg_stretch:
-        if this.state.cfg_scaling == ReaderScaling.fit_width:
-            thumb_class = 'reader-fitwidth-stretch'
-        elif this.state.cfg_scaling == ReaderScaling.fit_height:
-            thumb_class = 'reader-fitheight-stretch'
-    else:
-        if this.state.cfg_scaling == ReaderScaling.fit_width:
-            thumb_class = 'reader-fitwidth'
-        elif this.state.cfg_scaling == ReaderScaling.fit_height:
-            thumb_class = 'reader-fitheight'
 
     set_page = this.set_page
     return e(ui.Sidebar.Pushable,

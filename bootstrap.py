@@ -71,13 +71,7 @@ def question(question, default="yes"):
 
 
 def is_tool(name):
-    try:
-        devnull = open(os.devnull)
-        subprocess.Popen([name], stdout=devnull, stderr=devnull).communicate()
-    except OSError as e:
-        if e.errno == os.errno.ENOENT:
-            return False
-    return True
+    return shutil.which(name)
 
 
 def is_installed(cmd):
@@ -379,6 +373,10 @@ def deploy(args, unknown=None):
 
     from happypanda.common import constants
     from happypanda.core import updater
+
+    args.client = True
+    build(args, ["--prod"])
+    run([is_tool(is_installed("npm")), "run", "build"])
 
     if constants.is_osx:
         os_name = "osx"
