@@ -216,12 +216,12 @@ def translate(t_id: str, locale: str = None, default: str = None, placeholder: s
     kwargs = {}
     trs = default
 
+    kwargs["locale"] = helpers._get_locale(locale).lower()
+
     if placeholder:
         kwargs.update(placeholder),
     if count is not None:
         kwargs["count"] = count
-    if locale:
-        kwargs["locale"] = locale.lower()
     if default:
         kwargs["default"] = default
 
@@ -276,8 +276,8 @@ def get_sort_indexes(item_type: enums.ItemType=None, translate: bool=True, local
         for idx, name in db_sort.run(db_model, name=True).items():
             if translate:
                 try:
-                    name = i18n.t("general.sort-idx-{}".format(idx), default=name)
-                except BaseException:
+                    name = i18n.t("general.sort-idx-{}".format(idx), default=name, locale=helpers._get_locale(locale))
+                except Exception:
                     pass
             sort_indexes.append({
                 'index': int(idx),

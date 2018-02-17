@@ -2,15 +2,13 @@ from src import utils
 
 from src.client import client, log
 
-current_locale = "en_us"
-
 _translations_d = {}
 
 
 def add_translation(ctx, data, err):
-    _translations_d.setdefault(current_locale, {})
+    _translations_d.setdefault(ctx['locale'], {})
     if not err:
-        _translations_d[current_locale][ctx['t_id']] = {'text': data,
+        _translations_d[ctx['locale']][ctx['t_id']] = {'text': data,
                                                         'placeholder': ctx['placeholder'],
                                                         'count': ctx['count'],
                                                         }
@@ -30,8 +28,9 @@ __pragma__("iconv")
 def tr(that, t_id, default_txt, placeholder=None, count=None):
     t_txt = None
     if t_id:
-        t_txt = _translations_d.get(current_locale, {}).get(t_id)
-
+        curr_locale = utils.storage.get("locale", "unknown")
+        if curr_locale:
+            t_txt = _translations_d.get(curr_locale, {}).get(t_id)
     if t_id and t_txt and (placeholder is not None or count is not None):
         same = True
         if t_txt['count'] != count:
@@ -56,10 +55,11 @@ def tr(that, t_id, default_txt, placeholder=None, count=None):
             t_txt = None
 
     if t_txt is None and t_id:
-        fargs = {"t_id": t_id, "locale": current_locale, "default": default_txt, "count": count}
+        fargs = {"t_id": t_id, "default": default_txt, "count": count}
         ctx = {'t_id': t_id,
                'placeholder': placeholder,
                'count': count,
+               'locale': curr_locale,
                }
 
         if placeholder:

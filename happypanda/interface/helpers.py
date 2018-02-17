@@ -1,4 +1,4 @@
-from happypanda.common import utils, exceptions, hlogger
+from happypanda.common import utils, exceptions, hlogger, config
 from happypanda.core import db
 from happypanda.interface import enums
 from happypanda.core.commands import database_cmd
@@ -43,3 +43,8 @@ def _sort_helper(sort_by, sort_desc, db_model):
             order_exp = tuple(db.desc_expr(x) for x in order_exp)
 
     return order_exp, group_exp, join_exp
+
+def _get_locale(locale=None):
+    if locale:
+        return locale
+    return config.translation_locale.value

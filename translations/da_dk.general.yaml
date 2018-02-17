@@ -1,2 +1,28 @@
 # This id is required
 locale: Dansk (Danmark)
+
+# very useful for updating
+version: 1
+
+# Database
+db-item-gallery: Galleri
+db-item-collection: Kollektion
+
+db-status-ongoing: Igangværende
+db-status-completed: Afsluttet
+db_status-unknown: Ukendt
+
+# Sort
+sort-idx-1: Tilfældig
+sort-idx-2: Titel
+sort-idx-3: Artist
+sort-idx-4: Dato Tilføjet
+sort-idx-5: Dato Offentliggjort
+sort-idx-6: Sidst Læst
+sort-idx-7: Sidst Opdateret
+sort-idx-8: Bedømmelse
+sort-idx-9: Antal Læsninger
+sort-idx-10: Sideantal
+sort-idx-20: Navn
+sort-idx-30: Namespace
+sort-idx-31: Tag

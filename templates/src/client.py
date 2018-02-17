@@ -183,6 +183,8 @@ class Client(Base):
         if self.polling:
             self.reconnect()
             self.call_func("get_config", self._set_debug, cfg={'core.debug': False})
+            self.call_func("get_locales", self._set_locales)
+
         if len(self._msg_queue):
             while len(self._msg_queue):
                 self.socket.emit("server_call", self._msg_queue.pop(0))
@@ -333,8 +335,20 @@ class Client(Base):
         if err:
             state.app.notif(err['msg'], "Server({})".format(err['code']), "error")
 
+    def set_locale(self, l):
+        a, b = l.split('_')
+        l = "{}-{}".format(a, b.upper())
+        utils.moment.locale(l)
+
     def _set_debug(self, data):
         state.debug = data['core.debug']
+
+    def _set_locales(self, data):
+        state.locales = data
+        l = utils.storage.get("locale", False)
+        if l:
+            self.set_locale(l)
+            self.call_func("set_config", None, cfg={'client.translation_locale': l})
 
 
 client = Client()

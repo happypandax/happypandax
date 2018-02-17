@@ -1,6 +1,9 @@
 # This id is required
 locale: English (United States)
 
+# very useful for updating
+version: 1
+
 # Database
 db-item-gallery: Gallery
 db-item-collection: Collection

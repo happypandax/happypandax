@@ -188,8 +188,8 @@ def itemdropdown_change(e, d):
 def itemdropdown_render():
     props = this.props
     item_options = [
-        {'text': "Collection", 'value': ItemType.Collection},
-        {'text': "Gallery", 'value': ItemType.Gallery},
+        {'text': tr(this, "general.db-item-collection", "Collection"), 'value': ItemType.Collection},
+        {'text': tr(this, "general.db-item-gallery", "Gallery"), 'value': ItemType.Gallery},
     ]
     return e(ui.Dropdown, placeholder="Item Type", selection=True, options=item_options, item=True,
              defaultValue=ItemType.Gallery if props.value == ItemType.Grouping else props.value, onChange=this.item_change)

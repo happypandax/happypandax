@@ -1,5 +1,6 @@
 
 __pragma__('alias', 'as_', 'as')
+from src import utils
 from src.react_utils import (h, e,
                              render,
                              React,
@@ -20,8 +21,26 @@ def pref_general(props):
     cfg = props.cfg
     u_cfg = props.u_cfg
     items = []
-    if defined(cfg.gallery):
+    if defined(cfg.client):
+        __pragma__('tconv')
+        __pragma__('jsiter')
+        if state.locales:
+            locale_options = []
+            for l in state.locales:
+                locale_options.append({'key': l, 'value': l, 'text': state.locales[l]['locale']})
+            items.append(e(ui.Form.Select,
+                                options=locale_options,
+                                defaultValue=cfg.client.translation_locale,
+                                label=tr(props.tab, "", "Language"),
+                                onChange=lambda e, d: all((utils.storage.set("locale", d.value),
+                                                           props.upd("client.translation_locale", d.value),
+                                                           client.set_locale(d.value))),
+                            ))
+        __pragma__('nojsiter')
+        __pragma__('notconv')
 
+
+    if defined(cfg.gallery):
         if defined(cfg.gallery.external_image_viewer):
             items.append(e(ui.Header, tr(props.tab, "", "External Viewer"), size="small", dividing=True))
 

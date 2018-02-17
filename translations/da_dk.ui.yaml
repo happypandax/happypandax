@@ -1,8 +1,47 @@
+################################################################
+
+#  Prefixes:
+#   - mi == menu item text  
+#   - h == header text
+#   - de == description text
+#   - t == normal text
+#   - b == button text
+################################################################
+
 # Menu Item
-mi-dashboard: Hjem
+mi-dashboard: Dashboard
 mi-favorites: Favoritter
 mi-library: Bibliotek
+mi-directory: Mappe
 mi-inbox: Indbakke
-mi-downloads: Indhentninger
+mi-downloads: Hentninger
 mi-preferences: Præferencer
+mi-pref-general: Generel
+mi-pref-logins: Logins
+mi-pref-metadata: Metadata
+mi-pref-download: Hent
+mi-pref-monitoring: Overvågning
+mi-pref-ignore: Ignorer
+mi-pref-client: Client
+mi-pref-server: Server
 mi-about: Om
+mi-about-plugins: Tilføjelser
+mi-about-stats: Statistik
+mi-about-help: Hjælp
+mi-about-bug: Afmeld fejl
+mi-about-info: Info
+
+# API Page
+h-server-comm: Server Kommunikation
+t-server-comm-tutorial: |-
+    Typer oversættelser:
+        "tekst" -> string
+        1234 -> number
+        true -> bool
+        [1, "tekst"] -> array
+        {3:"val1", "key1":1} -> object
+
+    Notér: hvis alt fejler er typen string som standard
+
+# Misc
+t-showing-count: Viser %{from}-%{to} af %{all}

@@ -6,5 +6,6 @@ state = {
     'debug': True,
     'new_update': False,
     'active': True,  # current page is active
-    'connected': True
+    'connected': True,
+    'locales': {}, # locales from server
 }

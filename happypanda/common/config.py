@@ -73,13 +73,13 @@ class ConfigNode:
 
     @property
     def value(self):
-        with self._cfg.tmp_config(self.namespace, self._get_ctx_config().get(self._cfg.format_namespace(self.namespace))):
+        with self._cfg.tmp_config(self.namespace, self._get_ctx_config()):
             return self.get(self.namespace, self.name, default=self.default, create=False, type_=self.type_)
 
     @value.setter
     def value(self, new_value):
         if self.isolation == ConfigIsolation.client:
-            with self._cfg.tmp_config(self.namespace, self._get_ctx_config().get(self._cfg.format_namespace(self.namespace))):
+            with self._cfg.tmp_config(self.namespace, self._get_ctx_config()):
                 self._cfg.update(self.name, new_value, create=self.hidden)
         else:
             with self._cfg.namespace(self.namespace):
@@ -245,19 +245,20 @@ class Config:
             ns = self.format_namespace(ns)
             with self.namespace(ns):
                 tmp = self._current_ns not in self._cfg
-                self._cfg[self._current_ns] = self._cfg[self._current_ns].new_child(cfg)
+                tmp_cfg = cfg.setdefault(ns, {})
+                self._cfg[self._current_ns] = self._cfg[self._current_ns].new_child(tmp_cfg)
                 yield
                 self._cfg[self._current_ns] = self._cfg[self._current_ns].parents
                 if tmp:
                     self._cfg.pop(self._current_ns)
         else:
             tmp_ns = []
-            for ns in cfg:
+            for ns, tmp_cfg in cfg.items():
                 curr_ns = self.format_namespace(ns)
                 if curr_ns not in self._cfg:
                     tmp_ns.append(curr_ns)
                 with self.namespace(curr_ns):
-                    self._cfg[self._current_ns] = self._cfg[self._current_ns].new_child(cfg)
+                    self._cfg[self._current_ns] = self._cfg[self._current_ns].new_child(tmp_cfg)
             yield
             for ns in cfg:
                 with self.namespace(ns):
@@ -594,7 +595,9 @@ with config.namespace(client_ns):
         client_ns,
         "translation_locale",
         "en_us",
-        "The default translation locale when none is specified. See folder /translations for available locales")
+        "The default translation locale when none is specified. See folder /translations for available locales",
+        isolation=ConfigIsolation.client
+        )
 
 gui_ns = "gui"
 
