@@ -61,7 +61,7 @@ def search_render():
                size=this.props.size,
                input=e(ui.Input,
                        fluid=this.props.fluid,
-                       placeholder="Search title, artist, namespace & tags",
+                       placeholder=tr(this, "ui.t-search-main-placeholder", "Search title, artist, namespace & tags"),
                        label=e(ui.Popup,
                                e(SearchOptions,
                                  history=this.props.history,
@@ -290,7 +290,7 @@ def filterdropdown_render():
             item_options.append({'text': d, 'value': this.state.db_items[d]['id'], 'icon': "filter"})
     __pragma__("noiconv")
     return e(ui.Dropdown,
-             placeholder="Filter",
+             placeholder=tr(this, "ui.t-filterdropdown-placeholder", "Filter"),
              selection=True, item=True,
              options=item_options,
              search=True,

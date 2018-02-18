@@ -13,7 +13,8 @@ from src.single import (galleryitem, pageitem, groupingitem, collectionitem)
 from src import utils
 
 
-def ItemViewConfig(props):
+def Itemviewvonfig_render():
+    props = this.props
     cfg_suffix = props.suffix or ""
     infinite_scroll_cfg = "infinite_scroll"
     item_count_cfg = "item_count"
@@ -41,7 +42,7 @@ def ItemViewConfig(props):
     if utils.is_same_machine():
         ext_viewer_el.append(e(ui.Form.Field,
                                control=ui.Checkbox,
-                               label="Open in external viewer", toggle=True,
+                               label=tr(this, "ui.t-open-external-viewer", "Open in external viewer"), toggle=True,
                                defaultChecked=utils.storage.get(external_viewer_cfg + cfg_suffix, False),
                                onChange=lambda e, d: all((props.on_external_viewer(e, d),
                                                           utils.storage.set(external_viewer_cfg + cfg_suffix, d.checked))),
@@ -52,7 +53,7 @@ def ItemViewConfig(props):
         grp_gallery_el.append(
             e(ui.Form.Field,
               control=ui.Checkbox,
-              label="Group galleries", toggle=True,
+              label=tr(this, "ui.group-galleries", "Group galleries"), toggle=True,
               defaultChecked=utils.storage.get(group_gallery_cfg + cfg_suffix, False),
               onChange=lambda e, d: all((props.on_group_gallery(e, d),
                                          utils.storage.set(group_gallery_cfg + cfg_suffix, d.checked))),
@@ -61,7 +62,7 @@ def ItemViewConfig(props):
     return e(ui.Sidebar,
              e(ui.Form,
                *grp_gallery_el,
-               e(ui.Form.Field, control=ui.Checkbox, label="Infinite Scroll", toggle=True,
+               e(ui.Form.Field, control=ui.Checkbox, label=tr(this, "ui.t-infinite-scroll", "Infinite Scroll"), toggle=True,
                  defaultChecked=utils.storage.get(infinite_scroll_cfg + cfg_suffix, False),
                  onChange=lambda e, d: all(
                      (props.on_infinite_scroll(
@@ -69,14 +70,14 @@ def ItemViewConfig(props):
                          infinite_scroll_cfg + cfg_suffix, d.checked))),
                  ),
                  *ext_viewer_el,
-                 e(ui.Form.Select, options=item_count_options, label="Items per page", inline=True,
+                 e(ui.Form.Select, options=item_count_options, label=tr(this, "ui.t-items-per-page", "Items per page"), inline=True,
                    defaultValue=utils.storage.get(item_count_cfg + cfg_suffix, props.default_item_count or 30),
                    onChange=lambda e, d: all(
                        (props.on_item_count(
                            e, d), utils.storage.set(
                            item_count_cfg + cfg_suffix, d.value))),
                    ),
-                 e(ui.Form.Field, "Close", control=ui.Button),
+                 e(ui.Form.Field, tr(this, "ui.b-close", "Close"), control=ui.Button),
                  onSubmit=props.on_close,
                ),
              as_=ui.Segment,
@@ -86,6 +87,11 @@ def ItemViewConfig(props):
              direction="right",
              animation="push",
              )
+
+ItemViewConfig = createReactClass({
+    'displayName': 'ItemViewConfig',
+    'render': Itemviewvonfig_render
+})
 
 
 def itemviewbase_render():

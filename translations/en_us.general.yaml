@@ -2,7 +2,7 @@
 locale: English (United States)
 
 # very useful for updating
-version: 1
+_version_: 1
 
 # Database
 db-item-gallery: Gallery

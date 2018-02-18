@@ -140,10 +140,10 @@ def page_render():
     inbox = False
     trash = False
     read_count = 0
-    date_pub = "Unknown"
-    date_upd = "Unknown"
-    date_read = "Unknown"
-    date_added = "Unknown"
+    date_pub = tr(this, "ui.t-unknown", "Unknown")
+    date_upd = tr(this, "ui.t-unknown", "Unknown")
+    date_read = tr(this, "ui.t-unknown", "Unknown")
+    date_added = tr(this, "ui.t-unknown", "Unknown")
     urls = []
     parodies = []
     circles = []
@@ -187,54 +187,54 @@ def page_render():
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, info, as_="h5"), colSpan="2")))
     rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, "Artist(s):", as_="h5"), collapsing=True),
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-multi-artists", "Artist(s)")+':', as_="h5"), collapsing=True),
                   e(ui.Table.Cell, *(e(artistitem.ArtistLabel, data=x) for x in artists))))
     if circles:
         rows.append(e(ui.Table.Row,
-                      e(ui.Table.Cell, e(ui.Header, "Circle(s):", as_="h5"), collapsing=True),
+                      e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-multi-circles", "Circle(s)")+':', as_="h5"), collapsing=True),
                       e(ui.Table.Cell, *(e("span", x.js_name) for x in circles))))
     if parodies:
         rows.append(e(ui.Table.Row,
-                      e(ui.Table.Cell, e(ui.Header, "Parody:", as_="h5"), collapsing=True),
+                      e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-parody", "Parody")+':', as_="h5"), collapsing=True),
                       e(ui.Table.Cell,)))
     rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, "Language:", as_="h5"), collapsing=True),
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-language", "Language")+':', as_="h5"), collapsing=True),
                   e(ui.Table.Cell, this.state.lang_data.js_name)))
     rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, "Status:", as_="h5"), collapsing=True),
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-status", "Status")+':', as_="h5"), collapsing=True),
                   e(ui.Table.Cell, e(ui.Label, tr(this, "general.db-status-{}".format(status.lower()), status), color={"completed": "green", "ongoing": "orange", "unknown": "grey"}.get(status.lower(), "blue")))))
     rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, "Published:", as_="h5"), collapsing=True),
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-published", "Published")+':', as_="h5"), collapsing=True),
                   e(ui.Table.Cell, e(ui.Label, date_pub))))
     rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, "Times read:", as_="h5"), collapsing=True),
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-times-read", "Times read")+':', as_="h5"), collapsing=True),
                   e(ui.Table.Cell, e(ui.Label, read_count, circular=True))))
     rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, "Rating:", as_="h5"), collapsing=True),
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-rating", "Rating")+':', as_="h5"), collapsing=True),
                   e(ui.Table.Cell, e(ui.Rating, icon="star", rating=rating, maxRating=10, size="huge", clearable=True))))
 
     rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, "Tags:", as_="h5"), collapsing=True),
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-tags", "Tags")+':', as_="h5"), collapsing=True),
                   e(ui.Table.Cell, e(tagview.TagView, item_id=item_id, item_type=this.state.item_type))))
 
     rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, "URL(s):", as_="h5"), collapsing=True),
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-multi-urls", "URL(s)")+':', as_="h5"), collapsing=True),
                   e(ui.Table.Cell, e(ui.List, *[e(ui.List.Item, h("span", h("a", x, href=x, target="_blank"), e(ui.List.Icon, js_name="external share"))) for x in urls]))))
 
     indicators = []
 
     if inbox:
-        indicators.append(e(ui.Icon, js_name="inbox", size="big", title="This gallery is in your inbox"))
+        indicators.append(e(ui.Icon, js_name="inbox", size="big", title=tr(this, "ui.t-inboxed-gallery", "This gallery is in your inbox")))
 
     if trash:
         indicators.append(e(ui.Icon, js_name="trash", color="red", size="big",
-                            title="This gallery is set to be deleted"))
+                            title=tr(this, "ui.t-trashed-gallery", "This gallery is set to be deleted")))
 
     buttons = []
     external_view = []
     if utils.is_same_machine():
         external_view.append(e(ui.Button, icon="external", toggle=True, active=this.state.external_viewer,
-                               title="Open in external viewer", onClick=this.toggle_external_viewer))
+                               title=tr(this, "ui.t-open-external-viewer", "Open in external viewer"), onClick=this.toggle_external_viewer))
 
     if this.state.external_viewer:
         read_btn = {'onClick': this.open_external}
@@ -246,7 +246,7 @@ def page_render():
         e(ui.Grid.Row,
           e(ui.Grid.Column,
             e(ui.Button.Group,
-              e(ui.Button, e(ui.Icon, js_name="history"), "Save for later"),
+              e(ui.Button, e(ui.Icon, js_name="bookmark outline"), tr(this, "ui.b-save-later", "Save for later")),
               e(ui.Button.Or, text="or"),
               e(ui.Button, "Read", primary=True, **read_btn),
               *external_view,
@@ -262,7 +262,7 @@ def page_render():
             e(ui.Grid.Row,
               e(ui.Grid.Column,
                 e(ui.Button,
-                    e(ui.Icon, js_name="grid layout"), "Send to Library", color="green"),
+                    e(ui.Icon, js_name="grid layout"), tr(this, "ui.b-send-library", "Send to Library"), color="green"),
                 textAlign="center",
                 ),
               centered=True,
@@ -299,7 +299,7 @@ def page_render():
           e(ui.Grid.Column,
             e(ui.Button,
               e(ui.Icon, js_name="trash" if not trash else "reply"),
-              "Send to Trash" if not trash else "Restore",
+              tr(this, "ui.b-send-trash", "Send to Trash") if not trash else tr(this, "ui.b-restore", "Restore"),
               color="red" if not trash else "grey"),
             textAlign="center",
             ),
@@ -313,11 +313,11 @@ def page_render():
               e(ui.Grid.Column,
                 e(ui.Button.Group,
                   e(ui.Button,
-                    e(ui.Icon, js_name="close"), "Delete", color="red"),
+                    e(ui.Icon, js_name="close"), tr(this, "ui.b-delete", "Delete"), color="red"),
                   e(ui.Button, icon="remove circle outline", toggle=True, active=this.state.delete_files,
-                    title="Delete files"),
+                    title=tr(this, "ui.t-delete-files", "Delete files")),
                   e(ui.Button, icon="recycle", toggle=True, active=this.state.send_to_recycle,
-                    title="Send files to Recycle Bin")
+                    title=tr(this, "ui.t-send-recycle-bin", "Send files to Recycle Bin"))
                   ),
                 textAlign="center",
                 ),
@@ -379,9 +379,9 @@ def page_render():
                  basic=True,
                ),
              e(ui.Grid.Row,
-                 e(ui.Grid.Column, e(ui.Label, "Date added", e(ui.Label.Detail, date_added))),
-                 e(ui.Grid.Column, e(ui.Label, "Last read", e(ui.Label.Detail, date_read))),
-                 e(ui.Grid.Column, e(ui.Label, "Last updated", e(ui.Label.Detail, date_upd))),
+                 e(ui.Grid.Column, e(ui.Label, tr(this, "ui.t-date-added", "Date added"), e(ui.Label.Detail, date_added))),
+                 e(ui.Grid.Column, e(ui.Label, tr(this, "ui.t-last-read", "Last read"), e(ui.Label.Detail, date_read))),
+                 e(ui.Grid.Column, e(ui.Label, tr(this, "ui.t-last-updated", "Last updated"), e(ui.Label.Detail, date_upd))),
                  columns=3
                ),
              e(ui.Grid.Row, e(ui.Grid.Column,
@@ -389,7 +389,7 @@ def page_render():
                                 loading=this.state.loading_group,
                                 secondary=True,
                                 sildesToShow=4,
-                                label="Series"),
+                                label=tr(this, "ui.t-series", "Series")),
                               )),
              e(ui.Grid.Row, e(ui.Grid.Column, e(itemview.ItemView,
                                                 history=this.props.history,
@@ -398,7 +398,7 @@ def page_render():
                                                 item_type=ItemType.Gallery,
                                                 related_type=ItemType.Page,
                                                 view_filter=None,
-                                                label="Pages",
+                                                label=tr(this, "ui.t-pages", "Pages"),
                                                 config_suffix="gallerypage",
                                                 toggle_config=this.toggle_pages_config,
                                                 visible_config=this.state.visible_page_cfg,
@@ -447,7 +447,7 @@ Page = createReactClass({
     'toggle_pages_config': lambda a: this.setState({'visible_page_cfg': not this.state.visible_page_cfg}),
     'toggle_external_viewer': toggle_external_viewer,
 
-    'componentWillMount': lambda: all((this.props.menu([e(ui.Menu.Menu, e(ui.Menu.Item, e(ui.Icon, js_name="edit"), "Edit"), position="right")]),
+    'componentWillMount': lambda: all((this.props.menu([e(ui.Menu.Menu, e(ui.Menu.Item, e(ui.Icon, js_name="edit"), tr(this, "ui.b-edit", "Edit")), position="right")]),
                                        (this.get_item() if not this.state.data else None),
                                        this.get_config(),
                                        )),

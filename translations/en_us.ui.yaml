@@ -8,6 +8,18 @@
 #	- b == button text
 ################################################################
 
+# very useful for updating
+_version_: 2
+
+# Common
+b-edit: Edit
+b-close: Close
+b-new: New
+b-delete: Delete
+t-unknown: Unknown
+t-bracket-unknown: <Unknown>
+
+
 # Menu Item
 mi-dashboard: Dashboard
 mi-favorites: Favorites
@@ -16,6 +28,29 @@ mi-directory: Directory
 mi-inbox: Inbox
 mi-downloads: Downloads
 mi-preferences: Preferences
+mi-about: About
+
+# About Page
+mi-about-plugins: Plugins
+mi-about-stats: Statistics
+mi-about-help: Help
+mi-about-bug: Report bug
+mi-about-info: Info
+de-about-same-machine: You are currently connected from the same machine
+t-developer: Developer
+t-client-version: Client version
+t-server-version: Server version
+t-database-version: Database version
+t-torrent-version: Torrent Client version
+b-checking-update: Checking for new update
+b-new-update: A new update is available!
+b-check-update: Check for updates
+b-github-repo: Github Repo
+b-support-patreon: Support on patreon
+b-restart: Restart
+b-shutdown: Shutdown
+
+# Preferences Page
 mi-pref-general: General
 mi-pref-logins: Logins
 mi-pref-metadata: Metadata
@@ -24,12 +59,41 @@ mi-pref-monitoring: Monitoring
 mi-pref-ignore: Ignore
 mi-pref-client: Client
 mi-pref-server: Server
-mi-about: About
-mi-about-plugins: Plugins
-mi-about-stats: Statistics
-mi-about-help: Help
-mi-about-bug: Report bug
-mi-about-info: Info
+mi-pref-advanced: Advanced
+
+de-pref-disabled: Disabled because this client is connecting from a different device
+t-language: Language
+t-help-translate: Not satisfied with the translation? Consider helping out! See Github repo for more information
+t-untranslated-text: Show untranslated text
+t-translation-id-error: Error on invalid translation ID
+h-external-viewer: External Viewer
+t-external-viewer-ph: path/to/executable
+t-external-image-viewer: External Image Viewer
+t-external-image-viewer-args: External Image Viewer Arguments
+t-external-send-first-file: Send path to first file in folder/archive
+t-args-ex: "Example: -a -X --force"
+h-search: Search
+t-search-regex: Allow regex in search filters
+t-search-case-sensitive: Search filter is case sensitive
+t-search-whole-words: Match terms exact
+t-search-match-all: Match only items that has all terms
+t-search-children: Also match on children
+h-updates: Updates
+t-check-for-update: Regularly check for new releases
+t-update-interval: Interval in minutes between checking for a new release, set 0 to only check once every startup
+t-update-beta: Allow downloading beta releases
+t-update-alpha: Allow downloading alpha releases
+h-server: Server
+t-server-name: Server Name
+t-server-name-ph: Mom's basement
+t-server-host: Server Host
+t-server-port: Server Port
+h-webclient: Web Client
+t-webclient-host: Web Client Host
+t-webclient-port: Web Client Port
+t-run-in-debug: Run in debug mode
+t-send-critical-error: Send occurring critical errors to me (creator) so I can fix them faster (contains no sensitive information)
+t-path-to-unrar: Path to UNRAR tool
 
 # API Page
 h-server-comm: Server Communication
@@ -43,5 +107,65 @@ t-server-comm-tutorial: |-
 
     Note: if all fails, defaults to string
 
+# Directory Page
+mi-dir-tags: Tags
+mi-dir-artists: Artists
+mi-dir-circles: Circles
+mi-dir-categories: Categories
+mi-dir-Parodies: Parodies
+mi-dir-languages: Languages
+mi-dir-status: Status
+t-search-tags-placeholder: Search tags
+t-search-artists-placeholder: Search artists
+t-search-parodies-placeholder: Search parodies
+t-total-tags: Total Tags
+t-total-artists: Total Artists
+t-total-parodies: Total Parodies
+
+# Gallery Page
+t-multi-artists: Artist(s)
+t-multi-circles: Circle(s)
+t-parody: Parody
+t-status: Status
+t-published: Published
+t-times-read: Times read
+t-rating: Rating
+t-tags: Tags
+t-multi-urls: URL(s)
+t-inboxed-gallery: This gallery is in your inbox
+t-trashed-gallery: This gallery is set to be deleted
+b-restore: Restore
+t-delete-files: Delete files
+t-send-recycle-bin: Send files to Recycle Bin
+t-date-added: Date added
+t-last-read: Last read
+t-last-updated: Last updated
+t-series: Series
+t-pages: Pages
+
+# Item
+b-read: Read
+b-save-later: Save for later
+b-send-library: Send to Library
+b-add-to-filter: Add to filter
+b-add-to-collection: Add to collection
+b-add-to-series: Add to series
+b-send-trash: Send to Trash
+
+# Artist View
+t-galleries: Galleries
+t-show-galleries: Show galleries
+t-show-fav-galleries: Show favorite galleries
+t-show-inbox-galleries: Show galleries in inbox
+t-most-common-tags: Most common tags
+
+# Sidebar Options
+t-open-external-viewer: Open in external viewer
+t-infinite-scroll: Infinite Scroll
+t-group-galleries: Group galleries
+t-items-per-page: Items per page
+
 # Misc
 t-showing-count: Showing %{from}-%{to} of %{all}
+t-search-main-placeholder: Search title, artist, namespace & tags
+t-filterdropdown-placeholder: Filter

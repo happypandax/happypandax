@@ -87,10 +87,10 @@ def gallery_render():
                        active=this.state.dimmer,
                        content=e(ui.Responsive,
                                  e(ui.List,
-                                   e(ui.List.Item, e(ui.Button, tr(this, "", "Read"),
+                                   e(ui.List.Item, e(ui.Button, tr(this, "ui.b-read", "Read"),
                                                      primary=True, size="tiny", **read_button_args)),
-                                   e(ui.List.Item, e(ui.Button, e(ui.Icon, js_name="history"), tr(this, "", "Save for later"), size="tiny") if not inbox else
-                                     e(ui.Button, e(ui.Icon, js_name="grid layout"), tr(this, "", "Send to library"), color="green", size="tiny")),
+                                   e(ui.List.Item, e(ui.Button, e(ui.Icon, js_name="bookmark outline"), tr(this, "ui.b-save-later", "Save for later"), size="tiny") if not inbox else
+                                     e(ui.Button, e(ui.Icon, js_name="grid layout"), tr(this, "ui.b-send-library", "Send to library"), color="green", size="tiny")),
                                    ),
                                  minWidth=1000,
                                  ),
@@ -101,14 +101,14 @@ def gallery_render():
                                    'search': utils.query_to_string({'id': item_id})})
 
     menu_options = []
-    menu_options.append(e(ui.List.Item, content="Read", **read_button_args))
-    menu_options.append(e(ui.List.Item, content="Save for later", icon="history"))
+    menu_options.append(e(ui.List.Item, content=tr(this, "ui.b-read", "Read"), **read_button_args))
+    menu_options.append(e(ui.List.Item, content=tr(this, "ui.b-save-later", "Save for later"), icon="bookmark outline"))
     if inbox:
-        menu_options.append(e(ui.List.Item, content="Send to Library", icon="grid layout"))
-    menu_options.append(e(ui.List.Item, content="Add to filter", icon="filter"))
-    menu_options.append(e(ui.List.Item, content="Add to collection", icon="plus square outline"))
-    menu_options.append(e(ui.List.Item, content="Add to series", icon="add square"))
-    menu_options.append(e(ui.List.Item, content="Send to Trash", icon="trash"))
+        menu_options.append(e(ui.List.Item, content=tr(this, "ui.b-send-library", "Send to library"), icon="grid layout"))
+    menu_options.append(e(ui.List.Item, content=tr(this, "ui.b-add-to-filter", "Add to filter"), icon="filter"))
+    menu_options.append(e(ui.List.Item, content=tr(this, "ui.b-add-to-collection", "Add to collection"), icon="plus square outline"))
+    menu_options.append(e(ui.List.Item, content=tr(this, "ui.b-add-to-series", "Add to series"), icon="add square"))
+    menu_options.append(e(ui.List.Item, content=tr(this, "ui.b-send-trash", "Send to Trash"), icon="trash"))
 
     return e(ui.Card,
              e(ui.Dimmer.Dimmable,

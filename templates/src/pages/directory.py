@@ -19,8 +19,8 @@ from src import utils
 __pragma__("tconv")
 
 
-def SimpleLayout(props):
-
+def simplelayout_render():
+    props = this.props
     stats_el = []
     if props.stats:
         stats_el.append(
@@ -76,7 +76,7 @@ def SimpleLayout(props):
                  e(ui.Button, compact=True, basic=True,
                    icon="options", floated="right",
                    ),
-                 e(ui.Button, e(ui.Icon, js_name="plus"), "New", compact=True, disabled=True, basic=True, floated="right",
+                 e(ui.Button, e(ui.Icon, js_name="plus"), tr(this, "ui.b-new", "New"), compact=True, disabled=True, basic=True, floated="right",
                    ),
                  *stats_el,
                  *search_el,
@@ -100,6 +100,11 @@ def SimpleLayout(props):
 
 
 __pragma__("notconv")
+
+SimpleLayout = createReactClass({
+    'displayName': 'SimpleLayout',
+    'render': simplelayout_render
+})
 
 
 def get_db_status(data=None, error=None):
@@ -240,8 +245,9 @@ def parodiespage_render():
 
     items = []
 
+    unk = tr(this, "ui.t-bracket-unknown", "<Unknown>")
     for parody in this.state.data:
-        aname = "<Unknown>"
+        aname = unk
         if parody.names:
             aname = parody.names[0]['name']
         items.append(
@@ -264,10 +270,10 @@ def parodiespage_render():
              search=True,
              search_query=this.state.search_query,
              search_change=this.update_search,
-             search_placeholder=tr(this, "", "Search parodies"),
+             search_placeholder=tr(this, "ui.t-search-parodies-placeholder", "Search parodies"),
              stats=[e(ui.Statistic,
                       e(ui.Statistic.Value, this.state.count),
-                      e(ui.Statistic.Label, tr(this, "", "Total parodies"))
+                      e(ui.Statistic.Label, tr(this, "ui.t-total-parodies", "Total parodies"))
                       )]
              )
 
@@ -441,9 +447,9 @@ __pragma__("tconv")
 def artistpage_render():
 
     items = []
-
+    unk = tr(this, "ui.t-bracket-unknown", "<Unknown>")
     for artist in this.state.data:
-        aname = "<Unknown>"
+        aname = unk
         if artist.names:
             aname = artist.names[0]['name']
         items.append(
@@ -473,10 +479,10 @@ def artistpage_render():
              search=True,
              search_query=this.state.search_query,
              search_change=this.update_search,
-             search_placeholder=tr(this, "", "Search artists"),
+             search_placeholder=tr(this, "ui.t-search-artists-placeholder", "Search artists"),
              stats=[e(ui.Statistic,
                       e(ui.Statistic.Value, this.state.count),
-                      e(ui.Statistic.Label, tr(this, "", "Total artists"))
+                      e(ui.Statistic.Label, tr(this, "ui.t-total-artists", "Total artists"))
                       )]
              )
 
@@ -600,10 +606,10 @@ def tagspage_render():
              search=True,
              search_query=this.state.search_query,
              search_change=this.update_search,
-             search_placeholder=tr(this, "", "Search tags"),
+             search_placeholder=tr(this, "ui.t-search-tags-placeholder", "Search tags"),
              stats=[e(ui.Statistic,
                       e(ui.Statistic.Value, this.state.count),
-                      e(ui.Statistic.Label, tr(this, "", "Total Tags"))
+                      e(ui.Statistic.Label, tr(this, "ui.t-total-tags", "Total Tags"))
                       )]
              )
 
@@ -638,19 +644,19 @@ Page = createReactClass({
     'displayName': 'DirectoryPage',
 
     'componentWillMount': lambda: this.props.menu([
-        e(ui.Menu.Item, js_name=tr(this, "", "Tags"), as_=NavLink,
+        e(ui.Menu.Item, js_name=tr(this, "ui.mi-dir-tags", "Tags"), as_=NavLink,
           to="/directory/tags", activeClassName="active"),
-        e(ui.Menu.Item, js_name=tr(this, "", "Artists"), as_=NavLink,
+        e(ui.Menu.Item, js_name=tr(this, "ui.mi-dir-artists", "Artists"), as_=NavLink,
           to="/directory/artists", activeClassName="active"),
-        e(ui.Menu.Item, js_name=tr(this, "", "Circles"), as_=NavLink,
+        e(ui.Menu.Item, js_name=tr(this, "ui.mi-dir-circles", "Circles"), as_=NavLink,
           to="/directory/circles", activeClassName="active"),
-        e(ui.Menu.Item, js_name=tr(this, "", "Categories"), as_=NavLink,
+        e(ui.Menu.Item, js_name=tr(this, "ui.mi-dir-categories", "Categories"), as_=NavLink,
           to="/directory/categories", activeClassName="active"),
-        e(ui.Menu.Item, js_name=tr(this, "", "Parodies"), as_=NavLink,
+        e(ui.Menu.Item, js_name=tr(this, "ui.mi-dir-Parodies", "Parodies"), as_=NavLink,
           to="/directory/parodies", activeClassName="active"),
-        e(ui.Menu.Item, js_name=tr(this, "", "Languages"), as_=NavLink,
+        e(ui.Menu.Item, js_name=tr(this, "ui.mi-dir-languages", "Languages"), as_=NavLink,
           to="/directory/languages", activeClassName="active"),
-        e(ui.Menu.Item, js_name=tr(this, "", "Status"), as_=NavLink,
+        e(ui.Menu.Item, js_name=tr(this, "ui.mi-dir-status", "Status"), as_=NavLink,
           to="/directory/status", activeClassName="active"),
     ], pointing=True),
 

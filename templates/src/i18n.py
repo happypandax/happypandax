@@ -1,17 +1,21 @@
 from src import utils
 
+from src.state import state
 from src.client import client, log
 
 _translations_d = {}
+_translations_load_state = {}
 
 
 def add_translation(ctx, data, err):
-    _translations_d.setdefault(ctx['locale'], {})
+    _translations_load_state[ctx['hash_id']] = False
     if not err:
-        _translations_d[ctx['locale']][ctx['t_id']] = {'text': data,
+        _translations_d[ctx['hash_id']] = {'text': data,
                                                         'placeholder': ctx['placeholder'],
                                                         'count': ctx['count'],
                                                         }
+    elif not state.translation_id_error:
+        _translations_d[ctx['hash_id']] = {}
 
 
 def add_translation_component(ctx, data, err):
@@ -26,41 +30,28 @@ __pragma__("iconv")
 
 
 def tr(that, t_id, default_txt, placeholder=None, count=None):
+    if state.untranslated_text:
+        default_txt = "<UT>"+default_txt+"</UT>"
     t_txt = None
-    if t_id:
-        curr_locale = utils.storage.get("locale", "unknown")
-        if curr_locale:
-            t_txt = _translations_d.get(curr_locale, {}).get(t_id)
-    if t_id and t_txt and (placeholder is not None or count is not None):
-        same = True
-        if t_txt['count'] != count:
-            same = False
-        p_p = t_txt['placeholder']
-        if p_p and placeholder:
-            if len(p_p) != len(placeholder):
-                same = False
-            if same:
-                for p in placeholder:
-                    if not p in p_p:
-                        same = False
-                        break
-                    if p_p[p] != placeholder[p]:
-                        same = False
-                        break
+    curr_locale = utils.storage.get("locale", "unknown")
+    ctx = {'t_id': t_id,
+            'placeholder': placeholder,
+            'count': count,
+            'locale': curr_locale,
+            }
+    ctx['hash_id'] = utils.stringify(ctx)
 
-        elif txt['placeholder'] != placeholder:
-            same = False
-
-        if not same:
-            t_txt = None
+    if t_id and curr_locale:
+        t_txt = _translations_d.get(ctx['hash_id'])
 
     if t_txt is None and t_id:
-        fargs = {"t_id": t_id, "default": default_txt, "count": count}
-        ctx = {'t_id': t_id,
-               'placeholder': placeholder,
-               'count': count,
-               'locale': curr_locale,
-               }
+        if _translations_load_state[ctx['hash_id']]:
+            return default_txt
+        _translations_load_state[ctx['hash_id']] = True
+        fargs = {"t_id": t_id, "count": count}
+
+        if not state.translation_id_error:
+            fargs["default"] = default_txt
 
         if placeholder:
             fargs["placeholder"] = placeholder

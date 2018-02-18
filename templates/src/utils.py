@@ -1,6 +1,7 @@
 query_string = require("query-string")
 moment = require("moment")
 isEqual = require('lodash/isEqual')
+stringify = require('json-stable-stringify')
 
 syntax_highlight = __pragma__('js', '{}',
                               """

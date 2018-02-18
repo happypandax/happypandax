@@ -19,40 +19,40 @@ __pragma__("tconv")
 def about_info(props):
     top_items = []
     if is_same_machine():
-        top_items.append(e(ui.Grid.Column, e(ui.Header, tr(props.that, "", "You are currently connected from the same machine"),
+        top_items.append(e(ui.Grid.Column, e(ui.Header, tr(props.that, "ui.de-about-same-machine", "You are currently connected from the same machine"),
                                              size="small", color="green", textAlign="center")))
     first_rows = []
 
     first_rows.append(e(ui.Table.Row,
-                        e(ui.Table.Cell, e(ui.Header, tr(props.that, "", "Developer"), as_="h5"), collapsing=True),
+                        e(ui.Table.Cell, e(ui.Header, tr(props.that, "ui.t-developer", "Developer"), as_="h5"), collapsing=True),
                         e(ui.Table.Cell, h("a", "Twiddly", href="https://github.com/Pewpews", target="_blank"))))
     first_rows.append(e(ui.Table.Row,
-                        e(ui.Table.Cell, e(ui.Header, tr(props.that, "", "Twitter"), as_="h5"), collapsing=True),
+                        e(ui.Table.Cell, e(ui.Header, "Twitter", as_="h5"), collapsing=True),
                         e(ui.Table.Cell, h("a", "@pewspew", href="https://twitter.com/pewspew", target="_blank"))))
 
     second_rows = []
     second_rows.append(e(ui.Table.Row,
-                         e(ui.Table.Cell, e(ui.Header, tr(props.that, "", "Client version"), as_="h5"), collapsing=True),
+                         e(ui.Table.Cell, e(ui.Header, tr(props.that, "ui.t-client-version", "Client version"), as_="h5"), collapsing=True),
                          e(ui.Table.Cell, e(ui.Label, get_version(), basic=True))))
     second_rows.append(e(ui.Table.Row,
-                         e(ui.Table.Cell, e(ui.Header, tr(props.that, "", "Server version"), as_="h5"), collapsing=True),
+                         e(ui.Table.Cell, e(ui.Header, tr(props.that, "ui.t-server-version", "Server version"), as_="h5"), collapsing=True),
                          e(ui.Table.Cell, e(ui.Label, ".".join(props.version.core) if defined(props.version.core) else "", basic=True))))
     second_rows.append(e(ui.Table.Row,
-                         e(ui.Table.Cell, e(ui.Header, tr(props.that, "", "Database version"), as_="h5"), collapsing=True),
+                         e(ui.Table.Cell, e(ui.Header, tr(props.that, "ui.t-database-version", "Database version"), as_="h5"), collapsing=True),
                          e(ui.Table.Cell, e(ui.Label, ".".join(props.version.db) if defined(props.version.db) else "", basic=True))))
     second_rows.append(e(ui.Table.Row,
-                         e(ui.Table.Cell, e(ui.Header, tr(props.that, "", "Torrent Client version"), as_="h5"), collapsing=True),
+                         e(ui.Table.Cell, e(ui.Header, tr(props.that, "ui.t-torrent-version", "Torrent Client version"), as_="h5"), collapsing=True),
 
                          e(ui.Table.Cell, e(ui.Label, ".".join(props.version.torrent) if defined(props.version.torrent) else "", basic=True))))
 
     if props.update_checking:
-        upd_button = e(ui.Button, e(ui.Icon, js_name="refresh", loading=True), tr(props.that, "", "Checking for new update"),
+        upd_button = e(ui.Button, e(ui.Icon, js_name="refresh", loading=True), tr(props.that, "ui.b-checking-update", "Checking for new update"),
                        onClick=lambda: props.check_update(), color="orange", size="small")
     elif props.update_msg or state.new_update:
-        upd_button = e(ui.Button, e(ui.Icon, js_name="checkmark"), tr(props.that, "", "A new update is available!"),
+        upd_button = e(ui.Button, e(ui.Icon, js_name="checkmark"), tr(props.that, "ui.b-new-update", "A new update is available!"),
                        onClick=lambda: props.check_update(), color="green", size="small")
     else:
-        upd_button = e(ui.Button, e(ui.Icon, js_name="refresh"), tr(props.that, "", "Check for updates"),
+        upd_button = e(ui.Button, e(ui.Icon, js_name="refresh"), tr(props.that, "ui.b-check-update", "Check for updates"),
                        onClick=lambda: props.check_update(), size="small")
 
     return e(ui.Grid,
@@ -82,17 +82,17 @@ def about_info(props):
              e(ui.Grid.Row,
                e(ui.Grid.Column,
                  upd_button,
-                 e(ui.Button, e(ui.Icon, js_name="github"), tr(props.that, "", "Github Repo"),
+                 e(ui.Button, e(ui.Icon, js_name="github"), tr(props.that, "ui.b-github-repo", "Github Repo"),
                    as_="a", href="https://github.com/happypandax", target="_blank", size="small"),
-                 e(ui.Button, e(ui.Icon, js_name="heart"), tr(props.that, "", "Support on patreon"),
+                 e(ui.Button, e(ui.Icon, js_name="heart"), tr(props.that, "ui.b-support-patreon", "Support on patreon"),
                    as_="a", href="https://www.patreon.com/twiddly", target="_blank", color="orange", size="small"),
                  ),
                ),
              e(ui.Grid.Row,
                e(ui.Grid.Column,
-                 e(ui.Button, e(ui.Icon, js_name="repeat"), tr(props.that, "", "Restart"),
+                 e(ui.Button, e(ui.Icon, js_name="repeat"), tr(props.that, "ui.b-restart", "Restart"),
                    color="blue", size="small", onClick=lambda: props.restart()),
-                 e(ui.Button, e(ui.Icon, js_name="shutdown"), tr(props.that, "", "Shutdown"),
+                 e(ui.Button, e(ui.Icon, js_name="shutdown"), tr(props.that, "ui.b-shutdown", "Shutdown"),
                    color="red", size="small", onClick=lambda: props.shutdown()),
                  ),
                textAlign="right"

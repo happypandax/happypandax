@@ -13,6 +13,7 @@
     "babel-polyfill": "^6.26.0",
     "babel-preset-es2015": "^6.24.1",
     "babel-preset-react": "^6.24.1",
+    "json-stable-stringify": "^1.0.1",
     "loadash": "^1.0.0",
     "moment": "^2.20.1",
     "query-string": "^5.0.1",

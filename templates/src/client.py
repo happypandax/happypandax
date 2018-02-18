@@ -342,6 +342,9 @@ class Client(Base):
 
     def _set_debug(self, data):
         state.debug = data['core.debug']
+        if state.debug:
+            state.translation_id_error = utils.storage.get("translation_id_error", False)
+            state.untranslated_text = utils.storage.get("untranslated_text", True)
 
     def _set_locales(self, data):
         state.locales = data

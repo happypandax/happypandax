@@ -83,14 +83,14 @@ def artistprops_render():
                     verticalAlign="middle")))
 
     rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, tr(this, "", "Circle") + ":", size="small"), collapsing=True),
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-multi-circles", "Circle") + ":", size="small"), collapsing=True),
                   e(ui.Table.Cell, "")))
 
     rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, tr(this, "", "Galleries") + ":", size="small"), collapsing=True),
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-galleries", "Galleries") + ":", size="small"), collapsing=True),
                   e(ui.Table.Cell, this.state.gallery_count)))
     rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, tr(this, "", "URL(s)") + ":", size="small"), collapsing=True),
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.multi-urls", "URL(s)") + ":", size="small"), collapsing=True),
                   e(ui.Table.Cell, *[e(ui.List.Item, h("span", h("a", x, href=x, target="_blank"), e(ui.List.Icon, js_name="external share"))) for x in urls])))
 
     slider_el = []
@@ -110,11 +110,11 @@ def artistprops_render():
                  e(ui.Grid.Column, e(ui.Rating, icon="heart", size="huge", rating=fav), width=1),
                  e(ui.Grid.Column,
                    e(ui.Label.Group,
-                     e(ui.Label, tr(this, "", "Show galleries"), basic=True,
+                     e(ui.Label, tr(this, "ui.t-show-galleries", "Show galleries"), basic=True,
                        as_=Link, to=utils.build_url("/library", query=url_search_query, keep_query=False)),
-                     e(ui.Label, tr(this, "", "Show favorite galleries"), basic=True,
+                     e(ui.Label, tr(this, "ui.t-show-fav-galleries", "Show favorite galleries"), basic=True,
                        as_=Link, to=utils.build_url("/favorite", query=url_search_query, keep_query=False)),
-                     e(ui.Label, tr(this, "", "Show galleries in inbox"), basic=True,
+                     e(ui.Label, tr(this, "ui.t-show-inbox-galleries", "Show galleries in inbox"), basic=True,
                        as_=Link, to=utils.build_url("/inbox", query=url_search_query, keep_query=False)),
                      ), width=15, textAlign="right"),
                ),
@@ -130,7 +130,7 @@ def artistprops_render():
                      ),)),
              e(ui.Grid.Row, e(ui.Grid.Column,
                               e(ui.Segment,
-                                  e(ui.Label, tr(this, "", "Most common tags"), attached="top"),
+                                  e(ui.Label, tr(this, "ui.t-most-common-tags", "Most common tags"), attached="top"),
                                   e(ui.Label.Group,
                                     *tag_lbl
                                     ),

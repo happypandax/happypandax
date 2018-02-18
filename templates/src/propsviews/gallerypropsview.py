@@ -28,9 +28,9 @@ def galleryprops_render():
     item_id = this.state.id
     info = ""
     inbox = False
-    date_pub = "Unknown"
-    date_read = "Unknown"
-    date_added = "Unknown"
+    date_pub = tr(this, "ui.t-unknown", "Unknown")
+    date_read = tr(this, "ui.t-unknown", "Unknown")
+    date_added = tr(this, "ui.t-unknown", "Unknown")
 
     if this.state.data:
         read_count = this.state.data.times_read
@@ -72,29 +72,29 @@ def galleryprops_render():
                   e(ui.Table.Cell, e(ui.Header, info, as_="h5"), colSpan="2")))
 
     rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, "Artist(s):", as_="h5"), collapsing=True),
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-multi-artists", "Artist(s)")+':', as_="h5"), collapsing=True),
                   e(ui.Table.Cell, *(e(artistitem.ArtistLabel, data=x) for x in artists))))
     rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, "Published:", as_="h5"), collapsing=True),
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-published", "Published")+':', as_="h5"), collapsing=True),
                   e(ui.Table.Cell, e(ui.Label, date_pub))))
     rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, "Date added:", as_="h5"), collapsing=True),
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-date-added", "Date added")+':', as_="h5"), collapsing=True),
                   e(ui.Table.Cell, e(ui.Label, date_added))))
 
     rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, "Last read:", as_="h5"), collapsing=True),
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-last-read", "Last read")+':', as_="h5"), collapsing=True),
                   e(ui.Table.Cell, e(ui.Label, date_read))))
 
     rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, "Times read:", as_="h5"), collapsing=True),
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-times-read", "Times read")+':', as_="h5"), collapsing=True),
                   e(ui.Table.Cell, e(ui.Label, read_count, circular=True))))
     rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, "Tags:", as_="h5"), collapsing=True),
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-tags", "Tags")+':', as_="h5"), collapsing=True),
                   e(ui.Table.Cell, e(tagview.TagView, item_id=item_id, item_type=this.state.item_type,
                                      data=this.state.tags, on_tags=this.props.on_tags))))
 
     rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, "URL(s):", as_="h5"), collapsing=True),
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-multi-urls", "URL(s)")+':', as_="h5"), collapsing=True),
                   e(ui.Table.Cell, e(ui.List, *[e(ui.List.Item, h("span", h("a", x, href=x, target="_blank"), e(ui.List.Icon, js_name="external share"))) for x in urls]))))
 
     return e(ui.Table,

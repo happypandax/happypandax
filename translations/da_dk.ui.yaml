@@ -8,6 +8,8 @@
 #   - b == button text
 ################################################################
 
+_version_: 1 # tracking en_us
+
 # Menu Item
 mi-dashboard: Dashboard
 mi-favorites: Favoritter
@@ -16,6 +18,16 @@ mi-directory: Mappe
 mi-inbox: Indbakke
 mi-downloads: Hentninger
 mi-preferences: Præferencer
+mi-about: Om
+
+# About Page
+mi-about-plugins: Udvidelser
+mi-about-stats: Statistik
+mi-about-help: Hjælp
+mi-about-bug: Afmeld fejl
+mi-about-info: Info
+
+# Preferences Page
 mi-pref-general: Generel
 mi-pref-logins: Logins
 mi-pref-metadata: Metadata
@@ -24,17 +36,12 @@ mi-pref-monitoring: Overvågning
 mi-pref-ignore: Ignorer
 mi-pref-client: Client
 mi-pref-server: Server
-mi-about: Om
-mi-about-plugins: Tilføjelser
-mi-about-stats: Statistik
-mi-about-help: Hjælp
-mi-about-bug: Afmeld fejl
-mi-about-info: Info
+mi-pref-advanced: Avanceret
 
 # API Page
 h-server-comm: Server Kommunikation
 t-server-comm-tutorial: |-
-    Typer oversættelser:
+    Type oversættelser:
         "tekst" -> string
         1234 -> number
         true -> bool
