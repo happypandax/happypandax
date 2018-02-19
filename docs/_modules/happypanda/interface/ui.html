@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>happypanda.interface.ui &#8212; Happypanda X 0.0.5#116 documentation</title>
+    <title>happypanda.interface.ui &#8212; HappyPanda X 0.0.8#120 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.0.5#116',
+        VERSION:     '0.0.8#120',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -51,8 +51,8 @@
           <span class="icon-bar"></span>
         </button>
         <a class="navbar-brand" href="../../../index.html">
-          Happypanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.5#116</b></span>
+          HappyPanda X</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.8#120</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -70,8 +70,9 @@
       aria-labelledby="dLabelGlobalToc"><ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../install.html">Installing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../install.html#building">Building</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../usage.html">Using Happypanda X</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../usage.html">Using HappyPanda X</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../usage.html#exposing-happypanda-x">Exposing Happypanda X</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../translation.html">Translations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../settings.html">Settings</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../switches.html">Command-Line Arguments</a></li>
 </ul>
@@ -145,7 +146,7 @@
         <a href="https://twitter.com/share" class="twitter-share-button"
            data-url="" data-count="horizontal"
            data-via="twbootstrap"
-           data-related="pewpews:Creator of Happypanda X">Tweet</a>
+           data-related="pewpews:Creator of HappyPanda X">Tweet</a>
     </li>
 </ul>
 <div class="container">
@@ -362,6 +363,8 @@
 <span class="sd">    Get a translation by translation id.</span>
 <span class="sd">    Raises error if a default value was not provided and no translation was found.</span>
 
+<span class="sd">    You can find more about translations :ref:`here &lt;Translations&gt;`.</span>
+
 <span class="sd">    Args:</span>
 <span class="sd">        t_id: translation id</span>
 <span class="sd">        locale: locale to get translations from (will override default locale)</span>
@@ -375,12 +378,12 @@
     <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="n">trs</span> <span class="o">=</span> <span class="n">default</span>
 
+    <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;locale&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">helpers</span><span class="o">.</span><span class="n">_get_locale</span><span class="p">(</span><span class="n">locale</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+
     <span class="k">if</span> <span class="n">placeholder</span><span class="p">:</span>
         <span class="n">kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">placeholder</span><span class="p">),</span>
     <span class="k">if</span> <span class="n">count</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;count&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">count</span>
-    <span class="k">if</span> <span class="n">locale</span><span class="p">:</span>
-        <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;locale&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">locale</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">default</span><span class="p">:</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">default</span>
 
@@ -435,8 +438,8 @@
         <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">db_sort</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">db_model</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">translate</span><span class="p">:</span>
                 <span class="k">try</span><span class="p">:</span>
-                    <span class="n">name</span> <span class="o">=</span> <span class="n">i18n</span><span class="o">.</span><span class="n">t</span><span class="p">(</span><span class="s2">&quot;general.sort-idx-</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">idx</span><span class="p">),</span> <span class="n">default</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
-                <span class="k">except</span> <span class="ne">BaseException</span><span class="p">:</span>
+                    <span class="n">name</span> <span class="o">=</span> <span class="n">i18n</span><span class="o">.</span><span class="n">t</span><span class="p">(</span><span class="s2">&quot;general.sort-idx-</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">idx</span><span class="p">),</span> <span class="n">default</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">locale</span><span class="o">=</span><span class="n">helpers</span><span class="o">.</span><span class="n">_get_locale</span><span class="p">(</span><span class="n">locale</span><span class="p">))</span>
+                <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
                     <span class="k">pass</span>
             <span class="n">sort_indexes</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
                 <span class="s1">&#39;index&#39;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">idx</span><span class="p">),</span>

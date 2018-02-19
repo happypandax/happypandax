@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Server API &#8212; Happypanda X 0.0.5#116 documentation</title>
+    <title>Server API &#8212; HappyPanda X 0.0.8#120 documentation</title>
     
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.0.5#116',
+        VERSION:     '0.0.8#120',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -53,8 +53,8 @@
           <span class="icon-bar"></span>
         </button>
         <a class="navbar-brand" href="index.html">
-          Happypanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.5#116</b></span>
+          HappyPanda X</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.8#120</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -72,8 +72,9 @@
       aria-labelledby="dLabelGlobalToc"><ul>
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="install.html#building">Building</a></li>
-<li class="toctree-l1"><a class="reference internal" href="usage.html">Using Happypanda X</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Using HappyPanda X</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html#exposing-happypanda-x">Exposing Happypanda X</a></li>
+<li class="toctree-l1"><a class="reference internal" href="translation.html">Translations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="settings.html">Settings</a></li>
 <li class="toctree-l1"><a class="reference internal" href="switches.html">Command-Line Arguments</a></li>
 </ul>
@@ -155,7 +156,7 @@
         <a href="https://twitter.com/share" class="twitter-share-button"
            data-url="" data-count="horizontal"
            data-via="twbootstrap"
-           data-related="pewpews:Creator of Happypanda X">Tweet</a>
+           data-related="pewpews:Creator of HappyPanda X">Tweet</a>
     </li>
 </ul>
 <div class="container">
@@ -523,6 +524,28 @@ Enum member names may change sometime in the future. It is not likely to happen 
 </dd></dl>
 
 <dl class="function">
+<dt id="happypanda.interface.meta.get_locales">
+<code class="descname">get_locales</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/meta.html#get_locales"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.meta.get_locales" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve available translation locales</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><div class="highlight-guess"><div class="highlight"><pre><span></span>{
+    str : {
+                &#39;locale&#39; : str
+                &#39;namespaces&#39;: [str, ...]
+            }
+}
+</pre></div>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
 <dt id="happypanda.interface.meta.get_notification">
 <code class="descname">get_notification</code><span class="sig-paren">(</span><em>scope=None</em>, <em>msg_id=None</em>, <em>expired=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/meta.html#get_notification"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.meta.get_notification" title="Permalink to this definition">¶</a></dt>
 <dd><p>Not ready yet...</p>
@@ -759,6 +782,7 @@ Provides pagination.</p>
 <code class="descname">translate</code><span class="sig-paren">(</span><em>t_id</em>, <em>locale=None</em>, <em>default=None</em>, <em>placeholder={}</em>, <em>count=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/ui.html#translate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.ui.translate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get a translation by translation id.
 Raises error if a default value was not provided and no translation was found.</p>
+<p>You can find more about translations <a class="reference internal" href="translation.html#translations"><span class="std std-ref">here</span></a>.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />

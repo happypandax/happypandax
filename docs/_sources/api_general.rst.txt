@@ -20,14 +20,14 @@ Recommended Usage
 Collection
 ***************************************
 
-Conventions (e.g. ``C90``), magazines (e.g. ``Girls forM``),
+Conventions (e.g. ``C90``), magazine volumes (e.g. ``Girls forM vol.14``),
 tankōbon's or a compilation of related/personal galleries
 
 Grouping
 ***************************************
 
 Think of this as a namespace for related galleries. It is ideal for grouping
-multi-series galleries, so you use this as the series name. Since tankōbon's also sometimes feature
+multi-work galleries, so you use this as the series name. Since tankōbon's also sometimes feature
 a complete series, you can use this for that too. It is not recommended to put tankōbon in both
 **Collection** and here. Choose one and stick to it to avoid confusion.
 **Gallery**'s ``number`` field is used in the context of a **Grouping**.
@@ -37,7 +37,7 @@ GalleryFilter
 
 Think of this as those *smart-playlists* in music applications. It's a compilation of galleries put
 together by the user either manually or through automatic search filtering. If you've used the old
-Happypanda then you've should already be familiar with this. In old HP they were called gallery lists.
+Happypanda then you should already be familiar with this. In old HP they were called gallery lists.
 Recommended usage is "anything". It could range from your favorite fetishes to a shortcut for a
 search filter you're tired of always typing in.
 

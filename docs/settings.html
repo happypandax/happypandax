@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Settings &#8212; Happypanda X 0.0.5#116 documentation</title>
+    <title>Settings &#8212; HappyPanda X 0.0.8#120 documentation</title>
     
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.0.5#116',
+        VERSION:     '0.0.8#120',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -34,7 +34,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Command-Line Arguments" href="switches.html" />
-    <link rel="prev" title="Using Happypanda X" href="usage.html" />
+    <link rel="prev" title="Translations" href="translation.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
@@ -53,8 +53,8 @@
           <span class="icon-bar"></span>
         </button>
         <a class="navbar-brand" href="index.html">
-          Happypanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.5#116</b></span>
+          HappyPanda X</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.8#120</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -72,8 +72,9 @@
       aria-labelledby="dLabelGlobalToc"><ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="install.html#building">Building</a></li>
-<li class="toctree-l1"><a class="reference internal" href="usage.html">Using Happypanda X</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Using HappyPanda X</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html#exposing-happypanda-x">Exposing Happypanda X</a></li>
+<li class="toctree-l1"><a class="reference internal" href="translation.html">Translations</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Settings</a></li>
 <li class="toctree-l1"><a class="reference internal" href="switches.html">Command-Line Arguments</a></li>
 </ul>
@@ -96,7 +97,7 @@
               
                 
   <li>
-    <a href="usage.html" title="Previous Chapter: Using Happypanda X"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; Using Happypanda X</span>
+    <a href="translation.html" title="Previous Chapter: Translations"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; Translations</span>
     </a>
   </li>
   <li>
@@ -155,7 +156,7 @@
         <a href="https://twitter.com/share" class="twitter-share-button"
            data-url="" data-count="horizontal"
            data-via="twbootstrap"
-           data-related="pewpews:Creator of Happypanda X">Tweet</a>
+           data-related="pewpews:Creator of HappyPanda X">Tweet</a>
     </li>
 </ul>
 <div class="container">
@@ -213,13 +214,21 @@
 </tr>
 <tr class="row-odd"><td>check_new_releases</td>
 <td>True</td>
-<td>Regularly check for new releases</td>
+<td>Regularly check for updates</td>
 </tr>
-<tr class="row-even"><td>check_release_interval</td>
+<tr class="row-even"><td>auto_install_release</td>
+<td>True</td>
+<td>Automatically download, install and restart when a new update is found</td>
+</tr>
+<tr class="row-odd"><td>check_release_interval</td>
 <td>20</td>
-<td>Interval in minutes between checking for a new release, set 0 to only check once every startup</td>
+<td>Interval in minutes between checking for a new update, set 0 to only check once every startup</td>
 </tr>
-<tr class="row-odd"><td>allow_beta_releases</td>
+<tr class="row-even"><td>allow_beta_releases</td>
+<td>True</td>
+<td>Allow downloading beta releases</td>
+</tr>
+<tr class="row-odd"><td>allow_alpha_releases</td>
 <td>False</td>
 <td>Allow downloading alpha releases</td>
 </tr>
@@ -281,7 +290,7 @@
 </thead>
 <tbody valign="top">
 <tr class="row-odd"><td>server_name</td>
-<td>emilia_ram_mayoi</td>
+<td>kouko_momo_emilia</td>
 <td>Specifiy name of the server</td>
 </tr>
 <tr class="row-even"><td>port</td>
@@ -297,7 +306,7 @@
 <td>Specify which port to start the torrent client on</td>
 </tr>
 <tr class="row-odd"><td>port_range</td>
-<td>{&#8216;to&#8217;: 7018, &#8216;from&#8217;: 7009}</td>
+<td>{&#8216;from&#8217;: 7009, &#8216;to&#8217;: 7018}</td>
 <td>Specify a range of ports to attempt</td>
 </tr>
 <tr class="row-even"><td>host</td>
@@ -393,23 +402,27 @@
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td>autostart_server</td>
+<tr class="row-even"><td>start_on_boot</td>
+<td>False</td>
+<td>Start HPX GUI automatically on boot</td>
+</tr>
+<tr class="row-odd"><td>autostart_server</td>
 <td>False</td>
 <td>Start the server automatically on HPX GUI startup</td>
 </tr>
-<tr class="row-odd"><td>start_minimized_to_tray</td>
+<tr class="row-even"><td>start_minimized_to_tray</td>
 <td>False</td>
 <td>Start the HPX GUI in a minimized to tray state</td>
 </tr>
-<tr class="row-even"><td>send_to_tray_on_close</td>
+<tr class="row-odd"><td>send_to_tray_on_close</td>
 <td>False</td>
 <td>Put the application in the notification tray on close button</td>
 </tr>
-<tr class="row-odd"><td>send_to_tray_on_minimize</td>
+<tr class="row-even"><td>send_to_tray_on_minimize</td>
 <td>False</td>
 <td>Put the application in the notification tray on minimize button</td>
 </tr>
-<tr class="row-even"><td>open_webclient_on_server_start</td>
+<tr class="row-odd"><td>open_webclient_on_server_start</td>
 <td>True</td>
 <td>Open the webclient in your default browser on server start</td>
 </tr>
@@ -420,16 +433,16 @@
 <col width="33%" />
 </colgroup>
 <thead valign="bottom">
-<tr class="row-odd"><th class="head" colspan="3">network</th>
+<tr class="row-even"><th class="head" colspan="3">network</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td>request_timeout</td>
+<tr class="row-odd"><td>request_timeout</td>
 <td>30</td>
 <td>Upper limit of a request timeout in seconds</td>
 </tr>
-<tr class="row-odd"><td>proxy</td>
-<td>{&#8216;https&#8217;: &#8216;&#8217;, &#8216;http&#8217;: &#8216;&#8217;}</td>
+<tr class="row-even"><td>proxy</td>
+<td>{&#8216;http&#8217;: &#8216;&#8217;, &#8216;https&#8217;: &#8216;&#8217;}</td>
 <td>Specify network proxies. Proxy URLs must include the scheme. To use HTTP Basic Auth with your proxy, use the http://user:password&#64;host/ syntax</td>
 </tr>
 </tbody>

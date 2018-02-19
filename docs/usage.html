@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Using Happypanda X &#8212; Happypanda X 0.0.5#116 documentation</title>
+    <title>Using HappyPanda X &#8212; HappyPanda X 0.0.8#120 documentation</title>
     
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.0.5#116',
+        VERSION:     '0.0.8#120',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -33,7 +33,7 @@
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Settings" href="settings.html" />
+    <link rel="next" title="Translations" href="translation.html" />
     <link rel="prev" title="Installing" href="install.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
@@ -53,8 +53,8 @@
           <span class="icon-bar"></span>
         </button>
         <a class="navbar-brand" href="index.html">
-          Happypanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.5#116</b></span>
+          HappyPanda X</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.8#120</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -72,8 +72,9 @@
       aria-labelledby="dLabelGlobalToc"><ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="install.html#building">Building</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Using Happypanda X</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Using HappyPanda X</a></li>
 <li class="toctree-l1"><a class="reference internal" href="#exposing-happypanda-x">Exposing Happypanda X</a></li>
+<li class="toctree-l1"><a class="reference internal" href="translation.html">Translations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="settings.html">Settings</a></li>
 <li class="toctree-l1"><a class="reference internal" href="switches.html">Command-Line Arguments</a></li>
 </ul>
@@ -100,7 +101,7 @@
     </a>
   </li>
   <li>
-    <a href="settings.html" title="Next Chapter: Settings"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Settings &raquo;</span>
+    <a href="translation.html" title="Next Chapter: Translations"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Translations &raquo;</span>
     </a>
   </li>
               
@@ -155,19 +156,16 @@
         <a href="https://twitter.com/share" class="twitter-share-button"
            data-url="" data-count="horizontal"
            data-via="twbootstrap"
-           data-related="pewpews:Creator of Happypanda X">Tweet</a>
+           data-related="pewpews:Creator of HappyPanda X">Tweet</a>
     </li>
 </ul>
 <div class="container">
     <div class="row">
       <div class="col-md-3">
         <div id="sidebar" class="bs-sidenav" role="complementary"><ul>
-<li><a class="reference internal" href="#">Using Happypanda X</a><ul>
-<li><a class="reference internal" href="#starting-up">Starting up</a><ul>
-<li><a class="reference internal" href="#from-source">From source</a></li>
-<li><a class="reference internal" href="#from-executable">From executable</a></li>
-</ul>
-</li>
+<li><a class="reference internal" href="#">Using HappyPanda X</a><ul>
+<li><a class="reference internal" href="#setting-up">Setting up</a></li>
+<li><a class="reference internal" href="#starting">Starting</a></li>
 <li><a class="reference internal" href="#using">Using</a></li>
 </ul>
 </li>
@@ -183,48 +181,70 @@
         <div class="col-md-9 content">
             
   <div class="section" id="using-happypanda-x">
-<h1>Using Happypanda X<a class="headerlink" href="#using-happypanda-x" title="Permalink to this headline">¶</a></h1>
-<p>Default HPX consists of the following components:</p>
+<h1>Using HappyPanda X<a class="headerlink" href="#using-happypanda-x" title="Permalink to this headline">¶</a></h1>
+<p>A default HPX installation consists of the following two components:</p>
 <ul>
-<li><dl class="first docutils">
-<dt>Happypanda X Server</dt>
-<dd><div class="first last admonition hint">
-<p class="first admonition-title">Hint</p>
-<p class="last">The backbone of everything. HPX and its associated client&#8217;s won&#8217;t function without this running.</p>
-</div>
-</dd>
-</dl>
+<li><p class="first"><strong>HappyPanda X Server</strong></p>
+<blockquote>
+<div><p>The backbone of everything. HPX and its associated client&#8217;s and/or plugins won&#8217;t function without this running.</p>
+</div></blockquote>
 </li>
-<li><dl class="first docutils">
-<dt>Happypanda X Webclient</dt>
-<dd><div class="first last admonition hint">
-<p class="first admonition-title">Hint</p>
-<p class="last">The default frontend that comes with HPX. A web-based (JS) frontend for HPX.</p>
-</div>
-</dd>
-</dl>
+<li><p class="first"><strong>HappyPanda X Webclient</strong></p>
+<blockquote>
+<div><p>The default frontend that comes with HPX. A web-based (JS) frontend for HPX, if you will.</p>
+<p>This component should also be running, even if you&#8217;re not going to use the client.
+It should be started automatically on server start.</p>
+</div></blockquote>
 </li>
 </ul>
-<div class="section" id="starting-up">
-<h2>Starting up<a class="headerlink" href="#starting-up" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="from-source">
-<h3>From source<a class="headerlink" href="#from-source" title="Permalink to this headline">¶</a></h3>
-<p>See available command arguments: <code class="docutils literal"><span class="pre">python</span> <span class="pre">run.py</span> <span class="pre">--help</span></code> or <a class="reference internal" href="switches.html#command-line-arguments"><span class="std std-ref">Command-Line Arguments</span></a></p>
-<p>Start the server and webclient: <code class="docutils literal"><span class="pre">python</span> <span class="pre">run.py</span></code></p>
+<div class="section" id="setting-up">
+<h2>Setting up<a class="headerlink" href="#setting-up" title="Permalink to this headline">¶</a></h2>
+<p>A good idea before starting HPX is to go through the available settings that configure how HPX should be running.
+You can see the available settings <a class="reference internal" href="settings.html#settings"><span class="std std-ref">here</span></a>.</p>
+<p>To use these settings, you create a file named <code class="docutils literal"><span class="pre">config.yaml</span></code> in the root directory of HPX.</p>
+<p>You can create an example file with all settings listed if you run this command: <code class="docutils literal"><span class="pre">./happypandax</span> <span class="pre">--gen-config</span></code> or <code class="docutils literal"><span class="pre">python3</span> <span class="pre">run.py</span> <span class="pre">--gen-config</span></code> if you&#8217;re running from source.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>On a MacOS HPX installation, the root HPX folder is inside the bundle at <code class="docutils literal"><span class="pre">HappyPanda</span> <span class="pre">X.app/Contents/MacOS/</span></code>.</p>
+<p class="last">On Windows the executable is named <code class="docutils literal"><span class="pre">happypandax.exe</span></code> (with <code class="docutils literal"><span class="pre">.exe</span></code> suffix).</p>
 </div>
-<div class="section" id="from-executable">
-<h3>From executable<a class="headerlink" href="#from-executable" title="Permalink to this headline">¶</a></h3>
+<p>Most of these settings can also be configured from a HPX client.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">Not all settings work or have been implemented yet. You should leave these settings untouched for now: <code class="docutils literal"><span class="pre">server.disable_default_user</span></code>, <code class="docutils literal"><span class="pre">server.require_auth</span></code>, <code class="docutils literal"><span class="pre">server.expose_server</span></code> and <code class="docutils literal"><span class="pre">server.allow_guests</span></code>.</p>
+</div>
+</div>
+<div class="section" id="starting">
+<h2>Starting<a class="headerlink" href="#starting" title="Permalink to this headline">¶</a></h2>
+<p>There exists two ways of starting up HPX.</p>
+<p>If you&#8217;re running from source you start HPX either through <code class="docutils literal"><span class="pre">run.py</span></code> or <code class="docutils literal"><span class="pre">gui.py</span></code>.</p>
+<p>If from installation, there exists the two executables named <code class="docutils literal"><span class="pre">happypandax</span></code> and <code class="docutils literal"><span class="pre">happypandax_gui</span></code>.</p>
+<p>The <cite>gui.py</cite> or <cite>happypandax_gui</cite> is just a GUI wrapper around <code class="docutils literal"><span class="pre">run.py</span></code> or <code class="docutils literal"><span class="pre">happypandax</span></code> to provide a user-friendly way of starting HPX.</p>
+<p>Before starting, you can see the available arguments by supplying the <code class="docutils literal"><span class="pre">--help</span></code> argument on the commandline/terminal: <code class="docutils literal"><span class="pre">python3</span> <span class="pre">./run.py</span> <span class="pre">--help</span></code> or <code class="docutils literal"><span class="pre">./happypandax</span> <span class="pre">--help</span></code>.
+You can also refer to <a class="reference internal" href="switches.html#command-line-arguments"><span class="std std-ref">Command-Line Arguments</span></a>.</p>
+<p>To start the server (and the webclient) you just run: <code class="docutils literal"><span class="pre">python3</span> <span class="pre">./run.py</span></code> or doubleclick on the executable <code class="docutils literal"><span class="pre">happypandax</span></code>.
+You can also instead start the GUI wrapper, and it should be self-explanatory how to start the server from there.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">On a MacOS HPX installation, the app bundle is set to run <code class="docutils literal"><span class="pre">happypandax_gui</span></code>.</p>
 </div>
 </div>
 <div class="section" id="using">
 <h2>Using<a class="headerlink" href="#using" title="Permalink to this headline">¶</a></h2>
-<p>If you started the web client server, you can start using HPX right away by opening up your browser and going to
+<p>If you started HPX, you can start using HPX right away by opening up your browser and going to
 <code class="docutils literal"><span class="pre">localhost:7008</span></code> <em>(replace ``7008`` with whatever port you chose the webclient server to listen on)</em></p>
+<p>What else you could do is look for another client to use HPX with. They can come in all forms (mobile apps, pc software, etc.) as long as someone builds it.
+If you&#8217;re interested in building a client to work with HPX, head over to <a class="reference internal" href="client.html#creating-frontends"><span class="std std-ref">Creating frontends</span></a> for an introduction.</p>
+<p>Since a HPX client cannot function without the server running, it is a good idea to always leave the HPX server running in the background.</p>
 </div>
 </div>
 <div class="section" id="exposing-happypanda-x">
 <h1>Exposing Happypanda X<a class="headerlink" href="#exposing-happypanda-x" title="Permalink to this headline">¶</a></h1>
 <p>To allow HPX to be accessed from your phone or other devices, you&#8217;ll need to expose the server(s) to the private or public (internet) networks</p>
+<div class="admonition-todo admonition" id="index-0">
+<p class="first admonition-title">Todo</p>
+<p class="last">expose HPX</p>
+</div>
 <div class="section" id="private-network">
 <h2>Private network<a class="headerlink" href="#private-network" title="Permalink to this headline">¶</a></h2>
 <p>Doing this will allow for you to access HPX from <em>any device connected to your home network</em></p>

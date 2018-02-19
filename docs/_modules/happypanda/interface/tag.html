@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>happypanda.interface.tag &#8212; Happypanda X 0.0.5#116 documentation</title>
+    <title>happypanda.interface.tag &#8212; HappyPanda X 0.0.8#120 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.0.5#116',
+        VERSION:     '0.0.8#120',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -51,8 +51,8 @@
           <span class="icon-bar"></span>
         </button>
         <a class="navbar-brand" href="../../../index.html">
-          Happypanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.5#116</b></span>
+          HappyPanda X</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.8#120</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -70,8 +70,9 @@
       aria-labelledby="dLabelGlobalToc"><ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../install.html">Installing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../install.html#building">Building</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../usage.html">Using Happypanda X</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../usage.html">Using HappyPanda X</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../usage.html#exposing-happypanda-x">Exposing Happypanda X</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../translation.html">Translations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../settings.html">Settings</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../switches.html">Command-Line Arguments</a></li>
 </ul>
@@ -145,7 +146,7 @@
         <a href="https://twitter.com/share" class="twitter-share-button"
            data-url="" data-count="horizontal"
            data-via="twbootstrap"
-           data-related="pewpews:Creator of Happypanda X">Tweet</a>
+           data-related="pewpews:Creator of HappyPanda X">Tweet</a>
     </li>
 </ul>
 <div class="container">
@@ -208,6 +209,7 @@
 
     <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Identity</span><span class="p">(</span><span class="s1">&#39;tags&#39;</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span></div>
 
+
 <div class="viewcode-block" id="search_tags"><a class="viewcode-back" href="../../../api.html#happypanda.interface.tag.search_tags">[docs]</a><span class="k">def</span> <span class="nf">search_tags</span><span class="p">(</span><span class="n">search_query</span><span class="p">:</span> <span class="nb">str</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
                 <span class="n">search_options</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{},</span>
                 <span class="n">only_namespace</span><span class="p">:</span> <span class="nb">bool</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
@@ -249,13 +251,13 @@
 
     <span class="n">order_exp</span><span class="p">,</span> <span class="n">group_exp</span><span class="p">,</span> <span class="n">join_exp</span> <span class="o">=</span> <span class="n">helpers</span><span class="o">.</span><span class="n">_sort_helper</span><span class="p">(</span><span class="n">sort_by</span><span class="p">,</span> <span class="n">sort_desc</span><span class="p">,</span> <span class="n">db_model</span><span class="p">)</span>
 
-
     <span class="n">items</span> <span class="o">=</span> <span class="n">database_cmd</span><span class="o">.</span><span class="n">GetModelItems</span><span class="p">()</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">db_model</span><span class="p">,</span> <span class="n">model_ids</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="n">limit</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="n">offset</span><span class="p">,</span>
                                              <span class="n">join</span><span class="o">=</span><span class="n">join_exp</span><span class="p">,</span> <span class="n">order_by</span><span class="o">=</span><span class="n">order_exp</span><span class="p">,</span> <span class="n">group_by</span><span class="o">=</span><span class="n">group_exp</span><span class="p">)</span>
 
     <span class="n">msg</span> <span class="o">=</span> <span class="n">_contruct_tags_msg</span><span class="p">(</span><span class="n">items</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Identity</span><span class="p">(</span><span class="s1">&#39;tags&#39;</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span></div>
+
 
 <div class="viewcode-block" id="get_tags_count"><a class="viewcode-back" href="../../../api.html#happypanda.interface.tag.get_tags_count">[docs]</a><span class="k">def</span> <span class="nf">get_tags_count</span><span class="p">():</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -272,6 +274,7 @@
     <span class="n">s</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">db_session</span><span class="p">()</span>
 
     <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Identity</span><span class="p">(</span><span class="s1">&#39;count&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;count&#39;</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">NamespaceTags</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()})</span></div>
+
 
 <div class="viewcode-block" id="get_tags"><a class="viewcode-back" href="../../../api.html#happypanda.interface.tag.get_tags">[docs]</a><span class="k">def</span> <span class="nf">get_tags</span><span class="p">(</span><span class="n">item_type</span><span class="p">:</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span> <span class="o">=</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Gallery</span><span class="p">,</span>
              <span class="n">item_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>

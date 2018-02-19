@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>happypanda.interface.meta &#8212; Happypanda X 0.0.5#116 documentation</title>
+    <title>happypanda.interface.meta &#8212; HappyPanda X 0.0.8#120 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.0.5#116',
+        VERSION:     '0.0.8#120',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -51,8 +51,8 @@
           <span class="icon-bar"></span>
         </button>
         <a class="navbar-brand" href="../../../index.html">
-          Happypanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.5#116</b></span>
+          HappyPanda X</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.8#120</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -70,8 +70,9 @@
       aria-labelledby="dLabelGlobalToc"><ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../install.html">Installing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../install.html#building">Building</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../usage.html">Using Happypanda X</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../usage.html">Using HappyPanda X</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../usage.html#exposing-happypanda-x">Exposing Happypanda X</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../translation.html">Translations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../settings.html">Settings</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../switches.html">Command-Line Arguments</a></li>
 </ul>
@@ -145,7 +146,7 @@
         <a href="https://twitter.com/share" class="twitter-share-button"
            data-url="" data-count="horizontal"
            data-via="twbootstrap"
-           data-related="pewpews:Creator of Happypanda X">Tweet</a>
+           data-related="pewpews:Creator of HappyPanda X">Tweet</a>
     </li>
 </ul>
 <div class="container">
@@ -163,6 +164,8 @@
 
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">import</span> <span class="nn">arrow</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">yaml</span>
 
 <span class="kn">from</span> <span class="nn">happypanda.common</span> <span class="k">import</span> <span class="n">constants</span><span class="p">,</span> <span class="n">exceptions</span><span class="p">,</span> <span class="n">utils</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">hlogger</span>
 <span class="kn">from</span> <span class="nn">happypanda.core.services</span> <span class="k">import</span> <span class="n">AsyncService</span>
@@ -184,6 +187,58 @@
 <span class="c1">#        an error message object</span>
 <span class="c1">#    &quot;&quot;&quot;</span>
 <span class="c1">#    return message.Message(&quot;works&quot;)</span>
+
+<div class="viewcode-block" id="get_locales"><a class="viewcode-back" href="../../../api.html#happypanda.interface.meta.get_locales">[docs]</a><span class="k">def</span> <span class="nf">get_locales</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Retrieve available translation locales</span>
+
+<span class="sd">    Returns:</span>
+
+<span class="sd">        .. code-block:: guess</span>
+
+<span class="sd">            {</span>
+<span class="sd">                str : {</span>
+<span class="sd">                            &#39;locale&#39; : str</span>
+<span class="sd">                            &#39;namespaces&#39;: [str, ...]</span>
+<span class="sd">                        }</span>
+<span class="sd">            }</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">constants</span><span class="o">.</span><span class="n">translations</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">trs_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">scandir</span><span class="p">(</span><span class="n">constants</span><span class="o">.</span><span class="n">dir_translations</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">f</span><span class="o">.</span><span class="n">is_file</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.yaml&quot;</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+                <span class="n">t_locale</span><span class="p">,</span> <span class="n">t_ns</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">n</span>
+                <span class="n">l_dict</span> <span class="o">=</span> <span class="n">trs_dict</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">t_locale</span><span class="p">,</span> <span class="p">{})</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="s1">&#39;locale&#39;</span> <span class="ow">in</span> <span class="n">l_dict</span><span class="p">:</span>
+                    <span class="n">t_general</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">.general.yaml&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">t_locale</span><span class="p">)</span>
+                    <span class="n">t_general_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">constants</span><span class="o">.</span><span class="n">dir_translations</span><span class="p">,</span> <span class="n">t_general</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">t_general_path</span><span class="p">):</span>
+                        <span class="k">continue</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">t_general_path</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">rf</span><span class="p">:</span>
+                            <span class="n">f_dict</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">rf</span><span class="p">)</span>
+                            <span class="k">if</span> <span class="s1">&#39;locale&#39;</span> <span class="ow">in</span> <span class="n">f_dict</span><span class="p">:</span>
+                                <span class="n">l_dict</span><span class="p">[</span><span class="s1">&#39;locale&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">f_dict</span><span class="p">[</span><span class="s1">&#39;locale&#39;</span><span class="p">]</span>
+                    <span class="k">except</span> <span class="n">yaml</span><span class="o">.</span><span class="n">YAMLError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                        <span class="n">log</span><span class="o">.</span><span class="n">w</span><span class="p">(</span><span class="s2">&quot;Failed to load translation file </span><span class="si">{}</span><span class="s2">:&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">t_general</span><span class="p">),</span> <span class="n">e</span><span class="p">)</span>
+                        <span class="k">continue</span>
+
+                <span class="n">l_dict</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;namespaces&#39;</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">t_ns</span><span class="p">)</span>
+        <span class="n">constants</span><span class="o">.</span><span class="n">translations</span> <span class="o">=</span> <span class="n">trs_dict</span>
+
+    <span class="n">d</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">constants</span><span class="o">.</span><span class="n">translations</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="s1">&#39;locale&#39;</span> <span class="ow">in</span> <span class="n">b</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">d</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">=</span> <span class="n">b</span>
+
+    <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Identity</span><span class="p">(</span><span class="s2">&quot;locales&quot;</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span></div>
+
+
 
 <div class="viewcode-block" id="get_notification"><a class="viewcode-back" href="../../../api.html#happypanda.interface.meta.get_notification">[docs]</a><span class="k">def</span> <span class="nf">get_notification</span><span class="p">(</span><span class="n">scope</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">msg_id</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">expired</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
