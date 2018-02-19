@@ -16,6 +16,7 @@ Happypanda X user guide
 
     install
     usage
+    translation
     settings
     switches
 

@@ -68,9 +68,9 @@ ApiKwarg = createReactClass({
     'set_value': set_value,
 
     'render': lambda: e(ui.Form.Group,
-                        e(ui.Form.Input, js_name="param", label=tr(this, "", "Parameter"),
+                        e(ui.Form.Input, js_name="param", label=tr(this, "ui.t-parameter", "Parameter"),
                           onChange=this.set_key, inline=True, width="6"),
-                        e(ui.Form.Input, js_name="value", label=tr(this, "", "Value"),
+                        e(ui.Form.Input, js_name="value", label=tr(this, "ui.t-value", "Value"),
                           onChange=this.set_value, inline=True, width="10"),
                         )
 })
@@ -131,11 +131,11 @@ ApiForm = createReactClass({
     'handle_submit': handle_submit,
 
     'render': lambda: e(ui.Form,
-                        e(ui.Form.Input, label=tr(this, "", "Function"), onChange=this.set_func_name),
+                        e(ui.Form.Input, label=tr(this, "ui.t-function", "Function"), onChange=this.set_func_name),
                         *this.render_kwargs(this),
                         e(ui.Form.Group,
-                            e(ui.Button, content=tr(this, "", "Add parameter"), onClick=this.add_kwarg),
-                            e(ui.Form.Button, tr(this, "", "Call function",), loading=this.state['calling']),
+                            e(ui.Button, content=tr(this, "ui.b-add-parameter", "Add parameter"), onClick=this.add_kwarg),
+                            e(ui.Form.Button, tr(this, "ui.b-call-function", "Call function",), loading=this.state['calling']),
                           ),
                         onSubmit=this.handle_submit
                         )
@@ -169,11 +169,11 @@ Page = createReactClass({
                                       e(ApiForm, to_server=this.set_msg_to, from_server=this.set_msg_from),
                                       e(ui.Divider),
                                       e(ui.Segment,
-                                          e(ui.Label, tr(this, "", "Message"), attached="top"),
+                                          e(ui.Label, tr(this, "ui.t-message", "Message"), attached="top"),
                                           formatted_json(this.state['to_server']),
                                           basic=True),
                                       e(ui.Segment,
-                                          e(ui.Label, tr(this, "", "Response"), attached="top"),
+                                          e(ui.Label, tr(this, "ui.t-response", "Response"), attached="top"),
                                           formatted_json(this.state['from_server']),
                                           basic=True),
                                       ),

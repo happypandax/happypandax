@@ -203,6 +203,8 @@ def translate(t_id: str, locale: str = None, default: str = None, placeholder: s
     Get a translation by translation id.
     Raises error if a default value was not provided and no translation was found.
 
+    You can find more about translations :ref:`here <Translations>`.
+
     Args:
         t_id: translation id
         locale: locale to get translations from (will override default locale)

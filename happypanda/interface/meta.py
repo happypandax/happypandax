@@ -33,14 +33,15 @@ def get_locales():
     Retrieve available translation locales
 
     Returns:
-    .. code-block:: guess
 
-        {
-            str : {
-                        'locale' : str
-                        'namespaces': [str, ...]
-                    }
-        }
+        .. code-block:: guess
+
+            {
+                str : {
+                            'locale' : str
+                            'namespaces': [str, ...]
+                        }
+            }
     """
 
     if constants.translations is None:

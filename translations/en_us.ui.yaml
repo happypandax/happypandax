@@ -106,6 +106,13 @@ t-server-comm-tutorial: |-
     	{3:"val1", "key1":1} -> object
 
     Note: if all fails, defaults to string
+t-function: Function
+t-value: Value
+b-add-parameter: Add parameter
+b-call-function: Call function
+t-parameter: Parameter
+t-message: Message
+t-response: Response
 
 # Directory Page
 mi-dir-tags: Tags
