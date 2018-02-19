@@ -373,9 +373,10 @@ def deploy(args, unknown=None):
     from happypanda.common import constants
     from happypanda.core import updater
 
-    args.client = True
-    build(args, ["--prod"])
-    run([is_tool(is_installed("npm")), "run", "build"])
+    if not args.dev:
+        args.client = True
+        build(args, ["--prod"])
+        run([is_tool(is_installed("npm")), "run", "build"])
 
     if constants.is_osx:
         os_name = "osx"
