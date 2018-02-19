@@ -135,7 +135,8 @@ ApiForm = createReactClass({
                         *this.render_kwargs(this),
                         e(ui.Form.Group,
                             e(ui.Button, content=tr(this, "ui.b-add-parameter", "Add parameter"), onClick=this.add_kwarg),
-                            e(ui.Form.Button, tr(this, "ui.b-call-function", "Call function",), loading=this.state['calling']),
+                            e(ui.Form.Button, tr(this, "ui.b-call-function",
+                                                 "Call function",), loading=this.state['calling']),
                           ),
                         onSubmit=this.handle_submit
                         )

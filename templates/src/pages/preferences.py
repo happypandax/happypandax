@@ -16,13 +16,16 @@ from src.utils import defined, is_same_machine
 def disabled_machine_msg(props): return e(ui.Message, tr(
     props.tab, "ui.de-pref-disabled", "Disabled because this client is connecting from a different device"), color="yellow")
 
+
 def set_untranslated_text(e, d):
     state.untranslated_text = d.checked
     utils.storage.set("untranslated_text", d.checked)
 
+
 def set_translation_error(e, d):
     state.translation_id_error = d.checked
     utils.storage.set("translation_id_error", d.checked)
+
 
 def pref_general(props):
     cfg = props.cfg
@@ -36,14 +39,15 @@ def pref_general(props):
             for l in state.locales:
                 locale_options.append({'key': l, 'value': l, 'text': state.locales[l]['locale']})
             items.append(e(ui.Form.Select,
-                                options=locale_options,
-                                defaultValue=cfg.client.translation_locale,
-                                label=tr(props.tab, "ui.t-language", "Language"),
-                                onChange=lambda e, d: all((utils.storage.set("locale", d.value),
-                                                           props.upd("client.translation_locale", d.value),
-                                                           client.set_locale(d.value))),
-                            ))
-            items.append(h("p", tr(props.tab, "ui.t-help-translate", "Not satisfied with the translation? Consider helping out! See Github repo for more information")))
+                           options=locale_options,
+                           defaultValue=cfg.client.translation_locale,
+                           label=tr(props.tab, "ui.t-language", "Language"),
+                           onChange=lambda e, d: all((utils.storage.set("locale", d.value),
+                                                      props.upd("client.translation_locale", d.value),
+                                                      client.set_locale(d.value))),
+                           ))
+            items.append(h("p", tr(props.tab, "ui.t-help-translate",
+                                   "Not satisfied with the translation? Consider helping out! See Github repo for more information")))
             if state.debug:
                 items.append(e(ui.Form.Field,
                                e(ui.Checkbox,
@@ -61,14 +65,14 @@ def pref_general(props):
                                  onChange=set_translation_error,
                                  ))
                              )
-                             
+
         __pragma__('nojsiter')
         __pragma__('notconv')
 
-
     if defined(cfg.gallery):
         if defined(cfg.gallery.external_image_viewer):
-            items.append(e(ui.Header, tr(props.tab, "ui.h-external-viewer", "External Viewer"), size="small", dividing=True))
+            items.append(e(ui.Header, tr(props.tab, "ui.h-external-viewer",
+                                         "External Viewer"), size="small", dividing=True))
 
             if not is_same_machine():
                 ext_viewer.append(disabled_machine_msg(props))
@@ -96,7 +100,8 @@ def pref_general(props):
             items.append(e(ui.Form.Field,
                            e(ui.Checkbox,
                              toggle=True,
-                             label=tr(props.tab, "ui.t-external-send-first-file", "Send path to first file in folder/archive"),
+                             label=tr(props.tab, "ui.t-external-send-first-file",
+                                      "Send path to first file in folder/archive"),
                              defaultChecked=cfg.gallery.send_path_to_first_file,
                              onChange=lambda e, d: props.upd("gallery.send_path_to_first_file", d.checked),
                              disabled=not is_same_machine(),
@@ -214,7 +219,7 @@ def pref_server(props):
     u_cfg = props.u_cfg
     items = []
     if defined(cfg.server):
-        #items.append(e(ui.Message, tr(props.tab, "",
+        # items.append(e(ui.Message, tr(props.tab, "",
         #                              "These changes require a server restart."), info=True))
 
         items.append(e(ui.Header, tr(props.tab, "ui.h-server", "Server"), size="small", dividing=True))

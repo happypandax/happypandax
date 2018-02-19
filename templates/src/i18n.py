@@ -11,9 +11,9 @@ def add_translation(ctx, data, err):
     _translations_load_state[ctx['hash_id']] = False
     if not err:
         _translations_d[ctx['hash_id']] = {'text': data,
-                                                        'placeholder': ctx['placeholder'],
-                                                        'count': ctx['count'],
-                                                        }
+                                           'placeholder': ctx['placeholder'],
+                                           'count': ctx['count'],
+                                           }
     elif not state.translation_id_error:
         _translations_d[ctx['hash_id']] = {}
 
@@ -31,14 +31,14 @@ __pragma__("iconv")
 
 def tr(that, t_id, default_txt, placeholder=None, count=None):
     if state.untranslated_text:
-        default_txt = "<UT>"+default_txt+"</UT>"
+        default_txt = "<UT>" + default_txt + "</UT>"
     t_txt = None
     curr_locale = utils.storage.get("locale", "unknown")
     ctx = {'t_id': t_id,
-            'placeholder': placeholder,
-            'count': count,
-            'locale': curr_locale,
-            }
+           'placeholder': placeholder,
+           'count': count,
+           'locale': curr_locale,
+           }
     ctx['hash_id'] = utils.stringify(ctx)
 
     if t_id and curr_locale:

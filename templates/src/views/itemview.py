@@ -88,6 +88,7 @@ def Itemviewvonfig_render():
              animation="push",
              )
 
+
 ItemViewConfig = createReactClass({
     'displayName': 'ItemViewConfig',
     'render': Itemviewvonfig_render

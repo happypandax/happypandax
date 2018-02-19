@@ -17,22 +17,21 @@ dev_options = dict(
 env_python = r".\env\Scripts\python" if sys.platform.startswith("win") else "./env/bin/python"
 
 changes = """
+- updated various libraries
+- fixed possible 500 error in the webclient
+- added api function 'get_locales'
+- fix scaling not working in webclient reader
+- localization enhancements
+- updated docs
+
+From previous builds:
+
 - implemented page list in webclient
 - fix high memory consumption in conversion script
 - auto install updates
 - fix symlinks being resolved
 - add option to delete target db in conversion script
 - fixed misc issues
-
-From previous builds:
-
-- delete temp folder on shutdown
-- implemented infinite scrolling in webclient
-- added e-hentai tag definitions
-- added more options in the preferences page
-- added setting gui.start_on_boot and added implementation for windows
-- fixed issue in conversion script regarding archives with subfolders
-- fixed connection issues in webclient
 
 """
 

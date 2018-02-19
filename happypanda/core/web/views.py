@@ -101,7 +101,7 @@ def is_same_machine():
     try:
         if constants.is_win:
             local_adresses.append(socket.gethostbyaddr(socket.gethostname())[2][0])
-    except:
+    except BaseException:
         log.exception("Failed to retrieve IPV6 address")
 
     if addr in local_adresses:

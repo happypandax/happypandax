@@ -187,44 +187,45 @@ def page_render():
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, info, as_="h5"), colSpan="2")))
     rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-multi-artists", "Artist(s)")+':', as_="h5"), collapsing=True),
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-multi-artists", "Artist(s)") + ':', as_="h5"), collapsing=True),
                   e(ui.Table.Cell, *(e(artistitem.ArtistLabel, data=x) for x in artists))))
     if circles:
         rows.append(e(ui.Table.Row,
-                      e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-multi-circles", "Circle(s)")+':', as_="h5"), collapsing=True),
+                      e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-multi-circles", "Circle(s)") + ':', as_="h5"), collapsing=True),
                       e(ui.Table.Cell, *(e("span", x.js_name) for x in circles))))
     if parodies:
         rows.append(e(ui.Table.Row,
-                      e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-parody", "Parody")+':', as_="h5"), collapsing=True),
+                      e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-parody", "Parody") + ':', as_="h5"), collapsing=True),
                       e(ui.Table.Cell,)))
     rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-language", "Language")+':', as_="h5"), collapsing=True),
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-language", "Language") + ':', as_="h5"), collapsing=True),
                   e(ui.Table.Cell, this.state.lang_data.js_name)))
     rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-status", "Status")+':', as_="h5"), collapsing=True),
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-status", "Status") + ':', as_="h5"), collapsing=True),
                   e(ui.Table.Cell, e(ui.Label, tr(this, "general.db-status-{}".format(status.lower()), status), color={"completed": "green", "ongoing": "orange", "unknown": "grey"}.get(status.lower(), "blue")))))
     rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-published", "Published")+':', as_="h5"), collapsing=True),
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-published", "Published") + ':', as_="h5"), collapsing=True),
                   e(ui.Table.Cell, e(ui.Label, date_pub))))
     rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-times-read", "Times read")+':', as_="h5"), collapsing=True),
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-times-read", "Times read") + ':', as_="h5"), collapsing=True),
                   e(ui.Table.Cell, e(ui.Label, read_count, circular=True))))
     rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-rating", "Rating")+':', as_="h5"), collapsing=True),
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-rating", "Rating") + ':', as_="h5"), collapsing=True),
                   e(ui.Table.Cell, e(ui.Rating, icon="star", rating=rating, maxRating=10, size="huge", clearable=True))))
 
     rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-tags", "Tags")+':', as_="h5"), collapsing=True),
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-tags", "Tags") + ':', as_="h5"), collapsing=True),
                   e(ui.Table.Cell, e(tagview.TagView, item_id=item_id, item_type=this.state.item_type))))
 
     rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-multi-urls", "URL(s)")+':', as_="h5"), collapsing=True),
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-multi-urls", "URL(s)") + ':', as_="h5"), collapsing=True),
                   e(ui.Table.Cell, e(ui.List, *[e(ui.List.Item, h("span", h("a", x, href=x, target="_blank"), e(ui.List.Icon, js_name="external share"))) for x in urls]))))
 
     indicators = []
 
     if inbox:
-        indicators.append(e(ui.Icon, js_name="inbox", size="big", title=tr(this, "ui.t-inboxed-gallery", "This gallery is in your inbox")))
+        indicators.append(e(ui.Icon, js_name="inbox", size="big", title=tr(
+            this, "ui.t-inboxed-gallery", "This gallery is in your inbox")))
 
     if trash:
         indicators.append(e(ui.Icon, js_name="trash", color="red", size="big",

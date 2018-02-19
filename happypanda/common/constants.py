@@ -107,7 +107,7 @@ image_sizes = {
     "small": (100, 136),
 }
 
-translations = None # dict of available translation files
+translations = None  # dict of available translation files
 
 # PLUGIN
 

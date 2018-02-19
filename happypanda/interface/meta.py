@@ -53,7 +53,7 @@ def get_locales():
             if len(n) == 3:
                 t_locale, t_ns, _ = n
                 l_dict = trs_dict.setdefault(t_locale, {})
-                if not 'locale' in l_dict:
+                if 'locale' not in l_dict:
                     t_general = "{}.general.yaml".format(t_locale)
                     t_general_path = os.path.join(constants.dir_translations, t_general)
                     if not os.path.exists(t_general_path):
@@ -72,12 +72,11 @@ def get_locales():
 
     d = {}
     for a, b in constants.translations.items():
-        if not 'locale' in b:
+        if 'locale' not in b:
             continue
         d[a] = b
 
     return message.Identity("locales", d)
-
 
 
 def get_notification(scope=None, msg_id: int=None, expired: bool = False):

@@ -597,7 +597,7 @@ with config.namespace(client_ns):
         "en_us",
         "The default translation locale when none is specified. See folder /translations for available locales",
         isolation=ConfigIsolation.client
-        )
+    )
 
 gui_ns = "gui"
 

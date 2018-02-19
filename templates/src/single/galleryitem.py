@@ -104,9 +104,11 @@ def gallery_render():
     menu_options.append(e(ui.List.Item, content=tr(this, "ui.b-read", "Read"), **read_button_args))
     menu_options.append(e(ui.List.Item, content=tr(this, "ui.b-save-later", "Save for later"), icon="bookmark outline"))
     if inbox:
-        menu_options.append(e(ui.List.Item, content=tr(this, "ui.b-send-library", "Send to library"), icon="grid layout"))
+        menu_options.append(e(ui.List.Item, content=tr(
+            this, "ui.b-send-library", "Send to library"), icon="grid layout"))
     menu_options.append(e(ui.List.Item, content=tr(this, "ui.b-add-to-filter", "Add to filter"), icon="filter"))
-    menu_options.append(e(ui.List.Item, content=tr(this, "ui.b-add-to-collection", "Add to collection"), icon="plus square outline"))
+    menu_options.append(e(ui.List.Item, content=tr(this, "ui.b-add-to-collection",
+                                                   "Add to collection"), icon="plus square outline"))
     menu_options.append(e(ui.List.Item, content=tr(this, "ui.b-add-to-series", "Add to series"), icon="add square"))
     menu_options.append(e(ui.List.Item, content=tr(this, "ui.b-send-trash", "Send to Trash"), icon="trash"))
 

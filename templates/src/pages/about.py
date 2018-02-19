@@ -32,16 +32,20 @@ def about_info(props):
 
     second_rows = []
     second_rows.append(e(ui.Table.Row,
-                         e(ui.Table.Cell, e(ui.Header, tr(props.that, "ui.t-client-version", "Client version"), as_="h5"), collapsing=True),
+                         e(ui.Table.Cell, e(ui.Header, tr(props.that, "ui.t-client-version",
+                                                          "Client version"), as_="h5"), collapsing=True),
                          e(ui.Table.Cell, e(ui.Label, get_version(), basic=True))))
     second_rows.append(e(ui.Table.Row,
-                         e(ui.Table.Cell, e(ui.Header, tr(props.that, "ui.t-server-version", "Server version"), as_="h5"), collapsing=True),
+                         e(ui.Table.Cell, e(ui.Header, tr(props.that, "ui.t-server-version",
+                                                          "Server version"), as_="h5"), collapsing=True),
                          e(ui.Table.Cell, e(ui.Label, ".".join(props.version.core) if defined(props.version.core) else "", basic=True))))
     second_rows.append(e(ui.Table.Row,
-                         e(ui.Table.Cell, e(ui.Header, tr(props.that, "ui.t-database-version", "Database version"), as_="h5"), collapsing=True),
+                         e(ui.Table.Cell, e(ui.Header, tr(props.that, "ui.t-database-version",
+                                                          "Database version"), as_="h5"), collapsing=True),
                          e(ui.Table.Cell, e(ui.Label, ".".join(props.version.db) if defined(props.version.db) else "", basic=True))))
     second_rows.append(e(ui.Table.Row,
-                         e(ui.Table.Cell, e(ui.Header, tr(props.that, "ui.t-torrent-version", "Torrent Client version"), as_="h5"), collapsing=True),
+                         e(ui.Table.Cell, e(ui.Header, tr(props.that, "ui.t-torrent-version",
+                                                          "Torrent Client version"), as_="h5"), collapsing=True),
 
                          e(ui.Table.Cell, e(ui.Label, ".".join(props.version.torrent) if defined(props.version.torrent) else "", basic=True))))
 

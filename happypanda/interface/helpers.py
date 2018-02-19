@@ -44,6 +44,7 @@ def _sort_helper(sort_by, sort_desc, db_model):
 
     return order_exp, group_exp, join_exp
 
+
 def _get_locale(locale=None):
     if locale:
         return locale
