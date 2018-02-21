@@ -1,7 +1,7 @@
 import os
 import subprocess
 
-from happypanda.common import utils, hlogger, config
+from happypanda.common import utils, hlogger, config, exceptions
 from happypanda.core.command import (UndoCommand, CommandEvent,
                                      CommandEntry, Command)
 from happypanda.core.commands import database_cmd, io_cmd
@@ -141,7 +141,12 @@ class OpenGallery(Command):
             args = args if args else tuple(x.strip() for x in config.external_image_viewer_args.value.split())
 
             with self._open.call(self.path, self.first_file, self.gallery, args) as plg:
-                opened = plg.first()
+                try:
+                    opened = plg.first()
+                except OSError as e:
+                    raise exceptions.CommandError(utils.this_command(self),
+                                                  "Failed to open gallery with external viewer: {}".format(e.args[1]))
+
         else:
             log.w("Error opening gallery (), no page count".format(self.gallery.id))
 
