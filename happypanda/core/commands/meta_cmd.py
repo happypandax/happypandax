@@ -14,8 +14,10 @@ class CheckUpdate(AsyncCommand):
         return super().__init__(service, priority)
 
     def main(self, silent=True, force=False, push=False) -> dict:
+        self.set_max_progress(2)
         if force or config.check_release_interval.value:
             u = updater.check_release(silent=silent)
+            self.set_progress(1)
             if u:
                 init_update = True
                 init_restart = True
@@ -43,6 +45,7 @@ class CheckUpdate(AsyncCommand):
                     upd = UpdateApplication()
                     upd.merge_progress_into(self)
                     upd.main(u['url'], restart=init_restart, silent=silent, push=push)
+            self.set_progress(2)
             return u
 
 
@@ -57,6 +60,7 @@ class UpdateApplication(AsyncCommand):
         return super().__init__(service, priority)
 
     def main(self, download_url=None, restart=True, silent=True, push=False) -> bool:
+        self.set_max_progress(3)
         st = False
         if download_url:
             rel = download_url
@@ -64,10 +68,13 @@ class UpdateApplication(AsyncCommand):
             rel = updater.check_release(silent=silent)
             if rel:
                 rel = rel['url']
+        self.set_progress(1)
         if rel:
-            new_rel = updater.get_release(rel, silent=silent)
+            new_rel = updater.get_release(rel, silent=silent, cmd=self)
+            self.set_progress(2)
             if new_rel:
                 st = updater.register_release(new_rel['path'], silent, restart=restart)
+                self.set_progress(3)
                 if push:
                     if restart:
                         m = "Restarting and installing new update..."

@@ -2,6 +2,7 @@ import attr
 import requests
 import cachecontrol
 import os
+import arrow
 
 from happypanda.common import (hlogger, exceptions, utils, constants, config)
 from happypanda.core.command import CoreCommand, Command
@@ -86,14 +87,18 @@ class Response(CoreCommand):
         if extension:
             filepath = io_cmd.CoreFS(filepath.path + io_cmd.CoreFS(os.path.split(self._url)[1]).ext, filepath._archive)
 
+        self.set_max_progress(self._rsp.headers.get('content-length', 0)+1)
         log.d("Saving to filepath", filepath)
         with filepath.open(mode="wb") as f:
             if self.properties.stream:
+                s_time = arrow.now()
                 for data in self._rsp.iter_content(chunk_size=1024, decode_unicode=decode_unicode):
+                    self.next_progress(self._url)
                     f.write(data)
                     f.flush()
             else:
                 raise NotImplementedError
+        self.next_progress()
         return filepath.path
 
 

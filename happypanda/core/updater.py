@@ -140,7 +140,7 @@ def check_release(silent=True):
             log.exception("Supressed error when checking for new release")
 
 
-def get_release(download_url=None, archive=True, silent=True):
+def get_release(download_url=None, archive=True, silent=True, cmd=None):
     """
     Download a new release from provided url
 
@@ -178,7 +178,10 @@ def get_release(download_url=None, archive=True, silent=True):
                 d_file['path'] = download_url
             else:
                 log.i("Getting release from web", stdout=True)
-                r = SimpleGETRequest(download_url, RequestProperties(stream=True)).run()
+                r = SimpleGETRequest(download_url, RequestProperties(stream=True))
+                if cmd:
+                    r.merge_progress_into(cmd)
+                r = r.run()
                 d_file['path'] = r.save(
                     os.path.join(
                         constants.dir_cache if archive else constants.dir_temp,

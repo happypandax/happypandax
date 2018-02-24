@@ -167,6 +167,7 @@ class CoreCommand:
 
     def set_progress(self, value, text=None):
         assert isinstance(value, (int, float))
+        assert text is None or isinstance(text, str)
         self._add_progress()
         self._progress_time = arrow.now()
         self._progress_current = value
@@ -177,6 +178,21 @@ class CoreCommand:
         assert isinstance(value, (int, float))
         self._add_progress()
         self._progress_max = value
+
+    def next_progress(self, text=None, _from=0):
+        if self._progress_current is None:
+            self._progress_current = _from
+        if text is not None:
+            self._progress_text = text
+        self._progress_current += 1
+
+    @contextmanager
+    def progress(self, max_progress=None, text=None):
+        if max_progress is not None:
+            self.set_max_progress(max_progress)
+        yield
+        if max_progress is not None:
+            self.set_progress(max_progress, text)
 
     def run_native(self, f, *args, **kwargs):
         f = async.AsyncFuture(self, self._native_pool.apply_async(_native_runner(f), args, kwargs))
@@ -235,6 +251,8 @@ class Command(CoreCommand, metaclass=ABCMeta):
         utils.switch(self._priority)
         self._started_time = arrow.now()
         r = self._main(*args, **kwargs)
+        if self._progress_max is not None:
+            self.set_progress(self._progress_max)
         self._finished_time = arrow.now()
         return r
 

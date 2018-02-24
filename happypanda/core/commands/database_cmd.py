@@ -72,7 +72,6 @@ class GetModelImage(AsyncCommand):
 
     def main(self, model: db.Base, item_id: int,
              image_size: enums.ImageSize) -> db.Profile:
-
         self.model = model
 
         if image_size == enums.ImageSize.Original:
@@ -110,6 +109,7 @@ class GetModelImage(AsyncCommand):
             else:
                 old_img_hash = self.cover.data
 
+        self.next_progress()
         if generate:
             self.cover = self.run_native(self._generate_and_add, img_hash, old_img_hash, generate,
                                          model, item_id, image_size, profile_size).get()
@@ -150,6 +150,8 @@ class GetModelImage(AsyncCommand):
             i.profiles.append(cover)
 
         s.commit()
+        self.next_progress()
+
 
     def _generate_and_add(self, img_hash, old_img_hash, generate, model, item_id, image_size, profile_size):
 
@@ -165,7 +167,7 @@ class GetModelImage(AsyncCommand):
 
             cover.data = img_hash
             cover.size = profile_size
-
+        self.next_progress()
         if cover.path and generate:
             self._update_db(cover, item_id, model, old_img_hash)
         elif not cover.path:

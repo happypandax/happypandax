@@ -94,6 +94,8 @@ class ImageItem(AsyncCommand):
     def _generate(self):
         log.d("Generating image thumbnail", self._image,
               self.properties)
+        self.set_max_progress(2)
+        self.set_progress(1)
         size = self.properties.size
         fs = None
         if isinstance(self._image, str):
