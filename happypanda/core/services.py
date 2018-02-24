@@ -3,6 +3,7 @@ import weakref
 import functools
 import itertools
 
+from cachetools import LRUCache
 from gevent import pool, queue
 from apscheduler.schedulers.gevent import GeventScheduler
 
@@ -18,7 +19,7 @@ class Service:
     _id_counter = itertools.count(100)
 
     services = []
-    _all_commands = {}
+    _all_commands = LRUCache(1000)
 
     def __init__(self, name):
         self.name = name

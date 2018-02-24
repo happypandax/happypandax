@@ -11,6 +11,7 @@ from happypanda.common import constants, exceptions, utils, config, hlogger
 from happypanda.core.services import AsyncService
 from happypanda.core import command, message
 from happypanda.core.commands import meta_cmd
+from happypanda.interface import enums
 
 log = hlogger.Logger(__name__)
 
@@ -256,21 +257,50 @@ def get_command_state(command_ids: list):
     return message.Identity('command_state', states)
 
 
-# def get_command_progress(command_ids: list):
-#    """
-#    Get progress of command in percent
+def get_command_progress(command_ids: list):
+    """
+    Get progress of command operation
+    
+    If the command did not set a maximum value, the returned percent will be set to less than ``0.0``.
 
-#    Args:
-#        command_ids: list of command ids
+    You want to poll this every few seconds to get updated values.
 
-#    Returns:
-#        .. code-block:: guess
+    Args:
+        command_ids: list of command ids
 
-#            {
-#                command_id : progress
-#            }
-#    """
-#    return message.Message("works")
+    Returns:
+        .. code-block:: guess
+
+            {
+                command_id : {
+                                'value': float,
+                                'max': float,
+                                'percent': float,
+                                'type': :py:class:`.ProgressType`,
+                                'text': str,
+                                }
+            }
+
+            or
+
+            {
+                command_id : None
+            }
+    """
+    _command_msg(command_ids)
+
+    progs = {}
+
+    for i in command_ids:
+        cmd = AsyncService.get_command(i)
+        p = cmd.get_progress()
+        if p and not p['type']:
+            p['type'] = enums.ProgressType.Unknown
+        if p and p['type']:
+            p['type'] = p['type'].value
+        progs[i] = p
+
+    return message.Identity('command_progress', progs)
 
 
 def stop_command(command_ids: list):

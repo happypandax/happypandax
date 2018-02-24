@@ -43,6 +43,7 @@ class RequestProperties:
     cookies = attr.ib(default=None)
     stream = attr.ib(default=False)
     stream_callback = attr.ib(default=None)
+    progress = attr.ib(default=False)
 
 
 class Response(CoreCommand):

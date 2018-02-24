@@ -120,8 +120,14 @@ class GetModelImage(AsyncCommand):
     def _update_db(self, stale_cover, item_id, model, old_hash):
         s = constants.db_session()
         cover = s.query(db.Profile).filter(
-            db.and_op(db.Profile.data == old_hash, db.Profile.size == stale_cover.size)).one_or_none()
-        # TODO: handle MultipleResultsError
+            db.and_op(db.Profile.data == old_hash, db.Profile.size == stale_cover.size)).all()
+
+        if len(cover) > 1:
+            cover, *cover_ex = cover
+            for x in cover_ex:
+                s.delete(x)
+        elif cover:
+            cover = cover[0]
 
         new = False
 
@@ -142,6 +148,7 @@ class GetModelImage(AsyncCommand):
                 db.and_op(db.Profile.id == cover.id, model.id == item_id)).scalar():
             i = s.query(model).get(item_id)
             i.profiles.append(cover)
+
         s.commit()
 
     def _generate_and_add(self, img_hash, old_img_hash, generate, model, item_id, image_size, profile_size):

@@ -1,17 +1,17 @@
 from happypanda.common import (hlogger, constants, config)
-from happypanda.core.command import Command, CommandEvent
+from happypanda.core.command import Command, CommandEvent, AsyncCommand
 from happypanda.core import updater, message
 
 log = hlogger.Logger(__name__)
 
 
-class CheckUpdate(Command):
+class CheckUpdate(AsyncCommand):
     """
     Check for new release
     """
 
-    def __init__(self, priority=constants.Priority.Low):
-        super().__init__(priority)
+    def __init__(self, service = None, priority = constants.Priority.Low):
+        return super().__init__(service, priority)
 
     def main(self, silent=True, force=False, push=False) -> dict:
         if force or config.check_release_interval.value:
@@ -44,15 +44,15 @@ class CheckUpdate(Command):
             return u
 
 
-class UpdateApplication(Command):
+class UpdateApplication(AsyncCommand):
     """
     Check for new release and update the application
     """
 
     update = CommandEvent("update", bool, bool)
 
-    def __init__(self, priority=constants.Priority.Low):
-        super().__init__(priority)
+    def __init__(self, service = None, priority = constants.Priority.Low):
+        return super().__init__(service, priority)
 
     def main(self, download_url=None, restart=True, silent=True, push=False) -> bool:
         st = False

@@ -187,3 +187,10 @@ class ItemSort(_APIEnum):
     NamespaceTagNamespace = 30
     #: Tag
     NamespaceTagTag = 31
+
+class ProgressType(_APIEnum):
+
+    #: Unknown
+    Unknown = 1
+    #: Update
+    Update = 2

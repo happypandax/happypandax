@@ -23,3 +23,5 @@ attrs==17.4.0
 requests==2.18.4
 certifi>=2018.1.18
 APScheduler==3.5.1
+cachetools==2.0.1
+treelib==1.5.1

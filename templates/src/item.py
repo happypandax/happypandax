@@ -238,7 +238,7 @@ def sortdropdown_render():
                 })
     __pragma__("noiconv")
     return e(ui.Dropdown,
-             placeholder="Sort by",
+             placeholder=tr(this, "ui.t-sortdropdown-placeholder", "Sort by"),
              selection=True, item=True,
              options=item_options,
              value=this.props.value if this.props.value else js_undefined,

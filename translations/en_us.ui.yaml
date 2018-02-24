@@ -9,7 +9,7 @@
 ################################################################
 
 # very useful for updating
-_version_: 2
+_version_: 3
 
 # Common
 b-edit: Edit
@@ -176,3 +176,4 @@ t-items-per-page: Items per page
 t-showing-count: Showing %{from}-%{to} of %{all}
 t-search-main-placeholder: Search title, artist, namespace & tags
 t-filterdropdown-placeholder: Filter
+t-sortdropdown-placeholder: Sort by

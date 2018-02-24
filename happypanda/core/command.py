@@ -3,11 +3,15 @@ import arrow
 import gevent
 import weakref
 import sys
+import itertools
+import arrow
 
 from contextlib import contextmanager
 from abc import ABCMeta, abstractmethod
 from inspect import isclass
 from gevent.threadpool import ThreadPool
+from cachetools import LRUCache
+from treelib import Tree
 
 from happypanda.common import utils, hlogger, exceptions, constants
 from happypanda.core import plugins, async, db
@@ -76,6 +80,8 @@ class CoreCommand:
     _events = {}
     _entries = {}
     _native_pool = None
+    _progress_counter = itertools.count(1)
+    _progresses = LRUCache(500)
 
     def __new__(cls, *args, **kwargs):
         obj = super(CoreCommand, cls).__new__(cls)
@@ -89,6 +95,13 @@ class CoreCommand:
         self._finished_time = None
         self._priority = priority
         self._futures = []
+        self._progress_max = None
+        self._progress_current = None
+        self._progress_text = None
+        self._progress_count = None
+        self._progress_type = None
+        self._progress_tree = None
+        self._progress_time = None
 
     def _run(self, *args, **kwargs):
         """
@@ -96,6 +109,74 @@ class CoreCommand:
         """
         log.d("Running command:", self.__class__.__name__)
         return self.main(*args, **kwargs)
+
+    @classmethod
+    def get_all_progress(cls):
+        raise NotImplementedError
+
+    def _add_progress(self, add=True):
+        if not self._progress_count:
+            self._progress_count = next(self._progress_counter)
+
+        if self._progress_tree is None and self._progress_count not in self._progresses:
+            self._progress_tree = Tree()
+            if add:
+                self._progresses[self._progress_count] = self._progress_tree
+            self._progress_tree.create_node(self._progress_count, self._progress_count, data=weakref.ref(self))
+
+    def merge_progress_into(self, cmd):
+        assert isinstance(cmd, CoreCommand)
+        self._add_progress(False)
+        cmd._progress_tree.paste(cmd._progress_count, self._progress_tree)
+
+        self._progress_tree = cmd._progress_tree
+
+        if self._progress_count in self._progresses:
+            del self._progresses[self._progress_count]
+
+    def get_progress(self):
+
+        if self._progress_tree:
+            p = {'text': '',
+                 'value': .0,
+                 'percent': .0,
+                 'max': .0,
+                 'type': self._progress_type}
+
+            t = self._progress_tree.subtree(self._progress_count)
+            prog_time = self._progress_time
+            prog_text = self._progress_text if self._progress_text else ''
+            for _, n in t.nodes.items():
+                cmd = n.data()
+                if cmd:
+                    if cmd._progress_max:
+                        p['max'] += cmd._progress_max
+                    if cmd._progress_current:
+                        p['value'] += cmd._progress_current
+
+                    if not prog_time or (cmd._progress_time and cmd._progress_time > prog_time):
+                        prog_text = cmd._progress_text
+            if p['max']:
+                p['percent'] = (100/p['max'])*p['value']
+            else:
+                p['percent'] = -1.0
+            p['text'] = prog_text
+            return p
+        return None
+
+
+    def set_progress(self, value, text=None):
+        assert isinstance(value, (int, float))
+        self._add_progress()
+        self._progress_time = arrow.now()
+        self._progress_current = value
+        if text is not None:
+            self._progress_text = text
+
+    def set_max_progress(self, value):
+        assert isinstance(value, (int, float))
+        self._add_progress()
+        self._progress_max = value
 
     def run_native(self, f, *args, **kwargs):
         f = async.AsyncFuture(self, self._native_pool.apply_async(_native_runner(f), args, kwargs))
