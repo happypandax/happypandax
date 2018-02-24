@@ -40,7 +40,9 @@ class CheckUpdate(AsyncCommand):
                         if client_answer and 2 in client_answer:
                             init_restart = False
                 if init_update:
-                    UpdateApplication().run(u['url'], restart=init_restart, silent=silent, push=push)
+                    upd = UpdateApplication()
+                    upd.merge_progress_into(self)
+                    upd.main(u['url'], restart=init_restart, silent=silent, push=push)
             return u
 
 

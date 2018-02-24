@@ -110,7 +110,11 @@ def check_update(push: bool = False):
         push: whether to push out notifications if an update is found
 
     Returns:
-        an empty dict or
+        A command id with command value:
+
+        null
+
+        or
 
         .. code-block:: guess
 
@@ -121,11 +125,8 @@ def check_update(push: bool = False):
             }
     """
 
-    r = {}
-    upd = meta_cmd.CheckUpdate().run(force=True, push=push)
-    if upd:
-        r = upd
-    return message.Identity('update', r)
+    upd = meta_cmd.CheckUpdate(AsyncService.generic).run(force=True, push=push)
+    return message.Identity('update', upd)
 
 
 def update_application(download_url: str = None, restart: bool = True):
@@ -138,10 +139,12 @@ def update_application(download_url: str = None, restart: bool = True):
         restart: restart the application after installing the new update
 
     Returns:
+        A command id with command value:
+
         bool indicating whether the install was successful or not
     """
 
-    upd = meta_cmd.UpdateApplication().run(download_url, restart)
+    upd = meta_cmd.UpdateApplication(AsyncService.generic).run(download_url, restart)
     return message.Identity('update', upd)
 
 
