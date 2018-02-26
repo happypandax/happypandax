@@ -192,6 +192,8 @@ def get_version():
 
 
 def _command_msg(ids):
+    if ids is None:
+        return
     for x in ids:
         c = AsyncService.get_command(x)
         if not c:
@@ -260,27 +262,30 @@ def get_command_state(command_ids: list):
     return message.Identity('command_state', states)
 
 
-def get_command_progress(command_ids: list):
+def get_command_progress(command_ids: list = None):
     """
     Get progress of command operation
     
-    If the command did not set a maximum value, the returned percent will be set to less than ``0.0``.
+    If the command did not set a maximum value, the returned percent will be set to less than ``0.0`` for infinity.
 
-    You want to poll this every few seconds to get updated values.
+    This should be polled every few seconds to get updated values.
 
     Args:
-        command_ids: list of command ids
+        command_ids: list of command ids or None to retrieve progress of all occurring commands
 
     Returns:
         .. code-block:: guess
 
             {
-                command_id : {
+                command_id : {  'title': str,
                                 'value': float,
+                                'subtitle': str,
+                                'subtype': :py:class:`.ProgressType`,
                                 'max': float,
                                 'percent': float,
                                 'type': :py:class:`.ProgressType`,
                                 'text': str,
+                                'timestamp':int
                                 }
             }
 
@@ -289,19 +294,49 @@ def get_command_progress(command_ids: list):
             {
                 command_id : None
             }
+
+            or, if ``command_ids`` is ``None``:
+
+            [
+                {   'title': str,
+                    'value': float,
+                    'subtitle': str,
+                    'subtype': :py:class:`.ProgressType`,
+                    'max': float,
+                    'percent': float,
+                    'type': :py:class:`.ProgressType`,
+                    'text': str,
+                    'timestamp':int
+                    },
+                ...
+            ]
     """
     _command_msg(command_ids)
 
-    progs = {}
 
-    for i in command_ids:
-        cmd = AsyncService.get_command(i)
-        p = cmd.get_progress()
-        if p and not p['type']:
-            p['type'] = enums.ProgressType.Unknown
-        if p and p['type']:
-            p['type'] = p['type'].value
-        progs[i] = p
+    cmd_p = []
+    if command_ids is not None:
+        for i in command_ids:
+            cmd = AsyncService.get_command(i)
+            if cmd:
+                cmd_p.append(i, cmd.get_progress())
+    else:
+        cmd_p = command.CoreCommand.get_all_progress()
+
+    progs = {} if command_ids is not None else []
+
+    for x in cmd_p:
+        p = x[1] if command_ids is not None else x
+        for k in ('type', 'subtype'):
+            if p and not p[k]:
+                p[k] = enums.ProgressType.Unknown
+            if p and p[k]:
+                p[k] = p[k].value
+
+        if command_ids is not None:
+            progs[x[0]] = p
+        else:
+            progs.append(p)
 
     return message.Identity('command_progress', progs)
 

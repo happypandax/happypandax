@@ -33,7 +33,7 @@ updater_key = "updater"
 
 ## VERSIONING ##
 build = 120
-version = (0, 0, 8)
+version = (0, 0, 7)
 version_db = (0, 0, 1)
 version_web = (0, 0, 7)
 version_str = ".".join(str(x) for x in version)
@@ -100,6 +100,8 @@ class PushID(enum.Enum):
 
 
 maximum_native_workers = 15
+
+command_progress_removal_time = 60*5 # seconds
 
 image_sizes = {
     "big": (300, 416),

@@ -78,7 +78,7 @@ def start(argv=None, db_kwargs={}):
                 io_cmd.CoreFS(constants.config_example_path).path), stdout=True)
             return
 
-        update_state = check_update()
+        update_state = check_update() if not (not constants.is_frozen and constants.dev) else None
 
         if not update_state == constants.UpdateState.Installing.value:
 

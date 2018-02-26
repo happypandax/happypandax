@@ -1,6 +1,7 @@
 from happypanda.common import (hlogger, constants, config)
 from happypanda.core.command import Command, CommandEvent, AsyncCommand
 from happypanda.core import updater, message
+from happypanda.interface import enums
 
 log = hlogger.Logger(__name__)
 
@@ -14,9 +15,10 @@ class CheckUpdate(AsyncCommand):
         return super().__init__(service, priority)
 
     def main(self, silent=True, force=False, push=False) -> dict:
-        self.set_max_progress(2)
         if force or config.check_release_interval.value:
-            u = updater.check_release(silent=silent)
+            self.set_progress(type_=enums.ProgressType.CheckUpdate)
+            self.set_max_progress(2)
+            u = updater.check_release(silent=silent, cmd=self)
             self.set_progress(1)
             if u:
                 init_update = True
@@ -60,12 +62,13 @@ class UpdateApplication(AsyncCommand):
         return super().__init__(service, priority)
 
     def main(self, download_url=None, restart=True, silent=True, push=False) -> bool:
+        self.set_progress(type_=enums.ProgressType.UpdateApplication)
         self.set_max_progress(3)
         st = False
         if download_url:
             rel = download_url
         else:
-            rel = updater.check_release(silent=silent)
+            rel = updater.check_release(silent=silent, cmd=self)
             if rel:
                 rel = rel['url']
         self.set_progress(1)

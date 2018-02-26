@@ -84,6 +84,20 @@ class ItemSort:
     #: Tag
     NamespaceTagTag = 31
 
+class ProgressType:
+
+    #: Unknown
+    Unknown = 1
+    #: Network request
+    Request = 2
+    #: A check for new update
+    CheckUpdate = 3
+    #: Updating application
+    UpdateApplication = 4
+
+class PushID():
+    Update = 1
+    User = 200
 
 def log(msg):
     if state.debug:
@@ -445,7 +459,7 @@ class Command(Base):
                     self._check_status()
                 else:
                     if self._complete_callback:
-                        self._complete_callback()
+                        self._complete_callback(self)
 
                 self._fetch_value()
                 f = self.finished()
@@ -456,8 +470,9 @@ class Command(Base):
             state.commands.add(self)
             utils.poll_func(_poll, timeout, interval)
         else:
+            self._fetch_value()
             if self._complete_callback:
-                self._complete_callback()
+                self._complete_callback(self)
     __pragma__('nokwargs')
 
     __pragma__('iconv')
@@ -499,8 +514,9 @@ class Command(Base):
 
     __pragma__('iconv')
     __pragma__('tconv')
+    __pragma__('kwargs')
 
-    def get_value(self, cmd_id=None):
+    def get_value(self, cmd_id=None, block=False):
         "Fetch command value"
 
         if cmd_id and not isinstance(cmd_id, list):
@@ -514,12 +530,20 @@ class Command(Base):
             if i not in self._values:
                 ids.append(int(i))
 
+        if block:
+            self.poll_until_complete(3000)
+            while True:
+                if self.finished():
+                  break 
+
         if ids:
             self._fetch_value(cmd_ids=ids)
 
         if self._single_id:
             return self._values[str(self._single_id)]
         return self._values
+
+    __pragma__('nokwargs')
     __pragma__('noiconv')
     __pragma__('notconv')
 

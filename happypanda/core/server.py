@@ -97,7 +97,7 @@ class ClientNotifications:
         gl = scope is None
 
         if cl and ctx:
-            ctx['msg'].append(msg)
+            ctx['msg'].insert(0, msg)
 
         if gl:
             log.d("Pushing notification on global scope")
@@ -108,7 +108,7 @@ class ClientNotifications:
                     g_ctx = self._context(gl_ctx)
                     if cl and g_ctx == ctx:
                         continue
-                    g_ctx['msg'].append(msg)
+                    g_ctx['msg'].insert(0, msg)
         return self
 
     def reply(self, msg_id, action_values):
@@ -641,7 +641,7 @@ class HPServer:
         self._cleanup()
 
     def update(self, status=True, restart=True):
-        if status:
+        if status and not (not constants.is_frozen and constants.dev):
             self._exitcode = constants.ExitCode.Update
             if restart:
                 self.broadcast(enums.ServerCommand.ServerRestart.value)

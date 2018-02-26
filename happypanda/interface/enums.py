@@ -192,5 +192,9 @@ class ProgressType(_APIEnum):
 
     #: Unknown
     Unknown = 1
-    #: Update
-    Update = 2
+    #: Network request
+    Request = 2
+    #: A check for new update
+    CheckUpdate = 3
+    #: Updating application
+    UpdateApplication = 4

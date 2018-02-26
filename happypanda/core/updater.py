@@ -13,7 +13,7 @@ from happypanda.core.commands.io_cmd import CoreFS
 log = hlogger.Logger(__name__)
 
 
-def verify_release(checksum, silent=True):
+def verify_release(checksum, silent=True, cmd=None):
     """
     Verify a new release by checking against a key provider
 
@@ -31,10 +31,10 @@ def verify_release(checksum, silent=True):
         return True
     try:
         r = SimpleGETRequest(
-            "https://api.github.com/repos/{}/{}/contents/{}".format(repo_owner, repo_name, repo_file)).run()
+            "https://api.github.com/repos/{}/{}/contents/{}".format(repo_owner, repo_name, repo_file)).merge(cmd).run()
         data = r.json
         if data:
-            r = SimpleGETRequest(data['download_url']).run()
+            r = SimpleGETRequest(data['download_url']).merge(cmd).run()
             if r.text:
                 with utils.intertnal_db() as db:
                     db[checksum_rel_key] = r.text
@@ -62,7 +62,7 @@ def extract_version(v): return tuple(  # noqa: E704
 next_check = None
 
 
-def check_release(silent=True):
+def check_release(silent=True, cmd=None):
     """
     Check for new release
 
@@ -83,7 +83,7 @@ def check_release(silent=True):
         repo_name = config.github_repo.value['repo']
         repo_owner = config.github_repo.value['owner']
         try:
-            r = SimpleGETRequest("https://api.github.com/repos/{}/{}/tags".format(repo_owner, repo_name)).run()
+            r = SimpleGETRequest("https://api.github.com/repos/{}/{}/tags".format(repo_owner, repo_name)).merge(cmd).run()
             data = r.json
             with utils.intertnal_db() as db:
                 tags = [x['name'] for x in data] if data else []
@@ -111,7 +111,7 @@ def check_release(silent=True):
             changes = ""
             if new_rel:
                 r = SimpleGETRequest(
-                    "https://api.github.com/repos/{}/{}/releases/tags/{}".format(repo_owner, repo_name, new_rel)).run()
+                    "https://api.github.com/repos/{}/{}/releases/tags/{}".format(repo_owner, repo_name, new_rel)).merge(cmd).run()
                 data = r.json
                 ignore_words = ['installer']
                 if data and 'body' in data and 'assets' in data:
@@ -178,10 +178,7 @@ def get_release(download_url=None, archive=True, silent=True, cmd=None):
                 d_file['path'] = download_url
             else:
                 log.i("Getting release from web", stdout=True)
-                r = SimpleGETRequest(download_url, RequestProperties(stream=True))
-                if cmd:
-                    r.merge_progress_into(cmd)
-                r = r.run()
+                r = SimpleGETRequest(download_url, RequestProperties(stream=True)).merge(cmd).run()
                 d_file['path'] = r.save(
                     os.path.join(
                         constants.dir_cache if archive else constants.dir_temp,
@@ -189,7 +186,7 @@ def get_release(download_url=None, archive=True, silent=True, cmd=None):
                     extension=True)
             d_file['hash'] = sha256_checksum(d_file['path'])
             log.i("Computed file checksum", d_file['hash'])
-            if not constants.dev and not verify_release(d_file['hash'], silent):
+            if not constants.dev and not verify_release(d_file['hash'], silent, cmd=cmd):
                 log.w("File checksum mismatch from download url", download_url)
                 return None
             down_rels[download_url] = d_file
@@ -240,6 +237,9 @@ def register_release(filepath, silent=True, restart=True):
 
             # also, we only extract contents in the bundle (not the bundle itself)
             extracted_content = os.path.join(extracted_content, constants.osx_bundle_name)
+
+        if constants.dev and not constants.is_frozen:
+            app_path = constants.dir_temp
 
         with utils.intertnal_db() as db:
             db[constants.updater_key] = {'from': extracted_content,

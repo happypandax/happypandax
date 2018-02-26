@@ -3,7 +3,6 @@ import weakref
 import functools
 import itertools
 
-from cachetools import LRUCache
 from gevent import pool, queue
 from apscheduler.schedulers.gevent import GeventScheduler
 
@@ -19,7 +18,7 @@ class Service:
     _id_counter = itertools.count(100)
 
     services = []
-    _all_commands = LRUCache(1000)
+    _all_commands = weakref.WeakValueDictionary()
 
     def __init__(self, name):
         self.name = name
@@ -29,7 +28,7 @@ class Service:
         command_id = next(self._id_counter)
         cmd.command_id = command_id
         cmd.service = self
-        self._all_commands[command_id] = weakref.ref(cmd)
+        self._all_commands[command_id] = cmd
         return command_id
 
     def start_command(self, cmd_id, *args, **kwargs):
@@ -41,7 +40,7 @@ class Service:
     @classmethod
     def get_command(cls, cmd_id):
         if cmd_id in cls._all_commands:
-            return cls._all_commands[cmd_id]()
+            return cls._all_commands[cmd_id]
         return None
 
 #@attr.s
@@ -302,8 +301,10 @@ class AsyncService(Service):
         assert isinstance(cmd_id, int)
         gevent.idle(constants.Priority.Normal.value)
         if cmd_id in self._greenlets:
-            self._commands[cmd_id].kill()
-            self._greenlets[cmd_id].kill()
+            if cmd_id in self._commands:
+                self._commands[cmd_id].kill()
+            if cmd_id in self._greenlets:
+                self._greenlets[cmd_id].kill()
 
     def get_command_value(self, cmd_id):
         """
@@ -348,6 +349,8 @@ class AsyncService(Service):
 
         if callback:
             callback(greenlet.value)
+
+        del self._commands[command_id]
 
     def _start(self, cmd_id):
         gevent.idle(constants.Priority.Low.value)

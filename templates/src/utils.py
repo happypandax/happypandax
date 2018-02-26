@@ -39,13 +39,11 @@ random_string = __pragma__('js', '{}',
 interval_func = __pragma__('js', '{}',
                            """
     function interval_func(fn, interval) {
-    function f() {
-
-    fn();
-
-    setTimeout(f, interval);
-    }
-    f();
+        function f() {
+            fn();
+            return setTimeout(f, interval);
+        }
+        return f();
     }""")
 
 poll_func = __pragma__('js', '{}',

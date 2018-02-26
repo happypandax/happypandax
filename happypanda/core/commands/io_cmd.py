@@ -155,13 +155,13 @@ class ImageItem(AsyncCommand):
                 im.save(image_path)
         except (OSError, KeyError) as e:
             if not self._retrying:
-                log.w("Failed generating image:", e.args[1], "retrying...")
+                log.w("Failed generating image:", e.args, "retrying...")
                 self._retrying = True
                 if im:
                     im.close()
                     im = None
                 return self._generate()
-            log.w("Failed generating image:", e.args[1])
+            log.w("Failed generating image:", e.args)
         finally:
             if im:
                 im.close()

@@ -11,7 +11,7 @@ from abc import ABCMeta, abstractmethod
 from inspect import isclass
 from gevent.threadpool import ThreadPool
 from cachetools import LRUCache
-from treelib import Tree
+from treelib import Tree, exceptions as tree_exceptions
 
 from happypanda.common import utils, hlogger, exceptions, constants
 from happypanda.core import plugins, async, db
@@ -102,6 +102,8 @@ class CoreCommand:
         self._progress_type = None
         self._progress_tree = None
         self._progress_time = None
+        self._progress_timestamp = 0
+        self._progress_title = self.__class__.__name__
 
     def _run(self, *args, **kwargs):
         """
@@ -112,7 +114,12 @@ class CoreCommand:
 
     @classmethod
     def get_all_progress(cls):
-        raise NotImplementedError
+        ps = []
+        for c, t in cls._progresses.items():
+            x = t.get_node(t.root).data()
+            if x:
+                ps.insert(0, x.get_progress())
+        return ps
 
     def _add_progress(self, add=True):
         if not self._progress_count:
@@ -123,9 +130,20 @@ class CoreCommand:
             if add:
                 self._progresses[self._progress_count] = self._progress_tree
             self._progress_tree.create_node(self._progress_count, self._progress_count, data=weakref.ref(self))
+            self._progress_timestamp = arrow.now().timestamp
+
+        self._progress_time = arrow.now()
+
+    def merge(self, cmd):
+        ""
+        assert cmd is None or isinstance(cmd, CoreCommand)
+        if cmd:
+            self.merge_progress_into(cmd)
+        return self
 
     def merge_progress_into(self, cmd):
         assert isinstance(cmd, CoreCommand)
+        cmd._add_progress()
         self._add_progress(False)
         cmd._progress_tree.paste(cmd._progress_count, self._progress_tree)
 
@@ -134,18 +152,37 @@ class CoreCommand:
         if self._progress_count in self._progresses:
             del self._progresses[self._progress_count]
 
+    def _str_progress_tree(self):
+        self._tree_reader = ""
+        def w(l):
+            self._tree_reader = l.decode('utf-8') + '\n'
+
+        try:
+            self._progress_tree._Tree__print_backend(func=w)
+        except tree_exceptions.NodeIDAbsentError:
+            self._tree_reader = "Tree is empty"
+        return self._tree_reader
+
+
     def get_progress(self):
 
         if self._progress_tree:
-            p = {'text': '',
+            log.d("Command", self, "progress tree:\n{}".format(self._str_progress_tree()))
+            p = {'title': self._progress_title,
+                 'subtitle': '',
+                 'subtype': None,
+                 'text': '',
                  'value': .0,
                  'percent': .0,
                  'max': .0,
-                 'type': self._progress_type}
+                 'type': self._progress_type,
+                 'timestamp': self._progress_timestamp}
 
             t = self._progress_tree.subtree(self._progress_count)
             prog_time = self._progress_time
             prog_text = self._progress_text if self._progress_text else ''
+            prog_subtitle = ''
+            prog_subtype = None
             for _, n in t.nodes.items():
                 cmd = n.data()
                 if cmd:
@@ -156,35 +193,45 @@ class CoreCommand:
 
                     if not prog_time or (cmd._progress_time and cmd._progress_time > prog_time):
                         prog_text = cmd._progress_text
+                        prog_subtitle = cmd._progress_title
+                        prog_subtype = cmd._progress_type
             if p['max']:
                 p['percent'] = (100/p['max'])*p['value']
             else:
                 p['percent'] = -1.0
             p['text'] = prog_text
+            p['subtitle'] = prog_subtitle
+            p['subtype'] = prog_subtype
             return p
         return None
 
 
-    def set_progress(self, value, text=None):
-        assert isinstance(value, (int, float))
+    def set_progress(self, value=None, text=None, title=None, type_=None):
+        assert value is None or isinstance(value, (int, float))
         assert text is None or isinstance(text, str)
+        assert title is None or isinstance(text, str)
         self._add_progress()
-        self._progress_time = arrow.now()
-        self._progress_current = value
+        if title is not None:
+            self._progress_title = title
+        if value is not None:
+            self._progress_current = value
         if text is not None:
             self._progress_text = text
+        if type_ is not None:
+            self._progress_type = type_
 
     def set_max_progress(self, value):
         assert isinstance(value, (int, float))
         self._add_progress()
         self._progress_max = value
 
-    def next_progress(self, text=None, _from=0):
+    def next_progress(self, add=1, text=None, _from=0):
+        assert isinstance(add, (int, float))
         if self._progress_current is None:
             self._progress_current = _from
         if text is not None:
             self._progress_text = text
-        self._progress_current += 1
+        self._progress_current += add
 
     @contextmanager
     def progress(self, max_progress=None, text=None):
@@ -217,6 +264,10 @@ class CoreCommand:
               "\t\tRunning delta: {} (time between start and finish)\n".format(run_delta),
               "\t\tLog delta: {} (time between finish and this log)\n".format(log_delta),
               )
+
+    def __del__(self):
+        if self._progress_count and self._progress_count in self._progresses:
+            del self._progresses[self._progress_count]
 
     @classmethod
     def _get_commands(cls):
@@ -253,6 +304,8 @@ class Command(CoreCommand, metaclass=ABCMeta):
         r = self._main(*args, **kwargs)
         if self._progress_max is not None:
             self.set_progress(self._progress_max)
+        if self._progress_count and self._progress_count in self._progresses:
+            gevent.spawn_later(constants.command_progress_removal_time, lambda: self._progresses.pop(self._progress_count))
         self._finished_time = arrow.now()
         return r
 

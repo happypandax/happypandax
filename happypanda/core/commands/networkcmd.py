@@ -51,11 +51,16 @@ class Response(CoreCommand):
     """
     """
 
-    def __init__(self, _url, _response_obj, _props):
+    def __init__(self, _url, _request_method, _request_kwargs, _props):
         super().__init__()
         self.properties = _props
-        self._rsp = _response_obj
+        self._method = _request_method
+        self._kwargs = _request_kwargs
+        self._rsp = None
         self._url = _url
+
+    def _call(self):
+        self._rsp = self._method(self._url, **self._kwargs)
 
     @property
     def response(self):
@@ -87,13 +92,17 @@ class Response(CoreCommand):
         if extension:
             filepath = io_cmd.CoreFS(filepath.path + io_cmd.CoreFS(os.path.split(self._url)[1]).ext, filepath._archive)
 
-        self.set_max_progress(self._rsp.headers.get('content-length', 0)+1)
+        self.set_max_progress(int(self._rsp.headers.get('Content-Length', '0').strip())+1)
+        self.set_progress(type_=enums.ProgressType.Request)
         log.d("Saving to filepath", filepath)
         with filepath.open(mode="wb") as f:
             if self.properties.stream:
                 s_time = arrow.now()
+                dl_length = 0
                 for data in self._rsp.iter_content(chunk_size=1024, decode_unicode=decode_unicode):
-                    self.next_progress(self._url)
+                    data_len = len(data)
+                    dl_length += data_len
+                    self.next_progress(data_len, text="[{0:.3f} mbps] - {1}".format((dl_length/1000000)/max((arrow.now() - s_time).seconds, 1), self._url))
                     f.write(data)
                     f.flush()
             else:
@@ -152,7 +161,9 @@ class _Request(Command):
             kwargs['json'] = props.json
         if props.stream and verb == Method.GET:
             kwargs['stream'] = props.stream
-        r = Response(url, method(url, **kwargs), props)
+        r = Response(url, method, kwargs, props)
+        r.merge_progress_into(self)
+        r._call()
         return r
 
     def cleanup_session(self):

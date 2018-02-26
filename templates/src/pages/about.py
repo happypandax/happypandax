@@ -6,7 +6,7 @@ from src.react_utils import (h, e,
                              React,
                              createReactClass,
                              Link)
-from src.client import client
+from src.client import client, Command
 from src.state import state
 from src.ui import ui
 from src.i18n import tr
@@ -169,11 +169,16 @@ def abouttab_shutdown(data=None, error=None):
 __pragma__("tconv")
 
 
+def abouttab_check_update_value(cmd):
+    cmd_data = cmd.get_value()
+    if cmd_data:
+        state.new_update = True
+    this.setState({"update_msg": cmd_data, 'update_checking': False})
+
 def abouttab_check_update(data=None, error=None):
     if data is not None and not error:
-        if data:
-            state.new_update = True
-        this.setState({"update_msg": data, 'update_checking': False})
+        cmd = Command(data)
+        cmd.poll_until_complete(3000, callback=this.check_update_value)
     elif error:
         state.app.notif("Failed to check for updates", level="warning")
         this.setState({"update_checking": False})
@@ -228,6 +233,7 @@ AboutTab = createReactClass({
     'restart': abouttab_restart,
     'shutdown': abouttab_shutdown,
 
+    'check_update_value': abouttab_check_update_value,
     'check_update': abouttab_check_update,
 
     'componentDidMount': lambda: this.get_version(),

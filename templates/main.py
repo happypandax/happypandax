@@ -17,8 +17,9 @@ from src.ui import ui, Alert, Notif, ConnectStatus
 from src.nav import (sidebar, menu)
 from src.pages import (api, collection, gallery,
                        dashboard, favorites, inbox,
-                       library, page, directory)
-from src.client import pushclient
+                       library, page, directory,
+                       downloads)
+from src.client import pushclient, PushID
 from src import utils
 
 preview_txt = """Hi there!
@@ -63,11 +64,16 @@ def on_update(props):
         # TODO: scroll restoration
         window.scrollTo(0, 0)
 
+def on_path_mount():
+    state.history = this.props.history
+
 
 PathChange = createReactClass({
     'displayName': 'PathChange',
 
     'componentWillReceiveProps': on_update,
+
+    'componentDidMount': on_path_mount,
 
     'render': lambda: None
 })
@@ -121,9 +127,11 @@ def server_notifications(data=js_undefined, error=None):
             else:
                 tmout = 20000
                 ic = "info"
-                if data['id'] in [1, ]:
-                    tmout = tmout * 2
+                if data['id'] in (PushID.Update,):
+                    tmout = tmout * 1.5
                     ic = "angle double up"
+                    if state.history:
+                        utils.go_to(state.history, "/downloads")
                 this.notif(data['body'], data['title'], icon=ic, timeout=tmout)
     elif error:
         this.notif("Failed to retrieve server notification", level="warning")
@@ -252,6 +260,7 @@ def app_render():
                          e(Route, path="/favorite", component=this.favorites_page),
                          e(Route, path="/inbox", component=this.inbox_page),
                          e(Route, path="/directory", component=this.directory_page),
+                         e(Route, path="/downloads", component=this.downloads_page),
                          e(Route, path="/item/gallery", component=this.gallery_page),
                          e(Route, path="/item/collection", component=this.collection_page),
                          e(Route, path="/item/page", component=this.page_page),
@@ -322,6 +331,7 @@ App = createReactClass({
     'gallery_page': lambda p: e(gallery.Page, menu=this.set_menu_contents, **p),
     'collection_page': lambda p: e(collection.Page, menu=this.set_menu_contents, **p),
     'directory_page': lambda p: e(directory.Page, menu=this.set_menu_contents, **p),
+    'downloads_page': lambda p: e(downloads.Page, menu=this.set_menu_contents, **p),
 
     'render': app_render,
 })
