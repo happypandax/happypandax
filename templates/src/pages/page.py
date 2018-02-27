@@ -182,7 +182,7 @@ def on_key(ev):
             go_next()
         elif this.state.cfg_direction == ReaderDirection.right_to_left:
             go_prev()
-    elif ev.key in ("ArrowLeft", "d"):
+    elif ev.key in ("ArrowLeft", "a"):
         if this.state.cfg_direction == ReaderDirection.left_to_right:
             go_prev()
         elif this.state.cfg_direction == ReaderDirection.right_to_left:

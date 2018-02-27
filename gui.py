@@ -378,6 +378,7 @@ class Window(QMainWindow):
         super().__init__(*args, **kwargs)
         self.processes = []
         self.tray = QSystemTrayIcon(self)
+        self.tray.show()
         self.closing = False
         self.forcing = False
         self.server_started = False
