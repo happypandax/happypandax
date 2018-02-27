@@ -1,4 +1,4 @@
-.. Happypanda X documentation master file, created by
+.. HappyPanda X documentation master file, created by
    sphinx-quickstart on Sat Feb 25 19:36:02 2017.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
@@ -8,7 +8,7 @@
     This is project is under heavy development.
     If you want to speed up the development, please consider :ref:`Contributing`.
 
-Happypanda X user guide
+HappyPanda X user guide
 ----------------------------------------
 
 .. toctree::

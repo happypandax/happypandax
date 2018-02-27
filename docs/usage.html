@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Using HappyPanda X &#8212; HappyPanda X 0.0.8#120 documentation</title>
+    <title>Using HappyPanda X &#8212; HappyPanda X 0.0.9#121 documentation</title>
     
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.0.8#120',
+        VERSION:     '0.0.9#121',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -54,7 +54,7 @@
         </button>
         <a class="navbar-brand" href="index.html">
           HappyPanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.8#120</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.9#121</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -166,6 +166,7 @@
 <li><a class="reference internal" href="#">Using HappyPanda X</a><ul>
 <li><a class="reference internal" href="#setting-up">Setting up</a></li>
 <li><a class="reference internal" href="#starting">Starting</a></li>
+<li><a class="reference internal" href="#migrating-from-happypanda">Migrating from HappyPanda</a></li>
 <li><a class="reference internal" href="#using">Using</a></li>
 </ul>
 </li>
@@ -228,6 +229,13 @@ You can also instead start the GUI wrapper, and it should be self-explanatory ho
 <p class="first admonition-title">Note</p>
 <p class="last">On a MacOS HPX installation, the app bundle is set to run <code class="docutils literal"><span class="pre">happypandax_gui</span></code>.</p>
 </div>
+</div>
+<div class="section" id="migrating-from-happypanda">
+<h2>Migrating from HappyPanda<a class="headerlink" href="#migrating-from-happypanda" title="Permalink to this headline">¶</a></h2>
+<p>In the HPX root folder, you can find a commandline tool named <code class="docutils literal"><span class="pre">HPtoHPX</span></code> to help convert your HP database.
+See available arguments by supplying the <code class="docutils literal"><span class="pre">--help</span></code> argument: <code class="docutils literal"><span class="pre">./HPtoHPX</span> <span class="pre">--help</span></code>.</p>
+<p>Convert your HP database like this: <code class="docutils literal"><span class="pre">./HPtoHPX</span> <span class="pre">path/to/old/file.db</span> <span class="pre">data/happypanda.db</span></code></p>
+<p>Alternatively, you can also use the GUI wrapper <code class="docutils literal"><span class="pre">happypandax_gui</span></code>, which provides an user-friendly way of doing it.</p>
 </div>
 <div class="section" id="using">
 <h2>Using<a class="headerlink" href="#using" title="Permalink to this headline">¶</a></h2>

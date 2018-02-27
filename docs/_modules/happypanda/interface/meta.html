@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>happypanda.interface.meta &#8212; HappyPanda X 0.0.8#120 documentation</title>
+    <title>happypanda.interface.meta &#8212; HappyPanda X 0.0.9#121 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.0.8#120',
+        VERSION:     '0.0.9#121',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -52,7 +52,7 @@
         </button>
         <a class="navbar-brand" href="../../../index.html">
           HappyPanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.8#120</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.9#121</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -171,6 +171,7 @@
 <span class="kn">from</span> <span class="nn">happypanda.core.services</span> <span class="k">import</span> <span class="n">AsyncService</span>
 <span class="kn">from</span> <span class="nn">happypanda.core</span> <span class="k">import</span> <span class="n">command</span><span class="p">,</span> <span class="n">message</span>
 <span class="kn">from</span> <span class="nn">happypanda.core.commands</span> <span class="k">import</span> <span class="n">meta_cmd</span>
+<span class="kn">from</span> <span class="nn">happypanda.interface</span> <span class="k">import</span> <span class="n">enums</span>
 
 <span class="n">log</span> <span class="o">=</span> <span class="n">hlogger</span><span class="o">.</span><span class="n">Logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
@@ -213,7 +214,7 @@
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
                 <span class="n">t_locale</span><span class="p">,</span> <span class="n">t_ns</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">n</span>
                 <span class="n">l_dict</span> <span class="o">=</span> <span class="n">trs_dict</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">t_locale</span><span class="p">,</span> <span class="p">{})</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="s1">&#39;locale&#39;</span> <span class="ow">in</span> <span class="n">l_dict</span><span class="p">:</span>
+                <span class="k">if</span> <span class="s1">&#39;locale&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">l_dict</span><span class="p">:</span>
                     <span class="n">t_general</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">.general.yaml&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">t_locale</span><span class="p">)</span>
                     <span class="n">t_general_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">constants</span><span class="o">.</span><span class="n">dir_translations</span><span class="p">,</span> <span class="n">t_general</span><span class="p">)</span>
                     <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">t_general_path</span><span class="p">):</span>
@@ -232,12 +233,11 @@
 
     <span class="n">d</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">constants</span><span class="o">.</span><span class="n">translations</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="s1">&#39;locale&#39;</span> <span class="ow">in</span> <span class="n">b</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s1">&#39;locale&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">b</span><span class="p">:</span>
             <span class="k">continue</span>
         <span class="n">d</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">=</span> <span class="n">b</span>
 
     <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Identity</span><span class="p">(</span><span class="s2">&quot;locales&quot;</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span></div>
-
 
 
 <div class="viewcode-block" id="get_notification"><a class="viewcode-back" href="../../../api.html#happypanda.interface.meta.get_notification">[docs]</a><span class="k">def</span> <span class="nf">get_notification</span><span class="p">(</span><span class="n">scope</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">msg_id</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">expired</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
@@ -270,8 +270,6 @@
 <span class="sd">        push: whether to push out notifications if an update is found</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        an empty dict or</span>
-
 <span class="sd">        .. code-block:: guess</span>
 
 <span class="sd">            {</span>
@@ -279,13 +277,12 @@
 <span class="sd">                &#39;tag&#39; : str</span>
 <span class="sd">                &#39;changes&#39; : str,</span>
 <span class="sd">            }</span>
+
+<span class="sd">        or ``null``</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">r</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="n">upd</span> <span class="o">=</span> <span class="n">meta_cmd</span><span class="o">.</span><span class="n">CheckUpdate</span><span class="p">()</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">push</span><span class="o">=</span><span class="n">push</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">upd</span><span class="p">:</span>
-        <span class="n">r</span> <span class="o">=</span> <span class="n">upd</span>
-    <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Identity</span><span class="p">(</span><span class="s1">&#39;update&#39;</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span></div>
+    <span class="n">upd</span> <span class="o">=</span> <span class="n">meta_cmd</span><span class="o">.</span><span class="n">CheckUpdate</span><span class="p">(</span><span class="n">AsyncService</span><span class="o">.</span><span class="n">generic</span><span class="p">)</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">push</span><span class="o">=</span><span class="n">push</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Identity</span><span class="p">(</span><span class="s1">&#39;update&#39;</span><span class="p">,</span> <span class="n">upd</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="update_application"><a class="viewcode-back" href="../../../api.html#happypanda.interface.meta.update_application">[docs]</a><span class="k">def</span> <span class="nf">update_application</span><span class="p">(</span><span class="n">download_url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">restart</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
@@ -298,10 +295,10 @@
 <span class="sd">        restart: restart the application after installing the new update</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        bool indicating whether the install was successful or not</span>
+<span class="sd">        A command id with command value: ``bool`` indicating whether the install was successful or not</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">upd</span> <span class="o">=</span> <span class="n">meta_cmd</span><span class="o">.</span><span class="n">UpdateApplication</span><span class="p">()</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">download_url</span><span class="p">,</span> <span class="n">restart</span><span class="p">)</span>
+    <span class="n">upd</span> <span class="o">=</span> <span class="n">meta_cmd</span><span class="o">.</span><span class="n">UpdateApplication</span><span class="p">(</span><span class="n">AsyncService</span><span class="o">.</span><span class="n">generic</span><span class="p">)</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">download_url</span><span class="p">,</span> <span class="n">restart</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Identity</span><span class="p">(</span><span class="s1">&#39;update&#39;</span><span class="p">,</span> <span class="n">upd</span><span class="p">)</span></div>
 
 
@@ -349,6 +346,8 @@
 
 
 <span class="k">def</span> <span class="nf">_command_msg</span><span class="p">(</span><span class="n">ids</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">ids</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span>
     <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">:</span>
         <span class="n">c</span> <span class="o">=</span> <span class="n">AsyncService</span><span class="o">.</span><span class="n">get_command</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">c</span><span class="p">:</span>
@@ -417,21 +416,87 @@
     <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Identity</span><span class="p">(</span><span class="s1">&#39;command_state&#39;</span><span class="p">,</span> <span class="n">states</span><span class="p">)</span></div>
 
 
-<span class="c1"># def get_command_progress(command_ids: list):</span>
-<span class="c1">#    &quot;&quot;&quot;</span>
-<span class="c1">#    Get progress of command in percent</span>
+<div class="viewcode-block" id="get_command_progress"><a class="viewcode-back" href="../../../api.html#happypanda.interface.meta.get_command_progress">[docs]</a><span class="k">def</span> <span class="nf">get_command_progress</span><span class="p">(</span><span class="n">command_ids</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get progress of command operation</span>
+<span class="sd">    </span>
+<span class="sd">    If the command did not set a maximum value, the returned percent will be set to less than ``0.0`` for infinity.</span>
 
-<span class="c1">#    Args:</span>
-<span class="c1">#        command_ids: list of command ids</span>
+<span class="sd">    This should be polled every few seconds to get updated values.</span>
 
-<span class="c1">#    Returns:</span>
-<span class="c1">#        .. code-block:: guess</span>
+<span class="sd">    Args:</span>
+<span class="sd">        command_ids: list of command ids or None to retrieve progress of all occurring commands</span>
 
-<span class="c1">#            {</span>
-<span class="c1">#                command_id : progress</span>
-<span class="c1">#            }</span>
-<span class="c1">#    &quot;&quot;&quot;</span>
-<span class="c1">#    return message.Message(&quot;works&quot;)</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        .. code-block:: guess</span>
+
+<span class="sd">            {</span>
+<span class="sd">                command_id : {  &#39;title&#39;: str,</span>
+<span class="sd">                                &#39;value&#39;: float,</span>
+<span class="sd">                                &#39;subtitle&#39;: str,</span>
+<span class="sd">                                &#39;subtype&#39;: :py:class:`.ProgressType`,</span>
+<span class="sd">                                &#39;max&#39;: float,</span>
+<span class="sd">                                &#39;percent&#39;: float,</span>
+<span class="sd">                                &#39;type&#39;: :py:class:`.ProgressType`,</span>
+<span class="sd">                                &#39;text&#39;: str,</span>
+<span class="sd">                                &#39;timestamp&#39;:int</span>
+<span class="sd">                                }</span>
+<span class="sd">            }</span>
+
+<span class="sd">        or</span>
+
+<span class="sd">        .. code-block:: guess</span>
+
+<span class="sd">            {</span>
+<span class="sd">                command_id : None</span>
+<span class="sd">            }</span>
+
+<span class="sd">        or, if ``command_ids`` is ``None``:</span>
+
+<span class="sd">        .. code-block:: guess</span>
+
+<span class="sd">            [</span>
+<span class="sd">                {   &#39;title&#39;: str,</span>
+<span class="sd">                    &#39;value&#39;: float,</span>
+<span class="sd">                    &#39;subtitle&#39;: str,</span>
+<span class="sd">                    &#39;subtype&#39;: :py:class:`.ProgressType`,</span>
+<span class="sd">                    &#39;max&#39;: float,</span>
+<span class="sd">                    &#39;percent&#39;: float,</span>
+<span class="sd">                    &#39;type&#39;: :py:class:`.ProgressType`,</span>
+<span class="sd">                    &#39;text&#39;: str,</span>
+<span class="sd">                    &#39;timestamp&#39;:int</span>
+<span class="sd">                    },</span>
+<span class="sd">                ...</span>
+<span class="sd">            ]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_command_msg</span><span class="p">(</span><span class="n">command_ids</span><span class="p">)</span>
+
+
+    <span class="n">cmd_p</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">command_ids</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">command_ids</span><span class="p">:</span>
+            <span class="n">cmd</span> <span class="o">=</span> <span class="n">AsyncService</span><span class="o">.</span><span class="n">get_command</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">cmd</span><span class="p">:</span>
+                <span class="n">cmd_p</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">cmd</span><span class="o">.</span><span class="n">get_progress</span><span class="p">())</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">cmd_p</span> <span class="o">=</span> <span class="n">command</span><span class="o">.</span><span class="n">CoreCommand</span><span class="o">.</span><span class="n">get_all_progress</span><span class="p">()</span>
+
+    <span class="n">progs</span> <span class="o">=</span> <span class="p">{}</span> <span class="k">if</span> <span class="n">command_ids</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">cmd_p</span><span class="p">:</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">command_ids</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">x</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="s1">&#39;subtype&#39;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">p</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">p</span><span class="p">[</span><span class="n">k</span><span class="p">]:</span>
+                <span class="n">p</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">enums</span><span class="o">.</span><span class="n">ProgressType</span><span class="o">.</span><span class="n">Unknown</span>
+            <span class="k">if</span> <span class="n">p</span> <span class="ow">and</span> <span class="n">p</span><span class="p">[</span><span class="n">k</span><span class="p">]:</span>
+                <span class="n">p</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">value</span>
+
+        <span class="k">if</span> <span class="n">command_ids</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">progs</span><span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="n">p</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">progs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Identity</span><span class="p">(</span><span class="s1">&#39;command_progress&#39;</span><span class="p">,</span> <span class="n">progs</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="stop_command"><a class="viewcode-back" href="../../../api.html#happypanda.interface.meta.stop_command">[docs]</a><span class="k">def</span> <span class="nf">stop_command</span><span class="p">(</span><span class="n">command_ids</span><span class="p">:</span> <span class="nb">list</span><span class="p">):</span>

@@ -110,12 +110,6 @@ def check_update(push: bool = False):
         push: whether to push out notifications if an update is found
 
     Returns:
-        A command id with command value:
-
-        null
-
-        or
-
         .. code-block:: guess
 
             {
@@ -123,6 +117,8 @@ def check_update(push: bool = False):
                 'tag' : str
                 'changes' : str,
             }
+
+        or ``null``
     """
 
     upd = meta_cmd.CheckUpdate(AsyncService.generic).run(force=True, push=push)
@@ -139,9 +135,7 @@ def update_application(download_url: str = None, restart: bool = True):
         restart: restart the application after installing the new update
 
     Returns:
-        A command id with command value:
-
-        bool indicating whether the install was successful or not
+        A command id with command value: ``bool`` indicating whether the install was successful or not
     """
 
     upd = meta_cmd.UpdateApplication(AsyncService.generic).run(download_url, restart)
@@ -289,13 +283,17 @@ def get_command_progress(command_ids: list = None):
                                 }
             }
 
-            or
+        or
+
+        .. code-block:: guess
 
             {
                 command_id : None
             }
 
-            or, if ``command_ids`` is ``None``:
+        or, if ``command_ids`` is ``None``:
+
+        .. code-block:: guess
 
             [
                 {   'title': str,

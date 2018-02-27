@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Server API &#8212; HappyPanda X 0.0.8#120 documentation</title>
+    <title>Server API &#8212; HappyPanda X 0.0.9#121 documentation</title>
     
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.0.8#120',
+        VERSION:     '0.0.9#121',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -54,7 +54,7 @@
         </button>
         <a class="navbar-brand" href="index.html">
           HappyPanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.8#120</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.9#121</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -394,6 +394,36 @@ Enum member names may change sometime in the future. It is not likely to happen 
 </dd></dl>
 
 <dl class="class">
+<dt id="happypanda.interface.enums.ProgressType">
+<em class="property">class </em><code class="descname">ProgressType</code><a class="reference internal" href="_modules/happypanda/interface/enums.html#ProgressType"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.enums.ProgressType" title="Permalink to this definition">¶</a></dt>
+<dd><p>An enumeration.</p>
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ProgressType.CheckUpdate">
+<code class="descname">CheckUpdate</code><em class="property"> = 3</em><a class="headerlink" href="#happypanda.interface.enums.ProgressType.CheckUpdate" title="Permalink to this definition">¶</a></dt>
+<dd><p>A check for new update</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ProgressType.Request">
+<code class="descname">Request</code><em class="property"> = 2</em><a class="headerlink" href="#happypanda.interface.enums.ProgressType.Request" title="Permalink to this definition">¶</a></dt>
+<dd><p>Network request</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ProgressType.Unknown">
+<code class="descname">Unknown</code><em class="property"> = 1</em><a class="headerlink" href="#happypanda.interface.enums.ProgressType.Unknown" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unknown</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ProgressType.UpdateApplication">
+<code class="descname">UpdateApplication</code><em class="property"> = 4</em><a class="headerlink" href="#happypanda.interface.enums.ProgressType.UpdateApplication" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updating application</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
 <dt id="happypanda.interface.enums.ServerCommand">
 <em class="property">class </em><code class="descname">ServerCommand</code><a class="reference internal" href="_modules/happypanda/interface/enums.html#ServerCommand"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.enums.ServerCommand" title="Permalink to this definition">¶</a></dt>
 <dd><p>An enumeration.</p>
@@ -468,11 +498,66 @@ Enum member names may change sometime in the future. It is not likely to happen 
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>push</strong> (<code class="xref py py-class docutils literal"><span class="pre">bool</span></code>) &#8211; whether to push out notifications if an update is found</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">an empty dict or<div class="highlight-guess"><div class="highlight"><pre><span></span>{
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><div class="highlight-guess"><div class="highlight"><pre><span></span>{
     &#39;url&#39; : str,
     &#39;tag&#39; : str
     &#39;changes&#39; : str,
 }
+</pre></div>
+</div>
+<p>or <code class="docutils literal"><span class="pre">null</span></code></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="happypanda.interface.meta.get_command_progress">
+<code class="descname">get_command_progress</code><span class="sig-paren">(</span><em>command_ids=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/interface/meta.html#get_command_progress"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.interface.meta.get_command_progress" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get progress of command operation</p>
+<p>If the command did not set a maximum value, the returned percent will be set to less than <code class="docutils literal"><span class="pre">0.0</span></code> for infinity.</p>
+<p>This should be polled every few seconds to get updated values.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>command_ids</strong> (<code class="xref py py-data docutils literal"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal"><span class="pre">list</span></code>]) &#8211; list of command ids or None to retrieve progress of all occurring commands</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><div class="highlight-guess"><div class="highlight"><pre><span></span>{
+    command_id : {  &#39;title&#39;: str,
+                    &#39;value&#39;: float,
+                    &#39;subtitle&#39;: str,
+                    &#39;subtype&#39;: :py:class:`.ProgressType`,
+                    &#39;max&#39;: float,
+                    &#39;percent&#39;: float,
+                    &#39;type&#39;: :py:class:`.ProgressType`,
+                    &#39;text&#39;: str,
+                    &#39;timestamp&#39;:int
+                    }
+}
+</pre></div>
+</div>
+<p>or</p>
+<div class="highlight-guess"><div class="highlight"><pre><span></span>{
+    command_id : None
+}
+</pre></div>
+</div>
+<p>or, if <code class="docutils literal"><span class="pre">command_ids</span></code> is <code class="docutils literal"><span class="pre">None</span></code>:</p>
+<div class="highlight-guess"><div class="highlight"><pre><span></span>[
+    {   &#39;title&#39;: str,
+        &#39;value&#39;: float,
+        &#39;subtitle&#39;: str,
+        &#39;subtype&#39;: :py:class:`.ProgressType`,
+        &#39;max&#39;: float,
+        &#39;percent&#39;: float,
+        &#39;type&#39;: :py:class:`.ProgressType`,
+        &#39;text&#39;: str,
+        &#39;timestamp&#39;:int
+        },
+    ...
+]
 </pre></div>
 </div>
 </td>
@@ -663,7 +748,10 @@ If download_url is not provided, a check for a new release will occur</p>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">bool indicating whether the install was successful or not</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><code class="docutils literal"><span class="pre">bool</span></code> indicating whether the install was successful or not</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">A command id with command value</p>
 </td>
 </tr>
 </tbody>

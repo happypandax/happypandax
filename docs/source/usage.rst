@@ -35,10 +35,11 @@ Most of these settings can also be configured from a HPX client.
 .. warning::
     Not all settings work or have been implemented yet. You should leave these settings untouched for now: ``server.disable_default_user``, ``server.require_auth``, ``server.expose_server`` and ``server.allow_guests``.
 
+
 Starting
 -------------------------------------
 
-There exists two ways of starting up HPX.
+There are two ways of starting up HPX.
 
 If you're running from source you start HPX either through ``run.py`` or ``gui.py``.
 
@@ -55,6 +56,16 @@ You can also instead start the GUI wrapper, and it should be self-explanatory ho
 .. note::
     On a MacOS HPX installation, the app bundle is set to run ``happypandax_gui``.
 
+
+Migrating from HappyPanda
+-------------------------------------
+
+In the HPX root folder, you can find a commandline tool named ``HPtoHPX`` to help convert your HP database.
+See available arguments by supplying the ``--help`` argument: ``./HPtoHPX --help``.
+
+Convert your HP database like this: ``./HPtoHPX path/to/old/file.db data/happypanda.db``
+
+Alternatively, you can also use the GUI wrapper ``happypandax_gui``, which provides an user-friendly way of doing it.
 
 Using
 -------------------------------------
