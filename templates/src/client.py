@@ -84,6 +84,7 @@ class ItemSort:
     #: Tag
     NamespaceTagTag = 31
 
+
 class ProgressType:
 
     #: Unknown
@@ -95,9 +96,11 @@ class ProgressType:
     #: Updating application
     UpdateApplication = 4
 
+
 class PushID():
     Update = 1
     User = 200
+
 
 def log(msg):
     if state.debug:
@@ -534,7 +537,7 @@ class Command(Base):
             self.poll_until_complete(3000)
             while True:
                 if self.finished():
-                  break 
+                    break
 
         if ids:
             self._fetch_value(cmd_ids=ids)

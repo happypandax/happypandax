@@ -152,7 +152,6 @@ class GetModelImage(AsyncCommand):
         s.commit()
         self.next_progress()
 
-
     def _generate_and_add(self, img_hash, old_img_hash, generate, model, item_id, image_size, profile_size):
 
         model_name = db.model_name(model)

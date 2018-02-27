@@ -92,7 +92,7 @@ class Response(CoreCommand):
         if extension:
             filepath = io_cmd.CoreFS(filepath.path + io_cmd.CoreFS(os.path.split(self._url)[1]).ext, filepath._archive)
 
-        self.set_max_progress(int(self._rsp.headers.get('Content-Length', '0').strip())+1)
+        self.set_max_progress(int(self._rsp.headers.get('Content-Length', '0').strip()) + 1)
         self.set_progress(type_=enums.ProgressType.Request)
         log.d("Saving to filepath", filepath)
         with filepath.open(mode="wb") as f:
@@ -102,7 +102,8 @@ class Response(CoreCommand):
                 for data in self._rsp.iter_content(chunk_size=1024, decode_unicode=decode_unicode):
                     data_len = len(data)
                     dl_length += data_len
-                    self.next_progress(data_len, text="[{0:.3f} mbps] - {1}".format((dl_length/1000000)/max((arrow.now() - s_time).seconds, 1), self._url))
+                    self.next_progress(
+                        data_len, text="[{0:.3f} mbps] - {1}".format((dl_length / 1000000) / max((arrow.now() - s_time).seconds, 1), self._url))
                     f.write(data)
                     f.flush()
             else:

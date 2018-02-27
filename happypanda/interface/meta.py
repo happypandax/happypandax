@@ -259,7 +259,7 @@ def get_command_state(command_ids: list):
 def get_command_progress(command_ids: list = None):
     """
     Get progress of command operation
-    
+
     If the command did not set a maximum value, the returned percent will be set to less than ``0.0`` for infinity.
 
     This should be polled every few seconds to get updated values.
@@ -310,7 +310,6 @@ def get_command_progress(command_ids: list = None):
             ]
     """
     _command_msg(command_ids)
-
 
     cmd_p = []
     if command_ids is not None:

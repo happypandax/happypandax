@@ -447,10 +447,12 @@ def deploy(args, unknown=None):
                 print("{}\n\tSHA256 Checksum: {}".format(output_path_a, updater.sha256_checksum(output_path_a)))
     print("Done")
 
+
 def file_checksum(args, u=None):
     _activate_venv()
     from happypanda.core import updater
     print("{}\n\tSHA256 Checksum: {}".format(args.f, updater.sha256_checksum(args.f)))
+
 
 welcome_msg = """
 Welcome to HPX development helper script.

@@ -101,7 +101,7 @@ class PushID(enum.Enum):
 
 maximum_native_workers = 15
 
-command_progress_removal_time = 60*5 # seconds
+command_progress_removal_time = 60 * 5  # seconds
 
 image_sizes = {
     "big": (300, 416),

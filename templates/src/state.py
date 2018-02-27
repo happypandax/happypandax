@@ -1,7 +1,7 @@
 
 state = {
     'app': None,
-    'history': None, # router history
+    'history': None,  # router history
     'container_ref': None,  # main conatiner
     'commands': set(),
     'debug': True,

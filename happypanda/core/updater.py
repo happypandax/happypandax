@@ -83,7 +83,8 @@ def check_release(silent=True, cmd=None):
         repo_name = config.github_repo.value['repo']
         repo_owner = config.github_repo.value['owner']
         try:
-            r = SimpleGETRequest("https://api.github.com/repos/{}/{}/tags".format(repo_owner, repo_name)).merge(cmd).run()
+            r = SimpleGETRequest(
+                "https://api.github.com/repos/{}/{}/tags".format(repo_owner, repo_name)).merge(cmd).run()
             data = r.json
             with utils.intertnal_db() as db:
                 tags = [x['name'] for x in data] if data else []

@@ -148,7 +148,8 @@ __pragma__("nokwargs")
 
 
 def on_key(ev):
-    if ev.preventDefaulted: return
+    if ev.preventDefaulted:
+        return
 
     history = this.props.history
     gallery_id = this.state.data.gallery_id

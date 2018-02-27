@@ -4,7 +4,6 @@ import gevent
 import weakref
 import sys
 import itertools
-import arrow
 
 from contextlib import contextmanager
 from abc import ABCMeta, abstractmethod
@@ -154,6 +153,7 @@ class CoreCommand:
 
     def _str_progress_tree(self):
         self._tree_reader = ""
+
         def w(l):
             self._tree_reader = l.decode('utf-8') + '\n'
 
@@ -162,7 +162,6 @@ class CoreCommand:
         except tree_exceptions.NodeIDAbsentError:
             self._tree_reader = "Tree is empty"
         return self._tree_reader
-
 
     def get_progress(self):
 
@@ -196,7 +195,7 @@ class CoreCommand:
                         prog_subtitle = cmd._progress_title
                         prog_subtype = cmd._progress_type
             if p['max']:
-                p['percent'] = (100/p['max'])*p['value']
+                p['percent'] = (100 / p['max']) * p['value']
             else:
                 p['percent'] = -1.0
             p['text'] = prog_text
@@ -204,7 +203,6 @@ class CoreCommand:
             p['subtype'] = prog_subtype
             return p
         return None
-
 
     def set_progress(self, value=None, text=None, title=None, type_=None):
         assert value is None or isinstance(value, (int, float))
@@ -305,7 +303,10 @@ class Command(CoreCommand, metaclass=ABCMeta):
         if self._progress_max is not None:
             self.set_progress(self._progress_max)
         if self._progress_count and self._progress_count in self._progresses:
-            gevent.spawn_later(constants.command_progress_removal_time, lambda: self._progresses.pop(self._progress_count))
+            gevent.spawn_later(
+                constants.command_progress_removal_time,
+                lambda: self._progresses.pop(
+                    self._progress_count))
         self._finished_time = arrow.now()
         return r
 

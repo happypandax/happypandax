@@ -175,6 +175,7 @@ def abouttab_check_update_value(cmd):
         state.new_update = True
     this.setState({"update_msg": cmd_data, 'update_checking': False})
 
+
 def abouttab_check_update(data=None, error=None):
     if data is not None and not error:
         cmd = Command(data)

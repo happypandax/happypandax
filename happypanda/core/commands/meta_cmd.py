@@ -11,7 +11,7 @@ class CheckUpdate(AsyncCommand):
     Check for new release
     """
 
-    def __init__(self, service = None, priority = constants.Priority.Low):
+    def __init__(self, service=None, priority=constants.Priority.Low):
         return super().__init__(service, priority)
 
     def main(self, silent=True, force=False, push=False) -> dict:
@@ -58,7 +58,7 @@ class UpdateApplication(AsyncCommand):
 
     update = CommandEvent("update", bool, bool)
 
-    def __init__(self, service = None, priority = constants.Priority.Low):
+    def __init__(self, service=None, priority=constants.Priority.Low):
         return super().__init__(service, priority)
 
     def main(self, download_url=None, restart=True, silent=True, push=False) -> bool:

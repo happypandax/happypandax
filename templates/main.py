@@ -64,6 +64,7 @@ def on_update(props):
         # TODO: scroll restoration
         window.scrollTo(0, 0)
 
+
 def on_path_mount():
     state.history = this.props.history
 
