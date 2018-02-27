@@ -17,22 +17,22 @@ dev_options = dict(
 env_python = r".\env\Scripts\python" if sys.platform.startswith("win") else "./env/bin/python"
 
 changes = """
+- updated docs
+- added 'A' and 'D' key navigation to webclient reader
+- show descriptive error when external viewer fails
+- added new api function 'get_command_progress'
+- changed return values of api functions 'check_update' and 'update_application' to return command ids instead;
+- implemented command progress
+- work on /downloads
+
+From previous builds:
+
 - updated various libraries
 - fixed possible 500 error in the webclient
 - added api function 'get_locales'
 - fix scaling not working in webclient reader
 - localization enhancements
 - updated docs
-
-From previous builds:
-
-- implemented page list in webclient
-- fix high memory consumption in conversion script
-- auto install updates
-- fix symlinks being resolved
-- add option to delete target db in conversion script
-- fixed misc issues
-
 """
 
 
