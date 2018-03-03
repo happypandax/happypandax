@@ -3,8 +3,6 @@
 #from happypanda.core.services import DownloadService
 #from happypanda.core.commands import networkcmd
 
-#log = hlogger.Logger(__name__)
-
 
 # class GalleryDownload(AsyncCommand):
 #    """

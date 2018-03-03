@@ -10,7 +10,7 @@ from happypanda.common import constants, utils, config, exceptions, hlogger
 from happypanda.core.commands.networkcmd import SimpleGETRequest, RequestProperties
 from happypanda.core.commands.io_cmd import CoreFS
 
-log = hlogger.Logger(__name__)
+log = hlogger.Logger(constants.log_ns_core+__name__)
 
 
 def verify_release(checksum, silent=True, cmd=None):

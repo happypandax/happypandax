@@ -68,6 +68,7 @@ def start(argv=None, db_kwargs={}):
             monkey.patch_all(thread=False, ssl=False)
         utils.setup_online_reporter()
         hlogger.Logger.setup_logger(args, main=True, debug=config.debug.value)
+        utils.disable_loggers(config.disabled_loggers.value)
         log.i("HPX START")
         if constants.dev:
             log.i("DEVELOPER MODE ENABLED", stdout=True)
@@ -133,6 +134,8 @@ def start(argv=None, db_kwargs={}):
         if not args.only_web:
             config.config.save()
             hlogger.Logger.shutdown_listener()
+
+        hlogger.shutdown()
 
         # the gui will handle the restart
         if e_code == constants.ExitCode.Restart and not constants.from_gui:

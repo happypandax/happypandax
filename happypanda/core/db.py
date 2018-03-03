@@ -60,7 +60,7 @@ from happypanda.common import constants, exceptions, hlogger, utils, config
 force_instant_defaults()
 force_auto_coercion()
 
-log = hlogger.Logger(__name__)
+log = hlogger.Logger(constants.log_ns_database+__name__)
 
 and_op = and_
 or_op = or_

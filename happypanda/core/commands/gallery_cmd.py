@@ -1,13 +1,13 @@
 import os
 import subprocess
 
-from happypanda.common import utils, hlogger, config, exceptions
+from happypanda.common import utils, hlogger, config, exceptions, constants
 from happypanda.core.command import (UndoCommand, CommandEvent,
                                      CommandEntry, Command)
 from happypanda.core.commands import database_cmd, io_cmd
 from happypanda.core import db
 
-log = hlogger.Logger(__name__)
+log = hlogger.Logger(constants.log_ns_command+__name__)
 
 
 class RenameGallery(UndoCommand):

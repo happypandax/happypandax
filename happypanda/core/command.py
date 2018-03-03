@@ -15,7 +15,7 @@ from treelib import Tree, exceptions as tree_exceptions
 from happypanda.common import utils, hlogger, exceptions, constants
 from happypanda.core import plugins, async, db
 
-log = hlogger.Logger(__name__)
+log = hlogger.Logger(constants.log_ns_core+__name__)
 
 
 def get_available_commands():

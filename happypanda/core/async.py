@@ -5,10 +5,10 @@ import collections
 import threading
 import arrow
 
-from happypanda.common import hlogger, utils
+from happypanda.common import hlogger, utils, constants
 from happypanda.core import db
 
-log = hlogger.Logger(__name__)
+log = hlogger.Logger(constants.log_ns_core+__name__)
 
 
 class Greenlet(gevent.Greenlet):

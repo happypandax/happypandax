@@ -9,7 +9,7 @@ from happypanda.core.command import CoreCommand, Command
 from happypanda.core.commands import io_cmd
 from happypanda.interface import enums
 
-log = hlogger.Logger(__name__)
+log = hlogger.Logger(constants.log_ns_network+__name__)
 
 
 class Method(enums._APIEnum):

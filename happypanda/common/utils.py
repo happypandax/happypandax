@@ -19,6 +19,7 @@ import importlib
 import atexit
 import ctypes
 import subprocess
+import logging
 
 from dbm import dumb as dumbdb
 from inspect import ismodule, currentframe, getframeinfo
@@ -31,7 +32,7 @@ try:
 except ImportError:  # only available on windows
     pass
 
-log = hlogger.Logger(__name__)
+log = hlogger.Logger(constants.log_ns_misc+__name__)
 
 ImageSize = namedtuple("ImageSize", ['width', 'height'])
 
@@ -64,6 +65,25 @@ def setup_dirs():
         if dir_x:
             if not os.path.isdir(dir_x):
                 os.makedirs(dir_x)
+
+def disable_loggers(logs):
+    assert isinstance(logs, list)
+    log_level = logging.WARNING
+    for l in logs:
+        if isinstance(l, str):
+            hlogger.Logger(l).setLevel(log_level)
+            lx = l + '.'
+            if lx == constants.log_ns_core:
+                hlogger.Logger("apscheduler").setLevel(log_level)
+            if lx == constants.log_ns_database:
+                hlogger.Logger("sqlalchemy").setLevel(log_level)
+                hlogger.Logger("sqlalchemy.pool").setLevel(log_level)
+                hlogger.Logger("sqlalchemy.engine").setLevel(log_level)
+                hlogger.Logger("sqlalchemy.orm").setLevel(log_level)
+            elif lx == constants.log_ns_client:
+                hlogger.Logger("geventwebsocket").setLevel(log_level)
+            elif lx == constants.log_ns_network:
+                hlogger.Logger("cachecontrol").setLevel(log_level)
 
 
 def get_argparser():

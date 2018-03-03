@@ -1,5 +1,5 @@
 """exceptions module."""
-from happypanda.common import hlogger
+from happypanda.common import hlogger, constants
 
 log = hlogger.Logger(__name__)
 

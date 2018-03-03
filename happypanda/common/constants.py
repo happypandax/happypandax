@@ -74,6 +74,17 @@ link_ext = '.link'
 web_proc = None  # webserver process
 notification = None  # ClientNotifications
 
+log_ns_core = '[core].'
+log_ns_command = '[command].'
+log_ns_plugin = '[plugin].'
+log_ns_database = '[database].'
+log_ns_server = '[server].'
+log_ns_client = '[client].'
+log_ns_gui = '[gui].'
+log_ns_network = '[network].'
+log_ns_search = '[search].'
+log_ns_misc = '[misc].'
+
 
 class ExitCode(enum.Enum):
     Exit = 0

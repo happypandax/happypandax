@@ -6,7 +6,7 @@ from happypanda.core.commands import database_cmd
 from happypanda.core import db
 
 
-log = hlogger.Logger(__name__)
+log = hlogger.Logger(constants.log_ns_search+__name__)
 
 
 def _get_search_options():

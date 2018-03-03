@@ -10,7 +10,7 @@ from collections import ChainMap, OrderedDict
 
 from happypanda.common import exceptions, hlogger, constants
 
-log = hlogger.Logger(__name__)
+log = hlogger.Logger(constants.log_ns_core+__name__)
 
 
 class ConfigIsolation(Enum):
@@ -430,7 +430,6 @@ with config.namespace(core_ns):
         os.path.join(constants.dir_bin, "unrar.exe") if constants.is_win else "unrar",
         "Path to unrar tool. On Windows the default path is 'bin/win32/unrar.exe'. On Unix the default path is 'unrar'")
 
-
 gallery_ns = 'gallery'
 
 with config.namespace(gallery_ns):
@@ -682,6 +681,24 @@ with config.namespace(advanced_ns):
         "7z_path",
         "",
         "Path to the 7z executable", hidden=True)
+
+    disabled_loggers = config.create(
+        advanced_ns,
+        "disabled_loggers",
+        [],
+        "Loggers to disable. Available loggers: {}".format(",".join((
+            x[:-1] for x in (
+                constants.log_ns_client,
+                constants.log_ns_command,
+                constants.log_ns_core,
+                constants.log_ns_database,
+                constants.log_ns_gui,
+                constants.log_ns_network,
+                constants.log_ns_plugin,
+                constants.log_ns_search,
+                constants.log_ns_server,
+                constants.log_ns_misc
+                )))))
 
 config_doc = config.doc_render()  # for doc
 

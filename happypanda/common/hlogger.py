@@ -16,6 +16,8 @@ from logging.handlers import RotatingFileHandler
 
 from happypanda.common import constants
 
+def shutdown(*args):
+    logging.shutdown(*args)
 
 def eprint(*args, **kwargs):
     "Prints to stderr"
@@ -174,11 +176,16 @@ class Logger:
                 Logger("sqlalchemy.pool").setLevel(logging.DEBUG)
                 Logger("sqlalchemy.engine").setLevel(logging.INFO)
                 Logger("sqlalchemy.orm").setLevel(logging.INFO)
+
             if debug:
                 Logger(__name__).i(
                     os.path.split(
                         constants.log_debug)[1], "created at", os.path.abspath(
                         constants.log_debug), stdout=True)
+            else:
+                Logger("apscheduler").disable(logging.WARNING)
+
+
 
     @staticmethod
     def _listener(args, queue):
@@ -193,6 +200,7 @@ class Logger:
                 raise
             except BaseException:
                 traceback.print_exc(file=sys.stderr)
+        shutdown()
         queue.put(None)
 
     @classmethod
