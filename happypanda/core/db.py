@@ -16,8 +16,10 @@ from sqlalchemy.inspection import inspect
 from sqlalchemy.ext.mutable import Mutable
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.ext.compiler import compiles
+from sqlalchemy.ext.indexable import index_property
 from sqlalchemy.sql.expression import BinaryExpression, func, literal
 from sqlalchemy.sql.operators import custom_op
+from sqlalchemy.ext import orderinglist
 from sqlalchemy.orm import (
     sessionmaker,
     relationship,
@@ -67,6 +69,108 @@ or_op = or_
 sa_text = text
 desc_expr = desc
 
+class OrderingQuery(dynamic.AppenderQuery):
+    """
+    Mixes OrderedList and AppenderQuery
+    """
+
+    def __init__(self, attr, state):
+        super().__init__(attr, state)
+        self.ordering_attr = "number"
+        self.ordering_func = orderinglist.count_from_1
+        self.reorder_on_append = False
+
+    # More complex serialization schemes (multi column, e.g.) are possible by
+    # subclassing and reimplementing these two methods.
+    def _get_order_value(self, entity):
+        return getattr(entity, self.ordering_attr)
+
+    def _set_order_value(self, entity, value):
+        setattr(entity, self.ordering_attr, value)
+
+    def reorder(self, _iterable=None):
+        """Synchronize ordering for the entire collection.
+        Sweeps through the list and ensures that each object has accurate
+        ordering information set.
+        """
+        for index, entity in enumerate(_iterable or self):
+            self._order_entity(index, entity, True)
+
+    # As of 0.5, _reorder is no longer semi-private
+    _reorder = reorder
+
+    def _order_entity(self, index, entity, reorder=True):
+        have = self._get_order_value(entity)
+
+        # Don't disturb existing ordering if reorder is False
+        if have is not None and not reorder:
+            return
+
+        should_be = self.ordering_func(index, self)
+        if have != should_be:
+            self._set_order_value(entity, should_be)
+
+    def append(self, entity):
+        super().append(entity)
+        self._order_entity(self.count() - 1, entity, self.reorder_on_append)
+
+    def insert(self, index, entity):
+        items = list(self)
+        s = object_session(entity)
+        if inspect(entity).deleted  or s and entity in s.deleted:
+            # see http://docs.sqlalchemy.org/en/latest/orm/extensions/orderinglist.html?highlight=orderinglist#module-sqlalchemy.ext.orderinglist
+            raise exceptions.DatabaseError(utils.this_function(),
+                                           "Two entries trading values is not supported")
+        else:
+            items.insert(index, entity)
+
+        super().append(entity)
+        self._reorder(items)
+
+    def extend(self, iterator):
+        for i in iterator:
+            self.append(i)
+
+    def remove(self, entity):
+        super().remove(entity)
+        self._reorder()
+
+    def pop(self, index=-1):
+        entity = super().pop(index)
+        self._reorder()
+        return entity
+
+    def __setitem__(self, index, entity):
+        if isinstance(index, slice):
+            step = index.step or 1
+            start = index.start or 0
+            count = self.count()
+            if start < 0:
+                start += count
+            stop = index.stop or count
+            if stop < 0:
+                stop += count
+
+            for i in range(start, stop, step):
+                self.__setitem__(i, entity[i])
+        else:
+            self._order_entity(index, entity, True)
+            super().__setitem__(index, entity)
+
+    def __delitem__(self, index):
+        super().__delitem__(index)
+        self._reorder()
+
+    def __setslice__(self, start, end, values):
+        super().__setslice__(start, end, values)
+        self._reorder()
+
+    def __delslice__(self, start, end):
+        super().__delslice__(start, end)
+        self._reorder()
+
+    def __reduce__(self):
+        return orderinglist._reconstitute, (self.__class__, self.__dict__, list(self))
 
 class String(_String):
     """Enchanced version of standard SQLAlchemy's :class:`String`.
@@ -248,7 +352,8 @@ class BaseID:
     __table_args__ = {'mysql_collate': 'utf8mb4_unicode_ci'}
 
     id = Column(Integer, primary_key=True)
-    properties = Column(JSONType, nullable=False, default={})
+    _properties = Column(JSONType, nullable=False, default={})
+    plugin = index_property('_properties', 'plugin', default={})
 
     def delete(self):
         sess = object_session(self)
@@ -712,14 +817,13 @@ taggable_tags = Table(
         'namespace_tag_id', 'taggable_id'))
 
 
-class Taggable(Base):
+class Taggable(UpdatedMixin, Base):
     __tablename__ = 'taggable'
 
     tags = relationship(
         "NamespaceTags",
         secondary=taggable_tags,
         lazy="dynamic")
-
 
 class TaggableMixin(UpdatedMixin):
 
@@ -867,6 +971,7 @@ class Grouping(ProfileMixin, NameMixin, Base):
     galleries = relationship(
         "Gallery",
         back_populates="grouping",
+        order_by="Gallery.number",
         lazy="dynamic",
         cascade="all, delete-orphan")
     status = relationship(
@@ -973,6 +1078,8 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
         lazy="dynamic")
     pages = relationship(
         "Page",
+        order_by="Page.number",
+        query_class=OrderingQuery,
         back_populates="gallery",
         lazy='dynamic',
         cascade="all,delete-orphan")
@@ -1077,7 +1184,7 @@ url_association(Gallery, "galleries")
 @generic_repr
 class Page(TaggableMixin, ProfileMixin, Base):
     __tablename__ = 'page'
-    number = Column(Integer, nullable=False, default=0)
+    number = Column(Integer, nullable=False, default=-1)
     name = Column(String, nullable=False, default='')
     path = Column(String, nullable=False, default='')
     hash_id = Column(Integer, ForeignKey('hash.id'))
@@ -1165,6 +1272,7 @@ def initEvents(sess):
     @event.listens_for(Taggable.tags, 'append', retval=True)
     def taggable_new_tag(target, value, initiator):
         "when a tag is added, add its forefathers too"
+        target.last_updated = arrow.now()
 
         # only add the original nstag
         if value and value.alias_for:
@@ -1182,6 +1290,8 @@ def initEvents(sess):
     @event.listens_for(Taggable.tags, 'remove')
     def taggable_remove_tag(target, value, initiator):
         "when a tag is removed, remove its children too"
+        target.last_updated = arrow.now()
+
         if value and len(value.children):
             if initiator.op:
                 initiator.op = None

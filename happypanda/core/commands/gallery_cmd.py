@@ -72,9 +72,9 @@ class SimilarGallery(Command):
     def _get_set(self, tags):
         s = set()
         for ns in tags:
-            s.add("t-{}".format(ns.tag.name))
-            if not ns.namespace.name == constants.special_namespace:
-                s.add("n-{}".format(ns.namespace.name))
+            s.add("<tag>-{}".format(ns.tag.name))
+            #if not ns.namespace.name == constants.special_namespace:
+            #    s.add("n-{}".format(ns.namespace.name))
         return s
 
     def _calculate(self, gallery_or_id):

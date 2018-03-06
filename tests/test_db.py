@@ -159,6 +159,36 @@ class GeneralTest(unittest.TestCase):
         self.assertGreater(len(self.gallery.artists), 0)
         self.assertTrue(artists[0].galleries[0].id == self.gallery.id)
 
+    def test_page_numbering(self):
+        pages = [Page() for x in range(10)]
+        self.assertEqual(pages[0].number, -1)
+        for p in pages:
+            self.gallery.pages.append(p)
+        self.session.commit()
+        for i in self.gallery.pages.all():
+            self.assertEqual(i.number, -1)
+        self.gallery.pages.reorder()
+        for n, i in enumerate(self.gallery.pages.all(), 1):
+            self.assertEqual(i.number, n)
+        self.session.commit()
+        p0 = pages[0]
+        p1 = pages[1]
+        self.gallery.pages.remove(p0)
+        self.assertEqual(p1.number, 1)
+        with pytest.raises(exceptions.DatabaseError) as excinfo:
+            self.gallery.pages.insert(4, p0)
+        self.assertEqual(self.gallery.pages.count(), 9)
+        p = Page()
+        self.assertEqual(p.number, -1)
+        self.gallery.pages.insert(0, p)
+        self.assertEqual(p.number, 1)
+        self.assertEqual(p1.number, 2)
+        self.session.commit()
+        self.assertEqual(self.gallery.pages.count(), 10)
+        for n, i in enumerate(self.gallery.pages.all(), 1):
+            self.assertEqual(i.number, n)
+
+
     def tearDown(self):
         self.session.close()
 

@@ -630,7 +630,7 @@ if __name__ == "__main__":
     app.setOrganizationName("Twiddly")
     app.setDesktopFileName("HappyPanda X")
     window = Window()
-    window.resize(600, 650)
+    window.resize(650, 650)
     sys.stdout = SQueue
     sys.stderr = SQueue
     if config.gui_start_minimized.value:
