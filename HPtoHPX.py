@@ -1094,7 +1094,7 @@ def main(args=sys.argv[1:]):
                         p.path = pp[1]
                         p.number = pp[2]
                         p.in_archive = pp[3]
-                        dst_pages[g].pages.append(p)
+                        dst_pages[g].pages.append(p, True)
                     try:
                         print_progress(current_p_count, pages_count, "Progress:", bar_length=50)
                     except UnicodeEncodeError:
@@ -1137,7 +1137,7 @@ def main(args=sys.argv[1:]):
         s.add_all(dst_galleries)
         print("Adding gallery lists...")
         s.add_all(dst_lists)
-        print("Committing... (might take a while)")
+        print("Committing... (this might take a few minutes)")
         s.commit()
         print("Done!")
     except Exception as e:

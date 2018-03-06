@@ -79,6 +79,7 @@ class OrderingQuery(dynamic.AppenderQuery):
         self.ordering_attr = "number"
         self.ordering_func = orderinglist.count_from_1
         self.reorder_on_append = False
+        self._len = None
 
     # More complex serialization schemes (multi column, e.g.) are possible by
     # subclassing and reimplementing these two methods.
@@ -110,11 +111,21 @@ class OrderingQuery(dynamic.AppenderQuery):
         if have != should_be:
             self._set_order_value(entity, should_be)
 
-    def append(self, entity):
-        super().append(entity)
-        self._order_entity(self.count() - 1, entity, self.reorder_on_append)
+    def __len__(self):
+        if self._len is None:
+            self._len = self.count()
+        return self._len
 
-    def insert(self, index, entity):
+    def append(self, entity, enable_count_cache=False):
+        super().append(entity)
+        if not enable_count_cache:
+            self._len = None
+        else:
+            self._len = 0 if self._len is None else self._len
+            self._len + 1
+        self._order_entity(len(self) - 1, entity, self.reorder_on_append)
+
+    def insert(self, index, entity, enable_count_cache=False):
         items = list(self)
         s = object_session(entity)
         if inspect(entity).deleted  or s and entity in s.deleted:
@@ -125,26 +136,42 @@ class OrderingQuery(dynamic.AppenderQuery):
             items.insert(index, entity)
 
         super().append(entity)
+        if not enable_count_cache:
+            self._len = None
+        else:
+            self._len = 0 if self._len is None else self._len
+            self._len + 1
         self._reorder(items)
 
-    def extend(self, iterator):
+    def extend(self, iterator, enable_count_cache=False):
         for i in iterator:
-            self.append(i)
+            self.append(i, enable_count_cache=enable_count_cache)
 
-    def remove(self, entity):
+    def remove(self, entity, enable_count_cache=False):
         super().remove(entity)
+        if not enable_count_cache:
+            self._len = None
+        else:
+            self._len = 0 if self._len is None else self._len
+            self._len -= 1
         self._reorder()
 
-    def pop(self, index=-1):
+    def pop(self, index=-1, enable_count_cache=False):
         entity = super().pop(index)
+        if not enable_count_cache:
+            self._len = None
+        else:
+            self._len = 0 if self._len is None else self._len
+            self._len -= 1
         self._reorder()
         return entity
 
     def __setitem__(self, index, entity):
+        self._len = None
         if isinstance(index, slice):
             step = index.step or 1
             start = index.start or 0
-            count = self.count()
+            count = len(self)
             if start < 0:
                 start += count
             stop = index.stop or count
@@ -158,14 +185,17 @@ class OrderingQuery(dynamic.AppenderQuery):
             super().__setitem__(index, entity)
 
     def __delitem__(self, index):
+        self._len = None
         super().__delitem__(index)
         self._reorder()
 
     def __setslice__(self, start, end, values):
+        self._len = None
         super().__setslice__(start, end, values)
         self._reorder()
 
     def __delslice__(self, start, end):
+        self._len = None
         super().__delslice__(start, end)
         self._reorder()
 
