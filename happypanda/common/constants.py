@@ -114,6 +114,8 @@ maximum_native_workers = 15
 
 command_progress_removal_time = 60 * 5  # seconds
 
+is_new_db = False
+
 image_sizes = {
     "big": (300, 416),
     "medium": (200, 276),

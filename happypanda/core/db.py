@@ -603,6 +603,7 @@ class Hash(NameMixin, Base):
     __tablename__ = 'hash'
 
 
+@generic_repr
 class NamespaceTags(AliasMixin, Base):
     __tablename__ = 'namespace_tags'
 
@@ -1366,7 +1367,14 @@ def check_db_version(sess):
         log.i("Succesfully initiated database")
         log.i("DB Version: {}".format(life.version))
 
+    db_key = "db_usage"
+    with utils.intertnal_db() as idb:
+        if db_key not in idb or idb[db_key] != life.times_opened:
+            constants.is_new_db = True
+        idb[db_key] = life.times_opened
+
     life.times_opened += 1
+
     sess.add(Event(life, Event.Action.start))
     init_defaults(sess)
     sess.commit()

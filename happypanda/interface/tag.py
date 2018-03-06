@@ -143,6 +143,7 @@ def get_tags(item_type: enums.ItemType = enums.ItemType.Gallery,
     _, db_item = item_type._msg_and_model(
         (enums.ItemType.Gallery, enums.ItemType.Collection, enums.ItemType.Grouping, enums.ItemType.Page))
 
+
     db_obj = database_cmd.GetModelItems().run(db_item, {item_id})
     if db_obj:
         db_obj = db_obj[0]

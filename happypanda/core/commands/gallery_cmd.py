@@ -1,5 +1,6 @@
 import os
 import subprocess
+import math
 
 from happypanda.common import utils, hlogger, config, exceptions, constants
 from happypanda.core.command import (UndoCommand, CommandEvent,
@@ -59,11 +60,61 @@ class AddGallery(UndoCommand):
     def __init__(self):
         super().__init__()
 
-    def main(self, gallery: db.Gallery) -> None:
-        pass
+class SimilarGallery(Command):
+    """
+    Get similar galleries to given gallery
+    """
 
-    def undo(self):
-        return super().undo()
+    def __init__(self):
+        super().__init__()
+        self._gallery_similar_key = "gallery_similar_calc"
+
+    def _get_set(self, tags):
+        s = set()
+        for ns in tags:
+            s.add("t-{}".format(ns.tag.name))
+            if not ns.namespace.name == constants.special_namespace:
+                s.add("n-{}".format(ns.namespace.name))
+        return s
+
+    def _calculate(self, gallery_or_id):
+        assert isinstance(gallery_or_id, (int, db.Gallery))
+        data = {}
+
+        g_id = gallery_or_id.id if isinstance(gallery_or_id, db.Gallery) else gallery_or_id
+        if isinstance(gallery_or_id, db.Gallery):
+            g_tags = gallery_or_id
+        else:
+            g_tags = database_cmd.GetModelItems().run(db.Taggable, join=db.Gallery.taggable,
+                                         filter=db.Gallery.id==g_id)
+        if g_tags:
+            g_tags = self._get_set(g_tags.tags.all())
+            data[g_id] = gl_data = {}
+
+            for t_id, t in constants.db_session().query(db.Gallery.id, db.Taggable).join(db.Gallery.taggable):
+                if t_id == g_id:
+                    continue
+                t_tags = self._get_set(t.tags.all())
+                if (math.sqrt(len(g_tags)) * math.sqrt(len(t_tags))) != 0:
+                    cos = len(g_tags & t_tags) / (math.sqrt(len(g_tags))) * math.sqrt(len(t_tags))
+                else:
+                    cos = 0
+                gl_data[t_id] = cos
+
+        return data
+
+    def main(self, gallery: db.Gallery) -> list:
+        gl_data = {}
+        with utils.intertnal_db() as idb:
+            if self._gallery_similar_key in idb and not constants.is_new_db:
+                gl_data = idb[self._gallery_similar_key]
+
+        if not gallery.id in gl_data:
+            gl_data.update(self._calculate(gallery))
+            with utils.intertnal_db() as idb:
+                idb[self._gallery_similar_key] = gl_data
+        return [x for x in sorted(gl_data[gallery.id], reverse=True, key=lambda x:gl_data[gallery.id][x])]
+
 
 
 class OpenGallery(Command):
