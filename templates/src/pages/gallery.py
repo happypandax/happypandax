@@ -1,12 +1,11 @@
 from src.react_utils import (h,
                              e,
-                             React,
                              createReactClass,
                              Link)
 from src.ui import ui, Slider
 from src.i18n import tr
 from src.state import state
-from src.client import ItemType, ViewType, ImageSize, client
+from src.client import ItemType, ImageSize, client
 from src.single import galleryitem, thumbitem, artistitem
 from src.views import itemview, tagview
 from src import utils
@@ -61,7 +60,59 @@ def get_item(data=None, error=None):
                              related_type=ItemType.Collection,
                              item_type=this.state.item_type,
                              item_id=data.id)
+            client.call_func("get_related_items", this.get_filters,
+                    item_type=ItemType.Gallery,
+                    related_type=ItemType.GalleryFilter,
+                    item_id=data.id)
 
+        if data.id:
+            inbox = data.metatags.inbox
+            trash = data.metatags.trash
+            menu_items = []
+            menu_left = []
+            min_width = 768
+            if inbox:
+                menu_left.append(e(ui.Responsive, e(ui.Button, e(ui.Icon, js_name="grid layout"), tr(this, "ui.b-send-library", "Send to Library"), color="green"),
+                                   as_=ui.Menu.Item,
+                                   minWidth=min_width,
+                                   ))
+            menu_items.append(e(ui.Menu.Menu, *menu_left))
+            menu_right = []
+            menu_right.append(
+                e(ui.Responsive,
+                  e(ui.Button, e(ui.Icon, js_name="trash" if not trash else "reply"),
+                    tr(this, "ui.b-send-trash", "Send to Trash") if not trash else tr(this, "ui.b-restore", "Restore"),
+                    color="red" if not trash else "teal"),
+                  as_=ui.Menu.Item,
+                  minWidth=min_width,
+                  ))
+
+            if trash:
+                menu_right.append(
+                    e(ui.Responsive,
+                      e(ui.Button.Group,
+                          e(ui.Button,
+                            e(ui.Icon, js_name="close"), tr(this, "ui.b-delete", "Delete"), color="red"),
+                          e(ui.Button, icon="remove circle outline", toggle=True, active=this.state.delete_files,
+                            title=tr(this, "ui.t-delete-files", "Delete files")),
+                          e(ui.Button, icon="recycle", toggle=True, active=this.state.send_to_recycle,
+                            title=tr(this, "ui.t-send-recycle-bin", "Send files to Recycle Bin"))
+                        ),
+                      as_=ui.Menu.Item,
+                      minWidth=min_width,
+                      ))
+
+            menu_right.append(e(ui.Responsive,
+                                e(ui.Button, e(ui.Icon, js_name="edit"), tr(this, "ui.b-edit", "Edit")),
+                                as_=ui.Menu.Item,
+                                minWidth=min_width,
+                                ))
+
+            menu_items.append(e(ui.Menu.Menu, *menu_right, position="right"))
+
+
+            if len(menu_items):
+                this.props.menu(menu_items)
     elif error:
         state.app.notif("Failed to fetch item ({})".format(this.state.id), level="error")
     else:
@@ -91,6 +142,12 @@ def get_filter_count(data=None, error=None):
         this.setState({"filter_count": data['count']})
     elif error:
         state.app.notif("Failed to fetch filter count ({})".format(this.state.id), level="error")
+
+def get_filters(data=None, error=None):
+    if data is not None and not error:
+        this.setState({"filter_data": data})
+    elif error:
+        state.app.notif("Failed to fetch gallery filters ({})".format(this.state.id), level="error")
 
 
 def get_collection_count(data=None, error=None):
@@ -267,43 +324,20 @@ def page_render():
 
     if inbox:
         buttons.append(
-            e(ui.Grid.Row,
+            e(ui.Responsive,
               e(ui.Grid.Column,
                 e(ui.Button,
                     e(ui.Icon, js_name="grid layout"), tr(this, "ui.b-send-library", "Send to Library"), color="green"),
                 textAlign="center",
                 ),
               centered=True,
+                as_=ui.Grid.Row,
+                maxWidth = 767
               ),
         )
 
-    # if this.state.collection_count:
-    #    buttons.append(
-    #        e(ui.Grid.Row,
-    #            e(ui.Grid.Column,
-    #            e(ui.Button,
-    #                tr(this, "", "Appears in {} collections".format(this.state.collection_count), count=this.state.collection_count),
-    #                color="pink"),
-    #            textAlign="center",
-    #            ),
-    #            centered=True,
-    #            ),
-    #        )
-
-    # if this.state.filter_count:
-    #    buttons.append(
-    #        e(ui.Grid.Row,
-    #          e(ui.Grid.Column,
-    #            e(ui.Button,
-    #               tr(this, "", "Appears in {} filters".format(this.state.filter_count), count=this.state.filter_count),
-    #               color="teal"),
-    #            textAlign="center",
-    #            ),
-    #          centered=True,
-    #          ))
-
     buttons.append(
-        e(ui.Grid.Row,
+        e(ui.Responsive,
           e(ui.Grid.Column,
             e(ui.Button,
               e(ui.Icon, js_name="trash" if not trash else "reply"),
@@ -312,12 +346,14 @@ def page_render():
             textAlign="center",
             ),
           divided=True,
+            as_=ui.Grid.Row,
+            maxWidth = 767
           ),
     )
 
     if trash:
         buttons.append(
-            e(ui.Grid.Row,
+            e(ui.Responsive,
               e(ui.Grid.Column,
                 e(ui.Button.Group,
                   e(ui.Button,
@@ -330,9 +366,44 @@ def page_render():
                 textAlign="center",
                 ),
               centered=True,
+              as_=ui.Grid.Row,
+              maxWidth = 767
               ))
 
-    filters_and_collections = []
+    filter_accordion = []
+    if this.state.filter_count:
+        filter_items = []
+        for f in this.state.filter_data:
+            filter_items.append(e(ui.List.Item,
+                                  e(ui.List.Icon, js_name="filter"),
+                                  e(ui.List.Content,
+                                    e(Link, f['name'],
+                                      to=utils.build_url("/inbox" if inbox else "/library",
+                                                         {'filter_id':f['id']},
+                                                         keep_query=False)))))
+        filter_accordion.append(e(ui.Accordion,
+                                 panels=[
+                                     {
+                                         'title':{
+                                             'content':e(ui.Label,
+                                                         tr(this, "", "Appears in {} gallery filters".format(this.state.filter_count)),
+                                                         color="teal",),
+                                             'key': 't-1',
+                                             },
+                                         'content': {
+                                                'content':e(ui.List, *filter_items,
+                                                            animated=True,
+                                                            link=True,
+                                                            celled=True,
+                                                            relaxed=True),
+                                                'key':'t-2',
+                                                },
+                                         'key': 'c-1'
+                                         }
+                                     ]
+                                 ))
+
+    #filters_and_collections = []
 
     return e(ui.Grid,
              e(ui.Grid.Row, e(ui.Grid.Column, e(ui.Breadcrumb, icon="right arrow",))),
@@ -352,7 +423,11 @@ def page_render():
                                   ),
                                 centered=True,
                                 ),
+                    e(ui.Divider, fitted=True),
                      *buttons,
+                      e(ui.Grid.Row,
+                           *filter_accordion,
+                         ),
                      centered=True, verticalAlign="top"),
                    ),
                  e(ui.Grid.Column,
@@ -440,6 +515,7 @@ Page = createReactClass({
                                 'visible_page_cfg': False,
                                 'collection_count': this.props.collection_count or 0,
                                 'filter_count': this.props.filter_count or 0,
+                                'filter_data': [],
                                 },
 
     'on_read': lambda: utils.go_to(this.props.history, "/item/page", {'gid': this.state.data.id}, keep_query=False),
@@ -448,6 +524,7 @@ Page = createReactClass({
     'get_lang': get_lang,
     'get_status': get_status,
     'get_filter_count': get_filter_count,
+    'get_filters': get_filters,
     'get_collection_count': get_collection_count,
     'get_config': get_config,
     'open_external': galleryitem.open_external,
@@ -455,8 +532,7 @@ Page = createReactClass({
     'toggle_pages_config': lambda a: this.setState({'visible_page_cfg': not this.state.visible_page_cfg}),
     'toggle_external_viewer': toggle_external_viewer,
 
-    'componentWillMount': lambda: all((this.props.menu([e(ui.Menu.Menu, e(ui.Menu.Item, e(ui.Icon, js_name="edit"), tr(this, "ui.b-edit", "Edit")), position="right")]),
-                                       (this.get_item() if not this.state.data else None),
+    'componentWillMount': lambda: all(((this.get_item() if not this.state.data else None),
                                        this.get_config(),
                                        )),
     'componentDidUpdate': gallery_on_update,
