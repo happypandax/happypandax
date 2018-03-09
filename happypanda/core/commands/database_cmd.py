@@ -9,7 +9,7 @@ from happypanda.core import db, async
 from happypanda.interface import enums
 from happypanda.interface.enums import ItemSort
 
-log = hlogger.Logger(constants.log_ns_command+__name__)
+log = hlogger.Logger(constants.log_ns_command + __name__)
 
 
 class GetModelImage(AsyncCommand):

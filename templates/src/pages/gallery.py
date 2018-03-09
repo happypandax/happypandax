@@ -1,4 +1,3 @@
-__pragma__('alias', 'as_', 'as')
 from src.react_utils import (h,
                              e,
                              React,
@@ -11,6 +10,14 @@ from src.client import ItemType, ViewType, ImageSize, client
 from src.single import galleryitem, thumbitem, artistitem
 from src.views import itemview, tagview
 from src import utils
+from org.transcrypt.stubs.browser import __pragma__
+__pragma__('alias', 'as_', 'as')
+
+__pragma__('skip')
+require = window = require = setInterval = setTimeout = setImmediate = None
+clearImmediate = clearInterval = clearTimeout = this = document = None
+JSON = Math = console = alert = requestAnimationFrame = None
+__pragma__('noskip')
 
 
 def get_config(data=None, error=None):

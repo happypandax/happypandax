@@ -1,4 +1,3 @@
-__pragma__('alias', 'as_', 'as')
 import src
 from src.react_utils import (h,
                              e,
@@ -12,6 +11,14 @@ from src import utils
 from src.views import tagview
 from src.propsviews import gallerypropsview
 from src.i18n import tr
+from org.transcrypt.stubs.browser import __pragma__
+__pragma__('alias', 'as_', 'as')
+
+__pragma__('skip')
+require = window = require = setInterval = setTimeout = setImmediate = None
+clearImmediate = clearInterval = clearTimeout = this = document = None
+JSON = Math = console = alert = requestAnimationFrame = None
+__pragma__('noskip')
 
 
 def on_tags(data):

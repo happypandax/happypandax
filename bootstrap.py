@@ -9,7 +9,7 @@ from subprocess import run
 from importlib import reload
 
 dev_options = dict(
-    build_db=103,
+    build_db=122,
     prev_build=None,
     env_activated=False
 )

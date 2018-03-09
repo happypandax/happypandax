@@ -1,4 +1,3 @@
-__pragma__('alias', 'as_', 'as')
 import src
 from src import utils
 from src.react_utils import (h,
@@ -8,6 +7,14 @@ from src.ui import ui
 from src.i18n import tr
 from src.client import ItemType
 from src.propsviews import artistpropsview
+from org.transcrypt.stubs.browser import __pragma__
+__pragma__('alias', 'as_', 'as')
+
+__pragma__('skip')
+require = window = require = setInterval = setTimeout = setImmediate = None
+clearImmediate = clearInterval = clearTimeout = this = document = None
+JSON = Math = console = alert = requestAnimationFrame = None
+__pragma__('noskip')
 
 
 def artistlbl_render():
@@ -23,6 +30,8 @@ def artistlbl_render():
     lbl_args = {'content': name}
     if fav:
         lbl_args['icon'] = "star"
+    else:
+        lbl_args['icon'] = "user circle outline"
     return e(ui.Popup,
              e(artistpropsview.ArtistProps, data=data, tags=this.props.tags or this.state.tags),
              trigger=e(ui.Label,

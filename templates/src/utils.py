@@ -1,3 +1,10 @@
+from org.transcrypt.stubs.browser import __pragma__
+__pragma__('skip')
+require = window = require = setInterval = setTimeout = setImmediate = None
+clearImmediate = clearInterval = clearTimeout = this = document = None
+JSON = Math = console = alert = requestAnimationFrame = None
+__pragma__('noskip')
+
 query_string = require("query-string")
 moment = require("moment")
 isEqual = require('lodash/isEqual')

@@ -20,7 +20,7 @@ from happypanda.core.command import CoreCommand, CommandEntry, AsyncCommand
 from happypanda.core.services import ImageService
 from happypanda.core import db
 
-log = hlogger.Logger(constants.log_ns_command+__name__)
+log = hlogger.Logger(constants.log_ns_command + __name__)
 
 
 @attr.s

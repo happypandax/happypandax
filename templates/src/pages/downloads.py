@@ -1,5 +1,4 @@
 __pragma__('alias', 'as_', 'as')
-__pragma__('alias', 'js_input', 'input')
 from src.react_utils import (e,
                              h,
                              Route,
@@ -9,6 +8,14 @@ from src.ui import ui
 from src.client import client, ProgressType
 from src.state import state
 from src import utils
+from org.transcrypt.stubs.browser import __pragma__
+__pragma__('alias', 'js_input', 'input')
+
+__pragma__('skip')
+require = window = require = setInterval = setTimeout = setImmediate = None
+clearImmediate = clearInterval = clearTimeout = this = document = None
+JSON = Math = console = alert = requestAnimationFrame = None
+__pragma__('noskip')
 
 
 def get_progress(data=None, error=None):

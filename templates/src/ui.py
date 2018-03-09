@@ -1,4 +1,4 @@
-__pragma__('alias', 'as_', 'as')
+import math
 from src.react_utils import (h, e,
                              render,
                              React,
@@ -9,7 +9,13 @@ from src.react_utils import (h, e,
 
 from src.state import state
 from src import utils
-import math
+from org.transcrypt.stubs.browser import __pragma__
+
+__pragma__('skip')
+require = window = require = setInterval = setTimeout = setImmediate = None
+clearImmediate = clearInterval = clearTimeout = this = document = None
+JSON = Math = console = alert = requestAnimationFrame = None
+__pragma__('noskip')
 
 ui = require("semantic-ui-react")
 

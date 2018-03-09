@@ -1,4 +1,3 @@
-__pragma__('alias', 'as_', 'as')
 from src.react_utils import (h, e,
                              render,
                              createReactClass,
@@ -10,6 +9,14 @@ from src.i18n import tr
 from src.utils import defined, is_same_machine
 from src.nav import MenuItem
 from src.pages import preferences, about
+from org.transcrypt.stubs.browser import __pragma__
+__pragma__('alias', 'as_', 'as')
+
+__pragma__('skip')
+require = window = require = setInterval = setTimeout = setImmediate = None
+clearImmediate = clearInterval = clearTimeout = this = document = None
+JSON = Math = console = alert = requestAnimationFrame = None
+__pragma__('noskip')
 
 
 def sidebar_nav_render():

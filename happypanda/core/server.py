@@ -23,7 +23,7 @@ from happypanda.core import db, torrent, message, async  # noqa: F401
 from happypanda.interface import meta, enums
 from happypanda.core.commands import meta_cmd
 
-log = hlogger.Logger(constants.log_ns_server+__name__)
+log = hlogger.Logger(constants.log_ns_server + __name__)
 
 
 def list_api():

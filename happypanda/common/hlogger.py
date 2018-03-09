@@ -16,8 +16,10 @@ from logging.handlers import RotatingFileHandler
 
 from happypanda.common import constants
 
+
 def shutdown(*args):
     logging.shutdown(*args)
+
 
 def eprint(*args, **kwargs):
     "Prints to stderr"
@@ -184,8 +186,6 @@ class Logger:
                         constants.log_debug), stdout=True)
             else:
                 Logger("apscheduler").disable(logging.WARNING)
-
-
 
     @staticmethod
     def _listener(args, queue):

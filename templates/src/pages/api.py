@@ -1,4 +1,3 @@
-__pragma__('alias', 'as_', 'as')
 from src.react_utils import (h,
                              e,
                              React,
@@ -7,6 +6,14 @@ from src.ui import ui
 from src.client import client, ServerMsg
 from src.i18n import tr
 from src import utils
+from org.transcrypt.stubs.browser import __pragma__
+__pragma__('alias', 'as_', 'as')
+
+__pragma__('skip')
+require = window = require = setInterval = setTimeout = setImmediate = None
+clearImmediate = clearInterval = clearTimeout = this = document = None
+JSON = Math = console = alert = requestAnimationFrame = None
+__pragma__('noskip')
 
 
 def set_key(e):

@@ -10,7 +10,7 @@ from collections import ChainMap, OrderedDict
 
 from happypanda.common import exceptions, hlogger, constants
 
-log = hlogger.Logger(constants.log_ns_core+__name__)
+log = hlogger.Logger(constants.log_ns_core + __name__)
 
 
 class ConfigIsolation(Enum):
@@ -698,7 +698,7 @@ with config.namespace(advanced_ns):
                 constants.log_ns_search,
                 constants.log_ns_server,
                 constants.log_ns_misc
-                )))))
+            )))))
 
 config_doc = config.doc_render()  # for doc
 

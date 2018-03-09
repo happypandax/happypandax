@@ -7,7 +7,7 @@ import gzip
 from happypanda.common import constants, exceptions, utils, hlogger, config
 from happypanda.core import message
 
-log = hlogger.Logger(constants.log_ns_client+__name__)
+log = hlogger.Logger(constants.log_ns_client + __name__)
 
 
 class Client:

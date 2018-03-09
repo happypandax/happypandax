@@ -3,6 +3,14 @@ from src import utils
 from src.state import state
 from src.client import client, log
 
+from org.transcrypt.stubs.browser import __pragma__
+
+__pragma__('skip')
+require = window = require = setInterval = setTimeout = setImmediate = None
+clearImmediate = clearInterval = clearTimeout = this = document = None
+JSON = Math = console = alert = requestAnimationFrame = None
+__pragma__('noskip')
+
 _translations_d = {}
 _translations_load_state = {}
 

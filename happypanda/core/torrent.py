@@ -11,7 +11,7 @@ from happy_bittorrent.control import ControlManager, ControlClient, ControlServe
 from happy_bittorrent.models import TorrentInfo, TorrentState
 from happypanda.common import exceptions, constants, hlogger
 
-log = hlogger.Logger(constants.log_ns_core+__name__)
+log = hlogger.Logger(constants.log_ns_core + __name__)
 
 
 async def check_daemon_absence():

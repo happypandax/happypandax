@@ -1,4 +1,3 @@
-__pragma__('alias', 'as_', 'as')
 import src
 from src import utils
 from src.react_utils import (h,
@@ -9,6 +8,14 @@ from src.ui import ui
 from src.i18n import tr
 from src.client import ItemType, client
 from src.single import tagitem
+from org.transcrypt.stubs.browser import __pragma__
+__pragma__('alias', 'as_', 'as')
+
+__pragma__('skip')
+require = window = require = setInterval = setTimeout = setImmediate = None
+clearImmediate = clearInterval = clearTimeout = this = document = None
+JSON = Math = console = alert = requestAnimationFrame = None
+__pragma__('noskip')
 
 
 def get_tags(data=None, error=None):

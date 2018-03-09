@@ -62,12 +62,13 @@ from happypanda.common import constants, exceptions, hlogger, utils, config
 force_instant_defaults()
 force_auto_coercion()
 
-log = hlogger.Logger(constants.log_ns_database+__name__)
+log = hlogger.Logger(constants.log_ns_database + __name__)
 
 and_op = and_
 or_op = or_
 sa_text = text
 desc_expr = desc
+
 
 class OrderingQuery(dynamic.AppenderQuery):
     """
@@ -128,8 +129,9 @@ class OrderingQuery(dynamic.AppenderQuery):
     def insert(self, index, entity, enable_count_cache=False):
         items = list(self)
         s = object_session(entity)
-        if inspect(entity).deleted  or s and entity in s.deleted:
-            # see http://docs.sqlalchemy.org/en/latest/orm/extensions/orderinglist.html?highlight=orderinglist#module-sqlalchemy.ext.orderinglist
+        if inspect(entity).deleted or s and entity in s.deleted:
+            # see warning
+            # http://docs.sqlalchemy.org/en/latest/orm/extensions/orderinglist.html?highlight=orderinglist#module-sqlalchemy.ext.orderinglist
             raise exceptions.DatabaseError(utils.this_function(),
                                            "Two entries trading values is not supported")
         else:
@@ -201,6 +203,7 @@ class OrderingQuery(dynamic.AppenderQuery):
 
     def __reduce__(self):
         return orderinglist._reconstitute, (self.__class__, self.__dict__, list(self))
+
 
 class String(_String):
     """Enchanced version of standard SQLAlchemy's :class:`String`.
@@ -854,6 +857,7 @@ class Taggable(UpdatedMixin, Base):
         "NamespaceTags",
         secondary=taggable_tags,
         lazy="dynamic")
+
 
 class TaggableMixin(UpdatedMixin):
 

@@ -3,7 +3,7 @@ from happypanda.core.command import Command, CommandEvent, AsyncCommand
 from happypanda.core import updater, message
 from happypanda.interface import enums
 
-log = hlogger.Logger(constants.log_ns_command+__name__)
+log = hlogger.Logger(constants.log_ns_command + __name__)
 
 
 class CheckUpdate(AsyncCommand):

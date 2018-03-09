@@ -32,7 +32,7 @@ try:
 except ImportError:  # only available on windows
     pass
 
-log = hlogger.Logger(constants.log_ns_misc+__name__)
+log = hlogger.Logger(constants.log_ns_misc + __name__)
 
 ImageSize = namedtuple("ImageSize", ['width', 'height'])
 
@@ -65,6 +65,7 @@ def setup_dirs():
         if dir_x:
             if not os.path.isdir(dir_x):
                 os.makedirs(dir_x)
+
 
 def disable_loggers(logs):
     assert isinstance(logs, list)

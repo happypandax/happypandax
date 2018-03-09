@@ -13,7 +13,7 @@ from happypanda.common import constants, exceptions, utils, hlogger, config
 from happypanda.core import db
 from happypanda.core.commands import io_cmd
 
-log = hlogger.Logger(constants.log_ns_server+__name__)
+log = hlogger.Logger(constants.log_ns_server + __name__)
 
 
 def finalize(msg_dict, session_id="", name=None, error=None):

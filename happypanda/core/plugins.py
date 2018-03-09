@@ -8,7 +8,7 @@ import logging
 
 from happypanda.common import exceptions, utils, constants, hlogger
 
-log = hlogger.Logger(constants.log_ns_plugin+__name__)
+log = hlogger.Logger(constants.log_ns_plugin + __name__)
 
 
 def format_plugin(node_or_cls):

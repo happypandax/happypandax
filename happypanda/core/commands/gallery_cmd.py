@@ -8,7 +8,7 @@ from happypanda.core.command import (UndoCommand, CommandEvent,
 from happypanda.core.commands import database_cmd, io_cmd
 from happypanda.core import db
 
-log = hlogger.Logger(constants.log_ns_command+__name__)
+log = hlogger.Logger(constants.log_ns_command + __name__)
 
 
 class RenameGallery(UndoCommand):
@@ -60,6 +60,7 @@ class AddGallery(UndoCommand):
     def __init__(self):
         super().__init__()
 
+
 class SimilarGallery(Command):
     """
     Get similar galleries to given gallery
@@ -73,7 +74,7 @@ class SimilarGallery(Command):
         s = set()
         for ns in tags:
             s.add("<tag>-{}".format(ns.tag.name))
-            #if not ns.namespace.name == constants.special_namespace:
+            # if not ns.namespace.name == constants.special_namespace:
             #    s.add("n-{}".format(ns.namespace.name))
         return s
 
@@ -86,7 +87,7 @@ class SimilarGallery(Command):
             g_tags = gallery_or_id
         else:
             g_tags = database_cmd.GetModelItems().run(db.Taggable, join=db.Gallery.taggable,
-                                         filter=db.Gallery.id==g_id)
+                                                      filter=db.Gallery.id == g_id)
         if g_tags:
             g_tags = self._get_set(g_tags.tags.all())
             data[g_id] = gl_data = {}
@@ -109,12 +110,11 @@ class SimilarGallery(Command):
             if self._gallery_similar_key in idb and not constants.is_new_db:
                 gl_data = idb[self._gallery_similar_key]
 
-        if not gallery.id in gl_data:
+        if gallery.id not in gl_data:
             gl_data.update(self._calculate(gallery))
             with utils.intertnal_db() as idb:
                 idb[self._gallery_similar_key] = gl_data
         return [x for x in sorted(gl_data[gallery.id], reverse=True, key=lambda x:gl_data[gallery.id][x])]
-
 
 
 class OpenGallery(Command):

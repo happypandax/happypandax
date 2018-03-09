@@ -1,4 +1,3 @@
-__pragma__('alias', 'as_', 'as')
 import src
 from src.react_utils import (h,
                              e,
@@ -11,6 +10,14 @@ from src.client import (client, ServerMsg, ItemType, ImageSize, Command)
 from src.i18n import tr
 from src.state import state
 from src import utils
+from org.transcrypt.stubs.browser import __pragma__
+__pragma__('alias', 'as_', 'as')
+
+__pragma__('skip')
+require = window = require = setInterval = setTimeout = setImmediate = None
+clearImmediate = clearInterval = clearTimeout = this = document = None
+JSON = Math = console = alert = requestAnimationFrame = None
+__pragma__('noskip')
 
 SearchOptions = createReactClass({
     'displayName': 'SearchOptions',
