@@ -1,12 +1,8 @@
-import src
 from src.react_utils import (h,
                              e,
-                             React,
-                             createReactClass,
-                             withRouter,
-                             Link)
-from src.ui import ui, Slider, Error, Pagination
-from src.client import (client, ServerMsg, ItemType, ImageSize, Command)
+                             createReactClass)
+from src.ui import ui
+from src.client import (client, ItemType)
 from src.i18n import tr
 from src.state import state
 from src import utils
@@ -17,6 +13,8 @@ __pragma__('skip')
 require = window = require = setInterval = setTimeout = setImmediate = None
 clearImmediate = clearInterval = clearTimeout = this = document = None
 JSON = Math = console = alert = requestAnimationFrame = None
+js_undefined = location = locationStorage = sessionStorage = None
+Date = None
 __pragma__('noskip')
 
 SearchOptions = createReactClass({
@@ -62,7 +60,6 @@ def search_get_config(data=None, error=None):
 
 
 def search_render():
-    fluid = this.props.fluid
     return e(ui.Form,
              e(ui.Search,
                size=this.props.size,

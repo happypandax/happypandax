@@ -1,13 +1,6 @@
-from src.react_utils import (h, e,
-                             render,
-                             React,
-                             ReactDOM,
-                             createReactClass,
-                             NavLink)
-from src.client import client
-from src.state import state
+from src.react_utils import (e,
+                             createReactClass)
 from src.ui import ui
-from src.i18n import tr
 from src.utils import defined
 from src.nav import MenuItem
 from org.transcrypt.stubs.browser import __pragma__

@@ -1,10 +1,5 @@
-from src.react_utils import (h,
-                             e,
-                             React,
+from src.react_utils import (e,
                              createReactClass)
-from src.ui import ui
-from src.i18n import tr
-from src.state import state
 from src.client import ViewType
 from src import pages
 from org.transcrypt.stubs.browser import __pragma__

@@ -1,9 +1,6 @@
 from src import utils
 from src.react_utils import (h, e,
-                             render,
-                             React,
-                             createReactClass,
-                             NavLink)
+                             createReactClass)
 from src.client import client
 from src.state import state
 from src.ui import ui
@@ -16,6 +13,7 @@ __pragma__('skip')
 require = window = require = setInterval = setTimeout = setImmediate = None
 clearImmediate = clearInterval = clearTimeout = this = document = None
 JSON = Math = console = alert = requestAnimationFrame = None
+js_undefined = location = localStorage = sessionStorage = None
 __pragma__('noskip')
 
 
@@ -81,7 +79,7 @@ def pref_general(props):
                                          "External Viewer"), size="small", dividing=True))
 
             if not is_same_machine():
-                ext_viewer.append(disabled_machine_msg(props))
+                items.append(disabled_machine_msg(props))
 
             items.append(e(ui.Form.Group,
                            e(ui.Form.Input,

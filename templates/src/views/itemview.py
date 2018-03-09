@@ -1,9 +1,6 @@
 import math
-import src
-from src.react_utils import (h,
-                             e,
-                             createReactClass,
-                             Link)
+from src.react_utils import (e,
+                             createReactClass)
 from src.ui import ui, Error, Pagination
 from src.client import (client, ItemType)
 from src.i18n import tr

@@ -1,8 +1,5 @@
 from src.react_utils import (h, e,
-                             render,
-                             React,
-                             createReactClass,
-                             Link)
+                             createReactClass)
 from src.client import client, Command
 from src.state import state
 from src.ui import ui

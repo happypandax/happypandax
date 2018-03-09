@@ -1,7 +1,7 @@
 from src import utils
 
 from src.state import state
-from src.client import client, log
+from src.client import client
 
 from org.transcrypt.stubs.browser import __pragma__
 

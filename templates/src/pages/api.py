@@ -1,6 +1,5 @@
 from src.react_utils import (h,
                              e,
-                             React,
                              createReactClass)
 from src.ui import ui
 from src.client import client, ServerMsg

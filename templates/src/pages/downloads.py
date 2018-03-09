@@ -1,7 +1,4 @@
-__pragma__('alias', 'as_', 'as')
 from src.react_utils import (e,
-                             h,
-                             Route,
                              createReactClass)
 from src.i18n import tr
 from src.ui import ui
@@ -9,6 +6,7 @@ from src.client import client, ProgressType
 from src.state import state
 from src import utils
 from org.transcrypt.stubs.browser import __pragma__
+__pragma__('alias', 'as_', 'as')
 __pragma__('alias', 'js_input', 'input')
 
 __pragma__('skip')

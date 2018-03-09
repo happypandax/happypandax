@@ -1,15 +1,13 @@
 import math
 from src.react_utils import (h, e,
-                             render,
                              React,
-                             ReactDOM,
                              createReactClass,
-                             QueryLink,
-                             ScrollToTop)
+                             QueryLink)
 
 from src.state import state
 from src import utils
 from org.transcrypt.stubs.browser import __pragma__
+__pragma__('alias', 'as_', 'as')
 
 __pragma__('skip')
 require = window = require = setInterval = setTimeout = setImmediate = None

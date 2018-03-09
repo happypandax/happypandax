@@ -1,6 +1,4 @@
-import src
-from src.react_utils import (h,
-                             e,
+from src.react_utils import (e,
                              createReactClass)
 from src.ui import ui
 from src.i18n import tr
@@ -12,6 +10,7 @@ __pragma__('skip')
 require = window = require = setInterval = setTimeout = setImmediate = None
 clearImmediate = clearInterval = clearTimeout = this = document = None
 JSON = Math = console = alert = requestAnimationFrame = None
+js_undefined = location = localStorage = sessionStorage = None
 __pragma__('noskip')
 
 __pragma__("tconv")

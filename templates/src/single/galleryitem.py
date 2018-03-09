@@ -1,14 +1,11 @@
-import src
 from src.react_utils import (h,
                              e,
                              createReactClass,
                              Link)
 from src.ui import ui
 from src.client import (ItemType, ImageSize, client)
-from src.state import state
 from src.single import thumbitem
 from src import utils
-from src.views import tagview
 from src.propsviews import gallerypropsview
 from src.i18n import tr
 from org.transcrypt.stubs.browser import __pragma__
@@ -18,6 +15,7 @@ __pragma__('skip')
 require = window = require = setInterval = setTimeout = setImmediate = None
 clearImmediate = clearInterval = clearTimeout = this = document = None
 JSON = Math = console = alert = requestAnimationFrame = None
+js_undefined = location = localStorage = sessionStorage = None
 __pragma__('noskip')
 
 

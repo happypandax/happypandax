@@ -1,11 +1,8 @@
-import src
-from src.react_utils import (h,
-                             e,
+from src.react_utils import (e,
                              createReactClass,
                              withRouter)
 from src.ui import ui, ToggleIcon
 from src.client import ItemType
-from src.i18n import tr
 from src.state import state
 from src.views import itemview
 from src import utils, item
@@ -16,6 +13,7 @@ __pragma__('skip')
 require = window = require = setInterval = setTimeout = setImmediate = None
 clearImmediate = clearInterval = clearTimeout = this = document = None
 JSON = Math = console = alert = requestAnimationFrame = None
+js_undefined = location = localStorage = sessionStorage = None
 __pragma__('noskip')
 
 __pragma__("kwargs")

@@ -1,4 +1,3 @@
-import src
 from src import utils
 from src.react_utils import (h,
                              e,

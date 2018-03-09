@@ -1,4 +1,3 @@
-import src
 from src import utils
 from src.react_utils import (h,
                              e,
@@ -6,6 +5,7 @@ from src.react_utils import (h,
                              createReactClass)
 from src.ui import ui
 from src.i18n import tr
+from src.state import state
 from src.client import ItemType, client
 from src.single import tagitem
 from org.transcrypt.stubs.browser import __pragma__

@@ -2,16 +2,13 @@ from src.state import state
 from src.react_utils import (h,
                              e,
                              render,
-                             React,
-                             ReactDOM,
                              Switch,
                              createReactClass,
                              Router,
                              Route,
                              Redirect,
-                             withRouter
                              )
-from src.ui import ui, Alert, Notif, ConnectStatus
+from src.ui import ui, Alert, Notif
 from src.nav import (sidebar, menu)
 from src.pages import (api, collection, gallery,
                        dashboard, favorites, inbox,
@@ -25,6 +22,8 @@ __pragma__('skip')
 require = window = require = setInterval = setTimeout = setImmediate = None
 clearImmediate = clearInterval = clearTimeout = this = document = None
 JSON = Math = console = alert = requestAnimationFrame = None
+js_undefined = location = localStorage = sessionStorage = None
+Date = None
 __pragma__('noskip')
 
 
@@ -317,8 +316,6 @@ App = createReactClass({
     'toggle_scroll_up': lambda: this.setState({'scroll_up': not this.state.scroll_up}),
 
     "notif": None,
-
-    'add_notif': lambda o: add_notif,
 
     'close_preview_msg': lambda: all((this.setState({'preview_msg': False}),
                                       utils.storage.set("preview_msg", False))),

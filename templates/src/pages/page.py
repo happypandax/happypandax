@@ -1,12 +1,10 @@
-from src.react_utils import (h,
-                             e,
-                             React,
+from src.react_utils import (e,
                              createReactClass,
                              Link)
-from src.ui import ui, Slider
+from src.ui import ui
 from src.i18n import tr
 from src.state import state
-from src.client import (ItemType, ViewType, ImageSize, client, Command)
+from src.client import (ItemType, ImageSize, client, Command)
 from src.single import thumbitem, pageitem
 from src.views import tagview, itemview
 from src import utils
@@ -111,7 +109,6 @@ def get_item(ctx=None, data=None, error=None):
     elif error:
         state.app.notif("Failed to fetch item ({})".format(this.state.id), level="error")
     else:
-        item = this.state.item_type
         gid = utils.get_query("gid")
         pid = utils.get_query("id")
 
@@ -235,7 +232,6 @@ __pragma__("jsiter")
 def page_render():
     number = 0
     p_id = this.state.id
-    name = ""
     hash_id = ""
     path = ""
     fav = 0
@@ -245,7 +241,6 @@ def page_render():
         gid = this.state.data.gallery_id
         p_id = this.state.data.id
         number = this.state.data.number
-        name = this.state.data.name
         hash_id = this.state.data.hash
         path = this.state.data.path
         if this.state.data.metatags.favorite:

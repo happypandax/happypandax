@@ -1,12 +1,8 @@
 from src.react_utils import (h, e,
-                             render,
                              createReactClass,
                              NavLink)
-from src.client import client
-from src.state import state
 from src.ui import ui
 from src.i18n import tr
-from src.utils import defined, is_same_machine
 from src.nav import MenuItem
 from src.pages import preferences, about
 from org.transcrypt.stubs.browser import __pragma__

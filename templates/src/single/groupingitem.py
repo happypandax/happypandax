@@ -1,10 +1,8 @@
-import src
 from src.react_utils import (h,
                              e,
                              createReactClass)
 from src.ui import ui
 from src.client import (ItemType, ImageSize)
-from src.state import state
 from src.single import thumbitem
 from org.transcrypt.stubs.browser import __pragma__
 __pragma__('alias', 'as_', 'as')

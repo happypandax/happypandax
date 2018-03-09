@@ -1,6 +1,4 @@
-import src
-from src.react_utils import (h,
-                             e,
+from src.react_utils import (e,
                              createReactClass)
 from src.ui import ui
 from src.client import client

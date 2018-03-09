@@ -1,11 +1,13 @@
 from src.state import state
 from src import utils
-from org.transcrypt.stubs.browser import __pragma__
+from org.transcrypt.stubs.browser import __pragma__, __new__
 
 __pragma__('skip')
 require = window = require = setInterval = setTimeout = setImmediate = None
 clearImmediate = clearInterval = clearTimeout = this = document = None
 JSON = Math = console = alert = requestAnimationFrame = None
+js_undefined = location = locationStorage = sessionStorage = None
+Date = None
 __pragma__('noskip')
 
 io = require('socket.io-client')
@@ -413,7 +415,6 @@ class Command(Base):
 
     def _check_status(self, data=None, error=None):
         if data is not None and not error:
-            states = []
             for i in self._command_ids:
                 str_i = str(i)
                 self._states[str_i] = data[str_i]
@@ -428,7 +429,6 @@ class Command(Base):
     def stop(self, data=None, error=None):
         "Stop command"
         if data is not None and not error:
-            states = []
             for i in self._command_ids:
                 str_i = str(i)
                 self._states[str_i] = data[str_i]
@@ -510,7 +510,7 @@ class Command(Base):
                     cmd_ids = []
                     for i in self._command_ids:
                         str_i = str(i)
-                        if not str_i in self._values and str_i in self._states:
+                        if str_i not in self._values and str_i in self._states:
                             if self._states[str_i] == 'finished':
                                 cmd_ids.append(i)
                             if self._on_each and self._value_callback:

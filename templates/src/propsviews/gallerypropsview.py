@@ -1,11 +1,8 @@
-import src
 from src.react_utils import (h,
                              e,
-                             createReactClass,
-                             Link)
+                             createReactClass)
 from src.ui import ui
-from src.client import (ItemType, ImageSize, client)
-from src.state import state
+from src.client import ItemType
 from src.single import artistitem
 from src import utils
 from src.views import tagview

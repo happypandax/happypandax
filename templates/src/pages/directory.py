@@ -5,11 +5,10 @@ from src.react_utils import (e,
                              NavLink,
                              Switch,
                              createReactClass)
-from src.ui import ui, Pagination, ToggleIcon
+from src.ui import ui, Pagination
 from src.client import client, ItemType, ItemSort
 from src.i18n import tr
 from src.state import state
-from src.single import tagitem
 from src.propsviews import artistpropsview, tagpropsview
 from src import utils
 from org.transcrypt.stubs.browser import __pragma__

@@ -1,13 +1,8 @@
-from src.react_utils import (h,
-                             e,
-                             React,
+from src.react_utils import (e,
                              createReactClass)
 from src.ui import ui, Slider
-from src.client import client, ServerMsg
 from src.i18n import tr
-from src.state import state
 from src.single import galleryitem
-from src import item, utils
 from org.transcrypt.stubs.browser import __pragma__
 __pragma__('alias', 'as_', 'as')
 
