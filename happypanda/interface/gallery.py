@@ -42,6 +42,39 @@ log = hlogger.Logger(__name__)
 #    """
 #    return message.Message("works")
 
+def get_similar(item_type: enums.ItemType=enums.ItemType.Gallery,
+                  item_id: int = 0,
+                  limit=10):
+    """
+    Get similar items
+
+    Args:
+        item_type: possible items are :py:attr:`.ItemType.Gallery`
+        item_id: id of item
+        limit: amount of items
+
+    Returns:
+        A command id with command value:
+        
+        .. code-block:: guess
+
+            [
+                item message object,
+                ...
+            ]
+
+    """
+    item_type = enums.ItemType.get(item_type)
+    db_msg, db_model = item_type._msg_and_model(
+        (enums.ItemType.Gallery,))
+    item_list = message.List(db.model_name(db_model), db_msg)
+    similar_items = gallery_cmd.SimilarGallery().run(item_id)[:limit]
+    items = []
+    if similar_items:
+        items = database_cmd.GetModelItems().run(db_model, set(similar_items))
+    [item_list.append(db_msg(x)) for x in items]
+    return item_list
+
 def source_exists(item_type: enums.ItemType=enums.ItemType.Gallery,
                   item_id: int = 0,
                   check_all: bool=False):

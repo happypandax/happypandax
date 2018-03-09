@@ -2,7 +2,7 @@ from src.react_utils import (h,
                              e,
                              createReactClass,
                              Link)
-from src.ui import ui, Slider
+from src.ui import ui, Slider, LabelAccordion
 from src.i18n import tr
 from src.state import state
 from src.client import ItemType, ImageSize, client
@@ -27,7 +27,7 @@ def get_config(data=None, error=None):
     else:
         pass
 
-
+__pragma__('kwargs')
 def get_item(data=None, error=None):
     if data is not None and not error:
         this.setState({"data": data,
@@ -65,6 +65,11 @@ def get_item(data=None, error=None):
                     related_type=ItemType.GalleryFilter,
                     item_id=data.id)
 
+            client.call_func("get_similar_items", this.get_similar,
+                    item_type=ItemType.Gallery,
+                    item_id=data.id, limit=10)
+            this.setState({"similar_gallery_loading":True})
+
         if data.id:
             inbox = data.metatags.inbox
             trash = data.metatags.trash
@@ -72,7 +77,7 @@ def get_item(data=None, error=None):
             menu_left = []
             min_width = 768
             if inbox:
-                menu_left.append(e(ui.Responsive, e(ui.Button, e(ui.Icon, js_name="grid layout"), tr(this, "ui.b-send-library", "Send to Library"), color="green"),
+                menu_left.append(e(ui.Responsive, e(ui.Button, e(ui.Icon, js_name="grid layout"), tr(this, "ui.b-send-library", "Send to Library"), color="green", basic=True),
                                    as_=ui.Menu.Item,
                                    minWidth=min_width,
                                    ))
@@ -82,7 +87,7 @@ def get_item(data=None, error=None):
                 e(ui.Responsive,
                   e(ui.Button, e(ui.Icon, js_name="trash" if not trash else "reply"),
                     tr(this, "ui.b-send-trash", "Send to Trash") if not trash else tr(this, "ui.b-restore", "Restore"),
-                    color="red" if not trash else "teal"),
+                    color="red" if not trash else "teal", basic=True),
                   as_=ui.Menu.Item,
                   minWidth=min_width,
                   ))
@@ -96,14 +101,15 @@ def get_item(data=None, error=None):
                           e(ui.Button, icon="remove circle outline", toggle=True, active=this.state.delete_files,
                             title=tr(this, "ui.t-delete-files", "Delete files")),
                           e(ui.Button, icon="recycle", toggle=True, active=this.state.send_to_recycle,
-                            title=tr(this, "ui.t-send-recycle-bin", "Send files to Recycle Bin"))
+                            title=tr(this, "ui.t-send-recycle-bin", "Send files to Recycle Bin")),
+                          basic=True,
                         ),
                       as_=ui.Menu.Item,
                       minWidth=min_width,
                       ))
 
             menu_right.append(e(ui.Responsive,
-                                e(ui.Button, e(ui.Icon, js_name="edit"), tr(this, "ui.b-edit", "Edit")),
+                                e(ui.Button, e(ui.Icon, js_name="edit"), tr(this, "ui.b-edit", "Edit"), basic=True),
                                 as_=ui.Menu.Item,
                                 minWidth=min_width,
                                 ))
@@ -116,11 +122,14 @@ def get_item(data=None, error=None):
     elif error:
         state.app.notif("Failed to fetch item ({})".format(this.state.id), level="error")
     else:
+        if utils.defined(this.props.location.state) and this.props.location.state.gallery:
+            this.get_item(this.props.location.state.gallery)
         item = this.state.item_type
         item_id = this.state.id
         if item and item_id:
             client.call_func("get_item", this.get_item, item_type=item, item_id=item_id)
             this.setState({'loading': True})
+__pragma__('nokwargs')
 
 
 def get_grouping(data=None, error=None):
@@ -155,6 +164,12 @@ def get_collection_count(data=None, error=None):
         this.setState({"collection_count": data['count']})
     elif error:
         state.app.notif("Failed to fetch collection count ({})".format(this.state.id), level="error")
+
+def get_similar(data=None, error=None):
+    if data is not None and not error:
+        this.setState({"similar_gallery_data": data, 'similar_gallery_loading':False})
+    elif error:
+        state.app.notif("Failed to fetch similar galleries ({})".format(this.state.id), level="error")
 
 
 __pragma__("tconv")
@@ -376,17 +391,17 @@ def page_render():
         for f in this.state.filter_data:
             filter_items.append(e(ui.List.Item,
                                   e(ui.List.Icon, js_name="filter"),
-                                  e(ui.List.Content,
-                                    e(Link, f['name'],
-                                      to=utils.build_url("/inbox" if inbox else "/library",
+                                  e(ui.List.Content,f['name'],),
+                                  as_=Link, to=utils.build_url("/inbox" if inbox else "/library",
                                                          {'filter_id':f['id']},
-                                                         keep_query=False)))))
+                                                         keep_query=False),
+                                  ))
         filter_accordion.append(e(ui.Accordion,
                                  panels=[
                                      {
                                          'title':{
                                              'content':e(ui.Label,
-                                                         tr(this, "", "Appears in {} gallery filters".format(this.state.filter_count)),
+                                                         tr(this, "", "Appears in {} gallery filter".format(this.state.filter_count)),
                                                          color="teal",),
                                              'key': 't-1',
                                              },
@@ -400,95 +415,132 @@ def page_render():
                                                 },
                                          'key': 'c-1'
                                          }
-                                     ]
+                                     ],
                                  ))
 
-    #filters_and_collections = []
+    collection_accordion = []
+
+    if this.state.collection_count:
+        collection_accordion.append(e(ui.Grid.Row,
+                                      e(ui.Grid.Column,
+                                        e(LabelAccordion,
+                                          e(Slider,
+                                            secondary=True,
+                                            sildesToShow=4),
+                                          label=tr(this, "", "Appears in {} collection".format(this.state.collection_count)),
+                                          color="teal"
+                                          )
+                                        )
+                                      )
+                                )
+
+    similar_galleries = []
+
+    if True:
+        similar_gallery_data = this.state.similar_gallery_data
+        similar_galleries.append(e(ui.Grid.Row,
+                                        e(ui.Grid.Column,
+                                        e(LabelAccordion,
+                                            e(Slider,
+                                                *[e(galleryitem.Gallery, data=x) for x in similar_gallery_data],
+                                                loading=this.state.similar_gallery_loading,
+                                                secondary=True,
+                                                sildesToShow=4),
+                                            label=tr(this, "", "More like this"),
+                                            color="teal",
+                                            )
+                                        )
+                                        )
+                                )
 
     return e(ui.Grid,
-             e(ui.Grid.Row, e(ui.Grid.Column, e(ui.Breadcrumb, icon="right arrow",))),
-             e(ui.Grid.Row,
-                 e(ui.Grid.Column,
-                   e(ui.Grid, e(ui.Grid.Row,
-                                e(ui.Grid.Column,
-                                  e(thumbitem.Thumbnail,
-                                    size_type=ImageSize.Big,
-                                    item_type=this.state.item_type,
-                                    item_id=item_id,
-                                    size="medium",
-                                    shape="rounded",
-                                    centered=True,
-                                    bordered=True,),
-                                    tablet=10, mobile=6,
-                                  ),
+            e(ui.Grid.Row, e(ui.Grid.Column, e(ui.Breadcrumb, icon="right arrow",))),
+            e(ui.Grid.Row,
+                e(ui.Grid.Column,
+                e(ui.Grid, e(ui.Grid.Row,
+                            e(ui.Grid.Column,
+                                e(thumbitem.Thumbnail,
+                                size_type=ImageSize.Big,
+                                item_type=this.state.item_type,
+                                item_id=item_id,
+                                size="medium",
+                                shape="rounded",
                                 centered=True,
+                                bordered=True,),
+                                tablet=10, mobile=6,
                                 ),
-                    e(ui.Divider, fitted=True),
-                     *buttons,
-                      e(ui.Grid.Row,
-                           *filter_accordion,
-                         ),
-                     centered=True, verticalAlign="top"),
-                   ),
-                 e(ui.Grid.Column,
-                   e(ui.Grid,
-                       e(ui.Grid.Row,
-                           e(ui.Grid.Column, e(ui.Rating, icon="heart", size="massive", rating=fav), floated="right",),
-                           e(ui.Grid.Column, *indicators, floated="right", textAlign="right"),
-                         columns=2,
-                         ),
-                       e(ui.Grid.Row,
-                         e(ui.Grid,
-                           e(ui.Grid.Row, e(ui.Grid.Column, e(ui.Header, title, as_="h3"), textAlign="center")),
-                           e(ui.Grid.Row,
-                             e(ui.Grid.Column,
-                               e(ui.Table,
-                                 e(ui.Table.Body,
-                                   *rows
-                                   ),
-                                 basic="very"
-                                 ))),
-                           stackable=True,
-                           padded=False,
-                           relaxed=True,
-                           ),
-                         ),
-                     divided="vertically",
-                     ),
-                   ),
-                 columns=2,
-                 as_=ui.Segment,
-                 # loading=this.state.loading,
-                 basic=True,
-               ),
-             e(ui.Grid.Row,
-                 e(ui.Grid.Column, e(ui.Label, tr(this, "ui.t-date-added", "Date added"), e(ui.Label.Detail, date_added))),
-                 e(ui.Grid.Column, e(ui.Label, tr(this, "ui.t-last-read", "Last read"), e(ui.Label.Detail, date_read))),
-                 e(ui.Grid.Column, e(ui.Label, tr(this, "ui.t-last-updated", "Last updated"), e(ui.Label.Detail, date_upd))),
-                 columns=3
-               ),
-             e(ui.Grid.Row, e(ui.Grid.Column,
-                              e(Slider, *[e(galleryitem.Gallery, data=x) for x in series_data],
-                                loading=this.state.loading_group,
-                                secondary=True,
-                                sildesToShow=4,
-                                label=tr(this, "ui.t-series", "Series")),
-                              )),
-             e(ui.Grid.Row, e(ui.Grid.Column, e(itemview.ItemView,
-                                                history=this.props.history,
-                                                location=this.props.location,
-                                                item_id=item_id,
-                                                item_type=ItemType.Gallery,
-                                                related_type=ItemType.Page,
-                                                view_filter=None,
-                                                label=tr(this, "ui.t-pages", "Pages"),
-                                                config_suffix="gallerypage",
-                                                toggle_config=this.toggle_pages_config,
-                                                visible_config=this.state.visible_page_cfg,
-                                                container=True, secondary=True))),
-             stackable=True,
-             container=True,
-             )
+                            centered=True,
+                            ),
+                e(ui.Divider, fitted=True),
+                    *buttons,
+                    e(ui.Grid.Row,
+                        *filter_accordion,
+                        ),
+                    centered=True, verticalAlign="top"),
+                ),
+                e(ui.Grid.Column,
+                e(ui.Grid,
+                    e(ui.Grid.Row,
+                        e(ui.Grid.Column, e(ui.Rating, icon="heart", size="massive", rating=fav), floated="right",),
+                        e(ui.Grid.Column, *indicators, floated="right", textAlign="right"),
+                        columns=2,
+                        ),
+                    e(ui.Grid.Row,
+                        e(ui.Grid,
+                        e(ui.Grid.Row, e(ui.Grid.Column, e(ui.Header, title, as_="h3"), textAlign="center")),
+                        e(ui.Grid.Row,
+                            e(ui.Grid.Column,
+                            e(ui.Table,
+                                e(ui.Table.Body,
+                                *rows
+                                ),
+                                basic="very"
+                                ))),
+                        stackable=True,
+                        padded=False,
+                        relaxed=True,
+                        ),
+                        ),
+                    divided="vertically",
+                    ),
+                ),
+                columns=2,
+                as_=ui.Segment,
+                # loading=this.state.loading,
+                basic=True,
+            ),
+            e(ui.Grid.Row,
+                e(ui.Grid.Column, e(ui.Label, tr(this, "ui.t-date-added", "Date added"), e(ui.Label.Detail, date_added))),
+                e(ui.Grid.Column, e(ui.Label, tr(this, "ui.t-last-read", "Last read"), e(ui.Label.Detail, date_read))),
+                e(ui.Grid.Column, e(ui.Label, tr(this, "ui.t-last-updated", "Last updated"), e(ui.Label.Detail, date_upd))),
+                columns=3
+            ),
+            *collection_accordion,
+            e(ui.Grid.Row, e(ui.Grid.Column,
+                            e(Slider, *[e(galleryitem.Gallery, data=x) for x in series_data],
+                            loading=this.state.loading_group,
+                            basic=False,
+                            secondary=True,
+                            sildesToShow=4,
+                            color="blue",
+                            label=tr(this, "ui.t-series", "Series")),
+                            )),
+            *similar_galleries,
+            e(ui.Grid.Row, e(ui.Grid.Column, e(itemview.ItemView,
+                                            history=this.props.history,
+                                            location=this.props.location,
+                                            item_id=item_id,
+                                            item_type=ItemType.Gallery,
+                                            related_type=ItemType.Page,
+                                            view_filter=None,
+                                            label=tr(this, "ui.t-pages", "Pages"),
+                                            config_suffix="gallerypage",
+                                            toggle_config=this.toggle_pages_config,
+                                            visible_config=this.state.visible_page_cfg,
+                                            container=True, secondary=True))),
+                stackable=True,
+                container=True,
+                )
 
 
 __pragma__("notconv")
@@ -514,8 +566,11 @@ Page = createReactClass({
                                 'delete_files': False,
                                 'visible_page_cfg': False,
                                 'collection_count': this.props.collection_count or 0,
+                                'collection_data': [],
                                 'filter_count': this.props.filter_count or 0,
                                 'filter_data': [],
+                                'similar_gallery_loading': False,
+                                'similar_gallery_data': [],
                                 },
 
     'on_read': lambda: utils.go_to(this.props.history, "/item/page", {'gid': this.state.data.id}, keep_query=False),
@@ -525,6 +580,7 @@ Page = createReactClass({
     'get_status': get_status,
     'get_filter_count': get_filter_count,
     'get_filters': get_filters,
+    'get_similar': get_similar,
     'get_collection_count': get_collection_count,
     'get_config': get_config,
     'open_external': galleryitem.open_external,

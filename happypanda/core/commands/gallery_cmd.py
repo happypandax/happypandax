@@ -88,6 +88,8 @@ class SimilarGallery(Command):
         else:
             g_tags = database_cmd.GetModelItems().run(db.Taggable, join=db.Gallery.taggable,
                                                       filter=db.Gallery.id == g_id)
+            if g_tags:
+                g_tags = g_tags[0]
         if g_tags:
             g_tags = self._get_set(g_tags.tags.all())
             data[g_id] = gl_data = {}
@@ -104,17 +106,18 @@ class SimilarGallery(Command):
 
         return data
 
-    def main(self, gallery: db.Gallery) -> list:
+    def main(self, gallery_or_id: db.Gallery) -> list:
+        gid = gallery_or_id.id if isinstance(gallery_or_id, db.Gallery) else gallery_or_id
         gl_data = {}
         with utils.intertnal_db() as idb:
             if self._gallery_similar_key in idb and not constants.is_new_db:
                 gl_data = idb[self._gallery_similar_key]
 
-        if gallery.id not in gl_data:
-            gl_data.update(self._calculate(gallery))
+        if gid not in gl_data:
+            gl_data.update(self._calculate(gallery_or_id))
             with utils.intertnal_db() as idb:
                 idb[self._gallery_similar_key] = gl_data
-        return [x for x in sorted(gl_data[gallery.id], reverse=True, key=lambda x:gl_data[gallery.id][x])]
+        return [x for x in sorted(gl_data[gid], reverse=True, key=lambda x:gl_data[gid][x])]
 
 
 class OpenGallery(Command):

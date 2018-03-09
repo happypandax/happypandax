@@ -39,7 +39,7 @@ def Slider(props):
     items = [e(ui.Segment, x, basic=True, size=props.size, className="slide-segment") for x in children]
     add_el = []
     if props.label:
-        add_el.append(e(ui.Label, props.label, e(ui.Label.Detail, len(items)), attached="top"))
+        add_el.append(e(ui.Label, props.label, e(ui.Label.Detail, len(items)), color=props.color, attached="top"))
     base_size = props.sildesToShow if props.sildesToShow else 5
 
     if items:
@@ -70,7 +70,7 @@ def Slider(props):
 
     return e(ui.Segment,
              *add_el,
-             basic=True,
+             basic=props.basic if utils.defined(props.basic) else True,
              loading=props.loading,
              secondary=props.secondary,
              tertiary=props.tertiary,
@@ -296,4 +296,29 @@ ConnectStatus = createReactClass({
                            this.props.on_toggle(not this.state.toggled) if this.props.on_toggle else None)),
 
     'render': connectstatus_render,
+})
+
+LabelAccordion = createReactClass({
+    'displayName': 'LabelAccordion',
+
+    'getInitialState': lambda: {'open': this.props.default_open or False},
+
+    'toggle': lambda: all((this.setState({'open': not this.state.open}),
+                           this.props.on_toggle(not this.state.open) if this.props.on_toggle else None)),
+
+    'render': lambda: e(ui.Segment,
+                        e(ui.Label,
+                          e(ui.Icon, js_name="caret down" if this.state.open else "caret right"),
+                          this.props.label,
+                          *([e(ui.Label.Detail, this.props.detail)] if utils.defined(this.props.detail) else []),
+                          attached=this.props.attached or "top",
+                          onClick=this.toggle,
+                          color=this.props.color,
+                          as_="a",
+                          ),
+                        this.props.children if this.state.open else js_undefined,
+                        compact=this.props.compact,
+                        secondary=this.props.secondary,
+                        basic=this.props.basic if utils.defined(this.props.basic) else True,
+                        ),
 })

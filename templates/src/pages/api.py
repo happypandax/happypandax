@@ -1,7 +1,7 @@
 from src.react_utils import (h,
                              e,
                              createReactClass)
-from src.ui import ui
+from src.ui import ui, LabelAccordion
 from src.client import client, ServerMsg
 from src.i18n import tr
 from src import utils
@@ -169,20 +169,18 @@ Page = createReactClass({
                                       e(ui.Message,
                                           e(ui.Message.Header, tr(this, "ui.h-server-comm", "Server Communication")),
                                         h(ui.Message.Content, tr(this, "ui.t-server-comm-tutorial", "..."),
-                                              style={"white-space": "pre-wrap"}),
+                                              style={"whiteSpace": "pre-wrap"}),
                                         info=True,
                                         ),
                                       e(ui.Divider),
                                       e(ApiForm, to_server=this.set_msg_to, from_server=this.set_msg_from),
                                       e(ui.Divider),
-                                      e(ui.Segment,
-                                          e(ui.Label, tr(this, "ui.t-message", "Message"), attached="top"),
-                                          formatted_json(this.state['to_server']),
-                                          basic=True),
-                                      e(ui.Segment,
-                                          e(ui.Label, tr(this, "ui.t-response", "Response"), attached="top"),
-                                          formatted_json(this.state['from_server']),
-                                          basic=True),
+                                      e(LabelAccordion, formatted_json(this.state['to_server']),
+                                        label=tr(this, "ui.t-message", "Message"),
+                                        default_open=True),
+                                      e(LabelAccordion, formatted_json(this.state['from_server']),
+                                        label=tr(this, "ui.t-response", "Response"),
+                                        default_open=True, color="blue"),
                                       ),
                         as_=ui.Container,
                         basic=True,

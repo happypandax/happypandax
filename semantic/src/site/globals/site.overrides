@@ -78,10 +78,10 @@ i.medium-size {
 .json-key {
     color: @color_5;
 }
-.right {
+.right:not(.icon) {
     float: right;
 }
-.left {
+.left:not(.icon) {
     float: left;
 }
 .text-ellipsis {

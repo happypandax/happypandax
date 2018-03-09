@@ -103,7 +103,9 @@ def gallery_render():
               )
     if link:
         thumb = e(Link, thumb, to={'pathname': '/item/gallery',
-                                   'search': utils.query_to_string({'id': item_id})})
+                                   'search': utils.query_to_string({'id': item_id}),
+                                   'state': {'gallery':data},
+                                   })
 
     menu_options = []
     menu_options.append(e(ui.List.Item, content=tr(this, "ui.b-read", "Read"), **read_button_args))

@@ -2305,11 +2305,11 @@ i.medium-size {
   color: #f03434;
 }
 
-.right {
+.right:not(.icon) {
   float: right;
 }
 
-.left {
+.left:not(.icon) {
   float: left;
 }
 
