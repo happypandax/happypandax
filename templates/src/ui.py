@@ -52,7 +52,7 @@ def Slider(props):
                         centerMode=False,
                         accessibility=True,
                         lazyLoad=False,
-                        adaptiveHeight=True,
+                        adaptiveHeight=props.adaptiveHeight if utils.defined(props.adaptiveHeight) else False,
                         slidesToShow=base_size,
                         slidesToScroll=base_size - 1,
                         nextArrow=e(SliderNav, direction="right"),

@@ -4,9 +4,10 @@ import math
 
 from happypanda.common import utils, hlogger, config, exceptions, constants
 from happypanda.core.command import (UndoCommand, CommandEvent,
-                                     CommandEntry, Command)
+                                     CommandEntry, Command, AsyncCommand)
 from happypanda.core.commands import database_cmd, io_cmd
-from happypanda.core import db
+from happypanda.interface import enums
+from happypanda.core import db, async
 
 log = hlogger.Logger(constants.log_ns_command + __name__)
 
@@ -61,7 +62,7 @@ class AddGallery(UndoCommand):
         super().__init__()
 
 
-class SimilarGallery(Command):
+class SimilarGallery(AsyncCommand):
     """
     Get similar galleries to given gallery
     """
@@ -78,6 +79,7 @@ class SimilarGallery(Command):
             #    s.add("n-{}".format(ns.namespace.name))
         return s
 
+    @async.defer
     def _calculate(self, gallery_or_id):
         assert isinstance(gallery_or_id, (int, db.Gallery))
         data = {}
@@ -90,11 +92,14 @@ class SimilarGallery(Command):
                                                       filter=db.Gallery.id == g_id)
             if g_tags:
                 g_tags = g_tags[0]
-        if g_tags:
+        self.next_progress()
+        tag_count = g_tags.tags.count()
+        if g_tags and tag_count > 5:
             g_tags = self._get_set(g_tags.tags.all())
             data[g_id] = gl_data = {}
 
             for t_id, t in constants.db_session().query(db.Gallery.id, db.Taggable).join(db.Gallery.taggable):
+                self.next_progress()
                 if t_id == g_id:
                     continue
                 t_tags = self._get_set(t.tags.all())
@@ -109,12 +114,13 @@ class SimilarGallery(Command):
     def main(self, gallery_or_id: db.Gallery) -> list:
         gid = gallery_or_id.id if isinstance(gallery_or_id, db.Gallery) else gallery_or_id
         gl_data = {}
+        self.set_progress(type_=enums.ProgressType.Unknown)
+        self.next_progress()
         with utils.intertnal_db() as idb:
-            if self._gallery_similar_key in idb and not constants.is_new_db:
-                gl_data = idb[self._gallery_similar_key]
+            gl_data = idb.get(self._gallery_similar_key, gl_data)
 
         if gid not in gl_data:
-            gl_data.update(self._calculate(gallery_or_id))
+            gl_data.update(self._calculate(gallery_or_id).get())
             with utils.intertnal_db() as idb:
                 idb[self._gallery_similar_key] = gl_data
         return [x for x in sorted(gl_data[gid], reverse=True, key=lambda x:gl_data[gid][x])]

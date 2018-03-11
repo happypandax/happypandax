@@ -9,7 +9,7 @@ from apscheduler.schedulers.gevent import GeventScheduler
 from happypanda.common import hlogger, constants, config
 from happypanda.core import command, async
 
-log = hlogger.Logger(constants.log_ns_core + __name__)
+log = hlogger.Logger(constants.log_ns_command + __name__)
 
 
 class Service:

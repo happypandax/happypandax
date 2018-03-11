@@ -5,7 +5,7 @@ from src.react_utils import (h,
 from src.ui import ui, Slider, LabelAccordion
 from src.i18n import tr
 from src.state import state
-from src.client import ItemType, ImageSize, client
+from src.client import ItemType, ImageSize, client, Command
 from src.single import galleryitem, thumbitem, artistitem
 from src.views import itemview, tagview
 from src import utils
@@ -65,9 +65,9 @@ def get_item(data=None, error=None):
                     related_type=ItemType.GalleryFilter,
                     item_id=data.id)
 
-            client.call_func("get_similar_items", this.get_similar,
+            client.call_func("get_similar", this.get_similar,
                     item_type=ItemType.Gallery,
-                    item_id=data.id, limit=10)
+                    item_id=data.id, limit=15)
             this.setState({"similar_gallery_loading":True})
 
         if data.id:
@@ -124,6 +124,7 @@ def get_item(data=None, error=None):
     else:
         if utils.defined(this.props.location.state) and this.props.location.state.gallery:
             this.get_item(this.props.location.state.gallery)
+            return
         item = this.state.item_type
         item_id = this.state.id
         if item and item_id:
@@ -165,9 +166,23 @@ def get_collection_count(data=None, error=None):
     elif error:
         state.app.notif("Failed to fetch collection count ({})".format(this.state.id), level="error")
 
+__pragma__("tconv")
+def get_similar_progress(cmd):
+    p = cmd.get_progress()
+    if p:
+        this.setState({"similar_gallery_progress": p})
+__pragma__("notconv")
+
+def get_similar_value(cmd):
+    this.setState({"similar_gallery_data": cmd.get_value(), 'similar_gallery_loading':False})
+
 def get_similar(data=None, error=None):
     if data is not None and not error:
-        this.setState({"similar_gallery_data": data, 'similar_gallery_loading':False})
+        cmd = Command(data)
+        cmd.poll_until_complete()
+        cmd.poll_progress(callback=this.get_similar_progress)
+        cmd.set_callback(this.get_similar_value)
+
     elif error:
         state.app.notif("Failed to fetch similar galleries ({})".format(this.state.id), level="error")
 
@@ -436,16 +451,24 @@ def page_render():
 
     similar_galleries = []
 
-    if True:
+    if len(this.state.similar_gallery_data) or this.state.similar_gallery_loading:
         similar_gallery_data = this.state.similar_gallery_data
+        similar_slider_el = e(Slider,
+                                *[e(galleryitem.Gallery, data=x) for x in similar_gallery_data],
+                                secondary=True,
+                                sildesToShow=4)
+        similar_progress_el = e(ui.Progress,
+                                size="small",
+                                color="orange",
+                                active=True,
+                                total=this.state.similar_gallery_progress.value*2, 
+                                value=this.state.similar_gallery_progress.value,
+                                progress="value",
+                                autoSuccess=True)
         similar_galleries.append(e(ui.Grid.Row,
                                         e(ui.Grid.Column,
                                         e(LabelAccordion,
-                                            e(Slider,
-                                                *[e(galleryitem.Gallery, data=x) for x in similar_gallery_data],
-                                                loading=this.state.similar_gallery_loading,
-                                                secondary=True,
-                                                sildesToShow=4),
+                                            similar_progress_el if this.state.similar_gallery_loading else similar_slider_el ,
                                             label=tr(this, "", "More like this"),
                                             color="teal",
                                             )
@@ -569,6 +592,7 @@ Page = createReactClass({
                                 'collection_data': [],
                                 'filter_count': this.props.filter_count or 0,
                                 'filter_data': [],
+                                'similar_gallery_progress': {},
                                 'similar_gallery_loading': False,
                                 'similar_gallery_data': [],
                                 },
@@ -581,6 +605,8 @@ Page = createReactClass({
     'get_filter_count': get_filter_count,
     'get_filters': get_filters,
     'get_similar': get_similar,
+    'get_similar_value': get_similar_value,
+    'get_similar_progress': get_similar_progress,
     'get_collection_count': get_collection_count,
     'get_config': get_config,
     'open_external': galleryitem.open_external,

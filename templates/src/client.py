@@ -397,12 +397,14 @@ class Command(Base):
 
         self._command_ids = command_ids
         self._states = {}
+        self._progress = {}
         self._values = {}
         self._value_callback = None
         self._getting_value = False
         self._stopped = False
         self._on_each = False
         self._complete_callback = None
+        self._progress_callback = None
         self.commandclient = commandclient
 
         for i in self._command_ids:
@@ -465,17 +467,19 @@ class Command(Base):
         if not self.finished():
 
             def _poll():
-                if not self.finished():
-                    self._check_status()
-                else:
-                    if self._complete_callback:
-                        self._complete_callback(self)
+                if state.connected:
+                    self._fetch_value()
+                    if not self.finished():
+                        self._check_status()
+                    else:
+                        if self._complete_callback:
+                            self._complete_callback(self)
 
-                self._fetch_value()
-                f = self.finished()
-                if f:
-                    state.commands.remove(self)
-                return f
+                    f = self.finished()
+                    if f:
+                        state.commands.remove(self)
+                    return f
+                return False
 
             state.commands.add(self)
             utils.poll_func(_poll, timeout, interval)
@@ -483,6 +487,43 @@ class Command(Base):
             self._fetch_value()
             if self._complete_callback:
                 self._complete_callback(self)
+    __pragma__('nokwargs')
+
+    __pragma__('iconv')
+
+    def _fetch_progress(self, data=None, error=None):
+        "Stop command"
+        if data is not None and not error:
+            for i in self._command_ids:
+                str_i = str(i)
+                self._progress[str_i] = data[str_i]
+        elif error:
+            pass
+        else:
+            self.commandclient.call_func("get_command_progress", self._fetch_progress, command_ids=self._command_ids)
+    __pragma__('noiconv')
+
+    __pragma__('kwargs')
+
+    def poll_progress(self, interval=1000 * 3, timeout=1000 * 60 * 10, callback=None):
+        "Keep polling for command progress until it has finished running"
+        self._progress_callback = callback
+        if not self.finished():
+
+            def _poll():
+                if state.connected:
+                    self._fetch_progress()
+                    if self._progress_callback:
+                        self._progress_callback(self)
+                    f = self.finished()
+                    return f
+                return False
+
+            utils.poll_func(_poll, timeout, interval)
+        else:
+            self._fetch_progress()
+            if self._progress_callback:
+                self._progress_callback(self)
     __pragma__('nokwargs')
 
     __pragma__('iconv')
@@ -540,14 +581,14 @@ class Command(Base):
             if i not in self._values:
                 ids.append(int(i))
 
-        if block:
+        if ids:
+            self._fetch_value(cmd_ids=ids)
+
+        if block and not self.finished():
             self.poll_until_complete(3000)
             while True:
                 if self.finished():
                     break
-
-        if ids:
-            self._fetch_value(cmd_ids=ids)
 
         if self._single_id:
             return self._values[str(self._single_id)]
@@ -556,6 +597,27 @@ class Command(Base):
     __pragma__('nokwargs')
     __pragma__('noiconv')
     __pragma__('notconv')
+
+    def get_progress(self, cmd_id=None):
+        "Fetch command progress"
+
+        if cmd_id and not isinstance(cmd_id, list):
+            cmd_id = [str(cmd_id)]
+
+        if not cmd_id:
+            cmd_id = self._command_ids
+
+        ids = []
+        for i in cmd_id:
+            if i not in self._progress:
+                ids.append(int(i))
+
+        if ids:
+            self._fetch_progress()
+
+        if self._single_id:
+            return self._progress[str(self._single_id)]
+        return self._progress
 
     __pragma__('kwargs')
 

@@ -316,7 +316,7 @@ def get_command_progress(command_ids: list = None):
         for i in command_ids:
             cmd = AsyncService.get_command(i)
             if cmd:
-                cmd_p.append(i, cmd.get_progress())
+                cmd_p.append((i, cmd.get_progress()))
     else:
         cmd_p = command.CoreCommand.get_all_progress()
 

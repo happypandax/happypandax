@@ -4,10 +4,11 @@ Gallery
 
 """
 import os
+import functools
 
 from happypanda.common import exceptions, utils, constants, hlogger
 from happypanda.core.commands import database_cmd, io_cmd, gallery_cmd
-from happypanda.core import message, db
+from happypanda.core import message, db, services
 from happypanda.interface import enums
 
 log = hlogger.Logger(__name__)
@@ -42,6 +43,14 @@ log = hlogger.Logger(__name__)
 #    """
 #    return message.Message("works")
 
+def _get_similar(kwargs, similar_items):
+    item_list = message.List(db.model_name(kwargs['db_model']), kwargs['db_msg'])
+    items = []
+    if similar_items:
+        items = database_cmd.GetModelItems().run(kwargs['db_model'], set(similar_items[:kwargs['limit']]))
+    [item_list.append(kwargs['db_msg'](x)) for x in items]
+    return item_list
+
 def get_similar(item_type: enums.ItemType=enums.ItemType.Gallery,
                   item_id: int = 0,
                   limit=10):
@@ -67,13 +76,12 @@ def get_similar(item_type: enums.ItemType=enums.ItemType.Gallery,
     item_type = enums.ItemType.get(item_type)
     db_msg, db_model = item_type._msg_and_model(
         (enums.ItemType.Gallery,))
-    item_list = message.List(db.model_name(db_model), db_msg)
-    similar_items = gallery_cmd.SimilarGallery().run(item_id)[:limit]
-    items = []
-    if similar_items:
-        items = database_cmd.GetModelItems().run(db_model, set(similar_items))
-    [item_list.append(db_msg(x)) for x in items]
-    return item_list
+    c = gallery_cmd.SimilarGallery()
+    services.AsyncService.generic.add_command(c, functools.partial(_get_similar,
+                                                             {'limit':limit,
+                                                              'db_model':db_model,
+                                                              'db_msg':db_msg}))
+    return message.Identity('command', c.start(item_id))
 
 def source_exists(item_type: enums.ItemType=enums.ItemType.Gallery,
                   item_id: int = 0,

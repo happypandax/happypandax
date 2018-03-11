@@ -3,13 +3,12 @@ Database
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+import functools
 
 from happypanda.common import constants, utils, exceptions
 from happypanda.core import db, services, message
 from happypanda.interface import enums, helpers
 from happypanda.core.commands import database_cmd, search_cmd
-
-import functools
 
 
 def _get_image(kwargs, cover):
