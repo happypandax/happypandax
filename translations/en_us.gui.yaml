@@ -1,0 +1,45 @@
+################################################################
+
+#  Prefixes:
+#	- mi == menu item text	
+#	- h == header text
+#	- de == description text
+#	- t == normal text
+#	- b == button text
+################################################################
+
+# very useful for updating
+_version_: 1
+
+# Main
+b-start-server: Start server
+b-start-webclient: Start webclient
+b-open-webclient: Open Webclient
+b-open-config: Open configuration
+b-hp-to-hpx: HP to HPX
+mi-output: Output
+mi-config: Configuration
+t-setting-descr: Hover the question mark icon to see setting tooltip
+h-info: Info
+t-server: Server
+t-webclient: Webclient
+t-server-version: Server version
+t-webclient-version: Webclient version
+t-database-version: Database version
+b-stop-server: Stop server
+b-stop-webclient: Stop webclient
+t-still-running: Server or client is still running\nAre you sure you want to quit?
+
+# Tray
+t-show: Show
+t-quit: Quit
+
+# HPtoHPX
+t-old-hp-file: Old HP database file
+t-rar-path: RAR tool path
+t-skip-archive: Skip archives
+t-delete-target: Delete target database if it already exists
+t-dev-mode: Dev Mode
+t-command: Command
+b-convert: Convert
+t-optional: Optional

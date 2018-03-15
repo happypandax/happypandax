@@ -214,6 +214,10 @@ def translate(t_id: str, locale: str = None, default: str = None, placeholder: s
 
     Returns:
         string
+
+    .. seealso::
+
+        :func:`.get_locales`
     """
     kwargs = {}
     trs = default

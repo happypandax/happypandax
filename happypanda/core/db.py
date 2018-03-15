@@ -1512,12 +1512,13 @@ def check_db_version(sess):
         log.i("DB Version: {}".format(life.version))
 
     db_key = "db_usage"
-    with utils.intertnal_db() as idb:
-        if db_key not in idb or idb[db_key] != life.times_opened:
-            constants.is_new_db = True
-        idb[db_key] = life.times_opened
 
     life.times_opened += 1
+
+    with utils.intertnal_db() as idb:
+        if db_key not in idb or idb[db_key] + 1 != life.times_opened:
+            constants.is_new_db = True
+        idb[db_key] = life.times_opened
 
     sess.add(Event(life, Event.Action.start))
     init_defaults(sess)

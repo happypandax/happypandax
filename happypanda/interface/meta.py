@@ -43,6 +43,10 @@ def get_locales():
                             'namespaces': [str, ...]
                         }
             }
+
+    .. seealso::
+
+        :func:`.translate`
     """
 
     if constants.translations is None:

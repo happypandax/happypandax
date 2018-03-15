@@ -67,6 +67,8 @@ class SimilarGallery(AsyncCommand):
     Get similar galleries to given gallery
     """
 
+    calculate = CommandEntry("calculate", set, int)
+
     def __init__(self):
         super().__init__()
         self._gallery_similar_key = "gallery_similar_calc"
@@ -74,9 +76,11 @@ class SimilarGallery(AsyncCommand):
     def _get_set(self, tags):
         s = set()
         for ns in tags:
-            s.add("<tag>-{}".format(ns.tag.name))
-            # if not ns.namespace.name == constants.special_namespace:
-            #    s.add("n-{}".format(ns.namespace.name))
+            s.add("1-{}:{}".format(ns.namespace.name, ns.tag.name))
+            #s.add("{}".format(ns.tag.name))
+            #if not ns.namespace.name == constants.special_namespace:
+            #    s.add("1-{}:{}".format(ns.namespace.name, ns.tag.name))
+            #    s.add("2-{}:{}".format(ns.namespace.name, ns.tag.name))
         return s
 
     @async.defer
@@ -107,7 +111,8 @@ class SimilarGallery(AsyncCommand):
                     cos = len(g_tags & t_tags) / (math.sqrt(len(g_tags))) * math.sqrt(len(t_tags))
                 else:
                     cos = 0
-                gl_data[t_id] = cos
+                if cos:
+                    gl_data[t_id] = cos
 
         return data
 
@@ -116,8 +121,9 @@ class SimilarGallery(AsyncCommand):
         gl_data = {}
         self.set_progress(type_=enums.ProgressType.Unknown)
         self.next_progress()
-        with utils.intertnal_db() as idb:
-            gl_data = idb.get(self._gallery_similar_key, gl_data)
+        if not constants.is_new_db:
+            with utils.intertnal_db() as idb:
+                gl_data = idb.get(self._gallery_similar_key, gl_data)
 
         if gid not in gl_data:
             gl_data.update(self._calculate(gallery_or_id).get())

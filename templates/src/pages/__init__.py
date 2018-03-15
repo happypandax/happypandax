@@ -102,20 +102,20 @@ ItemViewPage = createReactClass({
     'toggle_config': lambda a: this.setState({'visible_config': not this.state.visible_config}),
 
     'on_item_change': lambda e, d: all((this.setState({'item_type': d.value}),
-                                        utils.storage.set("item_type", d.value))),
+                                        utils.session_storage.set("item_type", d.value))),
 
     'on_sort_change': lambda e, d: all((this.setState({'sort_idx': d.value}),
-                                        utils.storage.set("sort_idx_{}".format(this.state.item_type), d.value))),
+                                        utils.session_storage.set("sort_idx_{}".format(this.state.item_type), d.value))),
 
     'toggle_sort_desc': lambda d: all((this.setState({'sort_desc': not this.state.sort_desc}),
-                                       utils.storage.set("sort_desc", not this.state.sort_desc))),
+                                       utils.session_storage.set("sort_desc", not this.state.sort_desc))),
 
     'on_filter_change': lambda e, d: all((this.setState({'filter_id': d.value}),
-                                          utils.storage.set("filter_id", d.value))),
+                                         utils.session_storage.set("filter_id", utils.either(d.value, 0)))),
 
     'on_search': lambda s, o: all((this.setState({'search_query': s, 'search_options': o}),
-                                   utils.storage.set("search_query", s, True),
-                                   utils.storage.set("search_options", o, True))),
+                                   utils.session_storage.set("search_query", s, True),
+                                   utils.session_storage.set("search_options", o, True))),
 
     'update_menu': lambda: state.app.set_menu_contents(
         item_view_menu(
@@ -137,12 +137,12 @@ ItemViewPage = createReactClass({
 
     'componentDidUpdate': itemviewpage_update,
 
-    'getInitialState': lambda: {'item_type': utils.storage.get("item_type", int(utils.get_query("item_type", ItemType.Gallery))),
-                                'filter_id': utils.storage.get("filter_id", int(utils.get_query("filter_id", 0))),
-                                'sort_idx': utils.storage.get("sort_idx_{}".format(ItemType.Gallery), int(utils.get_query("sort_idx", 0))),
-                                'sort_desc': utils.storage.get("sort_desc", bool(utils.get_query("sort_desc", 0))),
-                                'search_query': utils.storage.get("search_query", "", True),
-                                'search_options': utils.storage.get("search_options", {}, True),
+    'getInitialState': lambda: {'item_type': utils.session_storage.get("item_type", int(utils.get_query("item_type", ItemType.Gallery))),
+                                'filter_id': int(utils.either(utils.get_query("filter_id", None), utils.session_storage.get("filter_id", 0))),
+                                'sort_idx': utils.session_storage.get("sort_idx_{}".format(ItemType.Gallery), int(utils.get_query("sort_idx", 0))),
+                                'sort_desc': utils.session_storage.get("sort_desc", bool(utils.get_query("sort_desc", 0))),
+                                'search_query': utils.session_storage.get("search_query", "", True),
+                                'search_options': utils.session_storage.get("search_options", {}, True),
                                 'visible_config': False,
                                 },
 

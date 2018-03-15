@@ -67,7 +67,7 @@ def get_item(data=None, error=None):
 
             client.call_func("get_similar", this.get_similar,
                     item_type=ItemType.Gallery,
-                    item_id=data.id, limit=15)
+                    item_id=data.id, limit=20)
             this.setState({"similar_gallery_loading":True})
 
         if data.id:
@@ -279,7 +279,7 @@ def page_render():
     rows = []
 
     rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, info, as_="h5"), colSpan="2")))
+                  e(ui.Table.Cell, e(ui.Header, info, as_="h5", className="sub-text"), colSpan="2")))
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-multi-artists", "Artist(s)") + ':', as_="h5"), collapsing=True),
                   e(ui.Table.Cell, *(e(artistitem.ArtistLabel, data=x) for x in artists))))
@@ -416,7 +416,9 @@ def page_render():
                                      {
                                          'title':{
                                              'content':e(ui.Label,
-                                                         tr(this, "", "Appears in {} gallery filter".format(this.state.filter_count)),
+                                                         tr(this, "ui.h-included-gallery-filters",
+                                                            "Included in {} gallery filter".format(this.state.filter_count),
+                                                            count=this.state.filter_count),
                                                          color="teal",),
                                              'key': 't-1',
                                              },
@@ -442,7 +444,9 @@ def page_render():
                                           e(Slider,
                                             secondary=True,
                                             sildesToShow=4),
-                                          label=tr(this, "", "Appears in {} collection".format(this.state.collection_count)),
+                                          label=tr(this, "ui.h-appears-in-collection",
+                                                   "Appears in {} collection".format(this.state.collection_count),
+                                                   count=this.state.collection_count),
                                           color="teal"
                                           )
                                         )
@@ -469,7 +473,7 @@ def page_render():
                                         e(ui.Grid.Column,
                                         e(LabelAccordion,
                                             similar_progress_el if this.state.similar_gallery_loading else similar_slider_el ,
-                                            label=tr(this, "", "More like this"),
+                                            label=tr(this, "ui.h-more-like-this", "More like this"),
                                             color="teal",
                                             )
                                         )

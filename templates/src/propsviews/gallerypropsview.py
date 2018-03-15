@@ -73,7 +73,7 @@ def galleryprops_render():
                     verticalAlign="middle")))
 
     rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, info, as_="h5"), colSpan="2")))
+                  e(ui.Table.Cell, e(ui.Header, info, as_="h5", className="sub-text"), colSpan="2")))
 
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-multi-artists", "Artist(s)") + ':', as_="h5"), collapsing=True),

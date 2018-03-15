@@ -211,29 +211,29 @@ class ConvertHP(QDialog):
 
         source_edit = PathLineEdit(self, False, "happypanda.db")
         source_edit.textChanged.connect(self.on_source)
-        lf.addRow(t("", default="Old HP database file") + ':', source_edit)
+        lf.addRow(t("gui.t-old-hp-file", default="Old HP database file") + ':', source_edit)
 
         rar_edit = PathLineEdit(self, False)
-        rar_edit.setPlaceholderText(t("", default="Optional"))
+        rar_edit.setPlaceholderText(t("gui.t-optional", default="Optional"))
         rar_edit.textChanged.connect(self.on_rar)
-        lf.addRow(t("", default="RAR tool path") + ':', rar_edit)
+        lf.addRow(t("gui.t-rar-path", default="RAR tool path") + ':', rar_edit)
         rar_edit.setText(config.unrar_tool_path.value)
 
         archive_box = QCheckBox(self)
         archive_box.stateChanged.connect(self.on_archive)
-        lf.addRow(t("", default="Skip archives") + ':', archive_box)
+        lf.addRow(t("gui.t-skip-archive", default="Skip archives") + ':', archive_box)
 
         delete_db = QCheckBox(self)
         delete_db.setChecked(self._delete)
         delete_db.stateChanged.connect(self.on_delete)
-        lf.addRow(t("", default="Delete target database if it already exists") + ':', delete_db)
+        lf.addRow(t("gui.t-delete-target", default="Delete target database if it already exists") + ':', delete_db)
 
         dev_box = QCheckBox(self)
         dev_box.stateChanged.connect(self.on_dev)
-        lf.addRow(t("", default="Dev Mode") + ':', dev_box)
+        lf.addRow(t("gui.t-dev-mode", default="Dev Mode") + ':', dev_box)
 
-        lf.addRow(t("", default="Command") + ':', self._args_label)
-        convert_btn = QPushButton(t("", default="Convert"))
+        lf.addRow(t("gui.t-command", default="Command") + ':', self._args_label)
+        convert_btn = QPushButton(t("gui.b-convert", default="Convert"))
         convert_btn.clicked.connect(self.convert)
         lf.addRow(convert_btn)
 
@@ -402,17 +402,17 @@ class Window(QMainWindow):
         self.main_tab = QTabWidget(self)
         self.viewer = TextViewer(SQueue, self.main_tab)
         settings_widget = QWidget(self.main_tab)
-        self.output_tab_idx = self.main_tab.addTab(self.viewer, t("", default="Output"))
-        self.main_tab.addTab(settings_widget, t("", default="Configuration"))
+        self.output_tab_idx = self.main_tab.addTab(self.viewer, t("gui.mi-output", default="Output"))
+        self.main_tab.addTab(settings_widget, t("gui.mi-config", default="Configuration"))
 
         settings_group_l = QVBoxLayout(settings_widget)
         settings = SettingsTabs()
         settings_group_l.addWidget(settings)
         settings_group_l.addWidget(
-            QLabel("<i>{}</i>".format(t("", default="Hover the question mark icon to see setting description tooltip"))))
+            QLabel("<i>{}</i>".format(t("gui.setting-descr", default="Hover the question mark icon to see setting description tooltip"))))
 
         buttons = QGroupBox(w)
-        self.server_btn = QPushButton(self.start_ico, t("", default="Start server"))
+        self.server_btn = QPushButton(self.start_ico, t("gui.b-start-server", default="Start server"))
         self.server_btn.clicked.connect(self.toggle_server)
         self.server_btn.setShortcut(Qt.CTRL | Qt.Key_S)
 
@@ -420,15 +420,15 @@ class Window(QMainWindow):
         # self.webclient_btn.clicked.connect(self.toggle_client)
         # self.webclient_btn.setShortcut(Qt.CTRL|Qt.Key_W)
 
-        open_client_btn = QPushButton(qta.icon("fa.external-link"), t("", default="Open Webclient"))
+        open_client_btn = QPushButton(qta.icon("fa.external-link"), t("gui.b-open-webclient", default="Open Webclient"))
         open_client_btn.clicked.connect(self.open_client)
         open_client_btn.setShortcut(Qt.CTRL | Qt.Key_O)
 
-        open_config_btn = QPushButton(qta.icon("fa.cogs"), t("", default="Open configuration"))
+        open_config_btn = QPushButton(qta.icon("fa.cogs"), t("gui.b-open-config", default="Open configuration"))
         open_config_btn.clicked.connect(self.open_cfg)
         open_config_btn.setShortcut(Qt.CTRL | Qt.Key_C)
 
-        convert_btn = QPushButton(qta.icon("fa.refresh"), t("", default="HP to HPX"))
+        convert_btn = QPushButton(qta.icon("fa.refresh"), t("gui.b-hp-to-hpx", default="HP to HPX"))
         convert_btn.clicked.connect(self.convert_hp)
 
         for b in (self.server_btn, open_config_btn, convert_btn, open_client_btn):
@@ -440,14 +440,14 @@ class Window(QMainWindow):
         button_layout.addWidget(open_config_btn)
         button_layout.addWidget(convert_btn)
 
-        infos = QGroupBox(t("", default="Info"))
+        infos = QGroupBox(t("gui.h-info", default="Info"))
         info_layout = QHBoxLayout(infos)
         version_layout = QFormLayout()
-        version_layout.addRow(t("", default="Server version") +
+        version_layout.addRow(t("gui.t-server-version", default="Server version") +
                               ':', QLabel(".".join(str(x) for x in constants.version)))
-        version_layout.addRow(t("", default="Webclient version") +
+        version_layout.addRow(t("gui.t-webclient-version", default="Webclient version") +
                               ':', QLabel(".".join(str(x) for x in constants.version_web)))
-        version_layout.addRow(t("", default="Database version") +
+        version_layout.addRow(t("gui.t-database-version", default="Database version") +
                               ':', QLabel(".".join(str(x) for x in constants.version_db)))
 
         connect_layout = QFormLayout()
@@ -459,8 +459,8 @@ class Window(QMainWindow):
 
         client_addr_lbl = QLabel(config.host_web.value + ':' + str(config.port_web.value))
 
-        connect_layout.addRow(t("", default="Server") + '@', server_addr_lbl)
-        connect_layout.addRow(t("", default="Webclient") + '@', client_addr_lbl)
+        connect_layout.addRow(t("gui.t-server", default="Server") + '@', server_addr_lbl)
+        connect_layout.addRow(t("gui.t-webclient", default="Webclient") + '@', client_addr_lbl)
         info_layout.addLayout(connect_layout)
         info_layout.addLayout(version_layout)
 
@@ -473,9 +473,9 @@ class Window(QMainWindow):
         self.tray.setIcon(QIcon(os.path.join(constants.dir_static, "favicon.ico")))
         self.tray.activated.connect(self.tray_activated)
         tray_menu = QMenu()
-        tray_menu.addAction(t("", default="Show"), lambda: all((self.showNormal(), self.activateWindow())))
+        tray_menu.addAction(t("gui.t-show", default="Show"), lambda: all((self.showNormal(), self.activateWindow())))
         tray_menu.addSeparator()
-        tray_menu.addAction(t("", default="Quit"), lambda: self.real_close())
+        tray_menu.addAction(t("gui.t-quit", default="Quit"), lambda: self.real_close())
         self.tray.setContextMenu(tray_menu)
 
     def real_close(self):
@@ -512,7 +512,7 @@ class Window(QMainWindow):
             exitcode = ecode
             self.force_close()
         if self.server_started:
-            self.server_btn.setText(t("", default="Stop server"))
+            self.server_btn.setText(t("gui.b-stop-server", default="Stop server"))
             self.server_btn.setIcon(self.stop_ico)
             self.server_process = self.start_server()
             self.activate_output.emit()
@@ -520,7 +520,7 @@ class Window(QMainWindow):
                 Timer(3, self.open_client).start()
         else:
             self.force_kill = True
-            self.server_btn.setText(t("", default="Start server"))
+            self.server_btn.setText(t("gui.b-start-server", default="Start server"))
             self.server_btn.setIcon(self.start_ico)
             if self.server_process:
                 self.stop_process(self.server_process)
@@ -529,11 +529,11 @@ class Window(QMainWindow):
     def toggle_client(self, exitcode=None):
         self.client_started = not self.client_started
         if self.client_started:
-            self.webclient_btn.setText(t("", default="Stop webclient"))
+            self.webclient_btn.setText(t("gui.b-stop-webclient", default="Stop webclient"))
             self.webclient_btn.setIcon(self.stop_ico)
 
         else:
-            self.webclient_btn.setText(t("", default="Start webclient"))
+            self.webclient_btn.setText(t("gui.b-start-webclient", default="Start webclient"))
             self.webclient_btn.setIcon(self.start_ico)
 
     def open_client(self):
@@ -582,7 +582,7 @@ class Window(QMainWindow):
                 self.show()
             if QMessageBox.warning(self,
                                    self.windowTitle(),
-                                   t("", default="Server or client is still running\nAre you sure you want to quit?"),
+                                   t("gui.t-still-running", default="Server or client is still running\nAre you sure you want to quit?"),
                                    QMessageBox.Yes | QMessageBox.No, QMessageBox.No)\
                == QMessageBox.No:
                 ev.ignore()

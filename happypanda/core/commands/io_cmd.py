@@ -16,7 +16,7 @@ from contextlib import contextmanager
 from gevent import fileobject
 
 from happypanda.common import hlogger, exceptions, utils, constants
-from happypanda.core.command import CoreCommand, CommandEntry, AsyncCommand
+from happypanda.core.command import CoreCommand, CommandEntry, AsyncCommand, Command
 from happypanda.core.services import ImageService
 from happypanda.core import db
 
@@ -794,3 +794,13 @@ class GalleryFS(CoreCommand):
     def _get_archive_pages(self):
         ""
         raise NotImplementedError
+
+class NameParser(Command):
+    """
+    """
+
+    parse = CommandEntry("rename", None, str, str)
+
+    def __init__(self):
+        super().__init__()
+        self.parsed = {}

@@ -9,7 +9,7 @@ See :ref:`Settings` for all server defined configuration keys and their default 
 There exists the special namespace ``this`` to retrieve and store configuration only visible to the
 client in question. The server will resolve the namespace ``this`` to the :ref:`session <Session>` owner's name
 (the client that created the session).
-These configuration keys will appear in the server's ``config.yaml`` file upon save.
+These configuration keys will appear in the server's ``config.yaml`` file under the session owner's name upon save.
 
 """
 

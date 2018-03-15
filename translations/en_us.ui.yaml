@@ -9,7 +9,7 @@
 ################################################################
 
 # very useful for updating
-_version_: 3
+_version_: 4
 
 # Common
 b-edit: Edit
@@ -149,6 +149,13 @@ t-last-read: Last read
 t-last-updated: Last updated
 t-series: Series
 t-pages: Pages
+h-included-gallery-filters:
+    one: Included in %{count} gallery filter
+    many: Included in %{count} gallery filters
+h-appears-in-collection:
+    one: Appears in %{count} collection
+    many: Appears in %{count} collections
+h-more-like-this: More like this
 
 # Item
 b-read: Read

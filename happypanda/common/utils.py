@@ -76,7 +76,8 @@ def disable_loggers(logs):
             lx = l + '.'
             if lx == constants.log_ns_core:
                 hlogger.Logger("apscheduler").setLevel(log_level)
-            if lx == constants.log_ns_database:
+                hlogger.Logger("PIL").setLevel(log_level)
+            elif lx == constants.log_ns_database:
                 hlogger.Logger("sqlalchemy").setLevel(log_level)
                 hlogger.Logger("sqlalchemy.pool").setLevel(log_level)
                 hlogger.Logger("sqlalchemy.engine").setLevel(log_level)
