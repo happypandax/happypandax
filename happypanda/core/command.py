@@ -109,7 +109,9 @@ class CoreCommand:
         Run the command with *args and **kwargs.
         """
         log.d("Running command:", self.__class__.__name__)
-        return self.main(*args, **kwargs)
+        r = self.main(*args, **kwargs)
+        log.d("Finished running command:", self.__class__.__name__)
+        return r
 
     @classmethod
     def get_all_progress(cls):

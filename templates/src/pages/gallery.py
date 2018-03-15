@@ -476,9 +476,8 @@ def page_render():
                               sildesToShow=4)
         similar_progress_el = e(ui.Progress,
                                 size="small",
-                                color="orange",
                                 active=True,
-                                total=this.state.similar_gallery_progress.value * 2,
+                                total=this.state.similar_gallery_progress.max or 0,
                                 value=this.state.similar_gallery_progress.value,
                                 progress="value",
                                 autoSuccess=True)
@@ -486,6 +485,7 @@ def page_render():
                                    e(ui.Grid.Column,
                                      e(LabelAccordion,
                                        similar_progress_el if this.state.similar_gallery_loading else similar_slider_el,
+                                       default_open=True,
                                        label=tr(this, "ui.h-more-like-this", "More like this"),
                                        color="teal",
                                        )

@@ -72,63 +72,89 @@ class SimilarGallery(AsyncCommand):
     def __init__(self):
         super().__init__()
         self._gallery_similar_key = "gallery_similar_calc"
+        self._gallery_similar_tags_key = 'gallery_similar_tags'
 
     def _get_set(self, tags):
         s = set()
-        for ns in tags:
-            s.add("1-{}:{}".format(ns.namespace.name, ns.tag.name))
-            # s.add("{}".format(ns.tag.name))
-            # if not ns.namespace.name == constants.special_namespace:
-            #    s.add("1-{}:{}".format(ns.namespace.name, ns.tag.name))
-            #    s.add("2-{}:{}".format(ns.namespace.name, ns.tag.name))
+        for ns, tags in tags.items():
+            for t in tags:
+                s.add("1-{}:{}".format(ns, t))
+                # s.add("{}".format(ns.tag.name))
+                # if not ns.namespace.name == constants.special_namespace:
+                #    s.add("1-{}:{}".format(ns.namespace.name, ns.tag.name))
+                #    s.add("2-{}:{}".format(ns.namespace.name, ns.tag.name))
         return s
 
     @async.defer
-    def _calculate(self, gallery_or_id):
+    def _calculate(self, gallery_or_id, all_gallery_tags={}):
         assert isinstance(gallery_or_id, (int, db.Gallery))
         data = {}
 
         g_id = gallery_or_id.id if isinstance(gallery_or_id, db.Gallery) else gallery_or_id
-        if isinstance(gallery_or_id, db.Gallery):
-            g_tags = gallery_or_id
+        tag_count = 0
+        tag_count_minimum = 5
+        if g_id in all_gallery_tags:
+            g_tags = all_gallery_tags[g_id]
+            for a, b in g_tags.items():
+                tag_count += len(b)
+            self.set_max_progress(len(g_tags)+3)
         else:
-            g_tags = database_cmd.GetModelItems().run(db.Taggable, join=db.Gallery.taggable,
-                                                      filter=db.Gallery.id == g_id)
-            if g_tags:
-                g_tags = g_tags[0]
-        self.next_progress()
-        tag_count = g_tags.tags.count()
-        if g_tags and tag_count > 5:
-            g_tags = self._get_set(g_tags.tags.all())
-            data[g_id] = gl_data = {}
+            if isinstance(gallery_or_id, db.Gallery):
+                g_tags = gallery_or_id
+            else:
+                g_tags = database_cmd.GetModelItems().run(db.Taggable, join=db.Gallery.taggable,
+                                                          filter=db.Gallery.id == g_id)
+                if g_tags:
+                    g_tags = g_tags[0]
+                tag_count = g_tags.tags.count()
+                if tag_count > tag_count_minimum:
+                    g_tags = g_tags.compact_tags(g_tags.tags.all())
 
-            for t_id, t in constants.db_session().query(db.Gallery.id, db.Taggable).join(db.Gallery.taggable):
+        self.next_progress()
+        if g_tags and tag_count > tag_count_minimum:
+            log.d("Calculating similarity")
+            g_tags = self._get_set(g_tags)
+            data[g_id] = gl_data = {}
+            update_dict = not all_gallery_tags
+            max_prog = 3
+            for t_id, t in all_gallery_tags.items() or constants.db_session().query(db.Gallery.id, db.Taggable).join(db.Gallery.taggable):
                 self.next_progress()
+                if update_dict:
+                    all_gallery_tags[t_id] = t.compact_tags(t.tags.all())
+                    max_prog += 1
+                    self.set_max_progress(max_prog)
                 if t_id == g_id:
                     continue
-                t_tags = self._get_set(t.tags.all())
+                t_tags = self._get_set(all_gallery_tags[t_id])
                 if (math.sqrt(len(g_tags)) * math.sqrt(len(t_tags))) != 0:
                     cos = len(g_tags & t_tags) / (math.sqrt(len(g_tags))) * math.sqrt(len(t_tags))
                 else:
                     cos = 0
                 if cos:
                     gl_data[t_id] = cos
+            log.d("Finished calculating similarity")
+        self.next_progress()
 
         return data
 
     def main(self, gallery_or_id: db.Gallery) -> list:
         gid = gallery_or_id.id if isinstance(gallery_or_id, db.Gallery) else gallery_or_id
         gl_data = {}
+        all_gallery_tags = {}
         self.set_progress(type_=enums.ProgressType.Unknown)
-        self.next_progress()
-        if not constants.is_new_db:
-            with utils.intertnal_db() as idb:
+        self.set_max_progress(1)
+        with utils.intertnal_db() as idb:
+            if not constants.is_new_db:
                 gl_data = idb.get(self._gallery_similar_key, gl_data)
-
+            all_gallery_tags = idb.get(self._gallery_similar_tags_key, all_gallery_tags)
+        log.d("Cached gallery tags", len(all_gallery_tags))
         if gid not in gl_data:
-            gl_data.update(self._calculate(gallery_or_id).get())
+            log.d("Similarity calculation not found in cache")
+            gl_data.update(self._calculate(gallery_or_id, all_gallery_tags).get())
             with utils.intertnal_db() as idb:
                 idb[self._gallery_similar_key] = gl_data
+                idb[self._gallery_similar_tags_key] = all_gallery_tags
+        self.next_progress()
         return [x for x in sorted(gl_data[gid], reverse=True, key=lambda x:gl_data[gid][x])]
 
 
