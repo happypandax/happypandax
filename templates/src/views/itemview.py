@@ -391,6 +391,7 @@ def item_view_render():
     items = this.state['items']
     el = this.state.element
     limit = this.props.limit or this.state.limit
+    size_type = this.props.size_type
     if not el:
         return e(Error, content="An error occured. No valid element available.")
     ext_viewer = this.props.external_viewer if utils.defined(this.props.external_viewer) else this.state.external_viewer
@@ -408,7 +409,7 @@ def item_view_render():
                                        )
 
     return e(ItemViewBase,
-             [e(el, data=x, centered=True, className="medium-size", key=n, external_viewer=ext_viewer)
+             [e(el, data=x, size_type=size_type, centered=True, className="medium-size", key=n, external_viewer=ext_viewer)
               for n, x in enumerate(items)],
              loading=this.state.loading,
              secondary=this.props.secondary,

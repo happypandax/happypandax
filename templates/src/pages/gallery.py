@@ -458,7 +458,7 @@ def page_render():
     if len(this.state.similar_gallery_data) or this.state.similar_gallery_loading:
         similar_gallery_data = this.state.similar_gallery_data
         similar_slider_el = e(Slider,
-                                *[e(galleryitem.Gallery, data=x) for x in similar_gallery_data],
+                                *[e(galleryitem.Gallery, data=x, className="small-size") for x in similar_gallery_data],
                                 secondary=True,
                                 sildesToShow=4)
         similar_progress_el = e(ui.Progress,
@@ -544,7 +544,7 @@ def page_render():
             ),
             *collection_accordion,
             e(ui.Grid.Row, e(ui.Grid.Column,
-                            e(Slider, *[e(galleryitem.Gallery, data=x) for x in series_data],
+                            e(Slider, *[e(galleryitem.Gallery, data=x, className="small-size") for x in series_data],
                             loading=this.state.loading_group,
                             basic=False,
                             secondary=True,

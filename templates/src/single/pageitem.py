@@ -64,7 +64,7 @@ def page_render():
     thumb = e(thumbitem.Thumbnail,
               item_id=item_id,
               item_type=this.state.item_type,
-              size_type=ImageSize.Medium,
+              size_type=this.props.size_type if this.props.size_type else ImageSize.Medium,
               centered=True,
               size=this.props.size,
               kwargs=thumb_kwargs,

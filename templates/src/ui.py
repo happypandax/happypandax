@@ -36,7 +36,8 @@ __pragma__("tconv")
 
 def Slider(props):
     children = props.data or React.Children.toArray(props.children)
-    items = [e(ui.Segment, x, basic=True, size=props.size, className="slide-segment") for x in children]
+    items = [e(ui.Segment, x,
+               basic=True, size=props.size, className="slide-segment") for x in children]
     add_el = []
     if props.label:
         add_el.append(e(ui.Label, props.label, e(ui.Label.Detail, len(items)), color=props.color, attached="top"))

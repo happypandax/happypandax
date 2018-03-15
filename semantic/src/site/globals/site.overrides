@@ -179,6 +179,10 @@ i.huge.icons {
     .card.medium-size {
         max-width: 200px !important;
     }
+
+    .card.small-size {
+        max-width: 145px !important;
+    }
 }
 
 h6 {

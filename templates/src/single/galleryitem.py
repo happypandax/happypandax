@@ -86,7 +86,7 @@ def gallery_render():
               item_id=item_id,
               centered=True,
               item_type=this.state.item_type,
-              size_type=ImageSize.Medium,
+              size_type=this.props.size_type if this.props.size_type else ImageSize.Medium,
               size=this.props.size,
               dimmer=e(ui.Dimmer,
                        active=this.state.dimmer,
