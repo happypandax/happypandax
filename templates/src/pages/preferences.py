@@ -17,8 +17,9 @@ js_undefined = location = localStorage = sessionStorage = None
 __pragma__('noskip')
 
 
-def disabled_machine_msg(props): return e(ui.Message, tr(
-    props.tab, "ui.de-pref-disabled", "Disabled because this client is connecting from a different device"), color="yellow")
+def disabled_machine_msg(props):
+    return e(ui.Message, tr(
+        props.tab, "ui.de-pref-disabled", "Disabled because this client is connecting from a different device"), color="yellow")
 
 
 def set_untranslated_text(e, d):
@@ -33,7 +34,7 @@ def set_translation_error(e, d):
 
 def pref_general(props):
     cfg = props.cfg
-    u_cfg = props.u_cfg
+    #u_cfg = props.u_cfg
     items = []
     if defined(cfg.client):
         __pragma__('tconv')
@@ -220,7 +221,7 @@ def pref_general(props):
 
 def pref_server(props):
     cfg = props.cfg
-    u_cfg = props.u_cfg
+    #u_cfg = props.u_cfg
     items = []
     if defined(cfg.server):
         # items.append(e(ui.Message, tr(props.tab, "",
@@ -289,7 +290,7 @@ def pref_server(props):
 
 def pref_advanced(props):
     cfg = props.cfg
-    u_cfg = props.u_cfg
+    #u_cfg = props.u_cfg
     items = []
     if defined(cfg.core):
         if defined(cfg.core.debug):
@@ -370,7 +371,7 @@ def preftab_render():
     u_cfg = this.state.u_config
     tab = this
 
-    def el(x): return e(x, u_cfg=u_cfg, tab=tab, cfg=config, refresh=t_refresh, upd=upd_config, set=set_config)
+    def el(x): return e(x, u_cfg=u_cfg, tab=tab, cfg=config, refresh=t_refresh, upd=upd_config, set=set_config)  # noqa: E704
 
     return e(ui.Tab,
              panes=[

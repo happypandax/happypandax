@@ -159,7 +159,7 @@ def on_key(ev):
     number = this.state.data.number
     page_count = this.state.page_count
 
-    def go_prev(): return utils.go_to(
+    def go_prev(): return utils.go_to(  # noqa: E704
         history,
         query={
             'gid': gallery_id,
@@ -173,7 +173,7 @@ def on_key(ev):
                     'gid': gallery_id,
                     "number": number + 1})
 
-    def go_last(): return utils.go_to(
+    def go_last(): return utils.go_to(  # noqa: E704
         history,
         query={
             'gid': gallery_id,

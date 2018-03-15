@@ -582,7 +582,8 @@ class Window(QMainWindow):
                 self.show()
             if QMessageBox.warning(self,
                                    self.windowTitle(),
-                                   t("gui.t-still-running", default="Server or client is still running\nAre you sure you want to quit?"),
+                                   t("gui.t-still-running",
+                                     default="Server or client is still running\nAre you sure you want to quit?"),
                                    QMessageBox.Yes | QMessageBox.No, QMessageBox.No)\
                == QMessageBox.No:
                 ev.ignore()

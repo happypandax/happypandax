@@ -1,7 +1,6 @@
 from src.react_utils import (e,
                              createReactClass)
 from src.ui import ui
-from src.i18n import tr
 from src.propsviews import tagpropsview
 from org.transcrypt.stubs.browser import __pragma__
 __pragma__('alias', 'as_', 'as')
@@ -19,10 +18,7 @@ __pragma__("tconv")
 def taglbl_render():
     ns = this.props.namespace or this.state.namespace or ""
     tag = this.props.tag or this.state.tag or ""
-    fav = 0
-    description = ""
-    if tag:
-        description = tr(this, "tag.{}".format(tag), "")
+    #fav = 0
 
     if ns == "__namespace__":
         ns = ""

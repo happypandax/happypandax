@@ -38,15 +38,15 @@ def page_on_click(e):
 
 
 def page_render():
-    fav = 0
+    #fav = 0
     title = ""
     item_id = this.state.id
     number = 0
     if this.state.data:
         title = str(this.state.data.number)
         number = this.state.data.number
-        if this.state.data.metatags.favorite:
-            fav = 1
+        # if this.state.data.metatags.favorite:
+        #    fav = 1
         if not item_id:
             item_id = this.state.data.id
 

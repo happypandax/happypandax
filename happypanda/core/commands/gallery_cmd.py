@@ -77,8 +77,8 @@ class SimilarGallery(AsyncCommand):
         s = set()
         for ns in tags:
             s.add("1-{}:{}".format(ns.namespace.name, ns.tag.name))
-            #s.add("{}".format(ns.tag.name))
-            #if not ns.namespace.name == constants.special_namespace:
+            # s.add("{}".format(ns.tag.name))
+            # if not ns.namespace.name == constants.special_namespace:
             #    s.add("1-{}:{}".format(ns.namespace.name, ns.tag.name))
             #    s.add("2-{}:{}".format(ns.namespace.name, ns.tag.name))
         return s

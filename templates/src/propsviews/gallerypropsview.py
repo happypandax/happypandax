@@ -23,28 +23,21 @@ def gallery_on_update(p_props, p_state):
 
 
 def galleryprops_render():
-    fav = 0
     title = ""
-    rating = 0
     urls = []
     artists = []
     artist_names = []
     item_id = this.state.id
     info = ""
-    inbox = False
     date_pub = tr(this, "ui.t-unknown", "Unknown")
     date_read = tr(this, "ui.t-unknown", "Unknown")
     date_added = tr(this, "ui.t-unknown", "Unknown")
 
     if this.state.data:
         read_count = this.state.data.times_read
-        rating = this.state.data.rating
         title = this.state.data.titles[0].js_name
         info = this.state.data.info
-        inbox = this.state.data.metatags.inbox
 
-        if this.state.data.metatags.favorite:
-            fav = 1
         if not item_id:
             item_id = this.state.data.id
 

@@ -45,14 +45,12 @@ def gallery_render():
     title = ""
     rating = 0
     urls = []
-    artists = []
     artist_names = []
     item_id = this.state.id
     inbox = False
     data = this.props.data or this.state.data
 
     if this.state.data:
-        read_count = this.state.data.times_read
         rating = this.state.data.rating
         title = this.state.data.titles[0].js_name
         inbox = this.state.data.metatags.inbox
@@ -65,7 +63,6 @@ def gallery_render():
         for a in this.state.data.artists:
             if len(a.names) > 0:
                 artist_names.append(a.names[0].js_name)
-        artists = this.state.data.artists
 
         for u in this.state.data.urls:
             urls.append(u.js_name)
@@ -104,7 +101,7 @@ def gallery_render():
     if link:
         thumb = e(Link, thumb, to={'pathname': '/item/gallery',
                                    'search': utils.query_to_string({'id': item_id}),
-                                   'state': {'gallery':data},
+                                   'state': {'gallery': data},
                                    })
 
     menu_options = []

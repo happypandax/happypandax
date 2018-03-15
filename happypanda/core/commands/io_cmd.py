@@ -795,6 +795,7 @@ class GalleryFS(CoreCommand):
         ""
         raise NotImplementedError
 
+
 class NameParser(Command):
     """
     """

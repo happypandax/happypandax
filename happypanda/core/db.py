@@ -45,7 +45,6 @@ from sqlalchemy import (
     Table,
     UniqueConstraint,
     PrimaryKeyConstraint,
-    Float,
     Enum,
     TypeDecorator,
     text)

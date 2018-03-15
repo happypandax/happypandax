@@ -51,9 +51,10 @@ def _get_similar(kwargs, similar_items):
     [item_list.append(kwargs['db_msg'](x)) for x in items]
     return item_list
 
+
 def get_similar(item_type: enums.ItemType=enums.ItemType.Gallery,
-                  item_id: int = 0,
-                  limit=10):
+                item_id: int = 0,
+                limit=10):
     """
     Get similar items
 
@@ -64,7 +65,7 @@ def get_similar(item_type: enums.ItemType=enums.ItemType.Gallery,
 
     Returns:
         A command id with command value:
-        
+
         .. code-block:: guess
 
             [
@@ -78,10 +79,11 @@ def get_similar(item_type: enums.ItemType=enums.ItemType.Gallery,
         (enums.ItemType.Gallery,))
     c = gallery_cmd.SimilarGallery()
     services.AsyncService.generic.add_command(c, functools.partial(_get_similar,
-                                                             {'limit':limit,
-                                                              'db_model':db_model,
-                                                              'db_msg':db_msg}))
+                                                                   {'limit': limit,
+                                                                    'db_model': db_model,
+                                                                    'db_msg': db_msg}))
     return message.Identity('command', c.start(item_id))
+
 
 def source_exists(item_type: enums.ItemType=enums.ItemType.Gallery,
                   item_id: int = 0,

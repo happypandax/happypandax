@@ -16,7 +16,6 @@ __pragma__('noskip')
 
 def grouping_render():
     title = ""
-    fav = 0
     item_id = this.state.id
     if this.state.data:
         title = this.state.data.js_name

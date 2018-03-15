@@ -175,13 +175,14 @@ i.huge.icon {
 i.huge.icons {
     font-size: 3em;
 }
+
+ .slick-slider .card.small-size {
+    max-width: 145px !important;
+}
+
 @media screen and (min-width: 1000px) {
     .card.medium-size {
         max-width: 200px !important;
-    }
-
-    .card.small-size {
-        max-width: 145px !important;
     }
 }
 

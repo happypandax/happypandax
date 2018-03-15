@@ -111,7 +111,7 @@ ItemViewPage = createReactClass({
                                        utils.session_storage.set("sort_desc", not this.state.sort_desc))),
 
     'on_filter_change': lambda e, d: all((this.setState({'filter_id': d.value}),
-                                         utils.session_storage.set("filter_id", utils.either(d.value, 0)))),
+                                          utils.session_storage.set("filter_id", utils.either(d.value, 0)))),
 
     'on_search': lambda s, o: all((this.setState({'search_query': s, 'search_options': o}),
                                    utils.session_storage.set("search_query", s, True),

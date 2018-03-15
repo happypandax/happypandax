@@ -13,6 +13,8 @@ __pragma__('skip')
 require = window = require = setInterval = setTimeout = setImmediate = None
 clearImmediate = clearInterval = clearTimeout = this = document = None
 JSON = Math = console = alert = requestAnimationFrame = None
+js_undefined = location = localStorage = sessionStorage = None
+Date = None
 __pragma__('noskip')
 
 ui = require("semantic-ui-react")
@@ -176,11 +178,11 @@ def pagination_render():
     current_pages = page_list[l_index:r_index]
 
     if this.props.query:
-        def make_items(i): return [e(ui.Menu.Item, js_name=str(x), active=current_page == x, onClick=go_page,
-                                     as_=QueryLink, query={'page': x}) for x in i]
+        def make_items(i): return [e(ui.Menu.Item, js_name=str(x), active=current_page == x, onClick=go_page,  # noqa: E704
+                                     as_=QueryLink, query={'page': x}) for x in i]  # noqa: E704
     else:
-        def make_items(i): return [e(ui.Menu.Item, js_name=str(
-            x), active=current_page == x, onClick=go_page) for x in i]
+        def make_items(i): return [e(ui.Menu.Item, js_name=str(  # noqa: E704
+            x), active=current_page == x, onClick=go_page) for x in i]  # noqa: E704
 
     items = make_items(current_pages)
 

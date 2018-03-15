@@ -27,7 +27,10 @@ def get_config(data=None, error=None):
     else:
         pass
 
+
 __pragma__('kwargs')
+
+
 def get_item(data=None, error=None):
     if data is not None and not error:
         this.setState({"data": data,
@@ -61,14 +64,14 @@ def get_item(data=None, error=None):
                              item_type=this.state.item_type,
                              item_id=data.id)
             client.call_func("get_related_items", this.get_filters,
-                    item_type=ItemType.Gallery,
-                    related_type=ItemType.GalleryFilter,
-                    item_id=data.id)
+                             item_type=ItemType.Gallery,
+                             related_type=ItemType.GalleryFilter,
+                             item_id=data.id)
 
             client.call_func("get_similar", this.get_similar,
-                    item_type=ItemType.Gallery,
-                    item_id=data.id, limit=20)
-            this.setState({"similar_gallery_loading":True})
+                             item_type=ItemType.Gallery,
+                             item_id=data.id, limit=20)
+            this.setState({"similar_gallery_loading": True})
 
         if data.id:
             inbox = data.metatags.inbox
@@ -116,7 +119,6 @@ def get_item(data=None, error=None):
 
             menu_items.append(e(ui.Menu.Menu, *menu_right, position="right"))
 
-
             if len(menu_items):
                 this.props.menu(menu_items)
     elif error:
@@ -130,6 +132,8 @@ def get_item(data=None, error=None):
         if item and item_id:
             client.call_func("get_item", this.get_item, item_type=item, item_id=item_id)
             this.setState({'loading': True})
+
+
 __pragma__('nokwargs')
 
 
@@ -153,6 +157,7 @@ def get_filter_count(data=None, error=None):
     elif error:
         state.app.notif("Failed to fetch filter count ({})".format(this.state.id), level="error")
 
+
 def get_filters(data=None, error=None):
     if data is not None and not error:
         this.setState({"filter_data": data})
@@ -166,15 +171,22 @@ def get_collection_count(data=None, error=None):
     elif error:
         state.app.notif("Failed to fetch collection count ({})".format(this.state.id), level="error")
 
+
 __pragma__("tconv")
+
+
 def get_similar_progress(cmd):
     p = cmd.get_progress()
     if p:
         this.setState({"similar_gallery_progress": p})
+
+
 __pragma__("notconv")
 
+
 def get_similar_value(cmd):
-    this.setState({"similar_gallery_data": cmd.get_value(), 'similar_gallery_loading':False})
+    this.setState({"similar_gallery_data": cmd.get_value(), 'similar_gallery_loading': False})
+
 
 def get_similar(data=None, error=None):
     if data is not None and not error:
@@ -362,7 +374,7 @@ def page_render():
                 ),
               centered=True,
                 as_=ui.Grid.Row,
-                maxWidth = 767
+                maxWidth=767
               ),
         )
 
@@ -377,7 +389,7 @@ def page_render():
             ),
           divided=True,
             as_=ui.Grid.Row,
-            maxWidth = 767
+            maxWidth=767
           ),
     )
 
@@ -397,7 +409,7 @@ def page_render():
                 ),
               centered=True,
               as_=ui.Grid.Row,
-              maxWidth = 767
+              maxWidth=767
               ))
 
     filter_accordion = []
@@ -406,34 +418,35 @@ def page_render():
         for f in this.state.filter_data:
             filter_items.append(e(ui.List.Item,
                                   e(ui.List.Icon, js_name="filter"),
-                                  e(ui.List.Content,f['name'],),
+                                  e(ui.List.Content, f['name'],),
                                   as_=Link, to=utils.build_url("/inbox" if inbox else "/library",
-                                                         {'filter_id':f['id']},
-                                                         keep_query=False),
+                                                               {'filter_id': f['id']},
+                                                               keep_query=False),
                                   ))
         filter_accordion.append(e(ui.Accordion,
-                                 panels=[
-                                     {
-                                         'title':{
-                                             'content':e(ui.Label,
-                                                         tr(this, "ui.h-included-gallery-filters",
-                                                            "Included in {} gallery filter".format(this.state.filter_count),
-                                                            count=this.state.filter_count),
-                                                         color="teal",),
-                                             'key': 't-1',
-                                             },
-                                         'content': {
-                                                'content':e(ui.List, *filter_items,
-                                                            animated=True,
-                                                            link=True,
-                                                            celled=True,
-                                                            relaxed=True),
-                                                'key':'t-2',
-                                                },
-                                         'key': 'c-1'
-                                         }
-                                     ],
-                                 ))
+                                  panels=[
+                                      {
+                                          'title': {
+                                              'content': e(ui.Label,
+                                                           tr(this, "ui.h-included-gallery-filters",
+                                                              "Included in {} gallery filter".format(
+                                                                  this.state.filter_count),
+                                                              count=this.state.filter_count),
+                                                           color="teal",),
+                                              'key': 't-1',
+                                          },
+                                          'content': {
+                                              'content': e(ui.List, *filter_items,
+                                                           animated=True,
+                                                           link=True,
+                                                           celled=True,
+                                                           relaxed=True),
+                                              'key': 't-2',
+                                          },
+                                          'key': 'c-1'
+                                      }
+                                  ],
+                                  ))
 
     collection_accordion = []
 
@@ -451,123 +464,123 @@ def page_render():
                                           )
                                         )
                                       )
-                                )
+                                    )
 
     similar_galleries = []
 
     if len(this.state.similar_gallery_data) or this.state.similar_gallery_loading:
         similar_gallery_data = this.state.similar_gallery_data
         similar_slider_el = e(Slider,
-                                *[e(galleryitem.Gallery, data=x, className="small-size") for x in similar_gallery_data],
-                                secondary=True,
-                                sildesToShow=4)
+                              *[e(galleryitem.Gallery, data=x, className="small-size") for x in similar_gallery_data],
+                              secondary=True,
+                              sildesToShow=4)
         similar_progress_el = e(ui.Progress,
                                 size="small",
                                 color="orange",
                                 active=True,
-                                total=this.state.similar_gallery_progress.value*2, 
+                                total=this.state.similar_gallery_progress.value * 2,
                                 value=this.state.similar_gallery_progress.value,
                                 progress="value",
                                 autoSuccess=True)
         similar_galleries.append(e(ui.Grid.Row,
-                                        e(ui.Grid.Column,
-                                        e(LabelAccordion,
-                                            similar_progress_el if this.state.similar_gallery_loading else similar_slider_el ,
-                                            label=tr(this, "ui.h-more-like-this", "More like this"),
-                                            color="teal",
-                                            )
-                                        )
-                                        )
-                                )
+                                   e(ui.Grid.Column,
+                                     e(LabelAccordion,
+                                       similar_progress_el if this.state.similar_gallery_loading else similar_slider_el,
+                                       label=tr(this, "ui.h-more-like-this", "More like this"),
+                                       color="teal",
+                                       )
+                                     )
+                                   )
+                                 )
 
     return e(ui.Grid,
-            e(ui.Grid.Row, e(ui.Grid.Column, e(ui.Breadcrumb, icon="right arrow",))),
-            e(ui.Grid.Row,
-                e(ui.Grid.Column,
-                e(ui.Grid, e(ui.Grid.Row,
-                            e(ui.Grid.Column,
+             e(ui.Grid.Row, e(ui.Grid.Column, e(ui.Breadcrumb, icon="right arrow",))),
+             e(ui.Grid.Row,
+               e(ui.Grid.Column,
+                 e(ui.Grid, e(ui.Grid.Row,
+                              e(ui.Grid.Column,
                                 e(thumbitem.Thumbnail,
-                                size_type=ImageSize.Big,
-                                item_type=this.state.item_type,
-                                item_id=item_id,
-                                size="medium",
-                                shape="rounded",
-                                centered=True,
-                                bordered=True,),
+                                  size_type=ImageSize.Big,
+                                  item_type=this.state.item_type,
+                                  item_id=item_id,
+                                  size="medium",
+                                  shape="rounded",
+                                  centered=True,
+                                  bordered=True,),
                                 tablet=10, mobile=6,
                                 ),
-                            centered=True,
-                            ),
-                e(ui.Divider, fitted=True),
-                    *buttons,
-                    e(ui.Grid.Row,
-                        *filter_accordion,
-                        ),
-                    centered=True, verticalAlign="top"),
-                ),
-                e(ui.Grid.Column,
-                e(ui.Grid,
-                    e(ui.Grid.Row,
-                        e(ui.Grid.Column, e(ui.Rating, icon="heart", size="massive", rating=fav), floated="right",),
-                        e(ui.Grid.Column, *indicators, floated="right", textAlign="right"),
-                        columns=2,
-                        ),
-                    e(ui.Grid.Row,
-                        e(ui.Grid,
-                        e(ui.Grid.Row, e(ui.Grid.Column, e(ui.Header, title, as_="h3"), textAlign="center")),
-                        e(ui.Grid.Row,
-                            e(ui.Grid.Column,
-                            e(ui.Table,
-                                e(ui.Table.Body,
-                                *rows
-                                ),
-                                basic="very"
-                                ))),
-                        stackable=True,
-                        padded=False,
-                        relaxed=True,
-                        ),
-                        ),
-                    divided="vertically",
-                    ),
-                ),
-                columns=2,
-                as_=ui.Segment,
-                # loading=this.state.loading,
-                basic=True,
-            ),
-            e(ui.Grid.Row,
-                e(ui.Grid.Column, e(ui.Label, tr(this, "ui.t-date-added", "Date added"), e(ui.Label.Detail, date_added))),
-                e(ui.Grid.Column, e(ui.Label, tr(this, "ui.t-last-read", "Last read"), e(ui.Label.Detail, date_read))),
-                e(ui.Grid.Column, e(ui.Label, tr(this, "ui.t-last-updated", "Last updated"), e(ui.Label.Detail, date_upd))),
-                columns=3
-            ),
-            *collection_accordion,
-            e(ui.Grid.Row, e(ui.Grid.Column,
-                            e(Slider, *[e(galleryitem.Gallery, data=x, className="small-size") for x in series_data],
-                            loading=this.state.loading_group,
-                            basic=False,
-                            secondary=True,
-                            sildesToShow=4,
-                            color="blue",
-                            label=tr(this, "ui.t-series", "Series")),
-                            )),
-            *similar_galleries,
-            e(ui.Grid.Row, e(ui.Grid.Column, e(itemview.ItemView,
-                                            history=this.props.history,
-                                            location=this.props.location,
-                                            item_id=item_id,
-                                            item_type=ItemType.Gallery,
-                                            related_type=ItemType.Page,
-                                            view_filter=None,
-                                            label=tr(this, "ui.t-pages", "Pages"),
-                                            config_suffix="gallerypage",
-                                            toggle_config=this.toggle_pages_config,
-                                            visible_config=this.state.visible_page_cfg,
-                                            container=True, secondary=True))),
-                stackable=True,
-                container=True,
-                )
+                              centered=True,
+                              ),
+                   e(ui.Divider, fitted=True),
+                   *buttons,
+                   e(ui.Grid.Row,
+                     *filter_accordion,
+                     ),
+                   centered=True, verticalAlign="top"),
+                 ),
+               e(ui.Grid.Column,
+                 e(ui.Grid,
+                   e(ui.Grid.Row,
+                     e(ui.Grid.Column, e(ui.Rating, icon="heart", size="massive", rating=fav), floated="right",),
+                     e(ui.Grid.Column, *indicators, floated="right", textAlign="right"),
+                     columns=2,
+                     ),
+                   e(ui.Grid.Row,
+                     e(ui.Grid,
+                       e(ui.Grid.Row, e(ui.Grid.Column, e(ui.Header, title, as_="h3"), textAlign="center")),
+                       e(ui.Grid.Row,
+                         e(ui.Grid.Column,
+                           e(ui.Table,
+                             e(ui.Table.Body,
+                               *rows
+                               ),
+                             basic="very"
+                             ))),
+                       stackable=True,
+                       padded=False,
+                       relaxed=True,
+                       ),
+                     ),
+                   divided="vertically",
+                   ),
+                 ),
+               columns=2,
+               as_=ui.Segment,
+               # loading=this.state.loading,
+               basic=True,
+               ),
+             e(ui.Grid.Row,
+               e(ui.Grid.Column, e(ui.Label, tr(this, "ui.t-date-added", "Date added"), e(ui.Label.Detail, date_added))),
+               e(ui.Grid.Column, e(ui.Label, tr(this, "ui.t-last-read", "Last read"), e(ui.Label.Detail, date_read))),
+               e(ui.Grid.Column, e(ui.Label, tr(this, "ui.t-last-updated", "Last updated"), e(ui.Label.Detail, date_upd))),
+               columns=3
+               ),
+             *collection_accordion,
+             e(ui.Grid.Row, e(ui.Grid.Column,
+                              e(Slider, *[e(galleryitem.Gallery, data=x, className="small-size") for x in series_data],
+                                loading=this.state.loading_group,
+                                basic=False,
+                                secondary=True,
+                                sildesToShow=4,
+                                color="blue",
+                                label=tr(this, "ui.t-series", "Series")),
+                              )),
+             *similar_galleries,
+             e(ui.Grid.Row, e(ui.Grid.Column, e(itemview.ItemView,
+                                                history=this.props.history,
+                                                location=this.props.location,
+                                                item_id=item_id,
+                                                item_type=ItemType.Gallery,
+                                                related_type=ItemType.Page,
+                                                view_filter=None,
+                                                label=tr(this, "ui.t-pages", "Pages"),
+                                                config_suffix="gallerypage",
+                                                toggle_config=this.toggle_pages_config,
+                                                visible_config=this.state.visible_page_cfg,
+                                                container=True, secondary=True))),
+             stackable=True,
+             container=True,
+             )
 
 
 __pragma__("notconv")
