@@ -185,7 +185,7 @@ class Logger:
                         constants.log_debug)[1], "created at", os.path.abspath(
                         constants.log_debug), stdout=True)
             else:
-                Logger("apscheduler").disable(logging.WARNING)
+                Logger("apscheduler").setLevel(logging.ERROR)
 
     @staticmethod
     def _listener(args, queue):
