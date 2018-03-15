@@ -485,7 +485,6 @@ def page_render():
                                    e(ui.Grid.Column,
                                      e(LabelAccordion,
                                        similar_progress_el if this.state.similar_gallery_loading else similar_slider_el,
-                                       default_open=True,
                                        label=tr(this, "ui.h-more-like-this", "More like this"),
                                        color="teal",
                                        )
