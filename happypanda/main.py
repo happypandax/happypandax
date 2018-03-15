@@ -60,12 +60,15 @@ def start(argv=None, db_kwargs={}):
         utils.setup_dirs()
         args = parser.parse_args(argv)
         utils.parse_options(args)
+        db_inited = False
 
         if not args.only_web:
-            db.init(**db_kwargs)
+            db_inited = db.init(**db_kwargs)
             command.init_commands()
             hlogger.Logger.init_listener(args)
             monkey.patch_all(thread=False, ssl=False)
+        else:
+            db_inited = True
         utils.setup_online_reporter()
         hlogger.Logger.setup_logger(args, main=True, debug=config.debug.value)
         utils.disable_loggers(config.disabled_loggers.value)
@@ -81,7 +84,7 @@ def start(argv=None, db_kwargs={}):
 
         update_state = check_update() if not (not constants.is_frozen and constants.dev) else None
 
-        if not update_state == constants.UpdateState.Installing.value:
+        if not update_state == constants.UpdateState.Installing.value and db_inited:
 
             utils.setup_i18n()
 
@@ -123,7 +126,10 @@ def start(argv=None, db_kwargs={}):
             io_cmd.CoreFS(constants.dir_temp).delete(ignore_errors=True)
 
         else:
-            e_code = constants.ExitCode.Update
+            if db_inited:
+                e_code = constants.ExitCode.Update
+            else:
+                e_code = constants.ExitCode.Exit
 
         log.i("HPX END")
 

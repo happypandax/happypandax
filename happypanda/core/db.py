@@ -637,7 +637,7 @@ def url_association(cls, bref="items"):
 class Life(Base):
     __tablename__ = 'life'
 
-    version = Column(Float, nullable=False, default=constants.version_db,)
+    version = Column(String, nullable=False, default=constants.version_db_str)
     times_opened = Column(Integer, nullable=False, default=0)
     timestamp = Column(ArrowType, nullable=False, default=arrow.now)
 
@@ -1492,20 +1492,29 @@ def check_db_version(sess):
     Raises db exception if not"""
     try:
         life = sess.query(Life).one_or_none()
-    except exc.NoSuchTableError:
-        raise exceptions.DatabaseInitError(
-            "Invalid database. Death DB.")
+    except (exc.NoSuchTableError, exc.OperationalError):
+        if constants.preview:
+            msg = 'Incompatible database. Please generate a new database using the HPtoHPX tool.'
+            log.w(msg, stdout=True)
+            return False
+        else:
+            raise exceptions.DatabaseInitError("Invalid database. Death DB.")
     if life:
-        if life.version not in constants.version_db:
-            msg = 'Local database version: {}\nSupported database versions:{}'.format(
-                life.version, constants.version_db)
-            log.c("Incompatible database version")
-            log.d(msg)
+        if life.version != constants.version_db_str:
+            if constants.preview:
+                msg = 'Incompatible database. Please generate a new database using the HPtoHPX tool.'
+                log.w(msg, stdout=True)
+                return False
+            else:
+                msg = 'Found database version: {}\nSupported database versions:{}'.format(
+                    life.version, constants.version_db_str)
+                log.c("Incompatible database version")
+                log.d(msg)
             raise exceptions.DatabaseVersionError(msg)
     else:
         life = Life()
         sess.add(life)
-        life.version = constants.version_db[0]
+        life.version = constants.version_db_str
         life.times_opened = 0
         sess.commit()
         log.i("Succesfully initiated database")
