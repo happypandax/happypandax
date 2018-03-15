@@ -294,7 +294,7 @@ __pragma__("kwargs")
 
 
 def either(a, b=None):
-    if a == None:
+    if a == None: # noqa: E711
         return b
     return a
 
