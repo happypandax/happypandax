@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>happypanda.interface.database &#8212; HappyPanda X 0.0.9#121 documentation</title>
+    <title>happypanda.interface.database &#8212; HappyPanda X 0.0.10#122 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.0.9#121',
+        VERSION:     '0.0.10#122',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -52,7 +52,7 @@
         </button>
         <a class="navbar-brand" href="../../../index.html">
           HappyPanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.9#121</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.10#122</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -163,13 +163,12 @@
 <span class="sd">~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~</span>
 
 <span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">functools</span>
 
 <span class="kn">from</span> <span class="nn">happypanda.common</span> <span class="k">import</span> <span class="n">constants</span><span class="p">,</span> <span class="n">utils</span><span class="p">,</span> <span class="n">exceptions</span>
 <span class="kn">from</span> <span class="nn">happypanda.core</span> <span class="k">import</span> <span class="n">db</span><span class="p">,</span> <span class="n">services</span><span class="p">,</span> <span class="n">message</span>
 <span class="kn">from</span> <span class="nn">happypanda.interface</span> <span class="k">import</span> <span class="n">enums</span><span class="p">,</span> <span class="n">helpers</span>
 <span class="kn">from</span> <span class="nn">happypanda.core.commands</span> <span class="k">import</span> <span class="n">database_cmd</span><span class="p">,</span> <span class="n">search_cmd</span>
-
-<span class="kn">import</span> <span class="nn">functools</span>
 
 
 <span class="k">def</span> <span class="nf">_get_image</span><span class="p">(</span><span class="n">kwargs</span><span class="p">,</span> <span class="n">cover</span><span class="p">):</span>
@@ -190,7 +189,7 @@
 <span class="sd">            :py:attr:`.ItemType.Collection`, :py:attr:`.ItemType.Grouping`, :py:attr:`.ItemType.Page`</span>
 <span class="sd">        item_ids: list of item ids</span>
 <span class="sd">        size: size of image</span>
-<span class="sd">        url: replace image content with url to image file</span>
+<span class="sd">        url: replace image content with http url to image file</span>
 <span class="sd">        uri: turn raw base64 string into an URI</span>
 
 <span class="sd">    Returns:</span>

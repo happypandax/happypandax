@@ -39,7 +39,7 @@ Most of these settings can also be configured from a HPX client.
 Starting
 -------------------------------------
 
-There exists two ways of starting up HPX.
+There are two ways of starting up HPX.
 
 If you're running from source you start HPX either through ``run.py`` or ``gui.py``.
 

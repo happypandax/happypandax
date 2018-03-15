@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>happypanda.interface.meta &#8212; HappyPanda X 0.0.9#121 documentation</title>
+    <title>happypanda.interface.meta &#8212; HappyPanda X 0.0.10#122 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.0.9#121',
+        VERSION:     '0.0.10#122',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -52,7 +52,7 @@
         </button>
         <a class="navbar-brand" href="../../../index.html">
           HappyPanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.9#121</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.10#122</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -203,6 +203,10 @@
 <span class="sd">                            &#39;namespaces&#39;: [str, ...]</span>
 <span class="sd">                        }</span>
 <span class="sd">            }</span>
+
+<span class="sd">    .. seealso::</span>
+
+<span class="sd">        :func:`.translate`</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="n">constants</span><span class="o">.</span><span class="n">translations</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -419,7 +423,7 @@
 <div class="viewcode-block" id="get_command_progress"><a class="viewcode-back" href="../../../api.html#happypanda.interface.meta.get_command_progress">[docs]</a><span class="k">def</span> <span class="nf">get_command_progress</span><span class="p">(</span><span class="n">command_ids</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Get progress of command operation</span>
-<span class="sd">    </span>
+
 <span class="sd">    If the command did not set a maximum value, the returned percent will be set to less than ``0.0`` for infinity.</span>
 
 <span class="sd">    This should be polled every few seconds to get updated values.</span>
@@ -471,13 +475,12 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">_command_msg</span><span class="p">(</span><span class="n">command_ids</span><span class="p">)</span>
 
-
     <span class="n">cmd_p</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">if</span> <span class="n">command_ids</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">command_ids</span><span class="p">:</span>
             <span class="n">cmd</span> <span class="o">=</span> <span class="n">AsyncService</span><span class="o">.</span><span class="n">get_command</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">cmd</span><span class="p">:</span>
-                <span class="n">cmd_p</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">cmd</span><span class="o">.</span><span class="n">get_progress</span><span class="p">())</span>
+                <span class="n">cmd_p</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">i</span><span class="p">,</span> <span class="n">cmd</span><span class="o">.</span><span class="n">get_progress</span><span class="p">()))</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">cmd_p</span> <span class="o">=</span> <span class="n">command</span><span class="o">.</span><span class="n">CoreCommand</span><span class="o">.</span><span class="n">get_all_progress</span><span class="p">()</span>
 

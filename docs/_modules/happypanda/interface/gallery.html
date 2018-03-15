@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>happypanda.interface.gallery &#8212; HappyPanda X 0.0.9#121 documentation</title>
+    <title>happypanda.interface.gallery &#8212; HappyPanda X 0.0.10#122 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.0.9#121',
+        VERSION:     '0.0.10#122',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -52,7 +52,7 @@
         </button>
         <a class="navbar-brand" href="../../../index.html">
           HappyPanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.9#121</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.10#122</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -164,10 +164,11 @@
 
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">functools</span>
 
 <span class="kn">from</span> <span class="nn">happypanda.common</span> <span class="k">import</span> <span class="n">exceptions</span><span class="p">,</span> <span class="n">utils</span><span class="p">,</span> <span class="n">constants</span><span class="p">,</span> <span class="n">hlogger</span>
 <span class="kn">from</span> <span class="nn">happypanda.core.commands</span> <span class="k">import</span> <span class="n">database_cmd</span><span class="p">,</span> <span class="n">io_cmd</span><span class="p">,</span> <span class="n">gallery_cmd</span>
-<span class="kn">from</span> <span class="nn">happypanda.core</span> <span class="k">import</span> <span class="n">message</span><span class="p">,</span> <span class="n">db</span>
+<span class="kn">from</span> <span class="nn">happypanda.core</span> <span class="k">import</span> <span class="n">message</span><span class="p">,</span> <span class="n">db</span><span class="p">,</span> <span class="n">services</span>
 <span class="kn">from</span> <span class="nn">happypanda.interface</span> <span class="k">import</span> <span class="n">enums</span>
 
 <span class="n">log</span> <span class="o">=</span> <span class="n">hlogger</span><span class="o">.</span><span class="n">Logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
@@ -201,6 +202,48 @@
 <span class="c1">#        list of paths to the galleries</span>
 <span class="c1">#    &quot;&quot;&quot;</span>
 <span class="c1">#    return message.Message(&quot;works&quot;)</span>
+
+<span class="k">def</span> <span class="nf">_get_similar</span><span class="p">(</span><span class="n">kwargs</span><span class="p">,</span> <span class="n">similar_items</span><span class="p">):</span>
+    <span class="n">item_list</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">model_name</span><span class="p">(</span><span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;db_model&#39;</span><span class="p">]),</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;db_msg&#39;</span><span class="p">])</span>
+    <span class="n">items</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">similar_items</span><span class="p">:</span>
+        <span class="n">items</span> <span class="o">=</span> <span class="n">database_cmd</span><span class="o">.</span><span class="n">GetModelItems</span><span class="p">()</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;db_model&#39;</span><span class="p">],</span> <span class="nb">set</span><span class="p">(</span><span class="n">similar_items</span><span class="p">[:</span><span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;limit&#39;</span><span class="p">]]))</span>
+    <span class="p">[</span><span class="n">item_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;db_msg&#39;</span><span class="p">](</span><span class="n">x</span><span class="p">))</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">items</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">item_list</span>
+
+
+<div class="viewcode-block" id="get_similar"><a class="viewcode-back" href="../../../api.html#happypanda.interface.gallery.get_similar">[docs]</a><span class="k">def</span> <span class="nf">get_similar</span><span class="p">(</span><span class="n">item_type</span><span class="p">:</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">=</span><span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Gallery</span><span class="p">,</span>
+                <span class="n">item_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+                <span class="n">limit</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get similar items</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        item_type: possible items are :py:attr:`.ItemType.Gallery`</span>
+<span class="sd">        item_id: id of item</span>
+<span class="sd">        limit: amount of items</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A command id with command value:</span>
+
+<span class="sd">        .. code-block:: guess</span>
+
+<span class="sd">            [</span>
+<span class="sd">                item message object,</span>
+<span class="sd">                ...</span>
+<span class="sd">            ]</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">item_type</span> <span class="o">=</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">item_type</span><span class="p">)</span>
+    <span class="n">db_msg</span><span class="p">,</span> <span class="n">db_model</span> <span class="o">=</span> <span class="n">item_type</span><span class="o">.</span><span class="n">_msg_and_model</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Gallery</span><span class="p">,))</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">gallery_cmd</span><span class="o">.</span><span class="n">SimilarGallery</span><span class="p">()</span>
+    <span class="n">services</span><span class="o">.</span><span class="n">AsyncService</span><span class="o">.</span><span class="n">generic</span><span class="o">.</span><span class="n">add_command</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">_get_similar</span><span class="p">,</span>
+                                                                   <span class="p">{</span><span class="s1">&#39;limit&#39;</span><span class="p">:</span> <span class="n">limit</span><span class="p">,</span>
+                                                                    <span class="s1">&#39;db_model&#39;</span><span class="p">:</span> <span class="n">db_model</span><span class="p">,</span>
+                                                                    <span class="s1">&#39;db_msg&#39;</span><span class="p">:</span> <span class="n">db_msg</span><span class="p">}))</span>
+    <span class="k">return</span> <span class="n">message</span><span class="o">.</span><span class="n">Identity</span><span class="p">(</span><span class="s1">&#39;command&#39;</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">item_id</span><span class="p">))</span></div>
+
 
 <div class="viewcode-block" id="source_exists"><a class="viewcode-back" href="../../../api.html#happypanda.interface.gallery.source_exists">[docs]</a><span class="k">def</span> <span class="nf">source_exists</span><span class="p">(</span><span class="n">item_type</span><span class="p">:</span> <span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">=</span><span class="n">enums</span><span class="o">.</span><span class="n">ItemType</span><span class="o">.</span><span class="n">Gallery</span><span class="p">,</span>
                   <span class="n">item_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>

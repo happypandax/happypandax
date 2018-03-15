@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>happypanda.core.command &#8212; HappyPanda X 0.0.9#121 documentation</title>
+    <title>happypanda.core.command &#8212; HappyPanda X 0.0.10#122 documentation</title>
     
     <link rel="stylesheet" href="../../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '0.0.9#121',
+        VERSION:     '0.0.10#122',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -52,7 +52,7 @@
         </button>
         <a class="navbar-brand" href="../../../index.html">
           HappyPanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.9#121</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.10#122</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -164,7 +164,6 @@
 <span class="kn">import</span> <span class="nn">weakref</span>
 <span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">itertools</span>
-<span class="kn">import</span> <span class="nn">arrow</span>
 
 <span class="kn">from</span> <span class="nn">contextlib</span> <span class="k">import</span> <span class="n">contextmanager</span>
 <span class="kn">from</span> <span class="nn">abc</span> <span class="k">import</span> <span class="n">ABCMeta</span><span class="p">,</span> <span class="n">abstractmethod</span>
@@ -176,7 +175,7 @@
 <span class="kn">from</span> <span class="nn">happypanda.common</span> <span class="k">import</span> <span class="n">utils</span><span class="p">,</span> <span class="n">hlogger</span><span class="p">,</span> <span class="n">exceptions</span><span class="p">,</span> <span class="n">constants</span>
 <span class="kn">from</span> <span class="nn">happypanda.core</span> <span class="k">import</span> <span class="n">plugins</span><span class="p">,</span> <span class="k">async</span><span class="p">,</span> <span class="n">db</span>
 
-<span class="n">log</span> <span class="o">=</span> <span class="n">hlogger</span><span class="o">.</span><span class="n">Logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="n">log</span> <span class="o">=</span> <span class="n">hlogger</span><span class="o">.</span><span class="n">Logger</span><span class="p">(</span><span class="n">constants</span><span class="o">.</span><span class="n">log_ns_core</span> <span class="o">+</span> <span class="vm">__name__</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">get_available_commands</span><span class="p">():</span>
@@ -314,6 +313,7 @@
 
     <span class="k">def</span> <span class="nf">_str_progress_tree</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_tree_reader</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+
         <span class="k">def</span> <span class="nf">w</span><span class="p">(</span><span class="n">l</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_tree_reader</span> <span class="o">=</span> <span class="n">l</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span>
 
@@ -322,7 +322,6 @@
         <span class="k">except</span> <span class="n">tree_exceptions</span><span class="o">.</span><span class="n">NodeIDAbsentError</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_tree_reader</span> <span class="o">=</span> <span class="s2">&quot;Tree is empty&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tree_reader</span>
-
 
     <span class="k">def</span> <span class="nf">get_progress</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 
@@ -356,7 +355,7 @@
                         <span class="n">prog_subtitle</span> <span class="o">=</span> <span class="n">cmd</span><span class="o">.</span><span class="n">_progress_title</span>
                         <span class="n">prog_subtype</span> <span class="o">=</span> <span class="n">cmd</span><span class="o">.</span><span class="n">_progress_type</span>
             <span class="k">if</span> <span class="n">p</span><span class="p">[</span><span class="s1">&#39;max&#39;</span><span class="p">]:</span>
-                <span class="n">p</span><span class="p">[</span><span class="s1">&#39;percent&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">100</span><span class="o">/</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;max&#39;</span><span class="p">])</span><span class="o">*</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span>
+                <span class="n">p</span><span class="p">[</span><span class="s1">&#39;percent&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">100</span> <span class="o">/</span> <span class="n">p</span><span class="p">[</span><span class="s1">&#39;max&#39;</span><span class="p">])</span> <span class="o">*</span> <span class="n">p</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">p</span><span class="p">[</span><span class="s1">&#39;percent&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span>
             <span class="n">p</span><span class="p">[</span><span class="s1">&#39;text&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">prog_text</span>
@@ -364,7 +363,6 @@
             <span class="n">p</span><span class="p">[</span><span class="s1">&#39;subtype&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">prog_subtype</span>
             <span class="k">return</span> <span class="n">p</span>
         <span class="k">return</span> <span class="kc">None</span>
-
 
     <span class="k">def</span> <span class="nf">set_progress</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">type_</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">assert</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span>
@@ -465,7 +463,10 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_progress_max</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">set_progress</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_progress_max</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_progress_count</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_progress_count</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_progresses</span><span class="p">:</span>
-            <span class="n">gevent</span><span class="o">.</span><span class="n">spawn_later</span><span class="p">(</span><span class="n">constants</span><span class="o">.</span><span class="n">command_progress_removal_time</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_progresses</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_progress_count</span><span class="p">))</span>
+            <span class="n">gevent</span><span class="o">.</span><span class="n">spawn_later</span><span class="p">(</span>
+                <span class="n">constants</span><span class="o">.</span><span class="n">command_progress_removal_time</span><span class="p">,</span>
+                <span class="k">lambda</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_progresses</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_progress_count</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_finished_time</span> <span class="o">=</span> <span class="n">arrow</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">r</span>
 
