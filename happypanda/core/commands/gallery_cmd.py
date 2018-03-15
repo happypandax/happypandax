@@ -97,7 +97,7 @@ class SimilarGallery(AsyncCommand):
             g_tags = all_gallery_tags[g_id]
             for a, b in g_tags.items():
                 tag_count += len(b)
-            self.set_max_progress(len(g_tags)+3)
+            self.set_max_progress(len(g_tags) + 3)
         else:
             if isinstance(gallery_or_id, db.Gallery):
                 g_tags = gallery_or_id
@@ -117,7 +117,8 @@ class SimilarGallery(AsyncCommand):
             data[g_id] = gl_data = {}
             update_dict = not all_gallery_tags
             max_prog = 3
-            for t_id, t in all_gallery_tags.items() or constants.db_session().query(db.Gallery.id, db.Taggable).join(db.Gallery.taggable):
+            for t_id, t in all_gallery_tags.items() or constants.db_session().query(
+                    db.Gallery.id, db.Taggable).join(db.Gallery.taggable):
                 self.next_progress()
                 if update_dict:
                     all_gallery_tags[t_id] = t.compact_tags(t.tags.all())

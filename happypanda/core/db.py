@@ -857,7 +857,6 @@ class Taggable(UpdatedMixin, Base):
         secondary=taggable_tags,
         lazy="dynamic")
 
-
     def compact_tags(self, tags):
         c_tags = {}
         for t in tags:
@@ -887,7 +886,6 @@ class TaggableMixin(UpdatedMixin):
         return self.taggable.tags
 
     compact_tags = Taggable.compact_tags
-
 
 
 @generic_repr
