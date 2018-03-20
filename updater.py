@@ -37,8 +37,7 @@ def launch_app(*args, **kwargs):
 def main():
     log.setup_logger()
     try:
-        with utils.intertnal_db() as db:
-            update_info = db.get(constants.updater_key, {})
+        update_info = constants.internaldb.update_info.get({})
         if not update_info:
             log.e("No update info registered")
             sys.exit(1)
@@ -70,9 +69,8 @@ def main():
             else:
                 log.e('No launch application provided')
 
-        with utils.intertnal_db() as db:
-            update_info['state'] = state.value
-            db[constants.updater_key] = update_info
+        update_info['state'] = state.value
+        constants.internaldb.update_info.set(update_info)
         log.i('Finished with state:', state)
     except BaseException:
         log.exception("Updater failed")

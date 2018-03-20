@@ -124,9 +124,10 @@ def get_item(data=None, error=None):
     elif error:
         state.app.notif("Failed to fetch item ({})".format(this.state.id), level="error")
     else:
-        if utils.defined(this.props.location.state) and this.props.location.state.gallery:
-            this.get_item(this.props.location.state.gallery)
-            return
+        if utils.defined(this.props.location):
+            if this.props.location.state and this.props.location.state.gallery:
+                this.get_item(this.props.location.state.gallery)
+                return
         item = this.state.item_type
         item_id = this.state.id
         if item and item_id:

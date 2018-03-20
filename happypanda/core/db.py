@@ -56,7 +56,7 @@ from sqlalchemy_utils import (
     get_type,
     JSONType)
 
-from happypanda.common import constants, exceptions, hlogger, utils, config
+from happypanda.common import constants, exceptions, hlogger, clsutils, config, utils
 
 force_instant_defaults()
 force_auto_coercion()
@@ -648,7 +648,7 @@ class Life(Base):
 class MetaTag(NameMixin, Base):
     __tablename__ = 'metatag'
 
-    names = utils.AttributeList("favorite", "inbox", "readlater", "trash")
+    names = clsutils.AttributeList("favorite", "inbox", "readlater", "trash")
     tags = {}
 
     @classmethod
@@ -1534,6 +1534,7 @@ def check_db_version(sess):
     with utils.intertnal_db() as idb:
         if db_key not in idb or idb[db_key] + 1 != life.times_opened:
             constants.is_new_db = True
+            constants.invalidator.similar_gallery = True
         idb[db_key] = life.times_opened
 
     sess.add(Event(life, Event.Action.start))

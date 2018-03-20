@@ -139,7 +139,7 @@ class Client:
                 "bytes from server",
                 self._server)
             buffered = gzip.decompress(buffered)
-            return utils.convert_to_json(buffered, self.name)
+            return utils.convert_to_json(buffered, self.name, log=log)
         except socket.error as e:
             self._disconnect()
             raise exceptions.ServerError(self.name, "{}".format(e))

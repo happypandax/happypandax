@@ -56,6 +56,9 @@ class Logger:
 
     def __init__(self, name):
         self.name = name
+        self.category = ""
+        if '.' in name:
+            self.category = name.split('.')[0]
         self._logger = logging.getLogger(name)
 
     def exception(self, *args):

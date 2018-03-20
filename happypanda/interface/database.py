@@ -257,6 +257,10 @@ def search_item(item_type: enums.ItemType=enums.ItemType.Gallery,
                 item message object,
                 ...
             ]
+
+    .. seealso::
+
+        :func:`.get_sort_indexes`
     """
     item_type = enums.ItemType.get(item_type)
 

@@ -70,7 +70,8 @@ thumbs_view = "/thumb"
 link_ext = '.link'
 
 # CORE
-
+invalidator = None
+internaldb = None
 web_proc = None  # webserver process
 notification = None  # ClientNotifications
 

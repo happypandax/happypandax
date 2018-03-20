@@ -71,8 +71,6 @@ class SimilarGallery(AsyncCommand):
 
     def __init__(self):
         super().__init__()
-        self._gallery_similar_key = "gallery_similar_calc"
-        self._gallery_similar_tags_key = 'gallery_similar_tags'
 
     def _get_set(self, tags):
         s = set()
@@ -145,16 +143,16 @@ class SimilarGallery(AsyncCommand):
         self.set_progress(type_=enums.ProgressType.Unknown)
         self.set_max_progress(1)
         with utils.intertnal_db() as idb:
-            if not constants.is_new_db:
-                gl_data = idb.get(self._gallery_similar_key, gl_data)
-            all_gallery_tags = idb.get(self._gallery_similar_tags_key, all_gallery_tags)
+            if not constants.invalidator.similar_gallery:
+                gl_data = idb.get(constants.internaldb.gallery_similar_calc.key, gl_data)
+            all_gallery_tags = idb.get(constants.internaldb.gallery_similar_tags.key, all_gallery_tags)
         log.d("Cached gallery tags", len(all_gallery_tags))
         if gid not in gl_data:
             log.d("Similarity calculation not found in cache")
             gl_data.update(self._calculate(gallery_or_id, all_gallery_tags).get())
             with utils.intertnal_db() as idb:
-                idb[self._gallery_similar_key] = gl_data
-                idb[self._gallery_similar_tags_key] = all_gallery_tags
+                idb[constants.internaldb.gallery_similar_calc.key] = gl_data
+                idb[constants.internaldb.gallery_similar_tags.key] = all_gallery_tags
         self.next_progress()
         return [x for x in sorted(gl_data[gid], reverse=True, key=lambda x:gl_data[gid][x])]
 

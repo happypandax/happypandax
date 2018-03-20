@@ -24,7 +24,7 @@ import logging
 from dbm import dumb as dumbdb
 from inspect import ismodule, currentframe, getframeinfo
 from contextlib import contextmanager
-from collections import namedtuple, UserList
+from collections import namedtuple
 
 from happypanda.common import constants, exceptions, hlogger, config
 try:
@@ -239,7 +239,7 @@ def session(sess=constants.db_session):
         raise
 
 
-def convert_to_json(buffer, name):
+def convert_to_json(buffer, name, log=log):
     ""
     try:
         log.d("Converting", sys.getsizeof(buffer), "bytes to JSON")
@@ -359,13 +359,14 @@ def setup_online_reporter():
         the rollbar lib somehow messes it up!
     """
     if config.report_critical_errors.value and constants.is_frozen:
+
         rollbar.init(config.rollbar_access_token.value,
                      'HPX {} web({}) db({}) build({}) platform({})'.format(
                          constants.version,
                          constants.version_web,
                          constants.version_db,
                          constants.build,
-                         platform.platform()))
+                         "windows" if constants.is_win else "linux" if constants.is_linux else "osx" if constants.is_osx else "unknown"))
         hlogger.Logger.report_online = True
 
 
@@ -492,21 +493,3 @@ def run_with_privileges(func, *args):
         if constants.is_win:
             print(prog)
             ctypes.windll.shell32.ShellExecuteW(None, "runas", prog, subprocess.list2cmdline(params), None, 1)
-
-
-class AttributeList(UserList):
-    """
-    l = AttributeList("one", "two")
-    l.one == "one"
-    l.two == "two"
-
-    """
-
-    def __init__(self, *names):
-        self._names = {str(x): x for x in names}
-        super().__init__(names)
-
-    def __getattr__(self, key):
-        if key in self._names:
-            return self._names[key]
-        raise AttributeError("AttributeError: no attribute named '{}'".format(key))

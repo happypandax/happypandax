@@ -274,7 +274,7 @@ class ClientHandler:
         where = "Message parsing"
         log.d("Parsing incoming data")
         try:
-            j_data = utils.convert_to_json(data, where)
+            j_data = utils.convert_to_json(data, where, log=log)
 
             log.d("Check if required root keys are present")
             # {"name":name, "data":data, 'session':id}

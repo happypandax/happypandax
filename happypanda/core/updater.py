@@ -131,8 +131,7 @@ def check_release(silent=True, cmd=None):
             latest_rel = None
             if download_url:
                 latest_rel = dict(url=download_url, tag=new_rel, changes=changes, version=new_version)
-                with utils.intertnal_db() as db:
-                    db['latest_release'] = latest_rel
+                constants.internaldb.latest_release.set(latest_rel)
 
             return latest_rel
         except exceptions.NetworkError:
@@ -161,7 +160,7 @@ def get_release(download_url=None, archive=True, silent=True, cmd=None):
 
     if not download_url:
         with utils.intertnal_db() as db:
-            l_rel = db.get('latest_release', {})
+            l_rel = db.get(constants.internaldb.latest_release.key, {})
             download_url = l_rel.get('url', False)
             if not download_url or (l_rel.get('version', tuple()) < constants.version):
                 log.d("No new release found in internal db")

@@ -120,8 +120,7 @@ class _Request(Command):
     def __init__(self, session=True, priority=constants.Priority.Low):
         super().__init__(priority)
         if not _Request.default_session:
-            with utils.intertnal_db() as db:
-                _Request.default_session = db.get("network_session", cachecontrol.CacheControl(requests.Session()))
+            _Request.default_session = constants.internaldb.network_session.get(cachecontrol.CacheControl(requests.Session()))
             self.default_session = _Request.default_session
 
         if session in (True, None):
@@ -168,9 +167,7 @@ class _Request(Command):
         return r
 
     def cleanup_session(self):
-        with utils.intertnal_db() as db:
-            db['network_session'] = self.default_session
-
+        constants.internaldb.network_session.set(self.default_session)
 
 class SimpleRequest(_Request):
     """
