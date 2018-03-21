@@ -6,7 +6,7 @@ from src.ui import ui, Slider, LabelAccordion
 from src.i18n import tr
 from src.state import state
 from src.client import ItemType, ImageSize, client, Command
-from src.single import galleryitem, thumbitem, artistitem
+from src.single import galleryitem, thumbitem, artistitem, parodyitem, circleitem
 from src.views import itemview, tagview
 from src import utils
 from org.transcrypt.stubs.browser import __pragma__
@@ -279,6 +279,10 @@ def page_render():
             item_id = this.state.data.id
 
         artists = this.state.data.artists
+        for a in artists:
+            if a.circles:
+                for c in a.circles:
+                    circles.append(c)
 
         for u in this.state.data.urls:
             urls.append(u.js_name)
@@ -299,11 +303,11 @@ def page_render():
     if circles:
         rows.append(e(ui.Table.Row,
                       e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-multi-circles", "Circle(s)") + ':', as_="h5"), collapsing=True),
-                      e(ui.Table.Cell, *(e("span", x.js_name) for x in circles))))
+                      e(ui.Table.Cell, *(e(circleitem.CircleLabel, data=x) for x in circles))))
     if parodies:
         rows.append(e(ui.Table.Row,
                       e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-parody", "Parody") + ':', as_="h5"), collapsing=True),
-                      e(ui.Table.Cell,)))
+                      e(ui.Table.Cell, *(e(parodyitem.ParodyLabel, data=x) for x in parodies))))
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-language", "Language") + ':', as_="h5"), collapsing=True),
                   e(ui.Table.Cell, this.state.lang_data.js_name)))

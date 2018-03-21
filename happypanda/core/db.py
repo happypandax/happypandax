@@ -234,6 +234,14 @@ class String(_String):
             return RegexMatchExpression(
                 self.expr, literal(other), custom_op('!~*'))
 
+class LowerCaseString(TypeDecorator):
+    """
+    Ensures strings a lowercased
+    """
+    impl = String
+
+    def process_bind_param(self, value, dialect):
+        return value.lower()
 
 class RegexMatchExpression(BinaryExpression):
     """Represents matching of a column againsts a regular expression."""
@@ -1027,6 +1035,8 @@ profile_association(Grouping, "groupings")
 @generic_repr
 class Language(NameMixin, Base):
     __tablename__ = 'language'
+
+    code = Column(LowerCaseString, nullable=False, default='')
 
     galleries = relationship(
         "Gallery",
