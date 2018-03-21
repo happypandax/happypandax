@@ -5,6 +5,7 @@ import itertools
 
 from gevent import pool, queue
 from apscheduler.schedulers.gevent import GeventScheduler
+from cachetools import LRUCache
 
 from happypanda.common import hlogger, constants, config
 from happypanda.core import command, async
@@ -235,7 +236,7 @@ class AsyncService(Service):
     Service running asynchronous commands
     """
 
-    _all_commands = {}
+    _all_commands = LRUCache(10*1000)
 
     def __init__(self, name, group=pool.Group()):
         super().__init__(name)
@@ -349,8 +350,6 @@ class AsyncService(Service):
 
         if callback:
             callback(greenlet.value)
-
-        del self._commands[command_id]
 
     def _start(self, cmd_id):
         gevent.idle(constants.Priority.Low.value)

@@ -2,7 +2,7 @@ from src.react_utils import (h,
                              e,
                              createReactClass,
                              Link)
-from src.ui import ui, Slider, LabelAccordion
+from src.ui import ui, Slider, LabelAccordion, DateLabel
 from src.i18n import tr
 from src.state import state
 from src.client import ItemType, ImageSize, client, Command
@@ -247,10 +247,10 @@ def page_render():
     inbox = False
     trash = False
     read_count = 0
-    date_pub = tr(this, "ui.t-unknown", "Unknown")
-    date_upd = tr(this, "ui.t-unknown", "Unknown")
-    date_read = tr(this, "ui.t-unknown", "Unknown")
-    date_added = tr(this, "ui.t-unknown", "Unknown")
+    date_pub = None
+    date_upd = None
+    date_read = None
+    date_added = None
     urls = []
     parodies = []
     circles = []
@@ -259,17 +259,13 @@ def page_render():
         parodies = this.state.data.parodies
 
         if this.state.data.pub_date:
-            date_pub = utils.moment.unix(this.state.data.pub_date).format("LL")
-            date_pub += " (" + utils.moment.unix(this.state.data.pub_date).fromNow() + ")"
+            date_pub = this.state.data.pub_date
         if this.state.data.last_updated:
-            date_upd = utils.moment.unix(this.state.data.last_updated).format("LLL")
-            date_upd += " (" + utils.moment.unix(this.state.data.last_updated).fromNow() + ")"
+            date_upd = this.state.data.last_updated
         if this.state.data.last_read:
-            date_read = utils.moment.unix(this.state.data.last_read).format("LLL")
-            date_read += " (" + utils.moment.unix(this.state.data.last_read).fromNow() + ")"
+            date_read = this.state.data.last_read
         if this.state.data.timestamp:
-            date_added = utils.moment.unix(this.state.data.timestamp).format("LLL")
-            date_added += " (" + utils.moment.unix(this.state.data.timestamp).fromNow() + ")"
+            date_added = this.state.data.timestamp
         read_count = this.state.data.times_read
         info = this.state.data.info
         title = this.state.data.titles[0].js_name
@@ -316,7 +312,7 @@ def page_render():
                   e(ui.Table.Cell, e(ui.Label, tr(this, "general.db-status-{}".format(status.lower()), status), color={"completed": "green", "ongoing": "orange", "unknown": "grey"}.get(status.lower(), "blue")))))
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-published", "Published") + ':', as_="h5"), collapsing=True),
-                  e(ui.Table.Cell, e(ui.Label, date_pub))))
+                  e(ui.Table.Cell, e(DateLabel, timestamp=date_pub, full=True))))
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-times-read", "Times read") + ':', as_="h5"), collapsing=True),
                   e(ui.Table.Cell, e(ui.Label, read_count, circular=True))))
@@ -554,9 +550,15 @@ def page_render():
                basic=True,
                ),
              e(ui.Grid.Row,
-               e(ui.Grid.Column, e(ui.Label, tr(this, "ui.t-date-added", "Date added"), e(ui.Label.Detail, date_added))),
-               e(ui.Grid.Column, e(ui.Label, tr(this, "ui.t-last-read", "Last read"), e(ui.Label.Detail, date_read))),
-               e(ui.Grid.Column, e(ui.Label, tr(this, "ui.t-last-updated", "Last updated"), e(ui.Label.Detail, date_upd))),
+               e(ui.Grid.Column,
+                 e(DateLabel, tr(this, "ui.t-date-added", "Date added"), timestamp=date_added, format="LLL"),
+                 textAlign="center"),
+               e(ui.Grid.Column,
+                 e(DateLabel, tr(this, "ui.t-last-read", "Last read"), timestamp=date_read, format="LLL"),
+                 textAlign="center"),
+               e(ui.Grid.Column,
+                 e(DateLabel, tr(this, "ui.t-last-updated", "Last updated"), timestamp=date_upd, format="LLL"),
+                 textAlign="center"),
                columns=3
                ),
              *collection_accordion,

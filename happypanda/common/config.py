@@ -14,8 +14,8 @@ log = hlogger.Logger(constants.log_ns_core + __name__)
 
 
 class ConfigIsolation(Enum):
-    server = 1
-    client = 2
+    server = "server"
+    client = "client"
 
 
 class ConfigNode:
@@ -327,10 +327,12 @@ class Config:
         # ]
         """
         sections = []
-        for s in self._default_config:
+        for s in sorted(ConfigNode._cfg_nodes):
             con = []
-            for key in self._default_config[s]:
-                con.append([key, self._default_config[s][key], self._comments[s][key]])
+            for key, node in sorted(ConfigNode._cfg_nodes[s].items(), key=lambda a:a[0]):
+                if node.hidden:
+                    continue
+                con.append([key, node.default or '', node.isolation.value, node.description])
             sections.append([con, s])
         return sections
 

@@ -128,7 +128,7 @@ Thumbnail = createReactClass({
 
     'is_mounted': False,
 
-    'getInitialState': lambda: {'img': this.props.img or "",
+    'getInitialState': lambda: {'img': this.props.img or "/static/img/default.png",
                                 'loading': False if this.props.img else True,
                                 'placeholder': this.props.placeholder if utils.defined(this.props.placeholder) else "/static/img/default.png",
                                 'active_cmd': None,

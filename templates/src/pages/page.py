@@ -152,7 +152,6 @@ __pragma__("nokwargs")
 
 
 def on_key(ev):
-    ev.preventDefault()
 
     history = this.props.history
     gallery_id = this.state.data.gallery_id
@@ -180,13 +179,16 @@ def on_key(ev):
             "number": number - 1})
 
     if ev.key == "Escape":
+        ev.preventDefault()
         this.back_to_gallery()
     elif ev.key in ("ArrowRight", "d"):
+        ev.preventDefault()
         if this.state.cfg_direction == ReaderDirection.left_to_right:
             go_next()
         elif this.state.cfg_direction == ReaderDirection.right_to_left:
             go_prev()
     elif ev.key in ("ArrowLeft", "a"):
+        ev.preventDefault()
         if this.state.cfg_direction == ReaderDirection.left_to_right:
             go_prev()
         elif this.state.cfg_direction == ReaderDirection.right_to_left:

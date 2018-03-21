@@ -5,6 +5,7 @@ from src.react_utils import (h, e,
                              QueryLink)
 
 from src.state import state
+from src.i18n import tr
 from src import utils
 from org.transcrypt.stubs.browser import __pragma__
 __pragma__('alias', 'as_', 'as')
@@ -324,4 +325,36 @@ LabelAccordion = createReactClass({
                         secondary=this.props.secondary,
                         basic=this.props.basic if utils.defined(this.props.basic) else True,
                         ),
+})
+
+def datelbl_render():
+    if this.props.timestamp:
+        full = utils.moment.unix(this.props.timestamp).format(this.props.format or "LL")
+        relative = utils.moment.unix(this.props.timestamp).fromNow()
+        if this.props.full:
+            date = full + " ({})".format(relative)
+        elif this.state.toggled:
+            date = full
+        else:
+            date = relative
+    else:
+        date = tr(this, "ui.t-unknown", "Unknown")
+
+    items = []
+    if this.props.children:
+        items.append(this.props.children)
+        items.append(e(ui.Label.Detail, date))
+    else:
+        items.append(date)
+
+    return e(ui.Label, *items, onClick=this.toggle, as_="a")
+
+DateLabel = createReactClass({
+    'displayName': 'DateLabel',
+
+    'getInitialState': lambda: {'toggled': False},
+
+    'toggle': lambda: this.setState({'toggled': not this.state.toggled}),
+
+    'render': datelbl_render,
 })
