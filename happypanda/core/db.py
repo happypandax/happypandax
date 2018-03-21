@@ -1574,14 +1574,15 @@ def init(**kwargs):
     return check_db_version(Session())
 
 
-def add_bulk(session, objects, amount=100):
+def add_bulk(session, objects, amount=100, flush=False, bulk_save=False, return_defaults=True):
     """
     Add objects in a bulk of x amount
     """
     left = objects[:amount]
     while left:
-        session.add_all(left)
-        session.commit()
+        session.bulk_save_objects(left, return_defaults=return_defaults) if bulk_save else session.add_all(left)
+        session.flush() if flush else session.commit()
+        objects = objects[amount:]
         left = objects[:amount]
 
 

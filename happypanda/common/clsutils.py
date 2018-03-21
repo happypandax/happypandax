@@ -37,7 +37,7 @@ class Invalidator:
 
     def __get__(self, instance, objtype):
         v = self.value
-        if self.value and invalidate:
+        if self.value:
             self.value = False
         return v
 

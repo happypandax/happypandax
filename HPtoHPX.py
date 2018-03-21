@@ -842,11 +842,14 @@ def main(args=sys.argv[1:]):
 
         gallery_mixmap = {}
         dst_galleries = []
+        dst_taggables = []
         dst_profiles = []
         en_lang = db.Language()
         en_lang.name = "English"
         dst_languages = {"english": en_lang}
         dst_artists = {}
+        dst_circles = {}
+        dst_parodies = {}
         dst_gtype = {}
         dst_status = {}
         dst_namespace = {}
@@ -855,6 +858,7 @@ def main(args=sys.argv[1:]):
         dst_collections = {}
         dst_grouping = {}
         dst_pages = {}
+        dst_pagelist = {}
 
         pages_to_send = []
         pages_to_send2 = []
@@ -966,6 +970,18 @@ def main(args=sys.argv[1:]):
                             artist.names.append(artist_name)
                         gallery.artists.append(artist)
                         dst_artists[artist_name.name] = artist
+                        #if 'Group' in g.tags:
+                        #    circle_tags = g.tags['Group']
+                        #    for ctag in circle_tags:
+                        #        if ctag:
+                        #            circle = dst_circles.get(ctag)
+                        #            if not circle:
+                        #                circle = db.Circle()
+                        #                circle.name = " ".join(x.capitalize() for x in ctag.strip().split())
+                        #                dst_circles[ctag] = circle
+                        #            if not circle in artist.circles:
+                        #                artist.circles.append(circle)
+
                     gallery.info = g.info
                     if g.fav:
                         gallery.metatags.append(db.MetaTag.tags[db.MetaTag.names.favorite])
@@ -984,6 +1000,20 @@ def main(args=sys.argv[1:]):
                         gurl = db.Url()
                         gurl.name = g.link
                         gallery.urls.append(gurl)
+
+                    #if 'Parody' in g.tags:
+                    #    parody_tags = g.tags['Parody']
+                    #    for ptag in parody_tags:
+                    #        if ptag:
+                    #            parody = dst_parodies.get(ptag)
+                    #            if not parody:
+                    #                parody = db.Parody()
+                    #                parody_name = db.AliasName()
+                    #                parody_name.name = " ".join(x.capitalize() for x in ptag.strip().split())
+                    #                parody_name.language = dst_languages['english']
+                    #                parody.names.append(parody_name)
+                    #                dst_parodies[ptag] = parody
+                    #            gallery.parodies.append(parody)
 
                     gallery.pub_date = g.pub_date
                     gallery.timestamp = g.date_added
@@ -1010,7 +1040,10 @@ def main(args=sys.argv[1:]):
                         nstag = dst_nstagmapping.get(nstagname, nstag)
                         dst_nstagmapping[nstagname] = nstag
                         for ch_g in galleries:
+                            taggable = db.Taggable()
+                            ch_g.taggable = taggable
                             ch_g.tags.append(nstag)
+                            dst_taggables.append(ch_g.taggable)
 
                 dst_galleries.extend(galleries)
 
@@ -1018,6 +1051,7 @@ def main(args=sys.argv[1:]):
                     print_progress(numb, len(src_galleries), "Progress:", bar_length=50)
                 except UnicodeEncodeError:
                     print("\nStill in progress... please wait...")
+
 
             if not pages_to_send:
                 AMOUNT_OF_TASKS = 1
@@ -1094,7 +1128,7 @@ def main(args=sys.argv[1:]):
                         p.path = pp[1]
                         p.number = pp[2]
                         p.in_archive = pp[3]
-                        dst_pages[g].pages.append(p, True)
+                        dst_pagelist.setdefault(dst_pages[g], []).append(p)
                     try:
                         print_progress(current_p_count, pages_count, "Progress:", bar_length=50)
                     except UnicodeEncodeError:
@@ -1120,6 +1154,30 @@ def main(args=sys.argv[1:]):
 
             dst_lists.append(glist)
 
+        #s.flush()
+        #print("Flushing... (this might take a few minutes)")
+        #s.bulk_save_objects(dst_taggables, return_defaults=True)
+        #s.flush()
+
+        #print("Adding languages...")
+        #items.extend(dst_languages.values())
+        #print("Adding artists...")
+        #items.extend(dst_artists.values())
+        #print("Adding gallery types...")
+        #items.extend(dst_gtype.values())
+        #print("Adding gallery status...")
+        #items.extend(dst_status.values())
+        #print("Adding gallery namespaces...")
+        #items.extend(dst_namespace.values())
+        #print("Adding gallery tags...")
+        #items.extend(dst_tag.values())
+        #items.extend(dst_nstagmapping.values())
+        #print("Adding galleries...")
+        #items.extend(dst_galleries)
+        #print("Adding gallery lists...")
+        #items.extend(dst_lists)
+        #s.bulk_save_objects(items, return_defaults=True)
+
         print("Adding languages...")
         s.add_all(dst_languages.values())
         print("Adding artists...")
@@ -1137,7 +1195,30 @@ def main(args=sys.argv[1:]):
         s.add_all(dst_galleries)
         print("Adding gallery lists...")
         s.add_all(dst_lists)
-        print("Committing... (this might take a few minutes)")
+        print("Flushing... (this might take a few minutes)")
+        s.flush()
+        print("Adding gallery pages...")
+        taggable_items = []
+        page_items = []
+        for g, g_pages in dst_pagelist.items():
+            for p in g_pages:
+                p.gallery_id = g.id
+                page_items.append(p)
+                taggable_items.append(db.Taggable())
+        if taggable_items:
+            one_taggable = taggable_items[0]
+            s.add(one_taggable)
+            s.flush()
+            s.bulk_save_objects(taggable_items[1:], return_defaults=True)
+            print("Flushing again... (this might take a few minutes)")
+            s.flush()
+            del taggable_items
+            taggable_items = list(s.query(db.Taggable.id).filter(db.Taggable.id > one_taggable.id).all())
+            taggable_items.insert(0, (one_taggable.id,))
+        for n, p in enumerate(page_items):
+            p.taggable_id = taggable_items[n][0]
+        s.bulk_save_objects(page_items, return_defaults=True)
+        print("Committing...")
         s.commit()
         print("Done!")
     except Exception as e:
