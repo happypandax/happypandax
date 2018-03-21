@@ -842,7 +842,6 @@ def main(args=sys.argv[1:]):
 
         gallery_mixmap = {}
         dst_galleries = []
-        dst_taggables = []
         dst_profiles = []
         en_lang = db.Language()
         en_lang.name = "English"
@@ -970,17 +969,17 @@ def main(args=sys.argv[1:]):
                             artist.names.append(artist_name)
                         gallery.artists.append(artist)
                         dst_artists[artist_name.name] = artist
-                        #if 'Group' in g.tags:
-                        #    circle_tags = g.tags['Group']
-                        #    for ctag in circle_tags:
-                        #        if ctag:
-                        #            circle = dst_circles.get(ctag)
-                        #            if not circle:
-                        #                circle = db.Circle()
-                        #                circle.name = " ".join(x.capitalize() for x in ctag.strip().split())
-                        #                dst_circles[ctag] = circle
-                        #            if not circle in artist.circles:
-                        #                artist.circles.append(circle)
+                        if 'Group' in g.tags:
+                            circle_tags = g.tags['Group']
+                            for ctag in circle_tags:
+                                if ctag:
+                                    circle = dst_circles.get(ctag)
+                                    if not circle:
+                                        circle = db.Circle()
+                                        circle.name = " ".join(x.capitalize() for x in ctag.strip().split())
+                                        dst_circles[ctag] = circle
+                                    if not circle in artist.circles:
+                                        artist.circles.append(circle)
 
                     gallery.info = g.info
                     if g.fav:
@@ -1001,19 +1000,19 @@ def main(args=sys.argv[1:]):
                         gurl.name = g.link
                         gallery.urls.append(gurl)
 
-                    #if 'Parody' in g.tags:
-                    #    parody_tags = g.tags['Parody']
-                    #    for ptag in parody_tags:
-                    #        if ptag:
-                    #            parody = dst_parodies.get(ptag)
-                    #            if not parody:
-                    #                parody = db.Parody()
-                    #                parody_name = db.AliasName()
-                    #                parody_name.name = " ".join(x.capitalize() for x in ptag.strip().split())
-                    #                parody_name.language = dst_languages['english']
-                    #                parody.names.append(parody_name)
-                    #                dst_parodies[ptag] = parody
-                    #            gallery.parodies.append(parody)
+                    if 'Parody' in g.tags:
+                        parody_tags = g.tags['Parody']
+                        for ptag in parody_tags:
+                            if ptag:
+                                parody = dst_parodies.get(ptag)
+                                if not parody:
+                                    parody = db.Parody()
+                                    parody_name = db.AliasName()
+                                    parody_name.name = " ".join(x.capitalize() for x in ptag.strip().split())
+                                    parody_name.language = dst_languages['english']
+                                    parody.names.append(parody_name)
+                                    dst_parodies[ptag] = parody
+                                gallery.parodies.append(parody)
 
                     gallery.pub_date = g.pub_date
                     gallery.timestamp = g.date_added
@@ -1040,10 +1039,7 @@ def main(args=sys.argv[1:]):
                         nstag = dst_nstagmapping.get(nstagname, nstag)
                         dst_nstagmapping[nstagname] = nstag
                         for ch_g in galleries:
-                            taggable = db.Taggable()
-                            ch_g.taggable = taggable
                             ch_g.tags.append(nstag)
-                            dst_taggables.append(ch_g.taggable)
 
                 dst_galleries.extend(galleries)
 

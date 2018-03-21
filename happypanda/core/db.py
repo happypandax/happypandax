@@ -946,7 +946,7 @@ class Circle(NameMixin, Base):
         "Artist",
         secondary=artist_circles,
         back_populates='circles',
-        lazy="joined")
+        lazy="dynamic")
 
 
 gallery_parodies = Table(

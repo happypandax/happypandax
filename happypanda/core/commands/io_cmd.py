@@ -125,6 +125,8 @@ class ImageItem(AsyncCommand):
 
             elif self.properties.output_dir:
                 o_dir = self.properties.output_dir
+                if not os.path.exists(o_dir):
+                    os.makedirs(o_dir)
                 o_name = self.properties.name if self.properties.name else utils.random_name()
                 if not o_name.endswith(ext):
                     o_name = o_name + ext
