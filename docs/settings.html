@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Settings &#8212; HappyPanda X 0.0.10#122 documentation</title>
+    <title>Settings &#8212; HappyPanda X 0.0.11#122 documentation</title>
     
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.0.10#122',
+        VERSION:     '0.0.11#122',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -54,7 +54,7 @@
         </button>
         <a class="navbar-brand" href="index.html">
           HappyPanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.10#122</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.11#122</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -174,290 +174,346 @@
 <h1>Settings<a class="headerlink" href="#settings" title="Permalink to this headline">¶</a></h1>
 <table border="1" class="docutils">
 <colgroup>
-<col width="33%" />
-<col width="33%" />
-<col width="33%" />
+<col width="25%" />
+<col width="25%" />
+<col width="25%" />
+<col width="25%" />
 </colgroup>
 <thead valign="bottom">
 <tr class="row-odd"><th class="head">Option</th>
 <th class="head">Default</th>
+<th class="head">Scope</th>
 <th class="head">Description</th>
 </tr>
 </thead>
 <tbody valign="top">
 </tbody>
 <colgroup>
-<col width="33%" />
-<col width="33%" />
-<col width="33%" />
+<col width="25%" />
+<col width="25%" />
+<col width="25%" />
+<col width="25%" />
 </colgroup>
 <thead valign="bottom">
-<tr class="row-even"><th class="head" colspan="3">core</th>
+<tr class="row-even"><th class="head" colspan="4">advanced</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-odd"><td>debug</td>
-<td>False</td>
-<td>Run in debug mode</td>
+<tr class="row-odd"><td>disabled_loggers</td>
+<td></td>
+<td>server</td>
+<td>Loggers to disable. Available loggers: [client],[command],[core],[database],[gui],[network],[plugin],[search],[server],[misc]</td>
 </tr>
-<tr class="row-even"><td>report_critical_errors</td>
-<td>True</td>
-<td>Send occurring critical errors to me (creator) so I can fix them faster</td>
+</tbody>
+<colgroup>
+<col width="25%" />
+<col width="25%" />
+<col width="25%" />
+<col width="25%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-even"><th class="head" colspan="4">client</th>
 </tr>
-<tr class="row-odd"><td>concurrent_image_tasks</td>
-<td>10</td>
-<td>Amount of image service tasks allowed to run at the same time (higher count does not necessarily mean faster generation)</td>
+</thead>
+<tbody valign="top">
+<tr class="row-odd"><td>translation_locale</td>
+<td>en_us</td>
+<td>client</td>
+<td>The default translation locale when none is specified. See folder /translations for available locales</td>
 </tr>
-<tr class="row-even"><td>concurrent_network_tasks</td>
-<td>50</td>
-<td>Amount of network service tasks allowed to run at the same time (higher count does not necessarily mean faster network speed)</td>
+</tbody>
+<colgroup>
+<col width="25%" />
+<col width="25%" />
+<col width="25%" />
+<col width="25%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-even"><th class="head" colspan="4">core</th>
 </tr>
-<tr class="row-odd"><td>check_new_releases</td>
-<td>True</td>
-<td>Regularly check for updates</td>
-</tr>
-<tr class="row-even"><td>auto_install_release</td>
-<td>True</td>
-<td>Automatically download, install and restart when a new update is found</td>
-</tr>
-<tr class="row-odd"><td>check_release_interval</td>
-<td>20</td>
-<td>Interval in minutes between checking for a new update, set 0 to only check once every startup</td>
+</thead>
+<tbody valign="top">
+<tr class="row-odd"><td>allow_alpha_releases</td>
+<td></td>
+<td>server</td>
+<td>Allow downloading alpha releases</td>
 </tr>
 <tr class="row-even"><td>allow_beta_releases</td>
 <td>True</td>
+<td>server</td>
 <td>Allow downloading beta releases</td>
 </tr>
-<tr class="row-odd"><td>allow_alpha_releases</td>
-<td>False</td>
-<td>Allow downloading alpha releases</td>
+<tr class="row-odd"><td>auto_install_release</td>
+<td>True</td>
+<td>server</td>
+<td>Automatically download, install and restart when a new update is found</td>
+</tr>
+<tr class="row-even"><td>check_new_releases</td>
+<td>True</td>
+<td>server</td>
+<td>Regularly check for updates</td>
+</tr>
+<tr class="row-odd"><td>check_release_interval</td>
+<td>20</td>
+<td>server</td>
+<td>Interval in minutes between checking for a new update, set 0 to only check once every startup</td>
+</tr>
+<tr class="row-even"><td>concurrent_image_tasks</td>
+<td>10</td>
+<td>server</td>
+<td>Amount of image service tasks allowed to run at the same time (higher count does not necessarily mean faster generation)</td>
+</tr>
+<tr class="row-odd"><td>concurrent_network_tasks</td>
+<td>50</td>
+<td>server</td>
+<td>Amount of network service tasks allowed to run at the same time (higher count does not necessarily mean faster network speed)</td>
+</tr>
+<tr class="row-even"><td>debug</td>
+<td></td>
+<td>server</td>
+<td>Run in debug mode</td>
+</tr>
+<tr class="row-odd"><td>report_critical_errors</td>
+<td>True</td>
+<td>server</td>
+<td>Send occurring critical errors to me (creator) so I can fix them faster</td>
 </tr>
 <tr class="row-even"><td>unrar_tool_path</td>
 <td>bin\win32\unrar.exe</td>
+<td>server</td>
 <td>Path to unrar tool. On Windows the default path is &#8216;bin/win32/unrar.exe&#8217;. On Unix the default path is &#8216;unrar&#8217;</td>
 </tr>
 </tbody>
 <colgroup>
-<col width="33%" />
-<col width="33%" />
-<col width="33%" />
+<col width="25%" />
+<col width="25%" />
+<col width="25%" />
+<col width="25%" />
 </colgroup>
 <thead valign="bottom">
-<tr class="row-odd"><th class="head" colspan="3">gallery</th>
+<tr class="row-odd"><th class="head" colspan="4">db</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>sqlite_database_timeout</td>
+<td>30</td>
+<td>server</td>
+<td>Amount of seconds to wait for the database to be writeable</td>
+</tr>
+</tbody>
+<colgroup>
+<col width="25%" />
+<col width="25%" />
+<col width="25%" />
+<col width="25%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head" colspan="4">gallery</th>
 </tr>
 </thead>
 <tbody valign="top">
 <tr class="row-even"><td>external_image_viewer</td>
 <td></td>
+<td>server</td>
 <td>Path to external image viewer executable</td>
 </tr>
 <tr class="row-odd"><td>external_image_viewer_args</td>
 <td></td>
+<td>server</td>
 <td>Command arguments to supply the image viewer executable</td>
 </tr>
-<tr class="row-even"><td>send_to_trash</td>
-<td>True</td>
-<td>Send deleted galleries to recycle bin</td>
-</tr>
-<tr class="row-odd"><td>send_path_to_first_file</td>
-<td>False</td>
+<tr class="row-even"><td>send_path_to_first_file</td>
+<td></td>
+<td>server</td>
 <td>Send path to first file when opening a gallery in external viewer</td>
 </tr>
+<tr class="row-odd"><td>send_to_trash</td>
+<td>True</td>
+<td>server</td>
+<td>Send deleted galleries to recycle bin</td>
+</tr>
 </tbody>
 <colgroup>
-<col width="33%" />
-<col width="33%" />
-<col width="33%" />
+<col width="25%" />
+<col width="25%" />
+<col width="25%" />
+<col width="25%" />
 </colgroup>
 <thead valign="bottom">
-<tr class="row-even"><th class="head" colspan="3">db</th>
+<tr class="row-even"><th class="head" colspan="4">gui</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-odd"><td>sqlite_database_timeout</td>
+<tr class="row-odd"><td>autostart_server</td>
+<td></td>
+<td>server</td>
+<td>Start the server automatically on HPX GUI startup</td>
+</tr>
+<tr class="row-even"><td>open_webclient_on_server_start</td>
+<td>True</td>
+<td>server</td>
+<td>Open the webclient in your default browser on server start</td>
+</tr>
+<tr class="row-odd"><td>send_to_tray_on_close</td>
+<td></td>
+<td>server</td>
+<td>Put the application in the notification tray on close button</td>
+</tr>
+<tr class="row-even"><td>send_to_tray_on_minimize</td>
+<td></td>
+<td>server</td>
+<td>Put the application in the notification tray on minimize button</td>
+</tr>
+<tr class="row-odd"><td>start_minimized_to_tray</td>
+<td></td>
+<td>server</td>
+<td>Start the HPX GUI in a minimized to tray state</td>
+</tr>
+<tr class="row-even"><td>start_on_boot</td>
+<td></td>
+<td>server</td>
+<td>Start HPX GUI automatically on boot</td>
+</tr>
+</tbody>
+<colgroup>
+<col width="25%" />
+<col width="25%" />
+<col width="25%" />
+<col width="25%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head" colspan="4">network</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>proxy</td>
+<td>{&#8216;https&#8217;: &#8216;&#8217;, &#8216;http&#8217;: &#8216;&#8217;}</td>
+<td>server</td>
+<td>Specify network proxies. Proxy URLs must include the scheme. To use HTTP Basic Auth with your proxy, use the http://user:password&#64;host/ syntax</td>
+</tr>
+<tr class="row-odd"><td>request_timeout</td>
 <td>30</td>
-<td>Amount of seconds to wait for the database to be writeable</td>
+<td>server</td>
+<td>Upper limit of a request timeout in seconds</td>
 </tr>
 </tbody>
 <colgroup>
-<col width="33%" />
-<col width="33%" />
-<col width="33%" />
+<col width="25%" />
+<col width="25%" />
+<col width="25%" />
+<col width="25%" />
 </colgroup>
 <thead valign="bottom">
-<tr class="row-even"><th class="head" colspan="3">server</th>
+<tr class="row-even"><th class="head" colspan="4">search</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-odd"><td>server_name</td>
-<td>lacus_krista_rias</td>
-<td>Specifiy name of the server</td>
+<tr class="row-odd"><td>case_sensitive</td>
+<td></td>
+<td>server</td>
+<td>Search filter is case sensitive</td>
 </tr>
-<tr class="row-even"><td>port</td>
-<td>7007</td>
-<td>Specify which port to start the server on</td>
+<tr class="row-even"><td>descendants</td>
+<td>True</td>
+<td>server</td>
+<td>Also match on descandants</td>
 </tr>
-<tr class="row-odd"><td>port_web</td>
-<td>7008</td>
-<td>Specify which port to start the webserver on</td>
+<tr class="row-odd"><td>match_all_terms</td>
+<td>True</td>
+<td>server</td>
+<td>Match only items that has all terms</td>
 </tr>
-<tr class="row-even"><td>torrent_port</td>
-<td>7006</td>
-<td>Specify which port to start the torrent client on</td>
+<tr class="row-even"><td>match_whole_words</td>
+<td></td>
+<td>server</td>
+<td>Match terms exact</td>
 </tr>
-<tr class="row-odd"><td>port_range</td>
-<td>{&#8216;from&#8217;: 7009, &#8216;to&#8217;: 7018}</td>
-<td>Specify a range of ports to attempt</td>
+<tr class="row-odd"><td>regex</td>
+<td></td>
+<td>server</td>
+<td>Allow regex in search filters</td>
+</tr>
+</tbody>
+<colgroup>
+<col width="25%" />
+<col width="25%" />
+<col width="25%" />
+<col width="25%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-even"><th class="head" colspan="4">server</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-odd"><td>allow_guests</td>
+<td>True</td>
+<td>server</td>
+<td>Specify if guests are allowed on this server</td>
+</tr>
+<tr class="row-even"><td>allowed_clients</td>
+<td></td>
+<td>server</td>
+<td>Limit amount of clients allowed to be connected (0 means no limit)</td>
+</tr>
+<tr class="row-odd"><td>disable_default_user</td>
+<td></td>
+<td>server</td>
+<td>Disable default user</td>
+</tr>
+<tr class="row-even"><td>encrypt</td>
+<td></td>
+<td>server</td>
+<td>Specify if messages should be encrypted before sending. A secret key has to be set for messages to be encrypted</td>
+</tr>
+<tr class="row-odd"><td>expose_server</td>
+<td></td>
+<td>server</td>
+<td>Attempt to expose the server through portforwading</td>
 </tr>
 <tr class="row-even"><td>host</td>
 <td>localhost</td>
+<td>server</td>
 <td>Specify which address the server should bind to</td>
 </tr>
 <tr class="row-odd"><td>host_web</td>
 <td></td>
+<td>server</td>
 <td>Specify which address the webserver should bind to</td>
 </tr>
-<tr class="row-even"><td>expose_server</td>
-<td>False</td>
-<td>Attempt to expose the server through portforwading</td>
+<tr class="row-even"><td>port</td>
+<td>7007</td>
+<td>server</td>
+<td>Specify which port to start the server on</td>
 </tr>
-<tr class="row-odd"><td>allowed_clients</td>
-<td>0</td>
-<td>Limit amount of clients allowed to be connected (0 means no limit)</td>
+<tr class="row-odd"><td>port_range</td>
+<td>{&#8216;to&#8217;: 7018, &#8216;from&#8217;: 7009}</td>
+<td>server</td>
+<td>Specify a range of ports to attempt</td>
 </tr>
-<tr class="row-even"><td>allow_guests</td>
-<td>True</td>
-<td>Specify if guests are allowed on this server</td>
+<tr class="row-even"><td>port_web</td>
+<td>7008</td>
+<td>server</td>
+<td>Specify which port to start the webserver on</td>
 </tr>
 <tr class="row-odd"><td>require_auth</td>
-<td>False</td>
+<td></td>
+<td>server</td>
 <td>Client must be authenticated to get write access</td>
 </tr>
-<tr class="row-even"><td>disable_default_user</td>
-<td>False</td>
-<td>Disable default user</td>
+<tr class="row-even"><td>server_name</td>
+<td>hinata_yami_albedo</td>
+<td>server</td>
+<td>Specifiy name of the server</td>
 </tr>
 <tr class="row-odd"><td>session_span</td>
-<td>0</td>
+<td></td>
+<td>server</td>
 <td>Specify the amount of time (in minutes) a session can go unused before expiring or 0 for never</td>
 </tr>
-<tr class="row-even"><td>encrypt</td>
-<td>False</td>
-<td>Specify if messages should be encrypted before sending. A secret key has to be set for messages to be encrypted</td>
-</tr>
-</tbody>
-<colgroup>
-<col width="33%" />
-<col width="33%" />
-<col width="33%" />
-</colgroup>
-<thead valign="bottom">
-<tr class="row-odd"><th class="head" colspan="3">search</th>
-</tr>
-</thead>
-<tbody valign="top">
-<tr class="row-even"><td>regex</td>
-<td>False</td>
-<td>Allow regex in search filters</td>
-</tr>
-<tr class="row-odd"><td>case_sensitive</td>
-<td>False</td>
-<td>Search filter is case sensitive</td>
-</tr>
-<tr class="row-even"><td>match_whole_words</td>
-<td>False</td>
-<td>Match terms exact</td>
-</tr>
-<tr class="row-odd"><td>match_all_terms</td>
-<td>True</td>
-<td>Match only items that has all terms</td>
-</tr>
-<tr class="row-even"><td>descendants</td>
-<td>True</td>
-<td>Also match on descandants</td>
-</tr>
-</tbody>
-<colgroup>
-<col width="33%" />
-<col width="33%" />
-<col width="33%" />
-</colgroup>
-<thead valign="bottom">
-<tr class="row-odd"><th class="head" colspan="3">client</th>
-</tr>
-</thead>
-<tbody valign="top">
-<tr class="row-even"><td>translation_locale</td>
-<td>en_us</td>
-<td>The default translation locale when none is specified. See folder /translations for available locales</td>
-</tr>
-</tbody>
-<colgroup>
-<col width="33%" />
-<col width="33%" />
-<col width="33%" />
-</colgroup>
-<thead valign="bottom">
-<tr class="row-odd"><th class="head" colspan="3">gui</th>
-</tr>
-</thead>
-<tbody valign="top">
-<tr class="row-even"><td>start_on_boot</td>
-<td>False</td>
-<td>Start HPX GUI automatically on boot</td>
-</tr>
-<tr class="row-odd"><td>autostart_server</td>
-<td>False</td>
-<td>Start the server automatically on HPX GUI startup</td>
-</tr>
-<tr class="row-even"><td>start_minimized_to_tray</td>
-<td>False</td>
-<td>Start the HPX GUI in a minimized to tray state</td>
-</tr>
-<tr class="row-odd"><td>send_to_tray_on_close</td>
-<td>False</td>
-<td>Put the application in the notification tray on close button</td>
-</tr>
-<tr class="row-even"><td>send_to_tray_on_minimize</td>
-<td>False</td>
-<td>Put the application in the notification tray on minimize button</td>
-</tr>
-<tr class="row-odd"><td>open_webclient_on_server_start</td>
-<td>True</td>
-<td>Open the webclient in your default browser on server start</td>
-</tr>
-</tbody>
-<colgroup>
-<col width="33%" />
-<col width="33%" />
-<col width="33%" />
-</colgroup>
-<thead valign="bottom">
-<tr class="row-even"><th class="head" colspan="3">network</th>
-</tr>
-</thead>
-<tbody valign="top">
-<tr class="row-odd"><td>request_timeout</td>
-<td>30</td>
-<td>Upper limit of a request timeout in seconds</td>
-</tr>
-<tr class="row-even"><td>proxy</td>
-<td>{&#8216;http&#8217;: &#8216;&#8217;, &#8216;https&#8217;: &#8216;&#8217;}</td>
-<td>Specify network proxies. Proxy URLs must include the scheme. To use HTTP Basic Auth with your proxy, use the http://user:password&#64;host/ syntax</td>
-</tr>
-</tbody>
-<colgroup>
-<col width="33%" />
-<col width="33%" />
-<col width="33%" />
-</colgroup>
-<thead valign="bottom">
-<tr class="row-odd"><th class="head" colspan="3">advanced</th>
-</tr>
-</thead>
-<tbody valign="top">
-<tr class="row-even"><td>disabled_loggers</td>
-<td colspan="2">Loggers to disable. Available loggers: [client],[command],[core],[database],[gui],[network],[plugin],[search],[server],[misc]</td>
+<tr class="row-even"><td>torrent_port</td>
+<td>7006</td>
+<td>server</td>
+<td>Specify which port to start the torrent client on</td>
 </tr>
 </tbody>
 </table>
