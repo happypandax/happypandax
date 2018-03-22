@@ -413,7 +413,8 @@ Page = createReactClass({
 
     'cmd_data': None,
     'set_page': lambda e, d: this.setState({'data': d}),
-    'go_prev': lambda: utils.go_to(this.props.history, query={'gid':this.state.data.gallery_id, 'number': this.state.data.number-1}),
+    'go_prev': lambda: utils.go_to(this.props.history, query={'gid':this.state.data.gallery_id, 'number': this.state.data.number-1}) if\
+       int(this.state.data.number) > 1 else None,
     'go_next': lambda: utils.go_to(this.props.history, query={'gid':this.state.data.gallery_id, 'number': this.state.data.number+1}) if\
        int(this.state.data.number) < int(this.state.page_count) else None,
     'go_left': go_left,

@@ -751,7 +751,7 @@ def _page_gen(items):
             else:
                 page_hash = (ch_path,)
                 dir_images = [
-                    x.path for x in os.scandir(g_path) if not x.is_dir() and x.name.endswith(
+                    x.path for x in os.scandir(ch_path) if not x.is_dir() and x.name.endswith(
                         img_formats)]
                 for n, x in enumerate(sorted(dir_images), 1):
                     x = io_cmd.CoreFS(x)
@@ -892,8 +892,6 @@ def main(args=sys.argv[1:]):
                                         ch.title.encode(
                                             errors='ignore')))
                             continue
-
-                    path_in_archive = ch.path
 
                     gallery = db.Gallery()
 
