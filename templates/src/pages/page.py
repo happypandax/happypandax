@@ -1,4 +1,4 @@
-from src.react_utils import (e,
+from src.react_utils import (e, h,
                              createReactClass,
                              Link)
 from src.ui import ui
@@ -150,49 +150,39 @@ def get_page_count(data=None, error=None, gid=None):
 
 __pragma__("nokwargs")
 
+def go_left():
+    if this.state.cfg_direction == ReaderDirection.left_to_right:
+        this.go_prev()
+    elif this.state.cfg_direction == ReaderDirection.right_to_left:
+        this.go_next()
+
+def go_right():
+    if this.state.cfg_direction == ReaderDirection.left_to_right:
+        this.go_next()
+    elif this.state.cfg_direction == ReaderDirection.right_to_left:
+        this.go_prev()
 
 def on_key(ev):
-
-    history = this.props.history
-    gallery_id = this.state.data.gallery_id
-    number = this.state.data.number
-    page_count = this.state.page_count
-
-    def go_prev(): return utils.go_to(  # noqa: E704
-        history,
-        query={
-            'gid': gallery_id,
-            "number": number - 1})
-
-    def go_next():
-        if int(number) < int(page_count):
-            return utils.go_to(
-                history,
-                query={
-                    'gid': gallery_id,
-                    "number": number + 1})
-
-    def go_last(): return utils.go_to(  # noqa: E704
-        history,
-        query={
-            'gid': gallery_id,
-            "number": number - 1})
-
     if ev.key == "Escape":
         ev.preventDefault()
         this.back_to_gallery()
     elif ev.key in ("ArrowRight", "d"):
         ev.preventDefault()
-        if this.state.cfg_direction == ReaderDirection.left_to_right:
-            go_next()
-        elif this.state.cfg_direction == ReaderDirection.right_to_left:
-            go_prev()
+        this.go_right()
     elif ev.key in ("ArrowLeft", "a"):
         ev.preventDefault()
-        if this.state.cfg_direction == ReaderDirection.left_to_right:
-            go_prev()
-        elif this.state.cfg_direction == ReaderDirection.right_to_left:
-            go_next()
+        this.go_left()
+
+def on_canvas_click(ev):
+    if this.state.context:
+        ev.preventDefault()
+        rect = this.state.context.getBoundingClientRect()
+        x, y = ev.clientX-rect.left, ev.clientY-rect.top
+        hwidth = rect.width/2
+        if x > hwidth:
+            this.go_right()
+        else:
+            this.go_left()
 
 
 def on_update(p_props, p_state):
@@ -284,8 +274,6 @@ def page_render():
               style=thumb_style,
               className=thumb_class
               )
-    if n_url:
-        thumb = e(Link, thumb, to=n_url)
 
     rows = []
 
@@ -370,7 +358,9 @@ def page_render():
                    e(ui.Ref,
                      e(ui.Grid.Column,
                        thumb,
-                       className="no-padding-segment"
+                       className="no-padding-segment",
+                       onClick=this.on_canvas_click,
+                       style={'cursor':'pointer'},
                        ),
                      innerRef=this.set_context,
                      ),
@@ -423,6 +413,11 @@ Page = createReactClass({
 
     'cmd_data': None,
     'set_page': lambda e, d: this.setState({'data': d}),
+    'go_prev': lambda: utils.go_to(this.props.history, query={'gid':this.state.data.gallery_id, 'number': this.state.data.number-1}),
+    'go_next': lambda: utils.go_to(this.props.history, query={'gid':this.state.data.gallery_id, 'number': this.state.data.number+1}) if\
+       int(this.state.data.number) < int(this.state.page_count) else None,
+    'go_left': go_left,
+    'go_right': go_right,
     'set_pagelist_ref': lambda r: this.setState({'page_list_ref': r}),
     'set_thumbs': set_thumbs,
     'get_thumbs': get_thumbs,
@@ -442,6 +437,8 @@ Page = createReactClass({
     'toggle_config': lambda: this.setState({'config_visible': not this.state.config_visible, 'pages_visible': False}),
     'toggle_pages': lambda: this.setState({'pages_visible': not this.state.pages_visible, 'config_visible': False}),
     'set_context': lambda c: this.setState({'context': c}),
+    'on_canvas_click': on_canvas_click,
+
     'componentDidUpdate': on_update,
     'componentWillReceiveProps': receive_props,
     'componentDidMount': lambda: window.addEventListener("keydown", this.on_key, False),
