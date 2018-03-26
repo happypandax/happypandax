@@ -262,8 +262,8 @@ SQLITE_REGEX_FUNCTIONS = {
 class PasswordHash(Mutable):
     def __init__(self, hash_, rounds=None):
         assert len(hash_) == 60, 'bcrypt hash should be 60 chars.'
-        assert hash_.count('$'), 'bcrypt hash should have 3x "$".'
-        self.hash = str(hash_)
+        assert hash_.count(b'$'), 'bcrypt hash should have 3x "$".'
+        self.hash = hash_.decode()
         self.rounds = int(self.hash.split('$')[2])
         self.desired_rounds = rounds or self.rounds
 
@@ -275,7 +275,7 @@ class PasswordHash(Mutable):
         This will also mark the object as having changed (and thus need updating).
         """
         if isinstance(candidate, str):
-            if self.hash == bcrypt.hashpw(candidate, self.hash):
+            if self.hash == bcrypt.hashpw(self._encoded(candidate), self.hash).decode():
                 if self.rounds < self.desired_rounds:
                     self._rehash(candidate)
                 return True
@@ -297,10 +297,14 @@ class PasswordHash(Mutable):
         """Returns a new PasswordHash object for the given password and rounds."""
         return cls(cls._new(password, rounds))
 
+    @classmethod
+    def _encoded(cls, txt):
+        return txt.encode('utf-8')
+
     @staticmethod
     def _new(password, rounds):
         """Returns a new bcrypt hash for the given password and rounds."""
-        return bcrypt.hashpw(password, bcrypt.gensalt(rounds))
+        return bcrypt.hashpw(PasswordHash._encoded(password), bcrypt.gensalt(rounds))
 
     def _rehash(self, password):
         """Recreates the internal hash and marks the object as changed."""
@@ -1494,14 +1498,29 @@ def create_user(role, name=None, password=None):
         if not s.query(User).filter(User.name == 'default').one_or_none():
             s.add(User(name='default', role=User.Role.default))
             s.commit()
+            return True
 
+    elif role == User.Role.guest:
+        if not s.query(User).filter(User.name == name).one_or_none():
+            s.add(User(name=name,
+                       role=User.Role.guest))
+            s.commit()
+            return True
     elif role == User.Role.user:
-        pass
+        if not s.query(User).filter(User.name == name).one_or_none():
+            s.add(User(name=name,
+                       role=User.Role.user,
+                       password=password))
+            s.commit()
+            return True
     elif role == User.Role.admin:
-        s.add(User(name=name,
-                   password=PasswordHash.new(password, 15),
-                   role=User.Role.admin))
-        s.commit()
+        if not s.query(User).filter(User.name == name).one_or_none():
+            s.add(User(name=name,
+                       password=PasswordHash.new(password, 15),
+                       role=User.Role.admin))
+            s.commit()
+            return True
+    
 
 
 def check_db_version(sess):

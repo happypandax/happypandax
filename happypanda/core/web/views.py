@@ -35,13 +35,15 @@ def _create_locks(id):
     return all_locks[id]
 
 
-def _connect_clients(clients):
-    clients["client"].connect()
-    for c in clients:
-        clients[c].connect()
-        clients[c]._alive = clients["client"]._alive
-        clients[c].session = clients["client"].session
-        clients[c]._accepted = clients["client"]._accepted
+def _connect_clients(clients, username, password):
+    main_client = "client"
+    clients[main_client].connect(username, password)
+    for name, c in clients.items():
+        if name == main_client:
+            continue
+        c.session = clients[main_client].session
+        c._accepted = clients[main_client]._accepted
+        c.connect(username, password)
 
 
 def get_clients(id, session_id=""):
@@ -117,12 +119,12 @@ def on_command_handle(client_id, clients, msg, lock):
         lock.acquire()
         if cmd == 1:
             if not clients['client'].alive():
-                _connect_clients(clients)
+                _connect_clients(clients, msg.get("username", ""), msg.get("password", ""))
             d['status'] = clients['client'].alive()
         elif cmd == 2:
             if not clients['client'].alive():
                 try:
-                    _connect_clients(clients)
+                    _connect_clients(clients, msg.get("username", ""), msg.get("password", ""))
                 except exceptions.ClientError as e:
                     log.exception("Failed to reconnect")
                     send_error(e, room=client_id)

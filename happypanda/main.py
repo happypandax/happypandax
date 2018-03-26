@@ -21,6 +21,7 @@ if __name__ == '__main__':
 
 import multiprocessing  # noqa: E402
 import rollbar  # noqa: E402
+import getpass # noqa: E402
 
 from multiprocessing import Process  # noqa: E402
 from apscheduler.triggers.interval import IntervalTrigger  # noqa: E402
@@ -31,6 +32,23 @@ from happypanda.core.commands import io_cmd, meta_cmd  # noqa: E402
 log = hlogger.Logger(__name__)
 parser = utils.get_argparser()  # required to be at module lvl for sphinx.autoprogram ext
 
+
+def create_user_interactive():
+    s = {}
+    s['role'] = input("Which role should the user have?"+
+                        "\n"+"(1) user (default)\t"+
+                        "(2) guest\t"+
+                        "(3) admin"+
+                        "\nPlease input a number: ")
+    s['role'] = {'1':db.User.Role.user, '2':db.User.Role.guest, '3':db.User.Role.admin}.get(s['role'], db.User.Role.user)
+    print("Creating {}...".format(s['role'].value))
+    s['username'] = utils.get_input(func=lambda: input("Username: "))
+    if s['role'] != db.User.Role.guest:
+        s['password'] = utils.get_input(func=getpass.getpass)
+        if not s['password'] == getpass.getpass("Again: "):
+            s = {}
+            print("Passwords did not match")
+    return s
 
 def check_update():
     with utils.intertnal_db() as db:
@@ -50,6 +68,23 @@ def check_update():
                 state = update_info['state']
     return state
 
+def cmd_commands(args):
+    if args.gen_config:
+        config.config.save_default()
+        log.i("Generated example configuration file at {}".format(
+            io_cmd.CoreFS(constants.config_example_path).path), stdout=True)
+        return True
+
+    if args.create_user:
+        print("============ Create User =============")
+        uinfo = create_user_interactive()
+        if uinfo:
+            if db.create_user(uinfo['role'], uinfo['username'], uinfo.get("password", "")):
+                print("Successfully created new user", uinfo['username'])
+            else:
+                print("User {} already exists".format(uinfo['username']))
+        print("========== Create User End ===========")
+        return True
 
 def start(argv=None, db_kwargs={}):
     assert sys.version_info >= (3, 5), "Python 3.5 and up is required"
@@ -65,22 +100,24 @@ def start(argv=None, db_kwargs={}):
         if not args.only_web:
             db_inited = db.init(**db_kwargs)
             command.init_commands()
-            hlogger.Logger.init_listener(args)
             monkey.patch_all(thread=False, ssl=False)
         else:
             db_inited = True
+
+        if cmd_commands(args):
+            return
+
+        if not args.only_web:
+            hlogger.Logger.init_listener(args)
+
         utils.setup_online_reporter()
         hlogger.Logger.setup_logger(args, main=True, debug=config.debug.value)
         utils.disable_loggers(config.disabled_loggers.value)
+
         log.i("HPX START")
         if constants.dev:
             log.i("DEVELOPER MODE ENABLED", stdout=True)
         log.i("\n{}".format(utils.os_info()))
-        if args.gen_config:
-            config.config.save_default()
-            log.i("Generated example configuration file at {}".format(
-                io_cmd.CoreFS(constants.config_example_path).path), stdout=True)
-            return
 
         update_state = check_update() if not (not constants.is_frozen and constants.dev) else None
 

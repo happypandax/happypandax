@@ -70,7 +70,7 @@ def get_item(data=None, error=None):
 
             client.call_func("get_similar", this.get_similar,
                              item_type=ItemType.Gallery,
-                             item_id=data.id, limit=20)
+                             item_id=data.id, limit=30)
             this.setState({"similar_gallery_loading": True})
 
         if data.id:

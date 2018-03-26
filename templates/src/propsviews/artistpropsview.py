@@ -7,7 +7,7 @@ from src.ui import ui
 from src.i18n import tr
 from src.state import state
 from src.client import ItemType, client
-from src.single import tagitem
+from src.single import tagitem, circleitem
 from org.transcrypt.stubs.browser import __pragma__
 __pragma__('alias', 'as_', 'as')
 
@@ -57,6 +57,7 @@ def artistprops_render():
     nstags = this.props.tags or this.state.tags or {}
     data = this.props.data or this.state.data
     urls = []
+    circles = []
 
     if data:
         if data.names:
@@ -66,6 +67,10 @@ def artistprops_render():
 
         for u in data.urls:
             urls.append(u.js_name)
+
+        if data.circles:
+            for c in data.circles:
+                circles.append(c)
 
     tag_lbl = []
 
@@ -89,16 +94,19 @@ def artistprops_render():
                   e(ui.Table.Cell, e(ui.Header, name, size="medium"), colSpan="2", textAlign="center",
                     verticalAlign="middle")))
 
-    rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-multi-circles", "Circle") + ":", size="small"), collapsing=True),
-                  e(ui.Table.Cell, "")))
+    if circles:
+        rows.append(e(ui.Table.Row,
+                      e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-multi-circles", "Circle") + ":", size="small"), collapsing=True),
+                      e(ui.Table.Cell, *(e(circleitem.CircleLabel, data=x) for x in circles))))
 
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-galleries", "Galleries") + ":", size="small"), collapsing=True),
                   e(ui.Table.Cell, this.state.gallery_count)))
-    rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.multi-urls", "URL(s)") + ":", size="small"), collapsing=True),
-                  e(ui.Table.Cell, *[e(ui.List.Item, h("span", h("a", x, href=x, target="_blank"), e(ui.List.Icon, js_name="external share"))) for x in urls])))
+
+    if urls:
+        rows.append(e(ui.Table.Row,
+                      e(ui.Table.Cell, e(ui.Header, tr(this, "ui.multi-urls", "URL(s)") + ":", size="small"), collapsing=True),
+                      e(ui.Table.Cell, *[e(ui.List.Item, h("span", h("a", x, href=x, target="_blank"), e(ui.List.Icon, js_name="external share"))) for x in urls])))
 
     slider_el = []
 
@@ -117,11 +125,11 @@ def artistprops_render():
                  e(ui.Grid.Column, e(ui.Rating, icon="heart", size="huge", rating=fav), width=1),
                  e(ui.Grid.Column,
                    e(ui.Label.Group,
-                     e(ui.Label, tr(this, "ui.t-show-galleries", "Show galleries"), basic=True,
+                     e(ui.Button, icon="grid layout", title=tr(this, "ui.t-show-galleries", "Show galleries"), basic=True,
                        as_=Link, to=utils.build_url("/library", query=url_search_query, keep_query=False)),
-                     e(ui.Label, tr(this, "ui.t-show-fav-galleries", "Show favorite galleries"), basic=True,
+                     e(ui.Button, icon="heart", title=tr(this, "ui.t-show-fav-galleries", "Show favorite galleries"), basic=True,
                        as_=Link, to=utils.build_url("/favorite", query=url_search_query, keep_query=False)),
-                     e(ui.Label, tr(this, "ui.t-show-inbox-galleries", "Show galleries in inbox"), basic=True,
+                     e(ui.Button, icon="inbox", title=tr(this, "ui.t-show-inbox-galleries", "Show galleries in inbox"), basic=True,
                        as_=Link, to=utils.build_url("/inbox", query=url_search_query, keep_query=False)),
                      ), width=15, textAlign="right"),
                ),

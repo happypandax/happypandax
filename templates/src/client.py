@@ -260,11 +260,16 @@ class Client(Base):
                 ", trying again in {} seconds".format(interval) if interval else ""
             ), "Server")
         self.send_command(self.commands['connect'])
-    __pragma__("nokwargs")
 
-    def send_command(self, cmd):
-        assert cmd in self.commands.values(), "Not a valid command"
-        self.socket.emit("command", {'command': cmd, 'session_id': self.session_id})
+    def send_command(self, cmd, extra=None):
+        if cmd not in self.commands.values():
+            self.log("Not a valid command")
+            return
+        msg = {'command': cmd, 'session_id': self.session_id}
+        if extra:
+            msg.update(extra)
+        self.socket.emit("command", msg)
+    __pragma__("nokwargs")
 
     def on_command(self, msg):
         self._connection_status = msg['status']

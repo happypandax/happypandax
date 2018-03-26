@@ -116,6 +116,15 @@ def get_argparser():
     parser.add_argument('--gen-config', action='store_true',
                         help='Generate a skeleton example config file and quit')
 
+    parser.add_argument('--create-user', action='store_true',
+                        help='Create a user interactively and quit')
+
+    parser.add_argument('--delete-user', action='store_true',
+                        help='Delete a user interactively and quit')
+
+    parser.add_argument('--list-user', action='store_true',
+                        help='Display a list of users and quit')
+
     parser.add_argument('-d', '--debug', action='store_true',
                         help='Start in debug mode (collects more information)')
 
@@ -177,6 +186,14 @@ def parse_options(args):
     if args.momo:
         run_with_privileges(*args.momo)
 
+def get_input(txt="Please enter something...", func=None):
+    if not func:
+        func = lambda: get_input("input: ")
+    t = func()
+    while not t:
+        print(txt)
+        t = func()
+    return t
 
 def connection_params():
     "Retrieve host and port"

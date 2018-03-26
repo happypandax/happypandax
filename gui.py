@@ -313,7 +313,7 @@ class SettingsTabs(QTabWidget):
             sarea = QScrollArea(self)
             sarea.setWidget(w)
             sarea.setWidgetResizable(True)
-            sarea.setBackgroundRole(QPalette.Light)
+            #sarea.setBackgroundRole(QPalette.Light)
             self.addTab(sarea, ns)
 
     def get_setting_input(self, ns, node):
