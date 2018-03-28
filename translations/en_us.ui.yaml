@@ -36,6 +36,7 @@ t-username: Username
 t-password: Password
 b-connect: Connect
 b-continue-as-guest: Connect as guest
+t-wrong-credentials: Wrong credentials!
 
 # About Page
 mi-about-plugins: Plugins

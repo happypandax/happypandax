@@ -60,6 +60,8 @@ class Client:
                         raise exceptions.AuthWrongCredentialsError(utils.this_function(), serv_error['msg'])
                     elif serv_error['code'] == exceptions.AuthRequiredError.code:
                         raise exceptions.AuthRequiredError(utils.this_function(), serv_error['msg'])
+                    elif serv_error['code'] == exceptions.AuthMissingCredentials.code:
+                        raise exceptions.AuthMissingCredentials(utils.this_function(), serv_error['msg'])
                     else:
                         raise exceptions.AuthError(
                             utils.this_function(), "{}: {}".format(

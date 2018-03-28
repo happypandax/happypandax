@@ -86,6 +86,19 @@ def cmd_commands(args):
         print("========== Create User End ===========")
         return True
 
+    if args.delete_user:
+        if db.delete_user(args.delete_user):
+            print("Successfully deleted user", args.delete_user)
+        else:
+            print("User {} does not exist".format(args.delete_user))
+        return True
+
+    if args.list_users:
+        for u in db.list_users(limit=20, offset=args.list_users-1):
+            print("{}\t{}".format(u.name, u.role.value))
+        return True
+
+
 def start(argv=None, db_kwargs={}):
     assert sys.version_info >= (3, 5), "Python 3.5 and up is required"
     e_code = None

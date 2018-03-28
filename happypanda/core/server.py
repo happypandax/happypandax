@@ -198,37 +198,25 @@ class ClientHandler:
         user_obj = None
         if user or password:
             log.d("Client provided credentials, authenticating...")
-            user_obj = s.query(
-                db.User).filter(
-                db.User.name == user).one_or_none()
-            if user_obj:
-                if not user_obj.role == db.User.Role.guest and not user_obj.password == password:
-                    raise exceptions.AuthWrongCredentialsError(
-                        utils.this_function(), "Wrong credentials")
-            else:
-                raise exceptions.AuthWrongCredentialsError(
-                    utils.this_function(), "Wrong credentials")
-        else:
-            log.d("Client did not provide credentials")
-
-            if not config.disable_default_user.value:
+            if user == "default" and not config.disable_default_user.value:
                 log.d("Authenticating with default user")
                 user_obj = s.query(
                     db.User).filter(
                     db.User.role == db.User.Role.default).one()
             else:
-                if not config.allow_guests.value:
-                    log.d("Guests are disallowed on this server")
-                    raise exceptions.AuthRequiredError(utils.this_function())
-                log.d("Authencticating as guest")
                 user_obj = s.query(
                     db.User).filter(
-                    db.and_op(
-                        db.User.address == self._ip,
-                        db.User.role == db.User.Role.guest)).one_or_none()
-                if not user_obj:
-                    user_obj = db.User(role=db.User.Role.guest)
-                    s.add(user_obj)
+                    db.User.name == user).one_or_none()
+                if not user_obj or (not user_obj.role == db.User.Role.guest and not user_obj.password == password):
+                    raise exceptions.AuthWrongCredentialsError(
+                        utils.this_function(), "Wrong credentials")
+        else:
+            log.d("Client did not provide credentials")
+            if not config.allow_guests.value:
+                log.d("Guests are disallowed on this server")
+                raise exceptions.AuthRequiredError(utils.this_function(), "Authentication is required")
+            log.d("Authencticating as guest")
+            user_obj = db.User(role=db.User.Role.guest)
 
         self.context['user'] = user_obj
 
@@ -240,7 +228,6 @@ class ClientHandler:
         log.d("Client accepted")
         self._accepted = True
 
-        s.commit()
 
     @staticmethod
     def sendall(client, msg):
@@ -409,9 +396,12 @@ class ClientHandler:
             log.d("Incoming handshake from client:", self._address)
             data = payload.get("data")
             if not config.allow_guests.value:
-                log.d("Guests are not allowed")
-                self._check_both(
-                    utils.this_function(), "JSON dict", ('user', 'password'), data)
+                log.d("Guests are not allowed, require keys")
+                try:
+                    self._check_both(
+                        utils.this_function(), "JSON dict", ('user', 'password'), data)
+                except exceptions.InvalidMessage as e:
+                    raise exceptions.AuthMissingCredentials(utils.this_function(), e.msg)
 
             u = p = None
 

@@ -119,11 +119,12 @@ def get_argparser():
     parser.add_argument('--create-user', action='store_true',
                         help='Create a user interactively and quit')
 
-    parser.add_argument('--delete-user', action='store_true',
+    parser.add_argument('--delete-user', type=str, metavar="USERNAME",
                         help='Delete a user interactively and quit')
 
-    parser.add_argument('--list-user', action='store_true',
-                        help='Display a list of users and quit')
+    parser.add_argument('--list-users', type=int, metavar="PAGE",
+                        nargs="?", const=1,
+                        help='Display a list of users from page N and quit')
 
     parser.add_argument('-d', '--debug', action='store_true',
                         help='Start in debug mode (collects more information)')

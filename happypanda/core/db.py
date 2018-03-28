@@ -330,7 +330,7 @@ class Password(TypeDecorator):
 
     def process_result_value(self, value, dialect):
         """Convert the hash to a PasswordHash, if it's non-NULL."""
-        if value is not None:
+        if value:
             value = PasswordHash._encoded(value)
             return PasswordHash(value, rounds=self.rounds)
 
@@ -347,7 +347,7 @@ class Password(TypeDecorator):
         """
         if isinstance(value, PasswordHash):
             return value
-        elif isinstance(value, str, bytes):
+        elif isinstance(value, (str, bytes)) and value:
             value = PasswordHash._encoded(value)
             return PasswordHash.new(value, self.rounds)
         elif value is not None:
@@ -1499,32 +1499,53 @@ def create_user(role, name=None, password=None):
     s = constants.db_session()
 
     if role == User.Role.default:
-        if not s.query(User).filter(User.name == 'default').one_or_none():
+        if not s.query(User.id).filter(User.name == 'default').one_or_none():
             s.add(User(name='default', role=User.Role.default))
             s.commit()
             return True
 
     elif role == User.Role.guest:
-        if not s.query(User).filter(User.name == name).one_or_none():
+        if not s.query(User.id).filter(User.name == name).one_or_none():
             s.add(User(name=name,
                        role=User.Role.guest))
             s.commit()
             return True
     elif role == User.Role.user:
-        if not s.query(User).filter(User.name == name).one_or_none():
+        if not s.query(User.id).filter(User.name == name).one_or_none():
             s.add(User(name=name,
                        role=User.Role.user,
                        password=password))
             s.commit()
             return True
     elif role == User.Role.admin:
-        if not s.query(User).filter(User.name == name).one_or_none():
+        if not s.query(User.id).filter(User.name == name).one_or_none():
             s.add(User(name=name,
                        password=PasswordHash.new(password, 12),
                        role=User.Role.admin))
             s.commit()
             return True
     
+def delete_user(name=None):
+    """
+    Delete user
+    """
+    if not name == "default":
+        s = constants.db_session()
+        u = s.query(User).filter(User.name == name).one_or_none()
+        if u:
+            s.delete(u)
+            s.commit()
+            return True
+    return False
+
+def list_users(role=None, limit=100, offset=0):
+    assert role is None or isinstance(role, User.Role)
+    s = constants.db_session()
+    q = s.query(User).filter(User.name != "default").order_by(User.name)
+    if role:
+        q.filter(User.role==role)
+    return q.offset(offset).limit(limit).all()
+
 
 
 def check_db_version(sess):

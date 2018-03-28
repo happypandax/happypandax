@@ -172,7 +172,10 @@ def on_command_handle(client_id, clients, msg, lock):
 
                 _handshake_clients(clients, request=True)
         except exceptions.AuthError as e:
-            send_error(e, room=client_id)
+            if not isinstance(e, (exceptions.AuthWrongCredentialsError,
+                                  exceptions.AuthMissingCredentials,
+                                  exceptions.AuthRequiredError)):
+                send_error(e, room=client_id)
 
         d['status'] = clients['client'].alive()
         d['accepted'] = clients['client']._accepted

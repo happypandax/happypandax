@@ -252,6 +252,12 @@ class AuthWrongCredentialsError(AuthError):
     def __init__(self, where, msg):
         super().__init__(where, msg)
 
+@error_code(412)
+class AuthMissingCredentials(AuthError):
+
+    def __init__(self, where, msg):
+        super().__init__(where, msg)
+
     # ## CLIENT -- CODE: 500+ ##
 
 
