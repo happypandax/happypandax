@@ -979,7 +979,8 @@ def main(args=sys.argv[1:]):
                                     if not circle in artist.circles:
                                         artist.circles.append(circle)
 
-                    gallery.info = g.info
+                    if not g.info == "No description..":
+                        gallery.info = g.info
                     if g.fav:
                         gallery.metatags.append(db.MetaTag.tags[db.MetaTag.names.favorite])
                     if g.view == 2:

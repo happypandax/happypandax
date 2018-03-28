@@ -360,7 +360,7 @@ def item_view_on_update(p_props, p_state):
         p_props.limit != this.props.limit,
         p_state.limit != this.state.limit,
     )):
-        this.setState({'page': 1})
+        this.reset_page()
         this.get_items_count()
 
     if any((
@@ -384,7 +384,7 @@ def item_view_on_update(p_props, p_state):
         p_props.sort_by != this.props.sort_by,
         p_props.sort_desc != this.props.sort_desc,
     )):
-        this.setState({'page': 1})
+        this.reset_page()
 
 
 def item_view_render():
@@ -460,6 +460,7 @@ ItemView = createReactClass({
     'get_element': get_element,
     'get_more': get_more,
 
+    'reset_page': lambda p: all((this.setState({'page': 1}), utils.go_to(this.props.history, query={'page':1}, push=False))),
     'set_page': lambda p: this.setState({'page': p, 'prev_page': None}),
 
     'on_infinite_scroll': lambda e, d: this.setState({'infinite_scroll': d.checked}),

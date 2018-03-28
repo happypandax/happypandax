@@ -3,6 +3,7 @@ from src.react_utils import (h,
                              e,
                              render,
                              Switch,
+                             ReactDOM,
                              createReactClass,
                              Router,
                              Route,
@@ -177,7 +178,10 @@ def app_will_mount():
 
 def app_did_mount():
     utils.interval_func(this.server_notifications, 5000)
+    document.body.appendChild(this.state.portal_el)
 
+def app_will_unmount():
+    document.body.removeChild(this.state.portal_el)
 
 def get_container_ref(ctx):
     state['container_ref'] = ctx
@@ -195,6 +199,7 @@ __pragma__("nokwargs")
 
 
 def app_render():
+
     if this.state.logged_in:
         sidebar_args = {
             'toggler': this.toggle_sidebar,
@@ -243,70 +248,72 @@ def app_render():
                            onClose=this.close_preview_msg)
                          )
 
-        alert_el = e(Alert, contentTemplate=Notif, stack={'limit': 6, 'spacing': 20},
-                       position="top-right", effect="slide", offset=50)
-
         el = e(Router,
-                 h("div",
-                     e(ui.Responsive,
-                       #e(ConnectStatus, context=this.state.root_ref),
-                       e(sidebar.SideBar, **sidebar_args), minWidth=767),
-                     e(ui.Responsive,
-                       e(sidebar.SideBar, mobile=True, **sidebar_args), maxWidth=768),
-                     e(Route, component=PathChange),
-                     alert_el,
-                     e(ui.Ref,
-                       e(ui.Sidebar.Pusher,
-                         e(ui.Visibility,
-                           e(ui.Responsive,
-                             e(menu.Menu, **menu_args), minWidth=767),
-                           e(ui.Responsive,
-                             e(menu.Menu, mobile=True, **menu_args), maxWidth=768),
-                           onBottomPassed=this.toggle_scroll_up,
-                           once=False,
-                           ),
-                         e(Switch,
-                             e(Route, path="/api", component=this.api_page),
-                             e(Route, path="/dashboard", component=this.dashboard_page),
-                             e(Route, path="/library", component=this.library_page),
-                             e(Route, path="/favorite", component=this.favorites_page),
-                             e(Route, path="/inbox", component=this.inbox_page),
-                             e(Route, path="/directory", component=this.directory_page),
-                             e(Route, path="/downloads", component=this.downloads_page),
-                             e(Route, path="/item/gallery", component=this.gallery_page),
-                             e(Route, path="/item/collection", component=this.collection_page),
-                             e(Route, path="/item/page", component=this.page_page),
-                             e(Redirect, js_from="/", exact=True, to={'pathname': "/library"}),
-                           ),
-                         # e(ui.Sticky,
-                         #  e(ui.Button, icon="chevron up", size="large", floated="right"),
-                         #   bottomOffset=55,
-                         #   context=this.state.container_ref,
-                         #   className="foreground-sticky"),
-                         e(ui.Dimmer, simple=True, onClickOutside=this.toggle_sidebar),
-                         *modal_els,
+                    h("div",
+                        e(ui.Responsive,
+                        #e(ConnectStatus, context=this.state.root_ref),
+                        e(sidebar.SideBar, **sidebar_args), minWidth=767),
+                        e(ui.Responsive,
+                        e(sidebar.SideBar, mobile=True, **sidebar_args), maxWidth=768),
+                        e(Route, component=PathChange),
+                        e(ui.Ref,
+                        e(ui.Sidebar.Pusher,
+                            e(ui.Visibility,
+                            e(ui.Responsive,
+                                e(menu.Menu, **menu_args), minWidth=767),
+                            e(ui.Responsive,
+                                e(menu.Menu, mobile=True, **menu_args), maxWidth=768),
+                            onBottomPassed=this.toggle_scroll_up,
+                            once=False,
+                            ),
+                            e(Switch,
+                                e(Route, path="/api", component=this.api_page),
+                                e(Route, path="/dashboard", component=this.dashboard_page),
+                                e(Route, path="/library", component=this.library_page),
+                                e(Route, path="/favorite", component=this.favorites_page),
+                                e(Route, path="/inbox", component=this.inbox_page),
+                                e(Route, path="/directory", component=this.directory_page),
+                                e(Route, path="/downloads", component=this.downloads_page),
+                                e(Route, path="/item/gallery", component=this.gallery_page),
+                                e(Route, path="/item/collection", component=this.collection_page),
+                                e(Route, path="/item/page", component=this.page_page),
+                                e(Redirect, js_from="/", exact=True, to={'pathname': "/library"}),
+                            ),
+                            # e(ui.Sticky,
+                            #  e(ui.Button, icon="chevron up", size="large", floated="right"),
+                            #   bottomOffset=55,
+                            #   context=this.state.container_ref,
+                            #   className="foreground-sticky"),
+                            e(ui.Dimmer, simple=True, onClickOutside=this.toggle_sidebar),
+                            *modal_els,
 
-                         dimmed=this.state.sidebar_toggled,
-                         as_=ui.Dimmer.Dimmable
-                         ),
-                       innerRef=this.get_context_ref,
-                       ),
-                     className="main-content",
-                     ref=this.get_root_ref,
-                   ),
+                            dimmed=this.state.sidebar_toggled,
+                            as_=ui.Dimmer.Dimmable,
+                            className="min-fullheight",
+                            ),
+                        innerRef=this.get_context_ref,
+                        ),
+                    ),
+                    key="1",
                  )
     elif not utils.defined(this.state.logged_in):
-        el = h("div",
-               alert_el,
-               e(ui.Segment, e(ui.Dimmer, e(ui.Loader), active=True), basic=True)
-               )
+        el = e(ui.Segment,
+                 e(ui.Dimmer,
+                   e(ui.Loader),
+                   active=True),
+                 basic=True,
+                 className="fullheight",
+                 key="1",
+                 )
     else:
-        el = h("div",
-               alert_el,
-               e(login.Page, on_login=this.on_login)
-               )
+        el = e(login.Page, on_login=this.on_login, key="1"),
 
-    return el
+    alert_el = e(Alert, contentTemplate=Notif, stack={'limit': 6, 'spacing': 20},
+            position="top-right", effect="slide", offset=50,
+            preserveContext=True, key="2",
+            )
+
+    return [el, ReactDOM.createPortal(alert_el, this.state.portal_el)]
 
 
 App = createReactClass({
@@ -314,6 +321,7 @@ App = createReactClass({
 
 
     'getInitialState': lambda: {
+        "portal_el": document.createElement('div'),
         "root_ref": None,
         "container_ref": None,
         "sidebar_toggled": False,
@@ -326,6 +334,7 @@ App = createReactClass({
         'logged_in': js_undefined,
     },
 
+    'componentWillUnMount': app_will_unmount,
     'componentWillMount': app_will_mount,
     'componentDidMount': app_did_mount,
 

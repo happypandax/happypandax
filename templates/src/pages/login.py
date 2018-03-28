@@ -39,6 +39,7 @@ def page_render():
         els.append(e(ui.Divider, tr(this, "ui.t-or", "Or"), horizontal=True))
 
     return e(ui.Segment,
+             this.props.children,
              *els,
              e(ui.Form,
                 e(ui.Form.Input,

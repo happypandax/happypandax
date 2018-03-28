@@ -203,10 +203,10 @@ class ClientHandler:
                 db.User.name == user).one_or_none()
             if user_obj:
                 if not user_obj.role == db.User.Role.guest and not user_obj.password == password:
-                    raise exceptions.AuthError(
+                    raise exceptions.AuthWrongCredentialsError(
                         utils.this_function(), "Wrong credentials")
             else:
-                raise exceptions.AuthError(
+                raise exceptions.AuthWrongCredentialsError(
                     utils.this_function(), "Wrong credentials")
         else:
             log.d("Client did not provide credentials")

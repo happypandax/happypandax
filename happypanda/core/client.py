@@ -56,9 +56,14 @@ class Client:
             if not ignore_err and data:
                 serv_error = data.get('error')
                 if serv_error:
-                    raise exceptions.AuthError(
-                        utils.this_function(), "{}: {}".format(
-                            serv_error['code'], serv_error['msg']))
+                    if serv_error['code'] == exceptions.AuthWrongCredentialsError.code:
+                        raise exceptions.AuthWrongCredentialsError(utils.this_function(), serv_error['msg'])
+                    elif serv_error['code'] == exceptions.AuthRequiredError.code:
+                        raise exceptions.AuthRequiredError(utils.this_function(), serv_error['msg'])
+                    else:
+                        raise exceptions.AuthError(
+                            utils.this_function(), "{}: {}".format(
+                                serv_error['code'], serv_error['msg']))
             if not data:
                 d = {}
                 if user:

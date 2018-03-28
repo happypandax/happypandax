@@ -2353,6 +2353,14 @@ i.medium-size {
   width: 100%;
 }
 
+.fullheight {
+  height: 100% !important;
+}
+
+.min-fullheight {
+  min-height: 100% !important;
+}
+
 .slide-next {
   top: 50%;
   position: absolute;
