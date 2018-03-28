@@ -9,16 +9,17 @@
 ################################################################
 
 # very useful for updating
-_version_: 4
+_version_: 5
 
 # Common
+t-loading: Loading
 b-edit: Edit
 b-close: Close
 b-new: New
 b-delete: Delete
 t-unknown: Unknown
 t-bracket-unknown: <Unknown>
-
+t-or: Or
 
 # Menu Item
 mi-dashboard: Dashboard
@@ -29,6 +30,12 @@ mi-inbox: Inbox
 mi-downloads: Downloads
 mi-preferences: Preferences
 mi-about: About
+
+# Login Page
+t-username: Username
+t-password: Password
+b-connect: Connect
+b-continue-as-guest: Connect as guest
 
 # About Page
 mi-about-plugins: Plugins

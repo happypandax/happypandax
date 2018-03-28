@@ -22,7 +22,7 @@ def get_progress(data=None, error=None):
     elif error:
         state.app.notif("Failed to retrieve progress update", level="warning")
     else:
-        if state['active'] and state['connected']:
+        if state['active'] and state['connected'] and state['accepted']:
             client.call_func("get_command_progress", this.get_progress)
 
 

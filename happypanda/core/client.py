@@ -28,7 +28,7 @@ class Client:
         self._buffer = b''
         self.session = session_id
         self.version = None
-        self._guest_allowed = False
+        self.guest_allowed = False
         self._accepted = False
 
         self._last_user = ""
@@ -40,37 +40,46 @@ class Client:
         "Check if connection with the server is still alive"
         return self._alive
 
-    def _handshake(self, data, user=None, password=None, ignore_err=False):
+    def _server_info(self, data):
+        if data:
+            serv_data = data.get('data')
+            if serv_data and "version" in serv_data:
+                self.guest_allowed = serv_data.get('guest_allowed')
+                self.version = serv_data.get('version')
+
+    def handshake(self, data={}, user=None, password=None, ignore_err=False):
         "Shake hands with server"
-        if not ignore_err:
-            serv_error = data.get('error')
-            if serv_error:
-                raise exceptions.AuthError(
-                    utils.this_function(), "{}: {}".format(
-                        serv_error['code'], serv_error['msg']))
-        serv_data = data.get('data')
-        if serv_data == "Authenticated":
-            self.session = data.get('session')
-            self._accepted = True
-        elif serv_data and "version" in serv_data:
-            self._guest_allowed = serv_data.get('guest_allowed')
-            self.version = serv_data.get('version')
-            d = {}
+        if self.alive():
             if user:
-                d['user'] = user
-                d['password'] = password
-            self._send(message.finalize(d, name=self.name))
-            self._handshake(self._recv())
+                self._last_user = user
+                self._last_pass = password
+            if not ignore_err and data:
+                serv_error = data.get('error')
+                if serv_error:
+                    raise exceptions.AuthError(
+                        utils.this_function(), "{}: {}".format(
+                            serv_error['code'], serv_error['msg']))
+            if not data:
+                d = {}
+                if user:
+                    d['user'] = user
+                    d['password'] = password
+                self._send(message.finalize(d, name=self.name))
+                self.handshake(self._recv(), ignore_err=ignore_err)
+            elif data:
+                serv_data = data.get('data')
+                if serv_data == "Authenticated":
+                    self.session = data.get('session')
+                    self._accepted = True
 
-    def request_auth(self):
-        self._handshake(self.communicate({'session': "", 'name': self.name,
-                                          'data': 'requestauth'}, True), self._last_user, self._last_pass)
+    def request_auth(self, ignore_err=False):
+        self._server_info(self.communicate({'session': "", 'name': self.name,
+                                          'data': 'requestauth'}, True))
+        self.handshake(user=self._last_user, password=self._last_pass, ignore_err=ignore_err)
 
-    def connect(self, user=None, password=None):
+    def connect(self):
         "Connect to the server"
         if not self._alive:
-            self._last_user = user
-            self._last_pass = password
             try:
                 log.i("Client connecting to server at: {}".format(self._server))
                 try:
@@ -82,12 +91,9 @@ class Client:
                     else:
                         raise
                 self._alive = True
-
-                if not self.session:
-                    self._handshake(self._recv(), user, password)
-                else:
+                self._server_info(self._recv())
+                if self.session:
                     self._accepted = True
-                    self._recv()
             except (OSError, ConnectionError) as e:
                 self._disconnect()
                 raise exceptions.ServerDisconnectError(
@@ -103,7 +109,7 @@ class Client:
         Send bytes to server
         """
         if not self._alive:
-            raise exceptions.ClientError(self.name, "Client is not connected to server")
+            raise exceptions.ClientError(self.name, "Client '{}' is not connected to server".format(self.name))
 
         log.d(
             "Sending",
@@ -153,7 +159,7 @@ class Client:
             dict from server
         """
         if self._alive and not self._accepted and not auth:
-            raise exceptions.AuthRequiredError(utils.this_function(), "Client is connected but not authenticated")
+            raise exceptions.AuthRequiredError(utils.this_function(), "Client '{}' is connected but not authenticated".format(self.name))
         self._send(bytes(json.dumps(msg), 'utf-8'))
         return self._recv()
 

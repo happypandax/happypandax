@@ -149,14 +149,14 @@ class ServerMsg:
         else:
             self.callback(data, err)
 
-
 class Client(Base):
 
     polling = False
-
+    clients = []
     __pragma__('kwargs')
 
-    def __init__(self, session="", namespace=""):
+    def __init__(self, name="webclient", session="", namespace=""):
+        self.clients.append(self)
         self.session_id = utils.storage.get("session_id")
         if not self.session_id:
             self.session_id = utils.random_string(10)
@@ -174,12 +174,14 @@ class Client(Base):
             'reconnect': 2,
             'disconnect': 3,
             'status': 4,
-            'handshake': 5
+            'handshake': 5,
+            'rehandshake': 6
         }
+        self.command_callbacks = {}
 
         self.namespace = namespace
         self.session = session
-        self.name = "webclient"
+        self.name = name
         self._reconnecting = False
         self._connection_status = True
         self._disconnected_once = False
@@ -208,8 +210,6 @@ class Client(Base):
         self._initial_socket_connection = True
         if self.polling:
             self.reconnect()
-            self.call_func("get_config", self._set_debug, cfg={'core.debug': False})
-            self.call_func("get_locales", self._set_locales)
 
         if len(self._msg_queue):
             while len(self._msg_queue):
@@ -217,6 +217,7 @@ class Client(Base):
 
     def on_disconnect(self):
         state['connected'] = False
+        self.session = ""
         self._socket_connection = False
         self._connection_status = False
         self._disconnected_once = True
@@ -261,23 +262,32 @@ class Client(Base):
             ), "Server")
         self.send_command(self.commands['connect'])
 
-    def send_command(self, cmd, extra=None):
+    def send_command(self, cmd, extra=None, callback=None):
         if cmd not in self.commands.values():
             self.log("Not a valid command")
             return
-        msg = {'command': cmd, 'session_id': self.session_id}
+        ServerMsg.msg_id += 1
+        msg = {'id':ServerMsg.msg_id, 'command': cmd, 'session_id': self.session_id}
         if extra:
             msg.update(extra)
+        if callback:
+            self.command_callbacks[msg['id']] = callback
         self.socket.emit("command", msg)
     __pragma__("nokwargs")
 
+    __pragma__('iconv')
     def on_command(self, msg):
-        self._connection_status = msg['status']
+        for c in self.clients:
+            c._connection_status = msg['status']
         state['connected'] = self._connection_status
+        state['accepted'] = msg['accepted']
+        state['guest_allowed'] = msg['guest_allowed']
+        state['version'] = msg['version']
+
         if self._connection_status:
-            if not utils.session_storage.get("startup_update", False):
-                utils.session_storage.set("startup_update", True)
-                self.call_func("check_update", push=True)
+            if msg['command'] in (self.commands['connect'], self.commands['reconnect']):
+                if not utils.session_storage.get("startup_update", False):
+                    utils.session_storage.set("startup_update", True)
             if self._disconnected_once or self._first_connect:
                 self._disconnected_once = False
                 self._first_connect = False
@@ -287,6 +297,23 @@ class Client(Base):
             self._retries = None
         else:
             self._disconnected_once = True
+
+        if msg['command'] in (self.commands['handshake'], self.commands['rehandshake']):
+            if msg['accepted']:
+                self.call_func("get_config", self._set_debug, cfg={'core.debug': False})
+                self.call_func("get_locales", self._set_locales)
+                self.call_func("check_update", push=True)
+        else:
+            if state['app']:
+                state['app'].on_login(state['accepted'])
+
+        if msg['id'] in self.command_callbacks:
+            cmd_cb = self.command_callbacks.pop(msg['id'])
+            if cmd_cb:
+                cmd_cb(msg)
+
+
+    __pragma__('noiconv')
 
     def on_error(self, msg):
         state.app.notif(msg['error'], "Server", "error")
@@ -307,7 +334,7 @@ class Client(Base):
             if 'error' in serv_data:
                 self.flash_error(serv_data['error'])
                 if serv_data['error']['code'] == 408:
-                    self.send_command(self.commands['handshake'])
+                    self.send_command(self.commands['rehandshake'])
             if serv_data['data'] == "Authenticated":
                 serv_msg = self._response_cb[serv_msg.id] = serv_msg
                 self.socket.emit("server_call", serv_msg._msg)
@@ -354,7 +381,7 @@ class Client(Base):
         }
 
         self._last_msg = final_msg
-        if self._connection_status and self._socket_connection:
+        if self._connection_status and self._socket_connection and state['accepted']:
             self.socket.emit("server_call", final_msg)
         else:
             if not self._initial_socket_connection:
@@ -386,8 +413,8 @@ class Client(Base):
 
 
 client = Client()
-pushclient = Client(namespace="/notification")
-commandclient = Client(namespace="/command")
+pushclient = Client("push", namespace="/notification")
+commandclient = Client("command", namespace="/command")
 
 
 class Command(Base):

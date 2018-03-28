@@ -263,8 +263,8 @@ class PasswordHash(Mutable):
     def __init__(self, hash_, rounds=None):
         assert len(hash_) == 60, 'bcrypt hash should be 60 chars.'
         assert hash_.count(b'$'), 'bcrypt hash should have 3x "$".'
-        self.hash = hash_.decode()
-        self.rounds = int(self.hash.split('$')[2])
+        self.hash = hash_
+        self.rounds = int(self.hash.split(b'$')[2])
         self.desired_rounds = rounds or self.rounds
 
     def __eq__(self, candidate):
@@ -275,9 +275,9 @@ class PasswordHash(Mutable):
         This will also mark the object as having changed (and thus need updating).
         """
         if isinstance(candidate, str):
-            if self.hash == bcrypt.hashpw(self._encoded(candidate), self.hash).decode():
-                if self.rounds < self.desired_rounds:
-                    self._rehash(candidate)
+            if self.rounds < self.desired_rounds:
+                self._rehash(candidate)
+            if bcrypt.checkpw(self._encoded(candidate), self.hash):
                 return True
         return False
 
@@ -299,7 +299,9 @@ class PasswordHash(Mutable):
 
     @classmethod
     def _encoded(cls, txt):
-        return txt.encode('utf-8')
+        if isinstance(txt, str):
+            txt = txt.encode('utf-8')
+        return txt
 
     @staticmethod
     def _new(password, rounds):
@@ -317,18 +319,19 @@ class Password(TypeDecorator):
     """Allows storing and retrieving password hashes using PasswordHash."""
     impl = String
 
-    def __init__(self, rounds=12, **kwds):
+    def __init__(self, rounds=10, **kwds):
         self.rounds = rounds
         super().__init__(**kwds)
 
     def process_bind_param(self, value, dialect):
         """Ensure the value is a PasswordHash and then return its hash."""
         p = self._convert(value)
-        return p.hash if p else None
+        return p.hash.decode('utf-8') if p else None
 
     def process_result_value(self, value, dialect):
         """Convert the hash to a PasswordHash, if it's non-NULL."""
         if value is not None:
+            value = PasswordHash._encoded(value)
             return PasswordHash(value, rounds=self.rounds)
 
     def validator(self, password):
@@ -344,7 +347,8 @@ class Password(TypeDecorator):
         """
         if isinstance(value, PasswordHash):
             return value
-        elif isinstance(value, str):
+        elif isinstance(value, str, bytes):
+            value = PasswordHash._encoded(value)
             return PasswordHash.new(value, self.rounds)
         elif value is not None:
             raise TypeError(
@@ -1516,7 +1520,7 @@ def create_user(role, name=None, password=None):
     elif role == User.Role.admin:
         if not s.query(User).filter(User.name == name).one_or_none():
             s.add(User(name=name,
-                       password=PasswordHash.new(password, 15),
+                       password=PasswordHash.new(password, 12),
                        role=User.Role.admin))
             s.commit()
             return True

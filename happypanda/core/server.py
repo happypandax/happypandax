@@ -202,7 +202,7 @@ class ClientHandler:
                 db.User).filter(
                 db.User.name == user).one_or_none()
             if user_obj:
-                if not user_obj.password == password:
+                if not user_obj.role == db.User.Role.guest and not user_obj.password == password:
                     raise exceptions.AuthError(
                         utils.this_function(), "Wrong credentials")
             else:
@@ -406,7 +406,7 @@ class ClientHandler:
         """
         assert payload is None or isinstance(payload, dict)
         if isinstance(payload, dict):
-            log.d("Incoming handshake from client", self._address)
+            log.d("Incoming handshake from client:", self._address)
             data = payload.get("data")
             if not config.allow_guests.value:
                 log.d("Guests are not allowed")
@@ -425,7 +425,7 @@ class ClientHandler:
             self.contexts[self.session.id] = self.context
             self.send(message.finalize("Authenticated", session_id=self.session.id))
         else:
-            log.d("Handshaking client:", self._address)
+            log.d("Sending handshake request to client:", self._address)
             msg = dict(
                 version=meta.get_version().data(),
                 guest_allowed=config.allow_guests.value,

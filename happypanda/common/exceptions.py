@@ -217,7 +217,7 @@ class AuthError(ServerError):
     """Auth Base Error."""
 
     def __init__(self, where, msg):
-        super().__init__(where, "An error occurred during authorization:\n{}".format(msg))
+        super().__init__(where, "An error occurred during authorization: {}".format(msg))
 
 
 @error_code(407)

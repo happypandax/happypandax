@@ -13,7 +13,7 @@ from src.nav import (sidebar, menu)
 from src.pages import (api, collection, gallery,
                        dashboard, favorites, inbox,
                        library, page, directory,
-                       downloads)
+                       downloads, login)
 from src.client import pushclient, PushID
 from src import utils
 from org.transcrypt.stubs.browser import __pragma__
@@ -145,7 +145,7 @@ def server_notifications(data=js_undefined, error=None):
     elif error:
         this.notif("Failed to retrieve server notification", level="warning")
     else:
-        if state['active'] and state['connected']:
+        if state['active'] and state['connected'] and state['accepted']:
             pushclient.call_func("get_notification", this.server_notifications)
 
 
@@ -195,103 +195,118 @@ __pragma__("nokwargs")
 
 
 def app_render():
-    sidebar_args = {
-        'toggler': this.toggle_sidebar,
-        'toggled': this.state["sidebar_toggled"]
-    }
+    if this.state.logged_in:
+        sidebar_args = {
+            'toggler': this.toggle_sidebar,
+            'toggled': this.state["sidebar_toggled"]
+        }
 
-    menu_args = {
-        'toggler': this.toggle_sidebar,
-        'contents': this.state["menu_nav_contents"],
-        'menu_args': this.state["menu_nav_args"]
-    }
+        menu_args = {
+            'toggler': this.toggle_sidebar,
+            'contents': this.state["menu_nav_contents"],
+            'menu_args': this.state["menu_nav_args"]
+        }
 
-    server_push_close = this.server_push_close
-    server_push_actions_el = []
-    if dict(this.state.server_push_msg).get("actions", False):
-        server_push_actions = []
-        push_id = this.state.server_push_msg['id']
-        for a in this.state.server_push_msg['actions']:
-            a_id = a['id']
-            if a['type'] == 'button':
-                server_push_actions.append(
-                    e(ui.Button, a['text'],
-                      value=a_id,
-                      onClick=lambda ev, da: all((
-                          server_notifications_reply(msg_id=push_id, values={da.value: da.value}),
-                          server_push_close()))))
+        server_push_close = this.server_push_close
+        server_push_actions_el = []
+        if dict(this.state.server_push_msg).get("actions", False):
+            server_push_actions = []
+            push_id = this.state.server_push_msg['id']
+            for a in this.state.server_push_msg['actions']:
+                a_id = a['id']
+                if a['type'] == 'button':
+                    server_push_actions.append(
+                        e(ui.Button, a['text'],
+                          value=a_id,
+                          onClick=lambda ev, da: all((
+                              server_notifications_reply(msg_id=push_id, values={da.value: da.value}),
+                              server_push_close()))))
 
-        server_push_actions_el.append(e(ui.Modal.Actions, *server_push_actions))
+            server_push_actions_el.append(e(ui.Modal.Actions, *server_push_actions))
 
-    modal_els = []
-    modal_els.append(e(ui.Modal,
-                       e(ui.Modal.Header, dict(this.state.server_push_msg).get("title", '')),
-                       e(ui.Modal.Content, dict(this.state.server_push_msg).get("body", '')),
-                       *server_push_actions_el,
-                       onClose=this.server_push_close,
-                       open=this.state.server_push, dimmer="inverted", closeIcon=True)
-                     )
+        modal_els = []
+        modal_els.append(e(ui.Modal,
+                           e(ui.Modal.Header, dict(this.state.server_push_msg).get("title", '')),
+                           e(ui.Modal.Content, dict(this.state.server_push_msg).get("body", '')),
+                           *server_push_actions_el,
+                           onClose=this.server_push_close,
+                           open=this.state.server_push, dimmer="inverted", closeIcon=True)
+                         )
 
-    modal_els.append(e(ui.Modal,
-                       e(ui.Modal.Header, "Welcome to HappyPanda X Preview!"),
-                       e(ui.Modal.Content, preview_txt, style={"white-space": "pre-wrap"}),
-                       e(ui.Modal.Actions, e(ui.Button, e(ui.Icon, js_name="heart"), "Show your support on patreon!",
-                                             href="https://www.patreon.com/twiddly", target="_blank", color="orange")),
-                       closeIcon=True,
-                       open=utils.storage.get("preview_msg", this.state.preview_msg),
-                       onClose=this.close_preview_msg)
-                     )
+        modal_els.append(e(ui.Modal,
+                           e(ui.Modal.Header, "Welcome to HappyPanda X Preview!"),
+                           e(ui.Modal.Content, preview_txt, style={"white-space": "pre-wrap"}),
+                           e(ui.Modal.Actions, e(ui.Button, e(ui.Icon, js_name="heart"), "Show your support on patreon!",
+                                                 href="https://www.patreon.com/twiddly", target="_blank", color="orange")),
+                           closeIcon=True,
+                           open=utils.storage.get("preview_msg", this.state.preview_msg),
+                           onClose=this.close_preview_msg)
+                         )
 
-    return e(Router,
-             h("div",
-                 e(ui.Responsive,
-                   #e(ConnectStatus, context=this.state.root_ref),
-                   e(sidebar.SideBar, **sidebar_args), minWidth=767),
-                 e(ui.Responsive,
-                   e(sidebar.SideBar, mobile=True, **sidebar_args), maxWidth=768),
-                 e(Route, component=PathChange),
-                 e(Alert, contentTemplate=Notif, stack={'limit': 6, 'spacing': 20},
-                   position="top-right", effect="slide", offset=50),
-                 e(ui.Ref,
-                   e(ui.Sidebar.Pusher,
-                     e(ui.Visibility,
-                       e(ui.Responsive,
-                         e(menu.Menu, **menu_args), minWidth=767),
-                       e(ui.Responsive,
-                         e(menu.Menu, mobile=True, **menu_args), maxWidth=768),
-                       onBottomPassed=this.toggle_scroll_up,
-                       once=False,
+        alert_el = e(Alert, contentTemplate=Notif, stack={'limit': 6, 'spacing': 20},
+                       position="top-right", effect="slide", offset=50)
+
+        el = e(Router,
+                 h("div",
+                     e(ui.Responsive,
+                       #e(ConnectStatus, context=this.state.root_ref),
+                       e(sidebar.SideBar, **sidebar_args), minWidth=767),
+                     e(ui.Responsive,
+                       e(sidebar.SideBar, mobile=True, **sidebar_args), maxWidth=768),
+                     e(Route, component=PathChange),
+                     alert_el,
+                     e(ui.Ref,
+                       e(ui.Sidebar.Pusher,
+                         e(ui.Visibility,
+                           e(ui.Responsive,
+                             e(menu.Menu, **menu_args), minWidth=767),
+                           e(ui.Responsive,
+                             e(menu.Menu, mobile=True, **menu_args), maxWidth=768),
+                           onBottomPassed=this.toggle_scroll_up,
+                           once=False,
+                           ),
+                         e(Switch,
+                             e(Route, path="/api", component=this.api_page),
+                             e(Route, path="/dashboard", component=this.dashboard_page),
+                             e(Route, path="/library", component=this.library_page),
+                             e(Route, path="/favorite", component=this.favorites_page),
+                             e(Route, path="/inbox", component=this.inbox_page),
+                             e(Route, path="/directory", component=this.directory_page),
+                             e(Route, path="/downloads", component=this.downloads_page),
+                             e(Route, path="/item/gallery", component=this.gallery_page),
+                             e(Route, path="/item/collection", component=this.collection_page),
+                             e(Route, path="/item/page", component=this.page_page),
+                             e(Redirect, js_from="/", exact=True, to={'pathname': "/library"}),
+                           ),
+                         # e(ui.Sticky,
+                         #  e(ui.Button, icon="chevron up", size="large", floated="right"),
+                         #   bottomOffset=55,
+                         #   context=this.state.container_ref,
+                         #   className="foreground-sticky"),
+                         e(ui.Dimmer, simple=True, onClickOutside=this.toggle_sidebar),
+                         *modal_els,
+
+                         dimmed=this.state.sidebar_toggled,
+                         as_=ui.Dimmer.Dimmable
+                         ),
+                       innerRef=this.get_context_ref,
                        ),
-                     e(Switch,
-                         e(Route, path="/api", component=this.api_page),
-                         e(Route, path="/dashboard", component=this.dashboard_page),
-                         e(Route, path="/library", component=this.library_page),
-                         e(Route, path="/favorite", component=this.favorites_page),
-                         e(Route, path="/inbox", component=this.inbox_page),
-                         e(Route, path="/directory", component=this.directory_page),
-                         e(Route, path="/downloads", component=this.downloads_page),
-                         e(Route, path="/item/gallery", component=this.gallery_page),
-                         e(Route, path="/item/collection", component=this.collection_page),
-                         e(Route, path="/item/page", component=this.page_page),
-                         e(Redirect, js_from="/", exact=True, to={'pathname': "/library"}),
-                       ),
-                     # e(ui.Sticky,
-                     #  e(ui.Button, icon="chevron up", size="large", floated="right"),
-                     #   bottomOffset=55,
-                     #   context=this.state.container_ref,
-                     #   className="foreground-sticky"),
-                     e(ui.Dimmer, simple=True, onClickOutside=this.toggle_sidebar),
-                     *modal_els,
-
-                     dimmed=this.state.sidebar_toggled,
-                     as_=ui.Dimmer.Dimmable
-                     ),
-                   innerRef=this.get_context_ref,
+                     className="main-content",
+                     ref=this.get_root_ref,
                    ),
-                 className="main-content",
-                 ref=this.get_root_ref,
-               ),
-             )
+                 )
+    elif not utils.defined(this.state.logged_in):
+        el = h("div",
+               alert_el,
+               e(ui.Segment, e(ui.Dimmer, e(ui.Loader), active=True), basic=True)
+               )
+    else:
+        el = h("div",
+               alert_el,
+               e(login.Page, on_login=this.on_login)
+               )
+
+    return el
 
 
 App = createReactClass({
@@ -308,6 +323,7 @@ App = createReactClass({
         'server_push_msg': {},
         'preview_msg': True,
         'scroll_up': False,
+        'logged_in': js_undefined,
     },
 
     'componentWillMount': app_will_mount,
@@ -322,6 +338,8 @@ App = createReactClass({
 
     'server_notifications': server_notifications,
     'server_push_close': lambda: this.setState({'server_push': False}),
+
+    'on_login': lambda s: this.setState({'logged_in': s}),
 
     'toggle_sidebar': lambda: (this.setState({'sidebar_toggled': not this.state['sidebar_toggled']})),
 

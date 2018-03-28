@@ -35,15 +35,25 @@ def _create_locks(id):
     return all_locks[id]
 
 
-def _connect_clients(clients, username, password):
+def _connect_clients(clients):
+    for name, c in clients.items():
+        c.connect()
+
+def _handshake_clients(clients, username=None, password=None, request=False):
     main_client = "client"
-    clients[main_client].connect(username, password)
+    if not clients[main_client].alive():
+        clients[main_client].connect()
+    if request:
+        clients[main_client].request_auth()
+    else:
+        clients[main_client].handshake(user=username, password=password)
     for name, c in clients.items():
         if name == main_client:
             continue
+        if not c.alive():
+            c.connect()
         c.session = clients[main_client].session
         c._accepted = clients[main_client]._accepted
-        c.connect(username, password)
 
 
 def get_clients(id, session_id=""):
@@ -112,32 +122,63 @@ def is_same_machine():
 
 
 def on_command_handle(client_id, clients, msg, lock):
-    d = {'status': None}
+
+    commands = {
+        'connect': 1,
+        'reconnect': 2,
+        'disconnect': 3,
+        'status': 4,
+        'handshake': 5,
+        'rehandshake': 6,
+    }
+
+    d = {'status': None,
+         'accepted': None,
+         'version': {},
+         'guest_allowed': None,
+         'id': msg.get('id')}
     cmd = msg.get('command')
     d['command'] = cmd
     try:
         lock.acquire()
-        if cmd == 1:
+        if cmd == commands['connect']:
+
             if not clients['client'].alive():
-                _connect_clients(clients, msg.get("username", ""), msg.get("password", ""))
-            d['status'] = clients['client'].alive()
-        elif cmd == 2:
+                _connect_clients(clients)
+
+        elif cmd == commands['reconnect']:
+
             if not clients['client'].alive():
                 try:
-                    _connect_clients(clients, msg.get("username", ""), msg.get("password", ""))
+                    _connect_clients(clients)
                 except exceptions.ClientError as e:
                     log.exception("Failed to reconnect")
                     send_error(e, room=client_id)
-                d['status'] = clients['client'].alive()
-        elif cmd == 3:
+
+        elif cmd == commands['disconnect']:
+
             if clients['client'].alive():
                 clients['client'].close()
-            d['status'] = clients['client'].alive()
-        elif cmd == 4:
-            d['status'] = clients['client'].alive()
-        elif cmd == 5:
-            clients['client'].request_auth()
-            d['status'] = clients['client']._accepted
+
+        elif cmd == commands['status']:
+            pass
+
+        try:
+            if cmd == commands['handshake']:
+            
+                _handshake_clients(clients, msg.get("username", ""), msg.get("password", ""))
+
+            elif cmd == commands['rehandshake']:
+
+                _handshake_clients(clients, request=True)
+        except exceptions.AuthError as e:
+            send_error(e, room=client_id)
+
+        d['status'] = clients['client'].alive()
+        d['accepted'] = clients['client']._accepted
+        d['guest_allowed'] = clients['client'].guest_allowed
+        d['version'] = clients['client'].version
+
     except exceptions.ServerError as e:
         log.exception()
         send_error(e, room=client_id)
@@ -161,15 +202,6 @@ def init_views(flask_app, socketio_app):
 
     @socketio.on('command')
     def on_command(msg):
-        """
-        1 - connect
-        2 - reconnect
-        3 - disconnect
-        4 - status
-        5 - handshake
-        Returns:
-            {'status' : bool or None}
-        """
         clients = get_clients(msg.get("session_id", "default"))
         locks = get_locks(msg.get("session_id", "default"))
         socketio_app.start_background_task(on_command_handle, request.sid, clients, msg, locks['client'])
