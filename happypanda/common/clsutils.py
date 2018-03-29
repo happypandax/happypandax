@@ -84,4 +84,5 @@ class InternalDatabase:
     similar_gallery_tags = GetSet("similar_gallery_tags")
 
 
-constants.internaldb = InternalDatabase()
+constants.internaldb = internaldb = InternalDatabase()
+

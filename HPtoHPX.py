@@ -969,8 +969,12 @@ def main(args=sys.argv[1:]):
                             if circle_in_title:
                                 artist_tags = g.tags['Artist']
                                 for atag in artist_tags:
-                                    if '(' + atag + ')' in g.artist.lower() or '(various)' in g.artist.lower():
-                                        artist_names.append(utils.extract_original_text(atag, g.artist))
+                                    artist_various = '(various)' in g.artist.lower()
+                                    if '(' + atag + ')' in g.artist.lower() or artist_various:
+                                        natag = utils.extract_original_text(atag, g.artist)
+                                        if artist_various and natag == atag:
+                                            natag = utils.capitalize_text(natag)
+                                        artist_names.append(natag)
                         if not artist_names:
                             artist_names.append(g.artist.strip())
 
@@ -988,15 +992,16 @@ def main(args=sys.argv[1:]):
                             if 'Group' in g.tags:
                                 circle_tags = g.tags['Group']
                                 for ctag in circle_tags:
-                                    if ctag:
-                                        circle = dst_circles.get(ctag)
+                                    if g.artist and ctag in g.artist.lower():
+                                        cname = utils.extract_original_text(ctag, g.artist)
+                                    else:
+                                        cname = utils.capitalize_text(ctag)
+                                    if cname:
+                                        circle = dst_circles.get(cname.lower())
                                         if not circle:
                                             circle = db.Circle()
-                                            if g.artist and ctag in g.artist.lower():
-                                                circle.name = utils.extract_original_text(ctag, g.artist)
-                                            else:
-                                                circle.name = utils.capitalize_text(ctag)
-                                            dst_circles[ctag] = circle
+                                            circle.name = cname
+                                            dst_circles[cname.lower()] = circle
                                         if not circle in artist.circles:
                                             artist.circles.append(circle)
 
@@ -1023,18 +1028,19 @@ def main(args=sys.argv[1:]):
                     if 'Parody' in g.tags:
                         parody_tags = g.tags['Parody']
                         for ptag in parody_tags:
-                            if ptag:
-                                parody = dst_parodies.get(ptag)
+                            if g.title and ptag in g.title.lower():
+                                pname = utils.extract_original_text(ptag, g.title)
+                            else:
+                                pname = utils.capitalize_text(ptag)
+                            if pname:
+                                parody = dst_parodies.get(pname.lower())
                                 if not parody:
                                     parody = db.Parody()
                                     parody_name = db.AliasName()
-                                    if g.title and ptag in g.title.lower():
-                                        parody_name.name = utils.extract_original_text(ptag, g.title)
-                                    else:
-                                        parody_name.name = utils.capitalize_text(ptag)
+                                    parody_name.name = pname
                                     parody_name.language = dst_languages['english']
                                     parody.names.append(parody_name)
-                                    dst_parodies[ptag] = parody
+                                    dst_parodies[pname.lower()] = parody
                                 gallery.parodies.append(parody)
 
                     gallery.pub_date = g.pub_date

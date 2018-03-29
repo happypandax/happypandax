@@ -4,7 +4,7 @@ import shutil
 import atexit
 import subprocess
 
-from happypanda.common import constants, hlogger
+from happypanda.common import constants, hlogger, clsutils
 
 # OS X: fix the working directory when running a mac app
 # OS X: files are in [app]/Contents/MacOS/
@@ -37,7 +37,7 @@ def launch_app(*args, **kwargs):
 def main():
     log.setup_logger()
     try:
-        update_info = constants.internaldb.update_info.get({})
+        update_info = clsutils.internaldb.update_info.get({})
         if not update_info:
             log.e("No update info registered")
             sys.exit(1)
@@ -70,7 +70,7 @@ def main():
                 log.e('No launch application provided')
 
         update_info['state'] = state.value
-        constants.internaldb.update_info.set(update_info)
+        clsutils.internaldb.update_info.set(update_info)
         log.i('Finished with state:', state)
     except BaseException:
         log.exception("Updater failed")
