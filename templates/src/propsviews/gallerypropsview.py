@@ -1,9 +1,9 @@
 from src.react_utils import (h,
                              e,
                              createReactClass)
-from src.ui import ui
-from src.client import ItemType
-from src.single import artistitem
+from src.ui import ui, DateLabel
+from src.client import ItemType, client
+from src.single import artistitem, parodyitem, circleitem
 from src import utils
 from src.views import tagview
 from src.i18n import tr
@@ -16,79 +16,145 @@ clearImmediate = clearInterval = clearTimeout = this = document = None
 JSON = Math = console = alert = requestAnimationFrame = None
 __pragma__('noskip')
 
+def get_lang(data=None, error=None):
+    if data is not None and not error:
+        this.setState({"lang_data": data})
+    elif error:
+        state.app.notif("Failed to fetch language ({})".format(this.state.id), level="error")
+    else:
+        if this.props.data and not this.props.language:
+            client.call_func("get_item", this.get_lang,
+                             item_type=ItemType.Language,
+                             item_id=this.props.data.language_id)
+
+__pragma__("tconv")
+
+def get_status(data=None, error=None):
+    if data is not None and not error:
+        if data:
+            this.setState({"status_data": data[0]})
+    elif error:
+        state.app.notif("Failed to fetch status ({})".format(this.state.id), level="error")
+    else:
+        if this.props.data and not this.props.status:
+            client.call_func("get_related_items", this.get_status,
+                        item_type=ItemType.Grouping,
+                        related_type=ItemType.Status,
+                        item_id=this.props.data.grouping_id)
+
+__pragma__("notconv")
+
 
 def gallery_on_update(p_props, p_state):
     if p_props.data != this.props.data:
         this.setState({'data': this.props.data, 'id': this.props.data.id if this.props.data else None})
 
 
+__pragma__('tconv')
 def galleryprops_render():
+
     title = ""
-    urls = []
+    rating = this.props.rating
     artists = []
-    artist_names = []
-    item_id = this.state.id
+    item_id = this.props.id
     info = ""
-    date_pub = tr(this, "ui.t-unknown", "Unknown")
-    date_read = tr(this, "ui.t-unknown", "Unknown")
-    date_added = tr(this, "ui.t-unknown", "Unknown")
+    inbox = False
+    trash = False
+    read_count = 0
+    date_pub = None
+    date_upd = None
+    date_read = None
+    date_added = None
+    urls = []
+    parodies = []
+    circles = []
+    status = this.props.status or this.state.status_data
+    language = this.props.language or this.state.lang_data
+    tags = this.props.tags
+    if this.props.data:
+        item_id = this.props.data.id
+        parodies = this.props.data.parodies
 
-    if this.state.data:
-        read_count = this.state.data.times_read
-        title = this.state.data.titles[0].js_name
-        info = this.state.data.info
-
+        if this.props.data.pub_date:
+            date_pub = this.props.data.pub_date
+        if this.props.data.last_updated:
+            date_upd = this.props.data.last_updated
+        if this.props.data.last_read:
+            date_read = this.props.data.last_read
+        if this.props.data.timestamp:
+            date_added = this.props.data.timestamp
+        read_count = this.props.data.times_read
+        info = this.props.data.info
+        title = this.props.data.titles[0].js_name
+        inbox = this.props.data.metatags.inbox
+        trash = this.props.data.metatags.trash
         if not item_id:
-            item_id = this.state.data.id
+            item_id = this.props.data.id
 
-        for a in this.state.data.artists:
-            if len(a.names) > 0:
-                artist_names.append(a.names[0].js_name)
-        artists = this.state.data.artists
+        artists = this.props.data.artists
+        for a in artists:
+            if a.circles:
+                for c in a.circles:
+                    circles.append(c)
 
-        for u in this.state.data.urls:
+        for u in this.props.data.urls:
             urls.append(u.js_name)
 
-        if this.state.data.pub_date:
-            date_pub = utils.moment.unix(this.state.data.pub_date).format("LL")
-            date_pub += " (" + utils.moment.unix(this.state.data.pub_date).fromNow() + ")"
-        if this.state.data.last_read:
-            date_read = utils.moment.unix(this.state.data.last_read).format("LLL")
-            date_read += " (" + utils.moment.unix(this.state.data.last_read).fromNow() + ")"
-        if this.state.data.timestamp:
-            date_added = utils.moment.unix(this.state.data.timestamp).format("LLL")
-            date_added += " (" + utils.moment.unix(this.state.data.timestamp).fromNow() + ")"
+        if not utils.defined(rating):
+            rating = this.props.data.rating
+
+    status = status.js_name if status else tr(this, "ui.t-unknown", "Unknown")
+    language = language.js_name if language else tr(this, "ui.t-unknown", "Unknown")
 
     rows = []
 
-    rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, title, as_="h3"), colSpan="2", textAlign="center",
-                    verticalAlign="middle")))
-
-    rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, info, as_="h5", className="sub-text"), colSpan="2")))
+    if this.props.compact:
+        rows.append(e(ui.Table.Row,
+                      e(ui.Table.Cell, e(ui.Header, title, as_="h3"), colSpan="2", textAlign="center",
+                        verticalAlign="middle")))
+    if info:
+        rows.append(e(ui.Table.Row,
+                      e(ui.Table.Cell, e(ui.Header, info, as_="h5", className="sub-text"), colSpan="2")))
 
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-multi-artists", "Artist(s)") + ':', as_="h5"), collapsing=True),
                   e(ui.Table.Cell, *(e(artistitem.ArtistLabel, data=x) for x in artists))))
+    if circles:
+        rows.append(e(ui.Table.Row,
+                      e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-multi-circles", "Circle(s)") + ':', as_="h5"), collapsing=True),
+                      e(ui.Table.Cell, *(e(circleitem.CircleLabel, data=x) for x in circles))))
+    if parodies:
+        rows.append(e(ui.Table.Row,
+                      e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-parody", "Parody") + ':', as_="h5"), collapsing=True),
+                      e(ui.Table.Cell, *(e(parodyitem.ParodyLabel, data=x) for x in parodies))))
+    rows.append(e(ui.Table.Row,
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-language", "Language") + ':', as_="h5"), collapsing=True),
+                  e(ui.Table.Cell, language)))
+    rows.append(e(ui.Table.Row,
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-rating", "Rating") + ':', as_="h5"), collapsing=True),
+                  e(ui.Table.Cell, e(ui.Rating, icon="star", rating=rating, maxRating=10, size="huge", clearable=True))))
+    rows.append(e(ui.Table.Row,
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-status", "Status") + ':', as_="h5"), collapsing=True),
+                  e(ui.Table.Cell, e(ui.Label, tr(this, "general.db-status-{}".format(status.lower()), status), color={"completed": "green", "ongoing": "orange", "unknown": "grey"}.get(status.lower(), "blue")))))
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-published", "Published") + ':', as_="h5"), collapsing=True),
-                  e(ui.Table.Cell, e(ui.Label, date_pub))))
-    rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-date-added", "Date added") + ':', as_="h5"), collapsing=True),
-                  e(ui.Table.Cell, e(ui.Label, date_added))))
-
-    rows.append(e(ui.Table.Row,
+                  e(ui.Table.Cell, e(DateLabel, timestamp=date_pub, full=True))))
+    if this.props.compact:
+        rows.append(e(ui.Table.Row,
+                  e(ui.Table.Cell, e(ui.Header,  tr(this, "ui.t-date-added", "Date added") + ':', as_="h5"), collapsing=True),
+                  e(ui.Table.Cell, e(DateLabel, timestamp=date_added, format="LLL"))))
+        rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-last-read", "Last read") + ':', as_="h5"), collapsing=True),
-                  e(ui.Table.Cell, e(ui.Label, date_read))))
-
+                  e(ui.Table.Cell, e(DateLabel, timestamp=date_read, format="LLL"))))
+        rows.append(e(ui.Table.Row,
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-last-updated", "Last updated") + ':', as_="h5"), collapsing=True),
+                  e(ui.Table.Cell, e(DateLabel, timestamp=date_upd, format="LLL"))))
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-times-read", "Times read") + ':', as_="h5"), collapsing=True),
                   e(ui.Table.Cell, e(ui.Label, read_count, circular=True))))
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-tags", "Tags") + ':', as_="h5"), collapsing=True),
-                  e(ui.Table.Cell, e(tagview.TagView, item_id=item_id, item_type=this.state.item_type,
-                                     data=this.state.tags, on_tags=this.props.on_tags))))
+                  e(ui.Table.Cell, e(tagview.TagView, item_id=item_id, item_type=this.state.item_type, data=tags, on_tags=this.props.on_tags))))
 
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-multi-urls", "URL(s)") + ':', as_="h5"), collapsing=True),
@@ -99,8 +165,10 @@ def galleryprops_render():
                *rows
                ),
              basic="very",
-             size="small"
+             size=this.props.size,
+             compact="very" if utils.defined(this.props.compact) else False
              )
+__pragma__('notconv')
 
 
 GalleryProps = createReactClass({
@@ -109,9 +177,13 @@ GalleryProps = createReactClass({
     'getInitialState': lambda: {'id': None,
                                 'data': this.props.data,
                                 'item_type': ItemType.Gallery,
-                                'tags': this.props.tags,
+                                'lang_data': this.props.language,
+                                'status_data': this.props.status,
                                 },
     'componentWillMount': lambda: this.setState({'id': this.props.data.id if this.props.data else this.state.data.id if this.state.data else None}),
+    'componentDidMount': lambda: all((this.get_lang(), this.get_status())),
+    'get_lang': get_lang,
+    'get_status': get_status,
     'componentDidUpdate': gallery_on_update,
 
     'render': galleryprops_render

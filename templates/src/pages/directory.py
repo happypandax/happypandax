@@ -9,7 +9,7 @@ from src.ui import ui, Pagination
 from src.client import client, ItemType, ItemSort
 from src.i18n import tr
 from src.state import state
-from src.propsviews import artistpropsview, tagpropsview
+from src.propsviews import artistpropsview, tagpropsview, circlepropsview, parodypropsview
 from src import utils
 from org.transcrypt.stubs.browser import __pragma__
 __pragma__('alias', 'as_', 'as')
@@ -230,6 +230,7 @@ def get_db_parodies(data=None, error=None):
         client.call_func("search_item", this.get_items,
                          item_type=ItemType.Parody,
                          search_query=this.state.search_query,
+                         sort_by=ItemSort.ParodyName,
                          offset=this.state.limit * (this.state.page - 1),
                          limit=this.state.limit)
         this.setState({'data_loading': True})
@@ -257,9 +258,17 @@ def parodiespage_render():
         if parody.names:
             aname = parody.names[0]['name']
         items.append(
-            e(ui.Card,
+            e(ui.Popup,
+                e(parodypropsview.ParodyProps, data=parody),
+             trigger=e(ui.Card,
                 e(ui.Card.Content, e(ui.Card.Description, aname)),
-              centered=True, link=True, className="default-card")
+              centered=True, link=True, className="default-card"),
+             hoverable=True,
+             wide="very",
+             on="click",
+             hideOnScroll=True,
+             position="top center"
+              )
         )
 
     return e(SimpleLayout,
@@ -375,9 +384,21 @@ def get_db_circles(data=None, error=None):
         state.app.notif("Failed to fetch circles", level="error")
         this.setState({'data_loading': False})
     else:
-        client.call_func("get_items", this.get_items,
-                         item_type=ItemType.Circle)
+        client.call_func("search_item", this.get_items,
+                         item_type=ItemType.Circle,
+                         search_query=this.state.search_query,
+                         sort_by=ItemSort.CircleName,
+                         offset=this.state.limit * (this.state.page - 1),
+                         limit=this.state.limit)
         this.setState({'data_loading': True})
+
+def get_circles_count(data=None, error=None):
+    if data is not None and not error:
+        this.setState({"count": data['count']})
+    elif error:
+        state.app.notif("Failed to fetch circle count", level="error")
+    else:
+        client.call_func("get_count", this.get_items_count, item_type=ItemType.Circle)
 
 
 __pragma__("tconv")
@@ -389,19 +410,40 @@ def circlespage_render():
 
     for item in sorted(this.state.data, key=lambda x: x['name'].lower()):
         items.append(
-            e(ui.Card,
-                e(ui.Card.Content, e(ui.Card.Description, item['name'])),
-              centered=True, link=True, className="default-card")
+            e(ui.Popup,
+              e(circlepropsview.CircleProps, data=item),
+             trigger=e(ui.Card,
+                    e(ui.Card.Content, e(ui.Card.Description, item['name']),
+                      ),
+                  centered=True, link=True, className="default-card"),
+             hoverable=True,
+             wide="very",
+             on="click",
+             hideOnScroll=True,
+             position="top center"
+              )
         )
 
     return e(SimpleLayout,
-             e(ui.Card.Group, *items, itemsPerRow=1, doubling=True, stackable=True,
+             e(ui.Card.Group, *items, itemsPerRow=2, doubling=True, stackable=True,
                as_=ui.Transition.Group,
                animation="scale",
                duration=500,),
              loading=this.state.data_loading,
+             pages=True,
+             item_count=this.state.count,
+             limit=this.state.limit,
+             page=this.state.page,
+             set_page=this.set_page,
+             search=True,
+             search_query=this.state.search_query,
+             search_change=this.update_search,
+             search_placeholder=tr(this, "ui.t-search-cricles-placeholder", "Search cricles"),
+             stats=[e(ui.Statistic,
+                      e(ui.Statistic.Value, this.state.count),
+                      e(ui.Statistic.Label, tr(this, "ui.t-total-circles", "Total circles"))
+                      )]
              )
-
 
 __pragma__("notconv")
 
@@ -409,13 +451,25 @@ CirclesPage = createReactClass({
     'displayName': 'CirclesPage',
 
     'getInitialState': lambda: {
+        'search_query': utils.get_query("search", "") or this.props.search_query,
         'data': [],
+        'limit': 50,
+        'page': 1,
+        'count': 0,
         'data_loading': False,
     },
 
     'get_items': get_db_circles,
+    'get_items_count': get_circles_count,
+    'set_page': lambda p: all((this.setState({'page': p}), )),
 
-    'componentDidMount': lambda: all((this.get_items(),)),
+    'update_search': lambda e, d: all((this.setState({'search_query': d.value}),
+                                       utils.go_to(this.props.history, query={'search': d.value}, push=False))),
+
+    'componentDidMount': lambda: all((this.get_items(), this.get_items_count())),
+
+    'componentDidUpdate': lambda p_p, p_s: this.get_items() if any((p_s.search_query != this.state.search_query,
+                                                                    p_s.page != this.state.page)) else None,
 
     'render': circlespage_render
 })

@@ -20,6 +20,7 @@ import atexit
 import ctypes
 import subprocess
 import logging
+import regex
 
 from dbm import dumb as dumbdb
 from inspect import ismodule, currentframe, getframeinfo
@@ -511,3 +512,61 @@ def run_with_privileges(func, *args):
         if constants.is_win:
             print(prog)
             ctypes.windll.shell32.ShellExecuteW(None, "runas", prog, subprocess.list2cmdline(params), None, 1)
+
+def multi_word_extract(cand, word_list, case=False, sep=" ", startswith=False, allow_inbetween=True):
+    """
+    Extract candidate words in the list of words and returns them.
+    Like extract_original_text but with prepared words.
+
+    func("foo bar", ["Foo", "Bar"]) -> "Foo Bar"
+    """
+
+    if isinstance(word_list, str):
+        word_list = word_list.split(sep)
+
+    if not allow_inbetween:
+        word_list = [word_list]
+
+    for n, word in enumerate(word_list):
+        wlist = word_list.copy()[n:] if allow_inbetween else word
+        buffer = ""
+        swith_cand = ""
+        while wlist:
+            t = wlist.pop(0)
+            if buffer:
+                buffer += sep + t
+            else:
+                buffer = t
+
+            a = buffer if case else buffer.lower()
+            b = cand if case else cand.lower()
+
+            if startswith:
+                m = b.startswith(a)
+            else:
+                m = b == a
+            if m and startswith:
+                swith_cand = buffer
+            elif m:
+                return buffer
+            else:
+                if swith_cand:
+                    return swith_cand
+        else:
+            if swith_cand:
+                return swith_cand
+
+def extract_original_text(cand, text):
+    """
+    Extract candidate text from a long string of text with correct case.
+
+    func("foo bar", "momo [Foo Bar] yumiko") -> "Foo Bar"
+    """
+    r = r"((?<=[\( \[]))?({})((?=[\) \]$]))?".format(cand)
+    m = regex.search(r, text, regex.IGNORECASE|regex.UNICODE)
+    if m:
+        return m[0]
+    return cand
+
+def capitalize_text(text):
+    return " ".join(x.capitalize() for x in text.strip().split())

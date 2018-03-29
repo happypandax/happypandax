@@ -26,3 +26,4 @@ APScheduler==3.5.1
 cachetools==2.0.1
 treelib==1.5.1
 qtmodern==0.1.4
+regex==2018.02.21

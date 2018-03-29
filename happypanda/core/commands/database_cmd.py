@@ -224,6 +224,9 @@ class GetDatabaseSort(Command):
         super().__init__()
         self.model = None
 
+    ##############################
+    # Gallery
+
     @names.default(capture=True)
     def _gallery_names(model_name, capture=db.model_name(db.Gallery)):
         return {
@@ -238,9 +241,6 @@ class GetDatabaseSort(Command):
             ItemSort.GalleryReadCount.value: "Read Count",
             ItemSort.GalleryPageCount.value: "Page Count",
         }
-
-    ##############################
-    # Gallery
 
     @orderby.default(capture=True)
     def _gallery_orderby(model_name, capture=db.model_name(db.Gallery)):
@@ -275,21 +275,44 @@ class GetDatabaseSort(Command):
     # AliasName
 
     @names.default(capture=True)
-    def _aliasname_names(model_name, capture=db.model_name(db.Artist)):
+    def _aliasname_names(model_name, capture=tuple(db.model_name(x) for x in (db.Artist, db.Parody))):
         return {
             ItemSort.ArtistName.value: "Name",
+            ItemSort.ParodyName.value: "Name",
         }
 
     @orderby.default(capture=True)
-    def _aliasname_orderby(model_name, capture=db.model_name(db.Artist)):
+    def _aliasname_orderby(model_name, capture=tuple(db.model_name(x) for x in (db.Artist, db.Parody))):
         return {
             ItemSort.ArtistName.value: (db.AliasName.name,),
+            ItemSort.ParodyName.value: (db.AliasName.name,),
         }
 
     @joins.default(capture=True)
-    def _aliasname_joins(model_name, capture=db.model_name(db.Artist)):
+    def _aliasname_joins(model_name, capture=tuple(db.model_name(x) for x in (db.Artist, db.Parody))):
         return {
             ItemSort.ArtistName.value: (db.Artist.names,),
+            ItemSort.ParodyName.value: (db.Parody.names,),
+        }
+
+    ##############################
+    # Circle
+
+    @names.default(capture=True)
+    def _circle_names(model_name, capture=db.model_name(db.Circle)):
+        return {
+            ItemSort.CircleName.value: "Name",
+        }
+
+    @orderby.default(capture=True)
+    def _circle_orderby(model_name, capture=db.model_name(db.Circle)):
+        return {
+            ItemSort.CircleName.value: (db.Circle.name,),
+        }
+
+    @joins.default(capture=True)
+    def _circle_joins(model_name, capture=db.model_name(db.Circle)):
+        return {
         }
 
     ##############################

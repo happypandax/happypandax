@@ -3,6 +3,7 @@ from src.react_utils import (e,
                              createReactClass)
 from src.ui import ui
 from src.client import ItemType
+from src.propsviews import circlepropsview
 from org.transcrypt.stubs.browser import __pragma__
 __pragma__('alias', 'as_', 'as')
 
@@ -21,6 +22,7 @@ def circlelbl_render():
 
     lbl_args = {'content': name}
     return e(ui.Popup,
+             e(circlepropsview.CircleProps, data=data),
              trigger=e(ui.Label,
                        basic=True,
                        color="teal",

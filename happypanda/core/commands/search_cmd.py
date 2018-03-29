@@ -210,6 +210,7 @@ class PartialModelFilter(Command):
     - Namespace
     - Artist
     - Circle
+    - Parody
     - Status
     - Grouping
     - Language
@@ -239,6 +240,7 @@ class PartialModelFilter(Command):
         return (db.Taggable,
                 db.Artist,
                 db.Circle,
+                db.Parody,
                 db.Status,
                 db.Grouping,
                 db.Language,
@@ -376,6 +378,33 @@ class PartialModelFilter(Command):
         ids = set()
 
         if term.namespace.lower() == 'artist' or not term.namespace:
+            col_on_parent = db.relationship_column(parent_model, child_model)
+
+            s = constants.db_session()
+            q = s.query(parent_model.id)
+            if col_on_parent:
+                q = q.join(col_on_parent)
+            ids.update(
+                x[0] for x in q.join(
+                    child_model.names).filter(
+                    match_string(
+                        db.AliasName.name,
+                        term.tag,
+                        options)).all())
+        return ids
+
+    @match_model.default(capture=True)
+    def _match_parody(parent_model, child_model, term, options,
+                      capture=db.model_name(db.Parody)):
+        get_model = database_cmd.GetModelClass()
+        parent_model = get_model.run(parent_model)
+        child_model = get_model.run(child_model)
+
+        match_string = PartialModelFilter._match_string_column
+        term = ParseTerm().run(term)
+        ids = set()
+
+        if term.namespace.lower() == 'parody' or not term.namespace:
             col_on_parent = db.relationship_column(parent_model, child_model)
 
             s = constants.db_session()

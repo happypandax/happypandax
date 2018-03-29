@@ -7,6 +7,7 @@ from src.i18n import tr
 from src.state import state
 from src.client import ItemType, ImageSize, client, Command
 from src.single import galleryitem, thumbitem, artistitem, parodyitem, circleitem
+from src.propsviews import gallerypropsview
 from src.views import itemview, tagview
 from src import utils
 from org.transcrypt.stubs.browser import __pragma__
@@ -241,22 +242,15 @@ def page_render():
     fav = this.state.fav
     title = ""
     rating = this.state.rating
-    artists = []
     item_id = this.state.id
-    info = ""
     inbox = False
     trash = False
-    read_count = 0
     date_pub = None
     date_upd = None
     date_read = None
     date_added = None
-    urls = []
-    parodies = []
-    circles = []
     if this.state.data:
         item_id = this.state.data.id
-        parodies = this.state.data.parodies
 
         if this.state.data.pub_date:
             date_pub = this.state.data.pub_date
@@ -266,67 +260,17 @@ def page_render():
             date_read = this.state.data.last_read
         if this.state.data.timestamp:
             date_added = this.state.data.timestamp
-        read_count = this.state.data.times_read
-        info = this.state.data.info
         title = this.state.data.titles[0].js_name
         inbox = this.state.data.metatags.inbox
         trash = this.state.data.metatags.trash
         if not item_id:
             item_id = this.state.data.id
 
-        artists = this.state.data.artists
-        for a in artists:
-            if a.circles:
-                for c in a.circles:
-                    circles.append(c)
-
-        for u in this.state.data.urls:
-            urls.append(u.js_name)
-
     series_data = []
     if this.state.group_data:
         series_data = this.state.group_data
 
     status = this.state.status_data.js_name if this.state.status_data.js_name else "Unknown"
-
-    rows = []
-
-    rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, info, as_="h5", className="sub-text"), colSpan="2")))
-    rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-multi-artists", "Artist(s)") + ':', as_="h5"), collapsing=True),
-                  e(ui.Table.Cell, *(e(artistitem.ArtistLabel, data=x) for x in artists))))
-    if circles:
-        rows.append(e(ui.Table.Row,
-                      e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-multi-circles", "Circle(s)") + ':', as_="h5"), collapsing=True),
-                      e(ui.Table.Cell, *(e(circleitem.CircleLabel, data=x) for x in circles))))
-    if parodies:
-        rows.append(e(ui.Table.Row,
-                      e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-parody", "Parody") + ':', as_="h5"), collapsing=True),
-                      e(ui.Table.Cell, *(e(parodyitem.ParodyLabel, data=x) for x in parodies))))
-    rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-language", "Language") + ':', as_="h5"), collapsing=True),
-                  e(ui.Table.Cell, this.state.lang_data.js_name)))
-    rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-status", "Status") + ':', as_="h5"), collapsing=True),
-                  e(ui.Table.Cell, e(ui.Label, tr(this, "general.db-status-{}".format(status.lower()), status), color={"completed": "green", "ongoing": "orange", "unknown": "grey"}.get(status.lower(), "blue")))))
-    rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-published", "Published") + ':', as_="h5"), collapsing=True),
-                  e(ui.Table.Cell, e(DateLabel, timestamp=date_pub, full=True))))
-    rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-times-read", "Times read") + ':', as_="h5"), collapsing=True),
-                  e(ui.Table.Cell, e(ui.Label, read_count, circular=True))))
-    rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-rating", "Rating") + ':', as_="h5"), collapsing=True),
-                  e(ui.Table.Cell, e(ui.Rating, icon="star", rating=rating, maxRating=10, size="huge", clearable=True))))
-
-    rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-tags", "Tags") + ':', as_="h5"), collapsing=True),
-                  e(ui.Table.Cell, e(tagview.TagView, item_id=item_id, item_type=this.state.item_type))))
-
-    rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-multi-urls", "URL(s)") + ':', as_="h5"), collapsing=True),
-                  e(ui.Table.Cell, e(ui.List, *[e(ui.List.Item, h("span", h("a", x, href=x, target="_blank"), e(ui.List.Icon, js_name="external share"))) for x in urls]))))
 
     indicators = []
 
@@ -530,11 +474,12 @@ def page_render():
                        e(ui.Grid.Row, e(ui.Grid.Column, e(ui.Header, title, as_="h3"), textAlign="center")),
                        e(ui.Grid.Row,
                          e(ui.Grid.Column,
-                           e(ui.Table,
-                             e(ui.Table.Body,
-                               *rows
-                               ),
-                             basic="very"
+                           e(gallerypropsview.GalleryProps,
+                             data=this.state.data,
+                             status=this.state.status_data,
+                             language=this.state.lang_data,
+                             rating=this.state.rating,
+                             size="large"
                              ))),
                        stackable=True,
                        padded=False,

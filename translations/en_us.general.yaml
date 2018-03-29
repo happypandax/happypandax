@@ -2,7 +2,7 @@
 locale: English (United States)
 
 # very useful for updating
-_version_: 1
+_version_: 2
 
 # Database
 db-item-gallery: Gallery
@@ -26,4 +26,6 @@ sort-idx-10: Page Count
 sort-idx-20: Name
 sort-idx-30: Namespace
 sort-idx-31: Tag
+sort-idx-40: Name
+sort-idx-45: Name
 

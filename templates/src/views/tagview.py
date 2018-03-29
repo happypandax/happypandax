@@ -1,4 +1,4 @@
-from src.react_utils import (e,
+from src.react_utils import (e,h,
                              createReactClass)
 from src.ui import ui
 from src.client import client
@@ -64,7 +64,7 @@ def tag_render():
         ns_tags = sorted([x.js_name for x in ns_tags])
         tag_rows.append(
             e(ui.Table.Row,
-                e(ui.Table.Cell, ns, collapsing=True),
+                e(ui.Table.Cell, h("span", ns, className="sub-text"), collapsing=True),
                 e(ui.Table.Cell,
                   e(ui.Label.Group,
                     *[e(tagitem.TagLabel, namespace=ns, tag=x, show_ns=False) for x in ns_tags],
@@ -73,7 +73,7 @@ def tag_render():
 
     return e(ui.Table,
              e(ui.Transition.Group, *tag_rows, as_=ui.Table.Body, duration=1000),
-             basic="very", celled=True, compact=True)
+             basic="very", celled=True, compact="very", size="small")
 
 
 TagView = createReactClass({

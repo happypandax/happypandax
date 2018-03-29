@@ -188,6 +188,13 @@ class ItemSort(_APIEnum):
     #: Tag
     NamespaceTagTag = 31
 
+    #: Circle Name
+    CircleName = 40
+
+    #: Parody Name
+    ParodyName = 45
+
+
 
 class ProgressType(_APIEnum):
 

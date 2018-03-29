@@ -133,9 +133,11 @@ mi-dir-status: Status
 t-search-tags-placeholder: Search tags
 t-search-artists-placeholder: Search artists
 t-search-parodies-placeholder: Search parodies
+t-search-circles-placeholder: Search circles
 t-total-tags: Total Tags
 t-total-artists: Total Artists
 t-total-parodies: Total Parodies
+t-total-circles: Total Circles
 
 # Gallery Page
 t-multi-artists: Artist(s)

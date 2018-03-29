@@ -14,7 +14,7 @@ import queue
 from multiprocessing import Process, Queue, Pipe
 from happypanda.core import db
 from happypanda.core.commands import io_cmd
-from happypanda.common import constants, config
+from happypanda.common import constants, config, utils
 
 GALLERY_LISTS = []
 pages_out = queue.Queue()
@@ -783,7 +783,7 @@ def process_pipes(out_queue, out_pipe):
     while True:
         try:
             out_queue.put(out_pipe.recv())
-        except EOFError:
+        except (EOFError, AssertionError):
             break
 
 
@@ -957,27 +957,48 @@ def main(args=sys.argv[1:]):
                     gallery.titles.append(title)
 
                     if g.artist:
-                        artist = None
-                        artist_name = db.AliasName()
-                        artist_name.name = g.artist.strip()
-                        artist_name.language = db_lang
-                        artist = dst_artists.get(artist_name.name)
-                        if not artist:
-                            artist = db.Artist()
-                            artist.names.append(artist_name)
-                        gallery.artists.append(artist)
-                        dst_artists[artist_name.name] = artist
-                        if 'Group' in g.tags:
-                            circle_tags = g.tags['Group']
-                            for ctag in circle_tags:
-                                if ctag:
-                                    circle = dst_circles.get(ctag)
-                                    if not circle:
-                                        circle = db.Circle()
-                                        circle.name = " ".join(x.capitalize() for x in ctag.strip().split())
-                                        dst_circles[ctag] = circle
-                                    if not circle in artist.circles:
-                                        artist.circles.append(circle)
+                        artist_names = []
+                        if 'Artist' in g.tags:
+                            circle_in_title = False
+                            if 'Group' in g.tags:
+                                circle_tags = g.tags['Group']
+                                for ctag in circle_tags:
+                                    if ctag+' ' in g.artist.lower():
+                                        circle_in_title = True
+                                        break
+                            if circle_in_title:
+                                artist_tags = g.tags['Artist']
+                                for atag in artist_tags:
+                                    if '('+atag+')' in g.artist.lower() or '(various)' in g.artist.lower():
+                                        artist_names.append(utils.extract_original_text(atag, g.artist))
+                        if not artist_names:
+                            artist_names.append(g.artist.strip())
+
+                        for a_name in artist_names:
+                            artist = None
+                            artist_name = db.AliasName()
+                            artist_name.name = a_name
+                            artist_name.language = db_lang
+                            artist = dst_artists.get(artist_name.name.lower())
+                            if not artist:
+                                artist = db.Artist()
+                                artist.names.append(artist_name)
+                            gallery.artists.append(artist)
+                            dst_artists[artist_name.name.lower()] = artist
+                            if 'Group' in g.tags:
+                                circle_tags = g.tags['Group']
+                                for ctag in circle_tags:
+                                    if ctag:
+                                        circle = dst_circles.get(ctag)
+                                        if not circle:
+                                            circle = db.Circle()
+                                            if g.artist and ctag in g.artist.lower():
+                                                circle.name = utils.extract_original_text(ctag, g.artist)
+                                            else:
+                                                circle.name = utils.capitalize_text(ctag)
+                                            dst_circles[ctag] = circle
+                                        if not circle in artist.circles:
+                                            artist.circles.append(circle)
 
                     if not g.info == "No description..":
                         gallery.info = g.info
@@ -990,9 +1011,9 @@ def main(args=sys.argv[1:]):
                     if g.type:
                         gtype = db.Category()
                         gtype.name = g.type
-                        gtype = dst_gtype.get(gtype.name, gtype)
+                        gtype = dst_gtype.get(gtype.name.lower(), gtype)
                         gallery.type = gtype
-                        dst_gtype[gtype.name] = gtype
+                        dst_gtype[gtype.name.lower()] = gtype
 
                     if g.link:
                         gurl = db.Url()
@@ -1007,7 +1028,10 @@ def main(args=sys.argv[1:]):
                                 if not parody:
                                     parody = db.Parody()
                                     parody_name = db.AliasName()
-                                    parody_name.name = " ".join(x.capitalize() for x in ptag.strip().split())
+                                    if g.title and ptag in g.title.lower():
+                                        parody_name.name = utils.extract_original_text(ptag, g.title)
+                                    else:
+                                        parody_name.name = utils.capitalize_text(ptag)
                                     parody_name.language = dst_languages['english']
                                     parody.names.append(parody_name)
                                     dst_parodies[ptag] = parody
