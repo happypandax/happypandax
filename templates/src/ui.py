@@ -327,6 +327,7 @@ LabelAccordion = createReactClass({
                         ),
 })
 
+
 def datelbl_render():
     if this.props.timestamp:
         full = utils.moment.unix(this.props.timestamp).format(this.props.format or "LL")
@@ -348,6 +349,7 @@ def datelbl_render():
         items.append(date)
 
     return e(ui.Label, *items, onClick=this.toggle, as_="a")
+
 
 DateLabel = createReactClass({
     'displayName': 'DateLabel',

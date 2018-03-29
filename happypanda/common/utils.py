@@ -188,14 +188,17 @@ def parse_options(args):
     if args.momo:
         run_with_privileges(*args.momo)
 
+
 def get_input(txt="Please enter something...", func=None):
     if not func:
-        func = lambda: get_input("input: ")
+        def func():
+            return get_input("input: ")
     t = func()
     while not t:
         print(txt)
         t = func()
     return t
+
 
 def connection_params():
     "Retrieve host and port"
@@ -513,6 +516,7 @@ def run_with_privileges(func, *args):
             print(prog)
             ctypes.windll.shell32.ShellExecuteW(None, "runas", prog, subprocess.list2cmdline(params), None, 1)
 
+
 def multi_word_extract(cand, word_list, case=False, sep=" ", startswith=False, allow_inbetween=True):
     """
     Extract candidate words in the list of words and returns them.
@@ -556,6 +560,7 @@ def multi_word_extract(cand, word_list, case=False, sep=" ", startswith=False, a
             if swith_cand:
                 return swith_cand
 
+
 def extract_original_text(cand, text):
     """
     Extract candidate text from a long string of text with correct case.
@@ -563,10 +568,11 @@ def extract_original_text(cand, text):
     func("foo bar", "momo [Foo Bar] yumiko") -> "Foo Bar"
     """
     r = r"((?<=[\( \[]))?({})((?=[\) \]$]))?".format(cand)
-    m = regex.search(r, text, regex.IGNORECASE|regex.UNICODE)
+    m = regex.search(r, text, regex.IGNORECASE | regex.UNICODE)
     if m:
         return m[0]
     return cand
+
 
 def capitalize_text(text):
     return " ".join(x.capitalize() for x in text.strip().split())

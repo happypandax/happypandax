@@ -21,7 +21,7 @@ if __name__ == '__main__':
 
 import multiprocessing  # noqa: E402
 import rollbar  # noqa: E402
-import getpass # noqa: E402
+import getpass  # noqa: E402
 
 from multiprocessing import Process  # noqa: E402
 from apscheduler.triggers.interval import IntervalTrigger  # noqa: E402
@@ -35,12 +35,17 @@ parser = utils.get_argparser()  # required to be at module lvl for sphinx.autopr
 
 def create_user_interactive():
     s = {}
-    s['role'] = input("Which role should the user have?"+
-                        "\n"+"(1) user (default)\t"+
-                        "(2) guest\t"+
-                        "(3) admin"+
-                        "\nPlease input a number: ")
-    s['role'] = {'1':db.User.Role.user, '2':db.User.Role.guest, '3':db.User.Role.admin}.get(s['role'], db.User.Role.user)
+    s['role'] = input("Which role should the user have?" +
+                      "\n" + "(1) user (default)\t" +
+                      "(2) guest\t" +
+                      "(3) admin" +
+                      "\nPlease input a number: ")
+    s['role'] = {
+        '1': db.User.Role.user,
+        '2': db.User.Role.guest,
+        '3': db.User.Role.admin}.get(
+        s['role'],
+        db.User.Role.user)
     print("Creating {}...".format(s['role'].value))
     s['username'] = utils.get_input(func=lambda: input("Username: "))
     if s['role'] != db.User.Role.guest:
@@ -49,6 +54,7 @@ def create_user_interactive():
             s = {}
             print("Passwords did not match")
     return s
+
 
 def check_update():
     with utils.intertnal_db() as db:
@@ -67,6 +73,7 @@ def check_update():
             if not update_info['state'] == constants.UpdateState.Installing.value:
                 state = update_info['state']
     return state
+
 
 def cmd_commands(args):
     if args.gen_config:
@@ -94,7 +101,7 @@ def cmd_commands(args):
         return True
 
     if args.list_users:
-        for u in db.list_users(limit=20, offset=args.list_users-1):
+        for u in db.list_users(limit=20, offset=args.list_users - 1):
             print("{}\t{}".format(u.name, u.role.value))
         return True
 

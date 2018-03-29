@@ -1,4 +1,4 @@
-from src.react_utils import (e, h,
+from src.react_utils import (e,
                              createReactClass,
                              Link)
 from src.ui import ui
@@ -150,17 +150,20 @@ def get_page_count(data=None, error=None, gid=None):
 
 __pragma__("nokwargs")
 
+
 def go_left():
     if this.state.cfg_direction == ReaderDirection.left_to_right:
         this.go_prev()
     elif this.state.cfg_direction == ReaderDirection.right_to_left:
         this.go_next()
 
+
 def go_right():
     if this.state.cfg_direction == ReaderDirection.left_to_right:
         this.go_next()
     elif this.state.cfg_direction == ReaderDirection.right_to_left:
         this.go_prev()
+
 
 def on_key(ev):
     if ev.key == "Escape":
@@ -173,12 +176,13 @@ def on_key(ev):
         ev.preventDefault()
         this.go_left()
 
+
 def on_canvas_click(ev):
     if this.state.context:
         ev.preventDefault()
         rect = this.state.context.getBoundingClientRect()
-        x, y = ev.clientX-rect.left, ev.clientY-rect.top
-        hwidth = rect.width/2
+        x, y = ev.clientX - rect.left, ev.clientY - rect.top # noqa: F841
+        hwidth = rect.width / 2
         if x > hwidth:
             this.go_right()
         else:
@@ -360,7 +364,7 @@ def page_render():
                        thumb,
                        className="no-padding-segment",
                        onClick=this.on_canvas_click,
-                       style={'cursor':'pointer'},
+                       style={'cursor': 'pointer'},
                        ),
                      innerRef=this.set_context,
                      ),
@@ -413,10 +417,10 @@ Page = createReactClass({
 
     'cmd_data': None,
     'set_page': lambda e, d: this.setState({'data': d}),
-    'go_prev': lambda: utils.go_to(this.props.history, query={'gid':this.state.data.gallery_id, 'number': this.state.data.number-1}) if\
-       int(this.state.data.number) > 1 else None,
-    'go_next': lambda: utils.go_to(this.props.history, query={'gid':this.state.data.gallery_id, 'number': this.state.data.number+1}) if\
-       int(this.state.data.number) < int(this.state.page_count) else None,
+    'go_prev': lambda: utils.go_to(this.props.history, query={'gid': this.state.data.gallery_id, 'number': this.state.data.number - 1}) if
+    int(this.state.data.number) > 1 else None,
+    'go_next': lambda: utils.go_to(this.props.history, query={'gid': this.state.data.gallery_id, 'number': this.state.data.number + 1}) if
+    int(this.state.data.number) < int(this.state.page_count) else None,
     'go_left': go_left,
     'go_right': go_right,
     'set_pagelist_ref': lambda r: this.setState({'page_list_ref': r}),

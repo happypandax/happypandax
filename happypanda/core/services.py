@@ -236,7 +236,7 @@ class AsyncService(Service):
     Service running asynchronous commands
     """
 
-    _all_commands = LRUCache(10*1000)
+    _all_commands = LRUCache(10 * 1000)
 
     def __init__(self, name, group=pool.Group()):
         super().__init__(name)

@@ -460,7 +460,7 @@ ItemView = createReactClass({
     'get_element': get_element,
     'get_more': get_more,
 
-    'reset_page': lambda p: all((this.setState({'page': 1}), utils.go_to(this.props.history, query={'page':1}, push=False))),
+    'reset_page': lambda p: all((this.setState({'page': 1}), utils.go_to(this.props.history, query={'page': 1}, push=False))),
     'set_page': lambda p: this.setState({'page': p, 'prev_page': None}),
 
     'on_infinite_scroll': lambda e, d: this.setState({'infinite_scroll': d.checked}),

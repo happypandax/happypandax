@@ -8,7 +8,7 @@ state = {
     'new_update': False,
     'active': True,  # current page is active
     'connected': True,
-    'accepted': False, # logged in
+    'accepted': False,  # logged in
     'guest_allowed': False,
     'version': {},
     'locales': {},  # locales from server

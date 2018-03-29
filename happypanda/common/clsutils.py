@@ -4,6 +4,7 @@ from happypanda.common import constants, hlogger, utils
 
 log = hlogger.Logger(constants.log_ns_misc + __name__)
 
+
 class AttributeList(UserList):
     """
     l = AttributeList("one", "two")
@@ -21,6 +22,7 @@ class AttributeList(UserList):
             return self._names[key]
         raise AttributeError("AttributeError: no attribute named '{}'".format(key))
 
+
 class Invalidator:
     """
     """
@@ -33,7 +35,6 @@ class Invalidator:
         if self.parent:
             self.parent.children.append(self)
             self.value = self.parent.value
-
 
     def __get__(self, instance, objtype):
         v = self.value
@@ -49,11 +50,13 @@ class Invalidator:
         for c in self.children:
             c._set(value)
 
+
 class CacheInvalidation:
     similar_gallery = Invalidator()
 
 
 constants.invalidator = CacheInvalidation()
+
 
 class InternalDatabase:
 
@@ -79,5 +82,6 @@ class InternalDatabase:
 
     similar_gallery_calc = GetSet("similar_gallery_calc")
     similar_gallery_tags = GetSet("similar_gallery_tags")
+
 
 constants.internaldb = InternalDatabase()

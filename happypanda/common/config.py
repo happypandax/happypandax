@@ -329,7 +329,7 @@ class Config:
         sections = []
         for s in sorted(ConfigNode._cfg_nodes):
             con = []
-            for key, node in sorted(ConfigNode._cfg_nodes[s].items(), key=lambda a:a[0]):
+            for key, node in sorted(ConfigNode._cfg_nodes[s].items(), key=lambda a: a[0]):
                 if node.hidden:
                     continue
                 con.append([key, node.default or '', node.isolation.value, node.description])

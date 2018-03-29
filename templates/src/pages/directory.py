@@ -260,14 +260,14 @@ def parodiespage_render():
         items.append(
             e(ui.Popup,
                 e(parodypropsview.ParodyProps, data=parody),
-             trigger=e(ui.Card,
-                e(ui.Card.Content, e(ui.Card.Description, aname)),
-              centered=True, link=True, className="default-card"),
-             hoverable=True,
-             wide="very",
-             on="click",
-             hideOnScroll=True,
-             position="top center"
+              trigger=e(ui.Card,
+                        e(ui.Card.Content, e(ui.Card.Description, aname)),
+                        centered=True, link=True, className="default-card"),
+              hoverable=True,
+              wide="very",
+              on="click",
+              hideOnScroll=True,
+              position="top center"
               )
         )
 
@@ -392,6 +392,7 @@ def get_db_circles(data=None, error=None):
                          limit=this.state.limit)
         this.setState({'data_loading': True})
 
+
 def get_circles_count(data=None, error=None):
     if data is not None and not error:
         this.setState({"count": data['count']})
@@ -412,15 +413,15 @@ def circlespage_render():
         items.append(
             e(ui.Popup,
               e(circlepropsview.CircleProps, data=item),
-             trigger=e(ui.Card,
-                    e(ui.Card.Content, e(ui.Card.Description, item['name']),
-                      ),
-                  centered=True, link=True, className="default-card"),
-             hoverable=True,
-             wide="very",
-             on="click",
-             hideOnScroll=True,
-             position="top center"
+              trigger=e(ui.Card,
+                        e(ui.Card.Content, e(ui.Card.Description, item['name']),
+                          ),
+                        centered=True, link=True, className="default-card"),
+              hoverable=True,
+              wide="very",
+              on="click",
+              hideOnScroll=True,
+              position="top center"
               )
         )
 
@@ -444,6 +445,7 @@ def circlespage_render():
                       e(ui.Statistic.Label, tr(this, "ui.t-total-circles", "Total circles"))
                       )]
              )
+
 
 __pragma__("notconv")
 

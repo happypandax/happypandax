@@ -12,7 +12,10 @@ __pragma__('skip')
 require = window = require = setInterval = setTimeout = setImmediate = None
 clearImmediate = clearInterval = clearTimeout = this = document = None
 JSON = Math = console = alert = requestAnimationFrame = None
+js_undefined = location = localStorage = sessionStorage = None
+Date = None
 __pragma__('noskip')
+
 
 def submit():
     uinfo = {}
@@ -22,15 +25,18 @@ def submit():
         uinfo['password'] = this.state['pass']
     this.connect(uinfo)
 
+
 def connect(uinfo):
     if client._connection_status:
         client.send_command(client.commands['handshake'], uinfo, this.on_handshake)
-        this.setState({'loading':True})
+        this.setState({'loading': True})
+
 
 def on_handshake(msg):
-    this.setState({'loading':False, 'accepted':bool(msg['accepted'])})
+    this.setState({'loading': False, 'accepted': bool(msg['accepted'])})
     if this.props.on_login:
         this.props.on_login(msg['accepted'])
+
 
 def page_render():
     els = []
@@ -42,47 +48,48 @@ def page_render():
     return e(ui.Grid,
              e(ui.Grid.Row),
              e(ui.Grid.Row,
-             e(ui.Grid.Column,
-             e(ui.Segment,
-                 this.props.children,
-                 h("center", e(ui.Icon, className="hpx-standard", size="massive")),
-                 e(ui.Divider, hidden=True, horizontal=True),
-                 *els,
-                 e(ui.Form,
-                    e(ui.Form.Input,
-                    label=tr(this, "ui.t-username", "Username"),
-                    placeholder="default",
-                    onChange=this.set_user,
-                    error=not this.state.accepted if defined(this.state.accepted) else this.state.accepted,
-                    ),
-                    e(ui.Form.Input,
-                    label=tr(this, "ui.t-password", "Password"),
-                    js_type="password",
-                    placeholder="default",
-                    onChange=this.set_pass,
-                    error=not this.state.accepted if defined(this.state.accepted) else this.state.accepted,
-                    ),
-                    e(ui.Message, tr(this, "ui.t-wrong-credentials", "Wrong credentials!"), error=True),
-                    e(ui.Button, tr(this, "ui.b-connect", "Connect"),
-                      js_type="submit", primary=True, floated="right"),
-                    onSubmit=this.submit,
-                    loading=this.state.loading,
-                    error=not this.state.accepted if defined(this.state.accepted) else this.state.accepted,
-                    ),
-                    clearing=True,
-                 ),
-             width="7",
-             widescreen="3",
-             largescreen="4",
-             mobile="15",
-             tablet="9",
-             computer="7",
-             )),
+               e(ui.Grid.Column,
+                 e(ui.Segment,
+                   this.props.children,
+                   h("center", e(ui.Icon, className="hpx-standard", size="massive")),
+                   e(ui.Divider, hidden=True, horizontal=True),
+                   *els,
+                   e(ui.Form,
+                     e(ui.Form.Input,
+                       label=tr(this, "ui.t-username", "Username"),
+                       placeholder="default",
+                       onChange=this.set_user,
+                       error=not this.state.accepted if defined(this.state.accepted) else this.state.accepted,
+                       ),
+                     e(ui.Form.Input,
+                       label=tr(this, "ui.t-password", "Password"),
+                       js_type="password",
+                       placeholder="default",
+                       onChange=this.set_pass,
+                       error=not this.state.accepted if defined(this.state.accepted) else this.state.accepted,
+                       ),
+                     e(ui.Message, tr(this, "ui.t-wrong-credentials", "Wrong credentials!"), error=True),
+                     e(ui.Button, tr(this, "ui.b-connect", "Connect"),
+                       js_type="submit", primary=True, floated="right"),
+                     onSubmit=this.submit,
+                     loading=this.state.loading,
+                     error=not this.state.accepted if defined(this.state.accepted) else this.state.accepted,
+                     ),
+                   clearing=True,
+                   ),
+                 width="7",
+                 widescreen="3",
+                 largescreen="4",
+                 mobile="15",
+                 tablet="9",
+                 computer="7",
+                 )),
              e(ui.Grid.Row),
              verticalAlign="middle",
              centered=True,
              className="fullheight"
              )
+
 
 Page = createReactClass({
     'displayName': 'LoginPage',
@@ -92,8 +99,8 @@ Page = createReactClass({
                                 'loading': False,
                                 'accepted': js_undefined,
                                 },
-    'set_user': lambda ev, d: this.setState({'user':d.value}),
-    'set_pass': lambda ev, d: this.setState({'pass':d.value}),
+    'set_user': lambda ev, d: this.setState({'user': d.value}),
+    'set_pass': lambda ev, d: this.setState({'pass': d.value}),
     'submit': submit,
     'connect': connect,
     'as_guest': lambda: this.connect({}),
@@ -101,4 +108,3 @@ Page = createReactClass({
 
     'render': page_render
 })
-

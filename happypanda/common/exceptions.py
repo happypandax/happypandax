@@ -246,11 +246,13 @@ class ParsingError(ServerError):
     ""
     pass
 
+
 @error_code(411)
 class AuthWrongCredentialsError(AuthError):
 
     def __init__(self, where, msg):
         super().__init__(where, msg)
+
 
 @error_code(412)
 class AuthMissingCredentials(AuthError):

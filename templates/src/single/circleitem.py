@@ -1,4 +1,3 @@
-from src import utils
 from src.react_utils import (e,
                              createReactClass)
 from src.ui import ui

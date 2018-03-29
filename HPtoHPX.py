@@ -963,13 +963,13 @@ def main(args=sys.argv[1:]):
                             if 'Group' in g.tags:
                                 circle_tags = g.tags['Group']
                                 for ctag in circle_tags:
-                                    if ctag+' ' in g.artist.lower():
+                                    if ctag + ' ' in g.artist.lower():
                                         circle_in_title = True
                                         break
                             if circle_in_title:
                                 artist_tags = g.tags['Artist']
                                 for atag in artist_tags:
-                                    if '('+atag+')' in g.artist.lower() or '(various)' in g.artist.lower():
+                                    if '(' + atag + ')' in g.artist.lower() or '(various)' in g.artist.lower():
                                         artist_names.append(utils.extract_original_text(atag, g.artist))
                         if not artist_names:
                             artist_names.append(g.artist.strip())
@@ -1070,7 +1070,6 @@ def main(args=sys.argv[1:]):
                     print_progress(numb, len(src_galleries), "Progress:", bar_length=50)
                 except UnicodeEncodeError:
                     print("\nStill in progress... please wait...")
-
 
             if not pages_to_send:
                 AMOUNT_OF_TASKS = 1
@@ -1173,28 +1172,28 @@ def main(args=sys.argv[1:]):
 
             dst_lists.append(glist)
 
-        #s.flush()
+        # s.flush()
         #print("Flushing... (this might take a few minutes)")
         #s.bulk_save_objects(dst_taggables, return_defaults=True)
-        #s.flush()
+        # s.flush()
 
         #print("Adding languages...")
-        #items.extend(dst_languages.values())
+        # items.extend(dst_languages.values())
         #print("Adding artists...")
-        #items.extend(dst_artists.values())
+        # items.extend(dst_artists.values())
         #print("Adding gallery types...")
-        #items.extend(dst_gtype.values())
+        # items.extend(dst_gtype.values())
         #print("Adding gallery status...")
-        #items.extend(dst_status.values())
+        # items.extend(dst_status.values())
         #print("Adding gallery namespaces...")
-        #items.extend(dst_namespace.values())
+        # items.extend(dst_namespace.values())
         #print("Adding gallery tags...")
-        #items.extend(dst_tag.values())
-        #items.extend(dst_nstagmapping.values())
+        # items.extend(dst_tag.values())
+        # items.extend(dst_nstagmapping.values())
         #print("Adding galleries...")
-        #items.extend(dst_galleries)
+        # items.extend(dst_galleries)
         #print("Adding gallery lists...")
-        #items.extend(dst_lists)
+        # items.extend(dst_lists)
         #s.bulk_save_objects(items, return_defaults=True)
 
         print("Adding languages...")

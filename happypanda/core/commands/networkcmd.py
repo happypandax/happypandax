@@ -4,7 +4,7 @@ import cachecontrol
 import os
 import arrow
 
-from happypanda.common import (hlogger, exceptions, utils, constants, config)
+from happypanda.common import (hlogger, exceptions, constants, config)
 from happypanda.core.command import CoreCommand, Command
 from happypanda.core.commands import io_cmd
 from happypanda.interface import enums
@@ -120,7 +120,8 @@ class _Request(Command):
     def __init__(self, session=True, priority=constants.Priority.Low):
         super().__init__(priority)
         if not _Request.default_session:
-            _Request.default_session = constants.internaldb.network_session.get(cachecontrol.CacheControl(requests.Session()))
+            _Request.default_session = constants.internaldb.network_session.get(
+                cachecontrol.CacheControl(requests.Session()))
             self.default_session = _Request.default_session
 
         if session in (True, None):
@@ -168,6 +169,7 @@ class _Request(Command):
 
     def cleanup_session(self):
         constants.internaldb.network_session.set(self.default_session)
+
 
 class SimpleRequest(_Request):
     """

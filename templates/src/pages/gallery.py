@@ -1,14 +1,13 @@
-from src.react_utils import (h,
-                             e,
+from src.react_utils import (e,
                              createReactClass,
                              Link)
 from src.ui import ui, Slider, LabelAccordion, DateLabel
 from src.i18n import tr
 from src.state import state
 from src.client import ItemType, ImageSize, client, Command
-from src.single import galleryitem, thumbitem, artistitem, parodyitem, circleitem
+from src.single import galleryitem, thumbitem
 from src.propsviews import gallerypropsview
-from src.views import itemview, tagview
+from src.views import itemview
 from src import utils
 from org.transcrypt.stubs.browser import __pragma__
 __pragma__('alias', 'as_', 'as')
@@ -17,6 +16,8 @@ __pragma__('skip')
 require = window = require = setInterval = setTimeout = setImmediate = None
 clearImmediate = clearInterval = clearTimeout = this = document = None
 JSON = Math = console = alert = requestAnimationFrame = None
+js_undefined = location = localStorage = sessionStorage = None
+Date = None
 __pragma__('noskip')
 
 
@@ -245,15 +246,12 @@ def page_render():
     item_id = this.state.id
     inbox = False
     trash = False
-    date_pub = None
     date_upd = None
     date_read = None
     date_added = None
     if this.state.data:
         item_id = this.state.data.id
 
-        if this.state.data.pub_date:
-            date_pub = this.state.data.pub_date
         if this.state.data.last_updated:
             date_upd = this.state.data.last_updated
         if this.state.data.last_read:
@@ -269,8 +267,6 @@ def page_render():
     series_data = []
     if this.state.group_data:
         series_data = this.state.group_data
-
-    status = this.state.status_data.js_name if this.state.status_data.js_name else "Unknown"
 
     indicators = []
 
@@ -478,7 +474,7 @@ def page_render():
                              data=this.state.data,
                              status=this.state.status_data,
                              language=this.state.lang_data,
-                             rating=this.state.rating,
+                             rating=rating,
                              size="large"
                              ))),
                        stackable=True,

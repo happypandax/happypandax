@@ -4,7 +4,7 @@ import shutil
 import atexit
 import subprocess
 
-from happypanda.common import constants, hlogger, utils
+from happypanda.common import constants, hlogger
 
 # OS X: fix the working directory when running a mac app
 # OS X: files are in [app]/Contents/MacOS/

@@ -525,22 +525,13 @@ class GalleryFilter(DatabaseMessage):
     def from_json(self, j):
         return super().from_json(j)
 
+
 class Circle(DatabaseMessage):
     "Encapsulates database circle object"
 
     def __init__(self, db_item):
         assert isinstance(db_item, db.Circle)
         super().__init__('circle', db_item)
-
-    def from_json(self, j):
-        return super().from_json(j)
-
-class Parody(DatabaseMessage):
-    "Encapsulates database parody object"
-
-    def __init__(self, db_item):
-        assert isinstance(db_item, db.Parody)
-        super().__init__('parody', db_item)
 
     def from_json(self, j):
         return super().from_json(j)

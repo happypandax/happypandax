@@ -99,6 +99,7 @@ class ItemSort:
     #: Parody Name
     ParodyName = 45
 
+
 class ProgressType:
 
     #: Unknown
@@ -153,6 +154,7 @@ class ServerMsg:
             self.callback(self.contextobj, data, err)
         else:
             self.callback(data, err)
+
 
 class Client(Base):
 
@@ -272,7 +274,7 @@ class Client(Base):
             self.log("Not a valid command")
             return
         ServerMsg.msg_id += 1
-        msg = {'id':ServerMsg.msg_id, 'command': cmd, 'session_id': self.session_id}
+        msg = {'id': ServerMsg.msg_id, 'command': cmd, 'session_id': self.session_id}
         if extra:
             msg.update(extra)
         if callback:
@@ -281,6 +283,7 @@ class Client(Base):
     __pragma__("nokwargs")
 
     __pragma__('iconv')
+
     def on_command(self, msg):
         for c in self.clients:
             c._connection_status = msg['status']
@@ -316,7 +319,6 @@ class Client(Base):
             cmd_cb = self.command_callbacks.pop(msg['id'])
             if cmd_cb:
                 cmd_cb(msg)
-
 
     __pragma__('noiconv')
 

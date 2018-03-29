@@ -234,6 +234,7 @@ class String(_String):
             return RegexMatchExpression(
                 self.expr, literal(other), custom_op('!~*'))
 
+
 class LowerCaseString(TypeDecorator):
     """
     Ensures strings a lowercased
@@ -242,6 +243,7 @@ class LowerCaseString(TypeDecorator):
 
     def process_bind_param(self, value, dialect):
         return value.lower()
+
 
 class RegexMatchExpression(BinaryExpression):
     """Represents matching of a column againsts a regular expression."""
@@ -1524,7 +1526,8 @@ def create_user(role, name=None, password=None):
                        role=User.Role.admin))
             s.commit()
             return True
-    
+
+
 def delete_user(name=None):
     """
     Delete user
@@ -1538,14 +1541,14 @@ def delete_user(name=None):
             return True
     return False
 
+
 def list_users(role=None, limit=100, offset=0):
     assert role is None or isinstance(role, User.Role)
     s = constants.db_session()
     q = s.query(User).filter(User.name != "default").order_by(User.name)
     if role:
-        q.filter(User.role==role)
+        q.filter(User.role == role)
     return q.offset(offset).limit(limit).all()
-
 
 
 def check_db_version(sess):

@@ -39,6 +39,7 @@ def _connect_clients(clients):
     for name, c in clients.items():
         c.connect()
 
+
 def _handshake_clients(clients, username=None, password=None, request=False):
     main_client = "client"
     if not clients[main_client].alive():
@@ -165,7 +166,7 @@ def on_command_handle(client_id, clients, msg, lock):
 
         try:
             if cmd == commands['handshake']:
-            
+
                 _handshake_clients(clients, msg.get("username", ""), msg.get("password", ""))
 
             elif cmd == commands['rehandshake']:

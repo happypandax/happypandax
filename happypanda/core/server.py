@@ -228,7 +228,6 @@ class ClientHandler:
         log.d("Client accepted")
         self._accepted = True
 
-
     @staticmethod
     def sendall(client, msg):
         """

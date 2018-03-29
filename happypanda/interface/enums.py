@@ -195,7 +195,6 @@ class ItemSort(_APIEnum):
     ParodyName = 45
 
 
-
 class ProgressType(_APIEnum):
 
     #: Unknown

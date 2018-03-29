@@ -1,6 +1,5 @@
 from src import utils
-from src.react_utils import (h,
-                             e,
+from src.react_utils import (e,
                              Link,
                              createReactClass)
 from src.ui import ui
@@ -18,19 +17,19 @@ __pragma__("tconv")
 
 
 def circleprops_render():
-    url_search_query = {'search':''}
+    url_search_query = {'search': ''}
     if this.state.data:
         url_search_query = {'search': 'circle:"{}"'.format(this.state.data.js_name)}
 
     return e(ui.Label.Group,
-                e(ui.Button, icon="grid layout", title=tr(this, "ui.t-show-galleries", "Show galleries"), basic=True,
-                as_=Link, to=utils.build_url("/library", query=url_search_query, keep_query=False)),
-                e(ui.Button, icon="heart", title=tr(this, "ui.t-show-fav-galleries", "Show favorite galleries"), basic=True,
-                as_=Link, to=utils.build_url("/favorite", query=url_search_query, keep_query=False)),
-                e(ui.Button, icon="inbox", title=tr(this, "ui.t-show-inbox-galleries", "Show galleries in inbox"), basic=True,
-                as_=Link, to=utils.build_url("/inbox", query=url_search_query, keep_query=False)),
-                className=this.props.ClassName,
-                )
+             e(ui.Button, icon="grid layout", title=tr(this, "ui.t-show-galleries", "Show galleries"), basic=True,
+               as_=Link, to=utils.build_url("/library", query=url_search_query, keep_query=False)),
+             e(ui.Button, icon="heart", title=tr(this, "ui.t-show-fav-galleries", "Show favorite galleries"), basic=True,
+               as_=Link, to=utils.build_url("/favorite", query=url_search_query, keep_query=False)),
+             e(ui.Button, icon="inbox", title=tr(this, "ui.t-show-inbox-galleries", "Show galleries in inbox"), basic=True,
+               as_=Link, to=utils.build_url("/inbox", query=url_search_query, keep_query=False)),
+             className=this.props.ClassName,
+             )
 
 
 __pragma__("notconv")

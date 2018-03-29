@@ -81,7 +81,7 @@ class Client:
 
     def request_auth(self, ignore_err=False):
         self._server_info(self.communicate({'session': "", 'name': self.name,
-                                          'data': 'requestauth'}, True))
+                                            'data': 'requestauth'}, True))
         self.handshake(user=self._last_user, password=self._last_pass, ignore_err=ignore_err)
 
     def connect(self):
@@ -166,7 +166,8 @@ class Client:
             dict from server
         """
         if self._alive and not self._accepted and not auth:
-            raise exceptions.AuthRequiredError(utils.this_function(), "Client '{}' is connected but not authenticated".format(self.name))
+            raise exceptions.AuthRequiredError(utils.this_function(),
+                                               "Client '{}' is connected but not authenticated".format(self.name))
         self._send(bytes(json.dumps(msg), 'utf-8'))
         return self._recv()
 

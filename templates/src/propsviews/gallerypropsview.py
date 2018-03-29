@@ -1,6 +1,7 @@
 from src.react_utils import (h,
                              e,
                              createReactClass)
+from src.state import state
 from src.ui import ui, DateLabel
 from src.client import ItemType, client
 from src.single import artistitem, parodyitem, circleitem
@@ -16,6 +17,7 @@ clearImmediate = clearInterval = clearTimeout = this = document = None
 JSON = Math = console = alert = requestAnimationFrame = None
 __pragma__('noskip')
 
+
 def get_lang(data=None, error=None):
     if data is not None and not error:
         this.setState({"lang_data": data})
@@ -27,7 +29,9 @@ def get_lang(data=None, error=None):
                              item_type=ItemType.Language,
                              item_id=this.props.data.language_id)
 
+
 __pragma__("tconv")
+
 
 def get_status(data=None, error=None):
     if data is not None and not error:
@@ -38,9 +42,10 @@ def get_status(data=None, error=None):
     else:
         if this.props.data and not this.props.status:
             client.call_func("get_related_items", this.get_status,
-                        item_type=ItemType.Grouping,
-                        related_type=ItemType.Status,
-                        item_id=this.props.data.grouping_id)
+                             item_type=ItemType.Grouping,
+                             related_type=ItemType.Status,
+                             item_id=this.props.data.grouping_id)
+
 
 __pragma__("notconv")
 
@@ -51,6 +56,8 @@ def gallery_on_update(p_props, p_state):
 
 
 __pragma__('tconv')
+
+
 def galleryprops_render():
 
     title = ""
@@ -58,8 +65,6 @@ def galleryprops_render():
     artists = []
     item_id = this.props.id
     info = ""
-    inbox = False
-    trash = False
     read_count = 0
     date_pub = None
     date_upd = None
@@ -86,8 +91,6 @@ def galleryprops_render():
         read_count = this.props.data.times_read
         info = this.props.data.info
         title = this.props.data.titles[0].js_name
-        inbox = this.props.data.metatags.inbox
-        trash = this.props.data.metatags.trash
         if not item_id:
             item_id = this.props.data.id
 
@@ -141,14 +144,14 @@ def galleryprops_render():
                   e(ui.Table.Cell, e(DateLabel, timestamp=date_pub, full=True))))
     if this.props.compact:
         rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header,  tr(this, "ui.t-date-added", "Date added") + ':', as_="h5"), collapsing=True),
-                  e(ui.Table.Cell, e(DateLabel, timestamp=date_added, format="LLL"))))
+                      e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-date-added", "Date added") + ':', as_="h5"), collapsing=True),
+                      e(ui.Table.Cell, e(DateLabel, timestamp=date_added, format="LLL"))))
         rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-last-read", "Last read") + ':', as_="h5"), collapsing=True),
-                  e(ui.Table.Cell, e(DateLabel, timestamp=date_read, format="LLL"))))
+                      e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-last-read", "Last read") + ':', as_="h5"), collapsing=True),
+                      e(ui.Table.Cell, e(DateLabel, timestamp=date_read, format="LLL"))))
         rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-last-updated", "Last updated") + ':', as_="h5"), collapsing=True),
-                  e(ui.Table.Cell, e(DateLabel, timestamp=date_upd, format="LLL"))))
+                      e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-last-updated", "Last updated") + ':', as_="h5"), collapsing=True),
+                      e(ui.Table.Cell, e(DateLabel, timestamp=date_upd, format="LLL"))))
     rows.append(e(ui.Table.Row,
                   e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-times-read", "Times read") + ':', as_="h5"), collapsing=True),
                   e(ui.Table.Cell, e(ui.Label, read_count, circular=True))))
@@ -168,6 +171,8 @@ def galleryprops_render():
              size=this.props.size,
              compact="very" if utils.defined(this.props.compact) else False
              )
+
+
 __pragma__('notconv')
 
 
