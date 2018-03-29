@@ -85,4 +85,3 @@ class InternalDatabase:
 
 
 constants.internaldb = internaldb = InternalDatabase()
-
