@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Command-Line Arguments &#8212; HappyPanda X 0.0.11#122 documentation</title>
+    <title>Command-Line Arguments &#8212; HappyPanda X 0.0.12#123 documentation</title>
     
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -15,7 +15,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.0.11#122',
+        VERSION:     '0.0.12#123',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -54,7 +54,7 @@
         </button>
         <a class="navbar-brand" href="index.html">
           HappyPanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.11#122</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.12#123</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -179,8 +179,10 @@
 <p>A manga/doujinshi manager with tagging support (<a class="reference external" href="https://github.com/happypandax/server">https://github.com/happypandax/server</a>)</p>
 <div class="highlight-console"><div class="highlight"><pre><span></span><span class="go">usage: Command-Line Arguments [-h] [-p PORT] [--torrent-port TORRENT_PORT]</span>
 <span class="go">                                  [--web-port WEB_PORT] [--host HOST]</span>
-<span class="go">                                  [--web-host WEB_HOST] [--gen-config] [-d] [-i]</span>
-<span class="go">                                  [-v] [--safe] [-x] [--only-web] [--momo ...]</span>
+<span class="go">                                  [--web-host WEB_HOST] [--gen-config]</span>
+<span class="go">                                  [--create-user] [--delete-user USERNAME]</span>
+<span class="go">                                  [--list-users [PAGE]] [-d] [-i] [-v] [--safe]</span>
+<span class="go">                                  [-x] [--only-web] [--momo ...]</span>
 </pre></div>
 </div>
 <dl class="option">
@@ -223,6 +225,24 @@
 <dt id="cmdoption-command-line-arguments-gen-config">
 <code class="descname">--gen-config</code><code class="descclassname"></code><a class="headerlink" href="#cmdoption-command-line-arguments-gen-config" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate a skeleton example config file and quit</p>
+</dd></dl>
+
+<dl class="option">
+<dt id="cmdoption-command-line-arguments-create-user">
+<code class="descname">--create-user</code><code class="descclassname"></code><a class="headerlink" href="#cmdoption-command-line-arguments-create-user" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a user interactively and quit</p>
+</dd></dl>
+
+<dl class="option">
+<dt id="cmdoption-command-line-arguments-delete-user">
+<code class="descname">--delete-user</code><code class="descclassname"> &lt;username&gt;</code><a class="headerlink" href="#cmdoption-command-line-arguments-delete-user" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete a user interactively and quit</p>
+</dd></dl>
+
+<dl class="option">
+<dt id="cmdoption-command-line-arguments-list-users">
+<code class="descname">--list-users</code><code class="descclassname"> &lt;page&gt;</code><a class="headerlink" href="#cmdoption-command-line-arguments-list-users" title="Permalink to this definition">¶</a></dt>
+<dd><p>Display a list of users from page N and quit</p>
 </dd></dl>
 
 <dl class="option">

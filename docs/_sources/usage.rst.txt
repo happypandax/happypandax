@@ -32,10 +32,6 @@ You can create an example file with all settings listed if you run this command:
 
 Most of these settings can also be configured from a HPX client.
 
-.. warning::
-    Not all settings work or have been implemented yet. You should leave these settings untouched for now: ``server.disable_default_user``, ``server.require_auth``, ``server.expose_server`` and ``server.allow_guests``.
-
-
 Starting
 -------------------------------------
 
