@@ -11,10 +11,18 @@ import time
 import multiprocessing
 import threading
 import queue
+import codecs
 from multiprocessing import Process, Queue, Pipe
 from happypanda.core import db
 from happypanda.core.commands import io_cmd
 from happypanda.common import constants, config, utils
+_print = print
+def safeprint(*s):
+    try:
+        _print(*s)
+    except UnicodeEncodeError:
+        _print(*[x.encode(errors="ignore") for x in s])
+print = safeprint
 
 GALLERY_LISTS = []
 pages_out = queue.Queue()
@@ -700,6 +708,7 @@ import random
 
 def parse_args(args=sys.argv[1:]):
     parser = argparse.ArgumentParser()
+    parser.add_argument('--debug', action='store_true', help="Print out a lot of useful information")
     parser.add_argument('source', help="Path to old HP database")
     parser.add_argument('destination', help="Desired path to new HPX database")
     parser.add_argument('-r', '--rar', help="Path to unrar tool", default=config.unrar_tool_path.value)
@@ -846,6 +855,7 @@ def main(args=sys.argv[1:]):
         en_lang = db.Language()
         en_lang.name = "English"
         dst_languages = {"english": en_lang}
+        dst_aliasnames = {}
         dst_artists = {}
         dst_circles = {}
         dst_parodies = {}
@@ -866,10 +876,14 @@ def main(args=sys.argv[1:]):
             unique_paths = []
             for numb, g in enumerate(src_galleries):
 
+                if args.debug:
+                    print("------------ Gallery ID {} ----------".format(g.id))
+
                 galleries = []
                 gallery_ns = None
 
                 for ch in g.chapters:
+
 
                     path = g.path if ch.in_archive else ch.path
                     if not os.path.exists(path):
@@ -892,6 +906,9 @@ def main(args=sys.argv[1:]):
                                         ch.title.encode(
                                             errors='ignore')))
                             continue
+
+                    if args.debug:
+                        print("Creating gallery from chapter: {}".format(g.path))
 
                     gallery = db.Gallery()
 
@@ -937,7 +954,6 @@ def main(args=sys.argv[1:]):
                             gstatus = dst_status.get(gstatus.name, gstatus)
                             gallery_ns.status = gstatus
                             dst_status[gstatus.name] = gstatus
-
                     gallery.number = ch.number
 
                     lang = g.language.lower() if g.language else None
@@ -980,9 +996,12 @@ def main(args=sys.argv[1:]):
 
                         for a_name in artist_names:
                             artist = None
-                            artist_name = db.AliasName()
-                            artist_name.name = a_name
-                            artist_name.language = db_lang
+                            artist_name = dst_aliasnames.get(a_name)
+                            if not artist_name:
+                                artist_name = db.AliasName()
+                                artist_name.name = a_name
+                                artist_name.language = db_lang
+                                dst_aliasnames[a_name] = artist_name
                             artist = dst_artists.get(artist_name.name.lower())
                             if not artist:
                                 artist = db.Artist()
@@ -1032,15 +1051,25 @@ def main(args=sys.argv[1:]):
                                 pname = utils.extract_original_text(ptag, g.title)
                             else:
                                 pname = utils.capitalize_text(ptag)
+                            if args.debug:
+                                    print("Parody tag:", ptag)
                             if pname:
                                 parody = dst_parodies.get(pname.lower())
                                 if not parody:
+                                    if args.debug:
+                                        print("Adding new parody:", pname)
                                     parody = db.Parody()
-                                    parody_name = db.AliasName()
-                                    parody_name.name = pname
-                                    parody_name.language = dst_languages['english']
+                                    parody_name = dst_aliasnames.get(pname)
+                                    if not parody_name:
+                                        parody_name = db.AliasName()
+                                        parody_name.name = pname
+                                        parody_name.language = dst_languages['english']
+                                        dst_aliasnames[pname] = parody_name
                                     parody.names.append(parody_name)
                                     dst_parodies[pname.lower()] = parody
+                                else:
+                                    if args.debug:
+                                        print("Adding old parody:", pname)
                                 gallery.parodies.append(parody)
 
                     gallery.pub_date = g.pub_date
@@ -1201,6 +1230,11 @@ def main(args=sys.argv[1:]):
         #print("Adding gallery lists...")
         # items.extend(dst_lists)
         #s.bulk_save_objects(items, return_defaults=True)
+
+        if args.debug:
+            print("Created parodies:")
+            for p in dst_parodies.values():
+                print(p.names)
 
         print("Adding languages...")
         s.add_all(dst_languages.values())
