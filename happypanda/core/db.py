@@ -630,6 +630,21 @@ def aliasname_association(cls, bref="items"):
         lazy='joined',
         backref=backref(bref, lazy="dynamic"),
         cascade="all")
+
+    def preferred_name(self):
+        t = self.name_by_language(config.translation_locale.value)
+        if not t and self.names:
+            t = self.names[0]
+        return t
+
+    def name_by_language(self, language_code):
+        language_code = utils.get_language_code(language_code)
+        for n in self.names:
+            if n.language and n.language.code == language_code:
+                return n
+
+    cls.name_by_language = hybrid_method(name_by_language)
+    cls.preferred_name = hybrid_property(preferred_name)
     return assoc
 
 
