@@ -576,3 +576,24 @@ def extract_original_text(cand, text):
 
 def capitalize_text(text):
     return " ".join(x.capitalize() for x in text.strip().split())
+
+def extract_collection(title):
+    """
+    Extract Comic Market
+    """
+    title = title.strip()
+    c = ""
+    r = r"(\(C\d+\))"
+    m = regex.search(r, title, regex.IGNORECASE | regex.UNICODE)
+    if m:
+        c = "Comic Market "+"".join(x for x in m[0] if x.isdigit())
+        title = title.replace(m[0], '').strip()
+    else:
+        pass
+    return c, title
+
+def get_language_code(lcode):
+    assert isinstance(lcode, str)
+    if '_' in lcode:
+        lcode = lcode.split('_')[0]
+    return lcode.lower()

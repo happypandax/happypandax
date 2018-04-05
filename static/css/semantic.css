@@ -2494,6 +2494,16 @@ h6 {
 .foreground-sticky > div {
   z-index: 99999;
 }
+
+.blur {
+  -webkit-filter: blur(4px);
+  filter: blur(4px);
+}
+
+.blur:hover {
+  -webkit-filter: unset;
+  filter: unset;
+}
 /*!
  * # Semantic UI 2.2.13 - Button
  * http://github.com/semantic-org/semantic-ui/

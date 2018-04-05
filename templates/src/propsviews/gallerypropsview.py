@@ -95,10 +95,14 @@ def galleryprops_render():
             item_id = this.props.data.id
 
         artists = this.props.data.artists
+        circle_ids = []
         for a in artists:
             if a.circles:
                 for c in a.circles:
+                    if c.id in circle_ids:
+                        continue
                     circles.append(c)
+                    circle_ids.append(c.id)
 
         for u in this.props.data.urls:
             urls.append(u.js_name)

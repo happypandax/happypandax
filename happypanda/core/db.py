@@ -17,6 +17,8 @@ from sqlalchemy.ext.mutable import Mutable
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.ext.indexable import index_property
+from sqlalchemy.ext.hybrid import hybrid_property, hybrid_method
+from sqlalchemy.ext.associationproxy  import AssociationProxy
 from sqlalchemy.sql.expression import BinaryExpression, func, literal
 from sqlalchemy.sql.operators import custom_op
 from sqlalchemy.ext import orderinglist
@@ -47,7 +49,8 @@ from sqlalchemy import (
     PrimaryKeyConstraint,
     Enum,
     TypeDecorator,
-    text)
+    text,
+    select)
 from sqlalchemy_utils import (
     ArrowType,
     generic_repr,
@@ -1067,15 +1070,15 @@ class Category(NameMixin, Base):
 gallery_collections = Table(
     'gallery_collections', Base.metadata, Column(
         'collection_id', Integer, ForeignKey('collection.id')), Column(
-            'gallery_id', Integer, ForeignKey('gallery.id')), UniqueConstraint(
-                'collection_id', 'gallery_id'))
+            'gallery_id', Integer, ForeignKey('gallery.id')), Column(
+                'timestamp', ArrowType, nullable=False, default=arrow.now),
+                    UniqueConstraint( 'collection_id', 'gallery_id'))
 
 
 @generic_repr
-class Collection(ProfileMixin, Base):
+class Collection(ProfileMixin, NameMixin, Base):
     __tablename__ = 'collection'
 
-    title = Column(String, nullable=False, default='')
     info = Column(String, nullable=False, default='')
     pub_date = Column(ArrowType)
 
@@ -1170,37 +1173,36 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
         self.times_read += 1
         self.last_read = datetime
 
-    @property
-    def title(self):
-        "Returns default title"
-        if not hasattr(self, '_title'):
-            self._set_default_title()
-        return self._title
+    @hybrid_property
+    def preferred_title(self):
+        t = self.title_by_language(config.translation_locale.value)
+        if not t and self.titles:
+            t = self.titles[0]
+        return t
 
-    @title.setter
-    def title(self, t):
-        assert isinstance(t, str)
-        if not hasattr(self, '_title'):
-            self._set_default_title()
+    @preferred_title.setter
+    def preferred_title(self, title):
+        raise NotImplementedError
+        if not isinstance(title, Title):
+            title = Title()
+            title.gallery = self
+            title.name = title
+        lcode = config.translation_locale.value
+        title.language = Language(code)
 
-        if self._title:
-            self._title.name = t
+    @preferred_title.expression
+    def preferred_title(cls):
+        raise NotImplementedError
+        lcode =  utils.get_language_code(config.translation_locale.value)
+        return select([Title]).where(Title.gallery_id==cls.id).where(Language.code==lcode).label("preffered_title")
 
-    def _set_default_title(self):
-        if len(self.titles) == 1:
-            self._title = self.titles[0]
-        else:
-            self._title = None
-
-    @property
-    def file_type(self):
-        ""
-        if not hasattr(self, '_file_type'):
-            _, self._file_type = os.path.splitext(self.path)
-            if not self._file_type:
-                self._file_type = 'folder'
-        return self._file_type
-
+    @hybrid_method
+    def title_by_language(self, language_code):
+        language_code = utils.get_language_code(language_code)
+        for t in self.titles:
+            if t.language and t.language.code == language_code:
+                return t
+                
     # def exists(self, obj=False, strict=False):
     #    """Checks if gallery exists by path
     #    Params:
@@ -1643,17 +1645,20 @@ def add_bulk(session, objects, amount=100, flush=False, bulk_save=False, return_
         left = objects[:amount]
 
 
-def table_attribs(model, id=False):
+def table_attribs(model, id=False, descriptors=False):
     """Returns a dict of table column names and their SQLAlchemy value objects
     Params:
         id -- retrieve id columns instead of the sqlalchemy object (to avoid a db query etc.)
+        descriptors -- include hybrid attributes and association proxies
     """
     assert isinstance(model, Base) or issubclass(model, Base)
     d = {}
 
-    obj = inspect(model)
-    if isinstance(obj, state.InstanceState):
-        attr = list(obj.attrs)
+    obj = model
+    in_obj = inspect(model)
+    if isinstance(in_obj, state.InstanceState):
+        model = type(model)
+        attr = list(in_obj.attrs)
 
         exclude = [y.key for y in attr if y.key.endswith('_id')]
         if id:
@@ -1662,12 +1667,17 @@ def table_attribs(model, id=False):
         for x in attr:
             if x.key not in exclude:
                 d[x.key] = x.value
-
     else:
         for name in model.__dict__:
             value = model.__dict__[name]
             if isinstance(value, attributes.InstrumentedAttribute):
                 d[name] = value
+
+    if descriptors:
+        for name, value in model.__dict__.items():
+            if isinstance(value, (hybrid_property, AssociationProxy)):
+                d[name] = getattr(obj, name)
+
     return d
 
 

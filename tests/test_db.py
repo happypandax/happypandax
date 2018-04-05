@@ -196,7 +196,7 @@ class CollectionRelationship(unittest.TestCase):
     def setUp(self):
         self.session = create_db()
 
-        self.collections = [Collection(title="col" + str(x)) for x in range(2)]
+        self.collections = [Collection(name="col" + str(x)) for x in range(2)]
         self.galleries = [Gallery() for x in range(10)]
         self.session.add_all(self.galleries)
         self.collections[0].galleries.extend(self.galleries[:5])
@@ -904,7 +904,7 @@ class ProfileRelationship(unittest.TestCase):
 
         self.gns = [Grouping(name="gns" + str(x)) for x in range(5)]
         self.galleries = [Gallery() for x in range(5)]
-        self.collections = [Collection(title="title" + str(x)) for x in range(5)]
+        self.collections = [Collection(name="title" + str(x)) for x in range(5)]
         self.pages = [Page(number=x) for x in range(5)]
 
         for n, x in enumerate(self.galleries):

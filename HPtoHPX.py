@@ -847,7 +847,7 @@ def main(args=sys.argv[1:]):
         s = sess()
         db.init_defaults(s)
 
-        print("Converting to Happypanda X Gallery.. ")
+        print("Converting to HappyPanda X Gallery.. ")
 
         gallery_mixmap = {}
         dst_galleries = []
@@ -933,12 +933,12 @@ def main(args=sys.argv[1:]):
                         pages_to_send2.append((pages_count, ch.in_archive, ch.path, path, g.path))
                         pages_count += 1
 
-                    for col in copy.copy(gallery.collections):
-                        if col.name in dst_collections:
-                            gallery.collections.remove(col)
-                            gallery.collections.append(dst_collections[col.name])
-                        else:
-                            dst_collections[col.name] = col
+                    #for col in copy.copy(gallery.collections):
+                    #    if col.name in dst_collections:
+                    #        gallery.collections.remove(col)
+                    #        gallery.collections.append(dst_collections[col.name])
+                    #    else:
+                    #        dst_collections[col.name] = col
 
                     if gallery_ns is not None:
                         gallery.grouping = gallery_ns
@@ -968,6 +968,17 @@ def main(args=sys.argv[1:]):
 
                     title = db.Title()
                     title.name = ch.title if ch.title else g.title
+
+                    col_name, n_title = utils.extract_collection(title.name)
+                    if col_name:
+                        title.name = n_title
+                        collection = dst_collections.get(col_name.lower())
+                        if not collection:
+                            collection = db.Collection()
+                            collection.name = col_name
+                            dst_collections[col_name.lower()] = collection
+                        collection.galleries.append(gallery)
+
                     title.language = db_lang
                     gallery.titles.clear()
                     gallery.titles.append(title)
@@ -1268,7 +1279,7 @@ def main(args=sys.argv[1:]):
             s.add(one_taggable)
             s.flush()
             s.bulk_save_objects(taggable_items[1:], return_defaults=True)
-            print("Flushing again... (this might take a few minutes)")
+            print("Flushing again... (this might take a few minutes too)")
             s.flush()
             del taggable_items
             taggable_items = list(s.query(db.Taggable.id).filter(db.Taggable.id > one_taggable.id).all())

@@ -11,7 +11,7 @@ karellen-geventws==1.0.2
 Flask-SocketIO==2.9.6
 libsass==0.13.2
 pyyaml==3.12
-Pillow==5.0.0
+Pillow==5.1.0
 https://github.com/happypandax/i18n/archive/master.zip
 send2trash==1.5.0
 PyQt5==5.9.2

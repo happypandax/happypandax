@@ -292,6 +292,16 @@ class Client(Base):
         state['guest_allowed'] = msg['guest_allowed']
         state['version'] = msg['version']
 
+        if msg['command'] in (self.commands['handshake'], self.commands['rehandshake'])\
+           or self._connection_status and self._first_connect:
+            if msg['accepted']:
+                self.call_func("get_config", self._set_debug, cfg={'core.debug': False})
+                self.call_func("get_locales", self._set_locales)
+                self.call_func("check_update", push=True)
+        else:
+            if state['app']:
+                state['app'].on_login(state['accepted'])
+
         if self._connection_status:
             if msg['command'] in (self.commands['connect'], self.commands['reconnect']):
                 if not utils.session_storage.get("startup_update", False):
@@ -305,15 +315,6 @@ class Client(Base):
             self._retries = None
         else:
             self._disconnected_once = True
-
-        if msg['command'] in (self.commands['handshake'], self.commands['rehandshake']):
-            if msg['accepted']:
-                self.call_func("get_config", self._set_debug, cfg={'core.debug': False})
-                self.call_func("get_locales", self._set_locales)
-                self.call_func("check_update", push=True)
-        else:
-            if state['app']:
-                state['app'].on_login(state['accepted'])
 
         if msg['id'] in self.command_callbacks:
             cmd_cb = self.command_callbacks.pop(msg['id'])
@@ -407,6 +408,8 @@ class Client(Base):
 
     def _set_debug(self, data):
         state.debug = data['core.debug']
+        if state.app:
+            state.app.setState({'debug':state.debug})
         if state.debug:
             state.translation_id_error = utils.storage.get("translation_id_error", False)
             state.untranslated_text = utils.storage.get("untranslated_text", True)

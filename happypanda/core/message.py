@@ -213,7 +213,7 @@ class DatabaseMessage(CoreMessage):
             load_collections -- Queries database to fetch all items in a collection
         """
         self._before_data()
-        gattribs = db.table_attribs(self.item, not load_values)
+        gattribs = db.table_attribs(self.item, not load_values, descriptors=True)
         return {
             x: self._unpack(
                 x,

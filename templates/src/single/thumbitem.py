@@ -94,6 +94,12 @@ def thumbnail_render():
 
     ex = this.props.kwargs if utils.defined(this.props.kwargs) else {}
 
+    clsname = ""
+    if this.props.blur:
+        clsname = "blur"
+    if this.props.className:
+        clsname + ' ' + this.props.className
+
     el = e(ui.Image, src=img_url,
            fluid=fluid,
            size=this.props.size,
@@ -112,7 +118,7 @@ def thumbnail_render():
            verticalAlign=this.props.verticalAlign,
            width=this.props.width,
            style=this.props.style,
-           className=this.props.className,
+           className=clsname,
            **ex
            )
     return e(ui.Segment, e(ui.Dimmer, e(ui.Loader), active=this.state.loading, inverted=True),

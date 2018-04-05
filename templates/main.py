@@ -250,6 +250,10 @@ def app_render():
                            onClose=this.close_preview_msg)
                          )
 
+        api_route = []
+        if this.state.debug:
+            api_route.append(e(Route, path="/api", component=this.api_page))
+
         el = e(Router,
                h("div",
                  e(ui.Responsive,
@@ -269,7 +273,7 @@ def app_render():
                        once=False,
                        ),
                      e(Switch,
-                       e(Route, path="/api", component=this.api_page),
+                       *api_route,
                        e(Route, path="/dashboard", component=this.dashboard_page),
                        e(Route, path="/library", component=this.library_page),
                        e(Route, path="/favorite", component=this.favorites_page),
@@ -334,6 +338,7 @@ App = createReactClass({
         'preview_msg': True,
         'scroll_up': False,
         'logged_in': js_undefined,
+        'debug': state.debug,
     },
 
     'componentWillUnMount': app_will_unmount,

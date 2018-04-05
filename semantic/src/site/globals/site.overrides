@@ -248,3 +248,11 @@ h6 {
 .foreground-sticky > div {
     z-index: 99999;
 }
+
+.blur {
+    filter: blur(4px);
+}
+
+.blur:hover {
+    filter: unset;
+}

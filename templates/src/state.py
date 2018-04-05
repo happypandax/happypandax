@@ -4,7 +4,7 @@ state = {
     'history': None,  # router history
     'container_ref': None,  # main conatiner
     'commands': set(),
-    'debug': True,
+    'debug': False,
     'new_update': False,
     'active': True,  # current page is active
     'connected': True,

@@ -123,6 +123,7 @@ def get_item(data=None, error=None):
 
             if len(menu_items):
                 this.props.menu(menu_items)
+
     elif error:
         state.app.notif("Failed to fetch item ({})".format(this.state.id), level="error")
     else:

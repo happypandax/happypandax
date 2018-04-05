@@ -66,6 +66,7 @@ def page_render():
               item_type=this.state.item_type,
               size_type=this.props.size_type if this.props.size_type else ImageSize.Medium,
               centered=True,
+              blur=this.props.blur,
               size=this.props.size,
               kwargs=thumb_kwargs,
               )

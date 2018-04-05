@@ -82,6 +82,7 @@ def gallery_render():
     thumb = e(thumbitem.Thumbnail,
               item_id=item_id,
               centered=True,
+              blur=this.props.blur,
               item_type=this.state.item_type,
               size_type=this.props.size_type if this.props.size_type else ImageSize.Medium,
               size=this.props.size,

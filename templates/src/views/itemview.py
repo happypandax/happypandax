@@ -24,6 +24,7 @@ def Itemviewvonfig_render():
     item_count_cfg = "item_count"
     external_viewer_cfg = "external_viewer"
     group_gallery_cfg = "group_gallery"
+    blur_cfg = "blur"
 
     item_count_options = [
         {'key': 10, 'text': '10', 'value': 10},
@@ -72,6 +73,13 @@ def Itemviewvonfig_render():
                      (props.on_infinite_scroll(
                          e, d), utils.storage.set(
                          infinite_scroll_cfg + cfg_suffix, d.checked))),
+                 ),
+                e(ui.Form.Field, control=ui.Checkbox, label=tr(this, "ui.t-blur", "Blur"), toggle=True,
+                 defaultChecked=utils.storage.get(blur_cfg + cfg_suffix, False),
+                 onChange=lambda e, d: all(
+                     (props.on_blur(
+                         e, d), utils.storage.set(
+                         blur_cfg + cfg_suffix, d.checked))),
                  ),
                  *ext_viewer_el,
                  e(ui.Form.Select, options=item_count_options, label=tr(this, "ui.t-items-per-page", "Items per page"), inline=True,
@@ -378,6 +386,7 @@ def item_view_on_update(p_props, p_state):
         p_props.sort_by != this.props.sort_by,
         p_props.sort_desc != this.props.sort_desc,
     )):
+        this.setState({'items': []})
         this.get_items()
 
     if any((
@@ -392,6 +401,7 @@ def item_view_render():
     el = this.state.element
     limit = this.props.limit or this.state.limit
     size_type = this.props.size_type
+    blur = this.state.blur
     if not el:
         return e(Error, content="An error occured. No valid element available.")
     ext_viewer = this.props.external_viewer if utils.defined(this.props.external_viewer) else this.state.external_viewer
@@ -406,10 +416,11 @@ def item_view_render():
                                        on_item_count=this.on_item_count,
                                        on_external_viewer=this.on_external_viewer,
                                        on_group_gallery=this.on_group_gallery,
+                                       on_blur=this.on_blur,
                                        )
 
     return e(ItemViewBase,
-             [e(el, data=x, size_type=size_type, centered=True, className="medium-size", key=n, external_viewer=ext_viewer)
+             [e(el, data=x, size_type=size_type, blur=blur, centered=True, className="medium-size", key=n, external_viewer=ext_viewer)
               for n, x in enumerate(items)],
              loading=this.state.loading,
              secondary=this.props.secondary,
@@ -453,6 +464,7 @@ ItemView = createReactClass({
                                 'visible_config': False,
                                 'external_viewer': utils.storage.get("external_viewer" + this.config_suffix(), False),
                                 'group_gallery': utils.storage.get("group_gallery" + this.config_suffix(), False),
+                                'blur': utils.storage.get("blur" + this.config_suffix(), False),
                                 },
 
     'get_items_count': get_items_count,
@@ -463,6 +475,7 @@ ItemView = createReactClass({
     'reset_page': lambda p: all((this.setState({'page': 1}), utils.go_to(this.props.history, query={'page': 1}, push=False))),
     'set_page': lambda p: this.setState({'page': p, 'prev_page': None}),
 
+    'on_blur': lambda e, d: this.setState({'blur': d.checked}),
     'on_infinite_scroll': lambda e, d: this.setState({'infinite_scroll': d.checked}),
     'on_item_count': lambda e, d: this.setState({'limit': d.value}),
     'on_external_viewer': lambda e, d: this.setState({'external_viewer': d.checked}),
