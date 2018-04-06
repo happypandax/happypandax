@@ -9,7 +9,7 @@ from src.react_utils import (h,
                              Route,
                              Redirect,
                              )
-from src.ui import ui, Alert, Notif
+from src.ui import ui, Alert, Notif, TitleChange
 from src.nav import (sidebar, menu)
 from src.pages import (api, collection, gallery,
                        dashboard, favorites, inbox,
@@ -319,7 +319,7 @@ def app_render():
                  preserveContext=True, key="2",
                  )
 
-    return [el, ReactDOM.createPortal(alert_el, this.state.portal_el)]
+    return [e(TitleChange), el, ReactDOM.createPortal(alert_el, this.state.portal_el)]
 
 
 App = createReactClass({

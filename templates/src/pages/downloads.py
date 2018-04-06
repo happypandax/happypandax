@@ -1,7 +1,7 @@
 from src.react_utils import (e,
                              createReactClass)
 from src.i18n import tr
-from src.ui import ui
+from src.ui import ui, TitleChange
 from src.client import client, ProgressType
 from src.state import state
 from src import utils
@@ -74,6 +74,7 @@ def page_render():
                      ))
 
     return e(ui.Container,
+             e(TitleChange, title=tr(this, "ui.mi-downloads", "Downloads")),
              e(ui.Form,
                e(ui.Form.Group,
                  e(ui.Form.Input,

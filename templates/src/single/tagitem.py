@@ -45,7 +45,6 @@ def taglbl_render():
                      ),
            hoverable=True,
            on="click",
-           hideOnScroll=True,
            position="top center",
            wide="very",
            )

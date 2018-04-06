@@ -44,7 +44,6 @@ def collection_render():
                                  inverted=True),
                        hoverable=True,
                        on="click",
-                       hideOnScroll=True,
                        position="right center",
                      ),
                    className="card-content",

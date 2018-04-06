@@ -1,6 +1,6 @@
 from src.react_utils import (e, h,
                              createReactClass)
-from src.ui import ui
+from src.ui import ui, TitleChange
 from src.state import state
 from src.i18n import tr
 from src.utils import defined
@@ -37,7 +37,6 @@ def on_handshake(msg):
     if this.props.on_login:
         this.props.on_login(msg['accepted'])
 
-
 def page_render():
     els = []
     if state['guest_allowed']:
@@ -46,6 +45,7 @@ def page_render():
         els.append(e(ui.Divider, tr(this, "ui.t-or", "Or"), horizontal=True))
 
     return e(ui.Grid,
+             e(TitleChange, title=tr(this, "ui.t-login", "Login")),
              e(ui.Grid.Row),
              e(ui.Grid.Row,
                e(ui.Grid.Column,

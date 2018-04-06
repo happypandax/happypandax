@@ -19,8 +19,8 @@ def artistlbl_render():
     fav = 0
     data = this.props.data or this.state.data
     if data:
-        if data.names:
-            name = data.names[0].js_name
+        if data.preferred_name:
+            name = data.preferred_name.js_name
         if data.metatags.favorite:
             fav = 1
 
@@ -40,7 +40,6 @@ def artistlbl_render():
              hoverable=True,
              wide="very",
              on="click",
-             hideOnScroll=True,
              position="top center"
              )
 

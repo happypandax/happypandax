@@ -1,5 +1,6 @@
 
 state = {
+    'title': 'HPX - Preview',
     'app': None,
     'history': None,  # router history
     'container_ref': None,  # main conatiner

@@ -5,7 +5,7 @@ from src.react_utils import (e,
                              NavLink,
                              Switch,
                              createReactClass)
-from src.ui import ui, Pagination
+from src.ui import ui, Pagination, TitleChange
 from src.client import client, ItemType, ItemSort
 from src.i18n import tr
 from src.state import state
@@ -140,6 +140,7 @@ def statuspage_render():
         )
 
     return e(SimpleLayout,
+             e(TitleChange, title=tr(this, "ui.mi-dir-status", "Status")),
              e(ui.Card.Group, *items, itemsPerRow=1, doubling=True, stackable=True,
                as_=ui.Transition.Group,
                animation="scale",
@@ -193,6 +194,7 @@ def languagespage_render():
         )
 
     return e(SimpleLayout,
+             e(TitleChange, title=tr(this, "ui.mi-dir-languages", "Languages")),
              e(ui.Card.Group, *items, itemsPerRow=1, doubling=True, stackable=True,
                as_=ui.Transition.Group,
                animation="scale",
@@ -272,6 +274,7 @@ def parodiespage_render():
         )
 
     return e(SimpleLayout,
+             e(TitleChange, title=tr(this, "ui.mi-dir-Parodies", "Parodies")),
              e(ui.Card.Group, *items, itemsPerRow=1, doubling=True, stackable=True,
                as_=ui.Transition.Group,
                animation="scale",
@@ -351,6 +354,7 @@ def categorypage_render():
         )
 
     return e(SimpleLayout,
+             e(TitleChange, title=tr(this, "ui.mi-dir-categories", "Categories")),
              e(ui.Card.Group, *items, itemsPerRow=1, doubling=True, stackable=True,
                as_=ui.Transition.Group,
                animation="scale",
@@ -426,6 +430,7 @@ def circlespage_render():
         )
 
     return e(SimpleLayout,
+             e(TitleChange, title=tr(this, "ui.mi-dir-circles", "Circles")),
              e(ui.Card.Group, *items, itemsPerRow=2, doubling=True, stackable=True,
                as_=ui.Transition.Group,
                animation="scale",
@@ -528,6 +533,7 @@ def artistpage_render():
               )
         )
     return e(SimpleLayout,
+             e(TitleChange, title=tr(this, "ui.mi-dir-artists", "Artists")),
              e(ui.Card.Group, *items, itemsPerRow=2, doubling=True, stackable=True,
                as_=ui.Transition.Group,
                animation="scale",
@@ -655,6 +661,7 @@ def tagspage_render():
                   ))
 
     return e(SimpleLayout,
+             e(TitleChange, title=tr(this, "ui.mi-dir-tags", "Tags")),
              e(ui.Card.Group, *tag_lbl, itemsPerRow=4, doubling=True, stackable=True,
                as_=ui.Transition.Group,
                animation="scale",

@@ -9,7 +9,7 @@
 ################################################################
 
 # very useful for updating
-_version_: 5
+_version_: 6
 
 # Common
 t-loading: Loading
@@ -32,6 +32,7 @@ mi-preferences: Preferences
 mi-about: About
 
 # Login Page
+t-login: Login
 t-username: Username
 t-password: Password
 b-connect: Connect

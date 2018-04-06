@@ -17,8 +17,8 @@ def parodylbl_render():
     name = ""
     data = this.props.data or this.state.data
     if data:
-        if data.names:
-            name = data.names[0].js_name
+        if data.preferred_name:
+            name = data.preferred_name.js_name
 
     lbl_args = {'content': name}
     return e(ui.Popup,

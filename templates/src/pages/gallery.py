@@ -1,7 +1,7 @@
 from src.react_utils import (e,
                              createReactClass,
                              Link)
-from src.ui import ui, Slider, LabelAccordion, DateLabel
+from src.ui import ui, Slider, LabelAccordion, DateLabel, TitleChange
 from src.i18n import tr
 from src.state import state
 from src.client import ItemType, ImageSize, client, Command
@@ -238,7 +238,6 @@ def gallery_on_update(p_props, p_state):
 
 __pragma__("tconv")
 
-
 def page_render():
 
     fav = this.state.fav
@@ -259,7 +258,8 @@ def page_render():
             date_read = this.state.data.last_read
         if this.state.data.timestamp:
             date_added = this.state.data.timestamp
-        title = this.state.data.titles[0].js_name
+        if this.state.data.preferred_title:
+            title = this.state.data.preferred_title.js_name
         inbox = this.state.data.metatags.inbox
         trash = this.state.data.metatags.trash
         if not item_id:
@@ -435,6 +435,7 @@ def page_render():
                                  )
 
     return e(ui.Grid,
+             e(TitleChange, title=title if title else "Gallery"),
              e(ui.Grid.Row, e(ui.Grid.Column, e(ui.Breadcrumb, icon="right arrow",))),
              e(ui.Grid.Row,
                e(ui.Grid.Column,

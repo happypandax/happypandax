@@ -90,7 +90,8 @@ def galleryprops_render():
             date_added = this.props.data.timestamp
         read_count = this.props.data.times_read
         info = this.props.data.info
-        title = this.props.data.titles[0].js_name
+        if this.props.data.preferred_title:
+            title = this.props.data.preferred_title.js_name
         if not item_id:
             item_id = this.props.data.id
 
