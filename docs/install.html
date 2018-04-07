@@ -1,27 +1,15 @@
 
 <!DOCTYPE html>
 
-
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>Installing &#8212; HappyPanda X 0.0.12#123 documentation</title>
-    
+    <title>Installing &#8212; HappyPanda X 0.0.12#124 documentation</title>
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="_static/style.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '0.0.12#123',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
@@ -40,8 +28,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-  </head>
-  <body role="document">
+  </head><body>
 
   <div id="navbar" class="navbar navbar-default navbar-fixed-top">
     <div class="container">
@@ -54,7 +41,7 @@
         </button>
         <a class="navbar-brand" href="index.html">
           HappyPanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.12#123</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.12#124</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -180,35 +167,35 @@
 </ol>
 <p>HPX is self-contained.
 Everything HPX creates and modifies, it does so in its own folder.
-This means it&#8217;s portable.
+This means it’s portable.
 The installer is just there to ease the install.
-On Windows it creates 3 shortcuts to <code class="docutils literal"><span class="pre">happypandax_gui.exe</span></code>.
-They are placed in your <code class="docutils literal"><span class="pre">Desktop</span></code>, <code class="docutils literal"><span class="pre">Start</span> <span class="pre">Menu</span></code> and <code class="docutils literal"><span class="pre">Start</span> <span class="pre">Menu/Programs</span></code> folders.</p>
-<p>If you&#8217;re on Windows &lt; 10, you need to install <code class="docutils literal"><span class="pre">Microsoft</span> <span class="pre">Visual</span> <span class="pre">C++</span> <span class="pre">Redistributable</span> <span class="pre">2015</span></code> to run HPX.
-The setup file is included in the archive, look for <code class="docutils literal"><span class="pre">vc_redist.x86.exe</span></code>.
-If you&#8217;re using the installer, this setup file will automatically be run for you.</p>
+On Windows it creates 3 shortcuts to <code class="docutils literal notranslate"><span class="pre">happypandax_gui.exe</span></code>.
+They are placed in your <code class="docutils literal notranslate"><span class="pre">Desktop</span></code>, <code class="docutils literal notranslate"><span class="pre">Start</span> <span class="pre">Menu</span></code> and <code class="docutils literal notranslate"><span class="pre">Start</span> <span class="pre">Menu/Programs</span></code> folders.</p>
+<p>If you’re on Windows &lt; 10, you need to install <code class="docutils literal notranslate"><span class="pre">Microsoft</span> <span class="pre">Visual</span> <span class="pre">C++</span> <span class="pre">Redistributable</span> <span class="pre">2015</span></code> to run HPX.
+The setup file is included in the archive, look for <code class="docutils literal notranslate"><span class="pre">vc_redist.x86.exe</span></code>.
+If you’re using the installer, this setup file will automatically be run for you.</p>
 <div class="admonition warning">
 <p class="first admonition-title">Warning</p>
-<p class="last">HPX requires sufficient permissions to read and write from it&#8217;s own folder to be able to run properly. This is required for the auto-update process to work.
-On Windows it means you shouldn&#8217;t install HPX somewhere like <code class="docutils literal"><span class="pre">C:\Program</span> <span class="pre">Files</span> <span class="pre">(x86)</span></code>. If you still choose to do so just remember to run HPX as admin.</p>
+<p class="last">HPX requires sufficient permissions to read and write from it’s own folder to be able to run properly. This is required for the auto-update process to work.
+On Windows it means you shouldn’t install HPX somewhere like <code class="docutils literal notranslate"><span class="pre">C:\Program</span> <span class="pre">Files</span> <span class="pre">(x86)</span></code>. If you still choose to do so just remember to run HPX as admin.</p>
 </div>
 </div>
 <div class="section" id="building">
 <h1>Building<a class="headerlink" href="#building" title="Permalink to this headline">¶</a></h1>
 <ol class="arabic simple">
-<li>install <code class="docutils literal"><span class="pre">Python</span> <span class="pre">3.5</span></code> and <code class="docutils literal"><span class="pre">pip</span></code> (and <code class="docutils literal"><span class="pre">git</span></code> if you haven&#8217;t already)</li>
+<li>install <code class="docutils literal notranslate"><span class="pre">Python</span> <span class="pre">3.5</span></code> and <code class="docutils literal notranslate"><span class="pre">pip</span></code> (and <code class="docutils literal notranslate"><span class="pre">git</span></code> if you haven’t already)</li>
 </ol>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
 <p class="last">Python 3.5 is the version that HPX is tested and being developed on. It should also work on 3.6 and up but no guarantees.</p>
 </div>
 <ol class="arabic simple" start="2">
-<li>run: <code class="docutils literal"><span class="pre">python3</span> <span class="pre">bootstrap.py</span></code></li>
+<li>run: <code class="docutils literal notranslate"><span class="pre">python3</span> <span class="pre">bootstrap.py</span></code></li>
 </ol>
 <div class="admonition warning">
 <p class="first admonition-title">Warning</p>
-<p>Windows users: If you get <code class="docutils literal"><span class="pre">error:</span> <span class="pre">command</span> <span class="pre">'..\cl.exe'</span> <span class="pre">failed</span> <span class="pre">with</span> <span class="pre">exit</span> <span class="pre">status</span> <span class="pre">2</span></code>, download <code class="docutils literal"><span class="pre">bitarray</span></code> from <a class="reference external" href="http://www.lfd.uci.edu/%7Egohlke/pythonlibs/#bitarray">here</a></p>
-<p class="last">Install like this: <code class="docutils literal"><span class="pre">.\env\Scripts\pip3.exe</span> <span class="pre">install</span> <span class="pre">bitarray.whl</span></code></p>
+<p>Windows users: If you get <code class="docutils literal notranslate"><span class="pre">error:</span> <span class="pre">command</span> <span class="pre">'..\cl.exe'</span> <span class="pre">failed</span> <span class="pre">with</span> <span class="pre">exit</span> <span class="pre">status</span> <span class="pre">2</span></code>, download <code class="docutils literal notranslate"><span class="pre">bitarray</span></code> from <a class="reference external" href="http://www.lfd.uci.edu/%7Egohlke/pythonlibs/#bitarray">here</a></p>
+<p class="last">Install like this: <code class="docutils literal notranslate"><span class="pre">.\env\Scripts\pip3.exe</span> <span class="pre">install</span> <span class="pre">bitarray.whl</span></code></p>
 </div>
 </div>
 
@@ -234,7 +221,7 @@ On Windows it means you shouldn&#8217;t install HPX somewhere like <code class="
     </p>
     <p>
         &copy; Copyright Twiddly.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.2.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.2.<br/>
     </p>
   </div>
 </footer>

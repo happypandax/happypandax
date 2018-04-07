@@ -108,7 +108,7 @@ html_theme_options = {
     'navbar_site_name': "Contents",
     'navbar_pagenav': False,
     'source_link_position': "footer",
-    'bootswatch_theme': "lumen",
+    'bootswatch_theme': "paper",
 }
 
 html_sidebars = {'**': ['localtoc.html']}

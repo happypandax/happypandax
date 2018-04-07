@@ -1,27 +1,15 @@
 
 <!DOCTYPE html>
 
-
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>Translations &#8212; HappyPanda X 0.0.12#123 documentation</title>
-    
+    <title>Translations &#8212; HappyPanda X 0.0.12#124 documentation</title>
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="_static/style.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '0.0.12#123',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
@@ -40,8 +28,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-  </head>
-  <body role="document">
+  </head><body>
 
   <div id="navbar" class="navbar navbar-default navbar-fixed-top">
     <div class="container">
@@ -54,7 +41,7 @@
         </button>
         <a class="navbar-brand" href="index.html">
           HappyPanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.12#123</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.12#124</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -164,8 +151,8 @@
       <div class="col-md-3">
         <div id="sidebar" class="bs-sidenav" role="complementary"><ul>
 <li><a class="reference internal" href="#">Translations</a><ul>
-<li><a class="reference internal" href="#translator-s-perspective">Translator&#8217;s perspective</a></li>
-<li><a class="reference internal" href="#developer-s-perspective">Developer&#8217;s perspective</a></li>
+<li><a class="reference internal" href="#translator-s-perspective">Translator’s perspective</a></li>
+<li><a class="reference internal" href="#developer-s-perspective">Developer’s perspective</a></li>
 </ul>
 </li>
 </ul>
@@ -177,31 +164,31 @@
   <div class="section" id="translations">
 <h1>Translations<a class="headerlink" href="#translations" title="Permalink to this headline">¶</a></h1>
 <p>HPX can be translated and localized to your language.</p>
-<p>Existing translations can be found at <code class="docutils literal"><span class="pre">[HPX]/translations</span></code>.
-These translation files are named like so: <code class="docutils literal"><span class="pre">&lt;language_code&gt;.&lt;namespace&gt;.yaml</span></code> in all lower-case.</p>
+<p>Existing translations can be found at <code class="docutils literal notranslate"><span class="pre">[HPX]/translations</span></code>.
+These translation files are named like so: <code class="docutils literal notranslate"><span class="pre">&lt;language_code&gt;.&lt;namespace&gt;.yaml</span></code> in all lower-case.</p>
 <p>In these translation files, translations are distinguished by <em>translation ids</em>:</p>
-<div class="highlight-guess"><div class="highlight"><pre><span></span>translation-id: translated text
+<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>translation-id: translated text
 translation-id-2: translated text 2
 ...
 </pre></div>
 </div>
-<p>It is required that a language namespace named <code class="docutils literal"><span class="pre">general</span></code> exists with this <em>translation id</em> for every translation language:</p>
-<div class="highlight-guess"><div class="highlight"><pre><span></span><span class="n">locale</span><span class="o">:</span> <span class="n">LanguageName</span> <span class="o">(</span><span class="n">Country</span><span class="o">)</span>
+<p>It is required that a language namespace named <code class="docutils literal notranslate"><span class="pre">general</span></code> exists with this <em>translation id</em> for every translation language:</p>
+<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span><span class="n">locale</span><span class="o">:</span> <span class="n">LanguageName</span> <span class="o">(</span><span class="n">Country</span><span class="o">)</span>
 </pre></div>
 </div>
-<p>You can see <code class="docutils literal"><span class="pre">translations/en_us.general.yaml</span></code> for an example.</p>
+<p>You can see <code class="docutils literal notranslate"><span class="pre">translations/en_us.general.yaml</span></code> for an example.</p>
 <p>If you need a quick primer on YAML, see <a class="reference external" href="https://learn.getgrav.org/advanced/yaml">here</a>.</p>
 <div class="section" id="translator-s-perspective">
-<h2>Translator&#8217;s perspective<a class="headerlink" href="#translator-s-perspective" title="Permalink to this headline">¶</a></h2>
-<p>If you&#8217;re coming from a translator&#8217;s perspective and just want to translate then here are some quick pointers.</p>
-<p>It is recommended that you translate from the <code class="docutils literal"><span class="pre">en_us</span></code> language code as this is the default language code for HPX , and
+<h2>Translator’s perspective<a class="headerlink" href="#translator-s-perspective" title="Permalink to this headline">¶</a></h2>
+<p>If you’re coming from a translator’s perspective and just want to translate then here are some quick pointers.</p>
+<p>It is recommended that you translate from the <code class="docutils literal notranslate"><span class="pre">en_us</span></code> language code as this is the default language code for HPX , and
 also the one being kept up to date the most and fastest.</p>
-<p>When translating you should take note of the <code class="docutils literal"><span class="pre">_version_</span></code> id from the file you&#8217;re translating from at the time of translating.
-When you&#8217;re done translating, you update the <code class="docutils literal"><span class="pre">_version_</span></code> in your translation files to match the ones you were translating from.
-This way you&#8217;&#8217; know that your translation files are out of date when these <code class="docutils literal"><span class="pre">_version_</span></code>&#8216;s differ.</p>
-<p>You can (and should!) submit your translation files to the main repo. Just create a pull request and it&#8217;ll be merged and usable by everyone in future releases!</p>
-<p>If you&#8217;re going to translate the <code class="docutils literal"><span class="pre">ui</span></code> namespace, do note the prefixes on the <em>language ids</em> and their meaning:</p>
-<div class="highlight-guess"><div class="highlight"><pre><span></span>#  Prefixes:
+<p>When translating you should take note of the <code class="docutils literal notranslate"><span class="pre">_version_</span></code> id from the file you’re translating from at the time of translating.
+When you’re done translating, you update the <code class="docutils literal notranslate"><span class="pre">_version_</span></code> in your translation files to match the ones you were translating from.
+This way you’’ know that your translation files are out of date when these <code class="docutils literal notranslate"><span class="pre">_version_</span></code>’s differ.</p>
+<p>You can (and should!) submit your translation files to the main repo. Just create a pull request and it’ll be merged and usable by everyone in future releases!</p>
+<p>If you’re going to translate the <code class="docutils literal notranslate"><span class="pre">ui</span></code> namespace, do note the prefixes on the <em>language ids</em> and their meaning:</p>
+<div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>#  Prefixes:
 #   - mi == menu item text
 #   - h == header text
 #   - de == description text
@@ -209,18 +196,18 @@ This way you&#8217;&#8217; know that your translation files are out of date when
 #   - b == button text
 </pre></div>
 </div>
-<p>I&#8217;m probably going to create a tool (or you can too) for helping translating later if I have time.</p>
+<p>I’m probably going to create a tool (or you can too) for helping translating later if I have time.</p>
 </div>
 <div class="section" id="developer-s-perspective">
-<h2>Developer&#8217;s perspective<a class="headerlink" href="#developer-s-perspective" title="Permalink to this headline">¶</a></h2>
+<h2>Developer’s perspective<a class="headerlink" href="#developer-s-perspective" title="Permalink to this headline">¶</a></h2>
 <p>Developers can choose to create their own language namespace for their own clients if they desire.
 This language namespace can also be included in future HPX releases. Just create a pull request.</p>
-<p>Say I made an app client for HPX. For this app I could create language files with the namespace <code class="docutils literal"><span class="pre">myapp</span></code> and include them in HPX.
+<p>Say I made an app client for HPX. For this app I could create language files with the namespace <code class="docutils literal notranslate"><span class="pre">myapp</span></code> and include them in HPX.
 Others can then come edit or create their own translations for my app in the same manner as they would for HPX.</p>
-<p>Translations are used like this <code class="docutils literal"><span class="pre">&lt;namespace&gt;.&lt;translation_id&gt;</span></code>.
-For example: <code class="docutils literal"><span class="pre">&quot;general.locale&quot;</span></code> -&gt; <code class="docutils literal"><span class="pre">English</span> <span class="pre">(United</span> <span class="pre">States)</span></code>.</p>
-<p>If you&#8217;re building a client, you can access these translations through the server API functions <a class="reference internal" href="api.html#happypanda.interface.ui.translate" title="happypanda.interface.ui.translate"><code class="xref py py-func docutils literal"><span class="pre">ui.translate()</span></code></a> and <a class="reference internal" href="api.html#happypanda.interface.meta.get_locales" title="happypanda.interface.meta.get_locales"><code class="xref py py-func docutils literal"><span class="pre">meta.get_locales()</span></code></a>.</p>
-<p>Keep in mind that the locale settings for HPX are <em>client-scoped</em>, meaning that you can change the locale settings freely without interfering with other client&#8217;s locale settings.</p>
+<p>Translations are used like this <code class="docutils literal notranslate"><span class="pre">&lt;namespace&gt;.&lt;translation_id&gt;</span></code>.
+For example: <code class="docutils literal notranslate"><span class="pre">&quot;general.locale&quot;</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">English</span> <span class="pre">(United</span> <span class="pre">States)</span></code>.</p>
+<p>If you’re building a client, you can access these translations through the server API functions <a class="reference internal" href="api.html#happypanda.interface.ui.translate" title="happypanda.interface.ui.translate"><code class="xref py py-func docutils literal notranslate"><span class="pre">ui.translate()</span></code></a> and <a class="reference internal" href="api.html#happypanda.interface.meta.get_locales" title="happypanda.interface.meta.get_locales"><code class="xref py py-func docutils literal notranslate"><span class="pre">meta.get_locales()</span></code></a>.</p>
+<p>Keep in mind that the locale settings for HPX are <em>client-scoped</em>, meaning that you can change the locale settings freely without interfering with other client’s locale settings.</p>
 <div class="admonition-todo admonition" id="index-0">
 <p class="first admonition-title">Todo</p>
 <p class="last">accessing through plugins</p>
@@ -250,7 +237,7 @@ For example: <code class="docutils literal"><span class="pre">&quot;general.loca
     </p>
     <p>
         &copy; Copyright Twiddly.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.2.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.2.<br/>
     </p>
   </div>
 </footer>

@@ -170,7 +170,7 @@ def gallery_render():
                hoverable=True,
                position="bottom center",
                wide="very",
-               on="click"
+               on="click",
                ),
              centered=this.props.centered,
              className=add_cls,

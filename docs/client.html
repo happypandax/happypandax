@@ -1,27 +1,15 @@
 
 <!DOCTYPE html>
 
-
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>Creating frontends &#8212; HappyPanda X 0.0.12#123 documentation</title>
-    
+    <title>Creating frontends &#8212; HappyPanda X 0.0.12#124 documentation</title>
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="_static/style.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '0.0.12#123',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
@@ -40,8 +28,7 @@
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 
-  </head>
-  <body role="document">
+  </head><body>
 
   <div id="navbar" class="navbar navbar-default navbar-fixed-top">
     <div class="container">
@@ -54,7 +41,7 @@
         </button>
         <a class="navbar-brand" href="index.html">
           HappyPanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.12#123</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.12#124</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -182,9 +169,9 @@
   <div class="section" id="creating-frontends">
 <h1>Creating frontends<a class="headerlink" href="#creating-frontends" title="Permalink to this headline">¶</a></h1>
 <p>HPX exposes an RPC interface over TCP making it possible to create a client in any programming language.</p>
-<p>For exchanging data between the server and client <code class="docutils literal"><span class="pre">JSON</span></code> is used. Make sure you&#8217;re familiar with <code class="docutils literal"><span class="pre">JSON</span></code> and its datatypes.</p>
+<p>For exchanging data between the server and client <code class="docutils literal notranslate"><span class="pre">JSON</span></code> is used. Make sure you’re familiar with <code class="docutils literal notranslate"><span class="pre">JSON</span></code> and its datatypes.</p>
 <p>Before wanting to talk to a HPX server, make sure you have one running. See <a class="reference internal" href="usage.html#setting-up"><span class="std std-ref">Setting up</span></a> or <a class="reference internal" href="env.html#setting-up-an-environment"><span class="std std-ref">Setting up an environment</span></a> on how to get one up and running.</p>
-<p>It is recommended that you run the server with the <code class="docutils literal"><span class="pre">--debug</span></code> and <code class="docutils literal"><span class="pre">--dev</span></code> commandline switches so that you can see what&#8217;s going on while you&#8217;re connected.
+<p>It is recommended that you run the server with the <code class="docutils literal notranslate"><span class="pre">--debug</span></code> and <code class="docutils literal notranslate"><span class="pre">--dev</span></code> commandline switches so that you can see what’s going on while you’re connected.
 See <a class="reference internal" href="switches.html#command-line-arguments"><span class="std std-ref">Command-Line Arguments</span></a>.</p>
 <div class="section" id="exchanging-messages">
 <h2>Exchanging messages<a class="headerlink" href="#exchanging-messages" title="Permalink to this headline">¶</a></h2>
@@ -192,21 +179,21 @@ See <a class="reference internal" href="switches.html#command-line-arguments"><s
 <p>To communicate with the server you need to instantiate a TCP socket.</p>
 <p>In your chosen programming language instantiate a TCP socket and connect it to the server.</p>
 <p>In pseudocode:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">var</span> <span class="n">sock</span> <span class="o">=</span> <span class="n">tcpsocket</span><span class="p">();</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">var</span> <span class="n">sock</span> <span class="o">=</span> <span class="n">tcpsocket</span><span class="p">();</span>
 <span class="n">sock</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">server_address</span><span class="p">,</span> <span class="n">server_port</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>The server will try to talk to you after connecting successfully.</p>
 <p>You receive this message.</p>
 <p>In pseudocode:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">var</span> <span class="n">msg</span> <span class="o">=</span> <span class="n">sock</span><span class="o">.</span><span class="n">receive</span><span class="p">();</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">var</span> <span class="n">msg</span> <span class="o">=</span> <span class="n">sock</span><span class="o">.</span><span class="n">receive</span><span class="p">();</span>
 </pre></div>
 </div>
 <p><strong>Now, the most important thing you need to understand is that the data you received just now might just be a part of the full message</strong>.</p>
-<p>The message is delimited so you keep receving data until you meet the EOF sequence. For HPX this EOF is <code class="docutils literal"><span class="pre">&lt;EOF&gt;</span></code> (in byte-form).</p>
+<p>The message is delimited so you keep receving data until you meet the EOF sequence. For HPX this EOF is <code class="docutils literal notranslate"><span class="pre">&lt;EOF&gt;</span></code> (in byte-form).</p>
 <p>HPX requires that all data, not including the EOF sequence, to be gzipped.</p>
 <p>A very crude example on how to receive a message from HPX in pseudocode:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">var</span> <span class="n">msg</span> <span class="o">=</span> <span class="n">none</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">var</span> <span class="n">msg</span> <span class="o">=</span> <span class="n">none</span>
 <span class="n">var</span> <span class="n">buffer</span> <span class="o">=</span> <span class="nb">bytes</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
 
 <span class="k">while</span> <span class="n">true</span><span class="p">:</span>
@@ -222,17 +209,17 @@ See <a class="reference internal" href="switches.html#command-line-arguments"><s
 <span class="n">var</span> <span class="n">data</span> <span class="o">=</span> <span class="n">gzip</span><span class="o">.</span><span class="n">decompress</span><span class="p">(</span><span class="n">buffer</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Now that we got a message from the server, we convert it into valid <code class="docutils literal"><span class="pre">JSON</span></code>.
+<p>Now that we got a message from the server, we convert it into valid <code class="docutils literal notranslate"><span class="pre">JSON</span></code>.
 The decompressed data is <cite>UTF-8</cite> encoded.</p>
 <p>In pseudocode:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">var</span> <span class="n">json_data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">);</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">var</span> <span class="n">json_data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">);</span>
 </pre></div>
 </div>
-<p>And that&#8217;s the end of it. You&#8217;ve successfully received a message from the server.</p>
-<p>Sending a message is even easier. Just make sure it&#8217;s valid <code class="docutils literal"><span class="pre">JSON</span></code>, converted to bytes encoded in <code class="docutils literal"><span class="pre">UTF-8</span></code> and then gzip compressed before you send.</p>
+<p>And that’s the end of it. You’ve successfully received a message from the server.</p>
+<p>Sending a message is even easier. Just make sure it’s valid <code class="docutils literal notranslate"><span class="pre">JSON</span></code>, converted to bytes encoded in <code class="docutils literal notranslate"><span class="pre">UTF-8</span></code> and then gzip compressed before you send.</p>
 <p><strong>Remember to suffix the message with the EOF tag so the server knows when your message is complete</strong>.</p>
 <p>In pseudocode:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">var</span> <span class="n">msg_to_send</span> <span class="o">=</span> <span class="nb">bytes</span><span class="p">(</span><span class="n">valid_json</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="c1"># make sure it&#39;s UTF-8 encoded</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">var</span> <span class="n">msg_to_send</span> <span class="o">=</span> <span class="nb">bytes</span><span class="p">(</span><span class="n">valid_json</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="c1"># make sure it&#39;s UTF-8 encoded</span>
 <span class="n">var</span> <span class="n">eof_tag</span> <span class="o">=</span> <span class="nb">bytes</span><span class="p">(</span><span class="s2">&quot;&lt;EOF&gt;&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
 
 <span class="c1"># compress the msg before sending</span>
@@ -243,27 +230,27 @@ The decompressed data is <cite>UTF-8</cite> encoded.</p>
 </pre></div>
 </div>
 <p>For every message you send the server, a response is sent back, that is, unless the server has crashed or something.</p>
-<p>(<strong>Please note that if you ran the server with the &#8211;dev switch, the server will not respond to messages if an unhandled exception was raised</strong>)</p>
+<p>(<strong>Please note that if you ran the server with the –dev switch, the server will not respond to messages if an unhandled exception was raised</strong>)</p>
 <p>The structure of the messages exchanged between the server and the client is consistent:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
     <span class="s2">&quot;session&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
     <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
     <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="p">{},</span>
 <span class="p">}</span>
 </pre></div>
 </div>
-<p>In <code class="docutils literal"><span class="pre">name</span></code> is a string value. This value is just an arbitrarily chosen name for the sever/client. It has some use, see <a class="reference internal" href="api.html#configuration"><span class="std std-ref">Configuration</span></a> when you&#8217;re done reading this.</p>
-<p>In <code class="docutils literal"><span class="pre">data</span></code> is the real message. <code class="docutils literal"><span class="pre">session</span></code> will be explained in <a class="reference internal" href="#session"><span class="std std-ref">Session</span></a>.</p>
+<p>In <code class="docutils literal notranslate"><span class="pre">name</span></code> is a string value. This value is just an arbitrarily chosen name for the sever/client. It has some use, see <a class="reference internal" href="api.html#configuration"><span class="std std-ref">Configuration</span></a> when you’re done reading this.</p>
+<p>In <code class="docutils literal notranslate"><span class="pre">data</span></code> is the real message. <code class="docutils literal notranslate"><span class="pre">session</span></code> will be explained in <a class="reference internal" href="#session"><span class="std std-ref">Session</span></a>.</p>
 <p><strong>Every message should look like this</strong>.</p>
-<p>For the sake of brevity, from now on only messages meant to be put in the <code class="docutils literal"><span class="pre">data</span></code> key will be shown.</p>
-<p>Generally, the server is very helpful and will tell you if your message is invalid and/or if you&#8217;ve misused or missed some keys.</p>
+<p>For the sake of brevity, from now on only messages meant to be put in the <code class="docutils literal notranslate"><span class="pre">data</span></code> key will be shown.</p>
+<p>Generally, the server is very helpful and will tell you if your message is invalid and/or if you’ve misused or missed some keys.</p>
 </div>
 <div class="section" id="authenticating">
 <h2>Authenticating<a class="headerlink" href="#authenticating" title="Permalink to this headline">¶</a></h2>
-<p>Remember that the server always sent a message after you&#8217;ve successfully connected?</p>
-<p>This is part of the authentication process or a so-called &#8220;handshake&#8221;.</p>
+<p>Remember that the server always sent a message after you’ve successfully connected?</p>
+<p>This is part of the authentication process or a so-called “handshake”.</p>
 <p>The server will send you a message that looks like this:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
     <span class="s2">&quot;version&quot;</span><span class="p">:</span>
         <span class="p">{</span>
             <span class="s2">&quot;core&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="s2">&quot;, # [major, minor, patch]</span>
@@ -275,27 +262,27 @@ The decompressed data is <cite>UTF-8</cite> encoded.</p>
 </pre></div>
 </div>
 <p>You can use this message to determine if the HPX server is supported or not.</p>
-<p>Notice the <code class="docutils literal"><span class="pre">guest_allowed</span></code> key. The value of this key informs if it&#8217;s possible to connect to the server <em>without</em> providing any credentials.</p>
+<p>Notice the <code class="docutils literal notranslate"><span class="pre">guest_allowed</span></code> key. The value of this key informs if it’s possible to connect to the server <em>without</em> providing any credentials.</p>
 <p>The server expects a response from the client that completes the handshake before any further processing is done.</p>
-<p>To authenticate as a <strong>guest</strong> the client responds with an empty object <code class="docutils literal"><span class="pre">{}</span></code>.</p>
+<p>To authenticate as a <strong>guest</strong> the client responds with an empty object <code class="docutils literal notranslate"><span class="pre">{}</span></code>.</p>
 <p>To authenticate as a <strong>user</strong> the client responds with:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
     <span class="s2">&quot;user&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
     <span class="s2">&quot;password&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span>
 <span class="p">}</span>
 </pre></div>
 </div>
-<p>The server will respond with <code class="docutils literal"><span class="pre">&quot;Authenticated&quot;</span></code> and assign a <code class="docutils literal"><span class="pre">session</span></code> for a successful handshake (this is the whole message):</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span>
+<p>The server will respond with <code class="docutils literal notranslate"><span class="pre">&quot;Authenticated&quot;</span></code> and assign a <code class="docutils literal notranslate"><span class="pre">session</span></code> for a successful handshake (this is the whole message):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
     <span class="s2">&quot;session&quot;</span><span class="p">:</span> <span class="s2">&quot;long_random_string&quot;</span><span class="p">,</span>
     <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
     <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="s2">&quot;Authenticated&quot;</span><span class="p">,</span>
 <span class="p">}</span>
 </pre></div>
 </div>
-<p>If otherwise, it responds with an error. See ... for possible errors.</p>
+<p>If otherwise, it responds with an error. See … for possible errors.</p>
 <p>This handshake is only required <em>once</em> per initial connection.
-Additional connections can be established without doing a handshake with the use of the newly-assigned <code class="docutils literal"><span class="pre">session</span></code> value.
+Additional connections can be established without doing a handshake with the use of the newly-assigned <code class="docutils literal notranslate"><span class="pre">session</span></code> value.
 See <a class="reference internal" href="#session"><span class="std std-ref">Session</span></a>.</p>
 <p>Additional connections</p>
 <div class="admonition-todo admonition" id="index-0">
@@ -306,7 +293,7 @@ See <a class="reference internal" href="#session"><span class="std std-ref">Sess
 <div class="section" id="session">
 <h2>Session<a class="headerlink" href="#session" title="Permalink to this headline">¶</a></h2>
 <p>After a successful handshake, a <em>session</em> is created:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
     <span class="s2">&quot;session&quot;</span><span class="p">:</span> <span class="s2">&quot;a_new_unique_session_string&quot;</span><span class="p">,</span>
     <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;server&quot;</span><span class="p">,</span>
     <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="s2">&quot;Authenticated&quot;</span><span class="p">,</span>
@@ -317,7 +304,7 @@ See <a class="reference internal" href="#session"><span class="std std-ref">Sess
 <p>The session is <em>not</em> tied to any particular connection, meaning multiple independent connections
 can use the same session.</p>
 <p>This allows for multiple independent connections to be made within the same or different app while sharing the same context:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">socketA</span> <span class="p">(</span><span class="n">connects</span><span class="p">)</span> <span class="o">--&gt;</span> <span class="n">server</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">socketA</span> <span class="p">(</span><span class="n">connects</span><span class="p">)</span> <span class="o">--&gt;</span> <span class="n">server</span>
 <span class="n">socketA</span> <span class="o">&lt;--</span> <span class="p">(</span><span class="n">asking</span> <span class="k">for</span> <span class="n">handshake</span><span class="p">)</span> <span class="n">server</span>
 <span class="n">socketA</span> <span class="p">(</span><span class="n">handshakes</span><span class="p">)</span> <span class="o">--&gt;</span> <span class="n">server</span>
 <span class="n">socketA</span> <span class="o">&lt;--</span> <span class="p">(</span><span class="n">accepted</span><span class="p">,</span> <span class="n">have</span> <span class="n">a</span> <span class="n">sessionid</span><span class="p">)</span> <span class="n">server</span>
@@ -331,9 +318,9 @@ can use the same session.</p>
 <p>Think of it as threads in a computer program.</p>
 <p>As shown above, the server will <em>always</em> send a message when a client connects.
 This message should thus always be consumed when connecting with additional sockets before sending the intended message with a session.</p>
-<p><strong>Sessions have a limited lifespan</strong>. Whenever you send a message using a session, you extend that particular session&#8217;s lifespan.</p>
-<p>Sessions expire when their lifespan runs out (shocking, isn&#8217;t it? :) ), requiring the client to do a <em>new</em> handshake.</p>
-<p>The extent of a single session&#8217;s lifespan is set by the server (in the server settings).</p>
+<p><strong>Sessions have a limited lifespan</strong>. Whenever you send a message using a session, you extend that particular session’s lifespan.</p>
+<p>Sessions expire when their lifespan runs out (shocking, isn’t it? :) ), requiring the client to do a <em>new</em> handshake.</p>
+<p>The extent of a single session’s lifespan is set by the server (in the server settings).</p>
 <div class="admonition-todo admonition" id="index-1">
 <p class="first admonition-title">Todo</p>
 <p class="last">explain session expired error</p>
@@ -341,26 +328,26 @@ This message should thus always be consumed when connecting with additional sock
 </div>
 <div class="section" id="calling-a-function">
 <h2>Calling a function<a class="headerlink" href="#calling-a-function" title="Permalink to this headline">¶</a></h2>
-<p>Now that you&#8217;ve perfomed a successful handshake, you can start using the <a class="reference internal" href="api.html#module-happypanda.interface.enums"><span class="std std-ref">Server API</span></a>.</p>
+<p>Now that you’ve perfomed a successful handshake, you can start using the <a class="reference internal" href="api.html#module-happypanda.interface.enums"><span class="std std-ref">Server API</span></a>.</p>
 <p>A <em>function-call</em> object in its simplest looks like this:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
     <span class="s2">&quot;fname&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span>
 <span class="p">}</span>
 </pre></div>
 </div>
-<p>The <code class="docutils literal"><span class="pre">fname</span></code> value is the name of the function you want to call. This particular object has no function arguments.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">fname</span></code> value is the name of the function you want to call. This particular object has no function arguments.</p>
 <p>To add additional function arguments you just define the arguments in the <em>function-call</em> object like this:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
     <span class="s2">&quot;fname&quot;</span><span class="p">:</span> <span class="s2">&quot;func1&quot;</span><span class="p">,</span>
     <span class="s2">&quot;arg1&quot;</span><span class="p">:</span> <span class="n">value1</span><span class="p">,</span>
     <span class="s2">&quot;arg2&quot;</span><span class="p">:</span> <span class="n">value2</span>
 <span class="p">}</span>
 </pre></div>
 </div>
-<p>This <em>function-call</em> object will call <code class="docutils literal"><span class="pre">func1(arg1=value1,</span> <span class="pre">arg2=value2)</span></code> on the server.</p>
+<p>This <em>function-call</em> object will call <code class="docutils literal notranslate"><span class="pre">func1(arg1=value1,</span> <span class="pre">arg2=value2)</span></code> on the server.</p>
 <p>It is possible to call multiple functions in a single message, which is why it is required that
 <em>function-call</em> objects are put in a list before sending the message:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">[</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span>
     <span class="p">{</span>
         <span class="s2">&quot;fname&quot;</span><span class="p">:</span> <span class="s2">&quot;func1&quot;</span>
     <span class="p">},</span>
@@ -371,7 +358,7 @@ This message should thus always be consumed when connecting with additional sock
 </pre></div>
 </div>
 <p>The server will respond with a list of <em>function-data</em> objects:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">[</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span>
     <span class="p">{</span>
         <span class="s2">&quot;fname&quot;</span><span class="p">:</span> <span class="s2">&quot;func1&quot;</span><span class="p">,</span>
         <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="p">{}</span>
@@ -383,8 +370,8 @@ This message should thus always be consumed when connecting with additional sock
 <span class="p">]</span>
 </pre></div>
 </div>
-<p>In case of errors raised by the function, the <em>function-data</em> gains an <code class="docutils literal"><span class="pre">error</span></code> key. See <a class="reference internal" href="#errors"><span class="std std-ref">Errors</span></a>.</p>
-<p>If you&#8217;re unsure on what data a function will return, see <a class="reference internal" href="#playing-with-the-api"><span class="std std-ref">Playing with the API</span></a></p>
+<p>In case of errors raised by the function, the <em>function-data</em> gains an <code class="docutils literal notranslate"><span class="pre">error</span></code> key. See <a class="reference internal" href="#errors"><span class="std std-ref">Errors</span></a>.</p>
+<p>If you’re unsure on what data a function will return, see <a class="reference internal" href="#playing-with-the-api"><span class="std std-ref">Playing with the API</span></a></p>
 <div class="admonition-todo admonition" id="index-2">
 <p class="first admonition-title">Todo</p>
 <p class="last">reference message objects here</p>
@@ -393,17 +380,17 @@ This message should thus always be consumed when connecting with additional sock
 <div class="section" id="errors">
 <h2>Errors<a class="headerlink" href="#errors" title="Permalink to this headline">¶</a></h2>
 <p>An <em>error</em> object looks like this:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
     <span class="s2">&quot;code&quot;</span><span class="p">:</span> <span class="n">integer</span><span class="p">,</span>
     <span class="s2">&quot;msg&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span>
 <span class="p">}</span>
 </pre></div>
 </div>
-<p><code class="docutils literal"><span class="pre">code</span></code> is the error code. See ... for available errors and error codes.</p>
-<p>Errors occuring will be put in an <code class="docutils literal"><span class="pre">error</span></code> key.</p>
+<p><code class="docutils literal notranslate"><span class="pre">code</span></code> is the error code. See … for available errors and error codes.</p>
+<p>Errors occuring will be put in an <code class="docutils literal notranslate"><span class="pre">error</span></code> key.</p>
 <p>Server-level errors (unhandled exceptions or errors not occuring in api-functions) will add
-the <code class="docutils literal"><span class="pre">error</span></code> key at the root level of the payload:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span>
+the <code class="docutils literal notranslate"><span class="pre">error</span></code> key at the root level of the payload:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
     <span class="s2">&quot;session&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
     <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
     <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="p">{},</span>
@@ -411,8 +398,8 @@ the <code class="docutils literal"><span class="pre">error</span></code> key at 
 <span class="p">}</span>
 </pre></div>
 </div>
-<p>Likewise, errors occuring in api-functions will add the <code class="docutils literal"><span class="pre">error</span></code> key in the <em>function-data</em> object:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span>
+<p>Likewise, errors occuring in api-functions will add the <code class="docutils literal notranslate"><span class="pre">error</span></code> key in the <em>function-data</em> object:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
     <span class="s2">&quot;fname&quot;</span><span class="p">:</span> <span class="s2">&quot;func2&quot;</span><span class="p">,</span>
     <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="p">{},</span>
     <span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="p">{}</span>
@@ -422,17 +409,17 @@ the <code class="docutils literal"><span class="pre">error</span></code> key at 
 </div>
 <div class="section" id="server-commands">
 <h2>Server commands<a class="headerlink" href="#server-commands" title="Permalink to this headline">¶</a></h2>
-<p>The server implements server commands to control the server remotely: <a class="reference internal" href="api.html#happypanda.interface.enums.ServerCommand" title="happypanda.interface.enums.ServerCommand"><code class="xref py py-class docutils literal"><span class="pre">ServerCommand</span></code></a></p>
+<p>The server implements server commands to control the server remotely: <a class="reference internal" href="api.html#happypanda.interface.enums.ServerCommand" title="happypanda.interface.enums.ServerCommand"><code class="xref py py-class docutils literal notranslate"><span class="pre">ServerCommand</span></code></a></p>
 <p>Server commands are invoked like this (this is the whole payload):</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
     <span class="s2">&quot;session&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
     <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
     <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="n">server_command</span>
 <span class="p">}</span>
 </pre></div>
 </div>
-<p>For example, if we want to shut down the server we use the <a class="reference internal" href="api.html#happypanda.interface.enums.ServerCommand.ServerQuit" title="happypanda.interface.enums.ServerCommand.ServerQuit"><code class="xref py py-attr docutils literal"><span class="pre">ServerCommand.ServerQuit</span></code></a> command:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span>
+<p>For example, if we want to shut down the server we use the <a class="reference internal" href="api.html#happypanda.interface.enums.ServerCommand.ServerQuit" title="happypanda.interface.enums.ServerCommand.ServerQuit"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ServerCommand.ServerQuit</span></code></a> command:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
     <span class="s2">&quot;session&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
     <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;clientname&quot;</span><span class="p">,</span>
     <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="s2">&quot;serverquit&quot;</span>
@@ -441,7 +428,7 @@ the <code class="docutils literal"><span class="pre">error</span></code> key at 
 </div>
 <p>Some server commands will be broadcasted to all connected clients.</p>
 <p>For example, when the server recieves a shut down command, the exact command will be propogated and broadcasted to all connected clients:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
     <span class="s2">&quot;session&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
     <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;servername&quot;</span><span class="p">,</span>
     <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="s2">&quot;serverquit&quot;</span>
@@ -456,7 +443,7 @@ the <code class="docutils literal"><span class="pre">error</span></code> key at 
 <div class="section" id="playing-with-the-api">
 <h2>Playing with the API<a class="headerlink" href="#playing-with-the-api" title="Permalink to this headline">¶</a></h2>
 <p>The default webclient has a place for watching and testing the exchanges between the server and the client.</p>
-<p>Start the webclient with the <code class="docutils literal"><span class="pre">--debug</span></code> switch and go to <code class="docutils literal"><span class="pre">/api</span></code>.</p>
+<p>Start the webclient with the <code class="docutils literal notranslate"><span class="pre">--debug</span></code> switch and go to <code class="docutils literal notranslate"><span class="pre">/api</span></code>.</p>
 </div>
 </div>
 
@@ -482,7 +469,7 @@ the <code class="docutils literal"><span class="pre">error</span></code> key at 
     </p>
     <p>
         &copy; Copyright Twiddly.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.2.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.2.<br/>
     </p>
   </div>
 </footer>

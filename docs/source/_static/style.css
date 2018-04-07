@@ -24,11 +24,27 @@
 }
 
 .class > dd, .function > dd {
-    border-left: 15px solid rgba(0, 0, 0, 0.1);
-    padding-left: 8px;
-    background-color: rgba(0, 0, 0, 0.03);
+    border-left: 0.3em solid rgba(0, 0, 0, 0.1);
+    padding: 1em 1em 0 1em;
+}
+
+.class > dd, .function > dd > p:last-of-type {
+    border-bottom: 0.1em solid rgba(0, 0, 0, 0.1);
+    padding-bottom: 1em;
 }
 
 .class .attribute { font-size: 0.9em; }
 
 .function > dt > em { margin: 0 3px; }
+
+.seealso .last code {
+    color: #ffd4d4;
+}
+
+.seealso .last code span:before {
+    content: '- ';
+}
+
+code {
+    color: #e95353;
+}
