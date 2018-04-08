@@ -36,7 +36,7 @@ In pseudocode::
 
 The message is delimited so you keep receving data until you meet the EOF sequence. For HPX this EOF is ``<EOF>`` (in byte-form).
 
-HPX requires that all data, not including the EOF sequence, to be gzipped.
+HPX requires that all data, **not including the EOF sequence**, to be gzipped.
 
 A very crude example on how to receive a message from HPX in pseudocode:
 
@@ -66,7 +66,7 @@ In pseudocode::
 
 And that's the end of it. You've successfully received a message from the server.
 
-Sending a message is even easier. Just make sure it's valid ``JSON``, converted to bytes encoded in ``UTF-8`` and then gzip compressed before you send.
+Sending a message is even easier. Just make sure it's valid ``JSON``, converted to bytes encoded in ``UTF-8`` and lastly gzip compressed before you send.
 
 **Remember to suffix the message with the EOF tag so the server knows when your message is complete**.     
 
@@ -307,7 +307,7 @@ For example, if we want to shut down the server we use the :attr:`.ServerCommand
         "data": "serverquit"
     }
 
-Some server commands will be broadcasted to all connected clients.
+Some server commands will be broadcasted to all connected clients before executing.
 
 For example, when the server recieves a shut down command, the exact command will be propogated and broadcasted to all connected clients::
 

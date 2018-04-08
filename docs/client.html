@@ -191,7 +191,7 @@ See <a class="reference internal" href="switches.html#command-line-arguments"><s
 </div>
 <p><strong>Now, the most important thing you need to understand is that the data you received just now might just be a part of the full message</strong>.</p>
 <p>The message is delimited so you keep receving data until you meet the EOF sequence. For HPX this EOF is <code class="docutils literal notranslate"><span class="pre">&lt;EOF&gt;</span></code> (in byte-form).</p>
-<p>HPX requires that all data, not including the EOF sequence, to be gzipped.</p>
+<p>HPX requires that all data, <strong>not including the EOF sequence</strong>, to be gzipped.</p>
 <p>A very crude example on how to receive a message from HPX in pseudocode:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">var</span> <span class="n">msg</span> <span class="o">=</span> <span class="n">none</span>
 <span class="n">var</span> <span class="n">buffer</span> <span class="o">=</span> <span class="nb">bytes</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
@@ -216,7 +216,7 @@ The decompressed data is <cite>UTF-8</cite> encoded.</p>
 </pre></div>
 </div>
 <p>And that’s the end of it. You’ve successfully received a message from the server.</p>
-<p>Sending a message is even easier. Just make sure it’s valid <code class="docutils literal notranslate"><span class="pre">JSON</span></code>, converted to bytes encoded in <code class="docutils literal notranslate"><span class="pre">UTF-8</span></code> and then gzip compressed before you send.</p>
+<p>Sending a message is even easier. Just make sure it’s valid <code class="docutils literal notranslate"><span class="pre">JSON</span></code>, converted to bytes encoded in <code class="docutils literal notranslate"><span class="pre">UTF-8</span></code> and lastly gzip compressed before you send.</p>
 <p><strong>Remember to suffix the message with the EOF tag so the server knows when your message is complete</strong>.</p>
 <p>In pseudocode:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">var</span> <span class="n">msg_to_send</span> <span class="o">=</span> <span class="nb">bytes</span><span class="p">(</span><span class="n">valid_json</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="c1"># make sure it&#39;s UTF-8 encoded</span>
@@ -426,7 +426,7 @@ the <code class="docutils literal notranslate"><span class="pre">error</span></c
 <span class="p">}</span>
 </pre></div>
 </div>
-<p>Some server commands will be broadcasted to all connected clients.</p>
+<p>Some server commands will be broadcasted to all connected clients before executing.</p>
 <p>For example, when the server recieves a shut down command, the exact command will be propogated and broadcasted to all connected clients:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
     <span class="s2">&quot;session&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
