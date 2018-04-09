@@ -2504,6 +2504,13 @@ h6 {
   -webkit-filter: unset;
   filter: unset;
 }
+
+.ui.card.piled.segments::after,
+.ui.card.piled.segments::before,
+.ui.card.piled.segment::after,
+.ui.card.piled.segment::before {
+  background-color: unset !important;
+}
 /*!
  * # Semantic UI 2.2.13 - Button
  * http://github.com/semantic-org/semantic-ui/

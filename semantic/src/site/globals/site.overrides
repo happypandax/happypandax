@@ -245,6 +245,10 @@ h6 {
   padding: 1em 1em !important;
 }
 
+.ui.card.piled.segments::after, .ui.card.piled.segments::before, .ui.card.piled.segment::after, .ui.card.piled.segment::before {
+    background-color: unset !important;
+}
+
 .foreground-sticky > div {
     z-index: 99999;
 }

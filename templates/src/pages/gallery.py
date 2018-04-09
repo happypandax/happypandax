@@ -56,6 +56,11 @@ def get_item(data=None, error=None):
                              item_type=ItemType.Language,
                              item_id=data.language_id)
 
+        if data.category_id:
+            client.call_func("get_item", this.get_category,
+                    item_type=ItemType.Category,
+                    item_id=data.category_id)
+
         if data.id:
             client.call_func("get_related_count", this.get_filter_count,
                              related_type=ItemType.GalleryFilter,
@@ -153,6 +158,14 @@ def get_lang(data=None, error=None):
         this.setState({"lang_data": data})
     elif error:
         state.app.notif("Failed to fetch language ({})".format(this.state.id), level="error")
+
+
+
+def get_category(data=None, error=None):
+    if data is not None and not error:
+        this.setState({"category_data": data})
+    elif error:
+        state.app.notif("Failed to fetch category ({})".format(this.state.id), level="error")
 
 
 def get_filter_count(data=None, error=None):
@@ -270,6 +283,9 @@ def page_render():
         series_data = this.state.group_data
 
     indicators = []
+
+    if this.state.category_data:
+        indicators.append(e(ui.Label, this.state.category_data.js_name, basic=True))
 
     if inbox:
         indicators.append(e(ui.Icon, js_name="inbox", size="big", title=tr(
@@ -544,6 +560,7 @@ Page = createReactClass({
                                 'data': this.props.data,
                                 'rating': 0,
                                 'fav': 0,
+                                'category_data': this.props.category_data or {},
                                 'lang_data': this.props.lang_data or {},
                                 'status_data': this.props.status_data or {},
                                 'group_data': this.props.group_data or [],
@@ -567,6 +584,7 @@ Page = createReactClass({
     'get_item': get_item,
     'get_grouping': get_grouping,
     'get_lang': get_lang,
+    'get_category': get_category,
     'get_status': get_status,
     'get_filter_count': get_filter_count,
     'get_filters': get_filters,

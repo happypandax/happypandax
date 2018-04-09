@@ -1044,11 +1044,12 @@ def main(args=sys.argv[1:]):
                     if g.rating is not None:
                         gallery.rating = g.rating * 2
                     if g.type:
-                        gtype = db.Category()
-                        gtype.name = g.type
-                        gtype = dst_gtype.get(gtype.name.lower(), gtype)
-                        gallery.type = gtype
-                        dst_gtype[gtype.name.lower()] = gtype
+                        gtype = dst_gtype.get(g.type.lower())
+                        if not gtype:
+                            gtype = db.Category()
+                            gtype.name = g.type
+                            dst_gtype[gtype.name.lower()] = gtype
+                        gallery.category = gtype
 
                     if g.link:
                         gurl = db.Url()

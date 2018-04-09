@@ -29,6 +29,11 @@ def get_item(data=None, error=None):
         if data.metatags.favorite:
             this.setState({"fav": 1})
 
+        if data.category_id:
+            client.call_func("get_item", this.get_category,
+                    item_type=ItemType.Category,
+                    item_id=data.category_id)
+
         if data.id:
             client.call_func("get_related_count", this.get_gallery_count,
                              related_type=ItemType.Gallery,
@@ -106,6 +111,11 @@ def get_gallery_count(data=None, error=None):
     elif error:
         state.app.notif("Failed to fetch gallery count ({})".format(this.state.id), level="error")
 
+def get_category(data=None, error=None):
+    if data is not None and not error:
+        this.setState({"category_data": data})
+    elif error:
+        state.app.notif("Failed to fetch category ({})".format(this.state.id), level="error")
 
 
 def collection_on_update(p_props, p_state):
@@ -143,6 +153,9 @@ def page_render():
             item_id = this.state.data.id
 
     indicators = []
+    
+    if this.state.category_data:
+        indicators.append(e(ui.Label, this.state.category_data.js_name, basic=True))
 
     if inbox:
         indicators.append(e(ui.Icon, js_name="inbox", size="big", title=tr(
@@ -286,6 +299,7 @@ Page = createReactClass({
                                 'rating': 0,
                                 'fav': 0,
                                 'item_type': ItemType.Collection,
+                                'category_data': this.props.category_data or {},
                                 'gallery_count': 0,
                                 'loading': True,
                                 'loading_group': True,

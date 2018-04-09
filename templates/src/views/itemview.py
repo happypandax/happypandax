@@ -219,7 +219,8 @@ def itemviewbase_render():
                centered=True,
                verticalAlign="middle",
                as_=ui.Transition.Group,
-               duration=1500,
+               animation='pulse',
+               duration=800,
                ),
              as_=ui.Segment,
              basic=True,
@@ -352,6 +353,7 @@ def get_more():
 def item_view_on_update(p_props, p_state):
     if p_props.item_type != this.props.item_type:
         this.get_element()
+        this.setState({'items': []})
 
     if p_props.search_query != this.props.search_query:
         this.setState({'search_query': this.props.search_query})
@@ -386,8 +388,9 @@ def item_view_on_update(p_props, p_state):
         p_props.sort_by != this.props.sort_by,
         p_props.sort_desc != this.props.sort_desc,
     )):
-        this.setState({'items': []})
         this.get_items()
+        if not this.state.infinite_scroll:
+            this.setState({'items': []})
 
     if any((
         p_props.sort_by != this.props.sort_by,

@@ -174,6 +174,7 @@ def gallery_render():
                ),
              centered=this.props.centered,
              className=add_cls,
+             #color="pink",
              link=True)
 
 

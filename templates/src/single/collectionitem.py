@@ -44,7 +44,6 @@ def collection_render():
                 blur=this.props.blur,
                 item_type=this.state.item_type,
                 size_type=this.props.size_type if this.props.size_type else ImageSize.Medium,
-                bordered=True,
                 )
 
     if link:
@@ -75,6 +74,7 @@ def collection_render():
                                 e(ui.Card.Header, title, className="text-ellipsis card-header"),
                                 ),
                 centered=this.props.centered,
+                #color="purple",
                 className=cls_name,
                 link=True)
 
