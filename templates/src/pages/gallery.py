@@ -435,7 +435,7 @@ def page_render():
                                  )
 
     return e(ui.Grid,
-             e(TitleChange, title=title if title else "Gallery"),
+             e(TitleChange, title=title if title else tr(this, "general.db-item-gallery", "Gallery")),
              e(ui.Grid.Row, e(ui.Grid.Column, e(ui.Breadcrumb, icon="right arrow",))),
              e(ui.Grid.Row,
                e(ui.Grid.Column,
@@ -523,7 +523,7 @@ def page_render():
                                                 related_type=ItemType.Page,
                                                 view_filter=None,
                                                 label=tr(this, "ui.t-pages", "Pages"),
-                                                config_suffix="gallerypage",
+                                                config_suffix=this.cfg_suffix,
                                                 toggle_config=this.toggle_pages_config,
                                                 visible_config=this.state.visible_page_cfg,
                                                 container=True, secondary=True))),

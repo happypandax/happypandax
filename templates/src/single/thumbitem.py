@@ -1,4 +1,4 @@
-from src.react_utils import (e,
+from src.react_utils import (e,h,
                              createReactClass,
                              )
 from src.ui import ui
@@ -98,7 +98,7 @@ def thumbnail_render():
     if this.props.blur:
         clsname = "blur"
     if this.props.className:
-        clsname + ' ' + this.props.className
+        clsname += ' ' + this.props.className
 
     el = e(ui.Image, src=img_url,
            fluid=fluid,
@@ -106,6 +106,7 @@ def thumbnail_render():
            disabled=this.props.disabled,
            centered=this.props.centered,
            bordered=this.props.bordered,
+           rounded=this.props.rounded,
            avatar=this.props.avatar,
            dimmer=this.props.dimmer,
            height=this.props.height,
@@ -121,11 +122,8 @@ def thumbnail_render():
            className=clsname,
            **ex
            )
-    return e(ui.Segment, e(ui.Dimmer, e(ui.Loader), active=this.state.loading, inverted=True),
+    return h("div", e(ui.Dimmer, e(ui.Loader), active=this.state.loading, inverted=True),
              el,
-             basic=True,
-             className="no-padding-segment",
-             inverted=this.props.inverted,
              )
 
 

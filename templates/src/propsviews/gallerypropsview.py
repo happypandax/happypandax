@@ -174,7 +174,7 @@ def galleryprops_render():
                ),
              basic="very",
              size=this.props.size,
-             compact="very" if utils.defined(this.props.compact) else False
+             compact="very" if utils.defined(this.props.compact) else False,
              )
 
 

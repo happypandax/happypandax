@@ -29,6 +29,7 @@ class GetModelImage(AsyncCommand):
 
     models = CommandEntry("models", tuple)
     generate = CommandEntry("generate", str, str, int, utils.ImageSize)
+    invalidate = CommandEntry("invalidate", bool, str, int, utils.ImageSize)
 
     cover_event = CommandEvent('cover', object)
 
@@ -49,7 +50,7 @@ class GetModelImage(AsyncCommand):
         )
 
     @generate.default(capture=True)
-    def _generate(model, item_id, size, capture=[db.model_name(x) for x in (db.Page, db.Gallery)]):
+    def _generate_gallery_and_page(model, item_id, size, capture=[db.model_name(x) for x in (db.Page, db.Gallery)]):
         im_path = ""
         model = GetModelClass().run(model)
 
@@ -69,6 +70,39 @@ class GetModelImage(AsyncCommand):
             im_props = io_cmd.ImageProperties(size, 0, constants.dir_thumbs)
             im_path = io_cmd.ImageItem(im_path, im_props).main()
         return im_path
+
+    @invalidate.default(capture=True)
+    def _invalidate_gallery_and_page(model, item_id, size, capture=[db.model_name(x) for x in (db.Page, db.Gallery)]):
+        return False
+
+    @generate.default(capture=True)
+    def _generate_collection(model, item_id, size, capture=db.model_name(db.Collection)):
+        im_path = ""
+        model = GetModelClass().run(model)
+
+        page = GetSession().run().query(
+            db.Page.path).join(db.Collection.galleries).join(db.Gallery.pages).filter(
+            db.and_op(
+                db.Collection.id == item_id,
+                db.Page.number == 1)).first()
+
+        # gallery sorted by insertion:
+        #page = GetSession().run().query(
+        #    db.Page.path, db.gallery_collections.c.timestamp.label("timestamp")).join(db.Collection.galleries).join(db.Gallery.pages).filter(
+        #    db.and_op(
+        #        db.Collection.id == item_id,
+        #        db.Page.number == 1)).sort_by("timestamp").first()
+        if page:
+            im_path = page[0]
+
+        if im_path:
+            im_props = io_cmd.ImageProperties(size, 0, constants.dir_thumbs)
+            im_path = io_cmd.ImageItem(im_path, im_props).main()
+        return im_path
+
+    @invalidate.default(capture=True)
+    def _invalidate_collection(model, item_id, size, capture=db.model_name(db.Collection)):
+        return False
 
     def main(self, model: db.Base, item_id: int,
              image_size: enums.ImageSize) -> db.Profile:
@@ -108,6 +142,13 @@ class GetModelImage(AsyncCommand):
                 generate = False
             else:
                 old_img_hash = self.cover.data
+
+        self.next_progress()
+        if not generate:
+            model_name = db.model_name(model)
+            with self.invalidate.call_capture(model_name, model_name, item_id, image_size) as plg:
+                if plg.first():
+                    generate = True
 
         self.next_progress()
         if generate:

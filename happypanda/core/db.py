@@ -1096,10 +1096,17 @@ class Collection(ProfileMixin, NameMixin, Base):
 
     info = Column(String, nullable=False, default='')
     pub_date = Column(ArrowType)
+    category_id = Column(Integer, ForeignKey('category.id'))
+    timestamp = Column(ArrowType, nullable=False, default=arrow.now)
+
+    category = relationship(
+    "Category",
+    cascade="save-update, merge, refresh-expire")
 
     galleries = relationship(
         "Gallery",
         secondary=gallery_collections,
+        order_by=desc_expr(gallery_collections.c.timestamp),
         back_populates="collections",
         lazy="dynamic",
         cascade="save-update, merge, refresh-expire")
@@ -1268,6 +1275,7 @@ class Page(TaggableMixin, ProfileMixin, Base):
     hash_id = Column(Integer, ForeignKey('hash.id'))
     gallery_id = Column(Integer, ForeignKey('gallery.id'), nullable=False)
     in_archive = Column(Boolean, default=False)
+    timestamp = Column(ArrowType, nullable=False, default=arrow.now)
 
     hash = relationship("Hash", cascade="save-update, merge, refresh-expire")
     gallery = relationship("Gallery", back_populates="pages")

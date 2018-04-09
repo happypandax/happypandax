@@ -168,6 +168,12 @@ h-appears-in-collection:
     many: Appears in %{count} collections
 h-more-like-this: More like this
 
+# Collection Page
+t-inboxed-collection: This collection is in your inbox
+t-trashed-collection: This collection is set to be deleted
+t-galleries: Galleries
+
+
 # Item
 b-read: Read
 b-save-later: Save for later

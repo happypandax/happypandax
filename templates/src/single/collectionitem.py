@@ -1,7 +1,9 @@
 from src.react_utils import (h,
                              e,
-                             createReactClass)
+                             createReactClass,
+                             Link)
 from src.ui import ui
+from src import utils
 from src.client import (ItemType, ImageSize)
 from src.single import thumbitem
 from org.transcrypt.stubs.browser import __pragma__
@@ -19,48 +21,62 @@ def collection_render():
     title = ""
     item_id = this.state.id
     fav = 0
+    data = this.props.data or this.state.data
 
     if this.state.data:
-        title = this.state.data.title
+        title = this.state.data.js_name
         if not item_id:
             item_id = this.state.data.id
         if this.state.data.metatags.favorite:
             fav = 1
 
-    return e(ui.Segment,
-             e(ui.Card,
-               e(ui.Dimmer.Dimmable,
-                 h("div",
-                   e(thumbitem.Thumbnail, item_id=item_id,
-                    item_type=this.state.item_type, size_type=ImageSize.Medium),
-                   e(ui.Rating, icon="heart", size="massive", className="card-item top left above-dimmer", rating=fav),
-                   e(ui.Popup,
-                     e(ui.List, [], selection=True, relaxed=True),
-                       trigger=e(ui.Icon,
-                                 js_name="ellipsis vertical",
-                                 bordered=True,
-                                 link=True,
-                                 className="card-item bottom right above-dimmer",
-                                 inverted=True),
-                       hoverable=True,
-                       on="click",
-                       position="right center",
-                     ),
-                   className="card-content",
-                   ),
-                 dimmed=this.state.dimmer,
-                 onMouseEnter=this.dimmer_show,
-                 onMouseLeave=this.dimmer_hide,
+    cls_name = "segment piled"
+    if this.props.className:
+        cls_name += ' ' + this.props.className
+
+    link = True
+    if not this.props.link == js_undefined:
+        link = this.props.link
+
+    thumb = e(thumbitem.Thumbnail,
+                item_id=item_id,
+                centered=True,
+                blur=this.props.blur,
+                item_type=this.state.item_type,
+                size_type=this.props.size_type if this.props.size_type else ImageSize.Medium,
+                bordered=True,
+                )
+
+    if link:
+        thumb = e(Link, thumb, to={'pathname': '/item/collection',
+                                   'search': utils.query_to_string({'id': item_id}),
+                                   'state': {'collection': data},
+                                   })
+
+    return e(ui.Card,
+                h("div",
+                thumb,
+                e(ui.Rating, icon="heart", size="massive", className="card-item top left above-dimmer", rating=fav),
+                e(ui.Popup,
+                    e(ui.List, [], selection=True, relaxed=True),
+                    trigger=e(ui.Icon,
+                                js_name="ellipsis vertical",
+                                bordered=True,
+                                link=True,
+                                className="card-item bottom right above-dimmer",
+                                inverted=True),
+                    hoverable=True,
+                    on="click",
+                    position="right center",
+                    ),
+                className="card-content",
                 ),
                 e(ui.Card.Content,
                                 e(ui.Card.Header, title, className="text-ellipsis card-header"),
                                 ),
-                className=this.props.className,
-                link=True),
-             piled=True,
-             stacked=True,
-             className="no-padding-segment",
-             )
+                centered=this.props.centered,
+                className=cls_name,
+                link=True)
 
 
 Collection = createReactClass({
@@ -69,7 +85,6 @@ Collection = createReactClass({
     'getInitialState': lambda: {'id': None,
                                 'data': None,
                                 'gallery_count': 0,
-                                'dimmer': False,
                                 'galleries': [],
                                 'item_type': ItemType.Collection},
 
