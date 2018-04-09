@@ -2386,16 +2386,17 @@ i.medium-size {
   padding: 5px !important;
 }
 
-.slide-segment {
-  margin: 0 !important;
-}
-
 .no-padding-segment {
   padding: 0 !important;
 }
 
 .overflow-auto {
   overflow: auto !important;
+}
+
+.no-margins,
+.slide-segment {
+  margin: 0 !important;
 }
 
 [class*='hpx-']:before {
@@ -2491,6 +2492,13 @@ h6 {
   padding: 1em 1em !important;
 }
 
+.ui.card.piled.segments::after,
+.ui.card.piled.segments::before,
+.ui.card.piled.segment::after,
+.ui.card.piled.segment::before {
+  background-color: unset !important;
+}
+
 .foreground-sticky > div {
   z-index: 99999;
 }
@@ -2503,13 +2511,6 @@ h6 {
 .blur:hover {
   -webkit-filter: unset;
   filter: unset;
-}
-
-.ui.card.piled.segments::after,
-.ui.card.piled.segments::before,
-.ui.card.piled.segment::after,
-.ui.card.piled.segment::before {
-  background-color: unset !important;
 }
 /*!
  * # Semantic UI 2.2.13 - Button

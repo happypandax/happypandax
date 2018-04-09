@@ -285,7 +285,7 @@ def page_render():
     indicators = []
 
     if this.state.category_data:
-        indicators.append(e(ui.Label, this.state.category_data.js_name, basic=True))
+        indicators.append(e(ui.Label, this.state.category_data.js_name, basic=True, size="large"))
 
     if inbox:
         indicators.append(e(ui.Icon, js_name="inbox", size="big", title=tr(
@@ -479,9 +479,10 @@ def page_render():
                e(ui.Grid.Column,
                  e(ui.Grid,
                    e(ui.Grid.Row,
-                     e(ui.Grid.Column, e(ui.Rating, icon="heart", size="massive", rating=fav), floated="right",),
-                     e(ui.Grid.Column, *indicators, floated="right", textAlign="right"),
+                     e(ui.Grid.Column, e(ui.Rating, icon="heart", size="massive", rating=fav), floated="right", className="no-margins"),
+                     e(ui.Grid.Column, *indicators, floated="right", textAlign="right", className="no-margins"),
                      columns=2,
+                     verticalAlign="middle",
                      ),
                    e(ui.Grid.Row,
                      e(ui.Grid,

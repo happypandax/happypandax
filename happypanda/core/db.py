@@ -508,6 +508,15 @@ class UpdatedMixin:
 
     last_updated = Column(ArrowType, nullable=False, default=arrow.now)
 
+class UserMixin:
+    user_id = Column(Integer, ForeignKey('user.id'))
+    user = relationship(
+    "User",
+    cascade="save-update, merge, refresh-expire")
+
+    def __init__(self, *args, **kwargs):
+        pass
+        # TODO: set current user here
 
 Base = declarative_base(cls=BaseID)
 
@@ -726,7 +735,7 @@ class User(Base):
 
 metatag_association(User, "users")
 
-
+@generic_repr
 class Profile(Base):
     __tablename__ = 'profile'
 
@@ -734,11 +743,7 @@ class Profile(Base):
     data = Column(String, nullable=False, index=True)
     size = Column(String, nullable=False)
     timestamp = Column(ArrowType, nullable=False, default=arrow.now)
-
-    def __repr__(self):
-        return "Profile ID:{} Size:{} Path:{}".format(
-            self.id, self.size, self.path)
-
+    custom = Column(Boolean, default=False)
 
 class Event(Base):
     __tablename__ = 'event'
@@ -777,7 +782,7 @@ class Hash(NameMixin, Base):
 
 
 @generic_repr
-class NamespaceTags(AliasMixin, Base):
+class NamespaceTags(AliasMixin, UserMixin, Base):
     __tablename__ = 'namespace_tags'
 
     tag_id = Column(Integer, ForeignKey('tag.id'))
@@ -885,7 +890,7 @@ taggable_tags = Table(
         'namespace_tag_id', 'taggable_id'))
 
 
-class Taggable(UpdatedMixin, Base):
+class Taggable(UpdatedMixin, UserMixin, Base):
     __tablename__ = 'taggable'
 
     tags = relationship(
@@ -948,7 +953,7 @@ artist_circles = Table(
 
 
 @generic_repr
-class Artist(ProfileMixin, Base):
+class Artist(ProfileMixin, UserMixin, Base):
     __tablename__ = 'artist'
 
     info = Column(String, nullable=False, default='')
@@ -975,7 +980,7 @@ url_association(Artist, "artists")
 
 
 @generic_repr
-class Circle(NameMixin, Base):
+class Circle(NameMixin, UserMixin, Base):
     __tablename__ = 'circle'
 
     artists = relationship(
@@ -993,7 +998,7 @@ gallery_parodies = Table(
 
 
 @generic_repr
-class Parody(Base):
+class Parody(UserMixin, Base):
     __tablename__ = 'parody'
 
     galleries = relationship(
@@ -1015,7 +1020,7 @@ gallery_filters = Table('gallery_filters', Base.metadata,
 
 
 @generic_repr
-class GalleryFilter(NameMixin, Base):
+class GalleryFilter(UserMixin, NameMixin, Base):
     __tablename__ = 'filter'
     filter = Column(String, nullable=False, default='')
     enforce = Column(Boolean, nullable=False, default=False)
@@ -1031,7 +1036,7 @@ class GalleryFilter(NameMixin, Base):
 
 
 @generic_repr
-class Status(NameMixin, Base):
+class Status(NameMixin, UserMixin, Base):
     __tablename__ = 'status'
 
     groupings = relationship(
@@ -1061,7 +1066,7 @@ profile_association(Grouping, "groupings")
 
 
 @generic_repr
-class Language(NameMixin, Base):
+class Language(NameMixin, UserMixin, Base):
     __tablename__ = 'language'
 
     code = Column(LowerCaseString, nullable=False, default='')
@@ -1073,7 +1078,7 @@ class Language(NameMixin, Base):
 
 
 @generic_repr
-class Category(NameMixin, Base):
+class Category(NameMixin, UserMixin, Base):
     __tablename__ = 'category'
 
     galleries = relationship(
@@ -1091,7 +1096,7 @@ gallery_collections = Table(
 
 
 @generic_repr
-class Collection(ProfileMixin, NameMixin, Base):
+class Collection(ProfileMixin, UpdatedMixin, NameMixin, UserMixin, Base):
     __tablename__ = 'collection'
 
     info = Column(String, nullable=False, default='')
@@ -1318,7 +1323,7 @@ profile_association(Page, "pages")
 
 
 @generic_repr
-class Title(AliasMixin, Base):
+class Title(AliasMixin, UserMixin, Base):
     __tablename__ = 'title'
     name = Column(String, nullable=False, default="")  # OBS: not unique
     language_id = Column(Integer, ForeignKey('language.id'))
@@ -1334,7 +1339,7 @@ class Title(AliasMixin, Base):
 
 
 @generic_repr
-class Url(Base):
+class Url(UserMixin, Base):
     __tablename__ = 'url'
     name = Column(String, nullable=False, default='')  # OBS: not unique
 

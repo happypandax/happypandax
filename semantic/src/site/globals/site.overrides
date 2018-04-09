@@ -140,15 +140,16 @@ i.medium-size {
 .slick-list {
     padding: 5px !important;
 }
-.slide-segment {
-    margin: 0 !important;
-}
 .no-padding-segment {
     padding: 0 !important;
 }
 .overflow-auto {
     overflow: auto !important;
 }
+.no-margins, .slide-segment {
+    margin: 0 !important;
+}
+
 [class*='hpx-'] {
     &:before {
         display: inline-block;

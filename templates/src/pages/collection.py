@@ -7,6 +7,7 @@ from src.i18n import tr
 from src.state import state
 from src.single import thumbitem
 from src.client import ItemType, ViewType, ImageSize, client
+from src.propsviews import collectionpropsview
 from src.views import itemview
 from src import item, utils
 from org.transcrypt.stubs.browser import __pragma__
@@ -149,13 +150,11 @@ def page_render():
             title = this.state.data.js_name
         inbox = this.state.data.metatags.inbox
         trash = this.state.data.metatags.trash
-        if not item_id:
-            item_id = this.state.data.id
 
     indicators = []
     
     if this.state.category_data:
-        indicators.append(e(ui.Label, this.state.category_data.js_name, basic=True))
+        indicators.append(e(ui.Label, this.state.category_data.js_name, basic=True, size="large"))
 
     if inbox:
         indicators.append(e(ui.Icon, js_name="inbox", size="big", title=tr(
@@ -241,14 +240,16 @@ def page_render():
                e(ui.Grid.Column,
                  e(ui.Grid,
                    e(ui.Grid.Row,
-                     e(ui.Grid.Column, e(ui.Rating, icon="heart", size="massive", rating=fav), floated="right",),
-                     e(ui.Grid.Column, *indicators, floated="right", textAlign="right"),
+                     e(ui.Grid.Column, e(ui.Rating, icon="heart", size="massive", rating=fav), floated="right", className="no-margins"),
+                     e(ui.Grid.Column, *indicators, floated="right", textAlign="right", className="no-margins"),
                      columns=2,
                      ),
                    e(ui.Grid.Row,
                      e(ui.Grid,
                        e(ui.Grid.Row, e(ui.Grid.Column, e(ui.Header, title, as_="h3"), textAlign="center")),
-                       e(ui.Grid.Row,),
+                       e(ui.Grid.Row, e(collectionpropsview.CollectionProps, data=this.state.data,
+                                        category=this.state.category_data,
+                                        gallery_count=this.state.gallery_count)),
                        stackable=True,
                        padded=False,
                        relaxed=True,
@@ -268,7 +269,7 @@ def page_render():
                e(ui.Grid.Column,
                  e(DateLabel, tr(this, "ui.t-last-updated", "Last updated"), timestamp=date_upd, format="LLL"),
                  textAlign="center"),
-               columns=3
+               columns=2
                ),
              e(ui.Grid.Row, e(ui.Grid.Column, e(itemview.ItemView,
                                                 history=this.props.history,
