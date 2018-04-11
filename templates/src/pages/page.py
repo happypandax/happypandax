@@ -181,7 +181,7 @@ def on_canvas_click(ev):
     if this.state.context:
         ev.preventDefault()
         rect = this.state.context.getBoundingClientRect()
-        x, y = ev.clientX - rect.left, ev.clientY - rect.top # noqa: F841
+        x, y = ev.clientX - rect.left, ev.clientY - rect.top  # noqa: F841
         hwidth = rect.width / 2
         if x > hwidth:
             this.go_right()
@@ -362,10 +362,10 @@ def page_render():
                    e(ui.Ref,
                      e(ui.Grid.Column,
                        e(ui.Segment,
-                            thumb,
-                            className="no-padding-segment",
-                            basic=True,
-                            inverted=this.state.cfg_invert,
+                         thumb,
+                         className="no-padding-segment",
+                         basic=True,
+                         inverted=this.state.cfg_invert,
                          ),
                        className="no-padding-segment",
                        onClick=this.on_canvas_click,

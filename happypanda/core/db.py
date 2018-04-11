@@ -18,7 +18,7 @@ from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.ext.indexable import index_property
 from sqlalchemy.ext.hybrid import hybrid_property, hybrid_method
-from sqlalchemy.ext.associationproxy  import AssociationProxy
+from sqlalchemy.ext.associationproxy import AssociationProxy
 from sqlalchemy.sql.expression import BinaryExpression, func, literal
 from sqlalchemy.sql.operators import custom_op
 from sqlalchemy.ext import orderinglist
@@ -508,15 +508,23 @@ class UpdatedMixin:
 
     last_updated = Column(ArrowType, nullable=False, default=arrow.now)
 
+
 class UserMixin:
-    user_id = Column(Integer, ForeignKey('user.id'))
-    user = relationship(
-    "User",
-    cascade="save-update, merge, refresh-expire")
+
+    @declared_attr
+    def user(cls):
+        return relationship(
+            "User",
+            cascade="save-update, merge, refresh-expire")
+
+    @declared_attr
+    def user_id(cls):
+        return Column(Integer, ForeignKey('user.id'))
 
     def __init__(self, *args, **kwargs):
         pass
         # TODO: set current user here
+
 
 Base = declarative_base(cls=BaseID)
 
@@ -735,6 +743,7 @@ class User(Base):
 
 metatag_association(User, "users")
 
+
 @generic_repr
 class Profile(Base):
     __tablename__ = 'profile'
@@ -744,6 +753,7 @@ class Profile(Base):
     size = Column(String, nullable=False)
     timestamp = Column(ArrowType, nullable=False, default=arrow.now)
     custom = Column(Boolean, default=False)
+
 
 class Event(Base):
     __tablename__ = 'event'
@@ -1092,7 +1102,7 @@ gallery_collections = Table(
         'collection_id', Integer, ForeignKey('collection.id')), Column(
             'gallery_id', Integer, ForeignKey('gallery.id')), Column(
                 'timestamp', ArrowType, nullable=False, default=arrow.now),
-                    UniqueConstraint( 'collection_id', 'gallery_id'))
+    UniqueConstraint('collection_id', 'gallery_id'))
 
 
 @generic_repr
@@ -1105,8 +1115,8 @@ class Collection(ProfileMixin, UpdatedMixin, NameMixin, UserMixin, Base):
     timestamp = Column(ArrowType, nullable=False, default=arrow.now)
 
     category = relationship(
-    "Category",
-    cascade="save-update, merge, refresh-expire")
+        "Category",
+        cascade="save-update, merge, refresh-expire")
 
     galleries = relationship(
         "Gallery",
@@ -1215,13 +1225,13 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
             title.gallery = self
             title.name = title
         lcode = config.translation_locale.value
-        title.language = Language(code)
+        title.language = Language(lcode)
 
     @preferred_title.expression
     def preferred_title(cls):
         raise NotImplementedError
-        lcode =  utils.get_language_code(config.translation_locale.value)
-        return select([Title]).where(Title.gallery_id==cls.id).where(Language.code==lcode).label("preffered_title")
+        lcode = utils.get_language_code(config.translation_locale.value)
+        return select([Title]).where(Title.gallery_id == cls.id).where(Language.code == lcode).label("preffered_title")
 
     @hybrid_method
     def title_by_language(self, language_code):
@@ -1229,7 +1239,7 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
         for t in self.titles:
             if t.language and t.language.code == language_code:
                 return t
-                
+
     # def exists(self, obj=False, strict=False):
     #    """Checks if gallery exists by path
     #    Params:

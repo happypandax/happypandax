@@ -74,12 +74,12 @@ def Itemviewvonfig_render():
                          e, d), utils.storage.set(
                          infinite_scroll_cfg + cfg_suffix, d.checked))),
                  ),
-                e(ui.Form.Field, control=ui.Checkbox, label=tr(this, "ui.t-blur", "Blur"), toggle=True,
+               e(ui.Form.Field, control=ui.Checkbox, label=tr(this, "ui.t-blur", "Blur"), toggle=True,
                  defaultChecked=utils.storage.get(blur_cfg + cfg_suffix, False),
                  onChange=lambda e, d: all(
-                     (props.on_blur(
-                         e, d), utils.storage.set(
-                         blur_cfg + cfg_suffix, d.checked))),
+                   (props.on_blur(
+                       e, d), utils.storage.set(
+                       blur_cfg + cfg_suffix, d.checked))),
                  ),
                  *ext_viewer_el,
                  e(ui.Form.Select, options=item_count_options, label=tr(this, "ui.t-items-per-page", "Items per page"), inline=True,

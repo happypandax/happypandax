@@ -1,5 +1,4 @@
-from src.react_utils import (h,
-                             e,
+from src.react_utils import (e,
                              createReactClass)
 from src.state import state
 from src.ui import ui, DateLabel
@@ -15,6 +14,7 @@ clearImmediate = clearInterval = clearTimeout = this = document = None
 JSON = Math = console = alert = requestAnimationFrame = None
 __pragma__('noskip')
 
+
 def get_gallery_count(data=None, error=None):
     if data is not None and not error:
         this.setState({"gallery_count": data['count']})
@@ -27,6 +27,7 @@ def get_gallery_count(data=None, error=None):
                              item_type=this.state.item_type,
                              item_id=this.state.data.id)
 
+
 def get_category(data=None, error=None):
     if data is not None and not error:
         this.setState({"category_data": data})
@@ -35,8 +36,9 @@ def get_category(data=None, error=None):
     else:
         if not this.state.category_data and this.state.data and this.state.data.category_id:
             client.call_func("get_item", this.get_category,
-                    item_type=ItemType.Category,
-                    item_id=this.state.data.category_id)
+                             item_type=ItemType.Category,
+                             item_id=this.state.data.category_id)
+
 
 def collection_on_update(p_props, p_state):
     if p_props.data != this.props.data:
@@ -46,14 +48,12 @@ def collection_on_update(p_props, p_state):
 def collectionprops_render():
 
     title = ""
-    item_id = this.props.id
     info = ""
     date_pub = None
     date_upd = None
     date_added = None
-    category = this.props.category or this.state.category_data
+    #category = this.props.category or this.state.category_data
     if this.props.data:
-        item_id = this.props.data.id
 
         if this.props.data.pub_date:
             date_pub = this.props.data.pub_date
@@ -79,11 +79,11 @@ def collectionprops_render():
                   e(ui.Table.Cell, e(DateLabel, timestamp=date_pub, full=True))))
     if this.props.compact:
         rows.append(e(ui.Table.Row,
-                        e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-date-added", "Date added") + ':', as_="h5"), collapsing=True),
-                        e(ui.Table.Cell, e(DateLabel, timestamp=date_added, format="LLL"))))
+                      e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-date-added", "Date added") + ':', as_="h5"), collapsing=True),
+                      e(ui.Table.Cell, e(DateLabel, timestamp=date_added, format="LLL"))))
         rows.append(e(ui.Table.Row,
-                        e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-last-updated", "Last updated") + ':', as_="h5"), collapsing=True),
-                        e(ui.Table.Cell, e(DateLabel, timestamp=date_upd, format="LLL"))))
+                      e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-last-updated", "Last updated") + ':', as_="h5"), collapsing=True),
+                      e(ui.Table.Cell, e(DateLabel, timestamp=date_upd, format="LLL"))))
 
     return e(ui.Table,
              e(ui.Table.Body,
@@ -93,6 +93,7 @@ def collectionprops_render():
              size=this.props.size,
              compact="very" if utils.defined(this.props.compact) else False,
              )
+
 
 CollectionProps = createReactClass({
     'displayName': 'CollectionProps',
@@ -111,4 +112,3 @@ CollectionProps = createReactClass({
 
     'render': collectionprops_render
 })
-

@@ -37,6 +37,7 @@ def on_handshake(msg):
     if this.props.on_login:
         this.props.on_login(msg['accepted'])
 
+
 def page_render():
     els = []
     if state['guest_allowed']:

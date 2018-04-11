@@ -361,6 +361,7 @@ DateLabel = createReactClass({
     'render': datelbl_render,
 })
 
+
 def TitleChange(props):
     document.title = props.title + ' - ' + state.title if props.title else state.title
     return None

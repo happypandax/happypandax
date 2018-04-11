@@ -395,6 +395,9 @@ def setup_online_reporter():
 @contextmanager
 def intertnal_db():
     log.d("Opening internal db")
+    if not os.path.exists(constants.dir_data):
+        setup_dirs()
+
     try:
         db = shelve.Shelf(dumbdb.open(constants.internal_db_path))
     except BaseException:
@@ -577,6 +580,7 @@ def extract_original_text(cand, text):
 def capitalize_text(text):
     return " ".join(x.capitalize() for x in text.strip().split())
 
+
 def extract_collection(title):
     """
     Extract Comic Market
@@ -586,11 +590,12 @@ def extract_collection(title):
     r = r"(\(C\d+\))"
     m = regex.search(r, title, regex.IGNORECASE | regex.UNICODE)
     if m:
-        c = "Comic Market "+"".join(x for x in m[0] if x.isdigit())
+        c = "Comiket " + "".join(x for x in m[0] if x.isdigit())
         title = title.replace(m[0], '').strip()
     else:
         pass
     return c, title
+
 
 def get_language_code(lcode):
     assert isinstance(lcode, str)

@@ -39,12 +39,12 @@ def collection_render():
         link = this.props.link
 
     thumb = e(thumbitem.Thumbnail,
-                item_id=item_id,
-                centered=True,
-                blur=this.props.blur,
-                item_type=this.state.item_type,
-                size_type=this.props.size_type if this.props.size_type else ImageSize.Medium,
-                )
+              item_id=item_id,
+              centered=True,
+              blur=this.props.blur,
+              item_type=this.state.item_type,
+              size_type=this.props.size_type if this.props.size_type else ImageSize.Medium,
+              )
 
     if link:
         thumb = e(Link, thumb, to={'pathname': '/item/collection',
@@ -53,30 +53,30 @@ def collection_render():
                                    })
 
     return e(ui.Card,
-                h("div",
-                thumb,
-                e(ui.Rating, icon="heart", size="massive", className="card-item top left above-dimmer", rating=fav),
-                e(ui.Popup,
-                    e(ui.List, [], selection=True, relaxed=True),
-                    trigger=e(ui.Icon,
-                                js_name="ellipsis vertical",
-                                bordered=True,
-                                link=True,
-                                className="card-item bottom right above-dimmer",
-                                inverted=True),
-                    hoverable=True,
-                    on="click",
-                    position="right center",
-                    ),
-                className="card-content",
-                ),
-                e(ui.Card.Content,
-                                e(ui.Card.Header, title, className="text-ellipsis card-header"),
-                                ),
-                centered=this.props.centered,
-                #color="purple",
-                className=cls_name,
-                link=True)
+             h("div",
+               thumb,
+               e(ui.Rating, icon="heart", size="massive", className="card-item top left above-dimmer", rating=fav),
+               e(ui.Popup,
+                 e(ui.List, [], selection=True, relaxed=True),
+                 trigger=e(ui.Icon,
+                           js_name="ellipsis vertical",
+                           bordered=True,
+                           link=True,
+                           className="card-item bottom right above-dimmer",
+                           inverted=True),
+                 hoverable=True,
+                 on="click",
+                 position="right center",
+                 ),
+               className="card-content",
+               ),
+             e(ui.Card.Content,
+               e(ui.Card.Header, title, className="text-ellipsis card-header"),
+               ),
+             centered=this.props.centered,
+             # color="purple",
+             className=cls_name,
+             link=True)
 
 
 Collection = createReactClass({

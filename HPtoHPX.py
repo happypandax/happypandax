@@ -17,11 +17,15 @@ from happypanda.core import db
 from happypanda.core.commands import io_cmd
 from happypanda.common import constants, config, utils
 _print = print
+
+
 def safeprint(*s):
     try:
         _print(*s)
     except UnicodeEncodeError:
         _print(*[x.encode(errors="ignore") for x in s])
+
+
 print = safeprint
 
 GALLERY_LISTS = []
@@ -884,7 +888,6 @@ def main(args=sys.argv[1:]):
 
                 for ch in g.chapters:
 
-
                     path = g.path if ch.in_archive else ch.path
                     if not os.path.exists(path):
                         try:
@@ -933,7 +936,7 @@ def main(args=sys.argv[1:]):
                         pages_to_send2.append((pages_count, ch.in_archive, ch.path, path, g.path))
                         pages_count += 1
 
-                    #for col in copy.copy(gallery.collections):
+                    # for col in copy.copy(gallery.collections):
                     #    if col.name in dst_collections:
                     #        gallery.collections.remove(col)
                     #        gallery.collections.append(dst_collections[col.name])
@@ -1064,7 +1067,7 @@ def main(args=sys.argv[1:]):
                             else:
                                 pname = utils.capitalize_text(ptag)
                             if args.debug:
-                                    print("Parody tag:", ptag)
+                                print("Parody tag:", ptag)
                             if pname:
                                 parody = dst_parodies.get(pname.lower())
                                 if not parody:

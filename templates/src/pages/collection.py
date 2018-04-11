@@ -1,15 +1,13 @@
-from src.react_utils import (h,
-                             e,
-                             React,
+from src.react_utils import (e,
                              createReactClass)
-from src.ui import ui, Slider, TitleChange, DateLabel
+from src.ui import ui, TitleChange, DateLabel
 from src.i18n import tr
 from src.state import state
 from src.single import thumbitem
 from src.client import ItemType, ViewType, ImageSize, client
 from src.propsviews import collectionpropsview
 from src.views import itemview
-from src import item, utils
+from src import utils
 from org.transcrypt.stubs.browser import __pragma__
 __pragma__('alias', 'as_', 'as')
 
@@ -32,8 +30,8 @@ def get_item(data=None, error=None):
 
         if data.category_id:
             client.call_func("get_item", this.get_category,
-                    item_type=ItemType.Category,
-                    item_id=data.category_id)
+                             item_type=ItemType.Category,
+                             item_id=data.category_id)
 
         if data.id:
             client.call_func("get_related_count", this.get_gallery_count,
@@ -106,11 +104,13 @@ def get_item(data=None, error=None):
 
 __pragma__('nokwargs')
 
+
 def get_gallery_count(data=None, error=None):
     if data is not None and not error:
         this.setState({"gallery_count": data['count']})
     elif error:
         state.app.notif("Failed to fetch gallery count ({})".format(this.state.id), level="error")
+
 
 def get_category(data=None, error=None):
     if data is not None and not error:
@@ -128,7 +128,9 @@ def collection_on_update(p_props, p_state):
     )):
         this.get_item()
 
+
 __pragma__("tconv")
+
 
 def page_render():
 
@@ -152,7 +154,7 @@ def page_render():
         trash = this.state.data.metatags.trash
 
     indicators = []
-    
+
     if this.state.category_data:
         indicators.append(e(ui.Label, this.state.category_data.js_name, basic=True, size="large"))
 
@@ -240,7 +242,8 @@ def page_render():
                e(ui.Grid.Column,
                  e(ui.Grid,
                    e(ui.Grid.Row,
-                     e(ui.Grid.Column, e(ui.Rating, icon="heart", size="massive", rating=fav), floated="right", className="no-margins"),
+                     e(ui.Grid.Column, e(ui.Rating, icon="heart", size="massive",
+                                         rating=fav), floated="right", className="no-margins"),
                      e(ui.Grid.Column, *indicators, floated="right", textAlign="right", className="no-margins"),
                      columns=2,
                      ),

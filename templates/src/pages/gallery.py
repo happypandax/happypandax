@@ -58,8 +58,8 @@ def get_item(data=None, error=None):
 
         if data.category_id:
             client.call_func("get_item", this.get_category,
-                    item_type=ItemType.Category,
-                    item_id=data.category_id)
+                             item_type=ItemType.Category,
+                             item_id=data.category_id)
 
         if data.id:
             client.call_func("get_related_count", this.get_filter_count,
@@ -160,7 +160,6 @@ def get_lang(data=None, error=None):
         state.app.notif("Failed to fetch language ({})".format(this.state.id), level="error")
 
 
-
 def get_category(data=None, error=None):
     if data is not None and not error:
         this.setState({"category_data": data})
@@ -250,6 +249,7 @@ def gallery_on_update(p_props, p_state):
 
 
 __pragma__("tconv")
+
 
 def page_render():
 
@@ -479,7 +479,8 @@ def page_render():
                e(ui.Grid.Column,
                  e(ui.Grid,
                    e(ui.Grid.Row,
-                     e(ui.Grid.Column, e(ui.Rating, icon="heart", size="massive", rating=fav), floated="right", className="no-margins"),
+                     e(ui.Grid.Column, e(ui.Rating, icon="heart", size="massive",
+                                         rating=fav), floated="right", className="no-margins"),
                      e(ui.Grid.Column, *indicators, floated="right", textAlign="right", className="no-margins"),
                      columns=2,
                      verticalAlign="middle",

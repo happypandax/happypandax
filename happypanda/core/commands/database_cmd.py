@@ -87,7 +87,7 @@ class GetModelImage(AsyncCommand):
                 db.Page.number == 1)).first()
 
         # gallery sorted by insertion:
-        #page = GetSession().run().query(
+        # page = GetSession().run().query(
         #    db.Page.path, db.gallery_collections.c.timestamp.label("timestamp")).join(db.Collection.galleries).join(db.Gallery.pages).filter(
         #    db.and_op(
         #        db.Collection.id == item_id,

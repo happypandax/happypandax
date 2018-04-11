@@ -33,7 +33,7 @@ updater_key = "updater"
 
 ## VERSIONING ##
 build = 124
-version = (0, 0, 12)
+version = (0, 0, 13)
 version_db = (0, 0, 4)
 version_web = (0, 0, 11)
 version_str = ".".join(str(x) for x in version)

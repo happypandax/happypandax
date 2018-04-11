@@ -16,10 +16,10 @@ __pragma__('noskip')
 
 def page_render():
     return [e(TitleChange, title=tr(this, "ui.mi-favorites", "Favorites"), key=1),
-             e(pages.ItemViewPage, view_type=ViewType.Favorite,
-             history=this.props.history,
-             location=this.props.location,
-             key=2)]
+            e(pages.ItemViewPage, view_type=ViewType.Favorite,
+              history=this.props.history,
+              location=this.props.location,
+              key=2)]
 
 
 Page = createReactClass({
