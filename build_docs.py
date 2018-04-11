@@ -1,5 +1,6 @@
 import os
 import shutil
+import sys
 from subprocess import run
 
 
@@ -7,7 +8,12 @@ def main():
     root_src_dir = "docs/build"
     root_dst_dir = "docs/"
 
-    run(["sphinx-build", "-b", "html", "docs/source", root_src_dir])
+    sphinx_path = "sphinx-build"
+
+    if os.environ.get('APPVEYOR'):
+        sphinx_path = os.path.join(os.path.split(sys.executable)[0], "Scripts", "sphinx-build.exe")
+
+    run([sphinx_path, "-b", "html", "docs/source", root_src_dir])
 
     for src_dir, dirs, files in os.walk(root_src_dir):
         dst_dir = src_dir.replace(root_src_dir, root_dst_dir, 1)

@@ -5,6 +5,7 @@ import shutil
 import argparse
 import subprocess
 import zipfile
+import pathlib
 from subprocess import run
 from importlib import reload
 
@@ -66,7 +67,7 @@ def is_installed(cmd):
             _cmd = input("Please enter path to the {} script/executable".format(_cmd))
         else:
             print("Cannot continue. Please make sure '{}' is available, or setup HPX manually".format(_cmd))
-            sys.exit()
+            sys.exit(1)
     return _cmd
 
 
@@ -77,7 +78,7 @@ def build(args, unknown=None):
             import build_webclient
         except ImportError:
             print("Please supply the '--dev' argument if you want to build the webclient")
-            sys.exit()
+            sys.exit(1)
 
         print("Building webclient")
         build_webclient.main(unknown)
@@ -87,7 +88,7 @@ def build(args, unknown=None):
             import build_docs
         except ImportError:
             print("Please supply the '--dev' argument if you want to build the docs")
-            sys.exit()
+            sys.exit(1)
 
         print("Building docs")
         build_docs.main()
@@ -98,6 +99,9 @@ def build(args, unknown=None):
 
 
 def _activate_venv():
+    if os.environ.get('CI'):
+        return
+
     if not dev_options['env_activated']:
         if not os.path.exists('env'):
             print("Looks like you haven't installed HPX yet. Please run '$ python bootstrap.py install' to install")
@@ -133,7 +137,7 @@ def _check_pip():
         import pip
     except ImportError:
         print("Seems like pip is not installed. Please install pip to continue")
-        sys.exit()
+        sys.exit(1)
 
 
 def _update_pip(args, skip=True):
@@ -189,7 +193,7 @@ def update(args):
         cmd = is_installed("git")
         if not os.path.exists(".git"):
             if not question("Looks like we're not connected to the main repo. Do you want me to set it up for you?"):
-                sys.exit()
+                sys.exit(1)
             print("Setting up git repo...")
             run([cmd, "init", "."])
             run([cmd, "remote", "add", "-f", "origin", "https://github.com/happypandax/server.git"])
@@ -209,6 +213,13 @@ def update(args):
 def version(args):
     _activate_venv()
     from happypanda.common import constants
+    if args.app_version:
+        print(constants.version_str)
+        return
+    if args.app_release:
+        print("HappyPanda X " + ('PREVIEW ' if constants.preview else '') + 'v'+constants.version_str)
+        return
+
     print("\n-----------------------------------------------\n")
     if dev_options['prev_build']:
         print("Build: {} -> {}".format(dev_options['prev_build'], constants.build))
@@ -324,11 +335,15 @@ def _compress_dir(dir_path, output_name, fmt="zip"):
     from happypanda.common import config
     print("Compressing {} archive...".format(fmt))
     if fmt == "7z":
-        if not config.sevenzip_path.value:
-            print("Please set the path to the 7z executable in your configuration (advanced -> 7z_path)")
-            sys.exit()
+        s7path = config.sevenzip_path.value
+        if os.environ.get('APPVEYOR'):
+            s7path = "7z.exe"
 
-        return run([config.sevenzip_path.value, "a", output_name, os.path.join(dir_path, "*")])
+        if not s7path:
+            print("Please set the path to the 7z executable in your configuration (advanced -> 7z_path)")
+            sys.exit(1)
+
+        return run([s7path, "a", output_name, os.path.join(dir_path, "*")])
     else:
         p = shutil.make_archive(dir_path, fmt, dir_path)
         os.replace(p, output_name)
@@ -350,7 +365,7 @@ def deploy(args, unknown=None):
     except ImportError:
         if not args.dev:
             print("Please supply the '--dev' argument if you want to deploy")
-            sys.exit()
+            sys.exit(1)
         else:
             _update_pip(args)
         from PyInstaller.__main__ import run as prun
@@ -370,6 +385,7 @@ def deploy(args, unknown=None):
     elif constants.is_linux:
         os_name = "linux"
 
+    sha_file_o = os.path.join(".", "dist", "sha256.txt")
     output_path = os.path.join(".", "dist", "happypandax")
     updater_path = "dist"
     dir_path = os.path.join(".", "dist", "happypandax")
@@ -397,6 +413,12 @@ def deploy(args, unknown=None):
             os.replace(bundle_path_old, bundle_path)
         os.replace(os.path.join(updater_path, upd_name), os.path.join(dir_path, upd_name))
 
+        if os.environ.get('CI'):
+            deploy_dir = os.path.join("dist", "files")
+            if os.path.exists(deploy_dir):
+                shutil.rmtree(deploy_dir)
+            os.mkdir(deploy_dir)
+
         for p in ("", "installer"):
             if constants.preview:
                 output_path_a = output_path + ".PREVIEW."
@@ -407,6 +429,8 @@ def deploy(args, unknown=None):
 
             installer_file_out = os.path.join(dir_path, installer_filename)
             if p == "installer":
+                if constants.is_linux:
+                    continue
                 if not os.path.exists(installer_file_out):
                     shutil.copyfile(installer_file, installer_file_out)
             else:
@@ -428,8 +452,17 @@ def deploy(args, unknown=None):
                                output_path_a)
             else:
                 _compress_dir(output_path, output_path_a, fmt)
+
             if p != "installer":
-                print("{}\n\tSHA256 Checksum: {}".format(output_path_a, updater.sha256_checksum(output_path_a)))
+                sha_value = updater.sha256_checksum(output_path_a)
+                with open(sha_file_o, "w") as f:
+                    f.write(sha_value)
+                print("{}\n\tSHA256 Checksum: {}".format(output_path_a, sha_value))
+
+            if os.environ.get('CI'):
+                deploy_file_o = os.path.join(deploy_dir, pathlib.Path(output_path_a).name)
+                os.replace(output_path_a, deploy_file_o)
+
     print("Done")
 
 
@@ -534,6 +567,8 @@ def main():
     subparser.set_defaults(func=convert)
 
     subparser = subparsers.add_parser('version', help='Display build number and latest changes')
+    subparser.add_argument('--app-version', action='store_true', help="Current app version")
+    subparser.add_argument('--app-release', action='store_true', help="Current app release name")
     subparser.set_defaults(func=version)
 
     subparser = subparsers.add_parser('run', help='Start HPX, additional args will be passed to HPX')

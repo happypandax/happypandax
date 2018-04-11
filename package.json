@@ -22,12 +22,12 @@
     "react-lazyload": "^2.3.0",
     "react-router-dom": "^4.1.2",
     "react-s-alert": "^1.4.1",
-    "react-slick": "^0.21.0",
-    "semantic-ui": "^2.2.13",
+    "react-slick": "0.21.x",
+    "semantic-ui": "2.2.x",
     "semantic-ui-react": "^0.78.2",
     "smoothscroll-polyfill": "^0.4.3",
     "socket.io": "^2.0.4",
-    "webpack": "^3.10.0"
+    "webpack": "3.10.x"
   },
   "scripts": {
     "build": "webpack -p --progress --config webpack.config.js",

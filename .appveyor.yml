@@ -1,0 +1,85 @@
+
+notifications:
+    - provider: Email
+      on_build_failure: true
+      on_build_success: false
+      on_build_status_changed: false
+version: '{build}'
+environment:
+    GH_USER: Twiddly
+    GH_MAIL: pew@pewpew.moe
+    REPO: happypandax/happypandax
+    CHECKSUM_REPO: happypandax/updates
+    CHECKSUM_FILE: checksums.txt
+    CHECKSUM_FILE_READ: dist/sha256.txt
+    GITHUB_TOKEN:
+        secure: 0GibYIezgkpRvXU0q9mydFwuRnc4Z4+XlqAKkFtPJgJmp0RsABAe1CxtoLEdQwkW
+    matrix:
+        - PYTHON: "C:\\Python36"
+          PYTHON_VERSION: "3.6"
+          PYTHON_ARCH: "32"
+
+cache:
+    - node_modules
+
+init:
+    - "echo %PYTHON% %PYTHON_VERSION% %PYTHON_ARCH%"
+
+install:
+    - ps: Install-Product node 8
+    - "%PYTHON%/python.exe -m pip install --upgrade pip"
+    - "%PYTHON%/Scripts/pip.exe install --upgrade setuptools pip"
+    - "%PYTHON%/Scripts/pip.exe install -r requirements-dev.txt"
+
+build: off
+
+test_script:
+    - "%PYTHON%/python.exe lint.py"
+    - "%PYTHON%/python.exe ./run_tests.py ./tests/test_updater.py"
+    #- "%PYTHON%/python.exe ./run_tests.py ./tests/test_db.py ./test/test_updater.py"
+
+before_deploy:
+    - npm install
+    - "%PYTHON%/python.exe ./bootstrap.py deploy"
+    - "%PYTHON%/python.exe ./bootstrap.py version --app-version> _app_version_ci"
+    - "%PYTHON%/python.exe ./bootstrap.py version --app-release> _app_release_ci"
+    - set /p CHECKSUM=<"%CHECKSUM_FILE_READ%"
+    - set /p APP_VERSION=<_app_version_ci
+    - set /p APP_RELEASE_NAME=<_app_release_ci
+    - set VERSION_TAG="v%APP_VERSION%"
+    - appveyor SetVariable -Name "CHECKSUM" -Value "%CHECKSUM%"
+    - appveyor AddMessage "%APP_VERSION%"
+    - appveyor SetVariable -Name "APP_VERSION" -Value "%APP_VERSION%"
+    - appveyor AddMessage "%APP_RELEASE_NAME%"
+    - appveyor SetVariable -Name "APP_RELEASE_NAME" -Value "%APP_RELEASE_NAME%"
+    - appveyor AddMessage "%VERSION_TAG%"
+    - appveyor SetVariable -Name "VERSION_TAG" -Value "%VERSION_TAG%"
+    - git config --local user.name "%GH_USER%"
+    - git config --local user.email "%GH_MAIL%"
+    - git tag -a %VERSION_TAG% -m "%APP_RELEASE_NAME%" & exit 0
+    - git push --quiet "https://%GITHUB_TOKEN%@github.com/%REPO%.git" %VERSION_TAG% >nul 2>&1 & exit 0
+    - dir "dist\files"
+    - ps: Get-ChildItem .\dist\files\* | % { Push-AppveyorArtifact $_.FullName -FileName $_.Name }
+
+deploy:
+    provider: GitHub
+    auth_token: $(GITHUB_TOKEN)
+    artifact: /.*/
+    release: $(APP_RELEASE_NAME)
+    description: ''
+    tag: $(VERSION_TAG)
+    draft: true
+    force_update: true
+    repository: $(REPO)
+    on:
+        branch: master
+
+after_deploy:
+    - git clone https://github.com/%CHECKSUM_REPO%.git "../_travis_checksum_repo"
+    - echo %CHECKSUM% >> "../_travis_checksum_repo/%CHECKSUM_FILE%"
+    - cd "../_travis_checksum_repo"
+    - git config --local user.name "%GH_USER%"
+    - git config --local user.email "%GH_MAIL%"
+    - git add %CHECKSUM_FILE%
+    - git commit -m "added %VERSION_TAG% windows"
+    - git push --quiet "https://%GITHUB_TOKEN%@github.com/%CHECKSUM_REPO%.git" master >nul 2>&1

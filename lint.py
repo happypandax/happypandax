@@ -34,7 +34,10 @@ def main():
                     aformat(p.path)
 
     print("Running flake8...\n")
-    return run(["flake8", "--config", "./setup.cfg", "."]).returncode
+    flake8_path = "flake8"
+    if os.environ.get('APPVEYOR'):
+        flake8_path = os.path.join(os.path.split(sys.executable)[0], "Scripts", "flake8.exe")
+    return run([flake8_path, "--config", "./setup.cfg", "."]).returncode
 
 
 if __name__ == '__main__':

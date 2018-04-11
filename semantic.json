@@ -1,14 +1,14 @@
 {
-  "base": "semantic\\",
+  "base": "semantic/",
   "paths": {
     "source": {
       "config": "src/theme.config",
       "definitions": "src/definitions/",
-      "site": "semantic\\",
+      "site": "semantic/",
       "themes": "src/themes/"
     },
     "output": {
-      "packaged": "../static\\css\\",
+      "packaged": "../static/css/",
       "uncompressed": "dist/components/",
       "compressed": "dist/css/components/",
       "themes": "../static/css/themes/"
