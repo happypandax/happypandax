@@ -201,7 +201,8 @@ __pragma__("notconv")
 
 
 def get_similar_value(cmd):
-    this.setState({"similar_gallery_data": cmd.get_value(), 'similar_gallery_loading': False})
+    v = cmd.get_value()
+    this.setState({"similar_gallery_data": v, 'similar_gallery_loading': False})
 
 
 def get_similar(data=None, error=None):
