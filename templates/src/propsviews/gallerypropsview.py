@@ -118,54 +118,54 @@ def galleryprops_render():
 
     if this.props.compact:
         rows.append(e(ui.Table.Row,
-                      e(ui.Table.Cell, e(ui.Header, title, as_="h3"), colSpan="2", textAlign="center",
+                      e(ui.Table.Cell, e(ui.Header, title, size="small"), colSpan="2", textAlign="center",
                         verticalAlign="middle")))
     if info:
         rows.append(e(ui.Table.Row,
-                      e(ui.Table.Cell, e(ui.Header, info, as_="h5", className="sub-text"), colSpan="2")))
+                      e(ui.Table.Cell, e(ui.Header, info, size="tiny", className="sub-text"), colSpan="2")))
+
+    if this.props.compact:
+        rows.append(e(ui.Table.Row,
+                      e(ui.Table.Cell,
+                        e(DateLabel, tr(this, "ui.t-date-added", "Date added"), timestamp=date_added, format="LLL"),
+                        e(DateLabel, tr(this, "ui.t-last-read", "Last read"), timestamp=date_read, format="LLL"),
+                        e(DateLabel, tr(this, "ui.t-last-updated", "Last updated"), timestamp=date_upd, format="LLL"),
+                        colSpan="2",
+                        textAlign="center",
+                      )))
 
     rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-multi-artists", "Artist(s)") + ':', as_="h5"), collapsing=True),
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-artist", "Artist") + ':', size="tiny", className="sub-text"), collapsing=True),
                   e(ui.Table.Cell, *(e(artistitem.ArtistLabel, data=x) for x in artists))))
     if circles:
         rows.append(e(ui.Table.Row,
-                      e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-multi-circles", "Circle(s)") + ':', as_="h5"), collapsing=True),
+                      e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-circle", "Circle") + ':', size="tiny", className="sub-text"), collapsing=True),
                       e(ui.Table.Cell, *(e(circleitem.CircleLabel, data=x) for x in circles))))
     if parodies:
         rows.append(e(ui.Table.Row,
-                      e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-parody", "Parody") + ':', as_="h5"), collapsing=True),
+                      e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-parody", "Parody") + ':', size="tiny", className="sub-text"), collapsing=True),
                       e(ui.Table.Cell, *(e(parodyitem.ParodyLabel, data=x) for x in parodies))))
     rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-language", "Language") + ':', as_="h5"), collapsing=True),
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-language", "Language") + ':', size="tiny", className="sub-text"), collapsing=True),
                   e(ui.Table.Cell, language)))
     rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-rating", "Rating") + ':', as_="h5"), collapsing=True),
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-rating", "Rating") + ':', size="tiny", className="sub-text"), collapsing=True),
                   e(ui.Table.Cell, e(ui.Rating, icon="star", rating=rating, maxRating=10, size="huge", clearable=True))))
     rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-status", "Status") + ':', as_="h5"), collapsing=True),
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-status", "Status") + ':', size="tiny", className="sub-text"), collapsing=True),
                   e(ui.Table.Cell, e(ui.Label, tr(this, "general.db-status-{}".format(status.lower()), status), color={"completed": "green", "ongoing": "orange", "unknown": "grey"}.get(status.lower(), "blue")))))
     rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-published", "Published") + ':', as_="h5"), collapsing=True),
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-published", "Published") + ':', size="tiny", className="sub-text"), collapsing=True),
                   e(ui.Table.Cell, e(DateLabel, timestamp=date_pub, full=True))))
-    if this.props.compact:
-        rows.append(e(ui.Table.Row,
-                      e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-date-added", "Date added") + ':', as_="h5"), collapsing=True),
-                      e(ui.Table.Cell, e(DateLabel, timestamp=date_added, format="LLL"))))
-        rows.append(e(ui.Table.Row,
-                      e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-last-read", "Last read") + ':', as_="h5"), collapsing=True),
-                      e(ui.Table.Cell, e(DateLabel, timestamp=date_read, format="LLL"))))
-        rows.append(e(ui.Table.Row,
-                      e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-last-updated", "Last updated") + ':', as_="h5"), collapsing=True),
-                      e(ui.Table.Cell, e(DateLabel, timestamp=date_upd, format="LLL"))))
     rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-times-read", "Times read") + ':', as_="h5"), collapsing=True),
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-times-read", "Times read") + ':', size="tiny", className="sub-text"), collapsing=True),
                   e(ui.Table.Cell, e(ui.Label, read_count, circular=True))))
     rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-tags", "Tags") + ':', as_="h5"), collapsing=True),
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-tags", "Tags") + ':', size="tiny", className="sub-text"), collapsing=True),
                   e(ui.Table.Cell, e(tagview.TagView, item_id=item_id, item_type=this.state.item_type, data=tags, on_tags=this.props.on_tags))))
 
     rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-multi-urls", "URL(s)") + ':', as_="h5"), collapsing=True),
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-url", "URL") + ':', size="tiny", className="sub-text"), collapsing=True),
                   e(ui.Table.Cell, e(ui.List, *[e(ui.List.Item, h("span", h("a", x, href=x, target="_blank"), e(ui.List.Icon, js_name="external share"))) for x in urls]))))
 
     return e(ui.Table,

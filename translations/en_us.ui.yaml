@@ -45,6 +45,8 @@ mi-about-stats: Statistics
 mi-about-help: Help
 mi-about-bug: Report bug
 mi-about-info: Info
+mi-about-trash: Trash
+mi-about-license: License
 de-about-same-machine: You are currently connected from the same machine
 t-developer: Developer
 t-client-version: Client version
@@ -54,10 +56,11 @@ t-torrent-version: Torrent Client version
 b-checking-update: Checking for new update
 b-new-update: A new update is available!
 b-check-update: Check for updates
-b-github-repo: Github Repo
-b-support-patreon: Support on patreon
+b-github-repo: View on Github
+b-support-patreon: Support on Patreon
 b-restart: Restart
 b-shutdown: Shutdown
+b-reset: Reset
 
 # Preferences Page
 mi-pref-general: General
@@ -72,7 +75,7 @@ mi-pref-advanced: Advanced
 
 de-pref-disabled: Disabled because this client is connecting from a different device
 t-language: Language
-t-help-translate: Not satisfied with the translation? Consider helping out! See Github repo for more information
+t-help-translate: Not satisfied with the translation? Consider helping out! Click here for more information.
 t-untranslated-text: Show untranslated text
 t-translation-id-error: Error on invalid translation ID
 h-external-viewer: External Viewer
@@ -141,15 +144,15 @@ t-total-parodies: Total Parodies
 t-total-circles: Total Circles
 
 # Gallery Page
-t-multi-artists: Artist(s)
-t-multi-circles: Circle(s)
+t-artist: Artist
+t-circle: Circle
 t-parody: Parody
 t-status: Status
 t-published: Published
 t-times-read: Times read
 t-rating: Rating
 t-tags: Tags
-t-multi-urls: URL(s)
+t-url: URL
 t-inboxed-gallery: This gallery is in your inbox
 t-trashed-gallery: This gallery is set to be deleted
 b-restore: Restore

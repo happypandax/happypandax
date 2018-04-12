@@ -117,6 +117,7 @@
     padding: 0;
     margin: 0;
     width: 100%;
+
     li {
         position: relative;
         display: inline-block;
@@ -125,6 +126,8 @@
         margin: 0 5px;
         padding: 0;
         cursor: pointer;
+        background-color: rgba(0, 0,0,0.1);
+        border-radius: 25px;
         button {
             border: 0;
             background: transparent;
@@ -138,6 +141,8 @@
             padding: 5px;
             cursor: pointer;
             &:hover, &:focus {
+                background-color: rgba(0, 0,0,0.15);
+                border-radius: 25px;
                 outline: none;
                 &:before {
                     opacity: @slick-opacity-on-hover;
@@ -161,6 +166,8 @@
             }
         }
         &.slick-active button:before {
+            border-radius: 25px;
+            background-color: rgba(0, 0,0,0.2);
             color: @slick-dot-color-active;
             opacity: @slick-opacity-default;
         }

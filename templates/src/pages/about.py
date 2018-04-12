@@ -1,5 +1,6 @@
 from src.react_utils import (h, e,
                              createReactClass)
+from src import utils
 from src.client import client, Command
 from src.state import state
 from src.ui import ui
@@ -90,18 +91,20 @@ def about_info(props):
                  upd_button,
                  e(ui.Button, e(ui.Icon, js_name="github"), tr(props.that, "ui.b-github-repo", "Github Repo"),
                    as_="a", href="https://github.com/happypandax", target="_blank", size="small"),
-                 e(ui.Button, e(ui.Icon, js_name="heart"), tr(props.that, "ui.b-support-patreon", "Support on patreon"),
+                 e(ui.Button, e(ui.Icon, js_name="heart"), tr(props.that, "ui.b-support-patreon", "Support on Patreon"),
                    as_="a", href="https://www.patreon.com/twiddly", target="_blank", color="orange", size="small"),
+                 e(ui.Button, e(ui.Icon, js_name="repeat"), tr(props.that, "ui.b-reset", "Reset"), size="small", floated="right",
+                   onClick=lambda: all((utils.storage.clear(True), utils.session_storage.clear(True)))),
                  ),
                ),
              e(ui.Grid.Row,
                e(ui.Grid.Column,
                  e(ui.Button, e(ui.Icon, js_name="repeat"), tr(props.that, "ui.b-restart", "Restart"),
-                   color="blue", size="small", onClick=lambda: props.restart()),
+                   color="blue", size="tiny", onClick=lambda: props.restart()),
                  e(ui.Button, e(ui.Icon, js_name="shutdown"), tr(props.that, "ui.b-shutdown", "Shutdown"),
-                   color="red", size="small", onClick=lambda: props.shutdown()),
+                   color="red", size="tiny", onClick=lambda: props.shutdown()),
                  ),
-               textAlign="right"
+               textAlign="right",
                ),
              divided="vertically",
              container=True,
@@ -216,7 +219,7 @@ def abouttab_render():
                                'content': tr(this, "ui.mi-about-stats", "Statistics")}, },
                  {'menuItem': {'key': 'bug', 'icon': 'bug', 'content': tr(this, "ui.mi-about-bug", "Report bug")}, },
                  {'menuItem': {'key': 'trash', 'icon': 'trash', 'content': tr(this, "ui.mi-about-trash", "Trash")}, },
-                 {'menuItem': {'key': 'license', 'icon': 'copyright', 'content': tr(this, "", "License")},
+                 {'menuItem': {'key': 'license', 'icon': 'copyright', 'content': tr(this, "ui.mi-about-license", "License")},
                      'render': lambda: e(about_license, that=this)},
              ],
              menu=e(ui.Menu, secondary=True, pointing=True, stackable=True))

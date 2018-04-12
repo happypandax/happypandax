@@ -1,7 +1,22 @@
 /*******************************
      User Global Variables
 *******************************/
-@importGoogleFonts: False;
+
+/*-------------------
+       Fonts
+--------------------*/
+
+@fontName          : 'Roboto';
+@fontSmoothing     : antialiased;
+
+@headerFont        : @fontName, 'Helvetica Neue', Arial, Helvetica, sans-serif;
+@pageFont          : @fontName, 'Helvetica Neue', Arial, Helvetica, sans-serif;
+
+@importGoogleFonts : false;
+
+/*-------------------
+      Site Colors
+--------------------*/
 
 @primaryColor   : @blue;
 @secondaryColor : @grey;
@@ -18,3 +33,36 @@
 @brown          : #96281B;
 @grey           : #BDC3C7;
 @black          : #212121;
+
+/*-------------------
+      Base Sizes
+--------------------*/
+
+@emSize            : 13px;
+@fontSize          : 12px;
+
+/*--------------
+  Page Heading
+---------------*/
+
+@headerLineHeight : 1.33em;
+@headerFontWeight : 400;
+
+@h1               : 2.0rem;
+@h2               : 1.75rem;
+@h3               : 1.5rem;
+@h4               : 1.25rem;
+@h5               : 1.05rem;
+
+/*-------------------
+        Sizes
+--------------------*/
+
+@miniSize        : (11 / 13);
+@tinySize        : (12 / 13);
+@smallSize       : (13 / 13);
+@mediumSize      : (14 / 13);
+@largeSize       : (16 / 13);
+@bigSize         : (18 / 13);
+@hugeSize        : (20 / 13);
+@massiveSize     : (24 / 13);

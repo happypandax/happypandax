@@ -143,6 +143,10 @@ i.medium-size {
 .no-padding-segment {
     padding: 0 !important;
 }
+.small-padding-segment {
+    padding: 5px !important;
+}
+
 .overflow-auto {
     overflow: auto !important;
 }
@@ -183,14 +187,22 @@ i.huge.icons {
     font-size: 3em;
 }
 
- .slick-slider .card.small-size {
-    max-width: 145px !important;
+.card.small-size {
+    max-width: 120px !important;
 }
 
 @media screen and (min-width: 1000px) {
     .card.medium-size {
         max-width: 200px !important;
     }
+
+    .card.small-size {
+        max-width: 145px !important;
+    }
+
+     .slick-slider .card.small-size {
+    max-width: 120px !important;
+}
 }
 
 h6 {
@@ -198,9 +210,16 @@ h6 {
     font-size: 1.0rem;
 }
 
-.sub-text {
-    font-size: 1rem !important;
+.tiny-text, .sub-text {
     color: rgba(0,0,0,.4) !important;
+}
+
+.tiny-text {
+    font-size: 1rem !important;
+}
+
+.medium-text {
+    font-size: 1rem !important;
 }
 
 .above-dimmer{

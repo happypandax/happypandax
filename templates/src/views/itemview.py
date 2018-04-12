@@ -58,7 +58,7 @@ def Itemviewvonfig_render():
         grp_gallery_el.append(
             e(ui.Form.Field,
               control=ui.Checkbox,
-              label=tr(this, "ui.group-galleries", "Group galleries"), toggle=True,
+              label=tr(this, "ui.t-group-galleries", "Group galleries"), toggle=True,
               defaultChecked=utils.storage.get(group_gallery_cfg + cfg_suffix, False),
               onChange=lambda e, d: all((props.on_group_gallery(e, d),
                                          utils.storage.set(group_gallery_cfg + cfg_suffix, d.checked))),
@@ -355,8 +355,11 @@ def item_view_on_update(p_props, p_state):
         this.get_element()
         this.setState({'items': []})
 
-    if p_props.search_query != this.props.search_query:
-        this.setState({'search_query': this.props.search_query})
+    if utils.defined(this.props.search_query) and (this.props.search_query != this.state.search_query):
+        squery = this.props.search_query
+        if not squery:
+            squery = ''
+        this.setState({'search_query': squery})
 
     if any((
         p_props.item_type != this.props.item_type,
@@ -365,7 +368,6 @@ def item_view_on_update(p_props, p_state):
         p_props.filter_id != this.props.filter_id,
         p_props.view_filter != this.props.view_filter,
         p_props.search_options != this.props.search_options,
-        p_props.search_query != this.props.search_query,
         p_state.search_query != this.state.search_query,
         p_props.limit != this.props.limit,
         p_state.limit != this.state.limit,
@@ -380,7 +382,6 @@ def item_view_on_update(p_props, p_state):
         p_props.filter_id != this.props.filter_id,
         p_props.view_filter != this.props.view_filter,
         p_props.search_options != this.props.search_options,
-        p_props.search_query != this.props.search_query,
         p_state.search_query != this.state.search_query,
         p_props.limit != this.props.limit,
         p_state.limit != this.state.limit,

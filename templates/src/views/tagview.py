@@ -64,7 +64,7 @@ def tag_render():
         ns_tags = sorted([x.js_name for x in ns_tags])
         tag_rows.append(
             e(ui.Table.Row,
-                e(ui.Table.Cell, h("span", ns, className="sub-text"), collapsing=True),
+                e(ui.Table.Cell, ns, className="sub-text", collapsing=True),
                 e(ui.Table.Cell,
                   e(ui.Label.Group,
                     *[e(tagitem.TagLabel, namespace=ns, tag=x, show_ns=False) for x in ns_tags],

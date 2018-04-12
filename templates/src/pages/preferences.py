@@ -51,8 +51,10 @@ def pref_general(props):
                                                       props.upd("client.translation_locale", d.value),
                                                       client.set_locale(d.value))),
                            ))
-            items.append(h("p", tr(props.tab, "ui.t-help-translate",
-                                   "Not satisfied with the translation? Consider helping out! See Github repo for more information")))
+            items.append(h("p", h("a", tr(props.tab, "ui.t-help-translate",
+                                   "Not satisfied with the translation? Consider helping out"),
+                           href="https://happypandax.github.io/happypandax/translation.html",
+                           target="_blank")))
             if state.debug:
                 items.append(e(ui.Form.Field,
                                e(ui.Checkbox,
@@ -205,7 +207,7 @@ def pref_general(props):
             items.append(e(ui.Form.Field,
                            e(ui.Checkbox,
                              toggle=True,
-                             label=tr(props.tab, "t-update-alpha", "Allow downloading alpha releases"),
+                             label=tr(props.tab, "ui.t-update-alpha", "Allow downloading alpha releases"),
                              defaultChecked=cfg.core.allow_alpha_releases,
                              onChange=lambda e, d: props.upd("core.allow_alpha_releases", d.checked),
                              ))

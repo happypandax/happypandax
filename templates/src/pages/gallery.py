@@ -5,7 +5,7 @@ from src.ui import ui, Slider, LabelAccordion, DateLabel, TitleChange
 from src.i18n import tr
 from src.state import state
 from src.client import ItemType, ImageSize, client, Command
-from src.single import galleryitem, thumbitem
+from src.single import galleryitem, thumbitem, collectionitem
 from src.propsviews import gallerypropsview
 from src.views import itemview
 from src import utils
@@ -66,7 +66,7 @@ def get_item(data=None, error=None):
                              related_type=ItemType.GalleryFilter,
                              item_type=this.state.item_type,
                              item_id=data.id)
-            client.call_func("get_related_count", this.get_collection_count,
+            client.call_func("get_related_items", this.get_collection_data,
                              related_type=ItemType.Collection,
                              item_type=this.state.item_type,
                              item_id=data.id)
@@ -181,11 +181,11 @@ def get_filters(data=None, error=None):
         state.app.notif("Failed to fetch gallery filters ({})".format(this.state.id), level="error")
 
 
-def get_collection_count(data=None, error=None):
+def get_collection_data(data=None, error=None):
     if data is not None and not error:
-        this.setState({"collection_count": data['count']})
+        this.setState({"collection_count": len(data), 'collection_data':data})
     elif error:
-        state.app.notif("Failed to fetch collection count ({})".format(this.state.id), level="error")
+        state.app.notif("Failed to fetch collection data ({})".format(this.state.id), level="error")
 
 
 __pragma__("tconv")
@@ -409,16 +409,20 @@ def page_render():
     collection_accordion = []
 
     if this.state.collection_count:
+        collection_data = this.state.collection_data
         collection_accordion.append(e(ui.Grid.Row,
                                       e(ui.Grid.Column,
                                         e(LabelAccordion,
                                           e(Slider,
+                                            *[e(collectionitem.Collection, data=x, className="small-size") for x in collection_data],
                                             secondary=True,
                                             sildesToShow=4),
                                           label=tr(this, "ui.h-appears-in-collection",
                                                    "Appears in {} collection".format(this.state.collection_count),
                                                    count=this.state.collection_count),
-                                          color="teal"
+                                          color="teal",
+                                          cfg_suffix=this.cfg_suffix+'collection',
+                                          default_open=True
                                           )
                                         )
                                       )
@@ -432,19 +436,22 @@ def page_render():
                               *[e(galleryitem.Gallery, data=x, className="small-size") for x in similar_gallery_data],
                               secondary=True,
                               sildesToShow=4)
-        similar_progress_el = e(ui.Progress,
+        similar_progress_el = e(ui.Segment, e(ui.Progress,
                                 size="small",
                                 active=True,
                                 total=this.state.similar_gallery_progress.max or 0,
                                 value=this.state.similar_gallery_progress.value,
                                 progress="value",
-                                autoSuccess=True)
+                                autoSuccess=True),
+                                basic=True)
         similar_galleries.append(e(ui.Grid.Row,
                                    e(ui.Grid.Column,
                                      e(LabelAccordion,
                                        similar_progress_el if this.state.similar_gallery_loading else similar_slider_el,
                                        label=tr(this, "ui.h-more-like-this", "More like this"),
                                        color="teal",
+                                       cfg_suffix=this.cfg_suffix+'similar',
+                                       default_open=True
                                        )
                                      )
                                    )
@@ -487,7 +494,7 @@ def page_render():
                      ),
                    e(ui.Grid.Row,
                      e(ui.Grid,
-                       e(ui.Grid.Row, e(ui.Grid.Column, e(ui.Header, title, as_="h3"), textAlign="center")),
+                       e(ui.Grid.Row, e(ui.Grid.Column, e(ui.Header, title, size="medium"), textAlign="center")),
                        e(ui.Grid.Row,
                          e(ui.Grid.Column,
                            e(gallerypropsview.GalleryProps,
@@ -522,7 +529,6 @@ def page_render():
                  textAlign="center"),
                columns=3
                ),
-             *collection_accordion,
              e(ui.Grid.Row, e(ui.Grid.Column,
                               e(Slider, *[e(galleryitem.Gallery, data=x, className="small-size") for x in series_data],
                                 loading=this.state.loading_group,
@@ -532,6 +538,7 @@ def page_render():
                                 color="blue",
                                 label=tr(this, "ui.t-series", "Series")),
                               )),
+             *collection_accordion,
              *similar_galleries,
              e(ui.Grid.Row, e(ui.Grid.Column, e(itemview.ItemView,
                                                 history=this.props.history,
@@ -593,7 +600,7 @@ Page = createReactClass({
     'get_similar': get_similar,
     'get_similar_value': get_similar_value,
     'get_similar_progress': get_similar_progress,
-    'get_collection_count': get_collection_count,
+    'get_collection_data': get_collection_data,
     'get_config': get_config,
     'open_external': galleryitem.open_external,
 

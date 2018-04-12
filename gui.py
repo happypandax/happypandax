@@ -618,7 +618,8 @@ if __name__ == "__main__":
     utils.parse_options(utils.get_argparser().parse_args())
 
     utils.setup_i18n()
-    toggle_start_on_boot(None, config.gui_start_on_boot.value)
+    if config.gui_start_on_boot.value:
+        toggle_start_on_boot(None, config.gui_start_on_boot.value)
     config.gui_start_on_boot.add_trigger(toggle_start_on_boot)
 
     QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)

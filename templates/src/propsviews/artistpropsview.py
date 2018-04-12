@@ -96,16 +96,16 @@ def artistprops_render():
 
     if circles:
         rows.append(e(ui.Table.Row,
-                      e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-multi-circles", "Circle") + ":", size="small"), collapsing=True),
+                      e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-circle", "Circle") + ":", size="tiny", className="sub-text"), collapsing=True),
                       e(ui.Table.Cell, *(e(circleitem.CircleLabel, data=x) for x in circles))))
 
     rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-galleries", "Galleries") + ":", size="small"), collapsing=True),
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-galleries", "Galleries") + ":", size="tiny", className="sub-text"), collapsing=True),
                   e(ui.Table.Cell, this.state.gallery_count)))
 
     if urls:
         rows.append(e(ui.Table.Row,
-                      e(ui.Table.Cell, e(ui.Header, tr(this, "ui.multi-urls", "URL(s)") + ":", size="small"), collapsing=True),
+                      e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-url", "URL") + ":", size="tiny", className="sub-text"), collapsing=True),
                       e(ui.Table.Cell, *[e(ui.List.Item, h("span", h("a", x, href=x, target="_blank"), e(ui.List.Icon, js_name="external share"))) for x in urls])))
 
     slider_el = []
@@ -122,16 +122,23 @@ def artistprops_render():
 
     return e(ui.Grid,
              e(ui.Grid.Row,
-                 e(ui.Grid.Column, e(ui.Rating, icon="heart", size="huge", rating=fav), width=1),
+                 e(ui.Grid.Column, e(ui.Rating, icon="heart", size="huge", rating=fav),
+                   floated="left", verticalAlign="middle", width=2),
                  e(ui.Grid.Column,
-                   e(ui.Label.Group,
-                     e(ui.Button, icon="grid layout", title=tr(this, "ui.t-show-galleries", "Show galleries"), basic=True,
+                   e(ui.Button.Group,
+                     e(ui.Button, icon="grid layout", title=tr(this, "ui.t-show-galleries", "Show galleries"),
                        as_=Link, to=utils.build_url("/library", query=url_search_query, keep_query=False)),
-                     e(ui.Button, icon="heart", title=tr(this, "ui.t-show-fav-galleries", "Show favorite galleries"), basic=True,
+                     e(ui.Button, icon="heart", title=tr(this, "ui.t-show-fav-galleries", "Show favorite galleries"),
                        as_=Link, to=utils.build_url("/favorite", query=url_search_query, keep_query=False)),
-                     e(ui.Button, icon="inbox", title=tr(this, "ui.t-show-inbox-galleries", "Show galleries in inbox"), basic=True,
+                     e(ui.Button, icon="inbox", title=tr(this, "ui.t-show-inbox-galleries", "Show galleries in inbox"),
                        as_=Link, to=utils.build_url("/inbox", query=url_search_query, keep_query=False)),
-                     ), width=15, textAlign="right"),
+                     basic=True,
+                     size="tiny",
+                     ),
+                   width=14,
+                   textAlign="right",
+                   verticalAlign="top"
+                   ),
                ),
              e(ui.Grid.Row,
                  e(ui.Grid.Column,

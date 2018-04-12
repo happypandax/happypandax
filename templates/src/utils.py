@@ -274,9 +274,9 @@ class Storage:
             self.dummy[key] = value
 
     def clear(self, local=False):
-        if self.enabled and not local:
+        if self.enabled:
             self.lstorage.js_clear()
-        else:
+        if local:
             self.dummy.clear()
 
     def remove(self, key, local=False):

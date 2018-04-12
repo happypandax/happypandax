@@ -10,9 +10,9 @@ def aformat(f_path):
 
 
 def main():
-
     parser = argparse.ArgumentParser()
     parser.add_argument('-f', '--format', action='store_true', help="Autoformat before running flake8")
+    parser.add_argument('--cfg', help="Path to custom flake8 config", default="./setup.cfg")
     args = parser.parse_args()
 
     if not os.path.isdir("happypanda"):
@@ -37,7 +37,7 @@ def main():
     flake8_path = "flake8"
     if os.environ.get('APPVEYOR'):
         flake8_path = os.path.join(os.path.split(sys.executable)[0], "Scripts", "flake8.exe")
-    return run([flake8_path, "--config", "./setup.cfg", "."]).returncode
+    return run([flake8_path, "--config", args.cfg, "."]).returncode
 
 
 if __name__ == '__main__':
