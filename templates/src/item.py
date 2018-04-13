@@ -60,11 +60,17 @@ def search_get_config(data=None, error=None):
 
 
 def search_render():
+    cls_name = ""
+    if this.props.fluid:
+        cls_name = "fullwidth"
+    if this.props.className:
+        cls_name+= " " + this.props.className
     return e(ui.Form,
              e(ui.Search,
                size=this.props.size,
                input=e(ui.Input,
                        fluid=this.props.fluid,
+                       transparent=this.props.transparent if utils.defined(this.props.transparent) else True,
                        placeholder=tr(this, "ui.t-search-main-placeholder", "Search title, artist, namespace & tags"),
                        label=e(ui.Popup,
                                e(SearchOptions,
@@ -79,18 +85,21 @@ def search_render():
                                  suggest=this.state.suggest,
                                  on_key=this.state.on_key,
                                  ),
-                               trigger=e(ui.Label, icon="options", as_="a"),
+                               trigger=e(ui.Button, icon=e(ui.Icon.Group,
+                                                           e(ui.Icon, js_name="options"),
+                                                           e(ui.Icon, js_name="search", corner=True)), js_type="button", basic=True),
                                hoverable=True,
                                on="click",
-                               hideOnScroll=True,)),
+                               hideOnScroll=True,),
+                       ),
                minCharacters=3,
-               fluid=True,
+               fluid=this.props.fluid,
+               action={'icon':'search'},
                open=this.state.suggest if not this.state.suggest else js_undefined,
-               icon=e(ui.Icon, js_name="search", link=True, onClick=this.on_search),
                onSearchChange=this.on_search_change,
                defaultValue=this.state.query
                ),
-             className=this.props.className,
+             className=cls_name,
              onSubmit=this.on_search
              )
 
@@ -182,29 +191,39 @@ ViewOptions = createReactClass({
 })
 
 
-def itemdropdown_change(e, d):
+def itembuttons_change(e, d):
     if this.props.query:
         utils.go_to(this.props.history, query={'item_type': d.value}, push=False)
     if this.props.on_change:
         this.props.on_change(e, d)
 
 
-def itemdropdown_render():
-    props = this.props
-    item_options = [
-        {'text': tr(this, "general.db-item-collection", "Collection"), 'value': ItemType.Collection},
-        {'text': tr(this, "general.db-item-gallery", "Gallery"), 'value': ItemType.Gallery},
-    ]
-    return e(ui.Dropdown, placeholder="Item Type", selection=True, options=item_options, item=True,
-             defaultValue=ItemType.Gallery if props.value == ItemType.Grouping else props.value, onChange=this.item_change)
+def itembuttons_render():
+    on_change = this.props.on_change
+    return e(ui.Button.Group,
+             e(ui.Button,tr(this, "general.db-item-collection", "Collection"),
+               value=ItemType.Collection,
+               onClick=lambda e, d: on_change(e, d) if on_change else None,
+               primary=True,
+               basic=this.props.value==ItemType.Collection,
+               ),
+             e(ui.Button, tr(this, "general.db-item-gallery", "Gallery"),
+               value=ItemType.Gallery,
+               onClick=lambda e, d: on_change(e, d) if on_change else None,
+               primary=True,
+               basic=this.props.value==ItemType.Gallery,
+               ),
+             toggle=True,
+             basic=True
+             )
 
 
-ItemDropdown = createReactClass({
-    'displayName': 'ItemDropdown',
+ItemButtons = createReactClass({
+    'displayName': 'ItemButtons',
 
-    'item_change': itemdropdown_change,
+    'item_change': itembuttons_change,
 
-    'render': itemdropdown_render
+    'render': itembuttons_render
 })
 
 
@@ -243,13 +262,20 @@ def sortdropdown_render():
     __pragma__("noiconv")
     return e(ui.Dropdown,
              placeholder=tr(this, "ui.t-sortdropdown-placeholder", "Sort by"),
-             selection=True, item=True,
              options=item_options,
              value=this.props.value if this.props.value else js_undefined,
              defaultValue=this.props.defaultValue if this.props.defaultValue else js_undefined,
              onChange=this.item_change,
              loading=this.state.loading,
              selectOnBlur=False,
+             pointing=this.props.pointing,
+             labeled=this.props.labeled,
+             inline=this.props.inline,
+             compact=this.props.compact,
+             button=this.props.button,
+             item=this.props.item if utils.defined(this.props.item) else True,
+             selection=this.props.selection if utils.defined(this.props.selection) else True,
+             basic=this.props.basic
              )
 
 
@@ -295,7 +321,6 @@ def filterdropdown_render():
     __pragma__("noiconv")
     return e(ui.Dropdown,
              placeholder=tr(this, "ui.t-filterdropdown-placeholder", "Filter"),
-             selection=True, item=True,
              options=item_options,
              search=True,
              allowAdditions=True,
@@ -304,6 +329,14 @@ def filterdropdown_render():
              onChange=this.item_change,
              loading=this.state.loading,
              selectOnBlur=False,
+             pointing=this.props.pointing,
+             labeled=this.props.labeled,
+             inline=this.props.inline,
+             compact=this.props.compact,
+             button=this.props.button,
+             item=this.props.item if utils.defined(this.props.item) else True,
+             selection=this.props.selection if utils.defined(this.props.selection) else True,
+             basic=this.props.basic
              )
 
 

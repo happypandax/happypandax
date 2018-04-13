@@ -23309,7 +23309,7 @@ ol.ui.horizontal.list li:before,
 .ui.menu .ui.dropdown .menu > .item {
   margin: 0;
   text-align: left;
-  font-size: 1.07692308em !important;
+  font-size: 1em !important;
   padding: 0.84615385em 1.23076923em !important;
   background: transparent !important;
   color: #212121 !important;
@@ -31589,7 +31589,7 @@ body.dimmable > .dimmer {
   line-height: 1em;
   color: #212121;
   padding: 1em 1.5em !important;
-  font-size: 1.07692308rem;
+  font-size: unset;
   text-transform: none;
   font-weight: normal;
   -webkit-box-shadow: none;

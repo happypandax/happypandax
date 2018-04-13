@@ -8,3 +8,7 @@
 
 @itemVerticalPadding: @relativeLarge;
 @itemHorizontalPadding: @relativeLarge;
+
+/* Dropdown in Menu */
+
+@dropdownItemFontSize: @relativeSmall;

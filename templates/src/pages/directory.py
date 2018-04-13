@@ -274,7 +274,7 @@ def parodiespage_render():
         )
 
     return e(SimpleLayout,
-             e(TitleChange, title=tr(this, "ui.mi-dir-Parodies", "Parodies")),
+             e(TitleChange, title=tr(this, "ui.mi-dir-parodies", "Parodies")),
              e(ui.Card.Group, *items, itemsPerRow=1, doubling=True, stackable=True,
                as_=ui.Transition.Group,
                animation="scale",
@@ -444,7 +444,7 @@ def circlespage_render():
              search=True,
              search_query=this.state.search_query,
              search_change=this.update_search,
-             search_placeholder=tr(this, "ui.t-search-cricles-placeholder", "Search cricles"),
+             search_placeholder=tr(this, "ui.t-search-circles-placeholder", "Search cricles"),
              stats=[e(ui.Statistic,
                       e(ui.Statistic.Value, this.state.count),
                       e(ui.Statistic.Label, tr(this, "ui.t-total-circles", "Total circles"))
@@ -721,7 +721,7 @@ Page = createReactClass({
           to="/directory/circles", activeClassName="active"),
         e(ui.Menu.Item, js_name=tr(this, "ui.mi-dir-categories", "Categories"), as_=NavLink,
           to="/directory/categories", activeClassName="active"),
-        e(ui.Menu.Item, js_name=tr(this, "ui.mi-dir-Parodies", "Parodies"), as_=NavLink,
+        e(ui.Menu.Item, js_name=tr(this, "ui.mi-dir-parodies", "Parodies"), as_=NavLink,
           to="/directory/parodies", activeClassName="active"),
         e(ui.Menu.Item, js_name=tr(this, "ui.mi-dir-languages", "Languages"), as_=NavLink,
           to="/directory/languages", activeClassName="active"),

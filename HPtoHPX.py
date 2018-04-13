@@ -12,6 +12,7 @@ import multiprocessing
 import threading
 import queue
 import codecs
+import regex
 from multiprocessing import Process, Queue, Pipe
 from happypanda.core import db
 from happypanda.core.commands import io_cmd
@@ -706,10 +707,6 @@ def print_progress(iteration, total, prefix='', suffix='', decimals=1, bar_lengt
         sys.stdout.write('\n')
     sys.stdout.flush()
 
-
-import random
-
-
 def parse_args(args=sys.argv[1:]):
     parser = argparse.ArgumentParser()
     parser.add_argument('--debug', action='store_true', help="Print out a lot of useful information")
@@ -799,6 +796,36 @@ def process_pipes(out_queue, out_pipe):
         except (EOFError, AssertionError):
             break
 
+def extract_collection(title):
+    """
+    Extract Comic Market
+    """
+    title = title.strip()
+    category = ""
+    col_name = ""
+
+    class CType:
+        comiket = 1
+        gfm = 2
+
+    for i, r in ((CType.comiket, r"(\(C\d+\))"),
+                 (CType.gfm, r"(\(\s*(from)?\s*girls form vol\.?\s*\d*\s*\))")):
+        m = regex.search(r, title, regex.IGNORECASE | regex.UNICODE)
+        if m:
+            if i == CType.comiket:
+                col_name = "Comiket " + "".join(x for x in m[0] if x.isdigit())
+                category = "Convention"
+            elif i == CType.gfm:
+                d = "".join(x for x in m[0] if x.isdigit())
+                if len(d) == 1:
+                    d = '0'+d
+                col_name = "Girls forM Vol. " + d
+                category = "Magazine"
+            title = " ".join(title.replace(m[0], '').strip().split())
+            break
+
+    return col_name, title, category
+
 
 def main(args=sys.argv[1:]):
     try:
@@ -863,7 +890,7 @@ def main(args=sys.argv[1:]):
         dst_artists = {}
         dst_circles = {}
         dst_parodies = {}
-        dst_gtype = {}
+        dst_categories = {}
         dst_status = {}
         dst_namespace = {}
         dst_tag = {}
@@ -972,7 +999,7 @@ def main(args=sys.argv[1:]):
                     title = db.Title()
                     title.name = ch.title if ch.title else g.title
 
-                    col_name, n_title = utils.extract_collection(title.name)
+                    col_name, n_title, col_category = extract_collection(title.name)
                     if col_name:
                         title.name = n_title
                         collection = dst_collections.get(col_name.lower())
@@ -981,6 +1008,15 @@ def main(args=sys.argv[1:]):
                             collection.name = col_name
                             dst_collections[col_name.lower()] = collection
                         collection.galleries.append(gallery)
+
+                        if col_category:
+                            col_type = dst_categories.get(col_category.lower())
+                            if not col_type:
+                                col_type = db.Category()
+                                col_type.name = col_category
+                                dst_categories[col_category.lower()] = col_type
+                            collection.category = col_type
+
 
                     title.language = db_lang
                     gallery.titles.clear()
@@ -1047,11 +1083,11 @@ def main(args=sys.argv[1:]):
                     if g.rating is not None:
                         gallery.rating = g.rating * 2
                     if g.type:
-                        gtype = dst_gtype.get(g.type.lower())
+                        gtype = dst_categories.get(g.type.lower())
                         if not gtype:
                             gtype = db.Category()
                             gtype.name = g.type
-                            dst_gtype[gtype.name.lower()] = gtype
+                            dst_categories[gtype.name.lower()] = gtype
                         gallery.category = gtype
 
                     if g.link:
@@ -1256,7 +1292,7 @@ def main(args=sys.argv[1:]):
         print("Adding artists...")
         s.add_all(dst_artists.values())
         print("Adding gallery types...")
-        s.add_all(dst_gtype.values())
+        s.add_all(dst_categories.values())
         print("Adding gallery status...")
         s.add_all(dst_status.values())
         print("Adding gallery namespaces...")

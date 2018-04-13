@@ -2,6 +2,9 @@
              Menu
 *******************************/
 
+/* Menu Item */
+@itemFontSize: unset;
+
 @menuBorderRadius: @borderRadius;
 @menuBorderColor: #DADADA;
 @menuBoxShadow: 0px 2px 4px rgba(0, 0, 0, 0.2);

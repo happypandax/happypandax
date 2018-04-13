@@ -1,12 +1,12 @@
 import math
 from src.react_utils import (e,
                              createReactClass)
-from src.ui import ui, Error, Pagination
+from src.ui import ui, Error, Pagination, ToggleIcon
 from src.client import (client, ItemType)
 from src.i18n import tr
 from src.state import state
 from src.single import (galleryitem, pageitem, groupingitem, collectionitem)
-from src import utils
+from src import utils, item
 from org.transcrypt.stubs.browser import __pragma__
 __pragma__('alias', 'as_', 'as')
 
@@ -203,10 +203,84 @@ def itemviewbase_render():
                                once=False,
                                ),))
 
+    nav_els = []
+    if this.props.show_itembuttons:
+        nav_els.append(e(ui.Menu.Item, e(item.ItemButtons,
+                         history=this.props.history,
+                         on_change=this.props.on_item_change,
+                         value=this.props.default_item,
+                         query=this.props.query,
+                         ), icon=True))
+
+    if this.props.show_search:
+        nav_els.append(e(ui.Menu.Menu, e(ui.Menu.Item, e(item.Search,
+                                 history=this.props.history,
+                                 location=this.props.location,
+                                 size="small",
+                                 fluid=True,
+                                 on_search=this.props.on_search,
+                                 search_query=this.props.default_search,
+                                 query=this.props.query,
+                                 ),
+                            className="fullwidth"),
+                         position="left",
+                         className="fullwidth"))
+
+    history = this.props.history
+    default_sort_desc = this.props.default_sort_desc
+    on_sort_desc = this.props.on_sort_desc
+    default_filter = this.props.default_filter
+    on_filter_change = this.props.on_filter_change
+
+    if this.props.show_sortdropdown:
+        nav_els.append(e(ui.Menu.Item,
+                         e(ToggleIcon, icons=["sort content ascending", "sort content descending"],
+                            on_toggle=lambda a: all((
+                                on_sort_desc(a),
+                                utils.go_to(history, query={'sort_desc': int(a)}, push=False))),
+                            toggled=default_sort_desc,
+                            ),
+                         e(item.SortDropdown,
+                         history=this.props.history,
+                         on_change=this.props.on_sort_change,
+                         item_type=this.props.default_item,
+                         query=this.props.query,
+                         value=this.props.default_sort,
+                         ), icon=True))
+
+    if this.props.show_filterdropdown:
+        nav_els.append(e(ui.Menu.Item,
+                         e(ui.Icon, js_name="delete" if default_filter else "filter",
+                            link=True if default_filter else False,
+                            onClick=js_undefined if not default_filter else lambda: all((
+                                on_filter_change(None, 0),
+                                utils.go_to(history, query={'filter_id': 0}, push=False))),
+                            ),
+                         e(item.FilterDropdown,
+                         history=this.props.history,
+                         on_change=this.props.on_filter_change,
+                         value=this.props.default_filter,
+                         query=this.props.query,
+                         inline=True,
+                         ), icon=True))
+
+    if len(nav_els) != 0:
+        nav_els = [e(ui.Grid.Row,
+                     e(ui.Grid.Column,
+                       e(ui.Menu,
+                         *nav_els,
+                         secondary=True,
+                         borderless=True,
+                         stackable=True,
+                         size="small",
+                         ),
+                       width=16))]
+
     el = e(ui.Sidebar.Pushable,
            *cfg_el,
            e(ui.Sidebar.Pusher,
              e(ui.Grid,
+               *nav_els,
                *count_el,
                *pagination,
                *[e(ui.Grid.Column, c, verticalAlign="middle",
@@ -265,9 +339,9 @@ def get_items(data=None, error=None):
                        'loading': False,
                        'loading_more': False})
     elif error:
-        state.app.notif("Failed to fetch item type: {}".format(this.props.item_type), level="error")
+        state.app.notif("Failed to fetch item type: {}".format(this.props.item_type or this.state.item_type), level="error")
     else:
-        item = this.props.item_type
+        item = this.props.item_type or this.state.item_type
         func_kw = {'item_type': item,
                    'page': max(int(this.state.page) - 1, 0),
                    'limit': this.props.limit or this.state.limit}
@@ -275,14 +349,14 @@ def get_items(data=None, error=None):
             func_kw['view_filter'] = this.props.view_filter
         if this.state.search_query:
             func_kw['search_query'] = this.state.search_query
-        if this.props.sort_by:
-            func_kw['sort_by'] = this.props.sort_by
-        if this.props.sort_desc:
-            func_kw['sort_desc'] = this.props.sort_desc
-        if this.props.search_options:
-            func_kw['search_options'] = this.props.search_options
-        if this.props.filter_id:
-            func_kw['filter_id'] = this.props.filter_id
+        if this.props.sort_by or this.state.sort_by:
+            func_kw['sort_by'] = this.props.sort_by or this.state.sort_by
+        if this.props.sort_desc or this.state.sort_desc:
+            func_kw['sort_desc'] = this.props.sort_desc or this.state.sort_desc
+        if this.props.search_options or this.state.search_options:
+            func_kw['search_options'] = this.props.search_options or this.state.search_options
+        if this.props.filter_id or this.state.filter_id:
+            func_kw['filter_id'] = this.props.filter_id or this.state.filter_id
         if this.props.related_type:
             func_kw['related_type'] = this.props.related_type
         if this.props.item_id:
@@ -304,16 +378,16 @@ def get_items_count(data=None, error=None):
     elif error:
         pass
     else:
-        item = this.props.item_type
+        item = this.props.item_type or this.state.item_type
         func_kw = {'item_type': item}
         if this.props.view_filter:
             func_kw['view_filter'] = this.props.view_filter
-        if this.props.filter_id:
-            func_kw['filter_id'] = this.props.filter_id
+        if this.props.filter_id or this.state.filter_id:
+            func_kw['filter_id'] = this.props.filter_id or this.state.filter_id
         if this.state.search_query:
             func_kw['search_query'] = this.state.search_query
-        if this.props.search_options:
-            func_kw['search_options'] = this.props.search_options
+        if this.props.search_options or this.state.search_options:
+            func_kw['search_options'] = this.props.search_options or this.state.search_options
         if this.props.related_type:
             func_kw['related_type'] = this.props.related_type
         if this.props.item_id:
@@ -332,7 +406,7 @@ def get_element():
         ItemType.Collection: collectionitem.Collection,
         ItemType.Grouping: groupingitem.Grouping,
         ItemType.Page: pageitem.Page,
-    }.get(this.props.related_type or this.props.item_type)
+    }.get(this.props.related_type or this.props.item_type or this.state.item_type)
     if not el:
         state.notif("No valid item type chosen", level="error")
 
@@ -363,11 +437,14 @@ def item_view_on_update(p_props, p_state):
 
     if any((
         p_props.item_type != this.props.item_type,
+        p_state.item_type != this.state.item_type,
         p_props.related_type != this.props.related_type,
         p_props.item_id != this.props.item_id,
         p_props.filter_id != this.props.filter_id,
+        p_state.filter_id != this.state.filter_id,
         p_props.view_filter != this.props.view_filter,
         p_props.search_options != this.props.search_options,
+        p_state.search_options != this.state.search_options,
         p_state.search_query != this.state.search_query,
         p_props.limit != this.props.limit,
         p_state.limit != this.state.limit,
@@ -377,17 +454,22 @@ def item_view_on_update(p_props, p_state):
 
     if any((
         p_props.item_type != this.props.item_type,
+        p_state.item_type != this.state.item_type,
         p_props.related_type != this.props.related_type,
         p_props.item_id != this.props.item_id,
         p_props.filter_id != this.props.filter_id,
+        p_state.filter_id != this.state.filter_id,
         p_props.view_filter != this.props.view_filter,
         p_props.search_options != this.props.search_options,
+        p_state.search_options != this.state.search_options,
         p_state.search_query != this.state.search_query,
         p_props.limit != this.props.limit,
         p_state.limit != this.state.limit,
         p_state.page != this.state.page,
         p_props.sort_by != this.props.sort_by,
+        p_state.sort_by != this.state.sort_by,
         p_props.sort_desc != this.props.sort_desc,
+        p_state.sort_desc != this.state.sort_desc,
     )):
         this.get_items()
         if not this.state.infinite_scroll:
@@ -395,7 +477,9 @@ def item_view_on_update(p_props, p_state):
 
     if any((
         p_props.sort_by != this.props.sort_by,
+        p_state.sort_by != this.state.sort_by,
         p_props.sort_desc != this.props.sort_desc,
+        p_state.sort_desc != this.state.sort_desc,
     )):
         this.reset_page()
 
@@ -410,13 +494,13 @@ def item_view_render():
         return e(Error, content="An error occured. No valid element available.")
     ext_viewer = this.props.external_viewer if utils.defined(this.props.external_viewer) else this.state.external_viewer
     cfg_el = this.props.config_el or e(ItemViewConfig,
-                                       item_type=this.props.related_type or this.props.item_type,
+                                       item_type=this.props.related_type or this.props.item_type or this.state.item_type,
                                        on_close=this.props.toggle_config or this.toggle_config,
                                        visible=this.props.visible_config if utils.defined(
                                            this.props.visible_config) else this.state.visible_config,
                                        default_item_count=this.state.limit,
                                        on_infinite_scroll=this.on_infinite_scroll,
-                                       suffix=this.props.config_suffix,
+                                       suffix=this.config_suffix(),
                                        on_item_count=this.on_item_count,
                                        on_external_viewer=this.on_external_viewer,
                                        on_group_gallery=this.on_group_gallery,
@@ -426,6 +510,8 @@ def item_view_render():
     return e(ItemViewBase,
              [e(el, data=x, size_type=size_type, blur=blur, centered=True, className="medium-size", key=n, external_viewer=ext_viewer)
               for n, x in enumerate(items)],
+             history=this.props.history,
+             location=this.props.location,
              loading=this.state.loading,
              secondary=this.props.secondary,
              tertiary=this.props.tertiary,
@@ -440,12 +526,28 @@ def item_view_render():
              infinite_scroll=this.state.infinite_scroll,
              on_load_more=this.get_more,
              loading_more=this.state.loading_more,
-             query=True,
-             history=this.props.history,
-             location=this.props.location,
+             query=this.props.query if utils.defined(this.props.query) else True,
              context=this.props.context,
              show_count=this.props.show_count,
              show_pagination=this.props.show_pagination,
+
+             show_search=this.props.show_search,
+             on_search=this.on_search,
+             default_search=this.state.search_query,
+
+             show_sortdropdown=this.props.show_sortdropdown,
+             on_sort_change=this.on_sort_change,
+             on_sort_desc=this.toggle_sort_desc,
+             default_sort=this.state.sort_by,
+             default_sort_desc=this.state.sort_desc,
+
+             show_itembuttons=this.props.show_itembuttons,
+             on_item_change=this.on_item_change,
+             default_item=this.state.item_type,
+
+             show_filterdropdown=this.props.show_filterdropdown,
+             on_filter_change=this.on_filter_change,
+             default_filter=this.state.filter_id,
              )
 
 
@@ -469,12 +571,30 @@ ItemView = createReactClass({
                                 'external_viewer': utils.storage.get("external_viewer" + this.config_suffix(), False),
                                 'group_gallery': utils.storage.get("group_gallery" + this.config_suffix(), False),
                                 'blur': utils.storage.get("blur" + this.config_suffix(), False),
+
+                                'item_type': utils.session_storage.get("item_type"+this.config_suffix(), int(utils.get_query("item_type", ItemType.Gallery))),
+                                'filter_id': int(utils.either(utils.get_query("filter_id", None), utils.session_storage.get("filter_id"+this.config_suffix(), 0))),
+                                'sort_by': utils.session_storage.get("sort_idx_{}".format(ItemType.Gallery)+this.config_suffix(), int(utils.get_query("sort_idx", 0))),
+                                'sort_desc': utils.session_storage.get("sort_desc"+this.config_suffix(), bool(utils.get_query("sort_desc", 0))),
+                                'search_query': utils.session_storage.get("search_query"+this.config_suffix(), "", True),
+                                'search_options': utils.storage.get("search_options", {}),
                                 },
 
     'get_items_count': get_items_count,
     'get_items': get_items,
     'get_element': get_element,
     'get_more': get_more,
+
+    'on_item_change': lambda e, d: all((this.setState({'item_type': d.value}),
+                                        utils.session_storage.set("item_type"+this.config_suffix(), d.value))),
+    'on_sort_change': lambda e, d: all((this.setState({'sort_by': d.value}),
+                                        utils.session_storage.set("sort_idx_{}".format(this.state.item_type)+this.config_suffix(), d.value))),
+    'toggle_sort_desc': lambda d: all((this.setState({'sort_desc': not this.state.sort_desc}),
+                                       utils.session_storage.set("sort_desc"+this.config_suffix(), not this.state.sort_desc))),
+    'on_filter_change': lambda e, d: all((this.setState({'filter_id': d.value}),
+                                          utils.session_storage.set("filter_id"+this.config_suffix(), utils.either(d.value, 0)))),
+    'on_search': lambda s, o: all((this.setState({'search_query': s if s else '', 'search_options': o}),
+                                   utils.storage.set("search_options", o))),
 
     'reset_page': lambda p: all((this.setState({'page': 1}), utils.go_to(this.props.history, query={'page': 1}, push=False))),
     'set_page': lambda p: this.setState({'page': p, 'prev_page': None}),

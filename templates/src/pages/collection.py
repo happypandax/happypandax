@@ -285,7 +285,11 @@ def page_render():
                                                 config_suffix=this.cfg_suffix,
                                                 toggle_config=this.toggle_galleries_config,
                                                 visible_config=this.state.visible_gallery_cfg,
-                                                container=True, secondary=True))),
+                                                show_search=True,
+                                                #show_filterdropdown=True,
+                                                show_sortdropdown=True,
+                                                container=True,
+                                                secondary=True))),
              stackable=True,
              container=True,
              )
@@ -312,6 +316,7 @@ Page = createReactClass({
                                 },
 
     'get_item': get_item,
+    'get_category': get_category,
 
     'toggle_galleries_config': lambda a: this.setState({'visible_gallery_cfg': not this.state.visible_gallery_cfg}),
 
