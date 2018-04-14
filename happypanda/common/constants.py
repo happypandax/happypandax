@@ -48,6 +48,7 @@ dir_bin = os.path.join(dir_root, "bin", "win32" if is_win else "osx" if is_osx e
 dir_data = os.path.join(dir_root, "data")
 dir_download = os.path.join(dir_root, "downloads")
 dir_cache = os.path.join(dir_data, "cache")
+dir_certs = os.path.join(dir_data, "certs")
 dir_update = os.path.join(dir_cache, "happyupdate")
 dir_log = os.path.join(dir_root, "logs")
 dir_temp = os.path.join(dir_cache, "temp")

@@ -225,3 +225,4 @@ semantic/src/themes/*
 semantic/src/site/*
 !semantic/src/site/globals/
 
+/data/certs

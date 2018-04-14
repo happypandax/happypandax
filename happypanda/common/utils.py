@@ -21,11 +21,14 @@ import ctypes
 import subprocess
 import logging
 import regex
+import OpenSSL
+import errno
 
 from dbm import dumb as dumbdb
 from inspect import ismodule, currentframe, getframeinfo
 from contextlib import contextmanager
 from collections import namedtuple
+from gevent import ssl
 
 from happypanda.common import constants, exceptions, hlogger, config
 try:
@@ -54,6 +57,7 @@ def setup_dirs():
     "Creates directories at the specified root path"
     for dir_x in (
             constants.dir_data,
+            constants.dir_certs,
             constants.dir_cache,
             constants.dir_log,
             constants.dir_plugin,
@@ -586,3 +590,79 @@ def get_language_code(lcode):
     if '_' in lcode:
         lcode = lcode.split('_')[0]
     return lcode.lower()
+
+def create_ssl_context(webserver=False, server_side=False, verify_mode=ssl.CERT_OPTIONAL, check_hostname=False,
+                       certfile=None, keyfile=None):
+    c = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH if server_side else ssl.Purpose.SERVER_AUTH)
+    c.verify_mode = verify_mode
+    c.check_hostname = check_hostname
+
+    if not certfile:
+        cfg_cert = config.web_cert.value if webserver else config.server_cert.value
+        certfile = cfg_cert.get("certfile")
+        keyfile = cfg_cert.get("keyfile")
+        if certfile is None and webserver:
+            cfg_cert = config.server_cert.value
+            certfile = cfg_cert.get("certfile")
+            keyfile = cfg_cert.get("keyfile")
+
+    if certfile is None:
+        certfile = os.path.join(constants.dir_certs, "happypandax.crt")
+        keyfile = os.path.join(constants.dir_certs, "happypandax.key")
+        pemfile = os.path.join(constants.dir_certs, "happypandax.pem")
+        if not os.path.exists(certfile):
+            create_self_signed_cert(certfile, keyfile, pemfile)
+        log.i("Certs not provided, using self-signed certificate")
+    else:
+        if not os.path.exists(certfile) and not (os.path.exists(keyfile) if keyfile else False):
+            raise exceptions.CoreError(this_function(), "Non-existent certificate or private key file")
+
+    if not keyfile:
+        keyfile = None
+
+    try:
+        if server_side:
+            c.load_cert_chain(certfile=certfile, keyfile=keyfile)
+        else:
+            c.load_verify_locations(certfile)
+    except OSError as e:
+        if e.errno == errno.EINVAL:
+            raise exceptions.CoreError(this_function(), "Invalid certificate or private key filepath")
+        raise exceptions.CoreError(this_function(), "Invalid certificate or private key: {}".format(e))
+
+    return c
+
+def create_self_signed_cert(cert_file, key_file, pem_file=None):
+    """
+    self-signed cert
+    """
+
+    # create a key pair
+    k = OpenSSL.crypto.PKey()
+    k.generate_key(OpenSSL.crypto.TYPE_RSA, 2048)
+
+    # create a self-signed cert
+    cert = OpenSSL.crypto.X509()
+    cert.get_subject().C = "HP"
+    cert.get_subject().ST = "HappyPanda X"
+    cert.get_subject().L = "HappyPanda X"
+    cert.get_subject().O = "HappyPanda X"
+    cert.get_subject().OU = "Twiddly Inc"
+    cert.get_subject().CN = socket.gethostname()
+    cert.set_serial_number(1000)
+    cert.gmtime_adj_notBefore(0)
+    cert.gmtime_adj_notAfter(10*365*24*60*60)
+    cert.set_issuer(cert.get_subject())
+    cert.set_pubkey(k)
+    cert.sign(k, 'sha256')
+
+    with open(cert_file, "wb") as f:
+        cert_pem = OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_PEM, cert)
+        f.write(cert_pem)
+    with open(key_file, "wb") as f:
+        key_pem = OpenSSL.crypto.dump_privatekey(OpenSSL.crypto.FILETYPE_PEM, k)
+        f.write(key_pem)
+
+    if pem_file:
+        with open(pem_file, "wb") as f:
+            f.write(cert_pem+key_pem)

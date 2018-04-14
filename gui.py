@@ -323,6 +323,8 @@ class SettingsTabs(QTabWidget):
             input_l = QFormLayout(input_w)
             for k, v in sorted(node.default.items()):
                 real_v = node.value.get(k, v)
+                if real_v is None:
+                    real_v = "null"
                 if type(v) == bool:
                     i = QCheckBox()
                     i.setChecked(real_v)
@@ -342,16 +344,37 @@ class SettingsTabs(QTabWidget):
             input_w.stateChanged.connect(lambda s: self.set_value(node, s, input_w))
         else:
             input_w = QLineEdit()
-            input_w.setText(str(node.value))
+            if isinstance(node.value, bool):
+                str_value = "true" if node.value else "false"
+            elif node.value is None:
+                str_value = "null"
+            else:
+                str_value = str(node.value)
+            input_w.setText(str_value)
             input_w.textChanged.connect(lambda s: self.set_value(node, s, input_w))
         q = QWidget()
         q_l = QHBoxLayout(q)
         q_l.addWidget(input_w)
         return q
 
+    def value_type(self, v, type_):
+        if not isinstance(type_, tuple):
+            type_ = (type_,)
+        if v == "null":
+            v = None
+        elif v in ("false", "true") and bool in type_:
+            v = True if v == "true" else False
+        else:
+            for t in type_:
+                try:
+                    v = t(v)
+                    break
+                except: pass
+        return v
+
     def set_dict_value(self, k, v, node, type_, widget):
         try:
-            v = type_(v)
+            v = self.value_type(v, type_)
             d = node.value.copy()
             d.update({k: v})
             node.value = d
@@ -362,7 +385,7 @@ class SettingsTabs(QTabWidget):
 
     def set_value(self, node, value, widget):
         try:
-            v = node.type_(value)
+            v = self.value_type(value, node.type_)
             node.value = v
             config.config.save()
             widget.setStyleSheet("background: rgba(137, 244, 66, 0.2);")

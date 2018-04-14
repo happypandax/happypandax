@@ -23,7 +23,11 @@ class Client:
         # HACK: properly fix this
         self._server = utils.get_qualified_name(config.host.value, config.port.value).split(':')
         self._server = (self._server[0], int(self._server[1]))
-        self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        if config.enable_ssl.value is True or config.enable_ssl.value == "server":
+            self._context = utils.create_ssl_context()
+            self._sock = self._context.wrap_socket(socket.socket(socket.AF_INET, socket.SOCK_STREAM))
+        else:
+            self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._alive = False
         self._buffer = b''
         self.session = session_id

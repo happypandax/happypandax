@@ -551,11 +551,24 @@ with config.namespace(server_ns):
         0,
         "Specify the amount of time (in minutes) a session can go unused before expiring or 0 for never")
 
-    encrypt = config.create(
-        server_ns,
-        'encrypt',
-        False,
-        "Specify if messages should be encrypted before sending. A secret key has to be set for messages to be encrypted")
+    enable_ssl = config.create(server_ns, "enable_ssl", False,
+                               'Enable SSL, valid values are true/false or "server"/"web" to only enable for the specific component',
+                               type_=(str, bool))
+
+    server_cert = config.create(server_ns,
+                                "server_cert",
+                                {'certfile': None,
+                                 'keyfile': None},
+                                 "Path to a certificate and the corresponding private key. If keyfile is not set, the private key will be taken from certfile. "+
+                                 "Note that if SSL is enabled and no cert files are provided, a self-signed certificate will be created and used instead. "+
+                                 "The self-signed certificate can be found at data/certs/")
+
+    web_cert = config.create(server_ns,
+                                "web_cert",
+                                {'certfile': None,
+                                 'keyfile': None},
+                                 "Same as server_cert. Values are inherited from server_cert If no values are provided and SSL is enabled for 'web' too")
+
 
 search_ns = 'search'
 

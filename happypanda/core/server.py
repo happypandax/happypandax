@@ -11,7 +11,7 @@ import errno
 
 from inspect import getmembers, isfunction, signature, Parameter
 
-from gevent import socket, pool
+from gevent import socket, pool, ssl
 from gevent.server import StreamServer
 from flask import Flask
 from flask_socketio import SocketIO
@@ -525,7 +525,15 @@ class HPServer:
         self._pool = pool.Pool(
             config.allowed_clients.value if config.allowed_clients.value else None,
             async.Greenlet)  # cannot be 0
-        self._server = StreamServer(params, self._handle, spawn=self._pool)
+        self._ssl_args = {}
+        if config.enable_ssl.value is True or config.enable_ssl.value == "server":
+            log.i("SSL enabled for server", stdout=True)
+            self._ssl_args['ssl_context'] = utils.create_ssl_context(server_side=True)
+
+        self._server = StreamServer(params,
+                                    self._handle,
+                                    spawn=self._pool,
+                                    **self._ssl_args)
         self._clients = set()  # a set of client handlers
         self._exitcode = None
 
@@ -662,4 +670,9 @@ class WebServer:
         if __name__ != '__main__':
             gevent.monkey.patch_all(thread=False, ssl=False)
         views.init_views(self.happyweb, self.socketio)
-        self.socketio.run(self.happyweb, host, port, debug=debug)
+        self._ssl_args = {}
+        if config.enable_ssl.value is True or config.enable_ssl.value == "web":
+            log.i("SSL enabled for webserver", stdout=True)
+            self._ssl_args['ssl_context'] = utils.create_ssl_context(webserver=True, server_side=True)
+            self._ssl_args['suppress_ragged_eofs'] = True
+        self.socketio.run(self.happyweb, host, port, debug=debug, **self._ssl_args)

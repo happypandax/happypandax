@@ -14,10 +14,10 @@ if hasattr(sys, 'frozen'):
 
 
 from gevent import monkey  # noqa: E402
-if __name__ == '__main__':
-    # need to patch before importing requests, see
-    # https://github.com/requests/requests/issues/3752
-    monkey.patch_ssl()
+#if __name__ == '__main__':
+# need to patch before importing requests, see
+# https://github.com/requests/requests/issues/3752
+monkey.patch_ssl()
 
 import multiprocessing  # noqa: E402
 import rollbar  # noqa: E402

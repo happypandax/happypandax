@@ -58,7 +58,7 @@ def Itemviewvonfig_render():
         grp_gallery_el.append(
             e(ui.Form.Field,
               control=ui.Checkbox,
-              label=tr(this, "ui.t-group-galleries", "Group galleries"), toggle=True,
+              label=tr(this, "ui.t-group-galleries", "Gallery Series"), toggle=True,
               defaultChecked=utils.storage.get(group_gallery_cfg + cfg_suffix, False),
               onChange=lambda e, d: all((props.on_group_gallery(e, d),
                                          utils.storage.set(group_gallery_cfg + cfg_suffix, d.checked))),
