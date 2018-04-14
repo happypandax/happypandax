@@ -48,7 +48,7 @@ def _get_similar(kwargs, similar_items):
     similar_items = similar_items[:kwargs['limit']]
     items = []
     if similar_items:
-        db_items = {} # needed to sort them the way they came in
+        db_items = {}  # needed to sort them the way they came in
         for g in database_cmd.GetModelItems().run(kwargs['db_model'], set(similar_items)):
             db_items[g.id] = g
         [items.append(db_items[x]) for x in similar_items]

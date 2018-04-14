@@ -286,7 +286,7 @@ def page_render():
                                                 toggle_config=this.toggle_galleries_config,
                                                 visible_config=this.state.visible_gallery_cfg,
                                                 show_search=True,
-                                                #show_filterdropdown=True,
+                                                # show_filterdropdown=True,
                                                 show_sortdropdown=True,
                                                 container=True,
                                                 secondary=True))),

@@ -14,6 +14,8 @@ __pragma__('skip')
 require = window = require = setInterval = setTimeout = setImmediate = None
 clearImmediate = clearInterval = clearTimeout = this = document = None
 JSON = Math = console = alert = requestAnimationFrame = None
+js_undefined = location = localStorage = sessionStorage = None
+Date = None
 __pragma__('noskip')
 
 
@@ -206,23 +208,23 @@ def itemviewbase_render():
     nav_els = []
     if this.props.show_itembuttons:
         nav_els.append(e(ui.Menu.Item, e(item.ItemButtons,
-                         history=this.props.history,
-                         on_change=this.props.on_item_change,
-                         value=this.props.default_item,
-                         query=this.props.query,
-                         ), icon=True))
+                                         history=this.props.history,
+                                         on_change=this.props.on_item_change,
+                                         value=this.props.default_item,
+                                         query=this.props.query,
+                                         ), icon=True))
 
     if this.props.show_search:
         nav_els.append(e(ui.Menu.Menu, e(ui.Menu.Item, e(item.Search,
-                                 history=this.props.history,
-                                 location=this.props.location,
-                                 size="small",
-                                 fluid=True,
-                                 on_search=this.props.on_search,
-                                 search_query=this.props.default_search,
-                                 query=this.props.query,
-                                 ),
-                            className="fullwidth"),
+                                                         history=this.props.history,
+                                                         location=this.props.location,
+                                                         size="small",
+                                                         fluid=True,
+                                                         on_search=this.props.on_search,
+                                                         search_query=this.props.default_search,
+                                                         query=this.props.query,
+                                                         ),
+                                         className="fullwidth"),
                          position="left",
                          className="fullwidth"))
 
@@ -235,34 +237,34 @@ def itemviewbase_render():
     if this.props.show_sortdropdown:
         nav_els.append(e(ui.Menu.Item,
                          e(ToggleIcon, icons=["sort content ascending", "sort content descending"],
-                            on_toggle=lambda a: all((
-                                on_sort_desc(a),
-                                utils.go_to(history, query={'sort_desc': int(a)}, push=False))),
-                            toggled=default_sort_desc,
-                            ),
+                           on_toggle=lambda a: all((
+                               on_sort_desc(a),
+                               utils.go_to(history, query={'sort_desc': int(a)}, push=False))),
+                           toggled=default_sort_desc,
+                           ),
                          e(item.SortDropdown,
-                         history=this.props.history,
-                         on_change=this.props.on_sort_change,
-                         item_type=this.props.default_item,
-                         query=this.props.query,
-                         value=this.props.default_sort,
-                         ), icon=True))
+                           history=this.props.history,
+                           on_change=this.props.on_sort_change,
+                           item_type=this.props.default_item,
+                           query=this.props.query,
+                           value=this.props.default_sort,
+                           ), icon=True))
 
     if this.props.show_filterdropdown:
         nav_els.append(e(ui.Menu.Item,
                          e(ui.Icon, js_name="delete" if default_filter else "filter",
-                            link=True if default_filter else False,
-                            onClick=js_undefined if not default_filter else lambda: all((
-                                on_filter_change(None, 0),
-                                utils.go_to(history, query={'filter_id': 0}, push=False))),
-                            ),
+                           link=True if default_filter else False,
+                           onClick=js_undefined if not default_filter else lambda: all((
+                               on_filter_change(None, 0),
+                               utils.go_to(history, query={'filter_id': 0}, push=False))),
+                           ),
                          e(item.FilterDropdown,
-                         history=this.props.history,
-                         on_change=this.props.on_filter_change,
-                         value=this.props.default_filter,
-                         query=this.props.query,
-                         inline=True,
-                         ), icon=True))
+                           history=this.props.history,
+                           on_change=this.props.on_filter_change,
+                           value=this.props.default_filter,
+                           query=this.props.query,
+                           inline=True,
+                           ), icon=True))
 
     if len(nav_els) != 0:
         nav_els = [e(ui.Grid.Row,
@@ -339,7 +341,10 @@ def get_items(data=None, error=None):
                        'loading': False,
                        'loading_more': False})
     elif error:
-        state.app.notif("Failed to fetch item type: {}".format(this.props.item_type or this.state.item_type), level="error")
+        state.app.notif(
+            "Failed to fetch item type: {}".format(
+                this.props.item_type or this.state.item_type),
+            level="error")
     else:
         item = this.props.item_type or this.state.item_type
         sort_by = (this.props.sort_by if utils.defined(this.props.sort_by) else this.state.sort_by)
@@ -565,7 +570,6 @@ ItemView = createReactClass({
 
     'getInitialState': lambda: {'page': 1,
                                 'prev_page': 0,
-                                'search_query': utils.get_query("search", "") or this.props.search_query,
                                 'infinite_scroll': utils.storage.get("infinite_scroll" + this.config_suffix(), this.props.infinite_scroll),
                                 'limit': utils.storage.get("item_count" + this.config_suffix(),
                                                            this.props.default_limit or (10 if this.props.related_type == ItemType.Page else 30)),
@@ -579,11 +583,11 @@ ItemView = createReactClass({
                                 'group_gallery': utils.storage.get("group_gallery" + this.config_suffix(), False),
                                 'blur': utils.storage.get("blur" + this.config_suffix(), False),
 
-                                'item_type': utils.session_storage.get("item_type"+this.config_suffix(), int(utils.get_query("item_type", ItemType.Gallery))),
-                                'filter_id': int(utils.either(utils.get_query("filter_id", None), utils.session_storage.get("filter_id"+this.config_suffix(), 0))),
-                                'sort_by': utils.session_storage.get("sort_idx_{}".format(utils.session_storage.get("item_type", ItemType.Gallery))+this.config_suffix(), int(utils.get_query("sort_idx", 0))),
-                                'sort_desc': utils.session_storage.get("sort_desc"+this.config_suffix(), bool(utils.get_query("sort_desc", 0))),
-                                'search_query': utils.session_storage.get("search_query"+this.config_suffix(), utils.get_query("search", "") if this.query() else "", True),
+                                'item_type': utils.session_storage.get("item_type" + this.config_suffix(), int(utils.get_query("item_type", ItemType.Gallery))),
+                                'filter_id': int(utils.either(utils.get_query("filter_id", None), utils.session_storage.get("filter_id" + this.config_suffix(), 0))),
+                                'sort_by': utils.session_storage.get("sort_idx_{}".format(utils.session_storage.get("item_type", ItemType.Gallery)) + this.config_suffix(), int(utils.get_query("sort_idx", 0))),
+                                'sort_desc': utils.session_storage.get("sort_desc" + this.config_suffix(), bool(utils.get_query("sort_desc", 0))),
+                                'search_query': this.props.search_query if utils.defined(this.props.search_query) else utils.session_storage.get("search_query" + this.config_suffix(), utils.get_query("search", "") if this.query() else "", True),
                                 'search_options': utils.storage.get("search_options", {}),
                                 },
 
@@ -594,13 +598,13 @@ ItemView = createReactClass({
 
     'on_item_change': lambda e, d: all((this.setState({'item_type': d.value,
                                                        'sort_by': utils.session_storage.get("sort_idx_{}".format(d.value), this.state.sort_by)}),
-                                        utils.session_storage.set("item_type"+this.config_suffix(), d.value))),
+                                        utils.session_storage.set("item_type" + this.config_suffix(), d.value))),
     'on_sort_change': lambda e, d: all((this.setState({'sort_by': d.value}),
-                                        utils.session_storage.set("sort_idx_{}".format(this.state.item_type)+this.config_suffix(), d.value))),
+                                        utils.session_storage.set("sort_idx_{}".format(this.state.item_type) + this.config_suffix(), d.value))),
     'toggle_sort_desc': lambda d: all((this.setState({'sort_desc': not this.state.sort_desc}),
-                                       utils.session_storage.set("sort_desc"+this.config_suffix(), not this.state.sort_desc))),
+                                       utils.session_storage.set("sort_desc" + this.config_suffix(), not this.state.sort_desc))),
     'on_filter_change': lambda e, d: all((this.setState({'filter_id': d.value}),
-                                          utils.session_storage.set("filter_id"+this.config_suffix(), utils.either(d.value, 0)))),
+                                          utils.session_storage.set("filter_id" + this.config_suffix(), utils.either(d.value, 0)))),
     'on_search': lambda s, o: all((this.setState({'search_query': s if s else '', 'search_options': o}),
                                    utils.storage.set("search_options", o))),
 

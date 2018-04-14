@@ -707,6 +707,7 @@ def print_progress(iteration, total, prefix='', suffix='', decimals=1, bar_lengt
         sys.stdout.write('\n')
     sys.stdout.flush()
 
+
 def parse_args(args=sys.argv[1:]):
     parser = argparse.ArgumentParser()
     parser.add_argument('--debug', action='store_true', help="Print out a lot of useful information")
@@ -796,6 +797,7 @@ def process_pipes(out_queue, out_pipe):
         except (EOFError, AssertionError):
             break
 
+
 def extract_collection(title):
     """
     Extract Comic Market
@@ -818,7 +820,7 @@ def extract_collection(title):
             elif i == CType.gfm:
                 d = "".join(x for x in m[0] if x.isdigit())
                 if len(d) == 1:
-                    d = '0'+d
+                    d = '0' + d
                 col_name = "Girls forM Vol. " + d
                 category = "Magazine"
             title = " ".join(title.replace(m[0], '').strip().split())
@@ -1016,7 +1018,6 @@ def main(args=sys.argv[1:]):
                                 col_type.name = col_category
                                 dst_categories[col_category.lower()] = col_type
                             collection.category = col_type
-
 
                     title.language = db_lang
                     gallery.titles.clear()

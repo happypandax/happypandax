@@ -217,7 +217,7 @@ def version(args):
         print(constants.version_str)
         return
     if args.app_release:
-        print("HappyPanda X " + ('PREVIEW ' if constants.preview else '') + 'v'+constants.version_str)
+        print("HappyPanda X " + ('PREVIEW ' if constants.preview else '') + 'v' + constants.version_str)
         return
 
     print("\n-----------------------------------------------\n")

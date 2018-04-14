@@ -306,12 +306,12 @@ ConnectStatus = createReactClass({
 LabelAccordion = createReactClass({
     'displayName': 'LabelAccordion',
 
-    'getInitialState': lambda: {'open': (utils.storage.get('labelaccordion'+this.props.cfg_suffix, this.props.default_open) if this.props.cfg_suffix else this.props.default_open) or False
+    'getInitialState': lambda: {'open': (utils.storage.get('labelaccordion' + this.props.cfg_suffix, this.props.default_open) if this.props.cfg_suffix else this.props.default_open) or False
                                 },
 
     'toggle': lambda: all((this.setState({'open': not this.state.open}),
                            this.props.on_toggle(not this.state.open) if this.props.on_toggle else None),
-                           utils.storage.set('labelaccordion'+this.props.cfg_suffix, not this.state.open) if this.props.cfg_suffix else None),
+                          utils.storage.set('labelaccordion' + this.props.cfg_suffix, not this.state.open) if this.props.cfg_suffix else None),
 
     'render': lambda: e(ui.Segment,
                         e(ui.Label,

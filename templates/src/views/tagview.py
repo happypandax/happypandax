@@ -1,5 +1,4 @@
-from src.react_utils import (e, h,
-                             createReactClass)
+from src.react_utils import (e, createReactClass)
 from src.ui import ui
 from src.client import client
 from src.state import state

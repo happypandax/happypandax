@@ -183,7 +183,7 @@ def get_filters(data=None, error=None):
 
 def get_collection_data(data=None, error=None):
     if data is not None and not error:
-        this.setState({"collection_count": len(data), 'collection_data':data})
+        this.setState({"collection_count": len(data), 'collection_data': data})
     elif error:
         state.app.notif("Failed to fetch collection data ({})".format(this.state.id), level="error")
 
@@ -415,14 +415,15 @@ def page_render():
                                       e(ui.Grid.Column,
                                         e(LabelAccordion,
                                           e(Slider,
-                                            *[e(collectionitem.Collection, data=x, className="small-size") for x in collection_data],
+                                            *[e(collectionitem.Collection, data=x, className="small-size")
+                                                for x in collection_data],
                                             secondary=True,
                                             sildesToShow=4),
                                           label=tr(this, "ui.h-appears-in-collection",
                                                    "Appears in {} collection".format(this.state.collection_count),
                                                    count=this.state.collection_count),
                                           color="teal",
-                                          cfg_suffix=this.cfg_suffix+'collection',
+                                          cfg_suffix=this.cfg_suffix + 'collection',
                                           default_open=True
                                           )
                                         )
@@ -438,12 +439,12 @@ def page_render():
                               secondary=True,
                               sildesToShow=4)
         similar_progress_el = e(ui.Segment, e(ui.Progress,
-                                size="small",
-                                active=True,
-                                total=this.state.similar_gallery_progress.max or 0,
-                                value=this.state.similar_gallery_progress.value,
-                                progress="value",
-                                autoSuccess=True),
+                                              size="small",
+                                              active=True,
+                                              total=this.state.similar_gallery_progress.max or 0,
+                                              value=this.state.similar_gallery_progress.value,
+                                              progress="value",
+                                              autoSuccess=True),
                                 basic=True)
         similar_galleries.append(e(ui.Grid.Row,
                                    e(ui.Grid.Column,
@@ -451,7 +452,7 @@ def page_render():
                                        similar_progress_el if this.state.similar_gallery_loading else similar_slider_el,
                                        label=tr(this, "ui.h-more-like-this", "More like this"),
                                        color="teal",
-                                       cfg_suffix=this.cfg_suffix+'similar',
+                                       cfg_suffix=this.cfg_suffix + 'similar',
                                        default_open=True
                                        )
                                      )

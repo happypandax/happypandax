@@ -365,11 +365,12 @@ class SettingsTabs(QTabWidget):
         elif v in ("false", "true") and bool in type_:
             v = True if v == "true" else False
         else:
-            for t in type_:
+            for i in type_:
                 try:
-                    v = t(v)
+                    v = i(v)
                     break
-                except: pass
+                except BaseException:
+                    pass
         return v
 
     def set_dict_value(self, k, v, node, type_, widget):

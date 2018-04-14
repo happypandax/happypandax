@@ -559,15 +559,15 @@ with config.namespace(server_ns):
                                 "server_cert",
                                 {'certfile': None,
                                  'keyfile': None},
-                                 "Path to a certificate and the corresponding private key. If keyfile is not set, the private key will be taken from certfile. "+
-                                 "Note that if SSL is enabled and no cert files are provided, a self-signed certificate will be created and used instead. "+
-                                 "The self-signed certificate can be found at data/certs/")
+                                "Path to a certificate and the corresponding private key. If keyfile is not set, the private key will be taken from certfile. " +
+                                "Note that if SSL is enabled and no cert files are provided, a self-signed certificate will be created and used instead. " +
+                                "The self-signed certificate can be found at data/certs/")
 
     web_cert = config.create(server_ns,
-                                "web_cert",
-                                {'certfile': None,
+                             "web_cert",
+                             {'certfile': None,
                                  'keyfile': None},
-                                 "Same as server_cert. Values are inherited from server_cert If no values are provided and SSL is enabled for 'web' too")
+                             "Same as server_cert. Values are inherited from server_cert If no values are provided and SSL is enabled for 'web' too")
 
 
 search_ns = 'search'

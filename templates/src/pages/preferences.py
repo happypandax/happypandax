@@ -52,9 +52,9 @@ def pref_general(props):
                                                       client.set_locale(d.value))),
                            ))
             items.append(h("p", h("a", tr(props.tab, "ui.t-help-translate",
-                                   "Not satisfied with the translation? Consider helping out"),
-                           href="https://happypandax.github.io/happypandax/translation.html",
-                           target="_blank")))
+                                          "Not satisfied with the translation? Consider helping out"),
+                                  href="https://happypandax.github.io/happypandax/translation.html",
+                                  target="_blank")))
             if state.debug:
                 items.append(e(ui.Form.Field,
                                e(ui.Checkbox,

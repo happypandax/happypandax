@@ -11,7 +11,6 @@ def main(args=sys.argv):
     if os.environ.get('APPVEYOR'):
         transcrypt_path = os.path.join(os.path.split(sys.executable)[0], "Scripts", "transcrypt.exe")
 
-
     js_dir = "templates"
     # Note:
     # Transcrypt is required to be in the same directory as the js files

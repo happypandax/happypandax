@@ -14,7 +14,7 @@ if hasattr(sys, 'frozen'):
 
 
 from gevent import monkey  # noqa: E402
-#if __name__ == '__main__':
+# if __name__ == '__main__':
 # need to patch before importing requests, see
 # https://github.com/requests/requests/issues/3752
 monkey.patch_ssl()

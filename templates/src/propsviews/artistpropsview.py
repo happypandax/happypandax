@@ -96,16 +96,19 @@ def artistprops_render():
 
     if circles:
         rows.append(e(ui.Table.Row,
-                      e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-circle", "Circle") + ":", size="tiny", className="sub-text"), collapsing=True),
+                      e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-circle", "Circle") +
+                                         ":", size="tiny", className="sub-text"), collapsing=True),
                       e(ui.Table.Cell, *(e(circleitem.CircleLabel, data=x) for x in circles))))
 
     rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-galleries", "Galleries") + ":", size="tiny", className="sub-text"), collapsing=True),
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-galleries", "Galleries") +
+                                     ":", size="tiny", className="sub-text"), collapsing=True),
                   e(ui.Table.Cell, this.state.gallery_count)))
 
     if urls:
         rows.append(e(ui.Table.Row,
-                      e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-url", "URL") + ":", size="tiny", className="sub-text"), collapsing=True),
+                      e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-url", "URL") +
+                                         ":", size="tiny", className="sub-text"), collapsing=True),
                       e(ui.Table.Cell, *[e(ui.List.Item, h("span", h("a", x, href=x, target="_blank"), e(ui.List.Icon, js_name="external share"))) for x in urls])))
 
     slider_el = []

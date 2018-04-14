@@ -591,6 +591,7 @@ def get_language_code(lcode):
         lcode = lcode.split('_')[0]
     return lcode.lower()
 
+
 def create_ssl_context(webserver=False, server_side=False, verify_mode=ssl.CERT_OPTIONAL, check_hostname=False,
                        certfile=None, keyfile=None):
     c = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH if server_side else ssl.Purpose.SERVER_AUTH)
@@ -632,6 +633,7 @@ def create_ssl_context(webserver=False, server_side=False, verify_mode=ssl.CERT_
 
     return c
 
+
 def create_self_signed_cert(cert_file, key_file, pem_file=None):
     """
     self-signed cert
@@ -651,7 +653,7 @@ def create_self_signed_cert(cert_file, key_file, pem_file=None):
     cert.get_subject().CN = socket.gethostname()
     cert.set_serial_number(1000)
     cert.gmtime_adj_notBefore(0)
-    cert.gmtime_adj_notAfter(10*365*24*60*60)
+    cert.gmtime_adj_notAfter(10 * 365 * 24 * 60 * 60)
     cert.set_issuer(cert.get_subject())
     cert.set_pubkey(k)
     cert.sign(k, 'sha256')
@@ -665,4 +667,4 @@ def create_self_signed_cert(cert_file, key_file, pem_file=None):
 
     if pem_file:
         with open(pem_file, "wb") as f:
-            f.write(cert_pem+key_pem)
+            f.write(cert_pem + key_pem)

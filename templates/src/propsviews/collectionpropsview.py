@@ -75,14 +75,17 @@ def collectionprops_render():
                       e(ui.Table.Cell, e(ui.Header, info, size="tiny", className="sub-text"), colSpan="2")))
 
     rows.append(e(ui.Table.Row,
-                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-published", "Published") + ':', size="tiny", className="sub-text"), collapsing=True),
+                  e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-published", "Published") +
+                                     ':', size="tiny", className="sub-text"), collapsing=True),
                   e(ui.Table.Cell, e(DateLabel, timestamp=date_pub, full=True))))
     if this.props.compact:
         rows.append(e(ui.Table.Row,
-                      e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-date-added", "Date added") + ':', size="tiny", className="sub-text"), collapsing=True),
+                      e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-date-added", "Date added") +
+                                         ':', size="tiny", className="sub-text"), collapsing=True),
                       e(ui.Table.Cell, e(DateLabel, timestamp=date_added, format="LLL"))))
         rows.append(e(ui.Table.Row,
-                      e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-last-updated", "Last updated") + ':', size="tiny", className="sub-text"), collapsing=True),
+                      e(ui.Table.Cell, e(ui.Header, tr(this, "ui.t-last-updated", "Last updated") +
+                                         ':', size="tiny", className="sub-text"), collapsing=True),
                       e(ui.Table.Cell, e(DateLabel, timestamp=date_upd, format="LLL"))))
 
     return e(ui.Table,

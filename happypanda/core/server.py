@@ -11,7 +11,7 @@ import errno
 
 from inspect import getmembers, isfunction, signature, Parameter
 
-from gevent import socket, pool, ssl
+from gevent import socket, pool
 from gevent.server import StreamServer
 from flask import Flask
 from flask_socketio import SocketIO

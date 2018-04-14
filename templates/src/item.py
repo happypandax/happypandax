@@ -64,7 +64,7 @@ def search_render():
     if this.props.fluid:
         cls_name = "fullwidth"
     if this.props.className:
-        cls_name+= " " + this.props.className
+        cls_name += " " + this.props.className
     return e(ui.Form,
              e(ui.Search,
                size=this.props.size,
@@ -94,7 +94,7 @@ def search_render():
                        ),
                minCharacters=3,
                fluid=this.props.fluid,
-               action={'icon':'search'},
+               action={'icon': 'search'},
                open=this.state.suggest if not this.state.suggest else js_undefined,
                onSearchChange=this.on_search_change,
                defaultValue=this.state.query
@@ -201,17 +201,17 @@ def itembuttons_change(e, d):
 def itembuttons_render():
     on_change = this.props.on_change
     return e(ui.Button.Group,
-             e(ui.Button,tr(this, "general.db-item-collection", "Collection"),
+             e(ui.Button, tr(this, "general.db-item-collection", "Collection"),
                value=ItemType.Collection,
                onClick=lambda e, d: on_change(e, d) if on_change else None,
                primary=True,
-               basic=this.props.value==ItemType.Collection,
+               basic=this.props.value == ItemType.Collection,
                ),
              e(ui.Button, tr(this, "general.db-item-gallery", "Gallery"),
                value=ItemType.Gallery,
                onClick=lambda e, d: on_change(e, d) if on_change else None,
                primary=True,
-               basic=this.props.value==ItemType.Gallery,
+               basic=this.props.value == ItemType.Gallery,
                ),
              toggle=True,
              basic=True
