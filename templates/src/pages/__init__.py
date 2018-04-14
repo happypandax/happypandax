@@ -148,7 +148,7 @@ ItemViewPage = createReactClass({
                                 'filter_id': int(utils.either(utils.get_query("filter_id", None), utils.session_storage.get("filter_id", 0))),
                                 'sort_idx': utils.session_storage.get("sort_idx_{}".format(utils.session_storage.get("item_type", ItemType.Gallery)), int(utils.get_query("sort_idx", 0))),
                                 'sort_desc': utils.session_storage.get("sort_desc", bool(utils.get_query("sort_desc", 0))),
-                                'search_query': utils.session_storage.get("search_query", "", True),
+                                'search_query': utils.session_storage.get("search_query", utils.get_query("search", ""), True),
                                 'search_options': utils.storage.get("search_options", {}),
                                 'visible_config': False,
                                 },

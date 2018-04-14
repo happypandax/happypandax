@@ -16,6 +16,10 @@ JSON = Math = console = alert = requestAnimationFrame = None
 js_undefined = location = localStorage = sessionStorage = None
 __pragma__('noskip')
 
+def collection_on_update(p_props, p_state):
+    if p_props.data != this.props.data:
+        this.setState({'data': this.props.data, 'id': this.props.data.id if this.props.data else None})
+
 
 def collection_render():
     title = ""
@@ -92,6 +96,7 @@ Collection = createReactClass({
     'dimmer_hide': lambda: this.setState({'dimmer': False}),
 
     'componentWillMount': lambda: this.setState({'data': this.props.data, 'id': 0}),
+    'componentDidUpdate': collection_on_update,
 
     'render': collection_render
 })

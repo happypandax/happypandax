@@ -532,7 +532,7 @@ def item_view_render():
              infinite_scroll=this.state.infinite_scroll,
              on_load_more=this.get_more,
              loading_more=this.state.loading_more,
-             query=this.props.query if utils.defined(this.props.query) else True,
+             query=this.query(),
              context=this.props.context,
              show_count=this.props.show_count,
              show_pagination=this.props.show_pagination,
@@ -561,6 +561,7 @@ ItemView = createReactClass({
     'displayName': 'ItemView',
 
     'config_suffix': lambda: this.props.config_suffix or "",
+    'query': lambda: this.props.query if utils.defined(this.props.query) else True,
 
     'getInitialState': lambda: {'page': 1,
                                 'prev_page': 0,
@@ -582,7 +583,7 @@ ItemView = createReactClass({
                                 'filter_id': int(utils.either(utils.get_query("filter_id", None), utils.session_storage.get("filter_id"+this.config_suffix(), 0))),
                                 'sort_by': utils.session_storage.get("sort_idx_{}".format(utils.session_storage.get("item_type", ItemType.Gallery))+this.config_suffix(), int(utils.get_query("sort_idx", 0))),
                                 'sort_desc': utils.session_storage.get("sort_desc"+this.config_suffix(), bool(utils.get_query("sort_desc", 0))),
-                                'search_query': utils.session_storage.get("search_query"+this.config_suffix(), "", True),
+                                'search_query': utils.session_storage.get("search_query"+this.config_suffix(), utils.get_query("search", "") if this.query() else "", True),
                                 'search_options': utils.storage.get("search_options", {}),
                                 },
 
