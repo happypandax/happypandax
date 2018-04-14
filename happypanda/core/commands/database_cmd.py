@@ -313,6 +313,41 @@ class GetDatabaseSort(Command):
         }
 
     ##############################
+    # Collection
+
+    @names.default(capture=True)
+    def _collection_names(model_name, capture=db.model_name(db.Collection)):
+        return {
+            ItemSort.CollectionRandom.value: "Random",
+            ItemSort.CollectionName.value: "Name",
+            ItemSort.CollectionDate.value: "Date Added",
+            ItemSort.CollectionPublished.value: "Date Published",
+            ItemSort.CollectionGalleryCount.value: "Gallery Count",
+        }
+
+    @orderby.default(capture=True)
+    def _collection_orderby(model_name, capture=db.model_name(db.Collection)):
+        return {
+            ItemSort.CollectionRandom.value: (func.random(),),
+            ItemSort.CollectionName.value: (db.Collection.name,),
+            ItemSort.CollectionDate.value: (db.Collection.timestamp,),
+            ItemSort.CollectionPublished.value: (db.Collection.pub_date,),
+            ItemSort.CollectionGalleryCount.value: (db.func.count(db.Gallery.id),),
+        }
+
+    @groupby.default(capture=True)
+    def _collection_groupby(model_name, capture=db.model_name(db.Collection)):
+        return {
+            ItemSort.CollectionGalleryCount.value: (db.Collection.id,),
+        }
+
+    @joins.default(capture=True)
+    def _collection_joins(model_name, capture=db.model_name(db.Collection)):
+        return {
+            ItemSort.CollectionGalleryCount.value: (db.Collection.galleries,),
+        }
+
+    ##############################
     # AliasName
 
     @names.default(capture=True)

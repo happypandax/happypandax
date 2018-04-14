@@ -342,6 +342,10 @@ def get_items(data=None, error=None):
         state.app.notif("Failed to fetch item type: {}".format(this.props.item_type or this.state.item_type), level="error")
     else:
         item = this.props.item_type or this.state.item_type
+        sort_by = (this.props.sort_by if utils.defined(this.props.sort_by) else this.state.sort_by)
+        sort_desc = (this.props.sort_desc if utils.defined(this.props.sort_desc) else this.state.sort_desc)
+        filter_id = (this.props.filter_id if utils.defined(this.props.filter_id) else this.state.filter_id)
+
         func_kw = {'item_type': item,
                    'page': max(int(this.state.page) - 1, 0),
                    'limit': this.props.limit or this.state.limit}
@@ -349,14 +353,14 @@ def get_items(data=None, error=None):
             func_kw['view_filter'] = this.props.view_filter
         if this.state.search_query:
             func_kw['search_query'] = this.state.search_query
-        if this.props.sort_by or this.state.sort_by:
-            func_kw['sort_by'] = this.props.sort_by or this.state.sort_by
-        if this.props.sort_desc or this.state.sort_desc:
-            func_kw['sort_desc'] = this.props.sort_desc or this.state.sort_desc
+        if sort_by:
+            func_kw['sort_by'] = sort_by
+        if sort_desc:
+            func_kw['sort_desc'] = sort_desc
         if this.props.search_options or this.state.search_options:
             func_kw['search_options'] = this.props.search_options or this.state.search_options
-        if this.props.filter_id or this.state.filter_id:
-            func_kw['filter_id'] = this.props.filter_id or this.state.filter_id
+        if filter_id:
+            func_kw['filter_id'] = filter_id
         if this.props.related_type:
             func_kw['related_type'] = this.props.related_type
         if this.props.item_id:
@@ -379,11 +383,13 @@ def get_items_count(data=None, error=None):
         pass
     else:
         item = this.props.item_type or this.state.item_type
+        filter_id = (this.props.filter_id if utils.defined(this.props.filter_id) else this.state.filter_id)
+
         func_kw = {'item_type': item}
         if this.props.view_filter:
             func_kw['view_filter'] = this.props.view_filter
-        if this.props.filter_id or this.state.filter_id:
-            func_kw['filter_id'] = this.props.filter_id or this.state.filter_id
+        if filter_id:
+            func_kw['filter_id'] = filter_id
         if this.state.search_query:
             func_kw['search_query'] = this.state.search_query
         if this.props.search_options or this.state.search_options:
@@ -574,7 +580,7 @@ ItemView = createReactClass({
 
                                 'item_type': utils.session_storage.get("item_type"+this.config_suffix(), int(utils.get_query("item_type", ItemType.Gallery))),
                                 'filter_id': int(utils.either(utils.get_query("filter_id", None), utils.session_storage.get("filter_id"+this.config_suffix(), 0))),
-                                'sort_by': utils.session_storage.get("sort_idx_{}".format(ItemType.Gallery)+this.config_suffix(), int(utils.get_query("sort_idx", 0))),
+                                'sort_by': utils.session_storage.get("sort_idx_{}".format(utils.session_storage.get("item_type", ItemType.Gallery))+this.config_suffix(), int(utils.get_query("sort_idx", 0))),
                                 'sort_desc': utils.session_storage.get("sort_desc"+this.config_suffix(), bool(utils.get_query("sort_desc", 0))),
                                 'search_query': utils.session_storage.get("search_query"+this.config_suffix(), "", True),
                                 'search_options': utils.storage.get("search_options", {}),
@@ -585,7 +591,8 @@ ItemView = createReactClass({
     'get_element': get_element,
     'get_more': get_more,
 
-    'on_item_change': lambda e, d: all((this.setState({'item_type': d.value}),
+    'on_item_change': lambda e, d: all((this.setState({'item_type': d.value,
+                                                       'sort_by': utils.session_storage.get("sort_idx_{}".format(d.value), this.state.sort_by)}),
                                         utils.session_storage.set("item_type"+this.config_suffix(), d.value))),
     'on_sort_change': lambda e, d: all((this.setState({'sort_by': d.value}),
                                         utils.session_storage.set("sort_idx_{}".format(this.state.item_type)+this.config_suffix(), d.value))),

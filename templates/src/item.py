@@ -229,10 +229,7 @@ ItemButtons = createReactClass({
 
 def sortdropdown_get(data=None, error=None):
     if data is not None and not error:
-        items = {}
-        for x in data:
-            items[x['name']] = x
-        this.setState({"sort_items": items, "loading": False})
+        this.setState({"sort_items": data, "loading": False})
     elif error:
         pass
     else:
@@ -251,12 +248,11 @@ def sortdropdown_render():
     item_options = []
     __pragma__("iconv")
     if this.state.sort_items:
-        for x in sorted(this.state.sort_items):
-            i = this.state.sort_items[x]
-            if i['item_type'] == this.props.item_type:
+        for x in sorted(this.state.sort_items, key=lambda k: k['name']):
+            if x['item_type'] == this.props.item_type:
                 item_options.append({
-                    'value': i['index'],
-                    'text': i['name'],
+                    'value': x['index'],
+                    'text': x['name'],
                     'icon': 'sort'
                 })
     __pragma__("noiconv")

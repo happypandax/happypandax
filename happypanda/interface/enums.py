@@ -194,6 +194,17 @@ class ItemSort(_APIEnum):
     #: Parody Name
     ParodyName = 45
 
+    #: Collection Random
+    CollectionRandom = 50
+    #: Collection Name
+    CollectionName = 51
+    #: Collection Date Added
+    CollectionDate = 52
+    #: Collection Date Published
+    CollectionPublished = 53
+    #: Collection Gallery Count
+    CollectionGalleryCount = 54
+
 
 class ProgressType(_APIEnum):
 
