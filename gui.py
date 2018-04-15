@@ -562,7 +562,11 @@ class Window(QMainWindow):
 
     def open_client(self):
         u = utils.get_qualified_name(config.host_web.value, config.port_web.value)
-        webbrowser.open('http://' + u)
+        if config.enable_ssl.value is True or config.enable_ssl.value == "web":
+            p = "https://"
+        else:
+            p = "http://"
+        webbrowser.open(p + u)
 
     def stop_process(self, p):
         if p:

@@ -594,9 +594,13 @@ def get_language_code(lcode):
 
 def create_ssl_context(webserver=False, server_side=False, verify_mode=ssl.CERT_OPTIONAL, check_hostname=False,
                        certfile=None, keyfile=None):
+
     c = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH if server_side else ssl.Purpose.SERVER_AUTH)
-    c.verify_mode = verify_mode
-    c.check_hostname = check_hostname
+
+    if verify_mode is not None:
+        c.verify_mode = verify_mode
+    if check_hostname is not None:
+        c.check_hostname = check_hostname
 
     if not certfile:
         cfg_cert = config.web_cert.value if webserver else config.server_cert.value

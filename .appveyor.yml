@@ -27,8 +27,7 @@ init:
 
 install:
     - ps: Install-Product node 8
-    - "%PYTHON%/python.exe -m pip install --upgrade pip"
-    - "%PYTHON%/Scripts/pip.exe install --upgrade setuptools pip"
+    - "%PYTHON%/python.exe -m pip install --upgrade setuptools pip"
     - "%PYTHON%/Scripts/pip.exe install -r requirements-dev.txt"
 
 build: off

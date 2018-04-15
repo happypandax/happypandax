@@ -75,7 +75,7 @@ def check_release(silent=True, cmd=None):
     global next_check
 
     if config.check_new_releases.value:
-        if next_check and next_check > arrow.now():
+        if not constants.dev and next_check and next_check > arrow.now():
             log.d("Skipping release check, still within interval")
             return None
         next_check = arrow.now().replace(minutes=+max(config.check_release_interval.value, 5))

@@ -1,3 +1,9 @@
+from gevent import monkey  # noqa: E402
+# need to patch before importing requests, see
+# https://github.com/requests/requests/issues/3752
+monkey.patch_ssl()
+monkey.patch_select()
+
 import os
 import sys
 
@@ -11,13 +17,6 @@ if __package__ is None and not hasattr(sys, 'frozen'):
 # WIN: fix working directoy when added to start at boot
 if hasattr(sys, 'frozen'):
     os.chdir(os.path.abspath(os.path.dirname(sys.executable)))
-
-
-from gevent import monkey  # noqa: E402
-# if __name__ == '__main__':
-# need to patch before importing requests, see
-# https://github.com/requests/requests/issues/3752
-monkey.patch_ssl()
 
 import multiprocessing  # noqa: E402
 import rollbar  # noqa: E402
