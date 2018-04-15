@@ -1,11 +1,11 @@
-from gevent import monkey  # noqa: E402
+from gevent import monkey
 # need to patch before importing requests, see
 # https://github.com/requests/requests/issues/3752
 monkey.patch_ssl()
 monkey.patch_select()
 
-import os
-import sys
+import os # noqa: E402
+import sys # noqa: E402
 
 if __package__ is None and not hasattr(sys, 'frozen'):
     # direct call of main.py
