@@ -66,21 +66,34 @@ Run ``python lint.py`` (supply the ``-f`` switch to autoformat) when you are rea
 
 Additonally, you could create a git hook for the pre-push event that'll automatically run ``lint.py`` for you everytime you do a ``git push``.
 
-Create a file named ``pre-push`` at ``[HPX location]/.git/hooks`` with these contents::
+Create two files named ``pre-push`` and ``pre-push.py`` at ``[HPX location]/.git/hooks`` with these contents::
 
-    #![HPX location]/env/scripts/python.exe
+``pre-push``:
+
+    #!/bin/sh
+    
+    # REMEMBER TO UNOMMENT YOUR PLATFORM
+
+    # POSIX
+    #"env/bin/python.exe" ".git/hooks/pre-push.py"
+
+    # WINDOWS
+    "env/scripts/python.exe" ".git/hooks/pre-push.py"
+
+``pre-push.py``:
+
+    #!/usr/bin/python3
     import os
     import sys
     from subprocess import run
 
-
     if __name__ == '__main__':
-        os.chdir("[HPX location]")
-        sys.exit(run(["python", "lint.py"]).returncode)
+        sys.exit(run([sys.executable, "lint.py"]).returncode)
 
-.. Warning::
-    | Remember to replace ``[HPX location]`` with where your HPX folder is located.
-    | Also, on posix, remember to make the file an exceutable with ``chmod +x <path-to-file>``
+
+
+.. Note::
+    | On posix remember to make the ``pre-push`` file an exceutable with ``chmod +x .git/hooks/pre-push``
 
 Testing
 **************************************

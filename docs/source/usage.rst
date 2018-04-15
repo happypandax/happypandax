@@ -18,55 +18,50 @@ A default HPX installation has the following two components:
 Setting up
 -------------------------------------
 
-A good idea before starting HPX is to go through the available settings that configure how HPX should be running.
+Before starting HPX it is recommended to go through all the available settings that configure how HPX should be running.
 You can see the available settings :ref:`here <Settings>`.
 
-To use these settings, you create a file named ``config.yaml`` in the root directory of HPX.
+To use these settings, you create a configuration file named ``config.yaml`` in the root directory of HPX.
 
-You can create an example file with all settings listed if you run this command: ``./happypandax --gen-config`` or ``python3 run.py --gen-config`` if you're running from source.
+You can generate an example configuration file with all settings listed with their default values if you run this command: ``./happypandax --gen-config``.
 
 .. note::
-    On a MacOS HPX installation, the root HPX folder is inside the bundle at ``HappyPanda X.app/Contents/MacOS/``.
+    - On a MacOS HPX installation, the root HPX folder is inside the bundle at ``HappyPanda X.app/Contents/MacOS/``.
 
-    On Windows the executable is named ``happypandax.exe`` (with ``.exe`` suffix).
+    - On Windows the executable is named ``happypandax.exe`` (with ``.exe`` suffix).
 
 Most of these settings can also be configured from a HPX client.
 
 Starting
 -------------------------------------
 
-There exists two ways of starting up HPX.
+You can start up HPX in two ways with the executables named ``happypandax`` and ``happypandax_gui``.
 
-If you're running from source you start HPX either through ``run.py`` or ``gui.py``.
+The ``happypandax_gui`` executable is mostly just a GUI wrapper around ``happypandax`` to provide a user-friendly way of starting HPX.
 
-If from installation, there are the two executables named ``happypandax`` and ``happypandax_gui``.
+Before starting, you can also see the available command-line arguments by supplying the ``--help`` argument to the ``happypandax`` executable on the cmd/terminal: ``./happypandax --help``.
+You could also refer to :ref:`Command-Line Arguments`. 
 
-The `gui.py` or `happypandax_gui` is just a GUI wrapper around ``run.py`` or ``happypandax`` to provide a user-friendly way of starting HPX.
-
-Before starting, you can see the available arguments by supplying the ``--help`` argument on the commandline/terminal: ``python3 ./run.py --help`` or ``./happypandax --help``.
-You can also refer to :ref:`Command-Line Arguments`. 
-
-To start the server (and the webclient) you just run: ``python3 ./run.py`` or doubleclick on the executable ``happypandax``.
-You can also instead start the GUI wrapper and it should be self-explanatory how to start the server from there.
+To start the server (and the webclient with it) you just start one of the two executables.
 
 .. note::
-    On a MacOS HPX installation, the app bundle is set to run ``happypandax_gui`` on launch.
+    On a MacOS HPX installation, the app bundle is set to invoke ``happypandax_gui`` on launch.
 
 
 Migrating from HappyPanda
 -------------------------------------
 
-In the HPX root folder, you can find a commandline tool named ``HPtoHPX`` to help convert your HP database.
-See available arguments by supplying the ``--help`` argument: ``./HPtoHPX --help``.
+In the HPX root folder, you can find a command-line tool named ``HPtoHPX`` to help convert your HP database.
+See available arguments by supplying the ``--help`` argument to the executable: ``./HPtoHPX --help``.
 
 Convert your HP database like this: ``./HPtoHPX "path/to/old/file.db" "data/happypanda.db"``
 
-Alternatively, you can also use the GUI wrapper ``happypandax_gui``, which provides an user-friendly way of doing it.
+Alternatively, you can also use the GUI wrapper ``happypandax_gui`` which provides a user-friendly way of doing it.
 
 Using
 -------------------------------------
 
-If you started HPX, you can start using HPX right away by opening up your browser and going to 
+After starting HPX you can start using it right away by opening up your browser and going to 
 ``localhost:7008`` *(replace ``7008`` with whatever port you chose the webclient server to listen on)*
 
 What else you could do is look for another client to use HPX with. They can come in all forms (mobile apps, pc software, etc.) as long as someone builds it.
@@ -75,7 +70,41 @@ If you're interested in building a client to work with HPX, head over to :ref:`C
 Since a HPX client cannot function without the server running, it is a good idea to always leave the HPX server running in the background.
 
 
-Exposing Happypanda X
+Securing HappyPanda X
+========================================
+
+Users
+-------------------------------------
+
+HPX creates a default super-user called ``default`` with no password. This user is enabled by default.
+If you're planning on having multiple people accessing your HPX server, or you want to access the server from a remote origin over the internet, it is best
+you disable this user. Disable it with the setting ``server.disable_default_user``.
+
+Additionally, you may also want to disallow people accessing the server without logging in with the settings ``server.allow_guests`` and ``server.require_auth``.
+
+TLS/SSL Support
+-------------------------------------
+
+To enable SSL connections see the setting ``server.enable_ssl``.
+You can choose to only enable SSL for one of the components by setting the value to either ``server`` or ``web``.
+Set the value to ``true`` to enable for both.
+
+Provide your certification and private key files with the settings ``server.server_cert`` and ``server.web_cert``.
+If your private key and certificate is stored in the same file, you only need to set ``certfile`` and can ignore ``keyfile``.
+
+You can also choose to not provide any certfiles at all, in which case HPX will proceed to create a self-signed certificate for your personal use.
+These files can be found at ``[HPX]/data/certs/``. ``happypandax.crt`` is the certificate, ``happypandax.key`` is the private key and ``happypandax.pem`` is the combined version of the two.
+To get other clients to accept your server with the self-signed certificate, provide them with the ``happypandax.crt`` file.
+
+When using the self-signed certificate, browsers will complain about an unsecure connection. Since you're using HPX for personal reasons and trust yourself (i hope so), you can go
+ahead and allow the connection by adding an exception.
+
+.. note::
+    If you have enabled SSL for the ``web`` component, do remember to access through the ``HTTPS`` protocol and not ``HTTP`` or you won't be able to connect.
+
+
+
+Exposing HappyPanda X
 ========================================
 
 To allow HPX to be accessed from your phone or other devices, you'll need to expose the server(s) to the private or public (internet) networks

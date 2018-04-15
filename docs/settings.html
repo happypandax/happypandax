@@ -5,7 +5,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Settings &#8212; HappyPanda X 0.0.12#124 documentation</title>
+    <title>Settings &#8212; HappyPanda X 0.0.13#124 documentation</title>
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="_static/style.css" type="text/css" />
@@ -41,7 +41,7 @@
         </button>
         <a class="navbar-brand" href="index.html">
           HappyPanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.12#124</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.13#124</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -60,7 +60,8 @@
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="install.html#building">Building</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Using HappyPanda X</a></li>
-<li class="toctree-l1"><a class="reference internal" href="usage.html#exposing-happypanda-x">Exposing Happypanda X</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html#securing-happypanda-x">Securing Happypanda X</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html#exposing-happypanda-x">Exposing HappyPanda X</a></li>
 <li class="toctree-l1"><a class="reference internal" href="translation.html">Translations</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Settings</a></li>
 <li class="toctree-l1"><a class="reference internal" href="switches.html">Command-Line Arguments</a></li>
@@ -374,7 +375,7 @@
 </thead>
 <tbody valign="top">
 <tr class="row-even"><td>proxy</td>
-<td>{‘http’: ‘’, ‘https’: ‘’}</td>
+<td>{‘https’: ‘’, ‘http’: ‘’}</td>
 <td>server</td>
 <td>Specify network proxies. Proxy URLs must include the scheme. To use HTTP Basic Auth with your proxy, use the http://user:password&#64;host/ syntax</td>
 </tr>
@@ -447,10 +448,10 @@
 <td>server</td>
 <td>Disable default user</td>
 </tr>
-<tr class="row-even"><td>encrypt</td>
+<tr class="row-even"><td>enable_ssl</td>
 <td></td>
 <td>server</td>
-<td>Specify if messages should be encrypted before sending. A secret key has to be set for messages to be encrypted</td>
+<td>Enable SSL, valid values are true/false or “server”/”web” to only enable for the specific component</td>
 </tr>
 <tr class="row-odd"><td>expose_server</td>
 <td></td>
@@ -487,20 +488,30 @@
 <td>server</td>
 <td>Client must be authenticated to get write access</td>
 </tr>
-<tr class="row-even"><td>server_name</td>
-<td>sena_yakumo_mikan</td>
+<tr class="row-even"><td>server_cert</td>
+<td>{‘certfile’: None, ‘keyfile’: None}</td>
+<td>server</td>
+<td>Path to a certificate and the corresponding private key. If keyfile is not set, the private key will be taken from certfile. Note that if SSL is enabled and no cert files are provided, a self-signed certificate will be created and used instead. The self-signed certificate can be found at data/certs/</td>
+</tr>
+<tr class="row-odd"><td>server_name</td>
+<td>naoka_naoka_kouko</td>
 <td>server</td>
 <td>Specifiy name of the server</td>
 </tr>
-<tr class="row-odd"><td>session_span</td>
+<tr class="row-even"><td>session_span</td>
 <td></td>
 <td>server</td>
 <td>Specify the amount of time (in minutes) a session can go unused before expiring or 0 for never</td>
 </tr>
-<tr class="row-even"><td>torrent_port</td>
+<tr class="row-odd"><td>torrent_port</td>
 <td>7006</td>
 <td>server</td>
 <td>Specify which port to start the torrent client on</td>
+</tr>
+<tr class="row-even"><td>web_cert</td>
+<td>{‘certfile’: None, ‘keyfile’: None}</td>
+<td>server</td>
+<td>Same as server_cert. Values are inherited from server_cert If no values are provided and SSL is enabled for ‘web’ too</td>
 </tr>
 </tbody>
 </table>
