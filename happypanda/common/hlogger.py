@@ -10,7 +10,7 @@ try:
 except ImportError:
     pass
 
-from multiprocessing import Process, Queue, TimeoutError
+from multiprocessing import Process, Queue, TimeoutError, queues
 from logging.handlers import RotatingFileHandler
 
 
@@ -221,5 +221,5 @@ class Logger:
             cls._queue.put(None)
             try:
                 cls._queue.get(timeout=3)
-            except TimeoutError:
+            except (TimeoutError, queues.Empty):
                 pass

@@ -725,6 +725,10 @@ class User(Base):
     context_id = Column(String, nullable=False, default='')
     password = Column(Password)
     timestamp = Column(ArrowType, nullable=False, default=arrow.now)
+    # TODO:
+    # maybe a list of enum values?
+    #rights = Column(JSONType, nullable=False, default={})
+
 
     events = relationship("Event", lazy='dynamic', back_populates='user')
 
@@ -1007,6 +1011,8 @@ gallery_parodies = Table(
                 'parody_id', 'gallery_id'))
 
 
+# TODO:
+#class Parody(ProfileMixin, UserMixin, Base):
 @generic_repr
 class Parody(UserMixin, Base):
     __tablename__ = 'parody'
@@ -1016,6 +1022,8 @@ class Parody(UserMixin, Base):
         secondary=gallery_parodies,
         back_populates='parodies',
         lazy="dynamic")
+
+#profile_association(Parody, "parodies")
 
 
 aliasname_association(Parody, "parodies")
@@ -1713,7 +1721,7 @@ def table_attribs(model, id=False, descriptors=False):
 
     if descriptors:
         for name, value in model.__dict__.items():
-            if isinstance(value, (hybrid_property, AssociationProxy)):
+            if isinstance(value, (hybrid_property, AssociationProxy, index_property)):
                 d[name] = getattr(obj, name)
 
     return d

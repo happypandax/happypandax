@@ -6,6 +6,7 @@ import send2trash
 import attr
 import subprocess
 import imghdr
+import errno
 
 from io import BytesIO
 from PIL import Image
@@ -336,12 +337,17 @@ class CoreFS(CoreCommand):
     @property
     def exists(self):
         "Check if path exists"
-        if self.inside_archive:
-            self._init_archive()
-            log.d("Checking for archive path", self.archive_name, "in archive", self.path)
-            return self.archive_name in self._archive.namelist()
-        else:
-            return self._path.exists()
+        try:
+            if self.inside_archive:
+                self._init_archive()
+                log.d("Checking for archive path", self.archive_name, "in archive", self.path)
+                return self.archive_name in self._archive.namelist()
+            else:
+                return self._path.exists()
+        except OSError as e:
+            if e.errno == errno.ENXIO:
+                return False
+            raise
 
     @property
     def ext(self):

@@ -617,7 +617,7 @@ def create_ssl_context(webserver=False, server_side=False, verify_mode=ssl.CERT_
         pemfile = os.path.join(constants.dir_certs, "happypandax.pem")
         if not os.path.exists(certfile):
             create_self_signed_cert(certfile, keyfile, pemfile)
-        log.i("Certs not provided, using self-signed certificate")
+        log.i("Certs not provided, using self-signed certificate", stdout=True)
     else:
         if not os.path.exists(certfile) and not (os.path.exists(keyfile) if keyfile else False):
             raise exceptions.CoreError(this_function(), "Non-existent certificate or private key file")
