@@ -10,6 +10,7 @@ import threading
 
 from contextlib import contextmanager
 from sqlalchemy.engine import Engine
+from sqlalchemy.engine.url import URL
 from sqlalchemy import String as _String
 from sqlalchemy import exc as sa_exc
 from sqlalchemy.inspection import inspect
@@ -58,6 +59,7 @@ from sqlalchemy_utils import (
     force_auto_coercion,
     get_type,
     JSONType)
+from sqlalchemy_utils.functions import create_database, database_exists
 
 from happypanda.common import constants, exceptions, hlogger, clsutils, config, utils
 
@@ -1499,20 +1501,17 @@ def sqlite_regex_match(element, compiler, **kw):
 
 
 @event.listens_for(Engine, 'connect')
-def sqlite_engine_connect(dbapi_connection, connection_record):
-    """Listener for the event of establishing connection to a SQLite database.
-    Creates the functions handling regular expression operators
-    within SQLite engine, pointing them to their Python implementations above.
-    """
+def engine_connect(dbapi_connection, connection_record):
 
-    for name, function in SQLITE_REGEX_FUNCTIONS.values():
-        dbapi_connection.create_function(name, 2, function)
+    if config.dialect.value == constants.Dialect.SQLITE:
+        for name, function in SQLITE_REGEX_FUNCTIONS.values():
+            dbapi_connection.create_function(name, 2, function)
 
-    cursor = dbapi_connection.cursor()
-    cursor.execute("PRAGMA case_sensitive_like = 1;")
-    cursor.execute("PRAGMA journal_mode=WAL")
-    cursor.execute("PRAGMA synchronous=NORMAL")
-    cursor.close()
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA case_sensitive_like = 1;")
+        cursor.execute("PRAGMA journal_mode=WAL")
+        cursor.execute("PRAGMA synchronous=NORMAL")
+        cursor.close()
 
 
 def init_defaults(sess):
@@ -1629,8 +1628,6 @@ def check_db_version(sess):
         life.version = constants.version_db_str
         life.times_opened = 0
         sess.commit()
-        log.i("Succesfully initiated database")
-        log.i("DB Version: {}".format(life.version))
 
     db_key = "db_usage"
 
@@ -1645,6 +1642,8 @@ def check_db_version(sess):
     sess.add(Event(life, Event.Action.start))
     init_defaults(sess)
     sess.commit()
+    log.d("Succesfully initiated database")
+    log.d("DB Version: {}".format(life.version))
     return True
 
 
@@ -1659,6 +1658,19 @@ def _get_current():
     else:
         return threading.local()
 
+def make_db_url(db_name=None):
+    if db_name is None:
+        db_name = constants.db_name_dev if constants.dev and config.db_name.value == constants.db_name else config.db_name.value
+    db_url = URL(
+        config.dialect.value,
+        username=config.db_username.value,
+        password=config.db_password.value,
+        host=config.db_host.value,
+        port=config.db_port.value,
+        database=db_name,
+        query=config.db_query.value,
+        )
+    return db_url
 
 def init(**kwargs):
     db_path = kwargs.get("path")
@@ -1670,8 +1682,15 @@ def init(**kwargs):
     initEvents(Session)
     constants.db_engine = kwargs.get("engine")
     if not constants.db_engine:
-        constants.db_engine = create_engine(os.path.join("sqlite:///", db_path),
-                                            connect_args={'timeout': config.sqlite_database_timeout.value})  # SQLITE specific arg (avoding db is locked errors)
+        if config.dialect.value == constants.Dialect.SQLITE:
+            constants.db_engine = create_engine(os.path.join("sqlite:///", db_path),
+                                                connect_args={'timeout': config.sqlite_database_timeout.value})  # SQLITE specific arg (avoding db is locked errors)
+        else:
+            db_url = make_db_url()
+            if not database_exists(db_url):
+                create_database(db_url)
+            constants.db_engine = create_engine(db_url)
+
     Base.metadata.create_all(constants.db_engine)
 
     Session.configure(bind=constants.db_engine)

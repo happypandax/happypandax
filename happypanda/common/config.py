@@ -25,7 +25,7 @@ class ConfigNode:
     _cfg_nodes = {}
 
     def __init__(self, cfg, ns, name, value, description="", type_=None,
-                 isolation=ConfigIsolation.server, hidden=False):
+                 isolation=ConfigIsolation.server, hidden=False, only=None):
         self._cfg = cfg
         self.isolation = isolation
         self.namespace = ns
@@ -35,6 +35,7 @@ class ConfigNode:
         self.type_ = type(value) if type_ is None else type_
         self.hidden = hidden
         self._created = False
+        self.only = only
         if not hidden:
             with self._cfg.namespace(ns):
                 self._cfg.define(name, value, description)
@@ -74,10 +75,14 @@ class ConfigNode:
     @property
     def value(self):
         with self._cfg.tmp_config(self.namespace, self._get_ctx_config()):
-            return self.get(self.namespace, self.name, default=self.default, create=False, type_=self.type_)
+            return self.get(self.namespace, self.name, default=self.default, create=False, type_=self.type_, only=self.only)
 
     @value.setter
     def value(self, new_value):
+        if self.only is not None and new_value not in self.only:
+            log.w("Ignoring config value assignment {}:{} to {}".format(self.namespace, self.name, new_value))
+            return
+
         if self.isolation == ConfigIsolation.client:
             with self._cfg.tmp_config(self.namespace, self._get_ctx_config()):
                 self._cfg.update(self.name, new_value, create=self.hidden)
@@ -276,7 +281,7 @@ class Config:
         yield
         self._current_ns = self._prev_ns
 
-    def get(self, ns, key, default=None, description="", create=False, type_=None):
+    def get(self, ns, key, default=None, description="", create=False, type_=None, only=None):
         ""
         if not self._loaded:
             self.load()
@@ -292,10 +297,17 @@ class Config:
                     raise
                 return default
 
+            if v is None:
+                return default
+
             if type_ is not None and not isinstance(v, type_):
                 log.w(
                     "Setting '{}.{}' expected '{}' but got '{}', using default value".format(
-                        ns, key, type_, type(v)), stdout=True)
+                        ns, key, type_, type(v)), stderr=True)
+                return default
+
+            if only is not None and v not in only:
+                log.w("Setting '{}:{}' expected one of {}, using default value".format(ns, key, only), stderr=True)
                 return default
             return v
 
@@ -463,6 +475,56 @@ with config.namespace(gallery_ns):
 db_ns = 'db'
 
 with config.namespace(db_ns):
+
+    dialect = config.create(
+        db_ns,
+        "dialect",
+        "sqlite",
+        "Which SQL dialect to use among 'sqlite', 'mysql' and 'postgres'. "+
+        "Note that HPX will not transfer data from one dialect to another once chosen. "+
+        "It is therefore advised that you choose a dialect early and stick to it throughout",
+        only=("sqlite", "mysql", "postgres"))
+
+    db_name = config.create(
+        db_ns,
+        "name",
+        constants.db_name,
+        "Database name")
+
+    db_username = config.create(
+        db_ns,
+        "username",
+        None,
+        "Database user name",
+        type_=str)
+
+    db_password = config.create(
+        db_ns,
+        "password",
+        None,
+        "Database password",
+        type_=str)
+
+    db_host = config.create(
+        db_ns,
+        "host",
+        None,
+        "Database host",
+        type_=str)
+
+    db_port = config.create(
+        db_ns,
+        "port",
+        None,
+        "Database port",
+        type_=int)
+
+    db_query = config.create(
+        db_ns,
+        "query",
+        {},
+        "A mapping of options to be passed to the database upon connect",
+        type_=dict)
 
     sqlite_database_timeout = config.create(
         db_ns,

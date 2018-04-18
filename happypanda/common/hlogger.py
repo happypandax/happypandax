@@ -75,14 +75,17 @@ class Logger:
 
     def w(self, *args, **kwargs):
         "WARNING"
+        kwargs.pop("stderr", True)
         self._log(self._logger.warning, *args, stderr=True, **kwargs)
 
     def e(self, *args, **kwargs):
         "ERROR"
+        kwargs.pop("stderr", True)
         self._log(self._logger.error, *args, stderr=True, **kwargs)
 
     def c(self, *args, **kwargs):
         "CRITICAL"
+        kwargs.pop("stderr", True)
         self._log(self._logger.critical, *args, stderr=True, **kwargs)
 
     def _log_format(self, *args):

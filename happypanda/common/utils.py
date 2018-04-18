@@ -373,7 +373,6 @@ def os_info():
         ARCH=platform.machine(),
         VERSION=platform.version(),
         PLATFORM=platform.platform(),
-        PYTHON=platform.python_version()
     ))
 
 

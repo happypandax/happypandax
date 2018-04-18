@@ -25,12 +25,11 @@ import getpass  # noqa: E402
 from multiprocessing import Process  # noqa: E402
 from apscheduler.triggers.interval import IntervalTrigger  # noqa: E402
 from happypanda.common import utils, constants, hlogger, config  # noqa: E402
-from happypanda.core import server, plugins, command, services, db  # noqa: E402
+from happypanda.core import server, plugins, command, services, db, async  # noqa: E402
 from happypanda.core.commands import io_cmd, meta_cmd  # noqa: E402
 
 log = hlogger.Logger(__name__)
 parser = utils.get_argparser()  # required to be at module lvl for sphinx.autoprogram ext
-
 
 def create_user_interactive():
     s = {}
@@ -120,6 +119,7 @@ def start(argv=None, db_kwargs={}):
             db_inited = db.init(**db_kwargs)
             command.init_commands()
             monkey.patch_all(thread=False, ssl=False)
+            async.patch_psycopg()
         else:
             db_inited = True
 
@@ -137,6 +137,8 @@ def start(argv=None, db_kwargs={}):
         if constants.dev:
             log.i("DEVELOPER MODE ENABLED", stdout=True)
         log.i("\n{}".format(utils.os_info()))
+
+        log.i("Using", config.dialect.value, "database")
 
         update_state = check_update() if not (not constants.is_frozen and constants.dev) else None
 

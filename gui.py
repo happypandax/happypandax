@@ -90,6 +90,7 @@ from i18n import t  # noqa: E402
 
 from happypanda.common import utils, config  # noqa: E402
 from happypanda.core.commands import io_cmd  # noqa: E402
+from happypanda.core import db # noqa: E402
 from happypanda import main  # noqa: E402
 import HPtoHPX  # noqa: E402
 
@@ -264,10 +265,10 @@ class ConvertHP(QDialog):
     def update_label(self):
         self.args = []
         self.args .append(os.path.normpath(self._source))
-        if self._dev:
-            self.args .append(os.path.join("data", "happypanda_dev.db"))
+        if config.dialect.value == constants.Dialect.SQLITE:
+            self.args .append(constants.db_path_dev if self._dev else constants.db_path)
         else:
-            self.args .append(os.path.join("data", "happypanda.db"))
+            self.args .append(str(db.make_db_url(constants.db_name_dev if self._dev else constants.db_name)))
         if self._rar:
             self.args .append("--rar")
             self.args .append(os.path.normpath(self._rar))

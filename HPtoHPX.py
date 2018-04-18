@@ -13,7 +13,10 @@ import threading
 import queue
 import codecs
 import regex
+
+from sqlalchemy_utils.functions import create_database, database_exists, drop_database
 from multiprocessing import Process, Queue, Pipe
+
 from happypanda.core import db
 from happypanda.core.commands import io_cmd
 from happypanda.common import constants, config, utils
@@ -841,13 +844,16 @@ def main(args=sys.argv[1:]):
         print("Source: ", src)
         print("Destination: ", dst)
 
-        if os.path.exists(dst):
+        if database_exists(dst):
             if args.delete_target:
                 print("Deleting existing target database")
-                os.unlink(dst)
+                if not any(dst.lower().startswith(x) for x in ('postgres', 'mysql', 'sqlite')):
+                    os.unlink(dst)
+                else:
+                    drop_database(dst)
             else:
-                print("Warning: destination file already exists, you might want to delete")
-        else:
+                print("Warning: destination database already exists, you might want to delete")
+        elif not all(dst.lower().startswith(x) for x in ('postgres', 'mysql', 'sqlite')):
             head, _ = os.path.split(dst)
             if head:
                 os.makedirs(head, exist_ok=True)
@@ -871,7 +877,12 @@ def main(args=sys.argv[1:]):
         print("Fetching all galleries, chapters, tags and hashes..")
         print("Fetched galleries count:", len(src_galleries))
         print("Creating new Happypanda X database")
-        engine = db.create_engine(os.path.join("sqlite:///", dst))
+        if not any(dst.lower().startswith(x) for x in ('postgres', 'mysql', 'sqlite')):
+            engine = db.create_engine(os.path.join("sqlite:///", dst))
+        else:
+            if not database_exists(dst):
+                create_database(dst)
+            engine = db.create_engine(dst)
         db.Base.metadata.create_all(engine)
         sess = db.scoped_session(db.sessionmaker())
         sess.configure(bind=engine)
