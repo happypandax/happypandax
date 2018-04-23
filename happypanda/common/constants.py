@@ -117,6 +117,8 @@ class PushID(enum.Enum):
     User = 200
 
 
+super_user_name = "default"
+
 maximum_native_workers = 15
 
 command_progress_removal_time = 60 * 5  # seconds

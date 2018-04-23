@@ -15,7 +15,7 @@ from treelib import Tree, exceptions as tree_exceptions
 from happypanda.common import utils, hlogger, exceptions, constants
 from happypanda.core import plugins, async, db
 
-log = hlogger.Logger(constants.log_ns_core + __name__)
+log = hlogger.Logger(constants.log_ns_command + __name__)
 
 
 def get_available_commands():
@@ -63,6 +63,7 @@ def _native_runner(f):
     frame = sys._getframe()
 
     def wrapper(*args, **kwargs):
+        log.d("Running", f, "in native thread")
         if utils.get_context(None) is None:
             g = gevent.getcurrent()
             try:
@@ -301,6 +302,7 @@ class Command(CoreCommand, metaclass=ABCMeta):
     def _main_wrap(self, *args, **kwargs):
         utils.switch(self._priority)
         self._started_time = arrow.now()
+        log.d("Calling main function of command:", self.__class__.__name__)
         r = self._main(*args, **kwargs)
         if self._progress_max is not None:
             self.set_progress(self._progress_max)
@@ -504,6 +506,7 @@ class CommandEntry(_CommandPlugin):
     @contextmanager
     def call_capture(self, token, *args, **kwargs):
         "Calls associated handlers with a capture token"
+        log.d("Calling command handler <{}> [{}]".format(self.qualifiedname(), token))
         handler = self.invoke_on_plugins(*args, **kwargs)
         handler.default_handler = self.default_handler
         handler.expected_type = self.return_type
@@ -516,6 +519,7 @@ class CommandEntry(_CommandPlugin):
     @contextmanager
     def call(self, *args, **kwargs):
         "Calls associated handlers"
+        log.d("Calling command handler <{}>".format(self.qualifiedname()))
         handler = self.invoke_on_plugins(*args, **kwargs)
         handler.default_handler = self.default_handler
         handler.expected_type = self.return_type

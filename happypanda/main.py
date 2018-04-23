@@ -1,6 +1,7 @@
 from gevent import monkey
 # need to patch before importing requests, see
 # https://github.com/requests/requests/issues/3752
+monkey.patch_socket()
 monkey.patch_ssl()
 monkey.patch_select()
 
@@ -24,7 +25,7 @@ import getpass  # noqa: E402
 
 from multiprocessing import Process  # noqa: E402
 from apscheduler.triggers.interval import IntervalTrigger  # noqa: E402
-from happypanda.common import utils, constants, hlogger, config  # noqa: E402
+from happypanda.common import utils, constants, hlogger, config, exceptions  # noqa: E402
 from happypanda.core import server, plugins, command, services, db, async  # noqa: E402
 from happypanda.core.commands import io_cmd, meta_cmd  # noqa: E402
 
@@ -107,6 +108,7 @@ def cmd_commands(args):
 def start(argv=None, db_kwargs={}):
     assert sys.version_info >= (3, 5), "Python 3.5 and up is required"
     e_code = None
+    e_num = 0
     try:
         if argv is None:
             argv = sys.argv[1:]
@@ -211,10 +213,12 @@ def start(argv=None, db_kwargs={}):
         if constants.web_proc:
             constants.web_proc.terminate()
         print(e)  # intentional
-        if config.report_critical_errors.value and not constants.dev and constants.is_frozen:
-            rollbar.report_exc_info()
-        raise
-    return e_code.value if e_code else 0
+        e_num = 1
+        if not isinstance(e, exceptions.CoreError):
+            if config.report_critical_errors.value and not constants.dev and constants.is_frozen:
+                rollbar.report_exc_info()
+            raise
+    return e_code.value if e_code else e_num
 
 
 if __name__ == '__main__':

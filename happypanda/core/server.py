@@ -198,7 +198,7 @@ class ClientHandler:
         user_obj = None
         if user or password:
             log.d("Client provided credentials, authenticating...")
-            if user == "default" and not config.disable_default_user.value:
+            if user == constants.super_user_name and not config.disable_default_user.value:
                 log.d("Authenticating with default user")
                 user_obj = s.query(
                     db.User).filter(

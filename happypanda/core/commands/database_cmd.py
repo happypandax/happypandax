@@ -159,6 +159,7 @@ class GetModelImage(AsyncCommand):
 
     @async.defer
     def _update_db(self, stale_cover, item_id, model, old_hash):
+        log.d("Updating profile for database item", model)
         s = constants.db_session()
         cover = s.query(db.Profile).filter(
             db.and_op(db.Profile.data == old_hash, db.Profile.size == stale_cover.size)).all()
@@ -187,6 +188,7 @@ class GetModelImage(AsyncCommand):
 
         if new or not s.query(db.Profile).join(db.relationship_column(model, db.Profile)).filter(
                 db.and_op(db.Profile.id == cover.id, model.id == item_id)).scalar():
+            log.d("Adding new profile to database item", model, "()".format(item_id))
             i = s.query(model).get(item_id)
             i.profiles.append(cover)
 
@@ -199,6 +201,7 @@ class GetModelImage(AsyncCommand):
 
         cover = db.Profile()
         if generate:
+            log.d("Generating new profile", image_size, "for database item", model)
             with self.generate.call_capture(model_name, model_name, item_id, image_size) as plg:
                 p = plg.first()
                 if not p:
@@ -209,6 +212,7 @@ class GetModelImage(AsyncCommand):
             cover.size = profile_size
         self.next_progress()
         if cover.path and generate:
+            log.d("Updating database")
             self._update_db(cover, item_id, model, old_img_hash)
         elif not cover.path:
             cover = None

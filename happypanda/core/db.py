@@ -1521,7 +1521,7 @@ def init_defaults(sess):
     duser = sess.query(User).filter(
         User.role == User.Role.default).one_or_none()
     if not duser:
-        duser = User(name="default", role=User.Role.default)
+        duser = User(name=constants.super_user_name, role=User.Role.default)
         sess.add(duser)
         sess.commit()
     constants.default_user = duser
@@ -1548,8 +1548,8 @@ def create_user(role, name=None, password=None):
     s = constants.db_session()
 
     if role == User.Role.default:
-        if not s.query(User.id).filter(User.name == 'default').one_or_none():
-            s.add(User(name='default', role=User.Role.default))
+        if not s.query(User.id).filter(User.name == constants.super_user_name).one_or_none():
+            s.add(User(name=constants.super_user_name, role=User.Role.default))
             s.commit()
             return True
 
@@ -1592,7 +1592,7 @@ def delete_user(name=None):
 def list_users(role=None, limit=100, offset=0):
     assert role is None or isinstance(role, User.Role)
     s = constants.db_session()
-    q = s.query(User).filter(User.name != "default").order_by(User.name)
+    q = s.query(User).filter(User.name != constants.super_user_name).order_by(User.name)
     if role:
         q.filter(User.role == role)
     return q.offset(offset).limit(limit).all()
@@ -1681,19 +1681,22 @@ def init(**kwargs):
     constants.db_session = functools.partial(_get_session, Session)
     initEvents(Session)
     constants.db_engine = kwargs.get("engine")
-    if not constants.db_engine:
-        if config.dialect.value == constants.Dialect.SQLITE:
-            constants.db_engine = create_engine(os.path.join("sqlite:///", db_path),
-                                                connect_args={'timeout': config.sqlite_database_timeout.value})  # SQLITE specific arg (avoding db is locked errors)
-        else:
-            db_url = make_db_url()
-            if not database_exists(db_url):
-                create_database(db_url)
-            constants.db_engine = create_engine(db_url)
+    try:
+        if not constants.db_engine:
+            if config.dialect.value == constants.Dialect.SQLITE:
+                constants.db_engine = create_engine(os.path.join("sqlite:///", db_path),
+                                                    connect_args={'timeout': config.sqlite_database_timeout.value})  # SQLITE specific arg (avoding db is locked errors)
+            else:
+                db_url = make_db_url()
+                if not database_exists(db_url):
+                    create_database(db_url)
+                constants.db_engine = create_engine(db_url)
 
-    Base.metadata.create_all(constants.db_engine)
+        Base.metadata.create_all(constants.db_engine)
 
-    Session.configure(bind=constants.db_engine)
+        Session.configure(bind=constants.db_engine)
+    except exc.OperationalError as e:
+        raise exceptions.DatabaseInitError("{}".format(e.orig))
 
     return check_db_version(Session())
 
@@ -1827,3 +1830,15 @@ def safe_session(sess=None):
 def cleanup_session():
     yield
     constants._db_scoped_session.remove()
+
+def cleanup_session_wrap(f=None):
+    if f is None:
+        def p_wrap(f):
+            return cleanup_session_wrap(f)
+        return p_wrap
+    else:
+
+        def wrapper(*args, **kwargs):
+            with cleanup_session():
+                return f(*args, **kwargs)
+        return wrapper

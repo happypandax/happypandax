@@ -92,6 +92,7 @@ class CPUThread():
                 # FIFO for now, but we should experiment with others
                 jobid, func, args, kwargs = self.in_q.popleft()
                 start_time = arrow.now()
+                log.d("Running function in cpu_bound thread:", func)
                 try:
                     with db.cleanup_session():
                         self.results[jobid] = func(*args, **kwargs)
@@ -196,6 +197,7 @@ def defer(f=None, predicate=None):
                 v = f(*args, **kwargs)
                 a._value = v
             else:
+                log.d("Putting function in cpu_bound thread:", f)
                 g = Greenlet(f_wrap, f, *args, **kwargs)
                 g.start()
                 a._future = g
