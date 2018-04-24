@@ -74,7 +74,7 @@ def page_render():
                      ))
 
     return e(ui.Container,
-             e(TitleChange, title=tr(this, "ui.mi-downloads", "Downloads")),
+             e(TitleChange, title=tr(this, "ui.mi-activity", "Activity")),
              e(ui.Form,
                e(ui.Form.Group,
                  e(ui.Form.Input,
@@ -96,7 +96,7 @@ def page_render():
 
 
 Page = createReactClass({
-    'displayName': 'DownloadsPage',
+    'displayName': 'ActivityPage',
     'interval_func': None,
 
     'componentWillMount': lambda: this.props.menu([

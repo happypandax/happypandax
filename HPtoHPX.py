@@ -1318,7 +1318,7 @@ def main(args=sys.argv[1:]):
         s.add_all(dst_lists)
         print("Flushing... (this might take a few minutes)")
         s.flush()
-        print("Adding gallery pages...")
+        print("Adding gallery pages... (this might take a while too)")
         taggable_items = []
         page_items = []
         for g, g_pages in dst_pagelist.items():
@@ -1331,7 +1331,7 @@ def main(args=sys.argv[1:]):
             s.add(one_taggable)
             s.flush()
             s.bulk_save_objects(taggable_items[1:], return_defaults=True)
-            print("Flushing again... (this might take a few minutes too)")
+            print("Flushing again... (and this...)")
             s.flush()
             del taggable_items
             taggable_items = list(s.query(db.Taggable.id).filter(db.Taggable.id > one_taggable.id).all())

@@ -14,7 +14,7 @@ from src.nav import (sidebar, menu)
 from src.pages import (api, collection, gallery,
                        dashboard, favorites, inbox,
                        library, page, directory,
-                       downloads, login)
+                       activity, login)
 from src.client import pushclient, PushID
 from src import utils
 from org.transcrypt.stubs.browser import __pragma__
@@ -141,7 +141,7 @@ def server_notifications(data=js_undefined, error=None):
                     tmout = tmout * 1.5
                     ic = "angle double up"
                     if state.history:
-                        utils.go_to(state.history, "/downloads")
+                        utils.go_to(state.history, "/activity")
                 this.notif(data['body'], data['title'], icon=ic, timeout=tmout)
     elif error:
         this.notif("Failed to retrieve server notification", level="warning")
@@ -279,7 +279,7 @@ def app_render():
                        e(Route, path="/favorite", component=this.favorites_page),
                        e(Route, path="/inbox", component=this.inbox_page),
                        e(Route, path="/directory", component=this.directory_page),
-                       e(Route, path="/downloads", component=this.downloads_page),
+                       e(Route, path="/activity", component=this.activity_page),
                        e(Route, path="/item/gallery", component=this.gallery_page),
                        e(Route, path="/item/collection", component=this.collection_page),
                        e(Route, path="/item/page", component=this.page_page),
@@ -372,7 +372,7 @@ App = createReactClass({
     'gallery_page': lambda p: e(gallery.Page, menu=this.set_menu_contents, **p),
     'collection_page': lambda p: e(collection.Page, menu=this.set_menu_contents, **p),
     'directory_page': lambda p: e(directory.Page, menu=this.set_menu_contents, **p),
-    'downloads_page': lambda p: e(downloads.Page, menu=this.set_menu_contents, **p),
+    'activity_page': lambda p: e(activity.Page, menu=this.set_menu_contents, **p),
 
     'render': app_render,
 })

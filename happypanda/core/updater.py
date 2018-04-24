@@ -92,7 +92,7 @@ def check_release(silent=True, cmd=None):
 
             new_rel = None
             new_version = tuple()
-            log.d("Found tags:", tags)
+            log.d("Most recent 5 tags:", tags[:5])
             # go down in releases until a suitable new release or we match local release
             while tags:
                 t = tags.pop(0)

@@ -1,7 +1,6 @@
 from gevent import monkey
 # need to patch before importing requests, see
 # https://github.com/requests/requests/issues/3752
-monkey.patch_socket()
 monkey.patch_ssl()
 monkey.patch_select()
 

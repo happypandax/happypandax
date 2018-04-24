@@ -9,7 +9,7 @@
 ################################################################
 
 # very useful for updating
-_version_: 6
+_version_: 7
 
 # Common
 t-loading: Loading
@@ -27,6 +27,7 @@ mi-favorites: Favorites
 mi-library: Library
 mi-directory: Directory
 mi-inbox: Inbox
+mi-activity: Activity
 mi-downloads: Downloads
 mi-preferences: Preferences
 mi-about: About

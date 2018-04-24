@@ -21,6 +21,7 @@ from sqlalchemy.ext.indexable import index_property
 from sqlalchemy.ext.hybrid import hybrid_property, hybrid_method
 from sqlalchemy.ext.associationproxy import AssociationProxy
 from sqlalchemy.sql.expression import BinaryExpression, func, literal
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql.operators import custom_op
 from sqlalchemy.ext import orderinglist
 from sqlalchemy.orm import (
@@ -58,7 +59,7 @@ from sqlalchemy_utils import (
     force_instant_defaults,
     force_auto_coercion,
     get_type,
-    JSONType)
+    JSONType as JSONType_)
 from sqlalchemy_utils.functions import create_database, database_exists
 
 from happypanda.common import constants, exceptions, hlogger, clsutils, config, utils
@@ -208,6 +209,16 @@ class OrderingQuery(dynamic.AppenderQuery):
     def __reduce__(self):
         return orderinglist._reconstitute, (self.__class__, self.__dict__, list(self))
 
+class JSONType(JSONType_):
+    """
+    Use JSONB instead of JSON
+    """
+
+    def load_dialect_impl(self, dialect):
+        if dialect.name == 'postgresql':
+            return dialect.type_descriptor(JSONB())
+        else:
+            return dialect.type_descriptor(self.impl)
 
 class String(_String):
     """Enchanced version of standard SQLAlchemy's :class:`String`.
@@ -1512,6 +1523,12 @@ def engine_connect(dbapi_connection, connection_record):
         cursor.execute("PRAGMA journal_mode=WAL")
         cursor.execute("PRAGMA synchronous=NORMAL")
         cursor.close()
+    elif config.dialect.value == constants.Dialect.POSTGRES:
+        cursor = dbapi_connection.cursor()
+        cursor.execute("SHOW server_version_num;")
+        if int(cursor.fetchone()[0]) < 90400:
+            raise exceptions.DatabaseInitError("HPX requires Postgres version 9.4 and up")
+        cursor.close()
 
 
 def init_defaults(sess):
@@ -1697,6 +1714,9 @@ def init(**kwargs):
         Session.configure(bind=constants.db_engine)
     except exc.OperationalError as e:
         raise exceptions.DatabaseInitError("{}".format(e.orig))
+    except exc.ProgrammingError as e:
+        if config.dialect.value == constants.Dialect.POSTGRES and 'server_version_num' in str(e):
+            raise exceptions.DatabaseInitError("HPX requires Postgres version 9.4 and up")
 
     return check_db_version(Session())
 
