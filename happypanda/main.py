@@ -137,7 +137,7 @@ def start(argv=None, db_kwargs={}):
         log.i("HPX START")
         if constants.dev:
             log.i("DEVELOPER MODE ENABLED", stdout=True)
-        log.i("\n{}".format(utils.os_info()))
+        log.i(utils.os_info())
 
         log.i("Using", config.dialect.value, "database")
 

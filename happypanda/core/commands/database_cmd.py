@@ -2,7 +2,7 @@ from collections import namedtuple
 from sqlalchemy.sql.expression import func
 from sqlalchemy_utils.functions import make_order_by_deterministic
 
-from happypanda.common import utils, hlogger, exceptions, constants
+from happypanda.common import utils, hlogger, exceptions, constants, config
 from happypanda.core.command import Command, CommandEvent, AsyncCommand, CommandEntry
 from happypanda.core.commands import io_cmd
 from happypanda.core import db, async
@@ -542,9 +542,8 @@ class GetModelItems(Command):
 
         if ids:
             id_amount = len(ids)
-            # TODO: only SQLite has 999 variables limit
             _max_variables = 900
-            if id_amount > _max_variables:
+            if id_amount > _max_variables and config.dialect.value == constants.Dialect.SQLITE:
                 if count:
                     fetched_list = [x for x in q.all() if x[0] in ids]
                 else:

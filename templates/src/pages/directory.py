@@ -5,7 +5,7 @@ from src.react_utils import (e,
                              NavLink,
                              Switch,
                              createReactClass)
-from src.ui import ui, Pagination, TitleChange
+from src.ui import ui, Pagination, TitleChange, TR
 from src.client import client, ItemType, ItemSort
 from src.i18n import tr
 from src.state import state
@@ -713,7 +713,7 @@ Page = createReactClass({
     'displayName': 'DirectoryPage',
 
     'componentWillMount': lambda: this.props.menu([
-        e(ui.Menu.Item, js_name=tr(this, "ui.mi-dir-tags", "Tags"), as_=NavLink,
+        e(ui.Menu.Item, e(TR, "ui.mi-dir-tags", default="Tags"), as_=NavLink,
           to="/directory/tags", activeClassName="active"),
         e(ui.Menu.Item, js_name=tr(this, "ui.mi-dir-artists", "Artists"), as_=NavLink,
           to="/directory/artists", activeClassName="active"),

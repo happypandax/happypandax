@@ -65,7 +65,7 @@ def search_render():
         cls_name = "fullwidth"
     if this.props.className:
         cls_name += " " + this.props.className
-    return e(ui.Form,
+    return h("form",
              e(ui.Search,
                size=this.props.size,
                input=e(ui.Input,
@@ -199,17 +199,16 @@ def itembuttons_change(e, d):
 
 
 def itembuttons_render():
-    on_change = this.props.on_change
     return e(ui.Button.Group,
              e(ui.Button, tr(this, "general.db-item-collection", "Collection"),
                value=ItemType.Collection,
-               onClick=lambda e, d: on_change(e, d) if on_change else None,
+               onClick=this.item_change,
                primary=True,
                basic=this.props.value == ItemType.Collection,
                ),
              e(ui.Button, tr(this, "general.db-item-gallery", "Gallery"),
                value=ItemType.Gallery,
-               onClick=lambda e, d: on_change(e, d) if on_change else None,
+               onClick=this.item_change,
                primary=True,
                basic=this.props.value == ItemType.Gallery,
                ),

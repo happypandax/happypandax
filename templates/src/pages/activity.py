@@ -1,7 +1,7 @@
 from src.react_utils import (e,
                              createReactClass)
 from src.i18n import tr
-from src.ui import ui, TitleChange
+from src.ui import ui, TitleChange, TR
 from src.client import client, ProgressType
 from src.state import state
 from src import utils
@@ -100,7 +100,7 @@ Page = createReactClass({
     'interval_func': None,
 
     'componentWillMount': lambda: this.props.menu([
-        e(ui.Menu.Item, js_name=tr(this, "", "Batch URLs")),
+        e(ui.Menu.Item, e(TR, "ui.mi-batch-urls", default="Batch URLs")),
     ]),
     'componentDidMount': page_mount,
     'componentWillUnmount': lambda: clearInterval(this.interval_func) if this.interval_func else None,

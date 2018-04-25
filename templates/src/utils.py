@@ -140,6 +140,13 @@ defined = __pragma__('js', '{}',
         return !(v === undefined);
     }""")
 
+remove_key = __pragma__('js', '{}',
+                     """
+    function remove_key(o, k) {
+        delete o[k];
+        return o;
+    }""")
+
 
 def get_locale():
     return window.navigator.userLanguage or window.navigator.language

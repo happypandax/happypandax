@@ -369,10 +369,9 @@ def get_context(key="ctx"):
 
 
 def os_info():
-    return pprint.pformat(dict(
-        ARCH=platform.machine(),
-        VERSION=platform.version(),
-        PLATFORM=platform.platform(),
+    return pprint.pformat((
+        platform.machine(),
+        platform.platform(),
     ))
 
 

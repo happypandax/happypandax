@@ -121,6 +121,7 @@ i.medium-size {
 .min-fullheight {
     height: 100% !important;
 }
+
 .slide-next {
     top: 50%;
     position: absolute;

@@ -30,7 +30,11 @@ def item_view_menu(history,
                    default_search=None,
                    on_filter_change=None,
                    default_filter=None,
-                   on_toggle_config=None):
+                   on_toggle_config=None,
+                   cfg_suffix=None):
+    v = utils.storage.get("def_sort_idx" + default_item + cfg_suffix, 0)
+    print(v)
+    print(default_sort)
     return [e(ui.Menu.Item, e(item.ItemButtons,
                               history=history,
                               on_change=on_item_change,
@@ -53,7 +57,7 @@ def item_view_menu(history,
                 ),
               e(item.SortDropdown,
                 history=history,
-                on_change=on_sort_change, value=default_sort,
+                on_change=on_sort_change, value=default_sort or utils.storage.get("def_sort_idx" + default_item + cfg_suffix, 0),
                 item_type=default_item,
                 query=True)),
             e(ui.Menu.Item,
@@ -83,6 +87,14 @@ def itemviewpage_update(p_p, p_s):
     )):
         this.update_menu()
 
+    if any((
+        p_s.item_type != this.state.item_type,
+    )):
+        this.setState({'sort_idx': 0})
+        query_obj = utils.query_to_obj(this.props.location.search)
+        del query_obj['sort_idx']
+        utils.go_to(this.props.history, query=query_obj, keep_query=False)
+
 
 def itemviewpage_render():
     return e(itemview.ItemView,
@@ -97,12 +109,14 @@ def itemviewpage_render():
              sort_desc=this.state.sort_desc,
              toggle_config=this.toggle_config,
              visible_config=this.state.visible_config,
-             config_suffix="main"
+             config_suffix=this.config_suffix,
              )
 
 
 ItemViewPage = createReactClass({
     'displayName': 'ItemViewPage',
+
+    'config_suffix': "main",
 
     'toggle_config': lambda a: this.setState({'visible_config': not this.state.visible_config}),
 
@@ -138,6 +152,7 @@ ItemViewPage = createReactClass({
             default_filter=this.state.filter_id,
             on_search=this.on_search,
             on_toggle_config=this.toggle_config,
+            cfg_suffix=this.config_suffix,
         )),
 
     'componentWillMount': lambda: this.update_menu(),

@@ -1,7 +1,7 @@
 from src.react_utils import (e,
                              createReactClass,
                              Link)
-from src.ui import ui, Slider, LabelAccordion, DateLabel, TitleChange
+from src.ui import ui, Slider, LabelAccordion, DateLabel, TitleChange, TR
 from src.i18n import tr
 from src.state import state
 from src.client import ItemType, ImageSize, client, Command
@@ -441,7 +441,7 @@ def page_render():
         similar_progress_el = e(ui.Segment, e(ui.Progress,
                                               size="small",
                                               active=True,
-                                              total=this.state.similar_gallery_progress.max or 0,
+                                              total=this.state.similar_gallery_progress.max or js_undefined,
                                               value=this.state.similar_gallery_progress.value,
                                               progress="value",
                                               autoSuccess=True),
@@ -587,7 +587,7 @@ Page = createReactClass({
                                 'filter_count': this.props.filter_count or 0,
                                 'filter_data': [],
                                 'similar_gallery_progress': {},
-                                'similar_gallery_loading': False,
+                                'similar_gallery_loading': True,
                                 'similar_gallery_data': [],
                                 },
 

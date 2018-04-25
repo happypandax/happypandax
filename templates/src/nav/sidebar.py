@@ -52,10 +52,10 @@ def sidebar_nav_render():
     # Note: Artists, Tags, Etc. Able to favorite artists and tags
     items.append(
         MenuItem(
-            "Downloads",
-            "ui.mi-downloads",
+            "Activity",
+            "ui.mi-activity",
             icon="tasks",
-            url="/downloads",
+            url="/activity",
             handler=this.props["toggler"]))
     pref_item = MenuItem("Preferences", "ui.mi-preferences",
                          modal=[

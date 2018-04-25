@@ -144,6 +144,9 @@ t-total-artists: Total Artists
 t-total-parodies: Total Parodies
 t-total-circles: Total Circles
 
+# Activity Page
+mi-batch-urls: Batch URs
+
 # Gallery Page
 t-artist: Artist
 t-circle: Circle
@@ -200,6 +203,7 @@ t-infinite-scroll: Infinite Scroll
 t-group-galleries: Gallery Series
 t-items-per-page: Items per page
 t-blur: Blur
+t-default-sort: Default sorting
 
 # Misc
 t-showing-count: Showing %{from}-%{to} of %{all}

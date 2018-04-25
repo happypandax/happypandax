@@ -1,5 +1,5 @@
 import math
-from src.react_utils import (e,
+from src.react_utils import (e, h,
                              createReactClass)
 from src.ui import ui, Error, Pagination, ToggleIcon
 from src.client import (client, ItemType)
@@ -27,6 +27,7 @@ def Itemviewvonfig_render():
     external_viewer_cfg = "external_viewer"
     group_gallery_cfg = "group_gallery"
     blur_cfg = "blur"
+    default_sort_cfg = "def_sort_idx"
 
     item_count_options = [
         {'key': 10, 'text': '10', 'value': 10},
@@ -66,6 +67,19 @@ def Itemviewvonfig_render():
                                          utils.storage.set(group_gallery_cfg + cfg_suffix, d.checked))),
               ))
 
+    sort_el = []
+    sort_el.append(
+        e(ui.Form.Field,
+            h("label", tr(this, "ui.t-default-sort", "Default sorting")),
+            e(item.SortDropdown,
+              query=False,
+              item_type=props.item_type,
+              value=utils.storage.get(default_sort_cfg + props.item_type + cfg_suffix),
+              on_change=lambda e, d: utils.storage.set(default_sort_cfg + props.item_type + cfg_suffix, d.value)
+              )
+            ),
+          )
+
     return e(ui.Sidebar,
              e(ui.Form,
                *grp_gallery_el,
@@ -91,6 +105,7 @@ def Itemviewvonfig_render():
                            e, d), utils.storage.set(
                            item_count_cfg + cfg_suffix, d.value))),
                    ),
+                 *sort_el,
                  e(ui.Form.Field, tr(this, "ui.b-close", "Close"), control=ui.Button),
                  onSubmit=props.on_close,
                ),
@@ -247,7 +262,7 @@ def itemviewbase_render():
                            on_change=this.props.on_sort_change,
                            item_type=this.props.default_item,
                            query=this.props.query,
-                           value=this.props.default_sort,
+                           value=this.props.default_sort or utils.storage.get("def_sort_idx" + this.props.default_item + this.props.config_suffix, 0),
                            ), icon=True))
 
     if this.props.show_filterdropdown:
@@ -347,7 +362,10 @@ def get_items(data=None, error=None):
             level="error")
     else:
         item = this.props.item_type or this.state.item_type
-        sort_by = (this.props.sort_by if utils.defined(this.props.sort_by) else this.state.sort_by)
+        sort_by = int(this.props.sort_by if utils.defined(this.props.sort_by) else this.state.sort_by)
+        if not sort_by:
+            sort_item = this.props.related_type or this.props.item_type or this.state.item_type
+            sort_by = utils.storage.get("def_sort_idx" + sort_item + this.config_suffix(), 0)
         sort_desc = (this.props.sort_desc if utils.defined(this.props.sort_desc) else this.state.sort_desc)
         filter_id = (this.props.filter_id if utils.defined(this.props.filter_id) else this.state.filter_id)
 
@@ -521,6 +539,7 @@ def item_view_render():
     return e(ItemViewBase,
              [e(el, data=x, size_type=size_type, blur=blur, centered=True, className="medium-size", key=n, external_viewer=ext_viewer)
               for n, x in enumerate(items)],
+             config_suffix=this.config_suffix(),
              history=this.props.history,
              location=this.props.location,
              loading=this.state.loading,
