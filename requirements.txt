@@ -29,3 +29,4 @@ qtmodern==0.1.4
 regex==2018.02.21
 pyopenssl==17.5.0
 psycopg2==2.7.4
+pymysql==0.8.0

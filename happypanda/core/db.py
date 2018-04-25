@@ -1678,14 +1678,22 @@ def _get_current():
 def make_db_url(db_name=None):
     if db_name is None:
         db_name = constants.db_name_dev if constants.dev and config.db_name.value == constants.db_name else config.db_name.value
+    db_query = {}
+    if config.dialect.value == constants.Dialect.MYSQL:
+        db_query = {'charset':'utf8mb4'}
+    db_query = {}
+    db_query.update(config.db_query.value)
+    drivername = config.dialect.value
+    if drivername == constants.Dialect.MYSQL:
+        drivername += '+pymysql'
     db_url = URL(
-        config.dialect.value,
+        drivername,
         username=config.db_username.value,
         password=config.db_password.value,
         host=config.db_host.value,
         port=config.db_port.value,
         database=db_name,
-        query=config.db_query.value,
+        query=db_query,
         )
     return db_url
 
@@ -1705,8 +1713,11 @@ def init(**kwargs):
                                                     connect_args={'timeout': config.sqlite_database_timeout.value})  # SQLITE specific arg (avoding db is locked errors)
             else:
                 db_url = make_db_url()
+                encoding = 'utf8mb4' if config.dialect.value == constants.Dialect.MYSQL else 'utf8'
+                print(db_url)
                 if not database_exists(db_url):
-                    create_database(db_url)
+                    print("creating")
+                    create_database(db_url, encoding)
                 constants.db_engine = create_engine(db_url)
 
         Base.metadata.create_all(constants.db_engine)

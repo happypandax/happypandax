@@ -844,6 +844,9 @@ def main(args=sys.argv[1:]):
         print("Source: ", src)
         print("Destination: ", dst)
 
+        if dst.startswith('mysql://'):
+            dst = dst.replace('mysql://', 'mysql+pymysql://')
+
         if database_exists(dst):
             if args.delete_target:
                 print("Deleting existing target database")
@@ -881,7 +884,8 @@ def main(args=sys.argv[1:]):
             engine = db.create_engine(os.path.join("sqlite:///", dst))
         else:
             if not database_exists(dst):
-                create_database(dst)
+                encoding = 'utf8mb4' if 'mysql' in dst.lower() else 'utf8'
+                create_database(dst, encoding)
             engine = db.create_engine(dst)
         db.Base.metadata.create_all(engine)
         sess = db.scoped_session(db.sessionmaker())
