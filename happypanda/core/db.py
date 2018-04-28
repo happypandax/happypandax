@@ -1848,8 +1848,10 @@ def safe_session(sess=None):
 
 @contextmanager
 def cleanup_session():
-    yield
-    constants._db_scoped_session.remove()
+    try:
+        yield
+    finally:
+        constants._db_scoped_session.remove()
 
 def cleanup_session_wrap(f=None):
     if f is None:

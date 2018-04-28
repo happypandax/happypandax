@@ -647,6 +647,7 @@ def create_self_signed_cert(cert_file, key_file, pem_file=None):
 
     # create a self-signed cert
     cert = OpenSSL.crypto.X509()
+    cert.set_version(2)
     cert.get_subject().C = "HP"
     cert.get_subject().ST = "HappyPanda X"
     cert.get_subject().L = "HappyPanda X"
@@ -658,6 +659,19 @@ def create_self_signed_cert(cert_file, key_file, pem_file=None):
     cert.gmtime_adj_notAfter(10 * 365 * 24 * 60 * 60)
     cert.set_issuer(cert.get_subject())
     cert.set_pubkey(k)
+    
+    san_list = ["DNS:localhost",
+                "DNS:happypanda.local",
+                "DNS:happypandax.local",
+                "IP:127.0.0.1"]
+    l_ip = get_local_ip()
+    if l_ip != "127.0.0.1":
+        san_list.append("IP:{}".format(l_ip))
+
+    cert.add_extensions([
+        OpenSSL.crypto.X509Extension(b"subjectAltName", False, ", ".join(san_list).encode())
+    ])
+
     cert.sign(k, 'sha256')
 
     with open(cert_file, "wb") as f:
