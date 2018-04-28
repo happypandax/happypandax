@@ -1,0 +1,14 @@
+{
+    "id": "a very long id",
+    "shortname": "test",
+    "name": "Test PLugin",
+    "version": "1.0.2",
+    "description": "a test plugin",
+    "author": "Twiddly",
+    "website": "github.com",
+    "entry": "main.py",
+    "test": "test.py",
+    "require": [
+        "happypandax > 1.0.0",
+    ]
+}

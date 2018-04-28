@@ -89,7 +89,7 @@ class CPUThread():
                     self.in_q_has_data.wait()
                     continue
                 # arbitrary non-preemptive service discipline can go here
-                # FIFO for now, but we should experiment with others
+                # FIFO for now
                 jobid, func, args, kwargs = self.in_q.popleft()
                 start_time = arrow.now()
                 log.d("Running function in cpu_bound thread:", func)

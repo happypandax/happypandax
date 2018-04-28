@@ -6,6 +6,8 @@ import inspect
 import enum
 import logging
 
+from gevent.signal import Event
+
 from happypanda.common import exceptions, utils, constants, hlogger
 
 log = hlogger.Logger(constants.log_ns_plugin + __name__)
@@ -59,23 +61,17 @@ def plugin_load(path, *args, **kwargs):
     """
     args = ["test"]
     kwargs = {"1": 2}
-    plugfile = None
+    manifest = None
     for f in os.scandir(path):
-        if f.name.lower() == "hplugin.py":
-            plugfile = f
+        if f.name.lower() == "hplugin.json":
+            manifest = f
             break
-    if not plugfile:
+    if not manifest:
         raise exceptions.CoreError(
             "Plugin loader",
-            "No main entry file named 'HPlugin.py' found in '{}'".format(
-                f.path))
+            "No manifest file named 'HPlugin.json' found in plugin directory '{}'".format(path))
 
-    plug = os.path.splitext(plugfile.name)[0]
-    sys.path.insert(0, os.path.realpath(path))
-    try:
-        _plugin_load(plug, path, *args, **kwargs)
-    finally:
-        sys.path.pop(0)
+    _plugin_load(plug, path, *args, **kwargs)
 
 
 def _plugin_load(module_name_or_class, path, *args, _logger=None, _manager=None, **kwargs):
@@ -85,32 +81,36 @@ def _plugin_load(module_name_or_class, path, *args, _logger=None, _manager=None,
     Returns:
         PluginNode
     """
-    plugclass = None
-    if isinstance(module_name_or_class, str):
-        mod = importlib.import_module(module_name_or_class)
-        mod = importlib.reload(mod)
-        plugmembers = inspect.getmembers(mod)
-        for name, m_object in plugmembers:
-            if name == "HPlugin":
-                plugclass = m_object
-                break
-    elif inspect.isclass(module_name_or_class):
-        plugclass = module_name_or_class
-    if plugclass is None:
-        raise exceptions.PluginError(
-            "Plugin loader",
-            "No main entry class named 'HPlugin' found in '{}'".format(path))
-    log.i("Loading", plugclass.__name__)
-    cls = HPluginMeta(
-        plugclass.__name__,
-        plugclass.__bases__,
-        dict(
-            plugclass.__dict__))
-    if not _logger:
-        _logger = get_plugin_logger(cls.NAME, path)
-    if not _manager:
-        _manager = registered
-    return _manager.register(cls, _logger, *args, **kwargs)
+    try:
+        sys.path.insert(0, os.path.realpath(path))
+        plugclass = None
+        if isinstance(module_name_or_class, str):
+            mod = importlib.import_module(module_name_or_class)
+            mod = importlib.reload(mod)
+            plugmembers = inspect.getmembers(mod)
+            for name, m_object in plugmembers:
+                if name == "HPlugin":
+                    plugclass = m_object
+                    break
+        elif inspect.isclass(module_name_or_class):
+            plugclass = module_name_or_class
+        if plugclass is None:
+            raise exceptions.PluginError(
+                "Plugin loader",
+                "No main entry class named 'HPlugin' found in '{}'".format(path))
+        log.i("Loading", plugclass.__name__)
+        cls = HPluginMeta(
+            plugclass.__name__,
+            plugclass.__bases__,
+            dict(
+                plugclass.__dict__))
+        if not _logger:
+            _logger = get_plugin_logger(cls.NAME, path)
+        if not _manager:
+            _manager = registered
+        return _manager.register(cls, _logger, *args, **kwargs)
+    finally:
+        sys.path.pop(0)
 
 
 def plugin_loader(path, *args, **kwargs):
@@ -375,10 +375,23 @@ class PluginManager:
     ""
 
     def __init__(self):
+        self._event = Event()
+        self._plugin_registry = {}
+
         self._nodes = {}
         self._started = False
         self._dirty = False
         self._commands = {}  # { command : [ plugins ] }
+
+    def _dependency_resolver(self):
+
+        while True:
+            self._event.wait()
+            plugins = set(self._plugin_registry.values())
+            plugins_to_load = [x for x in plugins if not x.loaded]
+            if plugins_to_load:
+                pass
+
 
     def register(self, plugin, logger, *args, **kwargs):
         """
@@ -617,9 +630,6 @@ class PluginManager:
         if not node.state == PluginState.Init:
             raise exceptions.PluginError(
                 node, "This method should be called in __init__")
-
-
-constants.plugin_manager = registered = PluginManager()
 
 
 class HPluginMeta(type):
