@@ -31,8 +31,19 @@ def set_translation_error(e, d):
     state.translation_id_error = d.checked
     utils.storage.set("translation_id_error", d.checked)
 
+def PrefSegment(props):
+    
+    return e(ui.Segment,
+             e(ui.Form,
+               props.children
+               ),
+             e(ui.Divider, horizontal=True),
+             e(ui.Message,h("p", tr(props.props.tab, "ui.t-setting-restart", "One or more setting modifications require a restart to take effect")),
+                            warning=True, size="tiny", hidden=not props.props.restart),
+             basic=True,
+             )
 
-def pref_general(props):
+def pref_view(props):
     cfg = props.cfg
     #u_cfg = props.u_cfg
     items = []
@@ -75,6 +86,13 @@ def pref_general(props):
 
         __pragma__('nojsiter')
         __pragma__('notconv')
+
+    return e(PrefSegment, *items, props=props)
+
+def pref_general(props):
+    cfg = props.cfg
+    #u_cfg = props.u_cfg
+    items = []
 
     if defined(cfg.gallery):
         if defined(cfg.gallery.external_image_viewer):
@@ -168,58 +186,7 @@ def pref_general(props):
                              ))
                          )
 
-    if defined(cfg.core):
-
-        if defined(cfg.core.check_new_releases):
-            items.append(e(ui.Header, tr(props.tab, "ui.h-updates", "Updates"), size="small", dividing=True))
-            items.append(e(ui.Form.Field,
-                           e(ui.Checkbox,
-                             toggle=True,
-                             label=tr(props.tab, "ui.t-check-for-update", "Regularly check for new releases"),
-                             defaultChecked=cfg.core.check_new_releases,
-                             onChange=lambda e, d: props.upd("core.check_new_releases", d.checked),
-                             ))
-                         )
-
-        if defined(cfg.core.check_release_interval):
-            items.append(e(ui.Form.Field,
-                           h("label", tr(
-                               props.tab, "ui.t-update-interval", "Interval in minutes between checking for a new release, set 0 to only check once every startup")),
-                           e(ui.Input,
-                             width=4,
-                             js_type="number",
-                             defaultValue=cfg.core.check_release_interval,
-                             onChange=lambda e, d: props.upd("core.check_release_interval", int(e.target.value)),
-                             ))
-                         )
-
-        if defined(cfg.core.allow_beta_releases):
-            items.append(e(ui.Form.Field,
-                           e(ui.Checkbox,
-                             toggle=True,
-                             label=tr(props.tab, "ui.t-update-beta", "Allow downloading beta releases"),
-                             defaultChecked=cfg.core.allow_beta_releases,
-                             onChange=lambda e, d: props.upd("core.allow_beta_releases", d.checked),
-                             ))
-                         )
-
-        if defined(cfg.core.allow_alpha_releases):
-            items.append(e(ui.Form.Field,
-                           e(ui.Checkbox,
-                             toggle=True,
-                             label=tr(props.tab, "ui.t-update-alpha", "Allow downloading alpha releases"),
-                             defaultChecked=cfg.core.allow_alpha_releases,
-                             onChange=lambda e, d: props.upd("core.allow_alpha_releases", d.checked),
-                             ))
-                         )
-
-    return e(ui.Segment,
-             e(ui.Form,
-               *items
-               ),
-             basic=True,
-             )
-
+    return e(PrefSegment, *items, props=props)
 
 def pref_server(props):
     cfg = props.cfg
@@ -282,13 +249,7 @@ def pref_server(props):
                            )
                          )
 
-    return e(ui.Segment,
-             e(ui.Form,
-               *items
-               ),
-             basic=True,
-             )
-
+    return e(PrefSegment, *items, props=props)
 
 def pref_advanced(props):
     cfg = props.cfg
@@ -329,12 +290,51 @@ def pref_advanced(props):
                              ))
                          )
 
-    return e(ui.Segment,
-             e(ui.Form,
-               *items
-               ),
-             basic=True,
-             )
+
+        if defined(cfg.core.check_new_releases):
+            items.append(e(ui.Header, tr(props.tab, "ui.h-updates", "Updates"), size="small", dividing=True))
+            items.append(e(ui.Form.Field,
+                           e(ui.Checkbox,
+                             toggle=True,
+                             label=tr(props.tab, "ui.t-check-for-update", "Regularly check for new releases"),
+                             defaultChecked=cfg.core.check_new_releases,
+                             onChange=lambda e, d: props.upd("core.check_new_releases", d.checked),
+                             ))
+                         )
+
+        if defined(cfg.core.check_release_interval):
+            items.append(e(ui.Form.Field,
+                           h("label", tr(
+                               props.tab, "ui.t-update-interval", "Interval in minutes between checking for a new release, set 0 to only check once every startup")),
+                           e(ui.Input,
+                             width=4,
+                             js_type="number",
+                             defaultValue=cfg.core.check_release_interval,
+                             onChange=lambda e, d: props.upd("core.check_release_interval", int(e.target.value)),
+                             ))
+                         )
+
+        if defined(cfg.core.allow_beta_releases):
+            items.append(e(ui.Form.Field,
+                           e(ui.Checkbox,
+                             toggle=True,
+                             label=tr(props.tab, "ui.t-update-beta", "Allow downloading beta releases"),
+                             defaultChecked=cfg.core.allow_beta_releases,
+                             onChange=lambda e, d: props.upd("core.allow_beta_releases", d.checked),
+                             ))
+                         )
+
+        if defined(cfg.core.allow_alpha_releases):
+            items.append(e(ui.Form.Field,
+                           e(ui.Checkbox,
+                             toggle=True,
+                             label=tr(props.tab, "ui.t-update-alpha", "Allow downloading alpha releases"),
+                             defaultChecked=cfg.core.allow_alpha_releases,
+                             onChange=lambda e, d: props.upd("core.allow_alpha_releases", d.checked),
+                             ))
+                         )
+
+    return e(PrefSegment, *items, props=props)
 
 
 def preftab_get_config(data=None, error=None):
@@ -362,26 +362,45 @@ __pragma__("nokwargs")
 
 
 def preftab_update_config(key, value):
+    if key in ('server.port',
+               'server.host',
+               'server.host_web',
+               'server.port_web',
+               'core.debug'):
+        this.trigger_restart()
     this.state.u_config[key] = value
 
 
 def preftab_render():
     t_refresh = this.trigger_refresh
+    t_restart = this.trigger_restart
+    s_restart = this.state.restart
     upd_config = this.update_config
     set_config = this.set_config
     config = this.state.config
     u_cfg = this.state.u_config
     tab = this
 
-    def el(x): return e(x, u_cfg=u_cfg, tab=tab, cfg=config, refresh=t_refresh, upd=upd_config, set=set_config)  # noqa: E704
+    def el(x): return e(x,
+                        u_cfg=u_cfg,
+                        tab=tab,
+                        cfg=config,
+                        refresh=t_refresh,
+                        tigger_restart=t_restart,
+                        restart=s_restart,
+                        upd=upd_config,
+                        set=set_config,
+                        )  # noqa: E704
 
     return e(ui.Tab,
              panes=[
+                 {'menuItem': tr(this, "ui.mi-pref-view", "View"),
+                  'render': lambda: el(pref_view)},
                  {'menuItem': tr(this, "ui.mi-pref-general", "General"),
                   'render': lambda: el(pref_general)},
                  {'menuItem': tr(this, "ui.mi-pref-logins", "Logins"), },
                  {'menuItem': tr(this, "ui.mi-pref-metadata", "Metadata"), },
-                 {'menuItem': tr(this, "ui.mi-pref-download", "Download"), },
+                 {'menuItem': tr(this, "ui.mi-pref-network", "Network"), },
                  {'menuItem': tr(this, "ui.mi-pref-monitoring", "Monitoring"), },
                  {'menuItem': tr(this, "ui.mi-pref-ignore", "Ignore"), },
                  {'menuItem': tr(this, "ui.mi-pref-server", "Server"),
@@ -395,7 +414,10 @@ def preftab_render():
 PrefTab = createReactClass({
     'displayName': 'PrefTab',
 
-    'getInitialState': lambda: {'config': {}, 'refresh': False, 'u_config': {}},
+    'getInitialState': lambda: {'config': {},
+                                'refresh': False,
+                                'u_config': {},
+                                'restart': False},
 
     'get_config': preftab_get_config,
 
@@ -404,6 +426,8 @@ PrefTab = createReactClass({
     'update_config': preftab_update_config,
 
     'trigger_refresh': lambda: this.setState({'refresh': True}),
+
+    'trigger_restart': lambda: this.setState({'restart': True}),
 
     'componentDidMount': lambda: this.get_config(),
 

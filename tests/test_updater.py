@@ -265,13 +265,15 @@ class TestUpdating:
             mock.patch("happypanda.core.commands.io_cmd.CoreFS.delete"),\
             mock.patch("happypanda.common.constants.dir_update", p):
             utils_temp.return_value = str(tmp_update_folder.mkdir("updater_release2"))
-            assert updater.register_release(asset_url_platform, silent=False, restart=False)
+            assert updater.register_release(asset_url_platform, silent=False, restart=True)
 
         with mock.patch("happypanda.common.constants.internal_db_path", str(tmp_update_folder.join("internals"))),\
             mock.patch("happypanda.common.constants.app_path", app_path),\
             mock.patch("updater.constants.internal_db_path", str(db_p)):
             assert constants.internal_db_path == str(db_p)
-            happyupd.main()
+            with mock.patch("updater.atexit.register") as aexit:
+                happyupd.main()
+                assert aexit.called
             with utils.intertnal_db() as db:
                 d = db[constants.updater_key]
                 assert d['state'] == constants.UpdateState.Success.value

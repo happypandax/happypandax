@@ -33,8 +33,6 @@ def item_view_menu(history,
                    on_toggle_config=None,
                    cfg_suffix=None):
     v = utils.storage.get("def_sort_idx" + default_item + cfg_suffix, 0)
-    print(v)
-    print(default_sort)
     return [e(ui.Menu.Item, e(item.ItemButtons,
                               history=history,
                               on_change=on_item_change,

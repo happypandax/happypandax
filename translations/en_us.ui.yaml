@@ -64,15 +64,17 @@ b-shutdown: Shutdown
 b-reset: Reset
 
 # Preferences Page
+mi-pref-view: View
 mi-pref-general: General
 mi-pref-logins: Logins
 mi-pref-metadata: Metadata
-mi-pref-download: Download
+mi-pref-network: Network
 mi-pref-monitoring: Monitoring
 mi-pref-ignore: Ignore
 mi-pref-client: Client
 mi-pref-server: Server
 mi-pref-advanced: Advanced
+t-setting-restart: One or more setting modifications require a restart before taking effect
 
 de-pref-disabled: Disabled because this client is connecting from a different device
 t-language: Language

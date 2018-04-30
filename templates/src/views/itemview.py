@@ -365,7 +365,15 @@ def get_items(data=None, error=None):
         sort_by = int(this.props.sort_by if utils.defined(this.props.sort_by) else this.state.sort_by)
         if not sort_by:
             sort_item = this.props.related_type or this.props.item_type or this.state.item_type
-            sort_by = utils.storage.get("def_sort_idx" + sort_item + this.config_suffix(), 0)
+            def_sort_key = "def_sort_idx" + sort_item + this.config_suffix()
+            sort_by = utils.storage.get(def_sort_key, 0)
+            if not sort_by:
+                sort_by = {
+                    ItemType.Gallery: 2,
+                    ItemType.Collection: 51
+                    }.get(sort_item, 0)
+                utils.storage.set(def_sort_key, sort_by)
+
         sort_desc = (this.props.sort_desc if utils.defined(this.props.sort_desc) else this.state.sort_desc)
         filter_id = (this.props.filter_id if utils.defined(this.props.filter_id) else this.state.filter_id)
 
@@ -512,6 +520,8 @@ def item_view_on_update(p_props, p_state):
     )):
         this.reset_page()
 
+def item_view_will_mount():
+    this.get_element()
 
 def item_view_render():
     items = this.state['items']
@@ -637,7 +647,7 @@ ItemView = createReactClass({
     'on_group_gallery': lambda e, d: this.setState({'group_gallery': d.checked}),
     'toggle_config': lambda a: this.setState({'visible_config': not this.state.visible_config}),
 
-    'componentWillMount': lambda: this.get_element(),
+    'componentWillMount': item_view_will_mount,
     'componentDidMount': lambda: all((this.get_items(), this.get_items_count())),
     'componentDidUpdate': item_view_on_update,
 

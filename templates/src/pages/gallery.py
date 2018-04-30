@@ -284,10 +284,6 @@ def page_render():
         series_data = this.state.group_data
 
     indicators = []
-
-    if this.state.category_data:
-        indicators.append(e(ui.Label, this.state.category_data.js_name, basic=True, size="large"))
-
     if inbox:
         indicators.append(e(ui.Icon, js_name="inbox", size="big", title=tr(
             this, "ui.t-inboxed-gallery", "This gallery is in your inbox")))
@@ -295,6 +291,9 @@ def page_render():
     if trash:
         indicators.append(e(ui.Icon, js_name="trash", color="red", size="big",
                             title=tr(this, "ui.t-trashed-gallery", "This gallery is set to be deleted")))
+
+    if this.state.category_data:
+        indicators.append(e(ui.Label, this.state.category_data.js_name, basic=True, size="large"))
 
     buttons = []
     external_view = []

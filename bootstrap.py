@@ -325,6 +325,13 @@ def start(args, unknown=None):
         _update_pip(args)
     return run([env_python, "run.py", *sys.argv[2:]]).returncode
 
+def test(args, unknown=None):
+    _activate_venv()
+    try:
+        from run_tests import main
+    except ImportError:
+        _update_pip(args)
+    return main(sys.argv[2:], False, env_python)
 
 def lint(args, unknown=None):
     _activate_venv()
@@ -574,10 +581,13 @@ def main():
     subparser = subparsers.add_parser('run', help='Start HPX, additional args will be passed to HPX')
     subparser.set_defaults(func=start)
 
+    subparser = subparsers.add_parser('test', help='Run tests, additional args are passed to pytest')
+    subparser.set_defaults(func=test)
+
     subparser = subparsers.add_parser('help', help='Help')
     subparser.set_defaults(func=lambda a: parser.print_help())
 
-    if any([x in sys.argv for x in ("run", "convert", "lint", "build")]):
+    if any([x in sys.argv for x in ("run", "convert", "lint", "build", "test")]):
         a = args, unknown = parser.parse_known_args()
     else:
         a = args = parser.parse_args()
