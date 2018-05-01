@@ -740,7 +740,7 @@ class User(Base):
     timestamp = Column(ArrowType, nullable=False, default=arrow.now)
     # TODO:
     # maybe a list of enum values?
-    #rights = Column(JSONType, nullable=False, default={})
+    rights = Column(JSONType, nullable=False, default={})
 
 
     events = relationship("Event", lazy='dynamic', back_populates='user')
@@ -1024,10 +1024,8 @@ gallery_parodies = Table(
                 'parody_id', 'gallery_id'))
 
 
-# TODO:
-#class Parody(ProfileMixin, UserMixin, Base):
 @generic_repr
-class Parody(UserMixin, Base):
+class Parody(ProfileMixin, UserMixin, Base):
     __tablename__ = 'parody'
 
     galleries = relationship(
