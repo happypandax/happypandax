@@ -119,7 +119,7 @@ def start(argv=None, db_kwargs={}):
         if not args.only_web:
             db_inited = db.init(**db_kwargs)
             command.init_commands()
-            monkey.patch_all(thread=False, ssl=False)
+            monkey.patch_all(thread=False, ssl=False, select=False)
             async.patch_psycopg()
         else:
             db_inited = True
