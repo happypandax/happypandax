@@ -1,3 +1,9 @@
+from gevent import monkey
+# need to patch before importing requests, see
+# https://github.com/requests/requests/issues/3752
+monkey.patch_ssl()
+monkey.patch_select()
+
 import sys
 import os
 
@@ -10,6 +16,7 @@ import pathlib
 from threading import Thread, Timer
 from multiprocessing import Process, queues
 from happypanda.common import constants
+
 
 # OS X: fix the working directory when running a mac app
 # OS X: files are in [app]/Contents/MacOS/
