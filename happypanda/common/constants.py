@@ -63,8 +63,8 @@ log_normal = os.path.join(dir_log, "activity.log")
 log_debug = os.path.join(dir_log, "debug.log")
 db_name = "happypanda"
 db_name_dev = "happypanda_dev"
-db_path = os.path.join(dir_root, dir_data, db_name+'.db')
-db_path_dev = os.path.join(dir_root, dir_data, db_name_dev+'.db')
+db_path = os.path.join(dir_root, dir_data, db_name + '.db')
+db_path_dev = os.path.join(dir_root, dir_data, db_name_dev + '.db')
 internal_db_path = os.path.join(dir_data, "internals")
 
 thumbs_view = "/thumb"
@@ -92,6 +92,7 @@ class Dialect:
     SQLITE = "sqlite"
     MYSQL = "mysql"
     POSTGRES = "postgres"
+
 
 class ExitCode(enum.Enum):
     Exit = 0

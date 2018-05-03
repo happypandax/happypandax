@@ -209,6 +209,7 @@ class OrderingQuery(dynamic.AppenderQuery):
     def __reduce__(self):
         return orderinglist._reconstitute, (self.__class__, self.__dict__, list(self))
 
+
 class JSONType(JSONType_):
     """
     Use JSONB instead of JSON
@@ -219,6 +220,7 @@ class JSONType(JSONType_):
             return dialect.type_descriptor(JSONB())
         else:
             return dialect.type_descriptor(self.impl)
+
 
 class String(_String):
     """Enchanced version of standard SQLAlchemy's :class:`String`.
@@ -742,7 +744,6 @@ class User(Base):
     # maybe a list of enum values?
     #rights = Column(JSONType, nullable=False, default={})
 
-
     events = relationship("Event", lazy='dynamic', back_populates='user')
 
     @validates('password')
@@ -1025,7 +1026,7 @@ gallery_parodies = Table(
 
 
 # TODO:
-#class Parody(ProfileMixin, UserMixin, Base):
+# class Parody(ProfileMixin, UserMixin, Base):
 @generic_repr
 class Parody(UserMixin, Base):
     __tablename__ = 'parody'
@@ -1675,6 +1676,7 @@ def _get_current():
     else:
         return threading.local()
 
+
 def make_db_url(db_name=None):
     if db_name is None:
         db_name = constants.db_name_dev if constants.dev and config.db_name.value == constants.db_name else config.db_name.value
@@ -1686,8 +1688,9 @@ def make_db_url(db_name=None):
         port=config.db_port.value,
         database=db_name,
         query=config.db_query.value,
-        )
+    )
     return db_url
+
 
 def init(**kwargs):
     db_path = kwargs.get("path")
@@ -1852,6 +1855,7 @@ def cleanup_session():
         yield
     finally:
         constants._db_scoped_session.remove()
+
 
 def cleanup_session_wrap(f=None):
     if f is None:

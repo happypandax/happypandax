@@ -2,6 +2,7 @@
 from os import chdir, path
 from subprocess import run
 
+
 def main(args=None, sysexit=True, executable=executable):
     # Change current working directory. This makes it so run_tests.py is
     # required to be on the same level as the happypanda folder
@@ -17,6 +18,7 @@ def main(args=None, sysexit=True, executable=executable):
         return exit(c)
     else:
         return c
+
 
 if __name__ == '__main__':
     main()

@@ -32,7 +32,7 @@ def item_view_menu(history,
                    default_filter=None,
                    on_toggle_config=None,
                    cfg_suffix=None):
-    v = utils.storage.get("def_sort_idx" + default_item + cfg_suffix, 0)
+    #v = utils.storage.get("def_sort_idx" + default_item + cfg_suffix, 0)
     return [e(ui.Menu.Item, e(item.ItemButtons,
                               history=history,
                               on_change=on_item_change,
@@ -55,7 +55,8 @@ def item_view_menu(history,
                 ),
               e(item.SortDropdown,
                 history=history,
-                on_change=on_sort_change, value=default_sort or utils.storage.get("def_sort_idx" + default_item + cfg_suffix, 0),
+                on_change=on_sort_change, value=default_sort or utils.storage.get(
+                    "def_sort_idx" + default_item + cfg_suffix, 0),
                 item_type=default_item,
                 query=True)),
             e(ui.Menu.Item,

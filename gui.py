@@ -4,18 +4,18 @@ from gevent import monkey
 monkey.patch_ssl()
 monkey.patch_select()
 
-import sys
-import os
+import sys # noqa: E402
+import os # noqa: E402
 
-import multiprocessing as mp
-import functools
-import signal
-import webbrowser
-import pathlib
+import multiprocessing as mp # noqa: E402
+import functools # noqa: E402
+import signal # noqa: E402
+import webbrowser # noqa: E402
+import pathlib # noqa: E402
 
-from threading import Thread, Timer
-from multiprocessing import Process, queues
-from happypanda.common import constants
+from threading import Thread, Timer # noqa: E402
+from multiprocessing import Process, queues # noqa: E402
+from happypanda.common import constants # noqa: E402
 
 
 # OS X: fix the working directory when running a mac app
@@ -97,7 +97,7 @@ from i18n import t  # noqa: E402
 
 from happypanda.common import utils, config  # noqa: E402
 from happypanda.core.commands import io_cmd  # noqa: E402
-from happypanda.core import db # noqa: E402
+from happypanda.core import db  # noqa: E402
 from happypanda import main  # noqa: E402
 import HPtoHPX  # noqa: E402
 

@@ -1,7 +1,7 @@
 from src.react_utils import (e,
                              createReactClass,
                              Link)
-from src.ui import ui, Slider, LabelAccordion, DateLabel, TitleChange, TR
+from src.ui import ui, Slider, LabelAccordion, DateLabel, TitleChange
 from src.i18n import tr
 from src.state import state
 from src.client import ItemType, ImageSize, client, Command

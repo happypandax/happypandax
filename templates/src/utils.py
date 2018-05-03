@@ -141,7 +141,7 @@ defined = __pragma__('js', '{}',
     }""")
 
 remove_key = __pragma__('js', '{}',
-                     """
+                        """
     function remove_key(o, k) {
         delete o[k];
         return o;

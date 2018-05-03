@@ -282,7 +282,7 @@ class AsyncService(Service):
         gevent.idle(constants.Priority.Normal.value)
         if cmd_id not in self._greenlets:
             self._greenlets[cmd_id] = async.Greenlet(
-                 db.cleanup_session_wrap(self._commands[cmd_id]._run), *args, **kwargs)
+                db.cleanup_session_wrap(self._commands[cmd_id]._run), *args, **kwargs)
 
         green = self._greenlets[cmd_id]
 

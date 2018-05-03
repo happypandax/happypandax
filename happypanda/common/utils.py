@@ -659,7 +659,7 @@ def create_self_signed_cert(cert_file, key_file, pem_file=None):
     cert.gmtime_adj_notAfter(10 * 365 * 24 * 60 * 60)
     cert.set_issuer(cert.get_subject())
     cert.set_pubkey(k)
-    
+
     san_list = ["DNS:localhost",
                 "DNS:happypanda.local",
                 "DNS:happypandax.local",

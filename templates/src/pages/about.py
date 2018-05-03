@@ -27,7 +27,8 @@ def about_info(props):
     first_rows = []
 
     first_rows.append(e(ui.Table.Row,
-                        e(ui.Table.Cell, e(ui.Header, e(ui.Icon, js_name="github"), tr(props.that, "ui.t-developer", "Developer"), as_="h5"), collapsing=True),
+                        e(ui.Table.Cell, e(ui.Header, e(ui.Icon, js_name="github"), tr(
+                            props.that, "ui.t-developer", "Developer"), as_="h5"), collapsing=True),
                         e(ui.Table.Cell, h("a", "Twiddly", href="https://github.com/Pewpews", target="_blank"))))
     first_rows.append(e(ui.Table.Row,
                         e(ui.Table.Cell, e(ui.Header, e(ui.Icon, js_name="twitter"), "Twitter", as_="h5"), collapsing=True),

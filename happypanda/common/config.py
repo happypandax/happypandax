@@ -75,7 +75,8 @@ class ConfigNode:
     @property
     def value(self):
         with self._cfg.tmp_config(self.namespace, self._get_ctx_config()):
-            return self.get(self.namespace, self.name, default=self.default, create=False, type_=self.type_, only=self.only)
+            return self.get(self.namespace, self.name, default=self.default,
+                            create=False, type_=self.type_, only=self.only)
 
     @value.setter
     def value(self, new_value):
@@ -480,8 +481,8 @@ with config.namespace(db_ns):
         db_ns,
         "dialect",
         "sqlite",
-        "Which SQL dialect to use among 'sqlite', 'mysql' and 'postgres'. "+
-        "Note that HPX will not transfer data from one dialect to another once chosen. "+
+        "Which SQL dialect to use among 'sqlite', 'mysql' and 'postgres'. " +
+        "Note that HPX will not transfer data from one dialect to another once chosen. " +
         "It is therefore advised that you choose a dialect early and stick to it throughout",
         only=("sqlite", "mysql", "postgres"))
 

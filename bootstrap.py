@@ -325,6 +325,7 @@ def start(args, unknown=None):
         _update_pip(args)
     return run([env_python, "run.py", *sys.argv[2:]]).returncode
 
+
 def test(args, unknown=None):
     _activate_venv()
     try:
@@ -332,6 +333,7 @@ def test(args, unknown=None):
     except ImportError:
         _update_pip(args)
     return main(sys.argv[2:], False, env_python)
+
 
 def lint(args, unknown=None):
     _activate_venv()

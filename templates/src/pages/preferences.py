@@ -31,17 +31,19 @@ def set_translation_error(e, d):
     state.translation_id_error = d.checked
     utils.storage.set("translation_id_error", d.checked)
 
+
 def PrefSegment(props):
-    
+
     return e(ui.Segment,
              e(ui.Form,
                props.children
                ),
              e(ui.Divider, horizontal=True),
-             e(ui.Message,h("p", tr(props.props.tab, "ui.t-setting-restart", "One or more setting modifications require a restart to take effect")),
-                            warning=True, size="tiny", hidden=not props.props.restart),
+             e(ui.Message, h("p", tr(props.props.tab, "ui.t-setting-restart", "One or more setting modifications require a restart to take effect")),
+               warning=True, size="tiny", hidden=not props.props.restart),
              basic=True,
              )
+
 
 def pref_view(props):
     cfg = props.cfg
@@ -88,6 +90,7 @@ def pref_view(props):
         __pragma__('notconv')
 
     return e(PrefSegment, *items, props=props)
+
 
 def pref_general(props):
     cfg = props.cfg
@@ -188,6 +191,7 @@ def pref_general(props):
 
     return e(PrefSegment, *items, props=props)
 
+
 def pref_server(props):
     cfg = props.cfg
     #u_cfg = props.u_cfg
@@ -251,6 +255,7 @@ def pref_server(props):
 
     return e(PrefSegment, *items, props=props)
 
+
 def pref_advanced(props):
     cfg = props.cfg
     #u_cfg = props.u_cfg
@@ -289,7 +294,6 @@ def pref_advanced(props):
                              onChange=lambda e: props.upd("core.unrar_tool_path", e.target.value)
                              ))
                          )
-
 
         if defined(cfg.core.check_new_releases):
             items.append(e(ui.Header, tr(props.tab, "ui.h-updates", "Updates"), size="small", dividing=True))
@@ -381,7 +385,7 @@ def preftab_render():
     u_cfg = this.state.u_config
     tab = this
 
-    def el(x): return e(x,
+    def el(x): return e(x, # noqa: E704
                         u_cfg=u_cfg,
                         tab=tab,
                         cfg=config,
@@ -390,7 +394,7 @@ def preftab_render():
                         restart=s_restart,
                         upd=upd_config,
                         set=set_config,
-                        )  # noqa: E704
+                        )
 
     return e(ui.Tab,
              panes=[

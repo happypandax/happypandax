@@ -77,8 +77,8 @@ def Itemviewvonfig_render():
               value=utils.storage.get(default_sort_cfg + props.item_type + cfg_suffix),
               on_change=lambda e, d: utils.storage.set(default_sort_cfg + props.item_type + cfg_suffix, d.value)
               )
-            ),
-          )
+          ),
+    )
 
     return e(ui.Sidebar,
              e(ui.Form,
@@ -262,7 +262,8 @@ def itemviewbase_render():
                            on_change=this.props.on_sort_change,
                            item_type=this.props.default_item,
                            query=this.props.query,
-                           value=this.props.default_sort or utils.storage.get("def_sort_idx" + this.props.default_item + this.props.config_suffix, 0),
+                           value=this.props.default_sort or utils.storage.get(
+                               "def_sort_idx" + this.props.default_item + this.props.config_suffix, 0),
                            ), icon=True))
 
     if this.props.show_filterdropdown:
@@ -371,7 +372,7 @@ def get_items(data=None, error=None):
                 sort_by = {
                     ItemType.Gallery: 2,
                     ItemType.Collection: 51
-                    }.get(sort_item, 0)
+                }.get(sort_item, 0)
                 utils.storage.set(def_sort_key, sort_by)
 
         sort_desc = (this.props.sort_desc if utils.defined(this.props.sort_desc) else this.state.sort_desc)
@@ -520,8 +521,10 @@ def item_view_on_update(p_props, p_state):
     )):
         this.reset_page()
 
+
 def item_view_will_mount():
     this.get_element()
+
 
 def item_view_render():
     items = this.state['items']

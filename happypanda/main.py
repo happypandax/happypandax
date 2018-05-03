@@ -4,8 +4,8 @@ from gevent import monkey
 monkey.patch_ssl()
 monkey.patch_select()
 
-import os # noqa: E402
-import sys # noqa: E402
+import os  # noqa: E402
+import sys  # noqa: E402
 
 if __package__ is None and not hasattr(sys, 'frozen'):
     # direct call of main.py
@@ -30,6 +30,7 @@ from happypanda.core.commands import io_cmd, meta_cmd  # noqa: E402
 
 log = hlogger.Logger(__name__)
 parser = utils.get_argparser()  # required to be at module lvl for sphinx.autoprogram ext
+
 
 def create_user_interactive():
     s = {}

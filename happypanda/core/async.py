@@ -215,6 +215,7 @@ def patch_psycopg():
 
     extensions.set_wait_callback(gevent_wait_callback)
 
+
 def gevent_wait_callback(conn, timeout=None):
     """
     A wait callback useful to allow gevent to work with Psycopg.
