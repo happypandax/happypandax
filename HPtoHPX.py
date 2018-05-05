@@ -844,16 +844,16 @@ def main(args=sys.argv[1:]):
         print("Source: ", src)
         print("Destination: ", dst)
 
-        if database_exists(dst):
+        if (not any(dst.lower().startswith(x) for x in ('postgres:', 'mysql:', 'sqlite:')) and os.path.exists(dst)) or database_exists(dst):
             if args.delete_target:
                 print("Deleting existing target database")
-                if not any(dst.lower().startswith(x) for x in ('postgres', 'mysql', 'sqlite')):
+                if not any(dst.lower().startswith(x) for x in ('postgres:', 'mysql:', 'sqlite:')):
                     os.unlink(dst)
                 else:
                     drop_database(dst)
             else:
                 print("Warning: destination database already exists, you might want to delete")
-        elif not all(dst.lower().startswith(x) for x in ('postgres', 'mysql', 'sqlite')):
+        elif not all(dst.lower().startswith(x) for x in ('postgres:', 'mysql:', 'sqlite:')):
             head, _ = os.path.split(dst)
             if head:
                 os.makedirs(head, exist_ok=True)
@@ -877,7 +877,7 @@ def main(args=sys.argv[1:]):
         print("Fetching all galleries, chapters, tags and hashes..")
         print("Fetched galleries count:", len(src_galleries))
         print("Creating new Happypanda X database")
-        if not any(dst.lower().startswith(x) for x in ('postgres', 'mysql', 'sqlite')):
+        if not any(dst.lower().startswith(x) for x in ('postgres:', 'mysql:', 'sqlite:')):
             engine = db.create_engine(os.path.join("sqlite:///", dst))
         else:
             if not database_exists(dst):

@@ -130,9 +130,9 @@ class Client:
         try:
             self._sock.sendall(gzip.compress(msg_bytes, 5))
             self._sock.sendall(constants.postfix)
-        except socket.error as e:
+        except (socket.error, ConnectionError) as e:
             self._disconnect()
-            raise exceptions.ClientError(self.name, "{}".format(e))
+            raise exceptions.ConnectionError(self.name, "{}".format(e))
 
     def _recv(self):
         "returns json"
@@ -157,9 +157,9 @@ class Client:
                 self._server)
             buffered = gzip.decompress(buffered)
             return utils.convert_to_json(buffered, self.name, log=log)
-        except socket.error as e:
+        except (socket.error, ConnectionError) as e:
             self._disconnect()
-            raise exceptions.ServerError(self.name, "{}".format(e))
+            raise exceptions.ConnectionError(self.name, "{}".format(e))
 
     def communicate(self, msg, auth=False):
         """Send and receive data with server
@@ -172,7 +172,7 @@ class Client:
         if self._alive and not self._accepted and not auth:
             raise exceptions.AuthRequiredError(utils.this_function(),
                                                "Client '{}' is connected but not authenticated".format(self.name))
-        self._send(bytes(json.dumps(msg), 'utf-8'))
+        self._send(bytes(utils.json_dumps(msg), 'utf-8'))
         return self._recv()
 
     def close(self):

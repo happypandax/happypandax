@@ -87,7 +87,6 @@ class SimilarGallery(AsyncCommand):
     def _calculate(self, gallery_or_id, all_gallery_tags={}):
         assert isinstance(gallery_or_id, (int, db.Gallery))
         data = {}
-
         g_id = gallery_or_id.id if isinstance(gallery_or_id, db.Gallery) else gallery_or_id
         tag_count = 0
         tag_count_minimum = 5
@@ -154,7 +153,10 @@ class SimilarGallery(AsyncCommand):
                 idb[constants.internaldb.similar_gallery_calc.key] = gl_data
                 idb[constants.internaldb.similar_gallery_tags.key] = all_gallery_tags
         self.next_progress()
-        return [x for x in sorted(gl_data[gid], reverse=True, key=lambda x:gl_data[gid][x])]
+        v = []
+        if gid in gl_data:
+            v = [x for x in sorted(gl_data[gid], reverse=True, key=lambda x:gl_data[gid][x])]
+        return v
 
 
 class OpenGallery(Command):

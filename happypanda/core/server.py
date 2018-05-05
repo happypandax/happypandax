@@ -667,8 +667,6 @@ class WebServer:
 
         if cmd_args is not None:
             utils.parse_options(cmd_args)
-        if __name__ != '__main__':
-            gevent.monkey.patch_all(thread=False, ssl=False, select=True)
         views.init_views(self.happyweb, self.socketio)
         self._ssl_args = {}
         if config.enable_ssl.value is True or config.enable_ssl.value == "web":

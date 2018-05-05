@@ -1,8 +1,8 @@
-from gevent import monkey
-# need to patch before importing requests, see
-# https://github.com/requests/requests/issues/3752
-monkey.patch_ssl()
-monkey.patch_select()
+from gevent import config # noqa: E402
+# need to configure before using anything gevent related
+config.monitor_thread = False
+config.resolver = "dnspython"
+config.resolver_timeout = 10
 
 import os  # noqa: E402
 import sys  # noqa: E402
@@ -30,7 +30,7 @@ from happypanda.core.commands import io_cmd, meta_cmd  # noqa: E402
 
 log = hlogger.Logger(__name__)
 parser = utils.get_argparser()  # required to be at module lvl for sphinx.autoprogram ext
-
+async.setup_gevent()
 
 def create_user_interactive():
     s = {}
@@ -120,8 +120,6 @@ def start(argv=None, db_kwargs={}):
         if not args.only_web:
             db_inited = db.init(**db_kwargs)
             command.init_commands()
-            monkey.patch_all(thread=False, ssl=False, select=False)
-            async.patch_psycopg()
         else:
             db_inited = True
 
@@ -160,10 +158,11 @@ def start(argv=None, db_kwargs={}):
 
             constants.notification = server.ClientNotifications()
 
-            upd_int = config.check_release_interval.value or config.check_release_interval.default
-            upd_id = services.Scheduler.generic.add_command(meta_cmd.CheckUpdate(),
-                                                            IntervalTrigger(minutes=upd_int))
-            services.Scheduler.generic.start_command(upd_id, push=True)
+            if not args.only_web:
+                upd_int = config.check_release_interval.value or config.check_release_interval.default
+                upd_id = services.Scheduler.generic.add_command(meta_cmd.CheckUpdate(),
+                                                                IntervalTrigger(minutes=upd_int))
+                services.Scheduler.generic.start_command(upd_id, push=True)
             # starting stuff
             services.Scheduler.generic.start()
             log.i("Starting webserver... ({}:{})".format(config.host_web.value, config.port_web.value), stdout=True)
@@ -175,7 +174,8 @@ def start(argv=None, db_kwargs={}):
                                              args=web_args,
                                              kwargs={'logging_queue': hlogger.Logger._queue,
                                                      'cmd_args': args},
-                                             daemon=True)
+                                             daemon=True,
+                                             name="gevent")
                 constants.web_proc.start()
                 hp_server = server.HPServer()
                 meta_cmd.ShutdownApplication.shutdown.subscribe(hp_server.shutdown)
@@ -223,4 +223,5 @@ def start(argv=None, db_kwargs={}):
 
 if __name__ == '__main__':
     multiprocessing.freeze_support()
+    multiprocessing.set_start_method("spawn")
     start()

@@ -281,7 +281,14 @@ class ClientError(ServerError):
 
 
 @error_code(501)
-class ServerDisconnectError(ClientError):
+class ConnectionError(ClientError):
+    """Server connection error."""
+
+    pass
+
+
+@error_code(502)
+class ServerDisconnectError(ConnectionError):
     """Server disconnected."""
 
     pass

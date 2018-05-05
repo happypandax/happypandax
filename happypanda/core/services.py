@@ -242,6 +242,7 @@ class AsyncService(Service):
         super().__init__(name)
         self._commands = {}  # cmd_id : command
         self._greenlets = {}  # cmd_id : greenlet
+        self._values = {} # cmd_id : values
         self._decorators = {}  # cmd_id : callable
         self._group = group
         self._queue = queue.Queue()
@@ -313,43 +314,48 @@ class AsyncService(Service):
         """
         assert isinstance(cmd_id, int)
         gevent.idle(constants.Priority.Normal.value)
-        if cmd_id in self._greenlets:
-            return self._greenlets[cmd_id].value
+        if cmd_id in self._values:
+            return self._values[cmd_id]
 
     def _callback_wrapper(self, command_id, command_obj, callback, greenlet):
         assert callable(callback) or callback is None
-
-        if not self._queue.empty():
-            try:
-                next_cmd_id = self._queue.get_nowait()
-                log.d("Starting command id", next_cmd_id, " next in queue in service '{}'".format(self.name))
-                self._start(next_cmd_id)
-            except queue.Empty:
-                pass
-
-        command_obj.state = command.CommandState.finished
         try:
-            greenlet.get()
-        except BaseException:
-            log.exception("Command", "{}({})".format(command_obj.__class__.__name__, command_id), "raised an exception")
-            command_obj.state = command.CommandState.failed
-            command_obj.exception = greenlet.exception
-            if constants.dev:
-                raise  # doesnt work
-        if isinstance(greenlet.value, gevent.GreenletExit):
-            command_obj.state = command.CommandState.stopped
-            greenlet.value = None
+            if not self._queue.empty():
+                try:
+                    next_cmd_id = self._queue.get_nowait()
+                    log.d("Starting command id", next_cmd_id, " next in queue in service '{}'".format(self.name))
+                    self._start(next_cmd_id)
+                except queue.Empty:
+                    pass
 
-        if command_id in self._decorators:
-            greenlet.value = self._decorators[command_id](greenlet.value)
+            command_obj.state = command.CommandState.finished
+            try:
+                greenlet.get()
+            except BaseException:
+                log.exception("Command", "{}({})".format(command_obj.__class__.__name__, command_id), "raised an exception")
+                command_obj.state = command.CommandState.failed
+                command_obj.exception = greenlet.exception
+                if constants.dev:
+                    raise  # doesnt work
+            value = greenlet.value
+            if isinstance(value, gevent.GreenletExit):
+                command_obj.state = command.CommandState.stopped
+                value = None
 
-        log.d(
-            "Command id", command_id, "in service '{}'".format(
-                self.name), "has finished running with state:", str(
-                command_obj.state))
+            if command_id in self._decorators:
+                value = self._decorators[command_id](value)
 
-        if callback:
-            callback(greenlet.value)
+            self._values[command_id] = value
+
+            log.d(
+                "Command id", command_id, "in service '{}'".format(
+                    self.name), "has finished running with state:", str(
+                    command_obj.state))
+            if callback:
+                callback(value)
+        except:
+            log.exception()
+            raise
 
     def _start(self, cmd_id):
         gevent.idle(constants.Priority.Low.value)
