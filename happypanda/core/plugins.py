@@ -7,11 +7,16 @@ import enum
 import logging
 import gevent
 import json
+import glob
+import pkg_resources
+import copy
+import pkgutil
 
 from gevent.event import Event
 from collections import OrderedDict
 
 from happypanda.common import exceptions, utils, constants, hlogger
+from happypanda.core import plugins_interface
 
 log = hlogger.Logger(constants.log_ns_plugin + __name__)
 
@@ -81,7 +86,15 @@ def _plugin_load(plugin_manager, manifest, path, *args, _logger=None, **kwargs):
     assert isinstance(manifest, str)
     with open(manifest, 'r', encoding='utf-8') as f:
         manifest = json.load(f)
-    manifestobj = PluginManifest(manifest)
+    pentry = manifest.get("entry")
+    if pentry:
+        if not os.path.exists(os.path.join(path, pentry)):
+            raise exceptions.PluginLoadError("Plugin loader", "Plugin entry {} does not exist".format(pentry))
+    ptest = manifest.get("test")
+    if ptest:
+        if not os.path.exists(os.path.join(path, ptest)):
+            raise exceptions.PluginLoadError("Plugin loader", "Plugin test {} does not exist".format(ptest))
+    manifestobj = PluginManifest(manifest, path)
     return plugin_manager.register(manifestobj, _logger, *args, **kwargs)
 
 
@@ -105,10 +118,11 @@ def plugin_loader(plugin_manager, path, *args, **kwargs):
 
 class PluginManifest(OrderedDict):
 
-    def __init__(self, manifest):
+    def __init__(self, manifest, path=""):
         assert isinstance(manifest, dict)
-        name = "PLugin loader"
-        plugin_requires = ("id", "name", "shortname", "version", "author", "description")
+        manifest['path'] = path
+        name = "Plugin loader"
+        plugin_requires = ("id", "entry", "name", "shortname", "version", "author", "description")
 
         for pr in plugin_requires:
             if not manifest.get(pr):
@@ -134,6 +148,9 @@ class PluginManifest(OrderedDict):
         if not isinstance(manifest.get('name'), str):
             raise exceptions.PluginAttributeError(
                 name, "Plugin name should be a string")
+        if not isinstance(manifest.get('entry'), str):
+            raise exceptions.PluginAttributeError(
+                name, "Plugin entry should be a filename")
         if not isinstance(manifest.get('shortname'), str):
             raise exceptions.PluginAttributeError(
                 name, "Plugin shortname should be a string")
@@ -158,6 +175,11 @@ class PluginManifest(OrderedDict):
             if not isinstance(manifest.get('website'), str):
                 raise exceptions.PluginAttributeError(
                     name, "Plugin website should be a string")
+
+        if manifest.get('test'):
+            if not isinstance(manifest.get('test'), str):
+                raise exceptions.PluginAttributeError(
+                    name, "Plugin website should be a filename")
 
         #if manifest.get('require'):
         #    e = None
@@ -415,17 +437,23 @@ class PluginState(enum.Enum):
 class PluginNode:
     ""
 
-    def __init__(self, manifest, logger, *args, **kwargs):
+    def __init__(self, manager, manifest, logger, *args, **kwargs):
         self.state = PluginState.Registered
+        self.manager = manager
         self.info = manifest
         self.args = args
         self.kwargs = kwargs
         self.commands = {}  # { command : handler }
-        self.instanced = None
+        self._modules = []
         self.logger = log if logger is None else logger
+        self._isolate = None
 
     def init(self):
         log.i("Initiating plugin -", self.format())
+        self._isolate = PluginIsolate(self)
+        with open(os.path.join(self.info.path, self.info.entry)) as f:
+            with self._isolate:
+                exec(f.read(), globals())
 
     def format(self):
         return format_plugin(self)
@@ -467,7 +495,6 @@ class PluginManager:
 
             self._event.clear()
 
-
     def register(self, manifest, logger, *args, **kwargs):
         """
         Registers a plugin
@@ -485,7 +512,7 @@ class PluginManager:
         if pluginid in self._nodes:
             raise exceptions.PluginError(
                 manifest.name, "Plugin ID already exists")
-        node = PluginNode(manifest, logger, *args, **kwargs)
+        node = PluginNode(self, manifest, logger, *args, **kwargs)
         self._nodes[pluginid] = node
         return node
 
@@ -607,25 +634,6 @@ class PluginManager:
                 utils.this_function(),
                 "Plugin node has not been registered with this manager")
 
-    def _ensure_valid_signature(self, node):
-        ""
-        sig = inspect.signature(node.plugin.__init__)
-        pars = list(sig.parameters)
-        if not len(pars) == 3:
-            raise exceptions.PluginSignatureError(
-                node, "Unexpected __init__() signature")
-        var_pos = False
-        var_key = False
-        for a in pars:
-            if sig.parameters[a].kind == inspect.Parameter.VAR_POSITIONAL:
-                var_pos = True
-            elif sig.parameters[a].kind == inspect.Parameter.VAR_KEYWORD:
-                var_key = True
-
-        if not (var_pos and var_key):
-            raise exceptions.PluginSignatureError(
-                node,
-                "A __init__ with the following signature must be defined: '__init__(self, *args, **kwargs)'")
 
     def disable_plugin(self, pluginid):
         "Disable plugin and its dependents"
@@ -666,21 +674,6 @@ class PluginManager:
         if command_name not in self._commands:
             self._commands[command_name] = []
         self._commands[command_name].append(node)
-
-    def _ensure_ready(self, node):
-        ""
-        assert isinstance(node, PluginNode)
-        if not node.state == PluginState.Enabled:
-            raise exceptions.PluginError(node, "This plugin is not ready")
-
-    def _ensure_before_init(self, node):
-        ""
-        assert isinstance(node, PluginNode)
-        if not node.state == PluginState.Init:
-            raise exceptions.PluginError(
-                node, "This method should be called in __init__")
-
-
 
 def strongly_connected_components(graph):
     """
@@ -783,3 +776,148 @@ def robust_topological_sort(graph):
                 component_graph[node_c].append(successor_c)
 
     return topological_sort(component_graph)
+
+class HPXImporter(importlib.abc.MetaPathFinder, importlib.abc.Loader):
+
+    def __init__(self, module_spec_cls, modules = {}):
+        self._modules = modules
+        self._module_spec_cls = module_spec_cls
+
+    def find_spec(self, fullname, path, target=None):
+        m_list = ("happypanda",)
+        for m in m_list:
+            if fullname.startswith(m):
+                raise ModuleNotFoundError("No module named '{}'".format(fullname))
+        if fullname in self._modules.keys():
+            spec = self._module_spec_cls(fullname, self)
+            return spec
+
+    def create_module(self, spec):
+        return self._modules[spec.name]
+
+    def exec_module(self, module):
+        pass
+
+
+class PluginIsolate:
+
+    _base_sys_modules = None
+
+    def __init__(self, node, working_dir=None, do_eggs=True):
+        assert isinstance(node, PluginNode)
+        # Convert relative paths to absolute paths with parent_dir and
+        # evaluate .egg files in the specified directories.
+        self.node = node
+        path = os.path.abspath(node.info.path)
+        self.working_dir = working_dir if working_dir else path
+        self.paths = [path]
+        if do_eggs:
+            self.paths.extend(glob.glob(os.path.join(path, '*.egg')))
+
+        self._old_managers = []
+        self._plugin_modules = {}
+        self._globals = {}
+        self._locals = {}
+        self._plugin_globals = {'__name__':'__main__',
+                                '__file__': os.path.normpath(os.path.join(path, node.info.entry)),
+                                '__doc__': None,
+                                '__package__': None,
+                                '__spec__': None,
+                                '__annotations__': {},
+                                '__loader__': None}
+        self._sys_modules = {}
+        self._sys_metapath = []
+        self._sys_path = []
+        self._plugin_sys_path = []
+        self.in_context = False
+
+        if self._base_sys_modules is None:
+            PluginIsolate._base_sys_modules = sys.modules.copy()
+            for k in tuple(PluginIsolate._base_sys_modules):
+                if k in sys.builtin_module_names:
+                    continue
+                del PluginIsolate._base_sys_modules[k]
+
+        self._hpximporter = HPXImporter(importlib.abc.machinery.ModuleSpec,
+                                        {constants.plugin_interface_name: plugins_interface})
+            
+
+    def _clean_sys_modules(self, sys_modules):
+        sys.modules.clear()
+        sys.modules.update(self._base_sys_modules)
+        sys.modules.update(self._plugin_modules)
+
+    def _clean_sys_path(self, sys_path):
+        if self._plugin_sys_path:
+            sys.path.clear()
+            sys.path.extend(self._plugin_sys_path)
+        else:
+            sys.path.insert(0, os.path.abspath(self.node.info.path))
+
+        for p in (os.getcwd(),):
+            print(p)
+            while p in sys.path:
+                sys.path.remove(p)
+
+    def __enter__(self):
+        self.in_context = True
+        log.d("Entering isolation mode for plugin", self.node)
+
+        self._old_managers.append(plugins_interface.__manager__)
+        plugins_interface.__manager__ = self.node.manager
+
+        self._sys_metapath = sys.meta_path[:]
+        sys.meta_path.insert(0, self._hpximporter)
+
+        self._sys_modules = sys.modules.copy()
+        self._clean_sys_modules(sys.modules)
+
+        self._sys_path = sys.path[:]
+        self._clean_sys_path(sys.path)
+
+        self._globals = globals().copy()
+        self._locals = locals().copy()
+
+        os.chdir(self.working_dir)
+
+        globals().clear()
+        locals().clear()
+
+        globals().update(self._plugin_globals)
+        locals().update(self._plugin_globals)
+
+        return self
+
+    def __exit__(self, *_):
+        if not self.in_context:
+          raise RuntimeError('context not entered')
+        self.in_context = False
+
+        self._plugin_globals = globals().copy()
+        globals().clear()
+        globals().update(self._globals)
+
+        locals().clear()
+        locals().update(self._locals)
+
+        # ----------------------------------
+
+        self._plugin_modules = sys.modules.copy()
+        sys.modules.clear()
+        sys.modules.update(self._sys_modules)
+
+        sys.meta_path.clear()
+        sys.meta_path.extend(self._sys_metapath)
+
+        self._plugin_sys_path = sys.path.copy()
+        sys.path.clear()
+        sys.path.extend(self._sys_path)
+
+        try:
+            plugins_interface.__manager__ = self._old_managers.pop()
+        except IndexError:
+            plugins_interface.__manager__ = None
+
+        os.chdir(self.working_dir)
+        print(sys.path)
+        log.d("Exiting isolation mode for plugin", self.node)

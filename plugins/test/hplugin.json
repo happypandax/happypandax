@@ -7,7 +7,7 @@
     "author": "Twiddly",
     "website": "github.com",
     "entry": "main.py",
-    "test": "test.py",
+    "test": "tests.py",
     "require": [
         "happypandax > 1.0.0"
     ]

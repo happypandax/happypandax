@@ -135,7 +135,7 @@ translations = None  # dict of available translation files
 
 # PLUGIN
 
-core_plugin = None
+plugin_interface_name = "__hpx__"
 plugin_manager = None
 available_commands = set()
 available_events = set()
