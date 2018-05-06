@@ -141,6 +141,11 @@ class PluginSignatureError(PluginError):
     """Plugin Signature Error."""
     pass
 
+@error_code(208)
+class PluginLoadError(PluginError):
+    """Plugin Load Error."""
+    pass
+
     # ## DATABASE -- CODE: 300+ ##
 
 

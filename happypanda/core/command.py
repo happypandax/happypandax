@@ -414,7 +414,7 @@ class _CommandPlugin:
     def invoke_on_plugins(self, *args, **kwargs):
         "Invoke all plugins"
         self._check_types(*args, **kwargs)
-        return plugins.registered.call_command(
+        return constants.plugin_manager.call_command(
             self.qualifiedname(), *args, **kwargs)
 
     def _ensure_class(self, type1, type2):

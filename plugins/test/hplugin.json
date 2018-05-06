@@ -1,5 +1,5 @@
 {
-    "id": "a very long id",
+    "id": "5c17829a-eca3-46fc-9d5e-da5804fdcbf5",
     "shortname": "test",
     "name": "Test PLugin",
     "version": "1.0.2",
@@ -9,6 +9,6 @@
     "entry": "main.py",
     "test": "test.py",
     "require": [
-        "happypandax > 1.0.0",
+        "happypandax > 1.0.0"
     ]
 }

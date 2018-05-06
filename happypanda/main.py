@@ -152,10 +152,10 @@ def start(argv=None, db_kwargs={}):
 
                 services.init_generic_services()
 
+                constants.plugin_manager = plugins.PluginManager()
+
                 if not args.safe:
-                    plugins.plugin_loader(constants.dir_plugin)
-                else:
-                    plugins.registered.init_plugins()
+                    plugins.plugin_loader(constants.plugin_manager, constants.dir_plugin)
 
             constants.notification = server.ClientNotifications()
 

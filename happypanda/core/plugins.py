@@ -5,27 +5,26 @@ import importlib
 import inspect
 import enum
 import logging
+import gevent
+import json
 
-from gevent.signal import Event
+from gevent.event import Event
+from collections import OrderedDict
 
 from happypanda.common import exceptions, utils, constants, hlogger
 
 log = hlogger.Logger(constants.log_ns_plugin + __name__)
 
-
-def format_plugin(node_or_cls):
+def format_plugin(node):
     ""
-    txt = ""
-    if isinstance(node_or_cls, PluginNode):
-        node_or_cls = node_or_cls.plugin
+    assert isinstance(node, (PluginNode, str))
 
-    if isinstance(node_or_cls, str):
-        txt = node_or_cls
+    txt = ""
+
+    if isinstance(node, str):
+        txt = node
     else:
-        if hasattr(node_or_cls, "NAME"):
-            txt = "{}:{}".format(node_or_cls.SHORTNAME, node_or_cls.ID)
-        else:
-            txt = "{}".format(node_or_cls.ID)
+        txt = "{}:{}".format(node.info.shortname, node.info.id)
 
     return txt
 
@@ -50,7 +49,7 @@ def get_plugin_logger(plugin_name, plugin_dir):
     return l
 
 
-def plugin_load(path, *args, **kwargs):
+def plugin_load(plugin_manager, path, *args, **kwargs):
     """
     Attempts to load a plugin
 
@@ -59,61 +58,34 @@ def plugin_load(path, *args, **kwargs):
         - *args -- additional arguments for plugin
         - **kwargs -- additional keyword arguments for plugin
     """
-    args = ["test"]
-    kwargs = {"1": 2}
     manifest = None
     for f in os.scandir(path):
         if f.name.lower() == "hplugin.json":
-            manifest = f
+            manifest = f.path
             break
     if not manifest:
-        raise exceptions.CoreError(
+        raise exceptions.PluginLoadError(
             "Plugin loader",
             "No manifest file named 'HPlugin.json' found in plugin directory '{}'".format(path))
 
-    _plugin_load(plug, path, *args, **kwargs)
+    _plugin_load(plugin_manager, manifest, path, *args, **kwargs)
 
 
-def _plugin_load(module_name_or_class, path, *args, _logger=None, _manager=None, **kwargs):
+def _plugin_load(plugin_manager, manifest, path, *args, _logger=None, **kwargs):
     """
     Imports plugin module and registers its main class
 
     Returns:
-        PluginNode
+        manifest dict
     """
-    try:
-        sys.path.insert(0, os.path.realpath(path))
-        plugclass = None
-        if isinstance(module_name_or_class, str):
-            mod = importlib.import_module(module_name_or_class)
-            mod = importlib.reload(mod)
-            plugmembers = inspect.getmembers(mod)
-            for name, m_object in plugmembers:
-                if name == "HPlugin":
-                    plugclass = m_object
-                    break
-        elif inspect.isclass(module_name_or_class):
-            plugclass = module_name_or_class
-        if plugclass is None:
-            raise exceptions.PluginError(
-                "Plugin loader",
-                "No main entry class named 'HPlugin' found in '{}'".format(path))
-        log.i("Loading", plugclass.__name__)
-        cls = HPluginMeta(
-            plugclass.__name__,
-            plugclass.__bases__,
-            dict(
-                plugclass.__dict__))
-        if not _logger:
-            _logger = get_plugin_logger(cls.NAME, path)
-        if not _manager:
-            _manager = registered
-        return _manager.register(cls, _logger, *args, **kwargs)
-    finally:
-        sys.path.pop(0)
+    assert isinstance(manifest, str)
+    with open(manifest, 'r', encoding='utf-8') as f:
+        manifest = json.load(f)
+    manifestobj = PluginManifest(manifest)
+    return plugin_manager.register(manifestobj, _logger, *args, **kwargs)
 
 
-def plugin_loader(path, *args, **kwargs):
+def plugin_loader(plugin_manager, path, *args, **kwargs):
     """
     Scans provided paths for viable plugins and attempts to load them
 
@@ -123,10 +95,117 @@ def plugin_loader(path, *args, **kwargs):
         - **kwargs -- additional keyword arguments for plugin
 
     """
+    assert isinstance(plugin_manager, PluginManager)
     log.i('Loading plugins from path:', path)
-    for pdir in os.scandir(path):
-        plugin_load(pdir.path, *args, **kwargs)
-    return registered.init_plugins()
+    plugindirs = list(os.scandir(path))
+    log.i("Loading", len(plugindirs), "plugins", stdout=True)
+    for pdir in plugindirs:
+        gevent.spawn(plugin_load, plugin_manager, pdir.path, *args, **kwargs).join()
+    plugin_manager.wake_up()
+
+class PluginManifest(OrderedDict):
+
+    def __init__(self, manifest):
+        assert isinstance(manifest, dict)
+        name = "PLugin loader"
+        plugin_requires = ("id", "name", "shortname", "version", "author", "description")
+
+        for pr in plugin_requires:
+            if not manifest.get(pr):
+                raise exceptions.PluginAttributeError(
+                    name, "{} attribute is missing".format(pr))
+
+        for pr in plugin_requires:
+            if not manifest.get(pr):
+                raise exceptions.PluginAttributeError(
+                    name, "{} attribute cannot be empty".format(pr))
+
+        try:
+            uid = manifest.get("id").replace('-', '')
+            val = uuid.UUID(uid, version=4)
+            assert val.hex == uid
+        except ValueError:
+            raise exceptions.PluginIDError(
+                name, "Invalid plugin id. UUID4 is required.")
+        except AssertionError:
+            raise exceptions.PluginIDError(
+                name, "Invalid plugin id. A valid UUID4 is required.")
+
+        if not isinstance(manifest.get('name'), str):
+            raise exceptions.PluginAttributeError(
+                name, "Plugin name should be a string")
+        if not isinstance(manifest.get('shortname'), str):
+            raise exceptions.PluginAttributeError(
+                name, "Plugin shortname should be a string")
+        if len(manifest.get('shortname')) > constants.plugin_shortname_length:
+            raise exceptions.PluginAttributeError(
+                name, "Plugin shortname cannot exceed {} characters".format(constants.plugin_shortname_length))
+        manifest['shortname'] = manifest['shortname'].strip()
+        if ' ' in manifest.get('shortname'):
+            raise exceptions.PluginAttributeError(
+                name, "Plugin shortname must not contain any whitespace")
+        #if not isinstance(cls.VERSION, tuple) or not len(cls.VERSION) == 3:
+        #    raise exceptions.PluginAttributeError(
+        #        name, "Plugin version should be a tuple with 3 integers")
+        if not isinstance(manifest.get('author'), str):
+            raise exceptions.PluginAttributeError(
+                name, "Plugin author should be a string")
+        if not isinstance(manifest.get('description'), str):
+            raise exceptions.PluginAttributeError(
+                name, "Plugin description should be a string")
+
+        if manifest.get('website'):
+            if not isinstance(manifest.get('website'), str):
+                raise exceptions.PluginAttributeError(
+                    name, "Plugin website should be a string")
+
+        #if manifest.get('require'):
+        #    e = None
+
+        #    if cls.REQUIRE:
+        #        # invalid list
+        #        if not isinstance(cls.REQUIRE, (tuple, list)):
+        #            e = exceptions.PluginAttributeError(
+        #                cls.NAME, "REQUIRE attribute must be a tuple/list")
+
+        #        if not e:
+        #            # wrong list
+        #            e_x = exceptions.PluginAttributeError(
+        #                cls.NAME,
+        #                "REQUIRE should look like this: [ ( ID, (0,0,0), (0,0,0) ) ]")
+        #            if not all(isinstance(x, (tuple, list)) for x in cls.REQUIRE):
+        #                e = e_x
+
+        #            if not e:
+        #                e = e_x
+        #                for x in cls.REQUIRE:
+        #                    if not x:
+        #                        break
+
+        #                    if len(x) < 2:
+        #                        break
+
+        #                    if not isinstance(x[0], str):
+        #                        break
+
+        #                    if not isinstance(x[1], tuple):
+        #                        break
+
+        #                    try:
+        #                        if not isinstance(x[2], tuple):
+        #                            break
+        #                    except IndexError:
+        #                        pass
+        #                else:
+        #                    e = None
+        #    if e:
+        #        raise e
+        super().__init__(manifest)
+
+    def __getattr__(self, key):
+        if key in self:
+            return self[key]
+        raise AttributeError("AttributeError: no attribute named '{}'".format(key))
 
 
 class HandlerValue:
@@ -328,7 +407,7 @@ class HandlerValue:
 class PluginState(enum.Enum):
     Disabled = 0  # puporsely disabled
     Unloaded = 1  # unloaded because of dependencies, etc.
-    Init = 2  # was just registered
+    Registered = 2  # was just registered
     Enabled = 3  # plugin is loaded and in use
     Failed = 4  # failed because of error
 
@@ -336,39 +415,28 @@ class PluginState(enum.Enum):
 class PluginNode:
     ""
 
-    def __init__(self, plugin_class, logger, *args, **kwargs):
-        self.state = PluginState.Init
-        self.plugin = plugin_class
+    def __init__(self, manifest, logger, *args, **kwargs):
+        self.state = PluginState.Registered
+        self.info = manifest
         self.args = args
         self.kwargs = kwargs
-        self.depends = {}  # {other_plugin_id : ( ver_start, vers_end )}
         self.commands = {}  # { command : handler }
         self.instanced = None
         self.logger = log if logger is None else logger
-        self.load_order = None
-        self._list_depends()
 
-    def _list_depends(self):
-        ""
-        if self.plugin.REQUIRE:
-            for x in self.plugin.REQUIRE:
-                version_end = (0, 0, 0)
-                try:
-                    version_end = x[2]
-                except IndexError:
-                    pass
+    def init(self):
+        log.i("Initiating plugin -", self.format())
 
-                self.depends[x[0]] = (x[1], version_end)
-            return self.depends
-
-    def formatted(self):
+    def format(self):
         return format_plugin(self)
 
     def __eq__(self, other):
-        return other == self.plugin.ID
+        if isinstance(other, PluginNode):
+            return other == self.info.id
+        return super.__eq__(other)
 
     def __hash__(self):
-        return hash(self.plugin.ID)
+        return hash(self.info.ID)
 
 
 class PluginManager:
@@ -382,23 +450,29 @@ class PluginManager:
         self._started = False
         self._dirty = False
         self._commands = {}  # { command : [ plugins ] }
+        self._init_plugins_greenlet = gevent.Greenlet(self._init_plugins)
+        self._init_plugins_greenlet.start()
 
-    def _dependency_resolver(self):
+    def _init_plugins(self):
 
         while True:
             self._event.wait()
-            plugins = set(self._plugin_registry.values())
-            plugins_to_load = [x for x in plugins if not x.loaded]
-            if plugins_to_load:
-                pass
+            for plugid, node in self._nodes.items():
+                if node.state in (PluginState.Disabled, PluginState.Failed):
+                    continue
+
+                # TODO: solve plugin dependecies
+
+                node.init()
+
+            self._event.clear()
 
 
-    def register(self, plugin, logger, *args, **kwargs):
+    def register(self, manifest, logger, *args, **kwargs):
         """
         Registers a plugin
 
         Params:
-            - plugin -- main plugin class
             - logger -- plugin logger
             - *args -- additional arguments for plugin
             - **kwargs -- additional keyword arguments for plugin
@@ -406,46 +480,21 @@ class PluginManager:
         Returns:
             PluginNode
         """
-        assert isinstance(plugin, HPluginMeta)
-        if plugin.ID in self._nodes:
+        assert isinstance(manifest, PluginManifest)
+        pluginid = manifest.id
+        if pluginid in self._nodes:
             raise exceptions.PluginError(
-                plugin.NAME, "Plugin ID already exists")
-        node = PluginNode(plugin, logger, *args, **kwargs)
-        self._nodes[plugin.ID] = node
+                manifest.name, "Plugin ID already exists")
+        node = PluginNode(manifest, logger, *args, **kwargs)
+        self._nodes[pluginid] = node
         return node
 
-    def init_plugins(self):
+    def wake_up(self):
         """
-        Instantiate new plugins and (re)solve all dependencies
-
-        Returns a dict with failed plugins: { plugin_id: exception }
+        Watches for registered plugins and initiates them
         """
+        self._event.set()
 
-        nodes = []
-
-        for plug_id in self._nodes:
-            node = self._nodes[plug_id]
-            if node.state in (PluginState.Disabled, PluginState.Failed):
-                continue
-
-            nodes.append(node)
-
-            #result = self._solve(node, node.depends)
-            # if isinstance(result, Exception):
-            #    failed[node.plugin.ID] = result
-            #    node.state = PluginState.Unloaded
-            #    continue
-
-            # if node.state in (PluginState.Init, PluginState.Unloaded):
-            #    self._init_plugin(plug_id)
-
-        solved_nodes, failed = self._solve(nodes)
-
-        for node in solved_nodes:
-            if not node.state == PluginState.Enabled:
-                self._init_plugin(node.plugin.ID)
-
-        return failed
 
     def _solve(self, nodes):
         """
@@ -631,162 +680,6 @@ class PluginManager:
             raise exceptions.PluginError(
                 node, "This method should be called in __init__")
 
-
-class HPluginMeta(type):
-
-    def __init__(cls, name, bases, dct):
-        plugin_requires = ("ID", "NAME", "SHORTNAME", "VERSION", "AUTHOR", "DESCRIPTION")
-
-        for pr in plugin_requires:
-            if not hasattr(cls, pr):
-                raise exceptions.PluginAttributeError(
-                    name, "{} attribute is missing".format(pr))
-
-        for pr in plugin_requires:
-            if not getattr(cls, pr):
-                raise exceptions.PluginAttributeError(
-                    name, "{} attribute cannot be empty".format(pr))
-
-        try:
-            uid = cls.ID.replace('-', '')
-            val = uuid.UUID(uid, version=4)
-            assert val.hex == uid
-        except ValueError:
-            raise exceptions.PluginIDError(
-                name, "Invalid plugin id. UUID4 is required.")
-        except AssertionError:
-            raise exceptions.PluginIDError(
-                name, "Invalid plugin id. A valid UUID4 is required.")
-
-        if not isinstance(cls.NAME, str):
-            raise exceptions.PluginAttributeError(
-                name, "Plugin name should be a string")
-        if not isinstance(cls.SHORTNAME, str):
-            raise exceptions.PluginAttributeError(
-                name, "Plugin shortname should be a string")
-        if len(cls.SHORTNAME) > 10:
-            raise exceptions.PluginAttributeError(
-                name, "Plugin shortname cannot exceed {} characters".format(constants.plugin_shortname_length))
-        if not isinstance(cls.VERSION, tuple) or not len(cls.VERSION) == 3:
-            raise exceptions.PluginAttributeError(
-                name, "Plugin version should be a tuple with 3 integers")
-        if not isinstance(cls.AUTHOR, str):
-            raise exceptions.PluginAttributeError(
-                name, "Plugin author should be a string")
-        if not isinstance(cls.DESCRIPTION, str):
-            raise exceptions.PluginAttributeError(
-                name, "Plugin description should be a string")
-
-        if hasattr(cls, "WEBSITE"):
-            if not isinstance(cls.WEBSITE, str):
-                raise exceptions.PluginAttributeError(
-                    name, "Plugin website should be a string")
-
-        if hasattr(cls, "REQUIRE"):
-            e = None
-
-            if cls.REQUIRE:
-                # invalid list
-                if not isinstance(cls.REQUIRE, (tuple, list)):
-                    e = exceptions.PluginAttributeError(
-                        cls.NAME, "REQUIRE attribute must be a tuple/list")
-
-                if not e:
-                    # wrong list
-                    e_x = exceptions.PluginAttributeError(
-                        cls.NAME,
-                        "REQUIRE should look like this: [ ( ID, (0,0,0), (0,0,0) ) ]")
-                    if not all(isinstance(x, (tuple, list)) for x in cls.REQUIRE):
-                        e = e_x
-
-                    if not e:
-                        e = e_x
-                        for x in cls.REQUIRE:
-                            if not x:
-                                break
-
-                            if len(x) < 2:
-                                break
-
-                            if not isinstance(x[0], str):
-                                break
-
-                            if not isinstance(x[1], tuple):
-                                break
-
-                            try:
-                                if not isinstance(x[2], tuple):
-                                    break
-                            except IndexError:
-                                pass
-                        else:
-                            e = None
-            if e:
-                raise e
-        else:
-            cls.REQUIRE = None
-
-        if hasattr(cls, "OPTIONS"):
-            pass
-
-        super().__init__(name, bases, dct)
-
-        # set attributes
-        attrs = inspect.getmembers(HPluginMeta)
-
-        for n, a in attrs:
-            if not n.startswith('_'):
-                setattr(cls, n, a)
-
-    def get_logger(cls):
-        """
-        Return a logger for plugin
-        """
-        node = registered._nodes.get(cls.ID)
-        if not node:
-            raise exceptions.PluginIDError(
-                cls.NAME, "No plugin found with ID: {}".format(cls.ID))
-        return node.logger
-
-    def on_command(cls, command_name, handler, **kwargs):
-        """
-        Attach handler to command
-
-        Params:
-            - command_name -- Name of the Class.command you want to connect to. Eg.: GalleryRename.rename
-            - handler -- Your custom method that should be executed when command is invoked
-        """
-        node = registered._nodes.get(cls.ID)
-        if not node:
-            raise exceptions.PluginIDError(
-                cls.NAME, "No plugin found with ID: {}".format(cls.ID))
-        registered._ensure_before_init(node)
-        registered.attach_to_command(node, command_name, handler)
-
-    def run_command(cls, command_name, *args, **kwargs):
-        """
-        Run a command
-
-        Params:
-            - command_name -- Name of command you want to run
-            - *args and **kwargs sent to command
-
-        Returns command return object
-        """
-        raise NotImplementedError
-
-    def create_command(cls, command_name, return_type):
-        """
-        Create a command that other plugins can attach to and extend
-        After creation, the command can be used like a regular method: self.command_name(args, kwargs)
-
-        Params:
-            - command_name -- Name of the command you want to create.
-
-        .. Note::
-            The values returned by the handlers are returned in a tuple
-        """
-        raise NotImplementedError
 
 
 def strongly_connected_components(graph):
