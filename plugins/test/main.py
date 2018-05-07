@@ -1,18 +1,7 @@
-import tests
-import sys
-import pprint
 import __hpx__ as hpx
-print = pprint.pprint
-
-print(sys)
-print("hello plugin")
-print(sys.path)
 
 def main():
-    print("calling main")
+    pass
 
-import os
-print(os.getcwd())
-hpx.log("hi")
-print(__name__)
-main()
+if __name__ == '__main__':
+    main()

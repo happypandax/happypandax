@@ -13,7 +13,7 @@ from cachetools import LRUCache
 from treelib import Tree, exceptions as tree_exceptions
 
 from happypanda.common import utils, hlogger, exceptions, constants
-from happypanda.core import plugins, async, db
+from happypanda.core import plugins, async_utils, db
 
 log = hlogger.Logger(constants.log_ns_command + __name__)
 
@@ -69,7 +69,7 @@ def _native_runner(f):
             try:
                 g._hp_inherit(parent, frame)
             except AttributeError:
-                async.Greenlet._hp_inherit(g, parent, frame)
+                async_utils.Greenlet._hp_inherit(g, parent, frame)
         return cleanup_wrapper(*args, **kwargs)
     return wrapper
 
@@ -243,7 +243,7 @@ class CoreCommand:
             self.set_progress(max_progress, text)
 
     def run_native(self, f, *args, **kwargs):
-        f = async.AsyncFuture(self, self._native_pool.apply_async(_native_runner(f), args, kwargs))
+        f = async_utils.AsyncFuture(self, self._native_pool.apply_async(_native_runner(f), args, kwargs))
         self._futures.append(f)
         return f
 
@@ -414,7 +414,7 @@ class _CommandPlugin:
     def invoke_on_plugins(self, *args, **kwargs):
         "Invoke all plugins"
         self._check_types(*args, **kwargs)
-        return constants.plugin_manager.call_command(
+        return constants.plugin_manager._call_command(
             self.qualifiedname(), *args, **kwargs)
 
     def _ensure_class(self, type1, type2):

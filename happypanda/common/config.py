@@ -444,6 +444,27 @@ with config.namespace(core_ns):
         os.path.join(constants.dir_bin, "unrar.exe") if constants.is_win else "unrar",
         "Path to unrar tool. On Windows the default path is 'bin/win32/unrar.exe'. On Unix the default path is 'unrar'")
 
+plugin_ns = 'plugin'
+
+with config.namespace(plugin_ns):
+    auto_install_plugin = config.create(
+        None,
+        "auto_install_plugin",
+        False,
+        "Automatically install a discovered plugin")
+
+    auto_install_plugin_dependency = config.create(
+        None,
+        "auto_install_plugin_dependency",
+        True,
+        "Automatically install a plugin's dependencies when installing a plugin")
+
+    plugin_dir = config.create(
+        None,
+        "plugin_dir",
+        "",
+        "Additional optional plugin directory to look for plugins")
+
 gallery_ns = 'gallery'
 
 with config.namespace(gallery_ns):

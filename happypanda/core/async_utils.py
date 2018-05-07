@@ -5,6 +5,7 @@ import collections
 import threading
 import arrow
 import psycopg2
+import functools
 
 from psycopg2 import extensions
 from gevent.socket import wait_read, wait_write
@@ -190,6 +191,7 @@ def defer(f=None, predicate=None):
                 CPUThread._thread = CPUThread()
             return CPUThread._thread.apply(f, args, kwargs)
 
+        @functools.wraps(f)
         def wrapper(*args, **kwargs):
             a = AsyncFuture(None, None)
             # TODO: unit test this

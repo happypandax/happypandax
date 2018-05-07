@@ -19,7 +19,7 @@ from flask_socketio import SocketIO
 from happypanda import interface
 from happypanda.core.web import views
 from happypanda.common import constants, exceptions, utils, hlogger, config
-from happypanda.core import db, torrent, message, async  # noqa: F401
+from happypanda.core import db, torrent, message, async_utils  # noqa: F401
 from happypanda.interface import meta, enums
 from happypanda.core.commands import meta_cmd
 
@@ -524,7 +524,7 @@ class HPServer:
         params = utils.connection_params()
         self._pool = pool.Pool(
             config.allowed_clients.value if config.allowed_clients.value else None,
-            async.Greenlet)  # cannot be 0
+            async_utils.Greenlet)  # cannot be 0
         self._ssl_args = {}
         if config.enable_ssl.value is True or config.enable_ssl.value == "server":
             log.i("SSL enabled for server", stdout=True)

@@ -5,7 +5,7 @@ from sqlalchemy_utils.functions import make_order_by_deterministic
 from happypanda.common import utils, hlogger, exceptions, constants, config
 from happypanda.core.command import Command, CommandEvent, AsyncCommand, CommandEntry
 from happypanda.core.commands import io_cmd
-from happypanda.core import db, async
+from happypanda.core import db, async_utils
 from happypanda.interface import enums
 from happypanda.interface.enums import ItemSort
 
@@ -157,7 +157,7 @@ class GetModelImage(AsyncCommand):
         self.cover_event.emit(self.cover)
         return self.cover
 
-    @async.defer
+    @async_utils.defer
     def _update_db(self, stale_cover, item_id, model, old_hash):
         log.d("Updating profile for database item", model)
         s = constants.db_session()

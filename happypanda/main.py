@@ -25,7 +25,7 @@ import getpass  # noqa: E402
 from multiprocessing import Process  # noqa: E402
 from apscheduler.triggers.interval import IntervalTrigger  # noqa: E402
 from happypanda.common import utils, constants, hlogger, config, exceptions  # noqa: E402
-from happypanda.core import server, plugins, command, services, db, async  # noqa: E402
+from happypanda.core import server, plugins, command, services, db, async_utils  # noqa: E402
 from happypanda.core.commands import io_cmd, meta_cmd  # noqa: E402
 
 log = hlogger.Logger(__name__)
@@ -120,7 +120,7 @@ def start(argv=None, db_kwargs={}):
             db_inited = db.init(**db_kwargs)
             command.init_commands()
             monkey.patch_all(thread=False, ssl=False)
-            async.patch_psycopg()
+            async_utils.patch_psycopg()
         else:
             db_inited = True
 
@@ -156,6 +156,8 @@ def start(argv=None, db_kwargs={}):
 
                 if not args.safe:
                     plugins.plugin_loader(constants.plugin_manager, constants.dir_plugin)
+                    if config.plugin_dir.value:
+                        plugins.plugin_loader(constants.plugin_manager, config.plugin_dir.value)
 
             constants.notification = server.ClientNotifications()
 
