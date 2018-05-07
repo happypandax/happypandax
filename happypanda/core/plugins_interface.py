@@ -22,6 +22,29 @@ def get_exception(name: str):
     """
     pass
 
+def get_config():
+    """
+    Get a dict-like object with configuration specific to this plugin
+
+    Returns:
+        dict-like object
+    """
+    pass
+
+def get_setting(name: str):
+    """
+    Get a dict-like object with configuration specific to this plugin
+    """
+
+def save_config(obj: dict):
+    """
+    Save configuration specific to this plugin
+
+    Args:
+        obj: dict-like object
+    """
+    pass
+
 def command(f: typing.Callable=None, command_name: str=None):
     """
     Create a command entry that other plugins can subscribe to

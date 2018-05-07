@@ -10,6 +10,10 @@ import json
 import glob
 import copy
 
+from packaging.requirements import Requirement, InvalidRequirement
+from packaging.specifiers import Specifier, InvalidSpecifier
+from packaging import markers
+from packaging.version import Version, InvalidVersion
 from gevent.event import Event
 from collections import OrderedDict
 
@@ -18,6 +22,11 @@ from happypanda.common import exceptions, utils, constants, hlogger, config
 from happypanda.core import plugins_interface, async_utils
 
 log = hlogger.Logger(constants.log_ns_plugin + __name__)
+
+# add hpx marker
+markers.VARIABLE |= markers.L("hpx")
+markers.VARIABLE |= markers.L("happypandax")
+markers.ALIASES['hpx'] = "happypandax"
 
 def format_plugin(node):
     ""
@@ -84,7 +93,14 @@ def _plugin_load(plugin_manager, manifest, path, *args, _logger=None, **kwargs):
     """
     assert isinstance(manifest, str)
     with open(manifest, 'r', encoding='utf-8') as f:
-        manifest = json.load(f)
+        err = None
+        try:
+            manifest = json.load(f)
+        except json.JSONDecodeError as e:
+            err = exceptions.PluginLoadError(
+                "Plugin loader",
+                "Failed to decode manifest file: {}".format(e.args[0]))
+        if err: raise err
     pentry = manifest.get("entry")
     if pentry:
         if not os.path.exists(os.path.join(path, pentry)):
@@ -160,9 +176,14 @@ class PluginManifest(OrderedDict):
         if ' ' in manifest.get('shortname'):
             raise exceptions.PluginAttributeError(
                 name, "Plugin shortname must not contain any whitespace")
-        #if not isinstance(cls.VERSION, tuple) or not len(cls.VERSION) == 3:
-        #    raise exceptions.PluginAttributeError(
-        #        name, "Plugin version should be a tuple with 3 integers")
+        if not isinstance(manifest.get('version'), str):
+            raise exceptions.PluginAttributeError(
+                name, "Plugin version should be a string")
+        try:
+            manifest['version'] = Version(manifest['version'])
+        except InvalidVersion:
+            raise exceptions.PluginAttributeError(
+                name, "Plugin version should conform to PEP 440")
         if not isinstance(manifest.get('author'), str):
             raise exceptions.PluginAttributeError(
                 name, "Plugin author should be a string")
@@ -178,49 +199,48 @@ class PluginManifest(OrderedDict):
         if manifest.get('test'):
             if not isinstance(manifest.get('test'), str):
                 raise exceptions.PluginAttributeError(
-                    name, "Plugin website should be a filename")
+                    name, "Plugin test entry should be a filename")
 
-        #if manifest.get('require'):
-        #    e = None
+        if manifest.get('require'):
+            if not isinstance(manifest.get('require'), list):
+                raise exceptions.PluginAttributeError(
+                    name, "Plugin require should be a list of strings")
+            require = manifest['require'][:]
+            manifest['require'] = []
+            for x in require:
+                err = None
 
-        #    if cls.REQUIRE:
-        #        # invalid list
-        #        if not isinstance(cls.REQUIRE, (tuple, list)):
-        #            e = exceptions.PluginAttributeError(
-        #                cls.NAME, "REQUIRE attribute must be a tuple/list")
+                if not isinstance(x, str):
+                    raise exceptions.PluginAttributeError(
+                        name, "Plugin require should be a list of strings")
+                try:
+                    r = Requirement(x)
+                except InvalidRequirement as e:
+                    err = exceptions.PluginAttributeError(
+                        name, "{} on '{}'".format(e.args[0], x))
 
-        #        if not e:
-        #            # wrong list
-        #            e_x = exceptions.PluginAttributeError(
-        #                cls.NAME,
-        #                "REQUIRE should look like this: [ ( ID, (0,0,0), (0,0,0) ) ]")
-        #            if not all(isinstance(x, (tuple, list)) for x in cls.REQUIRE):
-        #                e = e_x
+                if err: raise err
+                
+                if r.name in markers.VARIABLE:
+                    try:
+                        if r.marker:
+                            raise exceptions.PluginAttributeError(
+                                name, "Requirement '{}' cannot contain a marker".format(x))
+                        try:
+                            s = Specifier(str(r.specifier))
+                            m = "{}{}'{}'".format(r.name, s.operator, s.version)
+                            r.marker = markers.Marker(m)
+                        except InvalidSpecifier:
+                            r.marker = markers.Marker(x)
 
-        #            if not e:
-        #                e = e_x
-        #                for x in cls.REQUIRE:
-        #                    if not x:
-        #                        break
+                    except (markers.InvalidMarker, InvalidSpecifier) as e:
+                        err = exceptions.PluginAttributeError(
+                            name, "Invalid requirement '{}': {}".format(x, e.args[0]))
 
-        #                    if len(x) < 2:
-        #                        break
+                if err: raise err
 
-        #                    if not isinstance(x[0], str):
-        #                        break
+                manifest['require'].append(r)
 
-        #                    if not isinstance(x[1], tuple):
-        #                        break
-
-        #                    try:
-        #                        if not isinstance(x[2], tuple):
-        #                            break
-        #                    except IndexError:
-        #                        pass
-        #                else:
-        #                    e = None
-        #    if e:
-        #        raise e
         super().__init__(manifest)
 
     def __getattr__(self, key):

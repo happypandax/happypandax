@@ -572,7 +572,7 @@ class Plugin(CoreMessage):
         return {'id':node.info.id,
                 'name': node.info.name,
                 'shortname': node.info.shortname,
-                'version': node.info.version,
+                'version': node.info.version.public,
                 'author': node.info.author,
                 'description': node.info.description,
                 'website': node.info.get('website', ''),

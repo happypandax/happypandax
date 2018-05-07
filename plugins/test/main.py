@@ -1,7 +1,7 @@
 import __hpx__ as hpx
 
 def main():
-    pass
+    raise ValueError
 
 if __name__ == '__main__':
     main()

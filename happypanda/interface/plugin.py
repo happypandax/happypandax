@@ -64,3 +64,4 @@ def disable_plugin(plugin_id: str):
         status
     """
     constants.plugin_manager.disable_plugin(plugin_id)
+
