@@ -886,7 +886,6 @@ class PluginIsolate:
                 sys.path.insert(0, p)
 
         for p in (os.getcwd(),):
-            print(p)
             while p in sys.path:
                 sys.path.remove(p)
 
