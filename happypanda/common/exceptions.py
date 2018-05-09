@@ -89,7 +89,7 @@ class PluginError(CoreError):
         if isinstance(name_or_node, str):
             name = name_or_node
         else:
-            name = name_or_node.plugin.NAME
+            name = name_or_node.info.shortname
             self.node = name_or_node
 
         super().__init__("Plugin: " + name, message)
@@ -144,6 +144,11 @@ class PluginSignatureError(PluginError):
 @error_code(208)
 class PluginLoadError(PluginError):
     """Plugin Load Error."""
+    pass
+
+@error_code(209)
+class PluginInitError(PluginError):
+    """Plugin Init Error."""
     pass
 
     # ## DATABASE -- CODE: 300+ ##

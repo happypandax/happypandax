@@ -63,30 +63,32 @@ class Logger:
 
     def exception(self, *args):
         ""
-        self._log(self._logger.exception, *args, stderr=True)
+        return self._log(self._logger.exception, *args, stderr=True)
 
     def i(self, *args, **kwargs):
         "INFO"
-        self._log(self._logger.info, *args, **kwargs)
+        return self._log(self._logger.info, *args, **kwargs)
 
     def d(self, *args, **kwargs):
         "DEBUG"
-        self._log(self._logger.debug, *args, **kwargs)
+        if self._logger.isEnabledFor(logging.DEBUG):
+            return self._log(self._logger.debug, *args, **kwargs)
+        return ''
 
     def w(self, *args, **kwargs):
         "WARNING"
         kwargs.pop("stderr", True)
-        self._log(self._logger.warning, *args, stderr=True, **kwargs)
+        return self._log(self._logger.warning, *args, stderr=True, **kwargs)
 
     def e(self, *args, **kwargs):
         "ERROR"
         kwargs.pop("stderr", True)
-        self._log(self._logger.error, *args, stderr=True, **kwargs)
+        return self._log(self._logger.error, *args, stderr=True, **kwargs)
 
     def c(self, *args, **kwargs):
         "CRITICAL"
         kwargs.pop("stderr", True)
-        self._log(self._logger.critical, *args, stderr=True, **kwargs)
+        return self._log(self._logger.critical, *args, stderr=True, **kwargs)
 
     def _log_format(self, *args):
         s = ""
@@ -121,6 +123,7 @@ class Logger:
                 # fixed in python 3.6+
                 s = s.encode("utf-8", errors="ignore").decode("ascii")
                 p(s)
+        return s
 
     def __getattr__(self, name):
         return getattr(self._logger, name)
@@ -158,8 +161,25 @@ class Logger:
                 lg.setLevel(logging.DEBUG)
                 log_handlers.append(lg)
 
-            for log_path, lvl in ((constants.log_normal, logging.INFO),
-                                  (constants.log_error, logging.ERROR)):
+            logs = [(constants.log_normal, logging.INFO, None),
+                    (constants.log_error, logging.ERROR, None)]
+
+            plugin_filter = logging.Filter(constants.log_ns_plugin[:-1]) # remove .
+            if argsdev:
+                try:
+                    with open(constants.log_plugin, 'x') as f:
+                        pass
+                except FileExistsError:
+                    pass
+
+                lg = logging.FileHandler(constants.log_plugin, 'w', 'utf-8')
+                lg.setLevel(logging.DEBUG)
+                lg.addFilter(plugin_filter)
+                log_handlers.append(lg)
+            else:
+                logs.append((constants.log_plugin, logging.DEBUG, plugin_filter))
+
+            for log_path, lvl, log_filter in logs:
                 try:
                     with open(log_path, 'x') as f:  # noqa: F841
                         pass
@@ -167,16 +187,18 @@ class Logger:
                     pass
                 lg = RotatingFileHandler(
                     log_path,
-                    maxBytes=100000 * 10,
+                    maxBytes=constants.log_size,
                     encoding='utf-8',
                     backupCount=1)
                 lg.setLevel(lvl)
+                if log_filter:
+                    lg.addFilter(log_filter)
                 log_handlers.append(lg)
 
         logging.basicConfig(
             level=log_level,
-            format='%(asctime)-8s %(levelname)-10s %(name)-10s %(message)s',
-            datefmt='%d-%m %H:%M',
+            format=constants.log_format,
+            datefmt=constants.log_datefmt,
             handlers=tuple(log_handlers))
 
         if main:

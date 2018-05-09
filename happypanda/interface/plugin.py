@@ -21,7 +21,7 @@ def list_plugins(state: enums.PluginState=None):
             }
     """
     l = message.List('plugins', message.Plugin)
-    for n in constants.plugin_manager._nodes.values():
+    for n in constants.plugin_manager._nodes:
         l.append(message.Plugin(n))
     return l
 

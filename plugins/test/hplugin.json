@@ -9,7 +9,6 @@
     "entry": "main.py",
     "test": "tests.py",
     "require": [
-        "happypandax > 1.0.0",
-        "os_name == 'a'"
+        "happypandax > 0.0.0"
     ]
 }

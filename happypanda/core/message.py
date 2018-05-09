@@ -576,7 +576,8 @@ class Plugin(CoreMessage):
                 'author': node.info.author,
                 'description': node.info.description,
                 'website': node.info.get('website', ''),
-                'state': node.state.value
+                'state': node.state.value,
+                'status': node.reason
                 }
 
     def data(self):

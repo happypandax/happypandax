@@ -11,7 +11,7 @@ def get_logger(name: str):
     Args:
         name: name of logger
     """
-    pass
+    return __manager__.get_plugin_logger(__plugin_id__, name)
 
 def get_exception(name: str):
     """
@@ -93,3 +93,4 @@ def subscribe(f: typing.Callable=None, command: str=None):
 
 __manager__ = None
 __plugin_id__ = None
+__globals__ = None
