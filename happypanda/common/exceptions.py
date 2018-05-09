@@ -96,57 +96,43 @@ class PluginError(CoreError):
 
 
 @error_code(201)
-class PluginIDError(PluginError):
-    """Plugin ID Error."""
-
-    pass
-
-
-@error_code(202)
-class PluginNameError(PluginIDError):
-    """Plugin Name Error."""
-
-    pass
-
-
-@error_code(203)
 class PluginMethodError(PluginError, AttributeError):
     """Plugin Method Error."""
     pass
 
 
-@error_code(204)
+@error_code(202)
 class PluginAttributeError(PluginError):
     """Plugin Attribute Error."""
 
     pass
 
 
-@error_code(205)
+@error_code(203)
 class PluginCommandError(PluginError):
     """Plugin Command Error."""
 
     pass
 
 
-@error_code(206)
+@error_code(204)
 class PluginHandlerError(PluginError):
     """Plugin Handler Error."""
 
     pass
 
 
-@error_code(207)
+@error_code(205)
 class PluginSignatureError(PluginError):
     """Plugin Signature Error."""
     pass
 
-@error_code(208)
+@error_code(206)
 class PluginLoadError(PluginError):
     """Plugin Load Error."""
     pass
 
-@error_code(209)
+@error_code(207)
 class PluginInitError(PluginError):
     """Plugin Init Error."""
     pass

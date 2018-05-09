@@ -145,7 +145,7 @@ def plugin_load(plugin_manager, path):
             raise exceptions.PluginLoadError(
                 pname,
                 "No manifest file named 'HPlugin.json' found in plugin directory '{}'".format(path))
-        _plugin_load(plugin_manager, manifest, path, plug_log)
+        return _plugin_load(plugin_manager, manifest, path, plug_log)
 
 
 def _plugin_load(plugin_manager, manifest, path, logger=None):
@@ -170,11 +170,11 @@ def _plugin_load(plugin_manager, manifest, path, logger=None):
         pentry = manifest.get("entry")
         if pentry:
             if not os.path.exists(os.path.join(path, pentry)):
-                raise exceptions.PluginLoadError(pname, "Plugin entry {} does not exist".format(pentry))
+                raise exceptions.PluginLoadError(pname, "Plugin entry '{}' does not exist".format(pentry))
         ptest = manifest.get("test")
         if ptest:
             if not os.path.exists(os.path.join(path, ptest)):
-                raise exceptions.PluginLoadError(pname, "Plugin test entry {} does not exist".format(ptest))
+                raise exceptions.PluginLoadError(pname, "Plugin test entry '{}' does not exist".format(ptest))
         manifestobj = PluginManifest(manifest, path)
         return plugin_manager.register(manifestobj)
 
@@ -204,9 +204,9 @@ class PluginManifest(OrderedDict):
         plugin_requires = ("id", "entry", "name", "shortname", "version", "author", "description")
 
         for pr in plugin_requires:
-            if not manifest.get(pr):
+            if manifest.get(pr) is None:
                 raise exceptions.PluginAttributeError(
-                    name, "{} attribute is missing".format(pr))
+                    name, "{} attribute is missing or null".format(pr))
 
         for pr in plugin_requires:
             if not manifest.get(pr):
@@ -217,11 +217,8 @@ class PluginManifest(OrderedDict):
             uid = manifest.get("id").replace('-', '')
             val = uuid.UUID(uid, version=4)
             assert val.hex == uid
-        except ValueError:
-            raise exceptions.PluginIDError(
-                name, "Invalid plugin id. UUID4 is required.")
-        except AssertionError:
-            raise exceptions.PluginIDError(
+        except (ValueError, AssertionError):
+            raise exceptions.PluginAttributeError(
                 name, "Invalid plugin id. A valid UUID4 is required.")
 
         if not isinstance(manifest.get('name'), str):
@@ -667,7 +664,7 @@ class PluginManager:
         node = PluginNode(self, manifest)
         pluginid = manifest.id
         if pluginid in self._node_registry:
-            raise exceptions.PluginError(
+            raise exceptions.PluginLoadError(
                 node, "Plugin ID already exists")
         self._nodes.add(node)
         self._node_registry[pluginid] = node

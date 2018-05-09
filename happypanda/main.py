@@ -105,7 +105,7 @@ def cmd_commands(args):
 
 
 def start(argv=None, db_kwargs={}):
-    assert sys.version_info >= (3, 5), "Python 3.5 and up is required"
+    assert sys.version_info >= (3, 6), "Python 3.6 and up is required"
     e_code = None
     e_num = 0
     try:
