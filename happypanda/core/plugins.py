@@ -65,23 +65,23 @@ class PluginFilter:
     """
 
     def filter(self, record):
-        log_name = constants.log_ns_plugin + 'context.' + record.name[len(constants.log_ns_plugincontext):]
-        levels = {logging.ERROR:logging.WARNING,
-                  logging.CRITICAL:logging.WARNING}
-        r = copy.copy(record)
-        r.levelno = levels.get(r.levelno, r.levelno)
-        r.levelname = logging.getLevelName(r.levelno)
-        r.name = log_name
-        plugin_logs.setdefault(log_name, hlogger.Logger(log_name)).handle(r)
+        if not __file__ == record.pathname:
+            log_name = constants.log_ns_plugin + 'context.' + record.name[len(constants.log_ns_plugincontext):]
+            levels = {logging.ERROR:logging.WARNING,
+                      logging.CRITICAL:logging.WARNING}
+            r = copy.copy(record)
+            r.levelno = levels.get(r.levelno, r.levelno)
+            r.levelname = logging.getLevelName(r.levelno)
+            r.name = log_name
+            plugin_logs.setdefault(log_name, hlogger.Logger(log_name)).handle(r)
         return True
 
-
-def get_plugin_logger(name, *handler):
+def get_plugin_logger(name, *handler, propogate=False):
     assert name and isinstance(name, str)
     l = logging.getLogger(constants.log_ns_plugincontext+name)
-    l.propagate = False
+    l.addFilter
+    l.propagate = propogate
     if not l.hasHandlers():
-        l.addFilter(PluginFilter())
         for h in handler:
             l.addHandler(h)
     return l
@@ -105,6 +105,7 @@ def create_plugin_logger(plugin_dir):
         backupCount=1)
     normal_handler.setLevel(logging.INFO)
     normal_handler.setFormatter(formatter)
+    normal_handler.addFilter(PluginFilter())
     log_handlers.append(normal_handler)
 
     if config.debug.value:
@@ -118,6 +119,7 @@ def create_plugin_logger(plugin_dir):
         debug_handler.setLevel(logging.DEBUG)
         debug_handler.setFormatter(formatter)
         log_handlers.append(debug_handler)
+
 
     return log_handlers
 
@@ -530,8 +532,8 @@ class PluginNode:
         entry_file = os.path.join(self.info.path, self.info.entry)
         with open(entry_file) as f:
             try:
-                with self._isolate:
-                    exec(f.read(), globals())
+                with self._isolate as i:
+                    exec(f.read(), i.plugin_globals)
             except Exception as e:
                 err = e
                 self.logger.exception("An unhandled exception was raised during plugin initialization")
@@ -624,7 +626,7 @@ class PluginManager:
 
     def get_plugin_logger(self, node_or_id, name):
         node = self.get_node(node_or_id)
-        return get_plugin_logger(node.info.shortname+'.'+name, create_plugin_logger(node.info.path))
+        return get_plugin_logger(node.info.shortname+'.'+name, propogate=True)
 
     def _collect_dependencies(self, node):
         assert isinstance(node, PluginNode)
@@ -959,7 +961,7 @@ class HPXImporter(importlib.abc.MetaPathFinder, importlib.abc.Loader):
 
 class PluginIsolate:
 
-    _base_sys_modules = None
+    base_sys_modules = None
 
     def __init__(self, node, working_dir=None, do_eggs=True):
         assert isinstance(node, PluginNode)
@@ -974,9 +976,7 @@ class PluginIsolate:
 
         self._old_managers = []
         self._plugin_modules = {}
-        self._globals = {}
-        self._locals = {}
-        self._plugin_globals = {'__name__':'__main__',
+        self.plugin_globals = {'__name__':'__main__',
                                 '__file__': os.path.normpath(os.path.join(path, node.info.entry)),
                                 '__doc__': None,
                                 '__package__': None,
@@ -989,12 +989,12 @@ class PluginIsolate:
         self._plugin_sys_path = []
         self.in_context = False
 
-        if self._base_sys_modules is None:
-            PluginIsolate._base_sys_modules = sys.modules.copy()
-            for k in tuple(PluginIsolate._base_sys_modules):
+        if self.base_sys_modules is None:
+            PluginIsolate.base_sys_modules = sys.modules.copy()
+            for k in tuple(PluginIsolate.base_sys_modules):
                 if k in sys.builtin_module_names:
                     continue
-                del PluginIsolate._base_sys_modules[k]
+                del PluginIsolate.base_sys_modules[k]
 
         plug_interface = None
         o_plug_interface = plugins_interface
@@ -1012,7 +1012,7 @@ class PluginIsolate:
 
     def _clean_sys_modules(self, sys_modules):
         sys.modules.clear()
-        sys.modules.update(self._base_sys_modules)
+        sys.modules.update(self.base_sys_modules)
         sys.modules.update(self._plugin_modules)
 
     def _clean_sys_path(self, sys_path):
@@ -1040,16 +1040,7 @@ class PluginIsolate:
         self._sys_path = sys.path[:]
         self._clean_sys_path(sys.path)
 
-        self._globals = globals().copy()
-        self._locals = locals().copy()
-
         os.chdir(self.working_dir)
-
-        globals().clear()
-        locals().clear()
-
-        globals().update(self._plugin_globals)
-        locals().update(self._plugin_globals)
 
         return self
 
@@ -1057,15 +1048,6 @@ class PluginIsolate:
         if not self.in_context:
           raise RuntimeError('context not entered')
         self.in_context = False
-
-        self._plugin_globals = globals().copy()
-        globals().clear()
-        globals().update(self._globals)
-
-        locals().clear()
-        locals().update(self._locals)
-
-        # ----------------------------------
 
         self._plugin_modules = sys.modules.copy()
         sys.modules.clear()
