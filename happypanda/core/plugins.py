@@ -583,15 +583,6 @@ class PluginNode:
     def format(self):
         return format_plugin(self)
 
-    def __eq__(self, other):
-        if isinstance(other, PluginNode):
-            return other == self.info.id
-        return super.__eq__(other)
-
-    def __hash__(self):
-        return hash(self.info.id)
-
-
 class PluginManager:
     ""
 
@@ -608,19 +599,34 @@ class PluginManager:
         while True:
             self._event.wait()
 
-            node_items = []
-            # TODO: solve plugin dependecies
+            node_items = {}
             for node in self._nodes.copy():
                 if node.evaluate():
                     self._collect_dependencies(node)
                     if node.state != PluginState.Unloaded:
-                        node_items.append(node)
+                        node_items[node] = list(node.dependencies)
+            
+            sorted_nodes = []
+            for r in reversed(robust_topological_sort(node_items)):
+                if len(r) > 1:
+                    # circular dependency found
+                    pass
+                for n in r:
+                    if not n in sorted_nodes:
+                        sorted_nodes.append(n)
 
-            # TODO: auto install plugin dependecies
-
-            for node in node_items:
-                if node.state == PluginState.Installed and node.init():
-                    node.state = PluginState.Enabled
+            auto_install = config.auto_install_plugin_dependency.value
+            for node in sorted_nodes:
+                if node.state == PluginState.Installed:
+                    for n in node.dependencies:
+                        if n.state == PluginState.Registered:
+                            if auto_install:
+                                self.install_plugin(n, node)
+                            else:
+                                node.unload("Required plugin '{}' has not been installed".format(n.info.shortname))
+                    if node.state != PluginState.Unloaded:
+                        node.init()
+                        node.state = PluginState.Enabled
 
             self._event.clear()
 
@@ -637,18 +643,18 @@ class PluginManager:
             ready_version = None
             ready_state = None
             if other_node:
-                ready_state = other_node.state not in (PluginState.Unloaded, PluginState.Registered)
+                ready_state = other_node.state not in (PluginState.Unloaded,)
                 ready_version = other_node.info.version in r.specifier
                 if ready_state and ready_version:
                     node.dependencies.add(other_node)
                     other_node.dependents.add(node)
                     continue
             if ready_state is not None and not ready_state:
-                node.unload("Plugin '{}' has not been installed or is not loaded".format(other_node.info.shortname))
+                node.unload("Required plugin '{}' is not loaded or has been uninstalled".format(other_node.info.shortname))
             elif ready_version is not None and not ready_version:
-                node.unload("Plugin '{}' does not meet the required version {}".format(other_node.info.shortname, str(r.specifier)))
+                node.unload("Required plugin '{}' does not meet the required version {}".format(other_node.info.shortname, str(r.specifier)))
             else:
-                node.unload("Plugin '{}' is missing and has not been registered".format(r.name))
+                node.unload("Required plugin '{}' is missing and has not been registered".format(r.name))
 
     def register(self, manifest):
         """
@@ -677,99 +683,6 @@ class PluginManager:
         self._event.set()
 
 
-    def _solve(self, nodes):
-        """
-        Returns a tuple of:
-            - An ordered list of node, in the order they should be initiated in
-            - Nodes that failed the dependency resolving {node:exception}
-        """
-        failed = {}
-
-        universal = []
-        inverse = []
-        provides = {}
-
-        # solve hard requirements
-        for node in nodes:
-            for otherpluginid in node.depends:
-                formatted = format_plugin(otherpluginid)
-                # check if required plugin is present
-                e = None
-                if otherpluginid in self._node_registry:
-                    if self._node_registry[otherpluginid].state == PluginState.Unloaded:
-                        e = exceptions.PluginError(
-                            node, "A required plugin failed to load: {}".format(formatted))
-                    elif self._node_registry[otherpluginid].state == PluginState.Disabled:
-                        e = exceptions.PluginError(
-                            node,
-                            "A required plugin has been disabled: {}".format(formatted))
-                else:
-                    e = exceptions.PluginError(
-                        node, "A required plugin is not present: {}".format(formatted))
-
-                if not e:
-                    vers = node.depends[otherpluginid]
-                    other_node = self._node_registry[otherpluginid]
-                    # compare versions
-                    other_version = other_node.plugin.VERSION
-                    if not vers[0] <= other_version:
-                        e = exceptions.PluginError(
-                            node,
-                            "A required plugin does not meet version requirement {} <= {}: {}".format(
-                                vers[0],
-                                other_version,
-                                formatted))
-                    if not vers[1] == (0, 0, 0) and not vers[1] > other_version:
-                        e = exceptions.PluginError(
-                            node,
-                            "A required plugin does not meet version requirement {} > {}: {}".format(
-                                vers[1],
-                                other_version,
-                                formatted))
-                if e:
-                    failed[node] = e
-                    break
-            else:
-                provides[node.plugin.ID] = node
-                provides[node.plugin.SHORTNAME] = node
-
-                if node.load_order == "first":
-                    universal.append(node)
-                elif node.load_order == "last":
-                    inverse.append(node)
-
-        # build initial graph
-
-        dependencies = {}
-
-        for node in nodes:
-
-            reqs = set(node.depends.keys())
-            dependencies[node] = set(provides[x] for x in reqs)
-
-            if universal and node not in universal:
-                dependencies[node].update(universal)
-
-            if inverse and node in inverse:
-                dependencies[node].update(set(nodes).difference(inverse))
-
-        # solver
-        dependencies = robust_topological_sort(dependencies)
-
-        node_order = []
-        for node in dependencies:
-            # circular reference
-            if len(node) > 1:
-                for n in node:
-                    failed[n] = exceptions.PluginError("Circular dependency found: {}".format(node))
-                continue
-
-            node_order.append(node[0])
-
-        node_order.reverse()
-
-        return node_order, failed
-
     def get_node(self, node_or_id):
         if not isinstance(node_or_id, PluginNode):
             node_or_id = self._node_registry.get(node_or_id)
@@ -792,12 +705,14 @@ class PluginManager:
                 if node in self._commands[cmd]:
                     self._commands[cmd].remove(node)
 
-        # TODO: disable dependents?
-
-    def install_plugin(self, node_or_id):
+    def install_plugin(self, node_or_id, by_node=None):
         node = self.get_node(node_or_id)
-        log.d("Installing plugin -", node.format())
-        node.logger.info("Installing plugin")
+        if by_node is not None:
+            log.d("Installing plugin -", node.format(), "by", by_node.format())
+            node.logger.info("Installing plugin because '{}' was installed".format(by_node.info.shortname))
+        else:
+            log.d("Installing plugin -", node.format(), )
+            node.logger.info("Installing plugin")
         node.state = PluginState.Installed
 
     def remove_plugin(self, node_or_id):
@@ -821,7 +736,7 @@ class PluginManager:
                 h.append((n, n.commands[command_name]))
         return HandlerValue(command_name, h, *args, **kwargs)
 
-    def subscribe_to_command(self, node_or_id, command_name, handler):
+    def attach_to_command(self, node_or_id, command_name, handler):
         ""
         node = self.get_node(node_or_id)
         if command_name not in constants.available_commands:
@@ -836,107 +751,22 @@ class PluginManager:
         node.add_handler(command_name, handler)
         self._commands.setdefault(command_name, []).append(node)
 
-def strongly_connected_components(graph):
-    """
-    Tarjan's Algorithm (named for its discoverer, Robert Tarjan) is a graph theory algorithm
-    for finding the strongly connected components of a graph.
+    def subscribe_to_event(self, node_or_id, event_name, handler):
+        ""
+        raise NotImplementedError
+        node = self.get_node(node_or_id)
+        if command_name not in constants.available_commands:
+            raise exceptions.PluginCommandError(
+                node, "Command event '{}' does not exist".format(event_name))
+        if not callable(handler):
+            raise exceptions.PluginCommandError(
+                node, "Command event handler should be callable for command event '{}'".format(event_name))
 
-    Based on: http://en.wikipedia.org/wiki/Tarjan%27s_strongly_connected_components_algorithm
-    """
+        # TODO: check signature
 
-    index_counter = [0]
-    stack = []
-    lowlinks = {}
-    index = {}
-    result = []
+        node.add_handler(command_name, handler)
+        self._commands.setdefault(command_name, []).append(node)
 
-    def strongconnect(node):
-        # set the depth index for this node to the smallest unused index
-        index[node] = index_counter[0]
-        lowlinks[node] = index_counter[0]
-        index_counter[0] += 1
-        stack.append(node)
-
-        # Consider successors of `node`
-        try:
-            successors = graph[node]
-        except BaseException:
-            successors = []
-        for successor in successors:
-            if successor not in lowlinks:
-                # Successor has not yet been visited; recurse on it
-                strongconnect(successor)
-                lowlinks[node] = min(lowlinks[node], lowlinks[successor])
-            elif successor in stack:
-                # the successor is in the stack and hence in the current strongly connected component (SCC)
-                lowlinks[node] = min(lowlinks[node], index[successor])
-
-        # If `node` is a root node, pop the stack and generate an SCC
-        if lowlinks[node] == index[node]:
-            connected_component = []
-
-            while True:
-                successor = stack.pop()
-                connected_component.append(successor)
-                if successor == node:
-                    break
-            component = tuple(connected_component)
-            # storing the result
-            result.append(component)
-
-    for node in graph:
-        if node not in lowlinks:
-            strongconnect(node)
-
-    return result
-
-
-def topological_sort(graph):
-    count = {}
-    for node in graph:
-        count[node] = 0
-    for node in graph:
-        for successor in graph[node]:
-            count[successor] += 1
-
-    ready = [node for node in graph if count[node] == 0]
-
-    result = []
-    while ready:
-        node = ready.pop(-1)
-        result.append(node)
-
-        for successor in graph[node]:
-            count[successor] -= 1
-            if count[successor] == 0:
-                ready.append(successor)
-
-    return result
-
-
-def robust_topological_sort(graph):
-    """ First identify strongly connected components,
-        then perform a topological sort on these components. """
-
-    components = strongly_connected_components(graph)
-
-    node_component = {}
-    for component in components:
-        for node in component:
-            node_component[node] = component
-
-    component_graph = {}
-    for component in components:
-        component_graph[component] = []
-
-    for node in graph:
-        node_c = node_component[node]
-        for successor in graph[node]:
-            successor_c = node_component[successor]
-            if node_c != successor_c:
-                component_graph[node_c].append(successor_c)
-
-    return topological_sort(component_graph)
 
 class HPXImporter(importlib.abc.MetaPathFinder, importlib.abc.Loader):
 
@@ -1062,4 +892,105 @@ class PluginIsolate:
 
         os.chdir(self.working_dir)
         log.d("Exiting isolation mode for plugin", self.node.format())
+
+def strongly_connected_components(graph):
+    """
+    Tarjan's Algorithm (named for its discoverer, Robert Tarjan) is a graph theory algorithm
+    for finding the strongly connected components of a graph.
+
+    Based on: http://en.wikipedia.org/wiki/Tarjan%27s_strongly_connected_components_algorithm
+    """
+
+    index_counter = [0]
+    stack = []
+    lowlinks = {}
+    index = {}
+    result = []
+
+    def strongconnect(node):
+        # set the depth index for this node to the smallest unused index
+        index[node] = index_counter[0]
+        lowlinks[node] = index_counter[0]
+        index_counter[0] += 1
+        stack.append(node)
+
+        # Consider successors of `node`
+        try:
+            successors = graph[node]
+        except BaseException:
+            successors = []
+        for successor in successors:
+            if successor not in lowlinks:
+                # Successor has not yet been visited; recurse on it
+                strongconnect(successor)
+                lowlinks[node] = min(lowlinks[node], lowlinks[successor])
+            elif successor in stack:
+                # the successor is in the stack and hence in the current strongly connected component (SCC)
+                lowlinks[node] = min(lowlinks[node], index[successor])
+
+        # If `node` is a root node, pop the stack and generate an SCC
+        if lowlinks[node] == index[node]:
+            connected_component = []
+
+            while True:
+                successor = stack.pop()
+                connected_component.append(successor)
+                if successor == node:
+                    break
+            component = tuple(connected_component)
+            # storing the result
+            result.append(component)
+
+    for node in graph:
+        if node not in lowlinks:
+            strongconnect(node)
+
+    return result
+
+def topological_sort(graph):
+    count = {}
+    for node in graph:
+        count[node] = 0
+    for node in graph:
+        for successor in graph[node]:
+            count[successor] += 1
+
+    ready = [node for node in graph if count[node] == 0]
+
+    result = []
+    while ready:
+        node = ready.pop(-1)
+        result.append(node)
+
+        for successor in graph[node]:
+            count[successor] -= 1
+            if count[successor] == 0:
+                ready.append(successor)
+
+    return result
+
+
+def robust_topological_sort(graph):
+    """ First identify strongly connected components,
+        then perform a topological sort on these components. """
+
+    components = strongly_connected_components(graph)
+
+    node_component = {}
+    for component in components:
+        for node in component:
+            node_component[node] = component
+
+    component_graph = {}
+    for component in components:
+        component_graph[component] = []
+
+    for node in graph:
+        node_c = node_component[node]
+        for successor in graph[node]:
+            successor_c = node_component[successor]
+            if node_c != successor_c:
+                component_graph[node_c].append(successor_c)
+
+    return topological_sort(component_graph)
 

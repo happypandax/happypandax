@@ -47,7 +47,7 @@ def save_config(obj: dict):
 
 def command(f: typing.Callable=None, command_name: str=None):
     """
-    Create a command entry that other plugins can subscribe to
+    Create a command entry that other plugins can attach to
 
     Args:
         f: command handler
@@ -71,13 +71,33 @@ def command(f: typing.Callable=None, command_name: str=None):
             # return HandlerValue?
         return wrapper
 
-def subscribe(f: typing.Callable=None, command: str=None):
+def attach(f: typing.Callable=None, command: str=None):
     """
-    Subscribe to a command
+    Attach to a command
 
     Args:
         f: command handler
         command: a fully qualified command name, required
+    """
+    if f is None:
+        def p_wrap(f):
+            return attach(f, command)
+        return p_wrap
+    else:
+        assert isinstance(command, str), "Command must be the qualified name of a command"
+        __manager__.attach_to_command(__plugin_id__, command, f)
+        @functools.wraps(f)
+        def wrapper(*args, **kwargs):
+            return f(*args, **kwargs)
+        return wrapper
+
+def subscribe(f: typing.Callable=None, command: str=None):
+    """
+    Subscribe to a command event
+
+    Args:
+        f: command event handler
+        command: a fully qualified command event name, required
     """
     if f is None:
         def p_wrap(f):
@@ -90,6 +110,7 @@ def subscribe(f: typing.Callable=None, command: str=None):
         def wrapper(*args, **kwargs):
             return f(*args, **kwargs)
         return wrapper
+
 
 __manager__ = None
 __plugin_id__ = None

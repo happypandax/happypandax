@@ -589,6 +589,7 @@ class HPServer:
     def _start(self, blocking=True):
         try:
             constants.server_started = True
+            meta_cmd.InitApplication().run()
             if blocking:
                 log.i("Starting server... ({}:{})".format(
                     config.host.value, config.port.value), stdout=True)
