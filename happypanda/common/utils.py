@@ -670,3 +670,19 @@ def create_self_signed_cert(cert_file, key_file, pem_file=None):
     if pem_file:
         with open(pem_file, "wb") as f:
             f.write(cert_pem + key_pem)
+
+def check_signature():
+    pass
+    #sig = inspect.signature(node.plugin.__init__)
+    #pars = list(sig.parameters)
+    #if not len(pars) == 3:
+    #    raise exceptions.PluginSignatureError(
+    #        node, "Unexpected __init__() signature")
+    #var_pos = False
+    #var_key = False
+    #for a in pars:
+    #    if sig.parameters[a].kind == inspect.Parameter.VAR_POSITIONAL:
+    #        var_pos = True
+    #    elif sig.parameters[a].kind == inspect.Parameter.VAR_KEYWORD:
+    #        var_key = True
+

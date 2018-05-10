@@ -18,7 +18,6 @@ import enum
 from happypanda.common import utils, exceptions
 from happypanda.core import message, db
 
-
 class _APIEnum(enum.Enum):
     "A conv. enum class"
 

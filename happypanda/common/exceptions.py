@@ -1,4 +1,5 @@
-"""exceptions module."""
+"""
+"""
 from happypanda.common import hlogger
 
 log = hlogger.Logger(__name__)
@@ -6,7 +7,7 @@ log = hlogger.Logger(__name__)
 _error_codes = []
 
 
-def error_code(code):
+def _error_code(code):
     assert isinstance(code, int), "Error code must be of type int"
     assert code not in _error_codes, "Error code already used"
     _error_codes.append(code)
@@ -14,11 +15,17 @@ def error_code(code):
     def wrap(cls):
         cls.code = code
         cls.name = cls.__name__
+        d = '**Code**: ``{}``\n\n'.format(code)
+        if cls.__doc__ is not None:
+            cls.__doc__ = d + cls.__doc__
+        else:
+            cls.__doc__ = d
+
         return cls
     return wrap
 
 
-@error_code(100)
+@_error_code(100)
 class HappypandaError(RuntimeError):
     """Base Happypanda exception, all exceptions will derive from this."""
 
@@ -30,13 +37,13 @@ class HappypandaError(RuntimeError):
 # ## CORE -- CODE: 100+ ##
 
 
-@error_code(101)
+@_error_code(101)
 class CoreError(HappypandaError):
     """Base Happypanda core exception, all core exceptions will derive from this.
 
-    Params:
-        where -- where the error occured
-        message -- explanation of error
+    Args:
+        where: where the error occured
+        message: explanation of error
     """
 
     def __init__(self, where, message):
@@ -46,7 +53,7 @@ class CoreError(HappypandaError):
         self.msg = message
 
 
-@error_code(110)
+@_error_code(110)
 class SettingsError(CoreError):
     """
     Base settings error
@@ -54,7 +61,7 @@ class SettingsError(CoreError):
     pass
 
 
-@error_code(120)
+@_error_code(120)
 class CommandError(CoreError):
     """
     Base command error
@@ -62,7 +69,7 @@ class CommandError(CoreError):
     pass
 
 
-@error_code(121)
+@_error_code(121)
 class CommandAlreadyRunningError(CoreError):
     """
     Command is already running
@@ -73,13 +80,13 @@ class CommandAlreadyRunningError(CoreError):
     # ## PLUGINS -- CODE: 200+ ##
 
 
-@error_code(200)
+@_error_code(200)
 class PluginError(CoreError):
     """Base plugin exception, all plugin exceptions will derive from this.
 
-    Params:
-        name -- name of plugin
-        message -- explanation of error
+    Args:
+        name: name of plugin
+        message: explanation of error
     """
 
     def __init__(self, name_or_node, message):
@@ -92,47 +99,47 @@ class PluginError(CoreError):
             name = name_or_node.info.shortname
             self.node = name_or_node
 
-        super().__init__("Plugin: " + name, message)
+        super().__init__(name, message)
 
 
-@error_code(201)
+@_error_code(201)
 class PluginMethodError(PluginError, AttributeError):
     """Plugin Method Error."""
     pass
 
 
-@error_code(202)
+@_error_code(202)
 class PluginAttributeError(PluginError):
     """Plugin Attribute Error."""
 
     pass
 
 
-@error_code(203)
+@_error_code(203)
 class PluginCommandError(PluginError):
     """Plugin Command Error."""
 
     pass
 
 
-@error_code(204)
+@_error_code(204)
 class PluginHandlerError(PluginError):
     """Plugin Handler Error."""
 
     pass
 
 
-@error_code(205)
+@_error_code(205)
 class PluginSignatureError(PluginError):
     """Plugin Signature Error."""
     pass
 
-@error_code(206)
+@_error_code(206)
 class PluginLoadError(PluginError):
     """Plugin Load Error."""
     pass
 
-@error_code(207)
+@_error_code(207)
 class PluginInitError(PluginError):
     """Plugin Init Error."""
     pass
@@ -140,14 +147,14 @@ class PluginInitError(PluginError):
     # ## DATABASE -- CODE: 300+ ##
 
 
-@error_code(300)
+@_error_code(300)
 class DatabaseError(CoreError):
     """Base database exception, all database exceptions will derive from this."""
 
     pass
 
 
-@error_code(301)
+@_error_code(301)
 class DatabaseInitError(DatabaseError):
     """Database initialization error."""
 
@@ -156,7 +163,7 @@ class DatabaseInitError(DatabaseError):
         super().__init__("database initiation", "An error occured in the database initialization process: " + msg)
 
 
-@error_code(302)
+@_error_code(302)
 class DatabaseVersionError(DatabaseError):
     """Database version error."""
 
@@ -165,7 +172,7 @@ class DatabaseVersionError(DatabaseError):
         super().__init__("database initiation", "Database version mismatch: " + msg)
 
 
-@error_code(303)
+@_error_code(303)
 class DatabaseItemNotFoundError(DatabaseError):
     """Database item not found error"""
     pass
@@ -173,42 +180,42 @@ class DatabaseItemNotFoundError(DatabaseError):
     # ## SERVER -- CODE: 400+ ##
 
 
-@error_code(400)
+@_error_code(400)
 class ServerError(CoreError):
     """Base server exception, all server exceptions will derive from this."""
 
     pass
 
 
-@error_code(401)
+@_error_code(401)
 class ClientDisconnectError(ServerError):
     """Client disconnected."""
 
     pass
 
 
-@error_code(403)
+@_error_code(403)
 class InvalidMessage(ServerError):
     """Invalid message error."""
 
     pass
 
 
-@error_code(404)
+@_error_code(404)
 class APIError(ServerError):
     """API error."""
 
     pass
 
 
-@error_code(405)
+@_error_code(405)
 class APIRequirementError(ServerError):
     """API requirement error."""
 
     pass
 
 
-@error_code(406)
+@_error_code(406)
 class AuthError(ServerError):
     """Auth Base Error."""
 
@@ -216,14 +223,14 @@ class AuthError(ServerError):
         super().__init__(where, msg)
 
 
-@error_code(407)
+@_error_code(407)
 class AuthRequiredError(AuthError):
 
     def __init__(self, where, msg):
         super().__init__(where, msg)
 
 
-@error_code(408)
+@_error_code(408)
 class SessionExpiredError(ServerError):
     """Session expired error."""
 
@@ -231,41 +238,41 @@ class SessionExpiredError(ServerError):
         super().__init__(where, "Session '{}' has expired".format(session_id))
 
 
-@error_code(409)
+@_error_code(409)
 class EnumError(ServerError):
     """Enum error."""
     pass
 
 
-@error_code(410)
+@_error_code(410)
 class ParsingError(ServerError):
     ""
     pass
 
 
-@error_code(411)
+@_error_code(411)
 class AuthWrongCredentialsError(AuthError):
-
+    ""
     def __init__(self, where, msg):
         super().__init__(where, msg)
 
 
-@error_code(412)
+@_error_code(412)
 class AuthMissingCredentials(AuthError):
-
+    ""
     def __init__(self, where, msg):
         super().__init__(where, msg)
 
     # ## CLIENT -- CODE: 500+ ##
 
 
-@error_code(500)
+@_error_code(500)
 class ClientError(ServerError):
     """Base client exception, all client exceptions will derive from this.
 
-    Params:
-        name -- name of client
-        msg -- error message
+    Args:
+        name: name of client
+        msg: error message
     """
 
     def __init__(self, name, msg):
@@ -276,7 +283,7 @@ class ClientError(ServerError):
             super().__init__(name, "An error occured in client :\t{} ".format(msg))
 
 
-@error_code(501)
+@_error_code(501)
 class ServerDisconnectError(ClientError):
     """Server disconnected."""
 
@@ -285,14 +292,14 @@ class ServerDisconnectError(ClientError):
     ## ARCHIVE -- CODE: 600+ ##
 
 
-@error_code(600)
+@_error_code(600)
 class ArchiveError(HappypandaError):
     """Base archive exception, all archive exceptions will derive from this
     """
     pass
 
 
-@error_code(601)
+@_error_code(601)
 class ArchiveCreateError(ArchiveError):
     "Could not create archive object"
 
@@ -302,7 +309,7 @@ class ArchiveCreateError(ArchiveError):
                 error, filepath))
 
 
-@error_code(602)
+@_error_code(602)
 class ArchiveCorruptError(ArchiveError):
     "Bad file found in archive"
 
@@ -310,7 +317,7 @@ class ArchiveCorruptError(ArchiveError):
         return super().__init__("Bad file found in archive: '{}'".format(filepath))
 
 
-@error_code(603)
+@_error_code(603)
 class ArchiveFileNotFoundError(ArchiveError):
     "File not found in archive"
 
@@ -318,7 +325,7 @@ class ArchiveFileNotFoundError(ArchiveError):
         return super().__init__("File '{}' not found in archive: '{}'".format(f, archive_f))
 
 
-@error_code(604)
+@_error_code(604)
 class ArchiveUnsupportedError(ArchiveError):
     "Unsupported archive"
 
@@ -326,13 +333,13 @@ class ArchiveUnsupportedError(ArchiveError):
         return super().__init__("Archive file '{}' is not supported".format(f))
 
 
-@error_code(605)
+@_error_code(605)
 class ArchiveExtractError(ArchiveError):
     "Archive extraction error"
     pass
 
 
-@error_code(606)
+@_error_code(606)
 class ArchiveExistError(ArchiveError):
     "Archive does not exist error"
 
@@ -340,7 +347,7 @@ class ArchiveExistError(ArchiveError):
         return super().__init__("Archive file does not exist. File '{}' not found".format(f))
 
 
-@error_code(607)
+@_error_code(607)
 class NotAnArchiveError(ArchiveError):
     "Not an archive"
 
@@ -350,7 +357,7 @@ class NotAnArchiveError(ArchiveError):
     ## NETWORK -- CODE: 700+ ##
 
 
-@error_code(700)
+@_error_code(700)
 class NetworkError(CoreError):
     """
     Base network exception, all network exceptions will derive from this
@@ -365,7 +372,7 @@ class NetworkError(CoreError):
     ## ETC.  -- CODE:900+ ##
 
 
-@error_code(900)
+@_error_code(900)
 class JSONParseError(ServerError):
     """JSON parse error."""
 

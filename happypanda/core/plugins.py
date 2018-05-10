@@ -20,9 +20,9 @@ from collections import OrderedDict
 from logging.handlers import RotatingFileHandler
 from contextlib import contextmanager
 
-from happypanda.interface.enums import PluginState
+from happypanda.interface import enums
 from happypanda.common import exceptions, utils, constants, hlogger, config
-from happypanda.core import plugins_interface, async_utils
+from happypanda.core import plugin_interface, async_utils
 
 log = hlogger.Logger(constants.log_ns_plugin + __name__)
 
@@ -31,18 +31,20 @@ markers.VARIABLE |= markers.L("hpx")
 markers.VARIABLE |= markers.L("happypandax")
 markers.ALIASES['hpx'] = "happypandax"
 
+plugin_logs = {}
+def get_plugin_context_logger(logger_name):
+    log_name = constants.log_ns_plugin + 'context.' + logger_name[len(constants.log_ns_plugincontext):]
+    return plugin_logs.setdefault(log_name, hlogger.Logger(log_name))
+
 @contextmanager
 def log_plugin_error(logger, exception=True):
     assert isinstance(logger, logging.Logger) or logger is None
     try:
         yield
     except exceptions.PluginError as e:
-        if logger:
-            h = logger.exception if exception else logger.error
-            h("{}: {}".format(e.__class__.__name__, e.msg))
-        else:
-            log.w("PluginError: {} -- {}".format(e.where, e.msg))
-
+        h = logger.exception if exception else logger.error
+        h("{}: {}".format(e.__class__.__name__, e.msg))
+        get_plugin_context_logger(logger.name).w("{}: '{}' -- {}".format(e.__class__.__name__, e.where, e.msg))
 
 def format_plugin(node):
     ""
@@ -53,11 +55,10 @@ def format_plugin(node):
     if isinstance(node, str):
         txt = node
     else:
-        txt = "{}:{}".format(node.info.shortname, node.info.id)
+        sid = node.info.id.split('-')
+        txt = "{}:{}".format(node.info.shortname, sid[0]+'...'+sid[4])
 
     return txt
-
-plugin_logs = {}
 
 class PluginFilter:
     """
@@ -66,14 +67,14 @@ class PluginFilter:
 
     def filter(self, record):
         if not __file__ == record.pathname:
-            log_name = constants.log_ns_plugin + 'context.' + record.name[len(constants.log_ns_plugincontext):]
             levels = {logging.ERROR:logging.WARNING,
                       logging.CRITICAL:logging.WARNING}
-            r = copy.copy(record)
+            r = logging.LogRecord(record.name, record.levelno, record.pathname, record.lineno, record.msg, record.args, record.stack_info)
             r.levelno = levels.get(r.levelno, r.levelno)
             r.levelname = logging.getLevelName(r.levelno)
-            r.name = log_name
-            plugin_logs.setdefault(log_name, hlogger.Logger(log_name)).handle(r)
+            l = get_plugin_context_logger(record.name)
+            r.name = l.name
+            l.handle(r)
         return True
 
 def get_plugin_logger(name, *handler, propogate=False):
@@ -376,6 +377,10 @@ class HandlerValue:
         "Calls first handler, raises error if there is no handler"
         return self._call_node_idx(0, True)
 
+    def first_or_default(self):
+        ""
+        pass
+
     def first_or_none(self):
         "Calls first handler, return None if there is no handler"
         return self._call_node_idx(0, False)
@@ -384,13 +389,17 @@ class HandlerValue:
         "Calls last handler, raises error if there is no handler"
         return self._call_node_idx(-1, True)
 
+    def last_or_default(self):
+        ""
+        pass
+
     def last_or_none(self):
         "Calls last handler, return None if there is no handler"
         return self._call_node_idx(-1, False)
 
     def _add_capture_handler(self, handler, node=None):
         assert callable(handler)
-        assert node is None or isinstance(PluginNode)
+        assert node is None or isinstance(node, PluginNode)
 
         capture_dict = self._capture_handlers
         if not node:
@@ -471,47 +480,54 @@ class HandlerValue:
 
         return tuple(x for x in r if x is not None)
 
-    def _call_node_idx(self, idx, error=False):
-        if self.capture:
-            return self._call_capture(idx, error, False)
-        else:
-            if not self._handlers:
-                if self.default_handler:
-                    return self.default_handler(*self.args, **self.kwargs)
-                if error:
-                    self._raise_error()
-                return None
-            return self._call_handler(*self._handlers[idx])
+    def _call_node_idx(self, idx, error=False, until_result=False):
+        try:
+            if self.capture:
+                return self._call_capture(idx, error, False)
+            else:
+                if not self._handlers:
+                    if self.default_handler:
+                        return self.default_handler(*self.args, **self.kwargs)
+                    if error:
+                        self._raise_error()
+                    return None
+                return self._call_handler(*self._handlers[idx])
+        except:
+            raise NotImplementedError()
+            if until_result:
+                n_idx = idx + 1 if idx >= 0 else idx - 1
 
     def _call_handler(self, node, handler):
-        with log_plugin_error(node.logger, False):
-            err = None
-            try:
-                r = node.call_handler(handler, self.args, self.kwargs)
+        err = None
+        try:
+            r = node.call_handler(self.name, handler, self.args, self.kwargs)
 
-                if self.expected_type is not None:
-                    if not isinstance(r, self.expected_type):
-                        raise exceptions.PluginHandlerError(
-                            node,
-                            "On command '{}' expected type '{}', but got '{}' by plugin handler '{}'".format(
-                                self.name, str(type(self.expected_type)), str(type(r)), node.format()))
-
-            except Exception as e:
-                self.failed[node] = e
-                if isinstance(e, exceptions.PluginError):
-                    raise
-                else:
-                    node.logger.exception("An unhandled exception was raised by plugin handler on command '{}'".format(self.name))
+            if self.expected_type is not None:
+                if not isinstance(r, self.expected_type):
+                    err = exceptions.PluginHandlerError(
+                        node,
+                        "On command '{}' expected type '{}', but got '{}' by plugin handler '{}'".format(
+                            self.name, str(type(self.expected_type)), str(type(r)), node.format()))
+        except Exception as e:
+            self.failed[node] = e
+            node.logger.exception("An unhandled exception was raised by plugin handler on command '{}'".format(self.name))
+            get_plugin_context_logger(node.logger.name).w("An unhandled exception was raised by plugin handler on command '{}' by", node.format())
+            raise
+        if err:
+            self.failed[node] = err
+            node.logger.error("{}: {}".format(err.__class__.__name__, err.msg))
+            raise err
+        return r
 
 
 class PluginNode:
     ""
 
     def __init__(self, manager, manifest):
-        self.state = PluginState.Registered
+        self.state = enums.PluginState.Registered
         self.manager = manager
         self.info = manifest
-        self.commands = {}  # { command : handler }
+        self.commands = {'event':{}, 'entry':{}}  # { command : handler }
         self._modules = []
         self._isolate = None
         self.dependencies = set()
@@ -534,26 +550,35 @@ class PluginNode:
             except Exception as e:
                 err = e
                 self.logger.exception("An unhandled exception was raised during plugin initialization")
+                get_plugin_context_logger(self.logger.name).w(
+                    "An unhandled exception was raised during plugin initialization by {}: {}: {}".format(self.format(), e.__class__.__name__, str(e)))
+
         return False if err else True
 
     def add_handler(self, command, handler):
-        self.logger.debug(log.d("Adding command handler to", command, "-", self.format()))
-        self.commands[command] = handler
+        log.d("Adding command handler to", command, "-", self.format())
+        self.logger.info("Adding command handler to '{}'".format(command))
+        self.commands['entry'][command] = handler
 
-    def call_handler(self, handler, args, kwargs):
-        log.d("Calling command handler '{}' -".format(handler.__name__), self.format())
-        self.logger.info("Calling command handler '{}'".format(handler.__name__))
+    def add_event_handler(self, command, handler):
+        log.d("Adding command event handler to", command, "-", self.format())
+        self.logger.info("Adding command event handler to '{}'".format(command))
+        self.commands['event'][command] = handler
+
+    def call_handler(self, commandname, handler, args, kwargs):
+        log.d("Calling command handler for '{}' -".format(commandname), self.format())
+        self.logger.info("Calling command handler for '{}'".format(commandname))
         with self._isolate:
             return handler(*args, *kwargs)
 
     def unload(self, reason=""):
-        if self.state == PluginState.Unloaded:
+        if self.state == enums.PluginState.Unloaded:
             return
         log.d("Unloading plugin -", self.format())
         self.logger.info("Unloading plugin")
         self.status = reason
         self.manager.disable_plugin(self)
-        self.state = PluginState.Unloaded
+        self.state = enums.PluginState.Unloaded
         for n in self.dependents:
             n.unload("Plugin '{}' was unloaded".format(self.info.shortname))
 
@@ -587,7 +612,7 @@ class PluginManager:
         self._event = Event()
         self._node_registry = {} # { pluginid : node }
         self._nodes = set()
-        self._commands = {}  # { command : [ plugins ] }
+        self._commands = {'entry': {}, 'event': {}}  # { command : set( plugins ) }
         self._init_plugins_greenlet = async_utils.Greenlet(self._init_plugins)
         self._init_plugins_greenlet.start()
 
@@ -600,7 +625,7 @@ class PluginManager:
             for node in self._nodes.copy():
                 if node.evaluate():
                     self._collect_dependencies(node)
-                    if node.state != PluginState.Unloaded:
+                    if node.state != enums.PluginState.Unloaded:
                         node_items[node] = list(node.dependencies)
             
             sorted_nodes = []
@@ -614,16 +639,16 @@ class PluginManager:
 
             auto_install = config.auto_install_plugin_dependency.value
             for node in sorted_nodes:
-                if node.state == PluginState.Installed:
+                if node.state == enums.PluginState.Installed:
                     for n in node.dependencies:
-                        if n.state == PluginState.Registered:
+                        if n.state == enums.PluginState.Registered:
                             if auto_install:
                                 self.install_plugin(n, node)
                             else:
                                 node.unload("Required plugin '{}' has not been installed".format(n.info.shortname))
-                    if node.state != PluginState.Unloaded:
+                    if node.state != enums.PluginState.Unloaded:
                         node.init()
-                        node.state = PluginState.Enabled
+                        node.state = enums.PluginState.Enabled
 
             self._event.clear()
 
@@ -640,7 +665,7 @@ class PluginManager:
             ready_version = None
             ready_state = None
             if other_node:
-                ready_state = other_node.state not in (PluginState.Unloaded,)
+                ready_state = other_node.state not in (enums.PluginState.Unloaded,)
                 ready_version = other_node.info.version in r.specifier
                 if ready_state and ready_version:
                     node.dependencies.add(other_node)
@@ -696,11 +721,12 @@ class PluginManager:
         else:
             log.d("Disabling plugin -", node.format())
             node.logger.info("Disabling plugin")
-        node.state = PluginState.Disabled
-        for cmd in node.commands:
-            if cmd in self._commands:
-                if node in self._commands[cmd]:
-                    self._commands[cmd].remove(node)
+        node.state = enums.PluginState.Disabled
+        for n, cmd_dict in node.commands.items():
+            for cmd in cmd_dict:
+                if cmd in self._commands[n]:
+                    if node in self._commands[n][cmd]:
+                        self._commands[n][cmd].remove(node)
 
     def install_plugin(self, node_or_id, by_node=None):
         node = self.get_node(node_or_id)
@@ -710,7 +736,7 @@ class PluginManager:
         else:
             log.d("Installing plugin -", node.format(), )
             node.logger.info("Installing plugin")
-        node.state = PluginState.Installed
+        node.state = enums.PluginState.Installed
 
     def remove_plugin(self, node_or_id):
         "Remove plugin and its dependents"
@@ -723,20 +749,30 @@ class PluginManager:
 
         # TODO: disable dependents
 
-    def _call_command(self, command_name, *args, **kwargs):
+    def _call_command_entry(self, command_name, *args, **kwargs):
         """
         Returns HandlerValue
         """
         h = []
-        if command_name in self._commands:
-            for n in self._commands[command_name]:
-                h.append((n, n.commands[command_name]))
+        if command_name in self._commands['entry']:
+            for n in self._commands['entry'][command_name]:
+                h.append((n, n.commands['entry'][command_name]))
         return HandlerValue(command_name, h, *args, **kwargs)
+
+    def _call_command_event(self, command_name, *args, **kwargs):
+        """
+        """
+        h = []
+        if command_name in self._commands['event']:
+            for n in self._commands['event'][command_name]:
+                h.append((n, n.commands['event'][command_name]))
+
+        return HandlerValue(command_name, h, *args, **kwargs).all(default=True)
 
     def attach_to_command(self, node_or_id, command_name, handler):
         ""
         node = self.get_node(node_or_id)
-        if command_name not in constants.available_commands:
+        if command_name not in constants.available_commands['entry']:
             raise exceptions.PluginCommandError(
                 node, "Command '{}' does not exist".format(command_name))
         if not callable(handler):
@@ -746,13 +782,12 @@ class PluginManager:
         # TODO: check signature
 
         node.add_handler(command_name, handler)
-        self._commands.setdefault(command_name, []).append(node)
+        self._commands['entry'].setdefault(command_name, set()).add(node)
 
     def subscribe_to_event(self, node_or_id, event_name, handler):
         ""
-        raise NotImplementedError
         node = self.get_node(node_or_id)
-        if command_name not in constants.available_commands:
+        if event_name not in constants.available_commands['event']:
             raise exceptions.PluginCommandError(
                 node, "Command event '{}' does not exist".format(event_name))
         if not callable(handler):
@@ -761,8 +796,8 @@ class PluginManager:
 
         # TODO: check signature
 
-        node.add_handler(command_name, handler)
-        self._commands.setdefault(command_name, []).append(node)
+        node.add_event_handler(event_name, handler)
+        self._commands['event'].setdefault(event_name, set()).add(node)
 
 
 class HPXImporter(importlib.abc.MetaPathFinder, importlib.abc.Loader):
@@ -824,7 +859,7 @@ class PluginIsolate:
                 del PluginIsolate.base_sys_modules[k]
 
         plug_interface = None
-        o_plug_interface = plugins_interface
+        o_plug_interface = plugin_interface
         del sys.modules[o_plug_interface.__name__]
         try:
             plug_interface = importlib.import_module(o_plug_interface.__name__, o_plug_interface.__package__)
@@ -832,6 +867,10 @@ class PluginIsolate:
             plug_interface.__manager__ = self.node.manager
         finally:
             sys.modules[o_plug_interface.__name__] = o_plug_interface
+
+        for name, obj in inspect.getmembers(exceptions, inspect.isclass):
+            if issubclass(obj, Exception):
+                setattr(plug_interface, name, obj)
 
         self._hpximporter = HPXImporter(importlib.abc.machinery.ModuleSpec,
                                         {constants.plugin_interface_name: plug_interface})

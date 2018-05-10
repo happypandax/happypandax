@@ -20,11 +20,13 @@ log = hlogger.Logger(constants.log_ns_command + __name__)
 
 def get_available_commands():
     subs = utils.all_subclasses(Command)
-    commands = set()
+    commands = {'entry':set(), 'event':set()}
     for c in subs:
         c._get_commands()
         for a in c._entries:
-            commands.add(c.__name__ + '.' + c._entries[a].name)
+            commands['entry'].add(c.__name__ + '.' + c._entries[a].name)
+        for a in c._events:
+            commands['event'].add(c.__name__ + '.' + c._events[a].name)
     return commands
 
 
@@ -411,12 +413,15 @@ class _CommandPlugin:
         "Returns Class.command name"
         return self.command_cls.__name__ + '.' + self.name
 
-    def invoke_on_plugins(self, *args, **kwargs):
+    def invoke_on_plugins(self, command_type, *args, **kwargs):
         "Invoke all plugins"
         self._check_types(*args, **kwargs)
-        return constants.plugin_manager._call_command(
-            self.qualifiedname(), *args, **kwargs)
-
+        if command_type == 'entry':
+            return constants.plugin_manager._call_command_entry(
+                self.qualifiedname(), *args, **kwargs)
+        elif command_type == 'event':
+            return constants.plugin_manager._call_command_event(
+                self.qualifiedname(), *args, **kwargs)
     def _ensure_class(self, type1, type2):
         if isclass(type1):
             return issubclass(type1, type2)
@@ -463,7 +468,7 @@ class CommandEvent(_CommandPlugin):
 
     def emit(self, *args, **kwargs):
         "emit this event with *args and **kwargs"
-        self.invoke_on_plugins(*args, **kwargs)
+        self.invoke_on_plugins("event", *args, **kwargs)
         for h in self._handlers:
             h(*args, **kwargs)
 
@@ -507,7 +512,7 @@ class CommandEntry(_CommandPlugin):
     def call_capture(self, token, *args, **kwargs):
         "Calls associated handlers with a capture token"
         log.d("Calling command handler <{}> [{}]".format(self.qualifiedname(), token))
-        handler = self.invoke_on_plugins(*args, **kwargs)
+        handler = self.invoke_on_plugins("entry", *args, **kwargs)
         handler.default_handler = self.default_handler
         handler.expected_type = self.return_type
         handler.capture = True
@@ -520,7 +525,7 @@ class CommandEntry(_CommandPlugin):
     def call(self, *args, **kwargs):
         "Calls associated handlers"
         log.d("Calling command handler <{}>".format(self.qualifiedname()))
-        handler = self.invoke_on_plugins(*args, **kwargs)
+        handler = self.invoke_on_plugins("entry", *args, **kwargs)
         handler.default_handler = self.default_handler
         handler.expected_type = self.return_type
         yield handler

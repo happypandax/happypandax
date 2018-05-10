@@ -82,7 +82,7 @@ log_datefmt = '%b-%m %H:%M:%S'
 log_plugin_format = log_format
 log_plugin_datefmt = log_datefmt
 log_size = 100000 * 10 #10mb
-log_ns_plugincontext = 'plugincontext.'
+log_ns_plugincontext = 'pluginctx.'
 log_ns_core = '[core].'
 log_ns_command = '[command].'
 log_ns_plugin = '[plugin].'
@@ -144,8 +144,7 @@ translations = None  # dict of available translation files
 
 plugin_interface_name = "__hpx__"
 plugin_manager = None
-available_commands = set()
-available_events = set()
+available_commands = {'event': set(), 'entry': set()}
 plugin_shortname_length = 10
 
 # DATABASE

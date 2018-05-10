@@ -34,8 +34,7 @@ build: off
 
 test_script:
     - "%PYTHON%/python.exe lint.py"
-    - "%PYTHON%/python.exe ./run_tests.py ./tests/test_updater.py"
-    #- "%PYTHON%/python.exe ./run_tests.py ./tests/test_db.py ./test/test_updater.py"
+    - "%PYTHON%/python.exe ./run_tests.py ./tests/test_updater.py ./tests/test_plugins.py"
 
 before_deploy:
     - npm install
