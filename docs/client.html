@@ -58,9 +58,8 @@
       role="menu"
       aria-labelledby="dLabelGlobalToc"><ul>
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="install.html#building">Building</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Using HappyPanda X</a></li>
-<li class="toctree-l1"><a class="reference internal" href="usage.html#securing-happypanda-x">Securing Happypanda X</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html#securing-happypanda-x">Securing HappyPanda X</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html#exposing-happypanda-x">Exposing HappyPanda X</a></li>
 <li class="toctree-l1"><a class="reference internal" href="translation.html">Translations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="settings.html">Settings</a></li>
@@ -171,7 +170,7 @@
 <h1>Creating frontends<a class="headerlink" href="#creating-frontends" title="Permalink to this headline">¶</a></h1>
 <p>HPX exposes an RPC interface over TCP making it possible to create a client in any programming language.</p>
 <p>For exchanging data between the server and client <code class="docutils literal notranslate"><span class="pre">JSON</span></code> is used. Make sure you’re familiar with <code class="docutils literal notranslate"><span class="pre">JSON</span></code> and its datatypes.</p>
-<p>Before wanting to talk to a HPX server, make sure you have one running. See <a class="reference internal" href="usage.html#setting-up"><span class="std std-ref">Setting up</span></a> or <a class="reference internal" href="env.html#setting-up-an-environment"><span class="std std-ref">Setting up an environment</span></a> on how to get one up and running.</p>
+<p>Before wanting to talk to a HPX server, make sure you have one running. Note that there’s no need to run HPX from source if you just want to create a client.</p>
 <p>It is recommended that you run the server with the <code class="docutils literal notranslate"><span class="pre">--debug</span></code> and <code class="docutils literal notranslate"><span class="pre">--dev</span></code> commandline switches so that you can see what’s going on while you’re connected.
 See <a class="reference internal" href="switches.html#command-line-arguments"><span class="std std-ref">Command-Line Arguments</span></a>.</p>
 <div class="section" id="exchanging-messages">
@@ -462,10 +461,6 @@ the <code class="docutils literal notranslate"><span class="pre">error</span></c
       
         <br/>
         
-<div id="sourcelink">
-  <a href="_sources/client.rst.txt"
-     rel="nofollow">Source</a>
-</div>
       
     </p>
     <p>

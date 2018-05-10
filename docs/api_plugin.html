@@ -57,9 +57,8 @@
       role="menu"
       aria-labelledby="dLabelGlobalToc"><ul>
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="install.html#building">Building</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Using HappyPanda X</a></li>
-<li class="toctree-l1"><a class="reference internal" href="usage.html#securing-happypanda-x">Securing Happypanda X</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html#securing-happypanda-x">Securing HappyPanda X</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html#exposing-happypanda-x">Exposing HappyPanda X</a></li>
 <li class="toctree-l1"><a class="reference internal" href="translation.html">Translations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="settings.html">Settings</a></li>
@@ -147,7 +146,7 @@
       <div class="col-md-3">
         <div id="sidebar" class="bs-sidenav" role="complementary"><ul>
 <li><a class="reference internal" href="#">Plugin API</a><ul>
-<li><a class="reference internal" href="#methods">Methods</a></li>
+<li><a class="reference internal" href="#module-happypanda.core.plugin_interface">Interface</a></li>
 <li><a class="reference internal" href="#commands">Commands</a></li>
 </ul>
 </li>
@@ -159,8 +158,138 @@
             
   <div class="section" id="plugin-api">
 <h1>Plugin API<a class="headerlink" href="#plugin-api" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="methods">
-<h2>Methods<a class="headerlink" href="#methods" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-happypanda.core.plugin_interface">
+<span id="interface"></span><h2>Interface<a class="headerlink" href="#module-happypanda.core.plugin_interface" title="Permalink to this headline">¶</a></h2>
+<p>The plugin interface module named <code class="docutils literal notranslate"><span class="pre">__hpx__</span></code>.
+Import it in your plugin to access the methods and classes defined by the module:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">__hpx__</span> <span class="k">as</span> <span class="nn">hpx</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">hpx</span><span class="o">.</span><span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>In addition to what is defined here, <a class="reference internal" href="api_general.html#module-happypanda.common.exceptions"><span class="std std-ref">exceptions</span></a> defined by HPX are also available at the module-level
+and can be imported like so:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">__hpx__</span> <span class="k">as</span> <span class="nn">hpx</span>
+<span class="kn">from</span> <span class="nn">__hpx__</span> <span class="k">import</span> <span class="n">PluginError</span>
+
+<span class="k">raise</span> <span class="n">PluginError</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+<span class="k">raise</span> <span class="n">hpx</span><span class="o">.</span><span class="n">PluginError</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="function">
+<dt id="happypanda.core.plugin_interface.attach">
+<code class="descname">attach</code><span class="sig-paren">(</span><em>f=None</em>, <em>command=None</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.core.plugin_interface.attach" title="Permalink to this definition">¶</a></dt>
+<dd><p>Attach to a command</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>f</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>]) – command handler</li>
+<li><strong>command</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – a fully qualified command name, required</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="happypanda.core.plugin_interface.command">
+<code class="descname">command</code><span class="sig-paren">(</span><em>f=None</em>, <em>command_name=None</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.core.plugin_interface.command" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a command entry that other plugins can attach to</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>f</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>]) – command handler</li>
+<li><strong>command</strong> – optional command name, if omitted, the name of the function will be used</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="happypanda.core.plugin_interface.get_config">
+<code class="descname">get_config</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.core.plugin_interface.get_config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a dict-like object with configuration specific to this plugin</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">dict-like object</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="happypanda.core.plugin_interface.get_constant">
+<code class="descname">get_constant</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.core.plugin_interface.get_constant" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a value of a constant</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – name of constant</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="happypanda.core.plugin_interface.get_logger">
+<code class="descname">get_logger</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.core.plugin_interface.get_logger" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the logger for this plugin</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – name of logger</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="happypanda.core.plugin_interface.get_setting">
+<code class="descname">get_setting</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.core.plugin_interface.get_setting" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="happypanda.core.plugin_interface.save_config">
+<code class="descname">save_config</code><span class="sig-paren">(</span><em>obj</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.core.plugin_interface.save_config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save configuration specific to this plugin</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>obj</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>) – dict-like object</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="happypanda.core.plugin_interface.subscribe">
+<code class="descname">subscribe</code><span class="sig-paren">(</span><em>f=None</em>, <em>commandevent=None</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.core.plugin_interface.subscribe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Subscribe to a command event</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>f</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>]) – command event handler</li>
+<li><strong>commandevent</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – a fully qualified command event name, required</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 </div>
 <div class="section" id="commands">
 <h2>Commands<a class="headerlink" href="#commands" title="Permalink to this headline">¶</a></h2>
@@ -181,10 +310,6 @@
       
         <br/>
         
-<div id="sourcelink">
-  <a href="_sources/api_plugin.rst.txt"
-     rel="nofollow">Source</a>
-</div>
       
     </p>
     <p>

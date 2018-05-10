@@ -58,9 +58,8 @@
       role="menu"
       aria-labelledby="dLabelGlobalToc"><ul>
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="install.html#building">Building</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Using HappyPanda X</a></li>
-<li class="toctree-l1"><a class="reference internal" href="usage.html#securing-happypanda-x">Securing Happypanda X</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html#securing-happypanda-x">Securing HappyPanda X</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html#exposing-happypanda-x">Exposing HappyPanda X</a></li>
 <li class="toctree-l1"><a class="reference internal" href="translation.html">Translations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="settings.html">Settings</a></li>
@@ -152,6 +151,8 @@
       <div class="col-md-3">
         <div id="sidebar" class="bs-sidenav" role="complementary"><ul>
 <li><a class="reference internal" href="#">General</a><ul>
+<li><a class="reference internal" href="#module-happypanda.common.exceptions">Exceptions</a></li>
+<li><a class="reference internal" href="#guidelines">Guidelines</a><ul>
 <li><a class="reference internal" href="#database">Database</a><ul>
 <li><a class="reference internal" href="#hierarchy">Hierarchy</a></li>
 <li><a class="reference internal" href="#recommended-usage">Recommended Usage</a><ul>
@@ -172,8 +173,8 @@
 </li>
 </ul>
 </li>
-<li><a class="reference internal" href="#asynchronous-commands">Asynchronous Commands</a></li>
-<li><a class="reference internal" href="#exceptions">Exceptions</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -184,10 +185,361 @@
             
   <div class="section" id="general">
 <h1>General<a class="headerlink" href="#general" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-happypanda.common.exceptions">
+<span id="exceptions"></span><h2>Exceptions<a class="headerlink" href="#module-happypanda.common.exceptions" title="Permalink to this headline">¶</a></h2>
+<p>exceptions module.</p>
+<dl class="exception">
+<dt id="happypanda.common.exceptions.HappypandaError">
+<em class="property">exception </em><code class="descname">HappypandaError</code><span class="sig-paren">(</span><em>msg</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.common.exceptions.HappypandaError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">RuntimeError</span></code></p>
+<p><strong>Code</strong>: <code class="docutils literal notranslate"><span class="pre">100</span></code></p>
+<p>Base Happypanda exception, all exceptions will derive from this.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="happypanda.common.exceptions.CoreError">
+<em class="property">exception </em><code class="descname">CoreError</code><span class="sig-paren">(</span><em>where</em>, <em>message</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.common.exceptions.CoreError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#happypanda.common.exceptions.HappypandaError" title="happypanda.common.exceptions.HappypandaError"><code class="xref py py-class docutils literal notranslate"><span class="pre">happypanda.common.exceptions.HappypandaError</span></code></a></p>
+<p><strong>Code</strong>: <code class="docutils literal notranslate"><span class="pre">101</span></code></p>
+<p>Base Happypanda core exception, all core exceptions will derive from this.</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>Args:</dt>
+<dd>where: where the error occured
+message: explanation of error</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="exception">
+<dt id="happypanda.common.exceptions.SettingsError">
+<em class="property">exception </em><code class="descname">SettingsError</code><span class="sig-paren">(</span><em>where</em>, <em>message</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.common.exceptions.SettingsError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#happypanda.common.exceptions.CoreError" title="happypanda.common.exceptions.CoreError"><code class="xref py py-class docutils literal notranslate"><span class="pre">happypanda.common.exceptions.CoreError</span></code></a></p>
+<p><strong>Code</strong>: <code class="docutils literal notranslate"><span class="pre">110</span></code></p>
+<p>Base settings error</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="happypanda.common.exceptions.CommandError">
+<em class="property">exception </em><code class="descname">CommandError</code><span class="sig-paren">(</span><em>where</em>, <em>message</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.common.exceptions.CommandError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#happypanda.common.exceptions.CoreError" title="happypanda.common.exceptions.CoreError"><code class="xref py py-class docutils literal notranslate"><span class="pre">happypanda.common.exceptions.CoreError</span></code></a></p>
+<p><strong>Code</strong>: <code class="docutils literal notranslate"><span class="pre">120</span></code></p>
+<p>Base command error</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="happypanda.common.exceptions.CommandAlreadyRunningError">
+<em class="property">exception </em><code class="descname">CommandAlreadyRunningError</code><span class="sig-paren">(</span><em>where</em>, <em>message</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.common.exceptions.CommandAlreadyRunningError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#happypanda.common.exceptions.CoreError" title="happypanda.common.exceptions.CoreError"><code class="xref py py-class docutils literal notranslate"><span class="pre">happypanda.common.exceptions.CoreError</span></code></a></p>
+<p><strong>Code</strong>: <code class="docutils literal notranslate"><span class="pre">121</span></code></p>
+<p>Command is already running</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="happypanda.common.exceptions.PluginError">
+<em class="property">exception </em><code class="descname">PluginError</code><span class="sig-paren">(</span><em>name_or_node</em>, <em>message</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.common.exceptions.PluginError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#happypanda.common.exceptions.CoreError" title="happypanda.common.exceptions.CoreError"><code class="xref py py-class docutils literal notranslate"><span class="pre">happypanda.common.exceptions.CoreError</span></code></a></p>
+<p><strong>Code</strong>: <code class="docutils literal notranslate"><span class="pre">200</span></code></p>
+<p>Base plugin exception, all plugin exceptions will derive from this.</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>Args:</dt>
+<dd>name: name of plugin
+message: explanation of error</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="exception">
+<dt id="happypanda.common.exceptions.PluginMethodError">
+<em class="property">exception </em><code class="descname">PluginMethodError</code><span class="sig-paren">(</span><em>name_or_node</em>, <em>message</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.common.exceptions.PluginMethodError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#happypanda.common.exceptions.PluginError" title="happypanda.common.exceptions.PluginError"><code class="xref py py-class docutils literal notranslate"><span class="pre">happypanda.common.exceptions.PluginError</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">AttributeError</span></code></p>
+<p><strong>Code</strong>: <code class="docutils literal notranslate"><span class="pre">201</span></code></p>
+<p>Plugin Method Error.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="happypanda.common.exceptions.PluginAttributeError">
+<em class="property">exception </em><code class="descname">PluginAttributeError</code><span class="sig-paren">(</span><em>name_or_node</em>, <em>message</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.common.exceptions.PluginAttributeError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#happypanda.common.exceptions.PluginError" title="happypanda.common.exceptions.PluginError"><code class="xref py py-class docutils literal notranslate"><span class="pre">happypanda.common.exceptions.PluginError</span></code></a></p>
+<p><strong>Code</strong>: <code class="docutils literal notranslate"><span class="pre">202</span></code></p>
+<p>Plugin Attribute Error.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="happypanda.common.exceptions.PluginCommandError">
+<em class="property">exception </em><code class="descname">PluginCommandError</code><span class="sig-paren">(</span><em>name_or_node</em>, <em>message</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.common.exceptions.PluginCommandError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#happypanda.common.exceptions.PluginError" title="happypanda.common.exceptions.PluginError"><code class="xref py py-class docutils literal notranslate"><span class="pre">happypanda.common.exceptions.PluginError</span></code></a></p>
+<p><strong>Code</strong>: <code class="docutils literal notranslate"><span class="pre">203</span></code></p>
+<p>Plugin Command Error.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="happypanda.common.exceptions.PluginHandlerError">
+<em class="property">exception </em><code class="descname">PluginHandlerError</code><span class="sig-paren">(</span><em>name_or_node</em>, <em>message</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.common.exceptions.PluginHandlerError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#happypanda.common.exceptions.PluginError" title="happypanda.common.exceptions.PluginError"><code class="xref py py-class docutils literal notranslate"><span class="pre">happypanda.common.exceptions.PluginError</span></code></a></p>
+<p><strong>Code</strong>: <code class="docutils literal notranslate"><span class="pre">204</span></code></p>
+<p>Plugin Handler Error.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="happypanda.common.exceptions.PluginSignatureError">
+<em class="property">exception </em><code class="descname">PluginSignatureError</code><span class="sig-paren">(</span><em>name_or_node</em>, <em>message</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.common.exceptions.PluginSignatureError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#happypanda.common.exceptions.PluginError" title="happypanda.common.exceptions.PluginError"><code class="xref py py-class docutils literal notranslate"><span class="pre">happypanda.common.exceptions.PluginError</span></code></a></p>
+<p><strong>Code</strong>: <code class="docutils literal notranslate"><span class="pre">205</span></code></p>
+<p>Plugin Signature Error.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="happypanda.common.exceptions.PluginLoadError">
+<em class="property">exception </em><code class="descname">PluginLoadError</code><span class="sig-paren">(</span><em>name_or_node</em>, <em>message</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.common.exceptions.PluginLoadError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#happypanda.common.exceptions.PluginError" title="happypanda.common.exceptions.PluginError"><code class="xref py py-class docutils literal notranslate"><span class="pre">happypanda.common.exceptions.PluginError</span></code></a></p>
+<p><strong>Code</strong>: <code class="docutils literal notranslate"><span class="pre">206</span></code></p>
+<p>Plugin Load Error.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="happypanda.common.exceptions.PluginInitError">
+<em class="property">exception </em><code class="descname">PluginInitError</code><span class="sig-paren">(</span><em>name_or_node</em>, <em>message</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.common.exceptions.PluginInitError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#happypanda.common.exceptions.PluginError" title="happypanda.common.exceptions.PluginError"><code class="xref py py-class docutils literal notranslate"><span class="pre">happypanda.common.exceptions.PluginError</span></code></a></p>
+<p><strong>Code</strong>: <code class="docutils literal notranslate"><span class="pre">207</span></code></p>
+<p>Plugin Init Error.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="happypanda.common.exceptions.DatabaseError">
+<em class="property">exception </em><code class="descname">DatabaseError</code><span class="sig-paren">(</span><em>where</em>, <em>message</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.common.exceptions.DatabaseError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#happypanda.common.exceptions.CoreError" title="happypanda.common.exceptions.CoreError"><code class="xref py py-class docutils literal notranslate"><span class="pre">happypanda.common.exceptions.CoreError</span></code></a></p>
+<p><strong>Code</strong>: <code class="docutils literal notranslate"><span class="pre">300</span></code></p>
+<p>Base database exception, all database exceptions will derive from this.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="happypanda.common.exceptions.DatabaseInitError">
+<em class="property">exception </em><code class="descname">DatabaseInitError</code><span class="sig-paren">(</span><em>msg</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.common.exceptions.DatabaseInitError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#happypanda.common.exceptions.DatabaseError" title="happypanda.common.exceptions.DatabaseError"><code class="xref py py-class docutils literal notranslate"><span class="pre">happypanda.common.exceptions.DatabaseError</span></code></a></p>
+<p><strong>Code</strong>: <code class="docutils literal notranslate"><span class="pre">301</span></code></p>
+<p>Database initialization error.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="happypanda.common.exceptions.DatabaseVersionError">
+<em class="property">exception </em><code class="descname">DatabaseVersionError</code><span class="sig-paren">(</span><em>msg</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.common.exceptions.DatabaseVersionError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#happypanda.common.exceptions.DatabaseError" title="happypanda.common.exceptions.DatabaseError"><code class="xref py py-class docutils literal notranslate"><span class="pre">happypanda.common.exceptions.DatabaseError</span></code></a></p>
+<p><strong>Code</strong>: <code class="docutils literal notranslate"><span class="pre">302</span></code></p>
+<p>Database version error.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="happypanda.common.exceptions.DatabaseItemNotFoundError">
+<em class="property">exception </em><code class="descname">DatabaseItemNotFoundError</code><span class="sig-paren">(</span><em>where</em>, <em>message</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.common.exceptions.DatabaseItemNotFoundError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#happypanda.common.exceptions.DatabaseError" title="happypanda.common.exceptions.DatabaseError"><code class="xref py py-class docutils literal notranslate"><span class="pre">happypanda.common.exceptions.DatabaseError</span></code></a></p>
+<p><strong>Code</strong>: <code class="docutils literal notranslate"><span class="pre">303</span></code></p>
+<p>Database item not found error</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="happypanda.common.exceptions.ServerError">
+<em class="property">exception </em><code class="descname">ServerError</code><span class="sig-paren">(</span><em>where</em>, <em>message</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.common.exceptions.ServerError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#happypanda.common.exceptions.CoreError" title="happypanda.common.exceptions.CoreError"><code class="xref py py-class docutils literal notranslate"><span class="pre">happypanda.common.exceptions.CoreError</span></code></a></p>
+<p><strong>Code</strong>: <code class="docutils literal notranslate"><span class="pre">400</span></code></p>
+<p>Base server exception, all server exceptions will derive from this.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="happypanda.common.exceptions.ClientDisconnectError">
+<em class="property">exception </em><code class="descname">ClientDisconnectError</code><span class="sig-paren">(</span><em>where</em>, <em>message</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.common.exceptions.ClientDisconnectError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#happypanda.common.exceptions.ServerError" title="happypanda.common.exceptions.ServerError"><code class="xref py py-class docutils literal notranslate"><span class="pre">happypanda.common.exceptions.ServerError</span></code></a></p>
+<p><strong>Code</strong>: <code class="docutils literal notranslate"><span class="pre">401</span></code></p>
+<p>Client disconnected.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="happypanda.common.exceptions.InvalidMessage">
+<em class="property">exception </em><code class="descname">InvalidMessage</code><span class="sig-paren">(</span><em>where</em>, <em>message</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.common.exceptions.InvalidMessage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#happypanda.common.exceptions.ServerError" title="happypanda.common.exceptions.ServerError"><code class="xref py py-class docutils literal notranslate"><span class="pre">happypanda.common.exceptions.ServerError</span></code></a></p>
+<p><strong>Code</strong>: <code class="docutils literal notranslate"><span class="pre">403</span></code></p>
+<p>Invalid message error.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="happypanda.common.exceptions.APIError">
+<em class="property">exception </em><code class="descname">APIError</code><span class="sig-paren">(</span><em>where</em>, <em>message</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.common.exceptions.APIError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#happypanda.common.exceptions.ServerError" title="happypanda.common.exceptions.ServerError"><code class="xref py py-class docutils literal notranslate"><span class="pre">happypanda.common.exceptions.ServerError</span></code></a></p>
+<p><strong>Code</strong>: <code class="docutils literal notranslate"><span class="pre">404</span></code></p>
+<p>API error.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="happypanda.common.exceptions.APIRequirementError">
+<em class="property">exception </em><code class="descname">APIRequirementError</code><span class="sig-paren">(</span><em>where</em>, <em>message</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.common.exceptions.APIRequirementError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#happypanda.common.exceptions.ServerError" title="happypanda.common.exceptions.ServerError"><code class="xref py py-class docutils literal notranslate"><span class="pre">happypanda.common.exceptions.ServerError</span></code></a></p>
+<p><strong>Code</strong>: <code class="docutils literal notranslate"><span class="pre">405</span></code></p>
+<p>API requirement error.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="happypanda.common.exceptions.AuthError">
+<em class="property">exception </em><code class="descname">AuthError</code><span class="sig-paren">(</span><em>where</em>, <em>msg</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.common.exceptions.AuthError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#happypanda.common.exceptions.ServerError" title="happypanda.common.exceptions.ServerError"><code class="xref py py-class docutils literal notranslate"><span class="pre">happypanda.common.exceptions.ServerError</span></code></a></p>
+<p><strong>Code</strong>: <code class="docutils literal notranslate"><span class="pre">406</span></code></p>
+<p>Auth Base Error.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="happypanda.common.exceptions.AuthRequiredError">
+<em class="property">exception </em><code class="descname">AuthRequiredError</code><span class="sig-paren">(</span><em>where</em>, <em>msg</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.common.exceptions.AuthRequiredError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#happypanda.common.exceptions.AuthError" title="happypanda.common.exceptions.AuthError"><code class="xref py py-class docutils literal notranslate"><span class="pre">happypanda.common.exceptions.AuthError</span></code></a></p>
+<p><strong>Code</strong>: <code class="docutils literal notranslate"><span class="pre">407</span></code></p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="happypanda.common.exceptions.SessionExpiredError">
+<em class="property">exception </em><code class="descname">SessionExpiredError</code><span class="sig-paren">(</span><em>where</em>, <em>session_id</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.common.exceptions.SessionExpiredError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#happypanda.common.exceptions.ServerError" title="happypanda.common.exceptions.ServerError"><code class="xref py py-class docutils literal notranslate"><span class="pre">happypanda.common.exceptions.ServerError</span></code></a></p>
+<p><strong>Code</strong>: <code class="docutils literal notranslate"><span class="pre">408</span></code></p>
+<p>Session expired error.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="happypanda.common.exceptions.EnumError">
+<em class="property">exception </em><code class="descname">EnumError</code><span class="sig-paren">(</span><em>where</em>, <em>message</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.common.exceptions.EnumError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#happypanda.common.exceptions.ServerError" title="happypanda.common.exceptions.ServerError"><code class="xref py py-class docutils literal notranslate"><span class="pre">happypanda.common.exceptions.ServerError</span></code></a></p>
+<p><strong>Code</strong>: <code class="docutils literal notranslate"><span class="pre">409</span></code></p>
+<p>Enum error.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="happypanda.common.exceptions.ParsingError">
+<em class="property">exception </em><code class="descname">ParsingError</code><span class="sig-paren">(</span><em>where</em>, <em>message</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.common.exceptions.ParsingError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#happypanda.common.exceptions.ServerError" title="happypanda.common.exceptions.ServerError"><code class="xref py py-class docutils literal notranslate"><span class="pre">happypanda.common.exceptions.ServerError</span></code></a></p>
+<p><strong>Code</strong>: <code class="docutils literal notranslate"><span class="pre">410</span></code></p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="happypanda.common.exceptions.AuthWrongCredentialsError">
+<em class="property">exception </em><code class="descname">AuthWrongCredentialsError</code><span class="sig-paren">(</span><em>where</em>, <em>msg</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.common.exceptions.AuthWrongCredentialsError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#happypanda.common.exceptions.AuthError" title="happypanda.common.exceptions.AuthError"><code class="xref py py-class docutils literal notranslate"><span class="pre">happypanda.common.exceptions.AuthError</span></code></a></p>
+<p><strong>Code</strong>: <code class="docutils literal notranslate"><span class="pre">411</span></code></p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="happypanda.common.exceptions.AuthMissingCredentials">
+<em class="property">exception </em><code class="descname">AuthMissingCredentials</code><span class="sig-paren">(</span><em>where</em>, <em>msg</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.common.exceptions.AuthMissingCredentials" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#happypanda.common.exceptions.AuthError" title="happypanda.common.exceptions.AuthError"><code class="xref py py-class docutils literal notranslate"><span class="pre">happypanda.common.exceptions.AuthError</span></code></a></p>
+<p><strong>Code</strong>: <code class="docutils literal notranslate"><span class="pre">412</span></code></p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="happypanda.common.exceptions.ClientError">
+<em class="property">exception </em><code class="descname">ClientError</code><span class="sig-paren">(</span><em>name</em>, <em>msg</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.common.exceptions.ClientError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#happypanda.common.exceptions.ServerError" title="happypanda.common.exceptions.ServerError"><code class="xref py py-class docutils literal notranslate"><span class="pre">happypanda.common.exceptions.ServerError</span></code></a></p>
+<p><strong>Code</strong>: <code class="docutils literal notranslate"><span class="pre">500</span></code></p>
+<p>Base client exception, all client exceptions will derive from this.</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>Args:</dt>
+<dd>name: name of client
+msg: error message</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="exception">
+<dt id="happypanda.common.exceptions.ServerDisconnectError">
+<em class="property">exception </em><code class="descname">ServerDisconnectError</code><span class="sig-paren">(</span><em>name</em>, <em>msg</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.common.exceptions.ServerDisconnectError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#happypanda.common.exceptions.ClientError" title="happypanda.common.exceptions.ClientError"><code class="xref py py-class docutils literal notranslate"><span class="pre">happypanda.common.exceptions.ClientError</span></code></a></p>
+<p><strong>Code</strong>: <code class="docutils literal notranslate"><span class="pre">501</span></code></p>
+<p>Server disconnected.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="happypanda.common.exceptions.ArchiveError">
+<em class="property">exception </em><code class="descname">ArchiveError</code><span class="sig-paren">(</span><em>msg</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.common.exceptions.ArchiveError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#happypanda.common.exceptions.HappypandaError" title="happypanda.common.exceptions.HappypandaError"><code class="xref py py-class docutils literal notranslate"><span class="pre">happypanda.common.exceptions.HappypandaError</span></code></a></p>
+<p><strong>Code</strong>: <code class="docutils literal notranslate"><span class="pre">600</span></code></p>
+<p>Base archive exception, all archive exceptions will derive from this</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="happypanda.common.exceptions.ArchiveCreateError">
+<em class="property">exception </em><code class="descname">ArchiveCreateError</code><span class="sig-paren">(</span><em>filepath</em>, <em>error</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.common.exceptions.ArchiveCreateError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#happypanda.common.exceptions.ArchiveError" title="happypanda.common.exceptions.ArchiveError"><code class="xref py py-class docutils literal notranslate"><span class="pre">happypanda.common.exceptions.ArchiveError</span></code></a></p>
+<p><strong>Code</strong>: <code class="docutils literal notranslate"><span class="pre">601</span></code></p>
+<p>Could not create archive object</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="happypanda.common.exceptions.ArchiveCorruptError">
+<em class="property">exception </em><code class="descname">ArchiveCorruptError</code><span class="sig-paren">(</span><em>filepath</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.common.exceptions.ArchiveCorruptError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#happypanda.common.exceptions.ArchiveError" title="happypanda.common.exceptions.ArchiveError"><code class="xref py py-class docutils literal notranslate"><span class="pre">happypanda.common.exceptions.ArchiveError</span></code></a></p>
+<p><strong>Code</strong>: <code class="docutils literal notranslate"><span class="pre">602</span></code></p>
+<p>Bad file found in archive</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="happypanda.common.exceptions.ArchiveFileNotFoundError">
+<em class="property">exception </em><code class="descname">ArchiveFileNotFoundError</code><span class="sig-paren">(</span><em>f</em>, <em>archive_f</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.common.exceptions.ArchiveFileNotFoundError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#happypanda.common.exceptions.ArchiveError" title="happypanda.common.exceptions.ArchiveError"><code class="xref py py-class docutils literal notranslate"><span class="pre">happypanda.common.exceptions.ArchiveError</span></code></a></p>
+<p><strong>Code</strong>: <code class="docutils literal notranslate"><span class="pre">603</span></code></p>
+<p>File not found in archive</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="happypanda.common.exceptions.ArchiveUnsupportedError">
+<em class="property">exception </em><code class="descname">ArchiveUnsupportedError</code><span class="sig-paren">(</span><em>f</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.common.exceptions.ArchiveUnsupportedError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#happypanda.common.exceptions.ArchiveError" title="happypanda.common.exceptions.ArchiveError"><code class="xref py py-class docutils literal notranslate"><span class="pre">happypanda.common.exceptions.ArchiveError</span></code></a></p>
+<p><strong>Code</strong>: <code class="docutils literal notranslate"><span class="pre">604</span></code></p>
+<p>Unsupported archive</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="happypanda.common.exceptions.ArchiveExtractError">
+<em class="property">exception </em><code class="descname">ArchiveExtractError</code><span class="sig-paren">(</span><em>msg</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.common.exceptions.ArchiveExtractError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#happypanda.common.exceptions.ArchiveError" title="happypanda.common.exceptions.ArchiveError"><code class="xref py py-class docutils literal notranslate"><span class="pre">happypanda.common.exceptions.ArchiveError</span></code></a></p>
+<p><strong>Code</strong>: <code class="docutils literal notranslate"><span class="pre">605</span></code></p>
+<p>Archive extraction error</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="happypanda.common.exceptions.ArchiveExistError">
+<em class="property">exception </em><code class="descname">ArchiveExistError</code><span class="sig-paren">(</span><em>f</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.common.exceptions.ArchiveExistError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#happypanda.common.exceptions.ArchiveError" title="happypanda.common.exceptions.ArchiveError"><code class="xref py py-class docutils literal notranslate"><span class="pre">happypanda.common.exceptions.ArchiveError</span></code></a></p>
+<p><strong>Code</strong>: <code class="docutils literal notranslate"><span class="pre">606</span></code></p>
+<p>Archive does not exist error</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="happypanda.common.exceptions.NotAnArchiveError">
+<em class="property">exception </em><code class="descname">NotAnArchiveError</code><span class="sig-paren">(</span><em>f</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.common.exceptions.NotAnArchiveError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#happypanda.common.exceptions.ArchiveError" title="happypanda.common.exceptions.ArchiveError"><code class="xref py py-class docutils literal notranslate"><span class="pre">happypanda.common.exceptions.ArchiveError</span></code></a></p>
+<p><strong>Code</strong>: <code class="docutils literal notranslate"><span class="pre">607</span></code></p>
+<p>Not an archive</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="happypanda.common.exceptions.NetworkError">
+<em class="property">exception </em><code class="descname">NetworkError</code><span class="sig-paren">(</span><em>message</em>, <em>properties=None</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.common.exceptions.NetworkError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#happypanda.common.exceptions.CoreError" title="happypanda.common.exceptions.CoreError"><code class="xref py py-class docutils literal notranslate"><span class="pre">happypanda.common.exceptions.CoreError</span></code></a></p>
+<p><strong>Code</strong>: <code class="docutils literal notranslate"><span class="pre">700</span></code></p>
+<p>Base network exception, all network exceptions will derive from this</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="happypanda.common.exceptions.JSONParseError">
+<em class="property">exception </em><code class="descname">JSONParseError</code><span class="sig-paren">(</span><em>json_data</em>, <em>name</em>, <em>msg</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.common.exceptions.JSONParseError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#happypanda.common.exceptions.ServerError" title="happypanda.common.exceptions.ServerError"><code class="xref py py-class docutils literal notranslate"><span class="pre">happypanda.common.exceptions.ServerError</span></code></a></p>
+<p><strong>Code</strong>: <code class="docutils literal notranslate"><span class="pre">900</span></code></p>
+<p>JSON parse error.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="guidelines">
+<h2>Guidelines<a class="headerlink" href="#guidelines" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="database">
-<h2>Database<a class="headerlink" href="#database" title="Permalink to this headline">¶</a></h2>
+<h3>Database<a class="headerlink" href="#database" title="Permalink to this headline">¶</a></h3>
 <div class="section" id="hierarchy">
-<h3>Hierarchy<a class="headerlink" href="#hierarchy" title="Permalink to this headline">¶</a></h3>
+<h4>Hierarchy<a class="headerlink" href="#hierarchy" title="Permalink to this headline">¶</a></h4>
 <p><strong>Collection</strong> -&gt; <strong>Grouping</strong> -&gt; <strong>Gallery</strong> -&gt; <strong>Page</strong></p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
@@ -196,14 +548,14 @@ but it is sometimes helpful to think of it as such.</p>
 </div>
 </div>
 <div class="section" id="recommended-usage">
-<h3>Recommended Usage<a class="headerlink" href="#recommended-usage" title="Permalink to this headline">¶</a></h3>
+<h4>Recommended Usage<a class="headerlink" href="#recommended-usage" title="Permalink to this headline">¶</a></h4>
 <div class="section" id="collection">
-<h4>Collection<a class="headerlink" href="#collection" title="Permalink to this headline">¶</a></h4>
+<h5>Collection<a class="headerlink" href="#collection" title="Permalink to this headline">¶</a></h5>
 <p>Conventions (e.g. <code class="docutils literal notranslate"><span class="pre">C90</span></code>), magazine volumes (e.g. <code class="docutils literal notranslate"><span class="pre">Girls</span> <span class="pre">forM</span> <span class="pre">vol.14</span></code>),
 tankōbon’s or a compilation of related/personal galleries</p>
 </div>
 <div class="section" id="grouping">
-<h4>Grouping<a class="headerlink" href="#grouping" title="Permalink to this headline">¶</a></h4>
+<h5>Grouping<a class="headerlink" href="#grouping" title="Permalink to this headline">¶</a></h5>
 <p>Think of this as a namespace for related galleries. It is ideal for grouping
 multi-work galleries, so you use this as the series name. Since tankōbon’s also sometimes feature
 a complete series, you can use this for that too. It is not recommended to put tankōbon in both
@@ -211,7 +563,7 @@ a complete series, you can use this for that too. It is not recommended to put t
 <strong>Gallery</strong>’s <code class="docutils literal notranslate"><span class="pre">number</span></code> field is used in the context of a <strong>Grouping</strong>.</p>
 </div>
 <div class="section" id="galleryfilter">
-<h4>GalleryFilter<a class="headerlink" href="#galleryfilter" title="Permalink to this headline">¶</a></h4>
+<h5>GalleryFilter<a class="headerlink" href="#galleryfilter" title="Permalink to this headline">¶</a></h5>
 <p>Think of this as those <em>smart-playlists</em> in music applications. It’s a compilation of galleries put
 together by the user either manually or through automatic search filtering. If you’ve used the old
 Happypanda then you should already be familiar with this. In old HP they were called gallery lists.
@@ -219,14 +571,14 @@ Recommended usage is “anything”. It could range from your favorite fetishes 
 search filter you’re tired of always typing in.</p>
 </div>
 <div class="section" id="gallery">
-<h4>Gallery<a class="headerlink" href="#gallery" title="Permalink to this headline">¶</a></h4>
+<h5>Gallery<a class="headerlink" href="#gallery" title="Permalink to this headline">¶</a></h5>
 <p>A single chapter, then you group these chapters under a <strong>Grouping</strong> to form a complete series.</p>
 </div>
 </div>
 <div class="section" id="special-notes">
-<h3>Special Notes<a class="headerlink" href="#special-notes" title="Permalink to this headline">¶</a></h3>
+<h4>Special Notes<a class="headerlink" href="#special-notes" title="Permalink to this headline">¶</a></h4>
 <div class="section" id="id1">
-<h4>Gallery<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h4>
+<h5>Gallery<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h5>
 <ul class="simple">
 <li>A <strong>Gallery</strong> can have multiple <strong>Title</strong>, <strong>Artist</strong> and <strong>Parody</strong></li>
 <li>A <strong>Gallery</strong> can be in multiple <strong>Collection</strong> and <strong>GalleryFilter</strong></li>
@@ -235,16 +587,16 @@ search filter you’re tired of always typing in.</p>
 </ul>
 </div>
 <div class="section" id="tags">
-<h4>Tags<a class="headerlink" href="#tags" title="Permalink to this headline">¶</a></h4>
+<h5>Tags<a class="headerlink" href="#tags" title="Permalink to this headline">¶</a></h5>
 <p><strong>Gallery</strong> and <strong>Page</strong> are the only taggable items.
 <strong>Collection</strong> and <strong>Grouping</strong> are <em>not</em> taggable, but they can display, and are searchable through tags of their children <strong>Gallery</strong>.</p>
 <div class="section" id="alias">
-<h5>Alias<a class="headerlink" href="#alias" title="Permalink to this headline">¶</a></h5>
+<h6>Alias<a class="headerlink" href="#alias" title="Permalink to this headline">¶</a></h6>
 <blockquote>
 <div>…</div></blockquote>
 </div>
 <div class="section" id="parent">
-<h5>Parent<a class="headerlink" href="#parent" title="Permalink to this headline">¶</a></h5>
+<h6>Parent<a class="headerlink" href="#parent" title="Permalink to this headline">¶</a></h6>
 <blockquote>
 <div>…</div></blockquote>
 <div class="admonition note">
@@ -256,59 +608,6 @@ search filter you’re tired of always typing in.</p>
 </div>
 </div>
 </div>
-<div class="section" id="asynchronous-commands">
-<h2>Asynchronous Commands<a class="headerlink" href="#asynchronous-commands" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
-<dt id="happypanda.core.command.CommandState">
-<em class="property">class </em><code class="descname">CommandState</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/happypanda/core/command.html#CommandState"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#happypanda.core.command.CommandState" title="Permalink to this definition">¶</a></dt>
-<dd><p>An enumeration.</p>
-<dl class="attribute">
-<dt id="happypanda.core.command.CommandState.failed">
-<code class="descname">failed</code><em class="property"> = 6</em><a class="headerlink" href="#happypanda.core.command.CommandState.failed" title="Permalink to this definition">¶</a></dt>
-<dd><p>command has finished with an error</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="happypanda.core.command.CommandState.finished">
-<code class="descname">finished</code><em class="property"> = 4</em><a class="headerlink" href="#happypanda.core.command.CommandState.finished" title="Permalink to this definition">¶</a></dt>
-<dd><p>command has finished succesfully</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="happypanda.core.command.CommandState.in_queue">
-<code class="descname">in_queue</code><em class="property"> = 2</em><a class="headerlink" href="#happypanda.core.command.CommandState.in_queue" title="Permalink to this definition">¶</a></dt>
-<dd><p>command has been scheduled to start</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="happypanda.core.command.CommandState.in_service">
-<code class="descname">in_service</code><em class="property"> = 1</em><a class="headerlink" href="#happypanda.core.command.CommandState.in_service" title="Permalink to this definition">¶</a></dt>
-<dd><p>command has been put in a service (but not started or stopped yet)</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="happypanda.core.command.CommandState.out_of_service">
-<code class="descname">out_of_service</code><em class="property"> = 0</em><a class="headerlink" href="#happypanda.core.command.CommandState.out_of_service" title="Permalink to this definition">¶</a></dt>
-<dd><p>command has not been put in any service yet</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="happypanda.core.command.CommandState.started">
-<code class="descname">started</code><em class="property"> = 3</em><a class="headerlink" href="#happypanda.core.command.CommandState.started" title="Permalink to this definition">¶</a></dt>
-<dd><p>command has been started</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="happypanda.core.command.CommandState.stopped">
-<code class="descname">stopped</code><em class="property"> = 5</em><a class="headerlink" href="#happypanda.core.command.CommandState.stopped" title="Permalink to this definition">¶</a></dt>
-<dd><p>command has been forcefully stopped without finishing</p>
-</dd></dl>
-
-</dd></dl>
-
-</div>
-<div class="section" id="exceptions">
-<h2>Exceptions<a class="headerlink" href="#exceptions" title="Permalink to this headline">¶</a></h2>
 </div>
 </div>
 
@@ -326,10 +625,6 @@ search filter you’re tired of always typing in.</p>
       
         <br/>
         
-<div id="sourcelink">
-  <a href="_sources/api_general.rst.txt"
-     rel="nofollow">Source</a>
-</div>
       
     </p>
     <p>

@@ -34,7 +34,6 @@ from happypanda.common import constants
 # ones.
 extensions = ['sphinx.ext.autodoc',
     'sphinx.ext.todo',
-    'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
     'sphinx.ext.autosectionlabel',
     'sphinxcontrib.documentedlist',
@@ -125,7 +124,7 @@ html_static_path = ['_static']
 htmlhelp_basename = 'HappyPandaXdoc'
 
 html_use_smartypants = True
-
+html_show_sourcelink = False
 
 # -- Options for LaTeX output ---------------------------------------------
 
@@ -176,7 +175,4 @@ texinfo_documents = [
      author, 'HappyPandaX', 'One line description of project.',
      'Miscellaneous'),
 ]
-
-
-
 

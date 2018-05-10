@@ -21,10 +21,10 @@ Setting up an environment
 **************************************
 
 
-1. install ``Python 3.5``, ``pip`` and ``nodejs``/``npm`` (if want to work on the webclient) 
+1. install ``Python 3.6``, ``pip`` and ``nodejs``/``npm`` (if want to work on the webclient) 
 
 .. Note::
-    Python 3.5 is the version that HPX is tested and being developed on. It should also work on 3.6 and up but no guarantees.
+    Python 3.5 is the version that HPX is tested and being developed on. It should also work on 3.7 and up but no guarantees.
 
 2. run: ``python3 bootstrap.py --dev install``
 
@@ -46,7 +46,7 @@ Start the server and webclient in development mode: ``python3 bootstrap.py run -
 Code Style
 **************************************
 
-We should all *try* to follow the official style guide `PEP 8 <https://www.python.org/dev/peps/pep-0008/>`_.
+We should all *try* to follow the official style guide :pep:`8`.
 
 Run ``python3 bootstrap.py lint`` (supply the ``-f`` switch to autoformat) when you are ready to make a PR on Github. You're good to go as long as this script returns no errors.
 
@@ -55,13 +55,13 @@ Run ``python3 bootstrap.py lint`` (supply the ``-f`` switch to autoformat) when 
 
 Additonally, you could create a git hook for the pre-push event that'll automatically run ``lint.py`` for you everytime you do a ``git push``.
 
-Create two files named ``pre-push`` and ``pre-push.py`` at ``[HPX location]/.git/hooks`` with these contents::
+Create two files named ``pre-push`` and ``pre-push.py`` at ``[HPX location]/.git/hooks`` with these contents:
 
-``pre-push``:
+``pre-push``::
 
     #!/bin/sh
     
-    # REMEMBER TO UNOMMENT YOUR PLATFORM
+    # REMEMBER TO UNCOMMENT YOUR PLATFORM
 
     # POSIX
     #"env/bin/python.exe" ".git/hooks/pre-push.py"
@@ -69,7 +69,7 @@ Create two files named ``pre-push`` and ``pre-push.py`` at ``[HPX location]/.git
     # WINDOWS
     "env/scripts/python.exe" ".git/hooks/pre-push.py"
 
-``pre-push.py``:
+``pre-push.py``::
 
     #!/usr/bin/python3
     import os

@@ -56,9 +56,8 @@
       role="menu"
       aria-labelledby="dLabelGlobalToc"><ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../install.html">Installing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../install.html#building">Building</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../usage.html">Using HappyPanda X</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../usage.html#securing-happypanda-x">Securing Happypanda X</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../usage.html#securing-happypanda-x">Securing HappyPanda X</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../usage.html#exposing-happypanda-x">Exposing HappyPanda X</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../translation.html">Translations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../settings.html">Settings</a></li>
@@ -165,7 +164,6 @@
 
 <span class="kn">from</span> <span class="nn">happypanda.common</span> <span class="k">import</span> <span class="n">utils</span><span class="p">,</span> <span class="n">exceptions</span>
 <span class="kn">from</span> <span class="nn">happypanda.core</span> <span class="k">import</span> <span class="n">message</span><span class="p">,</span> <span class="n">db</span>
-
 
 <span class="k">class</span> <span class="nc">_APIEnum</span><span class="p">(</span><span class="n">enum</span><span class="o">.</span><span class="n">Enum</span><span class="p">):</span>
     <span class="s2">&quot;A conv. enum class&quot;</span>
@@ -364,6 +362,21 @@
     <span class="n">CheckUpdate</span> <span class="o">=</span> <span class="mi">3</span>
     <span class="c1">#: Updating application</span>
     <span class="n">UpdateApplication</span> <span class="o">=</span> <span class="mi">4</span></div>
+
+<div class="viewcode-block" id="PluginState"><a class="viewcode-back" href="../../../api.html#happypanda.interface.enums.PluginState">[docs]</a><span class="k">class</span> <span class="nc">PluginState</span><span class="p">(</span><span class="n">_APIEnum</span><span class="p">):</span>
+
+    <span class="c1">#: Puporsely disabled</span>
+    <span class="n">Disabled</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="c1">#: Unloaded because of dependencies, etc.</span>
+    <span class="n">Unloaded</span> <span class="o">=</span> <span class="mi">1</span> 
+    <span class="c1">#: Was just registered but not installed</span>
+    <span class="n">Registered</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="c1">#: Allowed to be enabled</span>
+    <span class="n">Installed</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="c1">#: Plugin is loaded and in use</span>
+    <span class="n">Enabled</span> <span class="o">=</span> <span class="mi">4</span>
+    <span class="c1">#: Failed because of error</span>
+    <span class="n">Failed</span> <span class="o">=</span> <span class="mi">5</span></div>
 </pre></div>
 
         </div>

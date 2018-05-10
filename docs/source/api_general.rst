@@ -1,8 +1,20 @@
 ﻿General
-#######################################
+=======================================
+
+
+Exceptions
+----------------------------------------
+
+.. automodule:: happypanda.common.exceptions
+    :members:
+    :show-inheritance:
+    :member-order: bysource
+
+Guidelines
+----------------------------------------
 
 Database
-----------------------------------------
+#######################################
 
 Hierarchy
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -78,7 +90,3 @@ Parent
     *You can right-click on the image and choose "Show image" to view it in its full dimensions*
 
 .. image:: _static/schema.png
-
-Exceptions
-----------------------------------------
-

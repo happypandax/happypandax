@@ -57,9 +57,8 @@
       role="menu"
       aria-labelledby="dLabelGlobalToc"><ul>
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="install.html#building">Building</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Using HappyPanda X</a></li>
-<li class="toctree-l1"><a class="reference internal" href="usage.html#securing-happypanda-x">Securing Happypanda X</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html#securing-happypanda-x">Securing HappyPanda X</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html#exposing-happypanda-x">Exposing HappyPanda X</a></li>
 <li class="toctree-l1"><a class="reference internal" href="translation.html">Translations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="settings.html">Settings</a></li>
@@ -154,10 +153,13 @@
  | <a href="#A"><strong>A</strong></a>
  | <a href="#B"><strong>B</strong></a>
  | <a href="#C"><strong>C</strong></a>
+ | <a href="#D"><strong>D</strong></a>
+ | <a href="#E"><strong>E</strong></a>
  | <a href="#F"><strong>F</strong></a>
  | <a href="#G"><strong>G</strong></a>
  | <a href="#H"><strong>H</strong></a>
  | <a href="#I"><strong>I</strong></a>
+ | <a href="#J"><strong>J</strong></a>
  | <a href="#L"><strong>L</strong></a>
  | <a href="#M"><strong>M</strong></a>
  | <a href="#N"><strong>N</strong></a>
@@ -300,11 +302,39 @@
 <h2 id="A">A</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api.html#happypanda.interface.enums.ItemType.Artist">Artist (ItemType attribute)</a>
+      <li><a href="api_general.html#happypanda.common.exceptions.APIError">APIError</a>
+</li>
+      <li><a href="api_general.html#happypanda.common.exceptions.APIRequirementError">APIRequirementError</a>
+</li>
+      <li><a href="api_general.html#happypanda.common.exceptions.ArchiveCorruptError">ArchiveCorruptError</a>
+</li>
+      <li><a href="api_general.html#happypanda.common.exceptions.ArchiveCreateError">ArchiveCreateError</a>
+</li>
+      <li><a href="api_general.html#happypanda.common.exceptions.ArchiveError">ArchiveError</a>
+</li>
+      <li><a href="api_general.html#happypanda.common.exceptions.ArchiveExistError">ArchiveExistError</a>
+</li>
+      <li><a href="api_general.html#happypanda.common.exceptions.ArchiveExtractError">ArchiveExtractError</a>
+</li>
+      <li><a href="api_general.html#happypanda.common.exceptions.ArchiveFileNotFoundError">ArchiveFileNotFoundError</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api_general.html#happypanda.common.exceptions.ArchiveUnsupportedError">ArchiveUnsupportedError</a>
+</li>
+      <li><a href="api.html#happypanda.interface.enums.ItemType.Artist">Artist (ItemType attribute)</a>
+</li>
       <li><a href="api.html#happypanda.interface.enums.ItemSort.ArtistName">ArtistName (ItemSort attribute)</a>
+</li>
+      <li><a href="api_plugin.html#happypanda.core.plugin_interface.attach">attach() (in module happypanda.core.plugin_interface)</a>
+</li>
+      <li><a href="api_general.html#happypanda.common.exceptions.AuthError">AuthError</a>
+</li>
+      <li><a href="api_general.html#happypanda.common.exceptions.AuthMissingCredentials">AuthMissingCredentials</a>
+</li>
+      <li><a href="api_general.html#happypanda.common.exceptions.AuthRequiredError">AuthRequiredError</a>
+</li>
+      <li><a href="api_general.html#happypanda.common.exceptions.AuthWrongCredentialsError">AuthWrongCredentialsError</a>
 </li>
   </ul></td>
 </tr></table>
@@ -330,6 +360,10 @@
 </li>
       <li><a href="api.html#happypanda.interface.enums.ItemSort.CircleName">CircleName (ItemSort attribute)</a>
 </li>
+      <li><a href="api_general.html#happypanda.common.exceptions.ClientDisconnectError">ClientDisconnectError</a>
+</li>
+      <li><a href="api_general.html#happypanda.common.exceptions.ClientError">ClientError</a>
+</li>
       <li><a href="api.html#happypanda.interface.enums.ItemType.Collection">Collection (ItemType attribute)</a>
 </li>
       <li><a href="api.html#happypanda.interface.enums.ItemSort.CollectionDate">CollectionDate (ItemSort attribute)</a>
@@ -341,6 +375,8 @@
       <li><a href="api.html#happypanda.interface.enums.ItemSort.CollectionPublished">CollectionPublished (ItemSort attribute)</a>
 </li>
       <li><a href="api.html#happypanda.interface.enums.ItemSort.CollectionRandom">CollectionRandom (ItemSort attribute)</a>
+</li>
+      <li><a href="api_plugin.html#happypanda.core.plugin_interface.command">command() (in module happypanda.core.plugin_interface)</a>
 </li>
       <li>
     Command-Line-Arguments command line option
@@ -383,7 +419,45 @@
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api_general.html#happypanda.core.command.CommandState">CommandState (class in happypanda.core.command)</a>
+      <li><a href="api_general.html#happypanda.common.exceptions.CommandAlreadyRunningError">CommandAlreadyRunningError</a>
+</li>
+      <li><a href="api_general.html#happypanda.common.exceptions.CommandError">CommandError</a>
+</li>
+      <li><a href="api.html#happypanda.core.command.CommandState">CommandState (class in happypanda.core.command)</a>
+</li>
+      <li><a href="api_general.html#happypanda.common.exceptions.CoreError">CoreError</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="D">D</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api_general.html#happypanda.common.exceptions.DatabaseError">DatabaseError</a>
+</li>
+      <li><a href="api_general.html#happypanda.common.exceptions.DatabaseInitError">DatabaseInitError</a>
+</li>
+      <li><a href="api_general.html#happypanda.common.exceptions.DatabaseItemNotFoundError">DatabaseItemNotFoundError</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api_general.html#happypanda.common.exceptions.DatabaseVersionError">DatabaseVersionError</a>
+</li>
+      <li><a href="api.html#happypanda.interface.plugin.disable_plugin">disable_plugin() (in module happypanda.interface.plugin)</a>
+</li>
+      <li><a href="api.html#happypanda.interface.enums.PluginState.Disabled">Disabled (PluginState attribute)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="E">E</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#happypanda.interface.enums.PluginState.Enabled">Enabled (PluginState attribute)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api_general.html#happypanda.common.exceptions.EnumError">EnumError</a>
 </li>
   </ul></td>
 </tr></table>
@@ -391,13 +465,15 @@
 <h2 id="F">F</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api_general.html#happypanda.core.command.CommandState.failed">failed (CommandState attribute)</a>
+      <li><a href="api.html#happypanda.core.command.CommandState.failed">failed (CommandState attribute)</a>
+</li>
+      <li><a href="api.html#happypanda.interface.enums.PluginState.Failed">Failed (PluginState attribute)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api.html#happypanda.interface.enums.ViewType.Favorite">Favorite (ViewType attribute)</a>
 </li>
-      <li><a href="api_general.html#happypanda.core.command.CommandState.finished">finished (CommandState attribute)</a>
+      <li><a href="api.html#happypanda.core.command.CommandState.finished">finished (CommandState attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -439,9 +515,15 @@
 </li>
       <li><a href="api.html#happypanda.interface.tag.get_common_tags">get_common_tags() (in module happypanda.interface.tag)</a>
 </li>
+      <li><a href="api_plugin.html#happypanda.core.plugin_interface.get_config">get_config() (in module happypanda.core.plugin_interface)</a>
+
+      <ul>
+        <li><a href="api.html#happypanda.interface.settings.get_config">(in module happypanda.interface.settings)</a>
+</li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api.html#happypanda.interface.settings.get_config">get_config() (in module happypanda.interface.settings)</a>
+      <li><a href="api_plugin.html#happypanda.core.plugin_interface.get_constant">get_constant() (in module happypanda.core.plugin_interface)</a>
 </li>
       <li><a href="api.html#happypanda.interface.database.get_count">get_count() (in module happypanda.interface.database)</a>
 </li>
@@ -453,13 +535,19 @@
 </li>
       <li><a href="api.html#happypanda.interface.meta.get_locales">get_locales() (in module happypanda.interface.meta)</a>
 </li>
+      <li><a href="api_plugin.html#happypanda.core.plugin_interface.get_logger">get_logger() (in module happypanda.core.plugin_interface)</a>
+</li>
       <li><a href="api.html#happypanda.interface.meta.get_notification">get_notification() (in module happypanda.interface.meta)</a>
 </li>
       <li><a href="api.html#happypanda.interface.gallery.get_page">get_page() (in module happypanda.interface.gallery)</a>
 </li>
+      <li><a href="api.html#happypanda.interface.plugin.get_plugin">get_plugin() (in module happypanda.interface.plugin)</a>
+</li>
       <li><a href="api.html#happypanda.interface.database.get_related_count">get_related_count() (in module happypanda.interface.database)</a>
 </li>
       <li><a href="api.html#happypanda.interface.database.get_related_items">get_related_items() (in module happypanda.interface.database)</a>
+</li>
+      <li><a href="api_plugin.html#happypanda.core.plugin_interface.get_setting">get_setting() (in module happypanda.core.plugin_interface)</a>
 </li>
       <li><a href="api.html#happypanda.interface.gallery.get_similar">get_similar() (in module happypanda.interface.gallery)</a>
 </li>
@@ -481,16 +569,20 @@
 <h2 id="H">H</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api_general.html#module-happypanda.common.exceptions">happypanda.common.exceptions (module)</a>
+</li>
+      <li><a href="api_plugin.html#module-happypanda.core.plugin_interface">happypanda.core.plugin_interface (module)</a>
+</li>
       <li><a href="api.html#module-happypanda.interface.database">happypanda.interface.database (module)</a>
 </li>
       <li><a href="api.html#module-happypanda.interface.enums">happypanda.interface.enums (module)</a>
 </li>
       <li><a href="api.html#module-happypanda.interface.gallery">happypanda.interface.gallery (module)</a>
 </li>
-      <li><a href="api.html#module-happypanda.interface.meta">happypanda.interface.meta (module)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#module-happypanda.interface.meta">happypanda.interface.meta (module)</a>
+</li>
       <li><a href="api.html#module-happypanda.interface.plugin">happypanda.interface.plugin (module)</a>
 </li>
       <li><a href="api.html#module-happypanda.interface.settings">happypanda.interface.settings (module)</a>
@@ -498,6 +590,8 @@
       <li><a href="api.html#module-happypanda.interface.tag">happypanda.interface.tag (module)</a>
 </li>
       <li><a href="api.html#module-happypanda.interface.ui">happypanda.interface.ui (module)</a>
+</li>
+      <li><a href="api_general.html#happypanda.common.exceptions.HappypandaError">HappypandaError</a>
 </li>
   </ul></td>
 </tr></table>
@@ -507,17 +601,31 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api.html#happypanda.interface.enums.ImageSize">ImageSize (class in happypanda.interface.enums)</a>
 </li>
-      <li><a href="api_general.html#happypanda.core.command.CommandState.in_queue">in_queue (CommandState attribute)</a>
+      <li><a href="api.html#happypanda.core.command.CommandState.in_queue">in_queue (CommandState attribute)</a>
 </li>
-      <li><a href="api_general.html#happypanda.core.command.CommandState.in_service">in_service (CommandState attribute)</a>
+      <li><a href="api.html#happypanda.core.command.CommandState.in_service">in_service (CommandState attribute)</a>
+</li>
+      <li><a href="api.html#happypanda.interface.enums.ViewType.Inbox">Inbox (ViewType attribute)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api.html#happypanda.interface.enums.ViewType.Inbox">Inbox (ViewType attribute)</a>
+      <li><a href="api.html#happypanda.interface.plugin.install_plugin">install_plugin() (in module happypanda.interface.plugin)</a>
+</li>
+      <li><a href="api.html#happypanda.interface.enums.PluginState.Installed">Installed (PluginState attribute)</a>
+</li>
+      <li><a href="api_general.html#happypanda.common.exceptions.InvalidMessage">InvalidMessage</a>
 </li>
       <li><a href="api.html#happypanda.interface.enums.ItemSort">ItemSort (class in happypanda.interface.enums)</a>
 </li>
       <li><a href="api.html#happypanda.interface.enums.ItemType">ItemType (class in happypanda.interface.enums)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="J">J</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api_general.html#happypanda.common.exceptions.JSONParseError">JSONParseError</a>
 </li>
   </ul></td>
 </tr></table>
@@ -527,11 +635,13 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api.html#happypanda.interface.enums.ItemType.Language">Language (ItemType attribute)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api.html#happypanda.interface.enums.ViewType.Library">Library (ViewType attribute)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api.html#happypanda.interface.ui.library_view">library_view() (in module happypanda.interface.ui)</a>
+</li>
+      <li><a href="api.html#happypanda.interface.plugin.list_plugins">list_plugins() (in module happypanda.interface.plugin)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -549,9 +659,13 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api.html#happypanda.interface.enums.ItemSort.NamespaceTagNamespace">NamespaceTagNamespace (ItemSort attribute)</a>
 </li>
+      <li><a href="api.html#happypanda.interface.enums.ItemSort.NamespaceTagTag">NamespaceTagTag (ItemSort attribute)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api.html#happypanda.interface.enums.ItemSort.NamespaceTagTag">NamespaceTagTag (ItemSort attribute)</a>
+      <li><a href="api_general.html#happypanda.common.exceptions.NetworkError">NetworkError</a>
+</li>
+      <li><a href="api_general.html#happypanda.common.exceptions.NotAnArchiveError">NotAnArchiveError</a>
 </li>
   </ul></td>
 </tr></table>
@@ -565,7 +679,7 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api.html#happypanda.interface.enums.ImageSize.Original">Original (ImageSize attribute)</a>
 </li>
-      <li><a href="api_general.html#happypanda.core.command.CommandState.out_of_service">out_of_service (CommandState attribute)</a>
+      <li><a href="api.html#happypanda.core.command.CommandState.out_of_service">out_of_service (CommandState attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -577,12 +691,39 @@
 </li>
       <li><a href="api.html#happypanda.interface.enums.ItemType.Parody">Parody (ItemType attribute)</a>
 </li>
+      <li><a href="api.html#happypanda.interface.enums.ItemSort.ParodyName">ParodyName (ItemSort attribute)</a>
+</li>
+      <li><a href="api_general.html#happypanda.common.exceptions.ParsingError">ParsingError</a>
+</li>
+      <li><a href="api_general.html#happypanda.common.exceptions.PluginAttributeError">PluginAttributeError</a>
+</li>
+      <li><a href="api_general.html#happypanda.common.exceptions.PluginCommandError">PluginCommandError</a>
+</li>
+      <li><a href="api_general.html#happypanda.common.exceptions.PluginError">PluginError</a>
+</li>
+      <li><a href="api_general.html#happypanda.common.exceptions.PluginHandlerError">PluginHandlerError</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api.html#happypanda.interface.enums.ItemSort.ParodyName">ParodyName (ItemSort attribute)</a>
+      <li><a href="api_general.html#happypanda.common.exceptions.PluginInitError">PluginInitError</a>
+</li>
+      <li><a href="api_general.html#happypanda.common.exceptions.PluginLoadError">PluginLoadError</a>
+</li>
+      <li><a href="api_general.html#happypanda.common.exceptions.PluginMethodError">PluginMethodError</a>
+</li>
+      <li><a href="api_general.html#happypanda.common.exceptions.PluginSignatureError">PluginSignatureError</a>
+</li>
+      <li><a href="api.html#happypanda.interface.enums.PluginState">PluginState (class in happypanda.interface.enums)</a>
 </li>
       <li><a href="api.html#happypanda.interface.enums.ProgressType">ProgressType (class in happypanda.interface.enums)</a>
 </li>
+      <li>
+    Python Enhancement Proposals
+
+      <ul>
+        <li><a href="env.html#index-0">PEP 8</a>
+</li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -590,6 +731,8 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api.html#happypanda.interface.enums.ViewType.ReadLater">ReadLater (ViewType attribute)</a>
+</li>
+      <li><a href="api.html#happypanda.interface.enums.PluginState.Registered">Registered (PluginState attribute)</a>
 </li>
       <li><a href="api.html#happypanda.interface.meta.reply_notification">reply_notification() (in module happypanda.interface.meta)</a>
 </li>
@@ -607,22 +750,34 @@
 <h2 id="S">S</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api.html#happypanda.interface.settings.save_config">save_config() (in module happypanda.interface.settings)</a>
+      <li><a href="api_plugin.html#happypanda.core.plugin_interface.save_config">save_config() (in module happypanda.core.plugin_interface)</a>
+
+      <ul>
+        <li><a href="api.html#happypanda.interface.settings.save_config">(in module happypanda.interface.settings)</a>
 </li>
+      </ul></li>
       <li><a href="api.html#happypanda.interface.database.search_item">search_item() (in module happypanda.interface.database)</a>
 </li>
       <li><a href="api.html#happypanda.interface.tag.search_tags">search_tags() (in module happypanda.interface.tag)</a>
 </li>
       <li><a href="api.html#happypanda.interface.enums.ServerCommand">ServerCommand (class in happypanda.interface.enums)</a>
 </li>
+      <li><a href="api_general.html#happypanda.common.exceptions.ServerDisconnectError">ServerDisconnectError</a>
+</li>
+      <li><a href="api_general.html#happypanda.common.exceptions.ServerError">ServerError</a>
+</li>
       <li><a href="api.html#happypanda.interface.enums.ServerCommand.ServerQuit">ServerQuit (ServerCommand attribute)</a>
 </li>
       <li><a href="api.html#happypanda.interface.enums.ServerCommand.ServerRestart">ServerRestart (ServerCommand attribute)</a>
 </li>
-      <li><a href="api.html#happypanda.interface.settings.set_config">set_config() (in module happypanda.interface.settings)</a>
+      <li><a href="api_general.html#happypanda.common.exceptions.SessionExpiredError">SessionExpiredError</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#happypanda.interface.settings.set_config">set_config() (in module happypanda.interface.settings)</a>
+</li>
+      <li><a href="api_general.html#happypanda.common.exceptions.SettingsError">SettingsError</a>
+</li>
       <li><a href="api.html#happypanda.interface.meta.shutdown_application">shutdown_application() (in module happypanda.interface.meta)</a>
 </li>
       <li><a href="api.html#happypanda.interface.enums.ImageSize.Small">Small (ImageSize attribute)</a>
@@ -631,13 +786,15 @@
 </li>
       <li><a href="api.html#happypanda.interface.meta.start_command">start_command() (in module happypanda.interface.meta)</a>
 </li>
-      <li><a href="api_general.html#happypanda.core.command.CommandState.started">started (CommandState attribute)</a>
+      <li><a href="api.html#happypanda.core.command.CommandState.started">started (CommandState attribute)</a>
 </li>
       <li><a href="api.html#happypanda.interface.enums.ItemType.Status">Status (ItemType attribute)</a>
 </li>
       <li><a href="api.html#happypanda.interface.meta.stop_command">stop_command() (in module happypanda.interface.meta)</a>
 </li>
-      <li><a href="api_general.html#happypanda.core.command.CommandState.stopped">stopped (CommandState attribute)</a>
+      <li><a href="api.html#happypanda.core.command.CommandState.stopped">stopped (CommandState attribute)</a>
+</li>
+      <li><a href="api_plugin.html#happypanda.core.plugin_interface.subscribe">subscribe() (in module happypanda.core.plugin_interface)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -661,10 +818,12 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api.html#happypanda.interface.enums.ProgressType.Unknown">Unknown (ProgressType attribute)</a>
 </li>
-      <li><a href="api.html#happypanda.interface.meta.update_application">update_application() (in module happypanda.interface.meta)</a>
+      <li><a href="api.html#happypanda.interface.enums.PluginState.Unloaded">Unloaded (PluginState attribute)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#happypanda.interface.meta.update_application">update_application() (in module happypanda.interface.meta)</a>
+</li>
       <li><a href="api.html#happypanda.interface.enums.ProgressType.UpdateApplication">UpdateApplication (ProgressType attribute)</a>
 </li>
       <li><a href="api.html#happypanda.interface.enums.ItemType.Url">Url (ItemType attribute)</a>

@@ -56,9 +56,8 @@
       role="menu"
       aria-labelledby="dLabelGlobalToc"><ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../install.html">Installing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../install.html#building">Building</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../usage.html">Using HappyPanda X</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../usage.html#securing-happypanda-x">Securing Happypanda X</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../usage.html#securing-happypanda-x">Securing HappyPanda X</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../usage.html#exposing-happypanda-x">Exposing HappyPanda X</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../translation.html">Translations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../settings.html">Settings</a></li>
@@ -161,22 +160,24 @@
 <span class="kn">from</span> <span class="nn">treelib</span> <span class="k">import</span> <span class="n">Tree</span><span class="p">,</span> <span class="n">exceptions</span> <span class="k">as</span> <span class="n">tree_exceptions</span>
 
 <span class="kn">from</span> <span class="nn">happypanda.common</span> <span class="k">import</span> <span class="n">utils</span><span class="p">,</span> <span class="n">hlogger</span><span class="p">,</span> <span class="n">exceptions</span><span class="p">,</span> <span class="n">constants</span>
-<span class="kn">from</span> <span class="nn">happypanda.core</span> <span class="k">import</span> <span class="n">plugins</span><span class="p">,</span> <span class="k">async</span><span class="p">,</span> <span class="n">db</span>
+<span class="kn">from</span> <span class="nn">happypanda.core</span> <span class="k">import</span> <span class="n">plugins</span><span class="p">,</span> <span class="n">async_utils</span><span class="p">,</span> <span class="n">db</span>
 
-<span class="n">log</span> <span class="o">=</span> <span class="n">hlogger</span><span class="o">.</span><span class="n">Logger</span><span class="p">(</span><span class="n">constants</span><span class="o">.</span><span class="n">log_ns_core</span> <span class="o">+</span> <span class="vm">__name__</span><span class="p">)</span>
+<span class="n">log</span> <span class="o">=</span> <span class="n">hlogger</span><span class="o">.</span><span class="n">Logger</span><span class="p">(</span><span class="n">constants</span><span class="o">.</span><span class="n">log_ns_command</span> <span class="o">+</span> <span class="vm">__name__</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">get_available_commands</span><span class="p">():</span>
     <span class="n">subs</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">all_subclasses</span><span class="p">(</span><span class="n">Command</span><span class="p">)</span>
-    <span class="n">commands</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">commands</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;entry&#39;</span><span class="p">:</span><span class="nb">set</span><span class="p">(),</span> <span class="s1">&#39;event&#39;</span><span class="p">:</span><span class="nb">set</span><span class="p">()}</span>
     <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">subs</span><span class="p">:</span>
         <span class="n">c</span><span class="o">.</span><span class="n">_get_commands</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">_entries</span><span class="p">:</span>
-            <span class="n">commands</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">+</span> <span class="s1">&#39;.&#39;</span> <span class="o">+</span> <span class="n">c</span><span class="o">.</span><span class="n">_entries</span><span class="p">[</span><span class="n">a</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="n">commands</span><span class="p">[</span><span class="s1">&#39;entry&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">+</span> <span class="s1">&#39;.&#39;</span> <span class="o">+</span> <span class="n">c</span><span class="o">.</span><span class="n">_entries</span><span class="p">[</span><span class="n">a</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">_events</span><span class="p">:</span>
+            <span class="n">commands</span><span class="p">[</span><span class="s1">&#39;event&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">+</span> <span class="s1">&#39;.&#39;</span> <span class="o">+</span> <span class="n">c</span><span class="o">.</span><span class="n">_events</span><span class="p">[</span><span class="n">a</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">commands</span>
 
 
-<div class="viewcode-block" id="CommandState"><a class="viewcode-back" href="../../../api_general.html#happypanda.core.command.CommandState">[docs]</a><span class="k">class</span> <span class="nc">CommandState</span><span class="p">(</span><span class="n">enum</span><span class="o">.</span><span class="n">Enum</span><span class="p">):</span>
+<div class="viewcode-block" id="CommandState"><a class="viewcode-back" href="../../../api.html#happypanda.core.command.CommandState">[docs]</a><span class="k">class</span> <span class="nc">CommandState</span><span class="p">(</span><span class="n">enum</span><span class="o">.</span><span class="n">Enum</span><span class="p">):</span>
 
     <span class="c1">#: command has not been put in any service yet</span>
     <span class="n">out_of_service</span> <span class="o">=</span> <span class="mi">0</span>
@@ -211,12 +212,13 @@
     <span class="n">frame</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">_getframe</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">wrapper</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">d</span><span class="p">(</span><span class="s2">&quot;Running&quot;</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="s2">&quot;in native thread&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">utils</span><span class="o">.</span><span class="n">get_context</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">g</span> <span class="o">=</span> <span class="n">gevent</span><span class="o">.</span><span class="n">getcurrent</span><span class="p">()</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">g</span><span class="o">.</span><span class="n">_hp_inherit</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">frame</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
-                <span class="k">async</span><span class="o">.</span><span class="n">Greenlet</span><span class="o">.</span><span class="n">_hp_inherit</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">frame</span><span class="p">)</span>
+                <span class="n">async_utils</span><span class="o">.</span><span class="n">Greenlet</span><span class="o">.</span><span class="n">_hp_inherit</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">frame</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">cleanup_wrapper</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">wrapper</span>
 
@@ -390,7 +392,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">set_progress</span><span class="p">(</span><span class="n">max_progress</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">run_native</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="n">f</span> <span class="o">=</span> <span class="k">async</span><span class="o">.</span><span class="n">AsyncFuture</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_native_pool</span><span class="o">.</span><span class="n">apply_async</span><span class="p">(</span><span class="n">_native_runner</span><span class="p">(</span><span class="n">f</span><span class="p">),</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">))</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">async_utils</span><span class="o">.</span><span class="n">AsyncFuture</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_native_pool</span><span class="o">.</span><span class="n">apply_async</span><span class="p">(</span><span class="n">_native_runner</span><span class="p">(</span><span class="n">f</span><span class="p">),</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_futures</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">f</span>
 
@@ -449,6 +451,7 @@
     <span class="k">def</span> <span class="nf">_main_wrap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">utils</span><span class="o">.</span><span class="n">switch</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_priority</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_started_time</span> <span class="o">=</span> <span class="n">arrow</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">d</span><span class="p">(</span><span class="s2">&quot;Calling main function of command:&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
         <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_main</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_progress_max</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">set_progress</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_progress_max</span><span class="p">)</span>
@@ -557,12 +560,15 @@
         <span class="s2">&quot;Returns Class.command name&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">command_cls</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">+</span> <span class="s1">&#39;.&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
 
-    <span class="k">def</span> <span class="nf">invoke_on_plugins</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">invoke_on_plugins</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">command_type</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="s2">&quot;Invoke all plugins&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_check_types</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">plugins</span><span class="o">.</span><span class="n">registered</span><span class="o">.</span><span class="n">call_command</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">qualifiedname</span><span class="p">(),</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-
+        <span class="k">if</span> <span class="n">command_type</span> <span class="o">==</span> <span class="s1">&#39;entry&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">constants</span><span class="o">.</span><span class="n">plugin_manager</span><span class="o">.</span><span class="n">_call_command_entry</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">qualifiedname</span><span class="p">(),</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">command_type</span> <span class="o">==</span> <span class="s1">&#39;event&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">constants</span><span class="o">.</span><span class="n">plugin_manager</span><span class="o">.</span><span class="n">_call_command_event</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">qualifiedname</span><span class="p">(),</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">_ensure_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">type1</span><span class="p">,</span> <span class="n">type2</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">isclass</span><span class="p">(</span><span class="n">type1</span><span class="p">):</span>
             <span class="k">return</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">type1</span><span class="p">,</span> <span class="n">type2</span><span class="p">)</span>
@@ -609,7 +615,7 @@
 
     <span class="k">def</span> <span class="nf">emit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="s2">&quot;emit this event with *args and **kwargs&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">invoke_on_plugins</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">invoke_on_plugins</span><span class="p">(</span><span class="s2">&quot;event&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_handlers</span><span class="p">:</span>
             <span class="n">h</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
@@ -652,7 +658,8 @@
     <span class="nd">@contextmanager</span>
     <span class="k">def</span> <span class="nf">call_capture</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">token</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="s2">&quot;Calls associated handlers with a capture token&quot;</span>
-        <span class="n">handler</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">invoke_on_plugins</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">d</span><span class="p">(</span><span class="s2">&quot;Calling command handler &lt;</span><span class="si">{}</span><span class="s2">&gt; [</span><span class="si">{}</span><span class="s2">]&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qualifiedname</span><span class="p">(),</span> <span class="n">token</span><span class="p">))</span>
+        <span class="n">handler</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">invoke_on_plugins</span><span class="p">(</span><span class="s2">&quot;entry&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">handler</span><span class="o">.</span><span class="n">default_handler</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_handler</span>
         <span class="n">handler</span><span class="o">.</span><span class="n">expected_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">return_type</span>
         <span class="n">handler</span><span class="o">.</span><span class="n">capture</span> <span class="o">=</span> <span class="kc">True</span>
@@ -664,7 +671,8 @@
     <span class="nd">@contextmanager</span>
     <span class="k">def</span> <span class="nf">call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="s2">&quot;Calls associated handlers&quot;</span>
-        <span class="n">handler</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">invoke_on_plugins</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">d</span><span class="p">(</span><span class="s2">&quot;Calling command handler &lt;</span><span class="si">{}</span><span class="s2">&gt;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qualifiedname</span><span class="p">()))</span>
+        <span class="n">handler</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">invoke_on_plugins</span><span class="p">(</span><span class="s2">&quot;entry&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">handler</span><span class="o">.</span><span class="n">default_handler</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_handler</span>
         <span class="n">handler</span><span class="o">.</span><span class="n">expected_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">return_type</span>
         <span class="k">yield</span> <span class="n">handler</span>

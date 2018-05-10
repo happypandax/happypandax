@@ -20,17 +20,5 @@ If you're using the installer, this setup file will automatically be run for you
     HPX requires sufficient permissions to read and write from it's own folder to be able to run properly. This is required for the auto-update process to work.
     On Windows it means you shouldn't install HPX somewhere like ``C:\Program Files (x86)``. If you still choose to do so just remember to run HPX as admin.
 
-Building
-#######################################
 
-1. install ``Python 3.5`` and ``pip`` (and ``git`` if you haven't already)
-
-.. Note::
-    Python 3.5 is the version that HPX is tested and being developed on. It should also work on 3.6 and up but no guarantees.
-
-2. run: ``python3 bootstrap.py``
-
-.. Warning::
-    Windows users: If you get ``error: command '..\cl.exe' failed with exit status 2``, download ``bitarray`` from `here <http://www.lfd.uci.edu/%7Egohlke/pythonlibs/#bitarray>`_
-
-    Install like this: ``.\env\Scripts\pip3.exe install bitarray.whl``
+If you wish to develop directly on HPX please head to :ref:`Setting up an environment`.

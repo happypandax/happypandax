@@ -35,9 +35,9 @@ Most of these settings can also be configured from a HPX client.
 Starting
 -------------------------------------
 
-You can start up HPX in two ways with the executables named ``happypandax`` and ``happypandax_gui``.
+You can start up HPX in two ways with the executables named :program:`happypandax` and :program:`happypandax_gui`.
 
-The ``happypandax_gui`` executable is mostly just a GUI wrapper around ``happypandax`` to provide a user-friendly way of starting HPX.
+The :program:`happypandax_gui` executable is mostly just a GUI wrapper around :program:`happypandax` to provide a user-friendly way of starting HPX.
 
 Before starting, you can also see the available command-line arguments by supplying the ``--help`` argument to the ``happypandax`` executable on the cmd/terminal: ``./happypandax --help``.
 You could also refer to :ref:`Command-Line Arguments`. 
@@ -56,7 +56,7 @@ See available arguments by supplying the ``--help`` argument to the executable: 
 
 Convert your HP database like this: ``./HPtoHPX "path/to/old/file.db" "data/happypanda.db"``
 
-Alternatively, you can also use the GUI wrapper ``happypandax_gui`` which provides a user-friendly way of doing it.
+Alternatively, you can also use the GUI wrapper :program:`happypandax_gui` which provides a user-friendly way of doing it.
 
 Using
 -------------------------------------

@@ -4,6 +4,11 @@ Server API
 .. automodule:: happypanda.interface.enums
    :members:
 
+**Asynchronous command states**:
+
+.. autoclass:: happypanda.core.command.CommandState
+   :members:
+
 Functions
 ----------------------------------------
 
