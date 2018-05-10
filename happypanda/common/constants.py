@@ -145,7 +145,7 @@ translations = None  # dict of available translation files
 plugin_interface_name = "__hpx__"
 plugin_manager = None
 available_commands = {'event': set(), 'entry': set()}
-plugin_shortname_length = 10
+plugin_shortname_length = 20
 
 # DATABASE
 db_engine = None

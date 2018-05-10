@@ -87,7 +87,7 @@ def command(f: typing.Callable=None, command_name: str=None):
 
 def attach(f: typing.Callable=None, command: str=None):
     """
-    Attach to a command
+    Attach to a command entry
 
     Args:
         f: command handler

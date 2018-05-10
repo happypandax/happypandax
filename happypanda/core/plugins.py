@@ -168,6 +168,8 @@ def _plugin_load(plugin_manager, manifest, path, logger=None):
                     pname,
                     "Failed to decode manifest file: {}".format(e.args[0]))
             if err: raise err
+        if not isinstance(manifest, dict):
+            raise exceptions.PluginLoadError(pname, "Expected a JSON mapping object")
         pentry = manifest.get("entry")
         if pentry:
             if not os.path.exists(os.path.join(path, pentry)):
@@ -189,7 +191,7 @@ def plugin_loader(plugin_manager, path):
 
     """
     assert isinstance(plugin_manager, PluginManager)
-    log.i('Loading plugins from path:', path)
+    log.i('Loading plugins from path:', path, stdout=True)
     plugindirs = list(os.scandir(path))
     log.i("Loading", len(plugindirs), "plugins", stdout=True)
     for pdir in plugindirs:
