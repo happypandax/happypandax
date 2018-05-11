@@ -1473,7 +1473,7 @@ Image content is base64 encoded.</p>
 <h3>Plugin<a class="headerlink" href="#plugin" title="Permalink to this headline">¶</a></h3>
 <dl class="function">
 <dt id="happypanda.interface.plugin.disable_plugin">
-<code class="descname">disable_plugin</code><span class="sig-paren">(</span><em>plugin_id</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.interface.plugin.disable_plugin" title="Permalink to this definition">¶</a></dt>
+<code class="descname">disable_plugin</code><span class="sig-paren">(</span><em>plugin_id=''</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.interface.plugin.disable_plugin" title="Permalink to this definition">¶</a></dt>
 <dd><p>Disable a plugin</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -1489,7 +1489,7 @@ Image content is base64 encoded.</p>
 
 <dl class="function">
 <dt id="happypanda.interface.plugin.get_plugin">
-<code class="descname">get_plugin</code><span class="sig-paren">(</span><em>plugin_id</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.interface.plugin.get_plugin" title="Permalink to this definition">¶</a></dt>
+<code class="descname">get_plugin</code><span class="sig-paren">(</span><em>plugin_id=''</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.interface.plugin.get_plugin" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get information for a specific plugin</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -1509,7 +1509,7 @@ Image content is base64 encoded.</p>
 
 <dl class="function">
 <dt id="happypanda.interface.plugin.install_plugin">
-<code class="descname">install_plugin</code><span class="sig-paren">(</span><em>plugin_id</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.interface.plugin.install_plugin" title="Permalink to this definition">¶</a></dt>
+<code class="descname">install_plugin</code><span class="sig-paren">(</span><em>plugin_id=''</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.interface.plugin.install_plugin" title="Permalink to this definition">¶</a></dt>
 <dd><p>Install a plugin</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -1538,6 +1538,22 @@ Image content is base64 encoded.</p>
 </pre></div>
 </div>
 </td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="happypanda.interface.plugin.remove_plugin">
+<code class="descname">remove_plugin</code><span class="sig-paren">(</span><em>plugin_id=''</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.interface.plugin.remove_plugin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove a plugin</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>plugin_id</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – UUID4 of plugin</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">status</td>
 </tr>
 </tbody>
 </table>
@@ -1625,7 +1641,7 @@ These configuration keys will appear in the server’s <code class="docutils lit
     </p>
     <p>
         &copy; Copyright Twiddly.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.2.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.4.<br/>
     </p>
   </div>
 </footer>

@@ -155,20 +155,10 @@
 <li><a class="reference internal" href="#guidelines">Guidelines</a><ul>
 <li><a class="reference internal" href="#database">Database</a><ul>
 <li><a class="reference internal" href="#hierarchy">Hierarchy</a></li>
-<li><a class="reference internal" href="#recommended-usage">Recommended Usage</a><ul>
-<li><a class="reference internal" href="#collection">Collection</a></li>
-<li><a class="reference internal" href="#grouping">Grouping</a></li>
-<li><a class="reference internal" href="#galleryfilter">GalleryFilter</a></li>
-<li><a class="reference internal" href="#gallery">Gallery</a></li>
-</ul>
-</li>
+<li><a class="reference internal" href="#recommended-usage">Recommended Usage</a></li>
 <li><a class="reference internal" href="#special-notes">Special Notes</a><ul>
-<li><a class="reference internal" href="#id1">Gallery</a></li>
-<li><a class="reference internal" href="#tags">Tags</a><ul>
 <li><a class="reference internal" href="#alias">Alias</a></li>
 <li><a class="reference internal" href="#parent">Parent</a></li>
-</ul>
-</li>
 </ul>
 </li>
 </ul>
@@ -187,7 +177,6 @@
 <h1>General<a class="headerlink" href="#general" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="module-happypanda.common.exceptions">
 <span id="exceptions"></span><h2>Exceptions<a class="headerlink" href="#module-happypanda.common.exceptions" title="Permalink to this headline">¶</a></h2>
-<p>exceptions module.</p>
 <dl class="exception">
 <dt id="happypanda.common.exceptions.HappypandaError">
 <em class="property">exception </em><code class="descname">HappypandaError</code><span class="sig-paren">(</span><em>msg</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.common.exceptions.HappypandaError" title="Permalink to this definition">¶</a></dt>
@@ -549,54 +538,65 @@ but it is sometimes helpful to think of it as such.</p>
 </div>
 <div class="section" id="recommended-usage">
 <h4>Recommended Usage<a class="headerlink" href="#recommended-usage" title="Permalink to this headline">¶</a></h4>
-<div class="section" id="collection">
-<h5>Collection<a class="headerlink" href="#collection" title="Permalink to this headline">¶</a></h5>
-<p>Conventions (e.g. <code class="docutils literal notranslate"><span class="pre">C90</span></code>), magazine volumes (e.g. <code class="docutils literal notranslate"><span class="pre">Girls</span> <span class="pre">forM</span> <span class="pre">vol.14</span></code>),
+<ul>
+<li><p class="first"><strong>Collection</strong></p>
+<blockquote>
+<div><p>Conventions (e.g. <code class="docutils literal notranslate"><span class="pre">C90</span></code>), magazine volumes (e.g. <code class="docutils literal notranslate"><span class="pre">Girls</span> <span class="pre">forM</span> <span class="pre">vol.14</span></code>),
 tankōbon’s or a compilation of related/personal galleries</p>
-</div>
-<div class="section" id="grouping">
-<h5>Grouping<a class="headerlink" href="#grouping" title="Permalink to this headline">¶</a></h5>
-<p>Think of this as a namespace for related galleries. It is ideal for grouping
+</div></blockquote>
+</li>
+<li><p class="first"><strong>Grouping</strong></p>
+<blockquote>
+<div><p>Think of this as a namespace for related galleries. It is ideal for grouping
 multi-work galleries, so you use this as the series name. Since tankōbon’s also sometimes feature
 a complete series, you can use this for that too. It is not recommended to put tankōbon in both
 <strong>Collection</strong> and here. Choose one and stick to it to avoid confusion.
 <strong>Gallery</strong>’s <code class="docutils literal notranslate"><span class="pre">number</span></code> field is used in the context of a <strong>Grouping</strong>.</p>
-</div>
-<div class="section" id="galleryfilter">
-<h5>GalleryFilter<a class="headerlink" href="#galleryfilter" title="Permalink to this headline">¶</a></h5>
-<p>Think of this as those <em>smart-playlists</em> in music applications. It’s a compilation of galleries put
+</div></blockquote>
+</li>
+<li><p class="first"><strong>GalleryFilter</strong></p>
+<blockquote>
+<div><p>Think of this as those <em>smart-playlists</em> in music applications. It’s a compilation of galleries put
 together by the user either manually or through automatic search filtering. If you’ve used the old
 Happypanda then you should already be familiar with this. In old HP they were called gallery lists.
 Recommended usage is “anything”. It could range from your favorite fetishes to a shortcut for a
 search filter you’re tired of always typing in.</p>
-</div>
-<div class="section" id="gallery">
-<h5>Gallery<a class="headerlink" href="#gallery" title="Permalink to this headline">¶</a></h5>
-<p>A single chapter, then you group these chapters under a <strong>Grouping</strong> to form a complete series.</p>
-</div>
+</div></blockquote>
+</li>
+<li><p class="first"><strong>Gallery</strong></p>
+<blockquote>
+<div><p>A single chapter, then you group these chapters under a <strong>Grouping</strong> to form a complete series.</p>
+</div></blockquote>
+</li>
+</ul>
 </div>
 <div class="section" id="special-notes">
 <h4>Special Notes<a class="headerlink" href="#special-notes" title="Permalink to this headline">¶</a></h4>
-<div class="section" id="id1">
-<h5>Gallery<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h5>
-<ul class="simple">
+<ul>
+<li><p class="first"><strong>Gallery</strong></p>
+<blockquote>
+<div><ul class="simple">
 <li>A <strong>Gallery</strong> can have multiple <strong>Title</strong>, <strong>Artist</strong> and <strong>Parody</strong></li>
 <li>A <strong>Gallery</strong> can be in multiple <strong>Collection</strong> and <strong>GalleryFilter</strong></li>
 <li>A <strong>Gallery</strong> can only be in <strong>one</strong> <strong>Grouping</strong></li>
 <li>A <strong>Gallery</strong> will <em>always</em> be in a <strong>Grouping</strong></li>
 </ul>
-</div>
-<div class="section" id="tags">
-<h5>Tags<a class="headerlink" href="#tags" title="Permalink to this headline">¶</a></h5>
-<p><strong>Gallery</strong> and <strong>Page</strong> are the only taggable items.
+</div></blockquote>
+</li>
+<li><p class="first"><strong>Tags</strong></p>
+<blockquote>
+<div><p><strong>Gallery</strong> and <strong>Page</strong> are the only taggable items.
 <strong>Collection</strong> and <strong>Grouping</strong> are <em>not</em> taggable, but they can display, and are searchable through tags of their children <strong>Gallery</strong>.</p>
+</div></blockquote>
+</li>
+</ul>
 <div class="section" id="alias">
-<h6>Alias<a class="headerlink" href="#alias" title="Permalink to this headline">¶</a></h6>
+<h5>Alias<a class="headerlink" href="#alias" title="Permalink to this headline">¶</a></h5>
 <blockquote>
 <div>…</div></blockquote>
 </div>
 <div class="section" id="parent">
-<h6>Parent<a class="headerlink" href="#parent" title="Permalink to this headline">¶</a></h6>
+<h5>Parent<a class="headerlink" href="#parent" title="Permalink to this headline">¶</a></h5>
 <blockquote>
 <div>…</div></blockquote>
 <div class="admonition note">
@@ -604,7 +604,6 @@ search filter you’re tired of always typing in.</p>
 <p class="last"><em>You can right-click on the image and choose “Show image” to view it in its full dimensions</em></p>
 </div>
 <img alt="_images/schema.png" src="_images/schema.png" />
-</div>
 </div>
 </div>
 </div>
@@ -629,7 +628,7 @@ search filter you’re tired of always typing in.</p>
     </p>
     <p>
         &copy; Copyright Twiddly.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.2.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.4.<br/>
     </p>
   </div>
 </footer>

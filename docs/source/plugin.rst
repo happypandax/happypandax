@@ -44,7 +44,7 @@ Plug-ins are contained in their own folder, so we start by creating one for our 
     -/..
     -MyPlugin/
 
-In this folder a manifest file named `hplugin.json` (case sensitive) is required::
+In this folder a manifest file named ``hplugin.json`` (case sensitive) is required::
 
     -/..
     -MyPlugin/
@@ -61,7 +61,7 @@ A manifest file is a file describing a plug-in. Inside ``hplugin.json`` is::
         "version": "1.0.2b",
         "description": "A hpx plugin",
         "test": "test.py",
-        "website": "twiddly.moe",
+        "website": "www.twiddly.moe",
         "require": [
             "happypandax >= 0.0.0"
         ]
@@ -69,7 +69,7 @@ A manifest file is a file describing a plug-in. Inside ``hplugin.json`` is::
 
 * ``id``: A UUID4 string. Unique across all plug-ins. This attribute is required to be present.
 * ``entry``: Path to the entry python file. Path is relative to this folder and must exist. This attribute is required to be present.
-* ``shortname``: Your plug-in name is short form. Must be all lowercase and cannot exceed ``20`` characters nor contain any whitespace. This attribute is required to be present.
+* ``shortname``: Your plug-in name in short form. Must be all lowercase and cannot exceed ``20`` characters nor contain any whitespace. This attribute is required to be present.
 * ``name``: Name of your plug-in. This attribute is required to be present.
 * ``author``: Name of plug-in author. This attribute is required to be present.
 * ``version``: A string of the version of your plug-in. Must conform :pep:`440`. This attribute is required to be present.
@@ -81,11 +81,11 @@ A manifest file is a file describing a plug-in. Inside ``hplugin.json`` is::
 * ``description``: A description of your plug-in. This attribute is required to be present.
 * ``test``: Path to the entry file for tests. Path is relative to this folder and must exist. This attribute is optional.
 * ``website``: A url to a website for the plug-in, author, etc. This attribute is optional.
-* ``require``: A list of strings defining dependencies. This attribute is optional.
+* ``require``: A list of strings defining other plug-ins as dependencies. This attribute is optional.
 
     A requirement must conform :pep:`508` with a few exceptions.
 
-    Other plug-ins can referred by their id or shortname.
+    Other plug-ins can be referred by their id or shortname.
 
     Examples of requirements that conforms :pep:`508`::
 
@@ -96,14 +96,14 @@ A manifest file is a file describing a plug-in. Inside ``hplugin.json`` is::
         "otherplugin >= 3.6,<2",
         "otherplugin >= 3; os_name=='posix'"
 
-    Notice the marker ``os_name=='posix'`` in the last example. In addition to the default markers, HPX defines ``happyandax`` or ``hpx`` to check against the running HPX version.
+    Notice the marker ``os_name=='posix'`` in the last example. In addition to the default markers defined in :pep:`508`, HPX defines ``happypandax`` or ``hpx`` to check against the running HPX version.
     Markers can also be used freely like so::
 
         "happypandax >= 1.5.3",
         "platform_system == 'Windows'",
         "otherplugin < 2; platform_system=='Windows'", # only required on windows
         "otherplugin > 2; platform_system=='Linux'", # only required on linux
-        "otherplugin == 2; happypandax==1.2"
+        "otherplugin == 2; happypandax==1.2" # only required on hpx version 1.2
 
 After creating and defining a manifest file our final plug-in folder looks like this::
 
@@ -125,9 +125,24 @@ After placing it in one of the locations, HPX should detect it and register it a
 Writing a plugin
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Now that we've defined our plug-in, we can now write the code for out plug-in.
+Now that we've defined our plug-in, we can now write the code for our plug-in.
 
+Please note that no code will be run *before* the plug-in has been installed. A registered plug-in is not the same as an installed plug-in.
 
+Interfacing with HPX
+****************************************
+
+Logging
+****************************************
+
+Errors
+****************************************
+
+Debugging
+****************************************
+
+About thread safety
+****************************************
 
 Available packages
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
