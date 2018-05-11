@@ -111,6 +111,20 @@ class ProgressType:
     #: Updating application
     UpdateApplication = 4
 
+class PluginState:
+
+    #: Puporsely disabled
+    Disabled = 0
+    #: Unloaded because of dependencies, etc.
+    Unloaded = 1 
+    #: Was just registered but not installed
+    Registered = 2
+    #: Allowed to be enabled
+    Installed = 3
+    #: Plugin is loaded and in use
+    Enabled = 4
+    #: Failed because of error
+    Failed = 5
 
 class PushID():
     Update = 1

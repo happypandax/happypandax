@@ -328,7 +328,18 @@ def pref_advanced(props):
                              onChange=lambda e: props.upd("core.unrar_tool_path", e.target.value)
                              ))
                          )
-
+    if state.debug:
+        items.append(e(ui.Form.Field,
+                e(ui.Checkbox,
+                    toggle=True,
+                    label=tr(
+                        props.tab,
+                        "ui.t-ping-for-notifications",
+                        "Ping for notifications"),
+                    defaultChecked=utils.storage.get("ping_for_notifications", True),
+                    onChange=lambda e, d: utils.storage.set("ping_for_notifications", d.checked),
+                    ))
+                )
     return e(ui.Segment,
              e(ui.Form,
                *items

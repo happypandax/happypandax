@@ -645,7 +645,7 @@ class PluginManager:
                     for n in node.dependencies:
                         if n.state == enums.PluginState.Registered:
                             if auto_install:
-                                self.install_plugin(n, node)
+                                self.install_plugin(n, node, wake_up=False)
                             else:
                                 node.unload("Required plugin '{}' has not been installed".format(n.info.shortname))
                     if node.state != enums.PluginState.Unloaded:
@@ -697,7 +697,7 @@ class PluginManager:
         self._node_registry[pluginid] = node
         self._node_registry.setdefault(node.info.shortname)
         if config.auto_install_plugin.value:
-            self.install_plugin(node)
+            self.install_plugin(node, wake_up=False)
         return node
 
     def wake_up(self):
@@ -730,7 +730,7 @@ class PluginManager:
                     if node in self._commands[n][cmd]:
                         self._commands[n][cmd].remove(node)
 
-    def install_plugin(self, node_or_id, by_node=None):
+    def install_plugin(self, node_or_id, by_node=None, wake_up=True):
         node = self.get_node(node_or_id)
         if by_node is not None:
             log.d("Installing plugin -", node.format(), "by", by_node.format())
@@ -739,6 +739,9 @@ class PluginManager:
             log.d("Installing plugin -", node.format(), )
             node.logger.info("Installing plugin")
         node.state = enums.PluginState.Installed
+        if wake_up:
+            self.wake_up()
+
 
     def remove_plugin(self, node_or_id):
         "Remove plugin and its dependents"
@@ -834,6 +837,7 @@ class PluginIsolate:
         self.node = node
         path = os.path.abspath(node.info.path)
         self.working_dir = working_dir if working_dir else path
+        self._ori_working_dir = os.getcwd()
         self.paths = [path]
         if do_eggs:
             self.paths.extend(glob.glob(os.path.join(path, '*.egg')))
@@ -908,6 +912,7 @@ class PluginIsolate:
         self._sys_path = sys.path[:]
         self._clean_sys_path(sys.path)
 
+        self._ori_working_dir = os.getcwd()
         os.chdir(self.working_dir)
 
         return self
@@ -928,7 +933,7 @@ class PluginIsolate:
         sys.path.clear()
         sys.path.extend(self._sys_path)
 
-        os.chdir(self.working_dir)
+        os.chdir(self._ori_working_dir)
         log.d("Exiting isolation mode for plugin", self.node.format())
 
 def strongly_connected_components(graph):

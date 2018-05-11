@@ -146,7 +146,7 @@ def server_notifications(data=js_undefined, error=None):
     elif error:
         this.notif("Failed to retrieve server notification", level="warning")
     else:
-        if state['active'] and state['connected'] and state['accepted']:
+        if state['active'] and state['connected'] and state['accepted'] and utils.storage.get("ping_for_notifications", True):
             pushclient.call_func("get_notification", this.server_notifications)
 
 

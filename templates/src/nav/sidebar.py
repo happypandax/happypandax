@@ -71,7 +71,8 @@ def sidebar_nav_render():
                           modal=[
                               e(ui.Modal.Content,
                                 e(ui.Header, icon="info", content=tr(this, "ui.mi-about", "About")),
-                                e(about.AboutTab))
+                                e(about.AboutTab),
+                                )
                           ],
                           icon="info", position="right", handler=this.props["toggler"])
     items.append(about_item)

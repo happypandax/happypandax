@@ -25,7 +25,7 @@ def list_plugins(state: enums.PluginState=None):
         l.append(message.Plugin(n))
     return l
 
-def get_plugin(plugin_id: str):
+def get_plugin(plugin_id: str=""):
     """
     Get information for a specific plugin
 
@@ -41,7 +41,7 @@ def get_plugin(plugin_id: str):
     return message.Plugin(constants.plugin_manager.get_node(plugin_id))
 
 
-def install_plugin(plugin_id: str):
+def install_plugin(plugin_id: str=""):
     """
     Install a plugin
 
@@ -53,7 +53,7 @@ def install_plugin(plugin_id: str):
     """
     constants.plugin_manager.install_plugin(plugin_id)
 
-def disable_plugin(plugin_id: str):
+def disable_plugin(plugin_id: str=""):
     """
     Disable a plugin
 
@@ -63,5 +63,18 @@ def disable_plugin(plugin_id: str):
     Returns:
         status
     """
+    constants.plugin_manager.disable_plugin(plugin_id)
+
+def remove_plugin(plugin_id: str=""):
+    """
+    Remove a plugin
+
+    Args:
+        plugin_id: UUID4 of plugin
+
+    Returns:
+        status
+    """
+    raise NotImplementedError
     constants.plugin_manager.disable_plugin(plugin_id)
 
