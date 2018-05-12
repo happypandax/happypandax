@@ -3,9 +3,9 @@ Contributing
 
 There are numerous of ways to contribute to HPX.
 
-- You can create a plugin for HPX, see how to here.
-- You can create a frontend in your favorite language, see how to here.
-- You can help with misc. things like *helping answering issues on Github*, *fixing my spelling mistakes*, etc. 
+- You can create a plugin for HPX, see how to :ref:`here <Plugins>`.
+- You can create a frontend in your favorite language, see how to :ref:`here <Creating frontends>`.
+- You can help with misc. things like *helping answering issues on Github*, *fixing spelling mistakes*, etc. 
 
 If you want to start contributing to the HPX core parts, you will need to set up the right
 environment and follow some simple guidelines. I appreciate any help.
@@ -24,7 +24,7 @@ Setting up an environment
 1. install ``Python 3.6``, ``pip`` and ``nodejs``/``npm`` (if want to work on the webclient) 
 
 .. Note::
-    Python 3.5 is the version that HPX is tested and being developed on. It should also work on 3.7 and up but no guarantees.
+    Python 3.6 is the version that HPX is tested and being developed on. It should also work on 3.7 and up but no guarantees.
 
 2. run: ``python3 bootstrap.py --dev install``
 

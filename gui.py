@@ -231,6 +231,7 @@ class ConvertHP(QDialog):
 
         dev_box = QCheckBox(self)
         dev_box.stateChanged.connect(self.on_dev)
+        dev_box.setChecked(constants.dev_db)
         lf.addRow(t("gui.t-dev-mode", default="Dev Mode") + ':', dev_box)
 
         lf.addRow(t("gui.t-command", default="Command") + ':', self._args_label)

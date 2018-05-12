@@ -120,7 +120,13 @@ through the setting ``plugin.plugin_dir``.
 .. note::
     On a MacOS HPX installation, the root HPX folder is inside the bundle at ``HappyPanda X.app/Contents/MacOS/``.
 
-After placing it in one of the locations, HPX should detect it and register it automatically either on startup or while running.
+After placing it in one of the locations, HPX should detect it and try to register it automatically either on startup or while running.
+You can see if the plugin has been registered successfully if it appears on the plugin listing in a HPX client or if HPX doesn't print any warnings.
+
+.. tip::
+
+    It is recommended that you run HPX with the ``--debug`` and ``--dev`` commandline switches so that you can see what's going when creating and writing a plug-in.
+    See :ref:`Command-Line Arguments`.
 
 Writing a plugin
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

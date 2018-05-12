@@ -144,13 +144,16 @@ def get_argparser():
                         help='Start without plugins')
 
     parser.add_argument('-x', '--dev', action='store_true',
-                        help='Start in development mode')
+                        help='Start in development mode (redirects logging to stdout)')
+
+    parser.add_argument('--dev-db', action='store_true',
+                        help='Create and use a development database')
 
     parser.add_argument('--only-web', action='store_true',
                         help='Start only the webserver (useful for debugging)')
 
     parser.add_argument('--momo', nargs=argparse.REMAINDER,
-                        help='Reserved (Momo best girl)')
+                        help='Reserved for best girl Momo')
 
     return parser
 
@@ -160,6 +163,7 @@ def parse_options(args):
     assert isinstance(args, argparse.Namespace)
 
     constants.dev = args.dev
+    constants.dev_db = args.dev_db
 
     cfg = config.config
 

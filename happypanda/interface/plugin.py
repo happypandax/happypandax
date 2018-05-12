@@ -40,6 +40,38 @@ def get_plugin(plugin_id: str=""):
     """
     return message.Plugin(constants.plugin_manager.get_node(plugin_id))
 
+def get_plugin_config(plugin_id: str=""):
+    """
+    Get configuration for a specific plugin
+
+    Args:
+        plugin_id: UUID4 of plugin
+
+    Returns:
+        .. code-block:: guess
+
+            {
+            }
+    """
+    raise NotImplementedError
+    return message.Plugin(constants.plugin_manager.get_node(plugin_id))
+
+def set_plugin_config(plugin_id: str=""):
+    """
+    Set configuration for a specific plugin
+
+    Args:
+        plugin_id: UUID4 of plugin
+
+    Returns:
+        .. code-block:: guess
+
+            {
+            }
+    """
+    raise NotImplementedError
+    return message.Plugin(constants.plugin_manager.get_node(plugin_id))
+
 
 def install_plugin(plugin_id: str=""):
     """
