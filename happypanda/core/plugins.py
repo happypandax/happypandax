@@ -860,9 +860,8 @@ class PluginIsolate:
         if self.base_sys_modules is None:
             PluginIsolate.base_sys_modules = sys.modules.copy()
             for k in tuple(PluginIsolate.base_sys_modules):
-                if k in sys.builtin_module_names:
-                    continue
-                del PluginIsolate.base_sys_modules[k]
+                if k.startswith('happypanda'):
+                    del PluginIsolate.base_sys_modules[k]
 
         plug_interface = None
         o_plug_interface = plugin_interface
