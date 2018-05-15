@@ -370,6 +370,7 @@ def deploy(args, unknown=None):
             _update_pip(args)
         from PyInstaller.__main__ import run as prun
 
+    import happypanda.core.command
     from happypanda.common import constants
     from happypanda.core import updater
 

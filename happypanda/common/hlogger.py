@@ -225,7 +225,7 @@ class Logger:
                     break
                 Logger(record.name).handle(record)
             except (KeyboardInterrupt, SystemExit):
-                raise
+                pass
             except BaseException:
                 traceback.print_exc(file=sys.stderr)
         shutdown()
