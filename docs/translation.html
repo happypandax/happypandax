@@ -163,16 +163,16 @@
             
   <div class="section" id="translations">
 <h1>Translations<a class="headerlink" href="#translations" title="Permalink to this headline">¶</a></h1>
-<p>HPX can be translated and localized to your language.</p>
+<p>It is possible to translate and localize HPX into your language.</p>
 <p>Existing translations can be found at <code class="docutils literal notranslate"><span class="pre">[HPX]/translations</span></code>.
 These translation files are named like so: <code class="docutils literal notranslate"><span class="pre">&lt;language_code&gt;.&lt;namespace&gt;.yaml</span></code> in all lower-case.</p>
-<p>In these translation files, translations are distinguished by <em>translation ids</em>:</p>
+<p>In these translation files, translations are distinguished by <strong>translation ids</strong>:</p>
 <div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>translation-id: translated text
 translation-id-2: translated text 2
 ...
 </pre></div>
 </div>
-<p>It is required that a language namespace named <code class="docutils literal notranslate"><span class="pre">general</span></code> exists with this <em>translation id</em> for every translation language:</p>
+<p>It is required that for every language, a namespace called <code class="docutils literal notranslate"><span class="pre">general</span></code> exists with this <strong>translation id</strong>:</p>
 <div class="highlight-guess notranslate"><div class="highlight"><pre><span></span><span class="n">locale</span><span class="o">:</span> <span class="n">LanguageName</span> <span class="o">(</span><span class="n">Country</span><span class="o">)</span>
 </pre></div>
 </div>
@@ -187,7 +187,7 @@ also the one being kept up to date the most and fastest.</p>
 When you’re done translating, you update the <code class="docutils literal notranslate"><span class="pre">_version_</span></code> in your translation files to match the ones you were translating from.
 This way you’’ know that your translation files are out of date when these <code class="docutils literal notranslate"><span class="pre">_version_</span></code>’s differ.</p>
 <p>You can (and should!) submit your translation files to the main repo. Just create a pull request and it’ll be merged and usable by everyone in future releases!</p>
-<p>If you’re going to translate the <code class="docutils literal notranslate"><span class="pre">ui</span></code> namespace, do note the prefixes on the <em>language ids</em> and their meaning:</p>
+<p>If you’re going to translate the <code class="docutils literal notranslate"><span class="pre">ui</span></code> namespace, do note the prefixes on the <strong>language ids</strong> and their meaning:</p>
 <div class="highlight-guess notranslate"><div class="highlight"><pre><span></span>#  Prefixes:
 #   - mi == menu item text
 #   - h == header text
@@ -196,18 +196,18 @@ This way you’’ know that your translation files are out of date when these <
 #   - b == button text
 </pre></div>
 </div>
-<p>I’m probably going to create a tool (or you can too) for helping translating later if I have time.</p>
+<p>I might create a tool (or you can too) for helping translating later if I have time.</p>
 </div>
 <div class="section" id="developer-s-perspective">
 <h2>Developer’s perspective<a class="headerlink" href="#developer-s-perspective" title="Permalink to this headline">¶</a></h2>
-<p>Developers can choose to create their own language namespace for their own clients if they desire.
+<p>Developers can choose to create their own language namespace for their own client applications if they desire.
 This language namespace can also be included in future HPX releases. Just create a pull request.</p>
-<p>Say I made an app client for HPX. For this app I could create language files with the namespace <code class="docutils literal notranslate"><span class="pre">myapp</span></code> and include them in HPX.
+<p>Say I made an app client for HPX named <code class="docutils literal notranslate"><span class="pre">myapp</span></code>. For this app I could create language files with the namespace <code class="docutils literal notranslate"><span class="pre">myapp</span></code> and include them in HPX.
 Others can then come edit or create their own translations for my app in the same manner as they would for HPX.</p>
 <p>Translations are used like this <code class="docutils literal notranslate"><span class="pre">&lt;namespace&gt;.&lt;translation_id&gt;</span></code>.
-For example: <code class="docutils literal notranslate"><span class="pre">&quot;general.locale&quot;</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">English</span> <span class="pre">(United</span> <span class="pre">States)</span></code>.</p>
-<p>If you’re building a client, you can access these translations through the server API functions <a class="reference internal" href="api.html#happypanda.interface.ui.translate" title="happypanda.interface.ui.translate"><code class="xref py py-func docutils literal notranslate"><span class="pre">ui.translate()</span></code></a> and <a class="reference internal" href="api.html#happypanda.interface.meta.get_locales" title="happypanda.interface.meta.get_locales"><code class="xref py py-func docutils literal notranslate"><span class="pre">meta.get_locales()</span></code></a>.</p>
-<p>Keep in mind that the locale settings for HPX are <em>client-scoped</em>, meaning that you can change the locale settings freely without interfering with other client’s locale settings.</p>
+For example: <code class="docutils literal notranslate"><span class="pre">&quot;general.locale&quot;</span></code> resolves to <code class="docutils literal notranslate"><span class="pre">English</span> <span class="pre">(United</span> <span class="pre">States)</span></code>.</p>
+<p>If you’re building a client, you can access these translations through the server API functions <a class="reference internal" href="api.html#happypanda.interface.ui.translate" title="happypanda.interface.ui.translate"><code class="xref py py-func docutils literal notranslate"><span class="pre">ui.translate()</span></code></a> and <code class="xref py py-func docutils literal notranslate"><span class="pre">meta.get_locales()</span></code>.</p>
+<p>Keep in mind that the locale settings for HPX are <em>client-scoped</em>, meaning that you can change the locale settings from a client freely without interfering with other client’s locale settings.</p>
 <div class="admonition-todo admonition" id="index-0">
 <p class="first admonition-title">Todo</p>
 <p class="last">accessing through plugins</p>

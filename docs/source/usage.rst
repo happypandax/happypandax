@@ -82,6 +82,8 @@ you disable this user. Disable it with the setting ``server.disable_default_user
 
 Additionally, you may also want to disallow people accessing the server without logging in with the settings ``server.allow_guests`` and ``server.require_auth``.
 
+To create and delete users, see the command-line args ``--create-user``, ``--delete-user`` and ``--list-users``.
+
 TLS/SSL Support
 -------------------------------------
 
@@ -107,18 +109,44 @@ ahead and allow the connection by adding an exception.
 Exposing HappyPanda X
 ========================================
 
-To allow HPX to be accessed from your phone or other devices, you'll need to expose the server(s) to the private or public (internet) networks
-
-.. todo::
-    expose HPX
+To allow HPX to be accessed from your phone or other devices, you'll need to expose the server(s) so it can be connected to from outside your computer.
 
 Private network
 -------------------------------------
 
-Doing this will allow for you to access HPX from *any device connected to your home network*
+Exposing HPX to your private network will allow *any device connected to your home network* to access HPX.
+This means that you can enjoy your collection on HPX not only from your computer but also from your tablet, phone, etc. as long as they are connected to your home network
+either through Wi-Fi or LAN.
+
+When starting HPX, set the two settings ``server.host`` and ``server.host_web`` to ``0.0.0.0``. This means that the server should listen on all interfaces.
+We can also set the ports with the settings ``server.port`` and ``server.port_web``, but we'll leave them to their default values.
+
+The next step is to allow connections on the chosen ports through your firewall.
+
+Windows
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+1. Press ``Win + R`` type ```firewall.cpl`` in the dialogbox and press enter.
+2. On the lefthand side click on the text that says something along *Allow a program to pass through firewall*.
+3. Click on the *Change settings* button on the top and check if ``HappyPanda X`` is on the list. If not then click on the button *Allow another program* below.
+4. If ``HappyPanda X`` is not on the list then add either ``happypandax.exe`` or ``happypandax_gui`` (depending on which you use) or both to the list.
+5. Make sure the checkbox on the right is checked. Which one to check depends on your network configuration but you can just check both if you're not sure.
+
+Mac
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Please use google
+
+Linux
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Please use google
 
 Public network
 -------------------------------------
 
-Doing this will allow for you to access HPX from *any device connected to the internet*
+Exposing HPX to the public network will allow you to access HPX from *any device connected to the internet*.
 
+.. todo::
+
+    expose HPX

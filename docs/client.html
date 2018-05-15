@@ -328,7 +328,7 @@ This message should thus always be consumed when connecting with additional sock
 </div>
 <div class="section" id="calling-a-function">
 <h2>Calling a function<a class="headerlink" href="#calling-a-function" title="Permalink to this headline">¶</a></h2>
-<p>Now that you’ve perfomed a successful handshake, you can start using the <a class="reference internal" href="api.html#module-happypanda.interface.enums"><span class="std std-ref">Server API</span></a>.</p>
+<p>Now that you’ve perfomed a successful handshake, you can start using the <a class="reference internal" href="api.html#server-api"><span class="std std-ref">Server API</span></a>.</p>
 <p>A <em>function-call</em> object in its simplest looks like this:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
     <span class="s2">&quot;fname&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span>
@@ -370,7 +370,7 @@ This message should thus always be consumed when connecting with additional sock
 <span class="p">]</span>
 </pre></div>
 </div>
-<p>In case of errors raised by the function, the <em>function-data</em> gains an <code class="docutils literal notranslate"><span class="pre">error</span></code> key. See <a class="reference internal" href="plugin.html#errors"><span class="std std-ref">Errors</span></a>.</p>
+<p>In case of errors raised by the function, the <em>function-data</em> gains an <code class="docutils literal notranslate"><span class="pre">error</span></code> key. See <a class="reference internal" href="#errors"><span class="std std-ref">Errors</span></a>.</p>
 <p>If you’re unsure on what data a function will return, see <a class="reference internal" href="#playing-with-the-api"><span class="std std-ref">Playing with the API</span></a></p>
 <div class="admonition-todo admonition" id="index-2">
 <p class="first admonition-title">Todo</p>
@@ -409,7 +409,7 @@ the <code class="docutils literal notranslate"><span class="pre">error</span></c
 </div>
 <div class="section" id="server-commands">
 <h2>Server commands<a class="headerlink" href="#server-commands" title="Permalink to this headline">¶</a></h2>
-<p>The server implements server commands to control the server remotely: <a class="reference internal" href="api.html#happypanda.interface.enums.ServerCommand" title="happypanda.interface.enums.ServerCommand"><code class="xref py py-class docutils literal notranslate"><span class="pre">ServerCommand</span></code></a></p>
+<p>The server implements server commands to control the server remotely: <a class="reference internal" href="api_general.html#happypanda.interface.enums.ServerCommand" title="happypanda.interface.enums.ServerCommand"><code class="xref py py-class docutils literal notranslate"><span class="pre">ServerCommand</span></code></a></p>
 <p>Server commands are invoked like this (this is the whole payload):</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
     <span class="s2">&quot;session&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
@@ -418,7 +418,7 @@ the <code class="docutils literal notranslate"><span class="pre">error</span></c
 <span class="p">}</span>
 </pre></div>
 </div>
-<p>For example, if we want to shut down the server we use the <a class="reference internal" href="api.html#happypanda.interface.enums.ServerCommand.ServerQuit" title="happypanda.interface.enums.ServerCommand.ServerQuit"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ServerCommand.ServerQuit</span></code></a> command:</p>
+<p>For example, if we want to shut down the server we use the <a class="reference internal" href="api_general.html#happypanda.interface.enums.ServerCommand.ServerQuit" title="happypanda.interface.enums.ServerCommand.ServerQuit"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ServerCommand.ServerQuit</span></code></a> command:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
     <span class="s2">&quot;session&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
     <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;clientname&quot;</span><span class="p">,</span>

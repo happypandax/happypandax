@@ -151,6 +151,11 @@
       <div class="col-md-3">
         <div id="sidebar" class="bs-sidenav" role="complementary"><ul>
 <li><a class="reference internal" href="#">General</a><ul>
+<li><a class="reference internal" href="#enums">Enums</a><ul>
+<li><a class="reference internal" href="#plugin">Plugin</a></li>
+<li><a class="reference internal" href="#client">Client</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#module-happypanda.common.exceptions">Exceptions</a></li>
 <li><a class="reference internal" href="#guidelines">Guidelines</a><ul>
 <li><a class="reference internal" href="#database">Database</a><ul>
@@ -173,8 +178,448 @@
       </div>
         <div class="col-md-9 content">
             
-  <div class="section" id="general">
-<h1>General<a class="headerlink" href="#general" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="module-happypanda.interface.enums">
+<span id="general"></span><h1>General<a class="headerlink" href="#module-happypanda.interface.enums" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="enums">
+<h2>Enums<a class="headerlink" href="#enums" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="plugin">
+<h3>Plugin<a class="headerlink" href="#plugin" title="Permalink to this headline">¶</a></h3>
+<p>These enums are a subclass of the standard <code class="xref py py-class docutils literal notranslate"><span class="pre">enum.Enum</span></code> class.
+To retrieve one of these enums see <a class="reference internal" href="api_plugin.html#happypanda.core.plugin_interface.get_constant" title="happypanda.core.plugin_interface.get_constant"><code class="xref py py-meth docutils literal notranslate"><span class="pre">__hpx__.get_constant</span></code></a></p>
+</div>
+<div class="section" id="client">
+<h3>Client<a class="headerlink" href="#client" title="Permalink to this headline">¶</a></h3>
+<p>Enums can be used by their member names and values interchangeably.
+Enum member names are case insensitive:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ItemType</span><span class="o">.</span><span class="n">Gallery</span> <span class="o">==</span> <span class="mi">1</span> <span class="c1"># true</span>
+<span class="n">ItemType</span><span class="o">.</span><span class="n">Gallery</span> <span class="o">==</span> <span class="n">ItemType</span><span class="o">.</span><span class="n">gaLLeRy</span> <span class="c1"># true</span>
+</pre></div>
+</div>
+<p>It is recommended that enum members are used by their <em>values</em> and not names.
+Enum member names may change sometime in the future. It is not likely to happen but no promises.</p>
+<dl class="class">
+<dt id="happypanda.interface.enums.ImageSize">
+<em class="property">class </em><code class="descname">ImageSize</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.interface.enums.ImageSize" title="Permalink to this definition">¶</a></dt>
+<dd><p>An enumeration.</p>
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ImageSize.Big">
+<code class="descname">Big</code><em class="property"> = 2</em><a class="headerlink" href="#happypanda.interface.enums.ImageSize.Big" title="Permalink to this definition">¶</a></dt>
+<dd><p>Big image size</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ImageSize.Medium">
+<code class="descname">Medium</code><em class="property"> = 3</em><a class="headerlink" href="#happypanda.interface.enums.ImageSize.Medium" title="Permalink to this definition">¶</a></dt>
+<dd><p>Medium image size</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ImageSize.Original">
+<code class="descname">Original</code><em class="property"> = 1</em><a class="headerlink" href="#happypanda.interface.enums.ImageSize.Original" title="Permalink to this definition">¶</a></dt>
+<dd><p>Original image size</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ImageSize.Small">
+<code class="descname">Small</code><em class="property"> = 4</em><a class="headerlink" href="#happypanda.interface.enums.ImageSize.Small" title="Permalink to this definition">¶</a></dt>
+<dd><p>Small image size</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="happypanda.interface.enums.ItemSort">
+<em class="property">class </em><code class="descname">ItemSort</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.interface.enums.ItemSort" title="Permalink to this definition">¶</a></dt>
+<dd><p>An enumeration.</p>
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ItemSort.ArtistName">
+<code class="descname">ArtistName</code><em class="property"> = 20</em><a class="headerlink" href="#happypanda.interface.enums.ItemSort.ArtistName" title="Permalink to this definition">¶</a></dt>
+<dd><p>Artist Name</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ItemSort.CircleName">
+<code class="descname">CircleName</code><em class="property"> = 40</em><a class="headerlink" href="#happypanda.interface.enums.ItemSort.CircleName" title="Permalink to this definition">¶</a></dt>
+<dd><p>Circle Name</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ItemSort.CollectionDate">
+<code class="descname">CollectionDate</code><em class="property"> = 52</em><a class="headerlink" href="#happypanda.interface.enums.ItemSort.CollectionDate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Collection Date Added</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ItemSort.CollectionGalleryCount">
+<code class="descname">CollectionGalleryCount</code><em class="property"> = 54</em><a class="headerlink" href="#happypanda.interface.enums.ItemSort.CollectionGalleryCount" title="Permalink to this definition">¶</a></dt>
+<dd><p>Collection Gallery Count</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ItemSort.CollectionName">
+<code class="descname">CollectionName</code><em class="property"> = 51</em><a class="headerlink" href="#happypanda.interface.enums.ItemSort.CollectionName" title="Permalink to this definition">¶</a></dt>
+<dd><p>Collection Name</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ItemSort.CollectionPublished">
+<code class="descname">CollectionPublished</code><em class="property"> = 53</em><a class="headerlink" href="#happypanda.interface.enums.ItemSort.CollectionPublished" title="Permalink to this definition">¶</a></dt>
+<dd><p>Collection Date Published</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ItemSort.CollectionRandom">
+<code class="descname">CollectionRandom</code><em class="property"> = 50</em><a class="headerlink" href="#happypanda.interface.enums.ItemSort.CollectionRandom" title="Permalink to this definition">¶</a></dt>
+<dd><p>Collection Random</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ItemSort.GalleryArtist">
+<code class="descname">GalleryArtist</code><em class="property"> = 3</em><a class="headerlink" href="#happypanda.interface.enums.ItemSort.GalleryArtist" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gallery Artist Name</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ItemSort.GalleryDate">
+<code class="descname">GalleryDate</code><em class="property"> = 4</em><a class="headerlink" href="#happypanda.interface.enums.ItemSort.GalleryDate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gallery Date Added</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ItemSort.GalleryPageCount">
+<code class="descname">GalleryPageCount</code><em class="property"> = 10</em><a class="headerlink" href="#happypanda.interface.enums.ItemSort.GalleryPageCount" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gallery Page Count</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ItemSort.GalleryPublished">
+<code class="descname">GalleryPublished</code><em class="property"> = 5</em><a class="headerlink" href="#happypanda.interface.enums.ItemSort.GalleryPublished" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gallery Date Published</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ItemSort.GalleryRandom">
+<code class="descname">GalleryRandom</code><em class="property"> = 1</em><a class="headerlink" href="#happypanda.interface.enums.ItemSort.GalleryRandom" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gallery Random</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ItemSort.GalleryRating">
+<code class="descname">GalleryRating</code><em class="property"> = 8</em><a class="headerlink" href="#happypanda.interface.enums.ItemSort.GalleryRating" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gallery Rating</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ItemSort.GalleryRead">
+<code class="descname">GalleryRead</code><em class="property"> = 6</em><a class="headerlink" href="#happypanda.interface.enums.ItemSort.GalleryRead" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gallery Last Read</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ItemSort.GalleryReadCount">
+<code class="descname">GalleryReadCount</code><em class="property"> = 9</em><a class="headerlink" href="#happypanda.interface.enums.ItemSort.GalleryReadCount" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gallery Read Count</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ItemSort.GalleryTitle">
+<code class="descname">GalleryTitle</code><em class="property"> = 2</em><a class="headerlink" href="#happypanda.interface.enums.ItemSort.GalleryTitle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gallery Title</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ItemSort.GalleryUpdated">
+<code class="descname">GalleryUpdated</code><em class="property"> = 7</em><a class="headerlink" href="#happypanda.interface.enums.ItemSort.GalleryUpdated" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gallery Last Updated</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ItemSort.NamespaceTagNamespace">
+<code class="descname">NamespaceTagNamespace</code><em class="property"> = 30</em><a class="headerlink" href="#happypanda.interface.enums.ItemSort.NamespaceTagNamespace" title="Permalink to this definition">¶</a></dt>
+<dd><p>Namespace</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ItemSort.NamespaceTagTag">
+<code class="descname">NamespaceTagTag</code><em class="property"> = 31</em><a class="headerlink" href="#happypanda.interface.enums.ItemSort.NamespaceTagTag" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tag</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ItemSort.ParodyName">
+<code class="descname">ParodyName</code><em class="property"> = 45</em><a class="headerlink" href="#happypanda.interface.enums.ItemSort.ParodyName" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parody Name</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="happypanda.interface.enums.ItemType">
+<em class="property">class </em><code class="descname">ItemType</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.interface.enums.ItemType" title="Permalink to this definition">¶</a></dt>
+<dd><p>An enumeration.</p>
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ItemType.Artist">
+<code class="descname">Artist</code><em class="property"> = 7</em><a class="headerlink" href="#happypanda.interface.enums.ItemType.Artist" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gallery Artist</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ItemType.Category">
+<code class="descname">Category</code><em class="property"> = 8</em><a class="headerlink" href="#happypanda.interface.enums.ItemType.Category" title="Permalink to this definition">¶</a></dt>
+<dd><p>Category</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ItemType.Circle">
+<code class="descname">Circle</code><em class="property"> = 11</em><a class="headerlink" href="#happypanda.interface.enums.ItemType.Circle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Circle</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ItemType.Collection">
+<code class="descname">Collection</code><em class="property"> = 2</em><a class="headerlink" href="#happypanda.interface.enums.ItemType.Collection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Collection</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ItemType.Gallery">
+<code class="descname">Gallery</code><em class="property"> = 1</em><a class="headerlink" href="#happypanda.interface.enums.ItemType.Gallery" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gallery</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ItemType.GalleryFilter">
+<code class="descname">GalleryFilter</code><em class="property"> = 3</em><a class="headerlink" href="#happypanda.interface.enums.ItemType.GalleryFilter" title="Permalink to this definition">¶</a></dt>
+<dd><p>GalleryFilter</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ItemType.Grouping">
+<code class="descname">Grouping</code><em class="property"> = 5</em><a class="headerlink" href="#happypanda.interface.enums.ItemType.Grouping" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gallery Namespace</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ItemType.Language">
+<code class="descname">Language</code><em class="property"> = 9</em><a class="headerlink" href="#happypanda.interface.enums.ItemType.Language" title="Permalink to this definition">¶</a></dt>
+<dd><p>Language</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ItemType.Page">
+<code class="descname">Page</code><em class="property"> = 4</em><a class="headerlink" href="#happypanda.interface.enums.ItemType.Page" title="Permalink to this definition">¶</a></dt>
+<dd><p>Page</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ItemType.Parody">
+<code class="descname">Parody</code><em class="property"> = 13</em><a class="headerlink" href="#happypanda.interface.enums.ItemType.Parody" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gallery Parody</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ItemType.Status">
+<code class="descname">Status</code><em class="property"> = 10</em><a class="headerlink" href="#happypanda.interface.enums.ItemType.Status" title="Permalink to this definition">¶</a></dt>
+<dd><p>Status</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ItemType.Title">
+<code class="descname">Title</code><em class="property"> = 6</em><a class="headerlink" href="#happypanda.interface.enums.ItemType.Title" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gallery Title</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ItemType.Url">
+<code class="descname">Url</code><em class="property"> = 12</em><a class="headerlink" href="#happypanda.interface.enums.ItemType.Url" title="Permalink to this definition">¶</a></dt>
+<dd><p>URL</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="happypanda.interface.enums.PluginState">
+<em class="property">class </em><code class="descname">PluginState</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.interface.enums.PluginState" title="Permalink to this definition">¶</a></dt>
+<dd><p>An enumeration.</p>
+<dl class="attribute">
+<dt id="happypanda.interface.enums.PluginState.Disabled">
+<code class="descname">Disabled</code><em class="property"> = 0</em><a class="headerlink" href="#happypanda.interface.enums.PluginState.Disabled" title="Permalink to this definition">¶</a></dt>
+<dd><p>Puporsely disabled</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.PluginState.Enabled">
+<code class="descname">Enabled</code><em class="property"> = 4</em><a class="headerlink" href="#happypanda.interface.enums.PluginState.Enabled" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plugin is loaded and in use</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.PluginState.Failed">
+<code class="descname">Failed</code><em class="property"> = 5</em><a class="headerlink" href="#happypanda.interface.enums.PluginState.Failed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Failed because of error</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.PluginState.Installed">
+<code class="descname">Installed</code><em class="property"> = 3</em><a class="headerlink" href="#happypanda.interface.enums.PluginState.Installed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Allowed to be enabled</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.PluginState.Registered">
+<code class="descname">Registered</code><em class="property"> = 2</em><a class="headerlink" href="#happypanda.interface.enums.PluginState.Registered" title="Permalink to this definition">¶</a></dt>
+<dd><p>Was just registered but not installed</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.PluginState.Unloaded">
+<code class="descname">Unloaded</code><em class="property"> = 1</em><a class="headerlink" href="#happypanda.interface.enums.PluginState.Unloaded" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unloaded because of dependencies, etc.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="happypanda.interface.enums.ProgressType">
+<em class="property">class </em><code class="descname">ProgressType</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.interface.enums.ProgressType" title="Permalink to this definition">¶</a></dt>
+<dd><p>An enumeration.</p>
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ProgressType.CheckUpdate">
+<code class="descname">CheckUpdate</code><em class="property"> = 3</em><a class="headerlink" href="#happypanda.interface.enums.ProgressType.CheckUpdate" title="Permalink to this definition">¶</a></dt>
+<dd><p>A check for new update</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ProgressType.Request">
+<code class="descname">Request</code><em class="property"> = 2</em><a class="headerlink" href="#happypanda.interface.enums.ProgressType.Request" title="Permalink to this definition">¶</a></dt>
+<dd><p>Network request</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ProgressType.Unknown">
+<code class="descname">Unknown</code><em class="property"> = 1</em><a class="headerlink" href="#happypanda.interface.enums.ProgressType.Unknown" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unknown</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ProgressType.UpdateApplication">
+<code class="descname">UpdateApplication</code><em class="property"> = 4</em><a class="headerlink" href="#happypanda.interface.enums.ProgressType.UpdateApplication" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updating application</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="happypanda.interface.enums.ServerCommand">
+<em class="property">class </em><code class="descname">ServerCommand</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.interface.enums.ServerCommand" title="Permalink to this definition">¶</a></dt>
+<dd><p>An enumeration.</p>
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ServerCommand.RequestAuth">
+<code class="descname">RequestAuth</code><em class="property"> = 3</em><a class="headerlink" href="#happypanda.interface.enums.ServerCommand.RequestAuth" title="Permalink to this definition">¶</a></dt>
+<dd><p>Request authentication</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ServerCommand.ServerQuit">
+<code class="descname">ServerQuit</code><em class="property"> = 1</em><a class="headerlink" href="#happypanda.interface.enums.ServerCommand.ServerQuit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Shut down the server</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ServerCommand.ServerRestart">
+<code class="descname">ServerRestart</code><em class="property"> = 2</em><a class="headerlink" href="#happypanda.interface.enums.ServerCommand.ServerRestart" title="Permalink to this definition">¶</a></dt>
+<dd><p>Restart the server</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="happypanda.interface.enums.ViewType">
+<em class="property">class </em><code class="descname">ViewType</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.interface.enums.ViewType" title="Permalink to this definition">¶</a></dt>
+<dd><p>An enumeration.</p>
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ViewType.Favorite">
+<code class="descname">Favorite</code><em class="property"> = 2</em><a class="headerlink" href="#happypanda.interface.enums.ViewType.Favorite" title="Permalink to this definition">¶</a></dt>
+<dd><p>Favourite</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ViewType.Inbox">
+<code class="descname">Inbox</code><em class="property"> = 3</em><a class="headerlink" href="#happypanda.interface.enums.ViewType.Inbox" title="Permalink to this definition">¶</a></dt>
+<dd><p>Inbox</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ViewType.Library">
+<code class="descname">Library</code><em class="property"> = 1</em><a class="headerlink" href="#happypanda.interface.enums.ViewType.Library" title="Permalink to this definition">¶</a></dt>
+<dd><p>Library</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ViewType.ReadLater">
+<code class="descname">ReadLater</code><em class="property"> = 5</em><a class="headerlink" href="#happypanda.interface.enums.ViewType.ReadLater" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read Later</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.interface.enums.ViewType.Trash">
+<code class="descname">Trash</code><em class="property"> = 4</em><a class="headerlink" href="#happypanda.interface.enums.ViewType.Trash" title="Permalink to this definition">¶</a></dt>
+<dd><p>Trash</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+<p><strong>Asynchronous command states</strong>:</p>
+<dl class="class">
+<dt id="happypanda.core.command.CommandState">
+<em class="property">class </em><code class="descname">CommandState</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.core.command.CommandState" title="Permalink to this definition">¶</a></dt>
+<dd><p>An enumeration.</p>
+<dl class="attribute">
+<dt id="happypanda.core.command.CommandState.failed">
+<code class="descname">failed</code><em class="property"> = 6</em><a class="headerlink" href="#happypanda.core.command.CommandState.failed" title="Permalink to this definition">¶</a></dt>
+<dd><p>command has finished with an error</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.core.command.CommandState.finished">
+<code class="descname">finished</code><em class="property"> = 4</em><a class="headerlink" href="#happypanda.core.command.CommandState.finished" title="Permalink to this definition">¶</a></dt>
+<dd><p>command has finished succesfully</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.core.command.CommandState.in_queue">
+<code class="descname">in_queue</code><em class="property"> = 2</em><a class="headerlink" href="#happypanda.core.command.CommandState.in_queue" title="Permalink to this definition">¶</a></dt>
+<dd><p>command has been scheduled to start</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.core.command.CommandState.in_service">
+<code class="descname">in_service</code><em class="property"> = 1</em><a class="headerlink" href="#happypanda.core.command.CommandState.in_service" title="Permalink to this definition">¶</a></dt>
+<dd><p>command has been put in a service (but not started or stopped yet)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.core.command.CommandState.out_of_service">
+<code class="descname">out_of_service</code><em class="property"> = 0</em><a class="headerlink" href="#happypanda.core.command.CommandState.out_of_service" title="Permalink to this definition">¶</a></dt>
+<dd><p>command has not been put in any service yet</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.core.command.CommandState.started">
+<code class="descname">started</code><em class="property"> = 3</em><a class="headerlink" href="#happypanda.core.command.CommandState.started" title="Permalink to this definition">¶</a></dt>
+<dd><p>command has been started</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="happypanda.core.command.CommandState.stopped">
+<code class="descname">stopped</code><em class="property"> = 5</em><a class="headerlink" href="#happypanda.core.command.CommandState.stopped" title="Permalink to this definition">¶</a></dt>
+<dd><p>command has been forcefully stopped without finishing</p>
+</dd></dl>
+
+</dd></dl>
+
 <div class="section" id="module-happypanda.common.exceptions">
 <span id="exceptions"></span><h2>Exceptions<a class="headerlink" href="#module-happypanda.common.exceptions" title="Permalink to this headline">¶</a></h2>
 <dl class="exception">

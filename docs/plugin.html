@@ -155,10 +155,10 @@
 <li><a class="reference internal" href="#defining-a-plugin">Defining a plugin</a></li>
 <li><a class="reference internal" href="#writing-a-plugin">Writing a plugin</a><ul>
 <li><a class="reference internal" href="#interfacing-with-hpx">Interfacing with HPX</a></li>
-<li><a class="reference internal" href="#logging">Logging</a></li>
-<li><a class="reference internal" href="#errors">Errors</a></li>
+<li><a class="reference internal" href="#logging-and-errors">Logging and errors</a></li>
 <li><a class="reference internal" href="#debugging">Debugging</a></li>
 <li><a class="reference internal" href="#about-thread-safety">About thread safety</a></li>
+<li><a class="reference internal" href="#how-to-not-break-stuff">How to not break stuff</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#available-packages">Available packages</a></li>
@@ -256,7 +256,7 @@ Like an <strong>entry</strong>, it’s up to a command when and to what an <stro
 <li><p class="first"><code class="docutils literal notranslate"><span class="pre">require</span></code>: A list of strings defining other plug-ins as dependencies. This attribute is optional.</p>
 <blockquote>
 <div><p>A requirement must conform <span class="target" id="index-2"></span><a class="pep reference external" href="https://www.python.org/dev/peps/pep-0508"><strong>PEP 508</strong></a> with a few exceptions.</p>
-<p>Other plug-ins can be referred by their id or shortname.</p>
+<p>Other plug-ins can be referred to by their id or shortname.</p>
 <p>Examples of requirements that conforms <span class="target" id="index-3"></span><a class="pep reference external" href="https://www.python.org/dev/peps/pep-0508"><strong>PEP 508</strong></a>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;otherplugin&quot;</span><span class="p">,</span>
 <span class="s2">&quot;5c17829a-eca3-46fc-9d5e-da5804fdcbf5 == 3&quot;</span><span class="p">,</span>
@@ -293,30 +293,211 @@ through the setting <code class="docutils literal notranslate"><span class="pre"
 <p class="first admonition-title">Note</p>
 <p class="last">On a MacOS HPX installation, the root HPX folder is inside the bundle at <code class="docutils literal notranslate"><span class="pre">HappyPanda</span> <span class="pre">X.app/Contents/MacOS/</span></code>.</p>
 </div>
-<p>After placing it in one of the locations, HPX should detect it and register it automatically either on startup or while running.</p>
+<p>After placing it in one of the locations, HPX should detect it and try to register it automatically either on startup or while running.
+You can see if the plugin has been registered successfully if it appears on the plugin listing in a HPX client or if HPX doesn’t print any warnings.</p>
+<div class="admonition tip">
+<p class="first admonition-title">Tip</p>
+<p class="last">It is recommended that you run HPX with the <code class="docutils literal notranslate"><span class="pre">--debug</span></code> and <code class="docutils literal notranslate"><span class="pre">--dev</span></code> commandline switches so that you can see what’s going on when your plug-in is being loaded and in use.
+See <a class="reference internal" href="switches.html#command-line-arguments"><span class="std std-ref">Command-Line Arguments</span></a>.</p>
+</div>
 </div>
 <div class="section" id="writing-a-plugin">
 <h2>Writing a plugin<a class="headerlink" href="#writing-a-plugin" title="Permalink to this headline">¶</a></h2>
 <p>Now that we’ve defined our plug-in, we can now write the code for our plug-in.</p>
-<p>Please note that no code will be run <em>before</em> the plug-in has been installed. A registered plug-in is not the same as an installed plug-in.</p>
+<p>Please note that no code will be run <em>before</em> the plug-in has been installed. A registered plug-in is not the same as an installed plug-in.
+These are the different kind of states a plug-in can be in: <a class="reference internal" href="api_general.html#happypanda.interface.enums.PluginState" title="happypanda.interface.enums.PluginState"><code class="xref py py-class docutils literal notranslate"><span class="pre">PluginState</span></code></a>.</p>
 <div class="section" id="interfacing-with-hpx">
 <h3>Interfacing with HPX<a class="headerlink" href="#interfacing-with-hpx" title="Permalink to this headline">¶</a></h3>
+<p>HPX provides plug-ins with a special module named <code class="docutils literal notranslate"><span class="pre">__hpx__</span></code> to interface with HPX.</p>
+<p>After a plug-in has been loaded, it can be installed. Installation has to be manually done by the user unless either of the two settings <code class="docutils literal notranslate"><span class="pre">plugin.auto_install_plugin</span></code> and <code class="docutils literal notranslate"><span class="pre">plugin.auto_install_plugin_dependency</span></code>
+are true.</p>
+<p>When a plug-in has been installed, it will be initialized. The entry file the plug-in has provided in its manifest will be run upon initialization.
+The entry file will be run in a special plug-in environment and will be run just like any other Python code.</p>
+<p>There are a couple of notable things about the plug-in environment:</p>
+<p>The entry file’s <code class="docutils literal notranslate"><span class="pre">__name__</span></code> will be set to <code class="docutils literal notranslate"><span class="pre">__main__</span></code> just like how Python does with its entry file.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The <code class="docutils literal notranslate"><span class="pre">__file__</span></code> attribute in the entry file is correctly set to be the path of the entry file.</p>
 </div>
-<div class="section" id="logging">
-<h3>Logging<a class="headerlink" href="#logging" title="Permalink to this headline">¶</a></h3>
+<p>The plug-in environment has been provided the special HPX interface module <a class="reference internal" href="api_plugin.html#module-happypanda.core.plugin_interface" title="happypanda.core.plugin_interface"><code class="xref py py-mod docutils literal notranslate"><span class="pre">__hpx__</span></code></a>.</p>
+<p>You can import any module and packages except <code class="docutils literal notranslate"><span class="pre">happypanda</span></code>.</p>
+<p>With all this in mind, we can now write code to interface with HPX. In the <code class="docutils literal notranslate"><span class="pre">main.py</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">__hpx__</span> <span class="k">as</span> <span class="nn">hpx</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">hpx</span><span class="o">.</span><span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Emilia is best girl&quot;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
 </div>
-<div class="section" id="errors">
-<h3>Errors<a class="headerlink" href="#errors" title="Permalink to this headline">¶</a></h3>
+<p>As you can see, we can write our code just like how we would write any regular Python program.
+HPX gives this flexibility and freedom to its plug-ins.</p>
+<p>The contents of the <code class="docutils literal notranslate"><span class="pre">__hpx__</span></code> module can be found at <a class="reference internal" href="api_plugin.html#plugin-api"><span class="std std-ref">Plugin API</span></a>, however, the most important methods from the module which we will cover here are
+<a class="reference internal" href="api_plugin.html#happypanda.core.plugin_interface.attach" title="happypanda.core.plugin_interface.attach"><code class="xref py py-meth docutils literal notranslate"><span class="pre">attach</span></code></a> and <a class="reference internal" href="api_plugin.html#happypanda.core.plugin_interface.subscribe" title="happypanda.core.plugin_interface.subscribe"><code class="xref py py-meth docutils literal notranslate"><span class="pre">subscribe</span></code></a>.</p>
+<p>The main point of a HPX plug-in is to use these methods and extend HPX.</p>
+<p>Just like previously mentioned, HPX provides many <strong>commands</strong> that defines different entrypoints and events that we can use.
+The method <a class="reference internal" href="api_plugin.html#happypanda.core.plugin_interface.subscribe" title="happypanda.core.plugin_interface.subscribe"><code class="xref py py-meth docutils literal notranslate"><span class="pre">subscribe</span></code></a> subscribes a handler function that we define to a command event.
+HPX defines the command <code class="xref py py-class docutils literal notranslate"><span class="pre">InitApplication</span></code> that has provided the event <code class="docutils literal notranslate"><span class="pre">init</span></code> that we can listen to.
+We can use this event to initialize our stuff:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">__hpx__</span> <span class="k">as</span> <span class="nn">hpx</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">hpx</span><span class="o">.</span><span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="nd">@hpx</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span><span class="s2">&quot;InitApplication.init&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">init</span><span class="p">():</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Initialized&quot;</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Emilia is best girl&quot;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>While it is true that we could also initialize on the module level, it is safer to do it on the <code class="docutils literal notranslate"><span class="pre">Init</span></code> event.</p>
+</div>
+<div class="section" id="logging-and-errors">
+<h3>Logging and errors<a class="headerlink" href="#logging-and-errors" title="Permalink to this headline">¶</a></h3>
 </div>
 <div class="section" id="debugging">
 <h3>Debugging<a class="headerlink" href="#debugging" title="Permalink to this headline">¶</a></h3>
+<div class="admonition-todo admonition" id="index-5">
+<p class="first admonition-title">Todo</p>
+<p class="last">debugging plugins</p>
+</div>
 </div>
 <div class="section" id="about-thread-safety">
 <h3>About thread safety<a class="headerlink" href="#about-thread-safety" title="Permalink to this headline">¶</a></h3>
 </div>
+<div class="section" id="how-to-not-break-stuff">
+<h3>How to not break stuff<a class="headerlink" href="#how-to-not-break-stuff" title="Permalink to this headline">¶</a></h3>
+<p>While HPX provides plug-ins lots of freedom, this can sometimes lead to plug-ins being able to disrupt the flow of the program and/or create inexplicable bugs,
+and generally make it so things are not working as intended.
+And that is why care must be taken while writing plug-ins.</p>
+<p>Here are some <strong>DO</strong>’s and <strong>DON’T</strong>’s that should ensure that everything plays nicely together.</p>
+<ul class="simple">
+<li><strong>DON’T</strong> change the current working directory.</li>
+<li><strong>DO</strong> always prefer the <a class="reference internal" href="api_plugin.html#plugin-api"><span class="std std-ref">Plugin API</span></a> instead of rolling your own thing.</li>
+<li><strong>DO</strong> always prefer using the <strong>commands</strong> that HPX provides, especially because it gives other things that are beyond your control a chance to run.</li>
+</ul>
+</div>
 </div>
 <div class="section" id="available-packages">
 <h2>Available packages<a class="headerlink" href="#available-packages" title="Permalink to this headline">¶</a></h2>
+<p>aiohttp==3.1.3</p>
+<p>alabaster==0.7.10</p>
+<p>alembic==0.9.6</p>
+<p>altgraph==0.15</p>
+<p>APScheduler==3.5.1</p>
+<p>arrow==0.12.1</p>
+<p>asn1crypto==0.24.0</p>
+<p>async-timeout==2.0.1</p>
+<p>attrs==17.4.0</p>
+<p>autopep8==1.3.4</p>
+<p>Babel==2.5.3</p>
+<p>bcrypt==3.1.3</p>
+<p>bencodepy==0.9.5</p>
+<p>biplist==1.0.3</p>
+<p>bitarray==0.8.1</p>
+<p>CacheControl==0.12.4</p>
+<p>cachetools==2.0.1</p>
+<p>certifi==2018.4.16</p>
+<p>cffi==1.11.5</p>
+<p>chardet==3.0.4</p>
+<p>click==6.7</p>
+<p>colorama==0.3.9</p>
+<p>cookies==2.2.1</p>
+<p>coverage==4.5.1</p>
+<p>cryptography==2.2.2</p>
+<p>dmgbuild==1.3.2</p>
+<p>dnspython==1.15.0</p>
+<p>docutils==0.14</p>
+<p>ds-store==1.1.2</p>
+<p>flake8==3.5.0</p>
+<p>Flask==1.0.1</p>
+<p>Flask-SocketIO==3.0.0</p>
+<p>future==0.16.0</p>
+<p>gevent==1.2.2</p>
+<p>greenlet==0.4.13</p>
+<p>happy-bittorrent==1.0.0</p>
+<p>happypandax-i18n==0.3.2</p>
+<p>idna==2.6</p>
+<p>idna-ssl==1.0.1</p>
+<p>imagesize==1.0.0</p>
+<p>itsdangerous==0.24</p>
+<p>Jinja2==2.10</p>
+<p>karellen-geventws==1.0.2</p>
+<p>mac-alias==2.0.7</p>
+<p>macholib==1.9</p>
+<p>Mako==1.0.7</p>
+<p>MarkupSafe==1.0</p>
+<p>mccabe==0.6.1</p>
+<p>mock==2.0.0</p>
+<p>msgpack-python==0.5.6</p>
+<p>multidict==4.2.0</p>
+<p>mypy==0.590</p>
+<p>packaging==17.1</p>
+<p>pbr==4.0.2</p>
+<p>pefile==2017.11.5</p>
+<p>Pillow==5.1.0</p>
+<p>pluggy==0.6.0</p>
+<p>pockets==0.6.2</p>
+<p>psutil==5.4.5</p>
+<p>psycopg2==2.7.4</p>
+<p>py==1.5.3</p>
+<p>pycodestyle==2.3.1</p>
+<p>pycparser==2.18</p>
+<p>pyflakes==1.6.0</p>
+<p>Pygments==2.2.0</p>
+<p>PyInstaller==3.3.1</p>
+<p>pyOpenSSL==17.5.0</p>
+<p>pyparsing==2.2.0</p>
+<p>pypiwin32==223</p>
+<p>PyQt5==5.10.1</p>
+<p>pytest==3.3.2</p>
+<p>pytest-cov==2.4.0</p>
+<p>python-dateutil==2.7.2</p>
+<p>python-editor==1.0.3</p>
+<p>python-engineio==2.1.0</p>
+<p>python-socketio==1.9.0</p>
+<p>pytz==2018.4</p>
+<p>pywin32==223</p>
+<p>PyYAML==3.12</p>
+<p>QtAwesome==0.4.4</p>
+<p>qtmodern==0.1.4</p>
+<p>QtPy==1.4.1</p>
+<p>rarfile==3.0</p>
+<p>regex==2018.2.21</p>
+<p>requests==2.18.4</p>
+<p>responses==0.9.0</p>
+<p>rollbar==0.13.18</p>
+<p>sadisplay==0.4.8</p>
+<p>Send2Trash==1.5.0</p>
+<p>sip==4.19.8</p>
+<p>six==1.11.0</p>
+<p>snowballstemmer==1.2.1</p>
+<p>Sphinx==1.7.4</p>
+<p>sphinx-autodoc-napoleon-typehints==2.1.6</p>
+<p>sphinx-bootstrap-theme==0.6.4</p>
+<p>sphinxcontrib-autoprogram==0.1.4</p>
+<p>sphinxcontrib-documentedlist==0.6</p>
+<p>sphinxcontrib-napoleon==0.6.1</p>
+<p>sphinxcontrib-websupport==1.0.1</p>
+<p>SQLAlchemy==1.2.7</p>
+<p>SQLAlchemy-Utils==0.33.3</p>
+<p>Transcrypt==3.6.101</p>
+<p>treelib==1.5.1</p>
+<p>typed-ast==1.1.0</p>
+<p>typing==3.6.4</p>
+<p>tzlocal==1.5.1</p>
+<p>urllib3==1.22</p>
+<p>Werkzeug==0.14.1</p>
+<p>yarl==1.2.2</p>
 </div>
 </div>
 
