@@ -5,6 +5,7 @@ import collections
 import threading
 import arrow
 import psycopg2
+import functools
 
 from psycopg2 import extensions
 from gevent.socket import wait_read, wait_write
@@ -89,7 +90,7 @@ class CPUThread():
                     self.in_q_has_data.wait()
                     continue
                 # arbitrary non-preemptive service discipline can go here
-                # FIFO for now, but we should experiment with others
+                # FIFO for now
                 jobid, func, args, kwargs = self.in_q.popleft()
                 start_time = arrow.now()
                 log.d("Running function in cpu_bound thread:", func)
@@ -190,6 +191,7 @@ def defer(f=None, predicate=None):
                 CPUThread._thread = CPUThread()
             return CPUThread._thread.apply(f, args, kwargs)
 
+        @functools.wraps(f)
         def wrapper(*args, **kwargs):
             a = AsyncFuture(None, None)
             # TODO: unit test this

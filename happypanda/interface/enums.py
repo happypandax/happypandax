@@ -2,7 +2,16 @@
 Enums
 ----------------------------------------
 
-Enums can be used by their member names and values interchangeably.
+Plugin
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+These enums are a subclass of the standard :class:`enum.Enum` class.
+To retrieve one of these enums see :meth:`__hpx__.get_constant <happypanda.core.plugin_interface.get_constant>`
+
+Client
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Through the client API, enums can be used by their member names and values interchangeably.
 Enum member names are case insensitive::
 
     ItemType.Gallery == 1 # true
@@ -16,8 +25,8 @@ Enum member names may change sometime in the future. It is not likely to happen 
 import enum
 
 from happypanda.common import utils, exceptions
-from happypanda.core import message, db
-
+from happypanda import core
+from happypanda.core import db
 
 class _APIEnum(enum.Enum):
     "A conv. enum class"
@@ -119,18 +128,18 @@ class ItemType(_APIEnum):
 
         obj = None
         try:
-            obj = getattr(message, item_type.name)
+            obj = getattr(core.message, item_type.name)
         except AttributeError:
             try:
                 if db_model and issubclass(db_model, db.NameMixin):
-                    obj = getattr(message, db.NameMixin.__name__)
+                    obj = getattr(core.message, db.NameMixin.__name__)
             except AttributeError:
                 pass
             if not obj:
                 if error:
                     raise exceptions.CoreError(utils.this_function(),
                                                "Equivalent Message object class for {} was not found".format(item_type))
-                obj = message.DatabaseMessage
+                obj = core.message.DatabaseMessage
 
         return obj, db_model
 
@@ -216,3 +225,18 @@ class ProgressType(_APIEnum):
     CheckUpdate = 3
     #: Updating application
     UpdateApplication = 4
+
+class PluginState(_APIEnum):
+
+    #: Puporsely disabled
+    Disabled = 0
+    #: Unloaded because of dependencies, etc.
+    Unloaded = 1 
+    #: Was just registered but not installed
+    Registered = 2
+    #: Allowed to be enabled
+    Installed = 3
+    #: Plugin is loaded and in use
+    Enabled = 4
+    #: Failed because of error
+    Failed = 5

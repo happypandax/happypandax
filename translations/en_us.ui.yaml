@@ -9,7 +9,7 @@
 ################################################################
 
 # very useful for updating
-_version_: 7
+_version_: 8
 
 # Common
 t-loading: Loading
@@ -62,6 +62,16 @@ b-support-patreon: Support on Patreon
 b-restart: Restart
 b-shutdown: Shutdown
 b-reset: Reset
+b-install: Install
+b-enable: Enable
+b-enabled: Enabled
+b-not-enabled: Not enabled
+b-disable: Disable
+b-disabled: Disabled
+b-not-loaded: Not loaded
+b-failed: Failed
+b-remove: Remove
+t-website: Website
 
 # Preferences Page
 mi-pref-view: View
@@ -109,6 +119,7 @@ t-webclient-port: Web Client Port
 t-run-in-debug: Run in debug mode
 t-send-critical-error: Send occurring critical errors to me (creator) so I can fix them faster (contains no sensitive information)
 t-path-to-unrar: Path to UNRAR tool
+t-ping-for-notifications: Ping for notifications
 
 # API Page
 h-server-comm: Server Communication

@@ -7,7 +7,7 @@ from happypanda.core.command import (UndoCommand, CommandEvent,
                                      CommandEntry, Command, AsyncCommand)
 from happypanda.core.commands import database_cmd, io_cmd
 from happypanda.interface import enums
-from happypanda.core import db, async
+from happypanda.core import db, async_utils
 
 log = hlogger.Logger(constants.log_ns_command + __name__)
 
@@ -83,7 +83,7 @@ class SimilarGallery(AsyncCommand):
                 #    s.add("2-{}:{}".format(ns.namespace.name, ns.tag.name))
         return s
 
-    @async.defer
+    @async_utils.defer
     def _calculate(self, gallery_or_id, all_gallery_tags={}):
         assert isinstance(gallery_or_id, (int, db.Gallery))
         data = {}

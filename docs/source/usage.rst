@@ -35,9 +35,9 @@ Most of these settings can also be configured from a HPX client.
 Starting
 -------------------------------------
 
-You can start up HPX in two ways with the executables named ``happypandax`` and ``happypandax_gui``.
+You can start up HPX in two ways with the executables named :program:`happypandax` and :program:`happypandax_gui`.
 
-The ``happypandax_gui`` executable is mostly just a GUI wrapper around ``happypandax`` to provide a user-friendly way of starting HPX.
+The :program:`happypandax_gui` executable is mostly just a GUI wrapper around :program:`happypandax` to provide a user-friendly way of starting HPX.
 
 Before starting, you can also see the available command-line arguments by supplying the ``--help`` argument to the ``happypandax`` executable on the cmd/terminal: ``./happypandax --help``.
 You could also refer to :ref:`Command-Line Arguments`. 
@@ -56,7 +56,7 @@ See available arguments by supplying the ``--help`` argument to the executable: 
 
 Convert your HP database like this: ``./HPtoHPX "path/to/old/file.db" "data/happypanda.db"``
 
-Alternatively, you can also use the GUI wrapper ``happypandax_gui`` which provides a user-friendly way of doing it.
+Alternatively, you can also use the GUI wrapper :program:`happypandax_gui` which provides a user-friendly way of doing it.
 
 Using
 -------------------------------------
@@ -81,6 +81,8 @@ If you're planning on having multiple people accessing your HPX server, or you w
 you disable this user. Disable it with the setting ``server.disable_default_user``.
 
 Additionally, you may also want to disallow people accessing the server without logging in with the settings ``server.allow_guests`` and ``server.require_auth``.
+
+To create and delete users, see the command-line args ``--create-user``, ``--delete-user`` and ``--list-users``.
 
 TLS/SSL Support
 -------------------------------------
@@ -107,18 +109,44 @@ ahead and allow the connection by adding an exception.
 Exposing HappyPanda X
 ========================================
 
-To allow HPX to be accessed from your phone or other devices, you'll need to expose the server(s) to the private or public (internet) networks
-
-.. todo::
-    expose HPX
+To allow HPX to be accessed from your phone or other devices, you'll need to expose the server(s) so it can be connected to from outside your computer.
 
 Private network
 -------------------------------------
 
-Doing this will allow for you to access HPX from *any device connected to your home network*
+Exposing HPX to your private network will allow *any device connected to your home network* to access HPX.
+This means that you can enjoy your collection on HPX not only from your computer but also from your tablet, phone, etc. as long as they are connected to your home network
+either through Wi-Fi or LAN.
+
+When starting HPX, set the two settings ``server.host`` and ``server.host_web`` to ``0.0.0.0``. This means that the server should listen on all interfaces.
+We can also set the ports with the settings ``server.port`` and ``server.port_web``, but we'll leave them to their default values.
+
+The next step is to allow connections on the chosen ports through your firewall.
+
+Windows
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+1. Press ``Win + R`` type ```firewall.cpl`` in the dialogbox and press enter.
+2. On the lefthand side click on the text that says something along *Allow a program to pass through firewall*.
+3. Click on the *Change settings* button on the top and check if ``HappyPanda X`` is on the list. If not then click on the button *Allow another program* below.
+4. If ``HappyPanda X`` is not on the list then add either ``happypandax.exe`` or ``happypandax_gui`` (depending on which you use) or both to the list.
+5. Make sure the checkbox on the right is checked. Which one to check depends on your network configuration but you can just check both if you're not sure.
+
+Mac
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Please use google
+
+Linux
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Please use google
 
 Public network
 -------------------------------------
 
-Doing this will allow for you to access HPX from *any device connected to the internet*
+Exposing HPX to the public network will allow you to access HPX from *any device connected to the internet*.
 
+.. todo::
+
+    expose HPX

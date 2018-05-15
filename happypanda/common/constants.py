@@ -7,6 +7,7 @@ rarfile.PATH_SEP = '/'
 
 preview = True
 dev = False
+dev_db = False
 is_installed = os.path.exists(".installed")  # user installed with installer
 is_frozen = getattr(sys, 'frozen', False)
 
@@ -61,6 +62,7 @@ config_example_path = os.path.join(dir_root, "config-example.yaml")
 log_error = os.path.join(dir_log, "error.log")
 log_normal = os.path.join(dir_log, "activity.log")
 log_debug = os.path.join(dir_log, "debug.log")
+log_plugin = os.path.join(dir_log, "plugin.log")
 db_name = "happypanda"
 db_name_dev = "happypanda_dev"
 db_path = os.path.join(dir_root, dir_data, db_name + '.db')
@@ -76,6 +78,12 @@ internaldb = None
 web_proc = None  # webserver process
 notification = None  # ClientNotifications
 
+log_format = '%(asctime)-6s--%(levelname)-6s %(name)-10s: %(message)s'
+log_datefmt = '%b-%m %H:%M:%S'
+log_plugin_format = log_format
+log_plugin_datefmt = log_datefmt
+log_size = 100000 * 10 #10mb
+log_ns_plugincontext = 'pluginctx.'
 log_ns_core = '[core].'
 log_ns_command = '[command].'
 log_ns_plugin = '[plugin].'
@@ -136,11 +144,10 @@ translations = None  # dict of available translation files
 
 # PLUGIN
 
-core_plugin = None
+plugin_interface_name = "__hpx__"
 plugin_manager = None
-available_commands = set()
-available_events = set()
-plugin_shortname_length = 10
+available_commands = {'event': set(), 'entry': set()}
+plugin_shortname_length = 20
 
 # DATABASE
 db_engine = None

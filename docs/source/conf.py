@@ -20,6 +20,10 @@
 import os
 import sys
 import sphinx_bootstrap_theme
+from os.path import basename
+from io import StringIO
+from docutils.parsers.rst import Directive
+from docutils import nodes, statemachine
 sys.path.insert(0, os.path.realpath(os.path.join('..', '..')))
 from happypanda.common import constants
 
@@ -34,7 +38,6 @@ from happypanda.common import constants
 # ones.
 extensions = ['sphinx.ext.autodoc',
     'sphinx.ext.todo',
-    'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
     'sphinx.ext.autosectionlabel',
     'sphinxcontrib.documentedlist',
@@ -125,7 +128,7 @@ html_static_path = ['_static']
 htmlhelp_basename = 'HappyPandaXdoc'
 
 html_use_smartypants = True
-
+html_show_sourcelink = False
 
 # -- Options for LaTeX output ---------------------------------------------
 
@@ -178,5 +181,28 @@ texinfo_documents = [
 ]
 
 
+class ExecDirective(Directive):
+    """Execute the specified python code and insert the output into the document"""
+    has_content = True
 
+    def run(self):
+        oldStdout, sys.stdout = sys.stdout, StringIO()
+
+        tab_width = self.options.get('tab-width', self.state.document.settings.tab_width)
+        source = self.state_machine.input_lines.source(self.lineno - self.state_machine.input_offset - 1)
+        try:
+            exec('\n'.join(self.content))
+            text = sys.stdout.getvalue()
+            for n, t in enumerate(reversed(text.split('\n'))):
+                lines = statemachine.string2lines(t, tab_width, convert_whitespace=True)
+                self.state_machine.insert_input(lines,
+                                                self.state_machine.input_lines.source(self.lineno - self.state_machine.input_offset - 1 + n))
+            return []
+        except Exception:
+            return [nodes.error(None, nodes.paragraph(text = "Unable to execute python code at %s:%d:" % (basename(source), self.lineno)), nodes.paragraph(text = str(sys.exc_info()[1])))]
+        finally:
+            sys.stdout = oldStdout
+
+def setup(app):
+    app.add_directive('exec', ExecDirective)
 

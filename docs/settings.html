@@ -58,9 +58,8 @@
       role="menu"
       aria-labelledby="dLabelGlobalToc"><ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="install.html#building">Building</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Using HappyPanda X</a></li>
-<li class="toctree-l1"><a class="reference internal" href="usage.html#securing-happypanda-x">Securing Happypanda X</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html#securing-happypanda-x">Securing HappyPanda X</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html#exposing-happypanda-x">Exposing HappyPanda X</a></li>
 <li class="toctree-l1"><a class="reference internal" href="translation.html">Translations</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Settings</a></li>
@@ -283,10 +282,45 @@
 </tr>
 </thead>
 <tbody valign="top">
+<tr class="row-even"><td>dialect</td>
+<td>sqlite</td>
+<td>server</td>
+<td>Which SQL dialect to use among ‘sqlite’, ‘mysql’ and ‘postgres’. Note that HPX will not transfer data from one dialect to another once chosen. It is therefore advised that you choose a dialect early and stick to it throughout</td>
+</tr>
+<tr class="row-odd"><td>host</td>
+<td></td>
+<td>server</td>
+<td>Database host</td>
+</tr>
+<tr class="row-even"><td>name</td>
+<td>happypanda</td>
+<td>server</td>
+<td>Database name</td>
+</tr>
+<tr class="row-odd"><td>password</td>
+<td></td>
+<td>server</td>
+<td>Database password</td>
+</tr>
+<tr class="row-even"><td>port</td>
+<td></td>
+<td>server</td>
+<td>Database port</td>
+</tr>
+<tr class="row-odd"><td>query</td>
+<td></td>
+<td>server</td>
+<td>A mapping of options to be passed to the database upon connect</td>
+</tr>
 <tr class="row-even"><td>sqlite_database_timeout</td>
 <td>30</td>
 <td>server</td>
 <td>Amount of seconds to wait for the database to be writeable</td>
+</tr>
+<tr class="row-odd"><td>username</td>
+<td></td>
+<td>server</td>
+<td>Database user name</td>
 </tr>
 </tbody>
 <colgroup>
@@ -296,26 +330,26 @@
 <col width="25%" />
 </colgroup>
 <thead valign="bottom">
-<tr class="row-odd"><th class="head" colspan="4">gallery</th>
+<tr class="row-even"><th class="head" colspan="4">gallery</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td>external_image_viewer</td>
+<tr class="row-odd"><td>external_image_viewer</td>
 <td></td>
 <td>server</td>
 <td>Path to external image viewer executable</td>
 </tr>
-<tr class="row-odd"><td>external_image_viewer_args</td>
+<tr class="row-even"><td>external_image_viewer_args</td>
 <td></td>
 <td>server</td>
 <td>Command arguments to supply the image viewer executable</td>
 </tr>
-<tr class="row-even"><td>send_path_to_first_file</td>
+<tr class="row-odd"><td>send_path_to_first_file</td>
 <td></td>
 <td>server</td>
 <td>Send path to first file when opening a gallery in external viewer</td>
 </tr>
-<tr class="row-odd"><td>send_to_trash</td>
+<tr class="row-even"><td>send_to_trash</td>
 <td>True</td>
 <td>server</td>
 <td>Send deleted galleries to recycle bin</td>
@@ -328,36 +362,36 @@
 <col width="25%" />
 </colgroup>
 <thead valign="bottom">
-<tr class="row-even"><th class="head" colspan="4">gui</th>
+<tr class="row-odd"><th class="head" colspan="4">gui</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-odd"><td>autostart_server</td>
+<tr class="row-even"><td>autostart_server</td>
 <td></td>
 <td>server</td>
 <td>Start the server automatically on HPX GUI startup</td>
 </tr>
-<tr class="row-even"><td>open_webclient_on_server_start</td>
+<tr class="row-odd"><td>open_webclient_on_server_start</td>
 <td>True</td>
 <td>server</td>
 <td>Open the webclient in your default browser on server start</td>
 </tr>
-<tr class="row-odd"><td>send_to_tray_on_close</td>
+<tr class="row-even"><td>send_to_tray_on_close</td>
 <td></td>
 <td>server</td>
 <td>Put the application in the notification tray on close button</td>
 </tr>
-<tr class="row-even"><td>send_to_tray_on_minimize</td>
+<tr class="row-odd"><td>send_to_tray_on_minimize</td>
 <td></td>
 <td>server</td>
 <td>Put the application in the notification tray on minimize button</td>
 </tr>
-<tr class="row-odd"><td>start_minimized_to_tray</td>
+<tr class="row-even"><td>start_minimized_to_tray</td>
 <td></td>
 <td>server</td>
 <td>Start the HPX GUI in a minimized to tray state</td>
 </tr>
-<tr class="row-even"><td>start_on_boot</td>
+<tr class="row-odd"><td>start_on_boot</td>
 <td></td>
 <td>server</td>
 <td>Start HPX GUI automatically on boot</td>
@@ -370,16 +404,16 @@
 <col width="25%" />
 </colgroup>
 <thead valign="bottom">
-<tr class="row-odd"><th class="head" colspan="4">network</th>
+<tr class="row-even"><th class="head" colspan="4">network</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td>proxy</td>
-<td>{‘https’: ‘’, ‘http’: ‘’}</td>
+<tr class="row-odd"><td>proxy</td>
+<td>{‘http’: ‘’, ‘https’: ‘’}</td>
 <td>server</td>
 <td>Specify network proxies. Proxy URLs must include the scheme. To use HTTP Basic Auth with your proxy, use the http://user:password&#64;host/ syntax</td>
 </tr>
-<tr class="row-odd"><td>request_timeout</td>
+<tr class="row-even"><td>request_timeout</td>
 <td>30</td>
 <td>server</td>
 <td>Upper limit of a request timeout in seconds</td>
@@ -392,31 +426,58 @@
 <col width="25%" />
 </colgroup>
 <thead valign="bottom">
-<tr class="row-even"><th class="head" colspan="4">search</th>
+<tr class="row-odd"><th class="head" colspan="4">plugin</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-odd"><td>case_sensitive</td>
+<tr class="row-even"><td>auto_install_plugin</td>
+<td></td>
+<td>server</td>
+<td>Automatically install a discovered plugin</td>
+</tr>
+<tr class="row-odd"><td>auto_install_plugin_dependency</td>
+<td>True</td>
+<td>server</td>
+<td>Automatically install a plugin’s dependencies when installing a plugin</td>
+</tr>
+<tr class="row-even"><td>plugin_dir</td>
+<td></td>
+<td>server</td>
+<td>Additional optional plugin directory to look for plugins</td>
+</tr>
+</tbody>
+<colgroup>
+<col width="25%" />
+<col width="25%" />
+<col width="25%" />
+<col width="25%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head" colspan="4">search</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>case_sensitive</td>
 <td></td>
 <td>server</td>
 <td>Search filter is case sensitive</td>
 </tr>
-<tr class="row-even"><td>descendants</td>
+<tr class="row-odd"><td>descendants</td>
 <td>True</td>
 <td>server</td>
 <td>Also match on descandants</td>
 </tr>
-<tr class="row-odd"><td>match_all_terms</td>
+<tr class="row-even"><td>match_all_terms</td>
 <td>True</td>
 <td>server</td>
 <td>Match only items that has all terms</td>
 </tr>
-<tr class="row-even"><td>match_whole_words</td>
+<tr class="row-odd"><td>match_whole_words</td>
 <td></td>
 <td>server</td>
 <td>Match terms exact</td>
 </tr>
-<tr class="row-odd"><td>regex</td>
+<tr class="row-even"><td>regex</td>
 <td></td>
 <td>server</td>
 <td>Allow regex in search filters</td>
@@ -429,86 +490,86 @@
 <col width="25%" />
 </colgroup>
 <thead valign="bottom">
-<tr class="row-even"><th class="head" colspan="4">server</th>
+<tr class="row-odd"><th class="head" colspan="4">server</th>
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-odd"><td>allow_guests</td>
+<tr class="row-even"><td>allow_guests</td>
 <td>True</td>
 <td>server</td>
 <td>Specify if guests are allowed on this server</td>
 </tr>
-<tr class="row-even"><td>allowed_clients</td>
+<tr class="row-odd"><td>allowed_clients</td>
 <td></td>
 <td>server</td>
 <td>Limit amount of clients allowed to be connected (0 means no limit)</td>
 </tr>
-<tr class="row-odd"><td>disable_default_user</td>
+<tr class="row-even"><td>disable_default_user</td>
 <td></td>
 <td>server</td>
 <td>Disable default user</td>
 </tr>
-<tr class="row-even"><td>enable_ssl</td>
+<tr class="row-odd"><td>enable_ssl</td>
 <td></td>
 <td>server</td>
 <td>Enable SSL, valid values are true/false or “server”/”web” to only enable for the specific component</td>
 </tr>
-<tr class="row-odd"><td>expose_server</td>
+<tr class="row-even"><td>expose_server</td>
 <td></td>
 <td>server</td>
 <td>Attempt to expose the server through portforwading</td>
 </tr>
-<tr class="row-even"><td>host</td>
+<tr class="row-odd"><td>host</td>
 <td>localhost</td>
 <td>server</td>
 <td>Specify which address the server should bind to</td>
 </tr>
-<tr class="row-odd"><td>host_web</td>
+<tr class="row-even"><td>host_web</td>
 <td></td>
 <td>server</td>
 <td>Specify which address the webserver should bind to</td>
 </tr>
-<tr class="row-even"><td>port</td>
+<tr class="row-odd"><td>port</td>
 <td>7007</td>
 <td>server</td>
 <td>Specify which port to start the server on</td>
 </tr>
-<tr class="row-odd"><td>port_range</td>
-<td>{‘to’: 7018, ‘from’: 7009}</td>
+<tr class="row-even"><td>port_range</td>
+<td>{‘from’: 7009, ‘to’: 7018}</td>
 <td>server</td>
 <td>Specify a range of ports to attempt</td>
 </tr>
-<tr class="row-even"><td>port_web</td>
+<tr class="row-odd"><td>port_web</td>
 <td>7008</td>
 <td>server</td>
 <td>Specify which port to start the webserver on</td>
 </tr>
-<tr class="row-odd"><td>require_auth</td>
+<tr class="row-even"><td>require_auth</td>
 <td></td>
 <td>server</td>
 <td>Client must be authenticated to get write access</td>
 </tr>
-<tr class="row-even"><td>server_cert</td>
+<tr class="row-odd"><td>server_cert</td>
 <td>{‘certfile’: None, ‘keyfile’: None}</td>
 <td>server</td>
 <td>Path to a certificate and the corresponding private key. If keyfile is not set, the private key will be taken from certfile. Note that if SSL is enabled and no cert files are provided, a self-signed certificate will be created and used instead. The self-signed certificate can be found at data/certs/</td>
 </tr>
-<tr class="row-odd"><td>server_name</td>
-<td>naoka_naoka_kouko</td>
+<tr class="row-even"><td>server_name</td>
+<td>eri_rias_momo</td>
 <td>server</td>
 <td>Specifiy name of the server</td>
 </tr>
-<tr class="row-even"><td>session_span</td>
+<tr class="row-odd"><td>session_span</td>
 <td></td>
 <td>server</td>
 <td>Specify the amount of time (in minutes) a session can go unused before expiring or 0 for never</td>
 </tr>
-<tr class="row-odd"><td>torrent_port</td>
+<tr class="row-even"><td>torrent_port</td>
 <td>7006</td>
 <td>server</td>
 <td>Specify which port to start the torrent client on</td>
 </tr>
-<tr class="row-even"><td>web_cert</td>
+<tr class="row-odd"><td>web_cert</td>
 <td>{‘certfile’: None, ‘keyfile’: None}</td>
 <td>server</td>
 <td>Same as server_cert. Values are inherited from server_cert If no values are provided and SSL is enabled for ‘web’ too</td>
@@ -531,15 +592,11 @@
       
         <br/>
         
-<div id="sourcelink">
-  <a href="_sources/settings.rst.txt"
-     rel="nofollow">Source</a>
-</div>
       
     </p>
     <p>
         &copy; Copyright Twiddly.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.2.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.4.<br/>
     </p>
   </div>
 </footer>

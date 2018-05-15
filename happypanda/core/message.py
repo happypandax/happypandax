@@ -10,7 +10,7 @@ import itertools
 from datetime import datetime
 
 from happypanda.common import constants, exceptions, utils, hlogger, config
-from happypanda.core import db
+from happypanda.core import db, plugins
 from happypanda.core.commands import io_cmd
 
 log = hlogger.Logger(constants.log_ns_server + __name__)
@@ -556,6 +556,34 @@ class Function(CoreMessage):
     def data(self):
         d = self._data.json_friendly(include_key=False) if self._data else None
         return {'fname': self.name, 'data': d}
+
+    def from_json(self, j):
+        return super().from_json(j)
+
+class Plugin(CoreMessage):
+    "A plugin message"
+
+    def __init__(self, node):
+        super().__init__('plugin')
+        assert isinstance(node, plugins.PluginNode)
+        self.node = node
+
+    def _node_data(self, node):
+        return {'id':node.info.id,
+                'name': node.info.name,
+                'shortname': node.info.shortname,
+                'version': node.info.version.public,
+                'author': node.info.author,
+                'description': node.info.description,
+                'website': node.info.get('website', ''),
+                'state': node.state.value,
+                'status': node.status
+                }
+
+    def data(self):
+        d = self._node_data(self.node)
+        d['require'] = [self._node_data(x) for x in self.node.dependencies]
+        return d
 
     def from_json(self, j):
         return super().from_json(j)

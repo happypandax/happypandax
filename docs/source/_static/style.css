@@ -52,3 +52,7 @@ code {
 body {
     font-size: 11pt;
 }
+
+.alert-info {
+    background-color: #20c8f1;
+}

@@ -1679,7 +1679,7 @@ def _get_current():
 
 def make_db_url(db_name=None):
     if db_name is None:
-        db_name = constants.db_name_dev if constants.dev and config.db_name.value == constants.db_name else config.db_name.value
+        db_name = constants.db_name_dev if constants.dev_db and config.db_name.value == constants.db_name else config.db_name.value
     db_url = URL(
         config.dialect.value,
         username=config.db_username.value,
@@ -1695,7 +1695,7 @@ def make_db_url(db_name=None):
 def init(**kwargs):
     db_path = kwargs.get("path")
     if not db_path:
-        db_path = constants.db_path_dev if constants.dev else constants.db_path
+        db_path = constants.db_path_dev if constants.dev_db else constants.db_path
     Session = scoped_session(sessionmaker(), scopefunc=_get_current)
     constants._db_scoped_session = Session
     constants.db_session = functools.partial(_get_session, Session)

@@ -8,7 +8,7 @@ from apscheduler.schedulers.gevent import GeventScheduler
 from cachetools import LRUCache
 
 from happypanda.common import hlogger, constants, config
-from happypanda.core import command, async, db
+from happypanda.core import command, async_utils, db
 
 log = hlogger.Logger(constants.log_ns_command + __name__)
 
@@ -281,8 +281,8 @@ class AsyncService(Service):
         assert isinstance(cmd_id, int)
         gevent.idle(constants.Priority.Normal.value)
         if cmd_id not in self._greenlets:
-            self._greenlets[cmd_id] = async.Greenlet(
-                db.cleanup_session_wrap(self._commands[cmd_id]._run), *args, **kwargs)
+            self._greenlets[cmd_id] = async_utils.Greenlet(
+                 db.cleanup_session_wrap(self._commands[cmd_id]._run), *args, **kwargs)
 
         green = self._greenlets[cmd_id]
 

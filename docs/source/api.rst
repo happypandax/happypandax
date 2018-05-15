@@ -1,17 +1,11 @@
 Server API
 ========================================
 
-.. automodule:: happypanda.interface.enums
-   :members:
-
-**Asynchronous command states**:
-
-.. autoclass:: happypanda.core.command.CommandState
-   :members:
-
 Functions
 ----------------------------------------
 
+These are errors that HPX may raise.
+Any error raised not on this list is an *unhandled exception*.
 
 .. automodule:: happypanda.interface.meta
    :members:

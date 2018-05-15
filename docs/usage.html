@@ -58,9 +58,8 @@
       role="menu"
       aria-labelledby="dLabelGlobalToc"><ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="install.html#building">Building</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Using HappyPanda X</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#securing-happypanda-x">Securing Happypanda X</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#securing-happypanda-x">Securing HappyPanda X</a></li>
 <li class="toctree-l1"><a class="reference internal" href="#exposing-happypanda-x">Exposing HappyPanda X</a></li>
 <li class="toctree-l1"><a class="reference internal" href="translation.html">Translations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="settings.html">Settings</a></li>
@@ -158,7 +157,7 @@
 <li><a class="reference internal" href="#using">Using</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#securing-happypanda-x">Securing Happypanda X</a><ul>
+<li><a class="reference internal" href="#securing-happypanda-x">Securing HappyPanda X</a><ul>
 <li><a class="reference internal" href="#users">Users</a></li>
 <li><a class="reference internal" href="#tls-ssl-support">TLS/SSL Support</a></li>
 </ul>
@@ -193,7 +192,7 @@ It should be started automatically on server start.</p>
 </ul>
 <div class="section" id="setting-up">
 <h2>Setting up<a class="headerlink" href="#setting-up" title="Permalink to this headline">¶</a></h2>
-<p>Before starting HPX it is recommended to to go through all the available settings that configure how HPX should be running.
+<p>Before starting HPX it is recommended to go through all the available settings that configure how HPX should be running.
 You can see the available settings <a class="reference internal" href="settings.html#settings"><span class="std std-ref">here</span></a>.</p>
 <p>To use these settings, you create a configuration file named <code class="docutils literal notranslate"><span class="pre">config.yaml</span></code> in the root directory of HPX.</p>
 <p>You can generate an example configuration file with all settings listed with their default values if you run this command: <code class="docutils literal notranslate"><span class="pre">./happypandax</span> <span class="pre">--gen-config</span></code>.</p>
@@ -208,9 +207,9 @@ You can see the available settings <a class="reference internal" href="settings.
 </div>
 <div class="section" id="starting">
 <h2>Starting<a class="headerlink" href="#starting" title="Permalink to this headline">¶</a></h2>
-<p>You can start up HPX in two ways with the executables named <code class="docutils literal notranslate"><span class="pre">happypandax</span></code> and <code class="docutils literal notranslate"><span class="pre">happypandax_gui</span></code>.</p>
-<p>The <cite>happypandax_gui</cite> executable is mostly just a GUI wrapper around <code class="docutils literal notranslate"><span class="pre">happypandax</span></code> to provide a user-friendly way of starting HPX.</p>
-<p>Before starting, you can also see the available command-line arguments by supplying the <code class="docutils literal notranslate"><span class="pre">--help</span></code> argument to the <cite>happypandax</cite> executable on the cmd/terminal: <code class="docutils literal notranslate"><span class="pre">./happypandax</span> <span class="pre">--help</span></code>.
+<p>You can start up HPX in two ways with the executables named <strong class="program">happypandax</strong> and <strong class="program">happypandax_gui</strong>.</p>
+<p>The <strong class="program">happypandax_gui</strong> executable is mostly just a GUI wrapper around <strong class="program">happypandax</strong> to provide a user-friendly way of starting HPX.</p>
+<p>Before starting, you can also see the available command-line arguments by supplying the <code class="docutils literal notranslate"><span class="pre">--help</span></code> argument to the <code class="docutils literal notranslate"><span class="pre">happypandax</span></code> executable on the cmd/terminal: <code class="docutils literal notranslate"><span class="pre">./happypandax</span> <span class="pre">--help</span></code>.
 You could also refer to <a class="reference internal" href="switches.html#command-line-arguments"><span class="std std-ref">Command-Line Arguments</span></a>.</p>
 <p>To start the server (and the webclient with it) you just start one of the two executables.</p>
 <div class="admonition note">
@@ -223,11 +222,11 @@ You could also refer to <a class="reference internal" href="switches.html#comman
 <p>In the HPX root folder, you can find a command-line tool named <code class="docutils literal notranslate"><span class="pre">HPtoHPX</span></code> to help convert your HP database.
 See available arguments by supplying the <code class="docutils literal notranslate"><span class="pre">--help</span></code> argument to the executable: <code class="docutils literal notranslate"><span class="pre">./HPtoHPX</span> <span class="pre">--help</span></code>.</p>
 <p>Convert your HP database like this: <code class="docutils literal notranslate"><span class="pre">./HPtoHPX</span> <span class="pre">&quot;path/to/old/file.db&quot;</span> <span class="pre">&quot;data/happypanda.db&quot;</span></code></p>
-<p>Alternatively, you can also use the GUI wrapper <code class="docutils literal notranslate"><span class="pre">happypandax_gui</span></code> which provides a user-friendly way of doing it.</p>
+<p>Alternatively, you can also use the GUI wrapper <strong class="program">happypandax_gui</strong> which provides a user-friendly way of doing it.</p>
 </div>
 <div class="section" id="using">
 <h2>Using<a class="headerlink" href="#using" title="Permalink to this headline">¶</a></h2>
-<p>If you started HPX, you can start using HPX right away by opening up your browser and going to
+<p>After starting HPX you can start using it right away by opening up your browser and going to
 <code class="docutils literal notranslate"><span class="pre">localhost:7008</span></code> <em>(replace ``7008`` with whatever port you chose the webclient server to listen on)</em></p>
 <p>What else you could do is look for another client to use HPX with. They can come in all forms (mobile apps, pc software, etc.) as long as someone builds it.
 If you’re interested in building a client to work with HPX, head over to <a class="reference internal" href="client.html#creating-frontends"><span class="std std-ref">Creating frontends</span></a> for an introduction.</p>
@@ -235,11 +234,11 @@ If you’re interested in building a client to work with HPX, head over to <a cl
 </div>
 </div>
 <div class="section" id="securing-happypanda-x">
-<h1>Securing Happypanda X<a class="headerlink" href="#securing-happypanda-x" title="Permalink to this headline">¶</a></h1>
+<h1>Securing HappyPanda X<a class="headerlink" href="#securing-happypanda-x" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="users">
 <h2>Users<a class="headerlink" href="#users" title="Permalink to this headline">¶</a></h2>
 <p>HPX creates a default super-user called <code class="docutils literal notranslate"><span class="pre">default</span></code> with no password. This user is enabled by default.
-If you’re planning on having multiple people accessing your HPX server or you want to access the server from a remote origin, it is best
+If you’re planning on having multiple people accessing your HPX server, or you want to access the server from a remote origin over the internet, it is best
 you disable this user. Disable it with the setting <code class="docutils literal notranslate"><span class="pre">server.disable_default_user</span></code>.</p>
 <p>Additionally, you may also want to disallow people accessing the server without logging in with the settings <code class="docutils literal notranslate"><span class="pre">server.allow_guests</span></code> and <code class="docutils literal notranslate"><span class="pre">server.require_auth</span></code>.</p>
 </div>
@@ -252,7 +251,7 @@ Set the value to <code class="docutils literal notranslate"><span class="pre">tr
 If your private key and certificate is stored in the same file, you only need to set <code class="docutils literal notranslate"><span class="pre">certfile</span></code> and can ignore <code class="docutils literal notranslate"><span class="pre">keyfile</span></code>.</p>
 <p>You can also choose to not provide any certfiles at all, in which case HPX will proceed to create a self-signed certificate for your personal use.
 These files can be found at <code class="docutils literal notranslate"><span class="pre">[HPX]/data/certs/</span></code>. <code class="docutils literal notranslate"><span class="pre">happypandax.crt</span></code> is the certificate, <code class="docutils literal notranslate"><span class="pre">happypandax.key</span></code> is the private key and <code class="docutils literal notranslate"><span class="pre">happypandax.pem</span></code> is the combined version of the two.
-To get other clients to accept your server with the self-signed certificate, provide them with <code class="docutils literal notranslate"><span class="pre">happypandax.crt</span></code>.</p>
+To get other clients to accept your server with the self-signed certificate, provide them with the <code class="docutils literal notranslate"><span class="pre">happypandax.crt</span></code> file.</p>
 <p>When using the self-signed certificate, browsers will complain about an unsecure connection. Since you’re using HPX for personal reasons and trust yourself (i hope so), you can go
 ahead and allow the connection by adding an exception.</p>
 <div class="admonition note">
@@ -292,15 +291,11 @@ ahead and allow the connection by adding an exception.</p>
       
         <br/>
         
-<div id="sourcelink">
-  <a href="_sources/usage.rst.txt"
-     rel="nofollow">Source</a>
-</div>
       
     </p>
     <p>
         &copy; Copyright Twiddly.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.2.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.4.<br/>
     </p>
   </div>
 </footer>

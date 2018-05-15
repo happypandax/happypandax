@@ -1,9 +1,6 @@
 Server API
 ========================================
 
-.. automodule:: happypanda.interface.enums
-   :members:
-
 Functions
 ----------------------------------------
 

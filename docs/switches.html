@@ -58,9 +58,8 @@
       role="menu"
       aria-labelledby="dLabelGlobalToc"><ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="install.html#building">Building</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Using HappyPanda X</a></li>
-<li class="toctree-l1"><a class="reference internal" href="usage.html#securing-happypanda-x">Securing Happypanda X</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html#securing-happypanda-x">Securing HappyPanda X</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html#exposing-happypanda-x">Exposing HappyPanda X</a></li>
 <li class="toctree-l1"><a class="reference internal" href="translation.html">Translations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="settings.html">Settings</a></li>
@@ -170,7 +169,7 @@
 <span class="go">                              [--web-host WEB_HOST] [--gen-config]</span>
 <span class="go">                              [--create-user] [--delete-user USERNAME]</span>
 <span class="go">                              [--list-users [PAGE]] [-d] [-i] [-v] [--safe]</span>
-<span class="go">                              [-x] [--only-web] [--momo ...]</span>
+<span class="go">                              [-x] [--dev-db] [--only-web] [--momo ...]</span>
 </pre></div>
 </div>
 <dl class="option">
@@ -260,7 +259,13 @@
 <dl class="option">
 <dt id="cmdoption-command-line-arguments-x">
 <code class="descname">-x</code><code class="descclassname"></code><code class="descclassname">, </code><code class="descname">--dev</code><code class="descclassname"></code><a class="headerlink" href="#cmdoption-command-line-arguments-x" title="Permalink to this definition">¶</a></dt>
-<dd><p>Start in development mode</p>
+<dd><p>Start in development mode (redirects logging to stdout)</p>
+</dd></dl>
+
+<dl class="option">
+<dt id="cmdoption-command-line-arguments-dev-db">
+<code class="descname">--dev-db</code><code class="descclassname"></code><a class="headerlink" href="#cmdoption-command-line-arguments-dev-db" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create and use a development database</p>
 </dd></dl>
 
 <dl class="option">
@@ -272,7 +277,7 @@
 <dl class="option">
 <dt id="cmdoption-command-line-arguments-momo">
 <code class="descname">--momo</code><code class="descclassname"> &lt;momo&gt;</code><a class="headerlink" href="#cmdoption-command-line-arguments-momo" title="Permalink to this definition">¶</a></dt>
-<dd><p>Reserved (Momo best girl)</p>
+<dd><p>Reserved for best girl Momo</p>
 </dd></dl>
 
 </div>
@@ -291,15 +296,11 @@
       
         <br/>
         
-<div id="sourcelink">
-  <a href="_sources/switches.rst.txt"
-     rel="nofollow">Source</a>
-</div>
       
     </p>
     <p>
         &copy; Copyright Twiddly.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.2.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.4.<br/>
     </p>
   </div>
 </footer>

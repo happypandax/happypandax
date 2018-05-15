@@ -18,7 +18,7 @@ A default HPX installation has the following two components:
 Setting up
 -------------------------------------
 
-Before starting HPX it is recommended to to go through all the available settings that configure how HPX should be running.
+Before starting HPX it is recommended to go through all the available settings that configure how HPX should be running.
 You can see the available settings :ref:`here <Settings>`.
 
 To use these settings, you create a configuration file named ``config.yaml`` in the root directory of HPX.
@@ -35,11 +35,11 @@ Most of these settings can also be configured from a HPX client.
 Starting
 -------------------------------------
 
-You can start up HPX in two ways with the executables named ``happypandax`` and ``happypandax_gui``.
+You can start up HPX in two ways with the executables named :program:`happypandax` and :program:`happypandax_gui`.
 
-The `happypandax_gui` executable is mostly just a GUI wrapper around ``happypandax`` to provide a user-friendly way of starting HPX.
+The :program:`happypandax_gui` executable is mostly just a GUI wrapper around :program:`happypandax` to provide a user-friendly way of starting HPX.
 
-Before starting, you can also see the available command-line arguments by supplying the ``--help`` argument to the `happypandax` executable on the cmd/terminal: ``./happypandax --help``.
+Before starting, you can also see the available command-line arguments by supplying the ``--help`` argument to the ``happypandax`` executable on the cmd/terminal: ``./happypandax --help``.
 You could also refer to :ref:`Command-Line Arguments`. 
 
 To start the server (and the webclient with it) you just start one of the two executables.
@@ -56,12 +56,12 @@ See available arguments by supplying the ``--help`` argument to the executable: 
 
 Convert your HP database like this: ``./HPtoHPX "path/to/old/file.db" "data/happypanda.db"``
 
-Alternatively, you can also use the GUI wrapper ``happypandax_gui`` which provides a user-friendly way of doing it.
+Alternatively, you can also use the GUI wrapper :program:`happypandax_gui` which provides a user-friendly way of doing it.
 
 Using
 -------------------------------------
 
-If you started HPX, you can start using HPX right away by opening up your browser and going to 
+After starting HPX you can start using it right away by opening up your browser and going to 
 ``localhost:7008`` *(replace ``7008`` with whatever port you chose the webclient server to listen on)*
 
 What else you could do is look for another client to use HPX with. They can come in all forms (mobile apps, pc software, etc.) as long as someone builds it.
@@ -70,14 +70,14 @@ If you're interested in building a client to work with HPX, head over to :ref:`C
 Since a HPX client cannot function without the server running, it is a good idea to always leave the HPX server running in the background.
 
 
-Securing Happypanda X
+Securing HappyPanda X
 ========================================
 
 Users
 -------------------------------------
 
 HPX creates a default super-user called ``default`` with no password. This user is enabled by default.
-If you're planning on having multiple people accessing your HPX server or you want to access the server from a remote origin, it is best
+If you're planning on having multiple people accessing your HPX server, or you want to access the server from a remote origin over the internet, it is best
 you disable this user. Disable it with the setting ``server.disable_default_user``.
 
 Additionally, you may also want to disallow people accessing the server without logging in with the settings ``server.allow_guests`` and ``server.require_auth``.
@@ -94,7 +94,7 @@ If your private key and certificate is stored in the same file, you only need to
 
 You can also choose to not provide any certfiles at all, in which case HPX will proceed to create a self-signed certificate for your personal use.
 These files can be found at ``[HPX]/data/certs/``. ``happypandax.crt`` is the certificate, ``happypandax.key`` is the private key and ``happypandax.pem`` is the combined version of the two.
-To get other clients to accept your server with the self-signed certificate, provide them with ``happypandax.crt``.
+To get other clients to accept your server with the self-signed certificate, provide them with the ``happypandax.crt`` file.
 
 When using the self-signed certificate, browsers will complain about an unsecure connection. Since you're using HPX for personal reasons and trust yourself (i hope so), you can go
 ahead and allow the connection by adding an exception.

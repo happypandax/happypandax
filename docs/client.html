@@ -58,9 +58,8 @@
       role="menu"
       aria-labelledby="dLabelGlobalToc"><ul>
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="install.html#building">Building</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Using HappyPanda X</a></li>
-<li class="toctree-l1"><a class="reference internal" href="usage.html#securing-happypanda-x">Securing Happypanda X</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html#securing-happypanda-x">Securing HappyPanda X</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html#exposing-happypanda-x">Exposing HappyPanda X</a></li>
 <li class="toctree-l1"><a class="reference internal" href="translation.html">Translations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="settings.html">Settings</a></li>
@@ -171,7 +170,7 @@
 <h1>Creating frontends<a class="headerlink" href="#creating-frontends" title="Permalink to this headline">¶</a></h1>
 <p>HPX exposes an RPC interface over TCP making it possible to create a client in any programming language.</p>
 <p>For exchanging data between the server and client <code class="docutils literal notranslate"><span class="pre">JSON</span></code> is used. Make sure you’re familiar with <code class="docutils literal notranslate"><span class="pre">JSON</span></code> and its datatypes.</p>
-<p>Before wanting to talk to a HPX server, make sure you have one running. See <a class="reference internal" href="usage.html#setting-up"><span class="std std-ref">Setting up</span></a> or <a class="reference internal" href="env.html#setting-up-an-environment"><span class="std std-ref">Setting up an environment</span></a> on how to get one up and running.</p>
+<p>Before wanting to talk to a HPX server, make sure you have one running. Note that there’s no need to run HPX from source if you just want to create a client.</p>
 <p>It is recommended that you run the server with the <code class="docutils literal notranslate"><span class="pre">--debug</span></code> and <code class="docutils literal notranslate"><span class="pre">--dev</span></code> commandline switches so that you can see what’s going on while you’re connected.
 See <a class="reference internal" href="switches.html#command-line-arguments"><span class="std std-ref">Command-Line Arguments</span></a>.</p>
 <div class="section" id="exchanging-messages">
@@ -329,7 +328,7 @@ This message should thus always be consumed when connecting with additional sock
 </div>
 <div class="section" id="calling-a-function">
 <h2>Calling a function<a class="headerlink" href="#calling-a-function" title="Permalink to this headline">¶</a></h2>
-<p>Now that you’ve perfomed a successful handshake, you can start using the <a class="reference internal" href="api.html#module-happypanda.interface.enums"><span class="std std-ref">Server API</span></a>.</p>
+<p>Now that you’ve perfomed a successful handshake, you can start using the <a class="reference internal" href="api.html#server-api"><span class="std std-ref">Server API</span></a>.</p>
 <p>A <em>function-call</em> object in its simplest looks like this:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
     <span class="s2">&quot;fname&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span>
@@ -410,7 +409,7 @@ the <code class="docutils literal notranslate"><span class="pre">error</span></c
 </div>
 <div class="section" id="server-commands">
 <h2>Server commands<a class="headerlink" href="#server-commands" title="Permalink to this headline">¶</a></h2>
-<p>The server implements server commands to control the server remotely: <a class="reference internal" href="api.html#happypanda.interface.enums.ServerCommand" title="happypanda.interface.enums.ServerCommand"><code class="xref py py-class docutils literal notranslate"><span class="pre">ServerCommand</span></code></a></p>
+<p>The server implements server commands to control the server remotely: <a class="reference internal" href="api_general.html#happypanda.interface.enums.ServerCommand" title="happypanda.interface.enums.ServerCommand"><code class="xref py py-class docutils literal notranslate"><span class="pre">ServerCommand</span></code></a></p>
 <p>Server commands are invoked like this (this is the whole payload):</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
     <span class="s2">&quot;session&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
@@ -419,7 +418,7 @@ the <code class="docutils literal notranslate"><span class="pre">error</span></c
 <span class="p">}</span>
 </pre></div>
 </div>
-<p>For example, if we want to shut down the server we use the <a class="reference internal" href="api.html#happypanda.interface.enums.ServerCommand.ServerQuit" title="happypanda.interface.enums.ServerCommand.ServerQuit"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ServerCommand.ServerQuit</span></code></a> command:</p>
+<p>For example, if we want to shut down the server we use the <a class="reference internal" href="api_general.html#happypanda.interface.enums.ServerCommand.ServerQuit" title="happypanda.interface.enums.ServerCommand.ServerQuit"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ServerCommand.ServerQuit</span></code></a> command:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
     <span class="s2">&quot;session&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
     <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;clientname&quot;</span><span class="p">,</span>
@@ -462,15 +461,11 @@ the <code class="docutils literal notranslate"><span class="pre">error</span></c
       
         <br/>
         
-<div id="sourcelink">
-  <a href="_sources/client.rst.txt"
-     rel="nofollow">Source</a>
-</div>
       
     </p>
     <p>
         &copy; Copyright Twiddly.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.2.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.4.<br/>
     </p>
   </div>
 </footer>

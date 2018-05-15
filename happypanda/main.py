@@ -25,7 +25,7 @@ import getpass  # noqa: E402
 from multiprocessing import Process  # noqa: E402
 from apscheduler.triggers.interval import IntervalTrigger  # noqa: E402
 from happypanda.common import utils, constants, hlogger, config, exceptions  # noqa: E402
-from happypanda.core import server, plugins, command, services, db, async  # noqa: E402
+from happypanda.core import server, plugins, command, services, db, async_utils  # noqa: E402
 from happypanda.core.commands import io_cmd, meta_cmd  # noqa: E402
 
 log = hlogger.Logger(__name__)
@@ -106,7 +106,7 @@ def cmd_commands(args):
 
 
 def start(argv=None, db_kwargs={}):
-    assert sys.version_info >= (3, 5), "Python 3.5 and up is required"
+    assert sys.version_info >= (3, 6), "Python 3.6 and up is required"
     e_code = None
     e_num = 0
     try:
@@ -120,8 +120,8 @@ def start(argv=None, db_kwargs={}):
         if not args.only_web:
             db_inited = db.init(**db_kwargs)
             command.init_commands()
-            monkey.patch_all(thread=False, ssl=False, select=False)
-            async.patch_psycopg()
+            monkey.patch_all(thread=False, ssl=False)
+            async_utils.patch_psycopg()
         else:
             db_inited = True
 
@@ -153,10 +153,12 @@ def start(argv=None, db_kwargs={}):
 
                 services.init_generic_services()
 
+                constants.plugin_manager = plugins.PluginManager()
+
                 if not args.safe:
-                    plugins.plugin_loader(constants.dir_plugin)
-                else:
-                    plugins.registered.init_plugins()
+                    plugins.plugin_loader(constants.plugin_manager, constants.dir_plugin)
+                    if config.plugin_dir.value:
+                        plugins.plugin_loader(constants.plugin_manager, config.plugin_dir.value)
 
             constants.notification = server.ClientNotifications()
 

@@ -1,8 +1,11 @@
 Plugin API
 ========================================
 
-Methods
+Interface
 ----------------------------------------
+.. automodule:: happypanda.core.plugin_interface
+   :members:
 
 Commands
 ----------------------------------------
+

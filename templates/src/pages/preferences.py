@@ -337,6 +337,18 @@ def pref_advanced(props):
                              onChange=lambda e, d: props.upd("core.allow_alpha_releases", d.checked),
                              ))
                          )
+    if state.debug:
+        items.append(e(ui.Form.Field,
+                e(ui.Checkbox,
+                    toggle=True,
+                    label=tr(
+                        props.tab,
+                        "ui.t-ping-for-notifications",
+                        "Ping for notifications"),
+                    defaultChecked=utils.storage.get("ping_for_notifications", True),
+                    onChange=lambda e, d: utils.storage.set("ping_for_notifications", d.checked),
+                    ))
+                )
 
     return e(PrefSegment, *items, props=props)
 
