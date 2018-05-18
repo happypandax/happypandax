@@ -16,7 +16,7 @@ send2trash==1.5.0
 PyQt5==5.10.1
 QtAwesome==0.4.4
 psutil==5.4.5
-rollbar==0.13.18
+rollbar==0.14.0
 CacheControl==0.12.4
 attrs==17.4.0
 requests==2.18.4
@@ -25,6 +25,6 @@ APScheduler==3.5.1
 cachetools==2.0.1
 treelib==1.5.1
 regex==2018.02.21
-pyopenssl==17.5.0
+pyOpenSSL==18.0.0
 psycopg2==2.7.4
 packaging==17.1
