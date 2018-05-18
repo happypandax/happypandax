@@ -20,11 +20,28 @@ def get_changelog():
     """
     Get the changelog in markdown formatted text
     The changelog returned is for the current release or a new update
+
+    Returns:
+
+        .. code-block:: guess
+
+            {
+                'version': str,
+                'changes': str
+            }
+
+    .. seealso::
+
+        :func:`.check_update`
+
     """
-    ch = ""
+
+    ch = {'version': '', 'changes':''}
     lr = constants.internaldb.latest_release.get()
     if lr:
-        ch = lr.get("changes", "")
+        ch['changes'] = lr.get("changes", "")
+        ch['version'] = lr.get("tag", "")
+
     return message.Identity("changelog", ch)
 
 def get_locales():
@@ -121,6 +138,11 @@ def check_update(push: bool = False):
             }
 
         or ``null``
+
+    .. seealso::
+
+        :func:`.get_changelog` -- when a new update is found, its changelog is immediately available here
+
     """
 
     upd = meta_cmd.CheckUpdate(AsyncService.generic).run(force=True, push=push)

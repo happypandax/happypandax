@@ -205,8 +205,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
              )
 
 def about_changelog(props):
+    els = []
+
+    if props.changelog.version:
+        els.append(e(ui.Grid.Row, e(ui.Header, props.changelog['version'])))
+
+    if props.changelog.changes:
+        els.append(e(ui.Grid.Row, dangerouslySetInnerHTML={'__html': utils.marked(props.changelog.changes)}))
+
+
     return e(ui.Grid,
-             e(ui.Grid.Row, dangerouslySetInnerHTML={'__html': utils.marked(props.changelog)}),
+             *els,
              divided="vertically",
              container=True,
              )
@@ -273,7 +282,7 @@ def abouttab_get_changelog(data=None, error=None):
     elif error:
         state.app.notif("Failed to get changelog", level="warning")
     else:
-        client.call_func("get_changelog")
+        client.call_func("get_changelog", this.get_changelog)
 
 
 __pragma__("notconv")
@@ -322,7 +331,7 @@ AboutTab = createReactClass({
 
     'getInitialState': lambda: {
         'plugins': [],
-        'changelog': '',
+        'changelog': {'changes':'', 'version':''},
         'version': {},
         'update_msg': {},
         'update_checking': False,
