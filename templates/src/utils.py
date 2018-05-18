@@ -8,6 +8,7 @@ Date = None
 __pragma__('noskip')
 
 query_string = require("query-string")
+marked = require("marked")
 moment = require("moment")
 isEqual = require('lodash/isEqual')
 stringify = require('json-stable-stringify')

@@ -11,6 +11,7 @@ from src.react_utils import (h,
                              )
 from src.ui import ui, Alert, Notif, TitleChange
 from src.nav import (sidebar, menu)
+from src.i18n import tr
 from src.pages import (api, collection, gallery,
                        dashboard, favorites, inbox,
                        library, page, directory,
@@ -137,12 +138,14 @@ def server_notifications(data=js_undefined, error=None):
             else:
                 tmout = 20000
                 ic = "info"
+                msg = data['body']
                 if data['id'] in (PushID.Update,):
                     tmout = tmout * 1.5
                     ic = "angle double up"
                     if state.history:
                         utils.go_to(state.history, "/activity")
-                this.notif(data['body'], data['title'], icon=ic, timeout=tmout)
+                    this.notif(tr(None, "ui.t-changelog-location", "About -> Changelog"), data['title'], icon=ic, timeout=tmout)
+                this.notif(msg, data['title'], icon=ic, timeout=tmout)
     elif error:
         this.notif("Failed to retrieve server notification", level="warning")
     else:
@@ -177,6 +180,7 @@ def app_will_mount():
 
 
 def app_did_mount():
+    tr(None, "ui.t-changelog-location", "")
     utils.interval_func(this.server_notifications, 5000)
     document.body.appendChild(this.state.portal_el)
 
@@ -232,9 +236,14 @@ def app_render():
             server_push_actions_el.append(e(ui.Modal.Actions, *server_push_actions))
 
         modal_els = []
+        server_push_msg = dict(this.state.server_push_msg)
+        push_body = server_push_msg.get("body", '')
+        if server_push_msg['id'] in (PushID.Update,):
+            push_body = tr(None, "ui.t-changelog-location", "About -> Changelog") + '\n' + push_body
+
         modal_els.append(e(ui.Modal,
-                           e(ui.Modal.Header, dict(this.state.server_push_msg).get("title", '')),
-                           e(ui.Modal.Content, dict(this.state.server_push_msg).get("body", '')),
+                           e(ui.Modal.Header, server_push_msg.get("title", '')),
+                           e(ui.Modal.Content, push_body, style={"whiteSpace": "pre-wrap"}),
                            *server_push_actions_el,
                            onClose=this.server_push_close,
                            open=this.state.server_push, dimmer="inverted", closeIcon=True)
@@ -339,6 +348,7 @@ App = createReactClass({
         'scroll_up': False,
         'logged_in': js_undefined,
         'debug': state.debug,
+        "changelog": "",
     },
 
     'componentWillUnMount': app_will_unmount,

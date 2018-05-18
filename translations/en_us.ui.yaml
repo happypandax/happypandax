@@ -47,6 +47,7 @@ mi-about-help: Help
 mi-about-bug: Report bug
 mi-about-info: Info
 mi-about-trash: Trash
+mi-about-changelog: Changelog
 mi-about-license: License
 de-about-same-machine: You are currently connected from the same machine
 t-developer: Developer
@@ -223,3 +224,4 @@ t-showing-count: Showing %{from}-%{to} of %{all}
 t-search-main-placeholder: Search title, artist, namespace & tags
 t-filterdropdown-placeholder: Filter
 t-sortdropdown-placeholder: Sort by
+t-changelog-location: Read about the new changes at About -> Changelog

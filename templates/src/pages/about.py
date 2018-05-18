@@ -204,6 +204,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
              container=True,
              )
 
+def about_changelog(props):
+    return e(ui.Grid,
+             e(ui.Grid.Row, dangerouslySetInnerHTML={'__html': utils.marked(props.changelog)}),
+             divided="vertically",
+             container=True,
+             )
+
 def abouttab_get_plugins(data=None, error=None):
     if data is not None and not error:
         this.setState({"plugins": data})
@@ -260,12 +267,21 @@ def abouttab_check_update(data=None, error=None):
         this.setState({"update_checking": True})
         client.call_func("check_update", this.check_update, push=True)
 
+def abouttab_get_changelog(data=None, error=None):
+    if data is not None and not error:
+        this.setState({"changelog": data})
+    elif error:
+        state.app.notif("Failed to get changelog", level="warning")
+    else:
+        client.call_func("get_changelog")
+
 
 __pragma__("notconv")
 
 
 def abouttab_render():
     get_plugins = this.get_plugins
+    changelog = this.state.changelog
     plugins = this.state.plugins
     version = this.state.version
     update_msg = this.state.update_msg
@@ -293,6 +309,8 @@ def abouttab_render():
                                'content': tr(this, "ui.mi-about-stats", "Statistics")}, },
                  {'menuItem': {'key': 'bug', 'icon': 'bug', 'content': tr(this, "ui.mi-about-bug", "Report bug")}, },
                  {'menuItem': {'key': 'trash', 'icon': 'trash', 'content': tr(this, "ui.mi-about-trash", "Trash")}, },
+                 {'menuItem': {'key': 'changelog', 'icon': 'announcement', 'content': tr(this, "ui.mi-about-changelog", "Changelog")},
+                     'render': lambda: e(about_changelog, that=this, changelog=changelog)},
                  {'menuItem': {'key': 'license', 'icon': 'copyright', 'content': tr(this, "ui.mi-about-license", "License")},
                      'render': lambda: e(about_license, that=this)},
              ],
@@ -304,6 +322,7 @@ AboutTab = createReactClass({
 
     'getInitialState': lambda: {
         'plugins': [],
+        'changelog': '',
         'version': {},
         'update_msg': {},
         'update_checking': False,
@@ -311,6 +330,7 @@ AboutTab = createReactClass({
 
     'get_version': abouttab_get_version,
     'get_plugins': abouttab_get_plugins,
+    'get_changelog': abouttab_get_changelog,
 
     'restart': abouttab_restart,
     'shutdown': abouttab_shutdown,
@@ -319,7 +339,9 @@ AboutTab = createReactClass({
     'check_update': abouttab_check_update,
 
     'componentDidMount': lambda: all((this.get_version(),
-                                      this.get_plugins())),
+                                      this.get_plugins(),
+                                      this.get_changelog(),
+                                      )),
 
     'render': abouttab_render
 })

@@ -103,7 +103,8 @@ def check_release(silent=True, cmd=None):
                     continue
                 v = extract_version(t)
                 if len(v) < 2 or v <= constants.version:
-                    continue
+                    log.d("Stopping at", t)
+                    break
                 else:
                     new_rel = t
                     new_version = v

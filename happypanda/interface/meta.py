@@ -16,18 +16,16 @@ from happypanda.interface import enums
 log = hlogger.Logger(__name__)
 
 
-# def get_error(code: int, id: int):
-#    """
-#    Get error
-
-#    Args:
-#        code: error code, refer to ...
-#        id:
-
-#    Returns:
-#        an error message object
-#    """
-#    return message.Message("works")
+def get_changelog():
+    """
+    Get the changelog in markdown formatted text
+    The changelog returned is for the current release or a new update
+    """
+    ch = ""
+    lr = constants.internaldb.latest_release.get()
+    if lr:
+        ch = lr.get("changes", "")
+    return message.Identity("changelog", ch)
 
 def get_locales():
     """

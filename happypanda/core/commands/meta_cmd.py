@@ -26,19 +26,19 @@ class CheckUpdate(AsyncCommand):
                 if push:
                     if config.auto_install_release.value:
                         msg = message.Notification(
-                            "Downloading and installing...\nChangelog coming soon! For now, please visit the github repo to see the new changes",
+                            "Downloading and installing new update...",
                             "A new update {} is available!".format(u['tag']))
                         msg.id = constants.PushID.Update.value
                         self.push(msg)
                     else:
                         msg = message.Notification(
-                            "Changelog coming soon! For now, please visit the github repo to see the new changes",
+                            "A new update is available!",
                             "HappyPanda X {} is available!".format(u['tag']))
                         msg.id = constants.PushID.Update.value
                         msg.add_action(1, "Update & Restart", "button")
                         msg.add_action(2, "Update", "button")
                         msg.add_action(3, "Skip", "button")
-                        client_answer = self.push(msg).get(msg.id, timeout=30)
+                        client_answer = self.push(msg).get(msg.id, timeout=constants.notif_long_timeout)
                         if not client_answer or 3 in client_answer:
                             init_update = False
                         if client_answer and 2 in client_answer:

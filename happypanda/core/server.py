@@ -119,7 +119,7 @@ class ClientNotifications:
             v[int(i)] = k
         self._actions[msg_id] = v
 
-    def get(self, msg_id, timeout=30):
+    def get(self, msg_id, timeout=constants.notif_normal_timeout):
         """
         """
         try:

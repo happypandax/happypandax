@@ -34,7 +34,7 @@ updater_key = "updater"
 
 ## VERSIONING ##
 build = 125
-version = (0, 0, 13)
+version = (0, 0, 12)
 version_db = (0, 0, 4)
 version_web = (0, 0, 12)
 version_str = ".".join(str(x) for x in version)
@@ -77,6 +77,10 @@ invalidator = None
 internaldb = None
 web_proc = None  # webserver process
 notification = None  # ClientNotifications
+
+notif_normal_timeout = 45
+notif_small_timeout = 15
+notif_long_timeout = 80
 
 log_format = '%(asctime)-6s--%(levelname)-6s %(name)-10s: %(message)s'
 log_datefmt = '%b-%m %H:%M:%S'
