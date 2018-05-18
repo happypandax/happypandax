@@ -1,8 +1,7 @@
+import multiprocessing as mp
 from gevent import monkey
-# need to patch before importing requests, see
-# https://github.com/requests/requests/issues/3752
-monkey.patch_ssl()
-monkey.patch_select()
+if mp.current_process().name == "gevent":
+    monkey.patch_all(thread=False)
 
 import sys # noqa: E402
 import os # noqa: E402
@@ -17,6 +16,8 @@ from threading import Thread, Timer # noqa: E402
 from multiprocessing import Process, queues # noqa: E402
 from happypanda.common import constants # noqa: E402
 
+if __name__ == '__main__':
+    mp.set_start_method("spawn")
 
 # OS X: fix the working directory when running a mac app
 # OS X: files are in [app]/Contents/MacOS/
@@ -593,7 +594,7 @@ class Window(QMainWindow):
             self.force_kill = False
 
     def start_server(self):
-        p = RedirectProcess(SQueue, SQueueExit, from_gui, target=main.start)
+        p = RedirectProcess(SQueue, SQueueExit, from_gui, target=main.start, name="gevent")
         p.start()
         Thread(target=self.watch_process, args=(self.toggle_server, p)).start()
         return p

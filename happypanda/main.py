@@ -30,7 +30,7 @@ from happypanda.core.commands import io_cmd, meta_cmd  # noqa: E402
 
 log = hlogger.Logger(__name__)
 parser = utils.get_argparser()  # required to be at module lvl for sphinx.autoprogram ext
-
+async_utils.patch_psycopg()
 
 def create_user_interactive():
     s = {}
@@ -120,8 +120,6 @@ def start(argv=None, db_kwargs={}):
         if not args.only_web:
             db_inited = db.init(**db_kwargs)
             command.init_commands()
-            monkey.patch_all(thread=False, ssl=False)
-            async_utils.patch_psycopg()
         else:
             db_inited = True
 
@@ -177,7 +175,8 @@ def start(argv=None, db_kwargs={}):
                                              args=web_args,
                                              kwargs={'logging_queue': hlogger.Logger._queue,
                                                      'cmd_args': args},
-                                             daemon=True)
+                                             daemon=True,
+                                             name="gevent")
                 constants.web_proc.start()
                 hp_server = server.HPServer()
                 meta_cmd.ShutdownApplication.shutdown.subscribe(hp_server.shutdown)
@@ -225,4 +224,5 @@ def start(argv=None, db_kwargs={}):
 
 if __name__ == '__main__':
     multiprocessing.freeze_support()
+    multiprocessing.set_start_method("spawn")
     start()
