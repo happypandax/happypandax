@@ -19,6 +19,7 @@ HappyPanda X user guide
     translation
     settings
     switches
+    faq
 
 For developers
 ----------------------------------------

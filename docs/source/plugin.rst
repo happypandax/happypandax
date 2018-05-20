@@ -16,8 +16,8 @@ Terminology
 
     Besides some core features that makes everything play nice together, a **command** is essentially what *a feature* in HPX is.
     An example of a command in HPX would be ``AddGallery``. This command, like its name implies, adds a gallery into HPX.
-    **Commands** can act as a building-block for other commands (used by another command) or run by itself.
-    Many of the functionalities provided by HPX are built up by many different **commands**. These commands can range from being very simple and do just one small job
+    **Commands** are self-contained and can act as a building-block for other commands (used by another command).
+    Many of the functionalities provided by HPX are built up by using many different **commands**. These commands can range from being very simple doing just one small job
     to being complex and doing something big.
 
 **Command entry**:
@@ -92,20 +92,20 @@ A manifest file is a file describing a plug-in. Inside ``hplugin.json`` is::
         "otherplugin",
         "5c17829a-eca3-46fc-9d5e-da5804fdcbf5 == 3",
         "otherplugin <= 1.2",
-        "otherplugin >= 3",
+        "5c17829a-eca3-46fc-9d5e-da5804fdcbf5 >= 3",
         "otherplugin >= 3.6,<2",
         "otherplugin >= 3; os_name=='posix'"
 
     Notice the marker ``os_name=='posix'`` in the last example. In addition to the default markers defined in :pep:`508`, HPX defines ``happypandax`` or ``hpx`` to check against the running HPX version.
     Markers can also be used freely like so::
 
-        "happypandax >= 1.5.3",
-        "platform_system == 'Windows'",
-        "otherplugin < 2; platform_system=='Windows'", # only required on windows
-        "otherplugin > 2; platform_system=='Linux'", # only required on linux
-        "otherplugin == 2; happypandax==1.2" # only required on hpx version 1.2
+        "happypandax >= 1.5.3", # indicates that this plugin requires this hpx version
+        "platform_system == 'Windows'", # indicates that this plugin requires the windows platform
+        "otherplugin < 2; platform_system=='Windows'", # indicates that otherplugin is only required on windows
+        "otherplugin > 2; platform_system=='Linux'", # indicates that otherplugin is only required on linux
+        "otherplugin == 2; happypandax==1.2" # indicates that otherplugin is only required on hpx version 1.2
 
-After creating and defining a manifest file our final plug-in folder looks like this::
+After creating and defining a manifest file and create the entry files our final plug-in folder looks like this::
 
     -/..
     -MyPlugin/
@@ -139,9 +139,9 @@ These are the different kind of states a plug-in can be in: :class:`PluginState 
 Interfacing with HPX
 ****************************************
 
-HPX provides plug-ins with a special module named ``__hpx__`` to interface with HPX.
+HPX plug-ins in a special environment with a special module named ``__hpx__`` to interface with HPX.
 
-After a plug-in has been loaded, it can be installed. Installation has to be manually done by the user unless either of the two settings ``plugin.auto_install_plugin`` and ``plugin.auto_install_plugin_dependency``
+After a plug-in has been registered, it can be installed. Installation has to be manually done by the user unless either of the two settings ``plugin.auto_install_plugin`` and ``plugin.auto_install_plugin_dependency``
 are true.
 
 When a plug-in has been installed, it will be initialized. The entry file the plug-in has provided in its manifest will be run upon initialization.
@@ -149,15 +149,15 @@ The entry file will be run in a special plug-in environment and will be run just
 
 There are a couple of notable things about the plug-in environment:
 
-The entry file's ``__name__`` will be set to ``__main__`` just like how Python does with its entry file.
+- The entry file's ``__name__`` will be set to ``__main__`` just like how Python does with its entry file.
 
 .. note::
 
     The ``__file__`` attribute in the entry file is correctly set to be the path of the entry file.
 
-The plug-in environment has been provided the special HPX interface module :mod:`__hpx__ <happypanda.core.plugin_interface>`.
+- The plug-in environment has been provided the special HPX interface module :mod:`__hpx__ <happypanda.core.plugin_interface>`.
 
-You can import any module and packages except ``happypanda``.
+- You can import any module and packages except ``happypanda``.
 
 With all this in mind, we can now write code to interface with HPX. In the ``main.py``::
 
@@ -215,6 +215,12 @@ Debugging
     
     debugging plugins
 
+Testing
+****************************************
+
+.. todo::
+    
+    testing plugins
 
 About thread safety
 ****************************************
@@ -224,17 +230,19 @@ How to not break stuff
 
 While HPX provides plug-ins lots of freedom, this can sometimes lead to plug-ins being able to disrupt the flow of the program and/or create inexplicable bugs,
 and generally make it so things are not working as intended.
-And that is why care must be taken while writing plug-ins.
+Which is why care must be taken while writing plug-ins.
 
 Here are some **DO**'s and **DON'T**'s that should ensure that everything plays nicely together.
 
-* **DON'T** change the current working directory.
+* **DON'T** ever change the current working directory. Especially because of the issues explained in :ref:`thread safety <About thread safety>`.
 
 * **DO** always prefer the :ref:`Plugin API` instead of rolling your own thing. If you think the API is limited and doesn't allow doing what you want to, consider opening a PR on Github instead.
-* **DO** always prefer using the **commands** that HPX provides, especially because it gives other things that are beyond your control a chance to run.
+* **DO** always prefer using the **commands** that HPX provides, especially because it allows other things that are beyond your control a chance to run.
 
 Available packages
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Aside from the python standard library, these are the available packages HPX provides that can be imported in the plug-in environment.
 
 .. exec::
 
