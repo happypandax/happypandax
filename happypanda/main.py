@@ -110,12 +110,21 @@ def start(argv=None, db_kwargs={}):
     e_code = None
     e_num = 0
     try:
+        log.i("HPX START")
+        log.i("Version:", constants.version_str)
+        log.i("DB Version:", constants.version_db_str)
+        log.i("Web Version:", constants.version_web_str)
         if argv is None:
             argv = sys.argv[1:]
         utils.setup_dirs()
         args = parser.parse_args(argv)
         utils.parse_options(args)
         db_inited = False
+        if constants.dev:
+            log.i("DEVELOPER MODE ENABLED", stdout=True)
+        if config.debug.value:
+            log.i("DEBUG MODE ENABLED", stdout=True)
+        log.i(utils.os_info())
 
         if not args.only_web:
             db_inited = db.init(**db_kwargs)
@@ -132,13 +141,6 @@ def start(argv=None, db_kwargs={}):
         utils.setup_online_reporter()
         hlogger.Logger.setup_logger(args, main=True, debug=config.debug.value)
         utils.disable_loggers(config.disabled_loggers.value)
-
-        log.i("HPX START")
-        if constants.dev:
-            log.i("DEVELOPER MODE ENABLED", stdout=True)
-        log.i(utils.os_info())
-
-        log.i("Using", config.dialect.value, "database")
 
         update_state = check_update() if not (not constants.is_frozen and constants.dev) else None
 

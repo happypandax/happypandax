@@ -51,8 +51,10 @@ class QueueHandler(logging.Handler):
 
 class Logger:
 
+    has_setup = False
     report_online = False
     _queue = None
+    _logs_queue = []
 
     def __init__(self, name):
         self.name = name
@@ -71,7 +73,7 @@ class Logger:
 
     def d(self, *args, **kwargs):
         "DEBUG"
-        if self._logger.isEnabledFor(logging.DEBUG):
+        if self._logger.isEnabledFor(logging.DEBUG) or not self.has_setup:
             return self._log(self._logger.debug, *args, **kwargs)
         return ''
 
@@ -100,6 +102,8 @@ class Logger:
         return s
 
     def _log(self, level, *args, stdout=False, stderr=False):
+        if not self.has_setup:
+            self._logs_queue.append((self.name, level, args, stdout, stderr))
         s = self._log_format(*args)
         level(s)
         if not constants.dev:
@@ -133,7 +137,6 @@ class Logger:
         assert isinstance(args, argparse.Namespace) or args is None
         argsdev = getattr(args, 'dev', False)
         argsdebug = getattr(args, 'debug', False)
-
         if logging_queue:
             cls._queue = logging_queue
         log_level = logging.DEBUG if argsdebug else logging.INFO
@@ -201,6 +204,7 @@ class Logger:
             datefmt=constants.log_datefmt,
             handlers=tuple(log_handlers))
 
+        cls.has_setup = True
         if main:
             if argsdev:
                 Logger("sqlalchemy.pool").setLevel(logging.DEBUG)
@@ -215,6 +219,9 @@ class Logger:
             else:
                 Logger("apscheduler").setLevel(logging.ERROR)
 
+            for log in cls._logs_queue:
+                l = Logger(log[0])
+                l._log(log[1], *log[2], stdout=log[3], stderr=log[4])
     @staticmethod
     def _listener(args, queue):
         Logger.setup_logger(args)

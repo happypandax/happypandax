@@ -7,6 +7,7 @@ import warnings
 import functools
 import gevent
 import threading
+import inspect as pyinspect
 
 from contextlib import contextmanager
 from sqlalchemy.engine import Engine
@@ -16,7 +17,7 @@ from sqlalchemy import Text as _Text
 from sqlalchemy import exc as sa_exc
 from sqlalchemy.inspection import inspect
 from sqlalchemy.ext.mutable import Mutable
-from sqlalchemy.ext.declarative import declarative_base, declared_attr
+from sqlalchemy.ext.declarative import declared_attr, as_declarative
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.ext.indexable import index_property
 from sqlalchemy.ext.hybrid import hybrid_property, hybrid_method
@@ -381,6 +382,21 @@ class Password(TypeDecorator):
                 'Cannot convert {} to a PasswordHash'.format(type(value)))
 
 
+@as_declarative()
+class Base:
+    __table_args__ = {'mysql_collate': 'utf8mb4_unicode_ci'}
+
+    id = Column(Integer, primary_key=True)
+    _properties = Column(JSONType, nullable=False, default={})
+    plugin = index_property('_properties', 'plugin', default={})
+
+    def delete(self):
+        sess = object_session(self)
+        if not sess:
+            sess = constants.db_session()
+        sess.delete(self)
+        return sess
+
 def _unique(session, cls, hashfunc, queryfunc, constructor, arg, kw):
     cache = getattr(session, '_unique_cache', None)
     if cache is None:
@@ -399,7 +415,6 @@ def _unique(session, cls, hashfunc, queryfunc, constructor, arg, kw):
                 session.add(obj)
         cache[key] = obj
         return obj
-
 
 class UniqueMixin:
     @classmethod
@@ -420,22 +435,6 @@ class UniqueMixin:
             cls,
             arg, kw
         )
-
-
-class BaseID:
-    __table_args__ = {'mysql_collate': 'utf8mb4_unicode_ci'}
-
-    id = Column(Integer, primary_key=True)
-    _properties = Column(JSONType, nullable=False, default={})
-    plugin = index_property('_properties', 'plugin', default={})
-
-    def delete(self):
-        sess = object_session(self)
-        if not sess:
-            sess = constants.db_session()
-        sess.delete(self)
-        return sess
-
 
 class NameMixin(UniqueMixin):
     name = Column(String, nullable=False, default='', unique=True)
@@ -547,9 +546,6 @@ class UserMixin:
         # TODO: set current user here
 
 
-Base = declarative_base(cls=BaseID)
-
-
 def validate_int(value):
     if isinstance(value, str):
         try:
@@ -656,6 +652,25 @@ def metatag_association(cls, bref="items"):
         cascade="all")
     return assoc
 
+def metalist_association(cls, bref="items"):
+    if not issubclass(cls, Base):
+        raise ValueError("Must be subbclass of Base")
+    table_name = cls.__tablename__
+    column = '{}_id'.format(table_name)
+    assoc = Table(
+        '{}_metalists'.format(table_name), Base.metadata, Column(
+            'metalist_id', Integer, ForeignKey('metalist.id')), Column(
+            column, Integer, ForeignKey(
+                '{}.id'.format(table_name))), UniqueConstraint(
+                    'metalist_id', column))
+
+    cls.metalists = relationship(
+        "MetaList",
+        secondary=assoc,
+        lazy='dynamic',
+        backref=backref(bref, lazy="dynamic"),
+        cascade="all")
+    return assoc
 
 def aliasname_association(cls, bref="items"):
     if not issubclass(cls, Base):
@@ -736,7 +751,6 @@ class MetaTag(NameMixin, Base):
     def all_names(cls):
         sess = constants.db_session()
         return tuple(x[0] for x in sess.query(cls.name).all())
-
 
 class User(Base):
     __tablename__ = 'user'
@@ -1078,7 +1092,6 @@ class GalleryFilter(UserMixin, NameMixin, Base):
         back_populates='filters',
         lazy="dynamic")
 
-
 @generic_repr
 class Status(NameMixin, UserMixin, Base):
     __tablename__ = 'status'
@@ -1387,9 +1400,20 @@ class Url(UserMixin, Base):
     __tablename__ = 'url'
     name = Column(Text, nullable=False, default='')  # OBS: not unique
 
+@generic_repr
+class MetaList(UserMixin, NameMixin, Base):
+    __tablename__ = 'metalist'
+
+metalist_mappers = [x for x in globals().values() if\
+                        pyinspect.isclass(x) and issubclass(x, Base) and\
+                            x not in (Base, MetaList)]
+
+for y in metalist_mappers:
+    metalist_association(y, y.__tablename__+'s')
+
+# =======================================================================================
+
 # Note: necessary to put in function because there is no Session object yet
-
-
 def initEvents(sess):
     "Initializes events"
 
@@ -1671,7 +1695,7 @@ def check_db_version(sess):
     init_defaults(sess)
     sess.commit()
     log.d("Succesfully initiated database")
-    log.d("DB Version: {}".format(life.version))
+    log.d("Using DB Version: {}".format(life.version))
     return True
 
 
@@ -1710,6 +1734,7 @@ def make_db_url(db_name=None):
 
 
 def init(**kwargs):
+    log.i("Using", config.dialect.value, "database", stdout=True)
     db_path = kwargs.get("path")
     if not db_path:
         db_path = constants.db_path_dev if constants.dev_db else constants.db_path
