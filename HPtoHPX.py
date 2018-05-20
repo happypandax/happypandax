@@ -844,16 +844,19 @@ def main(args=sys.argv[1:]):
         print("Source: ", src)
         print("Destination: ", dst)
 
+        if dst.startswith('mysql://'):
+            dst = dst.replace('mysql://', 'mysql+pymysql://')
+
         if database_exists(dst):
             if args.delete_target:
                 print("Deleting existing target database")
-                if not any(dst.lower().startswith(x) for x in ('postgres', 'mysql', 'sqlite')):
+                if not any(dst.lower().startswith(x) for x in ('postgres', 'mysql+pymysql', 'sqlite')):
                     os.unlink(dst)
                 else:
                     drop_database(dst)
             else:
                 print("Warning: destination database already exists, you might want to delete")
-        elif not all(dst.lower().startswith(x) for x in ('postgres', 'mysql', 'sqlite')):
+        elif not any(dst.lower().startswith(x) for x in ('postgres:', 'mysql+pymysql:', 'sqlite:')):
             head, _ = os.path.split(dst)
             if head:
                 os.makedirs(head, exist_ok=True)
@@ -867,7 +870,7 @@ def main(args=sys.argv[1:]):
         if args.process:
             print("Process count: ", args.process)
 
-        print("Connecting to Happypanda database..")
+        print("Connecting to HappyPanda database..")
         conn_src = sqlite3.connect(src)
         conn_src.row_factory = sqlite3.Row
         DBBase._DB_CONN = conn_src
@@ -876,13 +879,14 @@ def main(args=sys.argv[1:]):
         src_galleries = GalleryDB.get_all_gallery()
         print("Fetching all galleries, chapters, tags and hashes..")
         print("Fetched galleries count:", len(src_galleries))
-        print("Creating new Happypanda X database")
-        if not any(dst.lower().startswith(x) for x in ('postgres', 'mysql', 'sqlite')):
+        print("Creating new HappyPanda X database")
+        if not any(dst.lower().startswith(x) for x in ('postgres', 'mysql+pymysql', 'sqlite')):
             engine = db.create_engine(os.path.join("sqlite:///", dst))
         else:
             if not database_exists(dst):
-                create_database(dst)
-            engine = db.create_engine(dst)
+                encoding = 'utf8mb4' if 'mysql+pymysql' in dst.lower() else 'utf8'
+                create_database(dst, encoding)
+            engine = db.create_engine(dst, convert_unicode=True)
         db.Base.metadata.create_all(engine)
         sess = db.scoped_session(db.sessionmaker())
         sess.configure(bind=engine)
