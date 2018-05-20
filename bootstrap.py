@@ -488,7 +488,7 @@ HPX requires Python 3.5. Make sure that Python version is installed and in use.
 If this is your first time running this script, or if you haven't installed HPX yet, run:
     $ python3 bootstrap.py install
 Other optional downloads are:
-    - Git: If you want to automagically fetch new changes.
+    - Git: If you want to automatically fetch new changes.
     - NodeJS: If you want to work on the webclient.
 
 As of this build HPX does not implement any write features, and so you need a HP database to use HPX.
