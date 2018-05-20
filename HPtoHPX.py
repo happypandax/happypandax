@@ -17,11 +17,10 @@ import regex
 from sqlalchemy_utils.functions import create_database, database_exists, drop_database
 from multiprocessing import Process, Queue, Pipe
 
-from happypanda.core import db
+from happypanda.core import db, plugins
 from happypanda.core.commands import io_cmd
 from happypanda.common import constants, config, utils
 _print = print
-
 
 def safeprint(*s):
     try:
@@ -834,6 +833,7 @@ def extract_collection(title):
 
 def main(args=sys.argv[1:]):
     try:
+        
         args = parse_args(args)
 
         AMOUNT_OF_TASKS = args.process if args.process > 0 else 1
@@ -886,7 +886,7 @@ def main(args=sys.argv[1:]):
             if not database_exists(dst):
                 encoding = 'utf8mb4' if 'mysql+pymysql' in dst.lower() else 'utf8'
                 create_database(dst, encoding)
-            engine = db.create_engine(dst, convert_unicode=True)
+            engine = db.create_engine(dst)
         db.Base.metadata.create_all(engine)
         sess = db.scoped_session(db.sessionmaker())
         sess.configure(bind=engine)

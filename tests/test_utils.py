@@ -2,12 +2,13 @@
 import pytest
 
 from unittest import mock
+from happypanda.common.hlogger import eprint
 
 pytestmark = pytest.mark.utilstest
 
 
-@mock.patch('happypanda.common.utils.print')
-@mock.patch('happypanda.common.utils.sys')
+@mock.patch('happypanda.common.hlogger.print')
+@mock.patch('happypanda.common.hlogger.sys')
 def test_eprint(m_sys, m_print):
     """test eprint."""
     m_arg = mock.Mock()

@@ -39,7 +39,7 @@ install:
 
 script:
     - python3 lint.py
-    - "python3 ./run_tests.py ./tests/test_updater.py ./tests/test_plugins.py"
+    - "python3 ./run_tests.py ./tests/test_updater.py"
 
 before_deploy:
     - npm install

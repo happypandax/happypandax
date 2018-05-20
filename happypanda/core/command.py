@@ -417,11 +417,17 @@ class _CommandPlugin:
         "Invoke all plugins"
         self._check_types(*args, **kwargs)
         if command_type == 'entry':
-            return constants.plugin_manager._call_command_entry(
-                self.qualifiedname(), *args, **kwargs)
+            if constants.plugin_manager:
+                return constants.plugin_manager._call_command_entry(
+                    self.qualifiedname(), *args, **kwargs)
+            else:
+                return plugins.HandlerValue(self.qualifiedname(), [], *args, *kwargs)
         elif command_type == 'event':
-            return constants.plugin_manager._call_command_event(
-                self.qualifiedname(), *args, **kwargs)
+            if constants.plugin_manager:
+                return constants.plugin_manager._call_command_event(
+                    self.qualifiedname(), *args, **kwargs)
+            else:
+                return tuple()
     def _ensure_class(self, type1, type2):
         if isclass(type1):
             return issubclass(type1, type2)

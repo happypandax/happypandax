@@ -4,6 +4,7 @@ import os
 import sys
 import arrow
 import itertools
+import datetime
 
 pytestmark = pytest.mark.dbtest
 
@@ -19,6 +20,7 @@ def doublegen(it):
         yield (l.pop(), l.pop())
 
 def create_db():
+    config.dialect.value = constants.Dialect.SQLITE
     engine = create_engine("sqlite://")
     init(engine=engine)
     return constants._db_scoped_session.session_factory()
@@ -72,18 +74,12 @@ class GeneralTest(unittest.TestCase):
 
         self.assertEqual(self.session.query(Event).count(), 3)
 
-    @unittest.expectedFailure
+    #@unittest.expectedFailure
     def test_typesfail(self):
-        with self.assertRaises(AssertionError):
-            self.gallery.title = 2
-        with self.assertRaises(AssertionError):
-            self.gallery.fav = 2
-        with self.assertRaises(AssertionError):
-            self.gallery.fav = ""
         with self.assertRaises(AssertionError):
             self.gallery.last_read = datetime.date.today()
         with self.assertRaises(AssertionError):
-            self.gallery.language = 2
+            self.gallery.single_source = 2
         with self.assertRaises(AssertionError):
             self.gallery.rating = ""
 
@@ -125,7 +121,9 @@ class GeneralTest(unittest.TestCase):
 
     def test_titles(self):
         lang = Language(name="English")
-        titles = [Title(language=lang) for x in range(10)]
+        titles = [Title() for x in range(10)]
+        for x in titles:
+            x.language = lang
         self.gallery.titles.extend(titles)
         self.session.commit()
         self.assertEqual(titles[0].gallery_id, self.gallery.id)
@@ -196,7 +194,9 @@ class CollectionRelationship(unittest.TestCase):
     def setUp(self):
         self.session = create_db()
 
-        self.collections = [Collection(name="col" + str(x)) for x in range(2)]
+        self.collections = [Collection() for x in range(2)]
+        for n, x in enumerate(self.collections):
+            x.name = "col"+str(n)
         self.galleries = [Gallery() for x in range(10)]
         self.session.add_all(self.galleries)
         self.collections[0].galleries.extend(self.galleries[:5])
@@ -252,7 +252,9 @@ class ListRelationship(unittest.TestCase):
     def setUp(self):
         self.session = create_db()
 
-        self.glists = [GalleryFilter(name="list" + str(x)) for x in range(2)]
+        self.glists = [GalleryFilter() for x in range(2)]
+        for n, x in enumerate(self.glists):
+            x.name = "list"+str(n)
         self.galleries = [Gallery() for x in range(10)]
         self.session.add_all(self.galleries)
         for gl in self.glists:
@@ -904,7 +906,9 @@ class ProfileRelationship(unittest.TestCase):
 
         self.gns = [Grouping(name="gns" + str(x)) for x in range(5)]
         self.galleries = [Gallery() for x in range(5)]
-        self.collections = [Collection(name="title" + str(x)) for x in range(5)]
+        self.collections = [Collection() for x in range(5)]
+        for n, x in enumerate(self.collections):
+            x.name = "title"+str(n)
         self.pages = [Page(number=x) for x in range(5)]
 
         for n, x in enumerate(self.galleries):

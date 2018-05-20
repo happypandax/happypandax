@@ -224,7 +224,7 @@ class JSONType(JSONType_):
 
 class Text(_Text):
 
-    def __init__(self, length = 65535, *args, **kwargs):
+    def __init__(self, length = 65535 if config.dialect.value == constants.Dialect.MYSQL else None, *args, **kwargs):
         return super().__init__(length, *args, **kwargs)
 
 
@@ -578,6 +578,11 @@ def validate_arrow(value):
         type(value))
     return value
 
+def validatejson(value):
+    assert isinstance(
+        value, dict) or value is None, "Column only accepts dict, not {}".format(
+        type(value))
+    return value
 
 def validate_bool(value):
     assert isinstance(
@@ -589,8 +594,10 @@ def validate_bool(value):
 validators = {
     Integer: validate_int,
     String: validate_string,
+    Text: validate_string,
     ArrowType: validate_arrow,
     Boolean: validate_bool,
+    JSONType: validatejson,
 }
 
 
@@ -746,9 +753,10 @@ class User(Base):
     context_id = Column(String, nullable=False, default='')
     password = Column(Password)
     timestamp = Column(ArrowType, nullable=False, default=arrow.now)
-    # TODO:
-    # maybe a list of enum values?
     rights = Column(JSONType, nullable=False, default={})
+    right_add_gallery = index_property("rights", "add_gallery", default=True)
+    right_remove_gallery = index_property("rights", "remove_gallery", default=True)
+    right_update_gallery = index_property("rights", "update_gallery", default=True)
 
     events = relationship("Event", lazy='dynamic', back_populates='user')
 
@@ -1165,7 +1173,7 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
     pub_date = Column(ArrowType)
     info = Column(Text, nullable=False, default='')
     single_source = Column(Boolean, default=True)
-    fetched = Column(Boolean, default=False)
+    phantom = Column(Boolean, default=False)
     rating = Column(Integer, nullable=False, default=0)
     times_read = Column(Integer, nullable=False, default=0)
     timestamp = Column(ArrowType, nullable=False, default=arrow.now)
@@ -1384,7 +1392,6 @@ class Url(UserMixin, Base):
 
 def initEvents(sess):
     "Initializes events"
-    return
 
     @event.listens_for(sess, 'after_flush')
     def aliasmixin_delete(s, ctx):
@@ -1721,7 +1728,7 @@ def init(**kwargs):
                 db_url = make_db_url()
                 if not database_exists(db_url):
                     create_database(db_url, db_encoding)
-                constants.db_engine = create_engine(db_url, convert_unicode=True)
+                constants.db_engine = create_engine(db_url)
 
         Base.metadata.create_all(constants.db_engine)
 

@@ -308,7 +308,7 @@ class Config:
                 return default
 
             if only is not None and v not in only:
-                log.w("Setting '{}:{}' expected one of {}, using default value".format(ns, key, only), stderr=True)
+                log.w("Setting '{}:{}' expected one of {}, using default value '{}'".format(ns, key, only, default), stderr=True)
                 return default
             return v
 

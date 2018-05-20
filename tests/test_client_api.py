@@ -20,13 +20,13 @@ def server(monkeypatch, tmpdir, sample_db):
     yield t.start()
     t.kill()
 
-class APITest(unittest.TestCase):
-    """
-    Test server API
-    """
-    def setUp(self):
-        self.client = Client("test")
-        self.client.connect()
+#class APITest(unittest.TestCase):
+#    """
+#    Test server API
+#    """
+#    def setUp(self):
+#        self.client = Client("test")
+#        self.client.connect()
 
-    def tearDown(self):
-        self.client.close()
+#    def tearDown(self):
+#        self.client.close()
