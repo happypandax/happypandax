@@ -12,6 +12,7 @@ from contextlib import contextmanager
 from sqlalchemy.engine import Engine
 from sqlalchemy.engine.url import URL
 from sqlalchemy import String as _String
+from sqlalchemy import Text as _Text
 from sqlalchemy import exc as sa_exc
 from sqlalchemy.inspection import inspect
 from sqlalchemy.ext.mutable import Mutable
@@ -220,14 +221,20 @@ class JSONType(JSONType_):
         else:
             return dialect.type_descriptor(self.impl)
 
+class Text(_Text):
+
+    def __init__(self, length = 65535, *args, **kwargs):
+        return super().__init__(length, *args, **kwargs)
+
+
 class String(_String):
     """Enchanced version of standard SQLAlchemy's :class:`String`.
     Supports additional operators that can be used while constructing
     filter expressions.
     """
 
-    # def __init__(self, length = None, collation = None, convert_unicode = False, unicode_error = None, _warn_on_bytestring = False, *args, **kwargs):
-    #    return super().__init__(length, 'utf-8', convert_unicode, unicode_error, _warn_on_bytestring, *args, **kwargs)
+    def __init__(self, length = 255, *args, **kwargs):
+        return super().__init__(length, *args, **kwargs)
 
     class comparator_factory(_String.comparator_factory):
         """Contains implementation of :class:`String` operators
@@ -765,7 +772,7 @@ metatag_association(User, "users")
 class Profile(Base):
     __tablename__ = 'profile'
 
-    path = Column(String, nullable=False, default='')
+    path = Column(Text, nullable=False, default='')
     data = Column(String, nullable=False, index=True)
     size = Column(String, nullable=False)
     timestamp = Column(ArrowType, nullable=False, default=arrow.now)
@@ -983,7 +990,7 @@ artist_circles = Table(
 class Artist(ProfileMixin, UserMixin, Base):
     __tablename__ = 'artist'
 
-    info = Column(String, nullable=False, default='')
+    info = Column(Text, nullable=False, default='')
 
     galleries = relationship(
         "Gallery",
@@ -1051,7 +1058,7 @@ gallery_filters = Table('gallery_filters', Base.metadata,
 @generic_repr
 class GalleryFilter(UserMixin, NameMixin, Base):
     __tablename__ = 'filter'
-    filter = Column(String, nullable=False, default='')
+    filter = Column(Text, nullable=False, default='')
     enforce = Column(Boolean, nullable=False, default=False)
     regex = Column(Boolean, nullable=False, default=False)
     l_case = Column(Boolean, nullable=False, default=False)
@@ -1128,7 +1135,7 @@ gallery_collections = Table(
 class Collection(ProfileMixin, UpdatedMixin, NameMixin, UserMixin, Base):
     __tablename__ = 'collection'
 
-    info = Column(String, nullable=False, default='')
+    info = Column(Text, nullable=False, default='')
     pub_date = Column(ArrowType)
     category_id = Column(Integer, ForeignKey('category.id'))
     timestamp = Column(ArrowType, nullable=False, default=arrow.now)
@@ -1156,7 +1163,7 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
 
     last_read = Column(ArrowType)
     pub_date = Column(ArrowType)
-    info = Column(String, nullable=False, default='')
+    info = Column(Text, nullable=False, default='')
     single_source = Column(Boolean, default=True)
     fetched = Column(Boolean, default=False)
     rating = Column(Integer, nullable=False, default=0)
@@ -1305,7 +1312,7 @@ class Page(TaggableMixin, ProfileMixin, Base):
     __tablename__ = 'page'
     number = Column(Integer, nullable=False, default=-1)
     name = Column(String, nullable=False, default='')
-    path = Column(String, nullable=False, default='')
+    path = Column(Text, nullable=False, default='')
     hash_id = Column(Integer, ForeignKey('hash.id'))
     gallery_id = Column(Integer, ForeignKey('gallery.id'), nullable=False)
     in_archive = Column(Boolean, default=False)
@@ -1370,7 +1377,7 @@ class Title(AliasMixin, UserMixin, Base):
 @generic_repr
 class Url(UserMixin, Base):
     __tablename__ = 'url'
-    name = Column(String, nullable=False, default='')  # OBS: not unique
+    name = Column(Text, nullable=False, default='')  # OBS: not unique
 
 # Note: necessary to put in function because there is no Session object yet
 
@@ -1528,7 +1535,6 @@ def engine_connect(dbapi_connection, connection_record):
             raise exceptions.DatabaseInitError("HPX requires Postgres version 9.4 and up")
         cursor.close()
 
-
 def init_defaults(sess):
     "Initializes default items"
 
@@ -1678,8 +1684,7 @@ def make_db_url(db_name=None):
         db_name = constants.db_name_dev if constants.dev and config.db_name.value == constants.db_name else config.db_name.value
     db_query = {}
     if config.dialect.value == constants.Dialect.MYSQL:
-        db_query = {'charset':'utf8mb4'}
-    db_query = {}
+        db_query.update({'charset':'utf8mb4'})
     db_query.update(config.db_query.value)
     drivername = config.dialect.value
     if drivername == constants.Dialect.MYSQL:
@@ -1704,6 +1709,7 @@ def init(**kwargs):
     constants.db_session = functools.partial(_get_session, Session)
     initEvents(Session)
     constants.db_engine = kwargs.get("engine")
+    db_encoding = 'utf8mb4' if config.dialect.value == constants.Dialect.MYSQL else 'utf8'
     try:
         if not constants.db_engine:
             if config.dialect.value == constants.Dialect.SQLITE:
@@ -1711,12 +1717,9 @@ def init(**kwargs):
                                                     connect_args={'timeout': config.sqlite_database_timeout.value})  # SQLITE specific arg (avoding db is locked errors)
             else:
                 db_url = make_db_url()
-                encoding = 'utf8mb4' if config.dialect.value == constants.Dialect.MYSQL else 'utf8'
-                print(db_url)
                 if not database_exists(db_url):
-                    print("creating")
-                    create_database(db_url, encoding)
-                constants.db_engine = create_engine(db_url)
+                    create_database(db_url, db_encoding)
+                constants.db_engine = create_engine(db_url, convert_unicode=True)
 
         Base.metadata.create_all(constants.db_engine)
 

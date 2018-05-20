@@ -482,7 +482,8 @@ with config.namespace(db_ns):
         "sqlite",
         "Which SQL dialect to use among 'sqlite', 'mysql' and 'postgres'. "+
         "Note that HPX will not transfer data from one dialect to another once chosen. "+
-        "It is therefore advised that you choose a dialect early and stick to it throughout",
+        "It is therefore advised that you choose a dialect early and stick to it throughout. "+
+        "Only Postgres version 9.4 and up is supported. Only MySQL version 5.5.3 to 8 (exclusive) is supported.",
         only=("sqlite", "mysql", "postgres"))
 
     db_name = config.create(
