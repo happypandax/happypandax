@@ -145,7 +145,7 @@ def plugin_load(plugin_manager, path):
         if not manifest:
             raise exceptions.PluginLoadError(
                 pname,
-                "No manifest file named 'HPlugin.json' found in plugin directory '{}'".format(path))
+                "No manifest file named 'hplugin.json' found in plugin directory '{}'".format(path))
         return _plugin_load(plugin_manager, manifest, path, plug_log)
 
 

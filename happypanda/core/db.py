@@ -805,32 +805,35 @@ class Event(Base):
     __tablename__ = 'event'
 
     class Action(enum.Enum):
-        read = 'read'
-        start = 'start'
+        gallery_update = 'gallery_update'
+        gallery_delete = 'gallery_delete'
+        gallery_read = 'gallery_read'
+        app_start = 'app_start'
+        app_shutdown = 'app_shutdown'
 
-    item_id = Column(Integer, nullable=False)
-    item_name = Column(String, nullable=False)
+    item_id = Column(Integer)
+    name = Column(String, nullable=False, default="")
+    by_table = Column(String, nullable=False, default="")
     timestamp = Column(ArrowType, nullable=False, default=arrow.now)
-    action = Column(Enum(Action), nullable=False, default=Action.read)
+    action = Column(String, nullable=False)
     user_id = Column(Integer, ForeignKey('user.id'))
     user = relationship(
         "User",
         back_populates="events",
         cascade="save-update, merge, refresh-expire")
 
-    def __init__(
-            self,
-            item,
-            action=Action.read,
-            user_id=None,
-            timestamp=arrow.now()):
+    def __init__(self, action, item, name=None, user_id=None, timestamp=None):
         assert isinstance(item, Base)
+        if isinstance(action, Event.Action):
+            action = action.value
+        self.action = action
         self.user_id = user_id
         self.item_id = item.id
-        self.item_name = item.__tablename__
-        self.timestamp = timestamp
-        self.action = action
-
+        self.by_table = item.__tablename__
+        if name:
+            self.name = name
+        if timestamp:
+            self.timestamp = timestamp
 
 @generic_repr
 class Hash(NameMixin, Base):
@@ -1243,14 +1246,14 @@ class Gallery(TaggableMixin, ProfileMixin, Base):
         lazy="joined",
         cascade="save-update, merge, refresh-expire")
 
-    def read(self, user_id, datetime=None):
+    def read(self, user_id=None, datetime=None):
         "Creates a read event for user"
         if not datetime:
             datetime = arrow.now()
         self.last_read = datetime
         sess = object_session(self)
         if sess:
-            sess.add(Event(self, Event.Action.read, user_id, datetime))
+            sess.add(Event(Event.Action.gallery_read, self, user_id=user_id, timestamp=datetime))
         else:
             log.w(
                 "Cannot add gallery read event because no session exists for this object")
@@ -1691,7 +1694,7 @@ def check_db_version(sess):
             constants.invalidator.similar_gallery = True
         idb[db_key] = life.times_opened
 
-    sess.add(Event(life, Event.Action.start))
+    sess.add(Event(Event.Action.app_start, life))
     init_defaults(sess)
     sess.commit()
     log.d("Succesfully initiated database")

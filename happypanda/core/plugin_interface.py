@@ -60,7 +60,7 @@ def save_config(obj: dict):
 
 def command(f: typing.Callable=None, command_name: str=None):
     """
-    Create a command entry that other plugins can attach to
+    Create a command entry that other plugins can attach a handler to
 
     Args:
         f: command handler
@@ -87,7 +87,7 @@ def command(f: typing.Callable=None, command_name: str=None):
 
 def attach(f: typing.Callable=None, command: str=None):
     """
-    Attach to a command entry
+    Attach a handler to a command entry
 
     Args:
         f: command handler
@@ -108,7 +108,7 @@ def attach(f: typing.Callable=None, command: str=None):
 
 def subscribe(f: typing.Callable=None, commandevent: str=None):
     """
-    Subscribe to a command event
+    Subscribe a handler to a command event
 
     Args:
         f: command event handler
