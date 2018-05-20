@@ -3,7 +3,7 @@ Plugins
 
 HPX is built in a way that makes it possible to step in and modify the way a functionality works or even add new ones with ease with plug-ins.
 
-Plug-ins are written in ``Python 3.6``.
+Plug-ins can be written in ``Python 3`` up to``Python 3.6``.
 Note that you don't need to be running HPX from source to develop a plug-in.
 
 Here you will learn how to create a HPX plug-in and use it to extend HPX.
@@ -230,7 +230,7 @@ Here are some **DO**'s and **DON'T**'s that should ensure that everything plays 
 
 * **DON'T** change the current working directory.
 
-* **DO** always prefer the :ref:`Plugin API` instead of rolling your own thing.
+* **DO** always prefer the :ref:`Plugin API` instead of rolling your own thing. If you think the API is limited and doesn't allow doing what you want to, consider opening a PR on Github instead.
 * **DO** always prefer using the **commands** that HPX provides, especially because it gives other things that are beyond your control a chance to run.
 
 Available packages

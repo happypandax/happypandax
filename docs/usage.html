@@ -5,7 +5,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Using HappyPanda X &#8212; HappyPanda X 0.0.13#124 documentation</title>
+    <title>Using HappyPanda X &#8212; HappyPanda X 0.0.12#125 documentation</title>
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="_static/style.css" type="text/css" />
@@ -41,7 +41,7 @@
         </button>
         <a class="navbar-brand" href="index.html">
           HappyPanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.13#124</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.12#125</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -67,6 +67,7 @@
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="env.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="env.html#editing-the-documentation">Editing the documentation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="client.html">Creating frontends</a></li>
 <li class="toctree-l1"><a class="reference internal" href="plugin.html">Plugins</a></li>
 <li class="toctree-l1"><a class="reference internal" href="todo.html">TODO</a></li>
@@ -163,7 +164,12 @@
 </ul>
 </li>
 <li><a class="reference internal" href="#exposing-happypanda-x">Exposing HappyPanda X</a><ul>
-<li><a class="reference internal" href="#private-network">Private network</a></li>
+<li><a class="reference internal" href="#private-network">Private network</a><ul>
+<li><a class="reference internal" href="#windows">Windows</a></li>
+<li><a class="reference internal" href="#mac">Mac</a></li>
+<li><a class="reference internal" href="#linux">Linux</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#public-network">Public network</a></li>
 </ul>
 </li>
@@ -241,6 +247,7 @@ If you’re interested in building a client to work with HPX, head over to <a cl
 If you’re planning on having multiple people accessing your HPX server, or you want to access the server from a remote origin over the internet, it is best
 you disable this user. Disable it with the setting <code class="docutils literal notranslate"><span class="pre">server.disable_default_user</span></code>.</p>
 <p>Additionally, you may also want to disallow people accessing the server without logging in with the settings <code class="docutils literal notranslate"><span class="pre">server.allow_guests</span></code> and <code class="docutils literal notranslate"><span class="pre">server.require_auth</span></code>.</p>
+<p>To create and delete users, see the command-line args <code class="docutils literal notranslate"><span class="pre">--create-user</span></code>, <code class="docutils literal notranslate"><span class="pre">--delete-user</span></code> and <code class="docutils literal notranslate"><span class="pre">--list-users</span></code>.</p>
 </div>
 <div class="section" id="tls-ssl-support">
 <h2>TLS/SSL Support<a class="headerlink" href="#tls-ssl-support" title="Permalink to this headline">¶</a></h2>
@@ -262,18 +269,41 @@ ahead and allow the connection by adding an exception.</p>
 </div>
 <div class="section" id="exposing-happypanda-x">
 <h1>Exposing HappyPanda X<a class="headerlink" href="#exposing-happypanda-x" title="Permalink to this headline">¶</a></h1>
-<p>To allow HPX to be accessed from your phone or other devices, you’ll need to expose the server(s) to the private or public (internet) networks</p>
+<p>To allow HPX to be accessed from your phone or other devices, you’ll need to expose the server(s) so it can be connected to from outside your computer.</p>
+<div class="section" id="private-network">
+<h2>Private network<a class="headerlink" href="#private-network" title="Permalink to this headline">¶</a></h2>
+<p>Exposing HPX to your private network will allow <em>any device connected to your home network</em> to access HPX.
+This means that you can enjoy your collection on HPX not only from your computer but also from your tablet, phone, etc. as long as they are connected to your home network
+either through Wi-Fi or LAN.</p>
+<p>When starting HPX, set the two settings <code class="docutils literal notranslate"><span class="pre">server.host</span></code> and <code class="docutils literal notranslate"><span class="pre">server.host_web</span></code> to <code class="docutils literal notranslate"><span class="pre">0.0.0.0</span></code>. This means that the server should listen on all interfaces.
+We can also set the ports with the settings <code class="docutils literal notranslate"><span class="pre">server.port</span></code> and <code class="docutils literal notranslate"><span class="pre">server.port_web</span></code>, but we’ll leave them to their default values.</p>
+<p>The next step is to allow connections on the chosen ports through your firewall.</p>
+<div class="section" id="windows">
+<h3>Windows<a class="headerlink" href="#windows" title="Permalink to this headline">¶</a></h3>
+<ol class="arabic simple">
+<li>Press <code class="docutils literal notranslate"><span class="pre">Win</span> <span class="pre">+</span> <span class="pre">R</span></code> type <code class="docutils literal notranslate"><span class="pre">`firewall.cpl</span></code> in the dialogbox and press enter.</li>
+<li>On the lefthand side click on the text that says something along <em>Allow a program to pass through firewall</em>.</li>
+<li>Click on the <em>Change settings</em> button on the top and check if <code class="docutils literal notranslate"><span class="pre">HappyPanda</span> <span class="pre">X</span></code> is on the list. If not then click on the button <em>Allow another program</em> below.</li>
+<li>If <code class="docutils literal notranslate"><span class="pre">HappyPanda</span> <span class="pre">X</span></code> is not on the list then add either <code class="docutils literal notranslate"><span class="pre">happypandax.exe</span></code> or <code class="docutils literal notranslate"><span class="pre">happypandax_gui</span></code> (depending on which you use) or both to the list.</li>
+<li>Make sure the checkbox on the right is checked. Which one to check depends on your network configuration but you can just check both if you’re not sure.</li>
+</ol>
+</div>
+<div class="section" id="mac">
+<h3>Mac<a class="headerlink" href="#mac" title="Permalink to this headline">¶</a></h3>
+<p>Please use google</p>
+</div>
+<div class="section" id="linux">
+<h3>Linux<a class="headerlink" href="#linux" title="Permalink to this headline">¶</a></h3>
+<p>Please use google</p>
+</div>
+</div>
+<div class="section" id="public-network">
+<h2>Public network<a class="headerlink" href="#public-network" title="Permalink to this headline">¶</a></h2>
+<p>Exposing HPX to the public network will allow you to access HPX from <em>any device connected to the internet</em>.</p>
 <div class="admonition-todo admonition" id="index-0">
 <p class="first admonition-title">Todo</p>
 <p class="last">expose HPX</p>
 </div>
-<div class="section" id="private-network">
-<h2>Private network<a class="headerlink" href="#private-network" title="Permalink to this headline">¶</a></h2>
-<p>Doing this will allow for you to access HPX from <em>any device connected to your home network</em></p>
-</div>
-<div class="section" id="public-network">
-<h2>Public network<a class="headerlink" href="#public-network" title="Permalink to this headline">¶</a></h2>
-<p>Doing this will allow for you to access HPX from <em>any device connected to the internet</em></p>
 </div>
 </div>
 

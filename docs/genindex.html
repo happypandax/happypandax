@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Index &#8212; HappyPanda X 0.0.13#124 documentation</title>
+    <title>Index &#8212; HappyPanda X 0.0.12#125 documentation</title>
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="_static/style.css" type="text/css" />
@@ -40,7 +40,7 @@
         </button>
         <a class="navbar-brand" href="index.html">
           HappyPanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.13#124</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.12#125</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -66,6 +66,7 @@
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="env.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="env.html#editing-the-documentation">Editing the documentation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="client.html">Creating frontends</a></li>
 <li class="toctree-l1"><a class="reference internal" href="plugin.html">Plugins</a></li>
 <li class="toctree-l1"><a class="reference internal" href="todo.html">TODO</a></li>
@@ -359,6 +360,8 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api_general.html#happypanda.interface.enums.ItemType.Category">Category (ItemType attribute)</a>
 </li>
+      <li><a href="api.html#happypanda.interface.meta.check_update">check_update() (in module happypanda.interface.meta)</a>
+</li>
       <li><a href="api_general.html#happypanda.interface.enums.ProgressType.CheckUpdate">CheckUpdate (ProgressType attribute)</a>
 </li>
       <li><a href="api_general.html#happypanda.interface.enums.ItemType.Circle">Circle (ItemType attribute)</a>
@@ -514,6 +517,14 @@
 </li>
       <li><a href="api.html#happypanda.interface.tag.get_all_tags">get_all_tags() (in module happypanda.interface.tag)</a>
 </li>
+      <li><a href="api.html#happypanda.interface.meta.get_changelog">get_changelog() (in module happypanda.interface.meta)</a>
+</li>
+      <li><a href="api.html#happypanda.interface.meta.get_command_progress">get_command_progress() (in module happypanda.interface.meta)</a>
+</li>
+      <li><a href="api.html#happypanda.interface.meta.get_command_state">get_command_state() (in module happypanda.interface.meta)</a>
+</li>
+      <li><a href="api.html#happypanda.interface.meta.get_command_value">get_command_value() (in module happypanda.interface.meta)</a>
+</li>
       <li><a href="api.html#happypanda.interface.tag.get_common_tags">get_common_tags() (in module happypanda.interface.tag)</a>
 </li>
       <li><a href="api_plugin.html#happypanda.core.plugin_interface.get_config">get_config() (in module happypanda.core.plugin_interface)</a>
@@ -522,10 +533,10 @@
         <li><a href="api.html#happypanda.interface.settings.get_config">(in module happypanda.interface.settings)</a>
 </li>
       </ul></li>
-      <li><a href="api_plugin.html#happypanda.core.plugin_interface.get_constant">get_constant() (in module happypanda.core.plugin_interface)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api_plugin.html#happypanda.core.plugin_interface.get_constant">get_constant() (in module happypanda.core.plugin_interface)</a>
+</li>
       <li><a href="api.html#happypanda.interface.database.get_count">get_count() (in module happypanda.interface.database)</a>
 </li>
       <li><a href="api.html#happypanda.interface.database.get_image">get_image() (in module happypanda.interface.database)</a>
@@ -534,7 +545,11 @@
 </li>
       <li><a href="api.html#happypanda.interface.database.get_items">get_items() (in module happypanda.interface.database)</a>
 </li>
+      <li><a href="api.html#happypanda.interface.meta.get_locales">get_locales() (in module happypanda.interface.meta)</a>
+</li>
       <li><a href="api_plugin.html#happypanda.core.plugin_interface.get_logger">get_logger() (in module happypanda.core.plugin_interface)</a>
+</li>
+      <li><a href="api.html#happypanda.interface.meta.get_notification">get_notification() (in module happypanda.interface.meta)</a>
 </li>
       <li><a href="api.html#happypanda.interface.gallery.get_page">get_page() (in module happypanda.interface.gallery)</a>
 </li>
@@ -555,6 +570,8 @@
       <li><a href="api.html#happypanda.interface.tag.get_tags">get_tags() (in module happypanda.interface.tag)</a>
 </li>
       <li><a href="api.html#happypanda.interface.tag.get_tags_count">get_tags_count() (in module happypanda.interface.tag)</a>
+</li>
+      <li><a href="api.html#happypanda.interface.meta.get_version">get_version() (in module happypanda.interface.meta)</a>
 </li>
       <li><a href="api.html#happypanda.interface.ui.get_view_count">get_view_count() (in module happypanda.interface.ui)</a>
 </li>
@@ -578,6 +595,8 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#module-happypanda.interface.meta">happypanda.interface.meta (module)</a>
+</li>
       <li><a href="api.html#module-happypanda.interface.plugin">happypanda.interface.plugin (module)</a>
 </li>
       <li><a href="api.html#module-happypanda.interface.settings">happypanda.interface.settings (module)</a>
@@ -733,13 +752,17 @@
 </li>
       <li><a href="api_general.html#happypanda.interface.enums.PluginState.Registered">Registered (PluginState attribute)</a>
 </li>
+      <li><a href="api.html#happypanda.interface.plugin.remove_plugin">remove_plugin() (in module happypanda.interface.plugin)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api.html#happypanda.interface.plugin.remove_plugin">remove_plugin() (in module happypanda.interface.plugin)</a>
+      <li><a href="api.html#happypanda.interface.meta.reply_notification">reply_notification() (in module happypanda.interface.meta)</a>
 </li>
       <li><a href="api_general.html#happypanda.interface.enums.ProgressType.Request">Request (ProgressType attribute)</a>
 </li>
       <li><a href="api_general.html#happypanda.interface.enums.ServerCommand.RequestAuth">RequestAuth (ServerCommand attribute)</a>
+</li>
+      <li><a href="api.html#happypanda.interface.meta.restart_application">restart_application() (in module happypanda.interface.meta)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -767,23 +790,29 @@
 </li>
       <li><a href="api_general.html#happypanda.interface.enums.ServerCommand.ServerRestart">ServerRestart (ServerCommand attribute)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api_general.html#happypanda.common.exceptions.SessionExpiredError">SessionExpiredError</a>
 </li>
       <li><a href="api.html#happypanda.interface.settings.set_config">set_config() (in module happypanda.interface.settings)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api.html#happypanda.interface.plugin.set_plugin_config">set_plugin_config() (in module happypanda.interface.plugin)</a>
 </li>
       <li><a href="api_general.html#happypanda.common.exceptions.SettingsError">SettingsError</a>
+</li>
+      <li><a href="api.html#happypanda.interface.meta.shutdown_application">shutdown_application() (in module happypanda.interface.meta)</a>
 </li>
       <li><a href="api_general.html#happypanda.interface.enums.ImageSize.Small">Small (ImageSize attribute)</a>
 </li>
       <li><a href="api.html#happypanda.interface.gallery.source_exists">source_exists() (in module happypanda.interface.gallery)</a>
 </li>
+      <li><a href="api.html#happypanda.interface.meta.start_command">start_command() (in module happypanda.interface.meta)</a>
+</li>
       <li><a href="api_general.html#happypanda.core.command.CommandState.started">started (CommandState attribute)</a>
 </li>
       <li><a href="api_general.html#happypanda.interface.enums.ItemType.Status">Status (ItemType attribute)</a>
+</li>
+      <li><a href="api.html#happypanda.interface.meta.stop_command">stop_command() (in module happypanda.interface.meta)</a>
 </li>
       <li><a href="api_general.html#happypanda.core.command.CommandState.stopped">stopped (CommandState attribute)</a>
 </li>
@@ -815,6 +844,8 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api.html#happypanda.interface.meta.update_application">update_application() (in module happypanda.interface.meta)</a>
+</li>
       <li><a href="api_general.html#happypanda.interface.enums.ProgressType.UpdateApplication">UpdateApplication (ProgressType attribute)</a>
 </li>
       <li><a href="api_general.html#happypanda.interface.enums.ItemType.Url">Url (ItemType attribute)</a>

@@ -4,6 +4,8 @@ Server API
 Functions
 ----------------------------------------
 
+These are errors that HPX may raise.
+Any error raised not on this list is an *unhandled exception*.
 
 .. automodule:: happypanda.interface.meta
    :members:
