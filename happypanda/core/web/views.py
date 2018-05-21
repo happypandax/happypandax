@@ -97,7 +97,8 @@ def call_server(serv_data, root_client, client, lock):
                     serv_data['session'] = root_client.session
                 data = client.communicate(serv_data)
             except exceptions.ServerError as e:
-                if not isinstance(e, exceptions.ConnectionError):
+                if not isinstance(e, (exceptions.ConnectionError,
+                                      exceptions.AuthError)):
                     log.exception()
                 send_error(e)
         else:
@@ -163,7 +164,8 @@ def on_command_handle(client_id, clients, msg, lock):
                 try:
                     _connect_clients(clients)
                 except exceptions.ClientError as e:
-                    if not isinstance(e, exceptions.ConnectionError):
+                    if not isinstance(e, (exceptions.ConnectionError,
+                                            exceptions.AuthError)):
                         log.exception("Failed to reconnect")
                     send_error(e, room=client_id)
 
@@ -195,7 +197,8 @@ def on_command_handle(client_id, clients, msg, lock):
         d['version'] = clients['client'].version
 
     except exceptions.ServerError as e:
-        if not isinstance(e, exceptions.ConnectionError):
+        if not isinstance(e, (exceptions.ConnectionError,
+                                      exceptions.AuthError)):
             log.exception()
         send_error(e, room=client_id)
     finally:

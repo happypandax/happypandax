@@ -208,7 +208,7 @@ def get_similar_value(cmd):
 def get_similar(data=None, error=None):
     if data is not None and not error:
         cmd = Command(data)
-        cmd.poll_until_complete()
+        cmd.poll_until_complete(1000)
         cmd.poll_progress(callback=this.get_similar_progress)
         cmd.set_callback(this.get_similar_value)
 

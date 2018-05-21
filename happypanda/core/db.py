@@ -1756,7 +1756,9 @@ def init(**kwargs):
                 db_url = make_db_url()
                 if not database_exists(db_url):
                     create_database(db_url, db_encoding)
-                constants.db_engine = create_engine(db_url)
+                constants.db_engine = create_engine(db_url, max_overflow=20,
+                                                   pool_size=config.pool_size.value,
+                                                   pool_timeout=config.pool_timeout.value)
 
         Base.metadata.create_all(constants.db_engine)
 

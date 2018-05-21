@@ -555,6 +555,20 @@ with config.namespace(db_ns):
         30,
         "Amount of seconds to wait for the database to be writeable")
 
+    pool_size = config.create(
+        db_ns,
+        "pool_size",
+        30,
+        "The size of the pool to be maintained. This is the largest number of connections that will be kept persistently in the pool. "+
+        "This setting does not apply when the SQLite dialect is used")
+
+    pool_timeout = config.create(
+        db_ns,
+        "pool_timeout",
+        30,
+        "The number of seconds to wait before giving up on returning a connection. "+
+        "This setting does not apply when the SQLite dialect is used")
+
 server_ns = 'server'
 
 with config.namespace(server_ns):

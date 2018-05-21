@@ -39,16 +39,19 @@ install:
 
 script:
     - python3 lint.py
-    - "python3 ./run_tests.py ./tests/test_updater.py"
+    - "python3 ./run_tests.py"
 
 before_deploy:
     - npm install
+    - "python3 ./bootstrap.py build --docs"
     - "python3 ./bootstrap.py deploy"
     - export APP_VERSION=$(python3 ./bootstrap.py version --app-version)
     - export APP_RELEASE_NAME=$(python3 ./bootstrap.py version --app-release)
     - export VERSION_TAG=v$APP_VERSION
     - git config --local user.name "$GH_USER"
     - git config --local user.email "$GH_MAIL"
+    - git commit -am "update docs and webclient $VERSION_TAG"
+    - git push --quiet "https://$GITHUB_TOKEN@github.com/$REPO.git" > /dev/null 2>&1 || echo  "Failed to update webclient and docs"
     - git tag -a $VERSION_TAG -m "$APP_RELEASE_NAME" || echo "Tag already exists, skipping"
     - git push --quiet "https://$GITHUB_TOKEN@github.com/$REPO.git" $VERSION_TAG > /dev/null 2>&1 || echo  "Tag already exists, skipping"
     - echo $APP_RELEASE_NAME
