@@ -83,7 +83,7 @@ class CoreCommand:
     _entries = {}
     _native_pool = None
     _progress_counter = itertools.count(1)
-    _progresses = LRUCache(500)
+    _progresses = LRUCache(1000*1000)
 
     def __new__(cls, *args, **kwargs):
         obj = super(CoreCommand, cls).__new__(cls)
