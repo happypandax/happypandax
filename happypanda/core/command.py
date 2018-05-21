@@ -20,7 +20,7 @@ log = hlogger.Logger(constants.log_ns_command + __name__)
 
 def get_available_commands():
     subs = utils.all_subclasses(Command)
-    commands = {'entry':set(), 'event':set()}
+    commands = {'entry': set(), 'event': set()}
     for c in subs:
         c._get_commands()
         for a in c._entries:
@@ -83,7 +83,7 @@ class CoreCommand:
     _entries = {}
     _native_pool = None
     _progress_counter = itertools.count(1)
-    _progresses = LRUCache(1000*1000)
+    _progresses = LRUCache(1000 * 1000)
 
     def __new__(cls, *args, **kwargs):
         obj = super(CoreCommand, cls).__new__(cls)
@@ -428,6 +428,7 @@ class _CommandPlugin:
                     self.qualifiedname(), *args, **kwargs)
             else:
                 return tuple()
+
     def _ensure_class(self, type1, type2):
         if isclass(type1):
             return issubclass(type1, type2)

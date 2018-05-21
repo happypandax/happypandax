@@ -236,7 +236,5 @@ def gevent_wait_callback(conn, timeout=None):
             else:
                 raise psycopg2.OperationalError(
                     "Bad result from poll: {}".format(state))
-        except gevent.GreenletExit: # greenlet timed-out, probably a very bad solution
+        except gevent.GreenletExit:  # greenlet timed-out, probably a very bad solution
             log.e("Psycopg wait callback timed-out", timeout, "state:", state)
-
-

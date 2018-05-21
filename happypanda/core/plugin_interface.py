@@ -1,7 +1,7 @@
 """
 The plugin interface module named ``__hpx__``.
 Import it in your plugin to access the methods and classes defined by the module::
-    
+
     import __hpx__ as hpx
     logger = hpx.get_logger(__name__)
 
@@ -10,13 +10,14 @@ and can be imported like so::
 
     import __hpx__ as hpx
     from __hpx__ import PluginError
-    
+
     raise PluginError("", "")
     raise hpx.PluginError("", "")
 
 """
 import typing
 import functools
+
 
 def get_logger(name: str):
     """
@@ -27,6 +28,7 @@ def get_logger(name: str):
     """
     return __manager__.get_plugin_logger(__plugin_id__, name)
 
+
 def get_constant(name: str):
     """
     Get a value of a constant
@@ -35,6 +37,7 @@ def get_constant(name: str):
         name: name of constant
     """
     pass
+
 
 def get_config():
     """
@@ -45,9 +48,11 @@ def get_config():
     """
     pass
 
+
 def get_setting(name: str):
     """
     """
+
 
 def save_config(obj: dict):
     """
@@ -57,6 +62,7 @@ def save_config(obj: dict):
         obj: dict-like object
     """
     pass
+
 
 def command(f: typing.Callable=None, command_name: str=None):
     """
@@ -68,6 +74,7 @@ def command(f: typing.Callable=None, command_name: str=None):
     """
     if f is None or isinstance(f, str):
         command_name = f if isinstance(f, str) else command_name
+
         def p_wrap(f):
             return command(f, command_name)
         return p_wrap
@@ -76,14 +83,16 @@ def command(f: typing.Callable=None, command_name: str=None):
         raise NotImplementedError
         # TODO: create plugin command
         #__manager__.subscribe_to_command(plugin_id, command, f)
+
         @functools.wraps(f)
         def wrapper(*args, **kwargs):
             pass
             # TODO: call command through pm
             #__manager__.call_command(plugin_id, command, f)
-            
+
             # return HandlerValue?
         return wrapper
+
 
 def attach(f: typing.Callable=None, command: str=None):
     """
@@ -95,16 +104,19 @@ def attach(f: typing.Callable=None, command: str=None):
     """
     if f is None or isinstance(f, str):
         command = f if isinstance(f, str) else command
+
         def p_wrap(f):
             return attach(f, command)
         return p_wrap
     else:
         assert isinstance(command, str), "Command name must be the qualified name of a command"
         __manager__.attach_to_command(__plugin_id__, command, f)
+
         @functools.wraps(f)
         def wrapper(*args, **kwargs):
             return f(*args, **kwargs)
         return wrapper
+
 
 def subscribe(f: typing.Callable=None, commandevent: str=None):
     """
@@ -116,12 +128,14 @@ def subscribe(f: typing.Callable=None, commandevent: str=None):
     """
     if f is None or isinstance(f, str):
         commandevent = f if isinstance(f, str) else commandevent
+
         def p_wrap(f):
             return subscribe(f, commandevent)
         return p_wrap
     else:
         assert isinstance(commandevent, str), "Command event name must be the qualified name of a command event"
         __manager__.subscribe_to_event(__plugin_id__, commandevent, f)
+
         @functools.wraps(f)
         def wrapper(*args, **kwargs):
             return f(*args, **kwargs)

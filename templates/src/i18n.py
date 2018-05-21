@@ -31,6 +31,7 @@ def add_translation_component(ctx, data, err):
     if not err and ctx['cmp']:
         ctx['cmp'].forceUpdate()
 
+
 __pragma__("kwargs")
 __pragma__("tconv")
 __pragma__("iconv")

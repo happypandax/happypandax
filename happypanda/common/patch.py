@@ -1,7 +1,8 @@
 import sys
-import gevent.monkey # noqa: E402
+import gevent.monkey  # noqa: E402
 
 patched = False
+
 
 def patch():
     global patched
@@ -9,8 +10,9 @@ def patch():
         gevent.monkey.patch_all(thread=False)
         patched = True
 
+
 def unpatch():
-    import importlib # noqa: E402
+    import importlib  # noqa: E402
 
     for x in sys.modules:
         try:
@@ -18,8 +20,9 @@ def unpatch():
         except NotImplementedError:
             pass
 
+
 def with_unpatch(f):
-    import functools # noqa: E402
+    import functools  # noqa: E402
 
     @functools.wraps(f)
     def wrapper(*args, **kwargs):
@@ -27,4 +30,3 @@ def with_unpatch(f):
         return f(*args, **kwargs)
 
     return wrapper
-    

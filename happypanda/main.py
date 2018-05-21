@@ -1,6 +1,5 @@
 import os  # noqa: E402
 import sys  # noqa: E402
-import multiprocessing  # noqa: E402
 import rollbar  # noqa: E402
 import getpass  # noqa: E402
 
@@ -20,6 +19,7 @@ from happypanda.core.commands import io_cmd, meta_cmd  # noqa: E402
 log = hlogger.Logger(__name__)
 parser = utils.get_argparser()  # required to be at module lvl for sphinx.autoprogram ext
 async_utils.patch_psycopg()
+
 
 def create_user_interactive():
     s = {}
@@ -212,4 +212,3 @@ def start(argv=None, db_kwargs={}):
                 rollbar.report_exc_info()
             raise
     return e_code.value if e_code else e_num
-

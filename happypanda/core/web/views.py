@@ -1,5 +1,4 @@
 import os
-import socket
 
 from flask import (render_template, abort, request, send_from_directory)
 from werkzeug.utils import secure_filename
@@ -15,6 +14,7 @@ log = hlogger.Logger(__name__)
 
 all_clients = {}
 all_locks = {}
+
 
 @utils.log_exception(log=log)
 def _create_clients(id, session_id=""):
@@ -122,10 +122,10 @@ def is_same_machine():
 
     # IPV6
     # TODO
-    #try:
+    # try:
     #    if constants.is_win:
     #        local_adresses.append(socket.gethostbyaddr(socket.gethostname())[2][0])
-    #except BaseException:
+    # except BaseException:
     #    log.exception("Failed to retrieve IPV6 address")
 
     if addr in local_adresses:
@@ -165,7 +165,7 @@ def on_command_handle(client_id, clients, msg, lock):
                     _connect_clients(clients)
                 except exceptions.ClientError as e:
                     if not isinstance(e, (exceptions.ConnectionError,
-                                            exceptions.AuthError)):
+                                          exceptions.AuthError)):
                         log.exception("Failed to reconnect")
                     send_error(e, room=client_id)
 
@@ -198,7 +198,7 @@ def on_command_handle(client_id, clients, msg, lock):
 
     except exceptions.ServerError as e:
         if not isinstance(e, (exceptions.ConnectionError,
-                                      exceptions.AuthError)):
+                              exceptions.AuthError)):
             log.exception()
         send_error(e, room=client_id)
     finally:

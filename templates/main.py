@@ -144,12 +144,14 @@ def server_notifications(data=js_undefined, error=None):
                     ic = "angle double up"
                     if state.history:
                         utils.go_to(state.history, "/activity")
-                    this.notif(tr(None, "ui.t-changelog-location", "About -> Changelog"), data['title'], icon=ic, timeout=tmout)
+                    this.notif(tr(None, "ui.t-changelog-location", "About -> Changelog"),
+                               data['title'], icon=ic, timeout=tmout)
                 this.notif(msg, data['title'], icon=ic, timeout=tmout)
     elif error:
         this.notif("Failed to retrieve server notification", level="warning")
     else:
-        if state['active'] and state['connected'] and state['accepted'] and utils.storage.get("ping_for_notifications", True):
+        if state['active'] and state['connected'] and state['accepted'] and utils.storage.get(
+                "ping_for_notifications", True):
             pushclient.call_func("get_notification", this.server_notifications)
 
 

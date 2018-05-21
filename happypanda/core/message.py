@@ -1,7 +1,6 @@
 "Contains classes/functions used to encapsulate message structures"
 
 import enum
-import json
 import inspect
 import arrow
 import os
@@ -565,6 +564,7 @@ class Function(CoreMessage):
     def from_json(self, j):
         return super().from_json(j)
 
+
 class Plugin(CoreMessage):
     "A plugin message"
 
@@ -574,7 +574,7 @@ class Plugin(CoreMessage):
         self.node = node
 
     def _node_data(self, node):
-        return {'id':node.info.id,
+        return {'id': node.info.id,
                 'name': node.info.name,
                 'shortname': node.info.shortname,
                 'version': node.info.version.public,

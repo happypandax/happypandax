@@ -5,7 +5,8 @@ Plugin
 """
 from happypanda.common import constants
 from happypanda.interface import enums
-from happypanda.core import plugins, message
+from happypanda.core import message
+
 
 def list_plugins(state: enums.PluginState=None):
     """
@@ -25,6 +26,7 @@ def list_plugins(state: enums.PluginState=None):
         l.append(message.Plugin(n))
     return l
 
+
 def get_plugin(plugin_id: str=""):
     """
     Get information for a specific plugin
@@ -39,6 +41,7 @@ def get_plugin(plugin_id: str=""):
             }
     """
     return message.Plugin(constants.plugin_manager.get_node(plugin_id))
+
 
 def get_plugin_config(plugin_id: str=""):
     """
@@ -55,6 +58,7 @@ def get_plugin_config(plugin_id: str=""):
     """
     raise NotImplementedError
     return message.Plugin(constants.plugin_manager.get_node(plugin_id))
+
 
 def set_plugin_config(plugin_id: str=""):
     """
@@ -85,6 +89,7 @@ def install_plugin(plugin_id: str=""):
     """
     constants.plugin_manager.install_plugin(plugin_id)
 
+
 def disable_plugin(plugin_id: str=""):
     """
     Disable a plugin
@@ -96,6 +101,7 @@ def disable_plugin(plugin_id: str=""):
         status
     """
     constants.plugin_manager.disable_plugin(plugin_id)
+
 
 def remove_plugin(plugin_id: str=""):
     """
@@ -109,4 +115,3 @@ def remove_plugin(plugin_id: str=""):
     """
     raise NotImplementedError
     constants.plugin_manager.disable_plugin(plugin_id)
-

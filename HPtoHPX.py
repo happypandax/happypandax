@@ -22,6 +22,7 @@ from happypanda.core.commands import io_cmd
 from happypanda.common import constants, config, utils
 _print = print
 
+
 def safeprint(*s):
     try:
         _print(*s)
@@ -833,7 +834,7 @@ def extract_collection(title):
 
 def main(args=sys.argv[1:]):
     try:
-        
+
         args = parse_args(args)
 
         AMOUNT_OF_TASKS = args.process if args.process > 0 else 1

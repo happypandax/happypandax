@@ -308,7 +308,9 @@ class Config:
                 return default
 
             if only is not None and v not in only:
-                log.w("Setting '{}:{}' expected one of {}, using default value '{}'".format(ns, key, only, default), stderr=True)
+                log.w(
+                    "Setting '{}:{}' expected one of {}, using default value '{}'".format(
+                        ns, key, only, default), stderr=True)
                 return default
             return v
 
@@ -502,9 +504,9 @@ with config.namespace(db_ns):
         db_ns,
         "dialect",
         "sqlite",
-        "Which SQL dialect to use between 'sqlite' and 'postgres'. "+
-        "Note that HPX will not transfer data from one dialect to another once chosen. "+
-        "It is therefore advised that you choose a dialect early and stick to it throughout. "+
+        "Which SQL dialect to use between 'sqlite' and 'postgres'. " +
+        "Note that HPX will not transfer data from one dialect to another once chosen. " +
+        "It is therefore advised that you choose a dialect early and stick to it throughout. " +
         "Only Postgres version 9.4 and up is supported",
         only=("sqlite", "postgres"))
 
@@ -559,14 +561,14 @@ with config.namespace(db_ns):
         db_ns,
         "pool_size",
         15,
-        "The size of the pool to be maintained. This is the largest number of connections that will be kept persistently in the pool. "+
+        "The size of the pool to be maintained. This is the largest number of connections that will be kept persistently in the pool. " +
         "This setting does not apply when the SQLite dialect is used")
 
     pool_timeout = config.create(
         db_ns,
         "pool_timeout",
         45,
-        "The number of seconds to wait before giving up on returning a connection. "+
+        "The number of seconds to wait before giving up on returning a connection. " +
         "This setting does not apply when the SQLite dialect is used")
 
 server_ns = 'server'

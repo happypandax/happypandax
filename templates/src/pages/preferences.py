@@ -339,16 +339,16 @@ def pref_advanced(props):
                          )
     if state.debug:
         items.append(e(ui.Form.Field,
-                e(ui.Checkbox,
-                    toggle=True,
-                    label=tr(
-                        props.tab,
-                        "ui.t-ping-for-notifications",
-                        "Ping for notifications"),
-                    defaultChecked=utils.storage.get("ping_for_notifications", True),
-                    onChange=lambda e, d: utils.storage.set("ping_for_notifications", d.checked),
-                    ))
-                )
+                       e(ui.Checkbox,
+                         toggle=True,
+                         label=tr(
+                             props.tab,
+                             "ui.t-ping-for-notifications",
+                             "Ping for notifications"),
+                           defaultChecked=utils.storage.get("ping_for_notifications", True),
+                           onChange=lambda e, d: utils.storage.set("ping_for_notifications", d.checked),
+                         ))
+                     )
 
     return e(PrefSegment, *items, props=props)
 
@@ -397,7 +397,7 @@ def preftab_render():
     u_cfg = this.state.u_config
     tab = this
 
-    def el(x): return e(x, # noqa: E704
+    def el(x): return e(x,  # noqa: E704
                         u_cfg=u_cfg,
                         tab=tab,
                         cfg=config,

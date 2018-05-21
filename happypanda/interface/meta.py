@@ -36,13 +36,14 @@ def get_changelog():
 
     """
 
-    ch = {'version': '', 'changes':''}
+    ch = {'version': '', 'changes': ''}
     lr = constants.internaldb.latest_release.get()
     if lr:
         ch['changes'] = lr.get("changes", "")
         ch['version'] = lr.get("tag", "")
 
     return message.Identity("changelog", ch)
+
 
 def get_locales():
     """

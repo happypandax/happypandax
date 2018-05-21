@@ -1,6 +1,5 @@
 import socket
 import sys
-import json
 import errno
 import gzip
 

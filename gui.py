@@ -1,19 +1,20 @@
 import happypanda.common.patch
 import sys
-if __name__ == '__mp_main__' or (__name__ == '__main__' and len(sys.argv) >= 2 and sys.argv[1] == '--multiprocessing-fork'):
+if __name__ == '__mp_main__' or (__name__ == '__main__' and len(
+        sys.argv) >= 2 and sys.argv[1] == '--multiprocessing-fork'):
     happypanda.common.patch.patch()
 
-import multiprocessing as mp # noqa: E402
-from happypanda import main # noqa: E402
+import multiprocessing as mp  # noqa: E402
+from happypanda import main  # noqa: E402
 
-import os # noqa: E402
-import functools # noqa: E402
-import signal # noqa: E402
-import webbrowser # noqa: E402
-import pathlib # noqa: E402
+import os  # noqa: E402
+import functools  # noqa: E402
+import signal  # noqa: E402
+import webbrowser  # noqa: E402
+import pathlib  # noqa: E402
 
-from multiprocessing import Process, queues # noqa: E402
-from happypanda.common import constants # noqa: E402
+from multiprocessing import Process, queues  # noqa: E402
+from happypanda.common import constants  # noqa: E402
 
 if __name__ == '__main__':
     mp.set_start_method("spawn")
@@ -89,12 +90,11 @@ from PyQt5.QtWidgets import (QApplication,
 from PyQt5.QtGui import QIcon, QPalette, QMouseEvent  # noqa: E402
 from PyQt5.QtCore import Qt, QDir, pyqtSignal, QEvent  # noqa: E402
 from i18n import t  # noqa: E402
-from threading import Thread, Timer # noqa: E402
+from threading import Thread, Timer  # noqa: E402
 
 from happypanda.common import utils, config  # noqa: E402
 from happypanda.core.commands import io_cmd  # noqa: E402
 from happypanda.core import db  # noqa: E402
-from happypanda import main # noqa: E402 
 import HPtoHPX  # noqa: E402
 
 if constants.is_posix:

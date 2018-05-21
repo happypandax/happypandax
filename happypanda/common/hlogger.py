@@ -5,8 +5,6 @@ import argparse
 import traceback
 import os
 import multiprocessing as mp
-from gevent import monkey
-import socket, select
 
 try:
     import rollbar  # updater doesn't need this
@@ -17,7 +15,7 @@ from multiprocessing import Process, Queue, TimeoutError, queues
 from logging.handlers import RotatingFileHandler
 
 
-from happypanda.common import constants, patch
+from happypanda.common import constants
 
 
 def shutdown(*args):
@@ -182,7 +180,7 @@ class Logger:
             logs = [(constants.log_normal, logging.INFO, None),
                     (constants.log_error, logging.ERROR, None)]
 
-            plugin_filter = logging.Filter(constants.log_ns_plugin[:-1]) # remove .
+            plugin_filter = logging.Filter(constants.log_ns_plugin[:-1])  # remove .
             if argsdev:
                 try:
                     with open(constants.log_plugin, 'x') as f:
@@ -237,6 +235,7 @@ class Logger:
             for log in cls._logs_queue:
                 l = Logger(log[0])
                 l._log(log[1], *log[2], stdout=log[3], stderr=log[4])
+
     @staticmethod
     def _listener(args, queue):
         Logger.setup_logger(args)
@@ -270,4 +269,3 @@ class Logger:
                 cls._queue.get(timeout=3)
             except (TimeoutError, queues.Empty):
                 pass
-

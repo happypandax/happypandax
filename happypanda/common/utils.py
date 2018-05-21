@@ -691,6 +691,7 @@ def create_self_signed_cert(cert_file, key_file, pem_file=None):
         with open(pem_file, "wb") as f:
             f.write(cert_pem + key_pem)
 
+
 def log_exception(f=None, log=log):
     if f is None:
         def p_wrap(f):
@@ -700,31 +701,32 @@ def log_exception(f=None, log=log):
         def wrapper(*args, **kwargs):
             try:
                 v = f(*args, **kwargs)
-            except:
+            except BaseException:
                 log.exception()
                 raise
             return v
         return wrapper
 
+
 def json_dumps(msg, log=log):
     try:
         return json.dumps(msg)
-    except:
+    except BaseException:
         log.e(msg)
         raise
+
 
 def check_signature():
     pass
     #sig = inspect.signature(node.plugin.__init__)
     #pars = list(sig.parameters)
-    #if not len(pars) == 3:
+    # if not len(pars) == 3:
     #    raise exceptions.PluginSignatureError(
     #        node, "Unexpected __init__() signature")
     #var_pos = False
     #var_key = False
-    #for a in pars:
+    # for a in pars:
     #    if sig.parameters[a].kind == inspect.Parameter.VAR_POSITIONAL:
     #        var_pos = True
     #    elif sig.parameters[a].kind == inspect.Parameter.VAR_KEYWORD:
     #        var_key = True
-

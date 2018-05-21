@@ -134,10 +134,12 @@ class PluginSignatureError(PluginError):
     """Plugin Signature Error."""
     pass
 
+
 @_error_code(206)
 class PluginLoadError(PluginError):
     """Plugin Load Error."""
     pass
+
 
 @_error_code(207)
 class PluginInitError(PluginError):
@@ -253,6 +255,7 @@ class ParsingError(ServerError):
 @_error_code(411)
 class AuthWrongCredentialsError(AuthError):
     ""
+
     def __init__(self, where, msg):
         super().__init__(where, msg)
 
@@ -260,6 +263,7 @@ class AuthWrongCredentialsError(AuthError):
 @_error_code(412)
 class AuthMissingCredentials(AuthError):
     ""
+
     def __init__(self, where, msg):
         super().__init__(where, msg)
 

@@ -119,13 +119,13 @@ class ShutdownApplication(Command):
     def main(self):
         self.shutdown.emit()
 
+
 class InitApplication(Command):
     """
     Initialize the appplication
     """
 
     init = CommandEvent("init")
-
 
     def __init__(self, priority=constants.Priority.Normal):
         super().__init__(priority)

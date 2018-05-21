@@ -242,7 +242,7 @@ class AsyncService(Service):
         super().__init__(name)
         self._commands = {}  # cmd_id : command
         self._greenlets = {}  # cmd_id : greenlet
-        self._values = {} # cmd_id : values
+        self._values = {}  # cmd_id : values
         self._decorators = {}  # cmd_id : callable
         self._group = group
         self._queue = queue.Queue()
@@ -283,7 +283,7 @@ class AsyncService(Service):
         gevent.idle(constants.Priority.Normal.value)
         if cmd_id not in self._greenlets:
             self._greenlets[cmd_id] = async_utils.Greenlet(
-                 db.cleanup_session_wrap(self._commands[cmd_id]._run), *args, **kwargs)
+                db.cleanup_session_wrap(self._commands[cmd_id]._run), *args, **kwargs)
 
         green = self._greenlets[cmd_id]
 
@@ -332,7 +332,12 @@ class AsyncService(Service):
             try:
                 greenlet.get()
             except BaseException:
-                log.exception("Command", "{}({})".format(command_obj.__class__.__name__, command_id), "raised an exception")
+                log.exception(
+                    "Command",
+                    "{}({})".format(
+                        command_obj.__class__.__name__,
+                        command_id),
+                    "raised an exception")
                 command_obj.state = command.CommandState.failed
                 command_obj.exception = greenlet.exception
                 if constants.dev:
@@ -353,7 +358,7 @@ class AsyncService(Service):
                     command_obj.state))
             if callback:
                 callback(value)
-        except:
+        except BaseException:
             log.exception()
             raise
 

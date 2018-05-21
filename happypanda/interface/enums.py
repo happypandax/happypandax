@@ -28,6 +28,7 @@ from happypanda.common import utils, exceptions
 from happypanda import core
 from happypanda.core import db
 
+
 class _APIEnum(enum.Enum):
     "A conv. enum class"
 
@@ -226,12 +227,13 @@ class ProgressType(_APIEnum):
     #: Updating application
     UpdateApplication = 4
 
+
 class PluginState(_APIEnum):
 
     #: Puporsely disabled
     Disabled = 0
     #: Unloaded because of dependencies, etc.
-    Unloaded = 1 
+    Unloaded = 1
     #: Was just registered but not installed
     Registered = 2
     #: Allowed to be enabled

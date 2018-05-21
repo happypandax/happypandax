@@ -223,9 +223,10 @@ class JSONType(JSONType_):
         else:
             return dialect.type_descriptor(self.impl)
 
+
 class Text(_Text):
 
-    def __init__(self, length = 65535 if config.dialect.value == constants.Dialect.MYSQL else None, *args, **kwargs):
+    def __init__(self, length=65535 if config.dialect.value == constants.Dialect.MYSQL else None, *args, **kwargs):
         return super().__init__(length, *args, **kwargs)
 
 
@@ -235,7 +236,7 @@ class String(_String):
     filter expressions.
     """
 
-    def __init__(self, length = 255, *args, **kwargs):
+    def __init__(self, length=255, *args, **kwargs):
         return super().__init__(length, *args, **kwargs)
 
     class comparator_factory(_String.comparator_factory):
@@ -397,6 +398,7 @@ class Base:
         sess.delete(self)
         return sess
 
+
 def _unique(session, cls, hashfunc, queryfunc, constructor, arg, kw):
     cache = getattr(session, '_unique_cache', None)
     if cache is None:
@@ -415,6 +417,7 @@ def _unique(session, cls, hashfunc, queryfunc, constructor, arg, kw):
                 session.add(obj)
         cache[key] = obj
         return obj
+
 
 class UniqueMixin:
     @classmethod
@@ -435,6 +438,7 @@ class UniqueMixin:
             cls,
             arg, kw
         )
+
 
 class NameMixin(UniqueMixin):
     name = Column(String, nullable=False, default='', unique=True)
@@ -574,11 +578,13 @@ def validate_arrow(value):
         type(value))
     return value
 
+
 def validatejson(value):
     assert isinstance(
         value, dict) or value is None, "Column only accepts dict, not {}".format(
         type(value))
     return value
+
 
 def validate_bool(value):
     assert isinstance(
@@ -652,6 +658,7 @@ def metatag_association(cls, bref="items"):
         cascade="all")
     return assoc
 
+
 def metalist_association(cls, bref="items"):
     if not issubclass(cls, Base):
         raise ValueError("Must be subbclass of Base")
@@ -671,6 +678,7 @@ def metalist_association(cls, bref="items"):
         backref=backref(bref, lazy="dynamic"),
         cascade="all")
     return assoc
+
 
 def aliasname_association(cls, bref="items"):
     if not issubclass(cls, Base):
@@ -751,6 +759,7 @@ class MetaTag(NameMixin, Base):
     def all_names(cls):
         sess = constants.db_session()
         return tuple(x[0] for x in sess.query(cls.name).all())
+
 
 class User(Base):
     __tablename__ = 'user'
@@ -834,6 +843,7 @@ class Event(Base):
             self.name = name
         if timestamp:
             self.timestamp = timestamp
+
 
 @generic_repr
 class Hash(NameMixin, Base):
@@ -1066,6 +1076,7 @@ class Parody(ProfileMixin, UserMixin, Base):
         back_populates='parodies',
         lazy="dynamic")
 
+
 profile_association(Parody, "parodies")
 
 
@@ -1094,6 +1105,7 @@ class GalleryFilter(UserMixin, NameMixin, Base):
         secondary=gallery_filters,
         back_populates='filters',
         lazy="dynamic")
+
 
 @generic_repr
 class Status(NameMixin, UserMixin, Base):
@@ -1403,20 +1415,24 @@ class Url(UserMixin, Base):
     __tablename__ = 'url'
     name = Column(Text, nullable=False, default='')  # OBS: not unique
 
+
 @generic_repr
 class MetaList(UserMixin, NameMixin, Base):
     __tablename__ = 'metalist'
 
-metalist_mappers = [x for x in globals().values() if\
-                        pyinspect.isclass(x) and issubclass(x, Base) and\
-                            x not in (Base, MetaList)]
+
+metalist_mappers = [x for x in globals().values() if
+                    pyinspect.isclass(x) and issubclass(x, Base) and
+                    x not in (Base, MetaList)]
 
 for y in metalist_mappers:
-    metalist_association(y, y.__tablename__+'s')
+    metalist_association(y, y.__tablename__ + 's')
 
 # =======================================================================================
 
 # Note: necessary to put in function because there is no Session object yet
+
+
 def initEvents(sess):
     "Initializes events"
 
@@ -1569,6 +1585,7 @@ def engine_connect(dbapi_connection, connection_record):
             raise exceptions.DatabaseInitError("HPX requires Postgres version 9.4 and up")
         cursor.close()
 
+
 def init_defaults(sess):
     "Initializes default items"
 
@@ -1719,7 +1736,7 @@ def make_db_url(db_name=None):
         db_name = constants.db_name_dev if constants.dev and config.db_name.value == constants.db_name else config.db_name.value
     db_query = {}
     if config.dialect.value == constants.Dialect.MYSQL:
-        db_query.update({'charset':'utf8mb4'})
+        db_query.update({'charset': 'utf8mb4'})
     db_query.update(config.db_query.value)
     drivername = config.dialect.value
     if drivername == constants.Dialect.MYSQL:
@@ -1732,7 +1749,7 @@ def make_db_url(db_name=None):
         port=config.db_port.value,
         database=db_name,
         query=db_query,
-        )
+    )
     return db_url
 
 
@@ -1757,8 +1774,8 @@ def init(**kwargs):
                 if not database_exists(db_url):
                     create_database(db_url, db_encoding)
                 constants.db_engine = create_engine(db_url, max_overflow=20,
-                                                   pool_size=config.pool_size.value,
-                                                   pool_timeout=config.pool_timeout.value)
+                                                    pool_size=config.pool_size.value,
+                                                    pool_timeout=config.pool_timeout.value)
 
         Base.metadata.create_all(constants.db_engine)
 
