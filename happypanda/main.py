@@ -1,8 +1,9 @@
 from gevent import config # noqa: E402
 # need to configure before using anything gevent related
-config.monitor_thread = False
+config.monitor_thread = True
 config.resolver = "dnspython"
 config.resolver_timeout = 10
+config.max_blocking_time = 15
 
 import os  # noqa: E402
 import sys  # noqa: E402
