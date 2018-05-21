@@ -8,7 +8,6 @@ import functools
 
 from psycopg2 import extensions
 from gevent.socket import wait_read, wait_write
-from gevent.util import format_run_info
 from gevent import monkey
 
 from happypanda.common import hlogger, utils, constants
@@ -237,15 +236,4 @@ def gevent_wait_callback(conn, timeout=None):
             raise psycopg2.OperationalError(
                 "Bad result from poll: {}".format(state))
 
-hub_handle_error = None
 
-def hub_error_handler(ctx, type, value, tb):
-    hub_handle_error(ctx, type, value, tb)
-    log.exception()
-    log.d(format_run_info())
-
-def setup_gevent():
-    global hub_handle_error
-    hub = gevent.get_hub()
-    hub_handle_error = hub.handle_error
-    hub.handle_error = hub_error_handler
