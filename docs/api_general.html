@@ -5,7 +5,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>General &#8212; HappyPanda X 0.0.12#125 documentation</title>
+    <title>General &#8212; HappyPanda X 0.0.14#126 documentation</title>
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="_static/style.css" type="text/css" />
@@ -41,7 +41,7 @@
         </button>
         <a class="navbar-brand" href="index.html">
           HappyPanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.12#125</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.14#126</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -64,6 +64,7 @@
 <li class="toctree-l1"><a class="reference internal" href="translation.html">Translations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="settings.html">Settings</a></li>
 <li class="toctree-l1"><a class="reference internal" href="switches.html">Command-Line Arguments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="env.html">Contributing</a></li>
@@ -881,10 +882,18 @@ msg: error message</dd>
 </dd></dl>
 
 <dl class="exception">
-<dt id="happypanda.common.exceptions.ServerDisconnectError">
-<em class="property">exception </em><code class="descname">ServerDisconnectError</code><span class="sig-paren">(</span><em>name</em>, <em>msg</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.common.exceptions.ServerDisconnectError" title="Permalink to this definition">¶</a></dt>
+<dt id="happypanda.common.exceptions.ConnectionError">
+<em class="property">exception </em><code class="descname">ConnectionError</code><span class="sig-paren">(</span><em>name</em>, <em>msg</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.common.exceptions.ConnectionError" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#happypanda.common.exceptions.ClientError" title="happypanda.common.exceptions.ClientError"><code class="xref py py-class docutils literal notranslate"><span class="pre">happypanda.common.exceptions.ClientError</span></code></a></p>
 <p><strong>Code</strong>: <code class="docutils literal notranslate"><span class="pre">501</span></code></p>
+<p>Server connection error.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="happypanda.common.exceptions.ServerDisconnectError">
+<em class="property">exception </em><code class="descname">ServerDisconnectError</code><span class="sig-paren">(</span><em>name</em>, <em>msg</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.common.exceptions.ServerDisconnectError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#happypanda.common.exceptions.ConnectionError" title="happypanda.common.exceptions.ConnectionError"><code class="xref py py-class docutils literal notranslate"><span class="pre">happypanda.common.exceptions.ConnectionError</span></code></a></p>
+<p><strong>Code</strong>: <code class="docutils literal notranslate"><span class="pre">502</span></code></p>
 <p>Server disconnected.</p>
 </dd></dl>
 

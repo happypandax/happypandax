@@ -5,7 +5,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Plugin API &#8212; HappyPanda X 0.0.12#125 documentation</title>
+    <title>Plugin API &#8212; HappyPanda X 0.0.14#126 documentation</title>
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="_static/style.css" type="text/css" />
@@ -40,7 +40,7 @@
         </button>
         <a class="navbar-brand" href="index.html">
           HappyPanda X</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.0.12#125</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.0.14#126</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -63,6 +63,7 @@
 <li class="toctree-l1"><a class="reference internal" href="translation.html">Translations</a></li>
 <li class="toctree-l1"><a class="reference internal" href="settings.html">Settings</a></li>
 <li class="toctree-l1"><a class="reference internal" href="switches.html">Command-Line Arguments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="env.html">Contributing</a></li>
@@ -179,7 +180,7 @@ and can be imported like so:</p>
 <dl class="function">
 <dt id="happypanda.core.plugin_interface.attach">
 <code class="descname">attach</code><span class="sig-paren">(</span><em>f=None</em>, <em>command=None</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.core.plugin_interface.attach" title="Permalink to this definition">¶</a></dt>
-<dd><p>Attach to a command entry</p>
+<dd><p>Attach a handler to a command entry</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -197,7 +198,7 @@ and can be imported like so:</p>
 <dl class="function">
 <dt id="happypanda.core.plugin_interface.command">
 <code class="descname">command</code><span class="sig-paren">(</span><em>f=None</em>, <em>command_name=None</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.core.plugin_interface.command" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a command entry that other plugins can attach to</p>
+<dd><p>Create a command entry that other plugins can attach a handler to</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -276,7 +277,7 @@ and can be imported like so:</p>
 <dl class="function">
 <dt id="happypanda.core.plugin_interface.subscribe">
 <code class="descname">subscribe</code><span class="sig-paren">(</span><em>f=None</em>, <em>commandevent=None</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.core.plugin_interface.subscribe" title="Permalink to this definition">¶</a></dt>
-<dd><p>Subscribe to a command event</p>
+<dd><p>Subscribe a handler to a command event</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
