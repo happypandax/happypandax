@@ -226,14 +226,17 @@ def gevent_wait_callback(conn, timeout=None):
     """
     while True:
         state = conn.poll()
-        if state == extensions.POLL_OK:
-            break
-        elif state == extensions.POLL_READ:
-            wait_read(conn.fileno(), timeout=timeout)
-        elif state == extensions.POLL_WRITE:
-            wait_write(conn.fileno(), timeout=timeout)
-        else:
-            raise psycopg2.OperationalError(
-                "Bad result from poll: {}".format(state))
+        try:
+            if state == extensions.POLL_OK:
+                break
+            elif state == extensions.POLL_READ:
+                wait_read(conn.fileno(), timeout=timeout)
+            elif state == extensions.POLL_WRITE:
+                wait_write(conn.fileno(), timeout=timeout)
+            else:
+                raise psycopg2.OperationalError(
+                    "Bad result from poll: {}".format(state))
+        except gevent.GreenletExit: # greenlet timed-out, probably a very bad solution
+            log.e("Psycopg wait callback timed-out", timeout, "state:", state)
 
 
