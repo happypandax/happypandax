@@ -1,9 +1,3 @@
-from gevent import monkey
-# need to patch before importing requests, see
-# https://github.com/requests/requests/issues/3752
-monkey.patch_ssl()
-monkey.patch_select()
-
 import os  # noqa: E402
 import sys  # noqa: E402
 

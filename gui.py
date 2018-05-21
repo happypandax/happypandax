@@ -1,9 +1,14 @@
+import gevent.monkey
+import sys
+import ssl, socket, select
 import multiprocessing as mp
-from gevent import monkey
-if mp.current_process().name == "gevent":
-    monkey.patch_all(thread=False)
+if mp.current_process().name in ("gevent",):
+    for x in (ssl, socket, select):
+        del sys.modules[x.__name__]
+    gevent.monkey.patch_all(thread=False)
 
-import sys # noqa: E402
+from happypanda import main # noqa: E402
+
 import os # noqa: E402
 
 import multiprocessing as mp # noqa: E402
