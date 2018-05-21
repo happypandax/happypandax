@@ -10,7 +10,7 @@ from collections import ChainMap, OrderedDict
 
 from happypanda.common import exceptions, hlogger, constants
 
-log = hlogger.Logger(constants.log_ns_core + __name__)
+log = hlogger.Logger(constants.log_ns_core + __name__, process="MainProcess")
 
 
 class ConfigIsolation(Enum):

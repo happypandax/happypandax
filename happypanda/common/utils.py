@@ -394,7 +394,9 @@ def setup_online_reporter():
                          constants.version_web,
                          constants.version_db,
                          constants.build,
-                         "windows" if constants.is_win else "linux" if constants.is_linux else "osx" if constants.is_osx else "unknown"))
+                         "windows" if constants.is_win else "linux" if constants.is_linux else "osx" if constants.is_osx else "unknown"),
+                     allow_logging_basic_config=False,
+                     suppress_reinit_warning=True)
         hlogger.Logger.report_online = True
 
 

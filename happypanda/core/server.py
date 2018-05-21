@@ -662,7 +662,7 @@ class WebServer:
 
     def run(self, host, port, debug=False, logging_queue=None, cmd_args=None):
         if logging_queue:
-            hlogger.Logger.setup_logger(cmd_args, logging_queue)
+            hlogger.Logger.setup_logger(cmd_args, logging_queue, debug=debug)
             utils.setup_online_reporter()
             utils.disable_loggers(config.disabled_loggers.value)
 
@@ -674,4 +674,7 @@ class WebServer:
             log.i("SSL enabled for webserver", stdout=True)
             self._ssl_args['ssl_context'] = utils.create_ssl_context(webserver=True, server_side=True)
             self._ssl_args['suppress_ragged_eofs'] = True
-        self.socketio.run(self.happyweb, host, port, debug=debug, **self._ssl_args)
+        try:
+            self.socketio.run(self.happyweb, host, port, debug=debug, **self._ssl_args)
+        except KeyboardInterrupt:
+            pass

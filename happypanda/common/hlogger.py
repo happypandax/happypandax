@@ -4,6 +4,9 @@ import sys
 import argparse
 import traceback
 import os
+import multiprocessing as mp
+from gevent import monkey
+import socket, select
 
 try:
     import rollbar  # updater doesn't need this
@@ -14,7 +17,7 @@ from multiprocessing import Process, Queue, TimeoutError, queues
 from logging.handlers import RotatingFileHandler
 
 
-from happypanda.common import constants
+from happypanda.common import constants, patch
 
 
 def shutdown(*args):
@@ -35,12 +38,23 @@ class QueueHandler(logging.Handler):
         super().__init__()
         self.queue = queue
 
+    def createLock(self):
+        return
+
+    def acquire(self):
+        return
+
+    def release(self):
+        return
+
+    def handle(self, record):
+        return super().handle(record)
+
     def emit(self, record):
         try:
             ei = record.exc_info
             if ei:
                 self.format(record)
-                #dummy = self.format(record)
                 record.exc_info = None
             self.queue.put_nowait(record)
         except (KeyboardInterrupt, SystemExit):
@@ -56,7 +70,8 @@ class Logger:
     _queue = None
     _logs_queue = []
 
-    def __init__(self, name):
+    def __init__(self, name, process=None):
+        self.process = process
         self.name = name
         self.category = ""
         if '.' in name:
@@ -105,6 +120,8 @@ class Logger:
         if not self.has_setup:
             self._logs_queue.append((self.name, level, args, stdout, stderr))
         s = self._log_format(*args)
+        if self.process and not mp.current_process().name == self.process:
+            return s
         level(s)
         if not constants.dev:
             if level in (self._logger.exception, self._logger.critical) and self.report_online:
@@ -115,7 +132,7 @@ class Logger:
                         rollbar.report_message(s, "critical")
 
         # prevent printing multiple times
-        if not (constants.dev and not constants.is_frozen):
+        if not constants.dev:
             def p(x):
                 if stdout:
                     print(x)
@@ -146,8 +163,6 @@ class Logger:
 
         if cls._queue:
             lg = QueueHandler(cls._queue)
-            if argsdebug:
-                lg.setLevel(logging.DEBUG)
             log_handlers.append(lg)
         else:
             if argsdev:
@@ -243,7 +258,7 @@ class Logger:
         assert isinstance(args, argparse.Namespace)
         "Start a listener in a child process, returns queue"
         q = Queue()
-        Process(target=Logger._listener, args=(args, q,), daemon=True).start()
+        Process(target=Logger._listener, args=(args, q,), daemon=True, name="HPX Logger").start()
         cls._queue = q
         return cls._queue
 
@@ -255,3 +270,4 @@ class Logger:
                 cls._queue.get(timeout=3)
             except (TimeoutError, queues.Empty):
                 pass
+

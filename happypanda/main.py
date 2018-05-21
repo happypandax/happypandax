@@ -1,10 +1,8 @@
 import os  # noqa: E402
 import sys  # noqa: E402
-
-if __package__ is None and not hasattr(sys, 'frozen'):
-    # direct call of main.py
-    path = os.path.realpath(os.path.abspath(__file__))
-    sys.path.insert(0, os.path.dirname(os.path.dirname(path)))
+import multiprocessing  # noqa: E402
+import rollbar  # noqa: E402
+import getpass  # noqa: E402
 
 # OS X: fix the working directory when running a mac app
 # OS X: files are in [app]/Contents/MacOS/
@@ -12,12 +10,9 @@ if __package__ is None and not hasattr(sys, 'frozen'):
 if hasattr(sys, 'frozen'):
     os.chdir(os.path.abspath(os.path.dirname(sys.executable)))
 
-import multiprocessing  # noqa: E402
-import rollbar  # noqa: E402
-import getpass  # noqa: E402
-
 from multiprocessing import Process  # noqa: E402
 from apscheduler.triggers.interval import IntervalTrigger  # noqa: E402
+
 from happypanda.common import utils, constants, hlogger, config, exceptions  # noqa: E402
 from happypanda.core import server, plugins, command, services, db, async_utils  # noqa: E402
 from happypanda.core.commands import io_cmd, meta_cmd  # noqa: E402
@@ -133,7 +128,7 @@ def start(argv=None, db_kwargs={}):
             hlogger.Logger.init_listener(args)
 
         utils.setup_online_reporter()
-        hlogger.Logger.setup_logger(args, main=True, debug=config.debug.value)
+        hlogger.Logger.setup_logger(args, main=True, debug=config.debug.value, logging_queue=hlogger.Logger._queue)
         utils.disable_loggers(config.disabled_loggers.value)
 
         update_state = check_update() if not (not constants.is_frozen and constants.dev) else None
@@ -218,8 +213,3 @@ def start(argv=None, db_kwargs={}):
             raise
     return e_code.value if e_code else e_num
 
-
-if __name__ == '__main__':
-    multiprocessing.freeze_support()
-    multiprocessing.set_start_method("spawn")
-    start()
