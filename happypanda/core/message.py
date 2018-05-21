@@ -28,7 +28,7 @@ def finalize(msg_dict, session_id="", name=None, error=None):
     if error:
         msg['error'] = error
 
-    return bytes(json.dumps(msg), enc)
+    return bytes(utils.json_dumps(msg), enc)
 
 
 class CoreMessage:
@@ -42,6 +42,10 @@ class CoreMessage:
         "Set an error message"
         assert isinstance(e, Error)
         self._error = e
+
+    def _incompatible_type(self, x):
+        if not isinstance(x, (dict, str, int, float, list)):
+            raise ValueError("Incompatible type: {}".format(type(x)))
 
     def data(self):
         "Implement in subclass. Must return a dict or list if intended to be serializable."
@@ -138,6 +142,7 @@ class List(CoreMessage):
         d = item.json_friendly(
             include_key=False) if isinstance(
             item, CoreMessage) else item
+        self._incompatible_type(d)
         self.items.append(d)
 
     def data(self):

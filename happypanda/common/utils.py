@@ -689,6 +689,28 @@ def create_self_signed_cert(cert_file, key_file, pem_file=None):
         with open(pem_file, "wb") as f:
             f.write(cert_pem + key_pem)
 
+def log_exception(f=None, log=log):
+    if f is None:
+        def p_wrap(f):
+            return log_exception(f, log)
+        return p_wrap
+    else:
+        def wrapper(*args, **kwargs):
+            try:
+                v = f(*args, **kwargs)
+            except:
+                log.exception()
+                raise
+            return v
+        return wrapper
+
+def json_dumps(msg, log=log):
+    try:
+        return json.dumps(msg)
+    except:
+        log.e(msg)
+        raise
+
 def check_signature():
     pass
     #sig = inspect.signature(node.plugin.__init__)

@@ -11,24 +11,19 @@ from happypanda import main # noqa: E402
 
 import os # noqa: E402
 
-import multiprocessing as mp # noqa: E402
 import functools # noqa: E402
 import signal # noqa: E402
 import webbrowser # noqa: E402
 import pathlib # noqa: E402
 
-from threading import Thread, Timer # noqa: E402
 from multiprocessing import Process, queues # noqa: E402
 from happypanda.common import constants # noqa: E402
 
 if __name__ == '__main__':
     mp.set_start_method("spawn")
 
-# OS X: fix the working directory when running a mac app
-# OS X: files are in [app]/Contents/MacOS/
-# WIN: fix working directoy when added to start at boot
-if hasattr(sys, 'frozen'):
-    os.chdir(os.path.abspath(os.path.dirname(sys.executable)))
+if __name__ == '__main__':
+    mp.set_start_method("spawn")
 
 # This is required to be here or else multiprocessing won't work when running in a frozen state!
 # I had a hell of a time debugging this :(
@@ -104,7 +99,7 @@ from i18n import t  # noqa: E402
 from happypanda.common import utils, config  # noqa: E402
 from happypanda.core.commands import io_cmd  # noqa: E402
 from happypanda.core import db  # noqa: E402
-from happypanda import main  # noqa: E402
+from happypanda import main # noqa: E402 
 import HPtoHPX  # noqa: E402
 
 if constants.is_posix:

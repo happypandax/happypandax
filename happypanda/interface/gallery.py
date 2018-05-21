@@ -45,9 +45,9 @@ log = hlogger.Logger(__name__)
 
 def _get_similar(kwargs, similar_items):
     item_list = message.List(db.model_name(kwargs['db_model']), kwargs['db_msg'])
-    similar_items = similar_items[:kwargs['limit']]
     items = []
     if similar_items:
+        similar_items = similar_items[:kwargs['limit']]
         db_items = {}  # needed to sort them the way they came in
         for g in database_cmd.GetModelItems().run(kwargs['db_model'], set(similar_items)):
             db_items[g.id] = g

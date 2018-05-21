@@ -2,18 +2,21 @@ import sys
 import gevent
 import weakref
 import collections
-import threading
 import arrow
 import psycopg2
 import functools
 
 from psycopg2 import extensions
 from gevent.socket import wait_read, wait_write
+from gevent.util import format_run_info
+from gevent import monkey
 
 from happypanda.common import hlogger, utils, constants
 from happypanda.core import db
 
 log = hlogger.Logger(constants.log_ns_core + __name__)
+Thread = monkey.get_original("threading", "Thread")
+local = monkey.get_original("threading", "local")
 
 
 class Greenlet(gevent.Greenlet):
@@ -67,7 +70,7 @@ class CPUThread():
         self.out_async = gevent.get_hub().loop.async()
         self.out_q_has_data = gevent.event.Event()
         self.out_async.start(self.out_q_has_data.set)
-        self.worker = threading.Thread(target=self._run)
+        self.worker = Thread(target=self._run)
         self.worker.daemon = True
         self.stopping = False
         self.results = {}
@@ -77,7 +80,7 @@ class CPUThread():
 
     def _run(self):
         # in_cpubound_thread is sentinel to prevent double thread dispatch
-        thread_ctx = threading.local()
+        thread_ctx = local()
         thread_ctx.in_cpubound_thread = True
         try:
             self.in_async = gevent.get_hub().loop.async()
@@ -233,3 +236,16 @@ def gevent_wait_callback(conn, timeout=None):
         else:
             raise psycopg2.OperationalError(
                 "Bad result from poll: {}".format(state))
+
+hub_handle_error = None
+
+def hub_error_handler(ctx, type, value, tb):
+    hub_handle_error(ctx, type, value, tb)
+    log.exception()
+    log.d(format_run_info())
+
+def setup_gevent():
+    global hub_handle_error
+    hub = gevent.get_hub()
+    hub_handle_error = hub.handle_error
+    hub.handle_error = hub_error_handler

@@ -1,3 +1,9 @@
+from gevent import config # noqa: E402
+# need to configure before using anything gevent related
+config.monitor_thread = False
+config.resolver = "dnspython"
+config.resolver_timeout = 10
+
 import os  # noqa: E402
 import sys  # noqa: E402
 
@@ -156,10 +162,11 @@ def start(argv=None, db_kwargs={}):
 
             constants.notification = server.ClientNotifications()
 
-            upd_int = config.check_release_interval.value or config.check_release_interval.default
-            upd_id = services.Scheduler.generic.add_command(meta_cmd.CheckUpdate(),
-                                                            IntervalTrigger(minutes=upd_int))
-            services.Scheduler.generic.start_command(upd_id, push=True)
+            if not args.only_web:
+                upd_int = config.check_release_interval.value or config.check_release_interval.default
+                upd_id = services.Scheduler.generic.add_command(meta_cmd.CheckUpdate(),
+                                                                IntervalTrigger(minutes=upd_int))
+                services.Scheduler.generic.start_command(upd_id, push=True)
             # starting stuff
             services.Scheduler.generic.start()
             log.i("Starting webserver... ({}:{})".format(config.host_web.value, config.port_web.value), stdout=True)
