@@ -7,6 +7,7 @@ import gevent
 import json
 import glob
 import logging
+import attr
 
 from packaging.requirements import Requirement, InvalidRequirement
 from packaging.specifiers import Specifier, InvalidSpecifier
@@ -653,7 +654,8 @@ class PluginManager:
             for r in reversed(robust_topological_sort(node_items)):
                 if len(r) > 1:
                     # circular dependency found
-                    pass
+                    log.w("Circular dependency found between", *[n.info.shortname + ',' for n in r])
+
                 for n in r:
                     if n not in sorted_nodes:
                         sorted_nodes.append(n)
@@ -672,10 +674,6 @@ class PluginManager:
                         node.state = enums.PluginState.Enabled
 
             self._event.clear()
-
-    def get_plugin_logger(self, node_or_id, name):
-        node = self.get_node(node_or_id)
-        return get_plugin_logger(node.info.shortname + '.' + name, propogate=True)
 
     def _collect_dependencies(self, node):
         assert isinstance(node, PluginNode)
@@ -799,6 +797,8 @@ class PluginManager:
     def attach_to_command(self, node_or_id, command_name, handler):
         ""
         node = self.get_node(node_or_id)
+        log.d("Attaching plugin handler to entry '{}' -".format(command_name), node.format())
+        node.logger.debug("Attaching handler to entry '{}'".format(command_name))
         if command_name not in constants.available_commands['entry']:
             raise exceptions.PluginCommandError(
                 node, "Command '{}' does not exist".format(command_name))
@@ -814,6 +814,8 @@ class PluginManager:
     def subscribe_to_event(self, node_or_id, event_name, handler):
         ""
         node = self.get_node(node_or_id)
+        log.d("Subscribing plugin handler to event '{}' -".format(event_name), node.format())
+        node.logger.debug("Subscribing handler to event '{}'".format(event_name))
         if event_name not in constants.available_commands['event']:
             raise exceptions.PluginCommandError(
                 node, "Command event '{}' does not exist".format(event_name))
@@ -826,6 +828,76 @@ class PluginManager:
         node.add_event_handler(event_name, handler)
         self._commands['event'].setdefault(event_name, set()).add(node)
 
+    def get_plugin_logger(self, node_or_id, name):
+        node = self.get_node(node_or_id)
+        log.d("Getting plugin logger -", node.format())
+        node.logger.debug("Getting logger")
+        logname = node.info.shortname 
+        propogate = False
+        if name:
+            logname += '.' + name
+            propogate = True
+        return get_plugin_logger(logname, propogate=propogate)
+
+    def _plugin_config_key(self, node_or_id):
+        node = self.get_node(node_or_id)
+        return node.info.shortname + '.' + node.info.id.split('-')[1]
+
+    def get_plugin_config(self, node_or_id):
+        node = self.get_node(node_or_id)
+        log.d("Getting plugin configuration -", node.format())
+        node.logger.debug("Getting configuration")
+        return PluginConfig(config.config.get(config.plugin_ns, self._plugin_config_key(node), {}))
+
+    def get_setting(self, node_or_id, ns, key):
+        node = self.get_node(node_or_id)
+        log.d("Getting setting -", node.format())
+        node.logger.debug("Getting setting")
+        return config.config.get(ns, key)
+
+
+    def save_plugin_config(self, node_or_id, dictlike):
+        node = self.get_node(node_or_id)
+        log.d("Saving plugin configuration -", node.format())
+        node.logger.debug("Saving configuration")
+        with config.config.namespace(config.plugin_ns):
+            config.config.update(self._plugin_config_key(node), dictlike, create=True)
+        return config.config.save()
+
+class PluginConfig(dict):
+    pass
+
+@attr.s(frozen=True)
+class PluginConstants:
+    """
+    - version: current HPX version
+    - database_version: current HPX database version
+    - webclient_version: current HPX webclient version
+    - dev: developer mode enabled
+    - dev: debug mode enabled
+    - is_frozen: application has been made into an executable
+    - is_osx: application is running on OS X 
+    - is_linux: application is running on Linux
+    - is_win: application is running on Windows
+    - is_posix: application is running on a posix-compliant OS (true for both OS X and Linux)
+    - download_path: path to the downloads folder
+    - tumbnail_path: path to the thumbnails folder
+    - translation_path: path to the translations folder
+    """
+    
+    version = attr.ib(constants.version)
+    database_version = attr.ib(constants.version_db)
+    webclient_version = attr.ib(constants.version_web)
+    dev = attr.ib(constants.dev)
+    debug = attr.ib(config.debug.value)
+    is_frozen = attr.ib(constants.is_frozen)
+    is_osx = attr.ib(constants.is_osx)
+    is_win = attr.ib(constants.is_win)
+    is_linux = attr.ib(constants.is_linux)
+    is_posix = attr.ib(constants.is_posix)
+    download_path = attr.ib(constants.dir_download)
+    thumbnail_path = attr.ib(constants.dir_thumbs)
+    translation_path = attr.ib(constants.dir_translations)
 
 class HPXImporter(importlib.abc.MetaPathFinder, importlib.abc.Loader):
 
@@ -860,7 +932,6 @@ class PluginIsolate:
         self.node = node
         path = os.path.abspath(node.info.path)
         self.working_dir = working_dir if working_dir else path
-        self._ori_working_dir = os.getcwd()
         self.paths = [path]
         if do_eggs:
             self.paths.extend(glob.glob(os.path.join(path, '*.egg')))
@@ -893,6 +964,7 @@ class PluginIsolate:
             plug_interface = importlib.import_module(o_plug_interface.__name__, o_plug_interface.__package__)
             plug_interface.__plugin_id__ = self.node.info.id
             plug_interface.__manager__ = self.node.manager
+            plug_interface.constants = PluginConstants()
         finally:
             sys.modules[o_plug_interface.__name__] = o_plug_interface
 
@@ -933,9 +1005,6 @@ class PluginIsolate:
         self._sys_path = sys.path[:]
         self._clean_sys_path(sys.path)
 
-        self._ori_working_dir = os.getcwd()
-        os.chdir(self.working_dir)
-
         return self
 
     def __exit__(self, *_):
@@ -954,7 +1023,6 @@ class PluginIsolate:
         sys.path.clear()
         sys.path.extend(self._sys_path)
 
-        os.chdir(self._ori_working_dir)
         log.d("Exiting isolation mode for plugin", self.node.format())
 
 

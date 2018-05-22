@@ -77,7 +77,7 @@ def set_config(cfg: dict):
 
 def get_config(cfg: dict = {}):
     """
-    Get configuration
+    Get configuration. See :ref:`Settings`.
 
     Args:
         cfg: a dict containing ``namespace.key``:``default value`` or an empty dict to retrieve all settings

@@ -102,7 +102,7 @@ class TestPluginLoad:
             hplugin_a.join('hplugin.json').remove()
             with pytest.raises(hp_exceptions.PluginLoadError) as excinfo:
                 hpm = plugins.plugin_load(pm, str(hplugin_a))
-            assert "No manifest file named 'HPlugin.json' found" in str(excinfo.value)
+            assert "No manifest file named 'hplugin.json' found" in str(excinfo.value)
 
     def test_plugin_register(self, hplugin_a, hplugin_b):
         pm = PluginManager()

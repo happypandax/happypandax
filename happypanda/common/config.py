@@ -186,6 +186,8 @@ class Config:
             if f_dict is not None:
                 with open(self._user_file, 'w', encoding='utf-8') as wf:
                     self._ordered_dump(f_dict, wf)
+            return True
+        return False
 
     def save_default(self):
         with open(constants.config_example_path, 'w', encoding='utf-8') as wf:

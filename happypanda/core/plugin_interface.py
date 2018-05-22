@@ -10,33 +10,46 @@ and can be imported like so::
 
     import __hpx__ as hpx
     from __hpx__ import PluginError
-
     raise PluginError("", "")
     raise hpx.PluginError("", "")
+
+**Constants**
+
+The object ``constants`` is available on the module-level and provides various useful constants values.::
+
+    from __hpx__ import constants
+    print(constants.version) # -> (0, 0, 0)
+
+
+.. exec::
+
+    from happypanda.core.plugins import PluginConstants
+
+    print(PluginConstants.__doc__)
+
+    p = PluginConstants()
+    for x in sorted(p.__dict__):
+        y = p.__dict__[x]
+        print("    **{}** : *{}* = {}".format(x, type(y).__name__, y))
+        
+-----------------------------------------------------------------------
 
 """
 import typing
 import functools
 
+constants = None
 
-def get_logger(name: str):
+class _NO_DEFAULT: pass
+
+def get_logger(name: str=None):
     """
-    Get the logger for this plugin
+    Get the :class:`logging.Logger` object for this plugin
 
     Args:
         name: name of logger
     """
     return __manager__.get_plugin_logger(__plugin_id__, name)
-
-
-def get_constant(name: str):
-    """
-    Get a value of a constant
-
-    Args:
-        name: name of constant
-    """
-    pass
 
 
 def get_config():
@@ -46,52 +59,74 @@ def get_config():
     Returns:
         dict-like object
     """
-    pass
+    return __manager__.get_plugin_config(__plugin_id__)
 
 
-def get_setting(name: str):
+def get_setting(namespace: str, key: str, default=_NO_DEFAULT):
     """
-    """
+    Get the value of any setting in the configuration. See :ref:`Settings`.
 
+    Args:
+        namespace: setting namespace
+        key: setting key
+        default: default value if no key was found
+
+    Returns:
+        value of setting or default value if default was set, else raise a KeyError
+    """
+    try:
+        return __manager__.get_setting(__plugin_id__, namespace, key)
+    except KeyError:
+        if default is _NO_DEFAULT:
+            raise
+        return default
 
 def save_config(obj: dict):
     """
     Save configuration specific to this plugin
 
+    The configuration will appear in the ``plugin.<plugin namespace>`` namespace.
+    ``<plugin namespace>`` is equal to ``<plugin shortname>.<2nd item in plugin id>.
+    For example: ``myplugin.eca3`` where ``eca3`` is from ``xxxxxxx-eca3-xxxx-xxxx-xxxxxxxxxxxx``
+
     Args:
         obj: dict-like object
+
+    Returns:
+        bool on if config was saved
     """
-    pass
+    assert isinstance(obj, dict)
+    return __manager__.save_plugin_config(__plugin_id__, obj)
+    
 
+#def command(f: typing.Callable=None, command_name: str=None):
+#    """
+#    Create a command entry that other plugins can attach a handler to
 
-def command(f: typing.Callable=None, command_name: str=None):
-    """
-    Create a command entry that other plugins can attach a handler to
+#    Args:
+#        f: command handler
+#        command: optional command name, if omitted, the name of the function will be used
+#    """
+#    if f is None or isinstance(f, str):
+#        command_name = f if isinstance(f, str) else command_name
 
-    Args:
-        f: command handler
-        command: optional command name, if omitted, the name of the function will be used
-    """
-    if f is None or isinstance(f, str):
-        command_name = f if isinstance(f, str) else command_name
+#        def p_wrap(f):
+#            return command(f, command_name)
+#        return p_wrap
+#    else:
+#        assert isinstance(command_name, str), "Command name must be of type str"
+#        raise NotImplementedError
+#        # TODO: create plugin command
+#        #__manager__.subscribe_to_command(plugin_id, command, f)
 
-        def p_wrap(f):
-            return command(f, command_name)
-        return p_wrap
-    else:
-        assert isinstance(command_name, str), "Command name must be of type str"
-        raise NotImplementedError
-        # TODO: create plugin command
-        #__manager__.subscribe_to_command(plugin_id, command, f)
+#        @functools.wraps(f)
+#        def wrapper(*args, **kwargs):
+#            pass
+#            # TODO: call command through pm
+#            #__manager__.call_command(plugin_id, command, f)
 
-        @functools.wraps(f)
-        def wrapper(*args, **kwargs):
-            pass
-            # TODO: call command through pm
-            #__manager__.call_command(plugin_id, command, f)
-
-            # return HandlerValue?
-        return wrapper
+#            # return HandlerValue?
+#        return wrapper
 
 
 def attach(f: typing.Callable=None, command: str=None):

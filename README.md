@@ -16,7 +16,7 @@
 # Building
 
 1. install `Python 3.6` and `pip3` (and `git` if you haven't already)
-    > **Note**: Python 3.6 is the version being developed on. It should also work on 3.5 and up but no guarantees.
+    > **Note**: Python 3.6 is the version being developed on. It should also work on 3.7 and up but no guarantees.
 2. run: `python3 bootstrap.py`
     > **Windows users**: If you get `error: command '..\cl.exe' failed with exit status 2`, download `bitarray` from [here](http://www.lfd.uci.edu/%7Egohlke/pythonlibs/#bitarray)
     > **Install like this**: `.\env\Scripts\pip3.exe install bitarray.whl`
