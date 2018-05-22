@@ -592,6 +592,13 @@ class PluginNode:
         with self._isolate:
             return handler(*args, *kwargs)
 
+    def update_state(self, state):
+        assert isinstance(state, enums.PluginState)
+        self.state = state
+        ps = constants.internaldb.plugins_state.get({})
+        ps[self.info.id] = self.state.value
+        constants.internaldb.plugins_state.set(ps)
+
     def unload(self, reason=""):
         if self.state == enums.PluginState.Unloaded:
             return
@@ -599,7 +606,7 @@ class PluginNode:
         self.logger.info("Unloading plugin")
         self.status = reason
         self.manager.disable_plugin(self)
-        self.state = enums.PluginState.Unloaded
+        self.update_state(enums.PluginState.Unloaded)
         for n in self.dependents:
             n.unload("Plugin '{}' was unloaded".format(self.info.shortname))
 
@@ -671,7 +678,7 @@ class PluginManager:
                                 node.unload("Required plugin '{}' has not been installed".format(n.info.shortname))
                     if node.state != enums.PluginState.Unloaded:
                         node.init()
-                        node.state = enums.PluginState.Enabled
+                        node.update_state(enums.PluginState.Enabled)
 
             self._event.clear()
 
@@ -718,7 +725,10 @@ class PluginManager:
         self._nodes.add(node)
         self._node_registry[pluginid] = node
         self._node_registry.setdefault(node.info.shortname)
-        if config.auto_install_plugin.value:
+        saved_state = constants.internaldb.plugins_state.get({}).get(node.info.id)
+        if saved_state == enums.PluginState.Disabled:
+            self.disable_plugin(node)
+        elif config.auto_install_plugin.value or saved_state not in (None, enums.PluginState.Registered):
             self.install_plugin(node, wake_up=False)
         return node
 
@@ -744,7 +754,7 @@ class PluginManager:
         else:
             log.d("Disabling plugin -", node.format())
             node.logger.info("Disabling plugin")
-        node.state = enums.PluginState.Disabled
+        node.update_state(enums.PluginState.Disabled)
         for n, cmd_dict in node.commands.items():
             for cmd in cmd_dict:
                 if cmd in self._commands[n]:
@@ -759,7 +769,7 @@ class PluginManager:
         else:
             log.d("Installing plugin -", node.format(), )
             node.logger.info("Installing plugin")
-        node.state = enums.PluginState.Installed
+        node.update_state(enums.PluginState.Installed)
         if wake_up:
             self.wake_up()
 

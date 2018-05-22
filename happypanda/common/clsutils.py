@@ -83,5 +83,7 @@ class InternalDatabase:
     similar_gallery_calc = GetSet("similar_gallery_calc")
     similar_gallery_tags = GetSet("similar_gallery_tags")
 
+    plugins_state = GetSet("plugins_state")
+
 
 constants.internaldb = internaldb = InternalDatabase()
