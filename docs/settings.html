@@ -304,6 +304,16 @@
 <td>server</td>
 <td>Database password</td>
 </tr>
+<tr class="row-even"><td>pool_size</td>
+<td>15</td>
+<td>server</td>
+<td>The size of the pool to be maintained. This is the largest number of connections that will be kept persistently in the pool. This setting does not apply when the SQLite dialect is used</td>
+</tr>
+<tr class="row-odd"><td>pool_timeout</td>
+<td>45</td>
+<td>server</td>
+<td>The number of seconds to wait before giving up on returning a connection. This setting does not apply when the SQLite dialect is used</td>
+</tr>
 <tr class="row-even"><td>port</td>
 <td></td>
 <td>server</td>
@@ -557,7 +567,7 @@
 <td>Path to a certificate and the corresponding private key. If keyfile is not set, the private key will be taken from certfile. Note that if SSL is enabled and no cert files are provided, a self-signed certificate will be created and used instead. The self-signed certificate can be found at data/certs/</td>
 </tr>
 <tr class="row-even"><td>server_name</td>
-<td>albedo_lacus_shinobu</td>
+<td>yakumo_naoka_lacus</td>
 <td>server</td>
 <td>Specifiy name of the server</td>
 </tr>

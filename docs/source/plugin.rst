@@ -250,4 +250,5 @@ Aside from the python standard library, these are the available packages HPX pro
     import subprocess
     s = subprocess.check_output([sys.executable, '-m', 'pip', 'freeze'],
             encoding="utf-8")
-    print(s)
+    for x in s.split(): 
+        print('*'+x+'*')

@@ -148,7 +148,7 @@
       <div class="col-md-3">
         <div id="sidebar" class="bs-sidenav" role="complementary"><ul>
 <li><a class="reference internal" href="#">Plugin API</a><ul>
-<li><a class="reference internal" href="#module-happypanda.core.plugin_interface">Interface</a></li>
+<li><a class="reference internal" href="#interface">Interface</a></li>
 <li><a class="reference internal" href="#commands">Commands</a></li>
 </ul>
 </li>
@@ -158,25 +158,71 @@
       </div>
         <div class="col-md-9 content">
             
-  <div class="section" id="plugin-api">
-<h1>Plugin API<a class="headerlink" href="#plugin-api" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="module-happypanda.core.plugin_interface">
-<span id="interface"></span><h2>Interface<a class="headerlink" href="#module-happypanda.core.plugin_interface" title="Permalink to this headline">¶</a></h2>
+  <div class="section" id="module-happypanda.core.plugin_interface">
+<span id="plugin-api"></span><h1>Plugin API<a class="headerlink" href="#module-happypanda.core.plugin_interface" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="interface">
+<h2>Interface<a class="headerlink" href="#interface" title="Permalink to this headline">¶</a></h2>
 <p>The plugin interface module named <code class="docutils literal notranslate"><span class="pre">__hpx__</span></code>.
 Import it in your plugin to access the methods and classes defined by the module:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">__hpx__</span> <span class="k">as</span> <span class="nn">hpx</span>
 <span class="n">logger</span> <span class="o">=</span> <span class="n">hpx</span><span class="o">.</span><span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>In addition to what is defined here, <a class="reference internal" href="api_general.html#module-happypanda.common.exceptions"><span class="std std-ref">exceptions</span></a> defined by HPX are also available at the module-level
+<p>In addition to what is defined here, <a class="reference internal" href="api_general.html#module-happypanda.common.exceptions"><span class="std std-ref">exceptions</span></a> and <a class="reference internal" href="api_general.html#enums"><span class="std std-ref">enums</span></a> defined by HPX are also available at the module-level
 and can be imported like so:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">__hpx__</span> <span class="k">as</span> <span class="nn">hpx</span>
-<span class="kn">from</span> <span class="nn">__hpx__</span> <span class="k">import</span> <span class="n">PluginError</span>
-
+<span class="kn">from</span> <span class="nn">__hpx__</span> <span class="k">import</span> <span class="n">PluginError</span><span class="p">,</span> <span class="n">PluginState</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">PluginState</span><span class="p">)</span> <span class="c1"># -&gt; &lt;enum &#39;PluginState&#39;&gt;</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">hpx</span><span class="o">.</span><span class="n">ImageSize</span><span class="p">)</span> <span class="c1"># -&gt; &lt;enum &#39;ImageSize&#39;&gt;</span>
 <span class="k">raise</span> <span class="n">PluginError</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
 <span class="k">raise</span> <span class="n">hpx</span><span class="o">.</span><span class="n">PluginError</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
+<p><strong>command</strong></p>
+<p>The object <code class="docutils literal notranslate"><span class="pre">command</span></code> is available on the module-level and provides access to the various different commands defined by HPX:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">__hpx__</span> <span class="k">import</span> <span class="n">command</span>
+<span class="n">command</span><span class="o">.</span><span class="n">CheckUpdate</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>See <a class="reference internal" href="#commands"><span class="std std-ref">Commands</span></a> for more information.</p>
+<hr class="docutils" />
+<p><strong>constants</strong></p>
+<p>The object <code class="docutils literal notranslate"><span class="pre">constants</span></code> is available on the module-level and provides various useful constant values.:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">__hpx__</span> <span class="k">import</span> <span class="n">constants</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">constants</span><span class="o">.</span><span class="n">version</span><span class="p">)</span> <span class="c1"># -&gt; (0, 0, 0)</span>
+</pre></div>
+</div>
+<blockquote>
+<div><ul class="simple">
+<li>version: current HPX version</li>
+<li>database_version: current HPX database version</li>
+<li>webclient_version: current HPX webclient version</li>
+<li>dev: developer mode enabled</li>
+<li>dev: debug mode enabled</li>
+<li>is_frozen: application has been made into an executable</li>
+<li>is_osx: application is running on OS X</li>
+<li>is_linux: application is running on Linux</li>
+<li>is_win: application is running on Windows</li>
+<li>is_posix: application is running on a posix-compliant OS (true for both OS X and Linux)</li>
+<li>download_path: path to the downloads folder</li>
+<li>tumbnail_path: path to the thumbnails folder</li>
+<li>translation_path: path to the translations folder</li>
+</ul>
+<p><strong>database_version</strong> : <em>tuple</em> = (0, 0, 5)</p>
+<p><strong>debug</strong> : <em>bool</em> = True</p>
+<p><strong>dev</strong> : <em>bool</em> = False</p>
+<p><strong>download_path</strong> : <em>str</em> = downloads</p>
+<p><strong>is_frozen</strong> : <em>bool</em> = False</p>
+<p><strong>is_linux</strong> : <em>bool</em> = False</p>
+<p><strong>is_osx</strong> : <em>bool</em> = False</p>
+<p><strong>is_posix</strong> : <em>bool</em> = False</p>
+<p><strong>is_win</strong> : <em>bool</em> = True</p>
+<p><strong>thumbnail_path</strong> : <em>str</em> = staticthumbnails</p>
+<p><strong>translation_path</strong> : <em>str</em> = translations</p>
+<p><strong>version</strong> : <em>tuple</em> = (0, 0, 14)</p>
+<p><strong>webclient_version</strong> : <em>tuple</em> = (0, 0, 13)</p>
+</div></blockquote>
+<hr class="docutils" />
 <dl class="function">
 <dt id="happypanda.core.plugin_interface.attach">
 <code class="descname">attach</code><span class="sig-paren">(</span><em>f=None</em>, <em>command=None</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.core.plugin_interface.attach" title="Permalink to this definition">¶</a></dt>
@@ -188,24 +234,6 @@ and can be imported like so:</p>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>f</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>]) – command handler</li>
 <li><strong>command</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – a fully qualified command name, required</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="happypanda.core.plugin_interface.command">
-<code class="descname">command</code><span class="sig-paren">(</span><em>f=None</em>, <em>command_name=None</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.core.plugin_interface.command" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a command entry that other plugins can attach a handler to</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>f</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>]) – command handler</li>
-<li><strong>command</strong> – optional command name, if omitted, the name of the function will be used</li>
 </ul>
 </td>
 </tr>
@@ -228,28 +256,14 @@ and can be imported like so:</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="happypanda.core.plugin_interface.get_constant">
-<code class="descname">get_constant</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.core.plugin_interface.get_constant" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get a value of a constant</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – name of constant</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
 <dt id="happypanda.core.plugin_interface.get_logger">
-<code class="descname">get_logger</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.core.plugin_interface.get_logger" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the logger for this plugin</p>
+<code class="descname">get_logger</code><span class="sig-paren">(</span><em>name=None</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.core.plugin_interface.get_logger" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the <code class="xref py py-class docutils literal notranslate"><span class="pre">logging.Logger</span></code> object for this plugin</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – name of logger</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – name of logger</td>
 </tr>
 </tbody>
 </table>
@@ -257,18 +271,40 @@ and can be imported like so:</p>
 
 <dl class="function">
 <dt id="happypanda.core.plugin_interface.get_setting">
-<code class="descname">get_setting</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.core.plugin_interface.get_setting" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="descname">get_setting</code><span class="sig-paren">(</span><em>namespace</em>, <em>key</em>, <em>default=&lt;class 'happypanda.core.plugin_interface._NO_DEFAULT'&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.core.plugin_interface.get_setting" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the value of any setting in the configuration. See <a class="reference internal" href="settings.html#settings"><span class="std std-ref">Settings</span></a>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>namespace</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – setting namespace</li>
+<li><strong>key</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – setting key</li>
+<li><strong>default</strong> – default value if no key was found</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">value of setting or default value if default was set, else raise a KeyError</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
 
 <dl class="function">
 <dt id="happypanda.core.plugin_interface.save_config">
 <code class="descname">save_config</code><span class="sig-paren">(</span><em>obj</em><span class="sig-paren">)</span><a class="headerlink" href="#happypanda.core.plugin_interface.save_config" title="Permalink to this definition">¶</a></dt>
 <dd><p>Save configuration specific to this plugin</p>
+<p>The configuration will appear in the <code class="docutils literal notranslate"><span class="pre">plugin.&lt;plugin</span> <span class="pre">namespace&gt;</span></code> namespace.
+<code class="docutils literal notranslate"><span class="pre">&lt;plugin</span> <span class="pre">namespace&gt;</span></code> is equal to <code class="docutils literal notranslate"><span class="pre">&lt;plugin</span> <span class="pre">shortname&gt;.&lt;2nd</span> <span class="pre">item</span> <span class="pre">in</span> <span class="pre">plugin</span> <span class="pre">id&gt;.</span>
+<span class="pre">For</span> <span class="pre">example:</span> <span class="pre">``myplugin.eca3</span></code> where <code class="docutils literal notranslate"><span class="pre">eca3</span></code> is from <code class="docutils literal notranslate"><span class="pre">xxxxxxx-eca3-xxxx-xxxx-xxxxxxxxxxxx</span></code></p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>obj</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>) – dict-like object</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">bool on if config was saved</td>
 </tr>
 </tbody>
 </table>
