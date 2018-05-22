@@ -918,6 +918,7 @@ class HPXImporter(importlib.abc.MetaPathFinder, importlib.abc.Loader):
     def find_spec(self, fullname, path, target=None):
         m_list = ("happypanda",)
         for m in m_list:
+            print(fullname, path, target)
             if fullname.startswith(m):
                 raise ModuleNotFoundError("No module named '{}'".format(fullname))
         if fullname in self._modules.keys():
@@ -974,12 +975,17 @@ class PluginIsolate:
             plug_interface = importlib.import_module(o_plug_interface.__name__, o_plug_interface.__package__)
             plug_interface.__plugin_id__ = self.node.info.id
             plug_interface.__manager__ = self.node.manager
+            plug_interface.__package__ = constants.plugin_interface_name
             plug_interface.constants = PluginConstants()
         finally:
             sys.modules[o_plug_interface.__name__] = o_plug_interface
 
         for name, obj in inspect.getmembers(exceptions, inspect.isclass):
             if issubclass(obj, Exception):
+                setattr(plug_interface, name, obj)
+
+        for name, obj in inspect.getmembers(enums, inspect.isclass):
+            if issubclass(obj, enums._APIEnum):
                 setattr(plug_interface, name, obj)
 
         self._hpximporter = HPXImporter(importlib.abc.machinery.ModuleSpec,

@@ -6,7 +6,7 @@ Plugin
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 These enums are a subclass of the standard :class:`enum.Enum` class.
-To retrieve one of these enums see :meth:`__hpx__.get_constant <happypanda.core.plugin_interface.get_constant>`
+To retrieve one of these enums see the :ref:`Plugin Interface <interface>`.
 
 Client
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

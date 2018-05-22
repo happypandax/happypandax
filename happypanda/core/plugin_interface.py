@@ -1,25 +1,41 @@
 """
+Interface
+----------------------------------------
+
 The plugin interface module named ``__hpx__``.
 Import it in your plugin to access the methods and classes defined by the module::
 
     import __hpx__ as hpx
     logger = hpx.get_logger(__name__)
 
-In addition to what is defined here, :ref:`exceptions <Exceptions>` defined by HPX are also available at the module-level
+In addition to what is defined here, :ref:`exceptions <Exceptions>` and :ref:`enums <Enums>` defined by HPX are also available at the module-level
 and can be imported like so::
 
     import __hpx__ as hpx
-    from __hpx__ import PluginError
+    from __hpx__ import PluginError, PluginState
+    print(PluginState) # -> <enum 'PluginState'>
+    print(hpx.ImageSize) # -> <enum 'ImageSize'>
     raise PluginError("", "")
     raise hpx.PluginError("", "")
 
-**Constants**
+**command**
 
-The object ``constants`` is available on the module-level and provides various useful constants values.::
+The object ``command`` is available on the module-level and provides access to the various different commands defined by HPX::
+
+    from __hpx__ import command
+    command.CheckUpdate()
+
+
+See :ref:`Commands` for more information.
+
+-----------------------------------------------------------------------
+
+**constants**
+
+The object ``constants`` is available on the module-level and provides various useful constant values.::
 
     from __hpx__ import constants
     print(constants.version) # -> (0, 0, 0)
-
 
 .. exec::
 
@@ -35,9 +51,11 @@ The object ``constants`` is available on the module-level and provides various u
 -----------------------------------------------------------------------
 
 """
+
 import typing
 import functools
 
+command = None
 constants = None
 
 class _NO_DEFAULT: pass
@@ -99,7 +117,7 @@ def save_config(obj: dict):
     return __manager__.save_plugin_config(__plugin_id__, obj)
     
 
-#def command(f: typing.Callable=None, command_name: str=None):
+#def create_command(f: typing.Callable=None, command_name: str=None):
 #    """
 #    Create a command entry that other plugins can attach a handler to
 
@@ -179,3 +197,4 @@ def subscribe(f: typing.Callable=None, commandevent: str=None):
 
 __manager__ = None
 __plugin_id__ = None
+
