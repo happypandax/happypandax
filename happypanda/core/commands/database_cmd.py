@@ -2,14 +2,18 @@
 Database CMD
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. autodata:: happypanda.core.commands.database_cmd.GetDatabaseSort.SortTuple
+    :annotation: = NamedTuple
+
 """
+import typing
 
 from collections import namedtuple
 from sqlalchemy.sql.expression import func
 from sqlalchemy_utils.functions import make_order_by_deterministic
 
 from happypanda.common import utils, hlogger, exceptions, constants, config
-from happypanda.core.command import Command, CommandEvent, AsyncCommand, CommandEntry
+from happypanda.core.command import Command, CommandEvent, AsyncCommand, CommandEntry, CParam
 from happypanda.core.commands import io_cmd
 from happypanda.core import db, async_utils
 from happypanda.interface import enums
@@ -31,13 +35,106 @@ class GetModelImage(AsyncCommand):
     - GalleryFilter
 
     Returns a Profile database item
+
+    Args:
+        model: a database model
+        item_id: id of database item
+        image_size: size of image
+
+    Returns:
+        a database :class:`.db.Profile` object
+
     """
 
-    models = CommandEntry("models", tuple)
-    generate = CommandEntry("generate", str, str, int, utils.ImageSize)
-    invalidate = CommandEntry("invalidate", bool, str, int, utils.ImageSize)
+    models: tuple = CommandEntry("models",
+                                 __doc="""
+                                 Called to fetch the supported database models
+                                 """,
+                                 __doc_return="""
+                                 a tuple of database models :class:`.db.Base`
+                                 """)
+    generate: str = CommandEntry("generate",
+                               CParam("model_name", str, "name of a database model"),
+                               CParam("item_id", int, "id of database item"),
+                               CParam("image_size", utils.ImageSize, "size of image"),
+                               __capture=(str, "name of database model"),
+                               __doc="""
+                               Called to generate an image file of database item
+                               """,
+                               __doc_return="""
+                               path to image file
+                               """)
+    invalidate: bool = CommandEntry("invalidate",
+                                CParam("model_name", str, "name of a database model"),
+                                CParam("item_id", int, "id of database item"),
+                                CParam("image_size", utils.ImageSize, "size of image"),
+                                __capture=(str, "name of database model"),
+                                __doc="""
+                                Called to check if a new image should be forcefully generated
+                                """,
+                                __doc_return="""
+                                bool indicating wether an image should be generated or not
+                                """)
 
-    cover_event = CommandEvent('cover', object)
+    cover_event = CommandEvent('cover',
+                               CParam("profile_item", db.Profile, "database item with the generated image"),
+                               __doc="""
+                               Emitted at the end of the process
+                               """)
+
+    def main(self, model: db.Base, item_id: int,
+             image_size: enums.ImageSize) -> db.Profile:
+        self.model = model
+
+        if image_size == enums.ImageSize.Original:
+            image_size = utils.ImageSize(0, 0)
+        else:
+            image_size = utils.ImageSize(*constants.image_sizes[image_size.name.lower()])
+
+        with self.models.call() as plg:
+            for p in plg.all(default=True):
+                self._supported_models.update(p)
+
+        if self.model not in self._supported_models:
+            raise exceptions.CommandError(
+                utils.this_command(self),
+                "Model '{}' is not supported".format(model))
+
+        img_hash = io_cmd.ImageItem.gen_hash(
+            model, image_size, item_id)
+
+        generate = True
+        sess = constants.db_session()
+
+        profile_size = str(tuple(image_size))
+
+        self.cover = sess.query(
+            db.Profile).filter(
+            db.and_op(
+                db.Profile.data == img_hash,
+                db.Profile.size == profile_size)).first()
+
+        old_img_hash = None
+        if self.cover:
+            if io_cmd.CoreFS(self.cover.path).exists:
+                generate = False
+            else:
+                old_img_hash = self.cover.data
+
+        self.next_progress()
+        if not generate:
+            model_name = db.model_name(model)
+            with self.invalidate.call_capture(model_name, model_name, item_id, image_size) as plg:
+                if plg.first():
+                    generate = True
+
+        self.next_progress()
+        if generate:
+            self.cover = self.run_native(self._generate_and_add, img_hash, old_img_hash, generate,
+                                         model, item_id, image_size, profile_size).get()
+        self.cover_event.emit(self.cover)
+        return self.cover
+
 
     def __init__(self, service=None):
         super().__init__(service, priority=constants.Priority.Low)
@@ -110,59 +207,6 @@ class GetModelImage(AsyncCommand):
     def _invalidate_collection(model, item_id, size, capture=db.model_name(db.Collection)):
         return False
 
-    def main(self, model: db.Base, item_id: int,
-             image_size: enums.ImageSize) -> db.Profile:
-        self.model = model
-
-        if image_size == enums.ImageSize.Original:
-            image_size = utils.ImageSize(0, 0)
-        else:
-            image_size = utils.ImageSize(*constants.image_sizes[image_size.name.lower()])
-
-        with self.models.call() as plg:
-            for p in plg.all(default=True):
-                self._supported_models.update(p)
-
-        if self.model not in self._supported_models:
-            raise exceptions.CommandError(
-                utils.this_command(self),
-                "Model '{}' is not supported".format(model))
-
-        img_hash = io_cmd.ImageItem.gen_hash(
-            model, image_size, item_id)
-
-        generate = True
-        sess = constants.db_session()
-
-        profile_size = str(tuple(image_size))
-
-        self.cover = sess.query(
-            db.Profile).filter(
-            db.and_op(
-                db.Profile.data == img_hash,
-                db.Profile.size == profile_size)).first()
-
-        old_img_hash = None
-        if self.cover:
-            if io_cmd.CoreFS(self.cover.path).exists:
-                generate = False
-            else:
-                old_img_hash = self.cover.data
-
-        self.next_progress()
-        if not generate:
-            model_name = db.model_name(model)
-            with self.invalidate.call_capture(model_name, model_name, item_id, image_size) as plg:
-                if plg.first():
-                    generate = True
-
-        self.next_progress()
-        if generate:
-            self.cover = self.run_native(self._generate_and_add, img_hash, old_img_hash, generate,
-                                         model, item_id, image_size, profile_size).get()
-        self.cover_event.emit(self.cover)
-        return self.cover
-
     @async_utils.defer
     def _update_db(self, stale_cover, item_id, model, old_hash):
         log.d("Updating profile for database item", model)
@@ -227,7 +271,13 @@ class GetModelImage(AsyncCommand):
 
 class GetModelClass(Command):
     """
-    Returns a database model by name
+    Get database model item by name
+
+    Args:
+        model_name: name of database model
+
+    Returns:
+        a database model item
     """
 
     def __init__(self):
@@ -245,7 +295,11 @@ class GetModelClass(Command):
 
 class GetSession(Command):
     """
-    Returns a database session
+    Get a database session
+
+    Returns:
+        a database session object
+        
     """
 
     def __init__(self):
@@ -260,19 +314,96 @@ class GetDatabaseSort(Command):
     Returns a name or, a namedtuple(expr, joins) of a data sort expression and additional
     tables to join, for a given sort index
 
+    Args:
+        model: a database model
+        sort_index: a sort index
+        name: set true to only return a dict with sort names
+
     Returns:
-        a very good thing
+        a :data:`.SortTuple` if ``sort_index`` was given, else a dict with (``int``)``sort index``: :data:`SortTuple`
+        or a dict with (``int``)``sort index``:``sort name``(``str``) if ``name`` was set to true
     """
 
-    names = CommandEntry("names", dict, str)
+    names: dict = CommandEntry("names",
+                               CParam("model_name", str, "name of a database model"),
+                               __capture=(str, "name of database model"),
+                               __doc=""",
+                               Called to get a dict of sort names
+                               """,
+                               __doc_return="""
+                               A dict of (``int``)``sortindex``:``name of sort``(``str``)
+                               """
+                               )
 
-    orderby = CommandEntry("orderby", dict, str)
+    orderby: dict = CommandEntry("orderby",
+                               CParam("model_name", str, "name of a database model"),
+                               __capture=(str, "name of database model"),
+                               __doc=""",
+                               Called to get a dict of database item attributes to order by
+                               """,
+                               __doc_return="""
+                               A dict of (``int``)``sortindex``:``(item.attribute, ...)``(``tuple``)
+                               """)
 
-    groupby = CommandEntry("groupby", dict, str)
+    groupby: dict = CommandEntry("groupby",
+                               CParam("model_name", str, "name of a database model"),
+                               __capture=(str, "name of database model"),
+                               __doc=""",
+                               Called to get a dict of database item attributes to group by
+                               """,
+                               __doc_return="""
+                               A dict of (``int``)``sortindex``:``(item.attribute, ...)``(``tuple``)
+                               """)
 
-    joins = CommandEntry("joins", dict, str)
+    joins: dict = CommandEntry("joins",
+                               CParam("model_name", str, "name of a database model"),
+                               __capture=(str, "name of database model"),
+                               __doc=""",
+                               Called to get a dict of database items or item attributes to join with
+                               """,
+                               __doc_return="""
+                               A dict of (``int``)``sortindex``:``(item.attribute, item, ...)``(``tuple``)
+                               """)
 
     SortTuple = namedtuple("SortTuple", ["orderby", "joins", "groupby"])
+
+    def main(self, model: db.Base, sort_index: int=None, name: bool=False) -> typing.Union[dict, GetDatabaseSort.SortTuple]:
+        self.model = model
+        model_name = db.model_name(self.model)
+        items = {}
+        if name:
+            with self.names.call_capture(model_name, model_name) as plg:
+                for x in plg.all(default=True):
+                    items.update(x)
+        else:
+            orders = {}
+            with self.orderby.call_capture(model_name, model_name) as plg:
+                for x in plg.all(default=True):
+                    orders.update(x)
+
+            groups = {}
+            with self.groupby.call_capture(model_name, model_name) as plg:
+                for x in plg.all(default=True):
+                    groups.update(x)
+
+            joins = {}
+            with self.joins.call_capture(model_name, model_name) as plg:
+                for x in plg.all(default=True):
+                    joins.update(x)
+
+            for k, v in orders.items():
+                a = v
+                b = tuple()
+                c = None
+                if k in joins:
+                    t = joins[k]
+                    if isinstance(t, tuple):
+                        b = t
+                if k in groups:
+                    c = groups[k]
+                items[k] = self.SortTuple(a, b, c)
+
+        return items.get(sort_index) if sort_index else items
 
     def __init__(self):
         super().__init__()
@@ -428,55 +559,40 @@ class GetDatabaseSort(Command):
             ItemSort.NamespaceTagTag.value: (db.NamespaceTags.tag, db.NamespaceTags.namespace),
         }
 
-    def main(self, model: db.Base, sort_index: int=None, name: bool=False) -> object:
-        self.model = model
-        model_name = db.model_name(self.model)
-        items = {}
-        if name:
-            with self.names.call_capture(model_name, model_name) as plg:
-                for x in plg.all(default=True):
-                    items.update(x)
-        else:
-            orders = {}
-            with self.orderby.call_capture(model_name, model_name) as plg:
-                for x in plg.all(default=True):
-                    orders.update(x)
-
-            groups = {}
-            with self.groupby.call_capture(model_name, model_name) as plg:
-                for x in plg.all(default=True):
-                    groups.update(x)
-
-            joins = {}
-            with self.joins.call_capture(model_name, model_name) as plg:
-                for x in plg.all(default=True):
-                    joins.update(x)
-
-            for k, v in orders.items():
-                a = v
-                b = tuple()
-                c = None
-                if k in joins:
-                    t = joins[k]
-                    if isinstance(t, tuple):
-                        b = t
-                if k in groups:
-                    c = groups[k]
-                items[k] = self.SortTuple(a, b, c)
-
-        return items.get(sort_index) if sort_index else items
-
 
 class GetModelItems(Command):
     """
     Fetch model items from the database
 
-    Returns a tuple of model items
+    Args:
+        model: a database model item
+        ids: a set of item ids
+        columns: a tuple of database item columns to fetch
+        limit: amount to limit the results
+        offset: amount to offset the results
+        count: only return the count of items
+        filter: either a textual SQL criterion or a database criterion expression (can also be a tuple) 
+        order_by: either a textual SQL criterion or a database model item attribute (can also be a tuple) 
+        group_by: either a textual SQL criterion or a database model item attribute (can also be a tuple) 
+        join: either a textual SQL criterion or a database model item attribute (can also be a tuple) 
+
+    Returns:
+        a tuple of database model items or ``int`` if ``count`` was set to true
     """
 
-    fetched = CommandEvent("fetched", str, tuple)
+    fetched = CommandEvent("fetched",
+                          CParam("model_name", str, "name of a database model"),
+                          CParam("items", tuple, "fetched items"),
+                          __doc="""
+                          Emitted when items were fetched successfully
+                          """,)
 
-    count = CommandEvent("count", str, int)
+    count = CommandEvent("count",
+                        CParam("model_name", str, "name of a database model"),
+                        CParam("item_count", str, "count of items"),
+                        __doc="""
+                        Emitted when query was successful
+                        """)
 
     def __init__(self):
         super().__init__()
@@ -501,7 +617,7 @@ class GetModelItems(Command):
     def main(self, model: db.Base, ids: set = None, limit: int = 999,
              filter: str = None, order_by: str = None, group_by: str=None,
              offset: int = 0, columns: tuple = tuple(),
-             join: str = None, count: bool = False) -> tuple:
+             join: str = None, count: bool = False) -> typing.Union[tuple, int]:
         if ids is None:
             log.d("Fetching items", "offset:", offset, "limit:", limit)
         else:
@@ -581,9 +697,17 @@ class GetModelItems(Command):
 class MostCommonTags(Command):
     """
     Get the most common tags for item
+
+    Args:
+        model: a database model item
+        item_id: id of item
+        limit: amount to limit results
+
+    Returns:
+        a tuple of :class:`.NamespaceTags` items
     """
 
-    def main(self, model: db.Base, item_id: int, limit: int=20) -> tuple:
+    def main(self, model: db.Base, item_id: int, limit: int=20) -> typing.Tuple[db.NamespaceTags]:
         assert issubclass(model, (db.Artist, db.Grouping, db.Collection))
 
         s = constants.db_session()

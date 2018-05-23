@@ -391,7 +391,7 @@ class _CommandPlugin:
 
     command_cls = None
 
-    def __init__(self, name, *args, __doc='', __doc_return='', **kwargs):
+    def __init__(self, name, *args, __capture=None, __doc='', __doc_return='', **kwargs):
         self.name = name
         self._args_param = args
         self._kwargs_param = kwargs
@@ -401,13 +401,15 @@ class _CommandPlugin:
         self._kwargs_types = {}
         self.__doc__ = inspect.cleandoc(__doc or kwargs.pop('__doc', ''))
         self.__doc_return = inspect.cleandoc(__doc_return or kwargs.pop('__doc_return', ''))
+        self.__capture = __capture or kwargs.pop('__capture')
+        assert self.__capture is None or isinstance(self.__capture, tuple)
 
         for a in args:
-            if isinstance(a, CParam):
-                self._args_types.append(a.type)
-        for a,b in kwargs.items():
-            if isinstance(b, CParam):
-                self._kwargs_types[a] = b.type
+            assert isinstance(a, CParam)
+            self._args_types.append(a.type)
+        for a, b in kwargs.items():
+            assert isinstance(b, CParam)
+            self._kwargs_types[a] = b.type
 
     def _init(self):
         for x, y in getattr(self.command_cls, '__annotations__', {}).items():
@@ -424,6 +426,7 @@ class _CommandPlugin:
             {}
 
             **Fully qualified name:** ``{}``
+            {}
 
             Args:
             {}
@@ -433,6 +436,7 @@ class _CommandPlugin:
             {}
 
             **Fully qualified name:** ``{}``
+            {}
 
             Args:
             {}
@@ -443,6 +447,7 @@ class _CommandPlugin:
         doc = inspect.cleandoc(doc)
 
         doc = doc.format(self.__doc__, self.qualifiedname(),
+                   "**Capture:** ``{}`` -- {}".format(self.__capture[0], self._CommandPlugin__capture[1]) if self.__capture else '',
                    utils.indent_text("\n".join("{}: {}".format(x.name, x.__doc__) for x in params)),
                    utils.indent_text(self.__doc_return)
                    )
