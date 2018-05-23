@@ -1,3 +1,8 @@
+"""
+Download CMD
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+"""
 #from happypanda.common import hlogger, constants
 #from happypanda.core.command import AsyncCommand
 #from happypanda.core.services import DownloadService

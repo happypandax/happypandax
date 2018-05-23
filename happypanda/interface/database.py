@@ -38,8 +38,9 @@ def get_image(item_type: enums.ItemType=enums.ItemType.Gallery,
         .. code-block:: guess
 
             {
-                item_id : async_command_id
+                item_id : command_id
             }
+
     """
 
     item_type = enums.ItemType.get(item_type)

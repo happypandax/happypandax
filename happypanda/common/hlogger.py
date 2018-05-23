@@ -178,7 +178,7 @@ class Logger:
                 log_handlers.append(lg)
 
             logs = [(constants.log_normal, logging.INFO, None),
-                    (constants.log_error, logging.ERROR, None)]
+                    (constants.log_error, logging.WARNING, None)]
 
             plugin_filter = logging.Filter(constants.log_ns_plugin[:-1])  # remove .
             if argsdev:

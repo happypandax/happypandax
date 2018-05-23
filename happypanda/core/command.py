@@ -14,44 +14,22 @@ from treelib import Tree, exceptions as tree_exceptions
 
 from happypanda.common import utils, hlogger, exceptions, constants
 from happypanda.core import plugins, async_utils, db
+from happypanda.interface.enums import CommandState
 
 log = hlogger.Logger(constants.log_ns_command + __name__)
 
 
 def get_available_commands():
     subs = utils.all_subclasses(Command)
-    commands = {'entry': set(), 'event': set()}
+    commands = {'entry': set(), 'event': set(), 'class': {}}
     for c in subs:
         c._get_commands()
+        commands['class'][c.__name__] = c
         for a in c._entries:
             commands['entry'].add(c.__name__ + '.' + c._entries[a].name)
         for a in c._events:
             commands['event'].add(c.__name__ + '.' + c._events[a].name)
     return commands
-
-
-class CommandState(enum.Enum):
-
-    #: command has not been put in any service yet
-    out_of_service = 0
-
-    #: command has been put in a service (but not started or stopped yet)
-    in_service = 1
-
-    #: command has been scheduled to start
-    in_queue = 2
-
-    #: command has been started
-    started = 3
-
-    #: command has finished succesfully
-    finished = 4
-
-    #: command has been forcefully stopped without finishing
-    stopped = 5
-
-    #: command has finished with an error
-    failed = 6
 
 
 def _native_runner(f):

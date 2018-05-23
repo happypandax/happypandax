@@ -1,3 +1,8 @@
+"""
+Gallery CMD
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+"""
 import os
 import subprocess
 import math

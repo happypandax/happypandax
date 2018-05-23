@@ -69,8 +69,6 @@ def get_similar(item_type: enums.ItemType=enums.ItemType.Gallery,
         limit: amount of items
 
     Returns:
-        A command id with command value:
-
         .. code-block:: guess
 
             [
@@ -78,6 +76,7 @@ def get_similar(item_type: enums.ItemType=enums.ItemType.Gallery,
                 ...
             ]
 
+    |async command|
     """
     item_type = enums.ItemType.get(item_type)
     db_msg, db_model = item_type._msg_and_model(

@@ -20,7 +20,7 @@ from contextlib import contextmanager
 
 from happypanda.interface import enums
 from happypanda.common import exceptions, constants, hlogger, config
-from happypanda.core import plugin_interface, async_utils
+from happypanda.core import plugin_interface, async_utils, command
 
 log = hlogger.Logger(constants.log_ns_plugin + __name__)
 
@@ -918,7 +918,6 @@ class HPXImporter(importlib.abc.MetaPathFinder, importlib.abc.Loader):
     def find_spec(self, fullname, path, target=None):
         m_list = ("happypanda",)
         for m in m_list:
-            print(fullname, path, target)
             if fullname.startswith(m):
                 raise ModuleNotFoundError("No module named '{}'".format(fullname))
         if fullname in self._modules.keys():

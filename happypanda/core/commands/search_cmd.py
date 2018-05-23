@@ -1,3 +1,8 @@
+"""
+Search CMD
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+"""
 from collections import namedtuple, ChainMap
 
 from happypanda.common import hlogger, exceptions, utils, constants, config

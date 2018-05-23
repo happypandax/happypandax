@@ -1,7 +1,4 @@
 """
-Enums
-----------------------------------------
-
 Plugin
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -242,3 +239,26 @@ class PluginState(_APIEnum):
     Enabled = 4
     #: Failed because of error
     Failed = 5
+
+class CommandState(_APIEnum):
+
+    #: command has not been put in any service yet
+    out_of_service = 0
+
+    #: command has been put in a service (but not started or stopped yet)
+    in_service = 1
+
+    #: command has been scheduled to start
+    in_queue = 2
+
+    #: command has been started
+    started = 3
+
+    #: command has finished succesfully
+    finished = 4
+
+    #: command has been forcefully stopped without finishing
+    stopped = 5
+
+    #: command has finished with an error
+    failed = 6

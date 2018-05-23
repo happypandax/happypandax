@@ -130,6 +130,7 @@ def check_update(push: bool = False):
         push: whether to push out notifications if an update is found
 
     Returns:
+        
         .. code-block:: guess
 
             {
@@ -139,6 +140,8 @@ def check_update(push: bool = False):
             }
 
         or ``null``
+
+    |async command|
 
     .. seealso::
 
@@ -159,8 +162,11 @@ def update_application(download_url: str = None, restart: bool = True):
         download_url: a url to the release file, can be path to file on the system
         restart: restart the application after installing the new update
 
+
     Returns:
-        A command id with command value: ``bool`` indicating whether the install was successful or not
+        A ``bool`` indicating whether the install was successful or not
+
+    |async command|
     """
 
     upd = meta_cmd.UpdateApplication(AsyncService.generic).run(download_url, restart)
@@ -240,8 +246,8 @@ def get_command_value(command_ids: list):
 
     for i in command_ids:
         cmd = AsyncService.get_command(i)
-        if cmd.state not in (command.CommandState.finished, command.CommandState.stopped):
-            if cmd.state == command.CommandState.failed:
+        if cmd.state not in (enums.CommandState.finished, enums.CommandState.stopped):
+            if cmd.state == enums.CommandState.failed:
                 raise exceptions.CommandError(utils.this_function(), "Command with ID '{}' has failed".format(i))
             raise exceptions.CommandError(utils.this_function(),
                                           "Command with ID '{}' has not finished running".format(i))
@@ -414,39 +420,3 @@ def start_command(command_ids: list):
 
     return message.Identity('command_state', states)
 
-
-# def get_command_error(command_ids: list):
-#    """
-#    Get error raised during command runtime
-
-#    Args:
-#        command_ids: list of command ids
-
-#    Returns:
-#        .. code-block:: guess
-
-#            {
-#                command_id : error
-#            }
-#    """
-#    return message.Message("works")
-
-
-# def undo_command(command_ids: list):
-#    """
-#    Undo a command
-
-#    Args:
-#        command_ids: list of command ids
-
-#    Returns:
-#        .. code-block:: guess
-
-#            {
-#                command_id : state
-#            }
-
-#    .. Note::
-#        Only select commands are undoable
-#    """
-#    return message.Message("works")

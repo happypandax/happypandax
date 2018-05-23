@@ -1,3 +1,8 @@
+"""
+Meta CMD
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+"""
 from happypanda.common import (hlogger, constants, config)
 from happypanda.core.command import Command, CommandEvent, AsyncCommand
 from happypanda.core import updater, message

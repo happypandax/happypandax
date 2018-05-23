@@ -63,6 +63,14 @@ project = 'HappyPanda X'
 copyright = 'Twiddly'
 author = 'Twiddly'
 
+rst_prolog = """
+.. |async command| replace:: **Async function** -- This function returns a ``command id``.
+    Retrieve the value of the function with :meth:`.get_command_value`.
+    See :ref:`Asynchronous Commands` for more information.
+
+.. |python version| replace:: Python 3.6
+"""
+
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.

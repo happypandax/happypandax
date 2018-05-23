@@ -9,6 +9,7 @@ from cachetools import LRUCache
 
 from happypanda.common import hlogger, constants, config
 from happypanda.core import command, async_utils, db
+from happypanda.interface.enums import CommandState
 
 log = hlogger.Logger(constants.log_ns_command + __name__)
 
@@ -268,7 +269,7 @@ class AsyncService(Service):
                 "added command:",
                 cmd.__class__.__name__,
                 "({})".format(command_id))
-            cmd.state = command.CommandState.in_service
+            cmd.state = CommandState.in_service
             return command_id
         else:  # TODO: abit nonsensical? raise error instead maybe
             for c_id in self._commands:
@@ -328,7 +329,7 @@ class AsyncService(Service):
                 except queue.Empty:
                     pass
 
-            command_obj.state = command.CommandState.finished
+            command_obj.state = CommandState.finished
             try:
                 greenlet.get()
             except BaseException:
@@ -338,13 +339,13 @@ class AsyncService(Service):
                         command_obj.__class__.__name__,
                         command_id),
                     "raised an exception")
-                command_obj.state = command.CommandState.failed
+                command_obj.state = CommandState.failed
                 command_obj.exception = greenlet.exception
                 if constants.dev:
                     raise  # doesnt work
             value = greenlet.value
             if isinstance(value, gevent.GreenletExit):
-                command_obj.state = command.CommandState.stopped
+                command_obj.state = CommandState.stopped
                 value = None
 
             if command_id in self._decorators:
@@ -366,10 +367,10 @@ class AsyncService(Service):
         gevent.idle(constants.Priority.Low.value)
         if not self._group.full():
             self._group.start(self._greenlets[cmd_id])
-            self._commands[cmd_id].state = command.CommandState.started
+            self._commands[cmd_id].state = CommandState.started
         else:
             self._queue.put(cmd_id)
-            self._commands[cmd_id].state = command.CommandState.in_queue
+            self._commands[cmd_id].state = CommandState.in_queue
             log.d("Enqueueing command id", cmd_id, "in service '{}'".format(self.name))
 
 

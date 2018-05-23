@@ -1,16 +1,20 @@
 ﻿General
 =======================================
 
+Asynchronous Commands
+----------------------------------------
+
+Enums
+----------------------------------------
+
 .. automodule:: happypanda.interface.enums
-   :members:
-
-**Asynchronous command states**:
-
-.. autoclass:: happypanda.core.command.CommandState
    :members:
 
 Exceptions
 ----------------------------------------
+
+These are errors that HPX may raise.
+Any error raised not on this list is an *unhandled exception* and usually classifies as a critical error.
 
 .. automodule:: happypanda.common.exceptions
     :members:

@@ -1,3 +1,9 @@
+"""
+Network CMD
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+"""
+
 import attr
 import requests
 import cachecontrol

@@ -1,3 +1,9 @@
+"""
+Database CMD
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+"""
+
 from collections import namedtuple
 from sqlalchemy.sql.expression import func
 from sqlalchemy_utils.functions import make_order_by_deterministic
@@ -253,6 +259,9 @@ class GetDatabaseSort(Command):
     """
     Returns a name or, a namedtuple(expr, joins) of a data sort expression and additional
     tables to join, for a given sort index
+
+    Returns:
+        a very good thing
     """
 
     names = CommandEntry("names", dict, str)
