@@ -13,13 +13,7 @@ Enums
 Exceptions
 ----------------------------------------
 
-These are errors that HPX may raise.
-Any error raised not on this list is an *unhandled exception* and usually classifies as a critical error.
-
 .. automodule:: happypanda.common.exceptions
-    :members:
-    :show-inheritance:
-    :member-order: bysource
 
 Guidelines
 ----------------------------------------

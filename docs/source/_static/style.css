@@ -29,8 +29,12 @@
 }
 
 .class > dd, .function > dd > p:last-of-type {
-    border-bottom: 0.1em solid rgba(0, 0, 0, 0.1);
     padding-bottom: 1em;
+}
+
+dd > table.field-list {
+    width: 100% !important;
+    border-top: 0.1em solid rgba(0, 0, 0, 0.1);
 }
 
 .class .attribute { font-size: 0.9em; }
@@ -55,4 +59,8 @@ body {
 
 .alert-info {
     background-color: #20c8f1;
+}
+
+ul li .function code.descname {
+    font-size: 1.05em;
 }

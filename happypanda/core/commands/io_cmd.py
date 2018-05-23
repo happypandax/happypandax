@@ -521,7 +521,6 @@ class Archive(CoreCommand):
 
     Args:
         fpath: path to archive file
-        test: a test
 
     """
     _init = CommandEntry('init', object, pathlib.Path)

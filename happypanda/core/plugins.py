@@ -396,7 +396,7 @@ class HandlerValue:
 
     def first_or_default(self):
         ""
-        pass
+        raise NotImplementedError
 
     def first_or_none(self):
         "Calls first handler, return None if there is no handler"
@@ -408,7 +408,7 @@ class HandlerValue:
 
     def last_or_default(self):
         ""
-        pass
+        raise NotImplementedError
 
     def last_or_none(self):
         "Calls last handler, return None if there is no handler"

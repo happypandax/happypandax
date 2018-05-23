@@ -7,7 +7,7 @@ import arrow
 from functools import reduce
 
 from happypanda.common import constants, utils, config, exceptions, hlogger
-from happypanda.core.commands.networkcmd import SimpleGETRequest, RequestProperties
+from happypanda.core.commands.network_cmd import SimpleGETRequest, RequestProperties
 from happypanda.core.commands.io_cmd import CoreFS
 
 log = hlogger.Logger(constants.log_ns_core + __name__)

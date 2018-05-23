@@ -1,4 +1,16 @@
 """
+These are errors that HPX may raise.
+Any error raised not on this list is an *unhandled exception* and usually classifies as a critical error.
+
+.. exec::
+
+    from happypanda.common import exceptions
+    import inspect
+
+    for name, obj in sorted(inspect.getmembers(exceptions, inspect.isclass), key=lambda a:a[1].code):
+        if issubclass(obj, exceptions.HappypandaError):
+            print(".. autoexception:: {}.{}".format(obj.__module__, obj.__name__))
+
 """
 from happypanda.common import hlogger
 

@@ -4,7 +4,7 @@ Meta CMD
 
 """
 from happypanda.common import (hlogger, constants, config)
-from happypanda.core.command import Command, CommandEvent, AsyncCommand
+from happypanda.core.command import Command, CommandEvent, AsyncCommand, CParam
 from happypanda.core import updater, message
 from happypanda.interface import enums
 
@@ -14,6 +14,11 @@ log = hlogger.Logger(constants.log_ns_command + __name__)
 class CheckUpdate(AsyncCommand):
     """
     Check for new release
+
+    Args:
+        silent: supress all errors
+        force: bypass user config on allowing checking for updates
+        push: push notifications on found update
     """
 
     def __init__(self, service=None, priority=constants.Priority.Low):

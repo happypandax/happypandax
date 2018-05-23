@@ -2,11 +2,16 @@
 Search CMD
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. autodata:: happypanda.core.commands.search_cmd.Term
+    :annotation: = NamedTuple
+
 """
+import typing
+
 from collections import namedtuple, ChainMap
 
 from happypanda.common import hlogger, exceptions, utils, constants, config
-from happypanda.core.command import Command, CommandEvent, CommandEntry
+from happypanda.core.command import Command, CommandEvent, CommandEntry, CParam
 from happypanda.core.commands import database_cmd
 from happypanda.core import db
 
@@ -40,6 +45,9 @@ def get_search_options(options={}):
     return ChainMap(u_val, d_val)
 
 
+#: used to encapsulate a single term, e.g:
+#: ``pages::>5`` where ``pages`` is the namespace,
+#: ``>`` is the operator and ``5`` is the tag
 Term = namedtuple("Term", ["namespace", "tag", "operator"])
 
 
@@ -48,15 +56,32 @@ class ParseTerm(Command):
     Parse a single term
 
     By default, the following operators are parsed for:
-    - '' = ''
-    - '<' = 'less'
-    - '>' = 'great'
+    - '' to ''
+    - '<' to 'less'
+    - '>' to 'great'
 
-    Returns a namedtuple of strings: Term(namespace, tag, operator)
+    Args:
+        term: a single term
+
+    Returns:
+        a namedtuple of namespace, tag and operator
+
     """
 
-    parse = CommandEntry("parse", tuple, str)
-    parsed = CommandEvent("parsed", Term)
+    parse: tuple = CommandEntry("parse",
+                                CParam('term', str, "a single term"),
+                                __doc="""
+                                Will receive the term to be parsed.
+                                """,
+                                __doc_return="""
+                                A tuple of strings (namespace, tag, operator)
+                                """)
+
+    parsed = CommandEvent("parsed",
+                          CParam('term', Term, "the parsed term"),
+                          __doc="""
+                          Emitted after a term has been parsed
+                          """)
 
     def __init__(self):
         super().__init__()
@@ -82,11 +107,9 @@ class ParseTerm(Command):
         self.filter = term
 
         with self.parse.call(self.filter) as plg:
-            t = plg.first()
+            t = plg.first_or_default()
             if not len(t) == 3:
-                t = plg.default()
-
-            self.term = Term(*t)
+                self.term = Term(*t)
 
         self.parsed.emit(self.term)
 

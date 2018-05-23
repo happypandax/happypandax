@@ -4,6 +4,7 @@ import gevent
 import weakref
 import sys
 import itertools
+import inspect
 
 from contextlib import contextmanager
 from abc import ABCMeta, abstractmethod
@@ -251,16 +252,25 @@ class CoreCommand:
             del self._progresses[self._progress_count]
 
     @classmethod
-    def _get_commands(cls):
+    def _get_commands(cls, self=None):
         ""
+        if self is not None:
+            cls = self
+        events = {}
+        entries = {}
         for a in cls.__dict__.values():
             if isinstance(a, CommandEvent):
                 a.command_cls = cls
-                cls._events[a.name] = a
+                events[a.name] = a
+                a._init()
 
             if isinstance(a, CommandEntry):
                 a.command_cls = cls
-                cls._entries[a.name] = a
+                entries[a.name] = a
+                a._init()
+        cls._entries = entries
+        cls._events = events
+        return entries, events
 
 
 class Command(CoreCommand, metaclass=ABCMeta):
@@ -381,11 +391,62 @@ class _CommandPlugin:
 
     command_cls = None
 
-    def __init__(self, name, *args, description='', **kwargs):
+    def __init__(self, name, *args, __doc='', __doc_return='', **kwargs):
         self.name = name
-        self._args_types = args
-        self._kwargs_types = kwargs
-        self._description = description
+        self._args_param = args
+        self._kwargs_param = kwargs
+        self.signature = None
+        self.return_type = None
+        self._args_types = []
+        self._kwargs_types = {}
+        self.__doc__ = inspect.cleandoc(__doc or kwargs.pop('__doc', ''))
+        self.__doc_return = inspect.cleandoc(__doc_return or kwargs.pop('__doc_return', ''))
+
+        for a in args:
+            if isinstance(a, CParam):
+                self._args_types.append(a.type)
+        for a,b in kwargs.items():
+            if isinstance(b, CParam):
+                self._kwargs_types[a] = b.type
+
+    def _init(self):
+        for x, y in getattr(self.command_cls, '__annotations__', {}).items():
+            if self.command_cls.__dict__[x] == self:
+                self.return_type = y
+                break
+        params = [x for x in self._args_param if isinstance(x, CParam)]
+        [params.append(x) for x in self._kwargs_param.values() if isinstance(x, CParam)]
+        self.signature = inspect.Signature([x.parameter for x in params], return_annotation=self.return_type)
+
+        is_event = isinstance(self, CommandEvent)
+        if is_event:
+            doc = """
+            {}
+
+            **Fully qualified name:** ``{}``
+
+            Args:
+            {}
+            """
+        else:
+            doc = """
+            {}
+
+            **Fully qualified name:** ``{}``
+
+            Args:
+            {}
+
+            Returns:
+            {}
+            """
+        doc = inspect.cleandoc(doc)
+
+        doc = doc.format(self.__doc__, self.qualifiedname(),
+                   utils.indent_text("\n".join("{}: {}".format(x.name, x.__doc__) for x in params)),
+                   utils.indent_text(self.__doc_return)
+                   )
+        self.__doc__ = doc
 
     def qualifiedname(self):
         "Returns Class.command name"
@@ -470,9 +531,8 @@ class CommandEvent(_CommandPlugin):
 class CommandEntry(_CommandPlugin):
     "Base command entry"
 
-    def __init__(self, name, return_type, *args, **kwargs):
+    def __init__(self, name, *args, **kwargs):
         super().__init__(name, *args, **kwargs)
-        self.return_type = return_type
         self.default_handler = None
         self.default_capture_handlers = []
 
@@ -515,6 +575,14 @@ class CommandEntry(_CommandPlugin):
         handler.expected_type = self.return_type
         yield handler
 
+class CParam:
+    "Command parameter"
+
+    def __init__(self, name, type_=None, __doc__=''):
+        self.name = name
+        self.type = type_
+        self.parameter = inspect.Parameter(name, inspect.Parameter.POSITIONAL_OR_KEYWORD, annotation=type_)
+        self.__doc__ = inspect.cleandoc(__doc__)
 
 def init_commands():
     CoreCommand._native_pool = ThreadPool(constants.maximum_native_workers)
