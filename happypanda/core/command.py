@@ -399,9 +399,9 @@ class _CommandPlugin:
         self.return_type = None
         self._args_types = []
         self._kwargs_types = {}
-        self.__doc__ = inspect.cleandoc(__doc or kwargs.pop('__doc', ''))
-        self.__doc_return = inspect.cleandoc(__doc_return or kwargs.pop('__doc_return', ''))
-        self.__capture = __capture or kwargs.pop('__capture')
+        self.__doc__ = inspect.cleandoc(kwargs.pop('__doc', None) or kwargs.pop('__doc__', None) or __doc)
+        self.__doc_return = inspect.cleandoc(kwargs.pop('__doc_return', None) or __doc_return)
+        self.__capture = kwargs.pop('__capture', None) or __capture
         assert self.__capture is None or isinstance(self.__capture, tuple)
 
         for a in args:
@@ -421,35 +421,24 @@ class _CommandPlugin:
         self.signature = inspect.Signature([x.parameter for x in params], return_annotation=self.return_type)
 
         is_event = isinstance(self, CommandEvent)
-        if is_event:
-            doc = """
-            {}
+        doc = """
+        {}
 
-            **Fully qualified name:** ``{}``
-            {}
+        **Fully qualified name:** ``{}``
+        {}
 
-            Args:
-            {}
-            """
-        else:
-            doc = """
-            {}
+        {}
 
-            **Fully qualified name:** ``{}``
-            {}
-
-            Args:
-            {}
-
-            Returns:
-            {}
-            """
+        {}
+        """
         doc = inspect.cleandoc(doc)
 
-        doc = doc.format(self.__doc__, self.qualifiedname(),
-                   "**Capture:** ``{}`` -- {}".format(self.__capture[0], self._CommandPlugin__capture[1]) if self.__capture else '',
-                   utils.indent_text("\n".join("{}: {}".format(x.name, x.__doc__) for x in params)),
-                   utils.indent_text(self.__doc_return)
+        doc = doc.format(
+                   self.__doc__,
+                   self.qualifiedname(),
+                   "**Capture:** ``{}`` -- {}".format(self.__capture[0].__name__,self._CommandPlugin__capture[1]) if self.__capture else '',
+                   "Args:\n{}".format(utils.indent_text("\n".join("{}: {}".format(x.name, x.__doc__) for x in params))) if params else '',
+                   '' if is_event else "Returns:\n{}".format(utils.indent_text(self.__doc_return)) if self.__doc_return else ''
                    )
         self.__doc__ = doc
 

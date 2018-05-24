@@ -2,6 +2,12 @@
 Network CMD
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. autoclass:: happypanda.core.commands.network_cmd.Method
+    :members:
+
+.. autoclass:: happypanda.core.commands.network_cmd.RequestProperties
+    :members:
+
 """
 
 import attr
@@ -9,6 +15,7 @@ import requests
 import cachecontrol
 import os
 import arrow
+import typing
 
 from happypanda.common import (hlogger, exceptions, constants, config)
 from happypanda.core.command import CoreCommand, Command
@@ -19,42 +26,57 @@ log = hlogger.Logger(constants.log_ns_network + __name__)
 
 
 class Method(enums._APIEnum):
+
+    #: GET
     GET = "get"
+    #: POST
     POST = "post"
+    #: PUT
     PUT = "put"
+    #: DELETE
     DELETE = "delete"
+    #: HEAD
     HEAD = "head"
+    #: OPTIONS
     OPTIONS = "options"
 
 
 @attr.s
 class RequestProperties:
-    """
-
-    Args:
-        session: True for default session, False for no session, or custom session
-    """
-
-    method = attr.ib(default=None)
-    output = attr.ib(default="")
-    name = attr.ib(default="")  # for logging
-    session = attr.ib(default=True)
-    timeout = attr.ib(default=None)
+    #: a :class:`.Method` object
+    method: Method = attr.ib(default=None)
+    name: str = attr.ib(default="")  # for logging
+    #: set to True for default session, False for no session, or to a custom session
+    session: bool = attr.ib(default=True)
+    #: request timeout
+    timeout: int = attr.ib(default=None)
+    #: proxy
     proxy = attr.ib(default=None)
+    #: headers
     headers = attr.ib(default=None)
+    #: files
     files = attr.ib(default=None)
+    #: data
     data = attr.ib(default=None)
+    #: json
     json = attr.ib(default=None)
+    #: params
     params = attr.ib(default=None)
+    #: auth
     auth = attr.ib(default=None)
+    #: cookies
     cookies = attr.ib(default=None)
+    #: stream
     stream = attr.ib(default=False)
+    #: stream_callback
     stream_callback = attr.ib(default=None)
+    #: progress
     progress = attr.ib(default=False)
 
 
 class Response(CoreCommand):
     """
+    A request response. Not meant to be instanced publicly.
     """
 
     def __init__(self, _url, _request_method, _request_kwargs, _props):
@@ -75,10 +97,12 @@ class Response(CoreCommand):
 
     @property
     def json(self):
+        "Response json data"
         return self._rsp.json()
 
     @property
     def text(self):
+        "Response text data"
         return self._rsp.text
 
     def save(self, filepath, decode_unicode=False, extension=False):
@@ -179,9 +203,17 @@ class _Request(Command):
 
 class SimpleRequest(_Request):
     """
+    Make a HTTP request
+
+    Args:
+        url: url
+        properties: a :class:`.RequestProperties` object
+
+    Returns:
+        a :class:`.Response` object
     """
 
-    def __init__(self, url, properties):
+    def __init__(self, url: str, properties: RequestProperties):
         assert isinstance(properties, RequestProperties)
         assert isinstance(url, str)
         super().__init__(properties.session)
@@ -195,9 +227,16 @@ class SimpleRequest(_Request):
 class SimpleGETRequest(SimpleRequest):
     """
     A convenience wrapper around SimpleRequest for GET requests
+
+    Args:
+        url: url
+        properties: a :class:`.RequestProperties` object
+
+    Returns:
+        a :class:`.Response` object
     """
 
-    def __init__(self, url, properties=RequestProperties(), **kwargs):
+    def __init__(self, url: str, properties: RequestProperties=RequestProperties(), **kwargs):
         properties.method = Method.GET
         return super().__init__(url, properties, **kwargs)
 
@@ -205,39 +244,69 @@ class SimpleGETRequest(SimpleRequest):
 class SimplePOSTRequest(SimpleRequest):
     """
     A convenience wrapper around SimpleRequest for POST requests
+
+    Args:
+        url: url
+        properties: a :class:`.RequestProperties` object
+
+    Returns:
+        a :class:`.Response` object
     """
 
-    def __init__(self, url, properties=RequestProperties(), **kwargs):
+    def __init__(self, url: str, properties: RequestProperties=RequestProperties(), **kwargs):
         properties.method = Method.POST
         return super().__init__(url, properties, **kwargs)
 
 
 class MultiRequest(_Request):
     """
+    Make multiple HTTP requests
+
+    Args:
+        urls: a list of urls
+        properties: a :class:`.RequestProperties` object
+
+    Returns:
+        a :class:`.Response` object
     """
 
-    def __init__(self, urls, properties):
+    def __init__(self, urls: typing.Sequence[str], properties: RequestProperties):
         assert isinstance(properties, RequestProperties)
         assert isinstance(urls, (tuple, list, set, dict))
         super().__init__(properties.session)
         self.properties = properties
+        raise NotImplementedError
 
 
 class MultiGETRequest(MultiRequest):
     """
     A convenience wrapper around MultiRequest for GET requests
+
+    Args:
+        urls: a list of urls
+        properties: a :class:`.RequestProperties` object
+
+    Returns:
+        a :class:`.Response` object
     """
 
-    def __init__(self, url, properties=RequestProperties(), **kwargs):
+    def __init__(self, urls, properties: RequestProperties=RequestProperties(), **kwargs):
         properties.method = Method.GET
-        return super().__init__(url, properties, **kwargs)
+        return super().__init__(urls, properties, **kwargs)
 
 
 class MultiPOSTRequest(MultiRequest):
     """
     A convenience wrapper around MultiRequest for POST requests
+
+    Args:
+        urls: a list of urls
+        properties: a :class:`.RequestProperties` object
+
+    Returns:
+        a :class:`.Response` object
     """
 
-    def __init__(self, url, properties=RequestProperties(), **kwargs):
+    def __init__(self, urls, properties: RequestProperties=RequestProperties(), **kwargs):
         properties.method = Method.POST
-        return super().__init__(url, properties, **kwargs)
+        return super().__init__(urls, properties, **kwargs)

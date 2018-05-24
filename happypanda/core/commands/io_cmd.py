@@ -2,6 +2,9 @@
 I/O CMD
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. autoclass:: happypanda.core.commands.io_cmd.ImageProperties
+    :members:
+
 """
 import pathlib
 import os
@@ -22,7 +25,7 @@ from contextlib import contextmanager
 from gevent import fileobject
 
 from happypanda.common import hlogger, exceptions, utils, constants
-from happypanda.core.command import CoreCommand, CommandEntry, AsyncCommand, Command
+from happypanda.core.command import CoreCommand, CommandEntry, AsyncCommand, Command, CParam
 from happypanda.core.services import ImageService
 from happypanda.core import db
 
@@ -31,16 +34,28 @@ log = hlogger.Logger(constants.log_ns_command + __name__)
 
 @attr.s
 class ImageProperties:
-    size = attr.ib(default=utils.ImageSize(*constants.image_sizes['medium']))
-    radius = attr.ib(default=0)
-    output_dir = attr.ib(default=None)
-    output_path = attr.ib(default=None)
-    name = attr.ib(default=None)
-    create_symlink = attr.ib(default=True)
+    #: size of image, a :data:`.utils.ImageSize` object
+    size: utils.ImageSize = attr.ib(default=utils.ImageSize(*constants.image_sizes['medium']))
+    #: corner radius
+    radius: int = attr.ib(default=0)
+    #: folder to save the image to
+    output_dir: str = attr.ib(default=None)
+    #: path to save the image to, this and ``output_dir`` are mutually exclusive
+    output_path: str = attr.ib(default=None)
+    #: name of image file when saved to ``output_dir``, else a random name will be generated
+    name: str = attr.ib(default=None)
+    #: create an artificial symlink til the source image instead of copying it (only useful if image size isn't modified)
+    create_symlink: bool = attr.ib(default=True)
 
 
 class ImageItem(AsyncCommand):
     """
+    Generate an image from source image
+
+    Args:
+        filepath_or_bytes: path to image file or a ``bytes`` object
+        properties: an :class:`.ImageProperties` object
+        service: service to put this async command into
 
     Returns:
         a path to generated image
@@ -201,6 +216,9 @@ class CoreFS(CoreCommand):
     Default supported image types are:
         JPG/JPEG, BMP, PNG and GIF
 
+    Args:
+        path: path to file on the filesystem, accepts ``str``, ``pathlib.Path`` and :class:``.CoreFS`` objetcs
+        archive: if ``path`` is an archive or is inside one, then this :class:`.Archive` object should be used instead of creating a new one
     """
 
     ZIP = '.zip'
@@ -217,11 +235,24 @@ class CoreFS(CoreCommand):
     PNG = '.png'
     GIF = '.gif'
 
-    _archive_formats = CommandEntry("archive_formats", tuple)
-    _image_formats = CommandEntry("image_formats", tuple)
+    _archive_formats: tuple = CommandEntry("archive_formats",
+                                           __doc="""
+                                           Called to get a tuple of supported archive file formats
+                                           """,
+                                           __doc_return="""
+                                           a tuple of archive formats
+                                           """)
+    _image_formats: tuple = CommandEntry("image_formats",
+                                         __doc="""
+                                         Called to get a tuple of supported image formats
+                                         """,
+                                         __doc_return="""
+                                         a tuple of image formats
+                                         """)
 
-    def __init__(self, path=pathlib.Path(), archive=None):
+    def __init__(self, path: str=pathlib.Path(), archive=None):
         assert isinstance(path, (pathlib.Path, str, CoreFS))
+        assert isinstance(archive, Archive) or archive is None
         super().__init__()
         self._path = None
         self._o_path = path
@@ -523,21 +554,103 @@ class Archive(CoreCommand):
         fpath: path to archive file
 
     """
-    _init = CommandEntry('init', object, pathlib.Path)
-    _path_sep = CommandEntry('path_sep', str, object)
-    _test_corrupt = CommandEntry('test_corrupt', bool, object)
-    _is_dir = CommandEntry('is_dir', bool, object, str)
-    _extract = CommandEntry("extract", str, object, str, pathlib.Path)
-    _extract_all = CommandEntry("extract_all", str, object, pathlib.Path)
-    _namelist = CommandEntry("namelist", tuple, object)
-    _open = CommandEntry("open", object, object, str, tuple, dict)
-    _close = CommandEntry("close", None, object)
+    _init: object = CommandEntry('init',
+                                 CParam("path", pathlib.Path, "path to file"),
+                                 __capture=(str, "file extension"),
+                                 __doc="""
+                                 Called to initialize the underlying archive object
+                                 """,
+                                 __doc_return="""
+                                 the underlying archive object
+                                 """
+                                 )
+    _path_sep: str = CommandEntry('path_sep',
+                                  CParam("archive", object, "the underlying archive object"),
+                                  __capture=(str, "file extension"),
+                                  __doc="""
+                                  Called to retrieve the character that separates path name components.
+                                  The default separator is ``/``
+                                  """,
+                                  __doc_return="""
+                                  path separator character
+                                  """
+                                  )
+    _test_corrupt: bool = CommandEntry('test_corrupt',
+                                      CParam("archive", object, "the underlying archive object"),
+                                      __capture=(str, "file extension"),
+                                      __doc="""
+                                      Called to test if the archive is corrupted
+                                      """,
+                                      __doc_return="""
+                                      whether the archive is corrupt or not
+                                      """
+                                      )
+    _is_dir: bool = CommandEntry('is_dir',
+                                CParam("archive", object, "the underlying archive object"),
+                                CParam("filename", str, "filename or path **inside** the archive"),
+                                __capture=(str, "file extension"),
+                                __doc="""
+                                Called to check if an item inside the archive is a directory
+                                """,
+                                __doc_return="""
+                                whether the item is a directory or not
+                                """
+                                )
+    _extract: str = CommandEntry("extract",
+                                CParam("archive", object, "the underlying archive object"),
+                                CParam("filename", str, "filename or path **inside** the archive"),
+                                CParam("target", pathlib.Path, "target path to where items should be extracted to"),
+                                __capture=(str, "file extension"),
+                                __doc="""
+                                Called to extract an item inside the archive
+                                """,
+                                __doc_return="""
+                                path to extracted content
+                                """)
+    _extract_all: str = CommandEntry("extract_all",
+                                    CParam("archive", object, "the underlying archive object"),
+                                    CParam("target", pathlib.Path, "target path to where items should be extracted to"),
+                                    __capture=(str, "file extension"),
+                                    __doc="""
+                                    Called to extract all items inside the archive
+                                    """,
+                                    __doc_return="""
+                                    path to extracted content
+                                    """)
+    _namelist: tuple = CommandEntry("namelist",
+                                    CParam("archive", object, "the underlying archive object"),
+                                    __capture=(str, "file extension"),
+                                    __doc="""
+                                    Called to retrieve a tuple of the files and folders in the archive
+                                    """,
+                                    __doc_return="""
+                                    a tuple of the files and folders in the archive
+                                    """)
+    _open: object = CommandEntry("open",
+                                CParam("archive", object, "the underlying archive object"),
+                                CParam("filename", str, "filename or path **inside** the archive"),
+                                CParam("args", tuple, "additional arguments to pass when opening the file (like ``encoding='utf-8'``, etc.)"),
+                                CParam("kwargs", dict, "additional keyword-arguments to pass when opening the file (like ``encoding='utf-8'``, etc.)"),
+                                __capture=(str, "file extension"),
+                                __doc="""
+                                Called to open a file inside the archive.
+                                """,
+                                __doc_return="""
+                                a file-like object
+                                """
+                                )
+    _close: None = CommandEntry("close",
+                                CParam("archive", object, "the underlying archive object"),
+                                __capture=(str, "file extension"),
+                                __doc="""
+                                Called to close the underlying archive object
+                                """)
 
     def _def_formats():
         return (CoreFS.ZIP, CoreFS.RAR, CoreFS.CBZ, CoreFS.CBR, CoreFS.TARBZ2,
                 CoreFS.TARGZ, CoreFS.TARXZ)
 
-    def __init__(self, fpath):
+    def __init__(self, fpath: str):
         self._opened = False
         self._archive = None
         self._path = pathlib.Path(fpath)
@@ -734,12 +847,11 @@ class GalleryFS(CoreCommand):
     """
     Encapsulates an gallery object on the filesystem
     Args:
-        path: a valid path to a valid gallery archive/folder
-        db_gallery: Database Gallery object
+        path_or_dbitem: path to a valid gallery archive/folder or a :class:`.db.Gallery` database item
     """
 
-    def __init__(self, path_or_dbobject):
-        assert isinstance(path_or_dbobject, (str, CoreFS, db.Gallery, pathlib.Path))
+    def __init__(self, path_or_dbitem: str):
+        assert isinstance(path_or_dbitem, (str, CoreFS, db.Gallery, pathlib.Path))
 
         self.gallery = None
         self.path = None
@@ -750,10 +862,10 @@ class GalleryFS(CoreCommand):
         self.convention = ''
         self.pages = {}  # number : CoreFS
 
-        if isinstance(path_or_dbobject, db.Gallery):
-            self.gallery = path_or_dbobject
+        if isinstance(path_or_dbitem, db.Gallery):
+            self.gallery = path_or_dbitem
         else:
-            self.path = CoreFS(path_or_dbobject)
+            self.path = CoreFS(path_or_dbitem)
 
     # def load(self):
     #    "Extracts gallery data"
@@ -813,7 +925,7 @@ class NameParser(Command):
     """
     """
 
-    parse = CommandEntry("rename", None, str, str)
+    #parse = CommandEntry("rename", None, str, str)
 
     def __init__(self):
         super().__init__()

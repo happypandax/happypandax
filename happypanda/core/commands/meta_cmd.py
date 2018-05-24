@@ -3,6 +3,8 @@ Meta CMD
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+import typing
+
 from happypanda.common import (hlogger, constants, config)
 from happypanda.core.command import Command, CommandEvent, AsyncCommand, CParam
 from happypanda.core import updater, message
@@ -19,12 +21,24 @@ class CheckUpdate(AsyncCommand):
         silent: supress all errors
         force: bypass user config on allowing checking for updates
         push: push notifications on found update
+
+    Returns:
+        .. code-block:: guess
+
+            {
+            'url':'',
+            'changes':'',
+            'tag':'',
+            'version':(0, 0, 0)
+            }
+        
+        when there is a new release, or ``None``
     """
 
     def __init__(self, service=None, priority=constants.Priority.Low):
         return super().__init__(service, priority)
 
-    def main(self, silent=True, force=False, push=False) -> dict:
+    def main(self, silent: bool=True, force: bool=False, push: bool=False) -> typing.Union[dict, None]:
         if force or config.check_release_interval.value:
             self.set_progress(type_=enums.ProgressType.CheckUpdate)
             self.set_max_progress(2)
@@ -64,14 +78,29 @@ class CheckUpdate(AsyncCommand):
 class UpdateApplication(AsyncCommand):
     """
     Check for new release and update the application
+
+    Args:
+        download_url: url to file which is to be downloaded, if ``None`` the url will be retrieved with :func:`CheckUpdate`
+        restart: call :func:`RestartApplication` when the update has been registered
+        silent: supress all errors
+        push: push notifications on update
+
+    Returns:
+        bool indicating whether the update has been registered or not
     """
 
-    update = CommandEvent("update", bool, bool)
+    update = CommandEvent("update",
+                          CParam("status", bool, "whether the update has been registered or not"),
+                          CParam("restart", bool, "whether the call :func:`RestartApplication` if the update was registered"),
+                          __doc="""
+                          Emitted at the end of the process
+                          """
+                          )
 
     def __init__(self, service=None, priority=constants.Priority.Low):
         return super().__init__(service, priority)
 
-    def main(self, download_url=None, restart=True, silent=True, push=False) -> bool:
+    def main(self, download_url: str=None, restart: bool=True, silent: bool=True, push: bool=False) -> bool:
         self.set_progress(type_=enums.ProgressType.UpdateApplication)
         self.set_max_progress(3)
         st = False
@@ -107,7 +136,10 @@ class RestartApplication(Command):
     Restart the appplication
     """
 
-    restart = CommandEvent("restart")
+    restart = CommandEvent("restart",
+                           __doc="""
+                           Emitted when about to restart
+                           """)
 
     def __init__(self, priority=constants.Priority.Normal):
         super().__init__(priority)
@@ -121,7 +153,10 @@ class ShutdownApplication(Command):
     Shutdown the appplication
     """
 
-    shutdown = CommandEvent("shutdown")
+    shutdown = CommandEvent("shutdown",
+                            __doc="""
+                            Emitted when about to shutdown
+                            """)
 
     def __init__(self, priority=constants.Priority.Normal):
         super().__init__(priority)
@@ -135,7 +170,10 @@ class InitApplication(Command):
     Initialize the appplication
     """
 
-    init = CommandEvent("init")
+    init = CommandEvent("init",
+                        __doc="""
+                        Emitted on application startup where everything has been initialized after the server has started.
+                        """)
 
     def __init__(self, priority=constants.Priority.Normal):
         super().__init__(priority)

@@ -2,7 +2,7 @@
 Database CMD
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. autodata:: happypanda.core.commands.database_cmd.GetDatabaseSort.SortTuple
+.. autoattribute:: happypanda.core.commands.database_cmd.GetDatabaseSort.SortTuple
     :annotation: = NamedTuple
 
 """
@@ -367,7 +367,7 @@ class GetDatabaseSort(Command):
 
     SortTuple = namedtuple("SortTuple", ["orderby", "joins", "groupby"])
 
-    def main(self, model: db.Base, sort_index: int=None, name: bool=False) -> typing.Union[dict, GetDatabaseSort.SortTuple]:
+    def main(self, model: db.Base, sort_index: int=None, name: bool=False) -> typing.Union[dict, SortTuple]:
         self.model = model
         model_name = db.model_name(self.model)
         items = {}

@@ -65,16 +65,15 @@ class ParseTerm(Command):
 
     Returns:
         a namedtuple of namespace, tag and operator
-
     """
 
     parse: tuple = CommandEntry("parse",
                                 CParam('term', str, "a single term"),
                                 __doc="""
-                                Will receive the term to be parsed.
+                                Called to parse the term into ``namespace``, ``tag`` and ``operator``
                                 """,
                                 __doc_return="""
-                                A tuple of strings (namespace, tag, operator)
+                                a tuple of strings (namespace, tag, operator)
                                 """)
 
     parsed = CommandEvent("parsed",
@@ -118,13 +117,31 @@ class ParseTerm(Command):
 
 class ParseSearch(Command):
     """
-    Parse a search query
+    Parse a search query.
 
-    Dividies term into ns:tag pieces, returns a tuple of ns:tag pieces
+    Dividies term into ns:tag pieces
+
+    Args:
+        search_filter: a search query
+
+    Returns:
+        a tuple of ns:tag pieces
     """
 
-    parse = CommandEntry("parse", tuple, str)
-    parsed = CommandEvent("parsed", tuple)
+    parse: tuple = CommandEntry("parse",
+                                CParam('terms', str, "a search query"),
+                                __doc="""
+                                Called to divide the search query as written into ``namespace:tag``(``str``) pieces 
+                                """,
+                                __doc_return="""
+                                a tuple of `namespace:tag``(``str``) pieces
+                                """)
+
+    parsed = CommandEvent("parsed",
+                          CParam('pieces', tuple, "a tuple of `namespace:tag``(``str``) pieces"),
+                          __doc="""
+                          Emitted after the search query has been parsed
+                          """)
 
     def __init__(self):
         super().__init__()
@@ -248,13 +265,85 @@ class PartialModelFilter(Command):
     - Title
     - Url
 
-    Returns a set with ids of matched model items
+    Args:
+        model: a database model item
+        term: a single term, like ``rating:5``
+        match_options: search options, refer to :ref:`Settings`
+
+    Returns:
+        a ``set`` with ids of matched database model items
     """
 
-    models = CommandEntry("models", tuple)
+    models: tuple = CommandEntry("models",
+                                 __doc="""
+                                 Called to get a tuple of supported database models
+                                 """,
+                                 __doc_return="""
+                                 a tuple of database model items
+                                 """)
 
-    match_model = CommandEntry("match_model", set, str, str, str, ChainMap)
-    matched = CommandEvent("matched", set)
+    match_model: set = CommandEntry("match_model",
+                                  CParam("parent_model_name", str, "name of parent database model"),
+                                  CParam("child_model_name", str, "name of child database model"),
+                                  CParam("term", str, "a single term"),
+                                  CParam("options", ChainMap, "search options"),
+                                  __capture=(str, "a database model name"),
+                                  __doc="""
+                                  Called to perform the matching on database items of the given model
+                                  """,
+                                  __doc_return="""
+                                  a ``set`` of ids of the database items that match
+                                  """)
+    matched = CommandEvent("matched",
+                           CParam("matched_ids", set, "a ``set`` of ids of the database items that match"),
+                           __doc="""
+                           Emitted at the end of the process
+                           """
+                           )
+
+    def main(self, model: db.Base, term: str, match_options: dict = {}) -> typing.Set[int]:
+
+        self.model = model
+        model_name = db.model_name(self.model)
+        self.term = term
+        with self.models.call() as plg:
+            for p in plg.all(default=True):
+                self._supported_models.update(p)
+
+        if self.model not in self._supported_models:
+            raise exceptions.CommandError(utils.this_command(self),
+                                          "Model '{}' is not supported".format(model))
+
+        options = get_search_options(match_options)
+        log.d("Match options", options)
+
+        related_models = db.related_classes(model)
+
+        sess = constants.db_session()
+
+        model_count = sess.query(model).count()
+
+        with self.match_model.call_capture(model_name, model_name, model_name, self.term, options) as plg:
+            for i in plg.all():
+                self.matched_ids.update(i)
+                if len(self.matched_ids) == model_count:
+                    break
+
+        has_all = False
+        for m in related_models:
+            if m in self._supported_models:
+                with self.match_model.call_capture(db.model_name(m), model_name, db.model_name(m), self.term, options) as plg:
+                    for i in plg.all():
+                        self.matched_ids.update(i)
+                        if len(self.matched_ids) == model_count:
+                            has_all = True
+                            break
+            if has_all:
+                break
+
+        self.matched.emit(self.matched_ids)
+
+        return self.matched_ids
 
     def __init__(self):
         super().__init__()
@@ -469,116 +558,83 @@ class PartialModelFilter(Command):
                                                            options)).all())
         return ids
 
-    def main(self, model: db.Base, term: str, match_options: dict = {}) -> set:
-
-        self.model = model
-        model_name = db.model_name(self.model)
-        self.term = term
-        with self.models.call() as plg:
-            for p in plg.all(default=True):
-                self._supported_models.update(p)
-
-        if self.model not in self._supported_models:
-            raise exceptions.CommandError(utils.this_command(self),
-                                          "Model '{}' is not supported".format(model))
-
-        options = get_search_options(match_options)
-        log.d("Match options", options)
-
-        related_models = db.related_classes(model)
-
-        sess = constants.db_session()
-
-        model_count = sess.query(model).count()
-
-        with self.match_model.call_capture(model_name, model_name, model_name, self.term, options) as plg:
-            for i in plg.all():
-                self.matched_ids.update(i)
-                if len(self.matched_ids) == model_count:
-                    break
-
-        has_all = False
-        for m in related_models:
-            if m in self._supported_models:
-                with self.match_model.call_capture(db.model_name(m), model_name, db.model_name(m), self.term, options) as plg:
-                    for i in plg.all():
-                        self.matched_ids.update(i)
-                        if len(self.matched_ids) == model_count:
-                            has_all = True
-                            break
-            if has_all:
-                break
-
-        self.matched.emit(self.matched_ids)
-
-        return self.matched_ids
-
 
 class ModelFilter(Command):
     """
     Perform a full search on database model
-    Returns a set of ids of matched model items
+
+    Args:
+        model: a database model item
+        search_filter: a search query
+        match_options: search options, refer to :ref:`Settings`
+
+    Returns:
+        a set of ids of matched database model items
     """
 
-    separate = CommandEntry("separate", tuple, tuple)
-    include = CommandEntry("include", set, str, set, ChainMap)
-    exclude = CommandEntry("exclude", set, str, set, ChainMap)
-    empty = CommandEntry("empty", set, str)
+    separate: tuple = CommandEntry("separate",
+                                   CParam("pieces", tuple, "a tuple of terms"),
+                                   __doc="""
+                                   Called to separate terms that include and terms that exclude from eachother
+                                   """,
+                                   __doc_return="""
+                                   a tuple of two tuples where the first tuple contains terms that include
+                                   and the second contains terms that exclude
+                                   """
+                                   )
+    include: set = CommandEntry("include",
+                                CParam("model_name", str, "name of a database model"),
+                                CParam("pieces", tuple, "a tuple of terms"),
+                                CParam("options", ChainMap, "search options"),
+                                __doc="""
+                                Called to match database items of the given model to include in the final results
+                                """,
+                                __doc_return="""
+                                a ``set`` of ids of the database items that match
+                                """
+                                )
+    exclude: set = CommandEntry("exclude",
+                                CParam("model_name", str, "name of a database model"),
+                                CParam("pieces", tuple, "a tuple of terms"),
+                                CParam("options", ChainMap, "search options"),
+                                __doc="""
+                                Called to match database items of the given model to exclude in the final results
+                                """,
+                                __doc_return="""
+                                a ``set`` of ids of the database items that match
+                                """
+                                )
+    empty: set = CommandEntry("empty",
+                                CParam("model_name", str, "name of a database model"),
+                                __doc="""
+                                Called when the search query is empty
+                                """,
+                                __doc_return="""
+                                a ``set`` of ids of the database items that match when a search query is empty
+                                """)
 
-    included = CommandEvent("included", str, set)
-    excluded = CommandEvent("excluded", str, set)
-    matched = CommandEvent("matched", str, set)
+    included = CommandEvent("included",
+                            CParam("model_name", str, "name of a database model"),
+                            CParam("matched_ids", set, "a ``set`` of ids of the database items that match for inclusion"),
+                            __doc="""
+                            Emitted after the match
+                            """)
 
-    def __init__(self):
-        super().__init__()
-        self._model = None
-        self.parsesearchfilter = None
-        self.included_ids = set()
-        self.excluded_ids = set()
-        self.matched_ids = set()
+    excluded = CommandEvent("excluded",
+                            CParam("model_name", str, "name of a database model"),
+                            CParam("matched_ids", set, "a ``set`` of ids of the database items that match for exclusion"),
+                            __doc="""
+                            Emitted after the match
+                            """)
 
-    @separate.default()
-    def _separate(pecies):
+    matched = CommandEvent("matched",
+                            CParam("model_name", str, "name of a database model"),
+                            CParam("matched_ids", set, "a ``set`` of ids of the database items that match"),
+                            __doc="""
+                            Emitted at the end of the process with the final results
+                            """)
 
-        include = []
-        exclude = []
-
-        for p in pecies:
-            if p.startswith('-'):
-                exclude.append(p[1:])  # remove '-' at the start
-            else:
-                include.append(p)
-
-        return tuple(include), tuple(exclude)
-
-    @staticmethod
-    def _match(model_name, pieces, options):
-        ""
-        model = database_cmd.GetModelClass().run(model_name)
-        partialfilter = PartialModelFilter()
-        matched = set()
-
-        for p in pieces:
-            m = partialfilter.run(model, p, options)
-            matched.update(m)
-
-        return matched
-
-    @include.default()
-    def _include(model_name, pieces, options):
-        return ModelFilter._match(model_name, pieces, options)
-
-    @exclude.default()
-    def _exclude(model_name, pieces, options):
-        return ModelFilter._match(model_name, pieces, options)
-
-    @empty.default()
-    def _empty(model_name):
-        model = database_cmd.GetModelClass().run(model_name)
-        s = constants.db_session()
-        return set(x[0] for x in s.query(model.id).all())
-
-    def main(self, model: db.Base, search_filter: str, match_options: dict = {}) -> set:
+    def main(self, model: db.Base, search_filter: str, match_options: dict = {}) -> typing.Set[int]:
         assert issubclass(model, db.Base)
 
         self._model = model
@@ -637,3 +693,54 @@ class ModelFilter(Command):
         self.matched.emit(self._model.__name__, self.matched_ids)
 
         return self.matched_ids
+
+
+    def __init__(self):
+        super().__init__()
+        self._model = None
+        self.parsesearchfilter = None
+        self.included_ids = set()
+        self.excluded_ids = set()
+        self.matched_ids = set()
+
+    @separate.default()
+    def _separate(pecies):
+
+        include = []
+        exclude = []
+
+        for p in pecies:
+            if p.startswith('-'):
+                exclude.append(p[1:])  # remove '-' at the start
+            else:
+                include.append(p)
+
+        return tuple(include), tuple(exclude)
+
+    @staticmethod
+    def _match(model_name, pieces, options):
+        ""
+        model = database_cmd.GetModelClass().run(model_name)
+        partialfilter = PartialModelFilter()
+        matched = set()
+
+        for p in pieces:
+            m = partialfilter.run(model, p, options)
+            matched.update(m)
+
+        return matched
+
+    @include.default()
+    def _include(model_name, pieces, options):
+        return ModelFilter._match(model_name, pieces, options)
+
+    @exclude.default()
+    def _exclude(model_name, pieces, options):
+        return ModelFilter._match(model_name, pieces, options)
+
+    @empty.default()
+    def _empty(model_name):
+        model = database_cmd.GetModelClass().run(model_name)
+        s = constants.db_session()
+        return set(x[0] for x in s.query(model.id).all())
+

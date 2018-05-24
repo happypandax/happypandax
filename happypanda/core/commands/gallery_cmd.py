@@ -3,13 +3,14 @@ Gallery CMD
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
+import typing
 import os
 import subprocess
 import math
 
 from happypanda.common import utils, hlogger, config, exceptions, constants
 from happypanda.core.command import (UndoCommand, CommandEvent,
-                                     CommandEntry, Command, AsyncCommand)
+                                     CommandEntry, Command, AsyncCommand, CParam)
 from happypanda.core.commands import database_cmd, io_cmd
 from happypanda.interface import enums
 from happypanda.core import db, async_utils
@@ -17,51 +18,10 @@ from happypanda.core import db, async_utils
 log = hlogger.Logger(constants.log_ns_command + __name__)
 
 
-class RenameGallery(UndoCommand):
-    """
-    Rename a gallery
-    """
-
-    renamed = CommandEvent("renamed", str)
-    rename = CommandEntry("rename", None, str, str)
-
-    def __init__(self):
-        super().__init__()
-        self.title = None
-        self.old_title = None
-
-    @rename.default()
-    def _set_title(old_title, new_title):
-        return new_title
-
-    def main(self, title: db.Title, new_title: str) -> None:
-
-        self.title = title
-        self.old_title = title.name
-
-        with self.rename.call(title.name, new_title) as plg:
-            title.name = plg.first()
-
-            with utils.session() as s:
-                s.add(title)
-
-        self.renamed.emit(title.name)
-
-    def undo(self):
-        self.title.name = self.old_title
-
-        with utils.session() as s:
-            s.add(self.title)
-
-        self.renamed.emit(self.old_title)
-
-
 class AddGallery(UndoCommand):
     """
     Add a gallery
     """
-
-    added = CommandEvent("added", db.Gallery)
 
     def __init__(self):
         super().__init__()
@@ -69,10 +29,39 @@ class AddGallery(UndoCommand):
 
 class SimilarGallery(AsyncCommand):
     """
-    Get similar galleries to given gallery
+    Get a list of similar galleries to given gallery
+
+    Args:
+        gallery_or_id: a :class:`.db.Gallery` database item or an item id thereof
+
+    Returns:
+        a list of similar galleries sorted most to least
     """
 
-    calculate = CommandEntry("calculate", set, int)
+    #calculate: int = CommandEntry("calculate", set, int)
+
+    def main(self, gallery_or_id: db.Gallery) -> typing.List[db.Gallery]:
+        gid = gallery_or_id.id if isinstance(gallery_or_id, db.Gallery) else gallery_or_id
+        gl_data = {}
+        all_gallery_tags = {}
+        self.set_progress(type_=enums.ProgressType.Unknown)
+        self.set_max_progress(1)
+        with utils.intertnal_db() as idb:
+            if not constants.invalidator.similar_gallery:
+                gl_data = idb.get(constants.internaldb.similar_gallery_calc.key, gl_data)
+            all_gallery_tags = idb.get(constants.internaldb.similar_gallery_tags.key, all_gallery_tags)
+        log.d("Cached gallery tags", len(all_gallery_tags))
+        if gid not in gl_data:
+            log.d("Similarity calculation not found in cache")
+            gl_data.update(self._calculate(gallery_or_id, all_gallery_tags).get())
+            with utils.intertnal_db() as idb:
+                idb[constants.internaldb.similar_gallery_calc.key] = gl_data
+                idb[constants.internaldb.similar_gallery_tags.key] = all_gallery_tags
+        self.next_progress()
+        v = []
+        if gid in gl_data:
+            v = [x for x in sorted(gl_data[gid], reverse=True, key=lambda x:gl_data[gid][x])]
+        return v
 
     def __init__(self):
         super().__init__()
@@ -140,38 +129,85 @@ class SimilarGallery(AsyncCommand):
 
         return data
 
-    def main(self, gallery_or_id: db.Gallery) -> list:
-        gid = gallery_or_id.id if isinstance(gallery_or_id, db.Gallery) else gallery_or_id
-        gl_data = {}
-        all_gallery_tags = {}
-        self.set_progress(type_=enums.ProgressType.Unknown)
-        self.set_max_progress(1)
-        with utils.intertnal_db() as idb:
-            if not constants.invalidator.similar_gallery:
-                gl_data = idb.get(constants.internaldb.similar_gallery_calc.key, gl_data)
-            all_gallery_tags = idb.get(constants.internaldb.similar_gallery_tags.key, all_gallery_tags)
-        log.d("Cached gallery tags", len(all_gallery_tags))
-        if gid not in gl_data:
-            log.d("Similarity calculation not found in cache")
-            gl_data.update(self._calculate(gallery_or_id, all_gallery_tags).get())
-            with utils.intertnal_db() as idb:
-                idb[constants.internaldb.similar_gallery_calc.key] = gl_data
-                idb[constants.internaldb.similar_gallery_tags.key] = all_gallery_tags
-        self.next_progress()
-        v = []
-        if gid in gl_data:
-            v = [x for x in sorted(gl_data[gid], reverse=True, key=lambda x:gl_data[gid][x])]
-        return v
-
 
 class OpenGallery(Command):
     """
     Open a gallery in an external viewer
+
+    Args:
+        gallery_or_id: a :class:`.db.Gallery` database item or an item id thereof
+        number: page number
+        args: arguments to pass to the external program
+
+    Returns:
+        bool indicating wether the gallery was successfully opened
     """
 
-    _opened = CommandEvent("opened", str, str, db.Gallery, int)
-    _open = CommandEntry("open", bool, str, str, db.Gallery, tuple)
-    _resolve = CommandEntry("resolve", tuple, db.Gallery, int)
+    _opened = CommandEvent("opened",
+                           CParam("parent_path", str, "path to parent folder or archive"),
+                           CParam("child_path", str, "path to opened file in folder or archive"),
+                           CParam("gallery", db.Gallery, "database item object that was opened"),
+                           CParam("number", int, "page number"),
+                           __doc="""
+                           Emitted when a gallery or page was successfully opened
+                           """)
+
+    _open: bool = CommandEntry("open",
+                               CParam("parent_path", str, "path to parent folder or archive"),
+                               CParam("child_path", str, "path to opened file in folder or archive"),
+                               CParam("gallery", db.Gallery, "database item object that was opened"),
+                               CParam("arguments", tuple, "a tuple of arguments to pass to the external program"),
+                               __doc="""
+                               Called to open the given file in an external program
+                               """,
+                               __doc_return="""
+                               a bool indicating whether the file could be opened or not
+                               """)
+    _resolve: tuple = CommandEntry("resolve",
+                                   CParam("gallery", db.Gallery, "database item object that was opened"),
+                                   CParam("number", int, "page number"),
+                                   __doc="""
+                                   Called to resolve the parent (containing folder or archive) and child (the file, usually the first) paths
+                                   """,
+                                   __doc_return="""
+                                   a tuple with two items, the parent (``str``) and child (``str``) paths
+                                   """
+                                   )
+
+    def main(self, gallery_or_id: db.Gallery=None, number: int=None, args=tuple()) -> bool:
+        assert isinstance(gallery_or_id, (db.Gallery, int))
+        if isinstance(gallery_or_id, int):
+            gallery = database_cmd.GetModelItems().run(db.Gallery, {gallery_or_id})
+            if gallery:
+                gallery = gallery[0]
+        else:
+            gallery = gallery_or_id
+        self.gallery = gallery
+        if number is None:
+            number = 1
+        opened = False
+        if self.gallery.pages.count():
+            with self._resolve.call(self.gallery, number) as plg:
+                r = plg.first()
+                if len(r) == 2:
+                    self.path, self.first_file = r
+
+            args = args if args else tuple(x.strip() for x in config.external_image_viewer_args.value.split())
+
+            with self._open.call(self.path, self.first_file, self.gallery, args) as plg:
+                try:
+                    opened = plg.first()
+                except OSError as e:
+                    raise exceptions.CommandError(utils.this_command(self),
+                                                  "Failed to open gallery with external viewer: {}".format(e.args[1]))
+
+        else:
+            log.w("Error opening gallery (), no page count".format(self.gallery.id))
+
+        if opened:
+            self._opened.emit(self.path, self.first_file, self.gallery, number)
+
+        return opened
 
     def __init__(self):
         super().__init__()
@@ -220,35 +256,3 @@ class OpenGallery(Command):
 
         return parent, child
 
-    def main(self, gallery_id: int=None, gallery: db.Gallery=None, number: int=None, args=tuple()) -> bool:
-        assert isinstance(gallery, db.Gallery) or isinstance(gallery_id, int)
-        if gallery_id:
-            gallery = database_cmd.GetModelItems().run(db.Gallery, {gallery_id})
-            if gallery:
-                gallery = gallery[0]
-        self.gallery = gallery
-        if number is None:
-            number = 1
-        opened = False
-        if self.gallery.pages.count():
-            with self._resolve.call(self.gallery, number) as plg:
-                r = plg.first()
-                if len(r) == 2:
-                    self.path, self.first_file = r
-
-            args = args if args else tuple(x.strip() for x in config.external_image_viewer_args.value.split())
-
-            with self._open.call(self.path, self.first_file, self.gallery, args) as plg:
-                try:
-                    opened = plg.first()
-                except OSError as e:
-                    raise exceptions.CommandError(utils.this_command(self),
-                                                  "Failed to open gallery with external viewer: {}".format(e.args[1]))
-
-        else:
-            log.w("Error opening gallery (), no page count".format(self.gallery.id))
-
-        if opened:
-            self._opened.emit(self.path, self.first_file, self.gallery, number)
-
-        return opened
