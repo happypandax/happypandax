@@ -226,3 +226,7 @@ semantic/src/site/*
 !semantic/src/site/globals/
 
 /data/certs
+
+# docs
+docs/*
+!docs/source/
