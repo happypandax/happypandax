@@ -590,12 +590,14 @@ def capitalize_text(text):
     """
     return " ".join(x.capitalize() for x in text.strip().split())
 
+
 def indent_text(txt, num=4):
     """
     """
     if isinstance(txt, str):
         txt = txt.split('\n')
     return "\n".join((num * " ") + i for i in txt)
+
 
 def get_language_code(lcode):
     assert isinstance(lcode, str)

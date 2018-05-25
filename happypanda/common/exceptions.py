@@ -127,6 +127,7 @@ class PluginCommandError(PluginError):
 
     pass
 
+
 @_error_code(203)
 class PluginCommandNotFoundError(PluginCommandError):
     """Plugin Command Not Found Error."""

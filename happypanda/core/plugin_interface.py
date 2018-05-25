@@ -47,7 +47,7 @@ The object ``constants`` is available on the module-level and provides various u
     for x in sorted(p.__dict__):
         y = p.__dict__[x]
         print("    **{}** : *{}* = {}".format(x, type(y).__name__, y))
-        
+
 -----------------------------------------------------------------------
 
 """
@@ -58,7 +58,10 @@ import functools
 command = None
 constants = None
 
-class _NO_DEFAULT: pass
+
+class _NO_DEFAULT:
+    pass
+
 
 def get_logger(name: str=None):
     """
@@ -99,6 +102,7 @@ def get_setting(namespace: str, key: str, default=_NO_DEFAULT):
             raise
         return default
 
+
 def save_config(obj: dict):
     """
     Save configuration specific to this plugin
@@ -115,9 +119,9 @@ def save_config(obj: dict):
     """
     assert isinstance(obj, dict)
     return __manager__.save_plugin_config(__plugin_id__, obj)
-    
 
-#def create_command(f: typing.Callable=None, command_name: str=None):
+
+# def create_command(f: typing.Callable=None, command_name: str=None):
 #    """
 #    Create a command entry that other plugins can attach a handler to
 
@@ -197,4 +201,3 @@ def subscribe(f: typing.Callable=None, commandevent: str=None):
 
 __manager__ = None
 __plugin_id__ = None
-

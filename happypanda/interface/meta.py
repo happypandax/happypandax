@@ -130,7 +130,7 @@ def check_update(push: bool = False):
         push: whether to push out notifications if an update is found
 
     Returns:
-        
+
         .. code-block:: guess
 
             {
@@ -419,4 +419,3 @@ def start_command(command_ids: list):
         states[i] = cmd.state.name
 
     return message.Identity('command_state', states)
-

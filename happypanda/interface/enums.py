@@ -240,6 +240,7 @@ class PluginState(_APIEnum):
     #: Failed because of error
     Failed = 5
 
+
 class CommandState(_APIEnum):
 
     #: command has not been put in any service yet

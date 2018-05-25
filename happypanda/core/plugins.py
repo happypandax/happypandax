@@ -21,7 +21,7 @@ from contextlib import contextmanager
 
 from happypanda.interface import enums
 from happypanda.common import exceptions, constants, hlogger, config
-from happypanda.core import plugin_interface, async_utils, command
+from happypanda.core import plugin_interface, async_utils
 
 log = hlogger.Logger(constants.log_ns_plugin + __name__)
 
@@ -481,19 +481,20 @@ class HandlerValue:
 
     def _raise_error(self):
         raise exceptions.CoreError(
-            self.name+'handler',
+            self.name + 'handler',
             "No handler is connected to this command: {} (capture token: {})".format(self.name, self.capture_token))
 
     def _raise_default_error(self):
         raise exceptions.CoreError(
-            self.name+'handler',
+            self.name + 'handler',
             "No default handler is connected to this command: {} (capture token: {})".format(self.name, self.capture_token))
 
     def _call_capture(self, idx, error, default):
         if not self._capture_handlers and not self.default_capture_handlers:
             if error:
                 self._raise_error()
-            log.d(f"Calling capture handlers but no plugin handlers nor default handlers has been added for '{self.name}'")
+            log.d(
+                f"Calling capture handlers but no plugin handlers nor default handlers has been added for '{self.name}'")
             return None
 
         token_handler = self._get_capture_handlers(self.capture_token)
@@ -503,7 +504,8 @@ class HandlerValue:
         if not token_handler and not token_handler_d:
             if error:
                 self._raise_error()
-            log.d(f"Calling capture handlers but no plugin handlers nor default handlers has been added for token '{self.capture_token}' in '{self.name}'")
+            log.d(
+                f"Calling capture handlers but no plugin handlers nor default handlers has been added for token '{self.capture_token}' in '{self.name}'")
             return None
 
         r = []
@@ -513,8 +515,8 @@ class HandlerValue:
                 return self._call_handler(*token_handler[idx])
             else:
                 for y in token_handler:
-                    with self._unhandled_exception(y[0]) as err:
-                        r.append(self._call_handler(*y)) 
+                    with self._unhandled_exception(y[0]) as err: # noqa: F841
+                        r.append(self._call_handler(*y))
 
         if token_handler_d and default:
             if idx is not None:
@@ -539,12 +541,12 @@ class HandlerValue:
         if handlers:
             handlers_idx_list = list(range(len(handlers)))
             idx = handlers_idx_list[idx] if idx < 0 else idx
-            handlers_idx = list(itertools.islice(itertools.cycle(handlers_idx_list), len(handlers)*2))
-            handlers_idx = handlers_idx[idx:-1*len(handlers)+idx]
+            handlers_idx = list(itertools.islice(itertools.cycle(handlers_idx_list), len(handlers) * 2))
+            handlers_idx = handlers_idx[idx:-1 * len(handlers) + idx]
         else:
             handlers_idx = handlers_idx = (idx,)
         for i in handlers_idx:
-            with self._unhandled_exception(handlers[i][0] if i <= len(handlers)-1 else None) as err:
+            with self._unhandled_exception(handlers[i][0] if i <= len(handlers) - 1 else None) as err:
                 u_err = err
                 if self.capture:
                     return self._call_capture(i, error, default)
@@ -563,6 +565,7 @@ class HandlerValue:
     @contextmanager
     def _unhandled_exception(self, node):
         assert isinstance(node, PluginNode) or node is None
+
         @attr.s
         class ErrorInfo:
             raised_error = attr.ib(False)
@@ -573,7 +576,7 @@ class HandlerValue:
         try:
             yield err_info
         except Exception as e:
-            if isinstance(e, exceptions.CoreError) and e.where == self.name+'handler':
+            if isinstance(e, exceptions.CoreError) and e.where == self.name + 'handler':
                 raise
             self.failed[node] = e
             node.logger.exception(
@@ -627,7 +630,8 @@ class PluginNode:
                     exec(f.read(), i.plugin_globals)
             except Exception as e:
                 err = e
-                self.logger.exception(f"An unhandled exception '{e.__class__.__name__}' was raised during plugin initialization")
+                self.logger.exception(
+                    f"An unhandled exception '{e.__class__.__name__}' was raised during plugin initialization")
                 get_plugin_context_logger(self.logger.name).w(
                     "An unhandled exception was raised during plugin initialization by {}: {}: {}".format(self.format(), e.__class__.__name__, str(e)))
 
@@ -662,7 +666,8 @@ class PluginNode:
                 with self._isolate:
                     handler()
             except Exception as e:
-                self.logger.exception(f"An unhandled exception '{e.__class__.__name__}' was raised in the plugin '{event_name}' handler")
+                self.logger.exception(
+                    f"An unhandled exception '{e.__class__.__name__}' was raised in the plugin '{event_name}' handler")
                 get_plugin_context_logger(self.logger.name).w(
                     "An unhandled exception was raised in the '{}' handler by plugin {}: {}: {}".format(event_name, self.format(), e.__class__.__name__, str(e)))
 
@@ -932,7 +937,7 @@ class PluginManager:
         node = self.get_node(node_or_id)
         log.d("Getting plugin logger -", node.format())
         node.logger.debug("Getting logger")
-        logname = node.info.shortname 
+        logname = node.info.shortname
         propogate = False
         if name:
             logname += '.' + name
@@ -955,7 +960,6 @@ class PluginManager:
         node.logger.debug("Getting setting")
         return config.config.get(ns, key)
 
-
     def save_plugin_config(self, node_or_id, dictlike):
         node = self.get_node(node_or_id)
         log.d("Saving plugin configuration -", node.format())
@@ -964,8 +968,10 @@ class PluginManager:
             config.config.update(self._plugin_config_key(node), dictlike, create=True)
         return config.config.save()
 
+
 class PluginConfig(dict):
     pass
+
 
 @attr.s(frozen=True)
 class PluginConstants:
@@ -976,7 +982,7 @@ class PluginConstants:
     - dev: developer mode enabled
     - dev: debug mode enabled
     - is_frozen: application has been made into an executable
-    - is_osx: application is running on OS X 
+    - is_osx: application is running on OS X
     - is_linux: application is running on Linux
     - is_win: application is running on Windows
     - is_posix: application is running on a posix-compliant OS (true for both OS X and Linux)
@@ -999,6 +1005,7 @@ class PluginConstants:
     thumbnail_path = attr.ib(constants.dir_thumbs)
     translation_path = attr.ib(constants.dir_translations)
     current_dir = attr.ib("")
+
 
 class PluginCommands:
 
@@ -1043,7 +1050,7 @@ class PluginCommands:
                 if self.__cmd:
                     if not cmd_attr.startswith('_'):
                         return getattr(self.__cmd, cmd_attr)
-                raise AttributeError(f"AttributeError: '{attr}' object has no attribute '{cmd_attr}'") 
+                raise AttributeError(f"AttributeError: '{attr}' object has no attribute '{cmd_attr}'")
 
         return PluginCommand()
 

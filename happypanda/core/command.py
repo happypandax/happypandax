@@ -1,4 +1,3 @@
-import enum
 import arrow
 import gevent
 import weakref
@@ -434,12 +433,15 @@ class _CommandPlugin:
         doc = inspect.cleandoc(doc)
 
         doc = doc.format(
-                   self.__doc__,
-                   self.qualifiedname(),
-                   "**Capture:** ``{}`` -- {}".format(self.__capture[0].__name__,self._CommandPlugin__capture[1]) if self.__capture else '',
-                   "Args:\n{}".format(utils.indent_text("\n".join("{}: {}".format(x.name, x.__doc__) for x in params))) if params else '',
-                   '' if is_event else "Returns:\n{}".format(utils.indent_text(self.__doc_return)) if self.__doc_return else ''
-                   )
+            self.__doc__,
+            self.qualifiedname(),
+            "**Capture:** ``{}`` -- {}".format(self.__capture[0].__name__,
+                                               self._CommandPlugin__capture[1]) if self.__capture else '',
+            "Args:\n{}".format(utils.indent_text("\n".join("{}: {}".format(x.name, x.__doc__)
+                                                           for x in params))) if params else '',
+            '' if is_event else "Returns:\n{}".format(
+                utils.indent_text(self.__doc_return)) if self.__doc_return else ''
+        )
         self.__doc__ = doc
 
     def qualifiedname(self):
@@ -569,6 +571,7 @@ class CommandEntry(_CommandPlugin):
         handler.expected_type = self.return_type
         yield handler
 
+
 class CParam:
     "Command parameter"
 
@@ -577,6 +580,7 @@ class CParam:
         self.type = type_
         self.parameter = inspect.Parameter(name, inspect.Parameter.POSITIONAL_OR_KEYWORD, annotation=type_)
         self.__doc__ = inspect.cleandoc(__doc__)
+
 
 def init_commands():
     CoreCommand._native_pool = ThreadPool(constants.maximum_native_workers)

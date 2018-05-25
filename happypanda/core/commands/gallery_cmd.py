@@ -255,4 +255,3 @@ class OpenGallery(Command):
             raise NotImplementedError
 
         return parent, child
-

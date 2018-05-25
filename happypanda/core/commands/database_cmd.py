@@ -54,25 +54,25 @@ class GetModelImage(AsyncCommand):
                                  a tuple of database models :class:`.db.Base`
                                  """)
     generate: str = CommandEntry("generate",
-                               CParam("model_name", str, "name of a database model"),
-                               CParam("item_id", int, "id of database item"),
-                               CParam("image_size", utils.ImageSize, "size of image"),
-                               __capture=(str, "name of database model"),
-                               __doc="""
+                                 CParam("model_name", str, "name of a database model"),
+                                 CParam("item_id", int, "id of database item"),
+                                 CParam("image_size", utils.ImageSize, "size of image"),
+                                 __capture=(str, "name of database model"),
+                                 __doc="""
                                Called to generate an image file of database item
                                """,
-                               __doc_return="""
+                                 __doc_return="""
                                path to image file
                                """)
     invalidate: bool = CommandEntry("invalidate",
-                                CParam("model_name", str, "name of a database model"),
-                                CParam("item_id", int, "id of database item"),
-                                CParam("image_size", utils.ImageSize, "size of image"),
-                                __capture=(str, "name of database model"),
-                                __doc="""
+                                    CParam("model_name", str, "name of a database model"),
+                                    CParam("item_id", int, "id of database item"),
+                                    CParam("image_size", utils.ImageSize, "size of image"),
+                                    __capture=(str, "name of database model"),
+                                    __doc="""
                                 Called to check if a new image should be forcefully generated
                                 """,
-                                __doc_return="""
+                                    __doc_return="""
                                 bool indicating wether an image should be generated or not
                                 """)
 
@@ -134,7 +134,6 @@ class GetModelImage(AsyncCommand):
                                          model, item_id, image_size, profile_size).get()
         self.cover_event.emit(self.cover)
         return self.cover
-
 
     def __init__(self, service=None):
         super().__init__(service, priority=constants.Priority.Low)
@@ -299,7 +298,7 @@ class GetSession(Command):
 
     Returns:
         a database session object
-        
+
     """
 
     def __init__(self):
@@ -336,22 +335,22 @@ class GetDatabaseSort(Command):
                                )
 
     orderby: dict = CommandEntry("orderby",
-                               CParam("model_name", str, "name of a database model"),
-                               __capture=(str, "name of database model"),
-                               __doc=""",
+                                 CParam("model_name", str, "name of a database model"),
+                                 __capture=(str, "name of database model"),
+                                 __doc=""",
                                Called to get a dict of database item attributes to order by
                                """,
-                               __doc_return="""
+                                 __doc_return="""
                                A dict of (``int``)``sortindex``:``(item.attribute, ...)``(``tuple``)
                                """)
 
     groupby: dict = CommandEntry("groupby",
-                               CParam("model_name", str, "name of a database model"),
-                               __capture=(str, "name of database model"),
-                               __doc=""",
+                                 CParam("model_name", str, "name of a database model"),
+                                 __capture=(str, "name of database model"),
+                                 __doc=""",
                                Called to get a dict of database item attributes to group by
                                """,
-                               __doc_return="""
+                                 __doc_return="""
                                A dict of (``int``)``sortindex``:``(item.attribute, ...)``(``tuple``)
                                """)
 
@@ -571,26 +570,26 @@ class GetModelItems(Command):
         limit: amount to limit the results
         offset: amount to offset the results
         count: only return the count of items
-        filter: either a textual SQL criterion or a database criterion expression (can also be a tuple) 
-        order_by: either a textual SQL criterion or a database model item attribute (can also be a tuple) 
-        group_by: either a textual SQL criterion or a database model item attribute (can also be a tuple) 
-        join: either a textual SQL criterion or a database model item attribute (can also be a tuple) 
+        filter: either a textual SQL criterion or a database criterion expression (can also be a tuple)
+        order_by: either a textual SQL criterion or a database model item attribute (can also be a tuple)
+        group_by: either a textual SQL criterion or a database model item attribute (can also be a tuple)
+        join: either a textual SQL criterion or a database model item attribute (can also be a tuple)
 
     Returns:
         a tuple of database model items or ``int`` if ``count`` was set to true
     """
 
     fetched = CommandEvent("fetched",
-                          CParam("model_name", str, "name of a database model"),
-                          CParam("items", tuple, "fetched items"),
-                          __doc="""
+                           CParam("model_name", str, "name of a database model"),
+                           CParam("items", tuple, "fetched items"),
+                           __doc="""
                           Emitted when items were fetched successfully
                           """,)
 
     count = CommandEvent("count",
-                        CParam("model_name", str, "name of a database model"),
-                        CParam("item_count", int, "count of items"),
-                        __doc="""
+                         CParam("model_name", str, "name of a database model"),
+                         CParam("item_count", int, "count of items"),
+                         __doc="""
                         Emitted when query was successful
                         """)
 

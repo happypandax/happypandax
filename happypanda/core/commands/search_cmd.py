@@ -131,7 +131,7 @@ class ParseSearch(Command):
     parse: tuple = CommandEntry("parse",
                                 CParam('terms', str, "a search query"),
                                 __doc="""
-                                Called to divide the search query as written into ``namespace:tag``(``str``) pieces 
+                                Called to divide the search query as written into ``namespace:tag``(``str``) pieces
                                 """,
                                 __doc_return="""
                                 a tuple of `namespace:tag``(``str``) pieces
@@ -283,15 +283,15 @@ class PartialModelFilter(Command):
                                  """)
 
     match_model: set = CommandEntry("match_model",
-                                  CParam("parent_model_name", str, "name of parent database model"),
-                                  CParam("child_model_name", str, "name of child database model"),
-                                  CParam("term", str, "a single term"),
-                                  CParam("options", ChainMap, "search options"),
-                                  __capture=(str, "a database model name"),
-                                  __doc="""
+                                    CParam("parent_model_name", str, "name of parent database model"),
+                                    CParam("child_model_name", str, "name of child database model"),
+                                    CParam("term", str, "a single term"),
+                                    CParam("options", ChainMap, "search options"),
+                                    __capture=(str, "a database model name"),
+                                    __doc="""
                                   Called to perform the matching on database items of the given model
                                   """,
-                                  __doc_return="""
+                                    __doc_return="""
                                   a ``set`` of ids of the database items that match
                                   """)
     matched = CommandEvent("matched",
@@ -605,11 +605,11 @@ class ModelFilter(Command):
                                 """
                                 )
     empty: set = CommandEntry("empty",
-                                CParam("model_name", str, "name of a database model"),
-                                __doc="""
+                              CParam("model_name", str, "name of a database model"),
+                              __doc="""
                                 Called when the search query is empty
                                 """,
-                                __doc_return="""
+                              __doc_return="""
                                 a ``set`` of ids of the database items that match when a search query is empty
                                 """)
 
@@ -628,9 +628,9 @@ class ModelFilter(Command):
                             """)
 
     matched = CommandEvent("matched",
-                            CParam("model_name", str, "name of a database model"),
-                            CParam("matched_ids", set, "a ``set`` of ids of the database items that match"),
-                            __doc="""
+                           CParam("model_name", str, "name of a database model"),
+                           CParam("matched_ids", set, "a ``set`` of ids of the database items that match"),
+                           __doc="""
                             Emitted at the end of the process with the final results
                             """)
 
@@ -694,7 +694,6 @@ class ModelFilter(Command):
 
         return self.matched_ids
 
-
     def __init__(self):
         super().__init__()
         self._model = None
@@ -743,4 +742,3 @@ class ModelFilter(Command):
         model = database_cmd.GetModelClass().run(model_name)
         s = constants.db_session()
         return set(x[0] for x in s.query(model.id).all())
-

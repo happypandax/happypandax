@@ -31,7 +31,7 @@ class CheckUpdate(AsyncCommand):
             'tag':'',
             'version':(0, 0, 0)
             }
-        
+
         when there is a new release, or ``None``
     """
 

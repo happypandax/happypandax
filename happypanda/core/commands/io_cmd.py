@@ -576,45 +576,45 @@ class Archive(CoreCommand):
                                   """
                                   )
     _test_corrupt: bool = CommandEntry('test_corrupt',
-                                      CParam("archive", object, "the underlying archive object"),
-                                      __capture=(str, "file extension"),
-                                      __doc="""
+                                       CParam("archive", object, "the underlying archive object"),
+                                       __capture=(str, "file extension"),
+                                       __doc="""
                                       Called to test if the archive is corrupted
                                       """,
-                                      __doc_return="""
+                                       __doc_return="""
                                       whether the archive is corrupt or not
                                       """
-                                      )
+                                       )
     _is_dir: bool = CommandEntry('is_dir',
-                                CParam("archive", object, "the underlying archive object"),
-                                CParam("filename", str, "filename or path **inside** the archive"),
-                                __capture=(str, "file extension"),
-                                __doc="""
+                                 CParam("archive", object, "the underlying archive object"),
+                                 CParam("filename", str, "filename or path **inside** the archive"),
+                                 __capture=(str, "file extension"),
+                                 __doc="""
                                 Called to check if an item inside the archive is a directory
                                 """,
-                                __doc_return="""
+                                 __doc_return="""
                                 whether the item is a directory or not
                                 """
-                                )
+                                 )
     _extract: str = CommandEntry("extract",
-                                CParam("archive", object, "the underlying archive object"),
-                                CParam("filename", str, "filename or path **inside** the archive"),
-                                CParam("target", pathlib.Path, "target path to where items should be extracted to"),
-                                __capture=(str, "file extension"),
-                                __doc="""
+                                 CParam("archive", object, "the underlying archive object"),
+                                 CParam("filename", str, "filename or path **inside** the archive"),
+                                 CParam("target", pathlib.Path, "target path to where items should be extracted to"),
+                                 __capture=(str, "file extension"),
+                                 __doc="""
                                 Called to extract an item inside the archive
                                 """,
-                                __doc_return="""
+                                 __doc_return="""
                                 path to extracted content
                                 """)
     _extract_all: str = CommandEntry("extract_all",
-                                    CParam("archive", object, "the underlying archive object"),
-                                    CParam("target", pathlib.Path, "target path to where items should be extracted to"),
-                                    __capture=(str, "file extension"),
-                                    __doc="""
+                                     CParam("archive", object, "the underlying archive object"),
+                                     CParam("target", pathlib.Path, "target path to where items should be extracted to"),
+                                     __capture=(str, "file extension"),
+                                     __doc="""
                                     Called to extract all items inside the archive
                                     """,
-                                    __doc_return="""
+                                     __doc_return="""
                                     path to extracted content
                                     """)
     _namelist: tuple = CommandEntry("namelist",
@@ -627,18 +627,22 @@ class Archive(CoreCommand):
                                     a tuple of the files and folders in the archive
                                     """)
     _open: object = CommandEntry("open",
-                                CParam("archive", object, "the underlying archive object"),
-                                CParam("filename", str, "filename or path **inside** the archive"),
-                                CParam("args", tuple, "additional arguments to pass when opening the file (like ``encoding='utf-8'``, etc.)"),
-                                CParam("kwargs", dict, "additional keyword-arguments to pass when opening the file (like ``encoding='utf-8'``, etc.)"),
-                                __capture=(str, "file extension"),
-                                __doc="""
+                                 CParam("archive", object, "the underlying archive object"),
+                                 CParam("filename", str, "filename or path **inside** the archive"),
+                                 CParam(
+                                     "args", tuple, "additional arguments to pass when opening the file (like ``encoding='utf-8'``, etc.)"),
+                                 CParam(
+                                     "kwargs",
+                                     dict,
+                                     "additional keyword-arguments to pass when opening the file (like ``encoding='utf-8'``, etc.)"),
+                                 __capture=(str, "file extension"),
+                                 __doc="""
                                 Called to open a file inside the archive.
                                 """,
-                                __doc_return="""
+                                 __doc_return="""
                                 a file-like object
                                 """
-                                )
+                                 )
     _close: None = CommandEntry("close",
                                 CParam("archive", object, "the underlying archive object"),
                                 __capture=(str, "file extension"),
