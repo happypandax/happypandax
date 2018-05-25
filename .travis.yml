@@ -3,6 +3,9 @@ notifications:
         on_success: never
         on_failure: always
 language: python
+addons:
+    apt:
+        update: true
 env:
     global:
         - GH_USER=Twiddly

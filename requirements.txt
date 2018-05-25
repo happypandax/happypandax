@@ -18,7 +18,7 @@ QtAwesome==0.4.4
 psutil==5.4.5
 rollbar==0.14.0
 CacheControl==0.12.4
-attrs==17.4.0
+attrs==18.1.0
 requests==2.18.4
 certifi
 APScheduler==3.5.1
