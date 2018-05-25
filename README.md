@@ -5,9 +5,9 @@
 [![Github All Releases](https://img.shields.io/github/downloads/happypandax/happypandax/total.svg)](https://github.com/happypandax/happypandax/releases)
 [![Twitter Follow](https://img.shields.io/twitter/follow/pewspew.svg?style=social&label=Follow)](https://twitter.com/pewspew)
 
-> **This project is under heavy development. If you want to speed up the development, please consider [contributing](https://happypandax.github.io/happypandax/env.html).**
+> **This project is under heavy development. If you want to speed up the development, please consider [contributing](https://happypandax.github.io/env.html).**
 
-#### [Documentation](https://happypandax.github.io/happypandax/) - [Contribute](https://happypandax.github.io/happypandax/env.html) - [Download](https://github.com/happypandax/happypandax/releases) - [Plugins](https://github.com/happypandax/plugins) - [Support on Patreon](https://www.patreon.com/twiddly)
+#### [Documentation](https://happypandax.github.io/) - [Contribute](https://happypandax.github.io/env.html) - [Download](https://github.com/happypandax/happypandax/releases) - [Plugins](https://github.com/happypandax/plugins) - [Support on Patreon](https://www.patreon.com/twiddly)
 
 <p align="center">
 <img src="https://user-images.githubusercontent.com/11841002/32983531-4ac3fc6c-cc96-11e7-8ba4-c12d9ee0b8a8.png" width="400">
